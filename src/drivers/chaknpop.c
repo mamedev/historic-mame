@@ -1,6 +1,6 @@
 /*
- *	Chack'n Pop
- *	(C) 1983 TAITO Corp.
+ *  Chack'n Pop
+ *  (C) 1983 TAITO Corp.
  *
  * driver by BUT
  */
@@ -286,7 +286,7 @@ static MACHINE_DRIVER_START( chaknpop )
 
 	/* basic machine hardware */
 	/* the real board is 3.072MHz, but it is faster for MAME */
-	//MDRV_CPU_ADD(Z80, 18432000 / 6)	/* 3.072 MHz */
+	//MDRV_CPU_ADD(Z80, 18432000 / 6)   /* 3.072 MHz */
 	MDRV_CPU_ADD(Z80, 2860000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -336,7 +336,7 @@ ROM_START( chaknpop )
 
 	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 2k for the microcontroller */
 	/* MCU isn't dumped (its protected) however we simulate it using data
-	   extracted with a trojan, see machine/chaknpop.c */
+       extracted with a trojan, see machine/chaknpop.c */
 	ROM_LOAD( "68705.mcu",   0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprite */

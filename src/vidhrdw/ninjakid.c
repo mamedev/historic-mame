@@ -90,43 +90,43 @@ READ8_HANDLER( ninjakun_io_8000_r ){
 		return ninjakun_io_8000_ctrl[3];
 	}
 
-//	logerror("PC=%04x; RAM[0x800%d]\n",activecpu_get_pc(),offset);
+//  logerror("PC=%04x; RAM[0x800%d]\n",activecpu_get_pc(),offset);
 	return 0xFF;
 }
 
 /* static void handle_scrolly( UINT8 new_scroll ){ */
 
-/*	HACK!!!
+/*  HACK!!!
 **
-**	New rows are always written at fixed locations above and below the background
-**	tilemaps, rather than at the logical screen boundaries with respect to scrolling.
+**  New rows are always written at fixed locations above and below the background
+**  tilemaps, rather than at the logical screen boundaries with respect to scrolling.
 **
 **  I don't know how this is handled by the actual NinjaKun hardware, but the
-**	following is a crude approximation, yielding a playable game.
+**  following is a crude approximation, yielding a playable game.
 */
 
 /*
-	int old_row = old_scroll/8;
-	int new_row = new_scroll/8;
-	int i;
-	if( new_scroll!=old_scroll ){
-		tilemap_set_scrolly( bg_tilemap, 0, new_scroll&7 );
+    int old_row = old_scroll/8;
+    int new_row = new_scroll/8;
+    int i;
+    if( new_scroll!=old_scroll ){
+        tilemap_set_scrolly( bg_tilemap, 0, new_scroll&7 );
 
-		if ((new_row == ((old_row - 1) & 0xff)) || ((!old_row) && (new_row == 0x1f)))
-		{
-			for( i=0x400-0x21; i>=0; i-- ){
-				ninjakid_bg_videoram_w( i+0x20, videoram[0x800+i] );
-			}
-		}
-		else if ((new_row == ((old_row + 1) & 0xff)) || ((old_row == 0x1f) && (!new_row)))
-		{
-			for( i=0x20; i<0x400; i++ ){
-				ninjakid_bg_videoram_w( i-0x20, videoram[0x800+i] );
-			}
-		}
+        if ((new_row == ((old_row - 1) & 0xff)) || ((!old_row) && (new_row == 0x1f)))
+        {
+            for( i=0x400-0x21; i>=0; i-- ){
+                ninjakid_bg_videoram_w( i+0x20, videoram[0x800+i] );
+            }
+        }
+        else if ((new_row == ((old_row + 1) & 0xff)) || ((old_row == 0x1f) && (!new_row)))
+        {
+            for( i=0x20; i<0x400; i++ ){
+                ninjakid_bg_videoram_w( i-0x20, videoram[0x800+i] );
+            }
+        }
 
-		old_scroll = new_scroll;
-	}
+        old_scroll = new_scroll;
+    }
 }
 */
 
@@ -207,7 +207,7 @@ VIDEO_START( ninjakid ){
 
 	state_save_register_UINT8 ("NK_Video", 0, "ninjakun_io_8000_ctrl", ninjakun_io_8000_ctrl, 4);
 	state_save_register_int   ("NK_Video", 0, "flipscreen", &flipscreen);
-//	state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
+//  state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
 
 	return 0;
 }

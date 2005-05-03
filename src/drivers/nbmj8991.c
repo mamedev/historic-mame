@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	nbmj8991 - Nichibutsu Mahjong games for years 1989-1991
+    nbmj8991 - Nichibutsu Mahjong games for years 1989-1991
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/12/02 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/12/02 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -356,7 +356,7 @@ static ADDRESS_MAP_START( writeport_galkoku, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_WRITE)
-//	AM_RANGE(0xe0, 0xe0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xe0, 0xe0) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xf0, 0xf0) AM_WRITE(nb1413m3_outcoin_w)
 ADDRESS_MAP_END
 
@@ -381,7 +381,7 @@ static ADDRESS_MAP_START( writeport_hyouban, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_WRITE)
-//	AM_RANGE(0xe0, 0xe0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xe0, 0xe0) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xf0, 0xf0) AM_WRITE(nb1413m3_outcoin_w)
 ADDRESS_MAP_END
 
@@ -401,8 +401,8 @@ static ADDRESS_MAP_START( writeport_pstadium, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x7f) AM_WRITE(nbmj8991_blitter_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(nbmj8991_sound_w)
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
-//	AM_RANGE(0xb0, 0xb0) AM_WRITE(MWA8_NOP)
-//	AM_RANGE(0xd0, 0xd0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xb0, 0xb0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xd0, 0xd0) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xf0, 0xf0) AM_WRITE(nb1413m3_outcoin_w)
 ADDRESS_MAP_END
 
@@ -413,8 +413,8 @@ static ADDRESS_MAP_START( writeport_av2mj1bb, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_WRITE(nbmj8991_sound_w)
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_vcrctrl_w)
-//	AM_RANGE(0xd0, 0xd0) AM_WRITE(MWA8_NOP)
-//	AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xd0, 0xd0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 
@@ -1768,7 +1768,7 @@ static MACHINE_DRIVER_START( nbmjdrv1 )	// galkoku
 	MDRV_CPU_ADD_TAG("main", Z80, 25000000/5)		/* 5.00 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(readmem_galkoku, writemem_galkoku)
 	MDRV_CPU_IO_MAP(readport_galkoku, writeport_galkoku)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

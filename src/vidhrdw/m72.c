@@ -53,11 +53,11 @@ INTERRUPT_GEN( m72_interrupt )
 		rastersplit = line + 1;
 
 		/* this is used to do a raster effect and show the score display at
-		   the bottom of the screen or other things. The line where the
-		   interrupt happens is programmable (and the interrupt can be triggered
-		   multiple times, by changing the interrupt line register in the
-		   interrupt handler).
-		 */
+           the bottom of the screen or other things. The line where the
+           interrupt happens is programmable (and the interrupt can be triggered
+           multiple times, by changing the interrupt line register in the
+           interrupt handler).
+         */
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irqbase+2);
 	}
 }
@@ -245,7 +245,7 @@ VIDEO_START( majtitle )
 {
 // The tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound).
 // The layout ramains 256x64, the right half is just not displayed.
-//	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,256,64);
+//  bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,256,64);
 	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,majtitle_scan_rows,TILEMAP_SPLIT,8,8,128,64);
 	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 

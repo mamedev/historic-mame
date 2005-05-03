@@ -1,12 +1,12 @@
 /*###################################################################################################
 **
 **
-**		asap.c
-**		Core implementation for the portable ASAP emulator.
-**		ASAP = Atari Simplified Architecture Processor
+**      asap.c
+**      Core implementation for the portable ASAP emulator.
+**      ASAP = Atari Simplified Architecture Processor
 **
-**		Written by Aaron Giles
-**		Special thanks to Mike Albaugh for clarification on a couple of fine points.
+**      Written by Aaron Giles
+**      Special thanks to Mike Albaugh for clarification on a couple of fine points.
 **
 **
 **#################################################################################################*/
@@ -21,7 +21,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define PS_CFLAG			0x00000001
@@ -68,7 +68,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* ASAP Registers */
@@ -97,7 +97,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static asap_regs asap;
@@ -110,7 +110,7 @@ static int asap_icount;
 
 
 /*###################################################################################################
-**	OPCODE TABLE
+**  OPCODE TABLE
 **#################################################################################################*/
 
 static void noop(void);
@@ -269,7 +269,7 @@ static void (*conditiontable[16])(void) =
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32(pc)
@@ -355,7 +355,7 @@ INLINE void WRITELONG(offs_t address, data32_t data)
 
 
 /*###################################################################################################
-**	EXCEPTION HANDLING
+**  EXCEPTION HANDLING
 **#################################################################################################*/
 
 INLINE void generate_exception(int exception)
@@ -376,7 +376,7 @@ INLINE void generate_exception(int exception)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 INLINE void check_irqs(void)
@@ -399,7 +399,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void asap_get_context(void *dst)
@@ -432,7 +432,7 @@ static void asap_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void init_tables(void)
@@ -505,7 +505,7 @@ static void asap_exit(void)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 INLINE void fetch_instruction(void)
@@ -565,7 +565,7 @@ static int asap_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 asap_reg_layout[] =
@@ -601,7 +601,7 @@ static UINT8 asap_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t asap_dasm(char *buffer, offs_t pc)
@@ -618,7 +618,7 @@ static offs_t asap_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	HELPER MACROS
+**  HELPER MACROS
 **#################################################################################################*/
 
 #define OPCODE		(asap.op.d >> 27)
@@ -631,7 +631,7 @@ static offs_t asap_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	OPCODES
+**  OPCODES
 **#################################################################################################*/
 
 static void noop(void)
@@ -1768,7 +1768,7 @@ static void asap_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + ASAP_R30:	src2val[REGBASE + 30] = info->i;				break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + ASAP_R31:	src2val[REGBASE + 31] = info->i;				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:			asap.irq_callback = info->irqcallback;			break;
 	}
@@ -1794,7 +1794,7 @@ void asap_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

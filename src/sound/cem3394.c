@@ -1,13 +1,13 @@
 /***************************************************************************
 
-	CEM3394 sound driver.
+    CEM3394 sound driver.
 
-	This driver handles CEM-3394 analog synth chip. Very crudely.
+    This driver handles CEM-3394 analog synth chip. Very crudely.
 
-	Still to do:
-		- adjust the overall volume when multiple waves are being generated
-		- filter internal sound
-		- support resonance (don't understand how it works)
+    Still to do:
+        - adjust the overall volume when multiple waves are being generated
+        - filter internal sound
+        - support resonance (don't understand how it works)
 
 ***************************************************************************/
 
@@ -39,54 +39,54 @@
 
 /********************************************************************************
 
-	From the datasheet:
+    From the datasheet:
 
-	CEM3394_VCO_FREQUENCY:
-		-4.0 ... +4.0
-		-0.75 V/octave
-		f = exp(V) * 431.894
+    CEM3394_VCO_FREQUENCY:
+        -4.0 ... +4.0
+        -0.75 V/octave
+        f = exp(V) * 431.894
 
-	CEM3394_MODULATION_AMOUNT
-		 0.0 ... +3.5
-		 0.0 == 0.01 x frequency
-		 3.5 == 2.00 x frequency
+    CEM3394_MODULATION_AMOUNT
+         0.0 ... +3.5
+         0.0 == 0.01 x frequency
+         3.5 == 2.00 x frequency
 
-	CEM3394_WAVE_SELECT
-		-0.5 ... -0.2 == triangle
-		+0.9 ... +1.5 == triangle + sawtooth
-		+2.3 ... +3.9 == sawtooth
+    CEM3394_WAVE_SELECT
+        -0.5 ... -0.2 == triangle
+        +0.9 ... +1.5 == triangle + sawtooth
+        +2.3 ... +3.9 == sawtooth
 
-	CEM3394_PULSE_WIDTH
-		 0.0 ... +2.0
-		 0.0 ==   0% duty cycle
-		+2.0 == 100% duty cycle
+    CEM3394_PULSE_WIDTH
+         0.0 ... +2.0
+         0.0 ==   0% duty cycle
+        +2.0 == 100% duty cycle
 
-	CEM3394_MIXER_BALANCE
-		-4.0 ... +4.0
-		 0.0 both at -6dB
-		 -20 dB/V
+    CEM3394_MIXER_BALANCE
+        -4.0 ... +4.0
+         0.0 both at -6dB
+         -20 dB/V
 
-	CEM3394_FILTER_RESONANCE
-		 0.0 ... +2.5
-		 0.0 == no resonance
-		+2.5 == oscillation
+    CEM3394_FILTER_RESONANCE
+         0.0 ... +2.5
+         0.0 == no resonance
+        +2.5 == oscillation
 
-	CEM3394_FILTER_FREQENCY
-		-3.0 ... +4.0
-		-0.375 V/octave
-		 0.0 == 1300Hz
+    CEM3394_FILTER_FREQENCY
+        -3.0 ... +4.0
+        -0.375 V/octave
+         0.0 == 1300Hz
 
-	CEM3394_FINAL_GAIN
-		 0.0 ... +4.0
-		 -20 dB/V
-		 0.0 == -90dB
-		 4.0 == 0dB
+    CEM3394_FINAL_GAIN
+         0.0 ... +4.0
+         -20 dB/V
+         0.0 == -90dB
+         4.0 == 0dB
 
-	Square wave output = 160 (average is constant regardless of duty cycle)
-	Sawtooth output = 200
-	Triangle output = 250
-	Sawtooth + triangle output = 330
-	Maximum output = 400
+    Square wave output = 160 (average is constant regardless of duty cycle)
+    Sawtooth output = 200
+    Triangle output = 250
+    Sawtooth + triangle output = 330
+    Maximum output = 400
 
 ********************************************************************************/
 
@@ -181,7 +181,7 @@ static void cem3394_update(void *param, stream_sample_t **inputs, stream_sample_
 		depth >>= 13;
 
 		/* "apply" the filter: note this is pretty cheesy; it basically just downsamples the
-		   external sample to filter_freq by allowing only 2 transitions for every cycle */
+           external sample to filter_freq by allowing only 2 transitions for every cycle */
 		for (i = 0, ext = chip->external_buffer, position = chip->position; i < length; i++, ext++)
 		{
 			UINT32 newposition;
@@ -328,7 +328,7 @@ static void *cem3394_start(int sndindex, int clock, const void *config)
 {
 	const struct cem3394_interface *intf = config;
 	sound_chip *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 	chip->index = sndindex;

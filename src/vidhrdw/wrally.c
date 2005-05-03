@@ -21,23 +21,23 @@ extern data16_t *wrally_encr_table[2];
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Screen 0 & 1: (64*32, 16x16 tiles)
+    Screen 0 & 1: (64*32, 16x16 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | --xxxxxx xxxxxxxx | code
-	  0  | xx------ -------- | not used?
-	  1  | xxxxxxxx xxxxxxxx | unknown
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | --xxxxxx xxxxxxxx | code
+      0  | xx------ -------- | not used?
+      1  | xxxxxxxx xxxxxxxx | unknown
 
-	  preliminary
+      preliminary
 */
 
 
@@ -61,7 +61,7 @@ static void get_tile_info_wrally_screen1(int tile_index)
 
 /***************************************************************************
 
-	Memory Handlers
+    Memory Handlers
 
 ***************************************************************************/
 
@@ -75,7 +75,7 @@ WRITE16_HANDLER( wrally_vram_w )
 
 /***************************************************************************
 
-	Start/Stop the video hardware emulation.
+    Start/Stop the video hardware emulation.
 
 ***************************************************************************/
 
@@ -96,28 +96,28 @@ VIDEO_START( wrally )
 
 /***************************************************************************
 
-	Sprites
+    Sprites
 
 ***************************************************************************/
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | y position
-	  0  | --xxxxxx -------- | not used?
-	  0  | -x------ -------- | flipx
-	  0  | x------- -------- | flipy
-	  1  | xxxxxxxx xxxxxxxx | unknown
-	  2  | ------xx xxxxxxxx | x position
-	  2  | --xxxx-- -------- | sprite color (low 4 bits)
-	  2  | xx------ -------- | unknown
-	  3  | --xxxxxx xxxxxxxx | sprite code
-	  3	 | xx------ -------- | not used?
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | y position
+      0  | --xxxxxx -------- | not used?
+      0  | -x------ -------- | flipx
+      0  | x------- -------- | flipy
+      1  | xxxxxxxx xxxxxxxx | unknown
+      2  | ------xx xxxxxxxx | x position
+      2  | --xxxx-- -------- | sprite color (low 4 bits)
+      2  | xx------ -------- | unknown
+      3  | --xxxxxx xxxxxxxx | sprite code
+      3  | xx------ -------- | not used?
 
-	  preliminary
+      preliminary
 */
 
 static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -158,7 +158,7 @@ static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

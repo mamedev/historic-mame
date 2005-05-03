@@ -106,79 +106,79 @@ WRITE16_HANDLER( shadfrce_flip_screen )
 
 /* Ports mapping :
 
-	$1d0020.w : 0123456789ABCDEF
-	            x---------------	right     (player 1)
-	            -x--------------	left      (player 1)
-	            --x-------------	up        (player 1)
-	            ---x------------	down      (player 1)
-	            ----x-----------	button 1  (player 1)
-	            -----x----------	button 2  (player 1)
-	            ------x---------	button 3  (player 1)
-	            -------x--------	start     (player 1)
-	            --------x-------	coin 1
-	            ---------x------	coin 2                       *
-	            ----------x-----	service 1                    *
-	            -----------x----	unused
-	            ------------x---	DIP2-7
-	            -------------x--	DIP2-8
-	            --------------x-	unused
-	            ---------------x	unused
+    $1d0020.w : 0123456789ABCDEF
+                x---------------    right     (player 1)
+                -x--------------    left      (player 1)
+                --x-------------    up        (player 1)
+                ---x------------    down      (player 1)
+                ----x-----------    button 1  (player 1)
+                -----x----------    button 2  (player 1)
+                ------x---------    button 3  (player 1)
+                -------x--------    start     (player 1)
+                --------x-------    coin 1
+                ---------x------    coin 2                       *
+                ----------x-----    service 1                    *
+                -----------x----    unused
+                ------------x---    DIP2-7
+                -------------x--    DIP2-8
+                --------------x-    unused
+                ---------------x    unused
 
-	$1d0022.w : 0123456789ABCDEF
-	            x---------------	right     (player 2)
-	            -x--------------	left      (player 2)
-	            --x-------------	up        (player 2)
-	            ---x------------	down      (player 2)
-	            ----x-----------	button 1  (player 2)
-	            -----x----------	button 2  (player 2)
-	            ------x---------	button 3  (player 2)
-	            -------x--------	start     (player 2)
-	            --------x-------	DIP2-1    ("Difficulty")
-	            ---------x------	DIP2-2    ("Difficulty")
-	            ----------x-----	DIP2-3    ("Stage Clear Energy Regain")
-	            -----------x----	DIP2-4    ("Stage Clear Energy Regain")
-	            ------------x---	DIP2-5
-	            -------------x--	DIP2-6
-	            --------------x-	unused
-	            ---------------x	unused
+    $1d0022.w : 0123456789ABCDEF
+                x---------------    right     (player 2)
+                -x--------------    left      (player 2)
+                --x-------------    up        (player 2)
+                ---x------------    down      (player 2)
+                ----x-----------    button 1  (player 2)
+                -----x----------    button 2  (player 2)
+                ------x---------    button 3  (player 2)
+                -------x--------    start     (player 2)
+                --------x-------    DIP2-1    ("Difficulty")
+                ---------x------    DIP2-2    ("Difficulty")
+                ----------x-----    DIP2-3    ("Stage Clear Energy Regain")
+                -----------x----    DIP2-4    ("Stage Clear Energy Regain")
+                ------------x---    DIP2-5
+                -------------x--    DIP2-6
+                --------------x-    unused
+                ---------------x    unused
 
-	$1d0024.w : 0123456789ABCDEF
-	            x---------------	button 4  (player 1)
-	            -x--------------	button 5  (player 1)
-	            --x-------------	button 6  (player 1)
-	            ---x------------	button 4  (player 2)
-	            ----x-----------	button 5  (player 2)
-	            -----x----------	button 6  (player 2)
-	            ------x---------	unused
-	            -------x--------	unused
-	            --------x-------	DIP1-1
-	            ---------x------	DIP1-2    ("Coin(s) for Credit(s)")
-	            ----------x-----	DIP1-3    ("Coin(s) for Credit(s)")
-	            -----------x----	DIP1-4    (DEF_STR( Continue_Price ))
-	            ------------x---	DIP1-5    ("Free Play")
-	            -------------x--	DIP1-6    ("Flip Screen")
-	            --------------x-	unused
-	            ---------------x	unused
+    $1d0024.w : 0123456789ABCDEF
+                x---------------    button 4  (player 1)
+                -x--------------    button 5  (player 1)
+                --x-------------    button 6  (player 1)
+                ---x------------    button 4  (player 2)
+                ----x-----------    button 5  (player 2)
+                -----x----------    button 6  (player 2)
+                ------x---------    unused
+                -------x--------    unused
+                --------x-------    DIP1-1
+                ---------x------    DIP1-2    ("Coin(s) for Credit(s)")
+                ----------x-----    DIP1-3    ("Coin(s) for Credit(s)")
+                -----------x----    DIP1-4    (DEF_STR( Continue_Price ))
+                ------------x---    DIP1-5    ("Free Play")
+                -------------x--    DIP1-6    ("Flip Screen")
+                --------------x-    unused
+                ---------------x    unused
 
-	$1d0026.w : 0123456789ABCDEF
-	            x---------------	unused
-	            -x--------------	unused
-	            --x-------------	unused
-	            ---x------------	unused
-	            ----x-----------	unused
-	            -----x----------	unused
-	            ------x---------	unused
-	            -------x--------	unused
-	            --------x-------	DIP 1-7   ("Demo Sound")
-	            ---------x------	DIP 1-8   ("Test Mode")
-	            ----------x-----	vblank?
-	            -----------x----	unused
-	            ------------x---	unused
-	            -------------x--	unused
-	            --------------x-	unused
-	            ---------------x	unused
+    $1d0026.w : 0123456789ABCDEF
+                x---------------    unused
+                -x--------------    unused
+                --x-------------    unused
+                ---x------------    unused
+                ----x-----------    unused
+                -----x----------    unused
+                ------x---------    unused
+                -------x--------    unused
+                --------x-------    DIP 1-7   ("Demo Sound")
+                ---------x------    DIP 1-8   ("Test Mode")
+                ----------x-----    vblank?
+                -----------x----    unused
+                ------------x---    unused
+                -------------x--    unused
+                --------------x-    unused
+                ---------------x    unused
 
-	* only available when you are in "test mode"
+    * only available when you are in "test mode"
 
 */
 
@@ -261,7 +261,7 @@ static ADDRESS_MAP_START( shadfrce_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x142000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&shadfrce_spvideoram) AM_SIZE(&spriteram_size) /* sprites */
 	AM_RANGE(0x180000, 0x187fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) /* ?? */
 	/* probably video registers etc. */
-//	AM_RANGE(0x1c0000, 0x1d000d) AM_WRITE(MWA16_RAM) AM_BASE(&shadfrce_videoregs)
+//  AM_RANGE(0x1c0000, 0x1d000d) AM_WRITE(MWA16_RAM) AM_BASE(&shadfrce_videoregs)
 	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(shadfrce_bg0scrollx_w) /* SCROLL X */
 	AM_RANGE(0x1c0002, 0x1c0003) AM_WRITE(shadfrce_bg0scrolly_w) /* SCROLL Y */
 	AM_RANGE(0x1c0004, 0x1c0005) AM_WRITE(shadfrce_bg1scrollx_w) /* SCROLL X */

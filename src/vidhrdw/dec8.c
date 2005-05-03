@@ -18,24 +18,24 @@ Super Real Darwin:
   Closer to earlier Darwin 4078 board than above games.
 
 Last Mission/Shackled:
-	Has 1 Deco VSC30 (M60348) (From readme file)
-	Has 1 Deco HMC20 (M60232) (From readme file)
+    Has 1 Deco VSC30 (M60348) (From readme file)
+    Has 1 Deco HMC20 (M60232) (From readme file)
 
-	1 playfield
-	Sprite hardware same as Karnov.
-	(Shackled) Palettes 8-15 for tiles seem to have priority over sprites.
+    1 playfield
+    Sprite hardware same as Karnov.
+    (Shackled) Palettes 8-15 for tiles seem to have priority over sprites.
 
 Gondomania:
-	Has two large square surface mount chips: [ DRL 40, 8053, 8649a ]
-	Has 1 Deco VSC30 (M60348)
-	Has 1 Deco HMC20 (M60232)
-	Priority - all tiles with *pens* 8-15 appear over sprites with palettes 8-15.
+    Has two large square surface mount chips: [ DRL 40, 8053, 8649a ]
+    Has 1 Deco VSC30 (M60348)
+    Has 1 Deco HMC20 (M60232)
+    Priority - all tiles with *pens* 8-15 appear over sprites with palettes 8-15.
 
 Oscar:
-	Uses MXC-06 custom chip for sprites.
-	Uses BAC-06 custom chip for background.
-	I can't find what makes the fix chars...
-	Priority - tiles with palettes 8-15 have their *pens* 8-15 appearing over
+    Uses MXC-06 custom chip for sprites.
+    Uses BAC-06 custom chip for background.
+    I can't find what makes the fix chars...
+    Priority - tiles with palettes 8-15 have their *pens* 8-15 appearing over
 sprites.
 
 ***************************************************************************/
@@ -181,12 +181,12 @@ WRITE8_HANDLER( lastmiss_control_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/*
-		Bit 0x0f - ROM bank switch.
-		Bit 0x10 - Unused
-		Bit 0x20 - X scroll MSB
-		Bit 0x40 - Y scroll MSB
-		Bit 0x80 - Hold subcpu reset line high if clear, else low
-	*/
+        Bit 0x0f - ROM bank switch.
+        Bit 0x10 - Unused
+        Bit 0x20 - X scroll MSB
+        Bit 0x40 - Y scroll MSB
+        Bit 0x80 - Hold subcpu reset line high if clear, else low
+    */
 	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 
 	scroll2[0]=(data>>5)&1;

@@ -1,15 +1,15 @@
 /*###################################################################################################
 **
-**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**  TMS34010: Portable Texas Instruments TMS34010 emulator
 **
-**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-**	 Parts based on code by Aaron Giles
+**  Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**   Parts based on code by Aaron Giles
 **
 **#################################################################################################*/
 
 
 /*###################################################################################################
-**	MISC MACROS
+**  MISC MACROS
 **#################################################################################################*/
 
 #define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff >> (32 - (width)))
@@ -25,7 +25,7 @@
 
 
 /*###################################################################################################
-**	FLAG HANDLING MACROS
+**  FLAG HANDLING MACROS
 **#################################################################################################*/
 
 #define SIGN(val)			((val) & 0x80000000)
@@ -46,7 +46,7 @@
 
 
 /*###################################################################################################
-**	UNIMPLEMENTED INSTRUCTION
+**  UNIMPLEMENTED INSTRUCTION
 **#################################################################################################*/
 
 static void unimpl(void)
@@ -76,7 +76,7 @@ static void unimpl(void)
 
 
 /*###################################################################################################
-**	X/Y OPERATIONS
+**  X/Y OPERATIONS
 **#################################################################################################*/
 
 #define ADD_XY(R)								\
@@ -170,7 +170,7 @@ static void movy_b(void) { MOVY(B); }
 
 
 /*###################################################################################################
-**	PIXEL TRANSFER OPERATIONS
+**  PIXEL TRANSFER OPERATIONS
 **#################################################################################################*/
 
 #define PIXT_RI(R)			                        \
@@ -270,7 +270,7 @@ static void drav_b(void) { DRAV(B); }
 
 
 /*###################################################################################################
-**	ARITHMETIC OPERATIONS
+**  ARITHMETIC OPERATIONS
 **#################################################################################################*/
 
 #define ABS(R)			              			      		\
@@ -301,7 +301,7 @@ static void add_b(void) { ADD(B); }
 
 #define ADDC(R)			              			      		\
 {			  												\
-	/* I'm not sure to which side the carry is added to, should	*/	\
+	/* I'm not sure to which side the carry is added to, should */	\
 	/* verify it against the examples */					\
 	INT32 a = R##REG(R##SRCREG);							\
 	INT32 *rd = &R##REG(R##DSTREG);							\
@@ -1015,7 +1015,7 @@ static void zext1_b(void) { ZEXT(1,B); }
 
 
 /*###################################################################################################
-**	MOVE INSTRUCTIONS
+**  MOVE INSTRUCTIONS
 **#################################################################################################*/
 
 #define MOVI_W(R)		       		       			    		\
@@ -1364,7 +1364,7 @@ static void move1_aa (void) { MOVE_AA(1); }
 
 
 /*###################################################################################################
-**	PROGRAM CONTROL INSTRUCTIONS
+**  PROGRAM CONTROL INSTRUCTIONS
 **#################################################################################################*/
 
 #define CALL(R)													\
@@ -1851,115 +1851,115 @@ static void trap(void)
 
 
 /*###################################################################################################
-**	34020 INSTRUCTIONS
+**  34020 INSTRUCTIONS
 **#################################################################################################*/
 
 /************************************
 
 New 34020 ops:
 
-	0000 1100 000R dddd = ADDXYI IL,Rd
-	iiii iiii iiii iiii
-	iiii iiii iiii iiii
+    0000 1100 000R dddd = ADDXYI IL,Rd
+    iiii iiii iiii iiii
+    iiii iiii iiii iiii
 
-	0000 0000 1111 00SD = BLMOVE S,D
+    0000 0000 1111 00SD = BLMOVE S,D
 
-	0000 0110 0000 0000 = CEXEC S,c,ID,L
-	cccc cccc S000 0000
-	iiic cccc cccc cccc
+    0000 0110 0000 0000 = CEXEC S,c,ID,L
+    cccc cccc S000 0000
+    iiic cccc cccc cccc
 
-	1101 1000 0ccc cccS = CEXEC S,c,ID
-	iiic cccc cccc cccc
+    1101 1000 0ccc cccS = CEXEC S,c,ID
+    iiic cccc cccc cccc
 
-	0000 1000 1111 0010 = CLIP
+    0000 1000 1111 0010 = CLIP
 
-	0000 0110 011R dddd = CMOVCG Rd1,Rd2,S,c,ID
-	cccc cccc S00R dddd
-	iiic cccc cccc cccc
+    0000 0110 011R dddd = CMOVCG Rd1,Rd2,S,c,ID
+    cccc cccc S00R dddd
+    iiic cccc cccc cccc
 
-	0000 0110 101R dddd = CMOVCM *Rd+,n,S,c,ID
-	cccc cccc S00n nnnn
-	iiic cccc cccc cccc
+    0000 0110 101R dddd = CMOVCM *Rd+,n,S,c,ID
+    cccc cccc S00n nnnn
+    iiic cccc cccc cccc
 
-	0000 0110 110R dddd = CMOVCM -*Rd,n,S,c,ID
-	cccc cccc S00n nnnn
-	iiic cccc cccc cccc
+    0000 0110 110R dddd = CMOVCM -*Rd,n,S,c,ID
+    cccc cccc S00n nnnn
+    iiic cccc cccc cccc
 
-	0000 0110 0110 0000 = CMOVCS c,ID
-	cccc cccc 0000 0001
-	iiic cccc cccc cccc
+    0000 0110 0110 0000 = CMOVCS c,ID
+    cccc cccc 0000 0001
+    iiic cccc cccc cccc
 
-	0000 0110 001R ssss = CMOVGC Rs,c,ID
-	cccc cccc 0000 0000
-	iiic cccc cccc cccc
+    0000 0110 001R ssss = CMOVGC Rs,c,ID
+    cccc cccc 0000 0000
+    iiic cccc cccc cccc
 
-	0000 0110 010R ssss = CMOVGC Rs1,Rs2,S,c,ID
-	cccc cccc S00R ssss
-	iiic cccc cccc cccc
+    0000 0110 010R ssss = CMOVGC Rs1,Rs2,S,c,ID
+    cccc cccc S00R ssss
+    iiic cccc cccc cccc
 
-	0000 0110 100n nnnn = CMOVMC *Rs+,n,S,c,ID
-	cccc cccc S00R ssss
-	iiic cccc cccc cccc
+    0000 0110 100n nnnn = CMOVMC *Rs+,n,S,c,ID
+    cccc cccc S00R ssss
+    iiic cccc cccc cccc
 
-	0000 1000 001n nnnn = CMOVMC -*Rs,n,S,c,ID
-	cccc cccc S00R ssss
-	iiic cccc cccc cccc
+    0000 1000 001n nnnn = CMOVMC -*Rs,n,S,c,ID
+    cccc cccc S00R ssss
+    iiic cccc cccc cccc
 
-	0000 0110 111R dddd = CMOVMC *Rs+,Rd,S,c,ID
-	cccc cccc S00R ssss
-	iiic cccc cccc cccc
+    0000 0110 111R dddd = CMOVMC *Rs+,Rd,S,c,ID
+    cccc cccc S00R ssss
+    iiic cccc cccc cccc
 
-	0011 01kk kkkR dddd = CMPK k,Rd
+    0011 01kk kkkR dddd = CMPK k,Rd
 
-	0000 1010 100R dddd = CVDXYL Rd
+    0000 1010 100R dddd = CVDXYL Rd
 
-	0000 1010 011R dddd = CVMXYL Rd
+    0000 1010 011R dddd = CVMXYL Rd
 
-	1110 101s sssR dddd = CVSXYL Rs,Rd
+    1110 101s sssR dddd = CVSXYL Rs,Rd
 
-	0000 0010 101R dddd = EXGPS Rd
+    0000 0010 101R dddd = EXGPS Rd
 
-	1101 1110 Z001 1010 = FLINE Z
+    1101 1110 Z001 1010 = FLINE Z
 
-	0000 1010 1011 1011 = FPIXEQ
+    0000 1010 1011 1011 = FPIXEQ
 
-	0000 1010 1101 1011 = FPIXNE
+    0000 1010 1101 1011 = FPIXNE
 
-	0000 0010 110R dddd = GETPS Rd
+    0000 0010 110R dddd = GETPS Rd
 
-	0000 0000 0100 0000 = IDLE
+    0000 0000 0100 0000 = IDLE
 
-	0000 1100 0101 0111 = LINIT
+    0000 1100 0101 0111 = LINIT
 
-	0000 0000 1000 0000 = MWAIT
+    0000 0000 1000 0000 = MWAIT
 
-	0000 1010 0011 0111 = PFILL XY
+    0000 1010 0011 0111 = PFILL XY
 
-	0000 1110 0001 0111 = PIXBLT L,M,L
+    0000 1110 0001 0111 = PIXBLT L,M,L
 
-	0000 1000 0110 0000 = RETM
+    0000 1000 0110 0000 = RETM
 
-	0111 101s sssR dddd = RMO Rs,Rd
+    0111 101s sssR dddd = RMO Rs,Rd
 
-	0000 0010 100R dddd = RPIX Rd
+    0000 0010 100R dddd = RPIX Rd
 
-	0000 0010 0111 0011 = SETCDP
+    0000 0010 0111 0011 = SETCDP
 
-	0000 0010 1111 1011 = SETCMP
+    0000 0010 1111 1011 = SETCMP
 
-	0000 0010 0101 0001 = SETCSP
+    0000 0010 0101 0001 = SETCSP
 
-	0111 111s sssR dddd = SWAPF *Rs,Rd,0
+    0111 111s sssR dddd = SWAPF *Rs,Rd,0
 
-	0000 1110 1111 1010 = TFILL XY
+    0000 1110 1111 1010 = TFILL XY
 
-	0000 1000 0000 1111 = TRAPL
+    0000 1000 0000 1111 = TRAPL
 
-	0000 1000 0101 0111 = VBLT B,L
+    0000 1000 0101 0111 = VBLT B,L
 
-	0000 1010 0101 0111 = VFILL L
+    0000 1010 0101 0111 = VFILL L
 
-	0000 1010 0000 0000 = VLCOL
+    0000 1010 0000 0000 = VLCOL
 
 ************************************/
 

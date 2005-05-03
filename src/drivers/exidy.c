@@ -1,126 +1,126 @@
 /***************************************************************************
 
-	Exidy 6502 hardware
+    Exidy 6502 hardware
 
-	Games supported:
-		* Side Track
-		* Targ
-		* Spectar
-		* Mouse Trap
-		* Venture
-		* Pepper 2
-		* Hard Hat
-		* Fax
+    Games supported:
+        * Side Track
+        * Targ
+        * Spectar
+        * Mouse Trap
+        * Venture
+        * Pepper 2
+        * Hard Hat
+        * Fax
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Exidy memory map
+    Exidy memory map
 
-	0000-00FF R/W Zero Page RAM
-	0100-01FF R/W Stack RAM
-	0200-03FF R/W Scratchpad RAM
-	0800-3FFF  R  Program ROM              (Targ, Spectar only)
-	1A00       R  PX3 (Player 2 inputs)    (Fax only)
-				  bit 4  D
-				  bit 5  C
-				  bit 6  B
-				  bit 7  A
-	1C00       R  PX2 (Player 1 inputs)    (Fax only)
-				  bit 0  2 player start
-				  bit 1  1 player start
-				  bit 4  D
-				  bit 5  C
-				  bit 6  B
-				  bit 7  A
-	2000-3FFF  R  Banked question ROM      (Fax only)
-	4000-43FF R/W Screen RAM
-	4800-4FFF R/W Character Generator RAM (except Pepper II and Fax)
-	5000       W  Motion Object 1 Horizontal Position Latch (sprite 1 X)
-	5040       W  Motion Object 1 Vertical Position Latch   (sprite 1 Y)
-	5080       W  Motion Object 2 Horizontal Position Latch (sprite 2 X)
-	50C0       W  Motion Object 2 Vertical Position Latch   (sprite 2 Y)
-	5100       R  Option Dipswitch Port
-				  bit 0  coin 2 (NOT inverted) (must activate together with $5103 bit 5)
-				  bit 1-2  bonus
-				  bit 3-4  coins per play
-				  bit 5-6  lives
-				  bit 7  US/UK coins
-	5100       W  Motion Objects Image Latch
-				  Sprite number  bits 0-3 Sprite #1  4-7 Sprite #2
-	5101       R  Control Inputs Port
-				  bit 0  start 1
-				  bit 1  start 2
-				  bit 2  right
-				  bit 3  left
-				  bit 5  up
-				  bit 6  down
-				  bit 7  coin 1 (must activate together with $5103 bit 6)
-	5101       W  Output Control Latch (not used in PEPPER II upright)
-				  bit 7  Enable sprite #1
-				  bit 6  Enable sprite #2
-	5103       R  Interrupt Condition Latch
-				  bit 0  LNG0 - supposedly a language DIP switch
-				  bit 1  LNG1 - supposedly a language DIP switch
-				  bit 2  different for each game, but generally a collision bit
-				  bit 3  TABLE - supposedly a cocktail table DIP switch
-				  bit 4  different for each game, but generally a collision bit
-				  bit 5  coin 2 (must activate together with $5100 bit 0)
-				  bit 6  coin 1 (must activate together with $5101 bit 7)
-				  bit 7  L256 - VBlank?
-	5213       R  IN2 (Mouse Trap)
-				  bit 3  blue button
-				  bit 2  free play
-				  bit 1  red button
-				  bit 0  yellow button
-	52XX      R/W Audio/Color Board Communications
-	6000-6FFF R/W Character Generator RAM (Pepper II, Fax only)
-	8000-FFF9  R  Program memory space
-	FFFA-FFFF  R  Interrupt and Reset Vectors
+    0000-00FF R/W Zero Page RAM
+    0100-01FF R/W Stack RAM
+    0200-03FF R/W Scratchpad RAM
+    0800-3FFF  R  Program ROM              (Targ, Spectar only)
+    1A00       R  PX3 (Player 2 inputs)    (Fax only)
+                  bit 4  D
+                  bit 5  C
+                  bit 6  B
+                  bit 7  A
+    1C00       R  PX2 (Player 1 inputs)    (Fax only)
+                  bit 0  2 player start
+                  bit 1  1 player start
+                  bit 4  D
+                  bit 5  C
+                  bit 6  B
+                  bit 7  A
+    2000-3FFF  R  Banked question ROM      (Fax only)
+    4000-43FF R/W Screen RAM
+    4800-4FFF R/W Character Generator RAM (except Pepper II and Fax)
+    5000       W  Motion Object 1 Horizontal Position Latch (sprite 1 X)
+    5040       W  Motion Object 1 Vertical Position Latch   (sprite 1 Y)
+    5080       W  Motion Object 2 Horizontal Position Latch (sprite 2 X)
+    50C0       W  Motion Object 2 Vertical Position Latch   (sprite 2 Y)
+    5100       R  Option Dipswitch Port
+                  bit 0  coin 2 (NOT inverted) (must activate together with $5103 bit 5)
+                  bit 1-2  bonus
+                  bit 3-4  coins per play
+                  bit 5-6  lives
+                  bit 7  US/UK coins
+    5100       W  Motion Objects Image Latch
+                  Sprite number  bits 0-3 Sprite #1  4-7 Sprite #2
+    5101       R  Control Inputs Port
+                  bit 0  start 1
+                  bit 1  start 2
+                  bit 2  right
+                  bit 3  left
+                  bit 5  up
+                  bit 6  down
+                  bit 7  coin 1 (must activate together with $5103 bit 6)
+    5101       W  Output Control Latch (not used in PEPPER II upright)
+                  bit 7  Enable sprite #1
+                  bit 6  Enable sprite #2
+    5103       R  Interrupt Condition Latch
+                  bit 0  LNG0 - supposedly a language DIP switch
+                  bit 1  LNG1 - supposedly a language DIP switch
+                  bit 2  different for each game, but generally a collision bit
+                  bit 3  TABLE - supposedly a cocktail table DIP switch
+                  bit 4  different for each game, but generally a collision bit
+                  bit 5  coin 2 (must activate together with $5100 bit 0)
+                  bit 6  coin 1 (must activate together with $5101 bit 7)
+                  bit 7  L256 - VBlank?
+    5213       R  IN2 (Mouse Trap)
+                  bit 3  blue button
+                  bit 2  free play
+                  bit 1  red button
+                  bit 0  yellow button
+    52XX      R/W Audio/Color Board Communications
+    6000-6FFF R/W Character Generator RAM (Pepper II, Fax only)
+    8000-FFF9  R  Program memory space
+    FFFA-FFFF  R  Interrupt and Reset Vectors
 
-	Exidy Sound Board:
-	0000-07FF R/W RAM (mirrored every 0x7f)
-	0800-0FFF R/W 6532 Timer
-	1000-17FF R/W 6520 PIA
-	1800-1FFF R/W 8253 Timer
-	2000-27FF bit 0 Channel 1 Filter 1 enable
-			  bit 1 Channel 1 Filter 2 enable
-			  bit 2 Channel 2 Filter 1 enable
-			  bit 3 Channel 2 Filter 2 enable
-			  bit 4 Channel 3 Filter 1 enable
-			  bit 5 Channel 3 Filter 2 enable
-	2800-2FFF 6840 Timer
-	3000      Bit 0..1 Noise select
-	3001	  Bit 0..2 Channel 1 Amplitude
-	3002	  Bit 0..2 Channel 2 Amplitude
-	3003	  Bit 0..2 Channel 3 Amplitude
-	5800-7FFF ROM
+    Exidy Sound Board:
+    0000-07FF R/W RAM (mirrored every 0x7f)
+    0800-0FFF R/W 6532 Timer
+    1000-17FF R/W 6520 PIA
+    1800-1FFF R/W 8253 Timer
+    2000-27FF bit 0 Channel 1 Filter 1 enable
+              bit 1 Channel 1 Filter 2 enable
+              bit 2 Channel 2 Filter 1 enable
+              bit 3 Channel 2 Filter 2 enable
+              bit 4 Channel 3 Filter 1 enable
+              bit 5 Channel 3 Filter 2 enable
+    2800-2FFF 6840 Timer
+    3000      Bit 0..1 Noise select
+    3001      Bit 0..2 Channel 1 Amplitude
+    3002      Bit 0..2 Channel 2 Amplitude
+    3003      Bit 0..2 Channel 3 Amplitude
+    5800-7FFF ROM
 
-	Targ:
-	5200    Sound board control
-			bit 0 Music
-			bit 1 Shoot
-			bit 2 unused
-			bit 3 Swarn
-			bit 4 Sspec
-			bit 5 crash
-			bit 6 long
-			bit 7 game
+    Targ:
+    5200    Sound board control
+            bit 0 Music
+            bit 1 Shoot
+            bit 2 unused
+            bit 3 Swarn
+            bit 4 Sspec
+            bit 5 crash
+            bit 6 long
+            bit 7 game
 
-	5201    Sound board control
-			bit 0 note
-			bit 1 upper
+    5201    Sound board control
+            bit 0 note
+            bit 1 upper
 
-	MouseTrap Digital Sound:
-	0000-3FFF ROM
+    MouseTrap Digital Sound:
+    0000-3FFF ROM
 
-	IO:
-		A7 = 0: R Communication from sound processor
-		A6 = 0: R CVSD Clock State
-		A5 = 0: W Busy to sound processor
-		A4 = 0: W Data to CVSD
+    IO:
+        A7 = 0: R Communication from sound processor
+        A6 = 0: R CVSD Clock State
+        A5 = 0: W Busy to sound processor
+        A4 = 0: W Data to CVSD
 
 ***************************************************************************/
 
@@ -135,7 +135,7 @@
 
 /*************************************
  *
- *	Bankswitcher
+ *  Bankswitcher
  *
  *************************************/
 
@@ -152,7 +152,7 @@ static WRITE8_HANDLER( fax_bank_select_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -211,7 +211,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -243,7 +243,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -382,7 +382,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( phantoma )
 	PORT_INCLUDE(rallys)
-	
+
 	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )		PORT_DIPCONDITION(0, 0x80, PORTCOND_EQUALS, 0x00)
@@ -431,17 +431,17 @@ INPUT_PORTS_START( mtrap )
 
 	PORT_START_TAG("INTSOURCE")
 /*
-	The schematics claim these exist, but there's nothing in
-	the ROMs to support that claim (as far as I can see):
+    The schematics claim these exist, but there's nothing in
+    the ROMs to support that claim (as far as I can see):
 
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( French ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( German ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
+    PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_SPECIAL )
@@ -494,17 +494,17 @@ INPUT_PORTS_START( venture )
 
 	PORT_START_TAG("INTSOURCE")
 /*
-	The schematics claim these exist, but there's nothing in
-	the ROMs to support that claim (as far as I can see):
+    The schematics claim these exist, but there's nothing in
+    the ROMs to support that claim (as far as I can see):
 
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( French ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( German ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
+    PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -551,17 +551,17 @@ INPUT_PORTS_START( pepper2 )
 
 	PORT_START_TAG("INTSOURCE")
 /*
-	The schematics claim these exist, but there's nothing in
-	the ROMs to support that claim (as far as I can see):
+    The schematics claim these exist, but there's nothing in
+    the ROMs to support that claim (as far as I can see):
 
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( French ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( German ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
+    PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -602,17 +602,17 @@ INPUT_PORTS_START( fax )
 
 	PORT_START_TAG("INTSOURCE")
 /*
-	The schematics claim these exist, but there's nothing in
-	the ROMs to support that claim (as far as I can see):
+    The schematics claim these exist, but there's nothing in
+    the ROMs to support that claim (as far as I can see):
 
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( French ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( German ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
+    PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -643,7 +643,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -700,7 +700,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_2bpp[] =
 
 /*************************************
  *
- *	Sound  definitions
+ *  Sound  definitions
  *
  *************************************/
 
@@ -733,7 +733,7 @@ static struct CustomSound_interface exidy_custom_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -762,7 +762,7 @@ static MACHINE_DRIVER_START( targ )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("sample", SAMPLES, 0)
 	MDRV_SOUND_CONFIG(targ_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -789,7 +789,7 @@ static MACHINE_DRIVER_START( venture )
 	MDRV_SOUND_REPLACE("sample", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(exidy_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_REMOVE("dac")
 MACHINE_DRIVER_END
 
@@ -836,7 +836,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1161,8 +1161,8 @@ ROM_START( fax )
 	ROM_LOAD( "fxd-5a.64",  0x38000, 0x2000, CRC(67285bc6) SHA1(f929c916fb19dbc91fc3a75dfed6375b63cb2043) )
 	ROM_LOAD( "fxd-6a.64",  0x3a000, 0x2000, CRC(ba67b7b2) SHA1(12265f678b1e4dfc3b36a964f78b0103112753ee) )
 	/* The last two ROM sockets were apparently never populated */
-//	ROM_LOAD( "fxd-7a.64",  0x3c000, 0x2000, NO_DUMP )
-//	ROM_LOAD( "fxd-8a.64",  0x3e000, 0x2000, NO_DUMP )
+//  ROM_LOAD( "fxd-7a.64",  0x3c000, 0x2000, NO_DUMP )
+//  ROM_LOAD( "fxd-8a.64",  0x3e000, 0x2000, NO_DUMP )
 
 	ROM_REGION( 0x8000, REGION_CPU2, 0 ) /* 32k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, CRC(7c525aec) SHA1(f3afd3bfc0ba4265106e6ca217d113d23ad66016) )
@@ -1191,7 +1191,7 @@ ROM_START( faxa )
 	ROM_LOAD( "fxdb1-5c.bin", 0x18000, 0x2000, CRC(4770eb04) SHA1(c8123ba4fd66da471099cd364615a196c4d1ea94) )
 	ROM_LOAD( "fxdb1-6c.bin", 0x1a000, 0x2000, CRC(07c742ab) SHA1(c709be4a21cc946f2de9061948fe095ec511447e) )
 	ROM_LOAD( "fxdb1-7c.bin", 0x1c000, 0x2000, CRC(f2f39ebb) SHA1(879f0954331d219d44e82d4cf13f84c1d03dd6d5) )
-	ROM_LOAD( "fxdb1-8c.bin", 0x1e000, 0x2000, CRC(00f73e30) SHA1(586c28d1ea14626ccd0e9195f26f18168bd0cf72) )	
+	ROM_LOAD( "fxdb1-8c.bin", 0x1e000, 0x2000, CRC(00f73e30) SHA1(586c28d1ea14626ccd0e9195f26f18168bd0cf72) )
 	ROM_LOAD( "fxdb1-1b.bin", 0x20000, 0x2000, CRC(e13341cf) SHA1(5cc2c9f060436026dbcbc6f893f8ef17f10b6c75) )
 	ROM_LOAD( "fxdb1-2b.bin", 0x22000, 0x2000, CRC(300d7a6f) SHA1(4e28a522e14e0cf1b63be35e2a16b816d51f328c) )
 	ROM_LOAD( "fxdb1-3b.bin", 0x24000, 0x2000, CRC(db9a6a3a) SHA1(d192f8ece73dfa12cd390c6e0218d5bf58c46074) )
@@ -1200,7 +1200,7 @@ ROM_START( faxa )
 	ROM_LOAD( "fxdb1-6b.bin", 0x2a000, 0x2000, CRC(526c4c0d) SHA1(68480fb61d8e9e5386daeb94f5854913ab36b48d) )
 	ROM_LOAD( "fxdb1-7b.bin", 0x2c000, 0x2000, CRC(4cf8217c) SHA1(fd7b9c34b0ae532209453d68f30f6f9fbcec1964) )
 	ROM_LOAD( "fxdb1-8b.bin", 0x2e000, 0x2000, CRC(99485e27) SHA1(1f10e71507f111724a8b496f3cc57a6790116ac0) )
-	ROM_LOAD( "fxdb1-1a.bin", 0x30000, 0x2000, CRC(97c153b5) SHA1(0d5e66f0ded4453e1fe81cdcc56697664f76f28d) )	
+	ROM_LOAD( "fxdb1-1a.bin", 0x30000, 0x2000, CRC(97c153b5) SHA1(0d5e66f0ded4453e1fe81cdcc56697664f76f28d) )
 	ROM_LOAD( "fxdb1-2a.bin", 0x32000, 0x2000, CRC(63258140) SHA1(cdb03f5130c72d286d1a2f227dcf646da6e8f40a) )
 	ROM_LOAD( "fxdb1-3a.bin", 0x34000, 0x2000, CRC(1c698727) SHA1(6886bbf04f837fbda9a192e55e995cac9c9e1cad) )
 	ROM_LOAD( "fxdb1-4a.bin", 0x36000, 0x2000, CRC(8283d6fc) SHA1(dba1f0f53a6b16f2ee7ce1e8e6e081a6be7586f6) )
@@ -1208,7 +1208,7 @@ ROM_START( faxa )
 	ROM_LOAD( "fxdb1-6a.bin", 0x3a000, 0x2000, CRC(ff949367) SHA1(fb3d9c0abe3c915eaea983d9b429eb5227688532) )
 	ROM_LOAD( "fxdb1-7a.bin", 0x3c000, 0x2000, CRC(0f97b874) SHA1(5790d3ed9eed2ce05947bc28cc252f720a7f3aeb) )
 	ROM_LOAD( "fxdb1-8a.bin", 0x3e000, 0x2000, CRC(1d055bea) SHA1(96531db0a3a36319bc0a28096e601302eb2eb115) )
-	
+
 	ROM_REGION( 0x8000, REGION_CPU2, 0 ) /* 32k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, CRC(7c525aec) SHA1(f3afd3bfc0ba4265106e6ca217d113d23ad66016) )
 	ROM_LOAD( "fxa2-6a.16",   0x7000, 0x0800, CRC(2b3bfc44) SHA1(7e3b9133916c8121b2145942155601b3ade420da) )
@@ -1222,7 +1222,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -1277,7 +1277,7 @@ DRIVER_INIT( phantoma )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5001, 0x5001, 0, 0, exidy_sprite1_ypos_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5300, 0x5300, 0, 0, exidy_sprite2_xpos_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5301, 0x5301, 0, 0, exidy_sprite2_ypos_w);
-	
+
 	/* the ROM is actually mapped high */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, 0, MRA8_ROM);
 }
@@ -1319,7 +1319,7 @@ DRIVER_INIT( fax )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

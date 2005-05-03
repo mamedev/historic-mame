@@ -107,7 +107,7 @@ static void compute_tables(void)
 
 /**********************************************************************************************
 
-	generate_adpcm -- general ADPCM decoding routine
+    generate_adpcm -- general ADPCM decoding routine
 
 ***********************************************************************************************/
 
@@ -178,7 +178,7 @@ static void generate_adpcm(struct es8712 *chip, INT16 *buffer, int samples)
 
 /**********************************************************************************************
 
-	es8712_update -- update the sound chip so that it is in sync with CPU execution
+    es8712_update -- update the sound chip so that it is in sync with CPU execution
 
 ***********************************************************************************************/
 
@@ -287,7 +287,7 @@ static void es8712_state_save_register(struct es8712 *chip, int sndindex)
 
 /**********************************************************************************************
 
-	ES8712_start -- start emulation of an ES8712 chip
+    ES8712_start -- start emulation of an ES8712 chip
 
 ***********************************************************************************************/
 
@@ -346,7 +346,7 @@ static void es8712_reset(void *chip_src)
 
 /****************************************************************************
 
-	ES8712_set_bank_base -- set the base of the bank on a given chip
+    ES8712_set_bank_base -- set the base of the bank on a given chip
 
 *****************************************************************************/
 
@@ -360,7 +360,7 @@ void ES8712_set_bank_base(int which, int base)
 
 /****************************************************************************
 
-	ES8712_set_frequency -- dynamically adjusts the frequency of a given ADPCM chip
+    ES8712_set_frequency -- dynamically adjusts the frequency of a given ADPCM chip
 
 *****************************************************************************/
 
@@ -379,7 +379,7 @@ void ES8712_set_frequency(int which, int frequency)
 
 /**********************************************************************************************
 
-	ES8712_play -- Begin playing the addressed sample
+    ES8712_play -- Begin playing the addressed sample
 
 ***********************************************************************************************/
 

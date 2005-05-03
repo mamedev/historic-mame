@@ -1,10 +1,10 @@
 /***************************************************************************
 
-	PSX SPU
+    PSX SPU
 
-	CXD2922BQ/CXD2925Q
+    CXD2922BQ/CXD2925Q
 
-	preliminary version by smf.
+    preliminary version by smf.
 
 ***************************************************************************/
 
@@ -74,7 +74,7 @@ struct psxinfo
 	INT16 m_p_n_s1[ MAX_CHANNEL ];
 	INT16 m_p_n_s2[ MAX_CHANNEL ];
 	data32_t m_n_loop[ MAX_CHANNEL ];
-	
+
 	sound_stream *stream;
 };
 
@@ -216,7 +216,7 @@ static void spu_read( UINT32 n_address, INT32 n_size )
 
 	while( n_size > 0 )
 	{
-		chip->g_p_n_psxram[ n_address / 4 ] = 
+		chip->g_p_n_psxram[ n_address / 4 ] =
 			( chip->m_p_n_spuram[ chip->m_n_spuoffset + 0 ] << 0 ) |
 			( chip->m_p_n_spuram[ chip->m_n_spuoffset + 1 ] << 16 );
 		verboselog( 2, "%08x > %04x\n", chip->m_n_spuoffset + 0, chip->m_p_n_spuram[ chip->m_n_spuoffset + 0 ] );
@@ -251,7 +251,7 @@ static void *psxspu_start(int sndindex, int clock, const void *config)
 	struct psxinfo *chip;
 	int n_effect;
 	int n_channel;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
@@ -399,7 +399,7 @@ READ32_HANDLER( psx_spu_r )
 			}
 			return ( chip->m_p_n_repeataddress[ n_channel ] << 16 ) | chip->m_p_n_adsrvolume[ n_channel ];
 		default:
-			verboselog( 0, "psx_spu_r( %08x, %08x ) channel %d reg %d\n", offset, mem_mask, n_channel, offset % 4 ); 
+			verboselog( 0, "psx_spu_r( %08x, %08x ) channel %d reg %d\n", offset, mem_mask, n_channel, offset % 4 );
 			return 0;
 		}
 	}
@@ -496,7 +496,7 @@ WRITE32_HANDLER( psx_spu_w )
 			}
 			break;
 		default:
-			verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) channel %d reg %d\n", offset, mem_mask, data, n_channel, offset % 4 ); 
+			verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) channel %d reg %d\n", offset, mem_mask, data, n_channel, offset % 4 );
 			break;
 		}
 	}
@@ -568,7 +568,7 @@ WRITE32_HANDLER( psx_spu_w )
 		case SPU_REG( 0xda0 ):
 			if( ACCESSING_LSW32 )
 			{
-				verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) %08x\n", offset, mem_mask, data, 0xc00 + ( offset * 4 ) ); 
+				verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) %08x\n", offset, mem_mask, data, 0xc00 + ( offset * 4 ) );
 			}
 			if( ACCESSING_MSW32 )
 			{
@@ -652,7 +652,7 @@ WRITE32_HANDLER( psx_spu_w )
 			verboselog( 1, "psx_spu_w() effect %d = %04x\n", offset & 0x0f, chip->m_p_n_effect[ offset & 0x0f ] );
 			break;
 		default:
-			verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) %08x\n", offset, mem_mask, data, 0xc00 + ( offset * 4 ) ); 
+			verboselog( 0, "psx_spu_w( %08x, %08x, %08x ) %08x\n", offset, mem_mask, data, 0xc00 + ( offset * 4 ) );
 			break;
 		}
 	}

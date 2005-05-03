@@ -5,13 +5,13 @@ Bally Astrocade style games
 driver by Nicola Salmoria, Mike Coates, Frank Palazzolo
 
 TODO:
-	add rotate support
-	profpac_vm - self test
-	look into NVRAM problems in demndrgn
-	try 10-pin deluxe roms?
-	finish looking at noise gen bug
-	optimize sound code
-	dig into gorf timing hacks
+    add rotate support
+    profpac_vm - self test
+    look into NVRAM problems in demndrgn
+    try 10-pin deluxe roms?
+    finish looking at noise gen bug
+    optimize sound code
+    dig into gorf timing hacks
 
 Notes:
 - In seawolf2, service mode dip switch turns on memory test. Reset with 2 pressed
@@ -29,19 +29,19 @@ d000-d3ff STATIC RAM
 I/O ports:
 IN:
 08        intercept register (collision detector)
-	      bit 0: intercept in pixel 3 in an OR or XOR write since last reset
-	      bit 1: intercept in pixel 2 in an OR or XOR write since last reset
-	      bit 2: intercept in pixel 1 in an OR or XOR write since last reset
-	      bit 3: intercept in pixel 0 in an OR or XOR write since last reset
-	      bit 4: intercept in pixel 3 in last OR or XOR write
-	      bit 5: intercept in pixel 2 in last OR or XOR write
-	      bit 6: intercept in pixel 1 in last OR or XOR write
-	      bit 7: intercept in pixel 0 in last OR or XOR write
+          bit 0: intercept in pixel 3 in an OR or XOR write since last reset
+          bit 1: intercept in pixel 2 in an OR or XOR write since last reset
+          bit 2: intercept in pixel 1 in an OR or XOR write since last reset
+          bit 3: intercept in pixel 0 in an OR or XOR write since last reset
+          bit 4: intercept in pixel 3 in last OR or XOR write
+          bit 5: intercept in pixel 2 in last OR or XOR write
+          bit 6: intercept in pixel 1 in last OR or XOR write
+          bit 7: intercept in pixel 0 in last OR or XOR write
 10        IN0
 11        IN1
 12        IN2
 13        DSW
-14		  Video Retrace
+14        Video Retrace
 15        ?
 17        Speech Synthesizer (Output)
 
@@ -53,14 +53,14 @@ OUT:
 0a        screen height
 0b        color block transfer
 0c        magic RAM control
-	      bit 7: ?
-	      bit 6: flip
-	      bit 5: draw in XOR mode
-	      bit 4: draw in OR mode
-	      bit 3: "expand" mode (convert 1bpp data to 2bpp)
-	      bit 2: "rotate" mode (rotate 90 degrees - NOT EMULATED)
-	      bit 1:\ shift amount to be applied before copying
-	      bit 0:/
+          bit 7: ?
+          bit 6: flip
+          bit 5: draw in XOR mode
+          bit 4: draw in OR mode
+          bit 3: "expand" mode (convert 1bpp data to 2bpp)
+          bit 2: "rotate" mode (rotate 90 degrees - NOT EMULATED)
+          bit 1:\ shift amount to be applied before copying
+          bit 0:/
 0d        set interrupt vector
 10-18     sound
 19        magic RAM expand mode color
@@ -272,7 +272,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa55b, 0xa55b) AM_WRITE(wow_ramwrite_enable_w) /* ram write enable */
 	AM_RANGE(0x78, 0x7e) AM_MIRROR(0xff00) AM_WRITE(astrocde_pattern_board_w)
 
-/*	AM_RANGE(0xf8, 0xff) AM_MIRROR(0xff00) AM_WRITE(MWA8_NOP) */ /* Gorf uses these */
+/*  AM_RANGE(0xf8, 0xff) AM_MIRROR(0xff00) AM_WRITE(MWA8_NOP) */ /* Gorf uses these */
 ADDRESS_MAP_END
 
 
@@ -1039,7 +1039,7 @@ ROM_START( wow )
 	ROM_LOAD( "wow.x5",       0x8000, 0x1000, CRC(16912c2b) SHA1(faf9c96d99bc111c5f1618f6863f22fd9269027b) )
 	ROM_LOAD( "wow.x6",       0x9000, 0x1000, CRC(35797f82) SHA1(376bba29e88c16d95438fa996913b76581df0937) )
 	ROM_LOAD( "wow.x7",       0xa000, 0x1000, CRC(ce404305) SHA1(a52c6c7b77842f25c79515460be6b7ed959b5edb) )
-/*	ROM_LOAD( "wow.x8",       0xc000, CRC(00001000) , ? )	here would go the foreign language ROM */
+/*  ROM_LOAD( "wow.x8",       0xc000, CRC(00001000) , ? )   here would go the foreign language ROM */
 ROM_END
 
 ROM_START( gorf )

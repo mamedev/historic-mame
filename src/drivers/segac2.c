@@ -1,137 +1,137 @@
 /***********************************************************************************************
 
-	Sega System C/C2 Driver
-	driver by David Haywood and Aaron Giles
-	---------------------------------------
-	Version 0.81u7 - 22 Apr 2004
+    Sega System C/C2 Driver
+    driver by David Haywood and Aaron Giles
+    ---------------------------------------
+    Version 0.81u7 - 22 Apr 2004
 
-	Latest Changes :
-	-----+-------------------------------------------------------------------------------------
-	0.90u5| Set visual area width depending on vdp register 0x0c (HDG)
-	0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
-	0.73 | More of the Megaplay Bios Tests Pass (BR)
-	0.722| Improvements to Megaplay (BR) Added a few more Megatech sets but some are bad (DH)
-		 | --2 screens is going to cause problems with partial refresh and get_scanlines for
-		 | Megatech
-	0.71 | Started adding Support for Megatech, first step is improving the Genesis Emulation
-		 | The rendering will also need improving to support mid-frame palette changes
-		 | (RGB_DIRECT) maybe use tilemaps if its not too messy, added Genesis sound based on
-		 | Mess code
-	0.54 | Added Ribbit! support. Recoded some of the VDP to handle vertical windows. Removed
-	     | the bitmap cache and added partial updating support.
-	0.53 | Set the Protection Read / Write buffers to be cleared at reset in init_machine, this
-		 | fixes a problem with columns when you reset it and then attempted to play.
-		 |  (only drivers/segac2.c was changed)
-	0.52 | Added basic save state support .. not too sure how well it will work (seems to be
-		 | ok apart from sound where i guess the sound core needs updating) size of states
-		 | could probably be cut down a bit with an init variables from vdp registers function
-	0.51 | Added some Puyo Puyo (English Lang) Bootleg set, we don't have an *original* english
-		 | set yet however.  Also added a 2nd Bootleg of Tant-R, this one still has protection
-		 | inplace, however the apparently board lacks the sample playing hardware.
-		 | Removed 'Button3' from Puyo Puyo 2, its unneeded, the Rannyu Button is actually the
-		 | player 1 start button, its used for stopping a 2nd player interupting play.
-	0.50 | Added some Columns/Puyo Puyo 2 dips from Gerardo. Fixed nasty crash bug for games
-		 | not using the UPD7759. Made some minor tweaks to the VDP register accesses. Added
-		 | counter/timer description. Attempted to hook up battery RAM.
-	0.49 | Fixed clock speeds on sound chips and CPU. Tweaked the highlight color a bit.
-	0.48 | Added a kludge to make Stack Columns high score work. Fixed several video-related
-		 | differences from c2emu which caused problems in Puyo Puyo.
-	0.47 | Fixed Thunder Force hanging problem. No longer calling the UPD7759 on the C-system
-		 | games.
+    Latest Changes :
+    -----+-------------------------------------------------------------------------------------
+    0.90u5| Set visual area width depending on vdp register 0x0c (HDG)
+    0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
+    0.73 | More of the Megaplay Bios Tests Pass (BR)
+    0.722| Improvements to Megaplay (BR) Added a few more Megatech sets but some are bad (DH)
+         | --2 screens is going to cause problems with partial refresh and get_scanlines for
+         | Megatech
+    0.71 | Started adding Support for Megatech, first step is improving the Genesis Emulation
+         | The rendering will also need improving to support mid-frame palette changes
+         | (RGB_DIRECT) maybe use tilemaps if its not too messy, added Genesis sound based on
+         | Mess code
+    0.54 | Added Ribbit! support. Recoded some of the VDP to handle vertical windows. Removed
+         | the bitmap cache and added partial updating support.
+    0.53 | Set the Protection Read / Write buffers to be cleared at reset in init_machine, this
+         | fixes a problem with columns when you reset it and then attempted to play.
+         |  (only drivers/segac2.c was changed)
+    0.52 | Added basic save state support .. not too sure how well it will work (seems to be
+         | ok apart from sound where i guess the sound core needs updating) size of states
+         | could probably be cut down a bit with an init variables from vdp registers function
+    0.51 | Added some Puyo Puyo (English Lang) Bootleg set, we don't have an *original* english
+         | set yet however.  Also added a 2nd Bootleg of Tant-R, this one still has protection
+         | inplace, however the apparently board lacks the sample playing hardware.
+         | Removed 'Button3' from Puyo Puyo 2, its unneeded, the Rannyu Button is actually the
+         | player 1 start button, its used for stopping a 2nd player interupting play.
+    0.50 | Added some Columns/Puyo Puyo 2 dips from Gerardo. Fixed nasty crash bug for games
+         | not using the UPD7759. Made some minor tweaks to the VDP register accesses. Added
+         | counter/timer description. Attempted to hook up battery RAM.
+    0.49 | Fixed clock speeds on sound chips and CPU. Tweaked the highlight color a bit.
+    0.48 | Added a kludge to make Stack Columns high score work. Fixed several video-related
+         | differences from c2emu which caused problems in Puyo Puyo.
+    0.47 | Fixed Thunder Force hanging problem. No longer calling the UPD7759 on the C-system
+         | games.
     0.46 | Cleaned up the Dip Switches. Added Ichidant and Puyopuy2 Dips.
          | Todo: Complete Columns and Bloxeedc Dips.
-	0.45 | Fixed interrupt timing to match c2emu, which fixes scroll effects in several games.
-		 | Swapped sample ROM loading in some bootlegs. Added support for screen disable.
-	0.44 | Major cleanup. Figured out general protection mechanism. Added INT 4 and INT 2
-		 | support. Added shadow effects. Hooked up sound chips. Fixed palette banking. ASG
-	0.43 | Added Support for an English Language version of Ichidant-R (and I didn't even think
-		 | it was released outside of Japan, this is a nice Turn-Up) .. I wonder if Tant-R was
-		 | also released in English ...
-	0.42 | Removed WRITE_WORD which was being used to patch the roms as it is now obsolete,
-		 | replaced it with mem16[addy >> 1] = 0xXXXX which is the newer way of doing things.
-	0.41 | Mapped more Dipswitches and the odd minor fix.
-	0.40 | Updated the Driver so it 'works' with the new memory system introduced in 0.37b8
-		 | I'm pretty sure I've not done this right in places (for example writes to VRAM
-		 | should probably use data16_t or something.  <request>Help</request> :)
-		 | Also Added dipswitches to a few more of the games (Borench & PotoPoto) zzzz.
-	0.38 | Started Mapping Dipswitches & Controls on a Per Game basis.  Thunderforce AC now has
-		 | this information correct.
-	0.37 | Set it to Clear Video Memory in vh_start, this stops the corrupt tile in Puyo Puyo 2
-		 | however the game isn't really playable past the first level anyhow due to protection
-	0.36 | Mainly a tidy-up release, trying to make the thing more readable :)
-		 | also very minor fixes & changes
-	0.35 | Added Window Emualtion, Horizontal Screen Splitting only (none of the C2 Games
-		 | split the screen Vertically AFAIK so that element of the Genesis Hardware doesn't
-		 | need to be emulated here.
-		 | Thunderforce AC (bootleg)  tfrceacb is now playable and the test screens in Potopoto
-		 | will display correctly.  Don't think I broke anything but knowing me :)
-	0.34 | Fixed Some Things I accidentally broke (well forgot to put back) for the
-		 | previous version ...
-	0.33 | Fixed the Driver to Work in Pure Dos Mode (misunderstanding of the way MAME
-		 | allocated (or in this case didn't allocate) the Palette Ram.
-		 | Fixed a minor bug which was causing some problems in the scrolling in
-		 | potopoto's conveyer belt.
-	0.32 | Added Sprite Flipping This improves the GFX in several games, Tant-R (bootleg)
-		 | is probably now playable just with bad colours on the status bar due to missing
-		 | IRQ 4 Emulation.  Sprite Priority Also fixed .. another Typo
-	0.31 | Fixed Several Stupid Typo Type Bugs :p
-	-----+-------------------------------------------------------------------------------------
+    0.45 | Fixed interrupt timing to match c2emu, which fixes scroll effects in several games.
+         | Swapped sample ROM loading in some bootlegs. Added support for screen disable.
+    0.44 | Major cleanup. Figured out general protection mechanism. Added INT 4 and INT 2
+         | support. Added shadow effects. Hooked up sound chips. Fixed palette banking. ASG
+    0.43 | Added Support for an English Language version of Ichidant-R (and I didn't even think
+         | it was released outside of Japan, this is a nice Turn-Up) .. I wonder if Tant-R was
+         | also released in English ...
+    0.42 | Removed WRITE_WORD which was being used to patch the roms as it is now obsolete,
+         | replaced it with mem16[addy >> 1] = 0xXXXX which is the newer way of doing things.
+    0.41 | Mapped more Dipswitches and the odd minor fix.
+    0.40 | Updated the Driver so it 'works' with the new memory system introduced in 0.37b8
+         | I'm pretty sure I've not done this right in places (for example writes to VRAM
+         | should probably use data16_t or something.  <request>Help</request> :)
+         | Also Added dipswitches to a few more of the games (Borench & PotoPoto) zzzz.
+    0.38 | Started Mapping Dipswitches & Controls on a Per Game basis.  Thunderforce AC now has
+         | this information correct.
+    0.37 | Set it to Clear Video Memory in vh_start, this stops the corrupt tile in Puyo Puyo 2
+         | however the game isn't really playable past the first level anyhow due to protection
+    0.36 | Mainly a tidy-up release, trying to make the thing more readable :)
+         | also very minor fixes & changes
+    0.35 | Added Window Emualtion, Horizontal Screen Splitting only (none of the C2 Games
+         | split the screen Vertically AFAIK so that element of the Genesis Hardware doesn't
+         | need to be emulated here.
+         | Thunderforce AC (bootleg)  tfrceacb is now playable and the test screens in Potopoto
+         | will display correctly.  Don't think I broke anything but knowing me :)
+    0.34 | Fixed Some Things I accidentally broke (well forgot to put back) for the
+         | previous version ...
+    0.33 | Fixed the Driver to Work in Pure Dos Mode (misunderstanding of the way MAME
+         | allocated (or in this case didn't allocate) the Palette Ram.
+         | Fixed a minor bug which was causing some problems in the scrolling in
+         | potopoto's conveyer belt.
+    0.32 | Added Sprite Flipping This improves the GFX in several games, Tant-R (bootleg)
+         | is probably now playable just with bad colours on the status bar due to missing
+         | IRQ 4 Emulation.  Sprite Priority Also fixed .. another Typo
+    0.31 | Fixed Several Stupid Typo Type Bugs :p
+    -----+-------------------------------------------------------------------------------------
 
-	Sega's C2 was used between 1989 and 1994, the hardware being very similar to that
-	used by the Sega MegaDrive/Genesis Home Console Sega produced around the same time.
+    Sega's C2 was used between 1989 and 1994, the hardware being very similar to that
+    used by the Sega MegaDrive/Genesis Home Console Sega produced around the same time.
 
-	Year  Game                  Developer         Versions Dumped  Board  Status        Gen Ver Exists?
-	====  ====================  ================  ===============  =====  ============  ===============
-	1989  Bloxeed               Sega / Elorg      Eng              C      Playable      n
-	1990  Columns               Sega              Jpn              C      Playable      y
-	1990  Columns II            Sega              Jpn              C      Playable      n
-	1990  Borench               Sega              Eng              C2     Playable      n
-	1990  ThunderForce AC       Sega / Technosoft Eng, Jpn, EngBL  C2     Playable      y (as ThunderForce 3?)
-	1992  Ribbit!               Sega              Eng?             C2     Playable      ?
-	1992  Tant-R                Sega              Jpn, JpnBL       C2     Playable      y
-	1992  Puyo Puyo             Sega / Compile    Jpn (2 Vers)     C2     Playable      y
-	1994  Ichidant-R            Sega              Jpn              C2     Playable      y
-	1994  PotoPoto              Sega              Jpn              C2     Playable      n
-	1994  Puyo Puyo 2           Compile           Jpn              C2     Playable      y
-	1994  Stack Columns         Sega              Jpn              C2     Playable      n
-	1994  Zunzunkyou No Yabou   Sega              Jpn              C2     Playable      n
-
-
-	Notes:	Eng indicates game is in the English Language, Most Likely a European / US Romset
-			Jpn indicates the game plays in Japanese and is therefore likely a Japanes Romset
-
-			Another way to play these games is with Charles Macdonald's C2Emu, which was the
-			inspiration for much of this code. Visit http://cgfm2.emuviews.com for the
-			download, also home of some _very_ good Sega Genesis VDP documentation.
-
-			The ASM 68k Core causes a scoring problem in Columns, Starscream does this also,
-			with the C 68k Core the scoring in columns is correct.
-
-			Bloxeed doesn't Read from the Protection Chip at all; all of the other games do.
-			Currently the protection chip is mostly understood, and needs a table of 256
-			4-bit values for each game. In all cases except for Poto Poto and Puyo Puyo 2,
-			the table is embedded in the code. Workarounds for the other 2 cases are
-			provided.
-
-			I'm assuming System-C was the Board without the uPD7759 chip and System-C2 was the
-			version of the board with it, this could be completely wrong but it doesn't really
-			matter anyway.
-
-			Vertical 2 Cell Based Scrolling won't be 100% accurate on a line that uses a Line
-			Scroll value which isn't divisible by 8.. I've never seen a C2 game do this tho.
+    Year  Game                  Developer         Versions Dumped  Board  Status        Gen Ver Exists?
+    ====  ====================  ================  ===============  =====  ============  ===============
+    1989  Bloxeed               Sega / Elorg      Eng              C      Playable      n
+    1990  Columns               Sega              Jpn              C      Playable      y
+    1990  Columns II            Sega              Jpn              C      Playable      n
+    1990  Borench               Sega              Eng              C2     Playable      n
+    1990  ThunderForce AC       Sega / Technosoft Eng, Jpn, EngBL  C2     Playable      y (as ThunderForce 3?)
+    1992  Ribbit!               Sega              Eng?             C2     Playable      ?
+    1992  Tant-R                Sega              Jpn, JpnBL       C2     Playable      y
+    1992  Puyo Puyo             Sega / Compile    Jpn (2 Vers)     C2     Playable      y
+    1994  Ichidant-R            Sega              Jpn              C2     Playable      y
+    1994  PotoPoto              Sega              Jpn              C2     Playable      n
+    1994  Puyo Puyo 2           Compile           Jpn              C2     Playable      y
+    1994  Stack Columns         Sega              Jpn              C2     Playable      n
+    1994  Zunzunkyou No Yabou   Sega              Jpn              C2     Playable      n
 
 
-	Bugs:	Puyo Puyo ends up with a black screen after doing memory tests
-			Battery-backed RAM needs to be figured out
+    Notes:  Eng indicates game is in the English Language, Most Likely a European / US Romset
+            Jpn indicates the game plays in Japanese and is therefore likely a Japanes Romset
+
+            Another way to play these games is with Charles Macdonald's C2Emu, which was the
+            inspiration for much of this code. Visit http://cgfm2.emuviews.com for the
+            download, also home of some _very_ good Sega Genesis VDP documentation.
+
+            The ASM 68k Core causes a scoring problem in Columns, Starscream does this also,
+            with the C 68k Core the scoring in columns is correct.
+
+            Bloxeed doesn't Read from the Protection Chip at all; all of the other games do.
+            Currently the protection chip is mostly understood, and needs a table of 256
+            4-bit values for each game. In all cases except for Poto Poto and Puyo Puyo 2,
+            the table is embedded in the code. Workarounds for the other 2 cases are
+            provided.
+
+            I'm assuming System-C was the Board without the uPD7759 chip and System-C2 was the
+            version of the board with it, this could be completely wrong but it doesn't really
+            matter anyway.
+
+            Vertical 2 Cell Based Scrolling won't be 100% accurate on a line that uses a Line
+            Scroll value which isn't divisible by 8.. I've never seen a C2 game do this tho.
 
 
-	Thanks:	(in no particular order) to any MameDev that helped me out .. (OG, Mish etc.)
-			Charles MacDonald for his C2Emu .. without it working out what were bugs in my code
-				and issues due to protection would have probably killed the driver long ago :p
-			Razoola & Antiriad .. for helping teach me some 68k ASM needed to work out just why
-				the games were crashing :)
-			Sega for producing some Fantastic Games...
-			and anyone else who knows they've contributed :)
+    Bugs:   Puyo Puyo ends up with a black screen after doing memory tests
+            Battery-backed RAM needs to be figured out
+
+
+    Thanks: (in no particular order) to any MameDev that helped me out .. (OG, Mish etc.)
+            Charles MacDonald for his C2Emu .. without it working out what were bugs in my code
+                and issues due to protection would have probably killed the driver long ago :p
+            Razoola & Antiriad .. for helping teach me some 68k ASM needed to work out just why
+                the games were crashing :)
+            Sega for producing some Fantastic Games...
+            and anyone else who knows they've contributed :)
 
 ***********************************************************************************************/
 
@@ -153,14 +153,14 @@
 
 
 /******************************************************************************
-	Constants
+    Constants
 ******************************************************************************/
 
 #define MASTER_CLOCK		53693100
 
 
 /******************************************************************************
-	Global variables
+    Global variables
 ******************************************************************************/
 
 /* interrupt states */
@@ -223,30 +223,30 @@ unsigned int readpos = 1;  // serial bank selection position (9-bit)
 extern UINT16 scanbase;
 
 /******************************************************************************
-	Interrupt handling
+    Interrupt handling
 *******************************************************************************
 
-	The C/C2 System uses 3 Different Interrupts, IRQ2, IRQ4 and IRQ6.
+    The C/C2 System uses 3 Different Interrupts, IRQ2, IRQ4 and IRQ6.
 
-	IRQ6 = Vblank, this happens after the last visible line of the display has
-			been drawn (after line 224)
+    IRQ6 = Vblank, this happens after the last visible line of the display has
+            been drawn (after line 224)
 
-	IRQ4 = H-Int, this happens based upon the value in H-Int Counter.  If the
-			Horizontal Interrupt is enabled and the Counter Value = 0 there
-			will be a Level 4 Interrupt Triggered
+    IRQ4 = H-Int, this happens based upon the value in H-Int Counter.  If the
+            Horizontal Interrupt is enabled and the Counter Value = 0 there
+            will be a Level 4 Interrupt Triggered
 
-	IRQ2 = sound int, generated by the YM3438
+    IRQ2 = sound int, generated by the YM3438
 
-	--------
+    --------
 
-	More H-Counter Information:
+    More H-Counter Information:
 
-	Providing Horizontal Interrupts are active the H-Counter will be loaded
-	with the value stored in register #10 (0x0A) at the following times:
-		(1) At the top of the display, before drawing the first line
-		(2) When the counter has expired
-		(3) During the VBlank Period (lines 224-261)
-	The Counter is decreased by 1 after every line.
+    Providing Horizontal Interrupts are active the H-Counter will be loaded
+    with the value stored in register #10 (0x0A) at the following times:
+        (1) At the top of the display, before drawing the first line
+        (2) When the counter has expired
+        (3) During the VBlank Period (lines 224-261)
+    The Counter is decreased by 1 after every line.
 
 ******************************************************************************/
 
@@ -331,11 +331,11 @@ static void ym3438_interrupt(int state)
 
 
 /******************************************************************************
-	Machine init
+    Machine init
 *******************************************************************************
 
-	This is called at init time, when it's safe to create a timer. We use
-	it to prime the scanline interrupt timer.
+    This is called at init time, when it's safe to create a timer. We use
+    it to prime the scanline interrupt timer.
 
 ******************************************************************************/
 
@@ -373,7 +373,7 @@ static MACHINE_INIT( genesis )
 
 static MACHINE_INIT( megatech )
 {
-//	unsigned char* ram = memory_region(REGION_CPU3);
+//  unsigned char* ram = memory_region(REGION_CPU3);
 
 	/* mirroring of ram etc. */
 	cpu_setbank(1, &genesis_z80_ram[0]);
@@ -385,7 +385,7 @@ static MACHINE_INIT( megatech )
 
 static MACHINE_INIT( megaplay )
 {
-//	unsigned char* ram = memory_region(REGION_CPU3);
+//  unsigned char* ram = memory_region(REGION_CPU3);
 
 	/* mirroring of ram etc. */
 	cpu_setbank(1, &genesis_z80_ram[0]);
@@ -396,15 +396,15 @@ static MACHINE_INIT( megaplay )
 }
 
 /******************************************************************************
-	Sound handlers
+    Sound handlers
 *******************************************************************************
 
-	These handlers are responsible for communicating with the (genenerally)
-	8-bit sound chips. All accesses are via the low byte.
+    These handlers are responsible for communicating with the (genenerally)
+    8-bit sound chips. All accesses are via the low byte.
 
-	The Sega C/C2 system uses a YM3438 (compatible with the YM2612) for FM-
-	based music generation, and an SN76489 for PSG and noise effects. The
-	C2 board also appears to have a UPD7759 for sample playback.
+    The Sega C/C2 system uses a YM3438 (compatible with the YM2612) for FM-
+    based music generation, and an SN76489 for PSG and noise effects. The
+    C2 board also appears to have a UPD7759 for sample playback.
 
 ******************************************************************************/
 
@@ -498,19 +498,19 @@ static WRITE16_HANDLER( sn76489_w )
 
 
 /******************************************************************************
-	Palette RAM Read / Write Handlers
+    Palette RAM Read / Write Handlers
 *******************************************************************************
 
-	The following Read / Write Handlers are used when accessing Palette RAM.
-	The C2 Hardware appears to use 4 Banks of Colours 1 of which can be Mapped
-	to 0x8C0000 - 0x8C03FF at any given time by writes to 0x84000E (This same
-	address also looks to be used for things like Sample Banking)
+    The following Read / Write Handlers are used when accessing Palette RAM.
+    The C2 Hardware appears to use 4 Banks of Colours 1 of which can be Mapped
+    to 0x8C0000 - 0x8C03FF at any given time by writes to 0x84000E (This same
+    address also looks to be used for things like Sample Banking)
 
-	Each Colour uses 15-bits (from a 16-bit word) in the Format
-		xBGRBBBB GGGGRRRR  (x = unused, B = Blue, G = Green, R = Red)
+    Each Colour uses 15-bits (from a 16-bit word) in the Format
+        xBGRBBBB GGGGRRRR  (x = unused, B = Blue, G = Green, R = Red)
 
-	As this works out the Palette RAM Stores 2048 from a Possible 4096 Colours
-	at any given time.
+    As this works out the Palette RAM Stores 2048 from a Possible 4096 Colours
+    at any given time.
 
 ******************************************************************************/
 
@@ -548,13 +548,13 @@ static WRITE16_HANDLER( palette_w )
 
 
 /******************************************************************************
-	Ribbit! Palette Swizzling
+    Ribbit! Palette Swizzling
 *******************************************************************************
 
-	As additional protection, Ribbit! has some hardware that munges the
-	palette addresses. The exact mechanism that enables/disables this is not
-	really known, but can be reliably deduced by watching for certain ROM
-	accesses.
+    As additional protection, Ribbit! has some hardware that munges the
+    palette addresses. The exact mechanism that enables/disables this is not
+    really known, but can be reliably deduced by watching for certain ROM
+    accesses.
 
 ******************************************************************************/
 
@@ -625,14 +625,14 @@ static READ16_HANDLER( ribbit_palette_select_r )
 
 
 /******************************************************************************
-	Palette I/O Read & Write Handlers
+    Palette I/O Read & Write Handlers
 *******************************************************************************
 
-	Controls, and Poto Poto reads 'S' 'E' 'G' and 'A' (SEGA) from this area
-	as a form of protection.
+    Controls, and Poto Poto reads 'S' 'E' 'G' and 'A' (SEGA) from this area
+    as a form of protection.
 
-	Lots of unknown writes however offset 0E certainly seems to be banking,
-	both colours and sound sample banks.
+    Lots of unknown writes however offset 0E certainly seems to be banking,
+    both colours and sound sample banks.
 
 ******************************************************************************/
 
@@ -699,8 +699,8 @@ static WRITE16_HANDLER( iochip_w )
 
 		case 0x0e:
 			/* Bit  1   = YM3438 reset? no - breaks poto poto */
-/*			if (!(data & 2))
-				YM3438_sh_reset();*/
+/*          if (!(data & 2))
+                YM3438_sh_reset();*/
 			break;
 
 		case 0x0f:
@@ -718,12 +718,12 @@ static WRITE16_HANDLER( iochip_w )
 
 
 /******************************************************************************
-	Control Write Handler
+    Control Write Handler
 *******************************************************************************
 
-	Seems to control some global states. The most important bit is the low
-	one, which enables/disables the display. This is used while tiles are
-	being modified in Bloxeed.
+    Seems to control some global states. The most important bit is the low
+    one, which enables/disables the display. This is used while tiles are
+    being modified in Bloxeed.
 
 ******************************************************************************/
 
@@ -745,15 +745,15 @@ static WRITE16_HANDLER( control_w )
 
 
 /******************************************************************************
-	Protection Read / Write Handlers
+    Protection Read / Write Handlers
 *******************************************************************************
 
-	The protection chip is fairly simple. Writes to it control the palette
-	banking for the sprites and backgrounds. The low 4 bits are also
-	remembered in a 2-stage FIFO buffer. A read from this chip should
-	return a value from a 256x4-bit table. The index into this table is
-	computed by taking the second-to-last value written in the upper 4 bits,
-	and the previously-fetched table value in the lower 4 bits.
+    The protection chip is fairly simple. Writes to it control the palette
+    banking for the sprites and backgrounds. The low 4 bits are also
+    remembered in a 2-stage FIFO buffer. A read from this chip should
+    return a value from a 256x4-bit table. The index into this table is
+    computed by taking the second-to-last value written in the upper 4 bits,
+    and the previously-fetched table value in the lower 4 bits.
 
 ******************************************************************************/
 
@@ -827,13 +827,13 @@ static READ16_HANDLER( ribbit_prot_hack_r )
 
 
 /******************************************************************************
-	Counter/timer I/O
+    Counter/timer I/O
 *******************************************************************************
 
-	There appears to be a chip that is used to count coins and track time
-	played, or at the very least the current status of the game. All games
-	except Puyo Puyo 2 and Poto Poto access this in a mostly consistent
-	manner.
+    There appears to be a chip that is used to count coins and track time
+    played, or at the very least the current status of the game. All games
+    except Puyo Puyo 2 and Poto Poto access this in a mostly consistent
+    manner.
 
 ******************************************************************************/
 
@@ -879,27 +879,27 @@ static WRITE16_HANDLER( counter_timer_w )
 
 
 /******************************************************************************
-	NVRAM Handling
+    NVRAM Handling
 *******************************************************************************
 
-	There is a battery on the board that keeps the high scores. However,
-	simply saving the RAM doesn't seem to be good enough. This is still
-	pending investigation.
+    There is a battery on the board that keeps the high scores. However,
+    simply saving the RAM doesn't seem to be good enough. This is still
+    pending investigation.
 
 ******************************************************************************/
 
 /*
 static void nvram_handler(mame_file *file, int read_or_write)
 {
-	int i;
+    int i;
 
-	if (read_or_write)
-		mame_fwrite(file, main_ram, 0x10000);
-	else if (file)
-		mame_fread(file, main_ram, 0x10000);
-	else
-		for (i = 0; i < 0x10000/2; i++)
-			main_ram[i] = rand();
+    if (read_or_write)
+        mame_fwrite(file, main_ram, 0x10000);
+    else if (file)
+        mame_fread(file, main_ram, 0x10000);
+    else
+        for (i = 0; i < 0x10000/2; i++)
+            main_ram[i] = rand();
 }
 */
 
@@ -907,15 +907,15 @@ static void nvram_handler(mame_file *file, int read_or_write)
 
 Hiscores:
 
-Bloxeed  @ f400-????			[key = ???]
-Columns  @ fc00-ffff			[key = '(C) SEGA 1990.JAN BY.TAKOSUKEZOU' @ fc00,ffe0]
-Columns2 @ fc00-ffff			[key = '(C) SEGA 1990.SEP.COLUMNS2 JAPAN' @ fc00,fd00,fe00,ffe0]
-Borench  @ f400-f5ff			[key = 'EIJI' in last word]
-TForceAC @ 8100-817f/8180-81ff	[key = '(c)Tehcno soft90' @ 8070 and 80f0]
-TantR    @ fc00-fcff/fd00-fdff	[key = 0xd483 in last word]
-PuyoPuyo @ fc00-fdff/fe00-ffff	[key = 0x28e1 in first word]
-Ichidant @ fc00-fcff/fd00-fdff	[key = 0x85a9 in last word]
-StkClmns @ fc00-fc7f/fc80-fcff	[key = ???]
+Bloxeed  @ f400-????            [key = ???]
+Columns  @ fc00-ffff            [key = '(C) SEGA 1990.JAN BY.TAKOSUKEZOU' @ fc00,ffe0]
+Columns2 @ fc00-ffff            [key = '(C) SEGA 1990.SEP.COLUMNS2 JAPAN' @ fc00,fd00,fe00,ffe0]
+Borench  @ f400-f5ff            [key = 'EIJI' in last word]
+TForceAC @ 8100-817f/8180-81ff  [key = '(c)Tehcno soft90' @ 8070 and 80f0]
+TantR    @ fc00-fcff/fd00-fdff  [key = 0xd483 in last word]
+PuyoPuyo @ fc00-fdff/fe00-ffff  [key = 0x28e1 in first word]
+Ichidant @ fc00-fcff/fd00-fdff  [key = 0x85a9 in last word]
+StkClmns @ fc00-fc7f/fc80-fcff  [key = ???]
 PuyoPuy2
 PotoPoto
 ZunkYou
@@ -925,16 +925,16 @@ ZunkYou
 
 
 /******************************************************************************
-	Memory Maps
+    Memory Maps
 *******************************************************************************
 
-	The System C/C2 68k Memory map is fairly similar to the Genesis in terms
-	of RAM, ROM, VDP access locations, although the differences between the
-	arcade system and the Genesis means its not same.
+    The System C/C2 68k Memory map is fairly similar to the Genesis in terms
+    of RAM, ROM, VDP access locations, although the differences between the
+    arcade system and the Genesis means its not same.
 
-	The information here has been worked out from the games, and there may
-	be some uncertain things, for example Puyo Puyo 2 I believe accesses
-	0x8C0400 - 0x8C0FFF which is outside of what is seeminly valid paletteram.
+    The information here has been worked out from the games, and there may
+    be some uncertain things, for example Puyo Puyo 2 I believe accesses
+    0x8C0400 - 0x8C0FFF which is outside of what is seeminly valid paletteram.
 
 ******************************************************************************/
 
@@ -979,7 +979,7 @@ static ADDRESS_MAP_START( puckpkmn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM	)					/* Main Ram */
 
 	/* Unknown reads: */
-//	AM_RANGE(0xa10000, 0xa10001) AM_READ(MRA16_NOP)					/* ? once */
+//  AM_RANGE(0xa10000, 0xa10001) AM_READ(MRA16_NOP)                 /* ? once */
 	AM_RANGE(0xa10002, 0xa10005) AM_READ(MRA16_NOP)					/* ? alternative way of reading inputs ? */
 	AM_RANGE(0xa11100, 0xa11101) AM_READ(MRA16_NOP)					/* ? */
 ADDRESS_MAP_END
@@ -995,8 +995,8 @@ static ADDRESS_MAP_START( puckpkmn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	/* Unknown writes: */
 	AM_RANGE(0xa00000, 0xa00551) AM_WRITE(MWA16_RAM)					/* ? */
 	AM_RANGE(0xa10002, 0xa10005) AM_WRITE(MWA16_NOP)					/* ? alternative way of reading inputs ? */
-//	AM_RANGE(0xa10008, 0xa1000d) AM_WRITE(MWA16_NOP)					/* ? once */
-//	AM_RANGE(0xa14000, 0xa14003) AM_WRITE(MWA16_NOP)					/* ? once */
+//  AM_RANGE(0xa10008, 0xa1000d) AM_WRITE(MWA16_NOP)                    /* ? once */
+//  AM_RANGE(0xa14000, 0xa14003) AM_WRITE(MWA16_NOP)                    /* ? once */
 	AM_RANGE(0xa11100, 0xa11101) AM_WRITE(MWA16_NOP)					/* ? */
 	AM_RANGE(0xa11200, 0xa11201) AM_WRITE(MWA16_NOP)					/* ? */
 ADDRESS_MAP_END
@@ -1006,7 +1006,7 @@ ADDRESS_MAP_END
 /* from MESS */
 READ16_HANDLER(genesis_ctrl_r)
 {
-/*	int returnval; */
+/*  int returnval; */
 
 /*  logerror("genesis_ctrl_r %x\n", offset); */
 	switch (offset)
@@ -1031,7 +1031,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 {
 	data &= ~mem_mask;
 
-/*	logerror("genesis_ctrl_w %x, %x\n", offset, data); */
+/*  logerror("genesis_ctrl_w %x, %x\n", offset, data); */
 
 	switch (offset)
 	{
@@ -1085,7 +1085,7 @@ static READ16_HANDLER ( genesis_68k_to_z80_r )
 	if ((offset >= 0x0000) && (offset <= 0x3fff))
 	{
 		offset &=0x1fff;
-//		logerror("soundram_r returning %x\n",(gen_z80_shared[offset] << 8) + gen_z80_shared[offset+1]);
+//      logerror("soundram_r returning %x\n",(gen_z80_shared[offset] << 8) + gen_z80_shared[offset+1]);
 		return (genesis_z80_ram[offset] << 8) + genesis_z80_ram[offset+1];
 	}
 
@@ -1137,15 +1137,15 @@ static READ16_HANDLER ( megaplay_68k_to_z80_r )
 	if ((offset >= 0x0000) && (offset <= 0x1fff))
 	{
 		offset &=0x1fff;
-//		logerror("soundram_r returning %x\n",(gen_z80_shared[offset] << 8) + gen_z80_shared[offset+1]);
+//      logerror("soundram_r returning %x\n",(gen_z80_shared[offset] << 8) + gen_z80_shared[offset+1]);
 		return (genesis_z80_ram[offset] << 8) + genesis_z80_ram[offset+1];
 	}
 
 	if ((offset >= 0x2000) && (offset <= 0x3fff))
 	{
 		offset &=0x1fff;
-//		if(offset == 0)
-//			return (readinputport(8) << 8) ^ 0xff00;
+//      if(offset == 0)
+//          return (readinputport(8) << 8) ^ 0xff00;
 		return (ic36_ram[offset] << 8) + ic36_ram[offset+1];
 	}
 
@@ -1288,15 +1288,15 @@ READ16_HANDLER ( genesis_io_r )
 	{
 		case 0:
 		/* Charles MacDonald ( http://cgfm2.emuviews.com/ )
-		    D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
-		    D6 : Video type is 1= PAL, 0= NTSC
-		    D5 : Sega CD unit is 1= not present, 0= connected.
-		    D4 : Unused (always returns zero)
-		    D3 : Bit 3 of version number
-		    D2 : Bit 2 of version number
-		    D1 : Bit 1 of version number
-		    D0 : Bit 0 of version number
-		*/
+            D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
+            D6 : Video type is 1= PAL, 0= NTSC
+            D5 : Sega CD unit is 1= not present, 0= connected.
+            D4 : Unused (always returns zero)
+            D3 : Bit 3 of version number
+            D2 : Bit 2 of version number
+            D1 : Bit 1 of version number
+            D0 : Bit 0 of version number
+        */
 			return_value = 0x80; /* ? megatech is usa? */
 			break;
 
@@ -1317,7 +1317,7 @@ READ16_HANDLER ( genesis_io_r )
 			}
 
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-//			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+//          logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
 			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
@@ -1338,7 +1338,7 @@ READ16_HANDLER ( genesis_io_r )
 					return_value+=1;
 			}
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-//			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+//          logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
 			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
@@ -1359,15 +1359,15 @@ READ16_HANDLER ( megaplay_genesis_io_r )
 	{
 		case 0:
 		/* Charles MacDonald ( http://cgfm2.emuviews.com/ )
-		    D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
-		    D6 : Video type is 1= PAL, 0= NTSC
-		    D5 : Sega CD unit is 1= not present, 0= connected.
-		    D4 : Unused (always returns zero)
-		    D3 : Bit 3 of version number
-		    D2 : Bit 2 of version number
-		    D1 : Bit 1 of version number
-		    D0 : Bit 0 of version number
-		*/
+            D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
+            D6 : Video type is 1= PAL, 0= NTSC
+            D5 : Sega CD unit is 1= not present, 0= connected.
+            D4 : Unused (always returns zero)
+            D3 : Bit 3 of version number
+            D2 : Bit 2 of version number
+            D1 : Bit 1 of version number
+            D0 : Bit 0 of version number
+        */
 			return_value = 0x80; /* ? megatech is usa? */
 			break;
 
@@ -1381,7 +1381,7 @@ READ16_HANDLER ( megaplay_genesis_io_r )
 				return_value |= readinputport(1) & 0x03;
 			}
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-//			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
+//          logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
 			break;
 
 		case 2: /* port B data (joypad 2) */
@@ -1394,12 +1394,12 @@ READ16_HANDLER ( megaplay_genesis_io_r )
 				return_value |= readinputport(3) & 0x03;
 			}
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-//			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
+//          logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
 			break;
 
-//		case 3: /* port C data */
-//			return_value = bios_6402 << 3;
-//			break;
+//      case 3: /* port C data */
+//          return_value = bios_6402 << 3;
+//          break;
 
 	default:
 			return_value = genesis_io_ram[offset];
@@ -1410,7 +1410,7 @@ READ16_HANDLER ( megaplay_genesis_io_r )
 
 WRITE16_HANDLER ( genesis_io_w )
 {
-//	logerror ("write io offset :%02x data %04x PC: 0x%06x\n",offset,data,activecpu_get_previouspc());
+//  logerror ("write io offset :%02x data %04x PC: 0x%06x\n",offset,data,activecpu_get_previouspc());
 
 	switch (offset)
 	{
@@ -1496,7 +1496,7 @@ ADDRESS_MAP_END
 static WRITE8_HANDLER ( genesis_bank_select_w ) /* note value will be meaningless unless all bits are correctly set in */
 {
 	if (offset !=0 ) return;
-//	if (!z80running) logerror("undead Z80 latch write!\n");
+//  if (!z80running) logerror("undead Z80 latch write!\n");
 	if (z80_latch_bitcount == 0) z80_68000_latch = 0;
 
 	z80_68000_latch = z80_68000_latch | ((( ((unsigned char)data) & 0x01) << (15+z80_latch_bitcount)));
@@ -1598,7 +1598,7 @@ static READ8_HANDLER ( genesis_z80_bank_r )
 	/* Read the data out of the 68k ROM */
 	if (address < 0x400000) return memory_region(REGION_CPU1)[BYTE_XOR(address)];
 	/* else read the data out of the 68k RAM */
-// 	else if (address > 0xff0000) return genesis_68k_ram[BYTE_XOR(offset)];
+//  else if (address > 0xff0000) return genesis_68k_ram[BYTE_XOR(offset)];
 
 	return -1;
 }
@@ -1616,7 +1616,7 @@ static ADDRESS_MAP_START( genesis_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_BANK1) AM_BASE(&genesis_z80_ram)
  	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_BANK2) /* mirror */
 	AM_RANGE(0x4000, 0x7fff) AM_WRITE(genesis_z80_w)
- //	AM_RANGE(0x8000, 0xffff) AM_WRITE(genesis_z80_bank_w)
+ // AM_RANGE(0x8000, 0xffff) AM_WRITE(genesis_z80_bank_w)
 ADDRESS_MAP_END
 
 
@@ -1631,7 +1631,7 @@ static ADDRESS_MAP_START( megaplay_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_BANK1) AM_BASE(&genesis_z80_ram)
  	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_BANK2)
 	AM_RANGE(0x4000, 0x7fff) AM_WRITE(genesis_z80_w)
- //	AM_RANGE(0x8000, 0xffff) AM_WRITE(genesis_z80_bank_w)
+ // AM_RANGE(0x8000, 0xffff) AM_WRITE(genesis_z80_bank_w)
 ADDRESS_MAP_END
 
 /* MEGATECH specific */
@@ -1682,14 +1682,14 @@ static READ8_HANDLER( megaplay_bios_banksel_r )
 
 static WRITE8_HANDLER( megaplay_bios_banksel_w )
 {
-/*	Multi-slot note:
-	Bits 0 and 1 appear to determine the selected game slot.
-	It should be possible to multiplex different game ROMs at
-	0x000000-0x3fffff based on these bits.
+/*  Multi-slot note:
+    Bits 0 and 1 appear to determine the selected game slot.
+    It should be possible to multiplex different game ROMs at
+    0x000000-0x3fffff based on these bits.
 */
 	bios_bank = data;
 	bios_mode = MP_ROM;
-//	logerror("BIOS: ROM bank %i selected [0x%02x]\n",bios_bank >> 6, data);
+//  logerror("BIOS: ROM bank %i selected [0x%02x]\n",bios_bank >> 6, data);
 }
 
 static READ8_HANDLER( megaplay_bios_gamesel_r )
@@ -1701,7 +1701,7 @@ static WRITE8_HANDLER( megaplay_bios_gamesel_w )
 {
 	bios_6403 = data;
 
-//	logerror("BIOS: 0x6403 write: 0x%02x\n",data);
+//  logerror("BIOS: 0x6403 write: 0x%02x\n",data);
 	bios_mode = data & 0x10;
 }
 
@@ -1718,7 +1718,7 @@ static READ8_HANDLER( bank_r )
 	{
 		int sel = (bios_bank >> 6) & 0x03;
 
-//		usrintf_showmessage("Reading from Bank %i",sel);
+//      usrintf_showmessage("Reading from Bank %i",sel);
 
 		if(sel == 0)
 			return 0xff;
@@ -1751,7 +1751,7 @@ static WRITE8_HANDLER ( bank_w )
 		ic37_ram[(0x2000 * (bios_bank & 0x03)) + offset] = data;
 
 	if(offset >= 0x2000 && (bios_width & 0x08))
-//		ic36_ram[offset] = data;
+//      ic36_ram[offset] = data;
 		ic36_ram[offset - 0x2000] = data;
 }
 
@@ -1759,21 +1759,21 @@ static WRITE8_HANDLER ( bank_w )
 static READ8_HANDLER( megaplay_bios_6402_r )
 {
 	return genesis_io_ram[3];// & 0xfe;
-//	return bios_6402;// & 0xfe;
+//  return bios_6402;// & 0xfe;
 }
 
 static WRITE8_HANDLER( megaplay_bios_6402_w )
 {
 	genesis_io_ram[3] = (genesis_io_ram[3] & 0x07) | ((data & 0x70) >> 1);
-//	bios_6402 = (data >> 4) & 0x07;
-//	logerror("BIOS: 0x6402 write: 0x%02x\n",data);
+//  bios_6402 = (data >> 4) & 0x07;
+//  logerror("BIOS: 0x6402 write: 0x%02x\n",data);
 }
 
 static READ8_HANDLER( megaplay_bios_6404_r )
 {
-//	logerror("BIOS: 0x6404 read: returned 0x%02x\n",bios_6404 | (bios_6403 & 0x10) >> 4);
+//  logerror("BIOS: 0x6404 read: returned 0x%02x\n",bios_6404 | (bios_6403 & 0x10) >> 4);
 	return (bios_6404 & 0xfe) | ((bios_6403 & 0x10) >> 4);
-//	return bios_6404 | (bios_6403 & 0x10) >> 4;
+//  return bios_6404 | (bios_6403 & 0x10) >> 4;
 }
 
 static WRITE8_HANDLER( megaplay_bios_6404_w )
@@ -1782,13 +1782,13 @@ static WRITE8_HANDLER( megaplay_bios_6404_w )
 		cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 	bios_6404 = data;
 
-//	logerror("BIOS: 0x6404 write: 0x%02x\n",data);
+//  logerror("BIOS: 0x6404 write: 0x%02x\n",data);
 }
 
 static READ8_HANDLER( megaplay_bios_6204_r )
 {
 	return (genesis_io_ram[3]);
-//	return (bios_width & 0xf8) + (bios_6204 & 0x07);
+//  return (bios_width & 0xf8) + (bios_6204 & 0x07);
 }
 
 static WRITE8_HANDLER( megaplay_bios_width_w )
@@ -1796,16 +1796,16 @@ static WRITE8_HANDLER( megaplay_bios_width_w )
 	bios_width = data;
 	genesis_io_ram[3] = (genesis_io_ram[3] & 0x07) | ((data & 0xf8));
 
-//	logerror("BIOS: 0x6204 - Width write: %02x\n",data);
+//  logerror("BIOS: 0x6204 - Width write: %02x\n",data);
 }
 
 static READ8_HANDLER( megaplay_bios_6600_r )
 {
-/*	Multi-slot note:
-	0x6600 appears to be used to check for extra slots being used.
-	Enter the following line in place of the return statement in this
-	function to make the BIOS check all 4 slots (3 and 4 will be "not used")
-		return (bios_6600 & 0xfe) | (bios_bank & 0x01);
+/*  Multi-slot note:
+    0x6600 appears to be used to check for extra slots being used.
+    Enter the following line in place of the return statement in this
+    function to make the BIOS check all 4 slots (3 and 4 will be "not used")
+        return (bios_6600 & 0xfe) | (bios_bank & 0x01);
 */
 	return bios_6600;// & 0xfe;
 }
@@ -1813,7 +1813,7 @@ static READ8_HANDLER( megaplay_bios_6600_r )
 static WRITE8_HANDLER( megaplay_bios_6600_w )
 {
 	bios_6600 = data;
-//	logerror("BIOS: 0x6600 write: 0x%02x\n",data);
+//  logerror("BIOS: 0x6600 write: 0x%02x\n",data);
 }
 
 static WRITE8_HANDLER( megaplay_game_w )
@@ -1827,7 +1827,7 @@ static WRITE8_HANDLER( megaplay_game_w )
 	{
 		bios_mode = MP_GAME;
 		readpos = 1;
-//		usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
+//      usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
 		logerror("BIOS [0x%04x]: 68K address space bank selected: 0x%03x\n",activecpu_get_previouspc(),game_banksel);
 	}
 }
@@ -1843,7 +1843,7 @@ static ADDRESS_MAP_START( megatech_bios_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6800, 0x6800) AM_READ(input_port_6_r)
 	AM_RANGE(0x6801, 0x6801) AM_READ(input_port_7_r)
 	AM_RANGE(0x6802, 0x6807) AM_READ(bios_ctrl_r)
-//	AM_RANGE(0x6805, 0x6805) AM_READ(input_port_8_r)
+//  AM_RANGE(0x6805, 0x6805) AM_READ(input_port_8_r)
 	AM_RANGE(0x6808, 0x6fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0xffff) AM_READ(megatech_instr_r)
@@ -1950,7 +1950,7 @@ static READ8_HANDLER (megatech_bios_port_dd_r)
 
 static WRITE8_HANDLER (megatech_bios_port_7f_w)
 {
-//	usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
+//  usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
 }
 
 
@@ -1970,14 +1970,14 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( megaplay_bios_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0xdc, 0xdc) AM_READ(megatech_bios_port_dc_r)  // player inputs
-//	AM_RANGE(0xdd, 0xdd) AM_READ(megatech_bios_port_dd_r)  // other player 2 inputs
+//  AM_RANGE(0xdc, 0xdc) AM_READ(megatech_bios_port_dc_r)  // player inputs
+//  AM_RANGE(0xdd, 0xdd) AM_READ(megatech_bios_port_dd_r)  // other player 2 inputs
 	AM_RANGE(0xbe, 0xbf) AM_READ(megatech_bios_port_be_bf_r)			/* VDP */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( megaplay_bios_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0x3f, 0x3f) AM_WRITE(megatech_bios_port_ctrl_w)
+//  AM_RANGE(0x3f, 0x3f) AM_WRITE(megatech_bios_port_ctrl_w)
 	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_1_w)	/* SN76489 */
 	AM_RANGE(0xbe, 0xbf) AM_WRITE(megatech_bios_port_be_bf_w)			/* VDP */
 ADDRESS_MAP_END
@@ -1999,7 +1999,7 @@ INTERRUPT_GEN (megatech_irq)
 
 	if (sline <= 192) {
 
-//		if (sline != 192) segae_drawscanline(sline,1,1);
+//      if (sline != 192) segae_drawscanline(sline,1,1);
 
 		if (sline == 192)
 			vintpending = 1;
@@ -2030,17 +2030,17 @@ INTERRUPT_GEN (megatech_irq)
 
 
 /******************************************************************************
-	Input Ports
+    Input Ports
 *******************************************************************************
 
-	The input ports on the C2 games always consist of 1 Coin Port, 2 Player
-	Input ports and 2 Dipswitch Ports, 1 of those Dipswitch Ports being used
-	for coinage, the other for Game Options.
+    The input ports on the C2 games always consist of 1 Coin Port, 2 Player
+    Input ports and 2 Dipswitch Ports, 1 of those Dipswitch Ports being used
+    for coinage, the other for Game Options.
 
-	Most of the Games List the Dipswitchs and Inputs in the Test Menus, adding
-	them is just a tedious task.  I think Columnns & Bloxeed are Exceptions
-	and will need their Dipswitches working out by observation.  The Coin Part
-	of the DSW's seems fairly common to all games.
+    Most of the Games List the Dipswitchs and Inputs in the Test Menus, adding
+    them is just a tedious task.  I think Columnns & Bloxeed are Exceptions
+    and will need their Dipswitches working out by observation.  The Coin Part
+    of the DSW's seems fairly common to all games.
 
 ******************************************************************************/
 
@@ -2905,38 +2905,38 @@ INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 
 
 	PORT_START	/* Player 1 Controls - part 2 */
-//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
-//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+//  PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+//  PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+//  PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+//  PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+//  PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+//  PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Player 1 Controls - part 1 */
-//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 )
+//  PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+//  PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 )
 
 
 	PORT_START	/* Player 2 Controls - part 2 */
-//	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
-//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-//	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-//	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT  ) PORT_PLAYER(2)
-//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-//	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-//	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+//  PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+//  PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+//  PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT  ) PORT_PLAYER(2)
+//  PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+//  PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+//  PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Player 2 Controls - part 1 */
-//	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-//	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(2)
+//  PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+//  PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(2)
 
 	PORT_START	/* Temp - Fake dipswitch to turn on / off sms vdp display */
-//	PORT_DIPNAME( 0x01, 0x01, "SMS VDP Display (fake)" )
-//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x01, 0x01, "SMS VDP Display (fake)" )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
 	PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Select") PORT_CODE(KEYCODE_0)
@@ -3043,10 +3043,10 @@ INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 	PORT_START	 // BIOS input ports extra
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1)
-//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(CODE_NONE)
-//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(CODE_NONE)
-//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(CODE_NONE)
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(CODE_NONE)
+//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(CODE_NONE)
+//  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(CODE_NONE)
+//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(CODE_NONE)
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(CODE_NONE)
 
 INPUT_PORTS_END
 
@@ -3141,10 +3141,10 @@ INPUT_PORTS_START ( mp_sonic )
     PORT_DIPSETTING( 0x08, DEF_STR( Easy ) )
     PORT_DIPSETTING( 0x0c, DEF_STR( Normal ) )
     // Who knows...
-//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 4") PORT_CODE(KEYCODE_G)
+//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 4") PORT_CODE(KEYCODE_G)
 //  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 5") PORT_CODE(KEYCODE_H)
-//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 6") PORT_CODE(KEYCODE_J)
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 7") PORT_CODE(KEYCODE_K)
+//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 6") PORT_CODE(KEYCODE_J)
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 7") PORT_CODE(KEYCODE_K)
 
 INPUT_PORTS_END
 
@@ -3174,10 +3174,10 @@ INPUT_PORTS_START ( mp_gaxe2 )
     PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
     // Who knows...
-//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 4") PORT_CODE(KEYCODE_G)
+//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 4") PORT_CODE(KEYCODE_G)
 //  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 5") PORT_CODE(KEYCODE_H)
-//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 6") PORT_CODE(KEYCODE_J)
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 7") PORT_CODE(KEYCODE_K)
+//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 6") PORT_CODE(KEYCODE_J)
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 7") PORT_CODE(KEYCODE_K)
 
 INPUT_PORTS_END
 
@@ -3290,7 +3290,7 @@ INPUT_PORTS_START ( mp_mazin )
 	PORT_DIPNAME( 0x01, 0x01, "DSW C-1" )
     PORT_DIPSETTING( 0x01, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
-	
+
 	PORT_DIPNAME( 0x02, 0x02, "DSW C-2" )
     PORT_DIPSETTING( 0x02, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
@@ -3298,7 +3298,7 @@ INPUT_PORTS_START ( mp_mazin )
 	PORT_DIPNAME( 0x04, 0x04, "DSW C-3" )
     PORT_DIPSETTING( 0x04, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
-	
+
 	PORT_DIPNAME( 0x08, 0x08, "DSW C-4" )
     PORT_DIPSETTING( 0x08, DEF_STR ( Off ) )
     PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
@@ -3329,7 +3329,7 @@ INPUT_PORTS_START ( mp_soni2 )
 INPUT_PORTS_END
 
 /******************************************************************************
-	Sound interfaces
+    Sound interfaces
 ******************************************************************************/
 
 static struct upd7759_interface upd7759_intf =
@@ -3344,14 +3344,14 @@ static struct YM3438interface ym3438_intf =
 
 
 /******************************************************************************
-	Machine Drivers
+    Machine Drivers
 *******************************************************************************
 
-	General Overview
-		M68000 @ 10MHz (Main Processor)
-		YM3438 (Fm Sound)
-		SN76489 (PSG, Noise, Part of the VDP)
-		UPD7759 (Sample Playback, C-2 Only)
+    General Overview
+        M68000 @ 10MHz (Main Processor)
+        YM3438 (Fm Sound)
+        SN76489 (PSG, Noise, Part of the VDP)
+        UPD7759 (Sample Playback, C-2 Only)
 
 ******************************************************************************/
 
@@ -3514,7 +3514,7 @@ static MACHINE_DRIVER_START( megaplay )
 	MDRV_SOUND_ROUTE(0, "mono", 0.50)
 	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 
-//	MDRV_CPU_PROGRAM_MAP(megaplay_genesis_readmem, genesis_writemem)
+//  MDRV_CPU_PROGRAM_MAP(megaplay_genesis_readmem, genesis_writemem)
 
 	MDRV_VIDEO_START(megaplay)
 	MDRV_VIDEO_UPDATE(megaplay)
@@ -3534,20 +3534,20 @@ static MACHINE_DRIVER_START( megaplay )
 MACHINE_DRIVER_END
 
 /******************************************************************************
-	Rom Definitions
+    Rom Definitions
 *******************************************************************************
 
-	All the known System C/C2 Dumps are listed here with the exception of
-	the version of Puzzle & Action (I believe its actually Ichidant-R) which
-	was credited to SpainDumps in the included text file.  This appears to be
-	a bad dump (half sized roms) however the roms do not match up exactly with
-	the good dump of the game.  English language sets are assumed to be the
-	parent where they exist.  Hopefully some more alternate version dumps will
-	turn up sometime soon for example English Language version of Tant-R or
-	Japanese Language versions of Borench (if of course these games were
-	released in other locations.
+    All the known System C/C2 Dumps are listed here with the exception of
+    the version of Puzzle & Action (I believe its actually Ichidant-R) which
+    was credited to SpainDumps in the included text file.  This appears to be
+    a bad dump (half sized roms) however the roms do not match up exactly with
+    the good dump of the game.  English language sets are assumed to be the
+    parent where they exist.  Hopefully some more alternate version dumps will
+    turn up sometime soon for example English Language version of Tant-R or
+    Japanese Language versions of Borench (if of course these games were
+    released in other locations.
 
-	Games are in Order of Date (Year) with System-C titles coming first.
+    Games are in Order of Date (Year) with System-C titles coming first.
 
 ******************************************************************************/
 
@@ -3570,50 +3570,50 @@ There are 13 PAL's on the PCB !
 RAM: 62256 x 3, D41264 x 2 (ZIP Ram)
 DIPS: 2 x 8 position
 SW1:
-               			1	2	3	4	5	6	7	8
-coins   1coin 1 Cred.  	off	off	off
-		2c 1c			on	off	off
-		3c 1c			off	on	off
-		4c 1c			on	on	off
-		5c 1c			off	off	on
-		1c 2c			on	off	on
-		1c 3c			off	on	on
-		1c 4c			on	on	on
+                        1   2   3   4   5   6   7   8
+coins   1coin 1 Cred.   off off off
+        2c 1c           on  off off
+        3c 1c           off on  off
+        4c 1c           on  on  off
+        5c 1c           off off on
+        1c 2c           on  off on
+        1c 3c           off on  on
+        1c 4c           on  on  on
 
-players	1							off	off	off
- 		2							on	off	off
-		3							off	on	off
-		4							on	on	off
-		5							off	off	on
-		6							on	off	on
-		7							off	on	on
-		8							on	on	on
+players 1                           off off off
+        2                           on  off off
+        3                           off on  off
+        4                           on  on  off
+        5                           off off on
+        6                           on  off on
+        7                           off on  on
+        8                           on  on  on
 
 diffic-
-ulty	v.easy									off	off
-		normal									on	off
-		diffic.									off	on
-		v. diffic.								on	on
+ulty    v.easy                                  off off
+        normal                                  on  off
+        diffic.                                 off on
+        v. diffic.                              on  on
 
 
 SW2
 
 note position 3-8 not used
 
-               		1	2	3	4	5	6	7	8
-test mode	no		off
-			yes		on
+                    1   2   3   4   5   6   7   8
+test mode   no      off
+            yes     on
 
-demo sound	yes			off
-			no			on
+demo sound  yes         off
+            no          on
 
 
 ROMS:
-PUCKPOKE.U3	M5M27C201	Sound
-PUCKPOKE.U4	27C040--\
-PUCKPOKE.U5	27C040---\
-PUCKPOKE.U7	27C040----- Main program & GFX
-PUCKPOKE.U8	27C4001---/
+PUCKPOKE.U3 M5M27C201   Sound
+PUCKPOKE.U4 27C040--\
+PUCKPOKE.U5 27C040---\
+PUCKPOKE.U7 27C040----- Main program & GFX
+PUCKPOKE.U8 27C4001---/
 
 ROM sockets U63 & U64 empty
 
@@ -4577,15 +4577,15 @@ ROM_START( mp_mazin ) /* Mazin Wars */
 ROM_END
 
 /******************************************************************************
-	Machine Init Functions
+    Machine Init Functions
 *******************************************************************************
 
-	All of the Sega C/C2 games apart from Bloxeed used a protection chip.
-	The games contain various checks which make sure this protection chip is
-	present and returning the expected values.  The chip uses a table of
-	256x4-bit values to produce its results.  It appears that different
-	tables are used for Japanese vs. English variants of some games
-	(Puzzle & Action 2) but not others (Columns).
+    All of the Sega C/C2 games apart from Bloxeed used a protection chip.
+    The games contain various checks which make sure this protection chip is
+    present and returning the expected values.  The chip uses a table of
+    256x4-bit values to produce its results.  It appears that different
+    tables are used for Japanese vs. English variants of some games
+    (Puzzle & Action 2) but not others (Columns).
 
 ******************************************************************************/
 
@@ -4935,19 +4935,19 @@ DRIVER_INIT( puckpkmn )
 
 
 /******************************************************************************
-	Game Drivers
+    Game Drivers
 *******************************************************************************
 
-	These cover all the above games.
+    These cover all the above games.
 
-	Dates are all verified correct from Ingame display, some of the Titles
-	such as Ichidant-R, Tant-R might be slightly incorrect as I've seen the
-	games refered to by other names such as Ichident-R, Tanto-R, Tanto Arle
-	etc.
+    Dates are all verified correct from Ingame display, some of the Titles
+    such as Ichidant-R, Tant-R might be slightly incorrect as I've seen the
+    games refered to by other names such as Ichident-R, Tanto-R, Tanto Arle
+    etc.
 
-	bloxeedc is set as as clone of bloxeed as it is the same game but running
-	on a different piece of hardware.  The parent 'bloxeed' is a system18 game
-	and does not currently work due to it being encrypted.
+    bloxeedc is set as as clone of bloxeed as it is the same game but running
+    on a different piece of hardware.  The parent 'bloxeed' is a system18 game
+    and does not currently work due to it being encrypted.
 
 ******************************************************************************/
 
@@ -5070,7 +5070,7 @@ static DRIVER_INIT (megaplay)
 	memmove(src+0x10000,src+0x8000,0x18000); // move bios..
 
 	/* copy game instruction rom to main map.. maybe this should just be accessed
-	  through a handler instead?.. */
+      through a handler instead?.. */
 	for (offs=0;offs<0x8000;offs++)
 	{
 		data8_t dat;

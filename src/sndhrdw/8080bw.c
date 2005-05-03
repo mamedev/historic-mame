@@ -70,22 +70,22 @@ static int explosion;
 
 struct SN76477interface invaders_sn76477_interface =
 {
-	0	/* N/C */,		/*	4  noise_res		 */
-	0	/* N/C */,		/*	5  filter_res		 */
-	0	/* N/C */,		/*	6  filter_cap		 */
-	0	/* N/C */,		/*	7  decay_res		 */
-	0	/* N/C */,		/*	8  attack_decay_cap  */
-	RES_K(100) ,		/* 10  attack_res		 */
-	RES_K(56)  ,		/* 11  amplitude_res	 */
-	RES_K(10)  ,		/* 12  feedback_res 	 */
-	0	/* N/C */,		/* 16  vco_voltage		 */
-	CAP_U(0.1) ,		/* 17  vco_cap			 */
-	RES_K(8.2) ,		/* 18  vco_res			 */
-	5.0		 ,		/* 19  pitch_voltage	 */
-	RES_K(120) ,		/* 20  slf_res			 */
-	CAP_U(1.0) ,		/* 21  slf_cap			 */
-	0	/* N/C */,		/* 23  oneshot_cap		 */
-	0	/* N/C */		/* 24  oneshot_res		 */
+	0	/* N/C */,		/*  4  noise_res         */
+	0	/* N/C */,		/*  5  filter_res        */
+	0	/* N/C */,		/*  6  filter_cap        */
+	0	/* N/C */,		/*  7  decay_res         */
+	0	/* N/C */,		/*  8  attack_decay_cap  */
+	RES_K(100) ,		/* 10  attack_res        */
+	RES_K(56)  ,		/* 11  amplitude_res     */
+	RES_K(10)  ,		/* 12  feedback_res      */
+	0	/* N/C */,		/* 16  vco_voltage       */
+	CAP_U(0.1) ,		/* 17  vco_cap           */
+	RES_K(8.2) ,		/* 18  vco_res           */
+	5.0		 ,		/* 19  pitch_voltage     */
+	RES_K(120) ,		/* 20  slf_res           */
+	CAP_U(1.0) ,		/* 21  slf_cap           */
+	0	/* N/C */,		/* 23  oneshot_cap       */
+	0	/* N/C */		/* 24  oneshot_res       */
 };
 
 static const char *invaders_sample_names[] =
@@ -112,42 +112,42 @@ struct Samplesinterface invaders_samples_interface =
 
 struct SN76477interface invad2ct_sn76477_interface_1 =
 {
-	0,    /* N/C */	/*	4  noise_res		 */
-	0,    /* N/C */	/*	5  filter_res		 */
-	0,    /* N/C */	/*	6  filter_cap		 */
-	0,    /* N/C */	/*	7  decay_res		 */
-	0,    /* N/C */	/*	8  attack_decay_cap  */
-	RES_K(100), 	/* 10  attack_res		 */
-	RES_K(56),  	/* 11  amplitude_res	 */
-	RES_K(10),  	/* 12  feedback_res 	 */
-	0,    /* N/C */	/* 16  vco_voltage		 */
-	CAP_U(0.1), 	/* 17  vco_cap			 */
-	RES_K(8.2), 	/* 18  vco_res			 */
-	5.0,        	/* 19  pitch_voltage	 */
-	RES_K(120), 	/* 20  slf_res			 */
-	CAP_U(1.0), 	/* 21  slf_cap			 */
-	0,    /* N/C */	/* 23  oneshot_cap		 */
-	0,    /* N/C */	/* 24  oneshot_res		 */
+	0,    /* N/C */	/*  4  noise_res         */
+	0,    /* N/C */	/*  5  filter_res        */
+	0,    /* N/C */	/*  6  filter_cap        */
+	0,    /* N/C */	/*  7  decay_res         */
+	0,    /* N/C */	/*  8  attack_decay_cap  */
+	RES_K(100), 	/* 10  attack_res        */
+	RES_K(56),  	/* 11  amplitude_res     */
+	RES_K(10),  	/* 12  feedback_res      */
+	0,    /* N/C */	/* 16  vco_voltage       */
+	CAP_U(0.1), 	/* 17  vco_cap           */
+	RES_K(8.2), 	/* 18  vco_res           */
+	5.0,        	/* 19  pitch_voltage     */
+	RES_K(120), 	/* 20  slf_res           */
+	CAP_U(1.0), 	/* 21  slf_cap           */
+	0,    /* N/C */	/* 23  oneshot_cap       */
+	0,    /* N/C */	/* 24  oneshot_res       */
 };
 
 struct SN76477interface invad2ct_sn76477_interface_2 =
 {
-	0	/* N/C */  ,	/*	4  noise_res		 */
-	0	/* N/C */  ,	/*	5  filter_res		 */
-	0	/* N/C */  ,	/*	6  filter_cap		 */
-	0	/* N/C */  ,	/*	7  decay_res		 */
-	0	/* N/C */  ,	/*	8  attack_decay_cap  */
-	RES_K(100)   ,	/* 10  attack_res		 */
-	RES_K(56)    ,	/* 11  amplitude_res	 */
-	RES_K(10)    ,	/* 12  feedback_res 	 */
-	0	/* N/C */  ,	/* 16  vco_voltage		 */
-	CAP_U(0.047) ,	/* 17  vco_cap			 */
-	RES_K(39)    ,	/* 18  vco_res			 */
-	5.0		   ,	/* 19  pitch_voltage	 */
-	RES_K(120)   ,	/* 20  slf_res			 */
-	CAP_U(1.0)   ,	/* 21  slf_cap			 */
-	0	/* N/C */,	/* 23  oneshot_cap		 */
-	0	/* N/C */	/* 24  oneshot_res		 */
+	0	/* N/C */  ,	/*  4  noise_res         */
+	0	/* N/C */  ,	/*  5  filter_res        */
+	0	/* N/C */  ,	/*  6  filter_cap        */
+	0	/* N/C */  ,	/*  7  decay_res         */
+	0	/* N/C */  ,	/*  8  attack_decay_cap  */
+	RES_K(100)   ,	/* 10  attack_res        */
+	RES_K(56)    ,	/* 11  amplitude_res     */
+	RES_K(10)    ,	/* 12  feedback_res      */
+	0	/* N/C */  ,	/* 16  vco_voltage       */
+	CAP_U(0.047) ,	/* 17  vco_cap           */
+	RES_K(39)    ,	/* 18  vco_res           */
+	5.0		   ,	/* 19  pitch_voltage     */
+	RES_K(120)   ,	/* 20  slf_res           */
+	CAP_U(1.0)   ,	/* 21  slf_cap           */
+	0	/* N/C */,	/* 23  oneshot_cap       */
+	0	/* N/C */	/* 24  oneshot_res       */
 };
 
 static const char *invad2ct_sample_names[] =
@@ -423,7 +423,7 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 
 /*******************************************************/
 /*                                                     */
-/* Taito "Polaris"		                               */
+/* Taito "Polaris"                                     */
 /* D.R.                                                */
 /*******************************************************/
 // The R/C values in the schematic may have no bearing in reality.
@@ -792,7 +792,7 @@ static WRITE8_HANDLER( polaris_sh_port6_w )
 
 /*******************************************************/
 /*                                                     */
-/* Midway "Phantom II"		                           */
+/* Midway "Phantom II"                                 */
 /*                                                     */
 /*******************************************************/
 
@@ -804,7 +804,7 @@ MACHINE_INIT( phantom2 )
 
 /*******************************************************/
 /*                                                     */
-/* Midway "4 Player Bowling Alley"					   */
+/* Midway "4 Player Bowling Alley"                     */
 /*                                                     */
 /*******************************************************/
 
@@ -846,34 +846,34 @@ Port 1:
   Basically D0-D3 are column drivers and D4-D7 are row drivers.
   The folowing table shows values that light up individual lamps.
 
-	D7 D6 D5 D4 D3 D2 D1 D0   Function
-	--------------------------------------------------------------------------------------
-	 0  0  0  1  1  0  0  0   Explosion Lamp 0
-	 0  0  0  1  0  1  0  0   Explosion Lamp 1
-	 0  0  0  1  0  0  1  0   Explosion Lamp 2
-	 0  0  0  1  0  0  0  1   Explosion Lamp 3
-	 0  0  1  0  1  0  0  0   Explosion Lamp 4
-	 0  0  1  0  0  1  0  0   Explosion Lamp 5
-	 0  0  1  0  0  0  1  0   Explosion Lamp 6
-	 0  0  1  0  0  0  0  1   Explosion Lamp 7
-	 0  1  0  0  1  0  0  0   Explosion Lamp 8
-	 0  1  0  0  0  1  0  0   Explosion Lamp 9
-	 0  1  0  0  0  0  1  0   Explosion Lamp A
-	 0  1  0  0  0  0  0  1   Explosion Lamp B
-	 1  0  0  0  1  0  0  0   Explosion Lamp C
-	 1  0  0  0  0  1  0  0   Explosion Lamp D
-	 1  0  0  0  0  0  1  0   Explosion Lamp E
-	 1  0  0  0  0  0  0  1   Explosion Lamp F
+    D7 D6 D5 D4 D3 D2 D1 D0   Function
+    --------------------------------------------------------------------------------------
+     0  0  0  1  1  0  0  0   Explosion Lamp 0
+     0  0  0  1  0  1  0  0   Explosion Lamp 1
+     0  0  0  1  0  0  1  0   Explosion Lamp 2
+     0  0  0  1  0  0  0  1   Explosion Lamp 3
+     0  0  1  0  1  0  0  0   Explosion Lamp 4
+     0  0  1  0  0  1  0  0   Explosion Lamp 5
+     0  0  1  0  0  0  1  0   Explosion Lamp 6
+     0  0  1  0  0  0  0  1   Explosion Lamp 7
+     0  1  0  0  1  0  0  0   Explosion Lamp 8
+     0  1  0  0  0  1  0  0   Explosion Lamp 9
+     0  1  0  0  0  0  1  0   Explosion Lamp A
+     0  1  0  0  0  0  0  1   Explosion Lamp B
+     1  0  0  0  1  0  0  0   Explosion Lamp C
+     1  0  0  0  0  1  0  0   Explosion Lamp D
+     1  0  0  0  0  0  1  0   Explosion Lamp E
+     1  0  0  0  0  0  0  1   Explosion Lamp F
 
 Port 2:
-	D7 D6 D5 D4 D3 D2 D1 D0   Function
-	--------------------------------------------------------------------------------------
-	 x  x  x  x  x  x  x  1   Torpedo 1
-	 x  x  x  x  x  x  1  x   Torpedo 2
-	 x  x  x  x  x  1  x  x   Torpedo 3
-	 x  x  x  x  1  x  x  x   Torpedo 4
-	 x  x  x  1  x  x  x  x   Ready
-	 x  x  1  x  x  x  x  x   Reload
+    D7 D6 D5 D4 D3 D2 D1 D0   Function
+    --------------------------------------------------------------------------------------
+     x  x  x  x  x  x  x  1   Torpedo 1
+     x  x  x  x  x  x  1  x   Torpedo 2
+     x  x  x  x  x  1  x  x   Torpedo 3
+     x  x  x  x  1  x  x  x   Torpedo 4
+     x  x  x  1  x  x  x  x   Ready
+     x  x  1  x  x  x  x  x   Reload
 
 */
 
@@ -916,7 +916,7 @@ MACHINE_INIT( desertgu )
 
 /*******************************************************/
 /*                                                     */
-/* Taito "Space Chaser" 							   */
+/* Taito "Space Chaser"                                */
 /*                                                     */
 /* The SN76477 still needs to be routed to the         */
 /* discrete system for filtering.                      */
@@ -929,10 +929,10 @@ MACHINE_INIT( desertgu )
  *  The frequencies are (for the 8V signal):
  *
  *  19.968 MHz crystal / 2 (Qa of 74160 #10) -> 9.984MHz
- *					   / 2 (7474 #14) -> 4.992MHz
- *					   / 256+16 (74161 #5 and #8) -> 18352.94Hz
- *					   / 8 (8V) -> 2294.12 Hz
- * 					   / 2 the final freq. is 2 toggles -> 1147.06Hz
+ *                     / 2 (7474 #14) -> 4.992MHz
+ *                     / 256+16 (74161 #5 and #8) -> 18352.94Hz
+ *                     / 8 (8V) -> 2294.12 Hz
+ *                     / 2 the final freq. is 2 toggles -> 1147.06Hz
  *
  *  for 4V, it's double at 2294.12Hz
  */
@@ -942,22 +942,22 @@ MACHINE_INIT( desertgu )
 
 struct SN76477interface schaser_sn76477_interface =
 {
-	RES_K( 47)	,		/*	4  noise_res		 */
-	RES_K(330)	,		/*	5  filter_res		 */
-	CAP_P(470)	,		/*	6  filter_cap		 */
-	RES_M(2.2)	,		/*	7  decay_res		 */
-	CAP_U(1.0)	,		/*	8  attack_decay_cap  */
-	RES_K(4.7)	,		/* 10  attack_res		 */
-	0			,		/* 11  amplitude_res (variable)	 */
-	RES_K(33)	,		/* 12  feedback_res 	 */
-	0			,		/* 16  vco_voltage		 */
-	CAP_U(0.1)	,		/* 17  vco_cap			 */
-	RES_K(39)	,		/* 18  vco_res			 */
-	5.0			,		/* 19  pitch_voltage	 */
-	RES_K(120)	,		/* 20  slf_res			 */
-	CAP_U(1.0)	,		/* 21  slf_cap			 */
-	CAP_U(0.1)	,		/* 23  oneshot_cap		 */
-	RES_K(220)   		/* 24  oneshot_res		 */
+	RES_K( 47)	,		/*  4  noise_res         */
+	RES_K(330)	,		/*  5  filter_res        */
+	CAP_P(470)	,		/*  6  filter_cap        */
+	RES_M(2.2)	,		/*  7  decay_res         */
+	CAP_U(1.0)	,		/*  8  attack_decay_cap  */
+	RES_K(4.7)	,		/* 10  attack_res        */
+	0			,		/* 11  amplitude_res (variable)  */
+	RES_K(33)	,		/* 12  feedback_res      */
+	0			,		/* 16  vco_voltage       */
+	CAP_U(0.1)	,		/* 17  vco_cap           */
+	RES_K(39)	,		/* 18  vco_res           */
+	5.0			,		/* 19  pitch_voltage     */
+	RES_K(120)	,		/* 20  slf_res           */
+	CAP_U(1.0)	,		/* 21  slf_cap           */
+	CAP_U(0.1)	,		/* 23  oneshot_cap       */
+	RES_K(220)   		/* 24  oneshot_res       */
 };
 
 /* Nodes - Inputs */
@@ -981,9 +981,9 @@ DISCRETE_SOUND_START(schaser_discrete_interface)
 	/************************************************/
 	DISCRETE_INPUT_LOGIC  (SCHASER_DOT_EN)
 	DISCRETE_INPUT_LOGIC  (SCHASER_DOT_SEL)
-//	Change the constant to the stream input when working.
+//  Change the constant to the stream input when working.
 	DISCRETE_CONSTANT(SCHASER_EXP_STREAM, 0)
-//	DISCRETE_INPUTX_STREAM(SCHASER_EXP_STREAM,   5.0/36764,              0)
+//  DISCRETE_INPUTX_STREAM(SCHASER_EXP_STREAM,   5.0/36764,              0)
 	DISCRETE_INPUTX_LOGIC (SCHASER_MUSIC_BIT,    DEFAULT_TTL_V_LOGIC_1,  0,      0.0)
 	DISCRETE_INPUT_LOGIC  (SCHASER_SND_EN)
 
@@ -1047,21 +1047,21 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 	int effect;
 
 	/* bit 0 - Dot Sound Enable (SX0)
-	   bit 1 - Dot Sound Pitch (SX1)
-	   bit 2 - Effect Sound A (SX2)
-	   bit 3 - Effect Sound B (SX3)
-	   bit 4 - Effect Sound C (SX4)
-	   bit 5 - Explosion (SX5) */
+       bit 1 - Dot Sound Pitch (SX1)
+       bit 2 - Effect Sound A (SX2)
+       bit 3 - Effect Sound B (SX3)
+       bit 4 - Effect Sound C (SX4)
+       bit 5 - Explosion (SX5) */
 
 	discrete_sound_w(SCHASER_DOT_EN, data & 0x01);
 	discrete_sound_w(SCHASER_DOT_SEL, data & 0x02);
 
 	/* The effect is a variable rate 555 timer.  A diode/resistor array is used to
-	 * select the frequency.  Because of the diode voltage drop, we can not use the
-	 * standard 555 time formulas.  Also, when effect=0, the charge resistor
-	 * is disconnected.  This causes the charge on the cap to slowly bleed off, but
-	 * but the bleed time is so long, that we can just cheat and put the time on hold
-	 * when effect = 0.	*/
+     * select the frequency.  Because of the diode voltage drop, we can not use the
+     * standard 555 time formulas.  Also, when effect=0, the charge resistor
+     * is disconnected.  This causes the charge on the cap to slowly bleed off, but
+     * but the bleed time is so long, that we can just cheat and put the time on hold
+     * when effect = 0. */
 	effect = (data >> 2) & 0x07;
 	if (last_effect != effect)
 	{
@@ -1106,11 +1106,11 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 static WRITE8_HANDLER( schaser_sh_port5_w )
 {
 	/* bit 0 - Music (DAC) (SX6)
-	   bit 1 - Sound Enable (SX7)
-	   bit 2 - Coin Lockout (SX8)
-	   bit 3 - Field Control A (SX9)
-	   bit 4 - Field Control B (SX10)
-	   bit 5 - Flip Screen */
+       bit 1 - Sound Enable (SX7)
+       bit 2 - Coin Lockout (SX8)
+       bit 3 - Field Control A (SX9)
+       bit 4 - Field Control B (SX10)
+       bit 5 - Flip Screen */
 
 	discrete_sound_w(SCHASER_MUSIC_BIT, data & 0x01);
 

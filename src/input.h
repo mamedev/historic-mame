@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	input.h
+    input.h
 
-	Handle input from the user.
+    Handle input from the user.
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -323,7 +323,7 @@ enum
 	JOYCODE_8_BUTTON16,
 	JOYCODE_8_START,
 	JOYCODE_8_SELECT,
-	
+
 	/* digital mouse codes */
 	MOUSECODE_1_BUTTON1,
 	MOUSECODE_1_BUTTON2,
@@ -372,8 +372,8 @@ enum
 	MOUSECODE_8_BUTTON3,
 	MOUSECODE_8_BUTTON4,
 	MOUSECODE_8_BUTTON5,
-	MOUSECODE_8_BUTTON6, 
-	
+	MOUSECODE_8_BUTTON6,
+
 	/* analog codes of all sorts */
 #define __code_absolute_analog_start JOYCODE_1_ANALOG_X
 	JOYCODE_1_ANALOG_X,
@@ -484,7 +484,7 @@ enum
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -507,7 +507,7 @@ struct OSCodeInfo
 
 /*************************************
  *
- *	Macros
+ *  Macros
  *
  *************************************/
 
@@ -524,7 +524,7 @@ struct OSCodeInfo
 
 /*************************************
  *
- *	Function prototypes
+ *  Function prototypes
  *
  *************************************/
 

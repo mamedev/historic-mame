@@ -22,9 +22,9 @@ WRITE8_HANDLER( mrflea_videoram_w ){
 	offset &= 0x3ff;
 	videoram[offset] = data;
 	videoram[offset+0x400] = bank;
-	/*	the address range that tile data is written to sets one bit of
-	**	the bank select.  The remaining bits are from a video register.
-	*/
+	/*  the address range that tile data is written to sets one bit of
+    **  the bank select.  The remaining bits are from a video register.
+    */
 }
 
 WRITE8_HANDLER( mrflea_spriteram_w ){

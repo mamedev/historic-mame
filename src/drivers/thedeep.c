@@ -1,19 +1,19 @@
 /***************************************************************************
 
-							-= Run Deep / The Deep =-
+                            -= Run Deep / The Deep =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-Main CPU	:	Z80 (LH0080B @ 6MHz) + i8751 (Intel C8751H-88, protection)
+Main CPU    :   Z80 (LH0080B @ 6MHz) + i8751 (Intel C8751H-88, protection)
 
-Sound CPU	:	65C02 (R65C02P2 @ 2MHz)
+Sound CPU   :   65C02 (R65C02P2 @ 2MHz)
 
-Sound Chips	:	YM2203C
+Sound Chips :   YM2203C
 
-Video Chips	:	L7B0073 DATA EAST MXC 06 8746
-				L7A0072 DATA EAST BAC 06 VAE8713
+Video Chips :   L7B0073 DATA EAST MXC 06 8746
+                L7A0072 DATA EAST BAC 06 VAE8713
 
-Board		:	DE-0298-1
+Board       :   DE-0298-1
 
 Notes:
 
@@ -31,7 +31,7 @@ Notes:
 
 /***************************************************************************
 
-							Main CPU + MCU simulation
+                            Main CPU + MCU simulation
 
 ***************************************************************************/
 
@@ -99,22 +99,22 @@ static WRITE8_HANDLER( thedeep_protection_w )
 				protection_index = 0;
 
 			if ( protection_index < 0x19b )
-// d000-d00c:	hl += a * b
-// d00d-d029:	input a (e.g. $39) output hl (e.g. h=$03 l=$09).
-// 				Replace trainling 0's with space ($10). 00 -> '  '
-// d02a-d039:	input a (e.g. $39) output hl (e.g. h=$03 l=$09).
-// 				Replace trainling 0's with space ($10). 00 -> ' 0'
-// d03a-d046:	input a (e.g. $39) output hl (e.g. h=$03 l=$09). 00 -> '00'
-// d047-d086:	a /= e (e can be 0!)
-// d087-d0a4:	print ASCII string from HL to IX (sub $30 to every char)
-// d0a4-d0be:	print any string from HL to IX
-// d0bf-d109:	print ASCII string from HL to IX. Color is in c. (e.g. "game over")
-// d10a-d11f:	print 2 digit decimal number in hl to ix, color c. change ix
-// d120-d157:	update score: add 3 BCD bytes at ix to those at iy, then clear those at ix
-// d158-d165:	print digit: (IX+0) <- H; (IX+1) <-L. ix+=40
-// d166-d174:	hl = (hl + 2*a)
-// d175-d181:	hl *= e (e must be non zero)
-// d182-d19a:	hl /= de
+// d000-d00c:   hl += a * b
+// d00d-d029:   input a (e.g. $39) output hl (e.g. h=$03 l=$09).
+//              Replace trainling 0's with space ($10). 00 -> '  '
+// d02a-d039:   input a (e.g. $39) output hl (e.g. h=$03 l=$09).
+//              Replace trainling 0's with space ($10). 00 -> ' 0'
+// d03a-d046:   input a (e.g. $39) output hl (e.g. h=$03 l=$09). 00 -> '00'
+// d047-d086:   a /= e (e can be 0!)
+// d087-d0a4:   print ASCII string from HL to IX (sub $30 to every char)
+// d0a4-d0be:   print any string from HL to IX
+// d0bf-d109:   print ASCII string from HL to IX. Color is in c. (e.g. "game over")
+// d10a-d11f:   print 2 digit decimal number in hl to ix, color c. change ix
+// d120-d157:   update score: add 3 BCD bytes at ix to those at iy, then clear those at ix
+// d158-d165:   print digit: (IX+0) <- H; (IX+1) <-L. ix+=40
+// d166-d174:   hl = (hl + 2*a)
+// d175-d181:   hl *= e (e must be non zero)
+// d182-d19a:   hl /= de
 				protection_data = memory_region(REGION_CPU3)[0x185+protection_index++];
 			else
 				protection_data = 0xc9;
@@ -182,7 +182,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-									Sound CPU
+                                    Sound CPU
 
 ***************************************************************************/
 
@@ -202,7 +202,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
@@ -281,7 +281,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-								Graphics Layouts
+                                Graphics Layouts
 
 ***************************************************************************/
 
@@ -319,7 +319,7 @@ static struct GfxDecodeInfo thedeep_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
@@ -403,7 +403,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 

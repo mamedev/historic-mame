@@ -10,36 +10,36 @@ How to calibrate the guns:
   - once you get back to the start again press f2 to exit.
 
 Final Lap Notes:
-	1..4 cabinets may be wired together.
-	To move through self test options, press gas pedal and change gear shift from low to high
-	To change an option, move gear shift from low to high without touching the gas pedal
+    1..4 cabinets may be wired together.
+    To move through self test options, press gas pedal and change gear shift from low to high
+    To change an option, move gear shift from low to high without touching the gas pedal
 
 known issues:
-	- sprite/tilemap orthogonality needed
-	- bad road colors in Final Lap and Suzuka series
+    - sprite/tilemap orthogonality needed
+    - bad road colors in Final Lap and Suzuka series
 
-	Finest Hour:
-	- roz plane colors are bad in-game
+    Finest Hour:
+    - roz plane colors are bad in-game
 
-	Final Lap:
-	- sprite size bit is bogus during splash screen
+    Final Lap:
+    - sprite size bit is bogus during splash screen
 
-	Final Lap 3:
-	- bad steering
-	- uses unaligned 32x32 sprites, which aren't handled correctly in vidhrdw/namcos2.c yet
+    Final Lap 3:
+    - bad steering
+    - uses unaligned 32x32 sprites, which aren't handled correctly in vidhrdw/namcos2.c yet
 
-	Four Trax
-	- some graphics glitches (POSIRQ-related?)
-	- sprite banking (for rear view mirror) isn't working
+    Four Trax
+    - some graphics glitches (POSIRQ-related?)
+    - sprite banking (for rear view mirror) isn't working
 
-	Suzuka 8 Hours II
-	- some sprite cropping issues
+    Suzuka 8 Hours II
+    - some sprite cropping issues
 
-	Legend of Valkyrie
-	- gives ADSMISS error on startup
+    Legend of Valkyrie
+    - gives ADSMISS error on startup
 
-	Bubble Trouble (Golly Ghost II)
-	- not dumped
+    Bubble Trouble (Golly Ghost II)
+    - not dumped
 
 The Namco System II board is a 5 ( only 4 are emulated ) CPU system. The
 complete system consists of two boards: CPU + GRAPHICS. It contains a large
@@ -55,14 +55,14 @@ CPU Board details
 =================
 
 CPU BOARD - Master/Slave CPU, Sound CPU, I/O CPU, Serial I/F CPU
-			Text/Scrolling layer generation and video pixel generator.
-			Sound Generation.
+            Text/Scrolling layer generation and video pixel generator.
+            Sound Generation.
 
-CPU1 - Master CPU				(68K)
-CPU2 - Slave CPU				(68K)
-CPU3 - Sound/IO engine			(6809)
-CPU4 - IO Microcontroller		(63705) Dips/input ports
-CPU5 - Serial I/F Controller	(??? - Not emulated)
+CPU1 - Master CPU               (68K)
+CPU2 - Slave CPU                (68K)
+CPU3 - Sound/IO engine          (6809)
+CPU4 - IO Microcontroller       (63705) Dips/input ports
+CPU5 - Serial I/F Controller    (??? - Not emulated)
 
 The 4 CPU's are all connected via a central 2KByte dual port SRAM. The two
 68000s are on one side and the 6809/63705 are on the other side.
@@ -74,8 +74,8 @@ logic sits.
 So far only 1 CPU board variant has been identified, unlike the GFX board...
 
 All sound circuitry is contained on the CPU board, it consists of:
-	YM2151
-	C140 (24 Channel Stereo PCM Sample player)
+    YM2151
+    C140 (24 Channel Stereo PCM Sample player)
 
 The CPU board also contains the frame timing and video image generation
 circuitry along with text/scroll planes and the palette generator. The system
@@ -94,9 +94,9 @@ plane also has its own priority level.
 The video image generator receives a pixel stream from the graphics board
 which contains:
 
-		PEN NUMBER
-		COLOUR BANK
-		PIXEL PRIORITY
+        PEN NUMBER
+        COLOUR BANK
+        PIXEL PRIORITY
 
 This stream is then combined with the stream from the text plane pixel
 generator with the highest priority pixel being displayed on screen.
@@ -133,241 +133,241 @@ decoding pal from the Cosmo Gang board.
 
 
 #############################################################
-#															#
-#		MASTER 68000 PRIVATE MEMORY AREA (MAIN PCB) 		#
-#															#
+#                                                           #
+#       MASTER 68000 PRIVATE MEMORY AREA (MAIN PCB)         #
+#                                                           #
 #############################################################
-# Function						   Address		  R/W  DATA #
+# Function                         Address        R/W  DATA #
 #############################################################
-Program ROM 					   000000-03FFFF  R    D00-D15
+Program ROM                        000000-03FFFF  R    D00-D15
 
-Program RAM 					   100000-10FFFF  R/W  D00-D15
+Program RAM                        100000-10FFFF  R/W  D00-D15
 
-EEPROM							   180000-183FFF  R/W  D00-D07
+EEPROM                             180000-183FFF  R/W  D00-D07
 
-Interrupt Controller C148		   1C0000-1FFFFF  R/W  D00-D02
-	????????					   1C0XXX
-	????????					   1C2XXX
-	????????					   1C4XXX
-	Master/Slave IRQ level		   1C6XXX			   D00-D02
-	EXIRQ level 				   1C8XXX			   D00-D02
-	POSIRQ level				   1CAXXX			   D00-D02
-	SCIRQ level 				   1CCXXX			   D00-D02
-	VBLANK IRQ level			   1CEXXX			   D00-D02
-	????????					   1D0XXX
-	????????                       1D4000 trigger master/slave INT?
+Interrupt Controller C148          1C0000-1FFFFF  R/W  D00-D02
+    ????????                       1C0XXX
+    ????????                       1C2XXX
+    ????????                       1C4XXX
+    Master/Slave IRQ level         1C6XXX              D00-D02
+    EXIRQ level                    1C8XXX              D00-D02
+    POSIRQ level                   1CAXXX              D00-D02
+    SCIRQ level                    1CCXXX              D00-D02
+    VBLANK IRQ level               1CEXXX              D00-D02
+    ????????                       1D0XXX
+    ????????                       1D4000 trigger master/slave INT?
 
-	Acknowlegde Master/Slave IRQ   1D6XXX ack master/slave INT
-	Acknowledge EXIRQ			   1D8XXX
-	Acknowledge POSIRQ			   1DAXXX
-	Acknowledge SCIRQ			   1DCXXX
-	Acknowledge VBLANK IRQ		   1DEXXX
+    Acknowlegde Master/Slave IRQ   1D6XXX ack master/slave INT
+    Acknowledge EXIRQ              1D8XXX
+    Acknowledge POSIRQ             1DAXXX
+    Acknowledge SCIRQ              1DCXXX
+    Acknowledge VBLANK IRQ         1DEXXX
 
-	EEPROM Ready status 		   1E0XXX		  R    D01
-	Sound CPU Reset control 	   1E2XXX			W  D01
-	Slave 68000 & IO CPU Reset	   1E4XXX			W  D01
-	Watchdog reset kicker		   1E6XXX			W
-
-
-
-#############################################################
-#															#
-#		 SLAVE 68000 PRIVATE MEMORY AREA (MAIN PCB) 		#
-#															#
-#############################################################
-# Function						   Address		  R/W  DATA #
-#############################################################
-Program ROM 					   000000-03FFFF  R    D00-D15
-
-Program RAM 					   100000-10FFFF  R/W  D00-D15
-
-Interrupt Controller C148		   1C0000-1FFFFF  R/W  D00-D02
-	????????					   1C0XXX
-	????????					   1C2XXX
-	????????					   1C4XXX
-	Master/Slave IRQ level		   1C6XXX			   D00-D02
-	EXIRQ level 				   1C8XXX			   D00-D02
-	POSIRQ level				   1CAXXX			   D00-D02
-	SCIRQ level 				   1CCXXX			   D00-D02
-	VBLANK IRQ level			   1CEXXX			   D00-D02
-	????????					   1D0XXX
-	Acknowlegde Master/Slave IRQ   1D6XXX
-	Acknowledge EXIRQ			   1D8XXX
-	Acknowledge POSIRQ			   1DAXXX
-	Acknowledge SCIRQ			   1DCXXX
-	Acknowledge VBLANK IRQ		   1DEXXX
-	Watchdog reset kicker		   1E6XXX			W
-
+    EEPROM Ready status            1E0XXX         R    D01
+    Sound CPU Reset control        1E2XXX           W  D01
+    Slave 68000 & IO CPU Reset     1E4XXX           W  D01
+    Watchdog reset kicker          1E6XXX           W
 
 
 
 #############################################################
-#															#
-#			SHARED 68000 MEMORY AREA (MAIN PCB) 			#
-#															#
+#                                                           #
+#        SLAVE 68000 PRIVATE MEMORY AREA (MAIN PCB)         #
+#                                                           #
 #############################################################
-# Function						   Address		  R/W  DATA #
+# Function                         Address        R/W  DATA #
 #############################################################
-Data ROMS 0-1					   200000-2FFFFF  R    D00-D15
+Program ROM                        000000-03FFFF  R    D00-D15
 
-Data ROMS 2-3					   300000-3FFFFF  R    D00-D15
+Program RAM                        100000-10FFFF  R/W  D00-D15
 
-Screen memory for text planes	   400000-41FFFF  R/W  D00-D15
+Interrupt Controller C148          1C0000-1FFFFF  R/W  D00-D02
+    ????????                       1C0XXX
+    ????????                       1C2XXX
+    ????????                       1C4XXX
+    Master/Slave IRQ level         1C6XXX              D00-D02
+    EXIRQ level                    1C8XXX              D00-D02
+    POSIRQ level                   1CAXXX              D00-D02
+    SCIRQ level                    1CCXXX              D00-D02
+    VBLANK IRQ level               1CEXXX              D00-D02
+    ????????                       1D0XXX
+    Acknowlegde Master/Slave IRQ   1D6XXX
+    Acknowledge EXIRQ              1D8XXX
+    Acknowledge POSIRQ             1DAXXX
+    Acknowledge SCIRQ              1DCXXX
+    Acknowledge VBLANK IRQ         1DEXXX
+    Watchdog reset kicker          1E6XXX           W
 
-Screen control registers		   420000-43FFFF  R/W  D00-D15
-
-	Scroll plane 0 - X offset	   42XX02			W  D00-D11
-	Scroll plane 0 - X flip 	   42XX02			W  D15
-
-	??????						   42XX04			W  D14-D15
-
-	Scroll plane 0 - Y offset	   42XX06			W  D00-D11
-	Scroll plane 0 - Y flip 	   42XX06			W  D15
-
-	??????						   42XX08			W  D14-D15
-
-	Scroll plane 1 - X offset	   42XX0A			W  D00-D11
-	Scroll plane 1 - X flip 	   42XX0A			W  D15
-
-	??????						   42XX0C			W  D14-D15
-
-	Scroll plane 1 - Y offset	   42XX0E			W  D00-D11
-	Scroll plane 1 - Y flip 	   42XX0E			W  D15
-
-	??????						   42XX10			W  D14-D15
-
-	Scroll plane 2 - X offset	   42XX12			W  D00-D11
-	Scroll plane 2 - X flip 	   42XX12			W  D15
-
-	??????						   42XX14			W  D14-D15
-
-	Scroll plane 2 - Y offset	   42XX16			W  D00-D11
-	Scroll plane 2 - Y flip 	   42XX16			W  D15
-
-	??????						   42XX18			W  D14-D15
-
-	Scroll plane 3 - X offset	   42XX1A			W  D00-D11
-	Scroll plane 3 - X flip 	   42XX1A			W  D15
-
-	??????						   42XX1C			W  D14-D15
-
-	Scroll plane 3 - Y offset	   42XX1E			W  D00-D11
-	Scroll plane 3 - Y flip 	   42XX1E			W  D15
-
-	Scroll plane 0 priority 	   42XX20			W  D00-D02
-	Scroll plane 1 priority 	   42XX22			W  D00-D02
-	Scroll plane 2 priority 	   42XX24			W  D00-D02
-	Scroll plane 3 priority 	   42XX26			W  D00-D02
-	Text plane 0 priority		   42XX28			W  D00-D02
-	Text plane 1 priority		   42XX2A			W  D00-D02
-
-	Scroll plane 0 colour		   42XX30			W  D00-D03
-	Scroll plane 1 colour		   42XX32			W  D00-D03
-	Scroll plane 2 colour		   42XX34			W  D00-D03
-	Scroll plane 3 colour		   42XX36			W  D00-D03
-	Text plane 0 colour 		   42XX38			W  D00-D03
-	Text plane 1 colour 		   42XX3A			W  D00-D03
-
-Screen palette control/data 	   440000-45FFFF  R/W  D00-D15
-	RED   ROZ/Sprite pens 8x256    440000-440FFF
-	GREEN						   441000-441FFF
-	BLUE						   442000-442FFF
-	Control registers			   443000-44300F  R/W  D00-D15
-	RED   ROZ/Sprite pens 8x256    444000-444FFF
-	GREEN						   445000-445FFF
-	BLUE						   446000-446FFF
-																   447000-447FFF
-	RED   Text plane pens 8x256    448000-448FFF
-	GREEN						   449000-449FFF
-	BLUE						   44A000-44AFFF
-																   44B000-44BFFF
-	RED   Unused pens 8x256 	   44C000-44CFFF
-	GREEN						   44D000-44DFFF
-	BLUE						   44E000-44EFFF
-
-Dual port memory				   460000-47FFFF  R/W  D00-D07
-
-Serial comms processor			   480000-49FFFF
-
-Serial comms processor - Data	   4A0000-4BFFFF
 
 
 
 #############################################################
-#															#
-#			SHARED 68000 MEMORY AREA (GFX PCB)				#
-#			  (STANDARD NAMCO SYSTEM 2 BOARD)				#
-#															#
+#                                                           #
+#           SHARED 68000 MEMORY AREA (MAIN PCB)             #
+#                                                           #
 #############################################################
-# Function						   Address		  R/W  DATA #
+# Function                         Address        R/W  DATA #
 #############################################################
-Sprite RAM - 16 banks x 128 spr.   C00000-C03FFF  R/W  D00-D15
+Data ROMS 0-1                      200000-2FFFFF  R    D00-D15
 
-Sprite bank select				   C40000			W  D00-D03
-Rotate colour bank select							W  D08-D11
-Rotate priority level								W  D12-D14
+Data ROMS 2-3                      300000-3FFFFF  R    D00-D15
 
-Rotate/Zoom RAM (ROZ)			   C80000-CBFFFF  R/W  D00-D15
+Screen memory for text planes      400000-41FFFF  R/W  D00-D15
 
-Rotate/Zoom - Down dy	  (8:8)    CC0000		  R/W  D00-D15
-Rotate/Zoom - Right dy	  (8.8)    CC0002		  R/W  D00-D15
-Rotate/Zoom - Down dx	  (8.8)    CC0004		  R/W  D00-D15
-Rotate/Zoom - Right dx	  (8.8)    CC0006		  R/W  D00-D15
-Rotate/Zoom - Start Ypos  (12.4)   CC0008		  R/W  D00-D15
-Rotate/Zoom - Start Xpos  (12.4)   CC000A		  R/W  D00-D15
-Rotate/Zoom control 			   CC000E		  R/W  D00-D15
+Screen control registers           420000-43FFFF  R/W  D00-D15
 
-Key generator/Security device	   D00000-D0000F  R/W  D00-D15
+    Scroll plane 0 - X offset      42XX02           W  D00-D11
+    Scroll plane 0 - X flip        42XX02           W  D15
+
+    ??????                         42XX04           W  D14-D15
+
+    Scroll plane 0 - Y offset      42XX06           W  D00-D11
+    Scroll plane 0 - Y flip        42XX06           W  D15
+
+    ??????                         42XX08           W  D14-D15
+
+    Scroll plane 1 - X offset      42XX0A           W  D00-D11
+    Scroll plane 1 - X flip        42XX0A           W  D15
+
+    ??????                         42XX0C           W  D14-D15
+
+    Scroll plane 1 - Y offset      42XX0E           W  D00-D11
+    Scroll plane 1 - Y flip        42XX0E           W  D15
+
+    ??????                         42XX10           W  D14-D15
+
+    Scroll plane 2 - X offset      42XX12           W  D00-D11
+    Scroll plane 2 - X flip        42XX12           W  D15
+
+    ??????                         42XX14           W  D14-D15
+
+    Scroll plane 2 - Y offset      42XX16           W  D00-D11
+    Scroll plane 2 - Y flip        42XX16           W  D15
+
+    ??????                         42XX18           W  D14-D15
+
+    Scroll plane 3 - X offset      42XX1A           W  D00-D11
+    Scroll plane 3 - X flip        42XX1A           W  D15
+
+    ??????                         42XX1C           W  D14-D15
+
+    Scroll plane 3 - Y offset      42XX1E           W  D00-D11
+    Scroll plane 3 - Y flip        42XX1E           W  D15
+
+    Scroll plane 0 priority        42XX20           W  D00-D02
+    Scroll plane 1 priority        42XX22           W  D00-D02
+    Scroll plane 2 priority        42XX24           W  D00-D02
+    Scroll plane 3 priority        42XX26           W  D00-D02
+    Text plane 0 priority          42XX28           W  D00-D02
+    Text plane 1 priority          42XX2A           W  D00-D02
+
+    Scroll plane 0 colour          42XX30           W  D00-D03
+    Scroll plane 1 colour          42XX32           W  D00-D03
+    Scroll plane 2 colour          42XX34           W  D00-D03
+    Scroll plane 3 colour          42XX36           W  D00-D03
+    Text plane 0 colour            42XX38           W  D00-D03
+    Text plane 1 colour            42XX3A           W  D00-D03
+
+Screen palette control/data        440000-45FFFF  R/W  D00-D15
+    RED   ROZ/Sprite pens 8x256    440000-440FFF
+    GREEN                          441000-441FFF
+    BLUE                           442000-442FFF
+    Control registers              443000-44300F  R/W  D00-D15
+    RED   ROZ/Sprite pens 8x256    444000-444FFF
+    GREEN                          445000-445FFF
+    BLUE                           446000-446FFF
+                                                                   447000-447FFF
+    RED   Text plane pens 8x256    448000-448FFF
+    GREEN                          449000-449FFF
+    BLUE                           44A000-44AFFF
+                                                                   44B000-44BFFF
+    RED   Unused pens 8x256        44C000-44CFFF
+    GREEN                          44D000-44DFFF
+    BLUE                           44E000-44EFFF
+
+Dual port memory                   460000-47FFFF  R/W  D00-D07
+
+Serial comms processor             480000-49FFFF
+
+Serial comms processor - Data      4A0000-4BFFFF
 
 
 
 #############################################################
-#															#
-#			SHARED 68000 MEMORY AREA (GFX PCB)				#
-#			(METAL HAWK PCB - DUAL ROZ PLANES)				#
-#															#
+#                                                           #
+#           SHARED 68000 MEMORY AREA (GFX PCB)              #
+#             (STANDARD NAMCO SYSTEM 2 BOARD)               #
+#                                                           #
 #############################################################
-# Function						   Address		  R/W  DATA #
+# Function                         Address        R/W  DATA #
 #############################################################
 Sprite RAM - 16 banks x 128 spr.   C00000-C03FFF  R/W  D00-D15
 
-Rotate/Zoom RAM (ROZ1)			   C40000-C47FFF  R/W  D00-D15
+Sprite bank select                 C40000           W  D00-D03
+Rotate colour bank select                           W  D08-D11
+Rotate priority level                               W  D12-D14
 
-Rotate/Zoom RAM (ROZ2)			   C48000-C4FFFF  R/W  D00-D15
+Rotate/Zoom RAM (ROZ)              C80000-CBFFFF  R/W  D00-D15
 
-Rotate/Zoom1 - Down dy	   (8:8)   D00000		  R/W  D00-D15
-Rotate/Zoom1 - Right dy    (8.8)   D00002		  R/W  D00-D15
-Rotate/Zoom1 - Down dx	   (8.8)   D00004		  R/W  D00-D15
-Rotate/Zoom1 - Right dx    (8.8)   D00006		  R/W  D00-D15
-Rotate/Zoom1 - Start Ypos  (12.4)  D00008		  R/W  D00-D15
-Rotate/Zoom1 - Start Xpos  (12.4)  D0000A		  R/W  D00-D15
-Rotate/Zoom1 - control			   D0000E		  R/W  D00-D15
+Rotate/Zoom - Down dy     (8:8)    CC0000         R/W  D00-D15
+Rotate/Zoom - Right dy    (8.8)    CC0002         R/W  D00-D15
+Rotate/Zoom - Down dx     (8.8)    CC0004         R/W  D00-D15
+Rotate/Zoom - Right dx    (8.8)    CC0006         R/W  D00-D15
+Rotate/Zoom - Start Ypos  (12.4)   CC0008         R/W  D00-D15
+Rotate/Zoom - Start Xpos  (12.4)   CC000A         R/W  D00-D15
+Rotate/Zoom control                CC000E         R/W  D00-D15
 
-Rotate/Zoom2 - Down dy	   (8:8)   D00010		  R/W  D00-D15
-Rotate/Zoom2 - Right dy    (8.8)   D00012		  R/W  D00-D15
-Rotate/Zoom2 - Down dx	   (8.8)   D00014		  R/W  D00-D15
-Rotate/Zoom2 - Right dx    (8.8)   D00016		  R/W  D00-D15
-Rotate/Zoom2 - Start Ypos  (12.4)  D00018		  R/W  D00-D15
-Rotate/Zoom2 - Start Xpos  (12.4)  D0001A		  R/W  D00-D15
-Rotate/Zoom2 - control			   D0001E		  R/W  D00-D15
+Key generator/Security device      D00000-D0000F  R/W  D00-D15
 
-Sprite bank select ?			   E00000			W  D00-D15
 
 
 #############################################################
-#															#
-#			SHARED 68000 MEMORY AREA (GFX PCB)				#
-#			(FINAL LAP PCB) 								#
-#															#
+#                                                           #
+#           SHARED 68000 MEMORY AREA (GFX PCB)              #
+#           (METAL HAWK PCB - DUAL ROZ PLANES)              #
+#                                                           #
 #############################################################
-# Function						   Address		  R/W  DATA #
+# Function                         Address        R/W  DATA #
+#############################################################
+Sprite RAM - 16 banks x 128 spr.   C00000-C03FFF  R/W  D00-D15
+
+Rotate/Zoom RAM (ROZ1)             C40000-C47FFF  R/W  D00-D15
+
+Rotate/Zoom RAM (ROZ2)             C48000-C4FFFF  R/W  D00-D15
+
+Rotate/Zoom1 - Down dy     (8:8)   D00000         R/W  D00-D15
+Rotate/Zoom1 - Right dy    (8.8)   D00002         R/W  D00-D15
+Rotate/Zoom1 - Down dx     (8.8)   D00004         R/W  D00-D15
+Rotate/Zoom1 - Right dx    (8.8)   D00006         R/W  D00-D15
+Rotate/Zoom1 - Start Ypos  (12.4)  D00008         R/W  D00-D15
+Rotate/Zoom1 - Start Xpos  (12.4)  D0000A         R/W  D00-D15
+Rotate/Zoom1 - control             D0000E         R/W  D00-D15
+
+Rotate/Zoom2 - Down dy     (8:8)   D00010         R/W  D00-D15
+Rotate/Zoom2 - Right dy    (8.8)   D00012         R/W  D00-D15
+Rotate/Zoom2 - Down dx     (8.8)   D00014         R/W  D00-D15
+Rotate/Zoom2 - Right dx    (8.8)   D00016         R/W  D00-D15
+Rotate/Zoom2 - Start Ypos  (12.4)  D00018         R/W  D00-D15
+Rotate/Zoom2 - Start Xpos  (12.4)  D0001A         R/W  D00-D15
+Rotate/Zoom2 - control             D0001E         R/W  D00-D15
+
+Sprite bank select ?               E00000           W  D00-D15
+
+
+#############################################################
+#                                                           #
+#           SHARED 68000 MEMORY AREA (GFX PCB)              #
+#           (FINAL LAP PCB)                                 #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
 #############################################################
 Sprite RAM - ?? banks x ??? spr.   800000-80FFFF  R/W  D00-D15
-Sprite bank select ?			   840000			W  D00-D15
-Road RAM for tile layout		   880000-88FFFF  R/W  D00-D15
-Road RAM for tiles gfx data 	   890000-897FFF  R/W  D00-D15
-Road Generator controls 		   89F000-89FFFF  R/W  D00-D15
-Key generator/Security device	   A00000-A0000F  R/W  D00-D15
+Sprite bank select ?               840000           W  D00-D15
+Road RAM for tile layout           880000-88FFFF  R/W  D00-D15
+Road RAM for tiles gfx data        890000-897FFF  R/W  D00-D15
+Road Generator controls            89F000-89FFFF  R/W  D00-D15
+Key generator/Security device      A00000-A0000F  R/W  D00-D15
 
 
 
@@ -388,19 +388,19 @@ Reset output
 Watchdog
 
 
-C148pin 	Master CPU		Slave CPU
+C148pin     Master CPU      Slave CPU
 -------------------------------------
-YBNK		VBLANK			VBLANK
-IRQ4		SCIRQ			SCIRQ		(Serial comms IC Interrupt)
-IRQ3		POSIRQ			POSIRQ		(Comes from C116, pixel generator, Position interrup ?? line based ??)
-IRQ2		EXIRQ			EXIRQ		(Goes to video board but does not appear to be connected)
-IRQ1		SCPUIRQ 		MCPUIRQ 	(Master/Slave interrupts)
+YBNK        VBLANK          VBLANK
+IRQ4        SCIRQ           SCIRQ       (Serial comms IC Interrupt)
+IRQ3        POSIRQ          POSIRQ      (Comes from C116, pixel generator, Position interrup ?? line based ??)
+IRQ2        EXIRQ           EXIRQ       (Goes to video board but does not appear to be connected)
+IRQ1        SCPUIRQ         MCPUIRQ     (Master/Slave interrupts)
 
-OP0 		SSRES						(Sound CPU reset - 6809 only)
+OP0         SSRES                       (Sound CPU reset - 6809 only)
 OP1
 OP2
 
-IP0 		EEPROM BUSY
+IP0         EEPROM BUSY
 IP1
 IP2
 
@@ -424,14 +424,14 @@ Palette
 
 Ram test does:
 
-$440000-$442fff 	Object ???
-$444000-$446fff 	Char   ???
-$448000-$44afff 	Roz    ???
+$440000-$442fff     Object ???
+$444000-$446fff     Char   ???
+$448000-$44afff     Roz    ???
 $44c000-$44efff
 
-$448000-$4487ff 	Red??
-$448800-$448fff 	Green??
-$449000-$4497ff 	Blue??
+$448000-$4487ff     Red??
+$448800-$448fff     Green??
+$449000-$4497ff     Blue??
 
 
 Steel Gunner 2
@@ -453,7 +453,7 @@ $a00000 checks have been seen on the Final Lap boards.
 
 
 /*************************************************************/
-/* 68000/6809/63705 Shared memory area - DUAL PORT Memory	 */
+/* 68000/6809/63705 Shared memory area - DUAL PORT Memory    */
 /*************************************************************/
 
 static data8_t *namcos2_dpram;	/* 2Kx8 */
@@ -541,8 +541,8 @@ GollyGhostUpdateDiorama_c0( int data )
 		artwork_show("refrigerator",data&0x08 );
 		artwork_show("porch",       data&0x10 );
 		/* data&0x20 : player#1 (ZIP) force feedback
-		 * data&0x40 : player#2 (ZAP) force feedback
-		 */
+         * data&0x40 : player#2 (ZAP) force feedback
+         */
 	}
 	else
 	{
@@ -595,19 +595,19 @@ static WRITE8_HANDLER( namcos2_dpram_byte_w )
 }
 
 /*************************************************************/
-/* SHARED 68000 CPU Memory declarations 					 */
+/* SHARED 68000 CPU Memory declarations                      */
 /*************************************************************/
 
-/*	ROM0   = $200000-$2fffff
-	ROM1   = $300000-$3fffff
-	SCR    = $400000-$41ffff
-	SCRDT  = $420000-$43ffff
-	PALET  = $440000-$45ffff
-	DPCS   = $460000-$47ffff
-	SCOM   = $480000-$49ffff
-	SCOMDT = $4a0000-$4bffff
+/*  ROM0   = $200000-$2fffff
+    ROM1   = $300000-$3fffff
+    SCR    = $400000-$41ffff
+    SCRDT  = $420000-$43ffff
+    PALET  = $440000-$45ffff
+    DPCS   = $460000-$47ffff
+    SCOM   = $480000-$49ffff
+    SCOMDT = $4a0000-$4bffff
 
-	0xc00000 ONWARDS are unverified memory locations on the video board
+    0xc00000 ONWARDS are unverified memory locations on the video board
 */
 
 #define NAMCOS2_68K_DEFAULT_CPU_BOARD_AM \
@@ -742,7 +742,7 @@ static ADDRESS_MAP_START( slave_luckywld_am, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/* 6809 SOUND CPU Memory declarations						 */
+/* 6809 SOUND CPU Memory declarations                        */
 /*************************************************************/
 
 static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
@@ -771,7 +771,7 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/* 68705 IO CPU Memory declarations 						 */
+/* 68705 IO CPU Memory declarations                          */
 /*************************************************************/
 
 static ADDRESS_MAP_START( readmem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
@@ -808,13 +808,13 @@ static ADDRESS_MAP_START( writemem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/*															 */
-/*	NAMCO SYSTEM 2 PORT MACROS								 */
-/*															 */
-/*	Below are the port defintion macros that should be used  */
-/*	as the basis for defining a port set for a Namco System2  */
-/*	game.													 */
-/*															 */
+/*                                                           */
+/*  NAMCO SYSTEM 2 PORT MACROS                               */
+/*                                                           */
+/*  Below are the port defintion macros that should be used  */
+/*  as the basis for defining a port set for a Namco System2  */
+/*  game.                                                    */
+/*                                                           */
 /*************************************************************/
 
 #define NAMCOS2_MCU_PORT_B_DEFAULT \
@@ -901,20 +901,20 @@ ADDRESS_MAP_END
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 /*************************************************************/
-/*															 */
-/*	NAMCO SYSTEM 2 PORT DEFINITIONS 						 */
-/*															 */
-/*	There is a standard port definition defined that will	 */
-/*	work for most games, if you wish to produce a special	 */
-/*	definition for a particular game then see the assault	 */
-/*	and dirtfox definitions for examples of how to construct */
-/*	a special port definition								 */
-/*															 */
-/*	The default definitions includes only the following list */
-/*	of connections :										 */
-/*	  2 Joysticks, 6 Buttons, 1 Service, 1 Advance			 */
-/*	  2 Start												 */
-/*															 */
+/*                                                           */
+/*  NAMCO SYSTEM 2 PORT DEFINITIONS                          */
+/*                                                           */
+/*  There is a standard port definition defined that will    */
+/*  work for most games, if you wish to produce a special    */
+/*  definition for a particular game then see the assault    */
+/*  and dirtfox definitions for examples of how to construct */
+/*  a special port definition                                */
+/*                                                           */
+/*  The default definitions includes only the following list */
+/*  of connections :                                         */
+/*    2 Joysticks, 6 Buttons, 1 Service, 1 Advance           */
+/*    2 Start                                                */
+/*                                                           */
 /*************************************************************/
 
 INPUT_PORTS_START( default )
@@ -969,11 +969,11 @@ INPUT_PORTS_START( finallap )
 	PORT_DIPSETTING(	0x01, "H" )
 	PORT_DIPSETTING(	0x00, "L" )
 	/**
-	 * Each player can have one of four car types, selected by attaching a
-	 * particular special connector (included with the game) to the PCB.
-	 *
-	 * (see also Car Type(B) below in Port H)
-	 */
+     * Each player can have one of four car types, selected by attaching a
+     * particular special connector (included with the game) to the PCB.
+     *
+     * (see also Car Type(B) below in Port H)
+     */
 	PORT_DIPNAME( 0x02, 0x02, "Car Type(A)")
 	PORT_DIPSETTING(	0x02, "McLaren/Williams" )
 	PORT_DIPSETTING(	0x00, "Lotus/March" )
@@ -1217,8 +1217,8 @@ INPUT_PORTS_START( assault )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_START	 /* 63B05Z0 - $3002 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-//	PORT_START	 /* 63B05Z0 - $3003 */
-//	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_START   /* 63B05Z0 - $3003 */
+//  PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( suzuka )
@@ -1412,7 +1412,7 @@ INPUT_PORTS_END
 
 
 /*************************************************************/
-/* Namco System II - Graphics Declarations					 */
+/* Namco System II - Graphics Declarations                   */
 /*************************************************************/
 
 static struct GfxLayout obj_layout = {
@@ -1555,7 +1555,7 @@ static struct C140interface C140_interface =
 
 Master clock = 49.152MHz
 
-68000 Measured at  84ns = 12.4MHz	BUT 49.152MHz/4 = 12.288MHz = 81ns
+68000 Measured at  84ns = 12.4MHz   BUT 49.152MHz/4 = 12.288MHz = 81ns
 6809  Measured at 343ns = 2.915 MHz BUT 49.152MHz/16 = 3.072MHz = 325ns
 63B05 Measured at 120ns = 8.333 MHz BUT 49.152MHz/6 = 8.192MHz = 122ns
 
@@ -1565,8 +1565,8 @@ internal divider.
 
 Soooo;
 
-680000	= 12288000
-6809	=  3072000
+680000  = 12288000
+6809    =  3072000
 63B05Z0 =  2048000
 
 The interrupts to CPU4 has been measured at 60Hz (16.5mS period) on a
@@ -1576,9 +1576,9 @@ via software as INT1
 *******************************************/
 
 /*************************************************************/
-/*															 */
-/*	NAMCO SYSTEM 2 MACHINE DEFINTIONS						 */
-/*															 */
+/*                                                           */
+/*  NAMCO SYSTEM 2 MACHINE DEFINTIONS                        */
+/*                                                           */
 /*************************************************************/
 
 static MACHINE_DRIVER_START( default )
@@ -1886,7 +1886,7 @@ MACHINE_DRIVER_END
 
 
 /*************************************************************/
-/* Namco System II - ROM Declarations						 */
+/* Namco System II - ROM Declarations                        */
 /*************************************************************/
 
 #define NAMCOS2_GFXROM_LOAD_128K(romname,start,chksum)\
@@ -3747,7 +3747,7 @@ ROM_START( sws )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Sound voices */
 	ROM_LOAD( "ss1_voi1.3m",  0x000000, 0x080000, CRC(b88278cb) SHA1(49fde0970ff6bc72343f0f72d5e4c112013c7e43) ) // couldn't get a good read i suspect the one from sws92 is right 99.9% the same
-//	ROM_LOAD( "ss_voi1.bin",  0x000000, 0x080000, CRC(503e51b7) SHA1(2e159fcc9bb0bef9a3476ae233bc8d61fabbb4bd) )
+//  ROM_LOAD( "ss_voi1.bin",  0x000000, 0x080000, CRC(503e51b7) SHA1(2e159fcc9bb0bef9a3476ae233bc8d61fabbb4bd) )
 ROM_END
 
 /* SUPER WORLD STADIUM 92 */
@@ -4565,8 +4565,8 @@ DRIVER_INIT( luckywld ){
 }
 
 /* Based on the dumped BIOS versions it looks like Namco changed the BIOS rom */
-/* from sys2c65b to sys2c65c sometime between 1988 and 1990 as mirai ninja	  */
-/* and metal hawk have the B version and dragon saber has the C version 	  */
+/* from sys2c65b to sys2c65c sometime between 1988 and 1990 as mirai ninja    */
+/* and metal hawk have the B version and dragon saber has the C version       */
 
 /*    YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MONITOR, COMPANY, FULLNAME */
 GAMEX(1987, finallap, 0,        finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Rev E)", GAME_IMPERFECT_GRAPHICS )

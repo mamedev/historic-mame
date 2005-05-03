@@ -5,72 +5,72 @@
 
   0000-0bff ROM
 
-  1c00-1c1f RAM 	CPU scratch pad is first 32 bytes of video RAM(not displayed)
+  1c00-1c1f RAM     CPU scratch pad is first 32 bytes of video RAM(not displayed)
 
-  1c20-1eff RAM 	video buffer
-			xxxx	D0 - D5 character select
-					D6		horz line below character (row #9)
-					D7		vert line right of character (bit #0)
+  1c20-1eff RAM     video buffer
+            xxxx    D0 - D5 character select
+                    D6      horz line below character (row #9)
+                    D7      vert line right of character (bit #0)
 
-  1f00-1f03 		R/W hardware
+  1f00-1f03         R/W hardware
 
-			1f00 W	   audio channels
-					D4 gun fire
-					D5 explosion
-					D6 tank engine
-					D7 running man
-			1f00 R	   player 1 joystick
-					D0 up
-					D1 down
-					D2 right
-					D3 left
+            1f00 W     audio channels
+                    D4 gun fire
+                    D5 explosion
+                    D6 tank engine
+                    D7 running man
+            1f00 R     player 1 joystick
+                    D0 up
+                    D1 down
+                    D2 right
+                    D3 left
 
-			1f01 W	D0 - D7 marker y position
-			1f01 R	   player 2 joystick
-					D0 up
-					D1 down
-					D2 right
-					D3 left
+            1f01 W  D0 - D7 marker y position
+            1f01 R     player 2 joystick
+                    D0 up
+                    D1 down
+                    D2 right
+                    D3 left
 
-			1f02 W	D0 - D7 marker x position
-			1f02 R	   player 1 + 2 buttons
-					D0 button 1 player 2
-					D1 button 1 player 1
-					D2 button 2 player 2
-					D3 button 2 player 1
+            1f02 W  D0 - D7 marker x position
+            1f02 R     player 1 + 2 buttons
+                    D0 button 1 player 2
+                    D1 button 1 player 1
+                    D2 button 2 player 2
+                    D3 button 2 player 1
 
-			1f03 W		attract mode
-					D0 toggle on attract mode
-					   (attract mode switched off by coin detected)
-					D4 clear coin detected toggle
-			1f03 R		coinage, coin detected and start buttons
-					D0 coin 1/2 (DIP switch 4)
-					D1 start 'expert'
-					D2 start 'novice'
-					D3 coin detected
+            1f03 W      attract mode
+                    D0 toggle on attract mode
+                       (attract mode switched off by coin detected)
+                    D4 clear coin detected toggle
+            1f03 R      coinage, coin detected and start buttons
+                    D0 coin 1/2 (DIP switch 4)
+                    D1 start 'expert'
+                    D2 start 'novice'
+                    D3 coin detected
 
-  1f04-1f07 		Read only hardware
+  1f04-1f07         Read only hardware
 
-			1f04 R	   vertical scan counter
-					D0 60 Hz
-					D1 120 Hz
-					D2 240 Hz
-					D3 480 Hz
+            1f04 R     vertical scan counter
+                    D0 60 Hz
+                    D1 120 Hz
+                    D2 240 Hz
+                    D3 480 Hz
 
-			1f05 R	   vertical scan counter
-					D0 7.860 KHz
-					D1 3.960 KHz
-					D2 1.980 KHz
-					D3 960 Hz
+            1f05 R     vertical scan counter
+                    D0 7.860 KHz
+                    D1 3.960 KHz
+                    D2 1.980 KHz
+                    D3 960 Hz
 
-			1f06 R	D0 - D7 readback of marker x position
+            1f06 R  D0 - D7 readback of marker x position
 
-			1f07 R	D0 - D7 readback of marker y position
+            1f07 R  D0 - D7 readback of marker y position
 
   I/O ports:
 
   'data'         R          game time
-					D0 - D1 60,90,120,180 seconds (DIP switch 1 - 2)
+                    D0 - D1 60,90,120,180 seconds (DIP switch 1 - 2)
 
 ***************************************************************************/
 
@@ -79,73 +79,73 @@
 
   0000-0bff ROM
 
-  0c00-0c1f RAM 	CPU scratch pad is first 32 bytes of video RAM(not displayed)
+  0c00-0c1f RAM     CPU scratch pad is first 32 bytes of video RAM(not displayed)
 
-  0c20-0eff RAM 	video buffer
-			xxxx	D0 - D5 character select
-					D6		horz line below character (row #9)
-					D7		vert line right of character (bit #0)
+  0c20-0eff RAM     video buffer
+            xxxx    D0 - D5 character select
+                    D6      horz line below character (row #9)
+                    D7      vert line right of character (bit #0)
 
   1000-17ff ROM
 
-  1f00-1f03 		R/W hardware
+  1f00-1f03         R/W hardware
 
-			1f00 W	   audio control bits
-					D0 - D3 not used
-					D4 bowl and hit
-					D5 hit
-					D6 - D7 not used
-			1f00 R	   bowl ball
-					D0 fast
-					D1 slow
-					   joystick
-					D2 right
-					D3 left
+            1f00 W     audio control bits
+                    D0 - D3 not used
+                    D4 bowl and hit
+                    D5 hit
+                    D6 - D7 not used
+            1f00 R     bowl ball
+                    D0 fast
+                    D1 slow
+                       joystick
+                    D2 right
+                    D3 left
 
-			1f01 W	D0 - D7 marker y position
-			1f01 R	   hook control
-					D0 left
-					D1 right
-					D2 - D3 not used
+            1f01 W  D0 - D7 marker y position
+            1f01 R     hook control
+                    D0 left
+                    D1 right
+                    D2 - D3 not used
 
-			1f02 W	D0 - D7 marker x position
-			1f02 R	D0 - D3 not used
+            1f02 W  D0 - D7 marker x position
+            1f02 R  D0 - D3 not used
 
-			1f03 W		attract mode
-					D0 toggle on attract mode
-					   (attract mode switched off by coin detected)
-					D4 clear coin detected toggle
-					D5 can be jumpered to control inverse video
-					D6 - D7 not used
-			1f03 R		coinage, coin detected and start buttons
-					D0 coin 1/2 (DIP switch 4)
-					D1 start
-					D2 not used
-					D3 coin detected
+            1f03 W      attract mode
+                    D0 toggle on attract mode
+                       (attract mode switched off by coin detected)
+                    D4 clear coin detected toggle
+                    D5 can be jumpered to control inverse video
+                    D6 - D7 not used
+            1f03 R      coinage, coin detected and start buttons
+                    D0 coin 1/2 (DIP switch 4)
+                    D1 start
+                    D2 not used
+                    D3 coin detected
 
-  1f04-1f07 		Read only hardware
+  1f04-1f07         Read only hardware
 
-			1f04 R	   vertical scan counter
-					D0 60 Hz
-					D1 120 Hz
-					D2 240 Hz
-					D3 480 Hz
+            1f04 R     vertical scan counter
+                    D0 60 Hz
+                    D1 120 Hz
+                    D2 240 Hz
+                    D3 480 Hz
 
-			1f05 R	   vertical scan counter
-					D0 7.860 KHz
-					D1 3.960 KHz
-					D2 1.980 KHz
-					D3 960 Hz
+            1f05 R     vertical scan counter
+                    D0 7.860 KHz
+                    D1 3.960 KHz
+                    D2 1.980 KHz
+                    D3 960 Hz
 
-			1f06 R	D0 - D7 readback of marker x position
+            1f06 R  D0 - D7 readback of marker x position
 
-			1f07 R	D0 - D7 readback of marker y position
+            1f07 R  D0 - D7 readback of marker y position
 
   I/O ports:
 
   'data'         R          game time
-					D0 time on	   (DIP switch 1)
-					D1 3,5 seconds (DIP switch 2)
+                    D0 time on     (DIP switch 1)
+                    D1 3,5 seconds (DIP switch 2)
 
 ***************************************************************************/
 
@@ -156,67 +156,67 @@
 
   0000-07ff ROM
 
-  1c00-1c1f RAM 	CPU scratch pad is first 32 bytes of video RAM(not displayed)
+  1c00-1c1f RAM     CPU scratch pad is first 32 bytes of video RAM(not displayed)
 
-  1c20-1eff RAM 	video buffer
-			xxxx	D0 - D5 character select
-					D6		horz line below character (row #9)
-					D7		vert line right of character (bit #0)
+  1c20-1eff RAM     video buffer
+            xxxx    D0 - D5 character select
+                    D6      horz line below character (row #9)
+                    D7      vert line right of character (bit #0)
 
-  1f00-1f03 		R/W hardware
+  1f00-1f03         R/W hardware
 
-			1f00 W	   audio channels
-					D4 unused
-					D5 tone 1
-					D6 tone 2
-					D7 unused
-			1f00 R	   player 1 joystick
-					D0 up
-					D1 down
-					D2 right
-					D3 left
+            1f00 W     audio channels
+                    D4 unused
+                    D5 tone 1
+                    D6 tone 2
+                    D7 unused
+            1f00 R     player 1 joystick
+                    D0 up
+                    D1 down
+                    D2 right
+                    D3 left
 
-			1f01 W	D0 - D7 unused
-			1f01 R	   player 2 joystick
-					D0 up
-					D1 down
-					D2 right
-					D3 left
+            1f01 W  D0 - D7 unused
+            1f01 R     player 2 joystick
+                    D0 up
+                    D1 down
+                    D2 right
+                    D3 left
 
-			1f02 W	D0 - D7 unused
-			1f02 R	   player 1 + 2 buttons
-					D0 unused
-					D1 unused
-					D2 unused
-					D3 unused
+            1f02 W  D0 - D7 unused
+            1f02 R     player 1 + 2 buttons
+                    D0 unused
+                    D1 unused
+                    D2 unused
+                    D3 unused
 
-			1f03 W		attract mode
-					D0 toggle on attract mode
-					   (attract mode switched off by coin detected)
-					D4 clear coin detected toggle
-			1f03 R		coinage, coin detected and start buttons
-					D0 coin 1/2 (DIP switch 4)
-					D1 start
-					D2 start
-					D3 coin detected
+            1f03 W      attract mode
+                    D0 toggle on attract mode
+                       (attract mode switched off by coin detected)
+                    D4 clear coin detected toggle
+            1f03 R      coinage, coin detected and start buttons
+                    D0 coin 1/2 (DIP switch 4)
+                    D1 start
+                    D2 start
+                    D3 coin detected
 
-  1f04-1f07 		Read only hardware
+  1f04-1f07         Read only hardware
 
-			1f04 R	   vertical scan counter
-					D0 60 Hz
-					D1 120 Hz
-					D2 240 Hz
-					D3 480 Hz
+            1f04 R     vertical scan counter
+                    D0 60 Hz
+                    D1 120 Hz
+                    D2 240 Hz
+                    D3 480 Hz
 
-			1f05 R	   vertical scan counter
-					D0 7.860 KHz
-					D1 3.960 KHz
-					D2 1.980 KHz
-					D3 960 Hz
+            1f05 R     vertical scan counter
+                    D0 7.860 KHz
+                    D1 3.960 KHz
+                    D2 1.980 KHz
+                    D3 960 Hz
 
-			1f06 R	D0 - D7 unused
+            1f06 R  D0 - D7 unused
 
-			1f07 R	D0 - D7 unused
+            1f07 R  D0 - D7 unused
 
 ***************************************************************************/
 
@@ -667,10 +667,10 @@ static MACHINE_DRIVER_START( lazercmd )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
-/*			Main Clock is 8MHz divided by 12
-			but memory and IO access is only possible
-			within the line and frame blanking period
-			thus requiring an extra loading of approx 3-5 */
+/*          Main Clock is 8MHz divided by 12
+            but memory and IO access is only possible
+            within the line and frame blanking period
+            thus requiring an extra loading of approx 3-5 */
 	MDRV_CPU_PROGRAM_MAP(lazercmd_readmem,lazercmd_writemem)
 	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
@@ -703,10 +703,10 @@ static MACHINE_DRIVER_START( medlanes )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
-/*			Main Clock is 8MHz divided by 12
-			but memory and IO access is only possible
-			within the line and frame blanking period
-			thus requiring an extra loading of approx 3-5 */
+/*          Main Clock is 8MHz divided by 12
+            but memory and IO access is only possible
+            within the line and frame blanking period
+            thus requiring an extra loading of approx 3-5 */
 	MDRV_CPU_PROGRAM_MAP(medlanes_readmem,medlanes_writemem)
 	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
@@ -738,10 +738,10 @@ static MACHINE_DRIVER_START( bbonk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
-/*			Main Clock is 8MHz divided by 12
-			but memory and IO access is only possible
-			within the line and frame blanking period
-			thus requiring an extra loading of approx 3-5 */
+/*          Main Clock is 8MHz divided by 12
+            but memory and IO access is only possible
+            within the line and frame blanking period
+            thus requiring an extra loading of approx 3-5 */
 	MDRV_CPU_PROGRAM_MAP(bbonk_readmem,bbonk_writemem)
 	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
 	MDRV_CPU_VBLANK_INT(bbonk_timer, 128) 	/* 7680 Hz */

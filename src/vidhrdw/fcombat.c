@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Jaleco fcombat
+    Jaleco fcombat
 
 ***************************************************************************/
 
@@ -25,10 +25,10 @@ struct tilemap *bgmap;
 static void get_bg_tile_info(int tile_index)
 {
 	int tileno,palno;//32*16 x 32
-	
+
 	//palno=(tile_index-(tile_index/32*16)*32*16)/32;
-	
-	tileno = memory_region(REGION_USER1)[tile_index]; 
+
+	tileno = memory_region(REGION_USER1)[tile_index];
 	palno=0x18;//memory_region(REGION_USER2)[tile_index]>>3;
 	SET_TILE_INFO(2,tileno,palno,0)
 }
@@ -110,7 +110,7 @@ PALETTE_INIT( fcombat )
 
 /*************************************
  *
- *	Video system startup
+ *  Video system startup
  *
  *************************************/
 
@@ -124,7 +124,7 @@ VIDEO_START( fcombat )
 
 /*************************************
  *
- *	Video register I/O
+ *  Video register I/O
  *
  *************************************/
 
@@ -196,22 +196,22 @@ tilemap_mark_all_tiles_dirty(bgmap);
 			drawgfx(bitmap, gfx, code2, color, xflip, yflip, x, y + gfx->height,
 			        cliprect, TRANSPARENCY_PEN, 0);
 		}
-		
+
 		if(flags&0x10)
 		{
-			
-			
-			
+
+
+
 			drawgfx(bitmap, gfx, code2+16, color, xflip, yflip, x, y + gfx->height,
 			        cliprect, TRANSPARENCY_PEN, 0);
 			drawgfx(bitmap, gfx, code2+16*2, color, xflip, yflip, x, y + 2*gfx->height,
 			        cliprect, TRANSPARENCY_PEN, 0);
 			drawgfx(bitmap, gfx, code2+16*3, color, xflip, yflip, x, y + 3*gfx->height,
 			        cliprect, TRANSPARENCY_PEN, 0);
-			
+
 		}
-		
-		
+
+
 
 		drawgfx(bitmap, gfx, code, color, xflip, yflip, x, y,
 		        cliprect, TRANSPARENCY_PEN, 0);

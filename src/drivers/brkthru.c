@@ -468,17 +468,17 @@ static MACHINE_DRIVER_START( darwin )
 	MDRV_FRAMES_PER_SECOND(15625.0/272)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/* frames per second, vblank duration
-		Horizontal video frequency:
-			HSync = Dot Clock / Horizontal Frame Length
-			      = Xtal /2   / (HDisplay + HBlank)
-			      = 12MHz/2   / (240 + 144)
-			      = 15.625kHz
-		Vertical Video frequency:
-			VSync = HSync / Vertical Frame Length
-			      = HSync / (VDisplay + VBlank)
-			      = 15.625kHz / (240 + 32)
-			      = 57.444855Hz
-	tuned by Shingo SUZUKI(VSyncMAME Project) 2000/10/19 */
+        Horizontal video frequency:
+            HSync = Dot Clock / Horizontal Frame Length
+                  = Xtal /2   / (HDisplay + HBlank)
+                  = 12MHz/2   / (240 + 144)
+                  = 15.625kHz
+        Vertical Video frequency:
+            VSync = HSync / Vertical Frame Length
+                  = HSync / (VDisplay + VBlank)
+                  = 15.625kHz / (240 + 32)
+                  = 57.444855Hz
+    tuned by Shingo SUZUKI(VSyncMAME Project) 2000/10/19 */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

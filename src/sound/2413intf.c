@@ -1,6 +1,6 @@
 /****************************************************************
 
-	MAME / MESS functions
+    MAME / MESS functions
 
 ****************************************************************/
 
@@ -24,14 +24,14 @@ struct ym2413_info
 /*
 void YM2413DAC_update(int chip,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-	INT16 *buffer = _buffer[0];
-	static int out = 0;
+    INT16 *buffer = _buffer[0];
+    static int out = 0;
 
-	if ( ym2413[chip].reg[0x0F] & 0x01 )
-	{
-		out = ((ym2413[chip].reg[0x10] & 0xF0) << 7);
-	}
-	while (length--) *(buffer++) = out;
+    if ( ym2413[chip].reg[0x0F] & 0x01 )
+    {
+        out = ((ym2413[chip].reg[0x10] & 0xF0) << 7);
+    }
+    while (length--) *(buffer++) = out;
 }
 */
 

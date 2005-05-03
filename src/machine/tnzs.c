@@ -56,14 +56,14 @@ static READ8_HANDLER( mcu_tnzs_r )
 		cpu_yield();
 	}
 
-//	logerror("PC %04x: read %02x from mcu $c00%01x\n", activecpu_get_previouspc(), data, offset);
+//  logerror("PC %04x: read %02x from mcu $c00%01x\n", activecpu_get_previouspc(), data, offset);
 
 	return data;
 }
 
 static WRITE8_HANDLER( mcu_tnzs_w )
 {
-//	logerror("PC %04x: write %02x to mcu $c00%01x\n", activecpu_get_previouspc(), data, offset);
+//  logerror("PC %04x: write %02x to mcu $c00%01x\n", activecpu_get_previouspc(), data, offset);
 
 	if (offset == 0)
 		cpunum_set_reg(2, I8X41_DATA, data);
@@ -84,7 +84,7 @@ READ8_HANDLER( tnzs_port1_r )
 		default:	data = 0xff; break;
 	}
 
-//	logerror("I8742:%04x  Read %02x from port 1\n", activecpu_get_previouspc(), data);
+//  logerror("I8742:%04x  Read %02x from port 1\n", activecpu_get_previouspc(), data);
 
 	return data;
 }
@@ -93,14 +93,14 @@ READ8_HANDLER( tnzs_port2_r )
 {
 	int data = input_port_4_r(0);
 
-//	logerror("I8742:%04x  Read %02x from port 2\n", activecpu_get_previouspc(), data);
+//  logerror("I8742:%04x  Read %02x from port 2\n", activecpu_get_previouspc(), data);
 
 	return data;
 }
 
 WRITE8_HANDLER( tnzs_port2_w )
 {
-//	logerror("I8742:%04x  Write %02x to port 2\n", activecpu_get_previouspc(), data);
+//  logerror("I8742:%04x  Write %02x to port 2\n", activecpu_get_previouspc(), data);
 
 	coin_lockout_w( 0, (data & 0x40) );
 	coin_lockout_w( 1, (data & 0x80) );
@@ -116,7 +116,7 @@ READ8_HANDLER( arknoid2_sh_f000_r )
 {
 	int val;
 
-//	logerror("PC %04x: read input %04x\n", activecpu_get_pc(), 0xf000 + offset);
+//  logerror("PC %04x: read input %04x\n", activecpu_get_pc(), 0xf000 + offset);
 
 	val = readinputport(7 + offset/2);
 	if (offset & 1)
@@ -160,7 +160,7 @@ static void mcu_handle_coins(int coin)
 	{
 		if (coin & 0x01)	/* coin A */
 		{
-//			logerror("Coin dropped into slot A\n");
+//          logerror("Coin dropped into slot A\n");
 			coin_counter_w(0,1); coin_counter_w(0,0); /* Count slot A */
 			mcu_coinsA++;
 			if (mcu_coinsA >= mcu_coinage[0])
@@ -180,7 +180,7 @@ static void mcu_handle_coins(int coin)
 		}
 		if (coin & 0x02)	/* coin B */
 		{
-//			logerror("Coin dropped into slot B\n");
+//          logerror("Coin dropped into slot B\n");
 			coin_counter_w(1,1); coin_counter_w(1,0); /* Count slot B */
 			mcu_coinsB++;
 			if (mcu_coinsB >= mcu_coinage[2])
@@ -200,7 +200,7 @@ static void mcu_handle_coins(int coin)
 		}
 		if (coin & 0x04)	/* service */
 		{
-//			logerror("Coin dropped into service slot C\n");
+//          logerror("Coin dropped into service slot C\n");
 			mcu_credits++;
 		}
 		mcu_reportcoin = coin;
@@ -220,7 +220,7 @@ static READ8_HANDLER( mcu_arknoid2_r )
 {
 	const char *mcu_startup = "\x55\xaa\x5a";
 
-//	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
+//  logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -260,16 +260,16 @@ static READ8_HANDLER( mcu_arknoid2_r )
 	else
 	{
 		/*
-		status bits:
-		0 = mcu is ready to send data (read from c000)
-		1 = mcu has read data (from c000)
-		2 = unused
-		3 = unused
-		4-7 = coin code
-		      0 = nothing
-		      1,2,3 = coin switch pressed
-		      e = tilt
-		*/
+        status bits:
+        0 = mcu is ready to send data (read from c000)
+        1 = mcu has read data (from c000)
+        2 = unused
+        3 = unused
+        4-7 = coin code
+              0 = nothing
+              1,2,3 = coin switch pressed
+              e = tilt
+        */
 		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
 		if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
 		if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
@@ -282,7 +282,7 @@ static WRITE8_HANDLER( mcu_arknoid2_w )
 {
 	if (offset == 0)
 	{
-//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+//      logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -291,15 +291,15 @@ static WRITE8_HANDLER( mcu_arknoid2_w )
 	else
 	{
 		/*
-		0xc1: read number of credits, then buttons
-		0x54+0x41: add value to number of credits
-		0x15: sub 1 credit (when "Continue Play" only)
-		0x84: coin 1 lockout (issued only in test mode)
-		0x88: coin 2 lockout (issued only in test mode)
-		0x80: release coin lockout (issued only in test mode)
-		during initialization, a sequence of 4 bytes sets coin/credit settings
-		*/
-//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+        0xc1: read number of credits, then buttons
+        0x54+0x41: add value to number of credits
+        0x15: sub 1 credit (when "Continue Play" only)
+        0x84: coin 1 lockout (issued only in test mode)
+        0x88: coin 2 lockout (issued only in test mode)
+        0x80: release coin lockout (issued only in test mode)
+        during initialization, a sequence of 4 bytes sets coin/credit settings
+        */
+//      logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -325,7 +325,7 @@ static READ8_HANDLER( mcu_extrmatn_r )
 {
 	const char *mcu_startup = "\x5a\xa5\x55";
 
-//	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
+//  logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -371,7 +371,7 @@ static READ8_HANDLER( mcu_extrmatn_r )
 					{
 						mcu_initializing = 3;
 						return 0xee;	/* tilt */
-//						return 0x64;	/* theres a reset input somewhere */
+//                      return 0x64;    /* theres a reset input somewhere */
 					}
 					else return mcu_credits;
 				}
@@ -388,16 +388,16 @@ static READ8_HANDLER( mcu_extrmatn_r )
 	else
 	{
 		/*
-		status bits:
-		0 = mcu is ready to send data (read from c000)
-		1 = mcu has read data (from c000)
-		2 = unused
-		3 = unused
-		4-7 = coin code
-		      0 = nothing
-		      1,2,3 = coin switch pressed
-		      e = tilt
-		*/
+        status bits:
+        0 = mcu is ready to send data (read from c000)
+        1 = mcu has read data (from c000)
+        2 = unused
+        3 = unused
+        4-7 = coin code
+              0 = nothing
+              1,2,3 = coin switch pressed
+              e = tilt
+        */
 		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
 		if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
 		if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
@@ -410,7 +410,7 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 {
 	if (offset == 0)
 	{
-//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+//      logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -419,20 +419,20 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 	else
 	{
 		/*
-		0xa0: read number of credits
-		0xa1: read number of credits, then buttons
-		0x01: read player 1 joystick + buttons
-		0x02: read player 2 joystick + buttons
-		0x1a: read coin switches
-		0x21: read service & tilt switches
-		0x4a+0x41: add value to number of credits
-		0x84: coin 1 lockout (issued only in test mode)
-		0x88: coin 2 lockout (issued only in test mode)
-		0x80: release coin lockout (issued only in test mode)
-		during initialization, a sequence of 4 bytes sets coin/credit settings
-		*/
+        0xa0: read number of credits
+        0xa1: read number of credits, then buttons
+        0x01: read player 1 joystick + buttons
+        0x02: read player 2 joystick + buttons
+        0x1a: read coin switches
+        0x21: read service & tilt switches
+        0x4a+0x41: add value to number of credits
+        0x84: coin 1 lockout (issued only in test mode)
+        0x88: coin 2 lockout (issued only in test mode)
+        0x80: release coin lockout (issued only in test mode)
+        during initialization, a sequence of 4 bytes sets coin/credit settings
+        */
 
-//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+//      logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -718,7 +718,7 @@ WRITE8_HANDLER( tnzs_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-//	logerror("PC %04x: writing %02x to bankswitch\n", activecpu_get_pc(),data);
+//  logerror("PC %04x: writing %02x to bankswitch\n", activecpu_get_pc(),data);
 
 	/* bit 4 resets the second CPU */
 	if (data & 0x10)
@@ -734,7 +734,7 @@ WRITE8_HANDLER( tnzs_bankswitch1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
-//	logerror("PC %04x: writing %02x to bankswitch 1\n", activecpu_get_pc(),data);
+//  logerror("PC %04x: writing %02x to bankswitch 1\n", activecpu_get_pc(),data);
 
 	switch (mcu_type)
 	{

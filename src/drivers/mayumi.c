@@ -2,7 +2,7 @@
 
 Kikiippatsu Mayumi-chan (c) 1988 Victory L.L.C.
 
-	Driver by Uki
+    Driver by Uki
 
 *****************************************************************************/
 

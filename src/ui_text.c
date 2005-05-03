@@ -24,7 +24,7 @@ static const char *mame_default_text[] =
 	/* copyright stuff */
 	"Usage of emulators in conjunction with ROMs you don't own is forbidden by copyright law.",
 	"IF YOU ARE NOT LEGALLY ENTITLED TO PLAY \"%s\" ON THIS EMULATOR, PRESS ESC.",
-	"Otherwise, type OK to continue",
+	"Otherwise, type OK or move the joystick left then right to continue",
 
 	/* misc stuff */
 	"Return to Main Menu",
@@ -75,7 +75,7 @@ static const char *mame_default_text[] =
 	"THIS " CAPGAMENOUN " DOESN'T WORK PROPERLY",
 	"The game has protection which isn't fully emulated.",
 	"There are working clones of this game. They are:",
-	"Type OK to continue",
+	"Type OK or move the joystick left then right to continue",
 
 	/* main menu */
 	"Input (general)",
@@ -98,7 +98,7 @@ static const char *mame_default_text[] =
 	"Autocenter Speed",
 	"Reverse",
 	"Sensitivity",
-	
+
 	/* input groups */
 	"User Interface",
 	"Player 1 Controls",
@@ -215,12 +215,12 @@ static const char **trans_text;
 int uistring_init (mame_file *langfile)
 {
 	/*
-		TODO: This routine needs to do several things:
-			- load an external font if needed
-			- determine the number of characters in the font
-			- deal with multibyte languages
+        TODO: This routine needs to do several things:
+            - load an external font if needed
+            - determine the number of characters in the font
+            - deal with multibyte languages
 
-	*/
+    */
 
 	int i, j, str;
 	char curline[255];

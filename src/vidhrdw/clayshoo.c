@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Atari Clay Shoot hardware
+    Atari Clay Shoot hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -25,7 +25,7 @@ PALETTE_INIT( clayshoo )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 

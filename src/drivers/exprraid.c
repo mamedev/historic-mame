@@ -522,7 +522,7 @@ static DRIVER_INIT( wexpress )
 		/* make sure is what we want to patch */
 		if ( rom[i] == 0x4b && rom[i+1] == 0x00 && rom[i+2] == 0x29 && rom[i+3] == 0x02 )
 		{
-			/* replace custom opcode with: LDA	$FF */
+			/* replace custom opcode with: LDA  $FF */
 			rom[i] = 0xa5;
 			i++;
 			rom[i] = 0xff;

@@ -1,11 +1,11 @@
 /*************************************************************************
 
-	Atari Slapstic decoding helper
+    Atari Slapstic decoding helper
 
 **************************************************************************
 
-	For more information on the slapstic, see slapstic.html, or go to
-	http://www.aarongiles.com/slapstic.html
+    For more information on the slapstic, see slapstic.html, or go to
+    http://www.aarongiles.com/slapstic.html
 
 *************************************************************************/
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sun Electronics Kangaroo hardware
+    Sun Electronics Kangaroo hardware
 
 ***************************************************************************/
 
@@ -78,12 +78,12 @@ VIDEO_START( kangaroo )
 WRITE8_HANDLER( kangaroo_video_control_w )
 {
 	/* A & B bitmap control latch (A=playfield B=motion)
-		  bit 5 FLIP A
-		  bit 4 FLIP B
-		  bit 3 EN A
-		  bit 2 EN B
-		  bit 1 PRI A
-		  bit 0 PRI B */
+          bit 5 FLIP A
+          bit 4 FLIP B
+          bit 3 EN A
+          bit 2 EN B
+          bit 1 PRI A
+          bit 0 PRI B */
 
 	if ((*kangaroo_video_control & 0x30) != (data & 0x30))
 	{

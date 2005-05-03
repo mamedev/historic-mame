@@ -35,7 +35,7 @@ static void get_tile_info(int tile_index)
 /*
 static READ8_HANDLER( rom_bank_select_r )
 {
-	return suprgolf_rom_bank;
+    return suprgolf_rom_bank;
 }
 */
 static WRITE8_HANDLER( rom_bank_select_w )
@@ -86,7 +86,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
 	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_BASE(&videoram)
 	AM_RANGE(0xe800, 0xefff) AM_RAM
-//	AM_RANGE(0xf000, 0xffff) AM_RAM
+//  AM_RANGE(0xf000, 0xffff) AM_RAM
 	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -259,7 +259,7 @@ WRITE8_HANDLER( suprgolf_writeB )
 
 static void irqhandler(int irq)
 {
-//	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//  cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

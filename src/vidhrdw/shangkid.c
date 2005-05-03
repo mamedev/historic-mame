@@ -18,10 +18,10 @@ static void get_bg_tile_info(int tile_index){
 	if( shangkid_gfx_type==1 )
 	{
 		/* Shanghai Kid:
-			------xx	bank
-			-----x--	flipx
-			xxxxx---	color
-		*/
+            ------xx    bank
+            -----x--    flipx
+            xxxxx---    color
+        */
 		color = attributes>>3;
 		color = (color&0x03)|((color&0x1c)<<1);
 		SET_TILE_INFO(
@@ -33,10 +33,10 @@ static void get_bg_tile_info(int tile_index){
 	else
 	{
 		/* Chinese Hero:
-			------xx	bank
-			-xxxxx--	color
-			x-------	flipx?
-		*/
+            ------xx    bank
+            -xxxxx--    color
+            x-------    flipx?
+        */
 		color = (attributes>>2)&0x1f;
 		SET_TILE_INFO(
 				0,
@@ -249,9 +249,9 @@ static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct r
 		tile = videoram[i];
 		attr = videoram[i+0x400];
 		/*
-			x---.----	priority?
-			-xx-.----	bank
-		*/
+            x---.----   priority?
+            -xx-.----   bank
+        */
 		if( pri==0 || (attr>>7)==pri )
 		{
 			tile += ((attr>>5)&0x3)*256;

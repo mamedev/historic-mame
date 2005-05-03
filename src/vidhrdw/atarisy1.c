@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari System 1 hardware
+    Atari System 1 hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -35,7 +35,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -45,7 +45,7 @@ data16_t *atarisy1_bankselect;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -80,7 +80,7 @@ static struct GfxLayout objlayout =
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -95,7 +95,7 @@ static void reset_yscroll_callback(int param);
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Generic video system start
+ *  Generic video system start
  *
  *************************************/
 
@@ -217,7 +217,7 @@ VIDEO_START( atarisy1 )
 
 /*************************************
  *
- *	Graphics bank selection
+ *  Graphics bank selection
  *
  *************************************/
 
@@ -261,7 +261,7 @@ WRITE16_HANDLER( atarisy1_bankselect_w )
 
 /*************************************
  *
- *	Playfield priority pens
+ *  Playfield priority pens
  *
  *************************************/
 
@@ -281,7 +281,7 @@ WRITE16_HANDLER( atarisy1_priority_w )
 
 /*************************************
  *
- *	Playfield horizontal scroll
+ *  Playfield horizontal scroll
  *
  *************************************/
 
@@ -306,7 +306,7 @@ WRITE16_HANDLER( atarisy1_xscroll_w )
 
 /*************************************
  *
- *	Playfield vertical scroll
+ *  Playfield vertical scroll
  *
  *************************************/
 
@@ -328,14 +328,14 @@ WRITE16_HANDLER( atarisy1_yscroll_w )
 	force_partial_update(scanline);
 
 	/* because this latches a new value into the scroll base,
-	   we need to adjust for the scanline */
+       we need to adjust for the scanline */
 	adjusted_scroll = newscroll;
 	if (scanline <= Machine->visible_area.max_y)
 		adjusted_scroll -= (scanline + 1);
 	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, adjusted_scroll);
 
 	/* but since we've adjusted it, we must reset it to the normal value
-	   once we hit scanline 0 again */
+       once we hit scanline 0 again */
 	timer_adjust(yscroll_reset_timer, cpu_getscanlinetime(0), newscroll, 0);
 
 	/* update the data */
@@ -346,7 +346,7 @@ WRITE16_HANDLER( atarisy1_yscroll_w )
 
 /*************************************
  *
- *	Sprite RAM write handler
+ *  Sprite RAM write handler
  *
  *************************************/
 
@@ -368,7 +368,7 @@ WRITE16_HANDLER( atarisy1_spriteram_w )
 			atarimo_0_spriteram_w(offset, data, 0);
 			update_timers(cpu_getscanline());
 		}
-		
+
 		/* if we're about to modify data in the active sprite bank, make sure the video is up-to-date */
 		/* Road Runner needs this to work; note the +2 kludge -- +1 would be correct since the video */
 		/* renders the next scanline's sprites to the line buffers, but Road Runner still glitches */
@@ -385,7 +385,7 @@ WRITE16_HANDLER( atarisy1_spriteram_w )
 
 /*************************************
  *
- *	MO interrupt handlers
+ *  MO interrupt handlers
  *
  *************************************/
 
@@ -413,7 +413,7 @@ static void int3_callback(int scanline)
 
 /*************************************
  *
- *	MO interrupt state read
+ *  MO interrupt state read
  *
  *************************************/
 
@@ -426,7 +426,7 @@ READ16_HANDLER( atarisy1_int3state_r )
 
 /*************************************
  *
- *	Timer updater
+ *  Timer updater
  *
  *************************************/
 
@@ -491,7 +491,7 @@ static void update_timers(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -543,7 +543,7 @@ VIDEO_UPDATE( atarisy1 )
 
 /*************************************
  *
- *	Graphics decoding
+ *  Graphics decoding
  *
  *************************************/
 
@@ -608,7 +608,7 @@ static int decode_gfx(UINT16 *pflookup, UINT16 *molookup)
 
 /*************************************
  *
- *	Graphics bank mapping
+ *  Graphics bank mapping
  *
  *************************************/
 

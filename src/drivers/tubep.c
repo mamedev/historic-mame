@@ -154,16 +154,16 @@ static WRITE8_HANDLER( tubep_LS259_w )
 		case 0:
 		case 1:
 				/*
-					port b0: bit0 - coin 1 counter
-					port b1	 bit0 - coin 2 counter
-				*/
+                    port b0: bit0 - coin 1 counter
+                    port b1  bit0 - coin 2 counter
+                */
 				coin_counter_w(offset,data&1);
 				break;
 		case 2:
 				//something...
 				break;
 		case 5:
-				//screen_flip_w(offset,data&1);	/* bit 0 = screen flip, active high */
+				//screen_flip_w(offset,data&1); /* bit 0 = screen flip, active high */
 				break;
 		case 6:
 				tubep_background_romselect_w(offset,data);	/* bit0 = 0->select roms: B1,B3,B5; bit0 = 1->select roms: B2,B4,B6 */
@@ -210,7 +210,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER( main_cpu_irq_line_clear_w )
 {
-//	cpunum_set_input_line(0,CLEAR_LINE);
+//  cpunum_set_input_line(0,CLEAR_LINE);
 //not used - handled by MAME anyway (because it is usual Vblank int)
 	return;
 }
@@ -340,7 +340,7 @@ static WRITE8_HANDLER( rjammer_LS259_w )
 				coin_counter_w(offset,data&1);	/* bit 0 = coin counter */
 				break;
 		case 5:
-				//screen_flip_w(offset,data&1);	/* bit 0 = screen flip, active high */
+				//screen_flip_w(offset,data&1); /* bit 0 = screen flip, active high */
 				break;
 		default:
 				break;
@@ -487,9 +487,9 @@ static WRITE8_HANDLER( rjammer_voice_input_w )
 
 
 	/* NOTE: game resets interrupt line on ANY access to ANY I/O port.
-			I do it here because this port (0x80) is first one accessed
-			in the interrupt routine.
-	*/
+            I do it here because this port (0x80) is first one accessed
+            in the interrupt routine.
+    */
 	cpunum_set_input_line(2, 0, CLEAR_LINE );
 	return;
 }
@@ -844,15 +844,15 @@ static MACHINE_DRIVER_START( tubep )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_3)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
@@ -900,15 +900,15 @@ static MACHINE_DRIVER_START( rjammer )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
 	MDRV_SOUND_CONFIG(ay8910_interface_3)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)

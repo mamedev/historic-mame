@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -32,7 +32,7 @@ static UINT8 palettebank_vis;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -81,7 +81,7 @@ VIDEO_START( balsente )
 
 /*************************************
  *
- *	Video RAM write
+ *  Video RAM write
  *
  *************************************/
 
@@ -101,7 +101,7 @@ WRITE8_HANDLER( balsente_videoram_w )
 
 /*************************************
  *
- *	Palette banking
+ *  Palette banking
  *
  *************************************/
 
@@ -159,7 +159,7 @@ WRITE8_HANDLER( balsente_palette_select_w )
 
 /*************************************
  *
- *	Palette RAM write
+ *  Palette RAM write
  *
  *************************************/
 
@@ -177,7 +177,7 @@ WRITE8_HANDLER( balsente_paletteram_w )
 
 /*************************************
  *
- *	Sprite banking
+ *  Sprite banking
  *
  *************************************/
 
@@ -194,7 +194,7 @@ WRITE8_HANDLER( shrike_sprite_select_w )
 
 /*************************************
  *
- *	Sprite drawing
+ *  Sprite drawing
  *
  *************************************/
 
@@ -283,7 +283,7 @@ static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *
 
 /*************************************
  *
- *	Main screen refresh
+ *  Main screen refresh
  *
  *************************************/
 

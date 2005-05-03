@@ -1,63 +1,63 @@
 /***************************************************************************
 
-	Sega Pengo
+    Sega Pengo
 
     driver by Nicola Salmoria
 
     Games supported:
-		* Pengo
-		* Jr Pac-Man (bootleg)
+        * Pengo
+        * Jr Pac-Man (bootleg)
 
-	Known issues:
-		* none
+    Known issues:
+        * none
 
 ****************************************************************************
 
-	Pengo memory map (preliminary)
+    Pengo memory map (preliminary)
 
-	driver by Nicola Salmoria
+    driver by Nicola Salmoria
 
-	0000-7fff ROM
-	8000-83ff Video RAM
-	8400-87ff Color RAM
-	8800-8fff RAM
+    0000-7fff ROM
+    8000-83ff Video RAM
+    8400-87ff Color RAM
+    8800-8fff RAM
 
-	memory mapped ports:
+    memory mapped ports:
 
-	read:
-	9000      DSW1
-	9040      DSW0
-	9080      IN1
-	90c0      IN0
+    read:
+    9000      DSW1
+    9040      DSW0
+    9080      IN1
+    90c0      IN0
 
-	write:
-	8ff2-8ffd 6 pairs of two bytes:
-	          the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
-			  X flip (bit 1); the second byte the color
-	9005      sound voice 1 waveform (nibble)
-	9011-9013 sound voice 1 frequency (nibble)
-	9015      sound voice 1 volume (nibble)
-	900a      sound voice 2 waveform (nibble)
-	9016-9018 sound voice 2 frequency (nibble)
-	901a      sound voice 2 volume (nibble)
-	900f      sound voice 3 waveform (nibble)
-	901b-901d sound voice 3 frequency (nibble)
-	901f      sound voice 3 volume (nibble)
-	9022-902d Sprite coordinates, x/y pairs for 6 sprites
-	9040      interrupt enable
-	9041      sound enable
-	9042      palette bank selector
-	9043      flip screen
-	9044-9045 coin counters
-	9046      color lookup table bank selector
-	9047      character/sprite bank selector
-	9070      watchdog reset
+    write:
+    8ff2-8ffd 6 pairs of two bytes:
+              the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
+              X flip (bit 1); the second byte the color
+    9005      sound voice 1 waveform (nibble)
+    9011-9013 sound voice 1 frequency (nibble)
+    9015      sound voice 1 volume (nibble)
+    900a      sound voice 2 waveform (nibble)
+    9016-9018 sound voice 2 frequency (nibble)
+    901a      sound voice 2 volume (nibble)
+    900f      sound voice 3 waveform (nibble)
+    901b-901d sound voice 3 frequency (nibble)
+    901f      sound voice 3 volume (nibble)
+    9022-902d Sprite coordinates, x/y pairs for 6 sprites
+    9040      interrupt enable
+    9041      sound enable
+    9042      palette bank selector
+    9043      flip screen
+    9044-9045 coin counters
+    9046      color lookup table bank selector
+    9047      character/sprite bank selector
+    9070      watchdog reset
 
-	Main clock: XTAL = 18.432 MHz
-	Z80 Clock: XTAL/6 = 3.072 MHz
-	Horizontal video frequency: HSYNC = XTAL/3/192/2 = 16 kHz
-	Video frequency: VSYNC = HSYNC/132/2 = 60.606060 Hz
-	VBlank duration: 1/VSYNC * (20/132) = 2500 us
+    Main clock: XTAL = 18.432 MHz
+    Z80 Clock: XTAL/6 = 3.072 MHz
+    Horizontal video frequency: HSYNC = XTAL/3/192/2 = 16 kHz
+    Video frequency: VSYNC = HSYNC/132/2 = 60.606060 Hz
+    VBlank duration: 1/VSYNC * (20/132) = 2500 us
 
 ***************************************************************************/
 
@@ -71,7 +71,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -124,7 +124,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -266,7 +266,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -307,7 +307,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -321,7 +321,7 @@ static struct namco_interface namco_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -376,7 +376,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -596,7 +596,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -609,28 +609,28 @@ static DRIVER_INIT( pengo )
 static DRIVER_INIT( penta )
 {
 /*
-	the values vary, but the translation mask is always laid out like this:
+    the values vary, but the translation mask is always laid out like this:
 
-	  0 1 2 3 4 5 6 7 8 9 a b c d e f
-	0 A A B B A A B B C C D D C C D D
-	1 A A B B A A B B C C D D C C D D
-	2 E E F F E E F F G G H H G G H H
-	3 E E F F E E F F G G H H G G H H
-	4 A A B B A A B B C C D D C C D D
-	5 A A B B A A B B C C D D C C D D
-	6 E E F F E E F F G G H H G G H H
-	7 E E F F E E F F G G H H G G H H
-	8 H H G G H H G G F F E E F F E E
-	9 H H G G H H G G F F E E F F E E
-	a D D C C D D C C B B A A B B A A
-	b D D C C D D C C B B A A B B A A
-	c H H G G H H G G F F E E F F E E
-	d H H G G H H G G F F E E F F E E
-	e D D C C D D C C B B A A B B A A
-	f D D C C D D C C B B A A B B A A
+      0 1 2 3 4 5 6 7 8 9 a b c d e f
+    0 A A B B A A B B C C D D C C D D
+    1 A A B B A A B B C C D D C C D D
+    2 E E F F E E F F G G H H G G H H
+    3 E E F F E E F F G G H H G G H H
+    4 A A B B A A B B C C D D C C D D
+    5 A A B B A A B B C C D D C C D D
+    6 E E F F E E F F G G H H G G H H
+    7 E E F F E E F F G G H H G G H H
+    8 H H G G H H G G F F E E F F E E
+    9 H H G G H H G G F F E E F F E E
+    a D D C C D D C C B B A A B B A A
+    b D D C C D D C C B B A A B B A A
+    c H H G G H H G G F F E E F F E E
+    d H H G G H H G G F F E E F F E E
+    e D D C C D D C C B B A A B B A A
+    f D D C C D D C C B B A A B B A A
 
-	(e.g. 0xc0 is XORed with H)
-	therefore in the following tables we only keep track of A, B, C, D, E, F, G and H.
+    (e.g. 0xc0 is XORed with H)
+    therefore in the following tables we only keep track of A, B, C, D, E, F, G and H.
 */
 	static const unsigned char data_xortable[2][8] =
 	{
@@ -684,7 +684,7 @@ static DRIVER_INIT( penta )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

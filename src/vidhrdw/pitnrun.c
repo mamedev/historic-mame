@@ -3,18 +3,18 @@
   - BG layer 32x128 , 8x8 tiles 4bpp , 2 palettes  (2nd is black )
   - TXT layer 32x32 , 8x8 tiles 4bpp , 2 palettes (2nd is black)
   - Sprites 16x16 3bpp, 8 palettes (0-3 are black)
-  
+
   'Special' effects :
-  
+
   - spotlight - gfx(BG+Sprites) outside spotlight is using black pals
                 spotlight masks are taken from ROM pr8
-                simulated using bitmaps and custom clipping rect 
-                
+                simulated using bitmaps and custom clipping rect
+
   - lightning - BG color change (darkening ?) - simple analog circ.
-  							simulated by additional palette
+                            simulated by additional palette
 
 In debug build press 'w' for spotlight and 'e' for lightning
-  							
+
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -151,7 +151,7 @@ PALETTE_INIT (pitnrun)
 
 		palette_set_color(i,r,g,b);
 	}
-	
+
 	/* fake bg palette for lightning effect*/
 	for(i=2*16;i<2*16+16;i++)
 	{
@@ -171,8 +171,8 @@ PALETTE_INIT (pitnrun)
 		g/=3;
 		b/=3;
 
-		palette_set_color(i+16,(r>0xff)?0xff:r,(g>0xff)?0xff:g,(b>0xff)?0xff:b);	
-	
+		palette_set_color(i+16,(r>0xff)?0xff:r,(g>0xff)?0xff:g,(b>0xff)?0xff:b);
+
 	}
 }
 
@@ -192,17 +192,17 @@ VIDEO_START(pitnrun)
 static void pitnrun_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int sx, sy, flipx, flipy, offs,pal;
-	
+
 	for (offs = 0 ; offs < 0x100; offs+=4)
 	{
-		
+
 		pal=spriteram[offs+2]&0x3;
-	
+
 		sy = 256-spriteram[offs+0]-16;
 		sx = spriteram[offs+3];
 		flipy = (spriteram[offs+1]&0x80)>>7;
 		flipx = (spriteram[offs+1]&0x40)>>6;
-		
+
 		if (flip_screen_x)
 		{
 			sx = 256 - sx;
@@ -213,7 +213,7 @@ static void pitnrun_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 			sy = 240 - sy;
 			flipy = !flipy;
 		}
-		
+
 		drawgfx(bitmap,Machine->gfx[2],
  			(spriteram[offs+1]&0x3f)+((spriteram[offs+2]&0x80)>>1)+((spriteram[offs+2]&0x40)<<1),
 			pal,
@@ -226,7 +226,7 @@ static void pitnrun_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 VIDEO_UPDATE( pitnrun )
 {
 	int dx=0,dy=0;
-	struct rectangle myclip=*cliprect; 
+	struct rectangle myclip=*cliprect;
 
 #ifdef MAME_DEBUG
 	if (code_pressed_memory(KEYCODE_Q))
@@ -234,57 +234,57 @@ VIDEO_UPDATE( pitnrun )
 		unsigned char *ROM = memory_region(REGION_CPU1);
 		ROM[0x84f6]=0; /* lap 0 - normal */
 	}
-	
+
 	if (code_pressed_memory(KEYCODE_W))
 	{
 		unsigned char *ROM = memory_region(REGION_CPU1);
 		ROM[0x84f6]=6; /* lap 6 = spotlight */
 	}
-	
+
 	if (code_pressed_memory(KEYCODE_E))
 	{
 		unsigned char *ROM = memory_region(REGION_CPU1);
 		ROM[0x84f6]=2; /* lap 3 (trial 2)= lightnings */
 		ROM[0x8102]=1;
 	}
-#endif	
-	
+#endif
+
 	fillbitmap(bitmap,0,cliprect);
-	
+
 	if(!(pitnrun_ha&4))
 		tilemap_draw(bitmap,cliprect,bg, 0,0);
 	else
 	{
 		dx=128-pitnrun_h_heed+((pitnrun_ha&8)<<5)+3;
 		dy=128-pitnrun_v_heed+((pitnrun_ha&0x10)<<4);
-		
+
 		if (flip_screen_x)
 			dx=128-dx+16;
-			
+
 		if (flip_screen_y)
 			dy=128-dy;
 
 		myclip.min_x=dx;
 		myclip.min_y=dy;
 		myclip.max_x=dx+127;
-		myclip.max_y=dy+127;	
-	
-		
+		myclip.max_y=dy+127;
+
+
 		if(myclip.min_y<cliprect->min_y)myclip.min_y=cliprect->min_y;
 		if(myclip.min_x<cliprect->min_x)myclip.min_x=cliprect->min_x;
-		
+
 		if(myclip.max_y>cliprect->max_y)myclip.max_y=cliprect->max_y;
 		if(myclip.max_x>cliprect->max_x)myclip.max_x=cliprect->max_x;
-		
+
 		tilemap_draw(bitmap,&myclip,bg, 0,0);
 	}
-	
+
 	pitnrun_draw_sprites(bitmap,&myclip);
 
 	if(pitnrun_ha&4)
 		copybitmap(bitmap,tmp_bitmap[pitnrun_ha&3],flip_screen_x,flip_screen_y,dx,dy,&myclip,TRANSPARENCY_PEN, 1);
 	tilemap_draw(bitmap,cliprect,fg, 0,0);
-}	
+}
 
 
 

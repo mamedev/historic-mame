@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Mustache Boy
-	(c)1987 March Electronics
+    Mustache Boy
+    (c)1987 March Electronics
 
-	(there are also Seibu and Taito logos/copyrights in the ROMs)
+    (there are also Seibu and Taito logos/copyrights in the ROMs)
 
  driver by Tomasz Slanina dox@space.pl
 
  The hardware similar to Knuckle Joe.
 
-		TODO - Sound
-		   - YM2151 + YM 3012
+        TODO - Sound
+           - YM2151 + YM 3012
        - custom  T5182 cpu
        - 27256 ROM with data/code (?)  (can be replaced with 27512)
                      ______________________

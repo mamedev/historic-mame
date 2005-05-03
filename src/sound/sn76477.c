@@ -1,27 +1,27 @@
 /*****************************************************************************
   SN76477 pins and assigned interface variables/functions
 
-								SN76477_envelope_w()
-							   /					\
-					   [ 1] ENV SEL 1			ENV SEL 2 [28]
-					   [ 2] GND 				  MIXER C [27] \
- SN76477_noise_clock_w [ 3] NOISE EXT OSC		  MIXER A [26]	> SN76477_mixer_w()
-		  noise_res    [ 4] RES NOISE OSC		  MIXER B [25] /
-		 filter_res    [ 5] NOISE FILTER RES	  O/S RES [24] oneshot_res
-		 filter_cap    [ 6] NOISE FILTER CAP	  O/S CAP [23] oneshot_cap
-		  decay_res    [ 7] DECAY RES			  VCO SEL [22] SN76477_vco_w()
-   attack_decay_cap    [ 8] A/D CAP 			  SLF CAP [21] slf_cap
- SN76477_enable_w()    [ 9] ENABLE				  SLF RES [20] slf_res
-		 attack_res    [10] ATTACK RES				PITCH [19] pitch_voltage
-	  amplitude_res    [11] AMP 				  VCO RES [18] vco_res
-	   feedback_res    [12] FEEDBACK			  VCO CAP [17] vco_cap
-					   [13] OUTPUT			 VCO EXT CONT [16] vco_voltage
-					   [14] Vcc 			  +5V REG OUT [15]
+                                SN76477_envelope_w()
+                               /                    \
+                       [ 1] ENV SEL 1           ENV SEL 2 [28]
+                       [ 2] GND                   MIXER C [27] \
+ SN76477_noise_clock_w [ 3] NOISE EXT OSC         MIXER A [26]  > SN76477_mixer_w()
+          noise_res    [ 4] RES NOISE OSC         MIXER B [25] /
+         filter_res    [ 5] NOISE FILTER RES      O/S RES [24] oneshot_res
+         filter_cap    [ 6] NOISE FILTER CAP      O/S CAP [23] oneshot_cap
+          decay_res    [ 7] DECAY RES             VCO SEL [22] SN76477_vco_w()
+   attack_decay_cap    [ 8] A/D CAP               SLF CAP [21] slf_cap
+ SN76477_enable_w()    [ 9] ENABLE                SLF RES [20] slf_res
+         attack_res    [10] ATTACK RES              PITCH [19] pitch_voltage
+      amplitude_res    [11] AMP                   VCO RES [18] vco_res
+       feedback_res    [12] FEEDBACK              VCO CAP [17] vco_cap
+                       [13] OUTPUT           VCO EXT CONT [16] vco_voltage
+                       [14] Vcc               +5V REG OUT [15]
 
-	All resistor values in Ohms.
-	All capacitor values in Farads.
-	Use RES_K, RES_M and CAP_U, CAP_N, CAP_P macros to convert
-	magnitudes, eg. 220k = RES_K(220), 47nF = CAP_N(47)
+    All resistor values in Ohms.
+    All capacitor values in Farads.
+    Use RES_K, RES_M and CAP_U, CAP_N, CAP_P macros to convert
+    magnitudes, eg. 220k = RES_K(220), 47nF = CAP_N(47)
 
  *****************************************************************************/
 
@@ -93,13 +93,13 @@ struct SN76477 {
 	double oneshot_time;	/* ONE-SHOT time */
 	void *oneshot_timer;	/* ONE-SHOT timer */
 
-	int envelope;			/* pin	1, pin 28 */
-	double noise_res;		/* pin	4 */
-	double filter_res;		/* pin	5 */
-	double filter_cap;		/* pin	6 */
-	double decay_res;		/* pin	7 */
-	double attack_decay_cap;/* pin	8 */
-	int enable; 			/* pin	9 */
+	int envelope;			/* pin  1, pin 28 */
+	double noise_res;		/* pin  4 */
+	double filter_res;		/* pin  5 */
+	double filter_cap;		/* pin  6 */
+	double decay_res;		/* pin  7 */
+	double attack_decay_cap;/* pin  8 */
+	int enable; 			/* pin  9 */
 	double attack_res;		/* pin 10 */
 	double amplitude_res;	/* pin 11 */
 	double feedback_res;	/* pin 12 */
@@ -723,10 +723,10 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 }
 
 #define UPDATE_SLF															\
-	/*************************************									\
-	 * SLF super low frequency oscillator									\
-	 * frequency = 0.64 / (r_slf * c_slf)									\
-	 *************************************/ 								\
+	/*************************************                                  \
+     * SLF super low frequency oscillator                                   \
+     * frequency = 0.64 / (r_slf * c_slf)                                   \
+     *************************************/ 								\
 	sn->slf_count -= sn->slf_freq;											\
 	while( sn->slf_count <= 0 ) 											\
 	{																		\
@@ -735,11 +735,11 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 	}
 
 #define UPDATE_VCO															\
-	/************************************									\
-	 * VCO voltage controlled oscilator 									\
-	 * min. freq = 0.64 / (r_vco * c_vco)									\
-	 * freq. range is approx. 10:1											\
-	 ************************************/									\
+	/************************************                                   \
+     * VCO voltage controlled oscilator                                     \
+     * min. freq = 0.64 / (r_vco * c_vco)                                   \
+     * freq. range is approx. 10:1                                          \
+     ************************************/									\
 	if( sn->vco_select )													\
 	{																		\
 		/* VCO is controlled by SLF */										\
@@ -777,9 +777,9 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 	}
 
 #define UPDATE_NOISE														\
-	/*************************************									\
-	 * NOISE pseudo rand number generator									\
-	 *************************************/ 								\
+	/*************************************                                  \
+     * NOISE pseudo rand number generator                                   \
+     *************************************/ 								\
 	if( sn->noise_res > 0 ) 												\
 		sn->noise_poly = ( (sn->noise_poly << 7) +							\
 						   (sn->noise_poly >> 10) + 						\
@@ -794,9 +794,9 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 	}
 
 #define UPDATE_VOLUME														\
-	/*************************************									\
-	 * VOLUME adjust for attack/decay										\
-	 *************************************/ 								\
+	/*************************************                                  \
+     * VOLUME adjust for attack/decay                                       \
+     *************************************/ 								\
 	sn->vol_count -= sn->vol_rate;											\
 	if( sn->vol_count <= 0 )												\
 	{																		\

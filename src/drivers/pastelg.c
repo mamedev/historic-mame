@@ -1,11 +1,11 @@
 /******************************************************************************
 
-	Game Driver for Nichibutsu Mahjong series.
+    Game Driver for Nichibutsu Mahjong series.
 
-	Pastel Gal
-	(c)1985 Nihon Bussan Co.,Ltd.
+    Pastel Gal
+    (c)1985 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/06/07 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/06/07 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -85,7 +85,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_pastelg, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x90, 0x96) AM_WRITE(pastelg_blitter_w)
@@ -207,7 +207,7 @@ static MACHINE_DRIVER_START( pastelg )
 	MDRV_CPU_ADD(Z80, 19968000/8)	/* 2.496 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(readmem_pastelg, writemem_pastelg)
 	MDRV_CPU_IO_MAP(readport_pastelg, writeport_pastelg)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)	// nmiclock not written, chip is 1411M1 instead of 1413M3
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)  // nmiclock not written, chip is 1411M1 instead of 1413M3
 	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -228,7 +228,7 @@ static MACHINE_DRIVER_START( pastelg )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1250000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)

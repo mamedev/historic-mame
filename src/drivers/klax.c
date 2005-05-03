@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari Klax hardware
+    Atari Klax hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Klax (1989) [4 sets]
+    Games supported:
+        * Klax (1989) [4 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -26,7 +26,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static WRITE16_HANDLER( interrupt_ack_w )
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -77,7 +77,7 @@ static MACHINE_INIT( klax )
 
 /*************************************
  *
- *	Sound I/O
+ *  Sound I/O
  *
  *************************************/
 
@@ -97,7 +97,7 @@ static WRITE16_HANDLER( adpcm_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -132,7 +132,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -164,7 +164,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -191,7 +191,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -201,10 +201,10 @@ static MACHINE_DRIVER_START( klax )
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(klax)
 	MDRV_NVRAM_HANDLER(atarigen)
 
@@ -214,7 +214,7 @@ static MACHINE_DRIVER_START( klax )
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
-	
+
 	MDRV_VIDEO_START(klax)
 	MDRV_VIDEO_UPDATE(klax)
 
@@ -230,7 +230,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -352,7 +352,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -365,7 +365,7 @@ static DRIVER_INIT( klax )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

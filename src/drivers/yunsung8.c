@@ -1,14 +1,14 @@
 /***************************************************************************
 
-						  -= Yun Sung 8 Bit Games =-
+                          -= Yun Sung 8 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  Z80B
 Sound CPU    :  Z80A
-Video Chips  :	?
-Sound Chips  :	OKI M5205 + YM3812
+Video Chips  :  ?
+Sound Chips  :  OKI M5205 + YM3812
 
 ---------------------------------------------------------------------------
 Year + Game         Board#
@@ -65,7 +65,7 @@ MACHINE_INIT( yunsung8 )
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
@@ -87,12 +87,12 @@ WRITE8_HANDLER( yunsung8_bankswitch_w )
 }
 
 /*
-	Banked Video RAM:
+    Banked Video RAM:
 
-	c000-c7ff	Palette	(bit 1 of port 0 switches between 2 banks)
+    c000-c7ff   Palette (bit 1 of port 0 switches between 2 banks)
 
-	c800-cfff	Color	(bit 0 of port 0 switches between 2 banks)
-	d000-dfff	Tiles	""
+    c800-cfff   Color   (bit 0 of port 0 switches between 2 banks)
+    d000-dfff   Tiles   ""
 */
 
 static ADDRESS_MAP_START( yunsung8_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -134,7 +134,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 
 ***************************************************************************/
@@ -188,13 +188,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /***************************************************************************
-									Magix
+                                    Magix
 ***************************************************************************/
 
 INPUT_PORTS_START( magix )
@@ -282,7 +282,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Cannon Ball
+                                Cannon Ball
 ***************************************************************************/
 
 INPUT_PORTS_START( cannball )
@@ -372,7 +372,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
@@ -414,7 +414,7 @@ static struct GfxDecodeInfo yunsung8_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -484,14 +484,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-									Magix
+                                    Magix
 
 Yun Sung, 1995.
 CPU : Z80B
@@ -527,7 +527,7 @@ ROM_END
 
 /***************************************************************************
 
-								Cannon Ball
+                                Cannon Ball
 
 01, 02, 03, 04  are 27c020
 05, 06, 07, 08  are 27c010
@@ -568,7 +568,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

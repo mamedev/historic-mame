@@ -1,30 +1,30 @@
 /***************************************************************************
 
-	Atari Liberator hardware
+    Atari Liberator hardware
 
-	Games supported:
-		* Liberator
+    Games supported:
+        * Liberator
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Liberator Memory Map (for the main set, the other one is rearranged)
-	 (from the schematics/manual)
+    Liberator Memory Map (for the main set, the other one is rearranged)
+     (from the schematics/manual)
 
-	HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
-	---------+-----+------------------------+------------------------
+    HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
+    ---------+-----+------------------------+------------------------
     0000             D  D  D  D  D  D  D  D   XCOORD
     0001             D  D  D  D  D  D  D  D   YCOORD
     0002             D  D  D                  BIT MODE DATA
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     0003-033F        D  D  D  D  D  D  D  D   Working RAM
     0340-3D3F        D  D  D  D  D  D  D  D   Screen RAM
     3D40-3FFF        D  D  D  D  D  D  D  D   Working RAM
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     4000-403F    R   D  D  D  D  D  D  D  D   EARD*  read from non-volatile memory
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     5000         R                        D   coin AUX   (CTRLD* set low)
     5000         R                     D      coin LEFT  (CTRLD* set low)
     5000         R                  D         coin RIGHT (CTRLD* set low)
@@ -35,7 +35,7 @@
     5000         R   D                        SELF-TEST  (CTRLD* set low)
     5000         R               D  D  D  D   HDIR   (CTRLD* set high)
     5000         R   D  D  D  D               VDIR   (CTRLD* set high)
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     5001         R                        D   SHIELD 2
     5001         R                     D      SHIELD 1
     5001         R                  D         FIRE 2
@@ -44,14 +44,14 @@
     5001         R         D                  START 2
     5001         R      D                     START 1
     5001         R   D                        VBLANK
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     6000-600F    W               D  D  D  D   base_ram*
     6200-621F    W   D  D  D  D  D  D  D  D   COLORAM*
     6400         W                            INTACK*
     6600         W               D  D  D  D   EARCON
     6800         W   D  D  D  D  D  D  D  D   STARTLG (planet frame)
     6A00         W                            WDOG*
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     6C00         W            D               START LED 1
     6C01         W            D               START LED 2
     6C02         W            D               TBSWP*
@@ -60,76 +60,76 @@
     6C05         W            D               COINCNTRR
     6C06         W            D               COINCNTRL
     6C07         W            D               PLANET
-	---------+-----+------------------------+------------------------
+    ---------+-----+------------------------+------------------------
     6E00-6E3F    W   D  D  D  D  D  D  D  D   EARWR*
     7000-701F        D  D  D  D  D  D  D  D   IOS2* (Pokey 2)
     7800-781F        D  D  D  D  D  D  D  D   IOS1* (Pokey 1)
     8000-EFFF    R   D  D  D  D  D  D  D  D   ROM
-	-----------------------------------------------------------------
+    -----------------------------------------------------------------
 
 
-	 Dip switches at D4 on the PCB for play options: (IN2)
+     Dip switches at D4 on the PCB for play options: (IN2)
 
-	LSB  D1   D2   D3   D4   D5   D6   MSB
-	SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
-	-------------------------------------------------------------------------------------
-	Off  Off                                 4 ships per game   <-
-	On   Off                                 5 ships per game
-	Off  On                                  6 ships per game
-	On   On                                  8 ships per game
-	-------------------------------------------------------------------------------------
-	          Off  Off                       Bonus ship every 15000 points
-	          On   Off                       Bonus ship every 20000 points   <-
-	          Off  On                        Bonus ship every 25000 points
-	          On   On                        Bonus ship every 30000 points
-	-------------------------------------------------------------------------------------
-	                    On   Off             Easy game play
-	                    Off  Off             Normal game play   <-
-	                    Off  On              Hard game play
-	-------------------------------------------------------------------------------------
-	                                X    X   Not used
-	-------------------------------------------------------------------------------------
-
-
-	 Dip switches at A4 on the PCB for price options: (IN3)
-
-	LSB  D1   D2   D3   D4   D5   D6   MSB
-	SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
-	-------------------------------------------------------------------------------------
-	Off  Off                                 Free play
-	On   Off                                 1 coin for 2 credits
-	Off  On                                  1 coin for 1 credit   <-
-	On   On                                  2 coins for 1 credit
-	-------------------------------------------------------------------------------------
-	          Off  Off                       Right coin mech X 1   <-
-	          On   Off                       Right coin mech X 4
-	          Off  On                        Right coin mech X 5
-	          On   On                        Right coin mech X 6
-	-------------------------------------------------------------------------------------
-	                    Off                  Left coin mech X 1    <-
-	                    On                   Left coin mech X 2
-	-------------------------------------------------------------------------------------
-	                         Off  Off  Off   No bonus coins        <-
-	                         Off  On   Off   For every 4 coins inserted, game logic
-	                                          adds 1 more coin
-
-	                         On   On   Off   For every 4 coins inserted, game logic
-	                                          adds 2 more coin
-	                         Off  Off  On    For every 5 coins inserted, game logic
-	                                          adds 1 more coin
-	                         On   Off  On    For every 3 coins inserted, game logic
-	                                          adds 1 more coin
-	                          X   On   On    No bonus coins
-	-------------------------------------------------------------------------------------
-	<-  = Manufacturer's suggested settings
+    LSB  D1   D2   D3   D4   D5   D6   MSB
+    SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
+    -------------------------------------------------------------------------------------
+    Off  Off                                 4 ships per game   <-
+    On   Off                                 5 ships per game
+    Off  On                                  6 ships per game
+    On   On                                  8 ships per game
+    -------------------------------------------------------------------------------------
+              Off  Off                       Bonus ship every 15000 points
+              On   Off                       Bonus ship every 20000 points   <-
+              Off  On                        Bonus ship every 25000 points
+              On   On                        Bonus ship every 30000 points
+    -------------------------------------------------------------------------------------
+                        On   Off             Easy game play
+                        Off  Off             Normal game play   <-
+                        Off  On              Hard game play
+    -------------------------------------------------------------------------------------
+                                    X    X   Not used
+    -------------------------------------------------------------------------------------
 
 
-	Note:
-	----
+     Dip switches at A4 on the PCB for price options: (IN3)
 
-	The loop at $cf60 should count down from Y=0 instead of Y=0xff.  Because of this the first
-	four leftmost pixels of each row are not cleared.  This bug is masked by the visible area
-	covering up the offending pixels.
+    LSB  D1   D2   D3   D4   D5   D6   MSB
+    SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
+    -------------------------------------------------------------------------------------
+    Off  Off                                 Free play
+    On   Off                                 1 coin for 2 credits
+    Off  On                                  1 coin for 1 credit   <-
+    On   On                                  2 coins for 1 credit
+    -------------------------------------------------------------------------------------
+              Off  Off                       Right coin mech X 1   <-
+              On   Off                       Right coin mech X 4
+              Off  On                        Right coin mech X 5
+              On   On                        Right coin mech X 6
+    -------------------------------------------------------------------------------------
+                        Off                  Left coin mech X 1    <-
+                        On                   Left coin mech X 2
+    -------------------------------------------------------------------------------------
+                             Off  Off  Off   No bonus coins        <-
+                             Off  On   Off   For every 4 coins inserted, game logic
+                                              adds 1 more coin
+
+                             On   On   Off   For every 4 coins inserted, game logic
+                                              adds 2 more coin
+                             Off  Off  On    For every 5 coins inserted, game logic
+                                              adds 1 more coin
+                             On   Off  On    For every 3 coins inserted, game logic
+                                              adds 1 more coin
+                              X   On   On    No bonus coins
+    -------------------------------------------------------------------------------------
+    <-  = Manufacturer's suggested settings
+
+
+    Note:
+    ----
+
+    The loop at $cf60 should count down from Y=0 instead of Y=0xff.  Because of this the first
+    four leftmost pixels of each row are not cleared.  This bug is masked by the visible area
+    covering up the offending pixels.
 
 ******************************************************************************************/
 
@@ -145,7 +145,7 @@ static UINT8 ctrld;
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -164,7 +164,7 @@ static WRITE8_HANDLER( liberatr_coin_counter_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -190,7 +190,7 @@ static READ8_HANDLER( liberatr_input_port_0_r )
 		UINT8 trackball = readinputport(4);
 		return ((trackball & 0xf0) - (trackball_offset & 0xf0)) | ((trackball - trackball_offset) & 0x0f);
 	}
-	
+
 	/* otherwise, the LS191 is simply passing through the raw switch inputs */
 	else
 		return readinputport(0);
@@ -200,7 +200,7 @@ static READ8_HANDLER( liberatr_input_port_0_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -234,7 +234,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Alternate main CPU memory handlers
+ *  Alternate main CPU memory handlers
  *
  *************************************/
 
@@ -269,7 +269,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -353,7 +353,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -374,7 +374,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -424,7 +424,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -492,7 +492,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		dsp32dis.c
-**		Disassembler for the portable AT&T/Lucent DSP32C emulator.
-**		Written by Aaron Giles
+**      dsp32dis.c
+**      Disassembler for the portable AT&T/Lucent DSP32C emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -15,7 +15,7 @@
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32(pc)
@@ -24,7 +24,7 @@
 
 
 /*###################################################################################################
-**	CODE CODE
+**  CODE CODE
 **#################################################################################################*/
 
 static const char *sizesuffix[] = { "", "e" };
@@ -34,18 +34,18 @@ static const char *aMvals[] = { "a0", "a1", "a2", "a3", "0.0", "1.0", "Format 4"
 static const char *memsuffix[] = { "h", "l", "", "e" };
 static const char *functable[] =
 {
-	"ic", "oc", "float", "int", "round", "ifalt", "ifaeq", "ifagt", 
-	"reserved8", "reserved9", "float24", "int24", "ieee", "dsp", "seed", "reservedf" 
+	"ic", "oc", "float", "int", "round", "ifalt", "ifaeq", "ifagt",
+	"reserved8", "reserved9", "float24", "int24", "ieee", "dsp", "seed", "reservedf"
 };
-static const char *condtable[] = 
+static const char *condtable[] =
 {
 	"false", "true",
-	"pl", "mi", 
-	"ne", "eq", 
-	"vc", "vs", 
-	"cc", "cs", 
-	"ge", "lt", 
-	"gt", "le", 
+	"pl", "mi",
+	"ne", "eq",
+	"vc", "vs",
+	"cc", "cs",
+	"ge", "lt",
+	"gt", "le",
 	"hi", "ls",
 	"auc", "aus",
 	"age", "alt",
@@ -74,15 +74,15 @@ static const char *condtable[] =
 };
 static const char *regname[] =
 {
-	"0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", 
-	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "pc", 
+	"0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "pc",
 	"0", "r15", "r16", "r17", "r18", "r19", "-1", "1",
 	"r20", "r21", "dauc", "ioc", "res1c", "r22", "pcsh", "res1f"
 };
 static const char *regnamee[] =
 {
-	"0", "r1e", "r2e", "r3e", "r4e", "r5e", "r6e", "r7e", 
-	"r8e", "r9e", "r10e", "r11e", "r12e", "r13e", "r14e", "pce", 
+	"0", "r1e", "r2e", "r3e", "r4e", "r5e", "r6e", "r7e",
+	"r8e", "r9e", "r10e", "r11e", "r12e", "r13e", "r14e", "pce",
 	"0", "r15e", "r16e", "r17e", "r18e", "r19e", "--", "++",
 	"r20e", "r21e", "dauce", "ioce", "res1ce", "r22e", "pcshe", "res1fe"
 };
@@ -134,7 +134,7 @@ static const char *dasm_XYZ(UINT8 bits, char *buffer)
 {
 	UINT8 p = bits >> 3;
 	UINT8 i = bits & 7;
-	
+
 	if (p)
 	{
 		if (p == 15) p = lastp;		/* P=15 means Z inherits from Y, Y inherits from X */
@@ -155,7 +155,7 @@ static const char *dasm_XYZ(UINT8 bits, char *buffer)
 	{
 		switch (i)
 		{
-			case 0:		
+			case 0:
 			case 1:
 			case 2:
 			case 3:		sprintf(buffer, "a%d", i); break;
@@ -173,7 +173,7 @@ static const char *dasm_PI(UINT16 bits, char *buffer)
 {
 	UINT8 p = bits >> 5;
 	UINT8 i = bits & 0x1f;
-	
+
 	if (p)
 	{
 		switch (i)
@@ -206,7 +206,7 @@ static const char *dasm_PI(UINT16 bits, char *buffer)
 unsigned dasm_dsp32(char *buffer, unsigned pc)
 {
 	UINT32 op = ROPCODE(pc);
-	
+
 	switch (op >> 25)
 	{
 		/* DA format 1 */
@@ -239,7 +239,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			}
 			break;
 		}
-		
+
 		/* DA format 2 */
 		case 0x20:	case 0x21:	case 0x22:	case 0x23:
 		case 0x24:	case 0x25:	case 0x26:	case 0x27:
@@ -250,7 +250,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			const char *Z = dasm_XYZ((op >> 0) & 0x7f, tempbuf[2]);
 			const char *aM = aMvals[(op >> 26) & 7];
 			UINT8 aN = (op >> 21) & 3;
-			
+
 			if ((op & 0x7f) == 7)
 			{
 				if (aM[0] == '0')
@@ -267,7 +267,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			}
 			break;
 		}
-						
+
 		/* DA format 3 */
 		case 0x30:	case 0x31:	case 0x32:	case 0x33:
 		case 0x34:	case 0x35:	case 0x36:	case 0x37:
@@ -278,7 +278,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			const char *Z = dasm_XYZ((op >> 0) & 0x7f, tempbuf[2]);
 			const char *aM = aMvals[(op >> 26) & 7];
 			UINT8 aN = (op >> 21) & 3;
-			
+
 			if ((op & 0x7f) == 7)
 			{
 				if (aM[0] == '0')
@@ -295,7 +295,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			}
 			break;
 		}
-						
+
 		/* DA format 4 */
 		case 0x1c:	case 0x1d:
 		{
@@ -303,14 +303,14 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			const char *Y = dasm_XYZ((op >> 7) & 0x7f, tempbuf[1]);
 			const char *Z = dasm_XYZ((op >> 0) & 0x7f, tempbuf[2]);
 			UINT8 aN = (op >> 21) & 3;
-			
+
 			if ((op & 0x7f) == 7)
 				sprintf(buffer, "a%d = %s%s %s %s", aN, unarysign[(op >> 24) & 1], Y, sign[(op >> 23) & 1], X);
 			else
 				sprintf(buffer, "a%d = %s(%s=%s) %s %s", aN, unarysign[(op >> 24) & 1], Z, Y, sign[(op >> 23) & 1], X);
 			break;
 		}
-		
+
 		/* DA format 5 */
 		case 0x3c:	case 0x3d:	case 0x3e:	case 0x3f:
 			if ((op & 0x7f) == 7)
@@ -325,14 +325,14 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 						functable[(op >> 23) & 15],					// G
 						dasm_XYZ((op >> 7) & 0x7f, tempbuf[0]));	// Y
 			break;
-		
+
 		/* CA formats 0/1 */
 		case 0x00:	case 0x01:	case 0x02:	case 0x03:
 		{
 			const char *rH = regname[(op >> 16) & 0x1f];
 			UINT8 C = (op >> 21) & 0x3f;
 			INT16 N = (INT16)op;
-		
+
 			if (op == 0)
 				sprintf(buffer, "nop");
 			else if (C == 1 && N == 0 && ((op >> 16) & 0x1f) == 0x1e)
@@ -361,7 +361,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			}
 			break;
 		}
-		
+
 		/* CA format 3a */
 		case 0x06:	case 0x07:
 		{
@@ -379,7 +379,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				sprintf(buffer, "if (%s-- >= 0) goto %s", rM, rH);
 			break;
 		}
-		
+
 		/* CA format 3b/3c */
 		case 0x46:
 			if (((op >> 21) & 0x1f) == 0)
@@ -387,7 +387,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			else if (((op >> 21) & 0x1f) == 1)
 				sprintf(buffer, "do %d,%s", (op >> 16) & 0x1f, regname[op & 0x1f]);
 			break;
-		
+
 		/* CA format 4 */
 		case 0x08:	case 0x09:
 		{
@@ -405,7 +405,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				sprintf(buffer, "call %s (%s)", rH, rM);
 			break;
 		}
-		
+
 		/* CA format 5a/5b */
 		case 0x0a:	case 0x0b:
 		case 0x4a:	case 0x4b:
@@ -435,7 +435,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 
 			if ((op >> 10) & 1)
 				sprintf(condbuf, "if (%s) ", condtable[(op >> 12) & 15]);
-				
+
 			switch ((op >> 21) & 15)
 			{
 				/* add */
@@ -459,7 +459,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 							sprintf(buffer, "%s%s%s = %s%s + %s%s", condbuf, rD, s, rD, s, rS1, s);
 					}
 					break;
-				
+
 				case 1:
 					sprintf(buffer, "%s%s%s = %s%s * 2", condbuf, rD, s, rS1, s);
 					break;
@@ -470,21 +470,21 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 					else
 						sprintf(buffer, "%s%s%s = %s%s - %s%s", condbuf, rD, s, rS1, s, rD, s);
 					break;
-				
+
 				case 3:
 					if (threeop)
 						sprintf(buffer, "%s%s%s = %s%s # %s%s", condbuf, rD, s, rS2, s, rS1, s);
 					else
 						sprintf(buffer, "%s%s%s = %s%s # %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 4:
 					if (threeop)
 						sprintf(buffer, "%s%s%s = %s%s - %s%s", condbuf, rD, s, rS2, s, rS1, s);
 					else
 						sprintf(buffer, "%s%s%s = %s%s - %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 5:
 					sprintf(buffer, "%s%s%s = -%s%s", condbuf, rD, s, rS1, s);
 					break;
@@ -495,32 +495,32 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 					else
 						sprintf(buffer, "%s%s%s = %s%s &~ %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 7:
-//					if (threeop)
-//						sprintf(buffer, "%s%s%s - %s%s", condbuf, rS2, s, rS1, s);
-//					else
+//                  if (threeop)
+//                      sprintf(buffer, "%s%s%s - %s%s", condbuf, rS2, s, rS1, s);
+//                  else
 						sprintf(buffer, "%s%s%s - %s%s", condbuf, rD, s, rS1, s);
 					break;
-				
+
 				case 8:
 					if (threeop)
 						sprintf(buffer, "%s%s%s = %s%s ^ %s%s", condbuf, rD, s, rS2, s, rS1, s);
 					else
 						sprintf(buffer, "%s%s%s = %s%s ^ %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 9:
 					sprintf(buffer, "%s%s%s = %s%s >>> 1", condbuf, rD, s, rS1, s);
 					break;
-				
+
 				case 10:
 					if (threeop)
 						sprintf(buffer, "%s%s%s = %s%s | %s%s", condbuf, rD, s, rS2, s, rS1, s);
 					else
 						sprintf(buffer, "%s%s%s = %s%s | %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 11:
 					sprintf(buffer, "%s%s%s = %s%s <<< 1", condbuf, rD, s, rS1, s);
 					break;
@@ -528,35 +528,35 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				case 12:
 					sprintf(buffer, "%s%s%s = %s%s >> 1", condbuf, rD, s, rS1, s);
 					break;
-				
+
 				case 13:
 					sprintf(buffer, "%s%s%s = %s%s / 2", condbuf, rD, s, rS1, s);
 					break;
-				
+
 				case 14:
 					if (threeop)
 						sprintf(buffer, "%s%s%s = %s%s & %s%s", condbuf, rD, s, rS2, s, rS1, s);
 					else
 						sprintf(buffer, "%s%s%s = %s%s & %s%s", condbuf, rD, s, rD, s, rS1, s);
 					break;
-				
+
 				case 15:
-//					if (threeop)
-//						sprintf(buffer, "%s%s%s & %s%s", condbuf, rS1, s, rS2, s);
-//					else
+//                  if (threeop)
+//                      sprintf(buffer, "%s%s%s & %s%s", condbuf, rS1, s, rS2, s);
+//                  else
 						sprintf(buffer, "%s%s%s & %s%s", condbuf, rD, s, rS1, s);
 					break;
 			}
 			break;
 		}
-		
+
 		/* CA format 6c/6d */
 		case 0x0d:	case 0x4d:
 		{
 			const char *rD = regname[(op >> 16) & 0x1f];
 			const char *s = sizesuffix[(op >> 31) & 1];
 			INT16 N = (INT16)op;
-		
+
 			switch ((op >> 21) & 15)
 			{
 				case 0:
@@ -568,39 +568,39 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				case 13:
 					sprintf(buffer, "Unexpected: %08X", op);
 					break;
-				
+
 				case 2:
 					sprintf(buffer, "%s%s = %s - %s%s", rD, s, signed_16bit_unary(N), rD, s);
 					break;
-				
+
 				case 3:
 					sprintf(buffer, "%s%s = %s%s # %s", rD, s, rD, s, signed_16bit_unary(N));
 					break;
-				
+
 				case 4:
 					sprintf(buffer, "%s%s = %s%s - %s", rD, s, rD, s, signed_16bit_unary(N));
 					break;
-				
+
 				case 6:
 					sprintf(buffer, "%s%s = %s%s &~ %s", rD, s, rD, s, unsigned_16bit_size(N, (op >> 31) & 1));
 					break;
-				
+
 				case 7:
 					sprintf(buffer, "%s%s - %s", rD, s, signed_16bit_unary(N));
 					break;
-				
+
 				case 8:
 					sprintf(buffer, "%s%s = %s%s ^ %s", rD, s, rD, s, unsigned_16bit_size(N, (op >> 31) & 1));
 					break;
-				
+
 				case 10:
 					sprintf(buffer, "%s%s = %s%s | %s", rD, s, rD, s, unsigned_16bit_size(N, (op >> 31) & 1));
 					break;
-				
+
 				case 14:
 					sprintf(buffer, "%s%s = %s%s & %s", rD, s, rD, s, unsigned_16bit_size(N, (op >> 31) & 1));
 					break;
-				
+
 				case 15:
 					sprintf(buffer, "%s%s & %s", rD, s, unsigned_16bit_size(N, (op >> 31) & 1));
 					break;
@@ -643,7 +643,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				sprintf(buffer, "goto %s", rH);
 			break;
 		}
-						
+
 		/* CA format 8b */
 		case 0x60:	case 0x61:	case 0x62:	case 0x63:
 		case 0x64:	case 0x65:	case 0x66:	case 0x67:
@@ -654,7 +654,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			sprintf(buffer, "%s = $%x", regnamee[(op >> 16) & 0x1f], immed & 0xffffff);
 			break;
 		}
-						
+
 		/* CA format 8c */
 		case 0x70:	case 0x71:	case 0x72:	case 0x73:
 		case 0x74:	case 0x75:	case 0x76:	case 0x77:

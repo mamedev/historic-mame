@@ -155,8 +155,8 @@ DISCRETE_SOUND_START(asteroid_discrete_interface)
 	/* Thrust noise is a gated noise source         */
 	/* fed into a filter network                    */
 	/* It is an RC lowpass, followed by a           */
-	/* Sallen-Key bandpass, followed by an active	*/
-	/* lowpass.                             		*/
+	/* Sallen-Key bandpass, followed by an active   */
+	/* lowpass.                                     */
 	/************************************************/
 	DISCRETE_LFSR_NOISE(ASTEROID_NOISE, ASTEROID_NOISE_RESET, ASTEROID_NOISE_RESET, 12000.0, 1.0, 0, 0, &asteroid_lfsr)
 
@@ -226,8 +226,8 @@ DISCRETE_SOUND_START(astdelux_discrete_interface)
 	/* Thrust noise is a gated noise source         */
 	/* fed into a filter network                    */
 	/* It is an RC lowpass, followed by a           */
-	/* Sallen-Key bandpass, followed by an active	*/
-	/* lowpass.                             		*/
+	/* Sallen-Key bandpass, followed by an active   */
+	/* lowpass.                                     */
 	/************************************************/
 	DISCRETE_LFSR_NOISE(ASTEROID_NOISE, ASTEROID_NOISE_RESET, ASTEROID_NOISE_RESET, 12000.0, 1.0, 0, 0, &asteroid_lfsr)
 

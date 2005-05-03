@@ -3,11 +3,11 @@
 /* NIX or Novatecnia (both spanish) may have produced these
    its probably NIX due to somes similarities with Pirates
 
-	Supported Games                  Rip-off of
+    Supported Games                  Rip-off of
 
-	Fit of Fighting                  Art of Fighting (neogeo.c)
-	The History of Martial Arts      Fighter's History (deco32.c)
-	'BB' Untitled Prototype          -none, original-
+    Fit of Fighting                  Art of Fighting (neogeo.c)
+    The History of Martial Arts      Fighter's History (deco32.c)
+    'BB' Untitled Prototype          -none, original-
 
    'BB' Prototype isn't a game as such, 'BB' was the label on
    the prototype board. which appears to have been used simply
@@ -144,18 +144,18 @@ static ADDRESS_MAP_START( fitfight_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_3_word_r)
 
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_600000)
-	//	Is 0x600000 controlling the slave audio CPU? data is 0x1111000zzzzzzzzz (9 sign. bits)
-	//	Used by histryma/fitfight:
-	//		@0x000031ae/0x00002b3a: 0xF000, once, during POST
-	//		 0xe001ae/0xe00096 holds the address (0x600000), 0xe001b2/0xe0009a holds the word to output
-	//		@0x00003294/0x00002c1a: word content of 0xe001b2
-	//		@0x000032cc/?: 0xF0dd byte from 0xe001b5, dd seems to be allways 0xFD
-	//		@0x000036bc/?: 0xF0FD when inserting coin
-	//		@0x000037a6/0x000030e6: 0x??dd byte from 0xe08c05, 0xF101 then 0xF001/0xF157 then 0xF057
+	//  Is 0x600000 controlling the slave audio CPU? data is 0x1111000zzzzzzzzz (9 sign. bits)
+	//  Used by histryma/fitfight:
+	//      @0x000031ae/0x00002b3a: 0xF000, once, during POST
+	//       0xe001ae/0xe00096 holds the address (0x600000), 0xe001b2/0xe0009a holds the word to output
+	//      @0x00003294/0x00002c1a: word content of 0xe001b2
+	//      @0x000032cc/?: 0xF0dd byte from 0xe001b5, dd seems to be allways 0xFD
+	//      @0x000036bc/?: 0xF0FD when inserting coin
+	//      @0x000037a6/0x000030e6: 0x??dd byte from 0xe08c05, 0xF101 then 0xF001/0xF157 then 0xF057
 
-//	AM_RANGE(0x700000, 0x700001) AM_READ(xxxx) /* see init */
+//  AM_RANGE(0x700000, 0x700001) AM_READ(xxxx) /* see init */
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
-	//	kept at 0xe07900/0xe04c56
+	//  kept at 0xe07900/0xe04c56
 
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
 	//written at scanline 1, allways 0. Used by histryma/fitfight @0x00001d76/@0x00000f6a
@@ -384,7 +384,7 @@ INPUT_PORTS_START( fitfight )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0070, 0x0060, "Needed Points/Maximum Rounds" )	// see notes
-//	PORT_DIPSETTING(      0x0070, "Endless" )
+//  PORT_DIPSETTING(      0x0070, "Endless" )
 	PORT_DIPSETTING(      0x0060, "1/2" )
 	PORT_DIPSETTING(      0x0050, "2/3" )
 	PORT_DIPSETTING(      0x0040, "2/4" )
@@ -451,9 +451,9 @@ INPUT_PORTS_START( histryma )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )			// "Test" (duplicated)
 	/* MSB : SW2 -> 0xe05874.b (cpl) */
 	PORT_DIPNAME( 0xf800, 0x0000, "Time" )
-//	PORT_DIPSETTING(      0xf800, "15" )				// duplicated setting
-//	PORT_DIPSETTING(      0xf000, "15" )				// duplicated setting
-//	PORT_DIPSETTING(      0xe800, "15" )				// duplicated setting
+//  PORT_DIPSETTING(      0xf800, "15" )                // duplicated setting
+//  PORT_DIPSETTING(      0xf000, "15" )                // duplicated setting
+//  PORT_DIPSETTING(      0xe800, "15" )                // duplicated setting
 	PORT_DIPSETTING(      0xe000, "15" )
 	PORT_DIPSETTING(      0xd800, "18" )
 	PORT_DIPSETTING(      0xd000, "21" )
@@ -522,7 +522,7 @@ INPUT_PORTS_START( histryma )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0070, 0x0060, "Needed Points/Maximum Points" )	// see notes
-//	PORT_DIPSETTING(      0x0070, "Endless" )				// ends on a draw
+//  PORT_DIPSETTING(      0x0070, "Endless" )               // ends on a draw
 	PORT_DIPSETTING(      0x0060, "1/2" )
 	PORT_DIPSETTING(      0x0050, "2/3" )
 	PORT_DIPSETTING(      0x0040, "2/4" )
@@ -593,9 +593,9 @@ INPUT_PORTS_START( bbprot )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )			// "Test" (duplicated)
 	/* MSB : SW2 -> 0xe07e84.b (cpl) */
 	PORT_DIPNAME( 0xf800, 0x0000, "Time" )
-//	PORT_DIPSETTING(      0xf800, "15" )				// duplicated setting
-//	PORT_DIPSETTING(      0xf000, "15" )				// duplicated setting
-//	PORT_DIPSETTING(      0xe800, "15" )				// duplicated setting
+//  PORT_DIPSETTING(      0xf800, "15" )                // duplicated setting
+//  PORT_DIPSETTING(      0xf000, "15" )                // duplicated setting
+//  PORT_DIPSETTING(      0xe800, "15" )                // duplicated setting
 	PORT_DIPSETTING(      0xe000, "15" )
 	PORT_DIPSETTING(      0xd800, "18" )
 	PORT_DIPSETTING(      0xd000, "21" )
@@ -752,7 +752,7 @@ static MACHINE_DRIVER_START( fitfight )
 	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(fitfight_main_map,0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
-	
+
 	MDRV_CPU_ADD(UPD7810, 12000000)
 	/* audio CPU */
 	MDRV_CPU_CONFIG(sound_cpu_config)
@@ -835,7 +835,7 @@ ROM_START( fitfight )
 	ROM_REGION( 0x01c000, REGION_CPU2, 0 ) /* Sound Program */
 	ROM_LOAD( "u23_ff1.bin",  0x000000, 0x004000, CRC(e2d6d768) SHA1(233e5501ffda8db48341fa66f16b630544803a89) )
 	ROM_CONTINUE(          0x010000, 0x00c000 )
-	
+
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* OKI Samples? */
 	ROM_LOAD( "h7e_ff1.bin",  0x000000, 0x080000, CRC(3e12dfd8) SHA1(8f21abfc6a6aac9ad3fafe97d0279739c7b9fab9) ) //seems to be a merge of 2 0x040000 roms
 	ROM_LOAD( "h18e_ff1.bin", 0x080000, 0x080000, CRC(a7f36dbe) SHA1(206efb7f32d6123ed3e22790ff38dd0a8e1626d7) ) //seems to be a merge of 2 0x040000 roms
@@ -983,16 +983,16 @@ ROM_END
 
 static DRIVER_INIT( fitfight )
 {
-//	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-//	mem16[0x0165B2/2]=0x4e71; // for now so it boots
+//  data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+//  mem16[0x0165B2/2]=0x4e71; // for now so it boots
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x700000, 0x700001, 0, 0, fitfight_700000_r);
 	bbprot_kludge = 0;
 }
 
 static DRIVER_INIT( histryma )
 {
-//	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-//	mem16[0x017FDC/2]=0x4e71; // for now so it boots
+//  data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+//  mem16[0x017FDC/2]=0x4e71; // for now so it boots
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x700000, 0x700001, 0, 0, histryma_700000_r);
 	bbprot_kludge = 0;
 }

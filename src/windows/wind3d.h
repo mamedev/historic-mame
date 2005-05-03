@@ -1,6 +1,6 @@
 //============================================================
 //
-//	wind3d.h - Win32 Direct3D 7 (with DirectDraw 7) code
+//  wind3d.h - Win32 Direct3D 7 (with DirectDraw 7) code
 //
 //============================================================
 
@@ -11,7 +11,7 @@
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 extern int win_d3d_use_filter;
@@ -24,7 +24,7 @@ extern UINT8 win_d3d_effects_flipy;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 int win_d3d_init(int width, int height, int depth, int attributes, double aspect, const struct win_effect_data *effect);

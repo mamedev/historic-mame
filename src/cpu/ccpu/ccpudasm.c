@@ -1,11 +1,11 @@
 /*###################################################################################################
 **
 **
-**		ccpudasm.c
-**		Core implementation for the portable Cinematronics CPU disassembler.
+**      ccpudasm.c
+**      Core implementation for the portable Cinematronics CPU disassembler.
 **
-**		Written by Aaron Giles
-**		Special thanks to Zonn Moore for his detailed documentation.
+**      Written by Aaron Giles
+**      Special thanks to Zonn Moore for his detailed documentation.
 **
 **
 **#################################################################################################*/
@@ -39,12 +39,12 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0x1c:	case 0x1d:	case 0x1e:	case 0x1f:
 			sprintf(buffer, "INP  $%X", opcode & 0x0f);
 			break;
-		
+
 		/* A8I */
 		case 0x20:
 			sprintf(buffer, "A8I  $%X", cpu_readop(pc++));
 			break;
-		
+
 		/* A4I */
 		case 0x21:	case 0x22:	case 0x23:
 		case 0x24:	case 0x25:	case 0x26:	case 0x27:
@@ -57,7 +57,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0x30:
 			sprintf(buffer, "S8I  $%X", cpu_readop(pc++));
 			break;
-		
+
 		/* S4I */
 		case 0x31:	case 0x32:	case 0x33:
 		case 0x34:	case 0x35:	case 0x36:	case 0x37:
@@ -74,37 +74,37 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 			tempval = cpu_readop(pc++);
 			sprintf(buffer, "LPAI $%03X", (opcode & 0x0f) + (tempval & 0xf0) + ((tempval & 0x0f) << 8));
 			break;
-		
+
 		/* T4K */
 		case 0x50:
 			sprintf(buffer, "T4K");
 			break;
-		
+
 		/* JMIB/JEHB */
 		case 0x51:
 			sprintf(buffer, "JMIB/JEHB");
 			break;
-		
+
 		/* JVNB */
 		case 0x52:
 			sprintf(buffer, "JVNB");
 			break;
-		
+
 		/* JLTB */
 		case 0x53:
 			sprintf(buffer, "JLTB");
 			break;
-		
+
 		/* JEQB */
 		case 0x54:
 			sprintf(buffer, "JEQB");
 			break;
-		
+
 		/* JCZB */
 		case 0x55:
 			sprintf(buffer, "JCZB");
 			break;
-		
+
 		/* JOSB */
 		case 0x56:
 			sprintf(buffer, "JOSB");
@@ -119,32 +119,32 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0x58:
 			sprintf(buffer, "JMP");
 			break;
-		
+
 		/* JMI/JEH */
 		case 0x59:
 			sprintf(buffer, "JMI/JEH");
 			break;
-		
+
 		/* JVN */
 		case 0x5a:
 			sprintf(buffer, "JVN");
 			break;
-		
+
 		/* JLT */
 		case 0x5b:
 			sprintf(buffer, "JLT");
 			break;
-		
+
 		/* JEQ */
 		case 0x5c:
 			sprintf(buffer, "JEQ");
 			break;
-		
+
 		/* JCZ */
 		case 0x5d:
 			sprintf(buffer, "JCZ");
 			break;
-		
+
 		/* JOS */
 		case 0x5e:
 			sprintf(buffer, "JOS");
@@ -186,7 +186,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0x9c:	case 0x9d:	case 0x9e:	case 0x9f:
 			sprintf(buffer, "OUT  $%X", opcode & 0x0f);
 			break;
-			
+
 		/* LDA */
 		case 0xa0:	case 0xa1:	case 0xa2:	case 0xa3:
 		case 0xa4:	case 0xa5:	case 0xa6:	case 0xa7:
@@ -194,7 +194,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0xac:	case 0xad:	case 0xae:	case 0xaf:
 			sprintf(buffer, "LDA  $%X", opcode & 0x0f);
 			break;
-			
+
 		/* CMP */
 		case 0xb0:	case 0xb1:	case 0xb2:	case 0xb3:
 		case 0xb4:	case 0xb5:	case 0xb6:	case 0xb7:
@@ -210,7 +210,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0xcc:	case 0xcd:	case 0xce:	case 0xcf:
 			sprintf(buffer, "WS   $%X", opcode & 0x0f);
 			break;
-			
+
 		/* STA n */
 		case 0xd0:	case 0xd1:	case 0xd2:	case 0xd3:
 		case 0xd4:	case 0xd5:	case 0xd6:	case 0xd7:
@@ -218,115 +218,115 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0xdc:	case 0xdd:	case 0xde:	case 0xdf:
 			sprintf(buffer, "STA  $%X", opcode & 0x0f);
 			break;
-		
+
 		/* DV */
 		case 0xe0:
 			sprintf(buffer, "DV");
 			break;
-		
+
 		/* LPAP */
 		case 0xe1:
 			sprintf(buffer, "LPAP");
 			break;
-		
+
 		/* WSP */
 		case 0xf1:
 			sprintf(buffer, "WSP");
 			break;
-		
+
 		/* LKP */
 		case 0xe2:
 		case 0xf2:
 			sprintf(buffer, "LKP");
 			break;
-		
+
 		/* MUL */
 		case 0xe3:
 		case 0xf3:
 			sprintf(buffer, "MUL");
 			break;
-		
+
 		/* NV */
 		case 0xe4:
 		case 0xf4:
 			sprintf(buffer, "NV");
 			break;
-			
+
 		/* FRM */
 		case 0xe5:
 		case 0xf5:
 			sprintf(buffer, "FRM");
 			break;
-		
+
 		/* STAP */
 		case 0xe6:
 		case 0xf6:
 			sprintf(buffer, "STAP");
 			break;
-		
+
 		/* CST */
 		case 0xf7:
 			sprintf(buffer, "CST");
 			break;
-			
+
 		/* ADDP */
 		case 0xe7:
 			sprintf(buffer, "ADDP");
 			break;
-		
+
 		/* SUBP */
 		case 0xe8:
 		case 0xf8:
 			sprintf(buffer, "SUBP");
 			break;
-		
+
 		/* ANDP */
 		case 0xe9:
 		case 0xf9:
 			sprintf(buffer, "ANDP");
 			break;
-		
+
 		/* LDAP */
 		case 0xea:
 		case 0xfa:
 			sprintf(buffer, "LDAP");
 			break;
-		
+
 		/* SHR */
 		case 0xeb:
 		case 0xfb:
 			sprintf(buffer, "SHR");
 			break;
-		
+
 		/* SHL */
 		case 0xec:
 		case 0xfc:
 			sprintf(buffer, "SHL");
 			break;
-		
+
 		/* ASR */
 		case 0xed:
 		case 0xfd:
 			sprintf(buffer, "ASR");
 			break;
-		
+
 		/* SHRB */
 		case 0xee:
 		case 0xfe:
 			sprintf(buffer, "SHRB");
 			break;
-		
+
 		/* SHLB */
 		case 0xef:
 		case 0xff:
 			sprintf(buffer, "SHLB");
 			break;
-		
+
 		/* IV */
 		case 0xf0:
 			sprintf(buffer, "IV");
 			break;
 	}
-	
+
 	return pc - startpc;
 }

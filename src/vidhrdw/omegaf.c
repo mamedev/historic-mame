@@ -10,50 +10,50 @@ layers as against just one BG layer in Mutant Night.
 Foreground RAM format ( Foreground RAM format is same as Mutant Night )
 --------------------------------------------------------------
  +0         +1
- xxxx xxxx  ---- ----		= bottom 8 bits of tile number
- ---- ----  xx-- ----		= top 2 bits of tile number
- ---- ----  --x- ----		= flip X
- ---- ----  ---x ----		= flip Y
- ---- ----  ---- xxxx		= color ( 00h - 0fh )
+ xxxx xxxx  ---- ----       = bottom 8 bits of tile number
+ ---- ----  xx-- ----       = top 2 bits of tile number
+ ---- ----  --x- ----       = flip X
+ ---- ----  ---x ----       = flip Y
+ ---- ----  ---- xxxx       = color ( 00h - 0fh )
 
 
 Background RAM format
 --------------------------------------------------------------
  +0         +1
- xxxx xxxx  ---- ----		= bottom 8 bits of tile number
- ---- ----  x--- ----		= bit 9 of tile number
- ---- ----  -x-- ----		= bit 8 of tile number
- ---- ----  --x- ----		= bit 10 of tile number
- ---- ----  ---x ----		= bit 11 of tile number (the most top bit)
- ---- ----  ---- xxxx		= color ( 00h - 1fh )
+ xxxx xxxx  ---- ----       = bottom 8 bits of tile number
+ ---- ----  x--- ----       = bit 9 of tile number
+ ---- ----  -x-- ----       = bit 8 of tile number
+ ---- ----  --x- ----       = bit 10 of tile number
+ ---- ----  ---x ----       = bit 11 of tile number (the most top bit)
+ ---- ----  ---- xxxx       = color ( 00h - 1fh )
 
 
-Sprite RAM format	( Sprite format is same as Mutant Night )
+Sprite RAM format   ( Sprite format is same as Mutant Night )
 --------------------------------------------------------------
  +0         +1         +2         +3         +4
- xxxx xxxx  ---- ----  ---- ----  ---- ----  ---- ----	= sprite Y position
+ xxxx xxxx  ---- ----  ---- ----  ---- ----  ---- ----  = sprite Y position
  ---- ----  xxxx xxxx  ---- ----  ---- ----  ---- ----  = bottom 8 bits of sprite X position
- ---- ----  ---- ----  xx-- ----  ---- ----  ---- ----	= middle 2 bits of sprite number
- ---- ----  ---- ----  --x- ----  ---- ----  ---- ----	= flip X
+ ---- ----  ---- ----  xx-- ----  ---- ----  ---- ----  = middle 2 bits of sprite number
+ ---- ----  ---- ----  --x- ----  ---- ----  ---- ----  = flip X
  ---- ----  ---- ----  ---x ----  ---- ----  ---- ----  = flip Y
- ---- ----  ---- ----  ---- x---  ---- ----  ---- ----	= top bit of sprite number
- ---- ----  ---- ----  ---- -x--  ---- ----  ---- ----	= 0:normal size (16x16)  1:big size (32x32)
- ---- ----  ---- ----  ---- --x-  ---- ----  ---- ----	= sprite on / off
- ---- ----  ---- ----  ---- ---x  ---- ----  ---- ----	= top bit of sprite X position
+ ---- ----  ---- ----  ---- x---  ---- ----  ---- ----  = top bit of sprite number
+ ---- ----  ---- ----  ---- -x--  ---- ----  ---- ----  = 0:normal size (16x16)  1:big size (32x32)
+ ---- ----  ---- ----  ---- --x-  ---- ----  ---- ----  = sprite on / off
+ ---- ----  ---- ----  ---- ---x  ---- ----  ---- ----  = top bit of sprite X position
  ---- ----  ---- ----  ---- ----  xxxx xxxx  ---- ----  = bottom 8 bits of sprite number
- ---- ----  ---- ----  ---- ----  ---- ----  xxxx xxxx	= color
+ ---- ----  ---- ----  ---- ----  ---- ----  xxxx xxxx  = color
 
 
 Scroll RAM format (Omega Fighter)
 --------------------------------------------------------------
     +0         +1
- X  ???? -xxx  xxxx xxxx		= scroll X (0 - 0x3ff)
+ X  ???? -xxx  xxxx xxxx        = scroll X (0 - 0x3ff)
  Y  ???? ---x  xxxx xxxx        = scroll Y (0 - 0x1ff)
 
 Scroll RAM format (Atomic Robokid)
 --------------------------------------------------------------
     +0         +1
- X  ???? ---x  xxxx xxxx		= scroll X (0 - 0x1ff)
+ X  ???? ---x  xxxx xxxx        = scroll X (0 - 0x1ff)
  Y  ???? ---x  xxxx xxxx        = scroll Y (0 - 0x1ff)
 
 

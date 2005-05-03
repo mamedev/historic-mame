@@ -1,7 +1,7 @@
 /***************************************************************************
 
   Funky Jet                               (c) 1992 Mitchell Corporation
-  Sotsugyo Shousho	                      (c) 1995 Mitchell Corporation
+  Sotsugyo Shousho                        (c) 1995 Mitchell Corporation
 
   But actually a Data East pcb...  Hardware is pretty close to Super Burger
   Time but with a different graphics chip.

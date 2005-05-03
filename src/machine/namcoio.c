@@ -117,7 +117,7 @@ pin   description
 7-8   ?
 9-12  address to r/w from RAM; 12 also goes to the 16XX and acts as r/w line, so
       the chip can only read from addresses 0-7 and only write to addresses 8-F
-	  (this is probably a normal I/O port used for that purpose)
+      (this is probably a normal I/O port used for that purpose)
 13-16 out port A
 17-20 out port B
 21    GND
@@ -125,7 +125,7 @@ pin   description
 26-29 in port C
 30-33 in port D
 34-37 (to 16XX) probably data to r/w from RAM
-	  (this is probably a normal I/O port used for that purpose)
+      (this is probably a normal I/O port used for that purpose)
 38-41 in port A
 42    Vcc
 
@@ -390,8 +390,8 @@ void namcoio_50XX_write(int chipnum,int data)
 			case 0x68:	/* 2P Score */
 				Player[chip] = 1;
 				break;
-//			case 0x70:
-//				break;
+//          case 0x70:
+//              break;
 			case 0x80:
 				Score[Player[chip]][chip] += 5;
 				break;
@@ -633,11 +633,11 @@ void namcoio_51XX_write(int chip,int data)
   The joystick is parsed and a number corresponding to the direction is returned,
   according to the following table:
 
-	      0
-	    7	1
-	  6   8   2
-	    5	3
-	      4
+          0
+        7   1
+      6   8   2
+        5   3
+          4
 
   The values for directions impossible to obtain on a joystick have not been
   verified on Namco original hardware, but they are the same in all the bootlegs,
@@ -1041,18 +1041,18 @@ static void namco_customio_58XX_run(int chip)
 
 		case 5:	// bootup check
 			/* mode 5 values are checked against these numbers during power up
-			   mappy:  9-15 = 3 6 5 f a c e, expects 1-7 =   8 4 6 e d 9 d
-			   grobda: 9-15 = 2 3 4 5 6 7 8, expects 2 = f and 6 = c
-			   phozon: 9-15 = 0 1 2 3 4 5 6, expects 0-7 = 0 2 3 4 5 6 c a
-			   gaplus: 9-15 = f f f f f f f, expects 0-1 = f f
+               mappy:  9-15 = 3 6 5 f a c e, expects 1-7 =   8 4 6 e d 9 d
+               grobda: 9-15 = 2 3 4 5 6 7 8, expects 2 = f and 6 = c
+               phozon: 9-15 = 0 1 2 3 4 5 6, expects 0-7 = 0 2 3 4 5 6 c a
+               gaplus: 9-15 = f f f f f f f, expects 0-1 = f f
 
-			   This has been determined to be the result of repeated XORs,
-			   controlled by a 7-bit LFSR. The following algorithm should be
-			   equivalent to the original one (though probably less efficient).
-			   The first nibble of the result however is uncertain. It is usually
-			   0, but in some cases it toggles between 0 and F. We use a kludge
-			   to give Gaplus the F it expects.
-			*/
+               This has been determined to be the result of repeated XORs,
+               controlled by a 7-bit LFSR. The following algorithm should be
+               equivalent to the original one (though probably less efficient).
+               The first nibble of the result however is uncertain. It is usually
+               0, but in some cases it toggles between 0 and F. We use a kludge
+               to give Gaplus the F it expects.
+            */
 			{
 				int i,n,rng,seed;
 				#define NEXT(n) ((((n) & 1) ? (n) ^ 0x90 : (n)) >> 1)

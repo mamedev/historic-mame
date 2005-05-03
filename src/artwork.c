@@ -1,301 +1,301 @@
 
 /*********************************************************************
 
-	artwork.c
+    artwork.c
 
-	Second generation artwork implementation.
+    Second generation artwork implementation.
 
-	Still to do:
-		- tinting
-		- mechanism to disable built-in artwork
+    Still to do:
+        - tinting
+        - mechanism to disable built-in artwork
 
-	Longer term:
-		- struct mame_layer
-		  {
-		  	struct mame_bitmap *bitmap;
-		  	int rectcount;
-		  	struct rectangle rectlist[MAX_RECTS];
-		  }
-		- add 4 mame_layers for backdrop, overlay, bezel, ui to mame_display
-		- some mechanism to let the OSD do the blending
-		- MMX optimized implementations
-
-**********************************************************************
-
-	This file represents the second attempt at providing external
-	artwork support. Some parts of this code are based on the
-	original version, by Mike Balfour and Mathis Rosenhauer.
-
-	The goal: to provide artwork support with minimal knowledge of
-	the game drivers. The previous implementation required the
-	game drivers to allocate extra pens, extend the screen bitmap,
-	and handle a lot of the mundane details by hand. This is no
-	longer the case.
-
-	The key to all this is the .art file. A .art file is just a
-	text file describing all the artwork needed for a particular
-	game. It lives either in the $ARTWORK/gamename/ directory
-	or in the $ARTWORK/gamename.zip file, and is called
-	gamename.art.
+    Longer term:
+        - struct mame_layer
+          {
+            struct mame_bitmap *bitmap;
+            int rectcount;
+            struct rectangle rectlist[MAX_RECTS];
+          }
+        - add 4 mame_layers for backdrop, overlay, bezel, ui to mame_display
+        - some mechanism to let the OSD do the blending
+        - MMX optimized implementations
 
 **********************************************************************
 
-	THE ART FILE
+    This file represents the second attempt at providing external
+    artwork support. Some parts of this code are based on the
+    original version, by Mike Balfour and Mathis Rosenhauer.
 
-	The .art file is very simply formatted. It consists of any
-	number of entries that look like this:
+    The goal: to provide artwork support with minimal knowledge of
+    the game drivers. The previous implementation required the
+    game drivers to allocate extra pens, extend the screen bitmap,
+    and handle a lot of the mundane details by hand. This is no
+    longer the case.
 
-	[artname]:
-		file       = [filename]
-		alphafile  = [alphafilename]
-		layer      = [backdrop|overlay|bezel|marquee|panel|side|flyer]
-		position   = [left],[top],[right],[bottom]
-		priority   = [priority]
-		visible    = [visible]
-		alpha      = [alpha]
-		brightness = [brightness]
-
-	Comments in the .art file follow standard C++ comment format,
-	starting with a double-slash //. C-style comments are not
-	recognized.
-
-	Fields are:
-
-	[artname] - name that is used to reference this piece of
-		artwork in the game driver. Game drivers can show/hide
-		pieces of artwork. It is permissible to use the same
-		name for multiple pieces; in that case, a show/hide
-		command from the game will affect all pieces with that
-		name. This field is required.
-
-	file - name of the PNG file containing the main artwork.
-		This file should live in the same directory as the .art
-		file itself. Most PNG formats are supported. If the
-		PNG file does not have an alpha channel or transparent
-		colors, it will be loaded fully opaque. This field is
-		required.
-
-	alphafile - name of a PNG file containing the alpha channel.
-		Like the main file, this file should live in the same
-		directory as the .art file. The alphafile must have the
-		exact same dimensions as the main art file in order to
-		be valid. When loaded, the brightness of each pixel in
-		the alphafile controls the alpha channel for the
-		corresponding pixel in the main art.
-
-	layer - classifies this piece of artwork into one of several
-		predefined categories. Command line options can control
-		which categories of artwork are actually displayed. The
-		layer is also used to group the artwork for rendering
-		(see discussion of rendering below.) This field is
-		required.
-
-	position - specifies the position of this piece of artwork
-		relative to the game bitmap. See the section on
-		positioning, below, for the precise details. This field
-		is required.
-
-	priority - specifies the front-to-back ordering of this
-		piece of art. The various artwork pieces are assembled
-		from the bottom up, lowest priority to highest priority.
-		If you want a piece of artwork to appear behind another
-		piece of artwork, use a lower priority. The default
-		priority is 0.
-
-	visible - sets the initial visible state. By default, all
-		artwork is visible. The driver code can change this state
-		at runtime.
-
-	alpha - specifies a global, additional alpha value for the
-		entire piece of artwork. This alpha value is multiplied
-		by the per-pixel alpha value for the loaded artwork.
-		The default value is 1.0, which has no net effect on the
-		loaded alpha. An alpha of 0.0 will make the entire piece
-		of artwork fully transparent.
-
-	brightness - specifies a global brightness adjustment factor
-		for the entire piece of artwork. The red, green, and blue
-		components of every pixel are multiplied by this value
-		when the image is loaded. The default value is 1.0, which
-		has no net effect on the loaded artwork. A brightness
-		value of 0.0 will produce an entirely black image.
-
-	Once the .art file is loaded, the artwork is categories into
-	three groups: backdrops, overlays, and everything else. Each
-	of these groups is handled in its own way.
+    The key to all this is the .art file. A .art file is just a
+    text file describing all the artwork needed for a particular
+    game. It lives either in the $ARTWORK/gamename/ directory
+    or in the $ARTWORK/gamename.zip file, and is called
+    gamename.art.
 
 **********************************************************************
 
-	BLENDING
+    THE ART FILE
 
-	Conceptually, here is how it all fits together:
+    The .art file is very simply formatted. It consists of any
+    number of entries that look like this:
 
-	1. A combined backdrop bitmap is assembled. This consists of
-	taking an opaque black bitmap, and alpha blending all the
-	backdrop graphics, in order from lowest priority to highest,
-	into it.
+    [artname]:
+        file       = [filename]
+        alphafile  = [alphafilename]
+        layer      = [backdrop|overlay|bezel|marquee|panel|side|flyer]
+        position   = [left],[top],[right],[bottom]
+        priority   = [priority]
+        visible    = [visible]
+        alpha      = [alpha]
+        brightness = [brightness]
 
-	2. A combined overlay bitmap is assembled. This consists of
-	taking a translucent white overlay and performing a CMY blend
-	of all the overlay graphics, in order from lowest priority to
-	highest, into it.
+    Comments in the .art file follow standard C++ comment format,
+    starting with a double-slash //. C-style comments are not
+    recognized.
 
-	3. A combined bezel bitmap is assembled. This consists of
-	taking a fully transparent bitmap, and alpha blending all the
-	bezel, marquee, panel, side, and flyer graphics, in order from
-	lowest to highest, into it.
+    Fields are:
 
-	4. Depending on the user configurable artwork scale setting,
-	the game bitmap is potentially expanded 2x.
+    [artname] - name that is used to reference this piece of
+        artwork in the game driver. Game drivers can show/hide
+        pieces of artwork. It is permissible to use the same
+        name for multiple pieces; in that case, a show/hide
+        command from the game will affect all pieces with that
+        name. This field is required.
 
-	5. The combined overlay bitmap is applied to the game bitmap,
-	by using the brightness of the game pixel to control the
-	brightness of the corresponding overlay bitmap pixel, as
-	follows:
+    file - name of the PNG file containing the main artwork.
+        This file should live in the same directory as the .art
+        file itself. Most PNG formats are supported. If the
+        PNG file does not have an alpha channel or transparent
+        colors, it will be loaded fully opaque. This field is
+        required.
 
-		RGB[mix1] = (RGB[overlay] * A[overlay]) +
-				(RGB[overlay] - RGB[overlay] * A[overlay]) * Y[game];
+    alphafile - name of a PNG file containing the alpha channel.
+        Like the main file, this file should live in the same
+        directory as the .art file. The alphafile must have the
+        exact same dimensions as the main art file in order to
+        be valid. When loaded, the brightness of each pixel in
+        the alphafile controls the alpha channel for the
+        corresponding pixel in the main art.
 
-	where
+    layer - classifies this piece of artwork into one of several
+        predefined categories. Command line options can control
+        which categories of artwork are actually displayed. The
+        layer is also used to group the artwork for rendering
+        (see discussion of rendering below.) This field is
+        required.
 
-		RGB[mix1] -> RGB components of final mixed bitmap
-		A[overlay] -> alpha value of combined overlay
-		RGB[overlay] -> RGB components of combined overlay
-		Y[game] -> brightness of game pixel
+    position - specifies the position of this piece of artwork
+        relative to the game bitmap. See the section on
+        positioning, below, for the precise details. This field
+        is required.
 
-	6. The result of the overlay + game blending is then added to
-	the backdrop, as follows:
+    priority - specifies the front-to-back ordering of this
+        piece of art. The various artwork pieces are assembled
+        from the bottom up, lowest priority to highest priority.
+        If you want a piece of artwork to appear behind another
+        piece of artwork, use a lower priority. The default
+        priority is 0.
 
-		RGB[mix2] = RGB[mix1] + RGB[backdrop]
+    visible - sets the initial visible state. By default, all
+        artwork is visible. The driver code can change this state
+        at runtime.
 
-	where
+    alpha - specifies a global, additional alpha value for the
+        entire piece of artwork. This alpha value is multiplied
+        by the per-pixel alpha value for the loaded artwork.
+        The default value is 1.0, which has no net effect on the
+        loaded alpha. An alpha of 0.0 will make the entire piece
+        of artwork fully transparent.
 
-		RGB[mix2] -> RGB components of final mixed bitmap
-		RGB[mix1] -> RGB components of game + overlay mixing
-		RGB[backdrop] -> RGB components of combined backdrop graphics
+    brightness - specifies a global brightness adjustment factor
+        for the entire piece of artwork. The red, green, and blue
+        components of every pixel are multiplied by this value
+        when the image is loaded. The default value is 1.0, which
+        has no net effect on the loaded artwork. A brightness
+        value of 0.0 will produce an entirely black image.
 
-	7. The combined bezel bitmap is alpha blended against the
-	result of the previous operation, as follows:
-
-		RGB[final] = (RGB[mix2] * (1 - A[bezel])) + (RGB[bezel] * A[bezel])
-
-	where
-
-		RGB[final] -> RGB components of final bitmap
-		A[bezel] -> alpha value of combined bezel
-		RGB[bezel] -> RGB components of combined bezel
-		RGB[mix2] -> RGB components of game + overlay + backdrop mixing
+    Once the .art file is loaded, the artwork is categories into
+    three groups: backdrops, overlays, and everything else. Each
+    of these groups is handled in its own way.
 
 **********************************************************************
 
-	POSITIONING
+    BLENDING
 
-	The positioning of the artwork is a little tricky.
-	Conceptually, the game bitmap occupies the space from (0,0)
-	to (1,1). If you have a piece of artwork that exactly covers
-	the game area, then it too should stretch from (0,0) to (1,1).
-	However, most of the time, this is not the case.
+    Conceptually, here is how it all fits together:
 
-	For example, if you have, say, the Spy Hunter bezel at the
-	bottom of the screen, then you will want to specify the top
-	of the artwork at 1.0 and the bottom at something larger, maybe
-	1.25. The nice thing about the new artwork system is that it
-	will automatically stretch the bitmaps out to accomodate areas
-	beyond the game bitmap, and will still keep the proper aspect
-	ratio.
+    1. A combined backdrop bitmap is assembled. This consists of
+    taking an opaque black bitmap, and alpha blending all the
+    backdrop graphics, in order from lowest priority to highest,
+    into it.
 
-	Another common example is a backdrop that extends beyond all
-	four corners of the game bitmap. Here is how you would handle
-	that, in detail:
+    2. A combined overlay bitmap is assembled. This consists of
+    taking a translucent white overlay and performing a CMY blend
+    of all the overlay graphics, in order from lowest priority to
+    highest, into it.
 
-	Let's say you have some artwork like this:
+    3. A combined bezel bitmap is assembled. This consists of
+    taking a fully transparent bitmap, and alpha blending all the
+    bezel, marquee, panel, side, and flyer graphics, in order from
+    lowest to highest, into it.
 
-	 <============ 883 pixels ===============>
+    4. Depending on the user configurable artwork scale setting,
+    the game bitmap is potentially expanded 2x.
 
-	(1)-------------------------------------(2)  ^
-	 |                  ^                    |   |
-	 |              26 pixels                |   |
-	 |                  v                    |   |
-	 |     (5)-----------------------(6)     |   |
-	 |      |                         |      |   |
-	 |      |                         |      |   |
-	 |      |                         |      |   |
-	 |<---->|                         |      |   |
-	 |  97  |      Game screen        |      |  768
-	 |pixels|       700 x 500         |      | pixels
-	 |      |                         |<---->|   |
-	 |      |                         |  86  |   |
-	 |      |                         |pixels|   |
-	 |      |                         |      |   |
-	 |      |                         |      |   |
-	 |     (7)-----------------------(8)     |   |
-	 |                  ^                    |   |
-	 |              42 pixels                |   |
-	 |                  v                    |   |
-	(3)-------------------------------------(4)  v
+    5. The combined overlay bitmap is applied to the game bitmap,
+    by using the brightness of the game pixel to control the
+    brightness of the corresponding overlay bitmap pixel, as
+    follows:
 
-	If you're looking at the raw coordinates as might seem
-	logical, you would imagine that they come out like this:
+        RGB[mix1] = (RGB[overlay] * A[overlay]) +
+                (RGB[overlay] - RGB[overlay] * A[overlay]) * Y[game];
 
-		(1) is at (0,0)
-		(2) is at (883,0)
-		(3) is at (0,768)
-		(4) is at (883,768)
+    where
 
-		(5) is at (97,26)
-		(6) is at (797,26)
-		(7) is at (97,526)
-		(8) is at (797,526)
+        RGB[mix1] -> RGB components of final mixed bitmap
+        A[overlay] -> alpha value of combined overlay
+        RGB[overlay] -> RGB components of combined overlay
+        Y[game] -> brightness of game pixel
 
-	The first thing you need to do is adjust the coordinates
-	so that the upper left corner of the game screen (point 5)
-	is at (0,0). To do that, you need to subtract 97 from
-	each X coordinate and 26 from each Y coordinate:
+    6. The result of the overlay + game blending is then added to
+    the backdrop, as follows:
 
-		(1) is at (0-97,0-26)     -> (-97,-26)
-		(2) is at (883-97,0-26)   -> (786,-26)
-		(3) is at (0-97,768-26)   -> (-97,742)
-		(4) is at (883-97,768-26) -> (883,742)
+        RGB[mix2] = RGB[mix1] + RGB[backdrop]
 
-		(5) is at (97-97,26-26)   -> (0,0)
-		(6) is at (797-97,26-26)  -> (700,0)
-		(7) is at (97-97,526-26)  -> (0,500)
-		(8) is at (797-97,526-26) -> (700,500)
+    where
 
-	The final thing you need to do is make it so the bottom
-	right corner of the image (point 8) is at (1.0,1.0). To do
-	that, you need to divide each coordinate by the width
-	or height of the image
+        RGB[mix2] -> RGB components of final mixed bitmap
+        RGB[mix1] -> RGB components of game + overlay mixing
+        RGB[backdrop] -> RGB components of combined backdrop graphics
 
-		(1) is at (-97/700,-26/500)  -> (-0.13857,-0.052)
-		(2) is at (786/700,-26/500)  -> (1.122857,-0.052)
-		(3) is at (-97/700,742/500)  -> (-0.13857, 1.484)
-		(4) is at (883/700,742/500)  -> (1.122857, 1.484)
+    7. The combined bezel bitmap is alpha blended against the
+    result of the previous operation, as follows:
 
-		(5) is at (0/700,0/500)      -> (0.0,0.0)
-		(6) is at (700/700,0/500)    -> (1.0,0.0)
-		(7) is at (0/700,500/500)    -> (0.0,1.0)
-		(8) is at (700/700,500/500)  -> (1.0,1.0)
+        RGB[final] = (RGB[mix2] * (1 - A[bezel])) + (RGB[bezel] * A[bezel])
 
-	Alternately, you can also provide pixel coordinates, but it will
-	still be relative to the game's native resolution. So, if
-	the game normally runs at 256x224, you'll need to compute
-	the division factor so that the bottom right corner of the
-	game (point 8) ends up at (256,224) instead of (1.0,1.0).
+    where
 
-	Basically, if you have the original coordinates shown
-	right below the image, you can compute the values needed by
-	doing this for X coordinates:
+        RGB[final] -> RGB components of final bitmap
+        A[bezel] -> alpha value of combined bezel
+        RGB[bezel] -> RGB components of combined bezel
+        RGB[mix2] -> RGB components of game + overlay + backdrop mixing
 
-		(X coordinate on artwork) - (X coordinate of game's upper-left)
-		---------------------------------------------------------------
-		           (width of game in artwork pixels)
+**********************************************************************
 
-	And this for Y coordinates:
+    POSITIONING
 
-		(Y coordinate on artwork) - (Y coordinate of game's upper-left)
-		---------------------------------------------------------------
-			       (height of game in artwork pixels)
+    The positioning of the artwork is a little tricky.
+    Conceptually, the game bitmap occupies the space from (0,0)
+    to (1,1). If you have a piece of artwork that exactly covers
+    the game area, then it too should stretch from (0,0) to (1,1).
+    However, most of the time, this is not the case.
+
+    For example, if you have, say, the Spy Hunter bezel at the
+    bottom of the screen, then you will want to specify the top
+    of the artwork at 1.0 and the bottom at something larger, maybe
+    1.25. The nice thing about the new artwork system is that it
+    will automatically stretch the bitmaps out to accomodate areas
+    beyond the game bitmap, and will still keep the proper aspect
+    ratio.
+
+    Another common example is a backdrop that extends beyond all
+    four corners of the game bitmap. Here is how you would handle
+    that, in detail:
+
+    Let's say you have some artwork like this:
+
+     <============ 883 pixels ===============>
+
+    (1)-------------------------------------(2)  ^
+     |                  ^                    |   |
+     |              26 pixels                |   |
+     |                  v                    |   |
+     |     (5)-----------------------(6)     |   |
+     |      |                         |      |   |
+     |      |                         |      |   |
+     |      |                         |      |   |
+     |<---->|                         |      |   |
+     |  97  |      Game screen        |      |  768
+     |pixels|       700 x 500         |      | pixels
+     |      |                         |<---->|   |
+     |      |                         |  86  |   |
+     |      |                         |pixels|   |
+     |      |                         |      |   |
+     |      |                         |      |   |
+     |     (7)-----------------------(8)     |   |
+     |                  ^                    |   |
+     |              42 pixels                |   |
+     |                  v                    |   |
+    (3)-------------------------------------(4)  v
+
+    If you're looking at the raw coordinates as might seem
+    logical, you would imagine that they come out like this:
+
+        (1) is at (0,0)
+        (2) is at (883,0)
+        (3) is at (0,768)
+        (4) is at (883,768)
+
+        (5) is at (97,26)
+        (6) is at (797,26)
+        (7) is at (97,526)
+        (8) is at (797,526)
+
+    The first thing you need to do is adjust the coordinates
+    so that the upper left corner of the game screen (point 5)
+    is at (0,0). To do that, you need to subtract 97 from
+    each X coordinate and 26 from each Y coordinate:
+
+        (1) is at (0-97,0-26)     -> (-97,-26)
+        (2) is at (883-97,0-26)   -> (786,-26)
+        (3) is at (0-97,768-26)   -> (-97,742)
+        (4) is at (883-97,768-26) -> (883,742)
+
+        (5) is at (97-97,26-26)   -> (0,0)
+        (6) is at (797-97,26-26)  -> (700,0)
+        (7) is at (97-97,526-26)  -> (0,500)
+        (8) is at (797-97,526-26) -> (700,500)
+
+    The final thing you need to do is make it so the bottom
+    right corner of the image (point 8) is at (1.0,1.0). To do
+    that, you need to divide each coordinate by the width
+    or height of the image
+
+        (1) is at (-97/700,-26/500)  -> (-0.13857,-0.052)
+        (2) is at (786/700,-26/500)  -> (1.122857,-0.052)
+        (3) is at (-97/700,742/500)  -> (-0.13857, 1.484)
+        (4) is at (883/700,742/500)  -> (1.122857, 1.484)
+
+        (5) is at (0/700,0/500)      -> (0.0,0.0)
+        (6) is at (700/700,0/500)    -> (1.0,0.0)
+        (7) is at (0/700,500/500)    -> (0.0,1.0)
+        (8) is at (700/700,500/500)  -> (1.0,1.0)
+
+    Alternately, you can also provide pixel coordinates, but it will
+    still be relative to the game's native resolution. So, if
+    the game normally runs at 256x224, you'll need to compute
+    the division factor so that the bottom right corner of the
+    game (point 8) ends up at (256,224) instead of (1.0,1.0).
+
+    Basically, if you have the original coordinates shown
+    right below the image, you can compute the values needed by
+    doing this for X coordinates:
+
+        (X coordinate on artwork) - (X coordinate of game's upper-left)
+        ---------------------------------------------------------------
+                   (width of game in artwork pixels)
+
+    And this for Y coordinates:
+
+        (Y coordinate on artwork) - (Y coordinate of game's upper-left)
+        ---------------------------------------------------------------
+                   (height of game in artwork pixels)
 
 *********************************************************************/
 
@@ -310,7 +310,7 @@
 
 /***************************************************************************
 
-	Constants & macros
+    Constants & macros
 
 ***************************************************************************/
 
@@ -348,7 +348,7 @@ enum
 
 /***************************************************************************
 
-	Type definitions
+    Type definitions
 
 ***************************************************************************/
 
@@ -388,7 +388,7 @@ struct artwork_piece
 
 /***************************************************************************
 
-	Local variables
+    Local variables
 
 ***************************************************************************/
 
@@ -420,7 +420,7 @@ static const struct overlay_piece *overlay_list;
 
 /***************************************************************************
 
-	Prototypes
+    Prototypes
 
 ***************************************************************************/
 
@@ -455,7 +455,7 @@ static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int en
 #endif
 
 /*-------------------------------------------------
-	union_rect - compute the union of two rects
+    union_rect - compute the union of two rects
 -------------------------------------------------*/
 
 INLINE void union_rect(struct rectangle *dst, const struct rectangle *src)
@@ -474,8 +474,8 @@ INLINE void union_rect(struct rectangle *dst, const struct rectangle *src)
 
 
 /*-------------------------------------------------
-	compute_brightness - compute the effective
-	brightness for an RGB pixel
+    compute_brightness - compute the effective
+    brightness for an RGB pixel
 -------------------------------------------------*/
 
 INLINE UINT8 compute_brightness(rgb_t rgb)
@@ -486,8 +486,8 @@ INLINE UINT8 compute_brightness(rgb_t rgb)
 
 
 /*-------------------------------------------------
-	compute_pre_pixel - compute a premultiplied
-	pixel
+    compute_pre_pixel - compute a premultiplied
+    pixel
 -------------------------------------------------*/
 
 INLINE UINT32 compute_pre_pixel(UINT8 a, UINT8 r, UINT8 g, UINT8 b)
@@ -505,7 +505,7 @@ INLINE UINT32 compute_pre_pixel(UINT8 a, UINT8 r, UINT8 g, UINT8 b)
 
 
 /*-------------------------------------------------
-	compute_yrgb_pixel - compute a YRGB pixel
+    compute_yrgb_pixel - compute a YRGB pixel
 -------------------------------------------------*/
 
 INLINE UINT32 compute_yrgb_pixel(UINT8 a, UINT8 r, UINT8 g, UINT8 b)
@@ -521,8 +521,8 @@ INLINE UINT32 compute_yrgb_pixel(UINT8 a, UINT8 r, UINT8 g, UINT8 b)
 
 
 /*-------------------------------------------------
-	add_and_clamp - add two pixels and clamp
-	each component to the max
+    add_and_clamp - add two pixels and clamp
+    each component to the max
 -------------------------------------------------*/
 
 INLINE UINT32 add_and_clamp(UINT32 game, UINT32 underpix)
@@ -560,7 +560,7 @@ INLINE UINT32 add_and_clamp(UINT32 game, UINT32 underpix)
 
 
 /*-------------------------------------------------
-	blend_over - blend two pixels with overlay
+    blend_over - blend two pixels with overlay
 -------------------------------------------------*/
 
 INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
@@ -591,9 +591,9 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 #endif
 
 /*-------------------------------------------------
-	artwork_create_display - tweak the display
-	parameters based on artwork, and call through
-	to osd_create_display
+    artwork_create_display - tweak the display
+    parameters based on artwork, and call through
+    to osd_create_display
 -------------------------------------------------*/
 
 int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components, const struct artwork_callbacks *callbacks)
@@ -725,8 +725,8 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 
 
 /*-------------------------------------------------
-	artwork_system_active - checks to see if the
-	artwork system is currently active
+    artwork_system_active - checks to see if the
+    artwork system is currently active
 -------------------------------------------------*/
 
 static int artwork_system_active(void)
@@ -737,8 +737,8 @@ static int artwork_system_active(void)
 
 
 /*-------------------------------------------------
-	artwork_update_visible_area - resize artwork
-	when the game changes resolution
+    artwork_update_visible_area - resize artwork
+    when the game changes resolution
 -------------------------------------------------*/
 
 void artwork_update_visible_area(struct mame_display *display)
@@ -764,7 +764,7 @@ void artwork_update_visible_area(struct mame_display *display)
 
 	width = (int)((max_x - min_x) * (double)(original_width * gamescale) + 0.5);
 	height = (int)((max_y - min_y) * (double)(original_height * gamescale) + 0.5);
-	
+
 	/* compute the screen rect */
 	screenrect.min_x = screenrect.min_y = 0;
 	screenrect.max_x = width - 1;
@@ -791,8 +791,8 @@ void artwork_update_visible_area(struct mame_display *display)
 
 
 /*-------------------------------------------------
-	artwork_update_video_and_audio - update the
-	screen, adjusting for artwork
+    artwork_update_video_and_audio - update the
+    screen, adjusting for artwork
 -------------------------------------------------*/
 
 void artwork_update_video_and_audio(struct mame_display *display)
@@ -912,8 +912,8 @@ void artwork_update_video_and_audio(struct mame_display *display)
 
 
 /*-------------------------------------------------
-	artwork_override_screenshot_params - override
-	certain parameters when saving a screenshot
+    artwork_override_screenshot_params - override
+    certain parameters when saving a screenshot
 -------------------------------------------------*/
 
 void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rectangle *rect, UINT32 *rgb_components)
@@ -933,7 +933,7 @@ void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rect
 
 
 /*-------------------------------------------------
-	artwork_get_ui_bitmap - get the UI bitmap
+    artwork_get_ui_bitmap - get the UI bitmap
 -------------------------------------------------*/
 
 struct mame_bitmap *artwork_get_ui_bitmap(void)
@@ -944,8 +944,8 @@ struct mame_bitmap *artwork_get_ui_bitmap(void)
 
 
 /*-------------------------------------------------
-	artwork_mark_ui_dirty - mark a portion of the
-	UI bitmap dirty
+    artwork_mark_ui_dirty - mark a portion of the
+    UI bitmap dirty
 -------------------------------------------------*/
 
 void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
@@ -983,8 +983,8 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 
 
 /*-------------------------------------------------
-	artwork_get_screensize - get the real screen
-	size
+    artwork_get_screensize - get the real screen
+    size
 -------------------------------------------------*/
 
 void artwork_get_screensize(int *width, int *height)
@@ -1004,8 +1004,8 @@ void artwork_get_screensize(int *width, int *height)
 
 
 /*-------------------------------------------------
-	artwork_enable - globally enable/disable
-	artwork
+    artwork_enable - globally enable/disable
+    artwork
 -------------------------------------------------*/
 
 void artwork_enable(int enable)
@@ -1016,8 +1016,8 @@ void artwork_enable(int enable)
 
 
 /*-------------------------------------------------
-	artwork_set_overlay - set the hard-coded
-	overlay for this game
+    artwork_set_overlay - set the hard-coded
+    overlay for this game
 -------------------------------------------------*/
 
 void artwork_set_overlay(const struct overlay_piece *overlist)
@@ -1028,7 +1028,7 @@ void artwork_set_overlay(const struct overlay_piece *overlist)
 
 
 /*-------------------------------------------------
-	artwork_show - show/hide a tagged piece of art
+    artwork_show - show/hide a tagged piece of art
 -------------------------------------------------*/
 
 void artwork_show(const char *tag, int show)
@@ -1067,8 +1067,8 @@ void artwork_show(const char *tag, int show)
 #endif
 
 /*-------------------------------------------------
-	update_layers - update any dirty areas of
-	the layers
+    update_layers - update any dirty areas of
+    the layers
 -------------------------------------------------*/
 
 static int update_layers(void)
@@ -1132,8 +1132,8 @@ static int update_layers(void)
 
 
 /*-------------------------------------------------
-	erase_rect - erase the given bounds of a 32bpp
-	bitmap
+    erase_rect - erase the given bounds of a 32bpp
+    bitmap
 -------------------------------------------------*/
 
 static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color)
@@ -1152,8 +1152,8 @@ static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bound
 
 
 /*-------------------------------------------------
-	alpha_blend_intersecting_rect - alpha blend an
-	artwork piece into a bitmap
+    alpha_blend_intersecting_rect - alpha blend an
+    artwork piece into a bitmap
 -------------------------------------------------*/
 
 static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist)
@@ -1234,8 +1234,8 @@ static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const s
 
 
 /*-------------------------------------------------
-	add_intersecting_rect - add a
-	artwork piece into a bitmap
+    add_intersecting_rect - add a
+    artwork piece into a bitmap
 -------------------------------------------------*/
 
 static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds)
@@ -1268,8 +1268,8 @@ static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct re
 
 
 /*-------------------------------------------------
-	cmy_blend_intersecting_rect - CMY blend an
-	artwork piece into a bitmap
+    cmy_blend_intersecting_rect - CMY blend an
+    artwork piece into a bitmap
 -------------------------------------------------*/
 
 static void cmy_blend_intersecting_rect(
@@ -1372,8 +1372,8 @@ static void cmy_blend_intersecting_rect(
 #endif
 
 /*-------------------------------------------------
-	update_palette - update any dirty palette
-	entries
+    update_palette - update any dirty palette
+    entries
 -------------------------------------------------*/
 
 static void update_palette_lookup(struct mame_display *display)
@@ -1408,8 +1408,8 @@ static void update_palette_lookup(struct mame_display *display)
 
 
 /*-------------------------------------------------
-	render_game_bitmap - render the game bitmap
-	raw
+    render_game_bitmap - render the game bitmap
+    raw
 -------------------------------------------------*/
 
 #define PIXEL(x,y,srcdstbase,srcdstrpix,bits)	(*((UINT##bits *)srcdstbase##base + (y) * srcdstrpix##rowpixels + (x)))
@@ -1535,8 +1535,8 @@ static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette,
 
 
 /*-------------------------------------------------
-	render_game_bitmap_underlay - render the game
-	bitmap on top of an underlay
+    render_game_bitmap_underlay - render the game
+    bitmap on top of an underlay
 -------------------------------------------------*/
 
 static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display)
@@ -1667,8 +1667,8 @@ static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t 
 
 
 /*-------------------------------------------------
-	render_game_bitmap_overlay - render the game
-	bitmap blended with an overlay
+    render_game_bitmap_overlay - render the game
+    bitmap blended with an overlay
 -------------------------------------------------*/
 
 static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display)
@@ -1806,9 +1806,9 @@ static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *
 
 
 /*-------------------------------------------------
-	render_game_bitmap_underlay_overlay - render
-	the game bitmap blended with an overlay and
-	added to an underlay
+    render_game_bitmap_underlay_overlay - render
+    the game bitmap blended with an overlay and
+    added to an underlay
 -------------------------------------------------*/
 
 static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display)
@@ -1953,7 +1953,7 @@ static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, cons
 
 
 /*-------------------------------------------------
-	render_ui_overlay - render the UI overlay
+    render_ui_overlay - render the UI overlay
 -------------------------------------------------*/
 
 static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, struct mame_display *display)
@@ -2028,8 +2028,8 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 
 
 /*-------------------------------------------------
-	artwork_load_artwork_file - default MAME way
-	to locate an artwork file
+    artwork_load_artwork_file - default MAME way
+    to locate an artwork file
 -------------------------------------------------*/
 
 mame_file *artwork_load_artwork_file(const struct GameDriver **driver)
@@ -2059,8 +2059,8 @@ mame_file *artwork_load_artwork_file(const struct GameDriver **driver)
 #endif
 
 /*-------------------------------------------------
-	artwork_load - locate the .art file and
-	read all the bitmaps
+    artwork_load - locate the .art file and
+    read all the bitmaps
 -------------------------------------------------*/
 
 static int artwork_load(const struct GameDriver *driver, int width, int height, const struct artwork_callbacks *callbacks)
@@ -2128,7 +2128,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height, 
 			load_bitmap(driver->name, piece);
 	}
 // debugging
-//	fprintf(stderr, "backdrops=%d overlays=%d bezels=%d\n", num_underlays, num_overlays, num_bezels);
+//  fprintf(stderr, "backdrops=%d overlays=%d bezels=%d\n", num_underlays, num_overlays, num_bezels);
 
 	return 1;
 }
@@ -2136,9 +2136,9 @@ static int artwork_load(const struct GameDriver *driver, int width, int height, 
 
 
 /*-------------------------------------------------
-	open_and_read_png - open a PNG file, read it
-	in, and verify that we can do something with
-	it
+    open_and_read_png - open a PNG file, read it
+    in, and verify that we can do something with
+    it
 -------------------------------------------------*/
 
 static int open_and_read_png(const char *gamename, const char *filename, struct png_info *png)
@@ -2185,7 +2185,7 @@ static int open_and_read_png(const char *gamename, const char *filename, struct 
 
 
 /*-------------------------------------------------
-	load_bitmap - load the artwork into a bitmap
+    load_bitmap - load the artwork into a bitmap
 -------------------------------------------------*/
 
 static int load_bitmap(const char *gamename, struct artwork_piece *piece)
@@ -2271,8 +2271,8 @@ static int load_bitmap(const char *gamename, struct artwork_piece *piece)
 
 
 /*-------------------------------------------------
-	load_alpha_bitmap - load the external alpha
-	mask
+    load_alpha_bitmap - load the external alpha
+    mask
 -------------------------------------------------*/
 
 static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original)
@@ -2368,7 +2368,7 @@ static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, 
 
 
 /*-------------------------------------------------
-	artwork_prep - prepare the artwork
+    artwork_prep - prepare the artwork
 -------------------------------------------------*/
 
 static int artwork_prep(void)
@@ -2402,8 +2402,8 @@ static int artwork_prep(void)
 
 
 /*-------------------------------------------------
-	scale_bitmap - scale the bitmap for a
-	given piece of artwork
+    scale_bitmap - scale the bitmap for a
+    given piece of artwork
 -------------------------------------------------*/
 
 static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight)
@@ -2568,8 +2568,8 @@ static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight
 
 
 /*-------------------------------------------------
-	trim_bitmap - remove any transparent borders
-	from a scaled image
+    trim_bitmap - remove any transparent borders
+    from a scaled image
 -------------------------------------------------*/
 
 static void trim_bitmap(struct artwork_piece *piece)
@@ -2662,8 +2662,8 @@ static void trim_bitmap(struct artwork_piece *piece)
 #endif
 
 /*-------------------------------------------------
-	create_new_piece - allocate a new piece
-	entry
+    create_new_piece - allocate a new piece
+    entry
 -------------------------------------------------*/
 
 static struct artwork_piece *create_new_piece(const char *tag)
@@ -2701,8 +2701,8 @@ static struct artwork_piece *create_new_piece(const char *tag)
 
 
 /*-------------------------------------------------
-	artwork_sort_compare - qsort compare function
-	to sort pieces by priority
+    artwork_sort_compare - qsort compare function
+    to sort pieces by priority
 -------------------------------------------------*/
 
 static int CLIB_DECL artwork_sort_compare(const void *item1, const void *item2)
@@ -2724,7 +2724,7 @@ static int CLIB_DECL artwork_sort_compare(const void *item1, const void *item2)
 
 
 /*-------------------------------------------------
-	sort_pieces - sort the pieces by priority
+    sort_pieces - sort the pieces by priority
 -------------------------------------------------*/
 
 static void sort_pieces(void)
@@ -2778,7 +2778,7 @@ static void sort_pieces(void)
 
 
 /*-------------------------------------------------
-	validate_pieces - make sure we got valid data
+    validate_pieces - make sure we got valid data
 -------------------------------------------------*/
 
 static int validate_pieces(void)
@@ -2828,8 +2828,8 @@ static int validate_pieces(void)
 #endif
 
 /*-------------------------------------------------
-	generate_rect_piece - generate a rectangular
-	overlay piece
+    generate_rect_piece - generate a rectangular
+    overlay piece
 -------------------------------------------------*/
 
 static int generate_rect_piece(struct artwork_piece *piece, const struct overlay_piece *data, int width, int height)
@@ -2869,8 +2869,8 @@ static int generate_rect_piece(struct artwork_piece *piece, const struct overlay
 
 
 /*-------------------------------------------------
-	generate_disk_piece - generate a disk-shaped
-	overlay piece
+    generate_disk_piece - generate a disk-shaped
+    overlay piece
 -------------------------------------------------*/
 
 static void render_disk(struct mame_bitmap *bitmap, int r, UINT32 color)
@@ -2953,8 +2953,8 @@ static int generate_disk_piece(struct artwork_piece *piece, const struct overlay
 
 
 /*-------------------------------------------------
-	generate_overlay - generate an overlay with
-	the given pieces
+    generate_overlay - generate an overlay with
+    the given pieces
 -------------------------------------------------*/
 
 static int generate_overlay(const struct overlay_piece *list, int width, int height)
@@ -3005,7 +3005,7 @@ static int generate_overlay(const struct overlay_piece *list, int width, int hei
 #endif
 
 /*-------------------------------------------------
-	strip_space - strip leading/trailing spaces
+    strip_space - strip leading/trailing spaces
 -------------------------------------------------*/
 
 static char *strip_space(char *string)
@@ -3023,7 +3023,7 @@ static char *strip_space(char *string)
 
 
 /*-------------------------------------------------
-	parse_tag_value - parse a tag/value pair
+    parse_tag_value - parse a tag/value pair
 -------------------------------------------------*/
 
 static int parse_tag_value(struct artwork_piece *piece, const char *tag, const char *value)
@@ -3089,7 +3089,7 @@ static int parse_tag_value(struct artwork_piece *piece, const char *tag, const c
 
 
 /*-------------------------------------------------
-	parse_art_file - parse a .art file
+    parse_art_file - parse a .art file
 -------------------------------------------------*/
 
 static int parse_art_file(mame_file *file)
@@ -3161,8 +3161,8 @@ static int parse_art_file(mame_file *file)
 #endif
 
 /*-------------------------------------------------
-	compute_rgb_components - compute the RGB
-	components
+    compute_rgb_components - compute the RGB
+    components
 -------------------------------------------------*/
 
 static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rgb32_components[3])
@@ -3229,8 +3229,8 @@ static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rg
 
 
 /*-------------------------------------------------
-	add_range_to_hint - add a given range to the
-	hint record for the specified scanline
+    add_range_to_hint - add a given range to the
+    hint record for the specified scanline
 -------------------------------------------------*/
 
 static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int endx)

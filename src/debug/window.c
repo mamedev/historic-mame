@@ -1,16 +1,16 @@
 /****************************************************************************
- *	window.c
- *	Text mode window engine
+ *  window.c
+ *  Text mode window engine
  *
- *	Written by Neil Bradley (neil@synthcom.com)
- *	Heavily modified by Juergen Buchmueller (pullmoll@t-online.de)
+ *  Written by Neil Bradley (neil@synthcom.com)
+ *  Heavily modified by Juergen Buchmueller (pullmoll@t-online.de)
  *
  *  Designed to fit the needs of the new MAME debugger (a bit more ;)
  *
- *	Warning: This code is still buggy!
- *	Some of the changes I made were contrary to the original design,
- *	so expect 'assertions' for every non common case (ie. window too
- *	big, hanging out of the screen etc.)
+ *  Warning: This code is still buggy!
+ *  Some of the changes I made were contrary to the original design,
+ *  so expect 'assertions' for every non common case (ie. window too
+ *  big, hanging out of the screen etc.)
  ****************************************************************************/
 #include <stdio.h>
 
@@ -815,8 +815,8 @@ UINT32 win_open(UINT32 idx, struct sWindow *psWin)
 	if( psWin->flags & BORDER_BOTTOM )
 		++yadd;
 
-//	ASSERT((psWin->x + psWin->w + xadd) <= screen_w);
-//	ASSERT((psWin->y + psWin->h + yadd) <= screen_h);
+//  ASSERT((psWin->x + psWin->w + xadd) <= screen_w);
+//  ASSERT((psWin->y + psWin->h + yadd) <= screen_h);
 
 	psWin->text = MyMalloc( screen_w * (yadd + psWin->h), "win_open()" );
 	psWin->attr = MyMalloc( screen_w * (yadd + psWin->h), "win_open()" );
@@ -1160,7 +1160,7 @@ void win_erase_eol(UINT32 idx, UINT8 ch)
  *
  * Name : win_set_curpos
  *
- * Entry: Window #	and x/y coordinates within the window
+ * Entry: Window #  and x/y coordinates within the window
  *
  * Exit : Nothing
  *

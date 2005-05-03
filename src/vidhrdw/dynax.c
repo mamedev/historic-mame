@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	The CPU controls a video blitter that can read data from the ROMs
-	(instructions to draw pixel by pixel, in a compressed form) and write to
-	up to 8 frame buffers.
+    The CPU controls a video blitter that can read data from the ROMs
+    (instructions to draw pixel by pixel, in a compressed form) and write to
+    up to 8 frame buffers.
 
-	hanamai:
-	There are four scrolling layers. Each layer consists of 2 frame buffers.
-	The 2 images are interleaved to form the final picture sent to the screen.
+    hanamai:
+    There are four scrolling layers. Each layer consists of 2 frame buffers.
+    The 2 images are interleaved to form the final picture sent to the screen.
 
-	drgpunch:
-	There are three scrolling layers. Each layer consists of 2 frame buffers.
-	The 2 images are interleaved to form the final picture sent to the screen.
+    drgpunch:
+    There are three scrolling layers. Each layer consists of 2 frame buffers.
+    The 2 images are interleaved to form the final picture sent to the screen.
 
-	mjdialq2:
-	Two scrolling layers.
+    mjdialq2:
+    Two scrolling layers.
 
 ***************************************************************************/
 
@@ -47,7 +47,7 @@ PALETTE_INIT( sprtmtch )
 /***************************************************************************
 
 
-								Video Blitter(s)
+                                Video Blitter(s)
 
 
 ***************************************************************************/
@@ -269,27 +269,27 @@ WRITE8_HANDLER( dynax_flipscreen_w )
 
 /***************************************************************************
 
-							Blitter Data Format
+                            Blitter Data Format
 
-	The blitter reads its commands from the gfx ROMs. They are
-	instructions to draw an image pixel by pixel (in a compressed
-	form) in a frame buffer.
+    The blitter reads its commands from the gfx ROMs. They are
+    instructions to draw an image pixel by pixel (in a compressed
+    form) in a frame buffer.
 
-	Fetch 1 Byte from the ROM:
+    Fetch 1 Byte from the ROM:
 
-	7654 ----	Pen to draw with
-	---- 3210	Command
+    7654 ----   Pen to draw with
+    ---- 3210   Command
 
-	Other bytes may follow, depending on the command
+    Other bytes may follow, depending on the command
 
-	Commands:
+    Commands:
 
-	0		Stop.
-	1-b		Draw 1-b pixels along X.
-	c		Followed by 1 byte (N): draw N pixels along X.
-	d		Followed by 2 bytes (X,N): skip X pixels, draw N pixels along X.
-	e		? unused
-	f		Increment Y
+    0       Stop.
+    1-b     Draw 1-b pixels along X.
+    c       Followed by 1 byte (N): draw N pixels along X.
+    d       Followed by 2 bytes (X,N): skip X pixels, draw N pixels along X.
+    e       ? unused
+    f       Increment Y
 
 ***************************************************************************/
 
@@ -687,7 +687,7 @@ WRITE8_HANDLER( jantouki_blitter2_rev2_w )
 /***************************************************************************
 
 
-								Video Init
+                                Video Init
 
 
 ***************************************************************************/
@@ -820,7 +820,7 @@ VIDEO_START( neruton )
 {
 	if (video_start_hnoridur())	return 1;
 
-//	priority_table = priority_mjelctrn;
+//  priority_table = priority_mjelctrn;
 	update_irq_func = neruton_update_irq;
 
 	return 0;
@@ -829,7 +829,7 @@ VIDEO_START( neruton )
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -1048,12 +1048,12 @@ static int debug_mask(void)
 	return -1;
 }
 
-/*	A primitive gfx viewer:
+/*  A primitive gfx viewer:
 
-	T          -  Toggle viewer
-	I,O        -  Change palette (-,+)
-	J,K & N,M  -  Change "tile"  (-,+, slow & fast)
-	R          -  move "tile" to the next 1/8th of the gfx	*/
+    T          -  Toggle viewer
+    I,O        -  Change palette (-,+)
+    J,K & N,M  -  Change "tile"  (-,+, slow & fast)
+    R          -  move "tile" to the next 1/8th of the gfx  */
 static int debug_viewer(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 #ifdef MAME_DEBUG
@@ -1197,7 +1197,7 @@ VIDEO_UPDATE( jantouki )
 	cliprect1.max_y = middle_y - 1;
 	cliprect2.min_y = middle_y;
 
-//	if (layers_ctrl & 0x01)	jantouki_copylayer( bitmap, &cliprect2, 3, middle_y-16 );
+//  if (layers_ctrl & 0x01) jantouki_copylayer( bitmap, &cliprect2, 3, middle_y-16 );
 	if (layers_ctrl & 0x02)	jantouki_copylayer( bitmap, &cliprect2, 2, middle_y-16 );
 	if (layers_ctrl & 0x04)	jantouki_copylayer( bitmap, &cliprect2, 1, middle_y-16 );
 	if (layers_ctrl & 0x08)	jantouki_copylayer( bitmap, &cliprect2, 0, middle_y-16 );

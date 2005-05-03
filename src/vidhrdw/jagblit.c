@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Atari Jaguar blitter
+    Atari Jaguar blitter
 
 ****************************************************************************
 
-	How to use this module:
+    How to use this module:
 
-	#define FUNCNAME -- name of the function to be generated
-	#define COMMAND  -- blitter command bits for blitter
-	#define A1FIXED  -- fixed A1 flag bits for blitter
-	#define A2FIXED  -- fixed A2 flag bits for blitter
-	#include "jagblit.c"
+    #define FUNCNAME -- name of the function to be generated
+    #define COMMAND  -- blitter command bits for blitter
+    #define A1FIXED  -- fixed A1 flag bits for blitter
+    #define A2FIXED  -- fixed A2 flag bits for blitter
+    #include "jagblit.c"
 
 ****************************************************************************/
 
@@ -263,7 +263,7 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 	asrc_yadd			= (COMMAND & 0x00000800) ? a1_yadd : a2_yadd;
 	asrc_xmask			= (COMMAND & 0x00000800) ? a1_xmask : a2_xmask;
 	asrc_ymask			= (COMMAND & 0x00000800) ? a1_ymask : a2_ymask;
-	
+
 	adest_phrase_mode	= (COMMAND & 0x00000800) ? a2_phrase_mode : a1_phrase_mode;
 	adest_xstep			= (COMMAND & 0x00000800) ? a2_xstep : a1_xstep;
 	adest_ystep			= (COMMAND & 0x00000800) ? a2_ystep : a1_ystep;

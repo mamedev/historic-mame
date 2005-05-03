@@ -11,47 +11,47 @@ $0800-$0bff : videoram
 $0c00-$0c1f : I/O
 
 Read:
-	$0c00-$0c03 : p1 joystick
-	$0c04
-	$0c07       : stop at grid self-test if bit 7 is low
-	$0c0f 		: stop at first self-test if bit 7 is low
+    $0c00-$0c03 : p1 joystick
+    $0c04
+    $0c07       : stop at grid self-test if bit 7 is low
+    $0c0f       : stop at first self-test if bit 7 is low
 
-	$0c18		: Cabinet, 0 = table, 1 = upright
-	$0c19-$0c1a	: Coinage, 00 = free play, 01 = 2 coin 1 credit, 10 = 1 coin 2 credits, 11 = 1 coin 1 credit
-	$0c1b-$0c1c : Bonus, 00 = 10000, 01 = 15000, 10 = 20000, 11 = none
-	$0c1d		: Tanks, 0 = 3, 1 = 2
-	$0c1e-$0c1f : ??
+    $0c18       : Cabinet, 0 = table, 1 = upright
+    $0c19-$0c1a : Coinage, 00 = free play, 01 = 2 coin 1 credit, 10 = 1 coin 2 credits, 11 = 1 coin 1 credit
+    $0c1b-$0c1c : Bonus, 00 = 10000, 01 = 15000, 10 = 20000, 11 = none
+    $0c1d       : Tanks, 0 = 3, 1 = 2
+    $0c1e-$0c1f : ??
 
 Write:
-	$0c00-$0c01 : p1/p2 start leds
-	$0c02		: ?? written to at end of IRQ, either 0 or 1 - coin counter?
-	$0c03		: ?? written to during IRQ if grid test is on
-	$0c08		: ?? written to during IRQ if grid test is on
-	$0c09		: Sound - coin ding
-	$0c0a		: NMI enable (active low) ?? game only ??
-	$0c0b		: Sound - background noise, 0 - low rumble, 1 - high rumble
-	$0c0c		: Sound - player fire
-	$0c0d		: Sound - explosion
-	$0c0f		: NMI enable (active high) ?? demo only ??
+    $0c00-$0c01 : p1/p2 start leds
+    $0c02       : ?? written to at end of IRQ, either 0 or 1 - coin counter?
+    $0c03       : ?? written to during IRQ if grid test is on
+    $0c08       : ?? written to during IRQ if grid test is on
+    $0c09       : Sound - coin ding
+    $0c0a       : NMI enable (active low) ?? game only ??
+    $0c0b       : Sound - background noise, 0 - low rumble, 1 - high rumble
+    $0c0c       : Sound - player fire
+    $0c0d       : Sound - explosion
+    $0c0f       : NMI enable (active high) ?? demo only ??
 
-	$0c10		: IRQ ack ??
-	$0c18		: Watchdog ?? Not written to while game screen is up
+    $0c10       : IRQ ack ??
+    $0c18       : Watchdog ?? Not written to while game screen is up
 
 $2000-$3fff : ROM
 
 TODO:
-	. Resistor values on the color prom need to be verified
+    . Resistor values on the color prom need to be verified
 
 Changes:
-	28 Feb 98 LBO
-		. Fixed the coin interrupts
-		. Fixed the color issues, should be 100% if I guessed at the resistor values properly
-		. Fixed the 2nd player cocktail joystick, had the polarity reversed
-		. Hacked the sound sample triggers so they work better
+    28 Feb 98 LBO
+        . Fixed the coin interrupts
+        . Fixed the color issues, should be 100% if I guessed at the resistor values properly
+        . Fixed the 2nd player cocktail joystick, had the polarity reversed
+        . Hacked the sound sample triggers so they work better
 
 Known issues:
-	. The 'moving' tank rumble noise seems to keep playing a second too long
-	. Sample support is all a crapshoot. I have no idea how it really works
+    . The 'moving' tank rumble noise seems to keep playing a second too long
+    . Sample support is all a crapshoot. I have no idea how it really works
 
 ***************************************************************************/
 
@@ -112,7 +112,7 @@ WRITE8_HANDLER( tankbatt_interrupt_enable_w )
 	}
 	/* hack - turn off the engine noise if the normal game nmi's are disabled */
 	if (data) sample_stop (2);
-//	interrupt_enable_w (offset, !data);
+//  interrupt_enable_w (offset, !data);
 }
 
 WRITE8_HANDLER( tankbatt_demo_interrupt_enable_w )
@@ -123,7 +123,7 @@ WRITE8_HANDLER( tankbatt_demo_interrupt_enable_w )
 		cpunum_set_input_line(0, 0, CLEAR_LINE);
 		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 	}
-//	interrupt_enable_w (offset, data);
+//  interrupt_enable_w (offset, data);
 }
 
 WRITE8_HANDLER( tankbatt_sh_expl_w )
@@ -302,7 +302,7 @@ static MACHINE_DRIVER_START( tankbatt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

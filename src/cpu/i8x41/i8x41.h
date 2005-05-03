@@ -1,25 +1,25 @@
 /*****************************************************************************
  *
- *	 i8x41.h
- *	 Portable UPI-41/8041/8741/8042/8742 emulator interface
+ *   i8x41.h
+ *   Portable UPI-41/8041/8741/8042/8742 emulator interface
  *
- *	 Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
+ *   Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	 TLP (10-Jan-2003)
- *	   Added output ports registers to the debug viewer
- *	   Added the Clock Divider
+ *   TLP (10-Jan-2003)
+ *     Added output ports registers to the debug viewer
+ *     Added the Clock Divider
  *
  *****************************************************************************/
 
@@ -41,7 +41,7 @@
 
 
 /****************************************************************************
- *	Interrupt constants
+ *  Interrupt constants
  */
 
 #define I8X41_INT_IBF	0	/* input buffer full interrupt */
@@ -50,7 +50,7 @@
 
 /****************************************************************************
  *  Use these in the I/O port fields of your driver for the test lines - i.e,
- *	  { I8X41_t0,   I8X41_t0,   i8041_test0_r },
+ *    { I8X41_t0,   I8X41_t0,   i8041_test0_r },
  *    { I8X41_t1,   I8X41_t1,   i8041_test1_r },
  *    { I8X41_ps,   I8X41_ps,   i8041_port_strobe_w },
  */
@@ -61,7 +61,7 @@
 
 
 /****************************************************************************
- *	The i8x41/i8x42 have 128/256 bytes of internal memory respectively
+ *  The i8x41/i8x42 have 128/256 bytes of internal memory respectively
  */
 
 #define I8X41_intRAM_MASK		0x7f
@@ -77,7 +77,7 @@ enum {
 
 
 /****************************************************************************
- *	Public Functions
+ *  Public Functions
  */
 
 extern void i8x41_get_info(UINT32 state, union cpuinfo *info);

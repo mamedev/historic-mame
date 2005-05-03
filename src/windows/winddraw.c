@@ -1,6 +1,6 @@
 //============================================================
 //
-//	winddraw.c - Win32 DirectDraw code
+//  winddraw.c - Win32 DirectDraw code
 //
 //============================================================
 
@@ -26,7 +26,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -37,7 +37,7 @@ GUID *screen_guid_ptr;
 
 
 //============================================================
-//	DEBUGGING
+//  DEBUGGING
 //============================================================
 
 #define SHOW_FLIP_TIMES 		0
@@ -45,7 +45,7 @@ GUID *screen_guid_ptr;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // DirectDraw objects
@@ -86,7 +86,7 @@ static int pixel_aspect_ratio;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static double compute_mode_score(int width, int height, int depth, int refresh);
@@ -105,7 +105,7 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 
 
 //============================================================
-//	win_ddraw_fullscreen_margins
+//  win_ddraw_fullscreen_margins
 //============================================================
 
 void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *margins)
@@ -133,7 +133,7 @@ void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *mar
 
 
 //============================================================
-//	erase_outer_rect
+//  erase_outer_rect
 //============================================================
 
 INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE surface)
@@ -184,7 +184,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE surfa
 
 
 //============================================================
-//	win_ddraw_wait_vsync
+//  win_ddraw_wait_vsync
 //============================================================
 
 void win_ddraw_wait_vsync(void)
@@ -201,7 +201,7 @@ void win_ddraw_wait_vsync(void)
 
 
 //============================================================
-//	win_ddraw_init
+//  win_ddraw_init
 //============================================================
 
 int win_ddraw_init(int width, int height, int depth, int attributes, const struct win_effect_data *effect)
@@ -289,7 +289,7 @@ cant_create_ddraw:
 
 
 //============================================================
-//	win_ddraw_kill
+//  win_ddraw_kill
 //============================================================
 
 void win_ddraw_kill(void)
@@ -317,7 +317,7 @@ void win_ddraw_kill(void)
 
 
 //============================================================
-//	enum_callback
+//  enum_callback
 //============================================================
 
 static HRESULT WINAPI enum_callback(LPDDSURFACEDESC desc, LPVOID context)
@@ -344,7 +344,7 @@ static HRESULT WINAPI enum_callback(LPDDSURFACEDESC desc, LPVOID context)
 
 
 //============================================================
-//	enum2_callback
+//  enum2_callback
 //============================================================
 
 static HRESULT WINAPI enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context)
@@ -372,14 +372,14 @@ static HRESULT WINAPI enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 
 
 //============================================================
-//	compute_mode_score
+//  compute_mode_score
 //============================================================
 
 static double compute_mode_score(int width, int height, int depth, int refresh)
 {
 	static const double depth_matrix[4][2][4] =
 	{
-			// !needs_6bpp_per_gun		  // needs_6bpp_per_gun
+			// !needs_6bpp_per_gun        // needs_6bpp_per_gun
 		{ { 0.00, 0.75, 0.25, 0.50 },	{ 0.00, 0.25, 0.50, 0.75 } },	// 8bpp source
 		{ { 0.00, 1.00, 0.25, 0.50 },	{ 0.00, 0.50, 0.75, 1.00 } },	// 16bpp source
 		{ { 0.00, 0.00, 0.00, 0.00 },	{ 0.00, 0.00, 0.00, 0.00 } },	// 24bpp source (doesn't exist)
@@ -474,7 +474,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 
 
 //============================================================
-//	set_resolution
+//  set_resolution
 //============================================================
 
 static int set_resolution(void)
@@ -567,7 +567,7 @@ cant_enumerate_modes:
 
 
 //============================================================
-//	create_surfaces
+//  create_surfaces
 //============================================================
 
 static int create_surfaces(void)
@@ -673,7 +673,7 @@ cant_create_primary:
 
 
 //============================================================
-//	create_blit_surface
+//  create_blit_surface
 //============================================================
 
 static int create_blit_surface(void)
@@ -773,7 +773,7 @@ cant_create_blit:
 
 
 //============================================================
-//	set_brightness
+//  set_brightness
 //============================================================
 
 static void set_brightness(void)
@@ -814,7 +814,7 @@ static void set_brightness(void)
 
 
 //============================================================
-//	create_clipper
+//  create_clipper
 //============================================================
 
 static int create_clipper(void)
@@ -857,7 +857,7 @@ cant_create_clipper:
 
 
 //============================================================
-//	erase_surfaces
+//  erase_surfaces
 //============================================================
 
 static void erase_surfaces(void)
@@ -891,7 +891,7 @@ static void erase_surfaces(void)
 
 
 //============================================================
-//	release_surfaces
+//  release_surfaces
 //============================================================
 
 static void release_surfaces(void)
@@ -920,7 +920,7 @@ static void release_surfaces(void)
 
 
 //============================================================
-//	compute_color_masks
+//  compute_color_masks
 //============================================================
 
 static void compute_color_masks(const DDSURFACEDESC *desc)
@@ -987,7 +987,7 @@ static void compute_color_masks(const DDSURFACEDESC *desc)
 
 
 //============================================================
-//	win_ddraw_draw
+//  win_ddraw_draw
 //============================================================
 
 int win_ddraw_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -1024,7 +1024,7 @@ int win_ddraw_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, v
 
 
 //============================================================
-//	lock_must_succeed
+//  lock_must_succeed
 //============================================================
 
 static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -1053,7 +1053,7 @@ static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_
 
 
 //============================================================
-//	render_to_blit
+//  render_to_blit
 //============================================================
 
 static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -1200,7 +1200,7 @@ surface_lost:
 
 
 //============================================================
-//	blit_and_flip
+//  blit_and_flip
 //============================================================
 
 static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update)
@@ -1285,7 +1285,7 @@ surface_lost:
 
 
 //============================================================
-//	render_to_primary
+//  render_to_primary
 //============================================================
 
 static int render_to_primary(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)

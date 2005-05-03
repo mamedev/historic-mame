@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	memory.h
+    memory.h
 
-	Functions which handle the CPU memory accesses.
+    Functions which handle the CPU memory accesses.
 
 ***************************************************************************/
 
@@ -97,7 +97,7 @@ INLINE UINT64 d2u(double d)
 
 /***************************************************************************
 
-	Parameters
+    Parameters
 
 ***************************************************************************/
 
@@ -119,9 +119,9 @@ INLINE UINT64 d2u(double d)
 
 /***************************************************************************
 
-	Basic type definitions
+    Basic type definitions
 
-	These types are used for data access handlers.
+    These types are used for data access handlers.
 
 ***************************************************************************/
 
@@ -163,7 +163,7 @@ typedef void genf(void);
 
 /***************************************************************************
 
-	Basic macros
+    Basic macros
 
 ***************************************************************************/
 
@@ -211,10 +211,10 @@ typedef void genf(void);
 
 /***************************************************************************
 
-	Address array constants
+    Address array constants
 
-	These apply to values in the array of read/write handlers that is
-	declared within each driver.
+    These apply to values in the array of read/write handlers that is
+    declared within each driver.
 
 ***************************************************************************/
 
@@ -300,12 +300,12 @@ typedef void genf(void);
 
 /***************************************************************************
 
-	Constants for static entries in address map read/write arrays
+    Constants for static entries in address map read/write arrays
 
-	The first 32 entries in the address lookup table are reserved for
-	"static" handlers. These are internal handlers for RAM, ROM, banks,
-	and unmapped areas in the address space. The following definitions
-	are the properly-casted versions of the STATIC_ constants above.
+    The first 32 entries in the address lookup table are reserved for
+    "static" handlers. These are internal handlers for RAM, ROM, banks,
+    and unmapped areas in the address space. The following definitions
+    are the properly-casted versions of the STATIC_ constants above.
 
 ***************************************************************************/
 
@@ -610,17 +610,17 @@ typedef void genf(void);
 
 /***************************************************************************
 
-	Address space array type definitions
+    Address space array type definitions
 
-	Note that the data access handlers are not passed the actual address
-	where the operation takes place, but the offset from the beginning
-	of the block they are assigned to. This makes handling of mirror
-	addresses easier, and makes the handlers a bit more "object oriented".
-	If you handler needs to read/write the main memory area, provide a
-	"base" pointer: it will be initialized by the main engine to point to
-	the beginning of the memory block assigned to the handler. You may
-	also provide a pointer to "size": it will be set to the length of
-	the memory area processed by the handler.
+    Note that the data access handlers are not passed the actual address
+    where the operation takes place, but the offset from the beginning
+    of the block they are assigned to. This makes handling of mirror
+    addresses easier, and makes the handlers a bit more "object oriented".
+    If you handler needs to read/write the main memory area, provide a
+    "base" pointer: it will be initialized by the main engine to point to
+    the beginning of the memory block assigned to the handler. You may
+    also provide a pointer to "size": it will be set to the length of
+    the memory area processed by the handler.
 
 ***************************************************************************/
 
@@ -674,7 +674,7 @@ struct address_space_t
 
 /***************************************************************************
 
-	Address map array constructors
+    Address map array constructors
 
 ***************************************************************************/
 
@@ -762,7 +762,7 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /***************************************************************************
 
-	Address map array helper macros
+    Address map array helper macros
 
 ***************************************************************************/
 
@@ -777,9 +777,9 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /***************************************************************************
 
-	Address map lookup constants
+    Address map lookup constants
 
-	These apply to values in the internal lookup table.
+    These apply to values in the internal lookup table.
 
 ***************************************************************************/
 
@@ -810,9 +810,9 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /***************************************************************************
 
-	Address map lookup macros
+    Address map lookup macros
 
-	These are used for accessing the internal lookup table.
+    These are used for accessing the internal lookup table.
 
 ***************************************************************************/
 
@@ -824,7 +824,7 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /***************************************************************************
 
-	Function prototypes for core readmem/writemem routines
+    Function prototypes for core readmem/writemem routines
 
 ***************************************************************************/
 
@@ -970,7 +970,7 @@ void io_write_qword_64le(offs_t address, data64_t data);
 
 /***************************************************************************
 
-	Function prototypes for core memory functions
+    Function prototypes for core memory functions
 
 ***************************************************************************/
 
@@ -1022,7 +1022,7 @@ data64_t *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, of
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -1039,7 +1039,7 @@ extern struct address_map_t *construct_map_0(struct address_map_t *map);
 
 /***************************************************************************
 
-	Helper macros and inlines
+    Helper macros and inlines
 
 ***************************************************************************/
 

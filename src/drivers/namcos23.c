@@ -1,11 +1,11 @@
 /*
-	Namco (Super) System 23
-	Stub driver
+    Namco (Super) System 23
+    Stub driver
 
-	Hardware: R4650 (MIPS III) main CPU @ 166 MHz
-	          H8/3002 MCU for sound/inputs
-		  Custom polygon hardware
-		  Tilemaps?  Sprites?
+    Hardware: R4650 (MIPS III) main CPU @ 166 MHz
+              H8/3002 MCU for sound/inputs
+          Custom polygon hardware
+          Tilemaps?  Sprites?
 */
 
 /*
@@ -194,9 +194,9 @@ Notes:
       IC1 \
       IC2 / Main Program  (Fujitsu 29F016 16MBit FlashROM, TSOP48)
       IC3 - Sound Program (Fujitsu 29F400T 4MBit FlashROM, TSOP48)
-      
+
       Games that use this PCB include...
-      
+
       Game           Code and revision
       --------------------------------
       Time Crisis 2  TSS3 Ver.B
@@ -216,9 +216,9 @@ Notes:
       IC1 \
       IC2 / Main Program  (Fujitsu 29F016 16MBit FlashROM, TSOP48)
       IC3 - Sound Program (ST M29F400T 4MBit FlashROM, TSOP48)
-      
+
       Games that use this PCB include...
-      
+
       Game           Code and revision
       --------------------------------
       GP500          5GP3 Ver.C
@@ -270,19 +270,19 @@ Notes:
                            CCRH - size fixed at 16M
                            PT*  - size fixed at 32M
                            MT*  - size fixed at 64M
-      
+
       KEYCUS   - Mach211 CPLD (PLCC44)
       PAL(1)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  \ Both identical
-      PAL(2)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  / 
+      PAL(2)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  /
       PAL(3)   - PALCE16V8H  (PLCC20, stamped 'SS22M1')
       PAL(4)   - PALCE16V8H  (PLCC20, labelled 'SS23MM1')
-                 Note this PAL is not populated when used on Super System 23 
-           
+                 Note this PAL is not populated when used on Super System 23
+
       All ROMs are SOP44 MaskROMs
       Note: ROMs at locations 7M, 7K, 5M, 5K, 5J & 5F are not included in the archive since they're copies of
             other ROMs which are included in the archive.
             Each ROM is stamped with the Namco game code, then the ROM-use code (such as CCRL, CCRH, PT* or MT*).
-            
+
                            MaskROM
             Game           Code     Keycus
             ------------------------------
@@ -467,9 +467,9 @@ static READ32_HANDLER( keycus_KC010_r ) /* KC010 for Time Crisis 2 */
 			return 1;
 			break;
 
-//		case 9:	// maybe not a good idea, makes program crash earlier
-//			return 0x20000000;
-//			break;
+//      case 9: // maybe not a good idea, makes program crash earlier
+//          return 0x20000000;
+//          break;
 
 		case 10:
 			return 0x20;
@@ -511,9 +511,9 @@ static READ32_HANDLER( keycus_KC029_r ) /* KC029 for GP500 */
 			return 1;
 			break;
 
-//		case 9:	// maybe not a good idea, makes program crash earlier
-//			return 0x20000000;
-//			break;
+//      case 9: // maybe not a good idea, makes program crash earlier
+//          return 0x20000000;
+//          break;
 
 		case 10:
 			return 0x20;
@@ -564,13 +564,13 @@ INPUT_PORTS_END
 DRIVER_INIT(ss23)
 {
 /*
-	data32_t * pSrc = (data32_t *)memory_region(REGION_GFX4);
-	int i;
-	for( i=0; i<0x200000; i++ )
-	{
-		if( (i&0xf)==0 ) logerror( "\n%08x:", i );
-		logerror( " %08x", *pSrc++ );
-	}
+    data32_t * pSrc = (data32_t *)memory_region(REGION_GFX4);
+    int i;
+    for( i=0; i<0x200000; i++ )
+    {
+        if( (i&0xf)==0 ) logerror( "\n%08x:", i );
+        logerror( " %08x", *pSrc++ );
+    }
 */
 }
 #if 0
@@ -620,11 +620,11 @@ MACHINE_DRIVER_START( s23 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256,256)
 	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-//	MDRV_SCREEN_SIZE(768, 512)
-//	MDRV_VISIBLE_AREA(0, 767, 0, 511)
+//  MDRV_SCREEN_SIZE(768, 512)
+//  MDRV_VISIBLE_AREA(0, 767, 0, 511)
 	MDRV_PALETTE_LENGTH(0x2000)
 
-//	MDRV_GFXDECODE(gfxdecodeinfo)
+//  MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
@@ -643,11 +643,11 @@ MACHINE_DRIVER_START( ss23 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256,256)
 	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-//	MDRV_SCREEN_SIZE(768, 512)
-//	MDRV_VISIBLE_AREA(0, 767, 0, 511)
+//  MDRV_SCREEN_SIZE(768, 512)
+//  MDRV_VISIBLE_AREA(0, 767, 0, 511)
 	MDRV_PALETTE_LENGTH(0x2000)
 
-//	MDRV_GFXDECODE(gfxdecodeinfo)
+//  MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
@@ -708,8 +708,8 @@ ROM_START( gp500 )
         ROM_LOAD16_BYTE( "5gp1mtah.2j",  0x0000001, 0x800000, CRC(246e4b7a) SHA1(75743294b8f48bffb84f062febfbc02230d49ce9) )
 
 		/* COMMON FUJII YASUI WAKAO KURE INOUE
-		 * 0x000000..0x57ffff: all 0xff
-		 */
+         * 0x000000..0x57ffff: all 0xff
+         */
         ROM_LOAD16_BYTE( "5gp1mtbl.2f",  0x1000000, 0x800000, CRC(66640606) SHA1(c69a0219748241c49315d7464f8156f8068e9cf5) )
         ROM_LOAD16_BYTE( "5gp1mtbh.2m",  0x1000001, 0x800000, CRC(352360e8) SHA1(d621dfac3385059c52d215f6623901589a8658a3) )
 

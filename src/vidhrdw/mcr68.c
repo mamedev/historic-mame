@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Midway MCR-68k system
+    Midway MCR-68k system
 
 ***************************************************************************/
 
@@ -22,7 +22,7 @@ static struct tilemap *fg_tilemap;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -57,7 +57,7 @@ static void zwackery_get_fg_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -92,7 +92,7 @@ VIDEO_START( zwackery )
 
 /*************************************
  *
- *	Zwackery color data conversion
+ *  Zwackery color data conversion
  *
  *************************************/
 
@@ -144,7 +144,7 @@ PALETTE_INIT( zwackery )
 
 /*************************************
  *
- *	Palette RAM writes
+ *  Palette RAM writes
  *
  *************************************/
 
@@ -191,7 +191,7 @@ WRITE16_HANDLER( zwackery_paletteram_w )
 
 /*************************************
  *
- *	Video RAM writes
+ *  Video RAM writes
  *
  *************************************/
 
@@ -222,7 +222,7 @@ WRITE16_HANDLER( zwackery_spriteram_w )
 
 /*************************************
  *
- *	Sprite update
+ *  Sprite update
  *
  *************************************/
 
@@ -265,7 +265,7 @@ static void mcr68_update_sprites(struct mame_bitmap *bitmap, const struct rectan
 		if (x > 0x1f0) x -= 0x200;
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
-			The color 8 is used to cover over other sprites. */
+            The color 8 is used to cover over other sprites. */
 
 		/* first draw the sprite, visible */
 		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
@@ -321,7 +321,7 @@ static void zwackery_update_sprites(struct mame_bitmap *bitmap, const struct rec
 		if (x <= -32) x += 512;
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
-			The color 8 is used to cover over other sprites. */
+            The color 8 is used to cover over other sprites. */
 
 		/* first draw the sprite, visible */
 		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
@@ -337,7 +337,7 @@ static void zwackery_update_sprites(struct mame_bitmap *bitmap, const struct rec
 
 /*************************************
  *
- *	General MCR/68k update
+ *  General MCR/68k update
  *
  *************************************/
 

@@ -1,11 +1,11 @@
 /***************************************************************************
 
-	mcr.c
+    mcr.c
 
-	Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-	I/O ports)
+    Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
+    I/O ports)
 
-	Tapper machine started by Chris Kirmse
+    Tapper machine started by Chris Kirmse
 
 ***************************************************************************/
 

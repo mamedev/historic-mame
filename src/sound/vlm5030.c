@@ -1,19 +1,19 @@
 /*
-	vlm5030.c
+    vlm5030.c
 
-	VLM5030 emulator
+    VLM5030 emulator
 
-	Written by Tatsuyuki Satoh
-	Based on TMS5220 simulator (tms5220.c)
+    Written by Tatsuyuki Satoh
+    Based on TMS5220 simulator (tms5220.c)
 
   note:
-	memory read cycle(==sampling rate) = 122.9u(440clock)
-	interpolator (LC8109 = 2.5ms)      = 20 * samples(125us)
-	frame time (20ms)                  =  4 * interpolator
-	9bit DAC is composed of 5bit Physical and 3bitPWM.
+    memory read cycle(==sampling rate) = 122.9u(440clock)
+    interpolator (LC8109 = 2.5ms)      = 20 * samples(125us)
+    frame time (20ms)                  =  4 * interpolator
+    9bit DAC is composed of 5bit Physical and 3bitPWM.
 
   todo:
-	Noise Generator circuit without 'rand()' function.
+    Noise Generator circuit without 'rand()' function.
 
 ----------- command format (Analytical result) ----------
 
@@ -402,7 +402,7 @@ static void vlm5030_update_callback(void *param,stream_sample_t **inputs, stream
 			/* size */
 			length--;
 		}
-/*		return;*/
+/*      return;*/
 	}
 	/* stop phase */
 phase_stop:
@@ -478,7 +478,7 @@ static void VLM5030_setup_parameter(struct vlm5030_info *chip, UINT8 param)
 static void VLM5030_resotore_state(void)
 {
 	int i, ch;
-	
+
 	for (ch = 0; ch < MAX_SOUND; ch++)
 	{
 		struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, ch);
@@ -645,7 +645,7 @@ static void *vlm5030_start(int sndindex, int clock, const void *config)
 {
 	int emulation_rate;
 	struct vlm5030_info *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

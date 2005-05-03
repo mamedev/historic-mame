@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari ThunderJaws hardware
+    Atari ThunderJaws hardware
 
 ****************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Globals
+ *  Globals
  *
  *************************************/
 
@@ -21,7 +21,7 @@ UINT8 thunderj_alpha_tile_bank;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -60,7 +60,7 @@ static void get_playfield2_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -131,9 +131,9 @@ VIDEO_START( thunderj )
 
 /*************************************
  *
- *	Mark high palette bits starting
- *	at the given X,Y and continuing
- *	until a stop or the end of line
+ *  Mark high palette bits starting
+ *  at the given X,Y and continuing
+ *  until a stop or the end of line
  *
  *************************************/
 
@@ -156,7 +156,7 @@ void thunderj_mark_high_palette(struct mame_bitmap *bitmap, UINT16 *pf, UINT16 *
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -189,63 +189,63 @@ VIDEO_UPDATE( thunderj )
 				if (mo[x])
 				{
 					/* verified from the GALs on the real PCB; equations follow
-					 *
-					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
-					 *		PF/M=MPX0*!MPX1*!MPX2*!MPX3*!MPX4*!MPX5*!MPX6*!MPX7
-					 *		    +PFX3*PFX8*PFX9*!MPR0
-					 *		    +PFX3*PFX8*!MPR0*!MPR1
-					 *		    +PFX3*PFX9*!MPR1
-					 *
-					 *		--- CS1 is 1 if the playfield should be displayed
-					 *		CS1=PF/M*!ALBG*!APIX0*!APIX1
-					 *		   +!MPX0*!MPX1*!MPX2*!MPX3*!ALBG*!APIX0*!APIX1
-					 *
-					 *		--- CS0 is 1 if the MOs should be displayed
-					 *		CS0=!PF/M*MPX0*!ALBG*!APIX0*!APIX1
-					 *		   +!PF/M*MPX1*!ALBG*!APIX0*!APIX1
-					 *		   +!PF/M*MPX2*!ALBG*!APIX0*!APIX1
-					 *		   +!PF/M*MPX3*!ALBG*!APIX0*!APIX1
-					 *
-					 *		--- CRA10 is the 0x200 bit of the color RAM index; set if pf is displayed
-					 *		CRA10:=CS1
-					 *
-					 *		--- CRA9 is the 0x100 bit of the color RAM index; set if mo is displayed
-					 *		    or if the playfield selected is playfield #2
-					 *		CRA9:=PFXS*CS1
-					 *		    +!CS1*CS0
-					 *
-					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
-					 *		CRA8:=CS1*PFX7
-					 *		    +!CS1*MPX7*CS0
-					 *		    +!CS1*!CS0*ALC4
-					 *
-					 *		CRA7:=CS1*PFX6
-					 *		    +!CS1*MPX6*CS0
-					 *
-					 *		CRA6:=CS1*PFX5
-					 *		    +MPX5*!CS1*CS0
-					 *		    +!CS1*!CS0*ALC3
-					 *
-					 *		CRA5:=CS1*PFX4
-					 *		    +MPX4*!CS1*CS0
-					 *		    +!CS1*ALC2*!CS0
-					 *
-					 *		CRA4:=CS1*PFX3
-					 *		    +!CS1*MPX3*CS0
-					 *		    +!CS1*!CS0*ALC1
-					 *
-					 *		CRA3:=CS1*PFX2
-					 *		    +MPX2*!CS1*CS0
-					 *		    +!CS1*!CS0*ALC0
-					 *
-					 *		CRA2:=CS1*PFX1
-					 *		    +MPX1*!CS1*CS0
-					 *		    +!CS1*!CS0*APIX1
-					 *
-					 *		CRA1:=CS1*PFX0
-					 *		    +MPX0*!CS1*CS0
-					 *		    +!CS1*!CS0*APIX0
-					 */
+                     *
+                     *      --- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+                     *      PF/M=MPX0*!MPX1*!MPX2*!MPX3*!MPX4*!MPX5*!MPX6*!MPX7
+                     *          +PFX3*PFX8*PFX9*!MPR0
+                     *          +PFX3*PFX8*!MPR0*!MPR1
+                     *          +PFX3*PFX9*!MPR1
+                     *
+                     *      --- CS1 is 1 if the playfield should be displayed
+                     *      CS1=PF/M*!ALBG*!APIX0*!APIX1
+                     *         +!MPX0*!MPX1*!MPX2*!MPX3*!ALBG*!APIX0*!APIX1
+                     *
+                     *      --- CS0 is 1 if the MOs should be displayed
+                     *      CS0=!PF/M*MPX0*!ALBG*!APIX0*!APIX1
+                     *         +!PF/M*MPX1*!ALBG*!APIX0*!APIX1
+                     *         +!PF/M*MPX2*!ALBG*!APIX0*!APIX1
+                     *         +!PF/M*MPX3*!ALBG*!APIX0*!APIX1
+                     *
+                     *      --- CRA10 is the 0x200 bit of the color RAM index; set if pf is displayed
+                     *      CRA10:=CS1
+                     *
+                     *      --- CRA9 is the 0x100 bit of the color RAM index; set if mo is displayed
+                     *          or if the playfield selected is playfield #2
+                     *      CRA9:=PFXS*CS1
+                     *          +!CS1*CS0
+                     *
+                     *      --- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+                     *      CRA8:=CS1*PFX7
+                     *          +!CS1*MPX7*CS0
+                     *          +!CS1*!CS0*ALC4
+                     *
+                     *      CRA7:=CS1*PFX6
+                     *          +!CS1*MPX6*CS0
+                     *
+                     *      CRA6:=CS1*PFX5
+                     *          +MPX5*!CS1*CS0
+                     *          +!CS1*!CS0*ALC3
+                     *
+                     *      CRA5:=CS1*PFX4
+                     *          +MPX4*!CS1*CS0
+                     *          +!CS1*ALC2*!CS0
+                     *
+                     *      CRA4:=CS1*PFX3
+                     *          +!CS1*MPX3*CS0
+                     *          +!CS1*!CS0*ALC1
+                     *
+                     *      CRA3:=CS1*PFX2
+                     *          +MPX2*!CS1*CS0
+                     *          +!CS1*!CS0*ALC0
+                     *
+                     *      CRA2:=CS1*PFX1
+                     *          +MPX1*!CS1*CS0
+                     *          +!CS1*!CS0*APIX1
+                     *
+                     *      CRA1:=CS1*PFX0
+                     *          +MPX0*!CS1*CS0
+                     *          +!CS1*!CS0*APIX0
+                     */
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
 					int pfm = 0;
 

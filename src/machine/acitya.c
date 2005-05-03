@@ -31,9 +31,9 @@ static void acitya_decrypt_rom_8(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -66,9 +66,9 @@ static void acitya_decrypt_rom_9(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -99,9 +99,9 @@ static void acitya_decrypt_rom_A(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		newbyte  = (inverted_oldbyte & 0x80) >> 2;
@@ -132,9 +132,9 @@ static void acitya_decrypt_rom_B(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -146,7 +146,7 @@ static void acitya_decrypt_rom_B(void)
 		newbyte |= (inverted_oldbyte & 0x04) >> 1;
 		newbyte |= (inverted_oldbyte & 0x02) << 4;
 		newbyte |= (oldbyte & 0x01) << 6;
-	
+
 
 		RAM[mem + 0x1C000] = newbyte;
 	}
@@ -190,8 +190,8 @@ MACHINE_INIT( acitya )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* While the PAL supports up to 16 decryption methods, only four
-		are actually used in the PAL.  Therefore, we'll take a little
-		memory overhead and decrypt the ROMs using each method in advance. */
+        are actually used in the PAL.  Therefore, we'll take a little
+        memory overhead and decrypt the ROMs using each method in advance. */
 	acitya_decrypt_rom_8();
 	acitya_decrypt_rom_9();
 	acitya_decrypt_rom_A();

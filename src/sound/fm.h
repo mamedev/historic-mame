@@ -146,12 +146,12 @@ int YM2203Write(void *chip,int a,unsigned char v);
 unsigned char YM2203Read(void *chip,int a);
 
 /*
-**	Timer OverFlow
+**  Timer OverFlow
 */
 int YM2203TimerOver(void *chip, int c);
 
 /*
-**	State Save
+**  State Save
 */
 void YM2203Postload(void *chip);
 #endif /* BUILD_YM2203 */

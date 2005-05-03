@@ -297,7 +297,7 @@ VIDEO_UPDATE( bwing )
 	bwing_drawsprites(bitmap, cliprect, buffered_spriteram, 1);
 
 	// draw text layer
-//	if (mapmask & 4)
+//  if (mapmask & 4)
 	{
 		tilemap_set_flip(charmap, mapflip);
 		tilemap_draw(bitmap, cliprect, charmap, 0, 0);

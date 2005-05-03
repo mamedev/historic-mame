@@ -37,11 +37,11 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	/* priority bits:
-	   4 over zoom (0 = have priority)
-	   5 over B    (0 = have priority)
-	   6 over A    (1 = have priority)
-	   never over F
-	*/
+       4 over zoom (0 = have priority)
+       5 over B    (0 = have priority)
+       6 over A    (1 = have priority)
+       never over F
+    */
 	*priority = 0xff00;							/* F = 8 */
 	if ( *color & 0x10) *priority |= 0xf0f0;	/* Z = 4 */
 	if (~*color & 0x40) *priority |= 0xcccc;	/* A = 2 */
@@ -65,7 +65,7 @@ static void zoom_callback(int *code,int *color)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -90,7 +90,7 @@ VIDEO_START( ajax )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

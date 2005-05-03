@@ -1,6 +1,6 @@
 /*
- *	Chack'n Pop (C) 1983 TAITO Corp.
- *	simulate 68705 MCU
+ *  Chack'n Pop (C) 1983 TAITO Corp.
+ *  simulate 68705 MCU
  */
 
 #include "driver.h"

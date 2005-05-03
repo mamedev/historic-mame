@@ -1,11 +1,11 @@
 /*
-	"Gladiator"
-	(C) 1984 SNK
+    "Gladiator"
+    (C) 1984 SNK
 
 
-	known issues:
-	sound/music doesn't sound good (but it might be correct)
-	cocktail support is missing
+    known issues:
+    sound/music doesn't sound good (but it might be correct)
+    cocktail support is missing
 
 Change Log
 ----------
@@ -97,7 +97,7 @@ static READ8_HANDLER( sgladiat_soundlatch_r )
 
 static READ8_HANDLER( sgladiat_sound_nmi_ack_r )
 {
-//	cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE);
+//  cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE);
 	return 0;
 }
 
@@ -111,7 +111,7 @@ static READ8_HANDLER( sgladiat_inp0_r )
 static WRITE8_HANDLER( sglatiat_flipscreen_w )
 {
 	/* 0xa006 */
-	/* x-------	screen is flipped */
+	/* x------- screen is flipped */
 }
 
 static ADDRESS_MAP_START( sgladiat_readmem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
@@ -134,12 +134,12 @@ static ADDRESS_MAP_START( sgladiat_writemem_cpuA, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa600, 0xa600) AM_WRITE(sglatiat_flipscreen_w)
 	AM_RANGE(0xa700, 0xa700) AM_WRITE(snk_cpuA_nmi_ack_w)
 	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&shared_ram2)
-//		AM_RANGE(0xd200, 0xd200) AM_WRITE(MWA8_RAM) /* ?0x24 */
-//		AM_RANGE(0xd300, 0xd300) AM_WRITE(MWA8_RAM) /* ------xx: msb scrollx */
-//		AM_RANGE(0xd400, 0xd400) AM_WRITE(MWA8_RAM) /* xscroll (sprite) */
-//		AM_RANGE(0xd500, 0xd500) AM_WRITE(MWA8_RAM) /* yscroll (sprite) */
-//		AM_RANGE(0xd600, 0xd600) AM_WRITE(MWA8_RAM) /* xscroll (bg) */
-//		AM_RANGE(0xd700, 0xd700) AM_WRITE(MWA8_RAM) /* yscroll (bg) */
+//      AM_RANGE(0xd200, 0xd200) AM_WRITE(MWA8_RAM) /* ?0x24 */
+//      AM_RANGE(0xd300, 0xd300) AM_WRITE(MWA8_RAM) /* ------xx: msb scrollx */
+//      AM_RANGE(0xd400, 0xd400) AM_WRITE(MWA8_RAM) /* xscroll (sprite) */
+//      AM_RANGE(0xd500, 0xd500) AM_WRITE(MWA8_RAM) /* yscroll (sprite) */
+//      AM_RANGE(0xd600, 0xd600) AM_WRITE(MWA8_RAM) /* xscroll (bg) */
+//      AM_RANGE(0xd700, 0xd700) AM_WRITE(MWA8_RAM) /* yscroll (bg) */
 	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram)
 	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM)
@@ -190,7 +190,7 @@ static MACHINE_DRIVER_START( sgladiat )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(sgladiat_readmem_cpuA,sgladiat_writemem_cpuA)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+//  MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_PROGRAM_MAP(sgladiat_readmem_cpuB,sgladiat_writemem_cpuB)
@@ -218,10 +218,10 @@ static MACHINE_DRIVER_START( sgladiat )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END

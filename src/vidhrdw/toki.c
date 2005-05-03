@@ -18,7 +18,7 @@ static unsigned int toki_background_xscroll[256];
 static unsigned int toki_foreground_xscroll[256];
 
 /*************************************************************************
-					RASTER EFFECTS
+                    RASTER EFFECTS
 
 Xscroll can be altered per scanline to create rowscroll effect.
 
@@ -119,7 +119,7 @@ static void get_fore_tile_info(int tile_index)
 
 /*************************************
  *
- *		Start/Stop
+ *      Start/Stop
  *
  *************************************/
 
@@ -167,49 +167,49 @@ WRITE16_HANDLER( toki_background2_videoram16_w )
 }
 
 /***************************************************************************
-					SPRITES
+                    SPRITES
 
-	Original Spriteram
-	------------------
+    Original Spriteram
+    ------------------
 
-	It's not clear what purpose is served by marking tiles as being part of
-	big sprites. (Big sprites in the attract abduction scene have all tiles
-	marked as "first" unlike big sprites in-game.)
+    It's not clear what purpose is served by marking tiles as being part of
+    big sprites. (Big sprites in the attract abduction scene have all tiles
+    marked as "first" unlike big sprites in-game.)
 
-	We just ignore this top nibble (although perhaps in theory the bits
-	enable X/Y offsets in the low byte).
+    We just ignore this top nibble (although perhaps in theory the bits
+    enable X/Y offsets in the low byte).
 
-	+0   x....... ........  sprite disable ??
+    +0   x....... ........  sprite disable ??
       +0   .xx..... ........  tile is part of big sprite (4=first, 6=middle, 2=last)
-	+0   .....x.. ........  ??? always set? (could be priority - see Bloodbro)
-	+0   .......x ........  Flip x
-	+0   ........ xxxx....  X offset: add (this * 16) to X coord
-	+0   ........ ....xxxx  Y offset: add (this * 16) to Y coord
+    +0   .....x.. ........  ??? always set? (could be priority - see Bloodbro)
+    +0   .......x ........  Flip x
+    +0   ........ xxxx....  X offset: add (this * 16) to X coord
+    +0   ........ ....xxxx  Y offset: add (this * 16) to Y coord
 
- 	+1   xxxx.... ........  Color bank
-	+1   ....xxxx xxxxxxxx  Tile number (lo bits)
-	+2   x....... ........  Tile number (hi bit)
-	+2   .???.... ........  (set in not yet used entries)
-	+2   .......x xxxxxxxx  X coordinate
-	+3   .......x xxxxxxxx  Y coordinate
+    +1   xxxx.... ........  Color bank
+    +1   ....xxxx xxxxxxxx  Tile number (lo bits)
+    +2   x....... ........  Tile number (hi bit)
+    +2   .???.... ........  (set in not yet used entries)
+    +2   .......x xxxxxxxx  X coordinate
+    +3   .......x xxxxxxxx  Y coordinate
 
-	f000 0000 f000 0000     entry not yet used: unless this is honored there
-	                        will be junk sprites in top left corner
-	ffff ???? ???? ????     sprite marked as dead: unless this is honored
-	                        there will be junk sprites after floating monkey machine
+    f000 0000 f000 0000     entry not yet used: unless this is honored there
+                            will be junk sprites in top left corner
+    ffff ???? ???? ????     sprite marked as dead: unless this is honored
+                            there will be junk sprites after floating monkey machine
 
 
-	Bootleg Spriteram
-	-----------------
+    Bootleg Spriteram
+    -----------------
 
-	+0   .......x xxxxxxxx  Sprite Y coordinate
-	+1   ...xxxxx xxxxxxxx  Sprite tile number
-	+1   .x...... ........  Sprite flip x
- 	+2   xxxx.... ........  Sprite color bank
-	+3   .......x xxxxxxxx  Sprite X coordinate
+    +0   .......x xxxxxxxx  Sprite Y coordinate
+    +1   ...xxxxx xxxxxxxx  Sprite tile number
+    +1   .x...... ........  Sprite flip x
+    +2   xxxx.... ........  Sprite color bank
+    +3   .......x xxxxxxxx  Sprite X coordinate
 
-	f100 ???? ???? ????     dead / unused sprite ??
-	???? ???? 0000 ????     dead / unused sprite ??
+    f100 ???? ???? ????     dead / unused sprite ??
+    ???? ???? 0000 ????     dead / unused sprite ??
 
 
 ***************************************************************************/
@@ -299,7 +299,7 @@ void tokib_draw_sprites (struct mame_bitmap *bitmap,const struct rectangle *clip
 
 /*************************************
  *
- *		Master update function
+ *      Master update function
  *
  *************************************/
 

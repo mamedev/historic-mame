@@ -13,9 +13,9 @@ static void plot_pixel_rgb( int x, int y, int color)
 {
 	if (Machine->color_depth == 32)
 	{
-		UINT32 cr=(color&0x1f)<<3;	
-		UINT32 cg=(color&0x3e0)>>2;	
-		UINT32 cb=(color&0x7c00)>>7;	
+		UINT32 cr=(color&0x1f)<<3;
+		UINT32 cg=(color&0x3e0)>>2;
+		UINT32 cb=(color&0x7c00)>>7;
 		((UINT32 *)bitmaps[eolith_buffer]->line[y])[x] = cb | (cg<<8) | (cr<<16);
 	}
 	else
@@ -33,13 +33,13 @@ WRITE32_HANDLER(eolith_vram_w)
 			eolith_vram_w(offset,data,0xffff);
 			eolith_vram_w(offset,data,0xffff0000);
 		return;
-				
-		case 0xffff: 
+
+		case 0xffff:
 			if(data&0x80000000)
 				return;
 		break;
-		
-		case 0xffff0000: 
+
+		case 0xffff0000:
 			if(data&0x8000)
 				return;
 		break;
@@ -53,7 +53,7 @@ WRITE32_HANDLER(eolith_vram_w)
 	{
 		plot_pixel_rgb(x*2,y,(eo_vram[offset+(0x80000/4)*eolith_buffer]>>16)&0xffff);
 		plot_pixel_rgb(x*2+1,y,eo_vram[offset+(0x80000/4)*eolith_buffer]&0xffff);
-			
+
 	}
 }
 

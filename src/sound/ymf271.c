@@ -1,15 +1,15 @@
 /*
-	Yamaha YMF271-F "OPX" emulator v0.1
-	By R. Belmont.  
-	Based in part on YMF278B emulator by R. Belmont and O. Galibert.
-	12June04 update by Toshiaki Nijiura
-	Copyright (c) 2003 R. Belmont.
+    Yamaha YMF271-F "OPX" emulator v0.1
+    By R. Belmont.
+    Based in part on YMF278B emulator by R. Belmont and O. Galibert.
+    12June04 update by Toshiaki Nijiura
+    Copyright (c) 2003 R. Belmont.
 
-	This software is dual-licensed: it may be used in MAME and properly licensed
-	MAME derivatives under the terms of the MAME license.  For use outside of
-	MAME and properly licensed derivatives, it is available under the 
-	terms of the GNU Lesser General Public License (LGPL), version 2.1.
-	You may read the LGPL at http://www.gnu.org/licenses/lgpl.html
+    This software is dual-licensed: it may be used in MAME and properly licensed
+    MAME derivatives under the terms of the MAME license.  For use outside of
+    MAME and properly licensed derivatives, it is available under the
+    terms of the GNU Lesser General Public License (LGPL), version 2.1.
+    You may read the LGPL at http://www.gnu.org/licenses/lgpl.html
 */
 
 #include <math.h>
@@ -43,7 +43,7 @@ typedef struct
 	INT8  waveform;
 	INT8  accon;
 	INT8  algorithm;
-	INT8  ch0lvl, ch1lvl, ch2lvl, ch3lvl;	
+	INT8  ch0lvl, ch1lvl, ch2lvl, ch3lvl;
 
 	UINT32 startaddr;
 	UINT32 loopaddr;
@@ -172,16 +172,16 @@ static void ymf271_write_fm(YMF271Chip *chip, int grp, int adr, int data)
 				// key on
 				slot->step = 0;
 				slot->stepptr = 0;
-//				logerror("start %x end %x loop %x\n", slot->startaddr, slot->endaddr, slot->loopaddr);
+//              logerror("start %x end %x loop %x\n", slot->startaddr, slot->endaddr, slot->loopaddr);
 				if (slot->waveform != 7)
 				{
-//					logerror("UNSUPPORTED FM! on slot %d\n", slotnum);
+//                  logerror("UNSUPPORTED FM! on slot %d\n", slotnum);
 				}
 				else
 				{
-					int step, oct; 
+					int step, oct;
 
-//					logerror("oct %d fns %x fs %x srcnote %x srcb %x TL %x\n", slot->block, slot->fns, slot->fs, slot->srcnote, slot->srcb, slot->tl);
+//                  logerror("oct %d fns %x fs %x srcnote %x srcb %x TL %x\n", slot->block, slot->fns, slot->fs, slot->srcnote, slot->srcb, slot->tl);
 
 					oct = slot->block;
 					if (oct & 8)
@@ -192,7 +192,7 @@ static void ymf271_write_fm(YMF271Chip *chip, int grp, int adr, int data)
 					step = ((slot->fns/2) | 1024) << (oct + 7);
 					slot->step = (UINT32) ((((INT64)step)*(44100/4)) / (Machine->sample_rate  << slot->fs ) );
 
-//					logerror("step %x\n", slot->step);
+//                  logerror("step %x\n", slot->step);
 				}
 			}
 			else
@@ -348,7 +348,7 @@ static void ymf271_timer_a_tick(void *param)
 static void ymf271_timer_b_tick(void *param)
 {
 	YMF271Chip *chip = param;
-	
+
 	chip->status |= 2;
 
 	if (chip->enable & 8)
@@ -399,10 +399,10 @@ static void ymf271_write_timer(YMF271Chip *chip, int data)
 				chip->timerA |= data;
 				break;
 
-//			case 0x11:
-//				chip->timerA &= 0x00ff;
-//				chip->timerA |= (data & 0xff)<<8;
-//				break;
+//          case 0x11:
+//              chip->timerA &= 0x00ff;
+//              chip->timerA |= (data & 0xff)<<8;
+//              break;
 
 			case 0x12:
 				chip->timerB = data;
@@ -509,7 +509,7 @@ static void ymf271_w(int chipnum, int offset, int data)
 			chip->pcmreg = data;
 			break;
 		case 9:
-			ymf271_write_pcm(chip, data); 
+			ymf271_write_pcm(chip, data);
 			break;
 		case 0xc:
 			chip->timerreg = data;
@@ -543,7 +543,7 @@ static void ymf271_init(YMF271Chip *chip, UINT8 *rom, void (*cb)(int), read8_han
 {
 	chip->timA = timer_alloc_ptr(ymf271_timer_a_tick);
 	chip->timB = timer_alloc_ptr(ymf271_timer_b_tick);
-	
+
 	chip->rom = rom;
 	chip->irq_callback = cb;
 
@@ -560,7 +560,7 @@ static void *ymf271_start(int sndindex, int clock, const void *config)
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 	chip->index = sndindex;
-	
+
 	intf = config;
 
 	ymf271_init(chip, memory_region(intf->region), intf->irq_callback, intf->ext_read, intf->ext_write);

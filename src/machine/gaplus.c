@@ -15,9 +15,9 @@
 data8_t *gaplus_customio_3;
 
 /************************************************************************************
-*																					*
-*           Gaplus custom I/O chips (preliminary)									*
-*																					*
+*                                                                                   *
+*           Gaplus custom I/O chips (preliminary)                                   *
+*                                                                                   *
 ************************************************************************************/
 
 WRITE8_HANDLER( gaplus_customio_3_w )

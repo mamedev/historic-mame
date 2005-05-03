@@ -22,10 +22,10 @@ UINT8 *liberatr_bitmapram;
 
 
 /*
-	The following structure describes the (up to 32) line segments
-	that make up one horizontal line (latitude) for one display frame of the planet.
-	Note: this and the following structure is only used to collect the
-	data before it is packed for actual use.
+    The following structure describes the (up to 32) line segments
+    that make up one horizontal line (latitude) for one display frame of the planet.
+    Note: this and the following structure is only used to collect the
+    data before it is packed for actual use.
 */
 typedef struct
 {
@@ -36,10 +36,10 @@ typedef struct
 } Liberator_Segs;
 
 /*
-	The following structure describes the lines (latitudes)
-	that make up one complete display frame of the planet.
-	Note: this and the previous structure is only used to collect the
-	data before it is packed for actual use.
+    The following structure describes the lines (latitudes)
+    that make up one complete display frame of the planet.
+    Note: this and the previous structure is only used to collect the
+    data before it is packed for actual use.
 */
 typedef struct
 {
@@ -48,11 +48,11 @@ typedef struct
 
 
 /*
-	The following structure collects the 256 frames of the
-	planet (one per value of longitude).
-	The data is packed segment_count,segment_start,color,length,color,length,...  then
+    The following structure collects the 256 frames of the
+    planet (one per value of longitude).
+    The data is packed segment_count,segment_start,color,length,color,length,...  then
                        segment_count,segment_start,color,length,color,length...  for the next line, etc
-	for the 128 lines.
+    for the 128 lines.
 */
 typedef struct
 {
@@ -69,8 +69,8 @@ UINT8 *liberatr_y;
 static UINT8 *liberatr_videoram;
 
 /*
-	The following array collects the 2 different planet
-	descriptions, which are selected by liberatr_planetbit
+    The following array collects the 2 different planet
+    descriptions, which are selected by liberatr_planetbit
 */
 static Liberator_Planet *liberatr_planet_segs[2];
 
@@ -115,7 +115,7 @@ WRITE8_HANDLER( liberatr_colorram_w )
 	UINT8 r,g,b;
 
 	/* handle the hardware flip of the bit order from 765 to 576 that
-	   hardware does between vram and color ram */
+       hardware does between vram and color ram */
 	static UINT8 penmap[] = {0x10,0x12,0x14,0x16,0x11,0x13,0x15,0x17};
 
 
@@ -189,9 +189,9 @@ static int liberatr_init_planet(int planet_select)
 
 
 				/*
-				   read the planet picture ROM and get the
-				   latitude and longitude scaled from the scaling PROMS
-				*/
+                   read the planet picture ROM and get the
+                   latitude and longitude scaled from the scaling PROMS
+                */
 				address = (latitude << 5) + segment;
 				if (planet_select)
 					planet_data = (planet_rom[0x0000+address] << 8) + planet_rom[0x1000+address];
@@ -220,9 +220,9 @@ static int liberatr_init_planet(int planet_select)
 			}
 
 			/*
-			   determine which segment is the western horizon and
-			     leave 'segment' indexing it.
-			*/
+               determine which segment is the western horizon and
+                 leave 'segment' indexing it.
+            */
 			for (segment = 0; segment < 0x1f; segment++)	/* if not found, 'segment' = 0x1f */
 				if (visible_array[segment]) break;
 
@@ -232,9 +232,9 @@ static int liberatr_init_planet(int planet_select)
 				line->max_x += 1; 				/* make it even */
 
 			/*
-			   as part of the quest to reduce memory usage (and to a lesser degree
-			     execution time), stitch together segments that have the same color
-			*/
+               as part of the quest to reduce memory usage (and to a lesser degree
+                 execution time), stitch together segments that have the same color
+            */
 			segment_count = 0;
 			i = 0;
 			start_segment = segment;
@@ -259,9 +259,9 @@ static int liberatr_init_planet(int planet_select)
 		}
 
 		/* now that the all the lines have been processed, and we know how
-		   many segments it will take to store the description, allocate the
-		   space for it and copy the data to it.
-		*/
+           many segments it will take to store the description, allocate the
+           space for it and copy the data to it.
+        */
 		if ((buffer = (UINT8 *)auto_malloc(2*(128 + total_segment_count))) == 0)
 			return 1;
 
@@ -278,7 +278,7 @@ static int liberatr_init_planet(int planet_select)
 			last_x = 0;
 
 			/* calculate the bitmap's x coordinate for the western horizon
-			   center of bitmap - (the number of planet pixels) / 4 */
+               center of bitmap - (the number of planet pixels) / 4 */
 			*buffer++ = Machine->drv->screen_width/2 - (line->max_x + 2) / 4;
 
 			for (i = 0; i < segment_count; i++)

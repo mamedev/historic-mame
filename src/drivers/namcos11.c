@@ -48,9 +48,9 @@ Tekken II Ver.C         (C) Namco, 1995
 
 
 The Namco System 11 system comprises 3 PCB's....
-MOTHER PCB- This is the main PCB. It holds all sound circuitry, sound ROMs, program ROMs, shared RAM, bank-switching logic, 
+MOTHER PCB- This is the main PCB. It holds all sound circuitry, sound ROMs, program ROMs, shared RAM, bank-switching logic,
             controller/input logic (including sound CPU).
-            There are two known revisions of this PCB. The differences are not known, though they're probably almost identical except 
+            There are two known revisions of this PCB. The differences are not known, though they're probably almost identical except
             for some minor component shuffling. The 2nd revision is used only by Kosodate Quiz My Angel 3 and Star Sweep.
 CPU PCB   - There are two known revisions of this PCB. Any game can use either PCB. Contains main CPU/RAM and GPU/Video RAM
             The differences are only in the RAM type, one uses 4x 16MBit chips compared to the other that uses 2x 32MBit chips.
@@ -61,7 +61,7 @@ Each game has a multi-letter code assigned to it which is printed on a small sti
 This code is then proceeded by a number (1, 2, 3 & 4 seen so far), then 'Ver.' then A/B/C/D/E which denotes the software
 revision, and in some cases a sub-revision such as 1 or 2 (usually only listed in the test mode).
 The first 1 denotes a Japanese version, other numbers denote a World version.
-For World versions, only the main program changes (and sometimes only some of the program ROMs change), the rest of the (graphics) ROMs 
+For World versions, only the main program changes (and sometimes only some of the program ROMs change), the rest of the (graphics) ROMs
 use the Japanese version ROMs.
 See the Main PCB and ROM Daughterboard PCB texts below for more details.
 
@@ -110,7 +110,7 @@ Notes:
       4558     - Op Amp (SOIC8)
       LA4705   - Sanyo LA4705 15W 2-Channel Power Amplifier (SIP18)
       48WAY    - Namco 48 way edge connector used for extra controls and to output the 2nd speaker when set to stereo mode.
-            
+
       There is a REV B Mother board 'SYSTEM11 MOTHER(B) PCB' with slightly different
       component placings. It's not known if it has different components also.
 
@@ -118,23 +118,23 @@ Notes:
       Game                      Sticker      KEYCUS
       ---------------------------------------------
       Dancing Eyes              DC           C431
-      Don Bear Near                          
+      Don Bear Near
       Dunk Mania                DM           C410
       Kosodate Quiz My Angel 3  KQT          C443
       Prime Goal EX             PG           C411
-      Pocket Racer                           
-      Point Blank 2             GNB          C443             
-      Point Blank 3                          
+      Pocket Racer
+      Point Blank 2             GNB          C443
+      Point Blank 3
       Soul Edge                 SO           C409
       Soul Edge Ver. II         SO           C409
-      Soul Edge Ver. III                     
+      Soul Edge Ver. III
       Star Sweep                STP          C442
       Tekken                    TE           none
       Tekken Ver.B              TE           none
-      Tekken Ver.C                           
+      Tekken Ver.C
       Tekken II                 TES          C406
       Tekken II Ver.B           TES          C406
-      Tekken II Ver.C                        
+      Tekken II Ver.C
       Xevious 3D/G              XV3          C430
 
 
@@ -153,7 +153,7 @@ SYSTEM11 ROM8 PCB 8645960202 (8645970202)
 |----------------------------------------|
 Notes:
       This ROM board is wired to accept a maximum of 8x 8Bit 32MBit SOP44 MASK ROMs.
-      
+
 
 SYSTEM11 ROM8(64) PCB 8645960500 (8645970500)
 |----------------------------------------|
@@ -221,7 +221,7 @@ Notes:
       The 2nd revision CPU board (GP-13 COH-110) uses 2x 32MBit RAMs instead of
       the 4x D482445LGW-A70 RAMs and the 2 main SONY IC's are updated revisions,
       though the functionality of them is identical. The 2 types of CPU boards can be
-      used with any System 11 motherboard, and any System 11 game. 
+      used with any System 11 motherboard, and any System 11 game.
 
 Gun Board (Used only with Point Blank 2 so far)
 ---------
@@ -257,7 +257,7 @@ Notes:
       S11GUN1 - Altera Max EPM7128STC100-10 EPLD (QFP100, not populated)
       S11GUN2 - Altera Max EPM7128STC100-10 EPLD (QFP100, labelled 'S11GUN2)
       S11GUN3 - Altera Max EPM7128STC100-10 EPLD (QFP100, not populated)
-      AV9170  - Integrated Circuit Systems Inc. AV9170 Clock Synchronizer and Multiplier, Voltage Controlled Oscillator (SOIC8) 
+      AV9170  - Integrated Circuit Systems Inc. AV9170 Clock Synchronizer and Multiplier, Voltage Controlled Oscillator (SOIC8)
 
 ***************************************************************************/
 

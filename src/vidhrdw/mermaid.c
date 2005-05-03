@@ -28,7 +28,7 @@ PALETTE_INIT( mermaid )
 
 	// first, the char actor/sprite palette
 	int i;
-	
+
 	for (i = 0; i < TOTAL_COLORS(0); i++)
 	{
 		int r = 0x21 * BIT(*color_prom, 0) + 0x47 * BIT(*color_prom, 1) + 0x97 * BIT(*color_prom, 2);
@@ -113,17 +113,17 @@ WRITE8_HANDLER( rougien_gfxbankswitch2_w )
 READ8_HANDLER( mermaid_collision_r )
 {
 	/*
-		collision register active LO
-		Bit 0
-		Bit 1 - Sprite - Foreground
-		Bit 2 - Sprite - Stream
-		Bit 3
-		Bit 4
-		Bit 5
-		Bit 6
-		Bit 7
-	*/
-	
+        collision register active LO
+        Bit 0
+        Bit 1 - Sprite - Foreground
+        Bit 2 - Sprite - Stream
+        Bit 3
+        Bit 4
+        Bit 5
+        Bit 6
+        Bit 7
+    */
+
 	return 0;	// not implemented
 }
 
@@ -151,18 +151,18 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( mermaid )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
 		return 1;
-		
+
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll_cols(fg_tilemap, 32);
 	tilemap_set_transparent_pen(fg_tilemap, 0);
@@ -173,7 +173,7 @@ VIDEO_START( mermaid )
 static void mermaid_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
-	
+
 	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
 		int attr = spriteram[offs + 2];
@@ -200,8 +200,8 @@ static void mermaid_draw_sprites( struct mame_bitmap *bitmap )
 			sy = 240 - sy;
 		}
 
-		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy, 
-			(flip_screen_x ? &flip_spritevisiblearea : &spritevisiblearea), 
+		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
+			(flip_screen_x ? &flip_spritevisiblearea : &spritevisiblearea),
 			TRANSPARENCY_PEN, 0);
 	}
 }

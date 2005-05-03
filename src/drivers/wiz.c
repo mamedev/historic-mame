@@ -56,9 +56,9 @@ I/O read:
 7000 Sound Command Read (Wiz)
 
 I/O write:
-3000 NMI enable	(Stinger/Scion)
-4000 AY8910 Control Port #1	(Wiz)
-4001 AY8910 Write Port #1	(Wiz)
+3000 NMI enable (Stinger/Scion)
+4000 AY8910 Control Port #1 (Wiz)
+4001 AY8910 Write Port #1   (Wiz)
 5000 AY8910 Control Port #2
 5001 AY8910 Write Port #2
 6000 AY8910 Control Port #3
@@ -434,13 +434,13 @@ COMMON_IN01
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x20, DEF_STR( On ) )		/* See notes */
+//  PORT_DIPSETTING(    0x20, DEF_STR( On ) )       /* See notes */
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x40, DEF_STR( On ) )		/* See notes */
+//  PORT_DIPSETTING(    0x40, DEF_STR( On ) )       /* See notes */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x80, DEF_STR( On ) )		/* See notes */
+//  PORT_DIPSETTING(    0x80, DEF_STR( On ) )       /* See notes */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( kungfut )
@@ -506,7 +506,7 @@ INPUT_PORTS_START( kungfut )
 	PORT_DIPSETTING(    0x18, "5" )
 	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20000 40000" )
-//	PORT_DIPSETTING(    0x20, "20000 40000" )		// duplicated setting
+//  PORT_DIPSETTING(    0x20, "20000 40000" )       // duplicated setting
 	PORT_DIPSETTING(    0x10, "20000 80000" )
 	PORT_DIPSETTING(    0x30, "30000 90000" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
@@ -760,10 +760,10 @@ static MACHINE_DRIVER_START( stinger )
 	/* sound hardware */
 	MDRV_SOUND_MODIFY("8910.1")
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
-	
+
 	MDRV_SOUND_MODIFY("8910.2")
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
-	
+
 	MDRV_SOUND_REMOVE("8910.3")
 
 	MDRV_SOUND_ADD(DISCRETE, 0)

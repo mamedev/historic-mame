@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Video Hardware for Nichibutsu Mahjong series.
+    Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
 
 ******************************************************************************/
 
@@ -108,9 +108,9 @@ void niyanpai_blitter_w(int vram, int offset, int data)
 		case 0x00:	blitter_direction_x[vram] = (data & 0x01) ? 1 : 0;
 					blitter_direction_y[vram] = (data & 0x02) ? 1 : 0;
 					niyanpai_clutmode[vram] = (data & 0x04) ? 1 : 0;
-				//	if (data & 0x08) usrintf_showmessage("Unknown GFX Flag!! (0x08)");
+				//  if (data & 0x08) usrintf_showmessage("Unknown GFX Flag!! (0x08)");
 					niyanpai_transparency[vram] = (data & 0x10) ? 1 : 0;
-				//	if (data & 0x20) usrintf_showmessage("Unknown GFX Flag!! (0x20)");
+				//  if (data & 0x20) usrintf_showmessage("Unknown GFX Flag!! (0x20)");
 					niyanpai_flipscreen[vram] = (data & 0x40) ? 0 : 1;
 					niyanpai_dispflag[vram] = (data & 0x80) ? 1 : 0;
 					niyanpai_vramflip(vram);
@@ -304,8 +304,8 @@ static void niyanpai_gfxdraw(int vram)
 					niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] &= 0x000f;
 					niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0x0f) << 4;
 
-		//			niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] += niyanpai_clut[vram][(niyanpai_clutsel[vram] * 0x10)];
-		//			niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] += niyanpai_clut[vram][(niyanpai_clutsel[vram] * 0x10)];
+		//          niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] += niyanpai_clut[vram][(niyanpai_clutsel[vram] * 0x10)];
+		//          niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] += niyanpai_clut[vram][(niyanpai_clutsel[vram] * 0x10)];
 				}
 
 				color1 = niyanpai_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1];

@@ -1,67 +1,67 @@
 /***************************************************************************
 
-	Atari Arcade Classics hardware (prototypes)
+    Atari Arcade Classics hardware (prototypes)
 
     driver by Aaron Giles
 
-	Games supported:
-		* Arcade Classics (1992)
-		* Sparkz (1982)
+    Games supported:
+        * Arcade Classics (1992)
+        * Sparkz (1982)
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-0FFFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	200000-21FFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (512x256 pixels)
-	                R/W   xxxxxxxx --------      (Left pixel)
-	                R/W   -------- xxxxxxxx      (Right pixel)
-	3C0000-3C01FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
-	                R/W   x------- --------      (RGB 1 LSB)
-	                R/W   -xxxxx-- --------      (Red 5 MSB)
-	                R/W   ------xx xxx-----      (Green 5 MSB)
-	                R/W   -------- ---xxxxx      (Blue 5 MSB)
-	3C0200-3C03FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
-	3C0400-3C07FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (512 entries)
-	3E0000-3E07FF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (256 entries x 4 words)
-	                R/W   -------- xxxxxxxx      (0: Link to next object)
-	                R/W   x------- --------      (1: Horizontal flip)
-	                R/W   -xxxxxxx xxxxxxxx      (1: Tile index)
-	                R/W   xxxxxxxx x-------      (2: X position)
-	                R/W   -------- ----xxxx      (2: Palette select)
-	                R/W   xxxxxxxx x-------      (3: Y position)
-	                R/W   -------- -xxx----      (3: Number of X tiles - 1)
-	                R/W   -------- -----xxx      (3: Number of Y tiles - 1)
-	3E0800-3EFFFF   R/W   xxxxxxxx xxxxxxxx   Extra sprite RAM
-	640000          R     xxxxxxxx --------   Input port 1
-	640002          R     xxxxxxxx --------   Input port 2
-	640010          R     -------- xx------   Status port
-	                R     -------- x-------      (VBLANK)
-	                R     -------- -x------      (Self test)
-	640012          R     -------- --xx--xx   Coin inputs
-	                R     -------- --xx----      (Service coins)
-	                R     -------- ------xx      (Coin switches)
-	640020-640027   R     -------- xxxxxxxx   Analog inputs
-	640040            W   -------- x--xxxxx   Sound control
-	                  W   -------- x-------      (ADPCM bank select)
-	                  W   -------- ---xxxxx      (Volume)
-	640060            W   -------- --------   EEPROM enable
-	641000-641FFF   R/W   -------- xxxxxxxx   EEPROM
-	642000-642001   R/W   xxxxxxxx --------   MSM6295 communications
-	646000            W   -------- --------   32V IRQ acknowledge
-	647000            W   -------- --------   Watchdog reset
-	========================================================================
-	Interrupts:
-		IRQ4 = 32V
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-0FFFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    200000-21FFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (512x256 pixels)
+                    R/W   xxxxxxxx --------      (Left pixel)
+                    R/W   -------- xxxxxxxx      (Right pixel)
+    3C0000-3C01FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
+                    R/W   x------- --------      (RGB 1 LSB)
+                    R/W   -xxxxx-- --------      (Red 5 MSB)
+                    R/W   ------xx xxx-----      (Green 5 MSB)
+                    R/W   -------- ---xxxxx      (Blue 5 MSB)
+    3C0200-3C03FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
+    3C0400-3C07FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (512 entries)
+    3E0000-3E07FF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (256 entries x 4 words)
+                    R/W   -------- xxxxxxxx      (0: Link to next object)
+                    R/W   x------- --------      (1: Horizontal flip)
+                    R/W   -xxxxxxx xxxxxxxx      (1: Tile index)
+                    R/W   xxxxxxxx x-------      (2: X position)
+                    R/W   -------- ----xxxx      (2: Palette select)
+                    R/W   xxxxxxxx x-------      (3: Y position)
+                    R/W   -------- -xxx----      (3: Number of X tiles - 1)
+                    R/W   -------- -----xxx      (3: Number of Y tiles - 1)
+    3E0800-3EFFFF   R/W   xxxxxxxx xxxxxxxx   Extra sprite RAM
+    640000          R     xxxxxxxx --------   Input port 1
+    640002          R     xxxxxxxx --------   Input port 2
+    640010          R     -------- xx------   Status port
+                    R     -------- x-------      (VBLANK)
+                    R     -------- -x------      (Self test)
+    640012          R     -------- --xx--xx   Coin inputs
+                    R     -------- --xx----      (Service coins)
+                    R     -------- ------xx      (Coin switches)
+    640020-640027   R     -------- xxxxxxxx   Analog inputs
+    640040            W   -------- x--xxxxx   Sound control
+                      W   -------- x-------      (ADPCM bank select)
+                      W   -------- ---xxxxx      (Volume)
+    640060            W   -------- --------   EEPROM enable
+    641000-641FFF   R/W   -------- xxxxxxxx   EEPROM
+    642000-642001   R/W   xxxxxxxx --------   MSM6295 communications
+    646000            W   -------- --------   32V IRQ acknowledge
+    647000            W   -------- --------   Watchdog reset
+    ========================================================================
+    Interrupts:
+        IRQ4 = 32V
+    ========================================================================
 
 ****************************************************************************/
 
@@ -74,7 +74,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -103,7 +103,7 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -118,7 +118,7 @@ static MACHINE_INIT( arcadecl )
 
 /*************************************
  *
- *	MSM6295 I/O
+ *  MSM6295 I/O
  *
  *************************************/
 
@@ -138,7 +138,7 @@ static WRITE16_HANDLER( adpcm_w )
 
 /*************************************
  *
- *	Latch write
+ *  Latch write
  *
  *************************************/
 
@@ -146,9 +146,9 @@ static WRITE16_HANDLER( latch_w )
 {
 	/* bit layout in this register:
 
-		0x0080 == ADPCM bank
-		0x001F == volume
-	*/
+        0x0080 == ADPCM bank
+        0x001F == volume
+    */
 
 	/* lower byte being modified? */
 	if (ACCESSING_LSB)
@@ -162,7 +162,7 @@ static WRITE16_HANDLER( latch_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -193,7 +193,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -310,7 +310,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -336,7 +336,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -375,7 +375,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -408,7 +408,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -428,7 +428,7 @@ static DRIVER_INIT( sparkz )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

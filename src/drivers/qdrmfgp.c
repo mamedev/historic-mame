@@ -1,7 +1,7 @@
 /***************************************************************************
 
-Quiz Do Re Mi Fa Grand Prix (Japan)		(GQ460) (c)1994 Konami
-Quiz Do Re Mi Fa Grand Prix 2 (Japan)	(GE557) (c)1995 Konami
+Quiz Do Re Mi Fa Grand Prix (Japan)     (GQ460) (c)1994 Konami
+Quiz Do Re Mi Fa Grand Prix 2 (Japan)   (GE557) (c)1995 Konami
 
 
 CPU  :MC68HC000FN16
@@ -15,8 +15,8 @@ driver by Eisuke Watanabe
 
 Note:
 GP1 HDD data contents:
-	0x000-0x52D intro quiz musics
-	0x52E-0x535 not used quiz (system music or invalid data)
+    0x000-0x52D intro quiz musics
+    0x52E-0x535 not used quiz (system music or invalid data)
 ***************************************************************************/
 
 #include "driver.h"
@@ -40,7 +40,7 @@ static int gp2_irq_control;
 
 /*************************************
  *
- *	68k CPU memory handlers
+ *  68k CPU memory handlers
  *
  *************************************/
 
@@ -54,7 +54,7 @@ static READ16_HANDLER( i_port1_r )
 
 static READ16_HANDLER( i_port2_r )
 {
-	/* bit 0-1	battery power sensor: 3=good, 2=low, other=bad */
+	/* bit 0-1  battery power sensor: 3=good, 2=low, other=bad */
 
 	return (input_port_2_word_r(0,0) & 0xfffc) | 0x0003;
 }
@@ -67,17 +67,17 @@ int qdrmfgp_get_palette(void)
 
 static WRITE16_HANDLER( gp_control_w )
 {
-	/* bit 0		enable irq 1 (sound) */
-	/* bit 1		enable irq 2 (not used) */
-	/* bit 2		enable irq 3 (vblank) */
-	/* bit 3		enable irq 4 (hdd) */
-	/* bit 4-6		palette (tilemap) */
-	/* bit 7		inputports bankswitch */
-	/* bit 8		enable volume control */
-	/* bit 9		volume: 1=up, 0=down (low5,mid90,high180) */
-	/* bit 10		enable headphone volume control */
-	/* bit 11		headphone volume: 1=up, 0=down */
-	/* bit 15		gfxrom bankswitch */
+	/* bit 0        enable irq 1 (sound) */
+	/* bit 1        enable irq 2 (not used) */
+	/* bit 2        enable irq 3 (vblank) */
+	/* bit 3        enable irq 4 (hdd) */
+	/* bit 4-6      palette (tilemap) */
+	/* bit 7        inputports bankswitch */
+	/* bit 8        enable volume control */
+	/* bit 9        volume: 1=up, 0=down (low5,mid90,high180) */
+	/* bit 10       enable headphone volume control */
+	/* bit 11       headphone volume: 1=up, 0=down */
+	/* bit 15       gfxrom bankswitch */
 
 	COMBINE_DATA(&control);
 	qdrmfgp_pal = control & 0x70;
@@ -98,15 +98,15 @@ static WRITE16_HANDLER( gp_control_w )
 
 static WRITE16_HANDLER( gp2_control_w )
 {
-	/* bit 2		enable irq 3 (sound) */
-	/* bit 3		enable irq 4 (vblank) */
-	/* bit 4		enable irq 5 (hdd) */
-	/* bit 7		inputports bankswitch */
-	/* bit 8		enable volume control */
-	/* bit 9		volume: 1=up, 0=down (low0,mid90,high255) */
-	/* bit 10		enable headphone volume control */
-	/* bit 11		headphone volume: 1=up, 0=down */
-	/* bit 15		gfxrom bankswitch */
+	/* bit 2        enable irq 3 (sound) */
+	/* bit 3        enable irq 4 (vblank) */
+	/* bit 4        enable irq 5 (hdd) */
+	/* bit 7        inputports bankswitch */
+	/* bit 8        enable volume control */
+	/* bit 9        volume: 1=up, 0=down (low0,mid90,high255) */
+	/* bit 10       enable headphone volume control */
+	/* bit 11       headphone volume: 1=up, 0=down */
+	/* bit 15       gfxrom bankswitch */
 
 	COMBINE_DATA(&control);
 	qdrmfgp_pal = 0;
@@ -270,7 +270,7 @@ static READ16_HANDLER( gp2_ide_std_r )
 
 /*************************************
  *
- *	Interrupt handlers
+ *  Interrupt handlers
  *
  *************************************/
 
@@ -336,7 +336,7 @@ static void gp2_ide_interrupt(int state)
 
 /*************************************
  *
- *	Memory definitions
+ *  Memory definitions
  *
  *************************************/
 
@@ -416,7 +416,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -583,14 +583,14 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
 
 /*************************************
  *
- *	IDE interfaces
+ *  IDE interfaces
  *
  *************************************/
 
@@ -607,7 +607,7 @@ static struct ide_interface gp2_ide_intf =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -632,7 +632,7 @@ static struct K054539interface gp2_k054539_interface =
 
 /*************************************
  *
- *	Machine-specific init
+ *  Machine-specific init
  *
  *************************************/
 
@@ -660,7 +660,7 @@ static MACHINE_INIT( qdrmfgp2 )
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -729,7 +729,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -770,7 +770,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver-specific init
+ *  Driver-specific init
  *
  *************************************/
 
@@ -799,7 +799,7 @@ static DRIVER_INIT( qdrmfgp2 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

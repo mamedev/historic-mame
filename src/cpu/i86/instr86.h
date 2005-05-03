@@ -1,6 +1,6 @@
 /****************************************************************************
-*			  real mode i286 emulator v1.4 by Fabrice Frances				*
-*				(initial work based on David Hedley's pcemu)                *
+*             real mode i286 emulator v1.4 by Fabrice Frances               *
+*               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
 // file will be included in all cpu variants

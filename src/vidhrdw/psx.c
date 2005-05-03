@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	PSX GPU
+    PSX GPU
 
-	Preliminary software renderer by smf.
-	Thanks to Ryan Holtz, Pete B & Farfetch'd.
+    Preliminary software renderer by smf.
+    Thanks to Ryan Holtz, Pete B & Farfetch'd.
 
-	Supports:
-	  type 1 1024x1024 framebuffer (CXD8538Q)
-	  type 2 1024x512 framebuffer (CXD8561Q)
-	  type 2 1024x1024 framebuffer (CXD8514Q/CXD8561Q/CXD8654Q)
+    Supports:
+      type 1 1024x1024 framebuffer (CXD8538Q)
+      type 2 1024x512 framebuffer (CXD8561Q)
+      type 2 1024x1024 framebuffer (CXD8514Q/CXD8561Q/CXD8654Q)
 
-	Debug Keys:
-		M toggles mesh viewer.
-		V toggles vram viewer.
-		I toggles interleave in vram viewer.
+    Debug Keys:
+        M toggles mesh viewer.
+        V toggles vram viewer.
+        I toggles interleave in vram viewer.
 
 ***************************************************************************/
 
@@ -2563,7 +2563,7 @@ static void FrameBufferRectangleDraw( void )
 		while( n_distance > 0 )
 		{
 			p_vram = m_p_p_vram[ n_y & 1023 ] + ( n_x & 1023 );
-			WRITE_PIXEL( 
+			WRITE_PIXEL(
 				m_p_n_redshade[ MID_LEVEL | n_r.w.h ] |
 				m_p_n_greenshade[ MID_LEVEL | n_g.w.h ] |
 				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ] );
@@ -3088,7 +3088,7 @@ static void Dot( void )
 		(INT16)n_y <= (INT32)m_n_drawarea_y2 )
 	{
 		p_vram = m_p_p_vram[ n_y ] + n_x;
-		WRITE_PIXEL( 
+		WRITE_PIXEL(
 			m_p_n_redshade[ MID_LEVEL | n_r ] |
 			m_p_n_greenshade[ MID_LEVEL | n_g ] |
 			m_p_n_blueshade[ MID_LEVEL | n_b ] );

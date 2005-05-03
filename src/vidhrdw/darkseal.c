@@ -8,51 +8,51 @@ Data East custom chip 55:  Generates two playfields, playfield 1 is underneath
 playfield 2.  Dark Seal uses two of these chips.  1 playfield is _always_ off
 in this game.
 
-	16 bytes of control registers per chip.
+    16 bytes of control registers per chip.
 
-	Word 0:
-		Mask 0x0080: Flip screen
-		Mask 0x007f: ?
-	Word 2:
-		Mask 0xffff: Playfield 2 X scroll (top playfield)
-	Word 4:
-		Mask 0xffff: Playfield 2 Y scroll (top playfield)
-	Word 6:
-		Mask 0xffff: Playfield 1 X scroll (bottom playfield)
-	Word 8:
-		Mask 0xffff: Playfield 1 Y scroll (bottom playfield)
-	Word 0xa:
-		Mask 0xc000: Playfield 1 shape??
-		Mask 0x3000: Playfield 1 rowscroll style (maybe mask 0x3800??)
-		Mask 0x0300: Playfield 1 colscroll style (maybe mask 0x0700??)?
+    Word 0:
+        Mask 0x0080: Flip screen
+        Mask 0x007f: ?
+    Word 2:
+        Mask 0xffff: Playfield 2 X scroll (top playfield)
+    Word 4:
+        Mask 0xffff: Playfield 2 Y scroll (top playfield)
+    Word 6:
+        Mask 0xffff: Playfield 1 X scroll (bottom playfield)
+    Word 8:
+        Mask 0xffff: Playfield 1 Y scroll (bottom playfield)
+    Word 0xa:
+        Mask 0xc000: Playfield 1 shape??
+        Mask 0x3000: Playfield 1 rowscroll style (maybe mask 0x3800??)
+        Mask 0x0300: Playfield 1 colscroll style (maybe mask 0x0700??)?
 
-		Mask 0x00c0: Playfield 2 shape??
-		Mask 0x0030: Playfield 2 rowscroll style (maybe mask 0x0038??)
-		Mask 0x0003: Playfield 2 colscroll style (maybe mask 0x0007??)?
-	Word 0xc:
-		Mask 0x8000: Playfield 1 is 8*8 tiles else 16*16
-		Mask 0x4000: Playfield 1 rowscroll enabled
-		Mask 0x2000: Playfield 1 colscroll enabled
-		Mask 0x1f00: ?
+        Mask 0x00c0: Playfield 2 shape??
+        Mask 0x0030: Playfield 2 rowscroll style (maybe mask 0x0038??)
+        Mask 0x0003: Playfield 2 colscroll style (maybe mask 0x0007??)?
+    Word 0xc:
+        Mask 0x8000: Playfield 1 is 8*8 tiles else 16*16
+        Mask 0x4000: Playfield 1 rowscroll enabled
+        Mask 0x2000: Playfield 1 colscroll enabled
+        Mask 0x1f00: ?
 
-		Mask 0x0080: Playfield 2 is 8*8 tiles else 16*16
-		Mask 0x0040: Playfield 2 rowscroll enabled
-		Mask 0x0020: Playfield 2 colscroll enabled
-		Mask 0x001f: ?
-	Word 0xe:
-		??
+        Mask 0x0080: Playfield 2 is 8*8 tiles else 16*16
+        Mask 0x0040: Playfield 2 rowscroll enabled
+        Mask 0x0020: Playfield 2 colscroll enabled
+        Mask 0x001f: ?
+    Word 0xe:
+        ??
 
 Locations 0 & 0xe are mostly unknown:
 
-							 0		14
-Caveman Ninja (bottom):		0053	1100 (changes to 1111 later)
-Caveman Ninja (top):		0010	0081
-Two Crude (bottom):			0053	0000
-Two Crude (top):			0010	0041
-Dark Seal (bottom):			0010	0000
-Dark Seal (top):			0053	4101
-Tumblepop:					0010	0000
-Super Burger Time:			0010	0000
+                             0      14
+Caveman Ninja (bottom):     0053    1100 (changes to 1111 later)
+Caveman Ninja (top):        0010    0081
+Two Crude (bottom):         0053    0000
+Two Crude (top):            0010    0041
+Dark Seal (bottom):         0010    0000
+Dark Seal (top):            0053    4101
+Tumblepop:                  0010    0000
+Super Burger Time:          0010    0000
 
 Location 0xe looks like it could be a mirror of another byte..
 
@@ -60,28 +60,28 @@ Location 0xe looks like it could be a mirror of another byte..
 
 Sprites - Data East custom chip 52
 
-	8 bytes per sprite, unknowns bits seem unused.
+    8 bytes per sprite, unknowns bits seem unused.
 
-	Word 0:
-		Mask 0x8000 - ?
-		Mask 0x4000 - Y flip
-		Mask 0x2000 - X flip
-		Mask 0x1000 - Sprite flash
-		Mask 0x0800 - ?
-		Mask 0x0600 - Sprite height (1x, 2x, 4x, 8x)
-		Mask 0x01ff - Y coordinate
+    Word 0:
+        Mask 0x8000 - ?
+        Mask 0x4000 - Y flip
+        Mask 0x2000 - X flip
+        Mask 0x1000 - Sprite flash
+        Mask 0x0800 - ?
+        Mask 0x0600 - Sprite height (1x, 2x, 4x, 8x)
+        Mask 0x01ff - Y coordinate
 
-	Word 2:
-		Mask 0xffff - Sprite number
+    Word 2:
+        Mask 0xffff - Sprite number
 
-	Word 4:
-		Mask 0x8000 - ?
-		Mask 0x4000 - Sprite is drawn beneath top 8 pens of playfield 4
-		Mask 0x3e00 - Colour (32 palettes, most games only use 16)
-		Mask 0x01ff - X coordinate
+    Word 4:
+        Mask 0x8000 - ?
+        Mask 0x4000 - Sprite is drawn beneath top 8 pens of playfield 4
+        Mask 0x3e00 - Colour (32 palettes, most games only use 16)
+        Mask 0x01ff - X coordinate
 
-	Word 6:
-		Always unused.
+    Word 6:
+        Always unused.
 
 ***************************************************************************/
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Generic MAME cd-rom implementation
+    Generic MAME cd-rom implementation
 
 ***************************************************************************/
 
@@ -49,7 +49,7 @@ struct cdrom_track_info
 	UINT32 frames;		/* number of frames in this track */
 	UINT32 extraframes;	/* number of "spillage" frames in this track */
 
-	/* fields used in MAME only */	
+	/* fields used in MAME only */
 	UINT32 physframeofs;	/* frame number on the real CD this track starts at */
 	UINT32 chdframeofs;	/* frame number this track starts at on the CHD */
 };

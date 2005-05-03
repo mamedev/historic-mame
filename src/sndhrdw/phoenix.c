@@ -18,29 +18,29 @@
  * 4006
  * Dual 4-bit and dual 5-bit serial-in serial-out shift registers.
  *
- *			+----------+
- *		1D5 |1	+--+ 14| VCC
- *	   /1Q4 |2		 13| 1Q1
- *		CLK |3		 12| 2Q0
- *		2D4 |4	4006 11| 2Q0
- *		3D4 |5		 10| 3Q0
- *		4D5 |6		  9| 4Q0
- *		GND |7		  8| 4Q1
- *			+----------+
+ *          +----------+
+ *      1D5 |1  +--+ 14| VCC
+ *     /1Q4 |2       13| 1Q1
+ *      CLK |3       12| 2Q0
+ *      2D4 |4  4006 11| 2Q0
+ *      3D4 |5       10| 3Q0
+ *      4D5 |6        9| 4Q0
+ *      GND |7        8| 4Q1
+ *          +----------+
  *
  * [This information is part of the GIICM]
  *
  * Pin 8 and 9 are connected to an EXOR gate and the inverted
  * output (EXNOR) is fed back to pin 1 (and the pseudo polynome output).
  *
- *		1D5 		 1Q1  2D4		2Q0  3D4	   3Q0	4D5 	 4Q1 4Q0
- *		+--+--+--+--+--+  +--+--+--+--+  +--+--+--+--+	+--+--+--+--+--+
- *	 +->| 0| 1| 2| 3| 4|->| 5| 6| 7| 8|->| 9|10|11|12|->|13|14|15|16|17|
- *	 |	+--+--+--+--+--+  +--+--+--+--+  +--+--+--+--+	+--+--+--+--+--+
- *	 |											 ____			  |  |
- *	 |											/	 |------------+  |
- *	 +-----------------------------------------|EXNOR|				 |
- *												\____|---------------+
+ *      1D5          1Q1  2D4       2Q0  3D4       3Q0  4D5      4Q1 4Q0
+ *      +--+--+--+--+--+  +--+--+--+--+  +--+--+--+--+  +--+--+--+--+--+
+ *   +->| 0| 1| 2| 3| 4|->| 5| 6| 7| 8|->| 9|10|11|12|->|13|14|15|16|17|
+ *   |  +--+--+--+--+--+  +--+--+--+--+  +--+--+--+--+  +--+--+--+--+--+
+ *   |                                           ____             |  |
+ *   |                                          /    |------------+  |
+ *   +-----------------------------------------|EXNOR|               |
+ *                                              \____|---------------+
  *
  ****************************************************************************/
 
@@ -57,11 +57,11 @@ INLINE int update_c24(int samplerate)
 {
 	static int counter, level;
 	/*
-	 * Noise frequency control (Port B):
-	 * Bit 6 lo charges C24 (6.8u) via R51 (330) and when
-	 * bit 6 is hi, C24 is discharged through R52 (20k)
-	 * in approx. 20000 * 6.8e-6 = 0.136 seconds
-	 */
+     * Noise frequency control (Port B):
+     * Bit 6 lo charges C24 (6.8u) via R51 (330) and when
+     * bit 6 is hi, C24 is discharged through R52 (20k)
+     * in approx. 20000 * 6.8e-6 = 0.136 seconds
+     */
 	#define C24 6.8e-6
 	#define R49 1000
     #define R51 330
@@ -101,10 +101,10 @@ INLINE int update_c25(int samplerate)
 {
 	static int counter, level;
 	/*
-	 * Bit 7 hi charges C25 (6.8u) over a R50 (1k) and R53 (330) and when
-	 * bit 7 is lo, C25 is discharged through R54 (47k)
-	 * in about 47000 * 6.8e-6 = 0.3196 seconds
-	 */
+     * Bit 7 hi charges C25 (6.8u) over a R50 (1k) and R53 (330) and when
+     * bit 7 is lo, C25 is discharged through R54 (47k)
+     * in about 47000 * 6.8e-6 = 0.3196 seconds
+     */
 	#define C25 6.8e-6
 	#define R50 1000
     #define R53 330
@@ -150,10 +150,10 @@ INLINE int noise(int samplerate)
 	int sum = 0, level, frequency;
 
 	/*
-	 * The voltage levels are added and control I(CE) of transistor TR1
-	 * (NPN) which then controls the noise clock frequency (linearily?).
-	 * level = voltage at the output of the op-amp controlling the noise rate.
-	 */
+     * The voltage levels are added and control I(CE) of transistor TR1
+     * (NPN) which then controls the noise clock frequency (linearily?).
+     * level = voltage at the output of the op-amp controlling the noise rate.
+     */
 	if( vc24 < vc25 )
 		level = vc24 + (vc25 - vc24) / 2;
 	else
@@ -162,11 +162,11 @@ INLINE int noise(int samplerate)
 	frequency = 588 + 6325 * level / 32768;
 
     /*
-	 * NE555: Ra=47k, Rb=1k, C=0.05uF
-	 * minfreq = 1.44 / ((47000+2*1000) * 0.05e-6) = approx. 588 Hz
-	 * R71 (2700 Ohms) parallel to R73 (47k Ohms) = approx. 2553 Ohms
-	 * maxfreq = 1.44 / ((2553+2*1000) * 0.05e-6) = approx. 6325 Hz
-	 */
+     * NE555: Ra=47k, Rb=1k, C=0.05uF
+     * minfreq = 1.44 / ((47000+2*1000) * 0.05e-6) = approx. 588 Hz
+     * R71 (2700 Ohms) parallel to R73 (47k Ohms) = approx. 2553 Ohms
+     * maxfreq = 1.44 / ((2553+2*1000) * 0.05e-6) = approx. 6325 Hz
+     */
 	counter -= frequency;
 	if( counter <= 0 )
 	{
@@ -299,8 +299,8 @@ DISCRETE_SOUND_START(phoenix_discrete_interface)
 	/* LS163 counts rising edge, but the LS14 inverts that */
 	DISCRETE_NOTE(NODE_22, 1, NODE_21, PHOENIX_EFFECT_1_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)
 	/* When FILT is enabled, the effect is filtered.
-	 * While the R20 does decrease the amplitude a little, its main purpose
-	 * is to discharge C5 when the filter is disabled. */
+     * While the R20 does decrease the amplitude a little, its main purpose
+     * is to discharge C5 when the filter is disabled. */
 	DISCRETE_SWITCH(NODE_23, 1, PHOENIX_EFFECT_1_FILT, DEFAULT_TTL_V_LOGIC_1, DEFAULT_TTL_V_LOGIC_1 * RES_K(100) / (RES_K(10) + RES_K(100)))	// R20, R19
 	DISCRETE_MULTIPLY(NODE_24, 1, NODE_22, NODE_23)
 	DISCRETE_RCFILTER(NODE_25, 1, NODE_24, 1.0/(1.0/RES_K(10) + 1.0/RES_K(100)), CAP_U(.047))	// R19, R20, C5
@@ -339,8 +339,8 @@ WRITE8_HANDLER( phoenix_sound_control_a_w )
 
 	discrete_sound_w(PHOENIX_EFFECT_2_DATA, data & 0x0f);
 	discrete_sound_w(PHOENIX_EFFECT_2_FREQ, (data & 0x20) >> 4);
-//	discrete_sound_w(PHOENIX_EFFECT_3_EN  , data & 0x40);
-//	discrete_sound_w(PHOENIX_EFFECT_4_EN  , data & 0x80);
+//  discrete_sound_w(PHOENIX_EFFECT_3_EN  , data & 0x40);
+//  discrete_sound_w(PHOENIX_EFFECT_4_EN  , data & 0x80);
 
 	stream_update(channel,0);
 	sound_latch_a = data;

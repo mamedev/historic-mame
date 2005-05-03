@@ -1,7 +1,7 @@
 /***************************************************************************
 
-	Incredible Technologies/Strata system
-	(32-bit blitter variant)
+    Incredible Technologies/Strata system
+    (32-bit blitter variant)
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -23,7 +23,7 @@
 
 /*************************************
  *
- *	Blitter constants
+ *  Blitter constants
  *
  *************************************/
 
@@ -122,7 +122,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -159,7 +159,7 @@ static void scanline_interrupt(int param);
 
 /*************************************
  *
- *	Macros and inlines
+ *  Macros and inlines
  *
  *************************************/
 
@@ -195,7 +195,7 @@ INLINE void enable_clipping(void)
 
 /*************************************
  *
- *	Video start
+ *  Video start
  *
  *************************************/
 
@@ -245,7 +245,7 @@ VIDEO_START( itech32 )
 
 /*************************************
  *
- *	Latches
+ *  Latches
  *
  *************************************/
 
@@ -338,7 +338,7 @@ WRITE32_HANDLER( itech020_plane_w )
 
 /*************************************
  *
- *	Palette I/O
+ *  Palette I/O
  *
  *************************************/
 
@@ -404,7 +404,7 @@ WRITE32_HANDLER( itech020_paletteram_w )
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -461,7 +461,7 @@ static void logblit(const char *tag)
 
 /*************************************
  *
- *	Video interrupts
+ *  Video interrupts
  *
  *************************************/
 
@@ -495,7 +495,7 @@ static void scanline_interrupt(int param)
 
 /*************************************
  *
- *	Uncompressed blitter functions
+ *  Uncompressed blitter functions
  *
  *************************************/
 
@@ -624,7 +624,7 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 	INT32 zmatch = (drivedge_zbuf_control[2] & 0x1f) << 11;
 	INT32 srcdelta = 0;
 	int x, y;
-	
+
 	/* adjust for (lack of) clipping */
 	if (!(VIDEO_TRANSFER_FLAGS & XFERFLAG_CLIP))
 		disable_clipping();
@@ -643,7 +643,7 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 	for (y = 0; y < height; y += ysrcstep, sy += ydststep)
 	{
 		UINT8 *rowsrc = src + (srcdelta >> 8);
-		
+
 		/* in the polygon case, we don't factor in the Y */
 		if (VIDEO_TRANSFER_FLAGS != 0x5490)
 			rowsrc += (y >> 8) * (width >> 8);
@@ -851,7 +851,7 @@ static void draw_raw_drivedge(UINT16 *base, UINT16 *zbase, UINT16 color)
 
 /*************************************
  *
- *	Compressed blitter macros
+ *  Compressed blitter macros
  *
  *************************************/
 
@@ -889,7 +889,7 @@ do {												\
 
 /*************************************
  *
- *	Fast compressed blitter functions
+ *  Fast compressed blitter functions
  *
  *************************************/
 
@@ -1050,7 +1050,7 @@ INLINE void draw_rle_fast_xflip(UINT16 *base, UINT16 color)
 
 /*************************************
  *
- *	Slow compressed blitter functions
+ *  Slow compressed blitter functions
  *
  *************************************/
 
@@ -1157,7 +1157,7 @@ static void draw_rle(UINT16 *base, UINT16 color)
 
 /*************************************
  *
- *	Shift register manipulation
+ *  Shift register manipulation
  *
  *************************************/
 
@@ -1194,7 +1194,7 @@ static void shiftreg_clear(UINT16 *base, UINT16 *zbase)
 
 /*************************************
  *
- *	Video commands
+ *  Video commands
  *
  *************************************/
 
@@ -1266,7 +1266,7 @@ static void handle_video_command(void)
 
 			profiler_mark(PROFILER_END);
 			break;
-		
+
 		default:
 			if (BLIT_LOGGING) logerror("Unknown blit command %d\n", VIDEO_COMMAND);
 			break;
@@ -1281,7 +1281,7 @@ static void handle_video_command(void)
 
 /*************************************
  *
- *	Video I/O
+ *  Video I/O
  *
  *************************************/
 
@@ -1371,7 +1371,7 @@ READ16_HANDLER( itech32_video_r )
 
 /*************************************
  *
- *	Alternate video I/O
+ *  Alternate video I/O
  *
  *************************************/
 
@@ -1413,7 +1413,7 @@ READ32_HANDLER( itech020_video_r )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 

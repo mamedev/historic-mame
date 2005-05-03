@@ -1,9 +1,9 @@
 /******************************************************************************
 
-	Nintendo 2C03B PPU emulation.
+    Nintendo 2C03B PPU emulation.
 
-	Written by Ernesto Corvi.
-	This code is heavily based on Brad Oliver's MESS implementation.
+    Written by Ernesto Corvi.
+    This code is heavily based on Brad Oliver's MESS implementation.
 
 ******************************************************************************/
 
@@ -77,7 +77,7 @@ void (*ppu_latch)( offs_t offset );
 
 /*************************************
  *
- *	PPU Palette Initialization
+ *  PPU Palette Initialization
  *
  *************************************/
 void ppu2c03b_init_palette( int first_entry ) {
@@ -188,7 +188,7 @@ static struct GfxLayout ppu_charlayout =
 
 /*************************************
  *
- *	PPU Initialization and Disposal
+ *  PPU Initialization and Disposal
  *
  *************************************/
 int ppu2c03b_init( struct ppu2c03b_interface *interface )
@@ -616,7 +616,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 
 /*************************************
  *
- *	Scanline Rendering and Update
+ *  Scanline Rendering and Update
  *
  *************************************/
 static void render_scanline( int num )
@@ -727,7 +727,7 @@ static void scanline_callback( int num )
 	int blanked = ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) ) == 0;
 	int vblank = ( ppu_regs[PPU_STATUS] & PPU_STATUS_VBLANK ) ? 1 : 0;
 
-/*	logerror("SCANLINE CALLBACK %d\n",chips[num].scanline); */
+/*  logerror("SCANLINE CALLBACK %d\n",chips[num].scanline); */
 
 	/* if a callback is available, call it */
 	if ( chips[num].scanline_callback_proc )
@@ -782,7 +782,7 @@ static void scanline_callback( int num )
 
 /*************************************
  *
- *	PPU Reset
+ *  PPU Reset
  *
  *************************************/
 void ppu2c03b_reset( int num, int scan_scale )
@@ -852,7 +852,7 @@ void ppu2c03b_reset( int num, int scan_scale )
 
 /*************************************
  *
- *	PPU Registers Read
+ *  PPU Registers Read
  *
  *************************************/
 int ppu2c03b_r( int num, int offset )
@@ -871,7 +871,7 @@ int ppu2c03b_r( int num, int offset )
 		logerror( "PPU %d(r): Attempting to read past the chip\n", num );
 
 		offset &= PPU_MAX_REG - 1;
-/*		return 0; */
+/*      return 0; */
 	}
 
 	/* now, see wich register to read */
@@ -916,7 +916,7 @@ int ppu2c03b_r( int num, int offset )
 
 /*************************************
  *
- *	PPU Registers Write
+ *  PPU Registers Write
  *
  *************************************/
 void ppu2c03b_w( int num, int offset, int data )
@@ -934,7 +934,7 @@ void ppu2c03b_w( int num, int offset, int data )
 		logerror( "PPU: Attempting to write past the chip\n" );
 
 		offset &= PPU_MAX_REG - 1;
-/*		return; */
+/*      return; */
 	}
 
 	switch( offset )
@@ -1060,8 +1060,8 @@ void ppu2c03b_w( int num, int offset, int data )
 					break;
 				}
 
-				/* the only valid background colors are writes to 0x3f00 and 0x3f10			*/
-				/* and even then, they are mirrors of each other. as usual, some games		*/
+				/* the only valid background colors are writes to 0x3f00 and 0x3f10         */
+				/* and even then, they are mirrors of each other. as usual, some games      */
 				/* attempt to write values > the number of colors so we must mask the data. */
 				if ( tempAddr >= 0x3f00 )
 				{
@@ -1121,7 +1121,7 @@ void ppu2c03b_w( int num, int offset, int data )
 
 /*************************************
  *
- *	Sprite DMA
+ *  Sprite DMA
  *
  *************************************/
 void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
@@ -1138,7 +1138,7 @@ void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
 
 /*************************************
  *
- *	PPU Rendering
+ *  PPU Rendering
  *
  *************************************/
 void ppu2c03b_render( int num, struct mame_bitmap *bitmap, int flipx, int flipy, int sx, int sy )
@@ -1150,14 +1150,14 @@ void ppu2c03b_render( int num, struct mame_bitmap *bitmap, int flipx, int flipy,
 		return;
 	}
 
-/*	logerror("PPU %d:VBLANK HIT (scanline %d)\n",num, chips[num].scanline); */
+/*  logerror("PPU %d:VBLANK HIT (scanline %d)\n",num, chips[num].scanline); */
 
 	copybitmap( bitmap, chips[num].bitmap, flipx, flipy, sx, sy, 0, TRANSPARENCY_NONE, 0 );
 }
 
 /*************************************
  *
- *	PPU VideoROM banking
+ *  PPU VideoROM banking
  *
  *************************************/
 void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int bank, int bank_size )
@@ -1193,7 +1193,7 @@ void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int ban
 
 /*************************************
  *
- *	Utility functions
+ *  Utility functions
  *
  *************************************/
 int ppu2c03b_get_pixel( int num, int x, int y )
@@ -1326,7 +1326,7 @@ void ppu2c03b_set_scanlines_per_frame( int num, int scanlines )
 
 /*************************************
  *
- *	Accesors
+ *  Accesors
  *
  *************************************/
 

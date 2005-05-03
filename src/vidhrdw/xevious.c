@@ -28,8 +28,8 @@ static struct tilemap *fg_tilemap,*bg_tilemap;
   The palette PROMs are connected to the RGB output this way:
 
   bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-		-- 470 ohm resistor  -- RED/GREEN/BLUE
-		-- 1  kohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+        -- 1  kohm resistor  -- RED/GREEN/BLUE
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
@@ -189,10 +189,10 @@ static void get_fg_tile_info(int tile_index)
 	unsigned char attr = xevious_fg_colorram[tile_index];
 
 	/* the hardware has two character sets, one normal and one x-flipped. When
-	   screen is flipped, character y flip is done by the hardware inverting the
-	   timing signals, while x flip is done by selecting the 2nd character set.
-	   We reproduce this here, but since the tilemap system automatically flips
-	   characters when screen is flipped, we have to flip them back. */
+       screen is flipped, character y flip is done by the hardware inverting the
+       timing signals, while x flip is done by selecting the 2nd character set.
+       We reproduce this here, but since the tilemap system automatically flips
+       characters when screen is flipped, we have to flip them back. */
 	SET_TILE_INFO(
 			0,
 			xevious_fg_videoram[tile_index] | (flip_screen ? 0x100 : 0),
@@ -393,37 +393,37 @@ background pattern data
 
 colorram mapping
 b000-bfff background attribute
-		  bit 0-1 COL:palette set select
-		  bit 2-5 AN :color select
-		  bit 6   AFF:Y flip
-		  bit 7   PFF:X flip
+          bit 0-1 COL:palette set select
+          bit 2-5 AN :color select
+          bit 6   AFF:Y flip
+          bit 7   PFF:X flip
 c000-cfff background pattern name
-		  bit 0-7 PP0-7
+          bit 0-7 PP0-7
 
 seet 8A
-										2	  +-------+
+                                        2     +-------+
 COL0,1 -------------------------------------->|backg. |
-										1	  |color  |
+                                        1     |color  |
 PP7------------------------------------------>|replace|
-										4	  | ROM   |  6
+                                        4     | ROM   |  6
 AN0-3 --------------------------------------->|  4H   |-----> color code 6 bit
-		1  +-----------+	  +--------+      |  4F   |
+        1  +-----------+      +--------+      |  4F   |
 COL0  ---->|B8   ROM 3C| 16   |custom  |  2   |       |
-		8  |		   |----->|shifter |----->|       |
-PP0-7 ---->|B0-7 ROM 3D|	  |16->2*8 |      |       |
-		   +-----------+	  +--------+      +-------+
+        8  |           |----->|shifter |----->|       |
+PP0-7 ---->|B0-7 ROM 3D|      |16->2*8 |      |       |
+           +-----------+      +--------+      +-------+
 
 font rom controller
-	   1  +-----+     +--------+
+       1  +-----+     +--------+
 ANF   --->| ROM |  8  |shift   |  1
-	   8  | 3B  |---->|reg     |-----> font data
+       8  | 3B  |---->|reg     |-----> font data
 PP0-7 --->|     |     |8->1*8  |
-		  +-----+     +--------+
+          +-----+     +--------+
 
 font color ( not use color map )
-		2  |
+        2  |
 COL0-1 --->|  color code 6 bit
-		4  |
+        4  |
 AN0-3  --->|
 
 sprite

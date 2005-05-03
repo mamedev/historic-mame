@@ -17,21 +17,21 @@ unsigned char *ajax_sharedram;
 extern unsigned char ajax_priority;
 static int firq_enable;
 
-/*	ajax_bankswitch_w:
-	Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at H11:
+/*  ajax_bankswitch_w:
+    Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at H11:
 
-	Bit	Description
-	---	-----------
-	7	MRB3	Selects ROM N11/N12
-	6	CCOUNT2	Coin Counter 2	(*)
-	5	CCOUNT1	Coin Counter 1	(*)
-	4	SRESET	Slave CPU Reset?
-	3	PRI0	Layer Priority Selector
-	2	MRB2	\
-	1	MRB1	 |	ROM Bank Select
-	0	MRB0	/
+    Bit Description
+    --- -----------
+    7   MRB3    Selects ROM N11/N12
+    6   CCOUNT2 Coin Counter 2  (*)
+    5   CCOUNT1 Coin Counter 1  (*)
+    4   SRESET  Slave CPU Reset?
+    3   PRI0    Layer Priority Selector
+    2   MRB2    \
+    1   MRB1     |  ROM Bank Select
+    0   MRB0    /
 
-	(*)	The Coin Counters are handled by the Konami Custom 051550
+    (*) The Coin Counters are handled by the Konami Custom 051550
 */
 
 static WRITE8_HANDLER( ajax_bankswitch_w )
@@ -54,28 +54,28 @@ static WRITE8_HANDLER( ajax_bankswitch_w )
 	cpu_setbank(2,&RAM[bankaddress]);
 }
 
-/*	ajax_lamps_w:
-  	Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at B9:
+/*  ajax_lamps_w:
+    Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at B9:
 
-	Bit	Description
-	---	-----------
-	7	LAMP7 & LAMP8 - Game over lamps (*)
-	6	LAMP3 & LAMP4 - Game over lamps (*)
-	5	LAMP1 - Start lamp (*)
-	4	Control panel quaking (**)
-	3	Joystick vibration (**)
-	2	LAMP5 & LAMP6 - Power up lamps (*)
-	1	LAMP2 - Super weapon lamp (*)
-	0	unused
+    Bit Description
+    --- -----------
+    7   LAMP7 & LAMP8 - Game over lamps (*)
+    6   LAMP3 & LAMP4 - Game over lamps (*)
+    5   LAMP1 - Start lamp (*)
+    4   Control panel quaking (**)
+    3   Joystick vibration (**)
+    2   LAMP5 & LAMP6 - Power up lamps (*)
+    1   LAMP2 - Super weapon lamp (*)
+    0   unused
 
-	(*) The Lamps are handled by the M54585P
-	(**)Vibration/Quaking handled by these chips:
-		Chip		Location	Description
-		----		--------	-----------
-		PS2401-4	B21			???
-		UPA1452H	B22			???
-		LS74		H2			Dual +ve edge trigger D-type Flip-flop with SET and RESET
-		LS393		C20			Dual -ve edge trigger 4-bit Binary Ripple Counter with Resets
+    (*) The Lamps are handled by the M54585P
+    (**)Vibration/Quaking handled by these chips:
+        Chip        Location    Description
+        ----        --------    -----------
+        PS2401-4    B21         ???
+        UPA1452H    B22         ???
+        LS74        H2          Dual +ve edge trigger D-type Flip-flop with SET and RESET
+        LS393       C20         Dual -ve edge trigger 4-bit Binary Ripple Counter with Resets
 */
 
 static WRITE8_HANDLER( ajax_lamps_w )
@@ -90,21 +90,21 @@ static WRITE8_HANDLER( ajax_lamps_w )
 	set_led_status(7,data & 0x80);	/* game over lamps */
 }
 
-/*	ajax_ls138_f10:
-	The LS138 1-of-8 Decoder/Demultiplexer at F10 selects what to do:
+/*  ajax_ls138_f10:
+    The LS138 1-of-8 Decoder/Demultiplexer at F10 selects what to do:
 
-	Address	R/W	Description
-	-------	---	-----------
-	0x0000	(r)	???	I think this read is because a CPU core bug
-			(w)	0x0000	NSFIRQ	Trigger FIRQ on the M6809
-				0x0020	AFR		Watchdog reset (handled by the 051550)
-	0x0040	(w)	SOUND			Cause interrupt on the Z80
-	0x0080	(w)	SOUNDDATA		Sound code number
-	0x00c0	(w) MBL1			Enables the LS273 at H11 (Banking + Coin counters)
-	0x0100	(r) MBL2			Enables 2P Inputs reading
-	0x0140	(w) MBL3			Enables the LS273 at B9 (Lamps + Vibration)
-	0x0180	(r) MIO1			Enables 1P Inputs + DIPSW #1 & #2 reading
-	0x01c0	(r) MIO2			Enables DIPSW #3 reading
+    Address R/W Description
+    ------- --- -----------
+    0x0000  (r) ??? I think this read is because a CPU core bug
+            (w) 0x0000  NSFIRQ  Trigger FIRQ on the M6809
+                0x0020  AFR     Watchdog reset (handled by the 051550)
+    0x0040  (w) SOUND           Cause interrupt on the Z80
+    0x0080  (w) SOUNDDATA       Sound code number
+    0x00c0  (w) MBL1            Enables the LS273 at H11 (Banking + Coin counters)
+    0x0100  (r) MBL2            Enables 2P Inputs reading
+    0x0140  (w) MBL3            Enables the LS273 at B9 (Lamps + Vibration)
+    0x0180  (r) MIO1            Enables 1P Inputs + DIPSW #1 & #2 reading
+    0x01c0  (r) MIO2            Enables DIPSW #3 reading
 */
 
 READ8_HANDLER( ajax_ls138_f10_r )
@@ -175,19 +175,19 @@ WRITE8_HANDLER( ajax_sharedram_w )
 	ajax_sharedram[offset] = data;
 }
 
-/*	ajax_bankswitch_w_2:
-	Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at K14:
+/*  ajax_bankswitch_w_2:
+    Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at K14:
 
-	Bit	Description
-	---	-----------
-	7	unused
-	6	RMRD	Enable char ROM reading through the video RAM
-	5	RVO		enables 051316 wraparound
-	4	FIRQST	FIRQ control
-	3	SRB3	\
-	2	SRB2	 |
-	1	SRB1	 |	ROM Bank Select
-	0	SRB0	/
+    Bit Description
+    --- -----------
+    7   unused
+    6   RMRD    Enable char ROM reading through the video RAM
+    5   RVO     enables 051316 wraparound
+    4   FIRQST  FIRQ control
+    3   SRB3    \
+    2   SRB2     |
+    1   SRB1     |  ROM Bank Select
+    0   SRB0    /
 */
 
 WRITE8_HANDLER( ajax_bankswitch_2_w )

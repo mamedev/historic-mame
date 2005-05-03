@@ -1,12 +1,12 @@
 /***************************************************************************
 
-	Dark Seal (Rev 3)    (c) 1990 Data East Corporation (World version)
-	Dark Seal (Rev 1)    (c) 1990 Data East Corporation (World version)
-	Dark Seal            (c) 1990 Data East Corporation (Japanese version)
-	Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
-	Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
+    Dark Seal (Rev 3)    (c) 1990 Data East Corporation (World version)
+    Dark Seal (Rev 1)    (c) 1990 Data East Corporation (World version)
+    Dark Seal            (c) 1990 Data East Corporation (Japanese version)
+    Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
+    Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

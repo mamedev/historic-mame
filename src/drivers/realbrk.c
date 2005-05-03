@@ -1,24 +1,24 @@
 /***************************************************************************
 
-					  -= Billiard Academy Real Break =-
+                      -= Billiard Academy Real Break =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU    :	TMP68301
+CPU    :    TMP68301
 
-Sound  :	YMZ280b + YM2413
+Sound  :    YMZ280b + YM2413
 
-Chips  :	4L10F2467 (QFP160)
-			4L10F2468 (QFP160)
-			ACTEL A1010A
-			PST532 (system reset and battery backup switching)
+Chips  :    4L10F2467 (QFP160)
+            4L10F2468 (QFP160)
+            ACTEL A1010A
+            PST532 (system reset and battery backup switching)
 
 
 ---------------------------------------------------------------------------
-Year + Game							Board
+Year + Game                         Board
 ---------------------------------------------------------------------------
-98	Billiard Academy Real Break		NM523-1-9805
+98  Billiard Academy Real Break     NM523-1-9805
 ---------------------------------------------------------------------------
 
 Notes:
@@ -256,7 +256,7 @@ static data16_t *backup_ram;
 static READ16_HANDLER( backup_ram_r )
 {
 	/*TODO: understand the format & cmds of the backup-ram,maybe it's an
-	        unemulated tmp68301 feature?*/
+            unemulated tmp68301 feature?*/
 	if(activecpu_get_previouspc() == 0x02c08e)
 		return 0xffff;
 	else
@@ -267,7 +267,7 @@ static READ16_HANDLER( backup_ram_r )
 static READ16_HANDLER( backup_ram_dx_r )
 {
 	/*TODO: understand the format & cmds of the backup-ram,maybe it's an
-	        unemulated tmp68301 feature?*/
+            unemulated tmp68301 feature?*/
 	if(activecpu_get_previouspc() == 0x02f046)
 		return 0xffff;
 	else
@@ -281,7 +281,7 @@ static WRITE16_HANDLER( backup_ram_w )
 
 /***************************************************************************
 
-								Memory Maps
+                                Memory Maps
 
 ***************************************************************************/
 
@@ -290,9 +290,9 @@ static ADDRESS_MAP_START( base_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM							    			// ROM
 	AM_RANGE(0x200000, 0x203fff) AM_RAM                   AM_BASE(&spriteram16)	// Sprites
 	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16	)	// Palette
-	AM_RANGE(0x600000, 0x601fff) AM_READWRITE(MRA16_RAM,realbrk_vram_0_w) AM_BASE(&realbrk_vram_0	)	// Background	(0)
-	AM_RANGE(0x602000, 0x603fff) AM_READWRITE(MRA16_RAM,realbrk_vram_1_w) AM_BASE(&realbrk_vram_1	)	// Background	(1)
-	AM_RANGE(0x604000, 0x604fff) AM_READWRITE(MRA16_RAM,realbrk_vram_2_w) AM_BASE(&realbrk_vram_2	)	// Text			(2)
+	AM_RANGE(0x600000, 0x601fff) AM_READWRITE(MRA16_RAM,realbrk_vram_0_w) AM_BASE(&realbrk_vram_0	)	// Background   (0)
+	AM_RANGE(0x602000, 0x603fff) AM_READWRITE(MRA16_RAM,realbrk_vram_1_w) AM_BASE(&realbrk_vram_1	)	// Background   (1)
+	AM_RANGE(0x604000, 0x604fff) AM_READWRITE(MRA16_RAM,realbrk_vram_2_w) AM_BASE(&realbrk_vram_2	)	// Text         (2)
 	AM_RANGE(0x606000, 0x60600f) AM_READWRITE(MRA16_RAM,realbrk_vregs_w) AM_BASE(&realbrk_vregs 	)	// Scroll + Video Regs
 	AM_RANGE(0x605000, 0x61ffff) AM_RAM							               	//
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(YMZ280B_register_0_msb_w			)	// YMZ280
@@ -331,12 +331,12 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
 /***************************************************************************
-						Billiard Academy Real Break
+                        Billiard Academy Real Break
 ***************************************************************************/
 
 INPUT_PORTS_START( realbrk )
@@ -714,7 +714,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							Graphics Layouts
+                            Graphics Layouts
 
 ***************************************************************************/
 
@@ -763,12 +763,12 @@ static struct GfxDecodeInfo realbrk_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
 /***************************************************************************
-						Billiard Academy Real Break
+                        Billiard Academy Real Break
 ***************************************************************************/
 
 static struct YMZ280Binterface realbrk_ymz280b_intf =
@@ -837,13 +837,13 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
 /***************************************************************************
 
-						Billiard Academy Real Break
+                        Billiard Academy Real Break
 
 Dynax, 199?
 

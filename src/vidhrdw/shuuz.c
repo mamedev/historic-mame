@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Shuuz hardware
+    Atari Shuuz hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -30,7 +30,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -88,7 +88,7 @@ VIDEO_START( shuuz )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -112,19 +112,19 @@ VIDEO_UPDATE( shuuz )
 				if (mo[x])
 				{
 					/* verified from the GALs on the real PCB; equations follow
-					 *
-					 *		--- O13 is 1 if (PFS7-4 == 0xf)
-					 *		O13=PFS6*PFS7*(PFS5&PFS4)
-					 *
-					 *		--- PF/M is 1 if MOs have priority, or 0 if playfield has priority
-					 *		MO/PF=!PFS7*!(LBD7&LBD6)*!M1*!O13
-					 *		   +!PFS7*!(LBD7&LBD6)*!M2*!O13
-					 *		   +!PFS7*!(LBD7&LBD6)*!M3*!O13
-					 *		   +PFS7*(LBD7&LBD6)*!M1*!O13
-					 *		   +PFS7*(LBD7&LBD6)*!M2*!O13
-					 *		   +PFS7*(LBD7&LBD6)*!M3*!O13
-					 *
-					 */
+                     *
+                     *      --- O13 is 1 if (PFS7-4 == 0xf)
+                     *      O13=PFS6*PFS7*(PFS5&PFS4)
+                     *
+                     *      --- PF/M is 1 if MOs have priority, or 0 if playfield has priority
+                     *      MO/PF=!PFS7*!(LBD7&LBD6)*!M1*!O13
+                     *         +!PFS7*!(LBD7&LBD6)*!M2*!O13
+                     *         +!PFS7*!(LBD7&LBD6)*!M3*!O13
+                     *         +PFS7*(LBD7&LBD6)*!M1*!O13
+                     *         +PFS7*(LBD7&LBD6)*!M2*!O13
+                     *         +PFS7*(LBD7&LBD6)*!M3*!O13
+                     *
+                     */
 					int o13 = ((pf[x] & 0xf0) == 0xf0);
 					int mopf = 0;
 

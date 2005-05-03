@@ -19,22 +19,22 @@ static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
 static int stfight_sprite_base = 0;
 
 /*
-		Graphics ROM Format
-		===================
+        Graphics ROM Format
+        ===================
 
-		Each tile is 8x8 pixels
-		Each composite tile is 2x2 tiles, 16x16 pixels
-		Each screen is 32x32 composite tiles, 64x64 tiles, 256x256 pixels
-		Each layer is a 4-plane bitmap 8x16 screens, 2048x4096 pixels
+        Each tile is 8x8 pixels
+        Each composite tile is 2x2 tiles, 16x16 pixels
+        Each screen is 32x32 composite tiles, 64x64 tiles, 256x256 pixels
+        Each layer is a 4-plane bitmap 8x16 screens, 2048x4096 pixels
 
-		There are 4x256=1024 composite tiles defined for each layer
+        There are 4x256=1024 composite tiles defined for each layer
 
-		Each layer is mapped using 2 bytes/composite tile
-		- one byte for the tile
-		- one byte for the tile bank, attribute
-			- b7,b5     tile bank (0-3)
+        Each layer is mapped using 2 bytes/composite tile
+        - one byte for the tile
+        - one byte for the tile bank, attribute
+            - b7,b5     tile bank (0-3)
 
-		Each pixel is 4 bits = 16 colours.
+        Each pixel is 4 bits = 16 colours.
 
  */
 

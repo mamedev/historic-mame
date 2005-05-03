@@ -1,14 +1,14 @@
 /**************************************************************************
 
-	Votrax SC-01 Emulator
+    Votrax SC-01 Emulator
 
- 	Mike@Dissfulfils.co.uk
+    Mike@Dissfulfils.co.uk
 
 **************************************************************************
 
 sh_votrax_start  - Start emulation, load samples from Votrax subdirectory
 sh_votrax_stop   - End emulation, free memory used for samples
-votrax_w		 - Write data to votrax port
+votrax_w         - Write data to votrax port
 votrax_status    - Return busy status (-1 = busy)
 
 If you need to alter the base frequency (i.e. Qbert) then just alter
@@ -83,7 +83,7 @@ static void votrax_update_sound(void *param, stream_sample_t **inputs, stream_sa
 			frac += step;
 			pos += frac >> FRAC_BITS;
 			frac = frac & ((1 << FRAC_BITS) - 1);
-			
+
 			/* handle looping/ending */
 			if (pos >= length)
 			{
@@ -91,7 +91,7 @@ static void votrax_update_sound(void *param, stream_sample_t **inputs, stream_sa
 				break;
 			}
 		}
-		
+
 		/* push position back out */
 		info->pos = pos;
 		info->frac = frac;
@@ -102,7 +102,7 @@ static void votrax_update_sound(void *param, stream_sample_t **inputs, stream_sa
 static void *votrax_start(int sndindex, int clock, const void *config)
 {
 	struct votrax_info *votrax;
-	
+
 	votrax = auto_malloc(sizeof(*votrax));
 	memset(votrax, 0, sizeof(*votrax));
 
@@ -114,7 +114,7 @@ static void *votrax_start(int sndindex, int clock, const void *config)
 
 	votrax->sample = NULL;
 	votrax->step = 0;
-	
+
 	return votrax;
 }
 

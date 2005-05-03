@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Driver for Midway T-unit games.
+    Driver for Midway T-unit games.
 
 **************************************************************************/
 
@@ -33,7 +33,7 @@ static UINT8	fake_sound_state;
 
 /*************************************
  *
- *	CMOS reads/writes
+ *  CMOS reads/writes
  *
  *************************************/
 
@@ -67,7 +67,7 @@ READ16_HANDLER( midtunit_cmos_r )
 
 /*************************************
  *
- *	Generic input ports
+ *  Generic input ports
  *
  *************************************/
 
@@ -80,7 +80,7 @@ READ16_HANDLER( midtunit_input_r )
 
 /*************************************
  *
- *	Mortal Kombat (T-unit) protection
+ *  Mortal Kombat (T-unit) protection
  *
  *************************************/
 
@@ -141,7 +141,7 @@ static WRITE16_HANDLER( mk_prot_w )
 
 /*************************************
  *
- *	Mortal Kombat 2 protection
+ *  Mortal Kombat 2 protection
  *
  *************************************/
 
@@ -171,7 +171,7 @@ static WRITE16_HANDLER( mk2_prot_w )
 
 /*************************************
  *
- *	NBA Jam protection
+ *  NBA Jam protection
  *
  *************************************/
 
@@ -244,7 +244,7 @@ static WRITE16_HANDLER( nbajam_prot_w )
 
 /*************************************
  *
- *	Judge Dredd protection
+ *  Judge Dredd protection
  *
  *************************************/
 
@@ -367,7 +367,7 @@ static READ16_HANDLER( jdredd_hack_r )
 
 /*************************************
  *
- *	Generic driver init
+ *  Generic driver init
  *
  *************************************/
 
@@ -430,9 +430,9 @@ static void init_tunit_generic(int sound)
 
 /*************************************
  *
- *	T-unit init (ADPCM)
+ *  T-unit init (ADPCM)
  *
- * 	music: 6809 driving YM2151, DAC, and OKIM6295
+ *  music: 6809 driving YM2151, DAC, and OKIM6295
  *
  *************************************/
 
@@ -512,9 +512,9 @@ DRIVER_INIT( jdreddp )
 
 /*************************************
  *
- *	T-unit init (DCS)
+ *  T-unit init (DCS)
  *
- * 	music: ADSP2105
+ *  music: ADSP2105
  *
  *************************************/
 
@@ -538,7 +538,7 @@ DRIVER_INIT( mk2 )
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -563,13 +563,13 @@ MACHINE_INIT( midtunit )
 
 /*************************************
  *
- *	Sound write handlers
+ *  Sound write handlers
  *
  *************************************/
 
 READ16_HANDLER( midtunit_sound_state_r )
 {
-/*	logerror("%08X:Sound status read\n", activecpu_get_pc());*/
+/*  logerror("%08X:Sound status read\n", activecpu_get_pc());*/
 
 	if (sound_type == SOUND_DCS && Machine->sample_rate)
 		return dcs_control_r() >> 4;

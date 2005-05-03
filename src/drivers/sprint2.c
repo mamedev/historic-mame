@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari Sprint 2 hardware
+    Atari Sprint 2 hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Sprint 1
-		* Sprint 2
-		* Dominos
+    Games supported:
+        * Sprint 1
+        * Sprint 2
+        * Dominos
 
-	All three games run on the same PCB but with minor modifications (some
-	chips removed, some wire-wrap connections added).
+    All three games run on the same PCB but with minor modifications (some
+    chips removed, some wire-wrap connections added).
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 

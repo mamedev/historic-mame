@@ -2,13 +2,13 @@
 
 Misc early Z80 games with simple color bitmap graphics
 
-	- Space King 2    (c) Konami
-	- Kamikaze        (c) Leijac
-	- Astro Invader   (c) Stern
-	- Space Intruder  (c) Shoei
+    - Space King 2    (c) Konami
+    - Kamikaze        (c) Leijac
+    - Astro Invader   (c) Stern
+    - Space Intruder  (c) Shoei
 
 Space Intruder emulation by Lee Taylor (lee@defender.demon.co.uk),
-	December 1998.
+    December 1998.
 
 ***************************************************************************/
 
@@ -274,7 +274,7 @@ static MACHINE_DRIVER_START( astinvad )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(astinvad_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -315,7 +315,7 @@ static MACHINE_DRIVER_START( spaceint )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(astinvad_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

@@ -2,9 +2,9 @@
 
 Raiders5 (c) 1985 Taito / UPL
 
-	Driver by Uki
+    Driver by Uki
 
-	02/Jun/2001 -
+    02/Jun/2001 -
 
 ******************************************************************************
 
@@ -15,7 +15,7 @@ David Haywood for ninjakid driver.
 Howie Cohen
 Frank Palazzolo
 Alex Pasadyn
-	for nova2001 driver.
+    for nova2001 driver.
 
 Notes:
 

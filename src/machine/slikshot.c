@@ -1,69 +1,69 @@
 /***************************************************************************
 
-	Slick Shot input handling
+    Slick Shot input handling
 
-	Unlike the other 8-bit Strata games, Slick Shot has an interesting
-	and fairly complex input system. The actual cabinet has a good-sized
-	gap underneath the monitor, from which a small pool table emerges.
-	An actual cue ball and pool sticks were included with the game.
+    Unlike the other 8-bit Strata games, Slick Shot has an interesting
+    and fairly complex input system. The actual cabinet has a good-sized
+    gap underneath the monitor, from which a small pool table emerges.
+    An actual cue ball and pool sticks were included with the game.
 
-	To "control" the game, players actually put the cue ball on the pool
-	table and shot the ball into the gap. Four sensors underneath the
-	monitor would count how long they saw the ball, and from this data,
-	the velocity and crossing point of the ball could be derived.
+    To "control" the game, players actually put the cue ball on the pool
+    table and shot the ball into the gap. Four sensors underneath the
+    monitor would count how long they saw the ball, and from this data,
+    the velocity and crossing point of the ball could be derived.
 
-	In order to read these sensors, an extra Z80 was added to the board.
-	The Z80 program is astoundingly simple: on reset, it writes a value of
-	$00 to the output port, then waits for either sensor 0 or 1 to fire.
-	As soon as one of those sensors fires, it begins counting how long it
-	takes for the bits corresponding to those sensors, as well as sensors
-	2 and 3, to return to their 0 state. It then writes a $ff to the
-	output port to signal that data is ready and waits for the main CPU
-	to clock the data through.
+    In order to read these sensors, an extra Z80 was added to the board.
+    The Z80 program is astoundingly simple: on reset, it writes a value of
+    $00 to the output port, then waits for either sensor 0 or 1 to fire.
+    As soon as one of those sensors fires, it begins counting how long it
+    takes for the bits corresponding to those sensors, as well as sensors
+    2 and 3, to return to their 0 state. It then writes a $ff to the
+    output port to signal that data is ready and waits for the main CPU
+    to clock the data through.
 
-	On the main program side of things, the result from the Z80 is
-	periodically polled. Once a $ff is seen, 3 words and 1 bytes' worth
-	of data is read from the Z80, after which the Z80 goes into an
-	infinite loop. When the main program is ready to read a result again,
-	it resets the Z80 to start the read going again.
+    On the main program side of things, the result from the Z80 is
+    periodically polled. Once a $ff is seen, 3 words and 1 bytes' worth
+    of data is read from the Z80, after which the Z80 goes into an
+    infinite loop. When the main program is ready to read a result again,
+    it resets the Z80 to start the read going again.
 
-	The way the Z80 reads the data, is as follows:
+    The way the Z80 reads the data, is as follows:
 
-		- write $00 to output
-		- wait for sensor 0 or 1 to fire (go to the 1 state)
-		- count how long that sensor takes to return to 0
-		- count how long sensors 2 and 3 take to return to 0
-		- write $ff to output
-		- wait for data to be clocked through
-		- return 3 words + 1 byte of data:
-			- word 0 = (value of larger of sensor 2/3 counts) - (value of smaller)
-			- word 1 = value of smaller of sensor 2/3 counts
-			- word 2 = value of sensor 0/1
-			- byte = beam data
-				- bit 0 = 1 if sensor 0 fired; 0 if sensor 1 fired
-				- bit 1 = 1 if sensor 3 value > sensor 2 value; 0 otherwise
-		- enter infinite loop
+        - write $00 to output
+        - wait for sensor 0 or 1 to fire (go to the 1 state)
+        - count how long that sensor takes to return to 0
+        - count how long sensors 2 and 3 take to return to 0
+        - write $ff to output
+        - wait for data to be clocked through
+        - return 3 words + 1 byte of data:
+            - word 0 = (value of larger of sensor 2/3 counts) - (value of smaller)
+            - word 1 = value of smaller of sensor 2/3 counts
+            - word 2 = value of sensor 0/1
+            - byte = beam data
+                - bit 0 = 1 if sensor 0 fired; 0 if sensor 1 fired
+                - bit 1 = 1 if sensor 3 value > sensor 2 value; 0 otherwise
+        - enter infinite loop
 
-	Once this data is read from the Z80, it is converted to an intermediate
-	form, and then processed using 32-bit math (yes, on a 6809!) to produce
-	the final velocity and X position of the crossing.
+    Once this data is read from the Z80, it is converted to an intermediate
+    form, and then processed using 32-bit math (yes, on a 6809!) to produce
+    the final velocity and X position of the crossing.
 
-	Because it is not understood exactly where the sensors are placed and
-	how to simulate the actual behavior, this module attempts to do the
-	next best thing: given a velocity and X position, figure out raw
-	sensor values that will travel from the Z80 to the main 6809 and
-	through the calculations produce approximately the correct results.
+    Because it is not understood exactly where the sensors are placed and
+    how to simulate the actual behavior, this module attempts to do the
+    next best thing: given a velocity and X position, figure out raw
+    sensor values that will travel from the Z80 to the main 6809 and
+    through the calculations produce approximately the correct results.
 
-	There are several stages of data:
+    There are several stages of data:
 
-		- sens0, sens1, sens2, sens3 = raw sensor values
-		- word1, word2, word3, beam = values from the Z80 (beam = byte val)
-		- inter1, inter2, inter3, beam = intermediate forms in the 6809
-		- vx, vy, x = final X,Y velocities and X crossing point
+        - sens0, sens1, sens2, sens3 = raw sensor values
+        - word1, word2, word3, beam = values from the Z80 (beam = byte val)
+        - inter1, inter2, inter3, beam = intermediate forms in the 6809
+        - vx, vy, x = final X,Y velocities and X crossing point
 
-	And all the functions here are designed to take you through the various
-	stages, both forwards and backwards, replicating the operations in the
-	6809 or reversing them.
+    And all the functions here are designed to take you through the various
+    stages, both forwards and backwards, replicating the operations in the
+    6809 or reversing them.
 
 ***************************************************************************/
 
@@ -97,11 +97,11 @@ static int crosshair_max;
 
 /*************************************
  *
- *	sensors_to_words
+ *  sensors_to_words
  *
- *	converts from raw sensor data to
- *	the three words + byte that the
- *	Z80 sends to the main 6809
+ *  converts from raw sensor data to
+ *  the three words + byte that the
+ *  Z80 sends to the main 6809
  *
  *************************************/
 
@@ -134,12 +134,12 @@ static void sensors_to_words(UINT16 sens0, UINT16 sens1, UINT16 sens2, UINT16 se
 
 /*************************************
  *
- *	words_to_inters
+ *  words_to_inters
  *
- *	converts the three words + byte
- *	data from the Z80 into the three
- *	intermediate values used in the
- *	final calculations
+ *  converts the three words + byte
+ *  data from the Z80 into the three
+ *  intermediate values used in the
+ *  final calculations
  *
  *************************************/
 
@@ -182,11 +182,11 @@ static void words_to_inters(UINT16 word1, UINT16 word2, UINT16 word3, UINT8 beam
 
 /*************************************
  *
- *	inters_to_vels
+ *  inters_to_vels
  *
- *	converts the three intermediate
- *	values to the final velocity and
- *	X position values
+ *  converts the three intermediate
+ *  values to the final velocity and
+ *  X position values
  *
  *************************************/
 
@@ -254,12 +254,12 @@ static void inters_to_vels(UINT16 inter1, UINT16 inter2, UINT16 inter3, UINT8 be
 
 /*************************************
  *
- *	vels_to_inters
+ *  vels_to_inters
  *
- *	converts from the final velocity
- *	and X position values back to
- *	three intermediate values that
- *	will produce the desired result
+ *  converts from the final velocity
+ *  and X position values back to
+ *  three intermediate values that
+ *  will produce the desired result
  *
  *************************************/
 
@@ -307,12 +307,12 @@ static void vels_to_inters(UINT8 x, UINT8 vx, UINT8 vy,
 
 /*************************************
  *
- *	inters_to_words
+ *  inters_to_words
  *
- *	converts the intermediate values
- *	used in the final calculations
- *	back to the three words + byte
- *	data from the Z80
+ *  converts the intermediate values
+ *  used in the final calculations
+ *  back to the three words + byte
+ *  data from the Z80
  *
  *************************************/
 
@@ -370,11 +370,11 @@ static void inters_to_words(UINT16 inter1, UINT16 inter2, UINT16 inter3, UINT8 *
 
 /*************************************
  *
- *	words_to_sensors
+ *  words_to_sensors
  *
- *	converts from the three words +
- *	byte that the Z80 sends to the
- *	main 6809 back to raw sensor data
+ *  converts from the three words +
+ *  byte that the Z80 sends to the
+ *  main 6809 back to raw sensor data
  *
  *************************************/
 
@@ -398,7 +398,7 @@ static void words_to_sensors(UINT16 word1, UINT16 word2, UINT16 word3, UINT8 bea
 
 /*************************************
  *
- *	compute_sensors
+ *  compute_sensors
  *
  *************************************/
 
@@ -424,7 +424,7 @@ static void compute_sensors(void)
 
 /*************************************
  *
- *	slikz80_port_r
+ *  slikz80_port_r
  *
  *************************************/
 
@@ -454,7 +454,7 @@ READ8_HANDLER( slikz80_port_r )
 
 /*************************************
  *
- *	slikz80_port_w
+ *  slikz80_port_w
  *
  *************************************/
 
@@ -468,7 +468,7 @@ WRITE8_HANDLER( slikz80_port_w )
 
 /*************************************
  *
- *	slikshot_z80_r
+ *  slikshot_z80_r
  *
  *************************************/
 
@@ -483,7 +483,7 @@ READ8_HANDLER( slikshot_z80_r )
 
 /*************************************
  *
- *	slikshot_z80_control_r
+ *  slikshot_z80_control_r
  *
  *************************************/
 
@@ -496,7 +496,7 @@ READ8_HANDLER( slikshot_z80_control_r )
 
 /*************************************
  *
- *	slikshot_z80_control_w
+ *  slikshot_z80_control_w
  *
  *************************************/
 
@@ -509,7 +509,7 @@ static void delayed_z80_control_w(int data)
 	if ((data & 0x10) || cpunum_get_reg(2, Z80_PC) == 0x13a)
 	{
 		cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
-	
+
 		/* on the rising edge, make the crosshair visible again */
 		if ((data & 0x10) && !(z80_ctrl & 0x10))
 			crosshair_vis = 1;
@@ -532,9 +532,9 @@ WRITE8_HANDLER( slikshot_z80_control_w )
 
 /*************************************
  *
- *	slikshot_set_crosshair_range
+ *  slikshot_set_crosshair_range
  *
- *	set the range for the crosshair
+ *  set the range for the crosshair
  *
  *************************************/
 
@@ -548,7 +548,7 @@ void slikshot_set_crosshair_range(int miny, int maxy)
 
 /*************************************
  *
- *	video_update_slikshot
+ *  video_update_slikshot
  *
  *************************************/
 
@@ -556,7 +556,7 @@ VIDEO_UPDATE( slikshot )
 {
 	int totaldy, totaldx;
 	int temp, i;
-	
+
 	/* draw the normal video first */
 	video_update_itech8_2page(bitmap, cliprect);
 
@@ -564,12 +564,12 @@ VIDEO_UPDATE( slikshot )
 	xbuffer[ybuffer_next % YBUFFER_COUNT] = readinputportbytag_safe("FAKEX", 0);
 	ybuffer[ybuffer_next % YBUFFER_COUNT] = readinputportbytag_safe("FAKEY", 0);
 	ybuffer_next++;
-	
+
 	/* determine where to draw the starting point */
 	curxpos += xbuffer[(ybuffer_next + 1) % YBUFFER_COUNT];
 	if (curxpos < -0x80) curxpos = -0x80;
 	if (curxpos >  0x80) curxpos =  0x80;
-	
+
 	/* compute the total X/Y movement */
 	totaldx = totaldy = 0;
 	for (i = 0; i < YBUFFER_COUNT - 1; i++)
@@ -591,14 +591,14 @@ VIDEO_UPDATE( slikshot )
 		if (temp <=  0x10) temp =  0x10;
 		if (temp >=  0x7f) temp =  0x7f;
 		curvy = temp;
-		
+
 		temp = 0x60 + (curxpos * 0x30 / 0x80);
 		if (temp <=  0x30) temp =  0x30;
 		if (temp >=  0x90) temp =  0x90;
 		curx = temp;
 
 		compute_sensors();
-		usrintf_showmessage("V=%02x,%02x  X=%02x", curvx, curvy, curx);
+//      usrintf_showmessage("V=%02x,%02x  X=%02x", curvx, curvy, curx);
 		crosshair_vis = 0;
 	}
 	last_ytotal = totaldy;
@@ -624,10 +624,10 @@ VIDEO_UPDATE( slikshot )
 
 /*************************************
  *
- *	main
+ *  main
  *
- *	uncomment this to make a stand
- *	alone version for testing
+ *  uncomment this to make a stand
+ *  alone version for testing
  *
  *************************************/
 

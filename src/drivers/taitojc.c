@@ -380,7 +380,7 @@ VIDEO_START( taitojc )
 	int gfx_index=0;
 
 	/* allocate RAM for characters */
-//	jc_unknown_ram = auto_malloc(0x00100000);
+//  jc_unknown_ram = auto_malloc(0x00100000);
 
  	/* find first empty slot to decode gfx */
 	for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
@@ -490,7 +490,7 @@ VIDEO_UPDATE( taitojc )
 READ32_HANDLER ( jc_unknown_r )
 {
 	return 0xffffffff;
-//	return mame_rand() ^ (mame_rand()<<16);
+//  return mame_rand() ^ (mame_rand()<<16);
 }
 
 READ32_HANDLER ( jc_unk2_r )
@@ -502,7 +502,7 @@ static ADDRESS_MAP_START( taitojc_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x04000000, 0x040fffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x05900000, 0x0590ffff) AM_READ(MRA32_RAM) AM_BASE(&jc_weirdram)
-//	AM_RANGE(0x05900004, 0x05900007) AM_READ(jc_unknown_r) // ?
+//  AM_RANGE(0x05900004, 0x05900007) AM_READ(jc_unknown_r) // ?
 	AM_RANGE(0x06400000, 0x0640ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x06600000, 0x06600003) AM_READ(jc_unk2_r)
 	AM_RANGE(0x08000000, 0x080fffff) AM_READ(MRA32_RAM)
@@ -570,7 +570,7 @@ static MACHINE_INIT( jc )
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 // do not let the 68k start up until f3_shared_ram points to valid RAM
-//	cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
+//  cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	f3_68681_reset();
 
 	// Code assumes RAM at 05800000 is initalized to all FF, but then tests it
@@ -587,7 +587,7 @@ static struct ES5505interface es5505_interface =
 static MACHINE_DRIVER_START( taitojc )
 	MDRV_CPU_ADD(M68020, 25000000) // 68040 !!!
 	MDRV_CPU_PROGRAM_MAP(taitojc_readmem,taitojc_writemem)
-//	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+//  MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_MACHINE_INIT(jc)
 
@@ -697,20 +697,20 @@ ROM_START( sidebs2 )
 	ROM_LOAD16_BYTE( "e38-21.35", 0xc00000, 0x200000, CRC(25373c5f) SHA1(ab9f917dbde7c808be2cd836ce2d3fc558e290f1) )
 
 	/* PALS
-	e23-28.18    NOT A ROM
-	e23-27.13    NOT A ROM
-	e23-26.4     NOT A ROM
-	e23-25-1.3   NOT A ROM
-	e23-30.40    NOT A ROM
-	e23-29.39    NOT A ROM
-	e23-31.46    NOT A ROM
-	e23-32-1.51  NOT A ROM
-	e23-34.72    NOT A ROM
-	e23-33.53    NOT A ROM
-	e23-35.110   NOT A ROM
-	e23-38.73    NOT A ROM
-	e23-37.69    NOT A ROM
-	*/
+    e23-28.18    NOT A ROM
+    e23-27.13    NOT A ROM
+    e23-26.4     NOT A ROM
+    e23-25-1.3   NOT A ROM
+    e23-30.40    NOT A ROM
+    e23-29.39    NOT A ROM
+    e23-31.46    NOT A ROM
+    e23-32-1.51  NOT A ROM
+    e23-34.72    NOT A ROM
+    e23-33.53    NOT A ROM
+    e23-35.110   NOT A ROM
+    e23-38.73    NOT A ROM
+    e23-37.69    NOT A ROM
+    */
 ROM_END
 
 ROM_START( dendeg )
@@ -926,19 +926,19 @@ ROM_START( landgear )
 	ROM_LOAD16_BYTE( "e17-16.35",  0xc00000, 0x200000, CRC(6cf9f277) SHA1(03ca51fadc6b0b6502804346f18eeb55ab87b0e7) )
 
 	/* Pals
-	e07-02.4     NOT A ROM
-	e07-03.50    NOT A ROM
-	e07-04.115   NOT A ROM
-	e07-05.22    NOT A ROM
-	e07-06.37    NOT A ROM
-	e07-07.49    NOT A ROM
-	e07-08.65    NOT A ROM
-	e07-09.82    NOT A ROM
-	e07-10.116   NOT A ROM
-	e09-21.69    NOT A ROM
-	e09-22.73    NOT A ROM
-	e17-32.96    NOT A ROM
-	*/
+    e07-02.4     NOT A ROM
+    e07-03.50    NOT A ROM
+    e07-04.115   NOT A ROM
+    e07-05.22    NOT A ROM
+    e07-06.37    NOT A ROM
+    e07-07.49    NOT A ROM
+    e07-08.65    NOT A ROM
+    e07-09.82    NOT A ROM
+    e07-10.116   NOT A ROM
+    e09-21.69    NOT A ROM
+    e09-22.73    NOT A ROM
+    e17-32.96    NOT A ROM
+    */
 ROM_END
 
 

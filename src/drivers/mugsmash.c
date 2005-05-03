@@ -1,5 +1,5 @@
 /* Mug Smashers (c)199? Electronic Devices (Italy) / 3D Games (England)
-	driver by David Haywood - Dip Switches and Inputs by Stephane Humbert
+    driver by David Haywood - Dip Switches and Inputs by Stephane Humbert
 
  a side scrolling beat-em-up, borrows ideas from Combatribes, including
  the music (apparently) and sound hardware!
@@ -56,7 +56,7 @@ WRITE16_HANDLER( mugsmash_videoram1_w );
 static WRITE16_HANDLER( mugsmash_reg2_w )
 {
 	mugsmash_regs2[offset] = data;
-//	usrintf_showmessage	("Regs2 %04x, %04x, %04x, %04x", mugsmash_regs2[0], mugsmash_regs2[1],mugsmash_regs2[2], mugsmash_regs2[3]);
+//  usrintf_showmessage ("Regs2 %04x, %04x, %04x, %04x", mugsmash_regs2[0], mugsmash_regs2[1],mugsmash_regs2[2], mugsmash_regs2[3]);
 
 	switch (offset)
 	{
@@ -74,79 +74,79 @@ static WRITE16_HANDLER( mugsmash_reg2_w )
 
 /* Ports mapping :
 
-	$180000.w : 0123456789ABCDEF
-	            x---------------	right     (player 1)
-	            -x--------------	left      (player 1)
-	            --x-------------	up        (player 1)
-	            ---x------------	down      (player 1)
-	            ----x-----------	button 1  (player 1)
-	            -----x----------	button 2  (player 1)
-	            ------x---------	button 3  (player 1)
-	            -------x--------	start     (player 1)
-	            --------x-------	coin 1
-	            ---------x------	coin 2
-	            ----------x-----	unused
-	            -----------x----	unused
-	            ------------x---	SW1-7     ("Color Test")     *
-	            -------------x--	SW1-8     ("Draw SF.")       *
-	            --------------x-	unused
-	            ---------------x	unused
+    $180000.w : 0123456789ABCDEF
+                x---------------    right     (player 1)
+                -x--------------    left      (player 1)
+                --x-------------    up        (player 1)
+                ---x------------    down      (player 1)
+                ----x-----------    button 1  (player 1)
+                -----x----------    button 2  (player 1)
+                ------x---------    button 3  (player 1)
+                -------x--------    start     (player 1)
+                --------x-------    coin 1
+                ---------x------    coin 2
+                ----------x-----    unused
+                -----------x----    unused
+                ------------x---    SW1-7     ("Color Test")     *
+                -------------x--    SW1-8     ("Draw SF.")       *
+                --------------x-    unused
+                ---------------x    unused
 
-	$180002.w : 0123456789ABCDEF
-	            x---------------	right     (player 2)
-	            -x--------------	left      (player 2)
-	            --x-------------	up        (player 2)
-	            ---x------------	down      (player 2)
-	            ----x-----------	button 1  (player 2)
-	            -----x----------	button 2  (player 2)
-	            ------x---------	button 3  (player 2)
-	            -------x--------	start     (player 2)
-	            --------x-------	SW1-1     ("Test Mode")
-	            ---------x------	SW1-2     ("Coin/Credit")
-	            ----------x-----	SW1-3     ("Coin/Credit")
-	            -----------x----	SW1-4     ("Coin/Credit")
-	            ------------x---	SW1-5     ("Continue")
-	            -------------x--	SW1-6     ("Sound Test")     *
-	            --------------x-	unused
-	            ---------------x	unused
+    $180002.w : 0123456789ABCDEF
+                x---------------    right     (player 2)
+                -x--------------    left      (player 2)
+                --x-------------    up        (player 2)
+                ---x------------    down      (player 2)
+                ----x-----------    button 1  (player 2)
+                -----x----------    button 2  (player 2)
+                ------x---------    button 3  (player 2)
+                -------x--------    start     (player 2)
+                --------x-------    SW1-1     ("Test Mode")
+                ---------x------    SW1-2     ("Coin/Credit")
+                ----------x-----    SW1-3     ("Coin/Credit")
+                -----------x----    SW1-4     ("Coin/Credit")
+                ------------x---    SW1-5     ("Continue")
+                -------------x--    SW1-6     ("Sound Test")     *
+                --------------x-    unused
+                ---------------x    unused
 
-	$180004.w : 0123456789ABCDEF
-	            x---------------	unused
-	            -x--------------	unused
-	            --x-------------	unused
-	            ---x------------	unused
-	            ----x-----------	unused
-	            -----x----------	unused
-	            ------x---------	unused
-	            -------x--------	unused
-	            --------x-------	SW2-1     ("Sound Demo")
-	            ---------x------	SW2-2     ("Lives Num")
-	            ----------x-----	SW2-3     ("Lives Num")
-	            -----------x----	SW2-4     ("Not Used")
-	            ------------x---	SW2-5     ("Diff Level")
-	            -------------x--	SW2-6     ("Diff Level")
-	            --------------x-	unused
-	            ---------------x	unused
+    $180004.w : 0123456789ABCDEF
+                x---------------    unused
+                -x--------------    unused
+                --x-------------    unused
+                ---x------------    unused
+                ----x-----------    unused
+                -----x----------    unused
+                ------x---------    unused
+                -------x--------    unused
+                --------x-------    SW2-1     ("Sound Demo")
+                ---------x------    SW2-2     ("Lives Num")
+                ----------x-----    SW2-3     ("Lives Num")
+                -----------x----    SW2-4     ("Not Used")
+                ------------x---    SW2-5     ("Diff Level")
+                -------------x--    SW2-6     ("Diff Level")
+                --------------x-    unused
+                ---------------x    unused
 
-	$180006.w : 0123456789ABCDEF
-	            x---------------	unused
-	            -x--------------	unused
-	            --x-------------	unused
-	            ---x------------	unused
-	            ----x-----------	unused
-	            -----x----------	unused
-	            ------x---------	unused
-	            -------x--------	unused
-	            --------x-------	SW2-7     ("Draw Obj")       *
-	            ---------x------	SW2-8     ("Screen Pause")
-	            ----------x-----	unused
-	            -----------x----	unused
-	            ------------x---	unused
-	            -------------x--	unused
-	            --------------x-	unused
-	            ---------------x	unused
+    $180006.w : 0123456789ABCDEF
+                x---------------    unused
+                -x--------------    unused
+                --x-------------    unused
+                ---x------------    unused
+                ----x-----------    unused
+                -----x----------    unused
+                ------x---------    unused
+                -------x--------    unused
+                --------x-------    SW2-7     ("Draw Obj")       *
+                ---------x------    SW2-8     ("Screen Pause")
+                ----------x-----    unused
+                -----------x----    unused
+                ------------x---    unused
+                -------------x--    unused
+                --------------x-    unused
+                ---------------x    unused
 
-	* only available when you are in "test mode"
+    * only available when you are in "test mode"
 
 */
 

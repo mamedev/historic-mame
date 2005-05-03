@@ -26,7 +26,7 @@ Write:
 
 b000      NMI Enable
 b002      Coin Lockout
-b003	  Sound Enable
+b003      Sound Enable
 b005      Intrepid graphics bank select
 b006      Flip Screen X
 b007      Flip Screen Y
@@ -48,7 +48,7 @@ Port I/O Write:
 
 00  Reset Sound Command
 8c  AY8910 #2 Control Port    (Intrepid/Super Mouse only)
-8d  AY8910 #2 Write Port	  (Intrepid/Super Mouse only)
+8d  AY8910 #2 Write Port      (Intrepid/Super Mouse only)
 8e  AY8910 #1 Control Port
 8f  AY8910 #1 Write Port
 
@@ -229,7 +229,7 @@ IN0_REAL
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 	  IN2_FAKE
 INPUT_PORTS_END
 
@@ -270,7 +270,7 @@ IN0_REAL
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 IN2_FAKE
 INPUT_PORTS_END
 
@@ -313,7 +313,7 @@ IN0_REAL
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 IN2_FAKE
 INPUT_PORTS_END
 
@@ -322,7 +322,7 @@ INPUT_PORTS_START( intrepid )
 IN0_REAL
 /* The bit at 0x80 in IN0 Starts a timer, which, after it runs down, doesn't seem to do anything. See $0105 */
 
-	PORT_START_TAG("IN1")	                     
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
@@ -358,7 +358,7 @@ IN0_REAL
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 IN2_FAKE
 
 INPUT_PORTS_END
@@ -402,7 +402,7 @@ IN0_REAL
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 IN2_FAKE
 INPUT_PORTS_END
 
@@ -445,7 +445,7 @@ IN0_REAL
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	/* Since the real inputs are multiplexed, we used this fake port
-	   to read the 2nd player controls when the screen is flipped */
+       to read the 2nd player controls when the screen is flipped */
 IN2_FAKE
 INPUT_PORTS_END
 
@@ -562,11 +562,11 @@ static MACHINE_DRIVER_START( thepit )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END

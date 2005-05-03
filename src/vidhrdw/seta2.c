@@ -1,72 +1,72 @@
 /***************************************************************************
 
-						  -= Newer Seta Hardware =-
+                          -= Newer Seta Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-	This hardware only generates sprites. But they're of various types,
-	including some large "floating tilemap" ones.
-
-	Sprites RAM is 0x40000 bytes long. All games write the sprites list
-	at offset 0x3000. Each entry in the list holds data for a multi-sprite
-	of up to 256 single-sprites. The list looks like this:
-
-	Offset: 	Bits:					Value:
-
-		0.w		f--- ---- ---- ----		Last sprite
-				-edc ---- ---- ----		?
-				---c ---- ---- ----		0 = Each sprite specifies its size, 1 = use the size in the following words
-				---- b--- ---- ----		?
-				---- -a98 ---- ----		tile color depth
-				---- ---- 7654 3210		Number of sprites - 1
-
-		2.w		fedc ---- ---- ----		Number of tiles?
-				---- ba-- ---- ----		Number of tiles along X (1 << n)
-				---- --98 7654 3210		X displacement
-
-		4.w		fedc ---- ---- ----		Number of tiles?
-				---- ba-- ---- ----		Number of tiles along Y (1 << n)
-				---- --98 7654 3210		Y displacement
-
-		6.w		f--- ---- ---- ----		Single-sprite(s) type: tile (0) or row of tiles (1)
-				-edc ba98 7654 3210		Offset of the single-sprite(s) data
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	A single-sprite can be a tile or some horizontal rows of tiles.
+    This hardware only generates sprites. But they're of various types,
+    including some large "floating tilemap" ones.
 
-	Tile case:
+    Sprites RAM is 0x40000 bytes long. All games write the sprites list
+    at offset 0x3000. Each entry in the list holds data for a multi-sprite
+    of up to 256 single-sprites. The list looks like this:
 
-		0.w		fedc ---- ---- ----		Number of tiles?
-				---- ba-- ---- ----		Number of tiles along X (1 << n)
-				---- --98 7654 3210		X
+    Offset:     Bits:                   Value:
 
-		2.w		fedc ---- ---- ----		Number of tiles?
-				---- ba-- ---- ----		Number of tiles along Y (1 << n)
-				---- --98 7654 3210		Y
+        0.w     f--- ---- ---- ----     Last sprite
+                -edc ---- ---- ----     ?
+                ---c ---- ---- ----     0 = Each sprite specifies its size, 1 = use the size in the following words
+                ---- b--- ---- ----     ?
+                ---- -a98 ---- ----     tile color depth
+                ---- ---- 7654 3210     Number of sprites - 1
 
-		4.w		fedc ba98 765- ----		Color code (16 color steps)
-				---- ---- ---4 ----		Flip X
-				---- ---- ---- 3---		Flip Y
-				---- ---- ---- -210		Code (high bits)
+        2.w     fedc ---- ---- ----     Number of tiles?
+                ---- ba-- ---- ----     Number of tiles along X (1 << n)
+                ---- --98 7654 3210     X displacement
 
-		6.w								Code (low bits)
+        4.w     fedc ---- ---- ----     Number of tiles?
+                ---- ba-- ---- ----     Number of tiles along Y (1 << n)
+                ---- --98 7654 3210     Y displacement
+
+        6.w     f--- ---- ---- ----     Single-sprite(s) type: tile (0) or row of tiles (1)
+                -edc ba98 7654 3210     Offset of the single-sprite(s) data
 
 
-	Row case:
+    A single-sprite can be a tile or some horizontal rows of tiles.
 
-		0.w		fedc ba-- ---- ----
-				---- --98 7654 3210		X
+    Tile case:
 
-		2.w		fedc ba-- ---- ----		Number of rows - 1
-				---- --98 7654 3210		Y
+        0.w     fedc ---- ---- ----     Number of tiles?
+                ---- ba-- ---- ----     Number of tiles along X (1 << n)
+                ---- --98 7654 3210     X
 
-		4.w		f--- ---- ---- ----		Tile size: 8x8 (0) or 16x16 (1)
-				-edc ba-- ---- ----		"Tilemap" page
-				---- --98 7654 3210		"Tilemap" Scroll X
+        2.w     fedc ---- ---- ----     Number of tiles?
+                ---- ba-- ---- ----     Number of tiles along Y (1 << n)
+                ---- --98 7654 3210     Y
 
-		6.w		fedc ba9- ---- ----
-				---- ---8 7654 3210		"Tilemap" Scroll Y
+        4.w     fedc ba98 765- ----     Color code (16 color steps)
+                ---- ---- ---4 ----     Flip X
+                ---- ---- ---- 3---     Flip Y
+                ---- ---- ---- -210     Code (high bits)
+
+        6.w                             Code (low bits)
+
+
+    Row case:
+
+        0.w     fedc ba-- ---- ----
+                ---- --98 7654 3210     X
+
+        2.w     fedc ba-- ---- ----     Number of rows - 1
+                ---- --98 7654 3210     Y
+
+        4.w     f--- ---- ---- ----     Tile size: 8x8 (0) or 16x16 (1)
+                -edc ba-- ---- ----     "Tilemap" page
+                ---- --98 7654 3210     "Tilemap" Scroll X
+
+        6.w     fedc ba9- ---- ----
+                ---- ---8 7654 3210     "Tilemap" Scroll Y
 
 ***************************************************************************/
 
@@ -81,54 +81,54 @@ static int yoffset;
 /***************************************************************************
 
 
-								Video Registers
+                                Video Registers
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	0/2/4/6								? Horizontal
-	8/a/c/e								? Vertical
+    0/2/4/6                             ? Horizontal
+    8/a/c/e                             ? Vertical
 
-	10
-	12									Offset X?
-	14									Zoom X? low bits
-	16									Zoom X? high bits *
+    10
+    12                                  Offset X?
+    14                                  Zoom X? low bits
+    16                                  Zoom X? high bits *
 
-	18
-	1a									Offset Y?
-	1c									Zoom Y? low bits
-	1e									Zoom Y? high bits
+    18
+    1a                                  Offset Y?
+    1c                                  Zoom Y? low bits
+    1e                                  Zoom Y? high bits
 
-	30			fedc ba98 7654 321-
-				---- ---- ---- ---0		Disable video
+    30          fedc ba98 7654 321-
+                ---- ---- ---- ---0     Disable video
 
-	32..3f								?
+    32..3f                              ?
 
 
-	* A value of 1 is means no zoom, a value of 2 will halve the size.
-	  It's unknown whether a value less than 1 means magnification (probably yes)
+    * A value of 1 is means no zoom, a value of 2 will halve the size.
+      It's unknown whether a value less than 1 means magnification (probably yes)
 
 ***************************************************************************/
 
 WRITE16_HANDLER( seta2_vregs_w )
 {
 	/* 02/04 = horizontal display start/end
-	           mj4simai = 0065/01E5 (0180 visible area)
-			   myangel =  005D/01D5 (0178 visible area)
-			   pzlbowl =  0058/01D8 (0180 visible area)
-			   penbros =  0065/01A5 (0140 visible area)
-			   grdians =  0059/0188 (012f visible area)
-	   06    = horizontal total?
-	           mj4simai = 0204
-			   myangel =  0200
-			   pzlbowl =  0204
-			   penbros =  01c0
-			   grdians =  019a
-	*/
+               mj4simai = 0065/01E5 (0180 visible area)
+               myangel =  005D/01D5 (0178 visible area)
+               pzlbowl =  0058/01D8 (0180 visible area)
+               penbros =  0065/01A5 (0140 visible area)
+               grdians =  0059/0188 (012f visible area)
+       06    = horizontal total?
+               mj4simai = 0204
+               myangel =  0200
+               pzlbowl =  0204
+               penbros =  01c0
+               grdians =  019a
+    */
 
 	COMBINE_DATA(&seta2_vregs[offset]);
 	switch( offset*2 )
 	{
-	case 0x1c:	// FLIP SCREEN (myangel)	<- this is actually zoom
+	case 0x1c:	// FLIP SCREEN (myangel)    <- this is actually zoom
 		flip_screen_set( data & 1 );
 		if (data & ~1)	logerror("CPU #0 PC %06X: flip screen unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
@@ -154,7 +154,7 @@ WRITE16_HANDLER( seta2_vregs_w )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
 ***************************************************************************/
@@ -200,8 +200,8 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 				gfx = 1; break;
 			case 0x0400:	// 4bpp tiles (----3210)
 				gfx = 0; break;
-//			case 0x0300:
-//				unknown
+//          case 0x0300:
+//              unknown
 			case 0x0200:	// 3bpp tiles?  (-----210) (myangel "Graduate Tests")
 				gfx = 4; break;
 			case 0x0100:	// 2bpp tiles??? (--10----) (myangel2 question bubble, myangel endgame)
@@ -254,8 +254,8 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 				/* Draw the rows */
 				/* I don't think the following is entirely correct (when using 16x16
-				   tiles x should probably loop from 0 to 0x20) but it seems to work
-				   fine in all the games we have for now. */
+                   tiles x should probably loop from 0 to 0x20) but it seems to work
+                   fine in all the games we have for now. */
 				for (y = 0; y < (0x40 >> tilesize); y++)
 				{
 					int py = ((scrolly - (y+1) * (8 << tilesize) + 0x10) & 0x1ff) - 0x10 - yoffset;
@@ -349,7 +349,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

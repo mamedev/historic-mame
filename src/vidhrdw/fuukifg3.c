@@ -1,29 +1,29 @@
 /***************************************************************************
 
-						  -= Fuuki 32 Bit Games (FG-3) =-
+                          -= Fuuki 32 Bit Games (FG-3) =-
 
-				driver by Paul Priest and David Haywood
-				based on fuukifg2 by Luca Elia
+                driver by Paul Priest and David Haywood
+                based on fuukifg2 by Luca Elia
 
 
-	[ 4 Scrolling Layers ]
+    [ 4 Scrolling Layers ]
 
-							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 (double-buffered) ]
+                            [ Layer 0 ]     [ Layer 1 ]     [ Layers 2&3 (double-buffered) ]
 
-	Tile Size:				16 x 16 x 8		16 x 16 x 8		8 x 8 x 4
-	Layer Size (tiles):		64 x 32			64 x 32			64 x 32
+    Tile Size:              16 x 16 x 8     16 x 16 x 8     8 x 8 x 4
+    Layer Size (tiles):     64 x 32         64 x 32         64 x 32
 
-	[ 1024? Zooming Sprites ]
+    [ 1024? Zooming Sprites ]
 
-	Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
-	tiles both horizontally and vertically.
-	There is zooming (from full size to half size) and 4 levels of
-	priority (wrt layers)
+    Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
+    tiles both horizontally and vertically.
+    There is zooming (from full size to half size) and 4 levels of
+    priority (wrt layers)
 
-	Per-line raster effects used on many stages
-	Sprites buffered by two frames
-	Tilebank buffered by 3 frames? Only 2 in attract
-	Sprite pens needs to be buffered by 3 frames? Or lazy programming? Probably 2
+    Per-line raster effects used on many stages
+    Sprites buffered by two frames
+    Tilebank buffered by 3 frames? Only 2 in attract
+    Sprite pens needs to be buffered by 3 frames? Or lazy programming? Probably 2
 
 ***************************************************************************/
 
@@ -41,16 +41,16 @@ static UINT32 spr_buffered_tilebank[2];
 /***************************************************************************
 
 
-									Tilemaps
+                                    Tilemaps
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
+        0.w                             Code
 
-		2.w		fedc ba98 ---- ----
-				---- ---- 7--- ----		Flip Y
-				---- ---- -6-- ----		Flip X
-				---- ---- --54 3210		Color
+        2.w     fedc ba98 ---- ----
+                ---- ---- 7--- ----     Flip Y
+                ---- ---- -6-- ----     Flip X
+                ---- ---- --54 3210     Color
 
 
 ***************************************************************************/
@@ -84,7 +84,7 @@ LAYER( 3 )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -124,27 +124,27 @@ VIDEO_START( fuuki32 )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		fedc ---- ---- ----		Number Of Tiles Along X - 1
-				---- b--- ---- ----		Flip X
-				---- -a-- ---- ----		1 = Don't Draw This Sprite
-				---- --98 7654 3210		X (Signed)
+        0.w     fedc ---- ---- ----     Number Of Tiles Along X - 1
+                ---- b--- ---- ----     Flip X
+                ---- -a-- ---- ----     1 = Don't Draw This Sprite
+                ---- --98 7654 3210     X (Signed)
 
-		2.w		fedc ---- ---- ----		Number Of Tiles Along Y - 1
-				---- b--- ---- ----		Flip Y
-				---- -a-- ---- ----
-				---- --98 7654 3210		Y (Signed)
+        2.w     fedc ---- ---- ----     Number Of Tiles Along Y - 1
+                ---- b--- ---- ----     Flip Y
+                ---- -a-- ---- ----
+                ---- --98 7654 3210     Y (Signed)
 
-		4.w		fedc ---- ---- ----		Zoom X ($0 = Full Size, $F = Half Size)
-				---- ba98 ---- ----		Zoom Y ""
-				---- ---- 76-- ----		Priority
-				---- ---- --54 3210		Color
+        4.w     fedc ---- ---- ----     Zoom X ($0 = Full Size, $F = Half Size)
+                ---- ba98 ---- ----     Zoom Y ""
+                ---- ---- 76-- ----     Priority
+                ---- ---- --54 3210     Color
 
-		6.w		fe-- ---- ---- ----		Tile Bank
-				--dc ba98 7654 3210		Tile Code
+        6.w     fe-- ---- ---- ----     Tile Bank
+                --dc ba98 7654 3210     Tile Code
 
 
 ***************************************************************************/
@@ -261,33 +261,33 @@ if (code_pressed(KEYCODE_X))
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
-	Video Registers (fuuki32_vregs):
+    Video Registers (fuuki32_vregs):
 
-		00.w		Layer 0 Scroll Y
-		02.w		Layer 0 Scroll X
-		04.w		Layer 1 Scroll Y
-		06.w		Layer 1 Scroll X
-		08.w		Layer 2 Scroll Y
-		0a.w		Layer 2 Scroll X
-		0c.w		Layers Y Offset
-		0e.w		Layers X Offset
+        00.w        Layer 0 Scroll Y
+        02.w        Layer 0 Scroll X
+        04.w        Layer 1 Scroll Y
+        06.w        Layer 1 Scroll X
+        08.w        Layer 2 Scroll Y
+        0a.w        Layer 2 Scroll X
+        0c.w        Layers Y Offset
+        0e.w        Layers X Offset
 
-		10-1a.w		? 0
-		1c.w		Trigger a level 5 irq on this raster line
-		1e.w		? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
+        10-1a.w     ? 0
+        1c.w        Trigger a level 5 irq on this raster line
+        1e.w        ? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
 
-	Priority Register (fuuki32_priority):
+    Priority Register (fuuki32_priority):
 
-		fedc ba98 7654 3---
-		---- ---- ---- -210		Layer Order
+        fedc ba98 7654 3---
+        ---- ---- ---- -210     Layer Order
 
 
-	Unknown Registers ($de0000.l):
+    Unknown Registers ($de0000.l):
 
-		00.w		? $0200/$0201	(Flip Screen Off/On)
-		02.w		? $f300/$0330
+        00.w        ? $0200/$0201   (Flip Screen Off/On)
+        02.w        ? $f300/$0330
 
 ***************************************************************************/
 
@@ -316,8 +316,8 @@ VIDEO_UPDATE( fuuki32 )
 	data16_t scrollx_offs,   scrolly_offs;
 
 	/*
-	It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
-	*/
+    It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
+    */
 
 	int tm_back, tm_middle, tm_front;
 	int pri_table[6][3] = {

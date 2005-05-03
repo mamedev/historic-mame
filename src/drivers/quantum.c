@@ -1,45 +1,45 @@
 /***************************************************************************
 
-	Atari Quantum hardware
+    Atari Quantum hardware
 
-	driver by Paul Forgey, with some help from Aaron Giles
+    driver by Paul Forgey, with some help from Aaron Giles
 
-	Games supported:
-		* Quantum
+    Games supported:
+        * Quantum
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	QUANTUM MEMORY MAP (per schem):
+    Memory map
 
-	000000-003FFF	ROM0
-	004000-004FFF	ROM1
-	008000-00BFFF	ROM2
-	00C000-00FFFF	ROM3
-	010000-013FFF	ROM4
+****************************************************************************
 
-	018000-01BFFF	RAM0
-	01C000-01CFFF	RAM1
+    QUANTUM MEMORY MAP (per schem):
 
-	940000			TRACKBALL
-	948000			SWITCHES
-	950000			COLORRAM
-	958000			CONTROL (LED and coin control)
-	960000-970000	RECALL (nvram read)
-	968000			VGRST (vector reset)
-	970000			VGGO (vector go)
-	978000			WDCLR (watchdog)
-	900000			NVRAM (nvram write)
-	840000			I/OS (sound and dip switches)
-	800000-801FFF	VMEM (vector display list)
-	940000			I/O (shematic label really - covered above)
-	900000			DTACK1
+    000000-003FFF   ROM0
+    004000-004FFF   ROM1
+    008000-00BFFF   ROM2
+    00C000-00FFFF   ROM3
+    010000-013FFF   ROM4
+
+    018000-01BFFF   RAM0
+    01C000-01CFFF   RAM1
+
+    940000          TRACKBALL
+    948000          SWITCHES
+    950000          COLORRAM
+    958000          CONTROL (LED and coin control)
+    960000-970000   RECALL (nvram read)
+    968000          VGRST (vector reset)
+    970000          VGGO (vector go)
+    978000          WDCLR (watchdog)
+    900000          NVRAM (nvram write)
+    840000          I/OS (sound and dip switches)
+    800000-801FFF   VMEM (vector display list)
+    940000          I/O (shematic label really - covered above)
+    900000          DTACK1
 
 ***************************************************************************/
 
@@ -52,7 +52,7 @@
 
 /*************************************
  *
- *	Inputs
+ *  Inputs
  *
  *************************************/
 
@@ -83,7 +83,7 @@ static READ8_HANDLER( input_2_r )
 
 /*************************************
  *
- *	LEDs/coin counters
+ *  LEDs/coin counters
  *
  *************************************/
 
@@ -111,7 +111,7 @@ static WRITE16_HANDLER( led_w )
 
 /*************************************
  *
- *	POKEY I/O
+ *  POKEY I/O
  *
  *************************************/
 
@@ -136,7 +136,7 @@ static READ16_HANDLER( pokey_word_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -162,8 +162,8 @@ ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x958000, 0x958001) AM_WRITE(led_w)
 	AM_RANGE(0x960000, 0x960001) AM_WRITE(MWA16_NOP)	/* enable NVRAM? */
 	AM_RANGE(0x968000, 0x968001) AM_WRITE(avgdvg_reset_word_w)
-//	AM_RANGE(0x970000, 0x970001) AM_WRITE(avgdvg_go_w)
-//	AM_RANGE(0x978000, 0x978001) AM_WRITE(watchdog_reset_w)
+//  AM_RANGE(0x970000, 0x970001) AM_WRITE(avgdvg_go_w)
+//  AM_RANGE(0x978000, 0x978001) AM_WRITE(watchdog_reset_w)
 	/* the following is wrong, but it's the only way I found to fix the service mode */
 	AM_RANGE(0x978000, 0x978001) AM_WRITE(avgdvg_go_word_w)
 ADDRESS_MAP_END
@@ -172,7 +172,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -224,7 +224,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -242,7 +242,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -282,7 +282,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -334,7 +334,7 @@ ROM_END
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

@@ -20,24 +20,24 @@ There are 32 data banks of 0x800 bytes starting at 0x3000000
 The first 8 are continuous and used for sprites.
 
 Bank Offset Purpose
-0	0000	Sprites
-1	8000	"
-2	1000	"
-3	1800	"
-4	2000	"
-5	2800	"
-6	3000	"
-7	3800	Sprite List
+0   0000    Sprites
+1   8000    "
+2   1000    "
+3   1800    "
+4   2000    "
+5   2800    "
+6   3000    "
+7   3800    Sprite List
 ---
-8	4000	Pre Lineblend (0x000, 224 values) and Post Lineblend (0x400, 224 values)
-9	4800	Unknown
-a	5000	Tilemap XScroll/YScroll
-b	5800	Tilemap Priority/Zoom/AlphaBlending/Bank
+8   4000    Pre Lineblend (0x000, 224 values) and Post Lineblend (0x400, 224 values)
+9   4800    Unknown
+a   5000    Tilemap XScroll/YScroll
+b   5800    Tilemap Priority/Zoom/AlphaBlending/Bank
 
-c	6000	General Purpose banks for either tilemaps (can optionally use two consecutive banks)
-			Or To contain RowScroll/ColumnScroll (0x000, 224 values) followed by Priority/Zoom/AlphaBlending/Bank (0x400, 224 values)
+c   6000    General Purpose banks for either tilemaps (can optionally use two consecutive banks)
+            Or To contain RowScroll/ColumnScroll (0x000, 224 values) followed by Priority/Zoom/AlphaBlending/Bank (0x400, 224 values)
 ...
-1f	f800	"
+1f  f800    "
 */
 
 /*
@@ -62,7 +62,7 @@ Vid Regs:
         0a = normal 0b = alt buffer
         0c/0d are used by daraku for text layers. same as above except bank is still controlled by registers and seems to contain two 16x16 timemaps with alternate columns from each.
         0e-1f indicates layer uses row and/or line scroll. values come from associated bank, tiles from 2 below i.e bank c-1d
-		Bit 0x80 indicates use of line effects.
+        Bit 0x80 indicates use of line effects.
 0x1c -- ????123- enable bits  8 is enable. 4 indicates 8bpp tiles. 1 is size select for tilemap
 */
 
@@ -239,7 +239,7 @@ static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, c
 
 	scrollbank = BG_TYPE(layer); /* Scroll bank appears to be same as layer type */
 
-//	bank = BG_TYPE(layer) - 0x02; /* This is an assumption which seems to hold true so far, although the bank seems to be selectable per-line */
+//  bank = BG_TYPE(layer) - 0x02; /* This is an assumption which seems to hold true so far, although the bank seems to be selectable per-line */
 
 	/* Take the following details from the info for the first row, the same for every row in all cases so far */
 	bank    = (psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 - 0x4000/4] & 0x000000ff) >> 0;
@@ -288,7 +288,7 @@ static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, c
 				tileno = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0x0007ffff); /* seems to take into account spriteram, hence -0x4000 */
 				colour = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0xff000000) >> 24;
 
-//				drawgfx(zoom_bitmap,gfx,tileno,colour,0,0,(16*sx)&0x1ff,((16*sy)&(width-1)),NULL,TRANSPARENCY_PEN,0);
+//              drawgfx(zoom_bitmap,gfx,tileno,colour,0,0,(16*sx)&0x1ff,((16*sy)&(width-1)),NULL,TRANSPARENCY_PEN,0);
 
 				drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1)),cliprect,trans,0); /* normal */
 				if(scrollx)
@@ -303,8 +303,8 @@ static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, c
 		}
 		/* Only ever seems to use one linescroll value, ok for now */
 		/* Disabled for now, as they doesn't even support alpha :( */
-//		copyscrollbitmap(bitmap,zoom_bitmap,1,bg_scrollx,512,bg_scrolly,cliprect,TRANSPARENCY_PEN,0);
-//		copyscrollbitmap(bitmap,zoom_bitmap,256,bg_scrollx,0,bg_scrolly,cliprect,TRANSPARENCY_PEN,0);
+//      copyscrollbitmap(bitmap,zoom_bitmap,1,bg_scrollx,512,bg_scrolly,cliprect,TRANSPARENCY_PEN,0);
+//      copyscrollbitmap(bitmap,zoom_bitmap,256,bg_scrollx,0,bg_scrolly,cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -924,33 +924,33 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
 {
 	/*- Sprite Format 0x0000 - 0x37ff -**
 
-	0 ---- --yy yyyy yyyy | ---- --xx xxxx xxxx  1  F--- hhhh ZZZZ ZZZZ | fPPP wwww zzzz zzzz
-	2 pppp pppp -aaa -nnn | nnnn nnnn nnnn nnnn  3  ---- ---- ---- ---- | ---- ---- ---- ----
+    0 ---- --yy yyyy yyyy | ---- --xx xxxx xxxx  1  F--- hhhh ZZZZ ZZZZ | fPPP wwww zzzz zzzz
+    2 pppp pppp -aaa -nnn | nnnn nnnn nnnn nnnn  3  ---- ---- ---- ---- | ---- ---- ---- ----
 
-	y = ypos
-	x = xpos
+    y = ypos
+    x = xpos
 
-	h = height
-	w = width
+    h = height
+    w = width
 
-	F = flip (y)
-	f = flip (x)
+    F = flip (y)
+    f = flip (x)
 
-	Z = zoom (y)
-	z = zoom (x)
+    Z = zoom (y)
+    z = zoom (x)
 
-	n = tile number
+    n = tile number
 
-	p = palette
+    p = palette
 
-	a = alpha blending, selects which of the 8 alpha values in vid_regs[0-1] to use
+    a = alpha blending, selects which of the 8 alpha values in vid_regs[0-1] to use
 
-	P = priority
-	Points to a 4-bit entry in vid_regs[2] which provides a priority comparable with the bg layer's priorities.
-	However, sprite-sprite priority needs to be preserved.
-	daraku and soldivid only use the lsb
+    P = priority
+    Points to a 4-bit entry in vid_regs[2] which provides a priority comparable with the bg layer's priorities.
+    However, sprite-sprite priority needs to be preserved.
+    daraku and soldivid only use the lsb
 
-	**- End Sprite Format -*/
+    **- End Sprite Format -*/
 
 	const struct GfxElement *gfx;
 	data32_t *src = buffered_spriteram32; /* Use buffered spriteram */
@@ -1074,8 +1074,8 @@ static void psikyosh_prelineblend( struct mame_bitmap *bitmap, const struct rect
 {
 	/* There are 224 values for pre-lineblending. Using one for every row currently */
 	/* I suspect that it should be blended against black by the amount specified as
-	   gnbarich sets the 0x000000ff to 0x7f in test mode whilst the others use 0x80.
-	   As it's only used in testmode I'll just leave it as a toggle for now */
+       gnbarich sets the 0x000000ff to 0x7f in test mode whilst the others use 0x80.
+       As it's only used in testmode I'll just leave it as a toggle for now */
 	UINT32 *dstline;
 	data32_t *linefill = psikyosh_bgram; /* Per row */
 	int x,y;
@@ -1153,14 +1153,14 @@ VIDEO_EOF( psikyosh )
 	buffer_spriteram32_w(0,0,0);
 }
 
-/*usrintf_showmessage	("Regs %08x %08x %08x\n     %08x %08x %08x",
-	psikyosh_bgram[0x17f0/4], psikyosh_bgram[0x17f4/4], psikyosh_bgram[0x17f8/4],
-	psikyosh_bgram[0x1ff0/4], psikyosh_bgram[0x1ff4/4], psikyosh_bgram[0x1ff8/4]);*/
-/*usrintf_showmessage	("Regs %08x %08x %08x\n     %08x %08x %08x",
-	psikyosh_bgram[0x13f0/4], psikyosh_bgram[0x13f4/4], psikyosh_bgram[0x13f8/4],
-	psikyosh_bgram[0x1bf0/4], psikyosh_bgram[0x1bf4/4], psikyosh_bgram[0x1bf8/4]);*/
-/*usrintf_showmessage	("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
-	psikyosh_vidregs[0], psikyosh_vidregs[1],
-	psikyosh_vidregs[2], psikyosh_vidregs[3],
-	psikyosh_vidregs[4], psikyosh_vidregs[5],
-	psikyosh_vidregs[6], psikyosh_vidregs[7]);*/
+/*usrintf_showmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+    psikyosh_bgram[0x17f0/4], psikyosh_bgram[0x17f4/4], psikyosh_bgram[0x17f8/4],
+    psikyosh_bgram[0x1ff0/4], psikyosh_bgram[0x1ff4/4], psikyosh_bgram[0x1ff8/4]);*/
+/*usrintf_showmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+    psikyosh_bgram[0x13f0/4], psikyosh_bgram[0x13f4/4], psikyosh_bgram[0x13f8/4],
+    psikyosh_bgram[0x1bf0/4], psikyosh_bgram[0x1bf4/4], psikyosh_bgram[0x1bf8/4]);*/
+/*usrintf_showmessage   ("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
+    psikyosh_vidregs[0], psikyosh_vidregs[1],
+    psikyosh_vidregs[2], psikyosh_vidregs[3],
+    psikyosh_vidregs[4], psikyosh_vidregs[5],
+    psikyosh_vidregs[6], psikyosh_vidregs[7]);*/

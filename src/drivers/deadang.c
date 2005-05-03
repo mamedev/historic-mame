@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Dead Angle							(c) 1988 Seibu Kaihatsu
-	Gang Hunter							(c) 1988 Seibu Kaihatsu
+    Dead Angle                          (c) 1988 Seibu Kaihatsu
+    Gang Hunter                         (c) 1988 Seibu Kaihatsu
 
 ***************************************************************************/
 
 /*
 
-	TODO:
+    TODO:
 
-	- ghunter trackball input is broken
-	- coin lockouts
+    - ghunter trackball input is broken
+    - coin lockouts
 
 */
 

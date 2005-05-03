@@ -482,19 +482,19 @@ void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *c
 
 
 /*
-	Parameter Notes
-	---------------
-	clip    : *caller must supply a pointer to target clip rectangle
-	alpha   : 0 = invisible, 255 = solid
-	drawmode:
-		0 = all pens solid
-		1 = solid pens only
-		2 = all pens solid with alpha blending
-		3 = solid pens only with alpha blending
-		4 = shadow pens only
-		5 = all pens shadow
-	zcode   : 0 = closest, 255 = furthest (pixel z-depth), -1 = disable depth buffers and shadows
-	pri     : 0 = topmost, 255 = backmost (pixel priority)
+    Parameter Notes
+    ---------------
+    clip    : *caller must supply a pointer to target clip rectangle
+    alpha   : 0 = invisible, 255 = solid
+    drawmode:
+        0 = all pens solid
+        1 = solid pens only
+        2 = all pens solid with alpha blending
+        3 = solid pens only with alpha blending
+        4 = shadow pens only
+        5 = all pens shadow
+    zcode   : 0 = closest, 255 = furthest (pixel z-depth), -1 = disable depth buffers and shadows
+    pri     : 0 = topmost, 255 = backmost (pixel priority)
 */
 
 INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElement *gfx, const struct rectangle *cliprect,
@@ -664,7 +664,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 			}
 			while (--dst_h);
 		}
-		else 
+		else
 		{
 			switch (drawmode)
 			{
@@ -771,7 +771,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 					}
 					while (--dst_h);
 					break;
-			
+
 				case 4: // shadow pens only
 					do {
 						do {
@@ -825,7 +825,7 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 			}
 			while (--dst_h);
 		}
-		else 
+		else
 		{
 			switch (drawmode)
 			{
@@ -1416,15 +1416,15 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		switch (code)
 		{
 			/*
-				Background layers are represented by negative offset values as follow:
+                Background layers are represented by negative offset values as follow:
 
-				0+ : normal sprites
-				-1 : tile layer A - D
-				-2 : K053936 ROZ+ layer 1
-				-3 : K053936 ROZ+ layer 2
-				-4 : K053250 LVC layer 1
-				-5 : K053250 LVC layer 2
-			*/
+                0+ : normal sprites
+                -1 : tile layer A - D
+                -2 : K053936 ROZ+ layer 1
+                -3 : K053936 ROZ+ layer 2
+                -4 : K053250 LVC layer 1
+                -5 : K053250 LVC layer 2
+            */
 			case 4 :
 				offs = -128;
 				if (sub1flags & 0xf) { if (sub1flags & GXSUB_K053250) offs = -4; else if (sub1) offs = -2; }
@@ -1466,13 +1466,13 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		(*K053247_callback)(&code, &color, &pri);
 
 		/*
-			shadow = shadow code
-			spri   = shadow priority
-			temp1  = add solid object
-			temp2  = solid pens draw mode
-			temp3  = add shadow object
-			temp4  = shadow pens draw mode
-		*/
+            shadow = shadow code
+            spri   = shadow priority
+            temp1  = add solid object
+            temp2  = solid pens draw mode
+            temp3  = add shadow object
+            temp4  = shadow pens draw mode
+        */
 		temp4 = temp3 = temp2 = temp1 = spri = shadow = 0;
 
 		if (color & K055555_FULLSHADOW)
@@ -1543,14 +1543,14 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		}
 
 		/*
-			default sort order:
-			fedcba9876543210fedcba9876543210
-			xxxxxxxx------------------------ (priority)
-			--------xxxxxxxx---------------- (zcode)
-			----------------xxxxxxxx-------- (offset)
-			------------------------xxxx---- (shadow mode)
-			----------------------------xxxx (shadow code)
-		*/
+            default sort order:
+            fedcba9876543210fedcba9876543210
+            xxxxxxxx------------------------ (priority)
+            --------xxxxxxxx---------------- (zcode)
+            ----------------xxxxxxxx-------- (offset)
+            ------------------------xxxx---- (shadow mode)
+            ----------------------------xxxx (shadow code)
+        */
 		if (temp1)
 		{
 			// add objects with solid or alpha pens
@@ -1632,11 +1632,11 @@ void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect
 					}
 
 					/* blend layer only when:
-						1) vinmix != 0xff
-						2) its internal mix code is set
-						3) all mix code bits are internal(overriden until tile blending has been implemented)
-						4) 0 > alpha < 255;
-					*/
+                        1) vinmix != 0xff
+                        2) its internal mix code is set
+                        3) all mix code bits are internal(overriden until tile blending has been implemented)
+                        4) 0 > alpha < 255;
+                    */
 					if (temp1!=0xff && temp2 /*&& temp3==3*/)
 					{
 						temp4 = K054338_set_alpha_level(temp2);

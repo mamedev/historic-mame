@@ -4,7 +4,7 @@ Quiz DNA no Hanran (c) 1992 Face
 Quiz Gakuen Paradise (c) 1991 NMK
 Quiz Gekiretsu Scramble (Gakuen Paradise 2) (c) 1993 Face
 
-	Driver by Uki
+    Driver by Uki
 
 *****************************************************************************/
 

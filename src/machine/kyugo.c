@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Kyugo hardware games
+    Kyugo hardware games
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@ data8_t *kyugo_sharedram;
 
 /*************************************
  *
- *	Machine initialization
+ *  Machine initialization
  *
  *************************************/
 
@@ -33,7 +33,7 @@ WRITE8_HANDLER( kyugo_sub_cpu_control_w )
 
 /*************************************
  *
- *	Shared RAM handlers
+ *  Shared RAM handlers
  *
  *************************************/
 

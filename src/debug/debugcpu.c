@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugcpu.c
-**		Debugger CPU/memory interface engine.
-**		Written by Aaron Giles
+**      debugcpu.c
+**      Debugger CPU/memory interface engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -19,7 +19,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG			0
@@ -27,7 +27,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define NUM_TEMP_VARIABLES	10
@@ -35,13 +35,13 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 /* fixme: make this go away */
@@ -76,7 +76,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void perform_trace(struct debug_cpu_info *info);
@@ -93,11 +93,11 @@ static void set_cpu_reg(UINT32 ref, UINT64 value);
 
 
 /*###################################################################################################
-**	FRONTENDS FOR OLDER FUNCTIONS
+**  FRONTENDS FOR OLDER FUNCTIONS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	mame_debug_init - start up all subsections
+    mame_debug_init - start up all subsections
 -------------------------------------------------*/
 
 void mame_debug_init(void)
@@ -111,7 +111,7 @@ void mame_debug_init(void)
 
 
 /*-------------------------------------------------
-	mame_debug_exit - shutdown all subsections
+    mame_debug_exit - shutdown all subsections
 -------------------------------------------------*/
 
 void mame_debug_exit(void)
@@ -124,8 +124,8 @@ void mame_debug_exit(void)
 
 
 /*-------------------------------------------------
-	set_ea_info - hacky substitute for the old
-	version in mamedbg.c
+    set_ea_info - hacky substitute for the old
+    version in mamedbg.c
 -------------------------------------------------*/
 
 #ifdef MAME_DEBUG
@@ -216,18 +216,18 @@ const char *set_ea_info(int what, unsigned value, int size, int access)
 
 
 /*###################################################################################################
-**	INITIALIZATION
+**  INITIALIZATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_cpu_init - initialize the CPU
-	information for debugging
+    debug_cpu_init - initialize the CPU
+    information for debugging
 -------------------------------------------------*/
 
 void debug_cpu_init(void)
 {
 	int cpunum, spacenum, regnum;
-	
+
 	/* reset globals */
 	execution_state = EXECUTION_STATE_STOPPED;
 	execution_counter = 0;
@@ -239,13 +239,13 @@ void debug_cpu_init(void)
 	step_overout_breakpoint = ~0;
 	step_overout_cpunum = 0;
 	key_check_counter = 0;
-	
+
 	/* add "wpaddr", "wpdata", "cycles", "cpunum" to the global symbol table */
 	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "wpaddr", 0, get_wpaddr, NULL);
 	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "wpdata", 0, get_wpdata, NULL);
 	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "cycles", 0, get_cycles, NULL);
 	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "cpunum", 0, get_cpunum, NULL);
-	
+
 	/* add the temporary variables to the global symbol table */
 	for (regnum = 0; regnum < NUM_TEMP_VARIABLES; regnum++)
 	{
@@ -253,7 +253,7 @@ void debug_cpu_init(void)
 		sprintf(symname, "temp%d", regnum);
 		debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, symname, regnum, get_tempvar, set_tempvar);
 	}
-	
+
 	/* reset the CPU info */
 	memset(debug_cpuinfo, 0, sizeof(debug_cpuinfo));
 
@@ -265,17 +265,17 @@ void debug_cpu_init(void)
 		/* if this is a dummy, stop looking */
 		if (cputype == CPU_DUMMY)
 			break;
-			
+
 		/* reset the PC data */
 		debug_cpuinfo[cpunum].valid = 1;
 		debug_cpuinfo[cpunum].endianness = cpunum_endianness(cpunum);
 		debug_cpuinfo[cpunum].opwidth = cpunum_min_instruction_bytes(cpunum);
 		debug_cpuinfo[cpunum].ignoring = 0;
 		debug_cpuinfo[cpunum].temp_breakpoint_pc = ~0;
-		
+
 		/* allocate a symbol table */
 		debug_cpuinfo[cpunum].symtable = debug_symtable_alloc();
-		
+
 		/* add all registers into it */
 		for (regnum = 0; regnum < MAX_REGS; regnum++)
 		{
@@ -283,7 +283,7 @@ void debug_cpu_init(void)
 			const char *colon;
 			char symname[256];
 			int charnum;
-			
+
 			/* skip if we don't get a valid string, or one without a colon */
 			if (str == NULL)
 				continue;
@@ -296,7 +296,7 @@ void debug_cpu_init(void)
 				if (!isspace(*str))
 					symname[charnum++] = tolower(*str);
 			symname[charnum] = 0;
-			
+
 			/* add the symbol to the table */
 			debug_symtable_add_register(debug_cpuinfo[cpunum].symtable, symname, regnum, get_cpu_reg, set_cpu_reg);
 		}
@@ -307,7 +307,7 @@ void debug_cpu_init(void)
 			int datawidth = cpunum_databus_width(cpunum, spacenum);
 			int addrwidth = cpunum_addrbus_width(cpunum, spacenum);
 			int addrshift = cpunum_addrbus_shift(cpunum, spacenum);
-		
+
 			debug_cpuinfo[cpunum].space[spacenum].databytes = datawidth / 8;
 			debug_cpuinfo[cpunum].space[spacenum].addr2byte_lshift = (addrshift < 0) ? -addrshift : 0;
 			debug_cpuinfo[cpunum].space[spacenum].addr2byte_rshift = (addrshift > 0) ?  addrshift : 0;
@@ -319,13 +319,13 @@ void debug_cpu_init(void)
 
 
 /*-------------------------------------------------
-	debug_cpu_exit - free all memory
+    debug_cpu_exit - free all memory
 -------------------------------------------------*/
 
 void debug_cpu_exit(void)
 {
 	int cpunum, spacenum;
-	
+
 	/* loop over all watchpoints and breakpoints to free their memory */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
@@ -334,15 +334,15 @@ void debug_cpu_exit(void)
 			fclose(debug_cpuinfo[cpunum].trace.file);
 		if (debug_cpuinfo[cpunum].trace.action)
 			free(debug_cpuinfo[cpunum].trace.action);
-	
+
 		/* free the symbol table */
 		if (debug_cpuinfo[cpunum].symtable)
 			debug_symtable_free(debug_cpuinfo[cpunum].symtable);
-	
+
 		/* free all breakpoints */
 		while (debug_cpuinfo[cpunum].first_bp)
 			debug_breakpoint_clear(debug_cpuinfo[cpunum].first_bp->index);
-		
+
 		/* loop over all address spaces */
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 		{
@@ -356,12 +356,12 @@ void debug_cpu_exit(void)
 
 
 /*###################################################################################################
-**	EXECUTION CONTROL
+**  EXECUTION CONTROL
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_cpu_single_step - single step past the
-	requested number of instructions
+    debug_cpu_single_step - single step past the
+    requested number of instructions
 -------------------------------------------------*/
 
 void debug_cpu_single_step(int numsteps)
@@ -374,8 +374,8 @@ void debug_cpu_single_step(int numsteps)
 
 
 /*-------------------------------------------------
-	debug_cpu_single_step_over - single step over
-	a single instruction
+    debug_cpu_single_step_over - single step over
+    a single instruction
 -------------------------------------------------*/
 
 void debug_cpu_single_step_over(int numsteps)
@@ -389,8 +389,8 @@ void debug_cpu_single_step_over(int numsteps)
 
 
 /*-------------------------------------------------
-	debug_cpu_single_step_out - single step out of
-	the current function
+    debug_cpu_single_step_out - single step out of
+    the current function
 -------------------------------------------------*/
 
 void debug_cpu_single_step_out(void)
@@ -404,7 +404,7 @@ void debug_cpu_single_step_out(void)
 
 
 /*-------------------------------------------------
-	debug_cpu_go - resume execution
+    debug_cpu_go - resume execution
 -------------------------------------------------*/
 
 void debug_cpu_go(offs_t targetpc)
@@ -417,8 +417,8 @@ void debug_cpu_go(offs_t targetpc)
 
 
 /*-------------------------------------------------
-	debug_cpu_go_vblank - run until the next
-	VBLANK
+    debug_cpu_go_vblank - run until the next
+    VBLANK
 -------------------------------------------------*/
 
 void debug_cpu_go_vblank(void)
@@ -432,8 +432,8 @@ void debug_cpu_go_vblank(void)
 
 
 /*-------------------------------------------------
-	debug_cpu_go_interrupt - run until the 
-	specified interrupt fires
+    debug_cpu_go_interrupt - run until the
+    specified interrupt fires
 -------------------------------------------------*/
 
 void debug_cpu_go_interrupt(int irqline)
@@ -449,8 +449,8 @@ void debug_cpu_go_interrupt(int irqline)
 
 
 /*-------------------------------------------------
-	debug_cpu_next_cpu - execute until we hit
-	the next CPU
+    debug_cpu_next_cpu - execute until we hit
+    the next CPU
 -------------------------------------------------*/
 
 void debug_cpu_next_cpu(void)
@@ -462,8 +462,8 @@ void debug_cpu_next_cpu(void)
 
 
 /*-------------------------------------------------
-	debug_cpu_ignore_cpu - ignore/observe a given
-	CPU
+    debug_cpu_ignore_cpu - ignore/observe a given
+    CPU
 -------------------------------------------------*/
 
 void debug_cpu_ignore_cpu(int cpunum, int ignore)
@@ -477,8 +477,8 @@ void debug_cpu_ignore_cpu(int cpunum, int ignore)
 
 
 /*-------------------------------------------------
-	debug_cpu_trace - trace execution of a given
-	CPU
+    debug_cpu_trace - trace execution of a given
+    CPU
 -------------------------------------------------*/
 
 void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
@@ -487,11 +487,11 @@ void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
 	if (debug_cpuinfo[cpunum].trace.file)
 		fclose(debug_cpuinfo[cpunum].trace.file);
 	debug_cpuinfo[cpunum].trace.file = NULL;
-	
+
 	if (debug_cpuinfo[cpunum].trace.action)
 		free(debug_cpuinfo[cpunum].trace.action);
 	debug_cpuinfo[cpunum].trace.action = NULL;
-	
+
 	/* open any new files */
 	debug_cpuinfo[cpunum].trace.file = file;
 	debug_cpuinfo[cpunum].trace.action = NULL;
@@ -509,12 +509,12 @@ void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
 
 
 /*###################################################################################################
-**	UTILITIES
+**  UTILITIES
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_get_cpu_info - returns the cpu info
-	block for a given CPU
+    debug_get_cpu_info - returns the cpu info
+    block for a given CPU
 -------------------------------------------------*/
 
 const struct debug_cpu_info *debug_get_cpu_info(int cpunum)
@@ -524,8 +524,8 @@ const struct debug_cpu_info *debug_get_cpu_info(int cpunum)
 
 
 /*-------------------------------------------------
-	debug_halt_on_next_instruction - halt in
-	the debugger on the next instruction
+    debug_halt_on_next_instruction - halt in
+    the debugger on the next instruction
 -------------------------------------------------*/
 
 void debug_halt_on_next_instruction(void)
@@ -535,8 +535,8 @@ void debug_halt_on_next_instruction(void)
 
 
 /*-------------------------------------------------
-	debug_refresh_display - redraw the current
-	video display
+    debug_refresh_display - redraw the current
+    video display
 -------------------------------------------------*/
 
 void debug_refresh_display(void)
@@ -548,8 +548,8 @@ void debug_refresh_display(void)
 
 
 /*-------------------------------------------------
-	debug_get_execution_state - return the
-	current execution state
+    debug_get_execution_state - return the
+    current execution state
 -------------------------------------------------*/
 
 int debug_get_execution_state(void)
@@ -559,8 +559,8 @@ int debug_get_execution_state(void)
 
 
 /*-------------------------------------------------
-	debug_get_execution_counter - return the
-	current execution counter
+    debug_get_execution_counter - return the
+    current execution counter
 -------------------------------------------------*/
 
 UINT32 debug_get_execution_counter(void)
@@ -570,8 +570,8 @@ UINT32 debug_get_execution_counter(void)
 
 
 /*-------------------------------------------------
-	get_wpaddr - getter callback for the
-	'wpaddr' symbol
+    get_wpaddr - getter callback for the
+    'wpaddr' symbol
 -------------------------------------------------*/
 
 static UINT64 get_wpaddr(UINT32 ref)
@@ -581,8 +581,8 @@ static UINT64 get_wpaddr(UINT32 ref)
 
 
 /*-------------------------------------------------
-	get_wpdata - getter callback for the
-	'wpdata' symbol
+    get_wpdata - getter callback for the
+    'wpdata' symbol
 -------------------------------------------------*/
 
 static UINT64 get_wpdata(UINT32 ref)
@@ -592,8 +592,8 @@ static UINT64 get_wpdata(UINT32 ref)
 
 
 /*-------------------------------------------------
-	get_cycles - getter callback for the
-	'cycles' symbol
+    get_cycles - getter callback for the
+    'cycles' symbol
 -------------------------------------------------*/
 
 static UINT64 get_cycles(UINT32 ref)
@@ -603,8 +603,8 @@ static UINT64 get_cycles(UINT32 ref)
 
 
 /*-------------------------------------------------
-	get_cpunum - getter callback for the
-	'cpunum' symbol
+    get_cpunum - getter callback for the
+    'cpunum' symbol
 -------------------------------------------------*/
 
 static UINT64 get_cpunum(UINT32 ref)
@@ -614,8 +614,8 @@ static UINT64 get_cpunum(UINT32 ref)
 
 
 /*-------------------------------------------------
-	get_tempvar - getter callback for the
-	'tempX' symbols
+    get_tempvar - getter callback for the
+    'tempX' symbols
 -------------------------------------------------*/
 
 static UINT64 get_tempvar(UINT32 ref)
@@ -625,8 +625,8 @@ static UINT64 get_tempvar(UINT32 ref)
 
 
 /*-------------------------------------------------
-	set_tempvar - setter callback for the
-	'tempX' symbols
+    set_tempvar - setter callback for the
+    'tempX' symbols
 -------------------------------------------------*/
 
 static void set_tempvar(UINT32 ref, UINT64 value)
@@ -636,8 +636,8 @@ static void set_tempvar(UINT32 ref, UINT64 value)
 
 
 /*-------------------------------------------------
-	get_cpu_reg - getter callback for a CPU's
-	register symbols
+    get_cpu_reg - getter callback for a CPU's
+    register symbols
 -------------------------------------------------*/
 
 static UINT64 get_cpu_reg(UINT32 ref)
@@ -647,8 +647,8 @@ static UINT64 get_cpu_reg(UINT32 ref)
 
 
 /*-------------------------------------------------
-	set_cpu_reg - setter callback for a CPU's
-	register symbols
+    set_cpu_reg - setter callback for a CPU's
+    register symbols
 -------------------------------------------------*/
 
 static void set_cpu_reg(UINT32 ref, UINT64 value)
@@ -659,33 +659,33 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 
 
 /*###################################################################################################
-**	MAIN CPU CALLBACK
+**  MAIN CPU CALLBACK
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	MAME_Debug - called by the CPU cores before
-	executing any instruction
+    MAME_Debug - called by the CPU cores before
+    executing any instruction
 -------------------------------------------------*/
 
 void MAME_Debug(void)
 {
 	int cpunum = cpu_getactivecpu();
 	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
-	
+
 	/* quick out if we are ignoring */
 	if (info->ignoring)
 		return;
-	
+
 	/* note that we are in the debugger code */
 	within_debugger_code = 1;
-	
+
 	/* bump the counter */
 	execution_counter++;
-	
+
 	/* are we tracing? */
 	if (info->trace.file)
 		perform_trace(info);
-	
+
 	/* check for execution breakpoints */
 	if (execution_state != EXECUTION_STATE_STOPPED)
 	{
@@ -696,7 +696,7 @@ void MAME_Debug(void)
 			break_on_interrupt = 0;
 			execution_state = EXECUTION_STATE_STOPPED;
 		}
-	
+
 		/* see if the CPU changed and break if we are waiting for that to happen */
 		if (cpunum != last_cpunum)
 		{
@@ -704,7 +704,7 @@ void MAME_Debug(void)
 				execution_state = EXECUTION_STATE_STOPPED;
 			last_cpunum = cpunum;
 		}
-		
+
 		/* check the temp running breakpoint and break if we hit it */
 		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && activecpu_get_pc() == info->temp_breakpoint_pc)
 		{
@@ -712,11 +712,11 @@ void MAME_Debug(void)
 			debug_console_printf("Stopped at temporary breakpoint %X on CPU %d\n", info->temp_breakpoint_pc, cpunum);
 			info->temp_breakpoint_pc = ~0;
 		}
-		
+
 		/* check for execution breakpoints */
 		if (info->first_bp)
 			debug_check_breakpoints(cpunum, activecpu_get_pc());
-		
+
 		/* handle single stepping */
 		if (steps_until_stop > 0 && (execution_state >= EXECUTION_STATE_STEP_INTO && execution_state <= EXECUTION_STATE_STEP_OUT))
 		{
@@ -756,7 +756,7 @@ void MAME_Debug(void)
 			}
 		}
 	}
-	
+
 	/* if we are supposed to halt, do it now */
 	if (execution_state == EXECUTION_STATE_STOPPED)
 	{
@@ -767,7 +767,7 @@ void MAME_Debug(void)
 		/* update all views */
 		debug_view_update_all();
 		debug_refresh_display();
-		
+
 		/* wait for the debugger; during this time, disable sound output */
 		osd_sound_enable(0);
 		while (execution_state == EXECUTION_STATE_STOPPED)
@@ -798,11 +798,11 @@ void MAME_Debug(void)
 			}
 		}
 		osd_sound_enable(1);
-		
+
 		/* remember the last cpunum where we stopped */
 		last_stopped_cpunum = cpunum;
 	}
-	
+
 	/* handle step out/over on the instruction we are about to execute */
 	if ((execution_state == EXECUTION_STATE_STEP_OVER || execution_state == EXECUTION_STATE_STEP_OUT) && cpunum == step_overout_cpunum && step_overout_breakpoint == ~0)
 		prepare_for_step_overout();
@@ -813,8 +813,8 @@ void MAME_Debug(void)
 
 
 /*-------------------------------------------------
-	perform_trace - log to the tracefile the
-	data for a given instruction
+    perform_trace - log to the tracefile the
+    data for a given instruction
 -------------------------------------------------*/
 
 static void perform_trace(struct debug_cpu_info *info)
@@ -831,12 +831,12 @@ static void perform_trace(struct debug_cpu_info *info)
 			return;
 		info->trace.trace_over_target = ~0;
 	}
-	
+
 	/* check for a loop condition */
 	for (i = count = 0; i < TRACE_LOOPS; i++)
 		if (info->trace.history[i] == pc)
 			count++;
-	
+
 	/* if no more than 1 hit, process normally */
 	if (count <= 1)
 	{
@@ -844,17 +844,17 @@ static void perform_trace(struct debug_cpu_info *info)
 		if (info->trace.loops)
 			fprintf(info->trace.file, "\n   (loops for %d instructions)\n\n", info->trace.loops);
 		info->trace.loops = 0;
-	
+
 		/* execute any trace actions first */
 		if (info->trace.action)
 			debug_console_execute_command(info->trace.action, 0);
-		
+
 		/* print the address */
 		offset = sprintf(buffer, "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
-		
+
 		/* print the disassembly */
 		dasmresult = activecpu_dasm(&buffer[offset], pc);
-		
+
 		/* output the result */
 		fprintf(info->trace.file, "%s\n", buffer);
 
@@ -864,11 +864,11 @@ static void perform_trace(struct debug_cpu_info *info)
 		{
 			int extraskip = (dasmresult & DASMFLAG_OVERINSTMASK) >> DASMFLAG_OVERINSTSHIFT;
 			offs_t trace_over_target = pc + (dasmresult & DASMFLAG_LENGTHMASK);
-					
+
 			/* if we need to skip additional instructions, advance as requested */
 			while (extraskip-- > 0)
 				trace_over_target += activecpu_dasm(buffer, trace_over_target) & DASMFLAG_LENGTHMASK;
-				
+
 			info->trace.trace_over_target = trace_over_target;
 		}
 
@@ -876,16 +876,16 @@ static void perform_trace(struct debug_cpu_info *info)
 		info->trace.nextdex = (info->trace.nextdex + 1) % TRACE_LOOPS;
 		info->trace.history[info->trace.nextdex] = pc;
 	}
-	
+
 	/* else just count the loop */
 	else
 		info->trace.loops++;
 }
-	
+
 
 /*-------------------------------------------------
-	prepare_for_step_overout - prepare things for
-	stepping over an instruction
+    prepare_for_step_overout - prepare things for
+    stepping over an instruction
 -------------------------------------------------*/
 
 static void prepare_for_step_overout(void)
@@ -896,19 +896,19 @@ static void prepare_for_step_overout(void)
 
 	/* disassemble the current instruction and get the flags */
 	dasmresult = activecpu_dasm(dasmbuffer, pc);
-	
+
 	/* if flags are supported and it's a call-style opcode, set a temp breakpoint after that instruction */
 	if ((dasmresult & DASMFLAG_SUPPORTED) && (dasmresult & DASMFLAG_STEP_OVER))
 	{
 		int extraskip = (dasmresult & DASMFLAG_OVERINSTMASK) >> DASMFLAG_OVERINSTSHIFT;
 		pc += dasmresult & DASMFLAG_LENGTHMASK;
-		
+
 		/* if we need to skip additional instructions, advance as requested */
 		while (extraskip-- > 0)
 			pc += activecpu_dasm(dasmbuffer, pc) & DASMFLAG_LENGTHMASK;
 		step_overout_breakpoint = pc;
 	}
-	
+
 	/* if we're stepping out and this isn't a step out instruction, reset the steps until stop to a high number */
 	if (execution_state == EXECUTION_STATE_STEP_OUT)
 	{
@@ -918,11 +918,11 @@ static void prepare_for_step_overout(void)
 			steps_until_stop = 1;
 	}
 }
-	
+
 
 /*-------------------------------------------------
-	debug_vblank_hook - called when the real
-	VBLANK hits
+    debug_vblank_hook - called when the real
+    VBLANK hits
 -------------------------------------------------*/
 
 void debug_vblank_hook(void)
@@ -938,8 +938,8 @@ void debug_vblank_hook(void)
 
 
 /*-------------------------------------------------
-	debug_vblank_hook - called when an interrupt
-	is acknowledged
+    debug_vblank_hook - called when an interrupt
+    is acknowledged
 -------------------------------------------------*/
 
 void debug_interrupt_hook(int cpunum, int irqline)
@@ -955,29 +955,29 @@ void debug_interrupt_hook(int cpunum, int irqline)
 
 
 /*###################################################################################################
-**	BREAKPOINTS
+**  BREAKPOINTS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_check_breakpoints - check the 
-	breakpoints for a given CPU
+    debug_check_breakpoints - check the
+    breakpoints for a given CPU
 -------------------------------------------------*/
 
 void debug_check_breakpoints(int cpunum, offs_t pc)
 {
 	struct breakpoint *bp;
 	UINT64 result;
-	
+
 	/* see if we match */
 	for (bp = debug_cpuinfo[cpunum].first_bp; bp; bp = bp->next)
 		if (bp->enabled && bp->address == pc)
-		
+
 			/* if we do, evaluate the condition */
 			if (bp->condition == NULL || (debug_expression_execute(bp->condition, &result) == EXPRERR_NONE && result))
 			{
 				/* halt in the debugger by default */
 				execution_state = EXECUTION_STATE_STOPPED;
-				
+
 				/* if we hit, evaluate the action */
 				if (bp->action != NULL)
 					debug_console_execute_command(bp->action, 0);
@@ -991,28 +991,28 @@ void debug_check_breakpoints(int cpunum, offs_t pc)
 
 
 /*-------------------------------------------------
-	debug_breakpoint_first - find the first
-	breakpoint for a given CPU
+    debug_breakpoint_first - find the first
+    breakpoint for a given CPU
 -------------------------------------------------*/
 
 static struct breakpoint *find_breakpoint(int bpnum)
 {
 	struct breakpoint *bp;
 	int cpunum;
-	
+
 	/* loop over CPUs and find the requested breakpoint */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		for (bp = debug_cpuinfo[cpunum].first_bp; bp; bp = bp->next)
 			if (bp->index == bpnum)
 				return bp;
-	
+
 	return NULL;
 }
 
 
 /*-------------------------------------------------
-	debug_breakpoint_first - return the first
-	breakpoint for a given CPU
+    debug_breakpoint_first - return the first
+    breakpoint for a given CPU
 -------------------------------------------------*/
 
 struct breakpoint *debug_breakpoint_first(int cpunum)
@@ -1022,17 +1022,17 @@ struct breakpoint *debug_breakpoint_first(int cpunum)
 
 
 /*-------------------------------------------------
-	debug_breakpoint_set - set a new breakpoint
+    debug_breakpoint_set - set a new breakpoint
 -------------------------------------------------*/
 
 int debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *condition, const char *action)
 {
 	struct breakpoint *bp = malloc(sizeof(*bp));
-	
+
 	/* if we can't allocate, return failure */
 	if (!bp)
 		return 0;
-	
+
 	/* fill in the structure */
 	bp->index = next_index++;
 	bp->enabled = 1;
@@ -1045,7 +1045,7 @@ int debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *c
 		if (bp->action)
 			strcpy(bp->action, action);
 	}
-	
+
 	/* hook us in */
 	bp->next = debug_cpuinfo[cpunum].first_bp;
 	debug_cpuinfo[cpunum].first_bp = bp;
@@ -1054,14 +1054,14 @@ int debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *c
 
 
 /*-------------------------------------------------
-	debug_breakpoint_clear - clear a breakpoint
+    debug_breakpoint_clear - clear a breakpoint
 -------------------------------------------------*/
 
 int debug_breakpoint_clear(int bpnum)
 {
 	struct breakpoint *bp, *pbp;
 	int cpunum;
-	
+
 	/* loop over CPUs and find the requested breakpoint */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		for (pbp = NULL, bp = debug_cpuinfo[cpunum].first_bp; bp; pbp = bp, bp = bp->next)
@@ -1072,7 +1072,7 @@ int debug_breakpoint_clear(int bpnum)
 					debug_cpuinfo[cpunum].first_bp = bp->next;
 				else
 					pbp->next = bp->next;
-				
+
 				/* free the memory */
 				if (bp->condition)
 					debug_expression_free(bp->condition);
@@ -1081,21 +1081,21 @@ int debug_breakpoint_clear(int bpnum)
 				free(bp);
 				return 1;
 			}
-	
+
 	/* we didn't find it; return an error */
 	return 0;
 }
 
 
 /*-------------------------------------------------
-	debug_breakpoint_enable - enable/disable a 
-	breakpoint
+    debug_breakpoint_enable - enable/disable a
+    breakpoint
 -------------------------------------------------*/
 
 int debug_breakpoint_enable(int bpnum, int enable)
 {
 	struct breakpoint *bp = find_breakpoint(bpnum);
-	
+
 	/* if we found it, set it */
 	if (bp != NULL)
 	{
@@ -1108,32 +1108,32 @@ int debug_breakpoint_enable(int bpnum, int enable)
 
 
 /*###################################################################################################
-**	WATCHPOINTS
+**  WATCHPOINTS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_check_watchpoints - check the 
-	breakpoints for a given CPU and address space
+    debug_check_watchpoints - check the
+    breakpoints for a given CPU and address space
 -------------------------------------------------*/
 
 void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write)
 {
 	struct watchpoint *wp;
 	UINT64 result;
-	
+
 	/* if we're within debugger code, don't stop */
 	if (within_debugger_code)
 		return;
-	
+
 	/* if we are a write watchpoint, stash the value that will be written */
 	wpaddr = address;
 	if (type & WATCHPOINT_WRITE)
 		wpdata = value_to_write;
-				
+
 	/* see if we match */
 	for (wp = debug_cpuinfo[cpunum].space[spacenum].first_wp; wp; wp = wp->next)
 		if (wp->enabled && (wp->type & type) && address + size > wp->address && address < wp->address + wp->length)
-		
+
 			/* if we do, evaluate the condition */
 			if (wp->condition == NULL || (debug_expression_execute(wp->condition, &result) == EXPRERR_NONE && result))
 			{
@@ -1145,11 +1145,11 @@ void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address,
 
 				/* halt in the debugger by default */
 				execution_state = EXECUTION_STATE_STOPPED;
-				
+
 				/* if we hit, evaluate the action */
 				if (wp->action != NULL)
 					debug_console_execute_command(wp->action, 0);
-				
+
 				/* print a notification, unless the action made us go again */
 				if (execution_state == EXECUTION_STATE_STOPPED)
 				{
@@ -1171,29 +1171,29 @@ void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address,
 
 
 /*-------------------------------------------------
-	debug_watchpoint_first - find the first
-	watchpoint for a given CPU
+    debug_watchpoint_first - find the first
+    watchpoint for a given CPU
 -------------------------------------------------*/
 
 static struct watchpoint *find_watchpoint(int wpnum)
 {
 	struct watchpoint *wp;
 	int cpunum, spacenum;
-	
+
 	/* loop over CPUs and address spaces and find the requested watchpoint */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			for (wp = debug_cpuinfo[cpunum].space[spacenum].first_wp; wp; wp = wp->next)
 				if (wp->index == wpnum)
 					return wp;
-	
+
 	return NULL;
 }
 
 
 /*-------------------------------------------------
-	debug_watchpoint_first - return the first
-	watchpoint for a given CPU
+    debug_watchpoint_first - return the first
+    watchpoint for a given CPU
 -------------------------------------------------*/
 
 struct watchpoint *debug_watchpoint_first(int cpunum, int spacenum)
@@ -1203,17 +1203,17 @@ struct watchpoint *debug_watchpoint_first(int cpunum, int spacenum)
 
 
 /*-------------------------------------------------
-	debug_watchpoint_set - set a new watchpoint
+    debug_watchpoint_set - set a new watchpoint
 -------------------------------------------------*/
 
 int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, struct parsed_expression *condition, const char *action)
 {
 	struct watchpoint *wp = malloc(sizeof(*wp));
-	
+
 	/* if we can't allocate, return failure */
 	if (!wp)
 		return 0;
-	
+
 	/* fill in the structure */
 	wp->index = next_index++;
 	wp->enabled = 1;
@@ -1228,7 +1228,7 @@ int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, off
 		if (wp->action)
 			strcpy(wp->action, action);
 	}
-	
+
 	/* hook us in */
 	wp->next = debug_cpuinfo[cpunum].space[spacenum].first_wp;
 	debug_cpuinfo[cpunum].space[spacenum].first_wp = wp;
@@ -1238,14 +1238,14 @@ int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, off
 
 
 /*-------------------------------------------------
-	debug_watchpoint_clear - clear a watchpoint
+    debug_watchpoint_clear - clear a watchpoint
 -------------------------------------------------*/
 
 int debug_watchpoint_clear(int wpnum)
 {
 	struct watchpoint *wp, *pwp;
 	int cpunum, spacenum;
-	
+
 	/* loop over CPUs and find the requested watchpoint */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
@@ -1257,7 +1257,7 @@ int debug_watchpoint_clear(int wpnum)
 						debug_cpuinfo[cpunum].space[spacenum].first_wp = wp->next;
 					else
 						pwp->next = wp->next;
-					
+
 					/* free the memory */
 					if (wp->condition)
 						debug_expression_free(wp->condition);
@@ -1267,21 +1267,21 @@ int debug_watchpoint_clear(int wpnum)
 					debug_cpuinfo[cpunum].total_watchpoints--;
 					return 1;
 				}
-	
+
 	/* we didn't find it; return an error */
 	return 0;
 }
 
 
 /*-------------------------------------------------
-	debug_watchpoint_enable - enable/disable a 
-	watchpoint
+    debug_watchpoint_enable - enable/disable a
+    watchpoint
 -------------------------------------------------*/
 
 int debug_watchpoint_enable(int wpnum, int enable)
 {
 	struct watchpoint *wp = find_watchpoint(wpnum);
-	
+
 	/* if we found it, set it */
 	if (wp != NULL)
 	{
@@ -1293,8 +1293,8 @@ int debug_watchpoint_enable(int wpnum, int enable)
 
 
 /*-------------------------------------------------
-	debug_watchpoint_count_ptr - return a pointer
-	to the count of live watchpoints
+    debug_watchpoint_count_ptr - return a pointer
+    to the count of live watchpoints
 -------------------------------------------------*/
 
 const int *debug_watchpoint_count_ptr(int cpunum)
@@ -1306,18 +1306,18 @@ const int *debug_watchpoint_count_ptr(int cpunum)
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_read_byte - return a byte from the 
-	current cpu in the specified memory space
+    debug_read_byte - return a byte from the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 data8_t debug_read_byte(int spacenum, offs_t address)
 {
 	data8_t result;
-	
+
 	memory_set_debugger_access(1);
 	result = (*address_space[spacenum].accessors->read_byte)(address);
 	memory_set_debugger_access(0);
@@ -1326,8 +1326,8 @@ data8_t debug_read_byte(int spacenum, offs_t address)
 
 
 /*-------------------------------------------------
-	debug_read_word - return a word from the 
-	current cpu in the specified memory space
+    debug_read_word - return a word from the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 data16_t debug_read_word(int spacenum, offs_t address)
@@ -1354,8 +1354,8 @@ data16_t debug_read_word(int spacenum, offs_t address)
 
 
 /*-------------------------------------------------
-	debug_read_dword - return a dword from the 
-	current cpu in the specified memory space
+    debug_read_dword - return a dword from the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 data32_t debug_read_dword(int spacenum, offs_t address)
@@ -1382,8 +1382,8 @@ data32_t debug_read_dword(int spacenum, offs_t address)
 
 
 /*-------------------------------------------------
-	debug_read_qword - return a qword from the 
-	current cpu in the specified memory space
+    debug_read_qword - return a qword from the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 data64_t debug_read_qword(int spacenum, offs_t address)
@@ -1410,8 +1410,8 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 
 
 /*-------------------------------------------------
-	debug_write_byte - write a byte to the 
-	current cpu in the specified memory space
+    debug_write_byte - write a byte to the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 void debug_write_byte(int spacenum, offs_t address, data8_t data)
@@ -1423,8 +1423,8 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
 
 
 /*-------------------------------------------------
-	debug_write_word - write a word to the 
-	current cpu in the specified memory space
+    debug_write_word - write a word to the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 void debug_write_word(int spacenum, offs_t address, data16_t data)
@@ -1449,8 +1449,8 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 
 
 /*-------------------------------------------------
-	debug_write_dword - write a dword to the 
-	current cpu in the specified memory space
+    debug_write_dword - write a dword to the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 void debug_write_dword(int spacenum, offs_t address, data32_t data)
@@ -1475,8 +1475,8 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 
 
 /*-------------------------------------------------
-	debug_write_qword - write a qword to the 
-	current cpu in the specified memory space
+    debug_write_qword - write a qword to the
+    current cpu in the specified memory space
 -------------------------------------------------*/
 
 void debug_write_qword(int spacenum, offs_t address, data64_t data)
@@ -1501,8 +1501,8 @@ void debug_write_qword(int spacenum, offs_t address, data64_t data)
 
 
 /*-------------------------------------------------
-	debug_read_opcode - read 1,2,4 or 8 bytes at
-	the given offset from opcode space
+    debug_read_opcode - read 1,2,4 or 8 bytes at
+    the given offset from opcode space
 -------------------------------------------------*/
 
 UINT64 debug_read_opcode(UINT32 offset, int size)
@@ -1510,7 +1510,7 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	static const UINT64 dummy_data = ~0;
 	const void *ptr;
-	
+
 	/* adjust the offset */
 	memory_set_opbase(offset);
 	switch (info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size)
@@ -1518,49 +1518,49 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 		/* dump opcodes in bytes from a byte-sized bus */
 		case 11:
 			break;
-		
+
 		/* dump opcodes in bytes from a word-sized bus */
 		case 21:
 			offset ^= (info->endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in words from a word-sized bus */
 		case 22:
 			break;
-		
+
 		/* dump opcodes in bytes from a dword-sized bus */
 		case 41:
 			offset ^= (info->endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in words from a dword-sized bus */
 		case 42:
 			offset ^= (info->endianness == CPU_IS_LE) ? WORD_XOR_LE(0) : WORD_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in dwords from a dword-sized bus */
 		case 44:
 			break;
-		
+
 		/* dump opcodes in bytes from a qword-sized bus */
 		case 81:
 			offset ^= (info->endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in words from a qword-sized bus */
 		case 82:
 			offset ^= (info->endianness == CPU_IS_LE) ? WORD2_XOR_LE(0) : WORD2_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in dwords from a qword-sized bus */
 		case 84:
 			offset ^= (info->endianness == CPU_IS_LE) ? DWORD_XOR_LE(0) : DWORD_XOR_BE(0);
 			break;
-		
+
 		/* dump opcodes in qwords from a qword-sized bus */
 		case 88:
 			break;
-		
+
 		default:
 			osd_die("debug_read_opcode: unknown type = %d\n", info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size);
 			break;
@@ -1580,14 +1580,14 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 		case 4:	return *((data32_t *) ptr);
 		case 8:	return *((data64_t *) ptr);
 	}
-	
+
 	return 0;	/* appease compiler */
 }
 
 
 /*-------------------------------------------------
-	debug_read_memory - read 1,2,4 or 8 bytes at
-	the given offset in the given address space
+    debug_read_memory - read 1,2,4 or 8 bytes at
+    the given offset in the given address space
 -------------------------------------------------*/
 
 UINT64 debug_read_memory(int space, UINT32 offset, int size)
@@ -1610,8 +1610,8 @@ UINT64 debug_read_memory(int space, UINT32 offset, int size)
 
 
 /*-------------------------------------------------
-	debug_write_memory - write 1,2,4 or 8 bytes to
-	the given offset in the given address space
+    debug_write_memory - write 1,2,4 or 8 bytes to
+    the given offset in the given address space
 -------------------------------------------------*/
 
 void debug_write_memory(int space, UINT32 offset, int size, UINT64 value)
@@ -1633,8 +1633,8 @@ void debug_write_memory(int space, UINT32 offset, int size, UINT64 value)
 
 
 /*-------------------------------------------------
-	debug_trace_printf - writes text to a given
-	CPU's trace file
+    debug_trace_printf - writes text to a given
+    CPU's trace file
 -------------------------------------------------*/
 
 void debug_trace_printf(int cpunum, const char *fmt, ...)

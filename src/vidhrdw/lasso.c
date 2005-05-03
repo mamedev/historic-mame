@@ -2,28 +2,28 @@
 
  Lasso and similar hardware
 
-	driver by Phil Stroffolino, Nicola Salmoria, Luca Elia
+    driver by Phil Stroffolino, Nicola Salmoria, Luca Elia
 
 
-	Every game has 1 256 x 256 tilemap (non scrollable) made of 8 x 8
-	tiles, and 16 x 16 sprites (some games use 32, some more).
+    Every game has 1 256 x 256 tilemap (non scrollable) made of 8 x 8
+    tiles, and 16 x 16 sprites (some games use 32, some more).
 
-	The graphics for tiles and sprites are held inside the same ROMs,
-	but	aren't shared between the two:
+    The graphics for tiles and sprites are held inside the same ROMs,
+    but aren't shared between the two:
 
-	the first $100 tiles are for the tilemap, the following	$100 are
-	for sprites. This constitutes the first graphics bank. There can
-	be several.
+    the first $100 tiles are for the tilemap, the following $100 are
+    for sprites. This constitutes the first graphics bank. There can
+    be several.
 
-	Lasso has an additional pixel layer (256 x 256 x 1) and a third
-	CPU devoted to drawing into it (the lasso!)
+    Lasso has an additional pixel layer (256 x 256 x 1) and a third
+    CPU devoted to drawing into it (the lasso!)
 
-	Wwjgtin has an additional $800 x $400 scrolling tilemap in ROM
-	and $100 more 16 x 16 x 4 tiles for it.
+    Wwjgtin has an additional $800 x $400 scrolling tilemap in ROM
+    and $100 more 16 x 16 x 4 tiles for it.
 
-	The colors are static ($40 colors, 2 PROMs) but the background
-	color can be changed at runtime. Wwjgtin can change the last
-	4 colors (= last palette) too.
+    The colors are static ($40 colors, 2 PROMs) but the background
+    color can be changed at runtime. Wwjgtin can change the last
+    4 colors (= last palette) too.
 
 ***************************************************************************/
 
@@ -49,7 +49,7 @@ static int flip_screen_y;
 /***************************************************************************
 
 
-							Colors (BBGGGRRR)
+                            Colors (BBGGGRRR)
 
 
 ***************************************************************************/
@@ -140,7 +140,7 @@ static void pinbo_get_bg_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -179,7 +179,7 @@ VIDEO_START( pinbo )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 
@@ -267,7 +267,7 @@ WRITE8_HANDLER( wwjgtin_lastcolor_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 

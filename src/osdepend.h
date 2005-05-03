@@ -30,7 +30,7 @@ void osd_wait_for_debugger(void);
 
 /******************************************************************************
 
-	Display
+    Display
 
 ******************************************************************************/
 
@@ -131,7 +131,7 @@ const char *osd_get_fps_text(const struct performance_info *performance);
 
 /******************************************************************************
 
-	Sound
+    Sound
 
 ******************************************************************************/
 
@@ -162,9 +162,9 @@ void osd_stop_audio_stream(void);
 /*
   control master volume. attenuation is the attenuation in dB (a negative
   number). To convert from dB to a linear volume scale do the following:
-	volume = MAX_VOLUME;
-	while (attenuation++ < 0)
-		volume /= 1.122018454;		//	= (10 ^ (1/20)) = 1dB
+    volume = MAX_VOLUME;
+    while (attenuation++ < 0)
+        volume /= 1.122018454;      //  = (10 ^ (1/20)) = 1dB
 */
 void osd_set_mastervolume(int attenuation);
 int osd_get_mastervolume(void);
@@ -175,7 +175,7 @@ void osd_sound_enable(int enable);
 
 /******************************************************************************
 
-	Controls
+    Controls
 
 ******************************************************************************/
 
@@ -231,7 +231,7 @@ void osd_joystick_end_calibration(void);
 
 /******************************************************************************
 
-	File I/O
+    File I/O
 
 ******************************************************************************/
 
@@ -287,7 +287,7 @@ void osd_fclose(osd_file *file);
 
 /******************************************************************************
 
-	Timing
+    Timing
 
 ******************************************************************************/
 
@@ -308,7 +308,7 @@ cycles_t osd_profiling_ticks(void);
 
 /******************************************************************************
 
-	Miscellaneous
+    Miscellaneous
 
 ******************************************************************************/
 

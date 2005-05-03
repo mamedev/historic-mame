@@ -113,8 +113,8 @@ typedef enum
 
 	/* Assumed registers */
 	/* These are cheat registers which emulate the 1-longword prefetch
-	 * present in the 68000 and 68010.
-	 */
+     * present in the 68000 and 68010.
+     */
 	M68K_REG_PREF_ADDR,	/* Last prefetch address */
 	M68K_REG_PREF_DATA,	/* Last prefetch data */
 
@@ -275,7 +275,7 @@ void m68k_set_instr_hook_callback(void  (*callback)(void));
 /* ======================================================================== */
 
 /* Use this function to set the CPU type you want to emulate.
- * Currently supported types are: M68K_CPU_TYPE_68000, M68K_CPU_TYPE_68008, 
+ * Currently supported types are: M68K_CPU_TYPE_68000, M68K_CPU_TYPE_68008,
  * M68K_CPU_TYPE_68010, M68K_CPU_TYPE_EC020, and M68K_CPU_TYPE_68020.
  */
 void m68k_set_cpu_type(unsigned int cpu_type);

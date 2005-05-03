@@ -268,7 +268,7 @@ static void draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cl
 static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 
-	if (1)  
+	if (1)
 
 	{
 		int bpen,star_cntr;
@@ -282,9 +282,9 @@ static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *clip
 		bpen = Machine->pens[0x1f];
 		for (star_cntr = 0;star_cntr < MAX_STARS;star_cntr++)
 		{
-			int x,y;														  
-					
-			if   ( (set_a == star_seed_tab[star_cntr].set) ||  ( set_b == star_seed_tab[star_cntr].set) ) 	 
+			int x,y;
+
+			if   ( (set_a == star_seed_tab[star_cntr].set) ||  ( set_b == star_seed_tab[star_cntr].set) )
 			{
 
 
@@ -292,7 +292,7 @@ static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *clip
                                 y = (  star_seed_tab[star_cntr].y + stars_scrolly) % 256;
 
 				/* dont draw the stars that are off the screen */
-				if ( x < 224 && y < 224 ) 
+				if ( x < 224 && y < 224 )
 				 {
 
 					if (flip_screen) x += 64;
@@ -315,7 +315,7 @@ static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *clip
 VIDEO_UPDATE( bosco )
 {
 	/* the radar tilemap is just 8x32. We rely on the tilemap code to repeat it across
-	   the screen, and clip it to only the position where it is supposed to be shown */
+       the screen, and clip it to only the position where it is supposed to be shown */
 	struct rectangle fg_clip = *cliprect;
 	struct rectangle bg_clip = *cliprect;
 	if (flip_screen)

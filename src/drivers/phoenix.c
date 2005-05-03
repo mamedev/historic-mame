@@ -5,11 +5,11 @@ Phoenix hardware games
 driver by Richard Davies
 
 Note:
-	The discrete sound part of Phoenix requires a sample rate of at least 44100.
-	This is because the frequencies are so high, that some sounds will be
-	missed at a lower sample rate.
+    The discrete sound part of Phoenix requires a sample rate of at least 44100.
+    This is because the frequencies are so high, that some sounds will be
+    missed at a lower sample rate.
 
-	pleiads is using another sound driver, sndhrdw\pleiads.c
+    pleiads is using another sound driver, sndhrdw\pleiads.c
  Andrew Scott (ascott@utkux.utcc.utk.edu)
 
 
@@ -430,7 +430,7 @@ INPUT_PORTS_START( pleiadce )
 	PORT_DIPSETTING(	0x00, "7K 70K" )
 	PORT_DIPSETTING(	0x04, "8K 80K" )
 	PORT_DIPSETTING(	0x08, "9K 90K" )
-  /*PORT_DIPSETTING(	0x0c, "INVALID" )   Sets bonus to A000 */
+  /*PORT_DIPSETTING(    0x0c, "INVALID" )   Sets bonus to A000 */
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
@@ -585,10 +585,10 @@ static struct TMS36XXinterface pleiads_tms36xx_interface =
 {
 	TMS3615,	/* TMS36xx subtype(s) */
 	/*
-	 * Decay times of the voices; NOTE: it's unknown if
-	 * the the TMS3615 mixes more than one voice internally.
-	 * A wav taken from Pop Flamer sounds like there
-	 * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
+     * Decay times of the voices; NOTE: it's unknown if
+     * the the TMS3615 mixes more than one voice internally.
+     * A wav taken from Pop Flamer sounds like there
+     * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
      */
 	{0.33,0.33,0,0.33,0,0.33}
 };

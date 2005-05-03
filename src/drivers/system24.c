@@ -388,7 +388,7 @@ static READ16_HANDLER( fdc_r )
 		int res = fdc_data;
 		if(fdc_drq) {
 			fdc_span--;
-			//			logerror("Read %02x (%d)\n", res, fdc_span);
+			//          logerror("Read %02x (%d)\n", res, fdc_span);
 			if(fdc_span) {
 				fdc_pt++;
 				fdc_data = *fdc_pt;
@@ -473,7 +473,7 @@ static WRITE16_HANDLER( fdc_w )
 			break;
 		case 3:
 			if(fdc_drq) {
-				//				logerror("Write %02x (%d)\n", data, fdc_span);
+				//              logerror("Write %02x (%d)\n", data, fdc_span);
 				*fdc_pt++ = data;
 				fdc_span--;
 				if(!fdc_span) {
@@ -696,8 +696,8 @@ static void reset_reset(void)
 		if(resetcontrol & 2) {
 			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
-//			printf("enable 2nd cpu!\n");
-//			debug_halt_on_next_instruction();
+//          printf("enable 2nd cpu!\n");
+//          debug_halt_on_next_instruction();
 			s24_fd1094_machine_init();
 
 		} else
@@ -894,7 +894,7 @@ static READ16_HANDLER(irq_r)
 {
 	/* These hacks are for Gain Ground */
 	/* otherwise the interrupt occurs before the correct state has been
-	   set and the game crashes before booting */
+       set and the game crashes before booting */
 	if (!strcmp(Machine->gamedrv->name,"gground"))
 	{
 
@@ -1650,7 +1650,7 @@ INPUT_PORTS_START( quizmeku )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-    
+
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
@@ -1995,7 +1995,7 @@ ROM_START( sgmast )
 	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
 	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
-//	ROM_LOAD( "317-0058-05d.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
+//  ROM_LOAD( "317-0058-05d.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
 	/* not sure which of these images is best */

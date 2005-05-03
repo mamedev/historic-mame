@@ -1,42 +1,42 @@
 /****************************************************************************
 
-	NEC V20/V30/V33 emulator
+    NEC V20/V30/V33 emulator
 
-	(Re)Written June-September 2000 by Bryan McPhail (mish@tendril.co.uk) based
-	on code by Oliver Bergmann (Raul_Bloodworth@hotmail.com) who based code
-	on the i286 emulator by Fabrice Frances which had initial work based on
-	David Hedley's pcemu(!).
+    (Re)Written June-September 2000 by Bryan McPhail (mish@tendril.co.uk) based
+    on code by Oliver Bergmann (Raul_Bloodworth@hotmail.com) who based code
+    on the i286 emulator by Fabrice Frances which had initial work based on
+    David Hedley's pcemu(!).
 
-	This new core features 99% accurate cycle counts for each processor,
-	there are still some complex situations where cycle counts are wrong,
-	typically where a few instructions have differing counts for odd/even
-	source and odd/even destination memory operands.
+    This new core features 99% accurate cycle counts for each processor,
+    there are still some complex situations where cycle counts are wrong,
+    typically where a few instructions have differing counts for odd/even
+    source and odd/even destination memory operands.
 
-	Flag settings are also correct for the NEC processors rather than the
-	I86 versions.
+    Flag settings are also correct for the NEC processors rather than the
+    I86 versions.
 
-	Changelist:
+    Changelist:
 
-	22/02/2003:
-		Removed cycle counts from memory accesses - they are certainly wrong,
-		and there is already a memory access cycle penalty in the opcodes
-		using them.
+    22/02/2003:
+        Removed cycle counts from memory accesses - they are certainly wrong,
+        and there is already a memory access cycle penalty in the opcodes
+        using them.
 
-		Fixed save states.
+        Fixed save states.
 
-		Fixed ADJBA/ADJBS/ADJ4A/ADJ4S flags/return values for all situations.
-		(Fixes bugs in Geostorm and Thunderblaster)
+        Fixed ADJBA/ADJBS/ADJ4A/ADJ4S flags/return values for all situations.
+        (Fixes bugs in Geostorm and Thunderblaster)
 
-		Fixed carry flag on NEG (I thought this had been fixed circa Mame 0.58,
-		but it seems I never actually submitted the fix).
+        Fixed carry flag on NEG (I thought this had been fixed circa Mame 0.58,
+        but it seems I never actually submitted the fix).
 
-		Fixed many cycle counts in instructions and bug in cycle count
-		macros (odd word cases were testing for odd instruction word address
-		not data address).
+        Fixed many cycle counts in instructions and bug in cycle count
+        macros (odd word cases were testing for odd instruction word address
+        not data address).
 
-	Todo!
-		Double check cycle timing is 100%.
-		Fix memory interface (should be 16 bit).
+    Todo!
+        Double check cycle timing is 100%.
+        Fix memory interface (should be 16 bit).
 
 ****************************************************************************/
 
@@ -112,7 +112,7 @@ static UINT32 prefix_base;	/* base address of the latest prefix segment */
 char seg_prefix;		/* prefix segment indicator */
 
 
-/* The interrupt number of a pending external interrupt pending NMI is 2.	*/
+/* The interrupt number of a pending external interrupt pending NMI is 2.   */
 /* For INTR interrupts, the level is caught on the bus during an INTA cycle */
 
 #define INT_IRQ 0x01
@@ -921,12 +921,12 @@ static void set_irq_line(int irqline, int state)
 		I.irq_state = state;
 		if (state == CLEAR_LINE)
 		{
-	//		if (!I.IF)	NS010718 fix interrupt request loss
+	//      if (!I.IF)  NS010718 fix interrupt request loss
 				I.pending_irq &= ~INT_IRQ;
 		}
 		else
 		{
-	//		if (I.IF)	NS010718 fix interrupt request loss
+	//      if (I.IF)   NS010718 fix interrupt request loss
 				I.pending_irq |= INT_IRQ;
 		}
 	}

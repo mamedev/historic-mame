@@ -1,13 +1,13 @@
-/* Field Combat (c)1985 Jaleco 
+/* Field Combat (c)1985 Jaleco
 
-	TS 2004.10.22. analog[at]op.pl
-	- fixed sprite issues
+    TS 2004.10.22. analog[at]op.pl
+    - fixed sprite issues
   - added backgrounds and terrain info (external roms)
 
-	(press buttons 1+2 at the same time, to release 'army' ;)
+    (press buttons 1+2 at the same time, to release 'army' ;)
 
-	todo:
-		- fix colours (sprites , bg)
+    todo:
+        - fix colours (sprites , bg)
 */
 
 /* dump info
@@ -115,10 +115,10 @@ static READ8_HANDLER( fcombat_protection_r )
 {
 	/* Must match ONE of these values after a "and  $3E" intruction :
 
-		76F0: 1E 04 2E 26 34 32 3A 16 3E 36
+        76F0: 1E 04 2E 26 34 32 3A 16 3E 36
 
-	   Check code at 0x76c8 for more infos.
-	*/
+       Check code at 0x76c8 for more infos.
+    */
 	return 0xff;	// seems enough
 }
 
@@ -143,7 +143,7 @@ static READ8_HANDLER( fcombat_port3_r )
 }
 
 
-//bg scrolls 
+//bg scrolls
 
 static WRITE8_HANDLER(e900_w)
 {
@@ -193,11 +193,11 @@ static ADDRESS_MAP_START( fcombat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xe000) AM_READ(fcombat_port01_r)
 	AM_RANGE(0xe100, 0xe100) AM_READ(input_port_2_r)
 	AM_RANGE(0xe200, 0xe200) AM_READ(fcombat_port3_r)
-	AM_RANGE(0xe300, 0xe300) AM_READ(e300_r) 
+	AM_RANGE(0xe300, 0xe300) AM_READ(e300_r)
 	AM_RANGE(0xe400, 0xe400) AM_READ(fcombat_protection_r) // protection?
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM) 
-	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) 
-	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM) 
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fcombat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -208,12 +208,12 @@ static ADDRESS_MAP_START( fcombat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0xe800, 0xe800) AM_WRITE(fcombat_videoreg_w)	// at least bit 0 for flip screen and joystick input multiplexor
 
-	AM_RANGE(0xe900, 0xe900) AM_WRITE(e900_w)	
-	AM_RANGE(0xea00, 0xea00) AM_WRITE(ea00_w)	
-	AM_RANGE(0xeb00, 0xeb00) AM_WRITE(eb00_w)	
+	AM_RANGE(0xe900, 0xe900) AM_WRITE(e900_w)
+	AM_RANGE(0xea00, 0xea00) AM_WRITE(ea00_w)
+	AM_RANGE(0xeb00, 0xeb00) AM_WRITE(eb00_w)
 
-	AM_RANGE(0xec00, 0xec00) AM_WRITE(ec00_w)	
-	AM_RANGE(0xed00, 0xed00) AM_WRITE(ed00_w)	
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(ec00_w)
+	AM_RANGE(0xed00, 0xed00) AM_WRITE(ed00_w)
 
 	AM_RANGE(0xee00, 0xee00) AM_WRITE(ee00_w)	// related to protection ? - doesn't seem to have any effect
 
@@ -245,7 +245,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -280,13 +280,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 64 },
 	{ REGION_GFX2, 0, &spritelayout,     256, 64 },
-	{ REGION_GFX3, 0, &spritelayout,     512, 64 }, 
+	{ REGION_GFX3, 0, &spritelayout,     512, 64 },
 	{ -1 }
 };
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -302,7 +302,7 @@ static INTERRUPT_GEN( fcombat_interrupt )
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -331,20 +331,20 @@ static MACHINE_DRIVER_START( fcombat )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
 MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -406,7 +406,7 @@ static DRIVER_INIT( fcombat )
 	/* decode the characters */
 	/* the bits in the ROM are ordered: n8-n7 n6 n5 n4-v2 v1 v0 n3-n2 n1 n0 h2 */
 	/* we want them ordered like this:  n8-n7 n6 n5 n4-n3 n2 n1 n0-v2 v1 v0 h2 */
-	
+
 	for (oldaddr = 0; oldaddr < length; oldaddr++)
 	{
 		newaddr = ((oldaddr << 1) & 0x3c00) |       /* move n7-n4 */
@@ -427,13 +427,13 @@ static DRIVER_INIT( fcombat )
 		memcpy(&dst[oldaddr*32*8*2],&src[oldaddr*32*8],32*8);
 		memcpy(&dst[oldaddr*32*8*2+32*8],&src[oldaddr*32*8+0x2000],32*8);
 	}
-	
-	
+
+
 	src = temp;
 	dst = memory_region(REGION_USER2);
 	length = memory_region_length(REGION_USER2);
 	memcpy(src, dst, length);
-	
+
 	for (oldaddr = 0; oldaddr < 32; oldaddr++)
 	{
 		memcpy(&dst[oldaddr*32*8*2],&src[oldaddr*32*8],32*8);
@@ -461,10 +461,10 @@ ROM_START( fcombat )
 
 	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "fcombat6.f3",  0x00000, 0x4000, CRC(97282729) SHA1(72db0593551c2d15631341bf621b96013b46ce72) )
-			
+
 	ROM_REGION( 0x04000, REGION_USER1, 0 )
 	ROM_LOAD( "fcombat5.l3",  0x00000, 0x4000, CRC(96194ca7) SHA1(087d6ac8f93f087cb5e378dbe9a8cfcffa2cdddc) ) /* bg data */
-	
+
 	ROM_REGION( 0x04000, REGION_USER2, 0 )
 	ROM_LOAD( "fcombat4.p3",  0x00000, 0x4000, CRC(efe098ab) SHA1(fe64a5e9170835d242368109b1b221b0f8090e7e) ) /* terrain info */
 

@@ -14,7 +14,7 @@ struct YM2608interface
 };
 
 /************************************************/
-/* Chip 0 functions				*/
+/* Chip 0 functions             */
 /************************************************/
 READ8_HANDLER( YM2608_status_port_0_A_r );
 READ8_HANDLER( YM2608_status_port_0_B_r );
@@ -25,7 +25,7 @@ WRITE8_HANDLER( YM2608_data_port_0_A_w );
 WRITE8_HANDLER( YM2608_data_port_0_B_w );
 
 /************************************************/
-/* Chip 1 functions				*/
+/* Chip 1 functions             */
 /************************************************/
 READ8_HANDLER( YM2608_status_port_1_A_r );
 READ8_HANDLER( YM2608_status_port_1_B_r );

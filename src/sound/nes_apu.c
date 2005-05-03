@@ -661,7 +661,7 @@ static void *nesapu_start(int sndindex, int clock, const void *config)
 {
   const struct NESinterface *intf = config;
   struct nesapu_info *info;
-  
+
   info = auto_malloc(sizeof(*info));
   memset(info, 0, sizeof(*info));
 

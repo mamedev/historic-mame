@@ -88,7 +88,7 @@ Address          Dir Data     Name      Description
 01010-------101x r/W -------- SUB RESET reset sound CPU (data is in A0)
 01010-------110x   W -------- n.c.
 01010-------111x   W -------- n.c.
-10000----------- R/W -------- WDR		Watch Dog Reset
+10000----------- R/W -------- WDR       Watch Dog Reset
 101xxxxxxxxxxxxx R   xxxxxxxx ROM 1D    program ROM
 110xxxxxxxxxxxxx R   xxxxxxxx ROM 1C    program ROM
 111xxxxxxxxxxxxx R   xxxxxxxx ROM 1B    program ROM
@@ -136,7 +136,7 @@ Address          Dir Data     Name      Description
 000111111xxxxxxx R/W xxxxxxxx           portion holding sprite registers (x, y)
 00100xxxxxxxxxxx R/W xxxxxxxx RAM 2M    work RAM
 001001111xxxxxxx R/W xxxxxxxx           portion holding sprite registers (x msb, flip, size)
-00111xxxxxxxx---   W -------- POSIV		tilemap scroll (data is in A3-A10)
+00111xxxxxxxx---   W -------- POSIV     tilemap scroll (data is in A3-A10)
 01000-xxxxxxxxxx R/W xxxxxxxx SOUND     RAM (shared with sound CPU)
 01000-0000xxxxxx R/W xxxxxxxx           portion holding the sound registers
 01001-----xxxxxx R/W ----xxxx FBIT      I/O chips [1]
@@ -148,7 +148,7 @@ Address          Dir Data     Name      Description
 01010-------101x   W -------- SUB RESET reset sound CPU (data is in A0)
 01010-------110x   W -------- n.c.
 01010-------111x   W -------- n.c.
-10000----------- R/W -------- WDR		Watch Dog Reset [3]
+10000----------- R/W -------- WDR       Watch Dog Reset [3]
 101xxxxxxxxxxxxx R   xxxxxxxx ROM 1D    program ROM [2]
 110xxxxxxxxxxxxx R   xxxxxxxx ROM 1C    program ROM [2]
 111xxxxxxxxxxxxx R   xxxxxxxx ROM 1B    program ROM [2]
@@ -330,8 +330,8 @@ S: service switch (the one that adds a credit, not the one to enter service mode
   - press B1 3 times, S1 3 times, S2 3 times
   - after the score of the bonus round is shown, this text will be added at
     the bottom of the screen:
-	(c) 1983 NAMCO
-	ALL RIGHTS RESERVED
+    (c) 1983 NAMCO
+    ALL RIGHTS RESERVED
 
 - Tower of Druaga
   - enter service mode
@@ -1131,13 +1131,13 @@ NAMCO_56DSW0
 	PORT_DIPSETTING(    0x04, "30k" )						PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING(    0x18, "30k 60k" )					PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING(    0x1c, "30k 100k" )					PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
-//	PORT_DIPSETTING(    0x14, "30k 100k" )	// repeated		PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
+//  PORT_DIPSETTING(    0x14, "30k 100k" )  // repeated     PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING(    0x0c, "30k 120k and every 120k" )	PORT_DIPCONDITION(4,0x02,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING(    0x0c, "20k 80k" )					PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x08, "30k" )						PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x10, "30k 100k and every 100k" )	PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x1c, "30k 100k" )					PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
-//	PORT_DIPSETTING(    0x14, "30k 100k" )	// repeated		PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
+//  PORT_DIPSETTING(    0x14, "30k 100k" )  // repeated     PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x18, "40k 80k" )					PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x04, "100k" )						PORT_DIPCONDITION(4,0x02,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
@@ -2048,13 +2048,13 @@ static WRITE8_HANDLER( grobda_DAC_w )
 static DRIVER_INIT( grobda )
 {
 	/* I think the speech in Grobda is not a standard Namco sound feature, but rather a hack.
-	   The hardware automatically cycles the bottom 6 address lines of sound RAM, so they
-	   probably added a latch loaded when the bottom 4 lines are 0010 (which corresponds
-	   to locations not used by the sound hardware).
-	   The program writes the same value to 0x02, 0x12, 0x22 and 0x32.
-	   However, removing the 15XX from the board causes sound to disappear completely, so
-	   the DAC might be built-in after all.
-	  */
+       The hardware automatically cycles the bottom 6 address lines of sound RAM, so they
+       probably added a latch loaded when the bottom 4 lines are 0010 (which corresponds
+       to locations not used by the sound hardware).
+       The program writes the same value to 0x02, 0x12, 0x22 and 0x32.
+       However, removing the 15XX from the board causes sound to disappear completely, so
+       the DAC might be built-in after all.
+      */
 	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x0002, 0x0002, 0, 0, grobda_DAC_w );
 
 	init_58_56();

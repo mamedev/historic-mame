@@ -94,10 +94,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 {
 
 	/*
-	
-	Sprites are the same to sslam, but using 16x16 sprites instead of 8x8
 
-	*/
+    Sprites are the same to sslam, but using 16x16 sprites instead of 8x8
+
+    */
 
 	int offs;
 

@@ -10,13 +10,13 @@ Channels can be 8 bit signed PCM, or 12 bit signed PCM.
 Timer behavior is not yet handled.
 
 Unmapped registers:
-	0x1f8:timer interval?	(Nx0.1 ms)
-	0x1fa:irq ack? timer restart?
-	0x1fe:timer switch?(0:off 1:on)
+    0x1f8:timer interval?   (Nx0.1 ms)
+    0x1fa:irq ack? timer restart?
+    0x1fe:timer switch?(0:off 1:on)
 */
 /*
-	2000.06.26	CAB		fixed compressed pcm playback
-	2002.07.20	R.Belmont	added support for multiple banking types
+    2000.06.26  CAB     fixed compressed pcm playback
+    2002.07.20  R.Belmont   added support for multiple banking types
 */
 
 
@@ -106,7 +106,7 @@ READ8_HANDLER( C140_r )
    find_sample: compute the actual address of a sample given it's
    address and banking registers, as well as the board type.
 
-   I suspect in "real life" this works like the Sega MultiPCM where the banking 
+   I suspect in "real life" this works like the Sega MultiPCM where the banking
    is done by a small PAL or GAL external to the sound chip, which can be switched
    per-game or at least per-PCB revision as addressing range needs grow.
  */
@@ -133,16 +133,16 @@ static long find_sample(struct c140_info *info, long adrs, long bank)
 			// System 21 type B (chip select) banking
 
 			// get base address of sample inside the bank
-			newadr = ((adrs&0x100000)>>2) + (adrs&0x3ffff); 
+			newadr = ((adrs&0x100000)>>2) + (adrs&0x3ffff);
 
-			// now add the starting bank offsets based on the 2 
+			// now add the starting bank offsets based on the 2
 			// chip select bits.
 			// 0x40000 picks individual 512k ROMs
 			if (adrs & 0x40000)
 			{
 				newadr += 0x80000;
 			}
-			
+
 			// and 0x200000 which group of chips...
 			if (adrs & 0x200000)
 			{
@@ -376,7 +376,7 @@ static void *c140_start(int sndindex, int clock, const void *config)
 {
 	const struct C140interface *intf = config;
 	struct c140_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

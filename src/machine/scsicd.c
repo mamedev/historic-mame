@@ -4,7 +4,7 @@
 
 ***************************************************************************/
 
-#include "driver.h" 
+#include "driver.h"
 #include "scsidev.h"
 #include "cdrom.h"
 
@@ -64,7 +64,7 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 			logerror("SCSICD: READ (10) at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
 			break;
 		case 0x42:	// READ SUB-CHANNEL
-	//						logerror("SCSICD: READ SUB-CHANNEL type %d\n", pCmdBuf[3]);
+	//                      logerror("SCSICD: READ SUB-CHANNEL type %d\n", pCmdBuf[3]);
 			retval = 16;
 			break;
 		case 0x43:	// READ TOC
@@ -221,7 +221,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 						return;
 					}
 
-					logerror("SCSICD: READ SUB-CHANNEL Time = %x, SUBQ = %x\n", fifo[1], fifo[2]);	
+					logerror("SCSICD: READ SUB-CHANNEL Time = %x, SUBQ = %x\n", fifo[1], fifo[2]);
 
 					if (cdrom_audio_active(cdrom))
 					{
@@ -313,7 +313,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 							pData[dptr++] = cdrom_get_adr_control(cdrom, i);
 							pData[dptr++] = i;
 							pData[dptr++] = 0;
-							
+
 							tstart = cdrom_get_track_start(cdrom, i, (fifo[1]&2)>>1);
 
 							pData[dptr++] = (tstart>>24) & 0xff;
@@ -343,7 +343,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 					pData[2] = 0x04;	// IMMED = 1, SOTC = 0
 					pData[3] = pData[4] = pData[5] = pData[6] = pData[7] = 0; // reserved
 
-					// connect each audio channel to 1 output port	
+					// connect each audio channel to 1 output port
 					pData[8] = 1;
 					pData[10] = 2;
 					pData[12] = 4;

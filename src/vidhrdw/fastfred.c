@@ -124,7 +124,7 @@ static void get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -143,7 +143,7 @@ VIDEO_START( fastfred )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 
@@ -188,7 +188,7 @@ WRITE8_HANDLER( fastfred_charbank1_w )
 	if (new_data != charbank)
 	{
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
-	
+
 		charbank = new_data;
 	}
 }
@@ -200,7 +200,7 @@ WRITE8_HANDLER( fastfred_charbank2_w )
 	if (new_data != charbank)
 	{
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
-	
+
 		charbank = new_data;
 	}
 }
@@ -261,7 +261,7 @@ WRITE8_HANDLER( fastfred_flip_screen_y_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -292,7 +292,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 			if(fastfred_spriteram[offs + 1] & 0x20)
 				code ^= 0xff;
-			
+
 			flipx = 0;
 			flipy = 0;
 		}
@@ -419,6 +419,6 @@ VIDEO_UPDATE( imago )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_sprites(bitmap, cliprect);
-	
+
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

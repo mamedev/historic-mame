@@ -44,7 +44,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -55,7 +55,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -89,7 +89,7 @@ FILE *disclogfile = NULL;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -102,7 +102,7 @@ static void discrete_reset(void *chip);
 
 /*************************************
  *
- *	Debug logging
+ *  Debug logging
  *
  *************************************/
 
@@ -127,7 +127,7 @@ void CLIB_DECL discrete_log(const char *text, ...)
 
 /*************************************
  *
- *	Included simulation objects
+ *  Included simulation objects
  *
  *************************************/
 
@@ -141,7 +141,7 @@ void CLIB_DECL discrete_log(const char *text, ...)
 
 /*************************************
  *
- *	Master module list
+ *  Master module list
  *
  *************************************/
 
@@ -239,7 +239,7 @@ struct discrete_module module_list[] =
 
 /*************************************
  *
- *	Find a given node
+ *  Find a given node
  *
  *************************************/
 
@@ -254,7 +254,7 @@ struct node_description *discrete_find_node(void *chip, int node)
 
 /*************************************
  *
- *	Master discrete system start
+ *  Master discrete system start
  *
  *************************************/
 
@@ -329,7 +329,7 @@ static void *discrete_start(int sndindex, int clock, const void *config)
 
 /*************************************
  *
- *	Master discrete system stop
+ *  Master discrete system stop
  *
  *************************************/
 
@@ -359,7 +359,7 @@ static void discrete_stop(void *chip)
 
 /*************************************
  *
- *	Master reset of all nodes
+ *  Master reset of all nodes
  *
  *************************************/
 
@@ -391,7 +391,7 @@ static void discrete_reset(void *chip)
 
 /*************************************
  *
- *	Stream update functions
+ *  Stream update functions
  *
  *************************************/
 
@@ -447,7 +447,7 @@ static void discrete_stream_update(void *param, stream_sample_t **inputs, stream
 
 /*************************************
  *
- *	First pass init of nodes
+ *  First pass init of nodes
  *
  *************************************/
 
@@ -534,7 +534,7 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 
 /*************************************
  *
- *	Find and attach all input nodes
+ *  Find and attach all input nodes
  *
  *************************************/
 
@@ -571,7 +571,7 @@ static void find_input_nodes(struct discrete_info *info, struct discrete_sound_b
 
 /*************************************
  *
- *	Set up the output nodes
+ *  Set up the output nodes
  *
  *************************************/
 

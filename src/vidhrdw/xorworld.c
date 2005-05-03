@@ -58,13 +58,13 @@ WRITE16_HANDLER( xorworld_videoram16_w )
 }
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | ----xxxx xxxxxxxx | code
-	  0	 | xxxx---- -------- | color
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | ----xxxx xxxxxxxx | code
+      0  | xxxx---- -------- | color
 */
 
 static void get_bg_tile_info(int tile_index)
@@ -87,16 +87,16 @@ VIDEO_START( xorworld )
 }
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | x position
-	  0  | xxxxxxxx -------- | y position
-	  1  | -------- ------xx | flipxy? (not used)
-	  1  | ----xxxx xxxxxx-- | sprite number
-	  1  | xxxx---- -------- | sprite color
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | x position
+      0  | xxxxxxxx -------- | y position
+      1  | -------- ------xx | flipxy? (not used)
+      1  | ----xxxx xxxxxx-- | sprite number
+      1  | xxxx---- -------- | sprite color
 */
 
 static void xorworld_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
@@ -104,19 +104,19 @@ static void xorworld_draw_sprites( struct mame_bitmap *bitmap, const struct rect
 	int i;
 
 	for (i = 0; i < 0x40; i += 2)
-	{		
+	{
 		int sx = spriteram16[i] & 0x00ff;
 		int sy = 240 - (((spriteram16[i] & 0xff00) >> 8) & 0xff);
 		int code = (spriteram16[i+1] & 0x0ffc) >> 2;
 		int color = (spriteram16[i+1] & 0xf000) >> 12;
 
-		drawgfx(bitmap, Machine->gfx[1], code, color, 0, 0, sx, sy, 
+		drawgfx(bitmap, Machine->gfx[1], code, color, 0, 0, sx, sy,
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( xorworld )
-{	
+{
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	xorworld_draw_sprites(bitmap, cliprect);
 }

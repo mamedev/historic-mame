@@ -83,7 +83,7 @@ fprintf( f, "\n" );
 fprintf( f, "#define SHADOW8(data) palette_shadow_table[data]\n" );
 fprintf( f, "\n" );
 fprintf( f, "#define SHADOW16(data) palette_shadow_table[data]\n" );
-fprintf( f, "\n" );	
+fprintf( f, "\n" );
 fprintf( f, "//* AAT 032503: added limited 32-bit shadow and highlight support\n" );
 fprintf( f, "INLINE int SHADOW32(int c)\n" );
 fprintf( f, "{\n" );

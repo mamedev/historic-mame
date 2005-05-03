@@ -1,12 +1,12 @@
 /***************************************************************************
 
-							-= American Speedway =-
+                            -= American Speedway =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU  :	Z80A x 2
-Sound:	YM2151
+CPU  :  Z80A x 2
+Sound:  YM2151
 
 
 (c)1987 Enerdyne Technologies, Inc. / PGD
@@ -31,17 +31,17 @@ VIDEO_UPDATE( amspdwy );
 /***************************************************************************
 
 
-									Main CPU
+                                    Main CPU
 
 
 ***************************************************************************/
 
 /*
-	765-----	Buttons
-	---4----	Sgn(Wheel Delta)
-	----3210	Abs(Wheel Delta)
+    765-----    Buttons
+    ---4----    Sgn(Wheel Delta)
+    ----3210    Abs(Wheel Delta)
 
-	Or last value when wheel delta = 0
+    Or last value when wheel delta = 0
 */
 #define AMSPDWY_WHEEL_R( _n_ ) \
 READ8_HANDLER( amspdwy_wheel_##_n_##_r ) \
@@ -74,7 +74,7 @@ WRITE8_HANDLER( amspdwy_sound_w )
 
 static ADDRESS_MAP_START( amspdwy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM				)	// ROM
-//	AM_RANGE(0x8000, 0x801f) AM_READ(MRA8_RAM				)	// Palette
+//  AM_RANGE(0x8000, 0x801f) AM_READ(MRA8_RAM               )   // Palette
 	AM_RANGE(0x9000, 0x93ff) AM_READ(videoram_r			)	// Layer
 	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r			)	// Mirror?
 	AM_RANGE(0x9800, 0x9bff) AM_READ(colorram_r			)	// Layer
@@ -95,7 +95,7 @@ static ADDRESS_MAP_START( amspdwy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9400, 0x97ff) AM_WRITE(amspdwy_videoram_w				)	// Mirror?
 	AM_RANGE(0x9800, 0x9bff) AM_WRITE(amspdwy_colorram_w) AM_BASE(&colorram		)	// Layer
 	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(MWA8_RAM							)	// Unused?
-//	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP							)	// ?
+//  AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP                          )   // ?
 	AM_RANGE(0xa400, 0xa400) AM_WRITE(amspdwy_flipscreen_w				)	// Toggle Flip Screen?
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP							)	// ? Exiting IRQ
 	AM_RANGE(0xb400, 0xb400) AM_WRITE(amspdwy_sound_w					)	// To Sound CPU
@@ -119,7 +119,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Sound CPU
+                                Sound CPU
 
 
 ***************************************************************************/
@@ -133,7 +133,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( amspdwy_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM					)	// ROM
-//	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP					)	// ? Written with 0 at the start
+//  AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP                  )   // ? Written with 0 at the start
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2151_data_port_0_w		)	//
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM					)	// Work RAM
@@ -145,7 +145,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -171,7 +171,7 @@ INPUT_PORTS_START( amspdwy )
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Difficulty ) )
@@ -212,7 +212,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
@@ -239,7 +239,7 @@ static struct GfxDecodeInfo amspdwy_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -295,7 +295,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -304,7 +304,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-							American Speedway
+                            American Speedway
 
 USES TWO Z80 CPU'S W/YM2151 SOUND
 THE NUMBERS WITH THE NAMES ARE PROBABLY CHECKSUMS
@@ -319,7 +319,7 @@ HILO9B3C 5A          "       "
 LOHI4644 2A          "       "
 LOLO1D51 1A          "       "
 
-						American Speedway (Set 2)
+                        American Speedway (Set 2)
 
 1987 Enerdyne Technologies, Inc. Has Rev 4 PGD written on the top board.
 

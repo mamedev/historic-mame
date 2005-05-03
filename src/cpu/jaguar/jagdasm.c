@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		jagdasm.c
-**		Disassembler for the portable Jaguar DSP emulator.
-**		Written by Aaron Giles
+**      jagdasm.c
+**      Disassembler for the portable Jaguar DSP emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -15,14 +15,14 @@
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		(cpu_readop16(WORD_XOR_BE((UINT32)(pc))))
 
 
 /*###################################################################################################
-**	STATIC VARIABLES
+**  STATIC VARIABLES
 **#################################################################################################*/
 
 static const UINT8 convert_zero[32] =
@@ -64,11 +64,11 @@ static const char *condition[32] =
 	"???,",
 	"never,"
 };
-	
+
 
 
 /*###################################################################################################
-**	CODE CODE
+**  CODE CODE
 **#################################################################################################*/
 
 INLINE char *signed_16bit(INT16 val)
@@ -87,7 +87,7 @@ unsigned dasmjag(int variant, char *buffer, unsigned pc)
 	int reg1 = (op >> 5) & 31;
 	int reg2 = op & 31;
 	int size = 2;
-	
+
 	pc += 2;
 	switch (op >> 10)
 	{
@@ -175,8 +175,8 @@ unsigned dasmjag(int variant, char *buffer, unsigned pc)
 					sprintf(buffer, "illegal");
 					break;
 		case 63:	if (variant == JAGUAR_VARIANT_GPU)
-					sprintf(buffer, reg1 ? 
-					                "unpack  r%d" : 
+					sprintf(buffer, reg1 ?
+					                "unpack  r%d" :
 					                "pack    r%d", reg2);
 					else
 					sprintf(buffer, "addqmod $%x,r%d", convert_zero[reg1], reg2);

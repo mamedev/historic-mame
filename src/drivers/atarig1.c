@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari G1 hardware
+    Atari G1 hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Hydra (1990)
-		* Pit Fighter (1990)
+    Games supported:
+        * Hydra (1990)
+        * Pit Fighter (1990)
 
-	Known bugs:
-		* none
+    Known bugs:
+        * none
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -28,7 +28,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -44,7 +44,7 @@ static UINT8 bslapstic_primed;
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -77,7 +77,7 @@ static MACHINE_INIT( atarig1 )
 
 /*************************************
  *
- *	Sprite control latch
+ *  Sprite control latch
  *
  *************************************/
 
@@ -98,7 +98,7 @@ static WRITE16_HANDLER( mo_command_w )
 
 /*************************************
  *
- *	I/O read dispatch.
+ *  I/O read dispatch.
  *
  *************************************/
 
@@ -134,7 +134,7 @@ static READ16_HANDLER( a2d_data_r )
 
 /*************************************
  *
- *	Bootleg "slapstic" handler
+ *  Bootleg "slapstic" handler
  *
  *************************************/
 
@@ -200,7 +200,7 @@ static void pitfighb_cheap_slapstic_init(void)
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -216,7 +216,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xfc8000, 0xfc8007) AM_READWRITE(a2d_data_r, a2d_select_w)
 	AM_RANGE(0xfd0000, 0xfd0001) AM_READ(atarigen_sound_upper_r)
 	AM_RANGE(0xfd8000, 0xfdffff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-/*	AM_RANGE(0xfe0000, 0xfe7fff) AM_READ(from_r)*/
+/*  AM_RANGE(0xfe0000, 0xfe7fff) AM_READ(from_r)*/
 	AM_RANGE(0xfe8000, 0xfe89ff) AM_READWRITE(MRA16_RAM, atarigen_666_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xff0000, 0xff0fff) AM_WRITE(atarirle_0_spriteram_w) AM_BASE(&atarirle_0_spriteram)
 	AM_RANGE(0xff2000, 0xff2001) AM_WRITE(mo_command_w) AM_BASE(&mo_command)
@@ -229,7 +229,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -348,7 +348,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -398,7 +398,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -434,7 +434,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -641,10 +641,10 @@ ROM_START( pitfight )
 
 	ROM_REGION16_BE( 0x200000, REGION_GFX3, 0 )
 	/* missing 1st half on each rom */
-//	ROM_LOAD16_BYTE( "1065.65r", 0x080001, 0x40000, CRC(3bcad459) SHA1(08084fb9761ee8216b809a42eeb73c6c42e3b081) )
-//	ROM_LOAD16_BYTE( "1066.65n", 0x080000, 0x40000, CRC(d3a274ab) SHA1(9a791c5df45e317f7f88b384333d563b0ff566ea) )
-//	ROM_LOAD16_BYTE( "1067.70r", 0x180001, 0x40000, CRC(6e05d0a5) SHA1(ac5aaac3644af8c3ad852ce7f8b3248910df2e3a) )
-//	ROM_LOAD16_BYTE( "1068.70n", 0x180000, 0x40000, CRC(343ae455) SHA1(85d785f4e05ea74ca47df199c6b3f120028b9c37) )
+//  ROM_LOAD16_BYTE( "1065.65r", 0x080001, 0x40000, CRC(3bcad459) SHA1(08084fb9761ee8216b809a42eeb73c6c42e3b081) )
+//  ROM_LOAD16_BYTE( "1066.65n", 0x080000, 0x40000, CRC(d3a274ab) SHA1(9a791c5df45e317f7f88b384333d563b0ff566ea) )
+//  ROM_LOAD16_BYTE( "1067.70r", 0x180001, 0x40000, CRC(6e05d0a5) SHA1(ac5aaac3644af8c3ad852ce7f8b3248910df2e3a) )
+//  ROM_LOAD16_BYTE( "1068.70n", 0x180000, 0x40000, CRC(343ae455) SHA1(85d785f4e05ea74ca47df199c6b3f120028b9c37) )
 
 	ROM_LOAD16_BYTE( "1001", 0x000001, 0x20000, CRC(3af31444) SHA1(91fc02786b82abdf12ebdbaacdd1f158f8ce6d06) )
 	ROM_LOAD16_BYTE( "1002", 0x000000, 0x20000, CRC(f1d76a4c) SHA1(ca769d2cdd096f4a54f7bcaa4840fc9ffaabf499) )
@@ -887,7 +887,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -914,7 +914,7 @@ static DRIVER_INIT( pitfighb ) { init_g1_common(0x038000,  -1, 1); }
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

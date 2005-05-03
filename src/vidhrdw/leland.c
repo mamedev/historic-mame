@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Cinemat/Leland driver
+    Cinemat/Leland driver
 
-	Leland video hardware
+    Leland video hardware
 
 ***************************************************************************/
 
@@ -54,7 +54,7 @@ static UINT8 gfxbank;
 
 /*************************************
  *
- *	Start video hardware
+ *  Start video hardware
  *
  *************************************/
 
@@ -94,7 +94,7 @@ VIDEO_START( ataxx )
 
 /*************************************
  *
- *	Scrolling and banking
+ *  Scrolling and banking
  *
  *************************************/
 
@@ -149,7 +149,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
 
 /*************************************
  *
- *	Video address setting
+ *  Video address setting
  *
  *************************************/
 
@@ -170,7 +170,7 @@ static void leland_video_addr_w(int offset, int data, int num)
 
 /*************************************
  *
- *	Flush data from VRAM into our copy
+ *  Flush data from VRAM into our copy
  *
  *************************************/
 
@@ -218,7 +218,7 @@ static void update_for_scanline(int scanline)
 
 /*************************************
  *
- *	Common video RAM read
+ *  Common video RAM read
  *
  *************************************/
 
@@ -265,7 +265,7 @@ static int leland_vram_port_r(int offset, int num)
 
 /*************************************
  *
- *	Common video RAM write
+ *  Common video RAM write
  *
  *************************************/
 
@@ -351,7 +351,7 @@ static void leland_vram_port_w(int offset, int data, int num)
 
 /*************************************
  *
- *	Master video RAM read/write
+ *  Master video RAM read/write
  *
  *************************************/
 
@@ -391,7 +391,7 @@ READ8_HANDLER( leland_mvram_port_r )
 
 /*************************************
  *
- *	Slave video RAM read/write
+ *  Slave video RAM read/write
  *
  *************************************/
 
@@ -416,7 +416,7 @@ READ8_HANDLER( leland_svram_port_r )
 
 /*************************************
  *
- *	Ataxx master video RAM read/write
+ *  Ataxx master video RAM read/write
  *
  *************************************/
 
@@ -443,7 +443,7 @@ WRITE8_HANDLER( ataxx_svram_port_w )
 
 /*************************************
  *
- *	Ataxx slave video RAM read/write
+ *  Ataxx slave video RAM read/write
  *
  *************************************/
 
@@ -464,7 +464,7 @@ READ8_HANDLER( ataxx_svram_port_r )
 
 /*************************************
  *
- *	End-of-frame routine
+ *  End-of-frame routine
  *
  *************************************/
 
@@ -491,7 +491,7 @@ VIDEO_EOF( leland )
 
 /*************************************
  *
- *	ROM-based refresh routine
+ *  ROM-based refresh routine
  *
  *************************************/
 
@@ -542,7 +542,7 @@ VIDEO_UPDATE( leland )
 
 /*************************************
  *
- *	RAM-based refresh routine
+ *  RAM-based refresh routine
  *
  *************************************/
 

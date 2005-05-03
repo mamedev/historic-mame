@@ -1,54 +1,54 @@
  /**************************************************************************\
- *						Microchip PIC16C5x Emulator							*
- *																			*
- *					  Copyright (C) 2003+ Tony La Porta						*
- *				   Originally written for the MAME project.					*
- *																			*
- *																			*
- *		Addressing architecture is based on the Harvard addressing scheme.	*
- *																			*
- *																			*
- *	**** Change Log ****													*
- *	TLP (06-Apr-2003)														*
- *	 - First Public release.												*
- *	BO  (07-Apr-2003) Ver 1.01  											*
- *	 - Renamed 'sleep' function to 'sleepic' to avoid C conflicts.			*
- *	TLP (09-Apr-2003) Ver 1.10  											*
- *	 - Fixed modification of file register $03 (Status).					*
- *	 - Corrected support for 7FFh (12-bit) size ROMs.						*
- *	 - The 'call' and 'goto' instructions weren't correctly handling the	*
- *	   STATUS page info correctly.											*
- *	 - The FSR register was incorrectly oring the data with 0xe0 when read.	*
- *	 - Prescaler masking information was set to 3 instead of 7.				*
- *	 - Prescaler assign bit was set to 4 instead of 8.						*
- *	 - Timer source and edge select flags/masks were wrong.					*
- *	 - Corrected the memory bank selection in GET/SET_REGFILE and also the	*
- *	   indirect register addressing.										*
- *	BMP (18-May-2003) Ver 1.11												*
- *	 - pic16c5x_get_reg functions were missing 'returns'.					*
- *	TLP (27-May-2003) Ver 1.12  											*
- *	 - Fixed the WatchDog timer count.										*
- *	 - The Prescaler rate was incorrectly being zeroed, instead of the		*
- *	   actual Prescaler counter in the CLRWDT and SLEEP instructions.		*
- *	 - Added masking to the FSR register. Upper unused bits are always 1.	*
- *																			*
- *																			*
- *	**** Notes: ****														*
- *	PIC WatchDog Timer has a seperate internal clock. For the moment, we're	*
- *	   basing the count on a 4MHz input clock, since 4MHz is the typical	*
- *	   input frequency (but by no means always).							*
- *	A single scaler is available for the Counter/Timer or WatchDog Timer.	*
- *	   When connected to the Counter/Timer, it functions as a Prescaler,	*
- *	   hence prescale overflows, tick the Counter/Timer.					*
- *	   When connected to the WatchDog Timer, it functions as a Postscaler	*
- *	   hence WatchDog Timer overflows, tick the Postscaler. This scenario	*
- *	   means that the WatchDog timeout occurs when the Postscaler has		*
- *	   reached the scaler rate value, not when the WatchDog reaches zero.	*
- *	CLRWDT should prevent the WatchDog Timer from timing out and generating *
- *	   a device reset, but how is not known. The manual also mentions that	*
- *	   the WatchDog Timer can only be disabled during ROM programming, and	*
- *	   no other means seem to exist???										*
- *																			*
+ *                      Microchip PIC16C5x Emulator                         *
+ *                                                                          *
+ *                    Copyright (C) 2003+ Tony La Porta                     *
+ *                 Originally written for the MAME project.                 *
+ *                                                                          *
+ *                                                                          *
+ *      Addressing architecture is based on the Harvard addressing scheme.  *
+ *                                                                          *
+ *                                                                          *
+ *  **** Change Log ****                                                    *
+ *  TLP (06-Apr-2003)                                                       *
+ *   - First Public release.                                                *
+ *  BO  (07-Apr-2003) Ver 1.01                                              *
+ *   - Renamed 'sleep' function to 'sleepic' to avoid C conflicts.          *
+ *  TLP (09-Apr-2003) Ver 1.10                                              *
+ *   - Fixed modification of file register $03 (Status).                    *
+ *   - Corrected support for 7FFh (12-bit) size ROMs.                       *
+ *   - The 'call' and 'goto' instructions weren't correctly handling the    *
+ *     STATUS page info correctly.                                          *
+ *   - The FSR register was incorrectly oring the data with 0xe0 when read. *
+ *   - Prescaler masking information was set to 3 instead of 7.             *
+ *   - Prescaler assign bit was set to 4 instead of 8.                      *
+ *   - Timer source and edge select flags/masks were wrong.                 *
+ *   - Corrected the memory bank selection in GET/SET_REGFILE and also the  *
+ *     indirect register addressing.                                        *
+ *  BMP (18-May-2003) Ver 1.11                                              *
+ *   - pic16c5x_get_reg functions were missing 'returns'.                   *
+ *  TLP (27-May-2003) Ver 1.12                                              *
+ *   - Fixed the WatchDog timer count.                                      *
+ *   - The Prescaler rate was incorrectly being zeroed, instead of the      *
+ *     actual Prescaler counter in the CLRWDT and SLEEP instructions.       *
+ *   - Added masking to the FSR register. Upper unused bits are always 1.   *
+ *                                                                          *
+ *                                                                          *
+ *  **** Notes: ****                                                        *
+ *  PIC WatchDog Timer has a seperate internal clock. For the moment, we're *
+ *     basing the count on a 4MHz input clock, since 4MHz is the typical    *
+ *     input frequency (but by no means always).                            *
+ *  A single scaler is available for the Counter/Timer or WatchDog Timer.   *
+ *     When connected to the Counter/Timer, it functions as a Prescaler,    *
+ *     hence prescale overflows, tick the Counter/Timer.                    *
+ *     When connected to the WatchDog Timer, it functions as a Postscaler   *
+ *     hence WatchDog Timer overflows, tick the Postscaler. This scenario   *
+ *     means that the WatchDog timeout occurs when the Postscaler has       *
+ *     reached the scaler rate value, not when the WatchDog reaches zero.   *
+ *  CLRWDT should prevent the WatchDog Timer from timing out and generating *
+ *     a device reset, but how is not known. The manual also mentions that  *
+ *     the WatchDog Timer can only be disabled during ROM programming, and  *
+ *     no other means seem to exist???                                      *
+ *                                                                          *
  \**************************************************************************/
 
 
@@ -134,11 +134,11 @@ static unsigned cycles_000_other[16];
 /********  The following is the Status Flag register definition.  *********/
 			/* | 7 | 6 | 5 |  4 |  3 | 2 | 1  | 0 | */
 			/* |    PA     | TO | PD | Z | DC | C | */
-#define PA_REG		0xe0	/* PA	Program Page Preselect - bit 8 is unused here */
-#define TO_FLAG		0x10	/* TO	Time Out flag (WatchDog) */
-#define PD_FLAG		0x08	/* PD	Power Down flag */
-#define Z_FLAG		0x04	/* Z	Zero Flag */
-#define DC_FLAG		0x02	/* DC	Digit Carry/Borrow flag (Nibble) */
+#define PA_REG		0xe0	/* PA   Program Page Preselect - bit 8 is unused here */
+#define TO_FLAG		0x10	/* TO   Time Out flag (WatchDog) */
+#define PD_FLAG		0x08	/* PD   Power Down flag */
+#define Z_FLAG		0x04	/* Z    Zero Flag */
+#define DC_FLAG		0x02	/* DC   Digit Carry/Borrow flag (Nibble) */
 #define C_FLAG		0x01	/* C    Carry/Borrow Flag (Byte) */
 
 #define PA		(R.STATUS & PA_REG)
@@ -152,10 +152,10 @@ static unsigned cycles_000_other[16];
 /********  The following is the Option Flag register definition.  *********/
 			/* | 7 | 6 |   5  |   4  |  3  | 2 | 1 | 0 | */
 			/* | 0 | 0 | TOCS | TOSE | PSA |    PS     | */
-#define T0CS_FLAG	0x20	/* TOCS		Timer 0 clock source select */
-#define T0SE_FLAG	0x10	/* TOSE		Timer 0 clock source edge select */
-#define PSA_FLAG	0x08	/* PSA		Prescaler Assignment bit */
-#define PS_REG		0x07	/* PS		Prescaler Rate select */
+#define T0CS_FLAG	0x20	/* TOCS     Timer 0 clock source select */
+#define T0SE_FLAG	0x10	/* TOSE     Timer 0 clock source edge select */
+#define PSA_FLAG	0x08	/* PSA      Prescaler Assignment bit */
+#define PS_REG		0x07	/* PS       Prescaler Rate select */
 
 #define T0CS	(R.OPTION & T0CS_FLAG)
 #define T0SE	(R.OPTION & T0SE_FLAG)
@@ -166,16 +166,16 @@ static unsigned cycles_000_other[16];
 /********  The following is the Config Flag register definition.  *********/
 	/* | 11 | 10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 |   2  | 1 | 0 | */
 	/* |              CP                     | WDTE |  FOSC | */
-							/* CP		Code Protect (ROM read protect) */
-#define WDTE_FLAG	0x04	/* WDTE		WatchDog Timer enable */
-#define FOSC_FLAG	0x03	/* FOSC		Oscillator source select */
+							/* CP       Code Protect (ROM read protect) */
+#define WDTE_FLAG	0x04	/* WDTE     WatchDog Timer enable */
+#define FOSC_FLAG	0x03	/* FOSC     Oscillator source select */
 
 #define WDTE	(R.CONFIG & WDTE_FLAG)
 #define FOSC	(R.CONFIG & FOSC_FLAG)
 
 
 /************************************************************************
- *	Shortcuts
+ *  Shortcuts
  ************************************************************************/
 
 /* Easy bit position selectors */
@@ -343,7 +343,7 @@ INLINE void STORE_RESULT(offs_t addr, UINT8 data)
 
 
 /************************************************************************
- *	Emulate the Instructions
+ *  Emulate the Instructions
  ************************************************************************/
 
 /* This following function is here to fill in the void for */
@@ -618,7 +618,7 @@ static void xorwf(void)
 
 
 /***********************************************************************
- *	Cycle Timings
+ *  Cycle Timings
  ***********************************************************************/
 
 static unsigned cycles_main[256]=
@@ -692,7 +692,7 @@ static opcode_fn opcode_000_other[16]=
 
 
 /****************************************************************************
- *	Inits CPU emulation
+ *  Inits CPU emulation
  ****************************************************************************/
 
 static void pic16C5x_init(void)
@@ -730,7 +730,7 @@ static void pic16C5x_init(void)
 
 
 /****************************************************************************
- *	Reset registers to their initial values
+ *  Reset registers to their initial values
  ****************************************************************************/
 
 static void pic16C5x_reset_regs(void)
@@ -764,7 +764,7 @@ void pic16c5x_config(int data)
 
 
 /****************************************************************************
- *	Shut down CPU emulation
+ *  Shut down CPU emulation
  ****************************************************************************/
 
 static void pic16C5x_exit (void)
@@ -774,7 +774,7 @@ static void pic16C5x_exit (void)
 
 
 /****************************************************************************
- *	WatchDog
+ *  WatchDog
  ****************************************************************************/
 
 static void pic16C5x_update_watchdog(int counts)
@@ -816,7 +816,7 @@ static void pic16C5x_update_watchdog(int counts)
 
 
 /****************************************************************************
- *	Update Timer
+ *  Update Timer
  ****************************************************************************/
 
 static void pic16C5x_update_timer(int counts)
@@ -835,7 +835,7 @@ static void pic16C5x_update_timer(int counts)
 
 
 /****************************************************************************
- *	Execute IPeriod. Return 0 if emulation should be stopped
+ *  Execute IPeriod. Return 0 if emulation should be stopped
  ****************************************************************************/
 
 static int pic16C5x_execute(int cycles)
@@ -908,7 +908,7 @@ static int pic16C5x_execute(int cycles)
 
 
 /****************************************************************************
- *	Get all registers in given buffer
+ *  Get all registers in given buffer
  ****************************************************************************/
 
 static void pic16C5x_get_context (void *dst)
@@ -919,7 +919,7 @@ static void pic16C5x_get_context (void *dst)
 
 
 /****************************************************************************
- *	Set all registers to given values
+ *  Set all registers to given values
  ****************************************************************************/
 
 static void pic16C5x_set_context (void *src)
@@ -930,7 +930,7 @@ static void pic16C5x_set_context (void *src)
 
 
 /****************************************************************************
- *	Debugger definitions
+ *  Debugger definitions
  ****************************************************************************/
 
 #if (HAS_PIC16C55 || HAS_PIC16C57)
@@ -970,7 +970,7 @@ static offs_t pic16C5x_dasm(char *buffer, offs_t pc)
 
 
 /**************************************************************************
- *	Generic set_info
+ *  Generic set_info
  **************************************************************************/
 
 static void pic16C5x_set_info(UINT32 state, union cpuinfo *info)
@@ -1002,7 +1002,7 @@ static void pic16C5x_set_info(UINT32 state, union cpuinfo *info)
 
 
 /**************************************************************************
- *	Generic get_info
+ *  Generic get_info
  **************************************************************************/
 
 static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
@@ -1110,7 +1110,7 @@ static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_PIC16C54)
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( pic16c54_rom, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1123,7 +1123,7 @@ ADDRESS_MAP_END
 
 
 /****************************************************************************
- *	PIC16C54 Reset
+ *  PIC16C54 Reset
  ****************************************************************************/
 
 void pic16C54_reset(void *param)
@@ -1139,7 +1139,7 @@ void pic16C54_reset(void *param)
 
 
 /**************************************************************************
- *	CPU-specific get_info
+ *  CPU-specific get_info
  **************************************************************************/
 
 void pic16C54_get_info(UINT32 state, union cpuinfo *info)
@@ -1165,7 +1165,7 @@ void pic16C54_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_PIC16C55)
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( pic16c55_rom, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1178,7 +1178,7 @@ ADDRESS_MAP_END
 
 
 /****************************************************************************
- *	PIC16C55 Reset
+ *  PIC16C55 Reset
  ****************************************************************************/
 
 void pic16C55_reset(void *param)
@@ -1194,7 +1194,7 @@ void pic16C55_reset(void *param)
 
 
 /**************************************************************************
- *	CPU-specific get_info
+ *  CPU-specific get_info
  **************************************************************************/
 
 void pic16C55_get_info(UINT32 state, union cpuinfo *info)
@@ -1220,7 +1220,7 @@ void pic16C55_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_PIC16C56)
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( pic16c56_rom, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1233,7 +1233,7 @@ ADDRESS_MAP_END
 
 
 /****************************************************************************
- *	PIC16C56 Reset
+ *  PIC16C56 Reset
  ****************************************************************************/
 
 void pic16C56_reset(void *param)
@@ -1249,7 +1249,7 @@ void pic16C56_reset(void *param)
 
 
 /**************************************************************************
- *	CPU-specific get_info
+ *  CPU-specific get_info
  **************************************************************************/
 
 void pic16C56_get_info(UINT32 state, union cpuinfo *info)
@@ -1277,7 +1277,7 @@ void pic16C56_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_PIC16C57)
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( pic16c57_rom, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1293,7 +1293,7 @@ ADDRESS_MAP_END
 
 
 /****************************************************************************
- *	PIC16C57 Reset
+ *  PIC16C57 Reset
  ****************************************************************************/
 
 void pic16C57_reset(void *param)
@@ -1309,7 +1309,7 @@ void pic16C57_reset(void *param)
 
 
 /**************************************************************************
- *	CPU-specific get_info
+ *  CPU-specific get_info
  **************************************************************************/
 
 void pic16C57_get_info(UINT32 state, union cpuinfo *info)
@@ -1338,7 +1338,7 @@ void pic16C57_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_PIC16C58)
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( pic16c58_rom, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1354,7 +1354,7 @@ ADDRESS_MAP_END
 
 
 /****************************************************************************
- *	PIC16C58 Reset
+ *  PIC16C58 Reset
  ****************************************************************************/
 
 void pic16C58_reset(void *param)
@@ -1370,7 +1370,7 @@ void pic16C58_reset(void *param)
 
 
 /**************************************************************************
- *	CPU-specific get_info
+ *  CPU-specific get_info
  **************************************************************************/
 
 void pic16C58_get_info(UINT32 state, union cpuinfo *info)

@@ -201,8 +201,8 @@ void spy_collision(void)
 				y2 = (pmcram[i+0x9]<<8) + pmcram[i+0xa];
 				h2 = (pmcram[i+0xb]<<8) + pmcram[i+0xc];
 /*
-	The mad scientist's laser truck has both a high sprite center and a small height value.
-	It has to be measured from the ground to detect correctly.
+    The mad scientist's laser truck has both a high sprite center and a small height value.
+    It has to be measured from the ground to detect correctly.
 */
 				if (w2==0x58 && d2==0x04 && h2==0x10 && y2==0x30) h2 = y2;
 
@@ -220,9 +220,9 @@ void spy_collision(void)
 	else if (op1 > 1)
 	{
 /*
-	The PMCU also projects geometries to screen coordinates. Unfortunately I'm unable to figure
-	the scale factors from the PMCU code. Plugging 0 and 0x100 to the far and near planes seems
-	to do the trick though.
+    The PMCU also projects geometries to screen coordinates. Unfortunately I'm unable to figure
+    the scale factors from the PMCU code. Plugging 0 and 0x100 to the far and near planes seems
+    to do the trick though.
 */
 		loopend = (pmcram[0]<<8) + pmcram[1];
 		nearplane = (pmcram[2]<<8) + pmcram[3];
@@ -252,42 +252,42 @@ static WRITE8_HANDLER( spy_3f90_w )
 	static int old;
 
 	/*********************************************************************
-	*
-	* Signals, from schematic:
-	*   Bit 0 - CTR1 0x01
-	*   Bit 1 - CTR2 0x02
-	*   Bit 2 - CHA-RD 0x04
-	*   Bit 3 - TV-KILL 0x08  +TV-KILL & COLORBLK to pin 7 of
-	*                                    052535 video chips
-	*
-	*   Bit 4 - COLORBK/RVBK 0x10
-	*   Bit 5 - PMCBK 0x20  GX857 053180 PAL20P Pin 7 (MCE1)
-	*   Bit 6 - PMC-START 0x40  PMC START
-	*   Bit 7 - PMC-BK 0x80  PMC BK
-	*
-	*   PMC takes AB0-AB12, D0-D7 from 6809E, outputs EA0-EA10, ED0-ED7,
-	*   tied to A and D bus of 2128SL
-	*
-	*   See "MCPU" page of S.P.Y schematics for more...
-	*
-	*    PMC ERWE -> ~WR of 2128SL
-	*    PMC ERCS -> ~CE of 2128SL
-	*    PMC EROE -> ~OE of 2128SL
-	*
-	*    PMCOUTO -> PMCFIRQ -> 6809E ~FIRQ and PORT4, bit 0x08
-	*
-	*   PMC selected by PMC/RVRAMCS signal: pin 16 of PAL20P 05318
-	*
-	*    AB0xC -> 0x1000, so if address & 0x1000, appears PMC is selected.
-	*
-	*   Other apparent selects:
-	*
-	*    0x0800 -> COLORCS (color enable?)
-	*    0x2000 -> ~CS1 on 6264W
-	*    0x4000 -> ~OE on S63 27512
-	*    0x8000 -> ~OE on S22 27512
-	*
-	********************************************************************/
+    *
+    * Signals, from schematic:
+    *   Bit 0 - CTR1 0x01
+    *   Bit 1 - CTR2 0x02
+    *   Bit 2 - CHA-RD 0x04
+    *   Bit 3 - TV-KILL 0x08  +TV-KILL & COLORBLK to pin 7 of
+    *                                    052535 video chips
+    *
+    *   Bit 4 - COLORBK/RVBK 0x10
+    *   Bit 5 - PMCBK 0x20  GX857 053180 PAL20P Pin 7 (MCE1)
+    *   Bit 6 - PMC-START 0x40  PMC START
+    *   Bit 7 - PMC-BK 0x80  PMC BK
+    *
+    *   PMC takes AB0-AB12, D0-D7 from 6809E, outputs EA0-EA10, ED0-ED7,
+    *   tied to A and D bus of 2128SL
+    *
+    *   See "MCPU" page of S.P.Y schematics for more...
+    *
+    *    PMC ERWE -> ~WR of 2128SL
+    *    PMC ERCS -> ~CE of 2128SL
+    *    PMC EROE -> ~OE of 2128SL
+    *
+    *    PMCOUTO -> PMCFIRQ -> 6809E ~FIRQ and PORT4, bit 0x08
+    *
+    *   PMC selected by PMC/RVRAMCS signal: pin 16 of PAL20P 05318
+    *
+    *    AB0xC -> 0x1000, so if address & 0x1000, appears PMC is selected.
+    *
+    *   Other apparent selects:
+    *
+    *    0x0800 -> COLORCS (color enable?)
+    *    0x2000 -> ~CS1 on 6264W
+    *    0x4000 -> ~OE on S63 27512
+    *    0x8000 -> ~OE on S22 27512
+    *
+    ********************************************************************/
 
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -317,9 +317,9 @@ int i;
 logerror("collision test:\n");
 for (i = 0;i < 0xfe;i++)
 {
-	logerror("%02x ",pmcram[i]);
-	if (i == 0x0f || (i > 0x10 && (i - 0x10) % 14 == 13))
-		logerror("\n");
+    logerror("%02x ",pmcram[i]);
+    if (i == 0x0f || (i > 0x10 && (i - 0x10) % 14 == 13))
+        logerror("\n");
 }
 */
 		spy_collision();
@@ -562,12 +562,12 @@ static MACHINE_DRIVER_START( spy )
 	MDRV_SOUND_ADD(YM3812, 3579545)
 	MDRV_SOUND_CONFIG(ym3812_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_1)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
 	MDRV_SOUND_ROUTE(1, "mono", 0.20)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_2)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)

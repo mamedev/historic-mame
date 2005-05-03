@@ -1313,7 +1313,7 @@ _OP DecodeOp(data16_t Opcode)
 								case 2:
 									return ASL;
 								//case 3:
-								//	return LSL;
+								//  return LSL;
 							}
 							break;
 						case 4:

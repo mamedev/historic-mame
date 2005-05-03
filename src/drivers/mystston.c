@@ -221,7 +221,7 @@ static INTERRUPT_GEN( mystston_interrupt )
 		VBLK = 0x80;
 
 	/* IMS is triggered every time VLOC line 3 is raised,
-	   as VLOC counter starts at 16, effectively every 16 scanlines */
+       as VLOC counter starts at 16, effectively every 16 scanlines */
 	if ((scanline % 16) == 0)
 		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
@@ -250,10 +250,10 @@ static MACHINE_DRIVER_START( mystston )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END

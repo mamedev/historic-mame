@@ -3,20 +3,20 @@
 
 /*********************************************************
 
-	Konami 054539 PCM Sound Chip
+    Konami 054539 PCM Sound Chip
 
-	A lot of information comes from Amuse.
-	Big thanks to them.
+    A lot of information comes from Amuse.
+    Big thanks to them.
 
 
 
 CHANNEL_DEBUG enables the following keys:
 
-	PAD.   : toggle debug mode
-	PAD0   : toggle chip    (0 / 1)
-	PAD4,6 : select channel (0 - 7)
-	PAD8,2 : adjust gain    (00=0.0 10=1.0, 20=2.0, etc.)
-	PAD5   : reset gain factor to 1.0
+    PAD.   : toggle debug mode
+    PAD0   : toggle chip    (0 / 1)
+    PAD4,6 : select channel (0 - 7)
+    PAD8,2 : adjust gain    (00=0.0 10=1.0, 20=2.0, etc.)
+    PAD5   : reset gain factor to 1.0
 
 *********************************************************/
 
@@ -30,7 +30,7 @@ CHANNEL_DEBUG enables the following keys:
      00..02: pitch (lsb, mid, msb)
          03: volume (0=max, 0x40=-36dB)
          04: reverb volume (idem)
-	 05: pan (1-f right, 10 middle, 11-1f left)
+     05: pan (1-f right, 10 middle, 11-1f left)
      06..07: reverb delay (0=max, current computation non-trusted)
      08..0a: loop (lsb, mid, msb)
      0c..0e: start (lsb, mid, msb) (and current position ?)
@@ -40,7 +40,7 @@ CHANNEL_DEBUG enables the following keys:
 
    200..20f: 2 bytes/channel, 8 channels
      00: type (b2-3), reverse (b5)
-	 01: loop (b0)
+     01: loop (b0)
 
    214: keyon (b0-7 = channel 0-7)
    215: keyoff          ""
@@ -193,12 +193,12 @@ else
 			if (rbvol > VOL_CAP) rbvol = VOL_CAP;
 
 /*
-	INT x FLOAT could be interpreted as INT x (int)FLOAT instead of (float)INT x FLOAT on some compilers
-	causing precision loss. (rdelta - 0x2000) wraps around on zero reverb and the scale factor should
-	actually be 1/freq_ratio because the target is an offset to the reverb buffer not sample source.
+    INT x FLOAT could be interpreted as INT x (int)FLOAT instead of (float)INT x FLOAT on some compilers
+    causing precision loss. (rdelta - 0x2000) wraps around on zero reverb and the scale factor should
+    actually be 1/freq_ratio because the target is an offset to the reverb buffer not sample source.
 */
 			rdelta = (base1[6] | (base1[7] << 8)) >> 3;
-//			rdelta = (reverb_pos + (int)((rdelta - 0x2000) * info->freq_ratio)) & 0x3fff;
+//          rdelta = (reverb_pos + (int)((rdelta - 0x2000) * info->freq_ratio)) & 0x3fff;
 			rdelta = (int)((double)rdelta / info->freq_ratio + reverb_pos) & 0x3fff;
 			revb = rbase + rdelta;
 
@@ -490,11 +490,11 @@ static void K054539_w(int chip, offs_t offset, data8_t data) //*
 	int voice, reg;
 
 	/* The K054539 has behavior like many other wavetable chips including
-	   the Ensoniq 550x and Gravis GF-1: if a voice is active, writing
-	   to it's current position is silently ignored.
+       the Ensoniq 550x and Gravis GF-1: if a voice is active, writing
+       to it's current position is silently ignored.
 
-	   Dadandaan depends on this or the vocals go wrong.
-	   */
+       Dadandaan depends on this or the vocals go wrong.
+       */
 	if (offset < 8*0x20)
 	{
 		voice = offset / 0x20;
@@ -651,10 +651,10 @@ static void *k054539_start(int sndindex, int clock, const void *config)
 {
 	int i;
 	struct k054539_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
 	for (i = 0; i < 8; i++)
 		info->K054539_gain[i] = 1.0;
 	info->K054539_flags = K054539_RESET_FLAGS;
@@ -667,15 +667,15 @@ static void *k054539_start(int sndindex, int clock, const void *config)
 		info->freq_ratio = 1.0;
 
 	/*
-		I've tried various equations on volume control but none worked consistently.
-		The upper four channels in most MW/GX games simply need a significant boost
-		to sound right. For example, the bass and smash sound volumes in Violent Storm
-		have roughly the same values and the voices in Tokimeki Puzzledama are given
-		values smaller than those of the hihats. Needless to say the two K054539 chips
-		in Mystic Warriors are completely out of balance. Rather than forcing a
-		"one size fits all" function to the voltab the current invert exponential
-		appraoch seems most appropriate.
-	*/
+        I've tried various equations on volume control but none worked consistently.
+        The upper four channels in most MW/GX games simply need a significant boost
+        to sound right. For example, the bass and smash sound volumes in Violent Storm
+        have roughly the same values and the voices in Tokimeki Puzzledama are given
+        values smaller than those of the hihats. Needless to say the two K054539 chips
+        in Mystic Warriors are completely out of balance. Rather than forcing a
+        "one size fits all" function to the voltab the current invert exponential
+        appraoch seems most appropriate.
+    */
 	// Factor the 1/4 for the number of channels in the volume (1/8 is too harsh, 1/2 gives clipping)
 	// vol=0 -> no attenuation, vol=0x40 -> -36dB
 	for(i=0; i<256; i++)

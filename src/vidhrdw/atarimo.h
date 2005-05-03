@@ -1,8 +1,8 @@
 /*##########################################################################
 
-	atarimo.h
+    atarimo.h
 
-	Common motion object management functions for Atari raster games.
+    Common motion object management functions for Atari raster games.
 
 ##########################################################################*/
 
@@ -11,7 +11,7 @@
 
 
 /*##########################################################################
-	CONSTANTS
+    CONSTANTS
 ##########################################################################*/
 
 /* maximum number of motion object processors */
@@ -28,7 +28,7 @@
 
 
 /*##########################################################################
-	TYPES & STRUCTURES
+    TYPES & STRUCTURES
 ##########################################################################*/
 
 /* callback for special processing */
@@ -87,7 +87,7 @@ struct atarimo_rect_list
 
 
 /*##########################################################################
-	FUNCTION PROTOTYPES
+    FUNCTION PROTOTYPES
 ##########################################################################*/
 
 /* setup/shutdown */
@@ -122,7 +122,7 @@ WRITE16_HANDLER( atarimo_1_slipram_w );
 
 
 /*##########################################################################
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ##########################################################################*/
 
 extern data16_t *atarimo_0_spriteram;

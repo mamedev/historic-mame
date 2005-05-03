@@ -306,7 +306,7 @@ static void draw_bitmap(struct mame_bitmap *bitmap)
 					}
 				}
 			}
-			
+
 			count++;
 		}
 	}

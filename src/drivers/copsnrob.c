@@ -1,54 +1,54 @@
 /***************************************************************************
 
-	Atari Cops'n Robbers hardware
+    Atari Cops'n Robbers hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
-	Games supported:
-		* Sprint 1
-		* Sprint 2
+    Games supported:
+        * Sprint 1
+        * Sprint 2
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Cops'n Robbers memory map (preliminary)
+    Cops'n Robbers memory map (preliminary)
 
 
-	0000-00ff RAM
-	0c00-0fff Video RAM
-	1200-1fff ROM
+    0000-00ff RAM
+    0c00-0fff Video RAM
+    1200-1fff ROM
 
-	I/O Read:
+    I/O Read:
 
-	1000 Vertical Sync
-	1002 Bit 0-6 Player 1 Gun Position
-	     Bit 7   Player 1 Gas Pedal
-	1006 Same as above for Player 2
-	100A Same as above for Player 3
-	100E Same as above for Player 4
-	1012 DIP Switches
-	     0-1 Coinage
-	     2-3 Time Limit
-	     4-7 Fire button for Player 1-4
-	1016 Bit 6 - Start 1
-	     Bit 7 - Coin 1
-	101A Bit 6 - Start 2
-	     Bit 7 - Coin 2
+    1000 Vertical Sync
+    1002 Bit 0-6 Player 1 Gun Position
+         Bit 7   Player 1 Gas Pedal
+    1006 Same as above for Player 2
+    100A Same as above for Player 3
+    100E Same as above for Player 4
+    1012 DIP Switches
+         0-1 Coinage
+         2-3 Time Limit
+         4-7 Fire button for Player 1-4
+    1016 Bit 6 - Start 1
+         Bit 7 - Coin 1
+    101A Bit 6 - Start 2
+         Bit 7 - Coin 2
 
-	I/O Write:
+    I/O Write:
 
-	0500-0503 Direction of the cars
-	0504-0507 (sounds/enable) - 0506: LED 1
-	0600      Beer Truck Y
-	0700-07ff Beer Truck Sync Area
-	0800-08ff Bullets RAM
-	0900-0903 Car Sprite #
-	0a00-0a03 Car Y Pos
-	0b00-0bff Car Sync Area
-	1000      Sound effect and start led triggers must be here - 1000: LED 2
-	1001-1003 ???
+    0500-0503 Direction of the cars
+    0504-0507 (sounds/enable) - 0506: LED 1
+    0600      Beer Truck Y
+    0700-07ff Beer Truck Sync Area
+    0800-08ff Bullets RAM
+    0900-0903 Car Sprite #
+    0a00-0a03 Car Y Pos
+    0b00-0bff Car Sync Area
+    1000      Sound effect and start led triggers must be here - 1000: LED 2
+    1001-1003 ???
 
 ***************************************************************************/
 
@@ -61,7 +61,7 @@
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -75,7 +75,7 @@ static PALETTE_INIT( copsnrob )
 
 /*************************************
  *
- *	Video overlay
+ *  Video overlay
  *
  *************************************/
 
@@ -89,7 +89,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	LEDs
+ *  LEDs
  *
  *************************************/
 
@@ -115,7 +115,7 @@ static WRITE8_HANDLER( copsnrob_led_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) )
 	AM_RANGE(0x0000, 0x01ff) AM_RAM
 	AM_RANGE(0x0500, 0x0503) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0x0504, 0x0507) AM_WRITE(MWA8_NOP)  // ???
+//  AM_RANGE(0x0504, 0x0507) AM_WRITE(MWA8_NOP)  // ???
 	AM_RANGE(0x0506, 0x0506) AM_WRITE(copsnrob_led_w)
 	AM_RANGE(0x0600, 0x0600) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_trucky)
 	AM_RANGE(0x0700, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_truckram)
@@ -132,8 +132,8 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0a00, 0x0a03) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_cary)
 	AM_RANGE(0x0b00, 0x0bff) AM_RAM
 	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
-//	AM_RANGE(0x1000, 0x1003) AM_WRITENOP
-//	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+//  AM_RANGE(0x1000, 0x1003) AM_WRITENOP
+//  AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
 	AM_RANGE(0x1000, 0x1000) AM_READ(copsnrob_misc_r)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(copsnrob_misc_w)
 	AM_RANGE(0x1002, 0x100e) AM_READ(copsnrob_gun_position_r)
@@ -147,7 +147,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -205,7 +205,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -267,7 +267,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -295,7 +295,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -333,7 +333,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -346,7 +346,7 @@ static DRIVER_INIT( copsnrob )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

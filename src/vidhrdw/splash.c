@@ -20,31 +20,31 @@ static struct tilemap *screen[2];
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Screen 0: (64*32, 8x8 tiles)
+    Screen 0: (64*32, 8x8 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | sprite code (low 8 bits)
-	  0  | ----xxxx -------- | sprite code (high 4 bits)
-	  0  | xxxx---- -------- | color
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | sprite code (low 8 bits)
+      0  | ----xxxx -------- | sprite code (high 4 bits)
+      0  | xxxx---- -------- | color
 
-	Screen 1: (32*32, 16x16 tiles)
+    Screen 1: (32*32, 16x16 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- -------x | flip y
-	  0  | -------- ------x- | flip x
-	  0  | -------- xxxxxx-- | sprite code (low 6 bits)
-	  0  | ----xxxx -------- | sprite code (high 4 bits)
-	  0  | xxxx---- -------- | color
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- -------x | flip y
+      0  | -------- ------x- | flip x
+      0  | -------- xxxxxx-- | sprite code (low 6 bits)
+      0  | ----xxxx -------- | sprite code (high 4 bits)
+      0  | xxxx---- -------- | color
 */
 
 static void get_tile_info_splash_screen0(int tile_index)
@@ -75,7 +75,7 @@ static void get_tile_info_splash_screen1(int tile_index)
 
 /***************************************************************************
 
-	Memory Handlers
+    Memory Handlers
 
 ***************************************************************************/
 
@@ -175,7 +175,7 @@ static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle
 }
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -197,31 +197,31 @@ VIDEO_START( splash )
 
 /***************************************************************************
 
-	Sprites
+    Sprites
 
 ***************************************************************************/
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-  	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | sprite number (low 8 bits)
-	  0  | xxxxxxxx -------- | unused
-	  1  | -------- xxxxxxxx | y position
-	  1  | xxxxxxxx -------- | unused
-	  2  | -------- xxxxxxxx | x position (low 8 bits)
-	  2  | xxxxxxxx -------- | unused
-	  3  | -------- ----xxxx | sprite number (high 4 bits)
-	  3  | -------- --xx---- | unknown
-	  3  | -------- -x------ | flip x
-	  3  | -------- x------- | flip y
-	  3  | xxxxxxxx -------- | unused
-  	  400| -------- ----xxxx | sprite color
-	  400| -------- -xxx---- | unknown
-	  400| -------- x------- | x position (high bit)
-	  400| xxxxxxxx -------- | unused
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | sprite number (low 8 bits)
+      0  | xxxxxxxx -------- | unused
+      1  | -------- xxxxxxxx | y position
+      1  | xxxxxxxx -------- | unused
+      2  | -------- xxxxxxxx | x position (low 8 bits)
+      2  | xxxxxxxx -------- | unused
+      3  | -------- ----xxxx | sprite number (high 4 bits)
+      3  | -------- --xx---- | unknown
+      3  | -------- -x------ | flip x
+      3  | -------- x------- | flip y
+      3  | xxxxxxxx -------- | unused
+      400| -------- ----xxxx | sprite color
+      400| -------- -xxx---- | unknown
+      400| -------- x------- | x position (high bit)
+      400| xxxxxxxx -------- | unused
 */
 
 static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
@@ -266,7 +266,7 @@ static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

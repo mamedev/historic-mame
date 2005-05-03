@@ -22,8 +22,8 @@ static int scrolld[2][4][2] = {
 };
 /*
 static int scrolld1[2][4][2] = {
- 	{{ 0, 0 }, {2, 0}, {4, 0}, {5, 0}},	// default '157 offsets
- 	{{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
+    {{ 0, 0 }, {2, 0}, {4, 0}, {5, 0}}, // default '157 offsets
+    {{ 0, 0 }, {0, 0}, {0, 0}, {0, 0}}
 };
 */
 static int layer_colorbase;
@@ -59,7 +59,7 @@ static void get_dbz2_bg2_tile_info(int tile_index)
 
 	tileno = dbz2_bg2_videoram[tile_index*2+1] & 0x7fff;
 
-//	tileno = (tileno & 0x3f1f) | (tileno & 0x40) | ((tileno & 0x80) >> 2) | ((tileno & 0x20) << 2) | ((tileno & 0x4000) << 1); // not right? some bg's are still bad
+//  tileno = (tileno & 0x3f1f) | (tileno & 0x40) | ((tileno & 0x80) >> 2) | ((tileno & 0x20) << 2) | ((tileno & 0x4000) << 1); // not right? some bg's are still bad
 	colour = (dbz2_bg2_videoram[tile_index*2] & 0x000f);  // more bits?
 
 	flipx = (dbz2_bg2_videoram[tile_index*2] & 0x0080) >> 7;
@@ -81,7 +81,7 @@ static void get_dbz2_bg_tile_info(int tile_index)
 
 	tileno = dbz2_bg_videoram[tile_index*2+1] & 0x7fff;
 
-//	tileno = (tileno & 0x3f1f) | (tileno & 0x40) | ((tileno & 0x80) >> 2) | ((tileno & 0x20) << 2) | ((tileno & 0x4000) << 1); // not right? some bg's are still bad
+//  tileno = (tileno & 0x3f1f) | (tileno & 0x40) | ((tileno & 0x80) >> 2) | ((tileno & 0x20) << 2) | ((tileno & 0x4000) << 1); // not right? some bg's are still bad
 	colour = (dbz2_bg_videoram[tile_index*2] & 0x000f);  // more bits?
 
 	flipx = (dbz2_bg_videoram[tile_index*2] & 0x0080) >> 7;

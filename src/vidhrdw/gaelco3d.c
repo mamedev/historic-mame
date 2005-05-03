@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	Driver for Gaelco 3D games
+    Driver for Gaelco 3D games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
 **************************************************************************/
 
@@ -39,7 +39,7 @@ static int lastscan;
 
 /*************************************
  *
- *	Video init
+ *  Video init
  *
  *************************************/
 
@@ -48,19 +48,19 @@ VIDEO_START( gaelco3d )
 	screenbits = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!screenbits)
 		return 1;
-	
+
 	zbuffer = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	if (!zbuffer)
 		return 1;
-	
+
 	palette = auto_malloc(32768 * sizeof(palette[0]));
 	if (!palette)
 		return 1;
-	
+
 	polydata_buffer = auto_malloc(MAX_POLYDATA * sizeof(polydata_buffer[0]));
 	if (!polydata_buffer)
 		return 1;
-	
+
 	return 0;
 }
 
@@ -68,7 +68,7 @@ VIDEO_START( gaelco3d )
 
 /*************************************
  *
- *	TMS32031 floating point conversion
+ *  TMS32031 floating point conversion
  *
  *************************************/
 
@@ -105,7 +105,7 @@ static float dsp_to_float(UINT32 val)
 
 /*************************************
  *
- *	Polygon rendering
+ *  Polygon rendering
  *
  *************************************/
 
@@ -122,7 +122,7 @@ static int render_poly(UINT32 *polydata)
 	float uoz_dx = dsp_to_float(polydata[6]) * GAELCO3D_RESOLUTION_DIVIDE;
 	float uoz_dy = dsp_to_float(polydata[5]) * GAELCO3D_RESOLUTION_DIVIDE;
 	float uoz_base = dsp_to_float(polydata[9]);
-	
+
 	/* these three parameters combine via A * x + B * y + C to produce a v/z value */
 	float voz_dx = dsp_to_float(polydata[2]) * GAELCO3D_RESOLUTION_DIVIDE;
 	float voz_dy = dsp_to_float(polydata[1]) * GAELCO3D_RESOLUTION_DIVIDE;
@@ -141,11 +141,11 @@ static int render_poly(UINT32 *polydata)
 	struct poly_vertex vert[3];
 	struct rectangle clip;
 	int i;
-	
+
 	// shut up the compiler
 	(void)xorigin;
 	(void)yorigin;
-	
+
 	if (LOG_POLYGONS && code_pressed(KEYCODE_LSHIFT))
 	{
 		int t;
@@ -163,7 +163,7 @@ static int render_poly(UINT32 *polydata)
 				polydata[10],
 				polydata[11],
 				(INT16)(polydata[12] >> 16), (INT16)(polydata[12] << 2) >> 2, polydata[12]);
-		
+
 		printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[13] >> 16), (INT16)(polydata[13] << 2) >> 2, polydata[13], polydata[14]);
 		for (t = 15; !IS_POLYEND(polydata[t - 2]); t += 2)
 			printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[t] >> 16), (INT16)(polydata[t] << 2) >> 2, polydata[t], polydata[t+1]);
@@ -176,12 +176,12 @@ static int render_poly(UINT32 *polydata)
 	clip.max_x = Machine->visible_area.max_x - midx;
 	clip.max_y = Machine->visible_area.max_y - midy;
 
-	/* extract the first two vertices */	
+	/* extract the first two vertices */
 	vert[0].x = (((INT32)polydata[13] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
 	vert[0].y = (((INT32)(polydata[13] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
 	vert[1].x = (((INT32)polydata[15] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
 	vert[1].y = (((INT32)(polydata[15] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
-	
+
 	/* loop over the remaining verticies */
 	for (i = 17; !IS_POLYEND(polydata[i - 2]); i += 2)
 	{
@@ -193,7 +193,7 @@ static int render_poly(UINT32 *polydata)
 		/* extract vertex 2 */
 		vert[2].x = (((INT32)polydata[i] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
 		vert[2].y = (((INT32)(polydata[i] << 18) >> 18) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
-		
+
 		/* compute the scanning parameters */
 		scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &clip);
 		if (scans)
@@ -218,7 +218,7 @@ static int render_poly(UINT32 *polydata)
 					UINT16 *zbuf = zbuffer->line[midy - y];
 					float uoz = (uoz_dy * y + scan->sx * uoz_dx + uoz_base) * zbase;
 					float voz = (voz_dy * y + scan->sx * voz_dx + voz_base) * zbase;
-				
+
 					for (x = scan->sx; x <= scan->ex; x++)
 					{
 #if (!BILINEAR_FILTER)
@@ -237,19 +237,19 @@ static int render_poly(UINT32 *polydata)
 							paldata = palette[color | texturedata[pixeloffs]];
 							tf = f = (~u & 0xff) * (~v & 0xff);
 							r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
-							
+
 							paldata = palette[color | texturedata[pixeloffs + 1]];
 							tf += f = (u & 0xff) * (~v & 0xff);
 							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-							
+
 							paldata = palette[color | texturedata[pixeloffs + 4096]];
 							tf += f = (~u & 0xff) * (v & 0xff);
 							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-							
+
 							paldata = palette[color | texturedata[pixeloffs + 4097]];
 							f = 0x10000 - tf;
 							r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-							
+
 							dest[x] = ((r >> 16) & 0x7c00) | ((g >> 16) & 0x03e0) | (b >> 16);
 							zbuf[x] = zbufval;
 						}
@@ -260,7 +260,7 @@ static int render_poly(UINT32 *polydata)
 					}
 				}
 			}
-			
+
 			/* general case: non-alpha blended */
 			else if (color != 0x7f00)
 			{
@@ -273,7 +273,7 @@ static int render_poly(UINT32 *polydata)
 					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
 					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
 					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
-				
+
 					for (x = scan->sx; x <= scan->ex; x++)
 					{
 						if (ooz > 0)
@@ -299,19 +299,19 @@ static int render_poly(UINT32 *polydata)
 									paldata = palette[color | texturedata[pixeloffs]];
 									tf = f = (~u & 0xff) * (~v & 0xff);
 									r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 1]];
 									tf += f = (u & 0xff) * (~v & 0xff);
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 4096]];
 									tf += f = (~u & 0xff) * (v & 0xff);
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 4097]];
 									f = 0x10000 - tf;
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									dest[x] = ((r >> 16) & 0x7c00) | ((g >> 16) & 0x03e0) | (b >> 16);
 									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
 								}
@@ -326,7 +326,7 @@ static int render_poly(UINT32 *polydata)
 					}
 				}
 			}
-			
+
 			/* color 0x7f seems to be hard-coded as a 50% alpha blend */
 			else
 			{
@@ -339,7 +339,7 @@ static int render_poly(UINT32 *polydata)
 					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
 					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
 					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
-				
+
 					for (x = scan->sx; x <= scan->ex; x++)
 					{
 						if (ooz > 0)
@@ -365,19 +365,19 @@ static int render_poly(UINT32 *polydata)
 									paldata = palette[color | texturedata[pixeloffs]];
 									tf = f = (~u & 0xff) * (~v & 0xff);
 									r = (paldata & 0x7c00) * f; g = (paldata & 0x03e0) * f; b = (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 1]];
 									tf += f = (u & 0xff) * (~v & 0xff);
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 4096]];
 									tf += f = (~u & 0xff) * (v & 0xff);
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									paldata = palette[color | texturedata[pixeloffs + 4097]];
 									f = 0x10000 - tf;
 									r += (paldata & 0x7c00) * f; g += (paldata & 0x03e0) * f; b += (paldata & 0x001f) * f;
-									
+
 									paldata = ((r >> 17) & 0x7c00) | ((g >> 17) & 0x03e0) | (b >> 17);
 									dest[x] = ((dest[x] >> 1) & 0x3def) + (paldata & 0x3def);
 									zbuf[x] = (zbufval < 0) ? -zbufval : zbufval;
@@ -385,7 +385,7 @@ static int render_poly(UINT32 *polydata)
 #endif
 							}
 						}
-						
+
 						/* advance texture params to the next pixel */
 						ooz += ooz_dx;
 						uoz += uoz_dx;
@@ -398,23 +398,23 @@ static int render_poly(UINT32 *polydata)
 		/* copy vertex 2 to vertex 1 -- this hardware draws in fans */
 		vert[1] = vert[2];
 	}
-	
+
 	polygons++;
 	return i;
 }
 
 
-		
+
 /*************************************
  *
- *	Scene rendering
+ *  Scene rendering
  *
  *************************************/
 
 void gaelco3d_render(void)
 {
 	int i;
-	
+
 	/* if frameskip is engaged, skip it */
 	if (!osd_skip_this_frame())
 		for (i = 0; i < polydata_count; )
@@ -436,7 +436,7 @@ void gaelco3d_render(void)
 
 /*************************************
  *
- *	Renderer access
+ *  Renderer access
  *
  *************************************/
 
@@ -456,7 +456,7 @@ WRITE32_HANDLER( gaelco3d_render_w )
 
 /*************************************
  *
- *	Palette access
+ *  Palette access
  *
  *************************************/
 
@@ -490,7 +490,7 @@ WRITE32_HANDLER( gaelco3d_paletteram_020_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -502,17 +502,17 @@ VIDEO_UPDATE( gaelco3d )
 	{
 		static int xv = 0, yv = 0x1000;
 		UINT8 *base = memory_region(REGION_USER3);
-		
+
 		if (code_pressed(KEYCODE_LEFT) && xv >= 4)
 			xv -= 4;
 		if (code_pressed(KEYCODE_RIGHT) && xv < 4096 - 4)
 			xv += 4;
-		
+
 		if (code_pressed(KEYCODE_UP) && yv >= 4)
 			yv -= 4;
 		if (code_pressed(KEYCODE_DOWN) && yv < 0x40000)
 			yv += 4;
-		
+
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		{
 			UINT16 *dest = bitmap->line[y];

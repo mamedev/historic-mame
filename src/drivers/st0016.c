@@ -1,6 +1,6 @@
 /*******************************************
   Seta custom ST-0016 chip based games.
-	driver by Tomasz Slanina
+    driver by Tomasz Slanina
 ********************************************
 
 
@@ -85,9 +85,9 @@ ADDRESS_MAP_END
 static READ8_HANDLER(mux_r)
 {
 /*
-	76543210
-	    xxxx - input port #2
-	xxxx     - dip switches (2x8 bits) (multiplexed)
+    76543210
+        xxxx - input port #2
+    xxxx     - dip switches (2x8 bits) (multiplexed)
 */
 	int retval=input_port_2_r(0)&0x0f;
 	switch(mux_port&0x30)
@@ -271,7 +271,7 @@ INPUT_PORTS_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-//	{ 0, 0, &charlayout,      0, 16*4  },
+//  { 0, 0, &charlayout,      0, 16*4  },
 	{ -1 }	/* end of array */
 };
 
@@ -537,17 +537,17 @@ INPUT_PORTS_END
 Mayjinsen (JPN Ver.)
 (c)1994 Seta
 
-CPU:	UPD70732-25 V810 ?
-Sound:	Custom (ST-0016 ?)
+CPU:    UPD70732-25 V810 ?
+Sound:  Custom (ST-0016 ?)
 
-sx003.01	main prg
+sx003.01    main prg
 sx003.02
 sx003.03
-sx003.04	/
+sx003.04    /
 
-sx003.05d	chr
+sx003.05d   chr
 sx003.06
-sx003.07d	/
+sx003.07d   /
 
 -----------
 

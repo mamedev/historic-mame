@@ -82,19 +82,19 @@ IRQ2 points to RTE (not used).
 tdragon,mustang and hachamf test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
-2)	Press player 1 button 2 14 (!) times
+2)  Press player 1 button 2 14 (!) times
 
 gunnail test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
-2)	Press player 2 button 1 3 times
+2)  Press player 2 button 1 3 times
 
 bjtwin test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
-2)	Press player 1 buttons in this sequence:
-	2,2,2, 1,1,1, 2,2,2, 1,1,1
-	The release date of this program will appear.
+2)  Press player 1 buttons in this sequence:
+    2,2,2, 1,1,1, 2,2,2, 1,1,1
+    The release date of this program will appear.
 
 Some code has to be patched out for this to work (see below). The program
 remaps button 2 and 3 to button 1, so you can't enter the above sequence.
@@ -237,13 +237,13 @@ static READ16_HANDLER( tharrier_shared_r )
 
 static WRITE16_HANDLER( tharrier_mcu_control_w )
 {
-//	logerror("%04x: mcu_control_w %02x\n",activecpu_get_pc(),data);
+//  logerror("%04x: mcu_control_w %02x\n",activecpu_get_pc(),data);
 }
 
 static READ16_HANDLER( tharrier_mcu_r )
 {
 	/* The MCU is mapped as the top byte for byte accesses only,
-		all word accesses are to the input port */
+        all word accesses are to the input port */
 	if (ACCESSING_MSB && !ACCESSING_LSB)
 	{
 		static UINT8 to_main[] =
@@ -290,8 +290,8 @@ static WRITE8_HANDLER( macross2_sound_bank_w )
 static WRITE8_HANDLER( macross2_oki6295_bankswitch_w )
 {
 	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-	   controlled. The sample table at the beginning of the addressing space is
-	   divided in four pages as well, banked together with the sample data. */
+       controlled. The sample table at the beginning of the addressing space is
+       divided in four pages as well, banked together with the sample data. */
 	#define TABLESIZE 0x100
 	#define BANKSIZE 0x10000
 	int chip = (offset & 4) >> 2;
@@ -449,8 +449,8 @@ static ADDRESS_MAP_START( tharrier_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080010, 0x080011) AM_WRITE(tharrier_mcu_control_w)
 	AM_RANGE(0x080012, 0x080013) AM_WRITE(MWA16_NOP)
-//	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
-//	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
+//  AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
+//  AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
 	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(soundlatch_word_w)
 	AM_RANGE(0x088000, 0x0883ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
@@ -471,7 +471,7 @@ static ADDRESS_MAP_START( mustang_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080004, 0x080005) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
-//	AM_RANGE(0x08000e, 0x08000f) AM_READ(soundlatch2_word_r)	/* from Z80 bootleg only? */
+//  AM_RANGE(0x08000e, 0x08000f) AM_READ(soundlatch2_word_r)    /* from Z80 bootleg only? */
 	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
@@ -554,7 +554,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bioship_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-//	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
+//  AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
 	AM_RANGE(0x084000, 0x084001) AM_WRITE(bioship_bank_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
@@ -872,7 +872,7 @@ static ADDRESS_MAP_START( ssmissin_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(input_port_2_word_r)
-//	AM_RANGE(0x0c000e, 0x0c000f) AM_READ(??)
+//  AM_RANGE(0x0c000e, 0x0c000f) AM_READ(??)
 	AM_RANGE(0x0cc000, 0x0cffff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x0d0000, 0x0d07ff) AM_READ(nmk_txvideoram_r)
 ADDRESS_MAP_END
@@ -2823,7 +2823,7 @@ static MACHINE_DRIVER_START( manybloc )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(macross)
-//	MDRV_VIDEO_EOF(nmk)
+//  MDRV_VIDEO_EOF(nmk)
 	MDRV_VIDEO_UPDATE(manybloc)
 
 	/* sound hardware */
@@ -3425,12 +3425,12 @@ static MACHINE_DRIVER_START( raphero )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
 
-//	MDRV_CPU_ADD(Z80, 4000000) // tmp90c841 ?
+//  MDRV_CPU_ADD(Z80, 4000000) // tmp90c841 ?
 //<ianpatt> looks like the tmp90c841 is a microcontroller from toshiba compatible with the z80 instruction set
 //<ianpatt> and luckily it isn't one of the versions with embedded ROM
-//	/* audio CPU */ /* 4 MHz ? */
-//	MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
-//	MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
+//  /* audio CPU */ /* 4 MHz ? */
+//  MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
+//  MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(56) // measured
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4472,7 +4472,7 @@ static void decode_gfx(void)
 static void decode_tdragonb(void)
 {
 	/* Descrambling Info Again Taken from Raine, Huge Thanks to Antiriad and the Raine Team for
-	   going Open Source, best of luck in future development. */
+       going Open Source, best of luck in future development. */
 
 	unsigned char *rom;
 	int A;
@@ -4551,7 +4551,7 @@ static DRIVER_INIT( hachamf )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
-	//rom[0x0006/2] = 0x7dc2;	/* replace reset vector with the "real" one */
+	//rom[0x0006/2] = 0x7dc2;   /* replace reset vector with the "real" one */
 
 	// kludge the sound communication to let commands go through.
 	rom[0x048a/2] = 0x4e71;
@@ -4565,7 +4565,7 @@ static DRIVER_INIT( tdragonb )
 	decode_tdragonb();
 
 	/* The Following Patch is taken from Raine, Otherwise the game has no Sprites in Attract Mode or After Level 1
-	   which is rather odd considering its a bootleg.. */
+       which is rather odd considering its a bootleg.. */
 	rom[0x00308/2] = 0x4e71; /* Sprite Problem */
 }
 
@@ -4657,23 +4657,23 @@ static DRIVER_INIT( bjtwin )
 
 	/* Patch rom to enable test mode */
 
-/*	008F54: 33F9 0008 0000 000F FFFC move.w  $80000.l, $ffffc.l
- *	008F5E: 3639 0008 0002           move.w  $80002.l, D3
- *	008F64: 3003                     move.w  D3, D0				\
- *	008F66: 3203                     move.w  D3, D1				|	This code remaps
- *	008F68: 0041 BFBF                ori.w   #-$4041, D1		|   buttons 2 and 3 to
- *	008F6C: E441                     asr.w   #2, D1				|   button 1, so
- *	008F6E: 0040 DFDF                ori.w   #-$2021, D0		|   you can't enter
- *	008F72: E240                     asr.w   #1, D0				|   service mode
- *	008F74: C640                     and.w   D0, D3				|
- *	008F76: C641                     and.w   D1, D3				/
- *	008F78: 33C3 000F FFFE           move.w  D3, $ffffe.l
- *	008F7E: 207C 000F 9000           movea.l #$f9000, A0
+/*  008F54: 33F9 0008 0000 000F FFFC move.w  $80000.l, $ffffc.l
+ *  008F5E: 3639 0008 0002           move.w  $80002.l, D3
+ *  008F64: 3003                     move.w  D3, D0             \
+ *  008F66: 3203                     move.w  D3, D1             |   This code remaps
+ *  008F68: 0041 BFBF                ori.w   #-$4041, D1        |   buttons 2 and 3 to
+ *  008F6C: E441                     asr.w   #2, D1             |   button 1, so
+ *  008F6E: 0040 DFDF                ori.w   #-$2021, D0        |   you can't enter
+ *  008F72: E240                     asr.w   #1, D0             |   service mode
+ *  008F74: C640                     and.w   D0, D3             |
+ *  008F76: C641                     and.w   D1, D3             /
+ *  008F78: 33C3 000F FFFE           move.w  D3, $ffffe.l
+ *  008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-//	data 16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-//	rom[0x09172/2] = 0x6006;	/* patch checksum error */
-//	rom[0x08f74/2] = 0x4e71);
+//  data 16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+//  rom[0x09172/2] = 0x6006;    /* patch checksum error */
+//  rom[0x08f74/2] = 0x4e71);
 }
 
 GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0, 		  ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

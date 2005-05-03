@@ -307,26 +307,26 @@ static void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectang
 	int offs,end,inc;
 
 	/*
-		Alternate format from most 16 bit games - same as Captain America
+        Alternate format from most 16 bit games - same as Captain America
 
-		Word 0:
-			0x8000:	Y flip
-			0x4000: X flip
-			0x2000:	Flash (Sprite toggles on/off every frame)
-			0x1fff:	Y value
-		Word 1:
-			0xffff: X value
-		Word 2:
-			0xf000:	Block height
-			0x0f00: Block width
-			0x00e0: Unused?
-			0x001f: Colour
-		Word 3:
-			0xffff:	Sprite value
-	*/
+        Word 0:
+            0x8000: Y flip
+            0x4000: X flip
+            0x2000: Flash (Sprite toggles on/off every frame)
+            0x1fff: Y value
+        Word 1:
+            0xffff: X value
+        Word 2:
+            0xf000: Block height
+            0x0f00: Block width
+            0x00e0: Unused?
+            0x001f: Colour
+        Word 3:
+            0xffff: Sprite value
+    */
 
 	/* This may look strange, but the alpha-blended sprite chip definitely draws end to
-		front, ie, reversed from normal pdrawgfx style. */
+        front, ie, reversed from normal pdrawgfx style. */
 	if (gfxbank==4) {
 		offs=0;
 		end=0x400;
@@ -502,26 +502,26 @@ VIDEO_UPDATE( mutantf )
 	fillbitmap(bitmap,Machine->pens[0x400],cliprect); /* Confirmed */
 
 	/* There is no priority prom on this board, but there is a
-	priority control word, the only values used in game appear
-	to be 2, 6 & 7 though:
+    priority control word, the only values used in game appear
+    to be 2, 6 & 7 though:
 
-	Bit 0:	If set sprite chip 2 above sprite chip 1 else vice versa
-	Bit 1:  Always set?
-	Bit 2:  Almost always set  (Sometimes not set on screen transitions)
+    Bit 0:  If set sprite chip 2 above sprite chip 1 else vice versa
+    Bit 1:  Always set?
+    Bit 2:  Almost always set  (Sometimes not set on screen transitions)
 
-	The other bits may control alpha blend on the 2nd sprite chip, or
-	layer order.
-	*/
+    The other bits may control alpha blend on the 2nd sprite chip, or
+    layer order.
+    */
 	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 	deco16_tilemap_2_draw(bitmap,cliprect,0,0);
 	deco16_tilemap_3_draw(bitmap,cliprect,0,0);
 
 	/* We need to abuse the priority bitmap a little by clearing it before
-		drawing each sprite layer.  This is because there is no priority
-		orthogonality between sprite layers, but the alpha layer must obey
-		priority between sprites in each layer.  Ie, if we didn't do this,
-		then when two alpha blended shadows overlapped then they would be 25%
-		transparent against the background, rather than 50% */
+        drawing each sprite layer.  This is because there is no priority
+        orthogonality between sprite layers, but the alpha layer must obey
+        priority between sprites in each layer.  Ie, if we didn't do this,
+        then when two alpha blended shadows overlapped then they would be 25%
+        transparent against the background, rather than 50% */
 	if (deco16_priority&1) {
 		fillbitmap(priority_bitmap,0,cliprect);
 		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16,3);

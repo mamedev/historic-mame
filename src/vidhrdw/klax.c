@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Klax hardware
+    Atari Klax hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -29,7 +29,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -87,7 +87,7 @@ VIDEO_START( klax )
 
 /*************************************
  *
- *	Latch write handler
+ *  Latch write handler
  *
  *************************************/
 
@@ -99,7 +99,7 @@ WRITE16_HANDLER( klax_latch_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -124,8 +124,8 @@ VIDEO_UPDATE( klax )
 				{
 					/* verified from schematics:
 
-						PFPRI if (PFS7-4 == 0 || LBPIX3-0 == 0)
-					*/
+                        PFPRI if (PFS7-4 == 0 || LBPIX3-0 == 0)
+                    */
 					if ((pf[x] & 0xf0) != 0xf0)
 						pf[x] = mo[x];
 

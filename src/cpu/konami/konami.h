@@ -22,7 +22,7 @@ enum
 void konami_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************/
-/* Read a byte from given memory location									*/
+/* Read a byte from given memory location                                   */
 /****************************************************************************/
 #define KONAMI_RDMEM(Addr) ((unsigned)program_read_byte_8(Addr))
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Night Driver hardware
+    Atari Night Driver hardware
 
 ***************************************************************************/
 
@@ -78,26 +78,26 @@ WRITE8_HANDLER( nitedrvr_steering_reset_w )
 nitedrvr_in0_r
 
 Night Driver looks for the following:
-	A: $00
-		D4 - OPT1
-		D5 - OPT2
-		D6 - OPT3
-		D7 - OPT4
-	A: $01
-		D4 - TRACK SET
-		D5 - BONUS TIME ALLOWED
-		D6 - VBLANK
-		D7 - !TEST
-	A: $02
-		D4 - !GEAR 1
-		D5 - !GEAR 2
-		D6 - !GEAR 3
-		D7 - SPARE
-	A: $03
-		D4 - SPARE
-		D5 - DIFFICULT BONUS
-		D6 - STEER A
-		D7 - STEER B
+    A: $00
+        D4 - OPT1
+        D5 - OPT2
+        D6 - OPT3
+        D7 - OPT4
+    A: $01
+        D4 - TRACK SET
+        D5 - BONUS TIME ALLOWED
+        D6 - VBLANK
+        D7 - !TEST
+    A: $02
+        D4 - !GEAR 1
+        D5 - !GEAR 2
+        D6 - !GEAR 3
+        D7 - SPARE
+    A: $03
+        D4 - SPARE
+        D5 - DIFFICULT BONUS
+        D6 - STEER A
+        D7 - STEER B
 
 Fill in the steering and gear bits in a special way.
 ***************************************************************************/
@@ -134,30 +134,30 @@ READ8_HANDLER( nitedrvr_in0_r )
 nitedrvr_in1_r
 
 Night Driver looks for the following:
-	A: $00
-		D6 - SPARE
-		D7 - COIN 1
-	A: $01
-		D6 - SPARE
-		D7 - COIN 2
-	A: $02
-		D6 - SPARE
-		D7 - !START
-	A: $03
-		D6 - SPARE
-		D7 - !ACC
-	A: $04
-		D6 - SPARE
-		D7 - EXPERT
-	A: $05
-		D6 - SPARE
-		D7 - NOVICE
-	A: $06
-		D6 - SPARE
-		D7 - Special Alternating Signal
-	A: $07
-		D6 - SPARE
-		D7 - Ground
+    A: $00
+        D6 - SPARE
+        D7 - COIN 1
+    A: $01
+        D6 - SPARE
+        D7 - COIN 2
+    A: $02
+        D6 - SPARE
+        D7 - !START
+    A: $03
+        D6 - SPARE
+        D7 - !ACC
+    A: $04
+        D6 - SPARE
+        D7 - EXPERT
+    A: $05
+        D6 - SPARE
+        D7 - NOVICE
+    A: $06
+        D6 - SPARE
+        D7 - Special Alternating Signal
+    A: $07
+        D6 - SPARE
+        D7 - Ground
 
 Fill in the track difficulty switch and special signal in a special way.
 ***************************************************************************/

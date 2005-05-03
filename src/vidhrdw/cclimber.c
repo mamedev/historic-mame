@@ -322,7 +322,7 @@ static void drawbigsprite(struct mame_bitmap *bitmap)
 		flipy = !flipy;
 	}
 	color = cclimber_bigspriteram[1] & 0x07;	/* cclimber */
-//	color = cclimber_bigspriteram[1] & 0x03;	/* swimmer */
+//  color = cclimber_bigspriteram[1] & 0x03;    /* swimmer */
 
 	for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
 	{
@@ -332,7 +332,7 @@ static void drawbigsprite(struct mame_bitmap *bitmap)
 		if (flipy) sy = 15 - sy;
 
 		drawgfx(bitmap,Machine->gfx[2],
-//				cclimber_bsvideoram[offs],	/* cclimber */
+//              cclimber_bsvideoram[offs],  /* cclimber */
 				cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),	/* swimmer */
 				color,
 				flipx,flipy,
@@ -341,7 +341,7 @@ static void drawbigsprite(struct mame_bitmap *bitmap)
 
 		/* wraparound */
 		drawgfx(bitmap,Machine->gfx[2],
-//				cclimber_bsvideoram[offs],	/* cclimber */
+//              cclimber_bsvideoram[offs],  /* cclimber */
 				cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),	/* swimmer */
 				color,
 				flipx,flipy,

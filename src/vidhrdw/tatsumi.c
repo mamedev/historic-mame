@@ -18,8 +18,8 @@ WRITE16_HANDLER(tatsumi_sprite_control_w)
 	COMBINE_DATA(&tatsumi_sprite_control_ram[offset]);
 
 	/* 0xe0 is bank switch, others unknown */
-//	if ((offset==0xe0 && data&0xefff) || offset!=0xe0)
-//		logerror("%08x:  Tatsumi TZB215 sprite control %04x %08x\n", activecpu_get_pc(), offset, data);
+//  if ((offset==0xe0 && data&0xefff) || offset!=0xe0)
+//      logerror("%08x:  Tatsumi TZB215 sprite control %04x %08x\n", activecpu_get_pc(), offset, data);
 }
 
 /******************************************************************************/
@@ -34,8 +34,8 @@ WRITE8_HANDLER(roundup5_vram_w)
 {
 	offset+=((tatsumi_control_word&0x0c00)>>10) * 0x18000;
 
-//	if (offset>=0x30000)
-//		logerror("effective write to vram %06x %02x (control %04x)\n",offset,data,tatsumi_control_word);
+//  if (offset>=0x30000)
+//      logerror("effective write to vram %06x %02x (control %04x)\n",offset,data,tatsumi_control_word);
 
 	roundup5_vram[offset]=data;
 
@@ -48,16 +48,16 @@ WRITE8_HANDLER(roundup5_vram_w)
 
 WRITE8_HANDLER(roundup5_palette_w)
 {
-//	static int hack=0;
+//  static int hack=0;
 	int r,g,b,word;
 
 	paletteram[offset]=data;
 
-//	if (offset==0xbfe)
-//		hack++;
+//  if (offset==0xbfe)
+//      hack++;
 
-//	if (hack>1)
-//		return;
+//  if (hack>1)
+//      return;
 
 /*
 apache 3 schematics state
@@ -70,7 +70,7 @@ bit 0:  3.9kOhm resistor
 
 */
 
-//	logerror("PAL: %04x %02x\n",offset,data);
+//  logerror("PAL: %04x %02x\n",offset,data);
 
 	offset&=~3;
 	word=(paletteram[offset]<<8)|(paletteram[offset+2]);
@@ -82,16 +82,16 @@ bit 0:  3.9kOhm resistor
 }
 WRITE8_HANDLER(apache3_palette_w)
 {
-//	static int hack=0;
+//  static int hack=0;
 	int r,g,b,word;
 
 	paletteram[offset]=data;
 
-//	if (offset==0xbfe)
-//		hack++;
+//  if (offset==0xbfe)
+//      hack++;
 
-//	if (hack>1)
-//		return;
+//  if (hack>1)
+//      return;
 
 /*
 apache 3 schematics state
@@ -104,7 +104,7 @@ bit 0:  3.9kOhm resistor
 
 */
 
-//	logerror("PAL: %04x %02x\n",offset,data);
+//  logerror("PAL: %04x %02x\n",offset,data);
 
 	offset&=~1;
 	word=(paletteram[offset+1]<<8)|(paletteram[offset]);
@@ -162,8 +162,8 @@ WRITE8_HANDLER( roundup5_crt_w )
 		roundupt_crt_selected_reg=data&0x3f;
 	if (offset==2) {
 		roundupt_crt_reg[roundupt_crt_selected_reg]=data;
-//		if (roundupt_crt_selected_reg!=0xa && roundupt_crt_selected_reg!=0xb && roundupt_crt_selected_reg!=29)
-//		logerror("%08x:  Crt write %02x %02x\n",activecpu_get_pc(),roundupt_crt_selected_reg,data);
+//      if (roundupt_crt_selected_reg!=0xa && roundupt_crt_selected_reg!=0xb && roundupt_crt_selected_reg!=29)
+//      logerror("%08x:  Crt write %02x %02x\n",activecpu_get_pc(),roundupt_crt_selected_reg,data);
 	}
 }
 
@@ -265,11 +265,11 @@ INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const struc
 	if (!scalex || !scaley) return;
 
 	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
+    scalex and scaley are 16.16 fixed point numbers
+    1<<15 : shrink to 50%
+    1<<16 : uniform scale
+    1<<17 : double to 200%
+    */
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
 	if(clip)
@@ -308,17 +308,17 @@ INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const struc
 				int sy;//=ssy>>16;
 
 
-//				int ex = sx+sprite_screen_width;
-//				int ey = sy+sprite_screen_height;
+//              int ex = sx+sprite_screen_width;
+//              int ey = sy+sprite_screen_height;
 
 				int x_index_base;
 				int y_index;
 				int ex,ey;
 
 							int incxx=0x10000;//(int)((float)dx * cos(theta));
-//							int incxy=0x0;//(int)((float)dy * -sin(theta));
+//                          int incxy=0x0;//(int)((float)dy * -sin(theta));
 							int incyx=0x0;//(int)((float)dx * sin(theta));
-//							int incyy=0x10000;//(int)((float)dy * cos(theta));
+//                          int incyy=0x10000;//(int)((float)dy * cos(theta));
 
 							if (flipx)
 							{
@@ -390,17 +390,17 @@ INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const struc
 							int startx=0;
 							int starty=0;
 
-//							int incxx=0x10000;
-//							int incxy=0;
-//							int incyx=0;
-//							int incyy=0x10000;
+//                          int incxx=0x10000;
+//                          int incxy=0;
+//                          int incyx=0;
+//                          int incyy=0x10000;
 							double theta=rotate * ((2.0 * PI)/512.0);
 							double c=cos(theta);
 							double s=sin(theta);
 
 
-						//	if (ey-sy > 0)
-						//		dy=dy / (ey-sy);
+						//  if (ey-sy > 0)
+						//      dy=dy / (ey-sy);
 							{
 							float angleAsRadians=(float)rotate * (7.28f / 512.0f);
 							//float ccx = cosf(angleAsRadians);
@@ -483,8 +483,8 @@ void mycopyrozbitmap_core(struct mame_bitmap *bitmap,struct mame_bitmap *srcbitm
 	int sy;
 	int ex;
 	int ey;
-//	const int xmask = srcbitmap->width-1;
-//	const int ymask = srcbitmap->height-1;
+//  const int xmask = srcbitmap->width-1;
+//  const int ymask = srcbitmap->height-1;
 	const int widthshifted = srcwidth << 16;
 	const int heightshifted = srcheight << 16;
 	UINT32 *dest;
@@ -549,34 +549,34 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	for (offs = rambank;offs < rambank + 0x800;offs += 6)
 	{
 		/*
-			Sprite RAM itself uses an index into two ROM tables to actually draw the object.
+            Sprite RAM itself uses an index into two ROM tables to actually draw the object.
 
-			Sprite RAM format:
+            Sprite RAM format:
 
-			Word 0: 0xf000 - ?
-					0x0fff - Index into ROM sprite table
-			Word 1: 0x8000 - X Flip
-					0x7ff8 - Colour (TODO:  Check top bit on Apache 3/Round up)
-			        0x0007 - ?
-			Word 2: 0xffff - X position
-			Word 3: 0xffff - Y position
-			Word 4: 0x01ff - Rotation
+            Word 0: 0xf000 - ?
+                    0x0fff - Index into ROM sprite table
+            Word 1: 0x8000 - X Flip
+                    0x7ff8 - Colour (TODO:  Check top bit on Apache 3/Round up)
+                    0x0007 - ?
+            Word 2: 0xffff - X position
+            Word 3: 0xffff - Y position
+            Word 4: 0x01ff - Rotation
 
-			Sprite ROM table format, alternate lines come from each bank, with the
-			very first line indicating control information:
+            Sprite ROM table format, alternate lines come from each bank, with the
+            very first line indicating control information:
 
-			First bank:
-			Byte 0: Y destination offset (in scanlines, unaffected by scale).
-			Byte 1: Always 0?
-			Byte 2: Number of source scanlines to render from (so unaffected by destination scale).
-			Byte 3: Usually 0, sometimes 0x80??
+            First bank:
+            Byte 0: Y destination offset (in scanlines, unaffected by scale).
+            Byte 1: Always 0?
+            Byte 2: Number of source scanlines to render from (so unaffected by destination scale).
+            Byte 3: Usually 0, sometimes 0x80??
 
-			Other banks:
-			Byte 0: Width of line in tiles (-1)
-			Byte 1: X offset to start drawing line at (multipled by scale * 8)
-			Bytes 2/3: Tile index to start fetching tiles from (increments per tile).
+            Other banks:
+            Byte 0: Width of line in tiles (-1)
+            Byte 1: X offset to start drawing line at (multipled by scale * 8)
+            Bytes 2/3: Tile index to start fetching tiles from (increments per tile).
 
-		*/
+        */
 		y = spriteram16[offs+3];
 		x = spriteram16[offs+2];
 		scale = spriteram16[offs+4]&0xff;
@@ -586,8 +586,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 		index = spriteram16[offs];
 
-//		if (spriteram16[offs+1]&0x7)
-//			color=rand()%0xff;
+//      if (spriteram16[offs+1]&0x7)
+//          color=rand()%0xff;
 
 		/* End of sprite list marker */
 		if (index==0xffff || spriteram16[offs+4]==0xffff) //todo
@@ -729,17 +729,17 @@ start_offset-=48;
 static void draw_road(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct mame_bitmap *shadow_bitmap)
 {
 /*
-0xf980 0x0008 0x8c80 0x4a00	- road right to below, width unknown (32 pixels guess)
-0xfa80 0x0008 0x8c80 0x4a00	- road right to below, width unknown (32 pixels guess)
+0xf980 0x0008 0x8c80 0x4a00 - road right to below, width unknown (32 pixels guess)
+0xfa80 0x0008 0x8c80 0x4a00 - road right to below, width unknown (32 pixels guess)
 
-0xfb80 0x0008 0x8c80 0x4a00	- road in middle of screen, width unknown (32 pixels guess)
+0xfb80 0x0008 0x8c80 0x4a00 - road in middle of screen, width unknown (32 pixels guess)
 
 0xfc80 0x0008 0x8c80 0x4a00 - road width above to left, same width as above (ie, xpos - 32)
 0xfd80 0x0008 0x8c80 0x4a00 - road width above to left, same width as above (ie, xpos - 32)
 0xfe80 0x0008 0x8c80 0x4a00 - road width above to left, same width as above (ie, xpos - 32)
 0xff80 0x0008 0x8c80 0x4a00 - road width above to left, same width as above (ie, xpos - 32)
-0x0001						- road half/width above to left, (ie, xpos - 16)
-0x0081						- road width to left as usual (xpos-16 from above, or 32 from above2)
+0x0001                      - road half/width above to left, (ie, xpos - 16)
+0x0081                      - road width to left as usual (xpos-16 from above, or 32 from above2)
 
 0xfb0b 0x210b 0x8cf5 0x0dea - blue & left & right, with  blue|----|----|----|----|blue
 in this mode changing columns 2 & 3 have no apparent effect
@@ -748,10 +748,10 @@ in this mode changing columns 2 & 3 have no apparent effect
 0xfb0b 0xaa06 0x8cf5 0x0dea - as above, but scaled up - perhaps 16 pixels shifted from above
 0xfb0b 0xb005 0x8cf5 0x0dea - as above, but scaled up - perhaps 38 pixels shifted from above
 
-b21	diff is 1a6
-97b			20f
-76c			c2
-6aa			fa
+b21 diff is 1a6
+97b         20f
+76c         c2
+6aa         fa
 5b0
 
 
@@ -814,27 +814,27 @@ pos is 11.5 fixed point
 		int palette_byte;//=roundup_l_ram[visible_line/8];
 
 		/*
-			Each road line consists of up to two sets of 128 pixel data that can be positioned
-			on the x-axis and stretched/compressed on the x-axis.  Any screen pixels to the left
-			of the first set are drawn with pen 0 of the road pixel data.  Any screen pixels to the
-			right of the second set line are drawn with pen 127 of the road pixel data.
+            Each road line consists of up to two sets of 128 pixel data that can be positioned
+            on the x-axis and stretched/compressed on the x-axis.  Any screen pixels to the left
+            of the first set are drawn with pen 0 of the road pixel data.  Any screen pixels to the
+            right of the second set line are drawn with pen 127 of the road pixel data.
 
-			The road control data is laid out as follows (4 words per screen line, with 2 banks):
+            The road control data is laid out as follows (4 words per screen line, with 2 banks):
 
-			Word 0:	Line shift for 1st set - 13.3 signed fixed point value.
-			Word 1: Line scale - 5.11 fixed point value.  So 0x800 is 1:1, 0x400 is 1:2, etc
-			Word 2: Line shift for 2nd set - 13.3 signed fixed point value.
-			Word 3: ?
+            Word 0: Line shift for 1st set - 13.3 signed fixed point value.
+            Word 1: Line scale - 5.11 fixed point value.  So 0x800 is 1:1, 0x400 is 1:2, etc
+            Word 2: Line shift for 2nd set - 13.3 signed fixed point value.
+            Word 3: ?
 
-			The scale is shared between both pixel sets.  The 2nd set is only used when the road
-			forks into two between stages.  The 2nd line shift is an offset from the last pixel
-			of the 1st set.  The 2nd line shift uses a different palette bank.
+            The scale is shared between both pixel sets.  The 2nd set is only used when the road
+            forks into two between stages.  The 2nd line shift is an offset from the last pixel
+            of the 1st set.  The 2nd line shift uses a different palette bank.
 
 2nd road uses upper palette - confirmed by water stage.
 offset is from last pixel of first road segment?
 //last pixel of first road is really colour from 2nd road line?
 
-		*/
+        */
 
 		palette_byte=roundup_l_ram[visible_line/8];
 		pal=4 + ((palette_byte>>(visible_line%8))&1);
@@ -874,7 +874,7 @@ offset is from last pixel of first road segment?
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
-			//	col=linedata[0x7f]&0xf;
+			//  col=linedata[0x7f]&0xf;
 
 			if (shadow)
 				plot_pixel(bitmap,x,y,Machine->pens[768 + pal*16 + col]);
@@ -905,7 +905,7 @@ offset is from last pixel of first road segment?
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
-			//	col=linedata[0x7f]&0xf;
+			//  col=linedata[0x7f]&0xf;
 
 			if (shadow)
 				plot_pixel(bitmap,x,y,Machine->pens[768 + pal*16 + col + 32]);
@@ -946,9 +946,9 @@ static void update_cluts(int fake_palette_offset, int object_base, int length)
 {
 	/* Object palettes are build from a series of cluts stored in the object roms.
 
-		We update 'Mame palettes' from the clut here in order to simplify the
-		draw routines.  We also note down any uses of the 'shadow' pen (index 255).
-	*/
+        We update 'Mame palettes' from the clut here in order to simplify the
+        draw routines.  We also note down any uses of the 'shadow' pen (index 255).
+    */
 	int i;
 	UINT8 r,g,b;
 	const data8_t* bank1=tatsumi_rom_clut0;
@@ -999,8 +999,8 @@ VIDEO_UPDATE( apache3 )
 
 VIDEO_UPDATE( roundup5 )
 {
-//	data16_t bg_x_scroll=roundup5_unknown1[0] | (roundup5_unknown1[1]<<8);
-//	data16_t bg_y_scroll=roundup5_unknown2[0] | (roundup5_unknown2[1]<<8);
+//  data16_t bg_x_scroll=roundup5_unknown1[0] | (roundup5_unknown1[1]<<8);
+//  data16_t bg_y_scroll=roundup5_unknown2[0] | (roundup5_unknown2[1]<<8);
 
 	update_cluts(1024, 512, 4096);
 
@@ -1019,7 +1019,7 @@ VIDEO_UPDATE( roundup5 )
 VIDEO_UPDATE( cyclwarr )
 {
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
-//	tilemap_draw(bitmap,cliprect,bg_layer,0,0);
+//  tilemap_draw(bitmap,cliprect,bg_layer,0,0);
 	update_cluts(8192, 4096, 8192);
 	draw_sprites(bitmap,cliprect,0,(tatsumi_sprite_control_ram[0xe0]&0x1000) ? 0x1000 : 0);
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);

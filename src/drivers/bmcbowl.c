@@ -1,42 +1,42 @@
 /*
 BMC Bowling (c) 1994.05 BMC, Ltd
 
-- TS 2004.10.22 - analog[at]op.pl 
+- TS 2004.10.22 - analog[at]op.pl
 
-  Game is almost playable, especially with NVRAM_HACK (undefine it 
-  to get real nvram  access, but sometimes it's impossible to get back to 
-  title screen ). 
- 
- Controls:		 
+  Game is almost playable, especially with NVRAM_HACK (undefine it
+  to get real nvram  access, but sometimes it's impossible to get back to
+  title screen ).
 
- press START(1) OR BUTTON1 to start game , also START(1) or BUTTON1 to bowl / start 
-		( 5 to insert coin(s) , B to bet , D to pay out (?)  etc...)								
+ Controls:
+
+ press START(1) OR BUTTON1 to start game , also START(1) or BUTTON1 to bowl / start
+        ( 5 to insert coin(s) , B to bet , D to pay out (?)  etc...)
 
  press ANALIZER(0) durning boot to enter test menu, then :
-    		STOP1+STOP2 - sound test menu
-		BIG(G) - cycle options , 
-		DOUBLE(H) - play
-      		STOP1(X),STOP2(C) - change 
-       		TAKE(A) - color test
-         	START(1) - exit
-		BET(B)+START(1) - other tests
-		START(1) - next test
- 
+            STOP1+STOP2 - sound test menu
+        BIG(G) - cycle options ,
+        DOUBLE(H) - play
+            STOP1(X),STOP2(C) - change
+            TAKE(A) - color test
+            START(1) - exit
+        BET(B)+START(1) - other tests
+        START(1) - next test
+
  press START(1)+HP(S) durning boot to see stats
-	
- press CONFIRM(N) durning boot, to enter 	settings
-		BET(B) - change page
-		STOP1(X)/STOP3(V) - modify
-		START(1)/SMALL(F) - move 
-		KEY DOWN(D) - default ?
+
+ press CONFIRM(N) durning boot, to enter    settings
+        BET(B) - change page
+        STOP1(X)/STOP3(V) - modify
+        START(1)/SMALL(F) - move
+        KEY DOWN(D) - default ?
 
 TODO:
- 
+
  - scroll (writes to $91800 and VIA port A - not used in game (only in test mode))
  - music - writes  ($20-$30 bytes) to $93000-$93003 range
  - VIA 6522(interrupt gen , ports)
- - Crt 
- - interrupts 
+ - Crt
+ - interrupts
  - missing gfx elements
 
 ---
@@ -129,13 +129,13 @@ VIDEO_START( bmcbowl )
 VIDEO_UPDATE( bmcbowl )
 {
 /*
-	  280x230,4 bitmap layers, 8bpp, 	
-		missing scroll and priorities	(maybe fixed ones)
+      280x230,4 bitmap layers, 8bpp,
+        missing scroll and priorities   (maybe fixed ones)
 */
 
 	int x,y,z,pixdat;
 	fillbitmap(bitmap,get_black_pen(),cliprect);
- 
+
 	z=0;
 	for (y=0;y<230;y++)
 	{
@@ -147,21 +147,21 @@ VIDEO_UPDATE( bmcbowl )
 				plot_pixel(bitmap, x+1,   y, (pixdat&0xff));
 			if(pixdat>>8)
 				plot_pixel(bitmap, x,   y, (pixdat>>8));
-			
+
 			pixdat = bmcbowl_vid2[z];
-			
+
 			if(pixdat&0xff)
 				plot_pixel(bitmap, x+1,   y, (pixdat&0xff));
 			if(pixdat>>8)
 				plot_pixel(bitmap, x,   y, (pixdat>>8));
 
 			pixdat = bmcbowl_vid1[0x8000+z];
-		
+
 			if(pixdat&0xff)
 				plot_pixel(bitmap, x+1,   y, (pixdat&0xff));
 			if(pixdat>>8)
 				plot_pixel(bitmap, x,   y, (pixdat>>8));
-	
+
 			pixdat = bmcbowl_vid1[z];
 
 			if(pixdat&0xff)
@@ -184,7 +184,7 @@ static READ16_HANDLER( bmc_protection_r )
 {
 	switch(activecpu_get_previouspc())
 	{
-		case 0xca68:	
+		case 0xca68:
 			switch(activecpu_get_reg(M68K_D2))
 			{
 				case 0: 		 return 0x37<<8;
@@ -194,7 +194,7 @@ static READ16_HANDLER( bmc_protection_r )
 			break;
 	}
 	logerror("Protection read @ %X\n",activecpu_get_previouspc());
-	return mame_rand();	
+	return mame_rand();
 }
 
 static WRITE16_HANDLER( bmc_RAMDAC_offset_w )
@@ -305,7 +305,7 @@ static NVRAM_HANDLER( bmc_nvram )
 
 	if (read_or_write)
 		mame_fwrite(file, stats_ram, stats_ram_size);
-	else 
+	else
 
 #ifdef NVRAM_HACK
 	for (i = 0; i < stats_ram_size; i++)
@@ -319,7 +319,7 @@ static NVRAM_HANDLER( bmc_nvram )
 	if (file)
 		mame_fread(file, stats_ram, stats_ram_size);
 	else
-		
+
 		for (i = 0; i < stats_ram_size; i++)
 			stats_ram[i] = 0xff;
 #endif
@@ -331,16 +331,16 @@ static ADDRESS_MAP_START( bmcbowl_mem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x090000, 0x090001) AM_WRITE(bmc_RAMDAC_offset_w)
 	AM_RANGE(0x090002, 0x090003) AM_WRITE(bmc_RAMDAC_color_w)
-	AM_RANGE(0x090004, 0x090005) AM_WRITE(MWA16_NOP)//RAMDAC 
-	
+	AM_RANGE(0x090004, 0x090005) AM_WRITE(MWA16_NOP)//RAMDAC
+
 	AM_RANGE(0x090800, 0x090803) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x091000, 0x091001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x091800, 0x091801) AM_WRITE(scroll_w) 
+	AM_RANGE(0x091800, 0x091801) AM_WRITE(scroll_w)
 
 	AM_RANGE(0x092000, 0x09201f) AM_READWRITE(via_r,via_w)
 
 	AM_RANGE(0x093000, 0x093003) AM_WRITE(MWA16_NOP)  // related to music
-	AM_RANGE(0x092800, 0x092801) AM_WRITE(AY8910_write_port_0_msb_w		) 
+	AM_RANGE(0x092800, 0x092801) AM_WRITE(AY8910_write_port_0_msb_w		)
 	AM_RANGE(0x092802, 0x092803) AM_READ(AY8910_read_port_0_msb_r) AM_WRITE(AY8910_control_port_0_msb_w	)
 	AM_RANGE(0x093802, 0x093803) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x095000, 0x095fff) AM_RAM AM_BASE((data16_t **)&stats_ram) AM_SIZE(&stats_ram_size) /* 8 bit */
@@ -348,10 +348,10 @@ static ADDRESS_MAP_START( bmcbowl_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x140000, 0x1bffff) AM_ROM
 	AM_RANGE(0x1c0000, 0x1effff) AM_RAM AM_BASE(&bmcbowl_vid1)
 	AM_RANGE(0x1f0000, 0x1fffff) AM_RAM
-	AM_RANGE(0x200000, 0x21ffff) AM_RAM AM_BASE(&bmcbowl_vid2) 
-	
+	AM_RANGE(0x200000, 0x21ffff) AM_RAM AM_BASE(&bmcbowl_vid2)
+
 	AM_RANGE(0x28c000, 0x28c001) AM_READWRITE(OKIM6295_status_0_msb_r,OKIM6295_data_0_msb_w)
-	
+
 	/* protection device*/
 	AM_RANGE(0x30c000, 0x30c001) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x30c040, 0x30c041) AM_WRITE(MWA16_NOP)
@@ -368,29 +368,29 @@ INPUT_PORTS_START( bmcbowl )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE1 )	PORT_NAME("Note")
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE2 )	PORT_NAME("Analizer")
 
-	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Pay") PORT_CODE(KEYCODE_M)	
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Pay") PORT_CODE(KEYCODE_M)
 	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Stop") PORT_CODE(KEYCODE_Z)
 	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Stop 1") PORT_CODE(KEYCODE_X)
 	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Stop 2") PORT_CODE(KEYCODE_C)
 	PORT_BIT(0x0020, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Stop 3") PORT_CODE(KEYCODE_V)
 	PORT_BIT(0x0100, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Bet") PORT_CODE(KEYCODE_B)
-	PORT_BIT(0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Confirm") PORT_CODE(KEYCODE_N)	
+	PORT_BIT(0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Confirm") PORT_CODE(KEYCODE_N)
 
 
 	PORT_BIT(0x0040, IP_ACTIVE_LOW, IPT_START1 ) PORT_NAME("Start")
 	PORT_BIT(0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Start")
-	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Take") PORT_CODE(KEYCODE_A)	
-	PORT_BIT(0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("HP") PORT_CODE(KEYCODE_S)	
-	PORT_BIT(0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Key Down") PORT_CODE(KEYCODE_D)	
-	PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Small") PORT_CODE(KEYCODE_F)	
-	PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Big") PORT_CODE(KEYCODE_G)	
-	PORT_BIT(0x8000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Double") PORT_CODE(KEYCODE_H)	
-	
+	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Take") PORT_CODE(KEYCODE_A)
+	PORT_BIT(0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("HP") PORT_CODE(KEYCODE_S)
+	PORT_BIT(0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Key Down") PORT_CODE(KEYCODE_D)
+	PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Small") PORT_CODE(KEYCODE_F)
+	PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Big") PORT_CODE(KEYCODE_G)
+	PORT_BIT(0x8000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Double") PORT_CODE(KEYCODE_H)
+
 	PORT_START	/* DSW 2 */
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x20, "1 COIN 10 CREDITS")
 	PORT_DIPSETTING(    0x00, "2 COINS 10 CREDITS")
-	
+
 	PORT_DIPNAME( 0x01, 0x00, "DSW2 8" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -406,16 +406,16 @@ INPUT_PORTS_START( bmcbowl )
 	PORT_DIPNAME( 0x10, 0x00, "DSW2 4" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_DIPNAME( 0x40, 0x00, "DSW2 4" )
 	PORT_DIPSETTING(    0x040, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "DSW2 1" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_START	/* DSW 4 */
-	PORT_DIPNAME( 0x01, 0x00, "DSW4 8" )  
+	PORT_DIPNAME( 0x01, 0x00, "DSW4 8" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "DSW4 7" )
@@ -439,7 +439,7 @@ INPUT_PORTS_START( bmcbowl )
 	PORT_DIPNAME( 0x80, 0x00, "DSW4 1" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_START
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(1)
@@ -496,7 +496,7 @@ INTERRUPT_GEN( bmc_interrupt )
 }
 
 static MACHINE_DRIVER_START( bmcbowl )
-	MDRV_CPU_ADD_TAG("main", M68000, 21477270/2 )	 
+	MDRV_CPU_ADD_TAG("main", M68000, 21477270/2 )
 	MDRV_CPU_PROGRAM_MAP(bmcbowl_mem,0)
 	MDRV_CPU_VBLANK_INT(bmc_interrupt,2)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -509,7 +509,7 @@ static MACHINE_DRIVER_START( bmcbowl )
 
 	MDRV_VIDEO_START(bmcbowl)
 	MDRV_VIDEO_UPDATE(bmcbowl)
-	
+
 	MDRV_NVRAM_HANDLER(bmc_nvram)
 	MDRV_MACHINE_INIT(bmcbowl)
 

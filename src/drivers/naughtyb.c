@@ -33,37 +33,37 @@ Naughty Boy Switch Settings
  --------------------------------------------------------
 |Option |Factory|Descrpt| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
  ------------------------|-------------------------------
-|Lives	|		|2		|on |on |	|	|	|	|	|	|
+|Lives  |       |2      |on |on |   |   |   |   |   |   |
  ------------------------ -------------------------------
-|		|	X	|3		|off|on |	|	|	|	|	|	|
+|       |   X   |3      |off|on |   |   |   |   |   |   |
  ------------------------ -------------------------------
-|		|		|4		|on |off|	|	|	|	|	|	|
+|       |       |4      |on |off|   |   |   |   |   |   |
  ------------------------ -------------------------------
-|		|		|5		|off|off|	|	|	|	|	|	|
+|       |       |5      |off|off|   |   |   |   |   |   |
  ------------------------ -------------------------------
-|Extra	|		|10000	|	|	|on |on |	|	|	|	|
+|Extra  |       |10000  |   |   |on |on |   |   |   |   |
  ------------------------ -------------------------------
-|		|	X	|30000	|	|	|off|on |	|	|	|	|
+|       |   X   |30000  |   |   |off|on |   |   |   |   |
  ------------------------ -------------------------------
-|		|		|50000	|	|	|on |off|	|	|	|	|
+|       |       |50000  |   |   |on |off|   |   |   |   |
  ------------------------ -------------------------------
-|		|		|70000	|	|	|off|off|	|	|	|	|
+|       |       |70000  |   |   |off|off|   |   |   |   |
  ------------------------ -------------------------------
-|Credits|		|2c, 1p |	|	|	|	|on |on |	|	|
+|Credits|       |2c, 1p |   |   |   |   |on |on |   |   |
  ------------------------ -------------------------------
-|		|	X	|1c, 1p |	|	|	|	|off|on |	|	|
+|       |   X   |1c, 1p |   |   |   |   |off|on |   |   |
  ------------------------ -------------------------------
-|		|		|1c, 2p |	|	|	|	|on |off|	|	|
+|       |       |1c, 2p |   |   |   |   |on |off|   |   |
  ------------------------ -------------------------------
-|		|		|4c, 3p |	|	|	|	|off|off|	|	|
+|       |       |4c, 3p |   |   |   |   |off|off|   |   |
  ------------------------ -------------------------------
-|Dffclty|	X	|Easier |	|	|	|	|	|	|on |	|
+|Dffclty|   X   |Easier |   |   |   |   |   |   |on |   |
  ------------------------ -------------------------------
-|		|		|Harder |	|	|	|	|	|	|off|	|
+|       |       |Harder |   |   |   |   |   |   |off|   |
  ------------------------ -------------------------------
-| Type	|		|Upright|	|	|	|	|	|	|	|on |
+| Type  |       |Upright|   |   |   |   |   |   |   |on |
  ------------------------ -------------------------------
-|		|		|Cktail |	|	|	|	|	|	|	|off|
+|       |       |Cktail |   |   |   |   |   |   |   |off|
  ------------------------ -------------------------------
 
 *
@@ -73,32 +73,32 @@ Naughty Boy Switch Settings
 Pop Flamer appears to run on identical hardware as Naughty Boy.
 The dipswitches are even identical. Spooky.
 
-						1	2	3	4	5	6	7	8
+                        1   2   3   4   5   6   7   8
 -------------------------------------------------------
 Number of Mr. Mouse 2 |ON |ON |   |   |   |   |   |   |
-					3 |OFF|ON |   |   |   |   |   |   |
-					4 |ON |OFF|   |   |   |   |   |   |
-					5 |OFF|OFF|   |   |   |   |   |   |
+                    3 |OFF|ON |   |   |   |   |   |   |
+                    4 |ON |OFF|   |   |   |   |   |   |
+                    5 |OFF|OFF|   |   |   |   |   |   |
 -------------------------------------------------------
 Extra Mouse    10,000 |   |   |ON |ON |   |   |   |   |
-			   30,000 |   |   |OFF|ON |   |   |   |   |
-			   50,000 |   |   |ON |OFF|   |   |   |   |
-			   70,000 |   |   |OFF|OFF|   |   |   |   |
+               30,000 |   |   |OFF|ON |   |   |   |   |
+               50,000 |   |   |ON |OFF|   |   |   |   |
+               70,000 |   |   |OFF|OFF|   |   |   |   |
 -------------------------------------------------------
-Credit	2 coin 1 play |   |   |   |   |ON |ON |   |   |
-		1 coin 1 play |   |   |   |   |OFF|ON |   |   |
-		1 coin 2 play |   |   |   |   |ON |OFF|   |   |
-		1 coin 3 play |   |   |   |   |OFF|OFF|   |   |
+Credit  2 coin 1 play |   |   |   |   |ON |ON |   |   |
+        1 coin 1 play |   |   |   |   |OFF|ON |   |   |
+        1 coin 2 play |   |   |   |   |ON |OFF|   |   |
+        1 coin 3 play |   |   |   |   |OFF|OFF|   |   |
 -------------------------------------------------------
-Skill		   Easier |   |   |   |   |   |   |ON |   |
-			   Harder |   |   |   |   |   |   |OFF|   |
+Skill          Easier |   |   |   |   |   |   |ON |   |
+               Harder |   |   |   |   |   |   |OFF|   |
 -------------------------------------------------------
-Game style		Table |   |   |   |   |   |   |   |OFF|
-			  Upright |   |   |   |   |   |   |   |ON |
+Game style      Table |   |   |   |   |   |   |   |OFF|
+              Upright |   |   |   |   |   |   |   |ON |
 
 
 TODO:
-	* sounds are a little skanky
+    * sounds are a little skanky
 
  ***************************************************************************/
 
@@ -385,11 +385,11 @@ static struct TMS36XXinterface tms3615_interface =
 {
 	TMS3615,	/* TMS36xx subtype */
 	/*
-	 * Decay times of the voices; NOTE: it's unknown if
-	 * the the TMS3615 mixes more than one voice internally.
-	 * A wav taken from Pop Flamer sounds like there
-	 * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
-	 */
+     * Decay times of the voices; NOTE: it's unknown if
+     * the the TMS3615 mixes more than one voice internally.
+     * A wav taken from Pop Flamer sounds like there
+     * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
+     */
 	{0.15,0.20,0,0,0,0}
 };
 
@@ -619,7 +619,7 @@ ROM_START( popflamb )
 ROM_END
 
 ROM_START( trvmstr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */	
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic30.bin",     0x0000, 0x1000, CRC(4ccd0537) SHA1(f0991581c2efeb54626dd1f8acf33a28ed1b6f80) )
 	ROM_LOAD( "ic28.bin",     0x1000, 0x1000, CRC(782a2b8c) SHA1(611be829470c2fcbb301f48f5e80ad97e51ef821) )
 	ROM_LOAD( "ic26.bin",     0x2000, 0x1000, CRC(1362010a) SHA1(d721e051329b823e79515a631244eb77b77c731a) )
@@ -628,7 +628,7 @@ ROM_START( trvmstr )
 	ROM_LOAD( "ic44.bin",     0x0000, 0x1000, CRC(dac8cff7) SHA1(21da2b2ceb4a726d03b2e49a2df75ca66b89a197) )
 	ROM_LOAD( "ic46.bin",     0x1000, 0x1000, CRC(a97ab879) SHA1(67b86d056896f10e0c055fb58c97341cf75c3d17) )
 
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )	
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic48.bin",     0x0000, 0x1000, CRC(79952015) SHA1(8407c2bab476a60d945d82201f01bf59ae9e0dad) )
 	ROM_LOAD( "ic50.bin",     0x1000, 0x1000, CRC(f09da428) SHA1(092d0eea41c8bbd48d7a3aff54c15f85262b21ff) )
 
@@ -648,7 +648,7 @@ ROM_START( trvmstr )
 ROM_END
 
 ROM_START( trvgns )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "trvgns.30",   0x0000, 0x1000, CRC(a17f172c) SHA1(b831673f860f6b7566e248b13b349d82379b5e72) )
 	ROM_LOAD( "trvgns.28",   0x1000, 0x1000, CRC(681a1bff) SHA1(53da179185ae3bfb30502706cc623c2f4cc57128) )
 	ROM_LOAD( "trvgns.26",   0x2000, 0x1000, CRC(5b4068b8) SHA1(3b424dd8e2a6fa1e4628790f60c51d44f9a535a1) )

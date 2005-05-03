@@ -46,14 +46,14 @@ write:
 7001    trackball clear
 7002    Outputs 20-27
 7003    Flipflop outputs:
-		b0: F/B priority
-		b1: horiz. flip
-		b2: vert. flip
-		b3: Output 33
-		b4: coin counter
-		b5: left lamp (1P/3Lives start)
-		b6: middle lamps (2P/3Lives start, 1P/7Lives start)
-		b7: right lamp (2P/7Lives start)
+        b0: F/B priority
+        b1: horiz. flip
+        b2: vert. flip
+        b3: Output 33
+        b4: coin counter
+        b5: left lamp (1P/3Lives start)
+        b6: middle lamps (2P/3Lives start, 1P/7Lives start)
+        b7: right lamp (2P/7Lives start)
 7004    Outputs 40-47
 
 interrupts:
@@ -70,12 +70,12 @@ Main processor (8088 minimum mode)
 2000-2fff RAM or ROM (selected with jumpers on the board)
 3000-37ff sprites. The manual says there are 63 sprites (NOT 64),
           but the Q*Bert object priority test leaves sprite #63 dangling, so
-		  they are probably only 62.
+          they are probably only 62.
 3800-3fff video RAM
 4000-4fff char generator RAM (can be replaced by a ROM twice as large,
           selection made with jumpers on the board. If it's ROM, the CPU
-		  cannot fully access it, I think it could read half the data if it
-		  wanted to but none of the games do that)
+          cannot fully access it, I think it could read half the data if it
+          wanted to but none of the games do that)
 5000-57ff palette ram (palette of 16 colors)
 5800-5fff i/o ports
 6000-ffff ROM (not necessarily fully populated)
@@ -94,14 +94,14 @@ write:
 5801    trackball clear (optional)
 5802    Outputs 20-27
 5803    Flipflop outputs:
-		b0: F/B priority
-		b1: horiz. flip (sprite bank in Us vs. Them)
-		b2: vert. flip (maybe genlock control in the laser disc games)
-		b3: Output 33
-		b4: coin counter (sprite bank in Q*Bert Qubes)
-		b5: Q*Bert: kicker; Q*Bert Qubes: coin counter
-		b5/b6: 3 Stooges: joystick input multiplexer
-		b7: ?
+        b0: F/B priority
+        b1: horiz. flip (sprite bank in Us vs. Them)
+        b2: vert. flip (maybe genlock control in the laser disc games)
+        b3: Output 33
+        b4: coin counter (sprite bank in Q*Bert Qubes)
+        b5: Q*Bert: kicker; Q*Bert Qubes: coin counter
+        b5/b6: 3 Stooges: joystick input multiplexer
+        b7: ?
 5804    Outputs 40-47
 
 interrupts:
@@ -951,7 +951,7 @@ INPUT_PORTS_START( usvsthem )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
-/*	PORT_DIPSETTING(    0x09, DEF_STR( Free_Play ) ) */
+/*  PORT_DIPSETTING(    0x09, DEF_STR( Free_Play ) ) */
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
@@ -1290,8 +1290,8 @@ INPUT_PORTS_START( wizwarz )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20000, 30000" )
 	PORT_DIPSETTING(    0x01, "25000, 35000" )
-//	PORT_DIPSETTING(    0x00, "20000, 35000" )
-//	PORT_DIPSETTING(    0x01, "30000, 40000" )
+//  PORT_DIPSETTING(    0x00, "20000, 35000" )
+//  PORT_DIPSETTING(    0x01, "30000, 40000" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1301,8 +1301,8 @@ INPUT_PORTS_START( wizwarz )
 	PORT_DIPNAME( 0x08, 0x08, "Bonus Mine" )
 	PORT_DIPSETTING(    0x00, "15000, 20000" )
 	PORT_DIPSETTING(    0x08, "15000, 25000" )
-//	PORT_DIPSETTING(    0x00, "10000, 15000" )
-//	PORT_DIPSETTING(    0x08, "10000, 20000" )
+//  PORT_DIPSETTING(    0x00, "10000, 15000" )
+//  PORT_DIPSETTING(    0x08, "10000, 20000" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -1397,7 +1397,7 @@ INPUT_PORTS_START( kngtmare )
 	PORT_DIPNAME( 0x11, 0x11, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x11, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )

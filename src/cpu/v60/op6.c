@@ -1,6 +1,6 @@
 
 /*
-	FULLY TRUSTED
+    FULLY TRUSTED
 */
 
 UINT32 opTB(int reg) /* TRUSTED */

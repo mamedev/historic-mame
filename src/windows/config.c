@@ -621,14 +621,14 @@ int cli_frontend_init (int argc, char **argv)
 		memset(&inp_header, '\0', sizeof(INP_HEADER));
 		strcpy(inp_header.name, drivers[game_index]->name);
 		/* MAME32 stores the MAME version numbers at bytes 9 - 11
-		 * MAME DOS keeps this information in a string, the
-		 * Windows code defines them in the Makefile.
-		 */
+         * MAME DOS keeps this information in a string, the
+         * Windows code defines them in the Makefile.
+         */
 		/*
-		   inp_header.version[0] = 0;
-		   inp_header.version[1] = VERSION;
-		   inp_header.version[2] = BETA_VERSION;
-		 */
+           inp_header.version[0] = 0;
+           inp_header.version[1] = VERSION;
+           inp_header.version[2] = BETA_VERSION;
+         */
 		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
 	}
 
@@ -816,7 +816,7 @@ static int config_handle_arg(char *arg)
 
 
 //============================================================
-//	vlogerror
+//  vlogerror
 //============================================================
 
 static void vlogerror(const char *text, va_list arg)
@@ -843,7 +843,7 @@ static void vlogerror(const char *text, va_list arg)
 
 
 //============================================================
-//	logerror
+//  logerror
 //============================================================
 
 void CLIB_DECL logerror(const char *text,...)
@@ -858,7 +858,7 @@ void CLIB_DECL logerror(const char *text,...)
 
 
 //============================================================
-//	osd_die
+//  osd_die
 //============================================================
 
 void CLIB_DECL osd_die(const char *text,...)
@@ -876,7 +876,7 @@ void CLIB_DECL osd_die(const char *text,...)
 
 
 //============================================================
-//	win_basename
+//  win_basename
 //============================================================
 
 static char *win_basename(char *filename)
@@ -899,7 +899,7 @@ static char *win_basename(char *filename)
 
 
 //============================================================
-//	win_dirname
+//  win_dirname
 //============================================================
 
 static char *win_dirname(char *filename)
@@ -939,7 +939,7 @@ static char *win_dirname(char *filename)
 
 
 //============================================================
-//	win_strip_extension
+//  win_strip_extension
 //============================================================
 
 static char *win_strip_extension(char *filename)

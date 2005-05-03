@@ -87,7 +87,7 @@ Board:  A77-PWB-A-(A)
 CPU:    68B09E Z80-A
 Sound:  SN76489AN DAC
 OSC:    9.000MHz 16.000MHz
-Custom:	GX61A01
+Custom: GX61A01
 
 ----------------------------------------------------------------------------
 Mahjong Hourouki Gaiden
@@ -98,7 +98,7 @@ Board:  A77-PWB-A-(A)
 CPU:    68B09E Z80-A
 Sound:  SN76489AN DAC
 OSC:    9.000MHz 16.000MHz
-Custom:	GX61A01
+Custom: GX61A01
 
 ----------------------------------------------------------------------------
 Mahjong Hourouki Okite
@@ -273,9 +273,9 @@ static READ8_HANDLER( mrokumei_keyboard_r )
 	if (offset == 0)
 	{
 		/* bit 7: visible page
-		 * bit 6: vblank
-		 * other bits are inputs
-		 */
+         * bit 6: vblank
+         * other bits are inputs
+         */
 		res |= homedata_visible_page << 7;
 
 		if (vblank) res |= 0x40;
@@ -306,8 +306,8 @@ static READ8_HANDLER( mrokumei_sound_io_r )
 static WRITE8_HANDLER( mrokumei_sound_bank_w )
 {
 	/* bit 0 = ROM bank
-	   bit 2 = ROM or soundlatch
-	 */
+       bit 2 = ROM or soundlatch
+     */
 	sndbank = data;
 }
 
@@ -354,16 +354,16 @@ static WRITE8_HANDLER( reikaids_upd7807_porta_w )
 static WRITE8_HANDLER( reikaids_upd7807_portc_w )
 {
 	/* port C layout:
-	   7 coin counter
-	   6 to main CPU (data)
-	   5 YM2203 write clock
-	   4 YM2203 read clock
-	   3 YM2203 address (0 = register select 1 = data)
-	   2 to main CPU (status)
-	   1 \ ROM bank
-	   0 /
-	  */
-//	logerror("%04x: port C wr %02x (STATUS %d DATA %d)\n",activecpu_get_pc(),data,BIT(data,2),BIT(data,6));
+       7 coin counter
+       6 to main CPU (data)
+       5 YM2203 write clock
+       4 YM2203 read clock
+       3 YM2203 address (0 = register select 1 = data)
+       2 to main CPU (status)
+       1 \ ROM bank
+       0 /
+      */
+//  logerror("%04x: port C wr %02x (STATUS %d DATA %d)\n",activecpu_get_pc(),data,BIT(data,2),BIT(data,6));
 
 
 	cpu_setbank(2,memory_region(REGION_CPU2) + 0x10000 * (data & 0x03));
@@ -453,9 +453,9 @@ static READ8_HANDLER( pteacher_snd_r )
 static READ8_HANDLER( pteacher_io_r )
 {
 	/* bit 6: !vblank
-	 * bit 7: visible page
-	 * other bits seem unused
-	 */
+     * bit 7: visible page
+     * other bits seem unused
+     */
 
 	int res = (homedata_visible_page ^ 1) << 7;
 
@@ -470,7 +470,7 @@ static READ8_HANDLER( pteacher_keyboard_r )
 {
 	int dips = readinputport(0);
 
-//	logerror("%04x: keyboard_r with port A = %02x\n",activecpu_get_pc(),upd7807_porta);
+//  logerror("%04x: keyboard_r with port A = %02x\n",activecpu_get_pc(),upd7807_porta);
 
 	if (upd7807_porta & 0x80)
 	{
@@ -512,17 +512,17 @@ static WRITE8_HANDLER( pteacher_upd7807_porta_w )
 static WRITE8_HANDLER( pteacher_upd7807_portc_w )
 {
 	/* port C layout:
-	   7 coin counter
-	   6 enable message from main CPU on port A
-	   5 clock latch for 76489 command
-	   4
-	   3 \ ROM bank
-	   2 /
-	   1 input (service)
-	   0 input (coin)
-	  */
+       7 coin counter
+       6 enable message from main CPU on port A
+       5 clock latch for 76489 command
+       4
+       3 \ ROM bank
+       2 /
+       1 input (service)
+       0 input (coin)
+      */
 
-//	logerror("%04x: port C wr %02x\n",activecpu_get_pc(),data);
+//  logerror("%04x: port C wr %02x\n",activecpu_get_pc(),data);
 
 	cpu_setbank(2,memory_region(REGION_CPU2) + 0x10000 * ((data & 0x0c) >> 2));
 
@@ -1823,8 +1823,8 @@ ROM_END
 static DRIVER_INIT( jogakuen )
 {
 	/* it seems that Mahjong Jogakuen runs on the same board as the others,
-	   but with just these two addresses swapped. Instead of creating a new
-	   MachineDriver, I just fix them here. */
+       but with just these two addresses swapped. Instead of creating a new
+       MachineDriver, I just fix them here. */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8007, 0x8007, 0, 0, pteacher_blitter_bank_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8005, 0x8005, 0, 0, pteacher_gfx_bank_w);
 }

@@ -124,69 +124,69 @@ AT08XX03:
  - added highlights to tdfever and ftsoccer(needs masking at team selection)
  - notes:
 
-	Mad Crasher and Gladiator(sgladiat.c) have different memory maps but
-	their code base and port layouts are quite similar. The following are
-	some distinctive designs of these two games common to many other SNK
-	triple Z80 boards made in the mid-80's.
+    Mad Crasher and Gladiator(sgladiat.c) have different memory maps but
+    their code base and port layouts are quite similar. The following are
+    some distinctive designs of these two games common to many other SNK
+    triple Z80 boards made in the mid-80's.
 
-	1) Shared RAM
+    1) Shared RAM
 
-		The "shared" RAM in Mad Crasher is more appropriately
-		"switched" RAM. Marvin's schematics indicate selector
-		circuits and when a CPU wants to access specific part of
-		the memory it will write to the first byte of the 4k page
-		and give the selector a few cycles to settle.
+        The "shared" RAM in Mad Crasher is more appropriately
+        "switched" RAM. Marvin's schematics indicate selector
+        circuits and when a CPU wants to access specific part of
+        the memory it will write to the first byte of the 4k page
+        and give the selector a few cycles to settle.
 
-		It is not known what exactly happens when more than one CPU
-		try to access the same page.
+        It is not known what exactly happens when more than one CPU
+        try to access the same page.
 
-	2) IRQ
+    2) IRQ
 
-		CPUA starts recalculating game logic and constructing
-		sprites for the next frame upon receiving IRQ0. When CPUB
-		receives its own IRQ0 it copies sprite data prepared by
-		CPUA in the previous frame to VRAM and updates scroll
-		registers. The process takes about 2ms which fits in vblank
-		nicely. However, if CPUA modifies sprite data before
-		blitting is complete sprites for the current frame may get
-		overwritten by those for the next and it creates a funny
-		rubber-band effect.
+        CPUA starts recalculating game logic and constructing
+        sprites for the next frame upon receiving IRQ0. When CPUB
+        receives its own IRQ0 it copies sprite data prepared by
+        CPUA in the previous frame to VRAM and updates scroll
+        registers. The process takes about 2ms which fits in vblank
+        nicely. However, if CPUA modifies sprite data before
+        blitting is complete sprites for the current frame may get
+        overwritten by those for the next and it creates a funny
+        rubber-band effect.
 
-		In essence CPUA's IRQ0 should fire 1-2ms later than CPUB's
-		to maintain visual stability. Increasing the delay will only
-		waste cycles in idle loops. Note that certain games may have
-		CPUA and B switched roles.
+        In essence CPUA's IRQ0 should fire 1-2ms later than CPUB's
+        to maintain visual stability. Increasing the delay will only
+        waste cycles in idle loops. Note that certain games may have
+        CPUA and B switched roles.
 
-	3) NMI
+    3) NMI
 
-		CPUA and B handshake through NMIs. They were implemented in
-		all SNK triple Z80 drivers as
+        CPUA and B handshake through NMIs. They were implemented in
+        all SNK triple Z80 drivers as
 
-			ENABLE->SIGNAL->HOLDUP->MAKEUP->ACKNOWLEDGE
+            ENABLE->SIGNAL->HOLDUP->MAKEUP->ACKNOWLEDGE
 
-		but upon close examination of the games code no evidence of
-		any game relying on this behavior to function correctly was
-		found. Sometimes it even has adverse effects by triggering
-		extra NMI's therefore handshaking has been reduced to basic
+        but upon close examination of the games code no evidence of
+        any game relying on this behavior to function correctly was
+        found. Sometimes it even has adverse effects by triggering
+        extra NMI's therefore handshaking has been reduced to basic
 
-			SIGNAL->ACKNOWLEDGE
+            SIGNAL->ACKNOWLEDGE
 
-	4) Sound Latching
+    4) Sound Latching
 
-		Each game has a byte-size sound command port being
-		represented by Marvin's scheme as a single unit consists
-		of one flip-flop and two latches. The flip-flop may be
-		responsible for the sound busy flag but the second latch's
-		function is unclear. HAL21 seems to have the most complex
-		soundlatch circuit and the hardware is able to report
-		playback status in six different bits.
+        Each game has a byte-size sound command port being
+        represented by Marvin's scheme as a single unit consists
+        of one flip-flop and two latches. The flip-flop may be
+        responsible for the sound busy flag but the second latch's
+        function is unclear. HAL21 seems to have the most complex
+        soundlatch circuit and the hardware is able to report
+        playback status in six different bits.
 
-		The sound busy flag is raised when CPUA writes to the
-		soundlatch and is lowered when a designated port is read.
-		For games based on Marvin's hardware the designated port is
-		the soundlatch itself. Most games clear the flag within the
-		alerting IRQ autonomously but some like ASO and HAL21 do it
-		shortly after the sound CPU has finished modulating an effect.
+        The sound busy flag is raised when CPUA writes to the
+        soundlatch and is lowered when a designated port is read.
+        For games based on Marvin's hardware the designated port is
+        the soundlatch itself. Most games clear the flag within the
+        alerting IRQ autonomously but some like ASO and HAL21 do it
+        shortly after the sound CPU has finished modulating an effect.
 
 ****************************************************************************
 
@@ -206,12 +206,12 @@ y8950
 Fighting Soccer
 
 Credits (in alphabetical order)
-	Ernesto Corvi
-	Carlos A. Lozano
-	Jarek Parchanski
-	Phil Stroffolino (pjstroff@hotmail.com)
-	Victor Trucco
-	Marco Cassili
+    Ernesto Corvi
+    Carlos A. Lozano
+    Jarek Parchanski
+    Phil Stroffolino (pjstroff@hotmail.com)
+    Victor Trucco
+    Marco Cassili
 
 ***************************************************************************/
 
@@ -272,15 +272,15 @@ static int hard_flags;
 /*********************************************************************/
 
 /*
-	This 4 bit register is mapped at 0xf800.
+    This 4 bit register is mapped at 0xf800.
 
-	Writes to this register always contain 0x0f in the lower nibble.
-	The upper nibble contains a mask, which clears bits
+    Writes to this register always contain 0x0f in the lower nibble.
+    The upper nibble contains a mask, which clears bits
 
-	bit 0:	set by YM3526/YM3812 callback?
-	bit 1:	set by Y8950 callback?
-	bit 2:	sound cpu busy
-	bit 3:	sound command pending
+    bit 0:  set by YM3526/YM3812 callback?
+    bit 1:  set by Y8950 callback?
+    bit 2:  sound cpu busy
+    bit 3:  sound command pending
 */
 static int snk_sound_register;
 
@@ -295,17 +295,17 @@ static int snk_rot8( int which ){
 
 static int snk_rot12( int which ){
 /*
-	This routine converts a 4 bit (16 directional) analog input to the 12
-	directional input that many SNK games require.
+    This routine converts a 4 bit (16 directional) analog input to the 12
+    directional input that many SNK games require.
 */
 	const int dial_12[13] = {
 	0xb0,0xa0,0x90,0x80,0x70,0x60,
 	0xf0,
 	/* 0xf0 isn't a valid direction, but avoids the "joystick error"
-	protection
-	** in Guerilla War which happens when direction changes directly from
-	** 0x50<->0x60 8 times.
-	*/
+    protection
+    ** in Guerilla War which happens when direction changes directly from
+    ** 0x50<->0x60 8 times.
+    */
 	0x50,0x40,0x30,0x20,0x10,0x00
 	};
 	int value = readinputport(which+1);
@@ -1270,7 +1270,7 @@ static MACHINE_DRIVER_START( tdfever )
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+//  MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
@@ -1314,7 +1314,7 @@ static MACHINE_DRIVER_START( tdfever2 )
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(readmem_cpuB,writemem_cpuB)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+//  MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
@@ -2507,7 +2507,7 @@ ROM_START( ftsoccer )
 	ROM_LOAD( "ft-014.bin",  0x00000, 0x10000, CRC(38c38b40) SHA1(c4580add0946720441f5ef751d0d4a944cd92ad5) )
 	ROM_LOAD( "ft-015.bin",  0x10000, 0x10000, CRC(a614834f) SHA1(d73930e4bd780915e1b0d7f3fe7cbeaad19c233f) )
 
-//	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
+//  ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* 32x32 sprites */
 	ROM_LOAD( "ft-005.bin",  0x10000, 0x10000, CRC(def2f1d8) SHA1(b72e4dec3306d8afe461ac812b2de67ee85f9dd9) )
@@ -3695,7 +3695,7 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_DIPSETTING(    0x04, DEF_STR( Europe ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( USA ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Japan ) )
-/* 	PORT_DIPSETTING(    0x0c, DEF_STR( Europe ) ) */
+/*  PORT_DIPSETTING(    0x0c, DEF_STR( Europe ) ) */
 	SNK_COINAGE
 
 	PORT_START_TAG("DSW2")

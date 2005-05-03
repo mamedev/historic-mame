@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Video Hardware for Nichibutsu Mahjong series.
+    Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 2000/06/07 -
+    Driver by Takahiro Nogi 2000/06/07 -
 
 ******************************************************************************/
 

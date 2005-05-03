@@ -1,21 +1,21 @@
 /***************************************************************************
 
-	The Game Room Lethal Justice hardware
+    The Game Room Lethal Justice hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Lethal Justice
-		* Egg Venture
+    Games supported:
+        * Lethal Justice
+        * Egg Venture
 
-	Known bugs:
-		* some DIP switches not understood
+    Known bugs:
+        * some DIP switches not understood
 
-	Note:
-	Even though Egg Venture looks like it has a few extra scanlines at
-	the bottom, the video hardware is explicitly programmed to only
-	display 236 lines. Altering this will lead to bad flickering.
-	
+    Note:
+    Even though Egg Venture looks like it has a few extra scanlines at
+    the bottom, the video hardware is explicitly programmed to only
+    display 236 lines. Altering this will lead to bad flickering.
+
 ****************************************************************************
 
          EU21     EU18     EU20   32.000MHz
@@ -52,7 +52,7 @@ Note 2: Lethal Justice uses a TMS34010FNL-50 instead of the TMS34010FNL-40
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -77,7 +77,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -86,7 +86,7 @@ INPUT_PORTS_START( lethalj )
 	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* ??? Seems to be rigged up to the auto scroll, and acts as a fast forward*/
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) 
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0xffe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -170,8 +170,8 @@ INPUT_PORTS_START( eggventr )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Medium ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x1000, 0x1000, "Slot Machine" ) // Verified Correct - Unused for the Deluxe version?? Yes, the slot machine
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) ) // is present in the code as a 'bonus stage' (when the egg reaches Vegas?), 
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ) ) // but not actually called (EC). 
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) ) // is present in the code as a 'bonus stage' (when the egg reaches Vegas?),
+	PORT_DIPSETTING(      0x1000, DEF_STR( On ) ) // but not actually called (EC).
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -252,7 +252,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -270,7 +270,7 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -314,7 +314,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -421,7 +421,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

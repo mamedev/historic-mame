@@ -872,10 +872,10 @@ static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 
 		{
 			/*float dif=mult_vector(&vn, &view.light);
-			float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif);
-			cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
-			cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
-			*/
+            float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif);
+            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
+            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
+            */
 			float dif=mult_vector(&vn, &view.light);
 			float spec=compute_specular(&vn,&view.light,dif,lightmode);
 			float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif) + spec;
@@ -944,8 +944,8 @@ static UINT16 *push_direct(UINT16 *list)
 			 old_p0->x, old_p0->y, old_p0->z,
 			 old_p1->x, old_p1->y, old_p1->z);
 
-//	transform_point(old_p0);
-//	transform_point(old_p1);
+//  transform_point(old_p0);
+//  transform_point(old_p1);
 	if(old_p0->z > 0)
 		project_point_direct(old_p0);
 	else
@@ -1004,8 +1004,8 @@ static UINT16 *push_direct(UINT16 *list)
 
 		link = (flags >> 8) & 3;
 
-//		transform_point(p0);
-//		transform_point(p1);
+//      transform_point(p0);
+//      transform_point(p1);
 		if(p0->z > 0)
 			project_point_direct(p0);
 		if(p1->z > 0)

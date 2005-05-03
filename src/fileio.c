@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	fileio.c - file access functions
+    fileio.c - file access functions
 
 ***************************************************************************/
 
@@ -16,7 +16,7 @@
 
 
 /***************************************************************************
-	DEBUGGING
+    DEBUGGING
 ***************************************************************************/
 
 /* Verbose outputs to error.log ? */
@@ -32,7 +32,7 @@
 
 
 /***************************************************************************
-	CONSTANTS
+    CONSTANTS
 ***************************************************************************/
 
 #define PLAIN_FILE				0
@@ -60,7 +60,7 @@
 #endif
 
 /***************************************************************************
-	TYPE DEFINITIONS
+    TYPE DEFINITIONS
 ***************************************************************************/
 
 struct _mame_file
@@ -81,7 +81,7 @@ struct _mame_file
 
 
 /***************************************************************************
-	GLOBALS
+    GLOBALS
 ***************************************************************************/
 
 #ifdef MESS
@@ -90,7 +90,7 @@ int mess_ghost_images;
 
 
 /***************************************************************************
-	PROTOTYPES
+    PROTOTYPES
 ***************************************************************************/
 
 static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags);
@@ -99,7 +99,7 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 
 
 /***************************************************************************
-	mame_fopen
+    mame_fopen
 ***************************************************************************/
 
 mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite)
@@ -153,19 +153,19 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 			{
 				int flags = FILEFLAG_ALLOW_ABSOLUTE;
 				switch(openforwrite) {
-				case OSD_FOPEN_READ:   
+				case OSD_FOPEN_READ:
 					flags |= FILEFLAG_OPENREAD | FILEFLAG_ZIP_PATHS;
-					break;   
-				case OSD_FOPEN_WRITE:   
-					flags |= FILEFLAG_OPENWRITE;   
 					break;
-				case OSD_FOPEN_RW:   
-					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUST_EXIST;   
-					break;   
+				case OSD_FOPEN_WRITE:
+					flags |= FILEFLAG_OPENWRITE;
+					break;
+				case OSD_FOPEN_RW:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUST_EXIST;
+					break;
 				case OSD_FOPEN_RW_CREATE:
 					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
 					break;
-				} 
+				}
 				if (mess_ghost_images)
 					flags |= FILEFLAG_GHOST;
 
@@ -275,10 +275,10 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 
 /***************************************************************************
-	mame_fopen_rom
+    mame_fopen_rom
 ***************************************************************************/
 
-/* Similar to mame_fopen(,,FILETYPE_ROM), but lets you specify an expected checksum 
+/* Similar to mame_fopen(,,FILETYPE_ROM), but lets you specify an expected checksum
    (better encapsulation of the load by CRC used for ZIP files) */
 mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char* exphash)
 {
@@ -287,7 +287,7 @@ mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char
 
 
 /***************************************************************************
-	mame_fclose
+    mame_fclose
 ***************************************************************************/
 
 void mame_fclose(mame_file *file)
@@ -318,7 +318,7 @@ void mame_fclose(mame_file *file)
 
 
 /***************************************************************************
-	mame_faccess
+    mame_faccess
 ***************************************************************************/
 
 int mame_faccess(const char *filename, int filetype)
@@ -373,7 +373,7 @@ int mame_faccess(const char *filename, int filetype)
 
 
 /***************************************************************************
-	mame_fread
+    mame_fread
 ***************************************************************************/
 
 UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
@@ -409,7 +409,7 @@ UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
 
 
 /***************************************************************************
-	mame_fwrite
+    mame_fwrite
 ***************************************************************************/
 
 UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
@@ -430,7 +430,7 @@ UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
 
 
 /***************************************************************************
-	mame_fseek
+    mame_fseek
 ***************************************************************************/
 
 int mame_fseek(mame_file *file, INT64 offset, int whence)
@@ -470,7 +470,7 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 
 
 /***************************************************************************
-	mame_fchecksum
+    mame_fchecksum
 ***************************************************************************/
 
 int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char* hash)
@@ -478,7 +478,7 @@ int mame_fchecksum(const char *gamename, const char *filename, unsigned int *len
 	mame_file *file;
 
 	/* first open the file; we pass the source hash because it contains
-	   the expected checksum for the file (used to load by checksum) */
+       the expected checksum for the file (used to load by checksum) */
 	file = generic_fopen(FILETYPE_ROM, gamename, filename, hash, FILEFLAG_OPENREAD | FILEFLAG_HASH | FILEFLAG_VERIFY_ONLY);
 
 	/* if we didn't succeed return -1 */
@@ -495,7 +495,7 @@ int mame_fchecksum(const char *gamename, const char *filename, unsigned int *len
 
 
 /***************************************************************************
-	mame_fsize
+    mame_fsize
 ***************************************************************************/
 
 UINT64 mame_fsize(mame_file *file)
@@ -524,7 +524,7 @@ UINT64 mame_fsize(mame_file *file)
 
 
 /***************************************************************************
-	mame_fhash
+    mame_fhash
 ***************************************************************************/
 
 const char* mame_fhash(mame_file *file)
@@ -535,7 +535,7 @@ const char* mame_fhash(mame_file *file)
 
 
 /***************************************************************************
-	mame_fgetc
+    mame_fgetc
 ***************************************************************************/
 
 int mame_fgetc(mame_file *file)
@@ -570,20 +570,20 @@ int mame_fgetc(mame_file *file)
 
 
 /***************************************************************************
-	mame_ungetc
+    mame_ungetc
 ***************************************************************************/
 
 int mame_ungetc(int c, mame_file *file)
 {
 	file->back_char = c;
-  
+
 	return c;
 }
 
 
 
 /***************************************************************************
-	mame_fgets
+    mame_fgets
 ***************************************************************************/
 
 char *mame_fgets(char *s, int n, mame_file *file)
@@ -634,7 +634,7 @@ char *mame_fgets(char *s, int n, mame_file *file)
 
 
 /***************************************************************************
-	mame_feof
+    mame_feof
 ***************************************************************************/
 
 int mame_feof(mame_file *file)
@@ -660,7 +660,7 @@ int mame_feof(mame_file *file)
 
 
 /***************************************************************************
-	mame_ftell
+    mame_ftell
 ***************************************************************************/
 
 UINT64 mame_ftell(mame_file *file)
@@ -682,7 +682,7 @@ UINT64 mame_ftell(mame_file *file)
 
 
 /***************************************************************************
-	mame_fread_swap
+    mame_fread_swap
 ***************************************************************************/
 
 UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length)
@@ -709,7 +709,7 @@ UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length)
 
 
 /***************************************************************************
-	mame_fwrite_swap
+    mame_fwrite_swap
 ***************************************************************************/
 
 UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length)
@@ -744,7 +744,7 @@ UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length)
 
 
 /***************************************************************************
-	compose_path
+    compose_path
 ***************************************************************************/
 
 INLINE void compose_path(char *output, const char *gamename, const char *filename, const char *extension)
@@ -786,7 +786,7 @@ INLINE void compose_path(char *output, const char *gamename, const char *filenam
 
 
 /***************************************************************************
-	get_extension_for_filetype
+    get_extension_for_filetype
 ***************************************************************************/
 
 static const char *get_extension_for_filetype(int filetype)
@@ -869,7 +869,7 @@ static const char *get_extension_for_filetype(int filetype)
 
 
 /***************************************************************************
-	generic_fopen
+    generic_fopen
 ***************************************************************************/
 
 static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags)
@@ -1048,9 +1048,9 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					UINT32 crc = 0;
 
 					/* Since this is a .ZIP file, we extract the CRC from the expected hash
-					   (if any), so that we can load by CRC if needed. We must check that
-					   the hash really contains a CRC, because it could be a NO_DUMP rom
-					   for which we do not know the CRC yet. */
+                       (if any), so that we can load by CRC if needed. We must check that
+                       the hash really contains a CRC, because it could be a NO_DUMP rom
+                       for which we do not know the CRC yet. */
 					if (hash && hash_data_extract_binary_checksum(hash, HASH_CRC, crcs) != 0)
 					{
 						/* Store the CRC in a single DWORD */
@@ -1061,7 +1061,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					}
 
 					hash_data_clear(file.hash);
-						
+
 					if (checksum_zipped_file(pathtype, pathindex, name, tempname, &ziplength, &crc) == 0)
 					{
 						file.length = ziplength;
@@ -1084,9 +1084,9 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					/* Try loading the file */
 					err = load_zipped_file(pathtype, pathindex, name, tempname, &file.data, &ziplength);
 
-					/* If it failed, since this is a ZIP file, we can try to load by CRC 
-					   if an expected hash has been provided. unzip.c uses this ugly hack 
-					   of specifying the CRC as filename. */
+					/* If it failed, since this is a ZIP file, we can try to load by CRC
+                       if an expected hash has been provided. unzip.c uses this ugly hack
+                       of specifying the CRC as filename. */
 					if (err && hash)
 					{
 						char crcn[9];
@@ -1104,12 +1104,12 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 						file.type = ZIPPED_FILE;
 
 						/* Since we already loaded the file, we can easily calculate the
-						   checksum of all the functions. In practice, we use only the
-						   functions for which we have an expected checksum to compare with. */
+                           checksum of all the functions. In practice, we use only the
+                           functions for which we have an expected checksum to compare with. */
 						functions = hash_data_used_functions(hash);
 
 						/* If user asked for CRC only, and there is an expected checksum
-						   for CRC in the driver, compute only CRC. */
+                           for CRC in the driver, compute only CRC. */
 						if (options.crc_only && (functions & HASH_CRC))
 							functions = HASH_CRC;
 
@@ -1141,7 +1141,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 
 
 /***************************************************************************
-	checksum_file
+    checksum_file
 ***************************************************************************/
 
 static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, char* hash)
@@ -1195,10 +1195,10 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 
 	*size = length;
 
-	
+
 	/* compute the checksums (only the functions for which we have an expected
-	   checksum). Take also care of crconly: if the user asked, we will calculate
-	   only the CRC, but only if there is an expected CRC for this file. */
+       checksum). Take also care of crconly: if the user asked, we will calculate
+       only the CRC, but only if there is an expected CRC for this file. */
 	functions = hash_data_used_functions(hash);
 	if (options.crc_only && (functions & HASH_CRC))
 		functions = HASH_CRC;
@@ -1218,7 +1218,7 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 
 
 /***************************************************************************
-	mame_fputs
+    mame_fputs
 ***************************************************************************/
 
 #if !defined(CRLF) || (CRLF < 1) || (CRLF > 3)
@@ -1255,7 +1255,7 @@ int mame_fputs(mame_file *f, const char *s)
 
 
 /***************************************************************************
-	mame_vfprintf
+    mame_vfprintf
 ***************************************************************************/
 
 int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
@@ -1268,7 +1268,7 @@ int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
 
 
 /***************************************************************************
-	mame_fprintf
+    mame_fprintf
 ***************************************************************************/
 
 int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)

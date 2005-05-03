@@ -10,7 +10,7 @@ MAIN BOARD:
 3800-3bff Color RAM
 3c00-3fff Video RAM
 4000-5fff ROM (?)
-5ff0	  Watchdog (?)
+5ff0      Watchdog (?)
 6000-ffff ROM
 
 

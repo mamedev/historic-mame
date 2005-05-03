@@ -8,24 +8,24 @@ driver by Zsolt Vasvari and Nicola Salmoria
 
 Hardware specs are the same for all Dyna/Dynax games:
 
-CPU:	Z80
-Sound:	AY-3-8910
-OSC:	18.432MHz and 8MHz
+CPU:    Z80
+Sound:  AY-3-8910
+OSC:    18.432MHz and 8MHz
 
 Mahjong If doesn't use a Z80, it probably uses a Toshiba TLCS-90 which is
 similar to Z80 but with different opcodes
 
 -------------------------------------------------------------------------------------------
-Year + Game					Board			Company				Notes
+Year + Game                 Board           Company             Notes
 -------------------------------------------------------------------------------------------
-82 Royal Mahjong			FRM-03			Falcon
-86 Watashiha Suzumechan						Dyna Electronics
-86 Don Den Mahjong			D039198L-0		Dyna Electronics
-87 Mahjong Diplomat			D0706088L1-0	Dynax
-87 Tonton					D0908288L1-0	Dynax
-87 Mahjong Studio 101		D1708228L1		Dynax
-89 Mahjong Derringer		D2203018L		Dynax				Larger palette
-90 Mahjong If				D29?			Dynax				Larger palette, unsupported CPU
+82 Royal Mahjong            FRM-03          Falcon
+86 Watashiha Suzumechan                     Dyna Electronics
+86 Don Den Mahjong          D039198L-0      Dyna Electronics
+87 Mahjong Diplomat         D0706088L1-0    Dynax
+87 Tonton                   D0908288L1-0    Dynax
+87 Mahjong Studio 101       D1708228L1      Dynax
+89 Mahjong Derringer        D2203018L       Dynax               Larger palette
+90 Mahjong If               D29?            Dynax               Larger palette, unsupported CPU
 -------------------------------------------------------------------------------------------
 
 TODO:
@@ -205,7 +205,7 @@ VIDEO_UPDATE( royalmah )
 static WRITE8_HANDLER( royalmah_rom_w )
 {
 	/* using this handler will avoid all the entries in the error log that are the result of
-	   the RLD and RRD instructions this games uses to print text on the screen */
+       the RLD and RRD instructions this games uses to print text on the screen */
 }
 
 
@@ -450,7 +450,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mjderngr_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
-//	AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
+//  AM_RANGE(0x10, 0x10) AM_READ(input_port_11_r)
 	AM_RANGE(0x11, 0x11) AM_READ(input_port_10_r)
 	AM_RANGE(0x40, 0x40) AM_READ(input_port_13_r)	// DSW2
 	AM_RANGE(0x4c, 0x4c) AM_READ(input_port_12_r)	// DSW3
@@ -1084,7 +1084,7 @@ INPUT_PORTS_START( majs101b )
 	PORT_DIPSETTING(    0x28, "600" )
 	PORT_DIPSETTING(    0x18, "700" )
 	PORT_DIPSETTING(    0x00, "1000" )
-//	PORT_DIPSETTING(    0x38, "1000" )
+//  PORT_DIPSETTING(    0x38, "1000" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )		// check code at 0x1333
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -1177,7 +1177,7 @@ static MACHINE_DRIVER_START( royalmah )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)

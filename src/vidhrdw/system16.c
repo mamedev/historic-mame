@@ -4,7 +4,7 @@ Sega System 16 Video Hardware
 
 Known issues:
 - better abstraction of tilemap hardware is needed; a lot of this mess could and should
-	be consolidated further
+    be consolidated further
 - many games have ROM patches - why?  let's emulate protection when possible
 - several games fail their RAM self-test because of hacks in the drivers
 - many registers are suspiciously plucked from working RAM
@@ -16,7 +16,7 @@ Known issues:
 - end-of-sprite marker support will fix some glitches
 - shadow and partial shadow sprite support
 - to achieve sprite-tilemap orthogonality we must draw sprites from front to back;
-	this will also allow us to avoid processing the same shadowed pixel twice.
+    this will also allow us to avoid processing the same shadowed pixel twice.
 
 The System16 video hardware consists of:
 
@@ -31,8 +31,8 @@ The System16 video hardware consists of:
 Each scrolling layer (foreground, background) is an arrangement
 of 4 pages selected from 16 available pages, laid out as follows:
 
-	Page0  Page1
-	Page2  Page3
+    Page0  Page1
+    Page2  Page3
 
 Each page is an arrangement of 8x8 tiles, 64 tiles wide, and 32 tiles high.
 
@@ -60,32 +60,32 @@ alexkidd,fantzone,shinobl,hangon
 mjleague
 
 others:
-	shangon, shdancbl,
-	dduxbl,eswat,
-	passsht,passht4b
-	quartet,quartet2,
-	tetris,tturfbl,wb3bl
+    shangon, shdancbl,
+    dduxbl,eswat,
+    passsht,passht4b
+    quartet,quartet2,
+    tetris,tturfbl,wb3bl
 
 sys16_textram:
-type1		type0			function
+type1       type0           function
 ---------------------------------------
-0x74f		0x740			sys16_fg_page
-0x74e		0x741			sys16_bg_page
-			0x742			sys16_fg2_page
-			0x743			sys16_bg2_page
+0x74f       0x740           sys16_fg_page
+0x74e       0x741           sys16_bg_page
+            0x742           sys16_fg2_page
+            0x743           sys16_bg2_page
 
-0x792		0x748			sys16_fg_scrolly
-0x793		0x749			sys16_bg_scrolly
-			0x74a			sys16_fg2_scrolly
-			0x74b			sys16_bg2_scrolly
+0x792       0x748           sys16_fg_scrolly
+0x793       0x749           sys16_bg_scrolly
+            0x74a           sys16_fg2_scrolly
+            0x74b           sys16_bg2_scrolly
 
-0x7fc		0x74c			sys16_fg_scrollx
-0x7fd		0x74d			sys16_bg_scrollx
-			0x74e			sys16_fg2_scrollx
-			0x74f			sys16_bg2_scrollx
+0x7fc       0x74c           sys16_fg_scrollx
+0x7fd       0x74d           sys16_bg_scrollx
+            0x74e           sys16_fg2_scrollx
+            0x74f           sys16_bg2_scrollx
 
-			0x7c0..0x7df	sys18_splittab_fg_x
-			0x7e0..0x7ff	sys18_splittab_bg_x
+            0x7c0..0x7df    sys18_splittab_fg_x
+            0x7e0..0x7ff    sys18_splittab_bg_x
 
 ***************************************************************************/
 #include "driver.h"
@@ -185,14 +185,14 @@ READ16_HANDLER( sys16_tileram_r ){
 /***************************************************************************/
 
 /*
-	We mark the priority buffer as follows:
-		text	(0xf)
-		fg (hi) (0x7)
-		fg (lo) (0x3)
-		bg (hi) (0x1)
-		bg (lo) (0x0)
+    We mark the priority buffer as follows:
+        text    (0xf)
+        fg (hi) (0x7)
+        fg (lo) (0x3)
+        bg (hi) (0x1)
+        bg (lo) (0x0)
 
-	Each sprite has 4 levels of priority, specifying where they are placed between bg(lo) and text.
+    Each sprite has 4 levels of priority, specifying where they are placed between bg(lo) and text.
 */
 
 static void draw_sprite( //*
@@ -404,8 +404,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				if (sprite.zoomx) screen_width = screen_width*(0x800 - sprite.zoomx)/0x800 + 2;
 
 // fix, 5-bit zoom field
-//				if (sprite.zoomy) logical_height = logical_height*(0x20 + sprite.zoomy)/0x20 - 1;
-//				if (sprite.zoomx) screen_width = screen_width*(0x40 - sprite.zoomx)/0x40 + 2;
+//              if (sprite.zoomy) logical_height = logical_height*(0x20 + sprite.zoomy)/0x20 - 1;
+//              if (sprite.zoomx) screen_width = screen_width*(0x40 - sprite.zoomx)/0x40 + 2;
 
 				if (flipx && flipy) { mod_h = -logical_height-1; mod_x = 2; }
 				else if     (flipx) { mod_h = 0;                 mod_x = 2; }
@@ -454,20 +454,20 @@ UINT32 sys16_text_map( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows 
 /***************************************************************************/
 
 /*
-	Color generation details
+    Color generation details
 
-	Each color is made up of 5 bits, connected through one or more resistors like so:
+    Each color is made up of 5 bits, connected through one or more resistors like so:
 
-	Bit 0 = 1 x 3.9K ohm
-	Bit 1 = 1 x 2.0K ohm
-	Bit 2 = 1 x 1.0K ohm
-	Bit 3 = 2 x 1.0K ohm
-	Bit 4 = 4 x 1.0K ohm
+    Bit 0 = 1 x 3.9K ohm
+    Bit 1 = 1 x 2.0K ohm
+    Bit 2 = 1 x 1.0K ohm
+    Bit 3 = 2 x 1.0K ohm
+    Bit 4 = 4 x 1.0K ohm
 
-	Another data bit is connected by a tristate buffer to the color output through a 470 ohm resistor.
-	The buffer allows the resistor to have no effect (tristate), halve brightness (pull-down) or double brightness (pull-up).
-	The data bit source is a PPI pin in some of the earlier hardware (Hang-On, Pre-System 16) or bit 15 of each
-	color RAM entry (Space Harrier, System 16B and most later boards).
+    Another data bit is connected by a tristate buffer to the color output through a 470 ohm resistor.
+    The buffer allows the resistor to have no effect (tristate), halve brightness (pull-down) or double brightness (pull-up).
+    The data bit source is a PPI pin in some of the earlier hardware (Hang-On, Pre-System 16) or bit 15 of each
+    color RAM entry (Space Harrier, System 16B and most later boards).
 */
 
 const int resistances_normal[6] = {3900, 2000, 1000, 1000/2, 1000/4, 0};
@@ -484,9 +484,9 @@ WRITE16_HANDLER( sys16_paletteram_w )
 	if( oldword!=newword )
 	{
 		/* we can do this, because we initialize palette RAM to all black in vh_start */
-		/*	   byte 0    byte 1 */
-		/*	sBGR BBBB GGGG RRRR */
-		/*	x000 4321 4321 4321 */
+		/*     byte 0    byte 1 */
+		/*  sBGR BBBB GGGG RRRR */
+		/*  x000 4321 4321 4321 */
 
 		int r, g, b, rs, gs, bs, rh, gh, bh;
 		int r0 = (newword >> 12) & 1;
@@ -1063,15 +1063,15 @@ VIDEO_UPDATE( system16 ){
 
 	tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY, 0x00 );
 	if(sys16_bg_priority_mode) tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY | 1, 0x00 );
-//	sprite_draw(sprite_list,3); // needed for Aurail
+//  sprite_draw(sprite_list,3); // needed for Aurail
 	if( sys16_bg_priority_mode==2 ) tilemap_draw( bitmap,cliprect, background, 1, 0x01 );// body slam (& wrestwar??)
-//	sprite_draw(sprite_list,2);
+//  sprite_draw(sprite_list,2);
 	else if( sys16_bg_priority_mode==1 ) tilemap_draw( bitmap,cliprect, background, 1, 0x03 );// alien syndrome / aurail
 	tilemap_draw( bitmap,cliprect, foreground, 0, 0x03 );
-//	sprite_draw(sprite_list,1);
+//  sprite_draw(sprite_list,1);
 	tilemap_draw( bitmap,cliprect, foreground, 1, 0x07 );
 	if( sys16_textlayer_lo_max!=0 ) tilemap_draw( bitmap,cliprect, text_layer, 1, 7 );// needed for Body Slam
-//	sprite_draw(sprite_list,0);
+//  sprite_draw(sprite_list,0);
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	draw_sprites( bitmap,cliprect,0 );
@@ -1103,27 +1103,27 @@ VIDEO_UPDATE( system18old ){
 	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
 	/* ASTORM also draws some sprites with the vdp, needs to be higher priority..*/
 
-//	sprite_draw(sprite_list,3);
+//  sprite_draw(sprite_list,3);
 	tilemap_draw( bitmap,cliprect, background, 1, 0x1 );
-//	sprite_draw(sprite_list,2);
+//  sprite_draw(sprite_list,2);
 	tilemap_draw( bitmap,cliprect, background, 2, 0x3 );
 
 
 	if(sys18_fg2_active) tilemap_draw( bitmap,cliprect, foreground2, 0, 0x3 );
 	tilemap_draw( bitmap,cliprect, foreground, 0, 0x3 );
-//	sprite_draw(sprite_list,1);
+//  sprite_draw(sprite_list,1);
 	if(sys18_fg2_active) tilemap_draw( bitmap,cliprect, foreground2, 1, 0x7 );
 	tilemap_draw( bitmap,cliprect, foreground, 1, 0x7 );
 
 	if (!strcmp(Machine->gamedrv->name,"ddcrew"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for ddcrew
 
 	tilemap_draw( bitmap,cliprect, text_layer, 1, 0x7 );
-//	sprite_draw(sprite_list,0);
+//  sprite_draw(sprite_list,0);
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	if (!strcmp(Machine->gamedrv->name,"cltchitr"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
 	if (!strcmp(Machine->gamedrv->name,"cltchtrj"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
-//	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
+//  if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
 
 	draw_sprites( bitmap,cliprect, 0 );
 }

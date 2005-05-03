@@ -1,21 +1,21 @@
 /*****************************************************************************
  *
- *	 tbl65sc02.c
- *	 65sc02 opcode functions and function pointer table
+ *   tbl65sc02.c
+ *   65sc02 opcode functions and function pointer table
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 /* 4. February 2000 PeT fixed relative word operand */
@@ -37,10 +37,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *	 overrides for 65C02 opcodes
+ *   overrides for 65C02 opcodes
  *
  *****************************************************************************
- * op	 temp	  cycles			 rdmem	 opc  wrmem   ********************/
+ * op    temp     cycles             rdmem   opc  wrmem   ********************/
 #define m65sc02_00 m6502_00 								/* 7 BRK */
 #define m65sc02_20 m6502_20 								/* 6 JSR ABS */
 #define m65sc02_40 m6502_40 								/* 6 RTI */

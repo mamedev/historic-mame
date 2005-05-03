@@ -6,9 +6,9 @@
 
     * Heavy Barrel                            (USA set)
     * Heavy Barrel                            (World set)
-	* Bad Dudes vs. Dragonninja               (USA set)
+    * Bad Dudes vs. Dragonninja               (USA set)
     * Dragonninja                             (Japanese version of above)
-	* Birdie Try                              (Japanese set)
+    * Birdie Try                              (Japanese set)
     * Robocop                                 (World bootleg rom set)
     * Robocop                                 (World rev 3)
     * Robocop                                 (USA rev 1)
@@ -19,19 +19,19 @@
     * Sly Spy                                 (USA rev 2)
     * Secret Agent                            (World set)
     * Midnight Resistance                     (World set)
-	* Midnight Resistance                     (USA set)
+    * Midnight Resistance                     (USA set)
     * Midnight Resistance                     (Japanese set)
-	* Boulderdash                             (World set)
+    * Boulderdash                             (World set)
 
-	Heavy Barrel, Bad Dudes, Robocop, Birdie Try & Hippodrome use the 'MEC-M1'
+    Heavy Barrel, Bad Dudes, Robocop, Birdie Try & Hippodrome use the 'MEC-M1'
 motherboard and varying game boards.  Sly Spy, Midnight Resistance and
 Boulderdash use the same graphics chips but are different pcbs.
 
-	There are Secret Agent (bootleg) and Robocop (bootleg) sets to add.
+    There are Secret Agent (bootleg) and Robocop (bootleg) sets to add.
 
-	Thanks to Gouky & Richard Bush for information along the way, especially
-	Gouky's patch for Bad Dudes & YM3812 information!
-	Thanks to JC Alexander for fix to Robocop ending!
+    Thanks to Gouky & Richard Bush for information along the way, especially
+    Gouky's patch for Bad Dudes & YM3812 information!
+    Thanks to JC Alexander for fix to Robocop ending!
 
 ***************************************************************************/
 

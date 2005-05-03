@@ -1,29 +1,29 @@
 /***************************************************************************
 
-						  -= Yun Sung 8 Bit Games =-
+                          -= Yun Sung 8 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q 		shows the background layer
-		W 		shows the foreground layer
-
-		[ 2 Fixed Layers ]
-
-			[ Background ]
-
-			Layer Size:				512 x 256
-			Tiles:					8 x 8 x 8
-
-			[ Foreground ]
-
-			Layer Size:				512 x 256
-			Tiles:					8 x 8 x 4
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-		There are no sprites.
+Note:   if MAME_DEBUG is defined, pressing Z with:
+
+        Q       shows the background layer
+        W       shows the foreground layer
+
+        [ 2 Fixed Layers ]
+
+            [ Background ]
+
+            Layer Size:             512 x 256
+            Tiles:                  8 x 8 x 8
+
+            [ Foreground ]
+
+            Layer Size:             512 x 256
+            Tiles:                  8 x 8 x 4
+
+
+        There are no sprites.
 
 ***************************************************************************/
 
@@ -43,7 +43,7 @@ static int yunsung8_videobank;
 
 /***************************************************************************
 
-								Memory Handlers
+                                Memory Handlers
 
 ***************************************************************************/
 
@@ -57,8 +57,8 @@ READ8_HANDLER( yunsung8_videoram_r )
 {
 	int bank;
 
-	/*	Bit 1 of the bankswitching register contols the c000-c7ff
-		area (Palette). Bit 0 controls the c800-dfff area (Tiles) */
+	/*  Bit 1 of the bankswitching register contols the c000-c7ff
+        area (Palette). Bit 0 controls the c800-dfff area (Tiles) */
 
 	if (offset < 0x0800)	bank = yunsung8_videobank & 2;
 	else					bank = yunsung8_videobank & 1;
@@ -70,7 +70,7 @@ READ8_HANDLER( yunsung8_videoram_r )
 
 WRITE8_HANDLER( yunsung8_videoram_w )
 {
-	if (offset < 0x0800)		// c000-c7ff	Banked Palette RAM
+	if (offset < 0x0800)		// c000-c7ff    Banked Palette RAM
 	{
 		int bank = yunsung8_videobank & 2;
 		unsigned char *RAM;
@@ -113,14 +113,14 @@ WRITE8_HANDLER( yunsung8_flipscreen_w )
 
 /***************************************************************************
 
-							  [ Tiles Format ]
+                              [ Tiles Format ]
 
-	Offset:
+    Offset:
 
-	Video RAM + 0000.b		Code (Low  Bits)
-	Video RAM + 0001.b		Code (High Bits)
+    Video RAM + 0000.b      Code (Low  Bits)
+    Video RAM + 0001.b      Code (High Bits)
 
-	Color RAM + 0000.b		Color
+    Color RAM + 0000.b      Color
 
 
 ***************************************************************************/
@@ -163,7 +163,7 @@ static void get_tile_info_1( int tile_index )
 /***************************************************************************
 
 
-							Vide Hardware Init
+                            Vide Hardware Init
 
 
 ***************************************************************************/
@@ -189,7 +189,7 @@ VIDEO_START( yunsung8 )
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

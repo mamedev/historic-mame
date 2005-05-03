@@ -176,27 +176,27 @@ a diamond of a specific color: It depends on its x position and
 direction. There is a cheat code at the top of each secret room
 that can be entered on the copyright screen:
 
-	L -> left
-	R -> right
-	J -> jump
-	B -> rainbow
-	S -> start
+    L -> left
+    R -> right
+    J -> jump
+    B -> rainbow
+    S -> start
 
-				  |  regular   |  extra
-	--------------+------------+------------
-	Fast Feet     |  BLRBJSBJ  |  SLLSRJRR
-	Red Potion    |  RJSBJLBR  |  JLSSSBRJ
-	Yellow Potion |  SSSLLRRS  |  BRSLJSLJ
-	Hint A        |  BJBJBJRS  |  BJBJBJRS
-	Hint B        |  LJLSLBLS  |  LJLSLBLS
-	Continue      |  LBSJRLJL  |  LJLRSJJJ
-	Money Bags    |  RRLLBBJS  |  LLSBRRJB
-	Money + Cont  |  RRRRSBSJ  |  RSJRLBRS
-	Hint C        |  SJBLRJSR  |  SJBLRJSR
-	100M Counter  |  SRBJSLSB  |  BBSSJJJJ
-	Hint D        |  N/A       |  BBJJRLSL
-	Hint E        |  N/A       |  LRSLRSJR
-	Hint F        |  N/A       |  SBJLSBRR
+                  |  regular   |  extra
+    --------------+------------+------------
+    Fast Feet     |  BLRBJSBJ  |  SLLSRJRR
+    Red Potion    |  RJSBJLBR  |  JLSSSBRJ
+    Yellow Potion |  SSSLLRRS  |  BRSLJSLJ
+    Hint A        |  BJBJBJRS  |  BJBJBJRS
+    Hint B        |  LJLSLBLS  |  LJLSLBLS
+    Continue      |  LBSJRLJL  |  LJLRSJJJ
+    Money Bags    |  RRLLBBJS  |  LLSBRRJB
+    Money + Cont  |  RRRRSBSJ  |  RSJRLBRS
+    Hint C        |  SJBLRJSR  |  SJBLRJSR
+    100M Counter  |  SRBJSLSB  |  BBSSJJJJ
+    Hint D        |  N/A       |  BBJJRLSL
+    Hint E        |  N/A       |  LRSLRSJR
+    Hint F        |  N/A       |  SBJLSBRR
 
 ***************************************************************************/
 
@@ -367,7 +367,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 INPUT_PORTS_START( rainbow )

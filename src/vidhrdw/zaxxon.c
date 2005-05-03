@@ -1,15 +1,15 @@
 /*
 
-	SEGA Zaxxon Hardware - Video
+    SEGA Zaxxon Hardware - Video
 
-	TODO:
+    TODO:
 
-	- get rid of zaxxon_vid_type
-	- draw backgrounds as tilemaps
-	- convert skewing to use tilemap scrolling?
-	- zaxxon fg tilemap color calculation
-	- fix background size bug
-	- clean up background functions
+    - get rid of zaxxon_vid_type
+    - draw backgrounds as tilemaps
+    - convert skewing to use tilemap scrolling?
+    - zaxxon fg tilemap color calculation
+    - fix background size bug
+    - clean up background functions
 
 */
 
@@ -394,10 +394,10 @@ static void congo_draw_sprites( struct mame_bitmap *bitmap, const struct rectang
 	int offs;
 	int i;
 	static unsigned int sprpri[0x100]; /* this really should not be more
-		                            * than 0x1e, but I did not want to check
-		                            * for 0xff which is set when sprite is off
-		                            * -V-
-		                            */
+                                    * than 0x1e, but I did not want to check
+                                    * for 0xff which is set when sprite is off
+                                    * -V-
+                                    */
 
 	/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
 	/* The number of active sprites is stored at 0xc032 */

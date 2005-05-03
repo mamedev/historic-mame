@@ -55,8 +55,8 @@ NB2TilemapCB(data16_t code, int *tile, int *mask )
 
 	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 	{
-		/*	00010203 04050607 00010203 04050607 (normal) */
-		/*	00010718 191a1b07 00010708 090a0b07 (alt bank) */
+		/*  00010203 04050607 00010203 04050607 (normal) */
+		/*  00010718 191a1b07 00010708 090a0b07 (alt bank) */
 		int bank = nth_byte32( namconb1_tilebank32, (code>>13)+8 );
 		mangle = (code&0x1fff) + bank*0x2000;
 		*tile = mangle;
@@ -81,9 +81,9 @@ namconb1_install_palette( void )
 	data32_t *pSource;
 
 	/**
-	 * This is unnecessarily expensive.  Better would be to mark palette entries dirty as
-	 * they are modified, and only process those that have changed.
-	 */
+     * This is unnecessarily expensive.  Better would be to mark palette entries dirty as
+     * they are modified, and only process those that have changed.
+     */
 	pen = 0;
 	for( page=0; page<4; page++ )
 	{
@@ -261,7 +261,7 @@ VIDEO_UPDATE( namconb2 )
 	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
 
 	fillbitmap( bitmap, get_black_pen(), cliprect );
-	
+
 	if( memcmp(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank))!=0 )
 	{
 		namco_tilemap_invalidate();

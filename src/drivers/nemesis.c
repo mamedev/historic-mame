@@ -1,22 +1,22 @@
 /***************************************************************************
 
-	Nemesis (Hacked?)		GX400
-	Nemesis (World?)		GX400
-	Twin Bee				GX412
-	Gradius					GX456
-	Galactic Warriors		GX578
-	Konami GT				GX561
-	RF2						GX561
-	Salamander (Version D)	GX587
-	Salamander (Version J)	GX587
-	Lifeforce (US)			GX587
-	Lifeforce (Japan)		GX587
-	Black Panther			GX604
-	City Bomber (World)		GX787
-	City Bomber (Japan)		GX787
-	Hyper Crash				GX790
-	Kitten Kaboodle			GX712
-	Nyan Nyan Panic (Japan)	GX712
+    Nemesis (Hacked?)       GX400
+    Nemesis (World?)        GX400
+    Twin Bee                GX412
+    Gradius                 GX456
+    Galactic Warriors       GX578
+    Konami GT               GX561
+    RF2                     GX561
+    Salamander (Version D)  GX587
+    Salamander (Version J)  GX587
+    Lifeforce (US)          GX587
+    Lifeforce (Japan)       GX587
+    Black Panther           GX604
+    City Bomber (World)     GX787
+    City Bomber (Japan)     GX787
+    Hyper Crash             GX790
+    Kitten Kaboodle         GX712
+    Nyan Nyan Panic (Japan) GX712
 
 
 driver by Bryan McPhail
@@ -165,7 +165,7 @@ WRITE16_HANDLER( gx400_irq1_enable_word_w )
 {
 	if (ACCESSING_LSB)
 		irq1_on = data & 0x0001;
-/*	else
+/*  else
 logerror("irq1en = %08x\n",data);*/
 }
 
@@ -173,7 +173,7 @@ WRITE16_HANDLER( gx400_irq2_enable_word_w )
 {
 	if (ACCESSING_LSB)
 		irq2_on = data & 0x0001;
-/*	else
+/*  else
 logerror("irq2en = %08x\n",data);*/
 }
 
@@ -181,7 +181,7 @@ WRITE16_HANDLER( gx400_irq4_enable_word_w )
 {
 	if (ACCESSING_MSB)
 		irq4_on = data & 0x0100;
-/*	else
+/*  else
 logerror("irq4en = %08x\n",data);*/
 }
 
@@ -233,10 +233,10 @@ WRITE16_HANDLER( konamigt_irq2_enable_word_w )
 READ16_HANDLER( konamigt_input_word_r )
 {
 /*
-	bit 0-7:   steering
-	bit 8-9:   brake
-	bit 10-11: unknown
-	bit 12-15: accel
+    bit 0-7:   steering
+    bit 8-9:   brake
+    bit 10-11: unknown
+    bit 12-15: accel
 */
 
 	int data=readinputport(7);
@@ -244,11 +244,11 @@ READ16_HANDLER( konamigt_input_word_r )
 
 	int ret=0x0000;
 
-//	if(data&0x10) ret|=0x0800;			// turbo/gear?
-//	if(data&0x80) ret|=0x0400;			// turbo?
-	if(data&0x20) ret|=0x0300;			// brake		(0-3)
+//  if(data&0x10) ret|=0x0800;          // turbo/gear?
+//  if(data&0x80) ret|=0x0400;          // turbo?
+	if(data&0x20) ret|=0x0300;			// brake        (0-3)
 
-	if(data&0x40) ret|=0xf000;			// accel		(0-f)
+	if(data&0x40) ret|=0xf000;			// accel        (0-f)
 
 	ret|=data2&0x7f;					// steering wheel, not exactly sure if DIAL works ok.
 
@@ -1081,7 +1081,7 @@ INPUT_PORTS_START( konamigt )
 	PORT_START	/* IN7 */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+//  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 INPUT_PORTS_END
 
 
@@ -1152,7 +1152,7 @@ INPUT_PORTS_START( rf2 )
 	PORT_START	/* IN7 */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+//  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 
 INPUT_PORTS_END
 
@@ -1929,7 +1929,7 @@ INPUT_PORTS_START( hcrash )
 	PORT_START	/* IN7 */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+//  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 
 	/*WEC Le Mans 24 specific control*/
 	PORT_START	/* IN8 - Accelerator*/
@@ -2136,7 +2136,7 @@ static MACHINE_DRIVER_START( nemesis )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,18432000/2)         /* 9.216 MHz? */
-//			14318180/2,	/* From schematics, should be accurate */
+//          14318180/2, /* From schematics, should be accurate */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
 
@@ -2161,14 +2161,14 @@ static MACHINE_DRIVER_START( nemesis )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
-	
+
 	MDRV_SOUND_ADD(K005289, 3579545/2)
 	MDRV_SOUND_CONFIG(k005289_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
@@ -2207,11 +2207,11 @@ static MACHINE_DRIVER_START( konamigt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
@@ -2255,7 +2255,7 @@ static MACHINE_DRIVER_START( salamand )
 	MDRV_SOUND_CONFIG(vlm5030_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.10)
@@ -2298,7 +2298,7 @@ static MACHINE_DRIVER_START( blkpnthr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.10)
@@ -2341,7 +2341,7 @@ static MACHINE_DRIVER_START( citybomb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.30)
@@ -2388,7 +2388,7 @@ static MACHINE_DRIVER_START( nyanpani )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.30)
@@ -2435,11 +2435,11 @@ static MACHINE_DRIVER_START( gx400 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.95)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
@@ -2483,11 +2483,11 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318180/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
@@ -2543,7 +2543,7 @@ static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x050400, 0x0507ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
 	AM_RANGE(0x050800, 0x050bff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x050c00, 0x050fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll)
-	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)		/* used, but written to with 0's */
+	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)       /* used, but written to with 0's */
 
 
 	AM_RANGE(0x090000, 0x091fff) AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
@@ -2562,7 +2562,7 @@ static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
 	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
 
-//	AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
+//  AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
 	AM_RANGE(0x05c800, 0x05c801) AM_WRITE(watchdog_reset16_w)	/* probably */
 
 	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable */
@@ -2579,7 +2579,7 @@ static MACHINE_DRIVER_START( hcrash )
 	MDRV_CPU_ADD(M68000,18432000/2)         /* 9.216 MHz? */
 	MDRV_CPU_PROGRAM_MAP(hcrash_readmem,hcrash_writemem)
 	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
-//	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
+//  MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	/* audio CPU */        /* 3.579545 MHz */
@@ -2607,7 +2607,7 @@ static MACHINE_DRIVER_START( hcrash )
 	MDRV_SOUND_CONFIG(vlm5030_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.10)

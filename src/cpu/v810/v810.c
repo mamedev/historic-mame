@@ -1,19 +1,19 @@
 /********************************************
  NEC V810 (upd70732) core
   Tomasz Slanina - analog[at]op.pl
- 
+
  Change Log
  - 20/07/2004 - first public release
-  
- 
+
+
  TODO:
- 	- CY flag in few floating point opcodes 
- 		(all floating point opcodes are NOT tested!)
+    - CY flag in few floating point opcodes
+        (all floating point opcodes are NOT tested!)
   - traps/interrupts/exceptions
   - bitstring opcodes
   - timing
   - missing opcodes : reti , trap
- 
+
 ********************************************/
 
 #include "cpuintrf.h"
@@ -27,8 +27,8 @@
 void InitTab(void);
 
 
-#define clkIF 3		
-#define clkMEM 3		
+#define clkIF 3
+#define clkMEM 3
 
 static UINT32 (*OpCodeTable[64])(void);
 
@@ -95,14 +95,14 @@ int v810_ICount;
 #define PPC	v810.PPC
 
 /* Flags */
-#define GET_Z					( PSW & 0x00000001)     
-#define GET_S					((PSW & 0x00000002)>>1) 
-#define GET_OV				((PSW & 0x00000004)>>2) 
-#define GET_CY				((PSW & 0x00000008)>>3) 
-#define GET_ID				((PSW & 0x00008000)>>15)     
-#define GET_EP				((PSW & 0x00010000)>>16) 
-#define GET_NP				((PSW & 0x00020000)>>17) 
-#define GET_AE				((PSW & 0x00040000)>>18) 
+#define GET_Z					( PSW & 0x00000001)
+#define GET_S					((PSW & 0x00000002)>>1)
+#define GET_OV				((PSW & 0x00000004)>>2)
+#define GET_CY				((PSW & 0x00000008)>>3)
+#define GET_ID				((PSW & 0x00008000)>>15)
+#define GET_EP				((PSW & 0x00010000)>>16)
+#define GET_NP				((PSW & 0x00020000)>>17)
+#define GET_AE				((PSW & 0x00040000)>>18)
 
 #define SET_Z(val)				(PSW = (PSW & ~0x00000001) | (val))
 #define SET_S(val)				(PSW = (PSW & ~0x00000002) | ((val) << 1))
@@ -118,20 +118,20 @@ void v810_init(void)
 {
 	static int opt_init = 0;
 	int cpu = cpu_getactivecpu();
-	
-	if(!opt_init) 
+
+	if(!opt_init)
 	{
-		InitTab();	
+		InitTab();
 		opt_init = 1;
 	}
 	v810.irq_line = CLEAR_LINE;
 	v810.nmi_line = CLEAR_LINE;
-	
+
 	state_save_register_UINT32("v810", cpu, "reg",       v810.reg, 65);
 	state_save_register_int   ("v810", cpu, "irq_line", &v810.irq_line);
 	state_save_register_int   ("v810", cpu, "nmi_line", &v810.nmi_line);
 	state_save_register_UINT32("v810", cpu, "ppc",      &PPC, 1);
-	
+
 }
 
 void v810_reset(void *param)
@@ -186,12 +186,12 @@ static UINT8 v810_reg_layout[] = {
 	V810_PSW, V810_EIPC, 	V810_EIPSW, V810_FEPC, 	-1,
 	V810_FEPSW, V810_ECR, V810_TKCW, 	V810_CHCW, -1,
 	V810_ADTRE, 0
-	
+
 };
 
 static UINT8 v810_win_layout[] = {
 	0, 0,80, 6,	/* register window (top rows) */
-	0, 7,39,15,	/* disassembler window	*/
+	0, 7,39,15,	/* disassembler window  */
 	40, 7,39, 7,	/* memory #1 window (left) */
 	40,15,39, 7,	/* memory #2 window (right) */
 	0,23,80, 1,	/* command line window (bottom rows) */
@@ -209,8 +209,8 @@ unsigned v810_dasm(char *buffer, unsigned int pc)
 
 void 			set_irq_line(int irqline, int state)
 {
-	
-	
+
+
 }
 
 /**************************************************************************
@@ -237,58 +237,58 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 12:		set_irq_line(12, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 13:		set_irq_line(13, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 14:		set_irq_line(14, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 15:		set_irq_line(15, info->i);	
-		
+		case CPUINFO_INT_INPUT_STATE + 15:		set_irq_line(15, info->i);
+
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
-	
+
 		case CPUINFO_INT_PREVIOUSPC:					 		PPC = info->i;						break;
 
 		case CPUINFO_INT_REGISTER + V810_PC:
 		case CPUINFO_INT_PC:											PC = info->i; 						break;
 
-		case CPUINFO_INT_REGISTER + V810_R0:			R0 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R1:			R1 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R2:			R2 = info->i;							break;	
+		case CPUINFO_INT_REGISTER + V810_R0:			R0 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R1:			R1 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R2:			R2 = info->i;							break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + V810_SP:			SP = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R4:			R4 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R5:			R5 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R6:			R6 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R7:			R7 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R8:			R8 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R9:			R9 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R10:			R10 = info->i;						break;	
-		case CPUINFO_INT_REGISTER + V810_R11:			R11 = info->i;						break;	
-		case CPUINFO_INT_REGISTER + V810_R12:			R12 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R13:			R13 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R14:			R14 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R15:			R15 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R16:			R16 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R17:			R17 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R18:			R18 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R19:			R19 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R20:			R20 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R21:			R21 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R22:			R22 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R23:			R23 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R24:			R24 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R25:			R25 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R26:			R26 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R27:			R27 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R28:			R28 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R29:			R29 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R30:			R30 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_R31:			R31 = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_PSW:			PSW = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_EIPC:		EIPC = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_EIPSW:		EIPSW = info->i;						break;	
-		case CPUINFO_INT_REGISTER + V810_FEPC:		FEPC = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_FEPSW:		FEPSW = info->i;						break;	
-		case CPUINFO_INT_REGISTER + V810_ECR:			ECR = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_PIR:			PIR = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_TKCW:		TKCW = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_CHCW:		CHCW = info->i;							break;	
-		case CPUINFO_INT_REGISTER + V810_ADTRE:		ADTRE = info->i;						break;	
+		case CPUINFO_INT_REGISTER + V810_SP:			SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R4:			R4 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R5:			R5 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R6:			R6 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R7:			R7 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R8:			R8 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R9:			R9 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R10:			R10 = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_R11:			R11 = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_R12:			R12 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R13:			R13 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R14:			R14 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R15:			R15 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R16:			R16 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R17:			R17 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R18:			R18 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R19:			R19 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R20:			R20 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R21:			R21 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R22:			R22 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R23:			R23 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R24:			R24 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R25:			R25 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R26:			R26 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R27:			R27 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R28:			R28 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R29:			R29 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R30:			R30 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R31:			R31 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_PSW:			PSW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPC:		EIPC = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPSW:		EIPSW = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_FEPC:		FEPC = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_FEPSW:		FEPSW = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_ECR:			ECR = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_PIR:			PIR = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_TKCW:		TKCW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_CHCW:		CHCW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_ADTRE:		ADTRE = info->i;						break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					v810.irq_cb = info->irqcallback;			break;
@@ -306,8 +306,8 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		
-		
+
+
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
 				GET_AE ? 'A':'.',
@@ -320,7 +320,7 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 				GET_Z ?  'Z':'.');
 			break;
 
-		
+
 		case CPUINFO_INT_CONTEXT_SIZE:						info->i = sizeof(v810);					break;
 		case CPUINFO_INT_INPUT_LINES:							info->i = 9;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
@@ -330,7 +330,7 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:		info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:							info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:							info->i = 1;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -349,49 +349,49 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V810_PC:
 		case CPUINFO_INT_PC:											info->i = PC;  						break;
 
-		case CPUINFO_INT_REGISTER + V810_R0:			info->i = R0;							break;	
-		case CPUINFO_INT_REGISTER + V810_R1:			info->i = R1;							break;	
-		case CPUINFO_INT_REGISTER + V810_R2:			info->i = R2;							break;	
+		case CPUINFO_INT_REGISTER + V810_R0:			info->i = R0;							break;
+		case CPUINFO_INT_REGISTER + V810_R1:			info->i = R1;							break;
+		case CPUINFO_INT_REGISTER + V810_R2:			info->i = R2;							break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + V810_SP:			info->i = SP;							break;	
-		case CPUINFO_INT_REGISTER + V810_R4:			info->i = R4;							break;	
-		case CPUINFO_INT_REGISTER + V810_R5:			info->i = R5;							break;	
-		case CPUINFO_INT_REGISTER + V810_R6:			info->i = R6;							break;	
-		case CPUINFO_INT_REGISTER + V810_R7:			info->i = R7;							break;	
-		case CPUINFO_INT_REGISTER + V810_R8:			info->i = R8;							break;	
-		case CPUINFO_INT_REGISTER + V810_R9:			info->i = R9;							break;	
-		case CPUINFO_INT_REGISTER + V810_R10:			info->i = R10;							break;	
-		case CPUINFO_INT_REGISTER + V810_R11:			info->i = R11;							break;	
-		case CPUINFO_INT_REGISTER + V810_R12:			info->i = R12;							break;	
-		case CPUINFO_INT_REGISTER + V810_R13:			info->i = R13;							break;	
-		case CPUINFO_INT_REGISTER + V810_R14:			info->i = R14;							break;	
-		case CPUINFO_INT_REGISTER + V810_R15:			info->i = R15;							break;	
-		case CPUINFO_INT_REGISTER + V810_R16:			info->i = R16;							break;	
-		case CPUINFO_INT_REGISTER + V810_R17:			info->i = R17;							break;	
-		case CPUINFO_INT_REGISTER + V810_R18:			info->i = R18;							break;	
-		case CPUINFO_INT_REGISTER + V810_R19:			info->i = R19;							break;	
-		case CPUINFO_INT_REGISTER + V810_R20:			info->i = R20;							break;	
-		case CPUINFO_INT_REGISTER + V810_R21:			info->i = R21;							break;	
-		case CPUINFO_INT_REGISTER + V810_R22:			info->i = R22;							break;	
-		case CPUINFO_INT_REGISTER + V810_R23:			info->i = R23;							break;	
-		case CPUINFO_INT_REGISTER + V810_R24:			info->i = R24;							break;	
-		case CPUINFO_INT_REGISTER + V810_R25:			info->i = R25;							break;	
-		case CPUINFO_INT_REGISTER + V810_R26:			info->i = R26;							break;	
-		case CPUINFO_INT_REGISTER + V810_R27:			info->i = R27;							break;	
-		case CPUINFO_INT_REGISTER + V810_R28:			info->i = R28;							break;	
-		case CPUINFO_INT_REGISTER + V810_R29:			info->i = R29;							break;	
-		case CPUINFO_INT_REGISTER + V810_R30:			info->i = R30;							break;	
-		case CPUINFO_INT_REGISTER + V810_R31:			info->i = R31;							break;	
-		case CPUINFO_INT_REGISTER + V810_PSW:			info->i = PSW;							break;	
-		case CPUINFO_INT_REGISTER + V810_EIPC:		info->i = EIPC;							break;	
-		case CPUINFO_INT_REGISTER + V810_EIPSW:		info->i = EIPSW;						break;	
-		case CPUINFO_INT_REGISTER + V810_FEPC:		info->i = FEPC;							break;	
-		case CPUINFO_INT_REGISTER + V810_FEPSW:		info->i = FEPSW;						break;	
-		case CPUINFO_INT_REGISTER + V810_ECR:			info->i = ECR;							break;	
-		case CPUINFO_INT_REGISTER + V810_PIR:			info->i = PIR;							break;	
-		case CPUINFO_INT_REGISTER + V810_TKCW:		info->i = TKCW;							break;	
-		case CPUINFO_INT_REGISTER + V810_CHCW:		info->i = CHCW;							break;	
-		case CPUINFO_INT_REGISTER + V810_ADTRE:		info->i = ADTRE;						break;	
+		case CPUINFO_INT_REGISTER + V810_SP:			info->i = SP;							break;
+		case CPUINFO_INT_REGISTER + V810_R4:			info->i = R4;							break;
+		case CPUINFO_INT_REGISTER + V810_R5:			info->i = R5;							break;
+		case CPUINFO_INT_REGISTER + V810_R6:			info->i = R6;							break;
+		case CPUINFO_INT_REGISTER + V810_R7:			info->i = R7;							break;
+		case CPUINFO_INT_REGISTER + V810_R8:			info->i = R8;							break;
+		case CPUINFO_INT_REGISTER + V810_R9:			info->i = R9;							break;
+		case CPUINFO_INT_REGISTER + V810_R10:			info->i = R10;							break;
+		case CPUINFO_INT_REGISTER + V810_R11:			info->i = R11;							break;
+		case CPUINFO_INT_REGISTER + V810_R12:			info->i = R12;							break;
+		case CPUINFO_INT_REGISTER + V810_R13:			info->i = R13;							break;
+		case CPUINFO_INT_REGISTER + V810_R14:			info->i = R14;							break;
+		case CPUINFO_INT_REGISTER + V810_R15:			info->i = R15;							break;
+		case CPUINFO_INT_REGISTER + V810_R16:			info->i = R16;							break;
+		case CPUINFO_INT_REGISTER + V810_R17:			info->i = R17;							break;
+		case CPUINFO_INT_REGISTER + V810_R18:			info->i = R18;							break;
+		case CPUINFO_INT_REGISTER + V810_R19:			info->i = R19;							break;
+		case CPUINFO_INT_REGISTER + V810_R20:			info->i = R20;							break;
+		case CPUINFO_INT_REGISTER + V810_R21:			info->i = R21;							break;
+		case CPUINFO_INT_REGISTER + V810_R22:			info->i = R22;							break;
+		case CPUINFO_INT_REGISTER + V810_R23:			info->i = R23;							break;
+		case CPUINFO_INT_REGISTER + V810_R24:			info->i = R24;							break;
+		case CPUINFO_INT_REGISTER + V810_R25:			info->i = R25;							break;
+		case CPUINFO_INT_REGISTER + V810_R26:			info->i = R26;							break;
+		case CPUINFO_INT_REGISTER + V810_R27:			info->i = R27;							break;
+		case CPUINFO_INT_REGISTER + V810_R28:			info->i = R28;							break;
+		case CPUINFO_INT_REGISTER + V810_R29:			info->i = R29;							break;
+		case CPUINFO_INT_REGISTER + V810_R30:			info->i = R30;							break;
+		case CPUINFO_INT_REGISTER + V810_R31:			info->i = R31;							break;
+		case CPUINFO_INT_REGISTER + V810_PSW:			info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPC:		info->i = EIPC;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPSW:		info->i = EIPSW;						break;
+		case CPUINFO_INT_REGISTER + V810_FEPC:		info->i = FEPC;							break;
+		case CPUINFO_INT_REGISTER + V810_FEPSW:		info->i = FEPSW;						break;
+		case CPUINFO_INT_REGISTER + V810_ECR:			info->i = ECR;							break;
+		case CPUINFO_INT_REGISTER + V810_PIR:			info->i = PIR;							break;
+		case CPUINFO_INT_REGISTER + V810_TKCW:		info->i = TKCW;							break;
+		case CPUINFO_INT_REGISTER + V810_CHCW:		info->i = CHCW;							break;
+		case CPUINFO_INT_REGISTER + V810_ADTRE:		info->i = ADTRE;						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = v810_set_info;			break;
@@ -414,7 +414,7 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Tomasz Slanina"); break;
-		
+
 		case CPUINFO_STR_REGISTER + V810_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%08X", PC);	break;
 		case CPUINFO_STR_REGISTER + V810_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0 :%08X", R0);	break;
 		case CPUINFO_STR_REGISTER + V810_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1 :%08X", R1);	break;
@@ -422,45 +422,45 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + V810_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP :%08X", SP);	break;
 		case CPUINFO_STR_REGISTER + V810_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4 :%08X", R4);	break;
 		case CPUINFO_STR_REGISTER + V810_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5 :%08X", R5);	break;
-		case CPUINFO_STR_REGISTER + V810_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6 :%08X", R6);	break;	
-		case CPUINFO_STR_REGISTER + V810_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7 :%08X", R7);	break;	
-		case CPUINFO_STR_REGISTER + V810_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8 :%08X", R8);	break;	
-		case CPUINFO_STR_REGISTER + V810_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9 :%08X", R9);	break;	
-		case CPUINFO_STR_REGISTER + V810_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", R10);	break;	
-		case CPUINFO_STR_REGISTER + V810_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", R11);	break;	
-		case CPUINFO_STR_REGISTER + V810_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", R12);	break;	
-		case CPUINFO_STR_REGISTER + V810_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", R13);	break;	
-		case CPUINFO_STR_REGISTER + V810_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", R14);	break;	
-		case CPUINFO_STR_REGISTER + V810_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", R15);	break;	
-		case CPUINFO_STR_REGISTER + V810_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", R16);	break;	
-		case CPUINFO_STR_REGISTER + V810_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", R17);	break;	
-		case CPUINFO_STR_REGISTER + V810_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", R18);	break;	
-		case CPUINFO_STR_REGISTER + V810_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", R19);	break;	
-		case CPUINFO_STR_REGISTER + V810_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", R20);	break;	
-		case CPUINFO_STR_REGISTER + V810_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", R21);	break;	
-		case CPUINFO_STR_REGISTER + V810_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", R22);	break;	
-		case CPUINFO_STR_REGISTER + V810_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", R23);	break;	
-		case CPUINFO_STR_REGISTER + V810_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", R24);	break;	
-		case CPUINFO_STR_REGISTER + V810_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", R25);	break;	
-		case CPUINFO_STR_REGISTER + V810_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", R26);	break;	
-		case CPUINFO_STR_REGISTER + V810_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", R27);	break;	
-		case CPUINFO_STR_REGISTER + V810_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", R28);	break;	
-		case CPUINFO_STR_REGISTER + V810_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", R29);	break;	
-		case CPUINFO_STR_REGISTER + V810_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", R30);	break;	
-		case CPUINFO_STR_REGISTER + V810_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", R31);	break;	
-		case CPUINFO_STR_REGISTER + V810_EIPC:		sprintf(info->s = cpuintrf_temp_str(), "EIPC :%08X", EIPC);	break;	
-		case CPUINFO_STR_REGISTER + V810_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW  :%08X", PSW);	break;	
-		case CPUINFO_STR_REGISTER + V810_EIPSW:		sprintf(info->s = cpuintrf_temp_str(), "EIPSW:%08X", EIPSW);	break;	
-		case CPUINFO_STR_REGISTER + V810_FEPC:		sprintf(info->s = cpuintrf_temp_str(), "FEPC :%08X", FEPC);	break;	
+		case CPUINFO_STR_REGISTER + V810_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6 :%08X", R6);	break;
+		case CPUINFO_STR_REGISTER + V810_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7 :%08X", R7);	break;
+		case CPUINFO_STR_REGISTER + V810_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8 :%08X", R8);	break;
+		case CPUINFO_STR_REGISTER + V810_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9 :%08X", R9);	break;
+		case CPUINFO_STR_REGISTER + V810_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", R10);	break;
+		case CPUINFO_STR_REGISTER + V810_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", R11);	break;
+		case CPUINFO_STR_REGISTER + V810_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", R12);	break;
+		case CPUINFO_STR_REGISTER + V810_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", R13);	break;
+		case CPUINFO_STR_REGISTER + V810_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", R14);	break;
+		case CPUINFO_STR_REGISTER + V810_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", R15);	break;
+		case CPUINFO_STR_REGISTER + V810_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", R16);	break;
+		case CPUINFO_STR_REGISTER + V810_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", R17);	break;
+		case CPUINFO_STR_REGISTER + V810_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", R18);	break;
+		case CPUINFO_STR_REGISTER + V810_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", R19);	break;
+		case CPUINFO_STR_REGISTER + V810_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", R20);	break;
+		case CPUINFO_STR_REGISTER + V810_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", R21);	break;
+		case CPUINFO_STR_REGISTER + V810_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", R22);	break;
+		case CPUINFO_STR_REGISTER + V810_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", R23);	break;
+		case CPUINFO_STR_REGISTER + V810_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", R24);	break;
+		case CPUINFO_STR_REGISTER + V810_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", R25);	break;
+		case CPUINFO_STR_REGISTER + V810_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", R26);	break;
+		case CPUINFO_STR_REGISTER + V810_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", R27);	break;
+		case CPUINFO_STR_REGISTER + V810_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", R28);	break;
+		case CPUINFO_STR_REGISTER + V810_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", R29);	break;
+		case CPUINFO_STR_REGISTER + V810_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", R30);	break;
+		case CPUINFO_STR_REGISTER + V810_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", R31);	break;
+		case CPUINFO_STR_REGISTER + V810_EIPC:		sprintf(info->s = cpuintrf_temp_str(), "EIPC :%08X", EIPC);	break;
+		case CPUINFO_STR_REGISTER + V810_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW  :%08X", PSW);	break;
+		case CPUINFO_STR_REGISTER + V810_EIPSW:		sprintf(info->s = cpuintrf_temp_str(), "EIPSW:%08X", EIPSW);	break;
+		case CPUINFO_STR_REGISTER + V810_FEPC:		sprintf(info->s = cpuintrf_temp_str(), "FEPC :%08X", FEPC);	break;
 		case CPUINFO_STR_REGISTER + V810_FEPSW:		sprintf(info->s = cpuintrf_temp_str(), "FEPSW:%08X", FEPSW);	break;
-		case CPUINFO_STR_REGISTER + V810_ECR:			sprintf(info->s = cpuintrf_temp_str(), "ECR  :%08X", ECR);	break;	
-		case CPUINFO_STR_REGISTER + V810_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR  :%08X", PIR);	break;	
-		case CPUINFO_STR_REGISTER + V810_TKCW:		sprintf(info->s = cpuintrf_temp_str(), "TKCW :%08X", TKCW);	break;	
-		case CPUINFO_STR_REGISTER + V810_CHCW:		sprintf(info->s = cpuintrf_temp_str(), "CHCW :%08X", CHCW);	break;	
+		case CPUINFO_STR_REGISTER + V810_ECR:			sprintf(info->s = cpuintrf_temp_str(), "ECR  :%08X", ECR);	break;
+		case CPUINFO_STR_REGISTER + V810_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR  :%08X", PIR);	break;
+		case CPUINFO_STR_REGISTER + V810_TKCW:		sprintf(info->s = cpuintrf_temp_str(), "TKCW :%08X", TKCW);	break;
+		case CPUINFO_STR_REGISTER + V810_CHCW:		sprintf(info->s = cpuintrf_temp_str(), "CHCW :%08X", CHCW);	break;
 		case CPUINFO_STR_REGISTER + V810_ADTRE:		sprintf(info->s = cpuintrf_temp_str(), "ADTRE:%08X", ADTRE);	break;
-		
-		
-	
+
+
+
 	}
 }
 
@@ -476,7 +476,7 @@ UINT32 GETREG(UINT32 reg)
 	if(reg)
 		return v810.reg[reg];
 	else
-		return 0;	
+		return 0;
 }
 
 static UINT32 opUNDEF(void)
@@ -501,7 +501,7 @@ static UINT32 opMOVEA(void)	// movea imm16, reg1, reg2
 	return clkIF;
 }
 
-static UINT32 opMOVHI(void) 	// movhi imm16, reg1 ,reg2 	
+static UINT32 opMOVHI(void) 	// movhi imm16, reg1 ,reg2
 {
 	UINT32 op2=R_OP(PC);
 	PC+=2;
@@ -664,7 +664,7 @@ static UINT32 opXORr(void)	// xor r1,r2
 }
 
 
-static UINT32 opLDSR(void) // ldsr reg2,regID 
+static UINT32 opLDSR(void) // ldsr reg2,regID
 {
 	UINT32 op1=UI5(OP);
 	SETREG(32+op1,GETREG(GET2));
@@ -708,15 +708,15 @@ static UINT32 opSHLr(void)	// shl r1,r2
 	UINT64 tmp;
 	UINT32 count=GETREG(GET1);
 	count&=0x1f;
-	
+
 	SET_OV(0);
-	SET_CY(0); 
-	
+	SET_CY(0);
+
 	if(count)
 	{
 		tmp=GETREG(GET2);
 		tmp<<=count;
-		CHECK_CY(tmp);	
+		CHECK_CY(tmp);
 		SETREG(GET2,tmp&0xffffffff);
 		CHECK_ZS(GETREG(GET2));
 	}
@@ -727,15 +727,15 @@ static UINT32 opSHLi(void)	// shl imm5,r2
 {
 	UINT64 tmp;
 	UINT32 count=UI5(OP);
-	
+
 	SET_OV(0);
-	SET_CY(0); 
-	
+	SET_CY(0);
+
 	if(count)
 	{
 		tmp=GETREG(GET2);
 		tmp<<=count;
-		CHECK_CY(tmp);	
+		CHECK_CY(tmp);
 		SETREG(GET2,tmp&0xffffffff);
 	}
 	CHECK_ZS(GETREG(GET2));
@@ -748,7 +748,7 @@ static UINT32 opSHRr(void)	// shr r1,r2
 	UINT32 count=GETREG(GET1);
 	count&=0x1f;
 	SET_OV(0);
-	SET_CY(0); 
+	SET_CY(0);
 	if(count)
 	{
 		tmp=GETREG(GET2);
@@ -765,7 +765,7 @@ static UINT32 opSHRi(void)	// shr imm5,r2
 	UINT64 tmp;
 	UINT32 count=UI5(OP);
 	SET_OV(0);
-	SET_CY(0); 
+	SET_CY(0);
 	if(count)
 	{
 		tmp=GETREG(GET2);
@@ -784,7 +784,7 @@ static UINT32 opSARr(void)	// sar r1,r2
 	UINT32 count=GETREG(GET1);
 	count&=0x1f;
 	SET_OV(0);
-	SET_CY(0); 
+	SET_CY(0);
 	if(count)
 	{
 		tmp=GETREG(GET2);
@@ -802,7 +802,7 @@ static UINT32 opSARi(void)	// sar imm5,r2
 	UINT64 tmp;
 	UINT32 count=UI5(OP);
 	SET_OV(0);
-	SET_CY(0); 
+	SET_CY(0);
 	if(count)
 	{
 		tmp=GETREG(GET2);
@@ -818,7 +818,7 @@ static UINT32 opSARi(void)	// sar imm5,r2
 static UINT32 opJMPr(void)
 {
 	PC=GETREG(GET1)&~1;
-	return clkIF+2;	
+	return clkIF+2;
 }
 
 
@@ -826,7 +826,7 @@ static UINT32 opJR(void)
 {
 	UINT32 tmp=R_OP(PC);
 	PC=PC-2+(D26(OP,tmp)&~1);
-	return clkIF+2;	
+	return clkIF+2;
 }
 
 static UINT32 opJAL(void)
@@ -837,26 +837,26 @@ static UINT32 opJAL(void)
 	PC+=D26(OP,tmp);
 	PC-=4;
 	PC&=~1;
-	return clkIF+2;	
+	return clkIF+2;
 }
 
 
 static UINT32 opEI(void)
 {
-	SET_ID(0);	
-	return clkIF;	
+	SET_ID(0);
+	return clkIF;
 }
 
 static UINT32 opDI(void)
 {
-	SET_ID(1);	
-	return clkIF;	
+	SET_ID(1);
+	return clkIF;
 }
 
 static UINT32 opHALT(void)
 {
 	logerror("V810: HALT @ %X",PC-2);
-	return clkIF;	
+	return clkIF;
 }
 
 static UINT32 opB(void)
@@ -867,27 +867,27 @@ static UINT32 opB(void)
 		case 0: //bv
 			doBranch=GET_OV;
 		break;
-		
+
 		case 1: //bl
 			doBranch=GET_CY;
 		break;
-		
+
 		case 2: //be
 			doBranch=GET_Z;
 		break;
-		
+
 		case 3: //bnh
 			doBranch=GET_Z||GET_CY;
 		break;
-		
+
 		case 4: //bn
 			doBranch=GET_S;
 		break;
-		
+
 		case 5: //br
 			doBranch=1;
 		break;
-		
+
 		case 6: //blt
 			doBranch=GET_S^GET_OV;
 		break;
@@ -895,31 +895,31 @@ static UINT32 opB(void)
 		case 7: //ble
 			doBranch=GET_Z||(GET_S^GET_OV);
 		break;
-		
+
 		case 8: //bnv
 			doBranch=!GET_OV;
 		break;
-		
+
 		case 9: //bnl
 			doBranch=!GET_CY;
 		break;
-		
+
 		case 10: //bne
 			doBranch=!GET_Z;
 		break;
-		
+
 		case 11: //bh
 			doBranch=!(GET_Z||GET_CY);
 		break;
-	
+
 		case 12: //bp
 			doBranch=!GET_S;
 		break;
-		
+
 		case 13: //nop
-		
+
 		break;
-		
+
 		case 14: //bge
 			doBranch=!(GET_OV^GET_S);
 		break;
@@ -1111,7 +1111,7 @@ static UINT32 opDIVr(void)	// div r1,r2
 	{
 		SETREG(30,(INT32)((INT32)op2%(INT32)op1));
 		SETREG(GET2,(INT32)((INT32)op2/(INT32)op1));
-		SET_OV((op1^op2^GETREG(GET2)) == 0x80000000); 
+		SET_OV((op1^op2^GETREG(GET2)) == 0x80000000);
 		CHECK_ZS(GETREG(GET2));
 	}
 	return clkIF;
@@ -1125,7 +1125,7 @@ static UINT32 opDIVUr(void)	// divu r1,r2
 	{
 		SETREG(30,(INT32)(op2%op1));
 		SETREG(GET2,(INT32)(op2/op1));
-		SET_OV((op1^op2^GETREG(GET2)) == 0x80000000); 
+		SET_OV((op1^op2^GETREG(GET2)) == 0x80000000);
 		CHECK_ZS(GETREG(GET2));
 	}
 	return clkIF;
@@ -1218,7 +1218,7 @@ static void opCVTW(void)
 	SET_S((val1<0.0)?1:0);
 	SETREG(GET2,f2u(val1));
 }
-							
+
 static UINT32 opFpoint(void)
 {
 	UINT32 tmp=R_OP(PC);
@@ -1236,41 +1236,41 @@ static UINT32 opFpoint(void)
 	}
 	return clkIF+1;
 }
-							
+
 void InitTab(void)
 {
 	int i;
 	for(i=0;i<0xff;i++)
 		OpCodeTable[i]=opUNDEF;
 
-	OpCodeTable[0x00] = opMOVr;  	// mov r1,r2   			1
-	OpCodeTable[0x01] = opADDr;  	// add r1,r2   			1
-	OpCodeTable[0x02] = opSUBr;  	// sub r1,r2   			1
-	OpCodeTable[0x03] = opCMPr;  	// cmp2 r1,r2  			1
-	OpCodeTable[0x04] = opSHLr;  	// shl r1,r2   			1
-	OpCodeTable[0x05] = opSHRr;  	// shr r1,r2   			1
-	OpCodeTable[0x06] = opJMPr;  	// jmp [r1]    			1
-	OpCodeTable[0x07] = opSARr;  	// sar r1,r2   			1
-	OpCodeTable[0x08] = opMULr;  	// mul r1,r2   			1
-	OpCodeTable[0x09] = opDIVr;  	// div r1,r2   			1
-	OpCodeTable[0x0a] = opMULUr; 	// mulu r1,r2  			1
-	OpCodeTable[0x0b] = opDIVUr; 	// divu r1,r2  			1
-	OpCodeTable[0x0c] = opORr;   	// or r1,r2    			1
-	OpCodeTable[0x0d] = opANDr;  	// and r1,r2   			1
-	OpCodeTable[0x0e] = opXORr;  	// xor r1,r2   			1
-	OpCodeTable[0x0f] = opNOTr;  	// not r1,r2   			1
-	OpCodeTable[0x10] = opMOVi;  	// mov imm5,r2   		2
-	OpCodeTable[0x11] = opADDi;  	// add imm5,r2   		2
-	OpCodeTable[0x12] = opSETFi; 	// setf imm5,r2   		2
-	OpCodeTable[0x13] = opCMPi;  	// cmp imm5,r2   		2
-	OpCodeTable[0x14] = opSHLi;  	// shl imm5,r2   		2
-	OpCodeTable[0x15] = opSHRi;  	// shr imm5,r2   		2
-	OpCodeTable[0x16] = opEI;    	// ei   			2
-	OpCodeTable[0x17] = opSARi;  	// sar imm5,r2   		2
-	OpCodeTable[0x1a] = opHALT;  	// halt   			2
-	OpCodeTable[0x1c] = opLDSR;  	// ldsr reg2,regID   		2
-	OpCodeTable[0x1d] = opSTSR;  	// stsr regID,reg2   		2
-	OpCodeTable[0x1e] = opDI;  	// DI				2
+	OpCodeTable[0x00] = opMOVr;  	// mov r1,r2            1
+	OpCodeTable[0x01] = opADDr;  	// add r1,r2            1
+	OpCodeTable[0x02] = opSUBr;  	// sub r1,r2            1
+	OpCodeTable[0x03] = opCMPr;  	// cmp2 r1,r2           1
+	OpCodeTable[0x04] = opSHLr;  	// shl r1,r2            1
+	OpCodeTable[0x05] = opSHRr;  	// shr r1,r2            1
+	OpCodeTable[0x06] = opJMPr;  	// jmp [r1]             1
+	OpCodeTable[0x07] = opSARr;  	// sar r1,r2            1
+	OpCodeTable[0x08] = opMULr;  	// mul r1,r2            1
+	OpCodeTable[0x09] = opDIVr;  	// div r1,r2            1
+	OpCodeTable[0x0a] = opMULUr; 	// mulu r1,r2           1
+	OpCodeTable[0x0b] = opDIVUr; 	// divu r1,r2           1
+	OpCodeTable[0x0c] = opORr;   	// or r1,r2             1
+	OpCodeTable[0x0d] = opANDr;  	// and r1,r2            1
+	OpCodeTable[0x0e] = opXORr;  	// xor r1,r2            1
+	OpCodeTable[0x0f] = opNOTr;  	// not r1,r2            1
+	OpCodeTable[0x10] = opMOVi;  	// mov imm5,r2          2
+	OpCodeTable[0x11] = opADDi;  	// add imm5,r2          2
+	OpCodeTable[0x12] = opSETFi; 	// setf imm5,r2         2
+	OpCodeTable[0x13] = opCMPi;  	// cmp imm5,r2          2
+	OpCodeTable[0x14] = opSHLi;  	// shl imm5,r2          2
+	OpCodeTable[0x15] = opSHRi;  	// shr imm5,r2          2
+	OpCodeTable[0x16] = opEI;    	// ei               2
+	OpCodeTable[0x17] = opSARi;  	// sar imm5,r2          2
+	OpCodeTable[0x1a] = opHALT;  	// halt             2
+	OpCodeTable[0x1c] = opLDSR;  	// ldsr reg2,regID          2
+	OpCodeTable[0x1d] = opSTSR;  	// stsr regID,reg2          2
+	OpCodeTable[0x1e] = opDI;  	// DI               2
 	OpCodeTable[0x20] = opB;  	// Branch (7 bit opcode)
 	OpCodeTable[0x21] = opB;  	// Branch (7 bit opcode)
 	OpCodeTable[0x22] = opB;  	// Branch (7 bit opcode)
@@ -1279,28 +1279,28 @@ void InitTab(void)
 	OpCodeTable[0x25] = opB;  	// Branch (7 bit opcode)
 	OpCodeTable[0x26] = opB;  	// Branch (7 bit opcode)
 	OpCodeTable[0x27] = opB;  	// Branch (7 bit opcode)
-	OpCodeTable[0x28] = opMOVEA;  	// movea imm16, reg1, reg2	5
-	OpCodeTable[0x29] = opADDI;  	// addi imm16, reg1, reg2	5
-	OpCodeTable[0x2a] = opJR;  	// jr disp26			4
-	OpCodeTable[0x2b] = opJAL;  	// jal disp26			4
-	OpCodeTable[0x2c] = opORI;  	// ori imm16, reg1, reg2	5
-	OpCodeTable[0x2d] = opANDI;  	// andi imm16, reg1, reg2	5
-	OpCodeTable[0x2e] = opXORI;  	// xori imm16, reg1, reg2	5
-	OpCodeTable[0x2f] = opMOVHI;  	// movhi imm16, reg1 ,reg2 	5	
-	OpCodeTable[0x30] = opLDB;  	// ld.b disp16[reg1],reg2	6a
-	OpCodeTable[0x31] = opLDH;  	// ld.h disp16[reg1],reg2	6a
-	OpCodeTable[0x33] = opLDW;  	// ld.w disp16[reg1],reg2	6a
-	OpCodeTable[0x34] = opSTB;  	// st.b reg2, disp16[reg1]	6b
-	OpCodeTable[0x35] = opSTH;  	// st.h reg2, disp16[reg1]	6b
-	OpCodeTable[0x37] = opSTW;  	// st.w reg2, disp16[reg1]	6b
-	OpCodeTable[0x38] = opINB;  	// in.b disp16[reg1], reg2	6a
-	OpCodeTable[0x39] = opINH;  	// in.h disp16[reg1], reg2	6a
-	OpCodeTable[0x3a] = opCAXI;  	// caxi disp16[reg1],reg2	6a 
-	OpCodeTable[0x3b] = opINW;  	// in.w disp16[reg1], reg2	6a
-	OpCodeTable[0x3c] = opOUTB;  	// out.b reg2, disp16[reg1] 	6b
-	OpCodeTable[0x3d] = opOUTH;  	// out.h reg2, disp16[reg1] 	6b
-	OpCodeTable[0x3e] = opFpoint; //floating point opcodes 	
-	OpCodeTable[0x3f] = opOUTW;  	// out.w reg2, disp16[reg1] 	6b
+	OpCodeTable[0x28] = opMOVEA;  	// movea imm16, reg1, reg2  5
+	OpCodeTable[0x29] = opADDI;  	// addi imm16, reg1, reg2   5
+	OpCodeTable[0x2a] = opJR;  	// jr disp26            4
+	OpCodeTable[0x2b] = opJAL;  	// jal disp26           4
+	OpCodeTable[0x2c] = opORI;  	// ori imm16, reg1, reg2    5
+	OpCodeTable[0x2d] = opANDI;  	// andi imm16, reg1, reg2   5
+	OpCodeTable[0x2e] = opXORI;  	// xori imm16, reg1, reg2   5
+	OpCodeTable[0x2f] = opMOVHI;  	// movhi imm16, reg1 ,reg2  5
+	OpCodeTable[0x30] = opLDB;  	// ld.b disp16[reg1],reg2   6a
+	OpCodeTable[0x31] = opLDH;  	// ld.h disp16[reg1],reg2   6a
+	OpCodeTable[0x33] = opLDW;  	// ld.w disp16[reg1],reg2   6a
+	OpCodeTable[0x34] = opSTB;  	// st.b reg2, disp16[reg1]  6b
+	OpCodeTable[0x35] = opSTH;  	// st.h reg2, disp16[reg1]  6b
+	OpCodeTable[0x37] = opSTW;  	// st.w reg2, disp16[reg1]  6b
+	OpCodeTable[0x38] = opINB;  	// in.b disp16[reg1], reg2  6a
+	OpCodeTable[0x39] = opINH;  	// in.h disp16[reg1], reg2  6a
+	OpCodeTable[0x3a] = opCAXI;  	// caxi disp16[reg1],reg2   6a
+	OpCodeTable[0x3b] = opINW;  	// in.w disp16[reg1], reg2  6a
+	OpCodeTable[0x3c] = opOUTB;  	// out.b reg2, disp16[reg1]     6b
+	OpCodeTable[0x3d] = opOUTH;  	// out.h reg2, disp16[reg1]     6b
+	OpCodeTable[0x3e] = opFpoint; //floating point opcodes
+	OpCodeTable[0x3f] = opOUTW;  	// out.w reg2, disp16[reg1]     6b
 }
 
 

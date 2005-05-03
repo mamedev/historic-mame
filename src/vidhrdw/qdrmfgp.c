@@ -30,7 +30,7 @@ static void gp2_tile_callback(int layer, int *code, int *color)
 
 VIDEO_START( qdrmfgp )
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, NULL, tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, NULL, tile_callback, 0))
 		return 1;
 
 	K056832_set_LayerAssociation(0);
@@ -45,7 +45,7 @@ VIDEO_START( qdrmfgp )
 
 VIDEO_START( qdrmfgp2 )
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, NULL, gp2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, NULL, gp2_tile_callback, 0))
 		return 1;
 
 	K056832_set_LayerAssociation(0);

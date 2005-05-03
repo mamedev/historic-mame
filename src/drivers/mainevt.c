@@ -67,7 +67,7 @@ WRITE8_HANDLER( mainevt_bankswitch_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 
 	/* TODO: bit 5 = select work RAM or palette? */
-//	palette_selected = data & 0x20;
+//  palette_selected = data & 0x20;
 
 	/* bit 6 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
@@ -534,7 +534,7 @@ INPUT_PORTS_START( devstors )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
  	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -645,7 +645,7 @@ INPUT_PORTS_START( devstor2 )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
  	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -730,7 +730,7 @@ static MACHINE_DRIVER_START( mainevt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -772,7 +772,7 @@ static MACHINE_DRIVER_START( devstors )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 0.30)
 	MDRV_SOUND_ROUTE(1, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)

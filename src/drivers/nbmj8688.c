@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	nbmj8688 - Nichibutsu Mahjong games for years 1986-1988
+    nbmj8688 - Nichibutsu Mahjong games for years 1986-1988
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/01/28 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/01/28 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -101,10 +101,10 @@ static DRIVER_INIT( mjcamera )
 	int i;
 
 	/* this is one possible way to rearrange the protection ROM data to get the
-	   expected 0x5894 checksum. It's probably completely wrong! But since the
-	   game doesn't do anything else with that ROM, this is more than enough. I
-	   could just fill this are with fake data, the only thing that matters is
-	   the checksum. */
+       expected 0x5894 checksum. It's probably completely wrong! But since the
+       game doesn't do anything else with that ROM, this is more than enough. I
+       could just fill this are with fake data, the only thing that matters is
+       the checksum. */
 	for (i = 0;i < 0x10000;i++)
 	{
 		rom[i] = BITSWAP8(prot[i],1,6,0,4,2,3,5,7);
@@ -153,10 +153,10 @@ static DRIVER_INIT( idhimitu )
 	int i;
 
 	/* this is one possible way to rearrange the protection ROM data to get the
-	   expected 0x9944 checksum. It's probably completely wrong! But since the
-	   game doesn't do anything else with that ROM, this is more than enough. I
-	   could just fill this are with fake data, the only thing that matters is
-	   the checksum. */
+       expected 0x9944 checksum. It's probably completely wrong! But since the
+       game doesn't do anything else with that ROM, this is more than enough. I
+       could just fill this are with fake data, the only thing that matters is
+       the checksum. */
 	for (i = 0;i < 0x10000;i++)
 	{
 		rom[i] = BITSWAP8(prot[i + 0x10000],4,6,2,1,7,0,3,5);
@@ -181,10 +181,10 @@ static DRIVER_INIT( kaguya2 )
 	int i;
 
 	/* this is one possible way to rearrange the protection ROM data to get the
-	   expected 0x5894 checksum. It's probably completely wrong! But since the
-	   game doesn't do anything else with that ROM, this is more than enough. I
-	   could just fill this are with fake data, the only thing that matters is
-	   the checksum. */
+       expected 0x5894 checksum. It's probably completely wrong! But since the
+       game doesn't do anything else with that ROM, this is more than enough. I
+       could just fill this are with fake data, the only thing that matters is
+       the checksum. */
 	for (i = 0;i < 0x10000;i++)
 	{
 		rom[i] = BITSWAP8(prot[i],1,6,0,4,2,3,5,7);
@@ -401,7 +401,7 @@ ADDRESS_MAP_END
 static READ8_HANDLER( ff_r )
 {
 	/* possibly because of a bug, reads from port 0xd0 must return 0xff
-	   otherwise apparel doesn't clear the background when you insert a coin */
+       otherwise apparel doesn't clear the background when you insert a coin */
 	return 0xff;
 }
 
@@ -413,8 +413,8 @@ static ADDRESS_MAP_START( readport_secolove, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
 	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
 	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
-//	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
-//	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+//  AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+//  AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_secolove, ADDRESS_SPACE_IO, 8 )
@@ -442,7 +442,7 @@ static ADDRESS_MAP_START( writeport_crystalg, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xc0, 0xcf) AM_WRITE(nbmj8688_clut_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_WRITE)
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(crystalg_romsel_w)
-//	AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 
@@ -482,8 +482,8 @@ static ADDRESS_MAP_START( readport_kaguya, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
 	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
 	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
-//	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
-//	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+//  AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+//  AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_kaguya, ADDRESS_SPACE_IO, 8 )
@@ -593,8 +593,8 @@ static ADDRESS_MAP_START( readport_mmsikaku, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
 	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
 	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
-//	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
-//	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+//  AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+//  AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_mmsikaku, ADDRESS_SPACE_IO, 8 )
@@ -785,7 +785,7 @@ INPUT_PORTS_START( mmsikaku )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )					// TEST
@@ -1010,7 +1010,7 @@ INPUT_PORTS_START( kaguya )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )         //
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1087,7 +1087,7 @@ INPUT_PORTS_START( kaguya2 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1164,7 +1164,7 @@ INPUT_PORTS_START( kanatuen )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )         //
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1241,7 +1241,7 @@ INPUT_PORTS_START( kyuhito )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )         //
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1318,7 +1318,7 @@ INPUT_PORTS_START( idhimitu )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )         //
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1587,7 +1587,7 @@ INPUT_PORTS_START( mcitylov )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )					// TEST
@@ -2255,8 +2255,8 @@ INPUT_PORTS_START( housemn2 )
 	PORT_DIPSETTING(    0x00, "separate" )
 	PORT_DIPNAME( 0xc0, 0xc0, "Character Display Test (manual)" )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
@@ -2565,7 +2565,7 @@ INPUT_PORTS_START( livegal )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )					// TEST
@@ -3223,7 +3223,7 @@ static MACHINE_DRIVER_START( NBMJDRV_4096 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("8910", AY8910, 1250000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
@@ -3269,7 +3269,7 @@ static MACHINE_DRIVER_START( crystalg )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_crystalg)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 96)	// nmiclock = 2f
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 96) // nmiclock = 2f
 MACHINE_DRIVER_END
 
 
@@ -3280,7 +3280,7 @@ static MACHINE_DRIVER_START( apparel )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_secolove)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60
 MACHINE_DRIVER_END
 
 
@@ -3291,7 +3291,7 @@ static MACHINE_DRIVER_START( mbmj_h12bit )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_secolove)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60
 
 	/* video hardware */
 	MDRV_VIDEO_START(mbmj8688_hybrid_12bit)
@@ -3305,7 +3305,7 @@ static MACHINE_DRIVER_START( mbmj_p16bit )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_secolove)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60/40
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60/40
 
 	/* video hardware */
 	MDRV_VIDEO_START(mbmj8688_pure_16bit)
@@ -3336,7 +3336,7 @@ static MACHINE_DRIVER_START( seiha )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_seiha)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60
 MACHINE_DRIVER_END
 
 
@@ -3347,7 +3347,7 @@ static MACHINE_DRIVER_START( iemoto )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_iemoto)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60
 MACHINE_DRIVER_END
 
 
@@ -3358,7 +3358,7 @@ static MACHINE_DRIVER_START( ojousan )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_ojousan, writemem_ojousan)
 	MDRV_CPU_IO_MAP(readport_secolove, writeport_iemoto)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)	// nmiclock = 60
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)    // nmiclock = 60
 MACHINE_DRIVER_END
 
 
@@ -3369,7 +3369,7 @@ static MACHINE_DRIVER_START( mbmj_p12bit )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_mjsikaku, writemem_mjsikaku)
 	MDRV_CPU_IO_MAP(readport_kaguya, writeport_kaguya)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
 MACHINE_DRIVER_END
 
 
@@ -3380,7 +3380,7 @@ static MACHINE_DRIVER_START( mjsikaku )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_mjsikaku, writemem_mjsikaku)
 	MDRV_CPU_IO_MAP(readport_mjsikaku, writeport_mjsikaku)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 144)	// nmiclock = 70
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 144)    // nmiclock = 70
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("8910", YM3812, 20000000/8)
@@ -3395,7 +3395,7 @@ static MACHINE_DRIVER_START( mmsikaku )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem_secolove, writemem_secolove)
 	MDRV_CPU_IO_MAP(readport_mmsikaku, writeport_mmsikaku)
-//	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
+//  MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 128)
 MACHINE_DRIVER_END
 
 
@@ -3492,8 +3492,8 @@ ROM_START( nightlov )
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "9.ic5",  0x00000, 0x08000, CRC(634c2831) SHA1(02009b0bdf4e9502bcb4cf95614b7ca2e2b2f232) )
 	ROM_LOAD( "10.ic6", 0x08000, 0x08000, CRC(7705ca10) SHA1(569e403dc9c7055e4ac5c4a3aa067eae37de2b12) )
-//	ROM_LOAD( "9.ic5",  0x08000, 0x08000, CRC(634c2831) SHA1(02009b0bdf4e9502bcb4cf95614b7ca2e2b2f232) )
-//	ROM_LOAD( "10.ic6", 0x00000, 0x08000, CRC(7705ca10) SHA1(569e403dc9c7055e4ac5c4a3aa067eae37de2b12) )
+//  ROM_LOAD( "9.ic5",  0x08000, 0x08000, CRC(634c2831) SHA1(02009b0bdf4e9502bcb4cf95614b7ca2e2b2f232) )
+//  ROM_LOAD( "10.ic6", 0x00000, 0x08000, CRC(7705ca10) SHA1(569e403dc9c7055e4ac5c4a3aa067eae37de2b12) )
 
 	ROM_REGION( 0x060000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "5.6h",   0x00000, 0x10000, CRC(c4d5ce04) SHA1(78aef48edfd7c8f4fcdc93a5522781c4c70da2df) )
@@ -3977,7 +3977,7 @@ ROM_START( kaguya2f )
 	ROM_LOAD( "13.6p",   0x090000, 0x10000, CRC(ecb9f670) SHA1(c58ef1b17841d292e11e8906f11e61124eef672d) )
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
-//	ROM_LOAD( "ic4m.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )	// same as housemnq/3i.bin gfx data
+//  ROM_LOAD( "ic4m.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )  // same as housemnq/3i.bin gfx data
 ROM_END
 
 ROM_START( kanatuen )
@@ -4025,7 +4025,7 @@ ROM_START( kyuhito )
 	ROM_LOAD( "10.6p", 0x0b0000, 0x10000, CRC(1447ed65) SHA1(6b0f4ef3aef4dffe235a63000103c53ccad1c94f) )	// kanatuen/10.6p
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
-//	ROM_LOAD( "mask.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )	// same as housemnq/3i.bin gfx data
+//  ROM_LOAD( "mask.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )  // same as housemnq/3i.bin gfx data
 ROM_END
 
 ROM_START( mjsikaku )
@@ -4258,8 +4258,8 @@ GAME( 1988, mjcamera, 0,        otonano,         mjcamera, mjcamera, ROT0, "MIKI
 
 /*
 
-iemotom		outcoin check
-ojousanm	outcoin check
-ryuuha		outcoin check
+iemotom     outcoin check
+ojousanm    outcoin check
+ryuuha      outcoin check
 
 */

@@ -136,41 +136,41 @@ PSG2-E -> $c809
 PSG2-F -> $c80a - DIP Switch Bank 2 (Test mode is here)
 
 -------------------------------GET STAR------------------------------------
-		following info by Luca Elia (l.elia@tin.it)
+        following info by Luca Elia (l.elia@tin.it)
 
-				Interesting locations
-				---------------------
+                Interesting locations
+                ---------------------
 
-c803	credits
-c806	used as a watchdog: main cpu reads then writes FF.
-	If FF was read, jp 0000h. Sound cpu zeroes it.
+c803    credits
+c806    used as a watchdog: main cpu reads then writes FF.
+    If FF was read, jp 0000h. Sound cpu zeroes it.
 
-c807(1p)	left	7			c809	DSW1(cpl'd)
-c808(2p)	down	6			c80a	DSW2(cpl'd)
-active_H	right	5			c80b	ip 1(cpl'd)
-		up	4
-		0	3
-		0	2
-		but2	1
-		but1	0
+c807(1p)    left    7           c809    DSW1(cpl'd)
+c808(2p)    down    6           c80a    DSW2(cpl'd)
+active_H    right   5           c80b    ip 1(cpl'd)
+        up  4
+        0   3
+        0   2
+        but2    1
+        but1    0
 
-c21d(main)	1p lives
+c21d(main)  1p lives
 
 Main cpu writes to unmapped ports 0e,0f,05,03 at startup.
 Before playing, f1 is written to e802 and 00 to port 03.
 If flip screen dsw is on, ff is written to e802 an 00 to port 02, instead.
 
-				Interesting routines (main cpu)
-				-------------------------------
-4a3	wait A irq's
-432	init the Ath sprite
-569	reads a sequence from e803
-607	prints the Ath string (FF terminated). String info is stored at
-	65bc in the form of: attribute, dest. address, string address (5 bytes)
-b73	checks lives. If zero, writes 0 to port 04 then jp 0000h.
-	Before that, sets I to FF as a flag, for the startup ram check
-	routine, to not alter the credit counter.
-1523	put name in hi-scores?
+                Interesting routines (main cpu)
+                -------------------------------
+4a3 wait A irq's
+432 init the Ath sprite
+569 reads a sequence from e803
+607 prints the Ath string (FF terminated). String info is stored at
+    65bc in the form of: attribute, dest. address, string address (5 bytes)
+b73 checks lives. If zero, writes 0 to port 04 then jp 0000h.
+    Before that, sets I to FF as a flag, for the startup ram check
+    routine, to not alter the credit counter.
+1523    put name in hi-scores?
 
 -------------------------------Performan-----------------------------------
                  Interesting RAM locations (Main CPU).
@@ -365,7 +365,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(slapfight_port_00_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(slapfight_port_01_w)
 	AM_RANGE(0x02, 0x03) AM_WRITE(slapfight_flipscreen_w)
-//	AM_RANGE(0x04, 0x04) AM_WRITE(getstar_port_04_w)
+//  AM_RANGE(0x04, 0x04) AM_WRITE(getstar_port_04_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(slapfight_port_06_w)
 	AM_RANGE(0x07, 0x07) AM_WRITE(slapfight_port_07_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(slapfight_port_08_w)	/* select bank 0 */
@@ -390,7 +390,7 @@ static ADDRESS_MAP_START( perfrman_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa090, 0xa090) AM_WRITE(AY8910_control_port_1_w)
 	AM_RANGE(0xa092, 0xa092) AM_WRITE(AY8910_write_port_1_w)
 	AM_RANGE(0xa0e0, 0xa0e0) AM_WRITE(getstar_sh_intenable_w) /* maybe a0f0 also -LE */
-//	AM_RANGE(0xa0f0, 0xa0f0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xa0f0, 0xa0f0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -455,7 +455,7 @@ COMMON_START
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
@@ -495,7 +495,7 @@ COMMON_START
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
@@ -599,7 +599,7 @@ COMMON_START
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
@@ -774,11 +774,11 @@ static MACHINE_DRIVER_START( perfrman )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 16000000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 16000000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -817,11 +817,11 @@ static MACHINE_DRIVER_START( tigerhb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -862,11 +862,11 @@ static MACHINE_DRIVER_START( tigerh )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -904,11 +904,11 @@ static MACHINE_DRIVER_START( slapfigh )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1028,7 +1028,7 @@ ROM_START( tigerh2 )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )
 	/* is this the right mcu for this set? the mcu handling code in the roms seems patched and it doesn't
-	   work correctly */
+       work correctly */
 	ROM_LOAD( "a47_14.6a",   0x0000, 0x0800, CRC(4042489f) SHA1(b977e0821b6b1aa5a0a0f349cd78150af1a231df) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )

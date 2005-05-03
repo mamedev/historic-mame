@@ -1,38 +1,38 @@
 /***************************************************************************
 
-							  -= Unico Games =-
+                              -= Unico Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q / W / E		Shows Layer 0 / 1 / 2
-		A				Shows Sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	[ 3 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Tile Size:				16 x 16 x 8
-		Layer Size (tiles):		64 x 64
+        Q / W / E       Shows Layer 0 / 1 / 2
+        A               Shows Sprites
 
-	[ 512 Sprites ]
+        Keys can be used together!
 
-		Sprites are made of 16 x 16 x 8 tiles. Size can vary from 1 to
-		16 tiles horizontally, while their height is always 1 tile.
-		There seems to be 4 levels of priority (wrt layers) for each
-		sprite, following this simple scheme:
 
-		[if we denote the three layers with 0-3 (0 being the backmost)
-		 and the sprite with S]
+    [ 3 Scrolling Layers ]
 
-		Sprite Priority			Order (back -> front)
-				0					S 0 1 2
-				1					0 S 1 2
-				2					0 1 S 2
-				3					0 1 2 S
+        Tile Size:              16 x 16 x 8
+        Layer Size (tiles):     64 x 64
+
+    [ 512 Sprites ]
+
+        Sprites are made of 16 x 16 x 8 tiles. Size can vary from 1 to
+        16 tiles horizontally, while their height is always 1 tile.
+        There seems to be 4 levels of priority (wrt layers) for each
+        sprite, following this simple scheme:
+
+        [if we denote the three layers with 0-3 (0 being the backmost)
+         and the sprite with S]
+
+        Sprite Priority         Order (back -> front)
+                0                   S 0 1 2
+                1                   0 S 1 2
+                2                   0 1 S 2
+                3                   0 1 2 S
 
 ***************************************************************************/
 
@@ -54,12 +54,12 @@ data32_t *unico_vram32_0, *unico_vram32_1, *unico_vram32_2, *unico_scroll32;
 
 /***************************************************************************
 
-									Palette
+                                    Palette
 
-	Byte: 	0	1	2	3
-	Gun:	R	G	B	0
+    Byte:   0   1   2   3
+    Gun:    R   G   B   0
 
-	6 Bits x Gun
+    6 Bits x Gun
 
 ***************************************************************************/
 
@@ -87,15 +87,15 @@ WRITE32_HANDLER( unico_palette32_w )
 
 /***************************************************************************
 
-								Tilemaps
+                                Tilemaps
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
-		2.w		fedc ba98 7--- ----
-				---- ---- -6-- ----		Flip Y
-				---- ---- --5- ----		Flip X
-				---- ---- ---4 3210		Color
+        0.w                             Code
+        2.w     fedc ba98 7--- ----
+                ---- ---- -6-- ----     Flip Y
+                ---- ---- --5- ----     Flip X
+                ---- ---- ---4 3210     Color
 
 ***************************************************************************/
 
@@ -138,7 +138,7 @@ LAYER( 2 )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -209,22 +209,22 @@ VIDEO_START( zeropnt2 )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
-		0.w								X
+        0.w                             X
 
-		2.w								Y
+        2.w                             Y
 
-		4.w								Code
+        4.w                             Code
 
-		6.w		fe-- ---- ---- ----
-				--dc ---- ---- ----		Priority
-				---- ba98 ---- ----		Number of tiles along X, minus 1
-				---- ---- 7--- ----
-				---- ---- -6-- ----		Flip Y?
-				---- ---- --5- ----		Flip X
-				---- ---- ---4 3210		Color
+        6.w     fe-- ---- ---- ----
+                --dc ---- ---- ----     Priority
+                ---- ba98 ---- ----     Number of tiles along X, minus 1
+                ---- ---- 7--- ----
+                ---- ---- -6-- ----     Flip Y?
+                ---- ---- --5- ----     Flip X
+                ---- ---- ---4 3210     Color
 
 
 ***************************************************************************/
@@ -340,7 +340,7 @@ static void unico_draw_sprites32(struct mame_bitmap *bitmap,const struct rectang
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

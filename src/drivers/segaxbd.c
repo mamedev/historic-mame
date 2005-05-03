@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Sega X-board hardware
+    Sega X-board hardware
 
-	Special thanks to Charles MacDonald for his priceless assistance
+    Special thanks to Charles MacDonald for his priceless assistance
 
 ****************************************************************************
 
-	Known bugs:
-		* gprider has a hack to make it work
-		* extra sound boards etc. in some smgp sets not hooked up
-		* rachero doesn't like IC17/IC108 (divide chips) in self-test
-		  due to testing an out-of-bounds value
-		* abcop doesn't like IC41/IC108 (divide chips) in self-test
-		  due to testing an out-of-bounds value
+    Known bugs:
+        * gprider has a hack to make it work
+        * extra sound boards etc. in some smgp sets not hooked up
+        * rachero doesn't like IC17/IC108 (divide chips) in self-test
+          due to testing an out-of-bounds value
+        * abcop doesn't like IC41/IC108 (divide chips) in self-test
+          due to testing an out-of-bounds value
 
 ***************************************************************************/
 
@@ -31,7 +31,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -52,7 +52,7 @@ static data16_t *backupram1, *backupram2;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -63,7 +63,7 @@ extern void fd1094_driver_init(void);
 
 /*************************************
  *
- *	Configuration
+ *  Configuration
  *
  *************************************/
 
@@ -87,7 +87,7 @@ static void xboard_generic_init(void)
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -161,7 +161,7 @@ static void timer_ack_callback(void)
 
 /*************************************
  *
- *	Sound communication
+ *  Sound communication
  *
  *************************************/
 
@@ -181,7 +181,7 @@ static void sound_cpu_irq(int state)
 
 /*************************************
  *
- *	Basic machine setup
+ *  Basic machine setup
  *
  *************************************/
 
@@ -212,7 +212,7 @@ MACHINE_INIT( xboard )
 
 /*************************************
  *
- *	Input handlers
+ *  Input handlers
  *
  *************************************/
 
@@ -278,10 +278,10 @@ static READ16_HANDLER( iochip_0_r )
 	{
 		case 0:
 			/* Input port:
-				D7: (Not connected)
-				D6: /INTR of ADC0804
-				D5-D0: CN C pin 24-19 (switch state 0= open, 1= closed)
-			*/
+                D7: (Not connected)
+                D6: /INTR of ADC0804
+                D5-D0: CN C pin 24-19 (switch state 0= open, 1= closed)
+            */
 			return iochip_r(0, 0, readinputport(0));
 
 		case 1:
@@ -325,13 +325,13 @@ static WRITE16_HANDLER( iochip_0_w )
 	{
 		case 2:
 			/* Output port:
-				D7: (Not connected)
-				D6: (/WDC) - watchdog reset
-				D5: Screen display (1= blanked, 0= displayed)
-				D4-D2: (ADC2-0)
-				D1: (CONT) - affects sprite hardware
-				D0: Sound section reset (1= normal operation, 0= reset)
-			*/
+                D7: (Not connected)
+                D6: (/WDC) - watchdog reset
+                D5: Screen display (1= blanked, 0= displayed)
+                D4-D2: (ADC2-0)
+                D1: (CONT) - affects sprite hardware
+                D0: Sound section reset (1= normal operation, 0= reset)
+            */
 			if (((oldval ^ data) & 0x40) && !(data & 0x40)) watchdog_reset_w(0,0);
 			segaic16_set_display_enable(data & 0x20);
 			cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
@@ -339,9 +339,9 @@ static WRITE16_HANDLER( iochip_0_w )
 
 		case 3:
 			/* Output port:
-				D7: Amplifier mute control (1= sounding, 0= muted)
-				D6-D0: CN D pin A17-A23 (output level 1= high, 0= low)
-			*/
+                D7: Amplifier mute control (1= sounding, 0= muted)
+                D6-D0: CN D pin A17-A23 (output level 1= high, 0= low)
+            */
 			sound_global_enable(data & 0x80);
 			return;
 	}
@@ -414,7 +414,7 @@ static WRITE16_HANDLER( iocontrol_w )
 
 /*************************************
  *
- *	Line of Fire Custom I/O
+ *  Line of Fire Custom I/O
  *
  *************************************/
 
@@ -442,7 +442,7 @@ static VIDEO_UPDATE( loffire )
 
 /*************************************
  *
- *	SMGP external access
+ *  SMGP external access
  *
  *************************************/
 
@@ -462,7 +462,7 @@ static WRITE16_HANDLER( smgp_excs_w )
 
 /*************************************
  *
- *	Capacitor-backed RAM
+ *  Capacitor-backed RAM
  *
  *************************************/
 
@@ -484,7 +484,7 @@ static NVRAM_HANDLER( xboard )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -513,7 +513,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x2e8000, 0x2e800f) AM_MIRROR(0x003ff0) AM_READWRITE(segaic16_compare_timer_1_r, segaic16_compare_timer_1_w)
 	AM_RANGE(0x2ec000, 0x2ecfff) AM_MIRROR(0x001000) AM_RAM AM_SHARE(5) AM_BASE(&segaic16_roadram_0)
 	AM_RANGE(0x2ee000, 0x2effff) AM_READWRITE(segaic16_road_control_0_r, segaic16_road_control_0_w)
-//	AM_RANGE(0x2f0000, 0x2f3fff) AM_READWRITE(excs_r, excs_w)
+//  AM_RANGE(0x2f0000, 0x2f3fff) AM_READWRITE(excs_r, excs_w)
 	AM_RANGE(0x3f8000, 0x3fbfff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x3fc000, 0x3fffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
@@ -522,7 +522,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sub CPU memory handlers
+ *  Sub CPU memory handlers
  *
  *************************************/
 
@@ -536,14 +536,14 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0e8000, 0x0e800f) AM_MIRROR(0x003ff0) AM_READWRITE(segaic16_compare_timer_1_r, segaic16_compare_timer_1_w)
 	AM_RANGE(0x0ec000, 0x0ecfff) AM_MIRROR(0x001000) AM_RAM AM_SHARE(5)
 	AM_RANGE(0x0ee000, 0x0effff) AM_READWRITE(segaic16_road_control_0_r, segaic16_road_control_0_w)
-//	AM_RANGE(0x0f0000, 0x0f3fff) AM_READWRITE(excs_r, excs_w)
+//  AM_RANGE(0x0f0000, 0x0f3fff) AM_READWRITE(excs_r, excs_w)
 ADDRESS_MAP_END
 
 
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -565,7 +565,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Misc CPU memory handlers
+ *  Misc CPU memory handlers
  *
  *************************************/
 
@@ -583,19 +583,19 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Generic port definitions
+ *  Generic port definitions
  *
  *************************************/
 
 /*
-	aburner chip 0, port A: motor status (R)
-			chip 0, port B: motor power (W)
-			chip 0, port C: unknown (W)
-			chip 0, port D: lamp (W)
-			chip 1, port A: buttons
-			chip 1, port B: ---
-			chip 2, port C: DIPs
-			chip 3, port D: DIPs
+    aburner chip 0, port A: motor status (R)
+            chip 0, port B: motor power (W)
+            chip 0, port C: unknown (W)
+            chip 0, port D: lamp (W)
+            chip 1, port A: buttons
+            chip 1, port B: ---
+            chip 2, port C: DIPs
+            chip 3, port D: DIPs
 */
 
 static INPUT_PORTS_START( xboard_generic )
@@ -685,7 +685,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Game-specific port definitions
+ *  Game-specific port definitions
  *
  *************************************/
 
@@ -912,7 +912,7 @@ static INPUT_PORTS_START( smgp )
 	PORT_DIPSETTING(    0x80, "Cockpit" )
 	PORT_DIPSETTING(    0xc0, "Deluxe" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
-//	PORT_DIPSETTING(    0x00, "Deluxe" )
+//  PORT_DIPSETTING(    0x00, "Deluxe" )
 
 	PORT_START_TAG("ADC0")	/* steering */
 	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
@@ -1003,7 +1003,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -1023,7 +1023,7 @@ static struct SEGAPCMinterface segapcm_interface =
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1049,7 +1049,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Generic machine drivers
+ *  Generic machine drivers
  *
  *************************************/
 
@@ -1110,7 +1110,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( loffire )
 	MDRV_IMPORT_FROM(xboard)
-//	MDRV_INTERLEAVE(1750)
+//  MDRV_INTERLEAVE(1750)
 	MDRV_VIDEO_UPDATE(loffire)
 MACHINE_DRIVER_END
 
@@ -1118,15 +1118,15 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Afterburner, Sega X-board
-	CPU: 68000 (317-????)
+    Afterburner, Sega X-board
+    CPU: 68000 (317-????)
 */
 ROM_START( aburner )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1176,8 +1176,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Afterburner II, Sega X-board
-	CPU: 68000 (317-????)
+    Afterburner II, Sega X-board
+    CPU: 68000 (317-????)
 */
 ROM_START( aburner2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1227,8 +1227,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Line of Fire, Sega X-board
-	CPU: FD1094 (317-0136)
+    Line of Fire, Sega X-board
+    CPU: FD1094 (317-0136)
 */
 ROM_START( loffire )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1236,14 +1236,14 @@ ROM_START( loffire )
 	ROM_LOAD16_BYTE( "epr12850.rom", 0x000001, 0x20000, CRC(14598f2a) SHA1(13a51529ed32acefd733d9f638621c3e023dbd6d) )
 
 	/*
-	It's not possible to determine the original value with just the available
-	ROM data. The choice was between 47, 56 and 57, which decrypt correctly all
-	the code at the affected addresses (2638, 6638 and so on).
-	I chose 57 because it's the only one that has only 1 bit different from the
-	bad value in the old dump (77).
+    It's not possible to determine the original value with just the available
+    ROM data. The choice was between 47, 56 and 57, which decrypt correctly all
+    the code at the affected addresses (2638, 6638 and so on).
+    I chose 57 because it's the only one that has only 1 bit different from the
+    bad value in the old dump (77).
 
-	Nicola Salmoria
-	*/
+    Nicola Salmoria
+    */
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, BAD_DUMP CRC(344bfe0c) SHA1(f6bb8045b46f90f8abadf1dc2e1ae1d7cef9c810) )
@@ -1290,14 +1290,14 @@ ROM_START( loffire )
 ROM_END
 
 /**************************************************************************************************************************
-	Line of Fire, Sega X-board
-	CPU: FD1094 (317-0134)
+    Line of Fire, Sega X-board
+    CPU: FD1094 (317-0134)
 */
 ROM_START( loffirej )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
 	/* repaired using data from the loffire set since they are mostly identical
-	   when decrypted, they pass the rom check so are assumed to be ok but double
-	   checking them when possible never hurts */
+       when decrypted, they pass the rom check so are assumed to be ok but double
+       checking them when possible never hurts */
 	ROM_LOAD16_BYTE( "epr12794.bin", 0x000000, 0x20000, CRC(1e588992) SHA1(fe7107e83c12643e7d22fd4b4cd0c7bcff0d84c3) )
 	ROM_LOAD16_BYTE( "epr12795.bin", 0x000001, 0x20000, CRC(d43d7427) SHA1(ecbd425bab6aa65ffbd441d6a0936ac055d5f06d) )
 
@@ -1349,8 +1349,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Thunder Blade, Sega X-board
-	CPU: FD1094 (317-0056)
+    Thunder Blade, Sega X-board
+    CPU: FD1094 (317-0056)
 */
 ROM_START( thndrbld )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1404,8 +1404,8 @@ ROM_START( thndrbld )
 ROM_END
 
 /**************************************************************************************************************************
-	Thunder Blade (Japan), Sega X-board
-	CPU: MC68000
+    Thunder Blade (Japan), Sega X-board
+    CPU: MC68000
 */
 ROM_START( thndrbdj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1459,8 +1459,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Racing Hero, Sega X-board
-	CPU: FD1094 (317-0144)
+    Racing Hero, Sega X-board
+    CPU: FD1094 (317-0144)
 */
 ROM_START( rachero )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1515,51 +1515,51 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0126a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0126a)
 
-	This set is coming from a twin.
+    This set is coming from a twin.
 
-	This set has an extra link board (834-7112) or 171-5729-01 under the main board with a Z80
+    This set has an extra link board (834-7112) or 171-5729-01 under the main board with a Z80
 
-	Xtal is 16.000 Mhz.
+    Xtal is 16.000 Mhz.
 
-	It has also one eprom (Epr 12587.14) two pal 16L8 (315-5336 and 315-5337) and two
-	fujitsu IC MB89372P and MB8421-12LP
+    It has also one eprom (Epr 12587.14) two pal 16L8 (315-5336 and 315-5337) and two
+    fujitsu IC MB89372P and MB8421-12LP
 
-	Main Board : (834-8180-02)
+    Main Board : (834-8180-02)
 
-	Epr12576A.20 (68000)
-	Epr12577A.29 (68000)
-	Epr12563B.58 FD1094 317-0126A
-	Epr12564B.63 FD1094 317-0126A
-	Epr12609.93
-	Epr12610.97
-	Epr12611.101
-	Epr12612.105
-	Mpr12417.92
-	Mpr12418.96
-	Mpr12419.100
-	Mpr12420.104
-	Mpr12421.91
-	Mpr12422.95
-	Mpr12423.99
-	Mpr12424.103
-	Mpr12425.90
-	Mpr12426.94
-	Mpr12427.98
-	Mpr12428.102
-	Epr12429.154
-	Epr12430.153
-	Epr12431.152
-	Epr12436.17
-	Mpr12437.11
-	Mpr12438.12
-	Mpr12439.13
+    Epr12576A.20 (68000)
+    Epr12577A.29 (68000)
+    Epr12563B.58 FD1094 317-0126A
+    Epr12564B.63 FD1094 317-0126A
+    Epr12609.93
+    Epr12610.97
+    Epr12611.101
+    Epr12612.105
+    Mpr12417.92
+    Mpr12418.96
+    Mpr12419.100
+    Mpr12420.104
+    Mpr12421.91
+    Mpr12422.95
+    Mpr12423.99
+    Mpr12424.103
+    Mpr12425.90
+    Mpr12426.94
+    Mpr12427.98
+    Mpr12428.102
+    Epr12429.154
+    Epr12430.153
+    Epr12431.152
+    Epr12436.17
+    Mpr12437.11
+    Mpr12438.12
+    Mpr12439.13
 
-	Link Board :
+    Link Board :
 
-	Ep12587.14
+    Ep12587.14
 */
 ROM_START( smgp )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1612,8 +1612,8 @@ ROM_START( smgp )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0126a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0126a)
 */
 /* this set contained only prg roms */
 ROM_START( smgp6 )
@@ -1667,58 +1667,58 @@ ROM_START( smgp6 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0126)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0126)
 
-	SEGA Monaco G.P. by SEGA 1989
+    SEGA Monaco G.P. by SEGA 1989
 
-	This set is coming from a sitdown "air drive" version.
+    This set is coming from a sitdown "air drive" version.
 
-	This set has an extra sound board (837-7000) under the main board with a Z80
-	and a few eproms, some of those eproms are already on the main board !
+    This set has an extra sound board (837-7000) under the main board with a Z80
+    and a few eproms, some of those eproms are already on the main board !
 
-	It has also an "air drive" board with a Z80 and one eprom.
+    It has also an "air drive" board with a Z80 and one eprom.
 
-	Main Board : (834-7016-05)
+    Main Board : (834-7016-05)
 
-	Epr12576.20 (68000)
-	Epr12577.29 (68000)
-	Epr12563.58 FD1094 317-0126
-	Epr12564.63 FD1094 317-0126
-	Epr12413.93
-	Epr12414.97
-	Epr12415.101
-	Epr12416.105
-	Mpr12417.92
-	Mpr12418.96
-	Mpr12419.100
-	Mpr12420.104
-	Mpr12421.91
-	Mpr12422.95
-	Mpr12423.99
-	Mpr12424.103
-	Mpr12425.90
-	Mpr12426.94
-	Mpr12427.98
-	Mpr12428.102
-	Epr12429.154
-	Epr12430.153
-	Epr12431.152
-	Epr12436.17
-	Mpr12437.11
-	Mpr12438.12
-	IC 13 is not used !
+    Epr12576.20 (68000)
+    Epr12577.29 (68000)
+    Epr12563.58 FD1094 317-0126
+    Epr12564.63 FD1094 317-0126
+    Epr12413.93
+    Epr12414.97
+    Epr12415.101
+    Epr12416.105
+    Mpr12417.92
+    Mpr12418.96
+    Mpr12419.100
+    Mpr12420.104
+    Mpr12421.91
+    Mpr12422.95
+    Mpr12423.99
+    Mpr12424.103
+    Mpr12425.90
+    Mpr12426.94
+    Mpr12427.98
+    Mpr12428.102
+    Epr12429.154
+    Epr12430.153
+    Epr12431.152
+    Epr12436.17
+    Mpr12437.11
+    Mpr12438.12
+    IC 13 is not used !
 
-	Sound Board :
+    Sound Board :
 
-	Epr12535.8
-	Mpr12437.20
-	Mpr12438.21
-	Mpr12439.22
+    Epr12535.8
+    Mpr12437.20
+    Mpr12438.21
+    Mpr12439.22
 
-	Air Drive Board :
+    Air Drive Board :
 
-	Ep12505.8
+    Ep12505.8
 */
 ROM_START( smgp5 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1764,7 +1764,7 @@ ROM_START( smgp5 )
 	ROM_REGION( 0x60000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
 	ROM_LOAD( "mpr12437.11",    0x00000, 0x20000, CRC(a1c7e712) SHA1(fa7fa8c39690ae5dab8b28af5aeed5ffae2cd6de) )
 	ROM_LOAD( "mpr12438.12",    0x20000, 0x20000, CRC(6573d46b) SHA1(c4a4a0ea35250eff28a5bfd5e9cd372f52fd1308) )
-//	ROM_LOAD( "mpr12439.13",    0x40000, 0x20000, CRC(13bf6de5) SHA1(92228a05ec33d606491a1da98c4989f69cddbb49) ) // not here on this set
+//  ROM_LOAD( "mpr12439.13",    0x40000, 0x20000, CRC(13bf6de5) SHA1(92228a05ec33d606491a1da98c4989f69cddbb49) ) // not here on this set
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* comms */
 	/* no comms? */
@@ -1782,8 +1782,8 @@ ROM_START( smgp5 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0125a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0125a)
 */
 ROM_START( smgpu )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1836,8 +1836,8 @@ ROM_START( smgpu )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0125a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0125a)
 */
 /* only a few bytes changed.. but also passes rom test...*/
 ROM_START( smgpu3 )
@@ -1891,8 +1891,8 @@ ROM_START( smgpu3 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0125a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0125a)
 */
 ROM_START( smgpu2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1945,8 +1945,8 @@ ROM_START( smgpu2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Monaco GP, Sega X-board
-	CPU: FD1094 (317-0124a)
+    Super Monaco GP, Sega X-board
+    CPU: FD1094 (317-0124a)
 */
 ROM_START( smgpj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2002,8 +2002,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	AB Cop, Sega X-board
-	CPU: FD1094 (317-0169b)
+    AB Cop, Sega X-board
+    CPU: FD1094 (317-0169b)
 */
 ROM_START( abcop )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2058,8 +2058,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	GP Rider, Sega X-board
-	CPU: FD1094 (317-0163)
+    GP Rider, Sega X-board
+    CPU: FD1094 (317-0163)
 */
 /* we have a key for this set but no prgroms */
 ROM_START( gprider )
@@ -2112,8 +2112,8 @@ ROM_START( gprider )
 ROM_END
 
 /**************************************************************************************************************************
-	GP Rider, Sega X-board
-	CPU: FD1094 (317-0162)
+    GP Rider, Sega X-board
+    CPU: FD1094 (317-0162)
 */
 ROM_START( gprider1 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2168,7 +2168,7 @@ ROM_END
 
 /*************************************
  *
- *	Generic driver initialization
+ *  Generic driver initialization
  *
  *************************************/
 
@@ -2181,7 +2181,7 @@ static DRIVER_INIT( generic_xboard )
 
 /*************************************
  *
- *	Game-specific driver inits
+ *  Game-specific driver inits
  *
  *************************************/
 
@@ -2220,7 +2220,7 @@ static DRIVER_INIT( gprider )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

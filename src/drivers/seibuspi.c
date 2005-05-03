@@ -1,40 +1,40 @@
 /*
       Seibu SPI Hardware
-	  Seibu SYS386
+      Seibu SYS386
 
-	  Driver by Ville Linde
+      Driver by Ville Linde
 
 
-	  Games on this hardware:
+      Games on this hardware:
 
-	      Raiden Fighters
-		  Raiden Fighters 2
-		  Raiden Fighters Jet
-		  Senkyu / Battle Balls
-		  E-Jan High School
-		  Viper Phase 1
+          Raiden Fighters
+          Raiden Fighters 2
+          Raiden Fighters Jet
+          Senkyu / Battle Balls
+          E-Jan High School
+          Viper Phase 1
 
-	  Hardware:
+      Hardware:
 
-	      Intel 386 DX 25MHz / 33MHz
-		  Z80 8MHz (sound)
-		  YMF271F Sound chip
-		  Seibu Custom GFX chip
+          Intel 386 DX 25MHz / 33MHz
+          Z80 8MHz (sound)
+          YMF271F Sound chip
+          Seibu Custom GFX chip
 
-	  SYS386 seems like a lower-cost version of single-board SPI.
-	  It has a 40MHz AMD 386 and a considerably weaker sound system (dual MSM6295).
+      SYS386 seems like a lower-cost version of single-board SPI.
+      It has a 40MHz AMD 386 and a considerably weaker sound system (dual MSM6295).
 
-	  Bugs:
+      Bugs:
 
-	  Raiden Fighters : Game pauses for a brief second when bosses are encountered
-	  Senkyu / BBalls : ---
-	  Viper Phase 1   : OLD version (viprp1o) Game locks up / crashes after a few attract loops
-	                (386 writes to z80 fifo with data read from unmapped addresses in steps of 0x20000
-	                 past the end of z80 ram)
-	                  : lockups / pauses if you keep hold of fire before continue appears
-	  RF Jet          : Tile banking problems, sometimes tile banking does not work as it should
-	                    resulting in scenes being corrupt sometimes (for example mission briefing)
-	  E-Jan HS        : ---
+      Raiden Fighters : Game pauses for a brief second when bosses are encountered
+      Senkyu / BBalls : ---
+      Viper Phase 1   : OLD version (viprp1o) Game locks up / crashes after a few attract loops
+                    (386 writes to z80 fifo with data read from unmapped addresses in steps of 0x20000
+                     past the end of z80 ram)
+                      : lockups / pauses if you keep hold of fire before continue appears
+      RF Jet          : Tile banking problems, sometimes tile banking does not work as it should
+                        resulting in scenes being corrupt sometimes (for example mission briefing)
+      E-Jan HS        : ---
 
 TODO:
 - Alpha blending. Screen shot on www.system16.com show that during attract mode
@@ -1566,7 +1566,7 @@ READ32_HANDLER ( rdft_speedup_r )
 	/* rdftj */
 	if (activecpu_get_pc()==0x0203f22) cpu_spinuntil_int(); // idle
 
-//	printf("%08x\n",activecpu_get_pc());
+//  printf("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x00298d0-0x800)/4];
 }
@@ -1582,7 +1582,7 @@ READ32_HANDLER ( viprp1_speedup_r )
 	/* viprp1ot */
 	if (activecpu_get_pc()==0x02026bd) cpu_spinuntil_int(); // idle
 
-//	printf("%08x\n",activecpu_get_pc());
+//  printf("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x001e2e0-0x800)/4];
 }
@@ -1591,7 +1591,7 @@ READ32_HANDLER ( viprp1o_speedup_r )
 {
 	/* viperp1o */
 	if (activecpu_get_pc()==0x0201f99) cpu_spinuntil_int(); // idle
-//	printf("%08x\n",activecpu_get_pc());
+//  printf("%08x\n",activecpu_get_pc());
 	return spimainram[(0x001d49c-0x800)/4];
 }
 
@@ -1620,7 +1620,7 @@ READ32_HANDLER ( rf2_speedup_r )
 	/* rdft2a */
 	if (activecpu_get_pc()==0x0204366) cpu_spinuntil_int(); // idle
 
-//	printf("%08x\n",activecpu_get_pc());
+//  printf("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x0282AC-0x800)/4];
 }
@@ -1636,7 +1636,7 @@ READ32_HANDLER ( rfjet_speedup_r )
 	/* rfjetj */
 	if (activecpu_get_pc()==0x0205f2e) cpu_spinuntil_int(); // idle
 
-//	printf("%08x\n",activecpu_get_pc());
+//  printf("%08x\n",activecpu_get_pc());
 
 
 	return spimainram[(0x002894c-0x800)/4];
@@ -1690,8 +1690,8 @@ static DRIVER_INIT( batlball )
 
 static DRIVER_INIT( ejanhs )
 {
-//	idle skip doesn't work properly?
-//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
+//  idle skip doesn't work properly?
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;

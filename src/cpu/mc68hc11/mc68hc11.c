@@ -1,4 +1,4 @@
-/* 
+/*
    Motorola MC68HC11 emulator
 
    Written by Ville Linde
@@ -204,7 +204,7 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 
 		case 0x8b:		/* OPT4 */
 			return;
-			
+
 	}
 	osd_die("HC11: regs_w %02X, %02X\n", reg, value);
 }
@@ -289,13 +289,13 @@ static void hc11_init(void)
 	{
 		switch(hc11_opcode_list[i].page)
 		{
-			case 0x00:	
+			case 0x00:
 				hc11_optable[hc11_opcode_list[i].opcode] = hc11_opcode_list[i].handler;
 				break;
 			case 0x18:
 				hc11_optable_page2[hc11_opcode_list[i].opcode] = hc11_opcode_list[i].handler;
 				break;
-			case 0x1A:	
+			case 0x1A:
 				hc11_optable_page3[hc11_opcode_list[i].opcode] = hc11_opcode_list[i].handler;
 				break;
 			case 0xCD:
@@ -358,8 +358,8 @@ static int hc11_execute(int cycles)
 
 static UINT8 hc11_reg_layout[] =
 {
-	HC11_PC,		HC11_SP,		
-	HC11_A,			HC11_B,			
+	HC11_PC,		HC11_SP,
+	HC11_A,			HC11_B,
 	HC11_IX,		HC11_IY,
 	0
 };
@@ -397,7 +397,7 @@ static void mc68hc11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + HC11_B:				hc11.d.d8.b = info->i; break;
 		case CPUINFO_INT_REGISTER + HC11_IX:			hc11.ix = info->i; break;
 		case CPUINFO_INT_REGISTER + HC11_IY:			hc11.iy = info->i; break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					hc11.irq_callback = info->irqcallback; break;
 	}
@@ -417,7 +417,7 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 41;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -462,7 +462,7 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2004 Ville Linde"); break;
 
-		case CPUINFO_STR_FLAGS:							
+		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
 				(hc11.ccr & CC_S) ? 'S' : '.',
 				(hc11.ccr & CC_X) ? 'X' : '.',

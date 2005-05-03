@@ -35,7 +35,7 @@ static UINT32 bg4x8_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 static void get_bg_tile_info(int tile_index)
 {
 	/* the tile priority table is a guess compiled by looking at the game. It
-	   was not derived from a PROM so it could be wrong. */
+       was not derived from a PROM so it could be wrong. */
 	static int split_table[16] =
 	{
 		3,0,2,2,	/* the fourth could be 1 instead of 2 */

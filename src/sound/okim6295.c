@@ -7,9 +7,9 @@
  *   Written by Buffoni Mirko in 08/06/97
  *   References: various sources and documents.
  *
- *	 HJB 08/31/98
- *	 modified to use an automatically selected oversampling factor
- *	 for the current Machine->sample_rate
+ *   HJB 08/31/98
+ *   modified to use an automatically selected oversampling factor
+ *   for the current Machine->sample_rate
  *
  *   Mish 21/7/99
  *   Updated to allow multiple OKI chips with different sample rates
@@ -197,19 +197,19 @@ static void generate_adpcm(struct okim6295 *chip, struct ADPCMVoice *voice, INT1
 
 /**********************************************************************************************
  *
- *	OKIM 6295 ADPCM chip:
+ *  OKIM 6295 ADPCM chip:
  *
- *	Command bytes are sent:
+ *  Command bytes are sent:
  *
- *		1xxx xxxx = start of 2-byte command sequence, xxxxxxx is the sample number to trigger
- *		abcd vvvv = second half of command; one of the abcd bits is set to indicate which voice
- *		            the v bits seem to be volumed
+ *      1xxx xxxx = start of 2-byte command sequence, xxxxxxx is the sample number to trigger
+ *      abcd vvvv = second half of command; one of the abcd bits is set to indicate which voice
+ *                  the v bits seem to be volumed
  *
- *		0abc d000 = stop playing; one or more of the abcd bits is set to indicate which voice(s)
+ *      0abc d000 = stop playing; one or more of the abcd bits is set to indicate which voice(s)
  *
- *	Status is read:
+ *  Status is read:
  *
- *		???? abcd = one bit per voice, set to 0 if nothing is playing, or 1 if it is active
+ *      ???? abcd = one bit per voice, set to 0 if nothing is playing, or 1 if it is active
  *
 ***********************************************************************************************/
 
@@ -224,9 +224,9 @@ static void okim6295_update(void *param, stream_sample_t **inputs, stream_sample
 {
 	struct okim6295 *chip = param;
 	int i;
-	
+
 	memset(outputs[0], 0, samples * sizeof(*outputs[0]));
-	
+
 	for (i = 0; i < OKIM6295_VOICES; i++)
 	{
 		struct ADPCMVoice *voice = &chip->voice[i];

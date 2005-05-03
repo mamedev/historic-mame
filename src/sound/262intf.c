@@ -72,7 +72,7 @@ static void *ymf262_start(int sndindex, int clock, const void *config)
 	static const struct YMF262interface dummy = { 0 };
 	int rate = Machine->sample_rate;
 	struct ymf262_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

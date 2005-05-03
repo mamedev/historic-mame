@@ -6,24 +6,24 @@ To Do:
 Looping
 (C)1981 Venture Line
 
-	Main CPU
-		TMS9995
+    Main CPU
+        TMS9995
 
-	COP420 Microcontroller
-		manages CPU communnication?
+    COP420 Microcontroller
+        manages CPU communnication?
 
-	Sound CPU
-		TMS9980
-		AY-3-8910
-		TMS5220 (SPEECH)
+    Sound CPU
+        TMS9980
+        AY-3-8910
+        TMS5220 (SPEECH)
 
 ---------------------------------------------------------------
 
 Sky Bumper
 (C)1982 Venture Line
 
-	This is a ROM swap for Looping.  There are two 6116's on
-	the CPU board, where there is only one on Looping.
+    This is a ROM swap for Looping.  There are two 6116's on
+    the CPU board, where there is only one on Looping.
 
 ---------------------------------------------------------------
 
@@ -53,9 +53,9 @@ L056-6    9A          "      "      VLI-8-4 7A         "
                       "             LO56-5  8A         "
                       "             LO56-6  9A         "
                       "             VLI-8-7 10A        "
-                  ON RIBBON CABLE   18S030  11B				color prom?
-                     REAR BD      LOG.1-9-3 6A        2716	tiles
-                                  LOG.3     8A         "	tiles
+                  ON RIBBON CABLE   18S030  11B             color prom?
+                     REAR BD      LOG.1-9-3 6A        2716  tiles
+                                  LOG.3     8A         "    tiles
 */
 
 #include "driver.h"
@@ -250,7 +250,7 @@ void looping_spcint(int state)
 WRITE8_HANDLER( looping_sound_sw )
 {
 	/* this can be improved by adding the missing
-	   signals for decay etc. (see schematics) */
+       signals for decay etc. (see schematics) */
 	static int r[8];
 	r[offset]=data^1;
 	DAC_data_w(0, ((r[1]<<7) + (r[2]<<6))*r[6]);
@@ -258,7 +258,7 @@ WRITE8_HANDLER( looping_sound_sw )
 
 static ADDRESS_MAP_START( looping_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-/*	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM) videoram is write only? */
+/*  AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM) videoram is write only? */
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_0_r)	/* inp */
 	AM_RANGE(0xf801, 0xf801) AM_READ(input_port_1_r)
@@ -376,11 +376,11 @@ static MACHINE_DRIVER_START( looping )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
-	
+
 	MDRV_SOUND_ADD(TMS5220, 640000)
 	MDRV_SOUND_CONFIG(tms5220_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -463,7 +463,7 @@ LOOPIN1
 	PORT_DIPSETTING(    0x40, "3" )
 	PORT_DIPSETTING(    0x60, "5" )
 	PORT_DIPSETTING(    0x00, "Infinite (Cheat)")
-//	PORT_DIPSETTING(    0x20, "Infinite (Cheat)")
+//  PORT_DIPSETTING(    0x20, "Infinite (Cheat)")
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Video Hardware description for Taito Gladiator
+    Video Hardware description for Taito Gladiator
 
 ***************************************************************************/
 

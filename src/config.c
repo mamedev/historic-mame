@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	config.c
+    config.c
 
-	Configuration file I/O.
+    Configuration file I/O.
 
 ***************************************************************************/
 
@@ -18,7 +18,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -38,7 +38,7 @@ enum
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -106,7 +106,7 @@ struct config_file
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -118,7 +118,7 @@ static const char *seqtypestrings[] = { "standard", "decrement", "increment" };
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -141,23 +141,23 @@ static int build_mixer(void);
 
 /*************************************
  *
- *	Game data save/load
+ *  Game data save/load
  *
  *************************************/
 
 int config_load(const struct InputPort *input_ports_default, struct InputPort *input_ports)
 {
 	int result;
-	
+
 	/* clear current file data to zero */
 	memset(&curfile, 0, sizeof(curfile));
-	
+
 	/* open the config file */
 	curfile.file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 0);
 	if (!curfile.file)
 		return 0;
 	curfile.filetype = FILE_TYPE_GAME;
-	
+
 	/* load the XML */
 	result = config_load_xml();
 	mame_fclose(curfile.file);
@@ -170,7 +170,7 @@ int config_load(const struct InputPort *input_ports_default, struct InputPort *i
 	/* first apply counters and mixer data; it's okay if they fail */
 	apply_counters();
 	apply_mixer();
-	
+
 	/* return true only if we can apply the port data */
 	result = apply_ports(input_ports_default, input_ports);
 	cleanup_file();
@@ -182,7 +182,7 @@ void config_save(const struct InputPort *input_ports_default, const struct Input
 {
 	/* clear current file data to zero */
 	memset(&curfile, 0, sizeof(curfile));
-	
+
 	/* build the various components in memory */
 	if (!build_ports(input_ports_default, input_ports))
 		goto error;
@@ -190,13 +190,13 @@ void config_save(const struct InputPort *input_ports_default, const struct Input
 		goto error;
 	if (!build_mixer())
 		goto error;
-	
+
 	/* open the config file */
 	curfile.file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 1);
 	if (!curfile.file)
 		return;
 	curfile.filetype = FILE_TYPE_GAME;
-	
+
 	/* save the XML */
 	config_save_xml();
 	mame_fclose(curfile.file);
@@ -209,23 +209,23 @@ error:
 
 /*************************************
  *
- *	Default control data save/load
+ *  Default control data save/load
  *
  *************************************/
 
 int config_load_default(const struct InputPortDefinition *input_ports_backup, struct InputPortDefinition *input_ports)
 {
 	int result;
-	
+
 	/* clear current file data to zero */
 	memset(&curfile, 0, sizeof(curfile));
-	
+
 	/* open the config file */
 	curfile.file = mame_fopen("default", 0, FILETYPE_CONFIG, 0);
 	if (!curfile.file)
 		return 0;
 	curfile.filetype = FILE_TYPE_DEFAULT;
-	
+
 	/* load the XML */
 	result = config_load_xml();
 	mame_fclose(curfile.file);
@@ -243,17 +243,17 @@ void config_save_default(const struct InputPortDefinition *input_ports_backup, c
 {
 	/* clear current file data to zero */
 	memset(&curfile, 0, sizeof(curfile));
-	
+
 	/* build the various components in memory */
 	if (!build_default_ports(input_ports_backup, input_ports))
 		return;
-	
+
 	/* open the config file */
 	curfile.file = mame_fopen("default", 0, FILETYPE_CONFIG, 1);
 	if (!curfile.file)
 		goto error;
 	curfile.filetype = FILE_TYPE_DEFAULT;
-	
+
 	/* save the XML */
 	config_save_xml();
 	mame_fclose(curfile.file);
@@ -266,23 +266,23 @@ error:
 
 /*************************************
  *
- *	Controller-specific data load
+ *  Controller-specific data load
  *
  *************************************/
 
 int config_load_controller(const char *name, struct InputPortDefinition *input_ports)
 {
 	int result;
-	
+
 	/* clear current file data to zero */
 	memset(&curfile, 0, sizeof(curfile));
-	
+
 	/* open the config file */
 	curfile.file = mame_fopen(NULL, name, FILETYPE_CTRLR, 0);
 	if (!curfile.file)
 		return 0;
 	curfile.filetype = FILE_TYPE_CONTROLLER;
-	
+
 	/* load the XML */
 	result = config_load_xml();
 	mame_fclose(curfile.file);
@@ -299,14 +299,14 @@ int config_load_controller(const char *name, struct InputPortDefinition *input_p
 
 /*************************************
  *
- *	Allocated data cleanup
+ *  Allocated data cleanup
  *
  *************************************/
 
 static void cleanup_file(void)
 {
 	struct config_port *port, *next;
-	
+
 	/* free any allocated port data */
 	for (port = curfile.data.port; port != NULL; port = next)
 	{
@@ -319,7 +319,7 @@ static void cleanup_file(void)
 
 /*************************************
  *
- *	Helper to streamline defaults
+ *  Helper to streamline defaults
  *
  *************************************/
 
@@ -330,7 +330,7 @@ INLINE input_code_t get_default_code(int type)
 		case IPT_DIPSWITCH_NAME:
 		case IPT_CATEGORY_NAME:
 			return CODE_NONE;
-		
+
 		default:
 			if (curfile.filetype != FILE_TYPE_GAME)
 				return CODE_NONE;
@@ -344,7 +344,7 @@ INLINE input_code_t get_default_code(int type)
 
 /*************************************
  *
- *	XML loading callbacks
+ *  XML loading callbacks
  *
  *************************************/
 
@@ -369,7 +369,7 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 				sscanf(attributes[attr + 1], "%d", &curfile.data.version);
 		}
 	}
-	
+
 	/* look for second-level system tag */
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system"))
 	{
@@ -381,11 +381,11 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 					case FILE_TYPE_GAME:
 						curfile.data.ignore_game = (strcmp(attributes[attr + 1], Machine->gamedrv->name) != 0);
 						break;
-					
+
 					case FILE_TYPE_DEFAULT:
 						curfile.data.ignore_game = (strcmp(attributes[attr + 1], "default") != 0);
 						break;
-					
+
 					case FILE_TYPE_CONTROLLER:
 					{
 						const char *srcfile = strrchr(Machine->gamedrv->source_file, '/');
@@ -393,8 +393,8 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 						if (!srcfile) srcfile = strrchr(Machine->gamedrv->source_file, ':');
 						if (!srcfile) srcfile = Machine->gamedrv->source_file;
 						else srcfile++;
-						
-						curfile.data.ignore_game = 
+
+						curfile.data.ignore_game =
 							(strcmp(attributes[attr + 1], "default") != 0 &&
 							 strcmp(attributes[attr + 1], Machine->gamedrv->name) != 0 &&
 							 strcmp(attributes[attr + 1], srcfile) != 0 &&
@@ -409,11 +409,11 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 				curfile.data.loaded_count += !curfile.data.ignore_game;
 			}
 	}
-	
+
 	/* if we don't match the current game, punt now */
 	if (curfile.data.ignore_game)
 		return;
-	
+
 	/* look for second-level port tag */
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port"))
 	{
@@ -458,7 +458,7 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 			}
 		}
 	}
-	
+
 	/* look for second-level remap tag (we never write it, so it's only value for controller files) */
 	if (curfile.filetype == FILE_TYPE_CONTROLLER && !stricmp(curfile.parse.tag, "/mameconfig/system/input/remap"))
 	{
@@ -473,7 +473,7 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 		if (origcode != CODE_NONE && origcode < __code_max && newcode != CODE_NONE)
 			curfile.data.remap[origcode] = newcode;
 	}
-	
+
 	/* look for third-level defseq or newseq tag */
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port/defseq") || !stricmp(curfile.parse.tag, "/mameconfig/system/input/port/newseq"))
 	{
@@ -512,7 +512,7 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 			if (!stricmp(attributes[attr], "number") && sscanf(attributes[attr + 1], "%d", &count) == 1)
 				curfile.data.counters.tickets = count;
 	}
-	
+
 	/* look for second-level default tag */
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system/mixer/channel"))
 	{
@@ -552,7 +552,7 @@ static void config_element_end(void *data, const XML_Char *name)
 				seq_set_1(&curfile.data.port->newseq[curfile.parse.seq_index], get_default_code(curfile.data.port->type));
 	}
 
-	/* remove the last tag */	
+	/* remove the last tag */
 	p = strrchr(curfile.parse.tag, '/');
 	if (p) *p = 0;
 }
@@ -572,7 +572,7 @@ static void config_data(void *data, const XML_Char *s, int len)
 
 /*************************************
  *
- *	XML file load
+ *  XML file load
  *
  *************************************/
 
@@ -582,7 +582,7 @@ static int config_load_xml(void)
 	XML_Parser parser;
 	int done, mixernum, remapnum;
 	int first = 1;
-	
+
 	/* initialize the defaults */
 	for (mixernum = 0; mixernum < MAX_MIXER_CHANNELS; mixernum++)
 	{
@@ -591,7 +591,7 @@ static int config_load_xml(void)
 	}
 	for (remapnum = 0; remapnum < __code_max; remapnum++)
 		curfile.data.remap[remapnum] = remapnum;
-	
+
 	/* reset our parse data */
 	curfile.parse.tag[0] = 0;
 	curfile.parse.seq_index = -1;
@@ -600,7 +600,7 @@ static int config_load_xml(void)
 	parser = XML_ParserCreate(NULL);
 	if (!parser)
 		goto error;
-	
+
 	/* configure the parser */
 	XML_SetElementHandler(parser, config_element_start, config_element_end);
 	XML_SetCharacterDataHandler(parser, config_data);
@@ -609,16 +609,16 @@ static int config_load_xml(void)
 	do
 	{
 		char tempbuf[TEMP_BUFFER_SIZE];
-		
+
 		/* read as much as we can */
 		int bytes = mame_fread(curfile.file, tempbuf, sizeof(tempbuf));
 		done = mame_feof(curfile.file);
-		
+
 		/* if this is the first read, make sure we aren't sucking up an old binary file */
 		if (first && !memcmp(tempbuf, "MAMECFG", 7))
 			goto error;
 		first = 0;
-		
+
 		/* parse the data */
 		if (XML_Parse(parser, tempbuf, bytes, done) == XML_STATUS_ERROR)
 			goto error;
@@ -628,7 +628,7 @@ static int config_load_xml(void)
 	/* error if this isn't a valid game match */
 	if (curfile.data.loaded_count == 0)
 		goto error;
-	
+
 	/* reverse the port list */
 	port = curfile.data.port;
 	curfile.data.port = NULL;
@@ -653,18 +653,18 @@ error:
 
 /*************************************
  *
- *	XML file save
+ *  XML file save
  *
  *************************************/
 
 static void config_print_seq(int is_default, int type, int porttype, const input_seq_t *seq)
 {
 	char seqbuffer[256];
-	
+
 	/* skip if empty */
 	if (is_default && seq_get_1(seq) == get_default_code(porttype))
 		return;
-	
+
 	/* write the outer tag */
 	mame_fprintf(curfile.file, "\t\t\t\t<%s type=\"%s\">", is_default ? "defseq" : "newseq", seqtypestrings[type]);
 	if (seq_get_1(seq) == CODE_NONE)
@@ -680,19 +680,19 @@ static int config_save_xml(void)
 {
 	struct config_port *port;
 	int i, doit;
-	
+
 	/* start with the version */
 	mame_fprintf(curfile.file, "<mameconfig version=\"%d\">\n", CONFIG_VERSION);
-	
+
 	/* print out the system */
 	mame_fprintf(curfile.file, "\t<system name=\"%s\">\n\n", (curfile.filetype == FILE_TYPE_DEFAULT) ? "default" : Machine->gamedrv->name);
-	
+
 	/* first write the input section */
 	mame_fprintf(curfile.file, "\t\t<input>\n");
 	for (port = curfile.data.port; port != NULL; port = port->next)
 	{
 		int is_analog = port_type_is_analog(port->type);
-	
+
 		/* write the port information and attributes */
 		mame_fprintf(curfile.file, "\t\t\t<port type=\"%s\"", port_type_to_token(port->type, port->player));
 		if (curfile.filetype != FILE_TYPE_DEFAULT)
@@ -702,7 +702,7 @@ static int config_save_xml(void)
 				mame_fprintf(curfile.file, " keydelta=\"%d\" centerdelta=\"%d\" sensitivity=\"%d\" reverse=\"%s\"", port->keydelta, port->centerdelta, port->sensitivity, port->reverse ? "yes" : "no");
 		}
 		mame_fprintf(curfile.file, ">\n");
-		
+
 		/* write the default and current sequences */
 		if (!is_analog)
 		{
@@ -723,11 +723,11 @@ static int config_save_xml(void)
 				config_print_seq(0, 2, port->type, &port->newseq[2]);
 		}
 
-		/* close the tag */		
+		/* close the tag */
 		mame_fprintf(curfile.file, "\t\t\t</port>\n");
 	}
 	mame_fprintf(curfile.file, "\t\t</input>\n\n");
-	
+
 	/* if we are just writing default ports, leave it at that */
 	if (curfile.filetype != FILE_TYPE_DEFAULT)
 	{
@@ -746,7 +746,7 @@ static int config_save_xml(void)
 				mame_fprintf(curfile.file, "\t\t\t<tickets number=\"%d\" />\n", curfile.data.counters.tickets);
 			mame_fprintf(curfile.file, "\t\t</counters>\n\n");
 		}
-		
+
 		/* finally, write the mixer section */
 		doit = 0;
 		for (i = 0; i < MAX_MIXER_CHANNELS; i++)
@@ -761,7 +761,7 @@ static int config_save_xml(void)
 			mame_fprintf(curfile.file, "\t\t</mixer>\n\n");
 		}
 	}
-	
+
 #ifdef MESS
 	mess_config_save_xml(curfile.filetype, curfile.file);
 #endif
@@ -775,8 +775,8 @@ static int config_save_xml(void)
 
 /*************************************
  *
- *	Identifies which port types are
- *	saved/loaded
+ *  Identifies which port types are
+ *  saved/loaded
  *
  *************************************/
 
@@ -801,7 +801,7 @@ static int save_this_port_type(int type)
 
 /*************************************
  *
- *	Apply game-specific read port data
+ *  Apply game-specific read port data
  *
  *************************************/
 
@@ -820,10 +820,10 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 				return 0;
 
 			/* if we don't match, return a corrupt error */
-			if ((port->defvalue & port->mask) != (cin->default_value & cin->mask) || 
+			if ((port->defvalue & port->mask) != (cin->default_value & cin->mask) ||
 				port->mask != cin->mask || port->type != cin->type || port->player != cin->player)
 				return 0;
-			
+
 			/* if the default sequence(s) don't match, return a corrupt error */
 			if (!port_type_is_analog(port->type))
 			{
@@ -837,7 +837,7 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 					seq_cmp(&port->defseq[2], &cin->analog.incseq) != 0)
 					return 0;
 			}
-			
+
 			/* advance to the next port */
 			port = port->next;
 		}
@@ -852,7 +852,7 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 			in->analog.centerdelta = port->centerdelta;
 			in->analog.sensitivity = port->sensitivity;
 			in->analog.reverse = port->reverse;
-			
+
 			/* copy the sequence(s) */
 			seq_copy(&in->seq, &port->newseq[0]);
 			if (port_type_is_analog(port->type))
@@ -860,7 +860,7 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 				seq_copy(&in->analog.decseq, &port->newseq[1]);
 				seq_copy(&in->analog.incseq, &port->newseq[2]);
 			}
-			
+
 			/* advance to the next port */
 			port = port->next;
 		}
@@ -872,7 +872,7 @@ static int apply_ports(const struct InputPort *input_ports_default, struct Input
 
 /*************************************
  *
- *	Apply default port data
+ *  Apply default port data
  *
  *************************************/
 
@@ -880,7 +880,7 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 {
 	struct config_port *port;
 	int portnum, remapnum, seqnum;
-	
+
 	/* apply any remapping first */
 	for (remapnum = 0; remapnum < __code_max; remapnum++)
 		if (curfile.data.remap[remapnum] != remapnum)
@@ -889,7 +889,7 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 				for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
 					if (input_ports_default[portnum].defaultseq.code[seqnum] == remapnum)
 						input_ports_default[portnum].defaultseq.code[seqnum] = curfile.data.remap[remapnum];
-				
+
 				if (port_type_is_analog(input_ports_default[portnum].type))
 				{
 					for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
@@ -909,18 +909,18 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 			if (input_ports_default[portnum].type == port->type && input_ports_default[portnum].player == port->player)
 			{
 				/* load stored settings only if the default hasn't changed or if the backup array is NULL */
-				
+
 				/* non-analog case */
 				if (!port_type_is_analog(port->type))
 				{
 					if (input_ports_default_backup == NULL || seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0)
 						seq_copy(&input_ports_default[portnum].defaultseq, &port->newseq[0]);
 				}
-				
+
 				/* analog case */
 				else
 				{
-					if (input_ports_default_backup == NULL || 
+					if (input_ports_default_backup == NULL ||
 						(seq_cmp(&input_ports_default_backup[portnum].defaultseq, &port->defseq[0]) == 0 &&
 						 seq_cmp(&input_ports_default_backup[portnum].defaultdecseq, &port->defseq[1]) == 0 &&
 						 seq_cmp(&input_ports_default_backup[portnum].defaultincseq, &port->defseq[2]) == 0))
@@ -940,7 +940,7 @@ static int apply_default_ports(const struct InputPortDefinition *input_ports_def
 
 /*************************************
  *
- *	Apply counter/mixer data
+ *  Apply counter/mixer data
  *
  *************************************/
 
@@ -961,7 +961,7 @@ static int apply_mixer(void)
 {
 	int num_vals = sound_get_user_gain_count();
 	int mixernum;
-	
+
 	/* set the mixer gain on all channels */
 	for (mixernum = 0; mixernum < num_vals; mixernum++)
 		if (curfile.data.mixer.deflevel[mixernum] == sound_get_default_gain(mixernum))
@@ -974,7 +974,7 @@ static int apply_mixer(void)
 
 /*************************************
  *
- *	Build game-specific port data
+ *  Build game-specific port data
  *
  *************************************/
 
@@ -992,11 +992,11 @@ static int build_ports(const struct InputPort *input_ports_default, const struct
 			if (!port)
 				goto error;
 			memset(port, 0, sizeof(*port));
-			
+
 			/* add this port to our temporary list */
 			port->next = porthead;
 			porthead = port;
-			
+
 			/* fill in the data */
 			port->type        = input_ports_default[portnum].type;
 			port->player      = input_ports_default[portnum].player;
@@ -1007,7 +1007,7 @@ static int build_ports(const struct InputPort *input_ports_default, const struct
 			port->centerdelta = input_ports[portnum].analog.centerdelta;
 			port->sensitivity = input_ports[portnum].analog.sensitivity;
 			port->reverse     = input_ports[portnum].analog.reverse;
-			
+
 			/* copy the sequences */
 			seq_copy(&port->defseq[0], &input_ports_default[portnum].seq);
 			seq_copy(&port->newseq[0], &input_ports[portnum].seq);
@@ -1019,7 +1019,7 @@ static int build_ports(const struct InputPort *input_ports_default, const struct
 				seq_copy(&port->newseq[2], &input_ports[portnum].analog.incseq);
 			}
 		}
-	
+
 	/* now reverse the list and connect it to the config file */
 	curfile.data.port = NULL;
 	for (port = porthead; port != NULL; port = next)
@@ -1040,7 +1040,7 @@ error:
 
 /*************************************
  *
- *	Build default port data
+ *  Build default port data
  *
  *************************************/
 
@@ -1058,15 +1058,15 @@ static int build_default_ports(const struct InputPortDefinition *input_ports_def
 			if (!port)
 				goto error;
 			memset(port, 0, sizeof(*port));
-			
+
 			/* add this port to our temporary list */
 			port->next = porthead;
 			porthead = port;
-			
+
 			/* fill in the data */
 			port->type        = input_ports_default[portnum].type;
 			port->player      = input_ports_default[portnum].player;
-			
+
 			/* copy the sequences */
 			seq_copy(&port->defseq[0], &input_ports_default_backup[portnum].defaultseq);
 			seq_copy(&port->newseq[0], &input_ports_default[portnum].defaultseq);
@@ -1078,7 +1078,7 @@ static int build_default_ports(const struct InputPortDefinition *input_ports_def
 				seq_copy(&port->newseq[2], &input_ports_default[portnum].defaultincseq);
 			}
 		}
-	
+
 	/* now reverse the list and connect it to the config file */
 	curfile.data.port = NULL;
 	for (port = porthead; port != NULL; port = next)
@@ -1099,7 +1099,7 @@ error:
 
 /*************************************
  *
- *	Build counter/mixer data
+ *  Build counter/mixer data
  *
  *************************************/
 
@@ -1119,7 +1119,7 @@ static int build_mixer(void)
 {
 	int num_vals = sound_get_user_gain_count();
 	int mixernum;
-	
+
 	/* copy out the mixing levels */
 	for (mixernum = 0; mixernum < num_vals; mixernum++)
 	{

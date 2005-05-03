@@ -230,35 +230,35 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 {
 	/*- SPR RAM Format -**
 
-	  16 bytes per sprite
+      16 bytes per sprite
 
 0x00  --ss --SS  z--- ----  jjjg g-ff  ppcc cccc
 
-	  s = y size
-	  S = x size
-	  j = joint
-	  g = group sprite is part of (if groups are enabled)
-	  f = flip
-	  p = priority
-	  c = palette
+      s = y size
+      S = x size
+      j = joint
+      g = group sprite is part of (if groups are enabled)
+      f = flip
+      p = priority
+      c = palette
 
 0x04  ---- -aaa  aaaa aaaa  aaaa aaaa  aaaa aaaa
 
-	  a = ROM address of sprite data
+      a = ROM address of sprite data
 
 0x08  ZZZZ ZZ--  zzzz zz--  xxxx xxxx  xx-- ----
 
-	  Z = horizontal zoom table
-	  z = horizontal zoom subtable
-	  x = x position
+      Z = horizontal zoom table
+      z = horizontal zoom subtable
+      x = x position
 
 0x0C  ZZZZ ZZ--  zzzz zz--  yyyy yyyy  yy-- ----
 
-	  Z = vertical zoom table
-	  z = vertical zoom subtable
-	  x = y position
+      Z = vertical zoom table
+      z = vertical zoom subtable
+      x = y position
 
-	**- End of Comments -*/
+    **- End of Comments -*/
 
 	/* sprite ram start / end is not really fixed registers change it */
 
@@ -311,18 +311,18 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 		if (group_x_offset[3]&0x200) group_x_offset[3] -= 0x400; // Signed
 		if (group_y_offset[3]&0x200) group_y_offset[3] -= 0x400; // Signed
 
-	//	usrintf_showmessage	("x %08x y %08x x2 %08x y2 %08x",sprite_x_scroll, sprite_y_scroll,group_x_offset[1], group_y_offset[1]);
-	//	usrintf_showmessage("%d %d %d %d A:%d B:%d", sprite_kludge_x, sprite_kludge_y, sprite_x_scroll, sprite_y_scroll, (skns_pal_regs[0x00/4] & 0x7000) >> 12, (skns_pal_regs[0x10/4] & 0x7000) >> 12);
-	//	if (keyboard_pressed(KEYCODE_Q)) sprite_kludge_x++;
-	//	if (keyboard_pressed(KEYCODE_W)) sprite_kludge_x--;
-	//	if (keyboard_pressed(KEYCODE_E)) sprite_kludge_y++;
-	//	if (keyboard_pressed(KEYCODE_D)) sprite_kludge_y--;
+	//  usrintf_showmessage ("x %08x y %08x x2 %08x y2 %08x",sprite_x_scroll, sprite_y_scroll,group_x_offset[1], group_y_offset[1]);
+	//  usrintf_showmessage("%d %d %d %d A:%d B:%d", sprite_kludge_x, sprite_kludge_y, sprite_x_scroll, sprite_y_scroll, (skns_pal_regs[0x00/4] & 0x7000) >> 12, (skns_pal_regs[0x10/4] & 0x7000) >> 12);
+	//  if (keyboard_pressed(KEYCODE_Q)) sprite_kludge_x++;
+	//  if (keyboard_pressed(KEYCODE_W)) sprite_kludge_x--;
+	//  if (keyboard_pressed(KEYCODE_E)) sprite_kludge_y++;
+	//  if (keyboard_pressed(KEYCODE_D)) sprite_kludge_y--;
 
 		// Tilemap Pri/enables
-	//	usrintf_showmessage("A: %x %x B: %x %x", skns_v3_regs[0x10/4]>>3, skns_v3_regs[0x10/4]&7, skns_v3_regs[0x34/4]>>3, skns_v3_regs[0x34/4]&7);
+	//  usrintf_showmessage("A: %x %x B: %x %x", skns_v3_regs[0x10/4]>>3, skns_v3_regs[0x10/4]&7, skns_v3_regs[0x34/4]>>3, skns_v3_regs[0x34/4]&7);
 
 		/* Seems that sprites are consistently off by a fixed no. of pixels in different games
-		   (Patterns emerge through Manufacturer/Date/Orientation) */
+           (Patterns emerge through Manufacturer/Date/Orientation) */
 		sprite_x_scroll += sprite_kludge_x;
 		sprite_y_scroll += sprite_kludge_y;
 
@@ -357,15 +357,15 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 					group_number = (source[0] & 0x00001800) >> 11;
 
 					/* the group positioning doesn't seem to be working as i'd expect,
-					   if I apply the x position the cursor on galpani4 ends up moving
-					   from the correct position to too far right, also the y offset
-					   seems to cause the position to be off by one in galpans2 even if
-					   it fixes the position in galpani4?
+                       if I apply the x position the cursor on galpani4 ends up moving
+                       from the correct position to too far right, also the y offset
+                       seems to cause the position to be off by one in galpans2 even if
+                       it fixes the position in galpani4?
 
-					   even if I take into account the global sprite scroll registers
-					   it isn't right
+                       even if I take into account the global sprite scroll registers
+                       it isn't right
 
-					   global offset kludged using game specific offset -pjp */
+                       global offset kludged using game specific offset -pjp */
 
 					xpos += group_x_offset[group_number];
 					ypos += group_y_offset[group_number];
@@ -419,8 +419,8 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 			endromoffs = skns_rle_decode ( romoffset, size );
 
 			// PriTest
-//			if(!( (keyboard_pressed(KEYCODE_Q)&&(pri==0)) || (keyboard_pressed(KEYCODE_W)&&(pri==1)) || (keyboard_pressed(KEYCODE_E)&&(pri==2)) || (keyboard_pressed(KEYCODE_D)&&(pri==3)) ))
-//			if( !(keyboard_pressed(KEYCODE_Q) && ((source[0] & 0x00800000)>>24)) )
+//          if(!( (keyboard_pressed(KEYCODE_Q)&&(pri==0)) || (keyboard_pressed(KEYCODE_W)&&(pri==1)) || (keyboard_pressed(KEYCODE_E)&&(pri==2)) || (keyboard_pressed(KEYCODE_D)&&(pri==3)) ))
+//          if( !(keyboard_pressed(KEYCODE_Q) && ((source[0] & 0x00800000)>>24)) )
 			{
 				int NewColour = colour*256;
 
@@ -522,7 +522,7 @@ static void get_tilemap_A_tile_info(int tile_index)
 {
 	int code = ((skns_tilemapA_ram[tile_index] & 0x001fffff) >> 0 );
 	int colr = ((skns_tilemapA_ram[tile_index] & 0x3f000000) >> 24 );
-//	int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
+//  int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
 	int depth = (skns_v3_regs[0x0c/4] & 0x0001) << 1;
 	tile_info.flags = 0;
 
@@ -534,7 +534,7 @@ static void get_tilemap_A_tile_info(int tile_index)
 			code,
 			0x40+colr,
 			tile_info.flags)
-//	tile_info.priority = pri;
+//  tile_info.priority = pri;
 }
 
 WRITE32_HANDLER ( skns_tilemapA_w )
@@ -547,7 +547,7 @@ static void get_tilemap_B_tile_info(int tile_index)
 {
 	int code = ((skns_tilemapB_ram[tile_index] & 0x001fffff) >> 0 );
 	int colr = ((skns_tilemapB_ram[tile_index] & 0x3f000000) >> 24 );
-//	int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
+//  int pri  = ((skns_tilemapA_ram[tile_index] & 0x00e00000) >> 21 );
 	int depth = (skns_v3_regs[0x0c/4] & 0x0100) >> 7;
 	tile_info.flags = 0;
 
@@ -559,7 +559,7 @@ static void get_tilemap_B_tile_info(int tile_index)
 			code,
 			0x40+colr,
 			tile_info.flags)
-//	tile_info.priority = pri;
+//  tile_info.priority = pri;
 }
 
 WRITE32_HANDLER ( skns_tilemapB_w )
@@ -717,7 +717,7 @@ VIDEO_UPDATE(skns)
 
 	btiles = memory_region (REGION_GFX3);
 
-//	if (!(skns_v3_regs[0x0c/4] & 0x0100)); // if tilemap b is in 8bpp mode
+//  if (!(skns_v3_regs[0x0c/4] & 0x0100)); // if tilemap b is in 8bpp mode
 	{
 		if (skns_v3t_somedirty)
 		{
@@ -743,7 +743,7 @@ VIDEO_UPDATE(skns)
 		}
 	}
 
-//	if (skns_v3_regs[0x0c/4] & 0x0100); // if tilemap b is in 4bpp mode
+//  if (skns_v3_regs[0x0c/4] & 0x0100); // if tilemap b is in 4bpp mode
 	{
 		if (skns_v3t_4bpp_somedirty)
 		{

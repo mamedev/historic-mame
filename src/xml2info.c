@@ -23,12 +23,12 @@
 #define INDENT "\t"
 
 /* Output format configuration
-	L1 first level
-	L2 second level
-	B begin a list of items
-	E end a list of items
-	P begin an item
-	N end an item
+    L1 first level
+    L2 second level
+    B begin a list of items
+    E end a list of items
+    P begin an item
+    N end an item
 */
 
 /* Output unformatted */

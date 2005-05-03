@@ -1,13 +1,13 @@
 /***************************************************************************
 
-							-= Gals Panic II =-
+                            -= Gals Panic II =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-CPU		:	2 x 68000  +  MCU
-SOUND	:	2 x OKIM6295
-OTHER	:	EEPROM
-CUSTOM	:	?
+CPU     :   2 x 68000  +  MCU
+SOUND   :   2 x OKIM6295
+OTHER   :   EEPROM
+CUSTOM  :   ?
 
 To Do:
 
@@ -30,7 +30,7 @@ To Do:
 /***************************************************************************
 
 
-									EEPROM
+                                    EEPROM
 
 
 ***************************************************************************/
@@ -61,10 +61,10 @@ WRITE16_HANDLER(galpani2_eeprom_w)
 /***************************************************************************
 
 
-								MCU Simulation
+                                MCU Simulation
 
-100010.w	software watchdog?
-100020.b	number of tasks for the mcu
+100010.w    software watchdog?
+100020.b    number of tasks for the mcu
 
 ***************************************************************************/
 
@@ -179,7 +179,7 @@ static WRITE16_HANDLER( galpani2_mcu_nmi_w )
 /***************************************************************************
 
 
-							CPU#1 - Main + Sound
+                            CPU#1 - Main + Sound
 
 
 ***************************************************************************/
@@ -192,9 +192,9 @@ WRITE16_HANDLER( galpani2_coin_lockout_w )
 		coin_counter_w(1, data & 0x0200);
 		coin_lockout_w(0,~data & 0x0400);
 		coin_lockout_w(1,~data & 0x0800);
-		// & 0x1000		CARD in lockout?
-		// & 0x2000		CARD in lockout?
-		// & 0x4000		CARD out
+		// & 0x1000     CARD in lockout?
+		// & 0x2000     CARD in lockout?
+		// & 0x4000     CARD out
 	}
 }
 
@@ -263,8 +263,8 @@ static ADDRESS_MAP_START( galpani2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x580000, 0x580001) AM_WRITE(MWA16_RAM) AM_BASE(&galpani2_bg8_1_scrolly	)	// Background 1 Scroll Y
 	AM_RANGE(0x5c0000, 0x5c0001) AM_WRITE(MWA16_NOP								)	// ? 0 at startup only
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP								)	// Watchdog
-//	AM_RANGE(0x640000, 0x640001) AM_WRITE(MWA16_NOP								)	// ? 0 before resetting and at startup
-//	AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_NOP								)	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
+//  AM_RANGE(0x640000, 0x640001) AM_WRITE(MWA16_NOP                             )   // ? 0 before resetting and at startup
+//  AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_NOP                             )   // ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
 AM_RANGE(0x680000, 0x680001) AM_WRITE(galpani2_mcu_nmi_w	)	// ? 0 -> 1 -> 0 (lev 5) / 0 -> $10 -> 0
 	AM_RANGE(0x6c0000, 0x6c0001) AM_WRITE(galpani2_coin_lockout_w				)	// Coin + Card Lockout
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(OKIM6295_data_0_lsb_w					)	// 2 x OKIM6295
@@ -277,7 +277,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							CPU#2 - Backgrounds
+                            CPU#2 - Backgrounds
 
 
 ***************************************************************************/
@@ -322,7 +322,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -427,14 +427,14 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
 
 /*
-	16x16x8 made of four 8x8x8 tiles arrenged like:	01
-													23
+    16x16x8 made of four 8x8x8 tiles arrenged like: 01
+                                                    23
 */
 static struct GfxLayout layout_16x16x8 =
 {
@@ -456,7 +456,7 @@ static struct GfxDecodeInfo galpani2_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -533,14 +533,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								Roms Loading
+                                Roms Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Gals Panic II
+                                Gals Panic II
 
 
 Location      Device         File ID       Checksum
@@ -642,14 +642,14 @@ ROM_END
 /*
 CPU #0 PC 02F8F4 : OKI 1 bank 00000007
 CPU #0 PC 02F918 : OKI 1 (030)000000-000000
-043(16 banks):	0x10000 *: 2,8,
-044(4 banks):	0x40000 *: 1,3,
-045(8 banks):	0x40000 *: 1,
+043(16 banks):  0x10000 *: 2,8,
+044(4 banks):   0x40000 *: 1,3,
+045(8 banks):   0x40000 *: 1,
 CPU #0 PC 02F8D6 : OKI 0 bank 0000000A
 CPU #0 PC 02F918 : OKI 0 (380)000000-000000
-043(16 banks):	0x10000 *: 5,8,
-044(4 banks):	0x40000 *: -
-045(8 banks):	0x40000 *: -
+043(16 banks):  0x10000 *: 5,8,
+044(4 banks):   0x40000 *: -
+045(8 banks):   0x40000 *: -
 */
 
 /*
@@ -668,7 +668,7 @@ X4: 20 MHz
 */
 
 ROM_START( gpan2qiz )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* CPU#1 Code */	
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* CPU#1 Code */
 	ROM_LOAD16_BYTE( "g000j2.165", 0x000000, 0x080000, CRC(e0c5a03d) SHA1(e12457400ca8cd78674b44d7f4d664cfc0afc8c9) )
 	ROM_LOAD16_BYTE( "g001j2.164", 0x000001, 0x080000, CRC(c8e12223) SHA1(0e0160565e95cb33dc6ad796225e995ed3baf8eb) )
 
@@ -684,7 +684,7 @@ ROM_START( gpan2qiz )
 	ROM_LOAD16_BYTE( "gp2-303a.179", 0x600000, 0x100000, CRC(162d83b7) SHA1(16daf2ba09e63eaca5e50c944472773b1774c946) )
 	ROM_LOAD16_BYTE( "gp2-303b.180", 0x600001, 0x100000, CRC(458a1fbc) SHA1(971548ec8cce592773e762a0c972264013b7cb8d) )
 
-	ROM_REGION( 0x480000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */	
+	ROM_REGION( 0x480000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "gp2-200j.189", 0x000000, 0x200000, CRC(2f81e519) SHA1(c07f4dad15b6f7f1fb867f773c0ada309d172326) )
 	ROM_LOAD( "gp2-201j.171", 0x200000, 0x200000, CRC(bbe404e0) SHA1(198db9a6c6ec97ed8fd32d946051ba4d6e4bd354) )
 	ROM_LOAD16_BYTE( "g204j0.169", 0x400000, 0x040000, CRC(212d8aab) SHA1(459f556978ef9a103279cf633fcc1cacb367ea61) )

@@ -102,7 +102,7 @@ static void draw_status( struct mame_bitmap *bitmap )
 	for( row=0; row<4; row++ )
 	{
 		int sy,sx = (row&1)*8;
-		const unsigned char *source = mnchmobl_status_vram + (row&1)*32;
+		const unsigned char *source = mnchmobl_status_vram + (~row&1)*32;
 		if( row<=1 )
 		{
 			source+=2*32;
@@ -124,8 +124,8 @@ static void draw_status( struct mame_bitmap *bitmap )
 static void draw_background( struct mame_bitmap *bitmap )
 {
 /*
-	ROM B1.2C contains 256 tilemaps defining 4x4 configurations of
-	the tiles in ROM B2.2B
+    ROM B1.2C contains 256 tilemaps defining 4x4 configurations of
+    the tiles in ROM B2.2B
 */
 	unsigned char *tile_data = memory_region(REGION_GFX2);
 	const struct GfxElement *gfx = Machine->gfx[1];

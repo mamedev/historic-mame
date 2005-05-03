@@ -1,46 +1,46 @@
 /***************************************************************************
 
-	Arkanoid driver (Preliminary)
+    Arkanoid driver (Preliminary)
 
 
-	Japanese version support cocktail mode (DSW #7), the others don't.
+    Japanese version support cocktail mode (DSW #7), the others don't.
 
-	Here are the versions we have:
+    Here are the versions we have:
 
-	arkanoid	World version, probably an earlier revision
-	arknoidu	USA version, probably a later revision; There has been code
-			    inserted, NOT patched, so I don't think it's a bootleg
-				The 68705 code for this one was not available; I made it up from
-				the World version changing the level data pointer table.
-	arknoiuo	USA version, probably an earlier revision
-				ROM	a7510.bin should be identical to the real World one.
-				(It only differs in the country byte from A75_11.ROM)
-				This version works fine with the real MCU ROM
+    arkanoid    World version, probably an earlier revision
+    arknoidu    USA version, probably a later revision; There has been code
+                inserted, NOT patched, so I don't think it's a bootleg
+                The 68705 code for this one was not available; I made it up from
+                the World version changing the level data pointer table.
+    arknoiuo    USA version, probably an earlier revision
+                ROM a7510.bin should be identical to the real World one.
+                (It only differs in the country byte from A75_11.ROM)
+                This version works fine with the real MCU ROM
     arkatour    Tournament version
-				The 68705 code for this one was not available; I made it up from
-				the World version changing the level data pointer table.
-	arknoidj	Japanese version with level selector.
-				The 68705 code for this one was not available; I made it up from
-				the World version changing the level data pointer table.
-	arkbl2		Bootleg of the early Japanese version.
-				The only difference is that the warning text has been replaced
-				by "WAIT"
-				ROM	E2.6F should be identical to the real Japanese one.
-				(It only differs in the country byte from A75_11.ROM)
-				This version works fine with the real MCU ROM
-	arkatayt	Another bootleg of the early Japanese one, more heavily modified
-	arkblock	Another bootleg of the early Japanese one, more heavily modified
-	arkbloc2	Another bootleg
-	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
-	paddle2   	Another bootleg of the early Japanese one, more heavily modified
-	arkangc		Game Corporation bootleg with level selector
+                The 68705 code for this one was not available; I made it up from
+                the World version changing the level data pointer table.
+    arknoidj    Japanese version with level selector.
+                The 68705 code for this one was not available; I made it up from
+                the World version changing the level data pointer table.
+    arkbl2      Bootleg of the early Japanese version.
+                The only difference is that the warning text has been replaced
+                by "WAIT"
+                ROM E2.6F should be identical to the real Japanese one.
+                (It only differs in the country byte from A75_11.ROM)
+                This version works fine with the real MCU ROM
+    arkatayt    Another bootleg of the early Japanese one, more heavily modified
+    arkblock    Another bootleg of the early Japanese one, more heavily modified
+    arkbloc2    Another bootleg
+    arkbl3      Another bootleg of the early Japanese one, more heavily modified
+    paddle2     Another bootleg of the early Japanese one, more heavily modified
+    arkangc     Game Corporation bootleg with level selector
 
 
-	Most if not all Arkanoid sets have a bug in their game code. It occurs on the
-	final level where the player has to dodge falling objects. The bug resides in
-	the collision detection routine which sometimes reads from unmapped addresses
-	above $F000. For these addresses it is vital to read zero values, or else the
-	player will die for no reason.
+    Most if not all Arkanoid sets have a bug in their game code. It occurs on the
+    final level where the player has to dodge falling objects. The bug resides in
+    the collision detection routine which sometimes reads from unmapped addresses
+    above $F000. For these addresses it is vital to read zero values, or else the
+    player will die for no reason.
 
 
 ***************************************************************************/
@@ -173,10 +173,10 @@ INPUT_PORTS_START( arkanoid )
 INPUT_PORTS_END
 
 /* These are the input ports of the real Japanese ROM set                        */
-/* 'Block' uses the these ones as well.	The Tayto bootleg is different			 */
-/*  in coinage and # of lives.                    								 */
+/* 'Block' uses the these ones as well. The Tayto bootleg is different           */
+/*  in coinage and # of lives.                                                   */
 
-INPUT_PORTS_START( arknoidj )	
+INPUT_PORTS_START( arknoidj )
 	ARKNOI_IN0
 	ARKNOI_IN1
 	ARKNOI_SPINNERS
@@ -298,7 +298,7 @@ static MACHINE_DRIVER_START( arkanoid )
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)

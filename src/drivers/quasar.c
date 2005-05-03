@@ -14,7 +14,7 @@
 
   - Make Asto Wars to boot
   - Make Cat'n Mouse to boot
-	(it jumps to unpopulated rom, check jump at 0x2e62 and 0x4076)
+    (it jumps to unpopulated rom, check jump at 0x2e62 and 0x4076)
   - ...
 
 ************************************************************************
@@ -249,7 +249,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound board memory handlers
+ *  Sound board memory handlers
  *
  *************************************/
 

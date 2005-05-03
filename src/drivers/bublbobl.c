@@ -322,7 +322,7 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
 	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
-//	AM_RANGE(0xfa03, 0xfa03) AM_WRITE(soundcpu_reset_w)	// doesn't work for some reason
+//  AM_RANGE(0xfa03, 0xfa03) AM_WRITE(soundcpu_reset_w) // doesn't work for some reason
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
 	AM_RANGE(0xfc00, 0xffff) AM_RAM AM_BASE(&bublbobl_mcu_sharedram)
@@ -800,7 +800,7 @@ static MACHINE_DRIVER_START( boblbobl )
 	MDRV_CPU_PROGRAM_MAP(bootleg_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)	// interrupt mode 1, unlike Bubble Bobble
 
-//	MDRV_CPU_REMOVE("mcu")
+//  MDRV_CPU_REMOVE("mcu")
 MACHINE_DRIVER_END
 
 
@@ -883,7 +883,7 @@ ROM_START( tokiob )
 ROM_END
 
 // left for reference. The 68705 was from a bootleg, the original MCU is a 68701
-//	ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )	/* from a pirate board */
+//  ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )    /* from a pirate board */
 
 
 /*

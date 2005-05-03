@@ -58,8 +58,8 @@ struct png_info {
 	UINT8 *image;
 
 	/* The rest is private and should not be used
-	 * by the public functions
-	 */
+     * by the public functions
+     */
 	UINT8 bpp;
 	UINT32 rowbytes;
 	UINT8 *zimage;

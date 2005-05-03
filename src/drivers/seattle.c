@@ -1,128 +1,128 @@
 /*************************************************************************
 
-	Driver for Atari/Midway Phoenix/Seattle/Flagstaff hardware games
+    Driver for Atari/Midway Phoenix/Seattle/Flagstaff hardware games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Wayne Gretzky's 3d Hockey    [Phoenix, Atari, ~100MHz, 4MB RAM, 1xTMU]
+    Games supported:
+        * Wayne Gretzky's 3d Hockey    [Phoenix, Atari, ~100MHz, 4MB RAM, 1xTMU]
 
-		* Bio Freaks                   [Seattle, Midway, ???MHz, 8MB RAM, 1xTMU]
-		* CarnEvil                     [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
-		* NFL Blitz                    [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
-		* NFL Blitz 99                 [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
-		* NFL Blitz 2000               [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
-		* Mace: The Dark Age           [Seattle, Atari,  200MHz, 8MB RAM, 1xTMU]
+        * Bio Freaks                   [Seattle, Midway, ???MHz, 8MB RAM, 1xTMU]
+        * CarnEvil                     [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+        * NFL Blitz                    [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+        * NFL Blitz 99                 [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+        * NFL Blitz 2000               [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+        * Mace: The Dark Age           [Seattle, Atari,  200MHz, 8MB RAM, 1xTMU]
 
-		* California Speed             [Seattle + Widget, Atari, 150MHz, 8MB RAM, 1xTMU]
-		* Vapor TRX                    [Seattle + Widget, Atari, 192MHz, 8MB RAM, 1xTMU]
-		* Hyperdrive                   [Seattle + Widget, Midway, 200MHz, 8MB RAM, 1xTMU]
+        * California Speed             [Seattle + Widget, Atari, 150MHz, 8MB RAM, 1xTMU]
+        * Vapor TRX                    [Seattle + Widget, Atari, 192MHz, 8MB RAM, 1xTMU]
+        * Hyperdrive                   [Seattle + Widget, Midway, 200MHz, 8MB RAM, 1xTMU]
 
-		* San Francisco Rush           [Flagstaff, Atari, 192MHz, 2xTMU]
-		* San Francisco Rush: The Rock [Flagstaff, Atari, 192MHz, 8MB RAM, 2xTMU]
+        * San Francisco Rush           [Flagstaff, Atari, 192MHz, 2xTMU]
+        * San Francisco Rush: The Rock [Flagstaff, Atari, 192MHz, 8MB RAM, 2xTMU]
 
-	Known bugs:
-		* Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
-		* Carnevil: lets you set the flash brightness; need to emulate that
-		* Hyperdrive: long delay after you select a track; may be a timer issue
-
-***************************************************************************
-
-	Phoenix hardware main board:
-	
-		* 100MHz R4700 main CPU (50MHz system clock)
-		* Galileo GT64010 system controller
-		* National Semiconductor PC87415 IDE controller
-		* 3dfx FBI with 2MB frame buffer
-		* 3dfx TMU with 4MB txture memory
-		* Midway I/O ASIC
-		* 4MB DRAM for main CPU
-		* 512KB boot ROM
-		* 16MHz ADSP 2115 audio CPU
-		* 4MB DRAM for audio CPU
-		* 32KB boot ROM
-	
-	Seattle hardware main board:
-	
-		* 144MHz/150MHz/192MHz/200MHz R5000 main CPU (system clock 48MHz/50MHz)
-		* Galileo GT64010 system controller
-		* National Semiconductor PC87415 IDE controller
-		* 3dfx FBI with 2MB frame buffer
-		* 3dfx TMU with 4MB txture memory
-		* Midway I/O ASIC
-		* 8MB DRAM for main CPU
-		* 512KB boot ROM
-		* 16MHz ADSP 2115 audio CPU
-		* 4MB DRAM for audio CPU
-		* 32KB boot ROM
-
-	Flagstaff hardware main board:
-	
-		* 200MHz R5000 main CPU (system clock 50MHz)
-		* Galileo GT64010 system controller
-		* National Semiconductor PC87415 IDE controller
-		* SMC91C94 ethernet controller
-		* ADC0848 8 x A-to-D converters
-		* 3dfx FBI with 2MB frame buffer
-		* 2 x 3dfx TMU with 4MB txture memory
-		* Midway I/O ASIC
-		* 8MB DRAM for main CPU
-		* 512KB boot ROM
-		* 33MHz TMS32C031 audio CPU
-		* 8MB ROM space for audio CPU
-		* 512KB boot ROM
-	
-	Widget board:
-	
-		* SMC91C94 ethernet controller
-		* ADC0848 8 x A-to-D converters
+    Known bugs:
+        * Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
+        * Carnevil: lets you set the flash brightness; need to emulate that
+        * Hyperdrive: long delay after you select a track; may be a timer issue
 
 ***************************************************************************
 
-	Interrupt summary:
+    Phoenix hardware main board:
 
-	                    __________ 
-	UART clear-to-send |          |                     __________
-	-------(0x2000)--->|          |   Ethernet/Widget  |          |
-	                   |          |   ----(IRQ3/4/5)-->|          |
-	UART data ready    |          |                    |          |
-	-------(0x1000)--->|          |                    |          |
-	                   |          |   VSYNC            |          |
-	Main-to-sound empty|  IOASIC  |   ----(IRQ3/4/5)-->|          |
-	-------(0x0080)--->|          |                    |          |
-	                   |          |                    |          |
-	Sound-to-main full |          |   IDE Controller   |   CPU    |
-	-------(0x0040)--->|          |   -------(IRQ2)--->|          |
-	                   |          |                    |          |
-	Sound FIFO empty   |          |                    |          |
-	-------(0x0008)--->|          |   IOASIC Summary   |          |
-	                   |__________|----------(IRQ1)--->|          |
-	                                                   |          |
-	                    __________                     |          |
-	Timer 3            |          |   Galileo Summary  |          |
-	-------(0x0800)--->|          |----------(IRQ0)--->|          |
-	                   |          |                    |__________|
-	Timer 2            |          |
-	-------(0x0400)--->|          |
-	                   |          |
-	Timer 1            |          |
-	-------(0x0200)--->|          |
-	                   |          |
-	Timer 0            |          |
-	-------(0x0100)--->|          |
-	                   | Galileo  |
-	DMA channel 3      |          |
-	-------(0x0080)--->|          |
-	                   |          |
-	DMA channel 2      |          |
-	-------(0x0040)--->|          |
-	                   |          |
-	DMA channel 1      |          |
-	-------(0x0020)--->|          |
-	                   |          |
-	DMA channel 0      |          |
-	-------(0x0010)--->|          |
-	                   |__________|
+        * 100MHz R4700 main CPU (50MHz system clock)
+        * Galileo GT64010 system controller
+        * National Semiconductor PC87415 IDE controller
+        * 3dfx FBI with 2MB frame buffer
+        * 3dfx TMU with 4MB txture memory
+        * Midway I/O ASIC
+        * 4MB DRAM for main CPU
+        * 512KB boot ROM
+        * 16MHz ADSP 2115 audio CPU
+        * 4MB DRAM for audio CPU
+        * 32KB boot ROM
+
+    Seattle hardware main board:
+
+        * 144MHz/150MHz/192MHz/200MHz R5000 main CPU (system clock 48MHz/50MHz)
+        * Galileo GT64010 system controller
+        * National Semiconductor PC87415 IDE controller
+        * 3dfx FBI with 2MB frame buffer
+        * 3dfx TMU with 4MB txture memory
+        * Midway I/O ASIC
+        * 8MB DRAM for main CPU
+        * 512KB boot ROM
+        * 16MHz ADSP 2115 audio CPU
+        * 4MB DRAM for audio CPU
+        * 32KB boot ROM
+
+    Flagstaff hardware main board:
+
+        * 200MHz R5000 main CPU (system clock 50MHz)
+        * Galileo GT64010 system controller
+        * National Semiconductor PC87415 IDE controller
+        * SMC91C94 ethernet controller
+        * ADC0848 8 x A-to-D converters
+        * 3dfx FBI with 2MB frame buffer
+        * 2 x 3dfx TMU with 4MB txture memory
+        * Midway I/O ASIC
+        * 8MB DRAM for main CPU
+        * 512KB boot ROM
+        * 33MHz TMS32C031 audio CPU
+        * 8MB ROM space for audio CPU
+        * 512KB boot ROM
+
+    Widget board:
+
+        * SMC91C94 ethernet controller
+        * ADC0848 8 x A-to-D converters
+
+***************************************************************************
+
+    Interrupt summary:
+
+                        __________
+    UART clear-to-send |          |                     __________
+    -------(0x2000)--->|          |   Ethernet/Widget  |          |
+                       |          |   ----(IRQ3/4/5)-->|          |
+    UART data ready    |          |                    |          |
+    -------(0x1000)--->|          |                    |          |
+                       |          |   VSYNC            |          |
+    Main-to-sound empty|  IOASIC  |   ----(IRQ3/4/5)-->|          |
+    -------(0x0080)--->|          |                    |          |
+                       |          |                    |          |
+    Sound-to-main full |          |   IDE Controller   |   CPU    |
+    -------(0x0040)--->|          |   -------(IRQ2)--->|          |
+                       |          |                    |          |
+    Sound FIFO empty   |          |                    |          |
+    -------(0x0008)--->|          |   IOASIC Summary   |          |
+                       |__________|----------(IRQ1)--->|          |
+                                                       |          |
+                        __________                     |          |
+    Timer 3            |          |   Galileo Summary  |          |
+    -------(0x0800)--->|          |----------(IRQ0)--->|          |
+                       |          |                    |__________|
+    Timer 2            |          |
+    -------(0x0400)--->|          |
+                       |          |
+    Timer 1            |          |
+    -------(0x0200)--->|          |
+                       |          |
+    Timer 0            |          |
+    -------(0x0100)--->|          |
+                       | Galileo  |
+    DMA channel 3      |          |
+    -------(0x0080)--->|          |
+                       |          |
+    DMA channel 2      |          |
+    -------(0x0040)--->|          |
+                       |          |
+    DMA channel 1      |          |
+    -------(0x0020)--->|          |
+                       |          |
+    DMA channel 0      |          |
+    -------(0x0010)--->|          |
+                       |__________|
 
 **************************************************************************/
 
@@ -140,7 +140,7 @@
 
 /*************************************
  *
- *	Debugging constants
+ *  Debugging constants
  *
  *************************************/
 
@@ -154,7 +154,7 @@
 
 /*************************************
  *
- *	Core constants
+ *  Core constants
  *
  *************************************/
 
@@ -181,7 +181,7 @@
 
 /*************************************
  *
- *	Galileo constants
+ *  Galileo constants
  *
  *************************************/
 
@@ -304,7 +304,7 @@
 
 /*************************************
  *
- *	Widget board constants
+ *  Widget board constants
  *
  *************************************/
 
@@ -321,7 +321,7 @@
 
 /*************************************
  *
- *	Structures
+ *  Structures
  *
  *************************************/
 
@@ -355,7 +355,7 @@ struct widget_data
 {
 	/* ethernet register address */
 	UINT8			ethernet_addr;
-	
+
 	/* IRQ information */
 	UINT8			irq_num;
 	UINT8			irq_mask;
@@ -365,7 +365,7 @@ struct widget_data
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -400,7 +400,7 @@ static data32_t cmos_write_enabled;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -415,7 +415,7 @@ static void update_widget_irq(void);
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -458,7 +458,7 @@ static MACHINE_INIT( seattle )
 
 /*************************************
  *
- *	IDE interrupts
+ *  IDE interrupts
  *
  *************************************/
 
@@ -477,7 +477,7 @@ static struct ide_interface ide_intf =
 
 /*************************************
  *
- *	Ethernet interrupts
+ *  Ethernet interrupts
  *
  *************************************/
 
@@ -504,7 +504,7 @@ static struct smc91c9x_interface ethernet_intf =
 
 /*************************************
  *
- *	I/O ASIC interrupts
+ *  I/O ASIC interrupts
  *
  *************************************/
 
@@ -517,7 +517,7 @@ static void ioasic_irq(int state)
 
 /*************************************
  *
- *	Configurable interrupts
+ *  Configurable interrupts
  *
  *************************************/
 
@@ -550,7 +550,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 	/* VBLANK: compute the new IRQ vector */
 	irq = (*interrupt_config >> (2*VBLANK_IRQ_SHIFT)) & 3;
 	vblank_irq_num = (irq != 0) ? (2 + irq) : 0;
-	
+
 	/* Widget board case */
 	if (board_config == SEATTLE_WIDGET_CONFIG)
 	{
@@ -562,7 +562,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 		irq = (*interrupt_config >> (2*WIDGET_IRQ_SHIFT)) & 3;
 		widget.irq_num = (irq != 0) ? (2 + irq) : 0;
 	}
-	
+
 	/* Flagstaff board case */
 	if (board_config == FLAGSTAFF_CONFIG)
 	{
@@ -598,7 +598,7 @@ static WRITE32_HANDLER( seattle_interrupt_enable_w )
 
 /*************************************
  *
- *	VBLANK interrupts
+ *  VBLANK interrupts
  *
  *************************************/
 
@@ -629,7 +629,7 @@ static void vblank_assert(int state)
 {
 	/* cache the raw state */
 	vblank_state = state;
-	
+
 	/* latch on the correct polarity transition */
 	if ((state && !(*interrupt_enable & 0x100)) || (!state && (*interrupt_enable & 0x100)))
 	{
@@ -651,7 +651,7 @@ static void vblank_assert(int state)
 
 /*************************************
  *
- *	PCI bridge accesses
+ *  PCI bridge accesses
  *
  *************************************/
 
@@ -687,7 +687,7 @@ static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
 
 /*************************************
  *
- *	PCI 3dfx accesses
+ *  PCI 3dfx accesses
  *
  *************************************/
 
@@ -736,7 +736,7 @@ static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
 
 /*************************************
  *
- *	PCI IDE accesses
+ *  PCI IDE accesses
  *
  *************************************/
 
@@ -772,14 +772,14 @@ static void pci_ide_w(UINT8 reg, UINT8 type, data32_t data)
 
 /*************************************
  *
- *	Galileo timers & interrupts
+ *  Galileo timers & interrupts
  *
  *************************************/
 
 static void update_galileo_irqs(void)
 {
 	int state = CLEAR_LINE;
-	
+
 	/* if any unmasked interrupts are live, we generate */
 	if (galileo.reg[GREG_INT_STATE] & galileo.reg[GREG_INT_MASK])
 		state = ASSERT_LINE;
@@ -817,7 +817,7 @@ static void galileo_timer_callback(int which)
 
 /*************************************
  *
- *	Galileo DMA handler
+ *  Galileo DMA handler
  *
  *************************************/
 
@@ -970,7 +970,7 @@ static void galileo_perform_dma(int which)
 
 /*************************************
  *
- *	Galileo system controller
+ *  Galileo system controller
  *
  *************************************/
 
@@ -987,10 +987,10 @@ static READ32_HANDLER( galileo_r )
 	/* switch off the offset for special cases */
 	switch (offset)
 	{
-		case GREG_TIMER0_COUNT:	
+		case GREG_TIMER0_COUNT:
 		case GREG_TIMER1_COUNT:
-		case GREG_TIMER2_COUNT:	
-		case GREG_TIMER3_COUNT:	
+		case GREG_TIMER2_COUNT:
+		case GREG_TIMER3_COUNT:
 		{
 			int which = offset % 4;
 			struct galileo_timer *timer = &galileo.timer[which];
@@ -1199,7 +1199,7 @@ static WRITE32_HANDLER( galileo_w )
 
 /*************************************
  *
- *	Analog input handling (ADC0848)
+ *  Analog input handling (ADC0848)
  *
  *************************************/
 
@@ -1220,7 +1220,7 @@ static WRITE32_HANDLER( analog_port_w )
 
 /*************************************
  *
- *	CarnEvil gun handling
+ *  CarnEvil gun handling
  *
  *************************************/
 
@@ -1301,7 +1301,7 @@ static WRITE32_HANDLER( carnevil_gun_w )
 
 /*************************************
  *
- *	Ethernet access
+ *  Ethernet access
  *
  *************************************/
 
@@ -1326,7 +1326,7 @@ static WRITE32_HANDLER( ethernet_w )
 
 /*************************************
  *
- *	Widget board access
+ *  Widget board access
  *
  *************************************/
 
@@ -1344,7 +1344,7 @@ static void update_widget_irq(void)
 	UINT8 state = ethernet_irq_state << WINT_ETHERNET_SHIFT;
 	UINT8 mask = widget.irq_mask;
 	UINT8 assert = ((mask & state) != 0) && (*interrupt_enable & (1 << WIDGET_IRQ_SHIFT));
-	
+
 	/* update the IRQ state */
 	if (widget.irq_num != 0)
 		cpunum_set_input_line(0, widget.irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
@@ -1354,22 +1354,22 @@ static void update_widget_irq(void)
 static READ32_HANDLER( widget_r )
 {
 	data32_t result = ~0;
-	
+
 	switch (offset)
 	{
 		case WREG_ETHER_ADDR:
 			result = widget.ethernet_addr;
 			break;
-		
+
 		case WREG_INTERRUPT:
 			result = ethernet_irq_state << WINT_ETHERNET_SHIFT;
 			result = ~result;
 			break;
-		
+
 		case WREG_ANALOG:
 			result = analog_port_r(0, mem_mask);
 			break;
-		
+
 		case WREG_ETHER_DATA:
 			result = smc91c94_r(widget.ethernet_addr & 7, mem_mask & 0xffff);
 			break;
@@ -1391,16 +1391,16 @@ static WRITE32_HANDLER( widget_w )
 		case WREG_ETHER_ADDR:
 			widget.ethernet_addr = data;
 			break;
-		
+
 		case WREG_INTERRUPT:
 			widget.irq_mask = data;
 			update_widget_irq();
 			break;
-		
+
 		case WREG_ANALOG:
 			analog_port_w(0, data, mem_mask);
 			break;
-		
+
 		case WREG_ETHER_DATA:
 			smc91c94_w(widget.ethernet_addr & 7, data & 0xffff, mem_mask & 0xffff);
 			break;
@@ -1411,7 +1411,7 @@ static WRITE32_HANDLER( widget_w )
 
 /*************************************
  *
- *	CMOS access
+ *  CMOS access
  *
  *************************************/
 
@@ -1444,7 +1444,7 @@ static READ32_HANDLER( cmos_protect_r )
 
 /*************************************
  *
- *	Misc accesses
+ *  Misc accesses
  *
  *************************************/
 
@@ -1484,7 +1484,7 @@ static WRITE32_HANDLER( status_leds_w )
 
 /*************************************
  *
- *	Speedups
+ *  Speedups
  *
  *************************************/
 
@@ -1512,7 +1512,7 @@ static READ32_HANDLER( generic_speedup2_r )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -1546,7 +1546,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -2303,14 +2303,14 @@ INPUT_PORTS_START( blitz )
 	PORT_DIPSETTING(      0x0009, "Mode 3" )
 	PORT_DIPSETTING(      0x0002, "Mode 4" )
 	PORT_DIPSETTING(      0x000c, "Mode ECA" )
-//	PORT_DIPSETTING(      0x0004, "Not Used 1" )		/* Marked as Unused in the manual */
-//	PORT_DIPSETTING(      0x0008, "Not Used 2" )		/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0004, "Not Used 1" )        /* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0008, "Not Used 2" )        /* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x0030, 0x0030, "Curency Type" )
 	PORT_DIPSETTING(      0x0030, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, "Not Used" )		/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0000, "Not Used" )      /* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	/* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
@@ -2324,8 +2324,8 @@ INPUT_PORTS_START( blitz )
 	PORT_DIPNAME( 0x0600, 0x0200, "Graphics Mode" )
 	PORT_DIPSETTING(      0x0200, "512x385 @ 25KHz" )
 	PORT_DIPSETTING(      0x0400, "512x256 @ 15KHz" )
-//	PORT_DIPSETTING(      0x0600, "0" )			/* Marked as Unused in the manual */
-//	PORT_DIPSETTING(      0x0000, "3" )			/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0600, "0" )         /* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0000, "3" )         /* Marked as Unused in the manual */
 	PORT_DIPNAME( 0x1800, 0x1800, "Graphics Speed" )
 	PORT_DIPSETTING(      0x0000, "45 MHz" )
 	PORT_DIPSETTING(      0x0800, "47 MHz" )
@@ -2423,8 +2423,8 @@ INPUT_PORTS_START( blitz99 )
 	PORT_DIPSETTING(      0x001a, "German 3" )
 	PORT_DIPSETTING(      0x0018, "German 4" )
 	PORT_DIPSETTING(      0x0016, "German 5" )
-//	PORT_DIPSETTING(      0x0014, "German 5" )
-//	PORT_DIPSETTING(      0x0012, "German 5" )
+//  PORT_DIPSETTING(      0x0014, "German 5" )
+//  PORT_DIPSETTING(      0x0012, "German 5" )
 	PORT_DIPSETTING(      0x0010, "German ECA" )
 	PORT_DIPSETTING(      0x000e, "U.K. 1 ECA" )
 	PORT_DIPSETTING(      0x000c, "U.K. 2 ECA" )
@@ -2446,8 +2446,8 @@ INPUT_PORTS_START( blitz99 )
 	PORT_DIPNAME( 0x0600, 0x0200, "Graphics Mode" )
 	PORT_DIPSETTING(      0x0200, "512x385 @ 25KHz" )
 	PORT_DIPSETTING(      0x0400, "512x256 @ 15KHz" )
-//	PORT_DIPSETTING(      0x0600, "0" )			/* Marked as Unused in the manual */
-//	PORT_DIPSETTING(      0x0000, "3" )			/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0600, "0" )         /* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0000, "3" )         /* Marked as Unused in the manual */
 	PORT_DIPNAME( 0x1800, 0x1800, "Graphics Speed" )
 	PORT_DIPSETTING(      0x0000, "45 MHz" )
 	PORT_DIPSETTING(      0x0800, "47 MHz" )
@@ -2545,8 +2545,8 @@ INPUT_PORTS_START( carnevil )
 	PORT_DIPSETTING(      0x001a, "German 3" )
 	PORT_DIPSETTING(      0x0018, "German 4" )
 	PORT_DIPSETTING(      0x0016, "German 5" )
-//	PORT_DIPSETTING(      0x0014, "German 5" )
-//	PORT_DIPSETTING(      0x0012, "German 5" )
+//  PORT_DIPSETTING(      0x0014, "German 5" )
+//  PORT_DIPSETTING(      0x0012, "German 5" )
 	PORT_DIPSETTING(      0x0010, "German ECA" )
 	PORT_DIPSETTING(      0x000e, "U.K. 1" )
 	PORT_DIPSETTING(      0x000c, "U.K. 2" )
@@ -2566,10 +2566,10 @@ INPUT_PORTS_START( carnevil )
 	PORT_DIPSETTING(      0x0100, "0" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPNAME( 0x0600, 0x0400, "Resolution" )
-//	PORT_DIPSETTING(      0x0600, "0" )
-//	PORT_DIPSETTING(      0x0200, DEF_STR( Medium ) )
+//  PORT_DIPSETTING(      0x0600, "0" )
+//  PORT_DIPSETTING(      0x0200, DEF_STR( Medium ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Low ) )
-//	PORT_DIPSETTING(      0x0000, "3" )
+//  PORT_DIPSETTING(      0x0000, "3" )
 	PORT_DIPNAME( 0x1800, 0x1800, "Graphics Speed" )
 	PORT_DIPSETTING(      0x0000, "45 MHz" )
 	PORT_DIPSETTING(      0x0800, "47 MHz" )
@@ -2754,7 +2754,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -2830,7 +2830,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -3005,7 +3005,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -3027,14 +3027,14 @@ static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MRA32_NOP);
 			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MWA32_NOP);
 			break;
-		
+
 		case SEATTLE_WIDGET_CONFIG:
 			/* set up the widget board */
 			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_r);
 			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_w);
 			smc91c94_init(&ethernet_intf);
 			break;
-	
+
 		case FLAGSTAFF_CONFIG:
 			/* set up the analog inputs */
 			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb4000000, 0xb4000003, 0, 0, analog_port_r);
@@ -3088,10 +3088,10 @@ static DRIVER_INIT( sfrushrk )
 	init_common(MIDWAY_IOASIC_SFRUSHRK, 331/* unknown */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
-//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
-//	generic_speedup = &rambase[0x12498c/4];
-//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
-//	generic_speedup2 = &rambase[0x120000/4];
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
+//  generic_speedup = &rambase[0x12498c/4];
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
+//  generic_speedup2 = &rambase[0x120000/4];
 }
 
 
@@ -3122,8 +3122,8 @@ static DRIVER_INIT( biofreak )
 	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-//	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
-//	generic_speedup = &rambase[0x2502bc/4];
+//  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
+//  generic_speedup = &rambase[0x2502bc/4];
 }
 
 
@@ -3190,7 +3190,7 @@ static DRIVER_INIT( hyprdriv )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

@@ -143,16 +143,16 @@ VIDEO_UPDATE( kickgoal )
 	tilemap_draw(bitmap,cliprect,kickgoal_fgtm,0,0);
 
 	/*
-	usrintf_showmessage	("Regs %04x %04x %04x %04x %04x %04x %04x %04x",
-	kickgoal_scrram[0],
-	kickgoal_scrram[1],
-	kickgoal_scrram[2],
-	kickgoal_scrram[3],
-	kickgoal_scrram[4],
-	kickgoal_scrram[5],
-	kickgoal_scrram[6],
-	kickgoal_scrram[7]);
-	*/
+    usrintf_showmessage ("Regs %04x %04x %04x %04x %04x %04x %04x %04x",
+    kickgoal_scrram[0],
+    kickgoal_scrram[1],
+    kickgoal_scrram[2],
+    kickgoal_scrram[3],
+    kickgoal_scrram[4],
+    kickgoal_scrram[5],
+    kickgoal_scrram[6],
+    kickgoal_scrram[7]);
+    */
 }
 
 /* Holywood Action */

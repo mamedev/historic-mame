@@ -1,10 +1,10 @@
 /***************************************************************************
 
-	Videa Gridlee hardware
+    Videa Gridlee hardware
 
     driver by Aaron Giles
 
-	Based on the Bally/Sente SAC system
+    Based on the Bally/Sente SAC system
 
 ***************************************************************************/
 
@@ -14,7 +14,7 @@
 
 /*************************************
  *
- *	Globals
+ *  Globals
  *
  *************************************/
 
@@ -24,7 +24,7 @@ UINT8 gridlee_cocktail_flip;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -36,7 +36,7 @@ static UINT8 palettebank_vis;
 
 /*************************************
  *
- *	Color PROM conversion
+ *  Color PROM conversion
  *
  *************************************/
 
@@ -58,7 +58,7 @@ PALETTE_INIT( gridlee )
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -78,7 +78,7 @@ VIDEO_START( gridlee )
 
 /*************************************
  *
- *	Cocktail flip
+ *  Cocktail flip
  *
  *************************************/
 
@@ -95,7 +95,7 @@ WRITE8_HANDLER( gridlee_cocktail_flip_w )
 
 /*************************************
  *
- *	Video RAM write
+ *  Video RAM write
  *
  *************************************/
 
@@ -112,7 +112,7 @@ WRITE8_HANDLER( gridlee_videoram_w )
 
 /*************************************
  *
- *	Palette banking
+ *  Palette banking
  *
  *************************************/
 
@@ -130,7 +130,7 @@ WRITE8_HANDLER( gridlee_palette_select_w )
 
 /*************************************
  *
- *	Main screen refresh
+ *  Main screen refresh
  *
  *************************************/
 

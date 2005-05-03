@@ -138,49 +138,49 @@ WRITE16_HANDLER( gcpinbal_tilemaps_word_w )
 
 READ16_HANDLER( gcpinbal_ctrl_word_r )
 {
-	// ***** NOT HOOKED UP *****
+    // ***** NOT HOOKED UP *****
 
-	return gcpinbal_piv_ctrlram[offset];
+    return gcpinbal_piv_ctrlram[offset];
 }
 
 
 WRITE16_HANDLER( gcpinbal_ctrl_word_w )
 {
-	// ***** NOT HOOKED UP *****
+    // ***** NOT HOOKED UP *****
 
-	COMBINE_DATA(&gcpinbal_piv_ctrlram[offset]);
-	data = gcpinbal_piv_ctrlram[offset];
+    COMBINE_DATA(&gcpinbal_piv_ctrlram[offset]);
+    data = gcpinbal_piv_ctrlram[offset];
 
-	switch (offset)
-	{
-		case 0x00:
-			gcpinbal_scrollx[0] = -data;
-			break;
+    switch (offset)
+    {
+        case 0x00:
+            gcpinbal_scrollx[0] = -data;
+            break;
 
-		case 0x01:
-			gcpinbal_scrollx[1] = -data;
-			break;
+        case 0x01:
+            gcpinbal_scrollx[1] = -data;
+            break;
 
-		case 0x02:
-			gcpinbal_scrollx[2] = -data;
-			break;
+        case 0x02:
+            gcpinbal_scrollx[2] = -data;
+            break;
 
-		case 0x03:
-			gcpinbal_scrolly[0] = data;
-			break;
+        case 0x03:
+            gcpinbal_scrolly[0] = data;
+            break;
 
-		case 0x04:
-			gcpinbal_scrolly[1] = data;
-			break;
+        case 0x04:
+            gcpinbal_scrolly[1] = data;
+            break;
 
-		case 0x05:
-			gcpinbal_scrolly[2] = data;
-			break;
+        case 0x05:
+            gcpinbal_scrolly[2] = data;
+            break;
 
-		case 0x06:
-			gcpinbal_ctrl_reg = data;
-			break;
-	}
+        case 0x06:
+            gcpinbal_ctrl_reg = data;
+            break;
+    }
 }
 
 */
@@ -189,21 +189,21 @@ WRITE16_HANDLER( gcpinbal_ctrl_word_w )
 /****************************************************************
                      SPRITE DRAW ROUTINE
 
-	Word |     Bit(s)      | Use
-	-----+-----------------+-----------------
-	  0  |........ xxxxxxxx| X lo
-	  1  |........ xxxxxxxx| X hi
-	  2  |........ xxxxxxxx| Y lo
-	  3  |........ xxxxxxxx| Y hi
-	  4  |........ x.......| Disable
-	  4  |........ ...x....| Flip Y
-	  4  |........ ....x...| 1 = Y chain, 0 = X chain
-	  4  |........ .....xxx| Chain size
-	  5  |........ ??xxxxxx| Tile (low)
-	  6  |........ xxxxxxxx| Tile (high)
-	  7  |........ ....xxxx| Color Bank
+    Word |     Bit(s)      | Use
+    -----+-----------------+-----------------
+      0  |........ xxxxxxxx| X lo
+      1  |........ xxxxxxxx| X hi
+      2  |........ xxxxxxxx| Y lo
+      3  |........ xxxxxxxx| Y hi
+      4  |........ x.......| Disable
+      4  |........ ...x....| Flip Y
+      4  |........ ....x...| 1 = Y chain, 0 = X chain
+      4  |........ .....xxx| Chain size
+      5  |........ ??xxxxxx| Tile (low)
+      6  |........ xxxxxxxx| Tile (high)
+      7  |........ ....xxxx| Color Bank
 
-	Modified table from Raine
+    Modified table from Raine
 
 ****************************************************************/
 
@@ -359,7 +359,7 @@ VIDEO_UPDATE( gcpinbal )
 
 #if 0
 	{
-//		char buf[80];
+//      char buf[80];
 		sprintf(buf,"bg0_gfx: %04x bg1_gfx: %04x ",bg0_gfxset,bg1_gfxset);
 		usrintf_showmessage(buf);
 	}

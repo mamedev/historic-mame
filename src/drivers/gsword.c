@@ -10,33 +10,33 @@ Credits:
 - Jarek Parchanski: Dip Switch Fixes, Color improvements, ADPCM Interface code
 - Tatsuyuki Satoh: sound improvements, NEC 8741 emulation,adpcm improvements
 - Charlie Miltenberger: sprite colors improvements & precious hardware
-			information and screenshots
+            information and screenshots
 
 Trick:
 If you want fight with ODILION swordsman patch program for 1st CPU
 at these addresses, otherwise you won't never fight with him.
 
-		ROM[0x2256] = 0
-		ROM[0x2257] = 0
-		ROM[0x2258] = 0
-		ROM[0x2259] = 0
-		ROM[0x225A] = 0
+        ROM[0x2256] = 0
+        ROM[0x2257] = 0
+        ROM[0x2258] = 0
+        ROM[0x2259] = 0
+        ROM[0x225A] = 0
 
 
 There are 3 Z80s and two AY-3-8910s..
 
 Prelim memory map (last updated 6/15/98)
 *****************************************
-GS1		z80 Main Code	(8K)	0000-1FFF
+GS1     z80 Main Code   (8K)    0000-1FFF
 Gs2     z80 Game Data   (8K)    2000-3FFF
 Gs3     z80 Game Data   (8K)    4000-5FFF
 Gs4     z80 Game Data   (8K)    6000-7FFF
 Gs5     z80 Game Data   (4K)    8000-8FFF
 Gs6     Sprites         (8K)
 Gs7     Sprites         (8K)
-Gs8		Sprites			(8K)
-Gs10	Tiles			(8K)
-Gs11	Tiles			(8K)
+Gs8     Sprites         (8K)
+Gs10    Tiles           (8K)
+Gs11    Tiles           (8K)
 Gs12    3rd z80 CPU &   (8K)
         ADPCM Samples?
 Gs13    ADPCM Samples?  (8K)
@@ -49,7 +49,7 @@ Gs16    2nd z80 Data    (8K)    2000-3FFF
 *Main Z80*
 **********
 
-	9000 - 9fff	Work Ram
+    9000 - 9fff Work Ram
         982e - 982e Free play
         98e0 - 98e0 Coin Input
         98e1 - 98e1 Player 1 Controls
@@ -59,16 +59,16 @@ Gs16    2nd z80 Data    (8K)    2000-3FFF
         9e00 - 9e7f Sprites in working ram!
         9e80 - 9eff Sprite X & Y in working ram!
 
-	a000 - afff	Sprite RAM & Video Attributes
-        a000 - a37F	???
-        a380 - a77F	Sprite Tile #s
-        a780 - a7FF	Sprite Y & X positions
-        a980 - a980	Background Tile Bank Select
-        ab00 - ab00	Background Tile Y-Scroll register
-        ab80 - abff	Sprite Attributes(X & Y Flip)
+    a000 - afff Sprite RAM & Video Attributes
+        a000 - a37F ???
+        a380 - a77F Sprite Tile #s
+        a780 - a7FF Sprite Y & X positions
+        a980 - a980 Background Tile Bank Select
+        ab00 - ab00 Background Tile Y-Scroll register
+        ab80 - abff Sprite Attributes(X & Y Flip)
 
-	b000 - b7ff	Screen RAM
-	b800 - ffff	not used?!
+    b000 - b7ff Screen RAM
+    b800 - ffff not used?!
 
 PORTS:
 7e 8741-#0 data port
@@ -380,15 +380,15 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( josvolly_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
-//	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM) another ROM probably, not sure which one (tested on boot)
+//  AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM) another ROM probably, not sure which one (tested on boot)
 	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
-//	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+//  AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( josvolly_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0x8000, 0x8000) AM_WRITE(gsword_adpcm_data_w)
+//  AM_RANGE(0x8000, 0x8000) AM_WRITE(gsword_adpcm_data_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( josvolly_sound_readport, ADDRESS_SPACE_IO, 8 )
@@ -455,9 +455,9 @@ INPUT_PORTS_START( gsword )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 
 	PORT_START	/* DSW0 */
-	/* NOTE: Switches 0 & 1, 6,7,8 not used 	 */
-	/*	 Coins configurations were handled 	 */
-	/*	 via external hardware & not via program */
+	/* NOTE: Switches 0 & 1, 6,7,8 not used      */
+	/*   Coins configurations were handled   */
+	/*   via external hardware & not via program */
 	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x1c, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
@@ -509,7 +509,7 @@ INPUT_PORTS_START( gsword )
 	PORT_DIPSETTING(    0x00, "Fencing" )
 	PORT_DIPSETTING(    0x10, "Kendo" )
 	PORT_DIPSETTING(    0x20, "Roman" )
-//	PORT_DIPSETTING(    0x30, "Kendo" )
+//  PORT_DIPSETTING(    0x30, "Kendo" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )

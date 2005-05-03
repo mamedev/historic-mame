@@ -79,7 +79,7 @@ static void parse_frame(struct tms5110 *tms);
 void *tms5110_create(void)
 {
 	struct tms5110 *tms;
-	
+
 	tms = malloc(sizeof(*tms));
 	memset(tms, 0, sizeof(*tms));
 	return tms;
@@ -103,7 +103,7 @@ void tms5110_destroy(void *chip)
 void tms5110_reset_chip(void *chip)
 {
 	struct tms5110 *tms = chip;
-	
+
     /* initialize the FIFO */
     memset(tms->fifo, 0, sizeof(tms->fifo));
     tms->fifo_head = tms->fifo_tail = tms->fifo_count = 0;
@@ -218,7 +218,7 @@ static void perform_dummy_read(struct tms5110 *tms)
                 Talk Status goes active at the initiation of a SPEAK command.
                 It goes inactive (low) when the stop code (Energy=1111) is processed, or
                 immediately(?????? not TMS5110) by a RESET command.
-		TMS5110 datasheets mention this is only available as a result of executing
+        TMS5110 datasheets mention this is only available as a result of executing
                 TEST TALK command.
 
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Major Havoc hardware
+    Atari Major Havoc hardware
 
 ***************************************************************************/
 
@@ -30,7 +30,7 @@ static UINT8 has_gamma_cpu;
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -76,7 +76,7 @@ WRITE8_HANDLER( mhavoc_gamma_irq_ack_w )
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -116,7 +116,7 @@ MACHINE_INIT( mhavoc )
 
 /*************************************
  *
- *	Alpha -> gamma communications
+ *  Alpha -> gamma communications
  *
  *************************************/
 
@@ -154,7 +154,7 @@ READ8_HANDLER( mhavoc_alpha_r )
 
 /*************************************
  *
- *	Gamma -> alpha communications
+ *  Gamma -> alpha communications
  *
  *************************************/
 
@@ -179,7 +179,7 @@ READ8_HANDLER( mhavoc_gamma_r )
 
 /*************************************
  *
- *	RAM/ROM banking
+ *  RAM/ROM banking
  *
  *************************************/
 
@@ -189,7 +189,7 @@ WRITE8_HANDLER( mhavoc_ram_banksel_w )
 
 	data &= 0x01;
 	cpu_setbank(1, &ram_base[bank[data]]);
-/*	logerror("Alpha RAM select: %02x\n",data);*/
+/*  logerror("Alpha RAM select: %02x\n",data);*/
 }
 
 
@@ -199,14 +199,14 @@ WRITE8_HANDLER( mhavoc_rom_banksel_w )
 
 	data &= 0x03;
 	cpu_setbank(2, &ram_base[bank[data]]);
-/*	logerror("Alpha ROM select: %02x\n",data);*/
+/*  logerror("Alpha ROM select: %02x\n",data);*/
 }
 
 
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -278,7 +278,7 @@ READ8_HANDLER( mhavoc_port_1_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 

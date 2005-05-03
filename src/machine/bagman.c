@@ -17,8 +17,8 @@
 **need to use it for some other game too. We will need to make it more exact
 **then (some of the functionality of this chip IS NOT implemented). However I
 **have bought a book about PALs and I'm able to improve it. Just LMK.
-**	Jarek Burczynski
-**	bujar at mame dot net
+**  Jarek Burczynski
+**  bujar at mame dot net
 */
 
 
@@ -31,7 +31,7 @@ static unsigned char columnvalue[32];
 /*8 output pins (actually 6 output and 2 input/output)*/
 static unsigned char outvalue[8];
 
-/*		64 rows x 32 columns
+/*      64 rows x 32 columns
 **  1 - fuse blown: disconnected from input (equal to 1)
 **  0 - fuse not blown: connected to input (ie. x, not x, q, not q accordingly)
 */

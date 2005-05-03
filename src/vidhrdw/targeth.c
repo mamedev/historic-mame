@@ -19,24 +19,24 @@ static struct tilemap *pant[2];
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Screen 0 & 1: (64*32, 16x16 tiles)
+    Screen 0 & 1: (64*32, 16x16 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | --xxxxxx xxxxxxxx | code
-	  0  | xx------ -------- | not used?
-	  1  | -------- ---xxxxx | color (uses 1st half of the palette)
-	  1  | -------- --x----- | flip y
-	  1  | -------- -x------ | flip x
-	  1  | xxxxxxxx x------- | not used?
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | --xxxxxx xxxxxxxx | code
+      0  | xx------ -------- | not used?
+      1  | -------- ---xxxxx | color (uses 1st half of the palette)
+      1  | -------- --x----- | flip y
+      1  | -------- -x------ | flip x
+      1  | xxxxxxxx x------- | not used?
 */
 
 static void get_tile_info_targeth_screen0(int tile_index)
@@ -59,7 +59,7 @@ static void get_tile_info_targeth_screen1(int tile_index)
 
 /***************************************************************************
 
-	Memory Handlers
+    Memory Handlers
 
 ***************************************************************************/
 
@@ -73,7 +73,7 @@ WRITE16_HANDLER( targeth_vram_w )
 
 /***************************************************************************
 
-	Start/Stop the video hardware emulation.
+    Start/Stop the video hardware emulation.
 
 ***************************************************************************/
 
@@ -93,25 +93,25 @@ VIDEO_START( targeth )
 
 /***************************************************************************
 
-	Sprites
+    Sprites
 
 ***************************************************************************/
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | y position
-	  0  | --xxxxxx -------- | not used?
-	  0  | -x------ -------- | flipx
-	  0  | x------- -------- | flipy
-	  1  | xxxxxxxx xxxxxxxx | not used?
-	  2  | ------xx xxxxxxxx | x position
-	  2  | -xxxxx-- -------- | sprite color (uses 2nd half of the palette)
-	  3  | --xxxxxx xxxxxxxx | sprite code
-	  3	 | xx------ -------- | not used?
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | y position
+      0  | --xxxxxx -------- | not used?
+      0  | -x------ -------- | flipx
+      0  | x------- -------- | flipy
+      1  | xxxxxxxx xxxxxxxx | not used?
+      2  | ------xx xxxxxxxx | x position
+      2  | -xxxxx-- -------- | sprite color (uses 2nd half of the palette)
+      3  | --xxxxxx xxxxxxxx | sprite code
+      3  | xx------ -------- | not used?
 */
 
 static void targeth_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -138,7 +138,7 @@ static void targeth_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

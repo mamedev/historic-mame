@@ -77,7 +77,7 @@ static void pbillrd_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 		int ypos = spriteram[offs + 2];
 		int code = spriteram[offs + 0];
 
-		int flipx = 0;//spriteram[offs + 0] & 0x80;	//?? unused ?
+		int flipx = 0;//spriteram[offs + 0] & 0x80; //?? unused ?
 		int flipy = 0;//spriteram[offs + 0] & 0x40;
 		int color = spriteram[offs + 1] & 0x0f;
 

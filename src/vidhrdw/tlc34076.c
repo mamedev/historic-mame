@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	tlc34076.c
+    tlc34076.c
 
-	Basic implementation of the TLC34076 palette chip and similar
-	compatible chips.
+    Basic implementation of the TLC34076 palette chip and similar
+    compatible chips.
 
 ***************************************************************************/
 
@@ -33,7 +33,7 @@ static UINT8 dacbits;
 
 /*************************************
  *
- *	Palette update
+ *  Palette update
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static void update_palette(int which)
 
 /*************************************
  *
- *	State reset
+ *  State reset
  *
  *************************************/
 
@@ -91,7 +91,7 @@ void tlc34076_reset(int dacwidth)
 
 /*************************************
  *
- *	Read access
+ *  Read access
  *
  *************************************/
 
@@ -129,7 +129,7 @@ READ8_HANDLER( tlc34076_r )
 
 /*************************************
  *
- *	Write access
+ *  Write access
  *
  *************************************/
 
@@ -168,55 +168,55 @@ WRITE8_HANDLER( tlc34076_w )
 
 		case GENERAL_CONTROL:
 			/*
-				7 6 5 4 3 2 1 0
-				X X X X X X X 0 HSYNCOUT is active-low
-				X X X X X X X 1 HSYNCOUT is active-high (default)
-				X X X X X X 0 X VSYNCOUT is active-low
-				X X X X X X 1 X VSYNCOUT is active-high (default)
-				X X X X X 0 X X Disable split shift register transfer (default)
-				X X X X 0 1 X X Enable split shift register transfer
-				X X X X 0 X X X Disable special nibble mode (default)
-				X X X X 1 0 X X Enable special nibble mode
-				X X X 0 X X X X 0-IRE pedestal (default)
-				X X X 1 X X X X 7.5-IRE pedestal
-				X X 0 X X X X X Disable sync (default)
-				X X 1 X X X X X Enable sync
-				X 0 X X X X X X Little-endian mode (default)
-				X 1 X X X X X X Big-endian mode
-				0 X X X X X X X MUXOUT is low (default)
-				1 X X X X X X X MUXOUT is high
-			*/
+                7 6 5 4 3 2 1 0
+                X X X X X X X 0 HSYNCOUT is active-low
+                X X X X X X X 1 HSYNCOUT is active-high (default)
+                X X X X X X 0 X VSYNCOUT is active-low
+                X X X X X X 1 X VSYNCOUT is active-high (default)
+                X X X X X 0 X X Disable split shift register transfer (default)
+                X X X X 0 1 X X Enable split shift register transfer
+                X X X X 0 X X X Disable special nibble mode (default)
+                X X X X 1 0 X X Enable special nibble mode
+                X X X 0 X X X X 0-IRE pedestal (default)
+                X X X 1 X X X X 7.5-IRE pedestal
+                X X 0 X X X X X Disable sync (default)
+                X X 1 X X X X X Enable sync
+                X 0 X X X X X X Little-endian mode (default)
+                X 1 X X X X X X Big-endian mode
+                0 X X X X X X X MUXOUT is low (default)
+                1 X X X X X X X MUXOUT is high
+            */
 			break;
 
 		case INPUT_CLOCK_SEL:
 			/*
-				3 2 1 0
-				0 0 0 0 Select CLK0 as clock source§
-				0 0 0 1 Select CLK1 as clock source
-				0 0 1 0 Select CLK2 as clock source
-				0 0 1 1 Select CLK3 as TTL clock source
-				0 1 0 0 Select CLK3 as TTL clock source
-				1 0 0 0 Select CLK3 and CLK3 as ECL clock sources
-			*/
+                3 2 1 0
+                0 0 0 0 Select CLK0 as clock source§
+                0 0 0 1 Select CLK1 as clock source
+                0 0 1 0 Select CLK2 as clock source
+                0 0 1 1 Select CLK3 as TTL clock source
+                0 1 0 0 Select CLK3 as TTL clock source
+                1 0 0 0 Select CLK3 and CLK3 as ECL clock sources
+            */
 			break;
 
 		case OUTPUT_CLOCK_SEL:
 			/*
-				0 0 0 X X X VCLK frequency = DOTCLK frequency
-				0 0 1 X X X VCLK frequency = DOTCLK frequency/2
-				0 1 0 X X X VCLK frequency = DOTCLK frequency/4
-				0 1 1 X X X VCLK frequency = DOTCLK frequency/8
-				1 0 0 X X X VCLK frequency = DOTCLK frequency/16
-				1 0 1 X X X VCLK frequency = DOTCLK frequency/32
-				1 1 X X X X VCLK output held at logic high level (default condition)
-				X X X 0 0 0 SCLK frequency = DOTCLK frequency
-				X X X 0 0 1 SCLK frequency = DOTCLK frequency/2
-				X X X 0 1 0 SCLK frequency = DOTCLK frequency/4
-				X X X 0 1 1 SCLK frequency = DOTCLK frequency/8
-				X X X 1 0 0 SCLK frequency = DOTCLK frequency/16
-				X X X 1 0 1 SCLK frequency = DOTCLK frequency/32
-				X X X 1 1 X SCLK output held at logic level low (default condition)
-			*/
+                0 0 0 X X X VCLK frequency = DOTCLK frequency
+                0 0 1 X X X VCLK frequency = DOTCLK frequency/2
+                0 1 0 X X X VCLK frequency = DOTCLK frequency/4
+                0 1 1 X X X VCLK frequency = DOTCLK frequency/8
+                1 0 0 X X X VCLK frequency = DOTCLK frequency/16
+                1 0 1 X X X VCLK frequency = DOTCLK frequency/32
+                1 1 X X X X VCLK output held at logic high level (default condition)
+                X X X 0 0 0 SCLK frequency = DOTCLK frequency
+                X X X 0 0 1 SCLK frequency = DOTCLK frequency/2
+                X X X 0 1 0 SCLK frequency = DOTCLK frequency/4
+                X X X 0 1 1 SCLK frequency = DOTCLK frequency/8
+                X X X 1 0 0 SCLK frequency = DOTCLK frequency/16
+                X X X 1 0 1 SCLK frequency = DOTCLK frequency/32
+                X X X 1 1 X SCLK output held at logic level low (default condition)
+            */
 			break;
 
 		case PIXEL_READ_MASK:
@@ -234,7 +234,7 @@ WRITE8_HANDLER( tlc34076_w )
 
 /*************************************
  *
- *	16-bit accessors
+ *  16-bit accessors
  *
  *************************************/
 

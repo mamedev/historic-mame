@@ -21,7 +21,7 @@ OSOBJS += $(OBJ)/windows/mame.res
 endif
 
 ifdef NEW_DEBUGGER
-OSOBJS += $(OBJ)/windows/debugwin.o 
+OSOBJS += $(OBJ)/windows/debugwin.o
 endif
 
 # enable guard pages on all memory allocations in the debug build

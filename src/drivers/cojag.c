@@ -1,55 +1,55 @@
 /***************************************************************************
 
-	Atari CoJag hardware
+    Atari CoJag hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Area 51 (3 Sets)
-		* Maximum Force (2 Sets)
-		* Area 51/Maximum Force Duo (2 Sets)
-		* Vicious Circle
+    Games supported:
+        * Area 51 (3 Sets)
+        * Maximum Force (2 Sets)
+        * Area 51/Maximum Force Duo (2 Sets)
+        * Vicious Circle
 
-	In the future:
-		* Fishin' Frenzy
-		* Freeze
+    In the future:
+        * Fishin' Frenzy
+        * Freeze
 
-	To do:
-		* map out unused RAM per-game via MRA8_NOP/MWA8_NOP
+    To do:
+        * map out unused RAM per-game via MRA8_NOP/MWA8_NOP
 
-	Note: There is believed to be a 68020 version of Maximum Force (not confirmed or dumped)
+    Note: There is believed to be a 68020 version of Maximum Force (not confirmed or dumped)
 
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
-	========================================================================
-	MAIN CPU
-	========================================================================
+    ========================================================================
+    MAIN CPU
+    ========================================================================
 
-	------------------------------------------------------------
-	000000-3FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 0
-	400000-7FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 1
-	F00000-F000FF   R/W   xxxxxxxx xxxxxxxx   Tom Internal Registers
-	F00400-F005FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table A
-	F00600-F007FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table B
-	F00800-F00D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer A
-	F01000-F0159F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer B
-	F01800-F01D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer currently selected
-	F02000-F021FF   R/W   xxxxxxxx xxxxxxxx   GPU control registers
-	F02200-F022FF   R/W   xxxxxxxx xxxxxxxx   Blitter registers
-	F03000-F03FFF   R/W   xxxxxxxx xxxxxxxx   Local GPU RAM
-	F08800-F08D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer A
-	F09000-F0959F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer B
-	F09800-F09D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer currently selected
-	F0B000-F0BFFF   R/W   xxxxxxxx xxxxxxxx   32-bit access to local GPU RAM
-	F10000-F13FFF   R/W   xxxxxxxx xxxxxxxx   Jerry
-	F14000-F17FFF   R/W   xxxxxxxx xxxxxxxx   Joysticks and GPIO0-5
-	F18000-F1AFFF   R/W   xxxxxxxx xxxxxxxx   Jerry DSP
-	F1B000-F1CFFF   R/W   xxxxxxxx xxxxxxxx   Local DSP RAM
-	F1D000-F1DFFF   R     xxxxxxxx xxxxxxxx   Wavetable ROM
-	------------------------------------------------------------
+    ------------------------------------------------------------
+    000000-3FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 0
+    400000-7FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 1
+    F00000-F000FF   R/W   xxxxxxxx xxxxxxxx   Tom Internal Registers
+    F00400-F005FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table A
+    F00600-F007FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table B
+    F00800-F00D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer A
+    F01000-F0159F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer B
+    F01800-F01D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - line buffer currently selected
+    F02000-F021FF   R/W   xxxxxxxx xxxxxxxx   GPU control registers
+    F02200-F022FF   R/W   xxxxxxxx xxxxxxxx   Blitter registers
+    F03000-F03FFF   R/W   xxxxxxxx xxxxxxxx   Local GPU RAM
+    F08800-F08D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer A
+    F09000-F0959F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer B
+    F09800-F09D9F   R/W   xxxxxxxx xxxxxxxx   LBUF - 32-bit access to line buffer currently selected
+    F0B000-F0BFFF   R/W   xxxxxxxx xxxxxxxx   32-bit access to local GPU RAM
+    F10000-F13FFF   R/W   xxxxxxxx xxxxxxxx   Jerry
+    F14000-F17FFF   R/W   xxxxxxxx xxxxxxxx   Joysticks and GPIO0-5
+    F18000-F1AFFF   R/W   xxxxxxxx xxxxxxxx   Jerry DSP
+    F1B000-F1CFFF   R/W   xxxxxxxx xxxxxxxx   Local DSP RAM
+    F1D000-F1DFFF   R     xxxxxxxx xxxxxxxx   Wavetable ROM
+    ------------------------------------------------------------
 
 ***************************************************************************/
 
@@ -65,7 +65,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -80,7 +80,7 @@ UINT8 cojag_is_r3000;
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -99,7 +99,7 @@ static struct ide_interface ide_intf =
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -137,17 +137,17 @@ static MACHINE_INIT( cojag )
 
 /*************************************
  *
- *	Misc. control bits
+ *  Misc. control bits
  *
  *************************************/
 
 static READ32_HANDLER( misc_control_r )
 {
-	/*	D7    = board reset (low)
-		D6    = audio must & reset (high)
-		D5    = volume control data (invert on write)
-		D4    = volume control clock
-	 	D0    = shared memory select (0=XBUS) */
+	/*  D7    = board reset (low)
+        D6    = audio must & reset (high)
+        D5    = volume control data (invert on write)
+        D4    = volume control clock
+        D0    = shared memory select (0=XBUS) */
 
 	return misc_control_data ^ 0x20;
 }
@@ -157,11 +157,11 @@ static WRITE32_HANDLER( misc_control_w )
 {
 	logerror("%08X:misc_control_w(%02X)\n", activecpu_get_previouspc(), data);
 
-	/*	D7    = board reset (low)
-		D6    = audio must & reset (high)
-		D5    = volume control data (invert on write)
-		D4    = volume control clock
-	 	D0    = shared memory select (0=XBUS) */
+	/*  D7    = board reset (low)
+        D6    = audio must & reset (high)
+        D5    = volume control data (invert on write)
+        D4    = volume control clock
+        D0    = shared memory select (0=XBUS) */
 
 	/* handle resetting the DSPs */
 	if (!(data & 0x80))
@@ -182,7 +182,7 @@ static WRITE32_HANDLER( misc_control_w )
 
 /*************************************
  *
- *	32-bit access to the GPU
+ *  32-bit access to the GPU
  *
  *************************************/
 
@@ -201,7 +201,7 @@ static WRITE32_HANDLER( gpuctrl_w )
 
 /*************************************
  *
- *	32-bit access to the DSP
+ *  32-bit access to the DSP
  *
  *************************************/
 
@@ -220,7 +220,7 @@ static WRITE32_HANDLER( dspctrl_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -246,7 +246,7 @@ static READ32_HANDLER( status_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -259,7 +259,7 @@ static WRITE32_HANDLER( latch_w )
 
 /*************************************
  *
- *	EEPROM access
+ *  EEPROM access
  *
  *************************************/
 
@@ -280,15 +280,15 @@ static WRITE32_HANDLER( eeprom_enable_w )
 
 static WRITE32_HANDLER( eeprom_data_w )
 {
-//	if (eeprom_enable)
+//  if (eeprom_enable)
 	{
 		if (cojag_is_r3000)
 			generic_nvram32[offset] = data & 0x000000ff;
 		else
 			generic_nvram32[offset] = data & 0xff000000;
 	}
-//	else
-//		logerror("%08X:error writing to disabled EEPROM\n", activecpu_get_previouspc());
+//  else
+//      logerror("%08X:error writing to disabled EEPROM\n", activecpu_get_previouspc());
 	eeprom_enable = 0;
 }
 
@@ -296,29 +296,29 @@ static WRITE32_HANDLER( eeprom_data_w )
 
 /*************************************
  *
- *	GPU synchronization & speedup
+ *  GPU synchronization & speedup
  *
  *************************************/
 
 /*
-	Explanation:
+    Explanation:
 
-	The GPU generally sits in a tight loop waiting for the main CPU to store
-	a jump address into a specific memory location. This speedup is designed
-	to catch that loop, which looks like this:
+    The GPU generally sits in a tight loop waiting for the main CPU to store
+    a jump address into a specific memory location. This speedup is designed
+    to catch that loop, which looks like this:
 
-		load    (r28),r21
-		jump    (r21)
-		nop
+        load    (r28),r21
+        jump    (r21)
+        nop
 
-	When nothing is pending, the GPU keeps the address of the load instruction
-	at (r28) so that it loops back on itself. When the main CPU wants to execute
-	a command, it stores an alternate address to (r28).
+    When nothing is pending, the GPU keeps the address of the load instruction
+    at (r28) so that it loops back on itself. When the main CPU wants to execute
+    a command, it stores an alternate address to (r28).
 
-	Even if we don't optimize this case, we do need to detect when a command
-	is written to the GPU in order to improve synchronization until the GPU
-	has finished. To do this, we start a temporary high frequency timer and
-	run it until we get back to the spin loop.
+    Even if we don't optimize this case, we do need to detect when a command
+    is written to the GPU in order to improve synchronization until the GPU
+    has finished. To do this, we start a temporary high frequency timer and
+    run it until we get back to the spin loop.
 */
 
 static data32_t *gpu_jump_address;
@@ -371,19 +371,19 @@ static READ32_HANDLER( gpu_jump_r )
 
 /*************************************
  *
- *	Main CPU speedup (R3000 games)
+ *  Main CPU speedup (R3000 games)
  *
  *************************************/
 
 /*
-	Explanation:
+    Explanation:
 
-	Instead of sitting in a tight loop, the CPU will run the random number
-	generator over and over while waiting for an interrupt. In order to catch
-	that, we snoop the memory location it is polling, and see if it is read
-	at least 5 times in a row, each time less than 200 cycles apart. If so,
-	we assume it is spinning. Also, by waiting for 5 iterations, we let it
-	crank through some random numbers, just not several thousand every frame.
+    Instead of sitting in a tight loop, the CPU will run the random number
+    generator over and over while waiting for an interrupt. In order to catch
+    that, we snoop the memory location it is polling, and see if it is read
+    at least 5 times in a row, each time less than 200 cycles apart. If so,
+    we assume it is spinning. Also, by waiting for 5 iterations, we let it
+    crank through some random numbers, just not several thousand every frame.
 */
 
 #if ENABLE_SPEEDUP_HACKS
@@ -425,15 +425,15 @@ static READ32_HANDLER( cojagr3k_main_speedup_r )
 
 /*************************************
  *
- *	Main CPU speedup (Area 51)
+ *  Main CPU speedup (Area 51)
  *
  *************************************/
 
 /*
-	Explanation:
+    Explanation:
 
-	Very similar to the R3000 code, except we need to verify that the value in
-	*main_speedup is actually 0.
+    Very similar to the R3000 code, except we need to verify that the value in
+    *main_speedup is actually 0.
 */
 
 #if ENABLE_SPEEDUP_HACKS
@@ -466,10 +466,10 @@ static WRITE32_HANDLER( area51_main_speedup_w )
 
 
 /*
-	Explanation:
+    Explanation:
 
-	The Area 51/Maximum Force duo writes to a non-aligned address, so our check
-	against 0 must handle that explicitly.
+    The Area 51/Maximum Force duo writes to a non-aligned address, so our check
+    against 0 must handle that explicitly.
 */
 
 static WRITE32_HANDLER( area51mx_main_speedup_w )
@@ -504,7 +504,7 @@ static WRITE32_HANDLER( area51mx_main_speedup_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -598,7 +598,7 @@ static ADDRESS_MAP_START( m68020_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xf03000, 0xf03fff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_gpu_ram)
 	AM_RANGE(0xf0b000, 0xf0bfff) AM_WRITE(MWA32_BANK3)
 	AM_RANGE(0xf10000, 0xf103ff) AM_WRITE(jaguar_jerry_regs32_w)
-//	AM_RANGE(0xf17800, 0xf17803) AM_WRITE(latch_w)	// GPI04
+//  AM_RANGE(0xf17800, 0xf17803) AM_WRITE(latch_w)  // GPI04
 	AM_RANGE(0xf1a100, 0xf1a13f) AM_WRITE(dspctrl_w)
 	AM_RANGE(0xf1a140, 0xf1a17f) AM_WRITE(jaguar_serial_w)
 	AM_RANGE(0xf1b000, 0xf1cfff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_dsp_ram)
@@ -608,7 +608,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	GPU memory handlers
+ *  GPU memory handlers
  *
  *************************************/
 
@@ -639,7 +639,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	DSP memory handlers
+ *  DSP memory handlers
  *
  *************************************/
 
@@ -666,7 +666,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -763,7 +763,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -881,9 +881,9 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
- *	Date Information comes from either
+ *  Date Information comes from either
  *   ROM labels or from the Self-Test
  *   as "Main"
  *
@@ -1001,7 +1001,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1110,7 +1110,7 @@ static DRIVER_INIT( vcircle )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

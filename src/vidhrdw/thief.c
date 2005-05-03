@@ -1,5 +1,5 @@
-/*	video hardware for Pacific Novelty games:
-**	Thief/Nato Defense
+/*  video hardware for Pacific Novelty games:
+**  Thief/Nato Defense
 */
 
 #include "driver.h"
@@ -54,11 +54,11 @@ WRITE8_HANDLER( thief_video_control_w ){
 
 	thief_video_control = data;
 /*
-	bit 0: screen flip
-	bit 1: working page
-	bit 2: visible page
-	bit 3: mirrors bit 1
-	bit 4: mirrors bit 2
+    bit 0: screen flip
+    bit 1: working page
+    bit 2: visible page
+    bit 3: mirrors bit 1
+    bit 4: mirrors bit 2
 */
 }
 
@@ -68,9 +68,9 @@ WRITE8_HANDLER( thief_vtcsel_w ){
 
 WRITE8_HANDLER( thief_color_map_w ){
 /*
-	--xx----	blue
-	----xx--	green
-	------xx	red
+    --xx----    blue
+    ----xx--    green
+    ------xx    red
 */
 	const UINT8 intensity[4] = {0x00,0x55,0xAA,0xFF};
 	int r = intensity[(data & 0x03) >> 0];
@@ -83,8 +83,8 @@ WRITE8_HANDLER( thief_color_map_w ){
 
 WRITE8_HANDLER( thief_color_plane_w ){
 /*
-	--xx----	selects bitplane to read from (0..3)
-	----xxxx	selects bitplane(s) to write to (0x0 = none, 0xf = all)
+    --xx----    selects bitplane to read from (0..3)
+    ----xxxx    selects bitplane(s) to write to (0x0 = none, 0xf = all)
 */
 	thief_write_mask = data&0xf;
 	thief_read_mask = (data>>4)&3;
@@ -216,7 +216,7 @@ WRITE8_HANDLER( thief_blit_w ){
 	UINT8 old_data;
 	int xor_blit = data;
 		/* making the xor behavior selectable fixes score display,
-		but causes minor glitches on the playfield */
+        but causes minor glitches on the playfield */
 
 	x -= width*8;
 	xoffset = x&7;

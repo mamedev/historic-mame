@@ -1,40 +1,40 @@
 /***************************************************************************
 
-							  -= Afega Games =-
+                              -= Afega Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Q / W			Shows Layer 0 / 1
-		A				Shows Sprites
+        Q / W           Shows Layer 0 / 1
+        A               Shows Sprites
 
-		Keys can be used together!
+        Keys can be used together!
 
-	[ 2 Layers ]
-								[ Layer 0 ]		[ Layer 1 ]
+    [ 2 Layers ]
+                                [ Layer 0 ]     [ Layer 1 ]
 
-		Tile Size:				16 x 16 x 4/8	8 x 8 x 4
-		Layer Size (pixels):	1024 x 1024		256 x 256
-		Layer Size (tiles):		64 x 64			32 x 32
-		Scrolling:				Yes				No
+        Tile Size:              16 x 16 x 4/8   8 x 8 x 4
+        Layer Size (pixels):    1024 x 1024     256 x 256
+        Layer Size (tiles):     64 x 64         32 x 32
+        Scrolling:              Yes             No
 
-		The layout is a bit weird. 16 consecutive tile codes define a
-		vertical column. 16 columns form a page (256 x 256).
-		Layer 0 is made of 4 x 4 pages. Layer 1 of just 1 page.
+        The layout is a bit weird. 16 consecutive tile codes define a
+        vertical column. 16 columns form a page (256 x 256).
+        Layer 0 is made of 4 x 4 pages. Layer 1 of just 1 page.
 
-	[ 256 Sprites ]
+    [ 256 Sprites ]
 
-		Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
-		tiles both horizontally and vertically.
-		Is there zooming ?
+        Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
+        tiles both horizontally and vertically.
+        Is there zooming ?
 
-	[ Priorities ]
+    [ Priorities ]
 
-		The game only uses this scheme:
+        The game only uses this scheme:
 
-		Back -> Front:	Layer 0, Sprites, Layer 1
+        Back -> Front:  Layer 0, Sprites, Layer 1
 
 ***************************************************************************/
 
@@ -50,7 +50,7 @@ data16_t *afega_vram_1, *afega_scroll_1;
 /***************************************************************************
 
 
-						Palette - RRRRGGGGBBBB????
+                        Palette - RRRRGGGGBBBB????
 
 
 ***************************************************************************/
@@ -78,12 +78,12 @@ PALETTE_INIT( grdnstrm )
 
 /***************************************************************************
 
-								Tilemaps
+                                Tilemaps
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		2.w		fedc ---- ---- ----		Color
-				---- ba98 7654 3210		Code
+        2.w     fedc ---- ---- ----     Color
+                ---- ba98 7654 3210     Code
 
 ***************************************************************************/
 
@@ -150,7 +150,7 @@ WRITE16_HANDLER( afega_vram_1_w )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -198,34 +198,34 @@ VIDEO_START( firehawk )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		fedc ba-- ---- ----
-				---- --9- ---- ----		Flip Y?
-				---- ---8 7654 3---
-				---- --------- -21-		Priority?
-				---- ---- ---- ---0		1 = Draw This Sprite
+        0.w     fedc ba-- ---- ----
+                ---- --9- ---- ----     Flip Y?
+                ---- ---8 7654 3---
+                ---- --------- -21-     Priority?
+                ---- ---- ---- ---0     1 = Draw This Sprite
 
-		2.w		fedc ba98 ---- ----
-				---- ---- 7654 ----		Number Of Tiles Along Y - 1
-				---- ---- ---- 3210		Number Of Tiles Along X - 1
+        2.w     fedc ba98 ---- ----
+                ---- ---- 7654 ----     Number Of Tiles Along Y - 1
+                ---- ---- ---- 3210     Number Of Tiles Along X - 1
 
-		4.w
+        4.w
 
-		6.w								Code
+        6.w                             Code
 
-		8.w		fedc ba98 ---- ----
-				---- ---- 7654 3210		X (Signed)
+        8.w     fedc ba98 ---- ----
+                ---- ---- 7654 3210     X (Signed)
 
-		A.w
+        A.w
 
-		C.w		fedc ba98 ---- ----
-				---- ---- 7654 3210		Y (Signed)
+        C.w     fedc ba98 ---- ----
+                ---- ---- 7654 3210     Y (Signed)
 
-		E.w		fedc ba98 7654 ----
-				---- ---- ---- 3210		Color
+        E.w     fedc ba98 7654 ----
+                ---- ---- ---- 3210     Color
 
 
 ***************************************************************************/
@@ -303,7 +303,7 @@ if (code_pressed(KEYCODE_X))
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -344,8 +344,8 @@ VIDEO_UPDATE( redhawkb )
 	int layers_ctrl = -1;
 
 	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
-//	flip_screen_x_set(~readinputport(2) & 0x0100);
-//	flip_screen_y_set(~readinputport(2) & 0x0200);
+//  flip_screen_x_set(~readinputport(2) & 0x0100);
+//  flip_screen_y_set(~readinputport(2) & 0x0200);
 
 	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]+0x100);
 	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1]);

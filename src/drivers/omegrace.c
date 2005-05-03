@@ -1,218 +1,218 @@
 /***************************************************************************
 
-	Midway Omega Race hardware
+    Midway Omega Race hardware
 
-	driver by Bernd Wiebelt
+    driver by Bernd Wiebelt
 
-	Games supported:
-		* Omega Race
-		* Delta Race (Omega Race bootleg by Allied Leisure)
+    Games supported:
+        * Omega Race
+        * Delta Race (Omega Race bootleg by Allied Leisure)
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	This driver is dedicated to my loving wife Natalia Wiebelt
-	                                      and my daughter Lara Anna Maria
-	Summer 1997 Bernd Wiebelt
+    This driver is dedicated to my loving wife Natalia Wiebelt
+                                          and my daughter Lara Anna Maria
+    Summer 1997 Bernd Wiebelt
 
-	Many thanks to Al Kossow for the original sources and the solid documentation.
-	Without him, I could never had completed this driver.
-
-
-	--------
-
-	Most of the info here comes from the wiretap archive at:
-	http://www.spies.com/arcade/simulation/gameHardware/
+    Many thanks to Al Kossow for the original sources and the solid documentation.
+    Without him, I could never had completed this driver.
 
 
-	Omega Race Memory Map
-	Version 1.1 (Jul 24,1997)
-	---------------------
+    --------
 
-	0000 - 3fff	PROM
-	4000 - 4bff	RAM (3k)
-	5c00 - 5cff	NVRAM (256 x 4bits)
-	8000 - 8fff	Vec RAM (4k)
-	9000 - 9fff	Vec ROM (4k)
-
-	15 14 13 12 11 10
-	--+--+--+--+--+--
-	0  0  0  0                       M8 - 2732  (4k)
-	0  0  0  1                       L8 - 2732
-	0  0  1  0                       K8 - 2732
-	0  0  1  1                       J8 - 2732
-
-	0  1  -  0  0  0                 RAM (3k)
-	0  1  -  0  0  1
-	0  1  -  0  1  0
-
-	0  1  -  1  1  1                 4 Bit BB RAM (d0-d3)
-
-	1  -  -  0  0                    Vec RAM (4k)
-	1  -  -  0  1
-	1  -  -  1  0			 Vec ROM (2k) E1
-	1  -  -  1  1                    Vec ROM (2k) F1
-
-	I/O Ports
-
-	8	Start/ (VG start)
-	9	WDOG/  (Reset watchdog)
-	A	SEQRES/ (VG stop/reset?)
-	B	RDSTOP/ d7 = stop (VG running if 0)
-
-	10 I	DIP SW C4 (game ship settings)
-
-		6 5  4 3  2 1
-	                      1st bonus ship at
-	        | |  | |  0 0  40,000
-	        | |  | |  0 1  50,000
-	        | |  | |  1 0  70,000
-	        | |  | |  1 1 100,000
-	        | |  | |      2nd and  3rd bonus ships
-	        | |  0 0      150,000   250,000
-	        | |  0 1      250,000   500,000
-	        | |  1 0      500,000   750,000
-	        | |  1 1      750,000 1,500,000
-	        | |           ships per credit
-	        0 0           1 credit = 2 ships / 2 credits = 4 ships
-	        0 1           1 credit = 2 ships / 2 credits = 5 ships
-	        1 0           1 credit = 3 ships / 2 credits = 6 ships
-	        1 1           1 credit = 3 ships / 2 credits = 7 ships
-
-	11 I	7 = Test
-		6 = P1 Fire
-		5 = P1 Thrust
-		4 = Tilt
-
-		1 = Coin 2
-		0 = Coin 1
-
-	12 I	7 = 1P1CR
-		6 = 1P2CR
-
-		3 = 2P2CR -+
-		2 = 2P1CR  |
-		1 = P2Fire |
-		0 = P2Thr -+ cocktail only
-
-	13 O   7 =
-	        6 = screen reverse
-	        5 = 2 player 2 credit start LED
-	        4 = 2 player 1 credit start LED
-	        3 = 1 player 1 credit start LED
-	        2 = 1 player 1 credit start LED
-	        1 = coin meter 2
-	        0 = coin meter 1
-
-	14 O	sound command (interrupts sound Z80)
-
-	15 I	encoder 1 (d7-d2)
-
-		The encoder is a 64 position Grey Code encoder, or a
-		pot and A to D converter.
-
-		Unlike the quadrature inputs on Atari and Sega games,
-	        Omega Race's controller is an absolute angle.
-
-		0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
-		0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
-		0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
-		0xf0, 0xf4, 0xe4, 0xe0, 0xe8, 0xec, 0xcc, 0xc8,
-		0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
-		0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
-		0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
-		0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08
-
-	16 I	encoder 2 (d5-d0)
-
-		The inputs aren't scrambled as they are on the 1 player
-	        encoder
-
-	17 I	DIP SW C6 (coin/cocktail settings)
-
-	        8  7  6 5 4  3 2 1
-	                             coin switch 1
-	        |  |  | | |  0 0 0   1 coin  2 credits
-	        |  |  | | |  0 0 1   1 coin  3 credits
-	        |  |  | | |  0 1 0   1 coin  5 credits
-	        |  |  | | |  0 1 1   4 coins 5 credits
-	        |  |  | | |  1 0 0   3 coins 4 credits
-	        |  |  | | |  1 0 1   2 coins 3 credits
-	        |  |  | | |  1 1 0   2 coins 1 credit
-	        |  |  | | |  1 1 1   1 coin  1 credit
-	        |  |  | | |
-	        |  |  | | |          coin switch 2
-	        |  |  0 0 0          1 coin  2 credits
-	        |  |  0 0 1          1 coin  3 credits
-	        |  |  0 1 0          1 coin  5 credits
-	        |  |  0 1 1          4 coins 5 credits
-	        |  |  1 0 0          3 coins 4 credits
-	        |  |  1 0 1          2 coins 3 credits
-	        |  |  1 1 0          2 coins 1 credit
-	        |  |  1 1 1          1 coin  1 credit
-	        |  |
-	        |  0                 coin play
-	        |  1                 free play
-	        |
-	        0                    normal
-	        1                    cocktail
-
-	display list format: (4 byte opcodes)
-
-	+------+------+------+------+------+------+------+------+
-	|DY07   DY06   DY05   DY04   DY03   DY02   DY01   DY00  | 0
-	+------+------+------+------+------+------+------+------+
-	|OPCD3  OPCD2  OPCD1  OPCD0  DY11   DY10   DY09   DY08  | 1 OPCD 1111 = ABBREV/
-	+------+------+------+------+------+------+------+------+
-	|DX07   DX06   DX05   DX04   DX03   DX02   DX01   DX00  | 2
-	+------+------+------+------+------+------+------+------+
-	|INTEN3 INTEN2 INTEN1 INTEN0 DX11   DX10   DX09   DX08  | 3
-	+------+------+------+------+------+------+------+------+
-
-	    Draw relative vector       0x80      1000YYYY YYYYYYYY IIIIXXXX XXXXXXXX
-
-	    Draw relative vector
-	    and load scale             0x90      1001YYYY YYYYYYYY SSSSXXXX XXXXXXXX
-
-	    Beam to absolute
-	    screen position            0xA0      1010YYYY YYYYYYYY ----XXXX XXXXXXXX
-
-	    Halt                       0xB0      1011---- --------
-
-	    Jump to subroutine         0xC0      1100AAAA AAAAAAAA
-
-	    Return from subroutine     0xD0      1101---- --------
-
-	    Jump to new address        0xE0      1110AAAA AAAAAAAA
-
-	    Short vector draw          0xF0      1111YYYY IIIIXXXX
+    Most of the info here comes from the wiretap archive at:
+    http://www.spies.com/arcade/simulation/gameHardware/
 
 
-	Sound Z80 Memory Map
+    Omega Race Memory Map
+    Version 1.1 (Jul 24,1997)
+    ---------------------
 
-	0000 ROM
-	1000 RAM
+    0000 - 3fff PROM
+    4000 - 4bff RAM (3k)
+    5c00 - 5cff NVRAM (256 x 4bits)
+    8000 - 8fff Vec RAM (4k)
+    9000 - 9fff Vec ROM (4k)
 
-	15 14 13 12 11 10
-	            0           2k prom (K5)
-	            1           2k prom (J5)
-	         1              1k RAM  (K4,J4)
+    15 14 13 12 11 10
+    --+--+--+--+--+--
+    0  0  0  0                       M8 - 2732  (4k)
+    0  0  0  1                       L8 - 2732
+    0  0  1  0                       K8 - 2732
+    0  0  1  1                       J8 - 2732
 
-	I/O (write-only)
+    0  1  -  0  0  0                 RAM (3k)
+    0  1  -  0  0  1
+    0  1  -  0  1  0
 
-	0,1 			8912 (K3)
-	2,3			8912 (J3)
+    0  1  -  1  1  1                 4 Bit BB RAM (d0-d3)
+
+    1  -  -  0  0                    Vec RAM (4k)
+    1  -  -  0  1
+    1  -  -  1  0            Vec ROM (2k) E1
+    1  -  -  1  1                    Vec ROM (2k) F1
+
+    I/O Ports
+
+    8   Start/ (VG start)
+    9   WDOG/  (Reset watchdog)
+    A   SEQRES/ (VG stop/reset?)
+    B   RDSTOP/ d7 = stop (VG running if 0)
+
+    10 I    DIP SW C4 (game ship settings)
+
+        6 5  4 3  2 1
+                          1st bonus ship at
+            | |  | |  0 0  40,000
+            | |  | |  0 1  50,000
+            | |  | |  1 0  70,000
+            | |  | |  1 1 100,000
+            | |  | |      2nd and  3rd bonus ships
+            | |  0 0      150,000   250,000
+            | |  0 1      250,000   500,000
+            | |  1 0      500,000   750,000
+            | |  1 1      750,000 1,500,000
+            | |           ships per credit
+            0 0           1 credit = 2 ships / 2 credits = 4 ships
+            0 1           1 credit = 2 ships / 2 credits = 5 ships
+            1 0           1 credit = 3 ships / 2 credits = 6 ships
+            1 1           1 credit = 3 ships / 2 credits = 7 ships
+
+    11 I    7 = Test
+        6 = P1 Fire
+        5 = P1 Thrust
+        4 = Tilt
+
+        1 = Coin 2
+        0 = Coin 1
+
+    12 I    7 = 1P1CR
+        6 = 1P2CR
+
+        3 = 2P2CR -+
+        2 = 2P1CR  |
+        1 = P2Fire |
+        0 = P2Thr -+ cocktail only
+
+    13 O   7 =
+            6 = screen reverse
+            5 = 2 player 2 credit start LED
+            4 = 2 player 1 credit start LED
+            3 = 1 player 1 credit start LED
+            2 = 1 player 1 credit start LED
+            1 = coin meter 2
+            0 = coin meter 1
+
+    14 O    sound command (interrupts sound Z80)
+
+    15 I    encoder 1 (d7-d2)
+
+        The encoder is a 64 position Grey Code encoder, or a
+        pot and A to D converter.
+
+        Unlike the quadrature inputs on Atari and Sega games,
+            Omega Race's controller is an absolute angle.
+
+        0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
+        0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
+        0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
+        0xf0, 0xf4, 0xe4, 0xe0, 0xe8, 0xec, 0xcc, 0xc8,
+        0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
+        0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
+        0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
+        0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08
+
+    16 I    encoder 2 (d5-d0)
+
+        The inputs aren't scrambled as they are on the 1 player
+            encoder
+
+    17 I    DIP SW C6 (coin/cocktail settings)
+
+            8  7  6 5 4  3 2 1
+                                 coin switch 1
+            |  |  | | |  0 0 0   1 coin  2 credits
+            |  |  | | |  0 0 1   1 coin  3 credits
+            |  |  | | |  0 1 0   1 coin  5 credits
+            |  |  | | |  0 1 1   4 coins 5 credits
+            |  |  | | |  1 0 0   3 coins 4 credits
+            |  |  | | |  1 0 1   2 coins 3 credits
+            |  |  | | |  1 1 0   2 coins 1 credit
+            |  |  | | |  1 1 1   1 coin  1 credit
+            |  |  | | |
+            |  |  | | |          coin switch 2
+            |  |  0 0 0          1 coin  2 credits
+            |  |  0 0 1          1 coin  3 credits
+            |  |  0 1 0          1 coin  5 credits
+            |  |  0 1 1          4 coins 5 credits
+            |  |  1 0 0          3 coins 4 credits
+            |  |  1 0 1          2 coins 3 credits
+            |  |  1 1 0          2 coins 1 credit
+            |  |  1 1 1          1 coin  1 credit
+            |  |
+            |  0                 coin play
+            |  1                 free play
+            |
+            0                    normal
+            1                    cocktail
+
+    display list format: (4 byte opcodes)
+
+    +------+------+------+------+------+------+------+------+
+    |DY07   DY06   DY05   DY04   DY03   DY02   DY01   DY00  | 0
+    +------+------+------+------+------+------+------+------+
+    |OPCD3  OPCD2  OPCD1  OPCD0  DY11   DY10   DY09   DY08  | 1 OPCD 1111 = ABBREV/
+    +------+------+------+------+------+------+------+------+
+    |DX07   DX06   DX05   DX04   DX03   DX02   DX01   DX00  | 2
+    +------+------+------+------+------+------+------+------+
+    |INTEN3 INTEN2 INTEN1 INTEN0 DX11   DX10   DX09   DX08  | 3
+    +------+------+------+------+------+------+------+------+
+
+        Draw relative vector       0x80      1000YYYY YYYYYYYY IIIIXXXX XXXXXXXX
+
+        Draw relative vector
+        and load scale             0x90      1001YYYY YYYYYYYY SSSSXXXX XXXXXXXX
+
+        Beam to absolute
+        screen position            0xA0      1010YYYY YYYYYYYY ----XXXX XXXXXXXX
+
+        Halt                       0xB0      1011---- --------
+
+        Jump to subroutine         0xC0      1100AAAA AAAAAAAA
+
+        Return from subroutine     0xD0      1101---- --------
+
+        Jump to new address        0xE0      1110AAAA AAAAAAAA
+
+        Short vector draw          0xF0      1111YYYY IIIIXXXX
 
 
-	I/O (read-only)
+    Sound Z80 Memory Map
 
-	0                       input port from main CPU.
-	                        main CPU writing port generated INT
-	Sound Commands:
+    0000 ROM
+    1000 RAM
 
-	0 - reset sound CPU
+    15 14 13 12 11 10
+                0           2k prom (K5)
+                1           2k prom (J5)
+             1              1k RAM  (K4,J4)
+
+    I/O (write-only)
+
+    0,1             8912 (K3)
+    2,3         8912 (J3)
+
+
+    I/O (read-only)
+
+    0                       input port from main CPU.
+                            main CPU writing port generated INT
+    Sound Commands:
+
+    0 - reset sound CPU
 
 ***************************************************************************/
 
@@ -225,7 +225,7 @@
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -239,7 +239,7 @@ static MACHINE_INIT( omegrace )
 
 /*************************************
  *
- *	Vector processor interaction
+ *  Vector processor interaction
  *
  *************************************/
 
@@ -259,7 +259,7 @@ static READ8_HANDLER( omegrace_vg_status_r )
 
 /*************************************
  *
- *	Input handlers
+ *  Input handlers
  *
  *************************************/
 
@@ -297,7 +297,7 @@ READ8_HANDLER( omegrace_spinner1_r )
 
 /*************************************
  *
- *	Output handlers
+ *  Output handlers
  *
  *************************************/
 
@@ -327,7 +327,7 @@ WRITE8_HANDLER( omegrace_soundlatch_w )
 
 /*************************************
  *
- *	Overlay
+ *  Overlay
  *
  *************************************/
 
@@ -339,7 +339,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -386,7 +386,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -420,7 +420,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -505,7 +505,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -552,7 +552,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -574,7 +574,7 @@ ROM_START( deltrace )
 	ROM_LOAD( "omega.m7",     0x0000, 0x1000, CRC(0424d46e) SHA1(cc1ac6c06ba6f6e8466fa08286a0c70b5335af33) )
 	ROM_LOAD( "omega.l7",     0x1000, 0x1000, CRC(edcd7a7d) SHA1(5d142de2f48b01d563578a54fd5540e5d0ac8f4c) )
 	ROM_LOAD( "omega.k7",     0x2000, 0x1000, CRC(6d10f197) SHA1(9609a0cbeeef2efa10d49cde9f0afdca96e9c2f8) )
-	ROM_LOAD( "delta.j7",     0x3000, 0x1000, CRC(8ef9541e) SHA1(89e34f50a958ac60c5f223bcb6c1c14796b903c7) ) 
+	ROM_LOAD( "delta.j7",     0x3000, 0x1000, CRC(8ef9541e) SHA1(89e34f50a958ac60c5f223bcb6c1c14796b903c7) )
 	ROM_LOAD( "omega.e1",     0x9000, 0x0800, CRC(1d0fdf3a) SHA1(3333397a9745874cea1dd6a1bda783cc59393b55) )
 	ROM_LOAD( "omega.f1",     0x9800, 0x0800, CRC(d44c0814) SHA1(2f216ee6de88bbe09775619003aee2d5aa8c554d) )
 
@@ -585,7 +585,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -598,7 +598,7 @@ static DRIVER_INIT( omegrace )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

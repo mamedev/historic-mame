@@ -275,8 +275,7 @@ static void v60WritePSW(UINT32 newval)
 
 UINT32 opUNHANDLED(void)
 {
-	logerror("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
-	abort();
+	osd_die("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
 }
 
 // Opcode jump table
@@ -361,7 +360,7 @@ static void v60_do_irq(int vector)
 	tempPSW=PSW;
 
 	/* this is quite a horrible hack, if we do this then srmp7 breaks,
-	   if we don't then ultrax/twineag2 are broken, a real fix is needed */
+       if we don't then ultrax/twineag2 are broken, a real fix is needed */
 	if (!strcmp(Machine->gamedrv->name,"ultrax") ||	// from Mame32Plus
 	    !strcmp(Machine->gamedrv->name,"twineag2"))
 		v60WritePSW(PSW|((1<<28)));

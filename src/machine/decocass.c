@@ -1,6 +1,6 @@
 /***********************************************************************
 
-	DECO Cassette System machine
+    DECO Cassette System machine
 
  ***********************************************************************/
 
@@ -210,9 +210,9 @@ READ8_HANDLER( decocass_input_r )
 }
 
 /*
- * D0 - REQ/ data request	  (8041 pin 34 port 1.7)
+ * D0 - REQ/ data request     (8041 pin 34 port 1.7)
  * D1 - FNO/ function number  (8041 pin 21 port 2.0)
- * D2 - EOT/ end-of-tape	  (8041 pin 22 port 2.1)
+ * D2 - EOT/ end-of-tape      (8041 pin 22 port 2.1)
  * D3 - ERR/ error condition  (8041 pin 23 port 2.2)
  * D4 - BOT-EOT from tape
  * D5 -
@@ -537,15 +537,15 @@ static void decocass_fno(offs_t offset, data8_t data)
 
 /***************************************************************************
  *
- *	TYPE1 DONGLE (DE-0061)
- *	- Test Tape
- *	- Lock 'n Chase
- *	- Treasure Island
- *	- Super Astro Fighter
- *	- Lucky Poker
- *	- Terranian
- *	- Explorer
- *	- Pro Golf
+ *  TYPE1 DONGLE (DE-0061)
+ *  - Test Tape
+ *  - Lock 'n Chase
+ *  - Treasure Island
+ *  - Super Astro Fighter
+ *  - Lucky Poker
+ *  - Terranian
+ *  - Explorer
+ *  - Pro Golf
  *
  ***************************************************************************/
 
@@ -747,14 +747,14 @@ READ8_HANDLER( decocass_type1_map2_r )
 	data8_t save, addr, data;
 
 	/* read from tape:
-	 *	7d 43 5d 4f 04 ae e3 59 57 cb d6 55 4d 15
-	 * should become:
-	 *	?? 48 44 52 42 30 31 44 45 43 4f 53 59 53
-	 * lookup entries with above values:
-	 *	?? 47 59 4f 44 ae a7 59 53 cf d2 55 4d 55
-	 * difference:
-	 *	   04 04 00 40 00 44 00 04 04 04 00 00 40
-	 */
+     *  7d 43 5d 4f 04 ae e3 59 57 cb d6 55 4d 15
+     * should become:
+     *  ?? 48 44 52 42 30 31 44 45 43 4f 53 59 53
+     * lookup entries with above values:
+     *  ?? 47 59 4f 44 ae a7 59 53 cf d2 55 4d 55
+     * difference:
+     *     04 04 00 40 00 44 00 04 04 04 00 00 40
+     */
 
 	if (1 == (offset & 1))
 	{
@@ -833,14 +833,14 @@ READ8_HANDLER( decocass_type1_map3_r )
 	data8_t save, addr, data;
 
 	/* read from tape:
-	 *	f6 5f e5 c5 17 23 62 40 67 51 c5 ee 85 23
-	 * should become:
-	 *	20 48 44 52 42 30 31 41 53 54 52 4f 50 32
-	 * lookup entries with above values:
-	 *	b6 5f e7 c5 55 23 22 42 65 53 c5 ec c7 21
-	 * difference:
-	 *	40 00 02 00 40 00 40 02 02 02 00 02 42 02
-	 */
+     *  f6 5f e5 c5 17 23 62 40 67 51 c5 ee 85 23
+     * should become:
+     *  20 48 44 52 42 30 31 41 53 54 52 4f 50 32
+     * lookup entries with above values:
+     *  b6 5f e7 c5 55 23 22 42 65 53 c5 ec c7 21
+     * difference:
+     *  40 00 02 00 40 00 40 02 02 02 00 02 42 02
+     */
 
 	if (1 == (offset & 1))
 	{
@@ -882,11 +882,11 @@ READ8_HANDLER( decocass_type1_map3_r )
 
 /***************************************************************************
  *
- *	TYPE2 DONGLE (CS82-007)
- *	- Mission X
- *	- Disco No 1
- *	- Pro Tennis
- *	- Tornado
+ *  TYPE2 DONGLE (CS82-007)
+ *  - Mission X
+ *  - Disco No 1
+ *  - Pro Tennis
+ *  - Tornado
  *
  ***************************************************************************/
 READ8_HANDLER( decocass_type2_r )
@@ -955,18 +955,18 @@ WRITE8_HANDLER( decocass_type2_w )
 
 /***************************************************************************
  *
- *	TYPE3 DONGLE
- *	- Bump 'n Jump
- *	- Burnin' Rubber
- *	- Burger Time
- *	- Graplop
- *	- Cluster Buster
- *	- LaPaPa
- *	- Fighting Ice Hockey
- *	- Pro Bowling
- *	- Night Star
- *	- Pro Soccer
- *	- Peter Pepper's Ice Cream Factory
+ *  TYPE3 DONGLE
+ *  - Bump 'n Jump
+ *  - Burnin' Rubber
+ *  - Burger Time
+ *  - Graplop
+ *  - Cluster Buster
+ *  - LaPaPa
+ *  - Fighting Ice Hockey
+ *  - Pro Bowling
+ *  - Night Star
+ *  - Pro Soccer
+ *  - Peter Pepper's Ice Cream Factory
  *
  ***************************************************************************/
 READ8_HANDLER( decocass_type3_r )
@@ -1199,13 +1199,13 @@ WRITE8_HANDLER( decocass_type3_w )
 
 /***************************************************************************
  *
- *	TYPE4 DONGLE
- *	- Scrum Try
- *	Contains a 32K (EP)ROM that can be read from any byte
- *	boundary sequentially. The EPROM is enable after writing
- *	1100xxxx to E5x1 once. Then an address is written LSB
- *	to E5x0 MSB to E5x1 and every read from E5x1 returns the
- *	next byte of the contents.
+ *  TYPE4 DONGLE
+ *  - Scrum Try
+ *  Contains a 32K (EP)ROM that can be read from any byte
+ *  boundary sequentially. The EPROM is enable after writing
+ *  1100xxxx to E5x1 once. Then an address is written LSB
+ *  to E5x0 MSB to E5x1 and every read from E5x1 returns the
+ *  next byte of the contents.
  *
  ***************************************************************************/
 
@@ -1285,10 +1285,10 @@ WRITE8_HANDLER( decocass_type4_w )
 
 /***************************************************************************
  *
- *	TYPE5 DONGLE
- *	- Boulder Dash
- *	Actually a NOP dongle returning 0x55 after triggering a latch
- *	by writing 1100xxxx to E5x1
+ *  TYPE5 DONGLE
+ *  - Boulder Dash
+ *  Actually a NOP dongle returning 0x55 after triggering a latch
+ *  by writing 1100xxxx to E5x1
  *
  ***************************************************************************/
 
@@ -1362,9 +1362,9 @@ WRITE8_HANDLER( decocass_type5_w )
 
 /***************************************************************************
  *
- *	NO DONGLE
- *	- Flying Ball
- *	A NOP dongle returning the data read from cassette as is.
+ *  NO DONGLE
+ *  - Flying Ball
+ *  A NOP dongle returning the data read from cassette as is.
  *
  ***************************************************************************/
 
@@ -1404,7 +1404,7 @@ READ8_HANDLER( decocass_nodong_r )
 
 /***************************************************************************
  *
- *	Main dongle and 8041 interface
+ *  Main dongle and 8041 interface
  *
  ***************************************************************************/
 
@@ -1472,7 +1472,7 @@ WRITE8_HANDLER( decocass_e5xx_w )
 
 /***************************************************************************
  *
- *	state save setup
+ *  state save setup
  *
  ***************************************************************************/
 static void decocass_state_save_postload(void)
@@ -1526,7 +1526,7 @@ void decocass_machine_state_save_init(void)
 
 /***************************************************************************
  *
- *	init machine functions (select dongle and determine tape image size)
+ *  init machine functions (select dongle and determine tape image size)
  *
  ***************************************************************************/
 
@@ -1821,7 +1821,7 @@ MACHINE_INIT( cflyball )
 
 /***************************************************************************
  *
- *	8041 port handlers
+ *  8041 port handlers
  *
  ***************************************************************************/
 

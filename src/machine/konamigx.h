@@ -40,12 +40,12 @@ int K055555GX_decode_osmixcolor(int layer, int *color);
 // Sprite Callbacks
 
 /* callbacks should return color codes in this format:
-	fedcba9876543210fedcba9876543210
-	----------------xxxxxxxxxxxxxxxx (bit 00-15: color)
-	--------------xx---------------- (bit 16-17: blend code)
-	------------xx------------------ (bit 18-19: brightness code)
-	-x------------------------------ (bit 30   : skip shadow)
-	x------------------------------- (bit 31   : full shadow)
+    fedcba9876543210fedcba9876543210
+    ----------------xxxxxxxxxxxxxxxx (bit 00-15: color)
+    --------------xx---------------- (bit 16-17: blend code)
+    ------------xx------------------ (bit 18-19: brightness code)
+    -x------------------------------ (bit 30   : skip shadow)
+    x------------------------------- (bit 31   : full shadow)
 */
 #define K055555_COLORMASK	0x0000ffff
 #define K055555_MIXSHIFT 	16
@@ -63,12 +63,12 @@ void konamigx_le2_sprite_callback(int *code, int *color, int *priority);
 // Centralized Sprites and Layer Blitter
 
 /* Mixer Flags
-	fedcba9876543210fedcba9876543210
-	--------------------FFEEDDCCBBAA (layer A-F blend modes)
-	----------------DCBA------------ (layer A-D line/row scroll disables)
-	----FFEEDDCCBBAA---------------- (layer A-F mix codes in forced blending)
-	---x---------------------------- (disable shadows)
-	--x----------------------------- (disable z-buffering)
+    fedcba9876543210fedcba9876543210
+    --------------------FFEEDDCCBBAA (layer A-F blend modes)
+    ----------------DCBA------------ (layer A-D line/row scroll disables)
+    ----FFEEDDCCBBAA---------------- (layer A-F mix codes in forced blending)
+    ---x---------------------------- (disable shadows)
+    --x----------------------------- (disable z-buffering)
 */
 #define GXMIX_BLEND_AUTO	0			// emulate all blend effects
 #define GXMIX_BLEND_NONE	1			// disable all blend effects

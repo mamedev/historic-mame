@@ -3,7 +3,7 @@
 Kikiippatsu Mayumi-chan (c) 1988 Victory L.L.C.
 
 Video hardware
-	driver by Uki
+    driver by Uki
 
 ******************************************************************************/
 

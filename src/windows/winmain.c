@@ -1,6 +1,6 @@
 //============================================================
 //
-//	winmain.c - Win32 main program
+//  winmain.c - Win32 main program
 //
 //============================================================
 
@@ -26,7 +26,7 @@
 
 
 //============================================================
-//	TYPE DEFINITIONS
+//  TYPE DEFINITIONS
 //============================================================
 
 #define MAX_SYMBOLS		65536
@@ -42,7 +42,7 @@ struct map_entry
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 int verbose;
@@ -53,7 +53,7 @@ int _CRT_glob = 0;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 static char mapfile_name[MAX_PATH];
@@ -77,7 +77,7 @@ static const char helpfile[] = "mess.chm";
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
@@ -96,7 +96,7 @@ static void stop_profiler(void);
 
 
 //============================================================
-//	main
+//  main
 //============================================================
 
 #ifdef WINUI
@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 
 
 //============================================================
-//	osd_init
+//  osd_init
 //============================================================
 
 int osd_init(void)
@@ -266,7 +266,7 @@ int osd_init(void)
 
 
 //============================================================
-//	osd_exit
+//  osd_exit
 //============================================================
 
 void osd_exit(void)
@@ -280,7 +280,7 @@ void osd_exit(void)
 
 
 //============================================================
-//	osd_alloc_executable
+//  osd_alloc_executable
 //============================================================
 
 void *osd_alloc_executable(size_t size)
@@ -291,7 +291,7 @@ void *osd_alloc_executable(size_t size)
 
 
 //============================================================
-//	osd_free_executable
+//  osd_free_executable
 //============================================================
 
 void osd_free_executable(void *ptr)
@@ -302,7 +302,7 @@ void osd_free_executable(void *ptr)
 
 
 //============================================================
-//	osd_is_bad_read_ptr
+//  osd_is_bad_read_ptr
 //============================================================
 
 int osd_is_bad_read_ptr(const void *ptr, size_t size)
@@ -313,7 +313,7 @@ int osd_is_bad_read_ptr(const void *ptr, size_t size)
 
 
 //============================================================
-//	exception_filter
+//  exception_filter
 //============================================================
 
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
@@ -451,7 +451,7 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 
 
 //============================================================
-//	lookup_symbol
+//  lookup_symbol
 //============================================================
 
 static const char *lookup_symbol(UINT32 address)
@@ -490,7 +490,7 @@ static const char *lookup_symbol(UINT32 address)
 
 
 //============================================================
-//	get_code_base_size
+//  get_code_base_size
 //============================================================
 
 static int get_code_base_size(UINT32 *base, UINT32 *size)
@@ -514,8 +514,8 @@ static int get_code_base_size(UINT32 *base, UINT32 *size)
 
 
 //============================================================
-//	compare_base
-//	compare_hits -- qsort callbacks to sort on
+//  compare_base
+//  compare_hits -- qsort callbacks to sort on
 //============================================================
 
 static int CLIB_DECL compare_start(const void *item1, const void *item2)
@@ -534,7 +534,7 @@ static int compare_hits(const void *item1, const void *item2)
 
 
 //============================================================
-//	parse_map_file
+//  parse_map_file
 //============================================================
 
 static void parse_map_file(void)
@@ -600,7 +600,7 @@ static void parse_map_file(void)
 
 
 //============================================================
-//	free_symbol_map
+//  free_symbol_map
 //============================================================
 
 static void free_symbol_map(void)
@@ -618,7 +618,7 @@ static void free_symbol_map(void)
 
 #if ENABLE_PROFILER
 //============================================================
-//	output_symbol_list
+//  output_symbol_list
 //============================================================
 
 static void output_symbol_list(FILE *f)
@@ -637,7 +637,7 @@ static void output_symbol_list(FILE *f)
 
 
 //============================================================
-//	increment_bucket
+//  increment_bucket
 //============================================================
 
 static void increment_bucket(UINT32 addr)
@@ -655,7 +655,7 @@ static void increment_bucket(UINT32 addr)
 
 
 //============================================================
-//	profiler_thread
+//  profiler_thread
 //============================================================
 
 static DWORD WINAPI profiler_thread_entry(LPVOID lpParameter)
@@ -686,7 +686,7 @@ static DWORD WINAPI profiler_thread_entry(LPVOID lpParameter)
 
 
 //============================================================
-//	start_profiler
+//  start_profiler
 //============================================================
 
 static void start_profiler(void)
@@ -715,7 +715,7 @@ static void start_profiler(void)
 
 
 //============================================================
-//	stop_profiler
+//  stop_profiler
 //============================================================
 
 static void stop_profiler(void)

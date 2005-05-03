@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Machine Hardware for Nichibutsu Mahjong series.
+    Machine Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
 ******************************************************************************/
 

@@ -3,7 +3,7 @@
 Aliens (c) 1990 Konami Co. Ltd
 
 Preliminary driver by:
-	Manuel Abadia <manu@teleline.es>
+    Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -131,7 +131,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -170,7 +170,7 @@ INPUT_PORTS_START( aliens )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -236,7 +236,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -290,7 +290,7 @@ static MACHINE_DRIVER_START( aliens )
 	MDRV_SOUND_CONFIG(ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.60)
 	MDRV_SOUND_ROUTE(1, "mono", 0.60)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)

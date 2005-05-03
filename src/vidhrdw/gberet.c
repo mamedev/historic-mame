@@ -114,7 +114,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( gberet )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT_COLOR, 8, 8, 64, 32);
 
 	if (!bg_tilemap)

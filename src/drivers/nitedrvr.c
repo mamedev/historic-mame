@@ -1,36 +1,36 @@
 /***************************************************************************
 
-	Atari Night Driver hardware
+    Atari Night Driver hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Night Driver
+    Games supported:
+        * Night Driver
 
-	Known issues:
-		* The road boxes in service mode are flipped horizontally and there
-		  is an extraneous box according to the service manual.
+    Known issues:
+        * The road boxes in service mode are flipped horizontally and there
+          is an extraneous box according to the service manual.
 
 ****************************************************************************
 
-	Memory Map:
-		0000-01FF	R/W 	SCRAM (Scratchpad RAM)
-		0200-03FF	 W		PFW (Playfield Write)
-		0400-05FF	 W		HVC (Horiz/Vert/Char for Roadway)
-		0600-07FF	 R		IN0
-		0800-09FF	 R		IN1
-		0A00-0BFF	 W		OUT0
-		0C00-0DFF	 W		OUT1
-		0E00-0FFF	 -		OUT2 (Not used)
-		8000-83FF	 R		PFR (Playfield Read)
-		8400-87FF			Steering Reset
-		8800-8FFF	 -		Spare (Not used)
-		9000-97FF	 R		Program ROM1
-		9800-9FFF	 R		Program ROM2
-		(F800-FFFF)	 R		Program ROM2 - only needed for the 6502 vectors
+    Memory Map:
+        0000-01FF   R/W     SCRAM (Scratchpad RAM)
+        0200-03FF    W      PFW (Playfield Write)
+        0400-05FF    W      HVC (Horiz/Vert/Char for Roadway)
+        0600-07FF    R      IN0
+        0800-09FF    R      IN1
+        0A00-0BFF    W      OUT0
+        0C00-0DFF    W      OUT1
+        0E00-0FFF    -      OUT2 (Not used)
+        8000-83FF    R      PFR (Playfield Read)
+        8400-87FF           Steering Reset
+        8800-8FFF    -      Spare (Not used)
+        9000-97FF    R      Program ROM1
+        9800-9FFF    R      Program ROM2
+        (F800-FFFF)  R      Program ROM2 - only needed for the 6502 vectors
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -77,7 +77,7 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_START	// fake
 	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x30, DEF_STR( 2C_1C ) )
-	//PORT_DIPSETTING(	0x20, DEF_STR( 1C_1C ) ) // not a typo
+	//PORT_DIPSETTING(  0x20, DEF_STR( 1C_1C ) ) // not a typo
 	PORT_DIPSETTING(	0x10, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0xc0, 0x80, "Playing Time" )
@@ -181,7 +181,7 @@ static MACHINE_DRIVER_START( nitedrvr )
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(nitedrvr_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -190,16 +190,16 @@ MACHINE_DRIVER_END
 /* ROMs */
 
 /*
-ROM_START( nitedrvo )		// early revision has the program code stored in 8 chips
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "006560-01.h1", 0x9000, 0x0200, NO_DUMP ) // PROM 1
-	ROM_LOAD( "006561-01.c1", 0x9200, 0x0200, NO_DUMP ) // PROM 2
-	ROM_LOAD( "006562-01.j1", 0x9400, 0x0200, NO_DUMP ) // PROM 3
-	ROM_LOAD( "006563-01.d1", 0x9600, 0x0200, NO_DUMP ) // PROM 4
-	ROM_LOAD( "006564-01.k1", 0x9800, 0x0200, NO_DUMP ) // PROM 5
-	ROM_LOAD( "006565-01.e1", 0x9a00, 0x0200, NO_DUMP ) // PROM 6
-	ROM_LOAD( "006566-01.l1", 0x9c00, 0x0200, NO_DUMP ) // PROM 7
-	ROM_LOAD( "006567-01.f1", 0x9e00, 0x0200, NO_DUMP ) // PROM 8
+ROM_START( nitedrvo )       // early revision has the program code stored in 8 chips
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
+    ROM_LOAD( "006560-01.h1", 0x9000, 0x0200, NO_DUMP ) // PROM 1
+    ROM_LOAD( "006561-01.c1", 0x9200, 0x0200, NO_DUMP ) // PROM 2
+    ROM_LOAD( "006562-01.j1", 0x9400, 0x0200, NO_DUMP ) // PROM 3
+    ROM_LOAD( "006563-01.d1", 0x9600, 0x0200, NO_DUMP ) // PROM 4
+    ROM_LOAD( "006564-01.k1", 0x9800, 0x0200, NO_DUMP ) // PROM 5
+    ROM_LOAD( "006565-01.e1", 0x9a00, 0x0200, NO_DUMP ) // PROM 6
+    ROM_LOAD( "006566-01.l1", 0x9c00, 0x0200, NO_DUMP ) // PROM 7
+    ROM_LOAD( "006567-01.f1", 0x9e00, 0x0200, NO_DUMP ) // PROM 8
 ROM_END
 */
 

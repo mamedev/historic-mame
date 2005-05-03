@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Gauntlet hardware
+    Atari Gauntlet hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -22,7 +22,7 @@ UINT8 vindctr2_screen_refresh;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -33,7 +33,7 @@ static UINT8 playfield_color_bank;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -59,7 +59,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -134,7 +134,7 @@ VIDEO_START( gauntlet )
 
 /*************************************
  *
- *	Horizontal scroll register
+ *  Horizontal scroll register
  *
  *************************************/
 
@@ -158,7 +158,7 @@ WRITE16_HANDLER( gauntlet_xscroll_w )
 
 /*************************************
  *
- *	Vertical scroll/PF bank register
+ *  Vertical scroll/PF bank register
  *
  *************************************/
 
@@ -189,7 +189,7 @@ WRITE16_HANDLER( gauntlet_yscroll_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -214,8 +214,8 @@ VIDEO_UPDATE( gauntlet )
 				{
 					/* verified via schematics:
 
-						MO pen 1 clears PF color bit 0x80
-					*/
+                        MO pen 1 clears PF color bit 0x80
+                    */
 					if ((mo[x] & 0x0f) == 1)
 					{
 						/* Vindicators Part II has extra logic here for the bases */

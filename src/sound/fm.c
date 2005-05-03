@@ -186,10 +186,10 @@
 #endif
 
 
-/*	TL_TAB_LEN is calculated as:
-*	13 - sinus amplitude bits     (Y axis)
-*	2  - sinus sign bit           (Y axis)
-*	TL_RES_LEN - sinus resolution (X axis)
+/*  TL_TAB_LEN is calculated as:
+*   13 - sinus amplitude bits     (Y axis)
+*   2  - sinus sign bit           (Y axis)
+*   TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (13*2*TL_RES_LEN)
 static signed int tl_tab[TL_TAB_LEN];
@@ -365,21 +365,21 @@ static const UINT32 lfo_samples_per_step[8] = {108, 77, 71, 67, 62, 44, 8, 5};
 
 
 /*There are 4 different LFO AM depths available, they are:
-  0 dB,	1.4 dB,	5.9 dB, 11.8 dB
+  0 dB, 1.4 dB, 5.9 dB, 11.8 dB
   Here is how it is generated (in EG steps):
 
-  11.8 dB =	0, 2, 4, 6, 8, 10,12,14,16...126,126,124,122,120,118,....4,2,0
-   5.9 dB =	0, 1, 2, 3, 4, 5, 6, 7, 8....63, 63, 62, 61, 60, 59,.....2,1,0
-   1.4 dB =	0, 0, 0, 0, 1, 1, 1, 1, 2,...15, 15, 15, 15, 14, 14,.....0,0,0
+  11.8 dB = 0, 2, 4, 6, 8, 10,12,14,16...126,126,124,122,120,118,....4,2,0
+   5.9 dB = 0, 1, 2, 3, 4, 5, 6, 7, 8....63, 63, 62, 61, 60, 59,.....2,1,0
+   1.4 dB = 0, 0, 0, 0, 1, 1, 1, 1, 2,...15, 15, 15, 15, 14, 14,.....0,0,0
 
   (1.4 dB is loosing precision as you can see)
 
   It's implemented as generator from 0..126 with step 2 then a shift
   right N times, where N is:
-	8 for 0 dB
-	3 for 1.4 dB
-	1 for 5.9 dB
-	0 for 11.8 dB
+    8 for 0 dB
+    3 for 1.4 dB
+    1 for 5.9 dB
+    0 for 11.8 dB
 */
 static const UINT8 lfo_ams_depth_shift[4] = {8, 3, 1, 0};
 
@@ -543,8 +543,8 @@ typedef struct
 
 	/* Envelope Generator */
 	UINT8	state;		/* phase type */
-	UINT32	tl;			/* total level: TL << 3	*/
-	INT32	volume;		/* envelope counter	*/
+	UINT32	tl;			/* total level: TL << 3 */
+	INT32	volume;		/* envelope counter */
 	UINT32	sl;			/* sustain level:sl_table[SL] */
 	UINT32	vol_out;	/* current output from EG circuit (without AM from LFO) */
 
@@ -560,7 +560,7 @@ typedef struct
 	UINT8	ssg;		/* SSG-EG waveform */
 	UINT8	ssgn;		/* SSG-EG negated output */
 
-	UINT32	key;		/* 0=last key was KEY OFF, 1=KEY ON	*/
+	UINT32	key;		/* 0=last key was KEY OFF, 1=KEY ON */
 
 	/* LFO */
 	UINT32	AMmask;		/* AM enable flag */
@@ -575,10 +575,10 @@ typedef struct
 	UINT8	FB;			/* feedback shift */
 	INT32	op1_out[2];	/* op1 output for feedback */
 
-	INT32	*connect1;	/* SLOT1 output	pointer */
-	INT32	*connect3;	/* SLOT3 output	pointer */
-	INT32	*connect2;	/* SLOT2 output	pointer */
-	INT32	*connect4;	/* SLOT4 output	pointer */
+	INT32	*connect1;	/* SLOT1 output pointer */
+	INT32	*connect3;	/* SLOT3 output pointer */
+	INT32	*connect2;	/* SLOT2 output pointer */
+	INT32	*connect4;	/* SLOT4 output pointer */
 
 	INT32	*mem_connect;/* where to put the delayed sample (MEM) */
 	INT32	mem_value;	/* delayed sample (MEM) value */
@@ -586,35 +586,35 @@ typedef struct
 	INT32	pms;		/* channel PMS */
 	UINT8	ams;		/* channel AMS */
 
-	UINT32	fc;			/* fnum,blk:adjusted to sample rate	*/
-	UINT8	kcode;		/* key code:						*/
+	UINT32	fc;			/* fnum,blk:adjusted to sample rate */
+	UINT8	kcode;		/* key code:                        */
 	UINT32	block_fnum;	/* current blk/fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
 } FM_CH;
 
 
 typedef struct
 {
-	void *	param;		/* this chip parameter	*/
-	int		clock;		/* master clock  (Hz)	*/
-	int		rate;		/* sampling rate (Hz)	*/
-	double	freqbase;	/* frequency base		*/
-	double	TimerBase;	/* Timer base time		*/
+	void *	param;		/* this chip parameter  */
+	int		clock;		/* master clock  (Hz)   */
+	int		rate;		/* sampling rate (Hz)   */
+	double	freqbase;	/* frequency base       */
+	double	TimerBase;	/* Timer base time      */
 #if FM_BUSY_FLAG_SUPPORT
 	double	BusyExpire;	/* ExpireTime of Busy clear */
 #endif
-	UINT8	address;	/* address register		*/
-	UINT8	irq;		/* interrupt level		*/
-	UINT8	irqmask;	/* irq mask				*/
-	UINT8	status;		/* status flag			*/
-	UINT32	mode;		/* mode  CSM / 3SLOT	*/
-	UINT8	prescaler_sel;/* prescaler selector	*/
-	UINT8	fn_h;		/* freq latch			*/
-	int		TA;			/* timer a				*/
-	int		TAC;		/* timer a counter		*/
-	UINT8	TB;			/* timer b				*/
-	int		TBC;		/* timer b counter		*/
+	UINT8	address;	/* address register     */
+	UINT8	irq;		/* interrupt level      */
+	UINT8	irqmask;	/* irq mask             */
+	UINT8	status;		/* status flag          */
+	UINT32	mode;		/* mode  CSM / 3SLOT    */
+	UINT8	prescaler_sel;/* prescaler selector */
+	UINT8	fn_h;		/* freq latch           */
+	int		TA;			/* timer a              */
+	int		TAC;		/* timer a counter      */
+	UINT8	TB;			/* timer b              */
+	int		TBC;		/* timer b counter      */
 	/* local time tables */
-	INT32	dt_tab[8][32];/* DeTune table		*/
+	INT32	dt_tab[8][32];/* DeTune table       */
 	/* Extention Timer and IRQ handler */
 	FM_TIMERHANDLER	Timer_Handler;
 	FM_IRQHANDLER	IRQ_Handler;
@@ -652,7 +652,7 @@ typedef struct
 
 
 	/* there are 2048 FNUMs that can be generated using FNUM/BLK registers
-		but LFO works with one more bit of a precision so we really need 4096 elements */
+        but LFO works with one more bit of a precision so we really need 4096 elements */
 
 	UINT32	fn_table[4096];	/* fnumber->increment counter */
 
@@ -1096,7 +1096,7 @@ INLINE void advance_lfo(FM_OPN *OPN)
 
 		/*if (prev_pos != pos)*/
 		/* actually I can't optimize is this way without rewritting chan_calc()
-		to use chip->lfo_am instead of global lfo_am */
+        to use chip->lfo_am instead of global lfo_am */
 		{
 
 			/* triangle */
@@ -1200,7 +1200,7 @@ INLINE void advance_eg_channel(FM_OPN *OPN, FM_SLOT *SLOT)
 							/* same as KEY-ON operation */
 
 							/* restart of the Phase Generator should be here,
-								only if AR is not maximum ??? */
+                                only if AR is not maximum ??? */
 							/*SLOT->phase = 0;*/
 
 							/* phase -> Attack */
@@ -1248,7 +1248,7 @@ INLINE void advance_eg_channel(FM_OPN *OPN, FM_SLOT *SLOT)
 			out ^= ((1<<ENV_BITS)-1); /* 1023 */
 
 		/* we need to store the result here because we are going to change ssgn
-			in next instruction */
+            in next instruction */
 		SLOT->vol_out = out;
 
 		SLOT->ssgn ^= swap_flag;
@@ -1680,7 +1680,7 @@ static void OPNSetPres(FM_OPN *OPN , int pres , int TimerPres, int SSGpres)
 	init_timetables( &OPN->ST, dt_tab );
 
 	/* there are 2048 FNUMs that can be generated using FNUM/BLK registers
-		but LFO works with one more bit of a precision so we really need 4096 elements */
+        but LFO works with one more bit of a precision so we really need 4096 elements */
 	/* calculate fnumber -> increment counter table */
 	for(i = 0; i < 4096; i++)
 	{
@@ -1810,77 +1810,77 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 
 		/* SSG-EG envelope shapes :
 
-		E AtAlH
-		1 0 0 0  \\\\
+        E AtAlH
+        1 0 0 0  \\\\
 
-		1 0 0 1  \___
+        1 0 0 1  \___
 
-		1 0 1 0  \/\/
-		          ___
-		1 0 1 1  \
+        1 0 1 0  \/\/
+                  ___
+        1 0 1 1  \
 
-		1 1 0 0  ////
-		          ___
-		1 1 0 1  /
+        1 1 0 0  ////
+                  ___
+        1 1 0 1  /
 
-		1 1 1 0  /\/\
+        1 1 1 0  /\/\
 
-		1 1 1 1  /___
-
-
-		E = SSG-EG enable
+        1 1 1 1  /___
 
 
-		The shapes are generated using Attack, Decay and Sustain phases.
-
-		Each single character in the diagrams above represents this whole
-		sequence:
-
-		- when KEY-ON = 1, normal Attack phase is generated (*without* any
-		  difference when compared to normal mode),
-
-		- later, when envelope level reaches minimum level (max volume),
-		  the EG switches to Decay phase (which works with bigger steps
-		  when compared to normal mode - see below),
-
-		- later when envelope level passes the SL level,
-		  the EG swithes to Sustain phase (which works with bigger steps
-		  when compared to normal mode - see below),
-
-		- finally when envelope level reaches maximum level (min volume),
-		  the EG switches to Attack phase again (depends on actual waveform).
-
-		Important is that when switch to Attack phase occurs, the phase counter
-		of that operator will be zeroed-out (as in normal KEY-ON) but not always.
-		(I havent found the rule for that - perhaps only when the output level is low)
-
-		The difference (when compared to normal Envelope Generator mode) is
-		that the resolution in Decay and Sustain phases is 4 times lower;
-		this results in only 256 steps instead of normal 1024.
-		In other words:
-		when SSG-EG is disabled, the step inside of the EG is one,
-		when SSG-EG is enabled, the step is four (in Decay and Sustain phases).
-
-		Times between the level changes are the same in both modes.
+        E = SSG-EG enable
 
 
-		Important:
-		Decay 1 Level (so called SL) is compared to actual SSG-EG output, so
-		it is the same in both SSG and no-SSG modes, with this exception:
+        The shapes are generated using Attack, Decay and Sustain phases.
 
-		when the SSG-EG is enabled and is generating raising levels
-		(when the EG output is inverted) the SL will be found at wrong level !!!
-		For example, when SL=02:
-			0 -6 = -6dB in non-inverted EG output
-			96-6 = -90dB in inverted EG output
-		Which means that EG compares its level to SL as usual, and that the
-		output is simply inverted afterall.
+        Each single character in the diagrams above represents this whole
+        sequence:
+
+        - when KEY-ON = 1, normal Attack phase is generated (*without* any
+          difference when compared to normal mode),
+
+        - later, when envelope level reaches minimum level (max volume),
+          the EG switches to Decay phase (which works with bigger steps
+          when compared to normal mode - see below),
+
+        - later when envelope level passes the SL level,
+          the EG swithes to Sustain phase (which works with bigger steps
+          when compared to normal mode - see below),
+
+        - finally when envelope level reaches maximum level (min volume),
+          the EG switches to Attack phase again (depends on actual waveform).
+
+        Important is that when switch to Attack phase occurs, the phase counter
+        of that operator will be zeroed-out (as in normal KEY-ON) but not always.
+        (I havent found the rule for that - perhaps only when the output level is low)
+
+        The difference (when compared to normal Envelope Generator mode) is
+        that the resolution in Decay and Sustain phases is 4 times lower;
+        this results in only 256 steps instead of normal 1024.
+        In other words:
+        when SSG-EG is disabled, the step inside of the EG is one,
+        when SSG-EG is enabled, the step is four (in Decay and Sustain phases).
+
+        Times between the level changes are the same in both modes.
 
 
-		The Yamaha's manuals say that AR should be set to 0x1f (max speed).
-		That is not necessary, but then EG will be generating Attack phase.
+        Important:
+        Decay 1 Level (so called SL) is compared to actual SSG-EG output, so
+        it is the same in both SSG and no-SSG modes, with this exception:
 
-		*/
+        when the SSG-EG is enabled and is generating raising levels
+        (when the EG output is inverted) the SL will be found at wrong level !!!
+        For example, when SL=02:
+            0 -6 = -6dB in non-inverted EG output
+            96-6 = -90dB in inverted EG output
+        Which means that EG compares its level to SL as usual, and that the
+        output is simply inverted afterall.
+
+
+        The Yamaha's manuals say that AR should be set to 0x1f (max speed).
+        That is not necessary, but then EG will be generating Attack phase.
+
+        */
 
 
 		break;
@@ -2008,7 +2008,7 @@ void OPNPrescaler_w(FM_OPN *OPN , int addr, int pre_divider)
 
 #if BUILD_YM2203
 /*****************************************************************************/
-/*		YM2203 local section                                                 */
+/*      YM2203 local section                                                 */
 /*****************************************************************************/
 
 /* here's the virtual YM2203(OPN) */
@@ -2321,41 +2321,41 @@ int YM2203TimerOver(void *chip,int c)
 /* ADPCM type A channel struct */
 typedef struct
 {
-	UINT8		flag;			/* port state				*/
-	UINT8		flagMask;		/* arrived flag mask		*/
-	UINT8		now_data;		/* current ROM data			*/
-	UINT32		now_addr;		/* current ROM address		*/
+	UINT8		flag;			/* port state               */
+	UINT8		flagMask;		/* arrived flag mask        */
+	UINT8		now_data;		/* current ROM data         */
+	UINT32		now_addr;		/* current ROM address      */
 	UINT32		now_step;
 	UINT32		step;
 	UINT32		start;			/* sample data start address*/
-	UINT32		end;			/* sample data end address	*/
-	UINT8		IL;				/* Instrument Level			*/
-	INT32		adpcm_acc;		/* accumulator				*/
-	INT32		adpcm_step;		/* step						*/
-	INT32		adpcm_out;		/* (speedup) hiro-shi!!		*/
-	INT8		vol_mul;		/* volume in "0.75dB" steps	*/
-	UINT8		vol_shift;		/* volume in "-6dB" steps	*/
-	INT32		*pan;			/* &out_adpcm[OPN_xxxx] 	*/
+	UINT32		end;			/* sample data end address  */
+	UINT8		IL;				/* Instrument Level         */
+	INT32		adpcm_acc;		/* accumulator              */
+	INT32		adpcm_step;		/* step                     */
+	INT32		adpcm_out;		/* (speedup) hiro-shi!!     */
+	INT8		vol_mul;		/* volume in "0.75dB" steps */
+	UINT8		vol_shift;		/* volume in "-6dB" steps   */
+	INT32		*pan;			/* &out_adpcm[OPN_xxxx]     */
 } ADPCM_CH;
 
 /* here's the virtual YM2610 */
 typedef struct
 {
 #ifdef _STATE_H
-	UINT8		REGS[512];			/* registers			*/
+	UINT8		REGS[512];			/* registers            */
 #endif
-	FM_OPN		OPN;				/* OPN state			*/
-	FM_CH		CH[6];				/* channel state		*/
-	UINT8		addr_A1;			/* address line A1		*/
+	FM_OPN		OPN;				/* OPN state            */
+	FM_CH		CH[6];				/* channel state        */
+	UINT8		addr_A1;			/* address line A1      */
 
 	/* ADPCM-A unit */
-	UINT8		*pcmbuf;			/* pcm rom buffer		*/
-	UINT32		pcm_size;			/* size of pcm rom		*/
-	UINT8		adpcmTL;			/* adpcmA total level	*/
-	ADPCM_CH 	adpcm[6];			/* adpcm channels		*/
-	UINT32		adpcmreg[0x30];		/* registers			*/
+	UINT8		*pcmbuf;			/* pcm rom buffer       */
+	UINT32		pcm_size;			/* size of pcm rom      */
+	UINT8		adpcmTL;			/* adpcmA total level   */
+	ADPCM_CH 	adpcm[6];			/* adpcm channels       */
+	UINT32		adpcmreg[0x30];		/* registers            */
 	UINT8		adpcm_arrivedEndAddress;
-	YM_DELTAT 	deltaT;				/* Delta-T ADPCM unit	*/
+	YM_DELTAT 	deltaT;				/* Delta-T ADPCM unit   */
 
     UINT8		flagmask;			/* YM2608 only */
     UINT8		irqmask;			/* YM2608 only */
@@ -2610,7 +2610,7 @@ static void FMsave_state_adpcma(const char *name,int num,ADPCM_CH *adpcm)
 
 #if BUILD_YM2608
 /*****************************************************************************/
-/*		YM2608 local section                                                 */
+/*      YM2608 local section                                                 */
 /*****************************************************************************/
 
 
@@ -2626,8 +2626,8 @@ static unsigned int YM2608_ADPCM_ROM_addr[2*6] = {
 
 
 /*
-	This data is derived from the chip's output - internal ROM can't be read.
-	It was verified, using real YM2608, that this ADPCM stream produces 100% correct output signal.
+    This data is derived from the chip's output - internal ROM can't be read.
+    It was verified, using real YM2608, that this ADPCM stream produces 100% correct output signal.
 */
 
 static unsigned char YM2608_ADPCM_ROM[0x2000] = {
@@ -3510,7 +3510,7 @@ void YM2608ResetChip(void *chip)
 	FM_BUSY_CLEAR(&OPN->ST);
 
 	/* register 0x29 - default value after reset is:
-		enable only 3 FM channels and enable all the status flags */
+        enable only 3 FM channels and enable all the status flags */
 	YM2608IRQMaskWrite(OPN, F2608, 0x1f );	/* default value for D4-D0 is 1 */
 
 	/* register 0x10, A1=1 - default value is 1 for D4, D3, D2, 0 for the rest */
@@ -4415,17 +4415,17 @@ int YM2610TimerOver(void *chip,int c)
 
 #if BUILD_YM2612
 /*******************************************************************************/
-/*		YM2612 local section                                                   */
+/*      YM2612 local section                                                   */
 /*******************************************************************************/
 /* here's the virtual YM2612 */
 typedef struct
 {
 #ifdef _STATE_H
-	UINT8		REGS[512];			/* registers			*/
+	UINT8		REGS[512];			/* registers            */
 #endif
-	FM_OPN		OPN;				/* OPN state			*/
-	FM_CH		CH[6];				/* channel state		*/
-	UINT8		addr_A1;			/* address line A1		*/
+	FM_OPN		OPN;				/* OPN state            */
+	FM_CH		CH[6];				/* channel state        */
+	UINT8		addr_A1;			/* address line A1      */
 
 	/* dac output (YM2612) */
 	int			dacen;
@@ -4611,7 +4611,7 @@ void * YM2612Init(void *param, int index, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
 	YM2612 *F2612;
-	
+
 	cur_chip = NULL;	/* hiro-shi!! */
 
 	/* allocate extend state space */

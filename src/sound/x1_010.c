@@ -1,52 +1,52 @@
 /***************************************************************************
 
-							-= Seta Hardware =-
+                            -= Seta Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-					rewrite by Manbow-J(manbowj@hamal.freemail.ne.jp)
+                    rewrite by Manbow-J(manbowj@hamal.freemail.ne.jp)
 
 X1-010 (Seta Custom Sound Chip):
 
-	The X1-010 is 16 Voices sound generator, each channel gets it's
-	waveform from RAM (128 bytes per waveform, 8 bit unsigned data)
-	or sampling PCM(8bit unsigned data).
+    The X1-010 is 16 Voices sound generator, each channel gets it's
+    waveform from RAM (128 bytes per waveform, 8 bit unsigned data)
+    or sampling PCM(8bit unsigned data).
 
 Registers:
-	8 registers per channel (mapped to the lower bytes of 16 words on the 68K)
+    8 registers per channel (mapped to the lower bytes of 16 words on the 68K)
 
-	Reg:	Bits:		Meaning:
+    Reg:    Bits:       Meaning:
 
-	0		7654 3---
-			---- -2--	PCM/Waveform repeat flag (0:Ones 1:Repeat) (*1)
-			---- --1-	Sound out select (0:PCM 1:Waveform)
-			---- ---0	Key on / off
+    0       7654 3---
+            ---- -2--   PCM/Waveform repeat flag (0:Ones 1:Repeat) (*1)
+            ---- --1-   Sound out select (0:PCM 1:Waveform)
+            ---- ---0   Key on / off
 
-	1		7654 ----	PCM Volume 1 (L?)
-			---- 3210	PCM Volume 2 (R?)
-						Waveform No.
+    1       7654 ----   PCM Volume 1 (L?)
+            ---- 3210   PCM Volume 2 (R?)
+                        Waveform No.
 
-	2					PCM Frequency
-						Waveform Pitch Lo
+    2                   PCM Frequency
+                        Waveform Pitch Lo
 
-	3					Waveform Pitch Hi
+    3                   Waveform Pitch Hi
 
-	4					PCM Sample Start / 0x1000 			[Start/End in bytes]
-						Waveform Envelope Time
+    4                   PCM Sample Start / 0x1000           [Start/End in bytes]
+                        Waveform Envelope Time
 
-	5					PCM Sample End 0x100 - (Sample End / 0x1000)	[PCM ROM is Max 1MB?]
-						Waveform Envelope No.
-	6					Reserved
-	7					Reserved
+    5                   PCM Sample End 0x100 - (Sample End / 0x1000)    [PCM ROM is Max 1MB?]
+                        Waveform Envelope No.
+    6                   Reserved
+    7                   Reserved
 
-	offset 0x0000 - 0x0fff	Wave form data
-	offset 0x1000 - 0x1fff	Envelope data
+    offset 0x0000 - 0x0fff  Wave form data
+    offset 0x1000 - 0x1fff  Envelope data
 
-	*1 : when 0 is specified, hardware interrupt is caused(allways return soon)
+    *1 : when 0 is specified, hardware interrupt is caused(allways return soon)
 
 Hardcoded Values:
 
-	PCM ROM region:		REGION_SOUND1
+    PCM ROM region:     REGION_SOUND1
 
 ***************************************************************************/
 
@@ -95,7 +95,7 @@ struct x1_010_info
 };
 
 /* mixer tables and internal buffers */
-//static short	*mixer_buffer = NULL;
+//static short  *mixer_buffer = NULL;
 
 
 /*--------------------------------------------------------------
@@ -114,7 +114,7 @@ void seta_update( void *param, stream_sample_t **inputs, stream_sample_t **buffe
 	memset( buffer[0], 0, length*sizeof(*buffer[0]) );
 	memset( buffer[1], 0, length*sizeof(*buffer[1]) );
 
-//	if( info->sound_enable == 0 ) return;
+//  if( info->sound_enable == 0 ) return;
 
 	for( ch = 0; ch < SETA_NUM_CHANNELS; ch++ ) {
 		reg = (X1_010_CHANNEL *)&(info->reg[ch*sizeof(X1_010_CHANNEL)]);
@@ -198,7 +198,7 @@ static void *x1_010_start(int sndindex, int clock, const void *config)
 	int i;
 	const struct x1_010_interface *intf = config;
 	struct x1_010_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

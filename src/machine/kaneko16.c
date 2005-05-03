@@ -1,7 +1,7 @@
 /***************************************************************************
 
 
-							MCU Code Simulation
+                            MCU Code Simulation
 
 
 ***************************************************************************/
@@ -16,16 +16,16 @@
 data16_t *mcu_ram;
 
 /***************************************************************************
-								Gals Panic (set 2)
-								Gals Panic (set 3)
-								Sand Scorpion
-								Bonk's Adventure
-								Blood Warrior
+                                Gals Panic (set 2)
+                                Gals Panic (set 3)
+                                Sand Scorpion
+                                Bonk's Adventure
+                                Blood Warrior
 ***************************************************************************/
 
 /*
-	- see notes about this "calculator" implementation in drivers\galpanic.c
-	- bonkadv only uses Random Number, XY Overlap Collision bit and register '0x02'
+    - see notes about this "calculator" implementation in drivers\galpanic.c
+    - bonkadv only uses Random Number, XY Overlap Collision bit and register '0x02'
 */
 
 static struct {
@@ -123,19 +123,19 @@ WRITE16_HANDLER(galpanib_calc_w)
 
 
 /***************************************************************************
-								CALC3 MCU:
+                                CALC3 MCU:
 
-								Shogun Warriors
-								Fujiyama Buster
-								B.Rap Boys
+                                Shogun Warriors
+                                Fujiyama Buster
+                                B.Rap Boys
 ***************************************************************************/
 /*
 ---------------------------------------------------------------------------
-								CALC 3
+                                CALC 3
 
-92	B.Rap Boys				KANEKO CALC3 508 (74 PIN PQFP)
-92	Shogun Warriors
-	Fujiyama Buster			KANEKO CALC3 508 (74 Pin PQFP)
+92  B.Rap Boys              KANEKO CALC3 508 (74 PIN PQFP)
+92  Shogun Warriors
+    Fujiyama Buster         KANEKO CALC3 508 (74 Pin PQFP)
 ---------------------------------------------------------------------------
 
 MCU Initialization command:
@@ -185,16 +185,16 @@ CALC3_MCU_COM_W(2)
 CALC3_MCU_COM_W(3)
 
 /***************************************************************************
-								Shogun Warriors
+                                Shogun Warriors
 ***************************************************************************/
 
 /* Preliminary simulation: the game doesn't work */
 
 /*
-	MCU Tasks:
+    MCU Tasks:
 
-	- Read the DSWs
-	- Supply code snippets to the 68000
+    - Read the DSWs
+    - Supply code snippets to the 68000
 */
 
 void calc3_mcu_run(void)
@@ -218,10 +218,10 @@ void calc3_mcu_run(void)
 			int param1 = mcu_ram[calc3_mcu_command_offset + 1];
 			int param2 = mcu_ram[calc3_mcu_command_offset + 2];
 			int param3 = mcu_ram[calc3_mcu_command_offset + 3];
-//			int param4 = mcu_ram[calc3_mcu_command_offset + 4];
+//          int param4 = mcu_ram[calc3_mcu_command_offset + 4];
 			int param5 = mcu_ram[calc3_mcu_command_offset + 5];
-//			int param6 = mcu_ram[calc3_mcu_command_offset + 6];
-//			int param7 = mcu_ram[calc3_mcu_command_offset + 7];
+//          int param6 = mcu_ram[calc3_mcu_command_offset + 6];
+//          int param7 = mcu_ram[calc3_mcu_command_offset + 7];
 
 			// clear old command (handshake to main cpu)
 			mcu_ram[calc3_mcu_command_offset] = 0x0000;
@@ -298,7 +298,7 @@ First code snippet provided by the MCU:
 208086: 317C 7000 0316           move.w  #$7000, ($316,A0)
 20808C: 5247                     addq.w  #1, D7
 
-20808E: 0839 0001 0010 2E15      btst    #$1, $102e15.l	; service mode
+20808E: 0839 0001 0010 2E15      btst    #$1, $102e15.l ; service mode
 208096: 6714                     beq     2080ac
 
 208098: 117C 0058 0318           move.b  #$58, ($318,A0)
@@ -318,7 +318,7 @@ First code snippet provided by the MCU:
 
 		case 0x0001:
 		{
-//			int param1 = mcu_ram[calc3_mcu_command_offset + 1];
+//          int param1 = mcu_ram[calc3_mcu_command_offset + 1];
 			int param2 = mcu_ram[calc3_mcu_command_offset + 2];
 
 			// clear old command (handshake to main cpu)
@@ -339,13 +339,13 @@ First code snippet provided by the MCU:
 
 		case 0x0002:
 		{
-//			int param1 = mcu_ram[calc3_mcu_command_offset + 1];
-//			int param2 = mcu_ram[calc3_mcu_command_offset + 2];
-//			int param3 = mcu_ram[calc3_mcu_command_offset + 3];
-//			int param4 = mcu_ram[calc3_mcu_command_offset + 4];
-//			int param5 = mcu_ram[calc3_mcu_command_offset + 5];
-//			int param6 = mcu_ram[calc3_mcu_command_offset + 6];
-//			int param7 = mcu_ram[calc3_mcu_command_offset + 7];
+//          int param1 = mcu_ram[calc3_mcu_command_offset + 1];
+//          int param2 = mcu_ram[calc3_mcu_command_offset + 2];
+//          int param3 = mcu_ram[calc3_mcu_command_offset + 3];
+//          int param4 = mcu_ram[calc3_mcu_command_offset + 4];
+//          int param5 = mcu_ram[calc3_mcu_command_offset + 5];
+//          int param6 = mcu_ram[calc3_mcu_command_offset + 6];
+//          int param7 = mcu_ram[calc3_mcu_command_offset + 7];
 
 			// clear old command (handshake to main cpu)
 			mcu_ram[calc3_mcu_command_offset] = 0x0000;
@@ -361,23 +361,23 @@ First code snippet provided by the MCU:
 
 
 /***************************************************************************
-								TOYBOX MCU:
+                                TOYBOX MCU:
 
-								Bonk's Adventure
-								Blood Warrior
-								Great 1000 Miles Rally
-								...
+                                Bonk's Adventure
+                                Blood Warrior
+                                Great 1000 Miles Rally
+                                ...
 ***************************************************************************/
 /*
 ---------------------------------------------------------------------------
-								TOYBOX
+                                TOYBOX
 
-94	Bonk's Adventure			TOYBOX?		       TBSOP01
-94	Blood Warrior				TOYBOX?		       TBS0P01 452 9339PK001
-94	Great 1000 Miles Rally		TOYBOX													"MM0525-TOYBOX199","USMM0713-TB1994 "
-95	Great 1000 Miles Rally 2	TOYBOX		KANEKO TBSOP02 454 9451MK002 (74 pin PQFP)	"USMM0713-TB1994 "
-95  Jackie Chan					TOYBOX													"USMM0713-TB1994 "
-95  Gals Panic 3				TOYBOX?		       TBSOP01
+94  Bonk's Adventure            TOYBOX?            TBSOP01
+94  Blood Warrior               TOYBOX?            TBS0P01 452 9339PK001
+94  Great 1000 Miles Rally      TOYBOX                                                  "MM0525-TOYBOX199","USMM0713-TB1994 "
+95  Great 1000 Miles Rally 2    TOYBOX      KANEKO TBSOP02 454 9451MK002 (74 pin PQFP)  "USMM0713-TB1994 "
+95  Jackie Chan                 TOYBOX                                                  "USMM0713-TB1994 "
+95  Gals Panic 3                TOYBOX?            TBSOP01
 ---------------------------------------------------------------------------
 
 All the considerations are based on the analysis of jchan, and to a fewer extent galpani3, and make references to the current driver sources:
@@ -387,26 +387,26 @@ MCU triggering:
 
 the 4 JCHAN_MCU_COM_W(...) are in fact 2 groups:
 
-AM_RANGE(0x330000, 0x330001) AM_WRITE(jchan_mcu_com0_w)	// _[ these 2 are set to 0xFFFF
-AM_RANGE(0x340000, 0x340001) AM_WRITE(jchan_mcu_com1_w)	//  [ for MCU to execute cmd
+AM_RANGE(0x330000, 0x330001) AM_WRITE(jchan_mcu_com0_w) // _[ these 2 are set to 0xFFFF
+AM_RANGE(0x340000, 0x340001) AM_WRITE(jchan_mcu_com1_w) //  [ for MCU to execute cmd
 
-AM_RANGE(0x350000, 0x350001) AM_WRITE(jchan_mcu_com2_w)	// _[ these 2 are set to 0xFFFF
-AM_RANGE(0x360000, 0x360001) AM_WRITE(jchan_mcu_com3_w)	//  [ for MCU to return its status
+AM_RANGE(0x350000, 0x350001) AM_WRITE(jchan_mcu_com2_w) // _[ these 2 are set to 0xFFFF
+AM_RANGE(0x360000, 0x360001) AM_WRITE(jchan_mcu_com3_w) //  [ for MCU to return its status
 
 
 MCU parameters:
 ---------------
 
-mcu_command = mcu_ram[0x0010/2];	// command nb
-mcu_offset  = mcu_ram[0x0012/2]/2;	// offset in shared RAM where MCU will write
-mcu_subcmd  = mcu_ram[0x0014/2];	// sub-command parameter, happens only for command #4
+mcu_command = mcu_ram[0x0010/2];    // command nb
+mcu_offset  = mcu_ram[0x0012/2]/2;  // offset in shared RAM where MCU will write
+mcu_subcmd  = mcu_ram[0x0014/2];    // sub-command parameter, happens only for command #4
 
 
-	the only MCU commands found in program code are:
-	- 0x04: protection: provide data (see below) and code <<<---!!!
-	- 0x03: read DSW
-	- 0x02: load game settings \ stored in ATMEL AT93C46 chip,
-	- 0x42: save game settings / 128 bytes serial EEPROM
+    the only MCU commands found in program code are:
+    - 0x04: protection: provide data (see below) and code <<<---!!!
+    - 0x03: read DSW
+    - 0x02: load game settings \ stored in ATMEL AT93C46 chip,
+    - 0x42: save game settings / 128 bytes serial EEPROM
 
 
 Current feeling of devs is that this EEPROM might also play a role in the protection scheme,
@@ -491,7 +491,7 @@ void toybox_mcu_run(void)
 
 
 /*
-	bonkadv and bloodwar test bit 0
+    bonkadv and bloodwar test bit 0
 */
 READ16_HANDLER( toybox_mcu_status_r )
 {
@@ -501,7 +501,7 @@ READ16_HANDLER( toybox_mcu_status_r )
 
 
 /***************************************************************************
-								Blood Warrior
+                                Blood Warrior
 ***************************************************************************/
 
 void bloodwar_mcu_run(void)
@@ -633,7 +633,7 @@ void bloodwar_mcu_run(void)
 }
 
 /***************************************************************************
-								Bonk's Adventure
+                                Bonk's Adventure
 ***************************************************************************/
 
 void bonkadv_mcu_run(void)
@@ -742,15 +742,15 @@ void bonkadv_mcu_run(void)
 }
 
 /***************************************************************************
-							Great 1000 Miles Rally
+                            Great 1000 Miles Rally
 ***************************************************************************/
 
 /*
-	MCU Tasks:
+    MCU Tasks:
 
-	- Write and ID string to shared RAM.
-	- Access the EEPROM
-	- Read the DSWs
+    - Write and ID string to shared RAM.
+    - Access the EEPROM
+    - Read the DSWs
 */
 
 void gtmr_mcu_run(void)

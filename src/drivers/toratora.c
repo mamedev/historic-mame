@@ -59,8 +59,8 @@ WRITE8_HANDLER( toratora_clear_tv_w )
 INTERRUPT_GEN( toratora_interrupt )
 {
 	/* for simplicity, I generate an IRQ every vblank. In reality, the IRQ
-	   should be generated every time the status of an input
-	   (buttons + coins) changes. */
+       should be generated every time the status of an input
+       (buttons + coins) changes. */
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
@@ -84,8 +84,8 @@ static READ8_HANDLER( ca2_0_r )
 static WRITE8_HANDLER( portb_0_w )
 {
 	/* this is the coin counter output, however it is controlled by changing
-	   the PIA DDR (FF/DF) so we don't have a way to know which is which
-	   because we always get a 00 write. */
+       the PIA DDR (FF/DF) so we don't have a way to know which is which
+       because we always get a 00 write. */
 }
 
 

@@ -88,7 +88,7 @@ int wgp_core_vh_start (int x_offs,int y_offs,int piv_xoffs,int piv_yoffs)
 	tilemap_set_scrolldy( wgp_piv_tilemap[2],-piv_yoffs,0 );
 
 	/* We don't need tilemap_set_scroll_rows, as the custom draw routine
-	   applies rowscroll manually */
+       applies rowscroll manually */
 
 	TC0100SCN_set_colbanks(0x80,0xc0,0x40);
 
@@ -122,8 +122,8 @@ custom chip capable of four rather than three tilemaps.)
 502000 - 507fff : piv tilemaps 0-2 [tile numbers only]
 
 508000 - 50ffff : this area relates to pixel rows in each piv tilemap.
-	Includes rowscroll for the piv tilemaps, 1-2 of which act as a
-	simple road. To curve, it has rowscroll applied to each row.
+    Includes rowscroll for the piv tilemaps, 1-2 of which act as a
+    simple road. To curve, it has rowscroll applied to each row.
 
 508000 - 5087ff unknown/unused
 
@@ -131,22 +131,22 @@ custom chip capable of four rather than three tilemaps.)
 509000  piv1 row color bank (low byte = row horizontal zoom)
 509800  piv2 row color bank (low byte = row horizontal zoom)
 
-	Usual low byte is 0x7f, the default row horizontal zoom.
+    Usual low byte is 0x7f, the default row horizontal zoom.
 
-	The high byte is the color offset per pixel row. Controlling
-	color bank per scanline is rare in Taito games. Top Speed may
-	have a similar system to make its road 'move'.
+    The high byte is the color offset per pixel row. Controlling
+    color bank per scanline is rare in Taito games. Top Speed may
+    have a similar system to make its road 'move'.
 
-	In-game the high bytes are set to various values (seen 0 - 0x2b).
+    In-game the high bytes are set to various values (seen 0 - 0x2b).
 
 50a000  piv0 rowscroll [sky]  (not used, but the code supports this)
 50c000  piv1 rowscroll [road] (values 0xfd00 - 0x400)
 50e000  piv2 rowscroll [road or scenery] (values 0xfd00 - 0x403)
 
-	[It seems strange that unnecessarily large space allocations were
-	made for rowscroll. Perhaps the raster color/zoom effects were an
-	afterthought, and 508000-9fff was originally slated as rowscroll
-	for 'missing' 4th piv layer. Certainly the layout is illogical.]
+    [It seems strange that unnecessarily large space allocations were
+    made for rowscroll. Perhaps the raster color/zoom effects were an
+    afterthought, and 508000-9fff was originally slated as rowscroll
+    for 'missing' 4th piv layer. Certainly the layout is illogical.]
 
 510000 - 511fff : unknown/unused
 512000 - 517fff : piv tilemaps 0-2 [just tile colors ??]
@@ -225,10 +225,10 @@ WRITE16_HANDLER( wgp_piv_ctrl_word_w )
 
 		case 0x06:
 			/* Overall control reg (?)
-			   0x39  %00111001   normal
-			   0x2d  %00101101   piv2 layer goes under piv1
-			         seen on Wgp stages 4,5,7 in which piv 2 used
-			         for cloud or scenery wandering up screen */
+               0x39  %00111001   normal
+               0x2d  %00101101   piv2 layer goes under piv1
+                     seen on Wgp stages 4,5,7 in which piv 2 used
+                     for cloud or scenery wandering up screen */
 
 			wgp_piv_ctrl_reg = data;
 			break;
@@ -240,13 +240,13 @@ WRITE16_HANDLER( wgp_piv_ctrl_word_w )
 
 		case 0x09:
 			/* piv 1 y zoom (0x7f = normal, values 0 &
-			      0xff7f-ffbc in Wgp2) */
+                  0xff7f-ffbc in Wgp2) */
 			wgp_piv_zoom[1] = data;
 			break;
 
 		case 0x0a:
 			/* piv 2 y zoom (0x7f = normal, values 0 &
-			      0xff7f-ffbc in Wgp2, 0-0x98 in Wgp round 4/5) */
+                  0xff7f-ffbc in Wgp2, 0-0x98 in Wgp round 4/5) */
 			wgp_piv_zoom[2] = data;
 			break;
 	}
@@ -281,81 +281,81 @@ Memory Map
 
 400000 - 40bfff : Sprite tile mapping area
 
-	Tile numbers (0-0x3fff) alternate with word containing tile
-	color/unknown bits. I'm _not_ 100% sure that only Wgp2 uses
-	the unknown bits.
+    Tile numbers (0-0x3fff) alternate with word containing tile
+    color/unknown bits. I'm _not_ 100% sure that only Wgp2 uses
+    the unknown bits.
 
-	xxxxxxxx x.......  unused ??
-	........ .x......  unknown (Wgp2 only: Taito tyre bridge on default course)
-	........ ..x.....  unknown (Wgp2 only)
-	........ ...x....  unknown (Wgp2 only: Direction signs just before hill # 1)
-	........ ....cccc  color (0-15)
+    xxxxxxxx x.......  unused ??
+    ........ .x......  unknown (Wgp2 only: Taito tyre bridge on default course)
+    ........ ..x.....  unknown (Wgp2 only)
+    ........ ...x....  unknown (Wgp2 only: Direction signs just before hill # 1)
+    ........ ....cccc  color (0-15)
 
-	Tile map for each standard big sprite is 64 bytes (16 tiles).
-	(standard big sprite comprises 4x4 16x16 tiles)
+    Tile map for each standard big sprite is 64 bytes (16 tiles).
+    (standard big sprite comprises 4x4 16x16 tiles)
 
-	Tile map for each small sprite only uses 16 of the 64 bytes.
+    Tile map for each small sprite only uses 16 of the 64 bytes.
       The remaining 48 bytes are garbage and should be ignored.
-	(small sprite comprises 2x2 16x16 tiles)
+    (small sprite comprises 2x2 16x16 tiles)
 
 40c000 - 40dbff : Sprite Table
 
-	Every 16 bytes contains one sprite entry. First entry is
-	ignored [as 0 in active sprites list means no sprite].
+    Every 16 bytes contains one sprite entry. First entry is
+    ignored [as 0 in active sprites list means no sprite].
 
-	(0x1c0 [no.of entries] * 0x40 [bytes for big sprite] = 0x6fff
-	of sprite tile mapping area can be addressed at any one time.)
+    (0x1c0 [no.of entries] * 0x40 [bytes for big sprite] = 0x6fff
+    of sprite tile mapping area can be addressed at any one time.)
 
-	Sprite entry     (preliminary)
-	------------
+    Sprite entry     (preliminary)
+    ------------
 
-	+0x00  x pos (signed)
-	+0x02  y pos (signed)
-	+0x04  index to tile mapping area [2 msbs always set]
+    +0x00  x pos (signed)
+    +0x02  y pos (signed)
+    +0x04  index to tile mapping area [2 msbs always set]
 
-	       (400000 + (index &0x3fff) << 2) points to relevant part of
-	       sprite tile mapping area. Index >0x2fff would be invalid.
+           (400000 + (index &0x3fff) << 2) points to relevant part of
+           sprite tile mapping area. Index >0x2fff would be invalid.
 
-	+0x06  zoom size (pixels) [typical range 0x1-5f, 0x3f = standard]
-	       Looked up from a logarithm table in the data rom indexed
-	       by the z coordinate. Max size prog allows before it blanks
-	       the sprite is 0x140.
+    +0x06  zoom size (pixels) [typical range 0x1-5f, 0x3f = standard]
+           Looked up from a logarithm table in the data rom indexed
+           by the z coordinate. Max size prog allows before it blanks
+           the sprite is 0x140.
 
-	+0x08  incxx ?? (usually stuck at 0xf800)
-	+0x0a  incyy ?? (usually stuck at 0xf800)
+    +0x08  incxx ?? (usually stuck at 0xf800)
+    +0x0a  incyy ?? (usually stuck at 0xf800)
 
-	+0x0c  z coordinate i.e. how far away the sprite is from you
-	       going into the screen. Max distance prog allows before it
-	       blanks the sprite is 0x3fff. 0x1400 is about the farthest
-	       away that the code creates sprites. 0x400 = standard
-	       distance corresponding to 0x3f zoom.  <0x400 = close to
+    +0x0c  z coordinate i.e. how far away the sprite is from you
+           going into the screen. Max distance prog allows before it
+           blanks the sprite is 0x3fff. 0x1400 is about the farthest
+           away that the code creates sprites. 0x400 = standard
+           distance corresponding to 0x3f zoom.  <0x400 = close to
 
-	+0x0e  non-zero only during rotation.
+    +0x0e  non-zero only during rotation.
 
-	NB: +0x0c and +0x0e are paired. Equivalent of incyx and incxy ??
+    NB: +0x0c and +0x0e are paired. Equivalent of incyx and incxy ??
 
-	(No longer used entries typically have 0xfff6 in +0x06 and +0x08.)
+    (No longer used entries typically have 0xfff6 in +0x06 and +0x08.)
 
-	Only 2 rotation examples (i) at 0x40c000 when Taito
-	logo displayed (Wgp only). (ii) stage 5 (rain).
-	Other in-game sprites are simply using +0x06 and +0x0c,
+    Only 2 rotation examples (i) at 0x40c000 when Taito
+    logo displayed (Wgp only). (ii) stage 5 (rain).
+    Other in-game sprites are simply using +0x06 and +0x0c,
 
-	So the sprite rotation in Wgp screenshots must be a *blanket*
-	rotate effect, identical to the one applied to piv layers.
-	This explains why sprite/piv positions are basically okay
-	despite failure to implement rotation.
+    So the sprite rotation in Wgp screenshots must be a *blanket*
+    rotate effect, identical to the one applied to piv layers.
+    This explains why sprite/piv positions are basically okay
+    despite failure to implement rotation.
 
 40dc00 - 40dfff: Active Sprites list
 
-	Each word is a sprite number, 0x0 thru 0x1bf. If !=0
-	a word makes active the 0x10 bytes of sprite data at
-	(40c000 + sprite_num * 0x10). (Wgp2 fills this in reverse).
+    Each word is a sprite number, 0x0 thru 0x1bf. If !=0
+    a word makes active the 0x10 bytes of sprite data at
+    (40c000 + sprite_num * 0x10). (Wgp2 fills this in reverse).
 
 40fff0: Unknown (sprite control word?)
 
-	Wgp alternates 0x8000 and 0. Wgp2 only pokes 0.
-	Could this be some frame buffer control that would help to
-	reduce the sprite timing glitches in Wgp?
+    Wgp alternates 0x8000 and 0. Wgp2 only pokes 0.
+    Could this be some frame buffer control that would help to
+    reduce the sprite timing glitches in Wgp?
 
 ****************************************************************/
 
@@ -399,8 +399,8 @@ static void wgp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *
 			bigsprite = spriteram16[i + 2] &0x3fff;
 
 			/* The last five words [i + 3 thru 7] must be zoom/rotation
-			   control: for time being we kludge zoom using 1 word.
-			   Timing problems are causing many glitches. */
+               control: for time being we kludge zoom using 1 word.
+               Timing problems are causing many glitches. */
 
 if ((spriteram16[i + 4]==0xfff6) && (spriteram16[i + 5]==0))
 	continue;
@@ -429,7 +429,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 			map_index = bigsprite << 1;	/* now we access sprite tilemap */
 
 			/* don't know what selects 2x2 sprites: we use a nasty kludge
-			   which seems to work */
+               which seems to work */
 
 			i = wgp_spritemap[map_index + 0xa];
 			j = wgp_spritemap[map_index + 0xc];
@@ -575,7 +575,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,const struct rectangle
 	int i,y,y_index,src_y_index,row_index,row_zoom;
 
 	/* I have a fairly strong feeling these should be UINT32's, x_index is
-	   falling through from max +ve to max -ve quite a lot in this routine */
+       falling through from max +ve to max -ve quite a lot in this routine */
 	int sx,x_index,x_step,x_max;
 
 	UINT32 zoomx,zoomy;
@@ -594,11 +594,11 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,const struct rectangle
 	zoomx = 0x10000;	/* No overall X zoom, unlike TC0480SCP */
 
 	/* Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max ???
-	   In WGP see:  stage 4 (big spectator stand)
-	                stage 5 (cloud layer)
-	                stage 7 (two bits of background scenery)
-	                stage 8 (unknown - surely something should be appearing here...)
-	   In WGP2 see: road at big hill (default course) */
+       In WGP see:  stage 4 (big spectator stand)
+                    stage 5 (cloud layer)
+                    stage 7 (two bits of background scenery)
+                    stage 8 (unknown - surely something should be appearing here...)
+       In WGP2 see: road at big hill (default course) */
 
 	/* This calculation may be wrong, the y_index one too */
 	zoomy = 0x10000 - (((wgp_piv_ctrlram[0x08 + layer] &0xff) - 0x7f) * 512);

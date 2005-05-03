@@ -1,7 +1,7 @@
 /*
-	Intel i960 disassembler
+    Intel i960 disassembler
 
-	By Farfetch'd and R. Belmont
+    By Farfetch'd and R. Belmont
 */
 
 #include <stdio.h>
@@ -82,9 +82,9 @@ mnemonic_t mnem_reg[100] =
 	{ "modify",0x650 }, { "extract",0x651 }, { "modtc",0x654 }, { "modpc",0x655 },
 	{ "emul",0x670 }, { "ediv",0x671 },
 	{ "atanr",0x680 }, { "logepr", 0x681 }, { "logr", 0x682 }, { "remr", 0x683 }, { "cmpor", 0x684 }, { "cmpr", 0x685 }, { "sqrtr", 0x688 },
-	{ "expr", 0x689 }, { "logbnr", 0x68a }, { "roundr", 0x68b }, { "sinr", 0x68c }, { "cosr", 0x68d }, { "tanr", 0x68e }, { "classr", 0x68f }, 
+	{ "expr", 0x689 }, { "logbnr", 0x68a }, { "roundr", 0x68b }, { "sinr", 0x68c }, { "cosr", 0x68d }, { "tanr", 0x68e }, { "classr", 0x68f },
 	{ "atanrl",0x690 }, { "logeprl", 0x691 }, { "logrl", 0x692 }, { "remrl", 0x693 }, { "cmporl", 0x694 }, { "cmprl", 0x695 }, { "sqrtrl", 0x698 },
-	{ "exprl", 0x699 }, { "logbnrl", 0x69a }, { "roundrl", 0x69b }, { "sinrl", 0x69c }, { "cosrl", 0x69d }, { "tanrl", 0x69e }, { "classrl", 0x69f }, 
+	{ "exprl", 0x699 }, { "logbnrl", 0x69a }, { "roundrl", 0x69b }, { "sinrl", 0x69c }, { "cosrl", 0x69d }, { "tanrl", 0x69e }, { "classrl", 0x69f },
 	{ "cvtri", 0x6c0 }, { "cvtril", 0x6c1 }, { "cvtzri", 0x6c2 }, { "cvtzril", 0x6c3 }, { "movr", 0x6c9 },
 	{ "movrl", 0x6d9 },
 	{ "movre", 0x6e1 }, { "cpysre", 0x6e2 }, { "cpyrsre", 0x6e3 },

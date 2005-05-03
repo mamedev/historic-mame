@@ -70,19 +70,19 @@ handling them separately anyway.
 
 The format of the blitter data stored in ROM is very simple:
 
-7654 ----	Pen to draw with
----- 3210	Command
+7654 ----   Pen to draw with
+---- 3210   Command
 
 Commands:
 
-0		Stop
-1-b		Draw 1-b pixels along X.
-c		Followed by 1 byte (N): draw N pixels along X.
-d		Followed by 2 bytes (X,N): move on the line to pixel (start+X), draw N pixels
-		along X.
-e		Followed by 1 byte (N): set blit_layer = N. Used to draw interleaved graphics
-		with a single blitter run.
-f		Move to next line.
+0       Stop
+1-b     Draw 1-b pixels along X.
+c       Followed by 1 byte (N): draw N pixels along X.
+d       Followed by 2 bytes (X,N): move on the line to pixel (start+X), draw N pixels
+        along X.
+e       Followed by 1 byte (N): set blit_layer = N. Used to draw interleaved graphics
+        with a single blitter run.
+f       Move to next line.
 
 At the end of the blit, blit_src is left pointing to the next data in the gfx ROM.
 This is used to draw interleaved graphics with two blitter runs without having to set

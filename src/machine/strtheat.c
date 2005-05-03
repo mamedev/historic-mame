@@ -34,9 +34,9 @@ static void strtheat_decrypt_rom_8(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/*  start  c  */
@@ -66,9 +66,9 @@ static void strtheat_decrypt_rom_9(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/*   d  */
@@ -98,9 +98,9 @@ static void strtheat_decrypt_rom_A(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* DAHF bGcE   dis B   */
@@ -130,9 +130,9 @@ static void strtheat_decrypt_rom_B(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/*  a  ascii fAHCbGDE  */
@@ -152,8 +152,8 @@ static void strtheat_decrypt_rom_B(void)
 DRIVER_INIT( strtheat )
 {
 	/* While the PAL supports up to 16 decryption methods, only four
-		are actually used in the PAL.  Therefore, we'll take a little
-		memory overhead and decrypt the ROMs using each method in advance. */
+        are actually used in the PAL.  Therefore, we'll take a little
+        memory overhead and decrypt the ROMs using each method in advance. */
 	strtheat_decrypt_rom_8();
 	strtheat_decrypt_rom_9();
 	strtheat_decrypt_rom_A();

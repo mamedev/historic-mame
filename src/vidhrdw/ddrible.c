@@ -71,7 +71,7 @@ WRITE8_HANDLER( K005885_1_w )
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -107,7 +107,7 @@ static void get_bg_tile_info(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -126,7 +126,7 @@ VIDEO_START( ddrible )
 
 /***************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ***************************************************************************/
 
@@ -150,23 +150,23 @@ WRITE8_HANDLER( ddrible_bg_videoram_w )
 
 /***************************************************************************
 
-	Double Dribble sprites
+    Double Dribble sprites
 
 Each sprite has 5 bytes:
-byte #0:	sprite number
+byte #0:    sprite number
 byte #1:
-	bits 0..2:	sprite bank #
-	bit 3:		not used?
-	bits 4..7:	sprite color
-byte #2:	y position
-byte #3:	x position
-byte #4:	attributes
-	bit 0:		x position (high bit)
-	bit 1:		???
-	bits 2..4:	sprite size
-	bit 5:		flip x
-	bit 6:		flip y
-	bit 7:		unused?
+    bits 0..2:  sprite bank #
+    bit 3:      not used?
+    bits 4..7:  sprite color
+byte #2:    y position
+byte #3:    x position
+byte #4:    attributes
+    bit 0:      x position (high bit)
+    bit 1:      ???
+    bits 2..4:  sprite size
+    bit 5:      flip x
+    bit 6:      flip y
+    bit 7:      unused?
 
 ***************************************************************************/
 
@@ -236,7 +236,7 @@ static void ddribble_draw_sprites( struct mame_bitmap *bitmap, const struct rect
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

@@ -205,16 +205,16 @@ READ16_HANDLER( namcos2_68k_roz_ram_r )
 
 WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 {
-//	extern int debug_key_pressed;
+//  extern int debug_key_pressed;
 	data16_t oldword = namcos2_68k_roz_ram[offset];
 	COMBINE_DATA(&namcos2_68k_roz_ram[offset]);
 	if (oldword != namcos2_68k_roz_ram[offset])
 	{
 		tilemap_mark_tile_dirty(tilemap_roz,offset);
-//		if( code_pressed(KEYCODE_Q) )
-//		{
-//			debug_key_pressed = 1;
-//		}
+//      if( code_pressed(KEYCODE_Q) )
+//      {
+//          debug_key_pressed = 1;
+//      }
 	}
 }
 

@@ -16,7 +16,7 @@
 #define VFLAG  0x02
 #define CFLAG  0x01
 
-enum 
+enum
 {
 	H8_E0 = 1,
 	H8_E1,

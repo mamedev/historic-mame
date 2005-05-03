@@ -1,34 +1,34 @@
 /***************************************************************************
 
-	Seibu Sound System v1.02, designed 1986 by Seibu Kaihatsu
+    Seibu Sound System v1.02, designed 1986 by Seibu Kaihatsu
 
-	The Seibu sound system comprises of a Z80A, a YM3812, a YM3931*, and
-	an Oki MSM6205.  As well as sound the Z80 can controls coins and pass
-	data to the main cpu.  There are a few little quirks that make it
-	worthwhile emulating in a seperate file:
+    The Seibu sound system comprises of a Z80A, a YM3812, a YM3931*, and
+    an Oki MSM6205.  As well as sound the Z80 can controls coins and pass
+    data to the main cpu.  There are a few little quirks that make it
+    worthwhile emulating in a seperate file:
 
-	* The YM3812 generates interrupt RST10, by asserting the interrupt line,
-	and placing 0xd7 on the data bus.
+    * The YM3812 generates interrupt RST10, by asserting the interrupt line,
+    and placing 0xd7 on the data bus.
 
-	* The main cpu generates interrupt RST18, by asserting the interrupt line,
-	and placing 0xdf on the data bus.
+    * The main cpu generates interrupt RST18, by asserting the interrupt line,
+    and placing 0xdf on the data bus.
 
-	A problem can occur if both the YM3812 and the main cpu try to assert
-	the interrupt line at the same time.  The effect in the old Mame
-	emulation would be for sound to stop playing - this is because a RST18
-	cancelled out a RST10, and if a single RST10 is dropped sound stops
-	as the YM3812 timer is not reset.  The problem occurs because even
-	if both interrupts happen at the same time, there can only be one value
-	on the data bus.  Obviously the real hardware must have some circuit
-	to prevent this.  It is emulated by user timers to control the z80
-	interrupt vector.
+    A problem can occur if both the YM3812 and the main cpu try to assert
+    the interrupt line at the same time.  The effect in the old Mame
+    emulation would be for sound to stop playing - this is because a RST18
+    cancelled out a RST10, and if a single RST10 is dropped sound stops
+    as the YM3812 timer is not reset.  The problem occurs because even
+    if both interrupts happen at the same time, there can only be one value
+    on the data bus.  Obviously the real hardware must have some circuit
+    to prevent this.  It is emulated by user timers to control the z80
+    interrupt vector.
 
-	* The YM3931 is the main/sub cpu interface, similar to Konami's K054986A
-	  or Taito's TC0140SYT.  It also provides the Z80 memory map and
-	  interrupt control.  It's not a Yamaha chip :-)
+    * The YM3931 is the main/sub cpu interface, similar to Konami's K054986A
+      or Taito's TC0140SYT.  It also provides the Z80 memory map and
+      interrupt control.  It's not a Yamaha chip :-)
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
-	ADPCM by R. Belmont and Jarek Burczynski
+    Emulation by Bryan McPhail, mish@tendril.co.uk
+    ADPCM by R. Belmont and Jarek Burczynski
 
 ***************************************************************************/
 
@@ -41,30 +41,30 @@
 
 
 /*
-	Games using encrypted sound cpu:
+    Games using encrypted sound cpu:
 
-	Air Raid         1987	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Cabal            1988	"Michel/Seibu    sound 11/04/88"
-	Dead Angle       1988?	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Dynamite Duke    1989	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Toki             1989	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
-	Raiden (alt)     1990	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Air Raid         1987   "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Cabal            1988   "Michel/Seibu    sound 11/04/88"
+    Dead Angle       1988?  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Dynamite Duke    1989   "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Toki             1989   "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+    Raiden (alt)     1990   "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 
-	raiden and the decrypted raidena are not identical, there are vast sections of different data.
-	However, there are a few different bytes in the middle of identical data, suggesting a possible
-	error in the decryption scheme: they all require an additional XOR with 0x20 and are located at
-	similar addresses.
-	00002422: 03 23
-	000024A1: 00 20
-	000024A2: 09 29
-	00002822: 48 68
-	000028A1: 06 26
-	00002A21: 17 37
-	00002A22: 00 20
-	00002AA1: 12 32
-	00002C21: 02 22
-	00002CA1: 02 22
-	00002CA2: 17 37
+    raiden and the decrypted raidena are not identical, there are vast sections of different data.
+    However, there are a few different bytes in the middle of identical data, suggesting a possible
+    error in the decryption scheme: they all require an additional XOR with 0x20 and are located at
+    similar addresses.
+    00002422: 03 23
+    000024A1: 00 20
+    000024A2: 09 29
+    00002822: 48 68
+    000028A1: 06 26
+    00002A21: 17 37
+    00002A22: 00 20
+    00002AA1: 12 32
+    00002C21: 02 22
+    00002CA1: 02 22
+    00002CA2: 17 37
 */
 
 
@@ -122,7 +122,7 @@ void seibu_sound_decrypt(int cpu_region,int length)
 /***************************************************************************/
 
 /*
-	Handlers for early Seibu/Tad games with dual channel ADPCM
+    Handlers for early Seibu/Tad games with dual channel ADPCM
 */
 
 static int start, end, start1, end1;
@@ -160,12 +160,12 @@ WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 	switch (data)
 	{
 		case 0:
-//  			ADPCM_stop(0);
+//              ADPCM_stop(0);
 			break;
 		case 2:
 			break;
 		case 1:
-//			ADPCM_play(0, start, end-start);
+//          ADPCM_play(0, start, end-start);
 			break;
 
 	}
@@ -189,14 +189,14 @@ WRITE8_HANDLER( seibu_adpcm_ctl_2_w )
 	switch (data)
 	{
 		case 0:
-//  			ADPCM_stop(1);
+//              ADPCM_stop(1);
 			break;
 		case 2:
 			break;
 		case 1:
 			start1 += 0x10000;
 			end1 += 0x10000;
-//			ADPCM_play(1, start1, end1-start1);
+//          ADPCM_play(1, start1, end1-start1);
 			break;
 
 	}
@@ -391,7 +391,7 @@ WRITE16_HANDLER( seibu_main_mustb_w )
 	main2sub[0] = data&0xff;
 	main2sub[1] = data>>8;
 
-//	logerror("seibu_main_mustb_w: %x -> %x %x\n", data, main2sub[0], main2sub[1]);
+//  logerror("seibu_main_mustb_w: %x -> %x %x\n", data, main2sub[0], main2sub[1]);
 
 	update_irq_lines(RST18_ASSERT);
 }

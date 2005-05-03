@@ -2,7 +2,7 @@
 
   Ganbare Ginkun  (Japan)  (c)1995 TECMO
   Final StarForce (US)     (c)1992 TECMO
-  Riot			  (Japan)  (c)1992 NMK
+  Riot            (Japan)  (c)1992 NMK
 
 
 --
@@ -621,7 +621,7 @@ Notes:
       PAL1 - AMI 18CV8 stamped 'T-11'
       PAL2 - AMI 18CV8 stamped 'T-12'
 
-      Custom Tecmo IC's - 
+      Custom Tecmo IC's -
                          TECMO-5   MCU? clock input 6.000MHz on pin15 (SDIP64)
                          TECMO-06, also stamped 'YM6048' (QFP160)
                          TECMO-07, also stamped 'YM6621' (QFP160)
@@ -694,7 +694,7 @@ ROM_START( riot )
 	ROM_LOAD16_BYTE( "6.ic16", 0x00001, 0x80000, CRC(96ef61da) SHA1(c306e4d1eee19af0229a47c2f115f98c74f33d33) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "8.ic18", 0x00000, 0x20000, CRC(4b70e266) SHA1(4ed23de9223cc7359fbaff9dd500ef6daee00fb0) )	
+	ROM_LOAD( "8.ic18", 0x00000, 0x20000, CRC(4b70e266) SHA1(4ed23de9223cc7359fbaff9dd500ef6daee00fb0) )
 ROM_END
 
 /******************************************************************************/

@@ -20,20 +20,20 @@ static int locked;
 static int reset_delay;
 
 /*
-	EEPROM_command_match:
+    EEPROM_command_match:
 
-	Try to match the first (len) digits in the EEPROM serial buffer
-	string (*buf) with	an EEPROM command string (*cmd).
-	Return non zero if a match was found.
+    Try to match the first (len) digits in the EEPROM serial buffer
+    string (*buf) with  an EEPROM command string (*cmd).
+    Return non zero if a match was found.
 
-	The serial buffer only contains '0' or '1' (e.g. "1001").
-	The command can contain: '0' or '1' or these wildcards:
+    The serial buffer only contains '0' or '1' (e.g. "1001").
+    The command can contain: '0' or '1' or these wildcards:
 
-	'x' :	match both '0' and '1'
-	"*1":	match "1", "01", "001", "0001" etc.
-	"*0":	match "0", "10", "110", "1110" etc.
+    'x' :   match both '0' and '1'
+    "*1":   match "1", "01", "001", "0001" etc.
+    "*0":   match "0", "10", "110", "1110" etc.
 
-	Note: (cmd) may be NULL. Return 0 (no match) in this case.
+    Note: (cmd) may be NULL. Return 0 (no match) in this case.
 */
 static int EEPROM_command_match(const char *buf, const char *cmd, int len)
 {
@@ -79,16 +79,16 @@ static int EEPROM_command_match(const char *buf, const char *cmd, int len)
 
 struct EEPROM_interface eeprom_interface_93C46 =
 {
-	6,				// address bits	6
-	16,				// data bits	16
-	"*110",			// read			1 10 aaaaaa
-	"*101",			// write		1 01 aaaaaa dddddddddddddddd
-	"*111",			// erase		1 11 aaaaaa
-	"*10000xxxx",	// lock			1 00 00xxxx
-	"*10011xxxx",	// unlock		1 00 11xxxx
+	6,				// address bits 6
+	16,				// data bits    16
+	"*110",			// read         1 10 aaaaaa
+	"*101",			// write        1 01 aaaaaa dddddddddddddddd
+	"*111",			// erase        1 11 aaaaaa
+	"*10000xxxx",	// lock         1 00 00xxxx
+	"*10011xxxx",	// unlock       1 00 11xxxx
 	1,
-//	"*10001xxxx"	// write all	1 00 01xxxx dddddddddddddddd
-//	"*10010xxxx"	// erase all	1 00 10xxxx
+//  "*10001xxxx"    // write all    1 00 01xxxx dddddddddddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
 

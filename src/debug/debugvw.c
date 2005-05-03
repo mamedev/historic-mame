@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugvw.c
-**		Debugger view engine.
-**		Written by Aaron Giles
+**      debugvw.c
+**      Debugger view engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -19,7 +19,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG			0
@@ -27,7 +27,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define MAX_VIEW_WIDTH		(256)
@@ -41,7 +41,7 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 /* debug_view_callbacks contains calbacks specific to a given view */
@@ -139,7 +139,7 @@ struct debug_view_memory
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 static struct debug_view *first_view;
@@ -147,13 +147,13 @@ static struct debug_view *first_view;
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void console_update(struct debug_view *view);
@@ -186,11 +186,11 @@ static struct debug_view_callbacks callback_table[] =
 
 
 /*###################################################################################################
-**	INITIALIZATION
+**  INITIALIZATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_init - initializes the view system
+    debug_view_init - initializes the view system
 -------------------------------------------------*/
 
 void debug_view_init(void)
@@ -201,7 +201,7 @@ void debug_view_init(void)
 
 
 /*-------------------------------------------------
-	debug_view_exit - exits the view system
+    debug_view_exit - exits the view system
 -------------------------------------------------*/
 
 void debug_view_exit(void)
@@ -214,12 +214,12 @@ void debug_view_exit(void)
 
 
 /*###################################################################################################
-**	VIEW CREATION/DELETION
+**  VIEW CREATION/DELETION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_alloc - allocate a new debug
-	view
+    debug_view_alloc - allocate a new debug
+    view
 -------------------------------------------------*/
 
 struct debug_view *debug_view_alloc(int type)
@@ -267,7 +267,7 @@ struct debug_view *debug_view_alloc(int type)
 
 
 /*-------------------------------------------------
-	debug_view_free - free a debug view
+    debug_view_free - free a debug view
 -------------------------------------------------*/
 
 void debug_view_free(struct debug_view *view)
@@ -297,12 +297,12 @@ void debug_view_free(struct debug_view *view)
 
 
 /*###################################################################################################
-**	PROPERTY MANAGEMENT
+**  PROPERTY MANAGEMENT
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_get_property - return the value
-	of a given property
+    debug_view_get_property - return the value
+    of a given property
 -------------------------------------------------*/
 
 void debug_view_get_property(struct debug_view *view, int property, void *value)
@@ -372,8 +372,8 @@ void debug_view_get_property(struct debug_view *view, int property, void *value)
 
 
 /*-------------------------------------------------
-	debug_view_set_property - set the value
-	of a given property
+    debug_view_set_property - set the value
+    of a given property
 -------------------------------------------------*/
 
 void debug_view_set_property(struct debug_view *view, int property, const void *value)
@@ -507,12 +507,12 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 
 
 /*###################################################################################################
-**	UPDATE MANAGEMENT
+**  UPDATE MANAGEMENT
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_view_begin_update - bracket a sequence
-	of changes so that only one update occurs
+    debug_view_begin_update - bracket a sequence
+    of changes so that only one update occurs
 -------------------------------------------------*/
 
 void debug_view_begin_update(struct debug_view *view)
@@ -523,8 +523,8 @@ void debug_view_begin_update(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	debug_view_end_update - bracket a sequence
-	of changes so that only one update occurs
+    debug_view_end_update - bracket a sequence
+    of changes so that only one update occurs
 -------------------------------------------------*/
 
 void debug_view_end_update(struct debug_view *view)
@@ -553,8 +553,8 @@ void debug_view_end_update(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	debug_view_update_all - force all views to
-	refresh
+    debug_view_update_all - force all views to
+    refresh
 -------------------------------------------------*/
 
 void debug_view_update_all(void)
@@ -572,8 +572,8 @@ void debug_view_update_all(void)
 
 
 /*-------------------------------------------------
-	debug_view_update_type - force all views of
-	a given type to refresh
+    debug_view_update_type - force all views of
+    a given type to refresh
 -------------------------------------------------*/
 
 void debug_view_update_type(int type)
@@ -593,11 +593,11 @@ void debug_view_update_type(int type)
 
 
 /*###################################################################################################
-**	CONSOLE VIEW
+**  CONSOLE VIEW
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	console_update - update the console view
+    console_update - update the console view
 -------------------------------------------------*/
 
 static void console_update(struct debug_view *view)
@@ -648,12 +648,12 @@ static void console_update(struct debug_view *view)
 
 
 /*###################################################################################################
-**	REGISTERS VIEW
+**  REGISTERS VIEW
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	registers_alloc - allocate memory for the
-	registers view
+    registers_alloc - allocate memory for the
+    registers view
 -------------------------------------------------*/
 
 static int registers_alloc(struct debug_view *view)
@@ -676,8 +676,8 @@ static int registers_alloc(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	registers_free - free memory for the
-	registers view
+    registers_free - free memory for the
+    registers view
 -------------------------------------------------*/
 
 static void registers_free(struct debug_view *view)
@@ -692,8 +692,8 @@ static void registers_free(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	registers_recompute - recompute all info
-	for the registers view
+    registers_recompute - recompute all info
+    for the registers view
 -------------------------------------------------*/
 
 static void registers_recompute(struct debug_view *view)
@@ -844,8 +844,8 @@ static void registers_recompute(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	registers_update - update the contents of
-	the register view
+    registers_update - update the contents of
+    the register view
 -------------------------------------------------*/
 
 static void registers_update(struct debug_view *view)
@@ -966,12 +966,12 @@ static void registers_update(struct debug_view *view)
 
 
 /*###################################################################################################
-**	DISASSEMBLY VIEW
+**  DISASSEMBLY VIEW
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	disasm_alloc - allocate disasm for the
-	disassembly view
+    disasm_alloc - allocate disasm for the
+    disassembly view
 -------------------------------------------------*/
 
 static int disasm_alloc(struct debug_view *view)
@@ -994,8 +994,8 @@ static int disasm_alloc(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	disasm_free - free disasm for the
-	disassembly view
+    disasm_free - free disasm for the
+    disassembly view
 -------------------------------------------------*/
 
 static void disasm_free(struct debug_view *view)
@@ -1010,8 +1010,8 @@ static void disasm_free(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	disasm_back_up - back up the specified number
-	of instructions from the given PC
+    disasm_back_up - back up the specified number
+    of instructions from the given PC
 -------------------------------------------------*/
 
 static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, offs_t startpc, int numinstrs)
@@ -1077,8 +1077,8 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 
 
 /*-------------------------------------------------
-	disasm_generate_bytes - generate the opcode
-	byte values
+    disasm_generate_bytes - generate the opcode
+    byte values
 -------------------------------------------------*/
 
 static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debug_cpu_info *cpuinfo, int minbytes, char *string)
@@ -1124,8 +1124,8 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debu
 
 
 /*-------------------------------------------------
-	disasm_recompute - recompute all info
-	for the disassembly view
+    disasm_recompute - recompute all info
+    for the disassembly view
 -------------------------------------------------*/
 
 static void disasm_recompute(struct debug_view *view)
@@ -1205,8 +1205,8 @@ static void disasm_recompute(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	disasm_update - update the contents of
-	the disassembly view
+    disasm_update - update the contents of
+    the disassembly view
 -------------------------------------------------*/
 
 static void disasm_update(struct debug_view *view)
@@ -1332,8 +1332,8 @@ static void disasm_update(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	disasm_getprop - return the value
-	of a given property
+    disasm_getprop - return the value
+    of a given property
 -------------------------------------------------*/
 
 static void	disasm_getprop(struct debug_view *view, UINT32 property, void *value)
@@ -1358,8 +1358,8 @@ static void	disasm_getprop(struct debug_view *view, UINT32 property, void *value
 
 
 /*-------------------------------------------------
-	disasm_getprop - set the value
-	of a given property
+    disasm_getprop - set the value
+    of a given property
 -------------------------------------------------*/
 
 static void	disasm_setprop(struct debug_view *view, UINT32 property, const void *value)
@@ -1402,7 +1402,7 @@ static void	disasm_setprop(struct debug_view *view, UINT32 property, const void 
 
 
 /*###################################################################################################
-**	MEMORY VIEW
+**  MEMORY VIEW
 **#################################################################################################*/
 
 /*
@@ -1412,8 +1412,8 @@ static void	disasm_setprop(struct debug_view *view, UINT32 property, const void 
 */
 
 /*-------------------------------------------------
-	memory_alloc - allocate memory for the
-	memory view
+    memory_alloc - allocate memory for the
+    memory view
 -------------------------------------------------*/
 
 static int memory_alloc(struct debug_view *view)
@@ -1439,8 +1439,8 @@ static int memory_alloc(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	memory_free - free memory for the
-	memory view
+    memory_free - free memory for the
+    memory view
 -------------------------------------------------*/
 
 static void memory_free(struct debug_view *view)
@@ -1455,8 +1455,8 @@ static void memory_free(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	memory_get_cursor_pos - return the cursor
-	position as an address and a shift value
+    memory_get_cursor_pos - return the cursor
+    position as an address and a shift value
 -------------------------------------------------*/
 
 static int memory_get_cursor_pos(struct debug_view *view, offs_t *address, UINT8 *shift)
@@ -1545,9 +1545,9 @@ static int memory_get_cursor_pos(struct debug_view *view, offs_t *address, UINT8
 
 
 /*-------------------------------------------------
-	memory_set_cursor_pos - set the cursor
-	position as a function of an address and a
-	shift value
+    memory_set_cursor_pos - set the cursor
+    position as a function of an address and a
+    shift value
 -------------------------------------------------*/
 
 static void memory_set_cursor_pos(struct debug_view *view, offs_t address, UINT8 shift)
@@ -1611,8 +1611,8 @@ static void memory_set_cursor_pos(struct debug_view *view, offs_t address, UINT8
 
 
 /*-------------------------------------------------
-	memory_handle_char - handle a character typed
-	within the current view
+    memory_handle_char - handle a character typed
+    within the current view
 -------------------------------------------------*/
 
 static void memory_handle_char(struct debug_view *view, char chval)
@@ -1622,7 +1622,7 @@ static void memory_handle_char(struct debug_view *view, char chval)
 	char *hexchar = strchr(hexvals, tolower(chval));
 	offs_t address;
 	UINT8 shift;
-//	int modval;
+//  int modval;
 
 	/* get the position */
 	if (!memory_get_cursor_pos(view, &address, &shift))
@@ -1692,8 +1692,8 @@ static void memory_handle_char(struct debug_view *view, char chval)
 
 
 /*-------------------------------------------------
-	memory_update - update the contents of
-	the register view
+    memory_update - update the contents of
+    the register view
 -------------------------------------------------*/
 
 static void memory_update(struct debug_view *view)
@@ -1887,8 +1887,8 @@ static void memory_update(struct debug_view *view)
 
 
 /*-------------------------------------------------
-	memory_getprop - return the value
-	of a given property
+    memory_getprop - return the value
+    of a given property
 -------------------------------------------------*/
 
 static void	memory_getprop(struct debug_view *view, UINT32 property, void *value)
@@ -1929,8 +1929,8 @@ static void	memory_getprop(struct debug_view *view, UINT32 property, void *value
 
 
 /*-------------------------------------------------
-	memory_getprop - set the value
-	of a given property
+    memory_getprop - set the value
+    of a given property
 -------------------------------------------------*/
 
 static void	memory_setprop(struct debug_view *view, UINT32 property, const void *value)

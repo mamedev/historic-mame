@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Blasteroids hardware
+    Atari Blasteroids hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -22,7 +22,7 @@ data16_t *blstroid_priorityram;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -38,7 +38,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -96,7 +96,7 @@ VIDEO_START( blstroid )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -139,7 +139,7 @@ void blstroid_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -164,8 +164,8 @@ VIDEO_UPDATE( blstroid )
 				{
 					/* verified via schematics
 
-						priority address = HPPPMMMM
-					*/
+                        priority address = HPPPMMMM
+                    */
 					int priaddr = ((pf[x] & 8) << 4) | (pf[x] & 0x70) | ((mo[x] & 0xf0) >> 4);
 					if (blstroid_priorityram[priaddr] & 1)
 						pf[x] = mo[x];

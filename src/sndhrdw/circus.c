@@ -185,29 +185,29 @@ WRITE8_HANDLER( circus_clown_z_w )
 				case 0 : /* All Off */
 					discrete_sound_w(CIRCUS_MUSIC_BIT, 0);
 					break;
-	
+
 				case 1 : /* Music */
 					discrete_sound_w(CIRCUS_MUSIC_BIT, 1);
 					break;
-	
+
 				case 2 : /* Circus = Pop; Rip Cord = Splash */
 					sample_start (0, 0, 0);
 					break;
-	
+
 				case 3 : /* Normal Video */
 					break;
-	
+
 				case 4 : /* Circus = Miss; Rip Cord = Scream */
 					sample_start (1, 1, 0);
 					break;
-	
+
 				case 5 : /* Invert Video */
 					break;
-	
+
 				case 6 : /* Circus = Bounce; Rip Cord = Chute Open */
 					sample_start (2, 2, 0);
 					break;
-		
+
 				case 7 : /* Circus = not used; Rip Cord = Whistle */
 					if GAME_IS_RIPCORD
 						sample_start (3, 3, 0);
@@ -233,7 +233,7 @@ WRITE8_HANDLER( circus_clown_z_w )
 			if (data & 0x01)	/* Reward */
 				sample_start (4, 4, 0);
 
-			// if (data & 0x04)	/* Invert */
+			// if (data & 0x04) /* Invert */
 			break;
 
 		case 3:	/* crash */
@@ -243,29 +243,29 @@ WRITE8_HANDLER( circus_clown_z_w )
 				case 0 : /* All Off */
 					discrete_sound_w(CRASH_MUSIC_BIT, 0);
 					break;
-	
+
 				case 1 : /* Music */
 					discrete_sound_w(CRASH_MUSIC_BIT, 1);
 					break;
-	
+
 				case 2 : /* Crash */
 					sample_start (0, 0, 0);
 					break;
-	
+
 				case 3 : /* Normal Video and Beep */
 					discrete_sound_w(CRASH_BEEPER_EN, 0);
 					break;
-	
+
 				case 4 : /* Skid */
 					break;
-	
+
 				case 5 : /* Invert Video and Beep */
 					discrete_sound_w(CRASH_BEEPER_EN, 0);
 					break;
-	
+
 				case 6 : /* Hi Motor */
 					break;
-		
+
 				case 7 : /* Low Motor */
 					break;
 			}

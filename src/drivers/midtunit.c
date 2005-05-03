@@ -1,20 +1,20 @@
 /*************************************************************************
 
-	Midway T-unit system
+    Midway T-unit system
 
     driver by Alex Pasadyn, Zsolt Vasvari, Kurt Mahan, Ernesto Corvi,
     and Aaron Giles
 
-	Games supported:
-		* Mortal Kombat (T-unit version)
-		* Mortal Kombat 2
-		* NBA Jam
-		* NBA Jam Tournament Edition
-		* Judge Dredd (prototype)
+    Games supported:
+        * Mortal Kombat (T-unit version)
+        * Mortal Kombat 2
+        * NBA Jam
+        * NBA Jam Tournament Edition
+        * Judge Dredd (prototype)
 
-	Known bugs:
-		* page flipping seems off in NBA Jam (or else there's a blank-the
-			screen bit we're missing)
+    Known bugs:
+        * page flipping seems off in NBA Jam (or else there's a blank-the
+            screen bit we're missing)
 
 **************************************************************************/
 
@@ -30,7 +30,7 @@
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -44,7 +44,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x01800000, 0x0187ffff) AM_READWRITE(MRA16_RAM, midtunit_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x01a80000, 0x01a800ff) AM_READWRITE(midtunit_dma_r, midtunit_dma_w)
 	AM_RANGE(0x01b00000, 0x01b0001f) AM_WRITE(midtunit_control_w)
-/*	AM_RANGE(0x01c00060, 0x01c0007f) AM_WRITE(midtunit_cmos_enable_w) */
+/*  AM_RANGE(0x01c00060, 0x01c0007f) AM_WRITE(midtunit_cmos_enable_w) */
 	AM_RANGE(0x01d00000, 0x01d0001f) AM_READ(midtunit_sound_state_r)
 	AM_RANGE(0x01d01020, 0x01d0103f) AM_READWRITE(midtunit_sound_r, midtunit_sound_w)
 	AM_RANGE(0x01d81060, 0x01d8107f) AM_WRITE(watchdog_reset16_w)
@@ -59,7 +59,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -209,7 +209,7 @@ INPUT_PORTS_START( mk2 )
 	/*Note-the real MK2 board has a special cable designed for SF2 cab conversions that has the 2 SF2
           Medium punch/kick buttons as block buttons for MK2. The secondary block button registers in test mode,
           but does not have an indicator light show up. During gameplay, the second block only functions temporarily.
-	  You can hold the button, but the character will only take a block position for 1 second. This is correct behavior.*/
+      You can hold the button, but the character will only take a block position for 1 second. This is correct behavior.*/
 
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, "Test Switch" )
@@ -340,7 +340,7 @@ INPUT_PORTS_START( jdreddp )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0300, 0x0000, "Coin Counters" )
-//	PORT_DIPSETTING(      0x0300, "1 Counter, 1 count/coin" )
+//  PORT_DIPSETTING(      0x0300, "1 Counter, 1 count/coin" )
 	PORT_DIPSETTING(      0x0200, "1 Counter, Totalizing" )
 	PORT_DIPSETTING(      0x0100, "2 Counters, 1 count/coin" )
 	PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
@@ -355,8 +355,8 @@ INPUT_PORTS_START( jdreddp )
 	PORT_DIPSETTING(      0x5000, "3" ) // the game reads this as Skip Power up Test and Coinage 3
 	PORT_DIPSETTING(      0x1000, "4" )
 	PORT_DIPSETTING(      0x6000, "ECA" )
-//	PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x8000, "Dipswitch" )
@@ -446,20 +446,20 @@ INPUT_PORTS_START( nbajam )
 	PORT_DIPSETTING(      0x0300, "1 Counter, 1 count/coin" )
 	PORT_DIPSETTING(      0x0200, "1 Counter, Totalizing" )
 	PORT_DIPSETTING(      0x0100, "2 Counters, 1 count/coin" )
-//	PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
+//  PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, "Country" )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x7000, 0x7000, DEF_STR( Coinage ))
 	PORT_DIPSETTING(      0x7000, "1" )
 	PORT_DIPSETTING(      0x3000, "2" )
 	PORT_DIPSETTING(      0x5000, "3" )
 	PORT_DIPSETTING(      0x1000, "4" )
 	PORT_DIPSETTING(      0x6000, "ECA" )
-//	PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x8000, "Dipswitch" )
@@ -549,20 +549,20 @@ INPUT_PORTS_START( nbajamte )
 	PORT_DIPSETTING(      0x0300, "1 Counter, 1 count/coin" )
 	PORT_DIPSETTING(      0x0200, "1 Counter, Totalizing" )
 	PORT_DIPSETTING(      0x0100, "2 Counters, 1 count/coin" )
-//	PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
+//  PORT_DIPSETTING(      0x0000, "1 Counter, 1 count/coin" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, "Country" )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x7000, 0x7000, DEF_STR( Coinage ))
 	PORT_DIPSETTING(      0x7000, "1" )
 	PORT_DIPSETTING(      0x3000, "2" )
 	PORT_DIPSETTING(      0x5000, "3" )
 	PORT_DIPSETTING(      0x1000, "4" )
 	PORT_DIPSETTING(      0x6000, "ECA" )
-//	PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x8000, "Dipswitch" )
@@ -572,7 +572,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -590,19 +590,19 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
 /*
-	all games use identical visible areas and VBLANK timing
-	based on these video params:
+    all games use identical visible areas and VBLANK timing
+    based on these video params:
 
-	          VERTICAL                   HORIZONTAL
-	mk:       0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
-	mk2:      0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
-	jdredd:   0014-0112 / 0120 (254)     0032-00FA / 00FC (400)
-	nbajam:   0014-0112 / 0120 (254)     0032-00FA / 00FC (400)
+              VERTICAL                   HORIZONTAL
+    mk:       0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
+    mk2:      0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
+    jdredd:   0014-0112 / 0120 (254)     0032-00FA / 00FC (400)
+    nbajam:   0014-0112 / 0120 (254)     0032-00FA / 00FC (400)
 */
 
 static MACHINE_DRIVER_START( tunit_core )
@@ -647,7 +647,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -989,33 +989,33 @@ ROM_END
 /*
     equivalences for the extension board version (same contents, split in half)
 
-	ROM_LOAD( "ug14.l1",  0x000000, 0x080000, CRC(74f5aaf1) )
-	ROM_LOAD( "ug16.l11", 0x080000, 0x080000, CRC(1cf58c4c) )
-	ROM_LOAD( "u8.l1",    0x200000, 0x080000, CRC(56e22ff5) )
-	ROM_LOAD( "u11.l1",   0x280000, 0x080000, CRC(559ca4a3) )
-	ROM_LOAD( "ug17.l1",  0x100000, 0x080000, CRC(4202d8bf) )
-	ROM_LOAD( "ug18.l1",  0x180000, 0x080000, CRC(a3deab6a) )
+    ROM_LOAD( "ug14.l1",  0x000000, 0x080000, CRC(74f5aaf1) )
+    ROM_LOAD( "ug16.l11", 0x080000, 0x080000, CRC(1cf58c4c) )
+    ROM_LOAD( "u8.l1",    0x200000, 0x080000, CRC(56e22ff5) )
+    ROM_LOAD( "u11.l1",   0x280000, 0x080000, CRC(559ca4a3) )
+    ROM_LOAD( "ug17.l1",  0x100000, 0x080000, CRC(4202d8bf) )
+    ROM_LOAD( "ug18.l1",  0x180000, 0x080000, CRC(a3deab6a) )
 
-	ROM_LOAD( "uj14.l1",  0x300000, 0x080000, CRC(869a3c55) )
-	ROM_LOAD( "uj16.l11", 0x380000, 0x080000, CRC(c70cf053) )
-	ROM_LOAD( "u9.l1",    0x500000, 0x080000, CRC(67da0769) )
-	ROM_LOAD( "u10.l1",   0x580000, 0x080000, CRC(69000ac3) )
-	ROM_LOAD( "uj17.l1",  0x400000, 0x080000, CRC(ec3e1884) )
-	ROM_LOAD( "uj18.l1",  0x480000, 0x080000, CRC(c9f5aef4) )
+    ROM_LOAD( "uj14.l1",  0x300000, 0x080000, CRC(869a3c55) )
+    ROM_LOAD( "uj16.l11", 0x380000, 0x080000, CRC(c70cf053) )
+    ROM_LOAD( "u9.l1",    0x500000, 0x080000, CRC(67da0769) )
+    ROM_LOAD( "u10.l1",   0x580000, 0x080000, CRC(69000ac3) )
+    ROM_LOAD( "uj17.l1",  0x400000, 0x080000, CRC(ec3e1884) )
+    ROM_LOAD( "uj18.l1",  0x480000, 0x080000, CRC(c9f5aef4) )
 
-	ROM_LOAD( "u6.l1",    0x600000, 0x080000, CRC(8d4c496a) )
-	ROM_LOAD( "u13.l11",  0x680000, 0x080000, CRC(7fb20a45) )
-	ROM_LOAD( "ug19.l1",  0x800000, 0x080000, CRC(d6c1f75e) )
-	ROM_LOAD( "ug20.l1",  0x880000, 0x080000, CRC(19a33cff) )
-	ROM_LOAD( "ug22.l1",  0x700000, 0x080000, CRC(db6cfa45) )
-	ROM_LOAD( "ug23.l1",  0x780000, 0x080000, CRC(bfd8b656) )
+    ROM_LOAD( "u6.l1",    0x600000, 0x080000, CRC(8d4c496a) )
+    ROM_LOAD( "u13.l11",  0x680000, 0x080000, CRC(7fb20a45) )
+    ROM_LOAD( "ug19.l1",  0x800000, 0x080000, CRC(d6c1f75e) )
+    ROM_LOAD( "ug20.l1",  0x880000, 0x080000, CRC(19a33cff) )
+    ROM_LOAD( "ug22.l1",  0x700000, 0x080000, CRC(db6cfa45) )
+    ROM_LOAD( "ug23.l1",  0x780000, 0x080000, CRC(bfd8b656) )
 
-	ROM_LOAD( "u7.l1",    0x900000, 0x080000, CRC(3988aac8) )
-	ROM_LOAD( "u12.l11",  0x980000, 0x080000, CRC(2ef12cc6) )
-	ROM_LOAD( "uj19.l1",  0xb00000, 0x080000, CRC(4eed6f18) )
-	ROM_LOAD( "uj20.l1",  0xb80000, 0x080000, CRC(337b1e20) )
-	ROM_LOAD( "uj22.l1",  0xa00000, 0x080000, CRC(a6546b15) )
-	ROM_LOAD( "uj23.l1",  0xa80000, 0x080000, CRC(45867c6f) )
+    ROM_LOAD( "u7.l1",    0x900000, 0x080000, CRC(3988aac8) )
+    ROM_LOAD( "u12.l11",  0x980000, 0x080000, CRC(2ef12cc6) )
+    ROM_LOAD( "uj19.l1",  0xb00000, 0x080000, CRC(4eed6f18) )
+    ROM_LOAD( "uj20.l1",  0xb80000, 0x080000, CRC(337b1e20) )
+    ROM_LOAD( "uj22.l1",  0xa00000, 0x080000, CRC(a6546b15) )
+    ROM_LOAD( "uj23.l1",  0xa80000, 0x080000, CRC(45867c6f) )
 */
 
 
@@ -1274,7 +1274,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

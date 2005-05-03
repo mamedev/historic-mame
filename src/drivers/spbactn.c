@@ -168,7 +168,7 @@ static ADDRESS_MAP_START( spbactn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	/* this is an awful lot of unknowns */
 	AM_RANGE(0x90000, 0x90001) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x90010, 0x90011) AM_WRITE(soundcommand_w)
-//	AM_RANGE(0x90020, 0x90021) AM_WRITE(soundcommand_w)
+//  AM_RANGE(0x90020, 0x90021) AM_WRITE(soundcommand_w)
 	AM_RANGE(0x90030, 0x90031) AM_WRITE(MWA16_NOP)
 
 	AM_RANGE(0x90080, 0x90081) AM_WRITE(MWA16_NOP)

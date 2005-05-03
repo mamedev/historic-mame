@@ -26,8 +26,8 @@
 /******************************************************************************
  *  Notes:
 
-    **This core comes from my AT91 cpu core contributed to PinMAME, 
-      but with all the AT91 specific junk removed, 
+    **This core comes from my AT91 cpu core contributed to PinMAME,
+      but with all the AT91 specific junk removed,
       which leaves just the ARM7TDMI core itself. I further removed the CPU specific MAME stuff
       so you just have the actual ARM7 core itself, since many cpu's incorporate an ARM7 core, but add on
       many cpu specific functionality.
@@ -36,12 +36,12 @@
       implementation, and therefore, this file shouldn't be compiled as part of your project directly.
       Additionally, you will need to include arm7exec.c in your cpu's execute routine.
 
-      For better or for worse, the code itself is very much intact from it's arm 2/3/6 origins from 
+      For better or for worse, the code itself is very much intact from it's arm 2/3/6 origins from
       Bryan & Phil's work. I contemplated merging it in, but thought the fact that the CPSR is
       no longer part of the PC was enough of a change to make it annoying to merge.
     **
 
-    Coprocessor functions are heavily implementation specific, so callback handlers are used to allow the 
+    Coprocessor functions are heavily implementation specific, so callback handlers are used to allow the
     implementation to handle the functionality. Custom DASM handlers are included as well to allow the DASM
     output to be tailored to the co-proc implementation details.
 
@@ -52,7 +52,7 @@
     Could not find info on what the TEQP opcode is from page 44..
     I have no idea if user bank switching is right, as I don't fully understand it's use.
     Search for Todo: tags for remaining items not done.
-    
+
 
     Differences from Arm 2/3 (6 also?)
     -Full 32 bit address support
@@ -116,7 +116,7 @@ WRITE32_HANDLER((*arm7_coproc_do_callback));        //holder for the co processo
 READ32_HANDLER((*arm7_coproc_rt_r_callback));   //holder for the co processor Register Transfer Read Callback func.
 WRITE32_HANDLER((*arm7_coproc_rt_w_callback));  //holder for the co processor Register Transfer Write Callback Callback func.
 //holder for the co processor Data Transfer Read & Write Callback funcs
-void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));      
+void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));
 void (*arm7_coproc_dt_w_callback)(data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data));
 
 #ifdef MAME_DEBUG
@@ -127,7 +127,7 @@ char *(*arm7_dasm_cop_do_callback)( char *pBuf, data32_t opcode, char *pConditio
 #endif
 
 /***************************************************************************
- * Default Memory Handlers 
+ * Default Memory Handlers
  ***************************************************************************/
 INLINE void arm7_cpu_write32( int addr, data32_t data )
 {
@@ -230,7 +230,7 @@ INLINE data8_t arm7_cpu_read8( offs_t addr )
   (((rd) & SIGN_BIT) | ((!(rd)) << Z_BIT))
 
 
-//Long ALU Functions use bit 63 
+//Long ALU Functions use bit 63
 #define HandleLongALUNZFlags(rd) \
   ((((rd) & ((UINT64)1<<63))>>32) | ((!(rd)) << Z_BIT))
 
@@ -267,7 +267,7 @@ INLINE void SwitchMode (int cpsr_mode_val)
  * shifter carry output will manifest itself as @*carry == 0@ for carry clear
  * and @*carry != 0@ for carry set.
 
-   SJE: Rules: 
+   SJE: Rules:
    IF RC = 256, Result = no shift.
    LSL   0   = Result = RM, Carry = Old Contents of CPSR C Bit
    LSL(0,31) = Result shifted, least significant bit is in carry out
@@ -321,7 +321,7 @@ static data32_t decodeShift( data32_t insn, data32_t *pCarry)
     case 0:                     /* LSL */
         //LSL  32   = Result of 0, Carry = Bit 0 of RM
         //LSL >32   = Result of 0, Carry out 0
-        if(k>=32) 
+        if(k>=32)
         {
             if(pCarry)  *pCarry = (k==32)?rm&1:0;
             return 0;
@@ -637,7 +637,7 @@ static void HandleCoProcDO(data32_t insn)
 //Co-Processor Register Transfer - To/From Arm to Co-Proc
 static void HandleCoProcRT(data32_t insn)
 {
-    
+
     /* xxxx 1110 oooL nnnn dddd cccc ppp1 mmmm */
 
     // Load (MRC) data from Co-Proc to ARM7 register
@@ -664,7 +664,7 @@ static void HandleCoProcRT(data32_t insn)
 /*Data Transfer - To/From Arm to Co-Proc
    Loading or Storing, the co-proc function is responsible to read/write from the base register supplied + offset
    8 bit immediate value Base Offset address is << 2 to get the actual #
- 
+
   issues - #1 - the co-proc function, needs direct access to memory reads or writes (ie, so we must send a pointer to a func)
          - #2 - the co-proc may adjust the base address (especially if it reads more than 1 word), so a pointer to the register must be used
                 but the old value of the register must be restored if write back is not set..
@@ -676,8 +676,8 @@ static void HandleCoProcRT(data32_t insn)
 static void HandleCoProcDT(data32_t insn)
 {
     data32_t rn = (insn>>16)&0xf;
-    data32_t rnv = GET_REGISTER(rn);    // Get Address Value stored from Rn 
-    data32_t ornv = rnv;                // Keep value of Rn 
+    data32_t rnv = GET_REGISTER(rn);    // Get Address Value stored from Rn
+    data32_t ornv = rnv;                // Keep value of Rn
     data32_t off = (insn&0xff)<<2;      // Offset is << 2 according to manual
     data32_t* prn = &ARM7REG(rn);       // Pointer to our register, so it can be changed in the callback
 
@@ -1192,7 +1192,7 @@ static void HandleALU( data32_t insn )
     }
 
     /* Perform the operation */
-            
+
     switch (opcode)
     {
     /* Arithmetic operations */
@@ -1279,7 +1279,7 @@ static void HandleALU( data32_t insn )
                 /* S Flag is set - Write results to register & update CPSR (which was already handled using HandleALU flag macros) */
                 SET_REGISTER(rdn,rd);
         }
-    } 
+    }
     //SJE: Don't think this applies any more.. (see page 44 at bottom)
     /* TST & TEQ can affect R15 (the condition code register) with the S bit set */
     else if (rdn==eR15)
@@ -1311,8 +1311,8 @@ static void HandleMul( data32_t insn)
         GET_REGISTER( (insn&INSN_MUL_RS)>>INSN_MUL_RS_SHIFT );
 
     #if ARM7_DEBUG_CORE
-    if( 
-        ((insn&INSN_MUL_RM)==0xf) || 
+    if(
+        ((insn&INSN_MUL_RM)==0xf) ||
         (((insn&INSN_MUL_RS)>>INSN_MUL_RS_SHIFT )==0xf) ||
         (((insn&INSN_MUL_RN)>>INSN_MUL_RN_SHIFT)==0xf)
        )
@@ -1365,7 +1365,7 @@ static void HandleSMulLong( data32_t insn)
     /* Write the result (upper dword goes to RHi, lower to RLo) */
     SET_REGISTER(rhi, res>>32);
     SET_REGISTER(rlo, res & 0xFFFFFFFF);
-    
+
     /* Set N and Z if asked */
     if( insn & INSN_S )
     {
@@ -1403,7 +1403,7 @@ static void HandleUMulLong( data32_t insn)
     /* Write the result (upper dword goes to RHi, lower to RLo) */
     SET_REGISTER(rhi, res>>32);
     SET_REGISTER(rlo, res & 0xFFFFFFFF);
-    
+
     /* Set N and Z if asked */
     if( insn & INSN_S )
     {
@@ -1444,7 +1444,7 @@ static void HandleMemBlock( data32_t insn)
                 SwitchMode(eARM7_MODE_USER);
                 LOG(("%08x: User Bank Transfer not fully tested - please check if working properly!\n",R15));
                 result = loadInc( insn & 0xffff, rbp, insn&INSN_BDT_S );
-                //todo - not sure if Writeback occurs on User registers also.. 
+                //todo - not sure if Writeback occurs on User registers also..
                 SwitchMode(curmode);
             }
             else
@@ -1487,7 +1487,7 @@ static void HandleMemBlock( data32_t insn)
                 SwitchMode(eARM7_MODE_USER);
                 LOG(("%08x: User Bank Transfer not fully tested - please check if working properly!\n",R15));
                 result = loadDec( insn&0xffff, rbp, insn&INSN_BDT_S );
-                //todo - not sure if Writeback occurs on User registers also.. 
+                //todo - not sure if Writeback occurs on User registers also..
                 SwitchMode(curmode);
             }
             else
@@ -1499,7 +1499,7 @@ static void HandleMemBlock( data32_t insn)
                     LOG(("%08x:  Illegal LDRM writeback to r15\n",R15));
                 SET_REGISTER(rb,GET_REGISTER(rb)-result*4);
             }
-            
+
             //R15 included? (NOTE: CPSR restore must occur LAST otherwise wrong registers restored!)
             if (insn & 0x8000) {
                 R15-=4;     //SJE: I forget why i did this?
@@ -1539,13 +1539,13 @@ static void HandleMemBlock( data32_t insn)
             if(insn & INSN_BDT_S && ((insn & 0x8000)==0))
             {
                 //todo: needs to be tested..
-                
+
                 //set to user mode - then do the transfer, and set back
                 int curmode = GET_MODE;
                 SwitchMode(eARM7_MODE_USER);
                 LOG(("%08x: User Bank Transfer not fully tested - please check if working properly!\n",R15));
                 result = storeInc( insn&0xffff, rbp );
-                //todo - not sure if Writeback occurs on User registers also.. 
+                //todo - not sure if Writeback occurs on User registers also..
                 SwitchMode(curmode);
             }
             else
@@ -1572,7 +1572,7 @@ static void HandleMemBlock( data32_t insn)
                 SwitchMode(eARM7_MODE_USER);
                 LOG(("%08x: User Bank Transfer not fully tested - please check if working properly!\n",R15));
                 result = storeDec( insn&0xffff, rbp );
-                //todo - not sure if Writeback occurs on User registers also.. 
+                //todo - not sure if Writeback occurs on User registers also..
                 SwitchMode(curmode);
             }
             else

@@ -173,7 +173,7 @@ extern void nsc8105_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 /****************************************************************************/
-/* Read a byte from given memory location									*/
+/* Read a byte from given memory location                                   */
 /****************************************************************************/
 /* ASG 971005 -- changed to program_read_byte_8/program_write_byte_8 */
 #define M6800_RDMEM(Addr) ((unsigned)program_read_byte_8(Addr))

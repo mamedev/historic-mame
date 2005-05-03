@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Machine Hardware for Nichibutsu Mahjong series.
+    Machine Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -81,43 +81,43 @@ void nb1413m3_timer_callback(int param)
 #if 0
 	// nbmj1413m3_nmi_clock_w 指定
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8688	Z80:5.00MHz (20000000/4)
-	// 7	144-145			mjsikaku, mjsikakb, otonano, mjcamera
+	//                      nbmj8688    Z80:5.00MHz (20000000/4)
+	// 7    144-145         mjsikaku, mjsikakb, otonano, mjcamera
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8891	Z80:5.00MHz (20000000/4)
-	// 7	144-145			msjiken, telmahjn, mjcamerb, mmcamera
+	//                      nbmj8891    Z80:5.00MHz (20000000/4)
+	// 7    144-145         msjiken, telmahjn, mjcamerb, mmcamera
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8688	Z80:5.00MHz (20000000/4)
-	// 6	130-131			kaguya, kaguya2, idhimitu
+	//                      nbmj8688    Z80:5.00MHz (20000000/4)
+	// 6    130-131         kaguya, kaguya2, idhimitu
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8891	Z80:5.00MHz (20000000/4)
-	// 6	130-131			hanamomo, gionbana, mgion, abunai, mjfocus, mjfocusm, peepshow, scandal, scandalm, mgmen89, 
-	//						mjnanpas, mjnanpaa, mjnanpau, bananadr, mladyhtr, chinmoku, club90s, club90sa, lovehous, 
-	//						maiko, mmaiko, hanaoji, pairsten
+	//                      nbmj8891    Z80:5.00MHz (20000000/4)
+	// 6    130-131         hanamomo, gionbana, mgion, abunai, mjfocus, mjfocusm, peepshow, scandal, scandalm, mgmen89,
+	//                      mjnanpas, mjnanpaa, mjnanpau, bananadr, mladyhtr, chinmoku, club90s, club90sa, lovehous,
+	//                      maiko, mmaiko, hanaoji, pairsten
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8991	Z80:5MHz (25000000/5)
-	// 6	130-131			galkoku, hyouban, galkaika, tokyogal, tokimbsj, mcontest, uchuuai
+	//                      nbmj8991    Z80:5MHz (25000000/5)
+	// 6    130-131         galkoku, hyouban, galkaika, tokyogal, tokimbsj, mcontest, uchuuai
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8688	Z80:5.00MHz (20000000/4)
-	// 6	 81- 82			crystalg(DAC再生遅い),  crystal2(DAC再生遅い)
-	// 6	130-131			bijokkoy(アニメ変), bijokkog(アニメ変)
+	//                      nbmj8688    Z80:5.00MHz (20000000/4)
+	// 6     81- 82         crystalg(DAC再生遅い),  crystal2(DAC再生遅い)
+	// 6    130-131         bijokkoy(アニメ変), bijokkog(アニメ変)
 
 	// ----------------------------------------------------------------------------------------------------------------
-	// 						nbmj8688	Z80:5.00MHz (20000000/4)
-	// 4	108-109			bijokkoy(アニメ変), bijokkog(アニメ変)
+	//                      nbmj8688    Z80:5.00MHz (20000000/4)
+	// 4    108-109         bijokkoy(アニメ変), bijokkog(アニメ変)
 
 	// ----------------------------------------------------------------------------------------------------------------
 
 	// nbmj1413m3_nmi_clock_w 未指定
-	//*5	130-131?		hyhoo, hyhoo2	5.00MHz (ちょっとDAC再生速度が早いかも…)
-	//*5	130-131?		taiwanmb		5.00MHz (実機が無いのでDAC再生速度不明)
-	//*5	128-129?		omotesnd		5.00MHz
-	//*2	100-101?		pastelg			2.496MHz (19968000/8) ???
+	//*5    130-131?        hyhoo, hyhoo2   5.00MHz (ちょっとDAC再生速度が早いかも…)
+	//*5    130-131?        taiwanmb        5.00MHz (実機が無いのでDAC再生速度不明)
+	//*5    128-129?        omotesnd        5.00MHz
+	//*2    100-101?        pastelg         2.496MHz (19968000/8) ???
 #endif
 }
 
@@ -204,8 +204,8 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 #if 0
 	if (!cpu_getiloops())
 	{
-//		nb1413m3_busyflag = 1;
-//		nb1413m3_busyctr = 0;
+//      nb1413m3_busyflag = 1;
+//      nb1413m3_busyctr = 0;
 		cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 	if (nb1413m3_nmi_enable)
@@ -217,8 +217,8 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 	#include "nbmjchet.inc"
 	#endif
 #else
-//	nb1413m3_busyflag = 1;
-//	nb1413m3_busyctr = 0;
+//  nb1413m3_busyflag = 1;
+//  nb1413m3_busyctr = 0;
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 #if NB1413M3_DEBUG

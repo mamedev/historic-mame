@@ -1,7 +1,7 @@
 /***************************************************************************
 
  *****************************
- *** NINJA KID II hardware ***		(by Roberto Ventura)
+ *** NINJA KID II hardware ***      (by Roberto Ventura)
  *****************************
 
 Game authors:
@@ -44,8 +44,8 @@ c800-cdff       Color RAM
 d000-d7ff       "FRONT" tile map
 d800-dfff       "BACK" tile map
 e000-efff       Main RAM
-f400-f7ff	??? screen frame ???
-f800-f9ff	CPU Stack
+f400-f7ff   ??? screen frame ???
+f800-f9ff   CPU Stack
 fa00-ffff       Sprite registers (misc RAM)
 
 
@@ -79,8 +79,8 @@ c000    "KEYCOIN" button
         ^--------START 2
 
 
-c001	"PAD1"
-c002	"PAD2"
+c001    "PAD1"
+c002    "PAD2"
 
         76543210
           ||||||
@@ -119,12 +119,12 @@ c004    "DIPSW2"
         |^------->>
         ^-------->
 
-c200	Sound command?
-	This byte is written when game plays sound effects...
-	it is set when music or sound effects (both pcm and fm) are triggered;
-	I guess it is read by another CPU,then.
+c200    Sound command?
+    This byte is written when game plays sound effects...
+    it is set when music or sound effects (both pcm and fm) are triggered;
+    I guess it is read by another CPU,then.
 
-c201	Unknown,but used.
+c201    Unknown,but used.
 
 c202    Bank selector (0 to 7)
 
@@ -136,7 +136,7 @@ c203    Sprite 'overdraw'
         when an extra weapon is collected.
         Appears to work like a xor mask,a sprite removes older
         sprite 'bitmap' when present;other memory locations connected to
-	this function may be f400-f7ff...should be investigated more.
+    this function may be f400-f7ff...should be investigated more.
         -mmmh... I believe this is sci-fiction for a non-bitmap game...
 
 C208    Scroll X  0-7

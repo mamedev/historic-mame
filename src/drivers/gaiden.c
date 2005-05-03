@@ -114,12 +114,12 @@ MG-Y.VO
 -----------------------------------------------
 
 Notes:
-	68k clock:		9.216 MHz (18.432 / 2)
-	Z80 clock:		4.000 MHz
-	YM2203 clock:		4.000 MHz
-	MSM6295 clock:	1.000 MHz (samplerate 7575Hz, i.e. / 132)
+    68k clock:      9.216 MHz (18.432 / 2)
+    Z80 clock:      4.000 MHz
+    YM2203 clock:       4.000 MHz
+    MSM6295 clock:  1.000 MHz (samplerate 7575Hz, i.e. / 132)
 
-	IOP8 manufactured by Ricoh. Full part number: RICOH EPLIOP8BP (PAL or PIC?)
+    IOP8 manufactured by Ricoh. Full part number: RICOH EPLIOP8BP (PAL or PIC?)
 
 ***************************************************************************/
 
@@ -171,7 +171,7 @@ static WRITE16_HANDLER( gaiden_sound_command_w )
 static WRITE16_HANDLER( drgnbowl_sound_command_w )
 {
 	if (ACCESSING_MSB)
-	{ 
+	{
 		soundlatch_w(0,data >> 8);
 		cpunum_set_input_line(1,0,PULSE_LINE);
 	}
@@ -199,7 +199,7 @@ static WRITE16_HANDLER( wildfang_protection_w )
 
 		data >>= 8;
 
-//		logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
+//      logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
 
 		switch (data & 0xf0)
 		{
@@ -237,7 +237,7 @@ static WRITE16_HANDLER( wildfang_protection_w )
 
 static READ16_HANDLER( wildfang_protection_r )
 {
-//	logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
+//  logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
 	return prot;
 }
 
@@ -327,7 +327,7 @@ static WRITE16_HANDLER( raiga_protection_w )
 
 		data >>= 8;
 
-//		logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
+//      logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
 
 		switch (data & 0xf0)
 		{
@@ -341,7 +341,7 @@ static WRITE16_HANDLER( raiga_protection_w )
 			case 0x20:	/* low 4 bits of jump code */
 				jumpcode |= data & 0x0f;
 				logerror("requested protection jumpcode %02x\n",jumpcode);
-//				jumpcode = 0;
+//              jumpcode = 0;
 				if (raiga_jumppoints[jumpcode] == -2)
 				{
 					raiga_jumppoints = jumppoints_other;
@@ -373,7 +373,7 @@ static WRITE16_HANDLER( raiga_protection_w )
 
 static READ16_HANDLER( raiga_protection_r )
 {
-//	logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
+//  logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
 	return prot;
 }
 
@@ -605,7 +605,7 @@ INPUT_PORTS_START( wildfang )
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0xc000, "2" )
 	PORT_DIPSETTING(      0x4000, "3" )
-/*	PORT_DIPSETTING(      0x0000, "2" ) */
+/*  PORT_DIPSETTING(      0x0000, "2" ) */
 	/* When bit 0 is On,  use bits 4 and 5 for difficulty */
 	PORT_DIPNAME( 0x3000, 0x3000, "Difficulty (Tecmo Knight)" )
 	PORT_DIPSETTING(      0x3000, DEF_STR( Easy ) )
@@ -686,7 +686,7 @@ INPUT_PORTS_START( tknight )
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0xc000, "2" )
 	PORT_DIPSETTING(      0x4000, "3" )
-/*	PORT_DIPSETTING(      0x0000, "2" ) */
+/*  PORT_DIPSETTING(      0x0000, "2" ) */
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1362,7 +1362,7 @@ Notes:
       68000 : Motorola MC68000P10 CPU running at 10.000MHz [20/2] (DIP64)
       Z80   : Goldstar Z8400B running at 6.000MHz [12/2] (DIP40)
       6295  : Oki M6295 running at 1.000MHz [12/12] (QFP44), sample rate = 1000000 / 132
-      3569  : Looks like YM3812 or YM3526 or some other YM compatible YM35xx DIP24 chip. 
+      3569  : Looks like YM3812 or YM3526 or some other YM compatible YM35xx DIP24 chip.
               Input clock is 4MHz on pin 24 and output clock is 2MHz on pin 23 (tied to DAC)
       7105  : Likely YM3012 compatible DAC (pin 2 has 2MHz clock)
       FPGA  : Unknown FPGA (x2, PLCC84)

@@ -1,5 +1,5 @@
 /*
- *	Depth Charge sound routines
+ *  Depth Charge sound routines
  */
 
 #include "driver.h"

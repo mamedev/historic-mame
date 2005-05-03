@@ -14,14 +14,14 @@ enum {
 	p5_rrai		= 0x40,		// increment register select on writes
 	p5_rn		= 0x3f,		// register select
 
-//	p6_res6		= 0xe0,
+//  p6_res6     = 0xe0,
 	p6_fp		= 0x10,		// position detection flag
 	p6_fv		= 0x08,		// vertical border interval flag
 	p6_fc		= 0x04,
 	p6_hb		= 0x02,		// horizontal blanking flag?
 	p6_vb		= 0x01,		// vertical blanking flag?
 
-//	p7_res7 	= 0xc0,
+//  p7_res7     = 0xc0,
 	p7_tr		= 0x20,
 	p7_tc		= 0x10,
 	p7_tl		= 0x08,
@@ -39,7 +39,7 @@ enum {
 
 	r2_cpaw		= 0x80,		// if set, increment color palette address after writes
 	r2_cpar		= 0x40,		// if set, increment color palette address after reads
-//	r2_res2		= 0x20,
+//  r2_res2     = 0x20,
 	r2_b_a		= 0x10,
 	r2_scaw		= 0x08,		// if set, increment scroll address after writes
 	r2_scar		= 0x04,		// if set, increment scroll address after reads
@@ -48,7 +48,7 @@ enum {
 
 	r7_dckm 	= 0x80,
 	r7_flip		= 0x40,
-//	r7_res7		= 0x30,
+//  r7_res7     = 0x30,
 	r7_zron		= 0x08,		// if set, roz plane is active
 	r7_md		= 0x06,		// determines 1 of 4 possible video modes
 	r7_dspe		= 0x01,		// if set, display is enabled
@@ -57,7 +57,7 @@ enum {
 	r8_vds		= 0x30,
 	r8_rlrt		= 0x08,
 	r8_rlsc		= 0x04,
-//	r8_res8		= 0x02,
+//  r8_res8     = 0x02,
 	r8_pgs		= 0x01,
 
 	r9_pts		= 0xc0,
@@ -81,7 +81,7 @@ enum {
 	r12_bpf		= 0x38,
 	r12_apf		= 0x07,
 
-//	r14_res14	= 0xfc,
+//  r14_res14   = 0xfc,
 	r14_iep		= 0x02,		// if set, generate IRQ on position detection (?)
 	r14_iev		= 0x01,		// if set, generate IRQ on vertical border interval draw
 

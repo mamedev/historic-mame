@@ -1,5 +1,5 @@
 /*
-	Sega Multi System 32 hardware
+    Sega Multi System 32 hardware
 
  preliminary support by Jason Lo aka fbff
 
@@ -261,9 +261,9 @@ void multi32_set_colour (int offset, int monitor)
 	UINT16 r_bright, g_bright, b_bright;
 
 	/* Although the hardware writes to all 65536 colours on both monitors, the
-	   games do not use more than 16384 colours per monitor.  We discard any
-	   colours that are written above MAX_COLOURS(16384).
-	*/
+       games do not use more than 16384 colours per monitor.  We discard any
+       colours that are written above MAX_COLOURS(16384).
+    */
 
 	if (offset<MAX_COLOURS) {
 		if (monitor) {
@@ -381,10 +381,10 @@ extern int analogSwitch;
 static READ16_HANDLER( multi32_io_analog_r )
 {
 /*
-	{ 0xc00050, 0xc00057, system32_io_analog_r },
+    { 0xc00050, 0xc00057, system32_io_analog_r },
 
-	 Read the value of each analog control port, one bit at a time, 8 times.
-	 Analog Input Set B is requested by the hardware using "analogSwitch"
+     Read the value of each analog control port, one bit at a time, 8 times.
+     Analog Input Set B is requested by the hardware using "analogSwitch"
 */
 	int retdata;
 	if (offset<=3) {
@@ -416,12 +416,12 @@ static READ16_HANDLER( multi32_io_r )
 {
 /* I/O Control port at 0xc00000
 
-	{ 0xc00000, 0xc00001, input_port_1_word_r },
-	{ 0xc00002, 0xc00003, input_port_2_word_r },
-	{ 0xc00004, 0xc00007, sys32_read_ff },
-	{ 0xc00008, 0xc00009, input_port_3_word_r },
-	{ 0xc0000a, 0xc0000b, system32_eeprom_r },
-	{ 0xc0000c, 0xc0004f, sys32_read_ff },
+    { 0xc00000, 0xc00001, input_port_1_word_r },
+    { 0xc00002, 0xc00003, input_port_2_word_r },
+    { 0xc00004, 0xc00007, sys32_read_ff },
+    { 0xc00008, 0xc00009, input_port_3_word_r },
+    { 0xc0000a, 0xc0000b, system32_eeprom_r },
+    { 0xc0000c, 0xc0004f, sys32_read_ff },
 */
 	switch(offset) {
 	case 0x00:
@@ -455,12 +455,12 @@ static WRITE16_HANDLER( multi32_io_w )
 {
 /* I/O Control port at 0xc00000
 
-	{ 0xc00006, 0xc00007, system32_eeprom_w },
-	{ 0xc0000c, 0xc0000d, jp_v60_write_cab },
-	{ 0xc00008, 0xc0000d, MWA16_RAM }, // Unknown c00008=f1lap , c0000c=titlef
-	{ 0xc0000e, 0xc0000f, MWA16_RAM, &sys32_tilebank_external }, // tilebank per layer on multi32
-	{ 0xc0001c, 0xc0001d, MWA16_RAM, &sys32_displayenable },
-	{ 0xc0001e, 0xc0001f, MWA16_RAM }, // Unknown
+    { 0xc00006, 0xc00007, system32_eeprom_w },
+    { 0xc0000c, 0xc0000d, jp_v60_write_cab },
+    { 0xc00008, 0xc0000d, MWA16_RAM }, // Unknown c00008=f1lap , c0000c=titlef
+    { 0xc0000e, 0xc0000f, MWA16_RAM, &sys32_tilebank_external }, // tilebank per layer on multi32
+    { 0xc0001c, 0xc0001d, MWA16_RAM, &sys32_displayenable },
+    { 0xc0001e, 0xc0001f, MWA16_RAM }, // Unknown
 */
 
 	COMBINE_DATA(&control[offset]);
@@ -499,10 +499,10 @@ static READ16_HANDLER( multi32_io_2_r )
 {
 /* I/O Control port at 0xc00060
 
-	{ 0xc00060, 0xc00061, input_port_4_word_r },
-	{ 0xc00062, 0xc00063, input_port_5_word_r },
-	{ 0xc00064, 0xc00065, input_port_6_word_r },
-	{ 0xc00066, 0xc000ff, sys32_read_ff },
+    { 0xc00060, 0xc00061, input_port_4_word_r },
+    { 0xc00062, 0xc00063, input_port_5_word_r },
+    { 0xc00064, 0xc00065, input_port_6_word_r },
+    { 0xc00066, 0xc000ff, sys32_read_ff },
 */
 	switch(offset) {
 	case 0x00:
@@ -521,8 +521,8 @@ static WRITE16_HANDLER( multi32_io_2_w )
 {
 /* I/O Control port at 0xc00060
 
-	{ 0xc00060, 0xc00061, MWA16_RAM }, // Analog switch
-	{ 0xc00074, 0xc00075, MWA16_RAM }, // Unknown
+    { 0xc00060, 0xc00061, MWA16_RAM }, // Analog switch
+    { 0xc00074, 0xc00075, MWA16_RAM }, // Unknown
 */
 
 	switch(offset) {
@@ -608,7 +608,7 @@ static ADDRESS_MAP_START( multi32_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x31ffff) AM_READ(sys32_videoram_r) // Tile Ram
 	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA16_RAM) // sprite RAM
 	AM_RANGE(0x500000, 0x50000d) AM_READ(MRA16_RAM)	// Unknown
-//	AM_RANGE(0x500002, 0x500003) AM_READ(jp_v60_read_cab)
+//  AM_RANGE(0x500002, 0x500003) AM_READ(jp_v60_read_cab)
 
 	AM_RANGE(0x600000, 0x6100ff) AM_READ(MRA16_RAM) // Palette + mixer registers (Monitor A)
 	AM_RANGE(0x680000, 0x69004f) AM_READ(MRA16_RAM) // Palette + mixer registers (Monitor B)

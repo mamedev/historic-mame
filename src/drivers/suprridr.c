@@ -1,81 +1,81 @@
 /***************************************************************************
 
-	Taito Super Rider driver
-	
-	driver by Aaron Giles
-	
-	Games supported:
-		* Super Rider
+    Taito Super Rider driver
 
-	Known issues:
-		* clocks on sound chips and CPU not verified yet
-		* the board seems to contain a discrete sound portion
-		
-	Questions:
-		* there appears to be a second color bank for the tilemaps, where
-		  is it used, and how is it activated (if at all)?
-		* what are the writes to $08DB and $08E8 for?
-		  (guess: a discrete sound effect)
-  
+    driver by Aaron Giles
+
+    Games supported:
+        * Super Rider
+
+    Known issues:
+        * clocks on sound chips and CPU not verified yet
+        * the board seems to contain a discrete sound portion
+
+    Questions:
+        * there appears to be a second color bank for the tilemaps, where
+          is it used, and how is it activated (if at all)?
+        * what are the writes to $08DB and $08E8 for?
+          (guess: a discrete sound effect)
+
 ****************************************************************************
 
-	PCB Layout
-	----------
+    PCB Layout
+    ----------
 
-	Top board
+    Top board
 
-	REF. SR-8327A-B
-	|----------------------------------------------------------------|
-	|                 SR-11                                          |
-	|                                                                |
-	|          DIPSW  SR-10                                          |
-	|                                                                |
-	|                                                                |
-	|                                                                |
-	|                 NE555                                          |
-	|                                     NEC-D780C                  |
-	|  AY-3-8910                                                     |
-	|                                                                |
-	|  AY-3-8910                                                     |
-	|                 SR-09           HM6116   SR-06    SR-03        |
-	|  NEC-D780C                                                     |
-	|                                 SR-08    SR-05    SR-02        |
-	|                                                                |
-	|                       ?.000MHz  SR-07    SR-04    SR-01        |
-	|----------------------------------------------------------------|
-	      
+    REF. SR-8327A-B
+    |----------------------------------------------------------------|
+    |                 SR-11                                          |
+    |                                                                |
+    |          DIPSW  SR-10                                          |
+    |                                                                |
+    |                                                                |
+    |                                                                |
+    |                 NE555                                          |
+    |                                     NEC-D780C                  |
+    |  AY-3-8910                                                     |
+    |                                                                |
+    |  AY-3-8910                                                     |
+    |                 SR-09           HM6116   SR-06    SR-03        |
+    |  NEC-D780C                                                     |
+    |                                 SR-08    SR-05    SR-02        |
+    |                                                                |
+    |                       ?.000MHz  SR-07    SR-04    SR-01        |
+    |----------------------------------------------------------------|
 
-	Bottom board
 
-	REF. SR-8327B-B
-	|----------------------------------------------------------------|
-	|                                                                |
-	|    SR-12                                                       |
-	|                                                                |
-	|    SR-13                                                       |
-	|                                                                |
-	|    SR-14                                                       |
-	|                                        SR-15                   |
-	|                                                                |
-	|                                        SR-16                   |
-	|                                                                |
-	|                                        SR-17                   |
-	|                                                                |
-	|                                       M58725P                  |
-	|                                                                |
-	|                                                                |
-	|    18.432MHz                                                   |
-	|----------------------------------------------------------------|
-	
-	
-	Epoxy module (exact layout unknown)
-	
-	REF. ???
-	|-------------------------------|
-	|                               |
-	|      1        2        3      |
-	|                               |
-	|-------------------------------|
+    Bottom board
+
+    REF. SR-8327B-B
+    |----------------------------------------------------------------|
+    |                                                                |
+    |    SR-12                                                       |
+    |                                                                |
+    |    SR-13                                                       |
+    |                                                                |
+    |    SR-14                                                       |
+    |                                        SR-15                   |
+    |                                                                |
+    |                                        SR-16                   |
+    |                                                                |
+    |                                        SR-17                   |
+    |                                                                |
+    |                                       M58725P                  |
+    |                                                                |
+    |                                                                |
+    |    18.432MHz                                                   |
+    |----------------------------------------------------------------|
+
+
+    Epoxy module (exact layout unknown)
+
+    REF. ???
+    |-------------------------------|
+    |                               |
+    |      1        2        3      |
+    |                               |
+    |-------------------------------|
 
 ***************************************************************************/
 
@@ -91,7 +91,7 @@ static UINT8 sound_data;
 
 /*************************************
  *
- *	Interrupt generation
+ *  Interrupt generation
  *
  *************************************/
 
@@ -111,7 +111,7 @@ static INTERRUPT_GEN( main_nmi_gen )
 
 /*************************************
  *
- *	Sound CPU communication
+ *  Sound CPU communication
  *
  *************************************/
 
@@ -143,21 +143,21 @@ static WRITE8_HANDLER( sound_irq_ack_w )
 
 /*************************************
  *
- *	Misc handlers
+ *  Misc handlers
  *
  *************************************/
 
 static WRITE8_HANDLER( coin_lock_w )
 {
 	/* cleared when 9 credits are hit, but never reset! */
-/*	coin_lockout_global_w(~data & 1); */
+/*  coin_lockout_global_w(~data & 1); */
 }
 
 
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -192,7 +192,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -216,7 +216,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -266,7 +266,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -306,7 +306,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -319,7 +319,7 @@ static struct AY8910interface ay8910_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -330,15 +330,15 @@ static MACHINE_DRIVER_START( suprridr )
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(main_nmi_gen,1)
-	
+
 	MDRV_CPU_ADD(Z80, 10000000/4)		/* just a guess */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
@@ -349,13 +349,13 @@ static MACHINE_DRIVER_START( suprridr )
 	MDRV_PALETTE_INIT(suprridr)
 	MDRV_VIDEO_START(suprridr)
 	MDRV_VIDEO_UPDATE(suprridr)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 10000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 10000000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -365,7 +365,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -409,7 +409,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

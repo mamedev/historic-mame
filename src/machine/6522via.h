@@ -1,13 +1,13 @@
 /**********************************************************************
 
-	Rockwell 6522 VIA interface and emulation
+    Rockwell 6522 VIA interface and emulation
 
-	This function emulates all the functionality of up to 8 6522
-	versatile interface adapters.
+    This function emulates all the functionality of up to 8 6522
+    versatile interface adapters.
 
     This is based on the M6821 emulation in MAME.
 
-	Written by Mathis Rosenhauer
+    Written by Mathis Rosenhauer
 
 **********************************************************************/
 

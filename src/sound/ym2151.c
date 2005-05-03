@@ -1,6 +1,6 @@
 /*****************************************************************************
 *
-*	Yamaha YM2151 driver (version 2.150 final beta)
+*   Yamaha YM2151 driver (version 2.150 final beta)
 *
 ******************************************************************************/
 
@@ -97,16 +97,16 @@ typedef struct
 	UINT32		eg_timer_overflow;		/* envelope generator timer overlfows every 3 samples (on real chip) */
 
 	UINT32		lfo_phase;				/* accumulated LFO phase (0 to 255) */
-	UINT32		lfo_timer;				/* LFO timer						*/
-	UINT32		lfo_timer_add;			/* step of lfo_timer				*/
+	UINT32		lfo_timer;				/* LFO timer                        */
+	UINT32		lfo_timer_add;			/* step of lfo_timer                */
 	UINT32		lfo_overflow;			/* LFO generates new output when lfo_timer reaches this value */
-	UINT32		lfo_counter;			/* LFO phase increment counter		*/
-	UINT32		lfo_counter_add;		/* step of lfo_counter				*/
+	UINT32		lfo_counter;			/* LFO phase increment counter      */
+	UINT32		lfo_counter_add;		/* step of lfo_counter              */
 	UINT8		lfo_wsel;				/* LFO waveform (0-saw, 1-square, 2-triangle, 3-random noise) */
-	UINT8		amd;					/* LFO Amplitude Modulation Depth	*/
-	INT8		pmd;					/* LFO Phase Modulation Depth		*/
-	UINT32		lfa;					/* LFO current AM output			*/
-	INT32		lfp;					/* LFO current PM output			*/
+	UINT8		amd;					/* LFO Amplitude Modulation Depth   */
+	INT8		pmd;					/* LFO Phase Modulation Depth       */
+	UINT32		lfa;					/* LFO current AM output            */
+	INT32		lfp;					/* LFO current PM output            */
 
 	UINT8		test;					/* TEST register */
 	UINT8		ct;						/* output control pins (bit1-CT2, bit0-CT1) */
@@ -141,27 +141,27 @@ typedef struct
 	UINT32		timer_A_index_old;		/* timer A previous index */
 	UINT32		timer_B_index_old;		/* timer B previous index */
 
-	/*	Frequency-deltas to get the closest frequency possible.
-	*	There are 11 octaves because of DT2 (max 950 cents over base frequency)
-	*	and LFO phase modulation (max 800 cents below AND over base frequency)
-	*	Summary:   octave  explanation
-	*              0       note code - LFO PM
-	*              1       note code
-	*              2       note code
-	*              3       note code
-	*              4       note code
-	*              5       note code
-	*              6       note code
-	*              7       note code
-	*              8       note code
-	*              9       note code + DT2 + LFO PM
-	*              10      note code + DT2 + LFO PM
-	*/
+	/*  Frequency-deltas to get the closest frequency possible.
+    *   There are 11 octaves because of DT2 (max 950 cents over base frequency)
+    *   and LFO phase modulation (max 800 cents below AND over base frequency)
+    *   Summary:   octave  explanation
+    *              0       note code - LFO PM
+    *              1       note code
+    *              2       note code
+    *              3       note code
+    *              4       note code
+    *              5       note code
+    *              6       note code
+    *              7       note code
+    *              8       note code
+    *              9       note code + DT2 + LFO PM
+    *              10      note code + DT2 + LFO PM
+    */
 	UINT32		freq[11*768];			/* 11 octaves, 768 'cents' per octave */
 
-	/*	Frequency deltas for DT1. These deltas alter operator frequency
-	*	after it has been taken from frequency-deltas table.
-	*/
+	/*  Frequency deltas for DT1. These deltas alter operator frequency
+    *   after it has been taken from frequency-deltas table.
+    */
 	INT32		dt1_freq[8*32];			/* 8 DT1 levels, 32 KC values */
 
 	UINT32		noise_tab[32];			/* 17bit Noise Generator periods */
@@ -212,10 +212,10 @@ typedef struct
 #endif
 
 
-/*	TL_TAB_LEN is calculated as:
-*	13 - sinus amplitude bits     (Y axis)
-*	2  - sinus sign bit           (Y axis)
-*	TL_RES_LEN - sinus resolution (X axis)
+/*  TL_TAB_LEN is calculated as:
+*   13 - sinus amplitude bits     (Y axis)
+*   2  - sinus sign bit           (Y axis)
+*   TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (13*2*TL_RES_LEN)
 static signed int tl_tab[TL_TAB_LEN];
@@ -354,21 +354,21 @@ O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0)
 };
 #undef O
 
-/*	DT2 defines offset in cents from base note
+/*  DT2 defines offset in cents from base note
 *
-*	This table defines offset in frequency-deltas table.
-*	User's Manual page 22
+*   This table defines offset in frequency-deltas table.
+*   User's Manual page 22
 *
-*	Values below were calculated using formula: value =  orig.val / 1.5625
+*   Values below were calculated using formula: value =  orig.val / 1.5625
 *
-*	DT2=0 DT2=1 DT2=2 DT2=3
-*	0     600   781   950
+*   DT2=0 DT2=1 DT2=2 DT2=3
+*   0     600   781   950
 */
 static UINT32 dt2_tab[4] = { 0, 384, 500, 608 };
 
-/*	DT1 defines offset in Hertz from base note
-*	This table is converted while initialization...
-*	Detune table shown in YM2151 User's Manual is wrong (verified on the real chip)
+/*  DT1 defines offset in Hertz from base note
+*   This table is converted while initialization...
+*   Detune table shown in YM2151 User's Manual is wrong (verified on the real chip)
 */
 
 static UINT8 dt1_tab[4*32] = { /* 4*32 DT1 values */
@@ -442,21 +442,21 @@ static UINT16 phaseinc_rom[768]={
 
 
 /*
-	Noise LFO waveform.
+    Noise LFO waveform.
 
-	Here are just 256 samples out of much longer data.
+    Here are just 256 samples out of much longer data.
 
-	It does NOT repeat every 256 samples on real chip and I wasnt able to find
-	the point where it repeats (even in strings as long as 131072 samples).
+    It does NOT repeat every 256 samples on real chip and I wasnt able to find
+    the point where it repeats (even in strings as long as 131072 samples).
 
-	I only put it here because its better than nothing and perhaps
-	someone might be able to figure out the real algorithm.
+    I only put it here because its better than nothing and perhaps
+    someone might be able to figure out the real algorithm.
 
 
-	Note that (due to the way the LFO output is calculated) it is quite
-	possible that two values: 0x80 and 0x00 might be wrong in this table.
-	To be exact:
-		some 0x80 could be 0x81 as well as some 0x00 could be 0x01.
+    Note that (due to the way the LFO output is calculated) it is quite
+    possible that two values: 0x80 and 0x00 might be wrong in this table.
+    To be exact:
+        some 0x80 could be 0x81 as well as some 0x00 could be 0x01.
 */
 
 static UINT8 lfo_noise_waveform[256] = {
@@ -1342,7 +1342,7 @@ int YM2151ReadStatus( void *_chip )
 //#ifdef USE_MAME_TIMERS
 #if 0 // disabled for now due to crashing with winalloc.c (ERROR_NOT_ENOUGH_MEMORY)
 /*
-*	state save support for MAME
+*   state save support for MAME
 */
 void YM2151Postload(void *chip)
 {
@@ -1464,16 +1464,16 @@ static void ym2151_state_save_register( YM2151 *chip, int sndindex )
 
 
 /*
-*	Initialize YM2151 emulator(s).
+*   Initialize YM2151 emulator(s).
 *
-*	'num' is the number of virtual YM2151's to allocate
-*	'clock' is the chip clock in Hz
-*	'rate' is sampling rate
+*   'num' is the number of virtual YM2151's to allocate
+*   'clock' is the chip clock in Hz
+*   'rate' is sampling rate
 */
 void * YM2151Init(int index, int clock, int rate)
 {
 	YM2151 *PSG;
-	
+
 	PSG = (YM2151 *)malloc(sizeof(YM2151));
 	if (PSG == NULL)
 		return NULL;
@@ -1524,7 +1524,7 @@ void * YM2151Init(int index, int clock, int rate)
 void YM2151Shutdown(void *_chip)
 {
 	YM2151 *chip = _chip;
-	
+
 	free (chip);
 
 #ifdef LOG_CYM_FILE
@@ -1550,7 +1550,7 @@ void YM2151Shutdown(void *_chip)
 
 
 /*
-*	Reset chip number 'n'.
+*   Reset chip number 'n'.
 */
 void YM2151ResetChip(void *_chip)
 {
@@ -1796,7 +1796,7 @@ these 'main' rates:
 11 x: single '-' = 1 sample; (ie. level can change every 1 sample)
 
 Shapes for rates 11 x look like this:
-rate:		step:
+rate:       step:
 11 0        01234567
 
 level:
@@ -1805,7 +1805,7 @@ level:
 2               --
 3                 --
 
-rate:		step:
+rate:       step:
 11 1        01234567
 
 level:
@@ -1815,7 +1815,7 @@ level:
 3                -
 4                 --
 
-rate:		step:
+rate:       step:
 11 2        01234567
 
 level:
@@ -1826,7 +1826,7 @@ level:
 4                 -
 5                  -
 
-rate:		step:
+rate:       step:
 11 3        01234567
 
 level:
@@ -2124,7 +2124,7 @@ INLINE void advance(void)
 	default:	/*keep the compiler happy*/
 		/* random */
 		/* the real algorithm is unknown !!!
-			We just use a snapshot of data from real chip */
+            We just use a snapshot of data from real chip */
 
 		/* AM: range 0 to 255    */
 		/* PM: range -128 to 127 */
@@ -2137,11 +2137,11 @@ INLINE void advance(void)
 	PSG->lfp = p * PSG->pmd / 128;
 
 
-	/*	The Noise Generator of the YM2151 is 17-bit shift register.
-	*	Input to the bit16 is negated (bit0 XOR bit3) (EXNOR).
-	*	Output of the register is negated (bit0 XOR bit3).
-	*	Simply use bit16 as the noise output.
-	*/
+	/*  The Noise Generator of the YM2151 is 17-bit shift register.
+    *   Input to the bit16 is negated (bit0 XOR bit3) (EXNOR).
+    *   Output of the register is negated (bit0 XOR bit3).
+    *   Simply use bit16 as the noise output.
+    */
 	PSG->noise_p += PSG->noise_f;
 	i = (PSG->noise_p>>16);		/* number of events (shifts of the shift register) */
 	PSG->noise_p &= 0xffff;
@@ -2197,13 +2197,13 @@ INLINE void advance(void)
 
 
 	/* CSM is calculated *after* the phase generator calculations (verified on real chip)
-	* CSM keyon line seems to be ORed with the KO line inside of the chip.
-	* The result is that it only works when KO (register 0x08) is off, ie. 0
-	*
-	* Interesting effect is that when timer A is set to 1023, the KEY ON happens
-	* on every sample, so there is no KEY OFF at all - the result is that
-	* the sound played is the same as after normal KEY ON.
-	*/
+    * CSM keyon line seems to be ORed with the KO line inside of the chip.
+    * The result is that it only works when KO (register 0x08) is off, ie. 0
+    *
+    * Interesting effect is that when timer A is set to 1023, the KEY ON happens
+    * on every sample, so there is no KEY OFF at all - the result is that
+    * the sound played is the same as after normal KEY ON.
+    */
 
 	if (PSG->csm_req)			/* CSM KEYON/KEYOFF seqeunce request */
 	{
@@ -2329,11 +2329,11 @@ INLINE signed int acc_calc(signed int value)
 #endif
 
 
-/*	Generate samples for one of the YM2151's
+/*  Generate samples for one of the YM2151's
 *
-*	'num' is the number of virtual YM2151
-*	'**buffers' is table of pointers to the buffers: left and right
-*	'length' is the number of samples that should be generated
+*   'num' is the number of virtual YM2151
+*   '**buffers' is table of pointers to the buffers: left and right
+*   'length' is the number of samples that should be generated
 */
 void YM2151UpdateOne(void *chip, SAMP **buffers, int length)
 {

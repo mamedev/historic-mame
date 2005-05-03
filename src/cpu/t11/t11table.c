@@ -1,6 +1,6 @@
 /*** t11: Portable DEC T-11 emulator ******************************************
 
-	Copyright (C) Aaron Giles 1998
+    Copyright (C) Aaron Giles 1998
 
     Opcode table plus function prototypes
 
@@ -17,7 +17,7 @@ modes:
   ded = decrement deferred
   ix = index
   ixd = index deferred
-  
+
 */
 
 static void op_0000(void);
@@ -1120,37 +1120,37 @@ static void (*opcode_table[65536 >> 3])(void) =
 	br,			br,			br,			br,			br,			br,			br,			br,
 	br,			br,			br,			br,			br,			br,			br,			br,
 	br,			br,			br,			br,			br,			br,			br,			br,
-	br,			br,			br,			br,			br,			br,			br,			br,	
+	br,			br,			br,			br,			br,			br,			br,			br,
 	/* 0x0200 */
 	bne,		bne,		bne,		bne,		bne,		bne,		bne,		bne,
 	bne,		bne,		bne,		bne,		bne,		bne,		bne,		bne,
 	bne,		bne,		bne,		bne,		bne,		bne,		bne,		bne,
-	bne,		bne,		bne,		bne,		bne,		bne,		bne,		bne,	
+	bne,		bne,		bne,		bne,		bne,		bne,		bne,		bne,
 	/* 0x0300 */
 	beq,		beq,		beq,		beq,		beq,		beq,		beq,		beq,
 	beq,		beq,		beq,		beq,		beq,		beq,		beq,		beq,
 	beq,		beq,		beq,		beq,		beq,		beq,		beq,		beq,
-	beq,		beq,		beq,		beq,		beq,		beq,		beq,		beq,	
+	beq,		beq,		beq,		beq,		beq,		beq,		beq,		beq,
 	/* 0x0400 */
 	bge,		bge,		bge,		bge,		bge,		bge,		bge,		bge,
 	bge,		bge,		bge,		bge,		bge,		bge,		bge,		bge,
 	bge,		bge,		bge,		bge,		bge,		bge,		bge,		bge,
-	bge,		bge,		bge,		bge,		bge,		bge,		bge,		bge,	
+	bge,		bge,		bge,		bge,		bge,		bge,		bge,		bge,
 	/* 0x0500 */
 	blt,		blt,		blt,		blt,		blt,		blt,		blt,		blt,
 	blt,		blt,		blt,		blt,		blt,		blt,		blt,		blt,
 	blt,		blt,		blt,		blt,		blt,		blt,		blt,		blt,
-	blt,		blt,		blt,		blt,		blt,		blt,		blt,		blt,	
+	blt,		blt,		blt,		blt,		blt,		blt,		blt,		blt,
 	/* 0x0600 */
 	bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,
 	bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,
 	bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,
-	bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,	
+	bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,		bgt,
 	/* 0x0700 */
 	ble,		ble,		ble,		ble,		ble,		ble,		ble,		ble,
 	ble,		ble,		ble,		ble,		ble,		ble,		ble,		ble,
 	ble,		ble,		ble,		ble,		ble,		ble,		ble,		ble,
-	ble,		ble,		ble,		ble,		ble,		ble,		ble,		ble,	
+	ble,		ble,		ble,		ble,		ble,		ble,		ble,		ble,
 	/* 0x0800 */
 	illegal,	jsr_rgd,	jsr_in,		jsr_ind,	jsr_de,		jsr_ded,	jsr_ix,		jsr_ixd,
 	illegal,	jsr_rgd,	jsr_in,		jsr_ind,	jsr_de,		jsr_ded,	jsr_ix,		jsr_ixd,
@@ -1752,63 +1752,63 @@ static void (*opcode_table[65536 >> 3])(void) =
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
-	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,	
+	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 	/* 0x7f00 */
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
-	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,	
+	sob,		sob,		sob,		sob,		sob,		sob,		sob,		sob,
 
 	/* 0x8000 */
 	bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,
 	bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,
 	bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,
-	bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,	
+	bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,		bpl,
 	/* 0x8100 */
 	bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,
 	bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,
 	bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,
-	bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,	
+	bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,		bmi,
 	/* 0x8200 */
 	bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,
 	bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,
 	bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,
-	bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,	
+	bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,		bhi,
 	/* 0x8300 */
 	blos,		blos,		blos,		blos,		blos,		blos,		blos,		blos,
 	blos,		blos,		blos,		blos,		blos,		blos,		blos,		blos,
 	blos,		blos,		blos,		blos,		blos,		blos,		blos,		blos,
-	blos,		blos,		blos,		blos,		blos,		blos,		blos,		blos,	
+	blos,		blos,		blos,		blos,		blos,		blos,		blos,		blos,
 	/* 0x8400 */
 	bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,
 	bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,
 	bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,
-	bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,	
+	bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,		bvc,
 	/* 0x8500 */
 	bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,
 	bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,
 	bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,
-	bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,	
+	bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,		bvs,
 	/* 0x8600 */
 	bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,
 	bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,
 	bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,
-	bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,	
+	bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,		bcc,
 	/* 0x8700 */
 	bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,
 	bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,
 	bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,
-	bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,	
+	bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,		bcs,
 	/* 0x8800 */
 	emt,		emt,		emt,		emt,		emt,		emt,		emt,		emt,
 	emt,		emt,		emt,		emt,		emt,		emt,		emt,		emt,
 	emt,		emt,		emt,		emt,		emt,		emt,		emt,		emt,
-	emt,		emt,		emt,		emt,		emt,		emt,		emt,		emt,	
+	emt,		emt,		emt,		emt,		emt,		emt,		emt,		emt,
 	/* 0x8900 */
 	trap,		trap,		trap,		trap,		trap,		trap,		trap,		trap,
 	trap,		trap,		trap,		trap,		trap,		trap,		trap,		trap,
 	trap,		trap,		trap,		trap,		trap,		trap,		trap,		trap,
-	trap,		trap,		trap,		trap,		trap,		trap,		trap,		trap,	
+	trap,		trap,		trap,		trap,		trap,		trap,		trap,		trap,
 	/* 0x8a00 */
 	clrb_rg,	clrb_rgd,	clrb_in,	clrb_ind,	clrb_de,	clrb_ded,	clrb_ix,	clrb_ixd,
 	comb_rg,	comb_rgd,	comb_in,	comb_ind,	comb_de,	comb_ded,	comb_ix,	comb_ixd,

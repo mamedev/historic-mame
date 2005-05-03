@@ -1,11 +1,11 @@
 /*###################################################################################################
 **
 **
-**		ccpu.h
-**		Core implementation for the portable Cinematronics CPU emulator.
+**      ccpu.h
+**      Core implementation for the portable Cinematronics CPU emulator.
 **
-**		Written by Aaron Giles
-**		Special thanks to Zonn Moore for his detailed documentation.
+**      Written by Aaron Giles
+**      Special thanks to Zonn Moore for his detailed documentation.
 **
 **
 **#################################################################################################*/
@@ -15,7 +15,7 @@
 
 
 /*###################################################################################################
-**	REGISTER ENUMERATION
+**  REGISTER ENUMERATION
 **#################################################################################################*/
 
 enum
@@ -34,7 +34,7 @@ enum
 
 
 /*###################################################################################################
-**	CONFIG STRUCTURE
+**  CONFIG STRUCTURE
 **#################################################################################################*/
 
 struct CCPUConfig
@@ -45,7 +45,7 @@ struct CCPUConfig
 
 
 /*###################################################################################################
-**	PUBLIC FUNCTIONS
+**  PUBLIC FUNCTIONS
 **#################################################################################################*/
 
 extern void ccpu_get_info(UINT32 state, union cpuinfo *info);

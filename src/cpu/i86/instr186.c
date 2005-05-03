@@ -1,6 +1,6 @@
 /****************************************************************************
-*			  real mode i286 emulator v1.4 by Fabrice Frances				*
-*				(initial work based on David Hedley's pcemu)                *
+*             real mode i286 emulator v1.4 by Fabrice Frances               *
+*               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
 // file will be included in all cpu variants
@@ -54,7 +54,7 @@ static void PREFIX186(_bound)(void)    /* Opcode 0x62 */
 	int tmp= (INT16)RegWord(ModRM);
 	if (tmp<low || tmp>high) {
 		/* OB: on NECs CS:IP points to instruction
-		   FOLLOWING the BOUND instruction ! */
+           FOLLOWING the BOUND instruction ! */
 #if !defined(V20)
 		I.pc-=2;
 		PREFIX86(_interrupt)(5);

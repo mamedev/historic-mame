@@ -1,29 +1,29 @@
 /***************************************************************************
 
-	Sega System 18 hardware
+    Sega System 18 hardware
 
 ****************************************************************************
 
-	Known bugs:
-		* lghost sprites seem to be slightly out of sync
-		* vdp gfx on 2nd attract level of lghost are corrupt at top of stairs
-		  after attract mode loops
-		* pauses in lghost where all sprites vanish
-		* some minor gfx bugs in moonwalker (see mametesters)
+    Known bugs:
+        * lghost sprites seem to be slightly out of sync
+        * vdp gfx on 2nd attract level of lghost are corrupt at top of stairs
+          after attract mode loops
+        * pauses in lghost where all sprites vanish
+        * some minor gfx bugs in moonwalker (see mametesters)
 
 ****************************************************************************
 
-**	MC68000 + Z80
-**	2xYM3438 + Custom PCM
+**  MC68000 + Z80
+**  2xYM3438 + Custom PCM
 **
-**	Alien Storm
-**	Bloxeed
-**	Clutch Hitter
-**	D.D. Crew
-**	Laser Ghost
-**	Michael Jackson's Moonwalker
-**	Shadow Dancer
-**	Wally wo Sagase! (Where's Wally?)
+**  Alien Storm
+**  Bloxeed
+**  Clutch Hitter
+**  D.D. Crew
+**  Laser Ghost
+**  Michael Jackson's Moonwalker
+**  Shadow Dancer
+**  Wally wo Sagase! (Where's Wally?)
 
 ***************************************************************************/
 
@@ -37,7 +37,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -49,7 +49,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -69,7 +69,7 @@ static UINT8 lghost_value, lghost_select;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -87,7 +87,7 @@ static WRITE16_HANDLER( rom_5987_bank_w );
 
 /*************************************
  *
- *	Memory mapping tables
+ *  Memory mapping tables
  *
  *************************************/
 
@@ -144,7 +144,7 @@ static const struct segaic16_memory_map_entry *region_info_list[] =
 
 /*************************************
  *
- *	Configuration
+ *  Configuration
  *
  *************************************/
 
@@ -190,7 +190,7 @@ static void system18_generic_init(int _rom_board)
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -209,7 +209,7 @@ MACHINE_INIT( system18 )
 
 /*************************************
  *
- *	I/O space
+ *  I/O space
  *
  *************************************/
 
@@ -286,8 +286,8 @@ static WRITE16_HANDLER( io_chip_w )
 			segaic16_sprites_set_flip(0, data & 0x20);
 /* These are correct according to cgfm's docs, but mwalker and ddcrew both
    enable the lockout and never turn it off
-			coin_lockout_w(1, data & 0x08);
-			coin_lockout_w(0, data & 0x04); */
+            coin_lockout_w(1, data & 0x08);
+            coin_lockout_w(0, data & 0x04); */
 			coin_counter_w(1, data & 0x02);
 			coin_counter_w(0, data & 0x01);
 			break;
@@ -372,7 +372,7 @@ static WRITE16_HANDLER( misc_io_w )
 
 /*************************************
  *
- *	Tile banking
+ *  Tile banking
  *
  *************************************/
 
@@ -407,7 +407,7 @@ static WRITE16_HANDLER( rom_5987_bank_w )
 
 /*************************************
  *
- *	D.D.Crew Custom I/O
+ *  D.D.Crew Custom I/O
  *
  *************************************/
 
@@ -431,7 +431,7 @@ static READ16_HANDLER( ddcrew_custom_io_r )
 
 /*************************************
  *
- *	Laser Ghost Custom I/O
+ *  Laser Ghost Custom I/O
  *
  *************************************/
 
@@ -497,7 +497,7 @@ static VIDEO_UPDATE( lghost )
 
 /*************************************
  *
- *	Where's Wally Custom I/O
+ *  Where's Wally Custom I/O
  *
  *************************************/
 
@@ -555,7 +555,7 @@ static WRITE16_HANDLER( wwally_custom_io_w )
 
 /*************************************
  *
- *	Sound handlers
+ *  Sound handlers
  *
  *************************************/
 
@@ -575,7 +575,7 @@ static WRITE8_HANDLER( mcu_data_w )
 
 /*************************************
  *
- *	Capacitor-backed RAM
+ *  Capacitor-backed RAM
  *
  *************************************/
 
@@ -591,7 +591,7 @@ static NVRAM_HANDLER( system18 )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -604,7 +604,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -635,7 +635,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	i8751 MCU memory handlers
+ *  i8751 MCU memory handlers
  *
  *************************************/
 
@@ -653,7 +653,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Generic port definitions
+ *  Generic port definitions
  *
  *************************************/
 
@@ -769,7 +769,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Game-specific port definitions
+ *  Game-specific port definitions
  *
  *************************************/
 
@@ -1175,7 +1175,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1201,7 +1201,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1271,16 +1271,16 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Alien Storm (2 players version), Sega System 18
-	CPU: FD1094 (317-????)
-	ROM Board: 171-5873B
+    Alien Storm (2 players version), Sega System 18
+    CPU: FD1094 (317-????)
+    ROM Board: 171-5873B
 */
 ROM_START( astorm )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1313,10 +1313,10 @@ ROM_START( astorm )
 ROM_END
 
 /**************************************************************************************************************************
-	Alien Storm (3 players version), Sega System 18
-	CPU: FD1094 (317-0148)
-	ROM Board: 171-5873B
-	Game numbers: 833-7379-02 (main pcb: 834-7381-02, rom pcb: 834-7380-02)
+    Alien Storm (3 players version), Sega System 18
+    CPU: FD1094 (317-0148)
+    ROM Board: 171-5873B
+    Game numbers: 833-7379-02 (main pcb: 834-7381-02, rom pcb: 834-7380-02)
 */
 ROM_START( astorm3 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1349,8 +1349,8 @@ ROM_START( astorm3 )
 ROM_END
 
 /**************************************************************************************************************************
-	Alien Storm (3 players US version), Sega System 18
-	CPU: FD1094 (317-0147)
+    Alien Storm (3 players US version), Sega System 18
+    CPU: FD1094 (317-0147)
 */
 ROM_START( astormu )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1383,9 +1383,9 @@ ROM_START( astormu )
 ROM_END
 
 /**************************************************************************************************************************
-	Alien Storm, Sega System 18
-	CPU: FD1094 (317-0146)
-	ROM Board: 171-5873B
+    Alien Storm, Sega System 18
+    CPU: FD1094 (317-0146)
+    ROM Board: 171-5873B
 */
 ROM_START( astormj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1421,9 +1421,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Bloxeed, Sega System 18, 834-7307
-	CPU: FD1094 (317-0139)
-	ROM Board: 171-5874B
+    Bloxeed, Sega System 18, 834-7307
+    CPU: FD1094 (317-0139)
+    ROM Board: 171-5874B
 */
 ROM_START( bloxeed )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1450,9 +1450,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Clutch Hitter, Sega System 18
-	CPU: FD1094 (317-0176)
-	ROM Board: 171-5873B
+    Clutch Hitter, Sega System 18
+    CPU: FD1094 (317-0176)
+    ROM Board: 171-5873B
 */
 ROM_START( cltchitr )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1484,9 +1484,9 @@ ROM_START( cltchitr )
 ROM_END
 
 /**************************************************************************************************************************
-	Clutch Hitter, Sega System 18
-	CPU: FD1094 (317-0175)
-	ROM Board: 171-????
+    Clutch Hitter, Sega System 18
+    CPU: FD1094 (317-0175)
+    ROM Board: 171-????
 */
 ROM_START( cltchtrj )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1525,9 +1525,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0190)
-	ROM Board: 171-5873B
+    D.D. Crew, Sega System 18
+    CPU: FD1094 (317-0190)
+    ROM Board: 171-5873B
 */
 ROM_START( ddcrew )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1562,9 +1562,9 @@ ROM_START( ddcrew )
 ROM_END
 
 /**************************************************************************************************************************
-	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0186)
-	ROM Board: 171-5873B
+    D.D. Crew, Sega System 18
+    CPU: FD1094 (317-0186)
+    ROM Board: 171-5873B
 */
 ROM_START( ddcrewu )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1599,9 +1599,9 @@ ROM_START( ddcrewu )
 ROM_END
 
 /**************************************************************************************************************************
-	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0184)
-	ROM Board: 171-5873B
+    D.D. Crew, Sega System 18
+    CPU: FD1094 (317-0184)
+    ROM Board: 171-5873B
 */
 ROM_START( ddcrew2 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1636,9 +1636,9 @@ ROM_START( ddcrew2 )
 ROM_END
 
 /**************************************************************************************************************************
-	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-????)
-	ROM Board: 171-5873B
+    D.D. Crew, Sega System 18
+    CPU: FD1094 (317-????)
+    ROM Board: 171-5873B
 */
 ROM_START( ddcrew1 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1673,9 +1673,9 @@ ROM_START( ddcrew1 )
 ROM_END
 
 /**************************************************************************************************************************
-	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0182)
-	ROM Board: 171-5987A
+    D.D. Crew, Sega System 18
+    CPU: FD1094 (317-0182)
+    ROM Board: 171-5987A
 */
 ROM_START( ddcrewj )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1713,12 +1713,12 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Desert Breaker, Sega System 18
+    Desert Breaker, Sega System 18
 
-	game N°833-8830-02
-	pcb  N°837-8832-02 (171-5873-02b)
-	rom  N°834-8831-02 (171-5987a)
-	CPU Hiatchi FD1094 317-0196
+    game N°833-8830-02
+    pcb  N°837-8832-02 (171-5873-02b)
+    rom  N°834-8831-02 (171-5987a)
+    CPU Hiatchi FD1094 317-0196
 */
 ROM_START( desertbr )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0196 */
@@ -1756,9 +1756,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Laser Ghost, Sega System 18
-	CPU: FD1094 (317-0166)
-	ROM Board: 171-5873B
+    Laser Ghost, Sega System 18
+    CPU: FD1094 (317-0166)
+    ROM Board: 171-5873B
 */
 ROM_START( lghost )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1794,9 +1794,9 @@ ROM_START( lghost )
 ROM_END
 
 /**************************************************************************************************************************
-	Laser Ghost, Sega System 18
-	CPU: FD1094 (317-0165)
-	ROM Board: 171-5873B
+    Laser Ghost, Sega System 18
+    CPU: FD1094 (317-0165)
+    ROM Board: 171-5873B
 */
 ROM_START( lghostu )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1835,9 +1835,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Moonwalker, Sega System 18
-	CPU: FD1094 (317-0159)
-	ROM Board: 171-5873B
+    Moonwalker, Sega System 18
+    CPU: FD1094 (317-0159)
+    ROM Board: 171-5873B
 */
 ROM_START( mwalk )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code - custom cpu 317-0159 */
@@ -1875,9 +1875,9 @@ ROM_START( mwalk )
 ROM_END
 
 /**************************************************************************************************************************
-	Moonwalker, Sega System 18
-	CPU: FD1094 (317-0158)
-	ROM Board: 171-5873B
+    Moonwalker, Sega System 18
+    CPU: FD1094 (317-0158)
+    ROM Board: 171-5873B
 */
 ROM_START( mwalku )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code - custom cpu 317-0158 */
@@ -1913,9 +1913,9 @@ ROM_START( mwalku )
 ROM_END
 
 /**************************************************************************************************************************
-	Moonwalker, Sega System 18
-	CPU: FD1094 (317-0157)
-	ROM Board: 171-5873B
+    Moonwalker, Sega System 18
+    CPU: FD1094 (317-0157)
+    ROM Board: 171-5873B
 */
 ROM_START( mwalkj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code - custom cpu 317-0157 */
@@ -1956,9 +1956,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Pontoon, Sega System 18
-	CPU: FD1094 317-0153
-	ROM Board: 171-5873B
+    Pontoon, Sega System 18
+    CPU: FD1094 317-0153
+    ROM Board: 171-5873B
 */
 ROM_START( pontoon )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1985,9 +1985,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Shadow Dancer, Sega System 18
-	CPU: 68000
-	ROM Board: 171-5873B
+    Shadow Dancer, Sega System 18
+    CPU: 68000
+    ROM Board: 171-5873B
 */
 ROM_START( shdancer )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2015,9 +2015,9 @@ ROM_START( shdancer )
 ROM_END
 
 /**************************************************************************************************************************
-	Shadow Dancer, Sega System 18
-	CPU: 68000
-	ROM Board: 171-5873B
+    Shadow Dancer, Sega System 18
+    CPU: 68000
+    ROM Board: 171-5873B
 */
 ROM_START( shdancej )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2045,9 +2045,9 @@ ROM_START( shdancej )
 ROM_END
 
 /**************************************************************************************************************************
-	Shadow Dancer, Sega System 18
-	CPU: 68000
-	ROM Board: 171-5873B
+    Shadow Dancer, Sega System 18
+    CPU: 68000
+    ROM Board: 171-5873B
 */
 ROM_START( shdance1 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2078,9 +2078,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Wally wo Sagase! (Where's Wally?), Sega System 18
-	CPU: FD1094 317-0197B
-	ROM Board: 171-5873B
+    Wally wo Sagase! (Where's Wally?), Sega System 18
+    CPU: FD1094 317-0197B
+    ROM Board: 171-5873B
 */
 ROM_START( wwallyj )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0197 (?) */
@@ -2111,9 +2111,9 @@ ROM_START( wwallyj )
 ROM_END
 
 /**************************************************************************************************************************
-	Wally wo Sagase! (Where's Wally?), Sega System 18
-	CPU: FD1094 317-0197A
-	ROM Board: 171-5873B
+    Wally wo Sagase! (Where's Wally?), Sega System 18
+    CPU: FD1094 317-0197A
+    ROM Board: 171-5873B
 */
 ROM_START( wwallyja )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0197a */
@@ -2147,7 +2147,7 @@ ROM_END
 
 /*************************************
  *
- *	Generic driver initialization
+ *  Generic driver initialization
  *
  *************************************/
 
@@ -2170,7 +2170,7 @@ static DRIVER_INIT( generic_5987 )
 
 /*************************************
  *
- *	Game-specific driver inits
+ *  Game-specific driver inits
  *
  *************************************/
 
@@ -2198,7 +2198,7 @@ static DRIVER_INIT( wwally )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

@@ -1,18 +1,18 @@
 /***************************************************************************
 
-							-= Clash Road =-
+                            -= Clash Road =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-Main  CPU   :	Z80A
+Main  CPU   :   Z80A
 
-Video Chips :	?
+Video Chips :   ?
 
-Sound CPU   :	Z80A
+Sound CPU   :   Z80A
 
-Sound Chips :	Custom (NAMCO)
+Sound Chips :   Custom (NAMCO)
 
-XTAL        :	18.432 MHz
+XTAL        :   18.432 MHz
 
 
 ***************************************************************************/
@@ -149,14 +149,14 @@ INPUT_PORTS_START( clshroad )
 
 	PORT_START_TAG("DSW2")
 /*
-first bit OFF is:	0 			0	<- value
-					1			1
-					2			2
-					3			3
-					4			4
-					5			5
-					6			6
-					else		FF
+first bit OFF is:   0           0   <- value
+                    1           1
+                    2           2
+                    3           3
+                    4           4
+                    5           5
+                    6           6
+                    else        FF
 
 But the values seems unused then.
 */
@@ -337,7 +337,7 @@ static MACHINE_DRIVER_START( firebatl )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -373,7 +373,7 @@ static MACHINE_DRIVER_START( clshroad )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -497,7 +497,7 @@ ROM_START( clshrdst )
 	ROM_LOAD( "clashrd.g10", 0x0a40, 0x0100, CRC(73afefd0) SHA1(d14c5490c5b174d54043bfdf5c6fb675e67492e7) )	/* unknown (possibly bad dump) */
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "clashr1.bin", 0x0000, 0x2000, CRC(0d0a8068) SHA1(529878d0c5f078590e07ec0fffc27b212843c0ad) )	
+	ROM_LOAD( "clashr1.bin", 0x0000, 0x2000, CRC(0d0a8068) SHA1(529878d0c5f078590e07ec0fffc27b212843c0ad) )
 
 	ROM_REGION( 0x0200, REGION_SOUND2, 0 )	/* 4bit->8bit sample expansion PROMs */
 	ROM_LOAD( "clashrd.g8",  0x0000, 0x0100, CRC(bd2c080b) SHA1(9782bb5001e96db56bc29df398187f700bce4f8e) )	/* low 4 bits */

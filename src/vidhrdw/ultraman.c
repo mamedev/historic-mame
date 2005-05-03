@@ -54,7 +54,7 @@ static void zoom_callback_2(int *code,int *color)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -96,14 +96,14 @@ WRITE16_HANDLER( ultraman_gfxctrl_w )
 {
 	if (ACCESSING_LSB)
 	{
-		/*	bit 0: enable wraparound for scr #1
-			bit 1: msb of code for scr #1
-			bit 2: enable wraparound for scr #2
-			bit 3: msb of code for scr #2
-			bit 4: enable wraparound for scr #3
-			bit 5: msb of code for scr #3
-			bit 6: coin counter 1
-			bit 7: coin counter 2 */
+		/*  bit 0: enable wraparound for scr #1
+            bit 1: msb of code for scr #1
+            bit 2: enable wraparound for scr #2
+            bit 3: msb of code for scr #2
+            bit 4: enable wraparound for scr #3
+            bit 5: msb of code for scr #3
+            bit 6: coin counter 1
+            bit 7: coin counter 2 */
 		K051316_wraparound_enable(0,data & 0x01);
 		if (bank0 != ((data & 0x02) >> 1))
 		{
@@ -131,7 +131,7 @@ WRITE16_HANDLER( ultraman_gfxctrl_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

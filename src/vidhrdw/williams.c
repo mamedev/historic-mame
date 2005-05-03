@@ -1,93 +1,93 @@
 /***************************************************************************
 
-	Williams 6809 system
+    Williams 6809 system
 
 ****************************************************************************
 
-	The basic video system involves a 4-bit-per-pixel bitmap, oriented
-	in inverted X/Y order. That is, pixels (0,0) and (1,0) come from the
-	byte at offset 0. Pixels (2,0) and (3,0) come from the byte at offset
-	256. Pixels (4,0) and (5,0) come from the byte at offset 512. Etc.
-	
-	Defender and Stargate simply draw graphics to the framebuffer directly
-	with no extra intervention.
-	
-	Later games added a pair of "special chips" (SC-01) to the board which
-	are special purpose blitters. During their operation they HALT the
-	main CPU so that they can control the busses. The operation of the
-	chips is described in detail below.
-	
-	The original SC-01 had a bug that forced an XOR of the width and height
-	values with 4. This was fixed in the SC-02, which was used on  several
-	later games.
-	
-	Beginning with Sinistar, additional video tweaks were added.
-	
-	In Sinistar, a clipping window can be specified and enabled in order
-	to prevent the blitter chip from drawing beyond a certain address.
-	This clipping window can be switched on and off at will.
-	
-	In Blaster, a number of features were added. First, a fixed window can
-	be enabled which cuts off blitter drawing at 0x9700. Second, on a
-	per-scanline basis, an "erase behind" feature can be turned on which
-	clears the video RAM to 0 after it is refreshed to the screen. Third,
-	on a per-scanline basis, an alternate color can be latched as the new
-	background color.
-	
-	For Mystic Marathon and the 3 other "2nd generation" Williams games,
-	a tilemap background layer was added. This layer consisted of 24x16
-	tiles and only scrolled in the X direction. In addition, the palette
-	was expanded to 1024 entries, some of which were used for the tilemap.
-	The traditional foreground bitmap could be configured to use any bank
-	of 16 colors from the full palette.
+    The basic video system involves a 4-bit-per-pixel bitmap, oriented
+    in inverted X/Y order. That is, pixels (0,0) and (1,0) come from the
+    byte at offset 0. Pixels (2,0) and (3,0) come from the byte at offset
+    256. Pixels (4,0) and (5,0) come from the byte at offset 512. Etc.
+
+    Defender and Stargate simply draw graphics to the framebuffer directly
+    with no extra intervention.
+
+    Later games added a pair of "special chips" (SC-01) to the board which
+    are special purpose blitters. During their operation they HALT the
+    main CPU so that they can control the busses. The operation of the
+    chips is described in detail below.
+
+    The original SC-01 had a bug that forced an XOR of the width and height
+    values with 4. This was fixed in the SC-02, which was used on  several
+    later games.
+
+    Beginning with Sinistar, additional video tweaks were added.
+
+    In Sinistar, a clipping window can be specified and enabled in order
+    to prevent the blitter chip from drawing beyond a certain address.
+    This clipping window can be switched on and off at will.
+
+    In Blaster, a number of features were added. First, a fixed window can
+    be enabled which cuts off blitter drawing at 0x9700. Second, on a
+    per-scanline basis, an "erase behind" feature can be turned on which
+    clears the video RAM to 0 after it is refreshed to the screen. Third,
+    on a per-scanline basis, an alternate color can be latched as the new
+    background color.
+
+    For Mystic Marathon and the 3 other "2nd generation" Williams games,
+    a tilemap background layer was added. This layer consisted of 24x16
+    tiles and only scrolled in the X direction. In addition, the palette
+    was expanded to 1024 entries, some of which were used for the tilemap.
+    The traditional foreground bitmap could be configured to use any bank
+    of 16 colors from the full palette.
 
 ****************************************************************************
 
-	Blitter description from Sean Riddle's page:
+    Blitter description from Sean Riddle's page:
 
-	This page contains information about the Williams Special Chips, which
-	were 'bit blitters'- block transfer chips that could move data around on
-	the screen and in memory faster than the CPU. In fact, I've timed the
-	special chips at 16 megs in 18.1 seconds. That's 910K/sec, not bad for
-	the early 80s.
+    This page contains information about the Williams Special Chips, which
+    were 'bit blitters'- block transfer chips that could move data around on
+    the screen and in memory faster than the CPU. In fact, I've timed the
+    special chips at 16 megs in 18.1 seconds. That's 910K/sec, not bad for
+    the early 80s.
 
-	The blitters were not used in Defender and Stargate, but
-	were added to the ROM boards of the later games. Splat!, Blaster, Mystic
-	Marathon and Joust 2 used Special Chip 2s. The only difference that I've
-	seen is that SC1s have a small bug. When you tell the SC1 the size of
-	the data to move, you have to exclusive-or the width and height with 2.
-	The SC2s eliminate this bug.
+    The blitters were not used in Defender and Stargate, but
+    were added to the ROM boards of the later games. Splat!, Blaster, Mystic
+    Marathon and Joust 2 used Special Chip 2s. The only difference that I've
+    seen is that SC1s have a small bug. When you tell the SC1 the size of
+    the data to move, you have to exclusive-or the width and height with 2.
+    The SC2s eliminate this bug.
 
-	The blitters were accessed at memory location $CA00-CA06.
+    The blitters were accessed at memory location $CA00-CA06.
 
-	CA01 is the mask, usually $FF to move all bits.
-	CA02-3 is the source data location.
-	CA04-5 is the destination data location.
+    CA01 is the mask, usually $FF to move all bits.
+    CA02-3 is the source data location.
+    CA04-5 is the destination data location.
 
-	Writing to CA00 starts the blit, and the byte written determines how the
-	data is blitted.
+    Writing to CA00 starts the blit, and the byte written determines how the
+    data is blitted.
 
-	Bit 0 indicates that the source data is either laid out linear, one
-	pixel after the last, or in screen format, where there are 256 bytes from
-	one pair of pixels to the next.
+    Bit 0 indicates that the source data is either laid out linear, one
+    pixel after the last, or in screen format, where there are 256 bytes from
+    one pair of pixels to the next.
 
-	Bit 1 indicates the same, but for the destination data.
+    Bit 1 indicates the same, but for the destination data.
 
-	I'm not sure what bit 2 does. Looking at the image, I can't tell, but
-	perhaps it has to do with the mask. My test files only used a mask of $FF.
+    I'm not sure what bit 2 does. Looking at the image, I can't tell, but
+    perhaps it has to do with the mask. My test files only used a mask of $FF.
 
-	Bit 3 tells the blitter only to blit the foreground- that is, everything
-	that is not color 0. Also known as transparency mode.
+    Bit 3 tells the blitter only to blit the foreground- that is, everything
+    that is not color 0. Also known as transparency mode.
 
-	Bit 4 is 'solid' mode. Only the color indicated by the mask is blitted.
-	Note that this just creates a rectangle unless bit 3 is also set, in which
-	case it blits the image, but in a solid color.
+    Bit 4 is 'solid' mode. Only the color indicated by the mask is blitted.
+    Note that this just creates a rectangle unless bit 3 is also set, in which
+    case it blits the image, but in a solid color.
 
-	Bit 5 shifts the image one pixel to the right. Any data on the far right
-	jumps to the far left.
+    Bit 5 shifts the image one pixel to the right. Any data on the far right
+    jumps to the far left.
 
-	Bits 6 and 7 only blit every other pixel of the image. Bit 6 says even only,
-	while bit 7 says odd only.
+    Bits 6 and 7 only blit every other pixel of the image. Bit 6 says even only,
+    while bit 7 says odd only.
 
 ***************************************************************************/
 
@@ -100,7 +100,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -125,7 +125,7 @@ UINT8 williams_cocktail;
 
 /*************************************
  *
- *	Static global variables
+ *  Static global variables
  *
  *************************************/
 
@@ -154,7 +154,7 @@ static UINT8 williams2_fg_color;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -167,7 +167,7 @@ static int blitter_core(int sstart, int dstart, int w, int h, int data);
 
 /*************************************
  *
- *	Williams video startup
+ *  Williams video startup
  *
  *************************************/
 
@@ -207,14 +207,14 @@ VIDEO_START( williams2 )
 
 /*************************************
  *
- *	Williams video update
+ *  Williams video update
  *
  *************************************/
 
 VIDEO_UPDATE( williams )
 {
 	int x, y;
-	
+
 	/* loop over rows */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
@@ -235,7 +235,7 @@ VIDEO_UPDATE( williams )
 VIDEO_UPDATE( blaster )
 {
 	int x, y;
-	
+
 	/* if we're blitting from the top, start with a 0 for color 0 */
 	if (cliprect->min_y == Machine->visible_area.min_y || !(blaster_video_control & 1))
 		blaster_color0 = 0;
@@ -246,7 +246,7 @@ VIDEO_UPDATE( blaster )
 		int erase_behind = blaster_video_control & blaster_scanline_control[y] & 2;
 		UINT8 *source = &williams_videoram[y];
 		UINT16 *dest = bitmap->line[y];
-		
+
 		/* latch a new color0 pen? */
 		if (blaster_video_control & blaster_scanline_control[y] & 1)
 			blaster_color0 = 16 + y;
@@ -255,7 +255,7 @@ VIDEO_UPDATE( blaster )
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
 		{
 			int pix = source[(x/2) * 256];
-			
+
 			/* clear behind us if requested */
 			if (erase_behind)
 				source[(x/2) * 256] = 0;
@@ -271,7 +271,7 @@ VIDEO_UPDATE( blaster )
 VIDEO_UPDATE( williams2 )
 {
 	int x, y, basecolor;
-	
+
 	/* draw the background */
 	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
 
@@ -283,12 +283,12 @@ VIDEO_UPDATE( williams2 )
 	{
 		UINT8 *source = &williams_videoram[y];
 		UINT16 *dest = bitmap->line[y];
-		
+
 		/* loop over columns */
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
 		{
 			int pix = source[(x/2) * 256];
-			
+
 			if (pix & 0xf0)
 				dest[x+0] = basecolor + (pix >> 4);
 			if (pix & 0x0f)
@@ -301,7 +301,7 @@ VIDEO_UPDATE( williams2 )
 
 /*************************************
  *
- *	Williams palette I/O
+ *  Williams palette I/O
  *
  *************************************/
 
@@ -311,7 +311,7 @@ static void create_palette_lookup(void)
 	static const int resistances_b[2]  = { 560, 330 };
 	double weights_r[3], weights_g[3], weights_b[2];
 	int i;
-	
+
 	/* compute palette information */
 	/* note that there really are pullup/pulldown resistors, but this situation is complicated */
 	/* by the use of transistors, so we ignore that and just use the realtive resistor weights */
@@ -342,7 +342,7 @@ static void create_palette_lookup(void)
 		bit0 = (i >> 6) & 0x01;
 		bit1 = (i >> 7) & 0x01;
 		b = combine_2_weights(weights_b, bit0, bit1);
-		
+
 		palette_lookup[i] = MAKE_RGB(r, g, b);
 	}
 }
@@ -397,7 +397,7 @@ WRITE8_HANDLER( williams2_fg_select_w )
 
 /*************************************
  *
- *	Video position readout
+ *  Video position readout
  *
  *************************************/
 
@@ -416,7 +416,7 @@ READ8_HANDLER( williams2_video_counter_r )
 
 /*************************************
  *
- *	Tilemap handling
+ *  Tilemap handling
  *
  *************************************/
 
@@ -426,7 +426,7 @@ static void get_tile_info(int tile_index)
 	int data = williams2_tileram[tile_index];
 	int y = (tile_index >> 1) & 7;
 	int color = 0;
-	
+
 	switch (williams2_tilemap_config)
 	{
 		case WILLIAMS_TILEMAP_MYSTICM:
@@ -435,7 +435,7 @@ static void get_tile_info(int tile_index)
 			int a = 1 | ((color & 1) << 2) | ((color & 1) << 3);
 			int b = ((y & 6) >> 1);
 			int casc = (y & 1);
-			color = (a > b) || ((a == b) && !casc); 
+			color = (a > b) || ((a == b) && !casc);
 			break;
 		}
 
@@ -449,7 +449,7 @@ static void get_tile_info(int tile_index)
 			color = 0;
 			break;
 	}
-	
+
 	SET_TILE_INFO(0, data & mask, color, (data & ~mask) ? TILE_FLIPX : 0);
 }
 
@@ -507,7 +507,7 @@ WRITE8_HANDLER( williams2_xscroll_high_w )
 
 /*************************************
  *
- *	Blaster-specific enhancements
+ *  Blaster-specific enhancements
  *
  *************************************/
 
@@ -545,7 +545,7 @@ WRITE8_HANDLER( blaster_palette_0_w )
 
 /*************************************
  *
- *	Blitter setup and control
+ *  Blitter setup and control
  *
  *************************************/
 
@@ -559,7 +559,7 @@ static void blitter_init(int blitter_config, const UINT8 *remap_prom)
 
 	/* switch off the video config */
 	blitter_xor = (blitter_config == WILLIAMS_BLITTER_SC01) ? 4 : 0;
-	
+
 	/* create the remap table; if no PROM, make an identity remap table */
 	blitter_remap_lookup = auto_malloc(256 * 256);
 	blitter_remap = blitter_remap_lookup;
@@ -597,10 +597,10 @@ WRITE8_HANDLER( williams_blitter_w )
 	if (h == 0) h = 1;
 	if (w == 255) w = 256;
 	if (h == 255) h = 256;
-	
+
 	/* do the actual blit */
 	accesses = blitter_core(sstart, dstart, w, h, data);
-	
+
 	/* based on the number of memory accesses needed to do the blit, compute how long the blit will take */
 	/* this is just a guess */
 	estimated_clocks_at_4MHz = 20 + 2 * accesses;
@@ -608,7 +608,7 @@ WRITE8_HANDLER( williams_blitter_w )
 
 	/* Log blits */
 	logerror("%04X:Blit @ %3d : %02X%02X -> %02X%02X, %3dx%3d, mask=%02X, flags=%02X, icount=%d, win=%d\n",
-			activecpu_get_pc(), cpu_getscanline(), 
+			activecpu_get_pc(), cpu_getscanline(),
 			blitterram[2], blitterram[3],
 			blitterram[4], blitterram[5],
 			blitterram[6], blitterram[7],
@@ -626,7 +626,7 @@ WRITE8_HANDLER( williams2_blit_window_enable_w )
 
 /*************************************
  *
- *	Blitter core
+ *  Blitter core
  *
  *************************************/
 
@@ -634,21 +634,21 @@ INLINE void blit_pixel(int offset, int srcdata, int data, int mask, int solid)
 {
 	/* always read from video RAM regardless of the bank setting */
 	int pix = (offset < 0xc000) ? williams_videoram[offset] : program_read_byte(offset);
-	
+
 	/* handle transparency */
 	if (data & 0x08)
 	{
 		if (!(srcdata & 0xf0)) mask |= 0xf0;
 		if (!(srcdata & 0x0f)) mask |= 0x0f;
 	}
-	
+
 	/* handle solid versus source data */
 	pix &= mask;
 	if (data & 0x10)
 		pix |= solid & ~mask;
 	else
 		pix |= srcdata & ~mask;
-	
+
 	/* if the window is enabled, only blit to videoram below the clipping address */
 	/* note that we have to allow blits to non-video RAM (e.g. tileram) because those */
 	/* are not blocked by the window enable */
@@ -758,6 +758,6 @@ static int blitter_core(int sstart, int dstart, int w, int h, int data)
 				dstart += dyadv;
 		}
 	}
-	
+
 	return accesses;
 }

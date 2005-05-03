@@ -1,14 +1,14 @@
 /*
-	Flash ROM emulation
+    Flash ROM emulation
 
-	Explicitly supports:
-	Intel 28F016S5 (byte-wide)
-	AMD/Fujitsu 29F016 (byte-wide)
-	Sharp LH28F400 (word-wide)
+    Explicitly supports:
+    Intel 28F016S5 (byte-wide)
+    AMD/Fujitsu 29F016 (byte-wide)
+    Sharp LH28F400 (word-wide)
 
-	Flash ROMs use a standardized command set accross manufacturers,
-	so this emulation should work even for non-Intel and non-Sharp chips
-	as long as the game doesn't query the maker ID.
+    Flash ROMs use a standardized command set accross manufacturers,
+    so this emulation should work even for non-Intel and non-Sharp chips
+    as long as the game doesn't query the maker ID.
 */
 
 #include "driver.h"
@@ -133,7 +133,7 @@ data32_t intelflash_read(int chip, data32_t address)
 		}
 		break;
 	case FM_READSTATUS:
-//		c->flash_mode = FM_NORMAL;
+//      c->flash_mode = FM_NORMAL;
 		data = 0x80;
 		break;
 	case FM_READAMDID3:
@@ -173,7 +173,7 @@ data32_t intelflash_read(int chip, data32_t address)
 		break;
 	}
 
-//	logerror( "%08x: intelflash_read( %d, %08x ) %08x\n", activecpu_get_pc(), chip, address, data );
+//  logerror( "%08x: intelflash_read( %d, %08x ) %08x\n", activecpu_get_pc(), chip, address, data );
 
 	return data;
 }
@@ -188,7 +188,7 @@ void intelflash_write(int chip, data32_t address, data32_t data)
 	}
 	c = &chips[ chip ];
 
-//	logerror( "%08x: intelflash_write( %d, %08x, %08x )\n", activecpu_get_pc(), chip, address, data );
+//  logerror( "%08x: intelflash_write( %d, %08x, %08x )\n", activecpu_get_pc(), chip, address, data );
 
 	switch( c->flash_mode )
 	{
@@ -217,7 +217,7 @@ void intelflash_write(int chip, data32_t address, data32_t data)
 		case 0x60:	// set master lock
 			c->flash_mode = FM_SETMASTER;
 			break;
-		case 0x70:	// read status	
+		case 0x70:	// read status
 			c->flash_mode = FM_READSTATUS;
 			break;
 		case 0xaa:	// AMD ID select part 1

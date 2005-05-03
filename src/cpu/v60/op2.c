@@ -261,14 +261,12 @@ int opCMPF(void)
 
 int op5FUNHANDLED(void)
 {
-	logerror("Unhandled 5F opcode at %08x\n", PC);
-	abort();
+	osd_die("Unhandled 5F opcode at %08x\n", PC);
 }
 
 int op5CUNHANDLED(void)
 {
-	logerror("Unhandled 5C opcode at %08x\n", PC);
-	abort();
+	osd_die("Unhandled 5C opcode at %08x\n", PC);
 }
 
 int (*Op5FTable[32])(void) =

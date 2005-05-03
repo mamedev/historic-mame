@@ -7,12 +7,12 @@
   Notes:
   - The board uses a battery backed ram for protection, mapped at $7c00-$7fff.
   - If the battery backup data is corrupt, it comes up with some sort of code entry screen.
-	As far as I can tell, you can't do anything with it.
+    As far as I can tell, you can't do anything with it.
   - Replacing the battery backed ram with an eeprom is not really an option since the game stores the
-	current credits count in the battery backed ram.
+    current credits count in the battery backed ram.
   - System clock is 12 Mhz. The CPU clock is unknown.
   - The Alternate Gfx mode is funky. Not only it has different bitmaps, but also the strings with the
-  	game options are truncated. Title is also truncated.
+    game options are truncated. Title is also truncated.
 */
 
 #include "driver.h"

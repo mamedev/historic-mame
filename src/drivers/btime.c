@@ -535,7 +535,7 @@ static WRITE8_HANDLER( sound_command_w )
 
 INPUT_PORTS_START( btime )
 	COMMON_INPUTS
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -594,7 +594,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( cookrace )
 	COMMON_INPUTS
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_UNKNOWN )
@@ -1441,7 +1441,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-	Game driver(s)
+    Game driver(s)
 
 ***************************************************************************/
 
@@ -1794,8 +1794,8 @@ static READ8_HANDLER( wtennis_reset_hack_r )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Otherwise the game goes into test mode and there is no way out that I
-	   can see.  I'm not sure how it can work, it probably somehow has to do
-	   with the tape system */
+       can see.  I'm not sure how it can work, it probably somehow has to do
+       with the tape system */
 
 	RAM[0xfc30] = 0;
 
@@ -1821,9 +1821,9 @@ static DRIVER_INIT( zoar )
 
 
 	/* At location 0xD50A is what looks like an undocumented opcode. I tried
-	   implementing it given what opcode 0x23 should do, but it still didn't
-	   work in demo mode. So this could be another protection or a bad ROM read.
-	   I'm NOPing it out for now. */
+       implementing it given what opcode 0x23 should do, but it still didn't
+       work in demo mode. So this could be another protection or a bad ROM read.
+       I'm NOPing it out for now. */
 	memset(&rom[0xd50a],0xea,8);
 
     init_btime();

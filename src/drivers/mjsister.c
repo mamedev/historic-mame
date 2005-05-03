@@ -2,7 +2,7 @@
 
 Mahjong Sisters (c) 1986 Toa Plan
 
-	Driver by Uki
+    Driver by Uki
 
 *****************************************************************************/
 
@@ -135,7 +135,7 @@ static READ8_HANDLER( mjsister_keys_r )
 	int p,i,ret = 0;
 
 	p = mjsister_input_sel1 & 0x3f;
-//	p |= ((mjsister_input_sel2 & 8) << 4) | ((mjsister_input_sel2 & 0x20) << 1);
+//  p |= ((mjsister_input_sel2 & 8) << 4) | ((mjsister_input_sel2 & 0x20) << 1);
 
 	for (i=0; i<6; i++)
 	{
@@ -326,12 +326,12 @@ static MACHINE_DRIVER_START( mjsister )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, MCLK/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
-	MDRV_SOUND_ADD(DAC, 0)	
+	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 

@@ -1,8 +1,8 @@
 /*
- *	Emulation for the NEC PD4990A.
+ *  Emulation for the NEC PD4990A.
  *
- *	The PD4990A is a serial I/O Calendar & Clock IC used in the
- *		NEO GEO and probably a couple of other machines.
+ *  The PD4990A is a serial I/O Calendar & Clock IC used in the
+ *      NEO GEO and probably a couple of other machines.
 
 
   Completed by ElSemi.
@@ -12,9 +12,9 @@
 
   The three input bits seem to be used for a serial protocol
 
-	bit 0 - data
-	bit 1 - clock
-	bit 2 - command end (?)
+    bit 0 - data
+    bit 1 - clock
+    bit 2 - command end (?)
 
   the commands I've found so far are:
 
@@ -34,7 +34,7 @@
 #include "machine/pd4990a.h"
 
 
-/* Set the data in the chip to Monday 09/09/73 00:00:00 	*/
+/* Set the data in the chip to Monday 09/09/73 00:00:00     */
 /* If you ever read this Leejanne, you know what I mean :-) */
 struct pd4990a_s pd4990a =
 {

@@ -264,8 +264,8 @@
 	#define LSL_32(A, C) ((A) << (C))
 #else
 	/* We have to do this because the morons at ANSI decided that shifts
-	 * by >= data size are undefined.
-	 */
+     * by >= data size are undefined.
+     */
 	#define LSR_32(A, C) ((C) < 32 ? (A) >> (C) : 0)
 	#define LSL_32(A, C) ((C) < 32 ? (A) << (C) : 0)
 #endif /* M68K_INT_GT_32_BIT */
@@ -1550,10 +1550,10 @@ INLINE void m68ki_stack_frame_buserr(uint sr)
 	m68ki_push_16(REG_IR);
 	m68ki_push_32(m68ki_aerr_address);	/* access address */
 	/* 0 0 0 0 0 0 0 0 0 0 0 R/W I/N FC
-	 * R/W  0 = write, 1 = read
-	 * I/N  0 = instruction, 1 = not
-	 * FC   3-bit function code
-	 */
+     * R/W  0 = write, 1 = read
+     * I/N  0 = instruction, 1 = not
+     * FC   3-bit function code
+     */
 	m68ki_push_16(m68ki_aerr_write_mode | CPU_INSTR_MODE | m68ki_aerr_fc);
 }
 
@@ -1563,9 +1563,9 @@ INLINE void m68ki_stack_frame_buserr(uint sr)
 void m68ki_stack_frame_1000(uint pc, uint sr, uint vector)
 {
 	/* VERSION
-	 * NUMBER
-	 * INTERNAL INFORMATION, 16 WORDS
-	 */
+     * NUMBER
+     * INTERNAL INFORMATION, 16 WORDS
+     */
 	m68ki_fake_push_32();
 	m68ki_fake_push_32();
 	m68ki_fake_push_32();
@@ -1883,9 +1883,9 @@ INLINE void m68ki_exception_address_error(void)
 	uint sr = m68ki_init_exception();
 
 	/* If we were processing a bus error, address error, or reset,
-	 * this is a catastrophic failure.
-	 * Halt the CPU
-	 */
+     * this is a catastrophic failure.
+     * Halt the CPU
+     */
 	if(CPU_RUN_MODE == RUN_MODE_BERR_AERR_RESET)
 	{
 m68k_read_memory_8(0x00ffff01);

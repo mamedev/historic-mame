@@ -28,7 +28,7 @@ struct samples_info
 
 
 /*-------------------------------------------------
-	read_wav_sample - read a WAV file as a sample
+    read_wav_sample - read a WAV file as a sample
 -------------------------------------------------*/
 
 #ifdef LSB_FIRST
@@ -121,7 +121,7 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 		if (offset >= filesize)
 			return 0;
 	}
-	
+
 	/* fill in the sample data */
 	sample->length = length;
 	sample->frequency = rate;
@@ -131,7 +131,7 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 	{
 		unsigned char *tempptr;
 		int sindex;
-		
+
 		sample->data = auto_malloc(sizeof(*sample->data) * length);
 		mame_fread(f, sample->data, length);
 
@@ -152,7 +152,7 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 
 
 /*-------------------------------------------------
-	readsamples - load all samples
+    readsamples - load all samples
 -------------------------------------------------*/
 
 struct loaded_samples *readsamples(const char **samplenames, const char *basename)
@@ -226,10 +226,10 @@ void sample_start(int channel,int samplenum,int loop)
 		logerror("error: sample_start() called with samplenum = %d, but only %d samples available\n",samplenum,info->samples->total);
 		return;
 	}
-	
+
 	/* force an update before we start */
 	stream_update(chan->stream, 0);
-	
+
 	/* update the parameters */
 	sample = &info->samples->sample[samplenum];
 	chan->source = sample->data;
@@ -252,10 +252,10 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 		logerror("error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
 		return;
 	}
-	
+
 	/* force an update before we start */
 	stream_update(chan->stream, 0);
-	
+
 	/* update the parameters */
 	chan->source = sampledata;
 	chan->source_length = samples;
@@ -280,7 +280,7 @@ void sample_set_freq(int channel,int freq)
 
 	/* force an update before we start */
 	stream_update(chan->stream, 0);
-	
+
 	chan->step = ((INT64)freq << FRAC_BITS) / Machine->sample_rate;
 }
 
@@ -379,7 +379,7 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 			frac += step;
 			pos += frac >> FRAC_BITS;
 			frac = frac & ((1 << FRAC_BITS) - 1);
-			
+
 			/* handle looping/ending */
 			if (pos >= sample_length)
 			{
@@ -394,7 +394,7 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 				}
 			}
 		}
-		
+
 		/* push position back out */
 		chan->pos = pos;
 		chan->frac = frac;
@@ -409,7 +409,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
 	int i;
 	const struct Samplesinterface *intf = config;
 	struct samples_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 	sound_register_token(info);
@@ -417,7 +417,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
 	/* read audio samples */
 	if (intf->samplenames)
 		info->samples = readsamples(intf->samplenames,Machine->gamedrv->name);
-	
+
 	/* allocate channels */
 	info->numchannels = intf->channels;
 	info->channel = auto_malloc(sizeof(*info->channel) * info->numchannels);
@@ -429,11 +429,11 @@ static void *samples_start(int sndindex, int clock, const void *config)
 		info->channel[i].step = 0;
 		info->channel[i].loop = 0;
 	}
-	
+
 	/* initialize any custom handlers */
 	if (intf->start)
 		(*intf->start)();
-	
+
 	return info;
 }
 

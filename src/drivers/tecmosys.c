@@ -155,7 +155,7 @@ static READ16_HANDLER(reg_f80000_r)
 		// 68k code.
 		if (device_write_ptr == 0x10000)
 		{
-//			logerror("DEVICE write finished\n");
+//          logerror("DEVICE write finished\n");
 			device_status = DS_READ_ACK;
 			device_write_ptr = 0;
 			device_read_ptr = 0;
@@ -175,14 +175,14 @@ static READ16_HANDLER(reg_f80000_r)
 
 	if (device_status == DS_READ_ACK)
 	{
-//		logerror("Read ACK\n");
+//      logerror("Read ACK\n");
 		device_status = DS_READ;
 		return 0;
 	}
 
 	dt = device[device_read_ptr];
 
-//	logerror("DEVICE read %x: %x (at %x)\n", device_read_ptr, dt, cpunum_get_pc(0));
+//  logerror("DEVICE read %x: %x (at %x)\n", device_read_ptr, dt, cpunum_get_pc(0));
 
 	device_read_ptr++;
 	device_read_ptr &= 0xFFFF;
@@ -219,7 +219,7 @@ static WRITE16_HANDLER(reg_e80000_w)
 		switch (data)
 		{
 		case 0x13:
-//			logerror("DEVICE mode WRITE (cmd 0x13)\n");
+//          logerror("DEVICE mode WRITE (cmd 0x13)\n");
 			device_status = DS_WRITE;
 			device_write_ptr = 0;
 			break;
@@ -231,7 +231,7 @@ static WRITE16_HANDLER(reg_e80000_w)
 	// @@@ Should skip the writes while in read mode?
 	if (device_status == DS_READ || device_status == DS_READ_ACK)
 	{
-//		logerror("EEPROM write %x: %x\n", device_write_ptr, data);
+//      logerror("EEPROM write %x: %x\n", device_write_ptr, data);
 		return;
 	}
 

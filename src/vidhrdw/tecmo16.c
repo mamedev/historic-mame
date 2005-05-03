@@ -2,7 +2,7 @@
 
   Ganbare Ginkun  (Japan)  (c)1995 TECMO
   Final StarForce (US)     (c)1992 TECMO
-  Riot			  (Japan)  (c)1992 NMK
+  Riot            (Japan)  (c)1992 NMK
 
   Based on sprite drivers from vidhrdw/wc90.c by Ernesto Corvi (ernesto@imagina.com)
 
@@ -518,7 +518,7 @@ VIDEO_UPDATE( tecmo16 )
 	tilemap_draw(tile_bitmap_bg, cliprect,bg_tilemap, 0, 1);
 	tilemap_draw(tile_bitmap_fg, cliprect,fg_tilemap, 0, 2);
 	/* draw the blended tiles at a lower priority
-	   so sprites covered by them will still be drawn */
+       so sprites covered by them will still be drawn */
 	tilemap_draw(tile_bitmap_fg, cliprect,fg_tilemap, 1, 0);
 	tilemap_draw(tile_bitmap_fg, cliprect,tx_tilemap, 0, 4);
 

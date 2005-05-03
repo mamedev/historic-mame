@@ -1,21 +1,21 @@
 /***************************************************************************
 
-						  -= Fuuki 32 Bit Games (FG-3) =-
+                          -= Fuuki 32 Bit Games (FG-3) =-
 
-				driver by Paul Priest and David Haywood
-				based on fuukifg2 by Luca Elia
+                driver by Paul Priest and David Haywood
+                based on fuukifg2 by Luca Elia
 
 Hardware is similar to FG-2 used for :
 "Go Go! Mile Smile", "Susume! Mile Smile (Japan)" & "Gyakuten!! Puzzle Bancho (Japan)"
 See fuukifg2.c
 
-Main  CPU	:	M68020
+Main  CPU   :   M68020
 
 ---------------------------------------------------------------------------
 Year + Game
 ---------------------------------------------------------------------------
 98  Asura Blade - Sword of Dynasty
-	Asura Buster - Eternal Warriors
+    Asura Buster - Eternal Warriors
 ---------------------------------------------------------------------------
 
 --
@@ -152,7 +152,7 @@ static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
@@ -214,8 +214,8 @@ static ADDRESS_MAP_START( fuuki32_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 /**/AM_RANGE(0x8e0000, 0x8e0003) AM_READ(MRA32_RAM) // Controls layer order
 
 	AM_RANGE(0x903fe0, 0x903fff) AM_READ(snd_020_r) // Shared with Z80
-//	AM_RANGE(0x903fe0, 0x903fe3) AM_READ(fuuki32_sound_command_r) // Shared with Z80
-//	AM_RANGE(0x903fe4, 0x903fff) AM_READ(MRA32_RAM) // ??
+//  AM_RANGE(0x903fe0, 0x903fe3) AM_READ(fuuki32_sound_command_r) // Shared with Z80
+//  AM_RANGE(0x903fe4, 0x903fff) AM_READ(MRA32_RAM) // ??
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fuuki32_writemem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -246,7 +246,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 ***************************************************************************/
 
@@ -302,7 +302,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -408,7 +408,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -465,7 +465,7 @@ static struct GfxDecodeInfo fuuki32_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -553,14 +553,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Asura Blade
+                                Asura Blade
 Fuuki, 1999
 
 This dump is taken from a ROM board with number FG-3J ROM-J
@@ -615,7 +615,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

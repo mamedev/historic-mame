@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	poly.h
+    poly.h
 
-	Helper routines for polygon rendering.
+    Helper routines for polygon rendering.
 
 ***************************************************************************/
 

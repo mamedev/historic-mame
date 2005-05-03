@@ -1,17 +1,17 @@
 /* tilemap.c
 
-	When the videoram for a tile changes, call tilemap_mark_tile_dirty
-	with the appropriate memory offset.
+    When the videoram for a tile changes, call tilemap_mark_tile_dirty
+    with the appropriate memory offset.
 
-	In the video driver, follow these steps:
+    In the video driver, follow these steps:
 
-	1)	Set each tilemap's scroll registers.
+    1)  Set each tilemap's scroll registers.
 
-	2)	Call tilemap_draw to draw the tilemaps to the screen, from back to front.
+    2)  Call tilemap_draw to draw the tilemaps to the screen, from back to front.
 
-	Notes:
-	-	You can currently configure a tilemap as xscroll + scrolling columns or
-		yscroll + scrolling rows, but not both types of scrolling simultaneously.
+    Notes:
+    -   You can currently configure a tilemap as xscroll + scrolling columns or
+        yscroll + scrolling rows, but not both types of scrolling simultaneously.
 */
 
 #if !defined(DECLARE) && !defined(TRANSP)
@@ -139,11 +139,11 @@ static void update_tile_info( struct tilemap *tilemap, UINT32 cached_indx, UINT3
 static int PenToPixel_Init( struct tilemap *tilemap )
 {
 	/*
-		Construct a table for all tile orientations in advance.
-		This simplifies drawing tiles and masks tremendously.
-		If performance is an issue, we can always (re)introduce
-		customized code for each case and forgo tables.
-	*/
+        Construct a table for all tile orientations in advance.
+        This simplifies drawing tiles and masks tremendously.
+        If performance is an issue, we can always (re)introduce
+        customized code for each case and forgo tables.
+    */
 	int i,x,y,tx,ty;
 	UINT32 *pPenToPixel;
 	int lError;
@@ -1007,6 +1007,9 @@ struct mame_bitmap *tilemap_get_pixmap( struct tilemap * tilemap )
 	UINT32 cached_indx = 0;
 	UINT32 row,col;
 
+	if (!tilemap)
+		return 0;
+
 	if (tilemap->all_tiles_clean == 0)
 	{
 profiler_mark(PROFILER_TILEMAP_DRAW);
@@ -1517,8 +1520,8 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 			case 32:
 
 				/* Opaque drawing routines not present due to difficulty with
-				optimization using current ROZ methods
-				*/
+                optimization using current ROZ methods
+                */
 				if (priority)
 				{
 					if( flags&TILEMAP_ALPHA )
@@ -1686,13 +1689,13 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = alpha_blend32(*dest, clut[INPUT_VAL]) ;					\
-/*		logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
+/*      logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)npdt32)					\
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = clut[INPUT_VAL] ;										\
-/*		logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
+/*      logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pbt15)						\
 	{																	\

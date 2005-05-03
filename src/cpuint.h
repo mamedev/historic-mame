@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	cpuint.h
+    cpuint.h
 
-	Core multi-CPU interrupt engine.
+    Core multi-CPU interrupt engine.
 
 ***************************************************************************/
 
@@ -20,7 +20,7 @@ extern "C" {
 
 /*************************************
  *
- *	Startup/shutdown
+ *  Startup/shutdown
  *
  *************************************/
 
@@ -34,7 +34,7 @@ extern int (*cpu_irq_callbacks[])(int);
 
 /*************************************
  *
- *	CPU lines
+ *  CPU lines
  *
  *************************************/
 
@@ -60,7 +60,7 @@ void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
 
 /*************************************
  *
- *	Preferred interrupt callbacks
+ *  Preferred interrupt callbacks
  *
  *************************************/
 
@@ -103,7 +103,7 @@ INTERRUPT_GEN( irq7_line_assert );
 
 /*************************************
  *
- *	Obsolete interrupt handling
+ *  Obsolete interrupt handling
  *
  *************************************/
 

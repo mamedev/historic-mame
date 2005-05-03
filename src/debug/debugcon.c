@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugcon.c
-**		Debugger console engine.
-**		Written by Aaron Giles
+**      debugcon.c
+**      Debugger console engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -19,13 +19,13 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define CONSOLE_HISTORY		(10000)
@@ -34,7 +34,7 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 struct debug_command
@@ -50,7 +50,7 @@ struct debug_command
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 static char *console_history;
@@ -61,18 +61,18 @@ static struct debug_command *commandlist;
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	CODE
+**  CODE
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_console_init - initializes the console
-	system
+    debug_console_init - initializes the console
+    system
 -------------------------------------------------*/
 
 void debug_console_init(void)
@@ -89,8 +89,8 @@ void debug_console_init(void)
 
 
 /*-------------------------------------------------
-	debug_console_exit - frees the console
-	system
+    debug_console_exit - frees the console
+    system
 -------------------------------------------------*/
 
 void debug_console_exit(void)
@@ -104,12 +104,12 @@ void debug_console_exit(void)
 
 
 /*###################################################################################################
-**	COMMAND HANDLING
+**  COMMAND HANDLING
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	trim_parameter - executes a 
-	command
+    trim_parameter - executes a
+    command
 -------------------------------------------------*/
 
 static void trim_parameter(char **paramptr)
@@ -122,7 +122,7 @@ static void trim_parameter(char **paramptr)
 	do
 	{
 		repeat = 0;
-		
+
 		/* check for begin/end quotes */
 		if (len >= 2 && param[0] == '"' && param[len - 1] == '"')
 		{
@@ -130,7 +130,7 @@ static void trim_parameter(char **paramptr)
 			param++;
 			len -= 2;
 		}
-		
+
 		/* check for start/end braces */
 		else if (len >= 2 && param[0] == '{' && param[len - 1] == '}')
 		{
@@ -139,7 +139,7 @@ static void trim_parameter(char **paramptr)
 			len -= 2;
 			repeat = 1;
 		}
-		
+
 		/* check for leading spaces */
 		else if (len >= 1 && param[0] == ' ')
 		{
@@ -147,7 +147,7 @@ static void trim_parameter(char **paramptr)
 			len--;
 			repeat = 1;
 		}
-		
+
 		/* check for trailing spaces */
 		else if (len >= 1 && param[len - 1] == ' ')
 		{
@@ -156,14 +156,14 @@ static void trim_parameter(char **paramptr)
 			repeat = 1;
 		}
 	} while (repeat);
-	
+
 	*paramptr = param;
 }
 
 
 /*-------------------------------------------------
-	internal_execute_command - executes a 
-	command
+    internal_execute_command - executes a
+    command
 -------------------------------------------------*/
 
 static CMDERR internal_execute_command(int validate_only, int params, char **param)
@@ -175,7 +175,7 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 	/* no params is an error */
 	if (params == 0)
 		return CMDERR_NONE;
-	
+
 	/* the first parameter has the command and the real first parameter; separate them */
 	for (p = param[0]; *p && isspace(*p); p++) { }
 	for (command = p; *p && !isspace(*p); p++) { }
@@ -190,11 +190,11 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 	}
 	else
 		params = 0;
-	
+
 	/* NULL-terminate and trim space around all the parameters */
 	for (i = 1; i < params; i++)
 		*param[i]++ = 0;
-	
+
 	/* now go back and trim quotes and braces and any spaces they reveal*/
 	for (i = 0; i < params; i++)
 		trim_parameter(&param[i]);
@@ -212,19 +212,19 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 				break;
 			}
 		}
-	
+
 	/* error if not found */
 	if (!found)
 		return MAKE_CMDERR_UNKNOWN_COMMAND(0);
 	if (foundcount > 1)
 		return MAKE_CMDERR_AMBIGUOUS_COMMAND(0);
-	
+
 	/* see if we have the right number of parameters */
 	if (params < found->minparams)
 		return MAKE_CMDERR_NOT_ENOUGH_PARAMS(0);
 	if (params > found->maxparams)
 		return MAKE_CMDERR_TOO_MANY_PARAMS(0);
-	
+
 	/* execute the handler */
 	if (!validate_only)
 		(*found->handler)(found->ref, params, (const char **)param);
@@ -233,8 +233,8 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 
 
 /*-------------------------------------------------
-	internal_parse_command - parses a command
-	and either executes or just validates it
+    internal_parse_command - parses a command
+    and either executes or just validates it
 -------------------------------------------------*/
 
 static CMDERR internal_parse_command(const char *original_command, int validate_only)
@@ -244,15 +244,15 @@ static CMDERR internal_parse_command(const char *original_command, int validate_
 	CMDERR result = CMDERR_NONE;
 	char *command_start;
 	char *p, c;
-	
+
 	/* make a copy of the command */
 	strcpy(command, original_command);
-	
+
 	/* loop over all semicolon-separated stuff */
 	for (p = command; *p != 0; )
 	{
 		int paramcount = 0, foundend = 0, instring = 0, parendex = 0;
-	
+
 		/* find a semicolon or the end */
 		for (params[paramcount++] = p; !foundend; p++)
 		{
@@ -280,17 +280,17 @@ static CMDERR internal_parse_command(const char *original_command, int validate_
 				}
 			}
 		}
-		
+
 		/* check for unbalanced parentheses or quotes */
 		if (instring)
 			return MAKE_CMDERR_UNBALANCED_QUOTES(p - command);
 		if (parendex != 0)
 			return MAKE_CMDERR_UNBALANCED_PARENS(p - command);
-		
+
 		/* NULL-terminate if we ended in a semicolon */
 		p--;
 		if (c == ';') *p++ = 0;
-		
+
 		/* process the command */
 		command_start = params[0];
 		result = internal_execute_command(validate_only, paramcount, &params[0]);
@@ -302,21 +302,21 @@ static CMDERR internal_parse_command(const char *original_command, int validate_
 
 
 /*-------------------------------------------------
-	debug_console_execute_command - execute a
-	command string
+    debug_console_execute_command - execute a
+    command string
 -------------------------------------------------*/
 
 CMDERR debug_console_execute_command(const char *command, int echo)
 {
 	CMDERR result;
-	
+
 	/* echo if requested */
 	if (echo)
 		debug_console_printf(">%s", command);
-	
+
 	/* parse and execute */
 	result = internal_parse_command(command, 0);
-	
+
 	/* display errors */
 	if (result != CMDERR_NONE)
 	{
@@ -325,7 +325,7 @@ CMDERR debug_console_execute_command(const char *command, int echo)
 		debug_console_printf(" %*s^", CMDERR_ERROR_OFFSET(result), "");
 		debug_console_printf("%s\n", debug_cmderr_to_string(result));
 	}
-	
+
 	/* update all views */
 	if (echo)
 	{
@@ -337,8 +337,8 @@ CMDERR debug_console_execute_command(const char *command, int echo)
 
 
 /*-------------------------------------------------
-	debug_console_validate_command - validate a
-	command string
+    debug_console_validate_command - validate a
+    command string
 -------------------------------------------------*/
 
 CMDERR debug_console_validate_command(const char *command)
@@ -348,8 +348,8 @@ CMDERR debug_console_validate_command(const char *command)
 
 
 /*-------------------------------------------------
-	debug_console_register_command - register a
-	command handler
+    debug_console_register_command - register a
+    command handler
 -------------------------------------------------*/
 
 void debug_console_register_command(const char *command, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param))
@@ -357,14 +357,14 @@ void debug_console_register_command(const char *command, int ref, int minparams,
 	struct debug_command *cmd = malloc(sizeof(*cmd));
 	if (!cmd)
 		osd_die("Out of memory registering new command with the debugger!");
-		
+
 	/* fill in the command */
 	cmd->command = command;
 	cmd->ref = ref;
 	cmd->minparams = minparams;
 	cmd->maxparams = maxparams;
 	cmd->handler = handler;
-	
+
 	/* link it */
 	cmd->next = commandlist;
 	commandlist = cmd;
@@ -373,12 +373,12 @@ void debug_console_register_command(const char *command, int ref, int minparams,
 
 
 /*###################################################################################################
-**	ERROR HANDLING
+**  ERROR HANDLING
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_cmderr_to_string - return a friendly 
-	string for a given command error
+    debug_cmderr_to_string - return a friendly
+    string for a given command error
 -------------------------------------------------*/
 
 const char *debug_cmderr_to_string(CMDERR error)
@@ -398,12 +398,12 @@ const char *debug_cmderr_to_string(CMDERR error)
 
 
 /*###################################################################################################
-**	CONSOLE MANAGEMENT
+**  CONSOLE MANAGEMENT
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_console_clear - clears the console
-	buffer
+    debug_console_clear - clears the console
+    buffer
 -------------------------------------------------*/
 
 void debug_console_clear(void)
@@ -413,8 +413,8 @@ void debug_console_clear(void)
 
 
 /*-------------------------------------------------
-	debug_console_write_line - writes a line to
-	the output ring buffer
+    debug_console_write_line - writes a line to
+    the output ring buffer
 -------------------------------------------------*/
 
 void debug_console_write_line(const char *line)
@@ -436,7 +436,7 @@ void debug_console_write_line(const char *line)
 			}
 			dest[col] = 0;
 		}
-		
+
 		/* force an update of any console views */
 		debug_view_update_type(DVT_CONSOLE);
 	}
@@ -444,9 +444,9 @@ void debug_console_write_line(const char *line)
 
 
 /*-------------------------------------------------
-	debug_console_printf - printfs the given
-	arguments using the format to the debug
-	console
+    debug_console_printf - printfs the given
+    arguments using the format to the debug
+    console
 -------------------------------------------------*/
 
 void CLIB_DECL debug_console_printf(const char *format, ...)
@@ -457,14 +457,14 @@ void CLIB_DECL debug_console_printf(const char *format, ...)
 	va_start(arg, format);
 	vsprintf(buffer, format, arg);
 	va_end(arg);
-	
+
 	debug_console_write_line(buffer);
 }
 
 
 /*-------------------------------------------------
-	debug_console_get_line - retrieves the nth
-	line from the buffer
+    debug_console_get_line - retrieves the nth
+    line from the buffer
 -------------------------------------------------*/
 
 const char *debug_console_get_line(int index)
@@ -483,8 +483,8 @@ const char *debug_console_get_line(int index)
 
 
 /*-------------------------------------------------
-	debug_console_get_size - retrieves the size
-	in rows and columns
+    debug_console_get_size - retrieves the size
+    in rows and columns
 -------------------------------------------------*/
 
 void debug_console_get_size(int *rows, int *cols)

@@ -27,7 +27,7 @@ Air Duel                                1990  Rev 3.14 M72   No
 Daiku no Gensan                         1990  Rev 3.14 M81  Yes
 Daiku no Gensan (M72)                   1990  Rev 3.15 M72   No
 Hammerin' Harry                         1990  Rev 3.15 M81  Yes
-Ken-Go	                                1991  Rev 3.15 M81  Yes
+Ken-Go                                  1991  Rev 3.15 M81  Yes
 Pound for Pound                         1990  Rev 3.15 M83   No
 Cosmic Cop                              1991  Rev 3.15 M81  Yes
 Gallop - Armed Police Unit              1991  Rev 3.15 M72   No
@@ -177,7 +177,7 @@ WRITE8_HANDLER( rtype2_sample_addr_w )
 WRITE8_HANDLER( poundfor_sample_addr_w )
 {
 	/* poundfor writes both sample start and sample END - a first for Irem...
-	   we don't handle the end written here, 00 marks the sample end as usual. */
+       we don't handle the end written here, 00 marks the sample end as usual. */
 	if (offset > 1) return;
 
 	sample_addr >>= 4;

@@ -55,7 +55,7 @@ static MACHINE_INIT( galivan )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[0x10000]);
-//	layers = 0x60;
+//  layers = 0x60;
 }
 
 static WRITE8_HANDLER( galivan_sound_command_w )
@@ -142,8 +142,8 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x41, 0x42) AM_WRITE(galivan_scrollx_w)
 	AM_RANGE(0x43, 0x44) AM_WRITE(galivan_scrolly_w)
 	AM_RANGE(0x45, 0x45) AM_WRITE(galivan_sound_command_w)
-/*	AM_RANGE(0x46, 0x46) AM_WRITE(MWA8_NOP) */
-/*	AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) */
+/*  AM_RANGE(0x46, 0x46) AM_WRITE(MWA8_NOP) */
+/*  AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ninjemak_readport, ADDRESS_SPACE_IO, 8 )
@@ -160,8 +160,8 @@ static ADDRESS_MAP_START( ninjemak_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(ninjemak_gfxbank_w)
 	AM_RANGE(0x85, 0x85) AM_WRITE(galivan_sound_command_w)
-//	AM_RANGE(0x86, 0x86) AM_WRITE(MWA8_NOP)			// ??
-//	AM_RANGE(0x87, 0x87) AM_WRITE(MWA8_NOP)			// ??
+//  AM_RANGE(0x86, 0x86) AM_WRITE(MWA8_NOP)         // ??
+//  AM_RANGE(0x87, 0x87) AM_WRITE(MWA8_NOP)         // ??
 ADDRESS_MAP_END
 
 
@@ -178,7 +178,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-/*	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP)    value read and *discarded*    */
+/*  AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP)    value read and *discarded*    */
 	AM_RANGE(0x06, 0x06) AM_READ(galivan_sound_command_r)
 ADDRESS_MAP_END
 
@@ -240,12 +240,12 @@ ADDRESS_MAP_END
 	/* This is how the Bonus Life are defined in Service Mode */
 	/* However, to keep the way Bonus Life are defined in MAME, */
 	/* below are the same values, but using the MAME way */
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "20k" )
-//	PORT_DIPSETTING(    0x00, "50k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "every 60k" )
-//	PORT_DIPSETTING(    0x00, "every 90k" )
+//  PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//  PORT_DIPSETTING(    0x04, "20k" )
+//  PORT_DIPSETTING(    0x00, "50k" )
+//  PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//  PORT_DIPSETTING(    0x08, "every 60k" )
+//  PORT_DIPSETTING(    0x00, "every 90k" )
 #define NIHON_BONUS_LIFE \
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) ) \
 	PORT_DIPSETTING(    0x0c, "20k and every 60k" ) \

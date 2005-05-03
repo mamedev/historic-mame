@@ -7,14 +7,14 @@
 
  Games Supported:
 
-	Vamp 1/2				(c) 1999 Danbi & F2 System
-	Mission Craft			(c) 2000 Sun
-	Coolmini				(c) 199? Semicom
-	Super Lup Lup Puzzle	(c) 1999 Omega System
+    Vamp 1/2                (c) 1999 Danbi & F2 System
+    Mission Craft           (c) 2000 Sun
+    Coolmini                (c) 199? Semicom
+    Super Lup Lup Puzzle    (c) 1999 Omega System
 
  Games Needed:
 
-	Vamp 1/2 (World version)
+    Vamp 1/2 (World version)
 
 *********************************************************************/
 
@@ -607,10 +607,26 @@ Notes:
 */
 
 
-ROM_START( luplup )
+ROM_START( luplup ) /* version 3.0 / 990128 */
 	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "luplup-rom1.bin", 0x00000, 0x80000, CRC(9ea67f87) SHA1(73d16c056a8d64743181069a01559a43fee529a3) )
-	ROM_LOAD( "luplup-rom2.bin", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94))
+	ROM_LOAD( "luplup-rom2.bin", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
+	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-romu00.bin", 0x000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-roml01.bin", 0x400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-romu01.bin", 0x400002, 0x200000, NO_DUMP )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
+	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
+ROM_END
+
+
+ROM_START( luplup29 ) /* version 2.9 / 990108 */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "luplup-rom1.v29", 0x00000, 0x80000, CRC(36a8b8c1) SHA1(fed3eb2d83adc1b071a12ce5d49d4cab0ca20cc7) )
+	ROM_LOAD( "luplup-rom2.v29", 0x80000, 0x80000, CRC(50dac70f) SHA1(0e313114a988cb633a89508fda17eb09023827a2) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
 	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )
@@ -734,6 +750,7 @@ DRIVER_INIT( suplup )
 
 GAME( 1999, suplup,   0,      suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
 GAMEX(1999, luplup,   suplup, suplup,   common, suplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 3.0 / 990128)", GAME_NOT_WORKING )
+GAMEX(1999, luplup29, suplup, suplup,   common, suplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 2.9 / 990108)", GAME_NOT_WORKING )
 GAME( 1999, vamphalf, 0,      vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
 GAMEX(2000, misncrft, 0,      misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",	GAME_NO_SOUND )
 GAMEX(19??, coolmini, 0,      coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",					GAME_NOT_WORKING )

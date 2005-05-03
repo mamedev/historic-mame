@@ -67,7 +67,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
 	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
 	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_2_r)
-/*	AM_RANGE(0xa0a0, 0xa0a0)	???? */
+/*  AM_RANGE(0xa0a0, 0xa0a0)    ???? */
 	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_3_r)
 ADDRESS_MAP_END
 
@@ -98,7 +98,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-/*	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)	unknown - maybe DAC enable */
+/*  AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP) unknown - maybe DAC enable */
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_w)	/* probably. The sound latch has to be cleared some way */
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(champbas_dac_w)
 	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
@@ -301,9 +301,9 @@ ROM_END
 
 ROM_START( champbja )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "10",         0x0000, 0x2000, CRC(f7cdaf8e) SHA1(d4c840f2107394fadbcf822d64aaa381ac900367) ) 
-	ROM_LOAD( "09",         0x2000, 0x2000, CRC(9d39e5b3) SHA1(11c1a1d2296c0bf16d7610eaa79b034bfd813740) ) 
-	ROM_LOAD( "08",         0x4000, 0x2000, CRC(53468a0f) SHA1(d4b5ea48b27754eebe593c8b4fcf5bf117f27ae4) ) 
+	ROM_LOAD( "10",         0x0000, 0x2000, CRC(f7cdaf8e) SHA1(d4c840f2107394fadbcf822d64aaa381ac900367) )
+	ROM_LOAD( "09",         0x2000, 0x2000, CRC(9d39e5b3) SHA1(11c1a1d2296c0bf16d7610eaa79b034bfd813740) )
+	ROM_LOAD( "08",         0x4000, 0x2000, CRC(53468a0f) SHA1(d4b5ea48b27754eebe593c8b4fcf5bf117f27ae4) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the speech CPU */
 	ROM_LOAD( "16.2k",      0x0000, 0x2000, CRC(24c482ee) SHA1(c25bdf77014e095fc11a9a6b17f16858f19db451) )
@@ -317,7 +317,7 @@ ROM_START( champbja )
 	ROM_LOAD( "15.5g",      0x0000, 0x2000, CRC(a67c0c40) SHA1(3845839eff8c1624d26937f28ffde67a5fcb4805) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "clr",       0x0000, 0x0020, CRC(8f989357) SHA1(d0916fb5ef4b43bdf84663cd403418ffc5e98c17) ) /* palette */ 
+	ROM_LOAD( "clr",       0x0000, 0x0020, CRC(8f989357) SHA1(d0916fb5ef4b43bdf84663cd403418ffc5e98c17) ) /* palette */
 	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, CRC(2e481ffa) SHA1(bc8979efd43bee8be0ce96ebdacc873a5821e06e) ) /* look-up table */
 ROM_END
 

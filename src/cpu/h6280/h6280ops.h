@@ -1,12 +1,12 @@
 /*****************************************************************************
 
-	h6280ops.h - Addressing modes and opcode macros for the Hu6820 cpu
+    h6280ops.h - Addressing modes and opcode macros for the Hu6820 cpu
 
-	Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
+    Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
 
-	This source code is based (with permission!) on the 6502 emulator by
-	Juergen Buchmueller.  It is released as part of the Mame emulator project.
-	Let me know if you intend to use this code in any other project.
+    This source code is based (with permission!) on the 6502 emulator by
+    Juergen Buchmueller.  It is released as part of the Mame emulator project.
+    Let me know if you intend to use this code in any other project.
 
 ******************************************************************************/
 
@@ -160,7 +160,7 @@
 	cpu_readop_arg((h6280.mmr[PCW>>13] << 13) | (PCW&0x1fff))
 
 /***************************************************************
- *	BRA  branch relative
+ *  BRA  branch relative
  ***************************************************************/
 #define BRA(cond)												\
 	if (cond)													\
@@ -224,14 +224,14 @@
 	EAW += X
 
 /***************************************************************
- *	EA = absolute address + Y
+ *  EA = absolute address + Y
  ***************************************************************/
 #define EA_ABY													\
 	EA_ABS; 													\
 	EAW += Y
 
 /***************************************************************
- *	EA = zero page indirect (65c02 pre indexed w/o X)
+ *  EA = zero page indirect (65c02 pre indexed w/o X)
  ***************************************************************/
 #define EA_ZPI													\
 	ZPL = RDOPARG();											\
@@ -256,7 +256,7 @@
 	EAW += Y
 
 /***************************************************************
- *	EA = indirect (only used by JMP)
+ *  EA = indirect (only used by JMP)
  ***************************************************************/
 #define EA_IND													\
 	EA_ABS; 													\
@@ -266,7 +266,7 @@
 	EAL = tmp
 
 /***************************************************************
- *	EA = indirect plus x (only used by JMP)
+ *  EA = indirect plus x (only used by JMP)
  ***************************************************************/
 #define EA_IAX                                                  \
 	EA_ABS;														\
@@ -333,7 +333,7 @@
 #endif
 
 /* 6280 ********************************************************
- *	ADC Add with carry
+ *  ADC Add with carry
  ***************************************************************/
 #define ADC 													\
 	if (P & _fD)												\
@@ -369,14 +369,14 @@
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	AND Logical and
+ *  AND Logical and
  ***************************************************************/
 #define AND 													\
 	A = (UINT8)(A & tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	ASL Arithmetic shift left
+ *  ASL Arithmetic shift left
  ***************************************************************/
 #define ASL 													\
 	P = (P & ~_fC) | ((tmp >> 7) & _fC);						\
@@ -396,17 +396,17 @@
     BRA(tmp & (1<<bit))
 
 /* 6280 ********************************************************
- *	BCC Branch if carry clear
+ *  BCC Branch if carry clear
  ***************************************************************/
 #define BCC BRA(!(P & _fC))
 
 /* 6280 ********************************************************
- *	BCS Branch if carry set
+ *  BCS Branch if carry set
  ***************************************************************/
 #define BCS BRA(P & _fC)
 
 /* 6280 ********************************************************
- *	BEQ Branch if equal
+ *  BEQ Branch if equal
  ***************************************************************/
 #if LAZY_FLAGS
 #define BEQ BRA(!(NZ & 0xff))
@@ -415,7 +415,7 @@
 #endif
 
 /* 6280 ********************************************************
- *	BIT Bit test
+ *  BIT Bit test
  ***************************************************************/
 #undef BIT
 #define BIT														\
@@ -425,7 +425,7 @@
 		| ((tmp&A)  ? 0:_fZ)
 
 /* 6280 ********************************************************
- *	BMI Branch if minus
+ *  BMI Branch if minus
  ***************************************************************/
 #if LAZY_FLAGS
 #define BMI BRA(NZ & 0x8000)
@@ -434,7 +434,7 @@
 #endif
 
 /* 6280 ********************************************************
- *	BNE Branch if not equal
+ *  BNE Branch if not equal
  ***************************************************************/
 #if LAZY_FLAGS
 #define BNE BRA(NZ & 0xff)
@@ -443,7 +443,7 @@
 #endif
 
 /* 6280 ********************************************************
- *	BPL Branch if plus
+ *  BPL Branch if plus
  ***************************************************************/
 #if LAZY_FLAGS
 #define BPL BRA(!(NZ & 0x8000))
@@ -452,9 +452,9 @@
 #endif
 
 /* 6280 ********************************************************
- *	BRK Break
- *	increment PC, push PC hi, PC lo, flags (with B bit set),
- *	set I flag, reset D flag and jump via IRQ vector
+ *  BRK Break
+ *  increment PC, push PC hi, PC lo, flags (with B bit set),
+ *  set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
 	logerror("BRK %04x\n",activecpu_get_pc());	\
@@ -467,7 +467,7 @@
 	PCH = RDMEM(H6280_IRQ2_VEC+1)
 
 /* 6280 ********************************************************
- *	BSR Branch to subroutine
+ *  BSR Branch to subroutine
  ***************************************************************/
 #define BSR 													\
 	PUSH(PCH);													\
@@ -476,12 +476,12 @@
 	BRA(1)
 
 /* 6280 ********************************************************
- *	BVC Branch if overflow clear
+ *  BVC Branch if overflow clear
  ***************************************************************/
 #define BVC BRA(!(P & _fV))
 
 /* 6280 ********************************************************
- *	BVS Branch if overflow set
+ *  BVS Branch if overflow set
  ***************************************************************/
 #define BVS BRA(P & _fV)
 
@@ -492,19 +492,19 @@
     A = 0
 
 /* 6280 ********************************************************
- *	CLC Clear carry flag
+ *  CLC Clear carry flag
  ***************************************************************/
 #define CLC 													\
 	P &= ~_fC
 
 /* 6280 ********************************************************
- *	CLD Clear decimal flag
+ *  CLD Clear decimal flag
  ***************************************************************/
 #define CLD 													\
 	P &= ~_fD
 
 /* 6280 ********************************************************
- *	CLI Clear interrupt flag
+ *  CLI Clear interrupt flag
  ***************************************************************/
 #define CLI 													\
 	if( P & _fI )												\
@@ -515,7 +515,7 @@
 
 
 /* 6280 ********************************************************
- *	CLV Clear overflow flag
+ *  CLV Clear overflow flag
  ***************************************************************/
 #define CLV 													\
 	P &= ~_fV
@@ -533,7 +533,7 @@
     Y = 0
 
 /* 6280 ********************************************************
- *	CMP Compare accumulator
+ *  CMP Compare accumulator
  ***************************************************************/
 #define CMP 													\
 	P &= ~_fC;													\
@@ -542,7 +542,7 @@
 	SET_NZ((UINT8)(A - tmp))
 
 /* 6280 ********************************************************
- *	CPX Compare index X
+ *  CPX Compare index X
  ***************************************************************/
 #define CPX 													\
 	P &= ~_fC;													\
@@ -551,7 +551,7 @@
 	SET_NZ((UINT8)(X - tmp))
 
 /* 6280 ********************************************************
- *	CPY Compare index Y
+ *  CPY Compare index Y
  ***************************************************************/
 #define CPY 													\
 	P &= ~_fC;													\
@@ -567,35 +567,35 @@
     SET_NZ(A)
 
 /* 6280 ********************************************************
- *	DEC Decrement memory
+ *  DEC Decrement memory
  ***************************************************************/
 #define DEC 													\
 	tmp = (UINT8)(tmp-1); 										\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
- *	DEX Decrement index X
+ *  DEX Decrement index X
  ***************************************************************/
 #define DEX 													\
 	X = (UINT8)--X; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
- *	DEY Decrement index Y
+ *  DEY Decrement index Y
  ***************************************************************/
 #define DEY 													\
 	Y = (UINT8)--Y; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
- *	EOR Logical exclusive or
+ *  EOR Logical exclusive or
  ***************************************************************/
 #define EOR 													\
 	A = (UINT8)(A ^ tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	ILL Illegal opcode
+ *  ILL Illegal opcode
  ***************************************************************/
 #define ILL 													\
 	h6280_ICount -= 2; /* (assumed) */							\
@@ -609,37 +609,37 @@
     SET_NZ(A)
 
 /* 6280 ********************************************************
- *	INC Increment memory
+ *  INC Increment memory
  ***************************************************************/
 #define INC 													\
 	tmp = (UINT8)(tmp+1); 										\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
- *	INX Increment index X
+ *  INX Increment index X
  ***************************************************************/
 #define INX 													\
 	X = (UINT8)++X; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
- *	INY Increment index Y
+ *  INY Increment index Y
  ***************************************************************/
 #define INY 													\
 	Y = (UINT8)++Y; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
- *	JMP Jump to address
- *	set PC to the effective address
+ *  JMP Jump to address
+ *  set PC to the effective address
  ***************************************************************/
 #define JMP 													\
 	PCD = EAD
 
 /* 6280 ********************************************************
- *	JSR Jump to subroutine
- *	decrement PC (sic!) push PC hi, push PC lo and set
- *	PC to the effective address
+ *  JSR Jump to subroutine
+ *  decrement PC (sic!) push PC hi, push PC lo and set
+ *  PC to the effective address
  ***************************************************************/
 #define JSR 													\
 	PCW--;														\
@@ -648,29 +648,29 @@
 	PCD = EAD
 
 /* 6280 ********************************************************
- *	LDA Load accumulator
+ *  LDA Load accumulator
  ***************************************************************/
 #define LDA 													\
 	A = (UINT8)tmp; 											\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	LDX Load index X
+ *  LDX Load index X
  ***************************************************************/
 #define LDX 													\
 	X = (UINT8)tmp; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
- *	LDY Load index Y
+ *  LDY Load index Y
  ***************************************************************/
 #define LDY 													\
 	Y = (UINT8)tmp; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
- *	LSR Logic shift right
- *	0 -> [7][6][5][4][3][2][1][0] -> C
+ *  LSR Logic shift right
+ *  0 -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define LSR 													\
 	P = (P & ~_fC) | (tmp & _fC);								\
@@ -678,25 +678,25 @@
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
- *	NOP No operation
+ *  NOP No operation
  ***************************************************************/
 #define NOP
 
 /* 6280 ********************************************************
- *	ORA Logical inclusive or
+ *  ORA Logical inclusive or
  ***************************************************************/
 #define ORA 													\
 	A = (UINT8)(A | tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	PHA Push accumulator
+ *  PHA Push accumulator
  ***************************************************************/
 #define PHA 													\
 	PUSH(A)
 
 /* 6280 ********************************************************
- *	PHP Push processor status (flags)
+ *  PHP Push processor status (flags)
  ***************************************************************/
 #define PHP 													\
 	COMPOSE_P(0,0); 											\
@@ -715,14 +715,14 @@
     PUSH(Y)
 
 /* 6280 ********************************************************
- *	PLA Pull accumulator
+ *  PLA Pull accumulator
  ***************************************************************/
 #define PLA 													\
 	PULL(A);													\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	PLP Pull processor status (flags)
+ *  PLP Pull processor status (flags)
  ***************************************************************/
 #if LAZY_FLAGS
 
@@ -758,8 +758,8 @@
     tmp &= ~(1<<bit)
 
 /* 6280 ********************************************************
- *	ROL Rotate left
- *	new C <- [7][6][5][4][3][2][1][0] <- C
+ *  ROL Rotate left
+ *  new C <- [7][6][5][4][3][2][1][0] <- C
  ***************************************************************/
 #define ROL 													\
 	tmp = (tmp << 1) | (P & _fC);								\
@@ -768,8 +768,8 @@
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
- *	ROR Rotate right
- *	C -> [7][6][5][4][3][2][1][0] -> new C
+ *  ROR Rotate right
+ *  C -> [7][6][5][4][3][2][1][0] -> new C
  ***************************************************************/
 #define ROR 													\
 	tmp |= (P & _fC) << 8;										\
@@ -778,8 +778,8 @@
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
- *	RTI Return from interrupt
- *	pull flags, pull PC lo, pull PC hi and increment PC
+ *  RTI Return from interrupt
+ *  pull flags, pull PC lo, pull PC hi and increment PC
  ***************************************************************/
 #if LAZY_FLAGS
 
@@ -800,8 +800,8 @@
 #endif
 
 /* 6280 ********************************************************
- *	RTS Return from subroutine
- *	pull PC lo, PC hi and increment PC
+ *  RTS Return from subroutine
+ *  pull PC lo, PC hi and increment PC
  ***************************************************************/
 #define RTS 													\
 	PULL(PCL);													\
@@ -825,7 +825,7 @@
     A = tmp
 
 /* 6280 ********************************************************
- *	SBC Subtract with carry
+ *  SBC Subtract with carry
  ***************************************************************/
 #define SBC 													\
 	if (P & _fD)												\
@@ -861,25 +861,25 @@
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	SEC Set carry flag
+ *  SEC Set carry flag
  ***************************************************************/
 #define SEC 													\
 	P |= _fC
 
 /* 6280 ********************************************************
- *	SED Set decimal flag
+ *  SED Set decimal flag
  ***************************************************************/
 #define SED 													\
 	P |= _fD
 
 /* 6280 ********************************************************
- *	SEI Set interrupt flag
+ *  SEI Set interrupt flag
  ***************************************************************/
 #define SEI 													\
 	P |= _fI
 
 /* 6280 ********************************************************
- *	SET Set t flag
+ *  SET Set t flag
  ***************************************************************/
 #define SET 													\
 	P |= _fT;													\
@@ -910,19 +910,19 @@
     io_write_byte_8(0x0003,tmp)
 
 /* 6280 ********************************************************
- *	STA Store accumulator
+ *  STA Store accumulator
  ***************************************************************/
 #define STA 													\
 	tmp = A
 
 /* 6280 ********************************************************
- *	STX Store index X
+ *  STX Store index X
  ***************************************************************/
 #define STX 													\
 	tmp = X
 
 /* 6280 ********************************************************
- *	STY Store index Y
+ *  STY Store index Y
  ***************************************************************/
 #define STY 													\
 	tmp = Y
@@ -971,14 +971,14 @@
     if (tmp&0x80) h6280.mmr[7] = A
 
 /* 6280 ********************************************************
- *	TAX Transfer accumulator to index X
+ *  TAX Transfer accumulator to index X
  ***************************************************************/
 #define TAX 													\
 	X = A;														\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
- *	TAY Transfer accumulator to index Y
+ *  TAY Transfer accumulator to index Y
  ***************************************************************/
 #define TAY 													\
 	Y = A;														\
@@ -1079,14 +1079,14 @@
     tmp |= A
 
 /* 6280 ********************************************************
- *	TSX Transfer stack LSB to index X
+ *  TSX Transfer stack LSB to index X
  ***************************************************************/
 #define TSX 													\
 	X = S;														\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
- *	TST
+ *  TST
  ***************************************************************/
 #define TST														\
 	P = (P & ~(_fN|_fV|_fT|_fZ))								\
@@ -1095,21 +1095,21 @@
 		| ((tmp2&tmp)  ? 0:_fZ)
 
 /* 6280 ********************************************************
- *	TXA Transfer index X to accumulator
+ *  TXA Transfer index X to accumulator
  ***************************************************************/
 #define TXA 													\
 	A = X;														\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
- *	TXS Transfer index X to stack LSB
- *	no flags changed (sic!)
+ *  TXS Transfer index X to stack LSB
+ *  no flags changed (sic!)
  ***************************************************************/
 #define TXS 													\
 	S = X
 
 /* 6280 ********************************************************
- *	TYA Transfer index Y to accumulator
+ *  TYA Transfer index Y to accumulator
  ***************************************************************/
 #define TYA 													\
 	A = Y;														\

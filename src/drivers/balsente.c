@@ -1,119 +1,119 @@
 /***************************************************************************
 
-	Bally/Sente SAC-1 system
+    Bally/Sente SAC-1 system
 
     driver by Aaron Giles
 
-	Games supported:
-		* Chicken Shift
-		* Gimme a Break
-		* Goalie Ghost
-		* Grudge Match
-		* Hat Trick
-		* Mini Golf
-		* Name that Tune
-		* Night Stocker
-		* Off the Wall
-		* Rescue Raider
-		* Sente Diagnostic Cartridge
-		* Shrike Avenger
-		* Snacks'n Jaxson
-		* Snake Pit
-		* Spiker
-		* Stocker
-		* Stompin'
-		* Street Football
-		* Toggle
-		* Trivial Pursuit (Genus I)
-		* Trivial Pursuit (Genus II)
-		* Trivial Pursuit (All Sports Edition)
-		* Trivial Pursuit (Young Player's Edition)
-		* Trivial Pursuit (Baby Boomer Series)
+    Games supported:
+        * Chicken Shift
+        * Gimme a Break
+        * Goalie Ghost
+        * Grudge Match
+        * Hat Trick
+        * Mini Golf
+        * Name that Tune
+        * Night Stocker
+        * Off the Wall
+        * Rescue Raider
+        * Sente Diagnostic Cartridge
+        * Shrike Avenger
+        * Snacks'n Jaxson
+        * Snake Pit
+        * Spiker
+        * Stocker
+        * Stompin'
+        * Street Football
+        * Toggle
+        * Trivial Pursuit (Genus I)
+        * Trivial Pursuit (Genus II)
+        * Trivial Pursuit (All Sports Edition)
+        * Trivial Pursuit (Young Player's Edition)
+        * Trivial Pursuit (Baby Boomer Series)
 
-	Looking for ROMs for these:
-		* Euro Stocker
-		* Team Hat Trick
-		* Trivial Pursuit (Spanish)
+    Looking for ROMs for these:
+        * Euro Stocker
+        * Team Hat Trick
+        * Trivial Pursuit (Spanish)
 
-	Known bugs:
-		* CEM3394 emulation is not perfect
-		* Shrike Avenger doesn't work properly
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * CEM3394 emulation is not perfect
+        * Shrike Avenger doesn't work properly
 
 ****************************************************************************
 
-	========================================================================
-	CPU #1
-	========================================================================
-	0000-007F   R/W   xxxxxxxx    Sprite RAM (32 entries x 4 bytes)
-	            R/W   x-------       (0: Vertical flip)
-	            R/W   -x------       (0: Horizontal flip)
-	            R/W   ------xx       (0: Upper 2 bits of image number)
-	            R/W   xxxxxxxx       (1: Lower 8 bits of image number)
-	            R/W   xxxxxxxx       (2: Y position, offset by 17 pixels)
-	            R/W   xxxxxxxx       (3: X position)
-	0080-00DF   R/W   xxxxxxxx    Program RAM
-	00E0-00FF   R/W   xxxxxxxx    Additional sprite RAM (8 entries x 4 bytes)
-	0100-07FF   R/W   xxxxxxxx    Program RAM
-	0800-7FFF   R/W   xxxxxxxx    Video RAM (256x240 pixels)
-	            R/W   xxxx----       (left pixel)
-	            R/W   ----xxxx       (right pixel)
-	8000-8FFF   R/W   ----xxxx    Palette RAM (1024 entries x 4 bytes)
-	            R/W   ----xxxx       (0: red entry)
-	            R/W   ----xxxx       (1: green entry)
-	            R/W   ----xxxx       (2: blue entry)
-	9000-9007     W   --------    ADC start trigger, inputs 0-7
-	9400        R     xxxxxxxx    ADC data read
-	9800-9801     W   x-------    External output #0
-	9802-9803     W   x-------    External output #1
-	9804-9805     W   x-------    External output #2
-	9806-9807     W   x-------    External output #3
-	9808-9809     W   x-------    External output #4
-	980A-980B     W   x-------    External output #5
-	980C-980D     W   x-------    External output #6
-	980E-980F     W   x-------    NVRAM recall
-	9880          W   --------    Random number generator reset
-	98A0          W   -xxx----    A000-DFFF bank select
-	98C0          W   ------xx    Palette bank select
-	98E0          W   --------    Watchdog reset
-	9900        R     xxxxxxxx    DIP switch bank 1 (G) (active low)
-	9901        R     xxxxxxxx    DIP switch bank 2 (H) (active low)
-	9902        R     x-------    Self test (active low)
-	            R     -x------    Left coin (active low)
-	            R     --xxxxxx    External inputs (active low)
-	9903        R     x-------    VBLANK state (active high)
-	            R     -x------    Right coin (active low)
-	            R     --xxxx--    External inputs (active low)
-	            R     ------x-    Player 2 start (active low)
-	            R     -------x    Player 1 start (active low)
-	9A00        R     xxxxxxxx    Random number generator
-	9A04-9A05   R/W   xxxxxxxx    6850 UART I/O (to sound board)
-	9B00-9CFF   R/W   xxxxxxxx    NOVRAM
-	9F00          W   --x--xxx    Independent bank select (Night Stocker only?)
-	9e00-9fff   R/W               Shrike Avenger shares with 68k at 0x18000 (see Shrike notes below)
-	A000-BFFF   R     xxxxxxxx    Banked A/B ROM
-	C000-DFFF   R     xxxxxxxx    Banked C/D ROM
-	E000-FFFF   R     xxxxxxxx    Fixed program ROM
-	========================================================================
-	Interrupts:
-		NMI not connected
-		IRQ generated by 32L
-		FIRQ generated by 6850 UART
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    CPU #1
+    ========================================================================
+    0000-007F   R/W   xxxxxxxx    Sprite RAM (32 entries x 4 bytes)
+                R/W   x-------       (0: Vertical flip)
+                R/W   -x------       (0: Horizontal flip)
+                R/W   ------xx       (0: Upper 2 bits of image number)
+                R/W   xxxxxxxx       (1: Lower 8 bits of image number)
+                R/W   xxxxxxxx       (2: Y position, offset by 17 pixels)
+                R/W   xxxxxxxx       (3: X position)
+    0080-00DF   R/W   xxxxxxxx    Program RAM
+    00E0-00FF   R/W   xxxxxxxx    Additional sprite RAM (8 entries x 4 bytes)
+    0100-07FF   R/W   xxxxxxxx    Program RAM
+    0800-7FFF   R/W   xxxxxxxx    Video RAM (256x240 pixels)
+                R/W   xxxx----       (left pixel)
+                R/W   ----xxxx       (right pixel)
+    8000-8FFF   R/W   ----xxxx    Palette RAM (1024 entries x 4 bytes)
+                R/W   ----xxxx       (0: red entry)
+                R/W   ----xxxx       (1: green entry)
+                R/W   ----xxxx       (2: blue entry)
+    9000-9007     W   --------    ADC start trigger, inputs 0-7
+    9400        R     xxxxxxxx    ADC data read
+    9800-9801     W   x-------    External output #0
+    9802-9803     W   x-------    External output #1
+    9804-9805     W   x-------    External output #2
+    9806-9807     W   x-------    External output #3
+    9808-9809     W   x-------    External output #4
+    980A-980B     W   x-------    External output #5
+    980C-980D     W   x-------    External output #6
+    980E-980F     W   x-------    NVRAM recall
+    9880          W   --------    Random number generator reset
+    98A0          W   -xxx----    A000-DFFF bank select
+    98C0          W   ------xx    Palette bank select
+    98E0          W   --------    Watchdog reset
+    9900        R     xxxxxxxx    DIP switch bank 1 (G) (active low)
+    9901        R     xxxxxxxx    DIP switch bank 2 (H) (active low)
+    9902        R     x-------    Self test (active low)
+                R     -x------    Left coin (active low)
+                R     --xxxxxx    External inputs (active low)
+    9903        R     x-------    VBLANK state (active high)
+                R     -x------    Right coin (active low)
+                R     --xxxx--    External inputs (active low)
+                R     ------x-    Player 2 start (active low)
+                R     -------x    Player 1 start (active low)
+    9A00        R     xxxxxxxx    Random number generator
+    9A04-9A05   R/W   xxxxxxxx    6850 UART I/O (to sound board)
+    9B00-9CFF   R/W   xxxxxxxx    NOVRAM
+    9F00          W   --x--xxx    Independent bank select (Night Stocker only?)
+    9e00-9fff   R/W               Shrike Avenger shares with 68k at 0x18000 (see Shrike notes below)
+    A000-BFFF   R     xxxxxxxx    Banked A/B ROM
+    C000-DFFF   R     xxxxxxxx    Banked C/D ROM
+    E000-FFFF   R     xxxxxxxx    Fixed program ROM
+    ========================================================================
+    Interrupts:
+        NMI not connected
+        IRQ generated by 32L
+        FIRQ generated by 6850 UART
+    ========================================================================
 
 
-	========================================================================
-	CPU #2
-	========================================================================
-	0000-1FFF   R     xxxxxxxx    Program ROM
-	2000-3FFF   R/W   xxxxxxxx    Option RAM/ROM (assumed to be RAM for now)
-	4000-5FFF   R/W   xxxxxxxx    Program RAM
-	6000-6001     W   xxxxxxxx    6850 UART output (to main board)
-	E000-E001   R     xxxxxxxx    6850 UART input (from main board)
-	========================================================================
+    ========================================================================
+    CPU #2
+    ========================================================================
+    0000-1FFF   R     xxxxxxxx    Program ROM
+    2000-3FFF   R/W   xxxxxxxx    Option RAM/ROM (assumed to be RAM for now)
+    4000-5FFF   R/W   xxxxxxxx    Program RAM
+    6000-6001     W   xxxxxxxx    6850 UART output (to main board)
+    E000-E001   R     xxxxxxxx    6850 UART input (from main board)
+    ========================================================================
     0000-0003   R/W   xxxxxxxx    8253 counter chip I/O
     0008        R     ------xx    Counter state
                 R     ------x-    State of counter #0 OUT signal (active high)
@@ -135,82 +135,82 @@
                   W   -----x--    CEM3394 chip 3 enable
                   W   ------x-    CEM3394 chip 4 enable
                   W   -------x    CEM3394 chip 5 enable
-	========================================================================
-	Interrupts:
-		INT generated by counter #2 OUT signal on 8253
-		NMI generated by 6850 UART
-	========================================================================
+    ========================================================================
+    Interrupts:
+        INT generated by counter #2 OUT signal on 8253
+        NMI generated by 6850 UART
+    ========================================================================
 
-	========================================================================
-	Shrike SHM
-	Many thanks to Owen Rubin and Brian Deuel ( http://www.atarimuseum.com/orubin/ ) for their time,
-	interest, and memories!
+    ========================================================================
+    Shrike SHM
+    Many thanks to Owen Rubin and Brian Deuel ( http://www.atarimuseum.com/orubin/ ) for their time,
+    interest, and memories!
 
-	From Owen: The motor drive included 2 motors side by side at the rear of the cabinet with a U joint pivot
-	at the front. L & R motors were used independently for side to side "roll" motion, and together for pitch.
-	The motors were guarded by two sets of h/w limit switches - stop switch and (emergency) auto-reverse
-	switch - in tandem with soft limiting. The software calibrated the motors by running the motors slowly to
-	full limits and using the data for the soft limiting. (max chops?)
+    From Owen: The motor drive included 2 motors side by side at the rear of the cabinet with a U joint pivot
+    at the front. L & R motors were used independently for side to side "roll" motion, and together for pitch.
+    The motors were guarded by two sets of h/w limit switches - stop switch and (emergency) auto-reverse
+    switch - in tandem with soft limiting. The software calibrated the motors by running the motors slowly to
+    full limits and using the data for the soft limiting. (max chops?)
 
-	The proto was never completed, there was to be a final round against a mother ship where you would have
-	to shoot out 4 engines and a target array. (He thinks there was another bank of sprite ROMs for this that
-	may never have been included.) He also says 'There was going to be a "death blossom" shot you could
-	use once that would have been a wild ride as well, but that motion was VERY tough in the simulator, so I
-	did not complete it.'
+    The proto was never completed, there was to be a final round against a mother ship where you would have
+    to shoot out 4 engines and a target array. (He thinks there was another bank of sprite ROMs for this that
+    may never have been included.) He also says 'There was going to be a "death blossom" shot you could
+    use once that would have been a wild ride as well, but that motion was VERY tough in the simulator, so I
+    did not complete it.'
 
-	Owen's recollection of the motion diagnostics screen, the second cursor is the controllers feedback
-	and should match the yoke cursor. Two of the channels (sine/bar) are probably calculated/reported
-	motor pos. Red sine meant over/underspeed or calculated/reported discrepancy. All memories came with
-	a disclaimer ;)
+    Owen's recollection of the motion diagnostics screen, the second cursor is the controllers feedback
+    and should match the yoke cursor. Two of the channels (sine/bar) are probably calculated/reported
+    motor pos. Red sine meant over/underspeed or calculated/reported discrepancy. All memories came with
+    a disclaimer ;)
 
-	Shrike shares 9e00 - 9fff as 18000 - 181ff, 9e00-9e0f as registers, and the rest as GFX RAM.
-	10000-1001f appear to be the interface to the motors/sensors.
+    Shrike shares 9e00 - 9fff as 18000 - 181ff, 9e00-9e0f as registers, and the rest as GFX RAM.
+    10000-1001f appear to be the interface to the motors/sensors.
 
-	For more detailed (but unfinished as yet) disassembly of 68000, get me at my hotmail address, 'nuapete'
-	========================================================================
-	m6809        m68000
-	9e00 RW - RW 18000 ($0,A3) : 6809 command register, commands in range 0-19
-								cmd $0 nop
-								cmd $10 check RAM
-								cmd $11 check u22 ( 0000-3FFE )
-								cmd $12 check u24 ( 0001-3FFF )
-								cmd $13 check "u26" ( 8000-BFFE ) \ these appear to be for unused expansion slots
-								cmd $14 check "u28" ( 8001-BFFF ) /
-								cmd $15 check IRQs
-								cmd $16 check FIRQs
-								cmd $17 fetch max chops
-								cmd $18 fetch pulse width
-	9e01 W  - R  18001 ($1,A3) : &0x80 sprite bank select
-	9e02 W  - R  18002 ($2,A3) : \ joy x
-	9e03 W  - R  18003 ($3,A3) : / joy y
-	9e04 R  - W  18004 ($4,A3) : \ cursor y pos in diags screen
-	9e05 R  - W  18005 ($5,A3) : / cursor x pos in diags screen
-	9e06 R  - W  18006 ($6,A3) : 68k status
-									00 = OK
-									02 = cmd 3 or a failed
-									01 = Initial status (not OK)
-									10 = RAM bad
-									11 = ROM(s) bad
-									15 = IRQs bad
-									16 = FIRQs bad
-									F7 = 68k didn't get handshake from 6809
-									F8 = Too many spurious interrupts
-									F9 = Both limit switches at once
-									FA = 120 Hz signal slower than 80Hz
-									FB = Excess current sensor not working
-									FC = Motor range outside of expected
-									FD = Failed to detect limit switch
-									FE = No mech movement detected
-									FF = Excess current for too long
-	9e07 W  -  R 18007 ($7,A3) : \ writes random stuff from 9A00 which is the random number generator?
-	9e08 RW -  R 18008 ($8,A3) : / as 9e07
-	9e09 RW -  W 18009 ($9,A3) : \ 68k watchdog writes 0xaa
-	9e0a W  - RW 1800a ($a,A3) : / 6809 watchdog writes 0x55
-	9e0b    - RW 1800b ($b,A3) : Only writes are 0
-	9e0c R  - RW 1800c ($c,A3) : \ ypos returned from controller (affects enemy ship pos)
-	9e0d R  -  W 1800d ($d,A3) : / xpos returned from controller
-	9e0e W  -  R 1800e ($e,A3) : \
-	9e0f W  -    1800f ($f,A3) : / partial pointer into SHM gfx data
+    For more detailed (but unfinished as yet) disassembly of 68000, get me at my hotmail address, 'nuapete'
+    ========================================================================
+    m6809        m68000
+    9e00 RW - RW 18000 ($0,A3) : 6809 command register, commands in range 0-19
+                                cmd $0 nop
+                                cmd $10 check RAM
+                                cmd $11 check u22 ( 0000-3FFE )
+                                cmd $12 check u24 ( 0001-3FFF )
+                                cmd $13 check "u26" ( 8000-BFFE ) \ these appear to be for unused expansion slots
+                                cmd $14 check "u28" ( 8001-BFFF ) /
+                                cmd $15 check IRQs
+                                cmd $16 check FIRQs
+                                cmd $17 fetch max chops
+                                cmd $18 fetch pulse width
+    9e01 W  - R  18001 ($1,A3) : &0x80 sprite bank select
+    9e02 W  - R  18002 ($2,A3) : \ joy x
+    9e03 W  - R  18003 ($3,A3) : / joy y
+    9e04 R  - W  18004 ($4,A3) : \ cursor y pos in diags screen
+    9e05 R  - W  18005 ($5,A3) : / cursor x pos in diags screen
+    9e06 R  - W  18006 ($6,A3) : 68k status
+                                    00 = OK
+                                    02 = cmd 3 or a failed
+                                    01 = Initial status (not OK)
+                                    10 = RAM bad
+                                    11 = ROM(s) bad
+                                    15 = IRQs bad
+                                    16 = FIRQs bad
+                                    F7 = 68k didn't get handshake from 6809
+                                    F8 = Too many spurious interrupts
+                                    F9 = Both limit switches at once
+                                    FA = 120 Hz signal slower than 80Hz
+                                    FB = Excess current sensor not working
+                                    FC = Motor range outside of expected
+                                    FD = Failed to detect limit switch
+                                    FE = No mech movement detected
+                                    FF = Excess current for too long
+    9e07 W  -  R 18007 ($7,A3) : \ writes random stuff from 9A00 which is the random number generator?
+    9e08 RW -  R 18008 ($8,A3) : / as 9e07
+    9e09 RW -  W 18009 ($9,A3) : \ 68k watchdog writes 0xaa
+    9e0a W  - RW 1800a ($a,A3) : / 6809 watchdog writes 0x55
+    9e0b    - RW 1800b ($b,A3) : Only writes are 0
+    9e0c R  - RW 1800c ($c,A3) : \ ypos returned from controller (affects enemy ship pos)
+    9e0d R  -  W 1800d ($d,A3) : / xpos returned from controller
+    9e0e W  -  R 1800e ($e,A3) : \
+    9e0f W  -    1800f ($f,A3) : / partial pointer into SHM gfx data
 
 ***************************************************************************/
 
@@ -223,7 +223,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -253,7 +253,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -279,7 +279,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Shrike Avenger CPU memory handlers
+ *  Shrike Avenger CPU memory handlers
  *
  *************************************/
 
@@ -294,7 +294,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -1598,7 +1598,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -1613,7 +1613,7 @@ static struct cem3394_interface cem_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1692,7 +1692,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -2229,7 +2229,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -2371,7 +2371,7 @@ static DRIVER_INIT( shrike )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

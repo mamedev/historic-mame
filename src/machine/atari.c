@@ -1,9 +1,9 @@
 /******************************************************************************
-	Atari 400/800
+    Atari 400/800
 
-	Machine driver
+    Machine driver
 
-	Juergen Buchmueller, June 1998
+    Juergen Buchmueller, June 1998
 ******************************************************************************/
 
 #include <ctype.h>
@@ -593,54 +593,54 @@ static	void add_serin(UINT8 data, int with_checksum)
  * This is a description of the data flow between Atari (A) and the
  * Floppy (F) for the supported commands.
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			'1'  'S'  00   00                 get status
- * F->A 	ACK  CPL  04   FF	E0	 00   CKS
- *					   ^	^
- *					   |	|
- *					   |	bit 7 : door closed
- *					   |
- *					   bit7  : MD 128 bytes/sector, 26 sectors/track
- *					   bit5  : DD 256 bytes/sector, 18 sectors/track
- *					   else  : SD 128 bytes/sector, 18 sectors/track
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *          '1'  'S'  00   00                 get status
+ * F->A     ACK  CPL  04   FF   E0   00   CKS
+ *                     ^    ^
+ *                     |    |
+ *                     |    bit 7 : door closed
+ *                     |
+ *                     bit7  : MD 128 bytes/sector, 26 sectors/track
+ *                     bit5  : DD 256 bytes/sector, 18 sectors/track
+ *                     else  : SD 128 bytes/sector, 18 sectors/track
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			'1'  'R'  SECL SECH               read sector
- * F->A 	ACK 							  command acknowledge
- *				 ***						  now read the sector
- * F->A 			 CPL					  complete: sector read
- * F->A 				 128/256 byte CKS
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *          '1'  'R'  SECL SECH               read sector
+ * F->A     ACK                               command acknowledge
+ *               ***                          now read the sector
+ * F->A              CPL                      complete: sector read
+ * F->A                  128/256 byte CKS
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			'1'  'W'  SECL SECH               write with verify
- * F->A 	ACK 							  command acknowledge
- * A->F 		 128/256 data CKS
- * F->A 						   CPL		  complete: CKS okay
- *			execute writing the sector
- * F->A 								CPL   complete: sector written
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *          '1'  'W'  SECL SECH               write with verify
+ * F->A     ACK                               command acknowledge
+ * A->F          128/256 data CKS
+ * F->A                            CPL        complete: CKS okay
+ *          execute writing the sector
+ * F->A                                 CPL   complete: sector written
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			'1'  'P'  SECL SECH               put sector
- * F->A 	ACK 							  command acknowledge
- * A->F 		 128/256 data CKS
- * F->A 						   CPL		  complete: CKS okay
- *			execute writing the sector
- * F->A 								CPL   complete: sector written
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *          '1'  'P'  SECL SECH               put sector
+ * F->A     ACK                               command acknowledge
+ * A->F          128/256 data CKS
+ * F->A                            CPL        complete: CKS okay
+ *          execute writing the sector
+ * F->A                                 CPL   complete: sector written
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			 '1' '!'  xx   xx                 single density format
- * F->A 	ACK 							  command acknowledge
- *			execute formatting
- * F->A 			  CPL					  complete: format
- * F->A 				   128/256 byte CKS   bad sector table
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *           '1' '!'  xx   xx                 single density format
+ * F->A     ACK                               command acknowledge
+ *          execute formatting
+ * F->A               CPL                     complete: format
+ * F->A                    128/256 byte CKS   bad sector table
  *
  *
- * A->F 	DEV  CMD  AUX1 AUX2 CKS
- *			'1'  '"'  xx   xx                 double density format
- * F->A 	ACK 							  command acknowledge
- *			execute formatting
- * F->A 			  CPL					  complete: format
- * F->A 				   128/256 byte CKS   bad sector table
+ * A->F     DEV  CMD  AUX1 AUX2 CKS
+ *          '1'  '"'  xx   xx                 double density format
+ * F->A     ACK                               command acknowledge
+ *          execute formatting
+ * F->A               CPL                     complete: format
+ * F->A                    128/256 byte CKS   bad sector table
  *
  *****************************************************************************/
 
@@ -1597,7 +1597,7 @@ void a5200_handle_keypads(void)
 	}
 	else if (atari_last == 0xFE)
 		pokey1_kbcode_w(0x21, 1);
-	
+
 	/* remove key pressed status bit from skstat */
 	pokey1_kbcode_w(0xFF, 0);
 	atari_last = 0xff;
@@ -1611,7 +1611,7 @@ DRIVER_INIT( atari )
 
 	ram_size = !strcmp(Machine->gamedrv->name, "a400") || !strcmp(Machine->gamedrv->name, "a800")
 		? 0xA000 : 0x8000;
-	
+
 	/* install RAM */
 	ram_top = MIN(mess_ram_size, ram_size) - 1;
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,

@@ -1,17 +1,17 @@
 /***************************************************************************
 
-	Mermaid
-	Sanritsu
+    Mermaid
+    Sanritsu
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
-	Games supported:
-		* Mermaid
-		* Rougien
+    Games supported:
+        * Mermaid
+        * Rougien
 
-	Known issues:
-		* Hardware collision detection is not implemented.
-		* Are the stars really supposed to go up in Rougien?
+    Known issues:
+        * Hardware collision detection is not implemented.
+        * Are the stars really supposed to go up in Rougien?
 
 
 Yachtsman

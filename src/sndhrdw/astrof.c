@@ -82,7 +82,7 @@ WRITE8_HANDLER( astrof_sample1_w )
 	if ((data & 0x04) && !(last & 0x04))
 	{
 		/* I *know* that the effect select port will be written shortly
-		   after this one, so this works */
+           after this one, so this works */
 		start_explosion = 1;
 	}
 
@@ -136,8 +136,8 @@ WRITE8_HANDLER( astrof_sample2_w )
 		if (data & 0x04)
 		{
 			/* This is really a compound effect, made up of I believe 3 sound
-			   effects, but since our sample contains them all, disable playing
-			   the other effects while the explosion is playing */
+               effects, but since our sample contains them all, disable playing
+               the other effects while the explosion is playing */
 			if (!bosskill_playing)
 			{
 				sample_start(CHANNEL_EXPLOSION,SAMPLE_BOSSKILL,0);

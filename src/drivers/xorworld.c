@@ -6,25 +6,25 @@ Driver by Manuel Abadia <manu@teleline.es>
 
 Memory Map:
 -----------
-0x000000-0x01ffff	ROM
-0x200000-0x200001	Input #1
-0x400000-0x400001	Input #2
-0x600000-0x600001	DIPSW #1 + EEPROM read
-0x800000-0x800001	Philips SAA1099P write register
-0x800002-0x800003	Philips SAA1099P control register
-0xa00008-0xa0000d	EEPROM write/ctrl
-0xffc000-0xffc7ff	Screen		(8x8 tiles	32x32		(256x256))
-0xffc800-0xffc87f	Sprite RAM
-0xffc884-0xffffff	Work RAM
+0x000000-0x01ffff   ROM
+0x200000-0x200001   Input #1
+0x400000-0x400001   Input #2
+0x600000-0x600001   DIPSW #1 + EEPROM read
+0x800000-0x800001   Philips SAA1099P write register
+0x800002-0x800003   Philips SAA1099P control register
+0xa00008-0xa0000d   EEPROM write/ctrl
+0xffc000-0xffc7ff   Screen      (8x8 tiles  32x32       (256x256))
+0xffc800-0xffc87f   Sprite RAM
+0xffc884-0xffffff   Work RAM
 
 Interrupts:
-	Level 2 INT updates the timer
-	Level 6 INT drives the game
+    Level 2 INT updates the timer
+    Level 6 INT drives the game
 
 Unmapped addresses in the driver:
 
-0xffc800-0xffc801	INT 2 ACK\Watchdog timer
-0xffc802-0xffc803	INT 6 ACK/Watchdog timer
+0xffc800-0xffc801   INT 2 ACK\Watchdog timer
+0xffc802-0xffc803   INT 6 ACK/Watchdog timer
 
 EEPROM chip: 93C46
 
@@ -45,7 +45,7 @@ extern VIDEO_UPDATE( xorworld );
 
 
 /****************************************************************
-				NVRAM load/save/init
+                NVRAM load/save/init
 ****************************************************************/
 static NVRAM_HANDLER( xorworld )
 {
@@ -65,13 +65,13 @@ static NVRAM_HANDLER( xorworld )
 }
 
 /****************************************************************
-				Init machine
+                Init machine
 ****************************************************************/
 
 
 
 /****************************************************************
-				EEPROM read/write/control
+                EEPROM read/write/control
 ****************************************************************/
 
 /* the EEPROM is read thru bit 4 */
@@ -130,9 +130,9 @@ INPUT_PORTS_START( xorworld )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )	
-	//PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	// used for accessing the NVRAM
-	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )	
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	//PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )  // used for accessing the NVRAM
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
@@ -197,7 +197,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static INTERRUPT_GEN( xorworld_interrupt )
 {
 	if (cpu_getiloops() == 0)
-	{		
+	{
 		cpunum_set_input_line(0, 2, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
@@ -226,7 +226,7 @@ static MACHINE_DRIVER_START( xorworld )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 	MDRV_COLORTABLE_LENGTH(64*4)
-	
+
 	MDRV_PALETTE_INIT(xorworld)
 	MDRV_VIDEO_START(xorworld)
 	MDRV_VIDEO_UPDATE(xorworld)
@@ -248,7 +248,7 @@ ROM_START( xorworld )
 	ROM_LOAD( "d10.bin",	0x010000, 0x010000, CRC(3b1d6f24) SHA1(bedf60a4cbf20492b8a846b6a7b578f8fe8dbde9) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "b4.bin",   0x0000, 0x0100, CRC(75e468af) SHA1(b5fd1a086c27ca2e837cbbf1b7e57dfdd369b0d0) )  /* Red palette ROM (4 bits) */	
+	ROM_LOAD( "b4.bin",   0x0000, 0x0100, CRC(75e468af) SHA1(b5fd1a086c27ca2e837cbbf1b7e57dfdd369b0d0) )  /* Red palette ROM (4 bits) */
 	ROM_LOAD( "b7.bin",   0x0100, 0x0100, CRC(7e1cd146) SHA1(fd26a28f90c50ffcb0fe7718820c81eb9fe79e66) )  /* Green palette ROM (4 bits) */
 	ROM_LOAD( "b5.bin",   0x0200, 0x0100, CRC(c1b9d9f9) SHA1(c4b02bf60db449fb308a5eb3e41c43299ad8e3e3) )  /* Blue palette ROM (4 bits) */
 ROM_END
@@ -258,8 +258,8 @@ ROM_END
 
 static DRIVER_INIT( xorworld )
 {
-	/*	patch some strange protection (without this, strange characters appear
-		after level 5 and some pieces don't rotate properly some times) */
+	/*  patch some strange protection (without this, strange characters appear
+        after level 5 and some pieces don't rotate properly some times) */
 
 	UINT16 *rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x1390);
 

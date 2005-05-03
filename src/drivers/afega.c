@@ -1,25 +1,25 @@
 /***************************************************************************
 
-							  -= Afega Games =-
+                              -= Afega Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Main  CPU	:	M68000
-Video Chips	:	AFEGA AFI-GFSK  (68 Pin PLCC)
-				AFEGA AFI-GFLK (208 Pin PQFP)
+Main  CPU   :   M68000
+Video Chips :   AFEGA AFI-GFSK  (68 Pin PLCC)
+                AFEGA AFI-GFLK (208 Pin PQFP)
 
-Sound CPU	:	Z80
-Sound Chips	:	M6295 (AD-65)  +  YM2151 (BS901)  +  YM3014 (BS90?)
+Sound CPU   :   Z80
+Sound Chips :   M6295 (AD-65)  +  YM2151 (BS901)  +  YM3014 (BS90?)
 
 ---------------------------------------------------------------------------
-Year + Game						Notes
+Year + Game                     Notes
 ---------------------------------------------------------------------------
 97 Red Hawk                     US Version of Stagger 1
-98 Sen Jin - Guardian Storm		Some text missing (protection, see service mode)
+98 Sen Jin - Guardian Storm     Some text missing (protection, see service mode)
 98 Stagger I
 98 Bubble 2000                  By Tuning, but it seems to be the same HW
-01 Fire Hawk					By ESD with different sound hardware: 2 M6295
+01 Fire Hawk                    By ESD with different sound hardware: 2 M6295
 ---------------------------------------------------------------------------
 
 The Sen Jin protection supplies some 68k code seen in the 2760-29cf range
@@ -54,7 +54,7 @@ VIDEO_UPDATE( firehawk );
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
@@ -121,7 +121,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 
 ***************************************************************************/
@@ -147,13 +147,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Stagger I
+                                Stagger I
 ***************************************************************************/
 
 INPUT_PORTS_START( stagger1 )
@@ -316,7 +316,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Sen Jin - Guardian Storm
+                            Sen Jin - Guardian Storm
 ***************************************************************************/
 
 INPUT_PORTS_START( grdnstrm )
@@ -397,7 +397,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Bubble 2000
+                                Bubble 2000
 ***************************************************************************/
 
 INPUT_PORTS_START( bubl2000 )
@@ -467,7 +467,7 @@ INPUT_PORTS_START( bubl2000 )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x1400, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(      0x0000, "Disabled" )
+//  PORT_DIPSETTING(      0x0000, "Disabled" )
 	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( 3C_1C ) )
@@ -476,12 +476,12 @@ INPUT_PORTS_START( bubl2000 )
 	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(      0x0000, "Disabled" )
+//  PORT_DIPSETTING(      0x0000, "Disabled" )
 INPUT_PORTS_END
 
 
 /***************************************************************************
-								Fire Hawk
+                                Fire Hawk
 ***************************************************************************/
 
 INPUT_PORTS_START( firehawk )
@@ -521,9 +521,9 @@ INPUT_PORTS_START( firehawk )
 	PORT_DIPNAME( 0x000e, 0x000e, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( Very_Easy) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
-//	PORT_DIPSETTING(      0x000a, DEF_STR( Easy ) )
+//  PORT_DIPSETTING(      0x000a, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x000e, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Hardest ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( Very_Hard ) )
@@ -567,7 +567,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -645,7 +645,7 @@ static struct GfxDecodeInfo redhawkb_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -778,7 +778,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -807,7 +807,7 @@ static void decryptcode( int a23, int a22, int a21, int a20, int a19, int a18, i
 
 /***************************************************************************
 
-									Stagger I
+                                    Stagger I
 (AFEGA 1998)
 
 Parts:
@@ -843,7 +843,7 @@ ROM_END
 
 /***************************************************************************
 
-							Red Hawk (c)1997 Afega
+                            Red Hawk (c)1997 Afega
 
 
 
@@ -915,7 +915,7 @@ ROM_END
 
 /***************************************************************************
 
-							Sen Jin - Guardian Storm
+                            Sen Jin - Guardian Storm
 
 (C) Afega 1998
 
@@ -973,7 +973,7 @@ static DRIVER_INIT( grdnstrm )
 
 /***************************************************************************
 
-							Bubble 2000 (c)1998 Tuning
+                            Bubble 2000 (c)1998 Tuning
 
 Bubble 2000
 Tuning, 1998
@@ -1210,7 +1210,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

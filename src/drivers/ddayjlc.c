@@ -1,9 +1,9 @@
 /*
 
-	D-DAY	(c)Jaleco 1984
-	preliminary driver by Pierpaolo Prazzoli
+    D-DAY   (c)Jaleco 1984
+    preliminary driver by Pierpaolo Prazzoli
 ----------------------------------------------
-	Tomasz Slanina 2004.11.12. :
+    Tomasz Slanina 2004.11.12. :
 
   - correct sprite decoding
   - DMA  - see below
@@ -19,34 +19,34 @@ Is it 1984 or 1987 game ?
 There's text inside rom "1987.07    BY  ELS"
 -------------------------------------------------------------
 
-	DMA copy ?
+    DMA copy ?
 
-	Writes to adr. in range $e000-$e008 are usually like this:
+    Writes to adr. in range $e000-$e008 are usually like this:
 
-	ld hl,$e000
-	ld bc,XXxx
-	ld de,YYyy
-	ld (hl),c		;($e000),xx
-	ld (hl),b		;($e000),XX
-	inc hl
-	ld (hl),e		;($e001),yy
-	ld (hl),d		;($e001),YY
-	inc hl
-	ld bc,ZZzz
-	ld de,QQqq
-	ld (hl),c		;($e002),zz
-	ld (hl),b		;($e002),ZZ
-	inc hl
-	ld (hl),e		;($e003),qq
-	ld (hl),d		;($e003),QQ
-	ld a,WW
-	ld ($e008),a
-	ld a,1
-	ld ($f803),a
-	xor a
-	ld ($f083),a	; write latch
-	ld a,1
-	ld ($f083),a
+    ld hl,$e000
+    ld bc,XXxx
+    ld de,YYyy
+    ld (hl),c       ;($e000),xx
+    ld (hl),b       ;($e000),XX
+    inc hl
+    ld (hl),e       ;($e001),yy
+    ld (hl),d       ;($e001),YY
+    inc hl
+    ld bc,ZZzz
+    ld de,QQqq
+    ld (hl),c       ;($e002),zz
+    ld (hl),b       ;($e002),ZZ
+    inc hl
+    ld (hl),e       ;($e003),qq
+    ld (hl),d       ;($e003),QQ
+    ld a,WW
+    ld ($e008),a
+    ld a,1
+    ld ($f803),a
+    xor a
+    ld ($f083),a    ; write latch
+    ld a,1
+    ld ($f083),a
 
 where (my guess):
 
@@ -58,60 +58,60 @@ WW = $73 (always)
 
 It's used in (at least) three places :
 
-- $16e6	RAM -> spriteram
-	src = $8d6f
-	dst = $9000
-	size = $200
+- $16e6 RAM -> spriteram
+    src = $8d6f
+    dst = $9000
+    size = $200
 
-- $1cb1	RAM -> RAM
+- $1cb1 RAM -> RAM
 
-	src = $8432
-	dst = $807a
-	size = $364
+    src = $8432
+    dst = $807a
+    size = $364
 
-- $1cf4 	RAM -> RAM
+- $1cf4     RAM -> RAM
 
-	src = $805e
-	dst = $8432
-	size = $380
+    src = $805e
+    dst = $8432
+    size = $380
 
 ----------------------------------------------
 
 
-	CPU  : Z80
-	Sound: Z80 AY-3-8910(x2)
-	OSC  : 12.000MHz
+    CPU  : Z80
+    Sound: Z80 AY-3-8910(x2)
+    OSC  : 12.000MHz
 
-	-------
-	DD-8416
-	-------
-	ROMs:
-	1  - (2764)
-	2  |
-	3  |
-	4  |
-	5  |
-	6  |
-	7  |
-	8  |
-	9  |
-	10 |
-	11 /
+    -------
+    DD-8416
+    -------
+    ROMs:
+    1  - (2764)
+    2  |
+    3  |
+    4  |
+    5  |
+    6  |
+    7  |
+    8  |
+    9  |
+    10 |
+    11 /
 
-	-------
-	DD-8417
-	-------
-	ROMs:
-	12 - (2732)
-	13 /
+    -------
+    DD-8417
+    -------
+    ROMs:
+    12 - (2732)
+    13 /
 
-	14 - (2732)
-	15 /
+    14 - (2732)
+    15 /
 
-	16 - (2764)
-	17 |
-	18 |
-	19 /
+    16 - (2764)
+    17 |
+    18 |
+    19 /
 
 
 */

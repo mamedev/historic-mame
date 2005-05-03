@@ -137,7 +137,7 @@ static ADDRESS_MAP_START( hyperspt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1600, 0x1600) AM_READ(input_port_4_r) /* DIP 2 */
 	AM_RANGE(0x1680, 0x1680) AM_READ(input_port_0_r) /* IO Coin */
-//	AM_RANGE(0x1681, 0x1681) AM_READ(input_port_1_r) /* P1 IO */
+//  AM_RANGE(0x1681, 0x1681) AM_READ(input_port_1_r) /* P1 IO */
 	AM_RANGE(0x1681, 0x1681) AM_READ(konami_IN1_r) /* P1 IO and handle fake button for cheating */
 	AM_RANGE(0x1682, 0x1682) AM_READ(input_port_2_r) /* P2 IO */
 	AM_RANGE(0x1683, 0x1683) AM_READ(input_port_3_r) /* DIP 1 */
@@ -210,7 +210,7 @@ INPUT_PORTS_START( hyperspt )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via konami_IN1_r */
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell (Cheat)") PORT_PLAYER(1)
 
@@ -219,7 +219,7 @@ INPUT_PORTS_START( hyperspt )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(3) //PORT_COCKTAIL  before the system changed.
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(3) //PORT_COCKTAIL  Why?
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3  ) PORT_PLAYER(4) //PORT_COCKTAIL 
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3  ) PORT_PLAYER(4) //PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(4) //PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(4) //PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -458,7 +458,7 @@ static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
 struct VLM5030interface hyperspt_vlm5030_interface =
 {
 	REGION_SOUND1,	/* memory region  */
-	0		   /* memory size	 */
+	0		   /* memory size    */
 };
 
 
@@ -553,7 +553,7 @@ ROM_START( hyperspt )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, CRC(2c891d59) SHA1(79050fbe058c24349927edc7937ec68a77f450f1) )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, CRC(811a3f3f) SHA1(474f03345847cd9791ff6b7161286bbfef3f990a) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/*	64k for speech rom	  */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, CRC(e8f8ea78) SHA1(8d37818e5a2740c96696f37996f2a3f870386690) )
 ROM_END
 
@@ -591,7 +591,7 @@ ROM_START( hpolym84 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, CRC(2c891d59) SHA1(79050fbe058c24349927edc7937ec68a77f450f1) )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, CRC(811a3f3f) SHA1(474f03345847cd9791ff6b7161286bbfef3f990a) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/*	64k for speech rom	  */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, CRC(e8f8ea78) SHA1(8d37818e5a2740c96696f37996f2a3f870386690) )
 ROM_END
 

@@ -1,17 +1,17 @@
 /***************************************************************************
 
-	  Poly-Play
-	  (c) 1985 by VEB Polytechnik Karl-Marx-Stadt
+      Poly-Play
+      (c) 1985 by VEB Polytechnik Karl-Marx-Stadt
 
-	  driver by Martin Buchholz (buchholz@mail.uni-greifswald.de)
+      driver by Martin Buchholz (buchholz@mail.uni-greifswald.de)
 
-	  Very special thanks to the following people, each one of them spent
-	  some of their spare time to make this driver working:
-	  - Juergen Oppermann and Volker Hann for electronical assistance,
-	    repair work and ROM dumping.
-	  - Jan-Ole Christian from the Videogamemuseum in Berlin, which houses
-	    one of the last existing Poly-Play arcade automatons. He also
-	    provided me with schematics and service manuals.
+      Very special thanks to the following people, each one of them spent
+      some of their spare time to make this driver working:
+      - Juergen Oppermann and Volker Hann for electronical assistance,
+        repair work and ROM dumping.
+      - Jan-Ole Christian from the Videogamemuseum in Berlin, which houses
+        one of the last existing Poly-Play arcade automatons. He also
+        provided me with schematics and service manuals.
 
 
 memory map:
@@ -61,7 +61,7 @@ read:
 87        PIO Control register
 
 write:
-80	      Sound Channel 1
+80        Sound Channel 1
 81        Sound Channel 2
 82        generates 40 Hz timer for timeout in game title screens
 83        generates main 75 Hz timer interrupt
@@ -332,7 +332,7 @@ static MACHINE_DRIVER_START( polyplay )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

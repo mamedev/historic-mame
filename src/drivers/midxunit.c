@@ -1,15 +1,15 @@
 /*************************************************************************
 
-	Midway X-unit system
+    Midway X-unit system
 
-	driver by Aaron Giles
-	based on older drivers by Ernesto Corvi, Alex Pasadyn, Zsolt Vasvari
+    driver by Aaron Giles
+    based on older drivers by Ernesto Corvi, Alex Pasadyn, Zsolt Vasvari
 
-	Games supported:
-		* Revolution X
+    Games supported:
+        * Revolution X
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 **************************************************************************/
 
@@ -23,7 +23,7 @@
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -50,7 +50,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -113,7 +113,7 @@ INPUT_PORTS_START( revx )
 	PORT_DIPSETTING(      0x0300, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x0400, 0x0400, "Bill Validator" )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
@@ -162,7 +162,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -180,15 +180,15 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
 /*
-	visible areas and VBLANK timing based on these video params:
+    visible areas and VBLANK timing based on these video params:
 
-	          VERTICAL                   HORIZONTAL
-	revx:     0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+              VERTICAL                   HORIZONTAL
+    revx:     0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
 */
 
 static MACHINE_DRIVER_START( midxunit )
@@ -220,7 +220,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -287,7 +287,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

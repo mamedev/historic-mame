@@ -1,6 +1,6 @@
 /*** t11: Portable DEC T-11 emulator ******************************************
 
-	Copyright (C) Aaron Giles 1998
+    Copyright (C) Aaron Giles 1998
 
     Actual opcode implementation.  Excuse the excessive use of macros, it
     was the only way I could bear to type all this in!

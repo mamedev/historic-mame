@@ -61,16 +61,16 @@ VIDEO_START( pang )
 	tilemap_set_transparent_pen(bg_tilemap,15);
 
 	/*
-		OBJ RAM
-	*/
+        OBJ RAM
+    */
 	pang_objram=auto_malloc(pang_videoram_size);
 	if (!pang_objram)
 		return 1;
 	memset(pang_objram, 0, pang_videoram_size);
 
 	/*
-		Palette RAM
-	*/
+        Palette RAM
+    */
 	paletteram = auto_malloc(2*Machine->drv->total_colors);
 	if (!paletteram)
 		return 1;
@@ -165,7 +165,7 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);
-//	usrintf_showmessage(baf);
+//  usrintf_showmessage(baf);
 }
 
 	/* bit 0 is unknown (used, maybe back color enable?) */

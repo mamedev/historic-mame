@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
- *	 i8051dasm.c
- *	 Portable MCS-51 Family Emulator
+ *   i8051dasm.c
+ *   Portable MCS-51 Family Emulator
  *
  *   Chips in the family:
  *   8051 Product Line (8031,8051,8751)
@@ -9,22 +9,22 @@
  *   8054 Product Line (8054)
  *   8058 Product Line (8058)
  *
- *	 Copyright (c) 2003 Steve Ellenoff, all rights reserved.
+ *   Copyright (c) 2003 Steve Ellenoff, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   sellenoff@hotmail.com
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     sellenoff@hotmail.com
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	This work is based on:
- *	#1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
+ *  This work is based on:
+ *  #1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
  *  #2) 8051 simulator by Travis Marlatte
  *  #3) Portable UPI-41/8041/8741/8042/8742 emulator V0.1 by Juergen Buchmueller (MAME CORE)
  *
@@ -173,12 +173,12 @@ const char *get_data_address( UINT8 arg )
 	static char buffer[8][63+1];
 	static int which = 0;
 	which = (which+1) % 8;
-	if(arg < 0x80) 
+	if(arg < 0x80)
 	{
 		//Ram locations 0-0x1F are considered register access in 3 banks
 		if(arg < 0x1f)
 			sprintf(buffer[which],"%s",regbank[arg]);
-		else 
+		else
 		{
 		sym = set_ea_info(EA_SRC, arg, EA_UINT8, EA_VALUE);
 		sprintf(buffer[which],"%s",sym);
@@ -195,12 +195,12 @@ const char *get_bit_address( UINT8 arg )
 	static char buffer[8][63+1];
 	static int which = 0;
 	which = (which+1) % 8;
-	if(arg < 0x80) 
+	if(arg < 0x80)
 	{
 		//Bit address 0-7F can be referred to as 20.0, 20.1, to 20.7 for address 0, and 2f.0,2f.1 to 2f.7 for address 7f
 		if(arg < 0x7f)
 			sprintf(buffer[which],"%s",membits[arg]);
-		else 
+		else
 		{
 		sym = set_ea_info(EA_SRC, arg, EA_UINT8, EA_VALUE);
 		sprintf(buffer[which],"%s",sym);
@@ -251,14 +251,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 	op = cpu_readop(PC++);
 	switch( op )
 	{
-		
+
 		//NOP
 		case 0x00:				/* 1: 0000 0000 */
 			sprintf(dst, "nop");
 			break;
 
-		
-		//AJMP code addr		/* 1: aaa0 0001 */
+
+		//AJMP code addr        /* 1: aaa0 0001 */
 		case 0x01:
 		case 0x21:
 		case 0x41:
@@ -272,7 +272,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "ajmp  %s", sym);
 			break;
 
-		
+
 		//LJMP code addr
 		case 0x02:				/* 1: 0000 0010 */
 			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
@@ -281,34 +281,34 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "ljmp  %s", sym);
 			break;
 
-		
+
 		//RR A
 		case 0x03:				/* 1: 0000 0011 */
 			sprintf(dst, "rr    a");
 			break;
 
-		
+
 		//INC A
 		case 0x04:				/* 1: 0000 0100 */
 			sprintf(dst, "inc   a");
 			break;
 
-		
+
 		//INC data addr
 		case 0x05:				/* 1: 0000 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "inc   %s", sym);
 			break;
 
-		
-		//INC @R0/@R1			/* 1: 0000 011i */
+
+		//INC @R0/@R1           /* 1: 0000 011i */
 		case 0x06:
 		case 0x07:
 			sprintf(dst, "inc   @r%d", op&1);
 			break;
 
-		
-		//INC R0 to R7			/* 1: 0000 1rrr */
+
+		//INC R0 to R7          /* 1: 0000 1rrr */
 		case 0x08:
 		case 0x09:
 		case 0x0a:
@@ -320,7 +320,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "inc   r%d", op&7);
 			break;
 
-		
+
 		//JBC bit addr, code addr
 		case 0x10:				/* 1: 0001 0000 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
@@ -329,8 +329,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "jbc   %s,%s", sym, sym2);
 			break;
 
-		
-		//ACALL code addr		/* 1: aaa1 0001 */
+
+		//ACALL code addr       /* 1: aaa1 0001 */
 		case 0x11:
 		case 0x31:
 		case 0x51:
@@ -344,7 +344,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "acall %s", sym);
 			break;
 
-		
+
 		//LCALL code addr
 		case 0x12:				/* 1: 0001 0010 */
 			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
@@ -353,19 +353,19 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "lcall %s", sym);
 			break;
 
-		
+
 		//RRC A
 		case 0x13:				/* 1: 0001 0011 */
 			sprintf(dst, "rrc   a");
 			break;
 
-		
+
 		//DEC A
 		case 0x14:				/* 1: 0001 0100 */
 			sprintf(dst, "dec   a");
 			break;
 
-		
+
 		//DEC data addr
 		case 0x15:				/* 1: 0001 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -373,15 +373,15 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//DEC @R0/@R1			/* 1: 0001 011i */
-		case 0x16: 
+		//DEC @R0/@R1           /* 1: 0001 011i */
+		case 0x16:
 		case 0x17:
 			sprintf(dst, "dec   @r%d", op&1);
 			break;
 
-		
-		//DEC R0 to R7			/* 1: 0001 1rrr */
-		case 0x18: 
+
+		//DEC R0 to R7          /* 1: 0001 1rrr */
+		case 0x18:
 		case 0x19:
 		case 0x1a:
 		case 0x1b:
@@ -394,25 +394,25 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JB  bit addr, code addr
 		case 0x20:				/* 1: 0010 0000 */
-			sym = get_bit_address(cpu_readop_arg(PC++));		
+			sym = get_bit_address(cpu_readop_arg(PC++));
 			rel  = cpu_readop_arg(PC++);
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jb    %s,%s", sym, sym2);
 			break;
 
-		
+
 		//RET
 		case 0x22:				/* 1: 0010 0010 */
 			sprintf(dst, "ret");
 			break;
 
-		
+
 		//RL A
 		case 0x23:				/* 1: 0010 0011 */
 			sprintf(dst, "rl    a");
 			break;
 
-		
+
 		//ADD A, #data
 		case 0x24:				/* 1: 0010 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
@@ -426,15 +426,15 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to Test
-		//ADD A, @R0/@R1		/* 1: 0010 011i */
-		case 0x26: 
+		//ADD A, @R0/@R1        /* 1: 0010 011i */
+		case 0x26:
 		case 0x27:
 			sprintf(dst, "add   a,@r%d", op&1);
 			break;
 
-		
-		//ADD A, R0 to R7		/* 1: 0010 1rrr */
-		case 0x28: 
+
+		//ADD A, R0 to R7       /* 1: 0010 1rrr */
+		case 0x28:
 		case 0x29:
 		case 0x2a:
 		case 0x2b:
@@ -452,40 +452,40 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jnb   %s,%s", sym, sym2);
 			break;
-		
+
 		//RETI
 		case 0x32:				/* 1: 0011 0010 */
 			sprintf(dst, "reti");
 			break;
 
-		
+
 		//RLC A
 		case 0x33:				/* 1: 0011 0011 */
 			sprintf(dst, "rlc   a");
 			break;
-		
-		
+
+
 		//ADDC A, #data
 		case 0x34:				/* 1: 0011 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
 			sprintf(dst, "addc  a,#%s", sym);
 			break;
-		
+
 		//ADDC A, data addr
 		case 0x35:				/* 1: 0011 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "addc  a,%s", sym);
 			break;
-		
-		
-		//ADDC A, @R0/@R1		/* 1: 0011 011i */
+
+
+		//ADDC A, @R0/@R1       /* 1: 0011 011i */
 		case 0x36:
-		case 0x37: 
+		case 0x37:
 			sprintf(dst, "addc  a,@r%d", op&1);
 			break;
 
-		
-		//ADDC A, R0 to R7		/* 1: 0011 1rrr */
+
+		//ADDC A, R0 to R7      /* 1: 0011 1rrr */
 		case 0x38:
 		case 0x39:
 		case 0x3a:
@@ -497,7 +497,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "addc  a,r%d", op&7);
 			break;
 
-		
+
 		//JC code addr
 		case 0x40:				/* 1: 0100 0000 */
 			rel = cpu_readop_arg(PC++);
@@ -525,34 +525,34 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "orl   a,#%s", sym);
 			break;
 
-		
+
 		//ORL A, data addr
 		case 0x45:				/* 1: 0100 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "orl   a,%s", sym);
 			break;
 
-		
-		//ORL A, @RO/@R1		/* 1: 0100 011i */
+
+		//ORL A, @RO/@R1        /* 1: 0100 011i */
 		case 0x46:
 		case 0x47:
 			sprintf(dst, "orl   a,@r%d", op&1);
 			break;
 
-		
-		//ORL A, RO to R7		/* 1: 0100 1rrr */
-		case 0x48: 
-		case 0x49: 
-		case 0x4a: 
-		case 0x4b: 
-		case 0x4c: 
-		case 0x4d: 
-		case 0x4e: 
-		case 0x4f: 
+
+		//ORL A, RO to R7       /* 1: 0100 1rrr */
+		case 0x48:
+		case 0x49:
+		case 0x4a:
+		case 0x4b:
+		case 0x4c:
+		case 0x4d:
+		case 0x4e:
+		case 0x4f:
 			sprintf(dst, "orl   a,r%d", op&7);
 			break;
 
-		
+
 		//JNC code addr
 		case 0x50:				/* 1: 0101 0000 */
 			rel = cpu_readop_arg(PC++);
@@ -575,14 +575,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "anl   %s,#%s", sym,sym2);
 			break;
 
-		
+
 		//ANL A, #data
 		case 0x54:				/* 1: 0101 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
 			sprintf(dst, "anl   a,#%s", sym);
 			break;
 
-		
+
 		//ANL A, data addr
 		case 0x55:				/* 1: 0101 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -590,14 +590,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//ANL A, @RO/@R1		/* 1: 0101 011i */
-		case 0x56: 
+		//ANL A, @RO/@R1        /* 1: 0101 011i */
+		case 0x56:
 		case 0x57:
 			sprintf(dst, "anl   a,@r%d", op&1);
 			break;
 
-		
-		//ANL A, RO to R7		/* 1: 0101 1rrr */
+
+		//ANL A, RO to R7       /* 1: 0101 1rrr */
 		case 0x58:
 		case 0x59:
 		case 0x5a:
@@ -609,7 +609,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "anl   a,r%d", op&7);
 			break;
 
-		
+
 		//JZ code addr
 		case 0x60:				/* 1: 0110 0000 */
 			rel = cpu_readop_arg(PC++);
@@ -624,7 +624,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "xrl   %s,a", sym);
 			break;
 
-		
+
 		//XRL data addr, #data
 		case 0x63:				/* 1: 0110 0011 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -632,7 +632,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "xrl   %s,#%s", sym, sym2);
 			break;
 
-		
+
 		//XRL A, #data
 		case 0x64:				/* 1: 0110 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
@@ -646,14 +646,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//XRL A, @R0/@R1		/* 1: 0110 011i */
+		//XRL A, @R0/@R1        /* 1: 0110 011i */
 		case 0x66:
 		case 0x67:
 			sprintf(dst, "xrl   a,@r%d", op&1);
 			break;
 
-		
-		//XRL A, R0 to R7		/* 1: 0110 1rrr */
+
+		//XRL A, R0 to R7       /* 1: 0110 1rrr */
 		case 0x68:
 		case 0x69:
 		case 0x6a:
@@ -665,7 +665,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "xrl   a,r%d", op&7);
 			break;
 
-		
+
 		//JNZ code addr
 		case 0x70:				/* 1: 0111 0000 */
 			rel = cpu_readop_arg(PC++);
@@ -677,7 +677,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//ORL C, bit addr
 		case 0x72:				/* 1: 0111 0010 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "orl   c,%s", sym);		
+			sprintf(dst, "orl   c,%s", sym);
 			break;
 
 		//Unable to test
@@ -686,14 +686,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "jmp   @a+dptr");
 			break;
 
-		
+
 		//MOV A, #data
 		case 0x74:				/* 1: 0111 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   a,#%s", sym);
 			break;
 
-		
+
 		//MOV data addr, #data
 		case 0x75:				/* 1: 0111 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -702,15 +702,15 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//MOV @R0/@R1, #data	/* 1: 0111 011i */
+		//MOV @R0/@R1, #data    /* 1: 0111 011i */
 		case 0x76:
 		case 0x77:
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   @r%d,#%s", op&1, sym);
 			break;
 
-		
-		//MOV R0 to R7, #data	/* 1: 0111 1rrr */
+
+		//MOV R0 to R7, #data   /* 1: 0111 1rrr */
 		case 0x78:
 		case 0x79:
 		case 0x7a:
@@ -723,7 +723,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "mov   r%d,#%s", (op & 7), sym);
 			break;
 
-		
+
 		//SJMP code addr
 		case 0x80:				/* 1: 1000 0000 */
 			rel = cpu_readop_arg(PC++);
@@ -734,20 +734,20 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//ANL C, bit addr
 		case 0x82:				/* 1: 1000 0010 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "anl   c,%s", sym);		
+			sprintf(dst, "anl   c,%s", sym);
 			break;
 
 		//MOVC A, @A + PC
 		case 0x83:				/* 1: 1000 0011 */
-			sprintf(dst, "movc  a,@a+pc");		
+			sprintf(dst, "movc  a,@a+pc");
 			break;
-		
+
 		//DIV AB
 		case 0x84:				/* 1: 1000 0100 */
 			sprintf(dst, "div   ab");
 			break;
 
-		//MOV data addr, data addr	(Note: 1st address is src, 2nd is dst, but the mov command works as mov dst,src)
+		//MOV data addr, data addr  (Note: 1st address is src, 2nd is dst, but the mov command works as mov dst,src)
 		case 0x85:				/* 1: 1000 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sym2 = get_data_address(cpu_readop_arg(PC++));
@@ -762,7 +762,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "mov   %s,@r%d", sym, op&1);
 			break;
 
-		
+
 		//MOV data addr,R0 to R7/* 1: 1000 1rrr */
 		case 0x88:
 		case 0x89:
@@ -776,35 +776,35 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "mov   %s,r%d", sym, op&7);
 			break;
 
-		
+
 		//MOV DPTR, #data16
 		case 0x90:				/* 1: 1001 0000 */
 			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
 			addr|= cpu_readop_arg(PC++);
-			sym = set_ea_info(EA_SRC, addr , EA_UINT16, EA_VALUE);		
+			sym = set_ea_info(EA_SRC, addr , EA_UINT16, EA_VALUE);
 			sprintf(dst, "mov   dptr,#%s", sym);
 			break;
 
 		//MOV bit addr, C
 		case 0x92:				/* 1: 1001 0010 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "mov   %s,c", sym);		
+			sprintf(dst, "mov   %s,c", sym);
 			break;
 
-		
+
 		//MOVC A, @A + DPTR
 		case 0x93:				/* 1: 1001 0011 */
 			sprintf(dst, "movc  a,@a+dptr");
 			break;
 
-		
+
 		//SUBB A, #data
 		case 0x94:				/* 1: 1001 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
 			sprintf(dst, "subb  a,#%s", sym);
 			break;
 
-		
+
 		//SUBB A, data addr
 		case 0x95:				/* 1: 1001 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -812,14 +812,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//SUBB A, @R0/@R1		/* 1: 1001 011i */
+		//SUBB A, @R0/@R1       /* 1: 1001 011i */
 		case 0x96:
 		case 0x97:
 			sprintf(dst, "subb  a,@r%d", op&1);
 			break;
 
-		
-		//SUBB A, R0 to R7		/* 1: 1001 1rrr */
+
+		//SUBB A, R0 to R7      /* 1: 1001 1rrr */
 		case 0x98:
 		case 0x99:
 		case 0x9a:
@@ -835,23 +835,23 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//ORL C, /bit addr
 		case 0xa0:				  /* 1: 1010 0000 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "orl   c,/%s", sym);		
+			sprintf(dst, "orl   c,/%s", sym);
 			break;
 
-		
+
 		//MOV C, bit addr
 		case 0xa2:				  /* 1: 1010 0010 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "mov   c,%s", sym);		
+			sprintf(dst, "mov   c,%s", sym);
 			break;
 
-		
+
 		//INC DPTR
 		case 0xa3:				  /* 1: 1010 0011 */
 			sprintf(dst, "inc   dptr");
 			break;
 
-		
+
 		//MUL AB
 		case 0xa4:				  /* 1: 1010 0100 */
 			sprintf(dst, "mul   ab");
@@ -886,13 +886,13 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//ANL C,/bit addr
 		case 0xb0:						 /* 1: 1011 0000 */
 			sym = get_bit_address(cpu_readop_arg(PC++));
-			sprintf(dst, "anl   c,/%s", sym);		
+			sprintf(dst, "anl   c,/%s", sym);
 			break;
 
 		//CPL bit addr
 		case 0xb2:						 /* 1: 1011 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));		
-			sprintf(dst, "cpl   %s", sym);		
+			sym = get_bit_address(cpu_readop_arg(PC++));
+			sprintf(dst, "cpl   %s", sym);
 			break;
 
 		//Unable to test
@@ -901,7 +901,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "cpl   c");
 			break;
 
-		
+
 		//CJNE A, #data, code addr
 		case 0xb4:						 /* 1: 1011 0100 */
 			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
@@ -928,7 +928,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "cjne  @r%d,#%s,%s", op&1,sym, sym2);
 			break;
 
-		
+
 		//CJNE R0 to R7, #data, code addr/* 1: 1011 1rrr */
 		case 0xb8:
 		case 0xb9:
@@ -944,48 +944,48 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "cjne  r%d,#%s,%s", op&7,sym, sym2);
 			break;
 
-		
+
 		//PUSH data addr
 		case 0xc0:						/* 1: 1100 0000 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "push  %s", sym);
 			break;
 
-		
+
 		//CLR bit addr
 		case 0xc2:						/* 1: 1100 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));		
-			sprintf(dst, "clr   %s", sym);		
+			sym = get_bit_address(cpu_readop_arg(PC++));
+			sprintf(dst, "clr   %s", sym);
 			break;
 
-		
+
 		//CLR C
 		case 0xc3:						/* 1: 1100 0011 */
 			sprintf(dst, "clr   c");
 			break;
 
-		
+
 		//SWAP A
 		case 0xc4:						/* 1: 1100 0100 */
 			sprintf(dst, "swap  a");
 			break;
 
-		
+
 		//XCH A, data addr
 		case 0xc5:						/* 1: 1100 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "xch   a,%s",sym);
 			break;
 
-		
-		//XCH A, @RO/@R1				/* 1: 1100 011i */
+
+		//XCH A, @RO/@R1                /* 1: 1100 011i */
 		case 0xc6:
 		case 0xc7:
 			sprintf(dst, "xch   a,@r%d", op&1);
 			break;
 
-		
-		//XCH A, RO to R7				/* 1: 1100 1rrr */
+
+		//XCH A, RO to R7               /* 1: 1100 1rrr */
 		case 0xc8:
 		case 0xc9:
 		case 0xca:
@@ -997,21 +997,21 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "xch   a,r%d", op&7);
 			break;
 
-		
+
 		//POP data addr
 		case 0xd0:						/* 1: 1101 0000 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "pop   %s", sym);
 			break;
 
-		
+
 		//SETB bit addr
 		case 0xd2:						/* 1: 1101 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));		
-			sprintf(dst, "setb  %s", sym);		
+			sym = get_bit_address(cpu_readop_arg(PC++));
+			sprintf(dst, "setb  %s", sym);
 			break;
 
-		
+
 		//SETB C
 		case 0xd3:						/* 1: 1101 0011 */
 			sprintf(dst, "setb  c");
@@ -1023,7 +1023,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "da   a");
 			break;
 
-		
+
 		//DJNZ data addr, code addr
 		case 0xd5:						/* 1: 1101 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -1032,15 +1032,15 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "djnz  %s,%s", sym, sym2);
 			break;
 
-		
-		//XCHD A, @R0/@R1				/* 1: 1101 011i */
+
+		//XCHD A, @R0/@R1               /* 1: 1101 011i */
 		case 0xd6:
 		case 0xd7:
 			sprintf(dst, "xchd  a,@r%d", op&1);
 			break;
 
-		
-		//DJNZ R0 to R7,code addr		/* 1: 1101 1rrr */
+
+		//DJNZ R0 to R7,code addr       /* 1: 1101 1rrr */
 		case 0xd8:
 		case 0xd9:
 		case 0xda:
@@ -1054,26 +1054,26 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "djnz  r%d,%s",op&7,sym);
 			break;
 
-		
+
 		//MOVX A,@DPTR
 		case 0xe0:						/* 1: 1110 0000 */
 			sprintf(dst, "movx  a,@dptr");
 			break;
 
 		//Unable to test
-		//MOVX A, @R0/@R1				/* 1: 1110 001i */
-		case 0xe2:						
+		//MOVX A, @R0/@R1               /* 1: 1110 001i */
+		case 0xe2:
 		case 0xe3:
 			sprintf(dst, "movx  a,@r%d", op&1);
 			break;
 
-		
+
 		//CLR A
 		case 0xe4:						/* 1: 1110 0100 */
 			sprintf(dst, "clr   a");
 			break;
 
-		
+
 		//MOV A, data addr
 		case 0xe5:						/* 1: 1110 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
@@ -1081,14 +1081,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			break;
 
 		//Unable to test
-		//MOV A,@RO/@R1					/* 1: 1110 011i */
+		//MOV A,@RO/@R1                 /* 1: 1110 011i */
 		case 0xe6:
 		case 0xe7:
 			sprintf(dst, "mov   a,@r%d", op&1);
 			break;
 
-		
-		//MOV A,R0 to R7				/* 1: 1110 1rrr */
+
+		//MOV A,R0 to R7                /* 1: 1110 1rrr */
 		case 0xe8:
 		case 0xe9:
 		case 0xea:
@@ -1100,41 +1100,41 @@ unsigned Dasm8051(char *dst, unsigned pc)
 			sprintf(dst, "mov   a,r%d", op&7);
 			break;
 
-		
+
 		//MOVX @DPTR,A
 		case 0xf0:						/* 1: 1111 0000 */
 			sprintf(dst, "movx  @dptr,a");
 			break;
 
 		//Unable to test
-		//MOVX @R0/@R1,A				/* 1: 1111 001i */
+		//MOVX @R0/@R1,A                /* 1: 1111 001i */
 		case 0xf2:
 		case 0xf3:
 			sprintf(dst, "movx  @r%d,a", op&1);
 			break;
 
-		
+
 		//CPL A
 		case 0xf4:						/* 1: 1111 0100 */
 			sprintf(dst, "cpl   a");
 			break;
 
-		
+
 		//MOV data addr, A
 		case 0xf5:						/* 1: 1111 0101 */
 			sym = get_data_address(cpu_readop_arg(PC++));
 			sprintf(dst, "mov   %s,a", sym);
 			break;
 
-		
-		//MOV @R0/@R1, A				/* 1: 1111 011i */
+
+		//MOV @R0/@R1, A                /* 1: 1111 011i */
 		case 0xf6:
 		case 0xf7:
 			sprintf(dst, "mov   @r%d,a", op&1);
 			break;
 
-		
-		//MOV R0 to R7, A				/* 1: 1111 1rrr */
+
+		//MOV R0 to R7, A               /* 1: 1111 1rrr */
 		case 0xf8:
 		case 0xf9:
 		case 0xfa:

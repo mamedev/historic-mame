@@ -1,25 +1,25 @@
 /***************************************************************************
 
-	Sega G-80 raster hardware
+    Sega G-80 raster hardware
 
-	Across these games, there's a mixture of discrete sound circuitry,
-	speech boards, ADPCM samples, and a TMS3617 music chip.
+    Across these games, there's a mixture of discrete sound circuitry,
+    speech boards, ADPCM samples, and a TMS3617 music chip.
 
-	08-JAN-1999 - MAB:
-	 - added NEC 7751 support to Monster Bash
+    08-JAN-1999 - MAB:
+     - added NEC 7751 support to Monster Bash
 
-	05-DEC-1998 - MAB:
-	 - completely rewrote sound code to use Samples interface.
-	   (It's based on the Zaxxon sndhrdw code.)
+    05-DEC-1998 - MAB:
+     - completely rewrote sound code to use Samples interface.
+       (It's based on the Zaxxon sndhrdw code.)
 
-	TODO:
-	 - Astro Blaster needs "Attack Rate" modifiers implemented
-	 - Sample support for 005
-	 - Melody support for 005
-	 - Sound for Pig Newton
-	 - Speech for Astro Blaster
+    TODO:
+     - Astro Blaster needs "Attack Rate" modifiers implemented
+     - Sample support for 005
+     - Melody support for 005
+     - Sound for Pig Newton
+     - Speech for Astro Blaster
 
-	- Mike Balfour (mab22@po.cwru.edu)
+    - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -108,7 +108,7 @@ WRITE8_HANDLER( astrob_audio_ports_w )
 	{
 		/* Note that this also stops our speech from playing. */
 		/* (If our speech ever gets synthesized, this will probably
-		   need to call some type of speech_mute function) */
+           need to call some type of speech_mute function) */
 		for (noise = 0; noise < TOTAL_SOUNDS; noise++)
 			sample_stop(astrob_sa[noise].channel);
 		return;
@@ -187,13 +187,13 @@ An 8255:
   Port C is apparently unused
 
 Melody Generator:
-	There's an LS393 counter hooked to addr lines A0-A6 of a 2716 ROM.
-	Port B from the 8255 hooks to addr lines A7-A10 of the 2716.
-	D0-D4 output from the 2716 into an 6331.
-	D5 outputs from the 2716 to a 555 timer.
-	D0-D7 on the 6331 output to two LS161s.
-	The LS161s output to the LS293 (also connected to 8255 B4).
-	The output of this feeds into a 4391, which produces "MELODY" output.
+    There's an LS393 counter hooked to addr lines A0-A6 of a 2716 ROM.
+    Port B from the 8255 hooks to addr lines A7-A10 of the 2716.
+    D0-D4 output from the 2716 into an 6331.
+    D5 outputs from the 2716 to a 555 timer.
+    D0-D7 on the 6331 output to two LS161s.
+    The LS161s output to the LS293 (also connected to 8255 B4).
+    The output of this feeds into a 4391, which produces "MELODY" output.
 ***************************************************************************/
 
 const char *s005_sample_names[] =

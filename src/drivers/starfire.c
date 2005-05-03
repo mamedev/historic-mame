@@ -1,39 +1,39 @@
 /***************************************************************************
 
-	Star Fire/Fire One system
+    Star Fire/Fire One system
 
     driver by Daniel Boris, Olivier Galibert, Aaron Giles
 
 ****************************************************************************
 
-	Memory map
+    Memory map
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	0000-7FFF   R     xxxxxxxx   Program ROM
-	8000-9FFF   R/W   xxxxxxxx   Scratch RAM, actually mapped into low VRAM
-	9000          W   xxxxxxxx   VRAM write control register
-	              W   xxx-----      (VRAM shift amount 1)
-	              W   ---x----      (VRAM write mirror 1)
-	              W   ----xxx-      (VRAM shift amount 2)
-	              W   -------x      (VRAM write mirror 2)
-	9001          W   xxxxxxxx   Video control register
-	              W   x-------      (Color RAM source select)
-	              W   -x------      (Palette RAM write enable)
-	              W   --x-----      (Video RAM write enable)
-	              W   ---x----      (Right side mask select)
-	              W   ----xxxx      (Video RAM ALU operation)
-	9800-9807   R     xxxxxxxx   Input ports
-	A000-BFFF   R/W   xxxxxxxx   Color RAM
-	C000-DFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 1 and color
-	E000-FFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 2
-	========================================================================
-	Interrupts:
-	   NMI generated once/frame
-	========================================================================
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    0000-7FFF   R     xxxxxxxx   Program ROM
+    8000-9FFF   R/W   xxxxxxxx   Scratch RAM, actually mapped into low VRAM
+    9000          W   xxxxxxxx   VRAM write control register
+                  W   xxx-----      (VRAM shift amount 1)
+                  W   ---x----      (VRAM write mirror 1)
+                  W   ----xxx-      (VRAM shift amount 2)
+                  W   -------x      (VRAM write mirror 2)
+    9001          W   xxxxxxxx   Video control register
+                  W   x-------      (Color RAM source select)
+                  W   -x------      (Palette RAM write enable)
+                  W   --x-----      (Video RAM write enable)
+                  W   ---x----      (Right side mask select)
+                  W   ----xxxx      (Video RAM ALU operation)
+    9800-9807   R     xxxxxxxx   Input ports
+    A000-BFFF   R/W   xxxxxxxx   Color RAM
+    C000-DFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 1 and color
+    E000-FFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 2
+    ========================================================================
+    Interrupts:
+       NMI generated once/frame
+    ========================================================================
 
 ***************************************************************************
 
@@ -72,7 +72,7 @@ static read8_handler input_read;
 
 /*************************************
  *
- *	Video updates
+ *  Video updates
  *
  *************************************/
 
@@ -98,7 +98,7 @@ MACHINE_INIT( starfire )
 
 /*************************************
  *
- *	Scratch RAM, mapped into video RAM
+ *  Scratch RAM, mapped into video RAM
  *
  *************************************/
 
@@ -139,7 +139,7 @@ static READ8_HANDLER( starfire_scratch_r )
 
 /*************************************
  *
- *	Game-specific input handlers
+ *  Game-specific input handlers
  *
  *************************************/
 
@@ -188,7 +188,7 @@ static READ8_HANDLER( fireone_input_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -210,7 +210,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -305,7 +305,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -337,7 +337,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -406,7 +406,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -424,7 +424,7 @@ static DRIVER_INIT( fireone )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

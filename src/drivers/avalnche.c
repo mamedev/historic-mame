@@ -1,29 +1,29 @@
 /***************************************************************************
 
-	Atari Avalanche hardware
+    Atari Avalanche hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Avalanche
+    Games supported:
+        * Avalanche
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Memory Map:
-					0000-1FFF				RAM
-					2000-2FFF		R		INPUTS
-					3000-3FFF		W		WATCHDOG
-					4000-4FFF		W		OUTPUTS
-					5000-5FFF		W		SOUND LEVEL
-					6000-7FFF		R		PROGRAM ROM
-					8000-DFFF				UNUSED
-					E000-FFFF				PROGRAM ROM (Remapped)
+    Memory Map:
+                    0000-1FFF               RAM
+                    2000-2FFF       R       INPUTS
+                    3000-3FFF       W       WATCHDOG
+                    4000-4FFF       W       OUTPUTS
+                    5000-5FFF       W       SOUND LEVEL
+                    6000-7FFF       R       PROGRAM ROM
+                    8000-DFFF               UNUSED
+                    E000-FFFF               PROGRAM ROM (Remapped)
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -37,7 +37,7 @@
 
 /*************************************
  *
- *	Overlay
+ *  Overlay
  *
  *************************************/
 
@@ -58,7 +58,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -73,7 +73,7 @@ static PALETTE_INIT( avalnche )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -91,7 +91,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -167,7 +167,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -203,7 +203,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -229,7 +229,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -242,7 +242,7 @@ static DRIVER_INIT( avalnche )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

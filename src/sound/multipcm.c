@@ -87,7 +87,7 @@ typedef struct Voice_t
 typedef struct MultiPCM_t
 {
 	sound_stream * stream;
-	
+
 	unsigned char registers[28][8];	// 8 registers per voice?
 	int type;			// chip type: 0=model1, 1=multi32
 	int bankL, bankR;
@@ -231,7 +231,7 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 	// make volume table
 	double	max=255.0;
 	double	db=(48.0/128);
-	
+
 	mpcm = auto_malloc(sizeof(*mpcm));
 	memset(mpcm, 0, sizeof(*mpcm));
 
@@ -423,11 +423,11 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 						{
 							if (cptr->type == 1)	// multiPCM
 							{
-/*								logerror("MPCM: key on chip %d voice %d\n", chip, vnum);
-								logerror("regs %02x %02x %02x %02x %02x %02x %02x %02x\n", cptr->registers[vnum][0],
-									cptr->registers[vnum][1],cptr->registers[vnum][2],cptr->registers[vnum][3],
-									cptr->registers[vnum][4],cptr->registers[vnum][5],
-									cptr->registers[vnum][6],cptr->registers[vnum][7]);*/
+/*                              logerror("MPCM: key on chip %d voice %d\n", chip, vnum);
+                                logerror("regs %02x %02x %02x %02x %02x %02x %02x %02x\n", cptr->registers[vnum][0],
+                                    cptr->registers[vnum][1],cptr->registers[vnum][2],cptr->registers[vnum][3],
+                                    cptr->registers[vnum][4],cptr->registers[vnum][5],
+                                    cptr->registers[vnum][6],cptr->registers[vnum][7]);*/
 
 								if (vptr->pan < 8)
 								{
@@ -455,7 +455,7 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 					}
 					else
 					{
-//						logerror("MPCM: key off chip %d voice %d\n", chip, vnum);
+//                      logerror("MPCM: key off chip %d voice %d\n", chip, vnum);
 						vptr->active = 0;
 						vptr->relcount = 0;
 						if ((vptr->loop) && (vptr->pSamp))
@@ -472,11 +472,11 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 
 				case 6: // ??? LFO? reverb?
 				case 7:
-//					logerror("write %x to reg %d, voice %d\n", data, cptr->curreg, vnum);
+//                  logerror("write %x to reg %d, voice %d\n", data, cptr->curreg, vnum);
 					break;
 
 				default:
-//					logerror("write %x to reg %d, voice %d\n", data, cptr->curreg, vnum);
+//                  logerror("write %x to reg %d, voice %d\n", data, cptr->curreg, vnum);
 					break;
 			}
 			break;

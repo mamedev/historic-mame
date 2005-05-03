@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Hard Drivin' sound hardware
+    Hard Drivin' sound hardware
 
 ****************************************************************************/
 
@@ -19,7 +19,7 @@ data16_t *hdsnddsp_ram;
 
 /*************************************
  *
- *	Static globals
+ *  Static globals
  *
  *************************************/
 
@@ -44,7 +44,7 @@ static UINT32 last_bio_cycles;
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -60,7 +60,7 @@ void hdsnd_init(void)
 
 /*************************************
  *
- *	Update flags
+ *  Update flags
  *
  *************************************/
 
@@ -81,7 +81,7 @@ static void update_68k_interrupts(void)
 
 /*************************************
  *
- *	I/O from main CPU side
+ *  I/O from main CPU side
  *
  *************************************/
 
@@ -127,7 +127,7 @@ WRITE16_HANDLER( hd68k_snd_reset_w )
 
 /*************************************
  *
- *	I/O from sound CPU side
+ *  I/O from sound CPU side
  *
  *************************************/
 
@@ -151,7 +151,7 @@ WRITE16_HANDLER( hdsnd68k_data_w )
 
 /*************************************
  *
- *	Misc. 68k inputs
+ *  Misc. 68k inputs
  *
  *************************************/
 
@@ -171,11 +171,11 @@ READ16_HANDLER( hdsnd68k_320port_r )
 
 READ16_HANDLER( hdsnd68k_status_r )
 {
-//FFFF 3000	R	READSTAT	Read Status
-//			  D15 = 'Main Flag'
-//			  D14 = 'Sound Flag'
-//			  D13 = Test Switch
-//			  D12 = 5220 Ready Flag (0=Ready)
+//FFFF 3000 R   READSTAT    Read Status
+//            D15 = 'Main Flag'
+//            D14 = 'Sound Flag'
+//            D13 = Test Switch
+//            D12 = 5220 Ready Flag (0=Ready)
 	logerror("%06X:hdsnd68k_status_r(%04X)\n", activecpu_get_previouspc(), offset);
 	return (mainflag << 15) | (soundflag << 14) | 0x2000 | 0;//((readinputport(0) & 0x0020) << 8) | 0;
 }
@@ -184,7 +184,7 @@ READ16_HANDLER( hdsnd68k_status_r )
 
 /*************************************
  *
- *	Misc. 68k outputs
+ *  Misc. 68k outputs
  *
  *************************************/
 
@@ -245,7 +245,7 @@ WRITE16_HANDLER( hdsnd68k_irqclr_w )
 
 /*************************************
  *
- *	TMS32010 access
+ *  TMS32010 access
  *
  *************************************/
 
@@ -301,7 +301,7 @@ WRITE16_HANDLER( hdsnd68k_320com_w )
 
 /*************************************
  *
- *	TMS32010 interrupts
+ *  TMS32010 interrupts
  *
  *************************************/
 
@@ -325,7 +325,7 @@ READ16_HANDLER( hdsnddsp_get_bio )
 
 /*************************************
  *
- *	TMS32010 ports
+ *  TMS32010 ports
  *
  *************************************/
 
@@ -347,7 +347,7 @@ WRITE16_HANDLER( hdsnddsp_comport_w )
 WRITE16_HANDLER( hdsnddsp_mute_w )
 {
 	/* mute DAC audio, D0=1 */
-/*	dacmute = data & 1;		-- NOT STUFFED */
+/*  dacmute = data & 1;     -- NOT STUFFED */
 	logerror("%06X:mute DAC=%d\n", activecpu_get_previouspc(), data);
 }
 

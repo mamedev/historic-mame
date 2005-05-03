@@ -137,11 +137,11 @@ static READ16_HANDLER( deco_71_r )
 static MACHINE_INIT( sshangha )
 {
 	/* Such thing is needed as there is no code to turn the screen
-	   to normal orientation when the game is reset.
-	   I'm using the value that forces the screen to be in normal
+       to normal orientation when the game is reset.
+       I'm using the value that forces the screen to be in normal
          orientation when entering the "test mode"
          (check the game code from 0x0006b8 to 0x0006f0).
-	   I can't tell however if this is accurate or not. */
+       I can't tell however if this is accurate or not. */
 	sshangha_control_0_w(0, 0x10, 0xff00);
 }
 
@@ -190,7 +190,7 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc000) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
-//	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
+//  AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )

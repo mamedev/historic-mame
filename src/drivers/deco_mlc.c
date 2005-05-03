@@ -1,97 +1,97 @@
 /***************************************************************************
 
-	Data East MLC Hardware:
+    Data East MLC Hardware:
 
-	The MLC system is basically an 8" x 6" x 2" plastic box with a JAMMA connector on it.
-	The PCB's are very compact and have almost entirely surface mounted components on both
-	sides of both boards. One board contains the RAM, sound hardware and I/O, the other
-	board contains the CPU and ROMs. All main boards are identical between the MLC games and
-	can be changed just by plugging in another game and pressing test to reset the EEPROM
-	defaults.
+    The MLC system is basically an 8" x 6" x 2" plastic box with a JAMMA connector on it.
+    The PCB's are very compact and have almost entirely surface mounted components on both
+    sides of both boards. One board contains the RAM, sound hardware and I/O, the other
+    board contains the CPU and ROMs. All main boards are identical between the MLC games and
+    can be changed just by plugging in another game and pressing test to reset the EEPROM
+    defaults.
 
-	PCB Layout
-	----------
+    PCB Layout
+    ----------
 
-	Jamma Side:
+    Jamma Side:
 
-	DE-0444-1
-	|-----------------------------|
-	|                             |
-	| W24257            DE150     |
-	|   W24257                    |
-	|                             |
-	|J                      93C45 |
-	|A                            |
-	|M                            |
-	|M               DE223        |
-	|A                            |
-	|                             |
-	|                42MHz  W24257|
-	|                       W24257|
-	|                       W24257|
-	|            XILINK     W24257|
-	|5            XC3130          |
-	|0                            |
-	|P                            |
-	|I YMZ280B   YAC513           |
-	|N                            |
-	|-----------------------------|
-	Notes:
-		- Yamaha YMZ280B clock: 14.000MHz (42 / 3)
-		- DE150 custom (GFX)
-		- DE223 custom (GFX)
-		- Xilinx XC3130 (TQFP100, Bus Controller?)
-		- YAC513 D/A converter
-		- 93C45 EEPROM, 128 bytes x 8 bit (equivalent to 93C46)
-		- All SRAM is Winbond W24257S-70LL (32kx8)
-		- 50 PIN connector looks like flat cable SCSI connector used on any regular PC SCSI controller card. It appears
-		to be used for extra controls and hookup of a 2nd speaker for stereo output. It could also be used for externally
-		programming some IC's or factory diagnostic/repairs?
-		- Bottom side of the JAMMA side contains nothing significant except a sound AMP, test SW, LED, some
-		logic chips and connectors for joining the PCBs together.
-		- Vsync: 58Hz
+    DE-0444-1
+    |-----------------------------|
+    |                             |
+    | W24257            DE150     |
+    |   W24257                    |
+    |                             |
+    |J                      93C45 |
+    |A                            |
+    |M                            |
+    |M               DE223        |
+    |A                            |
+    |                             |
+    |                42MHz  W24257|
+    |                       W24257|
+    |                       W24257|
+    |            XILINK     W24257|
+    |5            XC3130          |
+    |0                            |
+    |P                            |
+    |I YMZ280B   YAC513           |
+    |N                            |
+    |-----------------------------|
+    Notes:
+        - Yamaha YMZ280B clock: 14.000MHz (42 / 3)
+        - DE150 custom (GFX)
+        - DE223 custom (GFX)
+        - Xilinx XC3130 (TQFP100, Bus Controller?)
+        - YAC513 D/A converter
+        - 93C45 EEPROM, 128 bytes x 8 bit (equivalent to 93C46)
+        - All SRAM is Winbond W24257S-70LL (32kx8)
+        - 50 PIN connector looks like flat cable SCSI connector used on any regular PC SCSI controller card. It appears
+        to be used for extra controls and hookup of a 2nd speaker for stereo output. It could also be used for externally
+        programming some IC's or factory diagnostic/repairs?
+        - Bottom side of the JAMMA side contains nothing significant except a sound AMP, test SW, LED, some
+        logic chips and connectors for joining the PCBs together.
+        - Vsync: 58Hz
 
-	As the CPU is stored on the game board it is possible that each game could
-	have a different CPU - however there are only two known configurations.  Avengers
-	in Galactic Storm uses a SH2 processor, whereas all the others use a custom Deco
-	processor (156 - thought to be encrypted ARM).
+    As the CPU is stored on the game board it is possible that each game could
+    have a different CPU - however there are only two known configurations.  Avengers
+    in Galactic Storm uses a SH2 processor, whereas all the others use a custom Deco
+    processor (156 - thought to be encrypted ARM).
 
-	Skull Fang:
+    Skull Fang:
 
-	DE-0445-1 (top)						DE-0445-1 (bottom)
-	|-----------------------------|		|-----------------------------|
-	|                             |		|                             |
-	|                             |		|                             |
-	|                             |		|           DE156     MCH-07  |
-	|  MCH-06             SH00-0  |		|                             |
-	|                             |		|                             |
-	|                     SH01-0  |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	| MCH-04    MCH-02    MCH-00  |		|                             |
-	|                             |		|                             |
-	|                             |		| MCH-01    MCH-03    MCH-05  |
-	|                             |		|                             |
-	| SH02-0                      |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	|                             |		|                             |
-	|-----------------------------|		|-----------------------------|
+    DE-0445-1 (top)                     DE-0445-1 (bottom)
+    |-----------------------------|     |-----------------------------|
+    |                             |     |                             |
+    |                             |     |                             |
+    |                             |     |           DE156     MCH-07  |
+    |  MCH-06             SH00-0  |     |                             |
+    |                             |     |                             |
+    |                     SH01-0  |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    | MCH-04    MCH-02    MCH-00  |     |                             |
+    |                             |     |                             |
+    |                             |     | MCH-01    MCH-03    MCH-05  |
+    |                             |     |                             |
+    | SH02-0                      |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    |                             |     |                             |
+    |-----------------------------|     |-----------------------------|
 
-	Notes:
-		- DE156 clock: 7.000MHz (42MHz / 6, QFP100, clock measured on pin 90)
+    Notes:
+        - DE156 clock: 7.000MHz (42MHz / 6, QFP100, clock measured on pin 90)
 
-	Driver todo:
-		Decrypt program roms using 156 processor.
-		Sprite X flip seems broken in Avengrgs - this seems to be a CPU bug in that
-		the sprite flip is not set in software, meaning that many backgrounds appear
-		incomplete (two identical sprites drawn on top of each other instead of
-		flipped side by side) and Captain America always faces the wrong way.
-		Text tilemap colours are wrong.
-		Sound is wrong.
+    Driver todo:
+        Decrypt program roms using 156 processor.
+        Sprite X flip seems broken in Avengrgs - this seems to be a CPU bug in that
+        the sprite flip is not set in software, meaning that many backgrounds appear
+        incomplete (two identical sprites drawn on top of each other instead of
+        flipped side by side) and Captain America always faces the wrong way.
+        Text tilemap colours are wrong.
+        Sound is wrong.
 
     Driver by Bryan McPhail, thank you to Avedis and The Guru.
 
@@ -118,14 +118,14 @@ static READ32_HANDLER( avengrs_control_r )
 
 static READ32_HANDLER(test2_r)
 {
-//	if (offset==0)
-//		return readinputport(0); //0xffffffff;
-//	logerror("%08x:  Test2_r %d\n",activecpu_get_pc(),offset);
+//  if (offset==0)
+//      return readinputport(0); //0xffffffff;
+//  logerror("%08x:  Test2_r %d\n",activecpu_get_pc(),offset);
 	return 0xffffffff;
 }
 static READ32_HANDLER(test3_r)
 {
-//	logerror("%08x:  Test3_r %d\n",activecpu_get_pc(),offset);
+//  logerror("%08x:  Test3_r %d\n",activecpu_get_pc(),offset);
 	return 0xffffffff;
 }
 
@@ -370,7 +370,7 @@ static MACHINE_DRIVER_START( mlc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(ARM,42000000/6) /* 42 MHz -> 7MHz clock confirmed on real board */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-//	MDRV_CPU_VBLANK_INT(avengrgs_interrupt,1)
+//  MDRV_CPU_VBLANK_INT(avengrgs_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -540,7 +540,7 @@ ROM_END
 static READ32_HANDLER( avengrgs_speedup_r )
 {
 	data32_t a=avengrgs_ram[0x89a0/4];
-//	logerror("Read %08x\n",activecpu_get_pc());
+//  logerror("Read %08x\n",activecpu_get_pc());
 	if (activecpu_get_pc()==0x3236 && (a&1)) cpu_spinuntil_int();
 
 	return a;

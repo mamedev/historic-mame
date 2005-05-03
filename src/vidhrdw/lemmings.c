@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	Lemmings video emulation - Bryan McPhail, mish@tendril.co.uk
+    Lemmings video emulation - Bryan McPhail, mish@tendril.co.uk
 
 *********************************************************************
 
-	There are two sets of sprites, the combination of custom chips 52 & 71.
-	There is a background pixel layer implemented with discrete logic
-	rather than a custom chip and a foreground VRAM tilemap layer that the
-	game mostly uses as a pixel layer (the vram format is arranged as
-	sequential pixels, rather than sequential characters).
+    There are two sets of sprites, the combination of custom chips 52 & 71.
+    There is a background pixel layer implemented with discrete logic
+    rather than a custom chip and a foreground VRAM tilemap layer that the
+    game mostly uses as a pixel layer (the vram format is arranged as
+    sequential pixels, rather than sequential characters).
 
 ***************************************************************************/
 
@@ -159,8 +159,8 @@ WRITE16_HANDLER( lemmings_pixel_1_w )
 	old=lemmings_pixel_1_data[offset];
 	COMBINE_DATA(&lemmings_pixel_1_data[offset]);
 	src=lemmings_pixel_1_data[offset];
-//	if (old==src)
-//		return;
+//  if (old==src)
+//      return;
 
 	sy=((offset<<1)/0x200);
 	sx=((offset<<1)&0x1ff);

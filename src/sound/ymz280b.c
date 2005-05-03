@@ -540,7 +540,7 @@ static void ymz280b_force_update(struct YMZ280BChip *chip)
 			continue;
 
 		/* finish off the current sample */
-//		if (voice->output_pos > 0)
+//      if (voice->output_pos > 0)
 		{
 			/* interpolate */
 			while (remaining > 0 && voice->output_pos < FRAC_ONE)
@@ -728,7 +728,7 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 {
 	const struct YMZ280Binterface *intf = config;
 	struct YMZ280BChip *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

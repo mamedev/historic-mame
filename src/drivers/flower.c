@@ -237,12 +237,12 @@ static MACHINE_DRIVER_START( flower )
 	MDRV_CPU_ADD(Z80,8000000)
 	MDRV_CPU_PROGRAM_MAP(flower_cpu1,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,10)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) //nmis stuff up the writes to shared ram
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) //nmis stuff up the writes to shared ram
 
 	MDRV_CPU_ADD(Z80,8000000)
 	MDRV_CPU_PROGRAM_MAP(flower_cpu2,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,8000000)
 	MDRV_CPU_PROGRAM_MAP(flower_sound_cpu,0)
@@ -266,7 +266,7 @@ static MACHINE_DRIVER_START( flower )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

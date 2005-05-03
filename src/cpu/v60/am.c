@@ -33,11 +33,11 @@ UINT8 modDim;
 /*
   Input:
   modAdd
-	modDim
+    modDim
 
   Output:
-	amOut
-	amLength
+    amOut
+    amLength
 */
 
 UINT32 ReadAM(void)
@@ -59,12 +59,12 @@ UINT32 BitReadAM(void)
 /*
   Input:
   modAdd
-	modDim
+    modDim
 
   Output:
-	amOut
-	amFlag
-	amLength
+    amOut
+    amFlag
+    amLength
 */
 
 UINT32 ReadAMAddress(void)
@@ -84,12 +84,12 @@ UINT32 BitReadAMAddress(void)
 /*
   Input:
   modAdd
-	modDim
-	modWriteValB/H/W
+    modDim
+    modWriteValB/H/W
 
   Output:
-	amOut
-	amLength
+    amOut
+    amLength
 */
 
 UINT32 WriteAM(void)

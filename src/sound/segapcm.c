@@ -71,7 +71,7 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 	int mask, rom_mask;
 	int i;
 	struct segapcm *spcm;
-	
+
 	spcm = auto_malloc(sizeof(*spcm));
 	memset(spcm, 0, sizeof(*spcm));
 

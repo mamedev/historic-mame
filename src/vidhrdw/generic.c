@@ -83,8 +83,8 @@ VIDEO_START( generic_bitmapped )
 	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	/* Generic_Bitmapped games (with no dirtybuffer) must store the current screen tmpbitmap 
-	   in a save state to insure the screen redraws properly upon load                    */
+	/* Generic_Bitmapped games (with no dirtybuffer) must store the current screen tmpbitmap
+       in a save state to insure the screen redraws properly upon load                    */
 	state_save_register_UINT8("video", 0, "tmpbitmap", (UINT8*)tmpbitmap->base, tmpbitmap->rowbytes * tmpbitmap->height ) ;
 
 	return 0;
@@ -167,14 +167,14 @@ WRITE8_HANDLER( spriteram_2_w )
 
 /* Mish:  171099
 
-	'Buffered spriteram' is where the graphics hardware draws the sprites
+    'Buffered spriteram' is where the graphics hardware draws the sprites
 from private ram that the main CPU cannot access.  The main CPU typically
 prepares sprites for the next frame in it's own sprite ram as the graphics
 hardware renders sprites for the current frame from private ram.  Main CPU
 sprite ram is usually copied across to private ram by setting some flag
 in the VBL interrupt routine.
 
-	The reason for this is to avoid sprite flicker or lag - if a game
+    The reason for this is to avoid sprite flicker or lag - if a game
 is unable to prepare sprite ram within a frame (for example, lots of sprites
 on screen) then it doesn't trigger the buffering hardware - instead the
 graphics hardware will use the sprites from the last frame. An example is
@@ -182,29 +182,29 @@ Dark Seal - the buffer flag is only written to if the CPU is idle at the time
 of the VBL interrupt.  If the buffering is not emulated the sprites flicker
 at busy scenes.
 
-	Some games seem to use buffering because of hardware constraints -
+    Some games seem to use buffering because of hardware constraints -
 Capcom games (Cps1, Last Duel, etc) render spriteram _1 frame ahead_ and
 buffer this spriteram at the end of a frame, so the _next_ frame must be drawn
 from the buffer.  Presumably the graphics hardware and the main cpu cannot
 share the same spriteram for whatever reason.
 
-	Sprite buffering & Mame:
+    Sprite buffering & Mame:
 
-	To use sprite buffering in a driver use VIDEO_BUFFERS_SPRITERAM in the
+    To use sprite buffering in a driver use VIDEO_BUFFERS_SPRITERAM in the
 machine driver.  This will automatically create an area for buffered spriteram
 equal to the size of normal spriteram.
 
-	Spriteram size _must_ be declared in the memory map:
+    Spriteram size _must_ be declared in the memory map:
 
-	{ 0x120000, 0x1207ff, MWA8_BANK2, &spriteram, &spriteram_size },
+    { 0x120000, 0x1207ff, MWA8_BANK2, &spriteram, &spriteram_size },
 
-	Then the video driver must draw the sprites from the buffered_spriteram
+    Then the video driver must draw the sprites from the buffered_spriteram
 pointer.  The function buffer_spriteram_w() is used to simulate hardware
 which buffers the spriteram from a memory location write.  The function
 buffer_spriteram(unsigned char *ptr, int length) can be used where
 more control is needed over what is buffered.
 
-	For examples see darkseal.c, contra.c, lastduel.c, bionicc.c etc.
+    For examples see darkseal.c, contra.c, lastduel.c, bionicc.c etc.
 
 */
 
@@ -251,12 +251,12 @@ void buffer_spriteram_2(unsigned char *ptr,int length)
 
 /***************************************************************************
 
-	Global video attribute handling code
+    Global video attribute handling code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	updateflip - handle global flipping
+    updateflip - handle global flipping
 -------------------------------------------------*/
 
 static void updateflip(void)
@@ -292,7 +292,7 @@ static void updateflip(void)
 
 
 /*-------------------------------------------------
-	flip_screen_set - set global flip
+    flip_screen_set - set global flip
 -------------------------------------------------*/
 
 void flip_screen_set(int on)
@@ -303,7 +303,7 @@ void flip_screen_set(int on)
 
 
 /*-------------------------------------------------
-	flip_screen_x_set - set global horizontal flip
+    flip_screen_x_set - set global horizontal flip
 -------------------------------------------------*/
 
 void flip_screen_x_set(int on)
@@ -318,7 +318,7 @@ void flip_screen_x_set(int on)
 
 
 /*-------------------------------------------------
-	flip_screen_y_set - set global vertical flip
+    flip_screen_y_set - set global vertical flip
 -------------------------------------------------*/
 
 void flip_screen_y_set(int on)
@@ -333,8 +333,8 @@ void flip_screen_y_set(int on)
 
 
 /*-------------------------------------------------
-	set_vh_global_attribute - set an arbitrary
-	global video attribute
+    set_vh_global_attribute - set an arbitrary
+    global video attribute
 -------------------------------------------------*/
 
 void set_vh_global_attribute( int *addr, int data )
@@ -349,8 +349,8 @@ void set_vh_global_attribute( int *addr, int data )
 
 
 /*-------------------------------------------------
-	get_vh_global_attribute - set an arbitrary
-	global video attribute
+    get_vh_global_attribute - set an arbitrary
+    global video attribute
 -------------------------------------------------*/
 
 int get_vh_global_attribute_changed(void)

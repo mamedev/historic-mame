@@ -1,134 +1,134 @@
 /***************************************************************************
 
-	mame.c
+    mame.c
 
-	Controls execution of the core MAME system.
+    Controls execution of the core MAME system.
 
 ****************************************************************************
 
-	Since there has been confusion in the past over the order of
-	initialization and other such things, here it is, all spelled out
-	as of March, 2005:
+    Since there has been confusion in the past over the order of
+    initialization and other such things, here it is, all spelled out
+    as of March, 2005:
 
-	main()
-		- does platform-specific init
-		- calls run_game() [mame.c]
+    main()
+        - does platform-specific init
+        - calls run_game() [mame.c]
 
-		run_game() [mame.c]
-			- begins resource tracking (level 1)
-			- calls mame_validitychecks() [mame.c] to perform validity checks on all compiled drivers
-			- calls expand_machine_driver() [mame.c] to construct the machine driver
-			- calls cpuintrf_init() [cpuintrf.c] to determine which CPUs are available
-			- calls init_game_options() [mame.c] to compute parameters based on global options struct
-			- initializes the savegame system
-			- calls osd_init() [osdepend.h] to do platform-specific initialization
+        run_game() [mame.c]
+            - begins resource tracking (level 1)
+            - calls mame_validitychecks() [mame.c] to perform validity checks on all compiled drivers
+            - calls expand_machine_driver() [mame.c] to construct the machine driver
+            - calls cpuintrf_init() [cpuintrf.c] to determine which CPUs are available
+            - calls init_game_options() [mame.c] to compute parameters based on global options struct
+            - initializes the savegame system
+            - calls osd_init() [osdepend.h] to do platform-specific initialization
 
-			- begins resource tracking (level 2)
-			- calls init_machine() [mame.c]
+            - begins resource tracking (level 2)
+            - calls init_machine() [mame.c]
 
-			init_machine() [mame.c]
-				- calls uistring_init() [ui_text.c] to initialize the localized strings
-				- calls code_init() [input.c] to initialize the input system
-				- calls input_port_alloc() [inptport.c] to construct the game's input ports
-				- calls chd_set_interface() [chd.c] to initialize the hard disk system
-				- calls rom_load() [common.c] to load the game's ROMs
-				- calls timer_init() [timer.c] to reset the timer system
-				- calls cpu_init_refresh_timer() [cpuexec.c] to start the refresh timer
-				- calls cpu_init() [cpuexec.c] to initialize the CPUs
-				- calls load_input_port_settings() [input.c] to load the configuration file
-				- calls memory_init() [memory.c] to process the game's memory maps
-				- calls the driver's DRIVER_INIT callback
+            init_machine() [mame.c]
+                - calls uistring_init() [ui_text.c] to initialize the localized strings
+                - calls code_init() [input.c] to initialize the input system
+                - calls input_port_alloc() [inptport.c] to construct the game's input ports
+                - calls chd_set_interface() [chd.c] to initialize the hard disk system
+                - calls rom_load() [common.c] to load the game's ROMs
+                - calls timer_init() [timer.c] to reset the timer system
+                - calls cpu_init_refresh_timer() [cpuexec.c] to start the refresh timer
+                - calls cpu_init() [cpuexec.c] to initialize the CPUs
+                - calls load_input_port_settings() [input.c] to load the configuration file
+                - calls memory_init() [memory.c] to process the game's memory maps
+                - calls the driver's DRIVER_INIT callback
 
-			- calls run_machine() [mame.c]
+            - calls run_machine() [mame.c]
 
-			run_machine() [mame.c]
-				- calls vh_open() [mame.c]
+            run_machine() [mame.c]
+                - calls vh_open() [mame.c]
 
-				vh_open() [mame.c]
-					- calls palette_start() [palette.c] to allocate the palette
-					- calls decode_graphics() [mame.c] to decode the graphics
-					- computes game resolution and aspect ratio
-					- calls artwork_create_display() [artwork.c] to set up the artwork and init the display
-					- allocates the scrbitmap
-					- sets the initial refresh rate and visible area
-					- calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
-					- calls builduifont() [usrintrf.c] to create the user interface font
-					- creates the debugger bitmap and font (old debugger only)
-					- calls palette_init() [palette.c] to finish palette initialization
-					- resets the performance tracking variables
+                vh_open() [mame.c]
+                    - calls palette_start() [palette.c] to allocate the palette
+                    - calls decode_graphics() [mame.c] to decode the graphics
+                    - computes game resolution and aspect ratio
+                    - calls artwork_create_display() [artwork.c] to set up the artwork and init the display
+                    - allocates the scrbitmap
+                    - sets the initial refresh rate and visible area
+                    - calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
+                    - calls builduifont() [usrintrf.c] to create the user interface font
+                    - creates the debugger bitmap and font (old debugger only)
+                    - calls palette_init() [palette.c] to finish palette initialization
+                    - resets the performance tracking variables
 
-				- calls tilemap_init() [tilemap.c] to initialize the tilemap system
-				- calls the driver's VIDEO_START callback
-				- calls sound_start() [sndintrf.c] to start the audio system
-				- disposes of regions marked as disposable
-				- calls run_machine_core() [mame.c]
+                - calls tilemap_init() [tilemap.c] to initialize the tilemap system
+                - calls the driver's VIDEO_START callback
+                - calls sound_start() [sndintrf.c] to start the audio system
+                - disposes of regions marked as disposable
+                - calls run_machine_core() [mame.c]
 
-				run_machine_core() [mame.c]
-					- shows the copyright screen
-					- shows the game warnings
-					- shows the game info screen
-					- calls init_user_interface() [usrintrf.c] to initialize the user interface
-					- calls InitCheat() [cheat.c] to initialize the cheat system
-					- calls the driver's NVRAM_HANDLER to load NVRAM
-					- calls cpu_run() [cpuexec.c]
-					
-					cpu_run() [cpuexec.c]
-						- calls mame_debug_init() [mamedbg.c] to init the debugger (old debugger only)
-						- calls cpu_pre_run() [cpuexec.c]
-						
-						cpu_pre_run() [cpuexec.c]
-							- begins resource tracking (level 3)
-							- calls hs_open() and hs_init() [hiscore.c] to set up high score hacks
-							- calls cpu_inittimers() [cpuexec.c] to set up basic system timers
-							- calls watchdog_setup() [cpuexec.c] to set up watchdog timers
-							- calls sound_reset() [sndintrf.c] to reset all the sound chips
-							- loops over each CPU and initializes its internal state
-							- calls the driver's MACHINE_INIT callback
-							- loops over each CPU and calls cpunum_reset() [cpuintrf.c] to reset it
-							- calls cpu_vblankreset() [cpuexec.c] to set up the first VBLANK callback
+                run_machine_core() [mame.c]
+                    - shows the copyright screen
+                    - shows the game warnings
+                    - shows the game info screen
+                    - calls init_user_interface() [usrintrf.c] to initialize the user interface
+                    - calls InitCheat() [cheat.c] to initialize the cheat system
+                    - calls the driver's NVRAM_HANDLER to load NVRAM
+                    - calls cpu_run() [cpuexec.c]
 
-						--------------( at this point, we're up and running )---------------------------
-						
-						- calls cpu_post_run() [cpuexec.c]
-						
-						cpu_post_run() [cpuexec.c]
-							- calls hs_close() [hiscore.c] to flush high score data
-							- calls the driver's MACHINE_STOP callback
-							- ends resource tracking (level 3), freeing all auto_mallocs and timers
-						
-						- if the machine is just being reset, loops back to the cpu_pre_run() step above
-						- calls mame_debug_exit() [mamedbg.c] to shut down the debugger (old debugger only)
-					
-					- calls the driver's NVRAM_HANDLER to save NVRAM
-					- calls StopCheat() [cheat.c] to tear down the cheat system
-					- calls save_input_port_settings() [inptport.c] to save the game's configuration
+                    cpu_run() [cpuexec.c]
+                        - calls mame_debug_init() [mamedbg.c] to init the debugger (old debugger only)
+                        - calls cpu_pre_run() [cpuexec.c]
 
-				- calls sound_stop() [sndintrf.c] to stop the audio system
-				- calls the driver's VIDEO_STOP callback
-				- calls tilemap_close() [tilemap.c] to tear down the tilemap system
-				- calls vh_close() [mame.c]
+                        cpu_pre_run() [cpuexec.c]
+                            - begins resource tracking (level 3)
+                            - calls hs_open() and hs_init() [hiscore.c] to set up high score hacks
+                            - calls cpu_inittimers() [cpuexec.c] to set up basic system timers
+                            - calls watchdog_setup() [cpuexec.c] to set up watchdog timers
+                            - calls sound_reset() [sndintrf.c] to reset all the sound chips
+                            - loops over each CPU and initializes its internal state
+                            - calls the driver's MACHINE_INIT callback
+                            - loops over each CPU and calls cpunum_reset() [cpuintrf.c] to reset it
+                            - calls cpu_vblankreset() [cpuexec.c] to set up the first VBLANK callback
 
-				vh_close() [mame.c]
-					- frees the decoded graphics
-					- frees the fonts
-					- calls osd_close_display() [osdepend.h] to shut down the display
+                        --------------( at this point, we're up and running )---------------------------
 
-			- calls shutdown_machine() [mame.c]
+                        - calls cpu_post_run() [cpuexec.c]
 
-			shutdown_machine() [mame.c]
-				- calls memory_shutdown() [memory.c] to tear down the memory system
-				- frees all the memory regions
-				- calls chd_close_all() [chd.c] to tear down the hard disks
-				- calls cpu_exit() [cpuexec.c] to tear down the CPU system
-				- calls code_close() [input.c] to tear down the input system
-				- calls state_save_reset() [state.c] to reset the saved state system
-				- calls coin_counter_reset() [common.c] to reset coin counters
+                        cpu_post_run() [cpuexec.c]
+                            - calls hs_close() [hiscore.c] to flush high score data
+                            - calls the driver's MACHINE_STOP callback
+                            - ends resource tracking (level 3), freeing all auto_mallocs and timers
 
-			- ends resource tracking (level 2), freeing all auto_mallocs and timers
-			- calls osd_exit() [osdepend.h] to do platform-specific cleanup
-			- ends resource tracking (level 1), freeing all auto_mallocs and timers
+                        - if the machine is just being reset, loops back to the cpu_pre_run() step above
+                        - calls mame_debug_exit() [mamedbg.c] to shut down the debugger (old debugger only)
 
-		- exits the program
+                    - calls the driver's NVRAM_HANDLER to save NVRAM
+                    - calls StopCheat() [cheat.c] to tear down the cheat system
+                    - calls save_input_port_settings() [inptport.c] to save the game's configuration
+
+                - calls sound_stop() [sndintrf.c] to stop the audio system
+                - calls the driver's VIDEO_STOP callback
+                - calls tilemap_close() [tilemap.c] to tear down the tilemap system
+                - calls vh_close() [mame.c]
+
+                vh_close() [mame.c]
+                    - frees the decoded graphics
+                    - frees the fonts
+                    - calls osd_close_display() [osdepend.h] to shut down the display
+
+            - calls shutdown_machine() [mame.c]
+
+            shutdown_machine() [mame.c]
+                - calls memory_shutdown() [memory.c] to tear down the memory system
+                - frees all the memory regions
+                - calls chd_close_all() [chd.c] to tear down the hard disks
+                - calls cpu_exit() [cpuexec.c] to tear down the CPU system
+                - calls code_close() [input.c] to tear down the input system
+                - calls state_save_reset() [state.c] to reset the saved state system
+                - calls coin_counter_reset() [common.c] to reset coin counters
+
+            - ends resource tracking (level 2), freeing all auto_mallocs and timers
+            - calls osd_exit() [osdepend.h] to do platform-specific cleanup
+            - ends resource tracking (level 1), freeing all auto_mallocs and timers
+
+        - exits the program
 
 ***************************************************************************/
 
@@ -148,7 +148,7 @@
 
 /***************************************************************************
 
-	Constants
+    Constants
 
 ***************************************************************************/
 
@@ -158,7 +158,7 @@
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -213,7 +213,7 @@ static struct artwork_callbacks mame_artwork_callbacks =
 
 /***************************************************************************
 
-	Hard disk interface prototype
+    Hard disk interface prototype
 
 ***************************************************************************/
 
@@ -236,7 +236,7 @@ static struct chd_interface mame_chd_interface =
 
 /***************************************************************************
 
-	Other function prototypes
+    Other function prototypes
 
 ***************************************************************************/
 
@@ -262,14 +262,14 @@ static int init_buffered_spriteram(void);
 
 /***************************************************************************
 
-	Inline functions
+    Inline functions
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	bail_and_print - set the bailing flag and
-	print a message if one hasn't already been
-	printed
+    bail_and_print - set the bailing flag and
+    print a message if one hasn't already been
+    printed
 -------------------------------------------------*/
 
 INLINE void bail_and_print(const char *message)
@@ -286,12 +286,12 @@ INLINE void bail_and_print(const char *message)
 
 /***************************************************************************
 
-	Core system management
+    Core system management
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	run_game - run the given game in a session
+    run_game - run the given game in a session
 -------------------------------------------------*/
 
 int run_game(int game)
@@ -301,7 +301,7 @@ int run_game(int game)
 	begin_resource_tracking();
 
 	/* validity checks -- the default is to perform these in all builds now
-	 * due to the number of incorrect submissions */
+     * due to the number of incorrect submissions */
 	if (!options.skip_validitychecks)
 		if (mame_validitychecks())
 			return 1;
@@ -374,7 +374,7 @@ int run_game(int game)
 
 
 /*-------------------------------------------------
-	init_machine - initialize the emulated machine
+    init_machine - initialize the emulated machine
 -------------------------------------------------*/
 
 static int init_machine(void)
@@ -486,9 +486,9 @@ cant_load_language_file:
 
 
 /*-------------------------------------------------
-	run_machine - start the various subsystems
-	and the CPU emulation; returns non zero in
-	case of error
+    run_machine - start the various subsystems
+    and the CPU emulation; returns non zero in
+    case of error
 -------------------------------------------------*/
 
 static int run_machine(void)
@@ -552,7 +552,7 @@ static int run_machine(void)
 
 
 /*-------------------------------------------------
-	run_machine_core - core execution loop
+    run_machine_core - core execution loop
 -------------------------------------------------*/
 
 void run_machine_core(void)
@@ -619,8 +619,8 @@ void run_machine_core(void)
 
 
 /*-------------------------------------------------
-	shutdown_machine - tear down the emulated
-	machine
+    shutdown_machine - tear down the emulated
+    machine
 -------------------------------------------------*/
 
 static void shutdown_machine(void)
@@ -658,7 +658,7 @@ static void shutdown_machine(void)
 
 
 /*-------------------------------------------------
-	mame_pause - pause or resume the system
+    mame_pause - pause or resume the system
 -------------------------------------------------*/
 
 void mame_pause(int pause)
@@ -672,8 +672,8 @@ void mame_pause(int pause)
 
 
 /*-------------------------------------------------
-	expand_machine_driver - construct a machine
-	driver from the macroized state
+    expand_machine_driver - construct a machine
+    driver from the macroized state
 -------------------------------------------------*/
 
 void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), struct InternalMachineDriver *output)
@@ -686,7 +686,7 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 
 
 /*-------------------------------------------------
-	vh_open - start up the video system
+    vh_open - start up the video system
 -------------------------------------------------*/
 
 static int vh_open(void)
@@ -831,7 +831,7 @@ cant_start_palette:
 
 
 /*-------------------------------------------------
-	vh_close - close down the video system
+    vh_close - close down the video system
 -------------------------------------------------*/
 
 static void vh_close(void)
@@ -869,8 +869,8 @@ static void vh_close(void)
 
 
 /*-------------------------------------------------
-	compute_aspect_ratio - determine the aspect
-	ratio encoded in the video attributes
+    compute_aspect_ratio - determine the aspect
+    ratio encoded in the video attributes
 -------------------------------------------------*/
 
 static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *aspect_x, int *aspect_y)
@@ -893,8 +893,8 @@ static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *a
 
 
 /*-------------------------------------------------
-	init_game_options - initialize the various
-	game options
+    init_game_options - initialize the various
+    game options
 -------------------------------------------------*/
 
 static int init_game_options(void)
@@ -936,7 +936,7 @@ static int init_game_options(void)
 
 
 /*-------------------------------------------------
-	decode_graphics - decode the graphics
+    decode_graphics - decode the graphics
 -------------------------------------------------*/
 
 static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
@@ -1016,8 +1016,8 @@ static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
 
 
 /*-------------------------------------------------
-	scale_vectorgames - scale the vector games
-	to a given resolution
+    scale_vectorgames - scale the vector games
+    to a given resolution
 -------------------------------------------------*/
 
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height)
@@ -1043,8 +1043,8 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 
 
 /*-------------------------------------------------
-	init_buffered_spriteram - initialize the
-	double-buffered spriteram
+    init_buffered_spriteram - initialize the
+    double-buffered spriteram
 -------------------------------------------------*/
 
 static int init_buffered_spriteram(void)
@@ -1088,13 +1088,13 @@ static int init_buffered_spriteram(void)
 
 /***************************************************************************
 
-	Screen rendering and management.
+    Screen rendering and management.
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	set_visible_area - adjusts the visible portion
-	of the bitmap area dynamically
+    set_visible_area - adjusts the visible portion
+    of the bitmap area dynamically
 -------------------------------------------------*/
 
 void set_visible_area(int min_x, int max_x, int min_y, int max_y)
@@ -1134,8 +1134,8 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 
 /*-------------------------------------------------
-	set_refresh_rate - adjusts the refresh rate
-	of the video mode dynamically
+    set_refresh_rate - adjusts the refresh rate
+    of the video mode dynamically
 -------------------------------------------------*/
 
 void set_refresh_rate(float fps)
@@ -1157,8 +1157,8 @@ void set_refresh_rate(float fps)
 
 
 /*-------------------------------------------------
-	schedule_full_refresh - force a full erase
-	and refresh the next frame
+    schedule_full_refresh - force a full erase
+    and refresh the next frame
 -------------------------------------------------*/
 
 void schedule_full_refresh(void)
@@ -1169,8 +1169,8 @@ void schedule_full_refresh(void)
 
 
 /*-------------------------------------------------
-	reset_partial_updates - reset the partial
-	updating mechanism for a new frame
+    reset_partial_updates - reset the partial
+    updating mechanism for a new frame
 -------------------------------------------------*/
 
 void reset_partial_updates(void)
@@ -1182,9 +1182,9 @@ void reset_partial_updates(void)
 
 
 /*-------------------------------------------------
-	force_partial_update - perform a partial
-	update from the last scanline up to and
-	including the specified scanline
+    force_partial_update - perform a partial
+    update from the last scanline up to and
+    including the specified scanline
 -------------------------------------------------*/
 
 void force_partial_update(int scanline)
@@ -1228,8 +1228,8 @@ void force_partial_update(int scanline)
 
 
 /*-------------------------------------------------
-	draw_screen - render the final screen bitmap
-	and update any artwork
+    draw_screen - render the final screen bitmap
+    and update any artwork
 -------------------------------------------------*/
 int gbPriorityBitmapIsDirty;
 
@@ -1246,8 +1246,8 @@ void draw_screen(void)
 
 
 /*-------------------------------------------------
-	update_video_and_audio - actually call the
-	OSD layer to perform an update
+    update_video_and_audio - actually call the
+    OSD layer to perform an update
 -------------------------------------------------*/
 
 void update_video_and_audio(void)
@@ -1325,7 +1325,7 @@ void update_video_and_audio(void)
 
 
 /*-------------------------------------------------
-	recompute_fps - recompute the frame rate
+    recompute_fps - recompute the frame rate
 -------------------------------------------------*/
 
 int vector_updates = 0;
@@ -1369,9 +1369,9 @@ static void recompute_fps(int skipped_it)
 
 
 /*-------------------------------------------------
-	updatescreen - handle frameskipping and UI,
-	plus updating the screen during normal
-	operations
+    updatescreen - handle frameskipping and UI,
+    plus updating the screen during normal
+    operations
 -------------------------------------------------*/
 
 int updatescreen(void)
@@ -1412,13 +1412,13 @@ int updatescreen(void)
 
 /***************************************************************************
 
-	Miscellaneous bits & pieces
+    Miscellaneous bits & pieces
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	mame_highscore_enabled - return 1 if high
-	scores are enabled
+    mame_highscore_enabled - return 1 if high
+    scores are enabled
 -------------------------------------------------*/
 
 int mame_highscore_enabled(void)
@@ -1437,7 +1437,7 @@ int mame_highscore_enabled(void)
 
 
 /*-------------------------------------------------
-	set_led_status - set the state of a given LED
+    set_led_status - set the state of a given LED
 -------------------------------------------------*/
 
 void set_led_status(int num, int on)
@@ -1451,8 +1451,8 @@ void set_led_status(int num, int on)
 
 
 /*-------------------------------------------------
-	mame_get_performance_info - return performance
-	info
+    mame_get_performance_info - return performance
+    info
 -------------------------------------------------*/
 
 const struct performance_info *mame_get_performance_info(void)
@@ -1463,8 +1463,8 @@ const struct performance_info *mame_get_performance_info(void)
 
 
 /*-------------------------------------------------
-	mame_find_cpu_index - return the index of the
-	given CPU, or -1 if not found
+    mame_find_cpu_index - return the index of the
+    given CPU, or -1 if not found
 -------------------------------------------------*/
 
 int mame_find_cpu_index(const char *tag)
@@ -1481,8 +1481,8 @@ int mame_find_cpu_index(const char *tag)
 
 
 /*-------------------------------------------------
-	machine_add_cpu - add a CPU during machine
-	driver expansion
+    machine_add_cpu - add a CPU during machine
+    driver expansion
 -------------------------------------------------*/
 
 struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const char *tag, int type, int cpuclock)
@@ -1505,8 +1505,8 @@ struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const 
 
 
 /*-------------------------------------------------
-	machine_find_cpu - find a tagged CPU during
-	machine driver expansion
+    machine_find_cpu - find a tagged CPU during
+    machine driver expansion
 -------------------------------------------------*/
 
 struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const char *tag)
@@ -1524,8 +1524,8 @@ struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const
 
 
 /*-------------------------------------------------
-	machine_remove_cpu - remove a tagged CPU
-	during machine driver expansion
+    machine_remove_cpu - remove a tagged CPU
+    during machine driver expansion
 -------------------------------------------------*/
 
 void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
@@ -1546,8 +1546,8 @@ void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
 
 
 /*-------------------------------------------------
-	machine_add_speaker - add a speaker during
-	machine driver expansion
+    machine_add_speaker - add a speaker during
+    machine driver expansion
 -------------------------------------------------*/
 
 struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine, const char *tag, float x, float y, float z)
@@ -1571,8 +1571,8 @@ struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine
 
 
 /*-------------------------------------------------
-	machine_find_speaker - find a tagged speaker
-	system during machine driver expansion
+    machine_find_speaker - find a tagged speaker
+    system during machine driver expansion
 -------------------------------------------------*/
 
 struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machine, const char *tag)
@@ -1590,8 +1590,8 @@ struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machin
 
 
 /*-------------------------------------------------
-	machine_remove_speaker - remove a tagged speaker
-	system during machine driver expansion
+    machine_remove_speaker - remove a tagged speaker
+    system during machine driver expansion
 -------------------------------------------------*/
 
 void machine_remove_speaker(struct InternalMachineDriver *machine, const char *tag)
@@ -1612,8 +1612,8 @@ void machine_remove_speaker(struct InternalMachineDriver *machine, const char *t
 
 
 /*-------------------------------------------------
-	machine_add_sound - add a sound system during
-	machine driver expansion
+    machine_add_sound - add a sound system during
+    machine driver expansion
 -------------------------------------------------*/
 
 struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, int clock)
@@ -1639,8 +1639,8 @@ struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, co
 
 
 /*-------------------------------------------------
-	machine_find_sound - find a tagged sound
-	system during machine driver expansion
+    machine_find_sound - find a tagged sound
+    system during machine driver expansion
 -------------------------------------------------*/
 
 struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, const char *tag)
@@ -1658,8 +1658,8 @@ struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, c
 
 
 /*-------------------------------------------------
-	machine_remove_sound - remove a tagged sound
-	system during machine driver expansion
+    machine_remove_sound - remove a tagged sound
+    system during machine driver expansion
 -------------------------------------------------*/
 
 void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag)
@@ -1680,8 +1680,8 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 
 
 /*-------------------------------------------------
-	mame_chd_open - interface for opening
-	a hard disk image
+    mame_chd_open - interface for opening
+    a hard disk image
 -------------------------------------------------*/
 
 struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
@@ -1710,8 +1710,8 @@ struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
 
 
 /*-------------------------------------------------
-	mame_chd_close - interface for closing
-	a hard disk image
+    mame_chd_close - interface for closing
+    a hard disk image
 -------------------------------------------------*/
 
 void mame_chd_close(struct chd_interface_file *file)
@@ -1722,8 +1722,8 @@ void mame_chd_close(struct chd_interface_file *file)
 
 
 /*-------------------------------------------------
-	mame_chd_read - interface for reading
-	from a hard disk image
+    mame_chd_read - interface for reading
+    from a hard disk image
 -------------------------------------------------*/
 
 UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
@@ -1735,8 +1735,8 @@ UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 coun
 
 
 /*-------------------------------------------------
-	mame_chd_write - interface for writing
-	to a hard disk image
+    mame_chd_write - interface for writing
+    to a hard disk image
 -------------------------------------------------*/
 
 UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
@@ -1747,8 +1747,8 @@ UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 cou
 
 
 /*-------------------------------------------------
-	mame_chd_length - interface for getting
-	the length a hard disk image
+    mame_chd_length - interface for getting
+    the length a hard disk image
 -------------------------------------------------*/
 
 UINT64 mame_chd_length(struct chd_interface_file *file)
@@ -1760,7 +1760,7 @@ UINT64 mame_chd_length(struct chd_interface_file *file)
 
 /***************************************************************************
 
-	Huge bunch of validity checks for the debug build
+    Huge bunch of validity checks for the debug build
 
 ***************************************************************************/
 
@@ -1809,7 +1809,7 @@ int mame_validitychecks(void)
 		}
 
 #if 0
-//		if (drivers[i]->drv->color_table_len == drivers[i]->drv->total_colors &&
+//      if (drivers[i]->drv->color_table_len == drivers[i]->drv->total_colors &&
 		if (drivers[i]->drv->color_table_len && drivers[i]->drv->total_colors &&
 				drivers[i]->drv->vh_init_palette == 0)
 		{
@@ -2083,11 +2083,11 @@ int mame_validitychecks(void)
 
 
 /*
-					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
-					{
-						printf("%s: %s has invalid memory region for gfx[%d]\n",drivers[i]->source_file,drivers[i]->name,j);
-						error = 1;
-					}
+                    if (type && (type >= REGION_MAX || type <= REGION_INVALID))
+                    {
+                        printf("%s: %s has invalid memory region for gfx[%d]\n",drivers[i]->source_file,drivers[i]->name,j);
+                        error = 1;
+                    }
 */
 
 					if (!IS_FRAC(drv.gfxdecodeinfo[j].gfxlayout->total))
@@ -2233,7 +2233,7 @@ int mame_validitychecks(void)
 						error = 1;
 					}
 			}
-			
+
 			for (j = 0; j < MAX_SOUND && drv.sound[j].sound_type != SOUND_DUMMY; j++)
 			{
 				int k, l;
@@ -2255,7 +2255,7 @@ int mame_validitychecks(void)
 					}
 				}
 			}
-			
+
 			end_resource_tracking();
 		}
 	}

@@ -31,7 +31,7 @@ WRITE8_HANDLER( bigevglf_68705_portA_w )
 WRITE8_HANDLER( bigevglf_68705_ddrA_w )
 {
 	ddrA = data;
-	
+
 }
 
 READ8_HANDLER( bigevglf_68705_portB_r )

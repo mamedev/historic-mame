@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Missile Command hardware
+    Atari Missile Command hardware
 
 ***************************************************************************/
 
@@ -49,7 +49,7 @@ WRITE8_HANDLER( missile_w )
 	/* 3 different ways to write to video ram - the third is caught by the core memory handler */
 	if (opcode == 0x81)
 	{
-		/* 	STA ($00,X) */
+		/*  STA ($00,X) */
 		missile_video_w (offset, data);
 		return;
 	}
@@ -125,7 +125,7 @@ READ8_HANDLER( missile_r )
 
 	if (opcode == 0xa1)
 	{
-		/* 	LDA ($00,X)  */
+		/*  LDA ($00,X)  */
 		return (missile_video_r(offset));
 	}
 

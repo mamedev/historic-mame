@@ -1,85 +1,85 @@
 /***************************************************************************
 
-								Air Buster
-						    (C) 1990  Kaneko
+                                Air Buster
+                            (C) 1990  Kaneko
 
-				    driver by Luca Elia (l.elia@tin.it)
+                    driver by Luca Elia (l.elia@tin.it)
 
 CPU   : Z-80 x 3
-SOUND : YM2203C		M6295
-OSC.  : 12.000MHz	16.000MHz
+SOUND : YM2203C     M6295
+OSC.  : 12.000MHz   16.000MHz
 
-					Interesting routines (main cpu)
-					-------------------------------
+                    Interesting routines (main cpu)
+                    -------------------------------
 
-fd-fe	address of int: 0x38	(must alternate? see e600/1)
-ff-100	address of int: 0x16
-66		print "sub cpu caused nmi" and die!
+fd-fe   address of int: 0x38    (must alternate? see e600/1)
+ff-100  address of int: 0x16
+66      print "sub cpu caused nmi" and die!
 
-7		after tests
+7       after tests
 
-1497	print string following call: (char)*,0. program continues after 0.
-		base addr = c300 + HL & 08ff, DE=xy , BC=dxdy
-		+0<-(e61b)	+100<-D	+200<-E	+300<-char	+400<-(e61c)
+1497    print string following call: (char)*,0. program continues after 0.
+        base addr = c300 + HL & 08ff, DE=xy , BC=dxdy
+        +0<-(e61b)  +100<-D +200<-E +300<-char  +400<-(e61c)
 
-1642	A<- buttons status (bits 0&1)
+1642    A<- buttons status (bits 0&1)
 
-					Interesting locations (main cpu)
-					--------------------------------
+                    Interesting locations (main cpu)
+                    --------------------------------
 
-2907	table of routines (f150 index = 1-3f, copied to e612)
-		e60e<-address of routine, f150<-0. e60e is used until f150!=0
+2907    table of routines (f150 index = 1-3f, copied to e612)
+        e60e<-address of routine, f150<-0. e60e is used until f150!=0
 
-	1:	2bf4	service mode								next
+    1:  2bf4    service mode                                next
 
-	2:	2d33	3:	16bd		4:	2dcb		5:	2fcf
-	6:	3262	7:	32b8
+    2:  2d33    3:  16bd        4:  2dcb        5:  2fcf
+    6:  3262    7:  32b8
 
-	8:	335d>	print gfx/color test page					next
-	9:	33c0>	handle the above page
+    8:  335d>   print gfx/color test page                   next
+    9:  33c0>   handle the above page
 
-	a:	29c6		b:	2a24		c:	16ce
+    a:  29c6        b:  2a24        c:  16ce
 
-	d:	3e7e>	*
-	e:	3ec5>	print "Sub Cpu / Ram Error"; **
-	f:	3e17>	print "Coin error"; **
-	10:	3528>	print (c) notice, not shown					next
-	11:	3730>	show (c) notice, wait 0x100 calls			next
+    d:  3e7e>   *
+    e:  3ec5>   print "Sub Cpu / Ram Error"; **
+    f:  3e17>   print "Coin error"; **
+    10: 3528>   print (c) notice, not shown                 next
+    11: 3730>   show (c) notice, wait 0x100 calls           next
 
-	12:		9658	13:	97c3		14:	a9fa		15:	aa6e
-	16-19:	2985	1a:	9c2e		1b:	9ffa		1c:	29c6
+    12:     9658    13: 97c3        14: a9fa        15: aa6e
+    16-19:  2985    1a: 9c2e        1b: 9ffa        1c: 29c6
 
-	1d:	2988>	*
+    1d: 2988>   *
 
-	1e:	a2c4		1f:	a31a		20:	a32f		21:	a344
-	22:	a359		23:	a36e		24:	a383		25:	a398
-	26:	a3ad		27:	a3c2		28:	a3d7		29:	a3f1
-	2a:	a40e		2b:	a4e5		2c:	a69d		2d:	adb8
-	2e:	ade9		2f:	2b8b		30:	a823
+    1e: a2c4        1f: a31a        20: a32f        21: a344
+    22: a359        23: a36e        24: a383        25: a398
+    26: a3ad        27: a3c2        28: a3d7        29: a3f1
+    2a: a40e        2b: a4e5        2c: a69d        2d: adb8
+    2e: ade9        2f: 2b8b        30: a823
 
-	31:	3d17>	print "warm up, wait few mins. secs left: 00"	next
-	32:	3dc0>	pause (e624 counter).e626						next
+    31: 3d17>   print "warm up, wait few mins. secs left: 00"   next
+    32: 3dc0>   pause (e624 counter).e626                       next
 
-	33:	96b4		34:	97ad
+    33: 96b4        34: 97ad
 
-	35-3f:	3e7e>	*
+    35-3f:  3e7e>   *
 
-*	Print "Command Error [$xx]" where xx is last routine index (e612)
-**	ld (0000h),A (??) ; loop
+*   Print "Command Error [$xx]" where xx is last routine index (e612)
+**  ld (0000h),A (??) ; loop
 
-3cd7	hiscores table (0x40 bytes, copied to e160)
-		Try entering TERU as your name :)
+3cd7    hiscores table (0x40 bytes, copied to e160)
+        Try entering TERU as your name :)
 
-7fff	country code: 0 <-> Japan; else World
+7fff    country code: 0 <-> Japan; else World
 
-e615	rank:	0-easy	1-normal	2-hard	3-hardest
-e624	sound code during sound test
+e615    rank:   0-easy  1-normal    2-hard  3-hardest
+e624    sound code during sound test
 
 -- Shared RAM --
 
-f148<-	sound code (copied from e624)
-f14a->	read on nmi routine. main cpu writes the value and writes to port 02
-f150<-	index of table of routines at 2907
+f148<-  sound code (copied from e624)
+f14a->  read on nmi routine. main cpu writes the value and writes to port 02
+f150<-  index of table of routines at 2907
 
 ----------------
 
@@ -87,67 +87,67 @@ f150<-	index of table of routines at 2907
 
 
 
-					Interesting routines (sub cpu)
-					-------------------------------
+                    Interesting routines (sub cpu)
+                    -------------------------------
 
-491		copy palette data	d000<-f200(a0)	d200<-f300(a0)	d400<-f400(200)
+491     copy palette data   d000<-f200(a0)  d200<-f300(a0)  d400<-f400(200)
 
-61c		f150<-A		f151<-A	(routine index of main cpu!)
-		if dsw1-2 active, it does nothing (?!)
+61c     f150<-A     f151<-A (routine index of main cpu!)
+        if dsw1-2 active, it does nothing (?!)
 
-c8c		c000-c7ff<-0	c800-cfff<-0	f600<-f200(400)
-1750	copies 10 lines of 20 bytes from 289e to f800
+c8c     c000-c7ff<-0    c800-cfff<-0    f600<-f200(400)
+1750    copies 10 lines of 20 bytes from 289e to f800
 
-22cd	copy 0x100 bytes
-22cf	copy 0x0FF bytes
-238d	copy 0x0A0 bytes
+22cd    copy 0x100 bytes
+22cf    copy 0x0FF bytes
+238d    copy 0x0A0 bytes
 
-					Interesting locations (sub cpu)
-					--------------------------------
+                    Interesting locations (sub cpu)
+                    --------------------------------
 
-fd-fe	address of int: 0x36e	(same as 38)
-ff-100	address of int: 0x4b0
+fd-fe   address of int: 0x36e   (same as 38)
+ff-100  address of int: 0x4b0
 
 -- Shared RAM --
 
-f000	credits
+f000    credits
 
 f001/d<-IN 24 (Service)
-f00e<-	bank
-f002<-	dsw1 (cpl'd)
-f003<-	dsw2 (cpl'd)
-f004<-	IN 20 (cpl'd) (player 1)
-f005<-	IN 22 (cpl'd) (player 2)
-f006<-	start lives: dsw-2 & 0x30 index; values: 3,4,5,7		(5da table)
-f007	current lives p1
-f008	current lives p2
+f00e<-  bank
+f002<-  dsw1 (cpl'd)
+f003<-  dsw2 (cpl'd)
+f004<-  IN 20 (cpl'd) (player 1)
+f005<-  IN 22 (cpl'd) (player 2)
+f006<-  start lives: dsw-2 & 0x30 index; values: 3,4,5,7        (5da table)
+f007    current lives p1
+f008    current lives p2
 
-f009<-	coin/credit 1: dsw-1 & 0x30 index; values: 11,12,21,23	(5de table)
-f00a<-	coin 1
-f00b<-	coin/credit 2: dsw-1 & 0xc0 index; values: 11,12,21,23	(5e2 table)
-f00c<-	coin 2
+f009<-  coin/credit 1: dsw-1 & 0x30 index; values: 11,12,21,23  (5de table)
+f00a<-  coin 1
+f00b<-  coin/credit 2: dsw-1 & 0xc0 index; values: 11,12,21,23  (5e2 table)
+f00c<-  coin 2
 
-f00f	?? outa (28h)
-f010	written by sub cpu, bit 4 read by main cpu.
-		bit 0	p1 playing
-		bit 1	p2 playing
+f00f    ?? outa (28h)
+f010    written by sub cpu, bit 4 read by main cpu.
+        bit 0   p1 playing
+        bit 1   p2 playing
 
-f014	index (1-f) of routine called during int 36e (table at c3f)
-	1:	62b			2:	66a			3:	6ad			4:	79f
-	5:	7e0			6:	81b			7:	8a7			8:	8e9
-	9:	b02			a:	0			b:	0			c:	bfc
-	d:	c0d			e:	a6f			f:	ac3
+f014    index (1-f) of routine called during int 36e (table at c3f)
+    1:  62b         2:  66a         3:  6ad         4:  79f
+    5:  7e0         6:  81b         7:  8a7         8:  8e9
+    9:  b02         a:  0           b:  0           c:  bfc
+    d:  c0d         e:  a6f         f:  ac3
 
-f015	index of the routine to call, usually the one selected by f014
-		but sometimes written directly.
+f015    index of the routine to call, usually the one selected by f014
+        but sometimes written directly.
 
 Scroll registers: ports 04/06/08/0a/0c, written in sequence (101f)
-port 06 <- f100 + f140	x		port 04 <- f104 + f142	y
-port 0a <- f120 + f140	x		port 08 <- f124 + f142	y
+port 06 <- f100 + f140  x       port 04 <- f104 + f142  y
+port 0a <- f120 + f140  x       port 08 <- f124 + f142  y
 port 0c <- f14c = bit 0/1/2/3 = port 6/4/a/8 val < FF
 
-f148->	sound code (from main cpu)
-f14c	scroll regs high bits
+f148->  sound code (from main cpu)
+f14c    scroll regs high bits
 
 ----------------
 
@@ -158,23 +158,23 @@ f14c	scroll regs high bits
 
 
 
-					Interesting routines (sound cpu)
-					-------------------------------
+                    Interesting routines (sound cpu)
+                    -------------------------------
 
-50a		6295
-521		6295
-a96		2203 reg<-B		val<-A
+50a     6295
+521     6295
+a96     2203 reg<-B     val<-A
 
-					Interesting locations (sound cpu)
-					---------------------------------
+                    Interesting locations (sound cpu)
+                    ---------------------------------
 
 c715
-c716	pending sound command
-c760	rom bank
+c716    pending sound command
+c760    rom bank
 
 
-								To Do
-								-----
+                                To Do
+                                -----
 
 - The bankswitching registers bits 4&5 are used (any Z80). What for ?
 - Is the sub cpu / sound cpu communication status port (0e) correct ?
@@ -187,27 +187,27 @@ c760	rom bank
 
 /*
 **
-**				Main cpu data
+**              Main cpu data
 **
 */
 
-/*	Runs in IM 2	fd-fe	address of int: 0x38
-					ff-100	address of int: 0x16	*/
+/*  Runs in IM 2    fd-fe   address of int: 0x38
+                    ff-100  address of int: 0x16    */
 
 /*
 **
-**				Sub cpu data
+**              Sub cpu data
 **
 **
 */
 
-/*	Runs in IM 2	fd-fe	address of int: 0x36e	(same as 0x38)
-					ff-100	address of int: 0x4b0	(only writes to port 38h)	*/
+/*  Runs in IM 2    fd-fe   address of int: 0x36e   (same as 0x38)
+                    ff-100  address of int: 0x4b0   (only writes to port 38h)   */
 /*
    Sub cpu and Sound cpu communicate bidirectionally:
 
-	   Sub   cpu writes to soundlatch,  reads from soundlatch2
-	   Sound cpu writes to soundlatch2, reads from soundlatch
+       Sub   cpu writes to soundlatch,  reads from soundlatch2
+       Sound cpu writes to soundlatch2, reads from soundlatch
 
    Each latch raises a flag when it's been written.
    The flag is cleared when the latch is read.
@@ -242,17 +242,17 @@ extern VIDEO_UPDATE( airbustr );
 static READ8_HANDLER( devram_r )
 {
 	// There's an MCU here, possibly
-	
+
 	switch (offset)
 	{
 		/* Reading efe0 probably resets a watchdog mechanism
-		   that would reset the main cpu. We avoid this and patch
-		   the rom instead (main cpu has to be reset once at startup) */
+           that would reset the main cpu. We avoid this and patch
+           the rom instead (main cpu has to be reset once at startup) */
 		case 0xfe0:
 			return 0/*watchdog_reset_r(0)*/;
 
 		/* Reading a word at eff2 probably yelds the product
-   		   of the words written to eff0 and eff2 */
+           of the words written to eff0 and eff2 */
 		case 0xff2:
 		case 0xff3:
 		{
@@ -263,7 +263,7 @@ static READ8_HANDLER( devram_r )
 		}	break;
 
 		/* Reading eff4, F0 times must yield at most 80-1 consecutive
-		   equal values */
+           equal values */
 		case 0xff4:
 			return rand();
 
@@ -308,7 +308,7 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 
 static READ8_HANDLER( soundcommand_status_r )
 {
-	// bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty
+	// bits: 2 <-> ?    1 <-> soundlatch full   0 <-> soundlatch2 empty
 	return 4 + soundlatch_status * 2 + (1 - soundlatch2_status);
 }
 
@@ -342,9 +342,9 @@ static WRITE8_HANDLER( airbustr_paletteram_w )
 	int r, g, b;
 	int val;
 
-	/*	! byte 1 ! ! byte 0 !	*/
-	/*	xGGG GGRR 	RRRB BBBB	*/
-	/*	x432 1043 	2104 3210	*/
+	/*  ! byte 1 ! ! byte 0 !   */
+	/*  xGGG GGRR   RRRB BBBB   */
+	/*  x432 1043   2104 3210   */
 
 	paletteram[offset] = data;
 	val = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
@@ -470,7 +470,7 @@ INPUT_PORTS_START( airbustr )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)	
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
@@ -689,12 +689,12 @@ DRIVER_INIT( airbustr )
 
 	// Startup check. We need a reset so I patch a busy loop with jp 0
 	ROM = memory_region(REGION_CPU1);
-	ROM[0x37e4] = 0x00;	
-	ROM[0x37e5] = 0x00;	
+	ROM[0x37e4] = 0x00;
+	ROM[0x37e5] = 0x00;
 
 	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
 	ROM = memory_region(REGION_CPU2);
-	ROM[0x0258] = 0x53; 					
+	ROM[0x0258] = 0x53;
 }
 
 DRIVER_INIT( airbustj )
@@ -710,12 +710,12 @@ DRIVER_INIT( airbustj )
 
 	// Startup check. We need a reset so I patch a busy loop with jp 0
 	ROM = memory_region(REGION_CPU1);
-	ROM[0x37f4] = 0x00;	
+	ROM[0x37f4] = 0x00;
 	ROM[0x37f5] = 0x00;
 
 	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
 	ROM = memory_region(REGION_CPU2);
-	ROM[0x0258] = 0x53; 					
+	ROM[0x0258] = 0x53;
 }
 
 /* Game Drivers */

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Sprint 2 video emulation
+    Atari Sprint 2 video emulation
 
 ***************************************************************************/
 
@@ -120,7 +120,7 @@ VIDEO_UPDATE( sprint2 )
 	int i;
 
 	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
-	
+
 	/* draw the sprites */
 
 	for (i = 0; i < 4; i++)
@@ -142,12 +142,12 @@ VIDEO_EOF( sprint2 )
 	int j;
 
 	/*
-	 * Collisions are detected for both player cars:
-	 *
-	 * D7 => collision w/ white playfield
-	 * D6 => collision w/ black playfield or another car
-	 *
-	 */
+     * Collisions are detected for both player cars:
+     *
+     * D7 => collision w/ white playfield
+     * D6 => collision w/ black playfield or another car
+     *
+     */
 
 	for (i = 0; i < 2; i++)
 	{

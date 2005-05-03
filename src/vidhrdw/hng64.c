@@ -89,10 +89,10 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		source+=8;
 	}
 
-//	for (int iii = 0; iii < 0x0f; iii++)
-//		printf("%.8x ", hng64_videoregs[iii]) ;
+//  for (int iii = 0; iii < 0x0f; iii++)
+//      printf("%.8x ", hng64_videoregs[iii]) ;
 
-//	printf("\n") ;
+//  printf("\n") ;
 
 	finish = hng64_spriteram;
 
@@ -122,9 +122,9 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		if(ypos&0x8000) ypos -=0x10000;
 
 
-//		if (!(source[4] == 0x00000000 || source[4] == 0x000000aa))
-//			printf("unknown : %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
-//															source[4]) ;
+//      if (!(source[4] == 0x00000000 || source[4] == 0x000000aa))
+//          printf("unknown : %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
+//                                                          source[4]) ;
 
 		/* Calculate the zoom */
 		/* First, prevent any possible divide by zero errors */
@@ -149,7 +149,7 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		{
 			gfx= Machine->gfx[5];
 			tileno>>=1;
-		//	pal >>=4;
+		//  pal >>=4;
 		}
 
 		// Accomodate for chaining and flipping
@@ -174,11 +174,11 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		}
 
 
-//		if (((source[2] & 0xffff0000) >> 16) == 0x0001)
-//		{
-//			usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
-//			// usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
-//		}
+//      if (((source[2] & 0xffff0000) >> 16) == 0x0001)
+//      {
+//          usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//          // usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//      }
 
 		for(ydrw=0;ydrw<=chainy;ydrw++)
 		{
@@ -195,24 +195,24 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 /* Transition_Control Memory Region Map
  * ------------------------------
  *
- *	UINT32 | Bytes    | Use
- *	-------+-76543210-+----------
- *	     0 |          |
- *	     1 |          |
- *	     2 |          |
- *	     3 |          |
- *	     4 |          |
- *	     5 |          |
- *	     6 | --xxxxxx | I popped into Buriki and saw some of these values changing to the same as 7.  hmmmm...
- *	     7 | --xxxxxx | Almost certainly RGB darkening
- *	     8 |          |
- *	     9 |          |
- *	    10 | --xxxxxx | Almost certainly RGB brightening
- *	    11 | xxxxxxxx | Unknown - looks like an ARGB value - it seems to change when the scene changes
- *	    12 |          |
- *	    13 |          |
- *	    14 |          |
- *	    15 |          |
+ *  UINT32 | Bytes    | Use
+ *  -------+-76543210-+----------
+ *       0 |          |
+ *       1 |          |
+ *       2 |          |
+ *       3 |          |
+ *       4 |          |
+ *       5 |          |
+ *       6 | --xxxxxx | I popped into Buriki and saw some of these values changing to the same as 7.  hmmmm...
+ *       7 | --xxxxxx | Almost certainly RGB darkening
+ *       8 |          |
+ *       9 |          |
+ *      10 | --xxxxxx | Almost certainly RGB brightening
+ *      11 | xxxxxxxx | Unknown - looks like an ARGB value - it seems to change when the scene changes
+ *      12 |          |
+ *      13 |          |
+ *      14 |          |
+ *      15 |          |
  *
  *  Various bits change depending on what is happening in the scene.
  *  These bits may set which 'layer' is affected by the blending.
@@ -224,8 +224,8 @@ static void hng64_transition_control(struct mame_bitmap *bitmap)
 {
 	int i, j ;
 
-//	float colorScaleR, colorScaleG, colorScaleB ;
-//	float finR, finG, finB ;
+//  float colorScaleR, colorScaleG, colorScaleB ;
+//  float finR, finG, finB ;
 	INT32 finR, finG, finB ;
 
 	INT32 darkR, darkG, darkB ;
@@ -253,31 +253,31 @@ static void hng64_transition_control(struct mame_bitmap *bitmap)
 				finB = (INT32)RGB_BLUE(*thePixel) ;
 
 				/*
-				// Apply the darkening pass (0x07)...
-				colorScaleR = 1.0f - (float)( hng64_fcram[0x00000007] & 0xff)        / 255.0f ;
-				colorScaleG = 1.0f - (float)((hng64_fcram[0x00000007] >> 8)  & 0xff) / 255.0f ;
-				colorScaleB = 1.0f - (float)((hng64_fcram[0x00000007] >> 16) & 0xff) / 255.0f ;
+                // Apply the darkening pass (0x07)...
+                colorScaleR = 1.0f - (float)( hng64_fcram[0x00000007] & 0xff)        / 255.0f ;
+                colorScaleG = 1.0f - (float)((hng64_fcram[0x00000007] >> 8)  & 0xff) / 255.0f ;
+                colorScaleB = 1.0f - (float)((hng64_fcram[0x00000007] >> 16) & 0xff) / 255.0f ;
 
-				finR = ((float)RGB_RED(*thePixel)   * colorScaleR) ;
-				finG = ((float)RGB_GREEN(*thePixel) * colorScaleG) ;
-				finB = ((float)RGB_BLUE(*thePixel)  * colorScaleB) ;
-
-
-				// Apply the lightening pass (0x0a)...
-				colorScaleR = 1.0f + (float)( hng64_fcram[0x0000000a] & 0xff)        / 255.0f ;
-				colorScaleG = 1.0f + (float)((hng64_fcram[0x0000000a] >> 8)  & 0xff) / 255.0f ;
-				colorScaleB = 1.0f + (float)((hng64_fcram[0x0000000a] >> 16) & 0xff) / 255.0f ;
-
-				finR *= colorScaleR ;
-				finG *= colorScaleG ;
-				finB *= colorScaleB ;
+                finR = ((float)RGB_RED(*thePixel)   * colorScaleR) ;
+                finG = ((float)RGB_GREEN(*thePixel) * colorScaleG) ;
+                finB = ((float)RGB_BLUE(*thePixel)  * colorScaleB) ;
 
 
-				// Clamp
-				if (finR > 255.0f) finR = 255.0f ;
-				if (finG > 255.0f) finG = 255.0f ;
-				if (finB > 255.0f) finB = 255.0f ;
-				*/
+                // Apply the lightening pass (0x0a)...
+                colorScaleR = 1.0f + (float)( hng64_fcram[0x0000000a] & 0xff)        / 255.0f ;
+                colorScaleG = 1.0f + (float)((hng64_fcram[0x0000000a] >> 8)  & 0xff) / 255.0f ;
+                colorScaleB = 1.0f + (float)((hng64_fcram[0x0000000a] >> 16) & 0xff) / 255.0f ;
+
+                finR *= colorScaleR ;
+                finG *= colorScaleG ;
+                finB *= colorScaleB ;
+
+
+                // Clamp
+                if (finR > 255.0f) finR = 255.0f ;
+                if (finG > 255.0f) finG = 255.0f ;
+                if (finB > 255.0f) finB = 255.0f ;
+                */
 
 
 				// Subtractive fading
@@ -394,15 +394,15 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 			UINT32 address[4] ;
 			UINT32 megaOffset ;
 			float eyeCoords[4] ;			// objectCoords transformed by the modelViewMatrix
-			// float clipCoords[4] ;		// eyeCoords transformed by the projectionMatrix
+			// float clipCoords[4] ;        // eyeCoords transformed by the projectionMatrix
 			float ndCoords[4] ;				// normalized device coordinates/clipCoordinates (x/w, y/w, z/w)
 			float windowCoords[4] ;			// mapped ndCoordinates to screen space
 			float cullRay[4] ;
 
 			// Debug...
-//			printf("Element %.2d (%d) : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n", i/0x08, j,
-//									   (UINT32)hng64_dls[j][i+0], (UINT32)hng64_dls[j][i+1], (UINT32)hng64_dls[j][i+2], (UINT32)hng64_dls[j][i+3],
-//									   (UINT32)hng64_dls[j][i+4], (UINT32)hng64_dls[j][i+5], (UINT32)hng64_dls[j][i+6], (UINT32)hng64_dls[j][i+7]) ;
+//          printf("Element %.2d (%d) : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n", i/0x08, j,
+//                                     (UINT32)hng64_dls[j][i+0], (UINT32)hng64_dls[j][i+1], (UINT32)hng64_dls[j][i+2], (UINT32)hng64_dls[j][i+3],
+//                                     (UINT32)hng64_dls[j][i+4], (UINT32)hng64_dls[j][i+5], (UINT32)hng64_dls[j][i+6], (UINT32)hng64_dls[j][i+7]) ;
 
 			// Depending on what the initial flags are, do sumthin'...
 			switch((workingList[i+0] & 0xffff0000) >> 16)
@@ -424,7 +424,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				far_    = uToF( workingList[i+3] & 0x0000ffff) ;
 
 				// It's almost .always. these values in fatfurwa...
-				// 0.070313    0.000000 [0]		(scaled by 128)
+				// 0.070313    0.000000 [0]     (scaled by 128)
 				// 0.000000   10.000000 [1]
 				// 0.000000    0.500000 [2]
 				// 2.000000   11.062500 [3]
@@ -454,25 +454,25 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				projectionMatrix[15] = 0.0f ;
 
 				/*
-				int xxx ;
-				for (xxx = 0; xxx < 16; xxx++)
-					printf("%f ", projectionMatrix[xxx]) ;
-				printf("\n") ;
+                int xxx ;
+                for (xxx = 0; xxx < 16; xxx++)
+                    printf("%f ", projectionMatrix[xxx]) ;
+                printf("\n") ;
 
-				printf("Vars   : %f %f %f %f %f %f\n", left, right, top, bottom, near, far) ;
-				printf("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-								 uToF((workingList[i+0] & 0xffff0000) >> 16)*128, uToF( workingList[i+0] & 0x0000ffff)*128,
-								 uToF((workingList[i+1] & 0xffff0000) >> 16)*128, uToF( workingList[i+1] & 0x0000ffff)*128,
+                printf("Vars   : %f %f %f %f %f %f\n", left, right, top, bottom, near, far) ;
+                printf("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+                                 uToF((workingList[i+0] & 0xffff0000) >> 16)*128, uToF( workingList[i+0] & 0x0000ffff)*128,
+                                 uToF((workingList[i+1] & 0xffff0000) >> 16)*128, uToF( workingList[i+1] & 0x0000ffff)*128,
 
-								 uToF((workingList[i+2] & 0xffff0000) >> 16)*128, uToF( workingList[i+2] & 0x0000ffff)*128,
-								 uToF((workingList[i+3] & 0xffff0000) >> 16)*128, uToF( workingList[i+3] & 0x0000ffff)*128,
+                                 uToF((workingList[i+2] & 0xffff0000) >> 16)*128, uToF( workingList[i+2] & 0x0000ffff)*128,
+                                 uToF((workingList[i+3] & 0xffff0000) >> 16)*128, uToF( workingList[i+3] & 0x0000ffff)*128,
 
-								 uToF((workingList[i+4] & 0xffff0000) >> 16)*128, uToF( workingList[i+4] & 0x0000ffff)*128,
-								 uToF((workingList[i+5] & 0xffff0000) >> 16)*128, uToF( workingList[i+5] & 0x0000ffff)*128,
+                                 uToF((workingList[i+4] & 0xffff0000) >> 16)*128, uToF( workingList[i+4] & 0x0000ffff)*128,
+                                 uToF((workingList[i+5] & 0xffff0000) >> 16)*128, uToF( workingList[i+5] & 0x0000ffff)*128,
 
-								 uToF((workingList[i+6] & 0xffff0000) >> 16)*128, uToF( workingList[i+6] & 0x0000ffff)*128,
-								 uToF((workingList[i+7] & 0xffff0000) >> 16)*128, uToF( workingList[i+7] & 0x0000ffff)*128) ;
-				*/
+                                 uToF((workingList[i+6] & 0xffff0000) >> 16)*128, uToF( workingList[i+6] & 0x0000ffff)*128,
+                                 uToF((workingList[i+7] & 0xffff0000) >> 16)*128, uToF( workingList[i+7] & 0x0000ffff)*128) ;
+                */
 
 				break ;
 
@@ -803,21 +803,21 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 						// BACKFACE CULL //
 						///////////////////
 /*
-						float cullRay[4] ;
-						float cullNorm[4] ;
+                        float cullRay[4] ;
+                        float cullNorm[4] ;
 
-						// Cast a ray out of the camera towards the polygon's point in eyespace.
-						vecmatmul4(cullRay, modelViewMatrix, polys[numPolys].vert[0].worldCoords) ;
-						normalize(cullRay) ;
-						// Dot product that with the normal to see if you're negative...
-						vecmatmul4(cullNorm, modelViewMatrix, polys[numPolys].faceNormal) ;
+                        // Cast a ray out of the camera towards the polygon's point in eyespace.
+                        vecmatmul4(cullRay, modelViewMatrix, polys[numPolys].vert[0].worldCoords) ;
+                        normalize(cullRay) ;
+                        // Dot product that with the normal to see if you're negative...
+                        vecmatmul4(cullNorm, modelViewMatrix, polys[numPolys].faceNormal) ;
 
-						float result = vecDotProduct(cullRay, cullNorm) ;
+                        float result = vecDotProduct(cullRay, cullNorm) ;
 
-						if (result < 0.0f)
-							polys[numPolys].visible = 1 ;
-						else
-							polys[numPolys].visible = 0 ;
+                        if (result < 0.0f)
+                            polys[numPolys].visible = 1 ;
+                        else
+                            polys[numPolys].visible = 0 ;
 */
 
 						////////////////////////////
@@ -875,15 +875,15 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 
 /*
-						// DEBUG
-						if (chunkLength == (9 << 1))
-						{
-							printf("Chunk : ") ;
-							for (int ajg = 0; ajg < chunkLength; ajg+=2)
-								printf("%.2x%.2x ", threeDPointer[ajg], threeDPointer[ajg+1]) ;
-							printf("\n") ;
-						}
-						// END DEBUG
+                        // DEBUG
+                        if (chunkLength == (9 << 1))
+                        {
+                            printf("Chunk : ") ;
+                            for (int ajg = 0; ajg < chunkLength; ajg+=2)
+                                printf("%.2x%.2x ", threeDPointer[ajg], threeDPointer[ajg+1]) ;
+                            printf("\n") ;
+                        }
+                        // END DEBUG
 */
 
 						// Advance to the next polygon chunk...
@@ -1154,10 +1154,10 @@ static float uToF(UINT16 input)
 	retVal = (float)((INT16)input) / 32768.0f ;
 
 /*
-	if ((INT16)input < 0)
-		retVal = (float)((INT16)input) / 32768.0f ;
-	else
-		retVal = (float)((INT16)input) / 32767.0f ;
+    if ((INT16)input < 0)
+        retVal = (float)((INT16)input) / 32768.0f ;
+    else
+        retVal = (float)((INT16)input) / 32767.0f ;
 */
 
 	return retVal ;
@@ -1363,13 +1363,13 @@ static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, stru
 	INT32 e;
 
 	/*
-	* inline swap. On some architectures, the XOR trick may be faster
-	*/
+    * inline swap. On some architectures, the XOR trick may be faster
+    */
 	INT32 tmpswap;
 
 	/*
-	* optimize for vertical and horizontal lines here
-	*/
+    * optimize for vertical and horizontal lines here
+    */
 
 	dx = abs(x1 - x0);
 	sx = ((x1 - x0) > 0) ? 1 : -1;
@@ -1421,13 +1421,13 @@ static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap)
 
 	// SHOWS THE CLIPPING //
 	/*
-	for (int j = 1; j < p->n-1; j++)
-	{
-		drawline2d(p->vert[0].clipCoords[0],   p->vert[0].clipCoords[1],   p->vert[j].clipCoords[0],   p->vert[j].clipCoords[1],   255, bitmap) ;
-		drawline2d(p->vert[j].clipCoords[0],   p->vert[j].clipCoords[1],   p->vert[j+1].clipCoords[0], p->vert[j+1].clipCoords[1], 255, bitmap) ;
-		drawline2d(p->vert[j+1].clipCoords[0], p->vert[j+1].clipCoords[1], p->vert[0].clipCoords[0],   p->vert[0].clipCoords[1],   255, bitmap) ;
-	}
-	*/
+    for (int j = 1; j < p->n-1; j++)
+    {
+        drawline2d(p->vert[0].clipCoords[0],   p->vert[0].clipCoords[1],   p->vert[j].clipCoords[0],   p->vert[j].clipCoords[1],   255, bitmap) ;
+        drawline2d(p->vert[j].clipCoords[0],   p->vert[j].clipCoords[1],   p->vert[j+1].clipCoords[0], p->vert[j+1].clipCoords[1], 255, bitmap) ;
+        drawline2d(p->vert[j+1].clipCoords[0], p->vert[j+1].clipCoords[1], p->vert[0].clipCoords[0],   p->vert[0].clipCoords[1],   255, bitmap) ;
+    }
+    */
 }
 #endif
 

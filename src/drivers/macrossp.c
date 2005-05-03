@@ -63,69 +63,69 @@ DIPS: 2x 8-Position
 
 SW1:
 
-			1	2	3	4	5	6	7	8
+            1   2   3   4   5   6   7   8
 -------------------------------------------------------------------------------------
-COIN A	1COIN 1PLAY	OFF	OFF	OFF	OFF
-	1C2P		ON	OFF	OFF	OFF
-	1C3P		OFF	ON	OFF	OFF
-	1C4P		ON	ON	OFF	OFF
-	1C5P		OFF	OFF	ON	OFF
-	1C6P		ON	OFF	ON	OFF
-	1C7P		OFF	ON	ON	OFF
-	2C1P		ON	ON	ON	OFF
-	2C3P		OFF	OFF	OFF	ON
-	2C5P		ON	OFF	OFF	ON
-	3C1P		OFF	ON	OFF	ON
-	3C2P		ON	ON	OFF	ON
-	3C4P		OFF	OFF	ON	ON
-	4C1P		ON	OFF	ON	ON
-	4C3P		OFF	ON	ON	ON
-	FREEPLAY	ON	ON	ON	ON
+COIN A  1COIN 1PLAY OFF OFF OFF OFF
+    1C2P        ON  OFF OFF OFF
+    1C3P        OFF ON  OFF OFF
+    1C4P        ON  ON  OFF OFF
+    1C5P        OFF OFF ON  OFF
+    1C6P        ON  OFF ON  OFF
+    1C7P        OFF ON  ON  OFF
+    2C1P        ON  ON  ON  OFF
+    2C3P        OFF OFF OFF ON
+    2C5P        ON  OFF OFF ON
+    3C1P        OFF ON  OFF ON
+    3C2P        ON  ON  OFF ON
+    3C4P        OFF OFF ON  ON
+    4C1P        ON  OFF ON  ON
+    4C3P        OFF ON  ON  ON
+    FREEPLAY    ON  ON  ON  ON
 
-COIN B	1COIN 1PLAY					OFF	OFF	OFF	OFF
-	1C2P						ON	OFF	OFF	OFF
-	1C3P						OFF	ON	OFF	OFF
-	1C4P						ON	ON	OFF	OFF
-	1C5P						OFF	OFF	ON	OFF
-	1C6P						ON	OFF	ON	OFF
-	1C7P						OFF	ON	ON	OFF
-	2C1P						ON	ON	ON	OFF
-	2C3P						OFF	OFF	OFF	ON
-	2C5P						ON	OFF	OFF	ON
-	3C1P						OFF	ON	OFF	ON
-	3C2P						ON	ON	OFF	ON
-	3C4P						OFF	OFF	ON	ON
-	4C1P						ON	OFF	ON	ON
-	4C3P						OFF	ON	ON	ON
-	5C3P						ON	ON	ON	ON
+COIN B  1COIN 1PLAY                 OFF OFF OFF OFF
+    1C2P                        ON  OFF OFF OFF
+    1C3P                        OFF ON  OFF OFF
+    1C4P                        ON  ON  OFF OFF
+    1C5P                        OFF OFF ON  OFF
+    1C6P                        ON  OFF ON  OFF
+    1C7P                        OFF ON  ON  OFF
+    2C1P                        ON  ON  ON  OFF
+    2C3P                        OFF OFF OFF ON
+    2C5P                        ON  OFF OFF ON
+    3C1P                        OFF ON  OFF ON
+    3C2P                        ON  ON  OFF ON
+    3C4P                        OFF OFF ON  ON
+    4C1P                        ON  OFF ON  ON
+    4C3P                        OFF ON  ON  ON
+    5C3P                        ON  ON  ON  ON
 
 FACTORY SETTING = ALL OFF
 
 
 SW2
 
-			1	2	3	4	5	6	7	8
+            1   2   3   4   5   6   7   8
 --------------------------------------------------------------------------------------
-DIFFICULTY	NORMAL	OFF	OFF
-		EASY	ON	OFF
-		HARD	OFF	ON
-		HARDEST	ON	ON
+DIFFICULTY  NORMAL  OFF OFF
+        EASY    ON  OFF
+        HARD    OFF ON
+        HARDEST ON  ON
 
-PLAYERS		3			OFF	OFF
-                4                       ON	OFF
-                5                       OFF	ON
-                2                       ON	ON
+PLAYERS     3           OFF OFF
+                4                       ON  OFF
+                5                       OFF ON
+                2                       ON  ON
 
-DEMO SOUND	YES					OFF
-		NO					ON
+DEMO SOUND  YES                 OFF
+        NO                  ON
 
-SCREEN F/F	PLAY						OFF
-		MUTE						ON
+SCREEN F/F  PLAY                        OFF
+        MUTE                        ON
 
-NOT USED								OFF
+NOT USED                                OFF
 
-MODE		GAME								OFF
-		TEST								ON
+MODE        GAME                                OFF
+        TEST                                ON
 
 
 FACTORY SETTING = ALL OFF
@@ -135,31 +135,31 @@ ROMs:  (Filename = ROM label, extension also on ROM label)
 
 TOP ROM PCB
 -----------
-BP964A-C.U1	\
-BP964A-C.U2	 |
-BP964A-C.U3	 |
-BP964A-C.U4	 > 27C040
-BP964A.U19	 |
-BP964A.U20	 |
-BP964A.U21	/
+BP964A-C.U1 \
+BP964A-C.U2  |
+BP964A-C.U3  |
+BP964A-C.U4  > 27C040
+BP964A.U19   |
+BP964A.U20   |
+BP964A.U21  /
 
-BP964A.U9	\
-BP964A.U10	 |
-BP964A.U11	 |
-BP964A.U12	 |
-BP964A.U13	 |
-BP964A.U14	 > 32M (44 pin SOP - surface mounted)
-BP964A.U15	 |
-BP964A.U16	 |
-BP964A.U17	 |
-BP964A.U18	 |
-BP964A.U24	/
+BP964A.U9   \
+BP964A.U10   |
+BP964A.U11   |
+BP964A.U12   |
+BP964A.U13   |
+BP964A.U14   > 32M (44 pin SOP - surface mounted)
+BP964A.U15   |
+BP964A.U16   |
+BP964A.U17   |
+BP964A.U18   |
+BP964A.U24  /
 
 ROMs:  (Filename = ROM Label)
 
 MOTHERBOARD PCB
 ---------------
-BP964A.U49	27C010
+BP964A.U49  27C010
 
 --- ROMSET: quizmoon ---
 
@@ -264,7 +264,7 @@ static READ32_HANDLER ( macrossp_soundstatus_r )
 {
 	static int toggle;
 
-//	logerror("%08x read soundstatus\n",activecpu_get_pc());
+//  logerror("%08x read soundstatus\n",activecpu_get_pc());
 
 	/* bit 1 is sound status */
 	/* bit 0 unknown - it is expected to toggle, vblank? */
@@ -291,7 +291,7 @@ static WRITE32_HANDLER( macrossp_soundcmd_w )
 
 static READ16_HANDLER( macrossp_soundcmd_r )
 {
-//	logerror("%06x read soundcmd\n",activecpu_get_pc());
+//  logerror("%06x read soundcmd\n",activecpu_get_pc());
 	sndpending = 0;
 	return soundlatch_word_r(offset,mem_mask);
 }
@@ -317,7 +317,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0xf00000, 0xf1ffff) AM_READ(MRA32_RAM)
 
-//	AM_RANGE(0xfe0000, 0xfe0003) AM_READ(MRA32_NOP)
+//  AM_RANGE(0xfe0000, 0xfe0003) AM_READ(MRA32_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -345,15 +345,15 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0xb00004, 0xb00007) AM_WRITE(MWA32_NOP)	// ????
 	AM_RANGE(0xb00008, 0xb0000b) AM_WRITE(MWA32_NOP)	// ????
-//	AM_RANGE(0xb0000c, 0xb0000f) AM_WRITE(MWA32_NOP)
+//  AM_RANGE(0xb0000c, 0xb0000f) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xb00010, 0xb00013) AM_WRITE(MWA32_RAM)	// macrossp palette fade
-//	AM_RANGE(0xb00020, 0xb00023) AM_WRITE(MWA32_NOP)
+//  AM_RANGE(0xb00020, 0xb00023) AM_WRITE(MWA32_NOP)
 
 	AM_RANGE(0xc00000, 0xc00003) AM_WRITE(macrossp_soundcmd_w)
 
 	AM_RANGE(0xf00000, 0xf1ffff) AM_WRITE(MWA32_RAM) AM_BASE(&macrossp_mainram) /* Main Ram */
 
-//	AM_RANGE(0xfe0000, 0xfe0003) AM_WRITE(MWA32_NOP)
+//  AM_RANGE(0xfe0000, 0xfe0003) AM_WRITE(MWA32_NOP)
 ADDRESS_MAP_END
 
 
@@ -647,7 +647,7 @@ INPUT_PORTS_START( quizmoon )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Flip_Screen ) )	// See in test mode ok but not working.... 
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Flip_Screen ) )	// See in test mode ok but not working....
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
@@ -750,8 +750,8 @@ static void irqhandler(int irq)
 	logerror("ES5506 irq %d\n",irq);
 
 	/* IRQ lines 1 & 4 on the sound 68000 are definitely triggered by the ES5506,
-	but I haven't noticed the ES5506 ever assert the line - maybe only used when developing the game? */
-//	cpunum_set_input_line(1,1,irq ? ASSERT_LINE : CLEAR_LINE);
+    but I haven't noticed the ES5506 ever assert the line - maybe only used when developing the game? */
+//  cpunum_set_input_line(1,1,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct ES5506interface es5506_interface =
@@ -778,7 +778,7 @@ static MACHINE_DRIVER_START( macrossp )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-//	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT) /* only needs 6 bits because of alpha blending */
+//  MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT) /* only needs 6 bits because of alpha blending */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN) /* only needs 6 bits because of alpha blending */
 	MDRV_SCREEN_SIZE(32*16, 16*16)
 	MDRV_VISIBLE_AREA(0*16, 24*16-1, 0*16, 15*16-1)

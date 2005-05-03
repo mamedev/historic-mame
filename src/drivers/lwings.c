@@ -8,10 +8,10 @@
   Driver provided by Paul Leaman
 
 To Do:
--	sectionz does "false contacts" on the coin counters, causing them to
-	increment twice per coin.
--	clean up Avengers protection; it currently checks against hard-coded program
-	counter rather than behaving as a memory-mapped black box.
+-   sectionz does "false contacts" on the coin counters, causing them to
+    increment twice per coin.
+-   clean up Avengers protection; it currently checks against hard-coded program
+    counter rather than behaving as a memory-mapped black box.
 
 
 Change Log:
@@ -231,11 +231,11 @@ static READ8_HANDLER( avengers_protection_r )
 		return avengers_fetch_paldata();
 	}
 
-	/*	Point to Angle Function
+	/*  Point to Angle Function
 
-		Input: two cartesian points
-		Output: direction code (north,northeast,east,...)
-	 */
+        Input: two cartesian points
+        Output: direction code (north,northeast,east,...)
+     */
 	x = avengers_param[0] - avengers_param[2];
 	y = avengers_param[1] - avengers_param[3];
 	for( dir=0; dir<8; dir++ )
@@ -366,7 +366,7 @@ ADDRESS_MAP_END
 
 /* Yes, _no_ ram */
 static ADDRESS_MAP_START( adpcm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-/*	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM) avoid cluttering up error.log */
+/*  AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM) avoid cluttering up error.log */
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 

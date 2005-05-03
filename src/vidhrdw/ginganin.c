@@ -1,58 +1,58 @@
 /**************************************************************************
 
-							Ginga NinkyouDen
-							(C) 1987 Jaleco
+                            Ginga NinkyouDen
+                            (C) 1987 Jaleco
 
-					driver by Luca Elia (l.elia@tin.it)
+                    driver by Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Q		shows background
-		W		shows foreground
-		E		shows frontmost (text) layer
-		A		shows sprites
+        Q       shows background
+        W       shows foreground
+        E       shows frontmost (text) layer
+        A       shows sprites
 
-		Keys can be used togheter!
+        Keys can be used togheter!
 
 
 [Screen]
-	Visible Size:		256H x 240V
-	Dynamic Colors: 	256 x 4
-	Color Space:		16R x 16G x 16B
+    Visible Size:       256H x 240V
+    Dynamic Colors:     256 x 4
+    Color Space:        16R x 16G x 16B
 
 [Scrolling layers]
-	Format (all layers):	Offset: 	0x400	 0x000
-							Bit:		fedc---- --------	Color
-										----ba98 76543210	Code
+    Format (all layers):    Offset:     0x400    0x000
+                            Bit:        fedc---- --------   Color
+                                        ----ba98 76543210   Code
 
-	[Background]
-		Size:				8192 x 512	(static: stored in ROM)
-		Scrolling:			X,Y 		(registers: $60006.w, $60004.w)
-		Tiles Size: 		16 x 16
-		Tiles Number:		$400
-		Colors: 			$300-$3ff
+    [Background]
+        Size:               8192 x 512  (static: stored in ROM)
+        Scrolling:          X,Y         (registers: $60006.w, $60004.w)
+        Tiles Size:         16 x 16
+        Tiles Number:       $400
+        Colors:             $300-$3ff
 
-	[Foreground]
-		Size:				4096 x 512
-		Scrolling:			X,Y 		(registers: $60002.w, $60000.w)
-		Tiles Size: 		16 x 16
-		Tiles Number:		$400
-		Colors: 			$200-$2ff
+    [Foreground]
+        Size:               4096 x 512
+        Scrolling:          X,Y         (registers: $60002.w, $60000.w)
+        Tiles Size:         16 x 16
+        Tiles Number:       $400
+        Colors:             $200-$2ff
 
-	[Frontmost]
-		Size:				256 x 256
-		Scrolling:			-
-		Tiles Size: 		8 x 8
-		Tiles Number:		$200
-		Colors: 			$000-$0ff
+    [Frontmost]
+        Size:               256 x 256
+        Scrolling:          -
+        Tiles Size:         8 x 8
+        Tiles Number:       $200
+        Colors:             $000-$0ff
 
 
 [Sprites]
-	On Screen:			256
-	In ROM: 			$a00
-	Colors: 			$100-$1ff
-	Format: 			See Below
+    On Screen:          256
+    In ROM:             $a00
+    Colors:             $100-$1ff
+    Format:             See Below
 
 
 **************************************************************************/
@@ -180,8 +180,8 @@ WRITE16_HANDLER( ginganin_vregs16_w )
 	case 4:
 		layers_ctrl = data;
 		break;
-/*	case 5:
- *		break;
+/*  case 5:
+ *      break;
  */
 	case 6:
 		flipscreen = !(data & 1);
@@ -200,21 +200,21 @@ WRITE16_HANDLER( ginganin_vregs16_w )
 
 /* --------------------------[ Sprites Format ]----------------------------
 
-Offset: 		Values: 		Format:
+Offset:         Values:         Format:
 
-0000.w			y position		fedc ba9- ---- ---- 	unused
-								---- ---8 ---- ---- 	subtract 256
-								---- ---- 7654 3210 	position
+0000.w          y position      fedc ba9- ---- ----     unused
+                                ---- ---8 ---- ----     subtract 256
+                                ---- ---- 7654 3210     position
 
-0002.w			x position		See above
+0002.w          x position      See above
 
-0004.w			code			f--- ---- ---- ---- 	y flip
-								-e-- ---- ---- ---- 	x flip
-								--dc ---- ---- ---- 	unused?
-								---- ba98 7654 3210 	code
+0004.w          code            f--- ---- ---- ----     y flip
+                                -e-- ---- ---- ----     x flip
+                                --dc ---- ---- ----     unused?
+                                ---- ba98 7654 3210     code
 
-0006.w			colour			fedc ---- ---- ---- 	colour code
-								---- ba98 7654 3210 	unused?
+0006.w          colour          fedc ---- ---- ----     colour code
+                                ---- ba98 7654 3210     unused?
 
 ------------------------------------------------------------------------ */
 

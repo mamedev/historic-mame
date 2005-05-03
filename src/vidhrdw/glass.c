@@ -23,24 +23,24 @@ int glass_current_bit = 0;
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Screen 0 & 1: (32*32, 16x16 tiles)
+    Screen 0 & 1: (32*32, 16x16 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | xxxxxxxx xxxxxxxx | code
-	  1  | -------- ---xxxxx | color (uses colors 0x200-0x3ff)
-	  1  | -------- --x----- | not used?
-	  1  | -------- -x------ | flip x
-	  1  | -------- x------- | flip y
-	  1  | xxxxxxxx -------- | not used
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | xxxxxxxx xxxxxxxx | code
+      1  | -------- ---xxxxx | color (uses colors 0x200-0x3ff)
+      1  | -------- --x----- | not used?
+      1  | -------- -x------ | flip x
+      1  | -------- x------- | flip y
+      1  | xxxxxxxx -------- | not used
 */
 
 static void get_tile_info_glass_screen0(int tile_index)
@@ -64,17 +64,17 @@ static void get_tile_info_glass_screen1(int tile_index)
 
 /***************************************************************************
 
-	Blitter
+    Blitter
 
 ***************************************************************************/
 
 /*
-	The blitter is accessed writting 5 consecutive bits. The stream is:	P0 P1 B2 B1 B0
+    The blitter is accessed writting 5 consecutive bits. The stream is: P0 P1 B2 B1 B0
 
-	if P0 is set, the hardware selects the first half of ROM H9 (girls)
-	if P1 is set, the hardware selects the second half of ROM H9 (boys)
+    if P0 is set, the hardware selects the first half of ROM H9 (girls)
+    if P1 is set, the hardware selects the second half of ROM H9 (boys)
 
-	B2B1B0 selects the picture (there are 8 pictures in each half of the ROM)
+    B2B1B0 selects the picture (there are 8 pictures in each half of the ROM)
 */
 
 WRITE16_HANDLER( glass_blitter_w )
@@ -114,7 +114,7 @@ WRITE16_HANDLER( glass_blitter_w )
 
 /***************************************************************************
 
-	Memory Handlers
+    Memory Handlers
 
 ***************************************************************************/
 
@@ -130,7 +130,7 @@ WRITE16_HANDLER( glass_vram_w )
 
 /***************************************************************************
 
-	Start/Stop the video hardware emulation.
+    Start/Stop the video hardware emulation.
 
 ***************************************************************************/
 
@@ -152,25 +152,25 @@ VIDEO_START( glass )
 
 /***************************************************************************
 
-	Sprites
+    Sprites
 
 ***************************************************************************/
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | y position
-	  0  | --xxxxxx -------- | not used?
-	  0  | -x------ -------- | flipx
-	  0  | x------- -------- | flipy
-	  1  | xxxxxxxx xxxxxxxx | not used?
-	  2  | -------x xxxxxxxx | x position
-	  2  | ---xxxx- -------- | sprite color (uses colors 0x100-0x1ff)
-	  2  | xx------ -------- | not used?
-	  3  | xxxxxxxx xxxxxxxx | sprite code
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | y position
+      0  | --xxxxxx -------- | not used?
+      0  | -x------ -------- | flipx
+      0  | x------- -------- | flipy
+      1  | xxxxxxxx xxxxxxxx | not used?
+      2  | -------x xxxxxxxx | x position
+      2  | ---xxxx- -------- | sprite color (uses colors 0x100-0x1ff)
+      2  | xx------ -------- | not used?
+      3  | xxxxxxxx xxxxxxxx | sprite code
 */
 
 static void glass_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -187,9 +187,9 @@ static void glass_draw_sprites(struct mame_bitmap *bitmap, const struct rectangl
 
 		int xflip = attr & 0x20;
 		int yflip = attr & 0x40;
-		
+
 		number = ((number & 0x03) << 14) | ((number & 0x0fffc) >> 2);
-		
+
 		drawgfx(bitmap,gfx,number,
 				0x10 + (color & 0x0f),xflip,yflip,
 				sx-0x0f,sy,
@@ -199,7 +199,7 @@ static void glass_draw_sprites(struct mame_bitmap *bitmap, const struct rectangl
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ****************************************************************************/
 

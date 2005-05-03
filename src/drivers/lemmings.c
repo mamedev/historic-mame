@@ -1,17 +1,17 @@
 /***************************************************************************
 
-	Lemmings				(c) 1991 Data East USA (DE-0357)
+    Lemmings                (c) 1991 Data East USA (DE-0357)
 
-	Prototype!  Licensed from the home computer version this game never
-	made it past the arcade field test stage.  Unlike most Data East games
-	this hardware features a pixel layer and a VRAM layer, probably to
-	make the transition from the pixel addressable computer code to the
-	arcade hardware.
+    Prototype!  Licensed from the home computer version this game never
+    made it past the arcade field test stage.  Unlike most Data East games
+    this hardware features a pixel layer and a VRAM layer, probably to
+    make the transition from the pixel addressable computer code to the
+    arcade hardware.
 
-	As prototype software it seems to have a couple of non-critical bugs,
-	the palette ram check and vram check both overrun their actual ramsize.
+    As prototype software it seems to have a couple of non-critical bugs,
+    the palette ram check and vram check both overrun their actual ramsize.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

@@ -14,7 +14,7 @@ I'm not sure about the refresh rate, 60Hz makes time match the dip switch
 settings, but music runs too fast.
 
 TS 20050212:
-- added Kyuukyoku no Othello - problems with gfx 
+- added Kyuukyoku no Othello - problems with gfx
   (wrong data copied to HD63484 ?)
 
 ***************************************************************************/
@@ -393,7 +393,7 @@ rwp /= 2;
 			cpx = fifo[1];
 			cpy = fifo[2];
 		}
-//		else if ((fifo[0] & 0xff00) == 0x8800)	/* ALINE */
+//      else if ((fifo[0] & 0xff00) == 0x8800)  /* ALINE */
 		else if ((fifo[0] & 0xfff8) == 0x8800)	/* ALINE */
 		{
 			INT16 ex,ey,sx,sy;
@@ -449,7 +449,7 @@ rwp /= 2;
 				}
 			}
 		}
-//		else if ((fifo[0] & 0xff00) == 0x9000)	/* ARCT */
+//      else if ((fifo[0] & 0xff00) == 0x9000)  /* ARCT */
 		else if ((fifo[0] & 0xfff8) == 0x9000)	/* ARCT */
 		{
 			INT16 pcx,pcy;
@@ -532,7 +532,7 @@ rwp /= 2;
 				}
 			}
 		}
-//		else if ((fifo[0] & 0xff00) == 0xc000)	/* AFRCT */
+//      else if ((fifo[0] & 0xff00) == 0xc000)  /* AFRCT */
 		else if ((fifo[0] & 0xfff8) == 0xc000)	/* AFRCT */
 		{
 			INT16 pcx,pcy;
@@ -579,7 +579,7 @@ rwp /= 2;
 				}
 			}
 		}
-//		else if ((fifo[0] & 0xff00) == 0xcc00)	/* DOT */
+//      else if ((fifo[0] & 0xff00) == 0xcc00)  /* DOT */
 		else if ((fifo[0] & 0xfff8) == 0xcc00)	/* DOT */
 		{
 			int dst;
@@ -588,7 +588,7 @@ rwp /= 2;
 
 			PLOT(dst,fifo[0] & 0x0007)
 		}
-//		else if ((fifo[0] & 0xf000) == 0xe000)	/* AGCPY */
+//      else if ((fifo[0] & 0xf000) == 0xe000)  /* AGCPY */
 		else if ((fifo[0] & 0xf0f8) == 0xe000)	/* AGCPY */
 		{
 			INT16 pcx,pcy;
@@ -631,7 +631,7 @@ static WRITE8_HANDLER( HD63484_address_w )
 	reg[offset] = data;
 	regno = reg[0];	/* only low 8 bits are used */
 //if (offset == 0)
-//	logerror("PC %05x: HD63484 select register %02x\n",activecpu_get_pc(),regno);
+//  logerror("PC %05x: HD63484 select register %02x\n",activecpu_get_pc(),regno);
 }
 
 static WRITE8_HANDLER( HD63484_data_w )
@@ -853,13 +853,13 @@ static ADDRESS_MAP_START( kothello_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0a000, 0x0a1ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0x0b010, 0x0b01f) AM_READ(seibu_main_v30_r) AM_WRITE(seibu_main_v30_w)
 	AM_RANGE(0x80000, 0xfffff) AM_ROM
-ADDRESS_MAP_END	
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( kothello )
-	SEIBU_COIN_INPUTS	
+	SEIBU_COIN_INPUTS
 INPUT_PORTS_END
 
-	
+
 INPUT_PORTS_START( shanghai )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -1102,13 +1102,13 @@ static MACHINE_DRIVER_START( kothello )
 	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
 	MDRV_CPU_PROGRAM_MAP(kothello_mem, 0)
 	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
-	
+
 	SEIBU3A_SOUND_SYSTEM_CPU(14318180/4)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(200)
-	
+
 	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
@@ -1119,7 +1119,7 @@ static MACHINE_DRIVER_START( kothello )
 
 	MDRV_VIDEO_START(shanghai)
 	MDRV_VIDEO_UPDATE(shanghai)
-	
+
 	/* sound hardware */
 	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE(14318180/4)
 	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
@@ -1213,7 +1213,7 @@ ROM_START( kothello )
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )
 	ROM_LOAD( "rom5.5l",   0x00000, 0x02000, CRC(7eb6e697) SHA1(4476e13f9a9e04472581f2c069760f53b33d5672))
 	ROM_CONTINUE(          0x10000, 0x0e000 )
-		
+
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rom6.7m",   0x00000, 0x10000, CRC(4ab1335d) SHA1(3a803e8a7e9b0c2a26ee23e7ac9c89c70cf2504b))
 ROM_END

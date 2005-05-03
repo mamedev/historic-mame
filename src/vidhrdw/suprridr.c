@@ -1,7 +1,7 @@
 /***************************************************************************
 
-	Venture Line Super Rider driver
-	
+    Venture Line Super Rider driver
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -21,7 +21,7 @@ static UINT8 flipx, flipy;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -42,7 +42,7 @@ static void get_tile_info2(int tile_index)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -53,7 +53,7 @@ VIDEO_START( suprridr )
 	bg_tilemap_noscroll = tilemap_create(get_tile_info,  tilemap_scan_rows, TILEMAP_OPAQUE,      8,8, 32,32);
 	if (!fg_tilemap || !bg_tilemap || !bg_tilemap_noscroll)
 		return 1;
-	
+
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 	return 0;
 }
@@ -62,14 +62,14 @@ VIDEO_START( suprridr )
 
 /*************************************
  *
- *	Color PROM decoding
+ *  Color PROM decoding
  *
  *************************************/
 
 PALETTE_INIT( suprridr )
 {
 	int i;
-	
+
 	for (i = 0; i < 96; i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
@@ -98,7 +98,7 @@ PALETTE_INIT( suprridr )
 
 /*************************************
  *
- *	Screen flip/scroll registers
+ *  Screen flip/scroll registers
  *
  *************************************/
 
@@ -137,7 +137,7 @@ WRITE8_HANDLER( suprridr_bgscrolly_w )
 
 /*************************************
  *
- *	Video RAM writes
+ *  Video RAM writes
  *
  *************************************/
 
@@ -159,7 +159,7 @@ WRITE8_HANDLER( suprridr_fgram_w )
 
 /*************************************
  *
- *	Video refresh
+ *  Video refresh
  *
  *************************************/
 
@@ -167,7 +167,7 @@ VIDEO_UPDATE( suprridr )
 {
 	struct rectangle subclip;
 	int i;
-	
+
 	/* render left 4 columns with no scroll */
 	subclip = Machine->visible_area;
 	subclip.max_x = subclip.min_x + (flipx ? 1*8 : 4*8) - 1;
@@ -186,10 +186,10 @@ VIDEO_UPDATE( suprridr )
 	subclip.max_x -= flipx ? 4*8 : 1*8;
 	sect_rect(&subclip, cliprect);
 	tilemap_draw(bitmap, &subclip, bg_tilemap, 0, 0);
-	
+
 	/* render the top layer */
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	
+
 	/* draw the sprites */
 	for (i = 0; i < 48; i++)
 	{
@@ -199,7 +199,7 @@ VIDEO_UPDATE( suprridr )
 		int fy = spriteram[i*4+1] & 0x80;
 		int x = spriteram[i*4+3];
 		int y = 240 - spriteram[i*4+0];
-		
+
 		if (flipx)
 		{
 			fx = !fx;

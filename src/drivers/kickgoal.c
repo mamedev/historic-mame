@@ -288,7 +288,7 @@ static MACHINE_DRIVER_START( kickgoal )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+//  MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hwaction )
@@ -317,7 +317,7 @@ static MACHINE_DRIVER_START( hwaction )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+//  MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 

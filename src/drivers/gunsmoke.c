@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Gun.Smoke
-	Capcom
+    Gun.Smoke
+    Capcom
 
-	driver by Paul Leaman
+    driver by Paul Leaman
 
-	Games supported:
-		* Gun.Smoke (World)
-		* Gun.Smoke (Japan)
-		* Gun.Smoke (US set 1)
-		* Gun.Smoke (US set 2)
-		
+    Games supported:
+        * Gun.Smoke (World)
+        * Gun.Smoke (Japan)
+        * Gun.Smoke (US set 1)
+        * Gun.Smoke (US set 2)
+
 ****************************************************************************
 
   GUNSMOKE
@@ -87,18 +87,18 @@ extern VIDEO_UPDATE( gunsmoke );
 static READ8_HANDLER( gunsmoke_protection_r )
 {
     /*
-	    The routine at 0x0e69 tries to read data starting at 0xc4c9.
-	    If this value is zero, it interprets the next two bytes as a
-	    jump address.
-	
-	    This was resulting in a reboot which happens at the end of level 3
-	    if you go too far to the right of the screen when fighting the level boss.
-	
-	    A non-zero for the first byte seems to be harmless  
-	    (although it may not be the correct behaviour).
-	
-	    This could be some devious protection or it could be a bug in the
-	    arcade game.  It's hard to tell without pulling the code apart.
+        The routine at 0x0e69 tries to read data starting at 0xc4c9.
+        If this value is zero, it interprets the next two bytes as a
+        jump address.
+
+        This was resulting in a reboot which happens at the end of level 3
+        if you go too far to the right of the screen when fighting the level boss.
+
+        A non-zero for the first byte seems to be harmless
+        (although it may not be the correct behaviour).
+
+        This could be some devious protection or it could be a bug in the
+        arcade game.  It's hard to tell without pulling the code apart.
     */
 
 	static int gunsmoke_fixed_data[] = { 0xff, 0x00, 0x00 };

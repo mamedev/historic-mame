@@ -402,7 +402,7 @@ static MACHINE_DRIVER_START( bwing )
 
 	MDRV_CPU_ADD(M6809, 2000000)
 	MDRV_CPU_PROGRAM_MAP(bwp2_readmem, bwp2_writemem)
-//	MDRV_CPU_VBLANK_INT(irq1_line_assert, 1) // vblank triggers FIRQ on CPU2 by design (unused)
+//  MDRV_CPU_VBLANK_INT(irq1_line_assert, 1) // vblank triggers FIRQ on CPU2 by design (unused)
 
 	MDRV_CPU_ADD(DECO16, 2000000)
 	/* audio CPU */

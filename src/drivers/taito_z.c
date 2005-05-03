@@ -21,7 +21,7 @@ source was very helpful in many areas particularly the sprites.)
 02-18-01 Added Spacegun gunsights (Insideoutboy)
 
 
-				*****
+                *****
 
 The Taito Z system has a number of similarities with the Taito F2 system,
 and uses some of the same custom Taito components.
@@ -60,8 +60,8 @@ The first 68000 handles screen, palette and sprites, and sometimes other
 jobs [e.g. inputs; in one game it also handles the road].
 
 The second 68000 may handle functions such as:
-	(i)  inputs/dips, sound (through a YM2610) and/or
-	(ii) the "road" that's in every TaitoZ game except Spacegun.
+    (i)  inputs/dips, sound (through a YM2610) and/or
+    (ii) the "road" that's in every TaitoZ game except Spacegun.
 
 Most Z system games have a Z80 as well, which takes over sound duties.
 Commands are written to it by the one of the 68000s.
@@ -488,33 +488,33 @@ Power Wheels
 
 Cpu PCB
 
-CPU:	68000-16 x2
-Sound:	Z80-A
-	YM2610
-OSC:	32.000MHz
-Chips:	TC0140SYT
-	TC0150ROD
-	TC0170ABT
-	TC0310FAM
-	TC0510NIO
+CPU:    68000-16 x2
+Sound:  Z80-A
+    YM2610
+OSC:    32.000MHz
+Chips:  TC0140SYT
+    TC0150ROD
+    TC0170ABT
+    TC0310FAM
+    TC0510NIO
 
 
 Video PCB
 
-OSC:	26.686MHz
-Chips:	TC0260DAR
-	TC0270MOD
-	TC0300FLA
-	TC0370MSO
-	TC0380BSH
-	TC0480SCP
+OSC:    26.686MHz
+Chips:  TC0260DAR
+    TC0270MOD
+    TC0300FLA
+    TC0370MSO
+    TC0380BSH
+    TC0480SCP
 
 
 LAN interface board
 
-OSC:	40.000MHz
-	16.000MHz
-Chips:	uPD72105C
+OSC:    40.000MHz
+    16.000MHz
+Chips:  uPD72105C
 
 
 TODO Lists
@@ -823,7 +823,7 @@ static void parse_control(void)
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
-	   if cpu B is disabled !! */
+       if cpu B is disabled !! */
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
@@ -832,7 +832,7 @@ static void parse_control_noz80(void)
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
-	   if cpu B is disabled !! */
+       if cpu B is disabled !! */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
@@ -898,8 +898,8 @@ static void taitoz_cpub_interrupt6(int x)
 static INTERRUPT_GEN( sci_interrupt )
 {
 	/* Need 2 int4's per int6 else (-$6b63,A5) never set to 1 which
-	   causes all sprites to vanish! Spriteram has areas for 2 frames
-	   so in theory only needs updating every other frame. */
+       causes all sprites to vanish! Spriteram has areas for 2 frames
+       so in theory only needs updating every other frame. */
 
 	sci_int6 = !sci_int6;
 
@@ -992,11 +992,11 @@ static WRITE16_HANDLER( spacegun_output_bypass_w )
 	{
 		case 0x03:
 
-/*			0000xxxx	(unused)
-			000x0000	eeprom reset (active low)
-			00x00000	eeprom clock
-			0x000000	eeprom data
-			x0000000	(unused)                  */
+/*          0000xxxx    (unused)
+            000x0000    eeprom reset (active low)
+            00x00000    eeprom clock
+            0x000000    eeprom data
+            x0000000    (unused)                  */
 
 			COMBINE_DATA(&eep_latch);
 			EEPROM_write_bit(data & 0x40);
@@ -1163,10 +1163,10 @@ logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",activecpu
 static WRITE16_HANDLER( bshark_stick_w )
 {
 	/* Each write invites a new interrupt as soon as the
-	   hardware has got the next a/d conversion ready. We set a token
-	   delay of 10000 cycles; our "coords" are always ready
-	   but we don't want CPUA to have an int6 before int4 is over (?)
-	*/
+       hardware has got the next a/d conversion ready. We set a token
+       delay of 10000 cycles; our "coords" are always ready
+       but we don't want CPUA to have an int6 before int4 is over (?)
+    */
 
 	timer_set(TIME_IN_CYCLES(10000,0),0, taitoz_interrupt6);
 }
@@ -1244,12 +1244,12 @@ static READ16_HANDLER( spacegun_lightgun_r )
 static WRITE16_HANDLER( spacegun_lightgun_w )
 {
 	/* Each write invites a new lightgun interrupt as soon as the
-	   hardware has got the next coordinate ready. We set a token
-	   delay of 10000 cycles; our "lightgun" coords are always ready
-	   but we don't want CPUB to have an int5 before int4 is over (?).
+       hardware has got the next coordinate ready. We set a token
+       delay of 10000 cycles; our "lightgun" coords are always ready
+       but we don't want CPUB to have an int5 before int4 is over (?).
 
-	   Four lightgun interrupts happen before the collected coords
-	   are moved to shared ram where CPUA can use them. */
+       Four lightgun interrupts happen before the collected coords
+       are moved to shared ram where CPUA can use them. */
 
 	timer_set(TIME_IN_CYCLES(10000,0),0, taitoz_sg_cpub_interrupt5);
 }
@@ -1346,13 +1346,13 @@ static WRITE16_HANDLER( taitoz_sound_w )
 		taitosound_comm_w (0, data & 0xff);
 
 #ifdef MAME_DEBUG
-//	if (data & 0xff00)
-//	{
-//		char buf[80];
+//  if (data & 0xff00)
+//  {
+//      char buf[80];
 //
-//		sprintf(buf,"taitoz_sound_w to high byte: %04x",data);
-//		usrintf_showmessage(buf);
-//	}
+//      sprintf(buf,"taitoz_sound_w to high byte: %04x",data);
+//      usrintf_showmessage(buf);
+//  }
 #endif
 }
 
@@ -1410,7 +1410,7 @@ static ADDRESS_MAP_START( contcirc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x084000, 0x087fff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram) AM_SIZE(&taitoz_sharedram_size)
-//	AM_RANGE(0x090000, 0x090001) AM_WRITE(MWA16_NOP)	/* ??? */
+//  AM_RANGE(0x090000, 0x090001) AM_WRITE(MWA16_NOP)    /* ??? */
 	AM_RANGE(0x100000, 0x100007) AM_WRITE(TC0110PCR_step1_rbswap_word_w)	/* palette */
 	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
 	AM_RANGE(0x220000, 0x22000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
@@ -1554,7 +1554,7 @@ static ADDRESS_MAP_START( bshark_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x108000, 0x10bfff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x110000, 0x113fff) AM_READ(sharedram_r)
-//	AM_RANGE(0x40000a, 0x40000b) AM_READ(taitoz_unknown_r)	// ???
+//  AM_RANGE(0x40000a, 0x40000b) AM_READ(taitoz_unknown_r)  // ???
 	AM_RANGE(0x600000, 0x600001) AM_READ(YM2610_status_port_0_A_lsb_r)
 	AM_RANGE(0x600002, 0x600003) AM_READ(YM2610_read_port_0_lsb_r)
 	AM_RANGE(0x600004, 0x600005) AM_READ(YM2610_status_port_0_B_lsb_r)
@@ -1567,7 +1567,7 @@ static ADDRESS_MAP_START( bshark_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x108000, 0x10bfff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x110000, 0x113fff) AM_WRITE(sharedram_w)
-//	AM_RANGE(0x400000, 0x400007) AM_WRITE(MWA16_NOP)   // pan ???
+//  AM_RANGE(0x400000, 0x400007) AM_WRITE(MWA16_NOP)   // pan ???
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(YM2610_control_port_0_A_lsb_w)
 	AM_RANGE(0x600002, 0x600003) AM_WRITE(YM2610_data_port_0_A_lsb_w)
 	AM_RANGE(0x600004, 0x600005) AM_WRITE(YM2610_control_port_0_B_lsb_w)
@@ -1599,7 +1599,7 @@ static ADDRESS_MAP_START( sci_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x10bfff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram) AM_SIZE(&taitoz_sharedram_size)
 	AM_RANGE(0x10c000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(TC0220IOC_halfword_w)
-//	AM_RANGE(0x400000, 0x400001) AM_WRITE(cpua_ctrl_w)	// ?? doesn't seem to fit what's written
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(cpua_ctrl_w)  // ?? doesn't seem to fit what's written
 	AM_RANGE(0x420000, 0x420003) AM_WRITE(taitoz_sound_w)
 	AM_RANGE(0x800000, 0x801fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
@@ -1647,9 +1647,9 @@ static ADDRESS_MAP_START( nightstr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
 	AM_RANGE(0xc20000, 0xc2000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
 	AM_RANGE(0xd00000, 0xd007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-//	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)	/* ??? */
-//	AM_RANGE(0xe00008, 0xe00009) AM_WRITE(MWA16_NOP)	/* ??? */
-//	AM_RANGE(0xe00010, 0xe00011) AM_WRITE(MWA16_NOP)	/* ??? */
+//  AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)    /* ??? */
+//  AM_RANGE(0xe00008, 0xe00009) AM_WRITE(MWA16_NOP)    /* ??? */
+//  AM_RANGE(0xe00010, 0xe00011) AM_WRITE(MWA16_NOP)    /* ??? */
 	AM_RANGE(0xe40000, 0xe40007) AM_WRITE(bshark_stick_w)
 ADDRESS_MAP_END
 
@@ -1698,7 +1698,7 @@ static ADDRESS_MAP_START( aquajack_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x20000f) AM_READ(TC0220IOC_halfword_r)
 	AM_RANGE(0x300000, 0x300003) AM_READ(taitoz_sound_r)
 	AM_RANGE(0x800800, 0x80083f) AM_READ(aquajack_unknown_r) // Read regularly after write to 800800...
-//	AM_RANGE(0x900000, 0x900007) AM_READ(taitoz_unknown_r)
+//  AM_RANGE(0x900000, 0x900007) AM_READ(taitoz_unknown_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( aquajack_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1707,8 +1707,8 @@ static ADDRESS_MAP_START( aquajack_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x104000, 0x107fff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(TC0220IOC_halfword_w)
 	AM_RANGE(0x300000, 0x300003) AM_WRITE(taitoz_sound_w)
-//	AM_RANGE(0x800800, 0x800801) AM_WRITE(taitoz_unknown_w)
-//	AM_RANGE(0x900000, 0x900007) AM_WRITE(taitoz_unknown_w)
+//  AM_RANGE(0x800800, 0x800801) AM_WRITE(taitoz_unknown_w)
+//  AM_RANGE(0x900000, 0x900007) AM_WRITE(taitoz_unknown_w)
 ADDRESS_MAP_END
 
 
@@ -1756,8 +1756,8 @@ static ADDRESS_MAP_START( spacegun_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00006, 0xc00007) AM_WRITE(YM2610_data_port_0_B_lsb_w)
 	AM_RANGE(0xc0000c, 0xc0000d) AM_WRITE(MWA16_NOP)	// interrupt controller?
 	AM_RANGE(0xc0000e, 0xc0000f) AM_WRITE(MWA16_NOP)
-//	AM_RANGE(0xc20000, 0xc20003) AM_WRITE(YM2610_????)	/* Pan (acc. to Raine) */
-//	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)	/* ??? */
+//  AM_RANGE(0xc20000, 0xc20003) AM_WRITE(YM2610_????)  /* Pan (acc. to Raine) */
+//  AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP)    /* ??? */
 	AM_RANGE(0xf00000, 0xf00007) AM_WRITE(spacegun_lightgun_w)
 ADDRESS_MAP_END
 
@@ -3121,7 +3121,7 @@ static void irqhandler(int irq)	// assumes Z80 sandwiched between 68Ks
 static void irqhandlerb(int irq)
 {
 	// DG: this is probably specific to Z80 and wrong?
-//	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//  cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =
@@ -3239,7 +3239,7 @@ static MACHINE_DRIVER_START( contcirc )
 	MDRV_SOUND_ROUTE(1, "left",  1.0)
 	MDRV_SOUND_ROUTE(2, "right", 1.0)
 
-//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+//  MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
@@ -3322,7 +3322,7 @@ static MACHINE_DRIVER_START( enforce )
 	MDRV_SOUND_ROUTE(1, "left",  1.0)
 	MDRV_SOUND_ROUTE(2, "right", 1.0)
 
-//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+//  MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
@@ -4019,11 +4019,11 @@ ROM_START( sci )
 	ROM_LOAD( "c09-16.rom", 0x00000, 0x10000, CRC(7245a6f6) SHA1(5bdde4e3bcde8c59dc84478c3cc079d7ef8ee9c5) )	/* unused roms */
 	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) )
 	ROM_LOAD( "c09-23.rom", 0x00000, 0x00100, CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )
-//	ROM_LOAD( "c09-21.rom", 0x00000, 0x00???, NO_DUMP )	/* pals (Guru dump) */
-//	ROM_LOAD( "c09-22.rom", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c09-24.rom", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c09-25.rom", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c09-26.rom", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c09-21.rom", 0x00000, 0x00???, NO_DUMP ) /* pals (Guru dump) */
+//  ROM_LOAD( "c09-22.rom", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c09-24.rom", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c09-25.rom", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c09-26.rom", 0x00000, 0x00???, NO_DUMP )
 ROM_END
 
 ROM_START( scia )
@@ -4202,7 +4202,7 @@ ROM_START( aquajack )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, CRC(119b9485) SHA1(2c9cd90be20df769e09016abccf59c8f119da286) )
 
-/*	(no unused roms in my set, there should be an 0x10000 one like the rest) */
+/*  (no unused roms in my set, there should be an 0x10000 one like the rest) */
 ROM_END
 
 ROM_START( aquajckj )
@@ -4239,7 +4239,7 @@ ROM_START( aquajckj )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, CRC(119b9485) SHA1(2c9cd90be20df769e09016abccf59c8f119da286) )
 
-/*	(no unused roms in my set, there should be an 0x10000 one like the rest) */
+/*  (no unused roms in my set, there should be an 0x10000 one like the rest) */
 ROM_END
 
 ROM_START( spacegun )
@@ -4271,14 +4271,14 @@ ROM_START( spacegun )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c57-08.75", 0x00000, 0x80000, CRC(22593550) SHA1(e802e947e6947d146e1b57dbff7ac021e19e7b2b) )
 
-/*	(no unused 0x10000 rom like the rest?) */
+/*  (no unused 0x10000 rom like the rest?) */
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
-//	ROM_LOAD( "c57-09.9",  0x00000, 0xada, CRC(306f130b) )	/* pals */
-//	ROM_LOAD( "c57-10.47", 0x00000, 0xcd5, CRC(f11474bd) )
-//	ROM_LOAD( "c57-11.48", 0x00000, 0xada, CRC(b33be19f) )
-//	ROM_LOAD( "c57-12.61", 0x00000, 0xcd5, CRC(f1847096) )
-//	ROM_LOAD( "c57-13.72", 0x00000, 0xada, CRC(795f0a85) )
-//	ROM_LOAD( "c57-14.96", 0x00000, 0xada, CRC(5b3c40b7) )
+//  ROM_LOAD( "c57-09.9",  0x00000, 0xada, CRC(306f130b) )  /* pals */
+//  ROM_LOAD( "c57-10.47", 0x00000, 0xcd5, CRC(f11474bd) )
+//  ROM_LOAD( "c57-11.48", 0x00000, 0xada, CRC(b33be19f) )
+//  ROM_LOAD( "c57-12.61", 0x00000, 0xcd5, CRC(f1847096) )
+//  ROM_LOAD( "c57-13.72", 0x00000, 0xada, CRC(795f0a85) )
+//  ROM_LOAD( "c57-14.96", 0x00000, 0xada, CRC(5b3c40b7) )
 ROM_END
 
 ROM_START( dblaxle )
@@ -4305,8 +4305,8 @@ ROM_START( dblaxle )
 	ROM_LOAD32_BYTE( "c78-07.33", 0x000001, 0x100000, CRC(9da00d5b) SHA1(f6b664c7495b936ce1b99852da45ec92cb37062a) )
 	ROM_LOAD32_BYTE( "c78-06.23", 0x000002, 0x100000, CRC(8309e91b) SHA1(3f27557bc82bf42cc77e3c7e363b51a0b119144d) )
 	ROM_LOAD32_BYTE( "c78-05.31", 0x000003, 0x100000, CRC(90001f68) SHA1(5c08dfe6a2e12e6ca84035815563f38fc2c2c029) )
-//	ROMX_LOAD      ( "c78-05l.1", 0x000003, 0x080000, CRC(f24bf972) , ROM_SKIP(7) )
-//	ROMX_LOAD      ( "c78-05h.2", 0x000007, 0x080000, CRC(c01039b5) , ROM_SKIP(7) )
+//  ROMX_LOAD      ( "c78-05l.1", 0x000003, 0x080000, CRC(f24bf972) , ROM_SKIP(7) )
+//  ROMX_LOAD      ( "c78-05h.2", 0x000007, 0x080000, CRC(c01039b5) , ROM_SKIP(7) )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c78-09.12", 0x000000, 0x80000, CRC(0dbde6f5) SHA1(4049271e3738b54e0c56d191889b1aea5664d49f) )	/* ROD, road lines */
@@ -4425,7 +4425,7 @@ ROM_END
 
 static DRIVER_INIT( taitoz )
 {
-//	taitosnd_setz80_soundcpu( 2 );
+//  taitosnd_setz80_soundcpu( 2 );
 
 	cpua_ctrl = 0xff;
 	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);

@@ -43,18 +43,18 @@ static void get_fg0_tile_info(int tile_index)
 {
 	/*- FG0 RAM Format -**
 
-	  0x1000 sized region (4096 bytes)
+      0x1000 sized region (4096 bytes)
 
-	  32x32 tilemap, 4 bytes per tile
+      32x32 tilemap, 4 bytes per tile
 
-	  ---- ----  CCCC TTTT  ---- ----  TTTT TTTT
+      ---- ----  CCCC TTTT  ---- ----  TTTT TTTT
 
-	  C = Colour Bank (0-15)
-	  T = Tile Number (0 - 4095)
+      C = Colour Bank (0-15)
+      T = Tile Number (0 - 4095)
 
-	  other bits unknown / unused
+      other bits unknown / unused
 
-	**- End of Comments -*/
+    **- End of Comments -*/
 
 	data16_t *tilebase;
 	int tileno;
@@ -78,19 +78,19 @@ static void get_bg0_tile_info(int tile_index)
 {
 	/*- BG0 RAM Format -**
 
-	  0x1000 sized region (4096 bytes)
+      0x1000 sized region (4096 bytes)
 
-	  32x32 tilemap, 4 bytes per tile
+      32x32 tilemap, 4 bytes per tile
 
-	  ---- ----  FCCC TTTT  ---- ----  TTTT TTTT
+      ---- ----  FCCC TTTT  ---- ----  TTTT TTTT
 
-	  C = Colour Bank (0-7)
-	  T = Tile Number (0 - 4095)
-	  F = FlipX
+      C = Colour Bank (0-7)
+      T = Tile Number (0 - 4095)
+      F = FlipX
 
-	  other bits unknown / unused
+      other bits unknown / unused
 
-	**- End of Comments -*/
+    **- End of Comments -*/
 
 	data16_t *tilebase;
 	int tileno, colbank, flipx;
@@ -115,24 +115,24 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap, const struct recta
 {
 	/*- SPR RAM Format -**
 
-	  0x3FF sized region (1024 bytes)
+      0x3FF sized region (1024 bytes)
 
-	  10 bytes per sprite
+      10 bytes per sprite
 
-	  ---- ---- yyyy yyyy ---- ---- CCCC XYLE ---- ---- fFNN NNNN ---- ---- nnnn nnnn ---- ---- xxxx xxxx
+      ---- ---- yyyy yyyy ---- ---- CCCC XYLE ---- ---- fFNN NNNN ---- ---- nnnn nnnn ---- ---- xxxx xxxx
 
-	  Yy = sprite Y Position
-	  Xx = sprite X Position
-	  C  = colour bank
-	  f  = flip Y
-	  F  = flip X
-	  L  = chain sprite (32x16)
-	  E  = sprite enable
-	  Nn = Sprite Number
+      Yy = sprite Y Position
+      Xx = sprite X Position
+      C  = colour bank
+      f  = flip Y
+      F  = flip X
+      L  = chain sprite (32x16)
+      E  = sprite enable
+      Nn = Sprite Number
 
-	  other bits unused
+      other bits unused
 
-	**- End of Comments -*/
+    **- End of Comments -*/
 
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *source = spriteram16;

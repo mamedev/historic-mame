@@ -274,7 +274,7 @@ ADDRESS_MAP_END
 
 /* Yes, _no_ ram */
 static ADDRESS_MAP_START( sound2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-/*	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM) avoid cluttering up error.log */
+/*  AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_ROM) avoid cluttering up error.log */
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 

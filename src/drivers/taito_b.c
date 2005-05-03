@@ -74,23 +74,23 @@ Other games that have this feature:
 
 List of known B-System games:
 
-	Rastan Saga II					(YM2610 sound)
-	Ashura Blaster					(YM2610 sound)
-	Crime City						(YM2610 sound)
-	Rambo 3 (two different versions)(YM2610 sound)
-	Tetris							(YM2610 sound)
-	Space Invaders DX				(YM2610 sound, MB87078 - electronic volume control)
-	Silent Dragon					(YM2610 sound)
-	Sel Feena						(YM2610 sound)
-	Ryujin							(YM2610 sound)
+    Rastan Saga II                  (YM2610 sound)
+    Ashura Blaster                  (YM2610 sound)
+    Crime City                      (YM2610 sound)
+    Rambo 3 (two different versions)(YM2610 sound)
+    Tetris                          (YM2610 sound)
+    Space Invaders DX               (YM2610 sound, MB87078 - electronic volume control)
+    Silent Dragon                   (YM2610 sound)
+    Sel Feena                       (YM2610 sound)
+    Ryujin                          (YM2610 sound)
 
-	Violence Fight					(YM2203 sound, 1xMSM6295 )
-	Hit The Ice						(YM2203 sound, 2xMSM6295 )
-	Master of Weapons				(YM2203 sound)
+    Violence Fight                  (YM2203 sound, 1xMSM6295 )
+    Hit The Ice                     (YM2203 sound, 2xMSM6295 )
+    Master of Weapons               (YM2203 sound)
 
-	Quiz Sekai wa SHOW by shobai	(YM2610-B sound, MB87078 - electronic volume control)
-	Puzzle Bobble					(YM2610-B sound, MB87078 - electronic volume control)
-	Sonic Blast Man					(YM2610-B sound)
+    Quiz Sekai wa SHOW by shobai    (YM2610-B sound, MB87078 - electronic volume control)
+    Puzzle Bobble                   (YM2610-B sound, MB87078 - electronic volume control)
+    Sonic Blast Man                 (YM2610-B sound)
 
 Nastar
 Taito, 1988
@@ -659,9 +659,9 @@ static ADDRESS_MAP_START( hitice_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700002, 0x700003) AM_WRITE(taitosound_comm16_msb_w)
 
 	AM_RANGE(0xb00000, 0xb7ffff) AM_WRITE(hitice_pixelram_w) AM_BASE(&taitob_pixelram)
-//	{ 0xbffff0, 0xbffff1, ???
+//  { 0xbffff0, 0xbffff1, ???
 	AM_RANGE(0xbffff2, 0xbffff5) AM_WRITE(hitice_pixel_scroll_w)
-//	{ 0xbffffa, 0xbffffb, ???
+//  { 0xbffffa, 0xbffffb, ???
 ADDRESS_MAP_END
 
 
@@ -908,12 +908,12 @@ static ADDRESS_MAP_START( silentd_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(input_port_5_word_r)
 	AM_RANGE(0x220000, 0x220001) AM_READ(input_port_6_word_r)
 	AM_RANGE(0x230000, 0x230001) AM_READ(input_port_7_word_r)
-//	AM_RANGE(0x240000, 0x240001) AM_READ(MRA16_NOP)	/* read 4 times at init */
+//  AM_RANGE(0x240000, 0x240001) AM_READ(MRA16_NOP) /* read 4 times at init */
 
 	AM_RANGE(0x100000, 0x100001) AM_READ(MRA16_NOP)
 	AM_RANGE(0x100002, 0x100003) AM_READ(taitosound_comm16_msb_r)
-//	AM_RANGE(0x10001a, 0x10001b) AM_READ(MRA16_NOP)	// ??? read at $1e344
-//	AM_RANGE(0x10001c, 0x10001d) AM_READ(MRA16_NOP)	// ??? read at $1e356
+//  AM_RANGE(0x10001a, 0x10001b) AM_READ(MRA16_NOP) // ??? read at $1e344
+//  AM_RANGE(0x10001c, 0x10001d) AM_READ(MRA16_NOP) // ??? read at $1e356
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( silentd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1070,7 +1070,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 #define TAITO_COINAGE_JAPAN_8 \
@@ -2120,12 +2120,12 @@ INPUT_PORTS_START( silentd )	/* World Version */
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 
 /* These next two are listed as Unused for "Oversea Versions"
-	For the USA version use this description:
+    For the USA version use this description:
 
-  Buy-In Pricing	Same As Play Pricing	OFF	OFF (Default)
-					1 Coin  = Continue		ON	OFF
-					2 Coins = Contniue		OFF	ON
-					3 Coins = Continue		ON	ON
+  Buy-In Pricing    Same As Play Pricing    OFF OFF (Default)
+                    1 Coin  = Continue      ON  OFF
+                    2 Coins = Contniue      OFF ON
+                    3 Coins = Continue      ON  ON
  */
 
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
@@ -2149,9 +2149,9 @@ INPUT_PORTS_START( silentd )	/* World Version */
 
 /*  Manual Shows "1 Coin Slot (Shared)" and "4 Coin Slot (1 Per Player)"
 
-	You can play the game with 2, 3, or 4 players and the last option is a linked 4 players.
-	Using bit6 and bit7&8 you end up with 1, 2 or 4 separate "Credits" on the demo screens.
-	Using bits7&8 you can have 2-4 players as shown at the top of the game screens.
+    You can play the game with 2, 3, or 4 players and the last option is a linked 4 players.
+    Using bit6 and bit7&8 you end up with 1, 2 or 4 separate "Credits" on the demo screens.
+    Using bits7&8 you can have 2-4 players as shown at the top of the game screens.
 
 */
 
@@ -2510,14 +2510,14 @@ INPUT_PORTS_START( sbm )
 	/* BUTTON1 ACTIVE LOW, - game thinks that punching pad has already been raised */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) PORT_NAME("Pad Photosensor 1")//PHOTO 1 (punching pad photosensor 1)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_BUTTON2 ) PORT_PLAYER(1) PORT_NAME("Pad Photosensor 2")//PHOTO 2 (punching pad photosensor 2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_BUTTON3 ) PORT_PLAYER(1) PORT_NAME("Pad Photosensor 3")//PHOTO 3	(punching pad photosensor 3)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_BUTTON3 ) PORT_PLAYER(1) PORT_NAME("Pad Photosensor 3")//PHOTO 3 (punching pad photosensor 3)
  	/*To simulate a punch:
-		- wait for "READY GO!" message,
-		- press button1 + button 2 (LCTRL + ALT) (you'll hear a "punching" sound),
-  		- THEN  press button 3 (SPACE)
- 		The time passed between the presses will be used to calculate the power of your punch.
-		The longer the time - the less power.
-	*/
+        - wait for "READY GO!" message,
+        - press button1 + button 2 (LCTRL + ALT) (you'll hear a "punching" sound),
+        - THEN  press button 3 (SPACE)
+        The time passed between the presses will be used to calculate the power of your punch.
+        The longer the time - the less power.
+    */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1) PORT_NAME("Pad Photosensor 4")//PHOTO 4  ??? ACTIVE_LOW  ??? (punching pad photosensor 4)
 INPUT_PORTS_END
 
@@ -2614,15 +2614,15 @@ static struct YM2203interface ym2203_interface =
 };
 
 /*
-	Games that use the mb87078 are: pbobble, spacedx and qzshowby
-	schems are not available, but from the writes I guess that
-	they only use channel 1
-	The sound chips' volume altered with the mb87078 are:
-	ym2610 in spacedx,
-	ym2610b in pbobble,qzshowby,
+    Games that use the mb87078 are: pbobble, spacedx and qzshowby
+    schems are not available, but from the writes I guess that
+    they only use channel 1
+    The sound chips' volume altered with the mb87078 are:
+    ym2610 in spacedx,
+    ym2610b in pbobble,qzshowby,
 
-	Both ym2610 and ym2610b generate 3 (PSG like) + 2 (fm left,right) channels.
-	I use mixer_set_volume() to emulate the effect.
+    Both ym2610 and ym2610b generate 3 (PSG like) + 2 (fm left,right) channels.
+    I use mixer_set_volume() to emulate the effect.
 */
 static void mb87078_gain_changed(int channel, int percent)
 {
@@ -2647,11 +2647,11 @@ static MACHINE_INIT( mb87078 )
 	if (Machine->sample_rate != 0)
 		MB87078_start(0, &mb87078_interface); /*chip #0*/
 /*
-	{
-		int i;
-		for (i=0; i<6; i++)
-			logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );
-	}
+    {
+        int i;
+        for (i=0; i<6; i++)
+            logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );
+    }
 */
 }
 
@@ -3420,9 +3420,9 @@ ROM_START( nastar )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "b81-02.2", 0x00000, 0x80000, CRC(20ec3b86) SHA1(fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed) )
 
-//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
-//	ROM_LOAD( "b81-05.21", 0x0000, 0x0001 )
-//	ROM_LOAD( "b81-06.22", 0x0000, 0x0001 )
+//  ROM_REGION( 0x1000, REGION_USER1)   /* PALs */
+//  ROM_LOAD( "b81-05.21", 0x0000, 0x0001 )
+//  ROM_LOAD( "b81-06.22", 0x0000, 0x0001 )
 
 ROM_END
 
@@ -3556,12 +3556,12 @@ ROM_START( tetrista )
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* these roms (present on the original board) are actually from from master of weapon
-	 b72-01.rom              mow-m01.rom             IDENTICAL
-	 b72-02.rom              mow-m02.rom             99.999809% (maybe one of them is bad?)
-	  the game doesn't use any tiles from here but the roms must be present on the board to avoid
-	  tile 0 being solid and obscuring the bitmap (however if we load them in the correct region
-	  unwanted tiles from here are shown after gameover which is wrong)
-	 */
+     b72-01.rom              mow-m01.rom             IDENTICAL
+     b72-02.rom              mow-m02.rom             99.999809% (maybe one of them is bad?)
+      the game doesn't use any tiles from here but the roms must be present on the board to avoid
+      tile 0 being solid and obscuring the bitmap (however if we load them in the correct region
+      unwanted tiles from here are shown after gameover which is wrong)
+     */
 	ROM_LOAD( "b72-02.rom", 0x000000, 0x080000, CRC(843444eb) SHA1(2b466045f882996c80e0090009ee957e11d32825) )
 	ROM_LOAD( "b72-01.rom", 0x080000, 0x080000, CRC(a24ac26e) SHA1(895715a2bb0cb15334cba2283bd228b4fc08cd0c) )
 ROM_END
@@ -3774,9 +3774,9 @@ ROM_START( viofight )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "c16-05.47", 0x000000, 0x80000, CRC(a49d064a) SHA1(f9ed675cfaae69b68c99c7dce7c2a457b5b5c293) )
 
-//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
-//	ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
-//	ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
+//  ROM_REGION( 0x1000, REGION_USER1)   /* PALs */
+//  ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
+//  ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
 
 ROM_END
 
@@ -3800,9 +3800,9 @@ ROM_START( viofighu )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "c16-05.47", 0x000000, 0x80000, CRC(a49d064a) SHA1(f9ed675cfaae69b68c99c7dce7c2a457b5b5c293) )
 
-//	ROM_REGION( 0x1000, REGION_USER1)	/* PALs */
-//	ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
-//	ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
+//  ROM_REGION( 0x1000, REGION_USER1)   /* PALs */
+//  ROM_LOAD( "c16-08.34", 0x0000, 0x0001 )
+//  ROM_LOAD( "c16-09.35", 0x0000, 0x0001 )
 
 ROM_END
 
@@ -3959,10 +3959,10 @@ GAME( 1994, spacedx,  0,       spacedx,  pbobble,  0, ROT0,   "Taito Corporation
 GAME( 1994, spacedxj, spacedx, spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.1" )
 GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0" )
 /*
-	Sonic Blast Man is a ticket dispensing game.
-	(Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
-	It is a bit different from other games running on this system,
-	in that it has a punching pad that player needs to punch to hit
- 	the enemy.
+    Sonic Blast Man is a ticket dispensing game.
+    (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
+    It is a bit different from other games running on this system,
+    in that it has a punching pad that player needs to punch to hit
+    the enemy.
 */
 GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)" )

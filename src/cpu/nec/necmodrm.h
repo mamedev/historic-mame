@@ -44,10 +44,10 @@ static struct {
 		WriteWord( EA , val);			\
 	}						\
 }
-	
+
 #define GetRMByte(ModRM) \
 	((ModRM) >= 0xc0 ? I.regs.b[Mod_RM.RM.b[ModRM]] : ReadByte( (*GetEA[ModRM])() ))
-	
+
 #define PutRMByte(ModRM,val)				\
 {							\
 	if (ModRM >= 0xc0)				\
@@ -65,7 +65,7 @@ static struct {
 		WriteByte( EA , FETCH );		\
 	}						\
 }
-	
+
 #define PutbackRMByte(ModRM,val)			\
 {							\
 	if (ModRM >= 0xc0)				\
@@ -78,7 +78,7 @@ static struct {
 	UINT32 ModRM = FETCH,src,dst;		\
 	src = RegByte(ModRM);				\
     dst = GetRMByte(ModRM)
-    
+
 #define DEF_wr16						\
 	UINT32 ModRM = FETCH,src,dst;		\
 	src = RegWord(ModRM);				\

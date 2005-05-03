@@ -638,57 +638,57 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 this function is used to get information on the sprite from spriteram and call the
 drawing functions
 
-	spriteram Sprite Entry layout
+    spriteram Sprite Entry layout
 
-	0:  ffffffff ffffffff  1:  HHHHHHHH WWWWWWWW  2:  hhhhhhhh hhhhhhhh  3:  wwwwwwww wwwwwwww
-	4:  yyyyyyyy yyyyyyyy  5:  xxxxxxxx xxxxxxxx  6:  rrrrrrrr rrrrrrrr  7:  pppppppp pppppppp
+    0:  ffffffff ffffffff  1:  HHHHHHHH WWWWWWWW  2:  hhhhhhhh hhhhhhhh  3:  wwwwwwww wwwwwwww
+    4:  yyyyyyyy yyyyyyyy  5:  xxxxxxxx xxxxxxxx  6:  rrrrrrrr rrrrrrrr  7:  pppppppp pppppppp
 
-	f = various flags
-		xx------ -------- (0xc000) :  Command (00 for a sprite, other values would mean this isn't a sprite)
-		--x----- -------- (0x2000) :  Sprite uses Indirect Palette (TRUSTED)
-		---x---- -------- (0x1000) :  Sprite uses Indirect Palette which is Interleaved in Spritelist (GA2?)
-		----x--- -------- (0x0800) :  Sprite is a shadow.  Uses upper 16 values of the sprite priority table
-		-----x-- -------- (0x0400) :  Sprite GFX data comes from Spriteram, not ROM (TRUSTED)
-		------x- -------- (0x0200) :  Sprite is 8bpp not 4bpp (TRUSTED)
-		-------x -------- (0x0100) :  If NOT set colour in palette 0x0f is transparent (TRUSTED)
-		-------- x------- (0x0080) :  Sprite Y-Flip (TRUSTED)
-		-------- -x------ (0x0040) :  Sprite X-Flip (TRUSTED)
-		-------- --x----- (0x0020) :  Use Y offset (offset set in last jump) (not trusted)
-		-------- ---x---- (0x0010) :  Use X offset (offset set in last jump) (TRUSTED)
-		-------- ----xx-- (0x000c) :  Y alignment. 00=Center, 10=Start, 01=End (TRUSTED)
-		-------- ------xx (0x0003) :  X alignment. 00=Center, 10=Start, 01=End (TRUSTED)
+    f = various flags
+        xx------ -------- (0xc000) :  Command (00 for a sprite, other values would mean this isn't a sprite)
+        --x----- -------- (0x2000) :  Sprite uses Indirect Palette (TRUSTED)
+        ---x---- -------- (0x1000) :  Sprite uses Indirect Palette which is Interleaved in Spritelist (GA2?)
+        ----x--- -------- (0x0800) :  Sprite is a shadow.  Uses upper 16 values of the sprite priority table
+        -----x-- -------- (0x0400) :  Sprite GFX data comes from Spriteram, not ROM (TRUSTED)
+        ------x- -------- (0x0200) :  Sprite is 8bpp not 4bpp (TRUSTED)
+        -------x -------- (0x0100) :  If NOT set colour in palette 0x0f is transparent (TRUSTED)
+        -------- x------- (0x0080) :  Sprite Y-Flip (TRUSTED)
+        -------- -x------ (0x0040) :  Sprite X-Flip (TRUSTED)
+        -------- --x----- (0x0020) :  Use Y offset (offset set in last jump) (not trusted)
+        -------- ---x---- (0x0010) :  Use X offset (offset set in last jump) (TRUSTED)
+        -------- ----xx-- (0x000c) :  Y alignment. 00=Center, 10=Start, 01=End (TRUSTED)
+        -------- ------xx (0x0003) :  X alignment. 00=Center, 10=Start, 01=End (TRUSTED)
 
-	H = height of sprite in ROM
-	W = width  of sprite in ROM (multiply by 4 to get screen width)
+    H = height of sprite in ROM
+    W = width  of sprite in ROM (multiply by 4 to get screen width)
 
-	System32:
-	w = width to draw on SCREEN + extra attributes
-		x------- -------- (0x8000) :  unknown
-		-x------ -------- (0x4000) :  Bit 5 of Sprite ROM Bank (TRUSTED)
-		--x----- -------- (0x2000) :  unknown
-		---x---- -------- (0x1000) :  unknown
-		----x--- -------- (0x0800) :  Bit 4 of Sprite ROM Bank (TRUSTED)
-		-----xxx xxxxxxxx (0x07ff) :  Width to draw on screen (TRUSTED)
+    System32:
+    w = width to draw on SCREEN + extra attributes
+        x------- -------- (0x8000) :  unknown
+        -x------ -------- (0x4000) :  Bit 5 of Sprite ROM Bank (TRUSTED)
+        --x----- -------- (0x2000) :  unknown
+        ---x---- -------- (0x1000) :  unknown
+        ----x--- -------- (0x0800) :  Bit 4 of Sprite ROM Bank (TRUSTED)
+        -----xxx xxxxxxxx (0x07ff) :  Width to draw on screen (TRUSTED)
 
-	Multi32:
-	w = width to draw on SCREEN + extra attributes
-		x------- -------- (0x8000) :  bit 5 of the sprite bank (TRUSTED)
-		-x------ -------- (0x4000) :  unknown
-		--x----- -------- (0x2000) :  Bit 4 of the sprite bank (TRUSTED)
-		---x---- -------- (0x1000) :  unknown
-		----x--- -------- (0x0800) :  Monitor selection for this sprite (TRUSTED)
-		-----xxx xxxxxxxx (0x07ff) :  Width to draw on screen (TRUSTED)
-	y = y-position (12-bit?, high bit = sign bit?)
+    Multi32:
+    w = width to draw on SCREEN + extra attributes
+        x------- -------- (0x8000) :  bit 5 of the sprite bank (TRUSTED)
+        -x------ -------- (0x4000) :  unknown
+        --x----- -------- (0x2000) :  Bit 4 of the sprite bank (TRUSTED)
+        ---x---- -------- (0x1000) :  unknown
+        ----x--- -------- (0x0800) :  Monitor selection for this sprite (TRUSTED)
+        -----xxx xxxxxxxx (0x07ff) :  Width to draw on screen (TRUSTED)
+    y = y-position (12-bit?, high bit = sign bit?)
 
-	x = x-position (12-bit, high bit = sign bit)
+    x = x-position (12-bit, high bit = sign bit)
 
-	r = ROM Offset of GFX data (multiply by 4 to get real offset)
+    r = ROM Offset of GFX data (multiply by 4 to get real offset)
 
-	p = Palette & Priority bits, I think these change depending on the mode (Direct or Indirect)
-		DIRECT MODE *probably wrong, holoseum needed a kludge to work
-		xxxxx--- -------- (0xf800) :  unknown
-		-----xxx xxxx---- (0x07f0) :  palette #
-		-------- ----xxxx (0x000f) :  unknown
+    p = Palette & Priority bits, I think these change depending on the mode (Direct or Indirect)
+        DIRECT MODE *probably wrong, holoseum needed a kludge to work
+        xxxxx--- -------- (0xf800) :  unknown
+        -----xxx xxxx---- (0x07f0) :  palette #
+        -------- ----xxxx (0x000f) :  unknown
 
 */
 
@@ -754,10 +754,10 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 	sys32sprite_rom_offset = sys32sprite_rom_offset << 2;
 
 	/* Determine the sprites palette and priority.  The actual priority of the sprite is found by looking up
-	   the sprite priority table in the mixer registers.  The lookup value is found by reading the first colour
-	   in the sprites palette in the case of indirect sprites.  For direct sprites, the lookup value is found by
-	   reading the sprite priority data.
-	*/
+       the sprite priority table in the mixer registers.  The lookup value is found by reading the first colour
+       in the sprites palette in the case of indirect sprites.  For direct sprites, the lookup value is found by
+       reading the sprite priority data.
+    */
 	if (sys32sprite_indirect_palette) {
 		if (sys32sprite_indirect_interleave) /* indirect mode where the table is included in the display list */
 		{
@@ -773,8 +773,8 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 	}
 	else {
 		/* If all of the palette bits are set, the sprite is a shadow.  This is a secondary
-		   method to define sprite shadows alongside the sys32sprite_is_shadow bit.
-		   Direct palette shadow sprites use the upper 16 values in the sprite priority lookup table. */
+           method to define sprite shadows alongside the sys32sprite_is_shadow bit.
+           Direct palette shadow sprites use the upper 16 values in the sprite priority lookup table. */
 		if (sprite_palette_mask==((spritedata_source[7]>>4)&sprite_palette_mask)) sys32sprite_is_shadow=1;
 		sys32sprite_priority_lookup = (spritedata_source[7]>>(system32_mixerShift+8))&0xf;
 	}
@@ -820,7 +820,7 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 	if (sys32sprite_xpos & 0x0800) sys32sprite_xpos -= 0x1000;
 
 	/* Inefficient sprite priority hack to get things working for now.  Will change to arrays later.
-		Currently, draw_sprite is a lot more processor intensive and has a greater need for optimisation. */
+        Currently, draw_sprite is a lot more processor intensive and has a greater need for optimisation. */
 	if (priloop==sys32sprite_priority)
 		if (!multi32 || (multi32 && (readinputport(0xf)&(sys32sprite_monitor_select+1))>>sys32sprite_monitor_select))
 			system32_draw_sprite ( bitmap, cliprect );
@@ -832,36 +832,36 @@ each entry in the sprite list is 16 bytes (8 words)
 the sprite list itself consists of 4 main different types of entry
  a normal sprite
 
-	0:  00------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
-	4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
+    0:  00------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
+    4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
 
-		(See Above for bit usage)
+        (See Above for bit usage)
 
  a command to set the clipping area
 
-	0:  01------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
-	4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
+    0:  01------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
+    4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
 
-		(to be filled in later)
+        (to be filled in later)
 
  a jump command
 
-	0:  10ujjjjj jjjjjjjj  1:  yyyyyyyy yyyyyyyy  2:  xxxxxxxx xxxxxxxx  3:  -------- --------
-	4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
+    0:  10ujjjjj jjjjjjjj  1:  yyyyyyyy yyyyyyyy  2:  xxxxxxxx xxxxxxxx  3:  -------- --------
+    4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
 
-		u = set sprite offset positions with this jump (alien3 proves this test is needed)
-		j = sprite number to jump to
-		y = sprite y offset to use (? bits) (only set if u = 1)
-		x = sprite x offset to use (? bits) (only set if u = 1)
+        u = set sprite offset positions with this jump (alien3 proves this test is needed)
+        j = sprite number to jump to
+        y = sprite y offset to use (? bits) (only set if u = 1)
+        x = sprite x offset to use (? bits) (only set if u = 1)
 
-		other bits unused / unknown
+        other bits unused / unknown
 
  a terminate list command
 
-	0:  11------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
-	4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
+    0:  11------ --------  1:  -------- --------  2:  -------- --------  3:  -------- --------
+    4:  -------- --------  5:  -------- --------  6:  -------- --------  7:  -------- --------
 
-		(other bits unused, list is terminated)
+        (other bits unused, list is terminated)
 
 sprite ram can also contain palette look up data for the special indirect
 palette modes, as well as sprite gfx data which is used instead of the gfx
@@ -890,11 +890,11 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 
 		switch (command) {
 		case 0x3: /* end of sprite list */
-			//				logerror ("SPRITELIST: terminated at sprite %06x\n", spritenum*16);
+			//              logerror ("SPRITELIST: terminated at sprite %06x\n", spritenum*16);
 			spritenum = 60000; /* just set a high sprite number so we stop processing */
 			break;
 		case 0x2: /* jump to position in sprite list*/
-			//				logerror ("SPRITELIST: jump at sprite %06x to %06x extra data 0 %04x 1 %04x, 2 %04x 3 %04x 4 %04x 5 %04x 6 %04x 7 %04x\n", spritenum*16, (spritedata_source[0] & 0x1fff)*16, spritedata_source[0] & 0x2000, spritedata_source[1], spritedata_source[2], spritedata_source[3] , spritedata_source[4] , spritedata_source[5] ,spritedata_source[6] , spritedata_source[7] );
+			//              logerror ("SPRITELIST: jump at sprite %06x to %06x extra data 0 %04x 1 %04x, 2 %04x 3 %04x 4 %04x 5 %04x 6 %04x 7 %04x\n", spritenum*16, (spritedata_source[0] & 0x1fff)*16, spritedata_source[0] & 0x2000, spritedata_source[1], spritedata_source[2], spritedata_source[3] , spritedata_source[4] , spritedata_source[5] ,spritedata_source[6] , spritedata_source[7] );
 			spritenum = spritedata_source[0] & 0x1fff;
 			if (spritedata_source[0] & 0x2000) {
 				jump_y = spritedata_source[1];
@@ -902,7 +902,7 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 			}
 			break;
 		case 0x1: /* set clipping registers */
-			//				logerror ("SPRITELIST: set clip regs at %06x extra data 0 %04x 1 %04x 2 %04x 3 %04x 4 %04x 5 %04x 6 %04x 7 %04x\n", spritenum*16, spritedata_source[0], spritedata_source[1],spritedata_source[2],spritedata_source[3],spritedata_source[4],spritedata_source[5],spritedata_source[6],spritedata_source[7]  );
+			//              logerror ("SPRITELIST: set clip regs at %06x extra data 0 %04x 1 %04x 2 %04x 3 %04x 4 %04x 5 %04x 6 %04x 7 %04x\n", spritenum*16, spritedata_source[0], spritedata_source[1],spritedata_source[2],spritedata_source[3],spritedata_source[4],spritedata_source[5],spritedata_source[6],spritedata_source[7]  );
 			{
 
 				if (spritedata_source[0] & 0x3000) /* alien 3 needs something like this ... */
@@ -927,7 +927,7 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 			spritenum ++;
 			break;
 		case 0x0: /* draw sprite */
-			//				logerror ("SPRITELIST: draw sprite at %06x\n", spritenum*16 );
+			//              logerror ("SPRITELIST: draw sprite at %06x\n", spritenum*16 );
 			system32_get_sprite_info (bitmap, &clip);
 			spritenum ++;
 			break;
@@ -936,7 +936,7 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 		processed++;
 		if (processed > 0x20000/16) /* its dead ;-) */
 		{
-			//			logerror ("SPRITELIST: terminated due to infinite loop\n");
+			//          logerror ("SPRITELIST: terminated due to infinite loop\n");
 			spritenum = 16384;
 		};
 	}
@@ -947,64 +947,64 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 tile banking is controlled by a register in here as well as a register external to the tilemap chip
 which is mapped at 0xc0000e
 
-	00 | rR-- -b--  ---- ----    |  b = tile bank low bit ( | 0x2000 ), not multi-32  r = screen resolution R also resolution?
-	02 | ---- ----  ---- dddd    |  d = tilemap disable registers
-	04 | bbbb bbbb  ???? SsRr       S = layer 3 rowselect enable
-									s = layer 2 rowselect enable
-									R = layer 3 rowscroll enable
-									r = layer 2 rowscroll enable
-									b = table bases
-									jpark sets one of the ?
-	06 |
-	08 |
-	0a |
-	0c |
-	0e |
-	10 |
-	12 | scroll x for tilemap 0
-	14 |
-	16 | scroll y for tilemap 0
-	18 |
-	1a | scroll x for tilemap 1
-	1c |
-	1e | scroll y for tilemap 1
-	20 |
-	22 | scroll x for tilemap 2
-	24 |
-	26 | scroll y for tilemap 2
-	28 |
-	2a | scroll x for tilemap 3
-	2c |
-	2e | scroll y for tilemap 3
-	30 | scroll x offset tilemap 0
-	32 | scroll y offset tilemap 0
-	34 | scroll x offset tilemap 1
-	36 | scroll y offset tilemap 1
-	38 | scroll x offset tilemap 2
-	3a | scroll y offset tilemap 2
-	3c | scroll x offset tilemap 3
-	3e | scroll y offset tilemap 3
-	40 | pages 0 + 1 of tilemap 0
-	42 | pages 2 + 3 of tilemap 0
-	44 | pages 0 + 1 of tilemap 1
-	46 | pages 2 + 3 of tilemap 1
-	48 | pages 0 + 1 of tilemap 2
-	4a | pages 2 + 3 of tilemap 2
-	4c | pages 0 + 1 of tilemap 3
-	4e | pages 2 + 3 of tilemap 4
-	50 |
-	52 |
-	54 |
-	56 |
-	58 |
-	5a |
-	5c |
-	5e |
-	60 |
-	62 |
-	64 |
-	66 |
-	.... etc.. fill the rest in later
+    00 | rR-- -b--  ---- ----    |  b = tile bank low bit ( | 0x2000 ), not multi-32  r = screen resolution R also resolution?
+    02 | ---- ----  ---- dddd    |  d = tilemap disable registers
+    04 | bbbb bbbb  ???? SsRr       S = layer 3 rowselect enable
+                                    s = layer 2 rowselect enable
+                                    R = layer 3 rowscroll enable
+                                    r = layer 2 rowscroll enable
+                                    b = table bases
+                                    jpark sets one of the ?
+    06 |
+    08 |
+    0a |
+    0c |
+    0e |
+    10 |
+    12 | scroll x for tilemap 0
+    14 |
+    16 | scroll y for tilemap 0
+    18 |
+    1a | scroll x for tilemap 1
+    1c |
+    1e | scroll y for tilemap 1
+    20 |
+    22 | scroll x for tilemap 2
+    24 |
+    26 | scroll y for tilemap 2
+    28 |
+    2a | scroll x for tilemap 3
+    2c |
+    2e | scroll y for tilemap 3
+    30 | scroll x offset tilemap 0
+    32 | scroll y offset tilemap 0
+    34 | scroll x offset tilemap 1
+    36 | scroll y offset tilemap 1
+    38 | scroll x offset tilemap 2
+    3a | scroll y offset tilemap 2
+    3c | scroll x offset tilemap 3
+    3e | scroll y offset tilemap 3
+    40 | pages 0 + 1 of tilemap 0
+    42 | pages 2 + 3 of tilemap 0
+    44 | pages 0 + 1 of tilemap 1
+    46 | pages 2 + 3 of tilemap 1
+    48 | pages 0 + 1 of tilemap 2
+    4a | pages 2 + 3 of tilemap 2
+    4c | pages 0 + 1 of tilemap 3
+    4e | pages 2 + 3 of tilemap 4
+    50 |
+    52 |
+    54 |
+    56 |
+    58 |
+    5a |
+    5c |
+    5e |
+    60 |
+    62 |
+    64 |
+    66 |
+    .... etc.. fill the rest in later
 
 */
 
@@ -1080,12 +1080,12 @@ void system32_draw_text_layer ( struct mame_bitmap *bitmap, const struct rectang
 
 	/* this register is like this
 
-	 ---- ----  tttt -bbb
+     ---- ----  tttt -bbb
 
-	 t = address of tilemap data (used by dbzvrvs)
-	 b = address of tile gfx data (used by radmobile / radrally ingame, jpark)
+     t = address of tilemap data (used by dbzvrvs)
+     b = address of tile gfx data (used by radmobile / radrally ingame, jpark)
 
-	 */
+     */
 
 	for (y = 0; y < 32 ; y++) {
 		for (x = 0; x < 64 ; x++) {
@@ -1200,17 +1200,17 @@ static void get_system32_tile_info ( int tile_index, int layer ) {
 	if (multi32) {
 
 		/*
-		External tilebank register (0xc0000e)
+        External tilebank register (0xc0000e)
 
-		-------- x-------  Tilemap Layer 3 bank += 0x4000
-		-------- -x------  Tilemap Layer 3 bank += 0x2000
-		-------- --x-----  Tilemap Layer 2 bank += 0x4000
-		-------- ---x----  Tilemap Layer 2 bank += 0x2000
-		-------- ----x---  Tilemap Layer 1 bank += 0x4000
-		-------- -----x--  Tilemap Layer 1 bank += 0x2000
-		-------- ------x-  Tilemap Layer 0 bank += 0x4000
-		-------- -------x  Tilemap Layer 0 bank += 0x2000
-		*/
+        -------- x-------  Tilemap Layer 3 bank += 0x4000
+        -------- -x------  Tilemap Layer 3 bank += 0x2000
+        -------- --x-----  Tilemap Layer 2 bank += 0x4000
+        -------- ---x----  Tilemap Layer 2 bank += 0x2000
+        -------- ----x---  Tilemap Layer 1 bank += 0x4000
+        -------- -----x--  Tilemap Layer 1 bank += 0x2000
+        -------- ------x-  Tilemap Layer 0 bank += 0x4000
+        -------- -------x  Tilemap Layer 0 bank += 0x2000
+        */
 
 		tileno|=(sys32_tilebank_external>>(layer*2)&3)*0x2000;
 	}
@@ -1293,18 +1293,18 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 
 	/* rowselect / rowscroll
 
-	outrunners road - works ok
-	svf pitch - works ok with tilemap flip / clipping hack
-	brival floor - seems ok
-	arabfgt floor - seems ok, bit shakey
-	rad rally mirror - reasonable but doesn't scroll smoothly
-	rad mobile backgrounds - wrong?
-	sonic title screen background - ok
+    outrunners road - works ok
+    svf pitch - works ok with tilemap flip / clipping hack
+    brival floor - seems ok
+    arabfgt floor - seems ok, bit shakey
+    rad rally mirror - reasonable but doesn't scroll smoothly
+    rad mobile backgrounds - wrong?
+    sonic title screen background - ok
 
-	what effect does alien3 use? zooming instead?
-	jurassic park enables rowscroll on one of the levels in the attract but its hard to see what for
+    what effect does alien3 use? zooming instead?
+    jurassic park enables rowscroll on one of the levels in the attract but its hard to see what for
 
-	*/
+    */
 
 	if (layer == 2) {
 		rowscroll = (sys32_videoram[0x01FF04/2] & 0x0001);
@@ -1320,8 +1320,8 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 	monitor_res=system32_screen_mode?52*8:40*8;
 
 	if (multi32) {
-		//			clip.min_x = Machine->visible_area.min_x;
-		//			clip.max_x = Machine->visible_area.max_x;
+		//          clip.min_x = Machine->visible_area.min_x;
+		//          clip.max_x = Machine->visible_area.max_x;
 		clip.min_x = (layer%2)*monitor_res;
 		clip.max_x = (layer%2+1)*monitor_res;
 		clip.min_y = 0;
@@ -1357,9 +1357,9 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 
 			if ((system32_mixerregs[monitor][(0x32+layer*2)/2]&8)>>3) {
 				/* disable wrap on this tilemap, should be done on the other too but its less important
-				   this is a bit messy because mame has no core functionality for this without resorting
-				   to tilemap_draw_roz which I can't do because of RGB_DIRECT, it might be wrong anyway,
-				   maybe its using the system32 clipping windows somehow */
+                   this is a bit messy because mame has no core functionality for this without resorting
+                   to tilemap_draw_roz which I can't do because of RGB_DIRECT, it might be wrong anyway,
+                   maybe its using the system32 clipping windows somehow */
 				if (layer == 3) {
 					int x2;
 					x2 =xscroll&0x7ff;
@@ -1554,7 +1554,7 @@ VIDEO_UPDATE( system32 ) {
 
 	/* Rad Rally (title screen) and Rad Mobile (Winners don't use drugs) use a bitmap ... */
 	/* i think this is wrong tho, rad rally enables it on the 2nd title screen when the
-	   data isn't complete */
+       data isn't complete */
 
 	if (sys32_videoram[0x01FF00/2] & 0x0800)  // wrong?
 	{
@@ -1564,11 +1564,11 @@ VIDEO_UPDATE( system32 ) {
 
 		const pen_t *paldata = &gfx->colortable[0];
 
-//		if ( code_pressed_memory(KEYCODE_C) )
-//		{
-//			ppp++;
+//      if ( code_pressed_memory(KEYCODE_C) )
+//      {
+//          ppp++;
 //
-//		}
+//      }
 
 		for ( ycnt = 0 ; ycnt < 224 ; ycnt ++ )
 		{
@@ -1623,7 +1623,7 @@ VIDEO_UPDATE( system32 ) {
 
 		int x;
 
-	//	x = rand();
+	//  x = rand();
 
 		fprintf(sys32_logfile,"Video Regs 0x31ff00 - 0x31ffff\n");
 		for (x = 0x1ff00; x< 0x20000; x+=2)

@@ -17,32 +17,32 @@
 
 
  To Do / Unknowns
-	-  Hack is needed to reset sound CPU and sound chip when machine
-		is 'tilted' in Pipi & Bibis. Otherwise sound CPU interferes
-		with the main CPU test of shared RAM. You get a 'Sub CPU RAM Error'
-	-  What do Scroll registers 0Eh and 0Fh really do ????
-	-  Snow Bros 2 sets bit 6 of the sprite X info word during weather
-		world map, and bits 4, 5 and 6 of the sprite X info word during
-		the Rabbit boss screen - reasons are unknown.
-	-  Fourth set of scroll registers have been used for Sprite scroll
-		though it may not be correct. For most parts this looks right
-		except for Snow Bros 2 when in the rabbit boss screen (all sprites
-		jump when big green nasty (which is the foreground layer) comes
-		in from the left)
-	-  Teki Paki tests video RAM from address 0 past SpriteRAM to $37ff.
-		This seems to be a bug in Teki Paki's vram test routine !
-	-  Batsugun, relationship between the two video controllers (priority
-		wise) is wrong and unknown.
+    -  Hack is needed to reset sound CPU and sound chip when machine
+        is 'tilted' in Pipi & Bibis. Otherwise sound CPU interferes
+        with the main CPU test of shared RAM. You get a 'Sub CPU RAM Error'
+    -  What do Scroll registers 0Eh and 0Fh really do ????
+    -  Snow Bros 2 sets bit 6 of the sprite X info word during weather
+        world map, and bits 4, 5 and 6 of the sprite X info word during
+        the Rabbit boss screen - reasons are unknown.
+    -  Fourth set of scroll registers have been used for Sprite scroll
+        though it may not be correct. For most parts this looks right
+        except for Snow Bros 2 when in the rabbit boss screen (all sprites
+        jump when big green nasty (which is the foreground layer) comes
+        in from the left)
+    -  Teki Paki tests video RAM from address 0 past SpriteRAM to $37ff.
+        This seems to be a bug in Teki Paki's vram test routine !
+    -  Batsugun, relationship between the two video controllers (priority
+        wise) is wrong and unknown.
 
 
  GP9001 Video RAM address layout:
 
-	Bank		  data size of video layer
-	-----------------------------------------
-	$0000-07FF	  800h words for background layer
-	$0800-0FFF	  800h words for foreground layer
-	$1000-17FF	  800h words for top (text) layer
-	$1800-1BFF	  400h words for sprites (100 possible sprites)
+    Bank          data size of video layer
+    -----------------------------------------
+    $0000-07FF    800h words for background layer
+    $0800-0FFF    800h words for foreground layer
+    $1000-17FF    800h words for top (text) layer
+    $1800-1BFF    400h words for sprites (100 possible sprites)
 
 
 
@@ -108,38 +108,38 @@ There seems to be sprite buffering - double buffering actually.
 
  GP9001 Scroll Registers (hex) :
 
-	00		Background scroll X (X flip off)
-	01		Background scroll Y (Y flip off)
-	02		Foreground scroll X (X flip off)
-	03		Foreground scroll Y (Y flip off)
-	04		Top (text) scroll X (X flip off)
-	05		Top (text) scroll Y (Y flip off)
-	06		Sprites    scroll X (X flip off) ???
-	07		Sprites    scroll Y (Y flip off) ???
-	0E		??? Initialise Video controller at startup ???
-	0F		Scroll update complete ??? (Not used in Ghox and V-Five)
+    00      Background scroll X (X flip off)
+    01      Background scroll Y (Y flip off)
+    02      Foreground scroll X (X flip off)
+    03      Foreground scroll Y (Y flip off)
+    04      Top (text) scroll X (X flip off)
+    05      Top (text) scroll Y (Y flip off)
+    06      Sprites    scroll X (X flip off) ???
+    07      Sprites    scroll Y (Y flip off) ???
+    0E      ??? Initialise Video controller at startup ???
+    0F      Scroll update complete ??? (Not used in Ghox and V-Five)
 
-	80		Background scroll X (X flip on)
-	81		Background scroll Y (Y flip on)
-	82		Foreground scroll X (X flip on)
-	83		Foreground scroll Y (Y flip on)
-	84		Top (text) scroll X (X flip on)
-	85		Top (text) scroll Y (Y flip on)
-	86		Sprites    scroll X (X flip on) ???
-	87		Sprites    scroll Y (Y flip on) ???
-	8F		Same as 0Fh except flip bit is active
+    80      Background scroll X (X flip on)
+    81      Background scroll Y (Y flip on)
+    82      Foreground scroll X (X flip on)
+    83      Foreground scroll Y (Y flip on)
+    84      Top (text) scroll X (X flip on)
+    85      Top (text) scroll Y (Y flip on)
+    86      Sprites    scroll X (X flip on) ???
+    87      Sprites    scroll Y (Y flip on) ???
+    8F      Same as 0Fh except flip bit is active
 
 
 Scroll Register 0E writes (Video controller inits ?) from different games:
 
-Teki-Paki		 | Ghox				| Knuckle Bash	   | Truxton 2		  |
+Teki-Paki        | Ghox             | Knuckle Bash     | Truxton 2        |
 0003, 0002, 4000 | ????, ????, ???? | 0202, 0203, 4200 | 0003, 0002, 4000 |
 
-Dogyuun			 | Batsugun			|
+Dogyuun          | Batsugun         |
 0202, 0203, 4200 | 0202, 0203, 4200 |
 1202, 1203, 5200 | 1202, 1203, 5200 | <--- Second video controller
 
-Pipi & Bibis	 | Fix Eight		| V-Five		   | Snow Bros. 2	  |
+Pipi & Bibis     | Fix Eight        | V-Five           | Snow Bros. 2     |
 0003, 0002, 4000 | 0202, 0203, 4200 | 0202, 0203, 4200 | 0202, 0203, 4200 |
 
 ***************************************************************************/
@@ -288,7 +288,7 @@ static void get_bg0_tile_info(int tile_index)
 			color,
 			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
-///	if ((attrib & 0x0f00) == 0) tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
+/// if ((attrib & 0x0f00) == 0) tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
 }
 
 static void get_top1_tile_info(int tile_index)
@@ -676,7 +676,7 @@ WRITE16_HANDLER( toaplan2_txvideoram16_offs_w )
 		}
 		COMBINE_DATA(&toaplan2_txvideoram16_offs[offset]);
 	}
-//	logerror("Writing %04x to text offs RAM offset %04x\n",data,offset);
+//  logerror("Writing %04x to text offs RAM offset %04x\n",data,offset);
 }
 
 READ16_HANDLER( toaplan2_txscrollram16_r )
@@ -691,7 +691,7 @@ WRITE16_HANDLER( toaplan2_txscrollram16_w )
 
 	tilemap_set_scrollx(tx_tilemap, offset, data_tx);
 
-//	logerror("Writing %04x to text scroll RAM offset %04x\n",data,offset);
+//  logerror("Writing %04x to text scroll RAM offset %04x\n",data,offset);
 	COMBINE_DATA(&toaplan2_txscrollram16[offset]);
 }
 
@@ -1322,7 +1322,7 @@ void toaplan2_log_vram(void)
 
 
 /***************************************************************************
-	Sprite Handlers
+    Sprite Handlers
 ***************************************************************************/
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int controller, int priority_to_display, int bank_sel )
@@ -1429,7 +1429,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 
 /***************************************************************************
-	Mark the sprite priority used list.
+    Mark the sprite priority used list.
 ***************************************************************************/
 static void mark_sprite_priority(int controller)
 {
@@ -1449,7 +1449,7 @@ static void mark_sprite_priority(int controller)
 }
 
 /***************************************************************************
-	Mark the tile priority used list.
+    Mark the tile priority used list.
 ***************************************************************************/
 static void mark_tile_priority(int controller)
 {
@@ -1485,7 +1485,7 @@ static void mark_tile_priority(int controller)
 }
 
 /***************************************************************************
-	Draw the game screen in the given mame_bitmap.
+    Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
 VIDEO_UPDATE( toaplan2_0 )

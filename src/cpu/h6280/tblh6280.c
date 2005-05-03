@@ -2,11 +2,11 @@
 
     tblh6280.c
 
-	Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
+    Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
 
-	This source code is based (with permission!) on the 6502 emulator by
-	Juergen Buchmueller.  It is released as part of the Mame emulator project.
-	Let me know if you intend to use this code in any other project.
+    This source code is based (with permission!) on the 6502 emulator by
+    Juergen Buchmueller.  It is released as part of the Mame emulator project.
+    Let me know if you intend to use this code in any other project.
 
 ******************************************************************************/
 
@@ -16,10 +16,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *	 Hu6280 opcodes
+ *   Hu6280 opcodes
  *
  *****************************************************************************
- * op	  temp	   cycles		      rdmem	  opc   wrmem   ******************/
+ * op     temp     cycles             rdmem   opc   wrmem   ******************/
 OP(_000) {		   h6280_ICount -= 8;		  BRK;		   } // 8 BRK
 OP(_020) {		   h6280_ICount -= 7; EA_ABS; JSR;		   } // 7 JSR  ABS
 OP(_040) {		   h6280_ICount -= 7;		  RTI;		   } // 7 RTI

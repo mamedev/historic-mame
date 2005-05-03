@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Exidy Car Polo hardware
+    Exidy Car Polo hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 
@@ -58,7 +58,7 @@ static struct mame_bitmap *sprite_border_collision_bitmap;
 
 /***************************************************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *  The palette PROM is connected to the RGB output this way.
  *
@@ -76,7 +76,7 @@ static struct mame_bitmap *sprite_border_collision_bitmap;
 PALETTE_INIT( carpolo )
 {
 	/* thanks to Jarek Burczynski for analyzing the circuit */
-//	const static float MAX_VOLTAGE = 6.9620;
+//  const static float MAX_VOLTAGE = 6.9620;
 	const static float MIN_VOLTAGE = 1.7434;
 	const static float MAX_VOLTAGE = 5.5266;
 
@@ -85,8 +85,8 @@ PALETTE_INIT( carpolo )
 
 	const static float g_voltage[] = { 1.7434, 2.1693, 2.5823, 3.0585,
 									   3.4811, 4.0707, 4.7415, 5.4251 };
-//	const static float g_voltage[] = { 4.7871, 5.0613, 5.3079, 5.6114,
-//									   5.7940, 6.1608, 6.5436, 6.9620 };
+//  const static float g_voltage[] = { 4.7871, 5.0613, 5.3079, 5.6114,
+//                                     5.7940, 6.1608, 6.5436, 6.9620 };
 
 	const static float b_voltage[] = { 1.9176, 2.8757, 3.9825, 5.5266 };
 
@@ -141,12 +141,12 @@ PALETTE_INIT( carpolo )
 
 
 	/* the bits in the goal gfx PROM are hooked as follows (all active LO):
-	   Bit 3 - goal post
-	   Bit 2 - scoring area
-	   Bit 1 - net
-	   Bit 0 - n/c
+       Bit 3 - goal post
+       Bit 2 - scoring area
+       Bit 1 - net
+       Bit 0 - n/c
 
-	   Below I am only filling in the colors actually used. */
+       Below I am only filling in the colors actually used. */
 
 	/* left goal */
 	COLOR(1, (0x07 ^ 0x0f)) = LEFT_GOAL_COLOR;
@@ -168,7 +168,7 @@ PALETTE_INIT( carpolo )
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -195,7 +195,7 @@ VIDEO_START( carpolo )
 
 /*************************************
  *
- *	Core video refresh
+ *  Core video refresh
  *
  *************************************/
 
@@ -302,7 +302,7 @@ VIDEO_UPDATE( carpolo )
 				1, carpolo_spriteram[0x0e] & 0x0f, BALL_COLOR);
 
 	/* left goal - position determined by bit 6 of the
-	   horizontal and vertical timing PROMs */
+       horizontal and vertical timing PROMs */
 	drawgfxzoom(bitmap,Machine->gfx[1],
 				0,0,
 				0,0,
@@ -319,7 +319,7 @@ VIDEO_UPDATE( carpolo )
 				0x20000,0x20000);
 
 	/* special char - bit 0 of 0x0f enables it,
-					  bit 1 marked as WIDE, but never appears to be set */
+                      bit 1 marked as WIDE, but never appears to be set */
 	if (carpolo_spriteram[0x0f] & 0x02)
 	{
 		logerror("WIDE!\n");
@@ -336,8 +336,8 @@ VIDEO_UPDATE( carpolo )
 	/* draw the alpha layer */
 
 	/* there are only 8 lines of text repeated 4 times
-	   and bit 3 of the vertical timing PROM controls in
-	   which quadrant the line will actually appear */
+       and bit 3 of the vertical timing PROM controls in
+       which quadrant the line will actually appear */
 
 	draw_alpha_line(bitmap, cliprect, 0, (0*4+0)*2  );
 	draw_alpha_line(bitmap, cliprect, 1, (0*4+0)*2+1);
@@ -352,7 +352,7 @@ VIDEO_UPDATE( carpolo )
 
 /*************************************
  *
- *	End of frame callback
+ *  End of frame callback
  *
  *************************************/
 

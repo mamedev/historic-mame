@@ -1,41 +1,41 @@
 /***************************************************************************
 
-							-= Kaneko 16 Bit Games =-
+                            -= Kaneko 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing:
+Note:   if MAME_DEBUG is defined, pressing:
 
-		Q  with  X/C/V/B/ Z   shows Layer 0 (tiles with priority 0/1/2/3/ All)
-		W  with  X/C/V/B/ Z   shows Layer 1 (tiles with priority 0/1/2/3/ All)
-		E  with  X/C/V/B/ Z   shows Layer 2 (tiles with priority 0/1/2/3/ All)
-		R  with  X/C/V/B/ Z   shows Layer 3 (tiles with priority 0/1/2/3/ All)
-		A  with  X/C/V/B/ Z   shows Sprites (tiles with priority 0/1/2/3/ All)
+        Q  with  X/C/V/B/ Z   shows Layer 0 (tiles with priority 0/1/2/3/ All)
+        W  with  X/C/V/B/ Z   shows Layer 1 (tiles with priority 0/1/2/3/ All)
+        E  with  X/C/V/B/ Z   shows Layer 2 (tiles with priority 0/1/2/3/ All)
+        R  with  X/C/V/B/ Z   shows Layer 3 (tiles with priority 0/1/2/3/ All)
+        A  with  X/C/V/B/ Z   shows Sprites (tiles with priority 0/1/2/3/ All)
 
-		Keys can be used together!
+        Keys can be used together!
 
-	[ 1 High Color Layer ]
+    [ 1 High Color Layer ]
 
-		In ROM	(Optional)
+        In ROM  (Optional)
 
-	[ Scrolling Layers ]
+    [ Scrolling Layers ]
 
-		Each VIEW2 chip generates 2 layers. Up to 2 chips are used
-		(4 layers)
+        Each VIEW2 chip generates 2 layers. Up to 2 chips are used
+        (4 layers)
 
-		Layer Size:				512 x 512
-		Tiles:					16 x 16 x 4
+        Layer Size:             512 x 512
+        Tiles:                  16 x 16 x 4
 
-		Line scroll is supported by the chip: each layer has RAM
-		for 512 horizontal scroll offsets (one per tilemap line)
-		that are added to the global scroll values.
-		See e.g. blazeon (2nd demo level), mgcrystl, sandscrp.
+        Line scroll is supported by the chip: each layer has RAM
+        for 512 horizontal scroll offsets (one per tilemap line)
+        that are added to the global scroll values.
+        See e.g. blazeon (2nd demo level), mgcrystl, sandscrp.
 
-	[ 1024 Sprites ]
+    [ 1024 Sprites ]
 
-		Sprites are 16 x 16 x 4 in the older games, 16 x 16 x 8 in
-		gtmr & gtmr2
+        Sprites are 16 x 16 x 4 in the older games, 16 x 16 x 8 in
+        gtmr & gtmr2
 
 
 **************************************************************************/
@@ -89,20 +89,20 @@ WRITE16_HANDLER( kaneko16_display_enable )
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
-							  [ Tiles Format ]
+                              [ Tiles Format ]
 
 Offset:
 
-0000.w			fedc ba-- ---- ----		unused?
-				---- --9- ---- ----		High Priority (vs Sprites)
-				---- ---8 ---- ----		High Priority (vs Tiles)
-				---- ---- 7654 32--		Color
-				---- ---- ---- --1-		Flip X
-				---- ---- ---- ---0		Flip Y
+0000.w          fedc ba-- ---- ----     unused?
+                ---- --9- ---- ----     High Priority (vs Sprites)
+                ---- ---8 ---- ----     High Priority (vs Tiles)
+                ---- ---- 7654 32--     Color
+                ---- ---- ---- --1-     Flip X
+                ---- ---- ---- ---0     Flip Y
 
-0002.w									Code
+0002.w                                  Code
 
 ***************************************************************************/
 
@@ -282,8 +282,8 @@ VIDEO_START( berlwall )
 		return 1;
 
 /*
-	8aba is used as background color
-	8aba/2 = 455d = 10001 01010 11101 = $11 $0a $1d
+    8aba is used as background color
+    8aba/2 = 455d = 10001 01010 11101 = $11 $0a $1d
 */
 
 	for (sx = 0 ; sx < 32 ; sx++)	// horizontal screens
@@ -323,69 +323,69 @@ VIDEO_START( berlwall )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Sprite data is layed out in RAM in different ways for different games
-	(type 0,1,2,etc.). This basically involves the bits in the attribute
-	word to be shuffled around and/or the words being in different order.
+    Sprite data is layed out in RAM in different ways for different games
+    (type 0,1,2,etc.). This basically involves the bits in the attribute
+    word to be shuffled around and/or the words being in different order.
 
-	Each sprite is always stuffed in 4 words. There may be some extra
-	padding words though (e.g. type 2 sprites are like type 0 but the
-	data is held in the last 8 bytes of every 16). Examples are:
+    Each sprite is always stuffed in 4 words. There may be some extra
+    padding words though (e.g. type 2 sprites are like type 0 but the
+    data is held in the last 8 bytes of every 16). Examples are:
 
-	Type 0: shogwarr, blazeon, bakubrkr.
-	Type 1: gtmr.
-	Type 2: berlwall
+    Type 0: shogwarr, blazeon, bakubrkr.
+    Type 1: gtmr.
+    Type 2: berlwall
 
-Offset:			Format:						Value:
+Offset:         Format:                     Value:
 
-0000.w			Attribute (type 0 & 2)
+0000.w          Attribute (type 0 & 2)
 
-					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
-					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
-					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
-					---c ba-- ---- ----
-					---- --9- ---- ----		High Priority (vs FG Tiles Of High Priority)
-					---- ---8 ---- ----		High Priority (vs BG Tiles Of High Priority)
-					---- ---- 7654 32--		Color
-					---- ---- ---- --1-		X Flip
-					---- ---- ---- ---0		Y Flip
+                    f--- ---- ---- ----     Multisprite: Use Latched Code + 1
+                    -e-- ---- ---- ----     Multisprite: Use Latched Color (And Flip?)
+                    --d- ---- ---- ----     Multisprite: Use Latched X,Y As Offsets
+                    ---c ba-- ---- ----
+                    ---- --9- ---- ----     High Priority (vs FG Tiles Of High Priority)
+                    ---- ---8 ---- ----     High Priority (vs BG Tiles Of High Priority)
+                    ---- ---- 7654 32--     Color
+                    ---- ---- ---- --1-     X Flip
+                    ---- ---- ---- ---0     Y Flip
 
-				Attribute (type 1)
+                Attribute (type 1)
 
-					f--- ---- ---- ----		Multisprite: Use Latched Code + 1
-					-e-- ---- ---- ----		Multisprite: Use Latched Color (And Flip?)
-					--d- ---- ---- ----		Multisprite: Use Latched X,Y As Offsets
-					---c ba-- ---- ----
-					---- --9- ---- ----		X Flip
-					---- ---8 ---- ----		Y Flip
-					---- ---- 7--- ----		High Priority (vs FG Tiles Of High Priority)
-					---- ---- -6-- ----		High Priority (vs BG Tiles Of High Priority)
-					---- ---- --54 3210		Color
+                    f--- ---- ---- ----     Multisprite: Use Latched Code + 1
+                    -e-- ---- ---- ----     Multisprite: Use Latched Color (And Flip?)
+                    --d- ---- ---- ----     Multisprite: Use Latched X,Y As Offsets
+                    ---c ba-- ---- ----
+                    ---- --9- ---- ----     X Flip
+                    ---- ---8 ---- ----     Y Flip
+                    ---- ---- 7--- ----     High Priority (vs FG Tiles Of High Priority)
+                    ---- ---- -6-- ----     High Priority (vs BG Tiles Of High Priority)
+                    ---- ---- --54 3210     Color
 
-0002.w										Code
-0004.w										X Position << 6
-0006.w										Y Position << 6
+0002.w                                      Code
+0004.w                                      X Position << 6
+0006.w                                      Y Position << 6
 
-	Type 3: sandscrp
+    Type 3: sandscrp
 
-Offset:			Format:				Value:
+Offset:         Format:             Value:
 
-07.b			7654 ----			Color
-				---- 3---
-				---- -2--			Multi Sprite
-				---- --1-			Y (High Bit)
-				---- ---0			X (High Bit)
+07.b            7654 ----           Color
+                ---- 3---
+                ---- -2--           Multi Sprite
+                ---- --1-           Y (High Bit)
+                ---- ---0           X (High Bit)
 
-09.b								X (Low Bits)
+09.b                                X (Low Bits)
 
-0B.b								Y (Low Bits)
+0B.b                                Y (Low Bits)
 
-0D.b								Code (Low Bits)
+0D.b                                Code (Low Bits)
 
-0F.b			7--- ----			Flip X
-				-6-- ----			Flip Y
-				--54 3210			Code (High Bits)
+0F.b            7--- ----           Flip X
+                -6-- ----           Flip Y
+                --54 3210           Code (High Bits)
 
 ***************************************************************************/
 
@@ -478,13 +478,13 @@ int kaneko16_parse_sprite_type3(int i, struct tempsprite *s)
 void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	/* Sprites *must* be parsed from the first in RAM to the last,
-	   because of the multisprite feature. But they *must* be drawn
-	   from the last in RAM (frontmost) to the firtst in order to
-	   cope with priorities using pdrawgfx.
+       because of the multisprite feature. But they *must* be drawn
+       from the last in RAM (frontmost) to the firtst in order to
+       cope with priorities using pdrawgfx.
 
-	   Hence we parse them from first to last and put the result
-	   in a temp buffer, then draw the buffer's contents from last
-	   to first. */
+       Hence we parse them from first to last and put the result
+       in a temp buffer, then draw the buffer's contents from last
+       to first. */
 
 	int max	=	(Machine->drv->screen_width > 0x100) ? (0x200<<6) : (0x100<<6);
 
@@ -571,7 +571,7 @@ void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
 
 
 	/* Let's finally draw the sprites we buffered, in reverse order
-	   (for pdrawgfx) */
+       (for pdrawgfx) */
 
 	for (s--; s >= spritelist.first_sprite; s--)
 	{
@@ -609,32 +609,32 @@ if (code_pressed(KEYCODE_Z))
 /***************************************************************************
 
 
-							Sprites Registers
+                            Sprites Registers
 
-	Offset:			Format:						Value:
+    Offset:         Format:                     Value:
 
-	0000.w			f--- ---- ---- ----			Sprites Disable?? (see blazeon)
-					-edc ba98 7654 32--
-					---- ---- ---- --1-			Flip X
-					---- ---- ---- ---0			Flip Y
+    0000.w          f--- ---- ---- ----         Sprites Disable?? (see blazeon)
+                    -edc ba98 7654 32--
+                    ---- ---- ---- --1-         Flip X
+                    ---- ---- ---- ---0         Flip Y
 
-	0002.w										Y Offset << 6 (Global)
-
-
-	0004..000e.w								?
+    0002.w                                      Y Offset << 6 (Global)
 
 
-	0010.w										X Offset << 6 #0
-	0012.w										Y Offset << 6 #0
+    0004..000e.w                                ?
 
-	0014.w										X Offset << 6 #1
-	0016.w										Y Offset << 6 #1
 
-	0018.w										X Offset << 6 #2
-	001a.w										Y Offset << 6 #2
+    0010.w                                      X Offset << 6 #0
+    0012.w                                      Y Offset << 6 #0
 
-	001c.w										X Offset << 6 #3
-	001e.w										Y Offset << 6 #3
+    0014.w                                      X Offset << 6 #1
+    0016.w                                      Y Offset << 6 #1
+
+    0018.w                                      X Offset << 6 #2
+    001a.w                                      Y Offset << 6 #2
+
+    001c.w                                      X Offset << 6 #3
+    001e.w                                      Y Offset << 6 #3
 
 ***************************************************************************/
 
@@ -642,35 +642,35 @@ if (code_pressed(KEYCODE_Z))
 [gtmr]
 
 Initial self test:
-600000: 4BC0 94C0 4C40 94C0-0404 0002 0000 0000		(Layers 1 regs)
-680000: 4BC0 94C0 4C40 94C0-1C1C 0002 0000 0000		(Layers 2 regs)
+600000: 4BC0 94C0 4C40 94C0-0404 0002 0000 0000     (Layers 1 regs)
+680000: 4BC0 94C0 4C40 94C0-1C1C 0002 0000 0000     (Layers 2 regs)
 Race start:
-600000: DC00 7D00 DC80 7D00-0404 0002 0000 0000		(Layers 1 regs)
-680000: DC00 7D00 DC80 7D00-1C1C 0002 0000 0000		(Layers 2 regs)
+600000: DC00 7D00 DC80 7D00-0404 0002 0000 0000     (Layers 1 regs)
+680000: DC00 7D00 DC80 7D00-1C1C 0002 0000 0000     (Layers 2 regs)
 
 [gtmr]
-700000: 0040 0000 0001 0180-0000 0000 0000 0000		(Sprites  regs)
-700010: 0040 0000 0040 0000-0040 0000 2840 1E00		; 1,0 .. a1,78
-													; a0*2=screenx/2
-													; 78*2=screeny/2
+700000: 0040 0000 0001 0180-0000 0000 0000 0000     (Sprites  regs)
+700010: 0040 0000 0040 0000-0040 0000 2840 1E00     ; 1,0 .. a1,78
+                                                    ; a0*2=screenx/2
+                                                    ; 78*2=screeny/2
 FLIP ON:
-700000: 0043 FFC0 0001 0180-0000 0000 0000 0000		(Sprites  regs)
-700010: 2FC0 4400 2FC0 4400-2FC0 4400 57C0 6200		; bf,110 .. 15f,188
-													; 15f-bf=a0! 188-110=78!
+700000: 0043 FFC0 0001 0180-0000 0000 0000 0000     (Sprites  regs)
+700010: 2FC0 4400 2FC0 4400-2FC0 4400 57C0 6200     ; bf,110 .. 15f,188
+                                                    ; 15f-bf=a0! 188-110=78!
 
 [berlwall]
-600000: 48CC 03C0 0001 0100-0000 0000 0000 0000		(Sprites  regs)
+600000: 48CC 03C0 0001 0100-0000 0000 0000 0000     (Sprites  regs)
 600010: 0000 0000 0000 0000-0000 0000 0000 0000
 FLIP ON:
-600000: 48CF FC00 0001 0100-0000 0000 0000 0000		(Sprites  regs)
+600000: 48CF FC00 0001 0100-0000 0000 0000 0000     (Sprites  regs)
 600010: 0000 0000 0000 0000-0000 0000 0000 0000
 
 [mgcrystl]
-900000: 4FCC 0000 0040 00C0-xxxx 0001 0001 0001		(Sprites  regs)
+900000: 4FCC 0000 0040 00C0-xxxx 0001 0001 0001     (Sprites  regs)
 900010: 0000 FC40 A000 9C40-1E00 1A40 0000 FC40
 FLIP ON:
-900000: 4FCF 0000 0040 00C0-xxxx 0001 0001 0001		(Sprites  regs)
-900010: 0000 0400 A000 A400-1E00 2200 0000 0400		; +1f<<6 on y
+900000: 4FCF 0000 0040 00C0-xxxx 0001 0001 0001     (Sprites  regs)
+900010: 0000 0400 A000 A400-1E00 2200 0000 0400     ; +1f<<6 on y
 */
 
 READ16_HANDLER( kaneko16_sprites_regs_r )
@@ -697,59 +697,59 @@ WRITE16_HANDLER( kaneko16_sprites_regs_w )
 			break;
 	}
 
-//	logerror("CPU #0 PC %06X : Warning, sprites reg %04X <- %04X\n",activecpu_get_pc(),offset*2,data);
+//  logerror("CPU #0 PC %06X : Warning, sprites reg %04X <- %04X\n",activecpu_get_pc(),offset*2,data);
 }
 
 
 /***************************************************************************
 
-							Layers Registers
+                            Layers Registers
 
 
-	Offset:			Format:						Value:
+    Offset:         Format:                     Value:
 
-	0000.w										FG Scroll X
-	0002.w										FG Scroll Y
+    0000.w                                      FG Scroll X
+    0002.w                                      FG Scroll Y
 
-	0004.w										BG Scroll X
-	0006.w										BG Scroll Y
+    0004.w                                      BG Scroll X
+    0006.w                                      BG Scroll Y
 
-	0008.w			Layers Control
+    0008.w          Layers Control
 
-					fed- ---- ---- ----
-					---c ---- ---- ----		BG Disable
-					---- b--- ---- ----		Line Scroll (Always 1 in berlwall & bakubrkr)
-					---- -a-- ---- ----		? Always 1 in gtmr     & bakubrkr ?
-					---- --9- ---- ----		BG Flip X
-					---- ---8 ---- ----		BG Flip Y
+                    fed- ---- ---- ----
+                    ---c ---- ---- ----     BG Disable
+                    ---- b--- ---- ----     Line Scroll (Always 1 in berlwall & bakubrkr)
+                    ---- -a-- ---- ----     ? Always 1 in gtmr     & bakubrkr ?
+                    ---- --9- ---- ----     BG Flip X
+                    ---- ---8 ---- ----     BG Flip Y
 
-					---- ---- 765- ----
-					---- ---- ---4 ----		FG Disable
-					---- ---- ---- 3---		Line Scroll (Always 1 in berlwall & bakubrkr)
-					---- ---- ---- -2--		? Always 1 in gtmr     & bakubrkr ?
-					---- ---- ---- --1-		FG Flip X
-					---- ---- ---- ---0		FG Flip Y
+                    ---- ---- 765- ----
+                    ---- ---- ---4 ----     FG Disable
+                    ---- ---- ---- 3---     Line Scroll (Always 1 in berlwall & bakubrkr)
+                    ---- ---- ---- -2--     ? Always 1 in gtmr     & bakubrkr ?
+                    ---- ---- ---- --1-     FG Flip X
+                    ---- ---- ---- ---0     FG Flip Y
 
-	000a.w										? always 0x0002 ?
+    000a.w                                      ? always 0x0002 ?
 
 There are more!
 
 ***************************************************************************/
 
-/*	[gtmr]
+/*  [gtmr]
 
-	car select screen scroll values:
-	Flipscreen off:
-		$6x0000: $72c0 ; $fbc0 ; 7340 ; 0
-		$72c0/$40 = $1cb = $200-$35	/	$7340/$40 = $1cd = $1cb+2
+    car select screen scroll values:
+    Flipscreen off:
+        $6x0000: $72c0 ; $fbc0 ; 7340 ; 0
+        $72c0/$40 = $1cb = $200-$35 /   $7340/$40 = $1cd = $1cb+2
 
-		$fbc0/$40 = -$11
+        $fbc0/$40 = -$11
 
-	Flipscreen on:
-		$6x0000: $5d00 ; $3780 ; $5c80 ; $3bc0
-		$5d00/$40 = $174 = $200-$8c	/	$5c80/$40 = $172 = $174-2
+    Flipscreen on:
+        $6x0000: $5d00 ; $3780 ; $5c80 ; $3bc0
+        $5d00/$40 = $174 = $200-$8c /   $5c80/$40 = $172 = $174-2
 
-		$3780/$40 = $de	/	$3bc0/$40 = $ef
+        $3780/$40 = $de /   $3bc0/$40 = $ef
 
 */
 
@@ -792,7 +792,7 @@ WRITE16_HANDLER( kaneko16_bg15_reg_w )
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -915,7 +915,7 @@ if ( code_pressed(KEYCODE_Z) ||
 	if (kaneko16_bg15_bitmap)
 	{
 		int select	=	kaneko16_bg15_select[ 0 ];
-//		int reg		=	kaneko16_bg15_reg[ 0 ];
+//      int reg     =   kaneko16_bg15_reg[ 0 ];
 		int flip	=	select & 0x20;
 		int sx, sy;
 
@@ -934,8 +934,8 @@ if ( code_pressed(KEYCODE_Z) ||
 	}
 
 	/* Fill the bitmap with pen 0. This is wrong, but will work most of
-	   the times. To do it right, each pixel should be drawn with pen 0
-	   of the bottomost tile that covers it (which is pretty tricky to do) */
+       the times. To do it right, each pixel should be drawn with pen 0
+       of the bottomost tile that covers it (which is pretty tricky to do) */
 
 	if (flag!=0)	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
@@ -946,11 +946,11 @@ if ( code_pressed(KEYCODE_Z) ||
 	if (kaneko16_tmap_2)
 	{
 	/*
-		The only working game using a 2nd VIEW2 chip is mgcrystl, where
-		its tilemaps seem to always be below every sprite. Hence we can
-		draw them with priority 0. To treat more complex cases, however,
-		we need tilemap.c to handle 8 "layers" (4 priorities x 2 chips)
-	*/
+        The only working game using a 2nd VIEW2 chip is mgcrystl, where
+        its tilemaps seem to always be below every sprite. Hence we can
+        draw them with priority 0. To treat more complex cases, however,
+        we need tilemap.c to handle 8 "layers" (4 priorities x 2 chips)
+    */
 		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+ 8)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_2, i, 0);
 		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+12)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_3, i, 0);
 	}
@@ -963,7 +963,7 @@ if ( code_pressed(KEYCODE_Z) ||
 	}
 
 	/* Sprites last (rendered with pdrawgfx, so they can slip
-	   in between the layers) */
+       in between the layers) */
 
 	if (layers_ctrl & (0xf<<16))
 		kaneko16_draw_sprites(bitmap,cliprect, (layers_ctrl >> 16) & 0xf);

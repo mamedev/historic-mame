@@ -137,9 +137,9 @@ static void *ym2610_start(int sndindex, int clock, const void *config)
 	void *pcmbufa,*pcmbufb;
 	int  pcmsizea,pcmsizeb;
 	struct ym2610_info *info;
-	
+
 	sound_type = SOUND_YM2610;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
@@ -191,7 +191,7 @@ static void *ym2610b_start(int sndindex, int clock, const void *config)
 	void *pcmbufa,*pcmbufb;
 	int  pcmsizea,pcmsizeb;
 	struct ym2610_info *info;
-	
+
 	sound_type = SOUND_YM2610B;
 
 	info = auto_malloc(sizeof(*info));
@@ -239,7 +239,7 @@ static void ym2610_reset(void *token)
 }
 
 /************************************************/
-/* Status Read for YM2610 - Chip 0				*/
+/* Status Read for YM2610 - Chip 0              */
 /************************************************/
 READ8_HANDLER( YM2610_status_port_0_A_r )
 {
@@ -270,7 +270,7 @@ READ16_HANDLER( YM2610_status_port_0_B_lsb_r )
 }
 
 /************************************************/
-/* Status Read for YM2610 - Chip 1				*/
+/* Status Read for YM2610 - Chip 1              */
 /************************************************/
 READ8_HANDLER( YM2610_status_port_1_A_r ) {
 	struct ym2610_info *info = sndti_token(sound_type,1);
@@ -293,7 +293,7 @@ READ16_HANDLER( YM2610_status_port_1_B_lsb_r ) {
 }
 
 /************************************************/
-/* Port Read for YM2610 - Chip 0				*/
+/* Port Read for YM2610 - Chip 0                */
 /************************************************/
 READ8_HANDLER( YM2610_read_port_0_r ){
 	struct ym2610_info *info = sndti_token(sound_type,0);
@@ -306,7 +306,7 @@ READ16_HANDLER( YM2610_read_port_0_lsb_r ){
 }
 
 /************************************************/
-/* Port Read for YM2610 - Chip 1				*/
+/* Port Read for YM2610 - Chip 1                */
 /************************************************/
 READ8_HANDLER( YM2610_read_port_1_r ){
 	struct ym2610_info *info = sndti_token(sound_type,1);
@@ -319,8 +319,8 @@ READ16_HANDLER( YM2610_read_port_1_lsb_r ){
 }
 
 /************************************************/
-/* Control Write for YM2610 - Chip 0			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2610 - Chip 0            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2610_control_port_0_A_w )
 {
@@ -357,8 +357,8 @@ WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
 }
 
 /************************************************/
-/* Control Write for YM2610 - Chip 1			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2610 - Chip 1            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2610_control_port_1_A_w ){
 	struct ym2610_info *info = sndti_token(sound_type,1);
@@ -387,8 +387,8 @@ WRITE16_HANDLER( YM2610_control_port_1_B_lsb_w ){
 }
 
 /************************************************/
-/* Data Write for YM2610 - Chip 0				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2610 - Chip 0               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2610_data_port_0_A_w )
 {
@@ -425,8 +425,8 @@ WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w )
 }
 
 /************************************************/
-/* Data Write for YM2610 - Chip 1				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2610 - Chip 1               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2610_data_port_1_A_w ){
 	struct ym2610_info *info = sndti_token(sound_type,1);

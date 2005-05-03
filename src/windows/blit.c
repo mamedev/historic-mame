@@ -1,6 +1,6 @@
 //============================================================
 //
-//	blit.c - Win32 blit handling
+//  blit.c - Win32 blit handling
 //
 //============================================================
 
@@ -18,7 +18,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from winmain.c
@@ -27,7 +27,7 @@ extern int verbose;
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 #define DEBUG_BLITTERS		0
@@ -59,7 +59,7 @@ extern int verbose;
 
 
 //============================================================
-//	TYPE DEFINITIONS
+//  TYPE DEFINITIONS
 //============================================================
 
 typedef void (*blitter_func)(void);
@@ -72,7 +72,7 @@ struct rgb_descriptor
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 extern void asmblit1_16_to_16_x1(void);
@@ -155,7 +155,7 @@ extern UINT32 asmblit_cpuid_features(void);
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 void *asmblit_srcdata;
@@ -170,7 +170,7 @@ UINT32 asmblit_rgbmask[MAX_VIDEO_HEIGHT * 2 * 16];
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // blitter cache
@@ -312,7 +312,7 @@ static struct rgb_descriptor sharp_desc =
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static int blit_vectors(const struct win_blit_params *blit);
@@ -322,7 +322,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 
 
 //============================================================
-//	BLITTER CORE TABLES
+//  BLITTER CORE TABLES
 //============================================================
 
 static void (*blit1_core[4][4][3])(void) =
@@ -456,7 +456,7 @@ static void (*blit16_core_rgb[4][4])(void) =
 
 
 //============================================================
-//	win_perform_blit
+//  win_perform_blit
 //============================================================
 
 int win_perform_blit(const struct win_blit_params *blit, int update)
@@ -527,7 +527,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 
 
 //============================================================
-//	blit_vectors
+//  blit_vectors
 //============================================================
 
 static int blit_vectors(const struct win_blit_params *blit)
@@ -611,7 +611,7 @@ static int blit_vectors(const struct win_blit_params *blit)
 
 
 //============================================================
-//	snippet_length
+//  snippet_length
 //============================================================
 
 static int snippet_length(void *snippet)
@@ -627,7 +627,7 @@ static int snippet_length(void *snippet)
 
 
 //============================================================
-//	emit_snippet_pair
+//  emit_snippet_pair
 //============================================================
 
 static void emit_snippet(void *snippet, UINT8 **dest)
@@ -641,7 +641,7 @@ static void emit_snippet(void *snippet, UINT8 **dest)
 
 
 //============================================================
-//	emit_mov_edi_reg
+//  emit_mov_edi_reg
 //============================================================
 
 static void emit_mov_edi_reg(int reg, int offs, UINT8 **dest)
@@ -673,7 +673,7 @@ static void emit_mov_edi_reg(int reg, int offs, UINT8 **dest)
 
 
 //============================================================
-//	emit_mov_edi_0
+//  emit_mov_edi_0
 //============================================================
 
 static void emit_mov_edi_0(int reg, int offs, UINT8 **dest)
@@ -727,7 +727,7 @@ static void emit_mov_edi_0(int reg, int offs, UINT8 **dest)
 
 
 //============================================================
-//	emit_reduce_brightness
+//  emit_reduce_brightness
 //============================================================
 
 static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct win_blit_params *blit, UINT8 **dest)
@@ -851,7 +851,7 @@ static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct
 
 
 //============================================================
-//	emit_reduce_brightness_mmx
+//  emit_reduce_brightness_mmx
 //============================================================
 
 static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const struct win_blit_params *blit, UINT8 **dest)
@@ -1034,7 +1034,7 @@ static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const st
 
 
 //============================================================
-//	generate_rgb_masks
+//  generate_rgb_masks
 //============================================================
 
 static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct win_blit_params *blit)
@@ -1078,7 +1078,7 @@ static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct w
 
 
 //============================================================
-//	emit_expansion
+//  emit_expansion
 //============================================================
 
 static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offslist, const struct win_blit_params *blit, UINT8 **dest, int update)
@@ -1132,7 +1132,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 
 
 //============================================================
-//	check_for_mmx
+//  check_for_mmx
 //============================================================
 
 static void check_for_mmx(void)
@@ -1155,7 +1155,7 @@ static void check_for_mmx(void)
 
 
 //============================================================
-//	expand_blitter
+//  expand_blitter
 //============================================================
 
 static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 **dest, int update)
@@ -1307,7 +1307,7 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 
 
 //============================================================
-//	fixup_addresses
+//  fixup_addresses
 //============================================================
 
 static void fixup_addresses(UINT8 **fixups, UINT8 *start, UINT8 *end)
@@ -1327,7 +1327,7 @@ static void fixup_addresses(UINT8 **fixups, UINT8 *start, UINT8 *end)
 
 
 //============================================================
-//	fixup_values
+//  fixup_values
 //============================================================
 
 static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
@@ -1347,7 +1347,7 @@ static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
 
 
 //============================================================
-//	compute_source_fixups
+//  compute_source_fixups
 //============================================================
 
 static void compute_source_fixups(const struct win_blit_params *blit, UINT32 valuefixups[])
@@ -1458,7 +1458,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 
 
 //============================================================
-//	generate_blitter
+//  generate_blitter
 //============================================================
 
 #define EMIT_SNIPPET_PAIR(snipname) \

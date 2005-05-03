@@ -453,9 +453,9 @@ INLINE void mul( void )
 INLINE void wai( void )
 {
 	/*
-	 * WAI stacks the entire machine state on the
-	 * hardware stack, then waits for an interrupt.
-	 */
+     * WAI stacks the entire machine state on the
+     * hardware stack, then waits for an interrupt.
+     */
 	m6808.wai_state |= M6800_WAI;
 	PUSHWORD(pPC);
 	PUSHWORD(pX);

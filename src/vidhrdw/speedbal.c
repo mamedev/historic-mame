@@ -1,9 +1,9 @@
  /****************************************************************************
- *									  *
- * vidhrdw.c								*
- *									  *
- * Functions to emulate the video hardware of the machine.		  *
- *									  *
+ *                                    *
+ * vidhrdw.c                                *
+ *                                    *
+ * Functions to emulate the video hardware of the machine.        *
+ *                                    *
  ****************************************************************************/
 
 #include "driver.h"
@@ -77,9 +77,9 @@ PALETTE_INIT( speedbal )
 
 
 /*************************************
- *				   *
- *	    Start-Stop	     *
- *				   *
+ *                 *
+ *      Start-Stop       *
+ *                 *
  *************************************/
 
 VIDEO_START( speedbal )
@@ -107,9 +107,9 @@ VIDEO_START( speedbal )
 
 
 /*************************************
- *				   *
+ *                 *
  *      Foreground characters RAM    *
- *				   *
+ *                 *
  *************************************/
 
 WRITE8_HANDLER( speedbal_foreground_videoram_w )
@@ -126,9 +126,9 @@ READ8_HANDLER( speedbal_foreground_videoram_r )
 
 
 /*************************************
- *				   *
- *	Background tiles RAM       *
- *				   *
+ *                 *
+ *  Background tiles RAM       *
+ *                 *
  *************************************/
 
 WRITE8_HANDLER( speedbal_background_videoram_w )
@@ -146,9 +146,9 @@ READ8_HANDLER( speedbal_background_videoram_r )
 
 
 /*************************************
- *				   *
- *	 Sprite drawing	    *
- *				   *
+ *                 *
+ *   Sprite drawing     *
+ *                 *
  *************************************/
 
 void speedbal_draw_sprites (struct mame_bitmap *bitmap)
@@ -186,9 +186,9 @@ void speedbal_draw_sprites (struct mame_bitmap *bitmap)
 
 
 /*************************************
- *				   *
+ *                 *
  *     Background drawing: Tiles     *
- *				   *
+ *                 *
  *************************************/
 
 void speedbal_draw_background (struct mame_bitmap *bitmap)
@@ -223,9 +223,9 @@ void speedbal_draw_background (struct mame_bitmap *bitmap)
 
 
 /*************************************
- *				   *
+ *                 *
  *   Foreground drawing: 8x8 graphs  *
- *				   *
+ *                 *
  *************************************/
 
 void speedbal_draw_foreground1 (struct mame_bitmap *bitmap)
@@ -234,7 +234,7 @@ void speedbal_draw_foreground1 (struct mame_bitmap *bitmap)
 
 	for (offset = 0;offset < speedbal_foreground_videoram_size ;offset+=2)
 	{
-//	    if (ch_dirtybuffer[offset])
+//      if (ch_dirtybuffer[offset])
 		{
 			caracter = speedbal_foreground_videoram[offset];
 			code     = speedbal_foreground_videoram[offset+1];
@@ -260,9 +260,9 @@ void speedbal_draw_foreground1 (struct mame_bitmap *bitmap)
 
 
 /*************************************
- *				   *
- *	 Refresh   screen	  *
- *				   *
+ *                 *
+ *   Refresh   screen     *
+ *                 *
  *************************************/
 
 VIDEO_UPDATE( speedbal )

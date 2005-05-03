@@ -1,7 +1,7 @@
 /***************************************************************************
 
-	Yie Ar Kung-Fu memory map (preliminary)
-	enrique.sanchez@cs.us.es
+    Yie Ar Kung-Fu memory map (preliminary)
+    enrique.sanchez@cs.us.es
 
 CPU:    Motorola 6809
 
@@ -9,40 +9,40 @@ Normal 6809 IRQs must be generated each video frame (60 fps).
 The 6809 NMI is used for sound timing.
 
 
-0000	  	R	VLM5030 status ???
-4000	 	 W  control port
-					bit 0 - flip screen
-					bit 1 - NMI enable
-					bit 2 - IRQ enable
-					bit 3 - coin counter A
-					bit 4 - coin counter B
-4800	 	 W	sound latch write
-4900	 	 W  copy sound latch to SN76496
-4a00	 	 W  VLM5030 control
-4b00	 	 W  VLM5030 data
-4c00		R   DSW #0
-4d00		R   DSW #1
-4e00		R   IN #0
-4e01		R   IN #1
-4e02		R   IN #2
-4e03		R   DSW #2
-4f00	 	 W  watchdog
-5000-502f	 W  sprite RAM 1 (18 sprites)
-					byte 0 - bit 0 - sprite code MSB
-							 bit 6 - flip X
-							 bit 7 - flip Y
-					byte 1 - Y position
-5030-53ff	RW  RAM
+0000        R   VLM5030 status ???
+4000         W  control port
+                    bit 0 - flip screen
+                    bit 1 - NMI enable
+                    bit 2 - IRQ enable
+                    bit 3 - coin counter A
+                    bit 4 - coin counter B
+4800         W  sound latch write
+4900         W  copy sound latch to SN76496
+4a00         W  VLM5030 control
+4b00         W  VLM5030 data
+4c00        R   DSW #0
+4d00        R   DSW #1
+4e00        R   IN #0
+4e01        R   IN #1
+4e02        R   IN #2
+4e03        R   DSW #2
+4f00         W  watchdog
+5000-502f    W  sprite RAM 1 (18 sprites)
+                    byte 0 - bit 0 - sprite code MSB
+                             bit 6 - flip X
+                             bit 7 - flip Y
+                    byte 1 - Y position
+5030-53ff   RW  RAM
 5400-542f    W  sprite RAM 2
-					byte 0 - X position
-					byte 1 - sprite code LSB
-5430-57ff	RW  RAM
-5800-5fff	RW  video RAM
-					byte 0 - bit 4 - character code MSB
-							 bit 6 - flip Y
-							 bit 7 - flip X
-					byte 1 - character code LSB
-8000-ffff	R   ROM
+                    byte 0 - X position
+                    byte 1 - sprite code LSB
+5430-57ff   RW  RAM
+5800-5fff   RW  video RAM
+                    byte 0 - bit 4 - character code MSB
+                             bit 6 - flip Y
+                             bit 7 - flip X
+                    byte 1 - character code LSB
+8000-ffff   R   ROM
 
 
 ***************************************************************************/
@@ -213,7 +213,7 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 INPUT_PORTS_END
 
 

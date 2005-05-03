@@ -39,12 +39,12 @@ READ8_HANDLER( apache3_bank_r )
 WRITE8_HANDLER( apache3_bank_w )
 {
 	/*
-		0x8000  - Set when accessing palette ram (not implemented, perhaps blank screen?)
-		0x0080	- Set when accessing IO cpu RAM/ROM (implemented as halt cpu)
-		0x0060	- IOP bank to access from main cpu (0x0 = RAM, 0x20 = lower ROM, 0x60 = upper ROM)
-		0x0010	- Set when accessing OBJ cpu RAM/ROM (implemented as halt cpu)
-		0x000f	- OBJ bank to access from main cpu (0x8 = RAM, 0x0 to 0x7 = ROM)
-	*/
+        0x8000  - Set when accessing palette ram (not implemented, perhaps blank screen?)
+        0x0080  - Set when accessing IO cpu RAM/ROM (implemented as halt cpu)
+        0x0060  - IOP bank to access from main cpu (0x0 = RAM, 0x20 = lower ROM, 0x60 = upper ROM)
+        0x0010  - Set when accessing OBJ cpu RAM/ROM (implemented as halt cpu)
+        0x000f  - OBJ bank to access from main cpu (0x8 = RAM, 0x0 to 0x7 = ROM)
+    */
 
 	if (offset==1) tatsumi_control_word=(tatsumi_control_word&0xff)|(data<<8);
 	else tatsumi_control_word=(tatsumi_control_word&0xff00)|(data&0xff);
@@ -93,11 +93,11 @@ READ8_HANDLER( apache3_v30_v20_r )
 	const data8_t* rom=(data8_t*)memory_region(REGION_CPU3);
 
 	/* Each V20 byte maps to a V30 word */
-	if ((tatsumi_control_word&0xe0)==0xe0) 
+	if ((tatsumi_control_word&0xe0)==0xe0)
 		rom+=0xf8000; /* Upper half */
-	else if ((tatsumi_control_word&0xe0)==0xc0) 
+	else if ((tatsumi_control_word&0xe0)==0xc0)
 		rom+=0xf0000;
-	else if ((tatsumi_control_word&0xe0)==0x80) 
+	else if ((tatsumi_control_word&0xe0)==0x80)
 		rom+=0x00000; // main ram
 	else
 		logerror("%08x: unmapped read z80 rom %08x\n",activecpu_get_pc(),offset);
@@ -108,7 +108,7 @@ READ8_HANDLER( apache3_v30_v20_r )
 WRITE8_HANDLER( apache3_v30_v20_w )
 {
 	data8_t* ram=(data8_t*)memory_region(REGION_CPU3);
-	
+
 	if ((tatsumi_control_word&0xe0)!=0x80)
 		logerror("%08x: write unmapped v30 rom %08x\n",activecpu_get_pc(),offset);
 
@@ -158,7 +158,7 @@ READ8_HANDLER( roundup_v30_z80_r )
 	const data8_t* rom=(data8_t*)memory_region(REGION_CPU3);
 
 	/* Each Z80 byte maps to a V30 word */
-	if (tatsumi_control_word&0x20) 
+	if (tatsumi_control_word&0x20)
 		rom+=0x8000; /* Upper half */
 
 	return rom[offset/2];
@@ -167,12 +167,12 @@ READ8_HANDLER( roundup_v30_z80_r )
 WRITE8_HANDLER( roundup_v30_z80_w )
 {
 	data8_t* ram=(data8_t*)memory_region(REGION_CPU3);
-	
+
 	/* Only 8 bits of the V30 data bus are connected - ignore writes to the other half */
 	if (offset&1)
 		return;
 
-	if (tatsumi_control_word&0x20) 
+	if (tatsumi_control_word&0x20)
 		offset+=0x10000; /* Upper half of Z80 address space */
 
 	ram[offset/2]=data&0xff;
@@ -183,7 +183,7 @@ WRITE8_HANDLER( roundup5_control_w )
 {
 	if (offset==1) tatsumi_control_word=(tatsumi_control_word&0xff)|(data<<8);
 	else tatsumi_control_word=(tatsumi_control_word&0xff00)|(data&0xff);
-		
+
 	if (tatsumi_control_word&0x10)
 		cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	else
@@ -194,44 +194,44 @@ WRITE8_HANDLER( roundup5_control_w )
 	else
 		cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 
-//	if (offset==1 && (tatsumi_control_w&0xfeff)!=(last_bank&0xfeff))
-//		logerror("%08x:  Changed bank to %04x (%d)\n",activecpu_get_pc(),tatsumi_control_w,offset);
+//  if (offset==1 && (tatsumi_control_w&0xfeff)!=(last_bank&0xfeff))
+//      logerror("%08x:  Changed bank to %04x (%d)\n",activecpu_get_pc(),tatsumi_control_w,offset);
 
 //todo - watchdog
 
 	/* Bank:
 
-		0x0017	:	OBJ banks
-		0x0018	:	68000 RAM		mask 0x0380 used to save bits when writing
-		0x0c10	:	68000 ROM
+        0x0017  :   OBJ banks
+        0x0018  :   68000 RAM       mask 0x0380 used to save bits when writing
+        0x0c10  :   68000 ROM
 
-		0x0040	:	Z80 rom (lower half) mapped to 0x10000
-		0x0060	:	Z80 rom (upper half) mapped to 0x10000
+        0x0040  :   Z80 rom (lower half) mapped to 0x10000
+        0x0060  :   Z80 rom (upper half) mapped to 0x10000
 
-		0x0100  :	watchdog.
+        0x0100  :   watchdog.
 
-		0x0c00	:	vram bank (bits 0x7000 also set when writing vram)
+        0x0c00  :   vram bank (bits 0x7000 also set when writing vram)
 
-		0x8000	:	set whenever writing to palette ram?
+        0x8000  :   set whenever writing to palette ram?
 
-		Changed bank to 0060 (0)
-	*/
+        Changed bank to 0060 (0)
+    */
 
 	if ((tatsumi_control_word&0x8)==0 && !(tatsumi_last_control&0x8))
 		cpunum_set_input_line(1, INPUT_LINE_IRQ4, ASSERT_LINE);
-//	if (tatsumi_control_w&0x200)
-//		cpu_set_reset_line(1, CLEAR_LINE);
-//	else
-//		cpu_set_reset_line(1, ASSERT_LINE);
+//  if (tatsumi_control_w&0x200)
+//      cpu_set_reset_line(1, CLEAR_LINE);
+//  else
+//      cpu_set_reset_line(1, ASSERT_LINE);
 
-//	if ((tatsumi_control_w&0x200) && (last_bank&0x200)==0)
-//		logerror("68k irq\n");
-//	if ((tatsumi_control_w&0x200)==0 && (last_bank&0x200)==0x200)
-//		logerror("68k reset\n");
+//  if ((tatsumi_control_w&0x200) && (last_bank&0x200)==0)
+//      logerror("68k irq\n");
+//  if ((tatsumi_control_w&0x200)==0 && (last_bank&0x200)==0x200)
+//      logerror("68k reset\n");
 
 	if (tatsumi_control_word==0x3a00) {
-//		cpu_set_reset_line(1, CLEAR_LINE);
-	//	logerror("68k on\n");
+//      cpu_set_reset_line(1, CLEAR_LINE);
+	//  logerror("68k on\n");
 
 	}
 
@@ -241,26 +241,26 @@ WRITE8_HANDLER( roundup5_control_w )
 WRITE16_HANDLER( roundup5_d0000_w )
 {
 	COMBINE_DATA(&roundup5_d0000_ram[offset]);
-//	logerror("d_68k_d0000_w %06x %04x\n",activecpu_get_pc(),data);
+//  logerror("d_68k_d0000_w %06x %04x\n",activecpu_get_pc(),data);
 }
 
 WRITE16_HANDLER( roundup5_e0000_w )
 {
-	/*	Bit 0x10 is road bank select,
-		Bit 0x100 is used, but unknown 
-	*/
+	/*  Bit 0x10 is road bank select,
+        Bit 0x100 is used, but unknown
+    */
 
 	COMBINE_DATA(&roundup5_e0000_ram[offset]);
 	cpunum_set_input_line(1, INPUT_LINE_IRQ4, CLEAR_LINE); // guess, probably wrong
 
-//	logerror("d_68k_e0000_w %06x %04x\n",activecpu_get_pc(),data);
+//  logerror("d_68k_e0000_w %06x %04x\n",activecpu_get_pc(),data);
 }
 
 /******************************************************************************/
 
 READ16_HANDLER(cyclwarr_control_r)
 {
-//	logerror("%08x:  control_r\n",activecpu_get_pc());
+//  logerror("%08x:  control_r\n",activecpu_get_pc());
 	return tatsumi_control_word;
 }
 
@@ -268,8 +268,8 @@ WRITE16_HANDLER(cyclwarr_control_w)
 {
 	COMBINE_DATA(&tatsumi_control_word);
 
-//	if ((tatsumi_control_word&0xfe)!=(tatsumi_last_control&0xfe))
-//		logerror("%08x:  control_w %04x\n",activecpu_get_pc(),data);
+//  if ((tatsumi_control_word&0xfe)!=(tatsumi_last_control&0xfe))
+//      logerror("%08x:  control_w %04x\n",activecpu_get_pc(),data);
 
 /*
 
@@ -281,20 +281,20 @@ WRITE16_HANDLER(cyclwarr_control_w)
 */
 
 	if ((tatsumi_control_word&4)==4 && (tatsumi_last_control&4)==0) {
-//		logerror("68k 2 halt\n");
+//      logerror("68k 2 halt\n");
 		cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
-	} 
+	}
 
 	if ((tatsumi_control_word&4)==0 && (tatsumi_last_control&4)==4) {
-//		logerror("68k 2 irq go\n");
+//      logerror("68k 2 irq go\n");
 		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 	}
 
 
 	// hack
 	if (activecpu_get_pc()==0x2c3c34) {
-//		cpu_set_reset_line(1, CLEAR_LINE);
-	//	logerror("hack 68k2 on\n");
+//      cpu_set_reset_line(1, CLEAR_LINE);
+	//  logerror("hack 68k2 on\n");
 	}
 
 	tatsumi_last_control=tatsumi_control_word;
@@ -324,7 +324,7 @@ READ8_HANDLER( tatsumi_v30_68000_r )
 		}
 
 		if ((offset&1)==0) return tatsumi_68k_ram[offset/2]&0xff;
-		return (tatsumi_68k_ram[offset/2]>>8)&0xff;	
+		return (tatsumi_68k_ram[offset/2]>>8)&0xff;
 	}
 
 	/* Read from 68k ROM */
@@ -334,12 +334,12 @@ READ8_HANDLER( tatsumi_v30_68000_r )
 	return (rom[offset/2]>>8)&0xff;
 }
 
-WRITE8_HANDLER( tatsumi_v30_68000_w ) 
-{ 
+WRITE8_HANDLER( tatsumi_v30_68000_w )
+{
 	data16_t d=tatsumi_68k_ram[offset/2];
 	if ((offset&1)==0) d=(d&0xff00)|data;
 	else d=(d&0xff)|(data<<8);
-	
+
 	if ((tatsumi_control_word&0x1f)!=0x18)
 		logerror("68k write in bank %05x\n",tatsumi_control_word);
 
@@ -366,7 +366,7 @@ READ8_HANDLER(tatsumi_hack_oki_r)
 {
 	int r=OKIM6295_status_0_r(0);
 
-	if (activecpu_get_pc()==0x2b70 || activecpu_get_pc()==0x2bb5 
+	if (activecpu_get_pc()==0x2b70 || activecpu_get_pc()==0x2bb5
 		|| activecpu_get_pc()==0x2acc
 		|| activecpu_get_pc()==0xf9881)
 		return 0xf;

@@ -54,7 +54,7 @@ WRITE8_HANDLER( exctsccr_DAC_data_w )
 
 /***************************************************************************
 
-	Memory definition(s)
+    Memory definition(s)
 
 ***************************************************************************/
 
@@ -161,7 +161,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input port(s)
+    Input port(s)
 
 ***************************************************************************/
 
@@ -221,7 +221,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Graphic(s) decoding
+    Graphic(s) decoding
 
 ***************************************************************************/
 
@@ -299,7 +299,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************
 
-	Machine driver(s)
+    Machine driver(s)
 
 ***************************************************************************/
 
@@ -344,7 +344,7 @@ static MACHINE_DRIVER_START( exctsccr )
 
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
@@ -380,7 +380,7 @@ static MACHINE_DRIVER_START( exctsccb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 

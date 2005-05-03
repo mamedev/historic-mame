@@ -1,16 +1,16 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.3
- *	Copyright (c) 2000 by The MAME Team
+ *  POKEY chip emulator 4.3
+ *  Copyright (c) 2000 by The MAME Team
  *
- *	Based on original info found in Ron Fries' Pokey emulator,
- *	with additions by Brad Oliver, Eric Smith and Juergen Buchmueller.
- *	paddle (a/d conversion) details from the Atari 400/800 Hardware Manual.
+ *  Based on original info found in Ron Fries' Pokey emulator,
+ *  with additions by Brad Oliver, Eric Smith and Juergen Buchmueller.
+ *  paddle (a/d conversion) details from the Atari 400/800 Hardware Manual.
  *  Polynome algorithms according to info supplied by Perry McFarlane.
  *
- *	This code is subject to the MAME license, which besides other
- *	things means it is distributed as is, no warranties whatsoever.
- *	For more details read mame.txt that comes with MAME.
+ *  This code is subject to the MAME license, which besides other
+ *  things means it is distributed as is, no warranties whatsoever.
+ *  For more details read mame.txt that comes with MAME.
  *
  *****************************************************************************/
 
@@ -70,10 +70,10 @@ extern "C" {
 
 /*****************************************************************************
  * pot0_r to pot7_r:
- *	Handlers for reading the pot values. Some Atari games use
- *	ALLPOT to return dipswitch settings and other things.
+ *  Handlers for reading the pot values. Some Atari games use
+ *  ALLPOT to return dipswitch settings and other things.
  * serin_r, serout_w, interrupt_cb:
- *	New function pointers for serial input/output and a interrupt callback.
+ *  New function pointers for serial input/output and a interrupt callback.
  *****************************************************************************/
 
 struct POKEYinterface {

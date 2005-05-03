@@ -117,11 +117,11 @@ WRITE8_HANDLER( djboy_paletteram_w )
 VIDEO_UPDATE( djboy )
 {
 	/**
-	 * xx------ msb x
-	 * --x----- msb y
-	 * ---x---- flipscreen
-	 * ----xxxx ROM bank
-	 */
+     * xx------ msb x
+     * --x----- msb y
+     * ---x---- flipscreen
+     * ----xxxx ROM bank
+     */
 	int flip = djboy_videoreg&0x10;
 	int scroll;
 
@@ -131,7 +131,7 @@ VIDEO_UPDATE( djboy )
 	tilemap_set_scrollx( background, 0, scroll );
 
 	scroll = djboy_scrolly | ((djboy_videoreg&0x20)<<3);
-	tilemap_set_scrolly( background, 0, scroll );	
+	tilemap_set_scrolly( background, 0, scroll );
 
 	tilemap_draw( bitmap, cliprect,background,0,0 );
 	draw_sprites( bitmap, cliprect );

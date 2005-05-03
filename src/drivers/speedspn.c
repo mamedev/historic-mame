@@ -388,7 +388,7 @@ VIDEO_START( mstworld )
 
 VIDEO_UPDATE( mstworld )
 {
-	
+
 }
 static MACHINE_DRIVER_START( mstworld )
 

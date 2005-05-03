@@ -1,104 +1,104 @@
 /***************************************************************************
 
-	Atari Football hardware
+    Atari Football hardware
 
-	driver by Mike Balfour, Patrick Lawrence, Brad Oliver
+    driver by Mike Balfour, Patrick Lawrence, Brad Oliver
 
-	Games supported:
-		* Atari Football
-		* Atari Baseball
-		* Atari Soccer
+    Games supported:
+        * Atari Football
+        * Atari Baseball
+        * Atari Soccer
 
-	Known issues:
-		* The down marker sprite is multiplexed so that it will be drawn at the
-		  top and bottom of the screen. We fake this feature. Additionally, we
-		  draw it at a different location which seems to make more sense.
+    Known issues:
+        * The down marker sprite is multiplexed so that it will be drawn at the
+          top and bottom of the screen. We fake this feature. Additionally, we
+          draw it at a different location which seems to make more sense.
 
-		* The play which is chosen is drawn in text at the top of the screen;
-		  no backdrop/overlay is supported yet. High quality artwork would be
-		  appreciated.
+        * The play which is chosen is drawn in text at the top of the screen;
+          no backdrop/overlay is supported yet. High quality artwork would be
+          appreciated.
 
-		* I'm not good at reading the schematics, so I'm unsure about the
-		  exact vblank duration. I'm pretty sure it is one of two values though.
+        * I'm not good at reading the schematics, so I'm unsure about the
+          exact vblank duration. I'm pretty sure it is one of two values though.
 
-		* The 4-player variation is slightly broken. I'm unsure of the
-		  LED multiplexing.
+        * The 4-player variation is slightly broken. I'm unsure of the
+          LED multiplexing.
 
 ****************************************************************************
 
-	Memory Map:
-		0000-01FF	Working RAM
-		0200-025F	Playfield - Player 1
-		03A0-03FF	Playfield - Player 2
-		1000-13BF	Scrollfield
-		13C0-13FF	Motion Object Parameters:
+    Memory Map:
+        0000-01FF   Working RAM
+        0200-025F   Playfield - Player 1
+        03A0-03FF   Playfield - Player 2
+        1000-13BF   Scrollfield
+        13C0-13FF   Motion Object Parameters:
 
-		13C0		Motion Object 1 Picture #
-		13C1		Motion Object 1 Vertical Position
-		13C2		Motion Object 2 Picture #
-		13C3		Motion Object 2 Vertical Position
-		...
-		13DE		Motion Object 16 Picture #
-		13DF		Motion Object 16 Vertical Position
+        13C0        Motion Object 1 Picture #
+        13C1        Motion Object 1 Vertical Position
+        13C2        Motion Object 2 Picture #
+        13C3        Motion Object 2 Vertical Position
+        ...
+        13DE        Motion Object 16 Picture #
+        13DF        Motion Object 16 Vertical Position
 
-		13E0		Motion Object 1 Horizontal Position
-		13E1		Spare
-		13E2		Motion Object 2 Horizontal Position
-		13E3		Spare
-		...
-		13FE		Motion Object 16 Horizontal Position
-		13FF		Spare
+        13E0        Motion Object 1 Horizontal Position
+        13E1        Spare
+        13E2        Motion Object 2 Horizontal Position
+        13E3        Spare
+        ...
+        13FE        Motion Object 16 Horizontal Position
+        13FF        Spare
 
-		2000-2003	Output ports:
+        2000-2003   Output ports:
 
-		2000		(OUT 0) Scrollfield Offset (8 bits)
-		2001		(OUT 1)
-					D0 = Whistle
-					D1 = Hit
-					D2 = Kicker
-					D5 = CTRLD
-		2002		(OUT 2)
-					D0-D3 = Noise Amplitude
-					D4 = Coin Counter
-					D5 = Attract
-		2003		(OUT 3)
-					D0-D3 = LED Cathodes
-					D4-D5 Spare
+        2000        (OUT 0) Scrollfield Offset (8 bits)
+        2001        (OUT 1)
+                    D0 = Whistle
+                    D1 = Hit
+                    D2 = Kicker
+                    D5 = CTRLD
+        2002        (OUT 2)
+                    D0-D3 = Noise Amplitude
+                    D4 = Coin Counter
+                    D5 = Attract
+        2003        (OUT 3)
+                    D0-D3 = LED Cathodes
+                    D4-D5 Spare
 
-		3000		Interrupt Acknowledge
-		4000-4003	Input ports:
+        3000        Interrupt Acknowledge
+        4000-4003   Input ports:
 
-		4000		(IN 0) = 0
-					D0 = Trackball Direction PL2VD
-					D1 = Trackball Direction PL2HD
-					D2 = Trackball Direction PL1VD
-					D3 = Trackball Direction PL1HD
-					D4 = Select 1
-					D5 = Slam
-					D6 = End Screen
-					D7 = Coin 1
-		4000		(CTRLD) = 1
-					D0-D3 = Track-ball Horiz. 1
-					D4-D7 = Track-ball Vert. 1
-		4002		(IN 2) = 0
-					D0-D3 = Option Switches
-					D4 = Select 2
-					D5 = Spare
-					D6 = Test
-					D7 = Coin 2
-		4002		(CTRLD) = 1
-					D0-D3 = Track-ball Horiz. 2
-					D4-D7 = Track-ball Vert. 2
+        4000        (IN 0) = 0
+                    D0 = Trackball Direction PL2VD
+                    D1 = Trackball Direction PL2HD
+                    D2 = Trackball Direction PL1VD
+                    D3 = Trackball Direction PL1HD
+                    D4 = Select 1
+                    D5 = Slam
+                    D6 = End Screen
+                    D7 = Coin 1
+        4000        (CTRLD) = 1
+                    D0-D3 = Track-ball Horiz. 1
+                    D4-D7 = Track-ball Vert. 1
+        4002        (IN 2) = 0
+                    D0-D3 = Option Switches
+                    D4 = Select 2
+                    D5 = Spare
+                    D6 = Test
+                    D7 = Coin 2
+        4002        (CTRLD) = 1
+                    D0-D3 = Track-ball Horiz. 2
+                    D4-D7 = Track-ball Vert. 2
 
-		5000		Watchdog
-		6800-7FFF	Program
-		(F800-FFFF) - only needed for the 6502 vectors
+        5000        Watchdog
+        6800-7FFF   Program
+        (F800-FFFF) - only needed for the 6502 vectors
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
-	Changes:
-		LBO - lots of cleanup, now it's playable.
+    Changes:
+        LBO - lots of cleanup, now it's playable.
 
 ***************************************************************************/
 
@@ -115,7 +115,7 @@ int atarifb_lamp1, atarifb_lamp2;
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -142,7 +142,7 @@ static PALETTE_INIT( atarifb )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -191,7 +191,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -433,7 +433,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -520,7 +520,7 @@ static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -548,7 +548,7 @@ static MACHINE_DRIVER_START( atarifb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(atarifb_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -593,7 +593,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -741,7 +741,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -780,7 +780,7 @@ static DRIVER_INIT( soccer )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

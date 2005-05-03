@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	CDRDAO TOC parser for CHD compression frontend
+    CDRDAO TOC parser for CHD compression frontend
 
 ***************************************************************************/
 
@@ -17,7 +17,7 @@
 #endif
 
 /***************************************************************************
-	CONSTANTS & DEFINES
+    CONSTANTS & DEFINES
 ***************************************************************************/
 
 #define EATWHITESPACE	\
@@ -64,22 +64,22 @@
 	token[j] = '\0';
 
 /***************************************************************************
-	PROTOTYPES
+    PROTOTYPES
 ***************************************************************************/
 
 /***************************************************************************
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 static char linebuffer[512];
 
 /***************************************************************************
-	IMPLEMENTATION
+    IMPLEMENTATION
 ***************************************************************************/
 
 /*-------------------------------------------------
-	get_file_size - returns the 64-bit file size
-	for a file
+    get_file_size - returns the 64-bit file size
+    for a file
 -------------------------------------------------*/
 
 static UINT64 get_file_size(const char *file)
@@ -122,7 +122,7 @@ static UINT64 get_file_size(const char *file)
 }
 
 /*-------------------------------------------------
-	cdrom_parse_toc - parse a CDRDAO format TOC file
+    cdrom_parse_toc - parse a CDRDAO format TOC file
 -------------------------------------------------*/
 
 int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track_input_info *outinfo)
@@ -193,11 +193,11 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				}
 
 				/*
-				   This is tricky: the next number can be either a raw
-				   number or an M:S:F number.  Check which it is.
-				   If a space or LF/CR/terminator occurs before a colon in the token,
-				   it's a raw number.
-				*/
+                   This is tricky: the next number can be either a raw
+                   number or an M:S:F number.  Check which it is.
+                   If a space or LF/CR/terminator occurs before a colon in the token,
+                   it's a raw number.
+                */
 
 trycolonagain:
 				foundcolon = 0;

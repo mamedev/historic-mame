@@ -1,36 +1,36 @@
 /****************************************************************************
- *						Intel 8039 Portable Emulator						*
- *																			*
- *					 Copyright (C) 1997 by Mirko Buffoni					*
- *	Based on the original work (C) 1997 by Dan Boris, an 8048 emulator		*
- *		You are not allowed to distribute this software commercially		*
- *		  Please, notify me, if you make any changes to this file			*
- *																			*
- *																			*
- *	**** Change Log ****													*
- *																			*
- *	TLP (19-Jun-2001)														*
- *	 - Changed Ports 1 and 2 to quasi bidirectional output latched ports	*
- *	 - Added the Port 1 & 2 output latch data to the debugger window		*
- *	TLP (02-Jan-2002)														*
- *	 - External IRQs no longer go pending (sampled as a level state)		*
- *	 - Timer IRQs do not go pending if Timer interrupts are disabled		*
- *	 - Timer IRQs made pending, were incorrectly being cleared if the		*
- *		external interrupt was being serviced								*
- *	 - External interrupts now take precedence when simultaneous			*
- *		internal and external interrupt requests occur						*
- *	 - 'DIS TCNTI' now removes pending timer IRQs							*
- *	 - Nested IRQs of any sort are no longer allowed						*
- *	 - T_flag was not being set in the right place of execution, which		*
- *		could have lead to it being incorrectly set after being cleared		*
- *	 - Counter overflows now also set the T_flag							*
- *	 - Added the Timer/Counter register to the debugger window				*
- *	TLP (09-Jan-2002)														*
- *	 - Changed Interrupt system to instant servicing						*
- *	 - The Timer and Counter can no longer be 'on' simultaneously			*
- *	 - Added Save State														*
+ *                      Intel 8039 Portable Emulator                        *
+ *                                                                          *
+ *                   Copyright (C) 1997 by Mirko Buffoni                    *
+ *  Based on the original work (C) 1997 by Dan Boris, an 8048 emulator      *
+ *      You are not allowed to distribute this software commercially        *
+ *        Please, notify me, if you make any changes to this file           *
+ *                                                                          *
+ *                                                                          *
+ *  **** Change Log ****                                                    *
+ *                                                                          *
+ *  TLP (19-Jun-2001)                                                       *
+ *   - Changed Ports 1 and 2 to quasi bidirectional output latched ports    *
+ *   - Added the Port 1 & 2 output latch data to the debugger window        *
+ *  TLP (02-Jan-2002)                                                       *
+ *   - External IRQs no longer go pending (sampled as a level state)        *
+ *   - Timer IRQs do not go pending if Timer interrupts are disabled        *
+ *   - Timer IRQs made pending, were incorrectly being cleared if the       *
+ *      external interrupt was being serviced                               *
+ *   - External interrupts now take precedence when simultaneous            *
+ *      internal and external interrupt requests occur                      *
+ *   - 'DIS TCNTI' now removes pending timer IRQs                           *
+ *   - Nested IRQs of any sort are no longer allowed                        *
+ *   - T_flag was not being set in the right place of execution, which      *
+ *      could have lead to it being incorrectly set after being cleared     *
+ *   - Counter overflows now also set the T_flag                            *
+ *   - Added the Timer/Counter register to the debugger window              *
+ *  TLP (09-Jan-2002)                                                       *
+ *   - Changed Interrupt system to instant servicing                        *
+ *   - The Timer and Counter can no longer be 'on' simultaneously           *
+ *   - Added Save State                                                     *
  *  TLP (15-Feb-2002)                                                       *
- *	 - Corrected Positive signal edge sensing (used on the T1 input)		*
+ *   - Corrected Positive signal edge sensing (used on the T1 input)        *
  ****************************************************************************/
 
 
@@ -45,9 +45,9 @@
 
 
 /*** Cycle times for the jump on condition instructions, are unusual.
-	 Condition is tested during the first cycle, so if condition is not
-	 met, second address fetch cycle may not really be taken. For now we
-	 just use the cycle counts as listed in the i8048 user manual.
+     Condition is tested during the first cycle, so if condition is not
+     met, second address fetch cycle may not really be taken. For now we
+     just use the cycle counts as listed in the i8048 user manual.
 ***/
 
 #if 0
@@ -59,9 +59,9 @@
 
 
 /* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
-#define I8039_NO_INT		0	/* No Interrupts pending or executing	*/
-#define I8039_EXTERNAL_INT	1	/* Execute a normal external interrupt	*/
-#define I8039_TIMCNT_INT	2	/* Execute a Timer/Counter interrupt	*/
+#define I8039_NO_INT		0	/* No Interrupts pending or executing   */
+#define I8039_EXTERNAL_INT	1	/* Execute a normal external interrupt  */
+#define I8039_TIMCNT_INT	2	/* Execute a Timer/Counter interrupt    */
 
 
 /* Layout of the registers in the debugger */
@@ -178,7 +178,7 @@ INLINE UINT8 pull(void) {
 	R.SP  = (R.SP + 15) & 0x0f;		/*  if (--R.SP < 0) R.SP = 15;  */
 	R.PSW = R.PSW & 0xf8;
 	R.PSW = R.PSW | (R.SP >> 1);
-	/* regPTR = ((M_By) ? 24 : 0);	regPTR should not change */
+	/* regPTR = ((M_By) ? 24 : 0);  regPTR should not change */
 	return intRAM[8+R.SP];
 }
 
@@ -353,7 +353,7 @@ static void inc_r7(void)	 { R7++; }
 static void inc_xr0(void)	 { intRAM[R0 & 0x7f]++; }
 static void inc_xr1(void)	 { intRAM[R1 & 0x7f]++; }
 
-/* static void jmp(void)	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | R.A11; }
+/* static void jmp(void)     { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | R.A11; }
  */
 
 static void jmp(void)
@@ -516,7 +516,7 @@ static void retr(void)
 	#ifdef MESS
 		change_pc(R.PC.w.l);
 	#endif
-//	R.A11 = R.A11ff;	/* NS990113 */
+//  R.A11 = R.A11ff;    /* NS990113 */
 	R.PSW = (R.PSW & 0x0f) | (i & 0xf0);	/* Stack is already changed by pull */
 	regPTR = ((M_By) ? 24 : 0);
 
@@ -682,7 +682,7 @@ static int Ext_IRQ(void)
 
 	if (R.xirq_en) {
 		if (R.irq_executing == I8039_NO_INT) {
-//			logerror("I8039:  EXT INTERRUPT being serviced\n");
+//          logerror("I8039:  EXT INTERRUPT being serviced\n");
 			R.irq_executing = I8039_EXTERNAL_INT;
 			push(R.PC.b.l);
 			push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
@@ -707,7 +707,7 @@ static int Timer_IRQ(void)
 
 	if (R.tirq_en) {
 		if (R.irq_executing == I8039_NO_INT) {
-//			logerror("I8039:  TIMER/COUNTER INTERRUPT\n");
+//          logerror("I8039:  TIMER/COUNTER INTERRUPT\n");
 			R.irq_executing = I8039_TIMCNT_INT;
 			R.pending_irq &= ~I8039_TIMCNT_INT;
 			push(R.PC.b.l);
@@ -756,7 +756,7 @@ static int i8039_execute(int cycles)
 
 		opcode=M_RDOP(R.PC.w.l);
 
-/*		logerror("I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
+/*      logerror("I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
 
 		R.PC.w.l++;
 		inst_cycles = opcode_main[opcode].cycles;
@@ -886,7 +886,7 @@ static void i8039_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8039_R5:			R5 = info->i;							break;
 		case CPUINFO_INT_REGISTER + I8039_R6:			R6 = info->i;							break;
 		case CPUINFO_INT_REGISTER + I8039_R7:			R7 = info->i;							break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					R.irq_callback = info->irqcallback;		break;
 	}
@@ -912,7 +912,7 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 2;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 3;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

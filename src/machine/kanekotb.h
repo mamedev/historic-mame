@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	TOYBOX MCU data for Bonk's Adventure
+    TOYBOX MCU data for Bonk's Adventure
 
 ***************************************************************************/
 
@@ -310,7 +310,7 @@ static data16_t bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100
 
 /***************************************************************************
 
-	TOYBOX MCU data for Blood Warrior
+    TOYBOX MCU data for Blood Warrior
 
 ***************************************************************************/
 
@@ -327,9 +327,9 @@ static data16_t bloodwar_mcu_4_09[] = {0x0000}; // Warrior 9
 
 
 // --- palette data ---
-//	number of palettes (>=1)
-//	palette data follows (each palette is 0x200 bytes long)
-//	a negative word will end the palette
+//  number of palettes (>=1)
+//  palette data follows (each palette is 0x200 bytes long)
+//  a negative word will end the palette
 static data16_t bloodwar_mcu_4_0a[] = {0x0001,0x8000}; // Warrior 1 Player 1
 static data16_t bloodwar_mcu_4_0b[] = {0x0001,0x8000}; // Warrior 1 Player 2
 static data16_t bloodwar_mcu_4_0c[] = {0x0001,0x8000}; // Warrior 5 Player 1
@@ -351,7 +351,7 @@ static data16_t bloodwar_mcu_4_1b[] = {0x0001,0x8000}; // Warrior 3 Player 2
 
 
 // --- tilemap data ---
-//	tile data (ff means no tiles) followed by routine index
+//  tile data (ff means no tiles) followed by routine index
 static data16_t bloodwar_mcu_4_1c[] = {0xff00}; // Warrior 8
 static data16_t bloodwar_mcu_4_1d[] = {0xff00}; // Warrior 2
 static data16_t bloodwar_mcu_4_1e[] = {0xff00}; // Warrior 3

@@ -1,40 +1,40 @@
 /***************************************************************************
 
-							  -= Tetris Plus 2 =-
+                              -= Tetris Plus 2 =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q		shows the background
-		W		shows the foreground
-		A		shows the sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	[ 2 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-	The Background is a 64 x 64 Tilemap with 16 x 16 x 8 tiles (1024 x 1024).
-	The Foreground is a 64 x 64 Tilemap with 8 x 8 x 8 tiles (512 x 512).
-	Each tile needs 4 bytes.
+        Q       shows the background
+        W       shows the foreground
+        A       shows the sprites
 
-	[ 1024? Sprites ]
+        Keys can be used together!
 
-	Sprites are "nearly" tile based: if the data in the ROMs is decoded
-	as 8x8 tiles, and each 32 consecutive tiles are drawn like a column
-	of 256 pixels, it turns out that every 32 x 32 tiles form a picture
-	of 256 x 256 pixels (a "page").
 
-	Sprites are portions of any size from those page's graphics rendered
-	to screen.
+    [ 2 Scrolling Layers ]
+
+    The Background is a 64 x 64 Tilemap with 16 x 16 x 8 tiles (1024 x 1024).
+    The Foreground is a 64 x 64 Tilemap with 8 x 8 x 8 tiles (512 x 512).
+    Each tile needs 4 bytes.
+
+    [ 1024? Sprites ]
+
+    Sprites are "nearly" tile based: if the data in the ROMs is decoded
+    as 8x8 tiles, and each 32 consecutive tiles are drawn like a column
+    of 256 pixels, it turns out that every 32 x 32 tiles form a picture
+    of 256 x 256 pixels (a "page").
+
+    Sprites are portions of any size from those page's graphics rendered
+    to screen.
 
 To Do:
 
--	There is a 3rd unimplemented layer capable of rotation (not used by
-	the game, can be tested in service mode).
--	Priority RAM is not taken into account.
+-   There is a 3rd unimplemented layer capable of rotation (not used by
+    the game, can be tested in service mode).
+-   Priority RAM is not taken into account.
 
 ***************************************************************************/
 
@@ -56,7 +56,7 @@ data16_t *tetrisp2_priority;
 /***************************************************************************
 
 
-									Palette
+                                    Palette
 
 
 ***************************************************************************/
@@ -78,7 +78,7 @@ WRITE16_HANDLER( tetrisp2_palette_w )
 /***************************************************************************
 
 
-									Priority
+                                    Priority
 
 
 ***************************************************************************/
@@ -110,14 +110,14 @@ WRITE16_HANDLER( rockn_priority_w )
 /***************************************************************************
 
 
-									Tilemaps
+                                    Tilemaps
 
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
-		2.w		fedc ba98 7654 ----
-				---- ---- ---- 3210		Color
+        0.w                             Code
+        2.w     fedc ba98 7654 ----
+                ---- ---- ---- 3210     Color
 
 
 ***************************************************************************/
@@ -237,39 +237,39 @@ VIDEO_START( rockntread )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset:		Bits:					Meaning:
+    Offset:     Bits:                   Meaning:
 
-	0.w			fedc ba98 ---- ----
-				---- ---- 7654 ----		Priority
-				---- ---- ---- 3---
-				---- ---- ---- -2--		Draw this sprite
-				---- ---- ---- --1-		Flip Y
-				---- ---- ---- ---0		Flip X
+    0.w         fedc ba98 ---- ----
+                ---- ---- 7654 ----     Priority
+                ---- ---- ---- 3---
+                ---- ---- ---- -2--     Draw this sprite
+                ---- ---- ---- --1-     Flip Y
+                ---- ---- ---- ---0     Flip X
 
-	2.w			fedc ba98 ---- ----		Tile's Y position in the tile page (*)
-				---- ---- 7654 3210		Tile's X position in the tile page (*)
+    2.w         fedc ba98 ---- ----     Tile's Y position in the tile page (*)
+                ---- ---- 7654 3210     Tile's X position in the tile page (*)
 
-	4.w			fedc ---- ---- ----		Color
-				---- ba98 7--- ----
-				---- ---- -654 3210		Tile Page (32x32 tiles = 256x256 pixels each)
+    4.w         fedc ---- ---- ----     Color
+                ---- ba98 7--- ----
+                ---- ---- -654 3210     Tile Page (32x32 tiles = 256x256 pixels each)
 
-	6.w			fedc ba98 ---- ----
-				---- ---- 7654 ----		Y Size - 1 (*)
-				---- ---- ---- 3210		X Size - 1 (*)
+    6.w         fedc ba98 ---- ----
+                ---- ---- 7654 ----     Y Size - 1 (*)
+                ---- ---- ---- 3210     X Size - 1 (*)
 
-	8.w			fedc ba-- ---- ----
-				---- --98 7654 3210		Y (Signed)
+    8.w         fedc ba-- ---- ----
+                ---- --98 7654 3210     Y (Signed)
 
-	A.w			fedc b--- ---- ----
-				---- -a98 7654 3210		X (Signed)
+    A.w         fedc b--- ---- ----
+                ---- -a98 7654 3210     X (Signed)
 
-	C.w			fedc ba98 7654 3210		ZOOM X (unused)
+    C.w         fedc ba98 7654 3210     ZOOM X (unused)
 
-	E.w			fedc ba98 7654 3210		ZOOM Y (unused)
+    E.w         fedc ba98 7654 3210     ZOOM Y (unused)
 
-(*)	1 pixel granularity
+(*) 1 pixel granularity
 
 ***************************************************************************/
 
@@ -340,7 +340,7 @@ static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 		}
 
 		/* Clip the sprite if its width or height is not an integer
-		   multiple of 8 pixels (1 tile) */
+           multiple of 8 pixels (1 tile) */
 
 		clip.min_x	=	sx;
 		clip.max_x	=	sx + xsize - 1;
@@ -396,7 +396,7 @@ static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

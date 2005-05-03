@@ -1,6 +1,6 @@
 /*
 
-	SEGA Zaxxon Hardware - Sound
+    SEGA Zaxxon Hardware - Sound
 
 */
 

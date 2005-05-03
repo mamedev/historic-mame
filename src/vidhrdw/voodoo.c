@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	3dfx Voodoo Graphics SST-1/2 emulator
+    3dfx Voodoo Graphics SST-1/2 emulator
 
-	emulator by Aaron Giles
+    emulator by Aaron Giles
 
 **************************************************************************/
 
@@ -14,7 +14,7 @@
 
 /*************************************
  *
- *	Math trickery
+ *  Math trickery
  *
  *************************************/
 
@@ -33,7 +33,7 @@
 
 /*************************************
  *
- *	Optimization flags
+ *  Optimization flags
  *
  *************************************/
 
@@ -47,7 +47,7 @@
 
 /*************************************
  *
- *	Debugging flags
+ *  Debugging flags
  *
  *************************************/
 
@@ -67,7 +67,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -92,7 +92,7 @@
 
 /*************************************
  *
- *	Macros
+ *  Macros
  *
  *************************************/
 
@@ -104,7 +104,7 @@
 
 /*************************************
  *
- *	Structures & typedefs
+ *  Structures & typedefs
  *
  *************************************/
 
@@ -154,7 +154,7 @@ struct tri_vertex
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -294,7 +294,7 @@ static UINT8 cheating_allowed;
 
 /*************************************
  *
- *	Dither matrices
+ *  Dither matrices
  *
  *************************************/
 
@@ -326,7 +326,7 @@ static const INT32 lod_dither_matrix[16] =
 
 /*************************************
  *
- *	LOD tables
+ *  LOD tables
  *
  *************************************/
 
@@ -354,7 +354,7 @@ static const UINT8 lod_width_shift[8][16] =
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -374,7 +374,7 @@ static void setup_and_draw_triangle(void);
 
 /*************************************
  *
- *	Register constants
+ *  Register constants
  *
  *************************************/
 
@@ -565,7 +565,7 @@ static void setup_and_draw_triangle(void);
 
 /*************************************
  *
- *	Register string table for debug
+ *  Register string table for debug
  *
  *************************************/
 
@@ -653,7 +653,7 @@ static const char *voodoo_reg_name[] =
 
 /*************************************
  *
- *	Video start
+ *  Video start
  *
  *************************************/
 
@@ -896,7 +896,7 @@ VIDEO_STOP( voodoo )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -988,7 +988,7 @@ VIDEO_UPDATE( voodoo )
 
 /*************************************
  *
- *	Memory FIFO management
+ *  Memory FIFO management
  *
  *************************************/
 
@@ -1093,7 +1093,7 @@ static void empty_memory_fifo(void)
 
 /*************************************
  *
- *	VBLANK callback/buffer swapping
+ *  VBLANK callback/buffer swapping
  *
  *************************************/
 
@@ -1200,7 +1200,7 @@ static void vblank_callback(int scanline)
 
 /*************************************
  *
- *	Special PCI I/O
+ *  Special PCI I/O
  *
  *************************************/
 
@@ -1235,7 +1235,7 @@ UINT32 voodoo_fifo_words_left(void)
 
 /*************************************
  *
- *	Recompute dirty texture data
+ *  Recompute dirty texture data
  *
  *************************************/
 
@@ -1308,7 +1308,7 @@ static void recompute_texture_params(int tmu)
 
 /*************************************
  *
- *	Texture RAM writes (no read access)
+ *  Texture RAM writes (no read access)
  *
  *************************************/
 
@@ -1332,9 +1332,9 @@ WRITE32_HANDLER( voodoo_textureram_w )
 
 	if (trex >= tmus)
 	{
-//	Blitz hits this during its POST
-//		if (trex != 3)
-//			printf("TMU %d write\n", trex);
+//  Blitz hits this during its POST
+//      if (trex != 3)
+//          printf("TMU %d write\n", trex);
 		return;
 	}
 
@@ -1418,7 +1418,7 @@ WRITE32_HANDLER( voodoo_textureram_w )
 
 /*************************************
  *
- *	Voodoo function tables
+ *  Voodoo function tables
  *
  *************************************/
 
@@ -1433,7 +1433,7 @@ WRITE32_HANDLER( voodoo_textureram_w )
 
 /*************************************
  *
- *	Voodoo 1 registers
+ *  Voodoo 1 registers
  *
  *************************************/
 
@@ -1491,7 +1491,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 
 /*************************************
  *
- *	MMIO register reads
+ *  MMIO register reads
  *
  *************************************/
 
@@ -1572,8 +1572,8 @@ READ32_HANDLER( voodoo_regs_r )
 
 		case vRetrace:
 			result = cpu_getscanline();
-//			if (LOG_REGISTERS)
-//				logerror("%06X:voodoo vRetrace read = %08X\n", activecpu_get_pc(), result);
+//          if (LOG_REGISTERS)
+//              logerror("%06X:voodoo vRetrace read = %08X\n", activecpu_get_pc(), result);
 			break;
 
 		/* reserved area in the TMU read by the Vegas startup sequence */
@@ -1602,7 +1602,7 @@ static void voodoo2_handle_register_w(offs_t offset, data32_t data);
 
 /*************************************
  *
- *	MMIO register writes
+ *  MMIO register writes
  *
  *************************************/
 
@@ -1648,8 +1648,8 @@ static int cmdfifo_compute_expected_depth(UINT32 *fifobase, offs_t readptr)
 			if (command & 0x10000) count++;			/* W1 */
 			if (command & 0x20000) count += 2;		/* S1/T1 */
 			count *= (command >> 6) & 15;			/* numverts */
-//			if (command & 0xfc00000)				/* smode != 0 */
-//				count++;
+//          if (command & 0xfc00000)                /* smode != 0 */
+//              count++;
 			return 1 + count + (command >> 29);
 
 		/* packet type 4 */
@@ -1878,7 +1878,7 @@ static void cmdfifo_process_pending(data32_t old_depth)
 
 /*************************************
  *
- *	Voodoo 2 registers
+ *  Voodoo 2 registers
  *
  *************************************/
 
@@ -2017,7 +2017,7 @@ WRITE32_HANDLER( voodoo2_regs_w )
 
 /*************************************
  *
- *	Voodoo 3 stubs
+ *  Voodoo 3 stubs
  *
  *************************************/
 

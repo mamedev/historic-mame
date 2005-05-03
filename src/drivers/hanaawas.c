@@ -57,7 +57,7 @@ static READ8_HANDLER( hanaawas_input_port_0_r )
 		buttons = readinputport(3);
 		break;
 	}
-	
+
 
 	/* map button pressed into 1-10 range */
 
@@ -230,7 +230,7 @@ static MACHINE_DRIVER_START( hanaawas )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

@@ -1,105 +1,105 @@
 /***************************************************************************
 
-	Rabbit Punch / Rabio Lepus
+    Rabbit Punch / Rabio Lepus
 
     driver by Aaron Giles
 
 ****************************************************************************
 
-	Memory map
+    Memory map
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-03FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	040000-04FFFF   R/W   xxxxxxxx xxxxxxxx   Bitmap RAM (512x256 pixels)
-	                R/W   xxxx---- --------      (leftmost pixel)
-	                R/W   ----xxxx --------      (2nd pixel)
-	                R/W   -------- xxxx----      (3rd pixel)
-	                R/W   -------- ----xxxx      (rightmost pixel)
-	060000-060FFF   R/W   xxxxxxxx xxxxxxxx   Sprite RAM (512 entries x 4 words)
-	                R/W   -------x xxxxxxxx      (0: horizontal position)
-	                R/W   xxx----- --------      (1: color index)
-	                R/W   ---x---- --------      (1: horizontal flip)
-	                R/W   -----xxx xxxxxxxx      (1: image number)
-	                R/W   -------x xxxxxxxx      (2: Y position)
-	                R/W   -------- --------      (3: not used)
-	080000-081FFF   R/W   xxxxxxxx xxxxxxxx   Background 1 RAM (64x64 tiles)
-	                R/W   xxx----- --------      (color index)
-	                R/W   ---xxxxx xxxxxxxx      (image number)
-	082000-083FFF   R/W   xxxxxxxx xxxxxxxx   Background 2 RAM (64x64 tiles)
-	                R/W   xxx----- --------      (color index)
-	                R/W   ---xxxxx xxxxxxxx      (image number)
-	0A0000-0A01FF   R/W   -xxxxxxx xxxxxxxx   Background 1 palette RAM (256 entries)
-	                R/W   -xxxxx-- --------      (red component)
-	                R/W   ------xx xxx-----      (green component)
-	                R/W   -------- ---xxxxx      (blue component)
-	0A0200-0A03FF   R/W   -xxxxxxx xxxxxxxx   Background 2 palette RAM (256 entries)
-	0A0400-0A05FF   R/W   -xxxxxxx xxxxxxxx   Bitmap palette RAM (256 entries)
-	0A0600-0A07FF   R/W   -xxxxxxx xxxxxxxx   Sprite palette RAM (256 entries)
-	0C0000            W   -------x xxxxxxxx   Background 1 vertical scroll
-	0C0002            W   -------x xxxxxxxx   Background 1 horizontal scroll
-	0C0004            W   -------x xxxxxxxx   Background 2 vertical scroll
-	0C0006            W   -------x xxxxxxxx   Background 2 horizontal scroll
-	0C0008            W   -------- ????????   Video controller data (CRTC)
-	0C000C            W   ---xxx-- -xxxxxxx   Video flags
-	                  W   ---x---- --------      (flip screen)
-	                  W   ----x--- --------      (background 2 image bank)
-	                  W   -----x-- --------      (background 1 image bank)
-	                  W   -------- -x------      (sprite palette bank)
-	                  W   -------- --x-----      (background 2 palette bank)
-	                  W   -------- ---x----      (background 1 palette bank)
-	                  W   -------- ----xxxx      (bitmap palette bank)
-	0C000E            W   -------- xxxxxxxx   Sound communications
-	0C0010            W   -------- --xxxxxx   Sprite bias (???)
-	0C0012            W   -------- --xxxxxx   Bitmap bias (???)
-	0C0018          R     -xxxx-xx --xxxxxx   Player 1 input port
-	                R     -x------ --------      (2 player start)
-	                R     --x----- --------      (1 player start)
-	                R     ---x---- --------      (coin 1)
-	                R     ----x--- --------      (coin 2)
-	                R     ------x- --------      (test switch)
-	                R     -------x --------      (service coin)
-	                R     -------- --x-----      (punch button)
-	                R     -------- ---x----      (missile button)
-	                R     -------- ----xxxx      (joystick right/left/down/up)
-	0C001A          R     -xxxx-xx --xxxxxx   Player 2 input port
-	0C001C          R     xxxxxxxx xxxxxxxx   DIP switches
-	                R     x------- --------      (flip screen)
-	                R     -x------ --------      (continues allowed)
-	                R     --x----- --------      (demo sounds)
-	                R     ---x---- --------      (extended play)
-	                R     ----x--- --------      (laser control)
-	                R     -----x-- --------      (number of lives)
-	                R     ------xx --------      (difficulty)
-	                R     -------- xxxx----      (coinage 2)
-	                R     -------- ----xxxx      (coinage 1)
-	0C001E          R     -------- -------x   Sound busy flag
-	0C0028            W   -------- ????????   Video controller register select (CRTC)
-	0FC000-0FFFFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
-	========================================================================
-	Interrupts:
-		IRQ1 = VBLANK
-	========================================================================
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-03FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    040000-04FFFF   R/W   xxxxxxxx xxxxxxxx   Bitmap RAM (512x256 pixels)
+                    R/W   xxxx---- --------      (leftmost pixel)
+                    R/W   ----xxxx --------      (2nd pixel)
+                    R/W   -------- xxxx----      (3rd pixel)
+                    R/W   -------- ----xxxx      (rightmost pixel)
+    060000-060FFF   R/W   xxxxxxxx xxxxxxxx   Sprite RAM (512 entries x 4 words)
+                    R/W   -------x xxxxxxxx      (0: horizontal position)
+                    R/W   xxx----- --------      (1: color index)
+                    R/W   ---x---- --------      (1: horizontal flip)
+                    R/W   -----xxx xxxxxxxx      (1: image number)
+                    R/W   -------x xxxxxxxx      (2: Y position)
+                    R/W   -------- --------      (3: not used)
+    080000-081FFF   R/W   xxxxxxxx xxxxxxxx   Background 1 RAM (64x64 tiles)
+                    R/W   xxx----- --------      (color index)
+                    R/W   ---xxxxx xxxxxxxx      (image number)
+    082000-083FFF   R/W   xxxxxxxx xxxxxxxx   Background 2 RAM (64x64 tiles)
+                    R/W   xxx----- --------      (color index)
+                    R/W   ---xxxxx xxxxxxxx      (image number)
+    0A0000-0A01FF   R/W   -xxxxxxx xxxxxxxx   Background 1 palette RAM (256 entries)
+                    R/W   -xxxxx-- --------      (red component)
+                    R/W   ------xx xxx-----      (green component)
+                    R/W   -------- ---xxxxx      (blue component)
+    0A0200-0A03FF   R/W   -xxxxxxx xxxxxxxx   Background 2 palette RAM (256 entries)
+    0A0400-0A05FF   R/W   -xxxxxxx xxxxxxxx   Bitmap palette RAM (256 entries)
+    0A0600-0A07FF   R/W   -xxxxxxx xxxxxxxx   Sprite palette RAM (256 entries)
+    0C0000            W   -------x xxxxxxxx   Background 1 vertical scroll
+    0C0002            W   -------x xxxxxxxx   Background 1 horizontal scroll
+    0C0004            W   -------x xxxxxxxx   Background 2 vertical scroll
+    0C0006            W   -------x xxxxxxxx   Background 2 horizontal scroll
+    0C0008            W   -------- ????????   Video controller data (CRTC)
+    0C000C            W   ---xxx-- -xxxxxxx   Video flags
+                      W   ---x---- --------      (flip screen)
+                      W   ----x--- --------      (background 2 image bank)
+                      W   -----x-- --------      (background 1 image bank)
+                      W   -------- -x------      (sprite palette bank)
+                      W   -------- --x-----      (background 2 palette bank)
+                      W   -------- ---x----      (background 1 palette bank)
+                      W   -------- ----xxxx      (bitmap palette bank)
+    0C000E            W   -------- xxxxxxxx   Sound communications
+    0C0010            W   -------- --xxxxxx   Sprite bias (???)
+    0C0012            W   -------- --xxxxxx   Bitmap bias (???)
+    0C0018          R     -xxxx-xx --xxxxxx   Player 1 input port
+                    R     -x------ --------      (2 player start)
+                    R     --x----- --------      (1 player start)
+                    R     ---x---- --------      (coin 1)
+                    R     ----x--- --------      (coin 2)
+                    R     ------x- --------      (test switch)
+                    R     -------x --------      (service coin)
+                    R     -------- --x-----      (punch button)
+                    R     -------- ---x----      (missile button)
+                    R     -------- ----xxxx      (joystick right/left/down/up)
+    0C001A          R     -xxxx-xx --xxxxxx   Player 2 input port
+    0C001C          R     xxxxxxxx xxxxxxxx   DIP switches
+                    R     x------- --------      (flip screen)
+                    R     -x------ --------      (continues allowed)
+                    R     --x----- --------      (demo sounds)
+                    R     ---x---- --------      (extended play)
+                    R     ----x--- --------      (laser control)
+                    R     -----x-- --------      (number of lives)
+                    R     ------xx --------      (difficulty)
+                    R     -------- xxxx----      (coinage 2)
+                    R     -------- ----xxxx      (coinage 1)
+    0C001E          R     -------- -------x   Sound busy flag
+    0C0028            W   -------- ????????   Video controller register select (CRTC)
+    0FC000-0FFFFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+    ========================================================================
+    Interrupts:
+        IRQ1 = VBLANK
+    ========================================================================
 
 
-	========================================================================
-	SOUND CPU
-	========================================================================
-	0000-EFFF   R     xxxxxxxx   Program ROM
-	F000-F001   R/W   xxxxxxxx   YM2151 communications
-	F200        R     xxxxxxxx   Sound command input
-	F400          W   x------x   UPD7759 control
-	              W   x-------      (/RESET line)
-	              W   -------x      (ROM bank select)
-	F600          W   xxxxxxxx   UPD7759 data/trigger
-	F800-FFFF   R/W   xxxxxxxx   Program RAM
-	========================================================================
-	Interrupts:
-		IRQ = YM2151 IRQ or'ed with the sound command latch flag
-	========================================================================
+    ========================================================================
+    SOUND CPU
+    ========================================================================
+    0000-EFFF   R     xxxxxxxx   Program ROM
+    F000-F001   R/W   xxxxxxxx   YM2151 communications
+    F200        R     xxxxxxxx   Sound command input
+    F400          W   x------x   UPD7759 control
+                  W   x-------      (/RESET line)
+                  W   -------x      (ROM bank select)
+    F600          W   xxxxxxxx   UPD7759 data/trigger
+    F800-FFFF   R/W   xxxxxxxx   Program RAM
+    ========================================================================
+    Interrupts:
+        IRQ = YM2151 IRQ or'ed with the sound command latch flag
+    ========================================================================
 
 ***************************************************************************/
 
@@ -140,7 +140,7 @@ WRITE16_HANDLER( rpunch_crtc_register_w );
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -160,7 +160,7 @@ MACHINE_INIT( rpunch )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -173,7 +173,7 @@ READ16_HANDLER( common_port_r )
 
 /*************************************
  *
- *	Sound I/O
+ *  Sound I/O
  *
  *************************************/
 
@@ -209,7 +209,7 @@ static READ16_HANDLER( sound_busy_r )
 
 /*************************************
  *
- *	UPD7759 controller
+ *  UPD7759 controller
  *
  *************************************/
 
@@ -235,7 +235,7 @@ WRITE8_HANDLER( upd_data_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -273,7 +273,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -298,7 +298,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -550,7 +550,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -593,7 +593,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -612,7 +612,7 @@ static struct upd7759_interface upd7759_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -657,7 +657,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -692,7 +692,7 @@ ROM_START( rpunch )
 
 	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rl_f18.bin", 0x20000, 0x20000, CRC(47840673) SHA1(ffe20f8772a987f5dd06a3f348a1e3cfed26e19e) )
-//	ROM_LOAD( "rpunch.91", 0x00000, 0x0f000, CRC(7512cc59) )
+//  ROM_LOAD( "rpunch.91", 0x00000, 0x0f000, CRC(7512cc59) )
 ROM_END
 
 ROM_START( rabiolep )
@@ -846,7 +846,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -868,7 +868,7 @@ static DRIVER_INIT( svolley )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

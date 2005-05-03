@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Exidy 6502 hardware
+    Exidy 6502 hardware
 
 *************************************************************************/
 
@@ -38,7 +38,7 @@ static UINT8 color_latch[3];
 
 /*************************************
  *
- *	Hard coded palettes
+ *  Hard coded palettes
  *
  *************************************/
 
@@ -88,7 +88,7 @@ UINT8 spectar_palette[] =
 
 /*************************************
  *
- *	Hard coded color tables
+ *  Hard coded color tables
  *
  *************************************/
 
@@ -111,8 +111,8 @@ UINT16 exidy_2bpp_colortable[] =
 {
 	/* two-bit characters */
 	/* (Because this is 2-bit color, the colorspace is only divided
-		in half instead of in quarters.  That's why 00-3F = 40-7F and
-		80-BF = C0-FF) */
+        in half instead of in quarters.  That's why 00-3F = 40-7F and
+        80-BF = C0-FF) */
 	0, 0, 4, 3,  /* chars 0x00-0x3F */
 	0, 0, 4, 3,  /* chars 0x40-0x7F */
 	0, 0, 2, 1,  /* chars 0x80-0xBF */
@@ -129,7 +129,7 @@ UINT16 exidy_2bpp_colortable[] =
 
 /*************************************
  *
- *	Palettes and colors
+ *  Palettes and colors
  *
  *************************************/
 
@@ -138,7 +138,7 @@ PALETTE_INIT( exidy )
 	if (exidy_palette)
 	{
 		int i;
-		
+
 		for (i = 0; i < PALETTE_LEN; i++)
 			palette_set_color(i,exidy_palette[i*3+0],exidy_palette[i*3+1],exidy_palette[i*3+2]);
 	}
@@ -149,7 +149,7 @@ PALETTE_INIT( exidy )
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -177,7 +177,7 @@ VIDEO_START( exidy )
 
 /*************************************
  *
- *	Interrupt generation
+ *  Interrupt generation
  *
  *************************************/
 
@@ -204,7 +204,7 @@ INTERRUPT_GEN( teetert_vblank_interrupt )
 	/* standard stuff */
 	if (cpu_getiloops() == 0)
 		exidy_vblank_interrupt();
-	
+
 	/* plus a pulse on the NMI line */
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
@@ -223,7 +223,7 @@ READ8_HANDLER( exidy_interrupt_r )
 
 /*************************************
  *
- *	Character RAM
+ *  Character RAM
  *
  *************************************/
 
@@ -240,7 +240,7 @@ WRITE8_HANDLER( exidy_characterram_w )
 
 /*************************************
  *
- *	Palette RAM
+ *  Palette RAM
  *
  *************************************/
 
@@ -263,7 +263,7 @@ WRITE8_HANDLER( exidy_color_w )
 
 /*************************************
  *
- *	Sprite controls
+ *  Sprite controls
  *
  *************************************/
 
@@ -301,7 +301,7 @@ WRITE8_HANDLER( exidy_sprite_enable_w )
 
 /*************************************
  *
- *	Background update
+ *  Background update
  *
  *************************************/
 
@@ -341,15 +341,15 @@ static void update_background(void)
 
 /*************************************
  *
- *	Determine the time when the beam
- *	will intersect a given pixel
+ *  Determine the time when the beam
+ *  will intersect a given pixel
  *
  *************************************/
 
 static double pixel_time(int x, int y)
 {
 	/* assuming this is called at refresh time, compute how long until we
-	 * hit the given x,y position */
+     * hit the given x,y position */
 	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (double)x * (1.0 / 256.0));
 }
 
@@ -367,19 +367,19 @@ static void collision_irq_callback(int param)
 
 /*************************************
  *
- *	End-of-frame callback
+ *  End-of-frame callback
  *
  *************************************/
 
 /***************************************************************************
 
-	Exidy hardware checks for two types of collisions based on the video
-	signals.  If the Motion Object 1 and Motion Object 2 signals are on at
-	the same time, an M1M2 collision bit gets set.  If the Motion Object 1
-	and Background Character signals are on at the same time, an M1CHAR
-	collision bit gets set.  So effectively, there's a pixel-by-pixel
-	collision check comparing Motion Object 1 (the player) to the
-	background and to the other Motion Object (typically a bad guy).
+    Exidy hardware checks for two types of collisions based on the video
+    signals.  If the Motion Object 1 and Motion Object 2 signals are on at
+    the same time, an M1M2 collision bit gets set.  If the Motion Object 1
+    and Background Character signals are on at the same time, an M1CHAR
+    collision bit gets set.  So effectively, there's a pixel-by-pixel
+    collision check comparing Motion Object 1 (the player) to the
+    background and to the other Motion Object (typically a bad guy).
 
 ***************************************************************************/
 
@@ -490,7 +490,7 @@ VIDEO_EOF( exidy )
 
 /*************************************
  *
- *	Standard screen refresh callback
+ *  Standard screen refresh callback
  *
  *************************************/
 

@@ -3,7 +3,7 @@
 Battlantis(GX777) (c) 1987 Konami
 
 Preliminary driver by:
-	Manuel Abadia <manu@teleline.es>
+    Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -94,7 +94,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -133,7 +133,7 @@ INPUT_PORTS_START( battlnts )
 	PORT_DIPSETTING(	0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(	0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(	0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -230,7 +230,7 @@ INPUT_PORTS_START( thehustj )
 	PORT_DIPSETTING(	0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(	0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(	0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, "Balls" )
@@ -326,7 +326,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -448,9 +448,9 @@ ROM_END
 
 
 /*
-	This recursive function doesn't use additional memory
-	(it could be easily converted into an iterative one).
-	It's called shuffle because it mimics the shuffling of a deck of cards.
+    This recursive function doesn't use additional memory
+    (it could be easily converted into an iterative one).
+    It's called shuffle because it mimics the shuffling of a deck of cards.
 */
 static void shuffle(UINT8 *buf,int len)
 {

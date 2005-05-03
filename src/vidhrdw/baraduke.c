@@ -11,14 +11,14 @@ static int xscroll[2], yscroll[2];
 
 /***************************************************************************
 
-	Convert the color PROMs.
+    Convert the color PROMs.
 
-	The palette PROMs are connected to the RGB output this way:
+    The palette PROMs are connected to the RGB output this way:
 
-	bit 3	-- 220 ohm resistor  -- RED/GREEN/BLUE
-			-- 470 ohm resistor  -- RED/GREEN/BLUE
-			-- 1  kohm resistor  -- RED/GREEN/BLUE
-	bit 0	-- 2.2kohm resistor  -- RED/GREEN/BLUE
+    bit 3   -- 220 ohm resistor  -- RED/GREEN/BLUE
+            -- 470 ohm resistor  -- RED/GREEN/BLUE
+            -- 1  kohm resistor  -- RED/GREEN/BLUE
+    bit 0   -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
 
@@ -59,7 +59,7 @@ PALETTE_INIT( baraduke )
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -115,7 +115,7 @@ static void get_tile_info1(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -144,7 +144,7 @@ VIDEO_START( baraduke )
 
 /***************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ***************************************************************************/
 
@@ -223,7 +223,7 @@ WRITE8_HANDLER( baraduke_spriteram_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 
@@ -238,12 +238,12 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	while( source<finish )
 	{
 /*
-	source[10] S-FT ---P
-	source[11] TTTT TTTT
-	source[12] CCCC CCCX
-	source[13] XXXX XXXX
-	source[14] ---T -S-F
-	source[15] YYYY YYYY
+    source[10] S-FT ---P
+    source[11] TTTT TTTT
+    source[12] CCCC CCCX
+    source[13] XXXX XXXX
+    source[14] ---T -S-F
+    source[15] YYYY YYYY
 */
 		int priority = source[10] & 0x01;
 		if (priority == sprite_priority)

@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Atari Arcade Classics hardware (prototypes)
+    Atari Arcade Classics hardware (prototypes)
 
 *************************************************************************/
 

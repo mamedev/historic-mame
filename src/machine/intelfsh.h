@@ -1,5 +1,5 @@
 /*
-	Intel Flash ROM emulation
+    Intel Flash ROM emulation
 */
 
 #ifndef _INTELFLASH_H_

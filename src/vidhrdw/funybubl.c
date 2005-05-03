@@ -50,20 +50,20 @@ static void funybubl_drawsprites( struct mame_bitmap *bitmap, const struct recta
 		int xpos, ypos, tile;
 
 		/* the sprites are in the sprite list twice
-		 the first format (in comments) appears to be a buffer, if you use
-		 this list you get garbage sprites in 2 player mode
-		 the second format (used) seems correct
+         the first format (in comments) appears to be a buffer, if you use
+         this list you get garbage sprites in 2 player mode
+         the second format (used) seems correct
 
-		 */
+         */
 /*
-		ypos = 0xff-source[1+0x10];
-		xpos = source[2+0x10];
-		tile =  source[0+0x10] | ( (source[3+0x10] & 0x0f) <<8);
-		if (source[3+0x10] & 0x80) tile += 0x1000;
-		if (source[3+0x10] & 0x20) xpos += 0x100;
-		// bits 0x40 (not used?) and 0x10 (just set during transition period of x co-ord 0xff and 0x00) ...
-		xpos -= 8;
-		ypos -= 14;
+        ypos = 0xff-source[1+0x10];
+        xpos = source[2+0x10];
+        tile =  source[0+0x10] | ( (source[3+0x10] & 0x0f) <<8);
+        if (source[3+0x10] & 0x80) tile += 0x1000;
+        if (source[3+0x10] & 0x20) xpos += 0x100;
+        // bits 0x40 (not used?) and 0x10 (just set during transition period of x co-ord 0xff and 0x00) ...
+        xpos -= 8;
+        ypos -= 14;
 
 */
 		ypos = source[2];
@@ -106,16 +106,16 @@ VIDEO_UPDATE(funybubl)
 	funybubl_drawsprites(bitmap,cliprect);
 
 /*
-	if ( code_pressed_memory(KEYCODE_W) )
-	{
-		FILE *fp;
+    if ( code_pressed_memory(KEYCODE_W) )
+    {
+        FILE *fp;
 
-		fp=fopen("funnybubsprites", "w+b");
-		if (fp)
-		{
-			fwrite(&funybubl_banked_videoram[0x1000], 0x1000, 1, fp);
-			fclose(fp);
-		}
-	}
+        fp=fopen("funnybubsprites", "w+b");
+        if (fp)
+        {
+            fwrite(&funybubl_banked_videoram[0x1000], 0x1000, 1, fp);
+            fclose(fp);
+        }
+    }
 */
 }

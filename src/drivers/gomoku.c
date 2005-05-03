@@ -1,10 +1,10 @@
 /******************************************************************************
 
-	Gomoku Narabe Renju
-	(c)1981 Nihon Bussan Co.,Ltd.
+    Gomoku Narabe Renju
+    (c)1981 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/06 -
-	Updated to compile again by David Haywood 19th Oct 2002
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/06 -
+    Updated to compile again by David Haywood 19th Oct 2002
 
 ******************************************************************************/
 /******************************************************************************
@@ -122,7 +122,7 @@ INPUT_PORTS_START( gomoku )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )	
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
@@ -190,7 +190,7 @@ static MACHINE_DRIVER_START( gomoku )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

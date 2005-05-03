@@ -9,30 +9,30 @@ MAIN CPU:
 0000-4fff ROM
 8000-87ff RAM
 a000-bfff video RAM (only 0x20 bytes of each 0x100 byte block is used)
-					(also contains sprite RAM)
+                    (also contains sprite RAM)
 c000-dfff color RAM (only 0x20 bytes of each 0x100 byte block is used)
-					(also contains sprite RAM)
+                    (also contains sprite RAM)
 
 read:
-f000	  interrupt ACK
-f800	  IN0/watchdog
-f801	  IN1
-f802	  IN2
+f000      interrupt ACK
+f800      IN0/watchdog
+f801      IN1
+f802      IN2
 
 write:
-e000	  row scroll
-e800	  flip screen
+e000      row scroll
+e800      flip screen
 e802-e803 coin counter
-e804	  ???
-e805	  gfx bank select
-e806	  ???
-f800	  watchdog
+e804      ???
+e805      gfx bank select
+e806      ???
+f800      watchdog
 
 
 I/0 ports:
 write
-00		  8910	control
-01		  8910	write
+00        8910  control
+01        8910  write
 
 AY8910 Port A = DSW
 

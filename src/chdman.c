@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	CHD compression frontend
+    CHD compression frontend
 
 ***************************************************************************/
 
@@ -30,13 +30,9 @@
 #endif
 #endif
 
-#if defined(__MWERKS__) && macintosh
-#include <console.h>
-#endif
-
 
 /***************************************************************************
-	CONSTANTS & DEFINES
+    CONSTANTS & DEFINES
 ***************************************************************************/
 
 #define IDE_SECTOR_SIZE			512
@@ -46,7 +42,7 @@
 
 
 /***************************************************************************
-	PROTOTYPES
+    PROTOTYPES
 ***************************************************************************/
 
 static struct chd_interface_file *chdman_open(const char *filename, const char *mode);
@@ -59,7 +55,7 @@ static UINT64 get_file_size(const char *file);
 
 
 /***************************************************************************
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 static struct chd_interface chdman_interface =
@@ -110,11 +106,11 @@ static const char *error_strings[] =
 
 
 /***************************************************************************
-	IMPLEMENTATION
+    IMPLEMENTATION
 ***************************************************************************/
 
 /*-------------------------------------------------
-	put_bigendian_uint32 - write a UINT32 in big-endian order to memory
+    put_bigendian_uint32 - write a UINT32 in big-endian order to memory
 -------------------------------------------------*/
 
 INLINE void put_bigendian_uint32(UINT8 *base, UINT32 value)
@@ -126,7 +122,7 @@ INLINE void put_bigendian_uint32(UINT8 *base, UINT32 value)
 }
 
 /*-------------------------------------------------
-	print_big_int - 64-bit int printing with commas
+    print_big_int - 64-bit int printing with commas
 -------------------------------------------------*/
 
 void print_big_int(UINT64 intvalue, char *output)
@@ -148,7 +144,7 @@ void print_big_int(UINT64 intvalue, char *output)
 
 
 /*-------------------------------------------------
-	big_int_string - return a string for a big int
+    big_int_string - return a string for a big int
 -------------------------------------------------*/
 
 char *big_int_string(UINT64 intvalue)
@@ -162,7 +158,7 @@ char *big_int_string(UINT64 intvalue)
 
 
 /*-------------------------------------------------
-	progress - generic progress callback
+    progress - generic progress callback
 -------------------------------------------------*/
 
 static void progress(const char *fmt, ...)
@@ -179,7 +175,7 @@ static void progress(const char *fmt, ...)
 
 
 /*-------------------------------------------------
-	error_string - return an error sting
+    error_string - return an error sting
 -------------------------------------------------*/
 
 static const char *error_string(int err)
@@ -196,7 +192,7 @@ static const char *error_string(int err)
 
 
 /*-------------------------------------------------
-	error - generic usage error display
+    error - generic usage error display
 -------------------------------------------------*/
 
 static void error(void)
@@ -221,8 +217,8 @@ static void error(void)
 
 
 /*-------------------------------------------------
-	special_chd_init - set up a CHD file as a
-	"fake" raw file for input
+    special_chd_init - set up a CHD file as a
+    "fake" raw file for input
 -------------------------------------------------*/
 
 static void special_chd_init(struct chd_file *chd, UINT64 logicalbytes)
@@ -242,8 +238,8 @@ static void special_chd_init(struct chd_file *chd, UINT64 logicalbytes)
 
 
 /*-------------------------------------------------
-	special_chd_finished - finish using a CHD
-	file as a "fake" raw file for input
+    special_chd_finished - finish using a CHD
+    file as a "fake" raw file for input
 -------------------------------------------------*/
 
 static void special_chd_finished(void)
@@ -315,8 +311,8 @@ static void special_chd_finished(void)
 
 
 /*-------------------------------------------------
-	is_physical_drive - clue to Win32 code that
-	we're reading a physical drive directly
+    is_physical_drive - clue to Win32 code that
+    we're reading a physical drive directly
 -------------------------------------------------*/
 
 #ifdef _WIN32
@@ -329,8 +325,8 @@ static int is_physical_drive(const char *file)
 
 
 /*-------------------------------------------------
-	guess_chs - given a file and an offset,
-	compute a best guess CHS value set
+    guess_chs - given a file and an offset,
+    compute a best guess CHS value set
 -------------------------------------------------*/
 
 static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
@@ -408,8 +404,8 @@ static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *
 
 
 /*-------------------------------------------------
-	do_create - create a new compressed hard disk
-	image from a raw file
+    do_create - create a new compressed hard disk
+    image from a raw file
 -------------------------------------------------*/
 
 static void do_createhd(int argc, char *argv[])
@@ -509,8 +505,8 @@ static void do_createhd(int argc, char *argv[])
 }
 
 /*-------------------------------------------------
-	do_createcd - create a new compressed CD
-	image from a raw file
+    do_createcd - create a new compressed CD
+    image from a raw file
 -------------------------------------------------*/
 
 static void do_createcd(int argc, char *argv[])
@@ -570,16 +566,16 @@ static void do_createcd(int argc, char *argv[])
 		}
 
 		/*
-		printf("Track %02d: file %s offset %d type %d subtype %d datasize %d subsize %d frames %d extra %d\n", i,
-			track_info.fname[i],
-			track_info.offset[i],
-			toc.tracks[i].trktype,
-			toc.tracks[i].subtype,
-			toc.tracks[i].datasize,
-			toc.tracks[i].subsize,
-			toc.tracks[i].frames,
-			toc.tracks[i].extraframes);
-		*/
+        printf("Track %02d: file %s offset %d type %d subtype %d datasize %d subsize %d frames %d extra %d\n", i,
+            track_info.fname[i],
+            track_info.offset[i],
+            toc.tracks[i].trktype,
+            toc.tracks[i].subtype,
+            toc.tracks[i].datasize,
+            toc.tracks[i].subsize,
+            toc.tracks[i].frames,
+            toc.tracks[i].extraframes);
+        */
 	}
 
 	/* create the new CHD file */
@@ -668,10 +664,10 @@ static void do_createcd(int argc, char *argv[])
 }
 
 /*
-	Create a new non-compressed hard disk image, with all hunks filled with 0s.
+    Create a new non-compressed hard disk image, with all hunks filled with 0s.
 
-	Example:
-		[program] -createblankhd out.hd 615 4 32 256 32768
+    Example:
+        [program] -createblankhd out.hd 615 4 32 256 32768
 */
 static void do_createblankhd(int argc, char *argv[])
 {
@@ -788,7 +784,7 @@ static void do_createblankhd(int argc, char *argv[])
 }
 
 /*
-	Compute the largest common divisor of two numbers.
+    Compute the largest common divisor of two numbers.
 */
 INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
 {
@@ -806,12 +802,12 @@ INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
 }
 
 /*-------------------------------------------------
-	Copy all hunks of data from one CHD file to another.  The hunk sizes do not
-	need to match.  If the source is shorter than the destination, the source
-	data will be padded with 0s.
+    Copy all hunks of data from one CHD file to another.  The hunk sizes do not
+    need to match.  If the source is shorter than the destination, the source
+    data will be padded with 0s.
 
-	Example
-		[program] -copydata in.hd out.hd
+    Example
+        [program] -copydata in.hd out.hd
 -------------------------------------------------*/
 static void do_copydata(int argc, char *argv[])
 {
@@ -931,8 +927,8 @@ static void do_copydata(int argc, char *argv[])
 }
 
 /*-------------------------------------------------
-	do_extract - extract a raw file from a
-	CHD image
+    do_extract - extract a raw file from a
+    CHD image
 -------------------------------------------------*/
 
 static void do_extract(int argc, char *argv[])
@@ -1030,8 +1026,8 @@ error:
 }
 
 /*-------------------------------------------------
-	do_extractcd - extract a CDRDAO .toc/.bin
-	file from a CHD-CD image
+    do_extractcd - extract a CDRDAO .toc/.bin
+    file from a CHD-CD image
 -------------------------------------------------*/
 
 static void do_extractcd(int argc, char *argv[])
@@ -1196,8 +1192,8 @@ error:
 }
 
 /*-------------------------------------------------
-	do_verify - validate the MD5/SHA1 on a drive
-	image
+    do_verify - validate the MD5/SHA1 on a drive
+    image
 -------------------------------------------------*/
 
 static void do_verify(int argc, char *argv[], int fix)
@@ -1309,8 +1305,8 @@ static void do_verify(int argc, char *argv[], int fix)
 
 
 /*-------------------------------------------------
-	do_info - dump the header information from
-	a drive image
+    do_info - dump the header information from
+    a drive image
 -------------------------------------------------*/
 
 static void do_info(int argc, char *argv[])
@@ -1415,7 +1411,7 @@ static void do_info(int argc, char *argv[])
 
 
 /*-------------------------------------------------
-	handle_custom_chomp - custom chomp a file
+    handle_custom_chomp - custom chomp a file
 -------------------------------------------------*/
 
 #if ENABLE_CUSTOM_CHOMP
@@ -1497,8 +1493,8 @@ error:
 
 
 /*-------------------------------------------------
-	do_merge_update_chomp - merge a parent and its
-	child together (also works for update & chomp)
+    do_merge_update_chomp - merge a parent and its
+    child together (also works for update & chomp)
 -------------------------------------------------*/
 
 #define OPERATION_UPDATE		0
@@ -1632,8 +1628,8 @@ error:
 
 
 /*-------------------------------------------------
-	do_diff - generate a difference between two
-	CHD files
+    do_diff - generate a difference between two
+    CHD files
 -------------------------------------------------*/
 
 static void do_diff(int argc, char *argv[])
@@ -1715,8 +1711,8 @@ error:
 
 
 /*-------------------------------------------------
-	do_setchs - change the CHS values on a hard
-	disk image
+    do_setchs - change the CHS values on a hard
+    disk image
 -------------------------------------------------*/
 
 static void do_setchs(int argc, char *argv[])
@@ -1839,8 +1835,8 @@ cleanup:
 
 
 /*-------------------------------------------------
-	get_file_size - returns the 64-bit file size
-	for a file
+    get_file_size - returns the 64-bit file size
+    for a file
 -------------------------------------------------*/
 
 static UINT64 get_file_size(const char *file)
@@ -1885,7 +1881,7 @@ static UINT64 get_file_size(const char *file)
 
 
 /*-------------------------------------------------
-	chdman_open - open file
+    chdman_open - open file
 -------------------------------------------------*/
 
 static struct chd_interface_file *chdman_open(const char *filename, const char *mode)
@@ -1932,7 +1928,7 @@ static struct chd_interface_file *chdman_open(const char *filename, const char *
 
 
 /*-------------------------------------------------
-	chdman_close - close file
+    chdman_close - close file
 -------------------------------------------------*/
 
 static void chdman_close(struct chd_interface_file *file)
@@ -1951,7 +1947,7 @@ static void chdman_close(struct chd_interface_file *file)
 
 
 /*-------------------------------------------------
-	chdman_read - read from an offset
+    chdman_read - read from an offset
 -------------------------------------------------*/
 
 static UINT32 chdman_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
@@ -2036,7 +2032,7 @@ static UINT32 chdman_read(struct chd_interface_file *file, UINT64 offset, UINT32
 
 
 /*-------------------------------------------------
-	chdman_write - write to an offset
+    chdman_write - write to an offset
 -------------------------------------------------*/
 
 static UINT32 chdman_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
@@ -2075,7 +2071,7 @@ static UINT32 chdman_write(struct chd_interface_file *file, UINT64 offset, UINT3
 
 
 /*-------------------------------------------------
-	chdman_length - return the current EOF
+    chdman_length - return the current EOF
 -------------------------------------------------*/
 
 static UINT64 chdman_length(struct chd_interface_file *file)
@@ -2114,17 +2110,13 @@ static UINT64 chdman_length(struct chd_interface_file *file)
 
 
 /*-------------------------------------------------
-	main - entry point
+    main - entry point
 -------------------------------------------------*/
 
 int main(int argc, char **argv)
 {
 	extern char build_version[];
 	printf("chdman - MAME Compressed Hunks of Data (CHD) manager %s\n", build_version);
-
-#if defined(__MWERKS__) && macintosh
-	argc = ccommand(& argv);
-#endif
 
 	/* require at least 1 argument */
 	if (argc < 2)

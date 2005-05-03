@@ -44,26 +44,26 @@ WRITE8_HANDLER( warpwarp_sound_w )
 	if( sound_latch & 8 )
 	{
 		/*
-		 * R85(?) is 10k, Rb is 0, C92 is 1uF
-		 * charge time t1 = 0.693 * (R24 + Rb) * C57 -> 0.22176s
-		 * discharge time t2 = 0.693 * (Rb) * C57 -> 0
-		 * C90(?) is only charged via D17 (1N914), no discharge!
-		 * Decay:
-		 * discharge C90(?) (1uF) through R13||R14 (22k||47k)
-		 * 0.639 * 15k * 1uF -> 0.9585s
-		 */
+         * R85(?) is 10k, Rb is 0, C92 is 1uF
+         * charge time t1 = 0.693 * (R24 + Rb) * C57 -> 0.22176s
+         * discharge time t2 = 0.693 * (Rb) * C57 -> 0
+         * C90(?) is only charged via D17 (1N914), no discharge!
+         * Decay:
+         * discharge C90(?) (1uF) through R13||R14 (22k||47k)
+         * 0.639 * 15k * 1uF -> 0.9585s
+         */
 		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/0.9585), 0, TIME_IN_HZ(32768/0.9585));
 	}
 	else
 	{
 		/*
-		 * discharge only after R93 (100k) and through the 10k
-		 * potentiometerin the amplifier section.
-		 * 0.639 * 110k * 1uF -> 7.0290s
-		 * ...but this is not very realistic for the game sound :(
-		 * maybe there _is_ a discharge through the diode D17?
-		 */
-//		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/7.0290), 0, TIME_IN_HZ(32768/7.0290));
+         * discharge only after R93 (100k) and through the 10k
+         * potentiometerin the amplifier section.
+         * 0.639 * 110k * 1uF -> 7.0290s
+         * ...but this is not very realistic for the game sound :(
+         * maybe there _is_ a discharge through the diode D17?
+         */
+//      timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/7.0290), 0, TIME_IN_HZ(32768/7.0290));
 		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/1.917), 0, TIME_IN_HZ(32768/1.917));
     }
 }
@@ -89,26 +89,26 @@ WRITE8_HANDLER( warpwarp_music2_w )
 	if( music2_latch & 0x10 )
 	{
 		/*
-		 * Ra (R83?) is 10k, Rb is 0, C92 is 1uF
-		 * charge time t1 = 0.693 * (Ra + Rb) * C -> 0.22176s
-		 * discharge time is (nearly) zero, because Rb is zero
-		 * C95(?) is only charged via D17, not discharged!
-		 * Decay:
-		 * discharge C95(?) (10uF) through R13||R14 (22k||47k)
-		 * 0.639 * 15k * 10uF -> 9.585s
-		 * ...I'm sure this is off by one number of magnitude :/
-		 */
-//		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/9.585), 0, TIME_IN_HZ(32768/9.585));
+         * Ra (R83?) is 10k, Rb is 0, C92 is 1uF
+         * charge time t1 = 0.693 * (Ra + Rb) * C -> 0.22176s
+         * discharge time is (nearly) zero, because Rb is zero
+         * C95(?) is only charged via D17, not discharged!
+         * Decay:
+         * discharge C95(?) (10uF) through R13||R14 (22k||47k)
+         * 0.639 * 15k * 10uF -> 9.585s
+         * ...I'm sure this is off by one number of magnitude :/
+         */
+//      timer_adjust(music_volume_timer, TIME_IN_HZ(32768/9.585), 0, TIME_IN_HZ(32768/9.585));
 		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/0.9585), 0, TIME_IN_HZ(32768/0.9585));
 	}
 	else
 	{
 		/*
-		 * discharge through R14 (47k),
-		 * discharge C95(?) (10uF) through R14 (47k)
-		 * 0.639 * 47k * 10uF -> 30.033s
-		 */
-//		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/30.033), 0, TIME_IN_HZ(32768/30.033));
+         * discharge through R14 (47k),
+         * discharge C95(?) (10uF) through R14 (47k)
+         * 0.639 * 47k * 10uF -> 30.033s
+         */
+//      timer_adjust(music_volume_timer, TIME_IN_HZ(32768/30.033), 0, TIME_IN_HZ(32768/30.033));
 		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/3.0033), 0, TIME_IN_HZ(32768/3.0033));
 	}
 
@@ -127,18 +127,18 @@ static void warpwarp_sound_update(void *param, stream_sample_t **inputs, stream_
 		*buffer++ = (sound_signal + music_signal) / 2;
 
 		/*
-		 * The music signal is selected at a rate of 2H (1.536MHz) from the
-		 * four bits of a 4 bit binary counter which is clocked with 16H,
-		 * which is 192kHz, and is divided by 4 times (64 - music1_latch).
-		 *	0 = 256 steps -> 750 Hz
-		 *	1 = 252 steps -> 761.9 Hz
-		 * ...
-		 * 32 = 128 steps -> 1500 Hz
-		 * ...
-		 * 48 =  64 steps -> 3000 Hz
-		 * ...
-		 * 63 =   4 steps -> 48 kHz
-		 */
+         * The music signal is selected at a rate of 2H (1.536MHz) from the
+         * four bits of a 4 bit binary counter which is clocked with 16H,
+         * which is 192kHz, and is divided by 4 times (64 - music1_latch).
+         *  0 = 256 steps -> 750 Hz
+         *  1 = 252 steps -> 761.9 Hz
+         * ...
+         * 32 = 128 steps -> 1500 Hz
+         * ...
+         * 48 =  64 steps -> 3000 Hz
+         * ...
+         * 63 =   4 steps -> 48 kHz
+         */
 		mcarry -= CLOCK_16H / (4 * (64 - music1_latch));
 		while( mcarry < 0 )
 		{

@@ -521,11 +521,11 @@ static void locomotn_draw_bullets( struct mame_bitmap *bitmap, const struct rect
 
 
 		/* it looks like in commsega the addresses used are
-		   a000-a003  a004-a00f
-		   8020-8023  8034-803f
-		   8820-8823  8834-883f
-		   so 8024-8033 and 8824-8833 are not used
-		*/
+           a000-a003  a004-a00f
+           8020-8023  8034-803f
+           8820-8823  8834-883f
+           so 8024-8033 and 8824-8833 are not used
+        */
 
 		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
 		y = 252 - rallyx_radary[offs];
@@ -546,7 +546,7 @@ static void locomotn_draw_bullets( struct mame_bitmap *bitmap, const struct rect
 VIDEO_UPDATE( rallyx )
 {
 	/* the radar tilemap is just 8x32. We rely on the tilemap code to repeat it across
-	   the screen, and clip it to only the position where it is supposed to be shown */
+       the screen, and clip it to only the position where it is supposed to be shown */
 	struct rectangle fg_clip = *cliprect;
 	struct rectangle bg_clip = *cliprect;
 	if (flip_screen)

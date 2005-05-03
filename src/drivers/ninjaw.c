@@ -12,7 +12,7 @@ David Graves
 Nicola Salmoria. Thanks to Richard Bush and the Raine team, whose open
 source was very helpful in many areas particularly the sprites.)
 
-				*****
+                *****
 
 The triple screen games operate on hardware with various similarities to
 the Taito F2 system, as they share some custom ics e.g. the TC0100SCN.
@@ -66,10 +66,10 @@ Ninja Warriors (JPN Ver.)
 
 Sound Board
 K1100313A
-CPU 	:Z80
-Sound	:YM2610
-OSC 	:16000.00KHz
-Other	:TC0140SYT,TC0060DCA x2
+CPU     :Z80
+Sound   :YM2610
+OSC     :16000.00KHz
+Other   :TC0140SYT,TC0060DCA x2
 -----------------------
 B31-08.19
 B31-09.18
@@ -80,10 +80,10 @@ B31_37.11
 CPU Board
 M4300086A
 K1100311A
-CPU 	:TS68000CP8 x2
-Sound	:YM2610
-OSC 	:26686.00KHz,16000.00KHz
-Other	:TC0040IOC,TC0070RGB x3,TC0110PCR x3,TC0100SCN x3
+CPU     :TS68000CP8 x2
+Sound   :YM2610
+OSC     :26686.00KHz,16000.00KHz
+Other   :TC0040IOC,TC0070RGB x3,TC0110PCR x3,TC0100SCN x3
 -----------------------
 B31-01.23
 B31-01.26
@@ -108,7 +108,7 @@ B31_41.5
 -----------------------
 OBJECT Board
 K1100312A
-Other	:TC0120SHT
+Other   :TC0120SHT
 -----------------------
 B31-04.173
 B31-05.174
@@ -178,7 +178,7 @@ static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
-	   if cpu B is disabled !! */
+       if cpu B is disabled !! */
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
@@ -196,7 +196,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 
 /*****************************************
-			SOUND
+            SOUND
 *****************************************/
 
 static int banknum = -1;
@@ -245,7 +245,7 @@ WRITE8_HANDLER( ninjaw_pancontrol )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( ninjaw_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -408,7 +408,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 #define NINJAW_DSWA \
@@ -579,9 +579,9 @@ INPUT_PORTS_END
 
 
 /***********************************************************
-				GFX DECODING
+                GFX DECODING
 
-	(Thanks to Raine for the obj decoding)
+    (Thanks to Raine for the obj decoding)
 ***********************************************************/
 
 static struct GfxLayout tilelayout =
@@ -619,7 +619,7 @@ static struct GfxDecodeInfo ninjaw_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2610 (SOUND)
+                 YM2610 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -637,7 +637,7 @@ static struct YM2610interface ym2610_interface =
 
 
 /**************************************************************
-			     SUBWOOFER (SOUND)
+                 SUBWOOFER (SOUND)
 **************************************************************/
 
 #if 0
@@ -665,7 +665,7 @@ static struct CustomSound_interface subwoofer_interface =
 
 
 /*************************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 
 Ninjaw: high interleaving of 100, but doesn't stop enemies
 "sliding" when they should be standing still relative
@@ -717,7 +717,7 @@ static MACHINE_DRIVER_START( ninjaw )
 	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
@@ -727,7 +727,7 @@ static MACHINE_DRIVER_START( ninjaw )
 	MDRV_SOUND_ADD_TAG("2610.2.r", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 
-//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+//  MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
@@ -774,7 +774,7 @@ static MACHINE_DRIVER_START( darius2 )
 	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
@@ -784,12 +784,12 @@ static MACHINE_DRIVER_START( darius2 )
 	MDRV_SOUND_ADD_TAG("2610.2.r", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 
-//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+//  MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( ninjaw )
@@ -830,10 +830,10 @@ ROM_START( ninjaw )
 	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screens 2+) */
 
 /* The actual board duplicates the SCR gfx roms for 2nd/3rd TC0100SCN */
-//	ROM_LOAD( "b31-01.26", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) )	/* SCR (screen 2) */
-//	ROM_LOAD( "b31-02.27", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
-//	ROM_LOAD( "b31-01.28", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) )	/* SCR (screen 3) */
-//	ROM_LOAD( "b31-02.29", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
+//  ROM_LOAD( "b31-01.26", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) ) /* SCR (screen 2) */
+//  ROM_LOAD( "b31-02.27", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
+//  ROM_LOAD( "b31-01.28", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) ) /* SCR (screen 3) */
+//  ROM_LOAD( "b31-02.29", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b31-09.18", 0x000000, 0x80000, CRC(60a73382) SHA1(0ddeb86fcd4d19a58e62bf8564f996d17e36e5c5) )
@@ -886,10 +886,10 @@ ROM_START( ninjawj )
 	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screens 2+) */
 
 /* The actual board duplicates the SCR gfx roms for 2nd/3rd TC0100SCN */
-//	ROM_LOAD( "b31-01.26", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) )	/* SCR (screen 2) */
-//	ROM_LOAD( "b31-02.27", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
-//	ROM_LOAD( "b31-01.28", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) )	/* SCR (screen 3) */
-//	ROM_LOAD( "b31-02.29", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
+//  ROM_LOAD( "b31-01.26", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) ) /* SCR (screen 2) */
+//  ROM_LOAD( "b31-02.27", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
+//  ROM_LOAD( "b31-01.28", 0x00000, 0x80000, CRC(8e8237a7) SHA1(3e181a153d9b4b7f6a620614ea9022285583a5b5) ) /* SCR (screen 3) */
+//  ROM_LOAD( "b31-02.29", 0x80000, 0x80000, CRC(4c3b4e33) SHA1(f99b379be1af085bf102d4d7cf35803e002fe80b) )
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b31-09.18", 0x000000, 0x80000, CRC(60a73382) SHA1(0ddeb86fcd4d19a58e62bf8564f996d17e36e5c5) )

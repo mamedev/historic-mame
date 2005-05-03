@@ -1,10 +1,10 @@
 /******************************************************************************
 
-	Gomoku Narabe Renju
-	(c)1981 Nihon Bussan Co.,Ltd.
+    Gomoku Narabe Renju
+    (c)1981 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/06 -
-	Updated to compile again by David Haywood 19th Oct 2002
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/06 -
+    Updated to compile again by David Haywood 19th Oct 2002
 
 ******************************************************************************/
 
@@ -25,7 +25,7 @@ data8_t *gomoku_bg_dirty;
 
 /******************************************************************************
 
-	palette RAM
+    palette RAM
 
 ******************************************************************************/
 
@@ -60,7 +60,7 @@ PALETTE_INIT( gomoku )
 
 /******************************************************************************
 
-	Tilemap callbacks
+    Tilemap callbacks
 
 ******************************************************************************/
 
@@ -109,7 +109,7 @@ WRITE8_HANDLER( gomoku_bg_dispsw_w )
 
 /******************************************************************************
 
-	Start the video hardware emulation
+    Start the video hardware emulation
 
 ******************************************************************************/
 
@@ -162,7 +162,7 @@ VIDEO_START( gomoku )
 
 /******************************************************************************
 
-	Display refresh
+    Display refresh
 
 ******************************************************************************/
 

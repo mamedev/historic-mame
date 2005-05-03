@@ -1,17 +1,17 @@
 #include "driver.h"
 
 /***********************************
-		VRENDER ZERO
-		VIDEO EMULATION By ElSemi
+        VRENDER ZERO
+        VIDEO EMULATION By ElSemi
 
 
-	The VRender0 is a very special 2D sprite renderer. The spec says it's based on 3D
-	technology.
-	The device processes "display lists" that contain pointers to the texture, tex coords
-	and the step increments on x and y (dxx,dxy,dyx,dyy) allowing ROZ effects on sprites.
-	It supports alphablend with programmable factors per channel and for source and dest
-	color.
-	
+    The VRender0 is a very special 2D sprite renderer. The spec says it's based on 3D
+    technology.
+    The device processes "display lists" that contain pointers to the texture, tex coords
+    and the step increments on x and y (dxx,dxy,dyx,dyy) allowing ROZ effects on sprites.
+    It supports alphablend with programmable factors per channel and for source and dest
+    color.
+
 ************************************/
 /*************
 Missing:
@@ -24,7 +24,7 @@ static UINT32 LastPalUpdate=0xffffffff;
 
 /*
 Pick a rare enough color to disable transparency (that way I save a cmp per loop to check
-if I must draw transparent or not. The palette build will take this color in account so 
+if I must draw transparent or not. The palette build will take this color in account so
 no color in the palette will have this value
 */
 #define NOTRANSCOLOR	0xecda
@@ -37,7 +37,7 @@ INLINE UINT16 RGB32TO16(UINT32 rgb)
 	return (((rgb>>(16+3))&0x1f)<<11)|(((rgb>>(8+2))&0x3f)<<5)|(((rgb>>(3))&0x1f)<<0);
 }
 
-typedef struct 
+typedef struct
 {
 	UINT32 Tx;
 	UINT32 Ty;
@@ -425,8 +425,8 @@ int ProcessPacket(UINT32 PacketPtr,UINT16 *Dest,UINT8 *TEXTURE)
 		RenderState.Width =8<<((Packet(28)>>0)&0x7);
 		RenderState.Height=8<<((Packet(28)>>3)&0x7);
 	}
-	
-	
+
+
 	if(Packet0&0x40 && RenderState.PalOffset!=LastPalUpdate)
 	{
 		UINT32 *Pal=(UINT32*) (TEXTURE+1024*RenderState.PalOffset);
@@ -438,7 +438,7 @@ int ProcessPacket(UINT32 PacketPtr,UINT16 *Dest,UINT8 *TEXTURE)
 			UINT16 v=RGB32TO16(p);
 			if((v==Trans && p!=RenderState.TransColor) || v==NOTRANSCOLOR)	//Error due to conversion. caused transparent
 			{
-				if((v&0x1f)!=0x1f)			
+				if((v&0x1f)!=0x1f)
 					v++;									//Make the color a bit different (blueish) so it's not
 				else
 					v--;
@@ -454,7 +454,7 @@ int ProcessPacket(UINT32 PacketPtr,UINT16 *Dest,UINT8 *TEXTURE)
 
 		Quad.Pitch=512;
 
-//		assert(Endx>=Dx && Endy>=Dy);
+//      assert(Endx>=Dx && Endy>=Dy);
 
 		if(Packet0&2)
 		{
@@ -485,12 +485,12 @@ int ProcessPacket(UINT32 PacketPtr,UINT16 *Dest,UINT8 *TEXTURE)
 			if(!Mode)		//Alpha includes Shade
 				Mode=2;
 			/*
-			//simulate shade with alphablend (SLOW!!!)
-			if(!Quad.SrcAlpha && (Packet0&0x8))
-			{
-				Quad.SrcAlpha=0x21;	//1
-				Quad.DstAlpha=0x01;	//0
-			}*/
+            //simulate shade with alphablend (SLOW!!!)
+            if(!Quad.SrcAlpha && (Packet0&0x8))
+            {
+                Quad.SrcAlpha=0x21; //1
+                Quad.DstAlpha=0x01; //0
+            }*/
 		}
 		else
 			Quad.Shade=RGB32(255,255,255);

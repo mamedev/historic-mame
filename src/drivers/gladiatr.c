@@ -6,8 +6,8 @@ Gladiator       (c) Taito 1986
 Credits:
 - Victor Trucco: original emulation and MAME driver
 - Steve Ellenoff: YM2203 Sound, ADPCM Sound, dip switch fixes, high score save,
-		  input port patches, panning fix, sprite banking,
-		  Golden Castle Rom Set Support
+          input port patches, panning fix, sprite banking,
+          Golden Castle Rom Set Support
 - Phil Stroffolino: palette, sprites, misc video driver fixes
 - Tatsuyuki Satoh: YM2203 sound improvements, NEC 8741 simulation,ADPCM with MC6809
 - Tomasz Slanina   preliminary Ping POng King driver

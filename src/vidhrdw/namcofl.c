@@ -54,8 +54,8 @@ namcofl_install_palette( void )
 	data32_t *pSource;
 
 	/* this is unnecessarily expensive.  Better would be to mark palette entries dirty as
-	 * they are modified, and only process those that have changed.
-	 */
+     * they are modified, and only process those that have changed.
+     */
 	pen = 0;
 	for( page=0; page<4; page++ )
 	{

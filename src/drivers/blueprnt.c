@@ -43,11 +43,11 @@ write:
 
 /*
 
-	TODO:
+    TODO:
 
-	- the cross hatch pattern test in service mode is too fast, each phase
-	  should take 15 seconds according to the service manual
-	- the two AY-3-8910's should be clocked independently at 2H and 4H
+    - the cross hatch pattern test in service mode is too fast, each phase
+      should take 15 seconds according to the service manual
+    - the two AY-3-8910's should be clocked independently at 2H and 4H
 
 */
 
@@ -337,10 +337,10 @@ static MACHINE_DRIVER_START( blueprnt )
 	MDRV_SOUND_ADD(AY8910, 10000000/2/2/2)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 10000000/2/2/2/2)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /* ROMs */

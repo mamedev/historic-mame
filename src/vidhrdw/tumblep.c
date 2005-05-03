@@ -117,7 +117,7 @@ static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		y = 240 - y;
         x = 304 - x;
 
-	//	sprite &= ~multi; /* Todo:  I bet TumblePop bootleg doesn't do this either */
+	//  sprite &= ~multi; /* Todo:  I bet TumblePop bootleg doesn't do this either */
 		if (fy)
 			inc = -1;
 		else
@@ -179,7 +179,7 @@ static void fncywld_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 		y = 240 - y;
         x = 304 - x;
 
-	//	sprite &= ~multi; /* Todo:  I bet TumblePop bootleg doesn't do this either */
+	//  sprite &= ~multi; /* Todo:  I bet TumblePop bootleg doesn't do this either */
 		if (fy)
 			inc = -1;
 		else
@@ -604,7 +604,7 @@ VIDEO_UPDATE( fncywld )
 
 VIDEO_UPDATE( jumppop )
 {
-//	fillbitmap(bitmap, get_black_pen(), cliprect);
+//  fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	tilemap_set_scrollx( pf1_tilemap,0, jumppop_control[2]-0x3a0 );
 	tilemap_set_scrolly( pf1_tilemap,0, jumppop_control[3] );

@@ -218,7 +218,7 @@ GOINDOL_INPUT_BITS
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-	
+
 GOINDOL_DSW1
 INPUT_PORTS_END
 
@@ -426,12 +426,12 @@ DRIVER_INIT( goindol )
 	rom[0x1964] = 0x00; // ROM 9 error (MCU?)
 	rom[0x1965] = 0x00; //
 	rom[0x1966] = 0x00; //
-//	rom[0x17c7] = 0x00;	// c421 == 3f
-//	rom[0x17c8] = 0x00;	//
-//	rom[0x16f0] = 0x18;	// c425 == 06
-//	rom[0x172c] = 0x18;	// c423 == 06
-//	rom[0x1779] = 0x00;	// c419 == 5b 3f 6d
-//	rom[0x177a] = 0x00;	//
+//  rom[0x17c7] = 0x00; // c421 == 3f
+//  rom[0x17c8] = 0x00; //
+//  rom[0x16f0] = 0x18; // c425 == 06
+//  rom[0x172c] = 0x18; // c423 == 06
+//  rom[0x1779] = 0x00; // c419 == 5b 3f 6d
+//  rom[0x177a] = 0x00; //
 	rom[0x063f] = 0x18;	//->fc55
 	rom[0x0b30] = 0x00;	// verify code at 0601-064b
 	rom[0x1bdf] = 0x18;	//->fc49

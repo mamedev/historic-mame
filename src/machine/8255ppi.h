@@ -58,7 +58,7 @@ WRITE8_HANDLER( ppi8255_7_w );
 /* mode 2 (used by Sord M5 to communicate with FD-5 disc interface */
 
 /* interface for mode 2 */
-typedef struct 
+typedef struct
 {
 	write8_handler	obfa_write[MAX_8255];
 	write8_handler	intra_write[MAX_8255];

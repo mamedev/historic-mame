@@ -1,18 +1,18 @@
 /*###################################################################################################
 **
 **
-**		mips3drc.c
-**		x86 Dynamic recompiler for MIPS III/IV emulator.
-**		Written by Aaron Giles
+**      mips3drc.c
+**      x86 Dynamic recompiler for MIPS III/IV emulator.
+**      Written by Aaron Giles
 **
 **
-**		Philosophy: this is intended to be a very basic implementation of a dynamic compiler in
-**		order to keep things simple. There are certainly more optimizations that could be added
-**		but for now, we keep it strictly to NOP stripping and LUI optimizations.
+**      Philosophy: this is intended to be a very basic implementation of a dynamic compiler in
+**      order to keep things simple. There are certainly more optimizations that could be added
+**      but for now, we keep it strictly to NOP stripping and LUI optimizations.
 **
 **
-**		Still not implemented:
-**			* MMU (it is logged, however)
+**      Still not implemented:
+**          * MMU (it is logged, however)
 **
 **
 **#################################################################################################*/
@@ -34,7 +34,7 @@
 
 
 /*###################################################################################################
-**	CONFIGURATION
+**  CONFIGURATION
 **#################################################################################################*/
 
 #define LOG_CODE			(0)
@@ -45,7 +45,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 /* COP0 registers */
@@ -115,7 +115,7 @@
 
 
 /*###################################################################################################
-**	HELPER MACROS
+**  HELPER MACROS
 **#################################################################################################*/
 
 #define RSREG		((op >> 21) & 31)
@@ -140,7 +140,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* memory access function table */
@@ -187,7 +187,7 @@ typedef struct
 	data32_t *	dcache;
 	size_t		icache_size;
 	size_t		dcache_size;
-	
+
 	/* callbacks */
 	void *		generate_interrupt_exception;
 	void *		generate_cop_exception;
@@ -201,7 +201,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void mips3drc_init(void);
@@ -216,7 +216,7 @@ static offs_t mips3_dasm(char *buffer, offs_t pc);
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
+**  PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
 static int	mips3_icount;
@@ -224,7 +224,7 @@ static int	mips3_icount;
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static mips3_regs mips3;
@@ -248,7 +248,7 @@ static const memory_handlers le_memory =
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 static void set_irq_line(int irqline, int state)
@@ -262,7 +262,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void mips3_get_context(void *dst)
@@ -283,7 +283,7 @@ static void mips3_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void compare_int_callback(int cpu)
@@ -357,10 +357,10 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	mips3.cpr[0][COP0_Compare] = 0xffffffff;
 	mips3.cpr[0][COP0_Count] = 0;
 	mips3.count_zero_time = activecpu_gettotalcycles64();
-	
+
 	/* reset the DRC */
 	drc_cache_reset(mips3.drc);
-	
+
 	/* config register: set the cache line size to 32 bytes */
 	configreg = 0x00026030;
 
@@ -373,7 +373,7 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	else if (config->icache <= 0x20000) configreg |= 5 << 6;
 	else if (config->icache <= 0x40000) configreg |= 6 << 6;
 	else                                configreg |= 7 << 6;
-	
+
 	/* config register: set the instruction cache size */
 	     if (config->icache <= 0x01000) configreg |= 0 << 9;
 	else if (config->icache <= 0x02000) configreg |= 1 << 9;
@@ -383,10 +383,10 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	else if (config->icache <= 0x20000) configreg |= 5 << 9;
 	else if (config->icache <= 0x40000) configreg |= 6 << 9;
 	else                                configreg |= 7 << 9;
-	
+
 	/* config register: set the endianness bit */
 	if (bigendian) configreg |= 0x00008000;
-	
+
 	/* config register: set the system clock divider */
 	divisor = 2;
 	if (config->system_clock != 0)
@@ -399,7 +399,7 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 		}
 	}
 	configreg |= (((divisor < 2) ? 2 : (divisor > 8) ? 8 : divisor) - 2) << 28;
-	
+
 	/* set up the architecture */
 	mips3.is_mips4 = mips4;
 	mips3.cpr[0][COP0_PRId] = prid;
@@ -409,17 +409,17 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 
 /*
 
-	R6000A = 0x0600
-	R10000 = 0x0900
-	R4300  = 0x0b00
-	VR41XX = 0x0c00
-	R12000 = 0x0e00
-	R8000  = 0x1000
-	R4600  = 0x2000
-	R4650  = 0x2000
-	R5000  = 0x2300
-	R5432  = 0x5400
-	RM7000 = 0x2700
+    R6000A = 0x0600
+    R10000 = 0x0900
+    R4300  = 0x0b00
+    VR41XX = 0x0c00
+    R12000 = 0x0e00
+    R8000  = 0x1000
+    R4600  = 0x2000
+    R4650  = 0x2000
+    R5000  = 0x2300
+    R5432  = 0x5400
+    RM7000 = 0x2700
 */
 
 #if (HAS_R4600)
@@ -519,11 +519,11 @@ static void mips3_exit(void)
 
 
 /*###################################################################################################
-**	RECOMPILER CALLBACKS
+**  RECOMPILER CALLBACKS
 **#################################################################################################*/
 
 /*------------------------------------------------------------------
-	update_cycle_counting
+    update_cycle_counting
 ------------------------------------------------------------------*/
 
 static void update_cycle_counting(void)
@@ -535,7 +535,7 @@ static void update_cycle_counting(void)
 		UINT32 compare = mips3.cpr[0][COP0_Compare];
 		UINT32 cyclesleft = compare - count;
 		double newtime = TIME_IN_CYCLES(((INT64)cyclesleft * 2), cpu_getactivecpu());
-		
+
 		/* due to accuracy issues, don't bother setting timers unless they're for less than 100msec */
 		if (newtime < TIME_IN_MSEC(100))
 			timer_adjust(mips3.compare_int_timer, newtime, cpu_getactivecpu(), 0);
@@ -547,7 +547,7 @@ static void update_cycle_counting(void)
 
 
 /*------------------------------------------------------------------
-	logtlbentry
+    logtlbentry
 ------------------------------------------------------------------*/
 
 INLINE void logonetlbentry(int which)
@@ -577,7 +577,7 @@ static void logtlbentry(void)
 
 
 /*------------------------------------------------------------------
-	log_code
+    log_code
 ------------------------------------------------------------------*/
 
 static void log_code(struct drccore *drc)
@@ -593,7 +593,7 @@ static void log_code(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	log_symbol
+    log_symbol
 ------------------------------------------------------------------*/
 
 static void log_symbol(struct drccore *drc, UINT32 pc)
@@ -630,7 +630,7 @@ static void log_symbol(struct drccore *drc, UINT32 pc)
 
 
 /*###################################################################################################
-**	RECOMPILER CORE
+**  RECOMPILER CORE
 **#################################################################################################*/
 
 #include "mdrcold.c"
@@ -639,7 +639,7 @@ static void log_symbol(struct drccore *drc, UINT32 pc)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 mips3_reg_layout[] =
@@ -678,7 +678,7 @@ static UINT8 mips3_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t mips3_dasm(char *buffer, offs_t pc)
@@ -752,13 +752,13 @@ static void mips3_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS3_R28:			mips3.r[28] = info->i;					break;
 		case CPUINFO_INT_REGISTER + MIPS3_R29:			mips3.r[29] = info->i;					break;
 		case CPUINFO_INT_REGISTER + MIPS3_R30:			mips3.r[30] = info->i;					break;
-		case CPUINFO_INT_SP:	
+		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + MIPS3_R31:			mips3.r[31] = info->i;					break;
 		case CPUINFO_INT_REGISTER + MIPS3_HI:			mips3.hi = info->i;						break;
 		case CPUINFO_INT_REGISTER + MIPS3_LO:			mips3.lo = info->i;						break;
-		
+
 		case CPUINFO_INT_MIPS3_DRC_OPTIONS:				mips3.drcoptions = info->i;				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					mips3.irq_callback = info->irqcallback;	break;
 	}
@@ -784,7 +784,7 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

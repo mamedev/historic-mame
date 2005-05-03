@@ -255,7 +255,7 @@ static READ16_HANDLER( driving_custom_io_r )
 WRITE16_HANDLER( driving_custom_io_w )
 {
 	COMBINE_DATA( &segas32_io_ram[offset] );
-//	S32_LOG("custom offset%04x\n",offset);
+//  S32_LOG("custom offset%04x\n",offset);
 
 	switch (offset)
 	{
@@ -337,7 +337,7 @@ static READ16_HANDLER( sonic_custom_io_r )
 WRITE16_HANDLER( sonic_custom_io_w )
 {
 	COMBINE_DATA( &segas32_io_ram[offset] );
-//	S32_LOG("custom offset%04x\n",offset);
+//  S32_LOG("custom offset%04x\n",offset);
 
 	switch (offset)
 	{
@@ -591,7 +591,7 @@ static void s32_recomp_bank(void)
 		case 0x40:
 		case 0xc0:
 			// SegaSonic (prototype) needs this alternate interpretation.
-//			Bank = (((remapbhi[s32_bhi]<<5) + (s32_blo&0x3f)) << 13);
+//          Bank = (((remapbhi[s32_bhi]<<5) + (s32_blo&0x3f)) << 13);
 			// all other s32 games work with this, notably Super Visual Football
 			// and Alien3: The Gun
 			Bank = (((remapbhi[s32_bhi]<<6) + (s32_blo&0x3f)) << 13);
@@ -1402,7 +1402,7 @@ ROM_START( arescue )
 	ROM_RELOAD     (                  0x0c0000, 0x20000 )
 	ROM_RELOAD     (                  0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr14508.7",    0x000001, 0x080000, CRC(6702c14d) SHA1(dc9324f16a3e3238f5ccdade9451d6823a50b563) )
 	ROM_LOAD16_BYTE( "epr14509.14",   0x000000, 0x080000, CRC(daa5a356) SHA1(ca87242c59de5ab5f9406635bee758a855fe20bc) )
 
@@ -1452,7 +1452,7 @@ ROM_START( alien3 )
 	ROM_LOAD( "15942.bin", 0x080000, 0x040000, CRC(a1e1d0ec) SHA1(10d8d2235a67a4ba475fe98124c6a4a5311592b5) )
 	ROM_RELOAD     (               0x0c0000, 0x40000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "15855.bin", 0x000000, 0x080000, CRC(a6fadabe) SHA1(328bbb54651eef197ba13f1bd9228f3f4de7ee5e) )
 	ROM_LOAD16_BYTE( "15854.bin", 0x000001, 0x080000, CRC(d1aec392) SHA1(f48804fe0151e83ad45e912b55db8ae8ddebd2ad) )
 
@@ -1500,7 +1500,7 @@ ROM_START( arabfgt )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "ep14592.18", 0x000000, 0x40000, CRC(f7dff316) SHA1(338690a1404dde6e7e66067f23605a247c7d0f5b) )
 	ROM_RELOAD( 0x080000, 0x40000)
 	ROM_LOAD16_BYTE( "ep14591.9",  0x000001, 0x40000, CRC(bbd940fb) SHA1(99c17aba890935eaf7ea468492da03103288eb1b) )
@@ -1547,7 +1547,7 @@ ROM_START( arabfgtj )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "ep14592.18", 0x000000, 0x40000, CRC(f7dff316) SHA1(338690a1404dde6e7e66067f23605a247c7d0f5b) )
 	ROM_RELOAD( 0x080000, 0x40000)
 	ROM_LOAD16_BYTE( "ep14591.9",  0x000001, 0x40000, CRC(bbd940fb) SHA1(99c17aba890935eaf7ea468492da03103288eb1b) )
@@ -1599,7 +1599,7 @@ ROM_START( brival )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "ep15723.18", 0x000000, 0x080000, CRC(4ff40d39) SHA1(b33a656f976ec7a1a2268e7b9a81d5b84f3d9ca3) )
 	ROM_LOAD16_BYTE( "ep15724.9",  0x000001, 0x080000, CRC(3ff8a052) SHA1(f484a8e15a022f9ff290e662ab27f96f9f0ad24e) )
 
@@ -1642,7 +1642,7 @@ ROM_START( darkedge )
 	ROM_LOAD16_WORD( "ep15246.8", 0x000000, 0x80000, CRC(c0bdceeb) SHA1(9cf670cf9a8691f259c75c1d9c6cb14e8a70bb72) )
 	ROM_RELOAD     (               0x080000, 0x80000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	/* none */
 
 	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
@@ -1675,7 +1675,7 @@ ROM_START( darkedgj )
 	ROM_LOAD16_WORD( "epr15244.8", 0x000000, 0x80000, CRC(0db138cb) SHA1(79ccb754e0d816b395b536a6d9c5a6e93168a913) )
 	ROM_RELOAD     (               0x080000, 0x80000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	/* none */
 
 	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
@@ -1717,7 +1717,7 @@ ROM_START( dbzvrvs )
 	ROM_LOAD16_WORD( "16543",   0x000000, 0x80000, CRC(7b9bc6f5) SHA1(556fd8471bf471e41fc6a50471c2be1bd6b98697) )
 	ROM_LOAD16_WORD( "16542.a", 0x080000, 0x80000, CRC(6449ab22) SHA1(03e6cdacf77f2ff80dd6798094deac5486f2c840) )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	/* none */
 
 	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
@@ -1768,7 +1768,7 @@ ROM_START( f1en )
 	ROM_RELOAD     (                  0x0c0000, 0x20000 )
 	ROM_RELOAD     (                  0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr14445.014",  0x000000, 0x040000, CRC(d06261ab) SHA1(6e1c4ce4e49a142fd5b1ecac98145960d7afd567) )
 	ROM_RELOAD( 0x080000, 0x040000)
 	ROM_LOAD16_BYTE( "epr14444.007",  0x000001, 0x040000, CRC(07724354) SHA1(9d7f64a80553c4ae0e9cf716478fd5c4b8277470) )
@@ -1825,7 +1825,7 @@ ROM_START( f1lap )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "15596", 0x000000, 0x040000, CRC(20e92909) SHA1(b974c79e11bfbd1cee61f9041cf79971fd96db3a) )
 	ROM_LOAD16_BYTE( "15597", 0x000001, 0x040000, CRC(cd1ccddb) SHA1(ff0371a8010141d1ab81b5eba555ae7c64e5da37) )
 
@@ -1876,7 +1876,7 @@ ROM_START( ga2 )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr15148.b", 0x000000, 0x40000, CRC(c477a9fd) SHA1(a9d60f801c12fd067e5ad1801a92c84edd13bd08) )
 	ROM_RELOAD( 0x80000, 0x40000)
 	ROM_LOAD16_BYTE( "epr15147.b", 0x000001, 0x40000, CRC(1bb676ea) SHA1(125ffd13204f48be23e20b281c42c2307888c40b) )
@@ -1921,7 +1921,7 @@ ROM_START( ga2u )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr15146.b", 0x000000, 0x40000, CRC(7293d5c3) SHA1(535a8b4b4a05546b321cee8de6733edfc1f71589) )
 	ROM_RELOAD( 0x80000, 0x40000)
 	ROM_LOAD16_BYTE( "epr15145.b", 0x000001, 0x40000, CRC(0da61782) SHA1(f0302d747e5d55663095bb38732af423104c33ea) )
@@ -1966,7 +1966,7 @@ ROM_START( ga2j )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr14941.18", 0x000000, 0x40000, CRC(0ffb8203) SHA1(b27dce634d203af8abb6ddfb656d4c48eb54af01) )
 	ROM_RELOAD( 0x80000, 0x40000)
 	ROM_LOAD16_BYTE( "epr14940.9", 0x000001, 0x40000, CRC(3b5b3084) SHA1(ea17f6b7fd413fe3808f822cec84c993c9b75aa2) )
@@ -2018,7 +2018,7 @@ ROM_START( holo )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr15011", 0x000000, 0x020000, CRC(b9f59f59) SHA1(f8c91fa877cf53153bec3d7850eab38227cc18ba) )
 	ROM_LOAD16_BYTE( "epr15010", 0x000001, 0x020000, CRC(0c09c57b) SHA1(028a9fe1c625be218ba90906308d25d69d4de4c4) )
 
@@ -2057,7 +2057,7 @@ ROM_START( jpark )
 	ROM_LOAD( "ep16402a.8", 0x000000, 0x080000, CRC(c70db239) SHA1(fd79dfd1ce194fcc8ccb58117bc845cdfe9943b1) )
 	ROM_RELOAD     (               0x080000, 0x80000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "ep16395.18", 0x000000, 0x080000, CRC(ac5a01d6) SHA1(df6bffdf5723cb8790a9c1c0ab271989a758bdd8) )
 	ROM_LOAD16_BYTE( "ep16394.9",  0x000001, 0x080000, CRC(c08c3a8a) SHA1(923cf256d863656336401fa75103b42298cb3822) )
 
@@ -2106,7 +2106,7 @@ ROM_START( radm )
 	ROM_RELOAD     (                 0x0c0000, 0x20000 )
 	ROM_RELOAD     (                 0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr13525.bin", 0x000000, 0x80000, CRC(62ad83a0) SHA1(b537176ebca15d91db04d5d7ab36aa967d41288e) )
 	ROM_LOAD16_BYTE( "epr13526.bin", 0x000001, 0x80000, CRC(59ea372a) SHA1(e7a5d59586652c59c23e07e0a99ecc740fb6144d) )
 
@@ -2151,7 +2151,7 @@ ROM_START( radmu )
 	ROM_RELOAD     (                 0x0c0000, 0x20000 )
 	ROM_RELOAD     (                 0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr13525.bin", 0x000000, 0x80000, CRC(62ad83a0) SHA1(b537176ebca15d91db04d5d7ab36aa967d41288e) )
 	ROM_LOAD16_BYTE( "epr13526.bin", 0x000001, 0x80000, CRC(59ea372a) SHA1(e7a5d59586652c59c23e07e0a99ecc740fb6144d) )
 
@@ -2203,7 +2203,7 @@ ROM_START( radr )
 	ROM_RELOAD     (                0x0c0000, 0x20000 )
 	ROM_RELOAD     (                0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr14106.14", 0x000000, 0x80000, CRC(e73c63bf) SHA1(30fb68eaa7d02a232c873bd7751cac7d0fa08e44) )
 	ROM_LOAD16_BYTE( "epr14107.07", 0x000001, 0x80000, CRC(832f797a) SHA1(b0c16ef7bd8d37f592975052ba9da3da70a2fc79) )
 
@@ -2248,7 +2248,7 @@ ROM_START( radru )
 	ROM_RELOAD     (                0x0c0000, 0x20000 )
 	ROM_RELOAD     (                0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr14106.14", 0x000000, 0x80000, CRC(e73c63bf) SHA1(30fb68eaa7d02a232c873bd7751cac7d0fa08e44) )
 	ROM_LOAD16_BYTE( "epr14107.07", 0x000001, 0x80000, CRC(832f797a) SHA1(b0c16ef7bd8d37f592975052ba9da3da70a2fc79) )
 
@@ -2296,7 +2296,7 @@ ROM_START( slipstrm )
 	ROM_LOAD16_WORD( "slipstrm.u6", 0x000000, 0x80000, BAD_DUMP CRC(7d066307) SHA1(d87e04167263b435b77830db02ed58651ccc020c) )
 	ROM_RELOAD     (               0x080000, 0x80000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "slipstrm.u14",0x000000, 0x80000, BAD_DUMP CRC(c3ff6309) SHA1(dcc857736fe0f15aa7909c3ee88a7e239c8f0228) )
 	ROM_LOAD16_BYTE( "slipstrm.u7", 0x000001, 0x80000, BAD_DUMP CRC(0e605c81) SHA1(47c64195cab9a07b234d5a375d26168e53ffaa17) )
 
@@ -2342,7 +2342,7 @@ ROM_START( sonic )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr-c-81.18", 0x000000, 0x040000, CRC(65b06c25) SHA1(9f524012a7adbc71737f90fc556f0ce9adc2bcf8) )
 	ROM_LOAD16_BYTE( "epr-c-80.9",  0x000001, 0x040000, CRC(2db66fd2) SHA1(54582c0d5977649a38fc3a2c0fe4d7b1959abc76) )
 
@@ -2386,7 +2386,7 @@ ROM_START( sonicp )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "sonpd0.bin", 0x000000, 0x040000, CRC(a7da7546) SHA1(0a10573b21cd38d58380698bc18b0256dbb24044) )
 	ROM_LOAD16_BYTE( "sonpd1.bin", 0x000001, 0x040000, CRC(c30e4c70) SHA1(897b6f62921694fe3c63677908f76eaf38b7b92f) )
 
@@ -2435,7 +2435,7 @@ ROM_START( spidey )
 	ROM_RELOAD (       0x0c0000, 0x020000 )
 	ROM_RELOAD (       0x0e0000, 0x020000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "14281", 0x000000, 0x020000, CRC(8a746c42) SHA1(fa3729ec3aa4b3c59322408146ce2cfbf5a11b98) )
 	ROM_LOAD16_BYTE( "14280", 0x000001, 0x020000, CRC(3c8148f7) SHA1(072b7982bb95e7a9ab77844b59020146c262488d) )
 
@@ -2477,7 +2477,7 @@ ROM_START( spideyu )
 	ROM_RELOAD (       0x0c0000, 0x020000 )
 	ROM_RELOAD (       0x0e0000, 0x020000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "14281", 0x000000, 0x020000, CRC(8a746c42) SHA1(fa3729ec3aa4b3c59322408146ce2cfbf5a11b98) )
 	ROM_LOAD16_BYTE( "14280", 0x000001, 0x020000, CRC(3c8148f7) SHA1(072b7982bb95e7a9ab77844b59020146c262488d) )
 
@@ -2532,7 +2532,7 @@ ROM_START( svf )
 	ROM_RELOAD     (               0x0c0000, 0x20000 )
 	ROM_RELOAD     (               0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr16865.18", 0x000000, 0x080000, CRC(9198ca9f) SHA1(0f6271ce8a07e4ab7fdce38964055510f2ebfd4e) )
 	ROM_LOAD16_BYTE( "epr16864.9", 0x000001, 0x080000, CRC(201a940e) SHA1(e19d76141844dbdedee0698ea50edbb898ab55e9) )
 
@@ -2572,7 +2572,7 @@ ROM_START( svs )
 	ROM_RELOAD	   (			   0x0c0000, 0x20000 )
 	ROM_RELOAD	   (			   0x0e0000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr16865.18", 0x000000, 0x080000, CRC(9198ca9f) SHA1(0f6271ce8a07e4ab7fdce38964055510f2ebfd4e) )
 	ROM_LOAD16_BYTE( "epr16864.9", 0x000001, 0x080000, CRC(201a940e) SHA1(e19d76141844dbdedee0698ea50edbb898ab55e9) )
 
@@ -2612,7 +2612,7 @@ ROM_START( jleague )
 	ROM_RELOAD     (        0x0c0000, 0x020000 )
 	ROM_RELOAD     (        0x0e0000, 0x020000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 ) /* v60 data */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
 	ROM_LOAD16_BYTE( "epr16776.18", 0x000000, 0x080000, CRC(e8694626) SHA1(d4318a9a6b1cc5c719bff9c25b7398dd2ea1e18b) )
 	ROM_LOAD16_BYTE( "epr16775.9",  0x000001, 0x080000, CRC(e81e2c3d) SHA1(2900710f1dec6cf71875c82a56584ba45ed3a545) )
 
@@ -2768,8 +2768,8 @@ DRIVER_INIT ( ga2 )
 
 	/* install protection handlers */
 	/* simulation */
-//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa0001f, 0, 0, ga2_sprite_protection_r); /* main sprite colours */
-//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0015f, 0, 0, ga2_wakeup_protection_r);
+//  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa0001f, 0, 0, ga2_sprite_protection_r); /* main sprite colours */
+//  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0015f, 0, 0, ga2_wakeup_protection_r);
 
 	decrypt_ga2_protrom();
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, ga2_dpram_w);
@@ -2838,7 +2838,7 @@ static DRIVER_INIT ( f1en )
  ******************************************************************************/
 
 GAMEX(1992, arescue,  0,        segas32,    f1en,    arescue,   ROT0, "Sega"  , "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, alien3,   0,        segas32,    alien3,  alien3,    ROT0, "Sega"  , "Alien³: The Gun", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, alien3,   0,        segas32,    alien3,  alien3,    ROT0, "Sega"  , "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, arabfgt,  0,        segas32,    spidey,  arabfgt,   ROT0, "Sega"  , "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, arabfgtj, arabfgt,  segas32,    spidey,  arabfgt,   ROT0, "Sega"  , "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, brival,   0,        segas32_hi, brival,  brival,    ROT0, "Sega"  , "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )

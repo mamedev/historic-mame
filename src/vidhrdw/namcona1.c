@@ -1,4 +1,4 @@
-/*	Namco System NA1/2 Video Hardware */
+/*  Namco System NA1/2 Video Hardware */
 
 #include "vidhrdw/generic.h"
 #include "namcona1.h"
@@ -286,9 +286,9 @@ static void pdraw_masked_tile(
 	int x,y;
 
 	/*
-	 *	custom blitter for drawing a masked 8x8x8BPP tile
-	 *	- assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
-	 */
+     *  custom blitter for drawing a masked 8x8x8BPP tile
+     *  - assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
+     */
 	if( sx > -8 &&
 		sy > -8 &&
 		sx < bitmap->width &&
@@ -305,9 +305,9 @@ static void pdraw_masked_tile(
 		mask_pitch = mask->line_modulo;
 
 		/* The way we render shadows makes some Emeralda text invisible.
-		 * The relevant text is composed of sprites with the shadow bit set,
-		 * displayed over a black backdrop.
-		 */
+         * The relevant text is composed of sprites with the shadow bit set,
+         * displayed over a black backdrop.
+         */
 		if( bShadow && namcona1_gametype!=NAMCO_EMERALDA )
 		{
 			for( y=0; y<8; y++ )
@@ -489,10 +489,10 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 
 	for( which=0; which<0x100; which++ )
 	{ /* max 256 sprites */
-		ypos	= source[0];	/* FHHH---E YYYYYYYY	flipy, height, ypos */
-		tile	= source[1];	/* O???TTTT TTTTTTTT	opaque tile */
-		color	= source[2];	/* FSWW???B CCCC?PPP	flipx, shadow, width, color, pri*/
-		xpos	= source[3];	/* -------X XXXXXXXX	xpos */
+		ypos	= source[0];	/* FHHH---E YYYYYYYY    flipy, height, ypos */
+		tile	= source[1];	/* O???TTTT TTTTTTTT    opaque tile */
+		color	= source[2];	/* FSWW???B CCCC?PPP    flipx, shadow, width, color, pri*/
+		xpos	= source[3];	/* -------X XXXXXXXX    xpos */
 
 		priority = pri_mask[color&0x7];
 		width = ((color>>12)&0x3)+1;
@@ -561,12 +561,12 @@ static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, data16_t *pSource, cons
 
 static void draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int which, int primask )
 {
-	/*			scrollx	lineselect
-	 *	tmap0	ffe000	ffe200
-	 *	tmap1	ffe400	ffe600
-	 *	tmap2	ffe800	ffea00
-	 *	tmap3	ffec00	ffee00
-	 */
+	/*          scrollx lineselect
+     *  tmap0   ffe000  ffe200
+     *  tmap1   ffe400  ffe600
+     *  tmap2   ffe800  ffea00
+     *  tmap3   ffec00  ffee00
+     */
 	int xadjust = 0x3a - which*2;
 	const data16_t *scroll = namcona1_scroll+0x200*which;
 	int line;
@@ -606,8 +606,8 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 			if( xdata == 0xc001 )
 			{
 				/* This is a simplification, but produces the correct behavior for the only game that uses this
-				 * feature, Numan Athletics.
-				 */
+                 * feature, Numan Athletics.
+                 */
 				draw_pixel_line(
 					bitmap->line[line],
 					priority_bitmap->line[line],

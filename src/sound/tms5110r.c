@@ -13,7 +13,7 @@ const static unsigned short energytable[0x10] = {
 63*2,  85*2,  114*2, 511 }; /*note: the last value (511) is not a true energy value, it's just a stop-sentinel */
 
 
-/* This is the tms5110 pitchtable */ 
+/* This is the tms5110 pitchtable */
 const static unsigned short pitchtable [0x20]={
 0,   15,  16,  17,
 19,  21,  22,  25,

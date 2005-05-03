@@ -153,10 +153,10 @@ static MACHINE_INIT( srmp3 )
 static WRITE16_HANDLER( srmp2_flags_w )
 {
 /*
-	---- ---x : Coin Counter
-	---x ---- : Coin Lock Out
-	--x- ---- : ADPCM Bank
-	x--- ---- : Palette Bank
+    ---- ---x : Coin Counter
+    ---x ---- : Coin Lock Out
+    --x- ---- : ADPCM Bank
+    x--- ---- : Palette Bank
 */
 
 	coin_counter_w( 0, ((data & 0x01) >> 0) );
@@ -169,8 +169,8 @@ static WRITE16_HANDLER( srmp2_flags_w )
 static WRITE16_HANDLER( mjyuugi_flags_w )
 {
 /*
-	---- ---x : Coin Counter
-	---x ---- : Coin Lock Out
+    ---- ---x : Coin Counter
+    ---x ---- : Coin Lock Out
 */
 
 	coin_counter_w( 0, ((data & 0x01) >> 0) );
@@ -181,8 +181,8 @@ static WRITE16_HANDLER( mjyuugi_flags_w )
 static WRITE16_HANDLER( mjyuugi_adpcm_bank_w )
 {
 /*
-	---- xxxx : ADPCM Bank
-	--xx ---- : GFX Bank
+    ---- xxxx : ADPCM Bank
+    --xx ---- : GFX Bank
 */
 	srmp2_adpcm_bank = (data & 0x0f);
 	mjyuugi_gfx_bank = ((data >> 4) & 0x03);
@@ -192,10 +192,10 @@ static WRITE16_HANDLER( mjyuugi_adpcm_bank_w )
 static WRITE16_HANDLER( srmp2_adpcm_code_w )
 {
 /*
-	- Received data may be playing ADPCM number.
-	- 0x000000 - 0x0000ff and 0x010000 - 0x0100ff are offset table.
-	- When the hardware receives the ADPCM number, it refers the offset
-	  table and plays the ADPCM for itself.
+    - Received data may be playing ADPCM number.
+    - 0x000000 - 0x0000ff and 0x010000 - 0x0100ff are offset table.
+    - When the hardware receives the ADPCM number, it refers the offset
+      table and plays the ADPCM for itself.
 */
 
 	unsigned char *ROM = memory_region(REGION_SOUND1);
@@ -215,10 +215,10 @@ static WRITE16_HANDLER( srmp2_adpcm_code_w )
 static WRITE8_HANDLER( srmp3_adpcm_code_w )
 {
 /*
-	- Received data may be playing ADPCM number.
-	- 0x000000 - 0x0000ff and 0x010000 - 0x0100ff are offset table.
-	- When the hardware receives the ADPCM number, it refers the offset
-	  table and plays the ADPCM for itself.
+    - Received data may be playing ADPCM number.
+    - 0x000000 - 0x0000ff and 0x010000 - 0x0100ff are offset table.
+    - When the hardware receives the ADPCM number, it refers the offset
+      table and plays the ADPCM for itself.
 */
 
 	unsigned char *ROM = memory_region(REGION_SOUND1);
@@ -285,8 +285,8 @@ static READ16_HANDLER( srmp2_cchip_status_1_r )
 static READ16_HANDLER( srmp2_input_1_r )
 {
 /*
-	---x xxxx : Key code
-	--x- ---- : Player 1 and 2 side flag
+    ---x xxxx : Key code
+    --x- ---- : Player 1 and 2 side flag
 */
 
 	if (!ACCESSING_LSB)
@@ -361,8 +361,8 @@ static WRITE16_HANDLER( srmp2_input_2_w )
 static WRITE8_HANDLER( srmp3_rombank_w )
 {
 /*
-	---x xxxx : MAIN ROM bank
-	xxx- ---- : ADPCM ROM bank
+    ---x xxxx : MAIN ROM bank
+    xxx- ---- : ADPCM ROM bank
 */
 
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -467,8 +467,8 @@ static READ8_HANDLER( srmp3_cchip_status_1_r )
 static WRITE8_HANDLER( srmp3_input_1_w )
 {
 /*
-	---- --x- : Player 1 side flag ?
-	---- -x-- : Player 2 side flag ?
+    ---- --x- : Player 1 side flag ?
+    ---- -x-- : Player 2 side flag ?
 */
 
 	logerror("PC:%04X DATA:%02X  srmp3_input_1_w\n", activecpu_get_pc(), data);
@@ -486,7 +486,7 @@ static WRITE8_HANDLER( srmp3_input_1_w )
 		else if (data == 0x49) qqq49++;
 		else qqqzz++;
 
-//		usrintf_showmessage("%04X %04X %04X %04X", qqq01, qqq02, qqq49, qqqzz);
+//      usrintf_showmessage("%04X %04X %04X %04X", qqq01, qqq02, qqq49, qqqzz);
 	}
 }
 
@@ -504,8 +504,8 @@ static WRITE8_HANDLER( srmp3_input_2_w )
 static READ8_HANDLER( srmp3_input_r )
 {
 /*
-	---x xxxx : Key code
-	--x- ---- : Player 1 and 2 side flag
+    ---x xxxx : Key code
+    --x- ---- : Player 1 and 2 side flag
 */
 
 	/* Currently I/O port of srmp3 is fully understood. */
@@ -514,8 +514,8 @@ static READ8_HANDLER( srmp3_input_r )
 
 	logerror("PC:%04X          srmp3_input_r\n", activecpu_get_pc());
 
-	// PC:0x8903	ROM:0xC903
-	// PC:0x7805	ROM:0x7805
+	// PC:0x8903    ROM:0xC903
+	// PC:0x7805    ROM:0x7805
 
 	if ((activecpu_get_pc() == 0x8903) || (activecpu_get_pc() == 0x7805))	/* Panel keys */
 	{
@@ -535,8 +535,8 @@ static READ8_HANDLER( srmp3_input_r )
 		}
 	}
 
-	// PC:0x8926	ROM:0xC926
-	// PC:0x7822	ROM:0x7822
+	// PC:0x8926    ROM:0xC926
+	// PC:0x7822    ROM:0x7822
 
 	if ((activecpu_get_pc() == 0x8926) || (activecpu_get_pc() == 0x7822))	/* Analizer and memory reset keys */
 	{
@@ -549,9 +549,9 @@ static READ8_HANDLER( srmp3_input_r )
 static WRITE8_HANDLER( srmp3_flags_w )
 {
 /*
-	---- ---x : Coin Counter
-	---x ---- : Coin Lock Out
-	xx-- ---- : GFX Bank
+    ---- ---x : Coin Counter
+    ---x ---- : Coin Lock Out
+    xx-- ---- : GFX Bank
 */
 
 	coin_counter_w( 0, ((data & 0x01) >> 0) );
@@ -950,7 +950,7 @@ INPUT_PORTS_START( ponchin )
 	PORT_DIPNAME( 0x30, 0x30, "Player Score" )
 	PORT_DIPSETTING(    0x30, "1000" )
 	PORT_DIPSETTING(    0x20, "2000" )
-//	PORT_DIPSETTING(    0x10, "1000" )
+//  PORT_DIPSETTING(    0x10, "1000" )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPNAME( 0x40, 0x40, "Debug Mode (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -1101,7 +1101,7 @@ static MACHINE_DRIVER_START( srmp2 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 20000000/16)
 	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
@@ -1117,7 +1117,7 @@ static MACHINE_DRIVER_START( srmp3 )
 	/* basic machine hardware */
 
 	MDRV_CPU_ADD(Z80, 3500000)		/* 3.50 MHz ? */
-	//		4000000,				/* 4.00 MHz ? */
+	//      4000000,                /* 4.00 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(srmp3_readmem,srmp3_writemem)
 	MDRV_CPU_IO_MAP(srmp3_readport,srmp3_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -1140,7 +1140,7 @@ static MACHINE_DRIVER_START( srmp3 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 16000000/16)
 	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
@@ -1175,7 +1175,7 @@ static MACHINE_DRIVER_START( mjyuugi )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 16000000/16)
 	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)

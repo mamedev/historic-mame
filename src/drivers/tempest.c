@@ -1,175 +1,175 @@
 /***************************************************************************
 
-	Atari Tempest hardware
+    Atari Tempest hardware
 
-	Games supported:
-		* Tempest
-		* Tempest Tubes
+    Games supported:
+        * Tempest
+        * Tempest Tubes
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	TEMPEST
-	-------
-	HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
-	0000-07FF  R/W   D  D  D  D  D  D  D  D   program ram (2K)
-	0800-080F   W                D  D  D  D   Colour ram
+    TEMPEST
+    -------
+    HEX        R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
+    0000-07FF  R/W   D  D  D  D  D  D  D  D   program ram (2K)
+    0800-080F   W                D  D  D  D   Colour ram
 
-	0C00        R                         D   Right coin sw
-	0C00        R                      D      Center coin sw
-	0C00        R                   D         Left coin sw
-	0C00        R                D            Slam sw
-	0C00        R             D               Self test sw
-	0C00        R          D                  Diagnostic step sw
-	0C00        R       D                     Halt
-	0C00        R    D                        3kHz ??
-	0D00        R    D  D  D  D  D  D  D  D   option switches
-	0E00        R    D  D  D  D  D  D  D  D   option switches
+    0C00        R                         D   Right coin sw
+    0C00        R                      D      Center coin sw
+    0C00        R                   D         Left coin sw
+    0C00        R                D            Slam sw
+    0C00        R             D               Self test sw
+    0C00        R          D                  Diagnostic step sw
+    0C00        R       D                     Halt
+    0C00        R    D                        3kHz ??
+    0D00        R    D  D  D  D  D  D  D  D   option switches
+    0E00        R    D  D  D  D  D  D  D  D   option switches
 
-	2000-2FFF  R/W   D  D  D  D  D  D  D  D   Vector Ram (4K)
-	3000-3FFF   R    D  D  D  D  D  D  D  D   Vector Rom (4K)
+    2000-2FFF  R/W   D  D  D  D  D  D  D  D   Vector Ram (4K)
+    3000-3FFF   R    D  D  D  D  D  D  D  D   Vector Rom (4K)
 
-	4000        W                         D   Right coin counter
-	4000        W                      D      left  coin counter
-	4000        W                D            Video invert - x
-	4000        W             D               Video invert - y
-	4800        W                             Vector generator GO
+    4000        W                         D   Right coin counter
+    4000        W                      D      left  coin counter
+    4000        W                D            Video invert - x
+    4000        W             D               Video invert - y
+    4800        W                             Vector generator GO
 
-	5000        W                             WD clear
-	5800        W                             Vect gen reset
+    5000        W                             WD clear
+    5800        W                             Vect gen reset
 
-	6000-603F   W    D  D  D  D  D  D  D  D   EAROM write
-	6040        W    D  D  D  D  D  D  D  D   EAROM control
-	6040        R    D                        Mathbox status
-	6050        R    D  D  D  D  D  D  D  D   EAROM read
+    6000-603F   W    D  D  D  D  D  D  D  D   EAROM write
+    6040        W    D  D  D  D  D  D  D  D   EAROM control
+    6040        R    D                        Mathbox status
+    6050        R    D  D  D  D  D  D  D  D   EAROM read
 
-	6060        R    D  D  D  D  D  D  D  D   Mathbox read
-	6070        R    D  D  D  D  D  D  D  D   Mathbox read
-	6080-609F   W    D  D  D  D  D  D  D  D   Mathbox start
+    6060        R    D  D  D  D  D  D  D  D   Mathbox read
+    6070        R    D  D  D  D  D  D  D  D   Mathbox read
+    6080-609F   W    D  D  D  D  D  D  D  D   Mathbox start
 
-	60C0-60CF  R/W   D  D  D  D  D  D  D  D   Custom audio chip 1
-	60D0-60DF  R/W   D  D  D  D  D  D  D  D   Custom audio chip 2
+    60C0-60CF  R/W   D  D  D  D  D  D  D  D   Custom audio chip 1
+    60D0-60DF  R/W   D  D  D  D  D  D  D  D   Custom audio chip 2
 
-	60E0        R                         D   one player start LED
-	60E0        R                      D      two player start LED
-	60E0        R                   D         FLIP
+    60E0        R                         D   one player start LED
+    60E0        R                      D      two player start LED
+    60E0        R                   D         FLIP
 
-	9000-DFFF  R     D  D  D  D  D  D  D  D   Program ROM (20K)
+    9000-DFFF  R     D  D  D  D  D  D  D  D   Program ROM (20K)
 
-	notes: program ram decode may be incorrect, but it appears like
-	this on the schematics, and the troubleshooting guide.
+    notes: program ram decode may be incorrect, but it appears like
+    this on the schematics, and the troubleshooting guide.
 
-	ZAP1,FIRE1,FIRE2,ZAP2 go to pokey2 , bits 3,and 4
-	(depending on state of FLIP)
-	player1 start, player2 start are pokey2 , bits 5 and 6
+    ZAP1,FIRE1,FIRE2,ZAP2 go to pokey2 , bits 3,and 4
+    (depending on state of FLIP)
+    player1 start, player2 start are pokey2 , bits 5 and 6
 
-	encoder wheel goes to pokey1 bits 0-3
-	pokey1, bit4 is cocktail detect
-
-
-	TEMPEST SWITCH SETTINGS (Atari, 1980)
-	-------------------------------------
+    encoder wheel goes to pokey1 bits 0-3
+    pokey1, bit4 is cocktail detect
 
 
-	GAME OPTIONS:
-	(8-position switch at L12 on Analog Vector-Generator PCB)
-
-	1   2   3   4   5   6   7   8   Meaning
-	-------------------------------------------------------------------------
-	Off Off                         2 lives per game
-	On  On                          3 lives per game
-	On  Off                         4 lives per game
-	Off On                          5 lives per game
-	        On  On  Off             Bonus life every 10000 pts
-	        On  On  On              Bonus life every 20000 pts
-	        On  Off On              Bonus life every 30000 pts
-	        On  Off Off             Bonus life every 40000 pts
-	        Off On  On              Bonus life every 50000 pts
-	        Off On  Off             Bonus life every 60000 pts
-	        Off Off On              Bonus life every 70000 pts
-	        Off Off Off             No bonus lives
-	                    On  On      English
-	                    On  Off     French
-	                    Off On      German
-	                    Off Off     Spanish
-	                            On  1-credit minimum
-	                            Off 2-credit minimum
+    TEMPEST SWITCH SETTINGS (Atari, 1980)
+    -------------------------------------
 
 
-	GAME OPTIONS:
-	(4-position switch at D/E2 on Math Box PCB)
+    GAME OPTIONS:
+    (8-position switch at L12 on Analog Vector-Generator PCB)
 
-	1   2   3   4                   Meaning
-	-------------------------------------------------------------------------
-	    Off                         Minimum rating range: 1, 3, 5, 7, 9
-	    On                          Minimum rating range tied to high score
-	        Off Off                 Medium difficulty (see notes)
-	        Off On                  Easy difficulty (see notes)
-	        On  Off                 Hard difficulty (see notes)
-	        On  On                  Medium difficulty (see notes)
-
-
-	PRICING OPTIONS:
-	(8-position switch at N13 on Analog Vector-Generator PCB)
-
-	1   2   3   4   5   6   7   8   Meaning
-	-------------------------------------------------------------------------
-	On  On  On                      No bonus coins
-	On  On  Off                     For every 2 coins, game adds 1 more coin
-	On  Off On                      For every 4 coins, game adds 1 more coin
-	On  Off Off                     For every 4 coins, game adds 2 more coins
-	Off On  On                      For every 5 coins, game adds 1 more coin
-	Off On  Off                     For every 3 coins, game adds 1 more coin
-	On  Off                 Off On  Demonstration Mode (see notes)
-	Off Off                 Off On  Demonstration-Freeze Mode (see notes)
-	            On                  Left coin mech * 1
-	            Off                 Left coin mech * 2
-	                On  On          Right coin mech * 1
-	                On  Off         Right coin mech * 4
-	                Off On          Right coin mech * 5
-	                Off Off         Right coin mech * 6
-	                        Off On  Free Play
-	                        Off Off 1 coin 2 plays
-	                        On  On  1 coin 1 play
-	                        On  Off 2 coins 1 play
+    1   2   3   4   5   6   7   8   Meaning
+    -------------------------------------------------------------------------
+    Off Off                         2 lives per game
+    On  On                          3 lives per game
+    On  Off                         4 lives per game
+    Off On                          5 lives per game
+            On  On  Off             Bonus life every 10000 pts
+            On  On  On              Bonus life every 20000 pts
+            On  Off On              Bonus life every 30000 pts
+            On  Off Off             Bonus life every 40000 pts
+            Off On  On              Bonus life every 50000 pts
+            Off On  Off             Bonus life every 60000 pts
+            Off Off On              Bonus life every 70000 pts
+            Off Off Off             No bonus lives
+                        On  On      English
+                        On  Off     French
+                        Off On      German
+                        Off Off     Spanish
+                                On  1-credit minimum
+                                Off 2-credit minimum
 
 
-	GAME SETTING NOTES:
-	-------------------
+    GAME OPTIONS:
+    (4-position switch at D/E2 on Math Box PCB)
 
-	Demonstration Mode:
-	- Plays a normal game of Tempest, but pressing SUPERZAP sends you
-	  directly to the next level.
+    1   2   3   4                   Meaning
+    -------------------------------------------------------------------------
+        Off                         Minimum rating range: 1, 3, 5, 7, 9
+        On                          Minimum rating range tied to high score
+            Off Off                 Medium difficulty (see notes)
+            Off On                  Easy difficulty (see notes)
+            On  Off                 Hard difficulty (see notes)
+            On  On                  Medium difficulty (see notes)
 
-	Demonstration-Freeze Mode:
-	- Just like Demonstration Mode, but with frozen screen action.
 
-	Both Demonstration Modes:
-	- Pressing RESET in either mode will cause the game to lock up.
-	  To recover, set switch 1 to On.
-	- You can start at any level from 1..81, so it's an easy way of
-	  seeing what the game can throw at you
-	- The score is zeroed at the end of the game, so you also don't
-	  have to worry about artificially high scores disrupting your
-	  scoring records as stored in the game's EAROM.
+    PRICING OPTIONS:
+    (8-position switch at N13 on Analog Vector-Generator PCB)
 
-	Easy Difficulty:
-	- Enemies move more slowly
-	- One less enemy shot on the screen at any given time
+    1   2   3   4   5   6   7   8   Meaning
+    -------------------------------------------------------------------------
+    On  On  On                      No bonus coins
+    On  On  Off                     For every 2 coins, game adds 1 more coin
+    On  Off On                      For every 4 coins, game adds 1 more coin
+    On  Off Off                     For every 4 coins, game adds 2 more coins
+    Off On  On                      For every 5 coins, game adds 1 more coin
+    Off On  Off                     For every 3 coins, game adds 1 more coin
+    On  Off                 Off On  Demonstration Mode (see notes)
+    Off Off                 Off On  Demonstration-Freeze Mode (see notes)
+                On                  Left coin mech * 1
+                Off                 Left coin mech * 2
+                    On  On          Right coin mech * 1
+                    On  Off         Right coin mech * 4
+                    Off On          Right coin mech * 5
+                    Off Off         Right coin mech * 6
+                            Off On  Free Play
+                            Off Off 1 coin 2 plays
+                            On  On  1 coin 1 play
+                            On  Off 2 coins 1 play
 
-	Hard Difficulty:
-	- Enemies move more quickly
-	- 1-4 more enemy shots on the screen at any given time
-	- One more enemy may be on the screen at any given time
 
-	High Scores:
-	- Changing toggles 1-5 at L12 (more/fewer lives, bonus ship levels)
-	  will erase the high score table.
-	- You should also wait 8-10 seconds after a game has been played
-	  before entering self-test mode or powering down; otherwise, you
-	  might erase or corrupt the high score table.
+    GAME SETTING NOTES:
+    -------------------
+
+    Demonstration Mode:
+    - Plays a normal game of Tempest, but pressing SUPERZAP sends you
+      directly to the next level.
+
+    Demonstration-Freeze Mode:
+    - Just like Demonstration Mode, but with frozen screen action.
+
+    Both Demonstration Modes:
+    - Pressing RESET in either mode will cause the game to lock up.
+      To recover, set switch 1 to On.
+    - You can start at any level from 1..81, so it's an easy way of
+      seeing what the game can throw at you
+    - The score is zeroed at the end of the game, so you also don't
+      have to worry about artificially high scores disrupting your
+      scoring records as stored in the game's EAROM.
+
+    Easy Difficulty:
+    - Enemies move more slowly
+    - One less enemy shot on the screen at any given time
+
+    Hard Difficulty:
+    - Enemies move more quickly
+    - 1-4 more enemy shots on the screen at any given time
+    - One more enemy may be on the screen at any given time
+
+    High Scores:
+    - Changing toggles 1-5 at L12 (more/fewer lives, bonus ship levels)
+      will erase the high score table.
+    - You should also wait 8-10 seconds after a game has been played
+      before entering self-test mode or powering down; otherwise, you
+      might erase or corrupt the high score table.
 
 ***************************************************************************/
 
@@ -185,7 +185,7 @@
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -219,7 +219,7 @@ static READ8_HANDLER( input_port_2_bit_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -244,7 +244,7 @@ static WRITE8_HANDLER( tempest_coin_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -288,7 +288,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -312,9 +312,9 @@ INPUT_PORTS_START( tempest )
 	/* This is the Tempest spinner input. It only uses 4 bits. */
 	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20)
 	/* The next one is reponsible for cocktail mode.
-	 * According to the documentation, this is not a switch, although
-	 * it may have been planned to put it on the Math Box PCB, D/E2 )
-	 */
+     * According to the documentation, this is not a switch, although
+     * it may have been planned to put it on the Math Box PCB, D/E2 )
+     */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -390,7 +390,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -410,7 +410,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -450,7 +450,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -561,7 +561,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

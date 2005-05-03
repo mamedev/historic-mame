@@ -2,17 +2,17 @@
 
 Taito Field Goal driver
 
-	set #1 / orig Taito PCB / sticker "AFN00004" / Field Goal
-	set #2 / orig Taito PCB / sticker "MFN00001" / Field Goal (different)
+    set #1 / orig Taito PCB / sticker "AFN00004" / Field Goal
+    set #2 / orig Taito PCB / sticker "MFN00001" / Field Goal (different)
 
 Differences between these sets include
 
-	- ball speed
-	- paddle color and position
-	- scoring of bonus points
-	- when bonus score reaches 1000...
-	    set #1: paddle gets sticky
-	    set #2: paddle reflects the ball vertically upward
+    - ball speed
+    - paddle color and position
+    - scoring of bonus points
+    - when bonus score reaches 1000...
+        set #1: paddle gets sticky
+        set #2: paddle reflects the ball vertically upward
 
 ***************************************************************************/
 
@@ -285,12 +285,12 @@ static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00fc, 0x00ff) AM_WRITE(fgoal_sound2_w)
 
 	AM_RANGE(0x0100, 0x03ff) AM_RAM
-	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&fgoal_video_ram) 
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&fgoal_video_ram)
 
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(fgoal_ypos_w)
 	AM_RANGE(0x8001, 0x8001) AM_WRITE(fgoal_xpos_w)
 	AM_RANGE(0x8002, 0x8002) AM_WRITE(fgoal_color_w)
-	
+
 	AM_RANGE(0xa000, 0xbfff) AM_ROM
 	AM_RANGE(0xd000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -418,48 +418,48 @@ MACHINE_DRIVER_END
 
 ROM_START( fgoal )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "tf04.m28", 0xa000, 0x0800, CRC(45fd7b03) SHA1(adc75a7fff6402c5c668ac28aec5d7c31c67c948) ) 
-	ROM_RELOAD(           0xe000, 0x0800 ) 
-	ROM_LOAD( "tf03.m31", 0xa800, 0x0800, CRC(01891c32) SHA1(013480dc970da83bda969506b2bd8865753a78ad) ) 
-	ROM_RELOAD(           0xe800, 0x0800 ) 
-	ROM_LOAD( "tf02.m38", 0xb000, 0x0800, CRC(c297d509) SHA1(a180e5203008db6b358dceee7349682ae3675c20) ) 
-	ROM_RELOAD(           0xf000, 0x0800 ) 
-	ROM_LOAD( "tf01.m46", 0xb800, 0x0800, CRC(1b0bfa5c) SHA1(768e14f08063cc022d7e18a9cb2197d64a9e1b8d) ) 
-	ROM_RELOAD(           0xf800, 0x0800 ) 
+	ROM_LOAD( "tf04.m28", 0xa000, 0x0800, CRC(45fd7b03) SHA1(adc75a7fff6402c5c668ac28aec5d7c31c67c948) )
+	ROM_RELOAD(           0xe000, 0x0800 )
+	ROM_LOAD( "tf03.m31", 0xa800, 0x0800, CRC(01891c32) SHA1(013480dc970da83bda969506b2bd8865753a78ad) )
+	ROM_RELOAD(           0xe800, 0x0800 )
+	ROM_LOAD( "tf02.m38", 0xb000, 0x0800, CRC(c297d509) SHA1(a180e5203008db6b358dceee7349682ae3675c20) )
+	ROM_RELOAD(           0xf000, 0x0800 )
+	ROM_LOAD( "tf01.m46", 0xb800, 0x0800, CRC(1b0bfa5c) SHA1(768e14f08063cc022d7e18a9cb2197d64a9e1b8d) )
+	ROM_RELOAD(           0xf800, 0x0800 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) /* overlay proms */
-	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) ) 
-	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) ) 
-	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) ) 
-	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) ) 
+	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) )
+	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) )
+	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) )
+	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, ROMREGION_INVERT )
-	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) ) 
-	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) ) 
+	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) )
+	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) )
 ROM_END
 
 
 ROM_START( fgoala )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "mf04.m28", 0xa000, 0x0800, CRC(acba21bc) SHA1(4a82e88555491883628a07f905d130380d5274f1) ) 
-	ROM_RELOAD(           0xe000, 0x0800 ) 
-	ROM_LOAD( "mf03.m31", 0xa800, 0x0800, CRC(4ce7462d) SHA1(ff02b4a831967c4e75e1d42e0679224b107d61bd) ) 
-	ROM_RELOAD(           0xe800, 0x0800 ) 
-	ROM_LOAD( "mf02.m38", 0xb000, 0x0800, CRC(5cd889b9) SHA1(7c8d810fed6d5e57c9b6a00e699f5b1d1253e84e) ) 
-	ROM_RELOAD(           0xf000, 0x0800 ) 
-	ROM_LOAD( "mf01.m46", 0xb800, 0x0800, CRC(9b9f5faa) SHA1(f944fff2c07e70f86fdd28fa5c9dc6c75ea2028b) ) 
-	ROM_RELOAD(           0xf800, 0x0800 ) 
-	ROM_LOAD( "mf05.m22", 0xd800, 0x0800, CRC(58082b8b) SHA1(72cd4153f7939cd33fc69ba82b44391fc19ae152) ) 
+	ROM_LOAD( "mf04.m28", 0xa000, 0x0800, CRC(acba21bc) SHA1(4a82e88555491883628a07f905d130380d5274f1) )
+	ROM_RELOAD(           0xe000, 0x0800 )
+	ROM_LOAD( "mf03.m31", 0xa800, 0x0800, CRC(4ce7462d) SHA1(ff02b4a831967c4e75e1d42e0679224b107d61bd) )
+	ROM_RELOAD(           0xe800, 0x0800 )
+	ROM_LOAD( "mf02.m38", 0xb000, 0x0800, CRC(5cd889b9) SHA1(7c8d810fed6d5e57c9b6a00e699f5b1d1253e84e) )
+	ROM_RELOAD(           0xf000, 0x0800 )
+	ROM_LOAD( "mf01.m46", 0xb800, 0x0800, CRC(9b9f5faa) SHA1(f944fff2c07e70f86fdd28fa5c9dc6c75ea2028b) )
+	ROM_RELOAD(           0xf800, 0x0800 )
+	ROM_LOAD( "mf05.m22", 0xd800, 0x0800, CRC(58082b8b) SHA1(72cd4153f7939cd33fc69ba82b44391fc19ae152) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) /* overlay proms */
-	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) ) 
-	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) ) 
-	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) ) 
-	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) ) 
+	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) )
+	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) )
+	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) )
+	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, ROMREGION_INVERT )
-	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) ) 
-	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) ) 
+	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) )
+	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) )
 ROM_END
 
 

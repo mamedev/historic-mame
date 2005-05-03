@@ -105,8 +105,8 @@ UINT32 bam1Autoincrement(void)
 		v60.reg[modVal&0x1F]+=4;
 		break;
 	default:
-		logerror("CPU - BAM1 - 7\n");
-		abort();
+		osd_die("CPU - BAM1 - 7\n");
+		break;
 	}
 	return 1;
 }
@@ -144,8 +144,8 @@ UINT32 bam1Autodecrement(void)
 		v60.reg[modVal&0x1F]-=4;
 		break;
 	default:
-		logerror("CPU - BAM1 - 7\n");
-		abort();
+		osd_die("CPU - BAM1 - 7\n");
+		break;
 	}
 	amOut=MemRead32(v60.reg[modVal&0x1F]);
 	return 1;
@@ -1090,68 +1090,57 @@ UINT32 am1ImmediateQuick(void)
 
 UINT32 am1Error1(void)
 {
-	logerror("CPU - AM1 - 1 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - AM1 - 1 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error1(void)
 {
-	logerror("CPU - BAM1 - 1 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 1 (PC=%06x)\n", PC);
 }
 
 UINT32 am1Error2(void)
 {
-	logerror("CPU - AM1 - 2 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - AM1 - 2 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error2(void)
 {
-	logerror("CPU - BAM1 - 2 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 2 (PC=%06x)\n", PC);
 }
 
 UINT32 am1Error3(void)
 {
-	logerror("CPU - AM1 - 3 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - AM1 - 3 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error3(void)
 {
-	logerror("CPU - BAM1 - 3 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 3 (PC=%06x)\n", PC);
 }
 
 UINT32 am1Error4(void)
 {
-	logerror("CPU - AM1 - 4 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - AM1 - 4 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error4(void)
 {
-	logerror("CPU - BAM1 - 4 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 4 (PC=%06x)\n", PC);
 }
 
 UINT32 am1Error5(void)
 {
-	logerror("CPU - AM1 - 5 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - AM1 - 5 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error5(void)
 {
-	logerror("CPU - BAM1 - 5 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 5 (PC=%06x)\n", PC);
 }
 
 UINT32 bam1Error6(void)
 {
-	logerror("CPU - BAM1 - 6 (PC=%06x)\n", PC);
-	abort();
+	osd_die("CPU - BAM1 - 6 (PC=%06x)\n", PC);
 }
 
 UINT32 (*AMTable1_G7a[16])(void) =

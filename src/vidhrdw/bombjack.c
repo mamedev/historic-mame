@@ -72,13 +72,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( bombjack )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

@@ -169,13 +169,13 @@ static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key
 	for (i = 0x10000;i < diff;i += 0x4000)
 		kabuki_decode(rom+i,rom+i+diff,rom+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 /*
-	{
-		FILE *f;
-		f = fopen("a","wb");
-		fwrite(rom,1,0x8000,f);
-		fwrite(rom+0x10000,1,0x40000,f);
-		fclose(f);
-	}
+    {
+        FILE *f;
+        f = fopen("a","wb");
+        fwrite(rom,1,0x8000,f);
+        fwrite(rom+0x10000,1,0x40000,f);
+        fclose(f);
+    }
 */
 }
 

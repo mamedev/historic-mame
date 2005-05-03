@@ -54,7 +54,7 @@ PALETTE_INIT( hanaawas )
 
 
 	/* character lookup table.  The 1bpp tiles really only use colors 0-0x0f and the
-	   3bpp ones 0x10-0x1f */
+       3bpp ones 0x10-0x1f */
 
 	for (i = 0;i < TOTAL_COLORS(0)/8 ;i++)
 	{
@@ -108,18 +108,18 @@ static void get_bg_tile_info(int tile_index)
 	int gfxbank = (attr & 0x40) >> 6;
 	int code = videoram[tile_index] + ((attr & 0x20) << 3);
 	int color = colorram[tile_index] & 0x1f;
-	
+
 	SET_TILE_INFO(gfxbank, code, color, 0)
 }
 
 VIDEO_START( hanaawas )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
-	
+
 	return 0;
 }
 

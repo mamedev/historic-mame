@@ -1,30 +1,30 @@
 /***************************************************************************
 
-	Epos games
+    Epos games
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 
-	Notes:
+    Notes:
 
-	- To walk in IGMO, hold down button 2.
-	- Super Glob seems like a later revision of The Glob, the most obvious
-	  difference being an updated service mode.
-	- These games don't have cocktail mode.
-	- The divisor 4 was derived using the timing loop used to split the screen
-	  in the middle.  This loop takes roughly 24200 cycles, giving
-	  2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
-	  assuming 60 fps and a 2500 cycle VBLANK period.
-	  This should be easy to check since the schematics are available, .
-	- I think theglob2 is earlier than theglob.  They only differ in one routine,
-	  but it appears to be a bug fix.  Also, theglob3 appears to be even older.
+    - To walk in IGMO, hold down button 2.
+    - Super Glob seems like a later revision of The Glob, the most obvious
+      difference being an updated service mode.
+    - These games don't have cocktail mode.
+    - The divisor 4 was derived using the timing loop used to split the screen
+      in the middle.  This loop takes roughly 24200 cycles, giving
+      2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
+      assuming 60 fps and a 2500 cycle VBLANK period.
+      This should be easy to check since the schematics are available, .
+    - I think theglob2 is earlier than theglob.  They only differ in one routine,
+      but it appears to be a bug fix.  Also, theglob3 appears to be even older.
 
-	To Do:
+    To Do:
 
-	- Super Blob uses a busy loop during the color test to split the screen
-	  between the two palettes.  This effect is not emulated, but since both
-	  halfs of the palette are identical, this is not an issue.  See $039c.
-	  The other games have a different color test, not using the busy loop.
+    - Super Blob uses a busy loop during the color test to split the screen
+      between the two palettes.  This effect is not emulated, but since both
+      halfs of the palette are identical, this is not an issue.  See $039c.
+      The other games have a different color test, not using the busy loop.
 
 ***************************************************************************/
 
@@ -54,7 +54,7 @@ WRITE8_HANDLER( dealer_decrypt_rom )
 		counter = (counter - 1) & 0x0F;
 	}
 
-//	logerror("PC %08x: ctr=%04x\n",activecpu_get_pc(),counter);
+//  logerror("PC %08x: ctr=%04x\n",activecpu_get_pc(),counter);
 
 	switch(counter)
 	{
@@ -72,7 +72,7 @@ WRITE8_HANDLER( dealer_decrypt_rom )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -102,7 +102,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Main CPU port handlers
+ *  Main CPU port handlers
  *
  *************************************/
 
@@ -134,7 +134,7 @@ static ADDRESS_MAP_START( dealer_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x13) AM_WRITE(ppi8255_0_w)
 	AM_RANGE(0x20, 0x24) AM_WRITE(dealer_decrypt_rom)
-//	AM_RANGE(0x40, 0x40) AM_WRITE(watchdog_reset_w)
+//  AM_RANGE(0x40, 0x40) AM_WRITE(watchdog_reset_w)
 ADDRESS_MAP_END
 
 static ppi8255_interface ppi8255_intf =
@@ -150,7 +150,7 @@ static ppi8255_interface ppi8255_intf =
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -357,7 +357,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -419,7 +419,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -620,16 +620,16 @@ DRIVER_INIT( dealer )
 /* there is not enough data to determine the last key.
    the code in question is this:
 
-     55  =   32 		ld (793e),a
-2f59 5c   	  3e
+     55  =   32         ld (793e),a
+2f59 5c       3e
 2f5a 79      78
 
-2f5b 55   32     		ld (79xx),a
+2f5b 55   32            ld (79xx),a
 2f5c f7   53 or  D2 or  F3
 2f5d 79   78
 
-2f5e 55    32      		ld (79xx),a
-2f5f cd	1B 56 77 9A BB F6
+2f5e 55    32           ld (79xx),a
+2f5f cd 1B 56 77 9A BB F6
      79    78
 It writes data to be read later.
 I don't know the lsb of the writes.  I do know:
@@ -711,7 +711,7 @@ Dave
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

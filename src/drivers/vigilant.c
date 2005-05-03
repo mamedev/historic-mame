@@ -8,7 +8,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 TS 2004.12.26.:
 - Buccaneers - incomplete dump, different sound hw (YM2203x2)
-	(to enter test mode press any button durning memory test)
+    (to enter test mode press any button durning memory test)
 
 Buccaneers has a 5.6888 Mhz and a 18.432 Mhz OSC
 
@@ -54,7 +54,7 @@ WRITE8_HANDLER( vigilant_out2_w )
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x04);
 
-//	data & 0x01 cocktail mode
+//  data & 0x01 cocktail mode
 }
 
 WRITE8_HANDLER( kikcubic_coin_w )
@@ -137,7 +137,7 @@ static ADDRESS_MAP_START( kikcubic_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(kikcubic_coin_w)	/* also flip screen, and...? */
 	AM_RANGE(0x04, 0x04) AM_WRITE(vigilant_bank_select_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(m72_sound_command_w)
-//	AM_RANGE(0x07, 0x07) AM_WRITE(MWA8_NOP)	/* ?? */
+//  AM_RANGE(0x07, 0x07) AM_WRITE(MWA8_NOP) /* ?? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -343,10 +343,10 @@ INPUT_PORTS_START( kikcubic )
 	PORT_DIPSETTING(	0x40, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(	0x30, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
-//	PORT_DIPSETTING(	0x10, "Undefined" )
-//	PORT_DIPSETTING(	0x20, "Undefined" )
-//	PORT_DIPSETTING(	0x80, "Undefined" )
-//	PORT_DIPSETTING(	0x90, "Undefined" )
+//  PORT_DIPSETTING(    0x10, "Undefined" )
+//  PORT_DIPSETTING(    0x20, "Undefined" )
+//  PORT_DIPSETTING(    0x80, "Undefined" )
+//  PORT_DIPSETTING(    0x90, "Undefined" )
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )

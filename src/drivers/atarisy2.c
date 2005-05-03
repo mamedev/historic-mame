@@ -1,124 +1,124 @@
 /***************************************************************************
 
-	Atari System 2 hardware
+    Atari System 2 hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Paperboy (1984) [3 sets]
-		* 720 Degrees (1986) [6 sets]
-		* Super Sprint (1986) [7 sets]
-		* Championship Sprint (1986) [8 sets]
-		* APB - All Points Bulletin (1987) [9 sets]
+    Games supported:
+        * Paperboy (1984) [3 sets]
+        * 720 Degrees (1986) [6 sets]
+        * Super Sprint (1986) [7 sets]
+        * Championship Sprint (1986) [8 sets]
+        * APB - All Points Bulletin (1987) [9 sets]
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	0000-0FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
-	1000-107F   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (64 entries)
-	            R/W   xxxx---- --------      (Intensity)
-	            R/W   ----xxxx --------      (Red)
-	            R/W   -------- xxxx----      (Green)
-	            R/W   -------- ----xxxx      (Blue)
-	1080-10BF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics palette RAM (32 entries)
-	1100-11FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (128 entries)
-	1400        R     -------- xxxxxxxx   ADC data read
-	1400          W   xxxxxx-- --------   Bank 1 ROM select
-	1402          W   xxxxxx-- --------   Bank 2 ROM select
-	1480-148F     W   -------- --------   ADC strobe/select
-	1580          W   -------- --------   Sound command read IRQ reset
-	15A0          W   -------- --------   Sound CPU reset
-	15C0          W   -------- --------   32V IRQ reset
-	15E0          W   -------- --------   VBLANK IRQ reset
-	1600          W   -------- ----xxxx   IRQ enable
-	              W   -------- ----x---      (VBLANK IRQ enable)
-	              W   -------- -----x--      (32V IRQ enable)
-	              W   -------- ------x-      (Sound response IRQ enable)
-	              W   -------- -------x      (Sound command read IRQ enable)
-	1680          W   -------- xxxxxxxx   Sound command
-	1700          W   xxxxxxxx xx--xxxx   Playfield X scroll/bank 1 select
-	              W   xxxxxxxx xx------      (Playfield X scroll)
-	              W   -------- ----xxxx      (Playfield bank 1 select)
-	1780          W   -xxxxxxx xx--xxxx   Playfield Y scroll/bank 2 select
-	              W   -xxxxxxx xx------      (Playfield Y scroll)
-	              W   -------- ----xxxx      (Playfield bank 2 select)
-	1800        R     x------- xxxxxxxx   Switch inputs
-	            R     x------- --------      (Test switch)
-	            R     -------- xx--xxxx      (Game-specific switches)
-	            R     -------- --x-----      (Sound command buffer full)
-	            R     -------- ---x----      (Sound response buffer full)
-	1800          W   -------- --------   Watchdog reset
-	1C00        R     -------- xxxxxxxx   Sound response read
-	2000-37FF   R/W   xxx---xx xxxxxxxx   Alphanumerics RAM (bank 0, 64x32 tiles)
-	            R/W   xxx----- --------      (Palette select)
-	            R/W   ------xx xxxxxxxx      (Tile index)
-	3800-3FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (bank 0, 256 entries x 4 words)
-	            R/W   xxxxxxxx xx------      (0: Y position)
-	            R/W   -------- -----xxx      (0: Tile index, 3 MSB)
-	            R/W   x------- --------      (1: Hold position from last object)
-	            R/W   -x------ --------      (1: Horizontal flip)
-	            R/W   --xxx--- --------      (1: Number of Y tiles - 1)
-	            R/W   -----xxx xxxxxxxx      (1: Tile index, 11 LSB)
-	            R/W   xxxxxxxx xx------      (2: X position)
-	            R/W   xx------ --------      (3: Priority)
-	            R/W   -xxx---- --------      (3: Palette select)
-	            R/W   -------- xxxxxxxx      (3: Link to the next object)
-	2000-3FFF   R/W   --xxxxxx xxxxxxxx   Playfield RAM (banks 2 & 3, 128x64 tiles)
-	            R/W   --xxx--- --------      (Palette select)
-	            R/W   -----x-- --------      (Tile bank select)
-	            R/W   ------xx xxxxxxxx      (Tile index, 10 LSB)
-	4000-5FFF   R     xxxxxxxx xxxxxxxx   Bank 1 ROM
-	6000-7FFF   R     xxxxxxxx xxxxxxxx   Bank 2 ROM
-	8000-FFFF   R     xxxxxxxx xxxxxxxx   Program ROM (slapstic mapped here as well)
-	========================================================================
-	Interrupts:
-		IRQ0 = sound command read
-		IRQ1 = sound command write
-		IRQ2 = 32V
-		IRQ3 = VBLANK
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    0000-0FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+    1000-107F   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (64 entries)
+                R/W   xxxx---- --------      (Intensity)
+                R/W   ----xxxx --------      (Red)
+                R/W   -------- xxxx----      (Green)
+                R/W   -------- ----xxxx      (Blue)
+    1080-10BF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics palette RAM (32 entries)
+    1100-11FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (128 entries)
+    1400        R     -------- xxxxxxxx   ADC data read
+    1400          W   xxxxxx-- --------   Bank 1 ROM select
+    1402          W   xxxxxx-- --------   Bank 2 ROM select
+    1480-148F     W   -------- --------   ADC strobe/select
+    1580          W   -------- --------   Sound command read IRQ reset
+    15A0          W   -------- --------   Sound CPU reset
+    15C0          W   -------- --------   32V IRQ reset
+    15E0          W   -------- --------   VBLANK IRQ reset
+    1600          W   -------- ----xxxx   IRQ enable
+                  W   -------- ----x---      (VBLANK IRQ enable)
+                  W   -------- -----x--      (32V IRQ enable)
+                  W   -------- ------x-      (Sound response IRQ enable)
+                  W   -------- -------x      (Sound command read IRQ enable)
+    1680          W   -------- xxxxxxxx   Sound command
+    1700          W   xxxxxxxx xx--xxxx   Playfield X scroll/bank 1 select
+                  W   xxxxxxxx xx------      (Playfield X scroll)
+                  W   -------- ----xxxx      (Playfield bank 1 select)
+    1780          W   -xxxxxxx xx--xxxx   Playfield Y scroll/bank 2 select
+                  W   -xxxxxxx xx------      (Playfield Y scroll)
+                  W   -------- ----xxxx      (Playfield bank 2 select)
+    1800        R     x------- xxxxxxxx   Switch inputs
+                R     x------- --------      (Test switch)
+                R     -------- xx--xxxx      (Game-specific switches)
+                R     -------- --x-----      (Sound command buffer full)
+                R     -------- ---x----      (Sound response buffer full)
+    1800          W   -------- --------   Watchdog reset
+    1C00        R     -------- xxxxxxxx   Sound response read
+    2000-37FF   R/W   xxx---xx xxxxxxxx   Alphanumerics RAM (bank 0, 64x32 tiles)
+                R/W   xxx----- --------      (Palette select)
+                R/W   ------xx xxxxxxxx      (Tile index)
+    3800-3FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (bank 0, 256 entries x 4 words)
+                R/W   xxxxxxxx xx------      (0: Y position)
+                R/W   -------- -----xxx      (0: Tile index, 3 MSB)
+                R/W   x------- --------      (1: Hold position from last object)
+                R/W   -x------ --------      (1: Horizontal flip)
+                R/W   --xxx--- --------      (1: Number of Y tiles - 1)
+                R/W   -----xxx xxxxxxxx      (1: Tile index, 11 LSB)
+                R/W   xxxxxxxx xx------      (2: X position)
+                R/W   xx------ --------      (3: Priority)
+                R/W   -xxx---- --------      (3: Palette select)
+                R/W   -------- xxxxxxxx      (3: Link to the next object)
+    2000-3FFF   R/W   --xxxxxx xxxxxxxx   Playfield RAM (banks 2 & 3, 128x64 tiles)
+                R/W   --xxx--- --------      (Palette select)
+                R/W   -----x-- --------      (Tile bank select)
+                R/W   ------xx xxxxxxxx      (Tile index, 10 LSB)
+    4000-5FFF   R     xxxxxxxx xxxxxxxx   Bank 1 ROM
+    6000-7FFF   R     xxxxxxxx xxxxxxxx   Bank 2 ROM
+    8000-FFFF   R     xxxxxxxx xxxxxxxx   Program ROM (slapstic mapped here as well)
+    ========================================================================
+    Interrupts:
+        IRQ0 = sound command read
+        IRQ1 = sound command write
+        IRQ2 = 32V
+        IRQ3 = VBLANK
+    ========================================================================
 
 
-	========================================================================
-	SOUND CPU
-	========================================================================
-	0000-0FFF   R/W   xxxxxxxx   Program RAM
-	1000-17FF   R/W   xxxxxxxx   EEPROM
-	1800-180F   R/W   xxxxxxxx   POKEY 1 (left) communications
-	1810-1813   R     xxxxxxxx   LETA analog inputs
-	1830-183F   R/W   xxxxxxxx   POKEY 2 (right) communications
-	1850-1851   R/W   xxxxxxxx   YM2151 communications
-	1860        R     xxxxxxxx   Sound command read
-	1870          W   xxxxxxxx   TMS5220 data latch
-	1872          W   --------   TMS5220 data strobe low
-	1873          W   --------   TMS5220 data strobe high
-	1874          W   xxxxxxxx   Sound response write
-	1876          W   ------xx   Coin counters
-	1878          W   --------   Interrupt acknowledge
-	187A          W   xxxxxxxx   Mixer control
-	              W   xxx-----      (TMS5220 volume)
-	              W   ---xx---      (POKEY volume)
-	              W   -----xxx      (YM2151 volume)
-	187C          W   --xxxx--   Misc. control bits
-	              W   --x-----      (TMS5220 frequency control)
-	              W   ---x----      (LETA resolution control)
-	              W   ----xx--      (LEDs)
-	187E          W   -------x   Sound enable
-	4000-FFFF   R     xxxxxxxx   Program ROM
-	========================================================================
-	Interrupts:
-		IRQ = YM2151 interrupt
-		NMI = latch on sound command
-	========================================================================
+    ========================================================================
+    SOUND CPU
+    ========================================================================
+    0000-0FFF   R/W   xxxxxxxx   Program RAM
+    1000-17FF   R/W   xxxxxxxx   EEPROM
+    1800-180F   R/W   xxxxxxxx   POKEY 1 (left) communications
+    1810-1813   R     xxxxxxxx   LETA analog inputs
+    1830-183F   R/W   xxxxxxxx   POKEY 2 (right) communications
+    1850-1851   R/W   xxxxxxxx   YM2151 communications
+    1860        R     xxxxxxxx   Sound command read
+    1870          W   xxxxxxxx   TMS5220 data latch
+    1872          W   --------   TMS5220 data strobe low
+    1873          W   --------   TMS5220 data strobe high
+    1874          W   xxxxxxxx   Sound response write
+    1876          W   ------xx   Coin counters
+    1878          W   --------   Interrupt acknowledge
+    187A          W   xxxxxxxx   Mixer control
+                  W   xxx-----      (TMS5220 volume)
+                  W   ---xx---      (POKEY volume)
+                  W   -----xxx      (YM2151 volume)
+    187C          W   --xxxx--   Misc. control bits
+                  W   --x-----      (TMS5220 frequency control)
+                  W   ---x----      (LETA resolution control)
+                  W   ----xx--      (LEDs)
+    187E          W   -------x   Sound enable
+    4000-FFFF   R     xxxxxxxx   Program ROM
+    ========================================================================
+    Interrupts:
+        IRQ = YM2151 interrupt
+        NMI = latch on sound command
+    ========================================================================
 
 ****************************************************************************/
 
@@ -137,7 +137,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -159,7 +159,7 @@ static UINT8 p2portrd_state;
 
 /*************************************
  *
- *	Interrupt updating
+ *  Interrupt updating
  *
  *************************************/
 
@@ -190,7 +190,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *	Every 8-scanline update
+ *  Every 8-scanline update
  *
  *************************************/
 
@@ -209,7 +209,7 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -233,7 +233,7 @@ static MACHINE_INIT( atarisy2 )
 
 /*************************************
  *
- *	Interrupt handlers
+ *  Interrupt handlers
  *
  *************************************/
 
@@ -277,7 +277,7 @@ static WRITE16_HANDLER( int_enable_w )
 
 /*************************************
  *
- *	Bank selection.
+ *  Bank selection.
  *
  *************************************/
 
@@ -319,7 +319,7 @@ static WRITE16_HANDLER( bankselect_w )
 
 /*************************************
  *
- *	I/O read dispatch.
+ *  I/O read dispatch.
  *
  *************************************/
 
@@ -362,7 +362,7 @@ static WRITE8_HANDLER( switch_6502_w )
 
 /*************************************
  *
- *	Controls read
+ *  Controls read
  *
  *************************************/
 
@@ -397,7 +397,7 @@ static READ8_HANDLER( leta_r )
 				int analogx = readinputport(7) - 128;
 				int analogy = readinputport(8) - 128;
 				double angle;
-				
+
 				/* if the joystick is centered, leave the rest of this alone */
 				angle = last_angle;
 				if (analogx < -32 || analogx > 32 || analogy < -32 || analogy > 32)
@@ -409,7 +409,7 @@ static READ8_HANDLER( leta_r )
 				else if (last_angle > 90 && angle < -90)
 					rotations++;
 				last_angle = angle;
-				
+
 				/* offset 0 returns 0xff when the controller blocks one of two gaps */
 				if ((offset & 3) == 0)
 				{
@@ -417,7 +417,7 @@ static READ8_HANDLER( leta_r )
 					/* we fake it a little to make it possible to hit the zeroed state with a digital controller */
 					return (angle >= -5.0 && angle <= 5.0) ? 0xff : 0x00;
 				}
-				
+
 				/* offset 1 returns dial value; 144 units = 1 full rotation */
 				else
 				{
@@ -438,7 +438,7 @@ static READ8_HANDLER( leta_r )
 
 /*************************************
  *
- *	Global sound control
+ *  Global sound control
  *
  *************************************/
 
@@ -491,7 +491,7 @@ static READ8_HANDLER( sound_6502_r )
 
 /*************************************
  *
- *	Speech chip
+ *  Speech chip
  *
  *************************************/
 
@@ -513,7 +513,7 @@ static WRITE8_HANDLER( tms5220_strobe_w )
 
 /*************************************
  *
- *	Misc. sound
+ *  Misc. sound
  *
  *************************************/
 
@@ -527,7 +527,7 @@ static WRITE8_HANDLER( coincount_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -557,7 +557,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -586,7 +586,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -757,7 +757,7 @@ INPUT_PORTS_START( 720 )
 	PORT_DIPSETTING(    0x10, "*2" )
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-/*	PORT_DIPSETTING(    0xc0, DEF_STR( None ) )*/
+/*  PORT_DIPSETTING(    0xc0, DEF_STR( None ) )*/
 	PORT_DIPSETTING(    0x80, "1 each 5" )
 	PORT_DIPSETTING(    0x40, "1 each 4" )
 	PORT_DIPSETTING(    0xa0, "1 each 3" )
@@ -1089,7 +1089,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1141,7 +1141,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -1161,7 +1161,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1178,24 +1178,24 @@ static MACHINE_DRIVER_START( atarisy2 )
 	MDRV_CPU_CONFIG(t11_data)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(vblank_int,1)
-	
+
 	MDRV_CPU_ADD_TAG("sound", M6502, ATARI_CLOCK_14MHz/8)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10)))
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(atarisy2)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 48*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 48*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
-	
+
 	MDRV_VIDEO_START(atarisy2)
 	MDRV_VIDEO_UPDATE(atarisy2)
 
@@ -1212,7 +1212,7 @@ static MACHINE_DRIVER_START( atarisy2 )
 	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
 	MDRV_SOUND_CONFIG(pokey_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
-	
+
 	MDRV_SOUND_ADD_TAG("tms", TMS5220, ATARI_CLOCK_20MHz/4/4/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
@@ -1223,7 +1223,7 @@ static MACHINE_DRIVER_START( 720 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarisy2)
-	
+
 	MDRV_CPU_REPLACE("sound", M6502, 2200000) /* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
 MACHINE_DRIVER_END
 
@@ -1232,7 +1232,7 @@ static MACHINE_DRIVER_START( sprint )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(atarisy2)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_REMOVE("tms")
 MACHINE_DRIVER_END
@@ -1241,7 +1241,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -3039,7 +3039,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -3115,7 +3115,7 @@ static void ssprint_init_common(const data16_t *default_eeprom)
 
 	pedal_count = 3;
 	has_tms5220 = 0;
-}	
+}
 
 static DRIVER_INIT( ssprint )
 {
@@ -3254,7 +3254,7 @@ static DRIVER_INIT( apb )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 
@@ -3268,7 +3268,7 @@ GAME( 1986, 720r2,    720,      720,      720,      720,      ROT0,   "Atari Gam
 GAME( 1986, 720r1,    720,      720,      720,      720,      ROT0,   "Atari Games", "720 Degrees (rev 1)" )
 GAME( 1986, 720g,     720,      720,      720,      720,      ROT0,   "Atari Games", "720 Degrees (German, rev 2)" )
 GAME( 1986, 720gr1,   720,      720,      720,      720,      ROT0,   "Atari Games", "720 Degrees (German, rev 1)" )
-	
+
 GAME( 1986, ssprint,  0,        sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint (rev 4)" )
 GAME( 1986, ssprint3, ssprint,  sprint,   ssprint,  ssprint1, ROT0,   "Atari Games", "Super Sprint (rev 3)" )
 GAME( 1986, ssprint1, ssprint,  sprint,   ssprint,  ssprint1, ROT0,   "Atari Games", "Super Sprint (rev 1)" )

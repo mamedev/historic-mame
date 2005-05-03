@@ -1,134 +1,134 @@
 /***************************************************************************
 
-							-= Seta Hardware =-
+                            -= Seta Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q			shows layer 0
-		W			shows layer 1
-		A			shows the sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-						[ 0, 1 Or 2 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-	Each layer consists of 2 tilemaps: only one can be displayed at a
-	given time (the games usually flip continuously between the two).
-	The two tilemaps share the same scrolling registers.
+        Q           shows layer 0
+        W           shows layer 1
+        A           shows the sprites
 
-		Layer Size:				1024 x 512
-		Tiles:					16x16x4 (16x16x6 in some games)
-		Tile Format:
-
-			Offset + 0x0000:
-							f--- ---- ---- ----		Flip X
-							-e-- ---- ---- ----		Flip Y
-							--dc ba98 7654 3210		Code
-
-			Offset + 0x1000:
-
-							fedc ba98 765- ----		-
-							---- ---- ---4 3210		Color
-
-			The other tilemap for this layer (always?) starts at
-			Offset + 0x2000.
+        Keys can be used together!
 
 
-							[ 1024 Sprites ]
+                        [ 0, 1 Or 2 Scrolling Layers ]
 
-	Sprites are 16x16x4. They are just like those in "The Newzealand Story",
-	"Revenge of DOH" etc (tnzs.c). Obviously they're hooked to a 16 bit
-	CPU here, so they're mapped a bit differently in memory. Additionally,
-	there are two banks of sprites. The game can flip between the two to
-	do double buffering, writing to a bit of a control register(see below)
+    Each layer consists of 2 tilemaps: only one can be displayed at a
+    given time (the games usually flip continuously between the two).
+    The two tilemaps share the same scrolling registers.
 
+        Layer Size:             1024 x 512
+        Tiles:                  16x16x4 (16x16x6 in some games)
+        Tile Format:
 
-		Spriteram16_2 + 0x000.w
+            Offset + 0x0000:
+                            f--- ---- ---- ----     Flip X
+                            -e-- ---- ---- ----     Flip Y
+                            --dc ba98 7654 3210     Code
 
-						f--- ---- ---- ----		Flip X
-						-e-- ---- ---- ----		Flip Y
-						--dc b--- ---- ----		-
-						---- --98 7654 3210		Code (Lower bits)
+            Offset + 0x1000:
 
-		Spriteram16_2 + 0x400.w
+                            fedc ba98 765- ----     -
+                            ---- ---- ---4 3210     Color
 
-						fedc b--- ---- ----		Color
-						---- -a9- ---- ----		Code (Upper Bits)
-						---- ---8 7654 3210		X
-
-		Spriteram16   + 0x000.w
-
-						fedc ba98 ---- ----		-
-						---- ---- 7654 3210		Y
+            The other tilemap for this layer (always?) starts at
+            Offset + 0x2000.
 
 
+                            [ 1024 Sprites ]
 
-							[ Floating Tilemap ]
-
-	There's a floating tilemap made of vertical colums composed of 2x16
-	"sprites". Each 32 consecutive "sprites" define a column.
-
-	For column I:
-
-		Spriteram16_2 + 0x800 + 0x40 * I:
-
-						f--- ---- ---- ----		Flip X
-						-e-- ---- ---- ----		Flip Y
-						--dc b--- ---- ----		-
-						---- --98 7654 3210		Code (Lower bits)
-
-		Spriteram16_2 + 0xc00 + 0x40 * I:
-
-						fedc b--- ---- ----		Color
-						---- -a9- ---- ----		Code (Upper Bits)
-						---- ---8 7654 3210		-
-
-	Each column	has a variable horizontal position and a vertical scrolling
-	value (see also the Sprite Control Registers). For column I:
+    Sprites are 16x16x4. They are just like those in "The Newzealand Story",
+    "Revenge of DOH" etc (tnzs.c). Obviously they're hooked to a 16 bit
+    CPU here, so they're mapped a bit differently in memory. Additionally,
+    there are two banks of sprites. The game can flip between the two to
+    do double buffering, writing to a bit of a control register(see below)
 
 
-		Spriteram16   + 0x400 + 0x20 * I:
+        Spriteram16_2 + 0x000.w
 
-						fedc ba98 ---- ----		-
-						---- ---- 7654 3210		Y
+                        f--- ---- ---- ----     Flip X
+                        -e-- ---- ---- ----     Flip Y
+                        --dc b--- ---- ----     -
+                        ---- --98 7654 3210     Code (Lower bits)
 
-		Spriteram16   + 0x408 + 0x20 * I:
+        Spriteram16_2 + 0x400.w
 
-						fedc ba98 ---- ----		-
-						---- ---- 7654 3210		Low Bits Of X
+                        fedc b--- ---- ----     Color
+                        ---- -a9- ---- ----     Code (Upper Bits)
+                        ---- ---8 7654 3210     X
+
+        Spriteram16   + 0x000.w
+
+                        fedc ba98 ---- ----     -
+                        ---- ---- 7654 3210     Y
 
 
 
-						[ Sprites Control Registers ]
+                            [ Floating Tilemap ]
+
+    There's a floating tilemap made of vertical colums composed of 2x16
+    "sprites". Each 32 consecutive "sprites" define a column.
+
+    For column I:
+
+        Spriteram16_2 + 0x800 + 0x40 * I:
+
+                        f--- ---- ---- ----     Flip X
+                        -e-- ---- ---- ----     Flip Y
+                        --dc b--- ---- ----     -
+                        ---- --98 7654 3210     Code (Lower bits)
+
+        Spriteram16_2 + 0xc00 + 0x40 * I:
+
+                        fedc b--- ---- ----     Color
+                        ---- -a9- ---- ----     Code (Upper Bits)
+                        ---- ---8 7654 3210     -
+
+    Each column has a variable horizontal position and a vertical scrolling
+    value (see also the Sprite Control Registers). For column I:
 
 
-		Spriteram16   + 0x601.b
+        Spriteram16   + 0x400 + 0x20 * I:
 
-						7--- ----		0
-						-6-- ----		Flip Screen
-						--5- ----		0
-						---4 ----		1 (Sprite Enable?)
-						---- 3210		???
+                        fedc ba98 ---- ----     -
+                        ---- ---- 7654 3210     Y
 
-		Spriteram16   + 0x603.b
+        Spriteram16   + 0x408 + 0x20 * I:
 
-						7--- ----		0
-						-6-- ----		Sprite Bank
-						--5- ----		0 = Sprite Buffering (blandia,msgundam,qzkklogy)
-						---4 ----		0
-						---- 3210		Columns To Draw (1 is the special value for 16)
+                        fedc ba98 ---- ----     -
+                        ---- ---- 7654 3210     Low Bits Of X
 
-		Spriteram16   + 0x605.b
 
-						7654 3210		High Bit Of X For Columns 7-0
 
-		Spriteram16   + 0x607.b
+                        [ Sprites Control Registers ]
 
-						7654 3210		High Bit Of X For Columns f-8
+
+        Spriteram16   + 0x601.b
+
+                        7--- ----       0
+                        -6-- ----       Flip Screen
+                        --5- ----       0
+                        ---4 ----       1 (Sprite Enable?)
+                        ---- 3210       ???
+
+        Spriteram16   + 0x603.b
+
+                        7--- ----       0
+                        -6-- ----       Sprite Bank
+                        --5- ----       0 = Sprite Buffering (blandia,msgundam,qzkklogy)
+                        ---4 ----       0
+                        ---- 3210       Columns To Draw (1 is the special value for 16)
+
+        Spriteram16   + 0x605.b
+
+                        7654 3210       High Bit Of X For Columns 7-0
+
+        Spriteram16   + 0x607.b
+
+                        7654 3210       High Bit Of X For Columns f-8
 
 
 
@@ -227,14 +227,14 @@ WRITE16_HANDLER( seta_vregs_w )
 	{
 		case 0/2:
 
-/*		fedc ba98 76-- ----
-		---- ---- --5- ----		Sound Enable
-		---- ---- ---4 ----		toggled in IRQ1 by many games, irq acknowledge?
-								[original comment for the above: ?? 1 in oisipuzl, sokonuke (layers related)]
-		---- ---- ---- 3---		Coin #1 Lock Out
-		---- ---- ---- -2--		Coin #0 Lock Out
-		---- ---- ---- --1-		Coin #1 Counter
-		---- ---- ---- ---0		Coin #0 Counter		*/
+/*      fedc ba98 76-- ----
+        ---- ---- --5- ----     Sound Enable
+        ---- ---- ---4 ----     toggled in IRQ1 by many games, irq acknowledge?
+                                [original comment for the above: ?? 1 in oisipuzl, sokonuke (layers related)]
+        ---- ---- ---- 3---     Coin #1 Lock Out
+        ---- ---- ---- -2--     Coin #0 Lock Out
+        ---- ---- ---- --1-     Coin #1 Counter
+        ---- ---- ---- ---0     Coin #0 Counter     */
 			if (ACCESSING_LSB)
 			{
 				seta_coin_lockout_w (data & 0x0f);
@@ -252,12 +252,12 @@ WRITE16_HANDLER( seta_vregs_w )
 
 				/* Partly handled in vh_screenrefresh:
 
-						fedc ba98 76-- ----
-						---- ---- --54 3---		Samples Bank (in blandia, eightfrc, zombraid)
-						---- ---- ---- -2--
-						---- ---- ---- --1-		Sprites Above Frontmost Layer
-						---- ---- ---- ---0		Layer 0 Above Layer 1
-				*/
+                        fedc ba98 76-- ----
+                        ---- ---- --54 3---     Samples Bank (in blandia, eightfrc, zombraid)
+                        ---- ---- ---- -2--
+                        ---- ---- ---- --1-     Sprites Above Frontmost Layer
+                        ---- ---- ---- ---0     Layer 0 Above Layer 1
+                */
 
 				new_bank = (data >> 3) & 0x7;
 
@@ -304,30 +304,30 @@ WRITE16_HANDLER( seta_vregs_w )
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
-							  [ Tiles Format ]
+                              [ Tiles Format ]
 
 Offset + 0x0000:
-					f--- ---- ---- ----		Flip X
-					-e-- ---- ---- ----		Flip Y
-					--dc ba98 7654 3210		Code
+                    f--- ---- ---- ----     Flip X
+                    -e-- ---- ---- ----     Flip Y
+                    --dc ba98 7654 3210     Code
 
 Offset + 0x1000:
 
-					fedc ba98 765- ----		-
-					---- ---- ---4 3210		Color
+                    fedc ba98 765- ----     -
+                    ---- ---- ---4 3210     Color
 
 
-					  [ TileMaps Control Registers]
+                      [ TileMaps Control Registers]
 
-Offset + 0x0:								Scroll X
-Offset + 0x2:								Scroll Y
+Offset + 0x0:                               Scroll X
+Offset + 0x2:                               Scroll Y
 Offset + 0x4:
-					fedc ba98 7654 3210		-
-					---- ---- ---- 3---		Tilemap Select (There Are 2 Tilemaps Per Layer)
-					---- ---- ---- -21-		0 (1 only in eightfrc, when flip is on!)
-					---- ---- ---- ---0		?
+                    fedc ba98 7654 3210     -
+                    ---- ---- ---- 3---     Tilemap Select (There Are 2 Tilemaps Per Layer)
+                    ---- ---- ---- -21-     0 (1 only in eightfrc, when flip is on!)
+                    ---- ---- ---- ---0     ?
 
 ***************************************************************************/
 
@@ -409,7 +409,7 @@ static void find_offsets(void)
 VIDEO_START( seta_2_layers )
 {
 	/* Each layer consists of 2 tilemaps: only one can be displayed
-	   at any given time */
+       at any given time */
 
 	/* layer 0 */
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
@@ -448,7 +448,7 @@ VIDEO_START( seta_2_layers )
 VIDEO_START( seta_1_layer )
 {
 	/* Each layer consists of 2 tilemaps: only one can be displayed
-	   at any given time */
+       at any given time */
 
 	/* layer 0 */
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
@@ -480,7 +480,7 @@ VIDEO_START( seta_1_layer )
 VIDEO_START( twineagl_1_layer )
 {
 	/* Each layer consists of 2 tilemaps: only one can be displayed
-	   at any given time */
+       at any given time */
 
 	/* layer 0 */
 	tilemap_0 = tilemap_create(	twineagl_get_tile_info_0, tilemap_scan_rows,
@@ -534,7 +534,7 @@ VIDEO_START( oisipuzl_2_layers )
 /***************************************************************************
 
 
-							Palette Init Functions
+                            Palette Init Functions
 
 
 ***************************************************************************/
@@ -642,7 +642,7 @@ PALETTE_INIT( usclssic )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
 ***************************************************************************/
@@ -682,15 +682,15 @@ static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectan
 	yoffs = flip ? 1 : -1;
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
-	   draw every column */
+       draw every column */
 	if (numcol == 1)
 		numcol = 16;
 
 
 	/* The first column is the frontmost, see twineagl test mode
-		BM 071204 - first column frontmost breaks superman.
-	*/
-//	for ( col = numcol - 1 ; col >= 0; col -- )
+        BM 071204 - first column frontmost breaks superman.
+    */
+//  for ( col = numcol - 1 ; col >= 0; col -- )
 	for ( col = 0 ; col < numcol; col ++ )
 	{
 		int x	=	spriteram16[(col * 0x20 + 0x08 + 0x400)/2] & 0xff;
@@ -708,19 +708,19 @@ static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectan
 			int bank	=	(color & 0x0600) >> 9;
 
 /*
-twineagl:	010 02d 0f 10	(ship)
-tndrcade:	058 02d 07 18	(start of game - yes, flip on!)
-arbalest:	018 02d 0f 10	(logo)
-metafox :	018 021 0f f0	(bomb)
-zingzip :	010 02c 00 0f	(bomb)
-wrofaero:	010 021 00 ff	(test mode)
-thunderl:	010 06c 00 ff	(always?)
-krzybowl:	011 028 c0 ff	(game)
-kiwame  :	016 021 7f 00	(logo)
-oisipuzl:	059 020 00 00	(game - yes, flip on!)
+twineagl:   010 02d 0f 10   (ship)
+tndrcade:   058 02d 07 18   (start of game - yes, flip on!)
+arbalest:   018 02d 0f 10   (logo)
+metafox :   018 021 0f f0   (bomb)
+zingzip :   010 02c 00 0f   (bomb)
+wrofaero:   010 021 00 ff   (test mode)
+thunderl:   010 06c 00 ff   (always?)
+krzybowl:   011 028 c0 ff   (game)
+kiwame  :   016 021 7f 00   (logo)
+oisipuzl:   059 020 00 00   (game - yes, flip on!)
 
-superman:	010 021 07 38	(game)
-twineagl:	000 027 00 0f	(test mode)
+superman:   010 021 07 38   (game)
+twineagl:   000 027 00 0f   (test mode)
 */
 
 			int sx		=	  x + xoffs  + (offs & 1) * 16;
@@ -817,7 +817,7 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -867,11 +867,11 @@ VIDEO_UPDATE( seta )
 
 	/* the hardware wants different scroll values when flipped */
 
-	/*	bg x scroll	     flip
-		metafox		0000 025d = 0, $400-$1a3 = $400 - $190 - $13
-		eightfrc	ffe8 0272
-					fff0 0260 = -$10, $400-$190 -$10
-					ffe8 0272 = -$18, $400-$190 -$18 + $1a		*/
+	/*  bg x scroll      flip
+        metafox     0000 025d = 0, $400-$1a3 = $400 - $190 - $13
+        eightfrc    ffe8 0272
+                    fff0 0260 = -$10, $400-$190 -$10
+                    ffe8 0272 = -$18, $400-$190 -$18 + $1a      */
 
 	x_0 += 0x10 - global_offsets->tilemap_offs[flip ? 1 : 0];
 	y_0 -= (256 - vis_dimy)/2;

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	The Game Room Lethal Justice hardware
+    The Game Room Lethal Justice hardware
 
 ***************************************************************************/
 
@@ -27,7 +27,7 @@ static UINT8 blank_palette;
 
 /*************************************
  *
- *	Compute X/Y coordinates
+ *  Compute X/Y coordinates
  *
  *************************************/
 
@@ -41,7 +41,7 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 
 /*************************************
  *
- *	Gun input handling
+ *  Gun input handling
  *
  *************************************/
 
@@ -49,7 +49,7 @@ READ16_HANDLER( lethalj_gun_r )
 {
 	data16_t result = 0;
 	int beamx, beamy;
-	
+
 	switch (offset)
 	{
 		case 4:
@@ -60,16 +60,16 @@ READ16_HANDLER( lethalj_gun_r )
 			guny = beamy;
 			blank_palette = 1;
 			break;
-		
+
 		case 6:
 			result = gunx/2;
 			break;
-		
+
 		case 7:
 			result = guny + 4;
 			break;
 	}
-/*	logerror("%08X:lethalj_gun_r(%d) = %04X\n", activecpu_get_pc(), offset, result); */
+/*  logerror("%08X:lethalj_gun_r(%d) = %04X\n", activecpu_get_pc(), offset, result); */
 	return result;
 }
 
@@ -77,7 +77,7 @@ READ16_HANDLER( lethalj_gun_r )
 
 /*************************************
  *
- *	video startup
+ *  video startup
  *
  *************************************/
 
@@ -98,7 +98,7 @@ VIDEO_START( lethalj )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -119,23 +119,23 @@ static void do_blit(void)
 	int height = (UINT16)blitter_data[7];
 	int y;
 
-/*	logerror("blitter data = %04X %04X %04X %04X %04X %04X %04X %04X\n",
-			blitter_data[0], blitter_data[1], blitter_data[2], blitter_data[3],
-			blitter_data[4], blitter_data[5], blitter_data[6], blitter_data[7]);*/
+/*  logerror("blitter data = %04X %04X %04X %04X %04X %04X %04X %04X\n",
+            blitter_data[0], blitter_data[1], blitter_data[2], blitter_data[3],
+            blitter_data[4], blitter_data[5], blitter_data[6], blitter_data[7]);*/
 
 	/* loop over Y coordinates */
 	for (y = 0; y <= height; y++, srcy++, dsty++)
 	{
 		UINT16 *source = blitter_base + srcy * BLITTER_SOURCE_WIDTH;
 		UINT16 *dest = screenram + dsty * BLITTER_DEST_WIDTH;
-		
+
 		/* clip in Y */
 		if (dsty >= 0 && dsty < BLITTER_DEST_HEIGHT)
 		{
 			int sx = srcx;
 			int dx = dstx;
 			int x;
-			
+
 			/* loop over X coordinates */
 			for (x = 0; x <= width; x++, sx++, dx++)
 				if (dx >= 0 && dx < BLITTER_DEST_WIDTH)
@@ -171,18 +171,18 @@ WRITE16_HANDLER( lethalj_blitter_w )
 
 /*************************************
  *
- *	video update
+ *  video update
  *
  *************************************/
 
 VIDEO_UPDATE( lethalj )
 {
 	int beamx, beamy;
-	
+
 	/* blank palette: fill with white */
 	if (blank_palette)
 		fillbitmap(bitmap, 0x7fff, cliprect);
-	
+
 	/* otherwise, blit from screenram */
 	else
 	{
@@ -195,7 +195,7 @@ VIDEO_UPDATE( lethalj )
 				*dest++ = *source++ & 0x7fff;
 		}
 	}
-	
+
 	/* draw player 1's crosshair */
 	get_crosshair_xy(0, &beamx, &beamy);
 	draw_crosshair(bitmap, beamx, beamy, cliprect);

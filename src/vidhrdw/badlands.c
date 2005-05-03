@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Bad Lands hardware
+    Atari Bad Lands hardware
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -21,7 +21,7 @@ static UINT8 playfield_tile_bank;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -37,7 +37,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Generic video system start
+ *  Generic video system start
  *
  *************************************/
 
@@ -96,7 +96,7 @@ VIDEO_START( badlands )
 
 /*************************************
  *
- *	Playfield bank write handler
+ *  Playfield bank write handler
  *
  *************************************/
 
@@ -115,7 +115,7 @@ WRITE16_HANDLER( badlands_pf_bank_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -139,7 +139,7 @@ VIDEO_UPDATE( badlands )
 				if (mo[x])
 				{
 					/* not yet verified
-					*/
+                    */
 					if ((mo[x] & ATARIMO_PRIORITY_MASK) || !(pf[x] & 8))
 						pf[x] = mo[x] & ATARIMO_DATA_MASK;
 

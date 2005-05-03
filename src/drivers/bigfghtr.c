@@ -2,29 +2,29 @@
 Tatakae! Big Fighter (c)1989 Nichibutsu
 
  based on armedf.c
- 
+
  TODO:
  - scroll
  - controls
  - dips
-	
-	$80600($80000 ?? ) - $80fff  = shared ram with 8751 MCU
 
-	controls :
+    $80600($80000 ?? ) - $80fff  = shared ram with 8751 MCU
 
-	02E3E8: move.w  $8c000.l, $8064a.l
-	02E3F2: move.w  $8c002.l, $8064c.l
-	02E3FC: move.b  #$1, $80640.l
-	02E404: move.w  $400000.l, D0
-	02E40A: tst.b   $80640.l
-	02E410: bne     2e3fc
-	02E412: move.w  $80642.l, $8064e.l
-	02E41C: move.w  $80644.l, $80650.l
-	02E426: move.w  $80646.l, $80652.l - input 1 (80646)
-	02E430: move.w  $80648.l, $80654.l
-	02E43A: rts
-	
-	
+    controls :
+
+    02E3E8: move.w  $8c000.l, $8064a.l
+    02E3F2: move.w  $8c002.l, $8064c.l
+    02E3FC: move.b  #$1, $80640.l
+    02E404: move.w  $400000.l, D0
+    02E40A: tst.b   $80640.l
+    02E410: bne     2e3fc
+    02E412: move.w  $80642.l, $8064e.l
+    02E41C: move.w  $80644.l, $80650.l
+    02E426: move.w  $80646.l, $80652.l - input 1 (80646)
+    02E430: move.w  $80648.l, $80654.l
+    02E43A: rts
+
+
 ------------------------------------------------------------------------
 Tatakae! Big Fighter
 Nichibutsu, 1989
@@ -152,7 +152,7 @@ static void get_tx_tile_info(int tile_index)
 	int attributes;
 
 	attributes = text_videoram[tile_index+0x800]&0xff;
-	
+
 	SET_TILE_INFO(
 			0,
 			tile_number + 256 * (attributes & 0x3),
@@ -258,7 +258,7 @@ VIDEO_UPDATE( bigfghtr )
 	}
 	else
 	{
-		fillbitmap( bitmap, get_black_pen(), cliprect ); 
+		fillbitmap( bitmap, get_black_pen(), cliprect );
 	}
 
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
@@ -266,7 +266,7 @@ VIDEO_UPDATE( bigfghtr )
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
 	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
-		
+
 }
 
 
@@ -300,9 +300,9 @@ static READ16_HANDLER(latch_r)
 
 static WRITE16_HANDLER(sharedram_w)
 {
-	
+
 	COMBINE_DATA(&sharedram16[offset]);
-	
+
 }
 
 static READ16_HANDLER(sharedram_r)
@@ -315,12 +315,12 @@ static READ16_HANDLER(sharedram_r)
 					read_latch=0;
 					return rand();
 				}
-			break;	
-			
+			break;
+
 			case 0x46/2:
 				return (input_port_0_word_r(0,0)&0xffff)^0xffff;
 
-		
+
 		}
 		return sharedram16[offset];
 }
@@ -339,18 +339,18 @@ static ADDRESS_MAP_START( mainmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x08c002, 0x08c003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x08c004, 0x08c005) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x08c006, 0x08c007) AM_READ(input_port_3_word_r)
-	
+
 	AM_RANGE(0x08d000, 0x08d001) AM_WRITE(io_w) 				//807b0
-	
+
 	AM_RANGE(0x08d002, 0x08d003) AM_WRITE(bg_scrollx_w) //8069a
 	AM_RANGE(0x08d004, 0x08d005) AM_WRITE(bg_scrolly_w) //80696
 	AM_RANGE(0x08d006, 0x08d007) AM_WRITE(fg_scrollx_w) //80692
 	AM_RANGE(0x08d008, 0x08d009) AM_WRITE(fg_scrolly_w) //8068e
-	
+
 	AM_RANGE(0x08d00a, 0x08d00b) AM_WRITE(sound_command_w)
 	AM_RANGE(0x400000, 0x400001) AM_READ(latch_r)
 ADDRESS_MAP_END
-	
+
 static ADDRESS_MAP_START( soundmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xf7ff) AM_ROM
 	AM_RANGE(0xf800, 0xffff) AM_RAM
@@ -423,7 +423,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( bigfghtr )
 	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
 	MDRV_CPU_PROGRAM_MAP(mainmem,0)
-	
+
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
@@ -469,10 +469,10 @@ INPUT_PORTS_START( bigfghtr )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 ) 
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) 
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) 
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
@@ -484,16 +484,16 @@ INPUT_PORTS_START( bigfghtr )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE1 ) 
-	PORT_SERVICE( 0x0200, IP_ACTIVE_LOW ) 
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_TILT )     
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x0200, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0xf800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) ) 
-	PORT_DIPSETTING(    0x03, "3" ) 
-	PORT_DIPSETTING(    0x02, "4" ) 
-	PORT_DIPSETTING(    0x01, "5" ) 
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
 
 
@@ -516,21 +516,21 @@ INPUT_PORTS_START( bigfghtr )
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) ) 
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) ) 
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) ) 
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) ) 
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) ) 
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) 
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Allow_Continue ) )		
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, "3 Times" )
 	PORT_DIPSETTING(    0x10, "5 Times" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )	
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
@@ -556,10 +556,10 @@ ROM_START( bigfghtr )
 	ROM_LOAD16_BYTE( "1.ic2", 0x00001, 0x20000, CRC(1100d991) SHA1(3c79398804b3a26b3df0c5734b270c37e1ba6a60) )
 	ROM_LOAD16_BYTE( "4.ic5", 0x40000, 0x20000, CRC(2464a83b) SHA1(00f5ac81bc33148daafeab757647b63894e0e0ca) )
 	ROM_LOAD16_BYTE( "2.ic4", 0x40001, 0x20000, CRC(b47bbcd5) SHA1(811bd4bc8fb662abf4734ab51e24c863d5cc3df3) )
-	
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code (sound) */
 	ROM_LOAD( "8.17k", 0x00000, 0x10000, CRC(0aeab61e) SHA1(165e0ad58542b65383fef714578da21f62df7b74) )
-	
+
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "7.11c", 0x00000, 0x08000, CRC(1809e79f) SHA1(730547771f803857acb552a84a8bc21bd3bda33f) )
 
@@ -569,8 +569,8 @@ ROM_START( bigfghtr )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "12.8a", 0x00000, 0x10000, CRC(a5694ea9) SHA1(ea94174495b3a65b3797932074a94df3b55fa0a2) )
-	ROM_LOAD( "11.6a", 0x10000, 0x10000, CRC(10b74e2c) SHA1(e3ec68726e7f277dc2043424f2e4d863eb01b3dc) ) 
-	
+	ROM_LOAD( "11.6a", 0x10000, 0x10000, CRC(10b74e2c) SHA1(e3ec68726e7f277dc2043424f2e4d863eb01b3dc) )
+
 
 	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "9.8d",  0x00000, 0x20000, CRC(fe67800e) SHA1(0d3c4c3cb185270260fa691a97cddf082d6a056e) )

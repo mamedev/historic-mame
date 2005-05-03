@@ -215,7 +215,7 @@ static ADDRESS_MAP_START( mastkin_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
 	AM_RANGE(0x1280, 0x1280) AM_READ(input_port_0_r) /* IO Coin */
 	AM_RANGE(0x1281, 0x1281) AM_READ(input_port_1_r) /* P1 IO */
-//	AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* unused */
+//  AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* unused */
 	AM_RANGE(0x1283, 0x1283) AM_READ(input_port_3_r) /* DIP 1 */
 	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2800, 0x3fff) AM_READ(MRA8_RAM)
@@ -285,9 +285,9 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)		/* This address triggers the SN chip to read the data port. */
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
 /* There are lots more addresses which are used for setting a two bit volume
-	controls for speech and music
+    controls for speech and music
 
-	Currently these are un-supported by Mame
+    Currently these are un-supported by Mame
 */
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) /* watch dog ? */
 	AM_RANGE(0xe004, 0xe004) AM_WRITE(VLM5030_data_w)
@@ -309,9 +309,9 @@ static ADDRESS_MAP_START( hyprolyb_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)		/* This address triggers the SN chip to read the data port. */
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(DAC_0_data_w)
 /* There are lots more addresses which are used for setting a two bit volume
-	controls for speech and music
+    controls for speech and music
 
-	Currently these are un-supported by Mame
+    Currently these are un-supported by Mame
 */
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) /* watch dog ? */
 	AM_RANGE(0xe004, 0xe004) AM_WRITE(hyprolyb_ADPCM_data_w)
@@ -565,11 +565,11 @@ INPUT_PORTS_START( mastkin )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
-//	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0b, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0d, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0e, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 3C_1C ) )
@@ -582,11 +582,11 @@ INPUT_PORTS_START( mastkin )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
-//	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0xb0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0xd0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( wizzquiz )
@@ -1073,7 +1073,7 @@ ROM_START( wizzquiz )
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, CRC(d55f30b5) SHA1(4d6a851f4886778307f75771645078b97ad55f5f) ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, CRC(d2ba4d32) SHA1(894b5cedf01ba9225a0d6215291857e455b84903) ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */	
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
 	ROM_LOAD( "361-d18.9c",   0x0000, 0x2000, CRC(f546a56b) SHA1(caee3d8546eb7a75ce2a578c6a1a630246aec6b8) )

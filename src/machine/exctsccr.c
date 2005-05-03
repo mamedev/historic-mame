@@ -14,7 +14,7 @@ Ernesto Corvi - 10/30/98
 
 - 09/12/2004 Pierpaolo Prazzoli
   added Exciting Soccer II protection
-  (still at least one issue because you can't control the player)										
+  (still at least one issue because you can't control the player)
 
 *************************************************************************************/
 

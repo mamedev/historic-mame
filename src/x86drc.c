@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		drccore.c
-**		x86 Dynamic recompiler support routines.
-**		Written by Aaron Giles
+**      drccore.c
+**      x86 Dynamic recompiler support routines.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -32,11 +32,11 @@ static void log_dispatch(struct drccore *drc);
 
 
 /*###################################################################################################
-**	EXTERNAL INTERFACES
+**  EXTERNAL INTERFACES
 **#################################################################################################*/
 
 /*------------------------------------------------------------------
-	drc_init
+    drc_init
 ------------------------------------------------------------------*/
 
 struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
@@ -102,7 +102,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 
 
 /*------------------------------------------------------------------
-	drc_cache_reset
+    drc_cache_reset
 ------------------------------------------------------------------*/
 
 void drc_cache_reset(struct drccore *drc)
@@ -145,7 +145,7 @@ void drc_cache_reset(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_execute
+    drc_execute
 ------------------------------------------------------------------*/
 
 void drc_execute(struct drccore *drc)
@@ -155,7 +155,7 @@ void drc_execute(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_exit
+    drc_exit
 ------------------------------------------------------------------*/
 
 void drc_exit(struct drccore *drc)
@@ -191,7 +191,7 @@ void drc_exit(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_begin_sequence
+    drc_begin_sequence
 ------------------------------------------------------------------*/
 
 void drc_begin_sequence(struct drccore *drc, UINT32 pc)
@@ -228,7 +228,7 @@ void drc_begin_sequence(struct drccore *drc, UINT32 pc)
 
 
 /*------------------------------------------------------------------
-	drc_end_sequence
+    drc_end_sequence
 ------------------------------------------------------------------*/
 
 void drc_end_sequence(struct drccore *drc)
@@ -250,7 +250,7 @@ void drc_end_sequence(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_register_code_at_cache_top
+    drc_register_code_at_cache_top
 ------------------------------------------------------------------*/
 
 void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
@@ -265,7 +265,7 @@ void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
 
 
 /*------------------------------------------------------------------
-	drc_get_code_at_pc
+    drc_get_code_at_pc
 ------------------------------------------------------------------*/
 
 void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc)
@@ -277,7 +277,7 @@ void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc)
 
 
 /*------------------------------------------------------------------
-	drc_append_verify_code
+    drc_append_verify_code
 ------------------------------------------------------------------*/
 
 void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length)
@@ -287,69 +287,69 @@ void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length)
 		UINT32 *codeptr = code, sum = 0;
 		void *target;
 		int i;
-		
+
 		for (i = 0; i < length / 4; i++)
 		{
 			sum = (sum >> 1) | (sum << 31);
 			sum += *codeptr++;
 		}
-		
-		_xor_r32_r32(REG_EAX, REG_EAX);								// xor	eax,eax
-		_mov_r32_imm(REG_EBX, code);								// mov	ebx,code
-		_mov_r32_imm(REG_ECX, length / 4);							// mov	ecx,length / 4
+
+		_xor_r32_r32(REG_EAX, REG_EAX);								// xor  eax,eax
+		_mov_r32_imm(REG_EBX, code);								// mov  ebx,code
+		_mov_r32_imm(REG_ECX, length / 4);							// mov  ecx,length / 4
 		target = drc->cache_top;									// target:
-		_ror_r32_imm(REG_EAX, 1);									// ror	eax,1
-		_add_r32_m32bd(REG_EAX, REG_EBX, 0);						// add	eax,[ebx]
-		_sub_r32_imm(REG_ECX, 1);									// sub	ecx,1
-		_lea_r32_m32bd(REG_EBX, REG_EBX, 4);						// lea	ebx,[ebx+4]
-		_jcc(COND_NZ, target);										// jnz	target
-		_cmp_r32_imm(REG_EAX, sum);									// cmp	eax,sum
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_ror_r32_imm(REG_EAX, 1);									// ror  eax,1
+		_add_r32_m32bd(REG_EAX, REG_EBX, 0);						// add  eax,[ebx]
+		_sub_r32_imm(REG_ECX, 1);									// sub  ecx,1
+		_lea_r32_m32bd(REG_EBX, REG_EBX, 4);						// lea  ebx,[ebx+4]
+		_jcc(COND_NZ, target);										// jnz  target
+		_cmp_r32_imm(REG_EAX, sum);									// cmp  eax,sum
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 	else if (length >= 12)
 	{
-		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
-		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp	[pc+4],opcode+4
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
-		_cmp_m32abs_imm((UINT8 *)code + 8, ((UINT32 *)code)[2]);	// cmp	[pc+8],opcode+8
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp  [pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
+		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp  [pc+4],opcode+4
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
+		_cmp_m32abs_imm((UINT8 *)code + 8, ((UINT32 *)code)[2]);	// cmp  [pc+8],opcode+8
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 	else if (length >= 8)
 	{
-		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
-		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp	[pc+4],opcode+4
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp  [pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
+		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp  [pc+4],opcode+4
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 	else if (length >= 4)
 	{
-		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp  [pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 	else if (length >= 2)
 	{
-		_cmp_m16abs_imm(code, *(UINT16 *)code);						// cmp	[pc],opcode
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m16abs_imm(code, *(UINT16 *)code);						// cmp  [pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 	else
 	{
-		_cmp_m8abs_imm(code, *(UINT8 *)code);						// cmp	[pc],opcode
-		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m8abs_imm(code, *(UINT8 *)code);						// cmp  [pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne  recompile
 	}
 }
 
 
 /*------------------------------------------------------------------
-	drc_append_call_debugger
+    drc_append_call_debugger
 ------------------------------------------------------------------*/
 
 void drc_append_call_debugger(struct drccore *drc)
 {
 #ifdef MAME_DEBUG
 	struct linkdata link;
-	_cmp_m32abs_imm(&mame_debug, 0);								// cmp	[mame_debug],0
-	_jcc_short_link(COND_E, &link);									// je	skip
+	_cmp_m32abs_imm(&mame_debug, 0);								// cmp  [mame_debug],0
+	_jcc_short_link(COND_E, &link);									// je   skip
 	drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
 	_resolve_link(&link);
 #endif
@@ -357,7 +357,7 @@ void drc_append_call_debugger(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_append_save_volatiles
+    drc_append_save_volatiles
 ------------------------------------------------------------------*/
 
 void drc_append_save_volatiles(struct drccore *drc)
@@ -372,7 +372,7 @@ void drc_append_save_volatiles(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_append_restore_volatiles
+    drc_append_restore_volatiles
 ------------------------------------------------------------------*/
 
 void drc_append_restore_volatiles(struct drccore *drc)
@@ -387,13 +387,13 @@ void drc_append_restore_volatiles(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_append_save_call_restore
+    drc_append_save_call_restore
 ------------------------------------------------------------------*/
 
 void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stackadj)
 {
 	drc_append_save_volatiles(drc);									// save volatiles
-	_call(target);													// call	target
+	_call(target);													// call target
 	drc_append_restore_volatiles(drc);								// restore volatiles
 	if (stackadj)
 		_add_r32_imm(REG_ESP, stackadj);							// adjust stack
@@ -401,50 +401,50 @@ void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stac
 
 
 /*------------------------------------------------------------------
-	drc_append_standard_epilogue
+    drc_append_standard_epilogue
 ------------------------------------------------------------------*/
 
 void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit)
 {
 	if (pcdelta != 0 && drc->pc_in_memory)
-		_add_m32abs_imm(drc->pcptr, pcdelta);						// add	[pc],pcdelta
+		_add_m32abs_imm(drc->pcptr, pcdelta);						// add  [pc],pcdelta
 	if (cycles != 0)
 	{
 		if (drc->icount_in_memory)
-			_sub_m32abs_imm(drc->icountptr, cycles);				// sub	[icount],cycles
+			_sub_m32abs_imm(drc->icountptr, cycles);				// sub  [icount],cycles
 		else
-			_sub_r32_imm(REG_EBP, cycles);							// sub	ebp,cycles
+			_sub_r32_imm(REG_EBP, cycles);							// sub  ebp,cycles
 	}
 	if (pcdelta != 0 && !drc->pc_in_memory)
-		_lea_r32_m32bd(REG_EDI, REG_EDI, pcdelta);					// lea	edi,[edi+pcdelta]
+		_lea_r32_m32bd(REG_EDI, REG_EDI, pcdelta);					// lea  edi,[edi+pcdelta]
 	if (allow_exit && cycles != 0)
-		_jcc(COND_S, drc->out_of_cycles);							// js	out_of_cycles
+		_jcc(COND_S, drc->out_of_cycles);							// js   out_of_cycles
 }
 
 
 /*------------------------------------------------------------------
-	drc_append_dispatcher
+    drc_append_dispatcher
 ------------------------------------------------------------------*/
 
 void drc_append_dispatcher(struct drccore *drc)
 {
 #if LOG_DISPATCHES
-	_push_imm(drc);													// push	drc
-	drc_append_save_call_restore(drc, (void *)log_dispatch, 4);		// call	log_dispatch
+	_push_imm(drc);													// push drc
+	drc_append_save_call_restore(drc, (void *)log_dispatch, 4);		// call log_dispatch
 #endif
 	if (drc->pc_in_memory)
-		_mov_r32_m32abs(REG_EDI, drc->pcptr);						// mov	edi,[pc]
-	_mov_r32_r32(REG_EAX, REG_EDI);									// mov	eax,edi
-	_shr_r32_imm(REG_EAX, drc->l1shift);							// shr	eax,l1shift
-	_mov_r32_r32(REG_EDX, REG_EDI);									// mov	edx,edi
-	_mov_r32_m32isd(REG_EAX, REG_EAX, 4, drc->lookup_l1);			// mov	eax,[eax*4 + l1lookup]
-	_and_r32_imm(REG_EDX, drc->l2mask);								// and	edx,l2mask
-	_jmp_m32bisd(REG_EAX, REG_EDX, drc->l2scale, 0);				// jmp	[eax+edx*l2scale]
+		_mov_r32_m32abs(REG_EDI, drc->pcptr);						// mov  edi,[pc]
+	_mov_r32_r32(REG_EAX, REG_EDI);									// mov  eax,edi
+	_shr_r32_imm(REG_EAX, drc->l1shift);							// shr  eax,l1shift
+	_mov_r32_r32(REG_EDX, REG_EDI);									// mov  edx,edi
+	_mov_r32_m32isd(REG_EAX, REG_EAX, 4, drc->lookup_l1);			// mov  eax,[eax*4 + l1lookup]
+	_and_r32_imm(REG_EDX, drc->l2mask);								// and  edx,l2mask
+	_jmp_m32bisd(REG_EAX, REG_EDX, drc->l2scale, 0);				// jmp  [eax+edx*l2scale]
 }
 
 
 /*------------------------------------------------------------------
-	drc_append_fixed_dispatcher
+    drc_append_fixed_dispatcher
 ------------------------------------------------------------------*/
 
 void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
@@ -452,16 +452,16 @@ void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 	void **base = drc->lookup_l1[newpc >> drc->l1shift];
 	if (base == drc->lookup_l2_recompile)
 	{
-		_mov_r32_m32abs(REG_EAX, &drc->lookup_l1[newpc >> drc->l1shift]);// mov	eax,[(newpc >> l1shift)*4 + l1lookup]
-		_jmp_m32bd(REG_EAX, (newpc & drc->l2mask) * drc->l2scale);		// jmp	[eax+(newpc & l2mask)*l2scale]
+		_mov_r32_m32abs(REG_EAX, &drc->lookup_l1[newpc >> drc->l1shift]);// mov eax,[(newpc >> l1shift)*4 + l1lookup]
+		_jmp_m32bd(REG_EAX, (newpc & drc->l2mask) * drc->l2scale);		// jmp  [eax+(newpc & l2mask)*l2scale]
 	}
 	else
-		_jmp_m32abs((UINT8 *)base + (newpc & drc->l2mask) * drc->l2scale);	// jmp	[eax+(newpc & l2mask)*l2scale]
+		_jmp_m32abs((UINT8 *)base + (newpc & drc->l2mask) * drc->l2scale);	// jmp  [eax+(newpc & l2mask)*l2scale]
 }
 
 
 /*------------------------------------------------------------------
-	drc_append_tentative_fixed_dispatcher
+    drc_append_tentative_fixed_dispatcher
 ------------------------------------------------------------------*/
 
 void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
@@ -477,7 +477,7 @@ void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 
 
 /*------------------------------------------------------------------
-	drc_append_set_fp_rounding
+    drc_append_set_fp_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex)
@@ -489,7 +489,7 @@ void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex)
 
 
 /*------------------------------------------------------------------
-	drc_append_set_temp_fp_rounding
+    drc_append_set_temp_fp_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
@@ -500,7 +500,7 @@ void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
 
 
 /*------------------------------------------------------------------
-	drc_append_restore_fp_rounding
+    drc_append_restore_fp_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_restore_fp_rounding(struct drccore *drc)
@@ -511,7 +511,7 @@ void drc_append_restore_fp_rounding(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_append_set_sse_rounding
+    drc_append_set_sse_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex)
@@ -523,7 +523,7 @@ void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex)
 
 
 /*------------------------------------------------------------------
-	drc_append_set_temp_sse_rounding
+    drc_append_set_temp_sse_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding)
@@ -534,7 +534,7 @@ void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding)
 
 
 /*------------------------------------------------------------------
-	drc_append_restore_sse_rounding
+    drc_append_restore_sse_rounding
 ------------------------------------------------------------------*/
 
 void drc_append_restore_sse_rounding(struct drccore *drc)
@@ -545,10 +545,10 @@ void drc_append_restore_sse_rounding(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_dasm
+    drc_dasm
 
-	An attempt to make a disassembler for DRC code; currently limited
-	by the functionality of DasmI386
+    An attempt to make a disassembler for DRC code; currently limited
+    by the functionality of DasmI386
 ------------------------------------------------------------------*/
 
 void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
@@ -605,11 +605,11 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 
 
 /*###################################################################################################
-**	INTERNAL CODEGEN
+**  INTERNAL CODEGEN
 **#################################################################################################*/
 
 /*------------------------------------------------------------------
-	append_entry_point
+    append_entry_point
 ------------------------------------------------------------------*/
 
 static void append_entry_point(struct drccore *drc)
@@ -633,7 +633,7 @@ static void append_entry_point(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	recompile_code
+    recompile_code
 ------------------------------------------------------------------*/
 
 static void recompile_code(struct drccore *drc)
@@ -645,19 +645,19 @@ static void recompile_code(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	append_recompile
+    append_recompile
 ------------------------------------------------------------------*/
 
 static void append_recompile(struct drccore *drc)
 {
-	_push_imm(drc);													// push	drc
-	drc_append_save_call_restore(drc, (genf *)recompile_code, 4);	// call	recompile_code
+	_push_imm(drc);													// push drc
+	drc_append_save_call_restore(drc, (genf *)recompile_code, 4);	// call recompile_code
 	drc_append_dispatcher(drc);										// dispatch
 }
 
 
 /*------------------------------------------------------------------
-	append_out_of_cycles
+    append_out_of_cycles
 ------------------------------------------------------------------*/
 
 static void append_out_of_cycles(struct drccore *drc)
@@ -677,13 +677,13 @@ static void append_out_of_cycles(struct drccore *drc)
 
 
 /*------------------------------------------------------------------
-	drc_x86_get_features()
+    drc_x86_get_features()
 ------------------------------------------------------------------*/
 UINT32 drc_x86_get_features(void)
 {
 	UINT32 features = 0;
 #ifdef _MSC_VER
-	__asm 
+	__asm
 	{
 		mov eax, 1
 		xor ebx, ebx
@@ -712,7 +712,7 @@ UINT32 drc_x86_get_features(void)
 
 
 /*------------------------------------------------------------------
-	log_dispatch
+    log_dispatch
 ------------------------------------------------------------------*/
 
 #if LOG_DISPATCHES

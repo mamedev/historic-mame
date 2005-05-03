@@ -1,13 +1,13 @@
  /**************************************************************************\
- *				Texas Instruments TMS320x25 DSP Disassembler				*
- *																			*
- *				   Copyright (C) 2001-2002+ Tony La Porta					*
- *						Written for the MAME project.						*
- *																			*
- *		Notes : Data is expected to be read from source file as MSB first.	*
- *				This is a word based microcontroller, with addressing		*
- *					architecture based on the Harvard addressing scheme.	*
- *																			*
+ *              Texas Instruments TMS320x25 DSP Disassembler                *
+ *                                                                          *
+ *                 Copyright (C) 2001-2002+ Tony La Porta                   *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *      Notes : Data is expected to be read from source file as MSB first.  *
+ *              This is a word based microcontroller, with addressing       *
+ *                  architecture based on the Harvard addressing scheme.    *
+ *                                                                          *
  \**************************************************************************/
 
 #include <stdio.h>

@@ -49,10 +49,10 @@ static UINT32 read_dword (char *buf) {
 
 /* Locate end-of-central-dir sig in buffer and return offset
    out:
-	*offset offset of cent dir start in buffer
+    *offset offset of cent dir start in buffer
    return:
-	==0 not found
-	!=0 found, *offset valid
+    ==0 not found
+    !=0 found, *offset valid
 */
 static int ecd_find_sig (char *buffer, int buflen, int *offset)
 {
@@ -380,8 +380,8 @@ void suspendzip(ZIP* zip) {
    in:
      zip suspended zip
    return:
-	zip success
-	==0 error (zip must be closed with closezip)
+    zip success
+    ==0 error (zip must be closed with closezip)
 */
 static ZIP* revivezip(ZIP* zip) {
 	if (!zip->fp) {
@@ -406,8 +406,8 @@ void rewindzip(ZIP* zip) {
 
 /* Seek zip->fp to compressed data
    return:
-	==0 success
-	<0 error
+    ==0 success
+    <0 error
 */
 int seekcompresszip(ZIP* zip, struct zipent* ent) {
 	char buf[ZIPNAME];
@@ -474,10 +474,10 @@ static int inflate_file(osd_file* in_file, unsigned in_size, unsigned char* out_
 
     err = inflateInit2(&d_stream, -MAX_WBITS);
 	/* windowBits is passed < 0 to tell that there is no zlib header.
-	 * Note that in this case inflate *requires* an extra "dummy" byte
-	 * after the compressed stream in order to complete decompression and
-	 * return Z_STREAM_END.
-	 */
+     * Note that in this case inflate *requires* an extra "dummy" byte
+     * after the compressed stream in order to complete decompression and
+     * return Z_STREAM_END.
+     */
     if (err != Z_OK)
 	{
 		logerror("inflateInit error: %d\n", err);
@@ -534,10 +534,10 @@ static int inflate_file(osd_file* in_file, unsigned in_size, unsigned char* out_
 
 /* Read compressed data
    out:
-	data compressed data read
+    data compressed data read
    return:
-	==0 success
-	<0 error
+    ==0 success
+    <0 error
 */
 int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
 	int err = seekcompresszip(zip,ent);
@@ -554,10 +554,10 @@ int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
 
 /* Read UNcompressed data
    out:
-	data UNcompressed data
+    data UNcompressed data
    return:
-	==0 success
-	<0 error
+    ==0 success
+    <0 error
 */
 int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
 	if (ent->compression_method == 0x0000) {
@@ -635,7 +635,7 @@ static ZIP* cache_openzip(int pathtype, int pathindex, const char* zipfile) {
 			unsigned j;
 
 /*
-			logerror("Zip cache HIT  for %s\n", zipfile);
+            logerror("Zip cache HIT  for %s\n", zipfile);
 */
 
 			/* reset the zip directory */
@@ -657,7 +657,7 @@ static ZIP* cache_openzip(int pathtype, int pathindex, const char* zipfile) {
 	/* not found */
 
 /*
-	logerror("Zip cache FAIL for %s\n", zipfile);
+    logerror("Zip cache FAIL for %s\n", zipfile);
 */
 
 	/* open the zip */
@@ -718,7 +718,7 @@ void unzip_cache_clear()
 
 			/* reset cache entry */
 			zip_cache_map[i] = 0;
-/*			return; */
+/*          return; */
 
 		}
 	}
@@ -804,8 +804,8 @@ int /* error */ load_zipped_file (int pathtype, int pathindex, const char* zipfi
 	return -1;
 }
 
-/*	Pass the path to the zipfile and the name of the file within the zipfile.
-	sum will be set to the CRC-32 of that zipped file. */
+/*  Pass the path to the zipfile and the name of the file within the zipfile.
+    sum will be set to the CRC-32 of that zipped file. */
 /*  The caller can preset sum to the expected checksum to enable "load by CRC" */
 int /* error */ checksum_zipped_file (int pathtype, int pathindex, const char *zipfile, const char *filename, unsigned int *length, unsigned int *sum) {
 	ZIP* zip;

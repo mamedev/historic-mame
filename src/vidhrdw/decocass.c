@@ -1,6 +1,6 @@
 /***********************************************************************
 
-	DECO Cassette System vidhrdw
+    DECO Cassette System vidhrdw
 
  ***********************************************************************/
 
@@ -81,7 +81,7 @@ static UINT32 tile_offset[32*32] = {
 };
 
 /********************************************
-	state saving setup
+    state saving setup
  ********************************************/
 void decocass_video_state_save_init(void)
 {
@@ -100,7 +100,7 @@ void decocass_video_state_save_init(void)
 }
 
 /********************************************
-	tilemap callbacks
+    tilemap callbacks
  ********************************************/
 
 static UINT32 fgvideoram_scan_cols( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
@@ -147,7 +147,7 @@ static void get_fg_tile_info(int tile_index)
 }
 
 /********************************************
-	big object
+    big object
  ********************************************/
 
 static void draw_object(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -200,15 +200,15 @@ static void draw_center(struct mame_bitmap *bitmap, const struct rectangle *clip
 }
 
 /********************************************
-	memory handlers
+    memory handlers
  ********************************************/
 
 WRITE8_HANDLER( decocass_paletteram_w )
 {
 	/*
-	 * RGB output is inverted and A4 is inverted too
-	 * (ME/ input on 1st paletteram, inverter -> ME/ on 2nd)
-	 */
+     * RGB output is inverted and A4 is inverted too
+     * (ME/ input on 1st paletteram, inverter -> ME/ on 2nd)
+     */
 	offset = (offset & 31) ^ 16;
 	paletteram_BBGGGRRR_w( offset, ~data );
 }
@@ -343,10 +343,10 @@ WRITE8_HANDLER( decocass_color_missiles_w )
 {
 	LOG(1,("decocass_color_missiles_w: $%02x\n", data));
 	/* only bits D0-D2 and D4-D6 are connected to
-	 * the color RAM demux:
-	 * D0-D2 to the IC0 inputs
-	 * D4-D6 to the IC1 inputs
-	 */
+     * the color RAM demux:
+     * D0-D2 to the IC0 inputs
+     * D4-D6 to the IC1 inputs
+     */
 	color_missiles = data & 0x77;
 }
 
@@ -383,15 +383,15 @@ WRITE8_HANDLER( decocass_color_center_bot_w )
 		return;
 	LOG(1,("decocass_color_center_bot_w: $%02x (color:%d, center_bot:%d)\n", data, data&3, data>>4));
 	/*
-	 * D7	CL3/4 (swap 2+4)
-	 * D6	CL1
-	 * D5	CL2
-	 * D4	CL4
-	 * D3	nc
-	 * D2	nc
-	 * D1	CLD4
-	 * D0	CLD3
-	 */
+     * D7   CL3/4 (swap 2+4)
+     * D6   CL1
+     * D5   CL2
+     * D4   CL4
+     * D3   nc
+     * D2   nc
+     * D1   CLD4
+     * D0   CLD3
+     */
 	set_vh_global_attribute( &color_center_bot, data);
 }
 
@@ -450,7 +450,7 @@ WRITE8_HANDLER( decocass_center_v_shift_w )
 }
 
 /********************************************
-	memory handlers
+    memory handlers
  ********************************************/
 
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int color,
@@ -511,7 +511,7 @@ static void draw_missiles(struct mame_bitmap *bitmap, const struct rectangle *cl
 	int i,offs;
 
 	/* Draw the missiles (16 of them) seemingly with alternating colors
-	 * from the E302 latch (color_missiles) */
+     * from the E302 latch (color_missiles) */
 	for (i = 0, offs = 0; i < 8; i++, offs += 4*interleave)
 	{
 		int sx,sy;

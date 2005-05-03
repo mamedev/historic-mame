@@ -1,9 +1,9 @@
 /*****************************************************************************
 
-		ToaPlan      game hardware from 1991 - 1994
-		Raizing/8ing game hardware from 1993 onwards
-		-------------------------------------------------
-		Driver by: Quench and Yochizo
+        ToaPlan      game hardware from 1991 - 1994
+        Raizing/8ing game hardware from 1993 onwards
+        -------------------------------------------------
+        Driver by: Quench and Yochizo
 
    Raizing games and Truxton 2 are heavily dependent on the Raine source -
    many thanks to Richard Bush and the Raine team. [Yochizo]
@@ -12,132 +12,132 @@
 
 Supported games:
 
-	Name		Board No	  Maker			Game name
-	----------------------------------------------------------------------------
-	tekipaki	TP-020		  Toaplan		Teki Paki
-	ghox		TP-021		  Toaplan		Ghox
-	dogyuun		TP-022		  Toaplan		Dogyuun
-	kbash		TP-023		  Toaplan		Knuckle Bash
-	truxton2	TP-024		  Toaplan		Truxton 2 / Tatsujin 2
-	pipibibs	TP-025		  Toaplan		Pipi & Bibis
-	whoopee		TP-025		  Toaplan		Whoopee
-	pipibibi	bootleg?	  Toaplan		Pipi & Bibis
-	fixeight	TP-026		  Toaplan		FixEight
-	fixeighb	bootleg		  Toaplan		FixEight
-	grindstm	TP-027		  Toaplan		Grind Stormer  (1992)
-	grindsta	TP-027		  Toaplan		Grind Stormer  (1992) (older)
-	vfive		TP-027		  Toaplan		V-V  (V-Five)  (1993 - Japan only)
-	batsugun	TP-030		  Toaplan		Batsugun
-	batugnsp	TP-030		  Toaplan		Batsugun  (Special Version)
-	snowbro2	??????		  Toaplan		Snow Bros. 2 - With New Elves
+    Name        Board No      Maker         Game name
+    ----------------------------------------------------------------------------
+    tekipaki    TP-020        Toaplan       Teki Paki
+    ghox        TP-021        Toaplan       Ghox
+    dogyuun     TP-022        Toaplan       Dogyuun
+    kbash       TP-023        Toaplan       Knuckle Bash
+    truxton2    TP-024        Toaplan       Truxton 2 / Tatsujin 2
+    pipibibs    TP-025        Toaplan       Pipi & Bibis
+    whoopee     TP-025        Toaplan       Whoopee
+    pipibibi    bootleg?      Toaplan       Pipi & Bibis
+    fixeight    TP-026        Toaplan       FixEight
+    fixeighb    bootleg       Toaplan       FixEight
+    grindstm    TP-027        Toaplan       Grind Stormer  (1992)
+    grindsta    TP-027        Toaplan       Grind Stormer  (1992) (older)
+    vfive       TP-027        Toaplan       V-V  (V-Five)  (1993 - Japan only)
+    batsugun    TP-030        Toaplan       Batsugun
+    batugnsp    TP-030        Toaplan       Batsugun  (Special Version)
+    snowbro2    ??????        Toaplan       Snow Bros. 2 - With New Elves
 
-	sstriker	RA-MA7893-01  Raizing		Sorcer Striker
-	mahoudai	RA-MA7893-01  Raizing		Mahou Daisakusen
-	kingdmgp	RA-MA9402-03  Raizing/8ing	Kingdom Grandprix
-	shippumd	RA-MA9402-03  Raizing/8ing	Shippu Mahou Daisakusen
-	battleg		RA9503		  Raizing/8ing	Battle Garegga (Type 2)
-	battlega	RA9503		  Raizing/8ing	Battle Garegga
-	battlegb	RA9503		  Raizing/8ing	Battle Garegga (New Version?)
-	battlegc	RA9503		  Raizing/8ing	Battle Garegga
-	batrider	RA9704		  Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
-	batridra	RA9704		  Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
-	batridrk	RA9704		  Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
-	bbakraid	ET68-V99	  8ing			Battle Bakraid (Japan - Wed Apr 7th, 1999)
-	bbakradu	ET68-V99	  8ing			Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
+    sstriker    RA-MA7893-01  Raizing       Sorcer Striker
+    mahoudai    RA-MA7893-01  Raizing       Mahou Daisakusen
+    kingdmgp    RA-MA9402-03  Raizing/8ing  Kingdom Grandprix
+    shippumd    RA-MA9402-03  Raizing/8ing  Shippu Mahou Daisakusen
+    battleg     RA9503        Raizing/8ing  Battle Garegga (Type 2)
+    battlega    RA9503        Raizing/8ing  Battle Garegga
+    battlegb    RA9503        Raizing/8ing  Battle Garegga (New Version?)
+    battlegc    RA9503        Raizing/8ing  Battle Garegga
+    batrider    RA9704        Raizing/8ing  Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
+    batridra    RA9704        Raizing/8ing  Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
+    batridrk    RA9704        Raizing/8ing  Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
+    bbakraid    ET68-V99      8ing          Battle Bakraid (Japan - Wed Apr 7th, 1999)
+    bbakradu    ET68-V99      8ing          Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
 
-	SET NOTES:
+    SET NOTES:
 
-	sstriker - might be a bootleg / hack, the region jumper is read with this set but even when set
-	           to Japan you get all english text etc which seems a little odd, but might be correct.
-	kingdmgp - might be a bootleg / hack, some of the tiles needed for the credits screen have been
-	           stripped out, doesn't seem very professional, since its rare and should probably only
-	           have a different graphics rom its nearly impossible for us to verify, a lot of boards
-	           being sold as 'Kingdom Grand Prix' are infact conversions using Neill Corlett's
-	           ghastly hack
+    sstriker - might be a bootleg / hack, the region jumper is read with this set but even when set
+               to Japan you get all english text etc which seems a little odd, but might be correct.
+    kingdmgp - might be a bootleg / hack, some of the tiles needed for the credits screen have been
+               stripped out, doesn't seem very professional, since its rare and should probably only
+               have a different graphics rom its nearly impossible for us to verify, a lot of boards
+               being sold as 'Kingdom Grand Prix' are infact conversions using Neill Corlett's
+               ghastly hack
 
-	           ** update the above two look like genuine Korean release
-	      ÿÿ      boards, Raizing probably just missed a few things
+               ** update the above two look like genuine Korean release
+          ÿÿ      boards, Raizing probably just missed a few things
 
  ****************************************************************************
- * Battle Garegga and Armed Police Batrider have secret characters.			*
- * Try to input the following commands to use them.							*
+ * Battle Garegga and Armed Police Batrider have secret characters.         *
+ * Try to input the following commands to use them.                         *
  * ======================================================================== *
- * Battle Garegga															*
- *		After inserting a coin (pushing a credit button), input				*
- *		UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START		*
- *		then you can use Mahou Daisakusen characters.						*
- *																			*
+ * Battle Garegga                                                           *
+ *      After inserting a coin (pushing a credit button), input             *
+ *      UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START        *
+ *      then you can use Mahou Daisakusen characters.                       *
+ *                                                                          *
  * ------------------------------------------------------------------------ *
- * Armed Police Batrider													*
- *		After inserting a coin (pushing a credit button), input				*
- *		UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START			*
- *		then you can use Mahou Daisakusen and Battle Garegga characters.	*
- *																			*
+ * Armed Police Batrider                                                    *
+ *      After inserting a coin (pushing a credit button), input             *
+ *      UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START           *
+ *      then you can use Mahou Daisakusen and Battle Garegga characters.    *
+ *                                                                          *
  ****************************************************************************
 
 
  ############################################################################
- # Battle Bakraid 'Unlimited Version' has unlocking codes to gain			#
- # access to extra players and game features.								#
- # Special thanks go to the 'R8ZING Shooter Tribute' page for finding		#
- # and publishing this info.												#
- #																			#
+ # Battle Bakraid 'Unlimited Version' has unlocking codes to gain           #
+ # access to extra players and game features.                               #
+ # Special thanks go to the 'R8ZING Shooter Tribute' page for finding       #
+ # and publishing this info.                                                #
+ #                                                                          #
  # ======================================================================== #
- #		PLAYER SELECT: PHASE 2												#
- # Result:	3 more fighter planes available:								#
- # Code:	UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start		#
- # Conditions:																#
- #		1. Start from the title screen										#
- #		2. Insert Coin														#
- #		3. Watch the 20 sec. counter and enter each part of the code right	#
- #		   between the counting.											#
- # Example: 12,up,11,up,10,down,9,down,8,left,7,right,6.left,5,r..			#
- # After entering the [B] button a chime should sound. Phase 2 unlocked!	#
- #																			#
+ #      PLAYER SELECT: PHASE 2                                              #
+ # Result:  3 more fighter planes available:                                #
+ # Code:    UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start       #
+ # Conditions:                                                              #
+ #      1. Start from the title screen                                      #
+ #      2. Insert Coin                                                      #
+ #      3. Watch the 20 sec. counter and enter each part of the code right  #
+ #         between the counting.                                            #
+ # Example: 12,up,11,up,10,down,9,down,8,left,7,right,6.left,5,r..          #
+ # After entering the [B] button a chime should sound. Phase 2 unlocked!    #
+ #                                                                          #
  # ------------------------------------------------------------------------ #
- #		PLAYER SELECT: PHASE 3												#
- # Result:	2 more fighter planes available:								#
- # Code:	UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start		#
- # Conditions:																#
- #		1. Start from the title screen										#
- #		2. Insert Coin														#
- #		3. Watch the 20 sec. counter and enter each part of the code right	#
- #		   between the counting.											#
- # Important: The entering of this code has to be finished before the		#
- # counter passes 10 ! To do so, you will have to start after coin			#
- # insertion, right before it starts to count:								#
- # Example: up,19,up,18,down,17,down,16,left,15,right,14.left,..			#
- # After entering the [A] button a chime should sound. Phase 3 unlocked!	#
- #																			#
+ #      PLAYER SELECT: PHASE 3                                              #
+ # Result:  2 more fighter planes available:                                #
+ # Code:    UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start       #
+ # Conditions:                                                              #
+ #      1. Start from the title screen                                      #
+ #      2. Insert Coin                                                      #
+ #      3. Watch the 20 sec. counter and enter each part of the code right  #
+ #         between the counting.                                            #
+ # Important: The entering of this code has to be finished before the       #
+ # counter passes 10 ! To do so, you will have to start after coin          #
+ # insertion, right before it starts to count:                              #
+ # Example: up,19,up,18,down,17,down,16,left,15,right,14.left,..            #
+ # After entering the [A] button a chime should sound. Phase 3 unlocked!    #
+ #                                                                          #
  # ------------------------------------------------------------------------ #
- #		TEAM EDIT: ENABLE													#
- # Result:	Unlocks the 'team edit' feature to select a team of different	#
- # 			ships. See selection secrets on how to enter the team edit mode.#
- # Code:	UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start		#
- # Conditions:																#
- #		1. Start from the title screen										#
- #		2. Insert Coin														#
- #		3. Watch the 20 sec. counter and enter each part of the code right	#
- #		   between the counting.											#
- # Important: This code hast to be entered so that the counter is at 0 when	#
- # you press the final button [B]. To do so, start after second 9:			#
- # Example: 9,up,8,down,7,up,6,down,5,left,4,right,3,left,2,right,1,A,0,B	#
- # After entering the [B] button a chime should sound. Team edit unlocked!	#
- #																			#
+ #      TEAM EDIT: ENABLE                                                   #
+ # Result:  Unlocks the 'team edit' feature to select a team of different   #
+ #          ships. See selection secrets on how to enter the team edit mode.#
+ # Code:    UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  Start       #
+ # Conditions:                                                              #
+ #      1. Start from the title screen                                      #
+ #      2. Insert Coin                                                      #
+ #      3. Watch the 20 sec. counter and enter each part of the code right  #
+ #         between the counting.                                            #
+ # Important: This code hast to be entered so that the counter is at 0 when #
+ # you press the final button [B]. To do so, start after second 9:          #
+ # Example: 9,up,8,down,7,up,6,down,5,left,4,right,3,left,2,right,1,A,0,B   #
+ # After entering the [B] button a chime should sound. Team edit unlocked!  #
+ #                                                                          #
  # ------------------------------------------------------------------------ #
- #		SPECIAL COURSE : ENABLE												#
- # Result:	Unlocks the boss mode, a game mode where you fight the bosses	#
- # 			only.															#
- # Code:	UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start		#
- # Conditions:																#
- #		1. Start from the title screen										#
- #		2. Hold [C] button													#
- #		3. Insert Coin														#
- #		4. Watch the 20 sec. counter and enter each part of the code right	#
- #		   between the counting.											#
- #		5. Release [C] button												#
- # After entering the [A] button a chime should sound. Special course		#
- # unlocked!																#
+ #      SPECIAL COURSE : ENABLE                                             #
+ # Result:  Unlocks the boss mode, a game mode where you fight the bosses   #
+ #          only.                                                           #
+ # Code:    UP  DOWN  UP  DOWN  LEFT  RIGHT  LEFT  RIGHT  B  A  Start       #
+ # Conditions:                                                              #
+ #      1. Start from the title screen                                      #
+ #      2. Hold [C] button                                                  #
+ #      3. Insert Coin                                                      #
+ #      4. Watch the 20 sec. counter and enter each part of the code right  #
+ #         between the counting.                                            #
+ #      5. Release [C] button                                               #
+ # After entering the [A] button a chime should sound. Special course       #
+ # unlocked!                                                                #
  ############################################################################
 
 
@@ -237,29 +237,29 @@ Battle Bakraid                 Working.
 
 
 Notes:
-	See Input Port definition header below, for instructions
-	  on how to enter pause/slow motion modes.
-	Code at $20A26 forces territory to Japan in V-Five. Some stuff
-	  NOP'd at reset vector, and NEC V25+ CPU post test is skipped (bootleg ?)
+    See Input Port definition header below, for instructions
+      on how to enter pause/slow motion modes.
+    Code at $20A26 forces territory to Japan in V-Five. Some stuff
+      NOP'd at reset vector, and NEC V25+ CPU post test is skipped (bootleg ?)
 
 To Do / Unknowns:
-	- Whoopee/Teki Paki sometimes tests bit 5 of the territory port
-		just after testing for vblank. Why ?
-	- Whoppee is currently using the sound CPU ROM (Z80) from a differnt
-		(pirate ?) version of Pipi and Bibis (Ryouta Kikaku copyright).
-		It really has a HD647180 CPU, and its internal ROM needs to be dumped.
-	- Fix top character text layer (implement the line position table).
-	- Priority problem on 2nd player side of selection screen in FixEight (both original and bootleg)
-	- Fixeight bootleg text in sound check mode does not display properly
-		with the CPU set to 10MHz (ok at 16MHz). Possible error in video_count_r routine.
+    - Whoopee/Teki Paki sometimes tests bit 5 of the territory port
+        just after testing for vblank. Why ?
+    - Whoppee is currently using the sound CPU ROM (Z80) from a differnt
+        (pirate ?) version of Pipi and Bibis (Ryouta Kikaku copyright).
+        It really has a HD647180 CPU, and its internal ROM needs to be dumped.
+    - Fix top character text layer (implement the line position table).
+    - Priority problem on 2nd player side of selection screen in FixEight (both original and bootleg)
+    - Fixeight bootleg text in sound check mode does not display properly
+        with the CPU set to 10MHz (ok at 16MHz). Possible error in video_count_r routine.
 
-	- Need to sort out the video status register. Currently should be enabled
-		by defining T2_VIDEO_CONTROL but sprite lag needs to be re-synched.
-		VIDEO_UPDATE should probably be AFTER Vblank.
-		Where did the magical '262' IRQ/Sec for the 68K come from? Probably
-		should be 256. CPU interleave on BBAKRAID is 262 aswell - why?
-	- Batrider IRQ4 beig activated at EOF is rubish. It's sound related -
-		maybe acknowledgement from the Z80 when its NMI has completed (port 46)
+    - Need to sort out the video status register. Currently should be enabled
+        by defining T2_VIDEO_CONTROL but sprite lag needs to be re-synched.
+        VIDEO_UPDATE should probably be AFTER Vblank.
+        Where did the magical '262' IRQ/Sec for the 68K come from? Probably
+        should be 256. CPU interleave on BBAKRAID is 262 aswell - why?
+    - Batrider IRQ4 beig activated at EOF is rubish. It's sound related -
+        maybe acknowledgement from the Z80 when its NMI has completed (port 46)
 
 *****************************************************************************/
 
@@ -390,7 +390,7 @@ static MACHINE_INIT( ghox )
 {
 	old_p1_paddle_h = 0;
 	old_p2_paddle_h = 0;
-	
+
 	machine_init_toaplan2();
 }
 
@@ -574,7 +574,7 @@ static void toaplan2_irq(int irq_line)
 	int vpos = cpu_getscanline();
 	if (vpos == 240) cpunum_set_input_line(0, irq_line, HOLD_LINE);
 	vblank_irq = 0; //Remove
-//	logerror("IRQ: scanline=%04x iloop=%04x beampos=%04x\n",vpos,cpu_getiloops(),cpu_gethorzbeampos());
+//  logerror("IRQ: scanline=%04x iloop=%04x beampos=%04x\n",vpos,cpu_getiloops(),cpu_gethorzbeampos());
 #else
 	if (cpu_getiloops() == 0) current_scanline = 255;
 
@@ -624,7 +624,7 @@ static READ16_HANDLER( video_count_r )
 	current_scanline = prev_scanline = vpos; //Remove
 	logerror("VC: scanline=%04x iloop=%04x beampos=%04x VBL=%04x\n",vpos,cpu_getiloops(),hpos,cpu_getvblank());
 #else
-//	logerror("Was VS=%04x  Vbl=%02x  VS=%04x - ",video_status,vblank_irq,prev_scanline );
+//  logerror("Was VS=%04x  Vbl=%02x  VS=%04x - ",video_status,vblank_irq,prev_scanline );
 
 	video_status = 0xff00;						/* Set signals inactive */
 	if ((current_scanline & 0x100) == 0) {
@@ -644,7 +644,7 @@ static READ16_HANDLER( video_count_r )
 	}
 	prev_scanline = current_scanline;
 
-//	logerror("Now VC=%04x  Vbl=%02x  VS=%04x  HS=%04x\n",video_status,vblank_irq,cpu_getscanline(),cpu_gethorzbeampos() );
+//  logerror("Now VC=%04x  Vbl=%02x  VS=%04x  HS=%04x\n",video_status,vblank_irq,cpu_getscanline(),cpu_gethorzbeampos() );
 #endif
 
 	return video_status;
@@ -707,7 +707,7 @@ static WRITE16_HANDLER( toaplan2_shared_w )
 static WRITE16_HANDLER( toaplan2_hd647180_cpu_w )
 {
 	/* Command sent to secondary CPU. Support for HD647180 will be
-	   required when a ROM dump becomes available for this hardware */
+       required when a ROM dump becomes available for this hardware */
 
 	if (ACCESSING_LSB)
 	{
@@ -799,21 +799,21 @@ static WRITE16_HANDLER( ghox_mcu_w )
 
 		if (data == 0xd3)
 		{
-		toaplan2_shared_ram16[0x56 / 2] = 0x003a;	//	move.w  d1,d5
+		toaplan2_shared_ram16[0x56 / 2] = 0x003a;	//  move.w  d1,d5
 		toaplan2_shared_ram16[0x58 / 2] = 0x0001;
-		toaplan2_shared_ram16[0x5a / 2] = 0x0008;	//	bclr.b  #0,d5
+		toaplan2_shared_ram16[0x5a / 2] = 0x0008;	//  bclr.b  #0,d5
 		toaplan2_shared_ram16[0x5c / 2] = 0x0085;
 		toaplan2_shared_ram16[0x5e / 2] = 0x0000;
 		toaplan2_shared_ram16[0x60 / 2] = 0x0000;
-		toaplan2_shared_ram16[0x62 / 2] = 0x00cb;	//	muls.w  #3,d5
+		toaplan2_shared_ram16[0x62 / 2] = 0x00cb;	//  muls.w  #3,d5
 		toaplan2_shared_ram16[0x64 / 2] = 0x00fc;
 		toaplan2_shared_ram16[0x66 / 2] = 0x0000;
 		toaplan2_shared_ram16[0x68 / 2] = 0x0003;
-		toaplan2_shared_ram16[0x6a / 2] = 0x0090;	//	sub.w   d5,d0
+		toaplan2_shared_ram16[0x6a / 2] = 0x0090;	//  sub.w   d5,d0
 		toaplan2_shared_ram16[0x6c / 2] = 0x0045;
-		toaplan2_shared_ram16[0x6e / 2] = 0x00e5;	//	lsl.b   #2,d1
+		toaplan2_shared_ram16[0x6e / 2] = 0x00e5;	//  lsl.b   #2,d1
 		toaplan2_shared_ram16[0x70 / 2] = 0x0009;
-		toaplan2_shared_ram16[0x72 / 2] = 0x004e;	//	rts
+		toaplan2_shared_ram16[0x72 / 2] = 0x004e;	//  rts
 		toaplan2_shared_ram16[0x74 / 2] = 0x0075;
 		}
 	}
@@ -822,18 +822,18 @@ static WRITE16_HANDLER( ghox_mcu_w )
 static READ16_HANDLER( ghox_shared_ram_r )
 {
 	/* Ghox 68K reads data from MCU shared RAM and writes it to main RAM.
-	   It then subroutine jumps to main RAM and executes this code.
-	   Here, we're just returning a RTS instruction for now.
-	   See above ghox_mcu_w routine.
+       It then subroutine jumps to main RAM and executes this code.
+       Here, we're just returning a RTS instruction for now.
+       See above ghox_mcu_w routine.
 
-	   Offset $56 and $58 are accessed from around PC:0F814
+       Offset $56 and $58 are accessed from around PC:0F814
 
-	   Offset $38 and $36 are accessed from around PC:0DA7C
-	   Offset $3c and $3a are accessed from around PC:02E3C
-	   Offset $40 and $3E are accessed from around PC:103EE
-	   Offset $44 and $42 are accessed from around PC:0FB52
-	   Offset $48 and $46 are accessed from around PC:06776
-	*/
+       Offset $38 and $36 are accessed from around PC:0DA7C
+       Offset $3c and $3a are accessed from around PC:02E3C
+       Offset $40 and $3E are accessed from around PC:103EE
+       Offset $44 and $42 are accessed from around PC:0FB52
+       Offset $48 and $46 are accessed from around PC:06776
+    */
 
 	return toaplan2_shared_ram16[offset] & 0xff;
 }
@@ -848,8 +848,8 @@ static WRITE16_HANDLER( ghox_shared_ram_w )
 static READ16_HANDLER( shared_ram_r )
 {
 /*  Other games using a NEC V25+ secondary CPU, have shared memory between
-	the 68000 and the V25+ CPU. The 68000 reads the status of the V25+
-	via a location of the shared memory.
+    the 68000 and the V25+ CPU. The 68000 reads the status of the V25+
+    via a location of the shared memory.
 */
 	return toaplan2_shared_ram16[offset] & 0xff;
 }
@@ -907,10 +907,10 @@ static WRITE16_HANDLER( dogyuun_snd_cpu_w )
 
 static READ16_HANDLER( kbash_snd_cpu_r )
 {
-/*	Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
-	If a value of 2 is read, then secondary CPU is busy.
-	Secondary CPU must report 0xff when no longer busy, to signify that it
-	has passed POST.
+/*  Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
+    If a value of 2 is read, then secondary CPU is busy.
+    Secondary CPU must report 0xff when no longer busy, to signify that it
+    has passed POST.
 */
 	return 0xff;
 }
@@ -1171,10 +1171,10 @@ static WRITE8_HANDLER( batrider_bankswitch_w )
 static READ16_HANDLER( batrider_z80_busack_r )
 {
 	/* Bit 1 returns the status of BUSAK from the Z80.
-	   BUSRQ is activated via bit 0x10 on the NVRAM write port.
-	   These accesses are made when the 68K wants to read the Z80
-	   ROM code. Failure to return the correct status incurrs a Sound Error.
-	*/
+       BUSRQ is activated via bit 0x10 on the NVRAM write port.
+       These accesses are made when the 68K wants to read the Z80
+       ROM code. Failure to return the correct status incurrs a Sound Error.
+    */
 
 	return raizing_Z80_busreq;			/* Loop BUSRQ to BUSAK */
 }
@@ -1241,17 +1241,17 @@ static data8_t bbakraid_unlimited_nvram[512] = {
 struct EEPROM_interface eeprom_interface_93C66 =
 {
 	/* Pin 6 of the 93C66 is connected to Gnd!
-	   So it's configured for 512 bytes */
+       So it's configured for 512 bytes */
 
 	9,			// address bits
 	8,			// data bits
-	"*110",		// read			110 aaaaaaaaa
-	"*101",		// write		101 aaaaaaaaa dddddddd
-	"*111",		// erase		111 aaaaaaaaa
-	"*10000xxxxxxx",// lock			100x 00xxxx
-	"*10011xxxxxxx",// unlock		100x 11xxxx
-//	"*10001xxxx",	// write all	1 00 01xxxx dddddddd
-//	"*10010xxxx"	// erase all	1 00 10xxxx
+	"*110",		// read         110 aaaaaaaaa
+	"*101",		// write        101 aaaaaaaaa dddddddd
+	"*111",		// erase        111 aaaaaaaaa
+	"*10000xxxxxxx",// lock         100x 00xxxx
+	"*10011xxxxxxx",// unlock       100x 11xxxx
+//  "*10001xxxx",   // write all    1 00 01xxxx dddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
 
@@ -1277,10 +1277,10 @@ static NVRAM_HANDLER( bbakraid )
 static READ16_HANDLER( bbakraid_nvram_r )
 {
 	/* Bit 1 returns the status of BUSAK from the Z80.
-	   BUSRQ is activated via bit 0x10 on the NVRAM write port.
-	   These accesses are made when the 68K wants to read the Z80
-	   ROM code. Failure to return the correct status incurrs a Sound Error.
-	*/
+       BUSRQ is activated via bit 0x10 on the NVRAM write port.
+       These accesses are made when the 68K wants to read the Z80
+       ROM code. Failure to return the correct status incurrs a Sound Error.
+    */
 
 	int data;
 	data  = ((EEPROM_read_bit() & 0x01) << 4);
@@ -1312,12 +1312,12 @@ static WRITE16_HANDLER( bbakraid_nvram_w )
 /****** Battle Bakraid 68K handlers ******/
 static READ16_HANDLER ( raizing_sndcomms_r )
 {
-//	logerror("68K (PC:%06x) reading %04x from $50001%01x\n",activecpu_get_pc(),(raizing_cpu_reply[offset] & 0xff),(offset*2));
+//  logerror("68K (PC:%06x) reading %04x from $50001%01x\n",activecpu_get_pc(),(raizing_cpu_reply[offset] & 0xff),(offset*2));
 	return (raizing_cpu_reply[offset] & 0xff);
 }
 static WRITE16_HANDLER ( raizing_sndcomms_w )
 {
-//	logerror("68K (PC:%06x) writing %04x to $50001%01x\n",activecpu_get_pc(),data,((offset*2)+4));
+//  logerror("68K (PC:%06x) writing %04x to $50001%01x\n",activecpu_get_pc(),data,((offset*2)+4));
 	COMBINE_DATA(&raizing_cpu_comm16[offset]);
 
 	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
@@ -1341,26 +1341,26 @@ static READ8_HANDLER ( raizing_request_r )
 }
 static WRITE8_HANDLER ( raizing_command_ack_w )
 {
-//	logerror("Z80 (PC:%04x) writing %02x to $40\n",activecpu_get_pc(),data);
+//  logerror("Z80 (PC:%04x) writing %02x to $40\n",activecpu_get_pc(),data);
 	raizing_cpu_reply[0] = data;
 }
 static WRITE8_HANDLER ( raizing_request_ack_w )
 {
-//	logerror("Z80 (PC:%04x) writing %02x to $42\n",activecpu_get_pc(),data);
+//  logerror("Z80 (PC:%04x) writing %02x to $42\n",activecpu_get_pc(),data);
 	raizing_cpu_reply[1] = data;
 }
 
 
 static WRITE8_HANDLER ( raizing_clear_nmi_w )
 {
-//	logerror("Clear NMI on the Z80 (Z80 PC:%06x writing %04x)\n",activecpu_get_pc(),data);
+//  logerror("Clear NMI on the Z80 (Z80 PC:%06x writing %04x)\n",activecpu_get_pc(),data);
 	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	cpu_yield();
 }
 
 static WRITE16_HANDLER ( bbakraid_trigger_z80_irq )
 {
-//	logerror("Triggering IRQ on the Z80 (PC:%06x)\n",activecpu_get_pc());
+//  logerror("Triggering IRQ on the Z80 (PC:%06x)\n",activecpu_get_pc());
 	cpunum_set_input_line(1, 0, HOLD_LINE);
 	cpu_yield();
 }
@@ -1610,7 +1610,7 @@ static ADDRESS_MAP_START( pipibibi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x083800, 0x087fff) AM_WRITE(MWA16_RAM)			/* SpriteRAM (unused) */
 	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x120000, 0x120fff) AM_WRITE(MWA16_RAM)			/* Copy of SpriteRAM ? */
-//	AM_RANGE(0x13f000, 0x13f001) AM_WRITE(MWA16_NOP)			/* ??? */
+//  AM_RANGE(0x13f000, 0x13f001) AM_WRITE(MWA16_NOP)            /* ??? */
 	AM_RANGE(0x180000, 0x182fff) AM_WRITE(pipibibi_videoram16_w)/* TileRAM */
 	AM_RANGE(0x188000, 0x18800f) AM_WRITE(pipibibi_scroll_w)
 	AM_RANGE(0x190010, 0x190011) AM_WRITE(pipibibi_z80_task_w)	/* Z80 task to perform */
@@ -1631,11 +1631,11 @@ static ADDRESS_MAP_START( fixeight_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 #else
 	AM_RANGE(0x28e000, 0x28efff) AM_READ(shared_ram_r)
 	AM_RANGE(0x28f000, 0x28f001) AM_READ(fixeight_sec_cpu_r)	/* V25+ status port */
-//	AM_RANGE(0x28f002, 0x28f003) AM_READ(MRA16_RAM)				/* part of shared ram */
-//	AM_RANGE(0x28f004, 0x28f005) AM_READ(input_port_5_word_r)	/* Dip Switch A - Wrong !!! */
-//	AM_RANGE(0x28f006, 0x28f007) AM_READ(input_port_6_word_r)	/* Dip Switch B - Wrong !!! */
-//	AM_RANGE(0x28f008, 0x28f009) AM_READ(input_port_7_word_r)	/* Territory Jumper block - Wrong !!! */
-//	AM_RANGE(0x28f002, 0x28fbff) AM_READ(MRA16_RAM)				/* part of shared ram */
+//  AM_RANGE(0x28f002, 0x28f003) AM_READ(MRA16_RAM)             /* part of shared ram */
+//  AM_RANGE(0x28f004, 0x28f005) AM_READ(input_port_5_word_r)   /* Dip Switch A - Wrong !!! */
+//  AM_RANGE(0x28f006, 0x28f007) AM_READ(input_port_6_word_r)   /* Dip Switch B - Wrong !!! */
+//  AM_RANGE(0x28f008, 0x28f009) AM_READ(input_port_7_word_r)   /* Territory Jumper block - Wrong !!! */
+//  AM_RANGE(0x28f002, 0x28fbff) AM_READ(MRA16_RAM)             /* part of shared ram */
 	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)
@@ -1659,9 +1659,9 @@ static ADDRESS_MAP_START( fixeight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 #else
 	AM_RANGE(0x28e000, 0x28efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
 	AM_RANGE(0x28f000, 0x28f001) AM_WRITE(fixeight_sec_cpu_w)	/* V25+ command port */
-//	AM_RANGE(0x28f002, 0x28f003) AM_WRITE(MWA16_RAM)			/* part of shared ram */
-//	AM_RANGE(0x28f004, 0x28f009) AM_WRITE(MWA16_NOP)			/* part of shared ram */
-//	AM_RANGE(0x28f002, 0x28fbff) AM_WRITE(MWA16_RAM)			/* part of shared ram */
+//  AM_RANGE(0x28f002, 0x28f003) AM_WRITE(MWA16_RAM)            /* part of shared ram */
+//  AM_RANGE(0x28f004, 0x28f009) AM_WRITE(MWA16_NOP)            /* part of shared ram */
+//  AM_RANGE(0x28f002, 0x28fbff) AM_WRITE(MWA16_RAM)            /* part of shared ram */
 	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
@@ -1701,7 +1701,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( vfive_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-//	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_ROM)				/* Sound ROM is here ??? */
+//  AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_ROM)             /* Sound ROM is here ??? */
 	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
 	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
 	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
@@ -1725,7 +1725,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( vfive_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_ROM)			/* Sound ROM is here ??? */
+//  AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_ROM)            /* Sound ROM is here ??? */
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
 #if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
@@ -1894,7 +1894,7 @@ static ADDRESS_MAP_START( shippumd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x218000, 0x21bfff) AM_WRITE(raizing_shared_ram_w)
-//	AM_RANGE(0x21c008, 0x21c009) AM_WRITE(MWA16_NOP)			/* ??? */
+//  AM_RANGE(0x21c008, 0x21c009) AM_WRITE(MWA16_NOP)            /* ??? */
 	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
@@ -2157,7 +2157,7 @@ ADDRESS_MAP_END
 #if V25
 static ADDRESS_MAP_START( V25_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_ROM)
-//	AM_RANGE(0x00000, 0x007ff) AM_READ(MRA8_RAM)			/* External shared RAM (Banked) */
+//  AM_RANGE(0x00000, 0x007ff) AM_READ(MRA8_RAM)            /* External shared RAM (Banked) */
 	AM_RANGE(0x04000, 0x04000) AM_READ(YM2151_status_port_0_r)
 	AM_RANGE(0x04002, 0x04002) AM_READ(OKIM6295_status_0_r)
 	AM_RANGE(0x04008, 0x04008) AM_READ(input_port_1_r)
@@ -2169,7 +2169,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( V25_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_ROM)
-//	AM_RANGE(0x00000, 0x007ff) AM_WRITE(MWA8_RAM)			/* External shared RAM (Banked) */
+//  AM_RANGE(0x00000, 0x007ff) AM_WRITE(MWA8_RAM)           /* External shared RAM (Banked) */
 	AM_RANGE(0x04000, 0x04000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x04001, 0x04001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x04002, 0x04002) AM_WRITE(OKIM6295_data_0_w)
@@ -2189,12 +2189,12 @@ ADDRESS_MAP_END
 
 
 /*****************************************************************************
-	Input Port definitions
-	Service input of the TOAPLAN2_SYSTEM_INPUTS is used as a Pause type input.
-	If you press then release the following buttons, the following occurs:
-	Service & P2 start            : The game will pause.
-	P1 start                      : The game will continue.
-	Service & P1 start & P2 start : The game will play in slow motion.
+    Input Port definitions
+    Service input of the TOAPLAN2_SYSTEM_INPUTS is used as a Pause type input.
+    If you press then release the following buttons, the following occurs:
+    Service & P2 start            : The game will pause.
+    P1 start                      : The game will continue.
+    Service & P1 start & P2 start : The game will play in slow motion.
 *****************************************************************************/
 
 #define  TOAPLAN2_PLAYER_INPUT( player, button3, button4 )						\
@@ -2336,7 +2336,7 @@ INPUT_PORTS_START( tekipaki )
 
 	DSWA_8
 	EUROPEAN_COINAGE_8
-//	NONEUROPEAN_COINAGE_8
+//  NONEUROPEAN_COINAGE_8
 
 	PORT_START_TAG("DSWB")
 	DIFFICULTY_8
@@ -2388,7 +2388,7 @@ INPUT_PORTS_START( ghox )
 
 	DSWA_8
 	EUROPEAN_COINAGE_8
-//	NONEUROPEAN_COINAGE_8
+//  NONEUROPEAN_COINAGE_8
 
 	PORT_START_TAG("DSWB")
 	DIFFICULTY_8
@@ -2457,7 +2457,7 @@ INPUT_PORTS_START( dogyuun )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -2486,14 +2486,14 @@ INPUT_PORTS_START( dogyuun )
 	PORT_DIPSETTING(	0x08, "South East Asia (Charterfield license)" )
 	PORT_DIPSETTING(	0x0c, "USA (Atari Games Corp license)" )
 	PORT_DIPSETTING(	0x0f, "Japan (Taito Corp license)" )
-/*	Duplicate settings
-	PORT_DIPSETTING(	0x0b, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x07, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x0a, "Korea (Unite Trading license)" )
-	PORT_DIPSETTING(	0x09, "Hong Kong (Charterfield license)" )
-	PORT_DIPSETTING(	0x0b, "Taiwan" )
-	PORT_DIPSETTING(	0x0d, "South East Asia (Charterfield license)" )
-	PORT_DIPSETTING(	0x0c, "USA (Atari Games Corp license)" )
+/*  Duplicate settings
+    PORT_DIPSETTING(    0x0b, DEF_STR( Europe ) )
+    PORT_DIPSETTING(    0x07, DEF_STR( USA ) )
+    PORT_DIPSETTING(    0x0a, "Korea (Unite Trading license)" )
+    PORT_DIPSETTING(    0x09, "Hong Kong (Charterfield license)" )
+    PORT_DIPSETTING(    0x0b, "Taiwan" )
+    PORT_DIPSETTING(    0x0d, "South East Asia (Charterfield license)" )
+    PORT_DIPSETTING(    0x0c, "USA (Atari Games Corp license)" )
 */
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
 INPUT_PORTS_END
@@ -2523,7 +2523,7 @@ INPUT_PORTS_START( kbash )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -2586,7 +2586,7 @@ INPUT_PORTS_START( truxton2 )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -2635,7 +2635,7 @@ INPUT_PORTS_START( pipibibs )
 
 	DSWA_8
 	EUROPEAN_COINAGE_8
-//	NONEUROPEAN_COINAGE_8
+//  NONEUROPEAN_COINAGE_8
 
 	PORT_START_TAG("DSWB")
 	DIFFICULTY_8
@@ -2680,7 +2680,7 @@ INPUT_PORTS_START( whoopee )
 	TOAPLAN2_SYSTEM_INPUTS
 
 	DSWA_8
-//	EUROPEAN_COINAGE_8
+//  EUROPEAN_COINAGE_8
 	NONEUROPEAN_COINAGE_8
 
 	PORT_START_TAG("DSWB")
@@ -2716,8 +2716,8 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( pipibibi )
 	PORT_START_TAG("IN0")		/* (0) VBlank */
-//	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )		/* This video HW */
-//	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )		/* doesnt wait for VBlank */
+//  PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )      /* This video HW */
+//  PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )     /* doesnt wait for VBlank */
 
 	PORT_START_TAG("IN1")
 	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
@@ -2732,14 +2732,14 @@ INPUT_PORTS_START( pipibibi )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
 	/* This video HW doesn't support flip screen */
-//	PORT_DIPNAME( 0x02,	0x00, DEF_STR( Flip_Screen ) )
-//	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_SERVICE( 0x04,	IP_ACTIVE_HIGH )		/* Service Mode */
 	PORT_DIPNAME( 0x08,	0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-//	EUROPEAN_COINAGE_8
+//  EUROPEAN_COINAGE_8
 	NONEUROPEAN_COINAGE_8
 
 	PORT_START_TAG("DSWB")
@@ -2766,7 +2766,7 @@ INPUT_PORTS_START( pipibibi )
 	PORT_DIPSETTING(	0x04, DEF_STR( USA ) )
 	PORT_DIPSETTING(	0x01, "Hong Kong (Honest Trading Co.)" )
 	PORT_DIPSETTING(	0x06, "Spain & Portugal (APM Electronics SA)" )
-//	PORT_DIPSETTING(	0x03, DEF_STR( World ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( World ) )
 	PORT_DIPNAME( 0x08,	0x00, "Nudity" )
 	PORT_DIPSETTING(	0x08, DEF_STR( Low ) )
 	PORT_DIPSETTING(	0x00, "High, but censored" )
@@ -2821,7 +2821,7 @@ INPUT_PORTS_START( fixeight )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -2896,7 +2896,7 @@ INPUT_PORTS_START( fixeighb )
 	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//	EUROPEAN_COINAGE_16
+//  EUROPEAN_COINAGE_16
 	NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -2944,7 +2944,7 @@ INPUT_PORTS_START( grindstm )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -2975,12 +2975,12 @@ INPUT_PORTS_START( grindstm )
 	PORT_DIPSETTING(	0x02, "Hong Kong (Charterfield License)" )
 	PORT_DIPSETTING(	0x04, "Taiwan (Anomoto International Inc License)" )
 	PORT_DIPSETTING(	0x06, "South East Asia (Charterfield License)" )
-/*	Duplicate settings
-	PORT_DIPSETTING(	0x09, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x0d, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x0e, "Korea" )
-	PORT_DIPSETTING(	0x0f, "Korea" )
-	PORT_DIPSETTING(	0x0c, "USA (American Sammy Corporation License)" )
+/*  Duplicate settings
+    PORT_DIPSETTING(    0x09, DEF_STR( Europe ) )
+    PORT_DIPSETTING(    0x0d, DEF_STR( USA ) )
+    PORT_DIPSETTING(    0x0e, "Korea" )
+    PORT_DIPSETTING(    0x0f, "Korea" )
+    PORT_DIPSETTING(    0x0c, "USA (American Sammy Corporation License)" )
 */
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
 INPUT_PORTS_END
@@ -3057,7 +3057,7 @@ INPUT_PORTS_START( batsugun )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	EUROPEAN_COINAGE_16
-//	NONEUROPEAN_COINAGE_16
+//  NONEUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3080,7 +3080,7 @@ INPUT_PORTS_START( batsugun )
 	PORT_DIPSETTING(		0x0009, DEF_STR( Europe ) )
 	PORT_DIPSETTING(		0x000b, DEF_STR( USA ) )
 	PORT_DIPSETTING(		0x000e, DEF_STR( Japan ) )
-//	PORT_DIPSETTING(		0x000f, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x000f, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0001, "Korea" )
 	PORT_DIPSETTING(		0x0003, "Hong Kong" )
 	PORT_DIPSETTING(		0x0005, "Taiwan" )
@@ -3088,7 +3088,7 @@ INPUT_PORTS_START( batsugun )
 	PORT_DIPSETTING(		0x0008, "Europe (Taito Corp License)" )
 	PORT_DIPSETTING(		0x000a, "USA (Taito Corp License)" )
 	PORT_DIPSETTING(		0x000c, "Japan (Taito Corp License)" )
-//	PORT_DIPSETTING(		0x000d, "Japan (Taito Corp License)" )
+//  PORT_DIPSETTING(        0x000d, "Japan (Taito Corp License)" )
 	PORT_DIPSETTING(		0x0000, "Korea (Unite Trading License)" )
 	PORT_DIPSETTING(		0x0002, "Hong Kong (Taito Corp License)" )
 	PORT_DIPSETTING(		0x0004, "Taiwan (Taito Corp License)" )
@@ -3128,8 +3128,8 @@ INPUT_PORTS_START( snowbro2 )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	NONEUROPEAN_COINAGE_16
 	/*  The following are listed in service mode for European territory,
-		but are not actually used in game play. */
-//	EUROPEAN_COINAGE_16
+        but are not actually used in game play. */
+//  EUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3300,8 +3300,8 @@ INPUT_PORTS_START( kingdmgp )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	NONEUROPEAN_COINAGE_16
 	/*  When Territory is set to Europe, the Coin A and B have
-		different values */
-//	EUROPEAN_COINAGE_16
+        different values */
+//  EUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3325,7 +3325,7 @@ INPUT_PORTS_START( kingdmgp )
 	PORT_DIPNAME( 0x000e,	0x0004, "Territory" )
 	PORT_DIPSETTING(		0x0004, DEF_STR( Europe ) )
 	PORT_DIPSETTING(		0x0002, DEF_STR( USA ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0006, "South East Asia" )
 	PORT_DIPSETTING(		0x0008, "China" )
 	PORT_DIPSETTING(		0x000a, "Korea" )
@@ -3360,8 +3360,8 @@ INPUT_PORTS_START( shippumd )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	NONEUROPEAN_COINAGE_16
 	/*  When Territory is set to Europe, the Coin A and B have
-		different values */
-//	EUROPEAN_COINAGE_16
+        different values */
+//  EUROPEAN_COINAGE_16
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3420,18 +3420,18 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(		0x00e0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
 	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-		and Coin_B becomes the following dips */
-//	PORT_DIPNAME( 0x0020,	0x0000, "Joystick Mode" )
-//	PORT_DIPSETTING(		0x0000, "90 degrees ACW" )
-//	PORT_DIPSETTING(		0x0020, DEF_STR( Normal ) )
-//	PORT_DIPNAME( 0x0040,	0x0000, "Effect" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0080,	0x0000, "Music" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
+        and Coin_B becomes the following dips */
+//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
+//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
+//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
+//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3450,11 +3450,11 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPSETTING(		0x0040, "5" )
 	PORT_DIPSETTING(		0x0050, "6" )
 	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//	PORT_DIPSETTING(		0x0070, "Invulnerability (Cheat)")
+//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
 	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
 	/* Bonus_Life for Non European territories */
-//	PORT_DIPSETTING(		0x0000, "Every 1000k" )
-//	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )
+//  PORT_DIPSETTING(        0x0000, "Every 1000k" )
+//  PORT_DIPSETTING(        0x0080, "1000k and 2000k" )
 	/* Bonus_Life values for European territories */
 	PORT_DIPSETTING(		0x0080, "Every 2000k" )
 	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )
@@ -3470,8 +3470,8 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPNAME( 0x0003,	0x0001, "Territory" )
 	PORT_DIPSETTING(		0x0001, "Denmark (German Tuning license)" )
 	/* These Settings End Up Reporting ROM-0 as BAD */
-//	PORT_DIPSETTING(		0x0002, "USA (Fabtek license)" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0002, "USA (Fabtek license)" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0003, "China" )
 	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -3511,18 +3511,18 @@ INPUT_PORTS_START( battlega )
 	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(		0x00e0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
 	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-		and Coin_B becomes the following dips */
-//	PORT_DIPNAME( 0x0020,	0x0000, "Joystick Mode" )
-//	PORT_DIPSETTING(		0x0000, "90 degrees ACW" )
-//	PORT_DIPSETTING(		0x0020, DEF_STR( Normal ) )
-//	PORT_DIPNAME( 0x0040,	0x0000, "Effect" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0080,	0x0000, "Music" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
+        and Coin_B becomes the following dips */
+//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
+//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
+//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
+//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3541,7 +3541,7 @@ INPUT_PORTS_START( battlega )
 	PORT_DIPSETTING(		0x0040, "5" )
 	PORT_DIPSETTING(		0x0050, "6" )
 	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//	PORT_DIPSETTING(		0x0070, "Invulnerability (Cheat)")
+//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
 	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
 	/* Bonus_Life for Japanese territory */
 	PORT_DIPSETTING(		0x0000, "Every 1000k" )			PORT_DIPCONDITION(6,0x03,PORTCOND_EQUALS,0x00)
@@ -3601,18 +3601,18 @@ INPUT_PORTS_START( battlegb )
 	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(		0x00e0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
 	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-		and Coin_B becomes the following dips */
-//	PORT_DIPNAME( 0x0020,	0x0000, "Joystick Mode" )
-//	PORT_DIPSETTING(		0x0000, "90 degrees ACW" )
-//	PORT_DIPSETTING(		0x0020, DEF_STR( Normal ) )
-//	PORT_DIPNAME( 0x0040,	0x0000, "Effect" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0080,	0x0000, "Music" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
+        and Coin_B becomes the following dips */
+//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
+//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
+//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
+//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSWB")
@@ -3631,11 +3631,11 @@ INPUT_PORTS_START( battlegb )
 	PORT_DIPSETTING(		0x0040, "5" )
 	PORT_DIPSETTING(		0x0050, "6" )
 	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//	PORT_DIPSETTING(		0x0070, "Invulnerability (Cheat)")
+//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
 	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
 	/* Bonus_Life for Non European territories */
-//	PORT_DIPSETTING(		0x0000, "Every 1000k" )
-//	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )
+//  PORT_DIPSETTING(        0x0000, "Every 1000k" )
+//  PORT_DIPSETTING(        0x0080, "1000k and 2000k" )
 	/* Bonus_Life values for European territories */
 	PORT_DIPSETTING(		0x0080, "Every 2000k" )
 	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )
@@ -3651,8 +3651,8 @@ INPUT_PORTS_START( battlegb )
 	PORT_DIPNAME( 0x0003,	0x0001, "Territory" )
 	PORT_DIPSETTING(		0x0001, "Austria (German Tuning license)" )
 	/* These Settings End Up Reporting ROM-0 as BAD */
-//	PORT_DIPSETTING(		0x0002, "USA (Fabtek license)" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0002, "USA (Fabtek license)" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0003, "Hong Kong" )
 	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -3703,16 +3703,16 @@ INPUT_PORTS_START( batrider )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x1000, DEF_STR( On ) )
 	/*  These Dips are showed only when Coin_A is set to Free_Play.
-		They are the last 3 Unused dips. Seems to be debug options */
-//	PORT_DIPNAME( 0x2000,	0x0000, "Guest Player" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x2000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x4000,	0x0000, "Player Select" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x4000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x8000,	0x0000, "Special Course" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x8000, DEF_STR( On ) )
+        They are the last 3 Unused dips. Seems to be debug options */
+//  PORT_DIPNAME( 0x2000,   0x0000, "Guest Player" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x2000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x4000,   0x0000, "Player Select" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x4000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x8000,   0x0000, "Special Course" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x8000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000,	0x0000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x2000, DEF_STR( On ) )
@@ -3729,9 +3729,9 @@ INPUT_PORTS_START( batrider )
 	PORT_DIPSETTING(		0x0000, "1" )
 	PORT_DIPSETTING(		0x0002, "2" )
 	/* When Coin_A is set to Free_Play, dip 0x0002 becomes: */
-//	PORT_DIPNAME( 0x0002,	0x0000, "Joystick Mode" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(		0x0002, "90 degrees ACW" )
+//  PORT_DIPNAME( 0x0002,   0x0000, "Joystick Mode" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(        0x0002, "90 degrees ACW" )
 	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
@@ -3749,17 +3749,17 @@ INPUT_PORTS_START( batrider )
 	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(		0x00e0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
 	/* Coin_B becomes the following dips, when Coin_A is set to Free_Play */
-//	PORT_DIPNAME( 0x0020,	0x0000, "Hit Score" )
-//	PORT_DIPSETTING(		0x0020, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0040,	0x0000, "Sound Effect" )
-//	PORT_DIPSETTING(		0x0040, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0080,	0x0000, "Music" )
-//	PORT_DIPSETTING(		0x0080, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0020,   0x0000, "Hit Score" )
+//  PORT_DIPSETTING(        0x0020, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0040,   0x0000, "Sound Effect" )
+//  PORT_DIPSETTING(        0x0040, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
+//  PORT_DIPSETTING(        0x0080, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
@@ -3843,9 +3843,9 @@ INPUT_PORTS_START( bbakraid )
 	PORT_DIPSETTING(		0x0000, "1" )
 	PORT_DIPSETTING(		0x0002, "2" )
 	/* When Coin_A is set to Free_Play, dip 0x0002 becomes: */
-//	PORT_DIPNAME( 0x0002,	0x0000, "Joystick Mode" )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(		0x0002, "90 degrees ACW" )
+//  PORT_DIPNAME( 0x0002,   0x0000, "Joystick Mode" )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(        0x0002, "90 degrees ACW" )
 	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
@@ -3863,18 +3863,18 @@ INPUT_PORTS_START( bbakraid )
 	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(		0x00e0, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
 	/* Coin_B becomes the following dips, when Coin_A is set to Free_Play */
 	/* Coin_B slot also behaves in freeplay mode when Coin_A is in freeplay */
-//	PORT_DIPNAME( 0x0020,	0x0000, "Hit Score" )
-//	PORT_DIPSETTING(		0x0020, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0040,	0x0000, "Sound Effect" )
-//	PORT_DIPSETTING(		0x0040, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x0080,	0x0000, "Music" )
-//	PORT_DIPSETTING(		0x0080, DEF_STR( Off ) )
-//	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0020,   0x0000, "Hit Score" )
+//  PORT_DIPSETTING(        0x0020, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0040,   0x0000, "Sound Effect" )
+//  PORT_DIPSETTING(        0x0040, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
+//  PORT_DIPSETTING(        0x0080, DEF_STR( Off ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
@@ -4014,8 +4014,8 @@ static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
 	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
-//	{ REGION_CPU1, 0x40000, &truxton2_tx_tilelayout, 0, 128 },	/* Truxton 2 */
-//	{ REGION_CPU1, 0x68000, &truxton2_tx_tilelayout, 0, 128 },	/* Fix Eight */
+//  { REGION_CPU1, 0x40000, &truxton2_tx_tilelayout, 0, 128 },  /* Truxton 2 */
+//  { REGION_CPU1, 0x68000, &truxton2_tx_tilelayout, 0, 128 },  /* Fix Eight */
 	{ 0, 0, &truxton2_tx_tilelayout,  0, 128 },
 	{ -1 } /* end of array */
 };
@@ -4384,7 +4384,7 @@ static MACHINE_DRIVER_START( fixeight )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(toaplan2)
-///	MDRV_NVRAM_HANDLER(fixeight)		/* See 37B6 code */
+/// MDRV_NVRAM_HANDLER(fixeight)        /* See 37B6 code */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -4817,7 +4817,7 @@ ROM_START( dogyuun )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp022.mcu", 0x00000, 0x08000, NO_DUMP )
+//  ROM_LOAD( "tp022.mcu", 0x00000, 0x08000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -4924,7 +4924,7 @@ ROM_START( fixeight )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
-//	ROM_LOAD( "tp-026.mcu", 0x0000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp-026.mcu", 0x0000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -4967,7 +4967,7 @@ ROM_START( grindstm )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -4983,7 +4983,7 @@ ROM_START( grindsta )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -4999,7 +4999,7 @@ ROM_START( vfive )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -5015,7 +5015,7 @@ ROM_START( batsugun )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -5040,7 +5040,7 @@ ROM_START( batugnsp )
 	/* Its likely to be a NEC V25+ (PLCC94). */
 #if V25
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
-//	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
+//  ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )

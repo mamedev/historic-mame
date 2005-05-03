@@ -102,7 +102,7 @@ static void namco_63701x_update(void *param, stream_sample_t **inputs, stream_sa
 static void *namco_63701x_start(int sndindex, int clock, const void *config)
 {
 	struct namco_63701x *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
@@ -126,11 +126,11 @@ void namco_63701x_write(int offset, int data)
 	else
 	{
 		/*
-		  should we stop the playing sample if voice_select[ch] == 0 ?
-		  originally we were, but this makes us lose a sample in genpeitd,
-		  after the continue counter reaches 0. Either we shouldn't stop
-		  the sample, or genpeitd is returning to the title screen too soon.
-		 */
+          should we stop the playing sample if voice_select[ch] == 0 ?
+          originally we were, but this makes us lose a sample in genpeitd,
+          after the continue counter reaches 0. Either we shouldn't stop
+          the sample, or genpeitd is returning to the title screen too soon.
+         */
 		if (chip->voices[ch].select & 0x1f)
 		{
 			int rom_offs;

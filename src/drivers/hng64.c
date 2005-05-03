@@ -7,7 +7,7 @@ ToDo  12th Oct 2004:
 
 * find where the remainder of the display list information is 'hiding'
     - complete display lists are not currently found in the dl_w memory handler.
-	  (this manifests itself as 'flickering' 3d in fatfurwa and missing bodies in buriki.
+      (this manifests itself as 'flickering' 3d in fatfurwa and missing bodies in buriki.
 * The effect of numerous (dozens of) 3d flags needs to be figured out by examining real hardware
 * Populate the display buffers with the data based on Elsemi's notes below
     - maybe there are some frame-buffer effects which will then work
@@ -494,7 +494,7 @@ below...
 before the function
 INLINE void logonetlbentry(int which)   (src/cpu/mips/mips3.c)
 put
-extern void	hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr);
+extern void hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr);
 and in the function (at the end) put
 hyperneogeo_mmu_hack(vaddr,paddr);
 
@@ -507,53 +507,53 @@ the same can be done with the drc core and it should work
 
 physical
 
-0x00000000	RAM
-0x04000000	Cart
-0x20000000	Sprites-tilemaps-palette
-0x30000000	3D banks
-0x60000000	Sound
-0x68000000	Something related to sound
-0x6E000000	Something related to sound
-0x8		??	(ffury maps these, access to roms?)
-0x9		??
-0xa		??
-0xC0000000	Comm
+0x00000000  RAM
+0x04000000  Cart
+0x20000000  Sprites-tilemaps-palette
+0x30000000  3D banks
+0x60000000  Sound
+0x68000000  Something related to sound
+0x6E000000  Something related to sound
+0x8     ??  (ffury maps these, access to roms?)
+0x9     ??
+0xa     ??
+0xC0000000  Comm
 
 
 MMU tables:
 
-Virtual		Physical
+Virtual     Physical
 
 bios
-0xC0000000	0x20000000
-0xD0000000	0x30000000
-0xE0000000	0x60000000
-0x60000000	0xC0000000
+0xC0000000  0x20000000
+0xD0000000  0x30000000
+0xE0000000  0x60000000
+0x60000000  0xC0000000
 
 
 fatfury
-0x10000000	0x80000000
-0x20000000	0x88000000
-0x30000000	0x90000000
-0x40000000	0x98000000
-0x50000000	0xA0000000
-0xC0000000	0x20000000
-0xD0000000	0x30000000
-0xE0000000	0x60000000
-0xE8000000	0x68000000
-0xEE000000	0x6E000000
-0x60000000	0xC0000000
+0x10000000  0x80000000
+0x20000000  0x88000000
+0x30000000  0x90000000
+0x40000000  0x98000000
+0x50000000  0xA0000000
+0xC0000000  0x20000000
+0xD0000000  0x30000000
+0xE0000000  0x60000000
+0xE8000000  0x68000000
+0xEE000000  0x6E000000
+0x60000000  0xC0000000
 
 
 samsho64
-0xC0000000	0x20000000
-0xC2000000	0x30000000
-0xC4000000	0x60000000
-0xC6000000	0x6e000000
-0xc8000000	0x68000000
-0xD0000000	0x30000000
-0xE0000000	0x60000000
-0x60000000	0xC0000000
+0xC0000000  0x20000000
+0xC2000000  0x30000000
+0xC4000000  0x60000000
+0xC6000000  0x6e000000
+0xc8000000  0x68000000
+0xD0000000  0x30000000
+0xE0000000  0x60000000
+0x60000000  0xC0000000
 
 <ElSemi> to translate the addresses, first lookup in that table, if it's not there, then output the address (minus the top 3 bits)
 <ElSemi> otherwise output the physical add associated
@@ -563,7 +563,7 @@ samsho64
 /*
 WRITE32_HANDLER( trap_write )
 {
-	logerror("Remapped write... %08x %08x\n",offset,data);
+    logerror("Remapped write... %08x %08x\n",offset,data);
 }
 */
 
@@ -577,7 +577,7 @@ void hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr)
 	{
 		printf("Remapped 0 to vidram!\n");
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x07fffff, 0, 0, hng64_videoram_w);
-	//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x07fffff, 0, 0, hng64_videoram_r);
+	//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x07fffff, 0, 0, hng64_videoram_r);
 
 	}
 }
@@ -606,7 +606,7 @@ WRITE32_HANDLER( hng64_videoram_w )
 		tilemap_mark_tile_dirty(hng64_tilemap4,offset&0x3fff);
 	}
 
-//	if ((realoff>=0x40000) && (realoff<=0x48000)) printf("offsw %08x %08x\n",realoff,data);
+//  if ((realoff>=0x40000) && (realoff<=0x48000)) printf("offsw %08x %08x\n",realoff,data);
 
 	/* 400000 - 7fffff is scroll regs etc. */
 }
@@ -646,7 +646,7 @@ static WRITE32_HANDLER( hng64_pal_w )
 	// printf("Alpha : %d %d %d %d\n", a, b, g, r) ;
 
 	// if (a != 0)
-	//	usrintf_showmessage("Alpha is not zero!") ;
+	//  usrintf_showmessage("Alpha is not zero!") ;
 
 	palette_set_color(offset,r,g,b);
 }
@@ -731,15 +731,15 @@ READ32_HANDLER( no_machine_error )
 
 WRITE32_HANDLER( hng64_dualport_w )
 {
-//	printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
+//  printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
 
 	COMBINE_DATA (&hng64_dualport[offset]);
 }
 
 READ32_HANDLER( hng64_dualport_r )
 {
-//	printf("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
-//	return mame_rand();
+//  printf("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
+//  return mame_rand();
 
 	return hng64_dualport[offset];
 }
@@ -750,7 +750,7 @@ WRITE32_HANDLER( hng64_3d_1_w )
 	// !!! Never does a write to 1 in the tests !!!
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
-//	printf("1w : %d %d\n", offset, hng64_3d_1[offset]) ;
+//  printf("1w : %d %d\n", offset, hng64_3d_1[offset]) ;
 
 	exit(1) ;
 }
@@ -759,18 +759,18 @@ WRITE32_HANDLER( hng64_3d_2_w )
 {
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
-//	printf("2w : %d %d\n", offset, hng64_3d_2[offset]) ;
+//  printf("2w : %d %d\n", offset, hng64_3d_2[offset]) ;
 }
 
 READ32_HANDLER( hng64_3d_1_r )
 {
-//	printf("1r : %d %d\n", offset, hng64_3d_1[offset]) ;
+//  printf("1r : %d %d\n", offset, hng64_3d_1[offset]) ;
 	return hng64_3d_1[offset] ;
 }
 
 READ32_HANDLER( hng64_3d_2_r )
 {
-//	printf("2r : %d %d\n", offset, hng64_3d_2[offset]) ;
+//  printf("2r : %d %d\n", offset, hng64_3d_2[offset]) ;
 	return hng64_3d_2[offset] ;
 }
 
@@ -797,38 +797,38 @@ WRITE32_HANDLER( dl_w )
 	if (offset <= 0x80)
 		hng64_dls[activeBuffer][offset] = hng64_dl[offset] ;
 
-//	printf("dl W : %.8x %.8x\n", offset, hng64_dl[offset]) ;
+//  printf("dl W : %.8x %.8x\n", offset, hng64_dl[offset]) ;
 
 	// Write out some interesting parts of the 3d display list ...
 	/*
-	if (!flagFlag)
-	{
-		if (offset >= 0x00000007)
-		{
-			dataArray[offset-0x00000007] = hng64_dl[offset] ;
-		}
-	}
+    if (!flagFlag)
+    {
+        if (offset >= 0x00000007)
+        {
+            dataArray[offset-0x00000007] = hng64_dl[offset] ;
+        }
+    }
 
-	if (offset == 0x00000017)
-	{
-		flagFlag = 1 ;
-		// a test out of curiosity
-		hng64_dl[offset] = 1 ;
-	}
-	*/
+    if (offset == 0x00000017)
+    {
+        flagFlag = 1 ;
+        // a test out of curiosity
+        hng64_dl[offset] = 1 ;
+    }
+    */
 }
 
 READ32_HANDLER( dl_r )
 {
-//	printf("dl R : %x %x\n", offset, hng64_dl[offset]) ;
+//  printf("dl R : %x %x\n", offset, hng64_dl[offset]) ;
 	return hng64_dl[offset] ;
 }
 
 /*
 WRITE32_HANDLER( activate_3d_buffer )
 {
-	COMBINE_DATA (&active_3d_buffer[offset]) ;
-	printf("COMBINED %d\n", active_3d_buffer[offset]) ;
+    COMBINE_DATA (&active_3d_buffer[offset]) ;
+    printf("COMBINED %d\n", active_3d_buffer[offset]) ;
 }
 */
 
@@ -836,7 +836,7 @@ WRITE32_HANDLER( activate_3d_buffer )
 WRITE32_HANDLER( fcram_w )
 {
 	COMBINE_DATA (&hng64_fcram[offset]) ;
-//	printf("Q1 W : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
+//  printf("Q1 W : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
 
 	if (offset == 0x00000007)
 	{
@@ -851,13 +851,13 @@ WRITE32_HANDLER( fcram_w )
 	if (offset == 0x0000000b)
 	{
 		sprintf(writeString, "%s %.8x ", writeString, hng64_fcram[offset]) ;
-//		usrintf_showmessage("%s", writeString) ;
+//      usrintf_showmessage("%s", writeString) ;
 	}
 }
 
 READ32_HANDLER( fcram_r )
 {
-//	printf("Q1 R : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
+//  printf("Q1 R : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
 	return hng64_fcram[offset] ;
 }
 
@@ -865,16 +865,16 @@ READ32_HANDLER( fcram_r )
 // Q2 handler (just after display list in memory)
 // Seems to read and write the same thing for every frame in fatfurwa
 /*
-	Q2 R : 00000000 00311800
-	Q2 W : 00000003 03000000
-	Q2 W : 00000002 e0001c00
-	Q2 W : 00000002 e0001c00
-	Q2 W : 00000001 3fe037e0
-	Q2 W : 00000001 3fe037e0
-	Q2 W : 00000000 00311800
+    Q2 R : 00000000 00311800
+    Q2 W : 00000003 03000000
+    Q2 W : 00000002 e0001c00
+    Q2 W : 00000002 e0001c00
+    Q2 W : 00000001 3fe037e0
+    Q2 W : 00000001 3fe037e0
+    Q2 W : 00000000 00311800
 
-	In the beginning it likes setting 0x04-0x0b to what looks like
-	a bunch of bit-flags...
+    In the beginning it likes setting 0x04-0x0b to what looks like
+    a bunch of bit-flags...
 */
 WRITE32_HANDLER( q2_w )
 {
@@ -911,14 +911,14 @@ READ32_HANDLER( q2_r )
 
 READ32_HANDLER( hng64_inputs_r )
 {
-//	printf("hng read %08x %08x\n",offset,mem_mask);
+//  printf("hng read %08x %08x\n",offset,mem_mask);
 
-//	static int toggi=0;
+//  static int toggi=0;
 
 
 	switch (offset*4)
 	{
-//		case 0x00: toggi^=1; if (toggi==1) {return 0x00000400;} else {return 0x00000300;};//otherwise it won't read inputs ..
+//      case 0x00: toggi^=1; if (toggi==1) {return 0x00000400;} else {return 0x00000300;};//otherwise it won't read inputs ..
 		case 0x00: return 0x00000400;
 		case 0x04: return readinputport(0)|(readinputport(1)<<16);
 		case 0x08: return readinputport(3)|(readinputport(2)<<16);
@@ -1095,7 +1095,7 @@ INPUT_PORTS_START( hng64 )
 	PORT_BIT(  0x4000, IP_ACTIVE_HIGH, IPT_START1)
 	PORT_BIT(  0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
-	PORT_START	/* Player 2	 */
+	PORT_START	/* Player 2  */
 	PORT_BIT(  0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP) PORT_PLAYER(2)
 	PORT_BIT(  0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN) PORT_PLAYER(2)
 	PORT_BIT(  0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT) PORT_PLAYER(2)
@@ -1438,7 +1438,7 @@ MACHINE_DRIVER_START( hng64 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(1024, 1024)
-//	MDRV_VISIBLE_AREA(0, 1023, 0, 1023) // to see the whole textures
+//  MDRV_VISIBLE_AREA(0, 1023, 0, 1023) // to see the whole textures
 	MDRV_VISIBLE_AREA(0, 511, 16, 447)
 	MDRV_PALETTE_LENGTH(0x1000)
 

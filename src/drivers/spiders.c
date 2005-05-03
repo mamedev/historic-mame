@@ -8,28 +8,28 @@ Memory map information
 
 Main CPU - Read Range
 
-$0000-$1bff	Video Memory (bit0)
-$4000-$5bff	Video Memory (bit1)
-$8000-$9bff	Video Memory (bit2)
-$c000-$c001	6845 CRT Controller (crtc6845)
-$c020-$c027	NVRAM
-$c044-$c047	MC6821 PIA 1 (Control input port - all input)
-$c048-$c04b	MC6821 PIA 2 (Sprite data port - see machine/spiders.c)
-$c050-$c053	MC6821 PIA 3 (Sound control - all output)
-$c060		Dip Switch 1
-$c080		Dip Switch 2
-$c0a0		Dip Switch 3
-$c100-ffff	ROM SPACE
+$0000-$1bff Video Memory (bit0)
+$4000-$5bff Video Memory (bit1)
+$8000-$9bff Video Memory (bit2)
+$c000-$c001 6845 CRT Controller (crtc6845)
+$c020-$c027 NVRAM
+$c044-$c047 MC6821 PIA 1 (Control input port - all input)
+$c048-$c04b MC6821 PIA 2 (Sprite data port - see machine/spiders.c)
+$c050-$c053 MC6821 PIA 3 (Sound control - all output)
+$c060       Dip Switch 1
+$c080       Dip Switch 2
+$c0a0       Dip Switch 3
+$c100-ffff  ROM SPACE
 
 Main CPU - Write Range
 
-$0000-$1bff	Video Memory (bit0)
-$4000-$5bff	Video Memory (bit1)
-$8000-$9bff	Video Memory (bit2)
-$c000-$c001	6845 CRT Controller (crtc6845)
-$c044-$c047	MC6821 PIA 1
-$c048-$c04b	MC6821 PIA 2 (Video port)
-$c050-$c053	MC6821 PIA 3
+$0000-$1bff Video Memory (bit0)
+$4000-$5bff Video Memory (bit1)
+$8000-$9bff Video Memory (bit2)
+$c000-$c001 6845 CRT Controller (crtc6845)
+$c044-$c047 MC6821 PIA 1
+$c048-$c04b MC6821 PIA 2 (Video port)
+$c050-$c053 MC6821 PIA 3
 
 
 DIP SWITCH 1
@@ -100,18 +100,18 @@ Following roms appear to have graphic data
 
 * Mapped in main CPU space
 
-* SP1.BIN	- Appears to have some sprites in it.
-* SP2.BIN	- Appears to have some 16x16 sprites. (Includes the word SIGMA)
-* SP3.BIN	- Appears to have 2-4 sprites 16x16 - spiders
-* SP4.BIN	- CPU Code 6809 - Main
-  SP5.BIN	- Some 8x8 and 16x16 tiles/sprites
-  SP6.BIN	- Some 8x8 tiles
-  SP7.BIN	- Tiles/Sprites 8x8
-  SP8.BIN	- Tiles/Sprites 8x8
-  SP9A.BIN 	- Tiles/Sprites 8x8
-  SP9B.BIN	- Tiles/Sprites 8x8
-  SP10A.BIN	- Tiles/Sprites 8x8
-  SP10B.BIN	- CPU Code 6802 - Sound
+* SP1.BIN   - Appears to have some sprites in it.
+* SP2.BIN   - Appears to have some 16x16 sprites. (Includes the word SIGMA)
+* SP3.BIN   - Appears to have 2-4 sprites 16x16 - spiders
+* SP4.BIN   - CPU Code 6809 - Main
+  SP5.BIN   - Some 8x8 and 16x16 tiles/sprites
+  SP6.BIN   - Some 8x8 tiles
+  SP7.BIN   - Tiles/Sprites 8x8
+  SP8.BIN   - Tiles/Sprites 8x8
+  SP9A.BIN  - Tiles/Sprites 8x8
+  SP9B.BIN  - Tiles/Sprites 8x8
+  SP10A.BIN - Tiles/Sprites 8x8
+  SP10B.BIN - CPU Code 6802 - Sound
 
 Spiders has a fully bitmapped display and all sprite drawing is handled by the CPU
 hence no gfxdecode is done on the sprite ROMS, the CPU accesses them via PIA2.
@@ -119,8 +119,8 @@ hence no gfxdecode is done on the sprite ROMS, the CPU accesses them via PIA2.
 Screen is arranged in three memory areas with three bits being combined from each
 area to produce a 3bit colour send directly to the screen.
 
-$0000-$1bff, $4000-$5bff, $8000-$9bff 	Bank 0
-$2000-$3bff, %6000-$7bff, $a000-$bbff	Bank 1
+$0000-$1bff, $4000-$5bff, $8000-$9bff   Bank 0
+$2000-$3bff, %6000-$7bff, $a000-$bbff   Bank 1
 
 The game normally runs from bank 0 only, but when lots of screen changes are required
 e.g spider or explosion then it implements a double buffered scheme with bank 1.

@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Sega Hang On hardware
+    Sega Hang On hardware
 
 ****************************************************************************
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
-	To do for each game:
-		* verify memory test
-		* verify inputs
-		* verify DIP switches
-		* verify protection
-		* check playability
+    To do for each game:
+        * verify memory test
+        * verify inputs
+        * verify DIP switches
+        * verify protection
+        * check playability
 
 ***************************************************************************/
 
@@ -28,7 +28,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -44,7 +44,7 @@ static void (*i8751_vblank_hook)(void);
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -60,7 +60,7 @@ static READ8_HANDLER( adc_status_r );
 
 /*************************************
  *
- *	PPI interfaces
+ *  PPI interfaces
  *
  *************************************/
 
@@ -79,7 +79,7 @@ static ppi8255_interface hangon_ppi_intf =
 
 /*************************************
  *
- *	Configuration
+ *  Configuration
  *
  *************************************/
 
@@ -96,7 +96,7 @@ static void hangon_generic_init(void)
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -129,7 +129,7 @@ static INTERRUPT_GEN( hangon_irq )
 
 /*************************************
  *
- *	I/O space
+ *  I/O space
  *
  *************************************/
 
@@ -223,7 +223,7 @@ static WRITE16_HANDLER( sharrier_io_w )
 
 /*************************************
  *
- *	PPI I/O handlers
+ *  PPI I/O handlers
  *
  *************************************/
 
@@ -313,7 +313,7 @@ static READ8_HANDLER( adc_status_r )
 
 /*************************************
  *
- *	I8751 interrupt generation
+ *  I8751 interrupt generation
  *
  *************************************/
 
@@ -329,7 +329,7 @@ static INTERRUPT_GEN( i8751_main_cpu_vblank )
 
 /*************************************
  *
- *	Per-game I8751 workarounds
+ *  Per-game I8751 workarounds
  *
  *************************************/
 
@@ -342,7 +342,7 @@ static void sharrier_i8751_sim(void)
 
 /*************************************
  *
- *	Sound communications?
+ *  Sound communications?
  *
  *************************************/
 
@@ -363,7 +363,7 @@ static READ8_HANDLER( sound_data_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -399,7 +399,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Second CPU memory handlers
+ *  Second CPU memory handlers
  *
  *************************************/
 
@@ -414,7 +414,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -460,7 +460,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	i8751 MCU memory handlers
+ *  i8751 MCU memory handlers
  *
  *************************************/
 
@@ -477,7 +477,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Generic port definitions
+ *  Generic port definitions
  *
  *************************************/
 
@@ -562,7 +562,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Game-specific port definitions
+ *  Game-specific port definitions
  *
  *************************************/
 
@@ -745,7 +745,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -771,7 +771,7 @@ static struct SEGAPCMinterface segapcm_interface =
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -797,7 +797,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Generic machine drivers
+ *  Generic machine drivers
  *
  *************************************/
 
@@ -935,7 +935,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Specific machine drivers
+ *  Specific machine drivers
  *
  *************************************/
 
@@ -987,15 +987,15 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Hang On
-	CPU: 68000 (317-????)
+    Hang On
+    CPU: 68000 (317-????)
 */
 ROM_START( hangon )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1047,8 +1047,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Super Hang On (bootleg upgrade)
-	CPU: 68000 (317-????)
+    Super Hang On (bootleg upgrade)
+    CPU: 68000 (317-????)
 */
 ROM_START( shangupb )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1102,8 +1102,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Space Harrier
-	CPU: 68000 (317-????)
+    Space Harrier
+    CPU: 68000 (317-????)
 */
 ROM_START( sharrier )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1181,8 +1181,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Enduro Racer with YM2151 sound board
-	CPU: FD1089A (317-????)
+    Enduro Racer with YM2151 sound board
+    CPU: FD1089A (317-????)
 */
 ROM_START( enduror )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1251,8 +1251,8 @@ ROM_START( enduror )
 ROM_END
 
 /**************************************************************************************************************************
-	Enduro Racer (bootleg) with YM2203 sound board
-	CPU: 68000
+    Enduro Racer (bootleg) with YM2203 sound board
+    CPU: 68000
 */
 ROM_START( endurobl )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1324,16 +1324,16 @@ ROM_START( endurobl )
 ROM_END
 
 /**************************************************************************************************************************
-	Enduro Racer (bootleg) with 2xYM2203 sound board
-	CPU: 68000
+    Enduro Racer (bootleg) with 2xYM2203 sound board
+    CPU: 68000
 */
 ROM_START( endurob2 )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
 	/* the program roms should be twice the size */
 	ROM_LOAD16_BYTE( "enduro.a07", 0x000000, 0x08000, BAD_DUMP CRC(259069bc) SHA1(42fa47ce4a29294f9eff3eddbba6c305d750aaa5) )
-//	ROM_CONTINUE(                  0x030000, 0x08000 )
+//  ROM_CONTINUE(                  0x030000, 0x08000 )
 	ROM_LOAD16_BYTE( "enduro.a04", 0x000001, 0x08000, BAD_DUMP CRC(f584fbd9) SHA1(6c9ddcd1d9cf95c6250b705b27865644da45d197) )
-//	ROM_CONTINUE(                  0x030000, 0x08000 )
+//  ROM_CONTINUE(                  0x030000, 0x08000 )
 	ROM_LOAD16_BYTE( "enduro.a08", 0x010000, 0x08000, CRC(d234918c) SHA1(ce2493a4ceff48331551e915fdbe19107865436e) )
 	ROM_LOAD16_BYTE( "enduro.a05", 0x010001, 0x08000, CRC(a525dd57) SHA1(587f449ea317dc9eae06e755e7c63a652effbe15) )
 	ROM_LOAD16_BYTE( "enduro.a09", 0x020000, 0x08000, CRC(f6391091) SHA1(3160b342b6447cccf67c932c7c1a42354cdfb058) )
@@ -1400,7 +1400,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1454,7 +1454,7 @@ static DRIVER_INIT( endurob2 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

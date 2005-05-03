@@ -310,34 +310,34 @@ static void namconb2_TriggerPOSIRQ( int scanline )
 static INTERRUPT_GEN( namconb2_interrupt )
 {
 	/**
-	 * f00000 0x01 // VBLANK irq level
-	 * f00001 0x00
-	 * f00002 0x05 // POSIRQ level
-	 * f00003 0x00
-	 *
-	 * f00004 VBLANK ack
-	 * f00005
-	 * f00006 POSIRQ ack
-	 * f00007
-	 *
-	 * f00008
-	 *
-	 * f00009 0x62
-	 * f0000a 0x0f
-	 * f0000b 0x41
-	 * f0000c 0x70
-	 * f0000d 0x70
-	 * f0000e 0x23
-	 * f0000f 0x50
-	 * f00010 0x00
-	 * f00011 0x64
-	 * f00012 0x18
-	 * f00013 0xe7
-	 * f00014 (watchdog)
-	 * f00016 0x00
-	 * f0001e 0x00
-	 * f0001f 0x01
-	 */
+     * f00000 0x01 // VBLANK irq level
+     * f00001 0x00
+     * f00002 0x05 // POSIRQ level
+     * f00003 0x00
+     *
+     * f00004 VBLANK ack
+     * f00005
+     * f00006 POSIRQ ack
+     * f00007
+     *
+     * f00008
+     *
+     * f00009 0x62
+     * f0000a 0x0f
+     * f0000b 0x41
+     * f0000c 0x70
+     * f0000d 0x70
+     * f0000e 0x23
+     * f0000f 0x50
+     * f00010 0x00
+     * f00011 0x64
+     * f00012 0x18
+     * f00013 0xe7
+     * f00014 (watchdog)
+     * f00016 0x00
+     * f0001e 0x00
+     * f0001f 0x01
+     */
 	int scanline = (paletteram32[0x1808/4]&0xffff)-32;
 	int irqlevel = GetCPURegister(0x00);
 	cpunum_set_input_line( 0, irqlevel, HOLD_LINE);
@@ -354,39 +354,39 @@ static INTERRUPT_GEN( namconb2_interrupt )
 static INTERRUPT_GEN( namconb1_interrupt )
 {
 	/**
-	 * 400000 0x00
-	 * 400001 0x00
-	 * 400002 0x00
-	 * 400003 0x00
-	 * 400004 0x35 // irq levels
-	 * 400005 0x00
-	 * 400006 0x00
-	 * 400007 0x00
-	 * 400008 0x00
-	 * 400009 0x00 VBLANK ack
-	 * 40000a 0x00
-	 * 40000b 0x03
-	 * 40000c 0x07
-	 * 40000d 0x01
-	 * 40000e 0x10
-	 * 40000f 0x03
-	 * 400010 0x00
-	 * 400011 0x07
-	 * 400012 0x10
-	 * 400013 0x10
-	 * 400014 0x00
-	 * 400015 0x01
-	 * 400016 (watchdog)
-	 * 400017 0x00
-	 * 400018 0x01
-	 * 400019 0x00
-	 * 40001a 0x00
-	 * 40001b 0x00
-	 * 40001c 0x00
-	 * 40001d 0x00
-	 * 40001e 0x00
-	 * 40001f 0x00
-	 */
+     * 400000 0x00
+     * 400001 0x00
+     * 400002 0x00
+     * 400003 0x00
+     * 400004 0x35 // irq levels
+     * 400005 0x00
+     * 400006 0x00
+     * 400007 0x00
+     * 400008 0x00
+     * 400009 0x00 VBLANK ack
+     * 40000a 0x00
+     * 40000b 0x03
+     * 40000c 0x07
+     * 40000d 0x01
+     * 40000e 0x10
+     * 40000f 0x03
+     * 400010 0x00
+     * 400011 0x07
+     * 400012 0x10
+     * 400013 0x10
+     * 400014 0x00
+     * 400015 0x01
+     * 400016 (watchdog)
+     * 400017 0x00
+     * 400018 0x01
+     * 400019 0x00
+     * 40001a 0x00
+     * 40001b 0x00
+     * 40001c 0x00
+     * 40001d 0x00
+     * 40001e 0x00
+     * 40001f 0x00
+     */
 	int scanline = (paletteram32[0x1808/4]&0xffff)-32;
 	int irqlevel = GetCPURegister(0x04)&0xf;
 	cpunum_set_input_line( 0, irqlevel, HOLD_LINE);
@@ -679,9 +679,9 @@ static
 WRITE32_HANDLER( srand_w )
 {
 	/**
-	 * Used to seed the hardware random number generator.
-	 * We don't yet know the algorithm that is used, so for now this is a NOP.
-	 */
+     * Used to seed the hardware random number generator.
+     * We don't yet know the algorithm that is used, so for now this is a NOP.
+     */
 } /* srand_w */
 
 static ADDRESS_MAP_START( namconb1_am, ADDRESS_SPACE_PROGRAM, 32 )

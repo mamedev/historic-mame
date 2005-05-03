@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	sndhrdw\hitme.c
+    sndhrdw\hitme.c
 
 *************************************************************************/
 #include "driver.h"
@@ -45,28 +45,28 @@ DISCRETE_SOUND_START(hitme_discrete_interface)
 	DISCRETE_ADJUSTMENT(HITME_GAME_SPEED,1,0.0,25000.0,DISC_LINADJ,6)
 
 	/* The clock for the main downcounter is a "404", or LS123 retriggerable multivibrator.
-	 * It is clocked by IPH2 (8.945MHz/16 = 559kHz), then triggers a pulse which is adjustable
-	 * via the resistor R3. When the pulse is finished, it immediately retriggers itself to
-	 * form a clock. The length of the clock pulse is 0.45*R*C, where R is the variable R3
-	 * resistor value, and C is 6.8uF. Thus the frequency of the resulting wave is
-	 * 1.0/(0.45*R*C). We compute that frequency and use a standard 50% duty cycle square wave.
-	 * This is because the "off time" of the clock is very small (559kHz), and we will miss
-	 * edges if we model it perfectly accurately. */
+     * It is clocked by IPH2 (8.945MHz/16 = 559kHz), then triggers a pulse which is adjustable
+     * via the resistor R3. When the pulse is finished, it immediately retriggers itself to
+     * form a clock. The length of the clock pulse is 0.45*R*C, where R is the variable R3
+     * resistor value, and C is 6.8uF. Thus the frequency of the resulting wave is
+     * 1.0/(0.45*R*C). We compute that frequency and use a standard 50% duty cycle square wave.
+     * This is because the "off time" of the clock is very small (559kHz), and we will miss
+     * edges if we model it perfectly accurately. */
 	DISCRETE_TRANSFORM3(NODE_16,1,1,0.45*6.8e-6,HITME_GAME_SPEED,"012*/")
 	DISCRETE_SQUAREWAVE(NODE_17,1,NODE_16,1,50,0.5,0)
 
 	/* There are 2 cascaded 4-bit downcounters (2R = low, 2P = high), effectively
-	 * making an 8-bit downcounter, clocked by the clock from the 404 chip.
-	 * The initial count is latched by writing OUT0. */
+     * making an 8-bit downcounter, clocked by the clock from the 404 chip.
+     * The initial count is latched by writing OUT0. */
 	DISCRETE_COUNTER(NODE_20,1,HITME_OUT0,NODE_17,255,0,HITME_DOWNCOUNT_VAL,DISC_CLK_ON_F_EDGE)
 	/* When the counter rolls over from 0->255, we clock a D-type flipflop at 2N. */
 	DISCRETE_TRANSFORM2(NODE_21,1,NODE_20,255,"01=!")
 
 	/* This flipflop represents the latch at 1L. It is clocked when OUT1 is written and latches
-	 * the value from the processor. When the downcounter above rolls over, it clears the latch. */
+     * the value from the processor. When the downcounter above rolls over, it clears the latch. */
 	DISCRETE_LOGIC_DFLIPFLOP(NODE_22,1,NODE_21,1,HITME_OUT1,HITME_ENABLE_VAL)
 
-	/* The output of the latch goes through a series of various capacitors in parallel.	*/
+	/* The output of the latch goes through a series of various capacitors in parallel. */
 	DISCRETE_COMP_ADDER(NODE_23,1,NODE_22,&desc_hitme_adder)
 
 	/* The combined capacitance is input to a 555 timer in astable mode. */

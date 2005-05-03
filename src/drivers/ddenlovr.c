@@ -12,19 +12,19 @@ Sound: (AY-3-8910) + YM2413 + MSM6295
 Other: Real Time Clock (Oki MSM6242B or 72421B)
 
 ---------------------------------------------------------------------------------------------------------------------------
-Year + Game					Board			CPU		Sound						Custom				Notes
+Year + Game                 Board           CPU     Sound                       Custom              Notes
 ---------------------------------------------------------------------------------------------------------------------------
-92 Monkey Mole Panic						2xZ80	AY8910 +          M6295		Dynax NL-001		8251
-93 Quiz Channel Question	N7311208L1-2	Z80		         YM2413 + M6295		NAKANIHON NL-002
-94 Quiz 365									68000	AY8910 + YM2413 + M6295
-94 Rong Rong								Z80		         YM2413 + M6295		NAKANIHON NL-002
-95 Don Den Lover Vol 1		D11309208L1		68000	AY8910 + YM2413 + M6295		NAKANIHON NL-005
-95 Nettoh Quiz Champion						68000	AY8910 + YM2413 + M6295
+92 Monkey Mole Panic                        2xZ80   AY8910 +          M6295     Dynax NL-001        8251
+93 Quiz Channel Question    N7311208L1-2    Z80              YM2413 + M6295     NAKANIHON NL-002
+94 Quiz 365                                 68000   AY8910 + YM2413 + M6295
+94 Rong Rong                                Z80              YM2413 + M6295     NAKANIHON NL-002
+95 Don Den Lover Vol 1      D11309208L1     68000   AY8910 + YM2413 + M6295     NAKANIHON NL-005
+95 Nettoh Quiz Champion                     68000   AY8910 + YM2413 + M6295
 
 the following use a different blitter, will probably go in a separate driver
-96 Hanakanzashi								Z80		         YM2413 + M6295
-96 Hana Kagerou								Z80		         YM2413 + M6295		70C160F011
-98 Mahjong Reach Ippatsu					Z80		         YM2413 + M6295		70C160F011
+96 Hanakanzashi                             Z80              YM2413 + M6295
+96 Hana Kagerou                             Z80              YM2413 + M6295     70C160F011
+98 Mahjong Reach Ippatsu                    Z80              YM2413 + M6295     70C160F011
 ---------------------------------------------------------------------------------------------------------------------------
 
 Notes:
@@ -111,7 +111,7 @@ VIDEO_START(mmpanic)
 
 /***************************************************************************
 
-						Blitter Data Format
+                        Blitter Data Format
 
 The gfx data is a bitstream. Command size is always 3 bits, argument size
 can be from 1 to 8 bits (up to 16 bits seem to be allowed, but not used).
@@ -122,14 +122,14 @@ Data starts with an 8 bit header:
 ----3210 size-1 of arguments indicating number of pixels (A)
 
 The commands are:
-000	Increment Y
+000 Increment Y
 001 Followed by A bits (N) and by B bits (P): draw N+1 pixels using pen P
 010 Followed by A bits (N) and by (N+1)*B bits: copy N+1 pixels
-011	Followed by A bits (N): skip N pixels
-100	not used
-101	Followed by 4 bits: change argument size
-110	Followed by 3 bits: change pen size
-111	Stop.
+011 Followed by A bits (N): skip N pixels
+100 not used
+101 Followed by 4 bits: change argument size
+110 Followed by 3 bits: change pen size
+111 Stop.
 
 The drawing operation is verified (quiz365) to modify dynax_blit_y.
 
@@ -238,7 +238,7 @@ static int blit_draw(int src,int sx,int flags)
 
 			default:
 				usrintf_showmessage("%06x: unknown command %02x",src,cmd);
-//				return (bit_addr + 7) / 8;
+//              return (bit_addr + 7) / 8;
 
 			case 1:	// LINE
 				{
@@ -345,7 +345,7 @@ if (dynax_blit_flip & 0xfc) usrintf_showmessage("dynax_blit_flip = %02x",dynax_b
 			break;
 
 		case 0x05:
-//			unknown; related to the dest layer
+//          unknown; related to the dest layer
 			break;
 
 		case 0x06:
@@ -431,18 +431,18 @@ if (dynax_clip_ctrl != 0x0f)
 				else if (data == 0x43 || data == 0x8c)
 				{
 					/* unknown; these two are issued one after the other (43 then 8c)
-					   8c is issued immediately after 43 has finished, without
-					   changing any argument
-					   initialized arguments are
-					   00 dest layer
-					   05 unknown, related to layer
-					   14 X - always 0?
-					   02 Y
-					   0a width - always 0?
-					   0b height
-					   04 blit_pen
-					   0c line_length - always 0?
-					*/
+                       8c is issued immediately after 43 has finished, without
+                       changing any argument
+                       initialized arguments are
+                       00 dest layer
+                       05 unknown, related to layer
+                       14 X - always 0?
+                       02 Y
+                       0a width - always 0?
+                       0b height
+                       04 blit_pen
+                       0c line_length - always 0?
+                    */
 if (data == 0x8c)
 {
 	int start = 512 * dynax_blit_y;
@@ -472,13 +472,13 @@ if (dynax_clip_ctrl != 0x0f)
 				else if ((data == 0x04) || (data == 0x14))
 				{
 					/* fill from (X,Y) to end of pixmap
-					   initialized arguments are
-					   00 dest layer
-					   05 unknown, related to layer
-					   14 X
-					   02 Y
-					   04 blit_pen
-					*/
+                       initialized arguments are
+                       00 dest layer
+                       05 unknown, related to layer
+                       14 X
+                       02 Y
+                       04 blit_pen
+                    */
 					int start = (data == 0x04) ? 0 : (512*dynax_blit_y + dynax_blit_x);
 
 #ifdef MAME_DEBUG
@@ -498,15 +498,15 @@ if (dynax_blit_x || dynax_blit_y)
 				else if (data == 0x13)
 				{
 					/* draw horizontal line
-					   initialized arguments are
-					   00 dest layer
-					   05 unknown, related to layer
-					   14 X
-					   02 Y
-					   0c line length
-					   04 blit_pen
-					   dynax_blit_x and dynax_blit_y are left pointing to the last pixel at the end of the command
-					*/
+                       initialized arguments are
+                       00 dest layer
+                       05 unknown, related to layer
+                       14 X
+                       02 Y
+                       0c line length
+                       04 blit_pen
+                       dynax_blit_x and dynax_blit_y are left pointing to the last pixel at the end of the command
+                    */
 
 #ifdef MAME_DEBUG
 usrintf_showmessage("LINE X");
@@ -522,15 +522,15 @@ if (dynax_blit_flip)
 				else if (data == 0x1b)
 				{
 					/* draw vertical line
-					   initialized arguments are
-					   00 dest layer
-					   05 unknown, related to layer
-					   14 X
-					   02 Y
-					   0c line length
-					   04 blit_pen
-					   dynax_blit_x and dynax_blit_y are left pointing to the last pixel at the end of the command
-					*/
+                       initialized arguments are
+                       00 dest layer
+                       05 unknown, related to layer
+                       14 X
+                       02 Y
+                       0c line length
+                       04 blit_pen
+                       dynax_blit_x and dynax_blit_y are left pointing to the last pixel at the end of the command
+                    */
 
 #ifdef MAME_DEBUG
 usrintf_showmessage("LINE Y");
@@ -544,15 +544,15 @@ if (dynax_clip_ctrl != 0x0f)
 				else if (data == 0x10)
 				{
 					/* copy from ROM
-					   initialized arguments are
-					   0D/0E/0F source data pointer
-					   14 X
-					   02 Y
-					   00 dest layer
-					   05 unknown, related to layer
-					   04 blit_pen
-					   06 blit_pen_mode (replace values stored in ROM)
-					 */
+                       initialized arguments are
+                       0D/0E/0F source data pointer
+                       14 X
+                       02 Y
+                       00 dest layer
+                       05 unknown, related to layer
+                       04 blit_pen
+                       06 blit_pen_mode (replace values stored in ROM)
+                     */
 					dynax_blit_address = blit_draw(dynax_blit_address,dynax_blit_x,data);
 				}
 				else
@@ -725,9 +725,9 @@ if (code_pressed(KEYCODE_Z))
 	copybitmap(bitmap,framebuffer,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
 	/*
-		technically, I should do the following in a eof handler, to avoid
-		palette/gfx synchronization issues with frameskipping
-	 */
+        technically, I should do the following in a eof handler, to avoid
+        palette/gfx synchronization issues with frameskipping
+     */
 	{
 		static int order[24][4] =
 		{
@@ -997,8 +997,8 @@ static WRITE16_HANDLER( quiz365_coincounter_w )
 }
 
 /*
-37,28,12	11		->		88
-67,4c,3a	??		->		51
+37,28,12    11      ->      88
+67,4c,3a    ??      ->      51
 */
 static data16_t quiz365_protection[2];
 static READ16_HANDLER( quiz365_protection_r )
@@ -1032,9 +1032,9 @@ static ADDRESS_MAP_START( quiz365_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x17ffff) AM_WRITE(MWA16_ROM						)	// ROM
 	AM_RANGE(0x200000, 0x2003ff) AM_WRITE(ddenlovr_palette_w	)	// Palette
 	AM_RANGE(0x200e0a, 0x200e0d) AM_WRITE(quiz365_protection_w	)	// Protection
-//	AM_RANGE(0x201000, 0x2017ff) AM_WRITE(MWA16_RAM 					)	// ?
+//  AM_RANGE(0x201000, 0x2017ff) AM_WRITE(MWA16_RAM                     )   // ?
 	AM_RANGE(0x300240, 0x300247) AM_WRITE(ddenlovr_palette_base_w)	// palette base for the 4 layers
-//	AM_RANGE(0x300248, 0x30024f) AM_WRITE(			)	// layer related? palette bank?
+//  AM_RANGE(0x300248, 0x30024f) AM_WRITE(          )   // layer related? palette bank?
 	AM_RANGE(0x300200, 0x300201) AM_WRITE(quiz365_select2_w	)	//
 	AM_RANGE(0x300202, 0x300203) AM_WRITE(quiz365_coincounter_w		)	// Coin Counters + more stuff written on startup
 	AM_RANGE(0x300268, 0x300269) AM_WRITE(ddenlovr_bgcolor_w)
@@ -1044,7 +1044,7 @@ static ADDRESS_MAP_START( quiz365_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x3003ca, 0x3003cb) AM_WRITE(ddenlovr_blitter_irq_ack_w	)	// Blitter irq acknowledge
 	AM_RANGE(0x300300, 0x300301) AM_WRITE(YM2413_register_port_0_lsb_w	)	// Sound
 	AM_RANGE(0x300302, 0x300303) AM_WRITE(YM2413_data_port_0_lsb_w		)	//
-//	AM_RANGE(0x300340, 0x30035f) AM_WRITE(					)	// 6242RTC
+//  AM_RANGE(0x300340, 0x30035f) AM_WRITE(                  )   // 6242RTC
 	AM_RANGE(0x300380, 0x300381) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0x300382, 0x300383) AM_WRITE(AY8910_write_port_0_lsb_w		)
 	AM_RANGE(0x3002c0, 0x3002c1) AM_WRITE(OKIM6295_data_0_lsb_w			)	//
@@ -1072,9 +1072,9 @@ static ADDRESS_MAP_START( ddenlovr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(ddenlovr_oki_bank_w			)
 	AM_RANGE(0xd00000, 0xd003ff) AM_WRITE(ddenlovr_palette_w	)	// Palette
-//	AM_RANGE(0xd01000, 0xd017ff) MWA16_RAM 					)	// ? B0 on startup, then 00
+//  AM_RANGE(0xd01000, 0xd017ff) MWA16_RAM                  )   // ? B0 on startup, then 00
 	AM_RANGE(0xe00040, 0xe00047) AM_WRITE(ddenlovr_palette_base_w)	// palette base for the 4 layers
-//	AM_RANGE(0xe00048, 0xe0004f) AM_WRITE(			)	// layer related? palette bank? see notes at beginning of driver
+//  AM_RANGE(0xe00048, 0xe0004f) AM_WRITE(          )   // layer related? palette bank? see notes at beginning of driver
 	AM_RANGE(0xe00068, 0xe00069) AM_WRITE(ddenlovr_bgcolor_w)
 	AM_RANGE(0xe0006a, 0xe0006b) AM_WRITE(ddenlovr_priority_w)
 	AM_RANGE(0xe0006c, 0xe0006d) AM_WRITE(ddenlovr_layer_enable_w)
@@ -1084,8 +1084,8 @@ static ADDRESS_MAP_START( ddenlovr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe0030c, 0xe0030d) AM_WRITE(ddenlovr_coincounter_1_w		)	//
 	AM_RANGE(0xe00400, 0xe00401) AM_WRITE(YM2413_register_port_0_lsb_w	)	// Sound
 	AM_RANGE(0xe00402, 0xe00403) AM_WRITE(YM2413_data_port_0_lsb_w		)	//
-//	AM_RANGE(0xe00500, 0xe0051f) AM_WRITE(					)	// 6242RTC
-//	AM_RANGE(0xe00302, 0xe00303) AM_WRITE(MWA16_NOP						)	// ?
+//  AM_RANGE(0xe00500, 0xe0051f) AM_WRITE(                  )   // 6242RTC
+//  AM_RANGE(0xe00302, 0xe00303) AM_WRITE(MWA16_NOP                     )   // ?
 	AM_RANGE(0xe00600, 0xe00601) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0xe00602, 0xe00603) AM_WRITE(AY8910_write_port_0_lsb_w		)
 	AM_RANGE(0xe00700, 0xe00701) AM_WRITE(OKIM6295_data_0_lsb_w 		)	//
@@ -1114,10 +1114,10 @@ static READ16_HANDLER( nettoqc_input_r )
 }
 
 /*
-	Protection:
+    Protection:
 
-	Writes 37 28 12 to 200e0b then 11 to 200e0d. Expects to read 88 from 200c03
-	Writes 67 4c 3a to 200e0b then 19 to 200e0d. Expects to read 51 from 200c03
+    Writes 37 28 12 to 200e0b then 11 to 200e0d. Expects to read 88 from 200c03
+    Writes 67 4c 3a to 200e0b then 19 to 200e0d. Expects to read 51 from 200c03
 */
 
 static data16_t *nettoqc_protection_val;
@@ -1185,7 +1185,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Rong Rong
+                                Rong Rong
 ***************************************************************************/
 
 static data8_t rongrong_select;
@@ -1233,7 +1233,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
-//	{ 0x1b, 0x1b,	// bit 5 = busy flag?
+//  { 0x1b, 0x1b,   // bit 5 = busy flag?
 	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
 	AM_RANGE(0x22, 0x23) AM_READ(rongrong_input2_r		)	//
 	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r	)	//
@@ -1253,7 +1253,7 @@ static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w)
 	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w)
 	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w)
-//	AM_RANGE(0xa0, 0xaf)	// 6242RTC
+//  AM_RANGE(0xa0, 0xaf)    // 6242RTC
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(quizchq_oki_bank_w)
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP)	// enables palette RAM at f000
 ADDRESS_MAP_END
@@ -1278,7 +1278,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
-//	{ 0x1b, 0x1b,	// bit 5 = busy flag?
+//  { 0x1b, 0x1b,   // bit 5 = busy flag?
 	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
 	AM_RANGE(0xa2, 0xa3) AM_READ(rongrong_input2_r		)	//
 	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r	)	//
@@ -1298,19 +1298,19 @@ static ADDRESS_MAP_START( rongrong_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w)
 	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w)
 	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w)
-//	AM_RANGE(0x20, 0x2f)	// 6242RTC
+//  AM_RANGE(0x20, 0x2f)    // 6242RTC
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP)	// enables palette RAM at f000, and protection device at f705/f706/f601
 ADDRESS_MAP_END
 /*
 1e input select,1c input read
-	3e=dsw1	3d=dsw2
+    3e=dsw1 3d=dsw2
 a0 input select,a2 input read (protection?)
-	0=?	1=?	2=coins(from a3)
+    0=? 1=? 2=coins(from a3)
 */
 
 
 /***************************************************************************
-								Monkey Mole Panic
+                                Monkey Mole Panic
 ***************************************************************************/
 
 
@@ -1684,7 +1684,7 @@ INPUT_PORTS_START( quiz365 )
 	PORT_DIPSETTING(    0x40, "0" )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0xc0, "2" )
-//	PORT_DIPSETTING(    0x00, "2" )
+//  PORT_DIPSETTING(    0x00, "2" )
 
 	PORT_START	// IN4 - DSW
 	PORT_DIPNAME( 0x03, 0x03, "Unknown 2-0&1" )
@@ -1951,8 +1951,8 @@ INPUT_PORTS_START( mmpanic )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
-//	PORT_DIPSETTING(    0x04, "5" )
-//	PORT_DIPSETTING(    0x00, "5" )
+//  PORT_DIPSETTING(    0x04, "5" )
+//  PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x20, 0x20, "Linked Cabinets" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2014,7 +2014,7 @@ INPUT_PORTS_START( mmpanic )
 INPUT_PORTS_END
 
 /***************************************************************************
-							Don Den Lover Vol.1
+                            Don Den Lover Vol.1
 ***************************************************************************/
 
 static struct AY8910interface ay8910_interface =
@@ -2077,7 +2077,7 @@ static MACHINE_DRIVER_START( nettoqc )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-								Rong Rong
+                                Rong Rong
 ***************************************************************************/
 
 /* the CPU is in Interrupt Mode 2
@@ -2092,8 +2092,8 @@ static INTERRUPT_GEN( quizchq_irq )
 	static int count;
 
 	/* I haven't found a irq ack register, so I need this kludge to
-	   make sure I don't lose any interrupt generated by the blitter,
-	   otherwise quizchq would lock up. */
+       make sure I don't lose any interrupt generated by the blitter,
+       otherwise quizchq would lock up. */
 	if (cpunum_get_info_int(0,CPUINFO_INT_INPUT_STATE + 0))
 		return;
 
@@ -2106,7 +2106,7 @@ static INTERRUPT_GEN( quizchq_irq )
 /*
 static INTERRUPT_GEN( rtc_irq )
 {
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
+    cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
 }
 */
 
@@ -2117,7 +2117,7 @@ static MACHINE_DRIVER_START( quizchq )
 	MDRV_CPU_PROGRAM_MAP(quizchq_readmem,quizchq_writemem)
 	MDRV_CPU_IO_MAP(quizchq_readport,quizchq_writeport)
 	MDRV_CPU_VBLANK_INT(quizchq_irq,1)
-//	MDRV_CPU_PERIODIC_INT(rtc_irq,1)
+//  MDRV_CPU_PERIODIC_INT(rtc_irq,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2155,19 +2155,19 @@ MACHINE_DRIVER_END
 /***************************************************************************
 ***************************************************************************/
 
-/*	the CPU is in Interrupt Mode 0:
+/*  the CPU is in Interrupt Mode 0:
 
-	RST 08 is vblank
-	RST 18 is from the blitter
-	RST 20 is from the 6242RTC
+    RST 08 is vblank
+    RST 18 is from the blitter
+    RST 20 is from the 6242RTC
  */
 static INTERRUPT_GEN( mmpanic_irq )
 {
 	static int count;
 
 	/* I haven't found a irq ack register, so I need this kludge to
-	   make sure I don't lose any interrupt generated by the blitter,
-	   otherwise the game would lock up. */
+       make sure I don't lose any interrupt generated by the blitter,
+       otherwise the game would lock up. */
 	if (cpunum_get_info_int(0,CPUINFO_INT_INPUT_STATE + 0))
 		return;
 
@@ -2279,16 +2279,16 @@ Quiz Channel Question (JPN ver.)
 N7311208L1-2
 N73SUB
 
-CPU:	TMPZ84C015BF-8
-Sound:	YM2413
-	M6295
-OSC:	16MHz
-	28.6363MHz
-	32.768KHz ?
-Custom:	NL-002 - Nakanihon
-	(1108F0405) - Dynax
-	(1427F0071) - Dynax
-Others:	M6242B (RTC?)
+CPU:    TMPZ84C015BF-8
+Sound:  YM2413
+    M6295
+OSC:    16MHz
+    28.6363MHz
+    32.768KHz ?
+Custom: NL-002 - Nakanihon
+    (1108F0405) - Dynax
+    (1427F0071) - Dynax
+Others: M6242B (RTC?)
 
 ***************************************************************************/
 
@@ -2377,7 +2377,7 @@ ROM_END
 
 /***************************************************************************
 
-								Rong Rong
+                                Rong Rong
 
 Here are the proms for Nakanihon's Rong Rong
 It's a quite nice Puzzle game.
@@ -2390,6 +2390,23 @@ For the sound it uses A YM2413
 ***************************************************************************/
 
 ROM_START( rongrong )
+	ROM_REGION( 0x118000, REGION_CPU1, 0 )	/* Z80 Code + space for banked RAM */
+	ROM_LOAD( "8002e.3e",     0x00000, 0x80000, CRC(062fa1b6) SHA1(f15a78c4192dbc56bb6ac0f92cffee88040b0a17) )
+	ROM_RELOAD(               0x10000, 0x80000 )
+	/* 90000-10ffff empty */
+
+	ROM_REGION( 0x280000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_LOAD( "8003.8c",      0x000000, 0x80000, CRC(f57192e5) SHA1(e33f5243028520492cd876be3e4b6a76a9b20d46) )
+	ROM_LOAD( "8004.9c",      0x080000, 0x80000, CRC(c8c0b5cb) SHA1(d0c99908022b7d5d484e6d1990c00f15f7d8665a) )
+	ROM_LOAD( "8005e.10c",    0x100000, 0x80000, CRC(11c7a23c) SHA1(96d6b82db2555f7d0df661367a7a09bd4eaecba9) )
+	ROM_LOAD( "8006e.11c",    0x180000, 0x80000, CRC(137e9b83) SHA1(5458f8982ce84990f0bc56f9269e46c691301ba1) )
+	ROM_LOAD( "8007e.12c",    0x200000, 0x80000, CRC(374a1d50) SHA1(bbbbaf048b06caaca292b9e3d4bf408ba5259ad6) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "8001w.2f",     0x00000, 0x40000, CRC(8edc87a2) SHA1(87e8ad50be025263e682cbfb5623f3a35b17118f) )
+ROM_END
+
+ROM_START( rongrngg )
 	ROM_REGION( 0x118000, REGION_CPU1, 0 )	/* Z80 Code + space for banked RAM */
 	ROM_LOAD( "rr_8002g.rom", 0x00000, 0x80000, CRC(9a5d2885) SHA1(9ca049085d14b1cfba6bd48adbb0b883494e7d29) )
 	ROM_RELOAD(               0x10000, 0x80000 )
@@ -2512,18 +2529,18 @@ ROM_END
 static DRIVER_INIT( rongrong )
 {
 	/* Rong Rong seems to have a protection that works this way:
-		- write 01 to port c2
-		- write three times to f705 (a fixed command?)
-		- write a parameter to f706
-		- read the answer back from f601
-		- write 00 to port c2
-	   The parameter is read from RAM location 60d4, and the answer
-	   is written back there. No matter what the protection device
-	   does, it seems that making 60d4 always read 0 is enough to
-	   bypass the protection. Actually, I'm wondering if this
-	   version of the game might be a bootleg with the protection
-	   patched.
-	 */
+        - write 01 to port c2
+        - write three times to f705 (a fixed command?)
+        - write a parameter to f706
+        - read the answer back from f601
+        - write 00 to port c2
+       The parameter is read from RAM location 60d4, and the answer
+       is written back there. No matter what the protection device
+       does, it seems that making 60d4 always read 0 is enough to
+       bypass the protection. Actually, I'm wondering if this
+       version of the game might be a bootleg with the protection
+       patched. (both sets need this)
+     */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x60d4, 0x60d4, 0, 0, MRA8_NOP);
 }
 
@@ -2533,7 +2550,8 @@ GAMEX(1993, quizchq,  0,       quizchq,  quizchq,  0,        ROT0, "Nakanihon", 
 GAMEX(1993, quizchql, quizchq, quizchq,  quizchq,  0,        ROT0, "Nakanihon (Laxan license)",                   "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon",                                   "Quiz 365 (Japan)",                           GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, quiz365t, quiz365, quiz365,  quiz365,  0,        ROT0, "Nakanihon + Taito",                           "Quiz 365 (Hong Kong & Taiwan)",              GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Germany)",                        GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
+GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Europe)",                         GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
+GAMEX(1994, rongrngg, rongrong,rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Germany)",                        GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAMEX(1995, nettoqc,  0,       nettoqc,  nettoqc,  0,        ROT0, "Nakanihon",                                   "Nettoh Quiz Champion (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAMEX(1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",                                       "Don Den Lover Vol. 1 (Hong Kong)",           GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 

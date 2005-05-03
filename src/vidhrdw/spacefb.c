@@ -102,9 +102,9 @@ VIDEO_UPDATE( spacefb )
 	int background_colour;
 
 	/*
-		Space Firebird only uses the red background flashing, but since we are documenting the hardware...
+        Space Firebird only uses the red background flashing, but since we are documenting the hardware...
 
-	*/
+    */
 
 	/* Clear the bitmap */
 	background_colour=0;
@@ -134,8 +134,8 @@ VIDEO_UPDATE( spacefb )
 	spriteno = (video_control & 0x20) ? 0x80 : 0x00;
 
 	/* A4 of the color PROM, depending on a jumper setting, can either come
-	   from the CREF line or from sprite memory. CREF is the default
-	   according to the schematics */
+       from the CREF line or from sprite memory. CREF is the default
+       according to the schematics */
 	col_bit2 = (video_control & 0x40) ? 0x04 : 0x00;
 
 	for (offs = 0; offs < 128; offs++, spriteno++)
@@ -196,7 +196,7 @@ VIDEO_UPDATE( spacefb )
 		for (b=0;b<8;b++)
 		{
 			drawgfx(bitmap,Machine->gfx[0],
-				 //	255 - b,
+				 // 255 - b,
 					255 - ( (colour_control & (1<<(7-b))) ? 6 : 5),
 					1,
 					0,0,
@@ -207,7 +207,7 @@ VIDEO_UPDATE( spacefb )
 		for (b=0;b<8;b++)
 		{
 			drawgfx(bitmap,Machine->gfx[0],
-				 //	255 - b,
+				 // 255 - b,
 					255 - ( (spacefb_sound_latch & (1<<(7-b))) ? (7-b)+5 : 0),
 					1,
 					0,0,

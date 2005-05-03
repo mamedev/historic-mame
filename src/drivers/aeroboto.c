@@ -170,8 +170,8 @@ INPUT_PORTS_START( formatz )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	/* The last dip switch is directly connected to the video hardware and
-	   flips the screen. The program instead sees the coin input, which must
-	   stay low for exactly 2 frames to be consistently recognized. */
+       flips the screen. The program instead sees the coin input, which must
+       stay low for exactly 2 frames to be consistently recognized. */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 
 	PORT_START_TAG("DSW2")
@@ -216,13 +216,13 @@ static struct GfxLayout charlayout =
 // exact star layout unknown... could be anything
 static struct GfxLayout starlayout =
 {
-	8,8,
-	RGN_FRAC(1,1),
-	1,
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
+    8,8,
+    RGN_FRAC(1,1),
+    1,
+    { 0 },
+    { 0, 1, 2, 3, 4, 5, 6, 7 },
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    8*8
 };
 */
 static struct GfxLayout spritelayout =
@@ -240,7 +240,7 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0,  64 },     /* chars */
-//	{ REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */
+//  { REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */
 	{ REGION_GFX3, 0, &spritelayout,   0,   8 },
 	{ -1 } /* end of array */
 };
@@ -286,7 +286,7 @@ static MACHINE_DRIVER_START( formatz )
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END

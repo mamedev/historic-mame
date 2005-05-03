@@ -1,9 +1,9 @@
 /***************************************************************************
 
-"AJAX/Typhoon"	(Konami GX770)
+"AJAX/Typhoon"  (Konami GX770)
 
 Driver by:
-	Manuel Abadia <manu@teleline.es>
+    Manuel Abadia <manu@teleline.es>
 
 TO DO:
 - Find the CPU core bug, that makes the 052001 to read from 0x0000
@@ -133,7 +133,7 @@ INPUT_PORTS_START( ajax )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalid" )
+//  PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalid" )
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -204,19 +204,19 @@ INPUT_PORTS_END
 
 
 
-/*	sound_bank_w:
-	Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at B11:
+/*  sound_bank_w:
+    Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at B11:
 
-	Bit	Description
-	---	-----------
-	7	CONT1 (???) \
-	6	CONT2 (???) / One or both bits are set to 1 when you kill a enemy
-	5	\
-	3	/ 4MBANKH
-	4	\
-	2	/ 4MBANKL
-	1	\
-	0	/ 2MBANK
+    Bit Description
+    --- -----------
+    7   CONT1 (???) \
+    6   CONT2 (???) / One or both bits are set to 1 when you kill a enemy
+    5   \
+    3   / 4MBANKH
+    4   \
+    2   / 4MBANKL
+    1   \
+    0   / 2MBANK
 */
 
 static WRITE8_HANDLER( sound_bank_w )
@@ -300,14 +300,14 @@ static MACHINE_DRIVER_START( ajax )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_1)
 	MDRV_SOUND_ROUTE(0, "left", 0.20)
 	MDRV_SOUND_ROUTE(0, "right", 0.20)
 	MDRV_SOUND_ROUTE(1, "left", 0.20)
 	MDRV_SOUND_ROUTE(1, "right", 0.20)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_2)
 	MDRV_SOUND_ROUTE(0, "left", 0.50)

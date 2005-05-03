@@ -49,7 +49,7 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 

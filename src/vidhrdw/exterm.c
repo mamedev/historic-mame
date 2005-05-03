@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Gottlieb Exterminator hardware
+    Gottlieb Exterminator hardware
 
 ***************************************************************************/
 
@@ -16,7 +16,7 @@ data16_t *exterm_master_videoram, *exterm_slave_videoram;
 
 /*************************************
  *
- *	Palette setup
+ *  Palette setup
  *
  *************************************/
 
@@ -36,7 +36,7 @@ PALETTE_INIT( exterm )
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (g >> 2);
 		b = (b << 3) | (b >> 2);
-		
+
 		palette_set_color(i+4096,r,g,b);
 	}
 }
@@ -45,7 +45,7 @@ PALETTE_INIT( exterm )
 
 /*************************************
  *
- *	Master shift register
+ *  Master shift register
  *
  *************************************/
 
@@ -76,7 +76,7 @@ void exterm_from_shiftreg_slave(unsigned int address, UINT16 *shiftreg)
 
 /*************************************
  *
- *	Main video refresh
+ *  Main video refresh
  *
  *************************************/
 

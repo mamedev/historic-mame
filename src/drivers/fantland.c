@@ -1,19 +1,19 @@
 /***************************************************************************
 
-					  -= Fantasy Land / Galaxy Gunners =-
+                      -= Fantasy Land / Galaxy Gunners =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPUs 	:	2 x 8086
-Sound	:	YM2151 + DAC
-Video	:	?
+CPUs    :   2 x 8086
+Sound   :   YM2151 + DAC
+Video   :   ?
 
 ---------------------------------------------------------------------------
-Year + Game				Boards
+Year + Game             Boards
 ---------------------------------------------------------------------------
->=1987	Fantasy Land	?
-1989	Galaxy Gunners	?
+>=1987  Fantasy Land    ?
+1989    Galaxy Gunners  ?
 ---------------------------------------------------------------------------
 
 Notes:
@@ -38,7 +38,7 @@ VIDEO_UPDATE( fantland );
 
 /***************************************************************************
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 ***************************************************************************/
 
@@ -47,8 +47,8 @@ static data8_t fantland_nmi_enable;
 static WRITE8_HANDLER( fantland_nmi_enable_w )
 {
 	fantland_nmi_enable = data;
-//	if ((fantland_nmi_enable != 0) && (fantland_nmi_enable != 8))
-//		logerror("CPU #0 : nmi_enable = %02x - PC = %04X\n", data, activecpu_get_pc());
+//  if ((fantland_nmi_enable != 0) && (fantland_nmi_enable != 8))
+//      logerror("CPU #0 : nmi_enable = %02x - PC = %04X\n", data, activecpu_get_pc());
 }
 
 static WRITE8_HANDLER( fantland_soundlatch_w )
@@ -58,7 +58,7 @@ static WRITE8_HANDLER( fantland_soundlatch_w )
 }
 
 /***************************************************************************
-								Fantasy Land
+                                Fantasy Land
 ***************************************************************************/
 
 static ADDRESS_MAP_START( fantland_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -87,7 +87,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Galaxy Gunners
+                                Galaxy Gunners
 ***************************************************************************/
 
 static ADDRESS_MAP_START( galaxygn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -119,7 +119,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 ***************************************************************************/
 
@@ -149,12 +149,12 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
 /***************************************************************************
-								Fantasy Land
+                                Fantasy Land
 ***************************************************************************/
 
 INPUT_PORTS_START( fantland )
@@ -228,7 +228,7 @@ INPUT_PORTS_START( fantland )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Galaxy Gunners
+                                Galaxy Gunners
 ***************************************************************************/
 
 INPUT_PORTS_START( galaxygn )
@@ -304,7 +304,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							Graphics Layouts
+                            Graphics Layouts
 
 ***************************************************************************/
 
@@ -327,7 +327,7 @@ static struct GfxDecodeInfo fantland_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
@@ -435,7 +435,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
@@ -520,7 +520,7 @@ ROM_START( fantlnda )
 ROM_END
 
 /***************************************************************************
-								Galaxy Gunners
+                                Galaxy Gunners
 ***************************************************************************/
 
 ROM_START( galaxygn )
@@ -671,10 +671,10 @@ ROM_START( borntofi )
 	ROM_LOAD( "15.bin", 0x90000, 0x10000, CRC(101cbd6b) SHA1(22668f362499f7ae017d9334f426ac644498e0b7) )
 	ROM_LOAD( "16.bin", 0xa0000, 0x10000, CRC(edab01a9) SHA1(ce9c6b48807c9b312067b27928d27b4532319c60) )
 	ROM_LOAD( "17.bin", 0xb0000, 0x10000, CRC(ea361ea5) SHA1(a2b38a250ab477226da5d56bd07ea3b2f3aa9625) )
-//	ROM_LOAD( "18.bin", 0xc0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
-//	ROM_LOAD( "19.bin", 0xd0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
-//	ROM_LOAD( "20.bin", 0xe0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
-//	ROM_LOAD( "21.bin", 0xf0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//  ROM_LOAD( "18.bin", 0xc0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//  ROM_LOAD( "19.bin", 0xd0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//  ROM_LOAD( "20.bin", 0xe0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//  ROM_LOAD( "21.bin", 0xf0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
 
 	ROM_REGION( 0x300000, REGION_GFX1,0 ) /*gfx */
 	ROMX_LOAD( "22.bin",  0x000002, 0x10000, CRC(a3afc57f) SHA1(2713fa4b6ad571748f47d25c72a0d40d80f8fcf6), ROM_SKIP(2) )
@@ -707,24 +707,24 @@ ROM_START( borntofi )
 	ROMX_LOAD( "31.bin",  0x1b0002, 0x10000, CRC(1446ddc5) SHA1(7bd2ae336514d939c71bdf52a72e710e28d14bd9), ROM_SKIP(2) )
 	ROMX_LOAD( "47.bin",  0x1b0001, 0x10000, CRC(b3147a84) SHA1(dfb9c8293a477697017f5632e203c9fb88cadc81), ROM_SKIP(2) )
 	ROMX_LOAD( "63.bin",  0x1b0000, 0x10000, CRC(5f530559) SHA1(d1d3edc2082985ccec9fe8ca0b27810623cb5b89), ROM_SKIP(2) )
-//	ROMX_LOAD( "32.bin",  0x1e0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "48.bin",  0x1e0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "64.bin",  0x1e0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "33.bin",  0x210002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "49.bin",  0x210001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "65.bin",  0x210000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "34.bin",  0x240002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "50.bin",  0x240001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "66.bin",  0x240000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "35.bin",  0x270002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "51.bin",  0x270001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "67.bin",  0x270000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "36.bin",  0x2a0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "52.bin",  0x2a0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "68.bin",  0x2a0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "37.bin",  0x2d0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "53.bin",  0x2d0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
-//	ROMX_LOAD( "69.bin",  0x2d0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "32.bin",  0x1e0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "48.bin",  0x1e0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "64.bin",  0x1e0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "33.bin",  0x210002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "49.bin",  0x210001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "65.bin",  0x210000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "34.bin",  0x240002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "50.bin",  0x240001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "66.bin",  0x240000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "35.bin",  0x270002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "51.bin",  0x270001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "67.bin",  0x270000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "36.bin",  0x2a0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "52.bin",  0x2a0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "68.bin",  0x2a0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "37.bin",  0x2d0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "53.bin",  0x2d0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//  ROMX_LOAD( "69.bin",  0x2d0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
 ROM_END
 
 GAME( 19??, fantland, 0,        fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 1)"   )

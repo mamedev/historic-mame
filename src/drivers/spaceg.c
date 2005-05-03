@@ -255,7 +255,7 @@ static WRITE8_HANDLER( zvideoram_w )
 
 static READ8_HANDLER(fake_r)
 {
-//	logerror("vb %04x\n", activecpu_get_pc() );
+//  logerror("vb %04x\n", activecpu_get_pc() );
 	return 0;
 }
 
@@ -369,10 +369,10 @@ static ADDRESS_MAP_START( readwritemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9400, 0x9400) AM_WRITE(io9400_w) /* gfx ctrl */
 	AM_RANGE(0x9401, 0x9401) AM_WRITE(io9401_w) /* gfx ctrl */
 	/* 9402 -
-		bits 0 and 1 probably control the lamps under the player 1 and player 2 start buttons
-		bit 3 is probably a flip screen
-		bit 7 - unknown - set to 1 during the gameplay (coinlock ?)
-	*/
+        bits 0 and 1 probably control the lamps under the player 1 and player 2 start buttons
+        bit 3 is probably a flip screen
+        bit 7 - unknown - set to 1 during the gameplay (coinlock ?)
+    */
 	AM_RANGE(0x9402, 0x9407) AM_RAM
 
 	AM_RANGE(0x9800, 0x9800) AM_READ(fake_r) //watchdog read ? nmi mask/ack ?
@@ -439,17 +439,17 @@ static MACHINE_DRIVER_START( spaceg )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-//	MDRV_SOUND_ADD(SN76496, 15468480/4)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+//  MDRV_SOUND_ADD(SN76496, 15468480/4)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-//	MDRV_SOUND_ADD(SN76496, 15468480/4)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+//  MDRV_SOUND_ADD(SN76496, 15468480/4)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-//	MDRV_SOUND_ADD(SN76496, 15468480/4)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+//  MDRV_SOUND_ADD(SN76496, 15468480/4)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-//	MDRV_SOUND_ADD(DAC, 0)
-//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+//  MDRV_SOUND_ADD(DAC, 0)
+//  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

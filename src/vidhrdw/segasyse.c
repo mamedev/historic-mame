@@ -24,7 +24,7 @@
 UINT8  segae_vdp_cmdpart[CHIPS];		/* VDP Command Part Counter */
 UINT16 segae_vdp_command[CHIPS];		/* VDP Command Word */
 
-UINT8  segae_vdp_accessmode[CHIPS];		/* VDP Access Mode (VRAM, CRAM)	*/
+UINT8  segae_vdp_accessmode[CHIPS];		/* VDP Access Mode (VRAM, CRAM) */
 UINT16 segae_vdp_accessaddr[CHIPS];		/* VDP Access Address */
 UINT8  segae_vdp_readbuffer[CHIPS];		/* VDP Read Buffer */
 
@@ -136,7 +136,7 @@ void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct recta
  VDP Start / Stop Functions
 ********************************************************************************
  note: we really should check after each allocation to make sure it was
-	   successful then if one allocation fails we can free up the previous ones
+       successful then if one allocation fails we can free up the previous ones
 *******************************************************************************/
 
 int	segae_vdp_start( UINT8 chip )
@@ -211,9 +211,9 @@ int	segae_vdp_start( UINT8 chip )
  return the following
 
  bit:
-  7	- vert int pending
-  6	- line int pending
-  5	- sprite collision (non 0 pixels) *not currently emulated (not needed by these games)*
+  7 - vert int pending
+  6 - line int pending
+  5 - sprite collision (non 0 pixels) *not currently emulated (not needed by these games)*
   4 - always 0
   3 - always 0
   2 - always 0
@@ -479,7 +479,7 @@ void segae_drawtilesline(UINT8 *dest, int line, UINT8 chip, UINT8 pri)
 		palette = (vram_word & 0x0800) >> 11;
 		priority= (vram_word & 0x1000) >> 12;
 
-		tilesline2= (line + vscroll) % 8; 
+		tilesline2= (line + vscroll) % 8;
 		if (flipy) tilesline2 = 7-tilesline2;
 
 		if (priority == pri) {

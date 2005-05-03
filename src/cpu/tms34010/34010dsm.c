@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "osd_cpu.h"
+#include "driver.h"
 
 #ifdef STANDALONE
 #define PC __pc + (offset << 3)
@@ -246,6 +247,7 @@ static void print_reg_list(UINT16 rev)
 
 unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 {
+	int flags = 0;
 	UINT8 bad = 0;
 	UINT16 subop;
 
@@ -643,7 +645,10 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 		{
 		case 0x0000:
 			if (is_34020)
+			{
 				sprintf (buffer, "TRAPL  ");
+				flags = DASMFLAG_STEP_OVER;
+			}
 			else
 				bad = 1;
 			break;
@@ -672,7 +677,10 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 
 		case 0x0060:
 			if (is_34020)
+			{
 				sprintf(buffer, "RETM   ");
+				flags = DASMFLAG_STEP_OUT;
+			}
 			else
 				bad = 1;
 			break;
@@ -686,19 +694,23 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 
 		case 0x0100:
 			sprintf (buffer, "TRAP   %Xh", op & 0x1f);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x0120:
 			sprintf (buffer, "CALL   ");
 			print_des_reg();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x0140:
 			sprintf (buffer, "RETI   ");
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 		case 0x0160:
 			sprintf (buffer, "RETS   ");
+			flags = DASMFLAG_STEP_OUT;
 			if (op & 0x1f)
 			{
 				sprintf(temp, "%Xh", op & 0x1f);
@@ -890,11 +902,13 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 		case 0x0120:
 			sprintf (buffer, "CALLR  ");
 			print_relative();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x0140:
 			sprintf (buffer, "CALLA  ");
 			print_long_parm();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x0160:
@@ -906,6 +920,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			print_des_reg();
 			strcat(buffer, ",");
 			print_relative();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x01a0:
@@ -913,6 +928,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			print_des_reg();
 			strcat(buffer, ",");
 			print_relative();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x01c0:
@@ -920,6 +936,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 			print_des_reg();
 			strcat(buffer, ",");
 			print_relative();
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 		case 0x01e0:
@@ -933,6 +950,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 
 
 	case 0x0e00:
+		flags = DASMFLAG_STEP_OVER;
 		switch (subop)
 		{
 		case 0x0000:
@@ -1104,6 +1122,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 		print_des_reg();
 		strcat(buffer, ",");
 		print_relative_5bit();
+		flags = DASMFLAG_STEP_OVER;
 		break;
 
 
@@ -1719,7 +1738,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 		sprintf (buffer, "DW     %04Xh", op & 0xffff);
 	}
 
-	return _pc - __pc;
+	return (_pc - __pc) | flags | DASMFLAG_SUPPORTED;
 }
 
 unsigned Dasm34010(char *buff, UINT32 pc)

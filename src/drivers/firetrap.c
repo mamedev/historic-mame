@@ -359,9 +359,9 @@ INPUT_PORTS_START( firetrap )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
@@ -442,9 +442,9 @@ INPUT_PORTS_START( firetpbl )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
@@ -555,7 +555,7 @@ static INTERRUPT_GEN( firetrap )
 			latch=0;
 
 		/* Make sure coin IRQ's aren't generated when another command is pending, the main cpu
-			definitely doesn't expect them as it locks out the coin routine */
+            definitely doesn't expect them as it locks out the coin routine */
 		if (coin_command_pending && !i8751_current_command) {
 			i8751_return=coin_command_pending;
 			cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xff);

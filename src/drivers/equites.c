@@ -89,9 +89,9 @@ Hardware Deficiencies
 
   equites_8404rule(unsigned pc, int offset, int data) details:
 
-	    pc: 68000 code address where the program queries the MCU
-	offset: 8404 memory offset(in bytes) from where MCU data is read
-	  data: fake byte-value to return (negative numbers trigger special conditions)
+        pc: 68000 code address where the program queries the MCU
+    offset: 8404 memory offset(in bytes) from where MCU data is read
+      data: fake byte-value to return (negative numbers trigger special conditions)
 
 The following ROMs need redump:
 
@@ -475,7 +475,7 @@ INPUT_PORTS_START( bullfgtr )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x9000, 0x0000, DEF_STR( Coinage ) )
-//	PORT_DIPSETTING(      0x9000, "A 1C/1C B 1C/1C" )		// More than 1 credit per player needed
+//  PORT_DIPSETTING(      0x9000, "A 1C/1C B 1C/1C" )       // More than 1 credit per player needed
 	PORT_DIPSETTING(      0x0000, "A 1C/1C B 1C/1C" )
 	PORT_DIPSETTING(      0x8000, "A 1C/1C B 1C/4C" )
 	PORT_DIPSETTING(      0x1000, "A 1C/2C B 1C/3C" )
@@ -490,8 +490,8 @@ INPUT_PORTS_START( kouyakyu )
 	EQUITES_PLAYER_INPUT_MSB( IPT_BUTTON1, IPT_BUTTON2, IPT_BUTTON3, IPT_START2 )
 
 	PORT_START
-//	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_COIN1 )
-//	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+//  PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_COIN1 )
+//  PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0300, IP_ACTIVE_HIGH, IPT_COIN1 )
 #if EASY_TEST_MODE
 	PORT_SERVICE( 0x0300, IP_ACTIVE_HIGH )

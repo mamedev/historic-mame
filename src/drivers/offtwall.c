@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari "Round" hardware
+    Atari "Round" hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Off the Wall (1991) [2 sets]
+    Games supported:
+        * Off the Wall (1991) [2 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -26,7 +26,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -49,7 +49,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -65,7 +65,7 @@ static MACHINE_INIT( offtwall )
 
 /*************************************
  *
- *	I/O handling
+ *  I/O handling
  *
  *************************************/
 
@@ -94,35 +94,35 @@ static WRITE16_HANDLER( io_latch_w )
 
 /*************************************
  *
- *	SLOOP workarounds
+ *  SLOOP workarounds
  *
  *************************************/
 
 
 /*-------------------------------------------------------------------------
 
-	Bankswitching
+    Bankswitching
 
-	Like the slapstic, the SoS bankswitches memory using A13 and A14.
-	Unlike the slapstic, the exact addresses to trigger the bankswitch
-	are unknown.
+    Like the slapstic, the SoS bankswitches memory using A13 and A14.
+    Unlike the slapstic, the exact addresses to trigger the bankswitch
+    are unknown.
 
-	Fortunately, Off the Wall uses a common routine for the important
-	bankswitching. The playfield data is stored in the banked area of
-	ROM, and by comparing the playfields to a real system, a mechanism
-	to bankswitch at the appropriate time was discovered. Fortunately,
-	it's really basic.
+    Fortunately, Off the Wall uses a common routine for the important
+    bankswitching. The playfield data is stored in the banked area of
+    ROM, and by comparing the playfields to a real system, a mechanism
+    to bankswitch at the appropriate time was discovered. Fortunately,
+    it's really basic.
 
-	OtW looks up the address to read playfield data from a table which
-	is 58 words long. Word 0 assumes the bank is 0, word 1 assumes the
-	bank is 1, etc. So we just trigger off of the table read and cause
-	the bank to switch then.
+    OtW looks up the address to read playfield data from a table which
+    is 58 words long. Word 0 assumes the bank is 0, word 1 assumes the
+    bank is 1, etc. So we just trigger off of the table read and cause
+    the bank to switch then.
 
-	In addition, there is code which checksums longs from $40000 down to
-	$3e000. The code wants that checksum to be $aaaa5555, but there is
-	no obvious way for this to happen. To work around this, we watch for
-	the final read from $3e000 and tweak the value such that the checksum
-	will come out the $aaaa5555 magically.
+    In addition, there is code which checksums longs from $40000 down to
+    $3e000. The code wants that checksum to be $aaaa5555, but there is
+    no obvious way for this to happen. To work around this, we watch for
+    the final read from $3e000 and tweak the value such that the checksum
+    will come out the $aaaa5555 magically.
 
 -------------------------------------------------------------------------*/
 
@@ -147,7 +147,7 @@ static READ16_HANDLER( bankrom_r )
 	logerror("%06X: %04X\n", activecpu_get_previouspc(), offset);
 
 	/* if the values are $3e000 or $3e002 are being read by code just below the
-		ROM bank area, we need to return the correct value to give the proper checksum */
+        ROM bank area, we need to return the correct value to give the proper checksum */
 	if ((offset == 0x3000 || offset == 0x3001) && activecpu_get_previouspc() > 0x37000)
 	{
 		unsigned int checksum = (program_read_word(0x3fd210)<<16)|program_read_word(0x3fd212);
@@ -165,18 +165,18 @@ static READ16_HANDLER( bankrom_r )
 
 /*-------------------------------------------------------------------------
 
-	Sprite Cache
+    Sprite Cache
 
-	Somewhere in the code, if all the hardware tests are met properly,
-	some additional dummy sprites are added to the sprite cache before
-	they are copied to sprite RAM. The sprite RAM copy routine computes
-	the total width of all sprites as they are copied and if the total
-	width is less than or equal to 38, it adds a "HARDWARE ERROR" sprite
-	to the end.
+    Somewhere in the code, if all the hardware tests are met properly,
+    some additional dummy sprites are added to the sprite cache before
+    they are copied to sprite RAM. The sprite RAM copy routine computes
+    the total width of all sprites as they are copied and if the total
+    width is less than or equal to 38, it adds a "HARDWARE ERROR" sprite
+    to the end.
 
-	Here we detect the read of the sprite count from within the copy
-	routine, and add some dummy sprites to the cache ourself if there
-	isn't enough total width.
+    Here we detect the read of the sprite count from within the copy
+    routine, and add some dummy sprites to the cache ourself if there
+    isn't enough total width.
 
 -------------------------------------------------------------------------*/
 
@@ -224,14 +224,14 @@ static READ16_HANDLER( spritecache_count_r )
 
 /*-------------------------------------------------------------------------
 
-	Unknown Verify
+    Unknown Verify
 
-	In several places, the value 1 is stored to the byte at $3fdf1e. A
-	fairly complex subroutine is called, and then $3fdf1e is checked to
-	see if it was set to zero. If it was, "HARDWARE ERROR" is displayed.
+    In several places, the value 1 is stored to the byte at $3fdf1e. A
+    fairly complex subroutine is called, and then $3fdf1e is checked to
+    see if it was set to zero. If it was, "HARDWARE ERROR" is displayed.
 
-	To avoid this, we just return 1 when this value is read within the
-	range of PCs where it is tested.
+    To avoid this, we just return 1 when this value is read within the
+    range of PCs where it is tested.
 
 -------------------------------------------------------------------------*/
 
@@ -251,7 +251,7 @@ static READ16_HANDLER( unknown_verify_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -296,7 +296,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -368,7 +368,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -394,7 +394,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -403,23 +403,23 @@ static MACHINE_DRIVER_START( offtwall )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(offtwall)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_VIDEO_START(offtwall)
 	MDRV_VIDEO_UPDATE(offtwall)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_iii_mono_noadpcm)
 MACHINE_DRIVER_END
@@ -428,7 +428,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -473,7 +473,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -519,7 +519,7 @@ static DRIVER_INIT( offtwalc )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

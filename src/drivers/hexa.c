@@ -21,7 +21,7 @@ d001      AY8910 write
 d008      bit0/1 = flip screen x/y
           bit 4 = ROM bank??
           bit 5 = char bank
-		  other bits????????
+          other bits????????
 d010      watchdog reset, or IRQ acknowledge, or both
 f000      ????????
 

@@ -1,24 +1,24 @@
 /*****************************************************************************
  *
- *	 opsce02.h
- *	 Addressing mode and opcode macros for 65ce02 CPU
+ *   opsce02.h
+ *   Addressing mode and opcode macros for 65ce02 CPU
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 2000 Peter Trauner, all rights reserved.
  *   documentation preliminary databook
- *	 documentation by michael steil mist@c64.org
- *	 available at ftp://ftp.funet.fi/pub/cbm/c65
+ *   documentation by michael steil mist@c64.org
+ *   available at ftp://ftp.funet.fi/pub/cbm/c65
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -55,12 +55,12 @@
 	else														\
 		P = (P & ~(F_N | F_Z)) | ((n.b.h) & F_N)
 
-/* EA_IDY 
+/* EA_IDY
  *  ???? subtract 1 cycle if page boundary is crossed */
 
 
 /***************************************************************
- *	EA = zero page indirect + Z (post indexed)
+ *  EA = zero page indirect + Z (post indexed)
  *  ???? subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #define EA_IDZ													\
@@ -73,8 +73,8 @@
 	EAW += Z
 
 /***************************************************************
- *	EA = zero page indexed stack, indirect + Y (post indexed)
- *	??? subtract 1 cycle if page boundary is crossed
+ *  EA = zero page indexed stack, indirect + Y (post indexed)
+ *  ??? subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 /* i think its based on stack high byte instead of of bank register */
 #define EA_ZP_INSP_INY											\
@@ -122,8 +122,8 @@
 #define PUSH_WORD(pair) PUSH(pair.b.l);PUSH(pair.b.h)
 
 /***************************************************************
- *	BRA  branch relative
- *	extra cycle if page boundary is crossed
+ *  BRA  branch relative
+ *  extra cycle if page boundary is crossed
  ***************************************************************/
 #undef BRA
 #define BRA(cond)												\
@@ -140,7 +140,7 @@
 	}
 
 /***************************************************************
- *	BRA  branch relative
+ *  BRA  branch relative
  ***************************************************************/
 #define BRA_WORD(cond)											\
 	if (cond)													\
@@ -157,19 +157,19 @@
 	}
 
 /* 65ce02 ******************************************************
- *	cle clear disable extended stack flag
+ *  cle clear disable extended stack flag
  ***************************************************************/
 #define CLE 													\
 		P|=F_E
 
 /* 65ce02 ******************************************************
- *	see set disable extended stack flag
+ *  see set disable extended stack flag
  ***************************************************************/
 #define SEE 													\
 		P&=~F_E
 
 /* 65ce02 ******************************************************
- *	augment
+ *  augment
  ***************************************************************/
 #define AUG 													\
  t1=RDOPARG(); t2=RDOPARG(); t3=RDOPARG(); \
@@ -177,13 +177,13 @@
   t1,t2,t3);
 
 /* 65ce02 ******************************************************
- *	rts imm
+ *  rts imm
  ***************************************************************/
 #define RTN 												\
   if (P&F_E) { S+=tmp; } else { SW+=tmp; }
 
 /* 65ce02 ******************************************************
- *	NEG accu
+ *  NEG accu
  * twos complement
  ***************************************************************/
 #define NEG 													\
@@ -191,8 +191,8 @@
 	SET_NZ(A)
 
 /* 65ce02 ******************************************************
- *	ASR arithmetic (signed) shift right
- *	[7] -> [7][6][5][4][3][2][1][0] -> C
+ *  ASR arithmetic (signed) shift right
+ *  [7] -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define ASR_65CE02												\
 	P = (P & ~F_C) | (tmp & F_C);								\
@@ -200,18 +200,18 @@
 	SET_NZ(tmp)
 
 /* 65ce02 ******************************************************
- *	ASW arithmetic shift left word
- *	[c] <- [15]..[6][5][4][3][2][1][0]
+ *  ASW arithmetic shift left word
+ *  [c] <- [15]..[6][5][4][3][2][1][0]
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
 #define ASW 													\
 	tmp.w.l = tmp.w.l << 1; 									\
 	P = (P & ~F_C) | (tmp.b.h2 & F_C);							\
-	SET_NZ_WORD(tmp);											
+	SET_NZ_WORD(tmp);
 
 /* 65ce02 ******************************************************
- *	ROW rotate left word
- *	[c] <- [15]..[6][5][4][3][2][1][0] <- C
+ *  ROW rotate left word
+ *  [c] <- [15]..[6][5][4][3][2][1][0] <- C
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
 #define ROW 													\
@@ -221,7 +221,7 @@
 	SET_NZ_WORD(tmp);											\
 
 /* 65ce02 ******************************************************
- *	CPZ Compare index Z
+ *  CPZ Compare index Z
  ***************************************************************/
 #define CPZ 													\
 	P &= ~F_C;													\
@@ -230,14 +230,14 @@
 	SET_NZ((UINT8)(Z - tmp))
 
 /* 65ce02 ******************************************************
- *	DEZ Decrement index Z
+ *  DEZ Decrement index Z
  ***************************************************************/
 #define DEZ 													\
 	Z = (UINT8)--Z; 											\
 	SET_NZ(Z)
 
 /* 65ce02 ******************************************************
- *	DEC Decrement memory word
+ *  DEC Decrement memory word
  ***************************************************************/
 /* not sure about this */
 #define DEW 													\
@@ -245,130 +245,130 @@
 	SET_NZ_WORD(tmp)
 
 /* 65ce02 ******************************************************
- *	DEZ Decrement index Z
+ *  DEZ Decrement index Z
  ***************************************************************/
 #define INZ 													\
 	Z = (UINT8)++Z; 											\
 	SET_NZ(Z)
 
 /* 65ce02 ******************************************************
- *	INW Increment memory word
+ *  INW Increment memory word
  ***************************************************************/
 #define INW 													\
 	tmp.w.l = ++tmp.w.l;										\
 	SET_NZ_WORD(tmp)
 
 /* 65ce02 ******************************************************
- *	LDZ Load index Z
+ *  LDZ Load index Z
  ***************************************************************/
 #define LDZ 													\
 	Z = (UINT8)tmp; 											\
 	SET_NZ(Z)
 
 /* 65ce02 ******************************************************
- * STZ	Store index Z
+ * STZ  Store index Z
  ***************************************************************/
 #define STZ_65CE02												\
 	tmp = Z
 
 /* 65ce02 ******************************************************
- *	PHZ Push index z
+ *  PHZ Push index z
  ***************************************************************/
 #define PHZ 													\
 	PUSH(Z)
 
 /* 65ce02 ******************************************************
- *	PLA Pull accumulator
+ *  PLA Pull accumulator
  ***************************************************************/
 #define PLZ 													\
 	PULL(Z); \
     SET_NZ(Z)
 
 /* 65ce02 ******************************************************
- * TAZ	Transfer accumulator to index z
+ * TAZ  Transfer accumulator to index z
  ***************************************************************/
 #define TAZ 													\
 	Z = A;														\
 	SET_NZ(Z)
 
 /* 65ce02 ******************************************************
- * TZA	Transfer index z to accumulator
+ * TZA  Transfer index z to accumulator
  ***************************************************************/
 #define TZA 													\
 	A = Z;														\
 	SET_NZ(A)
 
 /* 65ce02 ******************************************************
- * TSY	Transfer stack pointer to index y
+ * TSY  Transfer stack pointer to index y
  ***************************************************************/
 #define TSY 													\
 	Y = SPH;													\
 	SET_NZ(Y)
 
 /* 65ce02 ******************************************************
- * TYS	Transfer index y to stack pointer
+ * TYS  Transfer index y to stack pointer
  ***************************************************************/
 #define TYS 													\
 	SPH = Y;
 
 /* 65ce02 ******************************************************
- * TAB	Transfer accumulator to Direct Page
+ * TAB  Transfer accumulator to Direct Page
  ***************************************************************/
 #define TAB 													\
 	B = A;														\
 	SET_NZ(B)
 
 /* 65ce02 ******************************************************
- * TBA	Transfer direct page to accumulator
+ * TBA  Transfer direct page to accumulator
  ***************************************************************/
 #define TBA 													\
 	A = B;														\
 	SET_NZ(A)
 
 /* 65ce02 ******************************************************
- *	BCC Branch if carry clear
+ *  BCC Branch if carry clear
  ***************************************************************/
 #define BCC_WORD BRA_WORD(!(P & F_C))
 
 /* 65ce02 ******************************************************
- *	BCS Branch if carry set
+ *  BCS Branch if carry set
  ***************************************************************/
 #define BCS_WORD BRA_WORD(P & F_C)
 
 /* 65ce02 ******************************************************
- *	BEQ Branch if equal
+ *  BEQ Branch if equal
  ***************************************************************/
 #define BEQ_WORD BRA_WORD(P & F_Z)
 
 /* 65ce02 ******************************************************
- *	BMI Branch if minus
+ *  BMI Branch if minus
  ***************************************************************/
 #define BMI_WORD BRA_WORD(P & F_N)
 
 /* 65ce02 ******************************************************
- *	BNE Branch if not equal
+ *  BNE Branch if not equal
  ***************************************************************/
 #define BNE_WORD BRA_WORD(!(P & F_Z))
 
 /* 65ce02 ******************************************************
- *	BPL Branch if plus
+ *  BPL Branch if plus
  ***************************************************************/
 #define BPL_WORD BRA_WORD(!(P & F_N))
 
 /* 65ce02 ******************************************************
- * BVC	Branch if overflow clear
+ * BVC  Branch if overflow clear
  ***************************************************************/
 #define BVC_WORD BRA_WORD(!(P & F_V))
 
 /* 65ce02 ******************************************************
- * BVS	Branch if overflow set
+ * BVS  Branch if overflow set
  ***************************************************************/
 #define BVS_WORD BRA_WORD(P & F_V)
 
 /* 65ce02 ******************************************************
- *	JSR Jump to subroutine
- *	decrement PC (sic!) push PC hi, push PC lo and set
- *	PC to the effective address
+ *  JSR Jump to subroutine
+ *  decrement PC (sic!) push PC hi, push PC lo and set
+ *  PC to the effective address
  ***************************************************************/
 #define JSR_IND 												\
 	EAL = RDOPARG();											\
@@ -381,9 +381,9 @@
 	CHANGE_PC
 
 /* 65ce02 ******************************************************
- *	JSR Jump to subroutine
- *	decrement PC (sic!) push PC hi, push PC lo and set
- *	PC to the effective address
+ *  JSR Jump to subroutine
+ *  decrement PC (sic!) push PC hi, push PC lo and set
+ *  PC to the effective address
  ***************************************************************/
 #define JSR_INDX												\
 	EAL = RDOPARG()+X;											\
@@ -396,7 +396,7 @@
 	CHANGE_PC
 
 /* 65ce02 ******************************************************
- *	PLP Pull processor status (flags)
+ *  PLP Pull processor status (flags)
  ***************************************************************/
 #undef PLP
 #define PLP 													\
@@ -417,12 +417,12 @@
 		UINT8 temp; \
 		PULL(temp);												\
 		P=(P&F_E)|F_B|(temp&~F_E); \
-	}															
+	}
 
 /* 65ce02 ********************************************************
- * RTI	Return from interrupt
+ * RTI  Return from interrupt
  * pull flags, pull PC lo, pull PC hi and increment PC
- *	PCW++;
+ *  PCW++;
  ***************************************************************/
 #undef RTI
 #define RTI 													\
@@ -438,7 +438,7 @@
 	CHANGE_PC
 
 /* 65ce02 ********************************************************
- * TXS	Transfer index X to stack LSB
+ * TXS  Transfer index X to stack LSB
  * no flags changed (sic!)
  * txs tys not interruptable
  ***************************************************************/

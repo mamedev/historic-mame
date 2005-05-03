@@ -1,8 +1,8 @@
 /****************************************************************************
 
-	Metal Soldier Isaac II	(c) Taito 1985
+    Metal Soldier Isaac II  (c) Taito 1985
 
-	driver by Jaroslaw Burczynski
+    driver by Jaroslaw Burczynski
 
 ****************************************************************************/
 
@@ -138,8 +138,8 @@ MCU simulation TODO:
 		/*Start-up check*/
 		case 0x5f:  return (mcu_val+0x6b);
 		/*These interferes with RAM operations(setting them to non-zero you  *
-		 * will have unexpected results,such as infinite lives or score not  *
-		 * incremented properly).*/
+         * will have unexpected results,such as infinite lives or score not  *
+         * incremented properly).*/
 		case 0x40:
 		case 0x41:
  		case 0x42:
@@ -161,19 +161,19 @@ MCU simulation TODO:
 
  			UINT8 val= (readinputport(4)>>2) & 0x0f;
  			/* bit0 = left
- 			   bit1 = right
- 			   bit2 = down
- 			   bit3 = up
- 			*/
+               bit1 = right
+               bit2 = down
+               bit3 = up
+            */
  			/* direction is encoded as:
-                         	   4
-                         	 3   5
-                         	2     6
-                         	 1   7
-                         	   0
- 			*/
- 			/*		 0000   0001   0010   0011      0100   0101   0110   0111     1000   1001   1010   1011   1100   1101   1110   1111 */
- 			/*		nochange left  right nochange   down downlft dwnrght down     up     upleft uprgt  up    nochnge left   right  nochange */
+                               4
+                             3   5
+                            2     6
+                             1   7
+                               0
+            */
+ 			/*       0000   0001   0010   0011      0100   0101   0110   0111     1000   1001   1010   1011   1100   1101   1110   1111 */
+ 			/*      nochange left  right nochange   down downlft dwnrght down     up     upleft uprgt  up    nochnge left   right  nochange */
 
  			INT8 table[16] = { -1,    2,    6,     -1,       0,   1,      7,      0,       4,     3,     5,    4,     -1,     2,     6,    -1 };
 
@@ -212,7 +212,7 @@ static WRITE8_HANDLER( msisaac_mcu_w )
 	buggychl_mcu_w(offset,data);
 #else
 	//if(data != 0x0a && data != 0x42 && data != 0x02)
-	//	usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
+	//  usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
 	mcu_val = data;
 #endif
 }
@@ -264,9 +264,9 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc00, 0xffff) AM_WRITE(msisaac_bg_videoram_w) AM_BASE(&msisaac_videoram)
 
 
-//	AM_RANGE(0xf801, 0xf801) AM_WRITE(msisaac_bgcolor_w)
-//	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(flip_screen_w)
-//	AM_RANGE(0xfc03, 0xfc04) AM_WRITE(msisaac_coin_counter_w)
+//  AM_RANGE(0xf801, 0xf801) AM_WRITE(msisaac_bgcolor_w)
+//  AM_RANGE(0xfc00, 0xfc00) AM_WRITE(flip_screen_w)
+//  AM_RANGE(0xfc03, 0xfc04) AM_WRITE(msisaac_coin_counter_w)
 ADDRESS_MAP_END
 
 
@@ -297,7 +297,7 @@ static MACHINE_INIT( ta7630 )
 	}
 
 	/*for (i=0; i<8; i++)
-		logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );*/
+        logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );*/
 /*
   channels 0-2 AY#0
   channels 3-5 AY#1
@@ -561,10 +561,10 @@ static MACHINE_DRIVER_START( msisaac )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
@@ -590,10 +590,10 @@ ROM_START( msisaac )
 	ROM_LOAD( "a34.mcu"       , 0x0000, 0x0800, NO_DUMP )
 
 // I tried following MCUs; none of them work with this game:
-//	ROM_LOAD( "a30-14"    , 0x0000, 0x0800, CRC(c4690279) )	//40love
-//	ROM_LOAD( "a22-19.31",  0x0000, 0x0800, CRC(06a71df0) )  	//buggy challenge
-//	ROM_LOAD( "a45-19",     0x0000, 0x0800, CRC(5378253c) )  	//flstory
-//	ROM_LOAD( "a54-19",     0x0000, 0x0800, CRC(e08b8846) )  	//lkage
+//  ROM_LOAD( "a30-14"    , 0x0000, 0x0800, CRC(c4690279) ) //40love
+//  ROM_LOAD( "a22-19.31",  0x0000, 0x0800, CRC(06a71df0) )     //buggy challenge
+//  ROM_LOAD( "a45-19",     0x0000, 0x0800, CRC(5378253c) )     //flstory
+//  ROM_LOAD( "a54-19",     0x0000, 0x0800, CRC(e08b8846) )     //lkage
 
 	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a34_02.bin", 0x0000, 0x2000, CRC(50da1a81) SHA1(8aa5a896f3e1173155d4574f5e1c2703e334cf44) )

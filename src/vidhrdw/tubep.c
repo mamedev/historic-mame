@@ -121,7 +121,7 @@ PALETTE_INIT( rjammer )
   PROM bit 7 -- /enable on LS368 @E16
   PROM bit 6 -- /enable on LS368 @E15
 
-	6 outputs (Q1 to Q6) from E16 go to BLUE output (the same line as
+    6 outputs (Q1 to Q6) from E16 go to BLUE output (the same line as
     the first PROM) via 6 resistors:
     Q1 -- 8200 -- BLUE
     Q2 -- 4700 -- BLUE
@@ -130,7 +130,7 @@ PALETTE_INIT( rjammer )
     Q5 --  470 -- BLUE
     Q6 --  220 -- BLUE
 
-	6 outputs (Q1 to Q6) from E15 go to BLUE output (the same line as
+    6 outputs (Q1 to Q6) from E15 go to BLUE output (the same line as
     the first PROM) via 6 resistors:
     Q1 --15000 -- BLUE
     Q2 -- 8200 -- BLUE
@@ -146,7 +146,7 @@ PALETTE_INIT( rjammer )
   PROM bit 4 -- /enable on LS368 @E13
   PROM bit 3 -- /enable on LS368 @E12
 
-	6 outputs (Q1 to Q6) from E14 go to GREEN output (the same line as
+    6 outputs (Q1 to Q6) from E14 go to GREEN output (the same line as
     the first PROM) via 6 resistors:
     Q1 -- 8200 -- GREEN
     Q2 -- 4700 -- GREEN
@@ -155,7 +155,7 @@ PALETTE_INIT( rjammer )
     Q5 --  470 -- GREEN
     Q6 --  220 -- GREEN
 
-	6 outputs (Q1 to Q6) from E13 go to GREEN output (the same line as
+    6 outputs (Q1 to Q6) from E13 go to GREEN output (the same line as
     the first PROM) via 6 resistors:
     Q1 --15000 -- GREEN
     Q2 -- 8200 -- GREEN
@@ -164,7 +164,7 @@ PALETTE_INIT( rjammer )
     Q5 -- 1000 -- GREEN
     Q6 --  470 -- GREEN
 
-	6 outputs (Q1 to Q6) from E12 go to GREEN output (the same line as
+    6 outputs (Q1 to Q6) from E12 go to GREEN output (the same line as
     the first PROM) via 6 resistors:
     Q1 --33000 -- GREEN
     Q2 --15000 -- GREEN
@@ -180,7 +180,7 @@ PALETTE_INIT( rjammer )
   PROM bit 1 -- /enable on LS368 @E10
   PROM bit 0 -- /enable on LS368 @E9
 
-	6 outputs (Q1 to Q6) from E11 go to RED output (the same line as
+    6 outputs (Q1 to Q6) from E11 go to RED output (the same line as
     the first PROM) via 6 resistors:
     Q1 -- 8200 -- RED
     Q2 -- 4700 -- RED
@@ -189,7 +189,7 @@ PALETTE_INIT( rjammer )
     Q5 --  470 -- RED
     Q6 --  220 -- RED
 
-	6 outputs (Q1 to Q6) from E10 go to RED output (the same line as
+    6 outputs (Q1 to Q6) from E10 go to RED output (the same line as
     the first PROM) via 6 resistors:
     Q1 --15000 -- RED
     Q2 -- 8200 -- RED
@@ -198,7 +198,7 @@ PALETTE_INIT( rjammer )
     Q5 -- 1000 -- RED
     Q6 --  470 -- RED
 
-	6 outputs (Q1 to Q6) from E9 go to RED output (the same line as
+    6 outputs (Q1 to Q6) from E9 go to RED output (the same line as
     the first PROM) via 6 resistors:
     Q1 --33000 -- RED
     Q2 --15000 -- RED
@@ -291,8 +291,8 @@ PALETTE_INIT( tubep )
 	/* create background/sprites palette */
 
 	/* find the output scaler
-	   in order to do this we need to calculate the output with everything enabled.
-	*/
+       in order to do this we need to calculate the output with everything enabled.
+    */
 
 	/* red component */
 	for (i=0; i<6; i++) active_resistors_r[ 0+i] = resistors_0[i];
@@ -312,10 +312,10 @@ PALETTE_INIT( tubep )
 				3*6,	active_resistors_g,	weights_g,	470,	0,
 				2*6,	active_resistors_b,	weights_b,	470,	0);
 
-/*	compute_resistor_weights(0,	255,	output_scaler,
-				3*6,	active_resistors_r,	weights_r,	470,	0,
-				3*6,	active_resistors_g,	weights_g,	470,	0,
-				2*6,	active_resistors_b,	weights_b,	470,	0);
+/*  compute_resistor_weights(0, 255,    output_scaler,
+                3*6,    active_resistors_r, weights_r,  470,    0,
+                3*6,    active_resistors_g, weights_g,  470,    0,
+                2*6,    active_resistors_b, weights_b,  470,    0);
 */
 	/* now calculate all possible outputs from the circuit */
 
@@ -633,8 +633,8 @@ WRITE8_HANDLER( tubep_sprite_control_w )
 			colorram_addr_hi = (data & 0x3f) << 4;
 
 			/*write to: LS74 @D13 to clear the interrupt line /SINT
-			/SINT line will be reasserted in XSize * YSize cycles (RH0 signal cycles)
-			*/
+            /SINT line will be reasserted in XSize * YSize cycles (RH0 signal cycles)
+            */
 			/* 1.clear the /SINT interrupt line */
 			cpunum_set_input_line(3,0,CLEAR_LINE);
 
@@ -888,24 +888,24 @@ VIDEO_UPDATE( rjammer )
 					pal14h4_pin18 = (rom19C[addr] >> ((h&7)^7) ) &1;
 
 /*
-	PAL14H4 @15A functions:
+    PAL14H4 @15A functions:
 
-		PIN6 = disable color on offscreen area
+        PIN6 = disable color on offscreen area
 
-		PIN19,PIN18,PIN13 = arguments for PIN17 function
+        PIN19,PIN18,PIN13 = arguments for PIN17 function
 
-		PIN17 = background color bank (goes to A4 line on PROM @16A)
-		formula for PIN17 is:
+        PIN17 = background color bank (goes to A4 line on PROM @16A)
+        formula for PIN17 is:
 
-		PIN17 =	 ( PIN13 & PIN8 & PIN9 & !PIN11 &  PIN12 )
-		       | ( PIN18 & PIN8 & PIN9 &  PIN11 & !PIN12 )
-		       | ( PIN19 )
+        PIN17 =  ( PIN13 & PIN8 & PIN9 & !PIN11 &  PIN12 )
+               | ( PIN18 & PIN8 & PIN9 &  PIN11 & !PIN12 )
+               | ( PIN19 )
 
-			where:
-		PIN 8 = bit 3 of bg_data
-		PIN 9 = bit 2 of bg_data
-		PIN 11= bit 1 of bg_data
-		PIN 12= bit 0 of bg_data
+            where:
+        PIN 8 = bit 3 of bg_data
+        PIN 9 = bit 2 of bg_data
+        PIN 11= bit 1 of bg_data
+        PIN 12= bit 0 of bg_data
 
 
         not used by now, but for the record:

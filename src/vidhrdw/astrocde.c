@@ -86,7 +86,7 @@ PALETTE_INIT( astrocde )
 		if (i == 0)
 			BY = 0;
 		else
-//			BY = C*cos(i*2.0*3.14159/32.0);
+//          BY = C*cos(i*2.0*3.14159/32.0);
 			BY = 1.15*cos(i*2.0*3.14159/32.0);
 
 
@@ -262,7 +262,7 @@ WRITE8_HANDLER( astrocde_colour_split_w )
 
 WRITE8_HANDLER( astrocde_mode_w )
 {
-//	astrocade_mode = data & 0x01;
+//  astrocade_mode = data & 0x01;
 }
 
 
@@ -594,11 +594,11 @@ WRITE8_HANDLER( astrocde_pattern_board_w )
 {
 	static int src;
 	static int mode;	/*  bit 0 = direction
-							bit 1 = expand mode
-							bit 2 = constant
-							bit 3 = flush
-							bit 4 = flip
-							bit 5 = flop */
+                            bit 1 = expand mode
+                            bit 2 = constant
+                            bit 3 = flush
+                            bit 4 = flip
+                            bit 5 = flop */
 	static int skip;	/* bytes to skip after row copy */
 	static int dest;
 	static int length;	/* row length */
@@ -634,12 +634,12 @@ WRITE8_HANDLER( astrocde_pattern_board_w )
 		int i,j;
 
 #ifdef VERBOSE
-//		logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-//			activecpu_get_pc(),src,mode,skip,dest,length,loops);
+//      logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
+//          activecpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
 
 		/* Kludge: have to steal some cycles from the Z80 otherwise text
-		   scrolling in Gorf is too fast. */
+           scrolling in Gorf is too fast. */
 		activecpu_adjust_icount(- 4 * (length+1) * (loops+1));
 
 		for (i = 0; i <= loops;i++)

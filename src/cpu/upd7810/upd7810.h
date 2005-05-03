@@ -20,11 +20,11 @@ typedef enum {
 	TYPE_7810,
 	TYPE_7810_GAMEMASTER, // a few modifications until internal rom dumped
 	TYPE_7807
-//	TYPE_78C10, // stop instruction added
-//	TYPE_78IV,
-//	TYPE_78K0,
-//	TYPE_78K0S
-//	millions of subtypes
+//  TYPE_78C10, // stop instruction added
+//  TYPE_78IV,
+//  TYPE_78K0,
+//  TYPE_78K0S
+//  millions of subtypes
 } UPD7810_TYPE;
 
 /* Supply an instance of this function in your driver code:

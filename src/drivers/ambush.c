@@ -7,24 +7,24 @@ driver by Zsolt Vasvari
 
 Memory Mapped:
 
-0000-7fff   R	ROM
-8000-87ff	R/W	RAM
-a000		R	Watchdog Reset
-c080-c09f	W	Scroll RAM (1 byte for each column)
-c100-c1ff	W   Color RAM (1 line corresponds to 4 in the video ram)
+0000-7fff   R   ROM
+8000-87ff   R/W RAM
+a000        R   Watchdog Reset
+c080-c09f   W   Scroll RAM (1 byte for each column)
+c100-c1ff   W   Color RAM (1 line corresponds to 4 in the video ram)
 c200-c3ff   W   Sprite RAM
 c400-c7ff   W   Video RAM
-c800		R   DIP Switches
+c800        R   DIP Switches
 cc00-cc03   W   ??? (Maybe analog sound triggers?)
-cc04		W   Flip Screen
-cc05		W   Color Bank Select
-cc07		W   Coin Counter
+cc04        W   Flip Screen
+cc05        W   Color Bank Select
+cc07        W   Coin Counter
 
 
 I/O Ports:
 
-00-01		R/W AY8910 #0 (Port A = Input Port #0)
-80-81		R/W AY8910 #1 (Port A = Input Port #1)
+00-01       R/W AY8910 #0 (Port A = Input Port #0)
+80-81       R/W AY8910 #1 (Port A = Input Port #1)
 
 
 TODO:

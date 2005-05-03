@@ -20,12 +20,12 @@ static struct rectangle bg_clip, fg_clip, tx_clip;
 
 /***************************************************************************
 **
-**	Contra has palette RAM, but it also has four lookup table PROMs
+**  Contra has palette RAM, but it also has four lookup table PROMs
 **
-**	0	sprites #0
-**	1	tiles   #0
-**	2	sprites #1
-**	3	tiles   #1
+**  0   sprites #0
+**  1   tiles   #0
+**  2   sprites #1
+**  3   tiles   #1
 **
 ***************************************************************************/
 
@@ -58,7 +58,7 @@ PALETTE_INIT( contra )
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -132,7 +132,7 @@ static void get_tx_tile_info(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -150,13 +150,13 @@ VIDEO_START( contra )
 
 	bg_clip = Machine->visible_area;
 	bg_clip.min_x += 40;
-	
+
 	fg_clip = bg_clip;
-	
+
 	tx_clip = Machine->visible_area;
 	tx_clip.max_x = 39;
 	tx_clip.min_x = 0;
-	
+
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	return 0;
 }
@@ -164,7 +164,7 @@ VIDEO_START( contra )
 
 /***************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ***************************************************************************/
 
@@ -265,7 +265,7 @@ WRITE8_HANDLER( contra_K007121_ctrl_1_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 
@@ -285,7 +285,7 @@ VIDEO_UPDATE( contra )
 	struct rectangle bg_finalclip = bg_clip;
 	struct rectangle fg_finalclip = fg_clip;
 	struct rectangle tx_finalclip = tx_clip;
-	
+
 	sect_rect(&bg_finalclip, cliprect);
 	sect_rect(&fg_finalclip, cliprect);
 	sect_rect(&tx_finalclip, cliprect);

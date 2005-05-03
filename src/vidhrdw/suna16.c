@@ -1,58 +1,58 @@
 /***************************************************************************
 
-							-=  SunA 16 Bit Games =-
+                            -=  SunA 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-	These games have only sprites, of a peculiar type:
-
-	there is a region of memory where 32 pages of 32x32 tile codes can
-	be written like a tilemap made of 32 pages of 256x256 pixels. Each
-	tile uses 2 words.
-
-	Sprites are rectangular regions of *tiles* fetched from there and
-	sent to the screen. Each sprite uses 4 words, held where the last
-	page of tiles would be.
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-								[ Sprites Format ]
+    These games have only sprites, of a peculiar type:
+
+    there is a region of memory where 32 pages of 32x32 tile codes can
+    be written like a tilemap made of 32 pages of 256x256 pixels. Each
+    tile uses 2 words.
+
+    Sprites are rectangular regions of *tiles* fetched from there and
+    sent to the screen. Each sprite uses 4 words, held where the last
+    page of tiles would be.
 
 
-	Offset: 	Bits:					Value:
-
-		0.w		fedc ---- ---- ---- 	Source Page (Low Bits)
-				---- ba98 ---- ---- 	Source Column (Bit 8 = Sprite Flip X)
-				---- ---- 7654 3210 	Screen Y Position
-
-		2.w		fedc ---- ---- ---- 	Tile Bank
-				---- ba-- ---- ----
-				---- --9- ---- ---- 	Source Page (High Bit)
-				---- ---8 7654 3210 	Screen X Position
-
-	$10000.w	fedc ba98 ---- ----
-				---- ---- 76-- ---- 	Sprite Size:
-										00 -> 16 x 16	(2x2  tiles)
-										01 -> 32 x 32	(4x4  tiles)
-										10 -> 16 x 256	(2x32 tiles)
-										11 -> 32 x 256	(4x32 tiles)
-				---- ---- --54 ----		? (Bit 4 used by uballoon)
-				---- ---- ---- 3210 	Source Row
-
-	$10002.w								-
+                                [ Sprites Format ]
 
 
-							[ Sprite's Tiles Format ]
+    Offset:     Bits:                   Value:
+
+        0.w     fedc ---- ---- ----     Source Page (Low Bits)
+                ---- ba98 ---- ----     Source Column (Bit 8 = Sprite Flip X)
+                ---- ---- 7654 3210     Screen Y Position
+
+        2.w     fedc ---- ---- ----     Tile Bank
+                ---- ba-- ---- ----
+                ---- --9- ---- ----     Source Page (High Bit)
+                ---- ---8 7654 3210     Screen X Position
+
+    $10000.w    fedc ba98 ---- ----
+                ---- ---- 76-- ----     Sprite Size:
+                                        00 -> 16 x 16   (2x2  tiles)
+                                        01 -> 32 x 32   (4x4  tiles)
+                                        10 -> 16 x 256  (2x32 tiles)
+                                        11 -> 32 x 256  (4x32 tiles)
+                ---- ---- --54 ----     ? (Bit 4 used by uballoon)
+                ---- ---- ---- 3210     Source Row
+
+    $10002.w                                -
 
 
-	Offset: 	Bits:					Value:
+                            [ Sprite's Tiles Format ]
 
-		0.w		f--- ---- ---- ----		Flip Y
-				-e-- ---- ---- ----		Flip X
-				--dc ba98 7654 3210		Code
 
-	$10000.w	fedc ba98 7654 ----
-				---- ---- ---- 3210		Color
+    Offset:     Bits:                   Value:
+
+        0.w     f--- ---- ---- ----     Flip Y
+                -e-- ---- ---- ----     Flip X
+                --dc ba98 7654 3210     Code
+
+    $10000.w    fedc ba98 7654 ----
+                ---- ---- ---- 3210     Color
 
 
 ***************************************************************************/
@@ -75,7 +75,7 @@ WRITE16_HANDLER( suna16_flipscreen_w )
 /***************************************************************************
 
 
-				Banked Palette RAM. Format is xBBBBBGGGGRRRRR
+                Banked Palette RAM. Format is xBBBBBGGGGRRRRR
 
 
 ***************************************************************************/
@@ -108,7 +108,7 @@ WRITE16_HANDLER( suna16_paletteram16_w )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
 ***************************************************************************/
@@ -208,7 +208,7 @@ static void suna16_draw_sprites(struct mame_bitmap *bitmap)
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

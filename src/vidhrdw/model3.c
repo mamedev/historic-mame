@@ -879,7 +879,7 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-//					UINT16 pix;
+//                  UINT16 pix;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
@@ -1002,8 +1002,8 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-//					UINT16 pix;
-//					UINT16 r,g,b;
+//                  UINT16 pix;
+//                  UINT16 r,g,b;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
@@ -1443,7 +1443,7 @@ static void traverse_list4(UINT32 address)
 	}
 	else {		/* model in polygon ram */
 		/* TODO: polygon ram actually overrides the lowest 4MB of VROM.
-				 by moving the polygon ram there we could get rid of this distinction */
+                 by moving the polygon ram there we could get rid of this distinction */
 		draw_model(&polygon_ram[link & 0xffffff]);
 	}
 }
@@ -1531,7 +1531,7 @@ static void traverse_node(UINT32 address)
 						}
 						else {		/* model in polygon ram */
 							/* TODO: polygon ram actually overrides the lowest 4MB of VROM.
-									 by moving the polygon ram there we could get rid of this distinction */
+                                     by moving the polygon ram there we could get rid of this distinction */
 							draw_model(&polygon_ram[link & 0xffffff]);
 						}
 						break;

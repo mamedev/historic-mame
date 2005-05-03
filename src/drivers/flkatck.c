@@ -3,10 +3,10 @@
 Flak Attack/MX5000 (Konami GX669)
 
 Driver by:
-	Manuel Abadia <manu@teleline.es>
+    Manuel Abadia <manu@teleline.es>
 
 TO DO:
-	-What does 0x900X do? (Z80)
+    -What does 0x900X do? (Z80)
 
 ***************************************************************************/
 
@@ -171,7 +171,7 @@ INPUT_PORTS_START( flkatck )
 	PORT_DIPSETTING(	0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(	0x90, DEF_STR( 1C_7C ) )
-	//PORT_DIPSETTING(	  0x00, "Invalid" )
+	//PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
@@ -302,7 +302,7 @@ static MACHINE_DRIVER_START( flkatck )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.50)

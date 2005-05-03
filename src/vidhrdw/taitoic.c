@@ -16,7 +16,7 @@ TC0080VCO seems bugged, various sigsevs after games have been reset.
 
 sizeof() s in the TC0110PCR section are probably unnecessary?
 
-				---
+                ---
 
 PC080SN
 -------
@@ -28,10 +28,10 @@ it had a variant with added rowscroll capability.)
 Standard memory layout (two 64x64 tilemaps with 8x8 tiles)
 
 0000-3fff BG
-4000-41ff BG rowscroll		(only verified to exist on Topspeed)
+4000-41ff BG rowscroll      (only verified to exist on Topspeed)
 4200-7fff unknown/unused?
-8000-bfff FG	(FG/BG layer order fixed per game; Topspeed has BG on top)
-c000-c1ff FG rowscroll		(only verified to exist on Topspeed)
+8000-bfff FG    (FG/BG layer order fixed per game; Topspeed has BG on top)
+c000-c1ff FG rowscroll      (only verified to exist on Topspeed)
 c200-ffff unknown/unused?
 
 Double width memory layout (two 128x64 tilemaps with 8x8 tiles)
@@ -53,68 +53,68 @@ Control registers
 002-003 FG scroll X
 
 +0x50000 control word (written infrequently, only 2 bits used)
-	   ---------------x flip screen
-	   ----------x----- 0x20 poked here in Topspeed init, followed
-	                    by zero (Darius does the same).
+       ---------------x flip screen
+       ----------x----- 0x20 poked here in Topspeed init, followed
+                        by zero (Darius does the same).
 
 
 
 PC090OJ
 -------
 
-		Information from Raine (todo: reformat)
+        Information from Raine (todo: reformat)
 
-		OBJECT RAM
-		----------
+        OBJECT RAM
+        ----------
 
-		- 8 bytes/sprite
-		- 256 sprites (0x800 bytes)
-		- First sprite has *highest* priority
+        - 8 bytes/sprite
+        - 256 sprites (0x800 bytes)
+        - First sprite has *highest* priority
 
-		-----+--------+-------------------------
-		Byte | Bit(s) | Use
-		-----+76543210+-------------------------
-		  0  |.x......| Flip Y Axis
-		  0  |x.......| Flip X Axis
-		  1  |....xxxx| Colour Bank
-		  2  |.......x| Sprite Y
-		  3  |xxxxxxxx| Sprite Y
-		  4  |...xxxxx| Sprite Tile
-		  5  |xxxxxxxx| Sprite Tile
-		  6  |.......x| Sprite X
-		  7  |xxxxxxxx| Sprite X
-		-----+--------+-------------------------
+        -----+--------+-------------------------
+        Byte | Bit(s) | Use
+        -----+76543210+-------------------------
+          0  |.x......| Flip Y Axis
+          0  |x.......| Flip X Axis
+          1  |....xxxx| Colour Bank
+          2  |.......x| Sprite Y
+          3  |xxxxxxxx| Sprite Y
+          4  |...xxxxx| Sprite Tile
+          5  |xxxxxxxx| Sprite Tile
+          6  |.......x| Sprite X
+          7  |xxxxxxxx| Sprite X
+        -----+--------+-------------------------
 
-		SPRITE CONTROL
-		--------------
+        SPRITE CONTROL
+        --------------
 
-		- Maze of Flott [603D MASK] 201C 200B 200F
-		- Earth Joker 001C
-		- Cadash 0011 0013 0010 0000
+        - Maze of Flott [603D MASK] 201C 200B 200F
+        - Earth Joker 001C
+        - Cadash 0011 0013 0010 0000
 
-		-----+--------+-------------------------
-		Byte | Bit(s) | Use
-		-----+76543210+-------------------------
-		  0  |.......x| ?
-		  0  |......x.| Write Acknowledge?
-		  0  |..xxxx..| Colour Bank Offset
-		  0  |xx......| Unused
-		  1  |...xxxxx| Unused
-		  1  |..x.....| BG1:Sprite Priority
-		  1  |.x......| Priority?
-		  1  |x.......| Unused
-		-----+--------+-------------------------
+        -----+--------+-------------------------
+        Byte | Bit(s) | Use
+        -----+76543210+-------------------------
+          0  |.......x| ?
+          0  |......x.| Write Acknowledge?
+          0  |..xxxx..| Colour Bank Offset
+          0  |xx......| Unused
+          1  |...xxxxx| Unused
+          1  |..x.....| BG1:Sprite Priority
+          1  |.x......| Priority?
+          1  |x.......| Unused
+        -----+--------+-------------------------
 
-		OLD SPRITE CONTROL (RASTAN TYPE)
-		--------------------------------
+        OLD SPRITE CONTROL (RASTAN TYPE)
+        --------------------------------
 
-		-----+--------+-------------------------
-		Byte | Bit(s) | Use
-		-----+76543210+-------------------------
-		  1  |.......x| BG1:Sprite Priority?
-		  1  |......x.| Write Acknowledge?
-		  1  |xxx.....| Colour Bank Offset
-		-----+--------+-------------------------
+        -----+--------+-------------------------
+        Byte | Bit(s) | Use
+        -----+76543210+-------------------------
+          1  |.......x| BG1:Sprite Priority?
+          1  |......x.| Write Acknowledge?
+          1  |xxx.....| Colour Bank Offset
+        -----+--------+-------------------------
 
 
 
@@ -453,37 +453,37 @@ Control registers
 01a-01b Text layer y scroll
 01c-01d Unused (not written)
 01e-01f Layer Control register
-		x-------	Double width tilemaps (4 bg tilemaps become 64x32, and the
-		            memory layout changes). Slapshot changes this on the fly.
-		-x------	Flip screen
-		--x-----	unknown
+        x-------    Double width tilemaps (4 bg tilemaps become 64x32, and the
+                    memory layout changes). Slapshot changes this on the fly.
+        -x------    Flip screen
+        --x-----    unknown
 
-				Set in Metalb init by whether a byte in prg ROM $7fffe is zero.
-				Subsequently Metalb changes it for some screen layer layouts.
-				Footchmp clears it, Hthero sets it [then both leave it alone].
-				Deadconx code at $10e2 is interesting, with possible values of:
-				0x0, 0x20, 0x40, 0x60 poked in (via ram buffer) to control reg,
-				dependent on byte in prg ROM $7fffd and whether screen is flipped.
+                Set in Metalb init by whether a byte in prg ROM $7fffe is zero.
+                Subsequently Metalb changes it for some screen layer layouts.
+                Footchmp clears it, Hthero sets it [then both leave it alone].
+                Deadconx code at $10e2 is interesting, with possible values of:
+                0x0, 0x20, 0x40, 0x60 poked in (via ram buffer) to control reg,
+                dependent on byte in prg ROM $7fffd and whether screen is flipped.
 
-		---xxx--	BG layer priority order
+        ---xxx--    BG layer priority order
 
-		...000..	0  1  2  3
-		...001..	1  2  3  0  (no evidence of this)
-		...010..	2  3  0  1  (no evidence of this)
-		...011..	3  0  1  2
-		...100..	3  2  1  0
-		...101..	2  1  0  3  [Gunbustr attract and Metalb (c) screen]
-		...110..	1  0  3  2  (no evidence of this)
-		...111..	0  3  2  1
+        ...000..    0  1  2  3
+        ...001..    1  2  3  0  (no evidence of this)
+        ...010..    2  3  0  1  (no evidence of this)
+        ...011..    3  0  1  2
+        ...100..    3  2  1  0
+        ...101..    2  1  0  3  [Gunbustr attract and Metalb (c) screen]
+        ...110..    1  0  3  2  (no evidence of this)
+        ...111..    0  3  2  1
 
-		------x-	BG3 row zoom enable
-		-------x	BG2 row zoom enable
+        ------x-    BG3 row zoom enable
+        -------x    BG2 row zoom enable
 
-020-021 BG0 dx	(provides extra precision to x-scroll, only changed with xscroll)
+020-021 BG0 dx  (provides extra precision to x-scroll, only changed with xscroll)
 022-023 BG1 dx
 024-025 BG2 dx
 026-027 BG3 dx
-028-029 BG0 dy	(provides extra precision to y-scroll, only changed with yscroll)
+028-029 BG0 dy  (provides extra precision to y-scroll, only changed with yscroll)
 02a-02b BG1 dy
 02c-02d BG2 dy
 02e-02f BG3 dy
@@ -617,7 +617,7 @@ static int has_write_handler(int cpunum, write16_handler handler)
 	for (map = memory_get_map(cpunum, ADDRESS_SPACE_PROGRAM); map && !IS_AMENTRY_END(map); map++)
 		if (map->write.handler16 == handler)
 			return 1;
-	
+
 	return 0;
 }
 
@@ -1287,7 +1287,7 @@ int PC090OJ_vh_start(int gfxnum,int x_offset,int y_offset,int use_buffer)
 	state_save_register_UINT16("PC090OJb", 0, "memory", PC090OJ_ram_buffered, PC090OJ_RAM_SIZE/2);
 	state_save_register_UINT16("PC090OJc", 0, "register", &PC090OJ_ctrl, 1);
 
-//	state_save_register_func_postload(PC090OJ_restore);
+//  state_save_register_func_postload(PC090OJ_restore);
 
 	return 0;
 }
@@ -1430,7 +1430,7 @@ int TC0080VCO_flipscreen = 0,TC0080VCO_has_tx;
 #if 0
 static int TC0080VCO_zoomy_conv_table[] =
 {
-/* 		These are hand-tuned values... 		*/
+/*      These are hand-tuned values...      */
 /*    +0   +1   +2   +3   +4   +5   +6   +7    +8   +9   +a   +b   +c   +d   +e   +f */
 	0x00,0x01,0x01,0x02,0x02,0x03,0x04,0x05, 0x06,0x06,0x07,0x08,0x09,0x0a,0x0a,0x0b,	/* 0x00 */
 	0x0b,0x0c,0x0c,0x0d,0x0e,0x0e,0x0f,0x10, 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x16,
@@ -1514,11 +1514,11 @@ static struct GfxLayout TC0080VCO_charlayout =
 	256,	/* 256 chars */
 
 // can't be 4bpp as it becomes opaque in Ainferno...
-//	4,		/* 4 bits per pixel */
+//  4,      /* 4 bits per pixel */
 //#ifdef LSB_FIRST
-//	{ 0x10000*8 + 8, 0x10000*8, 8, 0 },
+//  { 0x10000*8 + 8, 0x10000*8, 8, 0 },
 //#else
-//	{ 0x10000*8, 0x10000*8 + 8, 0, 8 },
+//  { 0x10000*8, 0x10000*8 + 8, 0, 8 },
 //#endif
 
 	3,		/* 3 bits per pixel */
@@ -1913,8 +1913,8 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 					- (max_x + min_x) * (zoomx-0x10000);
 
 			/* 0x130 correct for Dleague. Syvalion correct with 0x1f0.
-			   min_y is 0x20 and 0x30; max_y is 0x10f and 0x1bf;
-			   max_y + min_y seems a good bet... */
+               min_y is 0x20 and 0x30; max_y is 0x10f and 0x1bf;
+               max_y + min_y seems a good bet... */
 
 			y_index = ((-TC0080VCO_scroll_ram[3] - 2) << 16)
 					+ min_y * zoomy - (max_y + min_y) * (zoomy-0x10000);
@@ -1960,14 +1960,14 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 			}
 /***********/
 
-//			while (x_index<x_max)
-//			{
-//				*dst16++ = src16[(x_index >> 16) &width_mask];
-//				x_index += x_step;
-//			}
+//          while (x_index<x_max)
+//          {
+//              *dst16++ = src16[(x_index >> 16) &width_mask];
+//              x_index += x_step;
+//          }
 //
-//					pdraw_scanline16(bitmap,0,y,screen_width,
-//						scanline,0,0,rot,priority);
+//                  pdraw_scanline16(bitmap,0,y,screen_width,
+//                      scanline,0,0,rot,priority);
 
 /*** NEW ***/
 			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
@@ -2454,9 +2454,9 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		TC0100SCN_tilemap[i][2][1] = tilemap_create(TC0100SCN_get_tile_info[i][2],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,32);
 
 		/* Set up clipping for multi-TC0100SCN games. We assume
-		   this code won't ever affect single screen games:
-		   Thundfox is the only one of those with two chips, and
-		   we're safe as it uses single width tilemaps. */
+           this code won't ever affect single screen games:
+           Thundfox is the only one of those with two chips, and
+           we're safe as it uses single width tilemaps. */
 
 		myclip = Machine->visible_area;
 
@@ -2525,7 +2525,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		TC0100SCN_tx_gfx[i] = gfx_index;
 
 		/* use the given gfx set for bg tiles; 2nd/3rd chips will
-		   use the same gfx set */
+           use the same gfx set */
 		gfxset_offs = i;
 		if (i > 1)
 			gfxset_offs = 1;
@@ -2540,8 +2540,8 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		tilemap_set_transparent_pen(TC0100SCN_tilemap[i][2][1],0);
 
 		/* Standard width tilemaps. I'm setting the optional chip #2
-		   7 bits higher and 2 pixels to the left than chip #1 because
-		   that's how thundfox wants it. */
+           7 bits higher and 2 pixels to the left than chip #1 because
+           that's how thundfox wants it. */
 
 		xd = (i == 0) ?  (-x_offset) : (-x_offset-2);
 		yd = (i == 0) ? (8-y_offset) : (1-y_offset);
@@ -2554,9 +2554,9 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][0], yd,    -flip_text_yoffs -yd);
 
 		/* Double width tilemaps. We must correct offsets for
-		   extra chips, as MAME sees offsets from LHS of whole
-		   display not from the edges of individual screens.
-		   NB flipscreen tilemap offsets are based on Cameltry */
+           extra chips, as MAME sees offsets from LHS of whole
+           display not from the edges of individual screens.
+           NB flipscreen tilemap offsets are based on Cameltry */
 
 		xd = -x_offset;
 		yd = 8-y_offset;
@@ -3394,12 +3394,12 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		yd =  TC0480SCP_y_offs;
 
 		/* Metalb and Deadconx have minor screenflip issues: blue planet
-		   is off on x axis by 1 and in Deadconx the dark blue screen
-		   between stages also seems off by 1 pixel. */
+           is off on x axis by 1 and in Deadconx the dark blue screen
+           between stages also seems off by 1 pixel. */
 
 		/* It's not possible to get the text scrolldx calculations
-		   harmonised with the other layers: xd-2, 315-xd is the
-		   next valid pair:- the numbers diverge from xd, 319-xd */
+           harmonised with the other layers: xd-2, 315-xd is the
+           next valid pair:- the numbers diverge from xd, 319-xd */
 
 		/* Single width offsets */
 		tilemap_set_scrolldx(TC0480SCP_tilemap[0][0], xd,   320-xd +TC0480SCP_flip_xoffs );
@@ -3729,7 +3729,7 @@ void TC0480SCP_tilemap_update(void)
 
 
 /*********************************************************************
-				BG0,1 LAYER DRAW
+                BG0,1 LAYER DRAW
 
 TODO
 ----
@@ -3767,8 +3767,8 @@ Historical Issues
 static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int layer,int flags,UINT32 priority)
 {
 	/* X-axis zoom offers expansion only: 0 = no zoom, 0xff = max
-	   Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
-	   (0x1a in Footchmp hiscore = shrunk) */
+       Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
+       (0x1a in Footchmp hiscore = shrunk) */
 
 	int zoomx = 0x10000 - (TC0480SCP_ctrl[0x08 + layer] &0xff00);
 	int zoomy = 0x10000 - (((TC0480SCP_ctrl[0x08 + layer] &0xff) - 0x7f) * 512);
@@ -3876,7 +3876,7 @@ static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,const struct rectangl
 
 
 /****************************************************************
-				BG2,3 LAYER DRAW
+                BG2,3 LAYER DRAW
 
 TODO
 ----
@@ -3938,8 +3938,8 @@ static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,const struct rectangl
 	if (TC0480SCP_dblwidth)	width_mask=0x3ff;
 
 	/* X-axis zoom offers expansion only: 0 = no zoom, 0xff = max
-	   Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
-	   (0x1a in Footchmp hiscore = shrunk) */
+       Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
+       (0x1a in Footchmp hiscore = shrunk) */
 
 	zoomx = 0x10000 - (TC0480SCP_ctrl[0x08 + layer] &0xff00);
 	zoomy = 0x10000 - (((TC0480SCP_ctrl[0x08 + layer] &0xff) - 0x7f) * 512);
@@ -4115,69 +4115,69 @@ int TC0150ROD_vh_start(void)
 
 /******************************************************************************
 
-	Memory map for TC0150ROD
-	------------------------
+    Memory map for TC0150ROD
+    ------------------------
 
-	0000-07ff  Road A, bank 0   [all are 256 lines]
-	0800-0fff  Road A, bank 1
-	1000-17ff  Road B, bank 0
-	1800-1fff  Road B, bank 1
+    0000-07ff  Road A, bank 0   [all are 256 lines]
+    0800-0fff  Road A, bank 1
+    1000-17ff  Road B, bank 0
+    1800-1fff  Road B, bank 1
 
-	1ffe-1fff  Control word
+    1ffe-1fff  Control word
 
-	           Contcirc: 08 0d   [bifurcating]
-	           ChaseHQ:  00 05   [08 0d when road rejoins]
-	           SCI:      09 0c   [when road bifurcates]
-	           Nightstr: 08 0d   [both bifurcating and not...]
-	           Aquajack: 04      [always?]
-	           Dblaxle:  08 0d
+               Contcirc: 08 0d   [bifurcating]
+               ChaseHQ:  00 05   [08 0d when road rejoins]
+               SCI:      09 0c   [when road bifurcates]
+               Nightstr: 08 0d   [both bifurcating and not...]
+               Aquajack: 04      [always?]
+               Dblaxle:  08 0d
 
-	           1000 1101
-	           1001 1100
-	           0000 0101
+               1000 1101
+               1001 1100
+               0000 0101
 
 
-	Road ram line layout (thanks to Raine for original table)
-	--------------------
+    Road ram line layout (thanks to Raine for original table)
+    --------------------
 
-	-----+-----------------+----------------------------------------
-	Word | Bit(s)          |  Info
-	-----+-----------------+----------------------------------------
-	  0  |x....... ........|  Draw background outside road edge on LHS
-	  0  |.x...... ........|  Left road edge from road A has priority over road B ?? (+)
-	  0  |..x..... ........|  Left road edge from road A has priority over road B ?? (*)
-	  0  |...x.... ........|  Left edge/background palette entry offset  (set = +2)
-	  0  |......xx xxxxxxxx|  Left edge   [pixels from road center] (@)
-	     |                 |
-	  1  |x....... ........|  Draw background outside road edge on RHS
-	  1  |.x...... ........|  Right road edge from road A has priority over road B ??
-	  1  |..x..... ........|  Right road edge from road A has priority over road B ?? (*)
-	  1  |...x.... ........|  Right edge/background palette entry offset  (set = +2)
-	  1  |......xx xxxxxxxx|  Right edge   [pixels from road center] (@)
-	     |                 |
-	  2  |x....... ........|  Set for either road a/b used lines in all games (Aquajack varies)
-	  2  |.x...... ........|  Road line body from Road A has higher priority than Road B ??
-	  2  |..x..... ........|  Road line body from Road A has higher priority than Road B ??
-	  2  |...x.... ........|  Palette entry offset   (set = +2)
-	  2  |....?... ........|  ? unknown, maybe line enable (always set?)
-	  2  |.....xxx xxxxxxxx|  X Offset   [offset is inverted] (^)
-	     |                 |
-	  3  |xxxx.... ........|  Color Bank  (selects group of 4 palette entries used for line)
-	  3  |......xx xxxxxxxx|  Road Gfx Tile number
-	-----+-----------------+-----------------------------------------
+    -----+-----------------+----------------------------------------
+    Word | Bit(s)          |  Info
+    -----+-----------------+----------------------------------------
+      0  |x....... ........|  Draw background outside road edge on LHS
+      0  |.x...... ........|  Left road edge from road A has priority over road B ?? (+)
+      0  |..x..... ........|  Left road edge from road A has priority over road B ?? (*)
+      0  |...x.... ........|  Left edge/background palette entry offset  (set = +2)
+      0  |......xx xxxxxxxx|  Left edge   [pixels from road center] (@)
+         |                 |
+      1  |x....... ........|  Draw background outside road edge on RHS
+      1  |.x...... ........|  Right road edge from road A has priority over road B ??
+      1  |..x..... ........|  Right road edge from road A has priority over road B ?? (*)
+      1  |...x.... ........|  Right edge/background palette entry offset  (set = +2)
+      1  |......xx xxxxxxxx|  Right edge   [pixels from road center] (@)
+         |                 |
+      2  |x....... ........|  Set for either road a/b used lines in all games (Aquajack varies)
+      2  |.x...... ........|  Road line body from Road A has higher priority than Road B ??
+      2  |..x..... ........|  Road line body from Road A has higher priority than Road B ??
+      2  |...x.... ........|  Palette entry offset   (set = +2)
+      2  |....?... ........|  ? unknown, maybe line enable (always set?)
+      2  |.....xxx xxxxxxxx|  X Offset   [offset is inverted] (^)
+         |                 |
+      3  |xxxx.... ........|  Color Bank  (selects group of 4 palette entries used for line)
+      3  |......xx xxxxxxxx|  Road Gfx Tile number
+    -----+-----------------+-----------------------------------------
 
-	@ size of bitmask suggested by Nightstr stage C when boss appears
-	^ bitmask confirmed in ChaseHQ code
+    @ size of bitmask suggested by Nightstr stage C when boss appears
+    ^ bitmask confirmed in ChaseHQ code
 
-	* see Nightstr "stage choice tunnel"
-	+ see Contcirc track at race start
+    * see Nightstr "stage choice tunnel"
+    + see Contcirc track at race start
 
-	These priority bits have a different meaning in road B ram. They appear to mean
-	that the relevant part of road B slips under road A. I.e. in road A they raise
-	priority, in road B they lower it.
+    These priority bits have a different meaning in road B ram. They appear to mean
+    that the relevant part of road B slips under road A. I.e. in road A they raise
+    priority, in road B they lower it.
 
-	We need a screenshot of Nightstr "stage choice tunnel" showing exactly what effect
-	happens at top and bottom of screen while tunnel bifurcates.
+    We need a screenshot of Nightstr "stage choice tunnel" showing exactly what effect
+    happens at top and bottom of screen while tunnel bifurcates.
 
 
 Priority Levels - used by this code to represent the way the TC0150ROD appears to work
@@ -4451,8 +4451,8 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 		}
 
 		/* We need to offset start pixel we draw for road edge when edge of
-		   road is partially or wholly offscreen on the opposite side
-		   e.g. Contcirc attract */
+           road is partially or wholly offscreen on the opposite side
+           e.g. Contcirc attract */
 
 		if (right_edge < 0)
 		{
@@ -4659,8 +4659,8 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 		}
 
 		/* We need to offset start pixel we draw for road edge when edge of
-		   road is partially or wholly offscreen on the opposite side
-		   e.g. Contcirc attract */
+           road is partially or wholly offscreen on the opposite side
+           e.g. Contcirc attract */
 
 		if (right_edge < 0)
 		{

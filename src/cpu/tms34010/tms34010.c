@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
-**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**  TMS34010: Portable Texas Instruments TMS34010 emulator
 **
-**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-**	 Parts based on code by Aaron Giles
+**  Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**   Parts based on code by Aaron Giles
 **
 **#################################################################################################*/
 
@@ -23,7 +23,7 @@ extern int debug_key_pressed;
 
 
 /*###################################################################################################
-**	DEBUG STATE & STRUCTURES
+**  DEBUG STATE & STRUCTURES
 **#################################################################################################*/
 
 #define VERBOSE 			0
@@ -68,7 +68,7 @@ static UINT8 tms34010_win_layout[] =
 
 
 /*###################################################################################################
-**	CORE STATE
+**  CORE STATE
 **#################################################################################################*/
 
 /* TMS34010 State */
@@ -126,9 +126,9 @@ typedef struct tms34010_regs
 	UINT16 IOregs[64];
 
 	/*************************
-	  note: in order to speed things up, we don't copy any data from here
-	  forward on a state transition
-	*************************/
+      note: in order to speed things up, we don't copy any data from here
+      forward on a state transition
+    *************************/
 	union						/* The register files are interleaved, so */
 	{							/* that the SP occupies the same location in both */
 		INT32 Bregs[241];   	/* Only every 16th entry is actually used */
@@ -151,7 +151,7 @@ typedef struct tms34010_regs
 
 
 /*###################################################################################################
-**	GLOBAL VARIABLES
+**  GLOBAL VARIABLES
 **#################################################################################################*/
 
 /* public globals */
@@ -181,7 +181,7 @@ static void tms34010_state_postload(void);
 
 
 /*###################################################################################################
-**	FUNCTION TABLES
+**  FUNCTION TABLES
 **#################################################################################################*/
 
 extern void wfield_01(offs_t offset,data32_t data);
@@ -315,7 +315,7 @@ static data32_t (*rfield_functions_s[32])(offs_t offset) =
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 /* context finder */
@@ -402,7 +402,7 @@ INLINE tms34010_regs *FINDCONTEXT(int cpu)
 
 
 /*###################################################################################################
-**	INLINE SHORTCUTS
+**  INLINE SHORTCUTS
 **#################################################################################################*/
 
 /* set the field widths - shortcut */
@@ -545,7 +545,7 @@ INLINE INT32 POP(void)
 
 
 /*###################################################################################################
-**	PIXEL READS
+**  PIXEL READS
 **#################################################################################################*/
 
 #define RP(m1,m2)  											\
@@ -575,7 +575,7 @@ static data32_t read_pixel_shiftreg(offs_t offset)
 
 
 /*###################################################################################################
-**	PIXEL WRITES
+**  PIXEL WRITES
 **#################################################################################################*/
 
 /* No Raster Op + No Transparency */
@@ -692,7 +692,7 @@ static void write_pixel_shiftreg(offs_t offset,data32_t data)
 
 
 /*###################################################################################################
-**	RASTER OPS
+**  RASTER OPS
 **#################################################################################################*/
 
 /* Raster operations */
@@ -726,7 +726,7 @@ static INT32 raster_op_21(INT32 newpix, INT32 oldpix) { return (oldpix > newpix)
 
 
 /*###################################################################################################
-**	OPCODE TABLE & IMPLEMENTATIONS
+**  OPCODE TABLE & IMPLEMENTATIONS
 **#################################################################################################*/
 
 /* includes the static function prototypes and the master opcode table */
@@ -739,7 +739,7 @@ static INT32 raster_op_21(INT32 newpix, INT32 oldpix) { return (oldpix > newpix)
 
 
 /*###################################################################################################
-**	Internal interrupt check
+**  Internal interrupt check
 *#################################################################################################*/
 
 /* Generate pending interrupts. Do NOT inline this function on DJGPP,
@@ -837,7 +837,7 @@ static void check_interrupt(void)
 
 
 /*###################################################################################################
-**	Reset the CPU emulation
+**  Reset the CPU emulation
 **#################################################################################################*/
 
 static void tms34010_init(void)
@@ -921,7 +921,7 @@ static void tms34020_reset(void *param)
 
 
 /*###################################################################################################
-**	Shut down the CPU emulation
+**  Shut down the CPU emulation
 **#################################################################################################*/
 
 static void tms34010_exit(void)
@@ -938,7 +938,7 @@ static void tms34010_exit(void)
 
 
 /*###################################################################################################
-**	Get all registers in given buffer
+**  Get all registers in given buffer
 **#################################################################################################*/
 
 static void tms34010_get_context(void *dst)
@@ -972,7 +972,7 @@ static void tms34020_get_context(void *dst)
 
 
 /*###################################################################################################
-**	Set all registers to given values
+**  Set all registers to given values
 **#################################################################################################*/
 
 static void tms34010_set_context(void *src)
@@ -1010,7 +1010,7 @@ static void tms34020_set_context(void *src)
 
 
 /*###################################################################################################
-**	Set IRQ line state
+**  Set IRQ line state
 **#################################################################################################*/
 
 static void set_irq_line(int irqline, int linestate)
@@ -1052,7 +1052,7 @@ static void set_irq_line(int irqline, int linestate)
 
 
 /*###################################################################################################
-**	Generate internal interrupt
+**  Generate internal interrupt
 *#################################################################################################*/
 
 static void internal_interrupt_callback(int param)
@@ -1074,7 +1074,7 @@ static void internal_interrupt_callback(int param)
 
 
 /*###################################################################################################
-**	Execute
+**  Execute
 *#################################################################################################*/
 
 static int tms34010_execute(int cycles)
@@ -1109,7 +1109,7 @@ static int tms34010_execute(int cycles)
 
 
 /*###################################################################################################
-**	Disassemble
+**  Disassemble
 *#################################################################################################*/
 
 static offs_t tms34010_dasm(char *buffer, offs_t pc)
@@ -1135,7 +1135,7 @@ static offs_t tms34020_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	PIXEL OPS
+**  PIXEL OPS
 **#################################################################################################*/
 
 static void (*pixel_write_ops[4][5])(offs_t offset,data32_t data) =
@@ -1186,7 +1186,7 @@ static void set_pixel_function(void)
 
 
 /*###################################################################################################
-**	RASTER OPS
+**  RASTER OPS
 **#################################################################################################*/
 
 static INT32 (*raster_ops[32]) (INT32 newpix, INT32 oldpix) =
@@ -1210,7 +1210,7 @@ static void set_raster_op(void)
 
 
 /*###################################################################################################
-**	VIDEO TIMING HELPERS
+**  VIDEO TIMING HELPERS
 **#################################################################################################*/
 
 INLINE int scanline_to_vcount(int scanline)
@@ -1320,7 +1320,7 @@ static void update_timers(void)
 
 
 /*###################################################################################################
-**	I/O REGISTER WRITES
+**  I/O REGISTER WRITES
 **#################################################################################################*/
 
 static const char *ioreg_name[] =
@@ -1695,7 +1695,7 @@ WRITE16_HANDLER( tms34020_io_register_w )
 
 
 /*###################################################################################################
-**	I/O REGISTER READS
+**  I/O REGISTER READS
 **#################################################################################################*/
 
 READ16_HANDLER( tms34010_io_register_r )
@@ -1783,7 +1783,7 @@ READ16_HANDLER( tms34020_io_register_r )
 
 
 /*###################################################################################################
-**	UTILITY FUNCTIONS
+**  UTILITY FUNCTIONS
 **#################################################################################################*/
 
 int tms34010_io_display_blanked(int cpu)
@@ -1828,7 +1828,7 @@ int tms34020_get_DPYSTRT(int cpu)
 
 
 /*###################################################################################################
-**	SAVE STATE
+**  SAVE STATE
 **#################################################################################################*/
 
 void tms34010_state_save(int cpunum, mame_file *f)
@@ -1885,7 +1885,7 @@ static void tms34010_state_postload(void)
 
 
 /*###################################################################################################
-**	HOST INTERFACE WRITES
+**  HOST INTERFACE WRITES
 **#################################################################################################*/
 
 void tms34010_host_w(int cpunum, int reg, int data)
@@ -1945,7 +1945,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 
 /*###################################################################################################
-**	HOST INTERFACE READS
+**  HOST INTERFACE READS
 **#################################################################################################*/
 
 int tms34010_host_r(int cpunum, int reg)
@@ -1976,7 +1976,7 @@ int tms34010_host_r(int cpunum, int reg)
 			result = TMS34010_RDMEM_WORD(TOBYTE(addr & 0xfffffff0));
 
 			/* optional postincrement (it says preincrement, but data is preloaded, so it
-			   is effectively a postincrement */
+               is effectively a postincrement */
 			if (IOREG(REG_HSTCTLH) & 0x1000)
 			{
 				addr += 0x10;
@@ -2018,7 +2018,7 @@ static void tms34010_set_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);				break;
 
 		case CPUINFO_INT_PC:       						PC = info->i; change_pc(TOBYTE(PC));	break;
-		case CPUINFO_INT_REGISTER + TMS34010_PC:		PC = info->i;							break;						
+		case CPUINFO_INT_REGISTER + TMS34010_PC:		PC = info->i;							break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + TMS34010_SP:		SP = info->i;							break;
 		case CPUINFO_INT_REGISTER + TMS34010_ST:		ST = info->i;							break;
@@ -2052,7 +2052,7 @@ static void tms34010_set_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS34010_B12:		BREG(BINDEX(12)) = info->i;				break;
 		case CPUINFO_INT_REGISTER + TMS34010_B13:		BREG(BINDEX(13)) = info->i;				break;
 		case CPUINFO_INT_REGISTER + TMS34010_B14:		BREG(BINDEX(14)) = info->i;				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					state.irq_callback = info->irqcallback;	break;
 	}
@@ -2078,7 +2078,7 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 10;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 10000;						break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 3;					break;

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari vector hardware
+    Atari vector hardware
 
 ***************************************************************************/
 
@@ -35,11 +35,11 @@ WRITE8_HANDLER( atari_vg_earom_ctrl_w )
 {
 	logerror("earom ctrl: %02x:%02x\n",offset, data);
 	/*
-		0x01 = clock
-		0x02 = set data latch? - writes only (not always)
-		0x04 = write mode? - writes only
-		0x08 = set addr latch?
-	*/
+        0x01 = clock
+        0x02 = set data latch? - writes only (not always)
+        0x04 = write mode? - writes only
+        0x08 = set addr latch?
+    */
 	if (data & 0x01)
 		earom_data = earom[earom_offset];
 	if ((data & 0x0c) == 0x0c)

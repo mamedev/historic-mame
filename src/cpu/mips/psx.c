@@ -1422,8 +1422,8 @@ static int mips_execute( int cycles )
 			{
 				/* todo: */
 /* used by bootstrap
-				logerror( "%08x: SW SR_ISC not supported\n", mipscpu.pc );
-				mips_stop();
+                logerror( "%08x: SW SR_ISC not supported\n", mipscpu.pc );
+                mips_stop();
 */
 				mips_advance_pc();
 			}
@@ -1650,11 +1650,11 @@ static void set_irq_line( int irqline, int state )
 		if( mipscpu.irq_callback )
 		{
 			/* HOLD_LINE interrupts are not supported by the architecture.
-			By acknowledging the interupt here they are treated like PULSE_LINE
-			interrupts, so if the interrupt isn't enabled it will be ignored.
-			There is also a problem with PULSE_LINE interrupts as the interrupt
-			pending bits aren't latched the emulated code won't know what caused
-			the interrupt. */
+            By acknowledging the interupt here they are treated like PULSE_LINE
+            interrupts, so if the interrupt isn't enabled it will be ignored.
+            There is also a problem with PULSE_LINE interrupts as the interrupt
+            pending bits aren't latched the emulated code won't know what caused
+            the interrupt. */
 			(*mipscpu.irq_callback)( irqline );
 		}
 		break;
@@ -2693,7 +2693,7 @@ static void mips_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS_CP2CR29:		mipscpu.cp2cr[ 29 ].d = info->i;		break;
 		case CPUINFO_INT_REGISTER + MIPS_CP2CR30:		mipscpu.cp2cr[ 30 ].d = info->i;		break;
 		case CPUINFO_INT_REGISTER + MIPS_CP2CR31:		mipscpu.cp2cr[ 31 ].d = info->i;		break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					mipscpu.irq_callback = info->irqcallback;			break;
 	}
@@ -2719,7 +2719,7 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -2743,8 +2743,8 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS_PC:			info->i = mipscpu.pc;					break;
 		case CPUINFO_INT_SP:
 			/* because there is no hardware stack and the pipeline causes the cpu to execute the
-			instruction after a subroutine call before the subroutine is executed there is little
-			chance of cmd_step_over() in mamedbg.c working. */
+            instruction after a subroutine call before the subroutine is executed there is little
+            chance of cmd_step_over() in mamedbg.c working. */
 								info->i = 0;													break;
 		case CPUINFO_INT_REGISTER + MIPS_DELAYV:		info->i = mipscpu.delayv;				break;
 		case CPUINFO_INT_REGISTER + MIPS_DELAYR:		info->i = mipscpu.delayr;				break;

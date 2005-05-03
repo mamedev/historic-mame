@@ -1,17 +1,17 @@
 /***************************************************************************
 
-	Art & Magic hardware
+    Art & Magic hardware
 
-	driver by Aaron Giles and Nicola Salmoria
+    driver by Aaron Giles and Nicola Salmoria
 
-	Games supported:
-		* Cheese Chase
-		* Ultimate Tennis
-		* Stone Ball
+    Games supported:
+        * Cheese Chase
+        * Ultimate Tennis
+        * Stone Ball
 
-	Known bugs:
-		* measured against a real PCB, the games run slightly too fast
-		  in spite of accurately measured VBLANK timings
+    Known bugs:
+        * measured against a real PCB, the games run slightly too fast
+          in spite of accurately measured VBLANK timings
 
 ***************************************************************************/
 
@@ -42,7 +42,7 @@ static void (*protection_handler)(void);
 
 /*************************************
  *
- *	Interrupts
+ *  Interrupts
  *
  *************************************/
 
@@ -72,7 +72,7 @@ static void m68k_gen_int(int state)
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -87,7 +87,7 @@ static MACHINE_INIT( artmagic )
 
 /*************************************
  *
- *	TMS34010 interface
+ *  TMS34010 interface
  *
  *************************************/
 
@@ -106,7 +106,7 @@ static WRITE16_HANDLER( tms_host_w )
 
 /*************************************
  *
- *	Misc control memory accesses
+ *  Misc control memory accesses
  *
  *************************************/
 
@@ -125,7 +125,7 @@ static WRITE16_HANDLER( control_w )
 
 /*************************************
  *
- *	Ultimate Tennis protection workarounds
+ *  Ultimate Tennis protection workarounds
  *
  *************************************/
 
@@ -146,7 +146,7 @@ static READ16_HANDLER( ultennis_hack_r )
 
 /*************************************
  *
- *	Game-specific protection
+ *  Game-specific protection
  *
  *************************************/
 
@@ -183,18 +183,18 @@ static void ultennis_protection(void)
 
 		case 0x02:	/* 02 aaaa bbbb cccc (xxxxxxxx) */
 			/*
-				Ultimate Tennis -- actual values from a board:
+                Ultimate Tennis -- actual values from a board:
 
-					hex								decimal
-					0041 0084 00c8 -> 00044142		 65 132 200 -> 278850 = 65*65*66
-					001e 0084 00fc -> 0000e808		 30 132 252 ->  59400 = 30*30*66
-					0030 007c 005f -> 00022e00		 48 124  95 -> 142848 = 48*48*62
-					0024 00dd 0061 -> 00022ce0		 36 221  97 -> 142560 = 36*36*110
-					0025 0096 005b -> 00019113		 37 150  91 -> 102675 = 37*37*75
-					0044 00c9 004c -> 00070e40		 68 201  76 -> 462400 = 68*68*100
+                    hex                             decimal
+                    0041 0084 00c8 -> 00044142       65 132 200 -> 278850 = 65*65*66
+                    001e 0084 00fc -> 0000e808       30 132 252 ->  59400 = 30*30*66
+                    0030 007c 005f -> 00022e00       48 124  95 -> 142848 = 48*48*62
+                    0024 00dd 0061 -> 00022ce0       36 221  97 -> 142560 = 36*36*110
+                    0025 0096 005b -> 00019113       37 150  91 -> 102675 = 37*37*75
+                    0044 00c9 004c -> 00070e40       68 201  76 -> 462400 = 68*68*100
 
-				question is: what is the 3rd value doing there?
-			*/
+                question is: what is the 3rd value doing there?
+            */
 			if (prot_input_index == 7)
 			{
 				UINT16 a = (INT16)(prot_input[1] | (prot_input[2] << 8));
@@ -400,7 +400,7 @@ static WRITE16_HANDLER( protection_bit_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -461,7 +461,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Slave CPU memory handlers
+ *  Slave CPU memory handlers
  *
  *************************************/
 
@@ -567,7 +567,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -576,7 +576,7 @@ INPUT_PORTS_START( cheesech )
 	AAM_PLAYER(1)
 	PORT_START_TAG("300002")
 	AAM_PLAYER(2)
-	
+
 	PORT_START_TAG("300004")
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ))
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
@@ -730,16 +730,16 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
 /*
-	video timing:
-		measured HSYNC frequency = 15.685kHz
-		measured VSYNC frequency = 50-51Hz
-		programmed total lines = 312
-		derived frame rate = 15685/312 = 50.27Hz
+    video timing:
+        measured HSYNC frequency = 15.685kHz
+        measured VSYNC frequency = 50-51Hz
+        programmed total lines = 312
+        derived frame rate = 15685/312 = 50.27Hz
 */
 
 MACHINE_DRIVER_START( artmagic )
@@ -790,7 +790,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -860,7 +860,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -926,7 +926,7 @@ static DRIVER_INIT( stonebal )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

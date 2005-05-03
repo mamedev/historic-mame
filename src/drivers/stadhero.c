@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Stadium Hero (Japan)			(c) 1988 Data East Corporation
+    Stadium Hero (Japan)            (c) 1988 Data East Corporation
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

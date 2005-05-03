@@ -122,8 +122,8 @@ enum
     F_BCx,          // BO, BI, target_addr  used only by BCx
     F_RT_RA_0_SIMM, // rT, rA|0, SIMM       rA|0 means if rA == 0, print 0
     F_ADDIS,        // rT, rA, SIMM (printed as unsigned)   only used by ADDIS
-    F_RT_RA_SIMM,   // rT, rA, SIMM         
-    F_RA_RT_UIMM,   // rA, rT, UIMM         
+    F_RT_RA_SIMM,   // rT, rA, SIMM
+    F_RA_RT_UIMM,   // rA, rT, UIMM
     F_CMP_SIMM,     // crfD, L, A, SIMM
     F_CMP_UIMM,     // crfD, L, A, UIMM
     F_RT_RA_0_RB,   // rT, rA|0, rB
@@ -482,17 +482,17 @@ static void SPR(char *dest, int spr_field)
 		case 1013:	strcat(dest, "dabr");	break;  // unsupported on 603e/EC603e
 
 		/*
-		 * Some PowerPC implementations may implement MFTB and MFSPR identically,
-		 * therefore TBR registers are also decoded here
-		 */
+         * Some PowerPC implementations may implement MFTB and MFSPR identically,
+         * therefore TBR registers are also decoded here
+         */
 
 		case 268:	strcat(dest, "tbl");	break;
 		case 269:	strcat(dest, "tbu");	break;
 
 		/*
-		 * PowerPC 603e/EC603e-specific registers
-		 */
-		
+         * PowerPC 603e/EC603e-specific registers
+         */
+
 		case 1008:	strcat(dest, "hid0");	break;
 		case 1009:	strcat(dest, "hid1");	break;
 		case 976:	strcat(dest, "dmiss");	break;
@@ -525,7 +525,7 @@ static void DCR(char *dest, int dcr_field)
 
 	switch (dcr)
 	{
-		case 144:	strcat(dest, "bear"); break;	
+		case 144:	strcat(dest, "bear"); break;
 		case 145:	strcat(dest, "besr"); break;
 		case 128:	strcat(dest, "br0"); break;
 		case 129:	strcat(dest, "br1"); break;
@@ -657,9 +657,9 @@ static int Check(UINT32 op, int flags)
 	if (flags & FL_CHECK_LSWI)
 	{
 		/*
-		 * Check that rA is not in the range of registers to be loaded (even
-		 * if rA == 0)
-		 */
+         * Check that rA is not in the range of registers to be loaded (even
+         * if rA == 0)
+         */
 
 		nb = G_NB(op);
 
@@ -670,16 +670,16 @@ static int Check(UINT32 op, int flags)
 				return 1;
 		}
 	}
-	
+
 	if (flags & FL_CHECK_LSWX)
 	{
 		/*
-		 * Check that rT != rA, rT != rB, and rD and rA both do not specify
-		 * R0.
-		 *
-		 * We cannot check fully whether rA or rB are in the range of
-		 * registers specified to be loaded because that depends on XER.
-		 */
+         * Check that rT != rA, rT != rB, and rD and rA both do not specify
+         * R0.
+         *
+         * We cannot check fully whether rA or rB are in the range of
+         * registers specified to be loaded because that depends on XER.
+         */
 
 		if (rt == ra || rt == G_RB(op) || ((rt == 0) && (ra == 0)))
 			return 1;
@@ -698,7 +698,7 @@ static int Check(UINT32 op, int flags)
 static int Simplified(UINT32 op, UINT32 vpc, char *signed16, char *mnem, char *oprs)
 {
 	UINT32  value, disp;
-	
+
 	value = G_SIMM(op); // value is fully sign-extended SIMM field
 	if (value & 0x8000)
 		value |= 0xffff0000;
@@ -764,7 +764,7 @@ static int Simplified(UINT32 op, UINT32 vpc, char *signed16, char *mnem, char *o
 	{
 		strcat(mnem, "xori");   // xoris rA,rT,UIMM -> xori rA,rT,UIMM<<16
 		sprintf(oprs, "r%d,r%d,0x%08X", G_RA(op), G_RT(op), G_UIMM(op) << 16);
-	}        
+	}
 	else if ((op & ~(M_RT|M_RA|M_SH|M_MB|M_ME|M_RC)) == D_OP(20))
 	{
 		value = Mask(G_MB(op), G_ME(op));
@@ -840,7 +840,7 @@ static int Simplified(UINT32 op, UINT32 vpc, char *signed16, char *mnem, char *o
 	}
 	else
 		return 0;   // no match
-	
+
 	return 1;
 }
 
@@ -856,14 +856,14 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 	oprs[0] = '\0';
 
 	/*
-	 * Decode signed 16-bit fields (SIMM and d) to spare us the work later
-	 */
+     * Decode signed 16-bit fields (SIMM and d) to spare us the work later
+     */
 
 	DecodeSigned16(signed16, op, 0);
 
 	/*
-	 * Try simplified forms first, then real instructions
-	 */
+     * Try simplified forms first, then real instructions
+     */
 
 	if( Simplified(op, pc, signed16, mnem, oprs) ) {
 		buffer += sprintf(buffer, "%s", mnem);
@@ -875,16 +875,16 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 	}
 
 	/*
-	 * Search for the instruction in the list and print it if there's a match
-	 */
+     * Search for the instruction in the list and print it if there's a match
+     */
 
 	for (i = 0; i < sizeof(itab) / sizeof(IDESCR); i++)
 	{
 		if ((op & ~itab[i].mask) == itab[i].match)  // check for match
 		{
 			/*
-			 * Base mnemonic followed be O, ., L, A
-			 */
+             * Base mnemonic followed be O, ., L, A
+             */
 
 			strcat(mnem, itab[i].mnem);
 			if (itab[i].flags & FL_OE)  if (op & M_OE) strcat(mnem, "o");
@@ -893,8 +893,8 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 			if (itab[i].flags & FL_AA)  if (op & M_AA) strcat(mnem, "a");
 
 			/*
-			 * Print operands
-			 */
+             * Print operands
+             */
 
 			switch (itab[i].format)
 			{
@@ -923,7 +923,7 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 			case F_RT_RA:
 				sprintf(oprs, "r%d,r%d", G_RT(op), G_RA(op));
 				break;
-			
+
 			case F_RA_RT_RB:
 				sprintf(oprs, "r%d,r%d,r%d", G_RA(op), G_RT(op), G_RB(op));
 				break;
@@ -934,7 +934,7 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 
 			case F_LI:
 				disp = G_LI(op) * 4;
-				if (disp & 0x02000000)	// sign extend	
+				if (disp & 0x02000000)	// sign extend
 					disp |= 0xfc000000;
 				sprintf(oprs, "0x%08X", disp + ((op & M_AA) ? 0 : pc));
 				break;

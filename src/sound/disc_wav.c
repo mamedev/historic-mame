@@ -187,9 +187,9 @@ void dss_counter_step(struct node_description *node)
 	}
 
 	/*
-	 * Only count if module is enabled.
-	 * This has the effect of holding the output at it's current value.
-	 */
+     * Only count if module is enabled.
+     * This has the effect of holding the output at it's current value.
+     */
 	if (DSS_COUNTER__ENABLE)
 	{
 		last_count = context->count;
@@ -958,11 +958,11 @@ void dss_schmitt_osc_step(struct node_description *node)
 	{
 		t = 0;
 		/* The charging voltage to the cap is the sum of the input voltage and the gate
-		 * output voltage in the ratios determined by their resistors in a divider network.
-		 * The input voltage is selectable as straight voltage in or logic level that will
-		 * use vGate as its voltage.  Note that ratioIn is just the ratio of the total
-		 * voltage and needs to be multipled by the input voltage.  ratioFeedback has
-		 * already been multiplied by vGate to save time because that voltage never changes. */
+         * output voltage in the ratios determined by their resistors in a divider network.
+         * The input voltage is selectable as straight voltage in or logic level that will
+         * use vGate as its voltage.  Note that ratioIn is just the ratio of the total
+         * voltage and needs to be multipled by the input voltage.  ratioFeedback has
+         * already been multiplied by vGate to save time because that voltage never changes. */
 		supply = (info->options & DISC_SCHMITT_OSC_IN_IS_VOLTAGE) ? context->ratioIn * DSS_SCHMITT_OSC__VIN : (DSS_SCHMITT_OSC__VIN ? context->ratioIn * info->vGate : 0);
 		supply += (context->state ? context->ratioFeedback : 0);
 		new_vCap = vCap + ((supply - vCap) * exponent);
@@ -1031,12 +1031,12 @@ void dss_schmitt_osc_reset(struct node_description *node)
 	double rSource;
 
 	/* The 2 resistors make a voltage divider, so their ratios add together
-	 * to make the charging voltage. */
+     * to make the charging voltage. */
 	context->ratioIn = info->rFeedback / (info->rIn + info->rFeedback);
 	context->ratioFeedback = info->rIn / (info->rIn + info->rFeedback) * info->vGate;
 
 	/* The voltage source resistance works out to the 2 resistors in parallel.
-	 * So use this for the RC charge constant. */
+     * So use this for the RC charge constant. */
 	rSource = 1.0 / ((1.0 / info->rIn) + (1.0 / info->rFeedback));
 	context->rc = rSource * info->c;
 	context->exponent = -1.0 / (context->rc  * Machine->sample_rate);
@@ -1396,7 +1396,7 @@ void dss_trianglewave_reset(struct node_description *node)
 
 void dss_adsrenv_step(struct node_description *node)
 {
-//	struct dss_adsr_context *context = node->context;
+//  struct dss_adsr_context *context = node->context;
 
 	if(DSS_ADSR__ENABLE)
 	{

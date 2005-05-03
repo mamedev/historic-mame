@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega Hang On hardware
+    Sega Hang On hardware
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -27,7 +27,7 @@ VIDEO_START( hangon )
 	/* initialize the sprites */
 	if (segaic16_sprites_init(0, SEGAIC16_SPRITES_HANGON, 0x400, 0))
 		return 1;
-		
+
 	/* initialize the road */
 	if (segaic16_road_init(0, SEGAIC16_ROAD_HANGON, 0x038, 0x7c0, 0x7c0, 0))
 		return 1;
@@ -47,7 +47,7 @@ VIDEO_START( sharrier )
 	/* initialize the sprites */
 	if (segaic16_sprites_init(0, SEGAIC16_SPRITES_SHARRIER, 0x400, 0))
 		return 1;
-		
+
 	/* initialize the road */
 	if (segaic16_road_init(0, SEGAIC16_ROAD_SHARRIER, 0x038, 0x7c0, 0x7c0, 0))
 		return 1;
@@ -58,7 +58,7 @@ VIDEO_START( sharrier )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -76,7 +76,7 @@ VIDEO_UPDATE( hangon )
 
 	/* draw the low priority road layer */
 	segaic16_road_draw(0, bitmap, cliprect, SEGAIC16_ROAD_BACKGROUND);
-	
+
 	/* draw background */
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);

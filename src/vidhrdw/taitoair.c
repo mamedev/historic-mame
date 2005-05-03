@@ -97,7 +97,7 @@ VIDEO_START( taitoair )
 static void taitoair_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
-	   is always 64 pixels. */
+       is always 64 pixels. */
 
 	int size[] = { 1, 2, 4, 4 };
 	int x0, y0, x, y, dx, dy, ex, ey, zx, zy;

@@ -131,7 +131,7 @@ static READ16_HANDLER( mweeprom_r )
 		return res;
 	}
 
-//	logerror("msb access to eeprom port\n");
+//  logerror("msb access to eeprom port\n");
 
 	return 0;
 }
@@ -151,7 +151,7 @@ static READ16_HANDLER( vseeprom_r )
 		return res;
 	}
 
-//	logerror("msb access to eeprom port\n");
+//  logerror("msb access to eeprom port\n");
 
 	return 0;
 }
@@ -166,7 +166,7 @@ static WRITE16_HANDLER( mweeprom_w )
 		return;
 	}
 
-//	logerror("unknown LSB write %x to eeprom\n", data);
+//  logerror("unknown LSB write %x to eeprom\n", data);
 
 }
 
@@ -310,7 +310,7 @@ static WRITE16_HANDLER( irq_ack_w )
 	{
 		mw_irq_control = data&0xff;
 
-//		if ((data &0xf0) != 0xd0) logerror("Unknown write to IRQ reg: %x\n", data);
+//      if ((data &0xf0) != 0xd0) logerror("Unknown write to IRQ reg: %x\n", data);
 
 	}
 }
@@ -378,7 +378,7 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 {
 	if (offset & 0x0078)
 	{
-//		printf("spr write %x to %x (PC=%x)\n", data, offset, activecpu_get_pc());
+//      printf("spr write %x to %x (PC=%x)\n", data, offset, activecpu_get_pc());
 		COMBINE_DATA(spriteram16+offset);
 	}
 	else
@@ -592,11 +592,11 @@ static WRITE16_HANDLER( mccontrol_w )
 
 		K053246_set_OBJCHA_line((data&0x04) ? ASSERT_LINE : CLEAR_LINE);
 
-//		if (data & 0xf8) logerror("Unk write %x to mccontrol\n", data);
+//      if (data & 0xf8) logerror("Unk write %x to mccontrol\n", data);
 
 	}
 
-//	else logerror("write %x to LSB of mccontrol\n", data);
+//  else logerror("write %x to LSB of mccontrol\n", data);
 
 }
 
@@ -1923,9 +1923,9 @@ static void init_common(void)
 	while( s<pFinish )
 	{
 		/* convert the whole mess to 5bpp planar in System GX's format
-		   (p3 p1 p2 p0 p5)
-		   (the original ROMs are stored as chunky for the first 4 bits
-		   and the 5th bit is planar, which is undecodable as-is) */
+           (p3 p1 p2 p0 p5)
+           (the original ROMs are stored as chunky for the first 4 bits
+           and the 5th bit is planar, which is undecodable as-is) */
 		int d0 = ((s[0]&0x80)   )|((s[0]&0x08)<<3)|((s[1]&0x80)>>2)|((s[1]&0x08)<<1)|
 		         ((s[2]&0x80)>>4)|((s[2]&0x08)>>1)|((s[3]&0x80)>>6)|((s[3]&0x08)>>3);
 		int d1 = ((s[0]&0x40)<<1)|((s[0]&0x04)<<4)|((s[1]&0x40)>>1)|((s[1]&0x04)<<2)|

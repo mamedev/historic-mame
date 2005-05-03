@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	Cinematronics Cosmic Chasm hardware
+    Cinematronics Cosmic Chasm hardware
 
-	driver by Mathis Rosenhauer
+    driver by Mathis Rosenhauer
 
-	Games supported:
-		* Cosmic Chasm
+    Games supported:
+        * Cosmic Chasm
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ***************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -49,7 +49,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -84,7 +84,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -138,7 +138,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -151,7 +151,7 @@ static struct CustomSound_interface custom_interface =
 
 /*************************************
  *
- *	CPU config
+ *  CPU config
  *
  *************************************/
 
@@ -165,7 +165,7 @@ static Z80_DaisyChain daisy_chain[] =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -209,7 +209,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -264,7 +264,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

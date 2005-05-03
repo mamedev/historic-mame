@@ -1,5 +1,5 @@
 /*
-	Generate the tms9900 emulator
+    Generate the tms9900 emulator
 */
 
 #include "tms9900.h"

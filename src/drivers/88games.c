@@ -123,8 +123,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(bankedram_r)
 	AM_RANGE(0x5f94, 0x5f94) AM_READ(input_port_0_r)
-//	AM_RANGE(0x5f95, 0x5f95) AM_READ(input_port_1_r)
-//	AM_RANGE(0x5f96, 0x5f96) AM_READ(input_port_2_r)
+//  AM_RANGE(0x5f95, 0x5f95) AM_READ(input_port_1_r)
+//  AM_RANGE(0x5f96, 0x5f96) AM_READ(input_port_2_r)
 	AM_RANGE(0x5f95, 0x5f95) AM_READ(cheat1_r)	/* P1 and P2 IO and handle fake button for cheating */
 	AM_RANGE(0x5f96, 0x5f96) AM_READ(cheat2_r)	/* P3 and P4 IO and handle fake button for cheating */
 	AM_RANGE(0x5f97, 0x5f97) AM_READ(input_port_3_r)
@@ -168,7 +168,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -177,7 +177,7 @@ INPUT_PORTS_START( 88games )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
-//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via cheat?_r */
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell (Cheat)") PORT_PLAYER(1)
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
@@ -245,7 +245,7 @@ INPUT_PORTS_START( 88games )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disabled" )
+//  PORT_DIPSETTING(    0x00, "Disabled" )
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -319,11 +319,11 @@ static MACHINE_DRIVER_START( 88games )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 0.75)
 	MDRV_SOUND_ROUTE(1, "mono", 0.75)
-	
+
 	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
 	MDRV_SOUND_CONFIG(upd7759_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
 	MDRV_SOUND_CONFIG(upd7759_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)

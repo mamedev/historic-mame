@@ -1,6 +1,6 @@
 //============================================================
 //
-//	ticker.c - Win32 timing code
+//  ticker.c - Win32 timing code
 //
 //============================================================
 
@@ -16,7 +16,7 @@
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static cycles_t init_cycle_counter(void);
@@ -28,7 +28,7 @@ static cycles_t nop_cycle_counter(void);
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // global cycle_counter function and divider
@@ -41,7 +41,7 @@ int				win_high_priority;
 
 
 //============================================================
-//	STATIC VARIABLES
+//  STATIC VARIABLES
 //============================================================
 
 static cycles_t suspend_adjustment;
@@ -49,7 +49,7 @@ static cycles_t suspend_time;
 
 
 //============================================================
-//	has_rdtsc
+//  has_rdtsc
 //============================================================
 
 static int has_rdtsc(void)
@@ -61,7 +61,7 @@ static int has_rdtsc(void)
 
 
 //============================================================
-//	init_cycle_counter
+//  init_cycle_counter
 //============================================================
 
 static cycles_t init_cycle_counter(void)
@@ -150,7 +150,7 @@ static cycles_t init_cycle_counter(void)
 
 
 //============================================================
-//	performance_cycle_counter
+//  performance_cycle_counter
 //============================================================
 
 static cycles_t performance_cycle_counter(void)
@@ -163,7 +163,7 @@ static cycles_t performance_cycle_counter(void)
 
 
 //============================================================
-//	rdtsc_cycle_counter
+//  rdtsc_cycle_counter
 //============================================================
 
 #ifdef _MSC_VER
@@ -203,7 +203,7 @@ static cycles_t rdtsc_cycle_counter(void)
 
 
 //============================================================
-//	time_cycle_counter
+//  time_cycle_counter
 //============================================================
 
 static cycles_t time_cycle_counter(void)
@@ -215,7 +215,7 @@ static cycles_t time_cycle_counter(void)
 
 
 //============================================================
-//	nop_cycle_counter
+//  nop_cycle_counter
 //============================================================
 
 static cycles_t nop_cycle_counter(void)
@@ -226,7 +226,7 @@ static cycles_t nop_cycle_counter(void)
 
 
 //============================================================
-//	osd_cycles
+//  osd_cycles
 //============================================================
 
 cycles_t osd_cycles(void)
@@ -237,7 +237,7 @@ cycles_t osd_cycles(void)
 
 
 //============================================================
-//	osd_cycles_per_second
+//  osd_cycles_per_second
 //============================================================
 
 cycles_t osd_cycles_per_second(void)
@@ -248,7 +248,7 @@ cycles_t osd_cycles_per_second(void)
 
 
 //============================================================
-//	osd_profiling_ticks
+//  osd_profiling_ticks
 //============================================================
 
 cycles_t osd_profiling_ticks(void)
@@ -259,7 +259,7 @@ cycles_t osd_profiling_ticks(void)
 
 
 //============================================================
-//	win_timer_enable
+//  win_timer_enable
 //============================================================
 
 void win_timer_enable(int enabled)

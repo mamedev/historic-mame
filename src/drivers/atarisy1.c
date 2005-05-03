@@ -1,117 +1,117 @@
 /***************************************************************************
 
-	Atari System 1 hardware
+    Atari System 1 hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Marble Madness (1984) [4 sets]
-		* Peter Packrat (1984)
-		* Indiana Jones & the Temple of Doom (1985) [5 sets]
-		* Road Runner (1985) [3 sets]
-		* Road Blasters (1987) [10 sets]
+    Games supported:
+        * Marble Madness (1984) [4 sets]
+        * Peter Packrat (1984)
+        * Indiana Jones & the Temple of Doom (1985) [5 sets]
+        * Road Runner (1985) [3 sets]
+        * Road Blasters (1987) [10 sets]
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-07FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	080000-087FFF   R     xxxxxxxx xxxxxxxx   Slapstic-protected ROM
-	2E0000          R     -------- x-------   Sprite interrupt state
-	400000-401FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
-	800000            W   -------x xxxxxxxx   Playfield X scroll
-	820000            W   -------x xxxxxxxx   Playfield Y scroll
-	840000            W   -------- xxxxxxxx   Playfield priority color mask
-	860000            W   -------- xxxxxxxx   Audio/video control
-	                  W   -------- x-------      (Sound CPU reset)
-	                  W   -------- -x------      (Trackball test)
-	                  W   -------- --xxx---      (Motion object RAM bank select)
-	                  W   -------- -----x--      (Playfield tile bank select)
-	                  W   -------- ------x-      (Trackball resolution & test LED)
-	                  W   -------- -------x      (Alphanumerics tile bank select)
-	880000            W   -------- --------   Watchdog reset
-	8A0000            W   -------- --------   VBLANK IRQ acknowledge
-	8C0000            W   -------- --------   EEPROM enable
-	900000-9FFFFF   R/W   xxxxxxxx xxxxxxxx   Catridge external RAM/ROM
-	A00000-A01FFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x64 tiles)
-	                R/W   x------- --------      (Horizontal flip)
-	                R/W   -xxxxxxx --------      (Tile ROM & palette select)
-	                R/W   -------- xxxxxxxx      (Tile index, 8 LSB)
-	A02000-A02FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (8 banks x 64 entries x 4 words)
-	                R/W   x------- --------      (0: X flip)
-	                R/W   --xxxxxx xxx-----      (0: Y position)
-	                R/W   -------- ----xxxx      (0: Number of Y tiles - 1)
-	                R/W   xxxxxxxx --------      (64: Tile ROM & palette select)
-	                R/W   -------- xxxxxxxx      (64: Tile index, 8 LSB)
-	                R/W   --xxxxxx xxx-----      (128: X position)
-	                R/W   -------- ----xxxx      (128: Number of X tiles - 1)
-	                R/W   -------- --xxxxxx      (192: Link to the next object)
-	A03000-A03FFF   R/W   --xxxxxx xxxxxxxx   Alphanumerics RAM
-	                R/W   --x----- --------      (Opaque/transparent)
-	                R/W   ---xxx-- --------      (Palette index)
-	                R/W   ------xx xxxxxxxx      (Tile index)
-	B00000-B001FF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics palette RAM (256 entries)
-	                R/W   xxxx---- --------      (Intensity)
-	                R/W   ----xxxx --------      (Red)
-	                R/W   -------- xxxx----      (Green)
-	                R/W   -------- ----xxxx      (Blue)
-	B00200-B003FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
-	B00400-B005FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
-	B00600-B007FF   R/W   xxxxxxxx xxxxxxxx   Translucency palette RAM (256 entries)
-	F00000-F00FFF   R/W   -------- xxxxxxxx   EEPROM
-	F20000-F20007   R     -------- xxxxxxxx   Analog inputs
-	F40000-F4001F   R     -------- xxxxxxxx   Joystick inputs
-	F40000-F4001F     W   -------- --------   Joystick IRQ enable
-	F60000          R     -------- xxxxxxxx   Switch inputs
-	                R     -------- x-------      (Command buffer full)
-	                R     -------- -x------      (Self test)
-	                R     -------- --x-xxxx      (Game-specific switches)
-	                R     -------- ---x----      (VBLANK)
-	FC0000          R     -------- xxxxxxxx   Sound response read
-	FE0000            W   -------- xxxxxxxx   Sound command write
-	========================================================================
-	Interrupts:
-		IRQ2 = joystick interrupt
-		IRQ3 = sprite-based interrupt
-		IRQ4 = VBLANK
-		IRQ6 = sound CPU communications
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-07FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    080000-087FFF   R     xxxxxxxx xxxxxxxx   Slapstic-protected ROM
+    2E0000          R     -------- x-------   Sprite interrupt state
+    400000-401FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+    800000            W   -------x xxxxxxxx   Playfield X scroll
+    820000            W   -------x xxxxxxxx   Playfield Y scroll
+    840000            W   -------- xxxxxxxx   Playfield priority color mask
+    860000            W   -------- xxxxxxxx   Audio/video control
+                      W   -------- x-------      (Sound CPU reset)
+                      W   -------- -x------      (Trackball test)
+                      W   -------- --xxx---      (Motion object RAM bank select)
+                      W   -------- -----x--      (Playfield tile bank select)
+                      W   -------- ------x-      (Trackball resolution & test LED)
+                      W   -------- -------x      (Alphanumerics tile bank select)
+    880000            W   -------- --------   Watchdog reset
+    8A0000            W   -------- --------   VBLANK IRQ acknowledge
+    8C0000            W   -------- --------   EEPROM enable
+    900000-9FFFFF   R/W   xxxxxxxx xxxxxxxx   Catridge external RAM/ROM
+    A00000-A01FFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x64 tiles)
+                    R/W   x------- --------      (Horizontal flip)
+                    R/W   -xxxxxxx --------      (Tile ROM & palette select)
+                    R/W   -------- xxxxxxxx      (Tile index, 8 LSB)
+    A02000-A02FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (8 banks x 64 entries x 4 words)
+                    R/W   x------- --------      (0: X flip)
+                    R/W   --xxxxxx xxx-----      (0: Y position)
+                    R/W   -------- ----xxxx      (0: Number of Y tiles - 1)
+                    R/W   xxxxxxxx --------      (64: Tile ROM & palette select)
+                    R/W   -------- xxxxxxxx      (64: Tile index, 8 LSB)
+                    R/W   --xxxxxx xxx-----      (128: X position)
+                    R/W   -------- ----xxxx      (128: Number of X tiles - 1)
+                    R/W   -------- --xxxxxx      (192: Link to the next object)
+    A03000-A03FFF   R/W   --xxxxxx xxxxxxxx   Alphanumerics RAM
+                    R/W   --x----- --------      (Opaque/transparent)
+                    R/W   ---xxx-- --------      (Palette index)
+                    R/W   ------xx xxxxxxxx      (Tile index)
+    B00000-B001FF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics palette RAM (256 entries)
+                    R/W   xxxx---- --------      (Intensity)
+                    R/W   ----xxxx --------      (Red)
+                    R/W   -------- xxxx----      (Green)
+                    R/W   -------- ----xxxx      (Blue)
+    B00200-B003FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
+    B00400-B005FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
+    B00600-B007FF   R/W   xxxxxxxx xxxxxxxx   Translucency palette RAM (256 entries)
+    F00000-F00FFF   R/W   -------- xxxxxxxx   EEPROM
+    F20000-F20007   R     -------- xxxxxxxx   Analog inputs
+    F40000-F4001F   R     -------- xxxxxxxx   Joystick inputs
+    F40000-F4001F     W   -------- --------   Joystick IRQ enable
+    F60000          R     -------- xxxxxxxx   Switch inputs
+                    R     -------- x-------      (Command buffer full)
+                    R     -------- -x------      (Self test)
+                    R     -------- --x-xxxx      (Game-specific switches)
+                    R     -------- ---x----      (VBLANK)
+    FC0000          R     -------- xxxxxxxx   Sound response read
+    FE0000            W   -------- xxxxxxxx   Sound command write
+    ========================================================================
+    Interrupts:
+        IRQ2 = joystick interrupt
+        IRQ3 = sprite-based interrupt
+        IRQ4 = VBLANK
+        IRQ6 = sound CPU communications
+    ========================================================================
 
 
-	========================================================================
-	SOUND CPU
-	========================================================================
-	0000-0FFF   R/W   xxxxxxxx   Program RAM
-	1000-100F   R/W   xxxxxxxx   M6522
-	1000-1FFF   R/W   xxxxxxxx   Catridge external RAM/ROM
-	1800-1801   R/W   xxxxxxxx   YM2151 communications
-	1810        R     xxxxxxxx   Sound command read
-	1810          W   xxxxxxxx   Sound response write
-	1820        R     x--xxxxx   Sound status/input read
-	            R     x-------      (Self-test)
-	            R     ---x----      (Response buffer full)
-	            R     ----x---      (Command buffer full)
-	            R     -----x--      (Service coin)
-	            R     ------x-      (Left coin)
-	            R     -------x      (Right coin)
-	1824-1825     W   -------x   LED control
-	1826          W   -------x   Right coin counter
-	1827          W   -------x   Left coin counter
-	1870-187F   R/W   xxxxxxxx   POKEY communications
-	4000-FFFF   R     xxxxxxxx   Program ROM
-	========================================================================
-	Interrupts:
-		IRQ = YM2151 interrupt
-		NMI = latch on sound command
-	========================================================================
+    ========================================================================
+    SOUND CPU
+    ========================================================================
+    0000-0FFF   R/W   xxxxxxxx   Program RAM
+    1000-100F   R/W   xxxxxxxx   M6522
+    1000-1FFF   R/W   xxxxxxxx   Catridge external RAM/ROM
+    1800-1801   R/W   xxxxxxxx   YM2151 communications
+    1810        R     xxxxxxxx   Sound command read
+    1810          W   xxxxxxxx   Sound response write
+    1820        R     x--xxxxx   Sound status/input read
+                R     x-------      (Self-test)
+                R     ---x----      (Response buffer full)
+                R     ----x---      (Command buffer full)
+                R     -----x--      (Service coin)
+                R     ------x-      (Left coin)
+                R     -------x      (Right coin)
+    1824-1825     W   -------x   LED control
+    1826          W   -------x   Right coin counter
+    1827          W   -------x   Left coin counter
+    1870-187F   R/W   xxxxxxxx   POKEY communications
+    4000-FFFF   R     xxxxxxxx   Program ROM
+    ========================================================================
+    Interrupts:
+        IRQ = YM2151 interrupt
+        NMI = latch on sound command
+    ========================================================================
 
 ****************************************************************************/
 
@@ -128,7 +128,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static UINT8 tms5220_ctl;
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -195,7 +195,7 @@ static MACHINE_INIT( atarisy1 )
 
 /*************************************
  *
- *	Joystick I/O
+ *  Joystick I/O
  *
  *************************************/
 
@@ -245,7 +245,7 @@ static WRITE16_HANDLER( joystick_w )
 
 /*************************************
  *
- *	Trackball I/O
+ *  Trackball I/O
  *
  *************************************/
 
@@ -294,7 +294,7 @@ static READ16_HANDLER( trakball_r )
 
 /*************************************
  *
- *	Sound status I/O
+ *  Sound status I/O
  *
  *************************************/
 
@@ -309,7 +309,7 @@ static READ16_HANDLER( port4_r )
 
 /*************************************
  *
- *	Sound input
+ *  Sound input
  *
  *************************************/
 
@@ -328,23 +328,23 @@ static READ8_HANDLER( switch_6502_r )
 
 /*************************************
  *
- *	TMS5220 communications
+ *  TMS5220 communications
  *
  *************************************/
 
 /*
- *	All communication to the 5220 goes through an VIA6522.
+ *  All communication to the 5220 goes through an VIA6522.
  *
- *	The ports are hooked in like follows:
+ *  The ports are hooked in like follows:
  *
- *	Port A, D0-D7 = TMS5220 data lines (i/o)
+ *  Port A, D0-D7 = TMS5220 data lines (i/o)
  *
- *	Port B, D0 = 	Write strobe (out)
- *	        D1 = 	Read strobe (out)
- *	        D2 = 	Ready signal (in)
- *	        D3 = 	Interrupt signal (in)
- *	        D4 = 	TMS5220 frequency select (out)
- *	        D5 = 	LED (out)
+ *  Port B, D0 =    Write strobe (out)
+ *          D1 =    Read strobe (out)
+ *          D2 =    Ready signal (in)
+ *          D3 =    Interrupt signal (in)
+ *          D4 =    TMS5220 frequency select (out)
+ *          D5 =    LED (out)
  */
 
 static WRITE8_HANDLER( via_pa_w )
@@ -396,7 +396,7 @@ static struct via6522_interface via_interface =
 
 /*************************************
  *
- *	Sound LED handlers
+ *  Sound LED handlers
  *
  *************************************/
 
@@ -409,7 +409,7 @@ static WRITE8_HANDLER( led_w )
 
 /*************************************
  *
- *	Opcode memory catcher.
+ *  Opcode memory catcher.
  *
  *************************************/
 
@@ -418,22 +418,22 @@ static OPBASE_HANDLER( indytemp_setopbase )
 	int prevpc = activecpu_get_previouspc();
 
 	/*
-	 *	This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
-	 *	directly to code in the slapstic.  The general order of things is this:
-	 *
-	 *		jump to $3A, which turns off interrupts and jumps to $00 (the reset address)
-	 *		look up the request in a table and jump there
-	 *		(under some circumstances, tweak the special addresses)
-	 *		return via an RTS at the real bankswitch address
-	 *
-	 *	To simulate this, we tweak the slapstic reset address on entry into slapstic code; then
-	 *	we let the system tweak whatever other addresses it wishes.  On exit, we tweak the
-	 *	address of the previous PC, which is the RTS instruction, thereby completing the
-	 *	bankswitch sequence.
-	 *
-	 *	Fortunately for us, all 4 banks have exactly the same code at this point in their
-	 *	ROM, so it doesn't matter which version we're actually executing.
-	 */
+     *  This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
+     *  directly to code in the slapstic.  The general order of things is this:
+     *
+     *      jump to $3A, which turns off interrupts and jumps to $00 (the reset address)
+     *      look up the request in a table and jump there
+     *      (under some circumstances, tweak the special addresses)
+     *      return via an RTS at the real bankswitch address
+     *
+     *  To simulate this, we tweak the slapstic reset address on entry into slapstic code; then
+     *  we let the system tweak whatever other addresses it wishes.  On exit, we tweak the
+     *  address of the previous PC, which is the RTS instruction, thereby completing the
+     *  bankswitch sequence.
+     *
+     *  Fortunately for us, all 4 banks have exactly the same code at this point in their
+     *  ROM, so it doesn't matter which version we're actually executing.
+     */
 
 	if (address & 0x80000)
 		atarigen_slapstic_r(0,0);
@@ -447,7 +447,7 @@ static OPBASE_HANDLER( indytemp_setopbase )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -480,7 +480,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -500,7 +500,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -693,7 +693,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -719,7 +719,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -732,7 +732,7 @@ static struct YM2151interface ym2151_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -783,7 +783,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -2067,7 +2067,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -2149,7 +2149,7 @@ static DRIVER_INIT( roadb110 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

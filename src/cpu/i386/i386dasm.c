@@ -1,4 +1,4 @@
-/* 
+/*
    i386 Disassembler
 
    Written by Ville Linde
@@ -1261,7 +1261,7 @@ static void handle_modrm(char* s)
 			case 2: s += sprintf( s, "edx" ); break;
 			case 3: s += sprintf( s, "ebx" ); break;
 			case 4: s = handle_sib_byte( s, mod ); break;
-			case 5: 
+			case 5:
 				if( mod == 0 ) {
 					disp32 = FETCHD32();
 					s += sprintf( s, "$%08X", disp32 );

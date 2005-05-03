@@ -1420,7 +1420,7 @@ static void I386OP(pop_ss32)(void)			// Opcode 0x17
 	} else {
 		CYCLES(7);
 	}
-}	
+}
 
 static void I386OP(pop_rm32)(void)			// Opcode 0x8f
 {

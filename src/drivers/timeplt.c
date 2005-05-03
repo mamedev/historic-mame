@@ -28,9 +28,9 @@ c200      watchdog reset
 c300      interrupt enable
 c302      flip screen
 c304      trigger interrupt on audio CPU
-c308	  Protection ???  Stuffs in some values computed from ROM content
-c30a	  coin counter 1
-c30c	  coin counter 2
+c308      Protection ???  Stuffs in some values computed from ROM content
+c30a      coin counter 1
+c30c      coin counter 2
 
 interrupts:
 standard NMI at 0x66
@@ -169,7 +169,7 @@ TIMEPILOT_INPUTS
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	
+
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -323,7 +323,7 @@ static MACHINE_DRIVER_START( timeplt )
 	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
 	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
 	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
-	
+
 	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)

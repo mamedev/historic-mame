@@ -1,36 +1,36 @@
 /***************************************************************************
 
-							  -= Cave Hardware =-
+                              -= Cave Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  MC68000
 
 Sound CPU    :  Z80 [Optional]
 
-Sound Chips  :	YMZ280B or
+Sound Chips  :  YMZ280B or
                 OKIM6295 x (1|2) + YM2203 / YM2151 [Optional]
 
 Other        :  93C46 EEPROM
 
 
 -----------------------------------------------------------------------------------
-Year + Game			License		PCB			Tilemaps		Sprites			Other
+Year + Game         License     PCB         Tilemaps        Sprites         Other
 -----------------------------------------------------------------------------------
-94	Mazinger Z		Banpresto	?			038 9335EX706	013 9341E7009	Z80
-94	PowerInstinct 2 Atlus		ATG02?		038 9429WX709?	?				Z80 NMK 112
-95	Metamoqester	Banpresto	BP947A		038 9437WX711	013 9346E7002	Z80
-95	Sailor Moon		Banpresto	BP945A		038 9437WX711	013 9346E7002	Z80
-95	Donpachi		Atlus		AT-C01DP-2	038 9429WX727	013 8647-01		NMK 112
-96	Air Gallet		Banpresto	BP962A		038 9437WX711	013 9346E7002	Z80
-96	Hotdog Storm	Marble		?			?								Z80
-97	Dodonpachi		Atlus		ATC03D2 	?
-98	Dangun Feveron	Nihon Sys.	CV01    	?
-98	ESP Ra.De.		Atlus		ATC04		?
-98	Uo Poko			Jaleco		CV02		?
-99	Guwange			Atlus		ATC05		?
-99	Gaia Crusaders	Noise Factory ?			?
+94  Mazinger Z      Banpresto   ?           038 9335EX706   013 9341E7009   Z80
+94  PowerInstinct 2 Atlus       ATG02?      038 9429WX709?  ?               Z80 NMK 112
+95  Metamoqester    Banpresto   BP947A      038 9437WX711   013 9346E7002   Z80
+95  Sailor Moon     Banpresto   BP945A      038 9437WX711   013 9346E7002   Z80
+95  Donpachi        Atlus       AT-C01DP-2  038 9429WX727   013 8647-01     NMK 112
+96  Air Gallet      Banpresto   BP962A      038 9437WX711   013 9346E7002   Z80
+96  Hotdog Storm    Marble      ?           ?                               Z80
+97  Dodonpachi      Atlus       ATC03D2     ?
+98  Dangun Feveron  Nihon Sys.  CV01        ?
+98  ESP Ra.De.      Atlus       ATC04       ?
+98  Uo Poko         Jaleco      CV02        ?
+99  Guwange         Atlus       ATC05       ?
+99  Gaia Crusaders  Noise Factory ?         ?
 -----------------------------------------------------------------------------------
 
 To Do:
@@ -54,7 +54,7 @@ To Do:
 /***************************************************************************
 
 
-						Interrupt Handling Routines
+                        Interrupt Handling Routines
 
 
 ***************************************************************************/
@@ -107,17 +107,17 @@ static void sound_irq_gen(int state)
 }
 
 
-/*	Level 1 irq routines:
+/*  Level 1 irq routines:
 
-	Game		|first read	| bit==0->routine +	|
-				|offset:	| read this offset	|
+    Game        |first read | bit==0->routine + |
+                |offset:    | read this offset  |
 
-	ddonpach	4,0			0 -> vblank + 4		1 -> rte	2 -> like 0		read sound
-	dfeveron	0			0 -> vblank + 4		1 -> + 6	-				read sound
-	uopoko		0			0 -> vblank + 4		1 -> + 6	-				read sound
-	esprade		0			0 -> vblank + 4		1 -> rte	2 must be 0		read sound
-	guwange		0			0 -> vblank + 6,4	1 -> + 6,4	2 must be 0		read sound
-	mazinger	0			0 -> vblank + 4		rest -> scroll + 6
+    ddonpach    4,0         0 -> vblank + 4     1 -> rte    2 -> like 0     read sound
+    dfeveron    0           0 -> vblank + 4     1 -> + 6    -               read sound
+    uopoko      0           0 -> vblank + 4     1 -> + 6    -               read sound
+    esprade     0           0 -> vblank + 4     1 -> rte    2 must be 0     read sound
+    guwange     0           0 -> vblank + 6,4   1 -> + 6,4  2 must be 0     read sound
+    mazinger    0           0 -> vblank + 4     rest -> scroll + 6
 */
 
 
@@ -136,9 +136,9 @@ static READ16_HANDLER( cave_irq_cause_r )
 	update_irq_state();
 
 /*
-	sailormn and agallet wait for bit 2 of $b80001 to go 1 -> 0.
-	It must happen once per frame as agallet uses this to show
-	the copyright notice screen for ~8.5s
+    sailormn and agallet wait for bit 2 of $b80001 to go 1 -> 0.
+    It must happen once per frame as agallet uses this to show
+    the copyright notice screen for ~8.5s
 */
 	if (offset == 0)
 	{
@@ -153,13 +153,13 @@ static READ16_HANDLER( cave_irq_cause_r )
 /***************************************************************************
 
 
-							Sound Handling Routines
+                            Sound Handling Routines
 
 
 ***************************************************************************/
 
-/*	We need a FIFO buffer for sailormn, where the inter-CPUs
-	communication is *really* tight */
+/*  We need a FIFO buffer for sailormn, where the inter-CPUs
+    communication is *really* tight */
 struct
 {
 	int len;
@@ -172,8 +172,8 @@ static READ8_HANDLER( soundflags_r )
 {
 	// bit 2 is low: can read command (lo)
 	// bit 3 is low: can read command (hi)
-//	return	(sound_flag1 ? 0 : 4) |
-//			(sound_flag2 ? 0 : 8) ;
+//  return  (sound_flag1 ? 0 : 4) |
+//          (sound_flag2 ? 0 : 8) ;
 return 0;
 }
 
@@ -181,8 +181,8 @@ static READ16_HANDLER( soundflags_ack_r )
 {
 	// bit 0 is low: can write command
 	// bit 1 is low: can read answer
-//	return	((sound_flag1 | sound_flag2) ? 1 : 0) |
-//			((soundbuf.len>0        ) ? 0 : 2) ;
+//  return  ((sound_flag1 | sound_flag2) ? 1 : 0) |
+//          ((soundbuf.len>0        ) ? 0 : 2) ;
 
 return		((soundbuf.len>0        ) ? 0 : 2) ;
 }
@@ -190,8 +190,8 @@ return		((soundbuf.len>0        ) ? 0 : 2) ;
 /* Main CPU: write a 16 bit sound latch and generate a NMI on the sound CPU */
 static WRITE16_HANDLER( sound_cmd_w )
 {
-//	sound_flag1 = 1;
-//	sound_flag2 = 1;
+//  sound_flag1 = 1;
+//  sound_flag2 = 1;
 	soundlatch_word_w(offset,data,mem_mask);
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
@@ -200,14 +200,14 @@ static WRITE16_HANDLER( sound_cmd_w )
 /* Sound CPU: read the low 8 bits of the 16 bit sound latch */
 static READ8_HANDLER( soundlatch_lo_r )
 {
-//	sound_flag1 = 0;
+//  sound_flag1 = 0;
 	return soundlatch_word_r(offset,0) & 0xff;
 }
 
 /* Sound CPU: read the high 8 bits of the 16 bit sound latch */
 static READ8_HANDLER( soundlatch_hi_r )
 {
-//	sound_flag2 = 0;
+//  sound_flag2 = 0;
 	return soundlatch_word_r(offset,0) >> 8;
 }
 
@@ -259,7 +259,7 @@ static READ16_HANDLER( cave_sound_r )
 /***************************************************************************
 
 
-									EEPROM
+                                    EEPROM
 
 
 ***************************************************************************/
@@ -357,7 +357,7 @@ WRITE16_HANDLER( cave_eeprom_lsb_w )
 	}
 }
 
-/*	- No eeprom or lockouts */
+/*  - No eeprom or lockouts */
 WRITE16_HANDLER( gaia_coin_lsb_w )
 {
 	if ( ACCESSING_LSB )  // odd address
@@ -367,8 +367,8 @@ WRITE16_HANDLER( gaia_coin_lsb_w )
 	}
 }
 
-/*	- No coin lockouts
-	- Writing 0xcf00 shouldn't send a 1 bit to the eeprom	*/
+/*  - No coin lockouts
+    - Writing 0xcf00 shouldn't send a 1 bit to the eeprom   */
 WRITE16_HANDLER( metmqstr_eeprom_msb_w )
 {
 	if (data & ~0xff00)
@@ -414,17 +414,17 @@ NVRAM_HANDLER( cave )
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
 
-/*	Lines starting with an empty comment in the following MemoryReadAddress
-	 arrays are there for debug (e.g. the game does not read from those ranges
-	AFAIK)	*/
+/*  Lines starting with an empty comment in the following MemoryReadAddress
+     arrays are there for debug (e.g. the game does not read from those ranges
+    AFAIK)  */
 
 /***************************************************************************
-								Dangun Feveron
+                                Dangun Feveron
 ***************************************************************************/
 
 static ADDRESS_MAP_START( dfeveron_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -462,7 +462,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Dodonpachi
+                                Dodonpachi
 ***************************************************************************/
 
 static ADDRESS_MAP_START( ddonpach_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -502,7 +502,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Donpachi
+                                    Donpachi
 ***************************************************************************/
 
 READ16_HANDLER( donpachi_videoregs_r )
@@ -525,7 +525,7 @@ WRITE16_HANDLER( donpachi_videoregs_w )
 
 	switch( offset )
 	{
-//		case 0x78/2:	watchdog_reset16_w(0,0);	break;
+//      case 0x78/2:    watchdog_reset16_w(0,0);    break;
 	}
 }
 #endif
@@ -537,8 +537,8 @@ static WRITE16_HANDLER( nmk_oki6295_bankswitch_w )
 	if (ACCESSING_LSB)
 	{
 		/* The OKI6295 ROM space is divided in four banks, each one indepentently
-		   controlled. The sample table at the beginning of the addressing space is
-		   divided in four pages as well, banked together with the sample data. */
+           controlled. The sample table at the beginning of the addressing space is
+           divided in four pages as well, banked together with the sample data. */
 
 		#define TABLESIZE 0x100
 		#define BANKSIZE 0x10000
@@ -603,7 +603,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Esprade
+                                    Esprade
 ***************************************************************************/
 
 static ADDRESS_MAP_START( esprade_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -643,7 +643,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Gaia Crusaders
+                                    Gaia Crusaders
 ***************************************************************************/
 
 static ADDRESS_MAP_START( gaia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -691,7 +691,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Guwange
+                                    Guwange
 ***************************************************************************/
 
 static ADDRESS_MAP_START( guwange_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -727,13 +727,13 @@ static ADDRESS_MAP_START( guwange_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xb00000, 0xb00005) AM_WRITE(MWA16_RAM) AM_BASE(&cave_vctrl_2		)	// Layer 2 Control
 	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
 	AM_RANGE(0xd00010, 0xd00011) AM_WRITE(cave_eeprom_lsb_w				)	// EEPROM
-//	AM_RANGE(0xd00012, 0xd00013) AM_WRITE(MWA16_NOP				)	// ?
-//	AM_RANGE(0xd00014, 0xd00015) AM_WRITE(MWA16_NOP				)	// ? $800068 in dfeveron ? probably Watchdog
+//  AM_RANGE(0xd00012, 0xd00013) AM_WRITE(MWA16_NOP             )   // ?
+//  AM_RANGE(0xd00014, 0xd00015) AM_WRITE(MWA16_NOP             )   // ? $800068 in dfeveron ? probably Watchdog
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Hotdog Storm
+                                Hotdog Storm
 ***************************************************************************/
 
 static ADDRESS_MAP_START( hotdogst_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -744,7 +744,7 @@ static ADDRESS_MAP_START( hotdogst_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 /**/AM_RANGE(0x900000, 0x907fff) AM_READ(MRA16_RAM				)	// Layer 1
 /**/AM_RANGE(0x980000, 0x987fff) AM_READ(MRA16_RAM				)	// Layer 2
 	AM_RANGE(0xa80000, 0xa80007) AM_READ(cave_irq_cause_r		)	// IRQ Cause
-//	AM_RANGE(0xa8006e, 0xa8006f) AM_READ(soundlatch_ack_r		)	// From Sound CPU
+//  AM_RANGE(0xa8006e, 0xa8006f) AM_READ(soundlatch_ack_r       )   // From Sound CPU
 /**/AM_RANGE(0xb00000, 0xb00005) AM_READ(MRA16_RAM				)	// Layer 0 Control
 /**/AM_RANGE(0xb80000, 0xb80005) AM_READ(MRA16_RAM				)	// Layer 1 Control
 /**/AM_RANGE(0xc00000, 0xc00005) AM_READ(MRA16_RAM				)	// Layer 2 Control
@@ -774,7 +774,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Mazinger Z
+                                Mazinger Z
 ***************************************************************************/
 
 static ADDRESS_MAP_START( mazinger_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -813,7 +813,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Metamoqester
+                                Metamoqester
 ***************************************************************************/
 
 static ADDRESS_MAP_START( metmqstr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -865,7 +865,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Power Instinct 2
+                                Power Instinct 2
 ***************************************************************************/
 
 READ16_HANDLER( pwrinst2_eeprom_r )
@@ -937,12 +937,12 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sailor Moon
+                                Sailor Moon
 ***************************************************************************/
 
 static READ16_HANDLER( sailormn_input0_r )
 {
-//	watchdog_reset16_r(0,0);	// written too rarely for mame.
+//  watchdog_reset16_r(0,0);    // written too rarely for mame.
 	return readinputport(0);
 }
 
@@ -1012,7 +1012,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Uo Poko
+                                    Uo Poko
 ***************************************************************************/
 
 static ADDRESS_MAP_START( uopoko_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1047,13 +1047,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-						Memory Maps - Sound CPU (Optional)
+                        Memory Maps - Sound CPU (Optional)
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hotdog Storm
+                                Hotdog Storm
 ***************************************************************************/
 
 WRITE8_HANDLER( hotdogst_rombank_w )
@@ -1107,7 +1107,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Mazinger Z
+                                Mazinger Z
 ***************************************************************************/
 
 WRITE8_HANDLER( mazinger_rombank_w )
@@ -1151,7 +1151,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Metamoqester
+                                Metamoqester
 ***************************************************************************/
 
 WRITE8_HANDLER( metmqstr_rombank_w )
@@ -1216,15 +1216,15 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Power Instinct 2
+                                Power Instinct 2
 ***************************************************************************/
 
 // TODO : FIX SAMPLES TABLE BEING OVERWRITTEN IN DONPACHI
 static WRITE8_HANDLER( pwrinst2_okibank_w )
 {
 	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-	   controlled. The sample table at the beginning of the addressing space is
-	   divided in four pages as well, banked together with the sample data. */
+       controlled. The sample table at the beginning of the addressing space is
+       divided in four pages as well, banked together with the sample data. */
 
 	#define TABLESIZE 0x100
 	#define BANKSIZE 0x10000
@@ -1294,14 +1294,14 @@ static ADDRESS_MAP_START( pwrinst2_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x10, 0x17) AM_WRITE(pwrinst2_okibank_w		)	// Samples bank
 	AM_RANGE(0x40, 0x40) AM_WRITE(YM2203_control_port_0_w	)	// YM2203
 	AM_RANGE(0x41, 0x41) AM_WRITE(YM2203_write_port_0_w		)	//
-//	AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP		)	// ?? volume
-//	AM_RANGE(0x51, 0x51) AM_WRITE(MWA8_NOP		)	// ?? volume
+//  AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP      )   // ?? volume
+//  AM_RANGE(0x51, 0x51) AM_WRITE(MWA8_NOP      )   // ?? volume
 	AM_RANGE(0x80, 0x80) AM_WRITE(pwrinst2_rombank_w		)	// ROM bank
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sailor Moon
+                                Sailor Moon
 ***************************************************************************/
 
 static data8_t *mirror_ram;
@@ -1384,15 +1384,15 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /*
-	dfeveron config menu:
-	101624.w -> 8,a6	preferences
-	101626.w -> c,a6	(1:coin<<4|credit) <<8 | (2:coin<<4|credit)
+    dfeveron config menu:
+    101624.w -> 8,a6    preferences
+    101626.w -> c,a6    (1:coin<<4|credit) <<8 | (2:coin<<4|credit)
 */
 
 /* Most games use this */
@@ -1705,7 +1705,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -1774,35 +1774,35 @@ static struct GfxLayout layout_sprites =
 #endif
 
 /***************************************************************************
-								Dangun Feveron
+                                Dangun Feveron
 ***************************************************************************/
 
 static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
-	   the second half for tiles. We use $8000 virtual colors instead
-	   for consistency with games having $8000 real colors.
-	   A vh_init_palette function is thus needed for sprites */
+       the second half for tiles. We use $8000 virtual colors instead
+       for consistency with games having $8000 real colors.
+       A vh_init_palette function is thus needed for sprites */
 
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x4400, 0x40 }, // [1] Layer 1
 	{ -1 }
 };
 
 /***************************************************************************
-								Dodonpachi
+                                Dodonpachi
 ***************************************************************************/
 
 static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 {
 	/* Layers 0&1 are 4 bit deep and use the first 16 of every 256
-	   colors for any given color code (a vh_init_palette function
-	   is provided for these layers, filling the 8000-83ff entries
-	   in the color table). Layer 2 uses the whole 256 for any given
-	   color code and the 4000-7fff range in the color table.	*/
+       colors for any given color code (a vh_init_palette function
+       is provided for these layers, filling the 8000-83ff entries
+       in the color table). Layer 2 uses the whole 256 for any given
+       color code and the 4000-7fff range in the color table.   */
 
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x8000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x8000, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x8,	0x4000, 0x40 }, // [2] Layer 2
@@ -1810,17 +1810,17 @@ static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Donpachi
+                                Donpachi
 ***************************************************************************/
 
 static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
-	   the second half for tiles. We use $8000 virtual colors instead
-	   for consistency with games having $8000 real colors.
-	   A vh_init_palette function is thus needed for sprites */
+       the second half for tiles. We use $8000 virtual colors instead
+       for consistency with games having $8000 real colors.
+       A vh_init_palette function is thus needed for sprites */
 
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x4400, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x4,	0x4400, 0x40 }, // [2] Layer 2
@@ -1828,12 +1828,12 @@ static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Esprade
+                                Esprade
 ***************************************************************************/
 
 static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
 {
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x8,	0x4000, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x8,	0x4000, 0x40 }, // [2] Layer 2
@@ -1841,17 +1841,17 @@ static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Hotdog Storm
+                                Hotdog Storm
 ***************************************************************************/
 
 static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
-	   the second half for tiles. We use $8000 virtual colors instead
-	   for consistency with games having $8000 real colors.
-	   A vh_init_palette function is needed for sprites */
+       the second half for tiles. We use $8000 virtual colors instead
+       for consistency with games having $8000 real colors.
+       A vh_init_palette function is needed for sprites */
 
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x4000, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x4,	0x4000, 0x40 }, // [2] Layer 2
@@ -1859,20 +1859,20 @@ static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Mazinger Z
+                                Mazinger Z
 ***************************************************************************/
 
 static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 {
-	/*	Sprites are 4 bit deep.
-		Layer 0 is 4 bit deep.
-		Layer 1 uses 64 color palettes, but the game only fills the
-		first 16 colors of each palette, Indeed, the gfx data in ROM
-		is empty in the top 4 bits. Additionally even if there are
-		$40 color codes, only $400 colors are addressable.
-		A vh_init_palette is thus needed for sprites and layer 0.	*/
+	/*  Sprites are 4 bit deep.
+        Layer 0 is 4 bit deep.
+        Layer 1 uses 64 color palettes, but the game only fills the
+        first 16 colors of each palette, Indeed, the gfx data in ROM
+        is empty in the top 4 bits. Additionally even if there are
+        $40 color codes, only $400 colors are addressable.
+        A vh_init_palette is thus needed for sprites and layer 0.   */
 
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x6,	0x4400, 0x40 }, // [1] Layer 1
 	{ -1 }
@@ -1880,12 +1880,12 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-								Power Instinct 2
+                                Power Instinct 2
 ***************************************************************************/
 
 static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
 {
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x0800+0x8000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x1000+0x8000, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x4,	0x1800+0x8000, 0x40 }, // [2] Layer 2
@@ -1895,13 +1895,13 @@ static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-								Sailor Moon
+                                Sailor Moon
 ***************************************************************************/
 
 static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
 {
 	/* 4 bit sprites ? */
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x4800, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x6_2,	0x4c00, 0x40 }, // [2] Layer 2
@@ -1910,12 +1910,12 @@ static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-								Uo Poko
+                                Uo Poko
 ***************************************************************************/
 
 static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 {
-//    REGION_GFX1										// Sprites
+//    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
 	{ -1 }
 };
@@ -1924,7 +1924,7 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -1934,7 +1934,7 @@ MACHINE_INIT( cave )
 	soundbuf.len = 0;
 
 	/* modify the eeprom on a reset with the desired region for the games that have the
-	   region factory set in eeprom */
+       region factory set in eeprom */
 	if (cave_region_byte >= 0)
 		EEPROM_get_data_pointer(0)[cave_region_byte] =  readinputport(2);
 }
@@ -1969,7 +1969,7 @@ static struct YM2203interface ym2203_interface =
 
 
 /***************************************************************************
-								Dangun Feveron
+                                Dangun Feveron
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( dfeveron )
@@ -2008,7 +2008,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Dodonpachi
+                                Dodonpachi
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( ddonpach )
@@ -2047,7 +2047,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Donpachi
+                                    Donpachi
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( donpachi )
@@ -2091,7 +2091,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Esprade
+                                Esprade
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( esprade )
@@ -2128,7 +2128,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Gaia Crusaders
+                                    Gaia Crusaders
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( gaia )
@@ -2164,7 +2164,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Guwange
+                                    Guwange
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( guwange )
@@ -2200,7 +2200,7 @@ static MACHINE_DRIVER_START( guwange )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-								Hotdog Storm
+                                Hotdog Storm
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( hotdogst )
@@ -2255,7 +2255,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Mazinger Z
+                                Mazinger Z
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( mazinger )
@@ -2266,7 +2266,7 @@ static MACHINE_DRIVER_START( mazinger )
 	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-//	/* audio CPU */	// Bidirectional communication
+//  /* audio CPU */ // Bidirectional communication
 	MDRV_CPU_PROGRAM_MAP(mazinger_sound_readmem,mazinger_sound_writemem)
 	MDRV_CPU_IO_MAP(mazinger_sound_readport,mazinger_sound_writeport)
 
@@ -2310,7 +2310,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Metamoqester
+                                Metamoqester
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( metmqstr )
@@ -2364,10 +2364,10 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Power Instinct 2
+                                Power Instinct 2
 ***************************************************************************/
 
-/*	X1 = 12 MHz, X2 = 28 MHz, X3 = 16 MHz. OKI: / 165 mode A ; / 132 mode B */
+/*  X1 = 12 MHz, X2 = 28 MHz, X3 = 16 MHz. OKI: / 165 mode A ; / 132 mode B */
 
 static MACHINE_DRIVER_START( pwrinst2 )
 
@@ -2426,7 +2426,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Sailor Moon / Air Gallet
+                        Sailor Moon / Air Gallet
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( sailormn )
@@ -2437,13 +2437,13 @@ static MACHINE_DRIVER_START( sailormn )
 	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
-//	/* audio CPU */	// Bidirectional Communication
+//  /* audio CPU */ // Bidirectional Communication
 	MDRV_CPU_PROGRAM_MAP(sailormn_sound_readmem,sailormn_sound_writemem)
 	MDRV_CPU_IO_MAP(sailormn_sound_readport,sailormn_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-//	MDRV_INTERLEAVE(10)
+//  MDRV_INTERLEAVE(10)
 
 	MDRV_MACHINE_INIT(cave)
 	MDRV_NVRAM_HANDLER(cave)
@@ -2480,7 +2480,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Uo Poko
+                                Uo Poko
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( uopoko )
@@ -2518,7 +2518,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -2588,7 +2588,7 @@ static void esprade_unpack_sprites(void)
 
 /***************************************************************************
 
-								Air Gallet
+                                Air Gallet
 
 Banpresto
 Runs on identical board to Sailor Moon (several sockets unpopulated)
@@ -2615,16 +2615,16 @@ GFX:  038 9437WX711 (176 pin PQFP)
 On PCB near JAMMA connector is a small push button to access test mode.
 
 ROMS:
-BP962A.U9	27C040		Sound Program
-BP962A.U45	27C240		Main Program
-BP962A.U47	23C16000	Sound
-BP962A.U48	23C16000	Sound
-BP962A.U53	23C16000	GFX
-BP962A.U54	23C16000	GFX
-BP962A.U57	23C16000	GFX
-BP962A.U65	23C16000	GFX
-BP962A.U76	23C16000	GFX
-BP962A.U77	23C16000	GFX
+BP962A.U9   27C040      Sound Program
+BP962A.U45  27C240      Main Program
+BP962A.U47  23C16000    Sound
+BP962A.U48  23C16000    Sound
+BP962A.U53  23C16000    GFX
+BP962A.U54  23C16000    GFX
+BP962A.U57  23C16000    GFX
+BP962A.U65  23C16000    GFX
+BP962A.U76  23C16000    GFX
+BP962A.U77  23C16000    GFX
 
 ***************************************************************************/
 
@@ -2667,10 +2667,10 @@ ROM_END
 
 /***************************************************************************
 
-								Dangun Feveron
+                                Dangun Feveron
 
-Board:	CV01
-OSC:	28.0, 16.0, 16.9 MHz
+Board:  CV01
+OSC:    28.0, 16.0, 16.9 MHz
 
 ***************************************************************************/
 
@@ -2802,14 +2802,14 @@ ROM_END
 
 /***************************************************************************
 
-								Dodonpachi (Japan)
+                                Dodonpachi (Japan)
 
-PCB:	AT-C03 D2
-CPU:	MC68000-16
-Sound:	YMZ280B
-OSC:	28.0000MHz
-		16.0000MHz
-		16.9MHz (16.9344MHz?)
+PCB:    AT-C03 D2
+CPU:    MC68000-16
+Sound:  YMZ280B
+OSC:    28.0000MHz
+        16.0000MHz
+        16.9MHz (16.9344MHz?)
 
 ***************************************************************************/
 
@@ -2867,7 +2867,7 @@ ROM_END
 
 /***************************************************************************
 
-								Donpachi
+                                Donpachi
 
 Known versions:
 
@@ -2987,10 +2987,10 @@ ROM_END
 
 /***************************************************************************
 
-									Esprade
+                                    Esprade
 
 ATC04
-OSC:	28.0, 16.0, 16.9 MHz
+OSC:    28.0, 16.0, 16.9 MHz
 
 ***************************************************************************/
 
@@ -3075,7 +3075,7 @@ ROM_END
 
 /***************************************************************************
 
-								Gaia Crusaders
+                                Gaia Crusaders
 
 Noise Factory, 1999
 
@@ -3140,14 +3140,14 @@ ROM_END
 
 /***************************************************************************
 
-								Guwange (Japan)
+                                Guwange (Japan)
 
-PCB:	ATC05
-CPU:	MC68000-16
-Sound:	YMZ280B
-OSC:	28.0000MHz
-		16.0000MHz
-		16.9MHz
+PCB:    ATC05
+CPU:    MC68000-16
+Sound:  YMZ280B
+OSC:    28.0000MHz
+        16.0000MHz
+        16.9MHz
 
 ***************************************************************************/
 
@@ -3164,7 +3164,7 @@ ROM_START( guwange )
 	ROM_LOAD16_BYTE( "u085.bin", 0x1000001, 0x400000, CRC(a7d5659e) SHA1(10abac022ebe106a3ca7186ff18ca2757f903033) )
 	ROM_RELOAD(                  0x1800001, 0x400000 )
 //sprite bug fix?
-//	ROM_FILL(                    0x1800000, 0x800000, 0xff )
+//  ROM_FILL(                    0x1800000, 0x800000, 0xff )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "u101.bin", 0x000000, 0x800000, CRC(0369491f) SHA1(ca6b1345506f13a17c9bace01637d1f61a278644) )
@@ -3182,7 +3182,7 @@ ROM_END
 
 /***************************************************************************
 
-								Hot Dog Storm
+                                Hot Dog Storm
 Marble 1996
 
 6264 6264 MP7 6264 6264 MP6 6264 6264 MP5  32MHz
@@ -3231,7 +3231,7 @@ ROM_END
 
 /***************************************************************************
 
-								Mazinger Z
+                                Mazinger Z
 
 Banpresto 1994
 
@@ -3283,7 +3283,7 @@ ROM_END
 
 /***************************************************************************
 
-								Metamoqester
+                                Metamoqester
 
 [Ninja Master (World version)?]
 (C) 1995 Banpresto
@@ -3309,22 +3309,22 @@ GFX:  (Same GFX chips as "Sailor Moon")
 On PCB near JAMMA connector is a small push button labelled SW1 to access test mode.
 
 ROMS:
-BP947A.U37	16M Mask	\ Oki Samples
-BP947A.U42	16M Mask	/
+BP947A.U37  16M Mask    \ Oki Samples
+BP947A.U42  16M Mask    /
 
-BP947A.U46	16M Mask	\
-BP947A.U47	16M Mask	|
-BP947A.U48	16M Mask	|
-BP947A.U49	16M Mask	| GFX
-BP947A.U50	16M Mask	|
-BP947A.U51	16M Mask	|
-BP947A.U52	16M Mask	/
+BP947A.U46  16M Mask    \
+BP947A.U47  16M Mask    |
+BP947A.U48  16M Mask    |
+BP947A.U49  16M Mask    | GFX
+BP947A.U50  16M Mask    |
+BP947A.U51  16M Mask    |
+BP947A.U52  16M Mask    /
 
-BP947A.U20	27C020		  Sound PRG
+BP947A.U20  27C020        Sound PRG
 
-BP947A.U25	27C240		\
-BP947A.U28	27C240		| Main PRG
-BP947A.U29	27C240		/
+BP947A.U25  27C240      \
+BP947A.U28  27C240      | Main PRG
+BP947A.U29  27C240      /
 
 ***************************************************************************/
 
@@ -3409,7 +3409,7 @@ ROM_END
 
 /***************************************************************************
 
-							Power Instinct 2
+                            Power Instinct 2
 
 ©1994 Atlus
 CPU: 68000, Z80
@@ -3467,7 +3467,7 @@ ROM_END
 
 /***************************************************************************
 
-								Sailor Moon
+                                Sailor Moon
 
 (C) 1995 Banpresto
 PCB: BP945A
@@ -3492,24 +3492,24 @@ GFX:  038 9437WX711 (176 pin PQFP)
 On PCB near JAMMA connector is a small push button to access test mode.
 
 ROMS:
-BP945A.U9	27C040		Sound Program
-BP945A.U45	27C240		Main Program
-BPSM.U46	23C16000	Main Program?
-BPSM.U47	23C4000		Sound?
-BPSM.U48	23C16000	Sound?
-BPSM.U53	23C16000	GFX
-BPSM.U54	23C16000	GFX
-BPSM.U57	23C16000	GFX
-BPSM.U58	23C16000	GFX
-BPSM.U59	23C16000	GFX
-BPSM.U60	23C16000	GFX
-BPSM.U61	23C16000	GFX
-BPSM.U62	23C16000	GFX
-BPSM.U63	23C16000	GFX
-BPSM.U64	23C16000	GFX
-BPSM.U65	23C16000	GFX
-BPSM.U76	23C16000	GFX
-BPSM.U77	23C16000	GFX
+BP945A.U9   27C040      Sound Program
+BP945A.U45  27C240      Main Program
+BPSM.U46    23C16000    Main Program?
+BPSM.U47    23C4000     Sound?
+BPSM.U48    23C16000    Sound?
+BPSM.U53    23C16000    GFX
+BPSM.U54    23C16000    GFX
+BPSM.U57    23C16000    GFX
+BPSM.U58    23C16000    GFX
+BPSM.U59    23C16000    GFX
+BPSM.U60    23C16000    GFX
+BPSM.U61    23C16000    GFX
+BPSM.U62    23C16000    GFX
+BPSM.U63    23C16000    GFX
+BPSM.U64    23C16000    GFX
+BPSM.U65    23C16000    GFX
+BPSM.U76    23C16000    GFX
+BPSM.U77    23C16000    GFX
 
 ***************************************************************************/
 
@@ -3604,9 +3604,9 @@ ROM_END
 
 /***************************************************************************
 
-									Uo Poko
+                                    Uo Poko
 Board: CV02
-OSC:	28.0, 16.0, 16.9 MHz
+OSC:    28.0, 16.0, 16.9 MHz
 
 ***************************************************************************/
 
@@ -3633,7 +3633,7 @@ ROM_END
 /***************************************************************************
 
 
-	Drivers Init Routines - Rom decryption/unpacking, global vars etc.
+    Drivers Init Routines - Rom decryption/unpacking, global vars etc.
 
 
 ***************************************************************************/
@@ -3670,7 +3670,7 @@ DRIVER_INIT( agallet )
 	cave_kludge = 0;
 	time_vblank_irq = 100;
 
-//	Speed Hack
+//  Speed Hack
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xb80000, 0xb80001, 0, 0, agallet_irq_cause_r);
 }
 
@@ -3724,7 +3724,7 @@ DRIVER_INIT( esprade )
 #if 0		//ROM PATCH
 	{
 		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-		rom[0x118A/2] = 0x4e71;			//palette fix	118A: 5548				SUBQ.W	#2,A0		--> NOP
+		rom[0x118A/2] = 0x4e71;			//palette fix   118A: 5548              SUBQ.W  #2,A0       --> NOP
 	}
 #endif
 }
@@ -3887,7 +3887,7 @@ DRIVER_INIT( uopoko )
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

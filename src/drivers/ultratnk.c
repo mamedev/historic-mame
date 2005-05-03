@@ -1,17 +1,17 @@
 /***************************************************************************
 
-	Atari/Kee Ultra Tank hardware
+    Atari/Kee Ultra Tank hardware
 
-	Games supported:
-		* Ultra Tank
+    Games supported:
+        * Ultra Tank
 
-	Known issues:
-		- colors are probably correct, but should be verified
-		- invisible tanks option doesn't work
-		- coin counters aren't mapped
-		- hardware collision detection is not emulated. However, the game is fully playable,
-		  since the game software uses it only as a hint to check for tanks bumping into
-		  walls/mines.
+    Known issues:
+        - colors are probably correct, but should be verified
+        - invisible tanks option doesn't work
+        - coin counters aren't mapped
+        - hardware collision detection is not emulated. However, the game is fully playable,
+          since the game software uses it only as a hint to check for tanks bumping into
+          walls/mines.
 
 ***************************************************************************/
 
@@ -27,7 +27,7 @@ static struct tilemap *bg_tilemap;
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -52,7 +52,7 @@ static PALETTE_INIT( ultratnk )
 
 /*************************************
  *
- *	Sprite rendering
+ *  Sprite rendering
  *
  *************************************/
 
@@ -61,10 +61,10 @@ static void ultratnk_draw_sprites( struct mame_bitmap *bitmap )
 	const UINT8 *pMem = memory_region( REGION_CPU1 );
 
 	if( (pMem[0x93]&0x80)==0 )
-	/*	Probably wrong; game description indicates that one or both tanks can
-		be invisible; in this game mode, tanks are visible when hit, bumping
-		into a wall, or firing
-	*/
+	/*  Probably wrong; game description indicates that one or both tanks can
+        be invisible; in this game mode, tanks are visible when hit, bumping
+        into a wall, or firing
+    */
 	{
 		drawgfx( bitmap, Machine->gfx[1], /* tank */
 			pMem[0x99]>>3,
@@ -104,7 +104,7 @@ static void ultratnk_draw_sprites( struct mame_bitmap *bitmap )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -149,7 +149,7 @@ VIDEO_UPDATE( ultratnk )
 
 /*************************************
  *
- *	Control reading
+ *  Control reading
  *
  *************************************/
 
@@ -228,7 +228,7 @@ static READ8_HANDLER( ultratnk_dipsw_r )
 
 /*************************************
  *
- *	Sound handlers
+ *  Sound handlers
  *
  *************************************/
 WRITE8_HANDLER( ultratnk_fire_w )
@@ -250,7 +250,7 @@ WRITE8_HANDLER( ultratnk_explosion_w )
 
 /*************************************
  *
- *	Interrupt generation
+ *  Interrupt generation
  *
  *************************************/
 
@@ -267,16 +267,16 @@ static INTERRUPT_GEN( ultratnk_interrupt )
 
 /*************************************
  *
- *	Misc memory handlers
+ *  Misc memory handlers
  *
  *************************************/
 
 static READ8_HANDLER( ultratnk_collision_r )
 {
-	/**	Note: hardware collision detection is not emulated.
-	 *	However, the game is fully playable, since the game software uses it
-	 *	only as a hint to check for tanks bumping into walls/mines.
-	 */
+	/** Note: hardware collision detection is not emulated.
+     *  However, the game is fully playable, since the game software uses it
+     *  only as a hint to check for tanks bumping into walls/mines.
+     */
 	switch( offset )
 	{
 		case 0x01:	return 0x80;	/* white tank = D7 */
@@ -307,7 +307,7 @@ static WRITE8_HANDLER( mirror_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -350,7 +350,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -420,7 +420,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -462,7 +462,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -490,7 +490,7 @@ static MACHINE_DRIVER_START( ultratnk )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(ultratnk_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -500,7 +500,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -528,7 +528,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

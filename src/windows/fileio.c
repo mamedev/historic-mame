@@ -1,6 +1,6 @@
 //============================================================
 //
-//	fileio.c - Win32 file access functions
+//  fileio.c - Win32 file access functions
 //
 //============================================================
 
@@ -45,7 +45,7 @@
 
 
 //============================================================
-//	EXTERNALS
+//  EXTERNALS
 //============================================================
 
 extern char *rompath_extra;
@@ -60,7 +60,7 @@ extern char *cheatfile;
 
 
 //============================================================
-//	TYPE DEFINITIONS
+//  TYPE DEFINITIONS
 //============================================================
 
 struct pathdata
@@ -87,7 +87,7 @@ static osd_file openfile[MAX_OPEN_FILES];
 
 
 //============================================================
-//	FILE PATH OPTIONS
+//  FILE PATH OPTIONS
 //============================================================
 
 struct rc_option fileio_opts[] =
@@ -131,7 +131,7 @@ struct rc_option fileio_opts[] =
 
 
 //============================================================
-//	is_pathsep
+//  is_pathsep
 //============================================================
 
 INLINE int is_pathsep(TCHAR c)
@@ -142,7 +142,7 @@ INLINE int is_pathsep(TCHAR c)
 
 
 //============================================================
-//	find_reverse_path_sep
+//  find_reverse_path_sep
 //============================================================
 
 static TCHAR *find_reverse_path_sep(TCHAR *name)
@@ -156,7 +156,7 @@ static TCHAR *find_reverse_path_sep(TCHAR *name)
 
 
 //============================================================
-//	create_path
+//  create_path
 //============================================================
 
 static void create_path(TCHAR *path, int has_filename)
@@ -188,7 +188,7 @@ static void create_path(TCHAR *path, int has_filename)
 
 
 //============================================================
-//	is_variablechar
+//  is_variablechar
 //============================================================
 
 INLINE int is_variablechar(char c)
@@ -199,7 +199,7 @@ INLINE int is_variablechar(char c)
 
 
 //============================================================
-//	parse_variable
+//  parse_variable
 //============================================================
 
 static const char *parse_variable(const char **start, const char *end)
@@ -228,7 +228,7 @@ static const char *parse_variable(const char **start, const char *end)
 
 
 //============================================================
-//	copy_and_expand_variables
+//  copy_and_expand_variables
 //============================================================
 
 static char *copy_and_expand_variables(const char *path, int len)
@@ -271,7 +271,7 @@ out_of_memory:
 
 
 //============================================================
-//	expand_pathlist
+//  expand_pathlist
 //============================================================
 
 static void expand_pathlist(struct pathdata *list)
@@ -341,7 +341,7 @@ out_of_memory:
 
 
 //============================================================
-//	get_path_for_filetype
+//  get_path_for_filetype
 //============================================================
 
 void free_pathlists(void)
@@ -371,7 +371,7 @@ void free_pathlists(void)
 
 
 //============================================================
-//	get_path_for_filetype
+//  get_path_for_filetype
 //============================================================
 
 static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *count)
@@ -421,7 +421,7 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 
 
 //============================================================
-//	compose_path
+//  compose_path
 //============================================================
 
 static void compose_path(TCHAR *output, int pathtype, int pathindex, const char *filename)
@@ -451,7 +451,7 @@ static void compose_path(TCHAR *output, int pathtype, int pathindex, const char 
 
 
 //============================================================
-//	osd_get_path_count
+//  osd_get_path_count
 //============================================================
 
 int osd_get_path_count(int pathtype)
@@ -466,7 +466,7 @@ int osd_get_path_count(int pathtype)
 
 
 //============================================================
-//	osd_get_path_info
+//  osd_get_path_info
 //============================================================
 
 int osd_get_path_info(int pathtype, int pathindex, const char *filename)
@@ -490,7 +490,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 
 
 //============================================================
-//	osd_fopen
+//  osd_fopen
 //============================================================
 
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
@@ -529,8 +529,8 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	compose_path(fullpath, pathtype, pathindex, filename);
 
 	/* if 'g' is specified, we 'ghost' our changes; in other words any changes
-	 * made to the file last only as long as the file is open.  Under the hood
-	 * this is implemented by using a temporary file */
+     * made to the file last only as long as the file is open.  Under the hood
+     * this is implemented by using a temporary file */
 	if (strchr(mode, 'g'))
 	{
 		GetTempPath(sizeof(temp_dir) / sizeof(temp_dir[0]), temp_dir);
@@ -579,7 +579,7 @@ error:
 
 
 //============================================================
-//	osd_fseek
+//  osd_fseek
 //============================================================
 
 int osd_fseek(osd_file *file, INT64 offset, int whence)
@@ -598,7 +598,7 @@ int osd_fseek(osd_file *file, INT64 offset, int whence)
 
 
 //============================================================
-//	osd_ftell
+//  osd_ftell
 //============================================================
 
 UINT64 osd_ftell(osd_file *file)
@@ -609,7 +609,7 @@ UINT64 osd_ftell(osd_file *file)
 
 
 //============================================================
-//	osd_feof
+//  osd_feof
 //============================================================
 
 int osd_feof(osd_file *file)
@@ -620,7 +620,7 @@ int osd_feof(osd_file *file)
 
 
 //============================================================
-//	osd_fread
+//  osd_fread
 //============================================================
 
 UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
@@ -699,7 +699,7 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 
 
 //============================================================
-//	osd_fwrite
+//  osd_fwrite
 //============================================================
 
 UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
@@ -730,7 +730,7 @@ UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
 
 
 //============================================================
-//	osd_fclose
+//  osd_fclose
 //============================================================
 
 void osd_fclose(osd_file *file)
@@ -745,7 +745,7 @@ void osd_fclose(osd_file *file)
 
 #ifdef MESS
 //============================================================
-//	osd_create_directory
+//  osd_create_directory
 //============================================================
 
 int osd_create_directory(int pathtype, int pathindex, const char *dirname)
@@ -760,7 +760,7 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 #endif
 
 //============================================================
-//	osd_display_loading_rom_message
+//  osd_display_loading_rom_message
 //============================================================
 
 // called while loading ROMs. It is called a last time with name == 0 to signal
@@ -783,7 +783,7 @@ int osd_display_loading_rom_message(const char *name,struct rom_load_data *romda
 
 #ifdef WINUI
 //============================================================
-//	set_pathlist
+//  set_pathlist
 //============================================================
 
 void set_pathlist(int file_type, const char *new_rawpath)

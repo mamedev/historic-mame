@@ -126,15 +126,15 @@ VIDEO_UPDATE(fitfight)
 	if (vblank > 0)
 		fillbitmap(bitmap, get_black_pen(), cliprect);
 	else {
-//		if (code_pressed(KEYCODE_Q))
-//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
-//		else if (code_pressed(KEYCODE_W))
-//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
-//		else if (code_pressed(KEYCODE_E))
-//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
-//		else if (code_pressed(KEYCODE_R))
-//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
-//		else
+//      if (code_pressed(KEYCODE_Q))
+//          scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
+//      else if (code_pressed(KEYCODE_W))
+//          scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
+//      else if (code_pressed(KEYCODE_E))
+//          scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
+//      else if (code_pressed(KEYCODE_R))
+//          scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
+//      else
 			scrollbak = ((fof_a00000[0]&0xff00) >> 5);
 		tilemap_set_scrollx(fof_bak_tilemap,0, scrollbak );
 		tilemap_set_scrolly(fof_bak_tilemap,0, fof_a00000[0]&0xff);
@@ -142,28 +142,28 @@ VIDEO_UPDATE(fitfight)
 
 		fitfight_drawsprites(bitmap,cliprect,0);
 
-//		if (code_pressed(KEYCODE_A))
-//			scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
-//		else if (code_pressed(KEYCODE_S))
-//			scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
-//		else if (code_pressed(KEYCODE_D))
-//			scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
-//		else if (code_pressed(KEYCODE_F))
-//			scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
-//		else
+//      if (code_pressed(KEYCODE_A))
+//          scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
+//      else if (code_pressed(KEYCODE_S))
+//          scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
+//      else if (code_pressed(KEYCODE_D))
+//          scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
+//      else if (code_pressed(KEYCODE_F))
+//          scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
+//      else
 			scrollmid = ((fof_900000[0]&0xff00) >> 5);
 		tilemap_set_scrollx(fof_mid_tilemap,0, scrollmid );
 		tilemap_set_scrolly(fof_mid_tilemap,0, fof_900000[0]&0xff);
-//		if (!code_pressed(KEYCODE_F))
+//      if (!code_pressed(KEYCODE_F))
 			tilemap_draw(bitmap,cliprect,fof_mid_tilemap,0,0);
 
 		fitfight_drawsprites(bitmap,cliprect,1);
 
 		tilemap_draw(bitmap,cliprect,fof_txt_tilemap,0,0);
 	}
-/*	usrintf_showmessage	("Regs %04x %04x %04x %04x %04x %04x",
-			fof_100000[0], fof_600000[0], fof_700000[0],
-			fof_800000[0], fof_900000[0],
-			fof_a00000[0] );
+/*  usrintf_showmessage ("Regs %04x %04x %04x %04x %04x %04x",
+            fof_100000[0], fof_600000[0], fof_700000[0],
+            fof_800000[0], fof_900000[0],
+            fof_a00000[0] );
 */
 }

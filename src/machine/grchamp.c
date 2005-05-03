@@ -9,7 +9,7 @@ static int comm_latch2[4];
 
 /***************************************************************************
 
-	Machine Init
+    Machine Init
 
 ***************************************************************************/
 
@@ -23,14 +23,14 @@ DRIVER_INIT( grchamp ) {
 }
 
 /*
-	A note about port signals (note the preceding asterisk):
-	*OUTxx = OUT port signals from CPU1
-	OUTxx = OUT port signals from CPU2
+    A note about port signals (note the preceding asterisk):
+    *OUTxx = OUT port signals from CPU1
+    OUTxx = OUT port signals from CPU2
 */
 
 /***************************************************************************
 
-	CPU 1
+    CPU 1
 
 ***************************************************************************/
 
@@ -51,7 +51,7 @@ WRITE8_HANDLER( grchamp_control0_w ){
 	/* bit 7 = RADAR ON (S26) */
 	grchamp_videoreg0 = data;
 	grchamp_cpu_irq_enable[0] = data & 1;	/* bit 0 */
-//	osd_led_w( 0, ( ~data >> 4 ) & 1 ); 	/* bit 4 */
+//  osd_led_w( 0, ( ~data >> 4 ) & 1 );     /* bit 4 */
 }
 
 WRITE8_HANDLER( grchamp_coinled_w ){
@@ -60,8 +60,8 @@ WRITE8_HANDLER( grchamp_coinled_w ){
 	/* bit 4 = Coin Lockout */
 	/* bit 5 = Game Over lamp */
 	/* bit 6/7 = unused */
-//	coin_lockout_global_w( 0, ( data >> 4 ) & 1 );	/* bit 4 */
-//	osd_led_w( 1, ( ~data >> 5 ) & 1 ); 			/* bit 5 */
+//  coin_lockout_global_w( 0, ( data >> 4 ) & 1 );  /* bit 4 */
+//  osd_led_w( 1, ( ~data >> 5 ) & 1 );             /* bit 5 */
 }
 
 WRITE8_HANDLER( grchamp_sound_w ){
@@ -77,7 +77,7 @@ WRITE8_HANDLER( grchamp_comm_w ){
 
 /***************************************************************************
 
-	CPU 2
+    CPU 2
 
 ***************************************************************************/
 
@@ -94,16 +94,16 @@ WRITE8_HANDLER( grchamp_port_1_w ) {
 		/* OUT2 - Page 43: writes to 'Left Synk Bus' */		/* bg0 xscroll? */
 
 	case 3: /* OUT3 - Page 45 */
-		/*	bit0-bit3 = Analog Tachometer output
-			bit4 = Palette selector. (Goes to A4 on the color prom). I believe this
-				select between colors 0-15 and colors 16-31.
-			bit5 = Center Layer 256H line enable. This bit enables/disables the
-		   		256H line (The extra higher bit for scroll) on the center (road) layer.
-			bit 6 and 7 = unused.
-		*/
+		/*  bit0-bit3 = Analog Tachometer output
+            bit4 = Palette selector. (Goes to A4 on the color prom). I believe this
+                select between colors 0-15 and colors 16-31.
+            bit5 = Center Layer 256H line enable. This bit enables/disables the
+                256H line (The extra higher bit for scroll) on the center (road) layer.
+            bit 6 and 7 = unused.
+        */
 		break;
 
-	case 4: /* OUT4	- Page 46 */
+	case 4: /* OUT4 - Page 46 */
 		/* trigger irq on cpu2 when vblank arrives */
 		grchamp_cpu_irq_enable[1] = data & 1;
 		break;

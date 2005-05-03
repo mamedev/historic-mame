@@ -87,9 +87,9 @@ static WRITE8_HANDLER( tbowl_sound_command_w )
 
 /*** Memory Structures
 
-	Board B is the main board, reading inputs, and in control of the 2 bg layers & text layer etc.
-	Board C is the sub board, main job is the sprites
-	Board A is for the sound
+    Board B is the main board, reading inputs, and in control of the 2 bg layers & text layer etc.
+    Board C is the sub board, main job is the sprites
+    Board A is for the sound
 
 ***/
 
@@ -107,7 +107,7 @@ static ADDRESS_MAP_START( readmem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc01, 0xfc01) AM_READ(input_port_1_r) // Player 2 inputs
 	AM_RANGE(0xfc02, 0xfc02) AM_READ(input_port_2_r) // Player 3 inputs
 	AM_RANGE(0xfc03, 0xfc03) AM_READ(input_port_3_r) // Player 4 inputs
-//	AM_RANGE(0xfc06, 0xfc06) AM_READ(dummy_r) // Read During NMI
+//  AM_RANGE(0xfc06, 0xfc06) AM_READ(dummy_r) // Read During NMI
 	AM_RANGE(0xfc07, 0xfc07) AM_READ(input_port_4_r) // System inputs
 	AM_RANGE(0xfc08, 0xfc08) AM_READ(input_port_5_r) // DSW1
 	AM_RANGE(0xfc09, 0xfc09) AM_READ(input_port_6_r) // DSW2
@@ -120,16 +120,16 @@ static ADDRESS_MAP_START( writemem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xbfff) AM_WRITE(tbowl_bg2videoram_w) AM_BASE(&tbowl_bg2videoram)
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(tbowl_bgvideoram_w) AM_BASE(&tbowl_bgvideoram)
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(tbowl_txvideoram_w) AM_BASE(&tbowl_txvideoram)
-//	AM_RANGE(0xf000, 0xf000) AM_WRITE(unknown_write)* written during start-up, not again */
+//  AM_RANGE(0xf000, 0xf000) AM_WRITE(unknown_write)* written during start-up, not again */
 	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xf800, 0xfbff) AM_WRITE(shared_w) AM_BASE(&shared_ram) /* check */
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(tbowlb_bankswitch_w)
-//	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(unknown_write) /* written during start-up, not again */
-//	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(unknown_write) /* written during start-up, not again */
+//  AM_RANGE(0xfc01, 0xfc01) AM_WRITE(unknown_write) /* written during start-up, not again */
+//  AM_RANGE(0xfc02, 0xfc02) AM_WRITE(unknown_write) /* written during start-up, not again */
 	AM_RANGE(0xfc0d, 0xfc0d) AM_WRITE(tbowl_sound_command_w) /* not sure, used quite a bit */
-//	AM_RANGE(0xfc05, 0xfc05) AM_WRITE(unknown_write) /* no idea */
-//	AM_RANGE(0xfc08, 0xfc08) AM_WRITE(unknown_write) /* hardly uesd .. */
-//	AM_RANGE(0xfc0a, 0xfc0a) AM_WRITE(unknown_write) /* hardly uesd .. */
+//  AM_RANGE(0xfc05, 0xfc05) AM_WRITE(unknown_write) /* no idea */
+//  AM_RANGE(0xfc08, 0xfc08) AM_WRITE(unknown_write) /* hardly uesd .. */
+//  AM_RANGE(0xfc0a, 0xfc0a) AM_WRITE(unknown_write) /* hardly uesd .. */
 	AM_RANGE(0xfc10, 0xfc10) AM_WRITE(tbowl_bg2xscroll_lo)
 	AM_RANGE(0xfc11, 0xfc11) AM_WRITE(tbowl_bg2xscroll_hi)
 	AM_RANGE(0xfc12, 0xfc12) AM_WRITE(tbowl_bg2yscroll_lo)
@@ -185,14 +185,14 @@ static ADDRESS_MAP_START( writemem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd001, 0xd001) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0xd800, 0xd800) AM_WRITE(YM3812_control_port_1_w)
 	AM_RANGE(0xd801, 0xd801) AM_WRITE(YM3812_write_port_1_w)
-//	AM_RANGE(0xe000, 0xe000) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe001, 0xe001) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe002, 0xe002) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe003, 0xe003) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe004, 0xe004) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe005, 0xe005) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe006, 0xe006) AM_WRITE(unknown_write)
-//	AM_RANGE(0xe007, 0xe007) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe000, 0xe000) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe001, 0xe001) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe002, 0xe002) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe003, 0xe003) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe004, 0xe004) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe005, 0xe005) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe006, 0xe006) AM_WRITE(unknown_write)
+//  AM_RANGE(0xe007, 0xe007) AM_WRITE(unknown_write)
 /* rest of sound is probably similar to tecmo.c */
 ADDRESS_MAP_END
 
@@ -318,7 +318,7 @@ INPUT_PORTS_START( tbowl )
 	PORT_DIPSETTING (   0xe0, "0:35" )
 	PORT_DIPSETTING (   0xe8, "0:30" )
 	PORT_DIPSETTING (   0xf0, "0:25" )
-//	PORT_DIPSETTING (   0xf8, "1:00" )
+//  PORT_DIPSETTING (   0xf8, "1:00" )
 
 	PORT_START	/* DSW2 (0xfc09 -> 0xffb5) */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty (unused ?)" )	// To be checked again
@@ -424,7 +424,7 @@ INPUT_PORTS_START( tbowlj )
 	PORT_DIPSETTING (   0xe0, "0:35" )
 	PORT_DIPSETTING (   0xe8, "0:30" )
 	PORT_DIPSETTING (   0xf0, "0:25" )
-//	PORT_DIPSETTING (   0xf8, "1:00" )
+//  PORT_DIPSETTING (   0xf8, "1:00" )
 
 	PORT_START	/* DSW2 (0xfc09 -> 0xffb5) */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty (unused ?)" )	// To be checked again
@@ -646,12 +646,12 @@ other is clearly a Japan version as it displays a regional warning
 there is also a bad dump which for reference has the following roms
 different to the world dump
 
-	"24.rom" 0x10000 0x39a2d923 (code)
-	"25.rom" 0x10000 0x9a0a9cd6 (code / data)
+    "24.rom" 0x10000 0x39a2d923 (code)
+    "25.rom" 0x10000 0x9a0a9cd6 (code / data)
 
-	"21.rom" 0x10000 0x93651858 (gfx)
-	"22.rom" 0x10000 0xee7561d9 (gfx)
-	"23.rom" 0x10000 0x46b3c186 (gfx)
+    "21.rom" 0x10000 0x93651858 (gfx)
+    "22.rom" 0x10000 0xee7561d9 (gfx)
+    "23.rom" 0x10000 0x46b3c186 (gfx)
 
 this fails its rom check so I assume its corrupt
 

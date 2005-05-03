@@ -50,7 +50,7 @@ VIDEO_START( hyprduel_14220 );
 VIDEO_UPDATE( hyprduel );
 
 /***************************************************************************
-								Interrupts
+                                Interrupts
 ***************************************************************************/
 
 static int blitter_bit;
@@ -206,15 +206,15 @@ MACHINE_INIT( hyprduel )
 
 
 /***************************************************************************
-								Banked ROM access
+                                Banked ROM access
 ***************************************************************************/
 
 /*
-	The main CPU has access to the ROMs that hold the graphics through
-	a banked window of 64k. Those ROMs also usually store the tables for
-	the virtual tiles set. The tile codes to be written to the tilemap
-	memory to render the backgrounds are also stored here, in a format
-	that the blitter can readily use (which is a form of compression)
+    The main CPU has access to the ROMs that hold the graphics through
+    a banked window of 64k. Those ROMs also usually store the tables for
+    the virtual tiles set. The tile codes to be written to the tilemap
+    memory to render the backgrounds are also stored here, in a format
+    that the blitter can readily use (which is a form of compression)
 */
 
 static data16_t *hyprduel_rombank;
@@ -234,45 +234,45 @@ READ16_HANDLER( hyprduel_bankedrom_r )
 
 /***************************************************************************
 
-									Blitter
+                                    Blitter
 
-	[ Registers ]
+    [ Registers ]
 
-		Offset:		Value:
+        Offset:     Value:
 
-		0.l			Destination Tilemap      (1,2,3)
-		4.l			Blitter Data Address     (byte offset into the gfx ROMs)
-		8.l			Destination Address << 7 (byte offset into the tilemap)
+        0.l         Destination Tilemap      (1,2,3)
+        4.l         Blitter Data Address     (byte offset into the gfx ROMs)
+        8.l         Destination Address << 7 (byte offset into the tilemap)
 
-		The Blitter reads a byte and looks at the most significative
-		bits for the opcode, while the remaining bits define a value
-		(usually how many bytes to write). The opcode byte may be
-		followed by a number of other bytes:
+        The Blitter reads a byte and looks at the most significative
+        bits for the opcode, while the remaining bits define a value
+        (usually how many bytes to write). The opcode byte may be
+        followed by a number of other bytes:
 
-			76------			Opcode
-			--543210			N
-			(at most N+1 bytes follow)
+            76------            Opcode
+            --543210            N
+            (at most N+1 bytes follow)
 
 
-		The blitter is designed to write every other byte (e.g. it
-		writes a byte and skips the next). Hence 2 blits are needed
-		to fill a tilemap (first even, then odd addresses)
+        The blitter is designed to write every other byte (e.g. it
+        writes a byte and skips the next). Hence 2 blits are needed
+        to fill a tilemap (first even, then odd addresses)
 
-	[ Opcodes ]
+    [ Opcodes ]
 
-			0		Copy the following N+1 bytes. If the whole byte
-					is $00:	stop and generate an IRQ
+            0       Copy the following N+1 bytes. If the whole byte
+                    is $00: stop and generate an IRQ
 
-			1		Fill N+1 bytes with a sequence, starting with
-					the  value in the following byte
+            1       Fill N+1 bytes with a sequence, starting with
+                    the  value in the following byte
 
-			2		Fill N+1 bytes with the value in the following
-					byte
+            2       Fill N+1 bytes with the value in the following
+                    byte
 
-			3		Skip N+1 bytes. If the whole byte is $C0:
-					skip to the next row of the tilemap (+0x200 bytes)
-					but preserve the column passed at the start of the
-					blit (destination address % 0x200)
+            3       Skip N+1 bytes. If the whole byte is $C0:
+                    skip to the next row of the tilemap (+0x200 bytes)
+                    but preserve the column passed at the start of the
+                    blit (destination address % 0x200)
 
 ***************************************************************************/
 
@@ -297,7 +297,7 @@ INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, co
 		case 2:	hyprduel_vram_1_w(offs,data,mask);	break;
 		case 3:	hyprduel_vram_2_w(offs,data,mask);	break;
 	}
-//	logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
+//  logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
 }
 
 
@@ -322,7 +322,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 		int shift			=	(dst_offs & 0x80) ? 0 : 8;
 		data16_t mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
 
-//		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
+//      logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
 
 		dst_offs >>= 7+1;
 		switch( tmap )
@@ -342,7 +342,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 
 			src_offs %= src_len;
 			b1 = blt_read(src,src_offs);
-//			logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs);
+//          logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs);
 			src_offs++;
 
 			count = ((~b1) & 0x3f) + 1;
@@ -352,10 +352,10 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 				case 0:
 
 					/* Stop and Generate an IRQ. We can't generate it now
-					   both because it's unlikely that the blitter is so
-					   fast and because some games (e.g. lastfort) need to
-					   complete the blitter irq service routine before doing
-					   another blit. */
+                       both because it's unlikely that the blitter is so
+                       fast and because some games (e.g. lastfort) need to
+                       complete the blitter irq service routine before doing
+                       another blit. */
 					if (b1 == 0)
 					{
 						timer_set(TIME_IN_USEC(500),0,hyprduel_blit_done);
@@ -436,7 +436,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 }
 
 /***************************************************************************
-								Memory Maps
+                                Memory Maps
 ***************************************************************************/
 
 static ADDRESS_MAP_START( hyprduel_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -506,7 +506,7 @@ static ADDRESS_MAP_START( hyprduel_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Input Ports
+                                Input Ports
 ***************************************************************************/
 
 #define JOY_LSB(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -594,7 +594,7 @@ INPUT_PORTS_START( hyprduel )
 INPUT_PORTS_END
 
 /***************************************************************************
-							Graphics Layouts
+                            Graphics Layouts
 ***************************************************************************/
 
 /* 8x8x4 tiles */
@@ -629,7 +629,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_14220[] =
 };
 
 /***************************************************************************
-							Sound Communication
+                            Sound Communication
 ***************************************************************************/
 
 static void sound_irq(int state)
@@ -643,7 +643,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 /***************************************************************************
-								Machine Drivers
+                                Machine Drivers
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( hyprduel )
@@ -687,7 +687,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								ROMs Loading
+                                ROMs Loading
 ***************************************************************************/
 
 static DRIVER_INIT( hyprduel )
@@ -696,16 +696,16 @@ static DRIVER_INIT( hyprduel )
 	data8_t *ROM = memory_region(REGION_GFX1);
 
 	/*
-	  Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
-	  time. The transparent pen is the last one, that is 15 or 255. To make
-	  tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
-	  for both tile depths.
-	*/
+      Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
+      time. The transparent pen is the last one, that is 15 or 255. To make
+      tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
+      for both tile depths.
+    */
 	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
 		ROM[i] ^= 0xff;
 
-//	ROM[(0x174b9*0x20)+0x1f] |= 0x0e;		/* I */
-//	ROM[(0x174e9*0x20)+0x1f] |= 0x0e;
+//  ROM[(0x174b9*0x20)+0x1f] |= 0x0e;       /* I */
+//  ROM[(0x174e9*0x20)+0x1f] |= 0x0e;
 
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00000, 0xc07fff, 0, 0, hypr_sharedram1_w);
 	memory_install_write16_handler(1, ADDRESS_SPACE_PROGRAM, 0xc00000, 0xc07fff, 0, 0, hypr_sharedram1_w);

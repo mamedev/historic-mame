@@ -322,7 +322,7 @@ static INTERRUPT_GEN( sslam_interrupt )
 
 		if (sslam_melody_loop)
 		{
-//			logerror("Changing to sample %02x\n",sslam_melody_loop);
+//          logerror("Changing to sample %02x\n",sslam_melody_loop);
 			OKIM6295_data_0_w(0,((0x80 | sslam_melody_loop) & 0xff));
 			OKIM6295_data_0_w(0,0x81);
 		}
@@ -573,7 +573,7 @@ ROM_START( sslam )
 	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
 	ROM_LOAD( "5.u42",     0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
 	ROM_LOAD( "4.u36",     0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
-	
+
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE  ) /* Sprites */
 	ROM_LOAD( "8.u83",     0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
 	ROM_LOAD( "9.u84",     0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )
@@ -630,7 +630,7 @@ ROM_START( sslama )
 	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
 	ROM_LOAD( "5.u42",     0x100000, 0x80000, CRC(8d18bdc6) SHA1(cacc4f475f85438a00ead4911730202e995983a7) )
 	ROM_LOAD( "4.u36",     0x180000, 0x80000, CRC(8e15fb9d) SHA1(47917d8aac1bce2e15f36904f5c2534e5b80236b) )
-	
+
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE  ) /* Sprites */
 	ROM_LOAD( "8.u83",     0x000000, 0x80000, CRC(19bb89dd) SHA1(c2a0c32d350a193d366b5086502998281fd0bec4) )
 	ROM_LOAD( "9.u84",     0x080000, 0x80000, CRC(d50d86c7) SHA1(7ecbcc03851a8174610f7f5ad889e40543da928e) )

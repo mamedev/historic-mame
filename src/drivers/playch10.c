@@ -2,124 +2,124 @@
 
 Playchoice 10 - (c) 1986 Nintendo of America
 
-	Written by Ernesto Corvi.
+    Written by Ernesto Corvi.
 
-	Portions of this code are heavily based on
-	Brad Oliver's MESS implementation of the NES.
+    Portions of this code are heavily based on
+    Brad Oliver's MESS implementation of the NES.
 
-	Thanks to people that contributed to this driver, namely:
-	- Brad Oliver.
-	- Aaron Giles.
+    Thanks to people that contributed to this driver, namely:
+    - Brad Oliver.
+    - Aaron Giles.
 
 ****************************************************************************
 
 BIOS:
-	Memory Map
-	----------
-	0000 - 3fff = Program ROM (8T)
-	8000 - 87ff = RAM (8V)
-	8800 - 8fff = RAM (8W)
-	9000 - 97ff = SRAM (8R - Videoram)
-	Cxxx = /INST ROM SEL
-	Exxx = /IDSEL
+    Memory Map
+    ----------
+    0000 - 3fff = Program ROM (8T)
+    8000 - 87ff = RAM (8V)
+    8800 - 8fff = RAM (8W)
+    9000 - 97ff = SRAM (8R - Videoram)
+    Cxxx = /INST ROM SEL
+    Exxx = /IDSEL
 
-	Input Ports	-----------
-	Read:
-	- Port 0
-	bit0 = CHSelect(?)
-	bit1 = Enter button
-	bit2 = Reset button
-	bit3 = INTDETECT
-	bit4 = N/C
-	bit5 = Coin 2
-	bit6 = Service button
-	bit7 = Coin 1
-	- Port 1 = Dipswitch 1
-	- Port 2 = Dipswitch 2
-	- Port 3 = /DETECTCLR
+    Input Ports -----------
+    Read:
+    - Port 0
+    bit0 = CHSelect(?)
+    bit1 = Enter button
+    bit2 = Reset button
+    bit3 = INTDETECT
+    bit4 = N/C
+    bit5 = Coin 2
+    bit6 = Service button
+    bit7 = Coin 1
+    - Port 1 = Dipswitch 1
+    - Port 2 = Dipswitch 2
+    - Port 3 = /DETECTCLR
 
-	Write: (always bit 0)
-	- Port 0 = SDCS (ShareD CS)
-	- Port 1 = /CNTRLMASK
-	- Port 2 = /DISPMASK
-	- Port 3 = /SOUNDMASK
-	- Port 4 = /GAMERES
-	- Port 5 = /GAMESTOP
-	- Port 6 = N/C
-	- Port 7 = N/C
-	- Port 8 = NMI Enable
-	- Port 9 = DOG DI
-	- Port A = /PPURES
-	- Port B = CSEL0 \
-	- Port C = CSEL1  \ (Cartridge select: 0 to 9)
-	- Port D = CSEL2  /
-	- Port E = CSEL3 /
-	- Port F = 8UP KEY
+    Write: (always bit 0)
+    - Port 0 = SDCS (ShareD CS)
+    - Port 1 = /CNTRLMASK
+    - Port 2 = /DISPMASK
+    - Port 3 = /SOUNDMASK
+    - Port 4 = /GAMERES
+    - Port 5 = /GAMESTOP
+    - Port 6 = N/C
+    - Port 7 = N/C
+    - Port 8 = NMI Enable
+    - Port 9 = DOG DI
+    - Port A = /PPURES
+    - Port B = CSEL0 \
+    - Port C = CSEL1  \ (Cartridge select: 0 to 9)
+    - Port D = CSEL2  /
+    - Port E = CSEL3 /
+    - Port F = 8UP KEY
 
 ****************************************************************************
 
 Working games:
 --------------
-	- 1942								(NF) - Standard board
-	- Balloon Fight						(BF) - Standard board
-	- Baseball							(BA) - Standard board
-	- Baseball Stars					(B9) - F board
-	- Captain Sky Hawk					(YW) - i board
-	- Castlevania						(CV) - B board
-	- Contra							(CT) - B board
-	- Double Dragon						(WD) - F board
-	- Double Dribble					(DW) - B board
-	- Dr. Mario							(VU) - F board
-	- Duck Hunt							(DH) - Standard board
-	- Excite Bike						(EB) - Standard board
-	- Fester's Quest					(EQ) - F board
-	- Gauntlet							(GL) - G board
-	- Golf								(GF) - Standard board
-	- Gradius							(GR) - A board
-	- Hogan's Alley						(HA) - Standard board
-	- Kung Fu							(SX) - Standard board
-	- Mario Bros.						(MA) - Standard board
-	- Mario Open Golf					(UG) - K board
-	- Mega Man 3						(XU) - G board
-	- Metroid							(MT) - D board
-	- Ninja Gaiden						(NG) - F board
-	- Ninja Gaiden 2					(NW) - G board
-	- Ninja Gaiden 3					(3N) - G board
-	- Nintendo World Cup				(XZ) - G board
-	- Power Blade						(7T) - G board
-	- Pro Wrestling						(PW) - B board
-	- Rad Racer							(RC) - D board
-	- Rad Racer II						(QR) - G board
-	- RC Pro Am							(PM) - F board
-	- Rescue Rangers					(RU) - F board
-	- Rockin' Kats						(7A) - G board
-	- Rush N' Attack					(RA) - B board
-	- Rygar								(RY) - B board
-	- Solar Jetman						(LJ) - i board
-	- Super C							(UE) - G board
-	- Super Mario Bros					(SM) - Standard board
-	- Super Mario Bros 2				(MW) - G board
-	- Super Mario Bros 3				(UM) - G board
-	- Tecmo Bowl						(TW) - F board
-	- Teenage Mutant Ninja Turtles		(U2) - F board
-	- Teenage Mutant Ninja Turtles 2	(2N) - G board
-	- Tennis							(TE) - Standard board
-	- Track & Field						(TR) - A board
-	- Trojan							(TJ) - B board
-	- The Goonies						(GN) - C board
-	- Volley Ball						(VB) - Standard board
-	- Wild Gunman						(WG) - Standard board
-	- Yo Noid							(YC) - F board
-	- Nintendo World Cup				(XZ) - G board
-	- Pinbot							(IO) - H board
+    - 1942                              (NF) - Standard board
+    - Balloon Fight                     (BF) - Standard board
+    - Baseball                          (BA) - Standard board
+    - Baseball Stars                    (B9) - F board
+    - Captain Sky Hawk                  (YW) - i board
+    - Castlevania                       (CV) - B board
+    - Contra                            (CT) - B board
+    - Double Dragon                     (WD) - F board
+    - Double Dribble                    (DW) - B board
+    - Dr. Mario                         (VU) - F board
+    - Duck Hunt                         (DH) - Standard board
+    - Excite Bike                       (EB) - Standard board
+    - Fester's Quest                    (EQ) - F board
+    - Gauntlet                          (GL) - G board
+    - Golf                              (GF) - Standard board
+    - Gradius                           (GR) - A board
+    - Hogan's Alley                     (HA) - Standard board
+    - Kung Fu                           (SX) - Standard board
+    - Mario Bros.                       (MA) - Standard board
+    - Mario Open Golf                   (UG) - K board
+    - Mega Man 3                        (XU) - G board
+    - Metroid                           (MT) - D board
+    - Ninja Gaiden                      (NG) - F board
+    - Ninja Gaiden 2                    (NW) - G board
+    - Ninja Gaiden 3                    (3N) - G board
+    - Nintendo World Cup                (XZ) - G board
+    - Power Blade                       (7T) - G board
+    - Pro Wrestling                     (PW) - B board
+    - Rad Racer                         (RC) - D board
+    - Rad Racer II                      (QR) - G board
+    - RC Pro Am                         (PM) - F board
+    - Rescue Rangers                    (RU) - F board
+    - Rockin' Kats                      (7A) - G board
+    - Rush N' Attack                    (RA) - B board
+    - Rygar                             (RY) - B board
+    - Solar Jetman                      (LJ) - i board
+    - Super C                           (UE) - G board
+    - Super Mario Bros                  (SM) - Standard board
+    - Super Mario Bros 2                (MW) - G board
+    - Super Mario Bros 3                (UM) - G board
+    - Tecmo Bowl                        (TW) - F board
+    - Teenage Mutant Ninja Turtles      (U2) - F board
+    - Teenage Mutant Ninja Turtles 2    (2N) - G board
+    - Tennis                            (TE) - Standard board
+    - Track & Field                     (TR) - A board
+    - Trojan                            (TJ) - B board
+    - The Goonies                       (GN) - C board
+    - Volley Ball                       (VB) - Standard board
+    - Wild Gunman                       (WG) - Standard board
+    - Yo Noid                           (YC) - F board
+    - Nintendo World Cup                (XZ) - G board
+    - Pinbot                            (IO) - H board
 
 Non working games due to mapper/nes emulation issues:
 -----------------------------------------------------
-	- Mike Tyson's Punchout				(PT) - E board
+    - Mike Tyson's Punchout             (PT) - E board
 
 Non working games due to missing roms:
 --------------------------------------
-	- ShatterHand						(??) - ? board
+    - ShatterHand                       (??) - ? board
 
 ****************************************************************************
 
@@ -131,7 +131,7 @@ The 6 first DSWA (A-F) are used for coinage (units of time given for coin A/coin
 When bit 6 of DSWB (O) is ON, units of time given for coin B are divided by 2
 
 The 6 first DSWB (I-N) are used to set timer speed :
-	[0x80d5] = ( ( (IN A,02) | 0xc0 ) + 0x3c ) & 0xff
+    [0x80d5] = ( ( (IN A,02) | 0xc0 ) + 0x3c ) & 0xff
 
 When bit 7 of DSWB (P) is ON, you're in 'Freeplay' mode with 9999 units of time ...
 However, this is effective ONLY if 7 other DSWB (I-O) are OFF !
@@ -445,105 +445,105 @@ INPUT_PORTS_START( playch10 )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SERVICE1 )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
-    
+
 /*
-	
-	The correct way to handle DIPs according to the manual.
-	Doesn't work due to limitations of the conditional DIPs
-	implementation in MAME.
+
+    The correct way to handle DIPs according to the manual.
+    Doesn't work due to limitations of the conditional DIPs
+    implementation in MAME.
 
 
-	PORT_START_TAG("SW1")
-	PORT_DIPNAME( 0x3f, 0x09, "Prime Time Bonus" )
-	// STANDARD TIME (no bonus)
-	PORT_DIPSETTING(    0x00, "0%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	// PRIME TIME (bonus) for 2 COINS
-	PORT_DIPSETTING(    0x07, "8%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x08, "17%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x09, "25%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x10, "33%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x11, "42%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x12, "50%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x13, "58%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x14, "67%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x15, "75%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x16, "83%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x17, "92%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x18, "100%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	// PRIME TIME (bonus) for 4 COINS
-	PORT_DIPSETTING(    0x04, "8%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x05, "17%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x06, "25%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x07, "33%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x08, "42%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x09, "50%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x10, "58%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x11, "67%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x12, "75%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x13, "83%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x14, "92%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x15, "100%" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_START_TAG("SW1")
+    PORT_DIPNAME( 0x3f, 0x09, "Prime Time Bonus" )
+    // STANDARD TIME (no bonus)
+    PORT_DIPSETTING(    0x00, "0%" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    // PRIME TIME (bonus) for 2 COINS
+    PORT_DIPSETTING(    0x07, "8%" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x08, "17%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x09, "25%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x10, "33%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x11, "42%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x12, "50%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x13, "58%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x14, "67%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x15, "75%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x16, "83%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x17, "92%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x18, "100%" )  PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    // PRIME TIME (bonus) for 4 COINS
+    PORT_DIPSETTING(    0x04, "8%" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x05, "17%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x06, "25%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x07, "33%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x08, "42%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x09, "50%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x10, "58%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x11, "67%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x12, "75%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x13, "83%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x14, "92%" )   PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x15, "100%" )  PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
 
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+    PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
-	PORT_START_TAG("SW2")
-	PORT_DIPNAME( 0x3f, 0x28, "Play Time/Coin" )
-	// STANDARD TIME (no bonus)
-	PORT_DIPSETTING(    0x3f, DEF_STR( Free_Play ) )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x23, "2:00 (120)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x21, "2:10 (130)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x1f, "2:20 (140)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x1d, "2:30 (150)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x1b, "2:40 (160)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x19, "2:50 (170)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x17, "3:00 (180)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x15, "3:10 (190)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x13, "3:20 (200)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x11, "3:30 (210)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x0f, "3:40 (220)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x0d, "3:50 (230)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x0b, "4:00 (240)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x09, "4:10 (250)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x07, "4:20 (260)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x05, "4:30 (270)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x03, "4:40 (280)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	PORT_DIPSETTING(    0x01, "4:50 (290)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
-	// PRIME TIME (bonus) for 2 COINS
-	PORT_DIPSETTING(    0x1c, "2:00 (120)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x1e, "2:10 (130)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x20, "2:20 (140)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x22, "2:30 (150)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x24, "2:40 (160)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x26, "2:50 (170)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x28, "3:00 (180)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x2a, "3:10 (190)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x2c, "3:20 (200)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x2e, "3:30 (210)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x30, "3:40 (220)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x32, "3:50 (230)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	PORT_DIPSETTING(    0x34, "4:00 (240)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
-	// PRIME TIME (bonus) for 4 COINS
-	PORT_DIPSETTING(    0x1c, "2:00 (120)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x1e, "2:10 (130)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x20, "2:20 (140)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x22, "2:30 (150)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x24, "2:40 (160)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x26, "2:50 (170)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x28, "3:00 (180)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x2a, "3:10 (190)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x2c, "3:20 (200)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x2e, "3:30 (210)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x30, "3:40 (220)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x32, "3:50 (230)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	PORT_DIPSETTING(    0x34, "4:00 (240)" )	PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
-	
-	PORT_DIPNAME( 0xc0, 0x80, "Bonus" )
-	PORT_DIPSETTING(    0xc0, "Standard Time" )
-	PORT_DIPSETTING(    0x80, "Prime Time for 2 Coins" )
-	PORT_DIPSETTING(    0x00, "Prime Time for 4 Coins" )
+    PORT_START_TAG("SW2")
+    PORT_DIPNAME( 0x3f, 0x28, "Play Time/Coin" )
+    // STANDARD TIME (no bonus)
+    PORT_DIPSETTING(    0x3f, DEF_STR( Free_Play ) )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x23, "2:00 (120)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x21, "2:10 (130)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x1f, "2:20 (140)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x1d, "2:30 (150)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x1b, "2:40 (160)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x19, "2:50 (170)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x17, "3:00 (180)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x15, "3:10 (190)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x13, "3:20 (200)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x11, "3:30 (210)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x0f, "3:40 (220)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x0d, "3:50 (230)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x0b, "4:00 (240)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x09, "4:10 (250)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x07, "4:20 (260)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x05, "4:30 (270)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x03, "4:40 (280)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    PORT_DIPSETTING(    0x01, "4:50 (290)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0xc0 )
+    // PRIME TIME (bonus) for 2 COINS
+    PORT_DIPSETTING(    0x1c, "2:00 (120)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x1e, "2:10 (130)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x20, "2:20 (140)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x22, "2:30 (150)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x24, "2:40 (160)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x26, "2:50 (170)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x28, "3:00 (180)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x2a, "3:10 (190)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x2c, "3:20 (200)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x2e, "3:30 (210)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x30, "3:40 (220)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x32, "3:50 (230)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    PORT_DIPSETTING(    0x34, "4:00 (240)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x80 )
+    // PRIME TIME (bonus) for 4 COINS
+    PORT_DIPSETTING(    0x1c, "2:00 (120)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x1e, "2:10 (130)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x20, "2:20 (140)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x22, "2:30 (150)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x24, "2:40 (160)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x26, "2:50 (170)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x28, "3:00 (180)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x2a, "3:10 (190)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x2c, "3:20 (200)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x2e, "3:30 (210)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x30, "3:40 (220)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x32, "3:50 (230)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+    PORT_DIPSETTING(    0x34, "4:00 (240)" )    PORT_DIPCONDITION(2, 0xc0, PORTCOND_EQUALS, 0x00 )
+
+    PORT_DIPNAME( 0xc0, 0x80, "Bonus" )
+    PORT_DIPSETTING(    0xc0, "Standard Time" )
+    PORT_DIPSETTING(    0x80, "Prime Time for 2 Coins" )
+    PORT_DIPSETTING(    0x00, "Prime Time for 4 Coins" )
 */
 	PORT_START_TAG("SW1")
 	PORT_DIPNAME( 0x3f, 0x00, "Units of time (coin A/coin B)" )
@@ -1623,7 +1623,7 @@ GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "P
 
 /******************************************************************************/
 
-/*    YEAR  NAME     PARENT	   MACHINE	 INPUT     INIT  	 MONITOR  */
+/*    YEAR  NAME     PARENT    MACHINE   INPUT     INIT      MONITOR  */
 
 /* Standard Games */
 GAME( 1983, pc_tenis, playch10, playch10, playch10, playch10, ROT0, "Nintendo",									"Tennis (PlayChoice-10)" )

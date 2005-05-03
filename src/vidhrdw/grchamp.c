@@ -1,4 +1,4 @@
-/*	video hardware for Taito Grand Champion */
+/*  video hardware for Taito Grand Champion */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -146,7 +146,7 @@ VIDEO_START( grchamp )
 	work_bitmap = auto_bitmap_alloc( 32,32 );
 	if( !work_bitmap )
 		return 1;
-		
+
 	tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
 	tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
 	tilemap[2] = tilemap_create(get_bg2_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -189,11 +189,11 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 	int dx = -48;
 	int dy = 16;
 	int attributes = grchamp_vreg1[0x3];
-		/*	----xxxx	Analog Tachometer output
-		**	---x----	palette select
-		**	--x-----	enables msb of bg#3 xscroll
-		**	xx------	unused
-		*/
+		/*  ----xxxx    Analog Tachometer output
+        **  ---x----    palette select
+        **  --x-----    enables msb of bg#3 xscroll
+        **  xx------    unused
+        */
 
 	int color = (attributes&0x10)?1:0;
 	if( color!=palette_bank )
@@ -263,8 +263,8 @@ static int collision_check( struct mame_bitmap *bitmap, int which )
 					{
 						result = 1; /* flag collision */
 
-						/*	wipe this pixel, so collision checks with the
-						**	next layer work */
+						/*  wipe this pixel, so collision checks with the
+                        **  next layer work */
 						plot_pixel( bitmap, sx, sy, bgcolor );
 					}
 				}
@@ -330,7 +330,7 @@ static void draw_headlights( struct mame_bitmap *bitmap, const struct rectangle 
 					if( data&0x80 ){
 						sx = x0+x+bit;
 						sy = y0+y;
-						if( sx>=cliprect->min_x && sy>=cliprect->min_y && 
+						if( sx>=cliprect->min_x && sy>=cliprect->min_y &&
 							sx<=cliprect->max_x && sy<=cliprect->max_y )
 						{
 							color = read_pixel( headlight_bitmap, x+bit, y );
@@ -355,7 +355,7 @@ static void draw_radar( struct mame_bitmap *bitmap, const struct rectangle *clip
 			int y = (offs/32)+16;
 			int bit;
 			for( bit=0; bit<8; bit++ ){
-				if( data&0x80 ) 
+				if( data&0x80 )
 					if ((x+bit) >= cliprect->min_x && (x+bit) <= cliprect->max_x &&
 						y >= cliprect->min_y && y <= cliprect->max_y)
 						plot_pixel( bitmap, x+bit, y, color );
@@ -367,17 +367,17 @@ static void draw_radar( struct mame_bitmap *bitmap, const struct rectangle *clip
 
 static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 /*
-	int value = grchamp_vreg1[0x03]&0xf;
-	int i;
-	for( i=0; i<value; i++ ){
-		drawgfx( bitmap, Machine->uifont,
-			'*',
-			0,
-			0,0,
-			i*6+32,64,
-			0,
-			TRANSPARENCY_NONE, 0 );
-	}
+    int value = grchamp_vreg1[0x03]&0xf;
+    int i;
+    for( i=0; i<value; i++ ){
+        drawgfx( bitmap, Machine->uifont,
+            '*',
+            0,
+            0,0,
+            i*6+32,64,
+            0,
+            TRANSPARENCY_NONE, 0 );
+    }
 */
 }
 

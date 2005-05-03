@@ -91,13 +91,13 @@ lev 5 : 0x74 : 0000 0524 - rte
 lev 6 : 0x78 : 0000 0524 - rte
 lev 7 : 0x7c : 0000 0524 - rte
 
-Board:	MJ-8956
+Board:  MJ-8956
 
-CPU:	68000-8
-		M50747 (not dumped)
-Sound:	M6295
-OSC:	12.000MHz
-		4.000MHz
+CPU:    68000-8
+        M50747 (not dumped)
+Sound:  M6295
+OSC:    12.000MHz
+        4.000MHz
 *******************************************************************************************/
 
 #include "driver.h"
@@ -243,7 +243,7 @@ static void daireika_mcu_run(void)
 		MCU_READ(2,0x1000,0x000/2,0x10);/*REACH (trusted)*/
 		MCU_READ(2,0x0400,0x000/2,0x11);/*KAN            */
 		MCU_READ(3,0x0008,0x000/2,0x12);/*PON            */
-		MCU_READ(3,0x0002,0x000/2,0x13);/*CHI 	(trusted)*/
+		MCU_READ(3,0x0002,0x000/2,0x13);/*CHI   (trusted)*/
 		MCU_READ(2,0x0004,0x000/2,0x14);/*START1*/
 	}
 	jm_regs[0x00c/2] = mame_rand() & 0xffff;
@@ -288,7 +288,7 @@ static void urashima_mcu_run(void)
 		MCU_READ(2,0x1000,0x300/2,0x10);/*REACH (trusted)*/
 		MCU_READ(2,0x0400,0x300/2,0x11);/*KAN            */
 		MCU_READ(3,0x0008,0x300/2,0x12);/*PON            */
-		MCU_READ(3,0x0002,0x300/2,0x13);/*CHI 	(trusted)*/
+		MCU_READ(3,0x0002,0x300/2,0x13);/*CHI   (trusted)*/
 		MCU_READ(2,0x0004,0x300/2,0x14);/*START1*/
 	}
 	jm_regs[0x30c/2] = mame_rand() & 0xffff;
@@ -330,7 +330,7 @@ static void second_mcu_run(void)
 		MCU_READ(3,0x0002,0x200/2,0x13);/*CHI*/
 		MCU_READ(2,0x0004,0x200/2,0x14);/*START1*/
 
-//		MCU_READ(2,0x0004,0x7b8/2,0x03);/*START1(correct?)  */
+//      MCU_READ(2,0x0004,0x7b8/2,0x03);/*START1(correct?)  */
 	}
 	jm_regs[0x20c/2] = mame_rand() & 0xffff; //kakumei2
 
@@ -350,13 +350,13 @@ VIDEO_UPDATE( jalmah )
 	switch(mcu_prg)
 	{
 		/*
-		#define DAIREIKA_MCU (0x11)
-		#define URASHIMA_MCU (0x12)
-		#define MJZOOMIN_MCU (0x13)
-		#define KAKUMEI_MCU  (0x21)
-		#define KAKUMEI2_MCU (0x22)
-		#define SUCHIPI_MCU  (0x23)
-		*/
+        #define DAIREIKA_MCU (0x11)
+        #define URASHIMA_MCU (0x12)
+        #define MJZOOMIN_MCU (0x13)
+        #define KAKUMEI_MCU  (0x21)
+        #define KAKUMEI2_MCU (0x22)
+        #define SUCHIPI_MCU  (0x23)
+        */
 		case MJZOOMIN_MCU:
 		case DAIREIKA_MCU: daireika_mcu_run(); break;
 		case URASHIMA_MCU: urashima_mcu_run(); break;
@@ -384,31 +384,31 @@ VIDEO_UPDATE( jalmah )
 	usrintf_showmessage("%04d %04d %04x %02x %01x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db,pri);
 	#endif
 	/*
-	Case by case priorities:
-	kakumei: title screen     = 0/23  (0-1 unused)
-			 attract mode     = 0/0123 (?)
-			 card table       = 0/013 (2 unused)
-			 gameplay         = 0/0123
-	kakumei2:title screen     = 0/0123
-	         attract mode     = 4/013 (2 unused) also 4/0213
-	         card table       = 9/013 (2 unused)
-	         character screen = 9/013 (2 unused)
-	         gameplay         = 2/03  (1-2 unused) also 2/013 (2 unused)
-	         continue screen  = 9/013 (2 unused)
-	suchipi: title screen     = 0/03  (1-2 unused)
-	         attract mode     = 6/103 (2 unused) also 6/1023
-	         card table       = 1/013 (2 unused)
-	         character screen = 4/0213
-	         victory screen   = 6/0123 also 6/1023
-	         gameplay         = d/0123
-	mjzoomin doesn't seem to use the priority number (0/0123)
-	daireika/urashima uses priority number with the protection device
-	daireika: gameplay        = x/103 (2 unused),might be 6
-	good results:
-	0/0123
-	4/0213
-	6/1023
-	*/
+    Case by case priorities:
+    kakumei: title screen     = 0/23  (0-1 unused)
+             attract mode     = 0/0123 (?)
+             card table       = 0/013 (2 unused)
+             gameplay         = 0/0123
+    kakumei2:title screen     = 0/0123
+             attract mode     = 4/013 (2 unused) also 4/0213
+             card table       = 9/013 (2 unused)
+             character screen = 9/013 (2 unused)
+             gameplay         = 2/03  (1-2 unused) also 2/013 (2 unused)
+             continue screen  = 9/013 (2 unused)
+    suchipi: title screen     = 0/03  (1-2 unused)
+             attract mode     = 6/103 (2 unused) also 6/1023
+             card table       = 1/013 (2 unused)
+             character screen = 4/0213
+             victory screen   = 6/0123 also 6/1023
+             gameplay         = d/0123
+    mjzoomin doesn't seem to use the priority number (0/0123)
+    daireika/urashima uses priority number with the protection device
+    daireika: gameplay        = x/103 (2 unused),might be 6
+    good results:
+    0/0123
+    4/0213
+    6/1023
+    */
 	if(!(pri & 2) || (pri & 0x8)) { jalmah_tilemap_draw(sc0_tilemap); }
 	if(!(pri & 4) || (pri & 0x8)) { jalmah_tilemap_draw(sc1_tilemap); }
 	if(!(pri & 2) || (pri & 0x8)) { jalmah_tilemap_draw(sc2_tilemap); }
@@ -475,9 +475,9 @@ WRITE16_HANDLER( sc2_vram_w )
 WRITE16_HANDLER( jalmah_tilebank_w )
 {
 	/*
-	 xxxx ---- fg bank (used by suchipi)
-	 ---- xxxx Priority number (trusted,see mjzoomin)
-	*/
+     xxxx ---- fg bank (used by suchipi)
+     ---- xxxx Priority number (trusted,see mjzoomin)
+    */
 	//usrintf_showmessage("Write to tilebank %02x",data);
 	if (ACCESSING_LSB)
 	{
@@ -503,9 +503,9 @@ static WRITE16_HANDLER( jalmah_scroll_w )
 	{
 		/*These 4 are just video regs,see mjzoomin test*/
 		/*
-			---x ---- Always on,8x8 tiles switch?
-			---- --xx RANGE registers
-		*/
+            ---x ---- Always on,8x8 tiles switch?
+            ---- --xx RANGE registers
+        */
 		case (0x24/2): jm_vregs[0] = data; break;
 		case (0x2c/2): jm_vregs[1] = data; break;
 		case (0x34/2): jm_vregs[2] = data; break;
@@ -554,7 +554,7 @@ WRITE16_HANDLER( jalmah_flip_screen_w )
 	/*---- ----x flip screen*/
 	flip_screen_set(data & 1);
 
-//	usrintf_showmessage("%04x",data);
+//  usrintf_showmessage("%04x",data);
 }
 
 static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
@@ -568,7 +568,7 @@ static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
 /**/AM_RANGE(0x080016, 0x080017) AM_READ(MRA16_RAM) AM_WRITE(jalmah_tilebank_w)
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(jalmah_okibank_w)
 	AM_RANGE(0x08001a, 0x08001b) AM_WRITE(jalmah_okirom_w)
-	//		 0x08001c, 0x08001d  write 1 by urashima (?)
+	//       0x08001c, 0x08001d  write 1 by urashima (?)
 /**/AM_RANGE(0x080020, 0x08003f) AM_READ(MRA16_RAM) AM_WRITE(jalmah_scroll_w)
 	AM_RANGE(0x080040, 0x080041) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	//       0x084000, 0x084001  ?
@@ -1234,8 +1234,8 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		//usrintf_showmessage("%04x %02x",jm_regs[0x030e/2],data);
 
 		/*******************************************************
-		1st M68k code uploaded by the MCU (sound prg)
-		*******************************************************/
+        1st M68k code uploaded by the MCU (sound prg)
+        *******************************************************/
 		jm_regs[0x0320/2] = 0x4ef9;
 		jm_regs[0x0322/2] = 0x0010;
 		jm_regs[0x0324/2] = 0x2000;//jmp $102000
@@ -1260,8 +1260,8 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		jm_mcu_code[0x2022/2] = 0x66f4;
 		jm_mcu_code[0x2024/2] = 0x4e75;
 		/*******************************************************
-		1st alt M68k code uploaded by the MCU (Input test mode)
-		*******************************************************/
+        1st alt M68k code uploaded by the MCU (Input test mode)
+        *******************************************************/
 		/*similar to mjzoomin but with offset summed with 0x300?*/
 		/*tx scrollx = $200*/
 		jm_regs[0x03c6/2] = 0x6008;//bra $+10
@@ -1287,8 +1287,8 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		jm_mcu_code[0x001e/2] = 0x4e75;//rts
 
 		/*******************************************************
-		2nd M68k code uploaded by the MCU (tile upload)
-		*******************************************************/
+        2nd M68k code uploaded by the MCU (tile upload)
+        *******************************************************/
 		jm_regs[0x03ca/2] = 0x4ef9;
 		jm_regs[0x03cc/2] = 0x0010;
 		jm_regs[0x03ce/2] = 0x0800;//jmp $100800
@@ -1297,17 +1297,17 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		jm_mcu_code[0x0804/2] = 0xfffc;
 		jm_mcu_code[0x0806/2] = 0x4e75;
 		/*******************************************************
-		3rd M68k code uploaded by the MCU (palette upload)
-		*******************************************************/
+        3rd M68k code uploaded by the MCU (palette upload)
+        *******************************************************/
 		jm_regs[0x03c0/2] = 0x4ef9;
 		jm_regs[0x03c2/2] = 0x0010;
 		jm_regs[0x03c4/2] = 0x1000;//jmp $101000
 		/*
-		palette additional protection:
-		A1:88200 = x:88000
-		A1:88000 = x:88600
-		TODO: optimize this...
-		*/
+        palette additional protection:
+        A1:88200 = x:88000
+        A1:88000 = x:88600
+        TODO: optimize this...
+        */
 		jm_mcu_code[0x1000/2] = 0x92fc;
 		jm_mcu_code[0x1002/2] = 0x0200;//suba.w $200,A1
 		jm_mcu_code[0x1004/2] = 0xb3fc;
@@ -1384,37 +1384,37 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		//jm_regs[0x000e/2] = 0x0005;
 
 		/*******************************************************
-		1st M68k code uploaded by the MCU.
-		*******************************************************/
+        1st M68k code uploaded by the MCU.
+        *******************************************************/
 		jm_regs[0x0140/2] = 0x4e75; 	//rts
 
 		/*
-		jm_regs[0x0140/2] = 0x4ef9;
-		jm_regs[0x0142/2] = 0x0010;
-		jm_regs[0x0144/2] = 0x1000;//jmp $101000
-		//jm_regs[0x00c6/2] = 0x4e75;//rts
-		jm_mcu_code[0x1000/2] = 0x33c2;
-		jm_mcu_code[0x1002/2] = 0x0010;
-		jm_mcu_code[0x1004/2] = 0x17fe; //move.w D2,$1017fe
-		jm_mcu_code[0x1006/2] = 0x23c8;
-		jm_mcu_code[0x1008/2] = 0x0010;
-		jm_mcu_code[0x100a/2] = 0x17f0;
-		jm_mcu_code[0x100c/2] = 0x2050; //movea (A0),A0
-		jm_mcu_code[0x100e/2] = 0x22d8;
-		jm_mcu_code[0x1010/2] = 0x51ca;
-		jm_mcu_code[0x1012/2] = 0xfffc;
-		jm_mcu_code[0x1014/2] = 0x3439;
-		jm_mcu_code[0x1016/2] = 0x0010;
-		jm_mcu_code[0x1018/2] = 0x17fe;
-		jm_mcu_code[0x101a/2] = 0x2079;
-		jm_mcu_code[0x101c/2] = 0x0010;
-		jm_mcu_code[0x101e/2] = 0x17f0;
-		jm_mcu_code[0x1020/2] = 0xd0fc;
-		jm_mcu_code[0x1022/2] = 0x0004;//adda.w $4,A0
-		jm_mcu_code[0x1024/2] = 0x4e75;*/
+        jm_regs[0x0140/2] = 0x4ef9;
+        jm_regs[0x0142/2] = 0x0010;
+        jm_regs[0x0144/2] = 0x1000;//jmp $101000
+        //jm_regs[0x00c6/2] = 0x4e75;//rts
+        jm_mcu_code[0x1000/2] = 0x33c2;
+        jm_mcu_code[0x1002/2] = 0x0010;
+        jm_mcu_code[0x1004/2] = 0x17fe; //move.w D2,$1017fe
+        jm_mcu_code[0x1006/2] = 0x23c8;
+        jm_mcu_code[0x1008/2] = 0x0010;
+        jm_mcu_code[0x100a/2] = 0x17f0;
+        jm_mcu_code[0x100c/2] = 0x2050; //movea (A0),A0
+        jm_mcu_code[0x100e/2] = 0x22d8;
+        jm_mcu_code[0x1010/2] = 0x51ca;
+        jm_mcu_code[0x1012/2] = 0xfffc;
+        jm_mcu_code[0x1014/2] = 0x3439;
+        jm_mcu_code[0x1016/2] = 0x0010;
+        jm_mcu_code[0x1018/2] = 0x17fe;
+        jm_mcu_code[0x101a/2] = 0x2079;
+        jm_mcu_code[0x101c/2] = 0x0010;
+        jm_mcu_code[0x101e/2] = 0x17f0;
+        jm_mcu_code[0x1020/2] = 0xd0fc;
+        jm_mcu_code[0x1022/2] = 0x0004;//adda.w $4,A0
+        jm_mcu_code[0x1024/2] = 0x4e75;*/
 		/*******************************************************
-		2nd M68k code uploaded by the MCU.
-		*******************************************************/
+        2nd M68k code uploaded by the MCU.
+        *******************************************************/
 		jm_regs[0x0020/2] = 0x4ef9;
 		jm_regs[0x0022/2] = 0x0010;
 		jm_regs[0x0024/2] = 0x2000;//jmp $102000
@@ -1438,9 +1438,9 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x2022/2] = 0x66f4;
 		jm_mcu_code[0x2024/2] = 0x4e75;
 		/*******************************************************
-		3rd M68k code uploaded by the MCU.
-		see mjzoomin_mcu_w
-		*******************************************************/
+        3rd M68k code uploaded by the MCU.
+        see mjzoomin_mcu_w
+        *******************************************************/
 		jm_regs[0x00c6/2] = 0x6000;
 		jm_regs[0x00c8/2] = 0x0008;//bra +$8,needed because we have only two bytes here
 		             			   //and we need three...
@@ -1454,9 +1454,9 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x0006/2] = 0xfffc;//dbra D1,f00ca
 		jm_mcu_code[0x0008/2] = 0x4e75;//rts
 		/*******************************************************
-		4th M68k code uploaded by the MCU
-		They seem video code cleaning functions
-		*******************************************************/
+        4th M68k code uploaded by the MCU
+        They seem video code cleaning functions
+        *******************************************************/
 		//108800
 		jm_regs[0x0100/2] = 0x4ef9;
 		jm_regs[0x0102/2] = 0x0010;
@@ -1555,32 +1555,32 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x89a8/2] = 0x4e75; //rts
 
 /*
-		jm_regs[0x0100/2] = 0x4ef9;
-		jm_regs[0x0102/2] = 0x0010;
-		jm_regs[0x0104/2] = 0x1000;//jmp $101000
-		//jm_regs[0x00c6/2] = 0x4e75;//rts
-		jm_mcu_code[0x1000/2] = 0x33c2;
-		jm_mcu_code[0x1002/2] = 0x0010;
-		jm_mcu_code[0x1004/2] = 0x17fe; //move.w D2,$1017fe
-		jm_mcu_code[0x1006/2] = 0x23c8;
-		jm_mcu_code[0x1008/2] = 0x0010;
-		jm_mcu_code[0x100a/2] = 0x17f0;
-		jm_mcu_code[0x100c/2] = 0x2050; //movea (A0),A0
-		jm_mcu_code[0x100e/2] = 0x22d8;
-		jm_mcu_code[0x1010/2] = 0x51ca;
-		jm_mcu_code[0x1012/2] = 0xfffc;
-		jm_mcu_code[0x1014/2] = 0x3439;
-		jm_mcu_code[0x1016/2] = 0x0010;
-		jm_mcu_code[0x1018/2] = 0x17fe;
-		jm_mcu_code[0x101a/2] = 0x2079;
-		jm_mcu_code[0x101c/2] = 0x0010;
-		jm_mcu_code[0x101e/2] = 0x17f0;
-		jm_mcu_code[0x1020/2] = 0xd0fc;
-		jm_mcu_code[0x1022/2] = 0x0004;//adda.w $4,A0
-		jm_mcu_code[0x1024/2] = 0x4e75;*/
+        jm_regs[0x0100/2] = 0x4ef9;
+        jm_regs[0x0102/2] = 0x0010;
+        jm_regs[0x0104/2] = 0x1000;//jmp $101000
+        //jm_regs[0x00c6/2] = 0x4e75;//rts
+        jm_mcu_code[0x1000/2] = 0x33c2;
+        jm_mcu_code[0x1002/2] = 0x0010;
+        jm_mcu_code[0x1004/2] = 0x17fe; //move.w D2,$1017fe
+        jm_mcu_code[0x1006/2] = 0x23c8;
+        jm_mcu_code[0x1008/2] = 0x0010;
+        jm_mcu_code[0x100a/2] = 0x17f0;
+        jm_mcu_code[0x100c/2] = 0x2050; //movea (A0),A0
+        jm_mcu_code[0x100e/2] = 0x22d8;
+        jm_mcu_code[0x1010/2] = 0x51ca;
+        jm_mcu_code[0x1012/2] = 0xfffc;
+        jm_mcu_code[0x1014/2] = 0x3439;
+        jm_mcu_code[0x1016/2] = 0x0010;
+        jm_mcu_code[0x1018/2] = 0x17fe;
+        jm_mcu_code[0x101a/2] = 0x2079;
+        jm_mcu_code[0x101c/2] = 0x0010;
+        jm_mcu_code[0x101e/2] = 0x17f0;
+        jm_mcu_code[0x1020/2] = 0xd0fc;
+        jm_mcu_code[0x1022/2] = 0x0004;//adda.w $4,A0
+        jm_mcu_code[0x1024/2] = 0x4e75;*/
 		/*******************************************************
-		5th M68k code uploaded by the MCU
-		*******************************************************/
+        5th M68k code uploaded by the MCU
+        *******************************************************/
 		jm_regs[0x00c0/2] = 0x4ef9;
 		jm_regs[0x00c2/2] = 0x0010;
 		jm_regs[0x00c4/2] = 0x1000;//jmp $101000
@@ -1615,8 +1615,8 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x1036/2] = 0x17fc;
 		jm_mcu_code[0x1038/2] = 0x4e75;
 		/*******************************************************
-		6th M68k code uploaded by the MCU (tile upload)
-		*******************************************************/
+        6th M68k code uploaded by the MCU (tile upload)
+        *******************************************************/
 		jm_regs[0x00ca/2] = 0x4ef9;
 		jm_regs[0x00cc/2] = 0x0010;
 		jm_regs[0x00ce/2] = 0x1800;//jmp $101800
@@ -1666,13 +1666,13 @@ static WRITE16_HANDLER( mjzoomin_mcu_w )
 	if(ACCESSING_LSB && data)
 	{
 		/*******************************************************
-		1st M68k code uploaded by the MCU(Service Mode PC=2a56).
-		Program passes some parameters before entering into the sub-routine (jsr)
-		D1 = 0xf
-		A0 = 1026e
-		A1 = 88600
-		(A0) is the vector number for take the real palette address.
-		*******************************************************/
+        1st M68k code uploaded by the MCU(Service Mode PC=2a56).
+        Program passes some parameters before entering into the sub-routine (jsr)
+        D1 = 0xf
+        A0 = 1026e
+        A1 = 88600
+        (A0) is the vector number for take the real palette address.
+        *******************************************************/
 		jm_regs[0x00c6/2] = 0x4ef9;
 		jm_regs[0x00c8/2] = 0x0010;
 		jm_regs[0x00ca/2] = 0x0000;//jsr $100000
@@ -1683,10 +1683,10 @@ static WRITE16_HANDLER( mjzoomin_mcu_w )
 		jm_mcu_code[0x0006/2] = 0xfffc;//dbra D1,f00ca
 		jm_mcu_code[0x0008/2] = 0x4e75;//rts
 		/*******************************************************
-		2nd M68k code uploaded by the MCU (Sound read/write)
-		(Note:copied from suchipi,sound makes the game slower
-		so I think I'm missing something here)
-		*******************************************************/
+        2nd M68k code uploaded by the MCU (Sound read/write)
+        (Note:copied from suchipi,sound makes the game slower
+        so I think I'm missing something here)
+        *******************************************************/
 		jm_regs[0x0020/2] = 0x4ef9;
 		jm_regs[0x0022/2] = 0x0010;
 		jm_regs[0x0024/2] = 0x1800;//jmp $101800
@@ -1710,9 +1710,9 @@ static WRITE16_HANDLER( mjzoomin_mcu_w )
 		jm_mcu_code[0x1822/2] = 0x66f4;
 		jm_mcu_code[0x1824/2] = 0x4e75;
 		/*******************************************************
-		3rd M68k code uploaded by the MCU(palette upload, 99,(9)%
-		sure on this ;-)
-		*******************************************************/
+        3rd M68k code uploaded by the MCU(palette upload, 99,(9)%
+        sure on this ;-)
+        *******************************************************/
 		jm_regs[0x00c0/2] = 0x4ef9;
 		jm_regs[0x00c2/2] = 0x0010;
 		jm_regs[0x00c4/2] = 0x1000;//jmp $101000

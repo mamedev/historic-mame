@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Xybots hardware
+    Atari Xybots hardware
 
 ****************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -37,7 +37,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -102,7 +102,7 @@ VIDEO_START( xybots )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -127,18 +127,18 @@ VIDEO_UPDATE( xybots )
 				{
 					/* verified via schematics:
 
-						PRIEN = ~(~MOPIX3 & ~MOPIX2 & ~MOPIX1) = (MOPIX3-0 > 1)
+                        PRIEN = ~(~MOPIX3 & ~MOPIX2 & ~MOPIX1) = (MOPIX3-0 > 1)
 
-						if (PRIEN)
-							PF/MO = (~MOPRI3-0 > PFCOL3-0)
-						else
-							PF/MO = (~MOPRI3-0 >= PFCOL3-0)
+                        if (PRIEN)
+                            PF/MO = (~MOPRI3-0 > PFCOL3-0)
+                        else
+                            PF/MO = (~MOPRI3-0 >= PFCOL3-0)
 
-						if (PF/MO | ~(PRIEN & MOCOL3))
-							GPC(P3-0) = PFPIX3-0
-						else
-							GPC(P3-0) = ~MOCOL3-0
-					*/
+                        if (PF/MO | ~(PRIEN & MOCOL3))
+                            GPC(P3-0) = PFPIX3-0
+                        else
+                            GPC(P3-0) = ~MOCOL3-0
+                    */
 					int mopriority = (mo[x] >> ATARIMO_PRIORITY_SHIFT) ^ 15;
 					int pfcolor = (pf[x] >> 4) & 0x0f;
 					int prien = ((mo[x] & 0x0f) > 1);

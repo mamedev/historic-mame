@@ -281,46 +281,46 @@ PROMs : (x1, near EPR-7543.12B, labelled PR7571)
 DIPSW : 8 position (x1)
 DIPSW Info:
 
-			1	2	3	4	5	6	7	8
+            1   2   3   4   5   6   7   8
 -----------------------------------------------------------------------------------
-Coin1  
-        1Coin 1Credit	OFF	OFF	OFF
-	2Coin 1Credit	ON	OFF	OFF
-	3Coin 1Credit	OFF	ON	OFF
-	4Coin 1Credit	ON	ON	OFF
-	1Coin 2Credit	OFF	OFF	ON
-	1Coin 3Credit	ON	OFF	ON
-	1Coin 4Credit	OFF	ON	ON
-	2Coin 3Credit	ON	ON	ON
+Coin1
+        1Coin 1Credit   OFF OFF OFF
+    2Coin 1Credit   ON  OFF OFF
+    3Coin 1Credit   OFF ON  OFF
+    4Coin 1Credit   ON  ON  OFF
+    1Coin 2Credit   OFF OFF ON
+    1Coin 3Credit   ON  OFF ON
+    1Coin 4Credit   OFF ON  ON
+    2Coin 3Credit   ON  ON  ON
 -----------------------------------------------------------------------------------
 Coin2
-	1Coin 1Credit				OFF	OFF
-	1Coin 2Credit				ON	OFF
-	2Coin 1Credit				OFF	ON
-	3Coin 1Credit				ON	ON
+    1Coin 1Credit               OFF OFF
+    1Coin 2Credit               ON  OFF
+    2Coin 1Credit               OFF ON
+    3Coin 1Credit               ON  ON
 -----------------------------------------------------------------------------------
 Demo Sound
-	Off							OFF
-	On							ON
+    Off                         OFF
+    On                          ON
 -----------------------------------------------------------------------------------
-Not Used								OFF	
+Not Used                                OFF
 -----------------------------------------------------------------------------------
 Language
-	Japanese								OFF
-	English									ON
+    Japanese                                OFF
+    English                                 ON
 -----------------------------------------------------------------------------------
 
 
 
 
-PCB Edge Connector Pinout		
+PCB Edge Connector Pinout
 -------------------------
 
 Parts               Solder
 Side                Side
 --------------------------------
-GND         A  1    GND 
-GND         B  2    GND 
+GND         A  1    GND
+GND         B  2    GND
 COIN 2      C  3    -
 1P HOLD     D  4    2P HOLD
 1P PUNCH    E  5    2P PUNCH
@@ -348,15 +348,15 @@ Controls via 8-way Joystick and 3 buttons (Punch, Hold, Kick)
 
 
 
-			Byte
-ROMs  : 		C'sum (for Mike ;-)
+            Byte
+ROMs  :         C'sum (for Mike ;-)
 ----------------------------------------
-EPR-7540.13D    27C256	6A13h
-EPR-7541.14D      "	2723h
-EPR-7542.15D      "	01E7h
-EPR-7543.12B      "	6558h	
+EPR-7540.13D    27C256  6A13h
+EPR-7541.14D      " 2723h
+EPR-7542.15D      " 01E7h
+EPR-7543.12B      " 6558h
 
-PR7571.10A      82s123	0A9Fh
+PR7571.10A      82s123  0A9Fh
 
 
 
@@ -370,18 +370,18 @@ RAM   : MB8128 (x2), SONY CXK5813D-55 (x2)
 PALs  : (x3, labelled 315-5054, 315-5053, 315-5203)
 PROMs : (x2, one near EPR-7547.7D labelled PR7572, one near EPR-7544.7H labelled PR7573)
 
-				Byte
-ROMs  : 			C'Sum
+                Byte
+ROMs  :             C'Sum
 -------------------------------------
-EPR-7544.7H    27C256  \ 	ED1Ah
-EPR-7545.6H      "      |	E6CAh
-EPR-7546.5H      "      |	55EAh
-EPR-7547.7D      "      | Gfx	EA3Fh
-EPR-7548.6D      "      |	5D1Fh
-EPR-7549.5D      "     /	16D1h
+EPR-7544.7H    27C256  \    ED1Ah
+EPR-7545.6H      "      |   E6CAh
+EPR-7546.5H      "      |   55EAh
+EPR-7547.7D      "      | Gfx   EA3Fh
+EPR-7548.6D      "      |   5D1Fh
+EPR-7549.5D      "     /    16D1h
 
-PR7572.7F      82s129		06F1h  \ Both have
-PR7573.7G      82s129		06F1h  / identical contents
+PR7572.7F      82s129       06F1h  \ Both have
+PR7573.7G      82s129       06F1h  / identical contents
 
 */
 
@@ -558,7 +558,7 @@ ROM_START( robowres )
 	ROM_CONTINUE(             0x10000, 0x2000 )
 	ROM_LOAD( "epr-7542.15d", 0x14000, 0x8000, CRC(3475fbd4) SHA1(96b28d6492d2e6e8ca9c57abdc5ad4df3777894b) )
 	ROM_COPY( REGION_CPU1, 0x16000, 0x10000, 0x4000 )
-	
+
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr-7544.7h", 0x000000, 0x8000, CRC(07b846ce) SHA1(6d214fbb43003d2ab35340d5b9fece5f637cadc6) )
 	ROM_LOAD( "epr-7545.6h", 0x008000, 0x8000, CRC(e99897be) SHA1(663f32b5290db7ab273e32510583f1aa8d8d4f46) )
@@ -573,7 +573,7 @@ ROM_START( robowres )
 	ROM_LOAD( "pr7571.10a",   0x00000, 0x0020, CRC(e82c6d5c) SHA1(de3090bf922171abd1c30f20ca163f387adc60e1) )
 	ROM_LOAD( "pr7572.7f",   0x00020, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
 	ROM_LOAD( "pr7573.7g",   0x00120, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
-	
+
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* adpcm voice data */
 	ROM_LOAD( "epr-7543.12b", 0x00000, 0x8000, CRC(4d108c49) SHA1(a7c3c5a5ad36917ea7f6d917377c2392fa9beea3) )
 ROM_END
@@ -585,7 +585,7 @@ ROM_START( robowrb )
 	ROM_CONTINUE(             0x10000, 0x2000 )
 	ROM_LOAD( "epr-7542.15d", 0x14000, 0x8000, CRC(3475fbd4) SHA1(96b28d6492d2e6e8ca9c57abdc5ad4df3777894b) )
 	ROM_COPY( REGION_CPU1, 0x16000, 0x10000, 0x4000 )
-	
+
 	ROM_LOAD( "dg1.f13",      0x1c000, 0x8000, CRC(b724968d) SHA1(36618fb81da919d578c2aa1c62d964871903c49f) )
 	ROM_COPY( REGION_CPU1,    0x08000, 0x24000, 0x14000 )
 
@@ -603,7 +603,7 @@ ROM_START( robowrb )
 	ROM_LOAD( "pr7571.10a",   0x00000, 0x0020, CRC(e82c6d5c) SHA1(de3090bf922171abd1c30f20ca163f387adc60e1) )
 	ROM_LOAD( "pr7572.7f",   0x00020, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
 	ROM_LOAD( "pr7573.7g",   0x00120, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
-	
+
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* adpcm voice data */
 	ROM_LOAD( "epr-7543.12b", 0x00000, 0x8000, CRC(4d108c49) SHA1(a7c3c5a5ad36917ea7f6d917377c2392fa9beea3) )
 ROM_END

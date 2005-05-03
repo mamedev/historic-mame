@@ -1,12 +1,12 @@
  /**************************************************************************\
- *						Microchip PIC16C5x Emulator							*
- *																			*
- *					  Copyright (C) 2003+ Tony La Porta						*
- *				   Originally written for the MAME project.					*
- *																			*
- *																			*
- *		Addressing architecture is based on the Harvard addressing scheme.	*
- *																			*
+ *                      Microchip PIC16C5x Emulator                         *
+ *                                                                          *
+ *                    Copyright (C) 2003+ Tony La Porta                     *
+ *                 Originally written for the MAME project.                 *
+ *                                                                          *
+ *                                                                          *
+ *      Addressing architecture is based on the Harvard addressing scheme.  *
+ *                                                                          *
  \**************************************************************************/
 
 #ifndef _PIC16C5X_H
@@ -19,10 +19,10 @@
 
 
 /**************************************************************************
- *	Internal Clock divisor
+ *  Internal Clock divisor
  *
- *	External Clock is divided internally by 4 for the instruction cycle
- *	times. (Each instruction cycle passes through 4 machine states).
+ *  External Clock is divided internally by 4 for the instruction cycle
+ *  times. (Each instruction cycle passes through 4 machine states).
  */
 
 #define PIC16C5x_CLOCK_DIVIDER		4
@@ -38,16 +38,16 @@ enum {
 
 
 /****************************************************************************
- *	Function to configure the CONFIG register. This is actually hard-wired
- *	during ROM programming, so should be called in the driver INIT, with
- *	the value if known (available in HEX dumps of the ROM).
+ *  Function to configure the CONFIG register. This is actually hard-wired
+ *  during ROM programming, so should be called in the driver INIT, with
+ *  the value if known (available in HEX dumps of the ROM).
  */
 
 void pic16c5x_config(int data);
 
 
 /****************************************************************************
- *	Read the state of the T0 Clock input signal
+ *  Read the state of the T0 Clock input signal
  */
 
 #define PIC16C5x_T0		0x10
@@ -55,14 +55,14 @@ void pic16c5x_config(int data);
 
 
 /****************************************************************************
- *	Input a word from given I/O port
+ *  Input a word from given I/O port
  */
 
 #define PIC16C5x_In(Port) ((UINT8)io_read_byte_8((Port)))
 
 
 /****************************************************************************
- *	Output a word to given I/O port
+ *  Output a word to given I/O port
  */
 
 #define PIC16C5x_Out(Port,Value) (io_write_byte_8((Port),Value))
@@ -70,14 +70,14 @@ void pic16c5x_config(int data);
 
 
 /****************************************************************************
- *	Read a word from given RAM memory location
+ *  Read a word from given RAM memory location
  */
 
 #define PIC16C5x_RAM_RDMEM(A) ((UINT8)data_read_byte_8(A))
 
 
 /****************************************************************************
- *	Write a word to given RAM memory location
+ *  Write a word to given RAM memory location
  */
 
 #define PIC16C5x_RAM_WRMEM(A,V) (data_write_byte_8(A,V))
@@ -85,18 +85,18 @@ void pic16c5x_config(int data);
 
 
 /****************************************************************************
- *	PIC16C5X_RDOP() is identical to PIC16C5X_RDMEM() except it is used for
- *	reading opcodes. In case of system with memory mapped I/O, this function
- *	can be used to greatly speed up emulation
+ *  PIC16C5X_RDOP() is identical to PIC16C5X_RDMEM() except it is used for
+ *  reading opcodes. In case of system with memory mapped I/O, this function
+ *  can be used to greatly speed up emulation
  */
 
 #define PIC16C5x_RDOP(A) (cpu_readop16((A)<<1))
 
 
 /****************************************************************************
- *	PIC16C5X_RDOP_ARG() is identical to PIC16C5X_RDOP() except it is used
- *	for reading opcode arguments. This difference can be used to support systems
- *	that use different encoding mechanisms for opcodes and opcode arguments
+ *  PIC16C5X_RDOP_ARG() is identical to PIC16C5X_RDOP() except it is used
+ *  for reading opcode arguments. This difference can be used to support systems
+ *  that use different encoding mechanisms for opcodes and opcode arguments
  */
 
 #define PIC16C5x_RDOP_ARG(A) (cpu_readop_arg16((A)<<1))

@@ -265,24 +265,24 @@ There are read/writes on bit 7 of 0xfff009 ($f009) ...
 */
 /*******************************************************************************
 
-	Miyasu Nonki no Quiz 18-Kin (Japan)
-	(c)1992 EIM
+    Miyasu Nonki no Quiz 18-Kin (Japan)
+    (c)1992 EIM
 
-	Added by Takahiro Nogi <nogi@kt.rim.or.jp> 2003/08/15 -
+    Added by Takahiro Nogi <nogi@kt.rim.or.jp> 2003/08/15 -
 
 
-Board:	OW-13 CPU
-CPU:	68000-10
-		Z80-B
-Sound:	YM2610
-OSC:	20.00000MHz
-		14.31818MHz
-		12.000MHz
-		8.000MHz
-Custom:	C7-01 GGA
-		VS8803
-		VS8904
-		VS8905
+Board:  OW-13 CPU
+CPU:    68000-10
+        Z80-B
+Sound:  YM2610
+OSC:    20.00000MHz
+        14.31818MHz
+        12.000MHz
+        8.000MHz
+Custom: C7-01 GGA
+        VS8803
+        VS8904
+        VS8905
 
 
 1-IC8.BIN    main prg.
@@ -464,7 +464,7 @@ INPUT_PORTS_START( welltris )
 
 #if WELLTRIS_4P_HACK
 	/* These can actually be read in the test mode even if they're not used by the game without patching the code
-	   might be useful if a real 4 player version ever turns up if it was ever produced */
+       might be useful if a real 4 player version ever turns up if it was ever produced */
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)

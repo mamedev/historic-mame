@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega vector hardware
+    Sega vector hardware
 
 *************************************************************************/
 
@@ -49,8 +49,8 @@ void sega_generate_vector_list (void)
   	              (1536-min_x)<<16, (max_y-512)<<16);
 
 	/*
-	 * walk the symbol list until 'last symbol' set
-	 */
+     * walk the symbol list until 'last symbol' set
+     */
 
 	do {
 		draw = vectorram[symbolIndex++];

@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari G42 hardware
+    Atari G42 hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Road Riot 4WD (1991)
-		* Guardians of the 'Hood (1992)
+    Games supported:
+        * Road Riot 4WD (1991)
+        * Guardians of the 'Hood (1992)
 
-	Known bugs:
-		* ASIC65 for Road Riot not quite perfect
+    Known bugs:
+        * ASIC65 for Road Riot not quite perfect
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -28,7 +28,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -45,7 +45,7 @@ static data16_t *sloop_base;
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -77,7 +77,7 @@ static MACHINE_INIT( atarig42 )
 
 /*************************************
  *
- *	I/O read dispatch.
+ *  I/O read dispatch.
  *
  *************************************/
 
@@ -139,27 +139,27 @@ static WRITE16_HANDLER( mo_command_w )
 
 /*************************************
  *
- *	SLOOP banking -- Road Riot
+ *  SLOOP banking -- Road Riot
  *
  *************************************/
 
 static void roadriot_sloop_tweak(int offset)
 {
 /*
-	sequence 1:
+    sequence 1:
 
-		touch $68000
-		touch $68eee and $124/$678/$abc/$1024(bank) in the same instruction
-		touch $69158/$6a690/$6e708/$71166
+        touch $68000
+        touch $68eee and $124/$678/$abc/$1024(bank) in the same instruction
+        touch $69158/$6a690/$6e708/$71166
 
-	sequence 2:
+    sequence 2:
 
-		touch $5edb4 to add 2 to the bank
-		touch $5db0a to add 1 to the bank
-		touch $5f042
-		touch $69158/$6a690/$6e708/$71166
-		touch $68000
-		touch $5d532/$5d534
+        touch $5edb4 to add 2 to the bank
+        touch $5db0a to add 1 to the bank
+        touch $5f042
+        touch $69158/$6a690/$6e708/$71166
+        touch $68000
+        touch $5d532/$5d534
 */
 
 	switch (offset)
@@ -274,7 +274,7 @@ static WRITE16_HANDLER( roadriot_sloop_data_w )
 
 /*************************************
  *
- *	SLOOP banking -- Guardians
+ *  SLOOP banking -- Guardians
  *
  *************************************/
 
@@ -331,7 +331,7 @@ static WRITE16_HANDLER( guardians_sloop_data_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -365,7 +365,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -450,7 +450,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -499,7 +499,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -535,7 +535,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -638,7 +638,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -669,24 +669,24 @@ static DRIVER_INIT( roadriot )
 
 	asic65_config(ASIC65_STANDARD);
 /*
-	Road Riot color MUX
+    Road Riot color MUX
 
-	CRA10=!MGEP*!AN.VID7*AN.0				-- if (mopri < pfpri) && (!alpha)
-	   +!AN.VID7*AN.0*MO.0					or if (mopix == 0) && (!alpha)
+    CRA10=!MGEP*!AN.VID7*AN.0               -- if (mopri < pfpri) && (!alpha)
+       +!AN.VID7*AN.0*MO.0                  or if (mopix == 0) && (!alpha)
 
-	CRA9=MGEP*!AN.VID7*AN.0*!MO.0			-- if (mopri >= pfpri) && (mopix != 0) && (!alpha)
-	   +!AN.VID7*AN.0*PF.VID9				or if (pfpix & 0x200) && (!alpha)
+    CRA9=MGEP*!AN.VID7*AN.0*!MO.0           -- if (mopri >= pfpri) && (mopix != 0) && (!alpha)
+       +!AN.VID7*AN.0*PF.VID9               or if (pfpix & 0x200) && (!alpha)
 
-	CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8		-- if (mopri >= pfpri) && (mopix != 0) && (mopix & 0x100) && (!alpha)
-	   +!MGEP*!AN.VID7*AN.0*PF.VID8			or if (mopri < pfpri) && (pfpix & 0x100) && (!alpha)
-	   +!AN.VID7*AN.0*MO.0*PF.VID8			or if (pfpix & 0x100) && (!alpha)
+    CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8     -- if (mopri >= pfpri) && (mopix != 0) && (mopix & 0x100) && (!alpha)
+       +!MGEP*!AN.VID7*AN.0*PF.VID8         or if (mopri < pfpri) && (pfpix & 0x100) && (!alpha)
+       +!AN.VID7*AN.0*MO.0*PF.VID8          or if (pfpix & 0x100) && (!alpha)
 
-	CRMUXB=!AN.VID7*AN.0					-- if (!alpha)
+    CRMUXB=!AN.VID7*AN.0                    -- if (!alpha)
 
-	CRMUXA=!MGEP							-- if (mopri < pfpri)
-	   +MO.0								or (mopix == 0)
-	   +AN.VID7								or (alpha)
-	   +!AN.0
+    CRMUXA=!MGEP                            -- if (mopri < pfpri)
+       +MO.0                                or (mopix == 0)
+       +AN.VID7                             or (alpha)
+       +!AN.0
 */
 }
 
@@ -723,24 +723,24 @@ static DRIVER_INIT( guardian )
 
 	asic65_config(ASIC65_GUARDIANS);
 /*
-	Guardians color MUX
+    Guardians color MUX
 
-	CRA10=MGEP*!AN.VID7*AN.0*!MO.0			-- if (mopri >= pfpri) && (!alpha) && (mopix != 0)
+    CRA10=MGEP*!AN.VID7*AN.0*!MO.0          -- if (mopri >= pfpri) && (!alpha) && (mopix != 0)
 
-	CRA9=MGEP*!AN.VID7*AN.0*!MO.0*MVID9		-- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x200)
-	   +!MGEP*!AN.VID7*AN.0*PF.VID9			or if (mopri < pfpri) && (!alpha) && (pfpix & 0x200)
-	   +!AN.VID7*AN.0*MO.0*PF.VID9			or if (mopix == 0) && (!alpha) && (pfpix & 0x200)
+    CRA9=MGEP*!AN.VID7*AN.0*!MO.0*MVID9     -- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x200)
+       +!MGEP*!AN.VID7*AN.0*PF.VID9         or if (mopri < pfpri) && (!alpha) && (pfpix & 0x200)
+       +!AN.VID7*AN.0*MO.0*PF.VID9          or if (mopix == 0) && (!alpha) && (pfpix & 0x200)
 
-	CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8		-- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x100)
-	   +!MGEP*!AN.VID7*AN.0*PF.VID8			or if (mopri < pfpri) && (!alpha) && (pfpix & 0x100)
-	   +!AN.VID7*AN.0*MO.0*PF.VID8			or if (mopix == 0) && (!alpha) && (pfpix & 0x100)
+    CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8     -- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x100)
+       +!MGEP*!AN.VID7*AN.0*PF.VID8         or if (mopri < pfpri) && (!alpha) && (pfpix & 0x100)
+       +!AN.VID7*AN.0*MO.0*PF.VID8          or if (mopix == 0) && (!alpha) && (pfpix & 0x100)
 
-	CRMUXB=!AN.VID7*AN.0					-- if (!alpha)
+    CRMUXB=!AN.VID7*AN.0                    -- if (!alpha)
 
-	CRMUXA=!MGEP							-- if (mopri < pfpri)
-	   +MO.0								or (mopix == 0)
-	   +AN.VID7								or (alpha)
-	   +!AN.0
+    CRMUXA=!MGEP                            -- if (mopri < pfpri)
+       +MO.0                                or (mopix == 0)
+       +AN.VID7                             or (alpha)
+       +!AN.0
 */
 }
 
@@ -748,7 +748,7 @@ static DRIVER_INIT( guardian )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

@@ -4,10 +4,10 @@ Real Mahjong Haihai                (c)1985 Alba
 Real Mahjong Haihai Jinji Idou Hen (c)1986 Alba
 Real Mahjong Haihai Seichouhen     (c)1986 Visco
 
-CPU:	Z80
-Sound:	AY-3-8910
+CPU:    Z80
+Sound:  AY-3-8910
         M5205
-OSC:	20.000MHz
+OSC:    20.000MHz
 
 driver by Nicola Salmoria
 
@@ -65,7 +65,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( rmhaihai )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if ( !bg_tilemap )
@@ -474,12 +474,12 @@ INPUT_PORTS_START( rmhaihib )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
 
-//	PORT_START // 11
-//	PORT_BIT(    0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Pay Out") PORT_CODE(KEYCODE_3)
-//	PORT_BIT(     0x02, IP_ACTIVE_LOW, IPT_SERVICE4 ) /* RAM clear */
-//	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-//	PORT_BIT(     0x08, IP_ACTIVE_LOW, IPT_SERVICE2 ) /* Analyzer */
-//	PORT_BIT(     0xF0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_START // 11
+//  PORT_BIT(    0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Pay Out") PORT_CODE(KEYCODE_3)
+//  PORT_BIT(     0x02, IP_ACTIVE_LOW, IPT_SERVICE4 ) /* RAM clear */
+//  PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+//  PORT_BIT(     0x08, IP_ACTIVE_LOW, IPT_SERVICE2 ) /* Analyzer */
+//  PORT_BIT(     0xF0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -547,7 +547,7 @@ static MACHINE_DRIVER_START( rmhaihai )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 20000000/16)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)

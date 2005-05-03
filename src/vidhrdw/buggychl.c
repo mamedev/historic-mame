@@ -67,13 +67,13 @@ WRITE8_HANDLER( buggychl_sprite_lookup_w )
 WRITE8_HANDLER( buggychl_ctrl_w )
 {
 /*
-	bit7 = lamp
-	bit6 = lockout
-	bit4 = OJMODE
-	bit3 = SKY OFF
-	bit2 = /SN3OFF
-	bit1 = HINV
-	bit0 = VINV
+    bit7 = lamp
+    bit6 = lockout
+    bit4 = OJMODE
+    bit3 = SKY OFF
+    bit2 = /SN3OFF
+    bit1 = HINV
+    bit0 = VINV
 */
 
 	flip_screen_y_set(data & 0x01);

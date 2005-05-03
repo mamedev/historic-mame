@@ -104,7 +104,7 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 
 static WRITE16_HANDLER( cps1_coinctrl_w )
 {
-//	usrintf_showmessage("coinctrl %04x",data);
+//  usrintf_showmessage("coinctrl %04x",data);
 
 	if (ACCESSING_MSB)
 	{
@@ -132,7 +132,7 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
 		coin_counter_w(3,data & 0x04);
 		coin_lockout_w(3,~data & 0x08);
 /*
-  	{
+    {
        char baf[40];
        sprintf(baf,"0xf1c004=%04x", data);
        usrintf_showmessage(baf);
@@ -206,9 +206,9 @@ static WRITE16_HANDLER( qsound_sharedram2_w )
 static WRITE8_HANDLER( qsound_banksw_w )
 {
 	/*
-	Z80 bank register for music note data. It's odd that it isn't encrypted
-	though.
-	*/
+    Z80 bank register for music note data. It's odd that it isn't encrypted
+    though.
+    */
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress=0x10000+((data&0x0f)*0x4000);
 	if (bankaddress >= memory_region_length(REGION_CPU2))
@@ -284,10 +284,10 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 	if (ACCESSING_LSB)
 	{
 		/*
-		bit 0 = data
-		bit 6 = clock
-		bit 7 = cs
-		*/
+        bit 0 = data
+        bit 6 = clock
+        bit 7 = cs
+        */
 		EEPROM_write_bit(data & 0x01);
 		EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
 		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
@@ -352,7 +352,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0xf004, 0xf004) AM_WRITE(cps1_snd_bankswitch_w)
-//	AM_RANGE(0xf006, 0xf006) AM_WRITE(MWA8_NOP) /* ???? Unknown ???? */
+//  AM_RANGE(0xf006, 0xf006) AM_WRITE(MWA8_NOP) /* ???? Unknown ???? */
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( qsound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -374,7 +374,7 @@ ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 #define CPS1_COINAGE_1 \
@@ -554,7 +554,7 @@ INPUT_PORTS_START( ghouls )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
@@ -636,7 +636,7 @@ INPUT_PORTS_START( ghoulsu )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
@@ -717,7 +717,7 @@ INPUT_PORTS_START( daimakai )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
@@ -798,14 +798,14 @@ INPUT_PORTS_START( strider )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
 	CPS1_DIFFICULTY_2
 	/* In 'striderj', bit 3 is stored at 0xff8e77 ($e77,A5) via code at 0x000a2a,
-	   but this address is never checked again.
-	   In 'strider' and 'stridrja', this code even doesn't exist ! */
+       but this address is never checked again.
+       In 'strider' and 'stridrja', this code even doesn't exist ! */
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -816,7 +816,7 @@ INPUT_PORTS_START( strider )
 	PORT_DIPSETTING(    0x00, "30K & 60K only" )
 	PORT_DIPNAME( 0xc0, 0x00, "Internal Diff. on Life Loss" )		// Check code at 0x00d15a
 	PORT_DIPSETTING(    0xc0, "-3" )
-//	PORT_DIPSETTING(    0x40, "-1" )
+//  PORT_DIPSETTING(    0x40, "-1" )
 	PORT_DIPSETTING(    0x00, "-1" )
 	PORT_DIPSETTING(    0x80, "Default" )
 
@@ -882,14 +882,14 @@ INPUT_PORTS_START( stridrua )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
 	CPS1_DIFFICULTY_2
 	/* In 'striderj', bit 3 is stored at 0xff8e77 ($e77,A5) via code at 0x000a2a,
-	   but this address is never checked again.
-	   In 'strider' and 'stridrja', this code even doesn't exist ! */
+       but this address is never checked again.
+       In 'strider' and 'stridrja', this code even doesn't exist ! */
 	PORT_DIPNAME( 0x08, 0x08, "2 Coins to Start, 1 to Continue" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -900,7 +900,7 @@ INPUT_PORTS_START( stridrua )
 	PORT_DIPSETTING(    0x00, "30K & 60K only" )
 	PORT_DIPNAME( 0xc0, 0x00, "Internal Diff. on Life Loss" )		// Check code at 0x00d15a
 	PORT_DIPSETTING(    0xc0, "-3" )
-//	PORT_DIPSETTING(    0x40, "-1" )
+//  PORT_DIPSETTING(    0x40, "-1" )
 	PORT_DIPSETTING(    0x00, "-1" )
 	PORT_DIPSETTING(    0x80, "Default" )
 
@@ -962,7 +962,7 @@ INPUT_PORTS_START( dynwar )
 	PORT_START_TAG("DSWA")
 	CPS1_COINAGE_3
 	/* According to the manual, ALL bits 0 to 5 must be ON to have
-	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
+       "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1049,11 +1049,11 @@ INPUT_PORTS_START( willow )
 	PORT_START_TAG("DSWA")
 	CPS1_COINAGE_3
 	/* According to the manual, ALL bits 0 to 5 must be ON to have
-	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
+       "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START_TAG("DSWB")
@@ -1073,15 +1073,15 @@ INPUT_PORTS_START( willow )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* When the Dip Switch is set to "On" , your magic and sword power will be increased
-	   at the end of the level if you haven't bought the magic/sword item. But you won't
+       at the end of the level if you haven't bought the magic/sword item. But you won't
          notice this before you use the character again. For example, magic power will be
          increased at the end of level 1 but you won't notice it before level 3, and sword
          power will be increased at the end of level 2 but you won't notice it before level 4.
-	   Useful addresses to know :
-		- 0xff8344.w ($344,A5) : level       (00-05)
-		- 0xff8366.b ($366,A5) : magic power (00-06)
-		- 0xff8367.b ($367,A5) : sword power (00-04)
-	*/
+       Useful addresses to know :
+        - 0xff8344.w ($344,A5) : level       (00-05)
+        - 0xff8366.b ($366,A5) : magic power (00-06)
+        - 0xff8367.b ($367,A5) : sword power (00-04)
+    */
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -1141,7 +1141,7 @@ INPUT_PORTS_START( unsquad )
 	PORT_START_TAG("DSWA")
 	CPS1_COINAGE_3
 	/* According to the manual, ALL bits 0 to 5 must be ON to have
-	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
+       "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1518,10 +1518,10 @@ INPUT_PORTS_START( mtwins )
 	PORT_START_TAG("DSWB")
 	CPS1_DIFFICULTY_1
 	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Lives ) )
-//	PORT_DIPSETTING(    0x30, "1" )					// 0x38 energy, smallest damage
-//	PORT_DIPSETTING(    0x38, "1" )					// 0x38 energy, small damage
-//	PORT_DIPSETTING(    0x28, "1" )					// 0x38 energy, big damage
-//	PORT_DIPSETTING(    0x20, "1" )					// 0x38 energy, biggest damage
+//  PORT_DIPSETTING(    0x30, "1" )                 // 0x38 energy, smallest damage
+//  PORT_DIPSETTING(    0x38, "1" )                 // 0x38 energy, small damage
+//  PORT_DIPSETTING(    0x28, "1" )                 // 0x38 energy, big damage
+//  PORT_DIPSETTING(    0x20, "1" )                 // 0x38 energy, biggest damage
 	PORT_DIPSETTING(    0x10, "1" )					// 0x20 energy, smallest damage
 	PORT_DIPSETTING(    0x18, "2" )					// 0x20 energy, small damage
 	PORT_DIPSETTING(    0x08, "3" )					// 0x20 energy, big damage
@@ -1605,14 +1605,14 @@ INPUT_PORTS_START( msword )
 
 	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x07, 0x04, "Player's vitality consumption" )		// "Level 1"
-	PORT_DIPSETTING(    0x07, "1 (Easiest)" )				// "Easy 3"		(-1 every 28 frames)
-	PORT_DIPSETTING(    0x06, "2" )						// "Easy 2"		(-1 every 24 frames)
-	PORT_DIPSETTING(    0x05, "3" )						// "Easy 1"		(-1 every 20 frames)
-	PORT_DIPSETTING(    0x04, "4 (Normal)" )				// DEF_STR( Normal )		(-1 every 18 frames)
-	PORT_DIPSETTING(    0x03, "5" )						// "Difficult 1"	(-1 every 16 frames)
-	PORT_DIPSETTING(    0x02, "6" )						// "Difficult 2"	(-1 every 14 frames)
-	PORT_DIPSETTING(    0x01, "7" )						// "Difficult 3"	(-1 every 12 frames)
-	PORT_DIPSETTING(    0x00, "8 (Hardest)" )				// "Difficult 4"	(-1 every 8 frames)
+	PORT_DIPSETTING(    0x07, "1 (Easiest)" )				// "Easy 3"     (-1 every 28 frames)
+	PORT_DIPSETTING(    0x06, "2" )						// "Easy 2"     (-1 every 24 frames)
+	PORT_DIPSETTING(    0x05, "3" )						// "Easy 1"     (-1 every 20 frames)
+	PORT_DIPSETTING(    0x04, "4 (Normal)" )				// DEF_STR( Normal )        (-1 every 18 frames)
+	PORT_DIPSETTING(    0x03, "5" )						// "Difficult 1"    (-1 every 16 frames)
+	PORT_DIPSETTING(    0x02, "6" )						// "Difficult 2"    (-1 every 14 frames)
+	PORT_DIPSETTING(    0x01, "7" )						// "Difficult 3"    (-1 every 12 frames)
+	PORT_DIPSETTING(    0x00, "8 (Hardest)" )				// "Difficult 4"    (-1 every 8 frames)
 	PORT_DIPNAME( 0x38, 0x38, "Enemy's vitality and attacking power" )	// "Level 2"
 	PORT_DIPSETTING(    0x20, "1 (Easiest)" )				// "Easy 3"
 	PORT_DIPSETTING(    0x28, "2" )						// "Easy 2"
@@ -1789,7 +1789,7 @@ INPUT_PORTS_START( nemo )
 	PORT_DIPNAME( 0x18, 0x18, "Life Bar" )
 	PORT_DIPSETTING(    0x00, "Minimun" )
 	PORT_DIPSETTING(    0x18, DEF_STR( Medium ) )
-//	PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )
+//  PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x08, "Maximum" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -3059,14 +3059,14 @@ INPUT_PORTS_START( qad )
 
 	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
-//	PORT_DIPSETTING(    0x07, DEF_STR( Easiest ) )
+//  PORT_DIPSETTING(    0x07, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Hardest ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( Hardest ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+//  PORT_DIPSETTING(    0x01, DEF_STR( Hardest ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x18, 0x10, "Wisdom" )
 	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
@@ -3078,9 +3078,9 @@ INPUT_PORTS_START( qad )
 	PORT_DIPSETTING(    0xa0, "3" )
 	PORT_DIPSETTING(    0xc0, "4" )
 	PORT_DIPSETTING(    0xe0, "5" )
-//	PORT_DIPSETTING(    0x40, "1" )
-//	PORT_DIPSETTING(    0x20, "1" )
-//	PORT_DIPSETTING(    0x00, "1" )
+//  PORT_DIPSETTING(    0x40, "1" )
+//  PORT_DIPSETTING(    0x20, "1" )
+//  PORT_DIPSETTING(    0x00, "1" )
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
@@ -3164,9 +3164,9 @@ INPUT_PORTS_START( qadj )
 	PORT_DIPSETTING(    0x05, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
-//	PORT_DIPSETTING(    0x02, "4" )
-//	PORT_DIPSETTING(    0x01, "4" )
-//	PORT_DIPSETTING(    0x00, "4" )
+//  PORT_DIPSETTING(    0x02, "4" )
+//  PORT_DIPSETTING(    0x01, "4" )
+//  PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3177,11 +3177,11 @@ INPUT_PORTS_START( qadj )
 	PORT_DIPSETTING(    0xa0, "1" )
 	PORT_DIPSETTING(    0xc0, "2" )
 	PORT_DIPSETTING(    0xe0, "3" )
-//	PORT_DIPSETTING(    0x00, "1" )
-//	PORT_DIPSETTING(    0x20, "1" )
-//	PORT_DIPSETTING(    0x80, "1" )
-//	PORT_DIPSETTING(    0x40, "2" )
-//	PORT_DIPSETTING(    0x60, "3" )
+//  PORT_DIPSETTING(    0x00, "1" )
+//  PORT_DIPSETTING(    0x20, "1" )
+//  PORT_DIPSETTING(    0x80, "1" )
+//  PORT_DIPSETTING(    0x40, "2" )
+//  PORT_DIPSETTING(    0x60, "3" )
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -3272,9 +3272,9 @@ INPUT_PORTS_START( qtono2 )
 	PORT_DIPSETTING(    0xe0, "3" )
 	PORT_DIPSETTING(    0xa0, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
-//	PORT_DIPSETTING(    0x40, "?" )
-//	PORT_DIPSETTING(    0x20, "?" )
-//	PORT_DIPSETTING(    0x00, "?" )
+//  PORT_DIPSETTING(    0x40, "?" )
+//  PORT_DIPSETTING(    0x20, "?" )
+//  PORT_DIPSETTING(    0x00, "?" )
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -3398,7 +3398,7 @@ INPUT_PORTS_START( megaman )
 	PORT_DIPSETTING(    0x0d, DEF_STR( Free_Play ) )
 	/* 0x00 to 0x0c 1 Coin/1 Credit */
 	PORT_DIPNAME( 0x60, 0x60, "Coin slots" )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 	PORT_DIPSETTING(    0x40, "1, Individual" )
 	PORT_DIPSETTING(    0x20, "1, Common" )
 	PORT_DIPSETTING(    0x60, "2, Common" )
@@ -3511,7 +3511,7 @@ INPUT_PORTS_START( rockmanj )
 	PORT_DIPSETTING(    0x0d, DEF_STR( Free_Play ) )
 	/* 0x00 to 0x0c 1 Coin/1 Credit */
 	PORT_DIPNAME( 0x60, 0x60, "Coin slots" )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 	PORT_DIPSETTING(    0x40, "1, Individual" )
 	PORT_DIPSETTING(    0x20, "1, Common" )
 	PORT_DIPSETTING(    0x60, "2, Common" )
@@ -3596,7 +3596,7 @@ static struct GfxLayout layout8x8 =
 	4,
 	{ GFX_RAW },
 	{ 4*8 },	/* org displacement - 8x8 tiles are taken from the RIGHT side of the 16x16 tile
-				   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
+                   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
 	{ 8*8 },	/* line modulo */
 	64*8		/* char modulo */
 };

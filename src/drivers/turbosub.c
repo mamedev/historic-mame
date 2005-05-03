@@ -1,15 +1,49 @@
+/*
+Turbo Sub (Unreleased prototype)
+(C) 1986 Entertainment Sciences
+
+Hardware
+--------
+* 6809
+ - i8251A (USART)
+* 6809
+* 6809
+ - TMS5220?
+ - DAC?
+* AM29116DC (16-bit bipolar microprocessor)
+
+Useful information
+------------------
+http://www.ionpool.net/arcade/es/turbo_sub.html  (includes PCB pictures)
+http://www.bitsavers.org/pdf/amd/_dataSheets/29116_dataSheet_Mar86.pdf
+
+Main PCB RAM
+------------
+8xAM29128 (2k ea = 16k)
+4xAM29128 (2k ea = 8k)
+8xS2016C  (2k ea = 16k)
+
+Video PCB RAM
+---------------
+20 x AM9122 (256x4 SRAM)
+3 x AM93422 (256x2 SRAM)
+*/
 
 #include "driver.h"
+#include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 
+/* Set to 1 to display test results and skip on errors */
+#define ROM_PATCHES 1
+
+static UINT8 INTER_CPU_REG;
+static int gfx_w=0x1d8;
+static int gfx_s=0x80;
 
 VIDEO_START( turbosub )
 {
 	return 0;
 }
-
-static int gfx_w=0x1d8;
-static int gfx_s=0x80;
 
 VIDEO_UPDATE( turbosub )
 {
@@ -69,72 +103,233 @@ VIDEO_UPDATE( turbosub )
 		{
 			if(x<256)
 				plot_pixel(bitmap,x,y,memory_region(REGION_GFX1)[(gfx_s*gfx_w+y*gfx_w+x)&0x7ffff]);
-//				plot_pixel(bitmap,x,y,memory_region(REGION_GFX2)[(gfx_s*gfx_w+y*gfx_w+x)&0x3ffff]);
+//              plot_pixel(bitmap,x,y,memory_region(REGION_GFX2)[(gfx_s*gfx_w+y*gfx_w+x)&0x3ffff]);
 
 		}
 }
 
+/* i8251A UART */
+static WRITE8_HANDLER( UART_W )
+{
+        if (offset==0) printf("%c",data);
+}
+
+static READ8_HANDLER( UART_R )
+{
+        return 0;
+}
+
+/* Corresponds to CPU 1 [6000] and something else (AM29116?) */
+static READ8_HANDLER( A4800_R )
+{
+        return INTER_CPU_REG;
+}
+
+/* Unknown - CPU1<->AM29116 interface? */
+static READ8_HANDLER( B6000_R )
+{
+        return 0;
+}
+
+/* Read by CPU0 at 4800 */
+static WRITE8_HANDLER( B6000_W )
+{
+        INTER_CPU_REG = data;
+}
+
+/* Control register */
+static WRITE8_HANDLER( A4800_W )
+{
+        /*
+        Bit 0 6809 #0 ROM bank bit 0
+        Bit 1 6809 #0 ROM bank bit 1
+        Bit 2 ?
+        Bit 3 ?
+        Bit 4 ?
+        Bit 5 ?
+        Bit 6 ?
+        Bit 7 6809 #1 NMI
+        */
+
+	int bankaddress;
+	unsigned char *ROM = memory_region(REGION_CPU1);
+	bankaddress = 0x10000 + (data & 0x03) * 0x10000;
+	cpu_setbank(1,&ROM[bankaddress]);
+
+        cpunum_set_input_line(1, INPUT_LINE_NMI, (data&0x80) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+
+/*
+   Look out for:
+   o  Analog controls
+   o  Digital controls
+   o  Numeric keypad
+*/
+
+INPUT_PORTS_START( turbosub )
+PORT_START
+INPUT_PORTS_END
+
+
+/*
+TURBOSUB.U85
+============
+
+Vectors
+=======
+
+Reset  = E002
+/NMI   = E3D0   (Not used = RTI)
+SWI    = E8D0
+IRQ    = E133
+FIRQ   = E319
+Others = E3D0   (Not used = RTI)
+
+
+Self-tests (initiated by CPU 0)
+===============================
+
+       f561: LDY, #$0001             Change to 0 to print out test results.
+       f737: JMP [A,X]               A = test number/2
+
+       Test   Loc.                  Desc.                                                             Status
+       ====   ====                  =====                                                             ======
+       0-16                         CPU 0 ROM checksums                                               OK
+       17                           CPU 0 RAM 0000-07ff                                               OK
+       18                           CPU 0 RAM 0800-0fff                                               OK
+       19                           CPU 0 RAM 1000-17ff                                               OK
+       20                           CPU 0 RAM 1800-1fff                                               OK
+       21                           CPU 0 RAM 2000-27ff                                               OK
+       22                           CPU 0 RAM 2800-2fff                                               OK
+       23                           CPU 0 RAM 3000-37ff                                               OK
+       24     0xf90d                ?                                                                 FAIL
+                                    [4800]<-90 then [4800]<-B0
+                                    Expect negative number from [4800] before time out.
+
+       25     0xf966                CPU 0<->1 communication test                                      OK
+       26     0xf98b                CPU 1 ROM e000-ffff checksum                                      OK                                     OK
+       27     0xf990                CPU 1 RAM 3000-37ff                                               OK
+       28     0xf995                CPU 1 RAM 0000-0fff                                               OK
+       29     0xf99a                CPU 1 RAM 1000-17ff                                               OK
+       30     0xf99f                CPU 1 RAM 1800-1fff                                               OK
+       31     0xf9a4                CPU 1 RAM 2000-27ff                                               OK
+       32     0xf9a9                CPU 1 RAM 2800-2fff                                               OK
+       33     0xf9ae                CPU 1 RAM 3000-37ff                                               OK
+       34     0xf9b3                CPU 1 RAM 3800-3fff                                               OK
+
+       35     0xf9dd                CPU 1: Read [6000]                                                FAIL
+       36     0xf9e3                                                                                  FAIL
+       37     0xf9e3                                                                                  FAIL
+       38     0xf9e3                CPU 1 RAM 4000-4ffe (even bytes)                                  OK
+       39     0xf9e3                CPU 1 RAM 4001-4fff (odd bytes)                                   OK
+
+       40     0xfa06                                                                                  FAIL
+       41     0xfafd                                                                                  OK
+       42     0xfb0e                                                                                  FAIL
+       43     0xfb2a                                                                                  FAIL
+       44     0xfbc9                                                                                  FAIL
+       45     0xfd61                                                                                  FAIL
+       46     0xfd70                                                                                  FAIL
+       47     0xfd97                                                                                  FAIL
+       48     0xfdc9                                                                                  FAIL
+       49     0xfdee                                                                                  FAIL
+       50     0xfe05                                                                                  FAIL
+       51     0xfe3d                                                                                  FAIL
+       52     0xfe54                                                                                  FAIL
+       53     0xfe6b                                                                                  FAIL
+       54     0xfe82                                                                                  FAIL
+       55     0xfe99                                                                                  FAIL
+*/
+
+static ADDRESS_MAP_START( cpu0_map, ADDRESS_SPACE_PROGRAM, 8 )
+        AM_RANGE(0x0000, 0x36ff) AM_RAM
+        AM_RANGE(0x3700, 0x3fff) AM_RAM AM_SHARE(1)
+        AM_RANGE(0x40ff, 0x40ff) AM_RAM                                    /* W */
+        AM_RANGE(0x41ff, 0x41ff) AM_RAM                                    /* W */
+        AM_RANGE(0x42ff, 0x42ff) AM_RAM                                    /* W */
+        AM_RANGE(0x4C00, 0x4C00) AM_RAM                                    /* R/W - An input device? (doesn't enter auto mode depending on read) */
+        AM_RANGE(0x4800, 0x4800) AM_READWRITE(A4800_R, A4800_W)            /* Control Register */
+        AM_RANGE(0x5000, 0x5000) AM_RAM                                    /* Write - related to 4C00 */
+        AM_RANGE(0x5400, 0x54ff) AM_RAM                                    /* UART buffer? */
+        AM_RANGE(0x5c00, 0x5c01) AM_READWRITE(UART_R, UART_W)              /* i8251A USART */
+        AM_RANGE(0x6000, 0xdfff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)        /* Bank switched ROMs */
+        AM_RANGE(0xe000, 0xffff) AM_ROM
+ADDRESS_MAP_END
+
+
+/*
+TURBOSUB.U63
+============
+
+Vectors
+=======
+
+Reset:  EF2A
+/NMI:   EF30
+Others: E064
+*/
 
 
 static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
-//stack - 3c000
+        AM_RANGE(0x0000, 0x36ff) AM_RAM
+        AM_RANGE(0x3700, 0x3fff) AM_RAM AM_SHARE(1)
+        AM_RANGE(0x4000, 0x4fff) AM_RAM                            /* 4kB  RAM */
+        AM_RANGE(0x6000, 0x6000) AM_READWRITE(B6000_R, B6000_W)    /* Read: AM29116? */
+        AM_RANGE(0x8000, 0x8000) AM_RAM                            /* Write */
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
+
+/*
+TURBOSUB.U66
+============
+
+Vectors
+=======
+
+Reset: ecb5               `
+FIRQ:  e114
+IRQ:   e0d3
+/NMI:  ecb5
+SWI:   e13d
+SWI2:  e13d
+SWI3:  e13d
+*/
 
 static ADDRESS_MAP_START( cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+        AM_RANGE(0x0000, 0x07ff) AM_RAM
+        AM_RANGE(0x200c, 0x200d) AM_RAM                    /* R/W - probably shared with another CPU */
+        AM_RANGE(0x200e, 0x200f) AM_RAM                    /* R/W */
+        AM_RANGE(0x2020, 0x2024) AM_RAM                    /* R/W */
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( cpu3_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0xc000, 0xffff) AM_ROM
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( cpu4_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM
-ADDRESS_MAP_END
-
-
-INPUT_PORTS_START( turbosub )
-INPUT_PORTS_END
-#if 0
-static struct GfxLayout charlayout =
+static MACHINE_INIT( turbosub )
 {
-	4,8,
-	RGN_FRAC(1,1),
-	8,
-	{ 0,1,2,3,4,5,6,7 },
-	{ 0,8,16,24 },
-	{ 0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32 },
-	8*32
-};
+#if ROM_PATCHES
+       data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
 
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,     0, 8 },
-	{ REGION_GFX2, 0, &charlayout,     0, 8 },
-
-	{ -1 }	/* end of array */
-};
+       rom[0xf564]=0;              /* Display test status */
+       rom[0xf60a]=0x20;           /* Skip on error */
 #endif
 
+}
 
 static MACHINE_DRIVER_START( turbosub )
 
-	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,4000000)
+	MDRV_CPU_PROGRAM_MAP(cpu0_map,0)
+
 	MDRV_CPU_ADD(M6809,4000000)
 	MDRV_CPU_PROGRAM_MAP(cpu1_map,0)
 
 	MDRV_CPU_ADD(M6809,4000000)
 	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
 
-	MDRV_CPU_ADD(M6809,4000000)
-	MDRV_CPU_PROGRAM_MAP(cpu3_map,0)
-
-//	MDRV_CPU_ADD(M68000,4000000)
-//	MDRV_CPU_PROGRAM_MAP(cpu4_map,0)
+	/* Don't forget the AM29116! */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -145,11 +340,11 @@ static MACHINE_DRIVER_START( turbosub )
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 0, 34*8-1)
 	//MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
+        MDRV_MACHINE_INIT( turbosub )
+        MDRV_INTERLEAVE(100)
 
 	MDRV_VIDEO_START(turbosub)
 	MDRV_VIDEO_UPDATE(turbosub)
-
-
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -159,16 +354,41 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( turbosub )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "turbosub.u63",   0xc000, 0x4000, CRC(35701532) SHA1(77d957682aab10ee902c1e47c468b9ab8fe6a512) )
+	ROM_REGION( 0xc0000, REGION_USER1, 0) /* Non-bankswitched, 6809 #0 code */
+	ROM_LOAD( "turbosub.u85",    0x18000, 0x4000, CRC(eabb9509) SHA1(cbfb6c5becb3fe1b4ed729e92a0f4029a5df7d67) )
+
+	ROM_REGION( 0x48000, REGION_CPU1, 0 )
+	/* Bankswitched 6809 code */
+	ROM_LOAD( "turbosub.u82",    0x10000, 0x2000, CRC(de32eb6f) SHA1(90bf31a5adf261d47b4f52e93b5e97f343b7ebf0) )
+        ROM_CONTINUE(                0x20000, 0x2000 )
+	ROM_LOAD( "turbosub.u81",    0x12000, 0x2000, CRC(9ae09613) SHA1(9b5ada4a21473b30be98bcc461129b6ed4e0bb11) )
+        ROM_CONTINUE(                0x22000, 0x2000 )
+	ROM_LOAD( "turbosub.u87",    0x14000, 0x2000, CRC(ad2284f7) SHA1(8e11b8ad0a98dd1fe6ec8f7ea9e6e4f4a45d8a1b) )
+        ROM_CONTINUE(                0x24000, 0x2000 )
+	ROM_LOAD( "turbosub.u86",    0x16000, 0x2000, CRC(4f51e6fd) SHA1(8f51ac6412aace29279ce7b02cad45ed681c2065) )
+        ROM_CONTINUE(                0x26000, 0x2000 )
+
+	ROM_LOAD( "turbosub.u80",    0x30000, 0x2000, CRC(ff2e2870) SHA1(45f91d63ad91585482c9dd05290b204b007e3f44) )
+        ROM_CONTINUE(                0x40000, 0x2000 )
+        ROM_LOAD( "turbosub.u79",    0x32000, 0x2000, CRC(13680923) SHA1(14e3daa2178853cef1fd96a68305420c11fceb96) )
+        ROM_CONTINUE(                0x42000, 0x2000 )
+	ROM_LOAD( "turbosub.u84",    0x34000, 0x2000, CRC(7059842d) SHA1(c20a8accd3fc23bc4476e1d08798d7a80915d37c) )
+        ROM_CONTINUE(                0x44000, 0x2000 )
+	ROM_LOAD( "turbosub.u83",    0x36000, 0x2000, CRC(31b86fc6) SHA1(8e56e8a75f653c3c4da2c9f31f739894beb194db) )
+        ROM_CONTINUE(                0x46000, 0x2000 )
+
+        /* e000 - ffff = Upper half of U85 (lower half is blank) */
+	ROM_COPY( REGION_USER1, 0x18000+0x2000, 0xe000, 0x2000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "turbosub.u66",   0xc000, 0x4000, CRC(5091bf3d) SHA1(7ab872cef1562a45f7533c16bbbae8772673465b) )
+	ROM_LOAD( "turbosub.u63",    0xc000, 0x4000, CRC(35701532) SHA1(77d957682aab10ee902c1e47c468b9ab8fe6a512) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "turbosub.u85",   0xc000, 0x4000, CRC(eabb9509) SHA1(cbfb6c5becb3fe1b4ed729e92a0f4029a5df7d67) )
+	ROM_LOAD( "turbosub.u66",   0xc000, 0x4000, CRC(5091bf3d) SHA1(7ab872cef1562a45f7533c16bbbae8772673465b) )
 
-	ROM_REGION( 0x10000, REGION_CPU4, 0 )
+       	ROM_REGION( 0xc0000, REGION_USER2, 0)       /* Unknown */
+	ROM_LOAD( "turbosub.u67",    0x00000, 0x4000, CRC(f8ae82e9) SHA1(fd27b9fe7872c3c680a1f71a4a5d5eeaa12e4a19) )
+	ROM_LOAD( "turbosub.u68",    0x04000, 0x4000, CRC(72e3d09b) SHA1(eefdfcd0c4c32e465f18d40f46cb5bc022c22bfd) )
 	ROM_LOAD( "turbosub.u69",    0x00000, 0x4000, CRC(ad04193b) SHA1(2f660302e60a7e68e079a8dd13266a77c077f939) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, 0 )
@@ -212,25 +432,7 @@ ROM_START( turbosub )
 	ROMX_LOAD( "turbosub.u26",   0x70002, 0x4000, CRC(867cfe32) SHA1(549e4e557d63dfab8e8c463916512a1b422ce425), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u36",   0x70003, 0x4000, CRC(0d8ebc21) SHA1(7ae65edae05869376caa975ff2c778a08e8ad8a2), ROM_SKIP(3) )
 
-
-
-	ROM_REGION( 0xc0000, REGION_USER1, 0)
-	ROM_LOAD( "turbosub.u67",    0x00000, 0x4000, CRC(f8ae82e9) SHA1(fd27b9fe7872c3c680a1f71a4a5d5eeaa12e4a19) )
-	ROM_LOAD( "turbosub.u68",    0x04000, 0x4000, CRC(72e3d09b) SHA1(eefdfcd0c4c32e465f18d40f46cb5bc022c22bfd) )
-
-	ROM_LOAD( "turbosub.u79",    0x0c000, 0x4000, CRC(13680923) SHA1(14e3daa2178853cef1fd96a68305420c11fceb96) )
-	ROM_LOAD( "turbosub.u80",    0x10000, 0x4000, CRC(ff2e2870) SHA1(45f91d63ad91585482c9dd05290b204b007e3f44) )
-
-
-	ROM_REGION( 0xc0000, REGION_USER2, 0) //code/data (ascii strings etc)
-	ROM_LOAD( "turbosub.u81",    0x00000, 0x4000, CRC(9ae09613) SHA1(9b5ada4a21473b30be98bcc461129b6ed4e0bb11) )
-	ROM_LOAD( "turbosub.u82",    0x04000, 0x4000, CRC(de32eb6f) SHA1(90bf31a5adf261d47b4f52e93b5e97f343b7ebf0) )
-	ROM_LOAD( "turbosub.u83",    0x08000, 0x4000, CRC(31b86fc6) SHA1(8e56e8a75f653c3c4da2c9f31f739894beb194db) )
-	ROM_LOAD( "turbosub.u84",    0x0c000, 0x4000, CRC(7059842d) SHA1(c20a8accd3fc23bc4476e1d08798d7a80915d37c) )
-	ROM_LOAD( "turbosub.u86",    0x10000, 0x4000, CRC(4f51e6fd) SHA1(8f51ac6412aace29279ce7b02cad45ed681c2065) )
-	ROM_LOAD( "turbosub.u87",    0x14000, 0x4000, CRC(ad2284f7) SHA1(8e11b8ad0a98dd1fe6ec8f7ea9e6e4f4a45d8a1b) )
-
-	ROM_REGION( 0x40000, REGION_GFX2, 0)//gfx ?
+	ROM_REGION( 0x40000, REGION_GFX2, 0)  //gfx ?
 	ROMX_LOAD( "turbosub.u44",   0x00000, 0x4000, CRC(eaa05860) SHA1(f649891dae9354b7f2e46e6a380b52a569229d64), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u54",   0x00001, 0x4000, CRC(bebf98d8) SHA1(170502bb44fc6d6bf14d8dac4778b37888c14a7b), ROM_SKIP(3) )
 
@@ -256,4 +458,4 @@ ROM_START( turbosub )
 	ROMX_LOAD( "turbosub.u56",   0x30003, 0x4000, CRC(6d116adf) SHA1(f808e28cef41dc86e43d8c12966037213da87c87), ROM_SKIP(3) )
 ROM_END
 
-GAMEX( 1986, turbosub,  0,       turbosub,  turbosub,  0, ROT0, "Entertainment Sciences", "Turbo Sub",GAME_NO_SOUND/*|GAME_GRAPHICS_DONT_F**KING_DECODE*/|GAME_NOT_WORKING )
+GAMEX( 1986, turbosub,  0,       turbosub,  turbosub,  0, ROT0, "Entertainment Sciences", "Turbo Sub",GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )

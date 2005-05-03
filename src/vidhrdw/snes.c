@@ -1457,16 +1457,16 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				}
 			}
 
-			/* Increase range_over. 
-			 * Stop drawing if exceeded 32 objects and
-			 * enforcing that limit is enabled */
+			/* Increase range_over.
+             * Stop drawing if exceeded 32 objects and
+             * enforcing that limit is enabled */
 			range_over++;
 			if( range_over == 32 && (readinputport( 16 ) & 0x10) )
 			{
 				/* Set the flag in STAT77 register */
 				snes_ram[STAT77] |= 0x40;
 				/* FIXME: This stops the SNESTest rom from drawing the object
-				 *        test properly.  Maybe we shouldn't stop drawing? */
+                 *        test properly.  Maybe we shouldn't stop drawing? */
 				/* return; */
 			}
 		}
@@ -1722,7 +1722,7 @@ static void snes_update_windowmasks(void)
 
 		/* update colour window */
 		/* FIXME: Why is the colour window different to the other windows? *
-		 * Have I overlooked something or done something wrong? */
+         * Have I overlooked something or done something wrong? */
 		snes_ppu.clipmasks[5][ii] = 0xff;
 		w1 = w2 = -1;
 		if( snes_ram[WOBJSEL] & 0x20 )
@@ -1753,28 +1753,28 @@ static void snes_update_windowmasks(void)
 			{
 				case 0x0:	/* OR */
 					snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 | w2 ? 0x00 : 0xff;*/
 					break;
 				case 0x4:	/* AND */
 					snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 & w2 ? 0x00 : 0xff;*/
 					break;
 				case 0x8:	/* XOR */
 					snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = w1 ^ w2 ? 0x00 : 0xff;*/
 					break;
 				case 0xc:	/* XNOR */
 					snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0xff : 0x00;
-/*					snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0x00 : 0xff;*/
+/*                  snes_ppu.clipmasks[5][ii] = !(w1 ^ w2) ? 0x00 : 0xff;*/
 					break;
 			}
 		}
 		else if( w1 >= 0 )
 			snes_ppu.clipmasks[5][ii] = w1 ? 0xff : 0x00;
-/*			snes_ppu.clipmasks[5][ii] = w1 ? 0x00 : 0xff;*/
+/*          snes_ppu.clipmasks[5][ii] = w1 ? 0x00 : 0xff;*/
 		else if( w2 >= 0 )
 			snes_ppu.clipmasks[5][ii] = w2 ? 0xff : 0x00;
-/*			snes_ppu.clipmasks[5][ii] = w2 ? 0x00 : 0xff;*/
+/*          snes_ppu.clipmasks[5][ii] = w2 ? 0x00 : 0xff;*/
 	}
 }
 
@@ -1860,7 +1860,7 @@ void snes_refresh_scanline( UINT16 curline )
 		for( ii = 0; ii < SNES_SCR_WIDTH * 2; ii++ )
 		{
 			/* Not sure if this is correct behaviour, but a few games seem to
-			 * require it. (SMW, Zelda etc) */
+             * require it. (SMW, Zelda etc) */
 			scanlines[SUBSCREEN].buffer[ii] = Machine->remapped_colortable[FIXED_COLOUR];
 			/* Draw back colour */
 			scanlines[MAINSCREEN].buffer[ii] = Machine->remapped_colortable[0];

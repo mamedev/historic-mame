@@ -1,117 +1,117 @@
 /***************************************************************************
 
-	Meadows S2650 driver
+    Meadows S2650 driver
 
-	driver by J. Buchmueller, June '98
+    driver by J. Buchmueller, June '98
 
-	Games supported:
-		* Dead Eye
-		* Gypsy Juggler
-		* Inferno
+    Games supported:
+        * Dead Eye
+        * Gypsy Juggler
+        * Inferno
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
     ***********************************************
     memory map CPU #0 (preliminary)
-	***********************************************
+    ***********************************************
 
-	0000..0bff	ROM part one
+    0000..0bff  ROM part one
 
-	0c00..0c03	H/W input ports
-	-----------------------------------------------
-			0 R control buttons
-				D0		button 1
-				D1		start 2 player game
+    0c00..0c03  H/W input ports
+    -----------------------------------------------
+            0 R control buttons
+                D0      button 1
+                D1      start 2 player game
 
-			1 R analog control
-				D0-D7	center is 0x7f
+            1 R analog control
+                D0-D7   center is 0x7f
 
-			2 R horizontal sync divider chain
-				D7 9.765kHz ... D0 2.5MHz
+            2 R horizontal sync divider chain
+                D7 9.765kHz ... D0 2.5MHz
 
-			3 R dip switch settings
-				D0-D2	select 2 to 9 coins
-				D3-D4	Coins per play D3 D4
-						1 coin	1 play	0  0
-						2 coins 1 play	1  0
-						1 coin	2 plays 0  1
-						free play		1  1
-				D5		Attact music 0:off, 1:on
-				D6-D7	Extended play  D6 D7
-						none			0  0
-						5000 pts		1  0
-						15000 pts		0  1
-						35000 pts		1  1
+            3 R dip switch settings
+                D0-D2   select 2 to 9 coins
+                D3-D4   Coins per play D3 D4
+                        1 coin  1 play  0  0
+                        2 coins 1 play  1  0
+                        1 coin  2 plays 0  1
+                        free play       1  1
+                D5      Attact music 0:off, 1:on
+                D6-D7   Extended play  D6 D7
+                        none            0  0
+                        5000 pts        1  0
+                        15000 pts       0  1
+                        35000 pts       1  1
 
-	0d00-0d0f	H/W sprites
-	-----------------------------------------------
+    0d00-0d0f   H/W sprites
+    -----------------------------------------------
             0 W D0-D7    sprite 0 horz
-			1 W D0-D7	 sprite 1 horz
-			2 W D0-D7	 sprite 2 horz
-			3 W D0-D7	 sprite 3 horz
-			4 W D0-D7	 sprite 0 vert
-			5 W D0-D7	 sprite 2 vert
-			6 W D0-D7	 sprite 3 vert
-			7 W D0-D7	 sprite 4 vert
-			8 W D0-D7	 sprite 0 select
-				D0-D3	 sprite #
-				D4		 prom (not sure)
-				D5		 flip x
-			9 W 		 sprite 1 select
-				D0-D3	 sprite #
-				D4		 prom (not sure)
-				D5		 flip x
-			a W 		 sprite 2 select
-				D0-D3	 sprite #
-				D4		 prom (not sure)
-				D5		 flip x
-			b W 		 sprite 3 select
-				D0-D3	 sprite #
-				D4		 prom (not sure)
-				D5		 flip x
+            1 W D0-D7    sprite 1 horz
+            2 W D0-D7    sprite 2 horz
+            3 W D0-D7    sprite 3 horz
+            4 W D0-D7    sprite 0 vert
+            5 W D0-D7    sprite 2 vert
+            6 W D0-D7    sprite 3 vert
+            7 W D0-D7    sprite 4 vert
+            8 W D0-D7    sprite 0 select
+                D0-D3    sprite #
+                D4       prom (not sure)
+                D5       flip x
+            9 W          sprite 1 select
+                D0-D3    sprite #
+                D4       prom (not sure)
+                D5       flip x
+            a W          sprite 2 select
+                D0-D3    sprite #
+                D4       prom (not sure)
+                D5       flip x
+            b W          sprite 3 select
+                D0-D3    sprite #
+                D4       prom (not sure)
+                D5       flip x
 
-	0e00-0eff	RAM
+    0e00-0eff   RAM
 
-	1000-1bff	ROM 	part two
+    1000-1bff   ROM     part two
 
-	1c00-1fff	RAM 	video buffer
+    1c00-1fff   RAM     video buffer
 
-	***********************************************
+    ***********************************************
     memory map CPU #1 (preliminary)
-	***********************************************
+    ***********************************************
 
-	0000..0bff	ROM part one
+    0000..0bff  ROM part one
 
-	0c00..0c03	H/W input ports
-	-----------------------------------------------
-			0 R sound command from CPU #0
-				D0-D7	8 different sounds ???
+    0c00..0c03  H/W input ports
+    -----------------------------------------------
+            0 R sound command from CPU #0
+                D0-D7   8 different sounds ???
 
-			1 R ???
-			2 R ???
-			3 R ???
+            1 R ???
+            2 R ???
+            3 R ???
 
             0 W D0-D7   DAC
             1 W D0-D3   preset for counter, clk is 5 MHz / 256
-				D4-D7	volume bits 0 .. 3 (bit 4 is CPU #1 flag output)
+                D4-D7   volume bits 0 .. 3 (bit 4 is CPU #1 flag output)
             2 W D0-D7   preset for counter, clk is 5 MHz / 32
             3 W D0      divide c02 counter by 0: 2, 1: 4
-				D1		sound enable for c02 tone generator
+                D1      sound enable for c02 tone generator
                 D2      sound enable for DAC
-				D3		sound enable for c01 tone generator
+                D3      sound enable for c01 tone generator
 
-	0e00-0eff	RAM
+    0e00-0eff   RAM
 
 
-	********************************************
-	Inferno memory map (very incomplete)
-	********************************************
-	0000..0bff	ROM part one
-	1c00..1eff	video buffer
-	1f00..1f03	hardware?
+    ********************************************
+    Inferno memory map (very incomplete)
+    ********************************************
+    0000..0bff  ROM part one
+    1c00..1eff  video buffer
+    1f00..1f03  hardware?
 
 ***************************************************************************/
 
@@ -127,7 +127,7 @@
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -141,7 +141,7 @@ static UINT8 minferno_sense;
 
 /*************************************
  *
- *	Special input ports
+ *  Special input ports
  *
  *************************************/
 
@@ -172,7 +172,7 @@ static READ8_HANDLER( vsync_chain_lo_r )
 
 /*************************************
  *
- *	Sound control writes
+ *  Sound control writes
  *
  *************************************/
 
@@ -196,7 +196,7 @@ static WRITE8_HANDLER( meadows_sound_w )
             break;
 
 		case 3:
-/*			S2650_Clear_Pending_Interrupts(); */
+/*          S2650_Clear_Pending_Interrupts(); */
 			break;
 	}
 }
@@ -205,7 +205,7 @@ static WRITE8_HANDLER( meadows_sound_w )
 
 /*************************************
  *
- *	Main CPU interrupt
+ *  Main CPU interrupt
  *
  *************************************/
 
@@ -235,7 +235,7 @@ static INTERRUPT_GEN( meadows_interrupt )
 
 /*************************************
  *
- *	Main CPU interrupt (Inferno)
+ *  Main CPU interrupt (Inferno)
  *
  *************************************/
 
@@ -251,7 +251,7 @@ static INTERRUPT_GEN( minferno_interrupt )
 
 /*************************************
  *
- *	Sound hardware output control
+ *  Sound hardware output control
  *
  *************************************/
 
@@ -293,7 +293,7 @@ static WRITE8_HANDLER( sound_hardware_w )
 
 /*************************************
  *
- *	Sound hardware read
+ *  Sound hardware read
  *
  *************************************/
 
@@ -318,7 +318,7 @@ static READ8_HANDLER( sound_hardware_r )
 
 /*************************************
  *
- *	Sound hardware interrupts
+ *  Sound hardware interrupts
  *
  *************************************/
 
@@ -333,7 +333,7 @@ static INTERRUPT_GEN( sound_interrupt )
 
 /*************************************
  *
- *	Overlays
+ *  Overlays
  *
  *************************************/
 
@@ -353,7 +353,7 @@ OVERLAY_END
 
 OVERLAY_START( gypsyjug_overlay )
 	OVERLAY_RECT(            0,    0, SCR_HORZ*8,        2*8, MAKE_ARGB(0x04, 32,192, 64))
-//	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
+//  OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
 	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        3*8, MAKE_ARGB(0x04, 32,192, 64))
 	OVERLAY_RECT(            0,  3*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
 	OVERLAY_RECT(            0,  6*8, SCR_HORZ*8,        9*8, MAKE_ARGB(0x04,192,160, 32))
@@ -366,7 +366,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Palette init
+ *  Palette init
  *
  *************************************/
 
@@ -380,7 +380,7 @@ static PALETTE_INIT( meadows )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -433,7 +433,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -454,7 +454,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -559,7 +559,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -577,7 +577,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,							/* 16*16 sprites ?	*/
+	16,16,							/* 16*16 sprites ?  */
 	32, 							/* 32 sprites  */
 	1,								/* 1 bits per pixel */
 	{ 0 },							/* 1 bitplane */
@@ -610,7 +610,7 @@ static struct GfxDecodeInfo minferno_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -625,7 +625,7 @@ static struct Samplesinterface custom_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -697,7 +697,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -776,7 +776,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -827,7 +827,7 @@ static DRIVER_INIT( minferno )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

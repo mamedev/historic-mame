@@ -288,7 +288,7 @@ WRITE32_HANDLER( psx_dma_w )
 					n_size = ( n_size & 0xffff ) * n_ba;
 				}
 
-				if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000000 && 
+				if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000000 &&
 					m_p_fn_dma_read[ n_channel ] != NULL )
 				{
 					verboselog( 1, "dma %d read block %08x %08x\n", n_channel, n_address, n_size );
@@ -374,10 +374,10 @@ WRITE32_HANDLER( psx_dma_w )
 				( data & ~mem_mask & 0x00ffffff );
 /* todo: find out whether to do this instead of dma_interrupt_update()
 
-			if( ( m_n_dicr & 0x7f000000 ) != 0 )
-			{
-				m_n_dicr &= ~0x80000000;
-			}
+            if( ( m_n_dicr & 0x7f000000 ) != 0 )
+            {
+                m_n_dicr &= ~0x80000000;
+            }
 */
 			verboselog( 1, "psx_dma_w( %04x, %08x, %08x ) dicr -> %08x\n", offset, data, mem_mask, m_n_dicr );
 			dma_interrupt_update();
@@ -527,7 +527,7 @@ static void root_timer_adjust( int n_counter )
 static void root_finished( int n_counter )
 {
 	verboselog( 2, "root_finished( %d ) %04x\n", n_counter, root_current( n_counter ) );
-//	if( ( m_p_n_root_mode[ n_counter ] & RC_COUNTTARGET ) != 0 )
+//  if( ( m_p_n_root_mode[ n_counter ] & RC_COUNTTARGET ) != 0 )
 	{
 		/* TODO: wrap should be handled differently as RC_COUNTTARGET & RC_IRQTARGET don't have to be the same. */
 		m_p_n_root_count[ n_counter ] = 0;
@@ -567,12 +567,12 @@ WRITE32_HANDLER( psx_counter_w )
 		{
 			m_p_n_root_count[ n_counter ] = 0;
 		}
-//		if( ( data & 0xfca6 ) != 0 ||
-//			( ( data & 0x0100 ) != 0 && n_counter != 0 && n_counter != 1 ) ||
-//			( ( data & 0x0200 ) != 0 && n_counter != 2 ) )
-//		{
-//			printf( "mode %d 0x%04x\n", n_counter, data & 0xfca6 );
-//		}
+//      if( ( data & 0xfca6 ) != 0 ||
+//          ( ( data & 0x0100 ) != 0 && n_counter != 0 && n_counter != 1 ) ||
+//          ( ( data & 0x0200 ) != 0 && n_counter != 2 ) )
+//      {
+//          printf( "mode %d 0x%04x\n", n_counter, data & 0xfca6 );
+//      }
 		break;
 	case 2:
 		m_p_n_root_target[ n_counter ] = data;
@@ -851,7 +851,7 @@ WRITE32_HANDLER( psx_sio_w )
 				}
 			}
 			m_p_n_sio_tx_prev[ n_port ] = m_p_n_sio_tx[ n_port ];
-	
+
 		}
 		break;
 	case 3:

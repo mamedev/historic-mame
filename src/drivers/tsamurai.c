@@ -1,12 +1,12 @@
 /****************************************************************************
 
-	Preliminary driver for Samurai, Nunchackun, Yuke Yuke Yamaguchi-kun
-	(c) Taito 1985
+    Preliminary driver for Samurai, Nunchackun, Yuke Yuke Yamaguchi-kun
+    (c) Taito 1985
 
-	Known Issues:
-	- some color problems (need screenshots)
-	- Nunchackun has wrong colors; sprites look better if you subtract sprite color from 0x2d
-	- Yuke Yuke Yamaguchi-kun isn't playable (sprite problem only?)
+    Known Issues:
+    - some color problems (need screenshots)
+    - Nunchackun has wrong colors; sprites look better if you subtract sprite color from 0x2d
+    - Yuke Yuke Yamaguchi-kun isn't playable (sprite problem only?)
 
 driver by Phil Stroffolino
 
@@ -15,7 +15,7 @@ Mission 660 extensions by Paul Swan (swan@easynet.co.uk)
 The game appears to use the same video board as Samurai et al. There is a
 character column scroll feature that I have added. Its used to scroll in
 the "660" logo on the title screen at the beginning. Not sure if Samurai
-at al use it but it's likely their boards have the feature.	Extra banking
+at al use it but it's likely their boards have the feature. Extra banking
 of the forground is done using an extra register. A bit in the background
 video RAM selects the additional background character space.
 
@@ -780,7 +780,7 @@ static MACHINE_DRIVER_START( tsamurai )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 
@@ -830,7 +830,7 @@ static MACHINE_DRIVER_START( m660 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 
@@ -870,7 +870,7 @@ static MACHINE_DRIVER_START( vsgongf )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 

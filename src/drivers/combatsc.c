@@ -37,14 +37,14 @@ TODO:
 
 Credits:
 
-	Hardware Info:
-		Jose Tejada Gomez
-		Manuel Abadia
-		Cesareo Gutierrez
+    Hardware Info:
+        Jose Tejada Gomez
+        Manuel Abadia
+        Cesareo Gutierrez
 
-	MAME Driver:
-		Phil Stroffolino
-		Manuel Abadia
+    MAME Driver:
+        Phil Stroffolino
+        Manuel Abadia
 
 Memory Maps (preliminary):
 
@@ -54,29 +54,29 @@ Memory Maps (preliminary):
 
 MAIN CPU:
 ---------
-00c0-00c3	Objects control
-0500		bankswitch control
-0600-06ff	palette
-0800-1fff	RAM
-2000-2fff	Video RAM (banked)
-3000-3fff	Object RAM (banked)
-4000-7fff	Banked Area + IO + Video Registers
-8000-ffff	ROM
+00c0-00c3   Objects control
+0500        bankswitch control
+0600-06ff   palette
+0800-1fff   RAM
+2000-2fff   Video RAM (banked)
+3000-3fff   Object RAM (banked)
+4000-7fff   Banked Area + IO + Video Registers
+8000-ffff   ROM
 
 SOUND CPU:
 ----------
-0000-8000	ROM
-8000-87ef	RAM
-87f0-87ff	???
-9000-9001	YM2203
-9008		???
-9800		OKIM5205?
-a000		soundlatch?
-a800		OKIM5205?
-fffc-ffff	???
+0000-8000   ROM
+8000-87ef   RAM
+87f0-87ff   ???
+9000-9001   YM2203
+9008        ???
+9800        OKIM5205?
+a000        soundlatch?
+a800        OKIM5205?
+fffc-ffff   ???
 
 
-		Notes about the sound systsem of the bootleg:
+        Notes about the sound systsem of the bootleg:
         ---------------------------------------------
         The positions 0x87f0-0x87ff are very important, it
         does work similar to a semaphore (same as a lot of
@@ -86,34 +86,34 @@ fffc-ffff	???
         I have tried put here a K007232 chip, but it didn't
         work.
 
-		Sound chips: OKI M5205 & YM2203
+        Sound chips: OKI M5205 & YM2203
 
-		We are using the other sound hardware for now.
+        We are using the other sound hardware for now.
 
 ****************************
 * Combat School (Original) *
 ****************************
 
-0000-005f	Video Registers (banked)
-0400-0407	input ports
-0408		coin counters
-0410		bankswitch control
-0600-06ff	palette
-0800-1fff	RAM
-2000-2fff	Video RAM (banked)
-3000-3fff	Object RAM (banked)
-4000-7fff	Banked Area + IO + Video Registers
-8000-ffff	ROM
+0000-005f   Video Registers (banked)
+0400-0407   input ports
+0408        coin counters
+0410        bankswitch control
+0600-06ff   palette
+0800-1fff   RAM
+2000-2fff   Video RAM (banked)
+3000-3fff   Object RAM (banked)
+4000-7fff   Banked Area + IO + Video Registers
+8000-ffff   ROM
 
 SOUND CPU:
 ----------
-0000-8000	ROM
-8000-87ff	RAM
-9000		uPD7759
-b000		uPD7759
-c000		uPD7759
-d000		soundlatch_r
-e000-e001	YM2203
+0000-8000   ROM
+8000-87ff   RAM
+9000        uPD7759
+b000        uPD7759
+c000        uPD7759
+d000        soundlatch_r
+e000-e001   YM2203
 
 ***************************************************************************/
 
@@ -277,7 +277,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( combasc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0007) AM_WRITE(combasc_pf_control_w)
 	AM_RANGE(0x0020, 0x005f) AM_WRITE(combasc_scrollram_w)
-//	AM_RANGE(0x0060, 0x00ff) AM_WRITE(MWA8_RAM)					/* RAM */
+//  AM_RANGE(0x0060, 0x00ff) AM_WRITE(MWA8_RAM)                 /* RAM */
 	AM_RANGE(0x0200, 0x0201) AM_WRITE(protection_w)
 	AM_RANGE(0x0206, 0x0206) AM_WRITE(protection_clock_w)
 	AM_RANGE(0x0408, 0x0408) AM_WRITE(combasc_coin_counter_w)	/* coin counters */
@@ -330,8 +330,8 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x87f0, 0x87ff) AM_WRITE(MWA8_RAM)				/* ??? */
  	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)/* YM 2203 */
 	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)	/* YM 2203 */
-	//AM_RANGE(0x9800, 0x9800) AM_WRITE(combasc_unknown_w_1)	/* OKIM5205? */
-	//AM_RANGE(0xa800, 0xa800) AM_WRITE(combasc_unknown_w_2)	/* OKIM5205? */
+	//AM_RANGE(0x9800, 0x9800) AM_WRITE(combasc_unknown_w_1)    /* OKIM5205? */
+	//AM_RANGE(0xa800, 0xa800) AM_WRITE(combasc_unknown_w_2)    /* OKIM5205? */
 	AM_RANGE(0x8800, 0xfffb) AM_WRITE(MWA8_ROM)				/* ROM */
 	AM_RANGE(0xfffc, 0xffff) AM_WRITE(MWA8_RAM)				/* ??? */
 ADDRESS_MAP_END

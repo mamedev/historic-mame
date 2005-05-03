@@ -4,22 +4,22 @@
 
 
 
-/* The timer clock which feeds the upper 4 bits of    					*/
-/* AY-3-8910 port A is based on the same clock        					*/
-/* feeding the sound CPU Z80.  It is a divide by      					*/
-/* 10240, formed by a standard divide by 1024,        					*/
-/* followed by a divide by 10 using a 4 bit           					*/
-/* bi-quinary count sequence. (See LS90 data sheet    					*/
-/* for an example).                                   					*/
-/*																		*/
-/* Bit 0 comes from the output of the divide by 1024  					*/
-/*       0, 1, 0, 1, 0, 1, 0, 1, 0, 1									*/
-/* Bit 1 comes from the QC output of the LS90 producing a sequence of	*/
-/* 		 0, 0, 1, 1, 0, 0, 1, 1, 1, 0									*/
-/* Bit 2 comes from the QD output of the LS90 producing a sequence of	*/
-/*		 0, 0, 0, 0, 1, 0, 0, 0, 0, 1									*/
-/* Bit 3 comes from the QA output of the LS90 producing a sequence of	*/
-/*		 0, 0, 0, 0, 0, 1, 1, 1, 1, 1			 						*/
+/* The timer clock which feeds the upper 4 bits of                      */
+/* AY-3-8910 port A is based on the same clock                          */
+/* feeding the sound CPU Z80.  It is a divide by                        */
+/* 10240, formed by a standard divide by 1024,                          */
+/* followed by a divide by 10 using a 4 bit                             */
+/* bi-quinary count sequence. (See LS90 data sheet                      */
+/* for an example).                                                     */
+/*                                                                      */
+/* Bit 0 comes from the output of the divide by 1024                    */
+/*       0, 1, 0, 1, 0, 1, 0, 1, 0, 1                                   */
+/* Bit 1 comes from the QC output of the LS90 producing a sequence of   */
+/*       0, 0, 1, 1, 0, 0, 1, 1, 1, 0                                   */
+/* Bit 2 comes from the QD output of the LS90 producing a sequence of   */
+/*       0, 0, 0, 0, 1, 0, 0, 0, 0, 1                                   */
+/* Bit 3 comes from the QA output of the LS90 producing a sequence of   */
+/*       0, 0, 0, 0, 0, 1, 1, 1, 1, 1                                   */
 
 static int gyruss_timer[10] =
 {

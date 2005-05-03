@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Driver for Midway T-unit games.
+    Driver for Midway T-unit games.
 
 **************************************************************************/
 
@@ -84,7 +84,7 @@ static struct
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -137,7 +137,7 @@ VIDEO_START( midxunit )
 
 /*************************************
  *
- *	Banked graphics ROM access
+ *  Banked graphics ROM access
  *
  *************************************/
 
@@ -160,7 +160,7 @@ READ16_HANDLER( midwunit_gfxrom_r )
 
 /*************************************
  *
- *	Video RAM read/write
+ *  Video RAM read/write
  *
  *************************************/
 
@@ -231,7 +231,7 @@ READ16_HANDLER( midtunit_vram_color_r )
 
 /*************************************
  *
- *	Shift register read/write
+ *  Shift register read/write
  *
  *************************************/
 
@@ -250,16 +250,16 @@ void midtunit_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 
 /*************************************
  *
- *	Control register
+ *  Control register
  *
  *************************************/
 
 WRITE16_HANDLER( midtunit_control_w )
 {
 	/*
-		other important bits:
-			bit 2 (0x0004) is toggled periodically
-	*/
+        other important bits:
+            bit 2 (0x0004) is toggled periodically
+    */
 	logerror("T-unit control = %04X\n", data);
 
 	COMBINE_DATA(&midtunit_control);
@@ -278,9 +278,9 @@ WRITE16_HANDLER( midtunit_control_w )
 WRITE16_HANDLER( midwunit_control_w )
 {
 	/*
-		other important bits:
-			bit 2 (0x0004) is toggled periodically
-	*/
+        other important bits:
+            bit 2 (0x0004) is toggled periodically
+    */
 	logerror("Wolf-unit control = %04X\n", data);
 
 	COMBINE_DATA(&midtunit_control);
@@ -302,7 +302,7 @@ READ16_HANDLER( midwunit_control_r )
 
 /*************************************
  *
- *	Palette handlers
+ *  Palette handlers
  *
  *************************************/
 
@@ -341,7 +341,7 @@ READ16_HANDLER( midxunit_paletteram_r )
 
 /*************************************
  *
- *	DMA drawing routines
+ *  DMA drawing routines
  *
  *************************************/
 
@@ -581,7 +581,7 @@ DMA_DRAW_FUNC(prefix##_p0c1_xf, bpp, extract, XFLIP_YES, skip, scale, PIXEL_COPY
 																											\
 static dma_draw_func prefix[32] =																			\
 {																											\
-/*	B0:N / B1:N			B0:Y / B1:N			B0:N / B1:Y			B0:Y / B1:Y */								\
+/*  B0:N / B1:N         B0:Y / B1:N         B0:N / B1:Y         B0:Y / B1:Y */								\
 	dma_draw_none,		prefix##_p0,		prefix##_p1,		prefix##_p0p1,		/* no color */ 			\
 	prefix##_c0,		prefix##_c0,		prefix##_c0p1,		prefix##_c0p1,		/* color 0 pixels */ 	\
 	prefix##_c1,		prefix##_p0c1,		prefix##_c1,		prefix##_p0c1,		/* color non-0 pixels */\
@@ -610,7 +610,7 @@ DECLARE_BLITTER_SET(dma_draw_noskip_noscale,   dma_state.bpp, EXTRACTGEN,   SKIP
 
 /*************************************
  *
- *	DMA finished callback
+ *  DMA finished callback
  *
  *************************************/
 
@@ -637,7 +637,7 @@ static void dma_callback(int is_in_34010_context)
 
 /*************************************
  *
- *	DMA reader
+ *  DMA reader
  *
  *************************************/
 
@@ -650,7 +650,7 @@ READ16_HANDLER( midtunit_dma_r )
 
 /*************************************
  *
- *	DMA write handler
+ *  DMA write handler
  *
  *************************************/
 
@@ -855,7 +855,7 @@ skipdma:
 
 /*************************************
  *
- *	Core refresh routine
+ *  Core refresh routine
  *
  *************************************/
 

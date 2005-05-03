@@ -15,7 +15,7 @@ static void filter_volume_update(void *param, stream_sample_t **inputs, stream_s
 	stream_sample_t *src = inputs[0];
 	stream_sample_t *dst = outputs[0];
 	struct filter_volume_info *info = param;
-	
+
 	while (samples--)
 		*dst++ = (*src++ * info->gain) >> 8;
 }
@@ -24,10 +24,10 @@ static void filter_volume_update(void *param, stream_sample_t **inputs, stream_s
 static void *filter_volume_start(int sndindex, int clock, const void *config)
 {
 	struct filter_volume_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
 	info->gain = 0x100;
 	info->stream = stream_create(1, 1, Machine->sample_rate, info, filter_volume_update);
 

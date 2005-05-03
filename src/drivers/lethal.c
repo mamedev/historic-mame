@@ -37,18 +37,18 @@ GX191 PWB353060A
 
 Dump of USA program ROMs only.
 
-Label	CRC32		Location	Code		Chip Type
-  1   [72b843cc]	  F4		Z80		TMS 27C512 (64k)
-  6   [1b6b8f16]	  U4		6309		ST 27C4001 (512k)
+Label   CRC32       Location    Code        Chip Type
+  1   [72b843cc]      F4        Z80     TMS 27C512 (64k)
+  6   [1b6b8f16]      U4        6309        ST 27C4001 (512k)
 
 At offset 0x3FD03 in 6_usa.u4 is "08/17/92 21:38"
 
 Run down of PCB:
 Main CPU:  HD63C09EP
-	OSC 24.00000MHz near 6309
+    OSC 24.00000MHz near 6309
 
 Sound CPU:  Z80 (Zilog Z0840006PSC)
-	OSC 18.43200MHz near Z80, 054968A & 054539
+    OSC 18.43200MHz near Z80, 054968A & 054539
 
 Konami Custom chips:
 
@@ -63,7 +63,7 @@ Konami Custom chips:
 
 All other ROMs surface mounted (not included):
 
-Label	Printed*	Position
+Label   Printed*    Position
 191 A03 Mask16M-8bit - Near 054986A & 054539 - Sound - Also labeled as 056046
 
 191A04  Mask8M-16bit \ Near 053244A (x2) & 05245A - Tiles

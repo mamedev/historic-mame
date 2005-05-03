@@ -1,13 +1,13 @@
 /***************************************************************************
 
-							  -= Blomby Car =-
+                              -= Blomby Car =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  68000
-Video Chips  :	TI TPC1020AFN-084 (= Actel A1020A PL84C 9548)
-Sound Chips  :	K-665 9546 (= M6295)
+Video Chips  :  TI TPC1020AFN-084 (= Actel A1020A PL84C 9548)
+Sound Chips  :  K-665 9546 (= M6295)
 
 To Do:
 
@@ -39,7 +39,7 @@ VIDEO_UPDATE( blmbycar );
 /***************************************************************************
 
 
-								Sound Banking
+                                Sound Banking
 
 
 ***************************************************************************/
@@ -58,7 +58,7 @@ WRITE16_HANDLER( blmbycar_okibank_w )
 /***************************************************************************
 
 
-								Input Handling
+                                Input Handling
 
 
 ***************************************************************************/
@@ -102,7 +102,7 @@ static READ16_HANDLER( blmbycar_opt_wheel_r )
 /***************************************************************************
 
 
-								Memory Maps
+                                Memory Maps
 
 
 ***************************************************************************/
@@ -152,7 +152,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -170,9 +170,9 @@ INPUT_PORTS_START( blmbycar )
 	PORT_DIPSETTING(      0x0004, "2" )
 	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Controls ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( Joystick ) )
-//	PORT_DIPSETTING(      0x0010, "Pot Wheel" )	// Preliminary
-//	PORT_DIPSETTING(      0x0008, "Opt Wheel" )	// Preliminary
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ) )	// Time goes to 0 rally fast!
+//  PORT_DIPSETTING(      0x0010, "Pot Wheel" ) // Preliminary
+//  PORT_DIPSETTING(      0x0008, "Opt Wheel" ) // Preliminary
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ) )   // Time goes to 0 rally fast!
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -238,7 +238,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
@@ -267,7 +267,7 @@ static struct GfxDecodeInfo blmbycar_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -307,14 +307,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Blomby Car
+                                Blomby Car
 Abm & Gecas, 1990.
 
 CPU : 68000
@@ -377,7 +377,7 @@ DRIVER_INIT( blmbycar )
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

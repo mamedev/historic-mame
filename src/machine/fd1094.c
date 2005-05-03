@@ -43,15 +43,15 @@ the 24 bits of the global key in a fixed way, which isn't affected by the
 battery-backed RAM.
 On reset, the CPU goes in state 0x00. The state can then be modified by the
 program, executing the instruction
-CMPI.L	#$00xxFFFF, D0
+CMPI.L  #$00xxFFFF, D0
 where xx is the state.
 When an interrupt happens, the CPU enters "irq mode", forcing a specific
 state, which is stored in byte 0 of the battery-backed RAM. Irq mode can also
 be selected by the program with the instruction
-CMPI.L	#$0200FFFF, D0
+CMPI.L  #$0200FFFF, D0
 When RTE is executed, the CPU leaves irq mode, restoring the previous state.
 This can also be done by the program with the instruction
-CMPI.L	#$0300FFFF, D0
+CMPI.L  #$0300FFFF, D0
 
 Since bytes 0-3 of the battery-backed RAM are used to store the irq state and
 the global key, they have a double use: this one, and the normal 8-bit key
@@ -71,36 +71,36 @@ There is still uncertainty about the assignment of two global key bits.
 
 key[1]
 ------
-key_0b invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
-global_xor0;	/
-key_5b invert;	bit 6
-key_2b invert;	bit 4
-key_1b invert;	bit 3 always 1 for now (but 0 in a bad CPU)
-global_xor1;	bit 2
-key_0c invert;	bit 1
-global_swap2;	bit 0
+key_0b invert;  \ bits 7,5 always 1 for now (but 0 in a bad CPU)
+global_xor0;    /
+key_5b invert;  bit 6
+key_2b invert;  bit 4
+key_1b invert;  bit 3 always 1 for now (but 0 in a bad CPU)
+global_xor1;    bit 2
+key_0c invert;  bit 1
+global_swap2;   bit 0
 
 key[2]
 ------
-key_1a invert;	bit 7 always 1 for now (but 0 in a bad CPU)
-key_6b invert;	bit 6 always 1 for now (but 0 in a bad CPU)
-global_swap0a;	bit 5
-key_7a invert;	bit 4
-key_4a invert;	bit 3
-global_swap0b;	bit 2
-key_6a invert;	bit 1
-key_3a invert;	bit 0
+key_1a invert;  bit 7 always 1 for now (but 0 in a bad CPU)
+key_6b invert;  bit 6 always 1 for now (but 0 in a bad CPU)
+global_swap0a;  bit 5
+key_7a invert;  bit 4
+key_4a invert;  bit 3
+global_swap0b;  bit 2
+key_6a invert;  bit 1
+key_3a invert;  bit 0
 
 key[3]
 ------
-key_2a invert;	bit 7 always 1 for now (but 0 in a bad CPU)
-global_swap3;	bit 6 always 1 for now (but 0 in a bad CPU)
-key_5a_invert;	bit 5
-global_swap1;	bit 4
-key_3b invert;	bit 3
-global_swap4;	bit 2
-key_0a invert;	bit 1
-key_4b invert;	bit 0
+key_2a invert;  bit 7 always 1 for now (but 0 in a bad CPU)
+global_swap3;   bit 6 always 1 for now (but 0 in a bad CPU)
+key_5a_invert;  bit 5
+global_swap1;   bit 4
+key_3b invert;  bit 3
+global_swap4;   bit 2
+key_0a invert;  bit 1
+key_4b invert;  bit 0
 
 
 summary of global keys:
@@ -330,7 +330,7 @@ static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey
 	else					key_F = BIT(mainkey,6);
 
 	/* the CPU has been verified to produce different results when fetching opcodes
-	   from 0000-0006 than when fetching the inital SP and PC on reset. */
+       from 0000-0006 than when fetching the inital SP and PC on reset. */
 	if (vector_fetch)
 	{
 		if (address <= 3) gkey3 = 0x00;	// supposed to always be the case

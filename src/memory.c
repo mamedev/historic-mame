@@ -1,90 +1,90 @@
 /***************************************************************************
 
-	memory.c
+    memory.c
 
-	Functions which handle the CPU memory access.
+    Functions which handle the CPU memory access.
 
-	Caveats:
+    Caveats:
 
-	* If your driver executes an opcode which crosses a bank-switched
-	boundary, it will pull the wrong data out of memory. Although not
-	a common case, you may need to revert to memcpy to work around this.
-	See machine/tnzs.c for an example.
+    * If your driver executes an opcode which crosses a bank-switched
+    boundary, it will pull the wrong data out of memory. Although not
+    a common case, you may need to revert to memcpy to work around this.
+    See machine/tnzs.c for an example.
 
-	To do:
+    To do:
 
-	- Add local banks for RAM/ROM to reduce pressure on banking
-	- Always mirror everything out to 32 bits so we don't have to mask the address?
-	- Add the ability to start with another memory map and modify it
-	- Add fourth memory space for encrypted opcodes
-	- Automatically mirror program space into data space if no data space
-	- Get rid of association between memory_regions and RAM
-	- Get rid of opcode/data separation by using address spaces?
-	- Add support for internal addressing (maybe just accessors - see TMS3202x)
-	- Fix debugger issues
-	- Evaluate min/max opcode ranges and do we include a check in cpu_readop?
+    - Add local banks for RAM/ROM to reduce pressure on banking
+    - Always mirror everything out to 32 bits so we don't have to mask the address?
+    - Add the ability to start with another memory map and modify it
+    - Add fourth memory space for encrypted opcodes
+    - Automatically mirror program space into data space if no data space
+    - Get rid of association between memory_regions and RAM
+    - Get rid of opcode/data separation by using address spaces?
+    - Add support for internal addressing (maybe just accessors - see TMS3202x)
+    - Fix debugger issues
+    - Evaluate min/max opcode ranges and do we include a check in cpu_readop?
 
 ****************************************************************************
 
-	Address map fields and restrictions:
+    Address map fields and restrictions:
 
-	AM_RANGE(start, end)
-		Specifies a range of consecutive addresses beginning with 'start' and
-		ending with 'end' inclusive. An address hits in this bucket if the
-		'address' >= 'start' and 'address' <= 'end'.
+    AM_RANGE(start, end)
+        Specifies a range of consecutive addresses beginning with 'start' and
+        ending with 'end' inclusive. An address hits in this bucket if the
+        'address' >= 'start' and 'address' <= 'end'.
 
-	AM_SPACE(match, mask)
-		Specifies at the bit level (closer to real hardware) how to determine
-		if an address matches a given bit pattern. An address hits in this
-		bucket if 'address' & 'mask' == 'match'
+    AM_SPACE(match, mask)
+        Specifies at the bit level (closer to real hardware) how to determine
+        if an address matches a given bit pattern. An address hits in this
+        bucket if 'address' & 'mask' == 'match'
 
-	AM_MASK(mask)
-		Specifies a mask for the addresses in the current bucket. This mask
-		is applied after a positive hit in the bucket specified by AM_RANGE
-		or AM_SPACE, and is computed before accessing the RAM or calling
-		through to the read/write handler. If you use AM_SPACE, the mask
-		is implicitly set equal to the logical NOT of the mask specified in
-		the AM_SPACE macro. If you use AM_MIRROR, below, the mask is ANDed
-		implicitly with the logical NOT of the mirror. The mask specified
-		by this macro is ANDed against any implicit masks.
+    AM_MASK(mask)
+        Specifies a mask for the addresses in the current bucket. This mask
+        is applied after a positive hit in the bucket specified by AM_RANGE
+        or AM_SPACE, and is computed before accessing the RAM or calling
+        through to the read/write handler. If you use AM_SPACE, the mask
+        is implicitly set equal to the logical NOT of the mask specified in
+        the AM_SPACE macro. If you use AM_MIRROR, below, the mask is ANDed
+        implicitly with the logical NOT of the mirror. The mask specified
+        by this macro is ANDed against any implicit masks.
 
-	AM_MIRROR(mirror)
-		Specifies mirror addresses for the given bucket. The current bucket
-		is mapped repeatedly according to the mirror mask, once where each
-		mirror bit is 0, and once where it is 1. For example, a 'mirror'
-		value of 0x14000 would map the bucket at 0x00000, 0x04000, 0x10000,
-		and 0x14000.
+    AM_MIRROR(mirror)
+        Specifies mirror addresses for the given bucket. The current bucket
+        is mapped repeatedly according to the mirror mask, once where each
+        mirror bit is 0, and once where it is 1. For example, a 'mirror'
+        value of 0x14000 would map the bucket at 0x00000, 0x04000, 0x10000,
+        and 0x14000.
 
-	AM_READ(read)
-		Specifies the read handler for this bucket. All reads will pass
-		through the given callback handler. Special static values representing
-		RAM, ROM, or BANKs are also allowed here.
+    AM_READ(read)
+        Specifies the read handler for this bucket. All reads will pass
+        through the given callback handler. Special static values representing
+        RAM, ROM, or BANKs are also allowed here.
 
-	AM_WRITE(write)
-		Specifies the write handler for this bucket. All writes will pass
-		through the given callback handler. Special static values representing
-		RAM, ROM, or BANKs are also allowed here.
+    AM_WRITE(write)
+        Specifies the write handler for this bucket. All writes will pass
+        through the given callback handler. Special static values representing
+        RAM, ROM, or BANKs are also allowed here.
 
-	AM_REGION(region, offs)
-		Only useful if AM_READ/WRITE point to RAM, ROM, or BANK memory. By
-		default, memory is allocated to back each bucket. By specifying
-		AM_REGION, you can tell the memory system to point the base of the
-		memory backing this bucket to a given memory 'region' at the
-		specified 'offs'.
+    AM_REGION(region, offs)
+        Only useful if AM_READ/WRITE point to RAM, ROM, or BANK memory. By
+        default, memory is allocated to back each bucket. By specifying
+        AM_REGION, you can tell the memory system to point the base of the
+        memory backing this bucket to a given memory 'region' at the
+        specified 'offs'.
 
-	AM_SHARE(index)
-		Similar to AM_REGION, this specifies that the memory backing the
-		current bucket is shared with other buckets. The first bucket to
-		specify the share 'index' will use its memory as backing for all
-		future buckets that specify AM_SHARE with the same 'index'.
+    AM_SHARE(index)
+        Similar to AM_REGION, this specifies that the memory backing the
+        current bucket is shared with other buckets. The first bucket to
+        specify the share 'index' will use its memory as backing for all
+        future buckets that specify AM_SHARE with the same 'index'.
 
-	AM_BASE(base)
-		Specifies a pointer to a pointer to the base of the memory backing
-		the current bucket.
+    AM_BASE(base)
+        Specifies a pointer to a pointer to the base of the memory backing
+        the current bucket.
 
-	AM_SIZE(size)
-		Specifies a pointer to a size_t variable which will be filled in
-		with the size, in bytes, of the current bucket.
+    AM_SIZE(size)
+        Specifies a pointer to a size_t variable which will be filled in
+        with the size, in bytes, of the current bucket.
 
 ***************************************************************************/
 
@@ -110,25 +110,25 @@
 
 /***************************************************************************
 
-	Basic theory of memory handling:
+    Basic theory of memory handling:
 
-	An address with up to 32 bits is passed to a memory handler. First,
-	an address mask is applied to the address, removing unused bits.
+    An address with up to 32 bits is passed to a memory handler. First,
+    an address mask is applied to the address, removing unused bits.
 
-	Next, the address is broken into two halves, an upper half and a
-	lower half. The number of bits in each half can be controlled via
-	macros in memory.h, but they default to the upper 18 bits and the
-	lower 14 bits. The upper half is then used as an index into the
-	base_lookup table.
+    Next, the address is broken into two halves, an upper half and a
+    lower half. The number of bits in each half can be controlled via
+    macros in memory.h, but they default to the upper 18 bits and the
+    lower 14 bits. The upper half is then used as an index into the
+    base_lookup table.
 
-	If the value pulled from the table is within the range 192-255, then
-	the lower half of the address is needed to resolve the final handler.
-	The value from the table (192-255) is combined with the lower address
-	bits to form an index into a subtable.
+    If the value pulled from the table is within the range 192-255, then
+    the lower half of the address is needed to resolve the final handler.
+    The value from the table (192-255) is combined with the lower address
+    bits to form an index into a subtable.
 
-	Table values in the range 0-63 are reserved for internal handling
-	(such as RAM, ROM, NOP, and banking). Table values between 64 and 192
-	are assigned dynamically at startup.
+    Table values in the range 0-63 are reserved for internal handling
+    (such as RAM, ROM, NOP, and banking). Table values between 64 and 192
+    are assigned dynamically at startup.
 
 ***************************************************************************/
 
@@ -163,7 +163,7 @@
 
 
 /*-------------------------------------------------
-	TYPE DEFINITIONS
+    TYPE DEFINITIONS
 -------------------------------------------------*/
 
 struct memory_block_t
@@ -250,7 +250,7 @@ struct cpu_data_t
 
 
 /*-------------------------------------------------
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 -------------------------------------------------*/
 
 UINT8 *						opcode_base;					/* opcode base */
@@ -347,7 +347,7 @@ static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 
 
 /*-------------------------------------------------
-	PROTOTYPES
+    PROTOTYPES
 -------------------------------------------------*/
 
 static int init_cpudata(void);
@@ -382,7 +382,7 @@ static void mem_dump(void);
 
 
 /*-------------------------------------------------
-	memory_init - initialize the memory system
+    memory_init - initialize the memory system
 -------------------------------------------------*/
 
 int memory_init(void)
@@ -425,7 +425,7 @@ int memory_init(void)
 
 
 /*-------------------------------------------------
-	memory_shutdown - free memory
+    memory_shutdown - free memory
 -------------------------------------------------*/
 
 void memory_shutdown(void)
@@ -454,7 +454,7 @@ void memory_shutdown(void)
 
 
 /*-------------------------------------------------
-	memory_set_context - set the memory context
+    memory_set_context - set the memory context
 -------------------------------------------------*/
 
 void memory_set_context(int activecpu)
@@ -518,8 +518,8 @@ void memory_set_context(int activecpu)
 
 
 /*-------------------------------------------------
-	memory_get_map - return a pointer to a CPU's
-	memory map
+    memory_get_map - return a pointer to a CPU's
+    memory map
 -------------------------------------------------*/
 
 const struct address_map_t *memory_get_map(int cpunum, int spacenum)
@@ -529,8 +529,8 @@ const struct address_map_t *memory_get_map(int cpunum, int spacenum)
 
 
 /*-------------------------------------------------
-	memory_set_opbase_handler - change op-code
-	memory base
+    memory_set_opbase_handler - change op-code
+    memory base
 -------------------------------------------------*/
 
 opbase_handler memory_set_opbase_handler(int cpunum, opbase_handler function)
@@ -544,7 +544,7 @@ opbase_handler memory_set_opbase_handler(int cpunum, opbase_handler function)
 
 
 /*-------------------------------------------------
-	memory_set_opbase - generic opcode base changer
+    memory_set_opbase - generic opcode base changer
 -------------------------------------------------*/
 
 void memory_set_opbase(offs_t pc)
@@ -595,8 +595,8 @@ void memory_set_opbase(offs_t pc)
 
 
 /*-------------------------------------------------
-	memory_set_opcode_base - set the base of
-	ROM
+    memory_set_opcode_base - set the base of
+    ROM
 -------------------------------------------------*/
 
 void memory_set_opcode_base(int cpunum, void *base)
@@ -617,9 +617,9 @@ void memory_set_opcode_base(int cpunum, void *base)
 
 
 /*-------------------------------------------------
-	memory_get_read_ptr - return a pointer to the
-	base of RAM associated with the given CPU
-	and offset
+    memory_get_read_ptr - return a pointer to the
+    base of RAM associated with the given CPU
+    and offset
 -------------------------------------------------*/
 
 void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
@@ -642,9 +642,9 @@ void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
 
 
 /*-------------------------------------------------
-	memory_get_write_ptr - return a pointer to the
-	base of RAM associated with the given CPU
-	and offset
+    memory_get_write_ptr - return a pointer to the
+    base of RAM associated with the given CPU
+    and offset
 -------------------------------------------------*/
 
 void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
@@ -667,27 +667,58 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 
 
 /*-------------------------------------------------
-	memory_get_op_ptr - return a pointer to the
-	base of opcode RAM associated with the given
-	CPU and offset
+    memory_get_op_ptr - return a pointer to the
+    base of opcode RAM associated with the given
+    CPU and offset
 -------------------------------------------------*/
 
 void *memory_get_op_ptr(int cpunum, offs_t offset)
 {
-	offs_t opbase = ~0;
+	offs_t new_offset;
+	void *ptr;
+	UINT8 *saved_opcode_base;
+	UINT8 *saved_opcode_arg_base;
+	offs_t saved_opcode_mask;
+	offs_t saved_opcode_memory_min;
+	offs_t saved_opcode_memory_max;
+	UINT8 saved_opcode_entry;
 
 	if (cpudata[cpunum].opbase)
-		opbase = cpudata[cpunum].opbase(offset);
+	{
+		/* need to save opcode info */
+		saved_opcode_base = opcode_base;
+		saved_opcode_arg_base = opcode_arg_base;
+		saved_opcode_mask = opcode_mask;
+		saved_opcode_memory_min = opcode_memory_min;
+		saved_opcode_memory_max = opcode_memory_max;
+		saved_opcode_entry = opcode_entry;
 
-	if (opbase == ~0)
-		return memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+		new_offset = cpudata[cpunum].opbase(offset);
+
+		if (new_offset == ~0)
+			ptr = &opcode_base[offset];
+		else
+			ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, new_offset);
+
+		/* restore opcode info */
+		opcode_base = saved_opcode_base;
+		opcode_arg_base = saved_opcode_arg_base;
+		opcode_mask = saved_opcode_mask;
+		opcode_memory_min = saved_opcode_memory_min;
+		opcode_memory_max = saved_opcode_memory_max;
+		opcode_entry = saved_opcode_entry;
+	}
 	else
-		return (void *) (opbase + offset);
+	{
+		ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+	}
+	return ptr;
 }
 
 
+
 /*-------------------------------------------------
-	memory_set_bankptr - set the base of a bank
+    memory_set_bankptr - set the base of a bank
 -------------------------------------------------*/
 
 void memory_set_bankptr(int banknum, void *base)
@@ -711,7 +742,7 @@ void memory_set_bankptr(int banknum, void *base)
 
 
 /*-------------------------------------------------
-	memory_set_bankptr - set the base of a bank
+    memory_set_bankptr - set the base of a bank
 -------------------------------------------------*/
 
 void memory_set_debugger_access(int debugger)
@@ -721,8 +752,8 @@ void memory_set_debugger_access(int debugger)
 
 
 /*-------------------------------------------------
-	memory_install_readX_handler - install dynamic
-	read handler for X-bit case
+    memory_install_readX_handler - install dynamic
+    read handler for X-bit case
 -------------------------------------------------*/
 
 data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
@@ -759,8 +790,8 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
 
 
 /*-------------------------------------------------
-	memory_install_writeX_handler - install dynamic
-	write handler for X-bit case
+    memory_install_writeX_handler - install dynamic
+    write handler for X-bit case
 -------------------------------------------------*/
 
 data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
@@ -797,9 +828,9 @@ data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start,
 
 
 /*-------------------------------------------------
-	memory_install_readX_matchmask_handler -
-	install dynamic match/mask read handler for
-	X-bit case
+    memory_install_readX_matchmask_handler -
+    install dynamic match/mask read handler for
+    X-bit case
 -------------------------------------------------*/
 
 data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler)
@@ -836,9 +867,9 @@ data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs
 
 
 /*-------------------------------------------------
-	memory_install_writeX_matchmask_handler -
-	install dynamic match/mask write handler for
-	X-bit case
+    memory_install_writeX_matchmask_handler -
+    install dynamic match/mask write handler for
+    X-bit case
 -------------------------------------------------*/
 
 data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler)
@@ -875,7 +906,7 @@ data64_t *memory_install_write64_matchmask_handler(int cpunum, int spacenum, off
 
 
 /*-------------------------------------------------
-	construct_map_0 - NULL memory map
+    construct_map_0 - NULL memory map
 -------------------------------------------------*/
 
 struct address_map_t *construct_map_0(struct address_map_t *map)
@@ -886,8 +917,8 @@ struct address_map_t *construct_map_0(struct address_map_t *map)
 
 
 /*-------------------------------------------------
-	init_cpudata - initialize the cpudata
-	structure for each CPU
+    init_cpudata - initialize the cpudata
+    structure for each CPU
 -------------------------------------------------*/
 
 static int init_cpudata(void)
@@ -919,8 +950,8 @@ static int init_cpudata(void)
 
 
 /*-------------------------------------------------
-	adjust_addresses - adjust addresses for a
-	given address space in a standard fashion
+    adjust_addresses - adjust addresses for a
+    given address space in a standard fashion
 -------------------------------------------------*/
 
 INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, offs_t *start, offs_t *end, offs_t *mask, offs_t *mirror)
@@ -928,7 +959,7 @@ INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, of
 	/* adjust start/end/mask values */
 	if (!*mask) *mask = space->rawmask;
 /* ASG - I think this is wrong - it prevents using a mask to mirror match/mask cases
-	if (ismatchmask) *mask |= *end & space->rawmask; */
+    if (ismatchmask) *mask |= *end & space->rawmask; */
 	*mask &= ~*mirror;
 	*start &= ~*mirror & space->rawmask;
 	*end &= ~*mirror & space->rawmask;
@@ -942,8 +973,8 @@ INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, of
 
 
 /*-------------------------------------------------
-	init_addrspace - initialize the address space
-	data structure
+    init_addrspace - initialize the address space
+    data structure
 -------------------------------------------------*/
 
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
@@ -1039,8 +1070,8 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 
 
 /*-------------------------------------------------
-	preflight_memory - verify the memory structs
-	and track which banks are referenced
+    preflight_memory - verify the memory structs
+    and track which banks are referenced
 -------------------------------------------------*/
 
 static int preflight_memory(void)
@@ -1138,8 +1169,8 @@ static int preflight_memory(void)
 
 
 /*-------------------------------------------------
-	populate_memory - populate the memory mapping
-	tables with entries
+    populate_memory - populate the memory mapping
+    tables with entries
 -------------------------------------------------*/
 
 static int populate_memory(void)
@@ -1179,8 +1210,8 @@ static int populate_memory(void)
 
 
 /*-------------------------------------------------
-	install_mem_handler - installs a handler for
-	memory operations
+    install_mem_handler - installs a handler for
+    memory operations
 -------------------------------------------------*/
 
 static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed)
@@ -1254,23 +1285,23 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 				hmirrorbase |= hmirrorbit[i];
 
 		/* if this is not our first time through, and the level 2 entry matches the previous
-		   level 2 entry, just do a quick map and get out; note that this only works for entries
-		   which don't span multiple level 1 table entries */
+           level 2 entry, just do a quick map and get out; note that this only works for entries
+           which don't span multiple level 1 table entries */
 		cur_index = LEVEL1_INDEX(start + hmirrorbase);
 		if (cur_index == LEVEL1_INDEX(end + hmirrorbase))
 		{
 			if (hmirrorcount != 0 && prev_entry == tabledata->table[cur_index])
 			{
 				VPRINTF(("Quick mapping subtable at %08X to match subtable at %08X\n", cur_index << LEVEL2_BITS, prev_index << LEVEL2_BITS));
-				
+
 				/* release the subtable if the old value was a subtable */
 				if (tabledata->table[cur_index] >= SUBTABLE_BASE)
 					release_subtable(tabledata, tabledata->table[cur_index]);
-				
+
 				/* reallocate the subtable if the new value is a subtable */
 				if (tabledata->table[prev_index] >= SUBTABLE_BASE)
 					reallocate_subtable(tabledata, tabledata->table[prev_index]);
-				
+
 				/* set the new value and short-circuit the mapping step */
 				tabledata->table[cur_index] = tabledata->table[prev_index];
 				continue;
@@ -1303,8 +1334,8 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 
 
 /*-------------------------------------------------
-	assign_dynamic_bank - finds a free or exact
-	matching bank
+    assign_dynamic_bank - finds a free or exact
+    matching bank
 -------------------------------------------------*/
 
 static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed, int ismasked)
@@ -1342,8 +1373,8 @@ static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 
 
 /*-------------------------------------------------
-	get_handler_index - finds the index of a
-	handler, or allocates a new one as necessary
+    get_handler_index - finds the index of a
+    handler, or allocates a new one as necessary
 -------------------------------------------------*/
 
 static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs_t start, offs_t end, offs_t mask)
@@ -1384,8 +1415,8 @@ static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs
 
 
 /*-------------------------------------------------
-	populate_table_range - assign a memory handler
-	to a range of addresses
+    populate_table_range - assign a memory handler
+    to a range of addresses
 -------------------------------------------------*/
 
 static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler)
@@ -1448,8 +1479,8 @@ static void populate_table_range(struct addrspace_data_t *space, int iswrite, of
 
 
 /*-------------------------------------------------
-	populate_table_match - assign a memory handler
-	to a range of addresses
+    populate_table_match - assign a memory handler
+    to a range of addresses
 -------------------------------------------------*/
 
 static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler)
@@ -1504,8 +1535,8 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
 
 
 /*-------------------------------------------------
-	allocate_subtable - allocate a fresh subtable
-	and set its usecount to 1
+    allocate_subtable - allocate a fresh subtable
+    and set its usecount to 1
 -------------------------------------------------*/
 
 static UINT8 allocate_subtable(struct table_data_t *tabledata)
@@ -1544,8 +1575,8 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 
 
 /*-------------------------------------------------
-	reallocate_subtable - increment the usecount on
-	a subtable
+    reallocate_subtable - increment the usecount on
+    a subtable
 -------------------------------------------------*/
 
 static void reallocate_subtable(struct table_data_t *tabledata, UINT8 subentry)
@@ -1562,8 +1593,8 @@ static void reallocate_subtable(struct table_data_t *tabledata, UINT8 subentry)
 
 
 /*-------------------------------------------------
-	merge_subtables - merge any duplicate
-	subtables
+    merge_subtables - merge any duplicate
+    subtables
 -------------------------------------------------*/
 
 static int merge_subtables(struct table_data_t *tabledata)
@@ -1622,8 +1653,8 @@ static int merge_subtables(struct table_data_t *tabledata)
 
 
 /*-------------------------------------------------
-	release_subtable - decrement the usecount on
-	a subtable and free it if we're done
+    release_subtable - decrement the usecount on
+    a subtable and free it if we're done
 -------------------------------------------------*/
 
 static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
@@ -1642,8 +1673,8 @@ static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
 
 
 /*-------------------------------------------------
-	open_subtable - gain access to a subtable for
-	modification
+    open_subtable - gain access to a subtable for
+    modification
 -------------------------------------------------*/
 
 static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
@@ -1680,7 +1711,7 @@ static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
 
 
 /*-------------------------------------------------
-	close_subtable - stop access to a subtable
+    close_subtable - stop access to a subtable
 -------------------------------------------------*/
 
 static void close_subtable(struct table_data_t *tabledata, offs_t l1index)
@@ -1690,8 +1721,8 @@ static void close_subtable(struct table_data_t *tabledata, offs_t l1index)
 
 
 /*-------------------------------------------------
-	Return whether a given memory map entry implies
-	the need of allocating and registering memory
+    Return whether a given memory map entry implies
+    the need of allocating and registering memory
 -------------------------------------------------*/
 
 static int amentry_needs_backing_store(int cpunum, int spacenum, const struct address_map_t *map)
@@ -1729,8 +1760,8 @@ static int amentry_needs_backing_store(int cpunum, int spacenum, const struct ad
 
 
 /*-------------------------------------------------
-	allocate_memory - allocate memory for
-	CPU address spaces
+    allocate_memory - allocate memory for
+    CPU address spaces
 -------------------------------------------------*/
 
 static int allocate_memory(void)
@@ -1832,8 +1863,8 @@ static int allocate_memory(void)
 
 
 /*-------------------------------------------------
-	allocate_memory_block - allocate a single
-	memory block of data
+    allocate_memory_block - allocate a single
+    memory block of data
 -------------------------------------------------*/
 
 static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_t end, void *memory)
@@ -1871,8 +1902,8 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 
 
 /*-------------------------------------------------
-	register_for_save - register a block of
-	memory for save states
+    register_for_save - register a block of
+    memory for save states
 -------------------------------------------------*/
 
 static void register_for_save(int cpunum, int spacenum, offs_t start, void *base, size_t numbytes)
@@ -1899,8 +1930,8 @@ static void register_for_save(int cpunum, int spacenum, offs_t start, void *base
 
 
 /*-------------------------------------------------
-	assign_intersecting_blocks - find all
-	intersecting blocks and assign their pointers
+    assign_intersecting_blocks - find all
+    intersecting blocks and assign their pointers
 -------------------------------------------------*/
 
 static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t *space, offs_t start, offs_t end, UINT8 *base)
@@ -1957,8 +1988,8 @@ static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t 
 
 
 /*-------------------------------------------------
-	find_memory - find all the requested pointers
-	into the final allocated memory
+    find_memory - find all the requested pointers
+    into the final allocated memory
 -------------------------------------------------*/
 
 static int find_memory(void)
@@ -2008,9 +2039,9 @@ static int find_memory(void)
 
 
 /*-------------------------------------------------
-	memory_find_base - return a pointer to the
-	base of RAM associated with the given CPU
-	and offset
+    memory_find_base - return a pointer to the
+    base of RAM associated with the given CPU
+    and offset
 -------------------------------------------------*/
 
 static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t offset)
@@ -2059,7 +2090,7 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 
 
 /*-------------------------------------------------
-	PERFORM_LOOKUP - common lookup procedure
+    PERFORM_LOOKUP - common lookup procedure
 -------------------------------------------------*/
 
 #define PERFORM_LOOKUP(lookup,space,extraand)											\
@@ -2071,7 +2102,7 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 
 
 /*-------------------------------------------------
-	READBYTE - generic byte-sized read handler
+    READBYTE - generic byte-sized read handler
 -------------------------------------------------*/
 
 #define READBYTE8(name,spacenum)														\
@@ -2124,8 +2155,8 @@ data8_t name(offs_t address)															\
 
 
 /*-------------------------------------------------
-	READWORD - generic word-sized read handler
-	(16-bit, 32-bit and 64-bit aligned only!)
+    READWORD - generic word-sized read handler
+    (16-bit, 32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
 #define READWORD16(name,spacenum)														\
@@ -2176,8 +2207,8 @@ data16_t name(offs_t address)															\
 
 
 /*-------------------------------------------------
-	READDWORD - generic dword-sized read handler
-	(32-bit and 64-bit aligned only!)
+    READDWORD - generic dword-sized read handler
+    (32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
 #define READDWORD32(name,spacenum)														\
@@ -2226,8 +2257,8 @@ data32_t name(offs_t address)															\
 
 
 /*-------------------------------------------------
-	READQWORD - generic qword-sized read handler
-	(64-bit aligned only!)
+    READQWORD - generic qword-sized read handler
+    (64-bit aligned only!)
 -------------------------------------------------*/
 
 #define READQWORD64(name,spacenum)														\
@@ -2251,7 +2282,7 @@ data64_t name(offs_t address)															\
 
 
 /*-------------------------------------------------
-	WRITEBYTE - generic byte-sized write handler
+    WRITEBYTE - generic byte-sized write handler
 -------------------------------------------------*/
 
 #define WRITEBYTE8(name,spacenum)														\
@@ -2302,8 +2333,8 @@ void name(offs_t address, data8_t data)													\
 
 
 /*-------------------------------------------------
-	WRITEWORD - generic word-sized write handler
-	(16-bit, 32-bit and 64-bit aligned only!)
+    WRITEWORD - generic word-sized write handler
+    (16-bit, 32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
 #define WRITEWORD16(name,spacenum)														\
@@ -2352,8 +2383,8 @@ void name(offs_t address, data16_t data)												\
 
 
 /*-------------------------------------------------
-	WRITEDWORD - dword-sized write handler
-	(32-bit and 64-bit aligned only!)
+    WRITEDWORD - dword-sized write handler
+    (32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
 #define WRITEDWORD32(name,spacenum)														\
@@ -2400,8 +2431,8 @@ void name(offs_t address, data32_t data)												\
 
 
 /*-------------------------------------------------
-	WRITEQWORD - qword-sized write handler
-	(64-bit aligned only!)
+    WRITEQWORD - qword-sized write handler
+    (64-bit aligned only!)
 -------------------------------------------------*/
 
 #define WRITEQWORD64(name,spacenum)														\
@@ -2424,7 +2455,7 @@ void name(offs_t address, data64_t data)												\
 
 
 /*-------------------------------------------------
-	Program memory handlers
+    Program memory handlers
 -------------------------------------------------*/
 
      READBYTE8(program_read_byte_8,      ADDRESS_SPACE_PROGRAM)
@@ -2474,7 +2505,7 @@ WRITEDWORD64LE(program_write_dword_64le, ADDRESS_SPACE_PROGRAM)
 
 
 /*-------------------------------------------------
-	Data memory handlers
+    Data memory handlers
 -------------------------------------------------*/
 
      READBYTE8(data_read_byte_8,      ADDRESS_SPACE_DATA)
@@ -2524,7 +2555,7 @@ WRITEDWORD64LE(data_write_dword_64le, ADDRESS_SPACE_DATA)
 
 
 /*-------------------------------------------------
-	I/O memory handlers
+    I/O memory handlers
 -------------------------------------------------*/
 
      READBYTE8(io_read_byte_8,      ADDRESS_SPACE_IO)
@@ -2574,7 +2605,7 @@ WRITEDWORD64LE(io_write_dword_64le, ADDRESS_SPACE_IO)
 
 
 /*-------------------------------------------------
-	safe opcode reading
+    safe opcode reading
 -------------------------------------------------*/
 
 data8_t cpu_readop_safe(offs_t offset)
@@ -2627,7 +2658,7 @@ data64_t cpu_readop_arg64_safe(offs_t offset)
 
 
 /*-------------------------------------------------
-	unmapped memory handlers
+    unmapped memory handlers
 -------------------------------------------------*/
 
 static READ8_HANDLER( mrh8_unmap_program )
@@ -2746,7 +2777,7 @@ static WRITE64_HANDLER( mwh64_unmap_io )
 
 
 /*-------------------------------------------------
-	no-op memory handlers
+    no-op memory handlers
 -------------------------------------------------*/
 
 static READ8_HANDLER( mrh8_nop_program )   { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
@@ -2771,7 +2802,7 @@ static WRITE64_HANDLER( mwh64_nop )        {  }
 
 
 /*-------------------------------------------------
-	other static handlers
+    other static handlers
 -------------------------------------------------*/
 
 static WRITE8_HANDLER( mwh8_ramrom )   { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
@@ -2781,8 +2812,8 @@ static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offs
 
 
 /*-------------------------------------------------
-	get_static_handler - returns points to static
-	memory handlers
+    get_static_handler - returns points to static
+    memory handlers
 -------------------------------------------------*/
 
 static genf *get_static_handler(int databits, int readorwrite, int spacenum, int which)
@@ -2840,7 +2871,7 @@ static genf *get_static_handler(int databits, int readorwrite, int spacenum, int
 
 
 /*-------------------------------------------------
-	debugging
+    debugging
 -------------------------------------------------*/
 
 #if MEM_DUMP

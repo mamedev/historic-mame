@@ -26,15 +26,15 @@ Rockford
 World Trophy Soccer
 
 Hardware description (from targets.mame.net):
-In the late 80s, Arcadia collaborated with Mastertronic to create their own 
-ten-interchangeable-game arcade platform called the Arcadia Multi Select system, 
-using the same hardware as the beloved Commodore Amiga computer. 
-(In fact, the Multi Select's main PCB is an A500 motherboard, to which the ROM 
+In the late 80s, Arcadia collaborated with Mastertronic to create their own
+ten-interchangeable-game arcade platform called the Arcadia Multi Select system,
+using the same hardware as the beloved Commodore Amiga computer.
+(In fact, the Multi Select's main PCB is an A500 motherboard, to which the ROM
 cage is attached through the external expansion port).
-Reportedly the system was also (or was originally) supposed to have been released 
+Reportedly the system was also (or was originally) supposed to have been released
 in two five-game Super Select versions--"Arcade Action" and "Sports Simulation"
--- but no specimens of these have ever been seen. 
-   
+-- but no specimens of these have ever been seen.
+
 NOTES and TODO:
 - To get into service mode, hold down F2 before pressing a button after
 the 'INITIALIZATION OK' message. Pressing F2 during game brings service mode also.
@@ -58,7 +58,7 @@ discarded, this looks like game bug
 
 /**************************************************************************
 
-	Autoconfig support
+    Autoconfig support
 
 ***************************************************************************/
 
@@ -75,7 +75,7 @@ discarded, this looks like game bug
 #define NORMAL( offs, data ) WRITE_WORD( offs, ( data & 0xf0 ) << 8 ); WRITE_WORD( offs+2, ( data & 0x0f ) << 12 );
 #define INV( offs, data ) WRITE_WORD( offs, ~( ( data & 0xf0 ) << 8 ) ); WRITE_WORD( offs+2, ~( ( data & 0x0f ) << 12 ) );
 
-static void autoconfig_init( UINT32 rom_boot_vector ) 
+static void autoconfig_init( UINT32 rom_boot_vector )
 {
 
 	data8_t *autoconf, *expansion;
@@ -170,8 +170,8 @@ INPUT_PORTS_START( arcadia )
 
 	PORT_START
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) /* Joystick - Port 1 */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) 
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) 
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_COCKTAIL /* Joystick - Port 2 */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
@@ -235,7 +235,7 @@ MACHINE_DRIVER_END
 	ROM_LOAD16_BYTE_BIOS( 2, "gcp-3-lo", 0x040000, 0x10000, CRC(87229e0d) SHA1(0b18544801e529f954b9e03226bd2e5475f36351) ) \
 	ROM_LOAD16_BYTE_BIOS( 2, "gcp-3-hi", 0x040001, 0x10000, CRC(3e7364be) SHA1(26e10d0ddc031a891138db36ce4f1732722e6847) )
 
-	
+
 
 ROM_START( ar_bios )
 	ARCADIA_BIOS
@@ -263,7 +263,7 @@ ROM_START( ar_airh )
 	ROM_REGION(0x180000, REGION_USER3, 0)
 	ROM_LOAD16_BYTE( "airh_1l.bin", 0x00000, 0x10000, CRC(155452b6) SHA1(aeaa67ea9cc543c9a43094545450159e4784fb5c) )
 	ROM_LOAD16_BYTE( "airh_1h.bin", 0x00001, 0x10000, CRC(290e8e9e) SHA1(9215e36f02adf4064934aab99accefcb17ea6d3f) )
-	
+
 ROM_END
 
 /*
@@ -316,7 +316,7 @@ ROM_START( ar_dart )
 	ROM_LOAD16_BYTE( "dart_5h.bin", 0x80001, 0x10000, CRC(38f4c236) SHA1(1a5501ed8e94cff584f40c3b984aff7aea9ec956) )
 	ROM_LOAD16_BYTE( "dart_6l.bin", 0xa0000, 0x10000, CRC(21112d4e) SHA1(95e49aa2f23c6d005a0de3cf96a1c06adeacf2a9) )
 	ROM_LOAD16_BYTE( "dart_6h.bin", 0xa0001, 0x10000, CRC(e21cc8be) SHA1(04280eef26f4a97c2280bdec19b1bc586fceffb0) )
-	
+
 ROM_END
 
 /*
@@ -338,7 +338,7 @@ Piggyback 1.5mb rom board
 */
 
 ROM_START( ar_fast )
-	ARCADIA_BIOS 
+	ARCADIA_BIOS
 
 	ROM_REGION(0x180000, REGION_USER3, 0)
 	ROM_LOAD16_BYTE( "fastv28.1l", 0x000000, 0x10000, CRC(8f7685c1) SHA1(b379c1a47618401cfbfcc7bd2d13ae51f5e73e46) )
@@ -571,18 +571,18 @@ ROM_END
 
 /***************************************************************************
 
-	Decryption routines
+    Decryption routines
 
 ***************************************************************************/
 
-/* decryption of bios rom: scpa211l, spotv3.0l, scpav3_0.1l */ 
+/* decryption of bios rom: scpa211l, spotv3.0l, scpav3_0.1l */
 static void arcadia_decode(void)
 {
 
 	UINT8* rom = memory_region(REGION_USER2);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 6, 1, 0, 2, 3, 4, 5, 7 );
 		rom += 2;
@@ -598,7 +598,7 @@ static void airh_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 5, 0, 2, 4, 7, 6, 1, 3 );
 		rom += 2;
@@ -611,7 +611,7 @@ static void bowl_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 7, 6, 0, 1, 2, 3, 4, 5 );
 		rom += 2;
@@ -625,7 +625,7 @@ static void dart_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 4, 0, 7, 6, 3, 1, 2, 5 );
 		rom += 2;
@@ -643,7 +643,7 @@ static void ldrba_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 2, 3, 4, 1, 0, 7, 5, 6 );
 		rom += 2;
@@ -657,7 +657,7 @@ static void ninj_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 1, 6, 5, 7, 4, 2, 0, 3 );
 		rom += 2;
@@ -670,7 +670,7 @@ static void rdwr_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 3, 1, 6, 4, 0, 5, 2, 7 );
 		rom += 2;
@@ -683,7 +683,7 @@ static void sdwr_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 6, 3, 4, 5, 2, 1, 0, 7 );
 		rom += 2;
@@ -696,7 +696,7 @@ static void sprg_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 4, 7, 3, 0, 6, 5, 2, 1 );
 		rom += 2;
@@ -709,7 +709,7 @@ static void xeon_decode(void)
 	UINT8* rom = memory_region(REGION_USER3);
 	int i;
 
-	for ( i = 0; i < 0x20000; i += 2 ) 
+	for ( i = 0; i < 0x20000; i += 2 )
 	{
 		*rom = BITSWAP8(*rom, 3, 1, 2, 4, 0, 5, 6, 7 );
 		rom += 2;
@@ -718,7 +718,7 @@ static void xeon_decode(void)
 
 /***************************************************************************
 
-					Arcadia machine interface
+                    Arcadia machine interface
 
 ***************************************************************************/
 
@@ -744,7 +744,7 @@ static int arcadia_cia_0_portB_r( void )
 	return ret;
 }
 
-static void arcadia_cia_0_portA_w( int data ) 
+static void arcadia_cia_0_portA_w( int data )
 {
 	if ( (data & 1) == 1)
 	{
@@ -809,7 +809,7 @@ static data16_t arcadia_read_joy0dat(void)
 {
 	int input = ( readinputport( 2 ) >> 4 );
 	int	top,bot,lft,rgt;
-	
+
 	top = ( input >> 3 ) & 1;
 	bot = ( input >> 2 ) & 1;
 	lft = ( input >> 1 ) & 1;
@@ -825,7 +825,7 @@ static data16_t arcadia_read_joy1dat(void)
 {
 	int input = ( readinputport( 2 ) & 0x0f );
 	int	top,bot,lft,rgt;
-	
+
 	top = ( input >> 3 ) & 1;
 	bot = ( input >> 2 ) & 1;
 	lft = ( input >> 1 ) & 1;
@@ -833,13 +833,13 @@ static data16_t arcadia_read_joy1dat(void)
 
 	if ( lft ) top ^= 1;
 	if ( rgt ) bot ^= 1;
-	
+
 	return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
 }
 
 /***************************************************************************
 
-					Driver init
+                    Driver init
 
 ***************************************************************************/
 

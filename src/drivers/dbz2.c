@@ -16,9 +16,9 @@
         flip the DIP and check it out!
 
   TODO:
-	- Gfx priorities (note that it has two 053251)
-	- Self Test Fails
-	- Some offsets/colours in DBZ1
+    - Gfx priorities (note that it has two 053251)
+    - Self Test Fails
+    - Some offsets/colours in DBZ1
 
 PCB Layout:
 
@@ -257,7 +257,7 @@ INPUT_PORTS_START( dbz )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) // seems unused
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) ) // Definitely correct 
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) ) // Definitely correct
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
@@ -317,7 +317,7 @@ INPUT_PORTS_START( dbz )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disabled" )
+//  PORT_DIPSETTING(    0x00, "Disabled" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dbz2 )
@@ -342,7 +342,7 @@ INPUT_PORTS_START( dbz2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) 
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
@@ -353,7 +353,7 @@ INPUT_PORTS_START( dbz2 )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Level_Select ) ) 
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Level_Select ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR(Service_Mode ) )
@@ -410,7 +410,7 @@ INPUT_PORTS_START( dbz2 )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disabled" )
+//  PORT_DIPSETTING(    0x00, "Disabled" )
 INPUT_PORTS_END
 
 /**********************************************************************************/

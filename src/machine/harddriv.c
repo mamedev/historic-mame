@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Hard Drivin' machine hardware
+    Hard Drivin' machine hardware
 
 ****************************************************************************/
 
@@ -17,7 +17,7 @@
 
 /*************************************
  *
- *	Constants and macros
+ *  Constants and macros
  *
  *************************************/
 
@@ -31,7 +31,7 @@
 
 /*************************************
  *
- *	External definitions
+ *  External definitions
  *
  *************************************/
 
@@ -90,7 +90,7 @@ extern UINT8 *hdgsp_vram;
 
 /*************************************
  *
- *	Static globals
+ *  Static globals
  *
  *************************************/
 
@@ -158,7 +158,7 @@ static void duart_callback(int param);
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -207,7 +207,7 @@ MACHINE_INIT( harddriv )
 
 /*************************************
  *
- *	68000 interrupt handling
+ *  68000 interrupt handling
  *
  *************************************/
 
@@ -266,7 +266,7 @@ void hdmsp_irq_gen(int state)
 
 /*************************************
  *
- *	68000 access to GSP
+ *  68000 access to GSP
  *
  *************************************/
 
@@ -293,7 +293,7 @@ WRITE16_HANDLER( hd68k_gsp_io_w )
 
 /*************************************
  *
- *	68000 access to MSP
+ *  68000 access to MSP
  *
  *************************************/
 
@@ -323,7 +323,7 @@ WRITE16_HANDLER( hd68k_msp_io_w )
 
 /*************************************
  *
- *	68000 input handlers
+ *  68000 input handlers
  *
  *************************************/
 
@@ -331,19 +331,19 @@ READ16_HANDLER( hd68k_port0_r )
 {
 	/* port is as follows:
 
-		0x0001 = DIAGN
-		0x0002 = /HSYNCB
-		0x0004 = /VSYNCB
-		0x0008 = EOC12
-		0x0010 = EOC8
-		0x0020 = SELF-TEST
-		0x0040 = COIN2
-		0x0080 = COIN1
-		0x0100 = SW1 #8
-		0x0200 = SW1 #7
-			.....
-		0x8000 = SW1 #1
-	*/
+        0x0001 = DIAGN
+        0x0002 = /HSYNCB
+        0x0004 = /VSYNCB
+        0x0008 = EOC12
+        0x0010 = EOC8
+        0x0020 = SELF-TEST
+        0x0040 = COIN2
+        0x0080 = COIN1
+        0x0100 = SW1 #8
+        0x0200 = SW1 #7
+            .....
+        0x8000 = SW1 #1
+    */
 	int temp = readinputport(0);
 	if (atarigen_get_hblank()) temp ^= 0x0002;
 	temp ^= 0x0018;		/* both EOCs always high for now */
@@ -433,7 +433,7 @@ READ16_HANDLER( hd68k_sound_reset_r )
 
 /*************************************
  *
- *	68000 output handlers
+ *  68000 output handlers
  *
  *************************************/
 
@@ -487,7 +487,7 @@ WRITE16_HANDLER( hd68k_wr0_write )
 
 WRITE16_HANDLER( hd68k_wr1_write )
 {
-	if (offset == 0) { //	logerror("Shifter Interface Latch = %02X\n", data);
+	if (offset == 0) { //   logerror("Shifter Interface Latch = %02X\n", data);
 	} else { 				logerror("/WR1(%04X)=%02X\n", offset, data);
 	}
 }
@@ -495,7 +495,7 @@ WRITE16_HANDLER( hd68k_wr1_write )
 
 WRITE16_HANDLER( hd68k_wr2_write )
 {
-	if (offset == 0) { //	logerror("Steering Wheel Latch = %02X\n", data);
+	if (offset == 0) { //   logerror("Steering Wheel Latch = %02X\n", data);
 	} else { 				logerror("/WR2(%04X)=%02X\n", offset, data);
 	}
 }
@@ -548,7 +548,7 @@ WRITE16_HANDLER( hdc68k_wheel_edge_reset_w )
 
 /*************************************
  *
- *	68000 ZRAM access
+ *  68000 ZRAM access
  *
  *************************************/
 
@@ -568,33 +568,33 @@ WRITE16_HANDLER( hd68k_zram_w )
 
 /*************************************
  *
- *	68000 DUART interface
+ *  68000 DUART interface
  *
  *************************************/
 
 /*
-									DUART registers
+                                    DUART registers
 
-			Read								Write
-			----------------------------------	-------------------------------------------
-	0x00 = 	Mode Register A (MR1A, MR2A) 		Mode Register A (MR1A, MR2A)
-	0x02 =	Status Register A (SRA) 			Clock-Select Register A (CSRA)
-	0x04 =	Clock-Select Register A 1 (CSRA) 	Command Register A (CRA)
-	0x06 = 	Receiver Buffer A (RBA) 			Transmitter Buffer A (TBA)
-	0x08 =	Input Port Change Register (IPCR) 	Auxiliary Control Register (ACR)
-	0x0a = 	Interrupt Status Register (ISR) 	Interrupt Mask Register (IMR)
-	0x0c = 	Counter Mode: Current MSB of 		Counter/Timer Upper Register (CTUR)
-					Counter (CUR)
-	0x0e = 	Counter Mode: Current LSB of 		Counter/Timer Lower Register (CTLR)
-					Counter (CLR)
-	0x10 = Mode Register B (MR1B, MR2B) 		Mode Register B (MR1B, MR2B)
-	0x12 = Status Register B (SRB) 				Clock-Select Register B (CSRB)
-	0x14 = Clock-Select Register B 2 (CSRB) 	Command Register B (CRB)
-	0x16 = Receiver Buffer B (RBB) 				Transmitter Buffer B (TBB)
-	0x18 = Interrupt-Vector Register (IVR) 		Interrupt-Vector Register (IVR)
-	0x1a = Input Port (IP) 						Output Port Configuration Register (OPCR)
-	0x1c = Start-Counter Command 3				Output Port Register (OPR): Bit Set Command 3
-	0x1e = Stop-Counter Command 3				Output Port Register (OPR): Bit Reset Command 3
+            Read                                Write
+            ----------------------------------  -------------------------------------------
+    0x00 =  Mode Register A (MR1A, MR2A)        Mode Register A (MR1A, MR2A)
+    0x02 =  Status Register A (SRA)             Clock-Select Register A (CSRA)
+    0x04 =  Clock-Select Register A 1 (CSRA)    Command Register A (CRA)
+    0x06 =  Receiver Buffer A (RBA)             Transmitter Buffer A (TBA)
+    0x08 =  Input Port Change Register (IPCR)   Auxiliary Control Register (ACR)
+    0x0a =  Interrupt Status Register (ISR)     Interrupt Mask Register (IMR)
+    0x0c =  Counter Mode: Current MSB of        Counter/Timer Upper Register (CTUR)
+                    Counter (CUR)
+    0x0e =  Counter Mode: Current LSB of        Counter/Timer Lower Register (CTLR)
+                    Counter (CLR)
+    0x10 = Mode Register B (MR1B, MR2B)         Mode Register B (MR1B, MR2B)
+    0x12 = Status Register B (SRB)              Clock-Select Register B (CSRB)
+    0x14 = Clock-Select Register B 2 (CSRB)     Command Register B (CRB)
+    0x16 = Receiver Buffer B (RBB)              Transmitter Buffer B (TBB)
+    0x18 = Interrupt-Vector Register (IVR)      Interrupt-Vector Register (IVR)
+    0x1a = Input Port (IP)                      Output Port Configuration Register (OPCR)
+    0x1c = Start-Counter Command 3              Output Port Register (OPR): Bit Set Command 3
+    0x1e = Stop-Counter Command 3               Output Port Register (OPR): Bit Reset Command 3
 */
 
 
@@ -706,7 +706,7 @@ WRITE16_HANDLER( hd68k_duart_w )
 
 /*************************************
  *
- *	GSP I/O register writes
+ *  GSP I/O register writes
  *
  *************************************/
 
@@ -735,7 +735,7 @@ WRITE16_HANDLER( hdgsp_io_w )
 
 /*************************************
  *
- *	GSP protection workarounds
+ *  GSP protection workarounds
  *
  *************************************/
 
@@ -751,7 +751,7 @@ WRITE16_HANDLER( hdgsp_protection_w )
 
 /*************************************
  *
- *	MSP synchronization helpers
+ *  MSP synchronization helpers
  *
  *************************************/
 
@@ -806,7 +806,7 @@ WRITE16_HANDLER( stmsp_sync2_w )
 
 /*************************************
  *
- *	68000 access to ADSP program memory
+ *  68000 access to ADSP program memory
  *
  *************************************/
 
@@ -842,7 +842,7 @@ WRITE16_HANDLER( hd68k_adsp_program_w )
 
 /*************************************
  *
- *	68000 access to ADSP data memory
+ *  68000 access to ADSP data memory
  *
  *************************************/
 
@@ -871,13 +871,13 @@ WRITE16_HANDLER( hd68k_adsp_data_w )
 
 /*************************************
  *
- *	68000 access to ADSP output memory
+ *  68000 access to ADSP output memory
  *
  *************************************/
 
 READ16_HANDLER( hd68k_adsp_buffer_r )
 {
-/*	logerror("hd68k_adsp_buffer_r(%04X)\n", offset);*/
+/*  logerror("hd68k_adsp_buffer_r(%04X)\n", offset);*/
 	return som_memory[m68k_adsp_buffer_bank * 0x2000 + offset];
 }
 
@@ -891,7 +891,7 @@ WRITE16_HANDLER( hd68k_adsp_buffer_w )
 
 /*************************************
  *
- *	68000 access to ADSP control regs
+ *  68000 access to ADSP control regs
  *
  *************************************/
 
@@ -1034,7 +1034,7 @@ READ16_HANDLER( hd68k_adsp_irq_state_r )
 
 /*************************************
  *
- *	ADSP memory-mapped I/O
+ *  ADSP memory-mapped I/O
  *
  *************************************/
 
@@ -1110,7 +1110,7 @@ WRITE16_HANDLER( hdadsp_special_w )
 
 /*************************************
  *
- *	General DS III I/O
+ *  General DS III I/O
  *
  *************************************/
 
@@ -1184,7 +1184,7 @@ WRITE16_HANDLER( hd68k_ds3_control_w )
 
 /*************************************
  *
- *	DS III graphics I/O
+ *  DS III graphics I/O
  *
  *************************************/
 
@@ -1261,7 +1261,7 @@ WRITE16_HANDLER( hd68k_ds3_gdata_w )
 
 /*************************************
  *
- *	DS III sound I/O
+ *  DS III sound I/O
  *
  *************************************/
 
@@ -1284,7 +1284,7 @@ WRITE16_HANDLER( hd68k_ds3_sdata_w )
 
 /*************************************
  *
- *	DS III internal I/O
+ *  DS III internal I/O
  *
  *************************************/
 
@@ -1378,7 +1378,7 @@ WRITE16_HANDLER( hdds3_control_w )
 
 /*************************************
  *
- *	DS III program memory handlers
+ *  DS III program memory handlers
  *
  *************************************/
 
@@ -1420,7 +1420,7 @@ WRITE16_HANDLER( hd68k_ds3_program_w )
 
 /*************************************
  *
- *	DSK board IRQ generation
+ *  DSK board IRQ generation
  *
  *************************************/
 
@@ -1434,7 +1434,7 @@ void hddsk_update_pif(UINT32 pins)
 
 /*************************************
  *
- *	DSK board control handlers
+ *  DSK board control handlers
  *
  *************************************/
 
@@ -1474,7 +1474,7 @@ WRITE16_HANDLER( hd68k_dsk_control_w )
 
 /*************************************
  *
- *	DSK board RAM/ZRAM/ROM handlers
+ *  DSK board RAM/ZRAM/ROM handlers
  *
  *************************************/
 
@@ -1517,7 +1517,7 @@ READ16_HANDLER( hd68k_dsk_rom_r )
 
 /*************************************
  *
- *	DSK board DSP32C I/O handlers
+ *  DSK board DSP32C I/O handlers
  *
  *************************************/
 
@@ -1541,7 +1541,7 @@ READ16_HANDLER( hd68k_dsk_dsp32_r )
 
 /*************************************
  *
- *	DSP32C synchronization
+ *  DSP32C synchronization
  *
  *************************************/
 
@@ -1591,7 +1591,7 @@ WRITE32_HANDLER( rddsp32_sync1_w )
 
 /*************************************
  *
- *	DSPCOM control handlers
+ *  DSPCOM control handlers
  *
  *************************************/
 
@@ -1619,7 +1619,7 @@ WRITE16_HANDLER( hddspcom_control_w )
 
 /*************************************
  *
- *	Race Drivin' slapstic handling
+ *  Race Drivin' slapstic handling
  *
  *************************************/
 
@@ -1639,7 +1639,7 @@ READ16_HANDLER( rd68k_slapstic_r )
 
 /*************************************
  *
- *	Steel Talons SLOOP handling
+ *  Steel Talons SLOOP handling
  *
  *************************************/
 
@@ -1756,10 +1756,10 @@ READ16_HANDLER( st68k_protosloop_r )
 
 /*************************************
  *
- *	GSP Optimizations - case 1
- *	Works for:
- *		Hard Drivin'
- *		STUN Runner
+ *  GSP Optimizations - case 1
+ *  Works for:
+ *      Hard Drivin'
+ *      STUN Runner
  *
  *************************************/
 
@@ -1803,9 +1803,9 @@ WRITE16_HANDLER( hdgsp_speedup2_w )
 
 /*************************************
  *
- *	GSP Optimizations - case 2
- *	Works for:
- *		Race Drivin'
+ *  GSP Optimizations - case 2
+ *  Works for:
+ *      Race Drivin'
  *
  *************************************/
 
@@ -1841,7 +1841,7 @@ WRITE16_HANDLER( rdgsp_speedup1_w )
 
 /*************************************
  *
- *	MSP Optimizations
+ *  MSP Optimizations
  *
  *************************************/
 
@@ -1898,7 +1898,7 @@ READ16_HANDLER( stmsp_speedup_r )
 
 /*************************************
  *
- *	ADSP Optimizations
+ *  ADSP Optimizations
  *
  *************************************/
 

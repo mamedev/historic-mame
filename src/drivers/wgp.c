@@ -1,6 +1,6 @@
 /***************************************************************************
 
-World Grand Prix	(c) Taito Corporation 1989
+World Grand Prix    (c) Taito Corporation 1989
 ================
 
 David Graves
@@ -12,7 +12,7 @@ It seems likely there are a LOT of undumped versions of this game...
 If you have access to a board, please check the rom numbers to see if
 any are different from the ones listed below.
 
-				*****
+                *****
 
 World Grand Prix runs on hardware which is pretty different from the
 system Taito commonly used for their pseudo-3d racing games of the
@@ -54,11 +54,11 @@ Video Map
 ---------
 
 400000 area is used for sprites. The game does tile mapping
-	in ram to create big sprites from the 16x16 tiles of gfx0.
-	See notes in \vidhrdw\ for details.
+    in ram to create big sprites from the 16x16 tiles of gfx0.
+    See notes in \vidhrdw\ for details.
 
 500000 area is for the "piv" tilemaps.
-	See notes in \vidhrdw\ for details.
+    See notes in \vidhrdw\ for details.
 
 
 TODO
@@ -88,9 +88,9 @@ Analogue brake pedal works but won't register in service mode.
 
 $28336 is code that shows brake value in service mode.
 $ac3e sub (called off int4) at $ac78 does three calcs to the six
-	AD values: results are stored at ($d22 / $d24 / $d26,A5)
-	It is the third one, ($d26,A5) which gets displayed
-	in service mode as brake.
+    AD values: results are stored at ($d22 / $d24 / $d26,A5)
+    It is the third one, ($d26,A5) which gets displayed
+    in service mode as brake.
 
 
 Wgp2
@@ -107,7 +107,7 @@ writes to $140000/2 - unfortunately while CPUA is in the middle of
 testing that ram. We hack prog for CPUB to disable the writes.]
 
 
-				*****
+                *****
 
 [Wgp stopped with LAN error. (Looks like CPUB tells CPUA what is wrong
 with LAN in shared ram $142048. Examined at $e57c which prints out
@@ -162,17 +162,17 @@ of sequential words to be pulled out of the data rom, depending
 on the first word value in the data rom for that entry ("code").
 Each code will pull out the following multiple of 16 words:
 
-	Code  Words   Tiles    Actual data rom entry
-	 0      1      4x4      [same]
-	 1      2      8x4      [same]
-	 2      4      8x8      [same]
-	 3      3      12x4     [same, see $98186]
-	 4      6      12x8
-	 5      9      12x12    [same]
-	 6      2      4x8      [WRONG! says 8x12 in data rom, see $982bf]
-	 7      6      8x12     [WRONG! says 4x8 in data rom]
-	 8      1      (2x2)*4  [2x2 in data rom]  (copies 12 unwanted
-	                                  words - causing junk sprites)
+    Code  Words   Tiles    Actual data rom entry
+     0      1      4x4      [same]
+     1      2      8x4      [same]
+     2      4      8x8      [same]
+     3      3      12x4     [same, see $98186]
+     4      6      12x8
+     5      9      12x12    [same]
+     6      2      4x8      [WRONG! says 8x12 in data rom, see $982bf]
+     7      6      8x12     [WRONG! says 4x8 in data rom]
+     8      1      (2x2)*4  [2x2 in data rom]  (copies 12 unwanted
+                                      words - causing junk sprites)
 
 $4083c0-47f in sprite mapping area has junk words - due to code 7
 making it read 6*16 words. 0x60 words are copied from the data rom
@@ -222,40 +222,40 @@ $90000-$9ffff   sprite tilemap data, preceded by lookup table
 $a0000-$affff   sprite tilemap data, preceded by lookup table
 $b0000-$cffff   TC0100SCN tilemaps, preceded by lookup table
 
-	Note that only just over half this space is used, rest is
-	0xff fill.
+    Note that only just over half this space is used, rest is
+    0xff fill.
 
 $d0000-$dffff is the pivot port data table
 
-	Four separate start points are available, contained in the
-	first 4 long words.
+    Four separate start points are available, contained in the
+    first 4 long words.
 
-	(Data words up to $da410 then 0xff fill)
+    (Data words up to $da410 then 0xff fill)
 
 $e0000-$e7ffe is a logarithmic curve table
 
-	This is used to look up perceived height of an object at
-	"distance" (offset/2).
+    This is used to look up perceived height of an object at
+    "distance" (offset/2).
 
-	ffff 8000 5555 4000 3333 2aaa  etc.
-	(tapering to value of 4 towards the end)
+    ffff 8000 5555 4000 3333 2aaa  etc.
+    (tapering to value of 4 towards the end)
 
-	The sprite routine shifts this one bit right and subtracts one
-	before poking into spriteram. Hence 4 => 1
+    The sprite routine shifts this one bit right and subtracts one
+    before poking into spriteram. Hence 4 => 1
 
 $e7fff-$e83fe is an unknown word table
 $e83ff-$effff empty (0xff fill)
 $f0000-$f03ff unknown lookup table
 $f0400-$fcbff series of unknown lookup tables
 
-	Seems to be a series of (zoom/rotate ??) lookup
-	tables all $400 words long. (Total no. of tables = 25?)
+    Seems to be a series of (zoom/rotate ??) lookup
+    tables all $400 words long. (Total no. of tables = 25?)
 
-	Each table starts at zero and tends upwards: the first reaches 0xfe7.
-	The final one reaches 0x3ff (i.e. each successive word is 1 higher
-	than the last). The values in the tables tend to go up smoothly but
-	with discontinuities at regular intervals. The intervals change
-	between tables.
+    Each table starts at zero and tends upwards: the first reaches 0xfe7.
+    The final one reaches 0x3ff (i.e. each successive word is 1 higher
+    than the last). The values in the tables tend to go up smoothly but
+    with discontinuities at regular intervals. The intervals change
+    between tables.
 
 $fcc00-$fffff empty (0xff fill)
 
@@ -386,7 +386,7 @@ static void parse_control(void)
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
-	   if cpu B is disabled !! */
+       if cpu B is disabled !! */
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 	/* bit 1 is "vibration" acc. to test mode */
@@ -413,7 +413,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 /*
 void wgp_interrupt4(int x)
 {
-	cpunum_set_input_line(0,4,HOLD_LINE);
+    cpunum_set_input_line(0,4,HOLD_LINE);
 }
 */
 
@@ -458,19 +458,19 @@ static WRITE16_HANDLER( rotate_port_w )
 {
 	/* This port may be for piv/sprite layer rotation.
 
-	Wgp2 pokes a single set of values (see 2 routines from
-	$4e4a), so if this is rotation then Wgp2 *doesn't* use
-	it.
+    Wgp2 pokes a single set of values (see 2 routines from
+    $4e4a), so if this is rotation then Wgp2 *doesn't* use
+    it.
 
-	Wgp pokes a wide variety of values here, which appear
-	to move up and down as rotation control words might.
-	See $ae06-d8 which pokes piv ctrl words, then pokes
-	values to this port.
+    Wgp pokes a wide variety of values here, which appear
+    to move up and down as rotation control words might.
+    See $ae06-d8 which pokes piv ctrl words, then pokes
+    values to this port.
 
-	There is a lookup area in the data rom from $d0000-$da400
-	which contains sets of 4 words (used for ports 0-3).
-	NB: port 6 is not written.
-	*/
+    There is a lookup area in the data rom from $d0000-$da400
+    which contains sets of 4 words (used for ports 0-3).
+    NB: port 6 is not written.
+    */
 
 	switch (offset)
 	{
@@ -554,8 +554,8 @@ logerror("CPU #0 PC %06x: warning - read unmapped a/d input offset %06x\n",activ
 static WRITE16_HANDLER( wgp_adinput_w )
 {
 	/* Each write invites a new interrupt as soon as the
-	   hardware has got the next a/d conversion ready. We set a token
-	   delay of 10000 cycles although our inputs are always ready. */
+       hardware has got the next a/d conversion ready. We set a token
+       delay of 10000 cycles although our inputs are always ready. */
 
 	timer_set(TIME_IN_CYCLES(10000,0),0, wgp_interrupt6);
 }
@@ -638,7 +638,7 @@ static ADDRESS_MAP_START( wgp_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )	/* LAN a
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x140000, 0x143fff) AM_READ(sharedram_r)
 	AM_RANGE(0x200000, 0x200003) AM_READ(wgp_sound_r)
-//	AM_RANGE(0x380000, 0x383fff) AM_READ(MRA16_RAM)	// LAN RAM
+//  AM_RANGE(0x380000, 0x383fff) AM_READ(MRA16_RAM) // LAN RAM
 	AM_RANGE(0x380000, 0x380001) AM_READ(lan_status_r)	// ??
 	// a lan input area is read somewhere above the status
 	// (make the status return 0 and log)...
@@ -649,7 +649,7 @@ static ADDRESS_MAP_START( wgp_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x140000, 0x143fff) AM_WRITE(sharedram_w)
 	AM_RANGE(0x200000, 0x200003) AM_WRITE(wgp_sound_w)
-//	AM_RANGE(0x380000, 0x383fff) AM_WRITE(MWA16_RAM)	// LAN RAM
+//  AM_RANGE(0x380000, 0x383fff) AM_WRITE(MWA16_RAM)    // LAN RAM
 ADDRESS_MAP_END
 
 
@@ -689,19 +689,19 @@ ADDRESS_MAP_END
 
 /* Duplicated macros from most other Taito drivers :
 
-	asuka.c
-	exzisus.c
-	ninjaw.c
-	opwolf.c
-	othunder.c
-	taito_b.c
-	taito_f2.c
-	taito_h.c
-	taito_l.c
-	taito_x.c
-	taitoair.c
-	topspeed.c
-	warriorb.c
+    asuka.c
+    exzisus.c
+    ninjaw.c
+    opwolf.c
+    othunder.c
+    taito_b.c
+    taito_f2.c
+    taito_h.c
+    taito_l.c
+    taito_x.c
+    taitoair.c
+    topspeed.c
+    warriorb.c
 */
 
 /* Same as TAITO_DIFFICULTY_8 in most Taito drivers. */
@@ -851,18 +851,18 @@ INPUT_PORTS_START( wgp )
    inputs are replaced by discrete values derived from the fake
    input port above, so keyboard control is feasible. */
 
-//	PORT_START	/* accel, 0-255 */
-//	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
+//  PORT_START  /* accel, 0-255 */
+//  PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
 	PORT_START	/* steer */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
-//	PORT_START	/* steer offset */
+//  PORT_START  /* steer offset */
 
-//	PORT_START	/* accel offset */
+//  PORT_START  /* accel offset */
 
-//	PORT_START	/* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
-//	PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
+//  PORT_START  /* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
+//  PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
 
 	PORT_START	/* unknown */
 	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_PLAYER(2)
@@ -933,18 +933,18 @@ INPUT_PORTS_START( wgpj )
    inputs are replaced by discrete values derived from the fake
    input port above, so keyboard control is feasible. */
 
-//	PORT_START	/* accel, 0-255 */
-//	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
+//  PORT_START  /* accel, 0-255 */
+//  PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
 	PORT_START	/* steer */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
-//	PORT_START	/* steer offset */
+//  PORT_START  /* steer offset */
 
-//	PORT_START	/* accel offset */
+//  PORT_START  /* accel offset */
 
-//	PORT_START	/* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
-//	PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
+//  PORT_START  /* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
+//  PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
 
 	PORT_START	/* unknown */
 	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_PLAYER(2)
@@ -1078,18 +1078,18 @@ INPUT_PORTS_START( wgp2 )	/* Wgp2 has no "lumps" ? */
    inputs are replaced by discrete values derived from the fake
    input port above, so keyboard control is feasible. */
 
-//	PORT_START	/* accel, 0-255 */
-//	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
+//  PORT_START  /* accel, 0-255 */
+//  PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
 	PORT_START	/* steer */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(25) PORT_REVERSE PORT_PLAYER(1)
 
-//	PORT_START	/* steer offset */
+//  PORT_START  /* steer offset */
 
-//	PORT_START	/* accel offset */
+//  PORT_START  /* accel offset */
 
-//	PORT_START	/* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
-//	PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
+//  PORT_START  /* brake, 0-0x30: needs to start at 0xff; then 0xcf is max brake */
+//  PORT_BIT( 0xff, 0xff, IPT_AD_STICK_X ) PORT_MINMAX(0xcf,0xff) PORT_SENSITIVITY(10) PORT_KEYDELTA(5) PORT_PLAYER(2)
 
 	PORT_START	/* unknown */
 	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_PLAYER(2)
@@ -1292,22 +1292,22 @@ ROM_START( wgp )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c32-12.7",  0x00000, 0x80000, CRC(df48a37b) SHA1(c0c191f4b8a5f55c0f1e52dac9cd3f7d15adace6) )
 
-//	Pals (Guru dump)
-//	ROM_LOAD( "c32-13.14", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-14.19", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-15.52", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-16.54", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-17.53", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-18.64", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-19.27", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-20.67", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-21.85", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-22.24", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-23.13", 0x00000, 0x00???, NO_DUMP )
+//  Pals (Guru dump)
+//  ROM_LOAD( "c32-13.14", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-14.19", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-15.52", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-16.54", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-17.53", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-18.64", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-19.27", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-20.67", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-21.85", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-22.24", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-23.13", 0x00000, 0x00???, NO_DUMP )
 
-//	Pals on lan interface board
-//	ROM_LOAD( "c32-34", 0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "c32-35", 0x00000, 0x00???, NO_DUMP )
+//  Pals on lan interface board
+//  ROM_LOAD( "c32-34", 0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "c32-35", 0x00000, 0x00???, NO_DUMP )
 ROM_END
 
 ROM_START( wgpj )
@@ -1453,8 +1453,8 @@ ROM_START( wgp2 )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
 	ROM_LOAD( "c32-12.7", 0x00000, 0x80000, CRC(df48a37b) SHA1(c0c191f4b8a5f55c0f1e52dac9cd3f7d15adace6) )
 
-//	WGP2 security board (has TC0190FMC)
-//	ROM_LOAD( "c73-06", 0x00000, 0x00???, NO_DUMP )
+//  WGP2 security board (has TC0190FMC)
+//  ROM_LOAD( "c73-06", 0x00000, 0x00???, NO_DUMP )
 ROM_END
 
 
@@ -1462,12 +1462,12 @@ DRIVER_INIT( wgp )
 {
 #if 0
 	/* Patch for coding error that causes corrupt data in
-	   sprite tilemapping area from $4083c0-847f */
+       sprite tilemapping area from $4083c0-847f */
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
 	ROM[0x25dc / 2] = 0x0602;	// faulty value is 0x0206
 #endif
 
-//	taitosnd_setz80_soundcpu( 2 );
+//  taitosnd_setz80_soundcpu( 2 );
 	cpua_ctrl = 0xff;
 
 	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);

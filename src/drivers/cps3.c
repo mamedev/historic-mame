@@ -93,9 +93,9 @@ ROM_START( sfiii )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x800000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x0000000, 0x800000, CRC(e896dc27) SHA1(47623820c64b72e69417afcafaacdd2c318cde1c) )
 	ROM_REGION( 0x2400000, REGION_USER5, 0 ) /* cd content region */
@@ -119,9 +119,9 @@ ROM_START( sfiii2 )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x0000000, 0x800000, CRC(682b014a) SHA1(abd5785f4b7c89584d6d1cf6fb61a77d7224f81f) )
 	ROM_LOAD( "20",  0x0800000, 0x800000, CRC(38090460) SHA1(aaade89b8ccdc9154f97442ca35703ec538fe8be) )
@@ -147,9 +147,9 @@ ROM_START( sfiii3 )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x0000000, 0x800000, CRC(77233d39) SHA1(59c3f890fdc33a7d8dc91e5f9c4e7b7019acfb00) )
 	ROM_LOAD( "20",  0x0800000, 0x800000, CRC(5ca8faba) SHA1(71c12638ae7fa38b362d68c3ccb4bb3ccd67f0e9) )
@@ -177,9 +177,9 @@ ROM_START( warzard )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x800000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x000000, 0x800000, CRC(68188016) SHA1(93aaac08cb5566c33aabc16457085b0a36048019) )
 	ROM_REGION( 0x2400000, REGION_USER5, 0 ) /* cd content region */
@@ -203,9 +203,9 @@ ROM_START( jojo )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x0000000, 0x800000, CRC(e40dc123) SHA1(517e7006349b5a8fd6c30910362583f48d009355) )
 	ROM_LOAD( "20",  0x0800000, 0x800000, CRC(0571e37c) SHA1(1aa28ef6ea1b606a55d0766480b3ee156f0bca5a) )
@@ -232,9 +232,9 @@ ROM_START( jojoba )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x000000, 0x800000, CRC(6e2490f6) SHA1(75cbf1e39ad6362a21c937c827e492d927b7cf39) )
 	ROM_LOAD( "20",  0x800000, 0x800000, CRC(1293892b) SHA1(b1beafac1a9c4b6d0640658af8a3eb359e76eb25) )
@@ -260,9 +260,9 @@ ROM_START( jojobaa )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
-	         This is done only to make analysis easier. Once correct
-	         emulation is possible this region will be removed and the
-	         roms will be loaded into flashram from the CD by the system */
+             This is done only to make analysis easier. Once correct
+             emulation is possible this region will be removed and the
+             roms will be loaded into flashram from the CD by the system */
 	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
 	ROM_LOAD( "10",  0x000000, 0x800000, CRC(6e2490f6) SHA1(75cbf1e39ad6362a21c937c827e492d927b7cf39) )
 	ROM_LOAD( "20",  0x800000, 0x800000, CRC(1293892b) SHA1(b1beafac1a9c4b6d0640658af8a3eb359e76eb25) )

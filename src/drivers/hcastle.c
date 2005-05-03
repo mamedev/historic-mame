@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Haunted Castle
+    Haunted Castle
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -224,7 +224,7 @@ INPUT_PORTS_START( hcastle )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalidity" )			// Disables the 2 coin slots
+//  PORT_DIPSETTING(    0x00, "Invalidity" )            // Disables the 2 coin slots
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -264,7 +264,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int linestate)
 {
-//	cpunum_set_input_line(1,0,linestate);
+//  cpunum_set_input_line(1,0,linestate);
 }
 
 static void volume_callback(int v)
@@ -312,7 +312,7 @@ static MACHINE_DRIVER_START( hcastle )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.44)

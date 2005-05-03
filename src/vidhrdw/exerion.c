@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Jaleco Exerion
+    Jaleco Exerion
 
 ***************************************************************************/
 
@@ -106,7 +106,7 @@ PALETTE_INIT( exerion )
 
 /*************************************
  *
- *	Video system startup
+ *  Video system startup
  *
  *************************************/
 
@@ -137,20 +137,20 @@ VIDEO_START( exerion )
 		return 1;
 
 	/*---------------------------------
-	 * Decode the background graphics
-	 *
-	 * We decode the 4 background layers separately, but shuffle the bits so that
-	 * we can OR all four layers together. Each layer has 2 bits per pixel. Each
-	 * layer is decoded into the following bit patterns:
-	 *
-	 *	000a 0000 00AA
-	 *  00b0 0000 BB00
-	 *  0c00 00CC 0000
-	 *  d000 DD00 0000
-	 *
-	 * Where AA,BB,CC,DD are the 2bpp data for the pixel,and a,b,c,d are the OR
-	 * of these two bits together.
-	 */
+     * Decode the background graphics
+     *
+     * We decode the 4 background layers separately, but shuffle the bits so that
+     * we can OR all four layers together. Each layer has 2 bits per pixel. Each
+     * layer is decoded into the following bit patterns:
+     *
+     *  000a 0000 00AA
+     *  00b0 0000 BB00
+     *  0c00 00CC 0000
+     *  d000 DD00 0000
+     *
+     * Where AA,BB,CC,DD are the 2bpp data for the pixel,and a,b,c,d are the OR
+     * of these two bits together.
+     */
 	for (i = 0; i < 4; i++)
 	{
 		src = memory_region(REGION_GFX3) + i * 0x2000;
@@ -191,7 +191,7 @@ VIDEO_START( exerion )
 
 /*************************************
  *
- *	Video register I/O
+ *  Video register I/O
  *
  *************************************/
 
@@ -253,7 +253,7 @@ READ8_HANDLER( exerion_video_timing_r )
 
 /*************************************
  *
- *	Background rendering
+ *  Background rendering
  *
  *************************************/
 
@@ -370,7 +370,7 @@ void draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 /*************************************
  *
- *	Core refresh routine
+ *  Core refresh routine
  *
  *************************************/
 

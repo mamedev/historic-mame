@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	mame.h
+    mame.h
 
-	Controls execution of the core MAME system.
+    Controls execution of the core MAME system.
 
 ***************************************************************************/
 
@@ -30,7 +30,7 @@ extern int gbPriorityBitmapIsDirty;
 
 /***************************************************************************
 
-	Parameters
+    Parameters
 
 ***************************************************************************/
 
@@ -59,7 +59,7 @@ extern int gbPriorityBitmapIsDirty;
 
 /***************************************************************************
 
-	Core description of the currently-running machine
+    Core description of the currently-running machine
 
 ***************************************************************************/
 
@@ -102,8 +102,8 @@ struct RunningMachine
 	float					refresh_rate;
 
 	/* remapped palette pen numbers. When you write directly to a bitmap in a
-	   non-paletteized mode, use this array to look up the pen number. For example,
-	   if you want to use color #6 in the palette, use pens[6] instead of just 6. */
+       non-paletteized mode, use this array to look up the pen number. For example,
+       if you want to use color #6 in the palette, use pens[6] instead of just 6. */
 	pen_t *					pens;
 
 	/* lookup table used to map gfx pen numbers to color numbers */
@@ -171,7 +171,7 @@ struct RunningMachine
 
 /***************************************************************************
 
-	Options passed from the frontend to the main core
+    Options passed from the frontend to the main core
 
 ***************************************************************************/
 
@@ -256,7 +256,7 @@ struct GameOptions
 
 /***************************************************************************
 
-	Display state passed to the OSD layer for rendering
+    Display state passed to the OSD layer for rendering
 
 ***************************************************************************/
 
@@ -305,7 +305,7 @@ struct mame_display
 
 /***************************************************************************
 
-	Performance data
+    Performance data
 
 ***************************************************************************/
 
@@ -321,7 +321,7 @@ struct performance_info
 
 /***************************************************************************
 
-	Globals referencing the current machine and the global options
+    Globals referencing the current machine and the global options
 
 ***************************************************************************/
 
@@ -332,7 +332,7 @@ extern struct RunningMachine *Machine;
 
 /***************************************************************************
 
-	Function prototypes
+    Function prototypes
 
 ***************************************************************************/
 

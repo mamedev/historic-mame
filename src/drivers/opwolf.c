@@ -5,10 +5,10 @@ Operation Wolf  (c) Taito 1987
 
 David Graves, Jarek Burczynski
 
-Sources:		MAME Rastan driver
-			MAME Taito F2 driver
-			Raine source - many thanks to Richard Bush
-			  and the Raine Team.
+Sources:        MAME Rastan driver
+            MAME Taito F2 driver
+            Raine source - many thanks to Richard Bush
+              and the Raine Team.
 
 Main CPU: MC68000 uses irq 5.
 Sound   : Z80 & YM2151 & MSM5205
@@ -84,7 +84,7 @@ static WRITE16_HANDLER( cchip_w )
 }
 
 /**********************************************************
-				GAME INPUTS
+                GAME INPUTS
 **********************************************************/
 
 static READ16_HANDLER( opwolf_lightgun_r )
@@ -115,7 +115,7 @@ static READ8_HANDLER( z80_input2_r )
 
 
 /******************************************************
-				SOUND
+                SOUND
 ******************************************************/
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -124,7 +124,7 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 }
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( opwolf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -161,9 +161,9 @@ static ADDRESS_MAP_START( opwolf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-	This extra Z80 substitutes for the c-chip in the bootleg,
-	but we also use it as a fake c-chip to get the original
-	working. */
+    This extra Z80 substitutes for the c-chip in the bootleg,
+    but we also use it as a fake c-chip to get the original
+    working. */
 
 static ADDRESS_MAP_START( sub_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
@@ -249,7 +249,7 @@ static WRITE8_HANDLER( opwolf_adpcm_b_w )
 		MSM5205_reset_w(0, 0);
 	}
 
-//	logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+//  logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
@@ -271,18 +271,18 @@ static WRITE8_HANDLER( opwolf_adpcm_c_w )
 		MSM5205_reset_w(1, 0);
 	}
 
-//	logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+//  logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
 static WRITE8_HANDLER( opwolf_adpcm_d_w )
 {
-//	logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+//  logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 static WRITE8_HANDLER( opwolf_adpcm_e_w )
 {
-//	logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
+//  logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
@@ -301,7 +301,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 #define TAITO_COINAGE_WORLD_8 \
@@ -386,7 +386,7 @@ INPUT_PORTS_END
 
 
 /**************************************************************
-				GFX DECODING
+                GFX DECODING
 **************************************************************/
 
 static struct GfxLayout charlayout =
@@ -449,7 +449,7 @@ static struct GfxDecodeInfo opwolfb_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2151 (SOUND)
+                 YM2151 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2151 emulator when the internal timers cause an IRQ */
@@ -476,7 +476,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_DRIVER_START( opwolf )
@@ -574,7 +574,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( opwolf )

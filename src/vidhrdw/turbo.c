@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega Z80-3D system
+    Sega Z80-3D system
 
 *************************************************************************/
 
@@ -49,7 +49,7 @@ static UINT32 sprite_mask;
 
 /***************************************************************************
 
-	Convert the color PROMs into a more useable format.
+    Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
 
@@ -209,7 +209,7 @@ PALETTE_INIT( buckrog )
 
 /***************************************************************************
 
-	Sprite startup/shutdown
+    Sprite startup/shutdown
 
 ***************************************************************************/
 
@@ -265,7 +265,7 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 
 /***************************************************************************
 
-	Foreground startup/shutdown
+    Foreground startup/shutdown
 
 ***************************************************************************/
 
@@ -306,7 +306,7 @@ static int init_fore(void)
 
 /***************************************************************************
 
-	Video startup
+    Video startup
 
 ***************************************************************************/
 
@@ -482,7 +482,7 @@ VIDEO_START( buckrog )
 
 /***************************************************************************
 
-	Sprite data gathering
+    Sprite data gathering
 
 ***************************************************************************/
 
@@ -567,7 +567,7 @@ static void subroc3d_update_sprite_info(void)
 
 /***************************************************************************
 
-	Sprite rendering
+    Sprite rendering
 
 ***************************************************************************/
 
@@ -679,7 +679,7 @@ static void draw_sprites(UINT32 *dest, UINT8 *edest, int scanline, UINT8 mask, i
 
 /***************************************************************************
 
-	Core drawing routines
+    Core drawing routines
 
 ***************************************************************************/
 
@@ -764,7 +764,7 @@ static void turbo_render(struct mame_bitmap *bitmap)
 				babit = road_enable_collide[area] & 0x07;
 
 				/* note: SLIPAR is 0 on the road surface only */
-				/*		 ACCIAR is 0 on the road surface and the striped edges only */
+				/*       ACCIAR is 0 on the road surface and the striped edges only */
 				slipar_acciar = road_enable_collide[area] & 0x30;
 				if (!road && (slipar_acciar & 0x20))
 				{
@@ -953,7 +953,7 @@ static void buckrog_render(struct mame_bitmap *bitmap)
 
 /***************************************************************************
 
-	Main refresh
+    Main refresh
 
 ***************************************************************************/
 
@@ -1002,7 +1002,7 @@ VIDEO_UPDATE( buckrog )
 
 /***************************************************************************
 
-	Buck Rogers misc
+    Buck Rogers misc
 
 ***************************************************************************/
 

@@ -39,13 +39,13 @@ void v810_get_info(UINT32, union cpuinfo*);
 #define D9(x) ((x&0x1ff)|((x&0x100)?0xfffffe00:0))
 #define SO(opcode) ((opcode)&0xfc00)>>10)
 
-#define CHECK_CY(x)	PSW=(PSW & ~8)|(((x) & (((UINT64)1) << 32)) ? 8 : 0) 
+#define CHECK_CY(x)	PSW=(PSW & ~8)|(((x) & (((UINT64)1) << 32)) ? 8 : 0)
 #define CHECK_OVADD(x,y,z)	PSW=(PSW & ~0x00000004) |(( ((x) ^ (z)) & ((y) ^ (z)) & 0x80000000) ? 4: 0)
 #define CHECK_OVSUB(x,y,z)	PSW=(PSW & ~0x00000004) |(( ((y) ^ (z)) & ((x) ^ (y)) & 0x80000000) ? 4: 0)
 #define CHECK_ZS(x)	PSW=(PSW & ~3)|((UINT32)(x)==0)|(((x)&0x80000000) ? 2: 0)
 
 
-#define ADD(dst, src)		{ UINT64 res=(UINT64)(dst)+(UINT64)(src); SetCF(res); SetOF_Add(res,src,dst); SetSZPF(res); dst=(UINT32)res; }	
+#define ADD(dst, src)		{ UINT64 res=(UINT64)(dst)+(UINT64)(src); SetCF(res); SetOF_Add(res,src,dst); SetSZPF(res); dst=(UINT32)res; }
 #define SUB(dst, src)		{ UINT64 res=(UINT64)(dst)-(INT64)(src); SetCF(res); SetOF_Sub(res,src,dst); SetSZPF(res); dst=(UINT32)res; }
 
 #ifdef MAME_DEBUG
@@ -86,12 +86,12 @@ enum
 	V810_R29,
 	V810_R30,
 	V810_R31, /* R31 - link pointer */
-	
+
 	/* System Registers */
-	V810_EIPC, /* Exception/interrupt  saving - PC */ 
-	V810_EIPSW,/* Exception/interrupt  saving - PSW */ 
-	V810_FEPC, /* Duplexed exception/NMI  saving - PC */ 
-	V810_FEPSW,/* Duplexed exception/NMI  saving - PSW */ 
+	V810_EIPC, /* Exception/interrupt  saving - PC */
+	V810_EIPSW,/* Exception/interrupt  saving - PSW */
+	V810_FEPC, /* Duplexed exception/NMI  saving - PC */
+	V810_FEPSW,/* Duplexed exception/NMI  saving - PSW */
 	V810_ECR,  /* Exception cause register */
 	V810_PSW,  /* Program status word */
 	V810_PIR,  /* Processor ID register */
@@ -120,7 +120,7 @@ enum
 	V810_res29,
 	V810_res30,
 	V810_res31,
-	
+
 	V810_PC
 };
 #endif

@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Exidy Car Polo hardware
+    Exidy Car Polo hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
-	Games supported:
-		* Car Polo
+    Games supported:
+        * Car Polo
 
-	Known issues:
-		* sound
+    Known issues:
+        * sound
 
      Original Bugs:
-		* if you insert a coin too fast (before the GAME OVER sign appears),
-		  the cars will chase *away* from the ball
+        * if you insert a coin too fast (before the GAME OVER sign appears),
+          the cars will chase *away* from the ball
 
 ****************************************************************************/
 
@@ -24,7 +24,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -63,7 +63,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -76,7 +76,7 @@ INPUT_PORTS_START( carpolo )
 	PORT_BIT (0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	/* the value read from here is used directly,
-	   the result is calculated by 60/value */
+       the result is calculated by 60/value */
 	PORT_START	/* IN1 */
 	PORT_BIT (0x03, IP_ACTIVE_HIGH, IPT_UNUSED )	/* the lowest 2 bits of the counter */
 	PORT_DIPNAME( 0xfc, 0x3c, "Game Sec/Real Sec" )
@@ -178,7 +178,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -231,7 +231,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -241,8 +241,8 @@ static MACHINE_DRIVER_START( carpolo )
 	MDRV_CPU_ADD(M6502,11289000/12)		/* 940.75 kHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(carpolo_timer_interrupt,1)	/* this not strictly VBLANK,
-													   but it's supposed to happen 60
-													   times a sec, so it's a good place */
+                                                       but it's supposed to happen 60
+                                                       times a sec, so it's a good place */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
@@ -266,7 +266,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -306,7 +306,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

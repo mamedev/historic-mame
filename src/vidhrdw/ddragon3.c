@@ -30,7 +30,7 @@ WRITE16_HANDLER( ddragon3_scroll16_w )
 		case 3: COMBINE_DATA(&ddragon3_bg_scrolly);	break;	// Scroll Y, BG0
 		case 4:										break;	// Unknown write
 		case 5: flip_screen_set(data & 0x01);		break;	// Flip Screen
-		case 6: 
+		case 6:
 			COMBINE_DATA(&ddragon3_bg_tilebase);			// BG Tile Base
 			ddragon3_bg_tilebase &= 0x1ff;
 			tilemap_mark_all_tiles_dirty(bg_tilemap);
@@ -120,25 +120,25 @@ VIDEO_START( ddragon3 )
  * Sprite Format
  * ----------------------------------
  *
- * Word | Bit(s)		   | Use
+ * Word | Bit(s)           | Use
  * -----+-fedcba9876543210-+----------------
- *	 0	| --------xxxxxxxx | ypos (signed)
+ *   0  | --------xxxxxxxx | ypos (signed)
  * -----+------------------+
- *	 1	| --------xxx----- | height
- *	 1	| -----------xx--- | yflip, xflip
- *	 1	| -------------x-- | msb x
- *	 1	| --------------x- | msb y?
- *	 1	| ---------------x | enable
+ *   1  | --------xxx----- | height
+ *   1  | -----------xx--- | yflip, xflip
+ *   1  | -------------x-- | msb x
+ *   1  | --------------x- | msb y?
+ *   1  | ---------------x | enable
  * -----+------------------+
- *	 2	| --------xxxxxxxx | tile number
+ *   2  | --------xxxxxxxx | tile number
  * -----+------------------+
- *	 3	| --------xxxxxxxx | bank
+ *   3  | --------xxxxxxxx | bank
  * -----+------------------+
- *	 4	| ------------xxxx |color
+ *   4  | ------------xxxx |color
  * -----+------------------+
- *	 5	| --------xxxxxxxx | xpos
+ *   5  | --------xxxxxxxx | xpos
  * -----+------------------+
- *	 6,7| unused
+ *   6,7| unused
  */
 
 static void ddragon3_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
@@ -177,7 +177,7 @@ static void ddragon3_draw_sprites( struct mame_bitmap *bitmap, const struct rect
 			for (i = 0; i <= height; i++)
 			{
 				drawgfx(bitmap, Machine->gfx[1], code + i, color, flipx, flipy,
-					sx, sy + (flip_screen ? (i * 16) : (-i * 16)), cliprect, 
+					sx, sy + (flip_screen ? (i * 16) : (-i * 16)), cliprect,
 					TRANSPARENCY_PEN, 0);
 			}
 		}

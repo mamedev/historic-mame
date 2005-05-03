@@ -1,39 +1,39 @@
 /***************************************************************************
 
-	Karnov (USA version)                   (c) 1987 Data East USA
-	Karnov (Japanese version)              (c) 1987 Data East Corporation
-	Wonder Planet (Japanese version)       (c) 1987 Data East Corporation
-	Chelnov (World version)                (c) 1987 Data East Corporation
-	Chelnov (USA version)                  (c) 1988 Data East USA
-	Chelnov (Japanese version)             (c) 1987 Data East Corporation
+    Karnov (USA version)                   (c) 1987 Data East USA
+    Karnov (Japanese version)              (c) 1987 Data East Corporation
+    Wonder Planet (Japanese version)       (c) 1987 Data East Corporation
+    Chelnov (World version)                (c) 1987 Data East Corporation
+    Chelnov (USA version)                  (c) 1988 Data East USA
+    Chelnov (Japanese version)             (c) 1987 Data East Corporation
 
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
-	NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
-	  and Chelnov USA & Chelnov Japan sets have different gameplay!
+    NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
+      and Chelnov USA & Chelnov Japan sets have different gameplay!
 
-	These games use a 68000 main processor with a 6502, YM2203C and YM3526 for
-	sound.  Karnov was a major pain to get going because of the
-	'protection' on the main player sprite, probably connected to the Intel
-	microcontroller on the board.  The game is very sensitive to the wrong values
-	at the input ports...
+    These games use a 68000 main processor with a 6502, YM2203C and YM3526 for
+    sound.  Karnov was a major pain to get going because of the
+    'protection' on the main player sprite, probably connected to the Intel
+    microcontroller on the board.  The game is very sensitive to the wrong values
+    at the input ports...
 
-	There is another Karnov rom set - a bootleg version of the Japanese roms with
-	the Data East copyright removed - not supported because the original Japanese
-	roms work fine.
+    There is another Karnov rom set - a bootleg version of the Japanese roms with
+    the Data East copyright removed - not supported because the original Japanese
+    roms work fine.
 
-	One of the two color PROMs for chelnov and chelnoj is different; one is most
-	likely a bad read, but I don't know which one.
+    One of the two color PROMs for chelnov and chelnoj is different; one is most
+    likely a bad read, but I don't know which one.
 
-	Thanks to Oliver Stabel <stabel@rhein-neckar.netsurf.de> for confirming some
-	of the sprite & control information :)
+    Thanks to Oliver Stabel <stabel@rhein-neckar.netsurf.de> for confirming some
+    of the sprite & control information :)
 
-	Cheats:
+    Cheats:
 
-	Karnov - put 0x30 at 0x60201 to skip a level
-	Chelnov - level number at 0x60189 - enter a value at cartoon intro
+    Karnov - put 0x30 at 0x60201 to skip a level
+    Chelnov - level number at 0x60189 - enter a value at cartoon intro
 
 *******************************************************************************/
 
@@ -85,7 +85,7 @@ static void karnov_i8751_w(int data)
 	if (data==0x401) i8751_return=0x4138; /* ^Whistling wind */
 	if (data==0x408) i8751_return=0x4276; /* ^Heavy Gates */
 
-//	if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
+//  if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	cpunum_set_input_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
 	i8751_needs_ack=1;
@@ -103,10 +103,10 @@ static void wndrplnt_i8751_w(int data)
 	if (data==0x100) i8751_return=0x67a;
 	if (data==0x200) i8751_return=0x214;
 	if (data==0x300) i8751_return=0x17; /* Copyright text on title screen */
-//	if (data==0x300) i8751_return=0x1; /* (USA) Copyright text on title screen */
+//  if (data==0x300) i8751_return=0x1; /* (USA) Copyright text on title screen */
 
 	/* The game writes many values in the 0x600 range, but only a specific mask
-	matters for the return value */
+    matters for the return value */
 	if ((data&0x600)==0x600) {
 		switch (data&0x18) {
 			case 0x00: 	i8751_return=0x4d53; break;
@@ -115,7 +115,7 @@ static void wndrplnt_i8751_w(int data)
 			case 0x18:	i8751_return=0x5341; break;
 		}
 	}
-//	else logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
+//  else logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	/* These are 68k function call addresses - different address for each power-up */
 	if (data==0x400) i8751_return=0x594;
@@ -249,7 +249,7 @@ static void chelnov_i8751_w(int data)
 		}
 	}
 
-//	logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
+//  logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	cpunum_set_input_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
 	i8751_needs_ack=1;
@@ -266,7 +266,7 @@ static WRITE16_HANDLER( karnov_control_w )
 
 			if (i8751_needs_ack) {
 				/* If a command and coin insert happen at once, then the i8751 will queue the
-					coin command until the previous command is ACK'd */
+                    coin command until the previous command is ACK'd */
 				if (i8751_coin_pending) {
 					i8751_return=i8751_coin_pending;
 					cpunum_set_input_line(0,6,HOLD_LINE);

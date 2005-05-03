@@ -1,13 +1,13 @@
 /*** t11: Portable DEC T-11 emulator ******************************************
 
-	Copyright (C) Aaron Giles 1998-2001
+    Copyright (C) Aaron Giles 1998-2001
 
-	System dependencies:	long must be at least 32 bits
-	                        word must be 16 bit unsigned int
-							byte must be 8 bit unsigned int
-							long must be more than 16 bits
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
+    System dependencies:    long must be at least 32 bits
+                            word must be 16 bit unsigned int
+                            byte must be 8 bit unsigned int
+                            long must be more than 16 bits
+                            arrays up to 65536 bytes must be supported
+                            machine must be twos complement
 
 *****************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Debugger layouts
+ *  Debugger layouts
  *
  *************************************/
 
@@ -47,7 +47,7 @@ static UINT8 t11_win_layout[] =
 
 /*************************************
  *
- *	Internal state representation
+ *  Internal state representation
  *
  *************************************/
 
@@ -70,7 +70,7 @@ static t11_Regs t11;
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -80,7 +80,7 @@ static int	t11_ICount;
 
 /*************************************
  *
- *	Macro shortcuts
+ *  Macro shortcuts
  *
  *************************************/
 
@@ -100,7 +100,7 @@ static int	t11_ICount;
 
 /*************************************
  *
- *	Low-level memory operations
+ *  Low-level memory operations
  *
  *************************************/
 
@@ -139,7 +139,7 @@ INLINE void WWORD(int addr, int data)
 
 /*************************************
  *
- *	Low-level stack operations
+ *  Low-level stack operations
  *
  *************************************/
 
@@ -161,7 +161,7 @@ INLINE int POP(void)
 
 /*************************************
  *
- *	Flag definitions and operations
+ *  Flag definitions and operations
  *
  *************************************/
 
@@ -193,7 +193,7 @@ INLINE int POP(void)
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -234,12 +234,12 @@ static void t11_check_irqs(void)
 		/* get the priority of this interrupt */
 		int new_pc = RWORD(irq->vector);
 		int new_psw = RWORD(irq->vector + 2);
-		
+
 		/* call the callback */
 		if (t11.irq_callback)
 		{
 			int vector = 0;
-			
+
 			if (t11.irq_state & 8) vector = 3;
 			else if (t11.irq_state & 4) vector = 2;
 			else if (t11.irq_state & 2) vector = 1;
@@ -267,7 +267,7 @@ static void t11_check_irqs(void)
 
 /*************************************
  *
- *	Core opcodes
+ *  Core opcodes
  *
  *************************************/
 
@@ -281,7 +281,7 @@ static void t11_check_irqs(void)
 
 /*************************************
  *
- *	Fetch current context into buffer
+ *  Fetch current context into buffer
  *
  *************************************/
 
@@ -295,7 +295,7 @@ static void t11_get_context(void *dst)
 
 /*************************************
  *
- *	Retrieve context from buffer
+ *  Retrieve context from buffer
  *
  *************************************/
 
@@ -310,7 +310,7 @@ static void t11_set_context(void *src)
 
 /*************************************
  *
- *	Low-level initialization/cleanup
+ *  Low-level initialization/cleanup
  *
  *************************************/
 
@@ -328,7 +328,7 @@ static void t11_exit(void)
 
 /*************************************
  *
- *	CPU reset
+ *  CPU reset
  *
  *************************************/
 
@@ -344,10 +344,10 @@ static void t11_reset(void *param)
 
 	/* reset the state */
 	memset(&t11, 0, sizeof(t11));
-	
+
 	/* initial SP is 376 octal, or 0xfe */
 	SP = 0x00fe;
-	
+
 	/* initial PC comes from the setup word */
 	PC = initial_pc[setup->mode >> 13];
 
@@ -357,7 +357,7 @@ static void t11_reset(void *param)
 	/* initialize the banking */
 	for (i = 0; i < 8; i++)
 		t11.bank[i] = &opcode_arg_base[i * 0x2000];
-	
+
 	/* initialize the IRQ state */
 	t11.irq_state = 0;
 }
@@ -366,7 +366,7 @@ static void t11_reset(void *param)
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -386,7 +386,7 @@ static void set_irq_line(int irqline, int state)
 
 /*************************************
  *
- *	Core execution
+ *  Core execution
  *
  *************************************/
 
@@ -425,7 +425,7 @@ getout:
 
 /*************************************
  *
- *	Disassembly hook
+ *  Disassembly hook
  *
  *************************************/
 
@@ -474,7 +474,7 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + T11_BANK5:			t11.bank[5] = &opcode_arg_base[info->i];			break;
 		case CPUINFO_INT_REGISTER + T11_BANK6:			t11.bank[6] = &opcode_arg_base[info->i];			break;
 		case CPUINFO_INT_REGISTER + T11_BANK7:			t11.bank[7] = &opcode_arg_base[info->i];			break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					t11.irq_callback = info->irqcallback;	break;
 	}
@@ -500,7 +500,7 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 12;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 110;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

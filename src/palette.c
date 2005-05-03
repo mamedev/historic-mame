@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	palette.c
+    palette.c
 
-	Palette handling functions.
+    Palette handling functions.
 
 ******************************************************************************/
 
@@ -14,7 +14,7 @@
 
 
 /*-------------------------------------------------
-	CONSTANTS
+    CONSTANTS
 -------------------------------------------------*/
 
 #define PEN_BRIGHTNESS_BITS		8
@@ -29,7 +29,7 @@ enum
 };
 
 /*-------------------------------------------------
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 -------------------------------------------------*/
 
 UINT32 direct_rgb_components[3];
@@ -44,7 +44,7 @@ data32_t *paletteram32;
 
 
 /*-------------------------------------------------
-	LOCAL VARIABLES
+    LOCAL VARIABLES
 -------------------------------------------------*/
 
 static rgb_t *game_palette;			/* RGB palette as set by the driver */
@@ -67,7 +67,7 @@ static UINT8 color_correct_table[(MAX_PEN_BRIGHTNESS * MAX_PEN_BRIGHTNESS) >> PE
 
 
 /*-------------------------------------------------
-	PROTOTYPES
+    PROTOTYPES
 -------------------------------------------------*/
 
 static int palette_alloc(void);
@@ -78,8 +78,8 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright);
 
 
 /*-------------------------------------------------
-	rgb_to_direct15 - convert an RGB triplet to
-	a 15-bit OSD-specified RGB value
+    rgb_to_direct15 - convert an RGB triplet to
+    a 15-bit OSD-specified RGB value
 -------------------------------------------------*/
 
 INLINE UINT16 rgb_to_direct15(rgb_t rgb)
@@ -92,8 +92,8 @@ INLINE UINT16 rgb_to_direct15(rgb_t rgb)
 
 
 /*-------------------------------------------------
-	rgb_to_direct32 - convert an RGB triplet to
-	a 32-bit OSD-specified RGB value
+    rgb_to_direct32 - convert an RGB triplet to
+    a 32-bit OSD-specified RGB value
 -------------------------------------------------*/
 
 INLINE UINT32 rgb_to_direct32(rgb_t rgb)
@@ -106,8 +106,8 @@ INLINE UINT32 rgb_to_direct32(rgb_t rgb)
 
 
 /*-------------------------------------------------
-	adjust_palette_entry - adjust a palette
-	entry for brightness and gamma
+    adjust_palette_entry - adjust a palette
+    entry for brightness and gamma
 -------------------------------------------------*/
 
 INLINE rgb_t adjust_palette_entry(rgb_t entry, int pen_bright)
@@ -121,7 +121,7 @@ INLINE rgb_t adjust_palette_entry(rgb_t entry, int pen_bright)
 
 
 /*-------------------------------------------------
-	mark_pen_dirty - mark a given pen index dirty
+    mark_pen_dirty - mark a given pen index dirty
 -------------------------------------------------*/
 
 INLINE void mark_pen_dirty(int pen)
@@ -132,8 +132,8 @@ INLINE void mark_pen_dirty(int pen)
 
 
 /*-------------------------------------------------
-	palette_start - palette initialization that
-	takes place before the display is created
+    palette_start - palette initialization that
+    takes place before the display is created
 -------------------------------------------------*/
 
 int palette_start(void)
@@ -197,59 +197,59 @@ int palette_start(void)
 //* 072703AT (last update)
 /*-------------------------------------------------
 
-	palette_set_shadow_mode(mode)
+    palette_set_shadow_mode(mode)
 
-		mode: 0 = use preset 0 (default shadow)
-		      1 = use preset 1 (default highlight)
-		      2 = use preset 2 *
-		      3 = use preset 3 *
+        mode: 0 = use preset 0 (default shadow)
+              1 = use preset 1 (default highlight)
+              2 = use preset 2 *
+              3 = use preset 3 *
 
-	* Preset 2 & 3 work independently under 32bpp,
-	  supporting up to four different types of
-	  shadows at one time. They mirror preset 1 & 2
-	  in lower depth settings to maintain
-	  compatibility.
-
-
-	palette_set_shadow_factor32(factor)
-
-		factor: 1.0(normal) to 0.0(pitch black)
+    * Preset 2 & 3 work independently under 32bpp,
+      supporting up to four different types of
+      shadows at one time. They mirror preset 1 & 2
+      in lower depth settings to maintain
+      compatibility.
 
 
-	palette_set_highlight_factor32(factor)
+    palette_set_shadow_factor32(factor)
 
-		factor: 1.0(normal) and up(brighter)
-
-
-	palette_set_shadow_dRGB32(mode, dr, dg, db, noclip)
-
-		mode:    0 to   3 (which preset to configure)
-
-		  dr: -255 to 255 ( red displacement )
-		  dg: -255 to 255 ( green displacement )
-		  db: -255 to 255 ( blue displacement )
-
-		noclip: 0 = resultant RGB clipped at 0x00/0xff
-		        1 = resultant RGB wraparound 0x00/0xff
+        factor: 1.0(normal) to 0.0(pitch black)
 
 
-	* Color shadows only work under 32bpp.
-	  This function has no effect in lower color
-	  depths where
+    palette_set_highlight_factor32(factor)
 
-		palette_set_shadow_factor32() or
-		palette_set_highlight_factor32()
+        factor: 1.0(normal) and up(brighter)
 
-	  should be used instead.
 
-	* 32-bit shadows are lossy. Even with zero RGB
-	  displacements the affected area will still look
-	  slightly darkened.
+    palette_set_shadow_dRGB32(mode, dr, dg, db, noclip)
 
-	  Drivers should ensure all shadow pens in
-	  gfx_drawmode_table[] are set to DRAWMODE_NONE
-	  when RGB displacements are zero to avoid the
-	  darkening effect.
+        mode:    0 to   3 (which preset to configure)
+
+          dr: -255 to 255 ( red displacement )
+          dg: -255 to 255 ( green displacement )
+          db: -255 to 255 ( blue displacement )
+
+        noclip: 0 = resultant RGB clipped at 0x00/0xff
+                1 = resultant RGB wraparound 0x00/0xff
+
+
+    * Color shadows only work under 32bpp.
+      This function has no effect in lower color
+      depths where
+
+        palette_set_shadow_factor32() or
+        palette_set_highlight_factor32()
+
+      should be used instead.
+
+    * 32-bit shadows are lossy. Even with zero RGB
+      displacements the affected area will still look
+      slightly darkened.
+
+      Drivers should ensure all shadow pens in
+      gfx_drawmode_table[] are set to DRAWMODE_NONE
+      when RGB displacements are zero to avoid the
+      darkening effect.
 
 -------------------------------------------------*/
 #define MAX_SHADOW_PRESETS 4
@@ -498,8 +498,8 @@ void palette_set_highlight_method(int method)
 
 
 /*-------------------------------------------------
-	palette_alloc - allocate memory for palette
-	structures
+    palette_alloc - allocate memory for palette
+    structures
 -------------------------------------------------*/
 
 static int palette_alloc(void)
@@ -589,9 +589,9 @@ static int palette_alloc(void)
 	if (colormode == PALETTIZED_16BIT)
 	{
 		/* we allocate a full 65536 entries table, to prevent memory corruption
-		 * bugs should the tilemap contains pens >= total_colors
-		 * (e.g. Machine->uifont->colortable[0] as returned by get_black_pen())
-		 */
+         * bugs should the tilemap contains pens >= total_colors
+         * (e.g. Machine->uifont->colortable[0] as returned by get_black_pen())
+         */
 		palette_shadow_table = auto_malloc(65536 * sizeof(palette_shadow_table[0]));
 		if (!palette_shadow_table)
 			return 1;
@@ -671,8 +671,8 @@ static int palette_alloc(void)
 
 
 /*-------------------------------------------------
-	palette_init - palette initialization that
-	takes place after the display is created
+    palette_init - palette initialization that
+    takes place after the display is created
 -------------------------------------------------*/
 
 int palette_init(void)
@@ -760,9 +760,9 @@ int palette_init(void)
 
 
 /*-------------------------------------------------
-	palette_get_total_colors_with_ui - returns
-	the total number of palette entries including
-	UI
+    palette_get_total_colors_with_ui - returns
+    the total number of palette entries including
+    UI
 -------------------------------------------------*/
 
 int palette_get_total_colors_with_ui(void)
@@ -780,8 +780,8 @@ int palette_get_total_colors_with_ui(void)
 
 
 /*-------------------------------------------------
-	palette_update_display - update the display
-	state with our latest info
+    palette_update_display - update the display
+    state with our latest info
 -------------------------------------------------*/
 
 void palette_update_display(struct mame_display *display)
@@ -823,8 +823,8 @@ void palette_update_display(struct mame_display *display)
 
 
 /*-------------------------------------------------
-	internal_modify_single_pen - change a single
-	pen and recompute its adjusted RGB value
+    internal_modify_single_pen - change a single
+    pen and recompute its adjusted RGB value
 -------------------------------------------------*/
 
 static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
@@ -869,8 +869,8 @@ static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
 
 
 /*-------------------------------------------------
-	internal_modify_pen - change a pen along with
-	its corresponding shadow/highlight
+    internal_modify_pen - change a pen along with
+    its corresponding shadow/highlight
 -------------------------------------------------*/
 
 static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright) //* new highlight operation
@@ -981,8 +981,8 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright) //* new 
 
 
 /*-------------------------------------------------
-	recompute_adjusted_palette - recompute the
-	entire palette after some major event
+    recompute_adjusted_palette - recompute the
+    entire palette after some major event
 -------------------------------------------------*/
 
 static void recompute_adjusted_palette(int brightness_or_gamma_changed)
@@ -1005,8 +1005,8 @@ static void recompute_adjusted_palette(int brightness_or_gamma_changed)
 
 
 /*-------------------------------------------------
-	palette_reset - called after restore to
-	actually update the palette
+    palette_reset - called after restore to
+    actually update the palette
 -------------------------------------------------*/
 
 static void palette_reset(void)
@@ -1018,8 +1018,8 @@ static void palette_reset(void)
 
 
 /*-------------------------------------------------
-	palette_set_color - set a single palette
-	entry
+    palette_set_color - set a single palette
+    entry
 -------------------------------------------------*/
 
 void palette_set_color(pen_t pen, UINT8 r, UINT8 g, UINT8 b)
@@ -1046,8 +1046,8 @@ void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
 }
 
 /*-------------------------------------------------
-	palette_get_color - return a single palette
-	entry
+    palette_get_color - return a single palette
+    entry
 -------------------------------------------------*/
 void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b)
 {
@@ -1066,8 +1066,8 @@ void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b)
 }
 
 /*-------------------------------------------------
-	palette_set_brightness - set the per-pen
-	brightness factor
+    palette_set_brightness - set the per-pen
+    brightness factor
 -------------------------------------------------*/
 
 void palette_set_brightness(pen_t pen, double bright)
@@ -1088,8 +1088,8 @@ void palette_set_brightness(pen_t pen, double bright)
 
 
 /*-------------------------------------------------
-	palette_set_shadow_factor - set the global
-	shadow brightness factor
+    palette_set_shadow_factor - set the global
+    shadow brightness factor
 -------------------------------------------------*/
 
 void palette_set_shadow_factor(double factor)
@@ -1110,8 +1110,8 @@ void palette_set_shadow_factor(double factor)
 
 
 /*-------------------------------------------------
-	palette_set_highlight_factor - set the global
-	highlight brightness factor
+    palette_set_highlight_factor - set the global
+    highlight brightness factor
 -------------------------------------------------*/
 
 void palette_set_highlight_factor(double factor)
@@ -1132,8 +1132,8 @@ void palette_set_highlight_factor(double factor)
 
 
 /*-------------------------------------------------
-	palette_set_global_gamma - set the global
-	gamma factor
+    palette_set_global_gamma - set the global
+    gamma factor
 -------------------------------------------------*/
 
 void palette_set_global_gamma(double _gamma)
@@ -1149,8 +1149,8 @@ void palette_set_global_gamma(double _gamma)
 
 
 /*-------------------------------------------------
-	palette_get_global_gamma - return the global
-	gamma factor
+    palette_get_global_gamma - return the global
+    gamma factor
 -------------------------------------------------*/
 
 double palette_get_global_gamma(void)
@@ -1161,8 +1161,8 @@ double palette_get_global_gamma(void)
 
 
 /*-------------------------------------------------
-	palette_set_global_brightness - set the global
-	brightness factor
+    palette_set_global_brightness - set the global
+    brightness factor
 -------------------------------------------------*/
 
 void palette_set_global_brightness(double brightness)
@@ -1178,8 +1178,8 @@ void palette_set_global_brightness(double brightness)
 
 
 /*-------------------------------------------------
-	palette_set_global_brightness_adjust - set
-	the global brightness adjustment factor
+    palette_set_global_brightness_adjust - set
+    the global brightness adjustment factor
 -------------------------------------------------*/
 
 void palette_set_global_brightness_adjust(double adjustment)
@@ -1195,8 +1195,8 @@ void palette_set_global_brightness_adjust(double adjustment)
 
 
 /*-------------------------------------------------
-	palette_get_global_brightness - return the global
-	brightness factor
+    palette_get_global_brightness - return the global
+    brightness factor
 -------------------------------------------------*/
 
 double palette_get_global_brightness(void)
@@ -1207,8 +1207,8 @@ double palette_get_global_brightness(void)
 
 
 /*-------------------------------------------------
-	get_black_pen - use this if you need to
-	fillbitmap() the background with black
+    get_black_pen - use this if you need to
+    fillbitmap() the background with black
 -------------------------------------------------*/
 
 pen_t get_black_pen(void)
@@ -1923,8 +1923,8 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
 
 /***************************************************************************
 
-	Standard black and white palette.
-	Color 0 is pure black, color 1 is pure white.
+    Standard black and white palette.
+    Color 0 is pure black, color 1 is pure white.
 
 ***************************************************************************/
 

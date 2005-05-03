@@ -424,7 +424,7 @@ void tia_process(void *_chip, stream_sample_t *buffer, int length)
 		if (!chip->oversampling)
 		{
 			/* decrement the sample counter - value is 256 since the lower
-			 * byte contains the fractional part */
+             * byte contains the fractional part */
 			chip->Samp_n_cnt -= 256;
 
 			/* if the count down has reached zero */
@@ -445,7 +445,7 @@ void tia_process(void *_chip, stream_sample_t *buffer, int length)
 			do
 			{
 				/* decrement the sample counter - value is 256 since the lower
-				 * byte contains the fractional part */
+                 * byte contains the fractional part */
 				chip->Samp_n_cnt -= 256;
 				/* calculate the latest output value and place in buffer */
 				*buffer++ = outvol_0 + outvol_1;
@@ -501,7 +501,7 @@ void *tia_sound_init(int clock, int sample_rate, int gain)
 {
 	struct tia *chip;
 	int chan;
-	
+
 	chip = malloc(sizeof(*chip));
 	if (!chip)
 		return NULL;
@@ -540,7 +540,7 @@ void *tia_sound_init(int clock, int sample_rate, int gain)
         chip->P5[chan] = 0;
         chip->P9[chan] = 0;
     }
-    
+
     return chip;
 }
 

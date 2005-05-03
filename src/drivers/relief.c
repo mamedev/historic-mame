@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari "Round" hardware
+    Atari "Round" hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Relief Pitcher (1990) [2 sets]
+    Games supported:
+        * Relief Pitcher (1990) [2 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -26,7 +26,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -38,7 +38,7 @@ static UINT32 adpcm_bank_base;
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -59,7 +59,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -79,7 +79,7 @@ static MACHINE_INIT( relief )
 
 /*************************************
  *
- *	I/O handling
+ *  I/O handling
  *
  *************************************/
 
@@ -95,7 +95,7 @@ static READ16_HANDLER( special_port2_r )
 
 /*************************************
  *
- *	Audio control I/O
+ *  Audio control I/O
  *
  *************************************/
 
@@ -128,7 +128,7 @@ static WRITE16_HANDLER( audio_volume_w )
 
 /*************************************
  *
- *	MSM5295 I/O
+ *  MSM5295 I/O
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static WRITE16_HANDLER( adpcm_w )
 
 /*************************************
  *
- *	YM2413 I/O
+ *  YM2413 I/O
  *
  *************************************/
 
@@ -167,7 +167,7 @@ static WRITE16_HANDLER( ym2413_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -212,7 +212,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -288,7 +288,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -328,7 +328,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -370,7 +370,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -421,7 +421,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -494,7 +494,7 @@ static DRIVER_INIT( relief2 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

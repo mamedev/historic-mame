@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Bally/Sente SAC-1 system
+    Bally/Sente SAC-1 system
 
     driver by Aaron Giles
 

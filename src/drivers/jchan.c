@@ -1,7 +1,7 @@
 /*
-	Jackie Chan The Kung-Fu Master
-	Jackie Chan in Fists of Fire
-	(c) Kaneko 1995
+    Jackie Chan The Kung-Fu Master
+    Jackie Chan in Fists of Fire
+    (c) Kaneko 1995
 
 WIP Driver by Sebastien Volpe, based on "this does nothing" by Haze ;)
 
@@ -51,24 +51,24 @@ DONE:
 
 99.99% of main->sub communication is done the following:
 
-		clr.w   $400002.l			; clear (shared ram) sub-cpu busy status word
-		move.w  #cmd, $403ffe.l		; call subcpu 
-wait	tst.w   $400002.l			; read (shared ram) sub-cpu busy status word
-		beq     wait				; active wait-loop
+        clr.w   $400002.l           ; clear (shared ram) sub-cpu busy status word
+        move.w  #cmd, $403ffe.l     ; call subcpu
+wait    tst.w   $400002.l           ; read (shared ram) sub-cpu busy status word
+        beq     wait                ; active wait-loop
 
 
 ********
 
-	there are error-msgs for (palette/sprite/bg) RAM + sub*(palette/sprite/bg) RAM, suggesting each 68k holds palette/sprite/bg ???
+    there are error-msgs for (palette/sprite/bg) RAM + sub*(palette/sprite/bg) RAM, suggesting each 68k holds palette/sprite/bg ???
 
-	main spriteram is located @ $500000-$5005ff
+    main spriteram is located @ $500000-$5005ff
 
-	sprite format is similar as what's described in vidhrdw\kaneko16.c:
-	-> each field is coded on a long, lo-word is zeroes except code
-	.L	attributes
-	.L	code.w|color.w ???
-	.L	x << 6
-	.L	y << 6
+    sprite format is similar as what's described in vidhrdw\kaneko16.c:
+    -> each field is coded on a long, lo-word is zeroes except code
+    .L  attributes
+    .L  code.w|color.w ???
+    .L  x << 6
+    .L  y << 6
 
 */
 
@@ -108,34 +108,34 @@ DIPS:1 DIP LABELLED SW2, 8 POSITION
 
 Eproms
 
-Location	Rom Type	PCB Label
-U164		27C2001		SPA-7A
-U165		27C2001		SPA-7B
-U13		27C1001		27C1001A
-U56		27C2001		23C8001E
-U67		27C040		27C4001
-U68		27C040		27C4001
-U69		27C040		27C4001
-U70		27C040		27C4001
-U86		27C040		27C4001
-U87		27C040		27C4001
+Location    Rom Type    PCB Label
+U164        27C2001     SPA-7A
+U165        27C2001     SPA-7B
+U13     27C1001     27C1001A
+U56     27C2001     23C8001E
+U67     27C040      27C4001
+U68     27C040      27C4001
+U69     27C040      27C4001
+U70     27C040      27C4001
+U86     27C040      27C4001
+U87     27C040      27C4001
 
 
 there are 12 mask roms (42 pin) labelled....
 
-Rom Label			Label on PCB		Location
-JC-100-00  9511 D		SPA-0			U179
-JC-101-00  9511 D		SPA-1			U180
-JC-102-00  9511 D		SPA-2			U181
-JC-103-00  9511 D		SPA-3			U182
-JC-104-00  T39 9510K7092	SPA-4			U183
-JC-105-00  T40 9510K7094	SPA-5			U184
-JC-108-00  T65 9517K7012	SPA-6			U185
-JC-106-00  T41 9510K7091	SPB-0			U171
-JC-107-00  T42 9510K7096	SPB-1			U172
-JC-200-00  W10 9510K7055	BG-0			U177
-JC-300-00  T43 9510K7098	23C16000		U84
-JC-301-00  W11 9510K7059	23C16000		U85
+Rom Label           Label on PCB        Location
+JC-100-00  9511 D       SPA-0           U179
+JC-101-00  9511 D       SPA-1           U180
+JC-102-00  9511 D       SPA-2           U181
+JC-103-00  9511 D       SPA-3           U182
+JC-104-00  T39 9510K7092    SPA-4           U183
+JC-105-00  T40 9510K7094    SPA-5           U184
+JC-108-00  T65 9517K7012    SPA-6           U185
+JC-106-00  T41 9510K7091    SPB-0           U171
+JC-107-00  T42 9510K7096    SPB-1           U172
+JC-200-00  W10 9510K7055    BG-0            U177
+JC-300-00  T43 9510K7098    23C16000        U84
+JC-301-00  W11 9510K7059    23C16000        U85
 
 there are other positions for mask roms, but they are empty. the locations are labelled SPB-2, SPB-3 and SPA-7.
 perhaps this pcb is used for other Kaneko games?
@@ -226,8 +226,8 @@ extern data32_t* skns_spc_regs;
 
 /***************************************************************************
 
-							MCU Code Simulation
-				(follows the implementation of kaneko16.c)
+                            MCU Code Simulation
+                (follows the implementation of kaneko16.c)
 
 Provided we found a working PCB, trojan code will help:
 - to get this game working (but there are many #4 sub-commands!)
@@ -250,11 +250,11 @@ void jchan_mcu_run(void)
 	logerror("CPU #0 (PC=%06X) : MCU executed command: %04X %04X %04X ",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_subcmd);
 
 /*
-	the only MCU commands found in program code are:
-	- 0x04: protection: provide data (see below) and code
-	- 0x03: read DSW
-	- 0x02: load game settings \ stored in ATMEL AT93C46 chip,
-	- 0x42: save game settings / 128 bytes serial EEPROM
+    the only MCU commands found in program code are:
+    - 0x04: protection: provide data (see below) and code
+    - 0x03: read DSW
+    - 0x02: load game settings \ stored in ATMEL AT93C46 chip,
+    - 0x42: save game settings / 128 bytes serial EEPROM
 */
 
 	switch (mcu_command >> 8)
@@ -456,10 +456,10 @@ VIDEO_UPDATE(jchan)
 
 ***************************************************************************/
 /*
-	controls handling routine is $21e2a, part of IT 1
-	player 1/2 controls are read from $f00000/$f00002 resp.
-	$f00006 is read and impacts controls 'decoding'
-	$f00000 is the only location also written
+    controls handling routine is $21e2a, part of IT 1
+    player 1/2 controls are read from $f00000/$f00002 resp.
+    $f00006 is read and impacts controls 'decoding'
+    $f00000 is the only location also written
 */
 static data16_t *jchan_ctrl;
 
@@ -546,7 +546,7 @@ READ16_HANDLER ( sub2main_cmd_r )
 
 WRITE16_HANDLER( jchan_suprnova_sprite32_w )
 {
-//	data32_t dat32;
+//  data32_t dat32;
 
 	COMBINE_DATA(&jchan_spriteram[offset]);
 
@@ -559,7 +559,7 @@ data16_t* jchan_sprregs;
 
 WRITE16_HANDLER( jchan_suprnova_sprite32regs_w )
 {
-//	data32_t dat32;
+//  data32_t dat32;
 
 	COMBINE_DATA(&jchan_sprregs[offset]);
 
@@ -582,23 +582,23 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x400001) AM_READ(sub2main_cmd_r) // some subcpu cmd writes @ $400000, IT3 of main reads this location
 	AM_RANGE(0x400002, 0x400003) AM_READWRITE(main2sub_status_r, main2sub_status_w)
 	AM_RANGE(0x400004, 0x400005) AM_READ(main2sub_result_r)
-//	AM_RANGE(0x400006, 0x400007) // ???
+//  AM_RANGE(0x400006, 0x400007) // ???
 	AM_RANGE(0x400100, 0x400123) AM_WRITE(main2sub_unknown)
 	AM_RANGE(0x403c02, 0x403c09) AM_WRITE(main2sub_param_w) // probably much more, see subcpu routine $7 @ $14aa
 	AM_RANGE(0x403ffe, 0x403fff) AM_WRITE(main2sub_cmd_w)
 
 	/* 1st sprite layer */
-//	AM_RANGE(0x500000, 0x5005ff) AM_RAM //     grid tested ($924-$97c), cleared ($982-$9a4) until $503fff
-//	AM_RANGE(0x500600, 0x503fff) AM_RAM // [B] grid tested, cleared ($b68-$be6)
+//  AM_RANGE(0x500000, 0x5005ff) AM_RAM //     grid tested ($924-$97c), cleared ($982-$9a4) until $503fff
+//  AM_RANGE(0x500600, 0x503fff) AM_RAM // [B] grid tested, cleared ($b68-$be6)
 	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram)
 	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs)
 
 	/* (0x700000, 0x707fff) = palette zone - but there seems to be 'sub-zones' used differently */
-//	AM_RANGE(0x700000, 0x707fff) AM_RAM //     grid tested, cleared ($dbc-$e3a), $2000 bytes (8Kb) copied from $aae40 ($e40-$e56)
-//	AM_RANGE(0x708000, 0x70ffff) AM_RAM // [E] grid tested, cleared ($d1c-$d9a), $8000 bytes (32Kb) copied from $a2e40 ($da0-$db6)
+//  AM_RANGE(0x700000, 0x707fff) AM_RAM //     grid tested, cleared ($dbc-$e3a), $2000 bytes (8Kb) copied from $aae40 ($e40-$e56)
+//  AM_RANGE(0x708000, 0x70ffff) AM_RAM // [E] grid tested, cleared ($d1c-$d9a), $8000 bytes (32Kb) copied from $a2e40 ($da0-$db6)
 	AM_RANGE(0x700000, 0x707fff) AM_RAM // palette for tilemaps?
 	AM_RANGE(0x708000, 0x70ffff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // palette for sprites?
-//	AM_RANGE(0x700000, 0x70ffff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // palette for sprites?
+//  AM_RANGE(0x700000, 0x70ffff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // palette for sprites?
 
 	AM_RANGE(0xf00000, 0xf00003) AM_READWRITE(jchan_ctrl_r, jchan_ctrl_w) AM_BASE(&jchan_ctrl)
 	AM_RANGE(0xf00004, 0xf00005) AM_READ(input_port_2_word_r) // DSW2
@@ -617,11 +617,11 @@ static ADDRESS_MAP_START( jchan_sub, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400002, 0x403fff) AM_RAM
 
 	/* VIEW2 Tilemap - [D] grid tested, cleared ($1d84), also cleared at startup ($810-$826) */
-	AM_RANGE(0x500000, 0x500fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
-	AM_RANGE(0x501000, 0x501fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
-	AM_RANGE(0x502000, 0x502fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_1)									//
-	AM_RANGE(0x503000, 0x503fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_0)									//
-	AM_RANGE(0x600000, 0x60001f) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
+	AM_RANGE(0x500000, 0x500fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1) // Layers 0
+	AM_RANGE(0x501000, 0x501fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0) //
+	AM_RANGE(0x502000, 0x502fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_1)                                  //
+	AM_RANGE(0x503000, 0x503fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_0)                                  //
+	AM_RANGE(0x600000, 0x60001f) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)   // Layers 0 Regs
 
 	/* 2nd sprite layer? - [C] grid tested, cleared ($1e2a), also cleared at startup ($7dc-$80a) */
 	AM_RANGE(0x700000, 0x703fff) AM_RAM // AM_BASE(&jchan_spriteram) AM_WRITE(jchan_suprnova_sprite32_w)
@@ -685,8 +685,8 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-//	{ REGION_GFX1, 0, &char2layout,   0, 512  },
-//	{ REGION_GFX2, 0, &char2layout,   0, 512  },
+//  { REGION_GFX1, 0, &char2layout,   0, 512  },
+//  { REGION_GFX2, 0, &char2layout,   0, 512  },
 	{ REGION_GFX3, 0, &tilelayout,   16384, 16384  },
 	{ -1 } /* end of array */
 };

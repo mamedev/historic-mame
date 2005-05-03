@@ -301,7 +301,7 @@ READ16_HANDLER (ASIC28_r16)
 			{
 				int v2=ASIC28REGS[0]&0x0f;
 				int v1=(ASIC28REGS[0]&0x0f00)>>8;
-//				unsigned short tmp=E0REGS[v2];
+//              unsigned short tmp=E0REGS[v2];
 				//E0REGS[v2]=E0REGS[v1];
 				//E0REGS[v1]=tmp;
 				if(ASIC28REGS[0]==0x102)
@@ -317,7 +317,7 @@ READ16_HANDLER (ASIC28_r16)
 			val=BATABLE[ASIC28REGS[0]&0x3f];
 			if(ASIC28REGS[0]>0x2f)
 			{
-//				PutMessage("Unmapped BA com, report ElSemi",60);
+//              PutMessage("Unmapped BA com, report ElSemi",60);
 				usrintf_showmessage	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
 			}
 			break;
@@ -352,7 +352,7 @@ READ16_HANDLER (ASIC28_r16)
 		case 0xd6:	//???? check it
 			{
 				int v2=ASIC28REGS[0]&0xf;
-//				int v1=(ASIC28REGS[0]&0xf0)>>4;
+//              int v1=(ASIC28REGS[0]&0xf0)>>4;
 				E0REGS[0]=E0REGS[v2];
 				//E0REGS[v2]=0;
 				val=0x880000;
@@ -402,7 +402,7 @@ READ16_HANDLER (ASIC28_r16)
 			}
 	}
 
-//	if(addr==0x500000)
+//  if(addr==0x500000)
 	if(offset==0)
 	{
 		unsigned short d=val&0xffff;
@@ -412,7 +412,7 @@ READ16_HANDLER (ASIC28_r16)
 		d^=realkey;
 		return d;
 	}
-//	else if(addr==0x500002)
+//  else if(addr==0x500002)
 	else if(offset==1)
 	{
 		unsigned short d=val>>16;
@@ -434,7 +434,7 @@ READ16_HANDLER (ASIC28_r16)
 WRITE16_HANDLER (ASIC28_w16)
 //void ASIC28_w16(unsigned int addr,unsigned short data)
 {
-//	if(addr==0x500000)
+//  if(addr==0x500000)
 	if(offset==0)
 	{
 		unsigned short realkey;
@@ -444,7 +444,7 @@ WRITE16_HANDLER (ASIC28_w16)
 		ASIC28REGS[0]=data;
 		return;
 	}
-//	if(addr==0x500002)
+//  if(addr==0x500002)
 	if(offset==1)
 	{
 		unsigned short realkey;
@@ -455,7 +455,7 @@ WRITE16_HANDLER (ASIC28_w16)
 		realkey|=ASIC28KEY;
 		data^=realkey;
 		ASIC28REGS[1]=data;
-//		ErrorLogMessage("ASIC28 CMD %X  PARAM %X",ASIC28REGS[1],ASIC28REGS[0]);
+//      ErrorLogMessage("ASIC28 CMD %X  PARAM %X",ASIC28REGS[1],ASIC28REGS[0]);
 		logerror("ASIC28 CMD %04x  PARAM %04x\n",ASIC28REGS[1],ASIC28REGS[0]);
 
 		ASICPARAMS[ASIC28REGS[1]&0xff]=ASIC28REGS[0];

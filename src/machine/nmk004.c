@@ -348,9 +348,9 @@ static void fm_update(int channel)
 
 					switch (token)
 					{
-//						case 0xef:	// play sample
-//							oki_play_sample(read8(fm->current++));
-//							break;
+//                      case 0xef:  // play sample
+//                          oki_play_sample(read8(fm->current++));
+//                          break;
 
 						case 0xf0:	// slot (for keyon ym2203 command)
 							fm->flags |= FM_FLAG_MUST_SEND_CONFIGURATION;

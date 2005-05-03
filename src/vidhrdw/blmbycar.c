@@ -1,29 +1,29 @@
 /***************************************************************************
 
-							  -= Blomby Car =-
+                              -= Blomby Car =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q		shows the background
-		W		shows the foreground
-		A		shows the sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	[ 2 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-	The Tilemaps are 64 x 32 tiles in size (1024 x 512).
-	Tiles are 16 x 16 x 4, with 32 color codes and 2 priority
-	leves (wrt sprites). Each tile needs 4 bytes.
+        Q       shows the background
+        W       shows the foreground
+        A       shows the sprites
 
-	[ 1024? Sprites ]
+        Keys can be used together!
 
-	They use the same graphics the tilemaps use (16 x 16 x 4 tiles)
-	with 16 color codes and 2 levels of priority
+
+    [ 2 Scrolling Layers ]
+
+    The Tilemaps are 64 x 32 tiles in size (1024 x 512).
+    Tiles are 16 x 16 x 4, with 32 color codes and 2 priority
+    leves (wrt sprites). Each tile needs 4 bytes.
+
+    [ 1024? Sprites ]
+
+    They use the same graphics the tilemaps use (16 x 16 x 4 tiles)
+    with 16 color codes and 2 levels of priority
 
 
 ***************************************************************************/
@@ -40,7 +40,7 @@ data16_t *blmbycar_vram_1, *blmbycar_scroll_1;
 /***************************************************************************
 
 
-								Palette
+                                Palette
 
 
 ***************************************************************************/
@@ -62,16 +62,16 @@ WRITE16_HANDLER( blmbycar_palette_w )
 /***************************************************************************
 
 
-								Tilemaps
+                                Tilemaps
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
-		2.w		fedc ba98 ---- ----
-				---- ---- 7--- ----		Flip Y
-				---- ---- -6-- ----		Flip X
-				---- ---- --5- ----		Priority (0 = Low)
-				---- ---- ---4 3210		Color
+        0.w                             Code
+        2.w     fedc ba98 ---- ----
+                ---- ---- 7--- ----     Flip Y
+                ---- ---- -6-- ----     Flip X
+                ---- ---- --5- ----     Priority (0 = Low)
+                ---- ---- ---4 3210     Color
 
 ***************************************************************************/
 
@@ -125,7 +125,7 @@ WRITE16_HANDLER( blmbycar_vram_1_w )
 /***************************************************************************
 
 
-								Video Init
+                                Video Init
 
 
 ***************************************************************************/
@@ -157,25 +157,25 @@ VIDEO_START( blmbycar )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		f--- ---- ---- ----		End Of Sprites
-				-edc ba9- ---- ----
-				---- ---8 7654 3210		Y (Signed)
+        0.w     f--- ---- ---- ----     End Of Sprites
+                -edc ba9- ---- ----
+                ---- ---8 7654 3210     Y (Signed)
 
-		2.w								Code
+        2.w                             Code
 
-		4.w		f--- ---- ---- ----		Flip Y
-				-e-- ---- ---- ----		Flip X
-				--dc ba98 7654 ----
-				---- ---- ---- 3210		Color (Bit 3 = Priority)
+        4.w     f--- ---- ---- ----     Flip Y
+                -e-- ---- ---- ----     Flip X
+                --dc ba98 7654 ----
+                ---- ---- ---- 3210     Color (Bit 3 = Priority)
 
-		6.w		f--- ---- ---- ----		? Is this ever used ?
-				-e-- ---- ---- ----		? 1 = Don't Draw ?
-				--dc ba9- ---- ----
-				---- ---8 7654 3210		X (Signed)
+        6.w     f--- ---- ---- ----     ? Is this ever used ?
+                -e-- ---- ---- ----     ? 1 = Don't Draw ?
+                --dc ba9- ---- ----
+                ---- ---8 7654 3210     X (Signed)
 
 
 ***************************************************************************/
@@ -228,7 +228,7 @@ static void blmbycar_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -250,7 +250,7 @@ if (code_pressed(KEYCODE_Z))
 
 	if (code_pressed(KEYCODE_Q))	msk |= 1;
 	if (code_pressed(KEYCODE_W))	msk |= 2;
-//	if (code_pressed(KEYCODE_E))	msk |= 4;
+//  if (code_pressed(KEYCODE_E))    msk |= 4;
 	if (code_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 }

@@ -1,50 +1,50 @@
 /****************************************************************************
 
-		ToaPlan game hardware from 1987
-		-------------------------------
-		Driver by: Quench
-		Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
-		Flying Shark bootleg info: Ruben Panossian
+        ToaPlan game hardware from 1987
+        -------------------------------
+        Driver by: Quench
+        Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
+        Flying Shark bootleg info: Ruben Panossian
 
 
 Supported games:
 
-	Toaplan Board Number:	TP-007
-	Taito game number:		B02
-		Flying Shark (World)
-		Sky Shark (USA Romstar license)
-		Hishou Zame (Flying Shark Japan license)
-		Flying Shark bootleg (USA Romstar license)
+    Toaplan Board Number:   TP-007
+    Taito game number:      B02
+        Flying Shark (World)
+        Sky Shark (USA Romstar license)
+        Hishou Zame (Flying Shark Japan license)
+        Flying Shark bootleg (USA Romstar license)
 
-	Toaplan Board Number:	TP-011
-	Taito game number:		B30
-		Twin Cobra (World)
-		Twin Cobra (USA license)
-		Kyukyoku Tiger (Japan license)
+    Toaplan Board Number:   TP-011
+    Taito game number:      B30
+        Twin Cobra (World)
+        Twin Cobra (USA license)
+        Kyukyoku Tiger (Japan license)
 
-	Comad Board Number:		??????
-	Comad game number:		???
-		GulfWar II (Game play very similar to Twin cobra)
+    Comad Board Number:     ??????
+    Comad game number:      ???
+        GulfWar II (Game play very similar to Twin cobra)
 
 Difference between Twin Cobra and Kyukyoko Tiger:
-	T.C. supports two simultaneous players.
-	K.T. supports two players, but only one at a time.
-		 for this reason, it also supports Table Top cabinets.
-	T.C. stores 3 characters for high scores.
-	K.T. stores 6 characters for high scores.
-	T.C. heros are Red and Blue for player 1 and 2 respectively.
-	K.T. heros are grey for both players.
-	T.C. dead remains of ground tanks are circular.
-	K.T. dead remains of ground tanks always vary in shape.
-	T.C. does not use DSW1-1 and DSW2-8.
-	K.T. uses DSW1-1 for cabinet type, and DSW2-8 for allow game continue.
-	T.C. continues new hero and continued game at current position.
-	K.T. continues new hero and continued game at predefined positions.
-		 After dying, and your new hero appears, if you do not travel more
-		 than your helicopter length forward, you are penalised and moved
-		 back further when your next hero appears.
-	K.T. Due to this difference in continue sequence, Kyukyoko Tiger is MUCH
-		 harder, challenging, and nearly impossible to complete !
+    T.C. supports two simultaneous players.
+    K.T. supports two players, but only one at a time.
+         for this reason, it also supports Table Top cabinets.
+    T.C. stores 3 characters for high scores.
+    K.T. stores 6 characters for high scores.
+    T.C. heros are Red and Blue for player 1 and 2 respectively.
+    K.T. heros are grey for both players.
+    T.C. dead remains of ground tanks are circular.
+    K.T. dead remains of ground tanks always vary in shape.
+    T.C. does not use DSW1-1 and DSW2-8.
+    K.T. uses DSW1-1 for cabinet type, and DSW2-8 for allow game continue.
+    T.C. continues new hero and continued game at current position.
+    K.T. continues new hero and continued game at predefined positions.
+         After dying, and your new hero appears, if you do not travel more
+         than your helicopter length forward, you are penalised and moved
+         back further when your next hero appears.
+    K.T. Due to this difference in continue sequence, Kyukyoko Tiger is MUCH
+         harder, challenging, and nearly impossible to complete !
 
 **************************** Memory & I/O Maps *****************************
 68000: Main CPU
@@ -57,14 +57,14 @@ Difference between Twin Cobra and Kyukyoko Tiger:
 7a000-7abff RAM shared with Z80; 16-bit on this side, 8-bit on Z80 side
 
 read:
-78001		DSW1 (Flying Shark)
-78003		DSW2 (Flying Shark)
+78001       DSW1 (Flying Shark)
+78003       DSW2 (Flying Shark)
 
-78005		Player 1 Joystick and Buttons input port
-78007		Player 2 Joystick and Buttons input port
-78009		bit 7 vblank, coin and control/service inputs (Flying shark)
-				Flying Shark implements Tilt as 'freeze system' and also has
-				a reset button, but its not implelemted here (not needed)
+78005       Player 1 Joystick and Buttons input port
+78007       Player 2 Joystick and Buttons input port
+78009       bit 7 vblank, coin and control/service inputs (Flying shark)
+                Flying Shark implements Tilt as 'freeze system' and also has
+                a reset button, but its not implelemted here (not needed)
 
 7e000-7e005 read data from video RAM (see below)
 
@@ -83,29 +83,29 @@ write:
 74004-74005 offset in character page to write character (7e004)
 
 76000-76003 as above but for another layer maybe ??? (Not used here)
-7800a		This activates INT line for Flying shark. (Not via 7800C)
-			00		Activate INTerrupt line to the TMS320C10 DSP.
-			01		Inhibit  INTerrupt line to the TMS320C10 DSP.
+7800a       This activates INT line for Flying shark. (Not via 7800C)
+            00      Activate INTerrupt line to the TMS320C10 DSP.
+            01      Inhibit  INTerrupt line to the TMS320C10 DSP.
 
-7800c		Control register (Byte write access).
-			bits 7-4 always 0
-			bits 3-1 select the control signal to drive.
-			bit   0  is the value passed to the control signal.
+7800c       Control register (Byte write access).
+            bits 7-4 always 0
+            bits 3-1 select the control signal to drive.
+            bit   0  is the value passed to the control signal.
 
-			Value (hex):
-			00-03	????
-			04		Clear IPL2 line to 68000 inactive hi (Interrupt priority 4)
-			05		Set   IPL2 line to 68000 active  low (Interrupt priority 4)
-			06		Dont flip display
-			07		Flip display
-			08		Switch to background layer ram bank 0
-			09		Switch to background layer ram bank 1
-			0A		Switch to foreground layer rom bank 0
-			0B		Switch to foreground layer rom bank 1
-			0C		Activate INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
-			0D		Inhibit  INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
-			0E		Turn screen off
-			0F		Turn screen on
+            Value (hex):
+            00-03   ????
+            04      Clear IPL2 line to 68000 inactive hi (Interrupt priority 4)
+            05      Set   IPL2 line to 68000 active  low (Interrupt priority 4)
+            06      Dont flip display
+            07      Flip display
+            08      Switch to background layer ram bank 0
+            09      Switch to background layer ram bank 1
+            0A      Switch to foreground layer rom bank 0
+            0B      Switch to foreground layer rom bank 1
+            0C      Activate INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
+            0D      Inhibit  INTerrupt line to the TMS320C10 DSP  (Twin Cobra)
+            0E      Turn screen off
+            0F      Turn screen on
 
 7e000-7e001 data to write in text video RAM (70000)
 7e002-7e003 data to write in bg video RAM (72004)
@@ -116,74 +116,74 @@ Z80: Sound CPU
 8000-87ff shared with 68000; 8-bit on this side, 16-bit on 68000 side
 
 in:
-00		  YM3812 status
-10		  Coin inputs and control/service inputs (Twin Cobra)
-40		  DSW1 (Twin Cobra)
-50		  DSW2 (Twin Cobra)
+00        YM3812 status
+10        Coin inputs and control/service inputs (Twin Cobra)
+40        DSW1 (Twin Cobra)
+50        DSW2 (Twin Cobra)
 
 out:
-00		  YM3812 control
-01		  YM3812 data
-20		  Coin counters / Coin lockouts
+00        YM3812 control
+01        YM3812 data
+20        Coin counters / Coin lockouts
 
 TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
 0000-07ff ROM 16-bit opcodes (word access only). Moved to $8000-8fff for
-				 MAME compatibility. View this ROM in the debugger at $8000h
+                 MAME compatibility. View this ROM in the debugger at $8000h
 0000-0090 Internal RAM (words).
 
 
 in:
-01		  data read from addressed 68K address space (Main RAM/Sprite RAM)
+01        data read from addressed 68K address space (Main RAM/Sprite RAM)
 
 out:
-00		  address of 68K to read/write to
-01		  data to write to addressed 68K address space (Main RAM/Sprite RAM)
-03		  bit 15 goes to BIO line of TMS320C10. BIO is a polled input line.
+00        address of 68K to read/write to
+01        data to write to addressed 68K address space (Main RAM/Sprite RAM)
+03        bit 15 goes to BIO line of TMS320C10. BIO is a polled input line.
 
 
 MCUs used with this hardware: (TMS320C10 in custom Toaplan/Taito disguise)
 
-Twin Cobra					Sky Shark					Wardner
-D70016U						D70012U  					D70012U
-GXC-04						GXC-02						GXC-02
-MCU (delta) 74000			MCU 71400					MCU (delta) 71900
+Twin Cobra                  Sky Shark                   Wardner
+D70016U                     D70012U                     D70012U
+GXC-04                      GXC-02                      GXC-02
+MCU (delta) 74000           MCU 71400                   MCU (delta) 71900
 
 
 
 68K writes the following to $30000 to tell DSP to do the following:
 Twin  Kyukyoku
 Cobra Tiger
-00		00	 do nothing
-01		0C	 run self test, and report DSP ROM checksum		from 68K PC:23CA6
-02		07	 control all enemy shots						from 68K PC:23BFA
-04		0B	 start the enemy helicopters					from 68K PC:23C66
-05		08	 check for colision with enemy fire ???			from 68K PC:23C20
-06		09	 check for colision with enemy ???				from 68K PC:23C44
-07		01	 control enemy helicopter shots					from 68K PC:23AB2
-08		02	 control all ground enemy shots
-0A		04	 read hero position and send enemy to it ?		from 68K PC:23B58
+00      00   do nothing
+01      0C   run self test, and report DSP ROM checksum     from 68K PC:23CA6
+02      07   control all enemy shots                        from 68K PC:23BFA
+04      0B   start the enemy helicopters                    from 68K PC:23C66
+05      08   check for colision with enemy fire ???         from 68K PC:23C20
+06      09   check for colision with enemy ???              from 68K PC:23C44
+07      01   control enemy helicopter shots                 from 68K PC:23AB2
+08      02   control all ground enemy shots
+0A      04   read hero position and send enemy to it ?      from 68K PC:23B58
 
-03		0A	\
-09		03	 \ These functions within the DSP never seem to be called ????
-0B		05	 /
-0C		06	/
+03      0A  \
+09      03   \ These functions within the DSP never seem to be called ????
+0B      05   /
+0C      06  /
 
 68K writes the following to $30004 to tell DSP to do the following:
-Flying	Hishou
-Shark	Zame
-00		00	 do nothing
-03		0B	 Write sprite to sprite RAM
-05		01	 Get angle
-06		02	 Rotate towards direction
-09		05	 Check collision between 2 spheres!??
-0A		06	 Polar coordinates add
-0B		07	 run self test, and report DSP ROM checksum
+Flying  Hishou
+Shark   Zame
+00      00   do nothing
+03      0B   Write sprite to sprite RAM
+05      01   Get angle
+06      02   Rotate towards direction
+09      05   Check collision between 2 spheres!??
+0A      06   Polar coordinates add
+0B      07   run self test, and report DSP ROM checksum
 
-01		09	\
-02		0A	 \
-04		08	  > These functions within the DSP never seem to be called ????
-07		03	 /
-08		04	/
+01      09  \
+02      0A   \
+04      08    > These functions within the DSP never seem to be called ????
+07      03   /
+08      04  /
 *****************************************************************************/
 
 
@@ -266,7 +266,7 @@ ADDRESS_MAP_END
 
 
 /*****************************************************************************
-	Input Port definitions
+    Input Port definitions
 *****************************************************************************/
 
 #define  TOAPLAN_PLAYER_INPUT( player )										 \
@@ -537,12 +537,12 @@ INPUT_PORTS_START( skyshark )
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
-/*	PORT_DIPSETTING(	0x30, DEF_STR( 1C_2C ) )	Same as previous */
+/*  PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )    Same as previous */
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
-/*	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_2C ) )	Same as previous */
+/*  PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )    Same as previous */
 
 	FSHARK_DSW_B
 INPUT_PORTS_END
@@ -711,9 +711,9 @@ ROM_START( twincobr )
 	ROM_LOAD16_BYTE( "dsp_22.bin",	0x0001, 0x0800, CRC(79389a71) SHA1(14ec4c1c9b06702319e89a7a250d0038393437f4) )
 	ROM_LOAD16_BYTE( "dsp_21.bin",	0x0000, 0x0800, CRC(2d135376) SHA1(67a2cc774d272ee1cd6e6bc1c5fc33fc6968837e) )
 /****** The following are from a bootleg board. ******
-	A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
-	ROM_LOAD16_BYTE( "tc1b",		0x0000, 0x0800, CRC(1757cc33) )
-	ROM_LOAD16_BYTE( "tc2a",		0x0001, 0x0800, CRC(d6d878c9) )
+    A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
+    ROM_LOAD16_BYTE( "tc1b",        0x0000, 0x0800, CRC(1757cc33) )
+    ROM_LOAD16_BYTE( "tc2a",        0x0001, 0x0800, CRC(d6d878c9) )
 */
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */

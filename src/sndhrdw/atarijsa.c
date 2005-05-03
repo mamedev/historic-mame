@@ -74,7 +74,7 @@ static WRITE8_HANDLER( jsa3_io_w );
 
 /*************************************
  *
- *	External interfaces
+ *  External interfaces
  *
  *************************************/
 
@@ -163,7 +163,7 @@ void atarijsa_reset(void)
 
 /*************************************
  *
- *	JSA I I/O handlers
+ *  JSA I I/O handlers
  *
  *************************************/
 
@@ -183,15 +183,15 @@ static READ8_HANDLER( jsa1_io_r )
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test
-				0x40 = NMI line state (active low)
-				0x20 = sound output full
-				0x10 = TMS5220 ready (active low)
-				0x08 = +5V
-				0x04 = +5V
-				0x02 = coin 2
-				0x01 = coin 1
-			*/
+                0x80 = self test
+                0x40 = NMI line state (active low)
+                0x20 = sound output full
+                0x10 = TMS5220 ready (active low)
+                0x08 = +5V
+                0x04 = +5V
+                0x02 = coin 2
+                0x01 = coin 1
+            */
 			result = readinputport(input_port);
 			if (!(readinputport(test_port) & test_mask)) result ^= 0x80;
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
@@ -239,14 +239,14 @@ static WRITE8_HANDLER( jsa1_io_w )
 
 		case 0x204:		/* WRIO */
 			/*
-				0xc0 = bank address
-				0x20 = coin counter 2
-				0x10 = coin counter 1
-				0x08 = squeak (tweaks the 5220 frequency)
-				0x04 = TMS5220 reset (active low)
-				0x02 = TMS5220 write strobe (active low)
-				0x01 = YM2151 reset (active low)
-			*/
+                0xc0 = bank address
+                0x20 = coin counter 2
+                0x10 = coin counter 1
+                0x08 = squeak (tweaks the 5220 frequency)
+                0x04 = TMS5220 reset (active low)
+                0x02 = TMS5220 write strobe (active low)
+                0x01 = YM2151 reset (active low)
+            */
 
 			/* handle TMS5220 I/O */
 			if (has_tms5220)
@@ -270,11 +270,11 @@ static WRITE8_HANDLER( jsa1_io_w )
 
 		case 0x206:		/* MIX */
 			/*
-				0xc0 = TMS5220 volume (0-3)
-				0x30 = POKEY volume (0-3)
-				0x0e = YM2151 volume (0-7)
-				0x01 = low-pass filter enable
-			*/
+                0xc0 = TMS5220 volume (0-3)
+                0x30 = POKEY volume (0-3)
+                0x0e = YM2151 volume (0-7)
+                0x01 = low-pass filter enable
+            */
 			tms5220_volume = ((data >> 6) & 3) * 100 / 3;
 			pokey_volume = ((data >> 4) & 3) * 100 / 3;
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
@@ -287,7 +287,7 @@ static WRITE8_HANDLER( jsa1_io_w )
 
 /*************************************
  *
- *	JSA II I/O handlers
+ *  JSA II I/O handlers
  *
  *************************************/
 
@@ -310,15 +310,15 @@ static READ8_HANDLER( jsa2_io_r )
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test
-				0x40 = NMI line state (active low)
-				0x20 = sound output full
-				0x10 = +5V
-				0x08 = +5V
-				0x04 = +5V
-				0x02 = coin 2
-				0x01 = coin 1
-			*/
+                0x80 = self test
+                0x40 = NMI line state (active low)
+                0x20 = sound output full
+                0x10 = +5V
+                0x08 = +5V
+                0x04 = +5V
+                0x02 = coin 2
+                0x01 = coin 1
+            */
 			result = readinputport(input_port);
 			if (!(readinputport(test_port) & test_mask)) result ^= 0x80;
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
@@ -368,14 +368,14 @@ static WRITE8_HANDLER( jsa2_io_w )
 
 		case 0x204:		/* /WRIO */
 			/*
-				0xc0 = bank address
-				0x20 = coin counter 2
-				0x10 = coin counter 1
-				0x08 = voice frequency (tweaks the OKI6295 frequency)
-				0x04 = OKI6295 reset (active low)
-				0x02 = n/c
-				0x01 = YM2151 reset (active low)
-			*/
+                0xc0 = bank address
+                0x20 = coin counter 2
+                0x10 = coin counter 1
+                0x08 = voice frequency (tweaks the OKI6295 frequency)
+                0x04 = OKI6295 reset (active low)
+                0x02 = n/c
+                0x01 = YM2151 reset (active low)
+            */
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
@@ -391,12 +391,12 @@ static WRITE8_HANDLER( jsa2_io_w )
 
 		case 0x206:		/* /MIX */
 			/*
-				0xc0 = n/c
-				0x20 = low-pass filter enable
-				0x10 = n/c
-				0x0e = YM2151 volume (0-7)
-				0x01 = OKI6295 volume (0-1)
-			*/
+                0xc0 = n/c
+                0x20 = low-pass filter enable
+                0x10 = n/c
+                0x0e = YM2151 volume (0-7)
+                0x01 = OKI6295 volume (0-1)
+            */
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
 			oki6295_volume = 50 + (data & 1) * 50;
 			update_all_volumes();
@@ -408,7 +408,7 @@ static WRITE8_HANDLER( jsa2_io_w )
 
 /*************************************
  *
- *	JSA III I/O handlers
+ *  JSA III I/O handlers
  *
  *************************************/
 
@@ -429,15 +429,15 @@ static READ8_HANDLER( jsa3_io_r )
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test (active high)
-				0x40 = NMI line state (active high)
-				0x20 = sound output full (active high)
-				0x10 = self test (active high)
-				0x08 = service (active high)
-				0x04 = tilt (active high)
-				0x02 = coin L (active high)
-				0x01 = coin R (active high)
-			*/
+                0x80 = self test (active high)
+                0x40 = NMI line state (active high)
+                0x20 = sound output full (active high)
+                0x10 = self test (active high)
+                0x08 = service (active high)
+                0x04 = tilt (active high)
+                0x02 = coin L (active high)
+                0x01 = coin R (active high)
+            */
 			result = readinputport(input_port);
 			if (!(readinputport(test_port) & test_mask)) result ^= 0x90;
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
@@ -489,14 +489,14 @@ static WRITE8_HANDLER( jsa3_io_w )
 
 		case 0x204:		/* /WRIO */
 			/*
-				0xc0 = bank address
-				0x20 = coin counter 2
-				0x10 = coin counter 1
-				0x08 = voice frequency (tweaks the OKI6295 frequency)
-				0x04 = OKI6295 reset (active low)
-				0x02 = OKI6295 bank bit 0
-				0x01 = YM2151 reset (active low)
-			*/
+                0xc0 = bank address
+                0x20 = coin counter 2
+                0x10 = coin counter 1
+                0x08 = voice frequency (tweaks the OKI6295 frequency)
+                0x04 = OKI6295 reset (active low)
+                0x02 = OKI6295 bank bit 0
+                0x01 = YM2151 reset (active low)
+            */
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
@@ -516,12 +516,12 @@ static WRITE8_HANDLER( jsa3_io_w )
 
 		case 0x206:		/* /MIX */
 			/*
-				0xc0 = n/c
-				0x20 = low-pass filter enable
-				0x10 = OKI6295 bank bit 1
-				0x0e = YM2151 volume (0-7)
-				0x01 = OKI6295 volume (0-1)
-			*/
+                0xc0 = n/c
+                0x20 = low-pass filter enable
+                0x10 = OKI6295 bank bit 1
+                0x0e = YM2151 volume (0-7)
+                0x01 = OKI6295 volume (0-1)
+            */
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
@@ -539,7 +539,7 @@ static WRITE8_HANDLER( jsa3_io_w )
 
 /*************************************
  *
- *	JSA IIIS I/O handlers
+ *  JSA IIIS I/O handlers
  *
  *************************************/
 
@@ -565,15 +565,15 @@ static READ8_HANDLER( jsa3s_io_r )
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test (active high)
-				0x40 = NMI line state (active high)
-				0x20 = sound output full (active high)
-				0x10 = self test (active high)
-				0x08 = service (active high)
-				0x04 = tilt (active high)
-				0x02 = coin L (active high)
-				0x01 = coin R (active high)
-			*/
+                0x80 = self test (active high)
+                0x40 = NMI line state (active high)
+                0x20 = sound output full (active high)
+                0x10 = self test (active high)
+                0x08 = service (active high)
+                0x04 = tilt (active high)
+                0x02 = coin L (active high)
+                0x01 = coin R (active high)
+            */
 			result = readinputport(input_port);
 			if (!(readinputport(test_port) & test_mask)) result ^= 0x90;
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
@@ -630,14 +630,14 @@ static WRITE8_HANDLER( jsa3s_io_w )
 
 		case 0x204:		/* /WRIO */
 			/*
-				0xc0 = bank address
-				0x20 = coin counter 2
-				0x10 = coin counter 1
-				0x08 = voice frequency (tweaks the OKI6295 frequency)
-				0x04 = OKI6295 reset (active low)
-				0x02 = left OKI6295 bank bit 0
-				0x01 = YM2151 reset (active low)
-			*/
+                0xc0 = bank address
+                0x20 = coin counter 2
+                0x10 = coin counter 1
+                0x08 = voice frequency (tweaks the OKI6295 frequency)
+                0x04 = OKI6295 reset (active low)
+                0x02 = left OKI6295 bank bit 0
+                0x01 = YM2151 reset (active low)
+            */
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
@@ -658,12 +658,12 @@ static WRITE8_HANDLER( jsa3s_io_w )
 
 		case 0x206:		/* /MIX */
 			/*
-				0xc0 = right OKI6295 bank bits 0-1
-				0x20 = low-pass filter enable
-				0x10 = left OKI6295 bank bit 1
-				0x0e = YM2151 volume (0-7)
-				0x01 = OKI6295 volume (0-1)
-			*/
+                0xc0 = right OKI6295 bank bits 0-1
+                0x20 = low-pass filter enable
+                0x10 = left OKI6295 bank bit 1
+                0x0e = YM2151 volume (0-7)
+                0x01 = OKI6295 volume (0-1)
+            */
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
@@ -682,7 +682,7 @@ static WRITE8_HANDLER( jsa3s_io_w )
 
 /*************************************
  *
- *	Volume helpers
+ *  Volume helpers
  *
  *************************************/
 
@@ -698,7 +698,7 @@ static void update_all_volumes(void)
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -773,7 +773,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -786,7 +786,7 @@ static struct YM2151interface ym2151_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 

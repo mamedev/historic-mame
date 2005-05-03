@@ -56,7 +56,7 @@ INTERRUPT_GEN( c8080bw_interrupt )
 
 
 /****************************************************************************
-	Extra / Different functions for Boot Hill                (MJC 300198)
+    Extra / Different functions for Boot Hill                (MJC 300198)
 ****************************************************************************/
 
 READ8_HANDLER( boothill_shift_data_r )

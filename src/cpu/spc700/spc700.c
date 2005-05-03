@@ -10,14 +10,14 @@
 /* ======================================================================== */
 /*
 Questions:
-	- How is H handled for ADDW and SUBW?
-	- How is TCall handled?
-	- What are the vectors?
-	- Are there interrupts? how do they work?
-	- Does I=1 mean interrupts enabled or disabled?
-	- How are N and Z handled in DIV on divide by zero?
-	- How is H handled in DIV and MUL?
-	- What's the difference between SLEEP and STOP?
+    - How is H handled for ADDW and SUBW?
+    - How is TCall handled?
+    - What are the vectors?
+    - Are there interrupts? how do they work?
+    - Does I=1 mean interrupts enabled or disabled?
+    - How are N and Z handled in DIV on divide by zero?
+    - How is H handled in DIV and MUL?
+    - What's the difference between SLEEP and STOP?
 
 Memory:
 0000-01ff: RAM (zero pages)
@@ -47,7 +47,7 @@ Address  Function Register  R/W  When Reset          Remarks
 00FBH    Timer-1             W   Indeterminate      Installed in sound-CPU
 00FCH    Timer-2             W   Indeterminate      Installed in sound-CPU
 00FDH    Counter-0           W   Indeterminate      Installed in sound-CPU
-00FEH    Counter-1           W   Indeterminate      Installed in sound-CPU 
+00FEH    Counter-1           W   Indeterminate      Installed in sound-CPU
 00FFH    Counter-2           W   Indeterminate      Installed in sound-CPU
 
 
@@ -875,13 +875,13 @@ INLINE void SET_FLAG_I(uint value)
 				CLK(1);														\
 				BRANCH(read_8_IMM(DST));									\
 /* \
-				if(REG_PC == REG_PPC)										\
-				{															\
-					CLK((BCLK+1)*(REG_Y+1));								\
-					REG_Y = 0;												\
-					if(CLOCKS < 0)											\
-						CLOCKS = 0;											\
-				}															\
+                if(REG_PC == REG_PPC)                                       \
+                {                                                           \
+                    CLK((BCLK+1)*(REG_Y+1));                                \
+                    REG_Y = 0;                                              \
+                    if(CLOCKS < 0)                                          \
+                        CLOCKS = 0;                                         \
+                }                                                           \
 */ \
 			}
 
@@ -898,17 +898,17 @@ INLINE void SET_FLAG_I(uint value)
 				CLK(1);														\
 				BRANCH(read_8_IMM(DST));									\
 /* \
-				if(REG_PC == REG_PPC)										\
-				{															\
-					do														\
-					{														\
-						SRC = MAKE_UINT_8(read_8_DP(DST) - 1);				\
-						write_8_DP(DST, SRC);								\
-						CLK(BCLK+1);										\
-					} while(SRC != 0 && CLOCKS > 0);						\
-					if(CLOCKS > 0)											\
-						BRANCH(3);											\
-				}															\
+                if(REG_PC == REG_PPC)                                       \
+                {                                                           \
+                    do                                                      \
+                    {                                                       \
+                        SRC = MAKE_UINT_8(read_8_DP(DST) - 1);              \
+                        write_8_DP(DST, SRC);                               \
+                        CLK(BCLK+1);                                        \
+                    } while(SRC != 0 && CLOCKS > 0);                        \
+                    if(CLOCKS > 0)                                          \
+                        BRANCH(3);                                          \
+                }                                                           \
 */ \
 			}
 
@@ -1480,7 +1480,7 @@ unsigned spc700_dasm(char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
 	return spc700_disassemble(buffer, pc);
 #else
-//	sprintf(buffer, "$%02X", read_8_instruction(pc));
+//  sprintf(buffer, "$%02X", read_8_instruction(pc));
 	return 1;
 #endif
 }
@@ -1492,7 +1492,7 @@ static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
 #ifdef MAME_DEBUG
 	return spc700_disassemble(buffer, pc);
 #else
-//	sprintf(buffer, "$%02X", read_8_instruction(pc));
+//  sprintf(buffer, "$%02X", read_8_instruction(pc));
 	return 1;
 #endif
 }
@@ -1793,7 +1793,7 @@ static void spc700_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SPC700_A:			REG_A = MAKE_UINT_8(info->i);			break;
 		case CPUINFO_INT_REGISTER + SPC700_X:			REG_X = MAKE_UINT_8(info->i);			break;
 		case CPUINFO_INT_REGISTER + SPC700_Y:			REG_Y = MAKE_UINT_8(info->i);			break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					INT_ACK = info->irqcallback;			break;
 	}
@@ -1828,7 +1828,7 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 8;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

@@ -1,48 +1,48 @@
 /***************************************************************************
 
-	Sega G-80 raster hardware
+    Sega G-80 raster hardware
 
-	Games supported:
-		* Astro Blaster
-		* Monster Bash
-		* 005
-		* Space Odyssey
-		* Pig Newton
-		* Sindbad Mystery
+    Games supported:
+        * Astro Blaster
+        * Monster Bash
+        * 005
+        * Space Odyssey
+        * Pig Newton
+        * Sindbad Mystery
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	See also sega.c for the Sega G-80 Vector games.
+    See also sega.c for the Sega G-80 Vector games.
 
-	Many thanks go to Dave Fish for the fine detective work he did into the
-	G-80 security chips (315-0064, 315-0070, 315-0076, 315-0082) which provided
-	me with enough information to emulate those chips at runtime along with
-	the 315-0062 Astro Blaster chip and the 315-0063 Space Odyssey chip.
+    Many thanks go to Dave Fish for the fine detective work he did into the
+    G-80 security chips (315-0064, 315-0070, 315-0076, 315-0082) which provided
+    me with enough information to emulate those chips at runtime along with
+    the 315-0062 Astro Blaster chip and the 315-0063 Space Odyssey chip.
 
-	Special note (24-MAR-1999) - Sindbad Mystery does *not* use the standard
-	G-80 security chip; rather, it uses the Sega System 1 encryption.
+    Special note (24-MAR-1999) - Sindbad Mystery does *not* use the standard
+    G-80 security chip; rather, it uses the Sega System 1 encryption.
 
-	Thanks also go to Paul Tonizzo, Clay Cowgill, John Bowes, and Kevin Klopp
-	for all the helpful information, samples, and schematics!
+    Thanks also go to Paul Tonizzo, Clay Cowgill, John Bowes, and Kevin Klopp
+    for all the helpful information, samples, and schematics!
 
-	TODO:
-	- locate Pig Newton cocktail mode?
-	- verify Pig Newton and Sindbad Mystery DIPs
-	- attempt Pig Newton, 005 sound
-	- fix transparency issues (Pig Newton, Sindbad Mystery)
-	- fix Space Odyssey background
-	- figure out why Astro Blaster version 1 ends the game right away
+    TODO:
+    - locate Pig Newton cocktail mode?
+    - verify Pig Newton and Sindbad Mystery DIPs
+    - attempt Pig Newton, 005 sound
+    - fix transparency issues (Pig Newton, Sindbad Mystery)
+    - fix Space Odyssey background
+    - figure out why Astro Blaster version 1 ends the game right away
 
-	- Mike Balfour (mab22@po.cwru.edu)
+    - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************
 
-	26/3/2000:	** Darren Hatton (UKVAC) / Adrian Purser (UKVAC) **
-				Added a 3rd Astro Blaster ROM set (ASTROB2).
-				Updated Dip Switches to be correct for the Astro Blaster sets.
+    26/3/2000:  ** Darren Hatton (UKVAC) / Adrian Purser (UKVAC) **
+                Added a 3rd Astro Blaster ROM set (ASTROB2).
+                Updated Dip Switches to be correct for the Astro Blaster sets.
 
 ***************************************************************************/
 
@@ -62,7 +62,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -78,7 +78,7 @@ static INTERRUPT_GEN( segar_interrupt )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -208,7 +208,7 @@ static READ8_HANDLER( spaceod_ports_r )
 
 /*************************************
  *
- *	sindbad Mystery sound handling
+ *  sindbad Mystery sound handling
  *
  *************************************/
 
@@ -241,7 +241,7 @@ static WRITE8_HANDLER( sindbadm_SN76496_1_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -284,7 +284,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Main CPU port handlers
+ *  Main CPU port handlers
  *
  *************************************/
 
@@ -321,7 +321,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -373,7 +373,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -931,7 +931,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -1001,7 +1001,7 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -1042,7 +1042,7 @@ static struct TMS36XXinterface monsterb_tms3617_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -1217,7 +1217,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1499,7 +1499,7 @@ ROM_END
 
 ROM_START( pignewt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-//	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
+//  ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
 	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, BAD_DUMP CRC(eccc814d) SHA1(d999d7d433bde5d7773cd7afaf3e673089ba2544)) /* U25 */
 	ROM_LOAD( "1888c",      0x0800, 0x0800, CRC(fd18ed09) SHA1(8bba49d93ae72dbc0497a5a24991c5da26d169d3) ) /* U1 */
 	ROM_LOAD( "1889c",      0x1000, 0x0800, CRC(f633f5ff) SHA1(b647bebfd8a2093b0b0b7587f7c816aade796b26) ) /* U2 */
@@ -1538,7 +1538,7 @@ ROM_END
 
 ROM_START( pignewta )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-//	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
+//  ROM_LOAD( "cpu.u25",    0x0000, 0x0800, NO_DUMP ) /* U25 */ why was it NO_DUMP not BAD_DUMP?
 	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, BAD_DUMP CRC(eccc814d) SHA1(d999d7d433bde5d7773cd7afaf3e673089ba2544)) /* U25 */
 	ROM_LOAD( "1888a",      0x0800, 0x0800, CRC(491c0835) SHA1(65c917ebcfa8e5199e9923c04626c067fda3c637) ) /* U1 */
 	ROM_LOAD( "1889a",      0x1000, 0x0800, CRC(0dcf0af2) SHA1(788c24c87f44f9206c994286c7ba093d365f056f) ) /* U2 */
@@ -1566,8 +1566,8 @@ ROM_START( pignewta )
 
 	ROM_REGION( 0x4000, REGION_USER1, 0 )		      /* background charmaps */
 	/* NOTE: No background ROMs for set A have been dumped, so the
-	ROMs from set C have been copied and renamed. This is to
-	provide a reminder that these ROMs still need to be dumped. */
+    ROMs from set C have been copied and renamed. This is to
+    provide a reminder that these ROMs still need to be dumped. */
 	ROM_LOAD( "1906a.bg",  0x0000, 0x1000, BAD_DUMP CRC(c79d33ce) SHA1(8a5332a801d0db6e5f33c0d39d165819f9914e65)  ) /* ??? */
 	ROM_LOAD( "1907a.bg",  0x1000, 0x1000, BAD_DUMP CRC(bc839d3c) SHA1(80b1c96cac7c51e49ca40a1c5fbc156b12529d2f)  ) /* ??? */
 	ROM_LOAD( "1908a.bg",  0x2000, 0x1000, BAD_DUMP CRC(92cb14da) SHA1(257db7bb2758d579bcf171cda410acff1877122c)  ) /* ??? */
@@ -1603,7 +1603,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1637,7 +1637,7 @@ static DRIVER_INIT( monster2 )
 {
 
 	/* This game uses an encrypted CPU */
-//	monster2_decode();
+//  monster2_decode();
 	spatter_decode();
 
 	/* This game uses the 315-0082 security chip */
@@ -1683,7 +1683,7 @@ static DRIVER_INIT( sindbadm )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

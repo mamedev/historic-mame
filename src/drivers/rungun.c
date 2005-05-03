@@ -116,10 +116,10 @@ static READ16_HANDLER( rng_sysregs_r )
 
 		case 0x04/2:
 			/*
-				bit0-7: coin mechs and services
-				bit8 : freeze
-				bit9 : joysticks layout(auto detect???)
-			*/
+                bit0-7: coin mechs and services
+                bit8 : freeze
+                bit9 : joysticks layout(auto detect???)
+            */
 			return(input_port_0_word_r(0, 0));
 		break;
 
@@ -149,13 +149,13 @@ static WRITE16_HANDLER( rng_sysregs_w )
 	{
 		case 0x08/2:
 			/*
-				bit0  : EEPROM_write_bit
-				bit1  : EEPROM_set_cs_line
-				bit2  : EEPROM_set_clock_line
-				bit3  : coin counter?
-				bit7  : set before massive memory writes
-				bit10 : IRQ5 ACK
-			*/
+                bit0  : EEPROM_write_bit
+                bit1  : EEPROM_set_cs_line
+                bit2  : EEPROM_set_clock_line
+                bit3  : coin counter?
+                bit7  : set before massive memory writes
+                bit10 : IRQ5 ACK
+            */
 			if (ACCESSING_LSB)
 			{
 				EEPROM_write_bit((data & 0x01) ? 1 : 0);
@@ -169,11 +169,11 @@ static WRITE16_HANDLER( rng_sysregs_w )
 
 		case 0x0c/2:
 			/*
-				bit 0 : also enables IRQ???
-				bit 1 : disable PSAC2 input?
-				bit 2 : OBJCHA
-				bit 3 : enable IRQ 5
-			*/
+                bit 0 : also enables IRQ???
+                bit 1 : disable PSAC2 input?
+                bit 2 : OBJCHA
+                bit 3 : enable IRQ 5
+            */
 			K053246_set_OBJCHA_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
 		break;
 	}

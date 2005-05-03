@@ -68,7 +68,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(tagteam_flipscreen_w)
 	AM_RANGE(0x2001, 0x2001) AM_WRITE(tagteam_control_w)
 	AM_RANGE(0x2002, 0x2002) AM_WRITE(sound_command_w)
-//	AM_RANGE(0x2003, 0x2003) AM_WRITE(MWA8_NOP) /* Appears to increment when you're out of the ring */
+//  AM_RANGE(0x2003, 0x2003) AM_WRITE(MWA8_NOP) /* Appears to increment when you're out of the ring */
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(tagteam_mirrorvideoram_w)
 	AM_RANGE(0x4400, 0x47ff) AM_WRITE(tagteam_mirrorcolorram_w)
 	AM_RANGE(0x4800, 0x4bff) AM_WRITE(tagteam_videoram_w) AM_BASE(&videoram)
@@ -135,7 +135,7 @@ static INTERRUPT_GEN( tagteam_interrupt )
 
 INPUT_PORTS_START( bigprowr )
 	TAGTEAM_PLAYERS
-	
+
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
@@ -153,7 +153,7 @@ INPUT_PORTS_START( bigprowr )
 	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )			// "Upright, Single Controls"
 	PORT_DIPSETTING(    0x40, "Upright, Dual Controls" )
-//	PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" )	// IMPOSSIBLE !
+//  PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" ) // IMPOSSIBLE !
 	PORT_DIPSETTING(    0x60, DEF_STR( Cocktail ) )			// "Cocktail, Dual Controls"
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
@@ -192,13 +192,13 @@ INPUT_PORTS_START( tagteam )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_NOTEQUALS,0x80) //Mode 1 
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_NOTEQUALS,0x80) //Mode 1
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_6C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_EQUALS,0x80) //Mode 2
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_NOTEQUALS,0x80) //Mode 1 
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_NOTEQUALS,0x80) //Mode 1
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_6C ) )PORT_DIPCONDITION(3,0xe0,PORTCOND_EQUALS,0x80) //Mode 2
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -206,7 +206,7 @@ INPUT_PORTS_START( tagteam )
 	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )			// "Upright, Single Controls"
 	PORT_DIPSETTING(    0x40, "Upright, Dual Controls" )
-//	PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" )	// IMPOSSIBLE !
+//  PORT_DIPSETTING(    0x20, "Cocktail, Single Controls" ) // IMPOSSIBLE !
 	PORT_DIPSETTING(    0x60, DEF_STR( Cocktail ) )			// "Cocktail, Dual Controls"
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
@@ -298,10 +298,10 @@ static MACHINE_DRIVER_START( tagteam )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 

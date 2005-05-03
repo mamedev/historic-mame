@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Mad Motor								(c) 1989 Mitchell Corporation
+  Mad Motor                             (c) 1989 Mitchell Corporation
 
   But it's really a Data East game..  Bad Dudes era graphics hardware with
   Dark Seal era sound hardware.  Maybe a license for a specific territory?

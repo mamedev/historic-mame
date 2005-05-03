@@ -50,17 +50,17 @@ static int scroll0,scroll1;
   The color PROMs are connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- GREEN
-		-- 470 ohm resistor  -- GREEN
-		-- 1  kohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
         -- 2.2kohm resistor  -- GREEN
         -- 220 ohm resistor  -- RED
-		-- 470 ohm resistor  -- RED
-		-- 1  kohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+        -- 1  kohm resistor  -- RED
   bit 0 -- 2.2kohm resistor  -- RED
 
   bit 3 -- 220 ohm resistor  -- BLUE
-		-- 470 ohm resistor  -- BLUE
-		-- 1  kohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 1  kohm resistor  -- BLUE
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
@@ -232,7 +232,7 @@ WRITE8_HANDLER( pacland_bankswitch_w )
 	bankaddress = 0x10000 + ((data & 0x07) << 13);
 	cpu_setbank(1,&RAM[bankaddress]);
 
-//	pbc = data & 0x20;
+//  pbc = data & 0x20;
 
 	if (palette_bank != ((data & 0x18) >> 3))
 	{

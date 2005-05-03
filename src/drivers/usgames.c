@@ -43,7 +43,7 @@ static WRITE8_HANDLER( usg_rombank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-//	logerror ("BANK WRITE? -%02x-\n",data);
+//  logerror ("BANK WRITE? -%02x-\n",data);
 //usrintf_showmessage("%02x",data);
 
 	cpu_setbank( 1,&RAM[ 0x10000 + 0x4000 * data] );
@@ -181,7 +181,7 @@ ADDRESS_MAP_END
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )\
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 #define USGIN3\
 	PORT_START_TAG("IN3")\
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )\
@@ -213,7 +213,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( usg32 )
 
 	USGIN0
-	
+
 	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x01, 0x01, "Service Keyboard Attached?" ) //Not actually a DIP, when keyboard is plugged in, this goes low
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
@@ -236,16 +236,16 @@ INPUT_PORTS_START( usg32 )
 
 
 	USGIN2
-	
+
 	USGIN3
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( usg83 ) //From here, the hardware was slightly upgraded, but not too different.
-	
+
     USGIN0
-	
-	PORT_START	
+
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Service Keyboard Attached?" ) //Not actually a DIP, when keyboard is plugged in, this goes low
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
@@ -264,11 +264,11 @@ INPUT_PORTS_START( usg83 ) //From here, the hardware was slightly upgraded, but 
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL ) // +12 Volts?
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
-    
+
     USGIN2
-    
+
 	USGIN3
-	
+
 INPUT_PORTS_END
 
 
@@ -318,7 +318,7 @@ static MACHINE_DRIVER_START( usg )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END

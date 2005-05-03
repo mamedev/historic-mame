@@ -99,7 +99,7 @@ static WRITE8_HANDLER( aquarium_snd_ack_w )
 
 static WRITE16_HANDLER( aquarium_sound_w )
 {
-//	usrintf_showmessage("sound write %04x",data);
+//  usrintf_showmessage("sound write %04x",data);
 
 	soundlatch_w(1,data&0xff);
 	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
@@ -207,12 +207,12 @@ INPUT_PORTS_START( aquarium )
 	PORT_DIPSETTING(      0x000c, "1/1" )
 	PORT_DIPSETTING(      0x0008, "2/3" )
 	PORT_DIPSETTING(      0x0004, "3/5" )
-//	PORT_DIPSETTING(      0x0000, "1/1" )
+//  PORT_DIPSETTING(      0x0000, "1/1" )
 	PORT_DIPNAME( 0x0030, 0x0030, "Winning Rounds (Player VS Player)" )
 	PORT_DIPSETTING(      0x0030, "1/1" )
 	PORT_DIPSETTING(      0x0020, "2/3" )
 	PORT_DIPSETTING(      0x0010, "3/5" )
-//	PORT_DIPSETTING(      0x0000, "1/1" )
+//  PORT_DIPSETTING(      0x0000, "1/1" )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -317,8 +317,8 @@ static struct GfxLayout tilelayout =
 static DRIVER_INIT( aquarium )
 {
 	/* The BG tiles are 5bpp, this rearranges the data from
-	   the roms containing the 1bpp data so we can decode it
-	   correctly */
+       the roms containing the 1bpp data so we can decode it
+       correctly */
 
 	data8_t *DAT2 = memory_region(REGION_GFX1)+0x080000;
 	data8_t *DAT = memory_region(REGION_USER1);

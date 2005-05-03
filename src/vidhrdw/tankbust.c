@@ -1,12 +1,12 @@
 /*
-*	Video Driver for Tank Busters
+*   Video Driver for Tank Busters
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /*
-*	variables
+*   variables
 */
 
 static struct tilemap *bg_tilemap;
@@ -21,9 +21,9 @@ data8_t * txt_ram;
 
 /* background tilemap :
 
-0xc000-0xc7ff:	xxxx xxxx tile code: 8 lsb bits
+0xc000-0xc7ff:  xxxx xxxx tile code: 8 lsb bits
 
-0xc800-0xcfff:	.... .xxx tile code: 3 msb bits
+0xc800-0xcfff:  .... .xxx tile code: 3 msb bits
                 .... x... tile priority ON TOP of sprites (roofs and part of the rails)
                 .xxx .... tile color code
                 x... .... ?? set on *all* roofs (a different bg/sprite priority ?)
@@ -186,17 +186,17 @@ WRITE8_HANDLER( tankbust_yscroll_w )
 /*
 spriteram format (4 bytes per sprite):
 
-	offset	0	x.......	flip X
-	offset	0	.x......	flip Y
-	offset	0	..xxxxxx	gfx code (6 bits)
+    offset  0   x.......    flip X
+    offset  0   .x......    flip Y
+    offset  0   ..xxxxxx    gfx code (6 bits)
 
-	offset	1	xxxxxxxx	y position
+    offset  1   xxxxxxxx    y position
 
-	offset	2	??????..	not used ?
-	offset	2	......?.	used but unknown ??? (color code ? or x ?)
-	offset	2	.......x	x position (1 MSB bit)
+    offset  2   ??????..    not used ?
+    offset  2   ......?.    used but unknown ??? (color code ? or x ?)
+    offset  2   .......x    x position (1 MSB bit)
 
-	offset	3	xxxxxxxx	x position (8 LSB bits)
+    offset  3   xxxxxxxx    x position (8 LSB bits)
 */
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)

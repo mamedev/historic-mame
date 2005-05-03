@@ -1,6 +1,6 @@
 //============================================================
 //
-//	sound.c - Win32 implementation of MAME sound routines
+//  sound.c - Win32 implementation of MAME sound routines
 //
 //============================================================
 
@@ -25,7 +25,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 extern int verbose;
@@ -33,7 +33,7 @@ extern int verbose;
 
 
 //============================================================
-//	DEBUGGING
+//  DEBUGGING
 //============================================================
 
 #define LOG_SOUND				0
@@ -42,7 +42,7 @@ extern int verbose;
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 #define INGORE_UNDERFLOW_FRAMES	100
@@ -61,7 +61,7 @@ extern int verbose;
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // global parameters
@@ -70,7 +70,7 @@ int							attenuation = 0;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // DirectSound objects
@@ -129,7 +129,7 @@ struct rc_option sound_opts[] =
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static int			dsound_init(void);
@@ -140,7 +140,7 @@ static void			dsound_destroy_buffers(void);
 
 
 //============================================================
-//	bytes_in_stream_buffer
+//  bytes_in_stream_buffer
 //============================================================
 
 INLINE int bytes_in_stream_buffer(void)
@@ -158,7 +158,7 @@ INLINE int bytes_in_stream_buffer(void)
 
 
 //============================================================
-//	osd_start_audio_stream
+//  osd_start_audio_stream
 //============================================================
 
 int osd_start_audio_stream(int stereo)
@@ -203,7 +203,7 @@ int osd_start_audio_stream(int stereo)
 
 
 //============================================================
-//	sound_update_refresh_rate
+//  sound_update_refresh_rate
 //============================================================
 
 void sound_update_refresh_rate(float newrate)
@@ -214,7 +214,7 @@ void sound_update_refresh_rate(float newrate)
 
 
 //============================================================
-//	osd_stop_audio_stream
+//  osd_stop_audio_stream
 //============================================================
 
 void osd_stop_audio_stream(void)
@@ -247,7 +247,7 @@ void osd_stop_audio_stream(void)
 
 
 //============================================================
-//	update_sample_adjustment
+//  update_sample_adjustment
 //============================================================
 
 static void update_sample_adjustment(int buffered)
@@ -325,7 +325,7 @@ static void update_sample_adjustment(int buffered)
 
 
 //============================================================
-//	copy_sample_data
+//  copy_sample_data
 //============================================================
 
 static void copy_sample_data(INT16 *data, int bytes_to_copy)
@@ -368,7 +368,7 @@ static void copy_sample_data(INT16 *data, int bytes_to_copy)
 
 
 //============================================================
-//	osd_update_audio_stream
+//  osd_update_audio_stream
 //============================================================
 
 int osd_update_audio_stream(INT16 *buffer)
@@ -431,7 +431,7 @@ int osd_update_audio_stream(INT16 *buffer)
 
 
 //============================================================
-//	osd_set_mastervolume
+//  osd_set_mastervolume
 //============================================================
 
 void osd_set_mastervolume(int _attenuation)
@@ -451,7 +451,7 @@ void osd_set_mastervolume(int _attenuation)
 
 
 //============================================================
-//	osd_get_mastervolume
+//  osd_get_mastervolume
 //============================================================
 
 int osd_get_mastervolume(void)
@@ -462,7 +462,7 @@ int osd_get_mastervolume(void)
 
 
 //============================================================
-//	osd_sound_enable
+//  osd_sound_enable
 //============================================================
 
 void osd_sound_enable(int enable_it)
@@ -481,7 +481,7 @@ void osd_sound_enable(int enable_it)
 
 
 //============================================================
-//	dsound_init
+//  dsound_init
 //============================================================
 
 static int dsound_init(void)
@@ -566,7 +566,7 @@ cant_create_dsound:
 
 
 //============================================================
-//	dsound_kill
+//  dsound_kill
 //============================================================
 
 static void dsound_kill(void)
@@ -580,7 +580,7 @@ static void dsound_kill(void)
 
 
 //============================================================
-//	dsound_create_buffers
+//  dsound_create_buffers
 //============================================================
 
 static int dsound_create_buffers(void)
@@ -667,7 +667,7 @@ cant_create_primary:
 
 
 //============================================================
-//	dsound_destroy_buffers
+//  dsound_destroy_buffers
 //============================================================
 
 static void dsound_destroy_buffers(void)

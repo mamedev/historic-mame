@@ -14,7 +14,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/15 -
 
 /*******************************************************************
 
-	Palette Setting.
+    Palette Setting.
 
 *******************************************************************/
 WRITE8_HANDLER( dotrikun_color_w )
@@ -35,7 +35,7 @@ WRITE8_HANDLER( dotrikun_color_w )
 
 /*******************************************************************
 
-	Draw Pixel.
+    Draw Pixel.
 
 *******************************************************************/
 WRITE8_HANDLER( dotrikun_videoram_w )

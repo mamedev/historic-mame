@@ -1,36 +1,36 @@
 /***************************************************************************
-				Wiping
-			    (C) 1982 Nichibutsu
+                Wiping
+                (C) 1982 Nichibutsu
 
-				    driver by
+                    driver by
 
-			Allard van der Bas (allard@mindless.com)
+            Allard van der Bas (allard@mindless.com)
 
 1 x Z80 CPU main game, 1 x Z80 with ???? sound hardware.
 ----------------------------------------------------------------------------
 Main processor :
 
-0xA800 - 0xA807	: 64 bits of input and dipswitches.
+0xA800 - 0xA807 : 64 bits of input and dipswitches.
 
 dip: 0.7 1.7 2.7
-       0   0   0	coin 1: 1 coin 0 credit.
+       0   0   0    coin 1: 1 coin 0 credit.
 
-       1   1   1	coin 1: 1 coin 7 credit.
+       1   1   1    coin 1: 1 coin 7 credit.
 
 dip: 3.7 4.7 5.7
-       0   0   0	coin 2: 0 coin 1 credit.
+       0   0   0    coin 2: 0 coin 1 credit.
 
-       1   1   1	coin 2: 7 coin 1 credit.
+       1   1   1    coin 2: 7 coin 1 credit.
 
 dip:  7.6
-	0		bonus at 30K and 70K
-	1		bonus at 50K and 150K
+    0       bonus at 30K and 70K
+    1       bonus at 50K and 150K
 
 dip: 6.7 7.7
-       0   0		2 lives
-       0   1		3 lives
-       1   0		4 lives
-       1   1		5 lives
+       0   0        2 lives
+       0   1        3 lives
+       1   0        4 lives
+       1   1        5 lives
 
 ***************************************************************************/
 #include "driver.h"
@@ -183,7 +183,7 @@ INPUT_PORTS_START( wiping )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disable" )
+//  PORT_DIPSETTING(    0x00, "Disable" )
 	PORT_DIPNAME( 0x38, 0x08, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 7C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 6C_1C ) )
@@ -248,7 +248,7 @@ INPUT_PORTS_START( rugrats )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disable" )
+//  PORT_DIPSETTING(    0x00, "Disable" )
 	PORT_DIPNAME( 0x38, 0x08, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 7C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 6C_1C ) )
@@ -336,7 +336,7 @@ static MACHINE_DRIVER_START( wiping )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

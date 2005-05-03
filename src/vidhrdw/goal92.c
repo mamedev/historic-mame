@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Goal '92 video hardware
+    Goal '92 video hardware
 
 ***************************************************************************/
 
@@ -176,7 +176,7 @@ VIDEO_UPDATE( goal92 )
 
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	draw_sprites(bitmap,cliprect,2);
-	
+
 	if(!(fg_bank & 0xff))
 		draw_sprites(bitmap,cliprect,1);
 

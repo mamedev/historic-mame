@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	vidhrdw.c
+    vidhrdw.c
 
-	Functions to emulate the video hardware of the machine.
+    Functions to emulate the video hardware of the machine.
 
-	There are only a few differences between the video hardware of Mysterious
-	Stones and Mat Mania. The tile bank select bit is different and the sprite
-	selection seems to be different as well. Additionally, the palette is stored
-	differently. I'm also not sure that the 2nd tile page is really used in
-	Mysterious Stones.
+    There are only a few differences between the video hardware of Mysterious
+    Stones and Mat Mania. The tile bank select bit is different and the sprite
+    selection seems to be different as well. Additionally, the palette is stored
+    differently. I'm also not sure that the 2nd tile page is really used in
+    Mysterious Stones.
 
 ***************************************************************************/
 
@@ -124,19 +124,19 @@ static void get_fg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index] + ((videoram[tile_index + 0x400] & 0x07) << 8);
 	int color = mystston_fgcolor;
-	
+
 	SET_TILE_INFO(0, code, color, 0)
 }
 
 VIDEO_START( mystston )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_x, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_x,
 		TILEMAP_OPAQUE, 16, 16, 16, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

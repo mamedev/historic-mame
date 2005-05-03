@@ -116,14 +116,14 @@ static void get_tile_info(int tile_index)
 
 
 /***************************************************************************
-	Starfield information
-	There's 3 sets of stars planes at different speeds.
+    Starfield information
+    There's 3 sets of stars planes at different speeds.
 
-	a000 ---> (bit 0 = 1) enable starfield.
-	  		  (bit 0 = 0) disable starfield.
-	a001 ---> starfield plane 0 control
-	a002 ---> starfield plane 1 control
-	a003 ---> starfield plane 2 control
+    a000 ---> (bit 0 = 1) enable starfield.
+              (bit 0 = 0) disable starfield.
+    a001 ---> starfield plane 0 control
+    a002 ---> starfield plane 1 control
+    a003 ---> starfield plane 2 control
 ***************************************************************************/
 
 #define MAX_STARS			250
@@ -245,7 +245,7 @@ WRITE8_HANDLER( gaplus_starfield_control_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

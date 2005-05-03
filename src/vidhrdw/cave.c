@@ -1,46 +1,46 @@
 /***************************************************************************
 
-							  -= Cave Hardware =-
+                              -= Cave Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing:
+Note:   if MAME_DEBUG is defined, pressing:
 
-		X/C/V/B/Z  with  Q   shows layer 0 (tiles with priority 0/1/2/3/All)
-		X/C/V/B/Z  with  W   shows layer 1 (tiles with priority 0/1/2/3/All)
-		X/C/V/B/Z  with  E   shows layer 2 (tiles with priority 0/1/2/3/All)
-		X/C/V/B/Z  with  R   shows layer 3 (tiles with priority 0/1/2/3/All)
-		X/C/V/B/Z  with  A   shows sprites (tiles with priority 0/1/2/3/All)
+        X/C/V/B/Z  with  Q   shows layer 0 (tiles with priority 0/1/2/3/All)
+        X/C/V/B/Z  with  W   shows layer 1 (tiles with priority 0/1/2/3/All)
+        X/C/V/B/Z  with  E   shows layer 2 (tiles with priority 0/1/2/3/All)
+        X/C/V/B/Z  with  R   shows layer 3 (tiles with priority 0/1/2/3/All)
+        X/C/V/B/Z  with  A   shows sprites (tiles with priority 0/1/2/3/All)
 
-		Keys can be used together!
+        Keys can be used together!
 
-	[ 1 Layer per chip (games use as many as 4 chips) ]
+    [ 1 Layer per chip (games use as many as 4 chips) ]
 
-		Layer Size:				512 x 512
-		Tiles:					8 x 8 & 16 x 16.
+        Layer Size:             512 x 512
+        Tiles:                  8 x 8 & 16 x 16.
 
-		There are 2 tilemaps in memory, one per tiles dimension.
-		A bit decides which one gets displayed.
-		The tiles depth varies with games, from 16 to 256 colors.
+        There are 2 tilemaps in memory, one per tiles dimension.
+        A bit decides which one gets displayed.
+        The tiles depth varies with games, from 16 to 256 colors.
 
-		A per layer row-scroll / row-select effect can be enabled:
+        A per layer row-scroll / row-select effect can be enabled:
 
-		a different scroll value is fetched (from tile RAM) for each
-		scan line, and a different tilemap line for each scan line
+        a different scroll value is fetched (from tile RAM) for each
+        scan line, and a different tilemap line for each scan line
 
-	[ 1024 Zooming Sprites ]
+    [ 1024 Zooming Sprites ]
 
-		There are 2 sprite RAMs. A hardware register's bit selects
-		the one to display (sprites double buffering).
+        There are 2 sprite RAMs. A hardware register's bit selects
+        the one to display (sprites double buffering).
 
-		The sprites are NOT tile based: the "tile" size and start address
-		is selectable for each sprite with a 16 pixel granularity.
+        The sprites are NOT tile based: the "tile" size and start address
+        is selectable for each sprite with a 16 pixel granularity.
 
-		Also note that the zoom is of a peculiar type: pixels are never
-		drawn more than once. So shrinking works as usual (some pixels are
-		just not drawn) while enlarging adds some transparent pixels to
-		the image, uniformly, to reach the final size.
+        Also note that the zoom is of a peculiar type: pixels are never
+        drawn more than once. So shrinking works as usual (some pixels are
+        just not drawn) while enlarging adds some transparent pixels to
+        the image, uniformly, to reach the final size.
 
 **************************************************************************/
 
@@ -127,10 +127,10 @@ static int spriteram_bank_delay;
 
 /***************************************************************************
 
-							Palette Init Routines
+                            Palette Init Routines
 
-	Function needed for games with 4 bit sprites, rather than 8 bit,
-	or games with an odd colors mapping for the layers.
+    Function needed for games with 4 bit sprites, rather than 8 bit,
+    or games with an odd colors mapping for the layers.
 
 ***************************************************************************/
 
@@ -139,9 +139,9 @@ PALETTE_INIT( dfeveron )
 	int color, pen;
 
 	/* Fill the 0-3fff range, used by sprites ($40 color codes * $100 pens)
-	   Here sprites have 16 pens, but the sprite drawing routine always
-	   multiplies the color code by $100 (for consistency).
-	   That's why we need this function.	*/
+       Here sprites have 16 pens, but the sprite drawing routine always
+       multiplies the color code by $100 (for consistency).
+       That's why we need this function.    */
 
 	for( color = 0; color < 0x40; color++ )
 		for( pen = 0; pen < 16; pen++ )
@@ -153,9 +153,9 @@ PALETTE_INIT( ddonpach )
 	int color, pen;
 
 	/* Fill the 8000-83ff range ($40 color codes * $10 pens) for
-	   layers 0 & 1 which are 4 bits deep rather than 8 bits deep
-	   like layer 2, but use the first 16 color of every 256 for
-	   any given color code. */
+       layers 0 & 1 which are 4 bits deep rather than 8 bits deep
+       like layer 2, but use the first 16 color of every 256 for
+       any given color code. */
 
 	for( color = 0; color < 0x40; color++ )
 		for( pen = 0; pen < 16; pen++ )
@@ -172,7 +172,7 @@ PALETTE_INIT( mazinger )
 			colortable[color * 256 + pen] = color * 16 + pen;
 
 	/* Layer 0 is 6 bit deep, there are 64 color codes but only $400
-	   colors are actually addressable */
+       colors are actually addressable */
 	for( color = 0; color < 0x40; color++ )
 		for( pen = 0; pen < 64; pen++ )
 			colortable[color * 64 + pen + 0x4400] = 0x400 + (color % (64/4)) * 64 + pen;
@@ -188,7 +188,7 @@ PALETTE_INIT( sailormn )
 			colortable[color * 256 + pen] = color * 16 + pen;
 
 	/* Layer 2 is 6 bit deep, there are 64 color codes but only $400
-	   colors are actually addressable */
+       colors are actually addressable */
 	for( color = 0; color < 0x40; color++ )
 		for( pen = 0; pen < 64; pen++ )
 			colortable[color * 64 + pen + 0x4c00] = 0xc00 + (color % (64/4)) * 64 + pen;
@@ -208,24 +208,24 @@ PALETTE_INIT( pwrinst2 )
 
 /***************************************************************************
 
-								  Tiles Format
+                                  Tiles Format
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	0.w			fe-- ---- ---- ---		Priority
-				--dc ba98 ---- ----		Color
-				---- ---- 7654 3210
+    0.w         fe-- ---- ---- ---      Priority
+                --dc ba98 ---- ----     Color
+                ---- ---- 7654 3210
 
-	2.w									Code
+    2.w                                 Code
 
 
-	When a row-scroll / row-select effect is enabled, the scroll values are
-	fetched starting from tile RAM + $1000, 4 bytes per scan line:
+    When a row-scroll / row-select effect is enabled, the scroll values are
+    fetched starting from tile RAM + $1000, 4 bytes per scan line:
 
-	Offset:		Value:
+    Offset:     Value:
 
-	0.w			Tilemap line to display
-	2.w			X Scroll value
+    0.w         Tilemap line to display
+    2.w         X Scroll value
 
 ***************************************************************************/
 
@@ -333,11 +333,11 @@ INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, UNUSEDARG offs_t off
 		tilemap_mark_tile_dirty(TILEMAP,offset - 0x4000/4);
 }
 
-/*	Some games, that only ever use the 8x8 tiles and no line scroll,
-	use mirror ram. For example in donpachi, writes to 400000-403fff
-	and 408000-407fff both go to the 8x8 tilemap ram. Use this function
-	in this cases. Note that the get_tile_info function looks in the
-	4000-7fff range for tiles, so we have to write the data there. */
+/*  Some games, that only ever use the 8x8 tiles and no line scroll,
+    use mirror ram. For example in donpachi, writes to 400000-403fff
+    and 408000-407fff both go to the 8x8 tilemap ram. Use this function
+    in this cases. Note that the get_tile_info function looks in the
+    4000-7fff range for tiles, so we have to write the data there. */
 INLINE void vram_8x8_w(data16_t *VRAM, struct tilemap *TILEMAP,UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
 {
 	offset %= 0x4000/2;
@@ -367,10 +367,10 @@ WRITE16_HANDLER( cave_vram_3_8x8_w )	{ vram_8x8_w(cave_vram_3, tilemap_3, offset
 
 /***************************************************************************
 
-							Video Init Routines
+                            Video Init Routines
 
-	Depending on the game, there can be from 1 to 4 layers and the
-	tile sizes can be 8x8 or 16x16.
+    Depending on the game, there can be from 1 to 4 layers and the
+    tile sizes can be 8x8 or 16x16.
 
 ***************************************************************************/
 
@@ -445,7 +445,7 @@ int cave_vh_start( int num )
 	cave_row_effect_offs_n = -1;
 	cave_row_effect_offs_f = 1;
 
-//	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start;
+//  background_color =   Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start +
 						(Machine->drv->gfxdecodeinfo[0].total_color_codes-1) *
 						 Machine->gfx[0]->color_granularity;
@@ -493,32 +493,32 @@ VIDEO_START( sailormn_3_layers )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	00.w		fedc ba98 76-- ----		X Position
-				---- ---- --54 3210
+    00.w        fedc ba98 76-- ----     X Position
+                ---- ---- --54 3210
 
-	02.w		fedc ba98 76-- ----		Y Position
-				---- ---- --54 3210
+    02.w        fedc ba98 76-- ----     Y Position
+                ---- ---- --54 3210
 
-	04.w		fe-- ---- ---- ----
-				--dc ba98 ---- ----		Color
-				---- ---- 76-- ----
-				---- ---- --54 ----		Priority
-				---- ---- ---- 3---		Flip X
-				---- ---- ---- -2--		Flip Y
-				---- ---- ---- --10		Code High Bit(s?)
+    04.w        fe-- ---- ---- ----
+                --dc ba98 ---- ----     Color
+                ---- ---- 76-- ----
+                ---- ---- --54 ----     Priority
+                ---- ---- ---- 3---     Flip X
+                ---- ---- ---- -2--     Flip Y
+                ---- ---- ---- --10     Code High Bit(s?)
 
-	06.w								Code Low Bits
+    06.w                                Code Low Bits
 
-	08/0A.w								Zoom X / Y
+    08/0A.w                             Zoom X / Y
 
-	0C.w		fedc ba98 ---- ----		Tile Size X
-				---- ---- 7654 3210		Tile Size Y
+    0C.w        fedc ba98 ---- ----     Tile Size X
+                ---- ---- 7654 3210     Tile Size Y
 
-	0E.w								Unused
+    0E.w                                Unused
 
 
 ***************************************************************************/
@@ -837,7 +837,7 @@ static void cave_sprite_check( const struct rectangle *clip )
 }
 
 static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
-	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+	/*  assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
 	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
@@ -929,7 +929,7 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 
 
 static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
-	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+	/*  assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
 	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
@@ -1027,7 +1027,7 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 }
 
 static void do_blit_16_cave( const struct sprite_cave *sprite ){
-	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+	/*  assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
 	int xcount0 = 0, ycount0 = 0;
@@ -1104,7 +1104,7 @@ static void do_blit_16_cave( const struct sprite_cave *sprite ){
 
 
 static void do_blit_16_cave_zb( const struct sprite_cave *sprite ){
-	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+	/*  assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
 	int xcount0 = 0, ycount0 = 0;
@@ -1231,57 +1231,57 @@ static void sprite_draw_donpachi_zbuf( int priority )
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
 
-				Layers Control Registers (cave_vctrl_0..2)
+                Layers Control Registers (cave_vctrl_0..2)
 
 
-		Offset:		Bits:					Value:
+        Offset:     Bits:                   Value:
 
-		0.w			f--- ---- ---- ----		0 = Layer Flip X
-					-e-- ---- ---- ----		Activate Row-scroll
-					--d- ---- ---- ----
-					---c ba9- ---- ----
-					---- ---8 7654 3210		Scroll X
+        0.w         f--- ---- ---- ----     0 = Layer Flip X
+                    -e-- ---- ---- ----     Activate Row-scroll
+                    --d- ---- ---- ----
+                    ---c ba9- ---- ----
+                    ---- ---8 7654 3210     Scroll X
 
-		2.w			f--- ---- ---- ----		0 = Layer Flip Y
-					-e-- ---- ---- ----		Activate Row-select
-					--d- ---- ---- ----		0 = 8x8 tiles, 1 = 16x16 tiles
-					---c ba9- ---- ----
-					---- ---8 7654 3210		Scroll Y
+        2.w         f--- ---- ---- ----     0 = Layer Flip Y
+                    -e-- ---- ---- ----     Activate Row-select
+                    --d- ---- ---- ----     0 = 8x8 tiles, 1 = 16x16 tiles
+                    ---c ba9- ---- ----
+                    ---- ---8 7654 3210     Scroll Y
 
-		4.w			fedc ba98 765- ----
-					---- ---- ---4 ----		Layer Disable
-					---- ---- ---- 32--
-					---- ---- ---- --10		Layer Priority (decides the order
-											of the layers for tiles with the
-											same tile priority)
-
-
-		Row-scroll / row-select data is fetched from tile RAM + $1000.
-
-		Row-select:		a tilemap line is specified for each scan line.
-		Row-scroll:		a different scroll value is specified for each scan line.
+        4.w         fedc ba98 765- ----
+                    ---- ---- ---4 ----     Layer Disable
+                    ---- ---- ---- 32--
+                    ---- ---- ---- --10     Layer Priority (decides the order
+                                            of the layers for tiles with the
+                                            same tile priority)
 
 
-					Sprites Registers (cave_videoregs)
+        Row-scroll / row-select data is fetched from tile RAM + $1000.
+
+        Row-select:     a tilemap line is specified for each scan line.
+        Row-scroll:     a different scroll value is specified for each scan line.
 
 
-	Offset:		Bits:					Value:
+                    Sprites Registers (cave_videoregs)
 
-		0.w		f--- ---- ---- ----		Sprites Flip X
-				-edc ba98 7654 3210		Sprites Offset X
 
-		2.w		f--- ---- ---- ----		Sprites Flip Y
-				-edc ba98 7654 3210		Sprites Offset Y
+    Offset:     Bits:                   Value:
 
-		..
+        0.w     f--- ---- ---- ----     Sprites Flip X
+                -edc ba98 7654 3210     Sprites Offset X
 
-		8.w		fedc ba98 7654 321-
-				---- ---- ---- ---0		Sprite RAM Bank
+        2.w     f--- ---- ---- ----     Sprites Flip Y
+                -edc ba98 7654 3210     Sprites Offset Y
 
-		There are more!
+        ..
+
+        8.w     fedc ba98 7654 321-
+                ---- ---- ---- ---0     Sprite RAM Bank
+
+        There are more!
 
 ***************************************************************************/
 
@@ -1309,8 +1309,8 @@ INLINE void cave_tilemap_draw(
 	offs_row =  flipy ? cave_row_effect_offs_f : cave_row_effect_offs_n;
 
 	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus
-	   Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
-	   Layer 1 */
+       Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
+       Layer 1 */
 	if		(TILEMAP == tilemap_0)	offs_x -= (tiledim_0 ? 1 : (1+8));
 	else if	(TILEMAP == tilemap_1)	offs_x -= (tiledim_1 ? 2 : (2+8));
 	else if	(TILEMAP == tilemap_2)	offs_x -= (tiledim_2 ? 3 : (3+8));
@@ -1325,17 +1325,17 @@ INLINE void cave_tilemap_draw(
 		int startline, endline, vramdata0, vramdata1;
 
 		/*
-			Row-select:
+            Row-select:
 
-			A tilemap line is specified for each scan line. This is handled
-			using many horizontal clipping regions (slices) and calling
-			tilemap_draw multiple times.
+            A tilemap line is specified for each scan line. This is handled
+            using many horizontal clipping regions (slices) and calling
+            tilemap_draw multiple times.
 
-			Note:	tilemap.c has a limitation on the size of a clipping
-					region, which can only be a multiple of 8 pixels.
-					Thus in vertical games (where our horizontal slices
-					become vertical) there may be graphical glitches.
-		*/
+            Note:   tilemap.c has a limitation on the size of a clipping
+                    region, which can only be a multiple of 8 pixels.
+                    Thus in vertical games (where our horizontal slices
+                    become vertical) there may be graphical glitches.
+        */
 
 		clip.min_x = cliprect->min_x;
 		clip.max_x = cliprect->max_x;
@@ -1354,12 +1354,12 @@ INLINE void cave_tilemap_draw(
 				int line;
 
 				/*
-					Row-scroll:
+                    Row-scroll:
 
-					A different scroll value is specified for each scan line.
-					This is handled using tilemap_set_scroll_rows and calling
-					tilemap_draw just once.
-				*/
+                    A different scroll value is specified for each scan line.
+                    This is handled using tilemap_set_scroll_rows and calling
+                    tilemap_draw just once.
+                */
 
 				tilemap_set_scroll_rows(TILEMAP,512);
 				for(line = startline; line < endline; line++)
@@ -1510,17 +1510,17 @@ VIDEO_UPDATE( cave )
 	fillbitmap(bitmap,Machine->remapped_colortable[background_color],cliprect);
 
 	/*
-		Tiles and sprites are ordered by priority (0 back, 3 front) with
-		sprites going below tiles of their same priority.
+        Tiles and sprites are ordered by priority (0 back, 3 front) with
+        sprites going below tiles of their same priority.
 
-		Sprites with the same priority are ordered by their place in
-		sprite RAM (last sprite is the frontmost).
+        Sprites with the same priority are ordered by their place in
+        sprite RAM (last sprite is the frontmost).
 
-		Tiles with the same priority are ordered by the priority of their layer.
+        Tiles with the same priority are ordered by the priority of their layer.
 
-		Tiles with the same priority *and* the same priority of their layer
-		are ordered by layer (0 back, 2 front)
-	*/
+        Tiles with the same priority *and* the same priority of their layer
+        are ordered by layer (0 back, 2 front)
+    */
 	for (pri=0;pri<=3;pri++)	// tile / sprite priority
 	{
 			if (layers_ctrl&(1<<(pri+16)))	(*cave_sprite_draw)( pri );

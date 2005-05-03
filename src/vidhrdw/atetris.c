@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Tetris hardware
+    Atari Tetris hardware
 
 ***************************************************************************/
 
@@ -14,7 +14,7 @@ static struct tilemap *tilemap;
 
 /*************************************
  *
- *	Tilemap callback
+ *  Tilemap callback
  *
  *************************************/
 
@@ -30,7 +30,7 @@ static void get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video RAM write
+ *  Video RAM write
  *
  *************************************/
 
@@ -44,7 +44,7 @@ WRITE8_HANDLER( atetris_videoram_w )
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -60,7 +60,7 @@ VIDEO_START( atetris )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 

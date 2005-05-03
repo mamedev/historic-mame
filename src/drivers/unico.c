@@ -1,22 +1,22 @@
 /***************************************************************************
 
-							  -= Unico Games =-
+                              -= Unico Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU			:	M68000 or M68EC020
-Sound Chips	:	OKI M6295 (AD-65) + YM3812 (K-666) or YM2151
-Video Chips	:	3 x Actel A1020B (Square 84 Pin Socketed) [Or A40MX04-F]
-				MACH211 (Square 44 Pin Socketed) [Or MACH210-15JC]
+CPU         :   M68000 or M68EC020
+Sound Chips :   OKI M6295 (AD-65) + YM3812 (K-666) or YM2151
+Video Chips :   3 x Actel A1020B (Square 84 Pin Socketed) [Or A40MX04-F]
+                MACH211 (Square 44 Pin Socketed) [Or MACH210-15JC]
 
 
 ---------------------------------------------------------------------------
-Year + Game			PCB				Notes
+Year + Game         PCB             Notes
 ---------------------------------------------------------------------------
-97	Burglar X		?
-98	Zero Point		ZPM1001A/B		Has Light Guns.
-99	Zero Point 2	UZP21001A/B		Has Light Guns.
+97  Burglar X       ?
+98  Zero Point      ZPM1001A/B      Has Light Guns.
+99  Zero Point 2    UZP21001A/B     Has Light Guns.
 ---------------------------------------------------------------------------
 
 
@@ -37,7 +37,7 @@ int unico_has_lightgun;
 /***************************************************************************
 
 
-								Memory Maps
+                                Memory Maps
 
 
 ***************************************************************************/
@@ -54,7 +54,7 @@ WRITE16_HANDLER( YM3812_data_port_0_msb_w )		{	if (ACCESSING_MSB)	YM3812_write_p
 */
 
 /***************************************************************************
-								Burglar X
+                                Burglar X
 ***************************************************************************/
 
 static WRITE16_HANDLER( burglarx_sound_bank_w )
@@ -109,7 +109,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Zero Point
+                                Zero Point
 ***************************************************************************/
 
 static WRITE16_HANDLER( zeropnt_sound_bank_w )
@@ -117,7 +117,7 @@ static WRITE16_HANDLER( zeropnt_sound_bank_w )
 	if (ACCESSING_MSB)
 	{
 		/* Banked sound samples. The 3rd quarter of the ROM
-		   contains garbage. Indeed, only banks 0&1 are used */
+           contains garbage. Indeed, only banks 0&1 are used */
 
 		int bank = (data >> 8 ) & 1;
 		unsigned char *dst	= memory_region(REGION_SOUND1);
@@ -216,7 +216,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Zero Point 2
+                                Zero Point 2
 ***************************************************************************/
 
 static READ32_HANDLER( zeropnt2_coins_r )			{ return (readinputportbytag("IN0") << 16) | 0xffff; }
@@ -323,13 +323,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Burglar X
+                                Burglar X
 ***************************************************************************/
 
 INPUT_PORTS_START( burglarx )
@@ -418,7 +418,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Zero Point
+                                Zero Point
 ***************************************************************************/
 
 INPUT_PORTS_START( zeropnt )
@@ -511,7 +511,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Zero Point 2
+                                Zero Point 2
 ***************************************************************************/
 
 INPUT_PORTS_START( zeropnt2 )
@@ -538,7 +538,7 @@ INPUT_PORTS_START( zeropnt2 )
 	PORT_DIPSETTING(      0x0800, DEF_STR(No) )
 	PORT_DIPSETTING(      0x0400, DEF_STR(Yes) )
 	PORT_DIPSETTING(      0x0c00, "Factory Setting" )
-//	PORT_DIPSETTING(      0x0000, "unused?" )
+//  PORT_DIPSETTING(      0x0000, "unused?" )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Language ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( English ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Japanese ) )
@@ -566,9 +566,9 @@ INPUT_PORTS_START( zeropnt2 )
 	PORT_DIPSETTING(      0x1c00, "4" )
 	PORT_DIPSETTING(      0x1800, "5" )
 	PORT_DIPSETTING(      0x1400, "6" )
-//	PORT_DIPSETTING(      0x0800, "4" )
-//	PORT_DIPSETTING(      0x0400, "4" )
-//	PORT_DIPSETTING(      0x0000, "4" )
+//  PORT_DIPSETTING(      0x0800, "4" )
+//  PORT_DIPSETTING(      0x0400, "4" )
+//  PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -607,7 +607,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -639,7 +639,7 @@ static struct GfxDecodeInfo unico_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -652,15 +652,15 @@ MACHINE_INIT( unico )
 
 struct EEPROM_interface zeropnt2_eeprom_interface =
 {
-	7,				// address bits	7
-	8,				// data bits	8
-	"*110",			// read			1 10 aaaaaaa
-	"*101",			// write		1 01 aaaaaaa dddddddd
-	"*111",			// erase		1 11 aaaaaaa
-	"*10000xxxx",	// lock			1 00 00xxxx
-	"*10011xxxx",	// unlock		1 00 11xxxx
-//	"*10001xxxx"	// write all	1 00 01xxxx dddddddd
-//	"*10010xxxx"	// erase all	1 00 10xxxx
+	7,				// address bits 7
+	8,				// data bits    8
+	"*110",			// read         1 10 aaaaaaa
+	"*101",			// write        1 01 aaaaaaa dddddddd
+	"*111",			// erase        1 11 aaaaaaa
+	"*10000xxxx",	// lock         1 00 00xxxx
+	"*10011xxxx",	// unlock       1 00 11xxxx
+//  "*10001xxxx"    // write all    1 00 01xxxx dddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
 void nvram_handler_zeropnt2(mame_file *file,int read_or_write)
@@ -676,7 +676,7 @@ void nvram_handler_zeropnt2(mame_file *file,int read_or_write)
 
 
 /***************************************************************************
-								Burglar X
+                                Burglar X
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( burglarx )
@@ -717,7 +717,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Zero Point
+                                Zero Point
 ***************************************************************************/
 
 MACHINE_INIT( zeropt )
@@ -764,7 +764,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Zero Point 2
+                                Zero Point 2
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( zeropnt2 )
@@ -811,7 +811,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -820,7 +820,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								Burglar X
+                                Burglar X
 
 by Unico
 
@@ -864,7 +864,7 @@ ROM_END
 
 /***************************************************************************
 
-								Zero Point
+                                Zero Point
 
 (C) 1998 Unico
 
@@ -943,7 +943,7 @@ ROM_END
 
 /***************************************************************************
 
-									Zero Point 2
+                                    Zero Point 2
 
 (c) 1999 Unico
 
@@ -1019,12 +1019,12 @@ DB6DB7ZP.212  -/
 SPECIAL NOTICE - Sound wiring change:
 
 For cabinets with one speaker:
-	JAMMA pin 10 goes to speaker (+)
-	Run a ground to the negative side of speaker.
+    JAMMA pin 10 goes to speaker (+)
+    Run a ground to the negative side of speaker.
 For cabinets with two speakers:
-	JAMMA pin 10 goes to right speaker (+)
-	JAMMA pin L goes to left speaker (+)
-	Run a ground to the negative side of each speaker.
+    JAMMA pin 10 goes to right speaker (+)
+    JAMMA pin L goes to left speaker (+)
+    Run a ground to the negative side of each speaker.
 
 Using Original Unico Light Guns & connectors:
 
@@ -1132,7 +1132,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

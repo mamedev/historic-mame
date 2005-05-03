@@ -263,7 +263,7 @@ WRITE16_HANDLER( polepos_road16_vscroll_w );
 
 
 /*************************************************************************************/
-/* Pole Position II protection														 */
+/* Pole Position II protection                                                       */
 /*************************************************************************************/
 
 READ16_HANDLER( polepos2_ic25_r )
@@ -287,7 +287,7 @@ READ16_HANDLER( polepos2_ic25_r )
 		last_result = (INT8)last_signed * (UINT8)last_unsigned;
 	}
 
-//	logerror("%04X: read IC25 @ %04X = %02X\n", activecpu_get_pc(), offset, result);
+//  logerror("%04X: read IC25 @ %04X = %02X\n", activecpu_get_pc(), offset, result);
 
 	return result | (result << 8);
 }
@@ -387,8 +387,8 @@ static READ8_HANDLER( in1_h )	{ return readinputport(5) >> 4; }	// wheel
 static WRITE8_HANDLER( out_0 )
 {
 // no start lamps in pole position
-//	set_led_status(1,data & 1);
-//	set_led_status(0,data & 2);
+//  set_led_status(1,data & 1);
+//  set_led_status(0,data & 2);
 	coin_counter_w(1,~data & 4);
 	coin_counter_w(0,~data & 8);
 }

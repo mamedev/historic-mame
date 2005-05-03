@@ -2,7 +2,7 @@
 #define saa1099_h
 
 /**********************************************
-	Philips SAA1099 Sound driver
+    Philips SAA1099 Sound driver
 **********************************************/
 
 #ifdef __cplusplus

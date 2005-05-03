@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Midway MCR-I/II system
+    Midway MCR-I/II system
 
-	Journey is an MCR-II game with a MCR-III sprite board so it has it's
-	own routines.
+    Journey is an MCR-II game with a MCR-III sprite board so it has it's
+    own routines.
 
 ***************************************************************************/
 
@@ -26,7 +26,7 @@ static struct tilemap *bg_tilemap;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -57,7 +57,7 @@ static void twotigra_get_bg_tile_info(int tile_index)
 
 /*************************************
  *
- *	Common video startup/shutdown
+ *  Common video startup/shutdown
  *
  *************************************/
 
@@ -89,7 +89,7 @@ VIDEO_START( mcr1 )
 	bg_tilemap = tilemap_create(mcr1_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 	if (!bg_tilemap)
 		return 1;
-	
+
 	/* handle the rest */
 	return video_start_common();
 }
@@ -101,7 +101,7 @@ VIDEO_START( mcr2 )
 	bg_tilemap = tilemap_create(mcr2_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 	if (!bg_tilemap)
 		return 1;
-	
+
 	/* handle the rest */
 	return video_start_common();
 }
@@ -113,7 +113,7 @@ VIDEO_START( twotigra )
 	bg_tilemap = tilemap_create(twotigra_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 	if (!bg_tilemap)
 		return 1;
-	
+
 	/* handle the rest */
 	return video_start_common();
 }
@@ -132,7 +132,7 @@ VIDEO_START( journey )
 
 /*************************************
  *
- *	Videoram writes
+ *  Videoram writes
  *
  *************************************/
 
@@ -194,7 +194,7 @@ WRITE8_HANDLER( twotigra_videoram_w )
 
 /*************************************
  *
- *	Sprite drawing
+ *  Sprite drawing
  *
  *************************************/
 
@@ -203,7 +203,7 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
 	const struct GfxElement *gfx = Machine->gfx[1];
 	UINT8 *src = gfx->gfxdata + gfx->char_modulo * code;
 	int y, x;
-	
+
 	/* offset for the extra top/left area */
 	sx += 32;
 	sy += 32;
@@ -241,7 +241,7 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
 
 /*************************************
  *
- *	Common sprite update
+ *  Common sprite update
  *
  *************************************/
 
@@ -305,7 +305,7 @@ static void mcr12_update_sprites(void)
 
 /*************************************
  *
- *	Sprite bitmap drawing
+ *  Sprite bitmap drawing
  *
  *************************************/
 
@@ -314,11 +314,11 @@ static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int tile
 	int sx = tile_index % 32;
 	int sy = tile_index / 32;
 	int x, y;
-	
+
 	/* skip if out of range */
 	if (sx >= xtiles || sy >= ytiles)
 		return;
-	
+
 	/* convert to pixel coordinates */
 	sx *= 16;
 	sy *= 16;
@@ -343,7 +343,7 @@ static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int tile
 
 /*************************************
  *
- *	Sprite rendering
+ *  Sprite rendering
  *
  *************************************/
 
@@ -380,7 +380,7 @@ static void mcr2_render_sprites(struct mame_bitmap *bitmap)
 			int tx = offs % 32;
 			int ty = offs / 32;
 			int attr;
-			
+
 			/* adjust for cocktail flip */
 			if (mcr_cocktail_flip)
 			{
@@ -399,7 +399,7 @@ static void mcr2_render_sprites(struct mame_bitmap *bitmap)
 
 /*************************************
  *
- *	Main refresh routines
+ *  Main refresh routines
  *
  *************************************/
 

@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Gaelco CG-1V/GAE1 based games
+    Gaelco CG-1V/GAE1 based games
 
-	Driver by Manuel Abadia <manu@teleline.es>
+    Driver by Manuel Abadia <manu@teleline.es>
 
-	Known games that run on this hardware:
-	======================================
-	Game           | Year | Chip      | Ref      |Protected
-	---------------+------+-----------+----------+--------------------
-	Alligator Hunt | 1994 | GAE1 449  | 940411   | DS5002FP, but unprotected version available
-	World Rally 2  | 1995 | GAE1 449  | 950510   | DS5002FP
-	Touch & Go     | 1995 | GAE1 501  | 950510-1 | DS5002FP
-	Maniac Square  | 1996 | Unknown   | ???      | DS5002FP, but unprotected version available
-	Snow Board     | 1996 | CG-1V 366 | 960419/1 | Lattice IspLSI 1016-80LJ
-	Bang!          | 1998 | CG-1V 388 | ???      | No
+    Known games that run on this hardware:
+    ======================================
+    Game           | Year | Chip      | Ref      |Protected
+    ---------------+------+-----------+----------+--------------------
+    Alligator Hunt | 1994 | GAE1 449  | 940411   | DS5002FP, but unprotected version available
+    World Rally 2  | 1995 | GAE1 449  | 950510   | DS5002FP
+    Touch & Go     | 1995 | GAE1 501  | 950510-1 | DS5002FP
+    Maniac Square  | 1996 | Unknown   | ???      | DS5002FP, but unprotected version available
+    Snow Board     | 1996 | CG-1V 366 | 960419/1 | Lattice IspLSI 1016-80LJ
+    Bang!          | 1998 | CG-1V 388 | ???      | No
 
 ***************************************************************************/
 
@@ -81,7 +81,7 @@ GFXDECODEINFO(0x0400000, 128);
 
 
 /*============================================================================
-							MANIAC SQUARE (FINAL)
+                            MANIAC SQUARE (FINAL)
   ============================================================================*/
 
 static ADDRESS_MAP_START( maniacsq_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -240,7 +240,7 @@ ROM_END
 
 
 /*============================================================================
-								BANG
+                                BANG
   ============================================================================*/
 
 static int clr_gun_int;
@@ -432,7 +432,7 @@ ROM_END
 
 
 /*============================================================================
-							ALLIGATOR HUNT
+                            ALLIGATOR HUNT
   ============================================================================*/
 
 
@@ -646,7 +646,7 @@ ROM_END
 
 
 /*============================================================================
-							TOUCH & GO
+                            TOUCH & GO
   ============================================================================*/
 
 static WRITE16_HANDLER( touchgo_coin_w )
@@ -838,7 +838,7 @@ static MACHINE_DRIVER_START( touchgo )
 
 	/* sound hardware */
 	/* the chip is stereo, but the game sound is mono because the right channel
-	   output is for cabinet 1 and the left channel output is for cabinet 2 */
+       output is for cabinet 1 and the left channel output is for cabinet 2 */
 #ifndef ONE_MONITOR
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 #endif
@@ -899,9 +899,9 @@ ROM_START( touchgo )
 	ROM_REGION( 0x1400000, REGION_GFX1, 0 ) /* GFX + Sound */
 	/* 0x0000000-0x0ffffff filled in in the DRIVER_INIT */
 	ROM_LOAD( "ic69",		0x1000000, 0x0200000, BAD_DUMP CRC(bba9aed5) SHA1(5ae1d082dafd82c406e0979f2884093deea17f86) )	/* GFX only */
-	/* 	the first 3/4 of this ROM contain gfx data for tiles 0x0000-0xbfff
-		 the last 1/4 of this ROM contain gfx data for tiles 0x8000-0xbfff
-		 it's a bad dump??? For now, we fill that area with 0 */
+	/*  the first 3/4 of this ROM contain gfx data for tiles 0x0000-0xbfff
+         the last 1/4 of this ROM contain gfx data for tiles 0x8000-0xbfff
+         it's a bad dump??? For now, we fill that area with 0 */
 	ROM_FILL(				0x1180000, 0x0280000, 0x0 )
 
 	ROM_REGION( 0x0c00000, REGION_GFX2, ROMREGION_DISPOSE ) /* Temporary storage */
@@ -914,7 +914,7 @@ ROM_END
 
 
 /*============================================================================
-							SNOW BOARD
+                            SNOW BOARD
   ============================================================================*/
 
 static ADDRESS_MAP_START( snowboar_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1107,7 +1107,7 @@ ROM_END
 
 
 /*============================================================================
-							WORLD RALLY 2
+                            WORLD RALLY 2
   ============================================================================*/
 
 static ADDRESS_MAP_START( wrally2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1261,7 +1261,7 @@ static MACHINE_DRIVER_START( wrally2 )
 
 	/* sound hardware */
 	/* the chip is stereo, but the game sound is mono because the right channel
-	   output is for cabinet 1 and the left channel output is for cabinet 2 */
+       output is for cabinet 1 and the left channel output is for cabinet 2 */
 #ifndef ONE_MONITOR
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 #endif

@@ -188,7 +188,7 @@ VIDEO_START( popper )
 	tilemap_clip = Machine->visible_area;
 
 	state_save_register_int ("video", 0, "flipscreen", &popper_flipscreen);
-//	state_save_register_int ("video", 0, "e002",       &popper_e002);
+//  state_save_register_int ("video", 0, "e002",       &popper_e002);
 	state_save_register_int ("video", 0, "gfx_bank",   &popper_gfx_bank);
 
 	return 0;

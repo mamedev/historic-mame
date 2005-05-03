@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Flower sound driver (quick hack of the Wiping sound driver)
+    Flower sound driver (quick hack of the Wiping sound driver)
 
 ***************************************************************************/
 
@@ -127,7 +127,7 @@ static void flower_update_mono(void *param, stream_sample_t **inputs, stream_sam
 
 						if (voice->oneshotplaying)
 						{
-//							*mix++ += ((w[offs] - 0x80) * v) / 16;
+//                          *mix++ += ((w[offs] - 0x80) * v) / 16;
 *mix++ += sound_rom2[v*256 + w[offs]] - 0x80;
 						}
 					}
@@ -136,7 +136,7 @@ static void flower_update_mono(void *param, stream_sample_t **inputs, stream_sam
 				{
 					offs = (c >> 15) & 0x1ff;
 
-//					*mix++ += ((w[offs] - 0x80) * v) / 16;
+//                  *mix++ += ((w[offs] - 0x80) * v) / 16;
 *mix++ += sound_rom2[v*256 + w[offs]] - 0x80;
 				}
 			}
@@ -216,7 +216,7 @@ WRITE8_HANDLER( flower_sound1_w )
 		voice->volume = (flower_soundregs1[7 + base] >> 4) | ((flower_soundregs2[7 + base] & 0x03) << 4);
 // the following would fix the hanging notes...
 //if ((flower_soundregs2[7 + base] & 0x01) == 0)
-//	voice->volume = 0;
+//  voice->volume = 0;
 
 		if (flower_soundregs1[4 + base] & 0x10)
 		{
@@ -237,15 +237,15 @@ WRITE8_HANDLER( flower_sound2_w )
 
 /*
 usrintf_showmessage("%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x",
-		flower_soundregs2[7 + 8*0],flower_soundregs1[7 + 8*0],
-		flower_soundregs2[7 + 8*1],flower_soundregs1[7 + 8*1],
-		flower_soundregs2[7 + 8*2],flower_soundregs1[7 + 8*2],
-		flower_soundregs2[7 + 8*3],flower_soundregs1[7 + 8*3],
-		flower_soundregs2[7 + 8*4],flower_soundregs1[7 + 8*4],
-		flower_soundregs2[7 + 8*5],flower_soundregs1[7 + 8*5],
-		flower_soundregs2[7 + 8*6],flower_soundregs1[7 + 8*6],
-		flower_soundregs2[7 + 8*7],flower_soundregs1[7 + 8*7]
-	);
+        flower_soundregs2[7 + 8*0],flower_soundregs1[7 + 8*0],
+        flower_soundregs2[7 + 8*1],flower_soundregs1[7 + 8*1],
+        flower_soundregs2[7 + 8*2],flower_soundregs1[7 + 8*2],
+        flower_soundregs2[7 + 8*3],flower_soundregs1[7 + 8*3],
+        flower_soundregs2[7 + 8*4],flower_soundregs1[7 + 8*4],
+        flower_soundregs2[7 + 8*5],flower_soundregs1[7 + 8*5],
+        flower_soundregs2[7 + 8*6],flower_soundregs1[7 + 8*6],
+        flower_soundregs2[7 + 8*7],flower_soundregs1[7 + 8*7]
+    );
 */
 
 	/* update the streams */

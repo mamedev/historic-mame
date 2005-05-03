@@ -1,7 +1,7 @@
 /***************************************************************************
 
 Find Out    (c) 1987
-Trivia		(c) 1984 / 1986
+Trivia      (c) 1984 / 1986
 
 driver by Nicola Salmoria
 
@@ -47,7 +47,7 @@ static WRITE8_HANDLER( findout_bitmap_w )
 	sy = (sy + yadd) & 0xff;
 
 //if (mask != bits)
-//	usrintf_showmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
+//  usrintf_showmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
 
 	if (mask & 0x80) plot_pixel(tmpbitmap,sx+0,sy,(bits & 0x80) ? fg : bg);
 	if (mask & 0x40) plot_pixel(tmpbitmap,sx+1,sy,(bits & 0x40) ? fg : bg);
@@ -63,7 +63,7 @@ static WRITE8_HANDLER( findout_bitmap_w )
 static READ8_HANDLER( portC_r )
 {
 	return 4;
-//	return (rand()&2);
+//  return (rand()&2);
 }
 
 static WRITE8_HANDLER( lamps_w )
@@ -85,8 +85,8 @@ static WRITE8_HANDLER( sound_w )
 	/* bit 7 goes directly to the sound amplifier */
 	DAC_data_w(0,((data & 0x80) >> 7) * 255);
 
-//	logerror("%04x: sound_w %02x\n",activecpu_get_pc(),data);
-//	usrintf_showmessage("%02x",data);
+//  logerror("%04x: sound_w %02x\n",activecpu_get_pc(),data);
+//  usrintf_showmessage("%02x",data);
 }
 
 static ppi8255_interface ppi8255_intf =
@@ -348,7 +348,7 @@ ROM_START( gt103a1 )
 	ROM_LOAD( "potpourri",       0x28000, 0x8000, CRC(f2968a28) SHA1(87c08c59dfee71e7bf071f09c3017c750a1c5694) )
 	ROM_LOAD( "rock_music",      0x30000, 0x8000, CRC(7f11733a) SHA1(d4d0dee75518edf986cb1241ade45ccb4840f088) )
 ROM_END
-	
+
 ROM_START( gt103a2 )
 	ROM_REGION( 0x38000, REGION_CPU1, 0 )
 	ROM_LOAD( "prog1_versionc", 0x00000, 0x4000, CRC(340246a4) SHA1(d655e1cf2b1e87a05e87ff6af4b794e6d54a2a52) )
@@ -387,7 +387,7 @@ ROM_START( gt103ab )
 	ROM_LOAD( "science_alt",       0x28000, 0x8000, CRC(ac93d348) SHA1(55550ba6b5daffdf9653854075ad4f8398a5e621) )
 	ROM_LOAD( "sports_alt2",       0x30000, 0x8000, CRC(40207845) SHA1(2dddb9685dcefabfde07057a639aa9d08da2329e) )
 ROM_END
-	
+
 ROM_START( gt103asx )
 	ROM_REGION( 0x38000, REGION_CPU1, 0 )
 	ROM_LOAD( "t_3a-8_1.bin",    0x00000, 0x4000, CRC(02aef306) SHA1(1ffc10c79a55d41ea36bcaab13cb3f02cb3f9712) )

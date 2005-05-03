@@ -35,24 +35,24 @@ WRITE8_HANDLER( geebee_sound_w )
 	if( sound_latch & 8 )
 	{
 		/*
-		 * R24 is 10k, Rb is 0, C57 is 1uF
-		 * charge time t1 = 0.693 * (R24 + Rb) * C57 -> 0.22176s
-		 * discharge time t2 = 0.693 * (Rb) * C57 -> 0
-		 * Then C33 is only charged via D6 (1N914), not discharged!
-		 * Decay:
-		 * discharge C33 (1uF) through R50 (22k) -> 0.14058s
-		 */
+         * R24 is 10k, Rb is 0, C57 is 1uF
+         * charge time t1 = 0.693 * (R24 + Rb) * C57 -> 0.22176s
+         * discharge time t2 = 0.693 * (Rb) * C57 -> 0
+         * Then C33 is only charged via D6 (1N914), not discharged!
+         * Decay:
+         * discharge C33 (1uF) through R50 (22k) -> 0.14058s
+         */
 		timer_adjust(volume_timer, TIME_IN_HZ(32768/0.14058), 0, TIME_IN_HZ(32768/0.14058));
 	}
 	else
 	{
 		/*
-		 * discharge only after R49 (100k) in the amplifier section,
-		 * so the volume shouldn't very fast and only when the signal
-		 * is gated through 6N (4066).
-		 * I can only guess here that the decay should be slower,
-		 * maybe half as fast?
-		 */
+         * discharge only after R49 (100k) in the amplifier section,
+         * so the volume shouldn't very fast and only when the signal
+         * is gated through 6N (4066).
+         * I can only guess here that the decay should be slower,
+         * maybe half as fast?
+         */
 		timer_adjust(volume_timer, TIME_IN_HZ(32768/0.2906), 0, TIME_IN_HZ(32768/0.2906));
     }
 }
@@ -122,7 +122,7 @@ void *geebee_sh_start(int clock, const struct CustomSound_interface *config)
 		decay[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
 	channel = stream_create(0, 1, Machine->sample_rate, NULL, geebee_sound_update);
-	
+
 	volume_timer = timer_alloc(volume_decay);
     return auto_malloc(1);
 }

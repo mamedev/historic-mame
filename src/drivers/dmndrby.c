@@ -164,10 +164,10 @@ VIDEO_UPDATE(dderby)
 
 INTERRUPT_GEN( dderby_interrupt )
 {
-//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x8);  // almost certainly wrong?
-//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x10); // almost certainly wrong?
-//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x18); // almost certainly wrong?
-//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x20); // almost certainly wrong?
+//  cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x8);  // almost certainly wrong?
+//  cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x10); // almost certainly wrong?
+//  cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x18); // almost certainly wrong?
+//  cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x20); // almost certainly wrong?
 }
 
 static MACHINE_DRIVER_START( dderby )

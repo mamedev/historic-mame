@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		dis32031.c
-**		Disassembler for the portable TMS32C031 emulator.
-**		Written by Aaron Giles
+**      dis32031.c
+**      Disassembler for the portable TMS32C031 emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -15,7 +15,7 @@
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32((pc) * 4)
@@ -32,7 +32,7 @@
 
 
 /*###################################################################################################
-**	CODE CODE
+**  CODE CODE
 **#################################################################################################*/
 
 INLINE char *signed_16bit(INT16 val)
@@ -63,67 +63,67 @@ static const char *condition[32] =
 
 //
 // for instructions 0x000-0x3f
-//	G = (op >> 21) & 3;
-//	G == 0 -> register  -> 000ooooo o00ddddd 00000000 000sssss
-//	G == 1 -> direct    -> 000ooooo o01ddddd DDDDDDDD DDDDDDDD
-//	G == 2 -> indirect  -> 000ooooo o10ddddd mmmmmaaa DDDDDDDD
-//	G == 3 -> immediate -> 000ooooo o11ddddd iiiiiiii iiiiiiii
+//  G = (op >> 21) & 3;
+//  G == 0 -> register  -> 000ooooo o00ddddd 00000000 000sssss
+//  G == 1 -> direct    -> 000ooooo o01ddddd DDDDDDDD DDDDDDDD
+//  G == 2 -> indirect  -> 000ooooo o10ddddd mmmmmaaa DDDDDDDD
+//  G == 3 -> immediate -> 000ooooo o11ddddd iiiiiiii iiiiiiii
 //
 // for instructions 0x040-0x7f
-//	T = (op >> 21) & 3;                       (src1)   (src2)
-//	T == 0 -> reg reg   -> 001ooooo o00ddddd 000sssss 000SSSSS
-//	T == 1 -> ind reg	-> 001ooooo o01ddddd mmmmmaaa 000SSSSS
-//	T == 2 -> reg ind	-> 001ooooo o10ddddd 000sssss MMMMMAAA
-//	T == 3 -> ind ind	-> 001ooooo o11ddddd mmmmmaaa MMMMMAAA
+//  T = (op >> 21) & 3;                       (src1)   (src2)
+//  T == 0 -> reg reg   -> 001ooooo o00ddddd 000sssss 000SSSSS
+//  T == 1 -> ind reg   -> 001ooooo o01ddddd mmmmmaaa 000SSSSS
+//  T == 2 -> reg ind   -> 001ooooo o10ddddd 000sssss MMMMMAAA
+//  T == 3 -> ind ind   -> 001ooooo o11ddddd mmmmmaaa MMMMMAAA
 //
 // for instructions 0x100-0x1ff
-//	10ooooPP dDsssSSS mmmmmaaa MMMMMAAA
-//	10ooooPP dDsssSSS 111rrrrr 111RRRRR
+//  10ooooPP dDsssSSS mmmmmaaa MMMMMAAA
+//  10ooooPP dDsssSSS 111rrrrr 111RRRRR
 //
 // conditional branches
-//	xxxxxxBa aaDccccc 00000000 000sssss
-//	xxxxxxBa aaDccccc iiiiiiii iiiiiiii
-//		D=0(standard) or 1(delayed)
-//		B=0(register) or 1(immediate)
+//  xxxxxxBa aaDccccc 00000000 000sssss
+//  xxxxxxBa aaDccccc iiiiiiii iiiiiiii
+//      D=0(standard) or 1(delayed)
+//      B=0(register) or 1(immediate)
 //
 // status register
-//	31-14 = 0
-//	13 = GIE
-//	12 = CC
-//	11 = CE
-//	10 = CF
-//	9 = 0
-//	8 = RM
-//	7 = OVM
-//	6 = LUF (latched FP underflow)
-//	5 = LV (latched overflow)
-//	4 = UF (FP underflow)
-//	3 = N
-//	2 = Z
-//	1 = V
-//	0 = C
+//  31-14 = 0
+//  13 = GIE
+//  12 = CC
+//  11 = CE
+//  10 = CF
+//  9 = 0
+//  8 = RM
+//  7 = OVM
+//  6 = LUF (latched FP underflow)
+//  5 = LV (latched overflow)
+//  4 = UF (FP underflow)
+//  3 = N
+//  2 = Z
+//  1 = V
+//  0 = C
 //
 // conditions:
-//	0 = U (unconditional)
-//	1 = LO (C)
-//	2 = LS (C | Z)
-//	3 = HI (~C & ~Z)
-//	4 = HS (~C)
-//	5 = EQ (Z)
-//	6 = NE (~Z)
-//	7 = LT (N)
-//	8 = LE (N | Z)
-//	9 = GT (~N & ~Z)
-//	10 = GE (~N)
-//	12 = NV (~V)
-//	13 = V (V)
-//	14 = NUF (~UF)
-//	15 = UF (UF)
-//	16 = NLV (~LV)
-//	17 = LV (LV)
-//	18 = NLUF (~LUF)
-//	19 = LUF (LUF)
-//	20 = ZUF (Z | UF)
+//  0 = U (unconditional)
+//  1 = LO (C)
+//  2 = LS (C | Z)
+//  3 = HI (~C & ~Z)
+//  4 = HS (~C)
+//  5 = EQ (Z)
+//  6 = NE (~Z)
+//  7 = LT (N)
+//  8 = LE (N | Z)
+//  9 = GT (~N & ~Z)
+//  10 = GE (~N)
+//  12 = NV (~V)
+//  13 = V (V)
+//  14 = NUF (~UF)
+//  15 = UF (UF)
+//  16 = NLV (~LV)
+//  17 = LV (LV)
+//  18 = NLUF (~LUF)
+//  19 = LUF (LUF)
+//  20 = ZUF (Z | UF)
 
 void append_indirect(UINT8 ma, INT8 disp, char *buffer)
 {

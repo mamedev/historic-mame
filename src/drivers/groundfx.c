@@ -1,64 +1,64 @@
 /***************************************************************************
 
-	Ground Effects / Super Ground FX					(c) 1993 Taito
+    Ground Effects / Super Ground FX                    (c) 1993 Taito
 
-	Driver by Bryan McPhail & David Graves.
+    Driver by Bryan McPhail & David Graves.
 
-	Board Info:
+    Board Info:
 
-	K1100744A
-	J1100316A
-	Sticker - K11J0744A
-	------------------------------------------------------------------------------------------------
-	| 2018  2088        43256      43256   MC68EC020RP25   DIP-SW (8) COM20020  SLIDE-SW  LAN-IN   |           Connector G        
-	| 2018  2088        D51-21     D51-22              D51-14                                      |           -----------        
-	| 2018  2088        43256      43256               (PAL16L8)                                   |       Parts    |   Solder   
-	|                                                  D51-15              ADC0809        LAN-OUT  |       ------------------    
-	| 2018              D51-23     D51-24              (PAL16L8)                                   |        GND    1 A   GND     
-	|                                                  D51-16-1                          JP4       |        GND    2 B   GND     
-	| 2018  TC0570SPC                                  (PAL16L8)            EEPROM.164   1-2       |        +12    3 C   +12     
-	| 2018                                                                               2-3       |         +5    4 D   +5      
-	|                                                                 TC0510NIO          2-3     --|         +5    5 E   +5      
-	|    D51-13       D51-03                                                             2-3     |           +5    6 F   +5      
-	|                 D51-04                             43256                           1-2     |                 7 H           
-	|    TC0470LIN    D51-05                                                             1-2     --|        +13    8 J   +13     
-	|                 D51-06                             43256   TC0650FCA               1-2       |        +13    9 K   +13     
-	|                 D51-07                                                             2-3       |      SPK_R+  10 L  SPK_R-   
-	|    TC0580PIV              43256                    43256      2018                 2-3       |      SPK_L+  11 M  SPK_L-   
-	|                           43256     D51-17                                                   |   SPK_REAR-  12 N  SPK_REAR-
-	| 514256          TC0480SCP           (PAL16L8)                                                |              13 P           
-	| 514256                                                                                      G|         RED  14 R  GREEN    
-	| 514256                              D51-10                                                   |        BLUE  15 S  SYNC     
-	| 514256   D51-09                     D51-11          TC0620SCC                                |       V-GND  16 T           
-	| 514256   D51-08                     D51012                                                   |      METER1  17 U  METER2   
-	| 514256          43256                                                                        |    LOCKOUT1  18 V  LOCKOUT2 
-	|          MB8421                                        43256                                 |              19 W           
-	| D51-18   MB8421             ENSONIC                                                        --|       COIN1  20 X  COIN2    
-	| (PAL20L8)       D51-29      OTISR2                     43256      MB87078                  |       SERVICE  21 Y  TEST     
-	|                         D51-01                                                             |                22 Z           
-	| D51-19          43256           ENSONIC     ENSONIC                                        --|    SHIFT UP  23 a  BRAKE    
-	| (PAL20L8)               D51-02  SUPER GLU   ESP-R6    TC511664    TL074  TL074               |   HANDLE VR  24 b  ACCEL VR 
-	|                 D51-30                                                                       |    SHIFT DN  25 c           
-	| MC68000P12F16MHz                                                  TDA1543 TDA1543            |              26 d           
-	|                 40MHz    16MHz  30.476MHz    MC68681                                         |         GND  27 e  GND      
-	| D51-20                                                                                       |         GND  28 f  GND      
-	| (PAL20L8)                                                                                    |
-	------------------------------------------------------------------------------------------------
+    K1100744A
+    J1100316A
+    Sticker - K11J0744A
+    ------------------------------------------------------------------------------------------------
+    | 2018  2088        43256      43256   MC68EC020RP25   DIP-SW (8) COM20020  SLIDE-SW  LAN-IN   |           Connector G
+    | 2018  2088        D51-21     D51-22              D51-14                                      |           -----------
+    | 2018  2088        43256      43256               (PAL16L8)                                   |       Parts    |   Solder
+    |                                                  D51-15              ADC0809        LAN-OUT  |       ------------------
+    | 2018              D51-23     D51-24              (PAL16L8)                                   |        GND    1 A   GND
+    |                                                  D51-16-1                          JP4       |        GND    2 B   GND
+    | 2018  TC0570SPC                                  (PAL16L8)            EEPROM.164   1-2       |        +12    3 C   +12
+    | 2018                                                                               2-3       |         +5    4 D   +5
+    |                                                                 TC0510NIO          2-3     --|         +5    5 E   +5
+    |    D51-13       D51-03                                                             2-3     |           +5    6 F   +5
+    |                 D51-04                             43256                           1-2     |                 7 H
+    |    TC0470LIN    D51-05                                                             1-2     --|        +13    8 J   +13
+    |                 D51-06                             43256   TC0650FCA               1-2       |        +13    9 K   +13
+    |                 D51-07                                                             2-3       |      SPK_R+  10 L  SPK_R-
+    |    TC0580PIV              43256                    43256      2018                 2-3       |      SPK_L+  11 M  SPK_L-
+    |                           43256     D51-17                                                   |   SPK_REAR-  12 N  SPK_REAR-
+    | 514256          TC0480SCP           (PAL16L8)                                                |              13 P
+    | 514256                                                                                      G|         RED  14 R  GREEN
+    | 514256                              D51-10                                                   |        BLUE  15 S  SYNC
+    | 514256   D51-09                     D51-11          TC0620SCC                                |       V-GND  16 T
+    | 514256   D51-08                     D51012                                                   |      METER1  17 U  METER2
+    | 514256          43256                                                                        |    LOCKOUT1  18 V  LOCKOUT2
+    |          MB8421                                        43256                                 |              19 W
+    | D51-18   MB8421             ENSONIC                                                        --|       COIN1  20 X  COIN2
+    | (PAL20L8)       D51-29      OTISR2                     43256      MB87078                  |       SERVICE  21 Y  TEST
+    |                         D51-01                                                             |                22 Z
+    | D51-19          43256           ENSONIC     ENSONIC                                        --|    SHIFT UP  23 a  BRAKE
+    | (PAL20L8)               D51-02  SUPER GLU   ESP-R6    TC511664    TL074  TL074               |   HANDLE VR  24 b  ACCEL VR
+    |                 D51-30                                                                       |    SHIFT DN  25 c
+    | MC68000P12F16MHz                                                  TDA1543 TDA1543            |              26 d
+    |                 40MHz    16MHz  30.476MHz    MC68681                                         |         GND  27 e  GND
+    | D51-20                                                                                       |         GND  28 f  GND
+    | (PAL20L8)                                                                                    |
+    ------------------------------------------------------------------------------------------------
 
 
-	Ground Effects combines the sprite system used in Taito Z games with
-	the TC0480SCP tilemap chip plus some features from the Taito F3 system.
-	It has an extra tilemap chip which is a dead ringer for the TC0100SCN
-	(check the inits), like Under Fire.
+    Ground Effects combines the sprite system used in Taito Z games with
+    the TC0480SCP tilemap chip plus some features from the Taito F3 system.
+    It has an extra tilemap chip which is a dead ringer for the TC0100SCN
+    (check the inits), like Under Fire.
 
-	Ground Effects is effectively a 30Hz game - though the vblank interrupts
-	still come in at 60Hz, the game uses a hardware frame counter to limit
-	itself to 30Hz (it only updates things like the video registers every
-	other vblank).  There isn't enough cpu power in a 16MHz 68020 to run 
-	this game at 60Hz.
+    Ground Effects is effectively a 30Hz game - though the vblank interrupts
+    still come in at 60Hz, the game uses a hardware frame counter to limit
+    itself to 30Hz (it only updates things like the video registers every
+    other vblank).  There isn't enough cpu power in a 16MHz 68020 to run
+    this game at 60Hz.
 
-	Ground Effects has a network mode - probably uses IRQ 6 and the unknown
-	ports at 0xc00000.
+    Ground Effects has a network mode - probably uses IRQ 6 and the unknown
+    ports at 0xc00000.
 
 ***************************************************************************/
 
@@ -90,7 +90,7 @@ extern UINT16 groundfx_rotate_ctrl[8];
 static data32_t *groundfx_ram;
 
 /***********************************************************
-				COLOR RAM
+                COLOR RAM
 
 Extract a standard version of this
 ("taito_8bpg_palette_word_w"?) to Taitoic.c ?
@@ -113,7 +113,7 @@ static WRITE32_HANDLER( color_ram_w )
 
 
 /***********************************************************
-				INTERRUPTS
+                INTERRUPTS
 ***********************************************************/
 
 static void groundfx_interrupt5(int x)
@@ -123,7 +123,7 @@ static void groundfx_interrupt5(int x)
 
 
 /**********************************************************
-				EPROM
+                EPROM
 **********************************************************/
 
 static data8_t default_eeprom[128]=
@@ -164,7 +164,7 @@ static NVRAM_HANDLER( groundfx )
 
 
 /**********************************************************
-			GAME INPUTS
+            GAME INPUTS
 **********************************************************/
 
 
@@ -231,7 +231,7 @@ static READ32_HANDLER( groundfx_adc_r )
 static WRITE32_HANDLER( groundfx_adc_w )
 {
 	/* One interrupt per input port (4 per frame, though only 2 used).
-		1000 cycle delay is arbitrary */
+        1000 cycle delay is arbitrary */
 	timer_set(TIME_IN_CYCLES(1000,0),0, groundfx_interrupt5);
 }
 
@@ -253,21 +253,21 @@ static WRITE32_HANDLER( rotate_control_w )	/* only a guess that it's rotation */
 static WRITE32_HANDLER( motor_control_w )
 {
 /*
-	Standard value poked is 0x00910200 (we ignore lsb and msb
-	which seem to be always zero)
+    Standard value poked is 0x00910200 (we ignore lsb and msb
+    which seem to be always zero)
 
-	0x0, 0x8000 and 0x9100 are written at startup
+    0x0, 0x8000 and 0x9100 are written at startup
 
-	Two bits are written in test mode to this middle word
-	to test gun vibration:
+    Two bits are written in test mode to this middle word
+    to test gun vibration:
 
-	........ .x......   P1 gun vibration
-	........ x.......   P2 gun vibration
+    ........ .x......   P1 gun vibration
+    ........ x.......   P2 gun vibration
 */
 }
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( groundfx_readmem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -330,7 +330,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS (dips in eprom)
+             INPUT PORTS (dips in eprom)
 ***********************************************************/
 
 INPUT_PORTS_START( groundfx )
@@ -379,7 +379,7 @@ INPUT_PORTS_START( groundfx )
 INPUT_PORTS_END
 
 /**********************************************************
-				GFX DECODING
+                GFX DECODING
 **********************************************************/
 
 static struct GfxLayout tile16x16_layout =
@@ -426,7 +426,7 @@ static struct GfxDecodeInfo groundfx_gfxdecodeinfo[] =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_INIT( groundfx )
@@ -492,7 +492,7 @@ static MACHINE_DRIVER_START( groundfx )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( groundfx )
@@ -532,17 +532,17 @@ ROM_START( groundfx )
 ROM_END
 
 
-static READ32_HANDLER( irq_speedup_r_groundfx )					
-{																
-	int ptr;													
-	if ((activecpu_get_sp()&2)==0) ptr=groundfx_ram[(activecpu_get_sp()&0x1ffff)/4];	
-	else ptr=(((groundfx_ram[(activecpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | 
-	(groundfx_ram[((activecpu_get_sp()&0x1ffff)/4)+1]>>16); 
+static READ32_HANDLER( irq_speedup_r_groundfx )
+{
+	int ptr;
+	if ((activecpu_get_sp()&2)==0) ptr=groundfx_ram[(activecpu_get_sp()&0x1ffff)/4];
+	else ptr=(((groundfx_ram[(activecpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) |
+	(groundfx_ram[((activecpu_get_sp()&0x1ffff)/4)+1]>>16);
 
-	if (activecpu_get_pc()==0x1ece && ptr==0x1b9a)					
-		cpu_spinuntil_int();			
-	
-	return groundfx_ram[0xb574/4];									
+	if (activecpu_get_pc()==0x1ece && ptr==0x1b9a)
+		cpu_spinuntil_int();
+
+	return groundfx_ram[0xb574/4];
 }
 
 

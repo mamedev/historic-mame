@@ -354,7 +354,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static void irqhandler(int irq)
 {
 	logerror("YM3526 firing an IRQ\n");
-//	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//  cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -384,7 +384,7 @@ static MACHINE_DRIVER_START( missb2 )
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
 	/* audio CPU */	// 3 MHz
 	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
+//  MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 	MDRV_CPU_VBLANK_INT(missb2_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -453,7 +453,7 @@ static DRIVER_INIT( missb2 )
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000,
-	   so I have to copy it there because bank switching wouldn't catch it */
+       so I have to copy it there because bank switching wouldn't catch it */
 	memcpy(ROM+0x08000,ROM+0x10000,0x4000);
 
 }

@@ -155,7 +155,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( ultraman_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)					/* ROM */
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_RAM)					/* RAM */
-//	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)					/* ??? */
+//  AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)                 /* ??? */
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(OKIM6295_data_0_w)			/* M6295 */
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)	/* YM2151 */
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)		/* YM2151 */
@@ -163,7 +163,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ultraman_writeport_sound, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)						/* ??? */
+//  AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)                     /* ??? */
 ADDRESS_MAP_END
 
 

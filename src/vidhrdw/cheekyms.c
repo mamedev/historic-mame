@@ -134,7 +134,7 @@ VIDEO_UPDATE( cheekyms )
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the sprites first, because they're supposed to appear below
-	   the characters */
+       the characters */
 	for (offs = 0; offs < sizeof(sprites)/sizeof(sprites[0]); offs += 4)
 	{
 		int v1, sx, sy, col, code;

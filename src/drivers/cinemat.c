@@ -1,31 +1,31 @@
 /***************************************************************************
 
-	Cinematronics vector hardware
+    Cinematronics vector hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
-	Retrocade Alliance
+    Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
+    Retrocade Alliance
 
-	Games supported:
-		* Space Wars
-		* Barrier
-		* Star Hawk
-		* Star Castle
-		* Tailgunner
-		* Rip Off
-		* Speed Freak
-		* Sundance
-		* Warrior
-		* Armor Attack
-		* Solar Quest
-		* Demon
-		* War of the Worlds
-		* Boxing Bugs
-		* QB-3
+    Games supported:
+        * Space Wars
+        * Barrier
+        * Star Hawk
+        * Star Castle
+        * Tailgunner
+        * Rip Off
+        * Speed Freak
+        * Sundance
+        * Warrior
+        * Armor Attack
+        * Solar Quest
+        * Demon
+        * War of the Worlds
+        * Boxing Bugs
+        * QB-3
 
-	To do:
-		* look into bad sample latency
+    To do:
+        * look into bad sample latency
 
 ***************************************************************************/
 
@@ -51,7 +51,7 @@ static UINT8 qb3_ram_bank;
 
 /*************************************
  *
- *	General machine init
+ *  General machine init
  *
  *************************************/
 
@@ -70,7 +70,7 @@ MACHINE_INIT( cinemat )
 
 /*************************************
  *
- *	General input handlers
+ *  General input handlers
  *
  *************************************/
 
@@ -90,7 +90,7 @@ static READ8_HANDLER( switches_r )
 
 /*************************************
  *
- *	Coin handlers
+ *  Coin handlers
  *
  *************************************/
 
@@ -114,7 +114,7 @@ static READ8_HANDLER( coin_input_r )
 
 /*************************************
  *
- *	General output handlers
+ *  General output handlers
  *
  *************************************/
 
@@ -137,7 +137,7 @@ static WRITE8_HANDLER( mux_select_w )
 
 /*************************************
  *
- *	Joystick inputs
+ *  Joystick inputs
  *
  *************************************/
 
@@ -155,7 +155,7 @@ static UINT8 joystick_read(void)
 
 /*************************************
  *
- *	Speed Freak inputs
+ *  Speed Freak inputs
  *
  *************************************/
 
@@ -195,7 +195,7 @@ static READ8_HANDLER( speedfrk_gear_r )
 
 /*************************************
  *
- *	Sundance inputs
+ *  Sundance inputs
  *
  *************************************/
 
@@ -240,7 +240,7 @@ static READ8_HANDLER( sundance_inputs_r )
 
 /*************************************
  *
- *	Boxing Bugs inputs
+ *  Boxing Bugs inputs
  *
  *************************************/
 
@@ -255,7 +255,7 @@ static READ8_HANDLER( boxingb_dial_r )
 
 /*************************************
  *
- *	QB3 inputs & RAM banking
+ *  QB3 inputs & RAM banking
  *
  *************************************/
 
@@ -276,7 +276,7 @@ static WRITE8_HANDLER( qb3_ram_bank_w )
 
 /*************************************
  *
- *	Video overlays
+ *  Video overlays
  *
  *************************************/
 
@@ -308,7 +308,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -357,7 +357,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -920,7 +920,7 @@ INPUT_PORTS_START( demon )
 	PORT_DIPSETTING(    0x30, "1" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "10" )
-/*	PORT_DIPSETTING(    0x20, "1" )*/
+/*  PORT_DIPSETTING(    0x20, "1" )*/
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -977,7 +977,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	CPU configurations
+ *  CPU configurations
  *
  *************************************/
 
@@ -997,7 +997,7 @@ static struct CCPUConfig config_jmi =
 
 /*************************************
  *
- *	Core machine drivers
+ *  Core machine drivers
  *
  *************************************/
 
@@ -1065,7 +1065,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Game-specific machine drivers
+ *  Game-specific machine drivers
  *
  *************************************/
 
@@ -1181,7 +1181,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1452,7 +1452,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1506,7 +1506,7 @@ static DRIVER_INIT( qb3 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

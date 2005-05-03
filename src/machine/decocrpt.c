@@ -22,22 +22,22 @@ Luckily, only two different encryption tables have been found so far.
 
 Table 1 (custom chip 56/141)
 ------------------------
-Mutant Fighter			1991
-Rohga Armour Attack		1991
-Captain America			1991
-Tumble Pop				1991
-Diet GoGo				1993
-Double Wing				1993
-Night Slashers			1993
-Joe & Mac Return		1994
-Ganbare! Gonta!! 2		1995
-Chain Reaction			1994
+Mutant Fighter          1991
+Rohga Armour Attack     1991
+Captain America         1991
+Tumble Pop              1991
+Diet GoGo               1993
+Double Wing             1993
+Night Slashers          1993
+Joe & Mac Return        1994
+Ganbare! Gonta!! 2      1995
+Chain Reaction          1994
 
 Table 2 (custom chip 74)
 ------------------------
-Wizard's Fire			1992
-Funky Jet				1992
-Sotsugyo Shousho		1995
+Wizard's Fire           1992
+Funky Jet               1992
+Sotsugyo Shousho        1995
 
 *******************************************************************************/
 
@@ -598,7 +598,7 @@ static const UINT8 deco74_swap_table[0x800] =
 	4,7,2,2,1,3,4,4,1,7,0,2,5,4,7,3,7,6,1,5,6,0,7,4,1,1,5,2,2,6,7,2,
 };
 
-static void deco_decrypt(int mem_region,const UINT8 *xor_table,const UINT16 *address_table,const UINT8 *swap_table)
+static void deco_decrypt(int mem_region,const UINT8 *xor_table,const UINT16 *address_table,const UINT8 *swap_table,int remap_only)
 {
 	data16_t *rom = (data16_t *)memory_region(mem_region);
 	int len = memory_region_length(mem_region)/2;
@@ -622,7 +622,10 @@ static void deco_decrypt(int mem_region,const UINT8 *xor_table,const UINT16 *add
 			int addr = (i & ~0x7ff) | address_table[i & 0x7ff];
 			int pat = swap_table[i & 0x7ff];
 
-			rom[i] = BITSWAP16(buffer[addr] ^ xor_masks[xor_table[addr & 0x7ff]],
+			if (remap_only)
+				rom[i] = buffer[addr];
+			else
+				rom[i] = BITSWAP16(buffer[addr] ^ xor_masks[xor_table[addr & 0x7ff]],
 							swap_patterns[pat][0],
 							swap_patterns[pat][1],
 							swap_patterns[pat][2],
@@ -655,10 +658,16 @@ static void deco_decrypt(int mem_region,const UINT8 *xor_table,const UINT16 *add
 
 void deco56_decrypt(int region)
 {
-	deco_decrypt(region,deco56_xor_table,deco56_address_table,deco56_swap_table);
+	deco_decrypt(region,deco56_xor_table,deco56_address_table,deco56_swap_table, 0);
 }
 
 void deco74_decrypt(int region)
 {
-	deco_decrypt(region,deco74_xor_table,deco74_address_table,deco74_swap_table);
+	deco_decrypt(region,deco74_xor_table,deco74_address_table,deco74_swap_table, 0);
+}
+
+void deco56_remap(int region)
+{
+	// Apply address remap, but not XOR/shift
+	deco_decrypt(region,deco56_xor_table,deco56_address_table,deco56_swap_table, 1);
 }

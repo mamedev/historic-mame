@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari I, Robot hardware
+    Atari I, Robot hardware
 
 ***************************************************************************/
 
@@ -232,7 +232,7 @@ READ8_HANDLER( irobot_control_r )
 }
 
 /*  we allow irmb_running and irvg_running to appear running before clearing
-	them to simulate the mathbox and vector generator running in real time */
+    them to simulate the mathbox and vector generator running in real time */
 READ8_HANDLER( irobot_status_r )
 {
 	int d=0;
@@ -257,7 +257,7 @@ READ8_HANDLER( irobot_status_r )
 
 /***********************************************************************
 
-	I-Robot Mathbox
+    I-Robot Mathbox
 
     Based on 4 2901 chips slice processors connected to form a 16-bit ALU
 

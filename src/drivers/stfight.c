@@ -1,5 +1,5 @@
 /*****************************          (by Mark McDougall)
- *** STREET FIGHT hardware ***	This has been adapted from the excellent
+ *** STREET FIGHT hardware ***  This has been adapted from the excellent
  *****************************  Psychic 5 description (by Roberto Ventura)
 
 Street Fight (c) Seibu Kaihatsu (1986)

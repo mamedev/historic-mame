@@ -55,19 +55,19 @@ int main(int ac, char **av)
     }
 
 	printf("/************************************************ \n");
-	printf(" * Result table for Z8000 DAB instruction         \n");
-	printf(" *                                                \n");
+    printf(" * Result table for Z8000 DAB instruction         \n");
+    printf(" *                                                \n");
     printf(" * bits    description                            \n");
-	printf(" * ---------------------------------------------- \n");
-	printf(" * 0..7    destination value                      \n");
-	printf(" * 8       carry flag before                      \n");
-	printf(" * 9       half carry flag before                 \n");
-	printf(" * 10      D flag (0 add/adc, 1 sub/sbc)          \n");
-	printf(" *                                                \n");
+    printf(" * ---------------------------------------------- \n");
+    printf(" * 0..7    destination value                      \n");
+    printf(" * 8       carry flag before                      \n");
+    printf(" * 9       half carry flag before                 \n");
+    printf(" * 10      D flag (0 add/adc, 1 sub/sbc)          \n");
+    printf(" *                                                \n");
     printf(" * result  description                            \n");
-	printf(" * ---------------------------------------------- \n");
-	printf(" * 0..7    result value                           \n");
-	printf(" * 8       carry flag after                       \n");
+    printf(" * ---------------------------------------------- \n");
+    printf(" * 0..7    result value                           \n");
+    printf(" * 8       carry flag after                       \n");
     printf(" ************************************************/\n");
     printf("static UINT16 Z8000_dab[0x800] = {\n");
     for (i = 0; i < 0x800; i++) {

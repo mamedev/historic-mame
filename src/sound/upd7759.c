@@ -1,99 +1,99 @@
 /************************************************************
 
-	NEC UPD7759 ADPCM Speech Processor
-	by: Juergen Buchmueller, Mike Balfour, Howie Cohen,
-		Olivier Galibert, and Aaron Giles
+    NEC UPD7759 ADPCM Speech Processor
+    by: Juergen Buchmueller, Mike Balfour, Howie Cohen,
+        Olivier Galibert, and Aaron Giles
 
 *************************************************************
 
-	Description:
+    Description:
 
-	The UPD7759 is a speech processing LSI that utilizes ADPCM to produce
-	speech or other sampled sounds.  It can directly address up to 1Mbit
-	(128k) of external data ROM, or the host CPU can control the speech
-	data transfer.  The UPD7759 is usually hooked up to a 640 kHz clock and
-	has one 8-bit input port, a start pin, a busy pin, and a clock output.
+    The UPD7759 is a speech processing LSI that utilizes ADPCM to produce
+    speech or other sampled sounds.  It can directly address up to 1Mbit
+    (128k) of external data ROM, or the host CPU can control the speech
+    data transfer.  The UPD7759 is usually hooked up to a 640 kHz clock and
+    has one 8-bit input port, a start pin, a busy pin, and a clock output.
 
-	The chip is composed of 3 parts:
-	- a clock divider
-	- a rom-reading engine
-	- an adpcm engine
-	- a 4-to-9 bit adpcm converter
+    The chip is composed of 3 parts:
+    - a clock divider
+    - a rom-reading engine
+    - an adpcm engine
+    - a 4-to-9 bit adpcm converter
 
-	The clock divider takes the base 640KHz clock and divides it first
-	by a fixed divisor of 4 and then by a value between 9 and 32.  The
-	result gives a clock between 5KHz and 17.78KHz.  It's probably
-	possible, but not recommended and certainly out-of-spec, to push the
-	chip harder by reducing the divider.
+    The clock divider takes the base 640KHz clock and divides it first
+    by a fixed divisor of 4 and then by a value between 9 and 32.  The
+    result gives a clock between 5KHz and 17.78KHz.  It's probably
+    possible, but not recommended and certainly out-of-spec, to push the
+    chip harder by reducing the divider.
 
-	The rom-reading engine reads one byte every two divided clock cycles.
-	The factor two comes from the fact that a byte has two nibbles, i.e.
-	two samples.
+    The rom-reading engine reads one byte every two divided clock cycles.
+    The factor two comes from the fact that a byte has two nibbles, i.e.
+    two samples.
 
-	The apdcm engine takes bytes and interprets them as commands:
+    The apdcm engine takes bytes and interprets them as commands:
 
-		00000000                    sample end
-		00dddddd                    silence
-		01ffffff                    send the 256 following nibbles to the converter
-		10ffffff nnnnnnnn           send the n+1 following nibbles to the converter
-		11---rrr --ffffff nnnnnnnn  send the n+1 following nibbles to the converter, and repeat r+1 times
+        00000000                    sample end
+        00dddddd                    silence
+        01ffffff                    send the 256 following nibbles to the converter
+        10ffffff nnnnnnnn           send the n+1 following nibbles to the converter
+        11---rrr --ffffff nnnnnnnn  send the n+1 following nibbles to the converter, and repeat r+1 times
 
-	"ffffff" is sent to the clock divider to be the base clock for the
-	adpcm converter, i.e., it's the sampling rate.  If the number of
-	nibbles to send is odd the last nibble is ignored.  The commands
-	are always 8-bit aligned.
+    "ffffff" is sent to the clock divider to be the base clock for the
+    adpcm converter, i.e., it's the sampling rate.  If the number of
+    nibbles to send is odd the last nibble is ignored.  The commands
+    are always 8-bit aligned.
 
-	"dddddd" is the duration of the silence.  The base speed is unknown,
-	1ms sounds reasonably.  It does not seem linked to the adpcm clock
-	speed because there often is a silence before any 01 or 10 command.
+    "dddddd" is the duration of the silence.  The base speed is unknown,
+    1ms sounds reasonably.  It does not seem linked to the adpcm clock
+    speed because there often is a silence before any 01 or 10 command.
 
-	The adpcm converter converts nibbles into 9-bit DAC values.  It has
-	an internal state of 4 bits that's used in conjunction with the
-	nibble to lookup which of the 256 possible steps is used.  Then
-	the state is changed according to the nibble value.  Essentially, the
-	higher the state, the bigger the steps are, and using big steps
-	increase the state.  Conversely, using small steps reduces the state.
-	This allows the engine to be a little more adaptative than a
-	classical ADPCM algorithm.
+    The adpcm converter converts nibbles into 9-bit DAC values.  It has
+    an internal state of 4 bits that's used in conjunction with the
+    nibble to lookup which of the 256 possible steps is used.  Then
+    the state is changed according to the nibble value.  Essentially, the
+    higher the state, the bigger the steps are, and using big steps
+    increase the state.  Conversely, using small steps reduces the state.
+    This allows the engine to be a little more adaptative than a
+    classical ADPCM algorithm.
 
-	The UPD7759 can run in two modes, master (also known as standalone)
-	and slave.  The mode is selected through the "md" pin.  No known
-	game changes modes on the fly, and it's unsure if that's even
-	possible to do.
-
-
-	Master mode:
-
-	The output of the rom reader is directly connected to the adpcm
-	converter.  The controlling cpu only sends a sample number and the
-	7759 plays it.
-
-	The sample rom has a header at the beginning of the form
-
-		nn 5a a5 69 55
-
-	where nn is the number of the last sample.  This is then followed by
-	a vector of 2-bytes msb-first values, one per sample.  Multiplying
-	them by two gives the sample start offset in the rom.  A 0x00 marks
-	the end of each sample.
-
-	It seems that the UPD7759 reads at least part of the rom header at
-	startup.  Games doing rom banking are careful to reset the chip after
-	each change.
+    The UPD7759 can run in two modes, master (also known as standalone)
+    and slave.  The mode is selected through the "md" pin.  No known
+    game changes modes on the fly, and it's unsure if that's even
+    possible to do.
 
 
-	Slave mode:
+    Master mode:
 
-	The rom reader is completely disconnected.  The input port is
-	connected directly to the adpcm engine.  The first write to the input
-	port activates the engine (the value itself is ignored).  The engine
-	activates the clock output and waits for commands.  The clock speed
-	is unknown, but its probably a divider of 640KHz.  We use 40KHz here
-	because 80KHz crashes altbeast.  The chip probably has an internal
-	fifo to the converter and suspends the clock when the fifo is full.
-	The first command is always 0xFF.  A second 0xFF marks the end of the
-	sample and the engine stops.  OTOH, there is a 0x00 at the end too.
-	Go figure.
+    The output of the rom reader is directly connected to the adpcm
+    converter.  The controlling cpu only sends a sample number and the
+    7759 plays it.
+
+    The sample rom has a header at the beginning of the form
+
+        nn 5a a5 69 55
+
+    where nn is the number of the last sample.  This is then followed by
+    a vector of 2-bytes msb-first values, one per sample.  Multiplying
+    them by two gives the sample start offset in the rom.  A 0x00 marks
+    the end of each sample.
+
+    It seems that the UPD7759 reads at least part of the rom header at
+    startup.  Games doing rom banking are careful to reset the chip after
+    each change.
+
+
+    Slave mode:
+
+    The rom reader is completely disconnected.  The input port is
+    connected directly to the adpcm engine.  The first write to the input
+    port activates the engine (the value itself is ignored).  The engine
+    activates the clock output and waits for commands.  The clock speed
+    is unknown, but its probably a divider of 640KHz.  We use 40KHz here
+    because 80KHz crashes altbeast.  The chip probably has an internal
+    fifo to the converter and suspends the clock when the fifo is full.
+    The first command is always 0xFF.  A second 0xFF marks the end of the
+    sample and the engine stops.  OTOH, there is a 0x00 at the end too.
+    Go figure.
 
 *************************************************************/
 
@@ -113,7 +113,7 @@
 
 /************************************************************
 
-	Constants
+    Constants
 
 *************************************************************/
 
@@ -144,7 +144,7 @@ enum
 
 /************************************************************
 
-	Type definitions
+    Type definitions
 
 *************************************************************/
 
@@ -194,7 +194,7 @@ struct upd7759_chip
 
 /************************************************************
 
-	Local variables
+    Local variables
 
 *************************************************************/
 
@@ -224,7 +224,7 @@ const static int upd7759_state[16] = { -1, -1, 0, 0, 1, 2, 2, 3, -1, -1, 0, 0, 1
 
 /************************************************************
 
-	ADPCM sample updater
+    ADPCM sample updater
 
 *************************************************************/
 
@@ -233,7 +233,7 @@ INLINE void update_adpcm(struct upd7759_chip *chip, int data)
 	/* update the sample and the state */
 	chip->sample += upd7759_step[chip->adpcm_state][data];
 	chip->adpcm_state += upd7759_state[data];
-	
+
 	/* clamp the state to 0..15 */
 	if (chip->adpcm_state < 0)
 		chip->adpcm_state = 0;
@@ -245,7 +245,7 @@ INLINE void update_adpcm(struct upd7759_chip *chip, int data)
 
 /************************************************************
 
-	Master chip state machine
+    Master chip state machine
 
 *************************************************************/
 
@@ -257,31 +257,31 @@ static void advance_state(struct upd7759_chip *chip)
 		case STATE_IDLE:
 			chip->clocks_left = 4;
 			break;
-		
+
 		/* drop DRQ state: update to the intended state */
 		case STATE_DROP_DRQ:
 			chip->drq = 0;
-			
+
 			chip->clocks_left = chip->post_drq_clocks;
 			chip->state = chip->post_drq_state;
 			break;
-		
+
 		/* Start state: we begin here as soon as a sample is triggered */
 		case STATE_START:
 			chip->req_sample = chip->rom ? chip->fifo_in : 0x10;
 			if (DEBUG_STATES) DEBUG_METHOD("UPD7759: req_sample = %02X\n", chip->req_sample);
 
 			/* 35+ cycles after we get here, the /DRQ goes low
-			 *     (first byte (number of samples in ROM) should be sent in response)
-			 *
-			 * (35 is the minimum number of cycles I found during heavy tests.
-			 * Depending on the state the chip was in just before the /MD was set to 0 (reset, standby
-			 * or just-finished-playing-previous-sample) this number can range from 35 up to ~24000).
-			 * It also varies slightly from test to test, but not much - a few cycles at most.) */
+             *     (first byte (number of samples in ROM) should be sent in response)
+             *
+             * (35 is the minimum number of cycles I found during heavy tests.
+             * Depending on the state the chip was in just before the /MD was set to 0 (reset, standby
+             * or just-finished-playing-previous-sample) this number can range from 35 up to ~24000).
+             * It also varies slightly from test to test, but not much - a few cycles at most.) */
 			chip->clocks_left = 70;	/* 35 - breaks cotton */
 			chip->state = STATE_FIRST_REQ;
 			break;
-	
+
 		/* First request state: issue a request for the first byte */
 		/* The expected response will be the index of the last sample */
 		case STATE_FIRST_REQ:
@@ -292,7 +292,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->clocks_left = 44;
 			chip->state = STATE_LAST_SAMPLE;
 			break;
-	
+
 		/* Last sample state: latch the last sample value and issue a request for the second byte */
 		/* The second byte read will be just a dummy */
 		case STATE_LAST_SAMPLE:
@@ -304,7 +304,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->clocks_left = 28;	/* 28 - breaks cotton */
 			chip->state = (chip->req_sample > chip->last_sample) ? STATE_IDLE : STATE_DUMMY1;
 			break;
-		
+
 		/* First dummy state: ignore any data here and issue a request for the third byte */
 		/* The expected response will be the MSB of the sample address */
 		case STATE_DUMMY1:
@@ -315,7 +315,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->clocks_left = 32;
 			chip->state = STATE_ADDR_MSB;
 			break;
-		
+
 		/* Address MSB state: latch the MSB of the sample address and issue a request for the fourth byte */
 		/* The expected response will be the LSB of the sample address */
 		case STATE_ADDR_MSB:
@@ -327,7 +327,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->clocks_left = 44;
 			chip->state = STATE_ADDR_LSB;
 			break;
-		
+
 		/* Address LSB state: latch the LSB of the sample address and issue a request for the fifth byte */
 		/* The expected response will be just a dummy */
 		case STATE_ADDR_LSB:
@@ -339,7 +339,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->clocks_left = 36;
 			chip->state = STATE_DUMMY2;
 			break;
-		
+
 		/* Second dummy state: ignore any data here and issue a request for the the sixth byte */
 		/* The expected response will be the first block header */
 		case STATE_DUMMY2:
@@ -355,7 +355,7 @@ static void advance_state(struct upd7759_chip *chip)
 
 		/* Block header state: latch the header and issue a request for the first byte afterwards */
 		case STATE_BLOCK_HEADER:
-		
+
 			/* if we're in a repeat loop, reset the offset to the repeat point and decrement the count */
 			if (chip->repeat_count)
 			{
@@ -365,7 +365,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->block_header = chip->rom ? chip->rom[chip->offset++ & 0x1ffff] : chip->fifo_in;
 			if (DEBUG_STATES) DEBUG_METHOD("UPD7759: header (@%05X) = %02X, requesting next byte\n", chip->offset, chip->block_header);
 			chip->drq = 1;
-	
+
 			/* our next step depends on the top two bits */
 			switch (chip->block_header & 0xc0)
 			{
@@ -375,20 +375,20 @@ static void advance_state(struct upd7759_chip *chip)
 					chip->sample = 0;
 					chip->adpcm_state = 0;
 					break;
-					
+
 				case 0x40:	/* 256 nibbles */
 					chip->sample_rate = (chip->block_header & 0x3f) + 1;
 					chip->nibbles_left = 256;
 					chip->clocks_left = 36;	/* just a guess */
 					chip->state = STATE_NIBBLE_MSN;
 					break;
-				
+
 				case 0x80:	/* n nibbles */
 					chip->sample_rate = (chip->block_header & 0x3f) + 1;
 					chip->clocks_left = 36;	/* just a guess */
 					chip->state = STATE_NIBBLE_COUNT;
 					break;
-				
+
 				case 0xc0:	/* repeat loop */
 					chip->repeat_count = (chip->block_header & 7) + 1;
 					chip->repeat_offset = chip->offset;
@@ -396,12 +396,12 @@ static void advance_state(struct upd7759_chip *chip)
 					chip->state = STATE_BLOCK_HEADER;
 					break;
 			}
-			
+
 			/* set a flag when we get the first non-zero header */
 			if (chip->block_header != 0)
 				chip->first_valid_header = 1;
 			break;
-		
+
 		/* Nibble count state: latch the number of nibbles to play and request another byte */
 		/* The expected response will be the first data byte */
 		case STATE_NIBBLE_COUNT:
@@ -420,7 +420,7 @@ static void advance_state(struct upd7759_chip *chip)
 			chip->adpcm_data = chip->rom ? chip->rom[chip->offset++ & 0x1ffff] : chip->fifo_in;
 			update_adpcm(chip, chip->adpcm_data >> 4);
 			chip->drq = 1;
-			
+
 			/* we stay in this state until the time for this sample is complete */
 			chip->clocks_left = chip->sample_rate * 4;
 			if (--chip->nibbles_left == 0)
@@ -428,11 +428,11 @@ static void advance_state(struct upd7759_chip *chip)
 			else
 				chip->state = STATE_NIBBLE_LSN;
 			break;
-			
+
 		/* LSN state: process the lower nibble */
 		case STATE_NIBBLE_LSN:
 			update_adpcm(chip, chip->adpcm_data & 15);
-			
+
 			/* we stay in this state until the time for this sample is complete */
 			chip->clocks_left = chip->sample_rate * 4;
 			if (--chip->nibbles_left == 0)
@@ -441,7 +441,7 @@ static void advance_state(struct upd7759_chip *chip)
 				chip->state = STATE_NIBBLE_MSN;
 			break;
 	}
-	
+
 	/* if there's a DRQ, fudge the state */
 	if (chip->drq)
 	{
@@ -456,7 +456,7 @@ static void advance_state(struct upd7759_chip *chip)
 
 /************************************************************
 
-	Stream callback
+    Stream callback
 
 *************************************************************/
 
@@ -476,21 +476,21 @@ static void upd7759_update(void *param, stream_sample_t **inputs, stream_sample_
 			/* store the current sample */
 			*buffer++ = sample << 7;
 			samples--;
-			
+
 			/* advance by the number of clocks/output sample */
 			pos += step;
-			
+
 			/* handle clocks, but only in standalone mode */
 			while (chip->rom && pos >= FRAC_ONE)
 			{
 				int clocks_this_time = pos >> FRAC_BITS;
 				if (clocks_this_time > clocks_left)
 					clocks_this_time = clocks_left;
-					
+
 				/* clock once */
 				pos -= clocks_this_time * FRAC_ONE;
 				clocks_left -= clocks_this_time;
-				
+
 				/* if we're out of clocks, time to handle the next state */
 				if (clocks_left == 0)
 				{
@@ -509,7 +509,7 @@ static void upd7759_update(void *param, stream_sample_t **inputs, stream_sample_
 	/* if we got out early, just zap the rest of the buffer */
 	if (samples != 0)
 		memset(buffer, 0, samples * sizeof(*buffer));
-	
+
 	/* flush the state back */
 	chip->clocks_left = clocks_left;
 	chip->pos = pos;
@@ -519,7 +519,7 @@ static void upd7759_update(void *param, stream_sample_t **inputs, stream_sample_
 
 /************************************************************
 
-	DRQ callback
+    DRQ callback
 
 *************************************************************/
 
@@ -527,18 +527,18 @@ static void upd7759_slave_update(void *param)
 {
 	struct upd7759_chip *chip = param;
 	UINT8 olddrq = chip->drq;
-	
+
 	/* update the stream */
 	stream_update(chip->channel, 0);
-	
+
 	/* advance the state */
 	advance_state(chip);
-	
+
 	/* if the DRQ changed, update it */
 	logerror("slave_update: DRQ %d->%d\n", olddrq, chip->drq);
 	if (olddrq != chip->drq && chip->drqcallback)
 		(*chip->drqcallback)(chip->drq);
-	
+
 	/* set a timer to go off when that is done */
 	if (chip->state != STATE_IDLE)
 		timer_adjust_ptr(chip->timer, chip->clocks_left * chip->clock_period, chip, 0);
@@ -548,7 +548,7 @@ static void upd7759_slave_update(void *param)
 
 /************************************************************
 
-	Sound startup
+    Sound startup
 
 *************************************************************/
 
@@ -573,7 +573,7 @@ static void upd7759_reset(struct upd7759_chip *chip)
 	chip->adpcm_state        = 0;
 	chip->adpcm_data         = 0;
 	chip->sample             = 0;
-	
+
 	/* turn off any timer */
 	if (chip->timer)
 		timer_adjust_ptr(chip->timer, TIME_NEVER, chip, 0);
@@ -584,32 +584,32 @@ static void *upd7759_start(int sndindex, int clock, const void *config)
 {
 	const struct upd7759_interface *intf = config;
 	struct upd7759_chip *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
 	/* allocate a stream channel */
 	chip->channel = stream_create(0, 1, Machine->sample_rate, chip, upd7759_update);
-	
+
 	/* compute the stepping rate based on the chip's clock speed */
 	if (Machine->sample_rate != 0)
 		chip->step = ((INT64)clock * (INT64)FRAC_ONE) / Machine->sample_rate;
-	
+
 	/* compute the clock period */
 	chip->clock_period = TIME_IN_HZ(clock);
-	
+
 	/* set the intial state */
 	chip->state = STATE_IDLE;
-	
+
 	/* compute the ROM base or allocate a timer */
 	if (intf->region != 0)
 		chip->rom = chip->rombase = memory_region(intf->region);
 	else
 		chip->timer = timer_alloc_ptr(upd7759_slave_update);
-	
+
 	/* set the DRQ callback */
 	chip->drqcallback = intf->drqcallback;
-	
+
 	/* assume /RESET and /START are both high */
 	chip->reset = 1;
 	chip->start = 1;
@@ -624,7 +624,7 @@ static void *upd7759_start(int sndindex, int clock, const void *config)
 
 /************************************************************
 
-	I/O handlers
+    I/O handlers
 
 *************************************************************/
 
@@ -637,7 +637,7 @@ void upd7759_reset_w(int which, UINT8 data)
 
 	/* update the stream first */
 	stream_update(chip->channel, 0);
-	
+
 	/* on the falling edge, reset everything */
 	if (oldreset && !chip->reset)
 		upd7759_reset(chip);
@@ -652,14 +652,14 @@ void upd7759_start_w(int which, UINT8 data)
 
 	logerror("upd7759_start_w: %d->%d\n", oldstart, chip->start);
 
-	/* update the stream first */	
+	/* update the stream first */
 	stream_update(chip->channel, 0);
 
 	/* on the rising edge, if we're idle, start going, but not if we're held in reset */
 	if (chip->state == STATE_IDLE && !oldstart && chip->start && chip->reset)
 	{
 		chip->state = STATE_START;
-		
+
 		/* for slave mode, start the timer going */
 		if (chip->timer)
 			timer_adjust_ptr(chip->timer, TIME_NOW, chip, 0);
@@ -693,7 +693,7 @@ void upd7759_set_bank_base(int which, UINT32 base)
 
 /************************************************************
 
-	Convenience handlers
+    Convenience handlers
 
 *************************************************************/
 

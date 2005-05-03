@@ -14,14 +14,14 @@ f000-feff RAM
 ff00-ffff Sprites (64 total: four bytes to one)
 
 in:
-00	DSW ONE
-10	DSW TWO
-20	IN1  JOY 1 STATUS & COIN & START
-30	IN2  JOY 2 STATUS & TILT
+00  DSW ONE
+10  DSW TWO
+20  IN1  JOY 1 STATUS & COIN & START
+30  IN2  JOY 2 STATUS & TILT
 
 out:
-40	????
-50	????  maybe VSYNC ????
+40  ????
+50  ????  maybe VSYNC ????
 
  ======================================================================
 
@@ -31,15 +31,15 @@ dc00-dfff shared with MAIN CPU
 f000-dfff RAM
 
 out:
-00	YM3812 control
-01	YM3812 data
-20	??
+00  YM3812 control
+01  YM3812 data
+20  ??
 
  ======================================================================
 
   Colors :   2 bits for foreground characters =  4 colors * 16 palettes
-	     4 bits for background tiles      = 16 colors * 16 palettes
-	     4 bits for sprites	       = 16 colors * 16 palettes
+         4 bits for background tiles      = 16 colors * 16 palettes
+         4 bits for sprites        = 16 colors * 16 palettes
 
 ***************************************************************************/
 
@@ -141,7 +141,7 @@ INPUT_PORTS_START( speedbal )
 	PORT_DIPSETTING(    0x04, "100000 300000" )
 	PORT_DIPSETTING(    0x01, "200000 1M" )
 	PORT_DIPSETTING(    0x05, "200000" )
-/*	PORT_DIPSETTING(    0x02, "200000" ) */
+/*  PORT_DIPSETTING(    0x02, "200000" ) */
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )

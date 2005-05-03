@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Raster Elite Tickee Tickats hardware
+    Raster Elite Tickee Tickats hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Tickee Tickats
-		* Ghost Hunter
-		* Tuts Tomb
+    Games supported:
+        * Tickee Tickats
+        * Ghost Hunter
+        * Tuts Tomb
 
-	Known bugs:
-		* (Tickee) gun sometimes misfires
+    Known bugs:
+        * (Tickee) gun sometimes misfires
 
 ***************************************************************************/
 
@@ -30,7 +30,7 @@ static data16_t *code_rom;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -48,7 +48,7 @@ static MACHINE_INIT( tickee )
 
 /*************************************
  *
- *	Miscellaneous control bits
+ *  Miscellaneous control bits
  *
  *************************************/
 
@@ -66,7 +66,7 @@ static READ8_HANDLER( port2_r )
 
 /*************************************
  *
- *	Miscellaneous control bits
+ *  Miscellaneous control bits
  *
  *************************************/
 
@@ -76,10 +76,10 @@ static WRITE16_HANDLER( tickee_control_w )
 
 	/* offsets:
 
-		2 = palette flash (0 normally, 1 when trigger is pressed)
-		3 = ticket motor (bit 3 = 0 for left motor, bit 2 = 0 for right motor)
-		6 = lamps? (changing all the time)
-	*/
+        2 = palette flash (0 normally, 1 when trigger is pressed)
+        3 = ticket motor (bit 3 = 0 for left motor, bit 2 = 0 for right motor)
+        6 = lamps? (changing all the time)
+    */
 
 	COMBINE_DATA(&tickee_control[offset]);
 
@@ -97,7 +97,7 @@ static WRITE16_HANDLER( tickee_control_w )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -157,7 +157,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -282,7 +282,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -302,7 +302,7 @@ static struct AY8910interface ay8910_interface_2 =
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -320,7 +320,7 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -453,7 +453,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -490,7 +490,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -504,7 +504,7 @@ static DRIVER_INIT( tickee )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

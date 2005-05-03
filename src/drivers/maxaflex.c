@@ -1,15 +1,15 @@
 /******************************************************************************
-	Exidy Max-A-Flex driver
+    Exidy Max-A-Flex driver
 
-	by Mariusz Wojcieszek
+    by Mariusz Wojcieszek
 
-	Based on Atari 400/800 MESS Driver by Juergen Buchmueller
+    Based on Atari 400/800 MESS Driver by Juergen Buchmueller
 
-	TODO:
-	- add DAC on supervisor board (AUDIO port)
-	- add AUDMUTE port - muting all sounds on system
-	- fix LCD digits display controlling
-	- change lamps and time counter display to use artwork
+    TODO:
+    - add DAC on supervisor board (AUDIO port)
+    - add AUDMUTE port - muting all sounds on system
+    - fix LCD digits display controlling
+    - change lamps and time counter display to use artwork
 
 ******************************************************************************/
 
@@ -32,14 +32,14 @@ static signed char digitA, digitB, digitC;
 static unsigned char lamps;
 
 /* Port A:
-	0	(in)  DSW
-	1	(in)  DSW
-	2	(in)  DSW
-	3	(in)  DSW
-	4	(in)  coin
-	5	(in)  START button
-	6	-
-	7	(out) AUDIO
+    0   (in)  DSW
+    1   (in)  DSW
+    2   (in)  DSW
+    3   (in)  DSW
+    4   (in)  coin
+    5   (in)  START button
+    6   -
+    7   (out) AUDIO
 */
 
 READ8_HANDLER( mcu_portA_r )
@@ -54,14 +54,14 @@ WRITE8_HANDLER( mcu_portA_w )
 }
 
 /* Port B:
-	0	(out)	Select 7-segment display to control by writing port C
-	1	(out)
-	2	(out)	clear coin interupt
-	3	(out)	STRKEY - line connected to keyboard input in 600XL, seems to be not used
-	4	(out)	RES600 - reset 600
-	5	(out)	AUDMUTE - mutes audio
-	6	(out)	latch for lamps
-	7	(out)	TOFF - enables/disables user controls
+    0   (out)   Select 7-segment display to control by writing port C
+    1   (out)
+    2   (out)   clear coin interupt
+    3   (out)   STRKEY - line connected to keyboard input in 600XL, seems to be not used
+    4   (out)   RES600 - reset 600
+    5   (out)   AUDMUTE - mutes audio
+    6   (out)   latch for lamps
+    7   (out)   TOFF - enables/disables user controls
 */
 
 READ8_HANDLER( mcu_portB_r )
@@ -97,10 +97,10 @@ WRITE8_HANDLER( mcu_portB_w )
 }
 
 /* Port C:
-	0	(out)	lamp COIN
-	1	(out)	lamp PLAY
-	2	(out)	lamp START
-	3	(out)	lamp OVER */
+    0   (out)   lamp COIN
+    1   (out)   lamp PLAY
+    2   (out)   lamp START
+    3   (out)   lamp OVER */
 READ8_HANDLER( mcu_portC_r )
 {
 	return (portC_in & ~ddrC) | (portC_out & ddrC);
@@ -225,7 +225,7 @@ static MACHINE_INIT(maxaflex)
 VIDEO_UPDATE(maxaflex)
 {
 	static char text[100];
-	
+
 	video_update_atari(bitmap,cliprect);
 
 	if ( digitA != -1 )
@@ -284,8 +284,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mcu_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
 	AM_RANGE(0x0000, 0x0000) AM_READ( mcu_portA_r ) AM_WRITE( mcu_portA_w )
-	AM_RANGE(0x0001, 0x0001) AM_READ( mcu_portB_r ) AM_WRITE( mcu_portB_w ) 
-	AM_RANGE(0x0002, 0x0002) AM_READ( mcu_portC_r ) AM_WRITE( mcu_portC_w ) 
+	AM_RANGE(0x0001, 0x0001) AM_READ( mcu_portB_r ) AM_WRITE( mcu_portB_w )
+	AM_RANGE(0x0002, 0x0002) AM_READ( mcu_portC_r ) AM_WRITE( mcu_portC_w )
 	AM_RANGE(0x0004, 0x0004) AM_READ( mcu_ddr_r ) AM_WRITE( mcu_portA_ddr_w )
 	AM_RANGE(0x0005, 0x0005) AM_READ( mcu_ddr_r ) AM_WRITE( mcu_portB_ddr_w )
 	AM_RANGE(0x0006, 0x0006) AM_READ( mcu_ddr_r ) AM_WRITE( mcu_portC_ddr_w )
@@ -486,7 +486,7 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_CPU_VBLANK_INT(a800xl_interrupt, TOTAL_LINES_60HZ)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_CPU_ADD(M68705, 3579545)	
+	MDRV_CPU_ADD(M68705, 3579545)
 	MDRV_CPU_PROGRAM_MAP(mcu_mem,0)
 	MDRV_CPU_PERIODIC_INT( supervisor_board_check_coin_input,10 )
 
@@ -504,7 +504,7 @@ static MACHINE_DRIVER_START( a600xl )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(POKEY, FREQ_17_EXACT)
 	MDRV_SOUND_CONFIG(pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

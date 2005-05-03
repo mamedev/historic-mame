@@ -1,9 +1,9 @@
 /******************************************************************************
 
-	Nintendo 2C03B PPU emulation.
+    Nintendo 2C03B PPU emulation.
 
-	Written by Ernesto Corvi.
-	This code is heavily based on Brad Oliver's MESS implementation.
+    Written by Ernesto Corvi.
+    This code is heavily based on Brad Oliver's MESS implementation.
 
 ******************************************************************************/
 #ifndef __PPU_2C03B_H__

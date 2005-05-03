@@ -106,19 +106,19 @@ Abnormalities:
 
  ------>    #4100  #f880    #1200  #7880    #4300  #f880    #e380  #f880
  -flip->    #1500  #7f00    #e8c0  #8580??  #1300  #7f00    #bb00  #7f00
-									  |
-									  |
-									f880 = 1111 1000 1000 = 1f1 scroll
-									7f00 - 0111 1111 0000 = 0fe scroll
-									7880 = 0111 1000 1000 = 0f1 scroll
-									8580 = 1000 0101 1000 = 10b scroll
+                                      |
+                                      |
+                                    f880 = 1111 1000 1000 = 1f1 scroll
+                                    7f00 - 0111 1111 0000 = 0fe scroll
+                                    7880 = 0111 1000 1000 = 0f1 scroll
+                                    8580 = 1000 0101 1000 = 10b scroll
 
  So a snapshot of the scroll equations become (from the functions below):
-	1f1 - (102 - 10f) == 1fe   star background
-	0Fe - (00d - 10f) == 200   star background (flipscreen)
-	0f1 - (102 - 10f) == 0fe   red  background
-	10B - (00d - 10f) == 20d   red  background (flipscreen) wrong!
-	10B - (00d - 002) == 100   red  background (flipscreen) should equate to this (100)
+    1f1 - (102 - 10f) == 1fe   star background
+    0Fe - (00d - 10f) == 200   star background (flipscreen)
+    0f1 - (102 - 10f) == 0fe   red  background
+    10B - (00d - 10f) == 20d   red  background (flipscreen) wrong!
+    10B - (00d - 002) == 100   red  background (flipscreen) should equate to this (100)
 
 
 ***************************************************************************/
@@ -891,7 +891,7 @@ void toaplan1_log_vram(void)
 			tattr[3] = pf3_tilevram16[tile_voffs];
 			tchar[4] = pf4_tilevram16[tile_voffs + 1];
 			tattr[4] = pf4_tilevram16[tile_voffs];
-//			logerror("PF3 offs:%04x   Tile:%04x  Attr:%04x\n", tile_voffs, tchar, tattr);
+//          logerror("PF3 offs:%04x   Tile:%04x  Attr:%04x\n", tile_voffs, tchar, tattr);
 			logerror("$(%04x)  Attr-Tile PF1:%04x-%04x  PF2:%04x-%04x  PF3:%04x-%04x  PF4:%04x-%04x\n", tile_voffs,
 									tattr[1], tchar[1],  tattr[2], tchar[2],
 									tattr[3], tchar[3],  tattr[4], tchar[4]);
@@ -916,7 +916,7 @@ void toaplan1_log_vram(void)
 	}
 	if ( code_pressed(KEYCODE_B) )
 	{
-//		while (code_pressed(KEYCODE_B)) ;
+//      while (code_pressed(KEYCODE_B)) ;
 		scrollx_offs1 += 0x1; scrollx_offs2 += 0x1; scrollx_offs3 += 0x1; scrollx_offs4 += 0x1;
 		logerror("Scrollx_offs now = %08x\n",scrollx_offs4);
 		tilemap_set_scrollx(pf1_tilemap,0,(pf1_scrollx >> 7) - (tiles_offsetx - scrollx_offs1));
@@ -926,7 +926,7 @@ void toaplan1_log_vram(void)
 	}
 	if ( code_pressed(KEYCODE_V) )
 	{
-//		while (code_pressed(KEYCODE_V)) ;
+//      while (code_pressed(KEYCODE_V)) ;
 		scrollx_offs1 -= 0x1; scrollx_offs2 -= 0x1; scrollx_offs3 -= 0x1; scrollx_offs4 -= 0x1;
 		logerror("Scrollx_offs now = %08x\n",scrollx_offs4);
 		tilemap_set_scrollx(pf1_tilemap,0,(pf1_scrollx >> 7) - (tiles_offsetx - scrollx_offs1));
@@ -936,7 +936,7 @@ void toaplan1_log_vram(void)
 	}
 	if ( code_pressed(KEYCODE_C) )
 	{
-//		while (code_pressed(KEYCODE_C)) ;
+//      while (code_pressed(KEYCODE_C)) ;
 		scrolly_offs += 0x1;
 		logerror("Scrolly_offs now = %08x\n",scrolly_offs);
 		tilemap_set_scrolly(pf1_tilemap,0,(pf1_scrolly >> 7) - (tiles_offsety - scrolly_offs));
@@ -946,7 +946,7 @@ void toaplan1_log_vram(void)
 	}
 	if ( code_pressed(KEYCODE_X) )
 	{
-//		while (code_pressed(KEYCODE_X)) ;
+//      while (code_pressed(KEYCODE_X)) ;
 		scrolly_offs -= 0x1;
 		logerror("Scrolly_offs now = %08x\n",scrolly_offs);
 		tilemap_set_scrolly(pf1_tilemap,0,(pf1_scrolly >> 7) - (tiles_offsety - scrolly_offs));
@@ -995,7 +995,7 @@ void toaplan1_log_vram(void)
 
 
 /***************************************************************************
-	Mark the sprite priority used list.
+    Mark the sprite priority used list.
 ***************************************************************************/
 
 static void mark_toaplan1_sprite_priority(void)
@@ -1037,7 +1037,7 @@ static void mark_rallybik_sprite_priority(void)
 
 
 /***************************************************************************
-	Sprite Handlers
+    Sprite Handlers
 ***************************************************************************/
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
@@ -1141,7 +1141,7 @@ static void draw_rallybik_sprites( struct mame_bitmap *bitmap, const struct rect
 
 
 /***************************************************************************
-	Draw the game screen in the given mame_bitmap.
+    Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
 VIDEO_UPDATE( rallybik )
@@ -1230,9 +1230,9 @@ VIDEO_UPDATE( demonwld )
 
 
 /****************************************************************************
-	Spriteram is always 1 frame ahead, suggesting spriteram buffering.
-	There are no CPU output registers that control this so we
-	assume it happens automatically every frame, at the end of vblank
+    Spriteram is always 1 frame ahead, suggesting spriteram buffering.
+    There are no CPU output registers that control this so we
+    assume it happens automatically every frame, at the end of vblank
 ****************************************************************************/
 
 VIDEO_EOF( rallybik )

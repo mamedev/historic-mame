@@ -121,23 +121,23 @@ Notes:
 
 Driver by Carlos A. Lozano & Rob Rosenbrock & Phil Stroffolino
 Updates by Bryan McPhail, 12/12/2004:
-	Fixed NMI & FIRQ handling according to schematics.
-	Fixed clock speeds.
-	Implemented GFX priority register/priority PROM
+    Fixed NMI & FIRQ handling according to schematics.
+    Fixed clock speeds.
+    Implemented GFX priority register/priority PROM
 
-	Xain has a semi-bug that shows up in MAME - at 0xa26b there is a tight
-	loop that checks for the VBLANK input bit going high.  However at the
-	start of a game the VBLANK interrupt routine doesn't return before
-	the VBLANK input bit goes low (VBLANK is held high for 8 scanlines only).
-	This would cause the emulation to hang, but it would work on the real
-	board because the instruction currently being decoded would finish
-	before the NMI was taken, so the VBLANK bit and NMI are not actually
-	exactly synchronised in practice.  This is currently hacked in MAME
-	by raising the VBLANK bit a scanline early.
+    Xain has a semi-bug that shows up in MAME - at 0xa26b there is a tight
+    loop that checks for the VBLANK input bit going high.  However at the
+    start of a game the VBLANK interrupt routine doesn't return before
+    the VBLANK input bit goes low (VBLANK is held high for 8 scanlines only).
+    This would cause the emulation to hang, but it would work on the real
+    board because the instruction currently being decoded would finish
+    before the NMI was taken, so the VBLANK bit and NMI are not actually
+    exactly synchronised in practice.  This is currently hacked in MAME
+    by raising the VBLANK bit a scanline early.
 
 
 TODO:
-	- 68705 microcontroller not dumped, patched out.
+    - 68705 microcontroller not dumped, patched out.
 
 ***************************************************************************/
 
@@ -233,13 +233,13 @@ static WRITE8_HANDLER( xain_irqB_clear_w )
 
 static READ8_HANDLER( xain_68705_r )
 {
-//	logerror("read 68705\n");
+//  logerror("read 68705\n");
 	return 0x4d;	/* fake P5 checksum test pass */
 }
 
 static WRITE8_HANDLER( xain_68705_w )
 {
-//	logerror("write %02x to 68705\n",data);
+//  logerror("write %02x to 68705\n",data);
 }
 
 static READ8_HANDLER( xain_input_port_4_r )
@@ -275,7 +275,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3a03, 0x3a03) AM_READ(input_port_3_r)
 	AM_RANGE(0x3a04, 0x3a04) AM_READ(xain_68705_r)	/* from the 68705 */
 	AM_RANGE(0x3a05, 0x3a05) AM_READ(xain_input_port_4_r)
-//	AM_RANGE(0x3a06, 0x3a06) AM_READ(MRA8_NOP)	/* ?? read (and discarded) on startup. Maybe reset the 68705 */
+//  AM_RANGE(0x3a06, 0x3a06) AM_READ(MRA8_NOP)  /* ?? read (and discarded) on startup. Maybe reset the 68705 */
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
@@ -483,8 +483,8 @@ static MACHINE_DRIVER_START( xsleena )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
-//	MDRV_CPU_ADD(M68705, 300000)	/* Confirmed 3MHz */
-//	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+//  MDRV_CPU_ADD(M68705, 300000)    /* Confirmed 3MHz */
+//  MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_INTERLEAVE(100)
@@ -538,8 +538,8 @@ ROM_START( xsleena )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, CRC(a5318cb8) SHA1(35fb28c5598e39f22552bb036ae356b78422f080) )
 
-//	ROM_REGION( 0x800, REGION_CPU4, 0 )
-//	ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
+//  ROM_REGION( 0x800, REGION_CPU4, 0 )
+//  ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, CRC(83c00dd8) SHA1(8e9b19281039b63072270c7a63d9fb30cda570fd) ) /* chars */
@@ -643,8 +643,8 @@ ROM_START( solarwar )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, CRC(a5318cb8) SHA1(35fb28c5598e39f22552bb036ae356b78422f080) )
 
-//	ROM_REGION( 0x800, REGION_CPU4, 0 )
-//	ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
+//  ROM_REGION( 0x800, REGION_CPU4, 0 )
+//  ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, CRC(83c00dd8) SHA1(8e9b19281039b63072270c7a63d9fb30cda570fd) ) /* chars */

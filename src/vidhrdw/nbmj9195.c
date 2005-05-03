@@ -1,9 +1,9 @@
 /******************************************************************************
 
-	Video Hardware for Nichibutsu Mahjong series.
+    Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
-	Special thanks to Tatsuyuki Satoh
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
+    Special thanks to Tatsuyuki Satoh
 
 ******************************************************************************/
 
@@ -127,9 +127,9 @@ void nbmj9195_blitter_w(int vram, int offset, int data)
 		case 0x00:	blitter_direction_x[vram] = (data & 0x01) ? 1 : 0;
 					blitter_direction_y[vram] = (data & 0x02) ? 1 : 0;
 					nbmj9195_clutmode[vram] = (data & 0x04) ? 1 : 0;
-				//	if (data & 0x08) usrintf_showmessage("Unknown GFX Flag!! (0x08)");
+				//  if (data & 0x08) usrintf_showmessage("Unknown GFX Flag!! (0x08)");
 					nbmj9195_transparency[vram] = (data & 0x10) ? 1 : 0;
-				//	if (data & 0x20) usrintf_showmessage("Unknown GFX Flag!! (0x20)");
+				//  if (data & 0x20) usrintf_showmessage("Unknown GFX Flag!! (0x20)");
 					nbmj9195_flipscreen[vram] = (data & 0x40) ? 0 : 1;
 					nbmj9195_dispflag[vram] = (data & 0x80) ? 1 : 0;
 					nbmj9195_vramflip(vram);

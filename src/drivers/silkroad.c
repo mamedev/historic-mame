@@ -44,59 +44,59 @@ DIPs   : 8 position (x2)
 Typed from sheet supplied with PCB (* = Default)
 
 DIP SWA
-			1	2	3	4	5	6	7	8
+            1   2   3   4   5   6   7   8
 --------------------------------------------------------------------------------------
-Lives		1	OFF
-		2*	ON
+Lives       1   OFF
+        2*  ON
 
-Special		OFF		OFF
-Effect		ON*		ON
+Special     OFF     OFF
+Effect      ON*     ON
 
-Position 3-5	Not used		OFF	OFF	OFF
+Position 3-5    Not used        OFF OFF OFF
 
-Difficulty	1						OFF	OFF	ON
-		2						ON	OFF	ON
-		3						OFF	ON	ON
-		4*						ON	ON	ON
-		5						OFF	OFF	OFF
-		6						ON	OFF	OFF
-		7						OFF	ON	OFF
-		8						ON	ON	OFF
+Difficulty  1                       OFF OFF ON
+        2                       ON  OFF ON
+        3                       OFF ON  ON
+        4*                      ON  ON  ON
+        5                       OFF OFF OFF
+        6                       ON  OFF OFF
+        7                       OFF ON  OFF
+        8                       ON  ON  OFF
 --------------------------------------------------------------------------------------
 
 
 DIP SWB
-			1	2	3	4	5	6	7	8
+            1   2   3   4   5   6   7   8
 --------------------------------------------------------------------------------------
 Position 1    Not Used  OFF
 
-Freeplay	No*		OFF
-		Yes		ON
+Freeplay    No*     OFF
+        Yes     ON
 
-Position 3	Not Used		OFF
+Position 3  Not Used        OFF
 
-Demo Sound	No				OFF
-		Yes*				ON
+Demo Sound  No              OFF
+        Yes*                ON
 
-Chute Type	Single*					OFF
-		Multi					ON
+Chute Type  Single*                 OFF
+        Multi                   ON
 
-Coin/Credit	1 Coin 1 Credit*				OFF	OFF	OFF
-		1 Coin 2 Credit					ON	OFF	OFF
-		1 Coin 3 Credit					OFF	ON	OFF
-		1 Coin 4 Credit					ON	ON	OFF
-		2 Coin 1 Credit					OFF	OFF	ON
-		3 Coin 1 Credit					ON	OFF	ON
-		4 Coin 1 Credit					OFF	ON	ON
-		5 Coin 1 Credit					ON	ON	ON
+Coin/Credit 1 Coin 1 Credit*                OFF OFF OFF
+        1 Coin 2 Credit                 ON  OFF OFF
+        1 Coin 3 Credit                 OFF ON  OFF
+        1 Coin 4 Credit                 ON  ON  OFF
+        2 Coin 1 Credit                 OFF OFF ON
+        3 Coin 1 Credit                 ON  OFF ON
+        4 Coin 1 Credit                 OFF ON  ON
+        5 Coin 1 Credit                 ON  ON  ON
 --------------------------------------------------------------------------------------
 
 ROMs:
-ROM00.BIN	32 pin 4M Mask, read as 27C4001			OKI Samples
-ROM01.BIN	MX27C2000					Sound Program
+ROM00.BIN   32 pin 4M Mask, read as 27C4001         OKI Samples
+ROM01.BIN   MX27C2000                   Sound Program
 
-ROM02.BIN	42 pin 8M Mask, read as uPD27C8000        \
-ROM03.BIN	42 pin 8M Mask, read as uPD27C8000        /	Main Program
+ROM02.BIN   42 pin 8M Mask, read as uPD27C8000        \
+ROM03.BIN   42 pin 8M Mask, read as uPD27C8000        / Main Program
 
 ROM04.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM \
 ROM05.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
@@ -104,7 +104,7 @@ ROM06.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
 ROM07.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
 ROM08.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
 ROM09.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
-ROM10.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |	GFX
+ROM10.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |    GFX
 ROM11.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
 ROM12.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
 ROM13.BIN       MX29F1610, SOP44 Surface Mounted Mask ROM  |
@@ -252,17 +252,17 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	// C00038 appears to be the coin counter, bit 0 is pulsed when a coin is inserted
 /*
-	AM_RANGE(0xC00034, 0xC00037) AM_WRITE(MWA32_NOP)
+    AM_RANGE(0xC00034, 0xC00037) AM_WRITE(MWA32_NOP)
 */
 
 	AM_RANGE(0xC0010c, 0xC00123) AM_WRITE(MWA32_RAM) AM_BASE(&silkroad_regs)
 /*
-	AM_RANGE(0xC0010C, 0xC0010f) AM_WRITE(MWA32_NOP) // 0
-	AM_RANGE(0xC00110, 0xC00113) AM_WRITE(MWA32_NOP) // 1
-	AM_RANGE(0xC00114, 0xC00117) AM_WRITE(MWA32_NOP) // 2
+    AM_RANGE(0xC0010C, 0xC0010f) AM_WRITE(MWA32_NOP) // 0
+    AM_RANGE(0xC00110, 0xC00113) AM_WRITE(MWA32_NOP) // 1
+    AM_RANGE(0xC00114, 0xC00117) AM_WRITE(MWA32_NOP) // 2
 
-	AM_RANGE(0xC0011c, 0xC0011f) AM_WRITE(MWA32_NOP) // 4
-	AM_RANGE(0xC00120, 0xC00123) AM_WRITE(MWA32_NOP) // 5
+    AM_RANGE(0xC0011c, 0xC0011f) AM_WRITE(MWA32_NOP) // 4
+    AM_RANGE(0xC00120, 0xC00123) AM_WRITE(MWA32_NOP) // 5
 */
 	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA32_RAM)
 ADDRESS_MAP_END
@@ -355,9 +355,9 @@ INPUT_PORTS_START( silkroad )
 	PORT_DIPSETTING( 0xa000, DEF_STR(1C_3C))
 	PORT_DIPSETTING( 0x8000, DEF_STR(1C_4C))
 
-//	PORT_START	/* Misc inputs */
-//	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* VBLANK ? */
-//	PORT_BIT( 0xff7f, IP_ACTIVE_LOW, IPT_UNUSED ) /* unknown / unused */
+//  PORT_START  /* Misc inputs */
+//  PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* VBLANK ? */
+//  PORT_BIT( 0xff7f, IP_ACTIVE_LOW, IPT_UNUSED ) /* unknown / unused */
 INPUT_PORTS_END
 
 
@@ -427,8 +427,8 @@ DRIVER_INIT( silkroad )
 {
 
 	/* why? rom04.bin looks like a bad dump, but it seems not since it was
-	   verified as correct... problem with the original which the gfx
-	   hardware didn't care about? */
+       verified as correct... problem with the original which the gfx
+       hardware didn't care about? */
 
 	data8_t *src = memory_region(REGION_GFX1)+0x1000000;
 	int len = 0x0200000;

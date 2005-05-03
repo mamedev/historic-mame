@@ -104,26 +104,26 @@ VIDEO_UPDATE( tutankhm )
 
 /* Juno First Blitter Hardware emulation
 
-	Juno First can blit a 16x16 graphics which comes from un-memory mapped graphics roms
+    Juno First can blit a 16x16 graphics which comes from un-memory mapped graphics roms
 
-	$8070->$8071 specifies the destination NIBBLE address
-	$8072->$8073 specifies the source NIBBLE address
+    $8070->$8071 specifies the destination NIBBLE address
+    $8072->$8073 specifies the source NIBBLE address
 
-	Depending on bit 0 of the source address either the source pixels will be copied to
-	the destination address, or a zero will be written.
-	This allows the game to quickly clear the sprites from the screen
+    Depending on bit 0 of the source address either the source pixels will be copied to
+    the destination address, or a zero will be written.
+    This allows the game to quickly clear the sprites from the screen
 
-	A lookup table is used to swap the source nibbles as they are the wrong way round in the
-	source data.
+    A lookup table is used to swap the source nibbles as they are the wrong way round in the
+    source data.
 
-	Bugs -
+    Bugs -
 
-		Currently only the even pixels will be written to. This is to speed up the blit routine
-		as it does not have to worry about shifting the source data.
-		This means that all destination X values will be rounded to even values.
-		In practice no one actaully notices this.
+        Currently only the even pixels will be written to. This is to speed up the blit routine
+        as it does not have to worry about shifting the source data.
+        This means that all destination X values will be rounded to even values.
+        In practice no one actaully notices this.
 
-		The clear works properly.
+        The clear works properly.
 */
 
 WRITE8_HANDLER( junofrst_blitter_w )

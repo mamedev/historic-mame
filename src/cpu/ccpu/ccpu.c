@@ -1,11 +1,11 @@
 /*###################################################################################################
 **
 **
-**		ccpu.c
-**		Core implementation for the portable Cinematronics CPU emulator.
+**      ccpu.c
+**      Core implementation for the portable Cinematronics CPU emulator.
 **
-**		Written by Aaron Giles
-**		Special thanks to Zonn Moore for his detailed documentation.
+**      Written by Aaron Giles
+**      Special thanks to Zonn Moore for his detailed documentation.
 **
 **
 **#################################################################################################*/
@@ -16,13 +16,13 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 typedef struct
@@ -37,7 +37,7 @@ typedef struct
     UINT16	Y;
     UINT16	T;
     UINT16 *acc;
-    
+
     UINT16	a0flag, ncflag, cmpacc, cmpval;
     UINT16	miflag, nextmiflag, nextnextmiflag;
     UINT16	drflag;
@@ -49,7 +49,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static ccpuRegs ccpu;
@@ -74,7 +74,7 @@ static UINT8 ccpu_win_layout[] =
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 #define READOP(a) 			(cpu_readop(a))
@@ -114,7 +114,7 @@ do { \
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void ccpu_get_context(void *dst)
@@ -135,7 +135,7 @@ static void ccpu_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static UINT8 read_jmi(void)
@@ -155,11 +155,11 @@ static void ccpu_init(void)
 static void ccpu_reset(void *param)
 {
 	struct CCPUConfig *config = param;
-	
+
 	/* copy input params */
 	ccpu.external_input = config->external_input ? config->external_input : read_jmi;
 	ccpu.vector_callback = config->vector_callback;
-	
+
 	/* zero registers */
 	ccpu.PC = 0;
 	ccpu.A = 0;
@@ -184,26 +184,26 @@ static void ccpu_reset(void *param)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 static int ccpu_execute(int cycles)
 {
 	ccpu_icount = cycles;
-	
+
 	while (ccpu_icount >= 0)
 	{
 		UINT16 tempval;
    		UINT8 opcode;
 
-		/* update the delayed MI flag */		
+		/* update the delayed MI flag */
 		ccpu.miflag = ccpu.nextmiflag;
 		ccpu.nextmiflag = ccpu.nextnextmiflag;
 
 		/* fetch the opcode */
 		CALL_MAME_DEBUG;
 		opcode = READOP(ccpu.PC++);
-		
+
 		switch (opcode)
 		{
 			/* LDAI */
@@ -228,14 +228,14 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, tempval);
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* A8I */
 			case 0x20:
 				tempval = READOP(ccpu.PC++);
 				STANDARD_ACC_OP(*ccpu.acc + tempval, tempval);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* A4I */
 			case 0x21:	case 0x22:	case 0x23:
 			case 0x24:	case 0x25:	case 0x26:	case 0x27:
@@ -252,7 +252,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(*ccpu.acc + (tempval ^ 0xfff) + 1, tempval);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* S4I */
 			case 0x31:	case 0x32:	case 0x33:
 			case 0x34:	case 0x35:	case 0x36:	case 0x37:
@@ -272,44 +272,44 @@ static int ccpu_execute(int cycles)
 				ccpu.J = (opcode & 0x0f) + (tempval & 0xf0) + ((tempval & 0x0f) << 8);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* T4K */
 			case 0x50:
 				ccpu.PC = (ccpu.P << 12) + ccpu.J;
 				change_pc(ccpu.PC);
 				NEXT_ACC_B(); CYCLES(4);
 				break;
-			
+
 			/* JMIB/JEHB */
 			case 0x51:
 				if ((*ccpu.external_input)()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_B(); CYCLES(2);
 				break;
-			
+
 			/* JVNB */
 			case 0x52:
 				if (TEST_DR()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_B(); CYCLES(2);
 				break;
-			
+
 			/* JLTB */
 			case 0x53:
 				if (TEST_LT()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_B(); CYCLES(2);
 				break;
-			
+
 			/* JEQB */
 			case 0x54:
 				if (TEST_EQ()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_B(); CYCLES(2);
 				break;
-			
+
 			/* JCZB */
 			case 0x55:
 				if (TEST_NC()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_B(); CYCLES(2);
 				break;
-			
+
 			/* JOSB */
 			case 0x56:
 				if (TEST_A0()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
@@ -326,37 +326,37 @@ static int ccpu_execute(int cycles)
 				ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J;
 				NEXT_ACC_A(); CYCLES(4);
 				break;
-			
+
 			/* JMI/JEH */
 			case 0x59:
 				if ((*ccpu.external_input)()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* JVN */
 			case 0x5a:
 				if (TEST_DR()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* JLT */
 			case 0x5b:
 				if (TEST_LT()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* JEQ */
 			case 0x5c:
 				if (TEST_EQ()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* JCZ */
 			case 0x5d:
 				if (TEST_NC()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* JOS */
 			case 0x5e:
 				if (TEST_A0()) { ccpu.PC = ((ccpu.PC - 1) & 0xf000) + ccpu.J; CYCLES(2); }
@@ -408,7 +408,7 @@ static int ccpu_execute(int cycles)
 					WRITEPORT(opcode & 0x07, ~*ccpu.acc & 1);
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-				
+
 			/* LDA */
 			case 0xa0:	case 0xa1:	case 0xa2:	case 0xa3:
 			case 0xa4:	case 0xa5:	case 0xa6:	case 0xa7:
@@ -419,7 +419,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, tempval);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-				
+
 			/* TST */
 			case 0xb0:	case 0xb1:	case 0xb2:	case 0xb3:
 			case 0xb4:	case 0xb5:	case 0xb6:	case 0xb7:
@@ -446,7 +446,7 @@ static int ccpu_execute(int cycles)
 				ccpu.I = RDMEM(ccpu.I) & 0xff;
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* STA */
 			case 0xd0:	case 0xd1:	case 0xd2:	case 0xd3:
 			case 0xd4:	case 0xd5:	case 0xd6:	case 0xd7:
@@ -456,16 +456,16 @@ static int ccpu_execute(int cycles)
 				WRMEM(ccpu.I, *ccpu.acc);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* DV */
 			case 0xe0:
 				{
 					INT16 stopX = (INT16)(ccpu.A << 4) >> 4;
 					INT16 stopY = (INT16)(ccpu.B << 4) >> 4;
-					
+
 					stopX = ((INT16)(stopX - ccpu.X) >> ccpu.T) + ccpu.X;
 					stopY = ((INT16)(stopY - ccpu.Y) >> ccpu.T) + ccpu.Y;
-					
+
 					(*ccpu.vector_callback)(ccpu.X, ccpu.Y, stopX, stopY, ccpu.T);
 
 					/* hack to make QB3 display semi-correctly during explosions */
@@ -474,7 +474,7 @@ static int ccpu_execute(int cycles)
 				}
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* LPAP */
 			case 0xe1:
 				ccpu.J = RDMEM(ccpu.I);
@@ -486,7 +486,7 @@ static int ccpu_execute(int cycles)
 				ccpu.I = RDMEM(ccpu.I) & 0xff;
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* LKP */
 			case 0xe2:
 			case 0xf2:
@@ -495,7 +495,7 @@ static int ccpu_execute(int cycles)
 				NEXT_ACC_A(); CYCLES(7);
 				ccpu.PC++;
 				break;
-			
+
 			/* MUL */
 			case 0xe3:
 			case 0xf3:
@@ -539,13 +539,13 @@ static int ccpu_execute(int cycles)
 				}
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* NV */
 			case 0xe4:
 			case 0xf4:
 				ccpu.T = 0;
-				while (((ccpu.A & 0xa00) == 0x000 || (ccpu.A & 0xa00) == 0xa00) && 
-					   ((ccpu.B & 0xa00) == 0x000 || (ccpu.B & 0xa00) == 0xa00) && 
+				while (((ccpu.A & 0xa00) == 0x000 || (ccpu.A & 0xa00) == 0xa00) &&
+					   ((ccpu.B & 0xa00) == 0x000 || (ccpu.B & 0xa00) == 0xa00) &&
 					   ccpu.T < 16)
 				{
 					ccpu.A = (ccpu.A << 1) & 0xfff;
@@ -555,21 +555,21 @@ static int ccpu_execute(int cycles)
 				}
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-				
+
 			/* FRM */
 			case 0xe5:
 			case 0xf5:
 				cpu_spinuntil_time(cpu_getscanlinetime(0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* STAP */
 			case 0xe6:
 			case 0xf6:
 				WRMEM(ccpu.I, *ccpu.acc);
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* CST */
 			case 0xf7:
 				watchdog_reset_w(0,0);
@@ -579,7 +579,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(*ccpu.acc + tempval, tempval);
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* SUBP */
 			case 0xe8:
 			case 0xf8:
@@ -587,7 +587,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(*ccpu.acc + (tempval ^ 0xfff) + 1, tempval);
 				NEXT_ACC_A(); CYCLES(3);
 				break;
-			
+
 			/* ANDP */
 			case 0xe9:
 			case 0xf9:
@@ -595,7 +595,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(*ccpu.acc & tempval, tempval);
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* LDAP */
 			case 0xea:
 			case 0xfa:
@@ -603,7 +603,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, tempval);
 				NEXT_ACC_A(); CYCLES(2);
 				break;
-			
+
 			/* SHR */
 			case 0xeb:
 			case 0xfb:
@@ -612,7 +612,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, 0xb0b | (opcode & 0xf0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* SHL */
 			case 0xec:
 			case 0xfc:
@@ -621,7 +621,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, 0xc0c | (opcode & 0xf0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* ASR */
 			case 0xed:
 			case 0xfd:
@@ -629,7 +629,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, 0xd0d | (opcode & 0xf0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* SHRB */
 			case 0xee:
 			case 0xfe:
@@ -644,7 +644,7 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, 0xe0e | (opcode & 0xf0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* SHLB */
 			case 0xef:
 			case 0xff:
@@ -659,23 +659,23 @@ static int ccpu_execute(int cycles)
 				STANDARD_ACC_OP(tempval, 0xf0f | (opcode & 0xf0));
 				NEXT_ACC_A(); CYCLES(1);
 				break;
-			
+
 			/* IV */
 			case 0xf0:
-				ccpu.X = (INT16)(ccpu.A << 4) >> 4; 
-				ccpu.Y = (INT16)(ccpu.B << 4) >> 4; 
+				ccpu.X = (INT16)(ccpu.A << 4) >> 4;
+				ccpu.Y = (INT16)(ccpu.B << 4) >> 4;
 				NEXT_ACC_A(); CYCLES(1);
 				break;
 		}
 	}
-	
+
 	return cycles - ccpu_icount;
 }
 
 
 
 /*###################################################################################################
-**	DISASSEMBLER INTERFACE
+**  DISASSEMBLER INTERFACE
 **#################################################################################################*/
 
 static offs_t ccpu_dasm(char *buffer, offs_t pc)
@@ -691,7 +691,7 @@ static offs_t ccpu_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	INFORMATION SETTERS
+**  INFORMATION SETTERS
 **#################################################################################################*/
 
 static void ccpu_set_info(UINT32 state, union cpuinfo *info)
@@ -724,7 +724,7 @@ static void ccpu_set_info(UINT32 state, union cpuinfo *info)
 
 
 /*###################################################################################################
-**	INFORMATION GETTERS
+**  INFORMATION GETTERS
 **#################################################################################################*/
 
 void ccpu_get_info(UINT32 state, union cpuinfo *info)
@@ -741,7 +741,7 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 15;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -796,7 +796,7 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright 2004 Aaron Giles & Zonn Moore"); break;
 
 		case CPUINFO_STR_FLAGS:
-    		sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c", 
+    		sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c",
 	        		TEST_A0() ? '0' : 'o',
 	        		TEST_NC() ? 'N' : 'n',
 	        		TEST_LT() ? 'L' : 'l',
@@ -806,7 +806,7 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 	        break;
 
         case CPUINFO_STR_REGISTER + CCPU_FLAGS:
-    		sprintf(info->s = cpuintrf_temp_str(), "FL:%c%c%c%c%c%c", 
+    		sprintf(info->s = cpuintrf_temp_str(), "FL:%c%c%c%c%c%c",
 	        		TEST_A0() ? '0' : 'o',
 	        		TEST_NC() ? 'N' : 'n',
 	        		TEST_LT() ? 'L' : 'l',

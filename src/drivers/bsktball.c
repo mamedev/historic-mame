@@ -1,23 +1,23 @@
 /***************************************************************************
 
-	Atari Basketball hardware
+    Atari Basketball hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Basketball
+    Games supported:
+        * Basketball
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Note:  The original hardware uses the Player 1 and Player 2 Start buttons
-	as the Jump/Shoot buttons.	I've taken button 1 and mapped it to the Start
-	buttons to keep people from getting confused.
+    Note:  The original hardware uses the Player 1 and Player 2 Start buttons
+    as the Jump/Shoot buttons.  I've taken button 1 and mapped it to the Start
+    buttons to keep people from getting confused.
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -46,7 +46,7 @@ extern WRITE8_HANDLER( bsktball_noise_reset_w );
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -151,7 +151,7 @@ static PALETTE_INIT( bsktball )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -181,7 +181,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -247,7 +247,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -288,7 +288,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -316,7 +316,7 @@ static MACHINE_DRIVER_START( bsktball )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(DISCRETE, 0)
 	MDRV_SOUND_CONFIG(bsktball_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -326,7 +326,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -346,7 +346,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

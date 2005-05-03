@@ -164,7 +164,7 @@ VIDEO_START( dkong )
 	gfx_bank = 0;
 	palette_bank = 0;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -222,7 +222,7 @@ WRITE8_HANDLER( radarscp_grid_color_w )
 	r = ((~data >> 0) & 0x01) * 0xff;
 	g = ((~data >> 1) & 0x01) * 0xff;
 	b = ((~data >> 2) & 0x01) * 0xff;
-//	palette_set_color(257,r,g,b);
+//  palette_set_color(257,r,g,b);
 	palette_set_color(257,0x00,0x00,0xff);
 }
 

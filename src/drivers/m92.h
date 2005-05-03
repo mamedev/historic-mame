@@ -1,8 +1,8 @@
 /*******************************************************************************
 
-	Irem M92 input port macros
+    Irem M92 input port macros
 
-	Can probably be used for other Irem games..
+    Can probably be used for other Irem games..
 
 *******************************************************************************/
 

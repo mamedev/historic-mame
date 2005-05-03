@@ -38,7 +38,7 @@ static void hc55516_update(void *param, stream_sample_t **inputs, stream_sample_
 static void *hc55516_start(int sndindex, int clock, const void *config)
 {
 	struct hc55516_data *chip;
-	
+
 	/* allocate the chip */
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));

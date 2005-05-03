@@ -10,19 +10,19 @@ NATO Defense
 (C) 1982 PACIFIC NOVELTY MFG. INC.
 
 Credits:
-	Shark Driver by Victor Trucco and Mike Balfour
-	Driver for Thief and NATO Defense by Phil Stroffolino
+    Shark Driver by Victor Trucco and Mike Balfour
+    Driver for Thief and NATO Defense by Phil Stroffolino
 
 - 8255 emulation (ports 0x30..0x3f) could be better abstracted
 
 - TMS9927 VTAC: do we need to emulate this?
-	The video controller registers effect screen size (currently
-	hard-coded on a per-game basis).
+    The video controller registers effect screen size (currently
+    hard-coded on a per-game basis).
 
 - minor blitting glitches in playfield of Thief (XOR vs copy?)
 
 - Nato Defense gfx ROMs may be hooked up wrong;
-	see screenshots from flyers
+    see screenshots from flyers
 
 ******************************************************************/
 
@@ -63,13 +63,13 @@ static INTERRUPT_GEN( thief_interrupt )
 /**********************************************************/
 
 
-/*	Following is an attempt to simulate the behavior of the
-**	cassette tape used in several Pacific Novelty games.
+/*  Following is an attempt to simulate the behavior of the
+**  cassette tape used in several Pacific Novelty games.
 **
-**	It is a leaderless tape that is constructed so that it will
-**	loop continuously.  The IO controller can start and stop the
-**	tape player's motor, and enable/disable each of two audio
-**	tracks.
+**  It is a leaderless tape that is constructed so that it will
+**  loop continuously.  The IO controller can start and stop the
+**  tape player's motor, and enable/disable each of two audio
+**  tracks.
 */
 
 enum
@@ -225,7 +225,7 @@ INPUT_PORTS_START( sharkatt )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x01, "4" )
 	PORT_DIPSETTING(	0x02, "5" )
-//	PORT_DIPSETTING(	0x03, "5" )
+//  PORT_DIPSETTING(    0x03, "5" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
@@ -475,13 +475,13 @@ static MACHINE_DRIVER_START( sharkatt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(sharkatt_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -510,10 +510,10 @@ static MACHINE_DRIVER_START( thief )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
@@ -545,10 +545,10 @@ static MACHINE_DRIVER_START( natodef )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 

@@ -1,5 +1,5 @@
-/*	hiscore.c
-**	generalized high score save/restore support
+/*  hiscore.c
+**  generalized high score save/restore support
 */
 
 #include "driver.h"
@@ -50,12 +50,12 @@ static void copy_from_memory (int cpu, int addr, UINT8 *dest, int num_bytes)
 
 /*****************************************************************************/
 
-/*	hexstr2num extracts and returns the value of a hexadecimal field from the
-	character buffer pointed to by pString.
+/*  hexstr2num extracts and returns the value of a hexadecimal field from the
+    character buffer pointed to by pString.
 
-	When hexstr2num returns, *pString points to the character following
-	the first non-hexadecimal digit, or NULL if an end-of-string marker
-	(0x00) is encountered.
+    When hexstr2num returns, *pString points to the character following
+    the first non-hexadecimal digit, or NULL if an end-of-string marker
+    (0x00) is encountered.
 
 */
 static UINT32 hexstr2num (const char **pString)
@@ -95,10 +95,10 @@ static UINT32 hexstr2num (const char **pString)
 	return result;
 }
 
-/*	given a line in the hiscore.dat file, determine if it encodes a
-	memory range (or a game name).
-	For now we assume that CPU number is always a decimal digit, and
-	that no game name starts with a decimal digit.
+/*  given a line in the hiscore.dat file, determine if it encodes a
+    memory range (or a game name).
+    For now we assume that CPU number is always a decimal digit, and
+    that no game name starts with a decimal digit.
 */
 static int is_mem_range (const char *pBuf)
 {
@@ -116,7 +116,7 @@ static int is_mem_range (const char *pBuf)
 			(c>='A' && c<='F');
 }
 
-/*	matching_game_name is used to skip over lines until we find <gamename>: */
+/*  matching_game_name is used to skip over lines until we find <gamename>: */
 static int matching_game_name (const char *pBuf, const char *name)
 {
 	while (*name)
@@ -176,10 +176,10 @@ static void hs_load (void)
 			UINT8 *data = malloc (mem_range->num_bytes);
 			if (data)
 			{
-				/*	this buffer will almost certainly be small
-					enough to be dynamically allocated, but let's
-					avoid memory trashing just in case
-				*/
+				/*  this buffer will almost certainly be small
+                    enough to be dynamically allocated, but let's
+                    avoid memory trashing just in case
+                */
 				mame_fread (f, data, mem_range->num_bytes);
 				copy_to_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
 				free (data);
@@ -203,10 +203,10 @@ static void hs_save (void)
 			UINT8 *data = malloc (mem_range->num_bytes);
 			if (data)
 			{
-				/*	this buffer will almost certainly be small
-					enough to be dynamically allocated, but let's
-					avoid memory trashing just in case
-				*/
+				/*  this buffer will almost certainly be small
+                    enough to be dynamically allocated, but let's
+                    avoid memory trashing just in case
+                */
 				copy_from_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
 				mame_fwrite(f, data, mem_range->num_bytes);
 			}

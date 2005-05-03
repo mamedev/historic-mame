@@ -19,10 +19,10 @@ static void tia_update(void *param, stream_sample_t **inputs, stream_sample_t **
 static void *tia_start(int sndindex, int clock, const void *config)
 {
 	struct tia_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
     if (Machine->sample_rate == 0)
         return info;
 

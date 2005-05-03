@@ -24,7 +24,7 @@ Ports    In            Out
 
 
 Notes:  Support is complete with the exception of the noise generator.
-		Hopefully I can add this based on some measurements from a real board
+        Hopefully I can add this based on some measurements from a real board
 
 ****************************************************************************/
 
@@ -486,7 +486,7 @@ static MACHINE_DRIVER_START( blockade )
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(blockade_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(DISCRETE, 0)
 	MDRV_SOUND_CONFIG(blockade_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

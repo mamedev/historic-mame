@@ -1,50 +1,50 @@
 /*****************************************************************************
  *
- *	 upd7810.c
- *	 Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.3
+ *   upd7810.c
+ *   Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.3
  *
- *	 Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
+ *   Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
  *
  *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *   You can contact me at juergen@mame.net or pullmoll@stop1984.com
  *
  *   - This source code is released as freeware for non-commercial purposes
  *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
- *	   The licensing terms of MAME apply to this piece of code for the MAME
- *	   project and derviative works, as defined by the MAME license. You
- *	   may opt to make modifications, improvements or derivative works under
- *	   that same conditions, and the MAME project may opt to keep
- *	   modifications, improvements or derivatives under their terms exclusively.
+ *     The licensing terms of MAME apply to this piece of code for the MAME
+ *     project and derviative works, as defined by the MAME license. You
+ *     may opt to make modifications, improvements or derivative works under
+ *     that same conditions, and the MAME project may opt to keep
+ *     modifications, improvements or derivatives under their terms exclusively.
  *
- *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *   - Alternatively you can choose to apply the terms of the "GPL" (see
  *     below) to this - and only this - piece of code or your derivative works.
- *	   Note that in no case your choice can have any impact on any other
- *	   source code of the MAME project, or binary, or executable, be it closely
- *	   or losely related to this piece of code.
+ *     Note that in no case your choice can have any impact on any other
+ *     source code of the MAME project, or binary, or executable, be it closely
+ *     or losely related to this piece of code.
  *
- *	-  At your choice you are also free to remove either licensing terms from
- *	   this file and continue to use it under only one of the two licenses. Do this
- *	   if you think that licenses are not compatible (enough) for you, or if you
- *	   consider either license 'too restrictive' or 'too free'.
+ *  -  At your choice you are also free to remove either licensing terms from
+ *     this file and continue to use it under only one of the two licenses. Do this
+ *     if you think that licenses are not compatible (enough) for you, or if you
+ *     consider either license 'too restrictive' or 'too free'.
  *
- *	-  GPL (GNU General Public License)
- *	   This program is free software; you can redistribute it and/or
- *	   modify it under the terms of the GNU General Public License
- *	   as published by the Free Software Foundation; either version 2
- *	   of the License, or (at your option) any later version.
+ *  -  GPL (GNU General Public License)
+ *     This program is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License
+ *     as published by the Free Software Foundation; either version 2
+ *     of the License, or (at your option) any later version.
  *
- *	   This program is distributed in the hope that it will be useful,
- *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	   GNU General Public License for more details.
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
  *
- *	   You should have received a copy of the GNU General Public License
- *	   along with this program; if not, write to the Free Software
- *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program; if not, write to the Free Software
+ *     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *
- *	This work is based on the
- *	"NEC Electronics User's Manual, April 1987"
+ *  This work is based on the
+ *  "NEC Electronics User's Manual, April 1987"
  *
  * NS20030115:
  * - fixed INRW_wa()
@@ -673,19 +673,19 @@ static void WP(offs_t port, data8_t data)
 	{
 	case UPD7810_PORTA:
 		upd7810.pa_out = data;
-//		data = (data & ~upd7810.ma) | (upd7810.pa_in & upd7810.ma);
+//      data = (data & ~upd7810.ma) | (upd7810.pa_in & upd7810.ma);
 		data = (data & ~upd7810.ma) | (upd7810.ma);	// NS20031401
 		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTB:
 		upd7810.pb_out = data;
-//		data = (data & ~upd7810.mb) | (upd7810.pb_in & upd7810.mb);
+//      data = (data & ~upd7810.mb) | (upd7810.pb_in & upd7810.mb);
 		data = (data & ~upd7810.mb) | (upd7810.mb);	// NS20031401
 		io_write_byte_8(port, data);
 		break;
 	case UPD7810_PORTC:
 		upd7810.pc_out = data;
-//		data = (data & ~upd7810.mc) | (upd7810.pc_in & upd7810.mc);
+//      data = (data & ~upd7810.mc) | (upd7810.pc_in & upd7810.mc);
 		data = (data & ~upd7810.mc) | (upd7810.mc);	// NS20031401
 		if (upd7810.mcc & 0x01) 	/* PC0 = TxD output */
 			data = (data & ~0x01) | (upd7810.txd & 1 ? 0x01 : 0x00);
@@ -1126,7 +1126,7 @@ static void upd7810_sio_input(void)
 			{
 				upd7810.rxs >>= 16 - 8;
 				RXB = upd7810.rxs;
-//				upd7810.rxcnt = 8;
+//              upd7810.rxcnt = 8;
 			}
 		}
 	}
@@ -1642,10 +1642,10 @@ static int upd7810_execute (int cycles)
 		RDOP(OP);
 
 		/*
-		 * clear L0 and/or L1 flags for all opcodes except
-		 * L0	for "MVI L,xx" or "LXI H,xxxx"
-		 * L1	for "MVI A,xx"
-		 */
+         * clear L0 and/or L1 flags for all opcodes except
+         * L0   for "MVI L,xx" or "LXI H,xxxx"
+         * L1   for "MVI A,xx"
+         */
 		PSW &= ~opXX[OP].mask_l0_l1;
 
 		/* skip flag set and not SOFTI opcode? */
@@ -1730,7 +1730,7 @@ static void set_irq_line(int irqline, int state)
 		if (irqline == INPUT_LINE_NMI)
 		{
 			/* no nested NMIs ? */
-//	        if (0 == (IRR & INTNMI))
+//          if (0 == (IRR & INTNMI))
 			{
 	            IRR |= INTNMI;
 				SP--;
@@ -1854,7 +1854,7 @@ static void upd7810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + UPD7810_CI:			CI	= info->i; 							break;
 		case CPUINFO_INT_REGISTER + UPD7810_CO0:		CO0 = info->i; 							break;
 		case CPUINFO_INT_REGISTER + UPD7810_CO1:		CO1 = info->i; 							break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					upd7810.irq_callback = info->irqcallback; break;
 	}
@@ -1880,7 +1880,7 @@ void upd7810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

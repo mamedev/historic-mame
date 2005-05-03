@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari "Round" hardware
+    Atari "Round" hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -39,7 +39,7 @@ static void get_playfield2_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -107,7 +107,7 @@ VIDEO_START( relief )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -134,27 +134,27 @@ VIDEO_UPDATE( relief )
 				if (mo[x])
 				{
 					/* verified from the GALs on the real PCB; equations follow
-					 *
-					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
-					 *		PF/M = PFXS
-					 *
-					 *		--- CS0 is set to 1 if the MO is transparent
-					 *		CS0=!MPX0*!MPX1*!MPX2*!MPX3
-					 *
-					 *		--- CS1 is 1 to select playfield pixels or 0 to select MO pixels
-					 *		!CS1=MPX5*MPX6*MPX7*!CS0
-					 *		    +!MPX4*MPX5*MPX6*MPX7
-					 *		    +PFXS*!CS0
-					 *		    +!MPX4*PFXS
-					 *
-					 *		--- CRA10 is the 0x200 bit of the color RAM index; set for the top playfield only
-					 *		CRA10:=CS1*PFXS
-					 *
-					 *		--- CRA9 is the 0x100 bit of the color RAM index; set for MOs only
-					 *		!CA9:=CS1
-					 *
-					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
-					 */
+                     *
+                     *      --- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+                     *      PF/M = PFXS
+                     *
+                     *      --- CS0 is set to 1 if the MO is transparent
+                     *      CS0=!MPX0*!MPX1*!MPX2*!MPX3
+                     *
+                     *      --- CS1 is 1 to select playfield pixels or 0 to select MO pixels
+                     *      !CS1=MPX5*MPX6*MPX7*!CS0
+                     *          +!MPX4*MPX5*MPX6*MPX7
+                     *          +PFXS*!CS0
+                     *          +!MPX4*PFXS
+                     *
+                     *      --- CRA10 is the 0x200 bit of the color RAM index; set for the top playfield only
+                     *      CRA10:=CS1*PFXS
+                     *
+                     *      --- CRA9 is the 0x100 bit of the color RAM index; set for MOs only
+                     *      !CA9:=CS1
+                     *
+                     *      --- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+                     */
 					int cs0 = 0;
 					int cs1 = 1;
 

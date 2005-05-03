@@ -1,93 +1,93 @@
 /***************************************************************************
 
-	Atari Bad Lands hardware
+    Atari Bad Lands hardware
 
     driver by Aaron Giles
 
-	Games supported:
-		* Bad Lands (1989)
+    Games supported:
+        * Bad Lands (1989)
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-03FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	FC0000          R     -------x --------   Sound command buffer full
-	FC0000            W   -------- --------   Sound CPU reset
-	FD0000-FD1FFF   R/W   -------- xxxxxxxx   EEPROM
-	FE0000            W   -------- --------   Watchdog reset
-	FE2000            W   -------- --------   VBLANK IRQ acknowledge
-	FE4000          R     -------- xxxx----   Switch inputs
-	                R     -------- x-------      (Self test)
-	                R     -------- -x------      (VBLANK)
-	                R     -------- --x-----      (Player 2 button)
-	                R     -------- ---x----      (Player 1 button)
-	FE6000          R     -------- xxxxxxxx   Player 1 steering
-	FE6002          R     -------- xxxxxxxx   Player 2 steering
-	FE6004          R     -------- xxxxxxxx   Player 1 pedal
-	FE6006          R     -------- xxxxxxxx   Player 2 pedal
-	FE8000            W   xxxxxxxx --------   Sound command write
-	FEA000          R     xxxxxxxx --------   Sound response read
-	FEC000            W   -------- -------x   Playfield tile bank select
-	FEE000            W   -------- --------   EEPROM enable
-	FFC000-FFC0FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (128 entries)
-	                R/W   x------- --------      (RGB 1 LSB)
-	                R/W   -xxxxx-- --------      (Red 5 MSB)
-	                R/W   ------xx xxx-----      (Green 5 MSB)
-	                R/W   -------- ---xxxxx      (Blue 5 MSB)
-	FFC100-FFC1FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (128 entries)
-	FFC200-FFC3FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (256 entries)
-	FFE000-FFEFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x32 tiles)
-	                R/W   xxx----- --------      (Palette select)
-	                R/W   ---x---- --------      (Tile bank select)
-	                R/W   ----xxxx xxxxxxxx      (Tile index)
-	FFF000-FFFFFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (32 entries x 4 words)
-	                R/W   ----xxxx xxxxxxxx      (0: Tile index)
-	                R/W   xxxxxxxx x-------      (1: Y position)
-	                R/W   -------- ----xxxx      (1: Number of Y tiles - 1)
-	                R/W   xxxxxxxx x-------      (3: X position)
-	                R/W   -------- ----x---      (3: Priority)
-	                R/W   -------- -----xxx      (3: Palette select)
-	========================================================================
-	Interrupts:
-		IRQ1 = VBLANK
-		IRQ2 = sound CPU communications
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-03FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    FC0000          R     -------x --------   Sound command buffer full
+    FC0000            W   -------- --------   Sound CPU reset
+    FD0000-FD1FFF   R/W   -------- xxxxxxxx   EEPROM
+    FE0000            W   -------- --------   Watchdog reset
+    FE2000            W   -------- --------   VBLANK IRQ acknowledge
+    FE4000          R     -------- xxxx----   Switch inputs
+                    R     -------- x-------      (Self test)
+                    R     -------- -x------      (VBLANK)
+                    R     -------- --x-----      (Player 2 button)
+                    R     -------- ---x----      (Player 1 button)
+    FE6000          R     -------- xxxxxxxx   Player 1 steering
+    FE6002          R     -------- xxxxxxxx   Player 2 steering
+    FE6004          R     -------- xxxxxxxx   Player 1 pedal
+    FE6006          R     -------- xxxxxxxx   Player 2 pedal
+    FE8000            W   xxxxxxxx --------   Sound command write
+    FEA000          R     xxxxxxxx --------   Sound response read
+    FEC000            W   -------- -------x   Playfield tile bank select
+    FEE000            W   -------- --------   EEPROM enable
+    FFC000-FFC0FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (128 entries)
+                    R/W   x------- --------      (RGB 1 LSB)
+                    R/W   -xxxxx-- --------      (Red 5 MSB)
+                    R/W   ------xx xxx-----      (Green 5 MSB)
+                    R/W   -------- ---xxxxx      (Blue 5 MSB)
+    FFC100-FFC1FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (128 entries)
+    FFC200-FFC3FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (256 entries)
+    FFE000-FFEFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x32 tiles)
+                    R/W   xxx----- --------      (Palette select)
+                    R/W   ---x---- --------      (Tile bank select)
+                    R/W   ----xxxx xxxxxxxx      (Tile index)
+    FFF000-FFFFFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (32 entries x 4 words)
+                    R/W   ----xxxx xxxxxxxx      (0: Tile index)
+                    R/W   xxxxxxxx x-------      (1: Y position)
+                    R/W   -------- ----xxxx      (1: Number of Y tiles - 1)
+                    R/W   xxxxxxxx x-------      (3: X position)
+                    R/W   -------- ----x---      (3: Priority)
+                    R/W   -------- -----xxx      (3: Palette select)
+    ========================================================================
+    Interrupts:
+        IRQ1 = VBLANK
+        IRQ2 = sound CPU communications
+    ========================================================================
 
 
-	========================================================================
-	SOUND CPU (based on JSA II, but implemented onboard)
-	========================================================================
-	0000-1FFF   R/W   xxxxxxxx   Program RAM
-	2000-2001   R/W   xxxxxxxx   YM2151 communications
-	2802        R     xxxxxxxx   Sound command read
-	2804        R     xxxx--xx   Status input
-	            R     x-------      (Self test)
-	            R     -x------      (Sound command buffer full)
-	            R     --x-----      (Sound response buffer full)
-	            R     ---x----      (Self test)
-	            R     ------xx      (Coin inputs)
-	2806        R/W   --------   IRQ acknowledge
-	2A02          W   xxxxxxxx   Sound response write
-	2A04          W   xxxx---x   Sound control
-	              W   xx------      (ROM bank select)
-	              W   --xx----      (Coin counters)
-	              W   -------x      (YM2151 reset)
-	3000-3FFF   R     xxxxxxxx   Banked ROM
-	4000-FFFF   R     xxxxxxxx   Program ROM
-	========================================================================
-	Interrupts:
-		IRQ = timed interrupt ORed with YM2151 interrupt
-		NMI = latch on sound command
-	========================================================================
+    ========================================================================
+    SOUND CPU (based on JSA II, but implemented onboard)
+    ========================================================================
+    0000-1FFF   R/W   xxxxxxxx   Program RAM
+    2000-2001   R/W   xxxxxxxx   YM2151 communications
+    2802        R     xxxxxxxx   Sound command read
+    2804        R     xxxx--xx   Status input
+                R     x-------      (Self test)
+                R     -x------      (Sound command buffer full)
+                R     --x-----      (Sound response buffer full)
+                R     ---x----      (Self test)
+                R     ------xx      (Coin inputs)
+    2806        R/W   --------   IRQ acknowledge
+    2A02          W   xxxxxxxx   Sound response write
+    2A04          W   xxxx---x   Sound control
+                  W   xx------      (ROM bank select)
+                  W   --xx----      (Coin counters)
+                  W   -------x      (YM2151 reset)
+    3000-3FFF   R     xxxxxxxx   Banked ROM
+    4000-FFFF   R     xxxxxxxx   Program ROM
+    ========================================================================
+    Interrupts:
+        IRQ = timed interrupt ORed with YM2151 interrupt
+        NMI = latch on sound command
+    ========================================================================
 
 ****************************************************************************/
 
@@ -101,7 +101,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -114,7 +114,7 @@ static UINT8 *bank_source_data;
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -160,7 +160,7 @@ static MACHINE_INIT( badlands )
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -184,7 +184,7 @@ static INTERRUPT_GEN( vblank_int )
 
 /*************************************
  *
- *	I/O read dispatch
+ *  I/O read dispatch
  *
  *************************************/
 
@@ -211,7 +211,7 @@ static READ16_HANDLER( pedal_1_r )
 
 /*************************************
  *
- *	Audio I/O handlers
+ *  Audio I/O handlers
  *
  *************************************/
 
@@ -231,15 +231,15 @@ static READ8_HANDLER( audio_io_r )
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test
-				0x40 = NMI line state (active low)
-				0x20 = sound output full
-				0x10 = self test
-				0x08 = +5V
-				0x04 = +5V
-				0x02 = coin 2
-				0x01 = coin 1
-			*/
+                0x80 = self test
+                0x40 = NMI line state (active low)
+                0x20 = sound output full
+                0x10 = self test
+                0x08 = +5V
+                0x04 = +5V
+                0x02 = coin 2
+                0x01 = coin 1
+            */
 			result = readinputport(3);
 			if (!(readinputport(0) & 0x0080)) result ^= 0x90;
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
@@ -287,14 +287,14 @@ static WRITE8_HANDLER( audio_io_w )
 
 		case 0x204:		/* WRIO */
 			/*
-				0xc0 = bank address
-				0x20 = coin counter 2
-				0x10 = coin counter 1
-				0x08 = n/c
-				0x04 = n/c
-				0x02 = n/c
-				0x01 = YM2151 reset (active low)
-			*/
+                0xc0 = bank address
+                0x20 = coin counter 2
+                0x10 = coin counter 1
+                0x08 = n/c
+                0x04 = n/c
+                0x02 = n/c
+                0x01 = YM2151 reset (active low)
+            */
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
@@ -306,7 +306,7 @@ static WRITE8_HANDLER( audio_io_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -335,7 +335,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -351,7 +351,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -394,7 +394,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -433,7 +433,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -475,7 +475,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -508,7 +508,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -525,7 +525,7 @@ static DRIVER_INIT( badlands )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

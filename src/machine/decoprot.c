@@ -1,56 +1,56 @@
 /****************************************************************************
 
-	Data East protection/IO chips
+    Data East protection/IO chips
 
 
-	Game						Custom chip number
-	------------------------------------------------
-	Edward Randy					60
-	Mutant Fighter					66
-	Captain America					75
-	Robocop 2						75
-	Lemmings						75
-	Caveman Ninja					104
-	Wizard Fire						104
-	Pocket Gal DX					104
-	Boogie Wings					104
-	Rohga							104
-	Diet GoGo						104
-	Funky Jet						146
-	Nitro Ball						146
-	Super Shanghai Dragon's Eye		146
-	Dragon Gun						146
-	Fighter's History				? (ID scratched off)
-	Tattoo Assassins				?
+    Game                        Custom chip number
+    ------------------------------------------------
+    Edward Randy                    60
+    Mutant Fighter                  66
+    Captain America                 75
+    Robocop 2                       75
+    Lemmings                        75
+    Caveman Ninja                   104
+    Wizard Fire                     104
+    Pocket Gal DX                   104
+    Boogie Wings                    104
+    Rohga                           104
+    Diet GoGo                       104
+    Funky Jet                       146
+    Nitro Ball                      146
+    Super Shanghai Dragon's Eye     146
+    Dragon Gun                      146
+    Fighter's History               ? (ID scratched off)
+    Tattoo Assassins                ?
 
-	This series of chips is used for I/O and copy protection.  They are all
-	16 bit word based chips, with 0x400 write addresses, and 0x400 read
-	addresses.  The basic idea of the protection is that read & write
-	addresses don't match.  So if you write to write address 0, you might
-	read that data back at read address 10, and something else will be at 0.
-	In addition, the data read back may be bit shifted in various ways.
-	Games can be very well protected by writing variables to the chip, and
-	expecting certain values back from certain read addresses.  With care,
-	it can be impossible to tell from the game code what values go where,
-	and what shifting goes on.  Eg, writing 10 values to the chip, of which
-	7 are dummy values, then reading back 3 particular values, and using them
-	in a multiplication and add calculation to get a jump address for the
-	program.  Even if you can guess one of many possible legal jump addresses
-	it's hard to tell what values should be bit shifted in what way.
+    This series of chips is used for I/O and copy protection.  They are all
+    16 bit word based chips, with 0x400 write addresses, and 0x400 read
+    addresses.  The basic idea of the protection is that read & write
+    addresses don't match.  So if you write to write address 0, you might
+    read that data back at read address 10, and something else will be at 0.
+    In addition, the data read back may be bit shifted in various ways.
+    Games can be very well protected by writing variables to the chip, and
+    expecting certain values back from certain read addresses.  With care,
+    it can be impossible to tell from the game code what values go where,
+    and what shifting goes on.  Eg, writing 10 values to the chip, of which
+    7 are dummy values, then reading back 3 particular values, and using them
+    in a multiplication and add calculation to get a jump address for the
+    program.  Even if you can guess one of many possible legal jump addresses
+    it's hard to tell what values should be bit shifted in what way.
 
-	It's also been found some chips contain a hardwired XOR port and hardwired
-	NAND port which affects only certain read values.
+    It's also been found some chips contain a hardwired XOR port and hardwired
+    NAND port which affects only certain read values.
 
-	The chips also handle the interface to the sound cpu via a write address,
-	and game inputs via several read addresses.  The I/O input data is also
-	mirrored to several locations, some with bit shifting.
+    The chips also handle the interface to the sound cpu via a write address,
+    and game inputs via several read addresses.  The I/O input data is also
+    mirrored to several locations, some with bit shifting.
 
-	Although several games use chip 104, each seems to be different, the
-	address lines leading to the chip on each game are probably arranged
-	differently, to further scramble reads/writes.  From hardware tests
-	chips 60 && 66 appear to be identical.
+    Although several games use chip 104, each seems to be different, the
+    address lines leading to the chip on each game are probably arranged
+    differently, to further scramble reads/writes.  From hardware tests
+    chips 60 && 66 appear to be identical.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -58,7 +58,9 @@
 #include "machine/eeprom.h"
 #include "state.h"
 
-#define DECO_PORT(p) (deco16_prot_ram[p/2])
+READ16_HANDLER( deco16_104_rohga_prot_r ); // todo
+
+#define DECO_PORT(p) (prot_ram[p/2])
 
 data16_t *deco16_prot_ram;
 data32_t *deco32_prot_ram;
@@ -398,7 +400,7 @@ WRITE16_HANDLER( deco16_66_prot_w ) /* Mutant Fighter */
 	else
 		mutantf_port_e8_hack=0x2401;
 
-//	2 4 c e 18 1e 22 2c 2e 34 36 38 3a 42 48 58 6a 72 7a 82 88 92 a2 a4 aa b0 b6 b8 dc e4 e8 f4 fa 1c8 308 7e8 40e
+//  2 4 c e 18 1e 22 2c 2e 34 36 38 3a 42 48 58 6a 72 7a 82 88 92 a2 a4 aa b0 b6 b8 dc e4 e8 f4 fa 1c8 308 7e8 40e
 	offset=offset<<1;
 	if (offset!=0x02 && offset!=0xc && offset!=0xe && offset!=0x18 && offset!=0x2c && offset!=0x2e && offset!=0x34
 		&& offset!=0x42 && offset!=0x58 && offset!=0x6a && offset!=0x72 && offset!=0x7a && offset!=0xb8
@@ -569,7 +571,7 @@ WRITE32_HANDLER( deco32_fghthist_prot_w )
 	COMBINE_DATA(&deco32_prot_ram[offset]);
 
 
-	if ((offset<<1)!=0 && (offset<<1)!=0x302 && (offset<<1)!=0x506 && (offset<<1)!=0x386 
+	if ((offset<<1)!=0 && (offset<<1)!=0x302 && (offset<<1)!=0x506 && (offset<<1)!=0x386
 		&& (offset<<1)!=0x6 && (offset<<1)!=0x186 && (offset<<1)!=0x70c)
 		logerror("%08x:  Protection write %04x %08x\n",activecpu_get_pc(),offset<<1,data);
 }
@@ -685,9 +687,9 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 		val=((val&0x00ff)<<8) | ((val&0xff00)>>8);
 		return (val<<16) ^ deco32_prot_ram[0x302>>1];
 
-//	case 0x40a: //wrong?
-//		val=((deco32_prot_ram[0x40a>>1]>>16)&0xffff);
-//		return (val<<16);
+//  case 0x40a: //wrong?
+//      val=((deco32_prot_ram[0x40a>>1]>>16)&0xffff);
+//      return (val<<16);
 
 	case 0x1e8: /* Bitshifted XOR, with additional inverse mask on final output */
 		val=((deco32_prot_ram[0xe>>1]>>16)&0xffff);
@@ -699,13 +701,13 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 		val=((val&0x0003)<<14) | ((val&0x000c)<<10) | ((val&0xfff0)>>4);
 		return (val<<16) & (~deco32_prot_ram[0x506>>1]);
 
-//	case 0x502: /* Bitshifted XOR, with additional inverse mask on final output */
+//  case 0x502: /* Bitshifted XOR, with additional inverse mask on final output */
 
 		// VAL unknown - NOT 0xe - shift unknown
 
-//		val=0;//((deco32_prot_ram[0xe>>1]>>16)&0xffff);
-//		val=0;//((val&0x000f)<<12) | ((val&0x00f0)<<4) | ((val&0x0f00)>>8) | ((val&0xf000)>>8);
-//		return ((val<<16) ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
+//      val=0;//((deco32_prot_ram[0xe>>1]>>16)&0xffff);
+//      val=0;//((val&0x000f)<<12) | ((val&0x00f0)<<4) | ((val&0x0f00)>>8) | ((val&0xf000)>>8);
+//      return ((val<<16) ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
 
 	case 0x4b4: /* Bitshifting with inverse mask on final output */
 		val=((deco32_prot_ram[0x604>>1]>>16)&0xffff);
@@ -802,24 +804,24 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 		return ((val<<16) ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
 
 	case 0x10e:
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
-//		val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
-//		return (val<<16) & (~deco32_prot_ram[0x506>>1]);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//      val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
+//      return (val<<16) & (~deco32_prot_ram[0x506>>1]);
 		val=(deco32_prot_ram[0x10e>>1]>>16);
 		return (val<<16);
 	case 0x382:
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
-//		val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
-//		return (val<<16) & (~deco32_prot_ram[0x506>>1]);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//      val=((deco32_prot_ram[0x480>>1]>>16)&0xf000);
+//      return (val<<16) & (~deco32_prot_ram[0x506>>1]);
 		val=(deco32_prot_ram[0x382>>1]>>16);
 		return (val<<16);
 
 	// above also affected by writes to 0x80???
 
-//  above twoveryinconsistent	
-	
+//  above twoveryinconsistent
+
 	case 0x1fc: //todo - check if mask is used
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 		val=((deco32_prot_ram[0x500>>1]>>16)&0xffff);
 		val=(val<<4);
 		return (val<<16); // & (~deco32_prot_ram[0x506>>1]);
@@ -827,8 +829,8 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 
 
 	case 0x126:
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
-//		val=((deco32_prot_ram[0xc>>1]>>16)&0xffff);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//      val=((deco32_prot_ram[0xc>>1]>>16)&0xffff);
 		val=((deco32_prot_ram[0x10e>>1]>>16)&0xffff);
 		val=((val&0xf000)<<0) | ((val&0x0ff0)>>4) | ((val&0x000f)<<8);
 		return (val<<16);
@@ -838,7 +840,7 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 
 
 	case 0x142: /* Hmm */ // not affected by writes to 10e 480 382 18e
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 		val=((deco32_prot_ram[0x10e>>1]>>16)&0xffff);
 		return (0x01000000 ^ deco32_prot_ram[0x302>>1]) & (~deco32_prot_ram[0x506>>1]);
 
@@ -864,31 +866,31 @@ READ32_HANDLER( deco32_fghthist_prot_r )
 /*
 Read 126
 
-	  00007c38:  Protection write 000c 0f830000
-	cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 0000F0FF & FFFFFFFF
-	00016378:  Protection write 010e 0a800000
-	000163ac:  Protection write 0480 00700000
+      00007c38:  Protection write 000c 0f830000
+    cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 0000F0FF & FFFFFFFF
+    00016378:  Protection write 010e 0a800000
+    000163ac:  Protection write 0480 00700000
 
 Read 80
-	0000d990:  Protection write 0006 ffedffee
-	cpu #0 (PC=0000A1C8): unmapped memory dword write to 0016C008 = 00000000 & FFFFFFFF
-	cpu #0 (PC=0000A230): unmapped memory dword write to 00140000 = 0017C020 & FFFFFFFF
-	0000cae8:  Protection write 070c 00010000
-	cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000000A0 & FFFFFFFF
-	00016378:  Protection write 0080 00088027
-	00016390:Read prot 00000080 (00000000)
+    0000d990:  Protection write 0006 ffedffee
+    cpu #0 (PC=0000A1C8): unmapped memory dword write to 0016C008 = 00000000 & FFFFFFFF
+    cpu #0 (PC=0000A230): unmapped memory dword write to 00140000 = 0017C020 & FFFFFFFF
+    0000cae8:  Protection write 070c 00010000
+    cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000000A0 & FFFFFFFF
+    00016378:  Protection write 0080 00088027
+    00016390:Read prot 00000080 (00000000)
 
 
 
   routine at:
 
   1637c
-		Write 0e00 into $382
-		Reads back 382
+        Write 0e00 into $382
+        Reads back 382
 
 
   18e1c:
-	
+
 
 
 
@@ -913,7 +915,7 @@ cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000000A0 & FFFFF
 00001c58:  Protection write 0082 3e0aed6f
 00001c7c:  Protection write 0082 ed6f0000
 00001c58:  Protection write 0082 58e000c2
-	
+
 Strike against player 1 (jump error)
 
 0013940:  Protection write 018e 02000002
@@ -959,8 +961,8 @@ cpu #0 (PC=00016374): unmapped memory dword write to 00208800 = 000007A0 & FFFFF
 	if ((offset<<1)==0x80)
 		return 0; //strobe between 0 and 0x00100000
 
-//	if (! ((offset<<1)>0x500 && (offset<<1)<0x540))
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//  if (! ((offset<<1)>0x500 && (offset<<1)<0x540))
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 
 	if ((offset<<1)==0x40a)
 		return 0x10000000;
@@ -1117,52 +1119,258 @@ READ16_HANDLER( deco16_146_funkyjet_prot_r )
 }
 
 /***************************************************************************/
-
+//#include <windows.h>//todo
 static data8_t deco16_prot_backbuffer_selected=0;
-static data16_t deco16_prot_backbuffer[0x100];
+static data16_t deco16_prot_backbuffer[0x100]; // todo
+static data16_t deco16_xor=0;
+static data16_t deco16_mask=0xffff;
 
 void deco16_104_rohga_reset(void)
 {
 	deco16_prot_backbuffer_selected=0;
 	state_save_register_UINT8("rohga", 0, "protstate", &deco16_prot_backbuffer_selected, 1);
 	state_save_register_UINT16("rohga", 0, "prot", deco16_prot_backbuffer, 0x100);
+// todo save mask/xor
+
+#if 0
+	// hack test
+	if (0)
+	{
+		int i;
+		FILE *fp;
+
+		fp=fopen("rohgah.txt", "w");
+		for (i=0; i<0x80; i++)
+		{
+			fprintf(fp,"ww %04x %06x\n", 0, 0x280000 + (i*2));
+		}
+		fprintf(fp,"rw 2806c4\n");
+		for (i=0; i<0x80; i++)
+		{
+			fprintf(fp,"ww %04x %06x\n", 0, 0x280000 + (i*2));
+		}
+		fprintf(fp,"rw 2806c4\n");
+
+//      for (i=0; i<0x80; i++)
+//      {
+//          if (i!=0x42/2 && i!=0xee/2)
+//          {
+//              fprintf(fp,"rw 28044e\nwait\n");
+//              fprintf(fp,"ww %04x %06x\n", 0xffff, 0x280000 + (i*2));
+//          }
+//      }
+
+		fprintf(fp,"ww eedc 280000\n");
+		for (i=0; i<0x400; i++)
+			fprintf(fp,"rw %06x\nwait\n", 0x280000 + (i*2));
+
+		fclose(fp);
+
+
+		srand(timeGetTime());
+
+		fp=fopen("rohgaw.txt", "w");
+		fprintf(fp,"\n\n#WRITE PROGRAM\n");
+		for (i=0; i<0x80; i++)
+		{
+			data16_t r=rand()%0xffff;
+			deco16_prot_backbuffer[i]=deco16_prot_ram[i]=r;
+			fprintf(fp,"ww %04x %06x\n", r, 0x280000 + (i*2));
+		}
+		fprintf(fp,"rw 2806c4\n");
+		for (i=0; i<0x80; i++)
+		{
+			fprintf(fp,"ww %04x %06x\n", deco16_prot_ram[i], 0x280000 + (i*2));
+//          fprintf(fp,"ww %04x %06x\n", (~deco16_prot_ram[i])&0xffff, 0x280000 + (i*2));
+		}
+		fprintf(fp,"rw 2806c4\n");
+
+			//150, 10e, 56a, 39a, 188, 3cc, 4a, 7e8, fc, 38c, 28
+// 5aa 2c 41a 168 314 1b4 5e2
+
+			deco16_xor=0xffff;
+			deco16_mask=0;
+			fprintf(fp,"ww %04x %06x\n", 0xffff, 0x280000 + 0x42);
+			fprintf(fp,"ww %04x %06x\n", 0x0000, 0x280000 + 0xee);
+			fclose(fp);
+			fp=fopen("rohgar.txt", "w");
+		{
+			static int ad[]={
+					0x44e, 0x2ac,
+						0x44,
+0x282, 0xd4,
+0x2a2,
+						0x250,0x5a2, 0x570, 0x32e, 0x4dc, 0x1be, 0x420, 0x390, 0x780,0x454, 0x53e, 0x250,
+
+0x2d0,
+//0x3ee,
+0x2b8,
+0x49c,
+0x780,
+0x454,
+0x53e,
+0x700, // todo
+0x700,
+0x1e8, 0x2d0, 0x33e, 0x2b8, 0x294,
+0xffff,
+					0x420, 0x390, 0x756, 0x424, 0x156, 0xa8, 0x64a, 0x16e, 0x39c,
+0x212, 0x70a, 0x7a0, 0x162, 0x384, 0x302, 0x334, 0x34c,
+0x34e, 0x722, 0x574, 0x5ae, 0x410, 0x340, 0x4a4, 0x256,
+0x79a, 0x65e, 0x79c, 0x15e, 0x6e4, 0x1e, 0x23a, 0x6e,
+0x3a2, 0x4a6, 0x7b0, 0x5aa, 0x662, 0x624, 0x2c, 0x41a,
+0x168, 0x314, 0x1b4, 0x5e2, 0x22c, 0x27e, 0x77e, 0xc,
+0x90, 0x246, 0x546, 0x7ce, 0x2e2, 0x40e, 0x248,0x3c0,
+0x4b8,0x65c,0x32a, 0x8, 0x456, 0x190, 0x3f2, 0x2be,
+0x178, 0x19e, 0x2a2, 0x748, 0x686,0x4c4, 0x538, 0x63a,
+0x348, 0x200, 0x254, 0x182, 0x58, 0x48e, 0x72a, 0x4ba,
+0x92, 0x1f0, 0x24e, 0x594, 0x7e2, 0x18c, 0x1fa, 0x70e,
+0x33a,0x1e2, 0x3f4, 0x2ae, 0x96, 0x2d0, 0x33e, 0x2b8,
+0x44e,0x3ca, 0x2ac, 0x3c, 0x174, 0x34a, 0x324, 0x344,
+0x72, 0x36e, 0x590, 0x7b6, 0x588, 0x1f6, 0x4c0, 0x63e,
+0x7cc,0x1bc,
+			0xffff};
+
+			int a=0;
+
+			fprintf(fp,"\n\n#READ PROGRAM\n");
+			while (ad[a]!=0xffff)
+			{
+				logerror("%04x -> %04x\n", ad[a], deco16_104_rohga_prot_r(ad[a]/2, 0xffff));
+				a++;
+			}
+			a=0;
+			while (ad[a]!=0xffff)
+			{
+				fprintf(fp,"rw %06x\nwait %04x\n", ad[a]+0x280000 ,deco16_104_rohga_prot_r(ad[a]/2, 0xffff));
+				a++;
+			}
+			fclose(fp);
+		}
+
+	}
+
+
+
+	if (1)
+	{
+		int i;
+		FILE *fp;
+
+		fp=fopen("mutanth.txt", "w");
+		for (i=0; i<0x80; i++)
+		{
+			fprintf(fp,"ww %04x %06x\n", 0, 0x1a0000 + (i*2));
+		}
+
+		fprintf(fp,"ww eedc 280000\n");
+		for (i=0; i<0x400; i++)
+			fprintf(fp,"rw %06x\nwait\n", 0x280000 + (i*2));
+
+		fclose(fp);
+
+
+		srand(timeGetTime());
+
+		fp=fopen("mutantw.txt", "w");
+		fprintf(fp,"\n\n#WRITE PROGRAM\n");
+		for (i=0; i<0x80; i++)
+		{
+			data16_t r=rand()%0xffff;
+			deco16_prot_backbuffer[i]=deco16_prot_ram[i]=r;
+			fprintf(fp,"ww %04x %06x\n", r, 0x1a0000 + (i*2));
+		}
+
+
+		deco16_xor=0xffff;
+		deco16_mask=0;
+		fprintf(fp,"ww %04x %06x\n", 0xffff, 0x1a0000 + 0x2c);
+		fprintf(fp,"ww %04x %06x\n", 0x0000, 0x1a0000 + 0x36);
+			fclose(fp);
+			fp=fopen("mutantr.txt", "w");
+		{
+			static int ad[]={
+					0x44e, 0x2ac,
+						0x44,
+0x282, 0xd4,
+0x2a2,
+						0x250,0x5a2, 0x570, 0x32e, 0x4dc, 0x1be, 0x420, 0x390, 0x780,0x454, 0x53e, 0x250,
+
+0x2d0,
+//0x3ee,
+0x2b8,
+0x49c,
+0x780,
+0x454,
+0x53e,
+0x700, // todo
+0x700,
+0x1e8, 0x2d0, 0x33e, 0x2b8, 0x294,
+0xffff,
+					0x420, 0x390, 0x756, 0x424, 0x156, 0xa8, 0x64a, 0x16e, 0x39c,
+0x212, 0x70a, 0x7a0, 0x162, 0x384, 0x302, 0x334, 0x34c,
+0x34e, 0x722, 0x574, 0x5ae, 0x410, 0x340, 0x4a4, 0x256,
+0x79a, 0x65e, 0x79c, 0x15e, 0x6e4, 0x1e, 0x23a, 0x6e,
+0x3a2, 0x4a6, 0x7b0, 0x5aa, 0x662, 0x624, 0x2c, 0x41a,
+0x168, 0x314, 0x1b4, 0x5e2, 0x22c, 0x27e, 0x77e, 0xc,
+0x90, 0x246, 0x546, 0x7ce, 0x2e2, 0x40e, 0x248,0x3c0,
+0x4b8,0x65c,0x32a, 0x8, 0x456, 0x190, 0x3f2, 0x2be,
+0x178, 0x19e, 0x2a2, 0x748, 0x686,0x4c4, 0x538, 0x63a,
+0x348, 0x200, 0x254, 0x182, 0x58, 0x48e, 0x72a, 0x4ba,
+0x92, 0x1f0, 0x24e, 0x594, 0x7e2, 0x18c, 0x1fa, 0x70e,
+0x33a,0x1e2, 0x3f4, 0x2ae, 0x96, 0x2d0, 0x33e, 0x2b8,
+0x44e,0x3ca, 0x2ac, 0x3c, 0x174, 0x34a, 0x324, 0x344,
+0x72, 0x36e, 0x590, 0x7b6, 0x588, 0x1f6, 0x4c0, 0x63e,
+0x7cc,0x1bc,
+			0xffff};
+
+			int a=0;
+
+			fprintf(fp,"\n\n#READ PROGRAM\n");
+			while (ad[a]!=0xffff)
+			{
+				logerror("%04x -> %04x\n", ad[a], deco16_104_rohga_prot_r(ad[a]/2, 0xffff));
+				a++;
+			}
+			a=0;
+			while (ad[a]!=0xffff)
+			{
+				fprintf(fp,"rw %06x\nwait %04x\n", ad[a]+0x280000 ,deco16_104_rohga_prot_r(ad[a]/2, 0xffff));
+				a++;
+			}
+			fclose(fp);
+		}
+
+	}
+#endif
 }
 
 WRITE16_HANDLER( deco16_104_rohga_prot_w )
 {
-	/* 
-		Schmeizr uses a feature of this chip that other games don't seem to exploit.  There
-		appear to be two banks of data ports (referred to here as front and back buffers).
-		These banks are switched when certain addresses are read - also very good protection
-		against trojans as it is non-obvious when data ports are switched.
+	/*
+        Schmeizr uses a feature of this chip that other games don't seem to exploit.  There
+        appear to be two banks of data ports (referred to here as front and back buffers).
+        These banks are switched when certain addresses are read - also very good protection
+        against trojans as it is non-obvious when data ports are switched.
 
-		It appears to work as follows..  When the front buffer is active (the state upon
-		reset) any writes to data ports push the existing front buffer word into the back
-		buffer (ie, a FIFO latch type of system).  When the back buffer is active, any writes
-		to data ports affect the back buffer only - the front buffer data is not affected, and
-		there is no FIFO action.
+        It appears to work as follows..  When the front buffer is active (the state upon
+        reset) any writes to data ports push the existing front buffer word into the back
+        buffer (ie, a FIFO latch type of system).  When the back buffer is active, any writes
+        to data ports affect the back buffer only - the front buffer data is not affected, and
+        there is no FIFO action.
 
-		By default the read ports return a scrambled address and scrambled data from a 
-		front buffer port.  When the back buffer is active most read ports return scrambled
-		data from the back buffer, however some ports work exclusively on front buffer data
-		even if the back buffer is selected.  
+        By default the read ports return a scrambled address and scrambled data from a
+        front buffer port.  When the back buffer is active most read ports return scrambled
+        data from the back buffer, however some ports work exclusively on front buffer data
+        even if the back buffer is selected.
 
-		There doesn't appear to be any way to detect what bank is currently selected - it
-		seems game code must maintain this state (if it matters).
-	*/
+        There doesn't appear to be any way to detect what bank is currently selected - it
+        seems game code must maintain this state (if it matters).
+    */
 
-	if (deco16_prot_backbuffer_selected) {
+	if (deco16_prot_backbuffer_selected)
 		COMBINE_DATA(&deco16_prot_backbuffer[offset]);
-
-//		if (offset==0x7e/2)
-//			logerror("Wrote %04x into back only\n",data);
-	} else {
-		/* FIFO */
-//		if (offset==0x7e/2)
-//			logerror("Wrote %04x into front, %04x to back\n",data,deco16_prot_ram[offset]);
-		deco16_prot_backbuffer[offset]=deco16_prot_ram[offset];
+	else
 		COMBINE_DATA(&deco16_prot_ram[offset]);
-	}
 
 	if (offset==(0xa8/2)) {
 		soundlatch_w(0,data&0xff);
@@ -1170,17 +1378,24 @@ WRITE16_HANDLER( deco16_104_rohga_prot_w )
 		return;
 	}
 
-	
+	// These are set regardless of bank
+	if (offset==0x42/2)
+		COMBINE_DATA(&deco16_xor);
+	if (offset==0xee/2)
+		COMBINE_DATA(&deco16_mask);
+
 	offset=offset*2;
 
-//	if (offset==0x60)
-//	logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
-	
+
+
+//  if (offset==0x60)
+//  logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+
 	//logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
 	if (offset==0xee || offset==0x42 || offset==0xa8)
 		return;
 
-//	logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+//  logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
 
 #if 1
 // 66 7c 7e 28 58 4a 9e
@@ -1196,14 +1411,14 @@ WRITE16_HANDLER( deco16_104_rohga_prot_w )
 	if (offset>=0xc0 && offset<0xd0)
 		return;
 
-//	if (offset==0x3c)
-//		logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+//  if (offset==0x3c)
+//      logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
 // Actually read:
-//	22 24 26 2c 2e 30 32 3c 40 44 46 48 60 62 66 6a 6e 76 7e 80 82 84 86 88 8a 8c 90 94 96 98 9a 9c a0 c0 c4 c6 c8 cc ce d6 dc de 
+//  22 24 26 2c 2e 30 32 3c 40 44 46 48 60 62 66 6a 6e 76 7e 80 82 84 86 88 8a 8c 90 94 96 98 9a 9c a0 c0 c4 c6 c8 cc ce d6 dc de
 
 // check 74 b0 b4 d4
 
-//  24 2a 2c 2e 30 3c 44 48 66 6a 74 a0 b0 b4 d4 d6 
+//  24 2a 2c 2e 30 3c 44 48 66 6a 74 a0 b0 b4 d4 d6
 //  32 60 7e
 //  22 26 a4 a6
 //  62 6e d0 dc de d2 d8 da 46
@@ -1230,434 +1445,354 @@ WRITE16_HANDLER( deco16_104_rohga_prot_w )
 
 READ16_HANDLER( deco16_104_rohga_prot_r )
 {
-//	if (offset!=0x88/2 && offset!=0x44c/2 && offset!=0x36c/2 && offset!=0x292/2)
-//logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
+	const data16_t* prot_ram=deco16_prot_backbuffer_selected ? deco16_prot_backbuffer : deco16_prot_ram;
+
+//  if (offset!=0x88/2 && offset!=0x44c/2 && offset!=0x36c/2 && offset!=0x292/2)
+//      logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
 
 	switch (offset) {
 		case 0x88/2: /* Player 1 & 2 input ports */
 			return readinputport(0);
-
-		case 0x44c/2: /* VBL */
-		case 0x36c/2: /* Coins */
+		case 0x36c/2:
 			return readinputport(1);
+		case 0x44c/2:
 
+			return ((readinputport(1)&0x7)<<13)|((readinputport(1)&0x8)<<9);
 		case 0x292/2: /* Dips */
 			return readinputport(2);
-#if 1
+
+		case 0x44/2:
+			return ((((DECO_PORT(0x2c)&0x000f)<<12)) ^ deco16_xor) & (~deco16_mask);
+		case 0x282/2:
+			return ((DECO_PORT(0x26)&0x000f)<<12) & (~deco16_mask);
+		case 0xd4/2:
+			return ((DECO_PORT(0x6e)&0x0ff0)<<4) | ((DECO_PORT(0x6e)&0x000e)<<3) | ((DECO_PORT(0x6e)&0x0001)<<7);
+		case 0x5a2/2:
+			return (((DECO_PORT(0x24)&0xff00)>>4) | ((DECO_PORT(0x24)&0x000f)<<0) | ((DECO_PORT(0x24)&0x00f0)<<8)) & (~deco16_mask);
+		case 0x570/2:
+			return (((DECO_PORT(0x24)&0xf0f0)>>0) | ((DECO_PORT(0x24)&0x000f)<<8)) ^ deco16_xor;
+		case 0x32e/2:
+			return (((DECO_PORT(0x46)&0xf000)>>0) | ((DECO_PORT(0x46)&0x00ff)<<4)) & (~deco16_mask);
+		case 0x4dc/2:
+			return ((DECO_PORT(0x62)&0x00ff)<<8);
+		case 0x1be/2:
+			return ((((DECO_PORT(0xc2)&0x0ff0)<<4) | ((DECO_PORT(0xc2)&0x0003)<<6) | ((DECO_PORT(0xc2)&0x000c)<<2)) ^ deco16_xor) & (~deco16_mask);
+
 		case 0x420/2:
-			return ((deco16_prot_ram[0x2e/2]&0xf000)>>4) | ((deco16_prot_ram[0x2e/2]&0x0f00)<<4) | ((deco16_prot_ram[0x2e/2]&0x00f0)>>4) | ((deco16_prot_ram[0x2e/2]&0x000f)<<4);
+			return ((DECO_PORT(0x2e)&0xf000)>>4) | ((DECO_PORT(0x2e)&0x0f00)<<4) | ((DECO_PORT(0x2e)&0x00f0)>>4) | ((DECO_PORT(0x2e)&0x000f)<<4);
 
 		case 0x390/2:
-			return deco16_prot_ram[0x2c/2];
-
-//		case 0x754/2: //fails verify
-//			return (((deco16_prot_ram[0x76/2]&0x000f)<<12) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return DECO_PORT(0x2c);
 
 		case 0x756/2:
-			return ((deco16_prot_ram[0x60/2]&0xfff0)>>4) | ((deco16_prot_ram[0x60/2]&0x0007)<<13) | ((deco16_prot_ram[0x60/2]&0x0008)<<9);
+			return ((DECO_PORT(0x60)&0xfff0)>>4) | ((DECO_PORT(0x60)&0x0007)<<13) | ((DECO_PORT(0x60)&0x0008)<<9);
 		case 0x424/2:
-			return ((deco16_prot_ram[0x60/2]&0xf000)>>4) | ((deco16_prot_ram[0x60/2]&0x0f00)<<4) | ((deco16_prot_ram[0x60/2]&0x00f0)>>0) | ((deco16_prot_ram[0x60/2]&0x000f)<<0);
+			return ((DECO_PORT(0x60)&0xf000)>>4) | ((DECO_PORT(0x60)&0x0f00)<<4) | ((DECO_PORT(0x60)&0x00f0)>>0) | ((DECO_PORT(0x60)&0x000f)<<0);
 
 		case 0x156/2:
-			return (((deco16_prot_ram[0xde/2]&0xff00)<<0) | ((deco16_prot_ram[0xde/2]&0x000f)<<4) | ((deco16_prot_ram[0xde/2]&0x00f0)>>4)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xde)&0xff00)<<0) | ((DECO_PORT(0xde)&0x000f)<<4) | ((DECO_PORT(0xde)&0x00f0)>>4)) & (~deco16_mask);
 		case 0xa8/2:
-			return (((deco16_prot_ram[0xde/2]&0xff00)>>4) | ((deco16_prot_ram[0xde/2]&0x000f)<<0) | ((deco16_prot_ram[0xde/2]&0x00f0)<<8)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xde)&0xff00)>>4) | ((DECO_PORT(0xde)&0x000f)<<0) | ((DECO_PORT(0xde)&0x00f0)<<8)) & (~deco16_mask);
 		case 0x64a/2:
-			return (((deco16_prot_ram[0xde/2]&0xfff0)>>4) | ((deco16_prot_ram[0xde/2]&0x000c)<<10) | ((deco16_prot_ram[0xde/2]&0x0003)<<14)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xde)&0xfff0)>>4) | ((DECO_PORT(0xde)&0x000c)<<10) | ((DECO_PORT(0xde)&0x0003)<<14)) & (~deco16_mask);
 
 		case 0x16e/2:
-			return deco16_prot_ram[0x6a/2];
+			return DECO_PORT(0x6a);
+
 		case 0x39c/2:
-			return (deco16_prot_ram[0x6a/2]&0x00ff) | ((deco16_prot_ram[0x6a/2]&0xf000)>>4) | ((deco16_prot_ram[0x6a/2]&0x0f00)<<4);
+			return (DECO_PORT(0x6a)&0x00ff) | ((DECO_PORT(0x6a)&0xf000)>>4) | ((DECO_PORT(0x6a)&0x0f00)<<4);
+		case 0x212/2:
+			return (((DECO_PORT(0x6e)&0xff00)>>4) | ((DECO_PORT(0x6e)&0x00f0)<<8) | ((DECO_PORT(0x6e)&0x000f)<<0)) ^ deco16_xor;
 
-		case 0x212/2: /* XOR register used */
-			return (((deco16_prot_ram[0x6e/2]&0xff00)>>4) | ((deco16_prot_ram[0x6e/2]&0x00f0)<<8) | ((deco16_prot_ram[0x6e/2]&0x000f)<<0)) ^ deco16_prot_ram[0x42/2];
-
-		case 0x70a/2: /* XOR register used */
-			return (((deco16_prot_ram[0xde/2]&0x00f0)<<8) | ((deco16_prot_ram[0xde/2]&0x0007)<<9) | ((deco16_prot_ram[0xde/2]&0x0008)<<5)) ^ deco16_prot_ram[0x42/2];
+		case 0x70a/2:
+			return (((DECO_PORT(0xde)&0x00f0)<<8) | ((DECO_PORT(0xde)&0x0007)<<9) | ((DECO_PORT(0xde)&0x0008)<<5)) ^ deco16_xor;
 
 		case 0x7a0/2:
-			return (deco16_prot_ram[0x6e/2]&0x00ff) | ((deco16_prot_ram[0x6e/2]&0xf000)>>4) | ((deco16_prot_ram[0x6e/2]&0x0f00)<<4);
+			return (DECO_PORT(0x6e)&0x00ff) | ((DECO_PORT(0x6e)&0xf000)>>4) | ((DECO_PORT(0x6e)&0x0f00)<<4);
 		case 0x162/2:
-			return deco16_prot_ram[0x6e/2];
-
+			return DECO_PORT(0x6e);
 
 		case 0x384/2:
-			return ((deco16_prot_ram[0xdc/2]&0xf000)>>12) | ((deco16_prot_ram[0xdc/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xdc/2]&0x000c)<<2) | ((deco16_prot_ram[0xdc/2]&0x0003)<<6);
+			return ((DECO_PORT(0xdc)&0xf000)>>12) | ((DECO_PORT(0xdc)&0x0ff0)<<4) | ((DECO_PORT(0xdc)&0x000c)<<2) | ((DECO_PORT(0xdc)&0x0003)<<6);
 
 		case 0x302/2:
-			return deco16_prot_ram[0x24/2];
+			return DECO_PORT(0x24);
 		case 0x334/2:
-			return deco16_prot_ram[0x30/2];
+			return DECO_PORT(0x30);
 		case 0x34c/2:
-			return deco16_prot_ram[0x3c/2];
+			return DECO_PORT(0x3c);
 
 		case 0x514/2:
-			return (((deco16_prot_ram[0x32/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x32/2]&0x000c)<<2) | ((deco16_prot_ram[0x32/2]&0x0003)<<6)) & (~deco16_prot_ram[0xee/2]);
-		case 0x444/2:
-			return ((deco16_prot_ram[0x66/2]&0x00f0)<<8) | ((deco16_prot_ram[0x66/2]&0x0007)<<9)  | ((deco16_prot_ram[0x66/2]&0x0008)<<5);
+			return (((DECO_PORT(0x32)&0x0ff0)<<4) | ((DECO_PORT(0x32)&0x000c)<<2) | ((DECO_PORT(0x32)&0x0003)<<6)) & (~deco16_mask);
 
 		case 0x34e/2:
-			return ((deco16_prot_ram[0xde/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xde/2]&0xf000)>>8) | ((deco16_prot_ram[0xde/2]&0x000f)<<0);
-		case 0x722/2: /* XOR applied before MASK */
-			return (((deco16_prot_ram[0xdc/2]&0x0fff)<<4) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-		case 0x574/2: /* XOR applied before MASK */
-			return ((((deco16_prot_ram[0xdc/2]&0xfff0)>>0) | ((deco16_prot_ram[0xdc/2]&0x0003)<<2) | ((deco16_prot_ram[0xdc/2]&0x000c)>>2)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-
+			return ((DECO_PORT(0xde)&0x0ff0)<<4) | ((DECO_PORT(0xde)&0xf000)>>8) | ((DECO_PORT(0xde)&0x000f)<<0);
+		case 0x722/2:
+			return (((DECO_PORT(0xdc)&0x0fff)<<4) ^ deco16_xor) & (~deco16_mask);
+		case 0x574/2:
+			return ((((DECO_PORT(0xdc)&0xfff0)>>0) | ((DECO_PORT(0xdc)&0x0003)<<2) | ((DECO_PORT(0xdc)&0x000c)>>2)) ^ deco16_xor) & (~deco16_mask);
 
 		case 0x5ae/2:
-			return deco16_prot_ram[0xdc/2];
+			return DECO_PORT(0xdc);
 		case 0x410/2:
-			return deco16_prot_ram[0xde/2];
+			return DECO_PORT(0xde);
 		case 0x340/2:
-			return ((deco16_prot_ram[0x90/2]&0xfff0) | ((deco16_prot_ram[0x90/2]&0x7)<<1) | ((deco16_prot_ram[0x90/2]&0x8)>>3)) ^ deco16_prot_ram[0x42/2];
+			return ((DECO_PORT(0x90)&0xfff0) | ((DECO_PORT(0x90)&0x7)<<1) | ((DECO_PORT(0x90)&0x8)>>3)) ^ deco16_xor;
 		case 0x4a4/2:
-			return (((deco16_prot_ram[0xce/2]&0x0ff0) | ((deco16_prot_ram[0xce/2]&0xf000)>>12) | ((deco16_prot_ram[0xce/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xce)&0x0ff0) | ((DECO_PORT(0xce)&0xf000)>>12) | ((DECO_PORT(0xce)&0x000f)<<12)) ^ deco16_xor) & (~deco16_mask);
 		case 0x256/2:
-			return ((((deco16_prot_ram[0xce/2]&0xf000)>>12) | ((deco16_prot_ram[0xce/2]&0x0fff)<<4))) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xce)&0xf000)>>12) | ((DECO_PORT(0xce)&0x0fff)<<4))) & (~deco16_mask);
 		case 0x79a/2:
-			return (((deco16_prot_ram[0xc8/2]&0xfff0)>>4) | ((deco16_prot_ram[0xc8/2]&0x0008)<<9) | ((deco16_prot_ram[0xc8/2]&0x0007)<<13)) ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0xc8)&0xfff0)>>4) | ((DECO_PORT(0xc8)&0x0008)<<9) | ((DECO_PORT(0xc8)&0x0007)<<13)) ^ deco16_xor;
+
 		case 0x65e/2:
-			return deco16_prot_ram[0x9c/2];
+			return DECO_PORT(0x9c);
 		case 0x79c/2:
-			return ((deco16_prot_ram[0xc6/2]&0xf000) | ((deco16_prot_ram[0xc6/2]&0x00ff)<<4) | ((deco16_prot_ram[0xc6/2]&0x0f00)>>8)) & (~deco16_prot_ram[0xee/2]);
+			return ((DECO_PORT(0xc6)&0xf000) | ((DECO_PORT(0xc6)&0x00ff)<<4) | ((DECO_PORT(0xc6)&0x0f00)>>8)) & (~deco16_mask);
 		case 0x15e/2:
-			return (((deco16_prot_ram[0x98/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x98/2]&0xf000)>>12) | ((deco16_prot_ram[0x98/2]&0x0003)<<6) | ((deco16_prot_ram[0x98/2]&0x000c)<<2)) ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x98)&0x0ff0)<<4) | ((DECO_PORT(0x98)&0xf000)>>12) | ((DECO_PORT(0x98)&0x0003)<<6) | ((DECO_PORT(0x98)&0x000c)<<2)) ^ deco16_xor;
 		case 0x6e4/2:
-			return deco16_prot_ram[0x98/2];
+			return DECO_PORT(0x98);
 		case 0x1e/2:
-			return ((((deco16_prot_ram[0xc4/2]&0xf000)>>4) | ((deco16_prot_ram[0xc4/2]&0x0f00)<<4) | ((deco16_prot_ram[0xc4/2]&0x00ff)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xc4)&0xf000)>>4) | ((DECO_PORT(0xc4)&0x0f00)<<4) | ((DECO_PORT(0xc4)&0x00ff)<<0)) ^ deco16_xor) & (~deco16_mask);
 		case 0x23a/2:
-			return ((((deco16_prot_ram[0x86/2]&0xfff0)>>0) | ((deco16_prot_ram[0x86/2]&0x0003)<<2) | ((deco16_prot_ram[0x86/2]&0x000c)>>2)) ^ deco16_prot_ram[0x42/2]);
+			return ((((DECO_PORT(0x86)&0xfff0)>>0) | ((DECO_PORT(0x86)&0x0003)<<2) | ((DECO_PORT(0x86)&0x000c)>>2)) ^ deco16_xor);
 		case 0x6e/2:
-			return ((((deco16_prot_ram[0x96/2]&0xf000)>>8) | ((deco16_prot_ram[0x96/2]&0x0f0f)<<0) | ((deco16_prot_ram[0x96/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2]);
+			return ((((DECO_PORT(0x96)&0xf000)>>8) | ((DECO_PORT(0x96)&0x0f0f)<<0) | ((DECO_PORT(0x96)&0x00f0)<<8)) ^ deco16_xor);
 		case 0x3a2/2:
-			return ((((deco16_prot_ram[0x94/2]&0xf000)>>8) | ((deco16_prot_ram[0x94/2]&0x0f00)>>8) | ((deco16_prot_ram[0x94/2]&0x00f0)<<8) | ((deco16_prot_ram[0x94/2]&0x000e)<<7) | ((deco16_prot_ram[0x94/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x94)&0xf000)>>8) | ((DECO_PORT(0x94)&0x0f00)>>8) | ((DECO_PORT(0x94)&0x00f0)<<8) | ((DECO_PORT(0x94)&0x000e)<<7) | ((DECO_PORT(0x94)&0x0001)<<11)) ^ deco16_xor);// & (~deco16_mask);
 		case 0x4a6/2:
-			return ((deco16_prot_ram[0x8c/2]&0xff00)>>0) | ((deco16_prot_ram[0x8c/2]&0x00f0)>>4) | ((deco16_prot_ram[0x8c/2]&0x000f)<<4);
+			return ((DECO_PORT(0x8c)&0xff00)>>0) | ((DECO_PORT(0x8c)&0x00f0)>>4) | ((DECO_PORT(0x8c)&0x000f)<<4);
 		case 0x7b0/2:
-			return deco16_prot_ram[0x80/2];
-		case 0x5aa/2: // need to verify (added mask as test)
-			return ((((deco16_prot_ram[0x98/2]&0x0f00)>>8) | ((deco16_prot_ram[0x98/2]&0xf000)>>8) | ((deco16_prot_ram[0x98/2]&0x00f0)<<8) | ((deco16_prot_ram[0x98/2]&0x000e)<<7) | ((deco16_prot_ram[0x98/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return DECO_PORT(0x80);
+		case 0x5aa/2:
+			return ((((DECO_PORT(0x98)&0x0f00)>>8) | ((DECO_PORT(0x98)&0xf000)>>8) | ((DECO_PORT(0x98)&0x00f0)<<8) | ((DECO_PORT(0x98)&0x000e)<<7) | ((DECO_PORT(0x98)&0x0001)<<11)) ^ deco16_xor) & (~deco16_mask);
 		case 0x662/2:
-			return deco16_prot_ram[0x8c/2];
+			return DECO_PORT(0x8c);
 		case 0x624/2:
-			return deco16_prot_ram[0x9a/2];
+			return DECO_PORT(0x9a);
 		case 0x2c/2:
-			return (((deco16_prot_ram[0x82/2]&0x0f0f)>>0) | ((deco16_prot_ram[0x82/2]&0xf000)>>8) | ((deco16_prot_ram[0x82/2]&0x00f0)<<8)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x82)&0x0f0f)>>0) | ((DECO_PORT(0x82)&0xf000)>>8) | ((DECO_PORT(0x82)&0x00f0)<<8)) & (~deco16_mask);
 
+		case 0x1b4/2:
+			return ((DECO_PORT(0xcc)&0x00f0)<<4) | ((DECO_PORT(0xcc)&0x000f)<<12);
 
+		case 0x7ce/2:
+			return ((DECO_PORT(0x80)&0x000e)<<11) | ((DECO_PORT(0x80)&0x0001)<<15);
 		case 0x41a/2:
-			return ((((deco16_prot_ram[0x84/2]&0x00f0)<<8) | ((deco16_prot_ram[0x84/2]&0xf000)>>8) | ((deco16_prot_ram[0x84/2]&0x0f00)>>8) | ((deco16_prot_ram[0x84/2]&0x0003)<<10) | ((deco16_prot_ram[0x84/2]&0x000c)<<6)) ^ deco16_prot_ram[0x42/2]);
+			return ((((DECO_PORT(0x84)&0x00f0)<<8) | ((DECO_PORT(0x84)&0xf000)>>8) | ((DECO_PORT(0x84)&0x0f00)>>8) | ((DECO_PORT(0x84)&0x0003)<<10) | ((DECO_PORT(0x84)&0x000c)<<6)) ^ deco16_xor);
 		case 0x168/2:
-			return ((((deco16_prot_ram[0x84/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x84/2]&0x000e)<<3) | ((deco16_prot_ram[0x84/2]&0x0001)<<5))) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x84)&0x0ff0)<<4) | ((DECO_PORT(0x84)&0x000e)<<3) | ((DECO_PORT(0x84)&0x0001)<<5))) & (~deco16_mask);
 		case 0x314/2:
-			return ((((deco16_prot_ram[0x84/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x84/2]&0x000e)<<3) | ((deco16_prot_ram[0x84/2]&0x0001)<<5)));
-		case 0x1b4/2: 
-			return ((deco16_prot_ram[0xcc/2]&0x00f0)<<4) | ((deco16_prot_ram[0xcc/2]&0x000f)<<12);
-		case 0x5e2/2: 
-			return ((((deco16_prot_ram[0x84/2]&0x00f0)<<8) | ((deco16_prot_ram[0x84/2]&0x000e)<<7) | ((deco16_prot_ram[0x84/2]&0x0001)<<9)));
-		case 0x22c/2: 
-			return ((deco16_prot_ram[0xc4/2]&0x00f0)<<8);
-		case 0x27e/2:
-			return ((((deco16_prot_ram[0x94/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-		case 0x77e/2:
-			return ((deco16_prot_ram[0x62/2]&0xf000)>>12) | ((deco16_prot_ram[0x62/2]&0x0ff0)<<0) | ((deco16_prot_ram[0x62/2]&0x000f)<<12);
-		case 0xc/2:
-			return ((deco16_prot_ram[0xd6/2]&0xf000)>>12) | ((deco16_prot_ram[0xd6/2]&0x0fff)<<4);
+			return ((((DECO_PORT(0x84)&0x0ff0)<<4) | ((DECO_PORT(0x84)&0x000e)<<3) | ((DECO_PORT(0x84)&0x0001)<<5)));
+		case 0x5e2/2:
+			return ((((DECO_PORT(0x84)&0x00f0)<<8) | ((DECO_PORT(0x84)&0x000e)<<7) | ((DECO_PORT(0x84)&0x0001)<<9)));
+		case 0x72a/2:
+			return ((((DECO_PORT(0x86)&0xfff0)>>4) | ((DECO_PORT(0x86)&0x0003)<<14) | ((DECO_PORT(0x86)&0x000c)<<10)) ^ deco16_xor) & (~deco16_mask);
+		case 0x178/2:
+			return (((DECO_PORT(0x88)&0x00ff)<<8) | ((DECO_PORT(0x88)&0xff00)>>8)) & (~deco16_mask);
+		case 0x40e/2:
+			return ((((DECO_PORT(0x8a)&0xf000)>>0) | ((DECO_PORT(0x8a)&0x00ff)<<4)) ^ deco16_xor) & (~deco16_mask);
+		case 0x248/2:
+			return ((((DECO_PORT(0x8c)&0xff00)>>8) | ((DECO_PORT(0x8c)&0x00f0)<<4) | ((DECO_PORT(0x8c)&0x000f)<<12)) ^ deco16_xor) & (~deco16_mask);
 
+		case 0x27e/2:
+			return ((((DECO_PORT(0x94)&0x00f0)<<8)) ^ deco16_xor) & (~deco16_mask);
+
+		case 0x22c/2:
+			return ((DECO_PORT(0xc4)&0x00f0)<<8);
+		case 0x77e/2:
+			return ((DECO_PORT(0x62)&0xf000)>>12) | ((DECO_PORT(0x62)&0x0ff0)<<0) | ((DECO_PORT(0x62)&0x000f)<<12);
+		case 0xc/2:
+			return ((DECO_PORT(0xd6)&0xf000)>>12) | ((DECO_PORT(0xd6)&0x0fff)<<4);
 
 		case 0x90/2:
-			return deco16_prot_ram[0x44/2];
+			return DECO_PORT(0x44);
 		case 0x246/2:
-			return ((((deco16_prot_ram[0x48/2]&0xff00)>>8) | ((deco16_prot_ram[0x48/2]&0x00f0)<<8) | ((deco16_prot_ram[0x48/2]&0x0f00)>>8) | ((deco16_prot_ram[0x48/2]&0x0003)<<10) | ((deco16_prot_ram[0x48/2]&0x000c)<<6)) ^ deco16_prot_ram[0x42/2]);
+			return ((((DECO_PORT(0x48)&0xff00)>>8) | ((DECO_PORT(0x48)&0x00f0)<<8) | ((DECO_PORT(0x48)&0x0f00)>>8) | ((DECO_PORT(0x48)&0x0003)<<10) | ((DECO_PORT(0x48)&0x000c)<<6)) ^ deco16_xor);
 		case 0x546/2:
-			return (((deco16_prot_ram[0x62/2]&0xf0f0)>>0) | ((deco16_prot_ram[0x62/2]&0x000f)<<8)) & (~deco16_prot_ram[0xee/2]);
-		case 0x7ce/2:
-			return ((deco16_prot_ram[0x80/2]&0x000e)<<11) | ((deco16_prot_ram[0x80/2]&0x0001)<<15);
+			return (((DECO_PORT(0x62)&0xf0f0)>>0) | ((DECO_PORT(0x62)&0x000f)<<8)) & (~deco16_mask);
 		case 0x2e2/2:
-			return ((deco16_prot_ram[0xc6/2]&0x000e)<<11) | ((deco16_prot_ram[0xc6/2]&0x0001)<<15);
-		case 0x40e/2:
-			return ((((deco16_prot_ram[0x8a/2]&0xf000)>>0) | ((deco16_prot_ram[0x8a/2]&0x00ff)<<4)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-		case 0x248/2:
-			return ((((deco16_prot_ram[0x8c/2]&0xff00)>>8) | ((deco16_prot_ram[0x8c/2]&0x00f0)<<4) | ((deco16_prot_ram[0x8c/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((DECO_PORT(0xc6)&0x000e)<<11) | ((DECO_PORT(0xc6)&0x0001)<<15);
 		case 0x3c0/2:
-			return deco16_prot_ram[0x22/2];
+			return DECO_PORT(0x22);
 		case 0x4b8/2:
-			return (((deco16_prot_ram[0x46/2]&0xf000)>>12) | ((deco16_prot_ram[0x46/2]&0x0f00)>>4) | ((deco16_prot_ram[0x46/2]&0x00ff)<<8)) ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x46)&0xf000)>>12) | ((DECO_PORT(0x46)&0x0f00)>>4) | ((DECO_PORT(0x46)&0x00ff)<<8)) ^ deco16_xor;
 		case 0x65c/2:
-			return ((((deco16_prot_ram[0x44/2]&0xf000)>>12) | ((deco16_prot_ram[0x44/2]&0x0fff)<<4)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-
+			return ((((DECO_PORT(0x44)&0xf000)>>12) | ((DECO_PORT(0x44)&0x0fff)<<4)) ^ deco16_xor) & (~deco16_mask);
 
 		case 0x32a/2:
-			return ((((deco16_prot_ram[0xc0/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xc0/2]&0x000e)<<3) | ((deco16_prot_ram[0xc0/2]&0x0001)<<7))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+			return ((((DECO_PORT(0xc0)&0x0ff0)<<4) | ((DECO_PORT(0xc0)&0x000e)<<3) | ((DECO_PORT(0xc0)&0x0001)<<7))) & (~deco16_mask);// ^ deco16_xor;
 		case 0x8/2:
-			return ((((deco16_prot_ram[0x94/2]&0xfff0)<<0) | ((deco16_prot_ram[0x94/2]&0x000e)>>1) | ((deco16_prot_ram[0x94/2]&0x0001)<<3))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+			return ((((DECO_PORT(0x94)&0xfff0)<<0) | ((DECO_PORT(0x94)&0x000e)>>1) | ((DECO_PORT(0x94)&0x0001)<<3))) & (~deco16_mask);// ^ deco16_xor;
 		case 0x456/2:
-			return (((deco16_prot_ram[0x26/2]&0xfff0)<<0) | ((deco16_prot_ram[0x26/2]&0x0007)<<1) | ((deco16_prot_ram[0x26/2]&0x0008)>>3));// ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x26)&0xfff0)<<0) | ((DECO_PORT(0x26)&0x0007)<<1) | ((DECO_PORT(0x26)&0x0008)>>3));// ^ deco16_xor;
 		case 0x190/2:
-			return ((((deco16_prot_ram[0x44/2]&0xf000)<<0) | ((deco16_prot_ram[0x44/2]&0x00ff)<<4))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+			return ((((DECO_PORT(0x44)&0xf000)<<0) | ((DECO_PORT(0x44)&0x00ff)<<4))) & (~deco16_mask);// ^ deco16_xor;
 		case 0x3f2/2:
-			return ((((deco16_prot_ram[0x48/2]&0x000f)<<12) | ((deco16_prot_ram[0x48/2]&0x00f0)<<4))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+			return ((((DECO_PORT(0x48)&0x000f)<<12) | ((DECO_PORT(0x48)&0x00f0)<<4))) & (~deco16_mask);// ^ deco16_xor;
 		case 0x2be/2:
-			return ((deco16_prot_ram[0x40/2]&0x00ff)<<8);
+			return ((DECO_PORT(0x40)&0x00ff)<<8);
 
-		case 0x178/2:
-			return (((deco16_prot_ram[0x88/2]&0x00ff)<<8) | ((deco16_prot_ram[0x88/2]&0xff00)>>8)) & (~deco16_prot_ram[0xee/2]);
 		case 0x19e/2:
-			return ((((deco16_prot_ram[0x3c/2]&0xf000)>>12) | ((deco16_prot_ram[0x3c/2]&0x0f00)<<4) | ((deco16_prot_ram[0x3c/2]&0x00f0)>>0) | ((deco16_prot_ram[0x3c/2]&0x000f)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-
+			return ((((DECO_PORT(0x3c)&0xf000)>>12) | ((DECO_PORT(0x3c)&0x0f00)<<4) | ((DECO_PORT(0x3c)&0x00f0)>>0) | ((DECO_PORT(0x3c)&0x000f)<<8)) ^ deco16_xor) & (~deco16_mask);
 		case 0x2a2/2:
-			return ((((deco16_prot_ram[0x44/2]&0xff00)>>8) | ((deco16_prot_ram[0x44/2]&0x00f0)<<8) | ((deco16_prot_ram[0x44/2]&0x000e)<<7) | ((deco16_prot_ram[0x44/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-
+			return ((((DECO_PORT(0x44)&0xff00)>>8) | ((DECO_PORT(0x44)&0x00f0)<<8) | ((DECO_PORT(0x44)&0x000e)<<7) | ((DECO_PORT(0x44)&0x0001)<<11)) ^ deco16_xor) & (~deco16_mask);
 		case 0x748/2:
-			return (((deco16_prot_ram[0x44/2]&0xfff0)<<0) | ((deco16_prot_ram[0x44/2]&0x000e)>>1) | ((deco16_prot_ram[0x44/2]&0x0001)<<3));// & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x44)&0xfff0)<<0) | ((DECO_PORT(0x44)&0x000e)>>1) | ((DECO_PORT(0x44)&0x0001)<<3));// & (~deco16_mask);
 		case 0x686/2:
-			return (((deco16_prot_ram[0x46/2]&0xf000)>>4) | ((deco16_prot_ram[0x46/2]&0x0f00)>>8) | ((deco16_prot_ram[0x46/2]&0x00f0)<<8) | ((deco16_prot_ram[0x46/2]&0x000f)<<4));// & (~deco16_prot_ram[0xee/2]);
-
+			return (((DECO_PORT(0x46)&0xf000)>>4) | ((DECO_PORT(0x46)&0x0f00)>>8) | ((DECO_PORT(0x46)&0x00f0)<<8) | ((DECO_PORT(0x46)&0x000f)<<4));// & (~deco16_mask);
 		case 0x4c4/2:
-			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12) & (~deco16_prot_ram[0xee/2]);
+			return ((DECO_PORT(0x3c)&0x000f)<<12) & (~deco16_mask);
 		case 0x538/2:
-			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12);
+			return ((DECO_PORT(0x3c)&0x000f)<<12);
 		case 0x63a/2:
-			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12);
-		// 63a as above?? more tests needed.
-
-
+			return ((DECO_PORT(0x3c)&0x000f)<<12);
 		case 0x348/2:
-			return ((((deco16_prot_ram[0x44/2]&0xf000)>>12) | ((deco16_prot_ram[0x44/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x44/2]&0x000e)<<3) | ((deco16_prot_ram[0x44/2]&0x0001)<<7))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x44)&0xf000)>>12) | ((DECO_PORT(0x44)&0x0ff0)<<4) | ((DECO_PORT(0x44)&0x000e)<<3) | ((DECO_PORT(0x44)&0x0001)<<7))) ^ deco16_xor;// & (~deco16_mask);
 		case 0x200/2:
-			return (((deco16_prot_ram[0xa0/2]&0xfff0)>>4) | ((deco16_prot_ram[0xa0/2]&0x0007)<<13) | ((deco16_prot_ram[0xa0/2]&0x0008)<<9));// & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xa0)&0xfff0)>>4) | ((DECO_PORT(0xa0)&0x0007)<<13) | ((DECO_PORT(0xa0)&0x0008)<<9));// & (~deco16_mask);
 		case 0x254/2:
-			return ((((deco16_prot_ram[0x7e/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x7e/2]&0x000c)<<2) | ((deco16_prot_ram[0x7e/2]&0x0003)<<6))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x7e)&0x0ff0)<<4) | ((DECO_PORT(0x7e)&0x000c)<<2) | ((DECO_PORT(0x7e)&0x0003)<<6))) ^ deco16_xor;// & (~deco16_mask);
 		case 0x182/2:
-			return ((deco16_prot_ram[0x46/2]&0xf000)<<0) | ((deco16_prot_ram[0x46/2]&0x0f00)>>8) | ((deco16_prot_ram[0x46/2]&0x00f0)>>0) | ((deco16_prot_ram[0x46/2]&0x000f)<<8);
+			return ((DECO_PORT(0x46)&0xf000)<<0) | ((DECO_PORT(0x46)&0x0f00)>>8) | ((DECO_PORT(0x46)&0x00f0)>>0) | ((DECO_PORT(0x46)&0x000f)<<8);
 		case 0x58/2:
-			return deco16_prot_ram[0x46/2];
-		case 0x48e/2: // fails verify (remove xor as test)
-			return ((((deco16_prot_ram[0x46/2]&0xf000)>>12) | ((deco16_prot_ram[0x46/2]&0x0f00)>>4) | ((deco16_prot_ram[0x46/2]&0x00f0)<<4) | ((deco16_prot_ram[0x46/2]&0x000f)<<12)));// /*^ deco16_prot_ram[0x42/2]*/) & (~deco16_prot_ram[0xee/2]);
-
-		case 0x72a/2:
-			return ((((deco16_prot_ram[0x86/2]&0xfff0)>>4) | ((deco16_prot_ram[0x86/2]&0x0003)<<14) | ((deco16_prot_ram[0x86/2]&0x000c)<<10)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return DECO_PORT(0x46);
+		case 0x48e/2:
+			return ((((DECO_PORT(0x46)&0xf000)>>12) | ((DECO_PORT(0x46)&0x0f00)>>4) | ((DECO_PORT(0x46)&0x00f0)<<4) | ((DECO_PORT(0x46)&0x000f)<<12)));// /*^ deco16_xor*/) & (~deco16_mask);
 
 		case 0x4ba/2:
-			return (((deco16_prot_ram[0x24/2]&0xf000)>>12) | ((deco16_prot_ram[0x24/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x24/2]&0x000c)<<2) | ((deco16_prot_ram[0x24/2]&0x0003)<<6)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x24)&0xf000)>>12) | ((DECO_PORT(0x24)&0x0ff0)<<4) | ((DECO_PORT(0x24)&0x000c)<<2) | ((DECO_PORT(0x24)&0x0003)<<6)) & (~deco16_mask);
 		case 0x92/2:
-			return (((deco16_prot_ram[0x3c/2]&0xfff0)>>0) | ((deco16_prot_ram[0x3c/2]&0x0007)<<1) | ((deco16_prot_ram[0x3c/2]&0x0008)>>3));
+			return (((DECO_PORT(0x3c)&0xfff0)>>0) | ((DECO_PORT(0x3c)&0x0007)<<1) | ((DECO_PORT(0x3c)&0x0008)>>3));
 		case 0x1f0/2:
-			return ((((deco16_prot_ram[0xa2/2]&0xf000)>>12) | ((deco16_prot_ram[0xa2/2]&0x0f00)>>4) | ((deco16_prot_ram[0xa2/2]&0x00ff)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xa2)&0xf000)>>12) | ((DECO_PORT(0xa2)&0x0f00)>>4) | ((DECO_PORT(0xa2)&0x00ff)<<8)) ^ deco16_xor) & (~deco16_mask);
 		case 0x24e/2:
-			return ((((deco16_prot_ram[0x46/2]&0xf000)>>8) | ((deco16_prot_ram[0x46/2]&0x0f00)>>0) | ((deco16_prot_ram[0x46/2]&0x00f0)>>4) | ((deco16_prot_ram[0x46/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x46)&0xf000)>>8) | ((DECO_PORT(0x46)&0x0f00)>>0) | ((DECO_PORT(0x46)&0x00f0)>>4) | ((DECO_PORT(0x46)&0x000f)<<12)) ^ deco16_xor);// & (~deco16_mask);
 		case 0x594/2:
-			return ((((deco16_prot_ram[0x40/2]&0x00f0)<<8) | ((deco16_prot_ram[0x40/2]&0x000c)<<6) | ((deco16_prot_ram[0x40/2]&0x0003)<<10)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x40)&0x00f0)<<8) | ((DECO_PORT(0x40)&0x000c)<<6) | ((DECO_PORT(0x40)&0x0003)<<10)) ^ deco16_xor);// & (~deco16_mask);
 
 		case 0x7e2/2:
-			return ((((deco16_prot_ram[0x96/2]&0xf000)<<0) | ((deco16_prot_ram[0x96/2]&0x00f0)<<4) | ((deco16_prot_ram[0x96/2]&0x000f)<<4))) ^ deco16_prot_ram[0x42/2];// | ((deco16_prot_ram[0x96/2]&0x0001)<<7));// ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x96)&0xf000)<<0) | ((DECO_PORT(0x96)&0x00f0)<<4) | ((DECO_PORT(0x96)&0x000f)<<4))) ^ deco16_xor;// | ((DECO_PORT(0x96)&0x0001)<<7));// ^ deco16_xor);// & (~deco16_mask);
 		case 0x18c/2:
-			return (((deco16_prot_ram[0x22/2]&0xfff0)>>4) | ((deco16_prot_ram[0x22/2]&0x000e)<<11) | ((deco16_prot_ram[0x22/2]&0x0001)<<15));// ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x22)&0xfff0)>>4) | ((DECO_PORT(0x22)&0x000e)<<11) | ((DECO_PORT(0x22)&0x0001)<<15));// ^ deco16_xor);// & (~deco16_mask);
 		case 0x1fa/2:
-			return ((((deco16_prot_ram[0x26/2]&0xf000)>>8) | ((deco16_prot_ram[0x26/2]&0x0f00)<<0) | ((deco16_prot_ram[0x26/2]&0x00f0)>>4) | ((deco16_prot_ram[0x26/2]&0x000f)<<12))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x26)&0xf000)>>8) | ((DECO_PORT(0x26)&0x0f00)<<0) | ((DECO_PORT(0x26)&0x00f0)>>4) | ((DECO_PORT(0x26)&0x000f)<<12))) ^ deco16_xor;// & (~deco16_mask);
 		case 0x70e/2:
-			return ((((deco16_prot_ram[0x26/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x26/2]&0x000c)<<2) | ((deco16_prot_ram[0x26/2]&0x0003)<<6))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x26)&0x0ff0)<<4) | ((DECO_PORT(0x26)&0x000c)<<2) | ((DECO_PORT(0x26)&0x0003)<<6))) ^ deco16_xor;// & (~deco16_mask);
 		case 0x33a/2:
-			return deco16_prot_ram[0x60/2] & (~deco16_prot_ram[0xee/2]);
+			return DECO_PORT(0x60) & (~deco16_mask);
 		case 0x1e2/2:
-			return ((deco16_prot_ram[0xd0/2]&0xf000)>>12) | ((deco16_prot_ram[0xd0/2]&0x0f00)>>4) | ((deco16_prot_ram[0xd0/2]&0x00ff)<<8);
-		case 0x3f4/2: // fails verify
-			return deco16_prot_ram[0x6e/2]<<4;// & (~deco16_prot_ram[0xee/2]);
+			return ((DECO_PORT(0xd0)&0xf000)>>12) | ((DECO_PORT(0xd0)&0x0f00)>>4) | ((DECO_PORT(0xd0)&0x00ff)<<8);
+		case 0x3f4/2:
+			return DECO_PORT(0x6e)<<4;
 
 		case 0x2ae/2:
-			return ((deco16_prot_ram[0x9c/2]&0xf000)<<0) | ((deco16_prot_ram[0x9c/2]&0x0ff0)>>4) | ((deco16_prot_ram[0x9c/2]&0x000f)<<8);// & (~deco16_prot_ram[0xee/2]);
+			return ((DECO_PORT(0x9c)&0xf000)<<0) | ((DECO_PORT(0x9c)&0x0ff0)>>4) | ((DECO_PORT(0x9c)&0x000f)<<8);// & (~deco16_mask);
 		case 0x96/2:
-			return ((((deco16_prot_ram[0x22/2]&0xff00)>>8) | ((deco16_prot_ram[0x22/2]&0x00f0)<<8) | ((deco16_prot_ram[0x22/2]&0x000e)<<7) | ((deco16_prot_ram[0x22/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-		// 53e changes to 1000 from d000 (write 1234 to ce 9c 9e)
+			return ((((DECO_PORT(0x22)&0xff00)>>8) | ((DECO_PORT(0x22)&0x00f0)<<8) | ((DECO_PORT(0x22)&0x000e)<<7) | ((DECO_PORT(0x22)&0x0001)<<11)) ^ deco16_xor) & (~deco16_mask);
 
-// 444 suspected as flip address..
-
-// 53e changes on ce 9c or 9e - use special test
-// 780 is stuck at 2300 on standard test - no xor or mask
-
-//		case 0x3c:
-// 3c when written returns 3c for 1 read only.. (then returns to zero)
-		
-		case 0x2d0/2:
-			return (((deco16_prot_ram[0x66/2]&0xf000)>>4) | ((deco16_prot_ram[0x66/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2];
 		case 0x33e/2:
-			return (((deco16_prot_ram[0x0/2]&0xf000)>>12) | ((deco16_prot_ram[0x0/2]&0x0f00)>>4) | ((deco16_prot_ram[0x0/2]&0x00f0)<<4) | ((deco16_prot_ram[0x0/2]&0x000f)<<12)) & (~deco16_prot_ram[0xee/2]);
-		case 0x2b8/2: 
-			return ((deco16_prot_ram[0x66/2]&0x00f0)<<8) ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x0)&0xf000)>>12) | ((DECO_PORT(0x0)&0x0f00)>>4) | ((DECO_PORT(0x0)&0x00f0)<<4) | ((DECO_PORT(0x0)&0x000f)<<12)) & (~deco16_mask);
 
-			
-			// $2d0 goes to 7500 when 5678 written to $66 (no xor, no mask), goes to 3100 when 1234 written
-// $33e goes to 8765 when 5678 written to 0		- no xor, yes mask  (4321)
+		case 0x6c4/2: /* Reads from here flip buffers */
+			deco16_prot_backbuffer_selected^=1;
+			// Flip occurs AFTER this data has been calculated
+			return ((DECO_PORT(0x66)&0xf0f0) | ((DECO_PORT(0x66)&0x000f)<<8)) & (~deco16_mask);
+		case 0x700/2: /* Reads from here flip buffers */
+			deco16_prot_backbuffer_selected^=1;
+			return (((DECO_PORT(0x66)&0xf000)>>4) | ((DECO_PORT(0x66)&0x00f0)<<8)) ^ deco16_xor;
+		case 0x444/2:
+			deco16_prot_backbuffer_selected^=1;
+			return ((DECO_PORT(0x66)&0x00f0)<<8) | ((DECO_PORT(0x66)&0x0007)<<9)  | ((DECO_PORT(0x66)&0x0008)<<5);
+		case 0x2d0/2:
+			deco16_prot_backbuffer_selected^=1;
+			return (((DECO_PORT(0x66)&0xf000)>>4) | ((DECO_PORT(0x66)&0x00f0)<<8)) ^ deco16_xor;
+		case 0x2b8/2:
+			deco16_prot_backbuffer_selected^=1;
+			return ((DECO_PORT(0x66)&0x00f0)<<8) ^ deco16_xor;
+		case 0x294/2:
+			deco16_prot_backbuffer_selected^=1;
+			return ((DECO_PORT(0x66)&0x000f)<<12);
+		case 0x1e8/2:
+			deco16_prot_backbuffer_selected^=1;
+			return 0; // todo
 
+		case 0x49c/2:
+			return (((DECO_PORT(0x6c)&0x00f0)<<8) ^ deco16_xor) & (~deco16_mask);
 
-// these not affected by any known data write
-// $174 return 4 hardwired (no xor, yes mask)
-// $3ca return 40 hardwired (xor, no mask)
-// $2ac return 400 hardwired (no xor, no mask)
-// $12e hardwired 9000 (xor & mask)
-// $21a hardwired a860 (no xor no mask)  a020 on different boot?
-
-		// From 0x3d5cc - writes to ee, a4, a6 don't seem to affect read
 		case 0x44e/2:
-			return 0x1000 ^ deco16_prot_ram[0x42/2];
-
-		// From 0x609ca - writes to 0xfe have no effect
-		case 0x3ca/2: // also returns 0x1040??
-			return 0x40 ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x44)&0x00f0)<<4) | ((DECO_PORT(0x44)&0x000f)<<12)) ^ deco16_xor;
+		case 0x3ca/2:
+			return (((DECO_PORT(0x1e)&0xfff0)>>4) | ((DECO_PORT(0x1e)&0x0003)<<14) | ((DECO_PORT(0x1e)&0x000c)<<10)) ^ deco16_xor;
 		case 0x2ac/2:
-			return 0x400;
-
-		// From 0x60c3e - writes to 0xfe have no effect
+			return DECO_PORT(0x1e);
 		case 0x3c/2:
-			return 0;
-		case 0x174/2: // also 0x404?
-			return 0x4 & (~deco16_prot_ram[0xee/2]);
-
-// TODO LATEST
-/*
-Protection PC 04907c: warning - read unmapped protection address 053e
-Protection PC 0032fc: warning - read unmapped protection address 0780
-Protection PC 045854: warning - read unmapped protection address 0454
-Protection PC 0032fc: warning - read unmapped protection address 0700
-
-Protection PC 066c9a: warning - read unmapped protection address 0294
-CONTROL PC 066c9c: warning - write protection memory address 0010 0000
-
-CONTROL PC 0609c4: warning - write protection memory address 00fe 0000
-cpu #0 (PC=00058A38): unmapped memory word read from 00A60004 & 00FF
-*/
-
-//		case 0x294/2:
-//			return 0x2000;
-//		case 0x21a/2: // sometimes a020... hmm - flip address?
-//			return 0xa020;
-
-//		case 0x44e/2:
-//			return ((((deco16_prot_ram[0x44/2]&0x00f0)<<4) | ((deco16_prot_ram[0x44/2]&0x000f)<<12))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
-
-//		case 0x12e/2:
-//			return ((((deco16_prot_ram[0x2/2]&0xf000)>>0) | ((deco16_prot_ram[0x2/2]&0x0ff0)>>4) | ((deco16_prot_ram[0x2/2]&0x000f)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
-
+			return (((DECO_PORT(0x1e)&0x0003)<<14) | ((DECO_PORT(0x1e)&0x000c)<<10)) & (~deco16_mask);
+		case 0x174/2:
+			return (((DECO_PORT(0x1e)&0xff00)>>8) | ((DECO_PORT(0x1e)&0x00f0)<<8) | ((DECO_PORT(0x1e)&0x0007)<<9) | ((DECO_PORT(0x1e)&0x0008)<<5)) & (~deco16_mask);
 		case 0x34a/2:
-			return (((deco16_prot_ram[0x4/2]&0xff00)>>0) | ((deco16_prot_ram[0x4/2]&0x00f0)>>4) | ((deco16_prot_ram[0x4/2]&0x000f)<<4)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x4)&0xff00)>>0) | ((DECO_PORT(0x4)&0x00f0)>>4) | ((DECO_PORT(0x4)&0x000f)<<4)) & (~deco16_mask);
 		case 0x324/2:
-			return (((deco16_prot_ram[0x6/2]&0xf000)>>12) | ((deco16_prot_ram[0x6/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x6/2]&0x0007)<<5) | ((deco16_prot_ram[0x6/2]&0x0008)<<1));
+			return (((DECO_PORT(0x6)&0xf000)>>12) | ((DECO_PORT(0x6)&0x0ff0)<<4) | ((DECO_PORT(0x6)&0x0007)<<5) | ((DECO_PORT(0x6)&0x0008)<<1));
 		case 0x344/2:
-			return (((deco16_prot_ram[0x8/2]&0xf000)>>8) | ((deco16_prot_ram[0x8/2]&0x0f00)>>8) | ((deco16_prot_ram[0x8/2]&0x00f0)<<4) | ((deco16_prot_ram[0x8/2]&0x000f)<<12));
+			return (((DECO_PORT(0x8)&0xf000)>>8) | ((DECO_PORT(0x8)&0x0f00)>>8) | ((DECO_PORT(0x8)&0x00f0)<<4) | ((DECO_PORT(0x8)&0x000f)<<12));
 		case 0x72/2:
-			return ((((deco16_prot_ram[0xa/2]&0xf000)>>8) | ((deco16_prot_ram[0xa/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xa/2]&0x000f)>>0))) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xa)&0xf000)>>8) | ((DECO_PORT(0xa)&0x0ff0)<<4) | ((DECO_PORT(0xa)&0x000f)>>0))) & (~deco16_mask);
 		case 0x36e/2:
-			return ((((deco16_prot_ram[0xc/2]&0xf000)>>0) | ((deco16_prot_ram[0xc/2]&0x0ff0)>>4) | ((deco16_prot_ram[0xc/2]&0x000f)<<8))) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xc)&0xf000)>>0) | ((DECO_PORT(0xc)&0x0ff0)>>4) | ((DECO_PORT(0xc)&0x000f)<<8))) & (~deco16_mask);
 
 		case 0x590/2:
-			return ((((deco16_prot_ram[0xe/2]&0xfff0)>>4) | ((deco16_prot_ram[0xe/2]&0x000e)<<11) | ((deco16_prot_ram[0xe/2]&0x0001)<<15))) ^ deco16_prot_ram[0x42/2];
+			return ((((DECO_PORT(0xe)&0xfff0)>>4) | ((DECO_PORT(0xe)&0x000e)<<11) | ((DECO_PORT(0xe)&0x0001)<<15))) ^ deco16_xor;
 		case 0x7b6/2:
-			return ((((deco16_prot_ram[0x2/2]&0xf000)>>8) | ((deco16_prot_ram[0x2/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x2/2]&0x000f)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x2)&0xf000)>>8) | ((DECO_PORT(0x2)&0x0ff0)<<4) | ((DECO_PORT(0x2)&0x000f)<<0)) ^ deco16_xor) & (~deco16_mask);
 		case 0x588/2:
-			return ((((deco16_prot_ram[0x4/2]&0xff00)>>4) | ((deco16_prot_ram[0x4/2]&0x00f0)<<8) | ((deco16_prot_ram[0x4/2]&0x000f)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x4)&0xff00)>>4) | ((DECO_PORT(0x4)&0x00f0)<<8) | ((DECO_PORT(0x4)&0x000f)<<0)) ^ deco16_xor) & (~deco16_mask);
 		case 0x1f6/2:
-			return (((deco16_prot_ram[0x6/2]&0xf000)>>12) | ((deco16_prot_ram[0x6/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x6/2]&0x0007)<<5) | ((deco16_prot_ram[0x6/2]&0x0008)<<1)) ^ deco16_prot_ram[0x42/2];
+			return (((DECO_PORT(0x6)&0xf000)>>12) | ((DECO_PORT(0x6)&0x0ff0)<<4) | ((DECO_PORT(0x6)&0x0007)<<5) | ((DECO_PORT(0x6)&0x0008)<<1)) ^ deco16_xor;
 		case 0x4c0/2:
-			return (((deco16_prot_ram[0x8/2]&0xf000)>>4) | ((deco16_prot_ram[0x8/2]&0x0f00)<<4) | ((deco16_prot_ram[0x8/2]&0x00f0)>>4) | ((deco16_prot_ram[0x8/2]&0x000f)<<4)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0x8)&0xf000)>>4) | ((DECO_PORT(0x8)&0x0f00)<<4) | ((DECO_PORT(0x8)&0x00f0)>>4) | ((DECO_PORT(0x8)&0x000f)<<4)) & (~deco16_mask);
 		case 0x63e/2:
-			return ((((deco16_prot_ram[0xa/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xa/2]&0xf000)>>12) | ((deco16_prot_ram[0xa/2]&0x0003)<<6) | ((deco16_prot_ram[0xa/2]&0x000c)<<2)));
+			return ((((DECO_PORT(0xa)&0x0ff0)<<4) | ((DECO_PORT(0xa)&0xf000)>>12) | ((DECO_PORT(0xa)&0x0003)<<6) | ((DECO_PORT(0xa)&0x000c)<<2)));
 		case 0x7cc/2:
-			return ((((deco16_prot_ram[0xc/2]&0xfff0)>>4) | ((deco16_prot_ram[0xc/2]&0x000e)<<11) | ((deco16_prot_ram[0xc/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0xc)&0xfff0)>>4) | ((DECO_PORT(0xc)&0x000e)<<11) | ((DECO_PORT(0xc)&0x0001)<<15)) ^ deco16_xor) & (~deco16_mask);
 		case 0x1bc/2:
-			return (((deco16_prot_ram[0xe/2]&0xf000)>>12) | ((deco16_prot_ram[0xe/2]&0x0f00)>>4) | ((deco16_prot_ram[0xe/2]&0x00ff)<<8)) & (~deco16_prot_ram[0xee/2]);
+			return (((DECO_PORT(0xe)&0xf000)>>12) | ((DECO_PORT(0xe)&0x0f00)>>4) | ((DECO_PORT(0xe)&0x00ff)<<8)) & (~deco16_mask);
 
-// 44e returns 8700 for 5678 on 44			XOR
+		case 0x780/2:
+			return DECO_PORT(0xb8);
 
-// $12e returns 5867 on  2					XOR	MASK
-// $34a 5687 on 4								MASK
-// $324 returns 6715 on 6
-// $344 8756   on 8 
-// $72 6758   on a				MASK
-// $36e 5867   on e				MASK
-
-#endif
-
-		case 0x150/2: // shared#
-if (deco16_prot_backbuffer_selected)
-		logerror("Protection PC %06x: warning - read %04x for $7e\n",activecpu_get_pc(),deco16_prot_backbuffer[0x7e/2]);
-else
-		logerror("Protection PC %06x: warning - read %04x for $7e\n",activecpu_get_pc(),deco16_prot_ram[0x7e/2]);
-
-			if (deco16_prot_backbuffer_selected)
-				return deco16_prot_backbuffer[0x7e/2];
-			return deco16_prot_ram[0x7e/2];
-
-		case 0x6c4/2: /* Schmeizr Robo only - reads from here flip buffers */
-			deco16_prot_backbuffer_selected^=1;
-
-			logerror("Protection PC %06x: warning - read flip address %04x - backbuffer now %d\n",activecpu_get_pc(),offset<<1,deco16_prot_backbuffer_selected);
+		case 0x454/2:
+			return (((DECO_PORT(0x82)&0xf000)>>8) | ((DECO_PORT(0x82)&0x0f00)>>0) | ((DECO_PORT(0x82)&0x00f0)>>4) | ((DECO_PORT(0x82)&0x000f)<<12)) ^ deco16_xor;
+		case 0x53e/2:
+			return ((DECO_PORT(0x9e)&0x0003)<<14) | ((DECO_PORT(0x9e)&0x000c)<<10);
+		case 0x250/2:
+			return (((DECO_PORT(0x62)&0xf0f0)<<0) | ((DECO_PORT(0x62)&0x0f00)>>8)  | ((DECO_PORT(0x62)&0x000f)<<8)) & (~deco16_mask);
 
 
-			return ((deco16_prot_ram[0x66/2]&0xf0f0) | ((deco16_prot_ram[0x66/2]&0x000f)<<8)) & (~deco16_prot_ram[0xee/2]);
-
-
-		case 0x10e/2: /* Schmeizr Robo only - front buffer only read port */
-			if (deco16_prot_backbuffer_selected)
-				return deco16_prot_backbuffer[0x7c/2];
-			return deco16_prot_ram[0x7c/2];
-		case 0x56a/2: /* Schmeizr Robo only - front buffer only read port */
-			if (deco16_prot_backbuffer_selected)
-				return (((deco16_prot_backbuffer[0x7c/2]&0xfff0)>>4) | ((deco16_prot_backbuffer[0x7c/2]&0x000e)<<11) | ((deco16_prot_backbuffer[0x7c/2]&0x0001)<<15)) & (~deco16_prot_backbuffer[0xee/2]);
-			return (((deco16_prot_ram[0x7c/2]&0xfff0)>>4) | ((deco16_prot_ram[0x7c/2]&0x000e)<<11) | ((deco16_prot_ram[0x7c/2]&0x0001)<<15)) & (~deco16_prot_ram[0xee/2]);
-
+		case 0x150/2: /* Shared */
+			return DECO_PORT(0x7e);
+		case 0x10e/2: /* Schmeizr Robo only */
+			return DECO_PORT(0x7c);
+		case 0x56a/2: /* Schmeizr Robo only */
+			return (((DECO_PORT(0x7c)&0xfff0)>>4) | ((DECO_PORT(0x7c)&0x000e)<<11) | ((DECO_PORT(0x7c)&0x0001)<<15)) & (~deco16_mask);
 		case 0x39a/2: /* Schmeizr Robo only */
-if (deco16_prot_backbuffer_selected)
-		logerror("Protection PC %06x: warning - 39a read %04x for $7e\n",activecpu_get_pc(),deco16_prot_backbuffer[0x7e/2]);
-else
-		logerror("Protection PC %06x: warning - 39a read %04x for $7e\n",activecpu_get_pc(),deco16_prot_ram[0x7e/2]);
-
-
-			if (deco16_prot_backbuffer_selected)
-				return ((((deco16_prot_backbuffer[0x7e/2]&0xfff0)>>4) | ((deco16_prot_backbuffer[0x7e/2]&0x000e)<<11) | ((deco16_prot_backbuffer[0x7e/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_backbuffer[0xee/2]);
-			return ((((deco16_prot_ram[0x7e/2]&0xfff0)>>4) | ((deco16_prot_ram[0x7e/2]&0x000e)<<11) | ((deco16_prot_ram[0x7e/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+			return ((((DECO_PORT(0x7e)&0xfff0)>>4) | ((DECO_PORT(0x7e)&0x000e)<<11) | ((DECO_PORT(0x7e)&0x0001)<<15)) ^ deco16_xor) & (~deco16_mask);
 		case 0x188/2: /* Schmeizr Robo only */
-	//		logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
-			return 0;
+			return (((deco16_mask&0x0003)<<6) | ((deco16_mask&0x000c)<<2) | ((deco16_mask&0x00f0)<<4) | ((deco16_mask&0x0f00)<<4)) & (~deco16_mask);
 		case 0x3cc/2: /* Schmeizr Robo only */
-	//			logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
-		return deco16_prot_ram[0xee/2];
+			return deco16_mask;
 		case 0x4a/2: /* Schmeizr Robo only */
-			if (deco16_prot_backbuffer_selected)
-				return (deco16_prot_backbuffer[0x9e/2]&0xffff) & (~deco16_prot_backbuffer[0xee/2]);
-			return (deco16_prot_ram[0x9e/2]&0xffff) & (~deco16_prot_ram[0xee/2]);
+			return DECO_PORT(0x9e) & (~deco16_mask);
 		case 0x7e8/2: /* Schmeizr Robo only */
-			if (deco16_prot_backbuffer_selected)
-				return (deco16_prot_backbuffer[0x4a/2]&0xffff) ^ deco16_prot_ram[0x42/2];
-			return (deco16_prot_ram[0x4a/2]&0xffff) ^ deco16_prot_ram[0x42/2];
+			return DECO_PORT(0x4a) ^ deco16_xor;
 		case 0xfc/2: /* Schmeizr Robo only */
-			if (deco16_prot_backbuffer_selected)
-				return deco16_prot_backbuffer[0x4a/2];
-			return deco16_prot_ram[0x4a/2];
+			return DECO_PORT(0x4a);
 		case 0x38c/2: /* Schmeizr Robo only */
-			if (deco16_prot_backbuffer_selected)
-				return deco16_prot_backbuffer[0x28/2];
-			return deco16_prot_ram[0x28/2];
+			return DECO_PORT(0x28);
 		case 0x28/2: /* Schmeizr Robo only  */
-			if (deco16_prot_backbuffer_selected)
-				return deco16_prot_backbuffer[0x58/2];
-			return deco16_prot_ram[0x58/2];
+			return DECO_PORT(0x58);
 	}
-
-/*
-	Sprite routine:
-
-	Writes data into 7c
-	puts $0 into $66
-
-	tsts 66
-	if 0
-	puts data into 7c
-	puts ffff into 66
-
-
-*/
 
 	logerror("Protection PC %06x: warning - read unmapped protection address %04x\n",activecpu_get_pc(),offset<<1);
 
@@ -1676,10 +1811,10 @@ WRITE16_HANDLER( deco16_146_nitroball_prot_w )
 		return;
 	}
 
-/*		20 30 130 150 170 190 1b0 1c0 1d0 1f0 240 260 290 2b0 2f0 310 340 370
- used	20	  130 150 170     1b0     1d0     240 SND 290 2b0 2f0         370
+/*      20 30 130 150 170 190 1b0 1c0 1d0 1f0 240 260 290 2b0 2f0 310 340 370
+ used   20    130 150 170     1b0     1d0     240 SND 290 2b0 2f0         370
 */
-	if (writeport!=0x20 && writeport!=0x130 && writeport!=0x150 && writeport!=0x170 && writeport!=0x1b0 
+	if (writeport!=0x20 && writeport!=0x130 && writeport!=0x150 && writeport!=0x170 && writeport!=0x1b0
 		&& writeport!=0x1d0 && writeport!=0x240 && writeport!=0x290 && writeport!=0x2b0
 		&& writeport!=0x2f0 && writeport!=0x370)
 		logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
@@ -1691,16 +1826,19 @@ READ16_HANDLER( deco16_146_nitroball_prot_r )
 {
 	const int readport=offset*2;
 	static int a;
+
+	const data16_t* prot_ram=deco16_prot_ram;
+
 	a++;
 
 	/* Nitroball's use of the protection device is quite weak - a range of values are
-	written to the chip at boot-time and there are many checks throughout the game
-	for certain values at certain locations.  Most checks are quite obvious - a
-	jump to an illegal address if the data isn't correct.  This, coupled with the 
-	fact there are no extra data writes at game-time, means it is quite easy to
-	spot the relationship between read & write addresses.  Even in the 'hard' cases
-	it is easy to guess the corret values.
-	*/
+    written to the chip at boot-time and there are many checks throughout the game
+    for certain values at certain locations.  Most checks are quite obvious - a
+    jump to an illegal address if the data isn't correct.  This, coupled with the
+    fact there are no extra data writes at game-time, means it is quite easy to
+    spot the relationship between read & write addresses.  Even in the 'hard' cases
+    it is easy to guess the corret values.
+    */
 
 // 0 a 4c 6a 6c ea 12e 13a 1de 316 3c6 452 4d0 53a 552 54c 582 5da 672 6be 70a 7e0
 
@@ -1733,18 +1871,18 @@ CONTROL PC 078176: warning - write protection memory address 01f0 1ffc
 CONTROL PC 078186: warning - write protection memory address 0310 0024
 CONTROL PC 07819e: warning - write protection memory address 01c0 0061
 
-  QPRINT	#4, #2, #$0
-	QPRINT	#14,#2, #$a
-	QPRINT	#24,#2, #$ea
-	QPRINT	#34,#2, #$6a
-	QPRINT	#44,#2, #$6c
-	QPRINT	#54,#2, #$12e
-	QPRINT	#64,#2, #$13a
-	
-		*/
+  QPRINT    #4, #2, #$0
+    QPRINT  #14,#2, #$a
+    QPRINT  #24,#2, #$ea
+    QPRINT  #34,#2, #$6a
+    QPRINT  #44,#2, #$6c
+    QPRINT  #54,#2, #$12e
+    QPRINT  #64,#2, #$13a
+
+        */
 
 	case 0xa:
-//		logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+//      logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
 //may strobe??
 		return ((DECO_PORT(0x310)&0x0fff)<<4);
 
@@ -1760,7 +1898,7 @@ CONTROL PC 07819e: warning - write protection memory address 01c0 0061
 
 	case 0x13a:
 // Correct FOR Protection PC 06b694: warning - read unmapped memory address 013a
-//		Protection PC 00846a: warning - read unmapped memory address 013a
+//      Protection PC 00846a: warning - read unmapped memory address 013a
 // Correct FOR Protection PC 0083b4: warning - read unmapped memory address 013a
 
 		//logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
@@ -1838,3 +1976,31 @@ WRITE16_HANDLER( dietgo_104_prot_w )
 }
 
 /**********************************************************************************/
+
+READ16_HANDLER( deco16_104_pktgaldx_prot_r )
+{
+	const data16_t* prot_ram=deco16_prot_ram;
+
+	switch (offset * 2)
+	{
+	case 0x5b2: return input_port_0_word_r(0, 0);
+	case 0x44c: return input_port_1_word_r(0, 0);
+	case 0x042: return input_port_2_word_r(0, 0);
+
+	case 0x510: return DECO_PORT(0);
+	case 0x51a: return DECO_PORT(2);
+	}
+
+	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+
+	return 0;
+}
+
+WRITE16_HANDLER( deco16_104_pktgaldx_prot_w )
+{
+	COMBINE_DATA(&deco16_prot_ram[offset]);
+//  logerror("Protection PC %06x: warning - write unmapped memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
+}
+
+/**********************************************************************************/
+

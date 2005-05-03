@@ -5,7 +5,7 @@
  *
  * Todo:
  *  Emulate write timing.
- *  
+ *
  */
 
 #include "state.h"
@@ -108,7 +108,7 @@ static data8_t at28c16_read( data32_t chip, offs_t offset )
 	}
 	else
 	{
-//		logerror( "at28c16_read( %04x ) data\n", offset );
+//      logerror( "at28c16_read( %04x ) data\n", offset );
 		return c->data[ offset ];
 	}
 }
@@ -130,7 +130,7 @@ static void at28c16_write( data32_t chip, offs_t offset, data8_t data )
 	}
 	else
 	{
-//		logerror( "at28c16_write( %d, %04x, %02x ) data\n", chip, offset, data );
+//      logerror( "at28c16_write( %d, %04x, %02x ) data\n", chip, offset, data );
 		c->data[ offset ] = data;
 	}
 }

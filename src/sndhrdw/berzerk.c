@@ -110,7 +110,7 @@ static void berzerk_sh_start(void)
 		if (sample_loaded(i))
 			berzerknoisemulate = 0;
 	}
-	
+
 	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, berzerk_sh_update);
 }
 

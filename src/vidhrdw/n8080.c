@@ -355,7 +355,7 @@ VIDEO_UPDATE( helifire )
 
 	unsigned saved_mv = helifire_mv;
 	unsigned saved_sc = helifire_sc;
-	
+
 	int x;
 	int y;
 

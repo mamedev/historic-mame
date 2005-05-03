@@ -1,6 +1,6 @@
 /***************************************************************************
-				ToaPlan game hardware from 1988-1991
-				------------------------------------
+                ToaPlan game hardware from 1988-1991
+                ------------------------------------
  ***************************************************************************/
 
 #include "driver.h"
@@ -45,12 +45,12 @@ WRITE16_HANDLER( toaplan1_intenable_w )
 WRITE16_HANDLER( demonwld_dsp_addrsel_w )
 {
 	/* This sets the main CPU RAM address the DSP should */
-	/*	read/write, via the DSP IO port 0 */
+	/*  read/write, via the DSP IO port 0 */
 	/* Top three bits of data need to be shifted left 9 places */
-	/*	to select which memory bank from main CPU address */
-	/*	space to use */
+	/*  to select which memory bank from main CPU address */
+	/*  space to use */
 	/* Lower thirteen bits of this data is shifted left one position */
-	/*	to move it to an even address word boundary */
+	/*  to move it to an even address word boundary */
 
 	main_ram_seg = ((data & 0xe000) << 9);
 	dsp_addr_w   = ((data & 0x1fff) << 1);
@@ -86,11 +86,11 @@ WRITE16_HANDLER( demonwld_dsp_w )
 
 WRITE16_HANDLER( demonwld_dsp_bio_w )
 {
-	/* data 0xffff	means inhibit BIO line to DSP and enable */
-	/*				communication to main processor */
-	/*				Actually only DSP data bit 15 controls this */
-	/* data 0x0000	means set DSP BIO line active and disable */
-	/*				communication to main processor*/
+	/* data 0xffff  means inhibit BIO line to DSP and enable */
+	/*              communication to main processor */
+	/*              Actually only DSP data bit 15 controls this */
+	/* data 0x0000  means set DSP BIO line active and disable */
+	/*              communication to main processor*/
 	logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
 	if (data & 0x8000) {
 		demonwld_dsp_BIO = CLEAR_LINE;

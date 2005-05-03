@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	Tekunon Kougyou Beam Invader hardware
+    Tekunon Kougyou Beam Invader hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
-	Games supported:
-		* Beam Invader
+    Games supported:
+        * Beam Invader
 
-	Known issues:
-		* Port 0 might be a analog port select
+    Known issues:
+        * Port 0 might be a analog port select
 
 ***************************************************************************/
 
@@ -19,7 +19,7 @@
 
 /****************************************************************
  *
- *	Special port handler - doesn't warrant its own 'machine file
+ *  Special port handler - doesn't warrant its own 'machine file
  *
  ****************************************************************/
 
@@ -31,7 +31,7 @@ static READ8_HANDLER( beaminv_input_port_3_r )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 
@@ -54,7 +54,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port handlers
+ *  Port handlers
  *
  *************************************/
 
@@ -65,7 +65,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -113,7 +113,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -141,7 +141,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -158,7 +158,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

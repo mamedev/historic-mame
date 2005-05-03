@@ -376,7 +376,7 @@ static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9004, 0x9006) AM_WRITE(rthunder_scroll1_w)	/* scroll + priority */
 
 	AM_RANGE(0x9400, 0x9402) AM_WRITE(rthunder_scroll2_w)	/* scroll + priority */
-//	{ 0x9403, 0x9403 } sub CPU rom bank select would be here
+//  { 0x9403, 0x9403 } sub CPU rom bank select would be here
 	AM_RANGE(0x9404, 0x9406) AM_WRITE(rthunder_scroll3_w)	/* scroll + priority */
 
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(rthunder_backcolor_w)
@@ -390,9 +390,9 @@ static ADDRESS_MAP_START( NAME##_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )							\
 	AM_RANGE(ADDR_VIDEO2+0x0000, ADDR_VIDEO2+0x1fff) AM_READWRITE(rthunder_videoram2_r,rthunder_videoram2_w)	\
 	AM_RANGE(ADDR_ROM+0x0000, ADDR_ROM+0x1fff) AM_READ(MRA8_BANK2)								\
 	AM_RANGE(0x8000, 0xffff) AM_ROM																\
-/*	{ ADDR_BANK+0x00, ADDR_BANK+0x02 } layer 2 scroll registers would be here */				\
+/*  { ADDR_BANK+0x00, ADDR_BANK+0x02 } layer 2 scroll registers would be here */				\
 	AM_RANGE(ADDR_BANK+0x03, ADDR_BANK+0x03) AM_WRITE(bankswitch2_w)							\
-/*	{ ADDR_BANK+0x04, ADDR_BANK+0x06 } layer 3 scroll registers would be here */				\
+/*  { ADDR_BANK+0x04, ADDR_BANK+0x06 } layer 3 scroll registers would be here */				\
 	AM_RANGE(ADDR_WDOG, ADDR_WDOG) AM_WRITE(watchdog2_w)										\
 	AM_RANGE(ADDR_INT, ADDR_INT) AM_WRITE(int_ack2_w)	/* IRQ acknowledge */					\
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)													\
@@ -834,7 +834,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x06, "Upright 1 Player" )
-/*	PORT_DIPSETTING(    0x02, "Upright 1 Player" ) */
+/*  PORT_DIPSETTING(    0x02, "Upright 1 Player" ) */
 	PORT_DIPSETTING(    0x04, "Upright 2 Players" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Continues ) )
@@ -994,7 +994,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x04, "Upright 2 Players" )
 	PORT_DIPSETTING(    0x06, DEF_STR( Cocktail ) )
-/*	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )	*/
+/*  PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) ) */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

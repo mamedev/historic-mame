@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari Canyon Bomber hardware
+    Atari Canyon Bomber hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Canyon Bomber
+    Games supported:
+        * Canyon Bomber
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Memory Map:
+    Memory Map:
         0000-01FF       WRAM
         0400-04FF       W A0=0:MOTOR1, A0=1:MOTOR2
         0500-05FF       W A0=0:EXPLODE, A0=1:TIMER RESET
@@ -27,8 +27,8 @@
         3000-37FF       ROM3 (Language ROM)
         3800-3FFF       ROM4 (Program ROM)
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -47,7 +47,7 @@ extern UINT8* canyon_videoram;
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -66,7 +66,7 @@ static PALETTE_INIT( canyon )
 
 /*************************************
  *
- *	Read handlers
+ *  Read handlers
  *
  *************************************/
 
@@ -97,7 +97,7 @@ static READ8_HANDLER( canyon_options_r )
 
 /*************************************
  *
- *	Write handlers
+ *  Write handlers
  *
  *************************************/
 
@@ -111,7 +111,7 @@ static WRITE8_HANDLER( canyon_led_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -134,7 +134,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -189,7 +189,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -240,7 +240,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -269,7 +269,7 @@ static MACHINE_DRIVER_START( canyon )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(canyon_discrete_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -280,7 +280,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -324,7 +324,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

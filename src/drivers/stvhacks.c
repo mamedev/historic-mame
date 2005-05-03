@@ -45,22 +45,22 @@ EEPROM write ffff to address 3e
 EEPROM write ffff to address 3f
 */
 /*static data8_t stv_default_eeprom[128] = {
-	0x53,0x45,0xff,0xff,0xff,0xff,0x3b,0xe2,
-	0x00,0x00,0x00,0x00,0x00,0x02,0x01,0x00,
-	0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x08,
-	0x08,0xfd,0x10,0x04,0x23,0x2a,0x00,0x00,
-	0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0x3b,0xe2,0xff,0xff,0x00,0x00,
-	0x00,0x01,0x01,0x00,0x01,0x01,0x00,0x00,
-	0x00,0x00,0x00,0x08,0x08,0xfd,0x10,0x04,
-	0x23,0x2a,0x00,0x00,0x00,0x00,0x00,0x00,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-	0xff,0xff,0xff,0xff
+    0x53,0x45,0xff,0xff,0xff,0xff,0x3b,0xe2,
+    0x00,0x00,0x00,0x00,0x00,0x02,0x01,0x00,
+    0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x08,
+    0x08,0xfd,0x10,0x04,0x23,0x2a,0x00,0x00,
+    0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0x3b,0xe2,0xff,0xff,0x00,0x00,
+    0x00,0x01,0x01,0x00,0x01,0x01,0x00,0x00,
+    0x00,0x00,0x00,0x08,0x08,0xfd,0x10,0x04,
+    0x23,0x2a,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff
 };*/
 
 static data8_t shienryu_default_eeprom[128] = {
@@ -211,19 +211,19 @@ static READ32_HANDLER( hanagumi_slave_off )
 DRIVER_INIT(hanagumi)
 {
 /*
-	06013E1E: NOP
-	0601015E: MOV.L   @($6C,PC),R3
-	06010160: MOV.L   @R3,R0  (6094188)
-	06010162: TST     R0,R0
-	06010164: BT      $0601015A
-	0601015A: JSR     R14
-	0601015C: NOP
-	06013E20: MOV.L   @($34,PC),R3
-	06013E22: MOV.B   @($00,R3),R0
-	06013E24: TST     R0,R0
-	06013E26: BT      $06013E1C
-	06013E1C: RTS
-	06013E1E: NOP
+    06013E1E: NOP
+    0601015E: MOV.L   @($6C,PC),R3
+    06010160: MOV.L   @R3,R0  (6094188)
+    06010162: TST     R0,R0
+    06010164: BT      $0601015A
+    0601015A: JSR     R14
+    0601015C: NOP
+    06013E20: MOV.L   @($34,PC),R3
+    06013E22: MOV.B   @($00,R3),R0
+    06013E24: TST     R0,R0
+    06013E26: BT      $06013E1C
+    06013E1C: RTS
+    06013E1E: NOP
 
    (loops for 288688 instructions)
 */
@@ -263,11 +263,11 @@ static READ32_HANDLER( puyosun_speedup_r )
 static READ32_HANDLER( puyosun_speedup2_r )
 {
 	/* this is read when the opcode is read .. we can't do much else because the only
-	 thing the loop checks is an internal sh2 register */
+     thing the loop checks is an internal sh2 register */
 
 	if (activecpu_get_pc()==0x6023702) cpu_spinuntil_time(TIME_IN_USEC(2000));
 
-//	logerror ("Ugly %08x\n", activecpu_get_pc());
+//  logerror ("Ugly %08x\n", activecpu_get_pc());
 
 	return stv_workram_h[0x023700/4];
 }
@@ -314,10 +314,10 @@ static READ32_HANDLER( cottonbm_speedup_r )
 static READ32_HANDLER( cottonbm_speedup2_r )
 {
 	/* this is read when the opcode is read .. we can't do much else because the only
-	 thing the loop checks is an internal sh2 register
+     thing the loop checks is an internal sh2 register
 
-	 it will fill the log with cpu #1 (PC=06032B52): warning - op-code execute on mapped I/O :/
-	 */
+     it will fill the log with cpu #1 (PC=06032B52): warning - op-code execute on mapped I/O :/
+     */
 
 	if (activecpu_get_pc()==0x6032b52)
 	{
@@ -335,7 +335,7 @@ static READ32_HANDLER( cottonbm_speedup2_r )
 
 	}
 
-//	logerror ("Ugly %08x\n", activecpu_get_pc());
+//  logerror ("Ugly %08x\n", activecpu_get_pc());
 
 	return stv_workram_h[0x032b50/4];
 }
@@ -358,10 +358,10 @@ static READ32_HANDLER( cotton2_speedup_r )
 static READ32_HANDLER( cotton2_speedup2_r )
 {
 	/* this is read when the opcode is read .. we can't do much else because the only
-	 thing the loop checks is an internal sh2 register
+     thing the loop checks is an internal sh2 register
 
-	 it will fill the log with cpu #1 (PC=xxx): warning - op-code execute on mapped I/O :/
-	 */
+     it will fill the log with cpu #1 (PC=xxx): warning - op-code execute on mapped I/O :/
+     */
 
 	if (activecpu_get_pc()==0x60338ec)
 	{
@@ -379,7 +379,7 @@ static READ32_HANDLER( cotton2_speedup2_r )
 
 	}
 
-//	logerror ("Ugly %08x\n", activecpu_get_pc());
+//  logerror ("Ugly %08x\n", activecpu_get_pc());
 
 	return stv_workram_h[0x0338ec/4];
 }
@@ -402,7 +402,7 @@ static READ32_HANDLER( dnmtdeka_speedup_r )
 
 DRIVER_INIT(dnmtdeka)
 {
-//   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
+//      memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
 
 	init_ic13();
 }
@@ -459,7 +459,7 @@ DRIVER_INIT(bakubaku)
 {
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60833f0, 0x60833f3, 0, 0, bakubaku_speedup_r ); // idle loop of main cpu
    	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60fdfe8, 0x60fdfeb, 0, 0, bakubaku_speedup2_r ); // turn off slave sh2, is it needed after boot ??
-   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6033660, 0x6033663, 0, 0, bakubaku_hangskip_r ); // it waits for a ram address to chamge what should change it?
+   	//memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6033660, 0x6033663, 0, 0, bakubaku_hangskip_r ); // it waits for a ram address to change what should change it?
 
 	init_ic13();
 }
@@ -467,24 +467,24 @@ DRIVER_INIT(bakubaku)
 static READ32_HANDLER( groovef_hack1_r )
 {
 	if(activecpu_get_pc() == 0x6005e7e) stv_workram_h[0x0fffcc/4] = 0x00000000;
-//	usrintf_showmessage("1 %08x",activecpu_get_pc());
+//  usrintf_showmessage("1 %08x",activecpu_get_pc());
 	return stv_workram_h[0x0fffcc/4];
 }
 
 static READ32_HANDLER( groovef_hack2_r )
 {
 	if(activecpu_get_pc() == 0x6005e88) stv_workram_h[0x0ca6cc/4] = 0x00000000;
-//	usrintf_showmessage("2 %08x",activecpu_get_pc());
+//  usrintf_showmessage("2 %08x",activecpu_get_pc());
 	return stv_workram_h[0x0ca6cc/4];
 }
 
 static READ32_HANDLER( groovef_speedup_r )
 {
-//	logerror ("groove speedup \n");
+//  logerror ("groove speedup \n");
 	if (activecpu_get_pc()==0x060a4972)
 	{
 		cpu_spinuntil_int(); // title logos
-//		logerror ("groove speedup skipping\n");
+//      logerror ("groove speedup skipping\n");
 
 	}
 
@@ -493,8 +493,8 @@ static READ32_HANDLER( groovef_speedup_r )
 /*
 static READ32_HANDLER( groovef_second_cpu_off_r )
 {
-	if (activecpu_get_pc()==0x060060c2) 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
-	return 0;
+    if (activecpu_get_pc()==0x060060c2)     cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+    return 0;
 }
 */
 
@@ -513,7 +513,7 @@ DRIVER_INIT( groovef )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60fffcc, 0x60fffcf, 0, 0, groovef_hack1_r );
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60c64ec, 0x60c64ef, 0, 0, groovef_speedup_r );
-//	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060dc, 0x60060df, 0, 0, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
+//  memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060dc, 0x60060df, 0, 0, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
 	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060e0, 0x60060e3, 0, 0, groovef_second_skip_r ); // careful .. its not an interrupt wait loop
 
 	init_stv();

@@ -1,21 +1,21 @@
 /***************************************************************************
 
-						  -= Yun Sung 16 Bit Games =-
+                          -= Yun Sung 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	[ 2 Scrolling Layers ]
+    [ 2 Scrolling Layers ]
 
-	Tiles are 16 x 16 x 8. The layout of the tilemap is a bit weird:
-	16 consecutive tile codes define a vertical column.
-	16 columns form a page (256 x 256).
-	The tilemap is made of 4 x 4 pages (1024 x 1024)
+    Tiles are 16 x 16 x 8. The layout of the tilemap is a bit weird:
+    16 consecutive tile codes define a vertical column.
+    16 columns form a page (256 x 256).
+    The tilemap is made of 4 x 4 pages (1024 x 1024)
 
-	[ 512? Sprites ]
+    [ 512? Sprites ]
 
-	Sprites are 16 x 16 x 4 in size. There's RAM for 512, but
-	the game just copies 384 entries.
+    Sprites are 16 x 16 x 4 in size. There's RAM for 512, but
+    the game just copies 384 entries.
 
 
 ***************************************************************************/
@@ -33,7 +33,7 @@ data16_t *yunsun16_priority;
 /***************************************************************************
 
 
-									Tilemaps
+                                    Tilemaps
 
 
 ***************************************************************************/
@@ -95,7 +95,7 @@ WRITE16_HANDLER( yunsun16_vram_1_w )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -133,19 +133,19 @@ VIDEO_START( yunsun16 )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
-		0.w								X
+        0.w                             X
 
-		2.w								Y
+        2.w                             Y
 
-		4.w								Code
+        4.w                             Code
 
-		6.w		fedc ba98 7--- ----
-				---- ---- -6-- ----		Flip Y
-				---- ---- --5- ----		Flip X
-				---- ---- ---4 3210		Color
+        6.w     fedc ba98 7--- ----
+                ---- ---- -6-- ----     Flip Y
+                ---- ---- --5- ----     Flip X
+                ---- ---- ---4 3210     Color
 
 
 ***************************************************************************/
@@ -201,7 +201,7 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -215,7 +215,7 @@ VIDEO_UPDATE( yunsun16 )
 	tilemap_set_scrollx(tilemap_1, 0, yunsun16_scroll_1[ 0 ]);
 	tilemap_set_scrolly(tilemap_1, 0, yunsun16_scroll_1[ 1 ]);
 
-//	usrintf_showmessage("%04X", *yunsun16_priority);
+//  usrintf_showmessage("%04X", *yunsun16_priority);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 

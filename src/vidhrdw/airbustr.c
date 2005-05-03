@@ -1,32 +1,32 @@
 /**************************************************************************
 
-								Air Buster
-						    (C) 1990  Kaneko
+                                Air Buster
+                            (C) 1990  Kaneko
 
-				    driver by Luca Elia (l.elia@tin.it)
+                    driver by Luca Elia (l.elia@tin.it)
 
 [Screen]
- 	Size:				256 x 256
-	Colors:				256 x 3
-	Color Space:		32R x 32G x 32B
+    Size:               256 x 256
+    Colors:             256 x 3
+    Color Space:        32R x 32G x 32B
 
 [Scrolling layers]
-	Number:				2
-	Size:				512 x 512
-	Scrolling:			X,Y
-	Tiles Size:			16 x 16
-	Tiles Number:		0x1000
-	Colors:				256 x 2	(0-511)
-	Format:
-				Offset:		0x400    0x000
-				Bit:		fedc---- --------	Color
-							----ba98 76543210	Code
+    Number:             2
+    Size:               512 x 512
+    Scrolling:          X,Y
+    Tiles Size:         16 x 16
+    Tiles Number:       0x1000
+    Colors:             256 x 2 (0-511)
+    Format:
+                Offset:     0x400    0x000
+                Bit:        fedc---- --------   Color
+                            ----ba98 76543210   Code
 
 [Sprites]
-	On Screen:			256 x 2
-	In ROM:				0x2000
-	Colors:				256		(512-767)
-	Format:				See Below
+    On Screen:          256 x 2
+    In ROM:             0x2000
+    Colors:             256     (512-767)
+    Format:             See Below
 
 
 **************************************************************************/
@@ -73,16 +73,16 @@ WRITE8_HANDLER( airbustr_colorram2_w )
 	}
 }
 
-/*	Scroll Registers
+/*  Scroll Registers
 
-	Port:
-	4		Bg Y scroll, low 8 bits
-	6		Bg X scroll, low 8 bits
-	8		Fg Y scroll, low 8 bits
-	A		Fg X scroll, low 8 bits
+    Port:
+    4       Bg Y scroll, low 8 bits
+    6       Bg X scroll, low 8 bits
+    8       Fg Y scroll, low 8 bits
+    A       Fg X scroll, low 8 bits
 
-	C		3		2		1		0		<-Bit
-			Bg Y	Bg X	Fg Y	Fg X	<-Scroll High Bits (complemented!)
+    C       3       2       1       0       <-Bit
+            Bg Y    Bg X    Fg Y    Fg X    <-Scroll High Bits (complemented!)
 */
 
 WRITE8_HANDLER( airbustr_scrollregs_w )
@@ -148,28 +148,28 @@ VIDEO_START( airbustr )
 	return 0;
 }
 
-/*		Sprites
+/*      Sprites
 
-Offset:					Values:
+Offset:                 Values:
 
-000-0ff					?
-100-1ff					?
-200-2ff					?
+000-0ff                 ?
+100-1ff                 ?
+200-2ff                 ?
 
-300-3ff		7654----	Color Code
-			----3---	?
-			-----2--	Multi Sprite
-			------1-	Y Position High Bit
-			-------0	X Position High Bit
+300-3ff     7654----    Color Code
+            ----3---    ?
+            -----2--    Multi Sprite
+            ------1-    Y Position High Bit
+            -------0    X Position High Bit
 
-400-4ff					X Position Low 8 Bits
-500-5ff					Y Position Low 8 Bits
-600-6ff					Code Low 8 Bits
+400-4ff                 X Position Low 8 Bits
+500-5ff                 Y Position Low 8 Bits
+600-6ff                 Code Low 8 Bits
 
-700-7ff		7-------	Flip X
-			-6------	Flip Y
-			--5-----	?
-			---43210	Code High Bits
+700-7ff     7-------    Flip X
+            -6------    Flip Y
+            --5-----    ?
+            ---43210    Code High Bits
 
 */
 

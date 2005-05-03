@@ -7,10 +7,10 @@ various early SNK games (1983-1985)
 driver by Phil Stroffolino
 
 Known Issues:
-	Mad Crasher fails the ROM test, but ROMs are verified to be good (reason's unknown)
-	Mad Crasher sound effects aren't being played (fixed)
-	Vanguard II crashes under dos with sound enabled (cannot verify)
-	Marvin's maze crashes under dos with sound enabled, hangs with sound disabled (cannot verify)
+    Mad Crasher fails the ROM test, but ROMs are verified to be good (reason's unknown)
+    Mad Crasher sound effects aren't being played (fixed)
+    Vanguard II crashes under dos with sound enabled (cannot verify)
+    Marvin's maze crashes under dos with sound enabled, hangs with sound disabled (cannot verify)
 
 
 Change Log
@@ -36,7 +36,7 @@ AT08XX03:
 
 /***************************************************************************
 **
-**	CPUA and CPUB communicate through shared RAM.
+**  CPUA and CPUB communicate through shared RAM.
 **
 ***************************************************************************/
 
@@ -68,10 +68,10 @@ extern WRITE8_HANDLER( marvins_palette_bank_w );
 
 /***************************************************************************
 **
-**	Interrupt Handling
+**  Interrupt Handling
 **
-**	CPUA can trigger an interrupt on CPUB, and CPUB can trigger an interrupt
-**	on CPUA.  Each CPU must re-enable interrupts on itself.
+**  CPUA can trigger an interrupt on CPUB, and CPUB can trigger an interrupt
+**  on CPUA.  Each CPU must re-enable interrupts on itself.
 **
 ***************************************************************************/
 
@@ -80,21 +80,21 @@ extern WRITE8_HANDLER( marvins_palette_bank_w );
 
 /***************************************************************************
 **
-**	Sound System
+**  Sound System
 **
-**	The sound CPU is a slave, with communication.
+**  The sound CPU is a slave, with communication.
 **
-**	Sound Chips: PSGX2 + "Wave Generater"
+**  Sound Chips: PSGX2 + "Wave Generater"
 **
-**	The Custom Wave Generator is controlled by 6 bytes
+**  The Custom Wave Generator is controlled by 6 bytes
 **
-**	The first pair of registers (0x8002, 0x8003) appear to define frequency
-**	as a fraction: RAM[0x8003]/RAM[0x8002].
+**  The first pair of registers (0x8002, 0x8003) appear to define frequency
+**  as a fraction: RAM[0x8003]/RAM[0x8002].
 **
-**	(0x8004, 0x8005, 0x8006, 0x8007) are currently unmapped.  Probably they
-**	control the shape of the wave being played.
+**  (0x8004, 0x8005, 0x8006, 0x8007) are currently unmapped.  Probably they
+**  control the shape of the wave being played.
 **
-**	snkwave_interface is currently implemented with the "namco" sound component.
+**  snkwave_interface is currently implemented with the "namco" sound component.
 **
 ***************************************************************************/
 
@@ -164,12 +164,12 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 **
-**	Memory Maps for CPUA, CPUB
+**  Memory Maps for CPUA, CPUB
 **
-**	Shared RAM is shuffled in Mad Crasher/Vanguard II compared to
-**	Marvin's Maze.
+**  Shared RAM is shuffled in Mad Crasher/Vanguard II compared to
+**  Marvin's Maze.
 **
-**	A few ports are mapped differently for each game.
+**  A few ports are mapped differently for each game.
 **
 ***************************************************************************/
 
@@ -231,7 +231,7 @@ static ADDRESS_MAP_START( madcrash_writemem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8300, 0x8300) AM_WRITE(sound_command_w)
 	AM_RANGE(0x8600, 0x86ff) AM_WRITE(MWA8_RAM)	// video attribute
 	AM_RANGE(0x8700, 0x8700) AM_WRITE(snk_cpuA_nmi_ack_w)
-//	AM_RANGE(0xc800, 0xc800) AM_WRITE(marvins_palette_bank_w)	// palette bank switch (c8f1 for Vanguard)
+//  AM_RANGE(0xc800, 0xc800) AM_WRITE(marvins_palette_bank_w)   // palette bank switch (c8f1 for Vanguard)
 	AM_RANGE(0xc800, 0xc8ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(marvins_background_ram_w) AM_BASE(&spriteram_3)
@@ -462,7 +462,7 @@ INPUT_PORTS_START( madcrash )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coinage ) )
-//	PORT_DIPSETTING(    0x08, DEF_STR( 5C_1C ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
@@ -504,7 +504,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 **
-**	Graphics Layout
+**  Graphics Layout
 **
 ***************************************************************************/
 
@@ -548,7 +548,7 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 
 /***************************************************************************
 **
-**	Machine Driver
+**  Machine Driver
 **
 ***************************************************************************/
 
@@ -664,11 +664,11 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 **
-**	ROM Loading
+**  ROM Loading
 **
-**	note:
-**		Mad Crasher doesn't pass its internal checksum
-**		Also, some of the background graphics look to be incorrect.
+**  note:
+**      Mad Crasher doesn't pass its internal checksum
+**      Also, some of the background graphics look to be incorrect.
 **
 ***************************************************************************/
 
@@ -790,12 +790,12 @@ static DRIVER_INIT( marvins )
 static DRIVER_INIT( madcrash )
 {
 /*
-	The following lines patch out the ROM test (which fails - probably
-	because of bit rot, so the rest of the test mode (what little there
-	is) can be explored.
+    The following lines patch out the ROM test (which fails - probably
+    because of bit rot, so the rest of the test mode (what little there
+    is) can be explored.
 
-	unsigned char *mem = memory_region(REGION_CPU1);
-	mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
+    unsigned char *mem = memory_region(REGION_CPU1);
+    mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
 */
 	init_sound( 0x20 );
 	snk_gamegroup = 1;

@@ -419,14 +419,14 @@ static void devzone_draw_grid(struct mame_bitmap *bitmap)
 
 
 			/* for the vertical lines, each bit indicates
-			   if there should be a line at the x position */
+               if there should be a line at the x position */
 			vert_data = vert_PROM[x >> 3];
 
 
 			/* the horizontal (perspective) lines are RLE encoded.
-			   When the screen is flipped, the address should be
-			   decrementing.  But since it's just a mirrored image,
-			   this is easier. */
+               When the screen is flipped, the address should be
+               decrementing.  But since it's just a mirrored image,
+               this is easier. */
 			if (count == 0)
 			{
 				count = horz_PROM[horz_addr++];
@@ -474,44 +474,44 @@ static void nomnlnd_draw_background(struct mame_bitmap *bitmap)
 
 	/* all positioning is via logic gates:
 
-	   tree is displayed where
+       tree is displayed where
 
-	   __          __
-	   HD' ^ HC' ^ HB'
+       __          __
+       HD' ^ HC' ^ HB'
 
-	   and
-		__		    __			    __
-	   (VB' ^ VC' ^ VD')  X  (VB' ^ VC' ^ VD')
-
-
-	   water is displayed where
-			 __			__
-	   HD' ^ HC' ^ HB ^ HA'
-
-	   and vertically the same equation as the trees,
-	   but final result inverted.
+       and
+        __          __              __
+       (VB' ^ VC' ^ VD')  X  (VB' ^ VC' ^ VD')
 
 
-	   The colors are coded in logic gates:
+       water is displayed where
+             __         __
+       HD' ^ HC' ^ HB ^ HA'
 
-	   trees:
-	   							P1 P2  BGR
-	     R = Plane1 ^ Plane2	 0  0  000
-	     G = Plane2				 0  1  010
-	     B = Plane1 ^ ~Plane2	 1  0  100
-	   							 1  1  011
+       and vertically the same equation as the trees,
+       but final result inverted.
 
-	   water:
-	   							P1 P2  BGR or
-	     R = Plane1 ^ Plane2	 0  0  100 000
-	     G = Plane2 v Plane2	 0  1  110 010
-	     B = ~Plane1 or			 1  0  010 010
-	   	     0 based oh HD		 1  1  011 011
 
-	   	 Not sure about B, the logic seems convulated for such
-	   	 a simple result.
+       The colors are coded in logic gates:
 
-	*/
+       trees:
+                                P1 P2  BGR
+         R = Plane1 ^ Plane2     0  0  000
+         G = Plane2              0  1  010
+         B = Plane1 ^ ~Plane2    1  0  100
+                                 1  1  011
+
+       water:
+                                P1 P2  BGR or
+         R = Plane1 ^ Plane2     0  0  100 000
+         G = Plane2 v Plane2     0  1  110 010
+         B = ~Plane1 or          1  0  010 010
+             0 based oh HD       1  1  011 011
+
+         Not sure about B, the logic seems convulated for such
+         a simple result.
+
+    */
 
 	while (1)
 	{
@@ -659,7 +659,7 @@ VIDEO_UPDATE( devzone )
 VIDEO_UPDATE( nomnlnd )
 {
 	/* according to the video summation logic on pg4, the trees and river
-	   have the highest priority */
+       have the highest priority */
 
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 

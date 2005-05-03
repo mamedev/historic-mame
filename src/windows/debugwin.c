@@ -1,6 +1,6 @@
 //============================================================
 //
-//	debugwin.c - Win32 debug window handling
+//  debugwin.c - Win32 debug window handling
 //
 //============================================================
 
@@ -24,7 +24,7 @@
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 #define MAX_VIEWS				4
@@ -80,7 +80,7 @@ enum
 
 
 //============================================================
-//	TYPES
+//  TYPES
 //============================================================
 
 struct debugview_info
@@ -124,13 +124,13 @@ struct debugwin_info
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 static struct debugwin_info *window_list;
@@ -156,7 +156,7 @@ static const char *address_space_name[ADDRESS_SPACES] = { "program", "data", "I/
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static struct debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler);
@@ -206,7 +206,7 @@ static void smart_show_all(BOOL show);
 
 
 //============================================================
-//	osd_wait_for_debugger
+//  osd_wait_for_debugger
 //============================================================
 
 void osd_wait_for_debugger(void)
@@ -257,7 +257,7 @@ void osd_wait_for_debugger(void)
 
 
 //============================================================
-//	debugwin_init_windows
+//  debugwin_init_windows
 //============================================================
 
 int debugwin_init_windows(void)
@@ -335,7 +335,7 @@ int debugwin_init_windows(void)
 
 
 //============================================================
-//	debugwin_show
+//  debugwin_show
 //============================================================
 
 void debugwin_show(int type)
@@ -350,7 +350,7 @@ void debugwin_show(int type)
 
 
 //============================================================
-//	debugwin_update_during_game
+//  debugwin_update_during_game
 //============================================================
 
 void debugwin_update_during_game(void)
@@ -374,7 +374,7 @@ void debugwin_update_during_game(void)
 
 
 //============================================================
-//	debugwin_is_debugger_visible
+//  debugwin_is_debugger_visible
 //============================================================
 
 int debugwin_is_debugger_visible(void)
@@ -395,7 +395,7 @@ int debugwin_is_debugger_visible(void)
 
 
 //============================================================
-//	debug_window_create
+//  debug_window_create
 //============================================================
 
 static struct debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler)
@@ -442,7 +442,7 @@ cleanup:
 
 
 //============================================================
-//	debug_window_free
+//  debug_window_free
 //============================================================
 
 static void debug_window_free(struct debugwin_info *info)
@@ -476,7 +476,7 @@ static void debug_window_free(struct debugwin_info *info)
 
 
 //============================================================
-//	debug_window_draw_contents
+//  debug_window_draw_contents
 //============================================================
 
 static void debug_window_draw_contents(struct debugwin_info *info, HDC dc)
@@ -533,7 +533,7 @@ static void debug_window_draw_contents(struct debugwin_info *info, HDC dc)
 
 
 //============================================================
-//	debug_window_proc
+//  debug_window_proc
 //============================================================
 
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -685,7 +685,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 
 //============================================================
-//	debug_view_create
+//  debug_view_create
 //============================================================
 
 static int debug_view_create(struct debugwin_info *info, int which, int type)
@@ -734,7 +734,7 @@ cleanup:
 
 
 //============================================================
-//	debug_view_set_bounds
+//  debug_view_set_bounds
 //============================================================
 
 static void debug_view_set_bounds(struct debugview_info *info, HWND parent, const RECT *newbounds)
@@ -752,7 +752,7 @@ static void debug_view_set_bounds(struct debugview_info *info, HWND parent, cons
 
 
 //============================================================
-//	debug_view_draw_contents
+//  debug_view_draw_contents
 //============================================================
 
 static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
@@ -824,7 +824,7 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 				// if the attribute changed, adjust the colors
 				if (viewdata[col].attrib != last_attrib)
 				{
-//					COLORREF oldfg = fgcolor;
+//                  COLORREF oldfg = fgcolor;
 					COLORREF oldbg = bgcolor;
 
 					// reset to standard colors
@@ -912,7 +912,7 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 
 
 //============================================================
-//	debug_view_update
+//  debug_view_update
 //============================================================
 
 static void debug_view_update(struct debug_view *view)
@@ -1026,7 +1026,7 @@ static void debug_view_update(struct debug_view *view)
 
 
 //============================================================
-//	debug_view_find
+//  debug_view_find
 //============================================================
 
 static struct debugview_info *debug_view_find(struct debug_view *view)
@@ -1045,7 +1045,7 @@ static struct debugview_info *debug_view_find(struct debug_view *view)
 
 
 //============================================================
-//	debug_view_process_scroll
+//  debug_view_process_scroll
 //============================================================
 
 static UINT32 debug_view_process_scroll(struct debugview_info *info, WORD type, HWND wnd)
@@ -1118,7 +1118,7 @@ static UINT32 debug_view_process_scroll(struct debugview_info *info, WORD type, 
 
 
 //============================================================
-//	debug_view_prev_view
+//  debug_view_prev_view
 //============================================================
 
 static void debug_view_prev_view(struct debugwin_info *info, struct debugview_info *curview)
@@ -1162,7 +1162,7 @@ static void debug_view_prev_view(struct debugwin_info *info, struct debugview_in
 
 
 //============================================================
-//	debug_view_next_view
+//  debug_view_next_view
 //============================================================
 
 static void debug_view_next_view(struct debugwin_info *info, struct debugview_info *curview)
@@ -1206,7 +1206,7 @@ static void debug_view_next_view(struct debugwin_info *info, struct debugview_in
 
 
 //============================================================
-//	debug_view_proc
+//  debug_view_proc
 //============================================================
 
 static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -1350,7 +1350,7 @@ static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, L
 
 
 //============================================================
-//	debug_edit_proc
+//  debug_edit_proc
 //============================================================
 
 static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -1474,7 +1474,7 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 
 #if 0
 //============================================================
-//	generic_create_window
+//  generic_create_window
 //============================================================
 
 static void generic_create_window(int type)
@@ -1521,7 +1521,7 @@ static void generic_create_window(int type)
 
 #if 0
 //============================================================
-//	generic_recompute_children
+//  generic_recompute_children
 //============================================================
 
 static void generic_recompute_children(struct debugwin_info *info)
@@ -1539,7 +1539,7 @@ static void generic_recompute_children(struct debugwin_info *info)
 
 
 //============================================================
-//	memory_create_window
+//  memory_create_window
 //============================================================
 
 static void memory_create_window(void)
@@ -1649,7 +1649,7 @@ static void memory_create_window(void)
 
 
 //============================================================
-//	memory_recompute_children
+//  memory_recompute_children
 //============================================================
 
 static void memory_recompute_children(struct debugwin_info *info)
@@ -1686,7 +1686,7 @@ static void memory_recompute_children(struct debugwin_info *info)
 
 
 //============================================================
-//	memory_process_string
+//  memory_process_string
 //============================================================
 
 static void memory_process_string(struct debugwin_info *info, const char *string)
@@ -1701,7 +1701,7 @@ static void memory_process_string(struct debugwin_info *info, const char *string
 
 
 //============================================================
-//	memory_handle_command
+//  memory_handle_command
 //============================================================
 
 static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
@@ -1775,7 +1775,7 @@ static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 
 //============================================================
-//	memory_handle_key
+//  memory_handle_key
 //============================================================
 
 static int memory_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
@@ -1807,7 +1807,7 @@ static int memory_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM l
 
 
 //============================================================
-//	memory_update_caption
+//  memory_update_caption
 //============================================================
 
 static void memory_update_caption(HWND wnd)
@@ -1828,7 +1828,7 @@ static void memory_update_caption(HWND wnd)
 
 
 //============================================================
-//	disasm_create_window
+//  disasm_create_window
 //============================================================
 
 static void disasm_create_window(void)
@@ -1925,7 +1925,7 @@ static void disasm_create_window(void)
 
 
 //============================================================
-//	disasm_recompute_children
+//  disasm_recompute_children
 //============================================================
 
 static void disasm_recompute_children(struct debugwin_info *info)
@@ -1962,7 +1962,7 @@ static void disasm_recompute_children(struct debugwin_info *info)
 
 
 //============================================================
-//	disasm_process_string
+//  disasm_process_string
 //============================================================
 
 static void disasm_process_string(struct debugwin_info *info, const char *string)
@@ -1977,7 +1977,7 @@ static void disasm_process_string(struct debugwin_info *info, const char *string
 
 
 //============================================================
-//	disasm_handle_command
+//  disasm_handle_command
 //============================================================
 
 static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
@@ -2019,7 +2019,7 @@ static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 
 //============================================================
-//	disasm_update_caption
+//  disasm_update_caption
 //============================================================
 
 static void disasm_update_caption(HWND wnd)
@@ -2039,7 +2039,7 @@ static void disasm_update_caption(HWND wnd)
 
 
 //============================================================
-//	console_create_window
+//  console_create_window
 //============================================================
 
 void console_create_window(void)
@@ -2156,7 +2156,7 @@ cleanup:
 
 
 //============================================================
-//	console_recompute_children
+//  console_recompute_children
 //============================================================
 
 static void console_recompute_children(struct debugwin_info *info)
@@ -2205,7 +2205,7 @@ static void console_recompute_children(struct debugwin_info *info)
 
 
 //============================================================
-//	console_process_string
+//  console_process_string
 //============================================================
 
 static void console_process_string(struct debugwin_info *info, const char *string)
@@ -2227,7 +2227,7 @@ static void console_process_string(struct debugwin_info *info, const char *strin
 
 
 //============================================================
-//	console_set_cpunum
+//  console_set_cpunum
 //============================================================
 
 static void console_set_cpunum(int cpunum)
@@ -2250,7 +2250,7 @@ static void console_set_cpunum(int cpunum)
 
 
 //============================================================
-//	create_standard_menubar
+//  create_standard_menubar
 //============================================================
 
 static HMENU create_standard_menubar(void)
@@ -2289,7 +2289,7 @@ static HMENU create_standard_menubar(void)
 
 
 //============================================================
-//	global_handle_command
+//  global_handle_command
 //============================================================
 
 static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
@@ -2342,7 +2342,7 @@ static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 
 //============================================================
-//	global_handle_key
+//  global_handle_key
 //============================================================
 
 static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
@@ -2403,7 +2403,7 @@ static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM l
 
 
 //============================================================
-//	smart_set_window_bounds
+//  smart_set_window_bounds
 //============================================================
 
 static void smart_set_window_bounds(HWND wnd, HWND parent, RECT *bounds)
@@ -2441,7 +2441,7 @@ static void smart_set_window_bounds(HWND wnd, HWND parent, RECT *bounds)
 
 
 //============================================================
-//	smart_show_window
+//  smart_show_window
 //============================================================
 
 static void smart_show_window(HWND wnd, BOOL show)
@@ -2454,7 +2454,7 @@ static void smart_show_window(HWND wnd, BOOL show)
 
 
 //============================================================
-//	smart_show_all
+//  smart_show_all
 //============================================================
 
 static void smart_show_all(BOOL show)

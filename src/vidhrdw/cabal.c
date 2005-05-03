@@ -87,17 +87,17 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 
 /********************************************************************
 
-	Cabal Spriteram
-	---------------
+    Cabal Spriteram
+    ---------------
 
-	+0   .......x ........  Sprite enable bit
-	+0   ........ xxxxxxxx  Sprite Y coordinate
-	+1   ..??.... ........  ??? unknown ???
-	+1   ....xxxx xxxxxxxx  Sprite tile number
- 	+2   .xxxx... ........  Sprite color bank
-	+2   .....x.. ........  Sprite flip x
-	+2   .......x xxxxxxxx  Sprite X coordinate
-	+3   (unused)
+    +0   .......x ........  Sprite enable bit
+    +0   ........ xxxxxxxx  Sprite Y coordinate
+    +1   ..??.... ........  ??? unknown ???
+    +1   ....xxxx xxxxxxxx  Sprite tile number
+    +2   .xxxx... ........  Sprite color bank
+    +2   .....x.. ........  Sprite flip x
+    +2   .......x xxxxxxxx  Sprite X coordinate
+    +3   (unused)
 
             -------E YYYYYYYY
             ----BBTT TTTTTTTT

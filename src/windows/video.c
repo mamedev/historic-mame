@@ -1,6 +1,6 @@
 //============================================================
 //
-//	video.c - Win32 video handling
+//  video.c - Win32 video handling
 //
 //============================================================
 
@@ -31,7 +31,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -49,7 +49,7 @@ extern struct rc_option win_d3d_opts[];
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // frameskipping
@@ -58,7 +58,7 @@ extern struct rc_option win_d3d_opts[];
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // screen to draw on
@@ -85,7 +85,7 @@ UINT8 blit_swapxy;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // screen info
@@ -172,7 +172,7 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 
 
 //============================================================
-//	OPTIONS
+//  OPTIONS
 //============================================================
 
 // prototypes
@@ -232,7 +232,7 @@ struct rc_option video_opts[] =
 
 
 //============================================================
-//	decode_cleanstretch
+//  decode_cleanstretch
 //============================================================
 
 static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority)
@@ -275,7 +275,7 @@ static int decode_cleanstretch(struct rc_option *option, const char *arg, int pr
 
 
 //============================================================
-//	video_set_resolution
+//  video_set_resolution
 //============================================================
 
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority)
@@ -312,7 +312,7 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 
 
 //============================================================
-//	decode_ftr
+//  decode_ftr
 //============================================================
 
 static int decode_ftr(struct rc_option *option, const char *arg, int priority)
@@ -337,7 +337,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 
 
 //============================================================
-//	decode_effect
+//  decode_effect
 //============================================================
 
 static int decode_effect(struct rc_option *option, const char *arg, int priority)
@@ -358,7 +358,7 @@ static int decode_effect(struct rc_option *option, const char *arg, int priority
 
 
 //============================================================
-//	decode_aspect
+//  decode_aspect
 //============================================================
 
 static int decode_aspect(struct rc_option *option, const char *arg, int priority)
@@ -379,7 +379,7 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 
 
 //============================================================
-//	win_orient_rect
+//  win_orient_rect
 //============================================================
 
 void win_orient_rect(struct rectangle *rect)
@@ -413,7 +413,7 @@ void win_orient_rect(struct rectangle *rect)
 
 
 //============================================================
-//	win_disorient_rect
+//  win_disorient_rect
 //============================================================
 
 void win_disorient_rect(struct rectangle *rect)
@@ -447,9 +447,9 @@ void win_disorient_rect(struct rectangle *rect)
 
 
 //============================================================
-//	devices_enum_callback
+//  devices_enum_callback
 //============================================================
-static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription, 
+static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription,
 										 LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm)
 {
 	if (verbose)
@@ -474,7 +474,7 @@ static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription
 
 
 //============================================================
-//	osd_create_display
+//  osd_create_display
 //============================================================
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
@@ -510,7 +510,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 	// if not using the primary display, enumerate the display devices and find the
 	// proper screen
-	
+
 	screen_guid_ptr = NULL;
 	ddraw_device_found = FALSE;
 	monitor = NULL;
@@ -578,7 +578,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 
 //============================================================
-//	osd_close_display
+//  osd_close_display
 //============================================================
 
 void osd_close_display(void)
@@ -597,7 +597,7 @@ void osd_close_display(void)
 
 
 //============================================================
-//	osd_skip_this_frame
+//  osd_skip_this_frame
 //============================================================
 
 int osd_skip_this_frame(void)
@@ -609,7 +609,7 @@ int osd_skip_this_frame(void)
 
 
 //============================================================
-//	osd_get_fps_text
+//  osd_get_fps_text
 //============================================================
 
 const char *osd_get_fps_text(const struct performance_info *performance)
@@ -641,7 +641,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 
 
 //============================================================
-//	check_inputs
+//  check_inputs
 //============================================================
 
 static void check_inputs(void)
@@ -722,7 +722,7 @@ static void check_inputs(void)
 
 
 //============================================================
-//	throttle_speed
+//  throttle_speed
 //============================================================
 
 static void throttle_speed(void)
@@ -780,7 +780,7 @@ static void throttle_speed(void)
 
 
 //============================================================
-//	update_palette
+//  update_palette
 //============================================================
 
 static void update_palette(struct mame_display *display)
@@ -791,7 +791,7 @@ static void update_palette(struct mame_display *display)
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
-//		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
+//      UINT32 dirtyflags = display->game_palette_dirty[i / 32];
 		if (dirtyflags)
 		{
 			display->game_palette_dirty[i / 32] = 0;
@@ -820,7 +820,7 @@ static void update_palette(struct mame_display *display)
 
 
 //============================================================
-//	update_visible_area
+//  update_visible_area
 //============================================================
 
 static void update_visible_area(struct mame_display *display)
@@ -855,7 +855,7 @@ static void update_visible_area(struct mame_display *display)
 
 
 //============================================================
-//	update_autoframeskip
+//  update_autoframeskip
 //============================================================
 
 void update_autoframeskip(void)
@@ -908,7 +908,7 @@ void update_autoframeskip(void)
 
 
 //============================================================
-//	render_frame
+//  render_frame
 //============================================================
 
 static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -968,7 +968,7 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 
 
 //============================================================
-//	osd_update_video_and_audio
+//  osd_update_video_and_audio
 //============================================================
 
 void osd_update_video_and_audio(struct mame_display *display)
@@ -1046,7 +1046,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 
 //============================================================
-//	osd_override_snapshot
+//  osd_override_snapshot
 //============================================================
 
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
@@ -1131,7 +1131,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 
 
 //============================================================
-//	osd_pause
+//  osd_pause
 //============================================================
 
 void osd_pause(int paused)

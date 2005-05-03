@@ -4,8 +4,8 @@
 
 ****************************************************************************
 
-	2 Data East 55 chips for playfields (same as Dark Seal, etc)
-	1 Data East MXC-06 chip for sprites (same as Bad Dudes, etc)
+    2 Data East 55 chips for playfields (same as Dark Seal, etc)
+    1 Data East MXC-06 chip for sprites (same as Bad Dudes, etc)
 
 ***************************************************************************/
 

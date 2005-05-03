@@ -100,15 +100,15 @@ static struct GfxDecodeInfo gfxdecodeinfops4[] =
 
 static struct EEPROM_interface eeprom_interface_93C56 =
 {
-	8,		// address bits	8
-	8,		// data bits	8
-	"*110x",	// read			110x aaaaaaaa
-	"*101x",	// write		101x aaaaaaaa dddddddd
-	"*111x",	// erase		111x aaaaaaaa
-	"*10000xxxxxxx",// lock			100x 00xxxx
-	"*10011xxxxxxx",// unlock		100x 11xxxx
-//	"*10001xxxx",	// write all	1 00 01xxxx dddddddddddddddd
-//	"*10010xxxx"	// erase all	1 00 10xxxx
+	8,		// address bits 8
+	8,		// data bits    8
+	"*110x",	// read         110x aaaaaaaa
+	"*101x",	// write        101x aaaaaaaa dddddddd
+	"*111x",	// erase        111x aaaaaaaa
+	"*10000xxxxxxx",// lock         100x 00xxxx
+	"*10011xxxxxxx",// unlock       100x 11xxxx
+//  "*10001xxxx",   // write all    1 00 01xxxx dddddddddddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
 static NVRAM_HANDLER(93C56)
@@ -355,7 +355,7 @@ static ADDRESS_MAP_START( ps4_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x03000000, 0x030037ff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x03003fe0, 0x03003fe3) AM_READ(ps4_eeprom_r)
 	AM_RANGE(0x03003fe4, 0x03003fe7) AM_READ(MRA32_NOP) // also writes to this address - might be vblank?
-//	AM_RANGE(0x03003fe8, 0x03003fef) AM_READ(MRA32_RAM) // vid regs?
+//  AM_RANGE(0x03003fe8, 0x03003fef) AM_READ(MRA32_RAM) // vid regs?
 	AM_RANGE(0x03004000, 0x03005fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x05000000, 0x05000003) AM_READ(psh_ymf_fm_r) // read YMF status
 	AM_RANGE(0x05800000, 0x05800007) AM_READ(ps4_io32_r) // Screen 1+2's Controls
@@ -371,7 +371,7 @@ static ADDRESS_MAP_START( ps4_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA32_ROM)	// program ROM (1 meg)
 	AM_RANGE(0x03000000, 0x030037ff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x03003fe0, 0x03003fe3) AM_WRITE(ps4_eeprom_w)
-//	AM_RANGE(0x03003fe4, 0x03003fe7) AM_WRITE(MWA32_NOP) // might be vblank?
+//  AM_RANGE(0x03003fe4, 0x03003fe7) AM_WRITE(MWA32_NOP) // might be vblank?
 	AM_RANGE(0x03003fe4, 0x03003fef) AM_WRITE(ps4_vidregs_w) AM_BASE(&psikyo4_vidregs) // vid regs?
 	AM_RANGE(0x03003ff0, 0x03003ff3) AM_WRITE(ps4_screen1_brt_w) // screen 1 brightness
 	AM_RANGE(0x03003ff4, 0x03003ff7) AM_WRITE(ps4_bgpen_1_dword_w) AM_BASE(&bgpen_1) // screen 1 clear colour

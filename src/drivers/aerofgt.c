@@ -646,9 +646,9 @@ INPUT_PORTS_START( karatblz )
 	PORT_DIPSETTING(      0x0020, "4 Players" )		/* 1 Unit / 4 Players */
 	PORT_DIPSETTING(      0x0000, "4 Players (Team)" )	/* 2 Units / 4 Players */
 	/*  With 4 player (Team) selected and Same Coin Slot:
-		Coin A & B credit together for use by _only_ player 1 or player 2
-		Coin C & D credit together for use by _only_ player 3 or player 4
-		Otherwise with Individual selected, everyone is seperate  */
+        Coin A & B credit together for use by _only_ player 1 or player 2
+        Coin C & D credit together for use by _only_ player 3 or player 4
+        Otherwise with Individual selected, everyone is seperate  */
 	PORT_DIPNAME( 0x0080, 0x0080, "Coin Slot" )
 	PORT_DIPSETTING(      0x0080, "Same" )
 	PORT_DIPSETTING(      0x0000, "Individual" )
@@ -722,12 +722,12 @@ INPUT_PORTS_START( spinlbrk )
 	PORT_DIPSETTING(      0x0001, "1-1-1-1C 1-1-1-2 HPs" )
 	PORT_DIPSETTING(      0x0000, "1-1C 1-2 HPs" )
 /* The last 5 Coin/Credit selections are cycles:
-	Example: 0x0004 = 2-1-1C 1-1-1 HPs:
-	2 Credits for the 1st Health Pack, 1 Credit for the 2nd Health Pack, 1 Credit
-	for the 3rd Health Pack... Then back to 2 Credits agian for 1 HP, then 1 credit
-	and 1 credit.... on and on.  With all Coin/Credit dips set to on, it's 1 Health
-	Pack for odd credits, 2 Health Packs for even credits :p
-	*/
+    Example: 0x0004 = 2-1-1C 1-1-1 HPs:
+    2 Credits for the 1st Health Pack, 1 Credit for the 2nd Health Pack, 1 Credit
+    for the 3rd Health Pack... Then back to 2 Credits agian for 1 HP, then 1 credit
+    and 1 credit.... on and on.  With all Coin/Credit dips set to on, it's 1 Health
+    Pack for odd credits, 2 Health Packs for even credits :p
+    */
 	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(      0x00f0, "1 Credit 1 Health Pack" )
 	PORT_DIPSETTING(      0x00e0, "1 Credit 2 Health Packs" )

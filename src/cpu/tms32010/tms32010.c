@@ -1,51 +1,51 @@
  /**************************************************************************\
- *				   Texas Instruments TMS32010 DSP Emulator					*
- *																			*
- *					Copyright (C) 1999-2004+ Tony La Porta					*
- *		You are not allowed to distribute this software commercially.		*
- *						Written for the MAME project.						*
- *																			*
- *																			*
- *		Notes : The term 'DMA' within this document, is in reference		*
- *					to Direct Memory Addressing, and NOT the usual term		*
- *					of Direct Memory Access.								*
- *				This is a word based microcontroller, with addressing		*
- *					architecture based on the Harvard addressing scheme.	*
- *																			*
- *																			*
- *																			*
- *	**** Change Log ****													*
- *																			*
- *	TLP (13-Jul-2002)														*
- *	 - Added Save-State support												*
- *	 - Converted the pending_irq flag to INTF (a real flag in this device)	*
- *	 - Fixed the ignore Interrupt Request for previous critical				*
- *	   instructions requiring an extra instruction to be processed. For		*
- *	   this reason, instant IRQ servicing cannot be supported here, so		*
- *	   INTF needs to be polled within the instruction execution loop		*
- *	 - Removed IRQ callback (IRQ ACK not supported on this device)			*
- *	 - A pending IRQ will remain pending until it's serviced. De-asserting	*
- *	   the IRQ Pin does not remove a pending IRQ state						*
- *	 - BIO is no longer treated as an IRQ line. It's polled when required.	*
- *	   This is the true behaviour of the device								*
- *	 - Removed the Clear OV flag from overflow instructions. Overflow		*
- *	   instructions can only set the flag. Flag test instructions clear it	*
- *	 - Fixed the ABST, SUBC and SUBH instructions							*
- *	 - Fixed the signedness in many equation based instructions				*
- *	 - Added the missing Previous PC to the get_register function			*
- *	 - Changed Cycle timings to include clock ticks							*
- *	 - Converted some registers from ints to pairs for much cleaner code	*
- *	TLP (20-Jul-2002) Ver 1.10												*
- *	 - Fixed the dissasembly from the debugger								*
- *	 - Changed all references from TMS320C10 to TMS32010					*
- *	ASG (24-Sep-2002) Ver 1.20												*
- *	 - Fixed overflow handling												*
- *	 - Simplified logic in a few locations									*
- *	TLP (22-Feb-2004) Ver 1.21												*
- *	 - Overflow for ADDH only affects upper 16bits (was modifying 32 bits)	*
- *	 - Internal Data Memory map is assigned here now						*
- *	 - Cycle counts for invalid opcodes 7F1E and 7F1F are now 0				*
- *																			*
+ *                 Texas Instruments TMS32010 DSP Emulator                  *
+ *                                                                          *
+ *                  Copyright (C) 1999-2004+ Tony La Porta                  *
+ *      You are not allowed to distribute this software commercially.       *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *                                                                          *
+ *      Notes : The term 'DMA' within this document, is in reference        *
+ *                  to Direct Memory Addressing, and NOT the usual term     *
+ *                  of Direct Memory Access.                                *
+ *              This is a word based microcontroller, with addressing       *
+ *                  architecture based on the Harvard addressing scheme.    *
+ *                                                                          *
+ *                                                                          *
+ *                                                                          *
+ *  **** Change Log ****                                                    *
+ *                                                                          *
+ *  TLP (13-Jul-2002)                                                       *
+ *   - Added Save-State support                                             *
+ *   - Converted the pending_irq flag to INTF (a real flag in this device)  *
+ *   - Fixed the ignore Interrupt Request for previous critical             *
+ *     instructions requiring an extra instruction to be processed. For     *
+ *     this reason, instant IRQ servicing cannot be supported here, so      *
+ *     INTF needs to be polled within the instruction execution loop        *
+ *   - Removed IRQ callback (IRQ ACK not supported on this device)          *
+ *   - A pending IRQ will remain pending until it's serviced. De-asserting  *
+ *     the IRQ Pin does not remove a pending IRQ state                      *
+ *   - BIO is no longer treated as an IRQ line. It's polled when required.  *
+ *     This is the true behaviour of the device                             *
+ *   - Removed the Clear OV flag from overflow instructions. Overflow       *
+ *     instructions can only set the flag. Flag test instructions clear it  *
+ *   - Fixed the ABST, SUBC and SUBH instructions                           *
+ *   - Fixed the signedness in many equation based instructions             *
+ *   - Added the missing Previous PC to the get_register function           *
+ *   - Changed Cycle timings to include clock ticks                         *
+ *   - Converted some registers from ints to pairs for much cleaner code    *
+ *  TLP (20-Jul-2002) Ver 1.10                                              *
+ *   - Fixed the dissasembly from the debugger                              *
+ *   - Changed all references from TMS320C10 to TMS32010                    *
+ *  ASG (24-Sep-2002) Ver 1.20                                              *
+ *   - Fixed overflow handling                                              *
+ *   - Simplified logic in a few locations                                  *
+ *  TLP (22-Feb-2004) Ver 1.21                                              *
+ *   - Overflow for ADDH only affects upper 16bits (was modifying 32 bits)  *
+ *   - Internal Data Memory map is assigned here now                        *
+ *   - Cycle counts for invalid opcodes 7F1E and 7F1F are now 0             *
+ *                                                                          *
  \**************************************************************************/
 
 
@@ -130,17 +130,17 @@ typedef void (*opcode_fn) (void);
 /********  The following is the Status (Flag) register definition.  *********/
 /* 15 | 14  |  13  | 12 | 11 | 10 | 9 |  8  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0  */
 /* OV | OVM | INTM |  1 |  1 |  1 | 1 | ARP | 1 | 1 | 1 | 1 | 1 | 1 | 1 | DP */
-#define OV_FLAG		0x8000	/* OV	(Overflow flag) 1 indicates an overflow */
-#define OVM_FLAG	0x4000	/* OVM	(Overflow Mode bit) 1 forces ACC overflow to greatest positive or negative saturation value */
-#define INTM_FLAG	0x2000	/* INTM	(Interrupt Mask flag) 0 enables maskable interrupts */
-#define ARP_REG		0x0100	/* ARP	(Auxiliary Register Pointer) */
-#define DP_REG		0x0001	/* DP	(Data memory Pointer (bank) bit) */
+#define OV_FLAG		0x8000	/* OV   (Overflow flag) 1 indicates an overflow */
+#define OVM_FLAG	0x4000	/* OVM  (Overflow Mode bit) 1 forces ACC overflow to greatest positive or negative saturation value */
+#define INTM_FLAG	0x2000	/* INTM (Interrupt Mask flag) 0 enables maskable interrupts */
+#define ARP_REG		0x0100	/* ARP  (Auxiliary Register Pointer) */
+#define DP_REG		0x0001	/* DP   (Data memory Pointer (bank) bit) */
 
-#define OV		( R.STR & OV_FLAG)			/* OV	(Overflow flag) */
-#define OVM		( R.STR & OVM_FLAG)			/* OVM	(Overflow Mode bit) 1 indicates an overflow */
-#define INTM	( R.STR & INTM_FLAG)		/* INTM	(Interrupt enable flag) 0 enables maskable interrupts */
-#define ARP		((R.STR & ARP_REG) >> 8)	/* ARP	(Auxiliary Register Pointer) */
-#define DP		((R.STR & DP_REG) << 7)		/* DP	(Data memory Pointer bit) */
+#define OV		( R.STR & OV_FLAG)			/* OV   (Overflow flag) */
+#define OVM		( R.STR & OVM_FLAG)			/* OVM  (Overflow Mode bit) 1 indicates an overflow */
+#define INTM	( R.STR & INTM_FLAG)		/* INTM (Interrupt enable flag) 0 enables maskable interrupts */
+#define ARP		((R.STR & ARP_REG) >> 8)	/* ARP  (Auxiliary Register Pointer) */
+#define DP		((R.STR & DP_REG) << 7)		/* DP   (Data memory Pointer bit) */
 
 #define DMA_DP	(DP | (R.opcode.b.l & 0x7f))	/* address used in direct memory access operations */
 #define DMA_DP1	(0x80 | R.opcode.b.l)			/* address used in direct memory access operations for sst instruction */
@@ -150,7 +150,7 @@ typedef void (*opcode_fn) (void);
 
 
 /************************************************************************
- *	Shortcuts
+ *  Shortcuts
  ************************************************************************/
 
 INLINE void CLR(UINT16 flag) { R.STR &= ~flag; R.STR |= 0x1efe; }
@@ -257,7 +257,7 @@ INLINE void putdata_sst(UINT16 data)
 
 
 /************************************************************************
- *	Emulate the Instructions
+ *  Emulate the Instructions
  ************************************************************************/
 
 /* This following function is here to fill in the void for */
@@ -284,8 +284,8 @@ static void abst(void)
  *** and newer generations of this type of chip supported it. I think ****
  *** the manual is wrong (apart from other errors the manual has). *******
 
-static void add_sh(void)	{ getdata(R.opcode.b.h,1); R.ACC.d += R.ALU.d; }
-static void addh(void)		{ getdata(0,0); R.ACC.d += (R.ALU.d << 16); }
+static void add_sh(void)    { getdata(R.opcode.b.h,1); R.ACC.d += R.ALU.d; }
+static void addh(void)      { getdata(0,0); R.ACC.d += (R.ALU.d << 16); }
  ***/
 
 static void add_sh(void)
@@ -650,7 +650,7 @@ static void zals(void)
 
 
 /***********************************************************************
- *	Cycle Timings
+ *  Cycle Timings
  ***********************************************************************/
 
 static unsigned cycles_main[256]=
@@ -681,7 +681,7 @@ static unsigned cycles_7F_other[32]=
 
 
 /***********************************************************************
- *	Opcode Table
+ *  Opcode Table
  ***********************************************************************/
 
 static opcode_fn opcode_main[256]=
@@ -731,7 +731,7 @@ static opcode_fn opcode_7F_other[32]=
 
 
 /****************************************************************************
- *	Inits CPU emulation
+ *  Inits CPU emulation
  ****************************************************************************/
 static void tms32010_init (void)
 {
@@ -755,7 +755,7 @@ static void tms32010_init (void)
 }
 
 /****************************************************************************
- *	Reset registers to their initial values
+ *  Reset registers to their initial values
  ****************************************************************************/
 static void tms32010_reset (void *param)
 {
@@ -764,14 +764,14 @@ static void tms32010_reset (void *param)
 	R.ACC.d = 0;
 	R.INTF  = TMS32010_INT_NONE;
 	addr_mask = 0x0fff;	/* TMS32010 can only address 0x0fff */
-						/* however other TMS3201x devices	*/
+						/* however other TMS3201x devices   */
 						/* can address up to 0xffff (incase */
-						/* their support is ever added).	*/
+						/* their support is ever added).    */
 }
 
 
 /****************************************************************************
- *	Shut down CPU emulation
+ *  Shut down CPU emulation
  ****************************************************************************/
 static void tms32010_exit (void)
 {
@@ -780,7 +780,7 @@ static void tms32010_exit (void)
 
 
 /****************************************************************************
- *	Issue an interrupt if necessary
+ *  Issue an interrupt if necessary
  ****************************************************************************/
 static int Ext_IRQ(void)
 {
@@ -799,7 +799,7 @@ static int Ext_IRQ(void)
 
 
 /****************************************************************************
- *	Execute IPeriod. Return 0 if emulation should be stopped
+ *  Execute IPeriod. Return 0 if emulation should be stopped
  ****************************************************************************/
 static int tms32010_execute(int cycles)
 {
@@ -834,7 +834,7 @@ static int tms32010_execute(int cycles)
 }
 
 /****************************************************************************
- *	Get all registers in given buffer
+ *  Get all registers in given buffer
  ****************************************************************************/
 static void tms32010_get_context (void *dst)
 {
@@ -843,7 +843,7 @@ static void tms32010_get_context (void *dst)
 }
 
 /****************************************************************************
- *	Set all registers to given values
+ *  Set all registers to given values
  ****************************************************************************/
 static void tms32010_set_context (void *src)
 {
@@ -853,7 +853,7 @@ static void tms32010_set_context (void *src)
 
 
 /****************************************************************************
- *	Set IRQ line state
+ *  Set IRQ line state
  ****************************************************************************/
 static void set_irq_line(int irqline, int state)
 {
@@ -874,7 +874,7 @@ static offs_t tms32010_dasm(char *buffer, offs_t pc)
 
 
 /****************************************************************************
- *	Internal Memory Map
+ *  Internal Memory Map
  ****************************************************************************/
 
 static ADDRESS_MAP_START( tms32010_ram, ADDRESS_SPACE_DATA, 16 )
@@ -884,7 +884,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
- *	Generic set_info
+ *  Generic set_info
  **************************************************************************/
 
 static void tms32010_set_info(UINT32 state, union cpuinfo *info)
@@ -915,7 +915,7 @@ static void tms32010_set_info(UINT32 state, union cpuinfo *info)
 
 
 /**************************************************************************
- *	Generic get_info
+ *  Generic get_info
  **************************************************************************/
 
 void tms32010_get_info(UINT32 state, union cpuinfo *info)

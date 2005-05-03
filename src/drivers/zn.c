@@ -304,23 +304,23 @@ static READ32_HANDLER( jamma_5_r )
 static READ32_HANDLER( boardconfig_r )
 {
 	/*
-	------00 mem=4M
-	------01 mem=4M
-	------10 mem=8M
-	------11 mem=16M
-	-----0-- smem=hM
-	-----1-- smem=2M
-	----0--- vmem=1M
-	----1--- vmem=2M
-	000----- rev=-2
-	001----- rev=-1
-	010----- rev=0
-	011----- rev=1
-	100----- rev=2
-	101----- rev=3
-	110----- rev=4
-	111----- rev=5
-	*/
+    ------00 mem=4M
+    ------01 mem=4M
+    ------10 mem=8M
+    ------11 mem=16M
+    -----0-- smem=hM
+    -----1-- smem=2M
+    ----0--- vmem=1M
+    ----1--- vmem=2M
+    000----- rev=-2
+    001----- rev=-1
+    010----- rev=0
+    011----- rev=1
+    100----- rev=2
+    101----- rev=3
+    110----- rev=4
+    111----- rev=5
+    */
 
 	if( Machine->drv->screen_height == 1024 )
 	{
@@ -341,11 +341,11 @@ static READ32_HANDLER( unknown_r )
 static WRITE32_HANDLER( coin_w )
 {
 	/* 0x01=counter
-	   0x02=coin lock 1
-	   0x08=??
-	   0x20=coin lock 2
-	   0x80=??
-	*/
+       0x02=coin lock 1
+       0x08=??
+       0x20=coin lock 2
+       0x80=??
+    */
 	if( ( data & ~0x23 ) != 0 )
 	{
 		verboselog( 0, "coin_w %08x\n", data );
@@ -593,8 +593,8 @@ DRIVER_INIT( coh1000c )
 		strcmp( Machine->gamedrv->name, "glprac2l" ) == 0 )
 	{
 		/* disable:
-			the QSound CPU for glpracr as it doesn't have any roms &
-			the link cpu for glprac2l as the h/w is not emulated yet. */
+            the QSound CPU for glpracr as it doesn't have any roms &
+            the link cpu for glprac2l as the h/w is not emulated yet. */
 		cpunum_suspend( 1, SUSPEND_REASON_DISABLE, 1 );
 	}
 }
@@ -669,7 +669,7 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_SOUND_CONFIG( psxspu_interface )
 	MDRV_SOUND_ROUTE(0, "left", 0.35)
 	MDRV_SOUND_ROUTE(1, "right", 0.35)
-	
+
 	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
 	MDRV_SOUND_CONFIG( qsound_interface )
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -712,7 +712,7 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_SOUND_CONFIG( psxspu_interface )
 	MDRV_SOUND_ROUTE(0, "left", 0.35)
 	MDRV_SOUND_ROUTE(1, "right", 0.35)
-	
+
 	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
 	MDRV_SOUND_CONFIG( qsound_interface )
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -921,7 +921,7 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_SOUND_CONFIG( psxspu_interface )
 	MDRV_SOUND_ROUTE(0, "left", 0.35)
 	MDRV_SOUND_ROUTE(1, "right", 0.35)
-	
+
 	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
 	MDRV_SOUND_CONFIG( qsound_interface )
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -2106,7 +2106,7 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_SOUND_CONFIG( psxspu_interface )
 	MDRV_SOUND_ROUTE(0, "left", 0.35)
 	MDRV_SOUND_ROUTE(1, "right", 0.35)
-	
+
 	MDRV_SOUND_ADD( YMF271, 0 )
 	MDRV_SOUND_CONFIG( ymf271_interface )
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -2590,9 +2590,9 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-//	MDRV_CPU_ADD( M68000, 10000000 )
-//	/* audio CPU */
-//	MDRV_CPU_PROGRAM_MAP( atlus_snd_map, 0 )
+//  MDRV_CPU_ADD( M68000, 10000000 )
+//  /* audio CPU */
+//  MDRV_CPU_PROGRAM_MAP( atlus_snd_map, 0 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -2619,7 +2619,7 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_SOUND_ROUTE(0, "left", 0.35)
 	MDRV_SOUND_ROUTE(1, "right", 0.35)
 
-//	MDRV_SOUND_ADD( YMZ280B, ymz280b_intf )
+//  MDRV_SOUND_ADD( YMZ280B, ymz280b_intf )
 MACHINE_DRIVER_END
 
 /*
@@ -2627,11 +2627,11 @@ MACHINE_DRIVER_END
 Sonic Wings Limited (JPN Ver.)
 (c)1996 Video System
 
-Board:	PS based (ZN-1,COH-1002V)
-	VS34 (ROM board)
+Board:  PS based (ZN-1,COH-1002V)
+    VS34 (ROM board)
 
-Key:	Mother    KN01
-	ROM board KN02
+Key:    Mother    KN01
+    ROM board KN02
 
 */
 
@@ -3140,13 +3140,13 @@ ROM_START( glpracr )
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_FILL( 0, 0x50000, 0x76 )
 /* there are no QSound program roms
-	ROM_LOAD( "gra-02",  0x00000, 0x08000, NO_DUMP )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-	ROM_LOAD( "gra-03",  0x28000, 0x20000, NO_DUMP )
+    ROM_LOAD( "gra-02",  0x00000, 0x08000, NO_DUMP )
+    ROM_CONTINUE(        0x10000, 0x18000 )
+    ROM_LOAD( "gra-03",  0x28000, 0x20000, NO_DUMP )
 */
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
 /* or QSound sample roms either
-	ROM_LOAD( "gra-01m", 0x0000000, 0x400000, NO_DUMP )
+    ROM_LOAD( "gra-01m", 0x0000000, 0x400000, NO_DUMP )
 */
 ROM_END
 
@@ -4193,7 +4193,7 @@ ROM_START( beastrzb )
 	ROM_LOAD( "27c800.3",     0xb00000, 0x100000, CRC(7192eb4e) SHA1(bb276a38261099d91080d8613dc7500322f6fcab) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
-/*	http://www.atmel.com/dyn/products/product_card.asp?family_id=604&family_name=8051+Architecture&part_id=1939 */
+/*  http://www.atmel.com/dyn/products/product_card.asp?family_id=604&family_name=8051+Architecture&part_id=1939 */
 	ROM_LOAD( "at89c4051",    0x000000, 0x001000, NO_DUMP ) /* cat 702 replacement or sound cpu? */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )

@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	Atari Cyberball hardware
+    Atari Cyberball hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Cyberball (1988) [3 sets]
-		* Cyberball 2072, 2-players (1989) [4 sets]
-		* Tournament Cyberball 2072 (1989) [2 sets]
+    Games supported:
+        * Cyberball (1988) [3 sets]
+        * Cyberball 2072, 2-players (1989) [4 sets]
+        * Tournament Cyberball 2072 (1989) [2 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -110,7 +110,7 @@ static MACHINE_INIT( cyberb2p )
 
 /*************************************
  *
- *	I/O read dispatch.
+ *  I/O read dispatch.
  *
  *************************************/
 
@@ -141,7 +141,7 @@ static READ16_HANDLER( sound_state_r )
 
 /*************************************
  *
- *	Extra I/O handlers.
+ *  Extra I/O handlers.
  *
  *************************************/
 
@@ -154,7 +154,7 @@ static WRITE16_HANDLER( p2_reset_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -187,7 +187,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Extra CPU memory handlers
+ *  Extra CPU memory handlers
  *
  *************************************/
 
@@ -214,7 +214,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -238,7 +238,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	68000 Sound CPU memory handlers
+ *  68000 Sound CPU memory handlers
  *
  *************************************/
 
@@ -255,7 +255,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	2-player main CPU memory handlers
+ *  2-player main CPU memory handlers
  *
  *************************************/
 
@@ -283,7 +283,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -375,7 +375,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -433,7 +433,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -446,7 +446,7 @@ static struct YM2151interface ym2151_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -455,26 +455,26 @@ static MACHINE_DRIVER_START( cyberbal )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
-	
+
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)))
-	
+
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(extra_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(sound_68k_map,0)
 	MDRV_CPU_PERIODIC_INT(cyberbal_sound_68k_irq_gen,10000)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
-	
+
 	MDRV_MACHINE_INIT(cyberbal)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_UPDATE_BEFORE_VBLANK)
 #if (CYBERBALL_DUAL_MODE)
@@ -487,10 +487,10 @@ static MACHINE_DRIVER_START( cyberbal )
 #endif
 	MDRV_GFXDECODE(gfxdecodeinfo_interleaved)
 	MDRV_PALETTE_LENGTH(4096)
-	
+
 	MDRV_VIDEO_START(cyberbal)
 	MDRV_VIDEO_UPDATE(cyberbal)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
@@ -513,23 +513,23 @@ static MACHINE_DRIVER_START( cyberb2p )
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(cyberb2p_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(cyberb2p)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*16, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*16-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_VIDEO_START(cyberb2p)
 	MDRV_VIDEO_UPDATE(cyberbal)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 MACHINE_DRIVER_END
@@ -538,7 +538,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -984,7 +984,7 @@ ROM_END
 
 /*************************************
  *
- *	Machine initialization
+ *  Machine initialization
  *
  *************************************/
 
@@ -1026,7 +1026,7 @@ static DRIVER_INIT( cyberb2p )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

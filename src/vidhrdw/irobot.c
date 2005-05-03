@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari I, Robot hardware
+    Atari I, Robot hardware
 
 ***************************************************************************/
 
@@ -132,42 +132,42 @@ VIDEO_START( irobot )
 
 /***************************************************************************
 
-	Polygon Generator  (Preliminary information)
-	The polygon communication ram works as follows (each location is a 16-bit word):
+    Polygon Generator  (Preliminary information)
+    The polygon communication ram works as follows (each location is a 16-bit word):
 
-	0000-xxxx: Object pointer table
-		bits 00..10: Address of object data
-		bits 12..15: Object type
-			0x4 = Polygon
-			0x8 = Point
-			0xC = Vector
-		(0xFFFF means end of table)
+    0000-xxxx: Object pointer table
+        bits 00..10: Address of object data
+        bits 12..15: Object type
+            0x4 = Polygon
+            0x8 = Point
+            0xC = Vector
+        (0xFFFF means end of table)
 
-	Point Object:
-		Word 0, bits 0..15: X Position  (0xFFFF = end of point objects)
-		Word 1, bits 7..15: Y Position
-		bits 0..5: Color
+    Point Object:
+        Word 0, bits 0..15: X Position  (0xFFFF = end of point objects)
+        Word 1, bits 7..15: Y Position
+        bits 0..5: Color
 
-	Vector Object:
-		Word 0, bits 7..15: Ending Y   (0xFFFF = end of line objects)
-		Word 1, bits 7..15: Starting Y
-				bits 0..5: Color
-		Word 2: Slope
-		Word 3, bits 0..15: Starting X
+    Vector Object:
+        Word 0, bits 7..15: Ending Y   (0xFFFF = end of line objects)
+        Word 1, bits 7..15: Starting Y
+                bits 0..5: Color
+        Word 2: Slope
+        Word 3, bits 0..15: Starting X
 
-	Polygon Object:
-		Word 0, bits 0..10: Pointer to second slope list
-		Word 1, bits 0..15: Starting X first vector
-		Word 2, bits 0..15: Starting X second vector
-		Word 3, bits 0..5: Color
-		bits 7..15: Initial Y value
+    Polygon Object:
+        Word 0, bits 0..10: Pointer to second slope list
+        Word 1, bits 0..15: Starting X first vector
+        Word 2, bits 0..15: Starting X second vector
+        Word 3, bits 0..5: Color
+        bits 7..15: Initial Y value
 
-	Slope Lists: (one starts at Word 4, other starts at pointer in Word 0)
-		Word 0, Slope (0xFFFF = side done)
-		Word 1, bits 7..15: Ending Y of vector
+    Slope Lists: (one starts at Word 4, other starts at pointer in Word 0)
+        Word 0, Slope (0xFFFF = side done)
+        Word 1, bits 7..15: Ending Y of vector
 
-	Each side is a continous set of vectors. Both sides are drawn at
-	the same time and the space between them is filled in.
+    Each side is a continous set of vectors. Both sides are drawn at
+    the same time and the space between them is filled in.
 
 ***************************************************************************/
 
@@ -314,13 +314,13 @@ void irobot_run_video(void)
 				ey = ROUND_TO_PIXEL(ey);
 				spnt+=2;
 
-			//	sx += word1;
+			//  sx += word1;
 
 				word2 = (INT16)combase16[spnt2];
 				ey2 = ROUND_TO_PIXEL(combase16[spnt2+1]);
 				spnt2+=2;
 
-			//	sx2 += word2;
+			//  sx2 += word2;
 
 				while(1)
 				{

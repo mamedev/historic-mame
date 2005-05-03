@@ -100,7 +100,7 @@ void darius_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	UINT8 flipx,flipy,color,priority;
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
+       while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
 	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)

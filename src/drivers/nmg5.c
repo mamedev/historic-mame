@@ -1,8 +1,8 @@
 /*
 
- Multi 5 / New Multi Game 5		(c) 1998 Yun Sung
- Search Eye						(c) 1999 Yun Sung
- Puzzle Club					(c) 2000 Yun Sung
+ Multi 5 / New Multi Game 5     (c) 1998 Yun Sung
+ Search Eye                     (c) 1999 Yun Sung
+ Puzzle Club                    (c) 2000 Yun Sung
 
  driver by Pierpaolo Prazzoli
 
@@ -73,7 +73,7 @@ static WRITE8_HANDLER( oki_banking_w )
 
 /*******************************************************************
 
-							Main Cpu
+                            Main Cpu
 
 ********************************************************************/
 
@@ -118,7 +118,7 @@ ADDRESS_MAP_END
 
 /*******************************************************************
 
-							Sound Cpu
+                            Sound Cpu
 
 ********************************************************************/
 
@@ -226,7 +226,7 @@ INPUT_PORTS_START( searchey )
 	PORT_DIPSETTING(      0x0001, "Fast" )
 	PORT_DIPSETTING(      0x0002, "Slow" )
 	PORT_DIPSETTING(      0x0003, "Slowest" )
-	PORT_DIPNAME( 0x000c, 0x000c, "Number of Helps" )	
+	PORT_DIPNAME( 0x000c, 0x000c, "Number of Helps" )
 	PORT_DIPSETTING(      0x000c, "1" )
 	PORT_DIPSETTING(      0x0008, "2" )
 	PORT_DIPSETTING(      0x0004, "3" )

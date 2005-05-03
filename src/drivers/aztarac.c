@@ -1,15 +1,15 @@
 /***************************************************************************
 
-	Centuri Aztarac hardware
+    Centuri Aztarac hardware
 
-	driver by Mathis Rosenhauer
-	Thanks to David Fish for additional hardware information.
+    driver by Mathis Rosenhauer
+    Thanks to David Fish for additional hardware information.
 
-	Games supported:
-		* Aztarac
+    Games supported:
+        * Aztarac
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ***************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -41,7 +41,7 @@ static MACHINE_INIT( aztarac )
 
 /*************************************
  *
- *	NVRAM handler
+ *  NVRAM handler
  *
  *************************************/
 
@@ -54,7 +54,7 @@ static READ16_HANDLER( nvram_r )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -68,7 +68,7 @@ static READ16_HANDLER( joystick_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -98,7 +98,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -132,7 +132,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -161,7 +161,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -210,7 +210,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -238,7 +238,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

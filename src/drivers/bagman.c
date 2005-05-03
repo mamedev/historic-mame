@@ -19,31 +19,31 @@ c000-ffff ROM (Super Bagman only)
 memory mapped ports:
 
 read:
-a000	  PAL16r6 output. (RD4 line)
-a800	  ? (read only in one place, not used) (RD5 line)
-b000	  DSW (RD6 line)
-b800	  watchdog reset (RD7 line)
+a000      PAL16r6 output. (RD4 line)
+a800      ? (read only in one place, not used) (RD5 line)
+b000      DSW (RD6 line)
+b800      watchdog reset (RD7 line)
 
 write:
-a000	  interrupt enable
-a001	  horizontal flip
-a002	  vertical flip
-a003	  video enable?? (seems to be unused in the schems)
-a004	  coin counter
-a007	  ? /SCS line in the schems connected to AY8910 pin A4 or AA (schems are unreadable)
+a000      interrupt enable
+a001      horizontal flip
+a002      vertical flip
+a003      video enable?? (seems to be unused in the schems)
+a004      coin counter
+a007      ? /SCS line in the schems connected to AY8910 pin A4 or AA (schems are unreadable)
 
 a800-a805 these lines control the state machine driving TMS5110 (only bit 0 matters)
-		  a800,a801,a802 - speech roms BIT select (000 bit 7, 001 bit 4, 010 bit 2)
-		  a803 - 0 keeps the state machine in reset state; 1 starts speech
-		  a804 - connected to speech rom 11 (QS) chip enable
-		  a805 - connected to speech rom 12 (QT) chip enable
-b000	  ?
-b800	  ?
+          a800,a801,a802 - speech roms BIT select (000 bit 7, 001 bit 4, 010 bit 2)
+          a803 - 0 keeps the state machine in reset state; 1 starts speech
+          a804 - connected to speech rom 11 (QS) chip enable
+          a805 - connected to speech rom 12 (QT) chip enable
+b000      ?
+b800      ?
 
 
 PAL16r6 This chip is custom logic used for guards controlling.
-		Inputs are connected to buffered address(!!!) lines AB0,AB1,AB2,AB3,AB4,AB5,AB6
-		We simulate this writing a800 to a805 there (which is wrong but works)
+        Inputs are connected to buffered address(!!!) lines AB0,AB1,AB2,AB3,AB4,AB5,AB6
+        We simulate this writing a800 to a805 there (which is wrong but works)
 
 
 I/O ports:
@@ -51,8 +51,8 @@ I/O ports:
 I/O 8  ;AY-3-8910 Control Reg.
 I/O 9  ;AY-3-8910 Data Write Reg.
 I/O C  ;AY-3-8910 Data Read Reg.
-		Port A of the 8910 is connected to IN0
-		Port B of the 8910 is connected to IN1
+        Port A of the 8910 is connected to IN0
+        Port B of the 8910 is connected to IN1
 
 ***************************************************************************/
 
@@ -543,7 +543,7 @@ static MACHINE_DRIVER_START( bagman )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
@@ -579,7 +579,7 @@ static MACHINE_DRIVER_START( pickin )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
@@ -629,7 +629,7 @@ static MACHINE_DRIVER_START( botanic )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)

@@ -305,73 +305,138 @@ Therfore, once enough simple instructions are implemented, it should be possible
 
 /MLPCS  =  !A10.!A11.A12.A13.!A14.!A15
 /DPRCS  =  A10.A11.A12.A13.!A14.!A15
-/INSALD =  /AT3RD.!AT3WDRART + !AT3WDRART.A15 + !AT3WDRART.!A13 + !AT3WDRART.A14 + !AT3WDRART.!A12 + !A7
-/CNTST  =  /AT3RD.!AT3WDRART + !AT3WDRART.A15 + !AT3WDRART.!A13 + !AT3WDRART.A14 + !AT3WDRART.!A12 + !A8
+/INSALD =  /AT3RD.!AT3WDRART + !AT3WDRART.A15 + !AT3WDRART.!A13 + !AT3WDRART.A14 + !AT3WDRART.!A12 + !A8
+/CNTST  =  /AT3RD.!AT3WDRART + !AT3WDRART.A15 + !AT3WDRART.!A13 + !AT3WDRART.A14 + !AT3WDRART.!A12 + !A7
 /SPCS  =  !A15.!A14.!A13.A12 + A14.!A13.!A12 + !A14.A12.A9 + !A14.A13.!A12 + !A14.!A11 + A15
 
 3000-31ff = Direct instruction input (AAB1-AAB3 connect to I0-2 of AU).
-
-3800-39ff
-3c00-3dff = SPCS
 
 3c00-3cff
 3d00-3dff
 3e00-3eff
 3f00-3fff = DATA ROM output enable.
 
+/SPCS  = 0800-0fff
+         3800-39ff
+         3c00-3dff
+         5000-7fff
 
-The function data ROMs are checksummed on startup (and on entering service mode),
-A test of the AU and interface follows (with some ROM mirror checks thrown in for good measure):
 
-ST
-04 [300C] <- AA55
-   [3000] <- 55AA
-   [300E] =  E355 ?
-04 [300E] =  5572 ?
+When CPU A8=1, the counters are loaded with an address (e.g. [3754] and [3120]).
 
-05 [300C] <- AA55
-   [3002] <- 55AA
-   [300E] =  1CAA ?
-05 [300E] =  AA8E ?
+The counters are enabled on:
 
-06 [300C] <- 5A5A
-   [3004] <- A5A5
-   [300E] =  FCC6 ?
-06 [300E] =  E890 ?
+* A7=1 (e.g. [3680] and [3A80]).
+* Read access to locations asserting /SPCS (e.g. [7a72] - those ROM mirror accesses have some significance afterall!)
+* BB2.162 bit 7 = 0 (/CUDEN).
 
-07 [300C] <- AA55
-   [3006] <- 55AA
-   [300E] =  1971 ?
-07 [300E] =  931E ?
+Writes to [36XX] and [37XX] load a value into the AU ROM address shift-registers .
+Reads from [36XX] (and [37xx] presumably) returns this value.
+Writes to [3A00] loads a shift value/direction.
 
-08 [300C] <- 1000
-   [300C] <- 5678
-   [3008] <- 8765
-   [300E] =  ff88 ?
-08 [300E] =  0765 ?
+The AU ROM address shifting is governed by DSEL0-1 (BB2.162):
 
-09 [300C] <- 0200
-   [300C] <- FFFF
-   [300C] <- 55AA
-   [3008] <- FFFF
-   [300E] =  002a ?
-09 [300E] =  01aa ?
+00 = Invalid
+01 = >> 4
+10 = << 4
+11 = Shift direction and magnitude specified by 4-bit data value written to [3A00]:
+    A13-11 =  000 ->  << by A10-7
+    A13-11 != 000 ->  >> by A13-11 (LSB=0)
 
-10 [3752] <- AA55
-   [3600] =  AA55 ?
+    The shift magnitude is specified by the number of number of 0s between the LSB (inclusive) and the '1'. Shifting is circular.
 
-10 [3600] <- 55AA
-   [3680] =  55AA ?
-11 [3680] =  A55A ?
-12 [3600] =  55AA ?
+Examples:
 
 13 [3754] <- 2DB5
    [3A00] <- 0100
-   [3600] =  B6D4 ?
+   [3600] == B6D4 ? // 0x2DB5 << 2 == 0xB6D4
 
 14 [3600] <- 2DB5
    [3A00] <- 0200
-   [3600] =  5B6A ?
+   [3600] == 5B6A ? // 0x2DB5 << 1 == 0x5B6A
+
+15 [3600] <- 2DB5
+   [3A00] <- 0400
+   [3600] == 2DB5   // No shift.
+
+16 [3600] <- 2DB5
+   [3A00] <- 0800
+   [3600] == 96DA ? // 0x2DB5 >> 1 == 0x96DA
+
+17 [3600] <- 2DB5
+   [3A00] <- 1000
+   [3600] =  4B6D ? // 0x2DB5 >> 2 == 0x4B6D
+
+18 [3600] <- 2DB5
+   [3A00] <- 2000
+   [3600] =  A5B6 ? // 0x2DB5 >> 3 == 0xA5B6
+
+19 [3600] <- 1568
+   [3A00] <- 2000
+   [3E00] =  1BF2 ? // 0x1568 >> 3 == 0x02AD -> AU_ROM[0x02AD] == 0x1BF2
+
+
+The 14-bit AU ROM address is formed from:
+
+A13-11 =  TFAD13-11 (BB2.162 D4-2)
+A10-8  =  If RADCHG = 1: AU PROM address bits 7-5
+      If RADCHG = 0: Bits 10-8 of shift registers
+A7-0   =  Bits 7-0 of shift registers.
+
+The current implementation of accessing the AU ROM is wrong (it's based on software behaviour rather than the actual hardware )
+
+Here's the full list of AU tests performed during test mode:
+
+ST
+   [300C] <- AA55
+   [3000] <- 55AA
+04 [300E] =  E355 ?
+04 [300E] =  5572 ?
+
+   [300C] <- AA55
+   [3002] <- 55AA
+05 [300E] =  1CAA ?
+05 [300E] =  AA8E ?
+
+   [300C] <- 5A5A
+   [3004] <- A5A5
+06 [300E] =  FCC6 ?
+06 [300E] =  E890 ?
+
+   [300C] <- AA55
+   [3006] <- 55AA
+07 [300E] =  1971 ?
+07 [300E] =  931E ?
+
+   [300C] <- 1000
+   [300C] <- 5678
+   [3008] <- 8765
+08 [300E] =  ff88 ?
+08 [300E] =  0765 ?
+
+   [300C] <- 0200
+   [300C] <- FFFF
+   [300C] <- 55AA
+   [3008] <- FFFF
+09 [300E] =  002a ?
+09 [300E] =  01aa ?
+
+   [3752] <- AA55
+10 [3600] =  AA55 ?
+
+   [3600] <- 55AA
+10 [3680] =  55AA ?
+
+11 [3680] =  A55A ?
+12 [3600] =  55AA ?
+
+   [3754] <- 2DB5
+   [3A00] <- 0100
+13 [3600] =  B6D4 ?
+
+   [3600] <- 2DB5
+   [3A00] <- 0200
+14 [3600] =  5B6A ?
 
 15 [3600] <- 2DB5
    [3A00] <- 0400
@@ -393,21 +458,21 @@ ST
    [3A00] <- 2000
    [3E00] =  1BF2 ?
 
-1A [7A6A] =  0000 ? <- WRONG???
+1A [7A68] =  0000 ?
 
 1B [3680] <- AA55
-   [7A6A] =  55AA ? (ROM check)
+   [7A6A] =  55AA ?
 
 1C [3200] <- AA55
    [300E] =  E355 ?
 
 1D [3754] <- AA55
-   [7A6A] =  55AA ? (ROM check)
+   [7A6A] =  55AA ?
 
 1E [3680] <- AA55
-   [7A6A] =  55AA ? (ROM check)
+   [7A6A] =  55AA ?
 
-1F [7A6C] =  AA55 ? (ROM check)
+1F [7A6C] =  AA55 ?
 
 20 [300E] =  1CAA ?
 
@@ -431,13 +496,97 @@ ST
    [3A80] =  FFFF ?
 2D [300E] =  FFFF ?
 2E [300E] =  AA56 ?
-2F [3600] <- 0000
-   [4000] =  00BC ?
+   [3600] <- 0000
+2F [4000] =  00BC ?
 30 [3600] =  0000 ?
-31 [310C] <- 0078
+
+   [310C] <- 0078
    [308C] <- 3F70
-   [3680] <- 0087 ?
-32 I got bored...
+40 [3680] =  0087 ?
+
+   [3600] <- 0020
+41 [3680] =  0100 ?
+
+   [3680] <- 533f
+42 [300e] =  0058 ?
+
+   [315c] <- 0020
+43 [7a72] =  0087 ?
+
+44 [3700] =  0080 ?
+
+   [300c] <- 00cc
+   [3000] <- 0074
+45 [308e] =  0000 ?
+
+46 [7a74] =  0078 ?
+   [308c] <- 0000
+47 [300e] =  00c5 ?
+
+   [300c] <- 0074
+   [3000] <- 008c
+48 [311e] =  0000 ?
+
+   [300c] <- 0224
+   [308c] <- 0000
+49 [300e] =  001c ?
+
+   [3724] <- 000c
+   [3000] <- 0078
+4a [300e] =  007c
+
+   [3728] <- 0023
+4b [3e80] =  0055 ?
+4c [3e00] =  0045 ?
+
+   [3600] <- fca2
+   [313c] <- 0118
+   [308c] <- ff42
+4d [300e] =  007e ?
+
+   [312c] <- 0040
+   [308c] <- 00f8
+4e [300e] =  0080 ?
+
+   [300c] <- 0261
+   [3130] <- 2000
+4f [3680] =  004c ?
+
+   [300c] <- 000f
+   [3008] <- e440
+50 [300e] =  0111 ?
+
+51 [7a7a] =  41fd ?
+   [3740] <- 010e
+
+52 [7a76] =  4000 ?
+53 [7a78] =  03a9 ?
+
+   [3280] <- 0800
+54 [3e00] =  ff52 ?
+
+   [3680] <- 001e
+55 [3680] =  ffcd ?
+
+56 [3600] =  fff0 ?
+
+   [314c] <- 0091
+   [3680] <- 0300
+
+57 [3680] =  015e ?
+
+   [3680] <- 00d5
+   [3704] <- 0002
+58 [3600] =  0015 ?
+
+   [3600] <- 0086
+   [317c] <- 0013
+59 [300e] =  09f2 ?
+
+   [300c] <- 0010
+   [3120] <- 011c
+5a [300e] =  11c0 ?
+
 */
 
 READ8_HANDLER(BB_AU_R)

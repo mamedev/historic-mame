@@ -1,8 +1,8 @@
 /***************************************************************************
 
-							-= Kaneko 16 Bit Games =-
+                            -= Kaneko 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 CPU    :  68000  +  MCU [Optional]
@@ -13,29 +13,29 @@ SOUND  :  OKI-M6295 x (1 | 2) + YM2149 x (0 | 2)
 OTHER  :  93C46 EEPROM [Optional]
 
 CUSTOM :  VU-001 046A                  (48pin PQFP)
-          VU-002 052 151021            (160pin PQFP)	<- Sprites
-          VU-003 										<- High Colour Background
-          VIEW2-CHIP 23160-509 9047EAI (144pin PQFP)	<- Tilemaps
+          VU-002 052 151021            (160pin PQFP)    <- Sprites
+          VU-003                                        <- High Colour Background
+          VIEW2-CHIP 23160-509 9047EAI (144pin PQFP)    <- Tilemaps
           MUX2-CHIP                    (64pin PQFP)
           HELP1-CHIP
           IU-001 9045KP002             (44pin PQFP)
-          I/O JAMMA MC-8282 047        (46pin)			<- Inputs
+          I/O JAMMA MC-8282 047        (46pin)          <- Inputs
 
 
 ---------------------------------------------------------------------------
-Year + Game					PCB			Notes
+Year + Game                 PCB         Notes
 ---------------------------------------------------------------------------
-91	The Berlin Wall
-	Magical Crystals		Z00FC-02
-92	Bakuretsu Breaker
-	Blaze On							2 Sprites Chips !?
-	Sand Scorpion (by Face)				MCU protection (collision detection etc.)
-	Shogun Warriors						MCU protection (68k code snippets, NOT WORKING)
-	B.Rap Boys							MCU protection (not working, game can be
+91  The Berlin Wall
+    Magical Crystals        Z00FC-02
+92  Bakuretsu Breaker
+    Blaze On                            2 Sprites Chips !?
+    Sand Scorpion (by Face)             MCU protection (collision detection etc.)
+    Shogun Warriors                     MCU protection (68k code snippets, NOT WORKING)
+    B.Rap Boys                          MCU protection (not working, game can be
                                                         run on a shoggwar board ok)
-94	Great 1000 Miles Rally				MCU protection (EEPROM handling etc.)
-	Bonk's Adventure		Z09AF-003	MCU protection (EEPROM handling etc.)
-95	Great 1000 Miles Rally 2			MCU protection (EEPROM handling etc.)
+94  Great 1000 Miles Rally              MCU protection (EEPROM handling etc.)
+    Bonk's Adventure        Z09AF-003   MCU protection (EEPROM handling etc.)
+95  Great 1000 Miles Rally 2            MCU protection (EEPROM handling etc.)
 ---------------------------------------------------------------------------
 
 Note: gtmr manual shows "Compatible with AX Kaneko System Board"
@@ -73,7 +73,7 @@ To Do:
 /***************************************************************************
 
 
-							Machine Initialisation
+                            Machine Initialisation
 
 
 ***************************************************************************/
@@ -86,13 +86,13 @@ MACHINE_INIT( kaneko16 )
 	kaneko16_sprite_yoffs = 0;
 
 /*
-	Sx = Sprites with priority x, x = tiles with priority x,
-	Sprites - Tiles Order (bottom -> top):
+    Sx = Sprites with priority x, x = tiles with priority x,
+    Sprites - Tiles Order (bottom -> top):
 
-	0	S0	1	2	3
-	0	1	S1	2	3
-	0	1	2	S2	3
-	0	1	2	3	S3
+    0   S0  1   2   3
+    0   1   S1  2   3
+    0   1   2   S2  3
+    0   1   2   3   S3
 */
 
 	kaneko16_priority.tile[0] = 0;
@@ -121,13 +121,13 @@ static MACHINE_INIT( blazeon )
 	kaneko16_sprite_yoffs = 0x000;
 
 /*
-	Sx = Sprites with priority x, x = tiles with priority x,
-	Sprites - Tiles Order (bottom -> top):
+    Sx = Sprites with priority x, x = tiles with priority x,
+    Sprites - Tiles Order (bottom -> top):
 
-	0	S0	1	2	3
-	0	1	S1	2	3
-	0	1	2	3	S2
-	0	1	2	3	S3
+    0   S0  1   2   3
+    0   1   S1  2   3
+    0   1   2   3   S2
+    0   1   2   3   S3
 */
 	kaneko16_priority.sprite[0] = 0xfffc;	// above tile[0], below the others
 	kaneko16_priority.sprite[1] = 0xfff0;	// above tile[0-1], below the others
@@ -198,19 +198,19 @@ static MACHINE_INIT( mgcrystl )
 {
 	machine_init_kaneko16();
 /*
-	Sx = Sprites with priority x, x = tiles with priority x,
-	Sprites - Tiles Order:
+    Sx = Sprites with priority x, x = tiles with priority x,
+    Sprites - Tiles Order:
 
-	S0:	below 0 2
+    S0: below 0 2
 
-	S1:	over  2
-		below 0
+    S1: over  2
+        below 0
 
-	S2:	over 0 2
+    S2: over 0 2
 
-	S3:	over all
+    S3: over all
 
-	tiles of the 2nd VIEW2 chip always behind sprites?
+    tiles of the 2nd VIEW2 chip always behind sprites?
 
 */
 	kaneko16_priority.tile[0] = 2;	// priorty mask = 1
@@ -244,7 +244,7 @@ static MACHINE_INIT( shogwarr )
 /***************************************************************************
 
 
-						Misc Machine Emulation Routines
+                        Misc Machine Emulation Routines
 
 
 ***************************************************************************/
@@ -325,7 +325,7 @@ static WRITE16_HANDLER( sandscrp_irq_cause_w )
 /***************************************************************************
 
 
-									Sound
+                                    Sound
 
 
 ***************************************************************************/
@@ -375,7 +375,7 @@ WRITE16_HANDLER( kaneko16_YM2149_1_w )
 /***************************************************************************
 
 
-									EEPROM
+                                    EEPROM
 
 
 ***************************************************************************/
@@ -399,7 +399,7 @@ WRITE16_HANDLER( kaneko16_eeprom_w )
 		EEPROM_write_bit(data & 0x02);
 
 		// reset line asserted: reset.
-//		EEPROM_set_cs_line((data & 0x00) ? CLEAR_LINE : ASSERT_LINE );
+//      EEPROM_set_cs_line((data & 0x00) ? CLEAR_LINE : ASSERT_LINE );
 
 		// clock line asserted: write latch or select next bit to read
 		EEPROM_set_clock_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE );
@@ -410,13 +410,13 @@ WRITE16_HANDLER( kaneko16_eeprom_w )
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								The Berlin Wall
+                                The Berlin Wall
 ***************************************************************************/
 
 static ADDRESS_MAP_START( berlwall, ADDRESS_SPACE_PROGRAM, 16 )
@@ -424,14 +424,14 @@ static ADDRESS_MAP_START( berlwall, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x20ffff) AM_RAM		// Work RAM
 	AM_RANGE(0x30e000, 0x30ffff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		// Sprites
 	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(MRA16_RAM, paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
-//	AM_RANGE(0x480000, 0x480001) AM_RAM		// ?
+//  AM_RANGE(0x480000, 0x480001) AM_RAM     // ?
 	AM_RANGE(0x500000, 0x500001) AM_READWRITE(kaneko16_bg15_reg_r, kaneko16_bg15_reg_w) AM_BASE(&kaneko16_bg15_reg)	// High Color Background
 	AM_RANGE(0x580000, 0x580001) AM_READWRITE(kaneko16_bg15_select_r, kaneko16_bg15_select_w) AM_BASE(&kaneko16_bg15_select)
 	AM_RANGE(0x600000, 0x60003f) AM_READWRITE(MRA16_RAM, kaneko16_sprites_regs_w) AM_BASE(&kaneko16_sprites_regs)	// Sprites Regs
 	AM_RANGE(0x680000, 0x680001) AM_READ(input_port_0_word_r)		// Inputs
 	AM_RANGE(0x680002, 0x680003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x680004, 0x680005) AM_READ(input_port_2_word_r)
-//	AM_RANGE(0x680006, 0x680007) AM_READ(input_port_3_word_r)
+//  AM_RANGE(0x680006, 0x680007) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(kaneko16_coin_lockout_w)	// Coin Lockout
 	AM_RANGE(0x780000, 0x780001) AM_READ(watchdog_reset16_r)		// Watchdog
 	AM_RANGE(0x800000, 0x80001f) AM_READWRITE(kaneko16_YM2149_0_r, kaneko16_YM2149_0_w)	// Sound
@@ -447,7 +447,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Bakuretsu Breaker
+                            Bakuretsu Breaker
 ***************************************************************************/
 
 /* Two un-assigned OKI samples get requested during game play. Leftover bug? */
@@ -493,7 +493,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Blaze On
+                                    Blaze On
 ***************************************************************************/
 
 static ADDRESS_MAP_START( blazeon, ADDRESS_SPACE_PROGRAM, 16 )
@@ -515,13 +515,13 @@ static ADDRESS_MAP_START( blazeon, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(kaneko16_coin_lockout_w)	// Coin Lockout
 	AM_RANGE(0xe00000, 0xe00001) AM_READWRITE(MRA16_NOP, kaneko16_soundlatch_w)	// Read = IRQ Ack ?
 	AM_RANGE(0xe40000, 0xe40001) AM_READ(MRA16_NOP)	// IRQ Ack ?
-//	AM_RANGE(0xe80000, 0xe80001) AM_READ(MRA16_NOP)	// IRQ Ack ?
+//  AM_RANGE(0xe80000, 0xe80001) AM_READ(MRA16_NOP) // IRQ Ack ?
 	AM_RANGE(0xec0000, 0xec0001) AM_READ(MRA16_NOP)	// Lev 4 IRQ Ack ?
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Blood Warrior
+                                Blood Warrior
 ***************************************************************************/
 
 static WRITE16_HANDLER( bloodwar_oki_0_bank_w )
@@ -529,7 +529,7 @@ static WRITE16_HANDLER( bloodwar_oki_0_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(0, 0x40000 * (data & 0x3) );
-//		logerror("CPU #0 PC %06X : OKI0  bank %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI0  bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -538,7 +538,7 @@ static WRITE16_HANDLER( bloodwar_oki_1_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(1, 0x40000 * (data & 0x3) );
-//		logerror("CPU #0 PC %06X : OKI1  bank %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI1  bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -591,7 +591,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Bonk's Adventure
+                                Bonk's Adventure
 ***************************************************************************/
 
 static int bonkadv_oki_0_bank[16] = {
@@ -614,11 +614,11 @@ static WRITE16_HANDLER( bonkadv_oki_0_bank_w )
 }
 
 /*
-	Sample layout is similar to what Luca describes for gtmr:
-	Except for chunk 0, the first $40 samples of each chunk are empty,
-	and despite that, samples in the range $0-3f are played.
-	So I adopted what he did for gtmr, and as he says: "By using
-	this scheme the sound improves, but I wouldn't bet it's correct.."
+    Sample layout is similar to what Luca describes for gtmr:
+    Except for chunk 0, the first $40 samples of each chunk are empty,
+    and despite that, samples in the range $0-3f are played.
+    So I adopted what he did for gtmr, and as he says: "By using
+    this scheme the sound improves, but I wouldn't bet it's correct.."
 */
 WRITE16_HANDLER( bonkadv_oki_0_data_w )
 {
@@ -637,7 +637,7 @@ WRITE16_HANDLER( bonkadv_oki_0_data_w )
 				if (samp < 0x40)
 				{
 					OKIM6295_set_bank_base(0, 0);
-//					logerror("Setting OKI0 bank to zero\n");
+//                  logerror("Setting OKI0 bank to zero\n");
 				}
 				else
 					OKIM6295_set_bank_base(0, bonkadv_bank0 );
@@ -645,7 +645,7 @@ WRITE16_HANDLER( bonkadv_oki_0_data_w )
 		}
 
 		OKIM6295_data_0_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -697,7 +697,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Great 1000 Miles Rally
+                            Great 1000 Miles Rally
 ***************************************************************************/
 
 
@@ -716,7 +716,7 @@ WRITE16_HANDLER( gtmr_oki_0_bank_w )
 	{
 		OKIM6295_set_bank_base(0, 0x10000 * (data & 0xF) );
 		bank0 = (data & 0xF);
-//		logerror("CPU #0 PC %06X : OKI0 bank %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI0 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -725,19 +725,19 @@ WRITE16_HANDLER( gtmr_oki_1_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(1, 0x40000 * (data & 0x1) );
-//		logerror("CPU #0 PC %06X : OKI1 bank %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI1 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
 /*
-	If you look at the samples ROM for the OKI chip #0, you'll see
-	it's divided into 16 chunks, each chunk starting with the header
-	holding the samples	addresses. But, except for chunk 0, the first
-	$100 bytes ($20 samples) of each chunk are empty, and despite that,
-	samples in the range $0-1f are played. So, whenever a samples in
-	this range is requested, we use the address and sample from chunk 0,
-	otherwise we use those from the selected bank. By using this scheme
-	the sound improves, but I wouldn't bet it's correct..
+    If you look at the samples ROM for the OKI chip #0, you'll see
+    it's divided into 16 chunks, each chunk starting with the header
+    holding the samples addresses. But, except for chunk 0, the first
+    $100 bytes ($20 samples) of each chunk are empty, and despite that,
+    samples in the range $0-1f are played. So, whenever a samples in
+    this range is requested, we use the address and sample from chunk 0,
+    otherwise we use those from the selected bank. By using this scheme
+    the sound improves, but I wouldn't bet it's correct..
 */
 
 WRITE16_HANDLER( gtmr_oki_0_data_w )
@@ -757,7 +757,7 @@ WRITE16_HANDLER( gtmr_oki_0_data_w )
 				if (samp < 0x20)
 				{
 					OKIM6295_set_bank_base(0, 0);
-//					logerror("Setting OKI0 bank to zero\n");
+//                  logerror("Setting OKI0 bank to zero\n");
 				}
 				else
 					OKIM6295_set_bank_base(0, 0x10000 * bank0 );
@@ -765,7 +765,7 @@ WRITE16_HANDLER( gtmr_oki_0_data_w )
 		}
 
 		OKIM6295_data_0_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
 
 	}
 }
@@ -775,7 +775,7 @@ WRITE16_HANDLER( gtmr_oki_1_data_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_data_1_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI1 <- %08X\n",activecpu_get_pc(),data);
+//      logerror("CPU #0 PC %06X : OKI1 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -837,7 +837,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Great 1000 Miles Rally 2
+                            Great 1000 Miles Rally 2
 ***************************************************************************/
 
 
@@ -884,7 +884,7 @@ static ADDRESS_MAP_START( gtmr2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x900014, 0x900015) AM_READ(kaneko16_rnd_r			)	// Random Number ?
 	AM_RANGE(0xa00000, 0xa00001) AM_READ(watchdog_reset16_r		)	// Watchdog
 	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r		)	// Inputs
-//	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r		)
+//  AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r        )
 	AM_RANGE(0xb00002, 0xb00003) AM_READ(gtmr2_IN1_r		)
 	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r		)
 	AM_RANGE(0xb00006, 0xb00007) AM_READ(input_port_3_word_r		)
@@ -893,7 +893,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Magical Crystal
+                                Magical Crystal
 ***************************************************************************/
 
 static ADDRESS_MAP_START( mgcrystl, ADDRESS_SPACE_PROGRAM, 16 )
@@ -924,7 +924,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sand Scorpion
+                                Sand Scorpion
 ***************************************************************************/
 
 WRITE16_HANDLER( sandscrp_coin_counter_w )
@@ -996,7 +996,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Shogun Warriors
+                                Shogun Warriors
 ***************************************************************************/
 
 /* Untested */
@@ -1041,13 +1041,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 
 ***************************************************************************/
 
 /***************************************************************************
-									Blaze On
+                                    Blaze On
 ***************************************************************************/
 
 #if 0
@@ -1073,7 +1073,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sand Scorpion
+                                Sand Scorpion
 ***************************************************************************/
 
 WRITE8_HANDLER( sandscrp_bankswitch_w )
@@ -1128,13 +1128,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /***************************************************************************
-							Bakuretsu Breaker
+                            Bakuretsu Breaker
 ***************************************************************************/
 
 INPUT_PORTS_START( bakubrkr )
@@ -1204,7 +1204,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							The Berlin Wall (set 1)
+                            The Berlin Wall (set 1)
 ***************************************************************************/
 
 INPUT_PORTS_START( berlwall )
@@ -1298,10 +1298,10 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							The Berlin Wall (set 2)
+                            The Berlin Wall (set 2)
 ***************************************************************************/
 
-//	Same as berlwall, but for a different lives setting
+//  Same as berlwall, but for a different lives setting
 
 INPUT_PORTS_START( berlwalt )
 	PORT_START	// IN0 - Player 1 - 680000.w
@@ -1394,7 +1394,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-									Blaze On
+                                    Blaze On
 ***************************************************************************/
 
 INPUT_PORTS_START( blazeon )
@@ -1437,11 +1437,11 @@ INPUT_PORTS_START( blazeon )
 	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0003, "5 Coins/6 Credits" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(      0x0001, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
@@ -1455,11 +1455,11 @@ INPUT_PORTS_START( blazeon )
 	PORT_DIPSETTING(      0x0090, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, "5 Coins/6 Credits" )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(      0x0010, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x00d0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
@@ -1490,7 +1490,7 @@ INPUT_PORTS_START( blazeon )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Blood Warrior
+                                Blood Warrior
 ***************************************************************************/
 
 INPUT_PORTS_START( bloodwar )
@@ -1560,7 +1560,7 @@ INPUT_PORTS_START( bloodwar )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Bonk's Adventure
+                                Bonk's Adventure
 ***************************************************************************/
 
 INPUT_PORTS_START( bonkadv )
@@ -1631,7 +1631,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Great 1000 Miles Rally
+                            Great 1000 Miles Rally
 ***************************************************************************/
 
 INPUT_PORTS_START( gtmr )
@@ -1703,7 +1703,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Great 1000 Miles Rally 2
+                            Great 1000 Miles Rally 2
 ***************************************************************************/
 
 INPUT_PORTS_START( gtmr2 )
@@ -1755,10 +1755,10 @@ INPUT_PORTS_START( gtmr2 )
 	PORT_DIPSETTING(      0x0400, "Machine 3" )
 	PORT_DIPSETTING(      0x0300, "Machine 4" )
 	/* 0x0000 to 0x0200 : "Machine 4"
-	PORT_DIPSETTING(      0x0200, "Machine 4 (0x0200)" )
-	PORT_DIPSETTING(      0x0100, "Machine 4 (0x0100)" )
-	PORT_DIPSETTING(      0x0000, "Machine 4 (0x0000)" )
-	*/
+    PORT_DIPSETTING(      0x0200, "Machine 4 (0x0200)" )
+    PORT_DIPSETTING(      0x0100, "Machine 4 (0x0100)" )
+    PORT_DIPSETTING(      0x0000, "Machine 4 (0x0000)" )
+    */
 	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Controls ) )
 	PORT_DIPSETTING(      0x1800, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(      0x0800, "Wheel (360)" )			// Not working correctly in race
@@ -1766,7 +1766,7 @@ INPUT_PORTS_START( gtmr2 )
 	PORT_DIPSETTING(      0x0000, "Wheel (270A)" )			// Not working correctly in race
 	PORT_DIPNAME( 0x2000, 0x2000, "Pedal Function" )
 	PORT_DIPSETTING(      0x2000, "Microswitch" )
-//	PORT_DIPSETTING(      0x0000, "Potentiometer" )			// Not implemented yet
+//  PORT_DIPSETTING(      0x0000, "Potentiometer" )         // Not implemented yet
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
@@ -1794,7 +1794,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Magical Crystal
+                                Magical Crystal
 ***************************************************************************/
 
 INPUT_PORTS_START( mgcrystl )
@@ -1880,7 +1880,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Sand Scorpion
+                                Sand Scorpion
 ***************************************************************************/
 
 INPUT_PORTS_START( sandscrp )
@@ -1977,7 +1977,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Shogun Warriors
+                                Shogun Warriors
 ***************************************************************************/
 
 INPUT_PORTS_START( shogwarr )
@@ -2039,8 +2039,8 @@ INPUT_PORTS_START( shogwarr )
 	PORT_DIPSETTING(    0x08, "7" )
 	PORT_DIPSETTING(    0x00, "8" )
 	PORT_DIPNAME( 0x40, 0x40, "Can Join During Game" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )	//	2 credits		winner vs computer
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )	//	1 credit		game over
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )	//  2 credits       winner vs computer
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )	//  1 credit        game over
 	PORT_DIPNAME( 0x80, 0x80, "Special Continue Mode" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2051,15 +2051,15 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
 
 
 /*
-	16x16x4 made of 4 8x8x4 blocks arrenged like:		 	01
- 	(nibbles are swapped for tiles, not for sprites)		23
+    16x16x4 made of 4 8x8x4 blocks arrenged like:           01
+    (nibbles are swapped for tiles, not for sprites)        23
 */
 static struct GfxLayout layout_16x16x4 =
 {
@@ -2073,8 +2073,8 @@ static struct GfxLayout layout_16x16x4 =
 };
 
 /*
-	16x16x8 made of 4 8x8x8 blocks arrenged like:	01
-													23
+    16x16x8 made of 4 8x8x8 blocks arrenged like:   01
+                                                    23
 */
 static struct GfxLayout layout_16x16x8 =
 {
@@ -2131,7 +2131,7 @@ static struct GfxDecodeInfo sandscrp_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -2163,16 +2163,16 @@ static struct AY8910interface ay8910_intf_eeprom =
 
 
 /***************************************************************************
-								The Berlin Wall
+                                The Berlin Wall
 ***************************************************************************/
 
 /*
-	Berlwall interrupts:
+    Berlwall interrupts:
 
-	1-3]	e8c:
-	4]		e54:
-	5]		de4:
-	6-7]	rte
+    1-3]    e8c:
+    4]      e54:
+    5]      de4:
+    6-7]    rte
 */
 
 static MACHINE_DRIVER_START( berlwall )
@@ -2200,7 +2200,7 @@ static MACHINE_DRIVER_START( berlwall )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_CONFIG(ay8910_intf_dsw)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
@@ -2216,7 +2216,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Bakuretsu Breaker
+                            Bakuretsu Breaker
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( bakubrkr )
@@ -2247,7 +2247,7 @@ static MACHINE_DRIVER_START( bakubrkr )
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_intf_eeprom)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -2260,17 +2260,17 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Blaze On
+                                    Blaze On
 ***************************************************************************/
 
 /*
-	Blaze On:
-		1]		busy loop
-		2]		does nothing
-		3]		rte
-		4]		drives the game
-		5]		== 2
-		6-7]	busy loop
+    Blaze On:
+        1]      busy loop
+        2]      does nothing
+        3]      rte
+        4]      drives the game
+        5]      == 2
+        6-7]    busy loop
 */
 
 static MACHINE_DRIVER_START( blazeon )
@@ -2310,17 +2310,17 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Great 1000 Miles Rally
+                            Great 1000 Miles Rally
 ***************************************************************************/
 
 /*
-	gtmr interrupts:
+    gtmr interrupts:
 
-	3] 476:			time, input ports, scroll registers
-	4] 466->258e:	set sprite ram
-	5] 438:			set sprite colors
+    3] 476:         time, input ports, scroll registers
+    4] 466->258e:   set sprite ram
+    5] 438:         set sprite colors
 
-	VIDEO_UPDATE_AFTER_VBLANK fixes the mangled/wrong colored sprites
+    VIDEO_UPDATE_AFTER_VBLANK fixes the mangled/wrong colored sprites
 */
 
 static MACHINE_DRIVER_START( gtmr )
@@ -2360,7 +2360,7 @@ static MACHINE_DRIVER_START( gtmr )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-								Blood Warrior
+                                Blood Warrior
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( bloodwar )
@@ -2375,7 +2375,7 @@ static MACHINE_DRIVER_START( bloodwar )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Great 1000 Miles Rally 2
+                            Great 1000 Miles Rally 2
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( gtmr2 )
@@ -2387,18 +2387,18 @@ static MACHINE_DRIVER_START( gtmr2 )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Bonk's Adventure
+                            Bonk's Adventure
 ***************************************************************************/
 
 /*
-	Even though 3 interrupts are triggered, I set an int_num of 4. (notice '+1')
-	I agree that it is kind of a misuse of the function, but I haven't found
-	clues in code on how interrupts are scheduled...
-	IT5 is the main int, and needs more time to execute than IT 3 and 4.
-	Between other things, each of these 2 int are responsible of translating
-	a part of sprite buffer from work ram to sprite ram.
-	So now test mode is fully working and visible.
-	SebV
+    Even though 3 interrupts are triggered, I set an int_num of 4. (notice '+1')
+    I agree that it is kind of a misuse of the function, but I haven't found
+    clues in code on how interrupts are scheduled...
+    IT5 is the main int, and needs more time to execute than IT 3 and 4.
+    Between other things, each of these 2 int are responsible of translating
+    a part of sprite buffer from work ram to sprite ram.
+    So now test mode is fully working and visible.
+    SebV
 */
 static MACHINE_DRIVER_START( bonkadv )
 
@@ -2413,7 +2413,7 @@ static MACHINE_DRIVER_START( bonkadv )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-								Magical Crystal
+                                Magical Crystal
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( mgcrystl )
@@ -2444,7 +2444,7 @@ static MACHINE_DRIVER_START( mgcrystl )
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_intf_eeprom)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -2457,7 +2457,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Sand Scorpion
+                                Sand Scorpion
 ***************************************************************************/
 
 /* YM3014B + YM2203C */
@@ -2520,20 +2520,20 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Shogun Warriors
+                                Shogun Warriors
 ***************************************************************************/
 
 /*
-	shogwarr interrupts:
+    shogwarr interrupts:
 
-	2] 100:	rte
-	3] 102:
-	4] 136:
-		movem.l D0-D7/A0-A6, -(A7)
-		movea.l $207808.l, A0	; from mcu?
-		jmp     ($4,A0)
+    2] 100: rte
+    3] 102:
+    4] 136:
+        movem.l D0-D7/A0-A6, -(A7)
+        movea.l $207808.l, A0   ; from mcu?
+        jmp     ($4,A0)
 
-	other: busy loop
+    other: busy loop
 */
 #define SHOGWARR_INTERRUPTS_NUM	3
 INTERRUPT_GEN( shogwarr_interrupt )
@@ -2542,7 +2542,7 @@ INTERRUPT_GEN( shogwarr_interrupt )
 	{
 		case 2:  cpunum_set_input_line(0, 2, HOLD_LINE); break;
 		case 1:  cpunum_set_input_line(0, 3, HOLD_LINE); break;
-//		case 0:  cpunum_set_input_line(0, 4, HOLD_LINE); break;
+//      case 0:  cpunum_set_input_line(0, 4, HOLD_LINE); break;
 	}
 }
 
@@ -2586,7 +2586,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -2624,17 +2624,17 @@ DRIVER_INIT( berlwall )
 
 /***************************************************************************
 
-								Bakuretsu Breaker
+                                Bakuretsu Breaker
 
-	USES TOSHIBA 68000 CPU W/TWO YM2149 & OKI M6295 FOR SOUND
+    USES TOSHIBA 68000 CPU W/TWO YM2149 & OKI M6295 FOR SOUND
 
-	LOCATION    TYPE
-	------------------
-	U38         27C040
-	U37         "
-	U36         27C020
-	U19         "
-	U18         "
+    LOCATION    TYPE
+    ------------------
+    U38         27C040
+    U37         "
+    U36         27C020
+    U19         "
+    U18         "
 
 Bakuretsu Breaker
 Kaneko, 1992
@@ -2764,7 +2764,7 @@ ROM_END
 
 /***************************************************************************
 
-								The Berlin Wall
+                                The Berlin Wall
 
 The Berlin Wall, Kaneko 1991, BW-002
 
@@ -2852,7 +2852,7 @@ ROM_END
 
 /***************************************************************************
 
-							Blaze On (Japan version)
+                            Blaze On (Japan version)
 
 CPU:          TMP68HC000-12/D780C-2(Z80)
 SOUND:        YM2151
@@ -2894,7 +2894,7 @@ ROM_END
 
 /***************************************************************************
 
-								Blood Warrior
+                                Blood Warrior
 
 Kaneko 1994
 
@@ -3017,94 +3017,94 @@ ROM_END
 
 /***************************************************************************
 
-							Great 1000 Miles Rally
+                            Great 1000 Miles Rally
 
-GMMU2+1	512K * 2	68k
-GMMU23	1M		OKI6295: 00000-2ffff + chunks of 0x10000 with headers
-GMMU24	1M		OKI6295: chunks of 0x40000 with headers - FIRST AND SECOND HALF IDENTICAL
+GMMU2+1 512K * 2    68k
+GMMU23  1M      OKI6295: 00000-2ffff + chunks of 0x10000 with headers
+GMMU24  1M      OKI6295: chunks of 0x40000 with headers - FIRST AND SECOND HALF IDENTICAL
 
-GMMU27	2M		sprites
-GMMU28	2M		sprites
-GMMU29	2M		sprites
-GMMU30	512k	sprites
+GMMU27  2M      sprites
+GMMU28  2M      sprites
+GMMU29  2M      sprites
+GMMU30  512k    sprites
 
-GMMU64	1M		sprites - FIRST AND SECOND HALF IDENTICAL
-GMMU65	1M		sprites - FIRST AND SECOND HALF IDENTICAL
+GMMU64  1M      sprites - FIRST AND SECOND HALF IDENTICAL
+GMMU65  1M      sprites - FIRST AND SECOND HALF IDENTICAL
 
-GMMU52	2M		tiles
+GMMU52  2M      tiles
 
 
 ---------------------------------------------------------------------------
-								Game code
+                                Game code
 ---------------------------------------------------------------------------
 
-100000.b	<- (!b00000.b) & 7f	[1p]
-    01.b	previous value of the above
-    02.b	bits gone high
+100000.b    <- (!b00000.b) & 7f [1p]
+    01.b    previous value of the above
+    02.b    bits gone high
 
-100008.b	<- (!b00002.b) & 7f	[2p]
+100008.b    <- (!b00002.b) & 7f [2p]
 
-100010.b	<- !b00004.b [coins]
-    11.b	previous value of the above
-    12.b	bits gone high
+100010.b    <- !b00004.b [coins]
+    11.b    previous value of the above
+    12.b    bits gone high
 
-100013.b	<- b00006.b	(both never accessed again?)
+100013.b    <- b00006.b (both never accessed again?)
 
-100015.b	<- wheel value
+100015.b    <- wheel value
 
-600000.w	<- 100a20.w + 100a30.w		600002.w	<- 100a22.w + 100a32.w
-600004.w	<- 100a24.w + 100a34.w		600006.w	<- 100a26.w + 100a36.w
+600000.w    <- 100a20.w + 100a30.w      600002.w    <- 100a22.w + 100a32.w
+600004.w    <- 100a24.w + 100a34.w      600006.w    <- 100a26.w + 100a36.w
 
-680000.w	<- 100a28.w + 100a38.w		680002.w	<- 100a2a.w + 100a3a.w
-680004.w	<- 100a2c.w + 100a3c.w		680006.w	<- 100a2e.w + 100a3e.w
+680000.w    <- 100a28.w + 100a38.w      680002.w    <- 100a2a.w + 100a3a.w
+680004.w    <- 100a2c.w + 100a3c.w      680006.w    <- 100a2e.w + 100a3e.w
 
-101265.b	<- DSW (from 206000)
-101266		<- Settings from NVRAM (0x80 bytes from 208000)
+101265.b    <- DSW (from 206000)
+101266      <- Settings from NVRAM (0x80 bytes from 208000)
 
-1034f8.b	credits
-103502.b	coins x ..
-103503.b	.. credits
+1034f8.b    credits
+103502.b    coins x ..
+103503.b    .. credits
 
-1035ec.l	*** Time (BCD: seconds * 10000) ***
-103e64.w	*** Speed << 4 ***
+1035ec.l    *** Time (BCD: seconds * 10000) ***
+103e64.w    *** Speed << 4 ***
 
-10421a.b	bank for the oki mapped at 800000
-104216.b	last value of the above
+10421a.b    bank for the oki mapped at 800000
+104216.b    last value of the above
 
-10421c.b	bank for the oki mapped at 880000
-104218.b	last value of the above
+10421c.b    bank for the oki mapped at 880000
+104218.b    last value of the above
 
 ROUTINES:
 
-dd6	print string: a2->scr ; a1->string ; d1.l = xpos.w<<6|ypos.w<<6
+dd6 print string: a2->scr ; a1->string ; d1.l = xpos.w<<6|ypos.w<<6
 
 Trap #2 = 43a0 ; d0.w = routine index ; (where not specified: 43c0):
-1:  43C4	2:  43F8	3:  448E	4:  44EE
-5:  44D2	6:  4508	7:  453A	10: 0AF6
-18: 4580	19: 4604
-20> 2128	writes 700000-70001f
+1:  43C4    2:  43F8    3:  448E    4:  44EE
+5:  44D2    6:  4508    7:  453A    10: 0AF6
+18: 4580    19: 4604
+20> 2128    writes 700000-70001f
 21: 21F6
-24> 2346	clears 400000-401407 (641*8 = $281*8)
-30> 282A	writes 600008/9/b/e-f, 680008/9/b/e-f
+24> 2346    clears 400000-401407 (641*8 = $281*8)
+30> 282A    writes 600008/9/b/e-f, 680008/9/b/e-f
 31: 295A
-32> 2B36	100a30-f <- 100a10-f
-34> 2B4C	clears 500000-503fff, 580000-583fff
-35> 2B9E	d1.w = selects between:	500000;501000;580000;581000.
-			Fill 0x1000 bytes from there with d2.l
+32> 2B36    100a30-f <- 100a10-f
+34> 2B4C    clears 500000-503fff, 580000-583fff
+35> 2B9E    d1.w = selects between: 500000;501000;580000;581000.
+            Fill 0x1000 bytes from there with d2.l
 
-70: 2BCE>	11d8a
+70: 2BCE>   11d8a
 71: 2BD6
-74: 2BDE	90: 3D44
-91> 3D4C	wait for bit 0 of d00000 to be 0
-92> 3D5C	200010.w<-D1	200012.w<-D2	200014.w<-D3
+74: 2BDE    90: 3D44
+91> 3D4C    wait for bit 0 of d00000 to be 0
+92> 3D5C    200010.w<-D1    200012.w<-D2    200014.w<-D3
 f1: 10F6
 
 ***************************************************************************/
 
-/*	This version displays:
+/*  This version displays:
 
-	tb05mm-eu "1000 miglia"
-	master up= 94/07/18 15:12:35			*/
+    tb05mm-eu "1000 miglia"
+    master up= 94/07/18 15:12:35            */
 
 ROM_START( gtmr )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
@@ -3116,14 +3116,14 @@ ROM_START( gtmr )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	/* fill the 0x700000-7fffff range first, with the second of the identical halves */
-//	ROM_LOAD16_BYTE( "gmmu64.bin",  0x600000, 0x100000, CRC(57d77b33) SHA1(f7ae28ae889be4442b7b236705943eaad1f0c84e) )	// HALVES IDENTICAL
-//	ROM_LOAD16_BYTE( "gmmu65.bin",  0x600001, 0x100000, CRC(05b8bdca) SHA1(44471d66787d5b48ae8b13676f42f27af44e5c6a) )	// HALVES IDENTICAL
+//  ROM_LOAD16_BYTE( "gmmu64.bin",  0x600000, 0x100000, CRC(57d77b33) SHA1(f7ae28ae889be4442b7b236705943eaad1f0c84e) )  // HALVES IDENTICAL
+//  ROM_LOAD16_BYTE( "gmmu65.bin",  0x600001, 0x100000, CRC(05b8bdca) SHA1(44471d66787d5b48ae8b13676f42f27af44e5c6a) )  // HALVES IDENTICAL
 	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, CRC(c0ab3efc) SHA1(e6cd15480977b036234d91e6f3a6e21b7f0a3c3e) )
 	ROM_LOAD( "gmmu28.bin",  0x200000, 0x200000, CRC(cf6b23dc) SHA1(ccfd0b17507e091e55c169361cd6a6b19641b717) )
 	ROM_LOAD( "gmmu29.bin",  0x400000, 0x200000, CRC(8f27f5d3) SHA1(219a86446ce2556682009d8aff837480f040a01e) )
 	ROM_LOAD( "gmmu30.bin",  0x600000, 0x080000, CRC(e9747c8c) SHA1(2507102ec34755c6f110eadb3444e6d3a3474051) )
 	/* codes 6800-7fff are explicitly skipped */
-	/* wrong tiles: 	gtmr	77e0 ; gtmralt	81c4 81e0 81c4 */
+	/* wrong tiles:     gtmr    77e0 ; gtmralt  81c4 81e0 81c4 */
 	ROM_LOAD( "sprites",     0x700000, 0x100000, NO_DUMP )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
@@ -3140,10 +3140,10 @@ ROM_START( gtmr )
 ROM_END
 
 
-/*	This version displays:
+/*  This version displays:
 
-	tb05mm-eu "1000 miglia"
-	master up= 94/09/06 14:49:19			*/
+    tb05mm-eu "1000 miglia"
+    master up= 94/09/06 14:49:19            */
 
 ROM_START( gtmre )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
@@ -3177,10 +3177,10 @@ ROM_START( gtmre )
 ROM_END
 
 
-/*	This version displays:
+/*  This version displays:
 
-	tb05mm-eu "1000 miglia"
-	master up= 94/09/06 20:30:39			*/
+    tb05mm-eu "1000 miglia"
+    master up= 94/09/06 20:30:39            */
 
 ROM_START( gtmrusa )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
@@ -3216,7 +3216,7 @@ ROM_END
 
 /***************************************************************************
 
-						Great 1000 Miles Rally 2
+                        Great 1000 Miles Rally 2
 
 Bootup displays "TB06MM2EX 1000 Miglia 2"
                 "Master Up 95-04-04 19:39:01"
@@ -3373,7 +3373,7 @@ ROM_END
 
 /***************************************************************************
 
-								Magical Crystals
+                                Magical Crystals
 
 (c)1991 Kaneko/Atlus
 Z00FC-02
@@ -3471,7 +3471,7 @@ ROM_END
 
 /***************************************************************************
 
-								Sand Scorpion
+                                Sand Scorpion
 
 (C) FACE
 68HC000N-12
@@ -3514,7 +3514,7 @@ ROM_END
 
 /***************************************************************************
 
-								Shogun Warriors
+                                Shogun Warriors
 
 Shogun Warriors, Kaneko 1992
 
@@ -3538,18 +3538,18 @@ Shogun Warriors, Kaneko 1992
 
 
 ---------------------------------------------------------------------------
-								Game code
+                                Game code
 ---------------------------------------------------------------------------
 
-102e04-7	<- !b80004-7
-102e18.w	-> $800000
-102e1c.w	-> $800002 , $800006
-102e1a.w	-> $800004
-102e20.w	-> $800008
+102e04-7    <- !b80004-7
+102e18.w    -> $800000
+102e1c.w    -> $800002 , $800006
+102e1a.w    -> $800004
+102e20.w    -> $800008
 
 ROUTINES:
 
-6622	print ($600000)
+6622    print ($600000)
 
 ***************************************************************************/
 
@@ -3591,21 +3591,21 @@ DRIVER_INIT( shogwarr )
 	init_kaneko16();
 
 /*
-	ROM test at 2237e:
+    ROM test at 2237e:
 
-	the chksum of 00000-03fffd = $657f is added to ($200042).w
-	[from shared ram]. The result must be $f463 [=($3fffe).w]
+    the chksum of 00000-03fffd = $657f is added to ($200042).w
+    [from shared ram]. The result must be $f463 [=($3fffe).w]
 
-	Now, $f463-$657f = $8ee4 = byte sum of FB040A.U33 !!
+    Now, $f463-$657f = $8ee4 = byte sum of FB040A.U33 !!
 
-	So, there's probably the MCU's code in there, though
-	I can't id what kind of CPU should run it :-(
+    So, there's probably the MCU's code in there, though
+    I can't id what kind of CPU should run it :-(
 */
 }
 
 /***************************************************************************
 
-								Fujiyama Buster
+                                Fujiyama Buster
 
 Japan (c) 1992 Kaneko
 This is the Japanese version of Shogun Warriors
@@ -3661,8 +3661,8 @@ ROM_START( fjbuster )	// Fujiyama Buster - Japan version of Shogun Warriors
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "fb010.u65",  0x000000, 0x100000, CRC(296ffd92) SHA1(183a28e4594c428deb4726ed22d5166592b94b60) )
 	ROM_LOAD( "fb011.u66",  0x100000, 0x080000, CRC(500a0367) SHA1(6dc5190f81b21f59ee56a3b2332c8d86d6599782) )	// ?!
-//	ROM_LOAD( "rb012.u67",  0x200000, 0x100000, CRC(bfdbe0d1) SHA1(3abc5398ee8ee1871b4d081f9b748539d69bcdba) )	Not used!  No ROMs here
-//	ROM_LOAD( "rb013.u68",  0x300000, 0x100000, CRC(28c37fe8) SHA1(e10dd1a810983077328b44e6e33ce2e899c506d2) )	Not used!  No ROMs here
+//  ROM_LOAD( "rb012.u67",  0x200000, 0x100000, CRC(bfdbe0d1) SHA1(3abc5398ee8ee1871b4d081f9b748539d69bcdba) )  Not used!  No ROMs here
+//  ROM_LOAD( "rb013.u68",  0x300000, 0x100000, CRC(28c37fe8) SHA1(e10dd1a810983077328b44e6e33ce2e899c506d2) )  Not used!  No ROMs here
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "fb000j.u43",    0x000000, 0x080000, CRC(a7522555) SHA1(ea88d90dda20bc309f98a1924c41551e7708e6af) )	// 2 x $40000
@@ -3675,7 +3675,7 @@ ROM_END
 
 /***************************************************************************
 
-								B.Rap Boys
+                                B.Rap Boys
 
 B.Rap Boys
 Kaneko, 1992
@@ -3695,22 +3695,22 @@ DIP: 1 x 8 POSITION
 SW1 - PCB location for 2 position DIP but location is unpopulated.
 SW2:
 
-					1	2	3	4	5	6	7	8
-SCREEN FLIP		NORMAL		OFF
-			FLIP		ON
-MODE			NORMAL			OFF
-			TEST			ON
-SWITCH TEST [1]		NO				OFF
-			YES				ON
-POSITION #4		NOT USED				OFF
-COIN TYPE	 	LOCAL COIN					OFF
-			COMMON COIN					ON
-GAME TYPE		3 PLAYERS	 					OFF
-			2 PLAYERS						ON
-DIFFICULTY [2]		EASY								ON	OFF
-			NORMAL								OFF	OFF
-			HARD								OFF	ON
-			VERY HARD							ON	ON
+                    1   2   3   4   5   6   7   8
+SCREEN FLIP     NORMAL      OFF
+            FLIP        ON
+MODE            NORMAL          OFF
+            TEST            ON
+SWITCH TEST [1]     NO              OFF
+            YES             ON
+POSITION #4     NOT USED                OFF
+COIN TYPE       LOCAL COIN                  OFF
+            COMMON COIN                 ON
+GAME TYPE       3 PLAYERS                       OFF
+            2 PLAYERS                       ON
+DIFFICULTY [2]      EASY                                ON  OFF
+            NORMAL                              OFF OFF
+            HARD                                OFF ON
+            VERY HARD                           ON  ON
 
 [1] This additional test becomes available in test mode when this DIP is ON.
 [2] Additional settings available in test mode via another on-screen menu.
@@ -3754,29 +3754,29 @@ KANEKO JAPAN 9204 T (44 PIN PQFP)
 PALs (x 11, read protected, not dumped)
 
 ROMs:
-RB-004.U61	27C010	  \     Main program
-RB-005.U62	27C010    /
+RB-004.U61  27C010    \     Main program
+RB-005.U62  27C010    /
 
-RB-000.U43	2M mask	  \
-RB-001.U44	4M mask	   |    Located near main program and OKI M6295 chips
-RB-002.U45	4M mask	   |    Possibly sound related / OKI Samples etc..
-RB-003.101	4M mask	  /
+RB-000.U43  2M mask   \
+RB-001.U44  4M mask    |    Located near main program and OKI M6295 chips
+RB-002.U45  4M mask    |    Possibly sound related / OKI Samples etc..
+RB-003.101  4M mask   /
 
-RB-006.U33	27C010	  	MCU program? (Linked to CALC3 508)
+RB-006.U33  27C010      MCU program? (Linked to CALC3 508)
 
-RB-010.U65	8M mask   \
-RB-011.U66	8M mask	   |    GFX
-RB-012.U67	8M mask    |
-RB-013.U68	8M mask   /
+RB-010.U65  8M mask   \
+RB-011.U66  8M mask    |    GFX
+RB-012.U67  8M mask    |
+RB-013.U68  8M mask   /
 
-RB-021.U76	4M mask   \
-RB-022.U77	4M mask    |
-RB-023.U78	4M mask	   |	GFX (located under a plug-in ROM PCB)
-RB-024.U79	4M mask   /
+RB-021.U76  4M mask   \
+RB-022.U77  4M mask    |
+RB-023.U78  4M mask    |    GFX (located under a plug-in ROM PCB)
+RB-024.U79  4M mask   /
 
-RB-020.U2	4M mask   \
-RB-025.U4	27C040	   |	GFX (located on a plug-in ROM PCB)
-RB-026.U5	27C040    /
+RB-020.U2   4M mask   \
+RB-025.U4   27C040     |    GFX (located on a plug-in ROM PCB)
+RB-026.U5   27C040    /
 
 
 -----
@@ -3823,7 +3823,7 @@ ROM_END
 
 /**********************************************************************
 
-							Bonk's Adventure
+                            Bonk's Adventure
 
 Bonk's Adventure
 Kaneko, 1994
@@ -3907,7 +3907,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game drivers
+                                Game drivers
 
 
 ***************************************************************************/

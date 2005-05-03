@@ -50,7 +50,7 @@ WRITE8_HANDLER(st0016_snd_w)
 	}
 }
 
-static void st0016_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length) 
+static void st0016_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	struct st0016_info *info = param;
 	int v, i, snum;
@@ -129,7 +129,7 @@ static void *st0016_start(int sndindex, int clock, const void *config)
 {
 	const struct ST0016interface *intf = config;
 	struct st0016_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

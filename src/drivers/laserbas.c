@@ -9,7 +9,7 @@
  writes (adr, data), address and previous
  operation (read or write).
  Pinout is almost identical to 2716 - type EPROM,
- except separated /RD and /WR	signals and lacks
+ except separated /RD and /WR   signals and lacks
  of /CS
 
  Tomasz Slanina analog [at] op.pl
@@ -217,8 +217,10 @@ ROM_START( laserbsa )
 ROM_END
 
 /*
-It was unclear what type of device FF.9 was. The silkscreen on the PCB said2716,
-but the device is a masked ROM with its identifying marks rubbed off.I dumped it
+It was unclear what type of device FF.9 was. The silkscreen on the PCB said
+2716,
+but the device is a masked ROM with its identifying marks rubbed off.
+I dumped it
 as a 2716 (FF.9), a 2532 like the others (FF.9A) and a 2732 (FF.9B).
 */
 

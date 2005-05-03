@@ -56,40 +56,40 @@ todo:
 in cocktail mopde p1 is flipped
 after inking the shark on the far right octi was moved to goal?
 for the colours, goal has to be black otherwise it would register
-	qas a hit, is goal pen 0 or 6?
+    qas a hit, is goal pen 0 or 6?
 rom writes when finishing a game
-	worth looking at before the collision is correct?
+    worth looking at before the collision is correct?
 playing dot hit when eaten by a shark?
 dont use any ints, s/b UINT8?
 enemy sprite not disabled at end of game
 tilemap
 palette may only be around 4 colours
-	is 14 the palette?
+    is 14 the palette?
 p2 ink doesn't always light up in test mode
 how do you know if you've got an ink left?
 prom 14 is the top bits? 4 bpp? or so?
 why is level 37 chosen?
 should it be 30fps?
-	check other taito games of the time
+    check other taito games of the time
 look at other taito 1981 games for ideas on the ports
-	bking
-	jhunt?
+    bking
+    jhunt?
 "Marine Deto" or "Marine Date"
-	look in the roms for all the text
+    look in the roms for all the text
 simplify gfx decode
 why does the player sprite need 4 colours?
-	check if more than 1 are used
+    check if more than 1 are used
 check service test ram wipes for confirmation of ram spots
-	anything after trackball test?
+    anything after trackball test?
 obj1 to obj2 draw order
 2nd trackball
 flip/cocktail issues
 
 done:
 timer?
-	you get 200 for each shot, don't think it's actually a timer
+    you get 200 for each shot, don't think it's actually a timer
 have i been using x/y consistently, ie non rotated or rotated origin?
-	yes, seems to be best using xy raw (ie non-rotated)
+    yes, seems to be best using xy raw (ie non-rotated)
 */
 
 #include "vidhrdw/generic.h"
@@ -232,7 +232,7 @@ static WRITE8_HANDLER( marinedt_pf_w )
 	marinedt_pf = data;
 
 //if(data&0xf0)
-//	logerror("pf:%02x %d\n",marinedt_pf);
+//  logerror("pf:%02x %d\n",marinedt_pf);
 //logerror("pd:%02x %d\n",marinedt_pd, cpu_getcurrentframe());
 
 }
@@ -375,20 +375,20 @@ PALETTE_INIT( marinedt )
 		bit0 = (~color_prom[i] >> 0) & 0x01;
 		bit1 = (~color_prom[i] >> 1) & 0x01;
 		bit2 = (~color_prom[i] >> 2) & 0x01;
-//		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+//      *(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		r = 0x27 * bit0 + 0x46 * bit1 + 0x92 * bit2;
 		/* green component */
 		bit0 = (~color_prom[i] >> 3) & 0x01;
 		bit1 = (~color_prom[i] >> 4) & 0x01;
 		bit2 = (~color_prom[i] >> 5) & 0x01;
-//		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+//      *(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		g = 0x27 * bit0 + 0x46 * bit1 + 0x92 * bit2;
 		/* blue component */
 		bit0 = (~color_prom[i] >> 5) & 0x01;
 		bit1 = (~color_prom[i] >> 6) & 0x01;
 		bit2 = (~color_prom[i] >> 7) & 0x01;
 bit0=0;
-//		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+//      *(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		b = 0x27 * bit0 + 0x46 * bit1 + 0x92 * bit2;
 
 		palette_set_color(i,r,g,b);
@@ -426,36 +426,36 @@ fillbitmap(bitmap, Machine->pens[0], cliprect);
 //yr=yr<<4;
 //yq=(256+2-marinedt_obj1_y+10)/64;
 //yq=yq<<8;
-//	{
-//		sx = (x+yr+yq)%32;
-//		sy = (x+yr+yq)/32;
-//		flipx = 1;
-//		flipy = 0;
+//  {
+//      sx = (x+yr+yq)%32;
+//      sy = (x+yr+yq)/32;
+//      flipx = 1;
+//      flipy = 0;
 
 //logerror("%x\n",videoram[offs]);
 
-//		drawgfx(bitmap,Machine->gfx[0],
-//				0,
-//				0,
-//				flipx,flipy,
-//				8*sx,8*sy,
-//				cliprect,TRANSPARENCY_NONE,0);
-//	}
+//      drawgfx(bitmap,Machine->gfx[0],
+//              0,
+//              0,
+//              flipx,flipy,
+//              8*sx,8*sy,
+//              cliprect,TRANSPARENCY_NONE,0);
+//  }
 //}
 
 {
-//	char buf[40];
-//	sprintf(buf,"%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X", marinedt_p2, marinedt_p3, marinedt_p4, marinedt_p5, marinedt_p6, marinedt_p8, marinedt_p9, marinedt_pa, marinedt_pd, marinedt_pf);
-//	usrintf_showmessage(buf);
-//	ui_drawbox(bitmap, 16, 230, 200,25);
-// 	ui_text(bitmap, "02 03 04 05 06 08 09 0a 0d 0f", 20, 234);
-// 	ui_text(bitmap, buf, 20, 244);
+//  char buf[40];
+//  sprintf(buf,"%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X", marinedt_p2, marinedt_p3, marinedt_p4, marinedt_p5, marinedt_p6, marinedt_p8, marinedt_p9, marinedt_pa, marinedt_pd, marinedt_pf);
+//  usrintf_showmessage(buf);
+//  ui_drawbox(bitmap, 16, 230, 200,25);
+//  ui_text(bitmap, "02 03 04 05 06 08 09 0a 0d 0f", 20, 234);
+//  ui_text(bitmap, buf, 20, 244);
 
-//  	if (marinedt_sound&0x02) ui_text(bitmap, "dot", 10, 4+36);
-//  	if (marinedt_sound&0x04) ui_text(bitmap, "col", 50, 4+36);
-//  	if (marinedt_sound&0x08) ui_text(bitmap, "ink", 90, 4+36);
-//  	if (marinedt_sound&0x10) ui_text(bitmap, "foam", 130, 4+36);
-//  	if (marinedt_sound&0x20) ui_text(bitmap, "jet", 180, 4+36);
+//      if (marinedt_sound&0x02) ui_text(bitmap, "dot", 10, 4+36);
+//      if (marinedt_sound&0x04) ui_text(bitmap, "col", 50, 4+36);
+//      if (marinedt_sound&0x08) ui_text(bitmap, "ink", 90, 4+36);
+//      if (marinedt_sound&0x10) ui_text(bitmap, "foam", 130, 4+36);
+//      if (marinedt_sound&0x20) ui_text(bitmap, "jet", 180, 4+36);
 
 //obj to obj coll
 collh=0;cxh=0;cyrh=0;cyqh=0;
@@ -504,7 +504,7 @@ if (marinedt_pd&0x01)
 if(coll)
 {
 --i;--j;
-//	plot_pixel(bitmap, 256-32-marinedt_obj1_x+i, 256-marinedt_obj1_y+j-1,Machine->pens[2]);
+//  plot_pixel(bitmap, 256-32-marinedt_obj1_x+i, 256-marinedt_obj1_y+j-1,Machine->pens[2]);
 
 //determine collision registers
 {
@@ -534,31 +534,31 @@ if(coll)
 
 }
 //{
-//	plot_pixel(bitmap, 256-28-marinedt_obj1_x+i, 256-2-marinedt_obj1_y+j,Machine->pens[1]);
-//			plot_pixel(bitmap, 256+i, 32+j,Machine->pens[1]);
+//  plot_pixel(bitmap, 256-28-marinedt_obj1_x+i, 256-2-marinedt_obj1_y+j,Machine->pens[1]);
+//          plot_pixel(bitmap, 256+i, 32+j,Machine->pens[1]);
 //}
 
-//	drawgfx(bitmap,Machine->gfx[1],
-//			((marinedt_obj1_a&0x04)<<1)+((marinedt_obj1_a&0x38)>>3),
-//			marinedt_obj1_a&0x03,
-//			1,marinedt_obj1_a&0x80,
-//			256,32,
-//			cliprect,TRANSPARENCY_PEN,0);
+//  drawgfx(bitmap,Machine->gfx[1],
+//          ((marinedt_obj1_a&0x04)<<1)+((marinedt_obj1_a&0x38)>>3),
+//          marinedt_obj1_a&0x03,
+//          1,marinedt_obj1_a&0x80,
+//          256,32,
+//          cliprect,TRANSPARENCY_PEN,0);
 
 //if(coll)
-//	drawgfx(bitmap,Machine->gfx[1],
-//			1,
-//			marinedt_obj1_a&0x03,
-//			1,0,
-//			256,96,
-//			cliprect,TRANSPARENCY_NONE,0);
+//  drawgfx(bitmap,Machine->gfx[1],
+//          1,
+//          marinedt_obj1_a&0x03,
+//          1,0,
+//          256,96,
+//          cliprect,TRANSPARENCY_NONE,0);
 //else
-//	drawgfx(bitmap,Machine->gfx[2],
-//			1,
-//			marinedt_obj1_a&0x03,
-//			1,0,
-//			256,96,
-//			cliprect,TRANSPARENCY_NONE,0);
+//  drawgfx(bitmap,Machine->gfx[2],
+//          1,
+//          marinedt_obj1_a&0x03,
+//          1,0,
+//          256,96,
+//          cliprect,TRANSPARENCY_NONE,0);
 
 }
 #endif
@@ -592,7 +592,7 @@ if (marinedt_pd&0x01)
 
 
 //if(coll)
-//	plot_pixel(bitmap, 256-32-marinedt_obj1_x+i, 256-marinedt_obj1_y+j-1,Machine->pens[1]);
+//  plot_pixel(bitmap, 256-32-marinedt_obj1_x+i, 256-marinedt_obj1_y+j-1,Machine->pens[1]);
 }
 
 static MACHINE_DRIVER_START( marinedt )

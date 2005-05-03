@@ -1,13 +1,13 @@
 /* arm.c
 
-	ARM 2/3/6 Emulation
+    ARM 2/3/6 Emulation
 
-	Todo:
-	Software interrupts unverified (nothing uses them so far, but they should be ok)
-	Timing - Currently very approximated, nothing relies on proper timing so far.
-	IRQ timing not yet correct (again, nothing is affected by this so far).
+    Todo:
+    Software interrupts unverified (nothing uses them so far, but they should be ok)
+    Timing - Currently very approximated, nothing relies on proper timing so far.
+    IRQ timing not yet correct (again, nothing is affected by this so far).
 
-	By Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino
+    By Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino
 
 */
 
@@ -464,13 +464,13 @@ static void arm_check_irq_state(void)
 
 	/* Exception priorities (from ARM6, not specifically ARM2/3):
 
-		Reset
-		Data abort
-		FIRQ
-		IRQ
-		Prefetch abort
-		Undefined instruction
-	*/
+        Reset
+        Data abort
+        FIRQ
+        IRQ
+        Prefetch abort
+        Undefined instruction
+    */
 
 	if (arm.pendingFiq && (pc&F_MASK)==0) {
 		R15 = eARM_MODE_FIQ;	/* Set FIQ mode so PC is saved to correct R14 bank */
@@ -575,7 +575,7 @@ static void HandleMemSingle( data32_t insn )
 	/* Calculate Rn, accounting for PC */
 	rn = (insn & INSN_RN) >> INSN_RN_SHIFT;
 
-//	if (rn==0xf) logerror("%08x:  Source R15\n",R15);
+//  if (rn==0xf) logerror("%08x:  Source R15\n",R15);
 
 	if (insn & INSN_SDT_P)
 	{
@@ -662,7 +662,7 @@ static void HandleMemSingle( data32_t insn )
 		if (insn & INSN_SDT_U)
 		{
 			/* Writeback is applied in pipeline, before value is read from mem,
-				so writeback is effectively ignored */
+                so writeback is effectively ignored */
 			if (rd==rn) {
 				SetRegister(rn,GetRegister(rd));
 				//todo: check for offs... ?
@@ -678,10 +678,10 @@ static void HandleMemSingle( data32_t insn )
 		else
 		{
 			/* Writeback is applied in pipeline, before value is read from mem,
-				so writeback is effectively ignored */
+                so writeback is effectively ignored */
 			if (rd==rn) {
 				SetRegister(rn,GetRegister(rd));
-			//	logerror("Arm %08x: LDR style with rn==rn\n",R15);
+			//  logerror("Arm %08x: LDR style with rn==rn\n",R15);
 			}
 			else {
 				SetRegister(rn,(rnv - off));
@@ -692,7 +692,7 @@ static void HandleMemSingle( data32_t insn )
 		}
 	}
 
-//	arm_check_irq_state()
+//  arm_check_irq_state()
 
 } /* HandleMemSingle */
 
@@ -776,7 +776,7 @@ static void HandleALU( data32_t insn )
 				logerror("%08x:  Pipelined R15 (Shift %d)\n",R15,(insn&INSN_I?8:insn&0x10u?12:12));
 
 			/* Docs strongly suggest the mode bits should be included here, but it breaks Captain
-			America, as it starts doing unaligned reads */
+            America, as it starts doing unaligned reads */
 			rn=(R15+8)&ADDRESS_MASK;
 		}
 		else
@@ -866,7 +866,7 @@ static void HandleALU( data32_t insn )
 				SetRegister(rdn,rd|oldMode); /* Todo: Should mask rd?? Mode not affected by S bit? */
 
 				/* IRQ masks may have changed in this instruction */
-//				arm_check_irq_state();
+//              arm_check_irq_state();
 			}
 			else
 				/* S Flag is set - update PSR & mode */
@@ -880,7 +880,7 @@ static void HandleALU( data32_t insn )
 			R15 = rd;
 
 			/* IRQ masks may have changed in this instruction */
-//			arm_check_irq_state();
+//          arm_check_irq_state();
 		} else {
 			if (ARM_DEBUG_CORE)
 				logerror("%08x: TST class on R15 no s bit set\n",R15);
@@ -1110,14 +1110,14 @@ static data32_t decodeShift( data32_t insn, data32_t *pCarry)
 
 	if ((insn & INSN_OP2_RM)==0xf) {
 		/* If hardwired shift, then PC is 8 bytes ahead, else if register shift
-		is used, then 12 bytes - TODO?? */
+        is used, then 12 bytes - TODO?? */
 		rm+=8;
 	}
 
 	/* All shift types ending in 1 are Rk, not #k */
 	if( t & 1 )
 	{
-//		logerror("%08x:  RegShift %02x %02x\n",R15, k>>1,GetRegister(k >> 1));
+//      logerror("%08x:  RegShift %02x %02x\n",R15, k>>1,GetRegister(k >> 1));
 		if (ARM_DEBUG_CORE && (insn&0x80)==0x80)
 			logerror("%08x:  RegShift ERROR (p36)\n",R15);
 
@@ -1125,7 +1125,7 @@ static data32_t decodeShift( data32_t insn, data32_t *pCarry)
 		k = GetRegister(k >> 1)&0x1f;
 		if( k == 0 ) /* Register shift by 0 is a no-op */
 		{
-//			logerror("%08x:  NO-OP Regshift\n",R15);
+//          logerror("%08x:  NO-OP Regshift\n",R15);
 			if (pCarry) *pCarry = R15 & C_MASK;
 			return rm;
 		}
@@ -1264,7 +1264,7 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 3;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 26;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -1279,7 +1279,7 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + ARM_FIRQ_LINE:	info->i = arm.pendingFiq;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* not implemented */	break;
-		case CPUINFO_INT_PC:							
+		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + ARM32_PC:			info->i = arm.sArmRegister[15]&ADDRESS_MASK; break;
 		case CPUINFO_INT_SP:							info->i = GetRegister(13);				break;
 
@@ -1311,7 +1311,7 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + ARM32_IR14:			info->i = arm.sArmRegister[eR14_IRQ];	break;
 		case CPUINFO_INT_REGISTER + ARM32_SR13:			info->i = arm.sArmRegister[eR13_SVC];	break;
 		case CPUINFO_INT_REGISTER + ARM32_SR14:			info->i = arm.sArmRegister[eR14_SVC];	break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = arm_set_info;			break;
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = arm_get_context;		break;

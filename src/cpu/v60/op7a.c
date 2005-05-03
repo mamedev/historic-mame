@@ -316,10 +316,10 @@ UINT32 opMOVSTRUB(UINT8 bFill, UINT8 bStop) /* TRUSTED (0,0) (1,0) */
 	UINT32 i,dest;
 	UINT8 c1;
 
-//	if (bStop)
-//	{
-//		int a=1;
-//	}
+//  if (bStop)
+//  {
+//      int a=1;
+//  }
 
 	F7aDecodeOperands(ReadAMAddress,0,ReadAMAddress,0);
 
@@ -386,8 +386,8 @@ UINT32 opMOVSTRUH(UINT8 bFill, UINT8 bStop) /* TRUSTED (0,0) (1,0) */
 	UINT32 i,dest;
 	UINT16 c1;
 
-//	if (bStop)
-//	{	int a=1; }
+//  if (bStop)
+//  {   int a=1; }
 
 	F7aDecodeOperands(ReadAMAddress,1,ReadAMAddress,1);
 
@@ -420,13 +420,13 @@ UINT32 opMOVSTRDH(UINT8 bFill, UINT8 bStop)
 	UINT32 i,dest;
 	UINT16 c1;
 
-//	if (bFill | bStop)
-//	{ int a=1; }
+//  if (bFill | bStop)
+//  { int a=1; }
 
 	F7aDecodeOperands(ReadAMAddress,1,ReadAMAddress,1);
 
-//	if (f7aLenOp1 != f7aLenOp2)
-//	{ int a=1; }
+//  if (f7aLenOp1 != f7aLenOp2)
+//  { int a=1; }
 
 	dest=(f7aLenOp1 < f7aLenOp2 ? f7aLenOp1 : f7aLenOp2);
 
@@ -722,8 +722,8 @@ UINT32 opMOVBSD(void)
 
 	F7bDecodeOperands(BitReadAMAddress,10,BitReadAMAddress,10);
 
-//	if (f7bLen!=1)
-//	{ int a=1; }
+//  if (f7bLen!=1)
+//  { int a=1; }
 
 	f7bBamOffset1 += f7bLen-1;
 	f7bBamOffset2 += f7bLen-1;
@@ -953,32 +953,27 @@ UINT32 opCVTDZP(void)
 
 UINT32 op58UNHANDLED(void)
 {
-	logerror("Unhandled 58 opcode at PC: /%06x\n", PC);
-	abort();
+	osd_die("Unhandled 58 opcode at PC: /%06x\n", PC);
 }
 
 UINT32 op5AUNHANDLED(void)
 {
-	logerror("Unhandled 5A opcode at PC: /%06x\n", PC);
-	abort();
+	osd_die("Unhandled 5A opcode at PC: /%06x\n", PC);
 }
 
 UINT32 op5BUNHANDLED(void)
 {
-	logerror("Unhandled 5B opcode at PC: /%06x\n", PC);
-	abort();
+	osd_die("Unhandled 5B opcode at PC: /%06x\n", PC);
 }
 
 UINT32 op5DUNHANDLED(void)
 {
-	logerror("Unhandled 5D opcode at PC: /%06x\n", PC);
-	abort();
+	osd_die("Unhandled 5D opcode at PC: /%06x\n", PC);
 }
 
 UINT32 op59UNHANDLED(void)
 {
-	logerror("Unhandled 59 opcode at PC: /%06x\n", PC);
-	abort();
+	osd_die("Unhandled 59 opcode at PC: /%06x\n", PC);
 }
 
 UINT32 (*Op59Table[32])(void) =

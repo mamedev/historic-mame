@@ -6,10 +6,10 @@
 
   Crypt Killer
   Konami, 1995
-  
+
   PCB Layout
   ----------
-  
+
   GQ420  PWB354905B
   |----------------------------------------------------------|
   |CN14     420A01.2G  420A02.3M           CN6  CN7   CN8    |
@@ -36,7 +36,7 @@
   | KM48V514  KM48V514                (U420UAA04)            |
   | KM48V514  KM48V514                                       |
   |----------------------------------------------------------|
-  
+
   Notes:
         CN6, CN7, CN8: For connection of guns.
         CN3 : For connection of extra controls/buttons.

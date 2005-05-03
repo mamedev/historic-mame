@@ -1,9 +1,9 @@
 /***************************************************************************
 
-							Ginga NinkyouDen
-							(C) 1987 Jaleco
+                            Ginga NinkyouDen
+                            (C) 1987 Jaleco
 
-					driver by Luca Elia (l.elia@tin.it)
+                    driver by Luca Elia (l.elia@tin.it)
 
 CPU   : 68000 68B09
 SOUND : YM2149 Y8950(MSX AUDIO)
@@ -11,38 +11,38 @@ OSC.  : 6.000MHz 3.579545MHz
 
 * CTC uses MB-8873E (MC-6840)
 
-					Interesting routines (main cpu)
-					-------------------------------
+                    Interesting routines (main cpu)
+                    -------------------------------
 
-Interrupts: 1-7]	d17a:	clears 20018 etc.
+Interrupts: 1-7]    d17a:   clears 20018 etc.
 
-f4b2	print string:	a1->(char)*,0x25(%) d7.w=color	a0->screen (30000)
-f5d6	print 7 digit BCD number: d0.l to (a1)+ color $3000
-
-
-					Interesting locations (main cpu)
-					--------------------------------
-
-20014	# of players (1-2)
-20018	cleared by interrupts
-2001c	credits (max 9)
-20020	internal timer?
-20024	initial lives
-20058	current lives p1
-2005c	current lives p2
-20070	coins
-200a4	time
-200a8	energy
-
-60008		values: 0 1 ffff
-6000c		bit:	0	flip sceen? <-	70002>>14
-					1	?			<-
-
-6000e	soundlatch	<- 20038 2003c 20040
+f4b2    print string:   a1->(char)*,0x25(%) d7.w=color  a0->screen (30000)
+f5d6    print 7 digit BCD number: d0.l to (a1)+ color $3000
 
 
-								To Do
-								-----
+                    Interesting locations (main cpu)
+                    --------------------------------
+
+20014   # of players (1-2)
+20018   cleared by interrupts
+2001c   credits (max 9)
+20020   internal timer?
+20024   initial lives
+20058   current lives p1
+2005c   current lives p2
+20070   coins
+200a4   time
+200a8   energy
+
+60008       values: 0 1 ffff
+6000c       bit:    0   flip sceen? <-  70002>>14
+                    1   ?           <-
+
+6000e   soundlatch  <- 20038 2003c 20040
+
+
+                                To Do
+                                -----
 
 - The sound section will benefit from proper MC6840 and YM8950 emulation
 
@@ -68,7 +68,7 @@ VIDEO_UPDATE( ginganin );
 
 /*
 **
-**				Main cpu data
+**              Main cpu data
 **
 */
 
@@ -98,7 +98,7 @@ ADDRESS_MAP_END
 
 /*
 **
-**				Sound cpu data
+**              Sound cpu data
 **
 */
 
@@ -118,7 +118,7 @@ static int MC6809_FLAG = 0;
 static WRITE8_HANDLER( MC6840_control_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
-	(This routine hasn't been completed yet.) */
+    (This routine hasn't been completed yet.) */
 
 	MC6840_index0 = data;
 
@@ -145,7 +145,7 @@ static WRITE8_HANDLER( MC6840_control_port_0_w )
 static WRITE8_HANDLER( MC6840_control_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
-	(This routine hasn't been completed yet.) */
+    (This routine hasn't been completed yet.) */
 
 	MC6840_index1 = data;
 }
@@ -153,7 +153,7 @@ static WRITE8_HANDLER( MC6840_control_port_1_w )
 static WRITE8_HANDLER( MC6840_write_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
-	(This routine hasn't been completed yet.) */
+    (This routine hasn't been completed yet.) */
 
 	MC6840_register0 = data;
 }
@@ -161,7 +161,7 @@ static WRITE8_HANDLER( MC6840_write_port_0_w )
 static WRITE8_HANDLER( MC6840_write_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
-	(This routine hasn't been completed yet.) */
+    (This routine hasn't been completed yet.) */
 
 	MC6840_register1 = data;
 }
@@ -188,7 +188,7 @@ ADDRESS_MAP_END
 
 
 
-/*	Input Ports:	[0] Controls	[1] DSWs */
+/*  Input Ports:    [0] Controls    [1] DSWs */
 
 INPUT_PORTS_START( ginganin )
 
@@ -266,7 +266,7 @@ INPUT_PORTS_END
 
 /*
 **
-**				Gfx data
+**              Gfx data
 **
 */
 
@@ -317,7 +317,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 INTERRUPT_GEN( ginganin_sound_interrupt )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
-	(This routine hasn't been completed yet.) */
+    (This routine hasn't been completed yet.) */
 
 	if (S_TEMPO_OLD != S_TEMPO)
 	{
@@ -375,7 +375,7 @@ static MACHINE_DRIVER_START( ginganin )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 3579545 / 2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 

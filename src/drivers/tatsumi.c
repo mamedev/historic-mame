@@ -1,70 +1,70 @@
 /***************************************************************************
 
-	Apache 3											ATF-011
-	Round Up 5											ATC-011
-	Cycle Warriors										ABA-011
+    Apache 3                                            ATF-011
+    Round Up 5                                          ATC-011
+    Cycle Warriors                                      ABA-011
 
-	Incredibly complex hardware!  These are all different boards, but share
-	a similar sprite chip (TZB215 on Apache 3, TZB315 on others).  Other
-	graphics (road, sky, bg/fg layers) all differ between games.
+    Incredibly complex hardware!  These are all different boards, but share
+    a similar sprite chip (TZB215 on Apache 3, TZB315 on others).  Other
+    graphics (road, sky, bg/fg layers) all differ between games.
 
-	Todo:
-		Sprite rotation
-		Finish road layer (Round Up 5)
-		Implement road layer (Apache 3, Cycle Warriors)
-		BG layer(s) (Cycle Warriors)
-		BG layer (Round Up 5) - May be driven by missing VRAM data
-		Round Up 5 always boots with a coin inserted
-		Round Up 5 doesn't survive a reset
-		Dip switches
-		Various other things..
+    Todo:
+        Sprite rotation
+        Finish road layer (Round Up 5)
+        Implement road layer (Apache 3, Cycle Warriors)
+        BG layer(s) (Cycle Warriors)
+        BG layer (Round Up 5) - May be driven by missing VRAM data
+        Round Up 5 always boots with a coin inserted
+        Round Up 5 doesn't survive a reset
+        Dip switches
+        Various other things..
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
-
-
-	Cycle Warriors Board Layout
-
-	ABA-011
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
-			6296             CW24A                   5864
-								CW25A                   5864
-			YM2151                  50MHz
+    Cycle Warriors Board Layout
 
-								TZ8315                 CW26A
-													5864
-		TC51821  TC51832                               D780C-1
-		TC51821  TC51832
-		TC51821  TC51832                     16MHz
-		TC51821  TC51832
-
-		CW00A   CW08A
-		CW01A   CW09A
-		CW02A   CW10A
-		CW03A   CW11A            68000-12              81C78
-		CW04A   CW12A                                  81C78
-		CW05A   CW13A                CW16B  CW18B      65256
-		CW06A   CW14A                CW17A  CW19A      65256
-		CW07A   CW15A                       CW20A
-											CW21       65256
-								68000-12   CW22A      65256
-											CW23
-
-	ABA-012
-
-							HD6445
+    ABA-011
 
 
-							51832
-							51832
-							51832
-							51832
+            6296             CW24A                   5864
+                                CW25A                   5864
+            YM2151                  50MHz
 
-							CW28
-							CW29
-							CW30
+                                TZ8315                 CW26A
+                                                    5864
+        TC51821  TC51832                               D780C-1
+        TC51821  TC51832
+        TC51821  TC51832                     16MHz
+        TC51821  TC51832
 
-	CW27
+        CW00A   CW08A
+        CW01A   CW09A
+        CW02A   CW10A
+        CW03A   CW11A            68000-12              81C78
+        CW04A   CW12A                                  81C78
+        CW05A   CW13A                CW16B  CW18B      65256
+        CW06A   CW14A                CW17A  CW19A      65256
+        CW07A   CW15A                       CW20A
+                                            CW21       65256
+                                68000-12   CW22A      65256
+                                            CW23
+
+    ABA-012
+
+                            HD6445
+
+
+                            51832
+                            51832
+                            51832
+                            51832
+
+                            CW28
+                            CW29
+                            CW30
+
+    CW27
 
 ***************************************************************************/
 
@@ -100,7 +100,7 @@ static ADDRESS_MAP_START( readmem_apache3, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x07fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x08000, 0x08fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x0c000, 0x0dfff) AM_READ(MRA8_RAM)
-//	AM_RANGE(0x0e800, 0x0e803) AM_READ(MRA_NOP) // CRT
+//  AM_RANGE(0x0e800, 0x0e803) AM_READ(MRA_NOP) // CRT
 	AM_RANGE(0x0f000, 0x0f000) AM_READ(input_port_3_r) // Dip 1
 	AM_RANGE(0x0f001, 0x0f001) AM_READ(input_port_4_r) // Dip 2
 	AM_RANGE(0x0f800, 0x0f801) AM_READ(apache3_bank_r)
@@ -301,7 +301,7 @@ static ADDRESS_MAP_START( readmem_cyclwarr_c, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfff4, 0xfff4) AM_READ(tatsumi_hack_oki_r) // OKIM6295_status_0_r)
 	AM_RANGE(0xfff8, 0xfff8) AM_READ(input_port_0_r)
 	AM_RANGE(0xfff9, 0xfff9) AM_READ(input_port_1_r)
-//	AM_RANGE(0xfffa, 0xfffa) AM_READ(input_port_0_r)// MRA_NOP) //irq ack???
+//  AM_RANGE(0xfffa, 0xfffa) AM_READ(input_port_0_r)// MRA_NOP) //irq ack???
 	AM_RANGE(0xfffc, 0xfffc) AM_READ(input_port_2_r)// MRA_NOP)
 ADDRESS_MAP_END
 

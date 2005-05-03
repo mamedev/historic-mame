@@ -4,28 +4,28 @@
 
 *********************************************************************
 
-	Each game uses the MXC-06 chip to produce sprites.
+    Each game uses the MXC-06 chip to produce sprites.
 
-	Sprite data:  The unknown bits seem to be unused.
+    Sprite data:  The unknown bits seem to be unused.
 
-	Byte 0:
-		Bit 0 : Y co-ord hi bit
-		Bit 1,2: ?
-		Bit 3,4 : Sprite height (1x, 2x, 4x, 8x)
-		Bit 5  - X flip
-		Bit 6  - Y flip
-		Bit 7  - Only display Sprite if set
-	Byte 1: Y-coords
-	Byte 2:
-		Bit 0,1,2,3: Hi bits of sprite number
-		Bit 4,5,6,7: (Probably unused MSB's of sprite)
-	Byte 3: Low bits of sprite number
-	Byte 4:
-		Bit 0 : X co-ords hi bit
-		Bit 1,2: ??
-		Bit 3: Sprite flash (sprite is displayed every other frame)
-		Bit 4,5,6,7:  - Colour
-	Byte 5: X-coords
+    Byte 0:
+        Bit 0 : Y co-ord hi bit
+        Bit 1,2: ?
+        Bit 3,4 : Sprite height (1x, 2x, 4x, 8x)
+        Bit 5  - X flip
+        Bit 6  - Y flip
+        Bit 7  - Only display Sprite if set
+    Byte 1: Y-coords
+    Byte 2:
+        Bit 0,1,2,3: Hi bits of sprite number
+        Bit 4,5,6,7: (Probably unused MSB's of sprite)
+    Byte 3: Low bits of sprite number
+    Byte 4:
+        Bit 0 : X co-ords hi bit
+        Bit 1,2: ??
+        Bit 3: Sprite flash (sprite is displayed every other frame)
+        Bit 4,5,6,7:  - Colour
+    Byte 5: X-coords
 
 **********************************************************************
 
@@ -34,14 +34,14 @@
     0x000 - character palettes (Sprites on Midnight R)
     0x200 - sprite palettes (Characters on Midnight R)
     0x400 - tiles 1
-  	0x600 - tiles 2
+    0x600 - tiles 2
 
-	Bad Dudes, Robocop, Heavy Barrel, Hippodrome - 24 bit rgb
-	Sly Spy, Midnight Resistance - 12 bit rgb
+    Bad Dudes, Robocop, Heavy Barrel, Hippodrome - 24 bit rgb
+    Sly Spy, Midnight Resistance - 12 bit rgb
 
   Tile data
 
-  	4 bit palette select, 12 bit tile select
+    4 bit palette select, 12 bit tile select
 
 **********************************************************************
 
@@ -51,12 +51,12 @@ configuration is 2 chips of 16*16 tiles, 1 of 8*8.
  Playfield control registers:
    bank 0:
    0:
-		bit 0 (0x1) set = 8*8 tiles, else 16*16 tiles
-		Bit 1 (0x2) unknown
-		bit 2 (0x4) set enables rowscroll
-		bit 3 (0x8) set enables colscroll
-		bit 7 (0x80) set in playfield 1 is reverse screen (set via dip-switch)
-		bit 7 (0x80) in other playfields unknown
+        bit 0 (0x1) set = 8*8 tiles, else 16*16 tiles
+        Bit 1 (0x2) unknown
+        bit 2 (0x4) set enables rowscroll
+        bit 3 (0x8) set enables colscroll
+        bit 7 (0x80) set in playfield 1 is reverse screen (set via dip-switch)
+        bit 7 (0x80) in other playfields unknown
    2: unknown (00 in bg, 03 in fg+text - maybe controls pf transparency?)
    4: unknown (always 00)
    6: playfield shape: 00 = 4x1, 01 = 2x2, 02 = 1x4 (low 4 bits only)
@@ -68,33 +68,33 @@ configuration is 2 chips of 16*16 tiles, 1 of 8*8.
    6: Style of rowscroll (low 4 bits, top 4 bits do nothing)
 
 Rowscroll/Colscroll styles:
-	0: 256 scroll registers (Robocop)
-	1: 128 scroll registers
-	2:  64 scroll registers
-	3:  32 scroll registers (Heavy Barrel, Midres)
-	4:  16 scroll registers (Bad Dudes, Sly Spy)
-	5:   8 scroll registers (Hippodrome)
-	6:   4 scroll registers (Heavy Barrel)
-	7:   2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
-	8:   1 scroll register (ie, none)
+    0: 256 scroll registers (Robocop)
+    1: 128 scroll registers
+    2:  64 scroll registers
+    3:  32 scroll registers (Heavy Barrel, Midres)
+    4:  16 scroll registers (Bad Dudes, Sly Spy)
+    5:   8 scroll registers (Hippodrome)
+    6:   4 scroll registers (Heavy Barrel)
+    7:   2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
+    8:   1 scroll register (ie, none)
 
-	Values above are *multiplied* by playfield shape.
+    Values above are *multiplied* by playfield shape.
 
 Playfield priority (Bad Dudes, etc):
-	In the bottommost playfield, pens 8-15 can have priority over the next playfield.
-	In that next playfield, pens 8-15 can have priority over sprites.
+    In the bottommost playfield, pens 8-15 can have priority over the next playfield.
+    In that next playfield, pens 8-15 can have priority over sprites.
 
 Bit 0:  Playfield inversion
 Bit 1:  Enable playfield mixing (for palettes 8-15 only)
 Bit 2:  Enable playfield/sprite mixing (for palettes 8-15 only)
 
 Priority word (Midres):
-	Bit 0 set = Playfield 3 drawn over Playfield 2
-			~ = Playfield 2 drawn over Playfield 3
-	Bit 1 set = Sprites are drawn inbetween playfields
-			~ = Sprites are on top of playfields
-	Bit 2
-	Bit 3 set = ...
+    Bit 0 set = Playfield 3 drawn over Playfield 2
+            ~ = Playfield 2 drawn over Playfield 3
+    Bit 1 set = Sprites are drawn inbetween playfields
+            ~ = Sprites are on top of playfields
+    Bit 2
+    Bit 3 set = ...
 
 ***************************************************************************/
 

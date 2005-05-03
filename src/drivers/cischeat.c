@@ -1,139 +1,139 @@
 /***************************************************************************
 
-							-= Jaleco Driving Games =-
+                            -= Jaleco Driving Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 - Note: press F2 to enter service mode -
 
 ---------------------------------------------------------------------------
-Year + Game		Hardware:	Main 	Sub#1	Sub#2	Sound	Sound Chips
+Year + Game     Hardware:   Main    Sub#1   Sub#2   Sound   Sound Chips
 ---------------------------------------------------------------------------
-[89	Big Run]				68000	68000	68000	68000	YM2151 2xM6295
+[89 Big Run]                68000   68000   68000   68000   YM2151 2xM6295
 
-	BOARD #1	BR8950c
-	BOARD #2	8951
-	BOARD #3	8952A
-	BOARD #4	8953
+    BOARD #1    BR8950c
+    BOARD #2    8951
+    BOARD #3    8952A
+    BOARD #4    8953
 
-[90	Cisco Heat]				68000	68000	68000	68000	YM2151 2xM6295
+[90 Cisco Heat]             68000   68000   68000   68000   YM2151 2xM6295
 
-	BOARD #1 CH-9072 EB90001-20024
-	BOARD #2 CH-9071 EB90001-20023
-	BOARD #3 CH-9073 EB90001-20025
+    BOARD #1 CH-9072 EB90001-20024
+    BOARD #2 CH-9071 EB90001-20023
+    BOARD #3 CH-9073 EB90001-20025
 
-[91	F1 GP Star]				68000	68000	68000	68000	YM2151 2xM6295
+[91 F1 GP Star]             68000   68000   68000   68000   YM2151 2xM6295
 
-	TB - Top board     (audio & I/O)       GP-9190A EB90015-20039-1
-	MB - Middle board  (GFX)               GP-9189  EB90015-20038
-	LB - Lower board   (CPU/GFX)           GP-9188A EB90015-20037-1
+    TB - Top board     (audio & I/O)       GP-9190A EB90015-20039-1
+    MB - Middle board  (GFX)               GP-9189  EB90015-20038
+    LB - Lower board   (CPU/GFX)           GP-9188A EB90015-20037-1
 
-	Chips:
+    Chips:
 
-		GS90015-02 (100 pin PQFP)	x 3		[Tilemaps]
-		GS-9000406 (80 pin PQFP)	x 3
+        GS90015-02 (100 pin PQFP)   x 3     [Tilemaps]
+        GS-9000406 (80 pin PQFP)    x 3
 
-		GS900151   (44 pin PQFP) (too small for the full part No.)
-		GS90015-03 (80 pin PQFP)	x 3  + 2x LH52258D-45 (32kx8 SRAM)
-		GS90015-06 (100 pin PQFP)	x 2  + 2x LH52250AD-90L (32kx8 SRAM)
-		GS90015-07 (64 pin PQFP)
-		GS90015-08 (64 pin PQFP)
-		GS90015-09 (64 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
-		GS90015-10 (64 pin PQFP)
-		GS90015-12 (80 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
-		GS90015-11 (100 pin PQFP)
+        GS900151   (44 pin PQFP) (too small for the full part No.)
+        GS90015-03 (80 pin PQFP)    x 3  + 2x LH52258D-45 (32kx8 SRAM)
+        GS90015-06 (100 pin PQFP)   x 2  + 2x LH52250AD-90L (32kx8 SRAM)
+        GS90015-07 (64 pin PQFP)
+        GS90015-08 (64 pin PQFP)
+        GS90015-09 (64 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
+        GS90015-10 (64 pin PQFP)
+        GS90015-12 (80 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
+        GS90015-11 (100 pin PQFP)
 
-		CS90015-04 x 2 (64 pin PQFP)		[Road]
-		GS90015-05 x 2 (100 pin PQFP)
+        CS90015-04 x 2 (64 pin PQFP)        [Road]
+        GS90015-05 x 2 (100 pin PQFP)
 
-[92	Wild Pilot]				68000	68000	68000	68000	YM2151 2xM6295 + another 68000
+[92 Wild Pilot]             68000   68000   68000   68000   YM2151 2xM6295 + another 68000
 
-		TB - Top board     (audio & I/O)       WP-92116 EB92020-20053
+        TB - Top board     (audio & I/O)       WP-92116 EB92020-20053
         MB - Middle board  (GFX)               GP-9189  EB90015-20038
         LB - Lower board   (CPU/GFX)           GP-9188A EB90015-20037-1
 
-[94	Scud Hammer]			68000	-		-		-		2xM6295
+[94 Scud Hammer]            68000   -       -       -       2xM6295
 
-	Board CF-92128B Chips:
-		GS9001501
-		GS90015-02 x 2	GS600406   x 2		[Tilemaps]
-		GS90015-03
+    Board CF-92128B Chips:
+        GS9001501
+        GS90015-02 x 2  GS600406   x 2      [Tilemaps]
+        GS90015-03
 
-	Board GP-9189 Chips:
-		GS90015-03 x 2						[Sprites]
-		GS90015-06 x 2
-		GS90015-07
-		GS90015-08
-		GS90015-09
-		GS90015-10
-		GS90015-11
-		MR90015-35 x 2
+    Board GP-9189 Chips:
+        GS90015-03 x 2                      [Sprites]
+        GS90015-06 x 2
+        GS90015-07
+        GS90015-08
+        GS90015-09
+        GS90015-10
+        GS90015-11
+        MR90015-35 x 2
 ---------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------
-Main CPU					[Cisco Heat]		[F1 GP Star]		[Scud Hammer]
+Main CPU                    [Cisco Heat]        [F1 GP Star]        [Scud Hammer]
 ----------------------------------------------------------------------------------
-ROM					R		000000-07ffff		<					<
-							100000-17ffff		<					RW : I / O + Sound
-Work RAM + Sprites	RW		0f0000-0fffff		<					<
-Hardware Regs		RW		080000-087fff		<					<
-Units Linking RAM	RW		088000-88ffff		<					-
-Shared RAM #2		RW		090000-097fff		<					-
-Shared RAM #1		RW		098000-09ffff		<					-
-Scroll RAM 0		RW		0a0000-0a7fff		<					<
-Scroll RAM 1		RW		0a8000-0affff		<					-
-Scroll RAM 2		RW		0b0000-0b7fff		<					<
-Palette RAM			RW		0b8000-0bffff		<					<
-	Palette Scroll 0		0b9c00-0b9fff		0b9e00-0b9fff		<
-	Palette Scroll 1		0bac00-0bafff		0bae00-0bafff		-
-	Palette Road 0			0bb800-0bbfff		<					-
-	Palette Road 1			0bc800-0bcfff		<					-
-	Palette Sprites			0bd000-0bdfff		<					0bb000-0bbfff
-	Palette Scroll 2		0bec00-0befff0		0bee00-0befff		0bce00-0bcfff
+ROM                 R       000000-07ffff       <                   <
+                            100000-17ffff       <                   RW : I / O + Sound
+Work RAM + Sprites  RW      0f0000-0fffff       <                   <
+Hardware Regs       RW      080000-087fff       <                   <
+Units Linking RAM   RW      088000-88ffff       <                   -
+Shared RAM #2       RW      090000-097fff       <                   -
+Shared RAM #1       RW      098000-09ffff       <                   -
+Scroll RAM 0        RW      0a0000-0a7fff       <                   <
+Scroll RAM 1        RW      0a8000-0affff       <                   -
+Scroll RAM 2        RW      0b0000-0b7fff       <                   <
+Palette RAM         RW      0b8000-0bffff       <                   <
+    Palette Scroll 0        0b9c00-0b9fff       0b9e00-0b9fff       <
+    Palette Scroll 1        0bac00-0bafff       0bae00-0bafff       -
+    Palette Road 0          0bb800-0bbfff       <                   -
+    Palette Road 1          0bc800-0bcfff       <                   -
+    Palette Sprites         0bd000-0bdfff       <                   0bb000-0bbfff
+    Palette Scroll 2        0bec00-0befff0      0bee00-0befff       0bce00-0bcfff
 ----------------------------------------------------------------------------------
 
 ----------------------------------------------------------------
-Sub CPU's					[Cisco Heat]		[F1 GP Star]
+Sub CPU's                   [Cisco Heat]        [F1 GP Star]
 ----------------------------------------------------------------
-ROM					R		000000-03ffff		<
-							200000-23ffff		-
-Work RAM			RW		0c0000-0c3fff		180000-183fff
-Shared RAM			RW		040000-047fff		080000-087fff
-Road RAM			RW		080000-0807ff		100000-1007ff
-Whatchdog					100000-100001		200000-200001
+ROM                 R       000000-03ffff       <
+                            200000-23ffff       -
+Work RAM            RW      0c0000-0c3fff       180000-183fff
+Shared RAM          RW      040000-047fff       080000-087fff
+Road RAM            RW      080000-0807ff       100000-1007ff
+Whatchdog                   100000-100001       200000-200001
 ----------------------------------------------------------------
 
 ----------------------------------------------------------------
-Sound CPU					[Cisco Heat]		[F1 GP Star]
+Sound CPU                   [Cisco Heat]        [F1 GP Star]
 ----------------------------------------------------------------
-ROM					R		000000-03ffff		<
-Work RAM			RW		0f0000-0fffff		0e0000-0fffff
-M6295 #1 Banking	 W		040002-040003		040004-040005
-M6295 #2 Banking	 W		040004-040005		040008-040009
-Sound Latch			 W		060002-060003		060000-060001
-Sound Latch			R		060004-060005		060000-060001
-YM2151 Reg Sel		 W		080001-080001		<
-YM2151 Data			 W		080003-080003		<
-YM2151 Status		R		080003-080003		<
-M6295 #1 Status		R		0a0001-0a0001		<
-M6295 #1 Data		 W		0a0000-0a0003		<
-M6295 #2 Status		R		0c0001-0c0001		<
-M6295 #2 Data		 W		0c0000-0c0003		<
+ROM                 R       000000-03ffff       <
+Work RAM            RW      0f0000-0fffff       0e0000-0fffff
+M6295 #1 Banking     W      040002-040003       040004-040005
+M6295 #2 Banking     W      040004-040005       040008-040009
+Sound Latch          W      060002-060003       060000-060001
+Sound Latch         R       060004-060005       060000-060001
+YM2151 Reg Sel       W      080001-080001       <
+YM2151 Data          W      080003-080003       <
+YM2151 Status       R       080003-080003       <
+M6295 #1 Status     R       0a0001-0a0001       <
+M6295 #1 Data        W      0a0000-0a0003       <
+M6295 #2 Status     R       0c0001-0c0001       <
+M6295 #2 Data        W      0c0000-0c0003       <
 ----------------------------------------------------------------
 
 Cheats:
 
 [cischeat]
--	f011a.w		*** stage - 1 ***
--	f0190.l		*** score / 10 (BCD) ***
--	f0280.w		*** time * 10 (seconds) ***
--	f61Xa.w		car X data
+-   f011a.w     *** stage - 1 ***
+-   f0190.l     *** score / 10 (BCD) ***
+-   f0280.w     *** time * 10 (seconds) ***
+-   f61Xa.w     car X data
 
 [f1gpstar]
--	Note: This game has some leftover code from Cisco Heat, it seems.
--	f9088.w		*** lap - 1 ***
--	fa008.w		($fa000 + $08) *** time (seconds) ***
--	fa2aa.l		($fa200 + $aa) speed << 16
+-   Note: This game has some leftover code from Cisco Heat, it seems.
+-   f9088.w     *** lap - 1 ***
+-   fa008.w     ($fa000 + $08) *** time (seconds) ***
+-   fa2aa.l     ($fa200 + $aa) speed << 16
 
 Common Issues:
 
@@ -197,7 +197,7 @@ VIDEO_UPDATE( scudhamm );
 /**************************************************************************
 
 
-						Memory Maps - Main CPU (#1)
+                        Memory Maps - Main CPU (#1)
 
 
 **************************************************************************/
@@ -214,7 +214,7 @@ static READ16_HANDLER( rom_3_r ) {return rom_3[offset];}
 
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 WRITE16_HANDLER( bigrun_paletteram16_w )
@@ -277,17 +277,17 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
-/*	CISCO HEAT
-	[  Test  ]		[  Real  ]
-	b9c00-b9fff		<				scroll 0
-	bac00-bafff		<				scroll 1
-	bb800-bbbff		bb800-bbfff		road 0
-	bc800-bcbff		bc800-bcfff		road 1
-	bd000-bd3ff		bd000-bdfff		sprites
-	bec00-befff		<				text		*/
+/*  CISCO HEAT
+    [  Test  ]      [  Real  ]
+    b9c00-b9fff     <               scroll 0
+    bac00-bafff     <               scroll 1
+    bb800-bbbff     bb800-bbfff     road 0
+    bc800-bcbff     bc800-bcfff     road 1
+    bd000-bd3ff     bd000-bdfff     sprites
+    bec00-befff     <               text        */
 
 WRITE16_HANDLER( cischeat_paletteram16_w )
 {
@@ -317,10 +317,10 @@ static ADDRESS_MAP_START( cischeat_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080000, 0x087fff) AM_READ(cischeat_vregs_r	)	// Vregs
 	AM_RANGE(0x088000, 0x088fff) AM_READ(MRA16_RAM			)	// Linking with other units
 
-/* 	Only the first 0x800 bytes are tested but:
-	CPU #0 PC 0000278c: warning - write 68c0 to unmapped memory address 0009c7fe
-	CPU #0 PC 0000dd58: warning - read unmapped memory address 000945ac
-	No mem access error from the other CPU's, though.. */
+/*  Only the first 0x800 bytes are tested but:
+    CPU #0 PC 0000278c: warning - write 68c0 to unmapped memory address 0009c7fe
+    CPU #0 PC 0000dd58: warning - read unmapped memory address 000945ac
+    No mem access error from the other CPU's, though.. */
 
 	/* this is the right order of sharedram's */
 	AM_RANGE(0x090000, 0x097fff) AM_READ(sharedram2_r		)	// Sharedram with sub CPU#2
@@ -354,7 +354,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 WRITE16_HANDLER( f1gpstar_paletteram16_w )
@@ -378,13 +378,13 @@ WRITE16_HANDLER( f1gpstar_paletteram16_w )
 	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_set_color(0xb00 + offset - 0x5000/2, r,g,b ); return;}
 }
 
-/*	F1 GP Star tests:
-	0A0000-0B8000
-	0F0000-100000
-	0B8000-0C0000
-	090800-091000
-	098800-099000
-	0F8000-0F9000	*/
+/*  F1 GP Star tests:
+    0A0000-0B8000
+    0F0000-100000
+    0B8000-0C0000
+    090800-091000
+    098800-099000
+    0F8000-0F9000   */
 
 static ADDRESS_MAP_START( f1gpstar_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM			)	// ROM
@@ -424,7 +424,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							F1 GrandPrix Star II
+                            F1 GrandPrix Star II
 **************************************************************************/
 
 // Same as f1gpstar, but vregs are slightly different:
@@ -466,7 +466,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							Scud Hammer
+                            Scud Hammer
 **************************************************************************/
 
 WRITE16_HANDLER( scudhamm_paletteram16_w )
@@ -488,17 +488,17 @@ WRITE16_HANDLER( scudhamm_paletteram16_w )
 
 data16_t scudhamm_motor_command;
 
-/*	Motor Status.
+/*  Motor Status.
 
-	f--- ---- ---- ----		Rotation Limit (R?)
-	-e-- ---- ---- ----		Rotation Limit (L?)
-	--dc ba98 7654 32--
-	---- ---- ---- --1-		Up Limit
-	---- ---- ---- ---0		Down Limit	*/
+    f--- ---- ---- ----     Rotation Limit (R?)
+    -e-- ---- ---- ----     Rotation Limit (L?)
+    --dc ba98 7654 32--
+    ---- ---- ---- --1-     Up Limit
+    ---- ---- ---- ---0     Down Limit  */
 
 READ16_HANDLER( scudhamm_motor_status_r )
 {
-//	return 1 << (rand()&1);			// Motor Status
+//  return 1 << (rand()&1);         // Motor Status
 	return scudhamm_motor_command;	// Motor Status
 }
 
@@ -509,13 +509,13 @@ READ16_HANDLER( scudhamm_motor_pos_r )
 }
 
 
-/*	Move the motor.
+/*  Move the motor.
 
-	fedc ba98 7654 32--
-	---- ---- ---- --1-		Move Up
-	---- ---- ---- ---0		Move Down
+    fedc ba98 7654 32--
+    ---- ---- ---- --1-     Move Up
+    ---- ---- ---- ---0     Move Down
 
-	Within $20 vblanks the motor must reach the target.	*/
+    Within $20 vblanks the motor must reach the target. */
 
 WRITE16_HANDLER( scudhamm_motor_command_w )
 {
@@ -530,9 +530,9 @@ READ16_HANDLER( scudhamm_analog_r )
 
 
 /*
-	I don't know how many leds are there, but each bit in the buttons input
-	port (coins, tilt, buttons, select etc.) triggers the corresponding bit
-	in this word. I mapped the 3 buttons to the first 3 led.
+    I don't know how many leds are there, but each bit in the buttons input
+    port (coins, tilt, buttons, select etc.) triggers the corresponding bit
+    in this word. I mapped the 3 buttons to the first 3 led.
 */
 WRITE16_HANDLER( scudhamm_leds_w )
 {
@@ -545,15 +545,15 @@ WRITE16_HANDLER( scudhamm_leds_w )
 
 	if (ACCESSING_LSB)
 	{
-//		set_led_status(3, data & 0x0010);	// if we had more leds..
-//		set_led_status(4, data & 0x0020);
+//      set_led_status(3, data & 0x0010);   // if we had more leds..
+//      set_led_status(4, data & 0x0020);
 	}
 }
 
 
 /*
-	$FFFC during self test, $FFFF onwards.
-	It could be audio(L/R) or layers(0/2) enable.
+    $FFFC during self test, $FFFF onwards.
+    It could be audio(L/R) or layers(0/2) enable.
 */
 WRITE16_HANDLER( scudhamm_enable_w )
 {
@@ -605,13 +605,13 @@ ADDRESS_MAP_END
 /**************************************************************************
 
 
-					Memory Maps - Road CPUs (#2 & #3)
+                    Memory Maps - Road CPUs (#2 & #3)
 
 
 **************************************************************************/
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 static ADDRESS_MAP_START( bigrun_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
@@ -644,7 +644,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 static ADDRESS_MAP_START( cischeat_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
@@ -682,7 +682,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 static ADDRESS_MAP_START( f1gpstar_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
@@ -717,7 +717,7 @@ ADDRESS_MAP_END
 /**************************************************************************
 
 
-						Memory Maps - Sound CPU (#4)
+                        Memory Maps - Sound CPU (#4)
 
 
 **************************************************************************/
@@ -726,7 +726,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 WRITE16_HANDLER( bigrun_soundbank_w )
@@ -760,7 +760,7 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 WRITE16_HANDLER( cischeat_soundbank_0_w )
@@ -795,13 +795,13 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 static ADDRESS_MAP_START( f1gpstar_sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM						)	// ROM
-	AM_RANGE(0x0e0000, 0x0fffff) AM_READ(MRA16_RAM						)	// RAM				(cischeat: f0000-fffff)
-	AM_RANGE(0x060000, 0x060001) AM_READ(soundlatch_word_r				)	// From Main CPU	(cischeat: 60004)
+	AM_RANGE(0x0e0000, 0x0fffff) AM_READ(MRA16_RAM						)	// RAM              (cischeat: f0000-fffff)
+	AM_RANGE(0x060000, 0x060001) AM_READ(soundlatch_word_r				)	// From Main CPU    (cischeat: 60004)
 	AM_RANGE(0x080002, 0x080003) AM_READ(YM2151_status_port_0_lsb_r	)
 	AM_RANGE(0x0a0000, 0x0a0001) AM_READ(OKIM6295_status_0_lsb_r		)
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(OKIM6295_status_1_lsb_r		)
@@ -809,10 +809,10 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( f1gpstar_sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
-	AM_RANGE(0x0e0000, 0x0fffff) AM_WRITE(MWA16_RAM						)	// RAM				(cischeat: f0000-fffff)
-	AM_RANGE(0x040004, 0x040005) AM_WRITE(cischeat_soundbank_0_w		)	// Sample Banking	(cischeat: 40002)
-	AM_RANGE(0x040008, 0x040009) AM_WRITE(cischeat_soundbank_1_w		)	// Sample Banking	(cischeat: 40004)
-	AM_RANGE(0x060000, 0x060001) AM_WRITE(soundlatch2_word_w			)	// To Main CPU		(cischeat: 60002)
+	AM_RANGE(0x0e0000, 0x0fffff) AM_WRITE(MWA16_RAM						)	// RAM              (cischeat: f0000-fffff)
+	AM_RANGE(0x040004, 0x040005) AM_WRITE(cischeat_soundbank_0_w		)	// Sample Banking   (cischeat: 40002)
+	AM_RANGE(0x040008, 0x040009) AM_WRITE(cischeat_soundbank_1_w		)	// Sample Banking   (cischeat: 40004)
+	AM_RANGE(0x060000, 0x060001) AM_WRITE(soundlatch2_word_w			)	// To Main CPU      (cischeat: 60002)
 	AM_RANGE(0x080000, 0x080001) AM_WRITE(YM2151_register_port_0_lsb_w	)
 	AM_RANGE(0x080002, 0x080003) AM_WRITE(YM2151_data_port_0_lsb_w		)
 	AM_RANGE(0x0a0000, 0x0a0003) AM_WRITE(OKIM6295_data_0_lsb_w			)
@@ -821,13 +821,13 @@ ADDRESS_MAP_END
 
 
 /**************************************************************************
-							F1 GrandPrix Star II
+                            F1 GrandPrix Star II
 **************************************************************************/
 
 static ADDRESS_MAP_START( f1gpstr2_sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM						)	// ROM
 	AM_RANGE(0x0e0000, 0x0fffff) AM_READ(MRA16_RAM						)	// RAM
-	AM_RANGE(0x060004, 0x060005) AM_READ(soundlatch_word_r				)	// From Main CPU	(f1gpstar: 60000)
+	AM_RANGE(0x060004, 0x060005) AM_READ(soundlatch_word_r				)	// From Main CPU    (f1gpstar: 60000)
 	AM_RANGE(0x080002, 0x080003) AM_READ(YM2151_status_port_0_lsb_r	)
 	AM_RANGE(0x0a0000, 0x0a0001) AM_READ(OKIM6295_status_0_lsb_r		)
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(OKIM6295_status_1_lsb_r		)
@@ -838,8 +838,8 @@ static ADDRESS_MAP_START( f1gpstr2_sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0e0000, 0x0fffff) AM_WRITE(MWA16_RAM						)	// RAM
 	AM_RANGE(0x040004, 0x040005) AM_WRITE(cischeat_soundbank_0_w		)	// Sample Banking
 	AM_RANGE(0x040008, 0x040009) AM_WRITE(cischeat_soundbank_1_w		)	// Sample Banking
-	AM_RANGE(0x04000e, 0x04000f) AM_WRITE(MWA16_NOP						)	// ? 0				(f1gpstar: no)
-	AM_RANGE(0x060002, 0x060003) AM_WRITE(soundlatch2_word_w			)	// To Main CPU		(f1gpstar: 60000)
+	AM_RANGE(0x04000e, 0x04000f) AM_WRITE(MWA16_NOP						)	// ? 0              (f1gpstar: no)
+	AM_RANGE(0x060002, 0x060003) AM_WRITE(soundlatch2_word_w			)	// To Main CPU      (f1gpstar: 60000)
 	AM_RANGE(0x080000, 0x080001) AM_WRITE(YM2151_register_port_0_lsb_w	)
 	AM_RANGE(0x080002, 0x080003) AM_WRITE(YM2151_data_port_0_lsb_w		)
 	AM_RANGE(0x0a0000, 0x0a0003) AM_WRITE(OKIM6295_data_0_lsb_w			)
@@ -849,7 +849,7 @@ ADDRESS_MAP_END
 /**************************************************************************
 
 
-						Memory Maps - IO CPU (#5)
+                        Memory Maps - IO CPU (#5)
 
 
 **************************************************************************/
@@ -875,7 +875,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -885,12 +885,12 @@ ADDRESS_MAP_END
    f1gpstar */
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
-//	Input Ports:	[0] Fake: Buttons Status
-//					[1] Coins		[2] Controls	[3] Unknown
-//					[4]	DSW 1 & 2	[5] DSW 3		[6] Driving Wheel
+//  Input Ports:    [0] Fake: Buttons Status
+//                  [1] Coins       [2] Controls    [3] Unknown
+//                  [4] DSW 1 & 2   [5] DSW 3       [6] Driving Wheel
 
 INPUT_PORTS_START( bigrun )
 	PORT_START_TAG("FAKE")	// IN0 - Fake input port - Buttons status
@@ -910,7 +910,7 @@ INPUT_PORTS_START( bigrun )
 
 	PORT_START_TAG("IN2")	//Controls - $80002.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 Brake")	// Brake
-//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift - We handle it using buttons 3&4
+//  PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )   // Shift - We handle it using buttons 3&4
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -927,12 +927,12 @@ INPUT_PORTS_START( bigrun )
 	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-//	PORT_DIPNAME( 0x10, 0x10, "Right Limit SW"	)
-//	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
-//	PORT_DIPNAME( 0x20, 0x20, "Left Limit SW"	)
-//	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+//  PORT_DIPNAME( 0x10, 0x10, "Right Limit SW"  )
+//  PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+//  PORT_DIPNAME( 0x20, 0x20, "Left Limit SW"   )
+//  PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( On )  )
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1008,12 +1008,12 @@ INPUT_PORTS_END
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
-//	Input Ports:	[0] Fake: Buttons Status
-//					[1] Coins		[2] Controls	[3] Unknown
-//					[4]	DSW 1 & 2	[5] DSW 3		[6] Driving Wheel
+//  Input Ports:    [0] Fake: Buttons Status
+//                  [1] Coins       [2] Controls    [3] Unknown
+//                  [4] DSW 1 & 2   [5] DSW 3       [6] Driving Wheel
 
 INPUT_PORTS_START( cischeat )
 	PORT_START_TAG("IN0")	// Fake input port - Buttons status
@@ -1032,7 +1032,7 @@ INPUT_PORTS_START( cischeat )
 
 	PORT_START_TAG("IN2")	// Controls - $80002.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 Brake")	// Brake
-//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift - We handle it using buttons 3&4
+//  PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )   // Shift - We handle it using buttons 3&4
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 Accelerator")	// Accel
@@ -1109,13 +1109,13 @@ INPUT_PORTS_END
 
 
 /**************************************************************************
-								F1 GrandPrix Star
+                                F1 GrandPrix Star
 **************************************************************************/
 
-//	Input Ports:	[0] Fake: Buttons Status
-//					[1] DSW 1 & 2		[2] Controls		[3] Unknown
-//					[4]	DSW 3			[5] Driving Wheel
-//					[6]	Coinage JP&USA	[7] Coinage UK&FR
+//  Input Ports:    [0] Fake: Buttons Status
+//                  [1] DSW 1 & 2       [2] Controls        [3] Unknown
+//                  [4] DSW 3           [5] Driving Wheel
+//                  [6] Coinage JP&USA  [7] Coinage UK&FR
 
 INPUT_PORTS_START( f1gpstar )
 	PORT_START_TAG("IN0")	// Fake input port - Buttons status
@@ -1123,14 +1123,14 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 Low Gear")\
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P1 High Gear")\
 
-/*	[Country]
-	Japan		"race together" in Test Mode, Always Choose Race
-				Japanese, Km/h, "handle shock"  , "(c)1991",
-	USA			English,  Mph , "steering shock", "(c)1992 North America Only"
-	England		English,  Mph , "steering shock", "(c)1992"
-	France		French,   Km/h, "steering shock", "(c)1992"	*/
+/*  [Country]
+    Japan       "race together" in Test Mode, Always Choose Race
+                Japanese, Km/h, "handle shock"  , "(c)1991",
+    USA         English,  Mph , "steering shock", "(c)1992 North America Only"
+    England     English,  Mph , "steering shock", "(c)1992"
+    France      French,   Km/h, "steering shock", "(c)1992" */
 
-	PORT_START_TAG("IN1")	// DSW 1 & 2 - $80000.w	-> !f9012
+	PORT_START_TAG("IN1")	// DSW 1 & 2 - $80000.w -> !f9012
 	// DSW 1 ( Coinage - it changes with Country: we use IN6 & IN7 )
 	PORT_DIPNAME( 0x0040, 0x0040, "Free Play (UK FR)" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
@@ -1168,7 +1168,7 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE( 0x0008, IP_ACTIVE_LOW) // -> f0100 (called "Test")
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1   )
-//	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Shift -> !f900e - We handle it with 2 buttons
+//  PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Shift -> !f900e - We handle it with 2 buttons
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_NAME("P1 Brake")// Brake -> !f9010
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2   ) // "Race Together"
 
@@ -1190,11 +1190,11 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-/*	DSW3-2&1 (Country: JP)	Effect
-	OFF-OFF					Red-White Car
-	OFF- ON					Red Car
-	ON-OFF					Blue-White Car
-	ON- ON					Blue Car, "equipped with communication link"	*/
+/*  DSW3-2&1 (Country: JP)  Effect
+    OFF-OFF                 Red-White Car
+    OFF- ON                 Red Car
+    ON-OFF                  Blue-White Car
+    ON- ON                  Blue Car, "equipped with communication link"    */
 
 	PORT_START_TAG("IN4")	// DSW 3 (4 bits, Cabinet Linking) - $8000c.w -> !f9014
 	PORT_DIPNAME( 0x01, 0x01, "This Unit Is" )
@@ -1211,7 +1211,7 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-				// 		 Accelerator   - $80010.b ->  !f9004.w
+				//       Accelerator   - $80010.b ->  !f9004.w
 	PORT_START_TAG("IN5")	// Driving Wheel - $80011.b ->  !f9008.w
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(30)
 
@@ -1257,7 +1257,7 @@ INPUT_PORTS_END
 
 
 /**************************************************************************
-								Wild Pilot
+                                Wild Pilot
 **************************************************************************/
 
 INPUT_PORTS_START( wildplt )
@@ -1265,7 +1265,7 @@ INPUT_PORTS_START( wildplt )
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0003, DEF_STR( 2C_1C ) )	
+	PORT_DIPSETTING(      0x0003, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
@@ -1331,14 +1331,14 @@ INPUT_PORTS_START( wildplt )
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_REVERSE
-	
+
 	PORT_START_TAG("IN3")
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15)
 INPUT_PORTS_END
 
 
 /**************************************************************************
-								Scud Hammer
+                                Scud Hammer
 **************************************************************************/
 
 INPUT_PORTS_START( scudhamm )
@@ -1419,7 +1419,7 @@ INPUT_PORTS_END
 /**************************************************************************
 
 
-								Gfx Layouts
+                                Gfx Layouts
 
 
 **************************************************************************/
@@ -1474,7 +1474,7 @@ static struct GfxLayout road_layout =
 };
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 static struct GfxDecodeInfo bigrun_gfxdecodeinfo[] =
@@ -1489,7 +1489,7 @@ static struct GfxDecodeInfo bigrun_gfxdecodeinfo[] =
 };
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
@@ -1504,7 +1504,7 @@ static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
 };
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
@@ -1519,7 +1519,7 @@ static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
 };
 
 /**************************************************************************
-								Scud Hammer
+                                Scud Hammer
 **************************************************************************/
 
 static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
@@ -1536,13 +1536,13 @@ static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 **************************************************************************/
 
 /**************************************************************************
-					Big Run, Cisco Heat, F1 GrandPrix Star
+                    Big Run, Cisco Heat, F1 GrandPrix Star
 **************************************************************************/
 
 /* CPU # 1 */
@@ -1692,14 +1692,14 @@ MACHINE_DRIVER_END
 
 
 /**************************************************************************
-								Scud Hammer
+                                Scud Hammer
 **************************************************************************/
 
 /*
-	1, 5-7] 	busy loop
-	2]			clr.w   $fc810.l + rte
-	3]			game
-	4]	 		== 3
+    1, 5-7]     busy loop
+    2]          clr.w   $fc810.l + rte
+    3]          game
+    4]          == 3
 */
 #define INTERRUPT_NUM_SCUDHAMM		30
 INTERRUPT_GEN( interrupt_scudhamm )
@@ -1751,21 +1751,21 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 **************************************************************************/
 
 /*
-	Sprite data is stored like this:
+    Sprite data is stored like this:
 
-	Sprite 0
-		Line 0-15 (left half)
-		Line 0-15 (right half)
-	Sprite 1
-	..
+    Sprite 0
+        Line 0-15 (left half)
+        Line 0-15 (right half)
+    Sprite 1
+    ..
 
-	We need to untangle it
+    We need to untangle it
 */
 void cischeat_untangle_sprites(int region)
 {
@@ -1791,7 +1791,7 @@ void cischeat_untangle_sprites(int region)
 
 /***************************************************************************
 
-									Big Run
+                                    Big Run
 
 Jaleco 1989
 
@@ -1844,12 +1844,12 @@ BR8950c
 8953
 ----
 
-	68000                  YM2151
+    68000                  YM2151
     D65006C
-	BR8953C.1 58257
-	BR8953C.2 58257
-								6295    5  T50
-       							6295    8  T51
+    BR8953C.1 58257
+    BR8953C.2 58257
+                                6295    5  T50
+                                6295    8  T51
 
 ***************************************************************************/
 
@@ -1932,51 +1932,51 @@ DRIVER_INIT( bigrun )
 
 /***************************************************************************
 
-								Cisco Heat
+                                Cisco Heat
 
 From "ARCADE ROMS FROM JAPAN (ARFJ)"'s readme:
 
  -BOARD #1 CH-9072 EB90001-20024-
-|                [9]r15 [10]r16  |	EP:	[1]ch9072.01	[2]ch9072.02
-|               [11]r17 [12]r18  |		[3]ch9072.03
-|               [13]r25 [14]r26  |MASK:	[9]ch9072.r15	[10]ch9072.r16
-|               [15]r19 [16]r20  |		[11]ch9072.r17	[12]ch9072.r18
-|     [1]01                      |		[13]ch9072.r25	[14]ch9072.r26
-|[2]02[3]03                      |		[15]ch9072.r19	[16]ch9072.r20
+|                [9]r15 [10]r16  |  EP: [1]ch9072.01    [2]ch9072.02
+|               [11]r17 [12]r18  |      [3]ch9072.03
+|               [13]r25 [14]r26  |MASK: [9]ch9072.r15   [10]ch9072.r16
+|               [15]r19 [16]r20  |      [11]ch9072.r17  [12]ch9072.r18
+|     [1]01                      |      [13]ch9072.r25  [14]ch9072.r26
+|[2]02[3]03                      |      [15]ch9072.r19  [16]ch9072.r20
 |[4] [5] [6]                     |
-|[7]                             |	([4][5][6][8]:27cx322  [7]:82S135)
+|[7]                             |  ([4][5][6][8]:27cx322  [7]:82S135)
 |[8]                             |
  --------------------------------
 
 Video                        Sound
- -BOARD #2 CH-9071 EB90001-20023- 	X1:12MHz  X2:4MHz  X3:20MHz  X4:7MHz
-|68000             [9]      68000|	YM2151x1 OKI M6295 x2 ([8]82S147 [9]:82S185)
-|[1]01 X3               X4 [11]11|	EP:	[1]ch9071v2.01 "CH-9071 Ver.2  1"
-|[2]02                     [10]10|		[2]ch9071.02
-|[3]03                           |		[3]ch9071v2.03 "CH-9071 Ver.2  3"
-|[4]04            X1 X2   [12]r23|		[4]ch9071.04
-|           [8]     YM2151[13]r24|		[7]ch9071.07
-|[7]07[5]a14[6]t74               |		[10]ch9071.10 	[11]ch9071.11
-|                                |MASK:	[5]ch9071.a14	[6]ch9071.t74
- --------------------------------		[12]ch9071.r23	[13]ch9071.r24
+ -BOARD #2 CH-9071 EB90001-20023-   X1:12MHz  X2:4MHz  X3:20MHz  X4:7MHz
+|68000             [9]      68000|  YM2151x1 OKI M6295 x2 ([8]82S147 [9]:82S185)
+|[1]01 X3               X4 [11]11|  EP: [1]ch9071v2.01 "CH-9071 Ver.2  1"
+|[2]02                     [10]10|      [2]ch9071.02
+|[3]03                           |      [3]ch9071v2.03 "CH-9071 Ver.2  3"
+|[4]04            X1 X2   [12]r23|      [4]ch9071.04
+|           [8]     YM2151[13]r24|      [7]ch9071.07
+|[7]07[5]a14[6]t74               |      [10]ch9071.10   [11]ch9071.11
+|                                |MASK: [5]ch9071.a14   [6]ch9071.t74
+ --------------------------------       [12]ch9071.r23  [13]ch9071.r24
 
  -BOARD #3 CH-9073 EB90001-20025-
 |           [5]r21 [6]r22   68000|
-|    [9]    [1]01  [2]02         | EP:	[1]ch9073.01	[2]ch9073.02
-|                                |		[3]ch9073v1.03 "CH-9073 Ver.1  3"
-|           [7]r21 [8]r22   68000|		[4]ch9073v1.04 "CH-9073 Ver.1  4"
-|           [3]03  [4]04         |MASK:	[5][7]ch9073.r21
-|            [10]    [11]        |		[6][8]ch9073.r22
-|                                |		([9][10][11]:82S129)
+|    [9]    [1]01  [2]02         | EP:  [1]ch9073.01    [2]ch9073.02
+|                                |      [3]ch9073v1.03 "CH-9073 Ver.1  3"
+|           [7]r21 [8]r22   68000|      [4]ch9073v1.04 "CH-9073 Ver.1  4"
+|           [3]03  [4]04         |MASK: [5][7]ch9073.r21
+|            [10]    [11]        |      [6][8]ch9073.r22
+|                                |      ([9][10][11]:82S129)
  --------------------------------
 
 DIP SW:8BITx2 , 4BITx1
 
 According to KLOV:
 
-Controls:	Steering: Wheel - A 'judder' motor is attached to the wheel.
-			Pedals: 2 - Both foot controls are simple switches.
-Sound:		Amplified Stereo (two channel)
+Controls:   Steering: Wheel - A 'judder' motor is attached to the wheel.
+            Pedals: 2 - Both foot controls are simple switches.
+Sound:      Amplified Stereo (two channel)
 
 ***************************************************************************/
 
@@ -2064,7 +2064,7 @@ DRIVER_INIT( cischeat )
 
 /***************************************************************************
 
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 
 From malcor's readme:
 
@@ -2191,12 +2191,12 @@ ROM_START( f1gpstar )
 	ROM_LOAD16_BYTE( "9188a-22.v20", 0x000001, 0x040000, CRC(de15c9ca) SHA1(f356b02ca66b7e8ab0293e6e28fcd3f7996c80c8) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 )
-	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
+	/* Should Use ROMs: 90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
 	ROM_LOAD16_BYTE( "9188a-16.v10",  0x000000, 0x020000, CRC(ef0f7ca9) SHA1(98ad687fdab67dd9f54b50cf21fd10ac34b61e7a) )
 	ROM_LOAD16_BYTE( "9188a-11.v10",  0x000001, 0x020000, CRC(de292ea3) SHA1(04ed19045edb4edfff2b8fedac37c4a3352dfa76) )
 
 	ROM_REGION( 0x80000, REGION_CPU3, 0 )
-	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
+	/* Should Use ROMs: 90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
 	ROM_LOAD16_BYTE( "9188a-6.v10",  0x000000, 0x020000, CRC(18ba0340) SHA1(e46e10a350f18cf3a46c0d3a0cb08fc369fced6d) )
 	ROM_LOAD16_BYTE( "9188a-1.v10",  0x000001, 0x020000, CRC(109d2913) SHA1(e117556481e801d51b8526a143bc202dda222f7f) )
 
@@ -2280,7 +2280,7 @@ DRIVER_INIT( f1gpstar )
 
 /***************************************************************************
 
-							Wild Pilot
+                            Wild Pilot
 
 
 Location   Device          File ID             Checksum
@@ -2293,7 +2293,7 @@ LB IC46    27C010     GP-9188A_11_Ver1-0.bin     D98A  [ CPU B PROG   ]
 LB IC70    27C010     GP-9188A_16_Ver1-0.bin     41E6  [ CPU B PROG   ]
 LB IC2     27C010     GP-9188A_01_Ver1-0.bin     D714  [ CPU C PROG   ]
 LB IC27    27C010     GP-9188A_06_Ver1-0.bin     3937  [ CPU C PROG   ]
-LB IC23   27C4001     GP-9188A_25_Ver1-0.bin     90BE   
+LB IC23   27C4001     GP-9188A_25_Ver1-0.bin     90BE
 LB IC152  27C4001     GP-9188A_28_Ver1-0.bin     6BBC
 LB IC174  27C1001     GP-9188A_30_Ver1-0.bin     1740
 LB IC14   27C4001         MR92020-01_C46.bin     E83D
@@ -2321,7 +2321,7 @@ MB IC12   27C4001         MR92020-16_W70.bin     9F01
 MB IC15    27C040      GP-9189_07_Ver1-0.bin     909A
 MB IC16    27C040      GP-9189_08_Ver1-0.bin     2FBE
 MB IC21    27C040      GP-9189_09_Ver1-0.bin     A33A
-MB IC22    27C040      GP-9189_10_Ver1-0.bin     CE2E 
+MB IC22    27C040      GP-9189_10_Ver1-0.bin     CE2E
 MB IC54   27C4001         MR90015-35_W33.bin     7890 *
 MB IC67   27C4001         MR90015-35_W33.bin     7890 *
 TB IC4    27C4001      WP-92116_1_Ver1-0.bin     7485  [ CPU D SND    ]
@@ -2334,7 +2334,7 @@ MB IC39   27CX642               CH9072-4.bin     10BE #
 MB IC33   27CX642               CH9072-5.bin     C83A #
 MB IC35   27CX642               CH9072-6.bin     D5C2 #
 MB IC59   27CX642               CH9072-8.bin     56C0 #
-LB IC105  N82S147               PR88004Q.bin     FCFC 
+LB IC105  N82S147               PR88004Q.bin     FCFC
 MB IC66   N82S135               PR88004W.bin     20C8
 LB IC117  N82S185               PR90015A.bin     3326
 LB IC153  N82S135               PR90015B.bin     1E52
@@ -2380,13 +2380,13 @@ I/O Processor(E)   - 68000
                    - Processor RAM 2x LH5168D-10L (8kx8 SRAM)
                    - GS90015-03 (80 PIN PQFP) + 2X 6116 SRAM
 
-GFX & Misc         - GS90015-02 (100 pin PQFP) 
+GFX & Misc         - GS90015-02 (100 pin PQFP)
                      GS-9000406 (80 pin PQFP)  + 2x LH5168D-10L (8kx8 SRAM)
 
-                   - GS90015-02 (100 pin PQFP) 
+                   - GS90015-02 (100 pin PQFP)
                      GS-9000406 (80 pin PQFP)  + 2x LH5168D-10L (8kx8 SRAM)
- 
-                   - GS90015-02 (100 pin PQFP) 
+
+                   - GS90015-02 (100 pin PQFP)
                      GS-9000406 (80 pin PQFP)  + 2x LH5168D-10L (8kx8 SRAM)
 
                    - GS900151   (44 pin PQFP) (too small for the full part No.)
@@ -2397,7 +2397,7 @@ GFX & Misc         - GS90015-02 (100 pin PQFP)
                    - GS90015-09 (64 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
                    - GS90015-10 (64 pin PQFP)
                    - GS90015-12 (80 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
-                   - GS90015-11 (100 pin PQFP) 
+                   - GS90015-11 (100 pin PQFP)
 
 ***************************************************************************/
 
@@ -2425,7 +2425,7 @@ ROM_START( wildplt )
 	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )	/* second halves of program ROMs */
 	ROM_LOAD16_BYTE( "gp-9188a_26_ver1-0.bin", 0x000000, 0x40000, CRC(bc48db69) SHA1(d66fa43347b991b899e086bfcf9ceb6277b859a9) )
 	ROM_LOAD16_BYTE( "gp-9188a_21_ver1-0.bin", 0x000001, 0x40000, CRC(c3192fbe) SHA1(c4a82a9174f6dc48946925ab94f81162632f58b0) )
-	
+
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp-9188a_25_ver1-0.bin", 0x000000, 0x80000, CRC(e69d3ccc) SHA1(10ab3d1980c571a478625ec4e505d711d90670cf) )
 
@@ -2447,13 +2447,13 @@ ROM_START( wildplt )
 	ROM_LOAD16_BYTE( "gp-9189_9_ver1-0.bin",  0x400000, 0x80000, CRC(0d4f6b5e) SHA1(92412590d17b7297188678a2b64c1b0ee7b00622) )
 	ROM_LOAD16_BYTE( "gp-9189_10_ver1-0.bin", 0x400001, 0x80000, CRC(9240969c) SHA1(1f7995349787792a759b1ba60673f28d0fe15cfe) )
 
-	ROM_REGION( 0x200000, REGION_GFX5, ROMREGION_DISPOSE )	
+	ROM_REGION( 0x200000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "mr92020-08_c50.bin", 0x000000, 0x80000, CRC(5e840567) SHA1(26e0278f455013600d37fc89eb83ce8bf11bb39d) )
 	ROM_LOAD( "mr92020-07_c49.bin", 0x080000, 0x80000, CRC(48d8ecb2) SHA1(dee5c274576c4463d33895a12e01b1b30a6daa58) )
 	ROM_LOAD( "mr92020-06_c51.bin", 0x100000, 0x80000, CRC(c00f1245) SHA1(11b9f6acbdf7094debb5a7a897afeb6a63b84103) )
 	ROM_LOAD( "mr92020-05_c48.bin", 0x180000, 0x80000, CRC(74ef3306) SHA1(9c22250df5bd14d50bb27728fe40b7f9ec283c24) )
 
-	ROM_REGION( 0x200000, REGION_GFX6, ROMREGION_DISPOSE )	
+	ROM_REGION( 0x200000, REGION_GFX6, ROMREGION_DISPOSE )
 	ROM_LOAD( "mr92020-04_c47.bin", 0x000000, 0x80000, CRC(c752f467) SHA1(9faa15567677dd5cc141727b182ba8d6de08329d) )
 	ROM_LOAD( "mr92020-03_c52.bin", 0x080000, 0x80000, CRC(985b5fe0) SHA1(a28eb20d37f171241fd0be702f2db12be1329836) )
 	ROM_LOAD( "mr92020-02_c53.bin", 0x100000, 0x80000, CRC(da961dd4) SHA1(fa36ee94d0a40a0e6e7201df2b74413f23e02ae0) )
@@ -2470,7 +2470,7 @@ ROM_START( wildplt )
 	ROM_LOAD( "ch9072_5.bin", 0x000000, 0x2000, CRC(e122916b) SHA1(86d5ecc7ecc6f175ecb28459697ef33e1ee06860) )
 	ROM_LOAD( "ch9072_6.bin", 0x000000, 0x2000, CRC(05d95bf7) SHA1(78181cf71f22c090a1e62823a43757353a9ef6ab) )
 	ROM_LOAD( "ch9072_8.bin", 0x000000, 0x2000, CRC(6bf52596) SHA1(bf4e7e7df3daae4aa6a441b58b15a435aa45630e) )
-	
+
 	ROM_LOAD( "mr90015-01_w06.bin", 0x000000, 0x80000, CRC(ce4bfe6e) SHA1(d428eb3d5da3bd080957c585c5b72b94a7849fca) ) // x 2
 	ROM_LOAD( "mr90015-02_w07.bin", 0x000000, 0x80000, CRC(fcbecc9b) SHA1(0670c276730ee282ef8c9599c00571b8d97725ab) ) // x 2
 	ROM_LOAD( "mr90015-03_w08.bin", 0x000000, 0x80000, CRC(ccf5b158) SHA1(06250762646e0da1fb71fd7b638492eaab3f5b7f) ) // x 2
@@ -2481,20 +2481,20 @@ ROM_START( wildplt )
 	ROM_LOAD( "pr88004w.bin", 0x000000, 0x0100, CRC(3d648467) SHA1(bf8dbaa2176c801f7370313425c87f0eefe8a3a4) )
 
 	ROM_LOAD( "pr90015a.bin", 0x000000, 0x0800, CRC(777583db) SHA1(8fd060a68fbb6156feb55afcfc5afd95999a8a62) )
-	ROM_LOAD( "pr90015b.bin", 0x000000, 0x0100, CRC(be240dac) SHA1(6203b73c1a5e09e525380a78b555c3818929d5eb) )	
+	ROM_LOAD( "pr90015b.bin", 0x000000, 0x0100, CRC(be240dac) SHA1(6203b73c1a5e09e525380a78b555c3818929d5eb) )
 ROM_END
 
 DRIVER_INIT( wildplt )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x080000, 0x087fff, 0, 0, wildplt_vregs_r );
-	
+
 	init_f1gpstar();
 }
 
 
 /***************************************************************************
 
-							F1 GrandPrix Star II
+                            F1 GrandPrix Star II
 
 This game uses the same bottom and middle boards as Grand Prix Star, however the top board
 (sound + I/O) is different (though I guess it has the same purpose.)
@@ -2704,7 +2704,7 @@ ROM_END
 
 /***************************************************************************
 
-								Scud Hammer
+                                Scud Hammer
 
 CF-92128B:
 
@@ -2743,8 +2743,8 @@ ROM_START( scudhamm )
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
 	ROM_LOAD( "5", 0x000000, 0x080000, CRC(714c115e) SHA1(c3e88b3972e3926f37968f3e84b932e1ac177142) )
 
-//	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
-//	UNUSED
+//  ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+//  UNUSED
 
 	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
 	ROM_LOAD( "6", 0x000000, 0x020000, CRC(b39aab63) SHA1(88275cce8b1323b2d835390a8fc2380b90d50d95) ) // 1xxxxxxxxxxxxxxxx = 0xFF
@@ -2774,7 +2774,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

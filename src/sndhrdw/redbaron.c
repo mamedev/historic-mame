@@ -1,17 +1,17 @@
 /*************************************************************************
 
-	Atari Red Baron hardware
+    Atari Red Baron hardware
 
 *************************************************************************/
 /*
 
     Red Baron sound notes:
-	bit function
-	7-4 explosion volume
-	3	start led
-	2	shot (machine gun sound)
-	1	squeal (nosedive sound)
-	0	POTSEL (rb_input_select)
+    bit function
+    7-4 explosion volume
+    3   start led
+    2   shot (machine gun sound)
+    1   squeal (nosedive sound)
+    0   POTSEL (rb_input_select)
 */
 
 #include <math.h>
@@ -99,9 +99,9 @@ static void redbaron_sound_update(void *param, stream_sample_t **inputs, stream_
 			if( shot_amp > 0 )
 			{
                 /* discharge C32 (0.1u) through R26 (33k) + R27 (15k)
-				 * 0.68 * C32 * (R26 + R27) = 3264us
-				 */
-//				#define C32_DISCHARGE_TIME (int)(32767 / 0.003264);
+                 * 0.68 * C32 * (R26 + R27) = 3264us
+                 */
+//              #define C32_DISCHARGE_TIME (int)(32767 / 0.003264);
 				/* I think this is to short. Is C32 really 1u? */
 				#define C32_DISCHARGE_TIME (int)(32767 / 0.03264);
 				shot_amp_counter -= C32_DISCHARGE_TIME;
@@ -124,8 +124,8 @@ static void redbaron_sound_update(void *param, stream_sample_t **inputs, stream_
 			if( squeal_amp < 32767 )
 			{
 				/* charge C5 (22u) over R3 (68k) and CR1 (1N914)
-				 * time = 0.68 * C5 * R3 = 1017280us
-				 */
+                 * time = 0.68 * C5 * R3 = 1017280us
+                 */
 				#define C5_CHARGE_TIME (int)(32767 / 1.01728);
 				squeal_amp_counter -= C5_CHARGE_TIME;
 				while( squeal_amp_counter <= 0 )
@@ -139,10 +139,10 @@ static void redbaron_sound_update(void *param, stream_sample_t **inputs, stream_
 			if( squeal_out )
 			{
 				/* NE555 setup as pulse position modulator
-				 * C = 0.01u, Ra = 33k, Rb = 47k
-				 * frequency = 1.44 / ((33k + 2*47k) * 0.01u) = 1134Hz
-				 * modulated by squeal_amp
-				 */
+                 * C = 0.01u, Ra = 33k, Rb = 47k
+                 * frequency = 1.44 / ((33k + 2*47k) * 0.01u) = 1134Hz
+                 * modulated by squeal_amp
+                 */
 				squeal_off_counter -= (1134 + 1134 * squeal_amp / 32767) / 3;
 				while( squeal_off_counter <= 0 )
 				{

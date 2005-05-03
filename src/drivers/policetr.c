@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	P&P Marketing Police Trainer hardware
+    P&P Marketing Police Trainer hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Police Trainer
-		* Sharpshooter
+    Games supported:
+        * Police Trainer
+        * Sharpshooter
 
-	Known bugs:
-		* flip screen not supported
+    Known bugs:
+        * flip screen not supported
 
-Note:	Police Trainer v1.3B runs on the same revision PCB as Sharpshooter - Rev 0.5B
-		If you hold the test button down and boot the game, all program roms
-		fail the checksum.  However, each checksum listed matches the checksum
-		printed on the ROM label.  This has been verified on an original PCB.
+Note:   Police Trainer v1.3B runs on the same revision PCB as Sharpshooter - Rev 0.5B
+        If you hold the test button down and boot the game, all program roms
+        fail the checksum.  However, each checksum listed matches the checksum
+        printed on the ROM label.  This has been verified on an original PCB.
 
 To ID the version of your SharpShooter, check the 2nd printed line on each type of ROM.
 
@@ -101,7 +101,7 @@ static offs_t speedup_pc;
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -121,7 +121,7 @@ static INTERRUPT_GEN( irq4_gen )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -146,7 +146,7 @@ static READ32_HANDLER( port2_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -178,7 +178,7 @@ static WRITE32_HANDLER( control_w )
 
 /*************************************
  *
- *	BSMT2000 I/O
+ *  BSMT2000 I/O
  *
  *************************************/
 
@@ -209,7 +209,7 @@ static READ32_HANDLER( bsmt2000_data_r )
 
 /*************************************
  *
- *	Busy loop optimization
+ *  Busy loop optimization
  *
  *************************************/
 
@@ -242,19 +242,19 @@ static WRITE32_HANDLER( speedup_w )
 
 /*************************************
  *
- *	EEPROM interface/saving
+ *  EEPROM interface/saving
  *
  *************************************/
 
 struct EEPROM_interface eeprom_interface_policetr =
 {
-	8,				// address bits	8
-	16,				// data bits	16
-	"*110",			// read			1 10 aaaaaa
-	"*101",			// write		1 01 aaaaaa dddddddddddddddd
-	"*111",			// erase		1 11 aaaaaa
-	"*10000xxxx",	// lock			1 00 00xxxx
-	"*10011xxxx"	// unlock		1 00 11xxxx
+	8,				// address bits 8
+	16,				// data bits    16
+	"*110",			// read         1 10 aaaaaa
+	"*101",			// write        1 01 aaaaaa dddddddddddddddd
+	"*111",			// erase        1 11 aaaaaa
+	"*10000xxxx",	// lock         1 00 00xxxx
+	"*10011xxxx"	// unlock       1 00 11xxxx
 };
 
 
@@ -273,7 +273,7 @@ static NVRAM_HANDLER( policetr )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -319,7 +319,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -405,7 +405,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -419,7 +419,7 @@ static struct BSMT2000interface bsmt2000_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -455,7 +455,7 @@ MACHINE_DRIVER_START( policetr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(BSMT2000, MASTER_CLOCK/2)
 	MDRV_SOUND_CONFIG(bsmt2000_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -475,7 +475,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -610,7 +610,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -635,7 +635,7 @@ static DRIVER_INIT( sshooter )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

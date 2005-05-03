@@ -1,36 +1,36 @@
 /*****************************************************************************
  *
- *	 tbl6510.c
+ *   tbl6510.c
  *   6510 opcode functions and function pointer table
  *
- *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *   Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	 - Opcode information based on an Intel 386 '6510.asm' core
- *	   written by R.F. van Ee (1993)
- *	 - Cycle counts are guesswork :-)
+ *   - Opcode information based on an Intel 386 '6510.asm' core
+ *     written by R.F. van Ee (1993)
+ *   - Cycle counts are guesswork :-)
  *
  *****************************************************************************/
-/* 
+/*
    PeT 11.August 2000
        added NMOS rw opcodes address access behaviour
-	   emulation of this currently NOT in NMOS 6502, N2A03, M6509
-	   only done in the official opcodes
-	   (inofficial are too hard to guess and test)
+       emulation of this currently NOT in NMOS 6502, N2A03, M6509
+       only done in the official opcodes
+       (inofficial are too hard to guess and test)
    NMOS does rw opcodes
    (inc 00) as read 00 into alu, write alu into 00, inc alu, write alu into 00
-   CMOS 
+   CMOS
    (inc 00) as read 00 into alu, read alu into 00, inc alu, write alu into 00
    needed in many C64,c16 games
    c16 lone07 does asl ff09, 1st write cycles quits interrupt
@@ -43,10 +43,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *	 overrides for 6510 opcodes
+ *   overrides for 6510 opcodes
  *
  *****************************************************************************
- ********** insn   temp 	cycles			   rdmem   opc	wrmem	**********/
+ ********** insn   temp     cycles             rdmem   opc  wrmem   **********/
 #define m6510_00 m6502_00									/* 7 BRK */
 #define m6510_20 m6502_20									/* 6 JSR */
 #define m6510_40 m6502_40									/* 6 RTI */

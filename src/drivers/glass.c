@@ -52,13 +52,13 @@ static struct GfxLayout glass_tilelayout16 =
 	0x100000/32,							/* number of tiles */
 	4,										/* 4 bpp */
 	{ 3*0x100000*8, 2*0x100000*8, 1*0x100000*8, 0*0x100000*8 },
-	{	
-		0, 1, 2, 3, 4, 5, 6, 7, 
+	{
+		0, 1, 2, 3, 4, 5, 6, 7,
 		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7
 	},
-	{ 
-		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 
-		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 
+	{
+		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
 	},
 	32*8
 };
@@ -148,7 +148,7 @@ PORT_START	/* DSW #2 */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-	
+
 PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
@@ -174,7 +174,7 @@ PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 PORT_START	/* 1P INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
@@ -242,7 +242,7 @@ ROM_START( glass )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Graphics */
 	ROM_LOAD( "h13.bin", 0x000000, 0x200000, CRC(13ab7f31) SHA1(468424f74d6cccd1b445a9f20e2d24bc46d61ed6) )
 	ROM_LOAD( "h11.bin", 0x200000, 0x200000, CRC(c6ac41c8) SHA1(22408ef1e35c66d0fba0c72972c46fad891d1193) )
-	
+
 	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* 16 bitmaps (320x200, indexed colors) */
 	ROM_LOAD( "h9.bin", 0x000000, 0x100000, CRC(b9492557) SHA1(3f5c0d696d65e1cd492763dfa749c813dd56a9bf) )
 
@@ -254,7 +254,7 @@ ROM_END
 
 /***************************************************************************
 
-	Split even/odd bytes from ROMs in 16 bit mode to different memory areas
+    Split even/odd bytes from ROMs in 16 bit mode to different memory areas
 
 ***************************************************************************/
 
@@ -278,16 +278,16 @@ void glass_ROM16_split(int src_reg, int dst_reg, int start, int length, int dest
 static DRIVER_INIT( glass )
 {
 	/*
-	For REGION_GFX2 we have this memory map:
-		0x000000-0x1fffff ROM H13
-		0x200000-0x3fffff ROM H11
+    For REGION_GFX2 we have this memory map:
+        0x000000-0x1fffff ROM H13
+        0x200000-0x3fffff ROM H11
 
-	and we are going to construct this one for REGION_GFX1:
-		0x000000-0x0fffff ROM H13 even bytes
-		0x100000-0x1fffff ROM H13 odd bytes
-		0x200000-0x2fffff ROM H11 even bytes
-		0x300000-0x3fffff ROM H11 odd bytes
-	*/
+    and we are going to construct this one for REGION_GFX1:
+        0x000000-0x0fffff ROM H13 even bytes
+        0x100000-0x1fffff ROM H13 odd bytes
+        0x200000-0x2fffff ROM H11 even bytes
+        0x300000-0x3fffff ROM H11 odd bytes
+    */
 
 	/* split ROM H13 */
 	glass_ROM16_split(REGION_GFX2, REGION_GFX1, 0x0000000, 0x0200000, 0x0000000, 0x0100000);

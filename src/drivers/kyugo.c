@@ -1,23 +1,23 @@
 /***************************************************************************
 
-	Kyugo hardware games
+    Kyugo hardware games
 
-	driver by:
-	Ernesto Corvi
-	someone@secureshell.com
+    driver by:
+    Ernesto Corvi
+    someone@secureshell.com
 
-	Games supported:
-		* Gyrodine - (c) 1984 Taito Corporation.
-		* Son of Phoenix - (c) 1985 Associated Overseas MFR, Inc.
-		* Repulse - (c) 1985 Sega
-		* '99 The last war - (c) 1985 Proma
-		* Flashgal - (c) 1985 Sega
-		* SRD Mission - (c) 1986 Taito Corporation.
-		* Legend - no copyright, but readme says: (c) 1986 SEGA/Coreland
-		* Airwolf - (c) 1987 Kyugo
+    Games supported:
+        * Gyrodine - (c) 1984 Taito Corporation.
+        * Son of Phoenix - (c) 1985 Associated Overseas MFR, Inc.
+        * Repulse - (c) 1985 Sega
+        * '99 The last war - (c) 1985 Proma
+        * Flashgal - (c) 1985 Sega
+        * SRD Mission - (c) 1986 Taito Corporation.
+        * Legend - no copyright, but readme says: (c) 1986 SEGA/Coreland
+        * Airwolf - (c) 1987 Kyugo
 
-	Known issues:
-		* attract mode in Son of Phoenix doesn't work
+    Known issues:
+        * attract mode in Son of Phoenix doesn't work
 
 ***************************************************************************/
 
@@ -28,7 +28,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -56,7 +56,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Main CPU port handlers
+ *  Main CPU port handlers
  *
  *************************************/
 
@@ -76,7 +76,7 @@ Main_PortMap( srdmissn, 0x08 )
 
 /*************************************
  *
- *	Sub CPU memory handlers
+ *  Sub CPU memory handlers
  *
  *************************************/
 
@@ -103,7 +103,7 @@ Sub_MemMap( flashgla, 0x7fff, 0xe000, 0xc040, 0xc080, 0xc0c0 )
 
 /*************************************
  *
- *	Sub CPU port handlers
+ *  Sub CPU port handlers
  *
  *************************************/
 
@@ -129,7 +129,7 @@ Sub_PortMap( flashgla, 0x40, 0x80 )
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -185,7 +185,7 @@ Sub_PortMap( flashgla, 0x40, 0x80 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )\
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 #define COMMON_END \
 	PORT_START_TAG("IN0")\
 	START_COINS\
@@ -423,7 +423,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -473,7 +473,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definition
+ *  Sound definition
  *
  *************************************/
 
@@ -486,7 +486,7 @@ static struct AY8910interface ay8910_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -522,11 +522,11 @@ static MACHINE_DRIVER_START( gyrodine )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
@@ -584,7 +584,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -665,7 +665,7 @@ ROM_START( gyrodinc )
 	ROM_LOAD( "a21.17", 0x0100, 0x0100, CRC(ca054448) SHA1(4bad8147905cbe9ec8bb5bcd8016e9950c5d95a9) ) /* green */
 	ROM_LOAD( "a21.18", 0x0200, 0x0100, CRC(23c0c449) SHA1(4a37821a6a16ae0cfdcfb0fa64733c03ba9e4815) ) /* blue */
 	ROM_LOAD( "a21.20", 0x0300, 0x0020, CRC(efc4985e) SHA1(b2fa02e388fbbe1077e79699efccb2d47cb83ba5) ) /* char lookup table */
-	ROM_LOAD( "m1.2c",  0x0320, 0x0020, CRC(83a39201) SHA1(4fdc722c9e20ee152c890342ef0dce18e35e2ef8) ) /* timing? (not used) */	
+	ROM_LOAD( "m1.2c",  0x0320, 0x0020, CRC(83a39201) SHA1(4fdc722c9e20ee152c890342ef0dce18e35e2ef8) ) /* timing? (not used) */
 ROM_END
 
 
@@ -1133,7 +1133,7 @@ ROM_END
 
 /*************************************
  *
- *	Game specific initialization
+ *  Game specific initialization
  *
  *************************************/
 
@@ -1157,7 +1157,7 @@ static DRIVER_INIT( srdmissn )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

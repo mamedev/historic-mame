@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Game Driver for Video System Mahjong series and Pipe Dream.
+    Game Driver for Video System Mahjong series and Pipe Dream.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
-	and Bryan McPhail, Nicola Salmoria, Aaron Giles
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
+    and Bryan McPhail, Nicola Salmoria, Aaron Giles
 
 ***************************************************************************/
 

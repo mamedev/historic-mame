@@ -1,65 +1,65 @@
 /***************************************************************************
 
-		ToaPlan game hardware from 1988-1991
-		------------------------------------
-		MAME Driver by: Darren Olafson
-		Technical info: Carl-Henrik Skarstedt  &  Magnus Danielsson
-		Driver updates: Quench
-		Video updates : SUZ
+        ToaPlan game hardware from 1988-1991
+        ------------------------------------
+        MAME Driver by: Darren Olafson
+        Technical info: Carl-Henrik Skarstedt  &  Magnus Danielsson
+        Driver updates: Quench
+        Video updates : SUZ
 
 
 Supported games:
 
-	ROM set		Toaplan
-	name		board No		Game name
-	--------------------------------------------------
-	rallybik	TP-012		Rally Bike/Dash Yarou
-	truxton		TP-013B		Truxton/Tatsujin
-	hellfire	TP-???		HellFire (2 Player version)
-	hellfir1	TP-???		HellFire (1 Player version)
-	zerowing	TP-015		Zero Wing
-	demonwld	TP-016		Demon's World/Horror Story [1990]
-	demonwl1	TP-016		Demon's World/Horror Story [1989] (Taito license)
-	fireshrk	TP-017		Fire Shark (World)			 [1990]
-	samesame	TP-017		Same! Same! Same! (Japan)	 [1989] (1 Player version)
-	samesam2	TP-017		Same! Same! Same! (Japan)	 [1989] (2 Player version)
-	outzone		TP-018		Out Zone
-	outzonea	TP-018		Out Zone (From board serial number 2122)
-	vimana		TP-019		Vimana (From board serial number 1547.04 [July '94])
-	vimana1		TP-019		Vimana (Older version)
-	vimanan		TP-019		Vimana (Nova Apparate GMBH & Co  license)
+    ROM set     Toaplan
+    name        board No        Game name
+    --------------------------------------------------
+    rallybik    TP-012      Rally Bike/Dash Yarou
+    truxton     TP-013B     Truxton/Tatsujin
+    hellfire    TP-???      HellFire (2 Player version)
+    hellfir1    TP-???      HellFire (1 Player version)
+    zerowing    TP-015      Zero Wing
+    demonwld    TP-016      Demon's World/Horror Story [1990]
+    demonwl1    TP-016      Demon's World/Horror Story [1989] (Taito license)
+    fireshrk    TP-017      Fire Shark (World)           [1990]
+    samesame    TP-017      Same! Same! Same! (Japan)    [1989] (1 Player version)
+    samesam2    TP-017      Same! Same! Same! (Japan)    [1989] (2 Player version)
+    outzone     TP-018      Out Zone
+    outzonea    TP-018      Out Zone (From board serial number 2122)
+    vimana      TP-019      Vimana (From board serial number 1547.04 [July '94])
+    vimana1     TP-019      Vimana (Older version)
+    vimanan     TP-019      Vimana (Nova Apparate GMBH & Co  license)
 
 
 Notes:
-	Fire Shark and Same! Same! Same! have a hidden function for the
-	service input. When invulnerability is enabled, pressing the
-	service input makes the screen scroll faster.
+    Fire Shark and Same! Same! Same! have a hidden function for the
+    service input. When invulnerability is enabled, pressing the
+    service input makes the screen scroll faster.
 
-	OutZone (set 2) has a bug in the 68K code. An Jump instruction at $3E6
-	goes to to an invalid instruction at $13DA4. It should really jump to
-	$13DAA. This bad jump is executed by flicking the 'Service DSW' while
-	after the game has booted. The other Outzone set correctly goes to
-	service mode, but this set just loses the plot.
+    OutZone (set 2) has a bug in the 68K code. An Jump instruction at $3E6
+    goes to to an invalid instruction at $13DA4. It should really jump to
+    $13DAA. This bad jump is executed by flicking the 'Service DSW' while
+    after the game has booted. The other Outzone set correctly goes to
+    service mode, but this set just loses the plot.
 
-	OutZone sprite priorities are unusual. On level 4, a character with
-	low priority (6) is hidden by a higher priority (8) character, yet it
-	shouldn't be. The character is a shooting enemy hidden by a sliding
-	left to right platform (which he should be standing on).
-	So how does the real hardware deal with this ?
+    OutZone sprite priorities are unusual. On level 4, a character with
+    low priority (6) is hidden by a higher priority (8) character, yet it
+    shouldn't be. The character is a shooting enemy hidden by a sliding
+    left to right platform (which he should be standing on).
+    So how does the real hardware deal with this ?
 
-	OutZone (set 2) uses different enemies in some stages and has extra
-	bonuses compared to set 1. The music sequences are also in different
-	orders between the sets. So which is the newest version ?
+    OutZone (set 2) uses different enemies in some stages and has extra
+    bonuses compared to set 1. The music sequences are also in different
+    orders between the sets. So which is the newest version ?
 
-	Demonwld (Toaplan copyright) is a newer version, and has a different game
-	level sequence compared to the Taito licensed version.
+    Demonwld (Toaplan copyright) is a newer version, and has a different game
+    level sequence compared to the Taito licensed version.
 
 
 To Do:
-	Add support for HD647180 (Z180) sound CPUs (once their internal
-	ROMS are dumped). These are:
-		Fire Shark/Same! Same! Same!
-		Vimana
+    Add support for HD647180 (Z180) sound CPUs (once their internal
+    ROMS are dumped). These are:
+        Fire Shark/Same! Same! Same!
+        Vimana
 
 ***************************************************************************/
 
@@ -83,7 +83,7 @@ static ADDRESS_MAP_START( rallybik_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100004, 0x100007) AM_READWRITE(rallybik_tileram16_r, toaplan1_tileram16_w)
 	AM_RANGE(0x100010, 0x10001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
 	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x140002, 0x140003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x140008, 0x14000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x144000, 0x1447ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -105,7 +105,7 @@ static ADDRESS_MAP_START( truxton_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100004, 0x100007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
 	AM_RANGE(0x100010, 0x10001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
 	AM_RANGE(0x140000, 0x140001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x140000, 0x140001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x140002, 0x140003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x140008, 0x14000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x144000, 0x1447ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -120,7 +120,7 @@ static ADDRESS_MAP_START( hellfire_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x040000, 0x047fff) AM_RAM
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x080000, 0x080001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x080000, 0x080001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x080002, 0x080003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x080008, 0x08000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x084000, 0x0847ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -146,7 +146,7 @@ static ADDRESS_MAP_START( zerowing_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c0000, 0x0c0003) AM_WRITE(toaplan1_tile_offsets_w)
 	AM_RANGE(0x0c0006, 0x0c0007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -165,7 +165,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( demonwld_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -193,7 +193,7 @@ static ADDRESS_MAP_START( samesame_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080006, 0x080007) AM_WRITE(toaplan1_fcu_flipscreen_w)
 	AM_RANGE(0x0c0000, 0x0c3fff) AM_RAM			/* Frame done at $c1ada */
 	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x100000, 0x100001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x100000, 0x100001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x100002, 0x100003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x100008, 0x10000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x104000, 0x1047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -205,13 +205,13 @@ static ADDRESS_MAP_START( samesame_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x140008, 0x140009) AM_READ(input_port_5_word_r)
 	AM_RANGE(0x14000a, 0x14000b) AM_READ(samesame_port_6_word_r)	/* Territory, and MCU ready */
 	AM_RANGE(0x14000c, 0x14000d) AM_WRITE(samesame_coin_w)	/* Coin counter/lockout */
-//	AM_RANGE(0x14000e, 0x14000f) AM_WRITE(samesame_mcu_w)	/* Commands sent to HD647180 */
+//  AM_RANGE(0x14000e, 0x14000f) AM_WRITE(samesame_mcu_w)   /* Commands sent to HD647180 */
 	AM_RANGE(0x180000, 0x180001) AM_WRITE(toaplan1_bcu_flipscreen_w)
 	AM_RANGE(0x180002, 0x180003) AM_READWRITE(toaplan1_tileram_offs_r, toaplan1_tileram_offs_w)
 	AM_RANGE(0x180004, 0x180007) AM_READWRITE(toaplan1_tileram16_r, toaplan1_tileram16_w)
 	AM_RANGE(0x180010, 0x18001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
 	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(toaplan1_frame_done_r)
-//	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(?? disable sprite refresh ??)
+//  AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(?? disable sprite refresh ??)
 	AM_RANGE(0x1c0002, 0x1c0003) AM_READWRITE(toaplan1_spriteram_offs_r, toaplan1_spriteram_offs_w)
 	AM_RANGE(0x1c0004, 0x1c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
 	AM_RANGE(0x1c0006, 0x1c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
@@ -230,7 +230,7 @@ static ADDRESS_MAP_START( outzone_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200010, 0x20001f) AM_READWRITE(toaplan1_scroll_regs_r, toaplan1_scroll_regs_w)
 	AM_RANGE(0x240000, 0x243fff) AM_RAM
 	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x300000, 0x300001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x300000, 0x300001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x300002, 0x300003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x300008, 0x30000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x304000, 0x3047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -248,7 +248,7 @@ static ADDRESS_MAP_START( vimana_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c0004, 0x0c0005) AM_READWRITE(toaplan1_spriteram16_r, toaplan1_spriteram16_w)
 	AM_RANGE(0x0c0006, 0x0c0007) AM_READWRITE(toaplan1_spritesizeram16_r, toaplan1_spritesizeram16_w)
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(?? video frame related ??)
 	AM_RANGE(0x400002, 0x400003) AM_WRITE(toaplan1_intenable_w)
 	AM_RANGE(0x400008, 0x40000f) AM_WRITE(toaplan1_bcu_control_w)
 	AM_RANGE(0x404000, 0x4047ff) AM_READWRITE(toaplan1_colorram1_r, toaplan1_colorram1_w) AM_BASE(&toaplan1_colorram1) AM_SIZE(&toaplan1_colorram1_size)
@@ -372,7 +372,7 @@ ADDRESS_MAP_END
 
 
 /*****************************************************************************
-	Input Port definitions
+    Input Port definitions
 *****************************************************************************/
 
 #define  TOAPLAN1_PLAYER_INPUT( player, button3, options )										\
@@ -490,16 +490,16 @@ INPUT_PORTS_START( truxton )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 /* The following are coin settings for Japan
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 */
 
 	PORT_START		/* DSW B */
@@ -534,9 +534,9 @@ INPUT_PORTS_START( truxton )
 	PORT_DIPSETTING(    0x04, "US/Taito America" )
 	PORT_DIPSETTING(    0x01, "US/Romstar" )
 	PORT_DIPSETTING(    0x00, "Japan/Taito Corp" )
-//	PORT_DIPSETTING(    0x05, "Same as 0x04" )
-//	PORT_DIPSETTING(    0x03, "Same as 0x02" )
-//	PORT_DIPSETTING(    0x07, "Same as 0x06" )
+//  PORT_DIPSETTING(    0x05, "Same as 0x04" )
+//  PORT_DIPSETTING(    0x03, "Same as 0x02" )
+//  PORT_DIPSETTING(    0x07, "Same as 0x06" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -600,7 +600,7 @@ INPUT_PORTS_START( hellfire )
 	PORT_START		/* Territory Jumper block */
 	PORT_DIPNAME( 0x03, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
 	PORT_DIPSETTING(    0x01, "US" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
@@ -669,7 +669,7 @@ INPUT_PORTS_START( hellfir1 )
 	PORT_START		/* Territory Jumper block */
 	PORT_DIPNAME( 0x03, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
 	PORT_DIPSETTING(    0x01, "US" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
@@ -738,7 +738,7 @@ INPUT_PORTS_START( zerowing )
 	PORT_START		/* Territory Jumper block */
 	PORT_DIPNAME( 0x03, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
 	PORT_DIPSETTING(    0x01, "US" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
@@ -920,16 +920,16 @@ INPUT_PORTS_START( samesame )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 /* settings listed in service mode, but not actually used ???
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 */
 
 	PORT_START		/* DSW B */
@@ -1004,16 +1004,16 @@ INPUT_PORTS_START( samesam2 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 /* settings listed in service mode, but not actually used ???
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 */
 
 	PORT_START		/* DSW B */
@@ -1043,18 +1043,18 @@ INPUT_PORTS_START( samesam2 )
 
 	PORT_START		/* Territory Jumper Block */
 /* settings listed in service mode, but not actually used
-	PORT_DIPNAME( 0x03, 0x00, "Territory" )
-//	PORT_DIPSETTING(    0x01, DEF_STR( Europe ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( USA ) )
+    PORT_DIPNAME( 0x03, 0x00, "Territory" )
+//  PORT_DIPSETTING(    0x01, DEF_STR( Europe ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Europe ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( USA ) )
 */
 	PORT_DIPNAME( 0x01, 0x00, "Show Territory Notice" )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-//	PORT_DIPNAME( 0x02, 0x00, "Show Territory Notice" )	/* Same as Bit 1 */
-//	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+//  PORT_DIPNAME( 0x02, 0x00, "Show Territory Notice" ) /* Same as Bit 1 */
+//  PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -1262,16 +1262,16 @@ INPUT_PORTS_START( vimana )
 	PORT_DIPSETTING(    0x03, "Hong Kong" )
 	PORT_DIPSETTING(    0x04, "Korea" )
 	PORT_DIPSETTING(    0x05, "Taiwan" )
-//	PORT_DIPSETTING(    0x06, "Taiwan" )
-//	PORT_DIPSETTING(    0x07, "US" )
-//	PORT_DIPSETTING(    0x08, "Hong Kong" )
-//	PORT_DIPSETTING(    0x09, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0a, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0b, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0c, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0d, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0e, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x06, "Taiwan" )
+//  PORT_DIPSETTING(    0x07, "US" )
+//  PORT_DIPSETTING(    0x08, "Hong Kong" )
+//  PORT_DIPSETTING(    0x09, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0a, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0b, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0d, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0e, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -1306,16 +1306,16 @@ INPUT_PORTS_START( vimanan )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 /* settings for other territories (non Nova license)
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 */
 
 	PORT_START		/* DSW B */
@@ -1351,16 +1351,16 @@ INPUT_PORTS_START( vimanan )
 	PORT_DIPSETTING(    0x03, "Hong Kong" )
 	PORT_DIPSETTING(    0x04, "Korea" )
 	PORT_DIPSETTING(    0x05, "Taiwan" )
-//	PORT_DIPSETTING(    0x06, "Taiwan" )
-//	PORT_DIPSETTING(    0x07, "US" )
-//	PORT_DIPSETTING(    0x08, "Hong Kong" )
-//	PORT_DIPSETTING(    0x09, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0a, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0b, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0c, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0d, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0e, DEF_STR( Unused ) )
-//	PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x06, "Taiwan" )
+//  PORT_DIPSETTING(    0x07, "US" )
+//  PORT_DIPSETTING(    0x08, "Hong Kong" )
+//  PORT_DIPSETTING(    0x09, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0a, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0b, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0d, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0e, DEF_STR( Unused ) )
+//  PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -2047,22 +2047,22 @@ ROM_START( outzonea )					/* From board serial number 2122 */
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, CRC(c64ec7b6) SHA1(e73b51c3713c2ea7a572a02531c15d1261ddeaa0) )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, CRC(64b6c5ac) SHA1(07fa20115f603445c0d51af3465c0471c09d76b1) )
 /* a pirate board exists using the same data in a different layout
-	ROM_LOAD16_BYTE( "04.bin",  0x000000, 0x10000, CRC(3d11eae0) )
-	ROM_LOAD16_BYTE( "08.bin",  0x000001, 0x10000, CRC(c7628891) )
-	ROM_LOAD16_BYTE( "13.bin",  0x080000, 0x10000, CRC(b23dd87e) )
-	ROM_LOAD16_BYTE( "09.bin",  0x080001, 0x10000, CRC(445651ba) )
-	ROM_LOAD16_BYTE( "03.bin",  0x020000, 0x10000, CRC(6b347646) )
-	ROM_LOAD16_BYTE( "07.bin",  0x020001, 0x10000, CRC(461b47f9) )
-	ROM_LOAD16_BYTE( "14.bin",  0x0a0000, 0x10000, CRC(b28ae37a) )
-	ROM_LOAD16_BYTE( "10.bin",  0x0a0001, 0x10000, CRC(6596a076) )
-	ROM_LOAD16_BYTE( "02.bin",  0x040000, 0x10000, CRC(11a781c3) )
-	ROM_LOAD16_BYTE( "06.bin",  0x040001, 0x10000, CRC(1055da17) )
-	ROM_LOAD16_BYTE( "15.bin",  0x0c0000, 0x10000, CRC(9c9e811b) )
-	ROM_LOAD16_BYTE( "11.bin",  0x0c0001, 0x10000, CRC(4c4d44dc) )
-	ROM_LOAD16_BYTE( "01.bin",  0x060000, 0x10000, CRC(e8c46aea) )
-	ROM_LOAD16_BYTE( "05.bin",  0x060001, 0x10000, CRC(f8a2fe01) )
-	ROM_LOAD16_BYTE( "16.bin",  0x0e0000, 0x10000, CRC(cffcb99b) )
-	ROM_LOAD16_BYTE( "12.bin",  0x0e0001, 0x10000, CRC(90d37ded) )
+    ROM_LOAD16_BYTE( "04.bin",  0x000000, 0x10000, CRC(3d11eae0) )
+    ROM_LOAD16_BYTE( "08.bin",  0x000001, 0x10000, CRC(c7628891) )
+    ROM_LOAD16_BYTE( "13.bin",  0x080000, 0x10000, CRC(b23dd87e) )
+    ROM_LOAD16_BYTE( "09.bin",  0x080001, 0x10000, CRC(445651ba) )
+    ROM_LOAD16_BYTE( "03.bin",  0x020000, 0x10000, CRC(6b347646) )
+    ROM_LOAD16_BYTE( "07.bin",  0x020001, 0x10000, CRC(461b47f9) )
+    ROM_LOAD16_BYTE( "14.bin",  0x0a0000, 0x10000, CRC(b28ae37a) )
+    ROM_LOAD16_BYTE( "10.bin",  0x0a0001, 0x10000, CRC(6596a076) )
+    ROM_LOAD16_BYTE( "02.bin",  0x040000, 0x10000, CRC(11a781c3) )
+    ROM_LOAD16_BYTE( "06.bin",  0x040001, 0x10000, CRC(1055da17) )
+    ROM_LOAD16_BYTE( "15.bin",  0x0c0000, 0x10000, CRC(9c9e811b) )
+    ROM_LOAD16_BYTE( "11.bin",  0x0c0001, 0x10000, CRC(4c4d44dc) )
+    ROM_LOAD16_BYTE( "01.bin",  0x060000, 0x10000, CRC(e8c46aea) )
+    ROM_LOAD16_BYTE( "05.bin",  0x060001, 0x10000, CRC(f8a2fe01) )
+    ROM_LOAD16_BYTE( "16.bin",  0x0e0000, 0x10000, CRC(cffcb99b) )
+    ROM_LOAD16_BYTE( "12.bin",  0x0e0001, 0x10000, CRC(90d37ded) )
 */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )

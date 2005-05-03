@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega vector hardware
+    Sega vector hardware
 
 *************************************************************************/
 
@@ -27,22 +27,22 @@
  */
 
 /*
-	Tac/Scan sound constants
+    Tac/Scan sound constants
 
-	There are some sounds that are unknown:
-	$09 Tunnel Warp Sound?
-	$0a
-	$0b Formation Change
+    There are some sounds that are unknown:
+    $09 Tunnel Warp Sound?
+    $0a
+    $0b Formation Change
         $0c
         $0e
         $0f
         $1c 1up (Extra Life)
         $2c Credit
         $30 - $3f  Hex numbers for ship position flight sounds
-	$41
+    $41
 
-	Some sound samples are missing:
-   	- I use the one bullet and one explosion sound for all 3 for example.
+    Some sound samples are missing:
+    - I use the one bullet and one explosion sound for all 3 for example.
 
 Star Trk Sounds (USB Loaded from 5400 in main EPROMs)
 

@@ -1,6 +1,6 @@
 //============================================================
 //
-//	video.h - Win32 implementation of MAME video routines
+//  video.h - Win32 implementation of MAME video routines
 //
 //============================================================
 
@@ -9,7 +9,7 @@
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // maximum video size
@@ -19,7 +19,7 @@
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // current frameskip/autoframeskip settings
@@ -42,7 +42,7 @@ extern UINT8		blit_swapxy;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 void win_orient_rect(struct rectangle *rect);

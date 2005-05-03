@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Video Hardware for Video System Mahjong series.
+    Video Hardware for Video System Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
 
 ******************************************************************************/
 

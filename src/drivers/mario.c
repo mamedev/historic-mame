@@ -170,7 +170,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7f00, 0x7f07) AM_WRITE(mario_sh3_w) /* Misc discrete samples */
 	AM_RANGE(0x7e00, 0x7e00) AM_WRITE(mario_sh_tuneselect_w)
 	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_NOP)	/* ??? */
-//	AM_RANGE(0x7e85, 0x7e85) AM_WRITE(MWA8_RAM)	/* Sets alternative 1 and 0 */
+//  AM_RANGE(0x7e85, 0x7e85) AM_WRITE(MWA8_RAM) /* Sets alternative 1 and 0 */
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
@@ -417,10 +417,10 @@ static MACHINE_DRIVER_START( mario )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -455,7 +455,7 @@ static MACHINE_DRIVER_START( masao )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/6)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

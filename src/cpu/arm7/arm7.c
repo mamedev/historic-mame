@@ -90,7 +90,7 @@ static int ARM7_ICOUNT;
  **************************************************************************/
 static void arm7_init(void)
 {
-    //must call core 
+    //must call core
     arm7_core_init("arm7");
 
 #if TEST_COPROC_FUNCS
@@ -294,7 +294,7 @@ void arm7_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_INT_MAX_INSTRUCTION_BYTES:         info->i = 4;                            break;
         case CPUINFO_INT_MIN_CYCLES:                    info->i = 3;                            break;
         case CPUINFO_INT_MAX_CYCLES:                    info->i = 4;                            break;
-        
+
         case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;                   break;
         case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;                   break;
         case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;                    break;
@@ -331,7 +331,7 @@ void arm7_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_INT_REGISTER + ARM7_R15:           info->i = ARM7REG(15);          break;
 
         case CPUINFO_INT_PREVIOUSPC:                    info->i = 0;    /* not implemented */   break;
-        case CPUINFO_INT_PC:                            
+        case CPUINFO_INT_PC:
         case CPUINFO_INT_REGISTER + ARM7_PC:            info->i = R15;                  break;
         case CPUINFO_INT_SP:                            info->i = GetRegister(13);      break;
 
@@ -364,7 +364,7 @@ void arm7_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_INT_REGISTER + ARM7_UR13:          info->i = ARM7REG(eR13_UND);    break;
         case CPUINFO_INT_REGISTER + ARM7_UR14:          info->i = ARM7REG(eR14_UND);    break;
         case CPUINFO_INT_REGISTER + ARM7_USPSR:         info->i = ARM7REG(eSPSR_UND);   break;
-        
+
         /* --- the following bits of info are returned as pointers to data or functions --- */
         case CPUINFO_PTR_SET_INFO:                      info->setinfo = arm7_set_info;          break;
         case CPUINFO_PTR_GET_CONTEXT:                   info->getcontext = arm7_get_context;    break;

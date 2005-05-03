@@ -1,28 +1,28 @@
 /*************************************************************************
 
-	Williams/Midway Y/Z-unit system
+    Williams/Midway Y/Z-unit system
 
     driver by Alex Pasadyn, Zsolt Vasvari, Kurt Mahan, Ernesto Corvi,
     and Aaron Giles
 
-	Games supported:
-		* Narc
-		* Trog (prototype and release versions)
-		* Strike Force
-		* Smash TV
-		* Hi Impact Football
-		* Super Hi Impact
-		* Terminator 2
-		* Mortal Kombat (Y-unit versions)
-		* Total Carnage
+    Games supported:
+        * Narc
+        * Trog (prototype and release versions)
+        * Strike Force
+        * Smash TV
+        * Hi Impact Football
+        * Super Hi Impact
+        * Terminator 2
+        * Mortal Kombat (Y-unit versions)
+        * Total Carnage
 
-	Known bugs:
-		* Super Hi Impact freaks out during play
-		* when the Porsche spins in Narc, the wheels are missing for
-			a single frame (may be an original bug)
-		* Terminator 2 freezes while playing the movies after destroying
-			skynet. Currently we have a hack in which prevents the freeze,
-			but we really should eventually figure it out for real
+    Known bugs:
+        * Super Hi Impact freaks out during play
+        * when the Porsche spins in Narc, the wheels are missing for
+            a single frame (may be an original bug)
+        * Terminator 2 freezes while playing the movies after destroying
+            skynet. Currently we have a hack in which prevents the freeze,
+            but we really should eventually figure it out for real
 
 **************************************************************************/
 
@@ -36,7 +36,7 @@
 
 /*************************************
  *
- *	Yawdim sound banking
+ *  Yawdim sound banking
  *
  *************************************/
 
@@ -50,7 +50,7 @@ static WRITE8_HANDLER( yawdim_oki_bank_w )
 
 /*************************************
  *
- *	CMOS read/write
+ *  CMOS read/write
  *
  *************************************/
 
@@ -68,7 +68,7 @@ static NVRAM_HANDLER( midyunit )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -100,7 +100,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -141,7 +141,7 @@ INPUT_PORTS_START( narc )
 	PORT_DIPSETTING(      0xc000, DEF_STR( English ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unknown ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unknown ) )
 
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -240,7 +240,7 @@ INPUT_PORTS_START( trog )
 	PORT_DIPSETTING(      0xc000, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -703,7 +703,7 @@ INPUT_PORTS_START( term2 )
 	PORT_DIPSETTING(      0xc000, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -788,11 +788,11 @@ INPUT_PORTS_START( totcarn )
 	PORT_DIPSETTING(      0x0007, "Finland" )
 	PORT_DIPSETTING(      0x0006, "Norway" )
 	PORT_DIPSETTING(      0x0005, "Denmark" )
-//	PORT_DIPSETTING(      0x0004, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x0003, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x0002, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x0001, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0004, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0003, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0002, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0001, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
@@ -838,7 +838,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -856,7 +856,7 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Z-unit machine driver
+ *  Z-unit machine driver
  *
  *************************************/
 
@@ -892,7 +892,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Y-unit machine drivers
+ *  Y-unit machine drivers
  *
  *************************************/
 
@@ -959,17 +959,17 @@ static MACHINE_DRIVER_START( mkyawdim )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(yunit_core)
-	
+
 	MDRV_CPU_ADD(Z80, 5000000)
 	MDRV_CPU_PROGRAM_MAP(yawdim_sound_map,0)
-	
+
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(4096)
 	MDRV_VIDEO_START(mkyawdim)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(OKIM6295, 8000)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -977,19 +977,19 @@ MACHINE_DRIVER_END
 
 
 /*
-	individual machine drivers with tweaked areas and VBLANK timing
-	based on these video params:
+    individual machine drivers with tweaked areas and VBLANK timing
+    based on these video params:
 
-	          VERTICAL                   HORIZONTAL
-	Narc:     001B-01AB / 01B0 (400)     003D-013D / 0150 (512)
-	Trog:     0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
-	Strkforc: 0014-0113 / 0120 (255)     002D-00F5 / 00FC (400)
-	Smashtv:  0014-0114 / 0120 (256)     002D-00FA / 00FC (410)
-	Hiimpact: 0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
-	Shimpact: 0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
-	Term2:    0014-0113 / 0120 (255)     002D-00F7 / 00FC (404)
-	MK:       0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
-	Totcarn:  0014-0114 / 0120 (256)     0032-00FA / 00FC (400)
+              VERTICAL                   HORIZONTAL
+    Narc:     001B-01AB / 01B0 (400)     003D-013D / 0150 (512)
+    Trog:     0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
+    Strkforc: 0014-0113 / 0120 (255)     002D-00F5 / 00FC (400)
+    Smashtv:  0014-0114 / 0120 (256)     002D-00FA / 00FC (410)
+    Hiimpact: 0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
+    Shimpact: 0014-0114 / 0120 (256)     002D-00F3 / 00FC (396)
+    Term2:    0014-0113 / 0120 (255)     002D-00F7 / 00FC (404)
+    MK:       0014-0112 / 0120 (254)     002D-00F5 / 00FC (400)
+    Totcarn:  0014-0114 / 0120 (256)     0032-00FA / 00FC (400)
 */
 
 
@@ -1025,7 +1025,7 @@ static MACHINE_DRIVER_START( term2 )
 	MDRV_IMPORT_FROM(yunit_adpcm)
 	MDRV_VBLANK_DURATION(COMPUTED_VBLANK(255, 288, MKLA5_FPS))
 	MDRV_VISIBLE_AREA(0, 399, 0, 255)
-//	MDRV_VISIBLE_AREA(0, 403, 0, 254)
+//  MDRV_VISIBLE_AREA(0, 403, 0, 254)
 MACHINE_DRIVER_END
 
 
@@ -1046,7 +1046,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1953,7 +1953,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

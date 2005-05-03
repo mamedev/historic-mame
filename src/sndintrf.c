@@ -1,15 +1,15 @@
 /***************************************************************************
 
-	sndintrf.c
+    sndintrf.c
 
-	Core sound interface functions and definitions.
+    Core sound interface functions and definitions.
 
 ****************************************************************************
 
-	Still to do:
-		* fix drivers that used to use ADPCM
-		* many cores do their own resampling; they should stop
-		* many cores mix to a separate buffer; no longer necessary
+    Still to do:
+        * fix drivers that used to use ADPCM
+        * many cores do their own resampling; they should stop
+        * many cores mix to a separate buffer; no longer necessary
 
 ***************************************************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -76,7 +76,7 @@ struct speaker_info
 
 /*************************************
  *
- *	Prototypes for all get info routines
+ *  Prototypes for all get info routines
  *
  *************************************/
 
@@ -172,7 +172,7 @@ void filter_rc_get_info(void *token, UINT32 state, union sndinfo *info);
 
 /*************************************
  *
- *	The core list of sound interfaces
+ *  The core list of sound interfaces
  *
  *************************************/
 
@@ -434,7 +434,7 @@ const struct
 
 /*************************************
  *
- *	Macros to help verify sound number
+ *  Macros to help verify sound number
  *
  *************************************/
 
@@ -456,7 +456,7 @@ const struct
 
 /*************************************
  *
- *	Macros to help verify sound type+index
+ *  Macros to help verify sound type+index
  *
  *************************************/
 
@@ -488,7 +488,7 @@ const struct
 
 /*************************************
  *
- *	Macros to help verify sound type
+ *  Macros to help verify sound type
  *
  *************************************/
 
@@ -510,7 +510,7 @@ const struct
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -540,7 +540,7 @@ static wav_file *wavfile;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -553,7 +553,7 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 
 /*************************************
  *
- *	Start up the sound system
+ *  Start up the sound system
  *
  *************************************/
 
@@ -563,11 +563,11 @@ int sound_start(void)
 	nosound_mode = (Machine->sample_rate == 0);
 	if (nosound_mode)
 		Machine->sample_rate = 11025;
-	
+
 	/* initialize the interfaces */
 	VPRINTF(("sndintrf_init\n"));
 	sndintrf_init();
-	
+
 	/* count the speakers */
 	for (totalspeakers = 0; Machine->drv->speaker[totalspeakers].tag; totalspeakers++) ;
 	VPRINTF(("total speakers = %d\n", totalspeakers));
@@ -577,7 +577,7 @@ int sound_start(void)
 	samples_this_frame = osd_start_audio_stream(1);
 	if (!samples_this_frame)
 		return 1;
-	
+
 	/* allocate memory for mix buffers */
 	finalmix = auto_malloc(Machine->sample_rate * sizeof(*finalmix));
 	leftmix = auto_malloc(Machine->sample_rate * sizeof(*leftmix));
@@ -589,25 +589,25 @@ int sound_start(void)
 	/* initialize the streams engine */
 	VPRINTF(("streams_init\n"));
 	streams_init();
-	
+
 	/* now start up the sound chips and tag their streams */
 	VPRINTF(("start_sound_chips\n"));
 	if (start_sound_chips())
 		return 1;
-	
+
 	/* then create all the speakers */
 	VPRINTF(("start_speakers\n"));
 	if (start_speakers())
 		return 1;
-	
+
 	/* finally, do all the routing */
 	VPRINTF(("route_sound\n"));
 	if (route_sound())
 		return 1;
-		
+
 	if (MAKE_WAVS)
 		wavfile = wav_open("finalmix.wav", Machine->sample_rate, 2);
-	
+
 	global_sound_enabled = 1;
 	return 0;
 }
@@ -616,7 +616,7 @@ int sound_start(void)
 
 /*************************************
  *
- *	Initialize the global interface
+ *  Initialize the global interface
  *
  *************************************/
 
@@ -654,14 +654,14 @@ void sndintrf_init(void)
 
 /*************************************
  *
- *	Start up all the sound chips
+ *  Start up all the sound chips
  *
  *************************************/
 
 static int start_sound_chips(void)
 {
 	int sndnum;
-	
+
 	/* reset the matrix and sound array */
 	memset(sound_matrix, 0, sizeof(sound_matrix));
 	memset(sound, 0, sizeof(sound));
@@ -689,13 +689,13 @@ static int start_sound_chips(void)
 		/* zap all the info */
 		info = &sound[sndnum];
 		memset(info, 0, sizeof(*info));
-		
+
 		/* copy in all the relevant info */
 		info->sound = msound;
 		info->sndindex = index;
 		info->intf = sndintrf[msound->sound_type];
 		info->token = NULL;
-		
+
 		/* start the chip, tagging all its streams */
 		VPRINTF(("sndnum = %d -- sound_type = %d, index = %d\n", sndnum, msound->sound_type, index));
 		current_sound_start = info;
@@ -703,11 +703,11 @@ static int start_sound_chips(void)
 		info->token = (*info->intf.start)(index, msound->clock, msound->config);
 		current_sound_start = NULL;
 		VPRINTF(("  token = %p\n", info->token));
-		
+
 		/* if that failed, die */
 		if (!info->token)
 			return 1;
-		
+
 		/* now count the outputs */
 		VPRINTF(("Counting outputs\n"));
 		for (index = 0; ; index++)
@@ -718,25 +718,25 @@ static int start_sound_chips(void)
 			info->outputs += stream_get_outputs(stream);
 			VPRINTF(("  stream %p, %d outputs\n", stream, stream_get_outputs(stream)));
 		}
-		
+
 		/* if we have outputs, examine them */
 		if (info->outputs)
 		{
 			/* allocate an array to hold them */
 			info->output = auto_malloc(info->outputs * sizeof(*info->output));
 			VPRINTF(("  %d outputs total\n", info->outputs));
-			
+
 			/* now fill the array */
 			info->outputs = 0;
 			for (index = 0; ; index++)
 			{
 				sound_stream *stream = stream_find_by_tag(info, index);
 				int outputs, outputnum;
-				
+
 				if (!stream)
 					break;
 				outputs = stream_get_outputs(stream);
-				
+
 				/* fill in an entry for each output */
 				for (outputnum = 0; outputnum < outputs; outputnum++)
 				{
@@ -754,7 +754,7 @@ static int start_sound_chips(void)
 
 /*************************************
  *
- *	Start up the speakers
+ *  Start up the speakers
  *
  *************************************/
 
@@ -768,7 +768,7 @@ static int start_speakers(void)
 	{
 		const struct MachineSpeaker *mspeaker = &Machine->drv->speaker[totalspeakers];
 		struct speaker_info *info;
-		
+
 		/* stop when we hit an empty entry */
 		if (!mspeaker->tag)
 			break;
@@ -776,7 +776,7 @@ static int start_speakers(void)
 		/* zap all the info */
 		info = &speaker[totalspeakers];
 		memset(info, 0, sizeof(*info));
-		
+
 		/* copy in all the relevant info */
 		info->speaker = mspeaker;
 		info->mixer_stream = NULL;
@@ -789,15 +789,15 @@ static int start_speakers(void)
 
 /*************************************
  *
- *	Helpers to locate speakers or
- *	sound chips by tag
+ *  Helpers to locate speakers or
+ *  sound chips by tag
  *
  *************************************/
 
 static struct speaker_info *find_speaker_by_tag(const char *tag)
 {
 	int spknum;
-	
+
 	/* attempt to find the speaker in our list */
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 		if (!strcmp(speaker[spknum].speaker->tag, tag))
@@ -821,38 +821,38 @@ static struct sound_info *find_sound_by_tag(const char *tag)
 
 /*************************************
  *
- *	Route the sounds to their
- *	destinations
+ *  Route the sounds to their
+ *  destinations
  *
  *************************************/
 
 static int route_sound(void)
 {
 	int sndnum, spknum, routenum, outputnum;
-	
+
 	/* iterate over all the sound chips */
 	for (sndnum = 0; sndnum < totalsnd; sndnum++)
 	{
 		struct sound_info *info = &sound[sndnum];
-		
+
 		/* iterate over all routes */
 		for (routenum = 0; routenum < info->sound->routes; routenum++)
 		{
 			const struct MachineSoundRoute *mroute = &info->sound->route[routenum];
 			struct speaker_info *speaker;
 			struct sound_info *sound;
-		
+
 			/* find the target */
 			speaker = find_speaker_by_tag(mroute->target);
 			sound = find_sound_by_tag(mroute->target);
-			
+
 			/* if neither found, it's fatal */
 			if (!speaker && !sound)
 			{
 				printf("Sound route \"%s\" not found!\n", mroute->target);
 				return 1;
 			}
-			
+
 			/* if we got a speaker, bump its input count */
 			if (speaker)
 			{
@@ -863,7 +863,7 @@ static int route_sound(void)
 			}
 		}
 	}
-	
+
 	/* now allocate the mixers and input data */
 	streams_set_tag(NULL);
 	for (spknum = 0; spknum < totalspeakers; spknum++)
@@ -883,18 +883,18 @@ static int route_sound(void)
 	for (sndnum = 0; sndnum < totalsnd; sndnum++)
 	{
 		struct sound_info *info = &sound[sndnum];
-		
+
 		/* iterate over all routes */
 		for (routenum = 0; routenum < info->sound->routes; routenum++)
 		{
 			const struct MachineSoundRoute *mroute = &info->sound->route[routenum];
 			struct speaker_info *speaker;
 			struct sound_info *sound;
-		
+
 			/* find the target */
 			speaker = find_speaker_by_tag(mroute->target);
 			sound = find_sound_by_tag(mroute->target);
-			
+
 			/* if it's a speaker, set the input */
 			if (speaker)
 			{
@@ -902,18 +902,18 @@ static int route_sound(void)
 					if (mroute->output == outputnum || mroute->output == ALL_OUTPUTS)
 					{
 						char namebuf[256];
-					
+
 						/* fill in the input data on this speaker */
 						speaker->input[speaker->inputs].gain = mroute->gain;
 						speaker->input[speaker->inputs].default_gain = mroute->gain;
 						sprintf(namebuf, "%s:%s #%d.%d", speaker->speaker->tag, sndnum_name(sndnum), info->sndindex, outputnum);
 						speaker->input[speaker->inputs].name = auto_strdup(namebuf);
-					
+
 						/* connect the output to the input */
 						stream_set_input(speaker->mixer_stream, speaker->inputs++, info->output[outputnum].stream, info->output[outputnum].output, mroute->gain);
 					}
 			}
-			
+
 			/* if it's a sound chip, set the input */
 			else
 			{
@@ -930,21 +930,21 @@ static int route_sound(void)
 
 /*************************************
  *
- *	Shut down the sound system
+ *  Shut down the sound system
  *
  *************************************/
 
 void sound_stop(void)
 {
 	int sndnum;
-	
+
 	if (wavfile)
 		wav_close(wavfile);
 
 #ifdef MAME_DEBUG
 {
 	int spknum;
-	
+
 	/* log the maximum sample values for all speakers */
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
@@ -962,7 +962,7 @@ void sound_stop(void)
 			if (info->intf.stop)
 				(*info->intf.stop)(info->token);
 		}
-	
+
 	/* stop the OSD code */
 	osd_stop_audio_stream();
 
@@ -977,7 +977,7 @@ void sound_stop(void)
 
 /*************************************
  *
- *	Mixer update
+ *  Mixer update
  *
  *************************************/
 
@@ -989,12 +989,12 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 
 	VPRINTF(("Mixer_update(%d)\n", length));
 
-	/* loop over samples */	
+	/* loop over samples */
 	for (pos = 0; pos < length; pos++)
 	{
 		INT32 sample = inputs[0][pos];
 		int inp;
-		
+
 		/* add up all the inputs */
 		for (inp = 1; inp < numinputs; inp++)
 			sample += inputs[inp][pos];
@@ -1006,7 +1006,7 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 
 /*************************************
  *
- *	Reset all sound chips
+ *  Reset all sound chips
  *
  *************************************/
 
@@ -1028,7 +1028,7 @@ void sound_reset(void)
 
 /*************************************
  *
- *	Early token registration
+ *  Early token registration
  *
  *************************************/
 
@@ -1042,28 +1042,28 @@ void sound_register_token(void *token)
 
 /*************************************
  *
- *	Once/frame update routine
+ *  Once/frame update routine
  *
  *************************************/
 
 void sound_frame_update(void)
 {
 	int sample, spknum;
-	
+
 	VPRINTF(("sound_frame_update\n"));
-	
+
 	profiler_mark(PROFILER_SOUND);
-	
+
 	/* reset the mixing streams */
 	memset(leftmix, 0, samples_this_frame * sizeof(*leftmix));
 	memset(rightmix, 0, samples_this_frame * sizeof(*rightmix));
-	
+
 	/* force all the speaker streams to generate the proper number of samples */
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
 		struct speaker_info *spk = &speaker[spknum];
 		stream_sample_t *stream_buf;
-		
+
 		/* get the output buffer */
 		if (spk->mixer_stream)
 		{
@@ -1082,7 +1082,7 @@ void sound_frame_update(void)
 				spk->total_samples++;
 			}
 #endif
-			
+
 			/* mix if sound is enabled */
 			if (global_sound_enabled && !nosound_mode)
 			{
@@ -1098,7 +1098,7 @@ void sound_frame_update(void)
 				else if (spk->speaker->x < 0)
 					for (sample = 0; sample < samples_this_frame; sample++)
 						leftmix[sample] += stream_buf[sample];
-				
+
 				/* if the speaker is to the right, send only to the right */
 				else
 					for (sample = 0; sample < samples_this_frame; sample++)
@@ -1106,12 +1106,12 @@ void sound_frame_update(void)
 			}
 		}
 	}
-	
+
 	/* now downmix the final result */
 	for (sample = 0; sample < samples_this_frame; sample++)
 	{
 		INT32 samp;
-		
+
 		/* clamp the left side */
 		samp = leftmix[sample];
 		if (samp < -32768)
@@ -1119,7 +1119,7 @@ void sound_frame_update(void)
 		else if (samp > 32767)
 			samp = 32767;
 		finalmix[sample*2+0] = samp;
-	
+
 		/* clamp the right side */
 		samp = rightmix[sample];
 		if (samp < -32768)
@@ -1148,9 +1148,9 @@ void sound_frame_update(void)
 
 /*************************************
  *
- *	Compute the fractional part of
- *	value based on how far along we
- *	are within the current frame
+ *  Compute the fractional part of
+ *  value based on how far along we
+ *  are within the current frame
  *
  *************************************/
 
@@ -1158,7 +1158,7 @@ int sound_scalebufferpos(int value)
 {
 	mame_time elapsed = mame_timer_timeelapsed(sound_update_timer);
 	int result;
-	
+
 	/* clamp to protect against negative time */
 	if (elapsed.seconds < 0)
 		elapsed = time_zero;
@@ -1174,7 +1174,7 @@ int sound_scalebufferpos(int value)
 
 /*************************************
  *
- *	Helpers for sound engines
+ *  Helpers for sound engines
  *
  *************************************/
 
@@ -1187,7 +1187,7 @@ int sndti_to_sndnum(int type, int index)
 
 /*************************************
  *
- *	Global sound enable/disable
+ *  Global sound enable/disable
  *
  *************************************/
 
@@ -1200,7 +1200,7 @@ void sound_global_enable(int enable)
 
 /*************************************
  *
- *	Sound chip resetting
+ *  Sound chip resetting
  *
  *************************************/
 
@@ -1215,7 +1215,7 @@ void sndti_reset(int type, int index)
 
 /*************************************
  *
- *	Output gain get/set
+ *  Output gain get/set
  *
  *************************************/
 
@@ -1240,14 +1240,14 @@ void sndti_set_output_gain(int type, int index, int output, float gain)
 
 /*************************************
  *
- *	Get the number of user gain controls
+ *  Get the number of user gain controls
  *
  *************************************/
 
 int sound_get_user_gain_count(void)
 {
 	int count = 0, speakernum;
-	
+
 	/* count up the number of speaker inputs */
 	for (speakernum = 0; speakernum < totalspeakers; speakernum++)
 		count += speaker[speakernum].inputs;
@@ -1258,14 +1258,14 @@ int sound_get_user_gain_count(void)
 
 /*************************************
  *
- *	Set the nth user gain value
+ *  Set the nth user gain value
  *
  *************************************/
 
 void sound_set_user_gain(int index, float gain)
 {
 	int count = 0, speakernum;
-	
+
 	/* count up the number of speaker inputs */
 	for (speakernum = 0; speakernum < totalspeakers; speakernum++)
 	{
@@ -1284,14 +1284,14 @@ void sound_set_user_gain(int index, float gain)
 
 /*************************************
  *
- *	Get the nth user gain value
+ *  Get the nth user gain value
  *
  *************************************/
 
 float sound_get_user_gain(int index)
 {
 	int count = 0, speakernum;
-	
+
 	/* count up the number of speaker inputs */
 	for (speakernum = 0; speakernum < totalspeakers; speakernum++)
 	{
@@ -1309,14 +1309,14 @@ float sound_get_user_gain(int index)
 
 /*************************************
  *
- *	Get the nth user default gain value
+ *  Get the nth user default gain value
  *
  *************************************/
 
 float sound_get_default_gain(int index)
 {
 	int count = 0, speakernum;
-	
+
 	/* count up the number of speaker inputs */
 	for (speakernum = 0; speakernum < totalspeakers; speakernum++)
 	{
@@ -1334,14 +1334,14 @@ float sound_get_default_gain(int index)
 
 /*************************************
  *
- *	Get the nth user gain name
+ *  Get the nth user gain name
  *
  *************************************/
 
 const char *sound_get_user_gain_name(int index)
 {
 	int count = 0, speakernum;
-	
+
 	/* count up the number of speaker inputs */
 	for (speakernum = 0; speakernum < totalspeakers; speakernum++)
 	{
@@ -1359,12 +1359,12 @@ const char *sound_get_user_gain_name(int index)
 
 /*************************************
  *
- *	Interfaces to a specific sound chip
+ *  Interfaces to a specific sound chip
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 sndnum_get_info_int(int sndnum, UINT32 state)
@@ -1409,7 +1409,7 @@ const char *sndnum_get_info_string(int sndnum, UINT32 state)
 
 
 /*--------------------------
- 	Set info accessors
+    Set info accessors
 --------------------------*/
 
 void sndnum_set_info_int(int sndnum, UINT32 state, INT64 data)
@@ -1438,7 +1438,7 @@ void sndnum_set_info_fct(int sndnum, UINT32 state, genf *data)
 
 
 /*--------------------------
- 	Misc accessors
+    Misc accessors
 --------------------------*/
 
 int sndnum_clock(int sndnum)
@@ -1457,12 +1457,12 @@ void *sndnum_token(int sndnum)
 
 /*************************************
  *
- *	Interfaces to a specific sound chip
+ *  Interfaces to a specific sound chip
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 sndti_get_info_int(int sndtype, int sndindex, UINT32 state)
@@ -1515,7 +1515,7 @@ const char *sndti_get_info_string(int sndtype, int sndindex, UINT32 state)
 
 
 /*--------------------------
- 	Set info accessors
+    Set info accessors
 --------------------------*/
 
 void sndti_set_info_int(int sndtype, int sndindex, UINT32 state, INT64 data)
@@ -1553,7 +1553,7 @@ void sndti_set_info_fct(int sndtype, int sndindex, UINT32 state, genf *data)
 
 
 /*--------------------------
- 	Misc accessors
+    Misc accessors
 --------------------------*/
 
 int sndti_clock(int sndtype, int sndindex)
@@ -1576,12 +1576,12 @@ void *sndti_token(int sndtype, int sndindex)
 
 /*************************************
  *
- *	Interfaces to a specific sound type
+ *  Interfaces to a specific sound type
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 sndtype_get_info_int(int sndtype, UINT32 state)
@@ -1628,10 +1628,10 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state)
 
 /*************************************
  *
- *	Dummy sound interfaces
+ *  Dummy sound interfaces
  *
  *************************************/
- 
+
 static void *dummy_sound_start(int index, int clock, const void *config)
 {
 	logerror("Warning: starting a dummy sound core -- you are missing a hookup in sndintrf.c!\n");

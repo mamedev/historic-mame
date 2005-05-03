@@ -1,89 +1,104 @@
-/* Pocket Gal Deluxe (and bootleg) */
+/*
 
+Pocket Gal Deluxe
+Nihon System Inc., 1993
+
+This game runs on Data East hardware.
+
+PCB Layout
+----------
+
+DEC-22V0  DE-0378-2
+|-------------------------------------|
+|  M6295(2)  KG01.14F     DE102  62256|
+|  M6295(1)  MAZ-03.13F          62256|
+|                                     |
+|   32.220MHz              KG00-2.12A |
+|                                     |
+|J           DE56              DE71   |
+|A                                    |
+|M     DE153            28MHz         |
+|M                    6264     DE52   |
+|A                    6264            |
+|                                     |
+|                                     |
+|                                     |
+|DSW1                   MAZ-01.3B     |
+|     DE104  MAZ-02.2H                |
+|DSW2                   MAZ-00.1B     |
+|-------------------------------------|
+
+Notes:
+      - CPU is DE102. The clock input is 14.000MHz on pin 6
+        It's a custom-made encrypted 68000.
+        The package is a Quad Flat Pack, has 128 pins and is symmetrically square (1 1/4" square from tip to tip).
+      - M6295(1) clock: 2.01375MHz (32.220 / 16)
+        M6295(2) clock: 1.006875MHz (32.220 / 32)
+      - VSync: 58Hz
+
+
+    Driver by David Haywood and Bryan McPhail
+
+*/
+
+/*
+original todo:
+    verify sound.
+
+bootleg todo:
+
+    Sound.
+    Fix GFX glitches in background of girls after each level.
+    Tidy up code.
+
+*/
 
 #include "driver.h"
 #include "decocrpt.h"
+#include "decoprot.h"
+#include "deco16ic.h"
+#include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
+
+VIDEO_START(pktgaldx);
+VIDEO_UPDATE(pktgaldx);
+VIDEO_START(pktgaldb);
+VIDEO_UPDATE(pktgaldb);
 
 extern void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcode_select_xor);
 
-data16_t* pcktgaldb_fgram;
-data16_t* pcktgaldb_sprites;
+extern data16_t* pcktgaldb_fgram;
+extern data16_t* pcktgaldb_sprites;
 
+/**********************************************************************************/
 
-/* Video on the orginal */
-VIDEO_START(pktgaldx)
+static WRITE16_HANDLER(pktgaldx_oki_bank_w)
 {
-	return 0;
+	OKIM6295_set_bank_base(1, data&3);
 }
 
-VIDEO_UPDATE(pktgaldx)
-{
-
-}
-
-/* Video for the bootleg */
-VIDEO_START(pktgaldb)
-{
-	return 0;
-}
-
-VIDEO_UPDATE(pktgaldb)
-{
-	int x,y;
-	int offset=0;
-	int tileno;
-	int colour;
-
-	fillbitmap(bitmap, get_black_pen(), cliprect);
-
-	/* the bootleg has lots of sprites instead?  - i bet this is easier with real bootleg gfx roms */
-	for (offset = 0;offset<0x1600/2;offset+=8)
-	{
-		tileno =  pcktgaldb_sprites[offset+3] | (pcktgaldb_sprites[offset+2]<<16);
-		colour =  pcktgaldb_sprites[offset+1]>>1;
-		x = pcktgaldb_sprites[offset+0];
-		y = pcktgaldb_sprites[offset+4];
-
-		x-=0xc2;
-		y&=0x1ff;
-		y-=8;
-
-		tileno -=0x1000;
-		drawgfx(bitmap,Machine->gfx[1],tileno,colour,0,0,x,y,cliprect,TRANSPARENCY_PEN,0);
-	}
-
-	for (offset = 0x1600/2;offset<0x2000/2;offset+=8)
-	{
-		tileno =  pcktgaldb_sprites[offset+3] | (pcktgaldb_sprites[offset+2]<<16);
-		colour =  pcktgaldb_sprites[offset+1]>>1;
-		x = pcktgaldb_sprites[offset+0]&0x1ff;
-		y = pcktgaldb_sprites[offset+4]&0x0ff;
-
-		x-=0xc2;
-		y&=0x1ff;
-		y-=8;
-
-		drawgfx(bitmap,Machine->gfx[2],tileno,colour,0,0,x,y,cliprect,TRANSPARENCY_PEN,0);
-	}
-
-	for (offset = 0x2000/2;offset<0x4000/2;offset+=8)
-	{
-		tileno =  pcktgaldb_sprites[offset+3] | (pcktgaldb_sprites[offset+2]<<16);
-		colour =  pcktgaldb_sprites[offset+1]>>1;
-		x = pcktgaldb_sprites[offset+0]&0x1ff;
-		y = pcktgaldb_sprites[offset+4]&0x0ff;
-
-		x-=0xc2;
-		y&=0x1ff;
-		y-=8;
-
-		drawgfx(bitmap,Machine->gfx[0],tileno,colour,0,0,x,y,cliprect,TRANSPARENCY_PEN,0);
-	}
-
-}
+/**********************************************************************************/
 
 static ADDRESS_MAP_START( pktgaldx_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x110000, 0x1107ff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x112000, 0x1127ff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
+
+	AM_RANGE(0x120000, 0x1207ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x130000, 0x130fff) AM_RAM AM_WRITE(deco16_nonbuffered_palette_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0x140000, 0x14000f) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x140006, 0x140007) AM_READ(OKIM6295_status_0_lsb_r)
+	AM_RANGE(0x150000, 0x15000f) AM_WRITE(OKIM6295_data_1_lsb_w)
+	AM_RANGE(0x150006, 0x150007) AM_READ(OKIM6295_status_1_lsb_r)
+
+	AM_RANGE(0x161800, 0x16180f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x164800, 0x164801) AM_WRITE(pktgaldx_oki_bank_w)
+	AM_RANGE(0x167800, 0x167fff) AM_READ(deco16_104_pktgaldx_prot_r) AM_WRITE(deco16_104_pktgaldx_prot_w) AM_BASE(&deco16_prot_ram)
+	AM_RANGE(0x170000, 0x17ffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -132,7 +147,7 @@ static ADDRESS_MAP_START( pktgaldb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x140006, 0x140007) AM_READ(pckgaldx_unknown_r) // sound?
 	AM_RANGE(0x150006, 0x150007) AM_READ(pckgaldx_unknown_r) // sound?
 
-//	AM_RANGE(0x160000, 0x167fff) AM_READ(MRA16_RAM)
+//  AM_RANGE(0x160000, 0x167fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x170000, 0x17ffff) AM_READ(MRA16_RAM)
 
 /*
@@ -150,7 +165,7 @@ cpu #0 (PC=0000923C): unmapped program memory word read from 00167DB2 & 00FF
 	AM_RANGE(0x16500A, 0x16500b) AM_READ(pckgaldx_unknown_r)
 
 	/* should we really be using these to read the i/o in the BOOTLEG?
-	  these look like i/o through protection ... */
+      these look like i/o through protection ... */
 	AM_RANGE(0x167842, 0x167843) AM_READ(input_port_2_word_r) // player controls
 	AM_RANGE(0x167c4c, 0x167c4d) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x167db2, 0x167db3) AM_READ(input_port_0_word_r)
@@ -190,6 +205,7 @@ static ADDRESS_MAP_START( pktgaldb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x330000, 0x330bff) AM_WRITE(MWA16_RAM) AM_WRITE(paletteram16_xRGB_w) AM_BASE(&paletteram16) // extra colours?
 ADDRESS_MAP_END
 
+/**********************************************************************************/
 
 INPUT_PORTS_START( pktgaldx )
 	PORT_START	/* 16bit */
@@ -306,10 +322,27 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 64 },	/* Tiles (8x8) */
-	{ REGION_GFX1, 0, &tile_16x16_layout,     0, 64 },	/* Tiles (16x16) */
-	{ REGION_GFX2, 0, &spritelayout, 0, 64},	/* Sprites (16x16) */
+	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 32 },	/* Tiles (8x8) */
+	{ REGION_GFX1, 0, &tile_16x16_layout,   0, 32 },	/* Tiles (16x16) */
+	{ REGION_GFX2, 0, &spritelayout,      512, 32 },	/* Sprites (16x16) */
+	{ -1 } /* end of array */
+};
 
+static struct GfxLayout bootleg_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0,1,2,3 },
+	{ 48,52,56,60,32,36,40,44,16,20,24,28,0,4,8,12 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+	  8*64, 9*64,10*64,11*64,12*64,13*64,14*64,15*64},
+	16*64
+};
+
+static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &bootleg_spritelayout,     0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -324,8 +357,8 @@ static MACHINE_DRIVER_START( pktgaldx )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 	MDRV_PALETTE_LENGTH(4096)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -334,6 +367,17 @@ static MACHINE_DRIVER_START( pktgaldx )
 	MDRV_VIDEO_UPDATE(pktgaldx)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -347,11 +391,11 @@ static MACHINE_DRIVER_START( pktgaldb )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 	MDRV_PALETTE_LENGTH(4096)
-	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(bootleg_gfxdecodeinfo)
 
 	MDRV_VIDEO_START(pktgaldb)
 	MDRV_VIDEO_UPDATE(pktgaldb)
@@ -359,46 +403,6 @@ static MACHINE_DRIVER_START( pktgaldb )
 	/* sound hardware */
 MACHINE_DRIVER_END
 
-/*
-
-Pocket Gal Deluxe
-Nihon System Inc., 1993
-
-This game runs on Data East hardware.
-
-PCB Layout
-----------
-
-DEC-22V0  DE-0378-2
-|-------------------------------------|
-|  M6295(2)  KG01.14F     DE102  62256|
-|  M6295(1)  MAZ-03.13F          62256|
-|                                     |
-|   32.220MHz              KG00-2.12A |
-|                                     |
-|J           DE56              DE71   |
-|A                                    |
-|M     DE153            28MHz         |
-|M                    6264     DE52   |
-|A                    6264            |
-|                                     |
-|                                     |
-|                                     |
-|DSW1                   MAZ-01.3B     |
-|     DE104  MAZ-02.2H                |
-|DSW2                   MAZ-00.1B     |
-|-------------------------------------|
-
-Notes:
-      - CPU is unknown. It's chip DE102. The clock input is 14.000MHz on pin 6
-        It's thought to be a custom-made encrypted 68000.
-        The package is a Quad Flat Pack, has 128 pins and is symmetrically square (1 1/4" square from tip to tip).
-        So the question arises...  "Which CPU's manufactured around 1993 had 128 pins?"
-      - M6295(1) clock: 2.01375MHz (32.220 / 16)
-        M6295(2) clock: 1.006875MHz (32.220 / 32)
-      - VSync: 58Hz
-
-*/
 
 ROM_START( pktgaldx )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* DE102 code (encrypted) */
@@ -444,27 +448,17 @@ ROM_START( pktgaldb )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "kg01.14f",    0x00000, 0x20000, CRC(8a106263) SHA1(229ab17403c2b8f4e89a90a8cda2f3c3a4b55d9e) ) // 1.bin on the bootleg
 
-/* ORIGINAL ROMS! .. these are not from the bootleg, we should replace them with bootleg roms below */
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "maz-02.2h",    0x00000, 0x100000, CRC(c9d35a59) SHA1(07b44c7d7d76b668b4d6ca5672bd1c2910228e68) )
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "maz-00.1b",    0x000000, 0x080000, CRC(fa3071f4) SHA1(72e7d920e9ca94f8cb166007a9e9e5426a201af8) )
-	ROM_LOAD16_BYTE( "maz-01.3b",    0x000001, 0x080000, CRC(4934fe21) SHA1(b852249f59906d69d32160ebaf9b4781193227e4) )
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )
+	ROM_LOAD16_BYTE( "11.bin",    0x000000, 0x80000, CRC(a8c8f1fd) SHA1(9fd5fa500967a1bd692abdbeef89ce195c8aecd4) )
+	ROM_LOAD16_BYTE( "6.bin",     0x000001, 0x80000, CRC(0e3335a1) SHA1(2d6899336302d222e8404dde159e64911a8f94e6) )
+	ROM_LOAD16_BYTE( "10.bin",    0x100000, 0x80000, CRC(9dd743a9) SHA1(dbc3e2bd044dbf21b04c174bd860969ee53b4050) )
+	ROM_LOAD16_BYTE( "7.bin",     0x100001, 0x80000, CRC(0ebf12b5) SHA1(17b6c2ce21de3671d75d89a41317efddf5b49339) )
+	ROM_LOAD16_BYTE( "9.bin",     0x200001, 0x80000, CRC(078f371c) SHA1(5b510a0f7f50c55cce1ffcc8f2e9c3432b23e352) )
+	ROM_LOAD16_BYTE( "8.bin",     0x200000, 0x80000, CRC(40f5a032) SHA1(c2ad585ddbc3ef40c6214cb30b4d78a2cd0a9446) )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* Oki samples (banked?) */
-	ROM_LOAD( "maz-03.13f",    0x00000, 0x100000, CRC(a313c964) SHA1(4a3664c4e2c44a017a0ab6a6d4361799cbda57b5) )
-
-/* BOOTLEG ROMS! .. sort use these later */
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD( "2.bin",    0x00000, 0x80000, CRC(f841d995) SHA1(0ef2f8fd9be62b979862c3688e7aad34c7b0404d) )
 	ROM_LOAD( "3.bin",    0x00000, 0x80000, CRC(4638747b) SHA1(56d79cd8d4d7b41b71f1e942b5a5bf1bafc5c6e7) )
-	ROM_LOAD( "6.bin",    0x00000, 0x80000, CRC(0e3335a1) SHA1(2d6899336302d222e8404dde159e64911a8f94e6) )
-	ROM_LOAD( "7.bin",    0x00000, 0x80000, CRC(0ebf12b5) SHA1(17b6c2ce21de3671d75d89a41317efddf5b49339) )
-	ROM_LOAD( "8.bin",    0x00000, 0x80000, CRC(40f5a032) SHA1(c2ad585ddbc3ef40c6214cb30b4d78a2cd0a9446) )
-	ROM_LOAD( "9.bin",    0x00000, 0x80000, CRC(078f371c) SHA1(5b510a0f7f50c55cce1ffcc8f2e9c3432b23e352) )
-	ROM_LOAD( "10.bin",    0x00000, 0x80000, CRC(9dd743a9) SHA1(dbc3e2bd044dbf21b04c174bd860969ee53b4050) )
-	ROM_LOAD( "11.bin",    0x00000, 0x80000, CRC(a8c8f1fd) SHA1(9fd5fa500967a1bd692abdbeef89ce195c8aecd4) )
+	ROM_LOAD( "2.bin",    0x80000, 0x80000, CRC(f841d995) SHA1(0ef2f8fd9be62b979862c3688e7aad34c7b0404d) )
 ROM_END
 
 
@@ -475,12 +469,6 @@ static DRIVER_INIT( pktgaldx )
 	deco102_decrypt(REGION_CPU1, 0x42ba, 0x00, 0x00);
 }
 
-static DRIVER_INIT( pktgaldb )
-{
-	deco56_decrypt(REGION_GFX1);
-}
-
-
-GAMEX(1992, pktgaldx, 0,        pktgaldx, pktgaldx, pktgaldx,  ROT0, "Data East", "Pocket Gal Deluxe (Euro v3.00)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1992, pktgaldj, pktgaldx, pktgaldx, pktgaldx, pktgaldx,  ROT0, "Nihon System",    "Pocket Gal Deluxe (Japan v3.00)",GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1992, pktgaldb, pktgaldx, pktgaldb, pktgaldx, pktgaldb,  ROT0, "bootleg",      "Pocket Gal Deluxe (Euro v3.00, bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAME( 1992, pktgaldx, 0,        pktgaldx, pktgaldx, pktgaldx,  ROT0, "Data East Corporation", "Pocket Gal Deluxe (Euro v3.00)" )
+GAME( 1993, pktgaldj, pktgaldx, pktgaldx, pktgaldx, pktgaldx,  ROT0, "Nihon System",          "Pocket Gal Deluxe (Japan v3.00)" )
+GAMEX(1992, pktgaldb, pktgaldx, pktgaldb, pktgaldx, 0,         ROT0, "bootleg",               "Pocket Gal Deluxe (Euro v3.00, bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

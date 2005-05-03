@@ -1,91 +1,91 @@
 /* ex: set tabstop=4 noexpandtab: */
 /*****************************************************************************
  *
- *	 i8x41.c
- *	 Portable UPI-41/8041/8741/8042/8742 emulator V0.2
+ *   i8x41.c
+ *   Portable UPI-41/8041/8741/8042/8742 emulator V0.2
  *
- *	 Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
+ *   Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
  *
  *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *   You can contact me at juergen@mame.net or pullmoll@stop1984.com
  *
  *   - This source code is released as freeware for non-commercial purposes
  *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
- *	   The licensing terms of MAME apply to this piece of code for the MAME
- *	   project and derviative works, as defined by the MAME license. You
- *	   may opt to make modifications, improvements or derivative works under
- *	   that same conditions, and the MAME project may opt to keep
- *	   modifications, improvements or derivatives under their terms exclusively.
+ *     The licensing terms of MAME apply to this piece of code for the MAME
+ *     project and derviative works, as defined by the MAME license. You
+ *     may opt to make modifications, improvements or derivative works under
+ *     that same conditions, and the MAME project may opt to keep
+ *     modifications, improvements or derivatives under their terms exclusively.
  *
- *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *   - Alternatively you can choose to apply the terms of the "GPL" (see
  *     below) to this - and only this - piece of code or your derivative works.
- *	   Note that in no case your choice can have any impact on any other
- *	   source code of the MAME project, or binary, or executable, be it closely
- *	   or losely related to this piece of code.
+ *     Note that in no case your choice can have any impact on any other
+ *     source code of the MAME project, or binary, or executable, be it closely
+ *     or losely related to this piece of code.
  *
- *	-  At your choice you are also free to remove either licensing terms from
- *	   this file and continue to use it under only one of the two licenses. Do this
- *	   if you think that licenses are not compatible (enough) for you, or if you
- *	   consider either license 'too restrictive' or 'too free'.
+ *  -  At your choice you are also free to remove either licensing terms from
+ *     this file and continue to use it under only one of the two licenses. Do this
+ *     if you think that licenses are not compatible (enough) for you, or if you
+ *     consider either license 'too restrictive' or 'too free'.
  *
- *	-  GPL (GNU General Public License)
- *	   This program is free software; you can redistribute it and/or
- *	   modify it under the terms of the GNU General Public License
- *	   as published by the Free Software Foundation; either version 2
- *	   of the License, or (at your option) any later version.
+ *  -  GPL (GNU General Public License)
+ *     This program is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License
+ *     as published by the Free Software Foundation; either version 2
+ *     of the License, or (at your option) any later version.
  *
- *	   This program is distributed in the hope that it will be useful,
- *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	   GNU General Public License for more details.
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
  *
- *	   You should have received a copy of the GNU General Public License
- *	   along with this program; if not, write to the Free Software
- *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- *
- *	This work is solely based on the
- *	'Intel(tm) UPI(tm)-41AH/42AH Users Manual'
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program; if not, write to the Free Software
+ *     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *
- *	**** Change Log ****
- *	HJB (19-Dec-2004) changed version to 0.3
- *	 - Tried to handle accesses to registers in get_info/set_info
- *	   before i8x41.ram is is initialized.
- *	 - cosmetics: readability in get_info/set_info, replaced non-ASCII
- *	   codes in comments, add 'ex' tabstop definition
+ *  This work is solely based on the
+ *  'Intel(tm) UPI(tm)-41AH/42AH Users Manual'
  *
- *	TLP (10-Jan-2003) Changed ver from 0.1 to 0.2
- *	 - Changed the internal RAM mask from 3Fh to FFh . The i8x41/i8x42 have
- *	   128/256 bytes of internal RAM respectively.
- *	 - Added output port data to the debug register view window.
- *	 - Added some missing break commands to the set_reg switch function.
- *	 - Changed Ports 1 and 2 to latched types (Quasi-bidirectional).
- *	 - Stopped illegal access to Port 0 and 3 (they don't exist).
- *	 - Changed ANLD, ORLD and MOVD instructions to act through Port 2 in
- *	   nibble mode.
- *	 - Copied F0 and moved F1 flags to the STATE flag bits where they belong.
- *	 - Corrected the 'addr' field by changing it from UINT8 to UINT16 for:
- *	   'INC @Rr' 'MOV @Rr,A' 'MOV @Rr,#N' 'XCH A,@Rr' 'XCHD A,@Rr'
- *	 - Added mask to TIMER when the TEST1 Counter overflows.
- *	 - Seperated the prescaler out of the timer/counter, in order to correct
- *	   the TEST1 input counter step.
- *	 - Moved TEST0 and TEST1 status flags out of the STATE register.
- *	   STATE register uses these upper bits for user definable purposes.
- *	 - TEST0 and TEST1 input lines are now sampled during the JTx/JNTx
- *	   instructions.
- *	 - Two methods for updating TEST1 input during counter mode are now
- *	   supported depending on the mode of use required.
- *	   You can use the Interrupt method, or input port read method.
- *	 - TIMER is now only controlled by the timer or counter (not both)
- *	   ie, When Starting the Counter, Stop the Timer and viceversa.
- *	 - Nested IRQs of any sort are no longer allowed, however IRQs can
- *	   become pending while a current interrupt is being serviced.
- *	 - IBF Interrupt now has priority over the Timer Interrupt, when they
- *	   occur simultaneously.
- *	 - Add the external Interrupt FLAGS (Port 24, Port 25).
- *	To Do:
- *	 - Add the external DMA FLAGS (Port 26, Port 27).  Page 4 and 37
+ *
+ *  **** Change Log ****
+ *  HJB (19-Dec-2004) changed version to 0.3
+ *   - Tried to handle accesses to registers in get_info/set_info
+ *     before i8x41.ram is is initialized.
+ *   - cosmetics: readability in get_info/set_info, replaced non-ASCII
+ *     codes in comments, add 'ex' tabstop definition
+ *
+ *  TLP (10-Jan-2003) Changed ver from 0.1 to 0.2
+ *   - Changed the internal RAM mask from 3Fh to FFh . The i8x41/i8x42 have
+ *     128/256 bytes of internal RAM respectively.
+ *   - Added output port data to the debug register view window.
+ *   - Added some missing break commands to the set_reg switch function.
+ *   - Changed Ports 1 and 2 to latched types (Quasi-bidirectional).
+ *   - Stopped illegal access to Port 0 and 3 (they don't exist).
+ *   - Changed ANLD, ORLD and MOVD instructions to act through Port 2 in
+ *     nibble mode.
+ *   - Copied F0 and moved F1 flags to the STATE flag bits where they belong.
+ *   - Corrected the 'addr' field by changing it from UINT8 to UINT16 for:
+ *     'INC @Rr' 'MOV @Rr,A' 'MOV @Rr,#N' 'XCH A,@Rr' 'XCHD A,@Rr'
+ *   - Added mask to TIMER when the TEST1 Counter overflows.
+ *   - Seperated the prescaler out of the timer/counter, in order to correct
+ *     the TEST1 input counter step.
+ *   - Moved TEST0 and TEST1 status flags out of the STATE register.
+ *     STATE register uses these upper bits for user definable purposes.
+ *   - TEST0 and TEST1 input lines are now sampled during the JTx/JNTx
+ *     instructions.
+ *   - Two methods for updating TEST1 input during counter mode are now
+ *     supported depending on the mode of use required.
+ *     You can use the Interrupt method, or input port read method.
+ *   - TIMER is now only controlled by the timer or counter (not both)
+ *     ie, When Starting the Counter, Stop the Timer and viceversa.
+ *   - Nested IRQs of any sort are no longer allowed, however IRQs can
+ *     become pending while a current interrupt is being serviced.
+ *   - IBF Interrupt now has priority over the Timer Interrupt, when they
+ *     occur simultaneously.
+ *   - Add the external Interrupt FLAGS (Port 24, Port 25).
+ *  To Do:
+ *   - Add the external DMA FLAGS (Port 26, Port 27).  Page 4 and 37
  *
  *****************************************************************************/
 
@@ -149,9 +149,9 @@ static UINT8 i8x41_win_layout[] = {
 /*
  * Memory locations
  * Note:
- * 000-3ff		internal ROM for 8x41 (1K)
- * 400-7ff		(more) internal for 8x42 type (2K)
- * 800-8ff		internal RAM
+ * 000-3ff      internal ROM for 8x41 (1K)
+ * 400-7ff      (more) internal for 8x42 type (2K)
+ * 800-8ff      internal RAM
  */
 #define M_IRAM	0x800	/* internal RAM is mapped here */
 #define M_BANK0 0x800	/* register bank 0 (8 times 8 bits) */
@@ -215,7 +215,7 @@ static void set_irq_line(int irqline, int state);
 
 
 /************************************************************************
- *	Shortcuts
+ *  Shortcuts
  ************************************************************************/
 
 INLINE void PUSH_PC_TO_STACK(void)
@@ -227,11 +227,11 @@ INLINE void PUSH_PC_TO_STACK(void)
 
 
 /************************************************************************
- *	Emulate the Instructions
+ *  Emulate the Instructions
  ************************************************************************/
 
 /***********************************
- *	illegal opcodes
+ *  illegal opcodes
  ***********************************/
 INLINE void illegal(void)
 {
@@ -239,7 +239,7 @@ INLINE void illegal(void)
 }
 
 /***********************************
- *	0110 1rrr *  ADD	 A,Rr
+ *  0110 1rrr *  ADD     A,Rr
  ***********************************/
 INLINE void add_r(int r)
 {
@@ -250,8 +250,8 @@ INLINE void add_r(int r)
 }
 
 /***********************************
- *	0110 000r
- *	ADD 	A,@Rr
+ *  0110 000r
+ *  ADD     A,@Rr
  ***********************************/
 INLINE void add_rm(int r)
 {
@@ -262,8 +262,8 @@ INLINE void add_rm(int r)
 }
 
 /***********************************
- *	0000 0011 7654 3210
- *	ADD 	A,#n
+ *  0000 0011 7654 3210
+ *  ADD     A,#n
  ***********************************/
 INLINE void add_i(void)
 {
@@ -275,8 +275,8 @@ INLINE void add_i(void)
 }
 
 /***********************************
- *	0111 1rrr
- *	ADDC	A,Rr
+ *  0111 1rrr
+ *  ADDC    A,Rr
  ***********************************/
 INLINE void addc_r(int r)
 {
@@ -287,8 +287,8 @@ INLINE void addc_r(int r)
 }
 
 /***********************************
- *	0111 000r
- *	ADDC	A,@Rr
+ *  0111 000r
+ *  ADDC    A,@Rr
  ***********************************/
 INLINE void addc_rm(int r)
 {
@@ -299,8 +299,8 @@ INLINE void addc_rm(int r)
 }
 
 /***********************************
- *	0001 0011 7654 3210
- *	ADDC	A,#n
+ *  0001 0011 7654 3210
+ *  ADDC    A,#n
  ***********************************/
 INLINE void addc_i(void)
 {
@@ -312,8 +312,8 @@ INLINE void addc_i(void)
 }
 
 /***********************************
- *	0101 1rrr
- *	ANL 	A,Rr
+ *  0101 1rrr
+ *  ANL     A,Rr
  ***********************************/
 INLINE void anl_r(int r)
 {
@@ -321,8 +321,8 @@ INLINE void anl_r(int r)
 }
 
 /***********************************
- *	0101 000r
- *	ANL 	A,@Rr
+ *  0101 000r
+ *  ANL     A,@Rr
  ***********************************/
 INLINE void anl_rm(int r)
 {
@@ -330,8 +330,8 @@ INLINE void anl_rm(int r)
 }
 
 /***********************************
- *	0101 0011 7654 3210
- *	ANL 	A,#n
+ *  0101 0011 7654 3210
+ *  ANL     A,#n
  ***********************************/
 INLINE void anl_i(void)
 {
@@ -340,8 +340,8 @@ INLINE void anl_i(void)
 }
 
 /***********************************
- *	1001 10pp 7654 3210
- *	ANL 	Pp,#n
+ *  1001 10pp 7654 3210
+ *  ANL     Pp,#n
  ***********************************/
 INLINE void anl_p_i(int p)
 {
@@ -359,8 +359,8 @@ INLINE void anl_p_i(int p)
 }
 
 /***********************************
- *	1001 11pp 7654 3210
- *	ANLD	Pp,A
+ *  1001 11pp 7654 3210
+ *  ANLD    Pp,A
  ***********************************/
 INLINE void anld_p_a(int p)
 {
@@ -372,8 +372,8 @@ INLINE void anld_p_a(int p)
 }
 
 /***********************************
- *	aaa1 0100 7654 3210
- *	CALL	addr
+ *  aaa1 0100 7654 3210
+ *  CALL    addr
  ***********************************/
 INLINE void call_i(int page)
 {
@@ -384,8 +384,8 @@ INLINE void call_i(int page)
 }
 
 /***********************************
- *	0010 0111
- *	CLR 	A
+ *  0010 0111
+ *  CLR     A
  ***********************************/
 INLINE void clr_a(void)
 {
@@ -393,8 +393,8 @@ INLINE void clr_a(void)
 }
 
 /***********************************
- *	1001 0111
- *	CLR 	C
+ *  1001 0111
+ *  CLR     C
  ***********************************/
 INLINE void clr_c(void)
 {
@@ -402,8 +402,8 @@ INLINE void clr_c(void)
 }
 
 /***********************************
- *	1000 0101
- *	CLR 	F0
+ *  1000 0101
+ *  CLR     F0
  ***********************************/
 INLINE void clr_f0(void)
 {
@@ -412,8 +412,8 @@ INLINE void clr_f0(void)
 }
 
 /***********************************
- *	1010 0101
- *	CLR 	F1
+ *  1010 0101
+ *  CLR     F1
  ***********************************/
 INLINE void clr_f1(void)
 {
@@ -421,8 +421,8 @@ INLINE void clr_f1(void)
 }
 
 /***********************************
- *	0011 0111
- *	CPL 	A
+ *  0011 0111
+ *  CPL     A
  ***********************************/
 INLINE void cpl_a(void)
 {
@@ -430,8 +430,8 @@ INLINE void cpl_a(void)
 }
 
 /***********************************
- *	1010 0111
- *	CPL 	C
+ *  1010 0111
+ *  CPL     C
  ***********************************/
 INLINE void cpl_c(void)
 {
@@ -439,8 +439,8 @@ INLINE void cpl_c(void)
 }
 
 /***********************************
- *	1001 0101
- *	CPL 	F0
+ *  1001 0101
+ *  CPL     F0
  ***********************************/
 INLINE void cpl_f0(void)
 {
@@ -449,8 +449,8 @@ INLINE void cpl_f0(void)
 }
 
 /***********************************
- *	1011 0101
- *	CPL 	F1
+ *  1011 0101
+ *  CPL     F1
  ***********************************/
 INLINE void cpl_f1(void)
 {
@@ -458,8 +458,8 @@ INLINE void cpl_f1(void)
 }
 
 /***********************************
- *	0101 0111
- *	DA		A
+ *  0101 0111
+ *  DA      A
  ***********************************/
 INLINE void da_a(void)
 {
@@ -474,8 +474,8 @@ INLINE void da_a(void)
 }
 
 /***********************************
- *	0000 0111
- *	DEC 	A
+ *  0000 0111
+ *  DEC     A
  ***********************************/
 INLINE void dec_a(void)
 {
@@ -483,8 +483,8 @@ INLINE void dec_a(void)
 }
 
 /***********************************
- *	1100 1rrr
- *	DEC 	Rr
+ *  1100 1rrr
+ *  DEC     Rr
  ***********************************/
 INLINE void dec_r(int r)
 {
@@ -492,8 +492,8 @@ INLINE void dec_r(int r)
 }
 
 /***********************************
- *	0001 0101
- *	DIS 	I
+ *  0001 0101
+ *  DIS     I
  ***********************************/
 INLINE void dis_i(void)
 {
@@ -501,8 +501,8 @@ INLINE void dis_i(void)
 }
 
 /***********************************
- *	0011 0101
- *	DIS 	TCNTI
+ *  0011 0101
+ *  DIS     TCNTI
  ***********************************/
 INLINE void dis_tcnti(void)
 {
@@ -510,8 +510,8 @@ INLINE void dis_tcnti(void)
 }
 
 /***********************************
- *	0111 1rrr 7654 3210
- *	DJNZ	Rr,addr
+ *  0111 1rrr 7654 3210
+ *  DJNZ    Rr,addr
  ***********************************/
 INLINE void djnz_r_i(int r)
 {
@@ -523,8 +523,8 @@ INLINE void djnz_r_i(int r)
 }
 
 /***********************************
- *	1110 0101
- *	EN		DMA
+ *  1110 0101
+ *  EN      DMA
  ***********************************/
 INLINE void en_dma(void)
 {
@@ -534,8 +534,8 @@ INLINE void en_dma(void)
 }
 
 /***********************************
- *	1111 0101
- *	EN		FLAGS
+ *  1111 0101
+ *  EN      FLAGS
  ***********************************/
 INLINE void en_flags(void)
 {
@@ -553,8 +553,8 @@ INLINE void en_flags(void)
 }
 
 /***********************************
- *	0000 0101
- *	EN		I
+ *  0000 0101
+ *  EN      I
  ***********************************/
 INLINE void en_i(void)
 {
@@ -567,8 +567,8 @@ INLINE void en_i(void)
 }
 
 /***********************************
- *	0010 0101
- *	EN		TCNTI
+ *  0010 0101
+ *  EN      TCNTI
  ***********************************/
 INLINE void en_tcnti(void)
 {
@@ -576,8 +576,8 @@ INLINE void en_tcnti(void)
 }
 
 /***********************************
- *	0010 0010
- *	IN		A,DBB
+ *  0010 0010
+ *  IN      A,DBB
  ***********************************/
 INLINE void in_a_dbb(void)
 {
@@ -596,8 +596,8 @@ INLINE void in_a_dbb(void)
 }
 
 /***********************************
- *	0000 10pp
- *	IN		A,Pp
+ *  0000 10pp
+ *  IN      A,Pp
  ***********************************/
 INLINE void in_a_p(int p)
 {
@@ -613,8 +613,8 @@ INLINE void in_a_p(int p)
 }
 
 /***********************************
- *	0001 0111
- *	INC 	A
+ *  0001 0111
+ *  INC     A
  ***********************************/
 INLINE void inc_a(void)
 {
@@ -622,8 +622,8 @@ INLINE void inc_a(void)
 }
 
 /***********************************
- *	0001 1rrr
- *	INC 	Rr
+ *  0001 1rrr
+ *  INC     Rr
  ***********************************/
 INLINE void inc_r(int r)
 {
@@ -631,8 +631,8 @@ INLINE void inc_r(int r)
 }
 
 /***********************************
- *	0001 000r
- *	INC  @	Rr
+ *  0001 000r
+ *  INC  @  Rr
  ***********************************/
 INLINE void inc_rm(int r)
 {
@@ -641,8 +641,8 @@ INLINE void inc_rm(int r)
 }
 
 /***********************************
- *	bbb1 0010
- *	JBb 	addr
+ *  bbb1 0010
+ *  JBb     addr
  ***********************************/
 INLINE void jbb_i(int bit)
 {
@@ -653,8 +653,8 @@ INLINE void jbb_i(int bit)
 }
 
 /***********************************
- *	1111 0110
- *	JC		addr
+ *  1111 0110
+ *  JC      addr
  ***********************************/
 INLINE void jc_i(void)
 {
@@ -665,8 +665,8 @@ INLINE void jc_i(void)
 }
 
 /***********************************
- *	1011 0110
- *	JF0 	addr
+ *  1011 0110
+ *  JF0     addr
  ***********************************/
 INLINE void jf0_i(void)
 {
@@ -677,8 +677,8 @@ INLINE void jf0_i(void)
 }
 
 /***********************************
- *	0111 0110
- *	JF1 	addr
+ *  0111 0110
+ *  JF1     addr
  ***********************************/
 INLINE void jf1_i(void)
 {
@@ -689,22 +689,22 @@ INLINE void jf1_i(void)
 }
 
 /***********************************
- *	aaa0 0100
- *	JMP 	addr
+ *  aaa0 0100
+ *  JMP     addr
  ***********************************/
 INLINE void jmp_i(int page)
 {
 	/* err.. do we have 10 or 11 PC bits?
-	 * CALL is said to use 0aa1 (4 pages)
-	 * JMP is said to use aaa0 (8 pages)
-	 */
+     * CALL is said to use 0aa1 (4 pages)
+     * JMP is said to use aaa0 (8 pages)
+     */
 	UINT8 adr = ROP_ARG(PC);
 	PC = page | adr;
 }
 
 /***********************************
- *	1011 0011
- *	JMP  @	A
+ *  1011 0011
+ *  JMP  @  A
  ***********************************/
 INLINE void jmpp_a(void)
 {
@@ -713,8 +713,8 @@ INLINE void jmpp_a(void)
 }
 
 /***********************************
- *	1110 0110
- *	JNC 	addr
+ *  1110 0110
+ *  JNC     addr
  ***********************************/
 INLINE void jnc_i(void)
 {
@@ -725,8 +725,8 @@ INLINE void jnc_i(void)
 }
 
 /***********************************
- *	1101 0110
- *	JNIBF	addr
+ *  1101 0110
+ *  JNIBF   addr
  ***********************************/
 INLINE void jnibf_i(void)
 {
@@ -737,8 +737,8 @@ INLINE void jnibf_i(void)
 }
 
 /***********************************
- *	0010 0110
- *	JNT0	addr
+ *  0010 0110
+ *  JNT0    addr
  ***********************************/
 INLINE void jnt0_i(void)
 {
@@ -749,8 +749,8 @@ INLINE void jnt0_i(void)
 }
 
 /***********************************
- *	0100 0110
- *	JNT1	addr
+ *  0100 0110
+ *  JNT1    addr
  ***********************************/
 INLINE void jnt1_i(void)
 {
@@ -767,8 +767,8 @@ INLINE void jnt1_i(void)
 }
 
 /***********************************
- *	1001 0110
- *	JNZ 	addr
+ *  1001 0110
+ *  JNZ     addr
  ***********************************/
 INLINE void jnz_i(void)
 {
@@ -779,8 +779,8 @@ INLINE void jnz_i(void)
 }
 
 /***********************************
- *	1000 0110
- *	JOBF	addr
+ *  1000 0110
+ *  JOBF    addr
  ***********************************/
 INLINE void jobf_i(void)
 {
@@ -791,8 +791,8 @@ INLINE void jobf_i(void)
 }
 
 /***********************************
- *	0001 0110
- *	JTF 	addr
+ *  0001 0110
+ *  JTF     addr
  ***********************************/
 INLINE void jtf_i(void)
 {
@@ -804,8 +804,8 @@ INLINE void jtf_i(void)
 }
 
 /***********************************
- *	0011 0110
- *	JT0 	addr
+ *  0011 0110
+ *  JT0     addr
  ***********************************/
 INLINE void jt0_i(void)
 {
@@ -816,8 +816,8 @@ INLINE void jt0_i(void)
 }
 
 /***********************************
- *	0101 0110
- *	JT1 	addr
+ *  0101 0110
+ *  JT1     addr
  ***********************************/
 INLINE void jt1_i(void)
 {
@@ -834,8 +834,8 @@ INLINE void jt1_i(void)
 }
 
 /***********************************
- *	1100 0110
- *	JZ		addr
+ *  1100 0110
+ *  JZ      addr
  ***********************************/
 INLINE void jz_i(void)
 {
@@ -846,8 +846,8 @@ INLINE void jz_i(void)
 }
 
 /***********************************
- *	0010 0011
- *	MOV 	A,#n
+ *  0010 0011
+ *  MOV     A,#n
  ***********************************/
 INLINE void mov_a_i(void)
 {
@@ -856,8 +856,8 @@ INLINE void mov_a_i(void)
 }
 
 /***********************************
- *	1100 0111
- *	MOV 	A,PSW
+ *  1100 0111
+ *  MOV     A,PSW
  ***********************************/
 INLINE void mov_a_psw(void)
 {
@@ -865,8 +865,8 @@ INLINE void mov_a_psw(void)
 }
 
 /***********************************
- *	1111 1rrr
- *	MOV 	A,Rr
+ *  1111 1rrr
+ *  MOV     A,Rr
  ***********************************/
 INLINE void mov_a_r(int r)
 {
@@ -874,8 +874,8 @@ INLINE void mov_a_r(int r)
 }
 
 /***********************************
- *	1111 000r
- *	MOV 	A,Rr
+ *  1111 000r
+ *  MOV     A,Rr
  ***********************************/
 INLINE void mov_a_rm(int r)
 {
@@ -883,8 +883,8 @@ INLINE void mov_a_rm(int r)
 }
 
 /***********************************
- *	0100 0010
- *	MOV 	A,T
+ *  0100 0010
+ *  MOV     A,T
  ***********************************/
 INLINE void mov_a_t(void)
 {
@@ -892,8 +892,8 @@ INLINE void mov_a_t(void)
 }
 
 /***********************************
- *	1101 0111
- *	MOV 	PSW,A
+ *  1101 0111
+ *  MOV     PSW,A
  ***********************************/
 INLINE void mov_psw_a(void)
 {
@@ -901,8 +901,8 @@ INLINE void mov_psw_a(void)
 }
 
 /***********************************
- *	1010 1rrr
- *	MOV 	Rr,A
+ *  1010 1rrr
+ *  MOV     Rr,A
  ***********************************/
 INLINE void mov_r_a(int r)
 {
@@ -910,8 +910,8 @@ INLINE void mov_r_a(int r)
 }
 
 /***********************************
- *	1011 1rrr
- *	MOV 	Rr,#n
+ *  1011 1rrr
+ *  MOV     Rr,#n
  ***********************************/
 INLINE void mov_r_i(int r)
 {
@@ -921,8 +921,8 @@ INLINE void mov_r_i(int r)
 }
 
 /***********************************
- *	1010 000r
- *	MOV 	@Rr,A
+ *  1010 000r
+ *  MOV     @Rr,A
  ***********************************/
 INLINE void mov_rm_a(int r)
 {
@@ -930,8 +930,8 @@ INLINE void mov_rm_a(int r)
 }
 
 /***********************************
- *	1011 000r
- *	MOV 	@Rr,#n
+ *  1011 000r
+ *  MOV     @Rr,#n
  ***********************************/
 INLINE void mov_rm_i(int r)
 {
@@ -941,8 +941,8 @@ INLINE void mov_rm_i(int r)
 }
 
 /***********************************
- *	1001 0000
- *	MOV 	STS,A
+ *  1001 0000
+ *  MOV     STS,A
  ***********************************/
 INLINE void mov_sts_a(void)
 {
@@ -950,8 +950,8 @@ INLINE void mov_sts_a(void)
 }
 
 /***********************************
- *	0110 0010
- *	MOV 	T,A
+ *  0110 0010
+ *  MOV     T,A
  ***********************************/
 INLINE void mov_t_a(void)
 {
@@ -959,8 +959,8 @@ INLINE void mov_t_a(void)
 }
 
 /***********************************
- *	0000 11pp
- *	MOVD	A,Pp
+ *  0000 11pp
+ *  MOVD    A,Pp
  ***********************************/
 INLINE void movd_a_p(int p)
 {
@@ -972,8 +972,8 @@ INLINE void movd_a_p(int p)
 }
 
 /***********************************
- *	0011 11pp
- *	MOVD	Pp,A
+ *  0011 11pp
+ *  MOVD    Pp,A
  ***********************************/
 INLINE void movd_p_a(int p)
 {
@@ -985,8 +985,8 @@ INLINE void movd_p_a(int p)
 }
 
 /***********************************
- *	1010 0011
- *	MOVP	A,@A
+ *  1010 0011
+ *  MOVP    A,@A
  ***********************************/
 INLINE void movp_a_am(void)
 {
@@ -995,8 +995,8 @@ INLINE void movp_a_am(void)
 }
 
 /***********************************
- *	1110 0011
- *	MOVP3	A,@A
+ *  1110 0011
+ *  MOVP3   A,@A
  ***********************************/
 INLINE void movp3_a_am(void)
 {
@@ -1005,16 +1005,16 @@ INLINE void movp3_a_am(void)
 }
 
 /***********************************
- *	0000 0000
- *	NOP
+ *  0000 0000
+ *  NOP
  ***********************************/
 INLINE void nop(void)
 {
 }
 
 /***********************************
- *	0100 1rrr
- *	ORL 	A,Rr
+ *  0100 1rrr
+ *  ORL     A,Rr
  ***********************************/
 INLINE void orl_r(int r)
 {
@@ -1022,8 +1022,8 @@ INLINE void orl_r(int r)
 }
 
 /***********************************
- *	0100 000r
- *	ORL 	A,@Rr
+ *  0100 000r
+ *  ORL     A,@Rr
  ***********************************/
 INLINE void orl_rm(int r)
 {
@@ -1031,8 +1031,8 @@ INLINE void orl_rm(int r)
 }
 
 /***********************************
- *	0100 0011 7654 3210
- *	ORL 	A,#n
+ *  0100 0011 7654 3210
+ *  ORL     A,#n
  ***********************************/
 INLINE void orl_i(void)
 {
@@ -1042,8 +1042,8 @@ INLINE void orl_i(void)
 }
 
 /***********************************
- *	1000 10pp 7654 3210
- *	ORL 	Pp,#n
+ *  1000 10pp 7654 3210
+ *  ORL     Pp,#n
  ***********************************/
 INLINE void orl_p_i(int p)
 {
@@ -1061,8 +1061,8 @@ INLINE void orl_p_i(int p)
 }
 
 /***********************************
- *	1000 11pp 7654 3210
- *	ORLD	Pp,A
+ *  1000 11pp 7654 3210
+ *  ORLD    Pp,A
  ***********************************/
 INLINE void orld_p_a(int p)
 {
@@ -1074,8 +1074,8 @@ INLINE void orld_p_a(int p)
 }
 
 /***********************************
- *	0000 0010
- *	OUT 	DBB,A
+ *  0000 0010
+ *  OUT     DBB,A
  ***********************************/
 INLINE void out_dbb_a(void)
 {
@@ -1091,8 +1091,8 @@ INLINE void out_dbb_a(void)
 }
 
 /***********************************
- *	0011 10pp
- *	OUT 	Pp,A
+ *  0011 10pp
+ *  OUT     Pp,A
  ***********************************/
 INLINE void out_p_a(int p)
 {
@@ -1108,8 +1108,8 @@ INLINE void out_p_a(int p)
 }
 
 /***********************************
- *	1000 0011
- *	RET
+ *  1000 0011
+ *  RET
  ***********************************/
 INLINE void ret(void)
 {
@@ -1121,8 +1121,8 @@ INLINE void ret(void)
 }
 
 /***********************************
- *	1001 0011
- *	RETR
+ *  1001 0011
+ *  RETR
  ***********************************/
 INLINE void retr(void)
 {
@@ -1137,8 +1137,8 @@ INLINE void retr(void)
 }
 
 /***********************************
- *	1110 0111
- *	RL		A
+ *  1110 0111
+ *  RL      A
  ***********************************/
 INLINE void rl_a(void)
 {
@@ -1146,8 +1146,8 @@ INLINE void rl_a(void)
 }
 
 /***********************************
- *	1111 0111
- *	RLC 	A
+ *  1111 0111
+ *  RLC     A
  ***********************************/
 INLINE void rlc_a(void)
 {
@@ -1157,8 +1157,8 @@ INLINE void rlc_a(void)
 }
 
 /***********************************
- *	0111 0111
- *	RR		A
+ *  0111 0111
+ *  RR      A
  ***********************************/
 INLINE void rr_a(void)
 {
@@ -1166,8 +1166,8 @@ INLINE void rr_a(void)
 }
 
 /***********************************
- *	0110 0111
- *	RRC 	A
+ *  0110 0111
+ *  RRC     A
  ***********************************/
 INLINE void rrc_a(void)
 {
@@ -1177,8 +1177,8 @@ INLINE void rrc_a(void)
 }
 
 /***********************************
- *	1100 0101
- *	SEL 	RB0
+ *  1100 0101
+ *  SEL     RB0
  ***********************************/
 INLINE void sel_rb0(void)
 {
@@ -1186,8 +1186,8 @@ INLINE void sel_rb0(void)
 }
 
 /***********************************
- *	1101 0101
- *	SEL 	RB1
+ *  1101 0101
+ *  SEL     RB1
  ***********************************/
 INLINE void sel_rb1(void)
 {
@@ -1195,8 +1195,8 @@ INLINE void sel_rb1(void)
 }
 
 /***********************************
- *	0110 0101
- *	STOP	TCNT
+ *  0110 0101
+ *  STOP    TCNT
  ***********************************/
 INLINE void stop_tcnt(void)
 {
@@ -1204,8 +1204,8 @@ INLINE void stop_tcnt(void)
 }
 
 /***********************************
- *	0100 0101
- *	STRT	CNT
+ *  0100 0101
+ *  STRT    CNT
  ***********************************/
 INLINE void strt_cnt(void)
 {
@@ -1214,8 +1214,8 @@ INLINE void strt_cnt(void)
 }
 
 /***********************************
- *	0101 0101
- *	STRT	T
+ *  0101 0101
+ *  STRT    T
  ***********************************/
 INLINE void strt_t(void)
 {
@@ -1224,8 +1224,8 @@ INLINE void strt_t(void)
 }
 
 /***********************************
- *	0100 0111
- *	SWAP	A
+ *  0100 0111
+ *  SWAP    A
  ***********************************/
 INLINE void swap_a(void)
 {
@@ -1233,8 +1233,8 @@ INLINE void swap_a(void)
 }
 
 /***********************************
- *	0010 1rrr
- *	XCH 	A,Rr
+ *  0010 1rrr
+ *  XCH     A,Rr
  ***********************************/
 INLINE void xch_a_r(int r)
 {
@@ -1244,8 +1244,8 @@ INLINE void xch_a_r(int r)
 }
 
 /***********************************
- *	0010 000r
- *	XCH 	A,@Rr
+ *  0010 000r
+ *  XCH     A,@Rr
  ***********************************/
 INLINE void xch_a_rm(int r)
 {
@@ -1256,8 +1256,8 @@ INLINE void xch_a_rm(int r)
 }
 
 /***********************************
- *	0011 000r
- *	XCHD	A,@Rr
+ *  0011 000r
+ *  XCHD    A,@Rr
  ***********************************/
 INLINE void xchd_a_rm(int r)
 {
@@ -1268,8 +1268,8 @@ INLINE void xchd_a_rm(int r)
 }
 
 /***********************************
- *	1101 1rrr
- *	XRL 	A,Rr
+ *  1101 1rrr
+ *  XRL     A,Rr
  ***********************************/
 INLINE void xrl_r(int r)
 {
@@ -1277,8 +1277,8 @@ INLINE void xrl_r(int r)
 }
 
 /***********************************
- *	1101 000r
- *	XRL 	A,@Rr
+ *  1101 000r
+ *  XRL     A,@Rr
  ***********************************/
 INLINE void xrl_rm(int r)
 {
@@ -1286,8 +1286,8 @@ INLINE void xrl_rm(int r)
 }
 
 /***********************************
- *	1101 0011 7654 3210
- *	XRL 	A,#n
+ *  1101 0011 7654 3210
+ *  XRL     A,#n
  ***********************************/
 INLINE void xrl_i(void)
 {
@@ -1298,7 +1298,7 @@ INLINE void xrl_i(void)
 
 
 /***********************************************************************
- *	Cycle Timings
+ *  Cycle Timings
  ***********************************************************************/
 
 static UINT8 i8x41_cycles[] = {
@@ -1322,7 +1322,7 @@ static UINT8 i8x41_cycles[] = {
 
 
 /****************************************************************************
- *	Inits CPU emulation
+ *  Inits CPU emulation
  ****************************************************************************/
 
 static void i8x41_init(void)
@@ -1347,7 +1347,7 @@ static void i8x41_init(void)
 
 
 /****************************************************************************
- *	Reset registers to their initial values
+ *  Reset registers to their initial values
  ****************************************************************************/
 
 static void i8x41_reset(void *param)
@@ -1368,7 +1368,7 @@ static void i8x41_reset(void *param)
 
 
 /****************************************************************************
- *	Shut down CPU emulation
+ *  Shut down CPU emulation
  ****************************************************************************/
 
 static void i8x41_exit(void)
@@ -1378,7 +1378,7 @@ static void i8x41_exit(void)
 
 
 /****************************************************************************
- *	Execute cycles - returns number of cycles actually run
+ *  Execute cycles - returns number of cycles actually run
  ****************************************************************************/
 
 static int i8x41_execute(int cycles)
@@ -2028,7 +2028,7 @@ static int i8x41_execute(int cycles)
 
 
 /****************************************************************************
- *	Get all registers in given buffer
+ *  Get all registers in given buffer
  ****************************************************************************/
 
 static void i8x41_get_context(void *dst)
@@ -2039,7 +2039,7 @@ static void i8x41_get_context(void *dst)
 
 
 /****************************************************************************
- *	Set all registers to given values
+ *  Set all registers to given values
  ****************************************************************************/
 
 static void i8x41_set_context(void *src)
@@ -2049,7 +2049,7 @@ static void i8x41_set_context(void *src)
 }
 
 /****************************************************************************
- *	Set IRQ line state
+ *  Set IRQ line state
  ****************************************************************************/
 
 static void set_irq_line(int irqline, int state)
@@ -2230,7 +2230,7 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
 			/* writing status.. hmm, should we issue interrupts here too? */
 			STATE = info->i;
 			break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:
 			i8x41.irq_callback = info->irqcallback;
@@ -2276,7 +2276,7 @@ void i8x41_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:
 			info->i = 2;
 			break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:
 			info->i = 8;
 			break;

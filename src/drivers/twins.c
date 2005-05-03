@@ -74,7 +74,7 @@ static WRITE8_HANDLER( port7_pal1_w )
 {
 	twins_pal[paloff] = (twins_pal[paloff] & 0x00ff) | (data<<8);
 	paloff = (paloff + 1) & 0xff;
-	
+
 }
 
 /* ??? weird ..*/
@@ -91,7 +91,7 @@ static WRITE8_HANDLER( portf_paloff1_w )
 
 static ADDRESS_MAP_START( twins_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x0ffff) AM_RAM
-	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&twins_videoram) 
+	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&twins_videoram)
 	AM_RANGE(0x20000, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -198,7 +198,7 @@ static MACHINE_DRIVER_START( twins )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

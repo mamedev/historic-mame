@@ -16,36 +16,36 @@ additional (optional) global transformations.
 ---------------------------------------------------------------------------
 memory map for DSP RAM (shared with the 68000 CPUs):
 
-	0x200000..0x2000ff	populated with ASCII Text during self-tests:
-		ROM:
-		RAM:
-		PTR:
-		SMU:
-		IDC:
-		CPU:ABORT
-		DSP:
-		CRC:OK  from cpu
-		CRC:    from dsp
-		ID:
-		B-M:	P-M:	S-M:	SET UP
+    0x200000..0x2000ff  populated with ASCII Text during self-tests:
+        ROM:
+        RAM:
+        PTR:
+        SMU:
+        IDC:
+        CPU:ABORT
+        DSP:
+        CRC:OK  from cpu
+        CRC:    from dsp
+        ID:
+        B-M:    P-M:    S-M:    SET UP
 
-	0x200100	status
-	0x200102	status
-	0x200104	0x0002
-	0x200106..9 dword.w(?)
-	0x20010a	checksum (starblade expects 0xed53)
-	0x20010c	checksum (starblade expects 0xd5df)
-	0x20010e	ack
-	0x200110	status
-	0x200112	status
-	0x200202	status
-	0x200206	work page select
+    0x200100    status
+    0x200102    status
+    0x200104    0x0002
+    0x200106..9 dword.w(?)
+    0x20010a    checksum (starblade expects 0xed53)
+    0x20010c    checksum (starblade expects 0xd5df)
+    0x20010e    ack
+    0x200110    status
+    0x200112    status
+    0x200202    status
+    0x200206    work page select
 
-	0x208000..0x2080ff	camera attributes for page#0
-	0x208200..0x208fff	3d object attribute list for page#0
+    0x208000..0x2080ff  camera attributes for page#0
+    0x208200..0x208fff  3d object attribute list for page#0
 
-	0x20c000..0x20c0ff	camera attributes for page#1
-	0x20c200..0x20cfff	3d object attribute list for page#1
+    0x20c000..0x20c0ff  camera attributes for page#1
+    0x20c200..0x20cfff  3d object attribute list for page#1
 ---------------------------------------------------------------------------
 
 Thanks to Aaron Giles for originally making sense of the Point ROM data:
@@ -247,7 +247,7 @@ static int
 DrawPolyObject0( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const INT16 *pDSPRAM, const INT16 *pCamera )
 {
 	INT16 code = 1 + pDSPRAM[1];
-//	INT16 window = pDSPRAM[2]; /* 0..3 */
+//  INT16 window = pDSPRAM[2]; /* 0..3 */
 	double M[4][4];
 
 	matrix3d_Identity( M );
@@ -261,7 +261,7 @@ static int
 DrawPolyObject1( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const INT16 *pDSPRAM, const INT16 *pCamera )
 {
 	INT16 code = 1 + pDSPRAM[1];
-//	INT16 window = pDSPRAM[2]; /* 0..3 */
+//  INT16 window = pDSPRAM[2]; /* 0..3 */
 	double M[4][4];
 
 	matrix3d_Identity( M );
@@ -300,29 +300,29 @@ DrawPolygons( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 	mbDspError = 0;
 
 	/*
-	0000:	0002 0001 2000
+    0000:   0002 0001 2000
 
-	0006:	0000 7fff rolx
-	000a:	ffff 7fff roly
-	000e:	0000 7fff rolz
+    0006:   0000 7fff rolx
+    000a:   ffff 7fff roly
+    000e:   0000 7fff rolz
 
-	0012:	1000 1000 ???? 0000
-	001a:	00f8 00f2	// WIDTH, HEIGHT
+    0012:   1000 1000 ???? 0000
+    001a:   00f8 00f2   // WIDTH, HEIGHT
 
-	001e:	0003 // priority?
+    001e:   0003 // priority?
 
-	0020:	0004 008e 0014 0000 0000 0000 0000 0000
-	0030:	0000 0000 0000 0000 0000 0000 0000 0000
-	//
-	0040:	073c 7fcb	// ROLX
-	0044:	0045 7fff	// ROLY
-	0048:	edb5 7eae	// ROLZ
-	004c:	0002		// ROLT?
+    0020:   0004 008e 0014 0000 0000 0000 0000 0000
+    0030:   0000 0000 0000 0000 0000 0000 0000 0000
+    //
+    0040:   073c 7fcb   // ROLX
+    0044:   0045 7fff   // ROLY
+    0048:   edb5 7eae   // ROLZ
+    004c:   0002        // ROLT?
 
-	004e:	0000 0000 // xpos?
-	0050:	0000 0000 // ypos?
-	0052:	0000 0000 // zpos?
-	*/
+    004e:   0000 0000 // xpos?
+    0050:   0000 0000 // ypos?
+    0052:   0000 0000 // zpos?
+    */
 
 	mCameraDescriptor.cx = bitmap->width/2;
 	mCameraDescriptor.cy = bitmap->height/2;
@@ -345,29 +345,29 @@ DrawPolygons( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		{
 		case 0x0000: /* starblade */
 			/* code, win, tx,ty,tz
-			 *	[use camera transform]
-			 *
-			 * intro (close up of planets)
-			 */
+             *  [use camera transform]
+             *
+             * intro (close up of planets)
+             */
 			size = DrawPolyObject0( bitmap, cliprect, pDSPRAM, pCamera );
 			break;
 
 		case 0x0001: /* starblade */
 			/* code, win, tx,ty,tz, rolx(2), roly(2), rolz(2), rolt
-			 *	[use camera transform]
-			 *
-			 * title screen shrapnel
-			 * in-game spacecraft
-			 */
+             *  [use camera transform]
+             *
+             * title screen shrapnel
+             * in-game spacecraft
+             */
 			size = DrawPolyObject1( bitmap, cliprect, pDSPRAM, pCamera );
 			break;
 
 		case 0x0002: /* starblade */
 			/* code, win, tx,ty,tz, rolx(2), roly(2), rolz(2), rolt
-			 *	[local transform only]
-			 *
-			 * player shots
-			 */
+             *  [local transform only]
+             *
+             * player shots
+             */
 			if ( code_pressed(KEYCODE_C) )
 			size = DrawPolyObject1( bitmap, cliprect, pDSPRAM, NULL );
 			break;
@@ -388,9 +388,9 @@ DrawPolygons( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		case 0x0007: /* air combat */
 			size = DrawPolyObject1( bitmap, cliprect, pDSPRAM, pCamera );
 			/* 0x00af 0x0003
-			 * 0x3518 0xe889 0xe39c
-			 * 0x0000 0x7fff 0x70e0 0xc3a7 0x0000 0x7fff 0x0004
-			 */
+             * 0x3518 0xe889 0xe39c
+             * 0x0000 0x7fff 0x70e0 0xc3a7 0x0000 0x7fff 0x0004
+             */
 			break;
 
 		case 0x0100: /* Cyber Sled */
@@ -440,19 +440,19 @@ update_palette( void )
 	int r,g,b;
 
 	/*
-	Palette:
-		0x0000..0x1fff	sprite palettes (0x10 sets of 0x100 colors)
+    Palette:
+        0x0000..0x1fff  sprite palettes (0x10 sets of 0x100 colors)
 
-		0x2000..0x3fff	polygon palette bank0 (0x10 sets of 0x200 colors)
-			(in starblade, some palette animation effects are performed here)
-		0x4000..0x5fff	polygon palette bank1 (0x10 sets of 0x200 colors)
-		0x6000..0x7fff	polygon palette bank2 (0x10 sets of 0x200 colors)
+        0x2000..0x3fff  polygon palette bank0 (0x10 sets of 0x200 colors)
+            (in starblade, some palette animation effects are performed here)
+        0x4000..0x5fff  polygon palette bank1 (0x10 sets of 0x200 colors)
+        0x6000..0x7fff  polygon palette bank2 (0x10 sets of 0x200 colors)
 
-		The polygon-dedicated color sets within a bank typically increase in
-		intensity from very dark to full intensity.
+        The polygon-dedicated color sets within a bank typically increase in
+        intensity from very dark to full intensity.
 
-		Probably the selected palette is determined by polygon view angle.
-	*/
+        Probably the selected palette is determined by polygon view angle.
+    */
 	for( i=0; i<NAMCOS21_NUM_COLORS; i++ )
 	{
 		data1 = paletteram16[0x00000/2+i];
@@ -492,8 +492,8 @@ VIDEO_UPDATE( namcos21_default )
 	}
 
 	/* some DSP witchery follows; it's an attempt to simulate the DSP behavior that
-	 * Starblade expects during setup.
-	  */
+     * Starblade expects during setup.
+      */
 	{
 		const data16_t cmd1[] =
 		{
@@ -513,10 +513,10 @@ VIDEO_UPDATE( namcos21_default )
 		else if( namcos21_dspram16[0x10e/2] == 0x0001 )
 		{
 			/* This signals that a large chunk of code/data has been written by the main CPU.
-			 *
-			 * Presumably the DSP processor(s) copy it to private RAM at this point.
-			 * The main CPU waits for this flag to be cleared.
-			 */
+             *
+             * Presumably the DSP processor(s) copy it to private RAM at this point.
+             * The main CPU waits for this flag to be cleared.
+             */
 			namcos21_dspram16[0x10e/2] = 0; /* ack */
 		}
 	}
@@ -525,8 +525,8 @@ VIDEO_UPDATE( namcos21_default )
 VIDEO_UPDATE( namcos21_winrun )
 {
 	/* videoram16 points to a framebuffer used by
-	 * Winning Run '91 hardware
-	 */
+     * Winning Run '91 hardware
+     */
 	int sx,sy;
 	for( sy=0; sy<512; sy++ )
 	{

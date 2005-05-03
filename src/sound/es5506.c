@@ -167,14 +167,14 @@ static void update_irq_state(struct ES5506Chip *chip)
 
 static void update_internal_irq_state(struct ES5506Chip *chip)
 {
-	/*	Host (cpu) has just read the voice interrupt vector (voice IRQ ack).
-	
-		Reset the voice vector to show the IRQB line is low (top bit set).
-		If we have any stacked interrupts (other voices waiting to be
-		processed - with their IRQ bit set) then they will be moved into
-		the vector next time the voice is processed.  In emulation
-		terms they get updated next time generate_samples() is called.	
-	*/
+	/*  Host (cpu) has just read the voice interrupt vector (voice IRQ ack).
+
+        Reset the voice vector to show the IRQB line is low (top bit set).
+        If we have any stacked interrupts (other voices waiting to be
+        processed - with their IRQ bit set) then they will be moved into
+        the vector next time the voice is processed.  In emulation
+        terms they get updated next time generate_samples() is called.
+    */
 
 	chip->irqv=0x80;
 
@@ -762,7 +762,7 @@ static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right,
 			generate_pcm(chip, voice, base, left, right, samples);
 
 		/* does this voice have it's IRQ bit raised? */
-		if (voice->control&CONTROL_IRQ) 
+		if (voice->control&CONTROL_IRQ)
 		{
 logerror("IRQ raised on voice %d!!\n",v);
 			/* only update voice vector if existing IRQ is acked by host */
@@ -897,7 +897,7 @@ static void *es5506_start_common(int sndtype, int sndindex, int clock, const voi
 	const struct ES5506interface *intf = config;
 	struct ES5506Chip *chip;
 	int j;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
@@ -1924,7 +1924,7 @@ static void es5505_reg_write(struct ES5506Chip *chip, offs_t offset, data16_t da
 {
 	struct ES5506Voice *voice = &chip->voice[chip->current_page & 0x1f];
 
-//	logerror("%04x:ES5505 write %02x/%02x = %04x & %04x\n", activecpu_get_previouspc(), chip->current_page, offset, data, mem_mask ^ 0xffff);
+//  logerror("%04x:ES5505 write %02x/%02x = %04x & %04x\n", activecpu_get_previouspc(), chip->current_page, offset, data, mem_mask ^ 0xffff);
 
 	/* force an update */
 	stream_update(chip->stream, 0);

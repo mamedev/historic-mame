@@ -107,7 +107,7 @@ READ8_HANDLER( routex_prot_read )
 
 static ADDRESS_MAP_START( cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
-  /*AM_RANGE(0x3000, 0x3001) AM_READ(MRA8_NOP)	 Route 16 protection device */
+  /*AM_RANGE(0x3000, 0x3001) AM_READ(MRA8_NOP)   Route 16 protection device */
 	AM_RANGE(0x4000, 0x43ff) AM_READ(route16_sharedram_r)
 	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_0_r)
 	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_1_r)
@@ -117,7 +117,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
- 	/*AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_NOP)	 Route 16 protection device */
+ 	/*AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_NOP)    Route 16 protection device */
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(route16_sharedram_w) AM_BASE(&route16_sharedram)
 	AM_RANGE(0x4800, 0x4800) AM_WRITE(route16_out0_w)
 	AM_RANGE(0x5000, 0x5000) AM_WRITE(route16_out1_w)
@@ -201,7 +201,7 @@ INPUT_PORTS_START( route16 )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) ) // Same as 0x08
+//  PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) ) // Same as 0x08
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -381,22 +381,22 @@ static struct AY8910interface ay8910_interface =
 
 static struct SN76477interface sn76477_interface =
 {
-	RES_K( 47)   ,		/*	4  noise_res		 */
-	RES_K(150)   ,		/*	5  filter_res		 */
-	CAP_U(0.001) ,		/*	6  filter_cap		 */
-	RES_M(3.3)   ,		/*	7  decay_res		 */
-	CAP_U(1.0)   ,		/*	8  attack_decay_cap  */
-	RES_K(4.7)   ,		/* 10  attack_res		 */
-	RES_K(200)   ,		/* 11  amplitude_res	 */
-	RES_K( 55)   ,		/* 12  feedback_res 	 */
-	5.0*2/(2+10) ,		/* 16  vco_voltage		 */
-	CAP_U(0.022) ,		/* 17  vco_cap			 */
-	RES_K(100)   ,		/* 18  vco_res			 */
-	5.0		   ,		/* 19  pitch_voltage	 */
-	RES_K( 75)   ,		/* 20  slf_res			 */
-	CAP_U(1.0)   ,		/* 21  slf_cap			 */
-	CAP_U(2.2)   ,		/* 23  oneshot_cap		 */
-	RES_K(4.7)   		/* 24  oneshot_res		 */
+	RES_K( 47)   ,		/*  4  noise_res         */
+	RES_K(150)   ,		/*  5  filter_res        */
+	CAP_U(0.001) ,		/*  6  filter_cap        */
+	RES_M(3.3)   ,		/*  7  decay_res         */
+	CAP_U(1.0)   ,		/*  8  attack_decay_cap  */
+	RES_K(4.7)   ,		/* 10  attack_res        */
+	RES_K(200)   ,		/* 11  amplitude_res     */
+	RES_K( 55)   ,		/* 12  feedback_res      */
+	5.0*2/(2+10) ,		/* 16  vco_voltage       */
+	CAP_U(0.022) ,		/* 17  vco_cap           */
+	RES_K(100)   ,		/* 18  vco_res           */
+	5.0		   ,		/* 19  pitch_voltage     */
+	RES_K( 75)   ,		/* 20  slf_res           */
+	CAP_U(1.0)   ,		/* 21  slf_cap           */
+	CAP_U(2.2)   ,		/* 23  oneshot_cap       */
+	RES_K(4.7)   		/* 24  oneshot_res       */
 };
 
 
@@ -636,7 +636,7 @@ DRIVER_INIT( route16 )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	/* Is this actually a bootleg? some of the protection has
-	   been removed */
+       been removed */
 
 	/* patch the protection */
 	rom[0x00e9] = 0x3a;

@@ -1,7 +1,7 @@
 /**************************************************************************
 
-  Last Duel 			          - Capcom, 1988
-  LED Storm 			          - Capcom, 1988
+  Last Duel                       - Capcom, 1988
+  LED Storm                       - Capcom, 1988
   Mad Gear                        - Capcom, 1989
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
@@ -455,7 +455,7 @@ INPUT_PORTS_START( madgear )
 	PORT_DIPSETTING(      0x0030, "Upright One Player" )
 	PORT_DIPSETTING(      0x0000, "Upright Two Players" )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Cocktail ) )
-/* 	PORT_DIPSETTING(      0x0020, "Upright One Player" ) */
+/*  PORT_DIPSETTING(      0x0020, "Upright One Player" ) */
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
@@ -496,7 +496,7 @@ INPUT_PORTS_START( madgear )
 	PORT_DIPSETTING(      0x0300, DEF_STR( 5C_3C ) )
 	PORT_DIPSETTING(      0x0600, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(      0x0f00, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x0e00, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0d00, DEF_STR( 1C_3C ) )

@@ -3,7 +3,7 @@
 Dr. Micro (c) 1983 Sanritsu
 
 Video hardware
-		driver by Uki
+        driver by Uki
 
 *******************************************************************************/
 

@@ -12,15 +12,15 @@
 
 Note: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
       with 0xff, because the built-in roms test checks how many question roms
-	  the games has and the type of each one.
-	  The  type is stored in one byte in an offset which change for every game
-	  (it's the offset stored in rom_type variable).
+      the games has and the type of each one.
+      The  type is stored in one byte in an offset which change for every game
+      (it's the offset stored in rom_type variable).
 
-	  Rom type byte legend:
-	  0 -> 0x02000 bytes rom
-	  1 -> 0x04000 bytes rom
-	  2 -> 0x08000 bytes rom
-	  3 -> 0x10000 bytes rom
+      Rom type byte legend:
+      0 -> 0x02000 bytes rom
+      1 -> 0x04000 bytes rom
+      2 -> 0x08000 bytes rom
+      3 -> 0x10000 bytes rom
 
 */
 
@@ -123,7 +123,7 @@ WRITE8_HANDLER( low_offset_w )
 		byte_low = 0x100;
 	}
 	else
-//		byte_low = offset;
+//      byte_low = offset;
 		byte_low = data;
 
 	logerror("low:  offset = %02X data = %02X\n",offset,data);
@@ -132,7 +132,7 @@ WRITE8_HANDLER( low_offset_w )
 WRITE8_HANDLER( high_offset_w )
 {
 	byte_high = offset;
-//	byte_high = data;
+//  byte_high = data;
 	logerror("high: offset = %02X data = %02X\n",offset,data);
 }
 
@@ -409,7 +409,7 @@ static MACHINE_DRIVER_START( phrcraze )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END

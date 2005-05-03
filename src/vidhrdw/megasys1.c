@@ -1,8 +1,8 @@
 /***************************************************************************
 
-							-= Jaleco Mega System 1 =-
+                            -= Jaleco Mega System 1 =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 
@@ -26,87 +26,87 @@
 MS1-A MS1-B MS1-C
 -----------------
 
-					Scrolling layers:
+                    Scrolling layers:
 
-90000 50000 e0000	Scroll 0
-94000 54000 e8000	Scroll 1
-98000 58000 f0000	Scroll 2					* Note: missing on MS1-Z
+90000 50000 e0000   Scroll 0
+94000 54000 e8000   Scroll 1
+98000 58000 f0000   Scroll 2                    * Note: missing on MS1-Z
 
-Tile format:	fedc------------	Palette
-				----ba9876543210	Tile Number
-
-
-
-84000 44000 c2208	Layers Enable				* Note: missing on MS1-Z?
-
-	fedc ---- ---- ---- unused
-	---- ba98 ---- ----	Priority Code
-	---- ---- 7654 ----	unused
-	---- ---- ---- 3---	Enable Sprites
-	---- ---- ---- -210	Enable Layer 210
-
-	(Note that the bottom layer can't be disabled)
-
-
-84200 44200 c2000	Scroll 0 Control
-84208 44208 c2008	Scroll 1 Control
-84008 44008 c2100	Scroll 2 Control		* Note: missing on MS1-Z
-
-Offset:		00						Scroll X
-			02						Scroll Y
-			04 fedc ba98 765- ----	? (unused?)
-			   ---- ---- ---4 ----	0<->16x16 Tiles	1<->8x8 Tiles
-			   ---- ---- ---- 32--	? (used, by p47!)
-			   ---- ---- ---- --10	N: Layer H pages = 16 / (2^N)
+Tile format:    fedc------------    Palette
+                ----ba9876543210    Tile Number
 
 
 
-84300 44300 c2308	Screen Control
+84000 44000 c2208   Layers Enable               * Note: missing on MS1-Z?
 
-	fed- ---- ---- ---- 	? (unused?)
-	---c ---- ---- ---- 	? (on, troughout peekaboo)
-	---- ba9- ---- ---- 	? (unused?)
-	---- ---8 ---- ---- 	Portrait F/F (?FullFill?)
-	---- ---- 765- ---- 	? (unused?)
-	---- ---- ---4 ---- 	Reset Sound CPU (1->0 Transition)
-	---- ---- ---- 321- 	? (unused?)
-	---- ---- ---- ---0		Flip Screen
+    fedc ---- ---- ---- unused
+    ---- ba98 ---- ---- Priority Code
+    ---- ---- 7654 ---- unused
+    ---- ---- ---- 3--- Enable Sprites
+    ---- ---- ---- -210 Enable Layer 210
+
+    (Note that the bottom layer can't be disabled)
+
+
+84200 44200 c2000   Scroll 0 Control
+84208 44208 c2008   Scroll 1 Control
+84008 44008 c2100   Scroll 2 Control        * Note: missing on MS1-Z
+
+Offset:     00                      Scroll X
+            02                      Scroll Y
+            04 fedc ba98 765- ----  ? (unused?)
+               ---- ---- ---4 ----  0<->16x16 Tiles 1<->8x8 Tiles
+               ---- ---- ---- 32--  ? (used, by p47!)
+               ---- ---- ---- --10  N: Layer H pages = 16 / (2^N)
+
+
+
+84300 44300 c2308   Screen Control
+
+    fed- ---- ---- ----     ? (unused?)
+    ---c ---- ---- ----     ? (on, troughout peekaboo)
+    ---- ba9- ---- ----     ? (unused?)
+    ---- ---8 ---- ----     Portrait F/F (?FullFill?)
+    ---- ---- 765- ----     ? (unused?)
+    ---- ---- ---4 ----     Reset Sound CPU (1->0 Transition)
+    ---- ---- ---- 321-     ? (unused?)
+    ---- ---- ---- ---0     Flip Screen
 
 
 
 **********  There are 256*4 colors (256*3 for MS1-Z):
 
-Colors		MS1-A/C			MS1-Z
+Colors      MS1-A/C         MS1-Z
 
-000-0ff		Scroll 0		Scroll 0
-100-1ff		Scroll 1		Sprites
-200-2ff		Scroll 2		Scroll 1
-300-3ff		Sprites			-
+000-0ff     Scroll 0        Scroll 0
+100-1ff     Scroll 1        Sprites
+200-2ff     Scroll 2        Scroll 1
+300-3ff     Sprites         -
 
-88000 48000 f8000	Palette
+88000 48000 f8000   Palette
 
-	fedc--------3---	Red
-	----ba98-----2--	Blue
-	--------7654--1-	Green
-	---------------0	? (used, not RGB! [not changed in fades])
+    fedc--------3---    Red
+    ----ba98-----2--    Blue
+    --------7654--1-    Green
+    ---------------0    ? (used, not RGB! [not changed in fades])
 
 
 **********  There are 256 sprites (128 for MS1-Z):
 
-&RAM[8000]	Sprite Data	(16 bytes/entry. 128? entries)
+&RAM[8000]  Sprite Data (16 bytes/entry. 128? entries)
 
-Offset:		0-6						? (used, but as normal RAM, I think)
-			08 	fed- ---- ---- ----	?
-				---c ---- ---- ----	mosaic sol.	(?)
-				---- ba98 ---- ----	mosaic		(?)
-				---- ---- 7--- ----	y flip
-				---- ---- -6-- ----	x flip
-				---- ---- --45 ----	?
-				---- ---- ---- 3210	color code (* bit 3 = priority *)
-			0A						H position
-			0C						V position
-			0E	fedc ---- ---- ----	? (used by p47j, 0-8!)
-				---- ba98 7654 3210	Number
+Offset:     0-6                     ? (used, but as normal RAM, I think)
+            08  fed- ---- ---- ---- ?
+                ---c ---- ---- ---- mosaic sol. (?)
+                ---- ba98 ---- ---- mosaic      (?)
+                ---- ---- 7--- ---- y flip
+                ---- ---- -6-- ---- x flip
+                ---- ---- --45 ---- ?
+                ---- ---- ---- 3210 color code (* bit 3 = priority *)
+            0A                      H position
+            0C                      V position
+            0E  fedc ---- ---- ---- ? (used by p47j, 0-8!)
+                ---- ba98 7654 3210 Number
 
 
 
@@ -114,41 +114,41 @@ Object RAM tells the hw how to use Sprite Data (missing on MS1-Z).
 This makes it possible to group multiple small sprite, up to 256,
 into one big virtual sprite (up to a whole screen):
 
-8e000 4e000 d2000	Object RAM (8 bytes/entry. 256*4 entries)
+8e000 4e000 d2000   Object RAM (8 bytes/entry. 256*4 entries)
 
-Offset:		00	Index into Sprite Data RAM
-			02	H	Displacement
-			04	V	Displacement
-			06	Number	Displacement
+Offset:     00  Index into Sprite Data RAM
+            02  H   Displacement
+            04  V   Displacement
+            06  Number  Displacement
 
 Only one of these four 256 entries is used to see if the sprite is to be
 displayed, according to this latter's flipx/y state:
 
-Object RAM entries:		Used by sprites with:
+Object RAM entries:     Used by sprites with:
 
-000-0ff					No Flip
-100-1ff					Flip X
-200-2ff					Flip Y
-300-3ff					Flip X & Y
-
-
+000-0ff                 No Flip
+100-1ff                 Flip X
+200-2ff                 Flip Y
+300-3ff                 Flip X & Y
 
 
-No? No? c2108	Sprite Bank
 
-	fedc ba98 7654 321- ? (unused?)
-	---- ---- ---- ---0 Sprite Bank
+
+No? No? c2108   Sprite Bank
+
+    fedc ba98 7654 321- ? (unused?)
+    ---- ---- ---- ---0 Sprite Bank
 
 
 
 84100 44100 c2200 Sprite Control
 
-			fedc ba9- ---- ---- ? (unused?)
-			---- ---8 ---- ---- Enable Sprite Splitting In 2 Groups:
-								Some Sprite Appear Over, Some Below The Layers
-			---- ---- 765- ---- ? (unused?)
-			---- ---- ---4 ----	Enable Effect (?)
-			---- ---- ---- 3210	Effect Number (?)
+            fedc ba9- ---- ---- ? (unused?)
+            ---- ---8 ---- ---- Enable Sprite Splitting In 2 Groups:
+                                Some Sprite Appear Over, Some Below The Layers
+            ---- ---- 765- ---- ? (unused?)
+            ---- ---- ---4 ---- Enable Effect (?)
+            ---- ---- ---- 3210 Effect Number (?)
 
 I think bit 4 enables some sort of color cycling for sprites having priority
 bit set. See code of p7j at 6488,  affecting the rotating sprites before the
@@ -162,21 +162,21 @@ tested, along with Effect Number being 1, so ...
 
 [ Sprite / Sprite order ]
 
-	[MS1-A,B,C]		From first in Object RAM (frontmost) to last.
-	[MS1-Z]			From last in Sprite RAM (frontmost) to first.
+    [MS1-A,B,C]     From first in Object RAM (frontmost) to last.
+    [MS1-Z]         From last in Sprite RAM (frontmost) to first.
 
 [ Layer / Layer & Sprite / Layer order ]
 
 Controlled by:
 
-	* bits 7-4 (16 values) of the Layer Control register
-	* bit 4 of the Sprite Control register
+    * bits 7-4 (16 values) of the Layer Control register
+    * bit 4 of the Sprite Control register
 
-		Layer Control	Sprite Control
-MS1-Z	-
-MS1-A	84000			84100
-MS1-B	44000			44100
-MS1-C	c2208			c2200
+        Layer Control   Sprite Control
+MS1-Z   -
+MS1-A   84000           84100
+MS1-B   44000           44100
+MS1-C   c2208           c2200
 
 When bit 4 of the Sprite Contol register is set, sprites with color
 code 0-7 and sprites with color 8-f form two groups. Each group can
@@ -267,20 +267,20 @@ VIDEO_START( megasys1 )
  	megasys1_bits_per_color_code = 4;
 
 /*
-	The tile code of a specific layer is multiplied for a constant
-	depending on the tile mode (8x8 or 16x16)
+    The tile code of a specific layer is multiplied for a constant
+    depending on the tile mode (8x8 or 16x16)
 
-	The most reasonable arrangement seems a 1:1 mapping (meaning we
-	must multiply by 4 the tile code in 16x16 mode, since we decode
-	the graphics like 8x8)
+    The most reasonable arrangement seems a 1:1 mapping (meaning we
+    must multiply by 4 the tile code in 16x16 mode, since we decode
+    the graphics like 8x8)
 
-	However, this is probably a game specific thing, as Soldam uses
-	layer 1 in both modes, and even with 8x8 tiles the tile code must
-	be multiplied by 4!
+    However, this is probably a game specific thing, as Soldam uses
+    layer 1 in both modes, and even with 8x8 tiles the tile code must
+    be multiplied by 4!
 
-	AFAIK, the other games use a layer in one mode only (always 8x8 or
-	16x16) so it could be that the multiplication factor is constant
-	for each layer and hardwired to 1x or 4x for both tile sizes
+    AFAIK, the other games use a layer in one mode only (always 8x8 or
+    16x16) so it could be that the multiplication factor is constant
+    for each layer and hardwired to 1x or 4x for both tile sizes
 */
 
 	megasys1_8x8_scroll_0_factor = 1;	megasys1_16x16_scroll_0_factor = 4;
@@ -302,10 +302,10 @@ VIDEO_START( megasys1 )
 
 /***************************************************************************
 
-							Layers declarations:
+                            Layers declarations:
 
-					* Read and write handlers for the layer
-					* Callbacks for the TileMap code
+                    * Read and write handlers for the layer
+                    * Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -379,19 +379,19 @@ MEGASYS1_SCROLLRAM_W(2)
 
 /***************************************************************************
 
-							Video registers access
+                            Video registers access
 
 ***************************************************************************/
 
 
-/*		Tilemap Size (PagesX x PagesY)
+/*      Tilemap Size (PagesX x PagesY)
 
-		Reg. Value			16			8		<- Tile Size
+        Reg. Value          16          8       <- Tile Size
 
-			0				16 x  2		8 x 1
-			1	 			 8 x  4		4 x 2
-			2	 			 4 x  8		4 x 2
-			3	 			 2 x 16		2 x 4
+            0               16 x  2     8 x 1
+            1                8 x  4     4 x 2
+            2                4 x  8     4 x 2
+            3                2 x 16     2 x 4
 */
 
 #define MEGASYS1_SCROLL_FLAG_W(_n_) \
@@ -544,9 +544,9 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 		case 0x2008/2+1 :	megasys1_scrolly[1] = new_data;	break;
 		case 0x2008/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-//		case 0x2100/2+0 :	megasys1_scrollx[2] = new_data;	break;
-//		case 0x2100/2+1 :	megasys1_scrolly[2] = new_data;	break;
-//		case 0x2100/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
+//      case 0x2100/2+0 :   megasys1_scrollx[2] = new_data; break;
+//      case 0x2100/2+1 :   megasys1_scrolly[2] = new_data; break;
+//      case 0x2100/2+2 :   MEGASYS1_VREG_FLAG(2)       break;
 
 		case 0x2108/2   :	megasys1_sprite_bank	=	new_data;		break;
 		case 0x2200/2   :	megasys1_sprite_flag	=	new_data;		break;
@@ -561,34 +561,34 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 
 /***************************************************************************
 
-							Sprites Drawing
+                            Sprites Drawing
 
 ***************************************************************************/
 
 
-/*	 Draw sprites in the given bitmap.
+/*   Draw sprites in the given bitmap.
 
  Sprite Data:
 
-	Offset		Data
+    Offset      Data
 
- 	00-07						?
-	08 		fed- ---- ---- ----	?
-			---c ---- ---- ----	mosaic sol.	(?)
-			---- ba98 ---- ----	mosaic		(?)
-			---- ---- 7--- ----	y flip
-			---- ---- -6-- ----	x flip
-			---- ---- --45 ----	?
-			---- ---- ---- 3210	color code (bit 3 = priority)
-	0A		X position
-	0C		Y position
-	0E		Code											*/
+    00-07                       ?
+    08      fed- ---- ---- ---- ?
+            ---c ---- ---- ---- mosaic sol. (?)
+            ---- ba98 ---- ---- mosaic      (?)
+            ---- ---- 7--- ---- y flip
+            ---- ---- -6-- ---- x flip
+            ---- ---- --45 ---- ?
+            ---- ---- ---- 3210 color code (bit 3 = priority)
+    0A      X position
+    0C      Y position
+    0E      Code                                            */
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
-/* objram: 0x100*4 entries		spritedata: 0x80 entries */
+/* objram: 0x100*4 entries      spritedata: 0x80 entries */
 
 	/* sprite order is from first in Sprite Data RAM (frontmost) to last */
 
@@ -683,7 +683,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 
 /***************************************************************************
-						Convert the Priority Prom
+                        Convert the Priority Prom
 ***************************************************************************/
 
 struct priority
@@ -700,21 +700,21 @@ extern struct GameDriver driver_chimerab;
 extern struct GameDriver driver_iganinju;
 
 /*
-	Layers order encoded as an int like: 0x01234, where
+    Layers order encoded as an int like: 0x01234, where
 
-	0:	Scroll 0
-	1:	Scroll 1
-	2:	Scroll 2
-	3:	Sprites with color 0-7
-		(*every sprite*, if sprite splitting is not active)
-	4:	Sprites with color 8-f
-	f:	empty placeholder (we can't use 0!)
+    0:  Scroll 0
+    1:  Scroll 1
+    2:  Scroll 2
+    3:  Sprites with color 0-7
+        (*every sprite*, if sprite splitting is not active)
+    4:  Sprites with color 8-f
+    f:  empty placeholder (we can't use 0!)
 
-	and the bottom layer is on the left (e.g. 0).
+    and the bottom layer is on the left (e.g. 0).
 
-	The special value 0xfffff means that the order is either unknown
-	or no simple stack of layers can account for the values in the prom.
-	(the default value, 0x04132, will be used in those cases)
+    The special value 0xfffff means that the order is either unknown
+    or no simple stack of layers can account for the values in the prom.
+    (the default value, 0x04132, will be used in those cases)
 
 */
 
@@ -737,47 +737,47 @@ static struct priority priorities[] =
 
 
 /*
-	Convert the 512 bytes in the Priority Prom into 16 ints, encoding
-	the layers order for 16 selectable priority schemes.
+    Convert the 512 bytes in the Priority Prom into 16 ints, encoding
+    the layers order for 16 selectable priority schemes.
 
-	INPUT (to the video chip):
+    INPUT (to the video chip):
 
-		4 pixels: 3 layers(012) + 1 sprite (3)
-		(there are low and high priority sprites which
-		are split when the "split sprites" bit is set)
+        4 pixels: 3 layers(012) + 1 sprite (3)
+        (there are low and high priority sprites which
+        are split when the "split sprites" bit is set)
 
-	addr =	( (low pri sprite & split sprites ) << 0 ) +
-			( (pixel 0 is enabled and opaque )  << 1 ) +
-			( (pixel 1 is enabled and opaque )  << 2 ) +
-			( (pixel 2 is enabled and opaque )  << 3 ) +
-			( (pixel 3 is enabled and opaque )  << 4 ) +
-			( (layers_enable bits 11-8  )       << 5 )
+    addr =  ( (low pri sprite & split sprites ) << 0 ) +
+            ( (pixel 0 is enabled and opaque )  << 1 ) +
+            ( (pixel 1 is enabled and opaque )  << 2 ) +
+            ( (pixel 2 is enabled and opaque )  << 3 ) +
+            ( (pixel 3 is enabled and opaque )  << 4 ) +
+            ( (layers_enable bits 11-8  )       << 5 )
 
-	OUTPUT (to video):
-		1 pixel, the one from layer: PROM[addr] (layer can be 0-3)
+    OUTPUT (to video):
+        1 pixel, the one from layer: PROM[addr] (layer can be 0-3)
 
-	This scheme can generate a wealth of funky priority schemes
-	while we can account for just a simple stack of transparent
-	layers like: 01324. That is: bottom layer is 0, then 1, then
-	sprites (low priority sprites if sprite splitting is active,
-	every sprite if not) then layer 2 and high priority sprites
-	(only if sprite splitting is active).
+    This scheme can generate a wealth of funky priority schemes
+    while we can account for just a simple stack of transparent
+    layers like: 01324. That is: bottom layer is 0, then 1, then
+    sprites (low priority sprites if sprite splitting is active,
+    every sprite if not) then layer 2 and high priority sprites
+    (only if sprite splitting is active).
 
-	Hence, during the conversion process we make sure each of the
-	16 priority scheme in the prom is a "simple" one like the above
-	and log a warning otherwise. The feasibility criterion is such:
+    Hence, during the conversion process we make sure each of the
+    16 priority scheme in the prom is a "simple" one like the above
+    and log a warning otherwise. The feasibility criterion is such:
 
-	the opaque pens of the top layer must be above any other layer.
-	The transparent pens of the top layer must be either totally
-	opaque or totally transparent with respects to the other layers:
-	when the bit relative to the top layer is not set, the top layer's
-	code must be either always absent (transparent case) or always
-	present (opaque case) in the prom.
+    the opaque pens of the top layer must be above any other layer.
+    The transparent pens of the top layer must be either totally
+    opaque or totally transparent with respects to the other layers:
+    when the bit relative to the top layer is not set, the top layer's
+    code must be either always absent (transparent case) or always
+    present (opaque case) in the prom.
 
-	NOTE: This can't account for orders starting like: 030..
-	as found in peekaboo's prom. That's where sprites go below
-	the bottom layer's opaque pens, but above its transparent
-	pens.
+    NOTE: This can't account for orders starting like: 030..
+    as found in peekaboo's prom. That's where sprites go below
+    the bottom layer's opaque pens, but above its transparent
+    pens.
 */
 
 PALETTE_INIT( megasys1 )
@@ -785,8 +785,8 @@ PALETTE_INIT( megasys1 )
 	int pri_code, offset, i, order;
 
 	/* First check if we have an hand-crafted priority scheme
-	   available (this should happen only if no good dump
-	   of the prom is known) */
+       available (this should happen only if no good dump
+       of the prom is known) */
 
 	i = 0;
 	while (	priorities[i].driver &&
@@ -841,8 +841,8 @@ PALETTE_INIT( megasys1 )
 					}
 				}
 
-				/*	note: 3210 means that layer 0 is the bottom layer
-					(the order is reversed in the hand-crafted data) */
+				/*  note: 3210 means that layer 0 is the bottom layer
+                    (the order is reversed in the hand-crafted data) */
 
 				layers_order[offset] = ( (layers_order[offset] << 4) | top ) & 0xfffff;
 				enable_mask &= ~top_mask;
@@ -944,7 +944,7 @@ PALETTE_INIT( megasys1 )
 
 
 /***************************************************************************
-			  Draw the game screen in the given mame_bitmap.
+              Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
 

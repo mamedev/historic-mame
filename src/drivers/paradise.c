@@ -1,13 +1,13 @@
 /***************************************************************************
 
-							  -= Paradise / Target Ball =-
+                              -= Paradise / Target Ball / Torus =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 CPU          :  Z8400B
-Video Chips  :	TPC1024AFN-084C
-Sound Chips  :	2 x AR17961 (OKI M6295)
+Video Chips  :  TPC1024AFN-084C
+Sound Chips  :  2 x AR17961 (OKI M6295) (only 1 in Torus)
 
 Notes:
 
@@ -64,7 +64,7 @@ Notes:
 
 /***************************************************************************
 
-								Memory Maps
+                                Memory Maps
 
 ***************************************************************************/
 
@@ -85,27 +85,43 @@ static WRITE8_HANDLER( paradise_rombank_w )
 static WRITE8_HANDLER( paradise_okibank_w )
 {
 	if (data & ~0x02)	logerror("CPU #0 - PC %04X: unknown oki bank bits %02X\n",activecpu_get_pc(),data);
-	OKIM6295_set_bank_base(1, (data & 0x02) ? 0x40000 : 0);
+
+	if (sndti_to_sndnum(SOUND_OKIM6295, 1) >= 0)
+		OKIM6295_set_bank_base(1, (data & 0x02) ? 0x40000 : 0);
 }
 
+static WRITE8_HANDLER( torus_coin_counter_w )
+{
+	coin_counter_w(0, data ^ 0xff);
+}
 
-static ADDRESS_MAP_START( paradise_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM		)	// ROM
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1		)	// ROM (banked)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM		)	// RAM
+#define STANDARD_MAP	\
+	AM_RANGE(0x0000, 0x7fff) AM_ROM	/* ROM */	\
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)	/* ROM (banked) */ \
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_WRITE(paradise_vram_2_w) AM_BASE(&paradise_vram_2	)	/* Background */ \
+	AM_RANGE(0xc800, 0xcfff) AM_RAM AM_WRITE(paradise_vram_1_w) AM_BASE(&paradise_vram_1	)	/* Midground */ \
+	AM_RANGE(0xd000, 0xd7ff) AM_RAM AM_WRITE(paradise_vram_0_w) AM_BASE(&paradise_vram_0	)	/* Foreground */ \
+
+
+static ADDRESS_MAP_START( paradise_map, ADDRESS_SPACE_PROGRAM, 8 )
+	STANDARD_MAP
+	AM_RANGE(0xd800, 0xd8ff) AM_RAM	// RAM
+	AM_RANGE(0xd900, 0xe0ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0xe100, 0xffff) AM_RAM	// RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( paradise_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM		)	// ROM
-	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM		)	// ROM (banked)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paradise_vram_2_w) AM_BASE(&paradise_vram_2	)	// Background
-	AM_RANGE(0xc800, 0xcfff) AM_WRITE(paradise_vram_1_w) AM_BASE(&paradise_vram_1	)	// Midground
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(paradise_vram_0_w) AM_BASE(&paradise_vram_0	)	// Foreground
-	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM								)	// RAM
-	AM_RANGE(0xd900, 0xe0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size	)	// Sprites
-	AM_RANGE(0xe100, 0xffff) AM_WRITE(MWA8_RAM								)	// RAM
+static ADDRESS_MAP_START( tgtball_map, ADDRESS_SPACE_PROGRAM, 8 )
+	STANDARD_MAP
+	AM_RANGE(0xd800, 0xd8ff) AM_RAM	// RAM
+	AM_RANGE(0xd900, 0xd9ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0xda00, 0xffff) AM_RAM	// RAM
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( torus_map, ADDRESS_SPACE_PROGRAM, 8 )
+	STANDARD_MAP
+	AM_RANGE(0xd800, 0xdfff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0xe000, 0xffff) AM_RAM	// RAM
+ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( paradise_readport, ADDRESS_SPACE_IO, 8 )
@@ -135,12 +151,12 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
 /***************************************************************************
-								Paradise
+                                Paradise
 ***************************************************************************/
 
 INPUT_PORTS_START( paradise )
@@ -303,10 +319,94 @@ INPUT_PORTS_START( tgtball )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( torus )
+
+	PORT_START	// IN0 - port $2020 - DSW 1
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN1 - port $2021 - DSW 2
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Characters Test" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN2 - port $2022 - Player 1
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_START	// IN3 - port $2023 - Player 2
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_START	// IN4 - port $2024 - Coins
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(5)
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_VBLANK  )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 /***************************************************************************
 
-								Graphics Layouts
+                                Graphics Layouts
 
 ***************************************************************************/
 
@@ -343,6 +443,17 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*4
 };
 
+static struct GfxLayout torus_layout_16x16x8 =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	8,
+	{ STEP4(RGN_FRAC(1,2),1), STEP4(RGN_FRAC(0,2),1) },
+	{ STEP8(0,4),STEP8(4*8,4) },
+	{ STEP16(0,8*8) },
+	128*8
+};
+
 static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0x100, 1  }, // [0] Sprites
@@ -352,18 +463,28 @@ static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static struct GfxDecodeInfo torus_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &torus_layout_16x16x8, 0x100, 1  }, // [0] Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	     0x400, 16 }, // [1] Background
+	{ REGION_GFX3, 0, &layout_8x8x8,	     0x300, 1  }, // [2] Midground
+	{ REGION_GFX4, 0, &layout_8x8x8,	     0x000, 1  }, // [3] Foreground
+	{ -1 }
+};
+
+
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( paradise )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 12000000/2)			/* Z8400B - 6mhz Verified*/
-	MDRV_CPU_PROGRAM_MAP(paradise_readmem,paradise_writemem)
+	MDRV_CPU_ADD_TAG("main", Z80, 12000000/2)			/* Z8400B - 6mhz Verified */
+	MDRV_CPU_PROGRAM_MAP(paradise_map,0)
 	MDRV_CPU_IO_MAP(paradise_readport,paradise_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No nmi routine */
 
@@ -387,21 +508,41 @@ static MACHINE_DRIVER_START( paradise )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_ADD_TAG("oki2", OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( tgtball )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(paradise)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(tgtball_map,0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( torus )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(paradise)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(torus_map,0)
+
+	MDRV_GFXDECODE(torus_gfxdecodeinfo)
+
+	MDRV_VIDEO_UPDATE(torus)
+
+	MDRV_SOUND_REMOVE("oki2")
 MACHINE_DRIVER_END
 
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
 /***************************************************************************
 
-									Paradise
+                                    Paradise
 
 (c) yun sung  year ??
 another porn qix alike game
@@ -472,7 +613,7 @@ ROM_END
 ROM_START( tgtballa )
 	ROM_REGION( 0x44000, REGION_CPU1, 0 )		/* Z80 Code */
 	ROM_LOAD( "yunsung.128", 0x00000, 0x0c000, CRC(cb0f3d46) SHA1(b56c4abbd4248074c1559a0f1902d2ea11cb01a8) )
-	ROM_CONTINUE(         0x10000, 0x34000    )
+	ROM_CONTINUE(            0x10000, 0x34000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 16x16x8 Sprites */
 	ROM_LOAD( "yunsung.114", 0x00000, 0x40000, CRC(3dbe1872) SHA1(754f90123a3944ca548fc66ee65a93615155bf30) )
@@ -496,21 +637,57 @@ ROM_START( tgtballa )
 	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
 ROM_END
 
+ROM_START( torus )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )		/* Z80 Code */
+	ROM_LOAD( "bc13.bin",     0x00000, 0xc000, CRC(55d3ef3e) SHA1(195463271fdb3f9f5c19068efd1c99105f761fe9) )
+	ROM_CONTINUE(             0x10000, 0x4000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 16x16x8 Sprites */
+	ROM_LOAD( "bc5.bin",      0x00000, 0x40000, CRC(5b60ce9f) SHA1(d5c091145e0bae7cd776e642ea17895d086ed2b0) )
+	ROM_LOAD( "bc6.bin",      0x40000, 0x40000, CRC(4caa0c50) SHA1(a971b6e87cd1162cf370d39cfeafefbb1557e14e) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* 8x8x4 Background */
+	/* not for this game */
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 8x8x8 Foreground */
+	ROM_LOAD( "bc2.bin",      0x00000, 0x80000, CRC(67c5ba1a) SHA1(0e39752ddc5ee9469647140a3fc9e6bb69d6afa1) )
+	ROM_LOAD( "bc1.bin",      0x80000, 0x80000, CRC(efb105e9) SHA1(7bfe6ff64b25797dd524a7077def5669f25f16ec) )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 8x8x8 Midground */
+	ROM_LOAD( "bc4.bin",      0x00000, 0x20000, CRC(ee914caf) SHA1(42f3d760a4c14658ac2eb0ba7f54fb9916368b50) )
+	ROM_LOAD( "bc3.bin",      0x20000, 0x20000, CRC(aff1dab9) SHA1(ae488abd605c1e78b8b73452a2c1391cc0fe6b00) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "bc15.bin",     0x00000, 0x40000, CRC(12d84839) SHA1(840d82253c0651ebe6799ea2bb5bae334e963e12) )
+ROM_END
+
+
+DRIVER_INIT (paradise)
+{
+	paradise_sprite_inc = 0x20;
+}
 
 // Inverted flipscreen and sprites are packed in less memory (same number though)
 DRIVER_INIT (tgtball)
 {
-	spriteram_size = 0x100;
+	paradise_sprite_inc = 4;
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x2001, 0x2001, 0, 0, tgtball_flipscreen_w );
+}
+
+DRIVER_INIT (torus)
+{
+	paradise_sprite_inc = 4;
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x2070, 0x2070, 0, 0, torus_coin_counter_w);
 }
 
 
 /***************************************************************************
 
-								Game Drivers
+                                Game Drivers
 
 ***************************************************************************/
 
-GAME( 1994+, paradise, 0,       paradise, paradise, 0,       ROT90, "Yun Sung", "Paradise" )
-GAME( 1995,  tgtball,  0,       paradise, tgtball,  tgtball, ROT0,  "Yun Sung", "Target Ball (Nude)" )
-GAME( 1995,  tgtballa, tgtball, paradise, tgtball,  tgtball, ROT0,  "Yun Sung", "Target Ball" )
+GAME( 1994+, paradise, 0,       paradise, paradise, paradise, ROT90, "Yun Sung", "Paradise" )
+GAME( 1995,  tgtball,  0,       tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball (Nude)" )
+GAME( 1995,  tgtballa, tgtball, tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball" )
+GAME( 1996,  torus,    0,       torus,    torus,    torus,    ROT90, "Yun Sung", "Torus" )

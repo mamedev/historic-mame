@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari Shuuz hardware
+    Atari Shuuz hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Shuuz (1990) [2 sets]
+    Games supported:
+        * Shuuz (1990) [2 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -26,7 +26,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -47,7 +47,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -67,7 +67,7 @@ static WRITE16_HANDLER( latch_w )
 
 /*************************************
  *
- *	LETA I/O
+ *  LETA I/O
  *
  *************************************/
 
@@ -95,7 +95,7 @@ static READ16_HANDLER( leta_r )
 
 /*************************************
  *
- *	MSM5295 I/O
+ *  MSM5295 I/O
  *
  *************************************/
 
@@ -115,7 +115,7 @@ static WRITE16_HANDLER( adpcm_w )
 
 /*************************************
  *
- *	Additional I/O
+ *  Additional I/O
  *
  *************************************/
 
@@ -133,7 +133,7 @@ static READ16_HANDLER( special_port0_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -174,7 +174,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -241,7 +241,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -268,7 +268,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -280,7 +280,7 @@ static MACHINE_DRIVER_START( shuuz )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(shuuz)
 	MDRV_NVRAM_HANDLER(atarigen)
 
@@ -306,7 +306,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -367,7 +367,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -380,7 +380,7 @@ static DRIVER_INIT( shuuz )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

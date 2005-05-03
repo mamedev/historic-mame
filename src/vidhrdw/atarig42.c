@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	Atari G42 hardware
+    Atari G42 hardware
 
 *****************************************************************************
 
-	MO data has 12 bits total: MVID0-11
-	MVID9-11 form the priority
-	MVID0-9 form the color bits
-	
-	PF data has 13 bits total: PF.VID0-12
-	PF.VID10-12 form the priority
-	PF.VID0-9 form the color bits
-	
-	Upper bits come from the low 5 bits of the HSCROLL value in alpha RAM
-	Playfield bank comes from low 2 bits of the VSCROLL value in alpha RAM
-	For GX2, there are 4 bits of bank
+    MO data has 12 bits total: MVID0-11
+    MVID9-11 form the priority
+    MVID0-9 form the color bits
+
+    PF data has 13 bits total: PF.VID0-12
+    PF.VID10-12 form the priority
+    PF.VID0-9 form the color bits
+
+    Upper bits come from the low 5 bits of the HSCROLL value in alpha RAM
+    Playfield bank comes from low 2 bits of the VSCROLL value in alpha RAM
+    For GX2, there are 4 bits of bank
 
 ****************************************************************************/
 
@@ -27,7 +27,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -39,7 +39,7 @@ UINT16 atarig42_motion_object_mask;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -53,7 +53,7 @@ static UINT16 playfield_yscroll;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -82,12 +82,12 @@ static UINT32 atarig42_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, U
 	int bank = 1 - (col / (num_cols / 2));
 	return bank * (num_rows * num_cols / 2) + row * (num_cols / 2) + (col % (num_cols / 2));
 }
- 
+
 
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -99,10 +99,10 @@ VIDEO_START( atarig42 )
 		256,		/* number of entries in sprite RAM */
 		0,			/* left clip coordinate */
 		0,			/* right clip coordinate */
-		
+
 		0x000,		/* base palette entry */
 		0x400,		/* maximum number of colors */
-	
+
 		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
 		{{ 0,0x03f0,0,0,0,0,0,0 }},	/* mask for the color */
 		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
@@ -150,7 +150,7 @@ VIDEO_START( atarig42 )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -223,7 +223,7 @@ void atarig42_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -239,7 +239,7 @@ VIDEO_UPDATE( atarig42 )
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 5, 5);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 6, 6);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 7, 7);
-	
+
 	/* copy the motion objects on top */
 	{
 		struct mame_bitmap *mo_bitmap = atarirle_get_vram(0, 0);
@@ -265,7 +265,7 @@ VIDEO_UPDATE( atarig42 )
 				}
 		}
 	}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

@@ -1,6 +1,6 @@
 /************************************
       Seta custom ST-0016 chip
-	driver by Tomasz Slanina
+    driver by Tomasz Slanina
 ************************************/
 
 #include "driver.h"
@@ -47,9 +47,9 @@ static struct GfxLayout charlayout =
 WRITE8_HANDLER(st0016_sprite_bank_w)
 {
 /*
-	76543210
-	    xxxx - spriteram  bank1
-	xxxx     - spriteram  bank2
+    76543210
+        xxxx - spriteram  bank1
+    xxxx     - spriteram  bank2
 */
 	st0016_spr_bank=data&ST0016_SPR_BANK_MASK;
 	st0016_spr2_bank=(data>>4)&ST0016_SPR_BANK_MASK;
@@ -58,9 +58,9 @@ WRITE8_HANDLER(st0016_sprite_bank_w)
 WRITE8_HANDLER(st0016_palette_bank_w)
 {
 /*
-	76543210
-	      xx - palram  bank
-	xxxxxx   - unknown/unused
+    76543210
+          xx - palram  bank
+    xxxxxx   - unknown/unused
 */
 	st0016_pal_bank=data&ST0016_PAL_BANK_MASK;
 }
@@ -68,8 +68,8 @@ WRITE8_HANDLER(st0016_palette_bank_w)
 WRITE8_HANDLER(st0016_character_bank_w)
 {
 /*
-	fedcba9876543210
-	xxxxxxxxxxxxxxxx - character (bank )
+    fedcba9876543210
+    xxxxxxxxxxxxxxxx - character (bank )
 */
 
 	if(offset&1)
@@ -137,20 +137,20 @@ WRITE8_HANDLER(st0016_character_ram_w)
 READ8_HANDLER(st0016_vregs_r)
 {
 /*
-	    $0, $1 = max scanline(including vblank)/timer? ($3e7)
+        $0, $1 = max scanline(including vblank)/timer? ($3e7)
 
-	    $8-$40 = bg tilemaps  (8 bytes each) :
-	    	       0 - ? = usually 0/20/ba*
-	    	       1 - 0 = disabled , !zero = address of tilemap in spriteram /$1000  (for example: 3 -> tilemap at $3000 )
-	    	       2 - ? = usually ff/1f/af*
-	    	       3 - priority ? = 0 - under sprites , $ff - over sprites \
-	    	       4 - ? = $7f/$ff
-	    	       5 - ? = $29/$20 (29 when tilemap must be drawn over sprites . maybe this is real priority ?)
-	    	       6 - ? = 0
-	    	       7 - ? =$20/$10/$12*
+        $8-$40 = bg tilemaps  (8 bytes each) :
+                   0 - ? = usually 0/20/ba*
+                   1 - 0 = disabled , !zero = address of tilemap in spriteram /$1000  (for example: 3 -> tilemap at $3000 )
+                   2 - ? = usually ff/1f/af*
+                   3 - priority ? = 0 - under sprites , $ff - over sprites \
+                   4 - ? = $7f/$ff
+                   5 - ? = $29/$20 (29 when tilemap must be drawn over sprites . maybe this is real priority ?)
+                   6 - ? = 0
+                   7 - ? =$20/$10/$12*
 
 
-	    $40-$60 = scroll registers , X.w, Y.w
+        $40-$60 = scroll registers , X.w, Y.w
 
 */
 
@@ -178,26 +178,26 @@ WRITE8_HANDLER(st0016_vregs_w)
 {
 	/*
 
-	   I/O ports:
+       I/O ports:
 
-	    $a0 \
-	    $a1 - source address >> 1
-	    $a2 /
+        $a0 \
+        $a1 - source address >> 1
+        $a2 /
 
-	    $a3 \
-	    $a4 - destination address >> 1  (inside character ram)
-	    $a5 /
+        $a3 \
+        $a4 - destination address >> 1  (inside character ram)
+        $a5 /
 
-	    $a6 \
-	    &a7 - (length inbytes - 1 ) >> 1
+        $a6 \
+        &a7 - (length inbytes - 1 ) >> 1
 
-	    $a8 - 76543210
-	          ??faaaaa
+        $a8 - 76543210
+              ??faaaaa
 
-	          a - most sign. bits of length
-	          f - DMA start latch
+              a - most sign. bits of length
+              f - DMA start latch
 
-	*/
+    */
 
 	st0016_vregs[offset]=data;
 	if(offset==0xa8 && (data&0x20))
@@ -228,47 +228,47 @@ WRITE8_HANDLER(st0016_vregs_w)
 static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	object ram :
+    object ram :
 
-	 each entry is 8 bytes:
+     each entry is 8 bytes:
 
-	   76543210 (bit)
-	 0 llllllll
-	 1 ---1SSSl
-	 2 oooooooo
-	 3 fooooooo
-	 4 xxxxxxxx
-	 5 ------xx
-	 6 yyyyyyyy
-	 7 ------yy
+       76543210 (bit)
+     0 llllllll
+     1 ---1SSSl
+     2 oooooooo
+     3 fooooooo
+     4 xxxxxxxx
+     5 ------xx
+     6 yyyyyyyy
+     7 ------yy
 
-	   1 - always(?) set
-	   S - scroll index ? (ports $40-$60, X(word),Y(word) )
-	   l - sublist length (8 byte entries -1)
-	   o - sublist offset (*8 to get real offset)
-	   f - end of list  flag
-	   x,y - sprite coords
+       1 - always(?) set
+       S - scroll index ? (ports $40-$60, X(word),Y(word) )
+       l - sublist length (8 byte entries -1)
+       o - sublist offset (*8 to get real offset)
+       f - end of list  flag
+       x,y - sprite coords
 
-	 sublist format (8 bytes/entry):
+     sublist format (8 bytes/entry):
 
-	   76543210
-	 0 cccccccc
-	 1 cccccccc
-	 2 --kkkkkk
-	 3 QW------
-	 4 xxxxxxxx
-	 5 -B---XXx
-	 6 yyyyyyyy
-	 7 -----YYy
+       76543210
+     0 cccccccc
+     1 cccccccc
+     2 --kkkkkk
+     3 QW------
+     4 xxxxxxxx
+     5 -B---XXx
+     6 yyyyyyyy
+     7 -----YYy
 
-	  c - character code
-	  k - palette
-	  QW - flips
-	  x,y - coords
-	  XX,YY - size (1<<size)
-	  B - merge pixel data with prevoius one (8bpp mode - neratte: seta logo and title screen)
+      c - character code
+      k - palette
+      QW - flips
+      x,y - coords
+      XX,YY - size (1<<size)
+      B - merge pixel data with prevoius one (8bpp mode - neratte: seta logo and title screen)
 
-	*/
+    */
 
 	int i,j,lx,ly,x,y,code,offset,length,sx,sy,color,flipx,flipy,scrollx,scrolly;
 

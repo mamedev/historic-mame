@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Driver for Williams/Midway Wolf-unit games.
+    Driver for Williams/Midway Wolf-unit games.
 
 **************************************************************************/
 
@@ -35,7 +35,7 @@ static void midxunit_dcs_output_full(int state);
 
 /*************************************
  *
- *	CMOS reads/writes
+ *  CMOS reads/writes
  *
  *************************************/
 
@@ -75,7 +75,7 @@ READ16_HANDLER( midwunit_cmos_r )
 
 /*************************************
  *
- *	General I/O writes
+ *  General I/O writes
  *
  *************************************/
 
@@ -103,7 +103,7 @@ WRITE16_HANDLER( midwunit_io_w )
 		case 3:
 			/* watchdog reset */
 			/* MK3 resets with this enabled */
-/*			watchdog_reset_w(0,0);*/
+/*          watchdog_reset_w(0,0);*/
 			break;
 
 		default:
@@ -127,12 +127,12 @@ WRITE16_HANDLER( midxunit_io_w )
 	{
 		case 2:
 			/* watchdog reset */
-//			watchdog_reset_w(0,0);
+//          watchdog_reset_w(0,0);
 			break;
 
 		default:
 			logerror("%08X:I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
-//			logerror("%08X:Unknown I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
+//          logerror("%08X:Unknown I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
 			break;
 	}
 	iodata[offset] = newword;
@@ -149,7 +149,7 @@ WRITE16_HANDLER( midxunit_unknown_w )
 
 /*************************************
  *
- *	General I/O reads
+ *  General I/O reads
  *
  *************************************/
 
@@ -220,7 +220,7 @@ READ16_HANDLER( midxunit_status_r )
 
 /*************************************
  *
- *	Revolution X UART
+ *  Revolution X UART
  *
  *************************************/
 
@@ -296,7 +296,7 @@ READ16_HANDLER( midxunit_uart_r )
 			break;
 	}
 
-/*	logerror("%08X:UART R @ %X = %02X\n", activecpu_get_pc(), offset, result);*/
+/*  logerror("%08X:UART R @ %X = %02X\n", activecpu_get_pc(), offset, result);*/
 	return result;
 }
 
@@ -332,14 +332,14 @@ WRITE16_HANDLER( midxunit_uart_w )
 			break;
 	}
 
-/*	logerror("%08X:UART W @ %X = %02X\n", activecpu_get_pc(), offset, data);*/
+/*  logerror("%08X:UART W @ %X = %02X\n", activecpu_get_pc(), offset, data);*/
 }
 
 
 
 /*************************************
  *
- *	Generic driver init
+ *  Generic driver init
  *
  *************************************/
 
@@ -371,9 +371,9 @@ static void init_wunit_generic(void)
 
 /*************************************
  *
- *	Wolf-unit init (DCS)
+ *  Wolf-unit init (DCS)
  *
- * 	music: ADSP2101
+ *  music: ADSP2101
  *
  *************************************/
 
@@ -546,7 +546,7 @@ DRIVER_INIT( revx )
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -574,7 +574,7 @@ MACHINE_INIT( midxunit )
 
 /*************************************
  *
- *	Security chip I/O
+ *  Security chip I/O
  *
  *************************************/
 
@@ -608,7 +608,7 @@ WRITE16_HANDLER( midxunit_security_clock_w )
 
 /*************************************
  *
- *	Sound write handlers
+ *  Sound write handlers
  *
  *************************************/
 

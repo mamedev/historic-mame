@@ -1,45 +1,45 @@
 /***************************************************************************
 
-	SNK/Alpha 68000 based games:
+    SNK/Alpha 68000 based games:
 
-	(Game)                  (PCB Number)     (Manufacturer)
+    (Game)                  (PCB Number)     (Manufacturer)
 
-	Super Stingray          ? (Early)        Alpha 1986?
-	Kyros                   ? (Early)        World Games Inc 1987
-	Mahjong Block Jongbou   Alpha 68K-96 N   SNK 1987
-	Paddle Mania            Alpha 68K-96 I   SNK 1988
-	Time Soldiers (Ver 3)   Alpha 68K-96 II  SNK/Romstar 1987
-	Time Soldiers (Ver 1)   Alpha 68K-96 II  SNK/Romstar 1987
-	Battlefield (Ver 1)     Alpha 68K-96 II  SNK 1987
-	Sky Soldiers            Alpha 68K-96 II  SNK/Romstar 1988
-	Gold Medalist           Alpha 68K-96 II  SNK 1988
-	Gold Medalist           (Bootleg)        SNK 1988
-	Sky Adventure           Alpha 68K-96 V   SNK 1989
-	Gang Wars               Alpha 68K-96 V   Alpha 1989
-	Gang Wars               (Bootleg)        Alpha 1989
-	Super Champion Baseball (V board?)       SNK/Alpha/Romstar/Sega 1989
-	The Next Space          A8004-1 PIC      SNK 1989
+    Super Stingray          ? (Early)        Alpha 1986?
+    Kyros                   ? (Early)        World Games Inc 1987
+    Mahjong Block Jongbou   Alpha 68K-96 N   SNK 1987
+    Paddle Mania            Alpha 68K-96 I   SNK 1988
+    Time Soldiers (Ver 3)   Alpha 68K-96 II  SNK/Romstar 1987
+    Time Soldiers (Ver 1)   Alpha 68K-96 II  SNK/Romstar 1987
+    Battlefield (Ver 1)     Alpha 68K-96 II  SNK 1987
+    Sky Soldiers            Alpha 68K-96 II  SNK/Romstar 1988
+    Gold Medalist           Alpha 68K-96 II  SNK 1988
+    Gold Medalist           (Bootleg)        SNK 1988
+    Sky Adventure           Alpha 68K-96 V   SNK 1989
+    Gang Wars               Alpha 68K-96 V   Alpha 1989
+    Gang Wars               (Bootleg)        Alpha 1989
+    Super Champion Baseball (V board?)       SNK/Alpha/Romstar/Sega 1989
+    The Next Space          A8004-1 PIC      SNK 1989
 
 General notes:
 
-	All II & V games are 68000, z80 plus a custom Alpha microcontroller,
-	the microcontroller is able to write to anywhere within main memory.
+    All II & V games are 68000, z80 plus a custom Alpha microcontroller,
+    the microcontroller is able to write to anywhere within main memory.
 
-	Gold Medalist (bootleg) has a 68705 in place of the Alpha controller.
+    Gold Medalist (bootleg) has a 68705 in place of the Alpha controller.
 
-	V boards have more memory and double the amount of colours as II boards.
+    V boards have more memory and double the amount of colours as II boards.
 
-	Time Soldiers - make the ROM writable and the game will enter a 'debug'
-	kind of mode, probably from the development system used.
+    Time Soldiers - make the ROM writable and the game will enter a 'debug'
+    kind of mode, probably from the development system used.
 
-	Time Soldiers - Title screen is corrupt when set to 'Japanese language',
-	the real board does this too!  (Battlefield is corrupt when set to English
-	too).
+    Time Soldiers - Title screen is corrupt when set to 'Japanese language',
+    the real board does this too!  (Battlefield is corrupt when set to English
+    too).
 
-	The Next Space is not an Alpha game, but the video hardware is identical
-	to Paddlemania.
+    The Next Space is not an Alpha game, but the video hardware is identical
+    to Paddlemania.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
 Stephh's additional notes (based on the games M68000 code and some tests) :
@@ -350,8 +350,8 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 {
 	/* possible jump codes:
          - Kyros          : 0x22
-	     - Super Stingray : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
-	*/
+         - Super Stingray : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
+    */
 	static unsigned coinvalue=0, microcontroller_data=0;
 	static UINT8 coinage1[8][2]={{1,1},{1,5},{1,3},{2,3},{1,2},{1,6},{1,4},{3,2}};
 	static UINT8 coinage2[8][2]={{1,1},{5,1},{3,1},{7,1},{2,1},{6,1},{4,1},{8,1}};
@@ -430,10 +430,10 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 static READ16_HANDLER( alpha_II_trigger_r )
 {
 	/* possible jump codes:
-	     - Time Soldiers : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
-	     - Sky Soldiers  : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
-	     - Gold Medalist : 0x21,0x23,0x24,0x5b
-	*/
+         - Time Soldiers : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
+         - Sky Soldiers  : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
+         - Gold Medalist : 0x21,0x23,0x24,0x5b
+    */
 	static unsigned coinvalue=0, microcontroller_data=0;
 	static UINT8 coinage1[8][2]={{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{3,2}};
 	static UINT8 coinage2[8][2]={{1,1},{2,1},{3,1},{4,1},{5,1},{6,1},{7,1},{8,1}};
@@ -518,10 +518,10 @@ static READ16_HANDLER( alpha_II_trigger_r )
 static READ16_HANDLER( alpha_V_trigger_r )
 {
 	/* possible jump codes:
-	     - Sky Adventure           : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
-	     - Gang Wars               : 0x21,0x23,0x24,0x54
-	     - Super Champion Baseball : 0x21,0x23,0x24
-	*/
+         - Sky Adventure           : 0x21,0x22,0x23,0x24,0x34,0x37,0x3a,0x3d,0x40,0x43,0x46,0x49
+         - Gang Wars               : 0x21,0x23,0x24,0x54
+         - Super Champion Baseball : 0x21,0x23,0x24
+    */
 	static unsigned coinvalue=0, microcontroller_data=0;
 	static UINT8 coinage1[8][2]={{1,1},{1,5},{1,3},{2,3},{1,2},{1,6},{1,4},{3,2}};
 	static UINT8 coinage2[8][2]={{1,1},{5,1},{3,1},{7,1},{2,1},{6,1},{4,1},{8,1}};
@@ -641,8 +641,8 @@ static READ16_HANDLER( alpha_V_trigger_r )
 			}
 
 			/* Gang Wars expects the first dip to appear in RAM at 0x02c6,
-			   the microcontroller supplies it (it does for all the other games,
-			   but usually to 0x0 in RAM) when 0x21 is read (code at 0x009332) */
+               the microcontroller supplies it (it does for all the other games,
+               but usually to 0x0 in RAM) when 0x21 is read (code at 0x009332) */
 			source=shared_ram[0x0163];
 			shared_ram[0x0163] = (source&0x00ff)|(readinputportbytag("IN4")<<8);
 
@@ -816,11 +816,11 @@ static ADDRESS_MAP_START( kyros_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe004, 0xe004) AM_WRITE(DAC_0_signed_data_w)
 	AM_RANGE(0xe006, 0xe00e) AM_WRITE(MWA8_NOP) // soundboard I/O's, ignored
 /* reference only
-	AM_RANGE(0xe006, 0xe006) AM_WRITE(MWA8_NOP) // NMI: diminishing saw-tooth
-	AM_RANGE(0xe008, 0xe008) AM_WRITE(MWA8_NOP) // NMI: 00
-	AM_RANGE(0xe00a, 0xe00a) AM_WRITE(MWA8_NOP) // RST38: 20
-	AM_RANGE(0xe00c, 0xe00c) AM_WRITE(MWA8_NOP) // RST30: 00 on entry
-	AM_RANGE(0xe00e, 0xe00e) AM_WRITE(MWA8_NOP) // RST30: 00,02,ff on exit(0x1d88)
+    AM_RANGE(0xe006, 0xe006) AM_WRITE(MWA8_NOP) // NMI: diminishing saw-tooth
+    AM_RANGE(0xe008, 0xe008) AM_WRITE(MWA8_NOP) // NMI: 00
+    AM_RANGE(0xe00a, 0xe00a) AM_WRITE(MWA8_NOP) // RST38: 20
+    AM_RANGE(0xe00c, 0xe00c) AM_WRITE(MWA8_NOP) // RST30: 00 on entry
+    AM_RANGE(0xe00e, 0xe00e) AM_WRITE(MWA8_NOP) // RST30: 00,02,ff on exit(0x1d88)
 */
 ADDRESS_MAP_END
 
@@ -1138,7 +1138,7 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPSETTING(    0x80, "A to B" )
 	PORT_DIPSETTING(    0x00, "A to C" )
 	PORT_DIPSETTING(    0x40, "A to E" )
-//	PORT_DIPSETTING(    0xc0, "A to B" )				// Possibility of "A only" in another version ?
+//  PORT_DIPSETTING(    0xc0, "A to B" )                // Possibility of "A only" in another version ?
 
 	PORT_START_TAG("IN4")	// DSW1
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
@@ -1172,7 +1172,7 @@ INPUT_PORTS_START( timesold )
 	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
 	ALPHA68K_MCU
-	
+
 	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
@@ -1184,7 +1184,7 @@ INPUT_PORTS_START( timesold )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
@@ -1236,7 +1236,7 @@ INPUT_PORTS_START( btlfield )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Language ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
@@ -1390,7 +1390,7 @@ INPUT_PORTS_START( skyadvnt )
 	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
 	ALPHA68K_MCU
-	
+
 	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
@@ -1436,7 +1436,7 @@ INPUT_PORTS_START( skyadvnu )
 	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
 	ALPHA68K_MCU
-	
+
 	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
@@ -1488,7 +1488,7 @@ INPUT_PORTS_START( gangwars )
 	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
 
 	ALPHA68K_MCU
-	
+
 	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
@@ -1541,7 +1541,7 @@ INPUT_PORTS_START( gangwarb )
 	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
 
 	ALPHA68K_MCU /* See notes */
-	
+
 	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
@@ -2107,7 +2107,7 @@ static MACHINE_DRIVER_START( jongbou )
 	MDRV_CPU_PROGRAM_MAP(jongbou_sound_map,0)
 	MDRV_CPU_IO_MAP(jongbou_sound_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,32)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -2497,7 +2497,7 @@ ROM_START( jongbou )
 	ROM_LOAD( "p6.l15", 0x00000, 0x10000, CRC(1facee65) SHA1(6c98338c616e53106960063d0d31483131b492b0) )
 	ROM_LOAD( "p5.k15", 0x10000, 0x10000, CRC(db0ad6bb) SHA1(c2ce0e78a4be9314f4f14ea87f521a79bab3697c) )
 	ROM_LOAD( "p4.j15", 0x20000, 0x10000, CRC(56842cfa) SHA1(141ed992332540487cec951eab61c18be994b618) )
-	
+
 	ROM_REGION( 0x2000, REGION_USER1, 0 )
 	ROM_LOAD( "p3.i15", 0x0000, 0x2000, CRC(8c09cd2a) SHA1(317764e0f5af29e78fd764bdf28579bf6be5630f) )
 
@@ -2724,7 +2724,7 @@ ROM_START( goldmeda )
 	ROM_LOAD16_BYTE( "gm4-7.bin", 0x00001, 0x10000, CRC(e19966af) SHA1(a2523627fcc9f5e4a82b4ebec937880fc0e0e9f3) )
 	ROM_LOAD16_BYTE( "gm1-7.bin", 0x20000, 0x10000, CRC(6d87b8a6) SHA1(6f47b42d6577691334784e961a991de2ad67f677) )
 	ROM_LOAD16_BYTE( "gm2-7.bin", 0x20001, 0x10000, CRC(8d579505) SHA1(81f225edbba1cac65275e2929336d076afbbd2bf) )
-	
+
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) // banking is slightly different from other Alpha68kII games
 	ROM_LOAD( "38.bin",          0x00000,  0x08000, CRC(4bf251b8) SHA1(d69a6607e92dbe8081c7c66b6853f02d578ef73f) ) // we use the bootleg set instead
 	ROM_CONTINUE(                0x18000,  0x08000 )
@@ -2741,7 +2741,7 @@ ROM_START( goldmeda )
 	ROM_LOAD( "goldchr2.c45",   0x080000, 0x80000, CRC(e6b0aa2c) SHA1(88d852803d92147d75853f0e7efa0f2a71820ac6) )
 	ROM_LOAD( "goldchr1.c44",   0x100000, 0x80000, CRC(55db41cd) SHA1(15fa192ea2b829dc6dc0cb88fc2c5e5a30af6c91) )
 	ROM_LOAD( "goldchr0.c43",   0x180000, 0x80000, CRC(76572c3f) SHA1(e7a1abf4240510810a0f9663295c0fbab9e55a63) )
-	
+
 	ROM_REGION( 0x10000, REGION_USER1, 0 ) // unknown
 	ROM_LOAD( "gm5-1.bin", 0x000000, 0x10000, CRC(77c601a3) SHA1(5db88b0000fa5e460aa431ca7b75e8fcf629e31e) )
 ROM_END
@@ -2764,7 +2764,7 @@ ROM_START( goldmedb )
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )  /* chars */
 	ROM_LOAD( "gm.5",           0x000000, 0x08000, CRC(667f33f1) SHA1(6d05603b49927f09c9bb34e787b003eceaaf7062) )
 	ROM_LOAD( "gm.6",           0x008000, 0x08000, CRC(56020b13) SHA1(17e176a9c82ed0d6cb5c4014034ce4e16b8ef4fb) )
-//	ROM_LOAD( "33.bin",         0x000000, 0x10000, CRC(05600b13) )
+//  ROM_LOAD( "33.bin",         0x000000, 0x10000, CRC(05600b13) )
 
 	/* I haven't yet verified if these are the same as the bootleg */
 
@@ -2877,7 +2877,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.313",     0x050000, 0x10000, CRC(c18f4ca8) SHA1(f5cb666d5aa53f201b6664d1c18b89a211230e78) )
 	ROM_LOAD( "gwb_ic.314",     0x060000, 0x10000, CRC(dfc44b60) SHA1(311422d4ea77118c0058e9f1a824f74cfa79cb87) )
 	ROM_LOAD( "gwb_ic.307",     0x070000, 0x10000, CRC(28082a7f) SHA1(e30bade13e03bca49c1f7001c9440ce251ece15d) )
-//	ROM_LOAD( "gwb_ic.320",     0x080000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) )
+//  ROM_LOAD( "gwb_ic.320",     0x080000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) )
 	ROM_LOAD( "gwb_ic.280",     0x080000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) ) //AT
 	ROM_LOAD( "gwb_ic.321",     0x090000, 0x10000, CRC(6b421c7b) SHA1(d96f91dc7e5f46990b05701483edf43a828a8879) )
 	ROM_LOAD( "gwb_ic.300",     0x0a0000, 0x10000, CRC(f3fa0877) SHA1(7950ef86ee66d19693f0b7071a3a34d9200f5a19) )
@@ -2888,7 +2888,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.305",     0x0f0000, 0x10000, CRC(5e04a9aa) SHA1(663330b467eb6406719d4d6cf7b05835b1600a37) )
 	ROM_LOAD( "gwb_ic.306",     0x100000, 0x10000, CRC(e2172955) SHA1(af13776e6537e736815a1180a1f6bad385724b0c) )
 	ROM_LOAD( "gwb_ic.299",     0x110000, 0x10000, CRC(e39f5599) SHA1(3c08a8163b528ebbcb627c511ccc2edacf0653c2) )
-//	ROM_LOAD( "gwb_ic.318",     0x120000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) )
+//  ROM_LOAD( "gwb_ic.318",     0x120000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) )
 	ROM_LOAD( "gwb_ic.320",     0x120000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) ) //AT
 	ROM_LOAD( "gwb_ic.319",     0x130000, 0x10000, CRC(c5b862b7) SHA1(a48be3e32ae5a656d8d239796e6e7bddd4a0805b) )
 	ROM_LOAD( "gwb_ic.292",     0x140000, 0x10000, CRC(c125f7be) SHA1(5d68abd91fa4fa18275c0597c51ce6d3e743d84d) )
@@ -2899,7 +2899,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.297",     0x190000, 0x10000, CRC(10373f63) SHA1(98ee65c68823530ad2eefd6e570db2f38b59c48e) )
 	ROM_LOAD( "gwb_ic.298",     0x1a0000, 0x10000, CRC(df37ec4d) SHA1(d2670dde87970a6f33ca3cd81bdc9991d663bac6) )
 	ROM_LOAD( "gwb_ic.291",     0x1b0000, 0x10000, CRC(beb07a2e) SHA1(f2751bef1850db7173f119fc0cfeefdf47ed7a86) )
-//	ROM_LOAD( "gwb_ic.316",     0x1c0000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) )
+//  ROM_LOAD( "gwb_ic.316",     0x1c0000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) )
 	ROM_LOAD( "gwb_ic.318",     0x1c0000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) ) //AT
 	ROM_LOAD( "gwb_ic.317",     0x1d0000, 0x10000, CRC(1622fadd) SHA1(240eaf117145773e388220513c2906ad2ac5d68b) )
 	ROM_LOAD( "gwb_ic.284",     0x1e0000, 0x10000, CRC(4aa95d66) SHA1(e5bb51fd32a7e9dc23aa13de35b8757dc11f7908) )
@@ -2910,7 +2910,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.289",     0x230000, 0x10000, CRC(c754d69f) SHA1(e64b8e1f719f5a95b7bcab2d25a40c8b819f7d4f) )
 	ROM_LOAD( "gwb_ic.290",     0x240000, 0x10000, CRC(306d1963) SHA1(2f19ba97b9bd1744b656095ae0244df2db03b09b) )
 	ROM_LOAD( "gwb_ic.283",     0x250000, 0x10000, CRC(b46e5761) SHA1(3c4c13c5896186fe36ace8704afeef84b0a0cb78) )
-//	ROM_LOAD( "gwb_ic.280",     0x260000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) )
+//  ROM_LOAD( "gwb_ic.280",     0x260000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) )
 	ROM_LOAD( "gwb_ic.316",     0x260000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) ) //AT
 	ROM_LOAD( "gwb_ic.315",     0x270000, 0x10000, CRC(e7c9b103) SHA1(6f70ca9b6a7439f9250145477f682f7487e11710) )
 
@@ -2943,7 +2943,7 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.313",     0x050000, 0x10000, CRC(c18f4ca8) SHA1(f5cb666d5aa53f201b6664d1c18b89a211230e78) )
 	ROM_LOAD( "gwb_ic.314",     0x060000, 0x10000, CRC(dfc44b60) SHA1(311422d4ea77118c0058e9f1a824f74cfa79cb87) )
 	ROM_LOAD( "gwb_ic.307",     0x070000, 0x10000, CRC(28082a7f) SHA1(e30bade13e03bca49c1f7001c9440ce251ece15d) )
-//	ROM_LOAD( "gwb_ic.320",     0x080000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) )
+//  ROM_LOAD( "gwb_ic.320",     0x080000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) )
 	ROM_LOAD( "gwb_ic.280",     0x080000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) ) //AT
 	ROM_LOAD( "gwb_ic.321",     0x090000, 0x10000, CRC(6b421c7b) SHA1(d96f91dc7e5f46990b05701483edf43a828a8879) )
 	ROM_LOAD( "gwb_ic.300",     0x0a0000, 0x10000, CRC(f3fa0877) SHA1(7950ef86ee66d19693f0b7071a3a34d9200f5a19) )
@@ -2954,7 +2954,7 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.305",     0x0f0000, 0x10000, CRC(5e04a9aa) SHA1(663330b467eb6406719d4d6cf7b05835b1600a37) )
 	ROM_LOAD( "gwb_ic.306",     0x100000, 0x10000, CRC(e2172955) SHA1(af13776e6537e736815a1180a1f6bad385724b0c) )
 	ROM_LOAD( "gwb_ic.299",     0x110000, 0x10000, CRC(e39f5599) SHA1(3c08a8163b528ebbcb627c511ccc2edacf0653c2) )
-//	ROM_LOAD( "gwb_ic.318",     0x120000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) )
+//  ROM_LOAD( "gwb_ic.318",     0x120000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) )
 	ROM_LOAD( "gwb_ic.320",     0x120000, 0x10000, CRC(9a7b51d8) SHA1(0ab01972d838c938bfd07d7b4661a0ecd009b2cb) ) //AT
 	ROM_LOAD( "gwb_ic.319",     0x130000, 0x10000, CRC(c5b862b7) SHA1(a48be3e32ae5a656d8d239796e6e7bddd4a0805b) )
 	ROM_LOAD( "gwb_ic.292",     0x140000, 0x10000, CRC(c125f7be) SHA1(5d68abd91fa4fa18275c0597c51ce6d3e743d84d) )
@@ -2965,7 +2965,7 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.297",     0x190000, 0x10000, CRC(10373f63) SHA1(98ee65c68823530ad2eefd6e570db2f38b59c48e) )
 	ROM_LOAD( "gwb_ic.298",     0x1a0000, 0x10000, CRC(df37ec4d) SHA1(d2670dde87970a6f33ca3cd81bdc9991d663bac6) )
 	ROM_LOAD( "gwb_ic.291",     0x1b0000, 0x10000, CRC(beb07a2e) SHA1(f2751bef1850db7173f119fc0cfeefdf47ed7a86) )
-//	ROM_LOAD( "gwb_ic.316",     0x1c0000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) )
+//  ROM_LOAD( "gwb_ic.316",     0x1c0000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) )
 	ROM_LOAD( "gwb_ic.318",     0x1c0000, 0x10000, CRC(9aeaddf9) SHA1(d609314015376672be8147b9eabbfe4c5611ab73) ) //AT
 	ROM_LOAD( "gwb_ic.317",     0x1d0000, 0x10000, CRC(1622fadd) SHA1(240eaf117145773e388220513c2906ad2ac5d68b) )
 	ROM_LOAD( "gwb_ic.284",     0x1e0000, 0x10000, CRC(4aa95d66) SHA1(e5bb51fd32a7e9dc23aa13de35b8757dc11f7908) )
@@ -2976,7 +2976,7 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.289",     0x230000, 0x10000, CRC(c754d69f) SHA1(e64b8e1f719f5a95b7bcab2d25a40c8b819f7d4f) )
 	ROM_LOAD( "gwb_ic.290",     0x240000, 0x10000, CRC(306d1963) SHA1(2f19ba97b9bd1744b656095ae0244df2db03b09b) )
 	ROM_LOAD( "gwb_ic.283",     0x250000, 0x10000, CRC(b46e5761) SHA1(3c4c13c5896186fe36ace8704afeef84b0a0cb78) )
-//	ROM_LOAD( "gwb_ic.280",     0x260000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) )
+//  ROM_LOAD( "gwb_ic.280",     0x260000, 0x10000, CRC(222b3dcd) SHA1(f9afe24c01daefe61939672efa2cb68bcc7235f0) )
 	ROM_LOAD( "gwb_ic.316",     0x260000, 0x10000, CRC(655b1518) SHA1(d97fd911901f92786bc22dac8e085cf4fa0cb1e9) ) //AT
 	ROM_LOAD( "gwb_ic.315",     0x270000, 0x10000, CRC(e7c9b103) SHA1(6f70ca9b6a7439f9250145477f682f7487e11710) )
 

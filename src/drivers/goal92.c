@@ -1,12 +1,12 @@
 /***************************************************************************
 
-	Goal! '92
+    Goal! '92
 
-	driver by Pierpaolo Prazzoli
-	and some bits by David Haywood
+    driver by Pierpaolo Prazzoli
+    and some bits by David Haywood
 
     TODO:
-	- Add ADPCM emulation
+    - Add ADPCM emulation
 
 ***************************************************************************/
 

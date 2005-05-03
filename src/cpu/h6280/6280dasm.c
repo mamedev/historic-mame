@@ -1,18 +1,18 @@
 /*****************************************************************************
 
-	6280dasm.c Hudsonsoft Hu6280 (HuC6280/Hu6280a) disassembler
+    6280dasm.c Hudsonsoft Hu6280 (HuC6280/Hu6280a) disassembler
 
-	Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
+    Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
 
-	This source code is based (with permission!) on the 6502 emulator by
-	Juergen Buchmueller.  It is released as part of the Mame emulator project.
-	Let me know if you intend to use this code in any other project.
+    This source code is based (with permission!) on the 6502 emulator by
+    Juergen Buchmueller.  It is released as part of the Mame emulator project.
+    Let me know if you intend to use this code in any other project.
 
 
-	Notes relating to Mame:
+    Notes relating to Mame:
 
-	The dasm window shows 'real' memory, as executed by the cpu
-	The data windows show 'physical' memory, as defined in the memory map
+    The dasm window shows 'real' memory, as executed by the cpu
+    The data windows show 'physical' memory, as defined in the memory map
 
 ******************************************************************************/
 
@@ -143,7 +143,7 @@ static const unsigned char op6280[512]=
 };
 
 /*****************************************************************************
- *	Disassemble a single command and return the number of bytes it uses.
+ *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
 int Dasm6280(char *buffer, int pc)
 {

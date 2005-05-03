@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	tlc34076.h
+    tlc34076.h
 
-	Basic implementation of the TLC34076 palette chip and similar
-	compatible chips.
+    Basic implementation of the TLC34076 palette chip and similar
+    compatible chips.
 
 ***************************************************************************/
 

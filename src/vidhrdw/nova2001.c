@@ -25,8 +25,8 @@
         Sprite+3, 0x20 = Y Flip
         Sprite+3, 0x10 = X Flip
         Sprite+3, 0x0f = pen for "color 1" taken from the first 16 colors
-	Sprite+3, 0x80
-	Sprite+3, 0x40
+    Sprite+3, 0x80
+    Sprite+3, 0x40
 
         All the rest are unknown and/or uneccessary.
 
@@ -160,13 +160,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( nova2001 )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

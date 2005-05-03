@@ -17,7 +17,7 @@ enum {
 #define Z8000_NVI		0x0800	/* non vectored interrupt */
 #define Z8000_VI		0x0400	/* vectored interrupt (LSB is vector)  */
 #define Z8000_SYSCALL	0x0200	/* system call (lsb is vector) */
-#define Z8000_HALT		0x0100	/* halted flag	*/
+#define Z8000_HALT		0x0100	/* halted flag  */
 
 /* PUBLIC FUNCTIONS */
 extern void z8000_get_info(UINT32 state, union cpuinfo *info);

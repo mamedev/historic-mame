@@ -20,14 +20,14 @@
       D2 bit from the code ROMs.
   3)  The other 6 data bits are decrypted by a 10H8 PAL.  The PAL also
       takes as input a 4-bit counter.  The counter is incremented and
-	  decremented as follows:
-	  - the Z-80 command IN($xx) where xx is an odd number decrements the
-	    counter; an even number increments the counter.
-		Ex:  IN($64) would increment the counter, IN($6B) would decrement
-		the counter.
+      decremented as follows:
+      - the Z-80 command IN($xx) where xx is an odd number decrements the
+        counter; an even number increments the counter.
+        Ex:  IN($64) would increment the counter, IN($6B) would decrement
+        the counter.
   4)  The PAL output also contains the two ROM enable lines used to enable
       the two encrypted code ROMs.  As long as the system is working
-	  correctly, these ROMs will always be enabled.
+      correctly, these ROMs will always be enabled.
 
   As it so happens, only four counter values are ever used, which is
   fortunate because the PAL only contains signals to enable the ROMs for
@@ -36,16 +36,16 @@
   daughterboard.  Following is a description of the resulting decryptions
   for these four counter states.
 
-  COUNTER		ENCRYPTED	DECRYPTED
-				  VALUE	      VALUE
+  COUNTER       ENCRYPTED   DECRYPTED
+                  VALUE       VALUE
 
-				DDDDDDDD	DDDDDDDD
-				76543210	76543210
+                DDDDDDDD    DDDDDDDD
+                76543210    76543210
 
-  Counter = 8:  abcdefgh	EAhBDgFC
-  Counter = 9:	abcdefgh	FAgeDBFC
-  Counter = A:	abcdefgh	EHDBagFC
-  Counter = B:  abcdefgh	GHDEaBFC
+  Counter = 8:  abcdefgh    EAhBDgFC
+  Counter = 9:  abcdefgh    FAgeDBFC
+  Counter = A:  abcdefgh    EHDBagFC
+  Counter = B:  abcdefgh    GHDEaBFC
 
   In the above diagram, capital letters represent inverted bits.  Notice
   that bits D2 and D5 are the same independent of counter state, this is
@@ -80,9 +80,9 @@ static void theglobp_decrypt_rom_8(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -116,9 +116,9 @@ static void theglobp_decrypt_rom_9(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -151,9 +151,9 @@ static void theglobp_decrypt_rom_A(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -186,9 +186,9 @@ static void theglobp_decrypt_rom_B(void)
 		oldbyte = RAM[mem];
 		inverted_oldbyte = ~oldbyte;
 
-		/*	Note: D2 is inverted and connected to D1, D5 is inverted and
-			connected to D0.  The other six data bits are converted by a
-			PAL10H8 driven by the counter. */
+		/*  Note: D2 is inverted and connected to D1, D5 is inverted and
+            connected to D0.  The other six data bits are converted by a
+            PAL10H8 driven by the counter. */
 		newbyte = 0;
 
 		/* Direct inversion */
@@ -244,8 +244,8 @@ MACHINE_INIT( theglobp )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* While the PAL supports up to 16 decryption methods, only four
-		are actually used in the PAL.  Therefore, we'll take a little
-		memory overhead and decrypt the ROMs using each method in advance. */
+        are actually used in the PAL.  Therefore, we'll take a little
+        memory overhead and decrypt the ROMs using each method in advance. */
 	theglobp_decrypt_rom_8();
 	theglobp_decrypt_rom_9();
 	theglobp_decrypt_rom_A();

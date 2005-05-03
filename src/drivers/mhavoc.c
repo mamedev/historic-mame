@@ -1,177 +1,177 @@
 /***************************************************************************
 
-	Atari Major Havoc hardware
+    Atari Major Havoc hardware
 
-	driver by Mike Appolo
+    driver by Mike Appolo
 
-	Games supported:
-		* Alpha One
-		* Major Havoc
-		* Major Havoc: Return to Vax
+    Games supported:
+        * Alpha One
+        * Major Havoc
+        * Major Havoc: Return to Vax
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	MAJOR HAVOC (Driver)
+    MAJOR HAVOC (Driver)
 
-	Notes:
+    Notes:
 
-	This game was provided in three configurations:
-	1) New Machine Purchase
-	2) Upgrade kit for Tempest (Kit "A")
-	3) Upgrade kit for Space Duel, Gravitar, and Black Window (Kit "B")
+    This game was provided in three configurations:
+    1) New Machine Purchase
+    2) Upgrade kit for Tempest (Kit "A")
+    3) Upgrade kit for Space Duel, Gravitar, and Black Window (Kit "B")
 
-	Controls on the machine were:
-	A backlit cylinder (roller) on new Major Havoc machines
-			or
-	A Tempest-like spinner on upgrades
-
-
-	Memory Map for Major Havoc
-
-	Alpha Processor
-	                 D  D  D  D  D  D  D  D
-	Hex Address      7  6  5  4  3  2  1  0                    Function
-	--------------------------------------------------------------------------------
-	0000-01FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (1/2K)
-	0200-07FF     |  D  D  D  D  D  D  D  D   | R/W  | Paged Program RAM (3K)
-	0800-09FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (1/2K)
-	              |                           |      |
-	1000	      |  D  D  D  D  D  D  D  D   |  R   | Gamma Commuication Read Port
-	              |                           |      |
-	1200          |  D                        |  R   | Right Coin (Player 1=0)
-	1200	      |     D                     |  R   | Left Coin  (Player 1=0)
-	1200          |        D                  |  R   | Aux. Coin  (Player 1=0)
-	1200          |           D               |  R   | Diagnostic Step
-	1200          |  D                        |  R   | Self Test Switch (Player 1=1)
-	1200          |     D                     |  R   | Cabinet Switch (Player 1=1)
-	1200          |        D                  |  R   | Aux. Coin Switch (Player 1=1)
-	1200          |           D               |  R   | Diagnostic Step
-	1200          |              D            |  R   | Gammma Rcvd Flag
-	1200          |                 D         |  R   | Gamma Xmtd Flag
-	1200          |                    D      |  R   | 2.4 KHz
-	1200          |                       D   |  R   | Vector Generator Halt Flag
-	              |                           |      |
-	1400-141F     |              D  D  D  D   |  W   | ColorRAM
-	              |                           |      |
-	1600          |  D                        |  W   | Invert X
-	1600          |     D                     |  W   | Invert Y
-	1600          |        D                  |  W   | Player 1
-	1600          |           D               |  W   | Not Used
-	1600          |              D            |  W   | Gamma Proc. Reset
-	1600          |                 D         |  W   | Beta Proc. Reset
-	1600          |                    D      |  W   | Not Used
-	1600          |                       D   |  W   | Roller Controller Light
-	              |                           |      |
-	1640          |                           |  W   | Vector Generator Go
-	1680          |                           |  W   | Watchdog Clear
-	16C0          |                           |  W   | Vector Generator Reset
-	              |                           |      |
-	1700          |                           |  W   | IRQ Acknowledge
-	1740          |                    D  D   |  W   | Program ROM Page Select
-	1780          |                       D   |  W   | Program RAM Page Select
-	17C0          |  D  D  D  D  D  D  D  D   |  W   | Gamma Comm. Write Port
-	              |                           |      |
-	1800-1FFF     |  D  D  D  D  D  D  D  D   | R/W  | Shared Beta RAM(not used)
-	              |                           |      |
-	2000-3FFF     |  D  D  D  D  D  D  D  D   |  R   | Paged Program ROM (32K)
-	4000-4FFF     |  D  D  D  D  D  D  D  D   | R/W  | Vector Generator RAM (4K)
-	5000-5FFF     |  D  D  D  D  D  D  D  D   |  R   | Vector Generator ROM (4K)
-	6000-7FFF     |  D  D  D  D  D  D  D  D   |  R   | Paged Vector ROM (32K)
-	8000-FFFF     |  D  D  D  D  D  D  D  D   |  R   | Program ROM (32K)
-	-------------------------------------------------------------------------------
-
-	Gamma Processor
-
-	                 D  D  D  D  D  D  D  D
-	Hex Address      7  6  5  4  3  2  1  0                    Function
-	--------------------------------------------------------------------------------
-	0000-07FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (2K)
-	2000-203F     |  D  D  D  D  D  D  D  D   | R/W  | Quad-Pokey I/O
-	              |                           |      |
-	2800          |  D                        |  R   | Fire 1 Switch
-	2800          |     D                     |  R   | Shield 1 Switch
-	2800          |        D                  |  R   | Fire 2 Switch
-	2800          |           D               |  R   | Shield 2 Switch
-	2800          |              D            |  R   | Not Used
-	2800          |                 D         |  R   | Speech Chip Ready
-	2800          |                    D      |  R   | Alpha Rcvd Flag
-	2800          |                       D   |  R   | Alpha Xmtd Flag
-	              |                           |      |
-	3000          |  D  D  D  D  D  D  D  D   |  R   | Alpha Comm. Read Port
-	              |                           |      |
-	3800-3803     |  D  D  D  D  D  D  D  D   |  R   | Roller Controller Input
-	              |                           |      |
-	4000          |                           |  W   | IRQ Acknowledge
-	4800          |                    D      |  W   | Left Coin Counter
-	4800          |                       D   |  W   | Right Coin Counter
-	              |                           |      |
-	5000          |  D  D  D  D  D  D  D  D   |  W   | Alpha Comm. Write Port
-	              |                           |      |
-	6000-61FF     |  D  D  D  D  D  D  D  D   | R/W  | EEROM
-	8000-BFFF     |  D  D  D  D  D  D  D  D   |  R   | Program ROM (16K)
-	-----------------------------------------------------------------------------
+    Controls on the machine were:
+    A backlit cylinder (roller) on new Major Havoc machines
+            or
+    A Tempest-like spinner on upgrades
 
 
+    Memory Map for Major Havoc
 
-	MAJOR HAVOC DIP SWITCH SETTINGS
+    Alpha Processor
+                     D  D  D  D  D  D  D  D
+    Hex Address      7  6  5  4  3  2  1  0                    Function
+    --------------------------------------------------------------------------------
+    0000-01FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (1/2K)
+    0200-07FF     |  D  D  D  D  D  D  D  D   | R/W  | Paged Program RAM (3K)
+    0800-09FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (1/2K)
+                  |                           |      |
+    1000          |  D  D  D  D  D  D  D  D   |  R   | Gamma Commuication Read Port
+                  |                           |      |
+    1200          |  D                        |  R   | Right Coin (Player 1=0)
+    1200          |     D                     |  R   | Left Coin  (Player 1=0)
+    1200          |        D                  |  R   | Aux. Coin  (Player 1=0)
+    1200          |           D               |  R   | Diagnostic Step
+    1200          |  D                        |  R   | Self Test Switch (Player 1=1)
+    1200          |     D                     |  R   | Cabinet Switch (Player 1=1)
+    1200          |        D                  |  R   | Aux. Coin Switch (Player 1=1)
+    1200          |           D               |  R   | Diagnostic Step
+    1200          |              D            |  R   | Gammma Rcvd Flag
+    1200          |                 D         |  R   | Gamma Xmtd Flag
+    1200          |                    D      |  R   | 2.4 KHz
+    1200          |                       D   |  R   | Vector Generator Halt Flag
+                  |                           |      |
+    1400-141F     |              D  D  D  D   |  W   | ColorRAM
+                  |                           |      |
+    1600          |  D                        |  W   | Invert X
+    1600          |     D                     |  W   | Invert Y
+    1600          |        D                  |  W   | Player 1
+    1600          |           D               |  W   | Not Used
+    1600          |              D            |  W   | Gamma Proc. Reset
+    1600          |                 D         |  W   | Beta Proc. Reset
+    1600          |                    D      |  W   | Not Used
+    1600          |                       D   |  W   | Roller Controller Light
+                  |                           |      |
+    1640          |                           |  W   | Vector Generator Go
+    1680          |                           |  W   | Watchdog Clear
+    16C0          |                           |  W   | Vector Generator Reset
+                  |                           |      |
+    1700          |                           |  W   | IRQ Acknowledge
+    1740          |                    D  D   |  W   | Program ROM Page Select
+    1780          |                       D   |  W   | Program RAM Page Select
+    17C0          |  D  D  D  D  D  D  D  D   |  W   | Gamma Comm. Write Port
+                  |                           |      |
+    1800-1FFF     |  D  D  D  D  D  D  D  D   | R/W  | Shared Beta RAM(not used)
+                  |                           |      |
+    2000-3FFF     |  D  D  D  D  D  D  D  D   |  R   | Paged Program ROM (32K)
+    4000-4FFF     |  D  D  D  D  D  D  D  D   | R/W  | Vector Generator RAM (4K)
+    5000-5FFF     |  D  D  D  D  D  D  D  D   |  R   | Vector Generator ROM (4K)
+    6000-7FFF     |  D  D  D  D  D  D  D  D   |  R   | Paged Vector ROM (32K)
+    8000-FFFF     |  D  D  D  D  D  D  D  D   |  R   | Program ROM (32K)
+    -------------------------------------------------------------------------------
 
-	$=Default
+    Gamma Processor
 
-	DIP Switch at position 13/14S
+                     D  D  D  D  D  D  D  D
+    Hex Address      7  6  5  4  3  2  1  0                    Function
+    --------------------------------------------------------------------------------
+    0000-07FF     |  D  D  D  D  D  D  D  D   | R/W  | Program RAM (2K)
+    2000-203F     |  D  D  D  D  D  D  D  D   | R/W  | Quad-Pokey I/O
+                  |                           |      |
+    2800          |  D                        |  R   | Fire 1 Switch
+    2800          |     D                     |  R   | Shield 1 Switch
+    2800          |        D                  |  R   | Fire 2 Switch
+    2800          |           D               |  R   | Shield 2 Switch
+    2800          |              D            |  R   | Not Used
+    2800          |                 D         |  R   | Speech Chip Ready
+    2800          |                    D      |  R   | Alpha Rcvd Flag
+    2800          |                       D   |  R   | Alpha Xmtd Flag
+                  |                           |      |
+    3000          |  D  D  D  D  D  D  D  D   |  R   | Alpha Comm. Read Port
+                  |                           |      |
+    3800-3803     |  D  D  D  D  D  D  D  D   |  R   | Roller Controller Input
+                  |                           |      |
+    4000          |                           |  W   | IRQ Acknowledge
+    4800          |                    D      |  W   | Left Coin Counter
+    4800          |                       D   |  W   | Right Coin Counter
+                  |                           |      |
+    5000          |  D  D  D  D  D  D  D  D   |  W   | Alpha Comm. Write Port
+                  |                           |      |
+    6000-61FF     |  D  D  D  D  D  D  D  D   | R/W  | EEROM
+    8000-BFFF     |  D  D  D  D  D  D  D  D   |  R   | Program ROM (16K)
+    -----------------------------------------------------------------------------
 
-	                                  1    2    3    4    5    6    7    8
-	STARTING LIVES                  _________________________________________
-	Free Play   1 Coin   2 Coin     |    |    |    |    |    |    |    |    |
-	    2         3         5      $|Off |Off |    |    |    |    |    |    |
-	    3         4         4       | On | On |    |    |    |    |    |    |
-	    4         5         6       | On |Off |    |    |    |    |    |    |
-	    5         6         7       |Off | On |    |    |    |    |    |    |
-	GAME DIFFICULTY                 |    |    |    |    |    |    |    |    |
-	Hard                            |    |    | On | On |    |    |    |    |
-	Medium                         $|    |    |Off |Off |    |    |    |    |
-	Easy                            |    |    |Off | On |    |    |    |    |
-	Demo                            |    |    | On |Off |    |    |    |    |
-	BONUS LIFE                      |    |    |    |    |    |    |    |    |
-	50,000                          |    |    |    |    | On | On |    |    |
-	100,000                        $|    |    |    |    |Off |Off |    |    |
-	200,000                         |    |    |    |    |Off | On |    |    |
-	No Bonus Life                   |    |    |    |    | On |Off |    |    |
-	ATTRACT MODE SOUND              |    |    |    |    |    |    |    |    |
-	Silence                         |    |    |    |    |    |    | On |    |
-	Sound                          $|    |    |    |    |    |    |Off |    |
-	ADAPTIVE DIFFICULTY             |    |    |    |    |    |    |    |    |
-	No                              |    |    |    |    |    |    |    | On |
-	Yes                            $|    |    |    |    |    |    |    |Off |
-	                                -----------------------------------------
 
-		DIP Switch at position 8S
 
-	                                  1    2    3    4    5    6    7    8
-	                                _________________________________________
-	Free Play                       |    |    |    |    |    |    | On |Off |
-	1 Coin for 1 Game               |    |    |    |    |    |    |Off |Off |
-	1 Coin for 2 Games              |    |    |    |    |    |    | On | On |
-	2 Coins for 1 Game             $|    |    |    |    |    |    |Off | On |
-	RIGHT COIN MECHANISM            |    |    |    |    |    |    |    |    |
-	x1                             $|    |    |    |    |Off |Off |    |    |
-	x4                              |    |    |    |    |Off | On |    |    |
-	x5                              |    |    |    |    | On |Off |    |    |
-	x6                              |    |    |    |    | On | On |    |    |
-	LEFT COIN MECHANISM             |    |    |    |    |    |    |    |    |
-	x1                             $|    |    |    |Off |    |    |    |    |
-	x2                              |    |    |    | On |    |    |    |    |
-	BONUS COIN ADDER                |    |    |    |    |    |    |    |    |
-	No Bonus Coins                 $|Off |Off |Off |    |    |    |    |    |
-	Every 4, add 1                  |Off | On |Off |    |    |    |    |    |
-	Every 4, add 2                  |Off | On | On |    |    |    |    |    |
-	Every 5, add 1                  | On |Off |Off |    |    |    |    |    |
-	Every 3, add 1                  | On |Off | On |    |    |    |    |    |
-	                                -----------------------------------------
+    MAJOR HAVOC DIP SWITCH SETTINGS
 
-		2 COIN MINIMUM OPTION: Short pin 6 @13N to ground.
+    $=Default
+
+    DIP Switch at position 13/14S
+
+                                      1    2    3    4    5    6    7    8
+    STARTING LIVES                  _________________________________________
+    Free Play   1 Coin   2 Coin     |    |    |    |    |    |    |    |    |
+        2         3         5      $|Off |Off |    |    |    |    |    |    |
+        3         4         4       | On | On |    |    |    |    |    |    |
+        4         5         6       | On |Off |    |    |    |    |    |    |
+        5         6         7       |Off | On |    |    |    |    |    |    |
+    GAME DIFFICULTY                 |    |    |    |    |    |    |    |    |
+    Hard                            |    |    | On | On |    |    |    |    |
+    Medium                         $|    |    |Off |Off |    |    |    |    |
+    Easy                            |    |    |Off | On |    |    |    |    |
+    Demo                            |    |    | On |Off |    |    |    |    |
+    BONUS LIFE                      |    |    |    |    |    |    |    |    |
+    50,000                          |    |    |    |    | On | On |    |    |
+    100,000                        $|    |    |    |    |Off |Off |    |    |
+    200,000                         |    |    |    |    |Off | On |    |    |
+    No Bonus Life                   |    |    |    |    | On |Off |    |    |
+    ATTRACT MODE SOUND              |    |    |    |    |    |    |    |    |
+    Silence                         |    |    |    |    |    |    | On |    |
+    Sound                          $|    |    |    |    |    |    |Off |    |
+    ADAPTIVE DIFFICULTY             |    |    |    |    |    |    |    |    |
+    No                              |    |    |    |    |    |    |    | On |
+    Yes                            $|    |    |    |    |    |    |    |Off |
+                                    -----------------------------------------
+
+        DIP Switch at position 8S
+
+                                      1    2    3    4    5    6    7    8
+                                    _________________________________________
+    Free Play                       |    |    |    |    |    |    | On |Off |
+    1 Coin for 1 Game               |    |    |    |    |    |    |Off |Off |
+    1 Coin for 2 Games              |    |    |    |    |    |    | On | On |
+    2 Coins for 1 Game             $|    |    |    |    |    |    |Off | On |
+    RIGHT COIN MECHANISM            |    |    |    |    |    |    |    |    |
+    x1                             $|    |    |    |    |Off |Off |    |    |
+    x4                              |    |    |    |    |Off | On |    |    |
+    x5                              |    |    |    |    | On |Off |    |    |
+    x6                              |    |    |    |    | On | On |    |    |
+    LEFT COIN MECHANISM             |    |    |    |    |    |    |    |    |
+    x1                             $|    |    |    |Off |    |    |    |    |
+    x2                              |    |    |    | On |    |    |    |    |
+    BONUS COIN ADDER                |    |    |    |    |    |    |    |    |
+    No Bonus Coins                 $|Off |Off |Off |    |    |    |    |    |
+    Every 4, add 1                  |Off | On |Off |    |    |    |    |    |
+    Every 4, add 2                  |Off | On | On |    |    |    |    |    |
+    Every 5, add 1                  | On |Off |Off |    |    |    |    |    |
+    Every 3, add 1                  | On |Off | On |    |    |    |    |    |
+                                    -----------------------------------------
+
+        2 COIN MINIMUM OPTION: Short pin 6 @13N to ground.
 
 ***************************************************************************/
 
@@ -188,7 +188,7 @@
 
 /*************************************
  *
- *	Alpha One: dual POKEY?
+ *  Alpha One: dual POKEY?
  *
  *************************************/
 
@@ -221,7 +221,7 @@ static WRITE8_HANDLER( dual_pokey_w )
 
 /*************************************
  *
- *	Gamma RAM
+ *  Gamma RAM
  *
  *************************************/
 
@@ -241,13 +241,13 @@ static WRITE8_HANDLER( mhavoc_gammaram_w )
 
 /*************************************
  *
- *	Alpha CPU memory handlers
+ *  Alpha CPU memory handlers
  *
  *************************************/
 
 static ADDRESS_MAP_START( alpha_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM	*/
+	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM */
 	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
 	AM_RANGE(0x1000, 0x1000) AM_READ(mhavoc_gamma_r)		/* Gamma Read Port */
 	AM_RANGE(0x1200, 0x1200) AM_READ(mhavoc_port_0_r)	/* Alpha Input Port 0 */
@@ -276,7 +276,7 @@ static ADDRESS_MAP_START( alpha_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x17c0, 0x17c0) AM_WRITE(mhavoc_gamma_w)		/* Gamma Communication Write Port */
 	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)			/* Shared Beta Ram */
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM	*/
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM */
 	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
@@ -284,50 +284,50 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Gamma CPU memory handlers
+ *  Gamma CPU memory handlers
  *
  *************************************/
 
 static ADDRESS_MAP_START( gamma_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)			/* Program RAM (2K)	*/
+	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)			/* Program RAM (2K) */
 	AM_RANGE(0x0800, 0x1fff) AM_READ(mhavoc_gammaram_r)	/* wraps to 0x000-0x7ff */
-	AM_RANGE(0x2000, 0x203f) AM_READ(quad_pokey_r)		/* Quad Pokey read	*/
-	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)	/* Gamma Input Port	*/
+	AM_RANGE(0x2000, 0x203f) AM_READ(quad_pokey_r)		/* Quad Pokey read  */
+	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)	/* Gamma Input Port */
 	AM_RANGE(0x3000, 0x3000) AM_READ(mhavoc_alpha_r)		/* Alpha Comm. Read Port*/
 	AM_RANGE(0x3800, 0x3803) AM_READ(input_port_2_r)		/* Roller Controller Input*/
 	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_4_r)		/* DSW at 8S */
-	AM_RANGE(0x6000, 0x61ff) AM_READ(MRA8_RAM)			/* EEROM		*/
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (16K)	*/
+	AM_RANGE(0x6000, 0x61ff) AM_READ(MRA8_RAM)			/* EEROM        */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (16K)    */
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( gamma_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)			/* Program RAM (2K)	*/
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)			/* Program RAM (2K) */
 	AM_RANGE(0x0800, 0x1fff) AM_WRITE(mhavoc_gammaram_w) AM_BASE(&gammaram)	/* wraps to 0x000-0x7ff */
-	AM_RANGE(0x2000, 0x203f) AM_WRITE(quad_pokey_w)		/* Quad Pokey write	*/
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(mhavoc_gamma_irq_ack_w)	/* IRQ Acknowledge	*/
-	AM_RANGE(0x4800, 0x4800) AM_WRITE(mhavoc_out_1_w)		/* Coin Counters 	*/
+	AM_RANGE(0x2000, 0x203f) AM_WRITE(quad_pokey_w)		/* Quad Pokey write */
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(mhavoc_gamma_irq_ack_w)	/* IRQ Acknowledge  */
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(mhavoc_out_1_w)		/* Coin Counters    */
 	AM_RANGE(0x5000, 0x5000) AM_WRITE(mhavoc_alpha_w)		/* Alpha Comm. Write Port */
-	AM_RANGE(0x6000, 0x61ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM		*/
+	AM_RANGE(0x6000, 0x61ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM        */
 ADDRESS_MAP_END
 
 
 
 /*************************************
  *
- *	Main CPU memory handlers (Alpha One)
+ *  Main CPU memory handlers (Alpha One)
  *
  *************************************/
 
 static ADDRESS_MAP_START( alphaone_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM	*/
+	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM */
 	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
 	AM_RANGE(0x1020, 0x103f) AM_READ(dual_pokey_r)
 	AM_RANGE(0x1040, 0x1040) AM_READ(alphaone_port_0_r)	/* Alpha Input Port 0 */
-	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)		/* Gamma Input Port	*/
+	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)		/* Gamma Input Port */
 	AM_RANGE(0x1080, 0x1080) AM_READ(input_port_2_r)		/* Roller Controller Input*/
-	AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)			/* EEROM		*/
+	AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)			/* EEROM        */
 	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)			/* Paged Program ROM (32K) */
 	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM) 			/* Vector RAM (4K) */
 	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_ROM)			/* Vector ROM (4K) */
@@ -350,9 +350,9 @@ static ADDRESS_MAP_START( alphaone_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x10b4, 0x10b4) AM_WRITE(mhavoc_rom_banksel_w)
 	AM_RANGE(0x10b8, 0x10b8) AM_WRITE(mhavoc_ram_banksel_w)
 	AM_RANGE(0x10e0, 0x10ff) AM_WRITE(mhavoc_colorram_w)	/* ColorRAM */
-	AM_RANGE(0x1800, 0x18ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM		*/
+	AM_RANGE(0x1800, 0x18ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM        */
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM	*/
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)/* Vector Generator RAM */
 	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
@@ -360,7 +360,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -528,7 +528,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -542,7 +542,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -602,10 +602,10 @@ static MACHINE_DRIVER_START( alphaone )
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey.1", POKEY, MHAVOC_CLOCK_1_25M)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_REPLACE("pokey.2", POKEY, MHAVOC_CLOCK_1_25M)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_REMOVE("pokey.3")
 	MDRV_SOUND_REMOVE("pokey.4")
 MACHINE_DRIVER_END
@@ -614,7 +614,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -781,7 +781,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

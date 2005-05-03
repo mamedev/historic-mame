@@ -172,15 +172,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct EEPROM_interface eeprom_interface_93C56 =
 {
-	8,		// address bits	8
-	8,		// data bits	8
-	"*110x",	// read			110x aaaaaaaa
-	"*101x",	// write		101x aaaaaaaa dddddddd
-	"*111x",	// erase		111x aaaaaaaa
-	"*10000xxxxxxx",// lock			100x 00xxxx
-	"*10011xxxxxxx",// unlock		100x 11xxxx
-//	"*10001xxxx",	// write all	1 00 01xxxx dddddddddddddddd
-//	"*10010xxxx"	// erase all	1 00 10xxxx
+	8,		// address bits 8
+	8,		// data bits    8
+	"*110x",	// read         110x aaaaaaaa
+	"*101x",	// write        101x aaaaaaaa dddddddd
+	"*111x",	// erase        111x aaaaaaaa
+	"*10000xxxxxxx",// lock         100x 00xxxx
+	"*10011xxxxxxx",// unlock       100x 11xxxx
+//  "*10001xxxx",   // write all    1 00 01xxxx dddddddddddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
 static NVRAM_HANDLER(93C56)
@@ -602,7 +602,7 @@ INPUT_PORTS_START( s1945iii ) /* Different Region again */
 	PSIKYOSH_PORT_PLAYER( 1, IPT_START1, 3 )
 	PORT_START_TAG("IN1")
 	PSIKYOSH_PORT_PLAYER( 2, IPT_START2, 3 )
-	
+
 	UNUSED_PORT
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, EEPROM doesn't reset */
 
@@ -618,9 +618,9 @@ INPUT_PORTS_START( dragnblz ) /* Security requires bit high */
 	PSIKYOSH_PORT_PLAYER( 1, IPT_START1, 3 )
 	PORT_START_TAG("IN1")
 	PSIKYOSH_PORT_PLAYER( 2, IPT_START2, 3 )
-	
+
 	UNUSED_PORT
-	
+
 	PORT_COIN( 1 ) /* Must be HIGH (Or Security Error), so can perform test */
 
 	PORT_START_TAG("IN4")/* jumper pads on the PCB */
@@ -635,7 +635,7 @@ INPUT_PORTS_START( gnbarich ) /* Same as S1945iii except only one button */
 	PSIKYOSH_PORT_PLAYER( 1, IPT_START1, 3 )
 	PORT_START_TAG("IN1")
 	PSIKYOSH_PORT_PLAYER( 2, IPT_START2, 3 )
-	
+
 	UNUSED_PORT
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, but EEPROM resets? */
 
@@ -691,7 +691,7 @@ ROM_START( s1945ii )
 	ROM_LOAD( "sound.u32", 0x000000, 0x400000, CRC(ba680ca7) SHA1(b645896e297aad426784aa656bff738e1b33c2a2) )
 	ROM_RELOAD ( 0x400000, 0x400000 )
 	/* 0x400000 - 0x7fffff allocated but left blank, it randomly reads from here on the
-	    Iron Casket level causing a crash otherwise, not sure why, bug in the sound emulation? */
+        Iron Casket level causing a crash otherwise, not sure why, bug in the sound emulation? */
 ROM_END
 
 ROM_START( daraku )
@@ -825,20 +825,20 @@ ROM_START( gnbarich )
 
 	ROM_REGION( 0x2c00000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
 	/* Gunbarich doesn't actually use 1-5 and 10, they're on the board, but all the gfx are in 6-9
-	   The game was an upgrade to Dragon Blaze, only some of the roms were replaced however it
-	   appears the board needs to be fully populated to work correctly so the Dragon Blaze roms
-	   were left on it.  After hooking up hidden rom test we can see only the 8 roms we load are
-	   tested */
-//	ROM_LOAD32_WORD( "1l.u4",  0x0400000, 0x200000, CRC(c2eb565c) SHA1(07e41b36cc03a87f28d091754fdb0d1a7316a532) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "1h.u12", 0x0400002, 0x200000, CRC(23cb46b7) SHA1(005b7cc40eea103688a64a72c219c7535970dbfb) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "2l.u5",  0x0800000, 0x200000, CRC(bc256aea) SHA1(1f1d678e8a63513a95f296b8a07d2ea485d1e53f) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "2h.u13", 0x0800002, 0x200000, CRC(b75f59ec) SHA1(a6cde94bc972e46e54c962fde49fc2174b312882) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "3l.u6",  0x0c00000, 0x200000, CRC(4284f008) SHA1(610b13304043411b3088fd4299b3cb0a4d8b0cc2) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "3h.u14", 0x0c00002, 0x200000, CRC(abe5cbbf) SHA1(c2fb1d8ea8772572c08b36496cf9fc5b91cf848b) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "4l.u7",  0x1000000, 0x200000, CRC(c9fcf2e5) SHA1(7cecdf3406da11289b54aaf58d12883ddfdc5e6b) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "4h.u15", 0x1000002, 0x200000, CRC(0ab0a12a) SHA1(1b29b6dc79e69edb56634517365d0ee8e6ea78ae) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "5l.u8",  0x1400000, 0x200000, CRC(68d03ccf) SHA1(d2bf6da5fa6e346b05872ed9616ffe51c3768f50) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "5h.u16", 0x1400002, 0x200000, CRC(5450fbca) SHA1(7a804263549cea951782a67855e69cb8cb417e98) ) /* From Dragon Blaze */
+       The game was an upgrade to Dragon Blaze, only some of the roms were replaced however it
+       appears the board needs to be fully populated to work correctly so the Dragon Blaze roms
+       were left on it.  After hooking up hidden rom test we can see only the 8 roms we load are
+       tested */
+//  ROM_LOAD32_WORD( "1l.u4",  0x0400000, 0x200000, CRC(c2eb565c) SHA1(07e41b36cc03a87f28d091754fdb0d1a7316a532) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "1h.u12", 0x0400002, 0x200000, CRC(23cb46b7) SHA1(005b7cc40eea103688a64a72c219c7535970dbfb) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "2l.u5",  0x0800000, 0x200000, CRC(bc256aea) SHA1(1f1d678e8a63513a95f296b8a07d2ea485d1e53f) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "2h.u13", 0x0800002, 0x200000, CRC(b75f59ec) SHA1(a6cde94bc972e46e54c962fde49fc2174b312882) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "3l.u6",  0x0c00000, 0x200000, CRC(4284f008) SHA1(610b13304043411b3088fd4299b3cb0a4d8b0cc2) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "3h.u14", 0x0c00002, 0x200000, CRC(abe5cbbf) SHA1(c2fb1d8ea8772572c08b36496cf9fc5b91cf848b) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "4l.u7",  0x1000000, 0x200000, CRC(c9fcf2e5) SHA1(7cecdf3406da11289b54aaf58d12883ddfdc5e6b) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "4h.u15", 0x1000002, 0x200000, CRC(0ab0a12a) SHA1(1b29b6dc79e69edb56634517365d0ee8e6ea78ae) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "5l.u8",  0x1400000, 0x200000, CRC(68d03ccf) SHA1(d2bf6da5fa6e346b05872ed9616ffe51c3768f50) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "5h.u16", 0x1400002, 0x200000, CRC(5450fbca) SHA1(7a804263549cea951782a67855e69cb8cb417e98) ) /* From Dragon Blaze */
 	ROM_LOAD32_WORD( "6l.u1",  0x1800000, 0x200000, CRC(0432e1a8) SHA1(632cb6534a19a92aa16d1dc8bb98c0c1fa17e428) )
 	ROM_LOAD32_WORD( "6h.u2",  0x1800002, 0x200000, CRC(f90fa3ea) SHA1(773861c6c559f2df88e395669f27c43bd4dd6eb6) )
 	ROM_LOAD32_WORD( "7l.u19", 0x1c00000, 0x200000, CRC(36bf9a58) SHA1(b546425f17f4b0b1112f0a22f9f5c695f5d97fe9) )
@@ -847,8 +847,8 @@ ROM_START( gnbarich )
 	ROM_LOAD32_WORD( "8h.u29", 0x2000002, 0x200000, CRC(8cd7aaa0) SHA1(83469c5407cba134ec1d22330623d8be8e0eabec) )
 	ROM_LOAD32_WORD( "9l.u41", 0x2400000, 0x200000, CRC(02c066fe) SHA1(ecd5f36d9e55a341aff956bab4e7b0ae9e6cc15f) )
 	ROM_LOAD32_WORD( "9h.u42", 0x2400002, 0x200000, CRC(5433385a) SHA1(138d62409cfb9e1a4eb3ca378ab8f6df45d478c0) )
-//	ROM_LOAD32_WORD( "10l.u58",0x2800000, 0x200000, CRC(a3f5c7f8) SHA1(d17478ca3e7ef46270f350ffa35d43acb05b1185) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "10h.u59",0x2800002, 0x200000, CRC(30e304c4) SHA1(1d866276bfe7f7524306a880d225aaf11ac2e5dd) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "10l.u58",0x2800000, 0x200000, CRC(a3f5c7f8) SHA1(d17478ca3e7ef46270f350ffa35d43acb05b1185) ) /* From Dragon Blaze */
+//  ROM_LOAD32_WORD( "10h.u59",0x2800002, 0x200000, CRC(30e304c4) SHA1(1d866276bfe7f7524306a880d225aaf11ac2e5dd) ) /* From Dragon Blaze */
 
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, CRC(7b10436b) SHA1(c731fcce024e286a677ca10a91761c1ee06094a5) )

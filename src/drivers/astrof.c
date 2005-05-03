@@ -12,29 +12,29 @@ protection involves the eprom datalines being routed through an 8bit x 256byte p
 it *may* have a more complex palette, it needs to be investigated when i get more time.
 
 
-	Astro Fighter Sets:
+    Astro Fighter Sets:
 
     The differences are minor. From newest to oldest:
 
-	Main Set: 16Kbit ROMs
-	          Green/Hollow empty fuel bar.
-			  60 points for every bomb destroyed.
+    Main Set: 16Kbit ROMs
+              Green/Hollow empty fuel bar.
+              60 points for every bomb destroyed.
 
-	Set 2:    8Kbit ROMs
-			  Blue/Solid empty fuel bar.
-			  60 points for every bomb destroyed.
+    Set 2:    8Kbit ROMs
+              Blue/Solid empty fuel bar.
+              60 points for every bomb destroyed.
 
-	Set 3:    8Kbit ROMs
-			  Blue/Solid empty fuel bar.
-			  300 points for every seven bombs destroyed.
+    Set 3:    8Kbit ROMs
+              Blue/Solid empty fuel bar.
+              300 points for every seven bombs destroyed.
 
 
 To Do!!
-	   Figure out the correct vblank interval. The one I'm using seems to be
-	   ok for Astro Fighter, but the submarine in Tomahawk flickers.
-	   Maybe the video rate should 57FPS as the Burger Time games?
+       Figure out the correct vblank interval. The one I'm using seems to be
+       ok for Astro Fighter, but the submarine in Tomahawk flickers.
+       Maybe the video rate should 57FPS as the Burger Time games?
 
-	   Rotation Support
+       Rotation Support
 
 Also....
         I know there must be at least one other rom set for Astro Fighter

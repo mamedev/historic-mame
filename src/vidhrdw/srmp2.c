@@ -72,24 +72,24 @@ PALETTE_INIT( srmp3 )
 static void srmp2_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
-	Sprite RAM A:	spriteram16_2
-	==============
-	 + 0x000 - 0x3ff
-	  x--- ----  ---- ---- : Flip X
-	  -x-- ----  ---- ---- : Flip Y
-	  --xx xxxx  xxxx xxxx : Tile number
+    Sprite RAM A:   spriteram16_2
+    ==============
+     + 0x000 - 0x3ff
+      x--- ----  ---- ---- : Flip X
+      -x-- ----  ---- ---- : Flip Y
+      --xx xxxx  xxxx xxxx : Tile number
 
-	 + 0x400 - 0x7ff
-	  xxxx x---  ---- ---- : Color
-	  ---- ---x  xxxx xxxx : X coords
+     + 0x400 - 0x7ff
+      xxxx x---  ---- ---- : Color
+      ---- ---x  xxxx xxxx : X coords
 
-	Sprite RAM B:	spriteram16
-	==============
-	 + 0x000 - 0x3ff
-	  ---- ----  xxxx xxxx : Y coords
+    Sprite RAM B:   spriteram16
+    ==============
+     + 0x000 - 0x3ff
+      ---- ----  xxxx xxxx : Y coords
 
-	 + 0x600
-	  ---- ----  -x-- ---- : Flip screen
+     + 0x600
+      ---- ----  -x-- ---- : Flip screen
 */
 
 	int offs;
@@ -162,7 +162,7 @@ static void srmp3_draw_sprites_map(struct mame_bitmap *bitmap)
 	yoffs	=	flip ? -0x01 : -0x01;
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
-	   draw every column */
+       draw every column */
 	if (numcol == 1)	numcol = 16;
 
 	/* The first column is the frontmost, see twineagl test mode */
@@ -218,36 +218,36 @@ static void srmp3_draw_sprites_map(struct mame_bitmap *bitmap)
 static void srmp3_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
-	Sprite RAM A:	spriteram_2
-	==============
-	 + 0x000 - 0x1ff
-	  xxxx xxxx : Tile number (low)
+    Sprite RAM A:   spriteram_2
+    ==============
+     + 0x000 - 0x1ff
+      xxxx xxxx : Tile number (low)
 
-	 + 0x200 - 0x3ff
-	  ---- ---- : Color
-	  xxxx xxxx : X coords (low)
-
-
-	Sprite RAM B:	spriteram_3
-	==============
-	 + 0x000 - 0x1ff
-	  x--- ---- : Flip X ?
-	  -x-- ---- : Flip Y ?
-	  --x- ---- : Use GFX bank flag
-	  ---x xxxx : Tile number (high)
-
-	 + 0x200 - 0x3ff
-	  xxxx x--- : Color
-	  ---- ---x : X coords (high)
+     + 0x200 - 0x3ff
+      ---- ---- : Color
+      xxxx xxxx : X coords (low)
 
 
-	Sprite RAM C:	spriteram
-	==============
-	 + 0x000 - 0x1ff
-	  xxxx xxxx : Y coords (low)
+    Sprite RAM B:   spriteram_3
+    ==============
+     + 0x000 - 0x1ff
+      x--- ---- : Flip X ?
+      -x-- ---- : Flip Y ?
+      --x- ---- : Use GFX bank flag
+      ---x xxxx : Tile number (high)
 
-	 + 0x300
-	  -x-- ---- : Flip screen
+     + 0x200 - 0x3ff
+      xxxx x--- : Color
+      ---- ---x : X coords (high)
+
+
+    Sprite RAM C:   spriteram
+    ==============
+     + 0x000 - 0x1ff
+      xxxx xxxx : Y coords (low)
+
+     + 0x300
+      -x-- ---- : Flip screen
 */
 
 	int offs;
@@ -256,7 +256,7 @@ static void srmp3_draw_sprites(struct mame_bitmap *bitmap)
 	int max_y	=	Machine -> drv -> screen_height;
 
 	int ctrl	=	spriteram[ 0x600/2 ];
-//	int ctrl2	=	spriteram[ 0x602/2 ];
+//  int ctrl2   =   spriteram[ 0x602/2 ];
 
 	int flip	=	ctrl & 0x40;
 
@@ -324,7 +324,7 @@ static void mjyuugi_draw_sprites_map(struct mame_bitmap *bitmap)
 	yoffs	=	flip ? 0x09 : 0x07;
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
-	   draw every column */
+       draw every column */
 	if (numcol == 1)	numcol = 16;
 
 	/* The first column is the frontmost, see twineagl test mode */
@@ -382,25 +382,25 @@ static void mjyuugi_draw_sprites_map(struct mame_bitmap *bitmap)
 static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
-	Sprite RAM A:	spriteram16_2
-	==============
-	 + 0x000 - 0x3ff
-	  x--- ----  ---- ---- : Flip X
-	  -x-- ----  ---- ---- : Flip Y
-	  --x- ----  ---- ---- : Use GFX bank flag
-	  ---x xxxx  xxxx xxxx : Tile number
+    Sprite RAM A:   spriteram16_2
+    ==============
+     + 0x000 - 0x3ff
+      x--- ----  ---- ---- : Flip X
+      -x-- ----  ---- ---- : Flip Y
+      --x- ----  ---- ---- : Use GFX bank flag
+      ---x xxxx  xxxx xxxx : Tile number
 
-	 + 0x400 - 0x7ff
-	  xxxx x---  ---- ---- : Color
-	  ---- ---x  xxxx xxxx : X coords
+     + 0x400 - 0x7ff
+      xxxx x---  ---- ---- : Color
+      ---- ---x  xxxx xxxx : X coords
 
-	Sprite RAM B:	spriteram16
-	==============
-	 + 0x000 - 0x3ff
-	  ---- ----  xxxx xxxx : Y coords
+    Sprite RAM B:   spriteram16
+    ==============
+     + 0x000 - 0x3ff
+      ---- ----  xxxx xxxx : Y coords
 
-	 + 0x600
-	  ---- ----  -x-- ---- : Flip screen
+     + 0x600
+      ---- ----  -x-- ---- : Flip screen
 */
 
 	int offs;

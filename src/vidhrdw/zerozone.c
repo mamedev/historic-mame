@@ -24,7 +24,7 @@ WRITE16_HANDLER( zerozone_tilemap_w )
 
 WRITE16_HANDLER(zerozone_tilebank_w)
 {
-//	usrintf_showmessage	("Data %04x",data);
+//  usrintf_showmessage ("Data %04x",data);
 	zerozone_tilebank = data & 0x7;
 	tilemap_mark_all_tiles_dirty(zerozone_tilemap);
 }

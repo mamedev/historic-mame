@@ -1,7 +1,7 @@
 /***************************************************************************
 
 Dragon Buster (c) 1984 Namco
-Sky Kid	      (c) 1985 Namco
+Sky Kid       (c) 1985 Namco
 
 Driver by Manuel Abadia <manu@teleline.es>
 

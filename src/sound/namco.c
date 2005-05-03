@@ -1,13 +1,13 @@
 /***************************************************************************
 
-	NAMCO sound driver.
+    NAMCO sound driver.
 
-	This driver handles the four known types of NAMCO wavetable sounds:
+    This driver handles the four known types of NAMCO wavetable sounds:
 
-		- 3-voice mono (PROM-based design: Pac-Man, Pengo, Dig Dug, etc)
-		- 8-voice quadrophonic (Pole Position 1, Pole Position 2)
-		- 8-voice mono (custom 15XX: Mappy, Dig Dug 2, etc)
-		- 8-voice stereo (System 1)
+        - 3-voice mono (PROM-based design: Pac-Man, Pengo, Dig Dug, etc)
+        - 8-voice quadrophonic (Pole Position 1, Pole Position 2)
+        - 8-voice mono (custom 15XX: Mappy, Dig Dug 2, etc)
+        - 8-voice stereo (System 1)
 
 ***************************************************************************/
 
@@ -23,9 +23,9 @@
 /* quality parameter: internal sample rate is 192 KHz, output is 48 KHz */
 #define INTERNAL_RATE	192000
 
-/* 16 bits:	sample bits of the stream buffer	*/
-/* 4 bits:	volume					*/
-/* 4 bits:	prom sample bits			*/
+/* 16 bits: sample bits of the stream buffer    */
+/* 4 bits:  volume                  */
+/* 4 bits:  prom sample bits            */
 #define MIXLEVEL	(1 << (16 - 4 - 4))
 
 /* stream output level */
@@ -68,7 +68,7 @@ struct namco_sound
 	int sample_rate;
 	int f_fracbits;
 	int stereo;
-	
+
 	/* decoded waveform table */
 	INT16 *waveform[MAX_VOLUME];
 };
@@ -390,19 +390,19 @@ static void *namco_start(int sndindex, int clock, const void *config)
 /********************************************************************************/
 
 /* pacman register map
-	0x05:		ch 0	waveform select
-	0x0a:		ch 1	waveform select
-	0x0f:		ch 2	waveform select
+    0x05:       ch 0    waveform select
+    0x0a:       ch 1    waveform select
+    0x0f:       ch 2    waveform select
 
-	0x10:		ch 0	the first voice has extra frequency bits
-	0x11-0x14:	ch 0	frequency
-	0x15:		ch 0	volume
+    0x10:       ch 0    the first voice has extra frequency bits
+    0x11-0x14:  ch 0    frequency
+    0x15:       ch 0    volume
 
-	0x16-0x19:	ch 1	frequency
-	0x1a:		ch 1	volume
+    0x16-0x19:  ch 1    frequency
+    0x1a:       ch 1    volume
 
-	0x1b-0x1e:	ch 2	frequency
-	0x1f:		ch 2	volume
+    0x1b-0x1e:  ch 2    frequency
+    0x1f:       ch 2    volume
 */
 
 WRITE8_HANDLER( pacman_sound_enable_w )
@@ -472,34 +472,34 @@ WRITE8_HANDLER( pacman_sound_w )
 Note: even if there are 8 voices, the game doesn't use the first 2 because
 it select the 54XX/52XX outputs on those channels
 
-	0x00-0x01	ch 0	frequency
-	0x02		ch 0	xxxx---- GAIN 2 volume
-	0x03		ch 0	xxxx---- GAIN 3 volume
-	                    ----xxxx GAIN 4 volume
+    0x00-0x01   ch 0    frequency
+    0x02        ch 0    xxxx---- GAIN 2 volume
+    0x03        ch 0    xxxx---- GAIN 3 volume
+                        ----xxxx GAIN 4 volume
 
-	0x04-0x07	ch 1
+    0x04-0x07   ch 1
 
-	.
-	.
-	.
+    .
+    .
+    .
 
-	0x1c-0x1f	ch 7
+    0x1c-0x1f   ch 7
 
-	0x23		ch 0	xxxx---- GAIN 1 volume
-	                    -----xxx waveform select
-	                    ----x-xx channel output select
-						         0-7 (all the same, shared with waveform select) = wave
-								 8 = CHANL1 (54XX pins 17-20)
-								 9 = CHANL2 (54XX pins 8-11)
-								 A = CHANL3 (54XX pins 4-7)
-								 B = CHANL4 (52XX)
-	0x27		ch 1
-	0x2b		ch 2
-	0x2f		ch 3
-	0x33		ch 4
-	0x37		ch 5
-	0x3b		ch 6
-	0x3f		ch 7
+    0x23        ch 0    xxxx---- GAIN 1 volume
+                        -----xxx waveform select
+                        ----x-xx channel output select
+                                 0-7 (all the same, shared with waveform select) = wave
+                                 8 = CHANL1 (54XX pins 17-20)
+                                 9 = CHANL2 (54XX pins 8-11)
+                                 A = CHANL3 (54XX pins 4-7)
+                                 B = CHANL4 (52XX)
+    0x27        ch 1
+    0x2b        ch 2
+    0x2f        ch 3
+    0x33        ch 4
+    0x37        ch 5
+    0x3b        ch 6
+    0x3f        ch 7
 */
 
 void polepos_sound_enable(int enable)
@@ -563,21 +563,21 @@ WRITE8_HANDLER( polepos_sound_w )
 /********************************************************************************/
 
 /* 15XX register map
-	0x03		ch 0	volume
-	0x04-0x05	ch 0	frequency
-	0x06		ch 0	waveform select & frequency
+    0x03        ch 0    volume
+    0x04-0x05   ch 0    frequency
+    0x06        ch 0    waveform select & frequency
 
-	0x0b		ch 1	volume
-	0x0c-0x0d	ch 1	frequency
-	0x0e		ch 1	waveform select & frequency
+    0x0b        ch 1    volume
+    0x0c-0x0d   ch 1    frequency
+    0x0e        ch 1    waveform select & frequency
 
-	.
-	.
-	.
+    .
+    .
+    .
 
-	0x3b		ch 7	volume
-	0x3c-0x3d	ch 7	frequency
-	0x3e		ch 7	waveform select & frequency
+    0x3b        ch 7    volume
+    0x3c-0x3d   ch 7    frequency
+    0x3e        ch 7    waveform select & frequency
 */
 
 void mappy_sound_enable(int enable)
@@ -629,27 +629,27 @@ WRITE8_HANDLER( namco_15xx_w )
 /********************************************************************************/
 
 /* namcos1 register map
-	0x00		ch 0	left volume
-	0x01		ch 0	waveform select & frequency
-	0x02-0x03	ch 0	frequency
-	0x04		ch 0	right volume AND
-	0x04		ch 1	noise sw
+    0x00        ch 0    left volume
+    0x01        ch 0    waveform select & frequency
+    0x02-0x03   ch 0    frequency
+    0x04        ch 0    right volume AND
+    0x04        ch 1    noise sw
 
-	0x08		ch 1	left volume
-	0x09		ch 1	waveform select & frequency
-	0x0a-0x0b	ch 1	frequency
-	0x0c		ch 1	right volume AND
-	0x0c		ch 2	noise sw
+    0x08        ch 1    left volume
+    0x09        ch 1    waveform select & frequency
+    0x0a-0x0b   ch 1    frequency
+    0x0c        ch 1    right volume AND
+    0x0c        ch 2    noise sw
 
-	.
-	.
-	.
+    .
+    .
+    .
 
-	0x38		ch 7	left volume
-	0x39		ch 7	waveform select & frequency
-	0x3a-0x3b	ch 7	frequency
-	0x3c		ch 7	right volume AND
-	0x3c		ch 0	noise sw
+    0x38        ch 7    left volume
+    0x39        ch 7    waveform select & frequency
+    0x3a-0x3b   ch 7    frequency
+    0x3c        ch 7    right volume AND
+    0x3c        ch 0    noise sw
 */
 
 static WRITE8_HANDLER( namcos1_sound_w )

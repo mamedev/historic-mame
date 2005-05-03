@@ -69,7 +69,7 @@ static READ8_HANDLER( thunderx_bankedram_r )
 	{
 		if (pmcbank)
 		{
-//			logerror("%04x read pmcram %04x\n",activecpu_get_pc(),offset);
+//          logerror("%04x read pmcram %04x\n",activecpu_get_pc(),offset);
 			return pmcram[offset];
 		}
 		else
@@ -88,7 +88,7 @@ static WRITE8_HANDLER( thunderx_bankedram_w )
 		ram[offset] = data;
 	else if (rambank & 0x10)
 	{
-//			if (offset == 0x200)	debug_signal_breakpoint(1);
+//          if (offset == 0x200)    debug_signal_breakpoint(1);
 		if (pmcbank)
 		{
 			logerror("%04x pmcram %04x = %02x\n",activecpu_get_pc(),offset,data);
@@ -104,72 +104,72 @@ static WRITE8_HANDLER( thunderx_bankedram_w )
 /*
 this is the data written to internal ram on startup:
 
-    Japan version	US version
-00: e7 00 00 ad 08	e7 00 00 ad 08
-01: 5f 80 05 a0 0c	1f 80 05 a0 0c														LDW ACC,RAM+05
-02:               	42 7e 00 8b 04														regE
-03: df 00 e2 8b 08	df 8e 00 cb 04														regE
-04: 5f 80 06 a0 0c	5f 80 07 a0 0c														LDB ACC,RAM+07
-05: df 7e 00 cb 08	df 7e 00 cb 08														LDB R7,[Rx]
-06: 1b 80 00 a0 0c	1b 80 00 a0 0c	LDPTR #0											 PTR2,RAM+00
-07: df 10 00 cb 08	df 10 00 cb 08	LDB R1,[PTR] (fl)									LDB R1,[Rx] (flags)
-08: 5f 80 03 a0 0c	5f 80 03 a0 0c	LDB R0,[3] (cm)										LDB ACC,RAM+03    load collide mask
-09: 1f 20 00 cb 08	1f 20 00 cb 08	LD CMP2,R0											test (AND) R1 vs ACC
-0a: c4 00 00 ab 0c	c4 00 00 ab 0c	INC PTR												LEA Rx,[++PTR2]
-0b: df 20 00 cb 08	df 20 00 cb 08	LDB R2,[PTR] (w)									LDB R2,[Rx] (width)
-0c: c4 00 00 ab 0c	c4 00 00 ab 0c	INC PTR												LEA Rx,[++PTR2]
-0d: df 30 00 cb 08	df 30 00 cb 08	LDB R3,[PTR] (h)									LDB R3,[Rx] (height)
-0e: c4 00 00 ab 0c	c4 00 00 ab 0c	INC PTR												LEA Rx,[++PTR2]
-0f: df 40 00 cb 08	df 40 00 cb 08	LDB R4,[PTR] (x)									LDB R4,[Rx] (x)
-10: c4 00 00 ab 0c	c4 00 00 ab 0c	INC PTR												LEA Rx,[++PTR2]
-11: df 50 00 cb 08	df 50 00 cb 08	LDB R5,[PTR] (y)									LDB R5,[Rx] (y)
-12: 60 22 35 e9 08	60 22 36 e9 08	BANDZ CMP2,R1,36									R2/R1, BEQ 36
-13: 44 0e 00 ab 08	44 0e 00 ab 08	MOVE PTR,INNER										LEA Rx,[PTR,0]    load flags
-14: df 60 00 cb 08	df 60 00 cb 08	LDB R6,[PTR] (fl)									LDB R6,[Rx]
-15: 5f 80 04 a0 0c	5f 80 04 a0 0c	LDB R0,[4] (hm)										LDB ACC,RAM+04    load hit mask
-16: 1f 60 00 cb 08	1f 60 00 cb 08	LD CMP6,R0											test R6 and ACC (AND)
-17: 60 6c 31 e9 08	60 6c 32 e9 08	BANDZ CMP6,R6,32									R6, BEQ 32
-18: 45 8e 01 a0 0c	45 8e 01 a0 0c	LDB R0,[INNER+1]   									LDB Ry,[PTR,1] (width)
-19: c5 64 00 cb 08	c5 64 00 cb 08	ADD ACC,R0,R2      									R6 = ADD Ry,R2
-1a: 45 8e 03 a0 0c	45 8e 03 a0 0c	LDB R0,[INNER+3]   									LDB Ry,[PTR,3] (x)
-1b: 67 00 00 cb 0c	67 00 00 cb 0c	MOV CMP,R0       									??? DEC Ry
-1c: 15 48 5d c9 0c	15 48 5e c9 0c	SUB CMP,R4 ; BGE 1E    								SUB R4,Ry; Bcc 1E
-1d: 12 00 00 eb 0c	12 00 00 eb 0c	NEG CMP         									??? NEG Ry
-1e: 48 6c 71 e9 0c	48 6c 72 e9 0c	B (CMP > ACC) 32     								R6, BLO 32
-1f: 45 8e 02 a0 0c	45 8e 02 a0 0c	LDB R0,[INNER+2]									LDB Ry,[PTR,2] (height)
-20: c5 66 00 cb 08	c5 66 00 cb 08	ADD ACC,R0,R3										R6 = ADD Ry,R3
-21: 45 8e 04 a0 0c	45 8e 04 a0 0c	LDB R0,[INNER+4]									LDB Ry,[PTR,4] (y)
-22: 67 00 00 cb 0c	67 00 00 cb 0c	MOV CMP,R0											??? DEC Ry
-23: 15 5a 64 c9 0c	15 5a 65 c9 0c	SUB CMP,R5 ; BGE 25									SUB R5,Ry; Bcc 25
-24: 12 00 00 eb 0c	12 00 00 eb 0c	NEG CMP												??? NEG Ry
-25: 48 6c 71 e9 0c	48 6c 72 e9 0c	B (CMP > ACC) 32									R6, BLO 32
-26: e5 92 9b e0 0c	e5 92 9b e0 0c														AND R1,#$9B
-27: dd 92 10 e0 0c	dd 92 10 e0 0c														OR R1,#$10
-28: 5c fe 00 a0 0c	5c fe 00 a0 0c														??? STB [PTR,0]
-29: df 60 00 d3 08	df 60 00 d3 08														LDB R6,
-2a: e5 ec 9f e0 0c	e5 ec 9f e0 0c														AND R6,#$9F
-2b: dd ec 10 00 0c	dd ec 10 00 0c														OR R6,#$10
-2c: 25 ec 04 c0 0c	25 ec 04 c0 0c														STB R6,[PTR2,-4]
-2d: 18 82 00 00 0c	18 82 00 00 0c
-2e: 4d 80 03 a0 0c	4d 80 03 a0 0c														RAM+03
-2f: df e0 e6 e0 0c	df e0 36 e1 0c
-30: 49 60 75 f1 08	49 60 76 f1 08														Jcc 36
-31: 67 00 35 cd 08	67 00 36 cd 08														Jcc 36
-32: c5 fe 05 e0 0c	c5 fe 05 e0 0c	ADD R7,R7,5											ADD regE,#5
-33: 5f 80 02 a0 0c	5f 80 02 a0 0c	LDB R0, [2]											LDB ACC,RAM+02
-34: 1f 00 00 cb 08	1f 00 00 cb 08	LCMP CMP0,R0
-35: 48 6e 52 c9 0c	48 6e 53 c9 0c	BNEQ CMP0,R7, 33									R6/R7, BLO 13
-36: c4 00 00 ab 0c	c4 00 00 ab 0c	INC PTR												LEA Rx,[++PTR2]
-37: 27 00 00 ab 0c	27 00 00 ab 0c
-38: 42 00 00 8b 04	42 00 00 8b 04	MOVE PTR, OUTER
-39: 1f 00 00 cb 00	1f 00 00 cb 00	 LCMP CMP0 ??										test PTR2 vs ACC
-3a: 48 00 43 c9 00	48 00 44 c9 00	BLT 4												BLT 04      next in set 0
-3b: 5f fe 00 e0 08	5f fe 00 e0 08
-3c: 5f 7e 00 ed 08	5f 7e 00 ed 08
-3d: ff 04 00 ff 06	ff 04 00 ff 06	STOP												STOP
-3e: 05 07 ff 02 03	05 07 ff 02 03
-3f: 01 01 e0 02 6c	01 00 60 00 a0
-	03 6c 04 40 04
+    Japan version   US version
+00: e7 00 00 ad 08  e7 00 00 ad 08
+01: 5f 80 05 a0 0c  1f 80 05 a0 0c                                                      LDW ACC,RAM+05
+02:                 42 7e 00 8b 04                                                      regE
+03: df 00 e2 8b 08  df 8e 00 cb 04                                                      regE
+04: 5f 80 06 a0 0c  5f 80 07 a0 0c                                                      LDB ACC,RAM+07
+05: df 7e 00 cb 08  df 7e 00 cb 08                                                      LDB R7,[Rx]
+06: 1b 80 00 a0 0c  1b 80 00 a0 0c  LDPTR #0                                             PTR2,RAM+00
+07: df 10 00 cb 08  df 10 00 cb 08  LDB R1,[PTR] (fl)                                   LDB R1,[Rx] (flags)
+08: 5f 80 03 a0 0c  5f 80 03 a0 0c  LDB R0,[3] (cm)                                     LDB ACC,RAM+03    load collide mask
+09: 1f 20 00 cb 08  1f 20 00 cb 08  LD CMP2,R0                                          test (AND) R1 vs ACC
+0a: c4 00 00 ab 0c  c4 00 00 ab 0c  INC PTR                                             LEA Rx,[++PTR2]
+0b: df 20 00 cb 08  df 20 00 cb 08  LDB R2,[PTR] (w)                                    LDB R2,[Rx] (width)
+0c: c4 00 00 ab 0c  c4 00 00 ab 0c  INC PTR                                             LEA Rx,[++PTR2]
+0d: df 30 00 cb 08  df 30 00 cb 08  LDB R3,[PTR] (h)                                    LDB R3,[Rx] (height)
+0e: c4 00 00 ab 0c  c4 00 00 ab 0c  INC PTR                                             LEA Rx,[++PTR2]
+0f: df 40 00 cb 08  df 40 00 cb 08  LDB R4,[PTR] (x)                                    LDB R4,[Rx] (x)
+10: c4 00 00 ab 0c  c4 00 00 ab 0c  INC PTR                                             LEA Rx,[++PTR2]
+11: df 50 00 cb 08  df 50 00 cb 08  LDB R5,[PTR] (y)                                    LDB R5,[Rx] (y)
+12: 60 22 35 e9 08  60 22 36 e9 08  BANDZ CMP2,R1,36                                    R2/R1, BEQ 36
+13: 44 0e 00 ab 08  44 0e 00 ab 08  MOVE PTR,INNER                                      LEA Rx,[PTR,0]    load flags
+14: df 60 00 cb 08  df 60 00 cb 08  LDB R6,[PTR] (fl)                                   LDB R6,[Rx]
+15: 5f 80 04 a0 0c  5f 80 04 a0 0c  LDB R0,[4] (hm)                                     LDB ACC,RAM+04    load hit mask
+16: 1f 60 00 cb 08  1f 60 00 cb 08  LD CMP6,R0                                          test R6 and ACC (AND)
+17: 60 6c 31 e9 08  60 6c 32 e9 08  BANDZ CMP6,R6,32                                    R6, BEQ 32
+18: 45 8e 01 a0 0c  45 8e 01 a0 0c  LDB R0,[INNER+1]                                    LDB Ry,[PTR,1] (width)
+19: c5 64 00 cb 08  c5 64 00 cb 08  ADD ACC,R0,R2                                       R6 = ADD Ry,R2
+1a: 45 8e 03 a0 0c  45 8e 03 a0 0c  LDB R0,[INNER+3]                                    LDB Ry,[PTR,3] (x)
+1b: 67 00 00 cb 0c  67 00 00 cb 0c  MOV CMP,R0                                          ??? DEC Ry
+1c: 15 48 5d c9 0c  15 48 5e c9 0c  SUB CMP,R4 ; BGE 1E                                 SUB R4,Ry; Bcc 1E
+1d: 12 00 00 eb 0c  12 00 00 eb 0c  NEG CMP                                             ??? NEG Ry
+1e: 48 6c 71 e9 0c  48 6c 72 e9 0c  B (CMP > ACC) 32                                    R6, BLO 32
+1f: 45 8e 02 a0 0c  45 8e 02 a0 0c  LDB R0,[INNER+2]                                    LDB Ry,[PTR,2] (height)
+20: c5 66 00 cb 08  c5 66 00 cb 08  ADD ACC,R0,R3                                       R6 = ADD Ry,R3
+21: 45 8e 04 a0 0c  45 8e 04 a0 0c  LDB R0,[INNER+4]                                    LDB Ry,[PTR,4] (y)
+22: 67 00 00 cb 0c  67 00 00 cb 0c  MOV CMP,R0                                          ??? DEC Ry
+23: 15 5a 64 c9 0c  15 5a 65 c9 0c  SUB CMP,R5 ; BGE 25                                 SUB R5,Ry; Bcc 25
+24: 12 00 00 eb 0c  12 00 00 eb 0c  NEG CMP                                             ??? NEG Ry
+25: 48 6c 71 e9 0c  48 6c 72 e9 0c  B (CMP > ACC) 32                                    R6, BLO 32
+26: e5 92 9b e0 0c  e5 92 9b e0 0c                                                      AND R1,#$9B
+27: dd 92 10 e0 0c  dd 92 10 e0 0c                                                      OR R1,#$10
+28: 5c fe 00 a0 0c  5c fe 00 a0 0c                                                      ??? STB [PTR,0]
+29: df 60 00 d3 08  df 60 00 d3 08                                                      LDB R6,
+2a: e5 ec 9f e0 0c  e5 ec 9f e0 0c                                                      AND R6,#$9F
+2b: dd ec 10 00 0c  dd ec 10 00 0c                                                      OR R6,#$10
+2c: 25 ec 04 c0 0c  25 ec 04 c0 0c                                                      STB R6,[PTR2,-4]
+2d: 18 82 00 00 0c  18 82 00 00 0c
+2e: 4d 80 03 a0 0c  4d 80 03 a0 0c                                                      RAM+03
+2f: df e0 e6 e0 0c  df e0 36 e1 0c
+30: 49 60 75 f1 08  49 60 76 f1 08                                                      Jcc 36
+31: 67 00 35 cd 08  67 00 36 cd 08                                                      Jcc 36
+32: c5 fe 05 e0 0c  c5 fe 05 e0 0c  ADD R7,R7,5                                         ADD regE,#5
+33: 5f 80 02 a0 0c  5f 80 02 a0 0c  LDB R0, [2]                                         LDB ACC,RAM+02
+34: 1f 00 00 cb 08  1f 00 00 cb 08  LCMP CMP0,R0
+35: 48 6e 52 c9 0c  48 6e 53 c9 0c  BNEQ CMP0,R7, 33                                    R6/R7, BLO 13
+36: c4 00 00 ab 0c  c4 00 00 ab 0c  INC PTR                                             LEA Rx,[++PTR2]
+37: 27 00 00 ab 0c  27 00 00 ab 0c
+38: 42 00 00 8b 04  42 00 00 8b 04  MOVE PTR, OUTER
+39: 1f 00 00 cb 00  1f 00 00 cb 00   LCMP CMP0 ??                                       test PTR2 vs ACC
+3a: 48 00 43 c9 00  48 00 44 c9 00  BLT 4                                               BLT 04      next in set 0
+3b: 5f fe 00 e0 08  5f fe 00 e0 08
+3c: 5f 7e 00 ed 08  5f 7e 00 ed 08
+3d: ff 04 00 ff 06  ff 04 00 ff 06  STOP                                                STOP
+3e: 05 07 ff 02 03  05 07 ff 02 03
+3f: 01 01 e0 02 6c  01 00 60 00 a0
+    03 6c 04 40 04
 */
 
 // run_collisions
@@ -456,7 +456,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -525,7 +525,7 @@ INPUT_PORTS_START( scontra )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -629,7 +629,7 @@ INPUT_PORTS_START( thunderx )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
  	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -672,7 +672,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -721,7 +721,7 @@ static MACHINE_DRIVER_START( scontra )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 1.0)
 	MDRV_SOUND_ROUTE(1, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -985,7 +985,7 @@ static void thunderx_banking( int lines )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-//	logerror("thunderx %04x: bank select %02x\n", activecpu_get_pc(), lines );
+//  logerror("thunderx %04x: bank select %02x\n", activecpu_get_pc(), lines );
 
 	offs = 0x10000 + (((lines & 0x0f) ^ 0x08) * 0x2000);
 	if (offs >= 0x28000) offs -= 0x20000;

@@ -1,89 +1,89 @@
 /***************************************************************************
 
-	Incredible Technologies/Strata system
-	(8-bit blitter variant)
+    Incredible Technologies/Strata system
+    (8-bit blitter variant)
 
 ****************************************************************************
 
-	The games run in one of two modes, either 4bpp mode with a latched
-	palette nibble, or straight 8bpp.
-	
-	arligntn:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
-	hstennis:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
-	neckneck:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
-	ninclown:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
-	peggle:		4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
-	rimrockn:	4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    The games run in one of two modes, either 4bpp mode with a latched
+    palette nibble, or straight 8bpp.
 
-	dynobop:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
-	pokrdice:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
-	slikshot:	8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+    arligntn:   4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    hstennis:   4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    neckneck:   4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    ninclown:   4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    peggle:     4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
+    rimrockn:   4bpp mode, dp = 00/80, draw to 0xxxx/2xxxx
 
-	gtg:		8bpp mode, dp = C0
-	stratab:	8bpp mode, dp = C0, always draws to 2xxxx
-	wfortune:	8bpp mode, dp = C0, always draws to 2xxxx
-	
+    dynobop:    8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+    pokrdice:   8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+    slikshot:   8bpp mode, dp = 00/FF, draw to 2xxxx/0xxxx
+
+    gtg:        8bpp mode, dp = C0
+    stratab:    8bpp mode, dp = C0, always draws to 2xxxx
+    wfortune:   8bpp mode, dp = C0, always draws to 2xxxx
+
 ****************************************************************************
 
-	8-bit blitter data format:
-	
-	+00  hhhhhhhh   MSB of 16-bit source address
-	+01  llllllll   LSB of 16-bit source address
-	+02  ---t----   Transparent: when set, don't write 0 nibbles
-	     ----r---   RLE: when set, source data is RLE compressed
-	     -----y--   Y-flip: when set, draw up instead of down
-	     ------x-   X-flip: when set, draw right instead of left
-	     -------s   Shift: when set, offset drawing by one nibble
-	+03  s-------   Blit status: when set, blit is in progress
-	+03  --------   Blit start: a write here starts the blit
-	+04  wwwwwwww   Width of blit, in bytes
-	+05  hhhhhhhh   Height of blit, in rows
-	+06  mmmmmmmm   Blit mask, applied to each source pixel
-	+07  ?-------   Set by ninclown at startup
-	     -4------   Set by games that use 4bpp latched output
-	     --?-----   Set by gtg, gtg2, peggle, pokrdice, stratab
-	     ---l----   Video status LED
-	     ----?---   Set by gtg2, ninclown, peggle, stratab
-	     ------?-   Set by arligntn, neckneck, gtg, gtg2, ninclown, peggle, pokrdice, rimrockn, stratab
-	+08  xxxxxxxx   Number of pixels to skip before drawing each row
-	+09  yyyyyyyy   Number of rows to draw (the first height - y rows are skipped)
-	+0A  eeeeeeee   Number of pixels to skip at the end of each row
-	+0B  ssssssss   Number of rows to skip at the end of drawing
-	
+    8-bit blitter data format:
+
+    +00  hhhhhhhh   MSB of 16-bit source address
+    +01  llllllll   LSB of 16-bit source address
+    +02  ---t----   Transparent: when set, don't write 0 nibbles
+         ----r---   RLE: when set, source data is RLE compressed
+         -----y--   Y-flip: when set, draw up instead of down
+         ------x-   X-flip: when set, draw right instead of left
+         -------s   Shift: when set, offset drawing by one nibble
+    +03  s-------   Blit status: when set, blit is in progress
+    +03  --------   Blit start: a write here starts the blit
+    +04  wwwwwwww   Width of blit, in bytes
+    +05  hhhhhhhh   Height of blit, in rows
+    +06  mmmmmmmm   Blit mask, applied to each source pixel
+    +07  ?-------   Set by ninclown at startup
+         -4------   Set by games that use 4bpp latched output
+         --?-----   Set by gtg, gtg2, peggle, pokrdice, stratab
+         ---l----   Video status LED
+         ----?---   Set by gtg2, ninclown, peggle, stratab
+         ------?-   Set by arligntn, neckneck, gtg, gtg2, ninclown, peggle, pokrdice, rimrockn, stratab
+    +08  xxxxxxxx   Number of pixels to skip before drawing each row
+    +09  yyyyyyyy   Number of rows to draw (the first height - y rows are skipped)
+    +0A  eeeeeeee   Number of pixels to skip at the end of each row
+    +0B  ssssssss   Number of rows to skip at the end of drawing
+
 ****************************************************************************
 
-	Blitter timing
-	
-	Times are in 2MHz NOPs (@ 2 cycles/NOP) after issuing a blit start 
-	command:
-	
-	  1x1 =	1-2		1x  1 = 1-2
-	  2x1 =	2		1x  2 = 2
-	  3x1 =	2		1x  3 = 2
-	  4x1 =	2		1x  4 = 2
-	  5x1 =	3		1x  5 = 3
-	  6x1 =	3		1x  6 = 3
-	  7x1 =	3-4		1x  7 = 3
-	  8x1 =	4		1x  8 = 4
-	  9x1 =	4		1x  9 = 4
-	 10x1 =	4		1x 10 = 4-5
-	 11x1 =	5		1x 11 = 5
-	 12x1 =	5		1x 12 = 5
-	 13x1 =	5-6		1x 13 = 5
-	 14x1 =	6		1x 14 = 6
-	 15x1 =	6		1x 15 = 6
-	 16x1 =	6-7		1x 16 = 6
-	 24x1 =	9-10	1x 24 = 9
-	 32x1 =	12		1x 32 = 12
-	 48x1 =	17		1x 48 = 17
-	 64x1 =	23		1x 64 = 22
-	 96x1 =	33		1x 96 = 33
-	128x1 =	44		1x128 = 44
-	192x1 =	65		1x192 = 65
-	240x1 =	81-82	1x240 = 81-82
-	
-	Times are not affected by transparency or RLE settings at all.
-	Times are slightly variable in nature in my tests (within 1 NOP).
+    Blitter timing
+
+    Times are in 2MHz NOPs (@ 2 cycles/NOP) after issuing a blit start
+    command:
+
+      1x1 = 1-2     1x  1 = 1-2
+      2x1 = 2       1x  2 = 2
+      3x1 = 2       1x  3 = 2
+      4x1 = 2       1x  4 = 2
+      5x1 = 3       1x  5 = 3
+      6x1 = 3       1x  6 = 3
+      7x1 = 3-4     1x  7 = 3
+      8x1 = 4       1x  8 = 4
+      9x1 = 4       1x  9 = 4
+     10x1 = 4       1x 10 = 4-5
+     11x1 = 5       1x 11 = 5
+     12x1 = 5       1x 12 = 5
+     13x1 = 5-6     1x 13 = 5
+     14x1 = 6       1x 14 = 6
+     15x1 = 6       1x 15 = 6
+     16x1 = 6-7     1x 16 = 6
+     24x1 = 9-10    1x 24 = 9
+     32x1 = 12      1x 32 = 12
+     48x1 = 17      1x 48 = 17
+     64x1 = 23      1x 64 = 22
+     96x1 = 33      1x 96 = 33
+    128x1 = 44      1x128 = 44
+    192x1 = 65      1x192 = 65
+    240x1 = 81-82   1x240 = 81-82
+
+    Times are not affected by transparency or RLE settings at all.
+    Times are slightly variable in nature in my tests (within 1 NOP).
 
 ***************************************************************************/
 
@@ -96,7 +96,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -107,7 +107,7 @@
 
 /*************************************
  *
- *	Blitter constants
+ *  Blitter constants
  *
  *************************************/
 
@@ -134,7 +134,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -158,7 +158,7 @@ static UINT32 grom_size;
 
 /*************************************
  *
- *	TMS34061 interfacing
+ *  TMS34061 interfacing
  *
  *************************************/
 
@@ -181,7 +181,7 @@ static struct tms34061_interface tms34061intf =
 
 /*************************************
  *
- *	Video start
+ *  Video start
  *
  *************************************/
 
@@ -208,7 +208,7 @@ VIDEO_START( itech8 )
 
 /*************************************
  *
- *	Palette I/O
+ *  Palette I/O
  *
  *************************************/
 
@@ -221,7 +221,7 @@ WRITE8_HANDLER( itech8_palette_w )
 
 /*************************************
  *
- *	Paging control
+ *  Paging control
  *
  *************************************/
 
@@ -237,7 +237,7 @@ WRITE8_HANDLER( itech8_page_w )
 
 /*************************************
  *
- *	Blitter data fetchers
+ *  Blitter data fetchers
  *
  *************************************/
 
@@ -260,7 +260,7 @@ INLINE UINT8 fetch_next_rle(void)
 		fetch_rle_count = grom_base[fetch_offset++ % grom_size];
 		fetch_rle_literal = fetch_rle_count & 0x80;
 		fetch_rle_count &= 0x7f;
-		
+
 		if (!fetch_rle_literal)
 			fetch_rle_value = grom_base[fetch_offset++ % grom_size];
 	}
@@ -278,13 +278,13 @@ INLINE void consume_rle(int count)
 	while (count)
 	{
 		int num_to_consume;
-		
+
 		if (fetch_rle_count == 0)
 		{
 			fetch_rle_count = grom_base[fetch_offset++ % grom_size];
 			fetch_rle_literal = fetch_rle_count & 0x80;
 			fetch_rle_count &= 0x7f;
-			
+
 			if (!fetch_rle_literal)
 				fetch_rle_value = grom_base[fetch_offset++ % grom_size];
 		}
@@ -302,7 +302,7 @@ INLINE void consume_rle(int count)
 
 /*************************************
  *
- *	Core blitter
+ *  Core blitter
  *
  *************************************/
 
@@ -330,11 +330,11 @@ static void perform_blit(void)
 				(*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO,
 				tms_state.regs[TMS34061_XYADDRESS] | ((tms_state.regs[TMS34061_XYOFFSET] & 0x300) << 8),
 				BLITTER_WIDTH, BLITTER_HEIGHT, BLITTER_FLAGS);
-	
+
 	/* initialize the fetcher */
 	fetch_offset = (*itech8_grom_bank << 16) | (BLITTER_ADDRHI << 8) | BLITTER_ADDRLO;
 	fetch_rle_count = 0;
-	
+
 	/* RLE starts with a couple of extra 0's */
 	if (rle)
 		fetch_offset += 2;
@@ -344,7 +344,7 @@ static void perform_blit(void)
 		transmaskhi = 0xf0, transmasklo = 0x0f;
 	else
 		transmaskhi = transmasklo = 0xff;
-	
+
 	/* compute horiz skip counts */
 	skip[0] = BLITTER_XSTART;
 	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;
@@ -399,14 +399,14 @@ static void perform_blit(void)
 			if (xflip && transmaskhi != 0xff)
 				pix = (pix >> 4) | (pix << 4);
 
-			/* draw upper pixel */			
+			/* draw upper pixel */
 			if (!transparent || (pix & transmaskhi))
 			{
 				tms_state.vram[addr] = (tms_state.vram[addr] & (0x0f << shift)) | ((pix & mask & 0xf0) >> shift);
 				tms_state.latchram[addr] = (tms_state.latchram[addr] & (0x0f << shift)) | ((color & 0xf0) >> shift);
 			}
-			
-			/* draw lower pixel */			
+
+			/* draw lower pixel */
 			if (!transparent || (pix & transmasklo))
 			{
 				offs_t addr1 = addr + shift/4;
@@ -414,7 +414,7 @@ static void perform_blit(void)
 				tms_state.latchram[addr1] = (tms_state.latchram[addr1] & (0xf0 >> shift)) | ((color & 0x0f) << shift);
 			}
 
-			/* advance to the next byte */			
+			/* advance to the next byte */
 			addr += xdir;
 		}
 
@@ -437,7 +437,7 @@ static void perform_blit(void)
 
 /*************************************
  *
- *	Blitter finished callback
+ *  Blitter finished callback
  *
  *************************************/
 
@@ -454,7 +454,7 @@ static void blitter_done(int param)
 
 /*************************************
  *
- *	Blitter I/O
+ *  Blitter I/O
  *
  *************************************/
 
@@ -477,7 +477,7 @@ READ8_HANDLER( itech8_blitter_r )
 		else
 			result &= 0x7f;
 	}
-	
+
 	/* a read from offsets 12-15 return input port values */
 	if (offset >= 12 && offset <= 15)
 		result = readinputport(3 + offset - 12);
@@ -530,7 +530,7 @@ WRITE8_HANDLER( itech8_blitter_w )
 
 /*************************************
  *
- *	TMS34061 I/O
+ *  TMS34061 I/O
  *
  *************************************/
 
@@ -540,7 +540,7 @@ WRITE8_HANDLER( itech8_tms34061_w )
 	int col = offset & 0xff;
 
 	/* Column address (CA0-CA8) is hooked up the A0-A7, with A1 being inverted
-	   during register access. CA8 is ignored */
+       during register access. CA8 is ignored */
 	if (func == 0 || func == 2)
 		col ^= 2;
 
@@ -555,7 +555,7 @@ READ8_HANDLER( itech8_tms34061_r )
 	int col = offset & 0xff;
 
 	/* Column address (CA0-CA8) is hooked up the A0-A7, with A1 being inverted
-	   during register access. CA8 is ignored */
+       during register access. CA8 is ignored */
 	if (func == 0 || func == 2)
 		col ^= 2;
 
@@ -567,7 +567,7 @@ READ8_HANDLER( itech8_tms34061_r )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -595,7 +595,7 @@ VIDEO_UPDATE( itech8_2layer )
 		UINT8 *base0 = &tms_state.vram[(0x00000 + page_offset + y * 256) & 0x3ffff];
 		UINT8 *base2 = &tms_state.vram[(0x20000 + page_offset + y * 256) & 0x3ffff];
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		
+
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
 			int pix0 = base0[x] & 0x0f;
@@ -627,7 +627,7 @@ VIDEO_UPDATE( itech8_2page )
 	{
 		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		
+
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = base[x];
 	}
@@ -659,7 +659,7 @@ VIDEO_UPDATE( itech8_2page_large )
 		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
 		UINT8 *latch = &tms_state.latchram[(page_offset + y * 256) & 0x3ffff];
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		
+
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
 		{
 			dest[x + 0] = (latch[x/2] & 0xf0) | (base[x/2] >> 4);

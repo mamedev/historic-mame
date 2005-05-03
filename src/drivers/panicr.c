@@ -12,13 +12,13 @@ CPU  : Sony CXQ70116D-8 (8086)
 Sound: YM2151,
 OSC  : 14.31818MHz,12.0000MHz,16.0000MHz
 Other:
-	Toshiba T5182
-	SEI0010BU(TC17G005AN-0025) x3
-	SEI0021BU(TC17G008AN-0022)
-	Toshiba(TC17G008AN-0024)
-	SEI0030BU(TC17G005AN-0026)
-	SEI0050BU(MA640 00)
-	SEI0040BU(TC15G008AN-0048)
+    Toshiba T5182
+    SEI0010BU(TC17G005AN-0025) x3
+    SEI0021BU(TC17G008AN-0022)
+    Toshiba(TC17G008AN-0024)
+    SEI0030BU(TC17G005AN-0026)
+    SEI0050BU(MA640 00)
+    SEI0040BU(TC15G008AN-0048)
 
 13F.BIN      [4e6b3c04]
 15F.BIN      [d735b572]
@@ -39,15 +39,15 @@ Other:
 1.19N        [674131b9]
 2.19M        [3d48b0b5]
 
-A.15C        [c75772bc]	82s129
-B.14C        [145d1e0d]	 |
-C.13C        [11c11bbd]	 |
-D.9B         [f99cac4b]	/
+A.15C        [c75772bc] 82s129
+B.14C        [145d1e0d]  |
+C.13C        [11c11bbd]  |
+D.9B         [f99cac4b] /
 
-8A.BPR       [908684a6]	63s281
-10J.BPR      [1dd80ee1]	 |
-10L.BPR      [f3f29695]	 |
-12D.BPR      [0df8aa3c]	/
+8A.BPR       [908684a6] 63s281
+10J.BPR      [1dd80ee1]  |
+10L.BPR      [f3f29695]  |
+12D.BPR      [0df8aa3c] /
 
 */
 
@@ -71,15 +71,15 @@ static WRITE8_HANDLER (vram_w)
 /*
 static void get_tile_info(int tile_index)
 {
-	int code;
+    int code;
 
-	code=videoram[tile_index/2];
+    code=videoram[tile_index/2];
 
-	SET_TILE_INFO(
-		0,
-		code,
-		0,
-		0)
+    SET_TILE_INFO(
+        0,
+        code,
+        0,
+        0)
 }
 */
 
@@ -205,7 +205,7 @@ static MACHINE_DRIVER_START( panicr )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
-//	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+//  MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
 
 	MDRV_VIDEO_START(panicr)
 	MDRV_VIDEO_UPDATE(panicr)

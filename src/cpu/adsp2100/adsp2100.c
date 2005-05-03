@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		ADSP2100.c
-**		Core implementation for the portable Analog ADSP-2100 emulator.
-**		Written by Aaron Giles
+**      ADSP2100.c
+**      Core implementation for the portable Analog ADSP-2100 emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -18,7 +18,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define TRACK_HOTSPOTS		0
@@ -39,7 +39,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* 16-bit registers that can be loaded signed or unsigned */
@@ -158,7 +158,7 @@ typedef struct
     UINT8    	irq_latch[5];
     INT32		interrupt_cycles;
     int			(*irq_callback)(int irqline);
-    
+
     /* other callbacks */
 	RX_CALLBACK sport_rx_callback;
 	TX_CALLBACK sport_tx_callback;
@@ -167,14 +167,14 @@ typedef struct
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
+**  PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
 static int	adsp2100_icount;
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static adsp2100_Regs adsp2100;
@@ -193,7 +193,7 @@ static UINT32 pcbucket[0x4000];
 
 
 /*###################################################################################################
-**	PRIVATE FUNCTION PROTOTYPES
+**  PRIVATE FUNCTION PROTOTYPES
 **#################################################################################################*/
 
 static int create_tables(void);
@@ -201,7 +201,7 @@ static void check_irqs(void);
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 INLINE UINT32 RWORD_DATA(UINT32 addr)
@@ -244,7 +244,7 @@ INLINE void WWORD_PGM(UINT32 addr, UINT32 data)
 
 
 /*###################################################################################################
-**	OTHER INLINES
+**  OTHER INLINES
 **#################################################################################################*/
 
 #if (HAS_ADSP2100)
@@ -303,7 +303,7 @@ INLINE void set_core_2181(void)
 
 
 /*###################################################################################################
-**	IMPORT CORE UTILITIES
+**  IMPORT CORE UTILITIES
 **#################################################################################################*/
 
 #include "2100ops.c"
@@ -311,7 +311,7 @@ INLINE void set_core_2181(void)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 INLINE int adsp2100_generate_irq(int which)
@@ -437,7 +437,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void adsp2100_get_context(void *dst)
@@ -464,7 +464,7 @@ static void adsp2100_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void adsp2100_init(void)
@@ -674,7 +674,7 @@ static void adsp2100_exit(void)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 /* execute instructions on this CPU until icount expires */
@@ -989,7 +989,7 @@ static int adsp2100_execute(int cycles)
 						mac_op_mr_xop(op);
 					else
 						mac_op_mr(op);
-				} 
+				}
 				break;
 			case 0x22: case 0x23:
 				/* 0010001x xxxxxxxx xxxxxxxx  conditional ALU to AR */
@@ -999,7 +999,7 @@ static int adsp2100_execute(int cycles)
 						alu_op_ar_const(op);
 					else
 						alu_op_ar(op);
-				} 
+				}
 				break;
 			case 0x24: case 0x25:
 				/* 0010010x xxxxxxxx xxxxxxxx  conditional MAC to MF */
@@ -1019,7 +1019,7 @@ static int adsp2100_execute(int cycles)
 						alu_op_af_const(op);
 					else
 						alu_op_af(op);
-				} 
+				}
 				break;
 			case 0x28: case 0x29:
 				/* 0010100x xxxxxxxx xxxxxxxx  MAC to MR with internal data register move */
@@ -1440,7 +1440,7 @@ static int adsp2100_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 adsp21xx_reg_layout[] =
@@ -1621,7 +1621,7 @@ static void adsp21xx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 14;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -2;					break;
@@ -1731,7 +1731,7 @@ static void adsp21xx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + ADSP2100_FL0:		info->i = adsp2100.fl0;					break;
 		case CPUINFO_INT_REGISTER + ADSP2100_FL1:		info->i = adsp2100.fl1;					break;
 		case CPUINFO_INT_REGISTER + ADSP2100_FL2:		info->i = adsp2100.fl2;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						/* set per CPU */						break;
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = adsp2100_get_context; break;
@@ -1974,7 +1974,7 @@ void adsp2101_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = adsp2101_set_info;		break;
 		case CPUINFO_PTR_RESET:							info->reset = adsp2101_reset;			break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2101_set_context; break;
-		
+
 		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->f = (genf *)adsp2100.sport_rx_callback;	break;
 		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->f = (genf *)adsp2100.sport_tx_callback;	break;
 
@@ -2335,7 +2335,7 @@ void adsp2181_idma_data_w(data16_t data)
 			adsp2100.idma_cache = data;
 			adsp2100.idma_offs = 1;
 		}
-		
+
 		/* lower 8 bits */
 		else
 		{
@@ -2343,7 +2343,7 @@ void adsp2181_idma_data_w(data16_t data)
 			adsp2100.idma_offs = 0;
 		}
 	}
-	
+
 	/* data memory */
 	else
 		WWORD_DATA(adsp2100.idma_addr++ & 0x3fff, data);
@@ -2352,7 +2352,7 @@ void adsp2181_idma_data_w(data16_t data)
 data16_t adsp2181_idma_data_r(data16_t data)
 {
 	data16_t result = 0xffff;
-	
+
 	/* program memory? */
 	if (!(adsp2100.idma_addr & 0x4000))
 	{
@@ -2362,7 +2362,7 @@ data16_t adsp2181_idma_data_r(data16_t data)
 			result = RWORD_PGM(adsp2100.idma_addr & 0x3fff) >> 8;
 			adsp2100.idma_offs = 1;
 		}
-		
+
 		/* lower 8 bits */
 		else
 		{
@@ -2370,11 +2370,11 @@ data16_t adsp2181_idma_data_r(data16_t data)
 			adsp2100.idma_offs = 0;
 		}
 	}
-	
+
 	/* data memory */
 	else
 		result = RWORD_DATA(adsp2100.idma_addr++ & 0x3fff);
-	
+
 	return result;
 }
 

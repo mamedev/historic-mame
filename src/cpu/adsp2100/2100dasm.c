@@ -178,7 +178,7 @@ static const char *constants[] =
 	"$8000",
 	"$7FFF"
 };
-	
+
 
 
 

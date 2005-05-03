@@ -156,12 +156,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface_1 = {
 	input_port_0_r,
-	input_port_1_r 
+	input_port_1_r
 };
 
 static struct AY8910interface ay8910_interface_2 = {
 	input_port_2_r,
-	input_port_3_r 
+	input_port_3_r
 };
 
 
@@ -191,11 +191,11 @@ static MACHINE_DRIVER_START( pkunwar )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

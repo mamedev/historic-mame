@@ -1,9 +1,9 @@
 /*********************************
  Wild Arrow - Meyco Games 1982
- 
+
  Preliminary driver by
- 		Tomasz Slanina
- 		Pierpaolo Prazzoli
+        Tomasz Slanina
+        Pierpaolo Prazzoli
 
 Wild Arrow (c) 1981 Meyco Games
 
@@ -15,7 +15,7 @@ XTal: 20.0
 
 
 Probably missing sound board.
-  	
+
 **********************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -103,7 +103,7 @@ static ADDRESS_MAP_START( memory_map, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0xa000, 0xa0ff) AM_RAM
 	AM_RANGE(0xcd00, 0xcd1f) AM_RAM
-	
+
 	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_1_r) AM_WRITENOP
 	AM_RANGE(0xf001, 0xf003) AM_WRITENOP
 	AM_RANGE(0xf004, 0xf004) AM_READ(unk_r) AM_WRITENOP
@@ -119,7 +119,7 @@ INPUT_PORTS_START( wldarrow )
 	PORT_DIPNAME( 0x04, 0x00, "Color" ) /* ??? */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "0-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -167,7 +167,7 @@ INPUT_PORTS_START( wldarrow )
 	PORT_DIPNAME( 0x40, 0x40, "1-6" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_DIPNAME( 0x01, 0x01, "2-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -189,8 +189,8 @@ INPUT_PORTS_START( wldarrow )
 	PORT_DIPNAME( 0x40, 0x40, "2-6" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
-	
+
+
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( wldarrow )
@@ -212,10 +212,10 @@ MACHINE_DRIVER_END
 
 ROM_START( wldarrow )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "a1-v48.8k",    0x0000, 0x0800, CRC(05dd8056) SHA1(556ca28d090cbf1855618ba40fc631523bdfadd5) ) 
-	ROM_LOAD( "a2-v48.7k",    0x0800, 0x0800, CRC(37df3acf) SHA1(a7f7f54af533dd8231bb20c526c053dd99e74863) ) 
-	ROM_LOAD( "a3-v48.6k",    0x1000, 0x0800, CRC(1295cee2) SHA1(61b260eb907ee4bbf1460277d09e3205c1f6d8a0) ) 
-	ROM_LOAD( "a4-v48.5k",    0x1800, 0x0800, CRC(5562614e) SHA1(7cb04d76e987944d385d40515396fc27ba00ae83) ) 
+	ROM_LOAD( "a1-v48.8k",    0x0000, 0x0800, CRC(05dd8056) SHA1(556ca28d090cbf1855618ba40fc631523bdfadd5) )
+	ROM_LOAD( "a2-v48.7k",    0x0800, 0x0800, CRC(37df3acf) SHA1(a7f7f54af533dd8231bb20c526c053dd99e74863) )
+	ROM_LOAD( "a3-v48.6k",    0x1000, 0x0800, CRC(1295cee2) SHA1(61b260eb907ee4bbf1460277d09e3205c1f6d8a0) )
+	ROM_LOAD( "a4-v48.5k",    0x1800, 0x0800, CRC(5562614e) SHA1(7cb04d76e987944d385d40515396fc27ba00ae83) )
 ROM_END
 
 DRIVER_INIT( wldarrow )
@@ -224,7 +224,7 @@ DRIVER_INIT( wldarrow )
 	for( i = 0; i < 0x2000; i++ )
 	{
 		memory_region(REGION_CPU1)[i]^=0xff;
-	}	
+	}
 }
 
 GAMEX( 1982, wldarrow,  0,		wldarrow, wldarrow, wldarrow, ROT0, "Meyco Games", "Wild Arrow", GAME_NO_SOUND | GAME_NOT_WORKING)

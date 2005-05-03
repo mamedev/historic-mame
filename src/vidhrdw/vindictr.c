@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Vindicators hardware
+    Atari Vindicators hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -25,7 +25,7 @@ static UINT16 playfield_yscroll;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -51,7 +51,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -116,7 +116,7 @@ VIDEO_START( vindictr )
 
 /*************************************
  *
- *	Palette RAM control
+ *  Palette RAM control
  *
  *************************************/
 
@@ -146,7 +146,7 @@ WRITE16_HANDLER( vindictr_paletteram_w )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -224,7 +224,7 @@ void vindictr_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -249,13 +249,13 @@ VIDEO_UPDATE( vindictr )
 				{
 					/* partially verified via schematics (there are a lot of PALs involved!):
 
-						SHADE = PAL(MPR1-0, LB7-0, PFX6-5, PFX3-2, PF/M)
+                        SHADE = PAL(MPR1-0, LB7-0, PFX6-5, PFX3-2, PF/M)
 
-						if (SHADE)
-							CRA |= 0x100
+                        if (SHADE)
+                            CRA |= 0x100
 
-						MOG3-1 = ~MAT3-1 if MAT6==1 and MSD3==1
-					*/
+                        MOG3-1 = ~MAT3-1 if MAT6==1 and MSD3==1
+                    */
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
 
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */

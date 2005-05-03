@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega 16-bit common hardware
+    Sega 16-bit common hardware
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@ extern void fd1094_machine_init(void);
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -26,7 +26,7 @@ extern void fd1094_machine_init(void);
 
 /*************************************
  *
- *	Types
+ *  Types
  *
  *************************************/
 
@@ -65,7 +65,7 @@ struct compare_timer_chip
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -78,7 +78,7 @@ static struct compare_timer_chip compare_timer[2];
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -88,7 +88,7 @@ static void update_memory_mapping(struct memory_mapper_chip *chip);
 
 /*************************************
  *
- *	Misc helpers
+ *  Misc helpers
  *
  *************************************/
 
@@ -120,14 +120,14 @@ READ16_HANDLER( segaic16_open_bus_r )
 
 /*************************************
  *
- *	Memory mapping chip
+ *  Memory mapping chip
  *
  *************************************/
 
 void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_entry *entrylist, void (*sound_w_callback)(data8_t), data8_t (*sound_r_callback)(void))
 {
 	struct memory_mapper_chip *chip = &memory_mapper;
-	
+
 	/* reset the chip structure */
 	memset(chip, 0, sizeof(*chip));
 	chip->cpunum = cpunum;
@@ -216,7 +216,7 @@ static void memory_mapper_w(struct memory_mapper_chip *chip, offs_t offset, data
 				chip->regs[0x01] = result;
 			}
 			break;
-		
+
 		case 0x07:	case 0x08:	case 0x09:
 			/* writes here latch a 68000 address for writing */
 			break;
@@ -370,7 +370,7 @@ WRITE16_HANDLER( segaic16_memory_mapper_lsb_w )
 
 /*************************************
  *
- *	Multiply chip
+ *  Multiply chip
  *
  *************************************/
 
@@ -412,7 +412,7 @@ WRITE16_HANDLER( segaic16_multiply_2_w ) { multiply_w(2, offset, data, mem_mask)
 
 /*************************************
  *
- *	Divide chip
+ *  Divide chip
  *
  *************************************/
 
@@ -449,12 +449,12 @@ static void update_divide(int which, int mode)
 			quotient = 32767;
 			divide[which].regs[6] |= 0x8000;
 		}
-		
+
 		/* store quotient and remainder */
 		divide[which].regs[4] = quotient;
 		divide[which].regs[5] = remainder;
 	}
-	
+
 	/* if mode 1, store 32-bit quotient */
 	else
 	{
@@ -527,7 +527,7 @@ WRITE16_HANDLER( segaic16_divide_2_w ) { divide_w(2, offset, data, mem_mask); }
 
 /*************************************
  *
- *	Compare/timer chip
+ *  Compare/timer chip
  *
  *************************************/
 
@@ -543,7 +543,7 @@ int segaic16_compare_timer_clock(int which)
 {
 	int old_counter = compare_timer[which].counter;
 	int result = 0;
-	
+
 	/* if we're enabled, clock the upcounter */
 	if (compare_timer[which].regs[10] & 1)
 		compare_timer[which].counter++;
@@ -626,13 +626,13 @@ static void compare_timer_w(int which, offs_t offset, data16_t data, data16_t me
 		case 0x2:	COMBINE_DATA(&compare_timer[which].regs[2]); update_compare(which, 1); break;
 		case 0x4:	compare_timer[which].regs[4] = 0; compare_timer[which].bit = 0; break;
 		case 0x6:	COMBINE_DATA(&compare_timer[which].regs[2]); update_compare(which, 0); break;
-		case 0x8:	
+		case 0x8:
 		case 0xc:	COMBINE_DATA(&compare_timer[which].regs[8]); break;
 		case 0x9:
 		case 0xd:	timer_interrupt_ack(which); break;
-		case 0xa:	
+		case 0xa:
 		case 0xe:	COMBINE_DATA(&compare_timer[which].regs[10]); break;
-		case 0xb:	
+		case 0xb:
 		case 0xf:
 			COMBINE_DATA(&compare_timer[which].regs[11]);
 			if (compare_timer[which].sound_w)

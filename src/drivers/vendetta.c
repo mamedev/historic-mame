@@ -262,7 +262,7 @@ READ8_HANDLER( vendetta_sound_interrupt_r )
 READ8_HANDLER( vendetta_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else
 	{
@@ -366,7 +366,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -533,7 +533,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -551,11 +551,12 @@ static INTERRUPT_GEN( vendetta_irq )
 static MACHINE_DRIVER_START( vendetta )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", KONAMI, 3000000)	/* seems correct, was 6MHz an overclock? */
+	MDRV_CPU_ADD_TAG("main", KONAMI, 6000000)	/* this is strange, seems an overclock but */
+//  MDRV_CPU_ADD_TAG("main", KONAMI, 3000000)   /* is needed to have correct music speed */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vendetta_irq,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* verified with M1, guessed but accurate */
+	MDRV_CPU_ADD(Z80, 3579545)	/* verified with PCB */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
                             /* interrupts are triggered by the main CPU */
@@ -577,11 +578,11 @@ static MACHINE_DRIVER_START( vendetta )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ADD(YM2151, 3579545)	/* verified with PCB */
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 
-	MDRV_SOUND_ADD(K053260, 4000000)
+	MDRV_SOUND_ADD(K053260, 3579545)	/* verified with PCB */
 	MDRV_SOUND_CONFIG(k053260_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.75)
 	MDRV_SOUND_ROUTE(1, "right", 0.75)

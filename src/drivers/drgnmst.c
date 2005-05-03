@@ -88,10 +88,10 @@ static READ8_HANDLER( drgnmst_snd_flag_r )
 
 static WRITE8_HANDLER( drgnmst_pcm_banksel_w )
 {
-	/*	This is a 4 bit port.
-		Each pair of bits is used in part of the OKI PCM ROM bank selectors.
-		See the Port 2 write handler below (drgnmst_snd_control_w) for details.
-	*/
+	/*  This is a 4 bit port.
+        Each pair of bits is used in part of the OKI PCM ROM bank selectors.
+        See the Port 2 write handler below (drgnmst_snd_control_w) for details.
+    */
 
 	pic16c5x_port0 = data;
 }
@@ -103,28 +103,28 @@ static WRITE8_HANDLER( drgnmst_oki_w )
 
 static WRITE8_HANDLER( drgnmst_snd_control_w )
 {
-	/*	This port controls communications to and from the 68K, both OKI
-		devices, and part of the OKI PCM ROM bank selection.
+	/*  This port controls communications to and from the 68K, both OKI
+        devices, and part of the OKI PCM ROM bank selection.
 
-		bit legend
-		7w  ROM bank select for OKI-1, bit 2. Bank bits 1 & 0 are on Port 0
-		6r  Flag from 68K to notify the PIC that a command is coming
-		5w  ROM bank select for OKI-0, bit 2. Bank bits 1 & 0 are on Port 0
-		4w  Set Port 1 to read sound to play command from 68K. (active low)
-		3w  OKI enable comms? (active low)
-		2w  OKI chip select? (0=OKI-1, 1=OKI-0)
-		1w  Latch write data to OKI? (active low)
-		0w  Activate read signal to OKI? (active low)
+        bit legend
+        7w  ROM bank select for OKI-1, bit 2. Bank bits 1 & 0 are on Port 0
+        6r  Flag from 68K to notify the PIC that a command is coming
+        5w  ROM bank select for OKI-0, bit 2. Bank bits 1 & 0 are on Port 0
+        4w  Set Port 1 to read sound to play command from 68K. (active low)
+        3w  OKI enable comms? (active low)
+        2w  OKI chip select? (0=OKI-1, 1=OKI-0)
+        1w  Latch write data to OKI? (active low)
+        0w  Activate read signal to OKI? (active low)
 
-		The PCM ROM bank selects are 3 bits wide.
-		2 bits for each OKI BANK selects are on Port 0, and the third most
-		significant bit is here. The MSb is written here immediately after
-		writing to Port 0 so we handle the bank switching here.
-		The PIC16C55 only supports bank selections for:
-		 OKI0 from 1 to 5  (Each bank selection switches the $20000-3ffff area)
-		 OKI1 from 0 to 7  (Each bank selection switches the entire $40000 area)
-		The OKI0 banks are pre-configured below in the driver init.
-	*/
+        The PCM ROM bank selects are 3 bits wide.
+        2 bits for each OKI BANK selects are on Port 0, and the third most
+        significant bit is here. The MSb is written here immediately after
+        writing to Port 0 so we handle the bank switching here.
+        The PIC16C55 only supports bank selections for:
+         OKI0 from 1 to 5  (Each bank selection switches the $20000-3ffff area)
+         OKI1 from 0 to 7  (Each bank selection switches the entire $40000 area)
+        The OKI0 banks are pre-configured below in the driver init.
+    */
 
 	int oki_new_bank;
 	drgnmst_oki_control = data;
@@ -145,13 +145,13 @@ static WRITE8_HANDLER( drgnmst_snd_control_w )
 	switch(drgnmst_oki_control & 0x1f)
 	{
 		case 0x11:
-//					logerror("Writing %02x to OKI1",drgnmst_oki_command);
-//					logerror(", PortC=%02x, Code=%02x, Bank0=%01x, Bank1=%01x\n",drgnmst_oki_control,drgnmst_snd_command,drgnmst_oki0_bank,drgnmst_oki1_bank);
+//                  logerror("Writing %02x to OKI1",drgnmst_oki_command);
+//                  logerror(", PortC=%02x, Code=%02x, Bank0=%01x, Bank1=%01x\n",drgnmst_oki_control,drgnmst_snd_command,drgnmst_oki0_bank,drgnmst_oki1_bank);
 					OKIM6295_data_1_w(0, drgnmst_oki_command);
 					break;
 		case 0x15:
-//					logerror("Writing %02x to OKI0",drgnmst_oki_command);
-//					logerror(", PortC=%02x, Code=%02x, Bank0=%01x, Bank1=%01x\n",drgnmst_oki_control,drgnmst_snd_command,drgnmst_oki0_bank,drgnmst_oki1_bank);
+//                  logerror("Writing %02x to OKI0",drgnmst_oki_command);
+//                  logerror(", PortC=%02x, Code=%02x, Bank0=%01x, Bank1=%01x\n",drgnmst_oki_control,drgnmst_snd_command,drgnmst_oki0_bank,drgnmst_oki1_bank);
 					OKIM6295_data_0_w(0, drgnmst_oki_command);
 					break;
 		default:	break;
@@ -173,15 +173,15 @@ static ADDRESS_MAP_START( drgnmst_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800018, 0x800019) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x80001a, 0x80001b) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x80001c, 0x80001d) AM_READ(input_port_3_word_r)
-//	AM_RANGE(0x800030, 0x800031) AM_NOP
+//  AM_RANGE(0x800030, 0x800031) AM_NOP
 	AM_RANGE(0x800100, 0x80011f) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs)
-//	AM_RANGE(0x800120, 0x800121) AM_NOP
-//	AM_RANGE(0x80014a, 0x80014b) AM_NOP
+//  AM_RANGE(0x800120, 0x800121) AM_NOP
+//  AM_RANGE(0x80014a, 0x80014b) AM_NOP
 	AM_RANGE(0x800154, 0x800155) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs2) // seems to be priority control
 	AM_RANGE(0x800176, 0x800177) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x800180, 0x800181) AM_WRITE(drgnmst_snd_command_w)
 	AM_RANGE(0x800188, 0x800189) AM_WRITE(drgnmst_snd_flag_w)
-//	AM_RANGE(0x8001e0, 0x8001e1) AM_NOP
+//  AM_RANGE(0x8001e0, 0x8001e1) AM_NOP
 	AM_RANGE(0x900000, 0x903fff) AM_READWRITE(MRA16_RAM, paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x904000, 0x907fff) AM_READWRITE(MRA16_RAM, drgnmst_md_videoram_w) AM_BASE(&drgnmst_md_videoram)
 	AM_RANGE(0x908000, 0x90bfff) AM_READWRITE(MRA16_RAM, drgnmst_bg_videoram_w) AM_BASE(&drgnmst_bg_videoram)
@@ -239,7 +239,7 @@ INPUT_PORTS_START( drgnmst )
 
 	PORT_START
 	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
-/*	PORT_DIPSETTING(      0x0300, DEF_STR( Off ) ) */
+/*  PORT_DIPSETTING(      0x0300, DEF_STR( Off ) ) */
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )
@@ -398,7 +398,7 @@ ROM_START( drgnmst )
 	ROM_LOAD16_BYTE( "dm1000o", 0x00001, 0x80000, CRC(ba48e9cf) SHA1(1107f927424107918bb10ff23f40c50579b23836) )
 
 	ROM_REGION( 0x400, REGION_CPU2, 0 ) /* PIC16C55 Code */
-//	ROM_LOAD( "pic16c55", 0x0000, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
+//  ROM_LOAD( "pic16c55", 0x0000, 0x400, CRC(531c9f8d) SHA1(8ec180b0566f2ce1e08f0347e5ad402c73b44049) )
 	/* ROM will be copied here by the init code from the USER1 region */
 
 	ROM_REGION( 0x1000, REGION_USER1, ROMREGION_DISPOSE )

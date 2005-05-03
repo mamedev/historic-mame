@@ -6,32 +6,32 @@
 Snow Bros Nick & Tom
 Toaplan, 1990
 
-	PCB Layout
-	----------
-	MIN16-02
+    PCB Layout
+    ----------
+    MIN16-02
 
-	|------------------------------------------|
-	| VOL     YM3812  6116  4464  4464         |
-	| LA4460  YM3014        4464  4464         |
-	|       458   SBROS-4.29         SBROS1.40 |
-	|   2003       Z80B     PANDORA            |
-	|J                    D41101C-1 LS07  LS32 |
-	|A SBROS-3A.5 SBROS-2A.6        LS139 LS174|
-	|M                  LS245 LS74  LS04  16MHz|
-	|M   6264     6264  F32   LS74  LS74       |
-	|A      68000       LS20  F138  LS04  12MHz|
-	|                   LS04  LS148 LS251 LS00 |
-	| LS273 LS245 LS245 LS158 LS257 LS257 LS32 |
-	|                                          |
-	| LS273  6116  6116 LS157   DSW2  DSW1     |
-	|------------------------------------------|
+    |------------------------------------------|
+    | VOL     YM3812  6116  4464  4464         |
+    | LA4460  YM3014        4464  4464         |
+    |       458   SBROS-4.29         SBROS1.40 |
+    |   2003       Z80B     PANDORA            |
+    |J                    D41101C-1 LS07  LS32 |
+    |A SBROS-3A.5 SBROS-2A.6        LS139 LS174|
+    |M                  LS245 LS74  LS04  16MHz|
+    |M   6264     6264  F32   LS74  LS74       |
+    |A      68000       LS20  F138  LS04  12MHz|
+    |                   LS04  LS148 LS251 LS00 |
+    | LS273 LS245 LS245 LS158 LS257 LS257 LS32 |
+    |                                          |
+    | LS273  6116  6116 LS157   DSW2  DSW1     |
+    |------------------------------------------|
 
-	Notes:
-	       68k clock: 8.000MHz
-	      Z80B clock: 6.000MHz
-	    YM3812 clock: 3.000MHz
-	           VSync: 57.5Hz
-	           HSync: 15.68kHz
+    Notes:
+           68k clock: 8.000MHz
+          Z80B clock: 6.000MHz
+        YM3812 clock: 3.000MHz
+               VSync: 57.5Hz
+               HSync: 15.68kHz
 
   driver by Mike Coates
 
@@ -113,7 +113,7 @@ READ16_HANDLER( snowbros_68000_sound_r )
 	int ret;
 
 	/* If the sound CPU is running, read the YM3812 status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0)
 	{
 		ret = soundlatch_r(offset);
@@ -214,7 +214,7 @@ static ADDRESS_MAP_START( hyperpac_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&hyperpac_ram)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(semicom_soundcmd_w)
-//	AM_RANGE(0x400000, 0x400001) ???
+//  AM_RANGE(0x400000, 0x400001) ???
 	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 
@@ -236,7 +236,7 @@ static ADDRESS_MAP_START( hyperpac_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
-//	AM_RANGE(0xf006, 0xf006) ???
+//  AM_RANGE(0xf006, 0xf006) ???
 ADDRESS_MAP_END
 
 /* Same volume used for all samples at the Moment, could be right, we have no
@@ -1077,10 +1077,10 @@ ROM_START( snowbros )
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sbros-1.41",   0x00000, 0x80000, CRC(16f06b3a) SHA1(c64d3b2d32f0f0fcf1d8c5f02f8589d59ddfd428) )
 	/* where were these from, a bootleg? */
-//	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
-//	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
-//	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
-//	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
+//  ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
+//  ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
+//  ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
+//  ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
 ROM_END
 
 ROM_START( snowbroa )
@@ -1206,7 +1206,7 @@ ROM_START( twinkle )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200, CRC(00d3e4b4) SHA1(afa359a8b48605ff034133bad2a0a182429dec71) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -1229,7 +1229,7 @@ ROM_START( moremore )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(782dd2aa) SHA1(2587734271e0c85cb76bcdee171366c4e6fc9f81) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -1255,7 +1255,7 @@ ROM_START( moremorp )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(782dd2aa) SHA1(2587734271e0c85cb76bcdee171366c4e6fc9f81) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -1281,7 +1281,7 @@ ROM_START( 3in1semi )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(85deba7c) SHA1(44c6d9306b4f8e47182f4740a18971c49a8df8db) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -1307,7 +1307,7 @@ ROM_START( cookbib2 )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(ae6d8ed5) SHA1(410cdacb9b90ea345c0e4be85e60a138f45a51f1) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
@@ -1360,11 +1360,11 @@ READ16_HANDLER ( moremorp_0a_read )
 
 static DRIVER_INIT( moremorp )
 {
-//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
-//	int i;
+//  data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//  int i;
 
-//	for (i = 0;i < 0x200/2;i++)
-//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+//  for (i = 0;i < 0x200/2;i++)
+//      hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 
 	/* explicit check in the code */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, moremorp_0a_read );
@@ -1373,35 +1373,35 @@ static DRIVER_INIT( moremorp )
 
 static DRIVER_INIT( cookbib2 )
 {
-//	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
-//	int i;
-//	hyperpac_ram[0xf000/2] = 0x46fc;
-//	hyperpac_ram[0xf002/2] = 0x2700;
+//  data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
+//  data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//  int i;
+//  hyperpac_ram[0xf000/2] = 0x46fc;
+//  hyperpac_ram[0xf002/2] = 0x2700;
 
 // verified on real hardware, need to move this to a file really
 
-//	static data16_t cookbib2_mcu68k[] =
-//	{
-//		// moved to protdata.bin
-//	};
+//  static data16_t cookbib2_mcu68k[] =
+//  {
+//      // moved to protdata.bin
+//  };
 
 
 
 
 //for (i = 0;i < sizeof(cookbib2_mcu68k)/sizeof(cookbib2_mcu68k[0]);i++)
-//		hyperpac_ram[0xf000/2 + i] = cookbib2_mcu68k[i];
+//      hyperpac_ram[0xf000/2 + i] = cookbib2_mcu68k[i];
 
-//	for (i = 0;i < 0x200/2;i++)
-//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+//  for (i = 0;i < 0x200/2;i++)
+//      hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 
 
 	// trojan is actually buggy and gfx flicker like crazy
 	// but we can pause the system after bootup with HALT line of 68k to get the table before
 	// it goes nuts
 
-	//	hyperpac_ram[0xf07a/2] = 0x4e73;
-	//	hyperpac_ram[0xf000/2] = 0x4e73;
+	//  hyperpac_ram[0xf07a/2] = 0x4e73;
+	//  hyperpac_ram[0xf000/2] = 0x4e73;
 
 #if 0
 
@@ -1497,8 +1497,8 @@ static DRIVER_INIT( cookbib2 )
 	/* put the address we want to read protection data  in A2 */
 	HCROM[0x048324/2] = 0x45f9;
 	HCROM[0x048326/2] = 0x0010;
-//	HCROM[0x048328/2] = 0xf000;
-//	HCROM[0x048328/2] = 0xf000+0xb4;
+//  HCROM[0x048328/2] = 0xf000;
+//  HCROM[0x048328/2] = 0xf000+0xb4;
 	HCROM[0x048328/2] = 0xf000+0xb4+0xb4;
 
 	/* put the address of spriteram  in A0 */
@@ -1611,10 +1611,10 @@ static DRIVER_INIT( cookbib2 )
 
 	/* Draw a character! */
 	/* D6 = y-coordinate
-	   D5 = x-coordinate
-	   D4 = value to draw
+       D5 = x-coordinate
+       D4 = value to draw
 
-	   A0 = spriteram base */
+       A0 = spriteram base */
 
 	// 0002 0002 0002 0010 00xx 00yy 00nn 000n
 

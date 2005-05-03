@@ -33,37 +33,37 @@
  * d00000: 054157 ROM readback for memory test
  * d20000: sprite RAM (4k)
  * d40000: 054157/056832 tilemap generator    (VACSET)
- * d44000: tile bank selectors	              (VSCCS)
+ * d44000: tile bank selectors                (VSCCS)
  * d48000: 053246/055673 sprite generator     (OBJSET1)
  * d4a000: more readback for sprite generator (OBJSET2)
  * d4c000: CCU1 registers                     (CCUS1)
- * 00: HCH			  6M/288   8M/384   12M/576	       224 256
- * 02: HCL		   HCH 	    01      01        02	  VCH  01  01
- * 04: HFPH		   HCL      7f      ff        ff	  VCL  07  20
- * 06: HFPL		   HFPH	    00      00        00	  VFP  11  0c
- * 08: HBPH		   HFPL	    10      19        23	  VBP  0e  0e
- * 0A: HBPL		   HBPH	    00      00        00	  VSW  07  05
- * 10: VCH		   HBPL	    30      3f        4d
- * 12: VCL		   HSW	    03      04        09
+ * 00: HCH            6M/288   8M/384   12M/576        224 256
+ * 02: HCL         HCH      01      01        02      VCH  01  01
+ * 04: HFPH        HCL      7f      ff        ff      VCL  07  20
+ * 06: HFPL        HFPH     00      00        00      VFP  11  0c
+ * 08: HBPH        HFPL     10      19        23      VBP  0e  0e
+ * 0A: HBPL        HBPH     00      00        00      VSW  07  05
+ * 10: VCH         HBPL     30      3f        4d
+ * 12: VCL         HSW      03      04        09
  * 14: VFP
  * 16: VBP
  * 18: VSW/HSW
  * 1A: INT TIME
  * 1C: INT1ACK (read VCTH) INT1 = V blank
  * 1E: INT2ACK (read VCTL) INT2 = H blank
- * d4e000: CCU2 registers		    (CCUS2)
+ * d4e000: CCU2 registers           (CCUS2)
  * d50000: K055555 8-bit-per-pixel priority encoder (PCUCS)
  * d52000: shared RAM with audio 68000      (SOUNDCS)
  * d56000: EEPROM comms, bit 7 is watchdog, bit 5 is frame?? (WRPOR1)
  * d56001: IRQ acknowledge (bits 0->3 = irq 1->4), IRQ enable in hi nibble (bits 4->7 = irq 1->4)
  * d58000: control register (OBJCHA, 68000 enable/disable, probably more) (WRPOR2)
- * d5a000: dipswitch bank 1		    (RDPORT1)
+ * d5a000: dipswitch bank 1         (RDPORT1)
  * d5a001: dipswitch bank 2
  * d5a002: input port (service switch)
  * d5a003: EEPROM data/ready in bit 0
- * d5c000: player 1 inputs		    (RDPORT2)
+ * d5c000: player 1 inputs          (RDPORT2)
  * d5c001: player 2 inputs
- * d5e000: test switch			    (RDPORT3)
+ * d5e000: test switch              (RDPORT3)
  * d80000: K054338 alpha blender registers
  * d90000: palette RAM for tilemaps
  * da0000: tilemap RAM (8k window, bankswitched by d40033)
@@ -144,11 +144,11 @@ static void *dmadelay_timer;
 /**********************************************************************************/
 /*
    Konami ESC (E Security Chip) protection chip found on:
-	- Salamander 2
-	- Sexy Parodius
-	- Twinbee Yahhoo
-	- Dragoon Might
-	- Daisu-Kiss
+    - Salamander 2
+    - Sexy Parodius
+    - Twinbee Yahhoo
+    - Dragoon Might
+    - Daisu-Kiss
 
    The ESC is a custom microcontroller with external SRAM connected
    to it.  It's microprogram is uploaded by the host game.  The ESC
@@ -397,7 +397,7 @@ static WRITE32_HANDLER( esc_w )
 	opcode = (program_read_word(data+2))|(program_read_word(data)<<16);
 
 	/* if there's an OBJECT_MAGIC_ID, that means
-	   there is a valid ESC command packet. */
+       there is a valid ESC command packet. */
 	if (opcode == ESC_OBJECT_MAGIC_ID)
 	{
 		int i;
@@ -412,15 +412,15 @@ static WRITE32_HANDLER( esc_w )
 			for(i=0; i<4096; i++)
 				esc_program[i] = program_read_byte(params+i);
 /*
-			{
-				FILE *f;
+            {
+                FILE *f;
 
-				f = fopen("esc.bin", "wb");
-				fwrite(esc_program, 4096, 1, f);
-				fclose(f);
+                f = fopen("esc.bin", "wb");
+                fwrite(esc_program, 4096, 1, f);
+                fclose(f);
 
-				logerror("Dumping ESC program\n");
-			}
+                logerror("Dumping ESC program\n");
+            }
 */
 			break;
 		case 1: // Run program
@@ -433,7 +433,7 @@ static WRITE32_HANDLER( esc_w )
 			}
 			break;
 		default:
-//			logerror("Unknown ESC opcode %d\n", opcode);
+//          logerror("Unknown ESC opcode %d\n", opcode);
 			break;
 		}
 		program_write_byte(data+9, ESTATE_END);
@@ -447,10 +447,10 @@ static WRITE32_HANDLER( esc_w )
 	else
 	{
 		/* INIT_CONSTANT means just for the ESC to initialize itself,
-		   there is not normal command parsing here. */
+           there is not normal command parsing here. */
 		if (opcode == ESC_INIT_CONSTANT)
 		{
-//			logerror("Got ESC_INIT_CONSTANT, 'booting' ESC\n");
+//          logerror("Got ESC_INIT_CONSTANT, 'booting' ESC\n");
 			return;
 		}
 
@@ -487,7 +487,7 @@ static READ32_HANDLER( eeprom_r )
 	// d5a001 = DIP switches #2
 	// d5a002 = input port: service4/3/2/1 coin 4/3/2/1
 	// d5a003 = objint stat, exioint stat, trackint stat, excgint stat, escint stat,
-	//	    excpuint stat, objdma stat, eeprom do
+	//      excpuint stat, objdma stat, eeprom do
 
 	// note: racin' force expects bit 1 of the eeprom port to toggle
 	return(readinputport(6)<<24 | readinputport(7)<<16 | readinputport(0)<<8 | EEPROM_read_bit() | gx_rdport1_3);
@@ -501,15 +501,15 @@ static WRITE32_HANDLER( eeprom_w )
 	{
 		odata = data >> 24;
 		/*
-		  bit 7: afr
-		  bit 6: objscan
-		  bit 5: background color select: 0 = 338 solid color, 1 = 5^5 gradient
-		  bit 4: coin counter 2
-		  bit 3: coin counter 1
-		  bit 2: eeprom clock
-		  bit 1: eeprom chip select
-		  bit 0: eeprom data
-		*/
+          bit 7: afr
+          bit 6: objscan
+          bit 5: background color select: 0 = 338 solid color, 1 = 5^5 gradient
+          bit 4: coin counter 2
+          bit 3: coin counter 1
+          bit 2: eeprom clock
+          bit 1: eeprom chip select
+          bit 0: eeprom data
+        */
 
 		EEPROM_write_bit((odata&0x01) ? 1 : 0);
 		EEPROM_set_cs_line((odata&0x02) ? CLEAR_LINE : ASSERT_LINE);
@@ -521,18 +521,18 @@ static WRITE32_HANDLER( eeprom_w )
 	if (!(mem_mask & 0xff0000))
 	{
 		/*
-		  bit 7 = mask all IRQ
-		  bit 6 = LAN IRQ enable
-		  bit 5 = CCU2 IRQ enable
-		  bit 4 = ESC IRQ enable
-		  bit 3 = EXCPU IRQ enable
-		  bit 2 = OBJ IRQ enable
-		  bit 1 = CCU1-INT2 enable
-		  bit 0 = CCU1-INT1 enable
-		*/
+          bit 7 = mask all IRQ
+          bit 6 = LAN IRQ enable
+          bit 5 = CCU2 IRQ enable
+          bit 4 = ESC IRQ enable
+          bit 3 = EXCPU IRQ enable
+          bit 2 = OBJ IRQ enable
+          bit 1 = CCU1-INT2 enable
+          bit 0 = CCU1-INT1 enable
+        */
 
 		konamigx_wrport1_1 = (data>>16)&0xff;
-//		logerror("write %x to IRQ register (PC=%x)\n", konamigx_wrport1_1, activecpu_get_pc());
+//      logerror("write %x to IRQ register (PC=%x)\n", konamigx_wrport1_1, activecpu_get_pc());
 
 		// gx_syncen is to ensure each IRQ is trigger at least once after being enabled
 		if (konamigx_wrport1_1 & 0x80) gx_syncen |= konamigx_wrport1_1 & 0x1f;
@@ -615,7 +615,7 @@ static READ32_HANDLER( ccu_r )
 	}
 	else
 	{
-//		logerror("Read unhandled CCU register %x\n", offset);
+//      logerror("Read unhandled CCU register %x\n", offset);
 	}
 
 	return 0;
@@ -643,11 +643,11 @@ static WRITE32_HANDLER( ccu_w )
 
 
 /*
-	GX object DMA timings:
+    GX object DMA timings:
 
-	 6Mhz dotclock: 42.7us(clear) / 341.3us(transfer)
-	 8Mhz dotclock: 32.0us(clear) / 256.0us(transfer)
-	12Mhz dotclock: 42.7us(clear) / 341.3us(transfer)
+     6Mhz dotclock: 42.7us(clear) / 341.3us(transfer)
+     8Mhz dotclock: 32.0us(clear) / 256.0us(transfer)
+    12Mhz dotclock: 42.7us(clear) / 341.3us(transfer)
 */
 
 static void dmaend_callback(int data)
@@ -776,7 +776,7 @@ static READ32_HANDLER( sound020_r )
 		rv |= LSW<<8;
 	}
 
-//	printf("Read 68k @ %x (PC=%x)\n", reg, activecpu_get_pc());
+//  printf("Read 68k @ %x (PC=%x)\n", reg, activecpu_get_pc());
 
 	// we clearly have some problem because some games require these hacks
 	// perhaps 68000/68020 timing is skewed?
@@ -942,77 +942,77 @@ static READ32_HANDLER( type3_sync_r )
 static int last_prot_op = -1, last_prot_clk;
 
 /*
-	Run and Gun 2, Rushing Heroes, Winning Spike, and Vs. Net Soccer contain a XILINX FPGA that serves as security.
+    Run and Gun 2, Rushing Heroes, Winning Spike, and Vs. Net Soccer contain a XILINX FPGA that serves as security.
 
-	RnG2's version is stamped "K002204", while Rushing Heroes' is "K0000035891".  Vs Net's is unknown at this time.
-	Winning Spike's is "0000032652".
+    RnG2's version is stamped "K002204", while Rushing Heroes' is "K0000035891".  Vs Net's is unknown at this time.
+    Winning Spike's is "0000032652".
 
-	RnG2's is used to generate the sprite list just like the ESC, among other tasks.  (RnG2 sends many commands per frame to the protection).
+    RnG2's is used to generate the sprite list just like the ESC, among other tasks.  (RnG2 sends many commands per frame to the protection).
 
-	Rushing Heroes is much simpler and uses only 1 command during gameplay.  They set up a giant table of pointers
-	at C10200->C102EF (see the routine at 2043CE.  C10001 contains which monitor they want to update (main or sub)
-	and it changes the pointers accordingly).  This sets up the palettes, the sprite list, and the ROZ tilemap, from the looks of things.
+    Rushing Heroes is much simpler and uses only 1 command during gameplay.  They set up a giant table of pointers
+    at C10200->C102EF (see the routine at 2043CE.  C10001 contains which monitor they want to update (main or sub)
+    and it changes the pointers accordingly).  This sets up the palettes, the sprite list, and the ROZ tilemap, from the looks of things.
 
-	Here are the lists constructed by Rushing Heroes (I've reordered the original code so it's in linear address order).
-	Vs. Net Soccer does the same thing starting at 2064DC (in fact, Rushing Heroes appears to be heavily based on Vs. Net's code).
+    Here are the lists constructed by Rushing Heroes (I've reordered the original code so it's in linear address order).
+    Vs. Net Soccer does the same thing starting at 2064DC (in fact, Rushing Heroes appears to be heavily based on Vs. Net's code).
 
-	    main monitor (2043da)            sub monitor (204616)
-	move.l  #$C0C000,($C10200).l	   move.l  #$C1C000,($C10200).l
-	move.l  #$C10000,($C10204).l	   move.l  #$C20000,($C10204).l
-	move.l  #$C0C000,($C10208).l	   move.l  #$C1C000,($C10208).l
-	move.l  #$C0C200,($C1020C).l	   move.l  #$C1C200,($C1020C).l
-	move.l  #$C0C200,($C10210).l	   move.l  #$C1C200,($C10210).l
-	move.l  #$C0D800,($C10214).l	   move.l  #$C1D800,($C10214).l
-	move.l  #$C0D800,($C10218).l	   move.l  #$C1D800,($C10218).l
-	move.l  #$C0EE00,($C1021C).l	   move.l  #$C1EE00,($C1021C).l
-	move.l  #$C0EE00,($C10220).l	   move.l  #$C1EE00,($C10220).l
-	move.l  #$C0F200,($C10224).l	   move.l  #$C1F200,($C10224).l
-	move.l  #$C0EE00,($C10228).l	   move.l  #$C1EE00,($C10228).l
-	move.l  #$C0EE00,($C1022C).l	   move.l  #$C1EE00,($C1022C).l
-	move.l  #$C0F000,($C10230).l	   move.l  #$C1F000,($C10230).l
-	move.l  #$C1C200,($C10234).l	   move.l  #$C0C200,($C10234).l
-	move.l  #$C1EE00,($C10238).l	   move.l  #$C0EE00,($C10238).l
-	move.l  #$C0A000,($C1023C).l	   move.l  #$C1A000,($C1023C).l
-	move.l  #$C0C000,($C10240).l	   move.l  #$C1C000,($C10240).l
-	move.l  #$C0A000,($C10244).l	   move.l  #$C1A000,($C10244).l
-	move.l  #$C10000,($C10248).l	   move.l  #$C20000,($C10248).l
-	move.l  #$C0FA00,($C1024C).l	   move.l  #$C1FA00,($C1024C).l
-	move.l  #$C1A000,($C10250).l	   move.l  #$C0A000,($C10250).l
-	move.l  #$C00000,($C10260).l	   move.l  #$C10000,($C10260).l
-	move.l  #$C10000,($C10264).l	   move.l  #$C00000,($C10264).l
-	move.l  #$C00800,($C10268).l	   move.l  #$C10800,($C10268).l
-	move.l  #$C01000,($C1026C).l	   move.l  #$C11000,($C1026C).l
-	move.l  #$C00500,($C10270).l	   move.l  #$C10500,($C10270).l
-	move.l  #$C00520,($C10274).l	   move.l  #$C10520,($C10274).l
-	move.l  #$C00540,($C10278).l	   move.l  #$C10540,($C10278).l
-	move.l  #$C00560,($C1027C).l	   move.l  #$C10560,($C1027C).l
-	move.l  #$C100C0,($C10280).l	   move.l  #$C100E0,($C10280).l
-	move.l  #$C100D0,($C10284).l	   move.l  #$C100F0,($C10284).l
-	move.l  #$C100E0,($C10288).l	   move.l  #$C100C0,($C10288).l
-	move.l  #$C100F0,($C1028C).l	   move.l  #$C100D0,($C1028C).l
-	move.l  #$E82000,($C10290).l	   move.l  #$EA2000,($C10290).l    palette segment (E80000 = main monitor palette, EA0000 = sub monitor palette)
-	move.l  #$E83000,($C10294).l	   move.l  #$EA3000,($C10294).l    palette segment
-	move.l  #$E84000,($C10298).l	   move.l  #$EA4000,($C10298).l    palette segment
-	move.l  #$E85000,($C1029C).l	   move.l  #$EA5000,($C1029C).l    palette segment
-	move.l  #$E80000,($C102A0).l	   move.l  #$EA0000,($C102A0).l    palette segment
-	move.l  #$E86000,($C102A4).l	   move.l  #$EA6000,($C102A4).l    palette segment
-	move.l  #$E86800,($C102A8).l	   move.l  #$EA6800,($C102A8).l    palette segment
-	move.l  #$D20000,($C102B0).l	   move.l  #$D21000,($C102B0).l    sprite list
-	move.l  #$D21000,($C102B4).l	   move.l  #$D22000,($C102B4).l    sprite end
-	move.l  #$C09000,($C102B8).l	   move.l  #$C19000,($C102B8).l
-	move.l  #$C0A000,($C102BC).l	   move.l  #$C1A000,($C102BC).l
-	move.l  #$C00700,($C102C0).l	   move.l  #$C10700,($C102C0).l
-	move.l  #$C00780,($C102C4).l	   move.l  #$C10780,($C102C4).l
-	move.l  #$C10700,($C102C8).l	   move.l  #$C00700,($C102C8).l
-	move.l  #$C10780,($C102CC).l	   move.l  #$C00780,($C102CC).l
-	move.l  #$C02070,($C102D0).l	   move.l  #$C12070,($C102D0).l
-	move.l  #$C09000,($C102D4).l	   move.l  #$C19000,($C102D4).l
-	move.l  #$C12070,($C102D8).l	   move.l  #$C02070,($C102D8).l
-	move.l  #$C19000,($C102DC).l	   move.l  #$C09000,($C102DC).l
-	move.l  #$C12000,($C102E0).l	   move.l  #$C12000,($C102E0).l
-	move.l  #$C20000,($C102E4).l	   move.l  #$C20000,($C102E4).l
-	move.l  #$C10300,($C102E8).l	   move.l  #$C10300,($C102E8).l
-	move.l  #$C10400,($C102EC).l	   move.l  #$C10400,($C102EC).l
+        main monitor (2043da)            sub monitor (204616)
+    move.l  #$C0C000,($C10200).l       move.l  #$C1C000,($C10200).l
+    move.l  #$C10000,($C10204).l       move.l  #$C20000,($C10204).l
+    move.l  #$C0C000,($C10208).l       move.l  #$C1C000,($C10208).l
+    move.l  #$C0C200,($C1020C).l       move.l  #$C1C200,($C1020C).l
+    move.l  #$C0C200,($C10210).l       move.l  #$C1C200,($C10210).l
+    move.l  #$C0D800,($C10214).l       move.l  #$C1D800,($C10214).l
+    move.l  #$C0D800,($C10218).l       move.l  #$C1D800,($C10218).l
+    move.l  #$C0EE00,($C1021C).l       move.l  #$C1EE00,($C1021C).l
+    move.l  #$C0EE00,($C10220).l       move.l  #$C1EE00,($C10220).l
+    move.l  #$C0F200,($C10224).l       move.l  #$C1F200,($C10224).l
+    move.l  #$C0EE00,($C10228).l       move.l  #$C1EE00,($C10228).l
+    move.l  #$C0EE00,($C1022C).l       move.l  #$C1EE00,($C1022C).l
+    move.l  #$C0F000,($C10230).l       move.l  #$C1F000,($C10230).l
+    move.l  #$C1C200,($C10234).l       move.l  #$C0C200,($C10234).l
+    move.l  #$C1EE00,($C10238).l       move.l  #$C0EE00,($C10238).l
+    move.l  #$C0A000,($C1023C).l       move.l  #$C1A000,($C1023C).l
+    move.l  #$C0C000,($C10240).l       move.l  #$C1C000,($C10240).l
+    move.l  #$C0A000,($C10244).l       move.l  #$C1A000,($C10244).l
+    move.l  #$C10000,($C10248).l       move.l  #$C20000,($C10248).l
+    move.l  #$C0FA00,($C1024C).l       move.l  #$C1FA00,($C1024C).l
+    move.l  #$C1A000,($C10250).l       move.l  #$C0A000,($C10250).l
+    move.l  #$C00000,($C10260).l       move.l  #$C10000,($C10260).l
+    move.l  #$C10000,($C10264).l       move.l  #$C00000,($C10264).l
+    move.l  #$C00800,($C10268).l       move.l  #$C10800,($C10268).l
+    move.l  #$C01000,($C1026C).l       move.l  #$C11000,($C1026C).l
+    move.l  #$C00500,($C10270).l       move.l  #$C10500,($C10270).l
+    move.l  #$C00520,($C10274).l       move.l  #$C10520,($C10274).l
+    move.l  #$C00540,($C10278).l       move.l  #$C10540,($C10278).l
+    move.l  #$C00560,($C1027C).l       move.l  #$C10560,($C1027C).l
+    move.l  #$C100C0,($C10280).l       move.l  #$C100E0,($C10280).l
+    move.l  #$C100D0,($C10284).l       move.l  #$C100F0,($C10284).l
+    move.l  #$C100E0,($C10288).l       move.l  #$C100C0,($C10288).l
+    move.l  #$C100F0,($C1028C).l       move.l  #$C100D0,($C1028C).l
+    move.l  #$E82000,($C10290).l       move.l  #$EA2000,($C10290).l    palette segment (E80000 = main monitor palette, EA0000 = sub monitor palette)
+    move.l  #$E83000,($C10294).l       move.l  #$EA3000,($C10294).l    palette segment
+    move.l  #$E84000,($C10298).l       move.l  #$EA4000,($C10298).l    palette segment
+    move.l  #$E85000,($C1029C).l       move.l  #$EA5000,($C1029C).l    palette segment
+    move.l  #$E80000,($C102A0).l       move.l  #$EA0000,($C102A0).l    palette segment
+    move.l  #$E86000,($C102A4).l       move.l  #$EA6000,($C102A4).l    palette segment
+    move.l  #$E86800,($C102A8).l       move.l  #$EA6800,($C102A8).l    palette segment
+    move.l  #$D20000,($C102B0).l       move.l  #$D21000,($C102B0).l    sprite list
+    move.l  #$D21000,($C102B4).l       move.l  #$D22000,($C102B4).l    sprite end
+    move.l  #$C09000,($C102B8).l       move.l  #$C19000,($C102B8).l
+    move.l  #$C0A000,($C102BC).l       move.l  #$C1A000,($C102BC).l
+    move.l  #$C00700,($C102C0).l       move.l  #$C10700,($C102C0).l
+    move.l  #$C00780,($C102C4).l       move.l  #$C10780,($C102C4).l
+    move.l  #$C10700,($C102C8).l       move.l  #$C00700,($C102C8).l
+    move.l  #$C10780,($C102CC).l       move.l  #$C00780,($C102CC).l
+    move.l  #$C02070,($C102D0).l       move.l  #$C12070,($C102D0).l
+    move.l  #$C09000,($C102D4).l       move.l  #$C19000,($C102D4).l
+    move.l  #$C12070,($C102D8).l       move.l  #$C02070,($C102D8).l
+    move.l  #$C19000,($C102DC).l       move.l  #$C09000,($C102DC).l
+    move.l  #$C12000,($C102E0).l       move.l  #$C12000,($C102E0).l
+    move.l  #$C20000,($C102E4).l       move.l  #$C20000,($C102E4).l
+    move.l  #$C10300,($C102E8).l       move.l  #$C10300,($C102E8).l
+    move.l  #$C10400,($C102EC).l       move.l  #$C10400,($C102EC).l
 */
 
 static WRITE32_HANDLER( type4_prot_w )
@@ -1034,13 +1034,13 @@ static WRITE32_HANDLER( type4_prot_w )
 			if (last_prot_op != -1)
 			{
 				/*
-					known commands:
-					rng2   rushhero  vsnet  winspike   what
-					------------------------------------------------------------------------------
-				        0a56   0d96	 0d14   0d1c       memcpy from c01000 to c01400 for 0x400 bytes
-					0b16                               generate sprite list at c01000 or c08400 (not sure entirely, see routine at 209922 in rungun2)
-					       0d97	 0515              parse big DMA list at c10200
-				*/
+                    known commands:
+                    rng2   rushhero  vsnet  winspike   what
+                    ------------------------------------------------------------------------------
+                        0a56   0d96  0d14   0d1c       memcpy from c01000 to c01400 for 0x400 bytes
+                    0b16                               generate sprite list at c01000 or c08400 (not sure entirely, see routine at 209922 in rungun2)
+                           0d97  0515              parse big DMA list at c10200
+                */
 
 				if ((last_prot_op == 0xa56) || (last_prot_op == 0xd96) || (last_prot_op == 0xd14) || (last_prot_op == 0xd1c))
 				{
@@ -1215,7 +1215,7 @@ static READ16_HANDLER( sndcomm68k_r )
 
 static WRITE16_HANDLER( sndcomm68k_w )
 {
-//	logerror("68K: write %x to %x\n", data, offset);
+//  logerror("68K: write %x to %x\n", data, offset);
 	sndto020[offset] = data;
 }
 
@@ -1307,8 +1307,8 @@ static MACHINE_DRIVER_START( konamigx )
 	MDRV_CPU_VBLANK_INT(konamigx_vbinterrupt, 1)
 
 	/* note: part is a -8, crystals are 18.4 and 32.0 MHz, and
-	   twinbee yahhoo will not pass POST if the 68000 isn't
-	   running at least this fast.  so the higher speed is probably a HACK... */
+       twinbee yahhoo will not pass POST if the 68000 isn't
+       running at least this fast.  so the higher speed is probably a HACK... */
 	MDRV_CPU_ADD_TAG("sound", M68000, 9200000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gxsndmap, 0)
@@ -3192,9 +3192,9 @@ MACHINE_INIT(konamigx)
 	konamigx_wrport2 = 0;
 
 /*
-	bit0  : EEPROM data(don't care)
-	bit1  : DMA busy   (cleared)
-	bit2-7: IRQ ready  (all set)
+    bit0  : EEPROM data(don't care)
+    bit1  : DMA busy   (cleared)
+    bit2-7: IRQ ready  (all set)
 */
 	gx_rdport1_3 = 0xfc;
 	gx_syncen    = 0;
@@ -3230,7 +3230,7 @@ static DRIVER_INIT(konamigx)
 #define BPP6  2
 #define BPP66 3
 
-//	int i;
+//  int i;
 	int readback = 0;
 
 	adc083x_init( 0, ADC0834, adc0834_callback );
@@ -3431,7 +3431,7 @@ static DRIVER_INIT(konamigx)
 }
 
 /**********************************************************************************/
-/*     year  ROM       parent    machine   inp    	 init */
+/*     year  ROM       parent    machine   inp       init */
 
 /* dummy parent for the BIOS */
 GAMEX(1994, konamigx, 0, konamigx, konamigx, konamigx, ROT0, "Konami", "System GX", NOT_A_DRIVER )

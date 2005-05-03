@@ -1,45 +1,45 @@
 /*
 Halley's Comet, 1986 Taito
 
-	Halley's Comet was created by Fukio Mitsuji (MTJ),
-	who also created Bubble Bobble, Rainbow Islands, Syvalion, etc.
+    Halley's Comet was created by Fukio Mitsuji (MTJ),
+    who also created Bubble Bobble, Rainbow Islands, Syvalion, etc.
 
   Issues:
-	- Status reads from blitter RAM aren't well understood.
-	  They probably includes both completion and collision flags.
-	- The blitter is missing many features, in particular certain sprites aren't
-	  erased properly.
-	- It isn't known how many independent planes of graphics the blitter manages.
-	  The starfield, for example, probably involves at least two additional planes
-	  orthogonal to the sprites and scroll layer.
-	- Background tiles inside the comet have wrong coordinates.
-	- Score digits have wrong colors.
-	- Blitter functions, especially those capable of screen warping, are unoptimized.
-	- The starfields can probably be represented and rendered by two simple lists
-	  instead of costly bitmaps.
-	- Ben Bero Beh has collision problems with the falling fireballs and a minor
-	  priority glitch with the "Elevator Action" baddies.
+    - Status reads from blitter RAM aren't well understood.
+      They probably includes both completion and collision flags.
+    - The blitter is missing many features, in particular certain sprites aren't
+      erased properly.
+    - It isn't known how many independent planes of graphics the blitter manages.
+      The starfield, for example, probably involves at least two additional planes
+      orthogonal to the sprites and scroll layer.
+    - Background tiles inside the comet have wrong coordinates.
+    - Score digits have wrong colors.
+    - Blitter functions, especially those capable of screen warping, are unoptimized.
+    - The starfields can probably be represented and rendered by two simple lists
+      instead of costly bitmaps.
+    - Ben Bero Beh has collision problems with the falling fireballs and a minor
+      priority glitch with the "Elevator Action" baddies.
 
-	* Halley's Comet's undocumented DIP switches only work if the player1 start button
-	  is depressed during boot-up.
-
-
-	Special thanks to Phil Stroffolino for the creation of a solid framework,
-	Jarek Burczynski for adding sound and providing awesome hand-drawn schematics,
-	Jason MacFarlane for his continuous and selfless support. I'd never have come
-	all this way without the invaluable videos and screen shots sent by Jason.
-
-	To the Columbia crew and the forerunners who gave their lives to science and space exploration.
-	Your bravery and devotion will not be forgotten.
+    * Halley's Comet's undocumented DIP switches only work if the player1 start button
+      is depressed during boot-up.
 
 
-CPU:	MC68B09EP Z80A(SOUND)
-Sound:	YM2149F x 4
-OSC:	19.968MHz 6MHz
+    Special thanks to Phil Stroffolino for the creation of a solid framework,
+    Jarek Burczynski for adding sound and providing awesome hand-drawn schematics,
+    Jason MacFarlane for his continuous and selfless support. I'd never have come
+    all this way without the invaluable videos and screen shots sent by Jason.
 
-J1100021	sound daughterboard
+    To the Columbia crew and the forerunners who gave their lives to science and space exploration.
+    Your bravery and devotion will not be forgotten.
 
-Z80A	6MHz
+
+CPU:    MC68B09EP Z80A(SOUND)
+Sound:  YM2149F x 4
+OSC:    19.968MHz 6MHz
+
+J1100021    sound daughterboard
+
+Z80A    6MHz
 2016
 A62-13
 A62-14
@@ -49,7 +49,7 @@ YM2149
 
 J1100018
 
-	  sw1		sw2  sw3  sw4
+      sw1       sw2  sw3  sw4
 
           A62-2  A62-15
 68B09EP   A62-1
@@ -135,23 +135,23 @@ Video sync   6 F   Video sync                 Post   6 F   Post
 
 
   color test layout:             (0,0) *ROT90
-	 +------+-------+------+------+
-	 |      |       |      |      |
-	 | White| Blue  |Green | Red  | 1 (brightest)
-	 |      |       |      |      |
-	 +------+-------+------+------+
-	 |      |       |      |      |
-	 |      |       |      |      | 2
-	 |      |       |      |      |
-	 +------+-------+------+------+
-	 |      |       |      |      |
-	 |      |       |      |      | 3
-	 |      |       |      |      |
-	 +------+-------+------+------+
-	 |      |       |      |      |
-	 |      |       |      |      | 4 (darkest)
-	 |      |       |      |      |
-	 +------+-------+------+------+
+     +------+-------+------+------+
+     |      |       |      |      |
+     | White| Blue  |Green | Red  | 1 (brightest)
+     |      |       |      |      |
+     +------+-------+------+------+
+     |      |       |      |      |
+     |      |       |      |      | 2
+     |      |       |      |      |
+     +------+-------+------+------+
+     |      |       |      |      |
+     |      |       |      |      | 3
+     |      |       |      |      |
+     +------+-------+------+------+
+     |      |       |      |      |
+     |      |       |      |      | 4 (darkest)
+     |      |       |      |      |
+     +------+-------+------+------+
 */
 
 //**************************************************************************
@@ -226,12 +226,12 @@ static void *blitter_reset_timer;
 static void blit(int offset)
 {
 /*
-	The render layers can be converted to standard MAME bitmaps but
-	I am not taking chances as long as the blitter has unknown draw
-	modes which may go beyond MAME's capability.
+    The render layers can be converted to standard MAME bitmaps but
+    I am not taking chances as long as the blitter has unknown draw
+    modes which may go beyond MAME's capability.
 
-	The function has grown tremendously as more features were added
-	and become rather difficult to maintain.
+    The function has grown tremendously as more features were added
+    and become rather difficult to maintain.
 */
 
 // status attributes
@@ -722,21 +722,21 @@ COMMAND_MODE:
 	if (command == STARPASS1 && flags & COLOR_ON)
 	{
 		/*
-			Each star map is generated by two data sets pointed by the second source
-			address. The first 256-byte set has scattered bits to reflect the star
-			population while the second 256-byte set appears to have random values.
-			When the game runs the the star fields are updated a small portion at a
-			time by a third data set containing gradient patterns which may indicate
-			gray shades or alpha levels.
+            Each star map is generated by two data sets pointed by the second source
+            address. The first 256-byte set has scattered bits to reflect the star
+            population while the second 256-byte set appears to have random values.
+            When the game runs the the star fields are updated a small portion at a
+            time by a third data set containing gradient patterns which may indicate
+            gray shades or alpha levels.
 
-			Halley's Comet draws and clears the two star fields as if they are
-			independent from the backgrounds, making it a total of four scrollable
-			layers. However, only two pairs of scroll registers are in use and they
-			affect the stars and the backgrounds together - possibly afterthoughts
-			on the original Ben Bero Beh hardware.
+            Halley's Comet draws and clears the two star fields as if they are
+            independent from the backgrounds, making it a total of four scrollable
+            layers. However, only two pairs of scroll registers are in use and they
+            affect the stars and the backgrounds together - possibly afterthoughts
+            on the original Ben Bero Beh hardware.
 
-			This algorithm is based on speculation and deemed inaccurate.
-		*/
+            This algorithm is based on speculation and deemed inaccurate.
+        */
 		#define RORB(R,N) ( ((R>>N)|(R<<(8-N))) & 0xff )
 		#define C2S(X,Y,O) ( (((Y+(O>>4))&YMASK)<<SCREEN_WIDTH_L2) + ((X+(O&0xf))&XMASK) )
 
@@ -804,21 +804,21 @@ COMMAND_MODE:
 	if (command == TILEPASS1 && flags & COLOR_ON)
 	{
 		/*
-			Tile positioning in this mode is very cryptic and different from
-			others. The coordinate system seems banked and influenced by layer
-			number and whether the blit code is written to the upper or lower
-			off-screen area. These conditions may also imply height-doubling,
-			Y-flipping and draw-from-bottom attributes.
+            Tile positioning in this mode is very cryptic and different from
+            others. The coordinate system seems banked and influenced by layer
+            number and whether the blit code is written to the upper or lower
+            off-screen area. These conditions may also imply height-doubling,
+            Y-flipping and draw-from-bottom attributes.
 
-			Pixel and color information is embedded but the game draws a
-			second pass at the same location with zeroes. In addition the
-			X and Y values passed to the blitter do not reflect the tiles true
-			locations. For example, tiles near the top or bottom of the screen
-			are positioned resonably close but those in the middle are oddly
-			shifted toward either side. The tiles also resemble predefined
-			patterns but I don't know if there are supposed to be lookup tables
-			in ROM or hard-wired to the blitter chips.
-		*/
+            Pixel and color information is embedded but the game draws a
+            second pass at the same location with zeroes. In addition the
+            X and Y values passed to the blitter do not reflect the tiles true
+            locations. For example, tiles near the top or bottom of the screen
+            are positioned resonably close but those in the middle are oddly
+            shifted toward either side. The tiles also resemble predefined
+            patterns but I don't know if there are supposed to be lookup tables
+            in ROM or hard-wired to the blitter chips.
+        */
 		if (y & 1) x -= 8;
 		y = tyremap[y] << 3;
 
@@ -1018,25 +1018,25 @@ static WRITE8_HANDLER( blitter_w )
 static READ8_HANDLER( collision_id_r )
 {
 /*
-	Collision detection abstract:
+    Collision detection abstract:
 
-	The blitter hardware does per-pixel comparison between two sprite groups.
-	When a collision occurs the ID's(memory offsets/16) of the intersecting pair
-	are written to ff8b(certain) and ff67(?). Then the blitter causes an alternate
-	IRQ to alert the CPU and a second check is performed in software to verify the
-	collision.
+    The blitter hardware does per-pixel comparison between two sprite groups.
+    When a collision occurs the ID's(memory offsets/16) of the intersecting pair
+    are written to ff8b(certain) and ff67(?). Then the blitter causes an alternate
+    IRQ to alert the CPU and a second check is performed in software to verify the
+    collision.
 
-	The trial emulation of the above was painfully slow and inaccurate because
-	collisions are not verified immediately during IRQ. Instead, a dedicated loop
-	is run between game logic and VBLANK to constantly check whether new collision
-	ID's have been reported. The blitter somehow knows to IRQ at the right moment
-	but I couldn't find any clear-cut triggers within the register area.
+    The trial emulation of the above was painfully slow and inaccurate because
+    collisions are not verified immediately during IRQ. Instead, a dedicated loop
+    is run between game logic and VBLANK to constantly check whether new collision
+    ID's have been reported. The blitter somehow knows to IRQ at the right moment
+    but I couldn't find any clear-cut triggers within the register area.
 
-	It is possible to bypass blitter-side collision altogether by feeding a redundant
-	sprite list to the main CPU, given that the processor is fast enough. This method
-	works reliably at 5MHz or above and will certainly break under 4MHz.
+    It is possible to bypass blitter-side collision altogether by feeding a redundant
+    sprite list to the main CPU, given that the processor is fast enough. This method
+    works reliably at 5MHz or above and will certainly break under 4MHz.
 
-	UPDATE: re-implemented pixel collision to accompany the hack method.
+    UPDATE: re-implemented pixel collision to accompany the hack method.
 */
 
 	if (game_id==GAME_HALLEYS && activecpu_get_pc()==0xb114) // HACK: collision detection bypass
@@ -1104,9 +1104,9 @@ static PALETTE_INIT( halleys )
 static void halleys_decode_rgb(DWORD *r, DWORD *g, DWORD *b, int addr, int data)
 {
 /*
-	proms contain:
-		00 00 00 00 c5 0b f3 17 fd cf 1f ef df bf 7f ff
-		00 00 00 00 01 61 29 26 0b f5 e2 17 57 fb cf f7
+    proms contain:
+        00 00 00 00 c5 0b f3 17 fd cf 1f ef df bf 7f ff
+        00 00 00 00 01 61 29 26 0b f5 e2 17 57 fb cf f7
 */
 	int latch1_273, latch2_273;
 	UINT8 *sram_189;
@@ -1488,18 +1488,18 @@ static INTERRUPT_GEN( halleys_interrupt )
 	{
 		case 0:
 			/*
-				How the custom chips handle sound latching is largely unknown.
-				Halley's Comet dumps sound commands to register ff8a so
-				rapidly the AY8910 core sometimes fails to reset itself and
-				the music stops. Masking sound NMI is not enough to ensure
-				successive writes are processed properly so it is advisable to
-				queue sound commands or make the main CPU yield for a minimum
-				of 600 Z80 cycles. Furthermore, soundlatch NMI interval should
-				not be too much shorter than music IRQ's period(27306667ns),
-				and must be longer in case of a reset(00).
+                How the custom chips handle sound latching is largely unknown.
+                Halley's Comet dumps sound commands to register ff8a so
+                rapidly the AY8910 core sometimes fails to reset itself and
+                the music stops. Masking sound NMI is not enough to ensure
+                successive writes are processed properly so it is advisable to
+                queue sound commands or make the main CPU yield for a minimum
+                of 600 Z80 cycles. Furthermore, soundlatch NMI interval should
+                not be too much shorter than music IRQ's period(27306667ns),
+                and must be longer in case of a reset(00).
 
-				Current implementation is quite safe although not 100% foul-proof.
-			*/
+                Current implementation is quite safe although not 100% foul-proof.
+            */
 			if (latch_delay) latch_delay--; else
 			if (ffcount)
 			{
@@ -1685,13 +1685,13 @@ ADDRESS_MAP_END
 //**************************************************************************
 // Port Maps
 /*
-	Halley's Comet
-	Taito/Coin-it 1986
+    Halley's Comet
+    Taito/Coin-it 1986
 
-	Coin mechs system can be optioned by setting dip sw 1 position 6 on
-	for single coin selector. Position 6 off for twin coin selector.
+    Coin mechs system can be optioned by setting dip sw 1 position 6 on
+    for single coin selector. Position 6 off for twin coin selector.
 
-	Dip sw 2 is not used and all contacts should be set off.
+    Dip sw 2 is not used and all contacts should be set off.
 */
 
 INPUT_PORTS_START( halleys )

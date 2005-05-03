@@ -1,14 +1,14 @@
 /***************************************************************************
 
-							-= American Speedway =-
+                            -= American Speedway =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 - 8x8 4 Color Tiles (with 8 palettes) used for both:
 
-	- 1 256x256 non scrolling layer
-	- 64 (32?) Sprites
+    - 1 256x256 non scrolling layer
+    - 64 (32?) Sprites
 
 ***************************************************************************/
 #include "driver.h"
@@ -23,7 +23,7 @@ WRITE8_HANDLER( amspdwy_paletteram_w )
 {
 	data ^= 0xff;
 	paletteram_BBGGGRRR_w(offset,data);
-//	paletteram_RRRGGGBB_w(offset,data);
+//  paletteram_RRRGGGBB_w(offset,data);
 }
 
 WRITE8_HANDLER( amspdwy_flipscreen_w )
@@ -35,14 +35,14 @@ WRITE8_HANDLER( amspdwy_flipscreen_w )
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
-							  [ Tiles Format ]
+                              [ Tiles Format ]
 
-	Videoram:	76543210	Code Low Bits
-	Colorram:	765-----
-				---43---	Code High Bits
-				-----210	Color
+    Videoram:   76543210    Code Low Bits
+    Colorram:   765-----
+                ---43---    Code High Bits
+                -----210    Color
 
 ***************************************************************************/
 
@@ -96,19 +96,19 @@ VIDEO_START( amspdwy )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-Offset:		Format:		Value:
+Offset:     Format:     Value:
 
-0						Y
-1						X
-2						Code Low Bits
-3			7-------	Flip X
-			-6------	Flip Y
-			--5-----
-			---4----	?
-			----3---	Code High Bit?
-			-----210	Color
+0                       Y
+1                       X
+2                       Code Low Bits
+3           7-------    Flip X
+            -6------    Flip Y
+            --5-----
+            ---4----    ?
+            ----3---    Code High Bit?
+            -----210    Color
 
 ***************************************************************************/
 
@@ -134,7 +134,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
-//				code + ((attr & 0x18)<<5),
+//              code + ((attr & 0x18)<<5),
 				code + ((attr & 0x08)<<5),
 				attr,
 				flipx, flipy,
@@ -148,7 +148,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
 ***************************************************************************/
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Model Racing Dribbling hardware
+    Model Racing Dribbling hardware
 
 ***************************************************************************/
 
@@ -11,8 +11,8 @@
 
 /*************************************
  *
- *	Convert the palette PROM into
- *	a real palette
+ *  Convert the palette PROM into
+ *  a real palette
  *
  *************************************/
 
@@ -39,7 +39,7 @@ PALETTE_INIT( dribling )
 
 /*************************************
  *
- *	Color control writes
+ *  Color control writes
  *
  *************************************/
 
@@ -53,7 +53,7 @@ WRITE8_HANDLER( dribling_colorram_w )
 
 /*************************************
  *
- *	Video update routine
+ *  Video update routine
  *
  *************************************/
 

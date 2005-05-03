@@ -2,7 +2,7 @@
 
 Dr. Micro (c) 1983 Sanritsu
 
-		driver by Uki
+        driver by Uki
 
 Quite similar to Appoooh
 

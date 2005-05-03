@@ -1,74 +1,74 @@
 /*
-	99xxcore.h : generic tms99xx emulation
+    99xxcore.h : generic tms99xx emulation
 
-	The TMS99XX_MODEL switch tells which emulator we want to build.  Set the
-	switch, then include 99xxcore.h, and you will have an emulator for this
-	processor.
+    The TMS99XX_MODEL switch tells which emulator we want to build.  Set the
+    switch, then include 99xxcore.h, and you will have an emulator for this
+    processor.
 
-	Only ti990/10, tms9900, tms9980a/9981, and tms9995 work OK for now.  Note
-	that tms9995 has not been tested extensively.
+    Only ti990/10, tms9900, tms9980a/9981, and tms9995 work OK for now.  Note
+    that tms9995 has not been tested extensively.
 
-	tms9940 is WIP: it is probably still buggy (particularily the BCD support),
-	as it has not been tested.  tms9985 has been implemented as a 9940 with
-	a data bus, which should be mostly correct.
+    tms9940 is WIP: it is probably still buggy (particularily the BCD support),
+    as it has not been tested.  tms9985 has been implemented as a 9940 with
+    a data bus, which should be mostly correct.
 
-	I think all software aspects of tms9985 and tms9989 are implemented.
-	You just need to implement bus interfaces, provided you know them.
-	(I don't...)
+    I think all software aspects of tms9985 and tms9989 are implemented.
+    You just need to implement bus interfaces, provided you know them.
+    (I don't...)
 
-	tms99000 cannot be implemented fully yet, due to lack of documentation.
+    tms99000 cannot be implemented fully yet, due to lack of documentation.
 
-	ti990/12 is not supported at all, and it should probably be implemented as
-	a separate processor core, anyway.
+    ti990/12 is not supported at all, and it should probably be implemented as
+    a separate processor core, anyway.
 
-	Original tms9900 emulator by Edward Swartz
-	Smoothed out by Raphael Nabet
-	Originally converted for Mame by M.Coates
-	Processor timing, support for tms9980 and tms9995, and many bug fixes by R Nabet
+    Original tms9900 emulator by Edward Swartz
+    Smoothed out by Raphael Nabet
+    Originally converted for Mame by M.Coates
+    Processor timing, support for tms9980 and tms9995, and many bug fixes by R Nabet
 */
 
 /*
-	The first member of the family was actually the ti990/10 minicomputer,
-	released in 1975.  tms9900 was released in 1976, and has the same
-	instruction set as ti990/10: however, tms9900 is slower, it does not
-	support privileges and memory mapping, and illegal instructions do not
-	cause an error interrupt.
+    The first member of the family was actually the ti990/10 minicomputer,
+    released in 1975.  tms9900 was released in 1976, and has the same
+    instruction set as ti990/10: however, tms9900 is slower, it does not
+    support privileges and memory mapping, and illegal instructions do not
+    cause an error interrupt.
 
-	The ti990 family later evoluted into the huge ti990/12 system, with support
-	for 144 different instructions, and microcode programming in case some user
-	found it was not enough.  ti990/10 was eventually replaced by a cheaper
-	ti990/10a board, built around a tms99000 microprocessor.
+    The ti990 family later evoluted into the huge ti990/12 system, with support
+    for 144 different instructions, and microcode programming in case some user
+    found it was not enough.  ti990/10 was eventually replaced by a cheaper
+    ti990/10a board, built around a tms99000 microprocessor.
 
-	The tms9980 processor is merely a tms9900 with a 8-bit data bus (instead of
-	16-bit on tms9900).
+    The tms9980 processor is merely a tms9900 with a 8-bit data bus (instead of
+    16-bit on tms9900).
 
-	tms9940 is a microcontroller, and is mostly similar to 9900/9980.  The
-	variant I know has 2kb of ROM, 128 bytes of RAM, a timer, 32 I/O line, some
-	of which can be reconfigured as a CRU bus, but no external memory bus.  It
-	includes three additional opcodes, which are not supported by any other
-	member of the family (with the probable exception of TMS9985).
+    tms9940 is a microcontroller, and is mostly similar to 9900/9980.  The
+    variant I know has 2kb of ROM, 128 bytes of RAM, a timer, 32 I/O line, some
+    of which can be reconfigured as a CRU bus, but no external memory bus.  It
+    includes three additional opcodes, which are not supported by any other
+    member of the family (with the probable exception of TMS9985).
 
-	tms9985 is similar to tms9940, but it supports an external 8-bit-wide
-	memory bus.  At least one variant included 8kb of ROM, 256 bytes of RAM.
-	It was ill-fated, as it was never released due to technical problems.
+    tms9985 is similar to tms9940, but it supports an external 8-bit-wide
+    memory bus.  At least one variant included 8kb of ROM, 256 bytes of RAM.
+    It was ill-fated, as it was never released due to technical problems.
 
-	tms9989 is mostly alien to me.  I guess it is a close relative of tms9995,
-	although I am not sure.  I have read that the SBP68689 supports tms9995
-	opcodes, but that tms9989 does not.
+    tms9989 is mostly alien to me.  I guess it is a close relative of tms9995,
+    although I am not sure.  I have read that the SBP68689 supports tms9995
+    opcodes, but that tms9989 does not.
 
-	tms9995 belongs to another generation.  It is quite faster than tms9900,
-	and supports 4 extra opcodes.  Its external bus is 8-bit-wide, and it has
-	256 bytes of internal 16-bit RAM.
+    tms9995 belongs to another generation.  It is quite faster than tms9900,
+    and supports 4 extra opcodes.  Its external bus is 8-bit-wide, and it has
+    256 bytes of internal 16-bit RAM.
 
-	tms99000 is the successor to both ti9900 and ti990/10.  It supports
-	privileges, and has a coprocessor interface which enables the use of an
-	external memory mapper.  Additionnally,  it can use a Macrostore ROM to
-	emulate additional instructions.
+    tms99000 is the successor to both ti9900 and ti990/10.  It supports
+    privileges, and has a coprocessor interface which enables the use of an
+    external memory mapper.  Additionnally,  it can use a Macrostore ROM to
+    emulate additional instructions.
 
-	This feature allowed TI to expand the 99000 family with the tms99105 (which
-	was said to support 84 instructions types), the tms99110 (which supported
-	floating point instructions), and possibly another chip (tms99220???) which
-	included parts of the UCSD P-system in Macrostore.
+    This feature allowed TI to expand the 99000 family with the tms99105 (which
+    was said to support 84 instructions types), the tms99110 (which supported
+    floating point instructions), and possibly another chip (tms99220???) which
+    included parts of the UCSD P-system in Macrostore.
 
 References :
 * 9900 family systems design, chapter 6, 7, 8
@@ -77,7 +77,7 @@ References :
 * Model 990/10A computer general description, section 4 (p/n 2302633-9701 A)
 * 990/99000 assembly language reference manual (p/n 2270509-9701 A)
 * Chapter 18 of unidentified book is the only reference on tms9940 I have found so far (Paperport format)
-	<ftp://ftp.whtech.com//datasheets/Hardware manuals/tms9900 9901 9904 9940 9980 (by a osborne).max>
+    <ftp://ftp.whtech.com//datasheets/Hardware manuals/tms9900 9901 9904 9940 9980 (by a osborne).max>
 
 Other references can be found on spies.com:
 <http://www.spies.com/arcade/simulation/processors/index.html>
@@ -87,9 +87,9 @@ Other references can be found on spies.com:
 
 /* Set this to 1 to support HOLD_LINE */
 /* This is a weird HOLD_LINE, actually : we hold the interrupt line only until IAQ
-	(instruction acquisition) is enabled.  Well, this scheme could possibly exist on
-	a tms9900-based system, unlike a real HOLD_LINE.  (OK, this is just a pretext, I was just too
-	lazy to implement a true HOLD_LINE ;-) .) */
+    (instruction acquisition) is enabled.  Well, this scheme could possibly exist on
+    a tms9900-based system, unlike a real HOLD_LINE.  (OK, this is just a pretext, I was just too
+    lazy to implement a true HOLD_LINE ;-) .) */
 /* BTW, this only works with tms9900 ! */
 #define SILLY_INTERRUPT_HACK 0
 
@@ -169,7 +169,7 @@ Other references can be found on spies.com:
 #endif
 
 /*
-	Now for some preprocessor wizardry.
+    Now for some preprocessor wizardry.
 */
 #define concat2(a,b) a##b
 
@@ -184,58 +184,58 @@ Other references can be found on spies.com:
 
 
 /*
-	I include this macro because we may eventually support other 99000 variants such as tms99110,
-	and this macro will remain true for every 99000 family member, even when we have
-	(TMS99XX_MODEL != TMS99000_ID).
+    I include this macro because we may eventually support other 99000 variants such as tms99110,
+    and this macro will remain true for every 99000 family member, even when we have
+    (TMS99XX_MODEL != TMS99000_ID).
 */
 #define IS_99000 (TMS99XX_MODEL == TMS99000_ID)
 
 /*
-	On microprocessor implementations (other than TMS9940 and, probably, TMS9985), the CKOF, CKON,
-	IDLE, LREX and RSET cause an external CRU write.  CKOF, CKON and LREX do nothing apart of this,
-	therefore they must be implemented with external hardware (CKON and CKOF are supposed to
-	enable/disable a line clock interrupt, and LREX to trigger a LOAD interrupt).  IDLE and RSET
-	are functional, but, on the one hand, the design allowed to light a diagnostic LED when
-	the processor is in IDLE state, and, on the other hand, the RSET instruction is supposed
-	to reset external devices as well.
+    On microprocessor implementations (other than TMS9940 and, probably, TMS9985), the CKOF, CKON,
+    IDLE, LREX and RSET cause an external CRU write.  CKOF, CKON and LREX do nothing apart of this,
+    therefore they must be implemented with external hardware (CKON and CKOF are supposed to
+    enable/disable a line clock interrupt, and LREX to trigger a LOAD interrupt).  IDLE and RSET
+    are functional, but, on the one hand, the design allowed to light a diagnostic LED when
+    the processor is in IDLE state, and, on the other hand, the RSET instruction is supposed
+    to reset external devices as well.
 
-	On the TI990/10 and TI990/12 minicomputers, there is no such CRU write.  The line clock
-	interrupt latch is part of the CPU board, LREX is fully functional, the IDLE led is connected
-	to the board, and the RSET line is part of the TILINE bus connector.
+    On the TI990/10 and TI990/12 minicomputers, there is no such CRU write.  The line clock
+    interrupt latch is part of the CPU board, LREX is fully functional, the IDLE led is connected
+    to the board, and the RSET line is part of the TILINE bus connector.
 
-	On the TMS9940, CKOF, CKON, LREX and RSET are not supported.  IDLE, on the other hand, is
-	supported, and the CPU can be configured to output its IDLE state on the P16 I/O pin.
+    On the TMS9940, CKOF, CKON, LREX and RSET are not supported.  IDLE, on the other hand, is
+    supported, and the CPU can be configured to output its IDLE state on the P16 I/O pin.
 */
 #define EXTERNAL_INSTRUCTION_DECODING (TMS99XX_MODEL != TI990_10_ID) && (TMS99XX_MODEL != TI9940_ID) && (TMS99XX_MODEL != TI9985_ID)
 #define EXTERNAL_INSTRUCTION_CALLBACK (TMS99XX_MODEL == TI990_10_ID)
 
 /*
-	ti990/10, ti990/12 and tms99000 support privileges
+    ti990/10, ti990/12 and tms99000 support privileges
 
-	privileged instructions:
-	CKOF, CKON, IDLE, LIMI, LREX, RSET,
-	LDD, LDS, LMF, (memory mapping instructions)
-	DINT, EINT, EMD , LCS, LIM, SLSP. (990/12 instructions)
+    privileged instructions:
+    CKOF, CKON, IDLE, LIMI, LREX, RSET,
+    LDD, LDS, LMF, (memory mapping instructions)
+    DINT, EINT, EMD , LCS, LIM, SLSP. (990/12 instructions)
 
-	instructions which are privileged when the effective CRU address is higher than 0xE00:
-	LDCR, SBO, SBZ, STCR, TB.
+    instructions which are privileged when the effective CRU address is higher than 0xE00:
+    LDCR, SBO, SBZ, STCR, TB.
 
-	instructions whose behaviour is modified in user mode (only user flags in ST are affected):
-	RTWP,
-	LST. (ti990/12 and tms99000 instruction)
+    instructions whose behaviour is modified in user mode (only user flags in ST are affected):
+    RTWP,
+    LST. (ti990/12 and tms99000 instruction)
 */
 #define HAS_PRIVILEGE ((TMS99XX_MODEL == TI990_10_ID) || IS_99000)
 
 /*
-	opcode groups
+    opcode groups
 
-	* 69 basic opcodes implemented on all family members
-	* 3 memory mapping opcodes implemented on ti990/10 with mapping option, ti990/12, and
-	  the tim99610 mapper in conjunction with any tms99000 family member: LMF, LDS, LDD
-	* 3 opcodes implemented on tms9940 (and probably tms9985) only: DCA, DCS, LIIM
-	* 4 opcodes implemented on ti990/12, tms9989 and above: MPYS, DIVS, LST, LWP
-	* 1 opcode implemented on ti990/12, and tms99000: BIND
-	* 72 opcodes implemented on ti990/12 only (some of which are emulated by tms99105 & tms99110)
+    * 69 basic opcodes implemented on all family members
+    * 3 memory mapping opcodes implemented on ti990/10 with mapping option, ti990/12, and
+      the tim99610 mapper in conjunction with any tms99000 family member: LMF, LDS, LDD
+    * 3 opcodes implemented on tms9940 (and probably tms9985) only: DCA, DCS, LIIM
+    * 4 opcodes implemented on ti990/12, tms9989 and above: MPYS, DIVS, LST, LWP
+    * 1 opcode implemented on ti990/12, and tms99000: BIND
+    * 72 opcodes implemented on ti990/12 only (some of which are emulated by tms99105 & tms99110)
 */
 
 #define HAS_MAPPING ((TMS99XX_MODEL == TI990_10_ID) /*|| IS_99000*/)
@@ -245,24 +245,24 @@ Other references can be found on spies.com:
 #define HAS_OVERFLOW_INTERRUPT ((TMS99XX_MODEL == TMS9995_ID) || IS_99000)
 
 /*
-	Under tms9900, opcodes >0200->03FF are incompletely decoded: bits 11 is ignored, and so are
-	bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
-	generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
-	Additionally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
-	non-zero.
+    Under tms9900, opcodes >0200->03FF are incompletely decoded: bits 11 is ignored, and so are
+    bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
+    generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
+    Additionally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
+    non-zero.
 */
 #define BETTER_0200_DECODING (TMS99XX_MODEL == TI990_10_ID)
 #define COMPLETE_0200_DECODING (TMS99XX_MODEL >= TMS9995_ID)
 
 /*
-	TI990/10 and tms9900 force unused bits in the ST register to 0.
-	TMS9995 does not.
+    TI990/10 and tms9900 force unused bits in the ST register to 0.
+    TMS9995 does not.
 */
 #define USE_ST_MASK (TMS99XX_MODEL <= TMS9985_ID)
 
 /*
-	TI990/10, TMS9900 and TMS99000 have a 16-bit-wide memory bus, and use 16-bus accessors.
-	TMS9940 use 16-bit accessors, too, as it has an internal 16-bit bus, and no external bus.
+    TI990/10, TMS9900 and TMS99000 have a 16-bit-wide memory bus, and use 16-bus accessors.
+    TMS9940 use 16-bit accessors, too, as it has an internal 16-bit bus, and no external bus.
 */
 #define USE_16_BIT_ACCESSORS ((TMS99XX_MODEL == TI990_10_ID) || (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9940_ID) || (IS_99000))
 
@@ -451,7 +451,7 @@ typedef struct
 #if (TMS99XX_MODEL == TI990_10_ID) || (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID)
 	/* On tms9900, we cache the state of INTREQ* and IC0-IC3 here */
 	/* On tms9980/9981, we translate the state of IC0-IC2 to the equivalent state for a tms9900,
-	and store the result here */
+    and store the result here */
 	int irq_level;	/* when INTREQ* is active, interrupt level on IC0-IC3 ; else always 16 */
 	int irq_state;	/* nonzero if the INTREQ* line is active (low) */
 					/* with TMS9940, bit 0 means INT1, bit 1 decrementer, bit 2 INT2 */
@@ -464,11 +464,11 @@ typedef struct
 
 	/* interrupt callback */
 	/* note that this callback is used by tms9900_set_irq_line() and tms9980a_set_irq_line() to
-	retreive the value on IC0-IC3 (non-standard behaviour) */
+    retreive the value on IC0-IC3 (non-standard behaviour) */
 	int (*irq_callback)(int irq_line);
 
 	int IDLE;       /* nonzero if processor is IDLE - i.e waiting for interrupt while writing
-	                    special data on CRU bus */
+                        special data on CRU bus */
 
 #ifdef MAME_DEBUG
 	UINT16 FR[16];  /* contains a copy of the workspace for the needs of the debugger */
@@ -523,7 +523,7 @@ typedef struct
 #endif
 
 	/* Some instructions (i.e. XOP, BLWP, and MID) disable interrupt recognition until another
-	instruction is executed : so they set this flag */
+    instruction is executed : so they set this flag */
 	int disable_interrupt_recognition;
 
 	/* notify the driver of changes in IDLE state */
@@ -557,7 +557,7 @@ static void reset_decrementer(void);
 #if (TMS99XX_MODEL == TI990_10_ID)
 
 /*
-	accessor for the internal ROM
+    accessor for the internal ROM
 */
 READ16_HANDLER(ti990_10_internal_r)
 {
@@ -570,7 +570,7 @@ READ16_HANDLER(ti990_10_internal_r)
 #if (TMS99XX_MODEL == TMS9995_ID)
 
 /*
-	accessor for the first 252 bytes of internal RAM
+    accessor for the first 252 bytes of internal RAM
 */
 READ8_HANDLER(tms9995_internal1_r)
 {
@@ -583,7 +583,7 @@ WRITE8_HANDLER(tms9995_internal1_w)
 }
 
 /*
-	accessor for the last 4 bytes of internal RAM
+    accessor for the last 4 bytes of internal RAM
 */
 READ8_HANDLER(tms9995_internal2_r)
 {
@@ -798,8 +798,8 @@ WRITE8_HANDLER(tms9995_internal2_w)
 #elif (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9940_ID)
 	/*16-bit data bus, 16-bit address bus (internal bus in the case of TMS9940)*/
 	/*Note that tms9900 actually never accesses a single byte : when performing byte operations,
-	it reads a 16-bit word, changes the revelant byte, then write a complete word.  You should
-	remember this when writing memory handlers.*/
+    it reads a 16-bit word, changes the revelant byte, then write a complete word.  You should
+    remember this when writing memory handlers.*/
 	/*This does not apply to tms9995 and tms99xxx, but does apply to tms9980 (see below).*/
 
 	#define readword(addr)        program_read_word_16be(addr)
@@ -815,8 +815,8 @@ WRITE8_HANDLER(tms9995_internal2_w)
 #elif (TMS99XX_MODEL == TMS9980_ID)
 	/*8-bit data bus, 14-bit address*/
 	/*Note that tms9980 never accesses a single byte (however crazy it may seem).  Although this
-	makes memory access slower, I have emulated this feature, because if I did otherwise,
-	there would be some implementation problems in some driver sooner or later.*/
+    makes memory access slower, I have emulated this feature, because if I did otherwise,
+    there would be some implementation problems in some driver sooner or later.*/
 
 	INLINE int readword(int addr)
 	{
@@ -1226,9 +1226,9 @@ WRITE8_HANDLER(tms9995_internal2_w)
 #define IMASK       (I.STATUS & ST_IM)
 
 /*
-	CYCLES macro : you provide timings for tms9900 and tms9995, and the macro chooses for you.
+    CYCLES macro : you provide timings for tms9900 and tms9995, and the macro chooses for you.
 
-	BTW, I have no idea what the timings are for tms9989 and tms99xxx...
+    BTW, I have no idea what the timings are for tms9989 and tms99xxx...
 */
 #if TMS99XX_MODEL == TI990_10_ID
 	/* Use TI990/10 timings*/
@@ -1263,7 +1263,7 @@ static void tms99xx_init(void)
 }
 
 /*
-	TMS9900 hard reset
+    TMS9900 hard reset
 */
 static void tms99xx_reset(void *p)
 {
@@ -1368,8 +1368,8 @@ static int tms99xx_execute(int cycles)
 	do
 					{
 		/* all TMS9900 chips I know do not honor interrupts after XOP, BLWP or MID (after any
-		  interrupt-like instruction, actually), and they do not either after LDS and LDD
-		  (There are good reasons for this). */
+          interrupt-like instruction, actually), and they do not either after LDS and LDD
+          (There are good reasons for this). */
 		if ((I.interrupt_pending) && (! I.disable_interrupt_recognition))
 		{
 			int level;
@@ -1502,8 +1502,8 @@ static int tms99xx_execute(int cycles)
 							/* GROM data buffer */
 							UINT8 buf;
 							/* internal flip-flops that are set after the first access to the GROM
-							address so that next access is mapped to the LSB, and cleared after each
-							data access */
+                            address so that next access is mapped to the LSB, and cleared after each
+                            data access */
 							char raddr_LSB, waddr_LSB;
 						} console_GROMs;
 						logerror("> GPL pointer %4.4X\n", console_GROMs.addr);
@@ -1558,7 +1558,7 @@ static int tms99xx_execute(int cycles)
 			#if (HAS_OVERFLOW_INTERRUPT)
 				#if (TMS99XX_MODEL == TMS9995_ID)
 					/* Note that TI had some problem implementing this...  I don't know if this feature works on
-					a real-world TMS9995. */
+                    a real-world TMS9995. */
 					if ((I.STATUS & ST_OVIE) && (I.STATUS & ST_OV) && (I.irq_level > 2))
 						I.irq_level = 2;  /* interrupt request */
 				#else
@@ -1586,7 +1586,7 @@ static void tms99xx_set_context(void *src)
 	{
 		I = *(tms99xx_Regs*)src;
 		/* We have to make additionnal checks, because Mame debugger can foolishly initialize
-		the context to all 0s */
+        the context to all 0s */
 		#if (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TI990_10_ID)
 		if (! I.irq_state)
 			I.irq_level = 16;
@@ -1618,7 +1618,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 	else
 	{
 		/*if (I.irq_state == state)
-			return;*/
+            return;*/
 
 		I.irq_state = state;
 
@@ -1643,46 +1643,46 @@ static void tms99xx_set_irq_line(int irqline, int state)
 /*
 void tms99xx_set_irq_line(INPUT_LINE_NMI, int state) : change the state of the LOAD* line
 
-	state == 0 -> LOAD* goes high (inactive)
-	state != 0 -> LOAD* goes low (active)
+    state == 0 -> LOAD* goes high (inactive)
+    state != 0 -> LOAD* goes low (active)
 
-	While LOAD* is low, we keep triggering LOAD interrupts...
+    While LOAD* is low, we keep triggering LOAD interrupts...
 
-	A problem : some peripherals lower the LOAD* line for a fixed time interval (causing the 1st
-	instruction of the LOAD interrupt routine to be repeated while the line is low), and will be
-	perfectly happy with the current scheme, but others might be more clever and wait for the IAQ
-	(Instruction acquisition) line to go high, and this needs a callback function to emulate.
+    A problem : some peripherals lower the LOAD* line for a fixed time interval (causing the 1st
+    instruction of the LOAD interrupt routine to be repeated while the line is low), and will be
+    perfectly happy with the current scheme, but others might be more clever and wait for the IAQ
+    (Instruction acquisition) line to go high, and this needs a callback function to emulate.
 */
 
 /*
 void tms99xx_set_irq_line(int irqline, int state) : sets the state of the interrupt line.
 
-	irqline is ignored, and should always be 0.
+    irqline is ignored, and should always be 0.
 
-	state == 0 -> INTREQ* goes high (inactive)
-	state != 0 -> INTREQ* goes low (active)
+    state == 0 -> INTREQ* goes high (inactive)
+    state != 0 -> INTREQ* goes low (active)
 */
 /*
-	R Nabet 991020, revised 991218 :
-	In short : interrupt code should call "cpu_set_irq_line(0, 0, ASSERT_LINE);" to set an
-	interrupt request (level-triggered interrupts).  Also, there MUST be a call to
-	"cpu_set_irq_line(0, 0, CLEAR_LINE);" in the machine code, when the interrupt line is released by
-	the hardware (generally in response to an action performed by the interrupt routines).
-	On tms9995 (9989 ?), you can use PULSE_LINE, too, since the processor latches the line...
+    R Nabet 991020, revised 991218 :
+    In short : interrupt code should call "cpu_set_irq_line(0, 0, ASSERT_LINE);" to set an
+    interrupt request (level-triggered interrupts).  Also, there MUST be a call to
+    "cpu_set_irq_line(0, 0, CLEAR_LINE);" in the machine code, when the interrupt line is released by
+    the hardware (generally in response to an action performed by the interrupt routines).
+    On tms9995 (9989 ?), you can use PULSE_LINE, too, since the processor latches the line...
 
-	**Note** : HOLD_LINE *NEVER* makes sense on the TMS9900 (or 9980, 9995...).  The reason is the
-	TMS9900 does NOT tell the world it acknoledges an interrupt, so no matter how much hardware you
-	use, you cannot know when the CPU takes the interrupt, hence you cannot release the line when
-	the CPU takes the interrupt.  Generally, the interrupt condition is cleared by the interrupt
-	routine (with some CRU or memory access).
+    **Note** : HOLD_LINE *NEVER* makes sense on the TMS9900 (or 9980, 9995...).  The reason is the
+    TMS9900 does NOT tell the world it acknoledges an interrupt, so no matter how much hardware you
+    use, you cannot know when the CPU takes the interrupt, hence you cannot release the line when
+    the CPU takes the interrupt.  Generally, the interrupt condition is cleared by the interrupt
+    routine (with some CRU or memory access).
 
-	Note that cpu_generate_interrupt uses HOLD_LINE, so your driver interrupt code
-	should always use the new style, i.e. return "ignore_interrupt()" and call
-	"cpu_set_irq_line(0, 0, ASSERT_LINE);" explicitely.
+    Note that cpu_generate_interrupt uses HOLD_LINE, so your driver interrupt code
+    should always use the new style, i.e. return "ignore_interrupt()" and call
+    "cpu_set_irq_line(0, 0, ASSERT_LINE);" explicitely.
 
-	Last, many TMS9900-based hardware use a TMS9901 interrupt-handling chip.  If anybody wants
-	to emulate some hardware which uses it, note that I am writing some emulation in the TI99/4(A)
-	driver in MESS, so you should ask me.
+    Last, many TMS9900-based hardware use a TMS9901 interrupt-handling chip.  If anybody wants
+    to emulate some hardware which uses it, note that I am writing some emulation in the TI99/4(A)
+    driver in MESS, so you should ask me.
 */
 /*
  * HJB 990430: changed to use irq_callback() to retrieve the vector
@@ -1690,8 +1690,8 @@ void tms99xx_set_irq_line(int irqline, int state) : sets the state of the interr
  *
  * R Nabet 990830 : My mistake, I rewrote all these once again ; I think it is now correct.
  * A driver using the TMS9900 should do :
- *		cpu_0_irq_line_vector_w(0, level);
- *		cpu_set_irq_line(0,0,ASSERT_LINE);
+ *      cpu_0_irq_line_vector_w(0, level);
+ *      cpu_set_irq_line(0,0,ASSERT_LINE);
  *
  * R Nabet 991108 : revised once again, with advice from Juergen Buchmueller, after a discussion
  * with Nicola...
@@ -1720,7 +1720,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 	else
 	{
 		/*if (I.irq_state == state)
-			return;*/
+            return;*/
 
 		I.irq_state = state;
 
@@ -1742,7 +1742,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 /*
-	interrupt system similar to tms9900, but only 3 interrupt pins (IC0-IC2)
+    interrupt system similar to tms9900, but only 3 interrupt pins (IC0-IC2)
 */
 
 static void tms99xx_set_irq_line(int irqline, int state)
@@ -1759,8 +1759,8 @@ static void tms99xx_set_irq_line(int irqline, int state)
 #if SILLY_INTERRUPT_HACK
 		#error "OK, this does not work with tms9980a"
 		/*I.load_state = 0;
-		I.irq_state = 1;
-		I.irq_level = IRQ_MAGIC_LEVEL;*/
+        I.irq_state = 1;
+        I.irq_level = IRQ_MAGIC_LEVEL;*/
 #else
 		int level;
 
@@ -1802,7 +1802,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 
 #elif (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 /*
-	2 interrupt pins (int1 and int2)
+    2 interrupt pins (int1 and int2)
 */
 
 static void tms99xx_set_irq_line(int irqline, int state)
@@ -1842,9 +1842,9 @@ static void decrementer_callback(int ignored)
 
 
 /*
-	reset and load the timer/decrementer
+    reset and load the timer/decrementer
 
-	Note that I don't know whether toggling flag0/flag1 causes the decrementer to be reloaded or not
+    Note that I don't know whether toggling flag0/flag1 causes the decrementer to be reloaded or not
 */
 static void reset_decrementer(void)
 {
@@ -1864,12 +1864,12 @@ static void reset_decrementer(void)
 }
 
 /*
-	You have two interrupt line : one triggers level-1 interrupts, the other triggers level-4
-	interrupts (or decrements the decrementer register).
+    You have two interrupt line : one triggers level-1 interrupts, the other triggers level-4
+    interrupts (or decrements the decrementer register).
 
-	According to the hardware, you may use PULSE_LINE (edge-triggered interrupts), or ASSERT_LINE
-	(level-triggered interrupts).  Edge-triggered interrupts are way simpler, but if multiple devices
-	share the same line, they must use level-triggered interrupts.
+    According to the hardware, you may use PULSE_LINE (edge-triggered interrupts), or ASSERT_LINE
+    (level-triggered interrupts).  Edge-triggered interrupts are way simpler, but if multiple devices
+    share the same line, they must use level-triggered interrupts.
 */
 static void tms99xx_set_irq_line(int irqline, int state)
 {
@@ -2013,15 +2013,15 @@ static unsigned tms99xx_dasm(char *buffer, unsigned pc)
 
 /*****************************************************************************/
 /*
-	CRU support code
+    CRU support code
 
-	The CRU bus is a 1-bit-wide I/O bus.  The CPU can read or write bits at random address.
-	Special instructions are dedicated to reading and writing one or several consecutive bits.
+    The CRU bus is a 1-bit-wide I/O bus.  The CPU can read or write bits at random address.
+    Special instructions are dedicated to reading and writing one or several consecutive bits.
 
 
 
-	Note that TMS99000 additionally supports parallel CRU operations, although I don't know how
-	this feature is implemented.
+    Note that TMS99000 additionally supports parallel CRU operations, although I don't know how
+    this feature is implemented.
 */
 
 enum
@@ -2205,9 +2205,9 @@ static void write_single_CRU(int port, int data)
 	}
 			/* External CRU */
 	/* Even though all the registers above are implemented internally, accesses
-	are passed to the external bus, too, and an external device might respond
-	to a write to these CRU address as well (particularly a write to the user
-	flag registers). */
+    are passed to the external bus, too, and an external device might respond
+    to a write to these CRU address as well (particularly a write to the user
+    flag registers). */
 	WRITEPORT(port, (data & 0x01));
 }
 #else
@@ -2215,7 +2215,7 @@ static void write_single_CRU(int port, int data)
 #endif
 
 /*
-	performs a normal write to CRU bus (used by SBZ, SBO, LDCR : address range 0 -> 0xFFF)
+    performs a normal write to CRU bus (used by SBZ, SBO, LDCR : address range 0 -> 0xFFF)
 */
 static cru_error_code writeCRU(int CRUAddr, int Number, UINT16 Value)
 {
@@ -2244,14 +2244,14 @@ static cru_error_code writeCRU(int CRUAddr, int Number, UINT16 Value)
 
 #if EXTERNAL_INSTRUCTION_DECODING
 /*
-	Some opcodes perform a dummy write to a special CRU address, so that an external function may be
-	triggered.
+    Some opcodes perform a dummy write to a special CRU address, so that an external function may be
+    triggered.
 
-	Only the first 3 MSBs of the address matter : other address bits and the written value itself
-	are undefined.
+    Only the first 3 MSBs of the address matter : other address bits and the written value itself
+    are undefined.
 
-	How should we support this ? With callback functions ? Actually, as long as we do not support
-	hardware which makes use of this feature, it does not really matter :-) .
+    How should we support this ? With callback functions ? Actually, as long as we do not support
+    hardware which makes use of this feature, it does not really matter :-) .
 */
 static void external_instruction_notify(int ext_op_ID)
 {
@@ -2299,11 +2299,11 @@ static void external_instruction_notify(int ext_op_ID)
 #endif
 
 /*
-	performs a normal read to CRU bus (used by TB, STCR : address range 0->0xFFF)
+    performs a normal read to CRU bus (used by TB, STCR : address range 0->0xFFF)
 
-	Note that on some hardware, e.g. TI99/4(a), all normal memory operations cause unwanted CRU
-	read at the same address.  This seems to be impossible to emulate efficiently, so, if you need
-	to emulate this, you're in trouble.
+    Note that on some hardware, e.g. TI99/4(a), all normal memory operations cause unwanted CRU
+    read at the same address.  This seems to be impossible to emulate efficiently, so, if you need
+    to emulate this, you're in trouble.
 */
 #define READPORT(port) io_read_byte_8(port)
 
@@ -2860,7 +2860,7 @@ static void h0040(UINT16 opcode)
 	case 6:
 		/* MOVS -- MOVe String */
 	case 7:
-		/* LIM --- Load Interrupt Mask	*/
+		/* LIM --- Load Interrupt Mask  */
 
 	case 10:
 		/* LCS --- Load writable Control Store */
@@ -2873,7 +2873,7 @@ static void h0040(UINT16 opcode)
 	case 13:
 		/* MVSK -- MoVe string from StacK */
 	case 14:
-		/* POPS -- POP String from stack	*/
+		/* POPS -- POP String from stack    */
 	case 15:
 		/* PSHS -- PuSH String to stack */
 
@@ -3004,9 +3004,9 @@ static void h0200(UINT16 opcode)
 	{	/* LMF */
 		/* LMF --- Load memory Map File */
 			/* Used by the memory mapper on ti990/10 with mapping option, ti990/12, and the TIM99610
-			mapper chip to be associated with tms99000.
-			Syntax: "LMF Rn,m" loads map file m (0 or 1) with six words of memory, starting at address
-			specified in workspace register Rn (0 thru 15). */
+            mapper chip to be associated with tms99000.
+            Syntax: "LMF Rn,m" loads map file m (0 or 1) with six words of memory, starting at address
+            specified in workspace register Rn (0 thru 15). */
 			#if HAS_PRIVILEGE
 				if (I.STATUS & ST_PR)
 				{
@@ -3153,7 +3153,7 @@ static void h0200(UINT16 opcode)
 	case 10:  /* IDLE */
 		/* IDLE -- IDLE until a reset, interrupt, load */
 		/* The TMS99000 locks until an interrupt happen (like with 68k STOP instruction),
-		   and continuously performs a special CRU write (code 2). */
+           and continuously performs a special CRU write (code 2). */
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
 			{
@@ -3259,7 +3259,7 @@ static void h0200(UINT16 opcode)
 		/* LREX -- Load or REstart eXecution */
 		/* Perform a special CRU write (code 7). */
 		/* An external circuitery could, for instance, activate the LOAD* line,
-		   causing a non-maskable LOAD interrupt (vector -1). */
+           causing a non-maskable LOAD interrupt (vector -1). */
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
 			{
@@ -3286,7 +3286,7 @@ static void h0200(UINT16 opcode)
 		/* CKOF -- ClocK OFf */
 		/* Disable the line clock interrupt. */
 		/* We use a callback because the line clock is implemented in machine
-		   code, not in the CPU core. */
+           code, not in the CPU core. */
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
 			{
@@ -3305,7 +3305,7 @@ static void h0200(UINT16 opcode)
 	case 15:  /* LREX */
 		/* LREX -- Load or REstart eXecution */
 		/* Trigger a LOAD interrupt (vector -1).  (We use a callback, and I
-		   have forgotten the reason why.) */
+           have forgotten the reason why.) */
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
 			{
@@ -3375,7 +3375,7 @@ static void h0400(UINT16 opcode)
 		/* Executes instruction *S */
 		execute(readwordX(addr, src_map));
 		/* On tms9900, the X instruction actually takes 8 cycles, but we gain 2 cycles on the next
-		instruction, as we don't need to fetch it. */
+        instruction, as we don't need to fetch it. */
 		CYCLES(1, 6, 2);
 		break;
 	case 3:   /* CLR */
@@ -3537,10 +3537,10 @@ static void h0400(UINT16 opcode)
 
 #if HAS_MAPPING
 	/* Used by the memory mapper on ti990/10 with mapping option, ti990/12, and the TIM99610
-	mapper chip to be associated with tms99000. */
+    mapper chip to be associated with tms99000. */
 	/* These opcode allow access to another page without the need of switching a page someplace. */
 	/* Note that, if I read the 990/10 schematics correctly, two consecutive LDS or LDD would
-	cause some trouble.  */
+    cause some trouble.  */
 	case 14:  /* LDS */
 		/* LDS --- Long Distance Source */
 
@@ -3731,7 +3731,7 @@ static void h0c00(UINT16 opcode)
 		case 15:
 			/* XIT --- eXIT from floating point interpreter */
 			/* Generated by some compilers, but equivalent to NOP on TI990/12.  May have been used
-			by some software floating-point emulators. */
+            by some software floating-point emulators. */
 			break;
 
 		default:
@@ -4010,9 +4010,9 @@ static void h1000(UINT16 opcode)
 
 			/* Set ST_OP bit. */
 			/*if (i & 1)
-				I.STATUS |= ST_OP;
-			else
-				I.STATUS &= ~ ST_OP;*/
+                I.STATUS |= ST_OP;
+            else
+                I.STATUS &= ~ ST_OP;*/
 
 			/* Jump accordingly. */
 			if (i & 1)  /*(I.STATUS & ST_OP)*/
@@ -4537,9 +4537,9 @@ static void h4000b(UINT16 opcode)
 		setst_byte_laep(value);
 		#if (TMS99XX_MODEL <= TMS9985_ID)
 			/* On ti990/10 and tms9900, MOVB needs to read destination, because it cannot actually
-			  read one single byte.  It reads a word, replaces the revelant byte, then write
-			  the result.  A tms9980 should not need to do so, but still does, because it is just
-			  a tms9900 with a 16 to 8 bit multiplexer (instead of a new chip design, like tms9995). */
+              read one single byte.  It reads a word, replaces the revelant byte, then write
+              the result.  A tms9980 should not need to do so, but still does, because it is just
+              a tms9900 with a 16 to 8 bit multiplexer (instead of a new chip design, like tms9995). */
 			(void)readbyteX(dest, dst_map);
 #endif
 		writebyteX(dest, value, dst_map);
@@ -4670,15 +4670,15 @@ static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
 					else
 					{
 						/*if ((info->i < top)
-								&& (info->i > I.map_files[I.cur_map].limit[0])
-								&& (info->i > I.map_files[I.cur_map].limit[1])
-								&& (info->i > I.map_files[I.cur_map].limit[2]))
-							I.PC = info->i;
-						else*/
+                                && (info->i > I.map_files[I.cur_map].limit[0])
+                                && (info->i > I.map_files[I.cur_map].limit[1])
+                                && (info->i > I.map_files[I.cur_map].limit[2]))
+                            I.PC = info->i;
+                        else*/
 							I.PC = 0;
 					}
 					/*if (info->i >= top)
-						I.PC = 0;*/
+                        I.PC = 0;*/
 				}
 				I.PC &= 0xfffe;
 			}
@@ -4708,7 +4708,7 @@ static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS9900_R13:		I.FR[13]= info->i;						break;
 		case CPUINFO_INT_REGISTER + TMS9900_R14:		I.FR[14]= info->i;						break;
 		case CPUINFO_INT_REGISTER + TMS9900_R15:		I.FR[15]= info->i;						break;
-#endif		
+#endif
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
@@ -4734,7 +4734,7 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;/*8 with 990/12, 99105, 99110*/break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;/*TODO: compute this value*/break;
-		
+
 #if (USE_16_BIT_ACCESSORS)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 #else
@@ -4784,10 +4784,10 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
 /* not implemented */
-/*		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		info->i = get_irq_line(INPUT_LINE_NMI);	break;
-		case CPUINFO_INT_INPUT_STATE + 0:				info->i = get_irq_line(0);				break;
-		case CPUINFO_INT_INPUT_STATE + 1:				info->i = get_irq_line(1);				break;
-		case CPUINFO_INT_INPUT_STATE + 2:					info->i = get_irq_line(2);				break;*/
+/*      case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:      info->i = get_irq_line(INPUT_LINE_NMI); break;
+        case CPUINFO_INT_INPUT_STATE + 0:               info->i = get_irq_line(0);              break;
+        case CPUINFO_INT_INPUT_STATE + 1:               info->i = get_irq_line(1);              break;
+        case CPUINFO_INT_INPUT_STATE + 2:                   info->i = get_irq_line(2);              break;*/
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 

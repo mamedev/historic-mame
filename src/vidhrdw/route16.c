@@ -123,7 +123,7 @@ WRITE8_HANDLER( stratvox_sn76477_w )
      * 5    - SN76477 mixer b
      * 4    - SN76477 mixer c
      * 3    - SN76477 envelope 1
-	 * 2	- SN76477 envelope 2
+     * 2    - SN76477 envelope 2
      * 1    - SN76477 vco
      * 0    - SN76477 enable
      ***************************************************************/
@@ -171,8 +171,8 @@ READ8_HANDLER ( speakres_in3_r )
 	int bit2=4, bit1=2, bit0=1;
 
 	/* just using a counter, the constants are the number of reads
-	   before going low, each read is 40 cycles apart. the constants
-	   were chosen based on the startup tests and for vr0=vr2 */
+       before going low, each read is 40 cycles apart. the constants
+       were chosen based on the startup tests and for vr0=vr2 */
 	speakres_vrx++;
 	if(speakres_vrx>0x300) bit0=0;		/* VR0 100k ohm - speech */
 	if(speakres_vrx>0x200) bit1=0;		/* VR1  50k ohm - main volume */

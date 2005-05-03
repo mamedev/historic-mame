@@ -128,7 +128,7 @@ static ADDRESS_MAP_START( skychut_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x5000, 0x53ff) AM_READ(MRA8_RAM) /* BKgrnd colour ??? */
 	AM_RANGE(0xa200, 0xa200) AM_READ(input_port_1_r)
 	AM_RANGE(0xa300, 0xa300) AM_READ(input_port_0_r)
-/*	AM_RANGE(0xa700, 0xa700) AM_READ(input_port_3_r)*/
+/*  AM_RANGE(0xa700, 0xa700) AM_READ(input_port_3_r)*/
 	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
 ADDRESS_MAP_END
 
@@ -139,7 +139,7 @@ static ADDRESS_MAP_START( skychut_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x4800, 0x4bff) AM_WRITE(skychut_colorram_w) AM_BASE(&colorram) /* foreground colour  */
 	AM_RANGE(0x5000, 0x53ff) AM_WRITE(MWA8_RAM) AM_BASE(&iremm15_chargen) /* background ????? */
-//	AM_RANGE(0xa100, 0xa1ff) AM_WRITE(MWA8_RAM) /* Sound writes????? */
+//  AM_RANGE(0xa100, 0xa1ff) AM_WRITE(MWA8_RAM) /* Sound writes????? */
 	AM_RANGE(0xa400, 0xa400) AM_WRITE(skychut_ctrl_w)	/* line at bottom of screen?, sound, flip screen */
 	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_ROM)	/* for the reset / interrupt vectors */
 ADDRESS_MAP_END

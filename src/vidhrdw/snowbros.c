@@ -22,26 +22,26 @@ VIDEO_UPDATE( snowbros )
 
 
 	/*
-	 * Sprite Tile Format
-	 * ------------------
-	 *
-	 * Byte | Bit(s)   | Use
-	 * -----+-76543210-+----------------
-	 *	0-5	| -------- | ?
-	 *	6	| -------- | ?
-	 *	7	| xxxx.... | Palette Bank
-	 *	7	| .......x | XPos - Sign Bit
-	 *	9	| xxxxxxxx | XPos
-	 *	7	| ......x. | YPos - Sign Bit
-	 *	B	| xxxxxxxx | YPos
-	 *	7	| .....x.. | Use Relative offsets
-	 *	C	| -------- | ?
-	 *	D	| xxxxxxxx | Sprite Number (low 8 bits)
-	 *	E	| -------- | ?
-	 *	F	| ....xxxx | Sprite Number (high 4 bits)
-	 *	F	| x....... | Flip Sprite Y-Axis
-	 *	F	| .x...... | Flip Sprite X-Axis
-	 */
+     * Sprite Tile Format
+     * ------------------
+     *
+     * Byte | Bit(s)   | Use
+     * -----+-76543210-+----------------
+     *  0-5 | -------- | ?
+     *  6   | -------- | ?
+     *  7   | xxxx.... | Palette Bank
+     *  7   | .......x | XPos - Sign Bit
+     *  9   | xxxxxxxx | XPos
+     *  7   | ......x. | YPos - Sign Bit
+     *  B   | xxxxxxxx | YPos
+     *  7   | .....x.. | Use Relative offsets
+     *  C   | -------- | ?
+     *  D   | xxxxxxxx | Sprite Number (low 8 bits)
+     *  E   | -------- | ?
+     *  F   | ....xxxx | Sprite Number (high 4 bits)
+     *  F   | x....... | Flip Sprite Y-Axis
+     *  F   | .x...... | Flip Sprite X-Axis
+     */
 
 	/* This clears & redraws the entire screen each pass */
 
@@ -105,9 +105,9 @@ VIDEO_UPDATE( wintbob )
 	{
 		int xpos  = spriteram16[offs] & 0xff;
 		int ypos  = spriteram16[offs+4] & 0xff;
-/*		int unk1  = spriteram16[offs+1] & 0x01;*/  /* Unknown .. Set for the Bottom Left part of Sprites */
+/*      int unk1  = spriteram16[offs+1] & 0x01;*/  /* Unknown .. Set for the Bottom Left part of Sprites */
 		int disbl = spriteram16[offs+1] & 0x02;
-/*		int unk2  = spriteram16[offs+1] & 0x04;*/  /* Unknown .. Set for most things */
+/*      int unk2  = spriteram16[offs+1] & 0x04;*/  /* Unknown .. Set for most things */
 		int wrapr = spriteram16[offs+1] & 0x08;
 		int colr  = (spriteram16[offs+1] & 0xf0) >> 4;
 		int tilen = (spriteram16[offs+2] << 8) + (spriteram16[offs+3] & 0xff);
@@ -143,26 +143,26 @@ VIDEO_UPDATE( snowbro3 )
 	int sx=0, sy=0, x=0, y=0, offs;
 
 	/*
-	 * Sprite Tile Format
-	 * ------------------
-	 *
-	 * Byte | Bit(s)   | Use
-	 * -----+-76543210-+----------------
-	 *	0-5	| -------- | ?
-	 *	6	| -------- | ?
-	 *	7	| xxxx.... | Palette Bank
-	 *	7	| .......x | XPos - Sign Bit
-	 *	9	| xxxxxxxx | XPos
-	 *	7	| ......x. | YPos - Sign Bit
-	 *	B	| xxxxxxxx | YPos
-	 *	7	| .....x.. | Use Relative offsets
-	 *	C	| -------- | ?
-	 *	D	| xxxxxxxx | Sprite Number (low 8 bits)
-	 *	E	| -------- | ?
-	 *	F	| ....xxxx | Sprite Number (high 4 bits)
-	 *	F	| x....... | Flip Sprite Y-Axis
-	 *	F	| .x...... | Flip Sprite X-Axis
-	 */
+     * Sprite Tile Format
+     * ------------------
+     *
+     * Byte | Bit(s)   | Use
+     * -----+-76543210-+----------------
+     *  0-5 | -------- | ?
+     *  6   | -------- | ?
+     *  7   | xxxx.... | Palette Bank
+     *  7   | .......x | XPos - Sign Bit
+     *  9   | xxxxxxxx | XPos
+     *  7   | ......x. | YPos - Sign Bit
+     *  B   | xxxxxxxx | YPos
+     *  7   | .....x.. | Use Relative offsets
+     *  C   | -------- | ?
+     *  D   | xxxxxxxx | Sprite Number (low 8 bits)
+     *  E   | -------- | ?
+     *  F   | ....xxxx | Sprite Number (high 4 bits)
+     *  F   | x....... | Flip Sprite Y-Axis
+     *  F   | .x...... | Flip Sprite X-Axis
+     */
 
 	/* This clears & redraws the entire screen each pass */
 

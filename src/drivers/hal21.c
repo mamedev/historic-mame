@@ -1,7 +1,7 @@
 /*
-	Hal21
-	ASO
-	Alpha Mission
+    Hal21
+    ASO
+    Alpha Mission
 
 
 Change Log
@@ -142,10 +142,10 @@ PALETTE_INIT( aso )
 	int num_colors = 1024;
 
 	/*
-		palette format is RRRG GGBB B??? the three unknown bits are used but
-		I'm not sure how, I'm currently using them as least significant bit but
-		that's most likely wrong.
-	*/
+        palette format is RRRG GGBB B??? the three unknown bits are used but
+        I'm not sure how, I'm currently using them as least significant bit but
+        that's most likely wrong.
+    */
 	for( i=0; i<num_colors; i++ )
 	{
 		int bit0=0,bit1,bit2,bit3,r,g,b;

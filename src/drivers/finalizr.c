@@ -57,9 +57,9 @@ WRITE8_HANDLER( finalizr_i8039_irq_w )
 static WRITE8_HANDLER( i8039_irqen_w )
 {
 	/*  bit 0x80 goes active low, indicating that the
-		external IRQ being serviced is complete
-		bit 0x40 goes active high to enable the DAC ?
-	*/
+        external IRQ being serviced is complete
+        bit 0x40 goes active high to enable the DAC ?
+    */
 
 	if ((data & 0x80) == 0)
 		cpunum_set_input_line(1, 0, CLEAR_LINE);
@@ -68,14 +68,14 @@ static WRITE8_HANDLER( i8039_irqen_w )
 static READ8_HANDLER( i8039_T1_r )
 {
 	/*  I suspect the clock-out from the I8039 T0 line should be connected
-		here (See the i8039_T0_w handler below).
-		The frequency of this clock cannot be greater than I8039 CLKIN / 45
-		Accounting for the I8039 input clock, and internal/external divisors
-		the frequency here should be 192KHz (I8039 CLKIN / 48)
+        here (See the i8039_T0_w handler below).
+        The frequency of this clock cannot be greater than I8039 CLKIN / 45
+        Accounting for the I8039 input clock, and internal/external divisors
+        the frequency here should be 192KHz (I8039 CLKIN / 48)
 
-		Here we apply a positive edge every 3.2 reads, to simulate 192KHz
-		based on the I8039 main xtal clock input frequency of 9.216MHz
-	*/
+        Here we apply a positive edge every 3.2 reads, to simulate 192KHz
+        based on the I8039 main xtal clock input frequency of 9.216MHz
+    */
 
 	finalizr_T1_line++;
 	if ((finalizr_T1_line % 3) == 0)
@@ -92,12 +92,12 @@ static READ8_HANDLER( i8039_T1_r )
 
 static WRITE8_HANDLER( i8039_T0_w )
 {
-	/*	This becomes a clock output at a frequency of 3.072MHz (derived
-		by internally dividing the main xtal clock input by a factor of 3).
-		This output is divided by a factor of 16, then used as a 192KHz
-		input clock to the T1 input line.
-		The I8039 core currently doesn't support clock out on this pin.
-	*/
+	/*  This becomes a clock output at a frequency of 3.072MHz (derived
+        by internally dividing the main xtal clock input by a factor of 3).
+        This output is divided by a factor of 16, then used as a 192KHz
+        input clock to the T1 input line.
+        The I8039 core currently doesn't support clock out on this pin.
+    */
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -116,7 +116,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0001, 0x0001) AM_WRITE(MWA8_RAM) AM_BASE(&finalizr_scroll)
 	AM_RANGE(0x0003, 0x0003) AM_WRITE(finalizr_videoctrl_w)
 	AM_RANGE(0x0004, 0x0004) AM_WRITE(MWA8_RAM) AM_BASE(&finalizr_interrupt_enable)
-//	AM_RANGE(0x0020, 0x003f) AM_WRITE(MWA8_RAM) AM_BASE(&finalizr_scroll)
+//  AM_RANGE(0x0020, 0x003f) AM_WRITE(MWA8_RAM) AM_BASE(&finalizr_scroll)
 	AM_RANGE(0x0818, 0x0818) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x0819, 0x0819) AM_WRITE(finalizr_coin_w)
 	AM_RANGE(0x081a, 0x081a) AM_WRITE(SN76496_0_w)	/* This address triggers the SN chip to read the data port. */
@@ -220,7 +220,7 @@ INPUT_PORTS_START( finalizr )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-/* 	PORT_DIPSETTING(    0x00, "Invalid" ) */
+/*  PORT_DIPSETTING(    0x00, "Invalid" ) */
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -327,7 +327,7 @@ INPUT_PORTS_START( finalizb )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-/* 	PORT_DIPSETTING(    0x00, "Invalid" ) */
+/*  PORT_DIPSETTING(    0x00, "Invalid" ) */
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )

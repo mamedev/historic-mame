@@ -60,7 +60,7 @@ WRITE8_HANDLER( safarir_ram_w )
 		if (offset < 0x400)
 		{
 			tilemap_mark_tile_dirty(fg_tilemap, offset);
-		} 
+		}
 		else
 		{
 			tilemap_mark_tile_dirty(bg_tilemap, offset - 0x400);
@@ -101,13 +101,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( safarir )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if (!bg_tilemap)
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if (!fg_tilemap)
@@ -141,7 +141,7 @@ static PALETTE_INIT( safarir )
 	palette_set_color(0, 0x00, 0x00, 0x00);
 	palette_set_color(1, 0x80, 0x80, 0x80);
 	palette_set_color(2, 0xff, 0xff, 0xff);
-	
+
 	palette_set_color(3, 0x00, 0x00, 0x00);
 	palette_set_color(4, 0x00, 0x00, 0x00);
 	palette_set_color(5, 0x00, 0x00, 0x00);
@@ -223,22 +223,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* the following is copied from spaceinv */
 struct SN76477interface sn76477_interface =
 {
-	0	/* N/C */,		/*	4  noise_res		 */
-	0	/* N/C */,		/*	5  filter_res		 */
-	0	/* N/C */,		/*	6  filter_cap		 */
-	0	/* N/C */,		/*	7  decay_res		 */
-	0	/* N/C */,		/*	8  attack_decay_cap  */
-	RES_K(100) ,		/* 10  attack_res		 */
-	RES_K(56)  ,		/* 11  amplitude_res	 */
-	RES_K(10)  ,		/* 12  feedback_res 	 */
-	0	/* N/C */,		/* 16  vco_voltage		 */
-	CAP_U(0.1) ,		/* 17  vco_cap			 */
-	RES_K(8.2) ,		/* 18  vco_res			 */
-	5.0		 ,		/* 19  pitch_voltage	 */
-	RES_K(120) ,		/* 20  slf_res			 */
-	CAP_U(1.0) ,		/* 21  slf_cap			 */
-	0	/* N/C */,		/* 23  oneshot_cap		 */
-	0	/* N/C */		/* 24  oneshot_res		 */
+	0	/* N/C */,		/*  4  noise_res         */
+	0	/* N/C */,		/*  5  filter_res        */
+	0	/* N/C */,		/*  6  filter_cap        */
+	0	/* N/C */,		/*  7  decay_res         */
+	0	/* N/C */,		/*  8  attack_decay_cap  */
+	RES_K(100) ,		/* 10  attack_res        */
+	RES_K(56)  ,		/* 11  amplitude_res     */
+	RES_K(10)  ,		/* 12  feedback_res      */
+	0	/* N/C */,		/* 16  vco_voltage       */
+	CAP_U(0.1) ,		/* 17  vco_cap           */
+	RES_K(8.2) ,		/* 18  vco_res           */
+	5.0		 ,		/* 19  pitch_voltage     */
+	RES_K(120) ,		/* 20  slf_res           */
+	CAP_U(1.0) ,		/* 21  slf_cap           */
+	0	/* N/C */,		/* 23  oneshot_cap       */
+	0	/* N/C */		/* 24  oneshot_res       */
 };
 
 static MACHINE_DRIVER_START( safarir )

@@ -11,23 +11,23 @@ Reverse-engineering and MAME driver by Norbert Kehrer (December 2003).
 Hardware:
 ---------
 
-CPU		TMS9980 (Texas Instruments)
-Sound chip	AY-3-8910
+CPU     TMS9980 (Texas Instruments)
+Sound chip  AY-3-8910
 
 
 Memory map:
 -----------
 
->0000 - >07ff	Fixed ROM
->0800 - >17ff	Bank-switched ROM
->1800 - >1bff	RAM
->1efc		Input port 1
->1efd		Input port 2
->1efe		Read:  DIP switch port 1
-		Write: Control port of AY-3-8910 sound chip
->1eff		Read: DIP switch port 2
-		Write: Data port of AY-3-8910
->2000 - >3fff	Video RAM (CPU view of it, in reality there are 24 KB on the video board)
+>0000 - >07ff   Fixed ROM
+>0800 - >17ff   Bank-switched ROM
+>1800 - >1bff   RAM
+>1efc       Input port 1
+>1efd       Input port 2
+>1efe       Read:  DIP switch port 1
+        Write: Control port of AY-3-8910 sound chip
+>1eff       Read: DIP switch port 2
+        Write: Data port of AY-3-8910
+>2000 - >3fff   Video RAM (CPU view of it, in reality there are 24 KB on the video board)
 
 
 Input ports:
@@ -83,14 +83,14 @@ DIP switch port 2, mapped to memory address 0x1eff:
 CRU lines:
 ----------
 
->400	Select bitplane for writes into video RAM (bit 1)
->401	Select bitplane for writes into video RAM (bit 0)
->402	ROM bank selector (bit 1)
->404	ROM bank selector (bit 0)
->406	Interrupt acknowledge (clears interrupt line)
->407	Watchdog reset (?)
->b12	Unknown, maybe some special-hardware sound effect or lights blinking (?)
->b13	Unknown, maybe some special-hardware sound effect or lights blinking (?)
+>400    Select bitplane for writes into video RAM (bit 1)
+>401    Select bitplane for writes into video RAM (bit 0)
+>402    ROM bank selector (bit 1)
+>404    ROM bank selector (bit 0)
+>406    Interrupt acknowledge (clears interrupt line)
+>407    Watchdog reset (?)
+>b12    Unknown, maybe some special-hardware sound effect or lights blinking (?)
+>b13    Unknown, maybe some special-hardware sound effect or lights blinking (?)
 
 ***************************************************************************/
 
@@ -297,7 +297,7 @@ static MACHINE_DRIVER_START( supertnk )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

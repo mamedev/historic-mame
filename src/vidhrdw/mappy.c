@@ -192,8 +192,8 @@ static UINT32 mappy_tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 nu
 	if (col & 0x20)
 	{
 		/* in the following code, note the +2 followed by & 0x0f. This causes unintuitive
-		   mapping from logical to hardware coordinates, which is true to the hardware.
-		   Not doing it that way would cause missing tiles in motos and todruaga */
+           mapping from logical to hardware coordinates, which is true to the hardware.
+           Not doing it that way would cause missing tiles in motos and todruaga */
 		if (row & 0x20)
 			offs = 0x7ff;	// outside visible area
 		else

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	MAME Compressed Hunks of Data file format
+    MAME Compressed Hunks of Data file format
 
 ***************************************************************************/
 
@@ -12,69 +12,69 @@
 
 /***************************************************************************
 
-	Compressed Hunks of Data header format. All numbers are stored in
-	Motorola (big-endian) byte ordering. The header is 76 (V1) or 80 (V2) 
-	bytes long.
+    Compressed Hunks of Data header format. All numbers are stored in
+    Motorola (big-endian) byte ordering. The header is 76 (V1) or 80 (V2)
+    bytes long.
 
-	V1 header:
+    V1 header:
 
-	[  0] char   tag[8];		// 'MComprHD'
-	[  8] UINT32 length;		// length of header (including tag and length fields)
-	[ 12] UINT32 version;		// drive format version
-	[ 16] UINT32 flags;			// flags (see below)
-	[ 20] UINT32 compression;	// compression type
-	[ 24] UINT32 hunksize;		// 512-byte sectors per hunk
-	[ 28] UINT32 totalhunks;	// total # of hunks represented
-	[ 32] UINT32 cylinders;		// number of cylinders on hard disk
-	[ 36] UINT32 heads;			// number of heads on hard disk
-	[ 40] UINT32 sectors;		// number of sectors on hard disk
-	[ 44] UINT8  md5[16];		// MD5 checksum of raw data
-	[ 60] UINT8  parentmd5[16];	// MD5 checksum of parent file
-	[ 76] (V1 header length)
+    [  0] char   tag[8];        // 'MComprHD'
+    [  8] UINT32 length;        // length of header (including tag and length fields)
+    [ 12] UINT32 version;       // drive format version
+    [ 16] UINT32 flags;         // flags (see below)
+    [ 20] UINT32 compression;   // compression type
+    [ 24] UINT32 hunksize;      // 512-byte sectors per hunk
+    [ 28] UINT32 totalhunks;    // total # of hunks represented
+    [ 32] UINT32 cylinders;     // number of cylinders on hard disk
+    [ 36] UINT32 heads;         // number of heads on hard disk
+    [ 40] UINT32 sectors;       // number of sectors on hard disk
+    [ 44] UINT8  md5[16];       // MD5 checksum of raw data
+    [ 60] UINT8  parentmd5[16]; // MD5 checksum of parent file
+    [ 76] (V1 header length)
 
-	V2 header:
+    V2 header:
 
-	[  0] char   tag[8];		// 'MComprHD'
-	[  8] UINT32 length;		// length of header (including tag and length fields)
-	[ 12] UINT32 version;		// drive format version
-	[ 16] UINT32 flags;			// flags (see below)
-	[ 20] UINT32 compression;	// compression type
-	[ 24] UINT32 hunksize;		// seclen-byte sectors per hunk
-	[ 28] UINT32 totalhunks;	// total # of hunks represented
-	[ 32] UINT32 cylinders;		// number of cylinders on hard disk
-	[ 36] UINT32 heads;			// number of heads on hard disk
-	[ 40] UINT32 sectors;		// number of sectors on hard disk
-	[ 44] UINT8  md5[16];		// MD5 checksum of raw data
-	[ 60] UINT8  parentmd5[16];	// MD5 checksum of parent file
-	[ 76] UINT32 seclen;		// number of bytes per sector
-	[ 80] (V2 header length)
+    [  0] char   tag[8];        // 'MComprHD'
+    [  8] UINT32 length;        // length of header (including tag and length fields)
+    [ 12] UINT32 version;       // drive format version
+    [ 16] UINT32 flags;         // flags (see below)
+    [ 20] UINT32 compression;   // compression type
+    [ 24] UINT32 hunksize;      // seclen-byte sectors per hunk
+    [ 28] UINT32 totalhunks;    // total # of hunks represented
+    [ 32] UINT32 cylinders;     // number of cylinders on hard disk
+    [ 36] UINT32 heads;         // number of heads on hard disk
+    [ 40] UINT32 sectors;       // number of sectors on hard disk
+    [ 44] UINT8  md5[16];       // MD5 checksum of raw data
+    [ 60] UINT8  parentmd5[16]; // MD5 checksum of parent file
+    [ 76] UINT32 seclen;        // number of bytes per sector
+    [ 80] (V2 header length)
 
-	V3 header:
+    V3 header:
 
-	[  0] char   tag[8];		// 'MComprHD'
-	[  8] UINT32 length;		// length of header (including tag and length fields)
-	[ 12] UINT32 version;		// drive format version
-	[ 16] UINT32 flags;			// flags (see below)
-	[ 20] UINT32 compression;	// compression type
-	[ 24] UINT32 totalhunks;	// total # of hunks represented
-	[ 28] UINT64 logicalbytes;	// logical size of the data (in bytes)
-	[ 36] UINT64 metaoffset;	// offset to the first blob of metadata
-	[ 44] UINT8  md5[16];		// MD5 checksum of raw data
-	[ 60] UINT8  parentmd5[16];	// MD5 checksum of parent file
-	[ 76] UINT32 hunkbytes;		// number of bytes per hunk
-	[ 80] UINT8  sha1[20];		// SHA1 checksum of raw data
-	[100] UINT8  parentsha1[20];// SHA1 checksum of parent file
-	[120] (V3 header length)
+    [  0] char   tag[8];        // 'MComprHD'
+    [  8] UINT32 length;        // length of header (including tag and length fields)
+    [ 12] UINT32 version;       // drive format version
+    [ 16] UINT32 flags;         // flags (see below)
+    [ 20] UINT32 compression;   // compression type
+    [ 24] UINT32 totalhunks;    // total # of hunks represented
+    [ 28] UINT64 logicalbytes;  // logical size of the data (in bytes)
+    [ 36] UINT64 metaoffset;    // offset to the first blob of metadata
+    [ 44] UINT8  md5[16];       // MD5 checksum of raw data
+    [ 60] UINT8  parentmd5[16]; // MD5 checksum of parent file
+    [ 76] UINT32 hunkbytes;     // number of bytes per hunk
+    [ 80] UINT8  sha1[20];      // SHA1 checksum of raw data
+    [100] UINT8  parentsha1[20];// SHA1 checksum of parent file
+    [120] (V3 header length)
 
-	Flags:
-		0x00000001 - set if this drive has a parent
-		0x00000002 - set if this drive allows writes
+    Flags:
+        0x00000001 - set if this drive has a parent
+        0x00000002 - set if this drive allows writes
 
 ***************************************************************************/
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -135,7 +135,7 @@ enum
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -178,7 +178,7 @@ struct chd_interface
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 

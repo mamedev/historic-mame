@@ -171,7 +171,7 @@ static void *sp0250_start(int sndindex, int clock, const void *config)
 {
 	const struct sp0250_interface *intf = config;
 	struct sp0250 *sp;
-	
+
 	sp = auto_malloc(sizeof(*sp));
 	memset(sp, 0, sizeof(*sp));
 	sp->RNG = 1;

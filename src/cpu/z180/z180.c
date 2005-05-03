@@ -1,46 +1,46 @@
 /*****************************************************************************
  *
- *	 z180.c
- *	 Portable Z180 emulator V0.2
+ *   z180.c
+ *   Portable Z180 emulator V0.2
  *
- *	 Copyright (C) 2000 Juergen Buchmueller, all rights reserved.
+ *   Copyright (C) 2000 Juergen Buchmueller, all rights reserved.
  *
  *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *   You can contact me at juergen@mame.net or pullmoll@stop1984.com
  *
  *   - This source code is released as freeware for non-commercial purposes
  *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
- *	   The licensing terms of MAME apply to this piece of code for the MAME
- *	   project and derviative works, as defined by the MAME license. You
- *	   may opt to make modifications, improvements or derivative works under
- *	   that same conditions, and the MAME project may opt to keep
- *	   modifications, improvements or derivatives under their terms exclusively.
+ *     The licensing terms of MAME apply to this piece of code for the MAME
+ *     project and derviative works, as defined by the MAME license. You
+ *     may opt to make modifications, improvements or derivative works under
+ *     that same conditions, and the MAME project may opt to keep
+ *     modifications, improvements or derivatives under their terms exclusively.
  *
- *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *   - Alternatively you can choose to apply the terms of the "GPL" (see
  *     below) to this - and only this - piece of code or your derivative works.
- *	   Note that in no case your choice can have any impact on any other
- *	   source code of the MAME project, or binary, or executable, be it closely
- *	   or losely related to this piece of code.
+ *     Note that in no case your choice can have any impact on any other
+ *     source code of the MAME project, or binary, or executable, be it closely
+ *     or losely related to this piece of code.
  *
- *	-  At your choice you are also free to remove either licensing terms from
- *	   this file and continue to use it under only one of the two licenses. Do this
- *	   if you think that licenses are not compatible (enough) for you, or if you
- *	   consider either license 'too restrictive' or 'too free'.
+ *  -  At your choice you are also free to remove either licensing terms from
+ *     this file and continue to use it under only one of the two licenses. Do this
+ *     if you think that licenses are not compatible (enough) for you, or if you
+ *     consider either license 'too restrictive' or 'too free'.
  *
- *	-  GPL (GNU General Public License)
- *	   This program is free software; you can redistribute it and/or
- *	   modify it under the terms of the GNU General Public License
- *	   as published by the Free Software Foundation; either version 2
- *	   of the License, or (at your option) any later version.
+ *  -  GPL (GNU General Public License)
+ *     This program is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License
+ *     as published by the Free Software Foundation; either version 2
+ *     of the License, or (at your option) any later version.
  *
- *	   This program is distributed in the hope that it will be useful,
- *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	   GNU General Public License for more details.
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
  *
- *	   You should have received a copy of the GNU General Public License
- *	   along with this program; if not, write to the Free Software
- *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program; if not, write to the Free Software
+ *     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *
  *****************************************************************************/
@@ -94,7 +94,7 @@ static UINT8 z180_win_layout[] = {
 
 /****************************************************************************/
 /* The Z180 registers. HALT is set to 1 when the CPU is halted, the refresh */
-/* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)	*/
+/* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
 /****************************************************************************/
 typedef struct {
 /* 00 */	PAIR	PREPC,PC,SP,AF,BC,DE,HL,IX,IY;
@@ -105,8 +105,8 @@ typedef struct {
 /* 40 */	UINT8	io[64]; 			/* 64 internal 8 bit registers */
 /* 80 */	offs_t	mmu[16];			/* MMU address translation */
 /* c0 */	UINT8	tmdr[2];			/* latched TMDR0H and TMDR1H values */
-/* c2 */	UINT8	irq_max;			/* number of daisy chain devices		*/
-/* c3 */	INT8	request_irq;		/* daisy chain next request device		*/
+/* c2 */	UINT8	irq_max;			/* number of daisy chain devices        */
+/* c3 */	INT8	request_irq;		/* daisy chain next request device      */
 /* c4 */	INT8	service_irq;		/* daisy chain next reti handling device */
 /* c5 */	UINT8	nmi_state;			/* nmi line state */
 /* c6 */	UINT8	irq_state[10];		/* irq line states (INT0,INT1,INT2) */
@@ -130,14 +130,14 @@ typedef struct {
 #define Z180_CKA0	  0x00000001  /* I/O asynchronous clock 0 (active high) or DREQ0 (mux) */
 #define Z180_CKA1	  0x00000002  /* I/O asynchronous clock 1 (active high) or TEND1 (mux) */
 #define Z180_CKS	  0x00000004  /* I/O serial clock (active high) */
-#define Z180_CTS0	  0x00000100  /* I	 clear to send 0 (active low) */
-#define Z180_CTS1	  0x00000200  /* I	 clear to send 1 (active low) or RXS (mux) */
-#define Z180_DCD0	  0x00000400  /* I	 data carrier detect (active low) */
-#define Z180_DREQ0	  0x00000800  /* I	 data request DMA ch 0 (active low) or CKA0 (mux) */
-#define Z180_DREQ1	  0x00001000  /* I	 data request DMA ch 1 (active low) */
-#define Z180_RXA0	  0x00002000  /* I	 asynchronous receive data 0 (active high) */
-#define Z180_RXA1	  0x00004000  /* I	 asynchronous receive data 1 (active high) */
-#define Z180_RXS	  0x00008000  /* I	 clocked serial receive data (active high) or CTS1 (mux) */
+#define Z180_CTS0	  0x00000100  /* I   clear to send 0 (active low) */
+#define Z180_CTS1	  0x00000200  /* I   clear to send 1 (active low) or RXS (mux) */
+#define Z180_DCD0	  0x00000400  /* I   data carrier detect (active low) */
+#define Z180_DREQ0	  0x00000800  /* I   data request DMA ch 0 (active low) or CKA0 (mux) */
+#define Z180_DREQ1	  0x00001000  /* I   data request DMA ch 1 (active low) */
+#define Z180_RXA0	  0x00002000  /* I   asynchronous receive data 0 (active high) */
+#define Z180_RXA1	  0x00004000  /* I   asynchronous receive data 1 (active high) */
+#define Z180_RXS	  0x00008000  /* I   clocked serial receive data (active high) or CTS1 (mux) */
 #define Z180_RTS0	  0x00010000  /*   O request to send (active low) */
 #define Z180_TEND0	  0x00020000  /*   O transfer end 0 (active low) or CKA1 (mux) */
 #define Z180_TEND1	  0x00040000  /*   O transfer end 1 (active low) */
@@ -147,9 +147,9 @@ typedef struct {
 #define Z180_TXS	  0x00400000  /*   O clocked serial transmit data (active high) */
 
 /*
- * Prevent warnings on NetBSD.  All identifiers beginning with an underscore 
- * followed by an uppercase letter are reserved by the C standard (ISO/IEC 
- * 9899:1999, 7.1.3) to be used by the implementation.  It'd be best to rename 
+ * Prevent warnings on NetBSD.  All identifiers beginning with an underscore
+ * followed by an uppercase letter are reserved by the C standard (ISO/IEC
+ * 9899:1999, 7.1.3) to be used by the implementation.  It'd be best to rename
  * all such instances, but this is less intrusive and error-prone.
  */
 #undef _B

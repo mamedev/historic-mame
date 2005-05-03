@@ -8,14 +8,14 @@ regarding this driver.
 F1 Dream protection workaround by Eric Hustvedt
 
 Memory Overview:
-	0xfe0800    sprites
-	0xfec000    text
-	0xfe4000    input ports,dip switches (read); sound out, video reg (write)
-	0xfe4002	protection (F1 Dream only)
-	0xfe8000    scroll registers
-	0xff8200    palette
-	0xffC000    working RAM
-	0xffEC70    high scores (not saved)
+    0xfe0800    sprites
+    0xfec000    text
+    0xfe4000    input ports,dip switches (read); sound out, video reg (write)
+    0xfe4002    protection (F1 Dream only)
+    0xfe8000    scroll registers
+    0xff8200    palette
+    0xffC000    working RAM
+    0xffEC70    high scores (not saved)
 
 ***************************************************************************/
 
@@ -45,11 +45,11 @@ static data16_t *ram16;
 
  Some notes:
  - The 8751 is triggered via location 0xfe4002, in place of the soundlatch normally
- 	present. The main cpu writes 0 to the location when it wants the 8751 to perform some work.
+    present. The main cpu writes 0 to the location when it wants the 8751 to perform some work.
  - The 8751 has memory which shadows locations 0xffffe0-0xffffff of the main cpu's address space.
  - The word at 0xffffe0 contains an 'opcode' which is written just before the write to 0xfe4002.
  - Some of the writes to the soundlatch may not be handled. 0x27fc is the main sound routine, the
- 	other locations are less frequently used.
+    other locations are less frequently used.
 */
 
 static int f1dream_613ea_lookup[16] = {

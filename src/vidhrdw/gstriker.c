@@ -11,8 +11,8 @@ extern data16_t *gs_mixer_regs;
 
 /*
 
-	VS920A - (Very) Simple tilemap chip
-	-----------------------------------
+    VS920A - (Very) Simple tilemap chip
+    -----------------------------------
 
 - 1 Plane
 - Tiles 8x8, 4bpp
@@ -20,8 +20,8 @@ extern data16_t *gs_mixer_regs;
 - No scrolling or other effects (at least in gstriker)
 
 
-	Videoram format:
-	----------------
+    Videoram format:
+    ----------------
 
 pppp tttt tttt tttt
 
@@ -100,8 +100,8 @@ static void VS920A_draw(int numchip, struct mame_bitmap* screen, const struct re
 
 /*
 
-	Fujitsu MB60553 - Tilemap chip
-	------------------------------
+    Fujitsu MB60553 - Tilemap chip
+    ------------------------------
 
 - 1 Plane
 - Tiles 16x16, 4bpp
@@ -111,16 +111,16 @@ static void VS920A_draw(int numchip, struct mame_bitmap* screen, const struct re
 - Surely another effect like roz/tilezoom, yet to be implemented
 
 
-	Videoram format
-	---------------
+    Videoram format
+    ---------------
 
 pppp bbbt tttt tttt
 
 t=tile, b=bank, p=palette
 
 
-	Registers
-	---------
+    Registers
+    ---------
 
 0 - Scroll X
 Fixed point 12.4 (seems wrong)
@@ -277,8 +277,8 @@ WRITE16_HANDLER(MB60553_1_vram_w)
 /*** Fujitsu CG10103 **********************************************/
 
 /*
-	Fujitsu CG10103 sprite generator
-	--------------------------------
+    Fujitsu CG10103 sprite generator
+    --------------------------------
 
 - Tile based
 - 16x16 4bpp tiles
@@ -294,8 +294,8 @@ tile numbers. Basically, the VS9210 indirects the tile number through a table in
 memory, before accessing the ROMs.
 
 
-	Sorting list format (VideoRAM offset 0)
-	---------------------------------------
+    Sorting list format (VideoRAM offset 0)
+    ---------------------------------------
 
 ?e-- ---f ssss ssss
 
@@ -305,8 +305,8 @@ s=sprite index
 ?=used together with 'e' almost always
 
 
-	Sprite format (VideoRAM offset 0x400)
-	-------------------------------------
+    Sprite format (VideoRAM offset 0x400)
+    -------------------------------------
 
 0: nnnn jjjy yyyy yyyy
 1: mmmm iiix xxxx xxxx

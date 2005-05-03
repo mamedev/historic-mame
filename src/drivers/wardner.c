@@ -1,25 +1,25 @@
 /***************************************************************************
 
-		ToaPlan game hardware from 1987
-		--------------------------------
-		Driver by: Quench
+        ToaPlan game hardware from 1987
+        --------------------------------
+        Driver by: Quench
 
 
 Supported games:
 
-	Toaplan Board Number:	TP-009
-	Taito Game Number:		B25
-		Wardners Forest (World)
-		Pyros			(USA)
-		Wardna no Mori	(Japan)
+    Toaplan Board Number:   TP-009
+    Taito Game Number:      B25
+        Wardners Forest (World)
+        Pyros           (USA)
+        Wardna no Mori  (Japan)
 
 Notes:
-		Basically the same video and machine hardware as Flying shark,
-		  except for the Main CPU which is a Z80 here.
-		See twincobr.c machine and video drivers to complete the
-		  hardware setup.
-		Also see Input Port definition header below, for instructions
-		  on how to enter test mode.
+        Basically the same video and machine hardware as Flying shark,
+          except for the Main CPU which is a Z80 here.
+        See twincobr.c machine and video drivers to complete the
+          hardware setup.
+        Also see Input Port definition header below, for instructions
+          on how to enter test mode.
 
 **************************** Memory & I/O Maps *****************************
 Z80:(0)  Main CPU
@@ -32,71 +32,71 @@ ae00-afff Spare unused, but tested Pallette RAM
 c000-c7ff Sound RAM - shared with C000-C7FF in Z80(1) RAM
 
 in:
-50		DSW A
-52		DSW B
-54		Player 1 controls
-56		Player 2 controls
-58		VBlank (bit 7) and coin-in/start inputs
-60		LSB data from char display layer
-61		MSB data from char display layer
-62		LSB data from BG   display layer
-63		MSB data from BG   display layer
-64		LSB data from FG   display layer
-65		MSB data from FG   display layer
+50      DSW A
+52      DSW B
+54      Player 1 controls
+56      Player 2 controls
+58      VBlank (bit 7) and coin-in/start inputs
+60      LSB data from char display layer
+61      MSB data from char display layer
+62      LSB data from BG   display layer
+63      MSB data from BG   display layer
+64      LSB data from FG   display layer
+65      MSB data from FG   display layer
 
 out:
-00		6845 CRTC offset register
-02		6845 CRTC register data
-10		char scroll LSB   < Y >
-11		char scroll MSB   < Y >
-12		char scroll LSB     X
-13		char scroll MSB     X
-14		char LSB RAM offset     20h * 40h  (0-07ff) and (4000-47ff) ???
-15		char MSB RAM offset
-20		BG   scroll LSB   < Y >
-21		BG   scroll MSB   < Y >
-22		BG   scroll LSB     X
-23		BG   scroll MSB     X
-24		BG   LSB RAM offset     40h * 40h  (0-0fff)
-25		BG   MSB RAM offset
-30		FG   scroll LSB   < Y >
-31		FG   scroll MSB   < Y >
-32		FG   scroll LSB     X
-33		FG   scroll MSB     X
-34		FG   LSB RAM offset     40h * 40h  (0-0fff)
-35		FG   MSB RAM offset
-40		spare scroll LSB  < Y >  (Not used)
-41		spare scroll MSB  < Y >  (Not used)
-5a-5c	Control registers
-		bits 7-4 always 0
-		bits 3-1 select the control signal to drive.
-		bit   0  is the value passed to the control signal.
-5a		data
-		00-01	INT line to TMS320C10 DSP (Active low trigger)
-		0c-0d	lockout for coin A input (Active low lockout)
-		0e-0f	lockout for coin B input (Active low lockout)
-5c		data
-		00-01	???
-		02-03	???
-		04-05	Active low INTerrupt to Z80(0) for screen refresh
-		06-07	Flip Screen (Active high flips)
-		08-09	Background RAM display bank switch
-		0a-0b	Foreground ROM display bank switch (not used here)
-		0c-0d	??? (what the hell does this do ?)
-60		LSB data to char display layer
-61		MSB data to char display layer
-62		LSB data to BG   display layer
-63		MSB data to BG   display layer
-64		LSB data to FG   display layer
-65		MSB data to FG   display layer
-70		ROM bank selector for Z80(0) address 8000-ffff
-		data
-		00  switch ROM from 8000-ffff out, and put sprite/palette/sound RAM back.
-		02  switch lower half of B25-18.ROM  ROM to 8000-ffff
-		03  switch upper half of B25-18.ROM  ROM to 8000-ffff
-		04  switch lower half of B25-19.ROM  ROM to 8000-ffff
-		05  switch upper half of B25-19.ROM  ROM to 8000-ffff
-		07  switch               B25-30.ROM  ROM to 8000-ffff
+00      6845 CRTC offset register
+02      6845 CRTC register data
+10      char scroll LSB   < Y >
+11      char scroll MSB   < Y >
+12      char scroll LSB     X
+13      char scroll MSB     X
+14      char LSB RAM offset     20h * 40h  (0-07ff) and (4000-47ff) ???
+15      char MSB RAM offset
+20      BG   scroll LSB   < Y >
+21      BG   scroll MSB   < Y >
+22      BG   scroll LSB     X
+23      BG   scroll MSB     X
+24      BG   LSB RAM offset     40h * 40h  (0-0fff)
+25      BG   MSB RAM offset
+30      FG   scroll LSB   < Y >
+31      FG   scroll MSB   < Y >
+32      FG   scroll LSB     X
+33      FG   scroll MSB     X
+34      FG   LSB RAM offset     40h * 40h  (0-0fff)
+35      FG   MSB RAM offset
+40      spare scroll LSB  < Y >  (Not used)
+41      spare scroll MSB  < Y >  (Not used)
+5a-5c   Control registers
+        bits 7-4 always 0
+        bits 3-1 select the control signal to drive.
+        bit   0  is the value passed to the control signal.
+5a      data
+        00-01   INT line to TMS320C10 DSP (Active low trigger)
+        0c-0d   lockout for coin A input (Active low lockout)
+        0e-0f   lockout for coin B input (Active low lockout)
+5c      data
+        00-01   ???
+        02-03   ???
+        04-05   Active low INTerrupt to Z80(0) for screen refresh
+        06-07   Flip Screen (Active high flips)
+        08-09   Background RAM display bank switch
+        0a-0b   Foreground ROM display bank switch (not used here)
+        0c-0d   ??? (what the hell does this do ?)
+60      LSB data to char display layer
+61      MSB data to char display layer
+62      LSB data to BG   display layer
+63      MSB data to BG   display layer
+64      LSB data to FG   display layer
+65      MSB data to FG   display layer
+70      ROM bank selector for Z80(0) address 8000-ffff
+        data
+        00  switch ROM from 8000-ffff out, and put sprite/palette/sound RAM back.
+        02  switch lower half of B25-18.ROM  ROM to 8000-ffff
+        03  switch upper half of B25-18.ROM  ROM to 8000-ffff
+        04  switch lower half of B25-19.ROM  ROM to 8000-ffff
+        05  switch upper half of B25-19.ROM  ROM to 8000-ffff
+        07  switch               B25-30.ROM  ROM to 8000-ffff
 
 
 
@@ -112,12 +112,12 @@ TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
 0000-0090 Internal RAM (words).
 
 in:
-01		data read from addressed Z80:(0) address space (Main RAM/Sprite RAM)
+01      data read from addressed Z80:(0) address space (Main RAM/Sprite RAM)
 
 out:
-00		address of Z80:(0) to read/write to
-01		data to write to addressed Z80:(0) address space (Main RAM/Sprite RAM)
-03		bit 15 goes to BIO line of TMS320C10. BIO is a polled input line.
+00      address of Z80:(0) to read/write to
+01      data to write to addressed Z80:(0) address space (Main RAM/Sprite RAM)
+03      bit 15 goes to BIO line of TMS320C10. BIO is a polled input line.
 
 
 ***************************************************************************/
@@ -250,11 +250,11 @@ ADDRESS_MAP_END
 
 
 /*****************************************************************************
-	Input Port definitions
+    Input Port definitions
 
-	There is a test mode for button/switch tests. To enter Test mode,
-	set the Cross Hatch Pattern DSW to on, restart and then press
-	player 1 start button when in the cross-hatch screen.
+    There is a test mode for button/switch tests. To enter Test mode,
+    set the Cross Hatch Pattern DSW to on, restart and then press
+    player 1 start button when in the cross-hatch screen.
 *****************************************************************************/
 
 #define  WARDNER_PLAYER_INPUT( player )										 \

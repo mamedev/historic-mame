@@ -10,7 +10,7 @@
 
    This software is dual-licensed: it may be used in MAME and properly licensed
    MAME derivatives under the terms of the MAME license.  For use outside of
-   MAME and properly licensed derivatives, it is available under the 
+   MAME and properly licensed derivatives, it is available under the
    terms of the GNU Lesser General Public License (LGPL), version 2.1.
    You may read the LGPL at http://www.gnu.org/licenses/lgpl.html
 
@@ -18,12 +18,12 @@
    Sep. 8, 2002 - fixed ymf278b_compute_rate when OCT is negative (RB)
    Dec. 11, 2002 - added ability to set non-standard clock rates (RB)
                    fixed envelope target for release (fixes missing
-		   instruments in hotdebut).
+           instruments in hotdebut).
                    Thanks to Team Japump! for MP3s from a real PCB.
-		   fixed crash if MAME is run with no sound.
-   June 4, 2003 -  Changed to dual-license with LGPL for use in OpenMSX. 
+           fixed crash if MAME is run with no sound.
+   June 4, 2003 -  Changed to dual-license with LGPL for use in OpenMSX.
                    OpenMSX contributed a bugfix where looped samples were
- 		    not being addressed properly, causing pitch fluctuation.
+            not being addressed properly, causing pitch fluctuation.
 */
 
 #include <math.h>
@@ -93,7 +93,7 @@ typedef struct
 	INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
 	int pan_left[16], pan_right[16];	// pan volume offsets
 	INT32 mix_level[8];
-	
+
 	sound_stream * stream;
 	int index;
 } YMF278BChip;
@@ -647,7 +647,7 @@ static void *ymf278b_start(int sndindex, int clock, const void *config)
 	const struct YMF278B_interface *intf;
 	int i;
 	YMF278BChip *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 	chip->index = sndindex;

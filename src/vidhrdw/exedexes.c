@@ -181,19 +181,19 @@ static UINT32 exedexes_fg_tilemap_scan( UINT32 col, UINT32 row, UINT32 num_cols,
 
 VIDEO_START( exedexes )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, exedexes_bg_tilemap_scan, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, exedexes_bg_tilemap_scan,
 		TILEMAP_OPAQUE, 32, 32, 64, 64);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, exedexes_fg_tilemap_scan, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, exedexes_fg_tilemap_scan,
 		TILEMAP_TRANSPARENT, 16, 16, 128, 128);
 
 	if ( !fg_tilemap )
 		return 1;
 
-	tx_tilemap = tilemap_create(get_tx_tile_info, tilemap_scan_rows, 
+	tx_tilemap = tilemap_create(get_tx_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 
 	if ( !tx_tilemap )
@@ -256,7 +256,7 @@ VIDEO_UPDATE( exedexes )
 		tilemap_set_scrolly(fg_tilemap, 0, ((exedexes_nbg_xscroll[1]) << 8) + exedexes_nbg_xscroll[0]);
 		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 	}
-	
+
 	exedexes_draw_sprites(bitmap, 0);
 
 	if (chon)

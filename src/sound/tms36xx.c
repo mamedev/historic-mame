@@ -161,12 +161,12 @@ static const int tune2[96*6] = {
 /*
  * The theme from Phoenix, a sad little tune.
  * Gerald Coy:
- *	 The starting song from Phoenix is coming from a old french movie and
- *	 it's called : "Jeux interdits" which means "unallowed games"  ;-)
+ *   The starting song from Phoenix is coming from a old french movie and
+ *   it's called : "Jeux interdits" which means "unallowed games"  ;-)
  * Mirko Buffoni:
- *	 It's called "Sogni proibiti" in italian, by Anonymous.
+ *   It's called "Sogni proibiti" in italian, by Anonymous.
  * Magic*:
- *	 This song is a classical piece called "ESTUDIO" from M.A.Robira.
+ *   This song is a classical piece called "ESTUDIO" from M.A.Robira.
  */
 static const int tune3[96*6] = {
 	A(2),	A(3),	A(4),	D(1),	 D(2),	  D(3),
@@ -284,7 +284,7 @@ static const int tune3[96*6] = {
 
 /* This is used to play single notes for the TMS3615/TMS3617 */
 static const int tune4[13*6] = {
-/*	16'     8'      5 1/3'  4'      2 2/3'  2'      */
+/*  16'     8'      5 1/3'  4'      2 2/3'  2'      */
 	B(0),	B(1),	Dx(2),	B(2),	Dx(3),	B(3),
 	C(1),	C(2),	E(2),	C(3),	E(3),	C(4),
 	Cx(1),	Cx(2),	F(2),	Cx(3),	F(3),	Cx(4),
@@ -494,10 +494,10 @@ static void *tms36xx_start(int sndindex, int clock, const void *config)
 	int j;
 	struct TMS36XX *tms;
 	int enable;
-	
+
 	tms = auto_malloc(sizeof(*tms));
 	memset(tms, 0, sizeof(*tms));
-	
+
 	tms->intf = config;
 
    tms->channel = stream_create(0, 1, Machine->sample_rate, tms, tms36xx_sound_update);
@@ -517,7 +517,7 @@ static void *tms36xx_start(int sndindex, int clock, const void *config)
 
    LOG(("TMS36xx samplerate    %d\n", tms->samplerate));
 	LOG(("TMS36xx basefreq      %d\n", tms->basefreq));
-	LOG(("TMS36xx decay         %d,%d,%d,%d,%d,%d\n", 
+	LOG(("TMS36xx decay         %d,%d,%d,%d,%d,%d\n",
 		tms->decay[0], tms->decay[1], tms->decay[2],
 		tms->decay[3], tms->decay[4], tms->decay[5]));
    LOG(("TMS36xx speed         %d\n", tms->speed));

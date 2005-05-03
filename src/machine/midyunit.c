@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Williams/Midway Y/Z-unit system
+    Williams/Midway Y/Z-unit system
 
 **************************************************************************/
 
@@ -50,7 +50,7 @@ static data16_t *t2_hack_mem;
 
 /*************************************
  *
- *	CMOS reads/writes
+ *  CMOS reads/writes
  *
  *************************************/
 
@@ -70,7 +70,7 @@ READ16_HANDLER( midyunit_cmos_r )
 
 /*************************************
  *
- *	CMOS enable and protection
+ *  CMOS enable and protection
  *
  *************************************/
 
@@ -135,7 +135,7 @@ READ16_HANDLER( midyunit_protection_r )
 
 /*************************************
  *
- *	Generic input ports
+ *  Generic input ports
  *
  *************************************/
 
@@ -148,7 +148,7 @@ READ16_HANDLER( midyunit_input_r )
 
 /*************************************
  *
- *	Special Terminator 2 input ports
+ *  Special Terminator 2 input ports
  *
  *************************************/
 
@@ -179,7 +179,7 @@ static WRITE16_HANDLER( term2_sound_w )
 
 /*************************************
  *
- *	Special Terminator 2 hack
+ *  Special Terminator 2 hack
  *
  *************************************/
 
@@ -217,7 +217,7 @@ static WRITE16_HANDLER( term2la1_hack_w )
 
 /*************************************
  *
- *	Generic driver init
+ *  Generic driver init
  *
  *************************************/
 
@@ -306,7 +306,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 		case SOUND_NARC:
 			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
-		
+
 		case SOUND_YAWDIM:
 			break;
 	}
@@ -316,10 +316,10 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 
 /*************************************
  *
- *	Z-unit init
+ *  Z-unit init
  *
- * 	music: 6809 driving YM2151, DAC
- * 	effects: 6809 driving CVSD, DAC
+ *  music: 6809 driving YM2151, DAC
+ *  effects: 6809 driving CVSD, DAC
  *
  *************************************/
 
@@ -332,9 +332,9 @@ DRIVER_INIT( narc )
 
 /*************************************
  *
- *	Y-unit init (CVSD)
+ *  Y-unit init (CVSD)
  *
- * 	music: 6809 driving YM2151, DAC, and CVSD
+ *  music: 6809 driving YM2151, DAC, and CVSD
  *
  *************************************/
 
@@ -423,9 +423,9 @@ DRIVER_INIT( strkforc )
 
 /*************************************
  *
- *	Y-unit init (ADPCM)
+ *  Y-unit init (ADPCM)
  *
- * 	music: 6809 driving YM2151, DAC, and OKIM6295
+ *  music: 6809 driving YM2151, DAC, and OKIM6295
  *
  *************************************/
 
@@ -506,7 +506,7 @@ DRIVER_INIT( totcarn )
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -529,7 +529,7 @@ MACHINE_INIT( midyunit )
 		case SOUND_ADPCM:
 			williams_adpcm_init(1);
 			break;
-		
+
 		case SOUND_YAWDIM:
 			break;
 	}
@@ -539,7 +539,7 @@ MACHINE_INIT( midyunit )
 
 /*************************************
  *
- *	Sound write handlers
+ *  Sound write handlers
  *
  *************************************/
 
@@ -568,7 +568,7 @@ WRITE16_HANDLER( midyunit_sound_w )
 			case SOUND_ADPCM:
 				williams_adpcm_data_w(data);
 				break;
-		
+
 			case SOUND_YAWDIM:
 				soundlatch_w(0, data);
 				cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);

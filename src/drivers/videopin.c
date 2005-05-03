@@ -1,12 +1,12 @@
 /*************************************************************************
 
-	Atari Video Pinball driver
+    Atari Video Pinball driver
 
-	by Sebastien Monassa (smonassa@mail.dotcom.fr) / overhaul by SJ
+    by Sebastien Monassa (smonassa@mail.dotcom.fr) / overhaul by SJ
 
-	Known issues:
+    Known issues:
 
-		- plunger doesn't work in test mode - bug in the game code?
+        - plunger doesn't work in test mode - bug in the game code?
 
 *************************************************************************/
 
@@ -204,7 +204,7 @@ static WRITE8_HANDLER( videopin_note_dvsr_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -234,7 +234,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -291,7 +291,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -341,7 +341,7 @@ static struct GfxDecodeInfo videopin_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -368,7 +368,7 @@ static MACHINE_DRIVER_START( videopin )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(videopin_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -378,7 +378,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -418,7 +418,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

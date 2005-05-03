@@ -57,7 +57,7 @@ INLINE UINT16 POP16(void)
 
 /*****************************************************************************/
 
-/* ABA				0x1B */
+/* ABA              0x1B */
 static void HC11OP(aba)(void)
 {
 	UINT16 r = hc11.d.d8.a + hc11.d.d8.b;
@@ -72,7 +72,7 @@ static void HC11OP(aba)(void)
 }
 
 
-/* ABX				0x3A */
+/* ABX              0x3A */
 static void HC11OP(abx)(void)
 {
 	hc11.ix += hc11.d.d8.b;
@@ -80,7 +80,7 @@ static void HC11OP(abx)(void)
 }
 
 
-/* ABY				0x18, 0x3A */
+/* ABY              0x18, 0x3A */
 static void HC11OP(aby)(void)
 {
 	hc11.iy += hc11.d.d8.b;
@@ -88,7 +88,7 @@ static void HC11OP(aby)(void)
 }
 
 
-/* ADCA IMM			0x89 */
+/* ADCA IMM         0x89 */
 static void HC11OP(adca_imm)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -104,7 +104,7 @@ static void HC11OP(adca_imm)(void)
 	CYCLES(2);
 }
 
-/* ADCA DIR			0x99 */
+/* ADCA DIR         0x99 */
 static void HC11OP(adca_dir)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -121,7 +121,7 @@ static void HC11OP(adca_dir)(void)
 	CYCLES(3);
 }
 
-/* ADCA EXT			0xB9 */
+/* ADCA EXT         0xB9 */
 static void HC11OP(adca_ext)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -138,7 +138,7 @@ static void HC11OP(adca_ext)(void)
 	CYCLES(4);
 }
 
-/* ADCA IND, X		0xA9 */
+/* ADCA IND, X      0xA9 */
 static void HC11OP(adca_indx)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -155,7 +155,7 @@ static void HC11OP(adca_indx)(void)
 	CYCLES(4);
 }
 
-/* ADCA IND, Y		0x18, 0xA9 */
+/* ADCA IND, Y      0x18, 0xA9 */
 static void HC11OP(adca_indy)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -173,7 +173,7 @@ static void HC11OP(adca_indy)(void)
 }
 
 
-/* ADCB IMM			0xC9 */
+/* ADCB IMM         0xC9 */
 static void HC11OP(adcb_imm)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -189,7 +189,7 @@ static void HC11OP(adcb_imm)(void)
 	CYCLES(2);
 }
 
-/* ADCB DIR			0xD9 */
+/* ADCB DIR         0xD9 */
 static void HC11OP(adcb_dir)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -206,7 +206,7 @@ static void HC11OP(adcb_dir)(void)
 	CYCLES(3);
 }
 
-/* ADCB EXT			0xF9 */
+/* ADCB EXT         0xF9 */
 static void HC11OP(adcb_ext)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -223,7 +223,7 @@ static void HC11OP(adcb_ext)(void)
 	CYCLES(4);
 }
 
-/* ADCB IND, X		0xE9 */
+/* ADCB IND, X      0xE9 */
 static void HC11OP(adcb_indx)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -240,7 +240,7 @@ static void HC11OP(adcb_indx)(void)
 	CYCLES(4);
 }
 
-/* ADCB IND, Y		0x18, 0xE9 */
+/* ADCB IND, Y      0x18, 0xE9 */
 static void HC11OP(adcb_indy)(void)
 {
 	int c = (hc11.ccr & CC_C) ? 1 : 0;
@@ -258,7 +258,7 @@ static void HC11OP(adcb_indy)(void)
 }
 
 
-/* ADDA IMM			0x8B */
+/* ADDA IMM         0x8B */
 static void HC11OP(adda_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -273,7 +273,7 @@ static void HC11OP(adda_imm)(void)
 	CYCLES(2);
 }
 
-/* ADDA DIR			0x9B */
+/* ADDA DIR         0x9B */
 static void HC11OP(adda_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -289,7 +289,7 @@ static void HC11OP(adda_dir)(void)
 	CYCLES(3);
 }
 
-/* ADDA EXT			0xBB */
+/* ADDA EXT         0xBB */
 static void HC11OP(adda_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -305,7 +305,7 @@ static void HC11OP(adda_ext)(void)
 	CYCLES(4);
 }
 
-/* ADDA IND, X		0xAB */
+/* ADDA IND, X      0xAB */
 static void HC11OP(adda_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -321,7 +321,7 @@ static void HC11OP(adda_indx)(void)
 	CYCLES(4);
 }
 
-/* ADDA IND, Y		0x18, 0xAB */
+/* ADDA IND, Y      0x18, 0xAB */
 static void HC11OP(adda_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -338,7 +338,7 @@ static void HC11OP(adda_indy)(void)
 }
 
 
-/* ADDB IMM			0xCB */
+/* ADDB IMM         0xCB */
 static void HC11OP(addb_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -353,7 +353,7 @@ static void HC11OP(addb_imm)(void)
 	CYCLES(2);
 }
 
-/* ADDB DIR			0xDB */
+/* ADDB DIR         0xDB */
 static void HC11OP(addb_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -369,7 +369,7 @@ static void HC11OP(addb_dir)(void)
 	CYCLES(3);
 }
 
-/* ADDB EXT			0xFB */
+/* ADDB EXT         0xFB */
 static void HC11OP(addb_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -385,7 +385,7 @@ static void HC11OP(addb_ext)(void)
 	CYCLES(4);
 }
 
-/* ADDB IND, X		0xEB */
+/* ADDB IND, X      0xEB */
 static void HC11OP(addb_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -401,7 +401,7 @@ static void HC11OP(addb_indx)(void)
 	CYCLES(4);
 }
 
-/* ADDB IND, Y		0x18, 0xEB */
+/* ADDB IND, Y      0x18, 0xEB */
 static void HC11OP(addb_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -418,7 +418,7 @@ static void HC11OP(addb_indy)(void)
 }
 
 
-/* ADDD	IMM			0xC3 */
+/* ADDD IMM         0xC3 */
 static void HC11OP(addd_imm)(void)
 {
 	UINT16 i = FETCH16();
@@ -432,7 +432,7 @@ static void HC11OP(addd_imm)(void)
 	CYCLES(4);
 }
 
-/* ADDD	DIR			0xD3 */
+/* ADDD DIR         0xD3 */
 static void HC11OP(addd_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -447,7 +447,7 @@ static void HC11OP(addd_dir)(void)
 	CYCLES(5);
 }
 
-/* ADDD	EXT			0xF3 */
+/* ADDD EXT         0xF3 */
 static void HC11OP(addd_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -462,7 +462,7 @@ static void HC11OP(addd_ext)(void)
 	CYCLES(6);
 }
 
-/* ADDD	IND, X		0xE3 */
+/* ADDD IND, X      0xE3 */
 static void HC11OP(addd_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -477,7 +477,7 @@ static void HC11OP(addd_indx)(void)
 	CYCLES(6);
 }
 
-/* ADDD	IND, Y		0x18, 0xE3 */
+/* ADDD IND, Y      0x18, 0xE3 */
 static void HC11OP(addd_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -493,7 +493,7 @@ static void HC11OP(addd_indy)(void)
 }
 
 
-/* ANDA IMM			0x84 */
+/* ANDA IMM         0x84 */
 static void HC11OP(anda_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -504,7 +504,7 @@ static void HC11OP(anda_imm)(void)
 	CYCLES(2);
 }
 
-/* ANDA DIR			0x94 */
+/* ANDA DIR         0x94 */
 static void HC11OP(anda_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -516,7 +516,7 @@ static void HC11OP(anda_dir)(void)
 	CYCLES(3);
 }
 
-/* ANDA EXT			0xB4 */
+/* ANDA EXT         0xB4 */
 static void HC11OP(anda_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -528,7 +528,7 @@ static void HC11OP(anda_ext)(void)
 	CYCLES(4);
 }
 
-/* ANDA IND, X		0xA4 */
+/* ANDA IND, X      0xA4 */
 static void HC11OP(anda_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -540,7 +540,7 @@ static void HC11OP(anda_indx)(void)
 	CYCLES(4);
 }
 
-/* ANDA IND, Y		0x18, 0xA4 */
+/* ANDA IND, Y      0x18, 0xA4 */
 static void HC11OP(anda_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -553,7 +553,7 @@ static void HC11OP(anda_indy)(void)
 }
 
 
-/* ANDB IMM			0xC4 */
+/* ANDB IMM         0xC4 */
 static void HC11OP(andb_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -564,7 +564,7 @@ static void HC11OP(andb_imm)(void)
 	CYCLES(2);
 }
 
-/* ANDB DIR			0xD4 */
+/* ANDB DIR         0xD4 */
 static void HC11OP(andb_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -576,7 +576,7 @@ static void HC11OP(andb_dir)(void)
 	CYCLES(3);
 }
 
-/* ANDB EXT			0xF4 */
+/* ANDB EXT         0xF4 */
 static void HC11OP(andb_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -588,7 +588,7 @@ static void HC11OP(andb_ext)(void)
 	CYCLES(4);
 }
 
-/* ANDB IND, X		0xE4 */
+/* ANDB IND, X      0xE4 */
 static void HC11OP(andb_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -600,7 +600,7 @@ static void HC11OP(andb_indx)(void)
 	CYCLES(4);
 }
 
-/* ANDB IND, Y		0x18, 0xE4 */
+/* ANDB IND, Y      0x18, 0xE4 */
 static void HC11OP(andb_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -613,7 +613,7 @@ static void HC11OP(andb_indy)(void)
 }
 
 
-/* BITA IMM			0x85 */
+/* BITA IMM         0x85 */
 static void HC11OP(bita_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -624,7 +624,7 @@ static void HC11OP(bita_imm)(void)
 	CYCLES(2);
 }
 
-/* BITA DIR			0x95 */
+/* BITA DIR         0x95 */
 static void HC11OP(bita_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -636,7 +636,7 @@ static void HC11OP(bita_dir)(void)
 	CYCLES(3);
 }
 
-/* BITA EXT			0xB5 */
+/* BITA EXT         0xB5 */
 static void HC11OP(bita_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -648,7 +648,7 @@ static void HC11OP(bita_ext)(void)
 	CYCLES(4);
 }
 
-/* BITA IND, X		0xA5 */
+/* BITA IND, X      0xA5 */
 static void HC11OP(bita_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -660,7 +660,7 @@ static void HC11OP(bita_indx)(void)
 	CYCLES(4);
 }
 
-/* BITA IND, Y		0x18, 0xA5 */
+/* BITA IND, Y      0x18, 0xA5 */
 static void HC11OP(bita_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -673,7 +673,7 @@ static void HC11OP(bita_indy)(void)
 }
 
 
-/* BITB IMM			0xC5 */
+/* BITB IMM         0xC5 */
 static void HC11OP(bitb_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -684,7 +684,7 @@ static void HC11OP(bitb_imm)(void)
 	CYCLES(2);
 }
 
-/* BITB DIR			0xD5 */
+/* BITB DIR         0xD5 */
 static void HC11OP(bitb_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -696,7 +696,7 @@ static void HC11OP(bitb_dir)(void)
 	CYCLES(3);
 }
 
-/* BITB EXT			0xF5 */
+/* BITB EXT         0xF5 */
 static void HC11OP(bitb_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -708,7 +708,7 @@ static void HC11OP(bitb_ext)(void)
 	CYCLES(4);
 }
 
-/* BITB IND, X		0xE5 */
+/* BITB IND, X      0xE5 */
 static void HC11OP(bitb_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -720,7 +720,7 @@ static void HC11OP(bitb_indx)(void)
 	CYCLES(4);
 }
 
-/* BITB IND, Y		0x18, 0xE5 */
+/* BITB IND, Y      0x18, 0xE5 */
 static void HC11OP(bitb_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -733,7 +733,7 @@ static void HC11OP(bitb_indy)(void)
 }
 
 
-/* BCS				0x25 */
+/* BCS              0x25 */
 static void HC11OP(bcs)(void)
 {
 	INT8 rel = FETCH();
@@ -745,7 +745,7 @@ static void HC11OP(bcs)(void)
 }
 
 
-/* BEQ				0x27 */
+/* BEQ              0x27 */
 static void HC11OP(beq)(void)
 {
 	INT8 rel = FETCH();
@@ -757,7 +757,7 @@ static void HC11OP(beq)(void)
 }
 
 
-/* BNE				0x26 */
+/* BNE              0x26 */
 static void HC11OP(bne)(void)
 {
 	INT8 rel = FETCH();
@@ -769,7 +769,7 @@ static void HC11OP(bne)(void)
 }
 
 
-/* BPL				0x2A */
+/* BPL              0x2A */
 static void HC11OP(bpl)(void)
 {
 	INT8 rel = FETCH();
@@ -781,7 +781,7 @@ static void HC11OP(bpl)(void)
 }
 
 
-/* BRA				0x20 */
+/* BRA              0x20 */
 static void HC11OP(bra)(void)
 {
 	INT8 rel = FETCH();
@@ -790,7 +790,7 @@ static void HC11OP(bra)(void)
 }
 
 
-/* BSR				0x8D */
+/* BSR              0x8D */
 static void HC11OP(bsr)(void)
 {
 	INT8 rel = FETCH();
@@ -801,7 +801,7 @@ static void HC11OP(bsr)(void)
 }
 
 
-/* CLI				0x0E */
+/* CLI              0x0E */
 static void HC11OP(cli)(void)
 {
 	hc11.ccr &= ~CC_I;
@@ -809,7 +809,7 @@ static void HC11OP(cli)(void)
 }
 
 
-/* CLRA				0x4F */
+/* CLRA             0x4F */
 static void HC11OP(clra)(void)
 {
 	hc11.d.d8.a = 0;
@@ -818,7 +818,7 @@ static void HC11OP(clra)(void)
 	CYCLES(2);
 }
 
-/* CLRB				0x5F */
+/* CLRB             0x5F */
 static void HC11OP(clrb)(void)
 {
 	hc11.d.d8.b = 0;
@@ -827,7 +827,7 @@ static void HC11OP(clrb)(void)
 	CYCLES(2);
 }
 
-/* CLR EXT			0x7F */
+/* CLR EXT          0x7F */
 static void HC11OP(clr_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -837,7 +837,7 @@ static void HC11OP(clr_ext)(void)
 	CYCLES(6);
 }
 
-/* CLR IND, X		0x6F */
+/* CLR IND, X       0x6F */
 static void HC11OP(clr_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -847,7 +847,7 @@ static void HC11OP(clr_indx)(void)
 	CYCLES(6);
 }
 
-/* CLR IND, Y		0x18, 0x6F */
+/* CLR IND, Y       0x18, 0x6F */
 static void HC11OP(clr_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -858,7 +858,7 @@ static void HC11OP(clr_indy)(void)
 }
 
 
-/* CMPA IMM			0x81 */
+/* CMPA IMM         0x81 */
 static void HC11OP(cmpa_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -871,7 +871,7 @@ static void HC11OP(cmpa_imm)(void)
 	CYCLES(2);
 }
 
-/* CMPA DIR			0x91 */
+/* CMPA DIR         0x91 */
 static void HC11OP(cmpa_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -885,7 +885,7 @@ static void HC11OP(cmpa_dir)(void)
 	CYCLES(3);
 }
 
-/* CMPA EXT			0xB1 */
+/* CMPA EXT         0xB1 */
 static void HC11OP(cmpa_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -899,7 +899,7 @@ static void HC11OP(cmpa_ext)(void)
 	CYCLES(4);
 }
 
-/* CMPA IND, X		0xA1 */
+/* CMPA IND, X      0xA1 */
 static void HC11OP(cmpa_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -913,7 +913,7 @@ static void HC11OP(cmpa_indx)(void)
 	CYCLES(4);
 }
 
-/* CMPA IND, Y		0x18, 0xA1 */
+/* CMPA IND, Y      0x18, 0xA1 */
 static void HC11OP(cmpa_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -928,7 +928,7 @@ static void HC11OP(cmpa_indy)(void)
 }
 
 
-/* CMPB IMM			0xC1 */
+/* CMPB IMM         0xC1 */
 static void HC11OP(cmpb_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -941,7 +941,7 @@ static void HC11OP(cmpb_imm)(void)
 	CYCLES(2);
 }
 
-/* CMPB DIR			0xD1 */
+/* CMPB DIR         0xD1 */
 static void HC11OP(cmpb_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -955,7 +955,7 @@ static void HC11OP(cmpb_dir)(void)
 	CYCLES(3);
 }
 
-/* CMPB EXT			0xF1 */
+/* CMPB EXT         0xF1 */
 static void HC11OP(cmpb_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -969,7 +969,7 @@ static void HC11OP(cmpb_ext)(void)
 	CYCLES(4);
 }
 
-/* CMPB IND, X		0xE1 */
+/* CMPB IND, X      0xE1 */
 static void HC11OP(cmpb_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -983,7 +983,7 @@ static void HC11OP(cmpb_indx)(void)
 	CYCLES(4);
 }
 
-/* CMPB IND, Y		0x18, 0xE1 */
+/* CMPB IND, Y      0x18, 0xE1 */
 static void HC11OP(cmpb_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -998,7 +998,7 @@ static void HC11OP(cmpb_indy)(void)
 }
 
 
-/* CPD IMM			0x1A, 0x83 */
+/* CPD IMM          0x1A, 0x83 */
 static void HC11OP(cpd_imm)(void)
 {
 	UINT16 i = FETCH16();
@@ -1011,7 +1011,7 @@ static void HC11OP(cpd_imm)(void)
 	CYCLES(5);
 }
 
-/* CPD DIR			0x1A, 0x93 */
+/* CPD DIR          0x1A, 0x93 */
 static void HC11OP(cpd_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1025,7 +1025,7 @@ static void HC11OP(cpd_dir)(void)
 	CYCLES(6);
 }
 
-/* CPD EXT			0x1A, 0xB3 */
+/* CPD EXT          0x1A, 0xB3 */
 static void HC11OP(cpd_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1039,7 +1039,7 @@ static void HC11OP(cpd_ext)(void)
 	CYCLES(7);
 }
 
-/* CPD IND, X		0x1A, 0xA3 */
+/* CPD IND, X       0x1A, 0xA3 */
 static void HC11OP(cpd_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1053,7 +1053,7 @@ static void HC11OP(cpd_indx)(void)
 	CYCLES(7);
 }
 
-/* CPD IND, Y		0xCD, 0xA3 */
+/* CPD IND, Y       0xCD, 0xA3 */
 static void HC11OP(cpd_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1068,7 +1068,7 @@ static void HC11OP(cpd_indy)(void)
 }
 
 
-/* CPX IMM			0x8C */
+/* CPX IMM          0x8C */
 static void HC11OP(cpx_imm)(void)
 {
 	UINT16 i = FETCH16();
@@ -1081,7 +1081,7 @@ static void HC11OP(cpx_imm)(void)
 	CYCLES(4);
 }
 
-/* CPX DIR			0x9C */
+/* CPX DIR          0x9C */
 static void HC11OP(cpx_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1095,7 +1095,7 @@ static void HC11OP(cpx_dir)(void)
 	CYCLES(5);
 }
 
-/* CPX EXT			0xBC */
+/* CPX EXT          0xBC */
 static void HC11OP(cpx_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1109,7 +1109,7 @@ static void HC11OP(cpx_ext)(void)
 	CYCLES(6);
 }
 
-/* CPX IND, X		0xAC */
+/* CPX IND, X       0xAC */
 static void HC11OP(cpx_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1123,7 +1123,7 @@ static void HC11OP(cpx_indx)(void)
 	CYCLES(6);
 }
 
-/* CPX IND, Y		0xCD, 0xAC */
+/* CPX IND, Y       0xCD, 0xAC */
 static void HC11OP(cpx_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1138,7 +1138,7 @@ static void HC11OP(cpx_indy)(void)
 }
 
 
-/* DEX				0x09 */
+/* DEX              0x09 */
 static void HC11OP(dex)(void)
 {
 	CLEAR_Z();
@@ -1148,7 +1148,7 @@ static void HC11OP(dex)(void)
 }
 
 
-/* DEY				0x18, 0x09 */
+/* DEY              0x18, 0x09 */
 static void HC11OP(dey)(void)
 {
 	CLEAR_Z();
@@ -1158,7 +1158,7 @@ static void HC11OP(dey)(void)
 }
 
 
-/* EORA IMM			0x88 */
+/* EORA IMM         0x88 */
 static void HC11OP(eora_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -1169,7 +1169,7 @@ static void HC11OP(eora_imm)(void)
 	CYCLES(2);
 }
 
-/* EORA DIR			0x98 */
+/* EORA DIR         0x98 */
 static void HC11OP(eora_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1181,7 +1181,7 @@ static void HC11OP(eora_dir)(void)
 	CYCLES(3);
 }
 
-/* EORA EXT			0xB8 */
+/* EORA EXT         0xB8 */
 static void HC11OP(eora_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1193,7 +1193,7 @@ static void HC11OP(eora_ext)(void)
 	CYCLES(4);
 }
 
-/* EORA IND, X		0xA8 */
+/* EORA IND, X      0xA8 */
 static void HC11OP(eora_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1205,7 +1205,7 @@ static void HC11OP(eora_indx)(void)
 	CYCLES(4);
 }
 
-/* EORA IND, Y		0x18, 0xA8 */
+/* EORA IND, Y      0x18, 0xA8 */
 static void HC11OP(eora_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1218,7 +1218,7 @@ static void HC11OP(eora_indy)(void)
 }
 
 
-/* EORB IMM			0xC8 */
+/* EORB IMM         0xC8 */
 static void HC11OP(eorb_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -1229,7 +1229,7 @@ static void HC11OP(eorb_imm)(void)
 	CYCLES(2);
 }
 
-/* EORB DIR			0xD8 */
+/* EORB DIR         0xD8 */
 static void HC11OP(eorb_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1241,7 +1241,7 @@ static void HC11OP(eorb_dir)(void)
 	CYCLES(3);
 }
 
-/* EORB EXT			0xF8 */
+/* EORB EXT         0xF8 */
 static void HC11OP(eorb_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1253,7 +1253,7 @@ static void HC11OP(eorb_ext)(void)
 	CYCLES(4);
 }
 
-/* EORB IND, X		0xE8 */
+/* EORB IND, X      0xE8 */
 static void HC11OP(eorb_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1265,7 +1265,7 @@ static void HC11OP(eorb_indx)(void)
 	CYCLES(4);
 }
 
-/* EORB IND, Y		0x18, 0xE8 */
+/* EORB IND, Y      0x18, 0xE8 */
 static void HC11OP(eorb_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1278,7 +1278,7 @@ static void HC11OP(eorb_indy)(void)
 }
 
 
-/* INCA				0x4C */
+/* INCA             0x4C */
 static void HC11OP(inca)(void)
 {
 	CLEAR_NZV();
@@ -1291,7 +1291,7 @@ static void HC11OP(inca)(void)
 }
 
 
-/* INX				0x08 */
+/* INX              0x08 */
 static void HC11OP(inx)(void)
 {
 	CLEAR_Z();
@@ -1301,7 +1301,7 @@ static void HC11OP(inx)(void)
 }
 
 
-/* JMP EXT			0x7E */
+/* JMP EXT          0x7E */
 static void HC11OP(jmp_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1310,7 +1310,7 @@ static void HC11OP(jmp_ext)(void)
 }
 
 
-/* JSR DIR			0x9D */
+/* JSR DIR          0x9D */
 static void HC11OP(jsr_dir)(void)
 {
 	UINT8 i = FETCH();
@@ -1320,7 +1320,7 @@ static void HC11OP(jsr_dir)(void)
 	CYCLES(5);
 }
 
-/* JSR EXT			0xBD */
+/* JSR EXT          0xBD */
 static void HC11OP(jsr_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1330,7 +1330,7 @@ static void HC11OP(jsr_ext)(void)
 	CYCLES(6);
 }
 
-/* JSR IND, X		0xAD */
+/* JSR IND, X       0xAD */
 static void HC11OP(jsr_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1340,7 +1340,7 @@ static void HC11OP(jsr_indx)(void)
 	CYCLES(6);
 }
 
-/* JSR IND, Y		0x18, 0xAD */
+/* JSR IND, Y       0x18, 0xAD */
 static void HC11OP(jsr_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1351,7 +1351,7 @@ static void HC11OP(jsr_indy)(void)
 }
 
 
-/* LDAA IMM			0x86 */
+/* LDAA IMM         0x86 */
 static void HC11OP(ldaa_imm)(void)
 {
 	CLEAR_NZV();
@@ -1361,7 +1361,7 @@ static void HC11OP(ldaa_imm)(void)
 	CYCLES(2);
 }
 
-/* LDAA DIR			0x96 */
+/* LDAA DIR         0x96 */
 static void HC11OP(ldaa_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1372,7 +1372,7 @@ static void HC11OP(ldaa_dir)(void)
 	CYCLES(3);
 }
 
-/* LDAA EXT			0xB6 */
+/* LDAA EXT         0xB6 */
 static void HC11OP(ldaa_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1383,7 +1383,7 @@ static void HC11OP(ldaa_ext)(void)
 	CYCLES(4);
 }
 
-/* LDAA IND, X		0xA6 */
+/* LDAA IND, X      0xA6 */
 static void HC11OP(ldaa_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1394,7 +1394,7 @@ static void HC11OP(ldaa_indx)(void)
 	CYCLES(4);
 }
 
-/* LDAA IND, Y		0x18, 0xA6 */
+/* LDAA IND, Y      0x18, 0xA6 */
 static void HC11OP(ldaa_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1405,7 +1405,7 @@ static void HC11OP(ldaa_indy)(void)
 	CYCLES(5);
 }
 
-/* LDAB IMM			0xC6 */
+/* LDAB IMM         0xC6 */
 static void HC11OP(ldab_imm)(void)
 {
 	CLEAR_NZV();
@@ -1415,7 +1415,7 @@ static void HC11OP(ldab_imm)(void)
 	CYCLES(2);
 }
 
-/* LDAB DIR			0xD6 */
+/* LDAB DIR         0xD6 */
 static void HC11OP(ldab_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1426,7 +1426,7 @@ static void HC11OP(ldab_dir)(void)
 	CYCLES(3);
 }
 
-/* LDAB EXT			0xF6 */
+/* LDAB EXT         0xF6 */
 static void HC11OP(ldab_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1437,7 +1437,7 @@ static void HC11OP(ldab_ext)(void)
 	CYCLES(4);
 }
 
-/* LDAB IND, X		0xE6 */
+/* LDAB IND, X      0xE6 */
 static void HC11OP(ldab_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1448,7 +1448,7 @@ static void HC11OP(ldab_indx)(void)
 	CYCLES(4);
 }
 
-/* LDAB IND, Y		0x18, 0xE6 */
+/* LDAB IND, Y      0x18, 0xE6 */
 static void HC11OP(ldab_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1460,7 +1460,7 @@ static void HC11OP(ldab_indy)(void)
 }
 
 
-/* LDD IMM			0xCC */
+/* LDD IMM          0xCC */
 static void HC11OP(ldd_imm)(void)
 {
 	CLEAR_NZV();
@@ -1470,7 +1470,7 @@ static void HC11OP(ldd_imm)(void)
 	CYCLES(3);
 }
 
-/* LDD DIR			0xDC */
+/* LDD DIR          0xDC */
 static void HC11OP(ldd_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1481,7 +1481,7 @@ static void HC11OP(ldd_dir)(void)
 	CYCLES(4);
 }
 
-/* LDD EXT			0xFC */
+/* LDD EXT          0xFC */
 static void HC11OP(ldd_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1492,7 +1492,7 @@ static void HC11OP(ldd_ext)(void)
 	CYCLES(5);
 }
 
-/* LDD IND, X		0xEC */
+/* LDD IND, X       0xEC */
 static void HC11OP(ldd_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1503,7 +1503,7 @@ static void HC11OP(ldd_indx)(void)
 	CYCLES(5);
 }
 
-/* LDD IND, Y		0x18, 0xEC */
+/* LDD IND, Y       0x18, 0xEC */
 static void HC11OP(ldd_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1515,7 +1515,7 @@ static void HC11OP(ldd_indy)(void)
 }
 
 
-/* LDS IMM			0x8E */
+/* LDS IMM          0x8E */
 static void HC11OP(lds_imm)(void)
 {
 	CLEAR_NZV();
@@ -1525,7 +1525,7 @@ static void HC11OP(lds_imm)(void)
 	CYCLES(3);
 }
 
-/* LDS DIR			0x9E */
+/* LDS DIR          0x9E */
 static void HC11OP(lds_dir)(void)
 {
 	UINT8 i = FETCH();
@@ -1536,7 +1536,7 @@ static void HC11OP(lds_dir)(void)
 	CYCLES(4);
 }
 
-/* LDS EXT			0xBE */
+/* LDS EXT          0xBE */
 static void HC11OP(lds_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1547,7 +1547,7 @@ static void HC11OP(lds_ext)(void)
 	CYCLES(5);
 }
 
-/* LDS IND, X		0xAE */
+/* LDS IND, X       0xAE */
 static void HC11OP(lds_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1558,7 +1558,7 @@ static void HC11OP(lds_indx)(void)
 	CYCLES(5);
 }
 
-/* LDS IND, Y		0x18, 0xAE */
+/* LDS IND, Y       0x18, 0xAE */
 static void HC11OP(lds_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1570,7 +1570,7 @@ static void HC11OP(lds_indy)(void)
 }
 
 
-/* LDX IMM			0xCE */
+/* LDX IMM          0xCE */
 static void HC11OP(ldx_imm)(void)
 {
 	CLEAR_NZV();
@@ -1580,7 +1580,7 @@ static void HC11OP(ldx_imm)(void)
 	CYCLES(3);
 }
 
-/* LDX DIR			0xDE */
+/* LDX DIR          0xDE */
 static void HC11OP(ldx_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1591,7 +1591,7 @@ static void HC11OP(ldx_dir)(void)
 	CYCLES(4);
 }
 
-/* LDX EXT			0xFE */
+/* LDX EXT          0xFE */
 static void HC11OP(ldx_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1602,7 +1602,7 @@ static void HC11OP(ldx_ext)(void)
 	CYCLES(5);
 }
 
-/* LDX IND, X		0xEE */
+/* LDX IND, X       0xEE */
 static void HC11OP(ldx_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1613,7 +1613,7 @@ static void HC11OP(ldx_indx)(void)
 	CYCLES(5);
 }
 
-/* LDX IND, Y		0xCD, 0xEE */
+/* LDX IND, Y       0xCD, 0xEE */
 static void HC11OP(ldx_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1625,7 +1625,7 @@ static void HC11OP(ldx_indy)(void)
 }
 
 
-/* LDY IMM			0x18, 0xCE */
+/* LDY IMM          0x18, 0xCE */
 static void HC11OP(ldy_imm)(void)
 {
 	CLEAR_NZV();
@@ -1635,7 +1635,7 @@ static void HC11OP(ldy_imm)(void)
 	CYCLES(4);
 }
 
-/* LDY DIR			0x18, 0xDE */
+/* LDY DIR          0x18, 0xDE */
 static void HC11OP(ldy_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1646,7 +1646,7 @@ static void HC11OP(ldy_dir)(void)
 	CYCLES(5);
 }
 
-/* LDY EXT			0x18, 0xFE */
+/* LDY EXT          0x18, 0xFE */
 static void HC11OP(ldy_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1657,7 +1657,7 @@ static void HC11OP(ldy_ext)(void)
 	CYCLES(6);
 }
 
-/* LDY IND, X		0x1A, 0xEE */
+/* LDY IND, X       0x1A, 0xEE */
 static void HC11OP(ldy_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1668,7 +1668,7 @@ static void HC11OP(ldy_indx)(void)
 	CYCLES(6);
 }
 
-/* LDY IND, Y		0x18, 0xEE */
+/* LDY IND, Y       0x18, 0xEE */
 static void HC11OP(ldy_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1680,7 +1680,7 @@ static void HC11OP(ldy_indy)(void)
 }
 
 
-/* PSHA				0x36 */
+/* PSHA             0x36 */
 static void HC11OP(psha)(void)
 {
 	PUSH8(hc11.d.d8.a);
@@ -1688,7 +1688,7 @@ static void HC11OP(psha)(void)
 }
 
 
-/* ORAA IMM			0x8A */
+/* ORAA IMM         0x8A */
 static void HC11OP(oraa_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -1699,7 +1699,7 @@ static void HC11OP(oraa_imm)(void)
 	CYCLES(2);
 }
 
-/* ORAA DIR			0x9A */
+/* ORAA DIR         0x9A */
 static void HC11OP(oraa_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1711,7 +1711,7 @@ static void HC11OP(oraa_dir)(void)
 	CYCLES(3);
 }
 
-/* ORAA EXT			0xBA */
+/* ORAA EXT         0xBA */
 static void HC11OP(oraa_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1723,7 +1723,7 @@ static void HC11OP(oraa_ext)(void)
 	CYCLES(4);
 }
 
-/* ORAA IND, X		0xAA */
+/* ORAA IND, X      0xAA */
 static void HC11OP(oraa_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1735,7 +1735,7 @@ static void HC11OP(oraa_indx)(void)
 	CYCLES(4);
 }
 
-/* ORAA IND, Y		0x18, 0xAA */
+/* ORAA IND, Y      0x18, 0xAA */
 static void HC11OP(oraa_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1748,7 +1748,7 @@ static void HC11OP(oraa_indy)(void)
 }
 
 
-/* ORAB IMM			0xCA */
+/* ORAB IMM         0xCA */
 static void HC11OP(orab_imm)(void)
 {
 	UINT8 i = FETCH();
@@ -1759,7 +1759,7 @@ static void HC11OP(orab_imm)(void)
 	CYCLES(2);
 }
 
-/* ORAB DIR			0xDA */
+/* ORAB DIR         0xDA */
 static void HC11OP(orab_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1771,7 +1771,7 @@ static void HC11OP(orab_dir)(void)
 	CYCLES(3);
 }
 
-/* ORAB EXT			0xFA */
+/* ORAB EXT         0xFA */
 static void HC11OP(orab_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1783,7 +1783,7 @@ static void HC11OP(orab_ext)(void)
 	CYCLES(4);
 }
 
-/* ORAB IND, X		0xEA */
+/* ORAB IND, X      0xEA */
 static void HC11OP(orab_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1795,7 +1795,7 @@ static void HC11OP(orab_indx)(void)
 	CYCLES(4);
 }
 
-/* ORAB IND, Y		0x18, 0xEA */
+/* ORAB IND, Y      0x18, 0xEA */
 static void HC11OP(orab_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1808,7 +1808,7 @@ static void HC11OP(orab_indy)(void)
 }
 
 
-/* PSHB				0x37 */
+/* PSHB             0x37 */
 static void HC11OP(pshb)(void)
 {
 	PUSH8(hc11.d.d8.b);
@@ -1816,7 +1816,7 @@ static void HC11OP(pshb)(void)
 }
 
 
-/* PSHY				0x18, 0x3C */
+/* PSHY             0x18, 0x3C */
 static void HC11OP(pshy)(void)
 {
 	PUSH16(hc11.iy);
@@ -1824,7 +1824,7 @@ static void HC11OP(pshy)(void)
 }
 
 
-/* PULA				0x32 */
+/* PULA             0x32 */
 static void HC11OP(pula)(void)
 {
 	hc11.d.d8.a = POP8();
@@ -1832,7 +1832,7 @@ static void HC11OP(pula)(void)
 }
 
 
-/* PULB				0x33 */
+/* PULB             0x33 */
 static void HC11OP(pulb)(void)
 {
 	hc11.d.d8.b = POP8();
@@ -1840,7 +1840,7 @@ static void HC11OP(pulb)(void)
 }
 
 
-/* PULY				0x18, 0x38 */
+/* PULY             0x18, 0x38 */
 static void HC11OP(puly)(void)
 {
 	hc11.iy = POP16();
@@ -1848,7 +1848,7 @@ static void HC11OP(puly)(void)
 }
 
 
-/* RTS				0x39 */
+/* RTS              0x39 */
 static void HC11OP(rts)(void)
 {
 	UINT16 rt_adr = POP16();
@@ -1857,7 +1857,7 @@ static void HC11OP(rts)(void)
 }
 
 
-/* SEI				0x0F */
+/* SEI              0x0F */
 static void HC11OP(sei)(void)
 {
 	hc11.ccr |= CC_I;
@@ -1865,7 +1865,7 @@ static void HC11OP(sei)(void)
 }
 
 
-/* STAA DIR			0x97 */
+/* STAA DIR         0x97 */
 static void HC11OP(staa_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1876,7 +1876,7 @@ static void HC11OP(staa_dir)(void)
 	CYCLES(3);
 }
 
-/* STAA EXT			0xB7 */
+/* STAA EXT         0xB7 */
 static void HC11OP(staa_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1887,7 +1887,7 @@ static void HC11OP(staa_ext)(void)
 	CYCLES(4);
 }
 
-/* STAA IND, X		0xA7 */
+/* STAA IND, X      0xA7 */
 static void HC11OP(staa_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1898,7 +1898,7 @@ static void HC11OP(staa_indx)(void)
 	CYCLES(4);
 }
 
-/* STAA IND, Y		0x18, 0xA7 */
+/* STAA IND, Y      0x18, 0xA7 */
 static void HC11OP(staa_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1909,7 +1909,7 @@ static void HC11OP(staa_indy)(void)
 	CYCLES(5);
 }
 
-/* STAB DIR			0xD7 */
+/* STAB DIR         0xD7 */
 static void HC11OP(stab_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1920,7 +1920,7 @@ static void HC11OP(stab_dir)(void)
 	CYCLES(3);
 }
 
-/* STAB EXT			0xF7 */
+/* STAB EXT         0xF7 */
 static void HC11OP(stab_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1931,7 +1931,7 @@ static void HC11OP(stab_ext)(void)
 	CYCLES(4);
 }
 
-/* STAB IND, X		0xE7 */
+/* STAB IND, X      0xE7 */
 static void HC11OP(stab_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1942,7 +1942,7 @@ static void HC11OP(stab_indx)(void)
 	CYCLES(4);
 }
 
-/* STAB IND, Y		0x18, 0xE7 */
+/* STAB IND, Y      0x18, 0xE7 */
 static void HC11OP(stab_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1954,7 +1954,7 @@ static void HC11OP(stab_indy)(void)
 }
 
 
-/* STD DIR			0xDD */
+/* STD DIR          0xDD */
 static void HC11OP(std_dir)(void)
 {
 	UINT8 d = FETCH();
@@ -1965,7 +1965,7 @@ static void HC11OP(std_dir)(void)
 	CYCLES(4);
 }
 
-/* STD EXT			0xFD */
+/* STD EXT          0xFD */
 static void HC11OP(std_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -1976,7 +1976,7 @@ static void HC11OP(std_ext)(void)
 	CYCLES(5);
 }
 
-/* STD IND, X		0xED */
+/* STD IND, X       0xED */
 static void HC11OP(std_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -1987,7 +1987,7 @@ static void HC11OP(std_indx)(void)
 	CYCLES(5);
 }
 
-/* STD IND, Y		0x18, 0xED */
+/* STD IND, Y       0x18, 0xED */
 static void HC11OP(std_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -1999,7 +1999,7 @@ static void HC11OP(std_indy)(void)
 }
 
 
-/* TAB				0x16 */
+/* TAB              0x16 */
 static void HC11OP(tab)(void)
 {
 	CLEAR_NZV();
@@ -2010,7 +2010,7 @@ static void HC11OP(tab)(void)
 }
 
 
-/* TAP				0x06 */
+/* TAP              0x06 */
 static void HC11OP(tap)(void)
 {
 	UINT8 ccr = hc11.ccr;
@@ -2019,7 +2019,7 @@ static void HC11OP(tap)(void)
 }
 
 
-/* TPA				0x07 */
+/* TPA              0x07 */
 static void HC11OP(tpa)(void)
 {
 	hc11.d.d8.a = hc11.ccr;
@@ -2027,7 +2027,7 @@ static void HC11OP(tpa)(void)
 }
 
 
-/* TSTA				0x4D */
+/* TSTA             0x4D */
 static void HC11OP(tsta)(void)
 {
 	CLEAR_NZVC();
@@ -2036,7 +2036,7 @@ static void HC11OP(tsta)(void)
 	CYCLES(2);
 }
 
-/* TSTB				0x5D */
+/* TSTB             0x5D */
 static void HC11OP(tstb)(void)
 {
 	CLEAR_NZVC();
@@ -2045,7 +2045,7 @@ static void HC11OP(tstb)(void)
 	CYCLES(2);
 }
 
-/* TST EXT			0x7D */
+/* TST EXT          0x7D */
 static void HC11OP(tst_ext)(void)
 {
 	UINT16 adr = FETCH16();
@@ -2056,7 +2056,7 @@ static void HC11OP(tst_ext)(void)
 	CYCLES(6);
 }
 
-/* TST IND, X		0x6D */
+/* TST IND, X       0x6D */
 static void HC11OP(tst_indx)(void)
 {
 	UINT8 offset = FETCH();
@@ -2067,7 +2067,7 @@ static void HC11OP(tst_indx)(void)
 	CYCLES(6);
 }
 
-/* TST IND, Y		0x18, 0x6D */
+/* TST IND, Y       0x18, 0x6D */
 static void HC11OP(tst_indy)(void)
 {
 	UINT8 offset = FETCH();
@@ -2078,8 +2078,8 @@ static void HC11OP(tst_indy)(void)
 	CYCLES(6);
 }
 
-	
-/* XGDX				0x8F */
+
+/* XGDX             0x8F */
 static void HC11OP(xgdx)(void)
 {
 	UINT16 tmp = hc11.d.d16;
@@ -2089,7 +2089,7 @@ static void HC11OP(xgdx)(void)
 }
 
 
-/* XGDY				0x18, 0x8F */
+/* XGDY             0x18, 0x8F */
 static void HC11OP(xgdy)(void)
 {
 	UINT16 tmp = hc11.d.d16;

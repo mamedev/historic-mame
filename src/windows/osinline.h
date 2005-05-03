@@ -1,6 +1,6 @@
 //============================================================
 //
-//	osinline.h - Win32 inline functions
+//  osinline.h - Win32 inline functions
 //
 //============================================================
 
@@ -10,17 +10,17 @@
 #include "osd_cpu.h"
 
 //============================================================
-//	MACROS
+//  MACROS
 //============================================================
 
 #define osd_pend	osd_pend
-//#define pdo16		osd_pdo16
-//#define pdt16		osd_pdt16
+//#define pdo16     osd_pdo16
+//#define pdt16     osd_pdt16
 #define pdt16np		osd_pdt16np
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 void osd_pend(void);
@@ -30,7 +30,7 @@ void osd_pdt16np( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int ma
 
 
 //============================================================
-//	INLINE FUNCTIONS
+//  INLINE FUNCTIONS
 //============================================================
 
 #ifdef _MSC_VER

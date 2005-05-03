@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	Beast Busters			A9003	(c) 1989 SNK Corporation
-	Mechanized Attack		A8002	(c) 1989 SNK Corporation
+    Beast Busters           A9003   (c) 1989 SNK Corporation
+    Mechanized Attack       A8002   (c) 1989 SNK Corporation
 
-	Beast Busters is a large dedicated (non-jamma) triple machine gun game,
-	the gun positions values are read in an interrupt routine that must be
-	called for each position (X and Y for 3 guns, so at least 6 times a
-	frame).  However I can't make it work reliably..  So for the moment
-	I'm writing the gun positions directly to memory and bypassing
-	the IRQ routine.
+    Beast Busters is a large dedicated (non-jamma) triple machine gun game,
+    the gun positions values are read in an interrupt routine that must be
+    called for each position (X and Y for 3 guns, so at least 6 times a
+    frame).  However I can't make it work reliably..  So for the moment
+    I'm writing the gun positions directly to memory and bypassing
+    the IRQ routine.
 
-	Mechanized Attack (A8002) is an earlier design, it only has one sprite
-	chip, no eeprom, and only 2 machine guns, but the tilemaps are twice
-	the size.
+    Mechanized Attack (A8002) is an earlier design, it only has one sprite
+    chip, no eeprom, and only 2 machine guns, but the tilemaps are twice
+    the size.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
 Stephh's notes (based on the games M68000 code and some tests) :
@@ -193,15 +193,15 @@ static MACHINE_INIT( bbusters )
 	int data = readinputportbytag("FAKE1") & 0x03;
 
 	/* Country/Version :
-	     - 0x0000 : Japan?
+         - 0x0000 : Japan?
            - 0x0004 : US?
-           - 0x0008 : World?	(default)
-           - 0x000c : World?	(same as 0x0008)
-	*/
+           - 0x0008 : World?    (default)
+           - 0x000c : World?    (same as 0x0008)
+    */
 
 	RAM[0x003954/2] = data * 4;
 
-//	memset (eprom_data, 0xff, 0x80);	// Force EEPROM reset
+//  memset (eprom_data, 0xff, 0x80);    // Force EEPROM reset
 }
 #endif
 
@@ -212,11 +212,11 @@ static MACHINE_INIT( mechatt )
 	int data = readinputportbytag("FAKE1") & 0x03;
 
 	/* Country :
-	     - 0x0000 : Japan
-           - 0x1111 : World	(default)
+         - 0x0000 : Japan
+           - 0x1111 : World (default)
            - 0x2222 : US
            - 0x3333 : Asia?
-	*/
+    */
 
 	RAM[0x06a000/2] = (data << 12) | (data << 8) | (data << 4) | (data << 0);
 }
@@ -494,7 +494,7 @@ INPUT_PORTS_START( bbusters )
 	PORT_DIPSETTING(    0x00, "Japan?" )
 	PORT_DIPSETTING(    0x01, "US?" )
 	PORT_DIPSETTING(    0x02, "World?" )
-//	PORT_DIPSETTING(    0x03, "World?" )			// Same as "0008" - impossible choice ?
+//  PORT_DIPSETTING(    0x03, "World?" )            // Same as "0008" - impossible choice ?
 #endif
 INPUT_PORTS_END
 

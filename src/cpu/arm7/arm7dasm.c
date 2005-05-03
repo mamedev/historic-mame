@@ -1,23 +1,23 @@
 /*****************************************************************************
  *
- *	 arm7dasm.c
- *	 Portable ARM7TDMI Core Emulator - Disassembler
+ *   arm7dasm.c
+ *   Portable ARM7TDMI Core Emulator - Disassembler
  *
- *	 Copyright (c) 2004 Steve Ellenoff, all rights reserved.
+ *   Copyright (c) 2004 Steve Ellenoff, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   sellenoff@hotmail.com
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     sellenoff@hotmail.com
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	This work is based on:
+ *  This work is based on:
  *  #1) 'Atmel Corporation ARM7TDMI (Thumb) Datasheet - January 1999'
  *  #2) Arm 2/3/6 emulator By Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino (MAME CORE 0.76)
  *
@@ -60,7 +60,7 @@ static char *DasmCoProc_RT( char *pBuf, data32_t opcode, char *pConditionCode, c
 		pBuf += sprintf( pBuf, "MCR" );
 	}
 	pBuf += sprintf( pBuf, "%s", pConditionCode );
-	pBuf = WritePadding( pBuf, pBuf0 );			
+	pBuf = WritePadding( pBuf, pBuf0 );
 	pBuf += sprintf( pBuf, "p%d, %d, R%d, c%d, c%d",
 					(opcode>>8)&0xf, (opcode>>21)&7, (opcode>>12)&0xf, (opcode>>16)&0xf, opcode&0xf );
 	if((opcode>>5)&7) pBuf += sprintf( pBuf, ", %d",(opcode>>5)&7);
@@ -98,7 +98,7 @@ static char *DasmCoProc_DO( char *pBuf, data32_t opcode, char *pConditionCode, c
 	/* xxxx 1110 oooo nnnn dddd cccc ppp0 mmmm */
 	pBuf += sprintf( pBuf, "CDP" );
 	pBuf += sprintf( pBuf, "%s", pConditionCode );
-	pBuf = WritePadding( pBuf, pBuf0 );			
+	pBuf = WritePadding( pBuf, pBuf0 );
 	//p#,CPOpc,cd,cn,cm
 	pBuf += sprintf( pBuf, "p%d, %d, c%d, c%d, c%d",
 		(opcode>>8)&0xf, (opcode>>20)&0xf, (opcode>>12)&0xf, (opcode>>16)&0xf, opcode&0xf );
@@ -135,7 +135,7 @@ static char *WriteDataProcessingOperand( char *pBuf, data32_t opcode, int printO
 
 	/* Register Op2 */
 	if (printOp2)
-//SJE:	pBuf += sprintf(pBuf,"R%d, ", (opcode>>0)&0xf);
+//SJE:  pBuf += sprintf(pBuf,"R%d, ", (opcode>>0)&0xf);
 		pBuf += sprintf(pBuf,"R%d ", (opcode>>0)&0xf);
 
 	//SJE: ignore if LSL#0 for register shift
@@ -254,7 +254,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 
 			//Immediate or Register Offset?
 			if(opcode&0x400000) {			//Bit 22 - 1 = immediate, 0 = register
-				//immediate			( imm. value in high nibble (bits 8-11) and lo nibble (bit 0-3) )
+				//immediate         ( imm. value in high nibble (bits 8-11) and lo nibble (bit 0-3) )
 				pBuf += sprintf(pBuf, ",%s#$%x",(opcode&0x800000)?"":"-",( (((opcode>>8)&0x0f)<<4) | (opcode&0x0f)));
 			}
 			else {
@@ -265,7 +265,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 			//Pre-Inc brace & Write back
 			pBuf += sprintf(pBuf, "%s%s",(opcode&0x1000000)?"]":"",(opcode&0x200000)?"{!}":"");
 		}
-		else { 
+		else {
 			if(opcode&0x01000000) {		//bit 24 = 1
 			/* swap */
 			//todo: Test on valid instructions
@@ -289,7 +289,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 						pBuf += sprintf( pBuf, "S" );
 					else
 						pBuf += sprintf( pBuf, "U" );
-					
+
 					/* Multiply & Accumulate? */
 					if( opcode&0x00200000 )
 					{
@@ -307,7 +307,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 						*pBuf++ = 'S';
 					}
 					pBuf = WritePadding( pBuf, pBuf0 );
-					
+
 					//Format is RLo,RHi,Rm,Rs
 					pBuf += sprintf( pBuf,
 						"R%d, R%d, R%d, R%d",
@@ -316,7 +316,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 						(opcode&0xf),
 						(opcode>>8)&0xf);
 				}
-				else 
+				else
 				{
 					/* Multiply */
 					/* xxxx0000 00ASdddd nnnnssss 1001mmmm */
@@ -366,7 +366,7 @@ void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
 			if( (opcode&0x00200000) ) {
 				pBuf += sprintf(pBuf, "MSR%s",pConditionCode );
 				//Flag Bits Only? (Bit 16 Clear)
-				if( (opcode&0x10000)==0)	pBuf += sprintf(pBuf, "F");	
+				if( (opcode&0x10000)==0)	pBuf += sprintf(pBuf, "F");
 				pBuf = WritePadding( pBuf, pBuf0 );
 				pBuf += sprintf(pBuf, "%s,",strpsr);
 				WriteDataProcessingOperand(pBuf, opcode, (opcode&0x02000000)?1:0, 0, 1);

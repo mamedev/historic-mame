@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Williams 6809 system
+    Williams 6809 system
 
 ***************************************************************************/
 
@@ -60,7 +60,7 @@ static WRITE8_HANDLER( joust2_pia_3_cb1_w );
 
 /*************************************
  *
- *	Generic old-Williams PIA interfaces
+ *  Generic old-Williams PIA interfaces
  *
  *************************************/
 
@@ -124,7 +124,7 @@ struct pia6821_interface williams_snd_pia_intf =
 
 /*************************************
  *
- *	Game-specific old-Williams PIA interfaces
+ *  Game-specific old-Williams PIA interfaces
  *
  *************************************/
 
@@ -164,7 +164,7 @@ struct pia6821_interface spdball_pia_3_intf =
 
 /*************************************
  *
- *	Generic later-Williams PIA interfaces
+ *  Generic later-Williams PIA interfaces
  *
  *************************************/
 
@@ -196,7 +196,7 @@ struct pia6821_interface williams2_snd_pia_intf =
 
 /*************************************
  *
- *	Game-specific later-Williams PIA interfaces
+ *  Game-specific later-Williams PIA interfaces
  *
  *************************************/
 
@@ -236,7 +236,7 @@ struct pia6821_interface joust2_pia_1_intf =
 
 /*************************************
  *
- *	Older Williams interrupts
+ *  Older Williams interrupts
  *
  *************************************/
 
@@ -299,7 +299,7 @@ static void williams_snd_irq(int state)
 
 /*************************************
  *
- *	Older Williams initialization
+ *  Older Williams initialization
  *
  *************************************/
 
@@ -322,7 +322,7 @@ MACHINE_INIT( williams )
 
 /*************************************
  *
- *	Newer Williams interrupts
+ *  Newer Williams interrupts
  *
  *************************************/
 
@@ -365,7 +365,7 @@ static void williams2_endscreen_callback(int param)
 
 /*************************************
  *
- *	Newer Williams initialization
+ *  Newer Williams initialization
  *
  *************************************/
 
@@ -388,7 +388,7 @@ MACHINE_INIT( williams2 )
 
 /*************************************
  *
- *	VRAM/ROM banking
+ *  VRAM/ROM banking
  *
  *************************************/
 
@@ -414,7 +414,7 @@ WRITE8_HANDLER( williams2_bank_select_w )
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
 			cpu_setbank(1, williams_videoram);
 			break;
-		
+
 		/* pages 1 and 2 are ROM */
 		case 1:
 		case 2:
@@ -422,7 +422,7 @@ WRITE8_HANDLER( williams2_bank_select_w )
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
 			cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + 0x10000 * ((data & 6) >> 1));
 			break;
-		
+
 		/* page 3 accesses palette RAM; the remaining areas are as if page 1 ROM was selected */
 		case 3:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, williams2_paletteram_r);
@@ -436,7 +436,7 @@ WRITE8_HANDLER( williams2_bank_select_w )
 
 /*************************************
  *
- *	Sound commands
+ *  Sound commands
  *
  *************************************/
 
@@ -472,7 +472,7 @@ static WRITE8_HANDLER( williams2_snd_cmd_w )
 
 /*************************************
  *
- *	General input port handlers
+ *  General input port handlers
  *
  *************************************/
 
@@ -497,26 +497,26 @@ READ8_HANDLER( williams_input_port_1_4_r )
 /*
  *  Williams 49-way joystick
  *
- *	The joystick works on a 7x7 grid system:
+ *  The joystick works on a 7x7 grid system:
  *
- *		+ + + | + + +
- *		+ + + | + + +
- *		+ + + | + + +
- *		------+------
- *		+ + + | + + +
- *		+ + + | + + +
- *		+ + + | + + +
+ *      + + + | + + +
+ *      + + + | + + +
+ *      + + + | + + +
+ *      ------+------
+ *      + + + | + + +
+ *      + + + | + + +
+ *      + + + | + + +
  *
- *	Each axis has 7 positions, reported as follows
- *	in 4 bits/axis:
+ *  Each axis has 7 positions, reported as follows
+ *  in 4 bits/axis:
  *
- *		0000 = left/up full
- *		0100 = left/up 2/3
- *		0110 = left/up 1/3
- *		0111 = center
- *		1011 = right/down 1/3
- *		1001 = right/down 2/3
- *		1000 = right/down full
+ *      0000 = left/up full
+ *      0100 = left/up 2/3
+ *      0110 = left/up 1/3
+ *      0111 = center
+ *      1011 = right/down 1/3
+ *      1001 = right/down 2/3
+ *      1000 = right/down full
  */
 
 READ8_HANDLER( williams_49way_port_0_r )
@@ -538,7 +538,7 @@ READ8_HANDLER( williams_input_port_49way_0_5_r )
 
 /*************************************
  *
- *	CMOS access
+ *  CMOS access
  *
  *************************************/
 
@@ -559,7 +559,7 @@ WRITE8_HANDLER( bubbles_cmos_w )
 
 /*************************************
  *
- *	Watchdog
+ *  Watchdog
  *
  *************************************/
 
@@ -582,7 +582,7 @@ WRITE8_HANDLER( williams2_watchdog_reset_w )
 
 /*************************************
  *
- *	Diagnostic controls
+ *  Diagnostic controls
  *
  *************************************/
 
@@ -623,7 +623,7 @@ WRITE8_HANDLER( williams2_7segment_w )
 
 /*************************************
  *
- *	Defender-specific routines
+ *  Defender-specific routines
  *
  *************************************/
 
@@ -654,7 +654,7 @@ WRITE8_HANDLER( defender_bank_select_w )
 		case 0:
 			defender_install_io_space();
 			break;
-		
+
 		/* pages 1-9 map to ROM banks */
 		case 1:
 		case 2:
@@ -669,7 +669,7 @@ WRITE8_HANDLER( defender_bank_select_w )
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
 			cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + (data - 1) * 0x1000]);
 			break;
-		
+
 		/* pages A-F are not connected */
 		default:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_NOP);
@@ -682,7 +682,7 @@ WRITE8_HANDLER( defender_bank_select_w )
 
 /*************************************
  *
- *	Mayday-specific routines
+ *  Mayday-specific routines
  *
  *************************************/
 
@@ -700,7 +700,7 @@ READ8_HANDLER( mayday_protection_r )
 
 /*************************************
  *
- *	Sinistar-specific routines
+ *  Sinistar-specific routines
  *
  *************************************/
 
@@ -708,7 +708,7 @@ WRITE8_HANDLER( sinistar_vram_select_w )
 {
 	/* low two bits are standard */
 	williams_vram_select_w(offset, data);
-	
+
 	/* window enable from bit 2 (clips to 0x7400) */
 	williams_blitter_window_enable = data & 0x04;
 }
@@ -717,21 +717,21 @@ WRITE8_HANDLER( sinistar_vram_select_w )
 
 /*************************************
  *
- *	Blaster-specific routines
+ *  Blaster-specific routines
  *
  *************************************/
 
 INLINE void update_blaster_banking(void)
 {
 	UINT8 *base = memory_region(REGION_CPU1);
-	
+
 	/* if vram_bank is 1, we map in ROM areas based on the current bank select */
 	if (vram_bank)
 	{
 		cpu_setbank(1, base + 0x18000 + 0x4000 * blaster_bank);
 		cpu_setbank(2, base + 0x10000);
 	}
-	
+
 	/* otherwise, we map standard video RAM */
 	else
 	{
@@ -749,7 +749,7 @@ WRITE8_HANDLER( blaster_vram_select_w )
 
 	/* cocktail flip from bit 1 */
 	williams_cocktail = data & 0x02;
-	
+
 	/* window enable from bit 2 (clips to 0x9700) */
 	williams_blitter_window_enable = data & 0x04;
 }
@@ -765,7 +765,7 @@ WRITE8_HANDLER( blaster_bank_select_w )
 
 /*************************************
  *
- *	Lotto Fun-specific routines
+ *  Lotto Fun-specific routines
  *
  *************************************/
 
@@ -779,7 +779,7 @@ static READ8_HANDLER( lottofun_input_port_0_r )
 
 /*************************************
  *
- *	Turkey Shoot-specific routines
+ *  Turkey Shoot-specific routines
  *
  *************************************/
 
@@ -828,7 +828,7 @@ static WRITE8_HANDLER( tshoot_lamp_w )
 
 /*************************************
  *
- *	Joust 2-specific routines
+ *  Joust 2-specific routines
  *
  *************************************/
 

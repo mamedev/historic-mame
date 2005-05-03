@@ -89,7 +89,7 @@ static void get_tile_info1(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 

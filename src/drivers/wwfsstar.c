@@ -27,16 +27,16 @@
 ********************************************************************************
 
  Change Log:
- 04 Mar 2002	 | Fixed Dip Switches and Inputs	(Steph)
-			 | Fixed screen flipping by using similar routine to the one
-			 | in src/vidhrdw/wwfwfest.c		(Steph)
- 18 Jun 2001	 | Changed Interrupt Function .. its not fully understood whats
-			 | is meant to be going on ..
- 15 Jun 2001	 | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
-			 | mapped DSW's
- 15 Jun 2001	 | First Submission of Driver,
- 14 Jun 2001	 | Started Driver, using Raine Source as a reference for getting it
-			 | up and running
+ 04 Mar 2002     | Fixed Dip Switches and Inputs    (Steph)
+             | Fixed screen flipping by using similar routine to the one
+             | in src/vidhrdw/wwfwfest.c        (Steph)
+ 18 Jun 2001     | Changed Interrupt Function .. its not fully understood whats
+             | is meant to be going on ..
+ 15 Jun 2001     | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
+             | mapped DSW's
+ 15 Jun 2001     | First Submission of Driver,
+ 14 Jun 2001     | Started Driver, using Raine Source as a reference for getting it
+             | up and running
 
 ********************************************************************************
 
@@ -53,8 +53,8 @@
    non-responsive to controls.  It seems both interrupts must happen during the
    vblank period or something.
    Steph's update : I don't have this problem, but I have this message in the log file :
-	"Warning: you are using IPT_VBLANK with vblank_duration = 0.
-	You need to increase vblank_duration for IPT_VBLANK to work."
+    "Warning: you are using IPT_VBLANK with vblank_duration = 0.
+    You need to increase vblank_duration for IPT_VBLANK to work."
 
 *******************************************************************************/
 

@@ -1,5 +1,5 @@
 /*===========================================================================
-	ASTAT -- ALU/MAC status register
+    ASTAT -- ALU/MAC status register
 ===========================================================================*/
 
 /* flag definitions */
@@ -68,7 +68,7 @@ static const INT32 constants[] =
 
 
 /*===========================================================================
-	MSTAT -- ALU/MAC control register
+    MSTAT -- ALU/MAC control register
 ===========================================================================*/
 
 /* flag definitions */
@@ -98,7 +98,7 @@ INLINE void set_mstat(int new_value)
 
 
 /*===========================================================================
-	SSTAT -- stack status register
+    SSTAT -- stack status register
 ===========================================================================*/
 
 /* flag definitions */
@@ -114,7 +114,7 @@ INLINE void set_mstat(int new_value)
 
 
 /*===========================================================================
-	PC stack handlers
+    PC stack handlers
 ===========================================================================*/
 
 INLINE UINT32 pc_stack_top(void)
@@ -181,7 +181,7 @@ INLINE UINT32 pc_stack_pop_val(void)
 
 
 /*===========================================================================
-	CNTR stack handlers
+    CNTR stack handlers
 ===========================================================================*/
 
 INLINE UINT32 cntr_stack_top(void)
@@ -217,7 +217,7 @@ INLINE void cntr_stack_pop(void)
 
 
 /*===========================================================================
-	LOOP stack handlers
+    LOOP stack handlers
 ===========================================================================*/
 
 INLINE UINT32 loop_stack_top(void)
@@ -263,7 +263,7 @@ INLINE void loop_stack_pop(void)
 
 
 /*===========================================================================
-	STAT stack handlers
+    STAT stack handlers
 ===========================================================================*/
 
 INLINE void stat_stack_push(void)
@@ -297,7 +297,7 @@ INLINE void stat_stack_pop(void)
 
 
 /*===========================================================================
-	condition code checking
+    condition code checking
 ===========================================================================*/
 
 INLINE int CONDITION(int c)
@@ -316,7 +316,7 @@ INLINE int CONDITION(int c)
 
 
 /*===========================================================================
-	register writing
+    register writing
 ===========================================================================*/
 
 static void wr_inval(INT32 val) { logerror( "ADSP %04x: Writing to an invalid register!", adsp2100.ppc ); }
@@ -413,7 +413,7 @@ static void (*wr_reg[4][16])(INT32) =
 
 
 /*===========================================================================
-	register reading
+    register reading
 ===========================================================================*/
 
 static INT32 rd_inval(void) { logerror( "ADSP %04x: Writing to an invalid register!", adsp2100.ppc ); return 0; }
@@ -494,7 +494,7 @@ static INT32 (*rd_reg[4][16])(void) =
 
 
 /*===========================================================================
-	Modulus addressing logic
+    Modulus addressing logic
 ===========================================================================*/
 
 INLINE void modify_address(UINT32 ireg, UINT32 mreg)
@@ -512,7 +512,7 @@ INLINE void modify_address(UINT32 ireg, UINT32 mreg)
 
 
 /*===========================================================================
-	Data memory accessors
+    Data memory accessors
 ===========================================================================*/
 
 INLINE void data_write_dag1(UINT32 op, INT32 val)
@@ -599,7 +599,7 @@ INLINE UINT32 data_read_dag2(UINT32 op)
 }
 
 /*===========================================================================
-	Program memory accessors
+    Program memory accessors
 ===========================================================================*/
 
 INLINE void pgm_write_dag2(UINT32 op, INT32 val)
@@ -643,7 +643,7 @@ INLINE UINT32 pgm_read_dag2(UINT32 op)
 
 
 /*===========================================================================
-	ALU register reading
+    ALU register reading
 ===========================================================================*/
 
 #define ALU_GETXREG_UNSIGNED(x) (*(UINT16 *)alu_xregs[x])
@@ -674,7 +674,7 @@ static const void *alu_yregs[4] =
 
 
 /*===========================================================================
-	MAC register reading
+    MAC register reading
 ===========================================================================*/
 
 #define MAC_GETXREG_UNSIGNED(x) (*(UINT16 *)mac_xregs[x])
@@ -705,7 +705,7 @@ static const void *mac_yregs[4] =
 
 
 /*===========================================================================
-	SHIFT register reading
+    SHIFT register reading
 ===========================================================================*/
 
 #define SHIFT_GETXREG_UNSIGNED(x) (*(UINT16 *)shift_xregs[x])
@@ -726,7 +726,7 @@ static const void *shift_xregs[8] =
 
 
 /*===========================================================================
-	ALU operations (result in AR)
+    ALU operations (result in AR)
 ===========================================================================*/
 
 void alu_op_ar(int op)
@@ -738,12 +738,12 @@ void alu_op_ar(int op)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
-			/* Y				Clear when y = 0 */
+			/* Y                Clear when y = 0 */
 			res = ALU_GETYREG_UNSIGNED(yop);
 			CALC_NZ(res);
 			break;
 		case 0x01<<13:
-			/* Y + 1			PASS 1 when y = 0 */
+			/* Y + 1            PASS 1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop + 1;
 			CALC_NZ(res);
@@ -759,7 +759,7 @@ void alu_op_ar(int op)
 			CALC_NZVC(xop, yop, res);
 			break;
 		case 0x03<<13:
-			/* X + Y			X when y = 0 */
+			/* X + Y            X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop + yop;
@@ -779,7 +779,7 @@ void alu_op_ar(int op)
 			if (yop == 0x0000) SET_C;
 			break;
 		case 0x06<<13:
-			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			/* X - Y + C - 1    X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop - yop + (GET_C >> 3) - 1;
@@ -793,7 +793,7 @@ void alu_op_ar(int op)
 			CALC_NZVC_SUB(xop, yop, res);
 			break;
 		case 0x08<<13:
-			/* Y - 1			PASS -1 when y = 0 */
+			/* Y - 1            PASS -1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - 1;
 			CALC_NZ(res);
@@ -801,14 +801,14 @@ void alu_op_ar(int op)
 			else if (yop == 0x0000) SET_C;
 			break;
 		case 0x09<<13:
-			/* Y - X			-X when y = 0 */
+			/* Y - X            -X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop;
 			CALC_NZVC_SUB(yop, xop, res);
 			break;
 		case 0x0a<<13:
-			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			/* Y - X + C - 1    -X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop + (GET_C >> 3) - 1;
@@ -864,7 +864,7 @@ void alu_op_ar(int op)
 
 
 /*===========================================================================
-	ALU operations (result in AR, constant yop)
+    ALU operations (result in AR, constant yop)
 ===========================================================================*/
 
 void alu_op_ar_const(int op)
@@ -876,12 +876,12 @@ void alu_op_ar_const(int op)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
-			/* Y				Clear when y = 0 */
+			/* Y                Clear when y = 0 */
 			res = yop;
 			CALC_NZ(res);
 			break;
 		case 0x01<<13:
-			/* Y + 1			PASS 1 when y = 0 */
+			/* Y + 1            PASS 1 when y = 0 */
 			res = yop + 1;
 			CALC_NZ(res);
 			if (yop == 0x7fff) SET_V;
@@ -895,7 +895,7 @@ void alu_op_ar_const(int op)
 			CALC_NZVC(xop, yop, res);
 			break;
 		case 0x03<<13:
-			/* X + Y			X when y = 0 */
+			/* X + Y            X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = xop + yop;
 			CALC_NZVC(xop, yop, res);
@@ -913,7 +913,7 @@ void alu_op_ar_const(int op)
 			if (yop == 0x0000) SET_C;
 			break;
 		case 0x06<<13:
-			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			/* X - Y + C - 1    X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = xop - yop + (GET_C >> 3) - 1;
 			CALC_NZVC_SUB(xop, yop, res);
@@ -925,20 +925,20 @@ void alu_op_ar_const(int op)
 			CALC_NZVC_SUB(xop, yop, res);
 			break;
 		case 0x08<<13:
-			/* Y - 1			PASS -1 when y = 0 */
+			/* Y - 1            PASS -1 when y = 0 */
 			res = yop - 1;
 			CALC_NZ(res);
 			if (yop == 0x8000) SET_V;
 			else if (yop == 0x0000) SET_C;
 			break;
 		case 0x09<<13:
-			/* Y - X			-X when y = 0 */
+			/* Y - X            -X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = yop - xop;
 			CALC_NZVC_SUB(yop, xop, res);
 			break;
 		case 0x0a<<13:
-			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			/* Y - X + C - 1    -X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = yop - xop + (GET_C >> 3) - 1;
 			CALC_NZVC_SUB(yop, xop, res);
@@ -990,7 +990,7 @@ void alu_op_ar_const(int op)
 
 
 /*===========================================================================
-	ALU operations (result in AF)
+    ALU operations (result in AF)
 ===========================================================================*/
 
 void alu_op_af(int op)
@@ -1002,12 +1002,12 @@ void alu_op_af(int op)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
-			/* Y				Clear when y = 0 */
+			/* Y                Clear when y = 0 */
 			res = ALU_GETYREG_UNSIGNED(yop);
 			CALC_NZ(res);
 			break;
 		case 0x01<<13:
-			/* Y + 1			PASS 1 when y = 0 */
+			/* Y + 1            PASS 1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop + 1;
 			CALC_NZ(res);
@@ -1023,7 +1023,7 @@ void alu_op_af(int op)
 			CALC_NZVC(xop, yop, res);
 			break;
 		case 0x03<<13:
-			/* X + Y			X when y = 0 */
+			/* X + Y            X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop + yop;
@@ -1043,7 +1043,7 @@ void alu_op_af(int op)
 			if (yop == 0x0000) SET_C;
 			break;
 		case 0x06<<13:
-			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			/* X - Y + C - 1    X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop - yop + (GET_C >> 3) - 1;
@@ -1057,7 +1057,7 @@ void alu_op_af(int op)
 			CALC_NZVC_SUB(xop, yop, res);
 			break;
 		case 0x08<<13:
-			/* Y - 1			PASS -1 when y = 0 */
+			/* Y - 1            PASS -1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - 1;
 			CALC_NZ(res);
@@ -1065,14 +1065,14 @@ void alu_op_af(int op)
 			else if (yop == 0x0000) SET_C;
 			break;
 		case 0x09<<13:
-			/* Y - X			-X when y = 0 */
+			/* Y - X            -X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop;
 			CALC_NZVC_SUB(yop, xop, res);
 			break;
 		case 0x0a<<13:
-			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			/* Y - X + C - 1    -X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop + (GET_C >> 3) - 1;
@@ -1125,7 +1125,7 @@ void alu_op_af(int op)
 
 
 /*===========================================================================
-	ALU operations (result in AF, constant yop)
+    ALU operations (result in AF, constant yop)
 ===========================================================================*/
 
 void alu_op_af_const(int op)
@@ -1137,12 +1137,12 @@ void alu_op_af_const(int op)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
-			/* Y				Clear when y = 0 */
+			/* Y                Clear when y = 0 */
 			res = yop;
 			CALC_NZ(res);
 			break;
 		case 0x01<<13:
-			/* Y + 1			PASS 1 when y = 0 */
+			/* Y + 1            PASS 1 when y = 0 */
 			res = yop + 1;
 			CALC_NZ(res);
 			if (yop == 0x7fff) SET_V;
@@ -1156,7 +1156,7 @@ void alu_op_af_const(int op)
 			CALC_NZVC(xop, yop, res);
 			break;
 		case 0x03<<13:
-			/* X + Y			X when y = 0 */
+			/* X + Y            X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = xop + yop;
 			CALC_NZVC(xop, yop, res);
@@ -1174,7 +1174,7 @@ void alu_op_af_const(int op)
 			if (yop == 0x0000) SET_C;
 			break;
 		case 0x06<<13:
-			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			/* X - Y + C - 1    X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = xop - yop + (GET_C >> 3) - 1;
 			CALC_NZVC_SUB(xop, yop, res);
@@ -1186,20 +1186,20 @@ void alu_op_af_const(int op)
 			CALC_NZVC_SUB(xop, yop, res);
 			break;
 		case 0x08<<13:
-			/* Y - 1			PASS -1 when y = 0 */
+			/* Y - 1            PASS -1 when y = 0 */
 			res = yop - 1;
 			CALC_NZ(res);
 			if (yop == 0x8000) SET_V;
 			else if (yop == 0x0000) SET_C;
 			break;
 		case 0x09<<13:
-			/* Y - X			-X when y = 0 */
+			/* Y - X            -X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = yop - xop;
 			CALC_NZVC_SUB(yop, xop, res);
 			break;
 		case 0x0a<<13:
-			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			/* Y - X + C - 1    -X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			res = yop - xop + (GET_C >> 3) - 1;
 			CALC_NZVC_SUB(yop, xop, res);
@@ -1248,7 +1248,7 @@ void alu_op_af_const(int op)
 
 
 /*===========================================================================
-	ALU operations (no result)
+    ALU operations (no result)
 ===========================================================================*/
 
 void alu_op_none(int op)
@@ -1260,12 +1260,12 @@ void alu_op_none(int op)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
-			/* Y				Clear when y = 0 */
+			/* Y                Clear when y = 0 */
 			res = ALU_GETYREG_UNSIGNED(yop);
 			CALC_NZ(res);
 			break;
 		case 0x01<<13:
-			/* Y + 1			PASS 1 when y = 0 */
+			/* Y + 1            PASS 1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop + 1;
 			CALC_NZ(res);
@@ -1281,7 +1281,7 @@ void alu_op_none(int op)
 			CALC_NZVC(xop, yop, res);
 			break;
 		case 0x03<<13:
-			/* X + Y			X when y = 0 */
+			/* X + Y            X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop + yop;
@@ -1301,7 +1301,7 @@ void alu_op_none(int op)
 			if (yop == 0x0000) SET_C;
 			break;
 		case 0x06<<13:
-			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			/* X - Y + C - 1    X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = xop - yop + (GET_C >> 3) - 1;
@@ -1315,7 +1315,7 @@ void alu_op_none(int op)
 			CALC_NZVC_SUB(xop, yop, res);
 			break;
 		case 0x08<<13:
-			/* Y - 1			PASS -1 when y = 0 */
+			/* Y - 1            PASS -1 when y = 0 */
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - 1;
 			CALC_NZ(res);
@@ -1323,14 +1323,14 @@ void alu_op_none(int op)
 			else if (yop == 0x0000) SET_C;
 			break;
 		case 0x09<<13:
-			/* Y - X			-X when y = 0 */
+			/* Y - X            -X when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop;
 			CALC_NZVC_SUB(yop, xop, res);
 			break;
 		case 0x0a<<13:
-			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			/* Y - X + C - 1    -X + C - 1 when y = 0 */
 			xop = ALU_GETXREG_UNSIGNED(xop);
 			yop = ALU_GETYREG_UNSIGNED(yop);
 			res = yop - xop + (GET_C >> 3) - 1;
@@ -1377,7 +1377,7 @@ void alu_op_none(int op)
 
 
 /*===========================================================================
-	MAC operations (result in MR)
+    MAC operations (result in MR)
 ===========================================================================*/
 
 void mac_op_mr(int op)
@@ -1442,7 +1442,7 @@ void mac_op_mr(int op)
 #endif
 			break;
 		case 0x04<<13:
-			/* X * Y (SS)		Clear when y = 0 */
+			/* X * Y (SS)       Clear when y = 0 */
 			xop = MAC_GETXREG_SIGNED(xop);
 			yop = MAC_GETYREG_SIGNED(yop);
 			temp = (xop * yop) << shift;
@@ -1540,7 +1540,7 @@ void mac_op_mr(int op)
 
 
 /*===========================================================================
-	MAC operations (result in MR, yop == xop)
+    MAC operations (result in MR, yop == xop)
 ===========================================================================*/
 
 void mac_op_mr_xop(int op)
@@ -1601,7 +1601,7 @@ void mac_op_mr_xop(int op)
 #endif
 			break;
 		case 0x04<<13:
-			/* X * Y (SS)		Clear when y = 0 */
+			/* X * Y (SS)       Clear when y = 0 */
 			xop = MAC_GETXREG_SIGNED(xop);
 			temp = (xop * xop) << shift;
 			res = (INT64)temp;
@@ -1687,7 +1687,7 @@ void mac_op_mr_xop(int op)
 
 
 /*===========================================================================
-	MAC operations (result in MF)
+    MAC operations (result in MF)
 ===========================================================================*/
 
 void mac_op_mf(int op)
@@ -1752,7 +1752,7 @@ void mac_op_mf(int op)
 #endif
 			break;
 		case 0x04<<13:
-			/* X * Y (SS)		Clear when y = 0 */
+			/* X * Y (SS)       Clear when y = 0 */
 			xop = MAC_GETXREG_SIGNED(xop);
 			yop = MAC_GETYREG_SIGNED(yop);
 			temp = (xop * yop) << shift;
@@ -1847,7 +1847,7 @@ void mac_op_mf(int op)
 
 
 /*===========================================================================
-	MAC operations (result in MF, yop == xop)
+    MAC operations (result in MF, yop == xop)
 ===========================================================================*/
 
 void mac_op_mf_xop(int op)
@@ -1908,7 +1908,7 @@ void mac_op_mf_xop(int op)
 #endif
 			break;
 		case 0x04<<13:
-			/* X * Y (SS)		Clear when y = 0 */
+			/* X * Y (SS)       Clear when y = 0 */
 			xop = MAC_GETXREG_SIGNED(xop);
 			temp = (xop * xop) << shift;
 			res = (INT64)temp;
@@ -1991,7 +1991,7 @@ void mac_op_mf_xop(int op)
 
 
 /*===========================================================================
-	SHIFT operations (result in SR/SE/SB)
+    SHIFT operations (result in SR/SE/SB)
 ===========================================================================*/
 
 void shift_op(int op)
@@ -2173,7 +2173,7 @@ void shift_op(int op)
 
 
 /*===========================================================================
-	Immediate SHIFT operations (result in SR/SE/SB)
+    Immediate SHIFT operations (result in SR/SE/SB)
 ===========================================================================*/
 
 void shift_op_imm(int op)

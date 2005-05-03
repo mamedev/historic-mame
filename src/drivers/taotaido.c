@@ -3,8 +3,8 @@
   Tao Taido             (c) 1993 Video System
 
 
-	driver by David Haywood - Dip Switches and Inputs by Stephane Humbert
-	based on other Video System drivers
+    driver by David Haywood - Dip Switches and Inputs by Stephane Humbert
+    based on other Video System drivers
 
 Stephh's notes (based on the games M68000 code and some tests) :
 
@@ -45,15 +45,15 @@ Stephh's notes (based on the games M68000 code and some tests) :
 /* Tao Taido
 (c)1993 Video System
 
-CPU:	68000-16
-Sound:	Z80-B
-		YM2610
-OSC:	14.31818MHz
-		20.0000MHz
-		32.0000MHz
-Chips:	VS9108
-		VS920B
-		VS9209 x2
+CPU:    68000-16
+Sound:  Z80-B
+        YM2610
+OSC:    14.31818MHz
+        20.0000MHz
+        32.0000MHz
+Chips:  VS9108
+        VS920B
+        VS9209 x2
 
 ****************************************************************************
 
@@ -307,11 +307,11 @@ INPUT_PORTS_START( taotaido )
 	PORT_DIPSETTING(    0x00, "US" )				// also (c) Mc O'River Inc
 	PORT_DIPSETTING(    0x01, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x02, "Hong-Kong/Taiwan" )
-//	PORT_DIPSETTING(    0x03, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x04, "Korea" )
-//	PORT_DIPSETTING(    0x05, DEF_STR( Japan ) )
-//	PORT_DIPSETTING(    0x06, DEF_STR( Japan ) )
-//	PORT_DIPSETTING(    0x07, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x05, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x06, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x07, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( World ) )
 	/* 0x09 to 0x0f : DEF_STR( Japan ) */
 

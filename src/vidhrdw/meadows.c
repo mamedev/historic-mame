@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Meadows S2650 driver
+    Meadows S2650 driver
 
 ****************************************************************************/
 
@@ -18,7 +18,7 @@ static struct tilemap *bg_tilemap;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -31,7 +31,7 @@ static void get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -47,7 +47,7 @@ VIDEO_START( meadows )
 
 /*************************************
  *
- *	Video RAM write
+ *  Video RAM write
  *
  *************************************/
 
@@ -61,7 +61,7 @@ WRITE8_HANDLER( meadows_videoram_w )
 
 /*************************************
  *
- *	Sprite RAM write
+ *  Sprite RAM write
  *
  *************************************/
 
@@ -76,7 +76,7 @@ WRITE8_HANDLER( meadows_spriteram_w )
 
 /*************************************
  *
- *	Sprite rendering
+ *  Sprite rendering
  *
  *************************************/
 
@@ -89,7 +89,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		int x = spriteram[i+0] + SPR_ADJUST_X;
 		int y = spriteram[i+4] + SPR_ADJUST_Y;
 		int code = spriteram[i+8] & 0x0f; 		/* bit #0 .. #3 select sprite */
-/*		int bank = (spriteram[i+8] >> 4) & 1; 	   bit #4 selects prom ???    */
+/*      int bank = (spriteram[i+8] >> 4) & 1;      bit #4 selects prom ???    */
 		int bank = i;							/* that fixes it for now :-/ */
 		int flip = spriteram[i+8] >> 5;			/* bit #5 flip vertical flag */
 
@@ -101,7 +101,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /*************************************
  *
- *	Primary video update
+ *  Primary video update
  *
  *************************************/
 

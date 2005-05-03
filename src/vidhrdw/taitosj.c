@@ -21,6 +21,7 @@ unsigned char *taitosj_colscrolly;
 unsigned char *taitosj_gfxpointer;
 unsigned char *taitosj_colorbank,*taitosj_video_priority;
 unsigned char *kikstart_scrollram;
+unsigned char *taitosj_spritebank;
 static unsigned char taitosj_collision_reg[4];
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct mame_bitmap *taitosj_tmpbitmap[3];
@@ -229,6 +230,8 @@ VIDEO_START( taitosj )
 
 	flipscreen[0] = flipscreen[1] = 0;
 
+	taitosj_spritebank = spriteram;
+
 	return 0;
 }
 
@@ -305,6 +308,15 @@ logerror("videoenable = %02x\n",data);
 			memset(dirtybuffer3,1,videoram_size);
 		}
 
+		//OBJEX sprite bank select
+		if( data & 4 )
+			taitosj_spritebank = spriteram_2;
+		else
+			taitosj_spritebank = spriteram;
+
+		if ((taitosj_video_enable & 4) != (data & 4))
+			logerror( "sprite bank[%d]\n", (data & 4) >> 2 );
+
 		taitosj_video_enable = data;
 	}
 }
@@ -359,8 +371,8 @@ INLINE int get_sprite_xy(UINT8 num, UINT8* sx, UINT8* sy)
 	int offs = num * 4;
 
 
-	*sx = spriteram[offs] - 1;
-	*sy = 240 - spriteram[offs + 1];
+	*sx = taitosj_spritebank[offs] - 1;
+	*sy = 240 - taitosj_spritebank[offs + 1];
 	return (*sy < 240);
 }
 
@@ -400,17 +412,17 @@ static int check_sprite_sprite_bitpattern(int sx1, int sy1, int num1,
 	}
 
 	/* draw the sprites into seperate bitmaps and check overlapping region */
-	drawgfx(sprite_sprite_collbitmap1,Machine->gfx[(spriteram[offs1 + 3] & 0x40) ? 3 : 1],
-			spriteram[offs1 + 3] & 0x3f,
+	drawgfx(sprite_sprite_collbitmap1,Machine->gfx[(taitosj_spritebank[offs1 + 3] & 0x40) ? 3 : 1],
+			taitosj_spritebank[offs1 + 3] & 0x3f,
 			0,
-			spriteram[offs1 + 2] & 1, spriteram[offs1 + 2] & 2,
+			taitosj_spritebank[offs1 + 2] & 1, taitosj_spritebank[offs1 + 2] & 2,
 			sx1,sy1,
 			0,TRANSPARENCY_NONE,0);
 
-	drawgfx(sprite_sprite_collbitmap2,Machine->gfx[(spriteram[offs2 + 3] & 0x40) ? 3 : 1],
-			spriteram[offs2 + 3] & 0x3f,
+	drawgfx(sprite_sprite_collbitmap2,Machine->gfx[(taitosj_spritebank[offs2 + 3] & 0x40) ? 3 : 1],
+			taitosj_spritebank[offs2 + 3] & 0x3f,
 			0,
-			spriteram[offs2 + 2] & 1, spriteram[offs2 + 2] & 2,
+			taitosj_spritebank[offs2 + 2] & 1, taitosj_spritebank[offs2 + 2] & 2,
 			sx2,sy2,
 			0,TRANSPARENCY_NONE,0);
 
@@ -530,8 +542,8 @@ static int check_sprite_plane_bitpattern(int num)
 	maxy = spritearea[num].max_y + 1;
 
 
-	flipx = spriteram[offs + 2] & 1;
-	flipy = spriteram[offs + 2] & 2;
+	flipx = taitosj_spritebank[offs + 2] & 1;
+	flipy = taitosj_spritebank[offs + 2] & 2;
 
 	if (flipscreen[0])
 	{
@@ -547,8 +559,8 @@ static int check_sprite_plane_bitpattern(int num)
 	}
 
 	/* draw sprite into a bitmap and check if playfields collide */
-	drawgfx(sprite_plane_collbitmap1, Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
-			spriteram[offs + 3] & 0x3f,
+	drawgfx(sprite_plane_collbitmap1, Machine->gfx[(taitosj_spritebank[offs + 3] & 0x40) ? 3 : 1],
+			taitosj_spritebank[offs + 3] & 0x3f,
 			0,
 			flipx, flipy,
 			0,0,
@@ -614,7 +626,7 @@ static void drawsprites(struct mame_bitmap *bitmap)
 		int offs;
 
 
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4) // spriteram_size == spriteram_2_size
 		{
 			UINT8 sx,sy,flipx,flipy;
 
@@ -624,8 +636,8 @@ static void drawsprites(struct mame_bitmap *bitmap)
 
 			if (get_sprite_xy(offs / 4, &sx, &sy))
 			{
-				flipx = spriteram[offs + 2] & 1;
-				flipy = spriteram[offs + 2] & 2;
+				flipx = taitosj_spritebank[offs + 2] & 1;
+				flipy = taitosj_spritebank[offs + 2] & 2;
 				if (flipscreen[0])
 				{
 					sx = 238 - sx;
@@ -637,17 +649,17 @@ static void drawsprites(struct mame_bitmap *bitmap)
 					flipy = !flipy;
 				}
 
-				drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
-						spriteram[offs + 3] & 0x3f,
-						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
+				drawgfx(bitmap,Machine->gfx[(taitosj_spritebank[offs + 3] & 0x40) ? 3 : 1],
+						taitosj_spritebank[offs + 3] & 0x3f,
+						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((taitosj_spritebank[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around. The horizontal games (eg. sfposeid) need this */
-				drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
-						spriteram[offs + 3] & 0x3f,
-						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
+				drawgfx(bitmap,Machine->gfx[(taitosj_spritebank[offs + 3] & 0x40) ? 3 : 1],
+						taitosj_spritebank[offs + 3] & 0x3f,
+						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((taitosj_spritebank[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx - 0x100,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);

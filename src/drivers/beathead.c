@@ -1,98 +1,98 @@
 /***************************************************************************
 
-	Atari "Stella on Steroids" hardware
+    Atari "Stella on Steroids" hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* BeatHead
+    Games supported:
+        * BeatHead
 
-	Known bugs:
-		* none known
+    Known bugs:
+        * none known
 
 ****************************************************************************
 
-	Memory map
+    Memory map
 
-	===================================================================================================
-	MAIN CPU
-	===================================================================================================
-	00000000-0001FFFFF  R/W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   Main RAM
-	01800000-01BFFFFFF  R     xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   Main ROM
-	40000000-4000007FF  R/W   -------- -------- -------- xxxxxxxx   EEPROM
-	41000000            R     -------- -------- -------- xxxxxxxx   Data from sound board
-	41000000              W   -------- -------- -------- xxxxxxxx   Data to sound board
-	41000100            R     -------- -------- -------- -----xxx   Interrupt enables
-	                          -------- -------- -------- -----x--      (scanline int enable)
-	                          -------- -------- -------- ------x-      (unknown int enable)
-	                          -------- -------- -------- -------x      (unknown int enable)
-	41000100              W   -------- -------- -------- --------   Interrupt acknowledge
-	41000104              W   -------- -------- -------- --------   Unknown int disable
-	41000108              W   -------- -------- -------- --------   Unknown int disable
-	4100010c              W   -------- -------- -------- --------   Scanline int disable
-	41000114              W   -------- -------- -------- --------   Unknown int enable
-	41000118              W   -------- -------- -------- --------   Unknown int enable
-	4100011c              W   -------- -------- -------- --------   Scanline int enable
-	41000200            R     -------- -------- xxxx--xx xxxx--xx   Player 2/3 inputs
-	                    R     -------- -------- xxxx---- --------      (player 3 joystick UDLR)
-	                    R     -------- -------- ------x- --------      (player 3 button 1)
-	                    R     -------- -------- -------x --------      (player 3 button 2)
-	                    R     -------- -------- -------- xxxx----      (player 2 joystick UDLR)
-	                    R     -------- -------- -------- ------x-      (player 2 button 1)
-	                    R     -------- -------- -------- -------x      (player 2 button 2)
-	41000204            R     -------- -------- xxxx--xx xxxx--xx   Player 1/4 inputs
-	                    R     -------- -------- xxxx---- --------      (player 1 joystick UDLR)
-	                    R     -------- -------- ------x- --------      (player 1 button 1)
-	                    R     -------- -------- -------x --------      (player 1 button 2)
-	                    R     -------- -------- -------- xxxx----      (player 4 joystick UDLR)
-	                    R     -------- -------- -------- ------x-      (player 4 button 1)
-	                    R     -------- -------- -------- -------x      (player 4 button 2)
-	41000208              W   -------- -------- -------- --------   Sound /RESET assert
-	4100020C              W   -------- -------- -------- --------   Sound /RESET deassert
-	41000220              W   -------- -------- -------- --------   Coin counter assert
-	41000224              W   -------- -------- -------- --------   Coin counter deassert
-	41000300            R     -------- -------- xxxxxxxx -xxx----   DIP switches/additional inputs
-	                    R     -------- -------- xxxxxxxx --------      (debug DIP switches)
-	                    R     -------- -------- -------- -x------      (service switch)
-	                    R     -------- -------- -------- --x-----      (sound output buffer full)
-	                    R     -------- -------- -------- ---x----      (sound input buffer full)
-	41000304            R     -------- -------- -------- xxxxxxxx   Coin/service inputs
-	                    R     -------- -------- -------- xxxx----      (service inputs: R,RC,LC,L)
-	                    R     -------- -------- -------- ----xxxx      (coin inputs: R,RC,LC,L)
-	41000400              W   -------- -------- -------- -xxxxxxx   Palette select
-	41000500              W   -------- -------- -------- --------   EEPROM write enable
-	41000600              W   -------- -------- -------- ----xxxx   Finescroll, vertical SYNC flags
-	                      W   -------- -------- -------- ----x---      (VBLANK)
-	                      W   -------- -------- -------- -----x--      (VSYNC)
-	                      W   -------- -------- -------- ------xx      (fine scroll value)
-	41000700              W   -------- -------- -------- --------   Watchdog reset
-	42000000-4201FFFF   R/W   -------- -------- xxxxxxxx xxxxxxxx   Palette RAM
-	                    R/W   -------- -------- x------- --------      (LSB of all three components)
-	                    R/W   -------- -------- -xxxxx-- --------      (red component)
-	                    R/W   -------- -------- ------xx xxx-----      (green component)
-	                    R/W   -------- -------- -------- ---xxxxx      (blue component)
-	43000000              W   -------- -------- ----xxxx xxxxxxxx   HSYNC RAM address latch
-	                      W   -------- -------- ----x--- --------      (counter enable)
-	                      W   -------- -------- -----xxx xxxxxxxx      (RAM address)
-	43000004            R/W   -------- -------- -------- xxxxx---   HSYNC RAM data latch
-	                    R/W   -------- -------- -------- x-------      (generate IRQ)
-	                    R/W   -------- -------- -------- -x------      (VRAM shift enable)
-	                    R/W   -------- -------- -------- --x-----      (HBLANK)
-	                    R/W   -------- -------- -------- ---x----      (/HSYNC)
-	                    R/W   -------- -------- -------- ----x---      (release wait for sync)
-	43000008              W   -------- -------- -------- ---x-xx-   HSYNC unknown control
-	8DF80000            R     -------- -------- -------- --------   Unknown
-	8F380000-8F3FFFFF     W   -------- -------- -------- --------   VRAM latch address
-	8F900000-8F97FFFF     W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM transparent write
-	8F980000-8F9FFFFF   R/W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM standard read/write
-	8FB80000-8FBFFFFF     W   ----xxxx ----xxxx ----xxxx ----xxxx   VRAM "bulk" write
-	                      W   ----xxxx -------- -------- --------      (enable byte lanes for word 3?)
-	                      W   -------- ----xxxx -------- --------      (enable byte lanes for word 2?)
-	                      W   -------- -------- ----xxxx --------      (enable byte lanes for word 1?)
-	                      W   -------- -------- -------- ----xxxx      (enable byte lanes for word 0?)
-	8FFF8000              W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM "bulk" data latch
-	9E280000-9E2FFFFF     W   -------- -------- -------- --------   VRAM copy destination address latch
-	===================================================================================================
+    ===================================================================================================
+    MAIN CPU
+    ===================================================================================================
+    00000000-0001FFFFF  R/W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   Main RAM
+    01800000-01BFFFFFF  R     xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   Main ROM
+    40000000-4000007FF  R/W   -------- -------- -------- xxxxxxxx   EEPROM
+    41000000            R     -------- -------- -------- xxxxxxxx   Data from sound board
+    41000000              W   -------- -------- -------- xxxxxxxx   Data to sound board
+    41000100            R     -------- -------- -------- -----xxx   Interrupt enables
+                              -------- -------- -------- -----x--      (scanline int enable)
+                              -------- -------- -------- ------x-      (unknown int enable)
+                              -------- -------- -------- -------x      (unknown int enable)
+    41000100              W   -------- -------- -------- --------   Interrupt acknowledge
+    41000104              W   -------- -------- -------- --------   Unknown int disable
+    41000108              W   -------- -------- -------- --------   Unknown int disable
+    4100010c              W   -------- -------- -------- --------   Scanline int disable
+    41000114              W   -------- -------- -------- --------   Unknown int enable
+    41000118              W   -------- -------- -------- --------   Unknown int enable
+    4100011c              W   -------- -------- -------- --------   Scanline int enable
+    41000200            R     -------- -------- xxxx--xx xxxx--xx   Player 2/3 inputs
+                        R     -------- -------- xxxx---- --------      (player 3 joystick UDLR)
+                        R     -------- -------- ------x- --------      (player 3 button 1)
+                        R     -------- -------- -------x --------      (player 3 button 2)
+                        R     -------- -------- -------- xxxx----      (player 2 joystick UDLR)
+                        R     -------- -------- -------- ------x-      (player 2 button 1)
+                        R     -------- -------- -------- -------x      (player 2 button 2)
+    41000204            R     -------- -------- xxxx--xx xxxx--xx   Player 1/4 inputs
+                        R     -------- -------- xxxx---- --------      (player 1 joystick UDLR)
+                        R     -------- -------- ------x- --------      (player 1 button 1)
+                        R     -------- -------- -------x --------      (player 1 button 2)
+                        R     -------- -------- -------- xxxx----      (player 4 joystick UDLR)
+                        R     -------- -------- -------- ------x-      (player 4 button 1)
+                        R     -------- -------- -------- -------x      (player 4 button 2)
+    41000208              W   -------- -------- -------- --------   Sound /RESET assert
+    4100020C              W   -------- -------- -------- --------   Sound /RESET deassert
+    41000220              W   -------- -------- -------- --------   Coin counter assert
+    41000224              W   -------- -------- -------- --------   Coin counter deassert
+    41000300            R     -------- -------- xxxxxxxx -xxx----   DIP switches/additional inputs
+                        R     -------- -------- xxxxxxxx --------      (debug DIP switches)
+                        R     -------- -------- -------- -x------      (service switch)
+                        R     -------- -------- -------- --x-----      (sound output buffer full)
+                        R     -------- -------- -------- ---x----      (sound input buffer full)
+    41000304            R     -------- -------- -------- xxxxxxxx   Coin/service inputs
+                        R     -------- -------- -------- xxxx----      (service inputs: R,RC,LC,L)
+                        R     -------- -------- -------- ----xxxx      (coin inputs: R,RC,LC,L)
+    41000400              W   -------- -------- -------- -xxxxxxx   Palette select
+    41000500              W   -------- -------- -------- --------   EEPROM write enable
+    41000600              W   -------- -------- -------- ----xxxx   Finescroll, vertical SYNC flags
+                          W   -------- -------- -------- ----x---      (VBLANK)
+                          W   -------- -------- -------- -----x--      (VSYNC)
+                          W   -------- -------- -------- ------xx      (fine scroll value)
+    41000700              W   -------- -------- -------- --------   Watchdog reset
+    42000000-4201FFFF   R/W   -------- -------- xxxxxxxx xxxxxxxx   Palette RAM
+                        R/W   -------- -------- x------- --------      (LSB of all three components)
+                        R/W   -------- -------- -xxxxx-- --------      (red component)
+                        R/W   -------- -------- ------xx xxx-----      (green component)
+                        R/W   -------- -------- -------- ---xxxxx      (blue component)
+    43000000              W   -------- -------- ----xxxx xxxxxxxx   HSYNC RAM address latch
+                          W   -------- -------- ----x--- --------      (counter enable)
+                          W   -------- -------- -----xxx xxxxxxxx      (RAM address)
+    43000004            R/W   -------- -------- -------- xxxxx---   HSYNC RAM data latch
+                        R/W   -------- -------- -------- x-------      (generate IRQ)
+                        R/W   -------- -------- -------- -x------      (VRAM shift enable)
+                        R/W   -------- -------- -------- --x-----      (HBLANK)
+                        R/W   -------- -------- -------- ---x----      (/HSYNC)
+                        R/W   -------- -------- -------- ----x---      (release wait for sync)
+    43000008              W   -------- -------- -------- ---x-xx-   HSYNC unknown control
+    8DF80000            R     -------- -------- -------- --------   Unknown
+    8F380000-8F3FFFFF     W   -------- -------- -------- --------   VRAM latch address
+    8F900000-8F97FFFF     W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM transparent write
+    8F980000-8F9FFFFF   R/W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM standard read/write
+    8FB80000-8FBFFFFF     W   ----xxxx ----xxxx ----xxxx ----xxxx   VRAM "bulk" write
+                          W   ----xxxx -------- -------- --------      (enable byte lanes for word 3?)
+                          W   -------- ----xxxx -------- --------      (enable byte lanes for word 2?)
+                          W   -------- -------- ----xxxx --------      (enable byte lanes for word 1?)
+                          W   -------- -------- -------- ----xxxx      (enable byte lanes for word 0?)
+    8FFF8000              W   xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx   VRAM "bulk" data latch
+    9E280000-9E2FFFFF     W   -------- -------- -------- --------   VRAM copy destination address latch
+    ===================================================================================================
 
 ***************************************************************************/
 
@@ -108,7 +108,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -130,7 +130,7 @@ static UINT8		eeprom_enabled;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -184,7 +184,7 @@ static MACHINE_INIT( beathead )
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -202,10 +202,10 @@ static void update_interrupts(void)
 	if (irq_line_state != gen_int)
 	{
 		irq_line_state = gen_int;
-//		if (irq_line_state != CLEAR_LINE)
+//      if (irq_line_state != CLEAR_LINE)
 			cpunum_set_input_line(0, ASAP_IRQ0, irq_line_state);
-//		else
-//			asap_set_irq_line(ASAP_IRQ0, irq_line_state);
+//      else
+//          asap_set_irq_line(ASAP_IRQ0, irq_line_state);
 	}
 }
 
@@ -238,7 +238,7 @@ static READ32_HANDLER( interrupt_control_r )
 
 /*************************************
  *
- *	EEPROM handling
+ *  EEPROM handling
  *
  *************************************/
 
@@ -262,7 +262,7 @@ static WRITE32_HANDLER( eeprom_enable_w )
 
 /*************************************
  *
- *	Input handling
+ *  Input handling
  *
  *************************************/
 
@@ -296,7 +296,7 @@ static READ32_HANDLER( input_3_r )
 
 /*************************************
  *
- *	Sound communication
+ *  Sound communication
  *
  *************************************/
 
@@ -323,7 +323,7 @@ static WRITE32_HANDLER( sound_reset_w )
 
 /*************************************
  *
- *	Misc other I/O
+ *  Misc other I/O
  *
  *************************************/
 
@@ -336,7 +336,7 @@ static WRITE32_HANDLER( coin_count_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -372,7 +372,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -421,7 +421,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -430,22 +430,22 @@ static MACHINE_DRIVER_START( beathead )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(ASAP, ATARI_CLOCK_14MHz)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
-	
+
 	MDRV_MACHINE_INIT(beathead)
 	MDRV_NVRAM_HANDLER(generic_1fill)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(32768)
-	
+
 	MDRV_VIDEO_START(beathead)
 	MDRV_VIDEO_UPDATE(beathead)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_iii_mono)
 MACHINE_DRIVER_END
@@ -454,7 +454,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -484,12 +484,12 @@ ROM_END
 
 /*************************************
  *
- *	Driver speedups
+ *  Driver speedups
  *
  *************************************/
 
 /*
-	In-game hotspot @ 0180F8D8
+    In-game hotspot @ 0180F8D8
 */
 
 
@@ -521,7 +521,7 @@ static READ32_HANDLER( movie_speedup_r )
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -541,7 +541,7 @@ static DRIVER_INIT( beathead )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

@@ -5,11 +5,11 @@
   This file is not part of MAME. It is here to provide detailed
   documentation of the encryption used by Jr. Pac Man ROMs.
 
-	David Caldwell 6-1-97
-	bug reports and comments to:
-	david@indigita.com
+    David Caldwell 6-1-97
+    bug reports and comments to:
+    david@indigita.com
 
-	This code is published under the GNU Public License. (GPL)
+    This code is published under the GNU Public License. (GPL)
 
 ***************************************************************************/
 
@@ -270,18 +270,18 @@ int jrpacman_romdecode(int offset)
 
 	int ns3 =  ( !md7 );
 
-//	DebugPrint("%04x: %02x & %02x | %02x = %02x",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
-/*	printf("%04x: %02x & %02x | %02x = %02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
-	{static int i=0;
-	if (i++>100)
-	{
-		while (getchar()!='\n')
-			{}
-	}}*/
+//  DebugPrint("%04x: %02x & %02x | %02x = %02x",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
+/*  printf("%04x: %02x & %02x | %02x = %02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
+    {static int i=0;
+    if (i++>100)
+    {
+        while (getchar()!='\n')
+            {}
+    }}*/
 	{
 		int temp= ((int)RAM[addressBus] & 0x7A) | ((d7<<7) | (d2<<2) | (d0));
 
-//		if (Z80_Trace==1)
+//      if (Z80_Trace==1)
 			if (!used[addressBus])
 			{
 				used[addressBus]=1;

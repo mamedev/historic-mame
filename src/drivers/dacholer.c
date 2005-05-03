@@ -1,13 +1,13 @@
 /******************************************************************************
 
-	Dacholer	(c) 1983 Nichibutsu
-	Kick Boy	(c) 1983 Nichibutsu
+    Dacholer    (c) 1983 Nichibutsu
+    Kick Boy    (c) 1983 Nichibutsu
 
-	Driver by Pierpaolo Prazzoli
+    Driver by Pierpaolo Prazzoli
 
-	TODO:
-	- Add sound
-	- Add colors when proms are dumped
+    TODO:
+    - Add sound
+    - Add colors when proms are dumped
 
 ******************************************************************************/
 
@@ -138,7 +138,7 @@ INPUT_PORTS_START( dacholer )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	
+	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
@@ -153,7 +153,7 @@ INPUT_PORTS_START( dacholer )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	
+
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "1" )
@@ -351,7 +351,7 @@ ROM_START( kickboy )
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "kickboy9.rom",  0x0000, 0x2000, CRC(7eac2a64) SHA1(b4a44770bbded59cd572ac5d0ae178affc8cdab8) )
 	ROM_LOAD( "kickboy8.rom",  0x2000, 0x2000, CRC(b8829572) SHA1(01009ec63449c809608923fd9dcecd82b29c5d6d) )
-	
+
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "kickboy11.rom", 0x0000, 0x2000, CRC(4b769a1c) SHA1(fde17dcd4b7cda9cc54572e81bc2f0e48c19277d) )
 	ROM_LOAD( "kickboy10.rom", 0x2000, 0x2000, CRC(45199750) SHA1(a04b4d6d0defa613d269625b089d28dc68d5b73a) )

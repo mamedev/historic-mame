@@ -77,10 +77,10 @@ WRITE16_HANDLER( volfied_video_ctrl_w )
 READ16_HANDLER( volfied_video_ctrl_r )
 {
 	/* Could this be some kind of hardware collision detection? If bit 6 is
-	   set the game will check for collisions with the large enemy, whereas
-	   bit 5 does the same for small enemies. Bit 7 is also used although
-	   its purpose is unclear. This register is usually read during a VBI
-	   and stored in work RAM for later use. */
+       set the game will check for collisions with the large enemy, whereas
+       bit 5 does the same for small enemies. Bit 7 is also used although
+       its purpose is unclear. This register is usually read during a VBI
+       and stored in work RAM for later use. */
 
 	return 0x60;
 }
@@ -97,7 +97,7 @@ WRITE16_HANDLER( volfied_sprite_ctrl_w )
 
 
 /*******************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 *******************************************************/
 
 static void refresh_pixel_layer(void)
@@ -106,18 +106,18 @@ static void refresh_pixel_layer(void)
 
 	/*********************************************************
 
-	VIDEO RAM has 2 screens x 256 rows x 512 columns x 16 bits
+    VIDEO RAM has 2 screens x 256 rows x 512 columns x 16 bits
 
-	x---------------  select image
-	-x--------------  ?             (used for 3-D corners)
-	--x-------------  ?             (used for 3-D walls)
-	---xxxx---------  image B
-	-------xxx------  palette index bits #8 to #A
-	----------x-----  ?
-	-----------x----  ?
-	------------xxxx  image A
+    x---------------  select image
+    -x--------------  ?             (used for 3-D corners)
+    --x-------------  ?             (used for 3-D walls)
+    ---xxxx---------  image B
+    -------xxx------  palette index bits #8 to #A
+    ----------x-----  ?
+    -----------x----  ?
+    ------------xxxx  image A
 
-	*********************************************************/
+    *********************************************************/
 
 	UINT16* p = video_ram;
 

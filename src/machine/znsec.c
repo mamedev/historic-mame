@@ -7,13 +7,13 @@
   It's a DIP20 chip with a sticker of the form XXnn, where XX is the
   company and nn a number:
     AC = Acclaim
-	AT = Atlus
-	CP = Capcom
+    AT = Atlus
+    CP = Capcom
     ET = Raizing
     KN = Konami
     MG = Tecmo
-	TT = Taito
-	TW = Atari
+    TT = Taito
+    TW = Atari
 
   There usually are 2 of them, one on the cpu board and one on the rom
   board.  The cpu board one is usually numbered 01.

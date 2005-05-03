@@ -373,8 +373,8 @@ void dst_op_amp_filt_step(struct node_description *node)
 		}
 
 		/* Clip the output to the voltage rails.
-		 * This way we get the original distortion in all it's glory.
-		 */
+         * This way we get the original distortion in all it's glory.
+         */
 		if (node->output > context->vP) node->output = context->vP;
 		if (node->output < context->vN) node->output = context->vN;
 		context->y1 = node->output - info->vRef;
@@ -721,8 +721,8 @@ void dst_rcdisc4_reset(struct node_description *node)
 	{
 		case 1:
 			/* We will simulate this as a voltage divider with 2 states depending
-			 * on the input.  But we have to take the diodes into account.
-			 */
+             * on the input.  But we have to take the diodes into account.
+             */
 			v = DST_RCDISC4__VP - .5;	/* diode drop */
 
 			/* When the input is 1, both R1 & R3 are basically in parallel. */
@@ -745,9 +745,9 @@ void dst_rcdisc4_reset(struct node_description *node)
 
 		case 3:
 			/* We will simulate this as a voltage divider with 2 states depending
-			 * on the input.  The 1k pullup is in parallel with the internal TTL
-			 * resistance, so we will just use .5k in series with R1.
-			 */
+             * on the input.  The 1k pullup is in parallel with the internal TTL
+             * resistance, so we will just use .5k in series with R1.
+             */
 			r = 500.0 + DST_RCDISC4__R1;
 			context->v[1] = DST_RCDISC4__R2 / (r + DST_RCDISC4__R2) * (5.0 - 0.5);
 			rT = 1.0 / ( 1.0 / r + 1.0 / DST_RCDISC4__R2);
@@ -830,13 +830,13 @@ void dst_rcfilter_reset(struct node_description *node)
 
 void dst_rcfilterN_reset(struct node_description *node)
 {
-//	double f=1.0/(2*M_PI* DST_RCFILTERN__R * DST_RCFILTERN__C);
+//  double f=1.0/(2*M_PI* DST_RCFILTERN__R * DST_RCFILTERN__C);
 
 // !!!!!!!!!!!!!! CAN'T CHEAT LIKE THIS !!!!!!!!!!!!!!!!
 // Put this stuff in a context
 //
-//	node->input[2] = f;
-//	node->input[3] = DISC_FILTER_LOWPASS;
+//  node->input[2] = f;
+//  node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
 	dst_filter1_reset(node);
@@ -861,13 +861,13 @@ void dst_rcfilterN_reset(struct node_description *node)
 
 void dst_rcdiscN_reset(struct node_description *node)
 {
-//	double f=1.0/(2*M_PI* DST_RCDISCN__R * DST_RCDISCN__C);
+//  double f=1.0/(2*M_PI* DST_RCDISCN__R * DST_RCDISCN__C);
 
 // !!!!!!!!!!!!!! CAN'T CHEAT LIKE THIS !!!!!!!!!!!!!!!!
 // Put this stuff in a context
 //
-//	node->input[2] = f;
-//	node->input[3] = DISC_FILTER_LOWPASS;
+//  node->input[2] = f;
+//  node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
 	dst_filter1_reset(node);

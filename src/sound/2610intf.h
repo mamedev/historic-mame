@@ -11,7 +11,7 @@ struct YM2610interface
 };
 
 /************************************************/
-/* Chip 0 functions								*/
+/* Chip 0 functions                             */
 /************************************************/
 READ8_HANDLER( YM2610_status_port_0_A_r );
 READ16_HANDLER( YM2610_status_port_0_A_lsb_r );
@@ -29,7 +29,7 @@ WRITE8_HANDLER( YM2610_data_port_0_B_w );
 WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w );
 
 /************************************************/
-/* Chip 1 functions								*/
+/* Chip 1 functions                             */
 /************************************************/
 READ8_HANDLER( YM2610_status_port_1_A_r );
 READ16_HANDLER( YM2610_status_port_1_A_lsb_r );

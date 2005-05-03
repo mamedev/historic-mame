@@ -1,9 +1,9 @@
 /*
-	Gals Panic 3
-	(c) Kaneko 1995
+    Gals Panic 3
+    (c) Kaneko 1995
 
-	Skeleton driver by Haze
-	WIP Driver by Sebastien Volpe
+    Skeleton driver by Haze
+    WIP Driver by Sebastien Volpe
 
 Check done by main code, as part of EEPROM data:
 'Gals Panic 3 v0.96 95/08/29(Tue)'
@@ -23,18 +23,18 @@ What's been done lately:
 Gals Panic 3 (JPN Ver.)
 (c)1995 Kaneko
 
-CPU:	68000-16
-Sound:	YMZ280B-F
-OSC:	28.6363MHz
-		33.3333MHz
-EEPROM:	93C46
-Chips.:	GRAP2 x3				<- R/G/B Chips?
-		APRIO-GL
-		BABY004					<- Sprites, see suprnova.c
-		GCNT2
-		TBSOP01					<- ToyBox MCU
-		CG24173 6186
-		CG24143 4181
+CPU:    68000-16
+Sound:  YMZ280B-F
+OSC:    28.6363MHz
+        33.3333MHz
+EEPROM: 93C46
+Chips.: GRAP2 x3                <- R/G/B Chips?
+        APRIO-GL
+        BABY004                 <- Sprites, see suprnova.c
+        GCNT2
+        TBSOP01                 <- ToyBox MCU
+        CG24173 6186
+        CG24143 4181
 
 
 G3P0J1.71     prg.
@@ -193,8 +193,8 @@ WRITE16_HANDLER( galpani3_suprnova_sprite32regs_w )
 
 /***************************************************************************
 
-							MCU Code Simulation
-				(follows the implementation of kaneko16.c)
+                            MCU Code Simulation
+                (follows the implementation of kaneko16.c)
 
 ***************************************************************************/
 static data16_t *mcu_ram, galpani3_mcu_com[4];
@@ -208,11 +208,11 @@ void galpani3_mcu_run(void)
 	logerror("(PC=%06X): MCU executed command : %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 
 	/* the only MCU commands found in program code are:
-		 0x04: protection: provide code/data, that's exactly where we are stuck !!!
-		 0x03: read DSW
-		 0x02: load NVRAM settings \ ATMEL AT93C46 chip,
-		 0x42: save NVRAM settings / 128 bytes serial EEPROM
- 	*/
+         0x04: protection: provide code/data, that's exactly where we are stuck !!!
+         0x03: read DSW
+         0x02: load NVRAM settings \ ATMEL AT93C46 chip,
+         0x42: save NVRAM settings / 128 bytes serial EEPROM
+    */
 	switch (mcu_command >> 8)
 	{
 		case 0x03:	// DSW
@@ -225,7 +225,7 @@ void galpani3_mcu_run(void)
 		case 0x02: // $38950 - load NVRAM settings
 		{
 			/* NOTE: code @ $38B46 & $38ab8 does exactly what is checked after MCU command
-			         so that's what we'll mimic here... probably the initial NVRAM settings */
+                     so that's what we'll mimic here... probably the initial NVRAM settings */
 			int i;
 
 			/* MCU writes 128 bytes to shared ram: last byte is the byte-sum */

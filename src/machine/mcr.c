@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Midway MCR system
+    Midway MCR system
 
 ***************************************************************************/
 
@@ -20,7 +20,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -32,7 +32,7 @@ UINT8 mcr_cocktail_flip;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -67,7 +67,7 @@ static double m6840_internal_counter_period;	/* 68000 CLK / 10 */
 
 /*************************************
  *
- *	Function prototypes
+ *  Function prototypes
  *
  *************************************/
 
@@ -88,7 +88,7 @@ static void counter_fired_callback(int counter);
 
 /*************************************
  *
- *	Graphics declarations
+ *  Graphics declarations
  *
  *************************************/
 
@@ -145,7 +145,7 @@ struct GfxLayout mcr_sprite_layout =
 
 /*************************************
  *
- *	6821 PIA declarations
+ *  6821 PIA declarations
  *
  *************************************/
 
@@ -176,7 +176,7 @@ static struct pia6821_interface zwackery_pia_4_intf =
 
 /*************************************
  *
- *	Generic MCR CTC interface
+ *  Generic MCR CTC interface
  *
  *************************************/
 
@@ -208,7 +208,7 @@ static z80ctc_interface ctc_intf =
 
 /*************************************
  *
- *	Generic MCR machine initialization
+ *  Generic MCR machine initialization
  *
  *************************************/
 
@@ -229,7 +229,7 @@ MACHINE_INIT( mcr )
 
 /*************************************
  *
- *	Generic MCR/68k machine initialization
+ *  Generic MCR/68k machine initialization
  *
  *************************************/
 
@@ -296,7 +296,7 @@ MACHINE_INIT( zwackery )
 
 /*************************************
  *
- *	Generic MCR interrupt handler
+ *  Generic MCR interrupt handler
  *
  *************************************/
 
@@ -335,7 +335,7 @@ INTERRUPT_GEN( mcr68_interrupt )
 
 /*************************************
  *
- *	MCR/68k interrupt central
+ *  MCR/68k interrupt central
  *
  *************************************/
 
@@ -376,23 +376,23 @@ static void mcr68_493_callback(int param)
 
 /*************************************
  *
- *	Generic MCR port write handlers
+ *  Generic MCR port write handlers
  *
  *************************************/
 
 WRITE8_HANDLER( mcr_control_port_w )
 {
 	/*
-		Bit layout is as follows:
-			D7 = n/c
-			D6 = cocktail flip
-			D5 = red LED
-			D4 = green LED
-			D3 = n/c
-			D2 = coin meter 3
-			D1 = coin meter 2
-			D0 = coin meter 1
-	*/
+        Bit layout is as follows:
+            D7 = n/c
+            D6 = cocktail flip
+            D5 = red LED
+            D4 = green LED
+            D3 = n/c
+            D2 = coin meter 3
+            D1 = coin meter 2
+            D0 = coin meter 1
+    */
 
 	coin_counter_w(0, (data >> 0) & 1);
 	coin_counter_w(1, (data >> 1) & 1);
@@ -404,16 +404,16 @@ WRITE8_HANDLER( mcr_control_port_w )
 WRITE8_HANDLER( mcrmono_control_port_w )
 {
 	/*
-		Bit layout is as follows:
-			D7 = n/c
-			D6 = cocktail flip
-			D5 = n/c
-			D4 = n/c
-			D3 = n/c
-			D2 = n/c
-			D1 = n/c
-			D0 = coin meter 1
-	*/
+        Bit layout is as follows:
+            D7 = n/c
+            D6 = cocktail flip
+            D5 = n/c
+            D4 = n/c
+            D3 = n/c
+            D2 = n/c
+            D1 = n/c
+            D0 = coin meter 1
+    */
 
 	coin_counter_w(0, (data >> 0) & 1);
 	mcr_cocktail_flip = (data >> 6) & 1;
@@ -446,7 +446,7 @@ WRITE8_HANDLER( mcr_scroll_value_w )
 
 /*************************************
  *
- *	Zwackery-specific interfaces
+ *  Zwackery-specific interfaces
  *
  *************************************/
 
@@ -496,7 +496,7 @@ static void zwackery_493_callback(int param)
 
 /*************************************
  *
- *	M6840 timer utilities
+ *  M6840 timer utilities
  *
  *************************************/
 
@@ -655,7 +655,7 @@ static UINT16 compute_counter(int counter)
 
 /*************************************
  *
- *	M6840 timer I/O
+ *  M6840 timer I/O
  *
  *************************************/
 

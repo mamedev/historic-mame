@@ -176,8 +176,8 @@ VIDEO_UPDATE( supbtime )
 		tilemap_set_scrollx( pf1_tilemap,0, supbtime_control_0[1] + supbtime_pf1_row[4] );
 
 	/* The filled bitmap is unusual for Data East, but without this the title screen
-	background colour is incorrect.  This also explains why the game initialises
-	the previously unused palette ram to zero */
+    background colour is incorrect.  This also explains why the game initialises
+    the previously unused palette ram to zero */
 	fillbitmap(bitmap,Machine->pens[768],cliprect);
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 	supbtime_drawsprites(bitmap,cliprect);
@@ -198,8 +198,8 @@ VIDEO_UPDATE( chinatwn )
 	tilemap_set_scrolly( pf2_tilemap,0, supbtime_control_0[4] );
 
 	/* The filled bitmap is unusual for Data East, but without this the title screen
-	background colour is incorrect.  This also explains why the game initialises
-	the previously unused palette ram to zero */
+    background colour is incorrect.  This also explains why the game initialises
+    the previously unused palette ram to zero */
 	fillbitmap(bitmap,Machine->pens[768],cliprect);
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 	supbtime_drawsprites(bitmap,cliprect);

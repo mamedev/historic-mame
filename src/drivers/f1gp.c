@@ -106,7 +106,7 @@ static ADDRESS_MAP_START( f1gp_readmem1, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffd000, 0xffdfff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xffe000, 0xffefff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0xfff002, 0xfff003)	analog wheel?
+//  AM_RANGE(0xfff002, 0xfff003)    analog wheel?
 	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_1_word_r)
 	AM_RANGE(0xfff006, 0xfff007) AM_READ(input_port_2_word_r)
 	AM_RANGE(0xfff008, 0xfff009) AM_READ(command_pending_r)
@@ -145,7 +145,7 @@ static ADDRESS_MAP_START( f1gp2_readmem1, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffd000, 0xffdfff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xffe000, 0xffefff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
-//	AM_RANGE(0xfff002, 0xfff003)	analog wheel?
+//  AM_RANGE(0xfff002, 0xfff003)    analog wheel?
 	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_1_word_r)
 	AM_RANGE(0xfff006, 0xfff007) AM_READ(input_port_2_word_r)
 	AM_RANGE(0xfff008, 0xfff009) AM_READ(command_pending_r)

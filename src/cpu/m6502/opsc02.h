@@ -1,27 +1,27 @@
 /*****************************************************************************
  *
- *	 m6502ops.h
- *	 Addressing mode and opcode macros for 6502,65c02,65sc02,6510,n2a03 CPUs
+ *   m6502ops.h
+ *   Addressing mode and opcode macros for 6502,65c02,65sc02,6510,n2a03 CPUs
  *
- *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 65sc02 core Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *   65sc02 core Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
 /***************************************************************
- *	EA = indirect (only used by JMP)
+ *  EA = indirect (only used by JMP)
  * correct overflow handling
  ***************************************************************/
 #undef EA_IND
@@ -34,7 +34,7 @@
 	EAL = tmp
 
 /***************************************************************
- *	EA = zero page indirect (65c02 pre indexed w/o X)
+ *  EA = zero page indirect (65c02 pre indexed w/o X)
  ***************************************************************/
 #define EA_ZPI													\
 	ZPL = RDOPARG();											\
@@ -43,7 +43,7 @@
 	EAH = RDMEM(ZPD)
 
 /***************************************************************
- *	EA = indirect plus x (only used by 65c02 JMP)
+ *  EA = indirect plus x (only used by 65c02 JMP)
  ***************************************************************/
 #define EA_IAX													\
 	 EA_ABS;													\
@@ -63,13 +63,13 @@
 
 /***************************************************************
  ***************************************************************
- *			Macros to emulate the 65C02 opcodes
+ *          Macros to emulate the 65C02 opcodes
  ***************************************************************
  ***************************************************************/
 
 
 /* 65C02 ********************************************************
- *	ADC Add with carry
+ *  ADC Add with carry
  * different setting of flags in decimal mode
  ***************************************************************/
 #undef ADC
@@ -107,7 +107,7 @@
 	SET_NZ(A)
 
 /* 65C02 ********************************************************
- *	SBC Subtract with carry
+ *  SBC Subtract with carry
  * different setting of flags in decimal mode
  ***************************************************************/
 #undef SBC
@@ -145,21 +145,21 @@
 	SET_NZ(A)
 
 /* 65C02 *******************************************************
- *	BBR Branch if bit is reset
+ *  BBR Branch if bit is reset
  ***************************************************************/
 #define BBR(bit)												\
 	BRA(!(tmp & (1<<bit)))
 
 /* 65C02 *******************************************************
- *	BBS Branch if bit is set
+ *  BBS Branch if bit is set
  ***************************************************************/
 #define BBS(bit)												\
 	BRA(tmp & (1<<bit))
 
 /* 65c02 ********************************************************
- *	BRK Break
- *	increment PC, push PC hi, PC lo, flags (with B bit set),
- *	set I flag, reset D flag and jump via IRQ vector
+ *  BRK Break
+ *  increment PC, push PC hi, PC lo, flags (with B bit set),
+ *  set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #undef BRK
 #define BRK 													\
@@ -174,72 +174,72 @@
 
 
 /* 65C02 *******************************************************
- *	DEA Decrement accumulator
+ *  DEA Decrement accumulator
  ***************************************************************/
 #define DEA 													\
 	A = (UINT8)--A; 											\
 	SET_NZ(A)
 
 /* 65C02 *******************************************************
- *	INA Increment accumulator
+ *  INA Increment accumulator
  ***************************************************************/
 #define INA 													\
 	A = (UINT8)++A; 											\
 	SET_NZ(A)
 
 /* 65C02 *******************************************************
- *	PHX Push index X
+ *  PHX Push index X
  ***************************************************************/
 #define PHX 													\
 	PUSH(X)
 
 /* 65C02 *******************************************************
- *	PHY Push index Y
+ *  PHY Push index Y
  ***************************************************************/
 #define PHY 													\
 	PUSH(Y)
 
 /* 65C02 *******************************************************
- *	PLX Pull index X
+ *  PLX Pull index X
  ***************************************************************/
 #define PLX 													\
 	PULL(X); \
 	SET_NZ(X)
 
 /* 65C02 *******************************************************
- *	PLY Pull index Y
+ *  PLY Pull index Y
  ***************************************************************/
 #define PLY 													\
 	PULL(Y); \
 	SET_NZ(Y)
 
 /* 65C02 *******************************************************
- *	RMB Reset memory bit
+ *  RMB Reset memory bit
  ***************************************************************/
 #define RMB(bit)												\
 	tmp &= ~(1<<bit)
 
 /* 65C02 *******************************************************
- *	SMB Set memory bit
+ *  SMB Set memory bit
  ***************************************************************/
 #define SMB(bit)												\
 	tmp |= (1<<bit)
 
 /* 65C02 *******************************************************
- * STZ	Store zero
+ * STZ  Store zero
  ***************************************************************/
 #define STZ 													\
 	tmp = 0
 
 /* 65C02 *******************************************************
- * TRB	Test and reset bits
+ * TRB  Test and reset bits
  ***************************************************************/
 #define TRB 													\
 	SET_Z(tmp&A);												\
 	tmp &= ~A
 
 /* 65C02 *******************************************************
- * TSB	Test and set bits
+ * TSB  Test and set bits
  ***************************************************************/
 #define TSB 													\
 	SET_Z(tmp&A);												\
@@ -248,13 +248,13 @@
 
 /***************************************************************
  ***************************************************************
- *			Macros to emulate the 65sc02 opcodes
+ *          Macros to emulate the 65sc02 opcodes
  ***************************************************************
  ***************************************************************/
 
 
 /* 65sc02 ********************************************************
- *	BSR Branch to subroutine
+ *  BSR Branch to subroutine
  ***************************************************************/
 #define BSR 													\
 	EAL = RDOPARG();											\

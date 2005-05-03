@@ -101,27 +101,27 @@ There should be NVRAM somewhere, maybe fc000000-fc007fff
 bbbxing: some sprite/roz/bg alignment issues
 
 gratia: at the beginning of a level it shows the level name in the bottom right corner, scrolling it up
-	and making the score display scroll out of the screen. Is this correct ar should there be a raster
-	effect keeping the score on screen? And why didn't they just use sprites to do that?
+    and making the score display scroll out of the screen. Is this correct ar should there be a raster
+    effect keeping the score on screen? And why didn't they just use sprites to do that?
 
 gratia: the 3d sky shown at the beginning of the game has a black gap near the end. It would not be visible
-	if I made the "global brightness" register cut to 100% instead of 50%. Mmmm...
+    if I made the "global brightness" register cut to 100% instead of 50%. Mmmm...
 
 gratia: the 3d sky seems to be the only place needed the "wrap" parameter to draw_roz to be set. All other
-	games work fine with it not set, and there are many places where it definitely must not be set.
+    games work fine with it not set, and there are many places where it definitely must not be set.
 
 gratia: at the beginning of the game, before the sky appears, the city background appears for
-	an instant. Missing layer enable register?
+    an instant. Missing layer enable register?
 
 background color: pen 0 is correct for gametngk, but wrong for f1superb. Maybe it dpeends on the layer
-	priority order?
+    priority order?
 
 roz layer wrapping: currently it's always ON, breaking places where it gets very small so it gets
-	repeated on the screen (p47aces, kirarast, bbbxing, gametngk need it OFF).
-	gratia and desertwr need it ON.
+    repeated on the screen (p47aces, kirarast, bbbxing, gametngk need it OFF).
+    gratia and desertwr need it ON.
 
 there are sprite lag issues, but they might be caused by cpu timing so it's better to leave
-	them alone until the CPU clock is correct.
+    them alone until the CPU clock is correct.
 
 
 Not Working Games
@@ -370,17 +370,17 @@ static ADDRESS_MAP_START( ms32_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xfce00034, 0xfce00037) AM_WRITE(MWA32_NOP) // irq ack?
 	AM_RANGE(0xfce00038, 0xfce0003b) AM_WRITE(reset_sub_w)
 	AM_RANGE(0xfce00050, 0xfce0005f) AM_WRITE(MWA32_NOP)	// watchdog? I haven't investigated
-//	AM_RANGE(0xfce00000, 0xfce0007f) AM_WRITE(MWA32_RAM) AM_BASE(&ms32_fce00000) /* registers not ram? */
+//  AM_RANGE(0xfce00000, 0xfce0007f) AM_WRITE(MWA32_RAM) AM_BASE(&ms32_fce00000) /* registers not ram? */
 	AM_RANGE(0xfce00280, 0xfce0028f) AM_WRITE(ms32_brightness_w)	// global brightness control
 	AM_RANGE(0xfce00600, 0xfce0065f) AM_WRITE(MWA32_RAM) AM_BASE(&ms32_roz_ctrl)	/* roz control registers */
-//	{ 0xfce00800, 0xfce0085f, // f1superb, roz #2 control?
+//  { 0xfce00800, 0xfce0085f, // f1superb, roz #2 control?
 	AM_RANGE(0xfce00a00, 0xfce00a17) AM_WRITE(MWA32_RAM) AM_BASE(&ms32_tx_scroll)	/* tx layer scroll */
 	AM_RANGE(0xfce00a20, 0xfce00a37) AM_WRITE(MWA32_RAM) AM_BASE(&ms32_bg_scroll)	/* bg layer scroll */
 	AM_RANGE(0xfce00a7c, 0xfce00a7f) AM_WRITE(pip_w)	// ??? layer related? seems to be always 0
-//	AM_RANGE(0xfce00e00, 0xfce00e03)	coin counters + something else
+//  AM_RANGE(0xfce00e00, 0xfce00e03)    coin counters + something else
 
-//	AM_RANGE(0xfd104000, 0xfd105fff) AM_WRITE(MWA32_RAM) /* f1superb */
-//	AM_RANGE(0xfd144000, 0xfd145fff) AM_WRITE(MWA32_RAM) /* f1superb */
+//  AM_RANGE(0xfd104000, 0xfd105fff) AM_WRITE(MWA32_RAM) /* f1superb */
+//  AM_RANGE(0xfd144000, 0xfd145fff) AM_WRITE(MWA32_RAM) /* f1superb */
 
 	AM_RANGE(0xfd180000, 0xfd19ffff) AM_WRITE(ms32_priram_w) AM_BASE(&ms32_priram)	/* priority ram */
 	AM_RANGE(0xfd1a0000, 0xfd1bffff) AM_WRITE(ms32_priram_w)			/* mirror only used by memory test in service mode */
@@ -389,8 +389,8 @@ static ADDRESS_MAP_START( ms32_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0xfd400000, 0xfd43ffff) AM_WRITE(ms32_palram_w) AM_BASE(&ms32_palram) /* Palette */
 ///**/AM_RANGE(0xfd440000, 0xfd47ffff) AM_WRITE(MWA32_RAM) /* f1superb color */
-//	AM_RANGE(0xfdc00000, 0xfdc006ff) AM_WRITE(MWA32_RAM) /* f1superb */
-//	AM_RANGE(0xfde00000, 0xfde01fff) AM_WRITE(MWA32_RAM) /* f1superb, lineram #2? */
+//  AM_RANGE(0xfdc00000, 0xfdc006ff) AM_WRITE(MWA32_RAM) /* f1superb */
+//  AM_RANGE(0xfde00000, 0xfde01fff) AM_WRITE(MWA32_RAM) /* f1superb, lineram #2? */
 
 	AM_RANGE(0xfe000000, 0xfe01ffff) AM_WRITE(ms32_rozram_w) AM_BASE(&ms32_rozram)	/* roz layer */
 	AM_RANGE(0xfe020000, 0xfe03ffff) AM_WRITE(ms32_rozram_w)		/* mirror only used by memory test in service mode */
@@ -487,7 +487,7 @@ INPUT_PORTS_START( ms32 )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
 
@@ -558,7 +558,7 @@ INPUT_PORTS_START( bbbxing )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, UNKNOWN)	// BUTTON4 in "test mode"
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, UNKNOWN)	// BUTTON4 in "test mode"
 
@@ -651,7 +651,7 @@ INPUT_PORTS_START( desertwr )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
@@ -664,7 +664,7 @@ INPUT_PORTS_START( desertwr )
 	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x30, 0x30, "Armors" )
-//	PORT_DIPSETTING(    0x00, "2" )		// duplicate setting ?
+//  PORT_DIPSETTING(    0x00, "2" )     // duplicate setting ?
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -720,7 +720,7 @@ INPUT_PORTS_START( gametngk )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)	// BUTTON3 and BUTTON4 in "test mode"
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)	// BUTTON3 and BUTTON4 in "test mode"
 
@@ -789,7 +789,7 @@ INPUT_PORTS_START( tetrisp )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* There are inputs for players 3 and 4 in the "test mode",
-	   but NO addresses are read to check them ! */
+       but NO addresses are read to check them ! */
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)	// BUTTON3 and BUTTON4 in "test mode"
@@ -813,7 +813,7 @@ INPUT_PORTS_START( tetrisp )
 	PORT_DIPSETTING(    0x0c, "All Modes" )
 	PORT_DIPSETTING(    0x04, "Normal and Puzzle Modes" )
 	PORT_DIPSETTING(    0x08, "VS Mode" )
-//	PORT_DIPSETTING(    0x00, "Normal and Puzzle Modes" )		// "can't play normal mode" in "test mode"
+//  PORT_DIPSETTING(    0x00, "Normal and Puzzle Modes" )       // "can't play normal mode" in "test mode"
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
@@ -860,7 +860,7 @@ INPUT_PORTS_START( tp2m32 )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
 
@@ -928,7 +928,7 @@ INPUT_PORTS_START( p47aces )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)	// BUTTON3 and BUTTON4 in "test mode"
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)	// BUTTON3 and BUTTON4 in "test mode"
 
@@ -980,7 +980,7 @@ INPUT_PORTS_START( p47aces )
 	PORT_DIPNAME( 0x03, 0x03, "FG/BG X offset" )
 	PORT_DIPSETTING(    0x03, "0/0" )
 	PORT_DIPSETTING(    0x02, "5/5" )
-//	PORT_DIPSETTING(    0x01, "5/5" )
+//  PORT_DIPSETTING(    0x01, "5/5" )
 	PORT_DIPSETTING(    0x00, "2/4" )
 
 	MS32_UNUSED_PORT
@@ -996,7 +996,7 @@ INPUT_PORTS_START( gratia )
 
 	PORT_START_TAG("IN2")
 	MS32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, UNKNOWN)	// BUTTON4 in "test mode"
-	
+
 	PORT_START_TAG("IN3")
 	MS32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, UNKNOWN)	// BUTTON4 in "test mode"
 
@@ -1086,29 +1086,29 @@ INPUT_PORTS_START( hayaosi1 )
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) ) 
-	PORT_DIPSETTING(    0x80, DEF_STR( 4C_1C ) ) 
-	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) ) 
-	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) ) 
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) ) 
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) ) 
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) ) 
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) ) 
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) ) 
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) ) 
-	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) ) 
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) ) 
-	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) ) 
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) ) 
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) ) 
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) ) 
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) ) 
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) 
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) 
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) 
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0xc0, 0xc0, "Computer's AI (VS Mode)" )
@@ -1510,13 +1510,13 @@ static INTERRUPT_GEN(ms32_interrupt)
 	if( cpu_getiloops() == 0 ) irq_raise(10);
 	if( cpu_getiloops() == 1 ) irq_raise(9);
 	/* hayaosi1 needs at least 12 IRQ 0 per frame to work (see code at FFE02289)
-	   kirarast needs it too, at least 8 per frame, but waits for a variable amount
-	   47pi2 needs ?? per frame (otherwise it hangs when you lose)
-	   in different points. Could this be a raster interrupt?
-	   Other games using it but not needing it to work:
-	   desertwr
-	   p47aces
-	   */
+       kirarast needs it too, at least 8 per frame, but waits for a variable amount
+       47pi2 needs ?? per frame (otherwise it hangs when you lose)
+       in different points. Could this be a raster interrupt?
+       Other games using it but not needing it to work:
+       desertwr
+       p47aces
+       */
 	if( cpu_getiloops() >= 3 && cpu_getiloops() <= 32 ) irq_raise(0);
 }
 
@@ -1530,10 +1530,10 @@ static INTERRUPT_GEN(ms32_interrupt)
  0000-3eff: program ROM (fixed)
  3f00-3f0f: YMF271-F
  3f10     : RW :command latch
- 3f20	  : RW :2nd command latch  ?? (not connected on PCB)
+ 3f20     : RW :2nd command latch  ?? (not connected on PCB)
  3f40     : W : YMF271 pin 4 (bit 1) , YMF271 pin 39 (bit 4)
- 3f70	  : W : unknown ? connected to JALECO GS91022-04 pin 55 (from GAL)
- 3f80	  : Bank select - $bB
+ 3f70     : W : unknown ? connected to JALECO GS91022-04 pin 55 (from GAL)
+ 3f80     : Bank select - $bB
  4000-7fff: RAM
  8000-bfff: banked ROM area #1 - bank B+1
  c000-ffff: banked ROM area #2 - bank b+1
@@ -2323,7 +2323,7 @@ static DRIVER_INIT (ss92048_01)
 
 static DRIVER_INIT (kirarast)
 {
-//	{ 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
+//  { 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfcc00004, 0xfcc00007, 0, 0, ms32_mahjong_read_inputs1 );
 
 	init_ss92047_01();
@@ -2331,7 +2331,7 @@ static DRIVER_INIT (kirarast)
 
 static DRIVER_INIT (47pie2)
 {
-//	{ 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
+//  { 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfcc00004, 0xfcc00007, 0, 0, ms32_mahjong_read_inputs1 );
 
 	init_ss92048_01();

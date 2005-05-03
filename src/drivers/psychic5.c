@@ -1,5 +1,5 @@
 /**************************
- *** PSYCHIC 5 hardware ***		(by Roberto Ventura)
+ *** PSYCHIC 5 hardware ***     (by Roberto Ventura)
  **************************
 
 
@@ -23,14 +23,14 @@ I can recall of the 'real' arcade game.
 
 1) ROM CONTENTS.
 
-P5A	256 Kbit	Sound program ROM
-P5B	512 Kbit	Sprites data ROM 0
-P5C	512 Kbit	Sprites data ROM 1
-P5D	256 Kbit	Main CPU program ROM
-P5E	512 Kbit	Banked CPU data ROM (banks 0,1,2 and 3)
-P5F	256 Kbit	Foreground data ROM
-P5G	512 Kbit	Background data ROM 0
-P5H	512 Kbit	Background data ROM 1
+P5A 256 Kbit    Sound program ROM
+P5B 512 Kbit    Sprites data ROM 0
+P5C 512 Kbit    Sprites data ROM 1
+P5D 256 Kbit    Main CPU program ROM
+P5E 512 Kbit    Banked CPU data ROM (banks 0,1,2 and 3)
+P5F 256 Kbit    Foreground data ROM
+P5G 512 Kbit    Background data ROM 0
+P5H 512 Kbit    Background data ROM 1
 
 ROM banks 2 and 3 contain the eight level maps only.
 
@@ -89,22 +89,22 @@ Video RAM is also banked at locations from c000 to dfff.
 0000-7fff       ROM
 8000-bfff       paged ROM
 c000-dfff       paged RAM (RAM/VRAM/IO)
-f000-f1ff	I/O
-f200-f7ff	Sprites registers (misc RAM)
+f000-f1ff   I/O
+f200-f7ff   Sprites registers (misc RAM)
 f800-ffff       Work RAM
 
 -paged RAM memory map
 
 Bank 0
 
-c000-cfff	Background tile buffer
-e000-dfff	RAM (dummy background image for software collisions)
+c000-cfff   Background tile buffer
+e000-dfff   RAM (dummy background image for software collisions)
 
 Bank 1
 
-c000-c3ff	I/O
-c400-cbff	Palette RAM
-d000-d800	Foreground tile buffer
+c000-c3ff   I/O
+c400-cbff   Palette RAM
+d000-d800   Foreground tile buffer
 
 
 4) I/O
@@ -153,59 +153,59 @@ c308    BACKGROUND SCROLL Y  least significant 8 bits
 
 c309    BACKGROUND SCROLL Y  most significant 2 bits
 
-	76543210
-	      ||
-	      |^-- Y scroll bit 8
-	      ^--- Y scroll bit 9
+    76543210
+          ||
+          |^-- Y scroll bit 8
+          ^--- Y scroll bit 9
 
 c30A    BACKGROUND SCROLL X  least significant 8 bits
 
 c30B    BACKGROUND SCROLL X  MSB
 
-	76543210
-	||||||||
-	|||||||^-- X scroll bit 8
-	||||||^--- Unknown (title screen)
-	^^^^^^---- Unknown (title screen: 0xff)
+    76543210
+    ||||||||
+    |||||||^-- X scroll bit 8
+    ||||||^--- Unknown (title screen)
+    ^^^^^^---- Unknown (title screen: 0xff)
 
-c30C	SCREEN MODE
+c30C    SCREEN MODE
 
-	76543210
-	      ||
-	      |^-- background enable bit (0 means black BG)
-	      ^--- grey background enable bit
+    76543210
+          ||
+          |^-- background enable bit (0 means black BG)
+          ^--- grey background enable bit
 
-c5fe	BACKGROUND PALETTE INTENSITY (red and green)
+c5fe    BACKGROUND PALETTE INTENSITY (red and green)
 
-	76543210
-	||||||||
-	||||^^^^-- green intensity
-	^^^^------ red intensity
+    76543210
+    ||||||||
+    ||||^^^^-- green intensity
+    ^^^^------ red intensity
 
-c5ff	BACKGROUND PALETTE INTENSITY (blue)
+c5ff    BACKGROUND PALETTE INTENSITY (blue)
 
-	76543210
-	||||||||
+    76543210
+    ||||||||
         ||||^^^^-- unknown (?)
-	^^^^------ blue intensity
+    ^^^^------ blue intensity
 
 -RAM f000-f1ff
 
 f000    SOUND COMMAND (?)
 
-f001	UNKNOWN
-	maybe some external HW like a flashing light
-	when a coin falls in slot (?)
+f001    UNKNOWN
+    maybe some external HW like a flashing light
+    when a coin falls in slot (?)
 
-f002	ROM PAGE SELECTOR
-	select four (0-3) ROM pages at 8000-bfff.
+f002    ROM PAGE SELECTOR
+    select four (0-3) ROM pages at 8000-bfff.
 
-f003	VRAM PAGE SELECTOR
-	selects two (0-1) VRAM pages at c000-dfff.
+f003    VRAM PAGE SELECTOR
+    selects two (0-1) VRAM pages at c000-dfff.
 
-f004	UNKNOWN
+f004    UNKNOWN
 
-f005	UNKNOWN
+f005    UNKNOWN
 
 
 5) COLOR RAM
@@ -301,11 +301,11 @@ The first sprite data is located at f20b,then f21b and so on.
 0e      O7 O6 O5 O4 O3 O2 O1 O0         gfx - offset
 0f      -- -- -- -- C3 C2 C1 C0         color
 
-	Y= Y coordinate (two's complemented) (Y8 is used to clip sprite on top border)
+    Y= Y coordinate (two's complemented) (Y8 is used to clip sprite on top border)
         X= X coordinate (X8 is used to clip 32x32 sprites on left border)
         O= Gfx offset (1024 sprites)
         F= Flip
-	SZ=Size 0=16x16 sprite,1=32x32 sprite
+    SZ=Size 0=16x16 sprite,1=32x32 sprite
         C= Color palette selector
 */
 
@@ -451,7 +451,7 @@ INPUT_PORTS_START( psychic5 )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-    PORT_START_TAG("DSW0")  
+    PORT_START_TAG("DSW0")
     PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -476,7 +476,7 @@ INPUT_PORTS_START( psychic5 )
     PORT_DIPSETTING(    0x40, "4" )
     PORT_DIPSETTING(    0x00, "5" )
 
-    PORT_START_TAG("DSW1")  
+    PORT_START_TAG("DSW1")
     PORT_DIPNAME( 0x01, 0x01, "Invulnerability (Cheat)")
     PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )

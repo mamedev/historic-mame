@@ -47,37 +47,37 @@ static MACHINE_INIT( dragrace )
 
 static void dragrace_update_misc_flags(void)
 {
-	/* 0x0900 = set 3SPEED1			0x00000001
-	 * 0x0901 = set 4SPEED1			0x00000002
-	 * 0x0902 = set 5SPEED1			0x00000004
-	 * 0x0903 = set 6SPEED1			0x00000008
-	 * 0x0904 = set 7SPEED1			0x00000010
-	 * 0x0905 = set EXPLOSION1		0x00000020
-	 * 0x0906 = set SCREECH1		0x00000040
-	 * 0x0920 - 0x0927 = clear 0x0900 - 0x0907
+	/* 0x0900 = set 3SPEED1         0x00000001
+     * 0x0901 = set 4SPEED1         0x00000002
+     * 0x0902 = set 5SPEED1         0x00000004
+     * 0x0903 = set 6SPEED1         0x00000008
+     * 0x0904 = set 7SPEED1         0x00000010
+     * 0x0905 = set EXPLOSION1      0x00000020
+     * 0x0906 = set SCREECH1        0x00000040
+     * 0x0920 - 0x0927 = clear 0x0900 - 0x0907
 
-	 * 0x0909 = set KLEXPL1			0x00000200
-	 * 0x090b = set MOTOR1			0x00000800
-	 * 0x090c = set ATTRACT			0x00001000
-	 * 0x090d = set LOTONE			0x00002000
-	 * 0x090f = set Player 1 Start Lamp	0x00008000
-	 * 0x0928 - 0x092f = clear 0x0908 - 0x090f
+     * 0x0909 = set KLEXPL1         0x00000200
+     * 0x090b = set MOTOR1          0x00000800
+     * 0x090c = set ATTRACT         0x00001000
+     * 0x090d = set LOTONE          0x00002000
+     * 0x090f = set Player 1 Start Lamp 0x00008000
+     * 0x0928 - 0x092f = clear 0x0908 - 0x090f
 
-	 * 0x0910 = set 3SPEED2			0x00010000
-	 * 0x0911 = set 4SPEED2			0x00020000
-	 * 0x0912 = set 5SPEED2			0x00040000
-	 * 0x0913 = set 6SPEED2			0x00080000
-	 * 0x0914 = set 7SPEED2			0x00100000
-	 * 0x0915 = set EXPLOSION2		0x00200000
-	 * 0x0916 = set SCREECH2		0x00400000
-	 * 0x0930 = clear 0x0910 - 0x0917
+     * 0x0910 = set 3SPEED2         0x00010000
+     * 0x0911 = set 4SPEED2         0x00020000
+     * 0x0912 = set 5SPEED2         0x00040000
+     * 0x0913 = set 6SPEED2         0x00080000
+     * 0x0914 = set 7SPEED2         0x00100000
+     * 0x0915 = set EXPLOSION2      0x00200000
+     * 0x0916 = set SCREECH2        0x00400000
+     * 0x0930 = clear 0x0910 - 0x0917
 
-	 * 0x0919 = set KLEXPL2			0x02000000
-	 * 0x091b = set MOTOR2			0x08000000
-	 * 0x091d = set HITONE			0x20000000
-	 * 0x091f = set Player 2 Start Lamp	0x80000000
-	 * 0x0938 = clear 0x0918 - 0x091f
-	 */
+     * 0x0919 = set KLEXPL2         0x02000000
+     * 0x091b = set MOTOR2          0x08000000
+     * 0x091d = set HITONE          0x20000000
+     * 0x091f = set Player 2 Start Lamp 0x80000000
+     * 0x0938 = clear 0x0918 - 0x091f
+     */
 	set_led_status(0, dragrace_misc_flags & 0x00008000);
 	set_led_status(1, dragrace_misc_flags & 0x80000000);
 
@@ -353,7 +353,7 @@ static MACHINE_DRIVER_START( dragrace )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(dragrace_discrete_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)

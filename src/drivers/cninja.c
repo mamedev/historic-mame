@@ -9,8 +9,8 @@
   Robocop 2         (c) 1991 Data East Corporation (Japanese version)
   Robocop 2         (c) 1991 Data East Corporation (World version)
   Stone Age         (Italian bootleg)
-  Mutant Fighter	(c) 1992 Data East Corporation (World version)
-  Death Brade		(c) 1992 Data East Corporation (Japanese version)
+  Mutant Fighter    (c) 1992 Data East Corporation (World version)
+  Death Brade       (c) 1992 Data East Corporation (Japanese version)
 
   Edward Randy runs on the same board as Caveman Ninja but the protection
   chip is different.  Robocop 2 also has a different protection chip but
@@ -101,10 +101,10 @@ static WRITE16_HANDLER( cninja_irq_w )
 	switch (offset) {
 	case 0:
 		/* IRQ enable:
-			0xca:	Raster IRQ turned off
-			0xc8:	Raster IRQ turned on (68k IRQ level 4)
-			0xd8:	Raster IRQ turned on (68k IRQ level 3)
-		*/
+            0xca:   Raster IRQ turned off
+            0xc8:   Raster IRQ turned on (68k IRQ level 4)
+            0xd8:   Raster IRQ turned on (68k IRQ level 3)
+        */
 		logerror("%08x:  IRQ write %d %08x\n",activecpu_get_pc(),offset,data);
 		cninja_irq_mask=data&0xff;
 		return;
@@ -261,7 +261,7 @@ static ADDRESS_MAP_START( robocop2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x180000, 0x1807ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x18c064, 0x18c065) AM_WRITE(cninja_sound_w)
-//	AM_RANGE(0x18c000, 0x18c0ff) AM_WRITE(cninja_loopback_w) /* Protection writes */
+//  AM_RANGE(0x18c000, 0x18c0ff) AM_WRITE(cninja_loopback_w) /* Protection writes */
 	AM_RANGE(0x198000, 0x198001) AM_WRITE(buffer_spriteram16_w) /* DMA flag */
 	AM_RANGE(0x1a8000, 0x1a9fff) AM_WRITE(deco16_nonbuffered_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x1b0000, 0x1b0007) AM_WRITE(cninja_irq_w)
@@ -498,8 +498,8 @@ INPUT_PORTS_START( cninja )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	/* If DS #1-#6 are all ON */
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )		/*	Standard Coin Credit */
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )		/*	2 Coins to Start / 1 Coin to Continue */
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )		/*  Standard Coin Credit */
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )		/*  2 Coins to Start / 1 Coin to Continue */
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0100, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
@@ -1274,7 +1274,7 @@ ROM_START( stoneage )
 	ROM_LOAD16_BYTE( "gl-09.rom",  0x00000,  0x10000,  CRC(5a2d4752) SHA1(617dd10a99b5b55ca64dcdd22a0f133b0d6b770d) )
 
 	/* The bootleg graphics are stored in a different arrangement but
-		seem to be the same as the original set */
+        seem to be the same as the original set */
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  CRC(de89c69a) SHA1(b41bdf859854b5541c7eae7cd541b910cea1f839) )	/* tiles 3 */

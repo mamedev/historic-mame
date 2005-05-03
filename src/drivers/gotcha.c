@@ -85,7 +85,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(gotcha_gfxbank_select_w)
 	AM_RANGE(0x300002, 0x300009) AM_WRITE(gotcha_scroll_w)
-//	{ 0x30000c, 0x30000d,
+//  { 0x30000c, 0x30000d,
 	AM_RANGE(0x30000e, 0x30000f) AM_WRITE(gotcha_gfxbank_w)
 	AM_RANGE(0x320000, 0x320fff) AM_WRITE(gotcha_fgvideoram_w) AM_BASE(&gotcha_fgvideoram)
 	AM_RANGE(0x322000, 0x322fff) AM_WRITE(gotcha_bgvideoram_w) AM_BASE(&gotcha_bgvideoram)
@@ -244,7 +244,7 @@ static MACHINE_DRIVER_START( gotcha )
 	MDRV_CPU_ADD(Z80,6000000)	/* 6 MHz ? */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

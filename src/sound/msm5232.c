@@ -9,8 +9,8 @@
 #include "msm5232.h"
 
 /*
-	OKI MSM5232RS
-	8 channel tone generator
+    OKI MSM5232RS
+    8 channel tone generator
 */
 
 typedef struct {
@@ -42,7 +42,7 @@ typedef struct {
 
 typedef struct {
 	sound_stream *stream;
-	
+
 	VOICE	voi[8];
 
 	UINT32 EN_out16[2];	/* enable 16' output masks for both groups (0-disabled ; ~0 -enabled) */
@@ -149,7 +149,7 @@ static FILE *sample[9];
 
 #if 0
 /*
-	C24 = external capacity
+    C24 = external capacity
 
     printf("Time constant T=R*C =%f sec.\n",R51*C24);
     printf("Cap fully charged after 5T=%f sec (sample=%f). Level=%f\n",(R51*C24)*5,(R51*C24)*5*sample_rate , VMAX*0.99326 );
@@ -173,7 +173,7 @@ static void msm5232_init_tables( MSM5232 *chip )
 	i = ((double)(1<<STEP_SH) * (double)chip->rate) / (double)chip->clock;
 	chip->UpdateStep = i;
 	/* logerror("clock=%i Hz rate=%i Hz, UpdateStep=%i\n",
-			chip->clock, chip->rate, chip->UpdateStep); */
+            chip->clock, chip->rate, chip->UpdateStep); */
 
 	scale = ((double)chip->clock) / (double)chip->rate;
 	chip->noise_step = ((1<<STEP_SH)/128.0) * scale; /* step of the rng reg in 16.16 format */
@@ -400,10 +400,10 @@ static void msm5232_write(MSM5232 *chip, int ofst, int data)
 		case 0x0c:	/* group1 control */
 
 			/*if (chip->control1 != data)
-				logerror("msm5232: control1 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
+                logerror("msm5232: control1 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
 
 			/*if (data & 0x10)
-				usrintf_showmessage("msm5232: control1 ctrl=%2x\n", data);*/
+                usrintf_showmessage("msm5232: control1 ctrl=%2x\n", data);*/
 
 			chip->control1 = data;
 
@@ -420,10 +420,10 @@ static void msm5232_write(MSM5232 *chip, int ofst, int data)
 		case 0x0d:	/* group2 control */
 
 			/*if (chip->control2 != data)
-				logerror("msm5232: control2 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
+                logerror("msm5232: control2 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
 
 			/*if (data & 0x10)
-				usrintf_showmessage("msm5232: control2 ctrl=%2x\n", data);*/
+                usrintf_showmessage("msm5232: control2 ctrl=%2x\n", data);*/
 
 			chip->control2 = data;
 
@@ -737,7 +737,7 @@ static void *msm5232_start(int sndindex, int clock, const void *config)
 {
 	const struct MSM5232interface *intf = config;
 	MSM5232 *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

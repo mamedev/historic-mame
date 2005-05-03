@@ -1,8 +1,8 @@
 /*##########################################################################
 
-	atarigen.h
+    atarigen.h
 
-	General functions for Atari raster games.
+    General functions for Atari raster games.
 
 ##########################################################################*/
 
@@ -15,7 +15,7 @@
 
 
 /*##########################################################################
-	CONSTANTS
+    CONSTANTS
 ##########################################################################*/
 
 #define ATARI_CLOCK_14MHz	14318180
@@ -26,7 +26,7 @@
 
 
 /*##########################################################################
-	TYPES & STRUCTURES
+    TYPES & STRUCTURES
 ##########################################################################*/
 
 typedef void (*atarigen_int_callback)(void);
@@ -52,7 +52,7 @@ struct atarivc_state_desc
 
 
 /*##########################################################################
-	GLOBALS
+    GLOBALS
 ##########################################################################*/
 
 extern UINT8			atarigen_scanline_int_state;
@@ -89,11 +89,11 @@ extern struct atarivc_state_desc atarivc_state;
 
 
 /*##########################################################################
-	FUNCTION PROTOTYPES
+    FUNCTION PROTOTYPES
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	INTERRUPT HANDLING
+    INTERRUPT HANDLING
 ---------------------------------------------------------------*/
 
 void atarigen_interrupt_reset(atarigen_int_callback update_int);
@@ -114,7 +114,7 @@ WRITE32_HANDLER( atarigen_video_int_ack32_w );
 
 
 /*---------------------------------------------------------------
-	EEPROM HANDLING
+    EEPROM HANDLING
 ---------------------------------------------------------------*/
 
 void atarigen_eeprom_reset(void);
@@ -133,7 +133,7 @@ void atarigen_hisave(void);
 
 
 /*---------------------------------------------------------------
-	SLAPSTIC HANDLING
+    SLAPSTIC HANDLING
 ---------------------------------------------------------------*/
 
 void atarigen_slapstic_init(int cpunum, int base, int chipnum);
@@ -144,7 +144,7 @@ READ16_HANDLER( atarigen_slapstic_r );
 
 
 /*---------------------------------------------------------------
-	SOUND I/O
+    SOUND I/O
 ---------------------------------------------------------------*/
 
 void atarigen_sound_io_reset(int cpu_num);
@@ -170,7 +170,7 @@ READ8_HANDLER( atarigen_6502_sound_r );
 
 
 /*---------------------------------------------------------------
-	SOUND HELPERS
+    SOUND HELPERS
 ---------------------------------------------------------------*/
 
 void atarigen_set_ym2151_vol(int volume);
@@ -181,7 +181,7 @@ void atarigen_set_oki6295_vol(int volume);
 
 
 /*---------------------------------------------------------------
-	VIDEO CONTROLLER
+    VIDEO CONTROLLER
 ---------------------------------------------------------------*/
 
 void atarivc_reset(data16_t *eof_data, int playfields);
@@ -198,7 +198,7 @@ INLINE void atarivc_update_pf_xscrolls(void)
 
 
 /*---------------------------------------------------------------
-	PLAYFIELD/ALPHA MAP HELPERS
+    PLAYFIELD/ALPHA MAP HELPERS
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_alpha_w );
@@ -218,7 +218,7 @@ WRITE16_HANDLER( atarigen_playfield2_latched_msb_w );
 
 
 /*---------------------------------------------------------------
-	VIDEO HELPERS
+    VIDEO HELPERS
 ---------------------------------------------------------------*/
 
 void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, int frequency);
@@ -230,7 +230,7 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w );
 
 
 /*---------------------------------------------------------------
-	MISC HELPERS
+    MISC HELPERS
 ---------------------------------------------------------------*/
 
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes);
@@ -239,47 +239,47 @@ void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1);
 
 
 /*##########################################################################
-	GENERAL ATARI NOTES
+    GENERAL ATARI NOTES
 ############################################################################
-	
-	Atari 68000 list:
-	
-	Driver		Pr? Up?	VC?	PF?	P2?	MO?	AL? BM? PH?
-	----------	---	---	---	---	---	---	--- ---	---
-	arcadecl.c		 *				 *		 *
-	atarig1.c		 *		 *		rle	 *
-	atarig42.c		 *		 *		rle	 *
-	atarigt.c				 *		rle	 *
-	atarigx2.c				 *		rle	 *
-	atarisy1.c	 *	 *		 *		 *	 *				270->260
-	atarisy2.c	 *	 *		 *		 *	 *				150->120
-	badlands.c		 *		 *		 *					250->260
-	batman.c	 *	 *	 *	 *	 *	 *	 *		 *		200->160 ?
-	blstroid.c		 *		 *		 *					240->230
-	cyberbal.c		 *		 *	 	 *	 *				125->105 ?
-	eprom.c			 *		 *		 *	 *				170->170
-	gauntlet.c	 *	 *		 *		 *	 *		 *		220->250
-	klax.c		 *	 *		 *		 *					480->440 ?
-	offtwall.c		 *	 *	 *		 *					260->260
-	rampart.c		 *				 *		 *			280->280
-	relief.c	 *	 *	 *	 *	 *	 *					240->240
-	shuuz.c			 *	 *	 *		 *					410->290 fix!
-	skullxbo.c		 *	 	 *		 *	 *				150->145
-	thunderj.c		 *	 *	 *	 *	 *	 *		 *		180->180
-	toobin.c		 *		 *		 *	 *				140->115 fix!
-	vindictr.c	 *	 *		 *		 *	 *		 *		200->210
-	xybots.c	 *	 *		 *		 *	 *				235->238
-	----------	---	---	---	---	---	---	--- ---	---
 
-	Pr? - do we have verifiable proof on priorities?
-	Up? - have we updated to use new MO's & tilemaps?
-	VC? - does it use the video controller?
-	PF? - does it have a playfield?
-	P2? - does it have a dual playfield?
-	MO? - does it have MO's?
-	AL? - does it have an alpha layer?
-	BM? - does it have a bitmap layer?
-	PH? - does it use the palette hack?
+    Atari 68000 list:
+
+    Driver      Pr? Up? VC? PF? P2? MO? AL? BM? PH?
+    ----------  --- --- --- --- --- --- --- --- ---
+    arcadecl.c       *               *       *
+    atarig1.c        *       *      rle  *
+    atarig42.c       *       *      rle  *
+    atarigt.c                *      rle  *
+    atarigx2.c               *      rle  *
+    atarisy1.c   *   *       *       *   *              270->260
+    atarisy2.c   *   *       *       *   *              150->120
+    badlands.c       *       *       *                  250->260
+    batman.c     *   *   *   *   *   *   *       *      200->160 ?
+    blstroid.c       *       *       *                  240->230
+    cyberbal.c       *       *       *   *              125->105 ?
+    eprom.c          *       *       *   *              170->170
+    gauntlet.c   *   *       *       *   *       *      220->250
+    klax.c       *   *       *       *                  480->440 ?
+    offtwall.c       *   *   *       *                  260->260
+    rampart.c        *               *       *          280->280
+    relief.c     *   *   *   *   *   *                  240->240
+    shuuz.c          *   *   *       *                  410->290 fix!
+    skullxbo.c       *       *       *   *              150->145
+    thunderj.c       *   *   *   *   *   *       *      180->180
+    toobin.c         *       *       *   *              140->115 fix!
+    vindictr.c   *   *       *       *   *       *      200->210
+    xybots.c     *   *       *       *   *              235->238
+    ----------  --- --- --- --- --- --- --- --- ---
+
+    Pr? - do we have verifiable proof on priorities?
+    Up? - have we updated to use new MO's & tilemaps?
+    VC? - does it use the video controller?
+    PF? - does it have a playfield?
+    P2? - does it have a dual playfield?
+    MO? - does it have MO's?
+    AL? - does it have an alpha layer?
+    BM? - does it have a bitmap layer?
+    PH? - does it use the palette hack?
 
 ##########################################################################*/
 

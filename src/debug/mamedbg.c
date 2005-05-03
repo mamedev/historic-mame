@@ -1,15 +1,15 @@
 /****************************************************************************
- *	MAME debugger V0.54
- *	Juergen Buchmueller <pullmoll@t-online.de>
+ *  MAME debugger V0.54
+ *  Juergen Buchmueller <pullmoll@t-online.de>
  *
- *	Based on code found in the preivous version of the MAME debugger
- *	written by: Martin Scragg, John Butler, Mirko Buffoni
- *	Chris Moore, Aaron Giles, Ernesto Corvi
+ *  Based on code found in the preivous version of the MAME debugger
+ *  written by: Martin Scragg, John Butler, Mirko Buffoni
+ *  Chris Moore, Aaron Giles, Ernesto Corvi
  *
- *	Online help is available by pressing F1 (context sensitive!)
+ *  Online help is available by pressing F1 (context sensitive!)
  *
- *	TODO:
- *	- Add more display modes for the memory windows (binary? octal? decimal?)
+ *  TODO:
+ *  - Add more display modes for the memory windows (binary? octal? decimal?)
  *
  ****************************************************************************/
 
@@ -516,22 +516,22 @@ static int dbg_key_repeat = 4;
 UINT8 debugger_idle;
 
 rgb_t debugger_palette[] = {
-	MAKE_RGB(0x00,0x00,0x00), /* black	 */
-	MAKE_RGB(0x00,0x00,0x7f), /* blue 	 */
-	MAKE_RGB(0x00,0x7f,0x00), /* green	 */
-	MAKE_RGB(0x00,0x7f,0x7f), /* cyan 	 */
-	MAKE_RGB(0x7f,0x00,0x00), /* red		 */
-	MAKE_RGB(0x7f,0x00,0x7f), /* magenta	 */
-	MAKE_RGB(0x7f,0x7f,0x00), /* brown	 */
-	MAKE_RGB(0x7f,0x7f,0x7f), /* ltgray	 */
-	MAKE_RGB(0x5f,0x5f,0x5f), /* dkgray	 */
-	MAKE_RGB(0x00,0x00,0xff), /* ltblue	 */
-	MAKE_RGB(0x00,0xff,0x00), /* ltgreen	 */
-	MAKE_RGB(0x00,0xff,0xff), /* ltcyan	 */
-	MAKE_RGB(0xff,0x00,0x00), /* ltred	 */
+	MAKE_RGB(0x00,0x00,0x00), /* black   */
+	MAKE_RGB(0x00,0x00,0x7f), /* blue    */
+	MAKE_RGB(0x00,0x7f,0x00), /* green   */
+	MAKE_RGB(0x00,0x7f,0x7f), /* cyan    */
+	MAKE_RGB(0x7f,0x00,0x00), /* red         */
+	MAKE_RGB(0x7f,0x00,0x7f), /* magenta     */
+	MAKE_RGB(0x7f,0x7f,0x00), /* brown   */
+	MAKE_RGB(0x7f,0x7f,0x7f), /* ltgray  */
+	MAKE_RGB(0x5f,0x5f,0x5f), /* dkgray  */
+	MAKE_RGB(0x00,0x00,0xff), /* ltblue  */
+	MAKE_RGB(0x00,0xff,0x00), /* ltgreen     */
+	MAKE_RGB(0x00,0xff,0xff), /* ltcyan  */
+	MAKE_RGB(0xff,0x00,0x00), /* ltred   */
 	MAKE_RGB(0xff,0x00,0xff), /* ltmagenta */
-	MAKE_RGB(0xff,0xff,0x00), /* yellow	 */
-	MAKE_RGB(0xff,0xff,0xff)  /* white	 */
+	MAKE_RGB(0xff,0xff,0x00), /* yellow  */
+	MAKE_RGB(0xff,0xff,0xff)  /* white   */
 };
 
 
@@ -671,7 +671,7 @@ static int readkey(void)
 		if (code_pressed_memory(KEYCODE_F2)) k = KEYCODE_F2;
 		if (code_pressed_memory(KEYCODE_F3)) k = KEYCODE_F3;
 		if (code_pressed_memory(KEYCODE_F4)) k = KEYCODE_F4;
-/*		if (code_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5; */
+/*      if (code_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5; */
 		if (code_pressed_memory(KEYCODE_F6)) k = KEYCODE_F6;
 		if (code_pressed_memory(KEYCODE_F7)) k = KEYCODE_F7;
 		if (code_pressed_memory(KEYCODE_F8)) k = KEYCODE_F8;
@@ -680,7 +680,7 @@ static int readkey(void)
 		if (code_pressed_memory(KEYCODE_F11)) k = KEYCODE_F11;
 		if (code_pressed_memory(KEYCODE_F12)) k = KEYCODE_F12;
 		if (code_pressed_memory(KEYCODE_ESC)) k = KEYCODE_ESC;
-/*		if (code_pressed_memory_repeat(KEYCODE_TILDE,dbg_key_repeat)) k = KEYCODE_TILDE; */
+/*      if (code_pressed_memory_repeat(KEYCODE_TILDE,dbg_key_repeat)) k = KEYCODE_TILDE; */
 		if (code_pressed_memory_repeat(KEYCODE_MINUS,dbg_key_repeat)) k = KEYCODE_MINUS;
 		if (code_pressed_memory_repeat(KEYCODE_EQUALS,dbg_key_repeat)) k = KEYCODE_EQUALS;
 		if (code_pressed_memory_repeat(KEYCODE_BACKSPACE,dbg_key_repeat)) k = KEYCODE_BACKSPACE;
@@ -710,16 +710,16 @@ static int readkey(void)
 		if (code_pressed_memory_repeat(KEYCODE_ASTERISK,dbg_key_repeat)) k = KEYCODE_ASTERISK;
 		if (code_pressed_memory_repeat(KEYCODE_MINUS_PAD,dbg_key_repeat)) k = KEYCODE_MINUS_PAD;
 		if (code_pressed_memory_repeat(KEYCODE_PLUS_PAD,dbg_key_repeat)) k = KEYCODE_PLUS_PAD;
-/*		if (code_pressed_memory_repeat(KEYCODE_DEL_PAD,dbg_key_repeat)) k = KEYCODE_DEL_PAD; */
-/*		if (code_pressed_memory_repeat(KEYCODE_ENTER_PAD,dbg_key_repeat)) k = KEYCODE_ENTER_PAD; */
-/*		if (code_pressed_memory(KEYCODE_PRTSCR)) k = KEYCODE_PRTSCR; */
-/*		if (code_pressed_memory(KEYCODE_PAUSE)) k = KEYCODE_PAUSE; */
-/*		if (code_pressed_memory(KEYCODE_SCRLOCK)) k = KEYCODE_SCRLOCK; */
-/*		if (code_pressed_memory(KEYCODE_NUMLOCK)) k = KEYCODE_NUMLOCK; */
-/*		if (code_pressed_memory(KEYCODE_CAPSLOCK)) k = KEYCODE_CAPSLOCK; */
-/*		if (code_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
-/*		if (code_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
-/*		if (code_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
+/*      if (code_pressed_memory_repeat(KEYCODE_DEL_PAD,dbg_key_repeat)) k = KEYCODE_DEL_PAD; */
+/*      if (code_pressed_memory_repeat(KEYCODE_ENTER_PAD,dbg_key_repeat)) k = KEYCODE_ENTER_PAD; */
+/*      if (code_pressed_memory(KEYCODE_PRTSCR)) k = KEYCODE_PRTSCR; */
+/*      if (code_pressed_memory(KEYCODE_PAUSE)) k = KEYCODE_PAUSE; */
+/*      if (code_pressed_memory(KEYCODE_SCRLOCK)) k = KEYCODE_SCRLOCK; */
+/*      if (code_pressed_memory(KEYCODE_NUMLOCK)) k = KEYCODE_NUMLOCK; */
+/*      if (code_pressed_memory(KEYCODE_CAPSLOCK)) k = KEYCODE_CAPSLOCK; */
+/*      if (code_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
+/*      if (code_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
+/*      if (code_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
 
 		if (k == CODE_NONE)
 			debugger_idle = 1;
@@ -2205,14 +2205,14 @@ static void dbg_open_windows( void )
 			if( DASM_H + 1 == CMDS_Y )
 			{
 				/********************
-				 * dasm   * regs	*
-				 *		  ***********
-				 *		  * mem1	*
-				 *		  ***********
-				 *		  * mem2	*
-				 ********************
-				 * cmds 			*
-				 ********************/
+                 * dasm   * regs    *
+                 *        ***********
+                 *        * mem1    *
+                 *        ***********
+                 *        * mem2    *
+                 ********************
+                 * cmds             *
+                 ********************/
 				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+ah);
 				 dbg_set_rect(&mem1, MEM1_X+aw,MEM1_Y,MEM1_W,MEM1_H+(ah+1)/2);
@@ -2222,14 +2222,14 @@ static void dbg_open_windows( void )
 			if( MEM1_X == MEM2_X )
 			{
 				/********************
-				 * dasm   * regs	*
-				 ********** 		*
-				 * mem1   * 		*
-				 ********** 		*
-				 * mem2   * 		*
-				 ********************
-				 * cmds 			*
-				 ********************/
+                 * dasm   * regs    *
+                 **********         *
+                 * mem1   *         *
+                 **********         *
+                 * mem2   *         *
+                 ********************
+                 * cmds             *
+                 ********************/
 				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H);
 				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y,MEM1_W+aw,MEM1_H+(ah+1)/2);
@@ -2239,14 +2239,14 @@ static void dbg_open_windows( void )
 			if( DASM_X < REGS_X )
 			{
 				/********************
-				 * dasm   * regs	*
-				 *		  * 		*
-				 *		  * 		*
-				 ********************
-				 * mem1   * mem2	*
-				 ********************
-				 * cmds 			*
-				 ********************/
+                 * dasm   * regs    *
+                 *        *         *
+                 *        *         *
+                 ********************
+                 * mem1   * mem2    *
+                 ********************
+                 * cmds             *
+                 ********************/
 				 dbg_set_rect(&regs, REGS_X+aw,REGS_Y,REGS_W,REGS_H);
 				 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+aw,DASM_H+(ah+1)/2);
 				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y+(ah+1)/2,MEM1_W+aw,MEM1_H+ah/2);
@@ -2255,14 +2255,14 @@ static void dbg_open_windows( void )
 			else
 			{
 				/********************
-				 * regs   * dasm	*
-				 *		  * 		*
-				 *		  * 		*
-				 ********************
-				 * mem1   * mem2	*
-				 ********************
-				 * cmds 			*
-				 ********************/
+                 * regs   * dasm    *
+                 *        *         *
+                 *        *         *
+                 ********************
+                 * mem1   * mem2    *
+                 ********************
+                 * cmds             *
+                 ********************/
 				 dbg_set_rect(&dasm, DASM_X+aw,DASM_Y,DASM_W,DASM_H);
 				 dbg_set_rect(&regs, REGS_X,REGS_Y,REGS_W+aw,REGS_H+(ah+1)/2);
 				 dbg_set_rect(&mem1, MEM1_X,MEM1_Y+(ah+1)/2,MEM1_W+aw,MEM1_H+ah/2);
@@ -2272,14 +2272,14 @@ static void dbg_open_windows( void )
 		else
 		{
 			/********************
-			 * regs 			*
-			 ********************
-			 * dasm   * mem1	*
-			 *		  ***********
-			 *		  * mem2	*
-			 ********************
-			 * cmds 			*
-			 ********************/
+             * regs             *
+             ********************
+             * dasm   * mem1    *
+             *        ***********
+             *        * mem2    *
+             ********************
+             * cmds             *
+             ********************/
 			 dbg_set_rect(&regs, REGS_X,REGS_Y,REGS_W+aw,REGS_H);
 			 dbg_set_rect(&dasm, DASM_X,DASM_Y,DASM_W+(aw+1)/2,DASM_H+ah);
 			 dbg_set_rect(&mem1, MEM1_X+(aw+1)/2,MEM1_Y,MEM1_W+aw/2,MEM1_H+(ah+1)/2);
@@ -2393,7 +2393,7 @@ static void dump_regs( void )
 			result=activecpu_reg_string(reg[i]);
 			if (result)
 				width = strlen( result );
-			
+
 			if( width >= regs->max_width )
 				regs->max_width = width + 1;
 		}
@@ -2697,12 +2697,12 @@ static unsigned dump_dasm( unsigned pc )
 		if( line_pc_cpu == INVALID )
 		{
 			/*
-			 * We didn't find the exact instruction of the CPU PC.
-			 * This has to be caused by a jump into the midst of
-			 * another instruction down from the top. If the CPU PC
-			 * is between pc_first and pc (end), try again on next
-			 * instruction size boundary, else bail out...
-			 */
+             * We didn't find the exact instruction of the CPU PC.
+             * This has to be caused by a jump into the midst of
+             * another instruction down from the top. If the CPU PC
+             * is between pc_first and pc (end), try again on next
+             * instruction size boundary, else bail out...
+             */
 			if( DBGDASM.pc_cpu > pc_first && DBGDASM.pc_cpu < pc )
 				pc_first += ALIGN;
 			else
@@ -2864,18 +2864,18 @@ static void dump_mem( int which, int set_title )
 
 	if( set_title )
 	{
-//		if( DBGMEM[which].internal )
-//			win_set_title( WIN_MEM(active_cpu,which), "CPU internal" );
-//		else
+//      if( DBGMEM[which].internal )
+//          win_set_title( WIN_MEM(active_cpu,which), "CPU internal" );
+//      else
 			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base) );
 	}
 
-//	switch( DBGMEM[which].mode )
-//	{
-//	case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
+//  switch( DBGMEM[which].mode )
+//  {
+//  case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
 	/*case MODE_HEX_UINT16:*/ dump_mem_hex( which, len_addr, 4 );// break;
-//	case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
-//	}
+//  case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
+//  }
 }
 
 /**************************************************************************
@@ -3392,9 +3392,9 @@ static void edit_cmds(void)
 	{
 	case KEYCODE_SPACE:
 		/*
-		 * Command completion for convenience:
-		 * found a valid command and no space in the command line yet?
-		 */
+         * Command completion for convenience:
+         * found a valid command and no space in the command line yet?
+         */
 		if( cmd != INVALID && strchr(CMD, ' ') == NULL )
 		{
 			strcpy( CMD, commands[cmd].name );
@@ -3434,7 +3434,7 @@ static void edit_cmds(void)
 /**************************************************************************
  **************************************************************************
  *
- *		Command functions
+ *      Command functions
  *
  **************************************************************************
  **************************************************************************/
@@ -3505,8 +3505,8 @@ static void cmd_help( void )
 		dst += sprintf( dst, "Code align unit: %d byte(s)", (int)activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8 ) + 1;
 		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
 		dst += sprintf( dst, "Source file    : %s", activecpu_core_file() ) + 1;
-//		dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
-//		dst += sprintf( dst, "Internal write : %s", cputype_get_interface(cputype)->internal_write ? "yes" : "no" ) + 1;
+//      dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
+//      dst += sprintf( dst, "Internal write : %s", cputype_get_interface(cputype)->internal_write ? "yes" : "no" ) + 1;
 		dst += sprintf( dst, "Program / Data : %s", (cputype_databus_width(cputype, ADDRESS_SPACE_DATA) > 0) ? "yes" : "no" ) + 1;
 		dst += sprintf( dst, "%s", activecpu_core_credits() ) + 1;
 		break;
@@ -4715,11 +4715,11 @@ static void cmd_dasm_up( void )
 	if( DBGDASM.pc_top > 0 )
 	{
 		/*
-		 * Try to find the previous instruction by searching from the
-		 * longest instruction length towards the current address.
-		 * If we can't find one then just go back one byte,
-		 * which means that a previous guess was wrong.
-		 */
+         * Try to find the previous instruction by searching from the
+         * longest instruction length towards the current address.
+         * If we can't find one then just go back one byte,
+         * which means that a previous guess was wrong.
+         */
 		unsigned dasm_pc_tmp = rshift(DBGDASM.pc_top - lshift(INSTL)) & AMASK;
 		int i;
 		for( i = 0; i < INSTL; i += ALIGN )
@@ -4760,10 +4760,10 @@ static void cmd_dasm_page_up( void )
 {
 	UINT32 i;
 	/*
-	 * This uses a 'rolling window' of start addresses to work out
-	 * the best address to use to generate the previous pagefull of
-	 * disassembly - CM 980428
-	 */
+     * This uses a 'rolling window' of start addresses to work out
+     * the best address to use to generate the previous pagefull of
+     * disassembly - CM 980428
+     */
 	if( DBGDASM.pc_top > 0 )
 	{
 		unsigned dasm_pc_row[50];	/* needs to be > max windows height */
@@ -4783,9 +4783,9 @@ static void cmd_dasm_page_up( void )
 			}
 
 			/*
-			 * If this ever happens, it's because our
-			 * max_inst_len member is too small for the CPU
-			 */
+             * If this ever happens, it's because our
+             * max_inst_len member is too small for the CPU
+             */
 			if( i < h )
 			{
 				dasm_pc_tmp = dasm_pc_row[0];
@@ -5217,8 +5217,8 @@ static void mame_debug_reset_statics( void )
 
 
 /**************************************************************************
- *	mame_debug_trace_write
- *	Writes trace info to the active trace file, if appropriate
+ *  mame_debug_trace_write
+ *  Writes trace info to the active trace file, if appropriate
  **************************************************************************/
 void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
 {
@@ -5234,8 +5234,8 @@ void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
 
 
 /**************************************************************************
- *	mame_debug_init
- *	This function is called from cpu_run to startup the debugger
+ *  mame_debug_init
+ *  This function is called from cpu_run to startup the debugger
  **************************************************************************/
 #ifndef NEW_DEBUGGER
 void mame_debug_init(void)
@@ -5269,7 +5269,7 @@ void mame_debug_init(void)
 			case  8: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
 			case 16: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
 			case 32: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
-//			case 64: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT64; break;
+//          case 64: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT64; break;
 		}
 	}
 
@@ -5341,8 +5341,8 @@ void mame_debug_init(void)
 }
 
 /**************************************************************************
- *	mame_debug_exit
- *	This function is called from cpu_run to shutdown the debugger
+ *  mame_debug_exit
+ *  This function is called from cpu_run to shutdown the debugger
  **************************************************************************/
 void mame_debug_exit(void)
 {
@@ -5352,9 +5352,9 @@ void mame_debug_exit(void)
 
 /**************************************************************************
  **************************************************************************
- *		MAME_Debug
- *		This function is called from within an execution loop of a
- *		CPU core whenever mame_debug is non zero
+ *      MAME_Debug
+ *      This function is called from within an execution loop of a
+ *      CPU core whenever mame_debug is non zero
  **************************************************************************
  **************************************************************************/
 void MAME_Debug(void)
@@ -5390,8 +5390,8 @@ void MAME_Debug(void)
 		/* assume we're in debug */
 		dbg_active = 1;
 		/* See if we went into a function.
-		   A 'return' will cause the CPU's stack pointer to be
-		   greater than the previous stack pointer */
+           A 'return' will cause the CPU's stack pointer to be
+           greater than the previous stack pointer */
 		if( activecpu_get_pc() != DBG.next_pc && activecpu_get_sp() < DBG.prev_sp )
 		{
 			/* if so, set the temporary breakpoint on the return PC */

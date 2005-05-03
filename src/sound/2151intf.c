@@ -52,7 +52,7 @@ static void *ym2151_start(int sndindex, int clock, const void *config)
 	static const struct YM2151interface dummy = { 0 };
 	int rate = Machine->sample_rate;
 	struct ym2151_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

@@ -156,7 +156,7 @@ VIDEO_UPDATE(drgnmst)
 	tilemap_set_scrollx(drgnmst_bg_tilemap,0, drgnmst_vidregs[10]-18); // verify
 	tilemap_set_scrolly(drgnmst_bg_tilemap,0, drgnmst_vidregs[11]); // verify
 
-//	tilemap_set_scrollx(drgnmst_md_tilemap,0, drgnmst_vidregs[8]-16); // rowscrolled
+//  tilemap_set_scrollx(drgnmst_md_tilemap,0, drgnmst_vidregs[8]-16); // rowscrolled
 	tilemap_set_scrolly(drgnmst_md_tilemap,0, drgnmst_vidregs[9]); // verify
 
 	tilemap_set_scrollx(drgnmst_fg_tilemap,0, drgnmst_vidregs[6]-18); // verify (test mode colour test needs it)
@@ -203,7 +203,7 @@ VIDEO_UPDATE(drgnmst)
 
 	drgnmst_draw_sprites(bitmap,cliprect);
 
-//	usrintf_showmessage	("x %04x x %04x x %04x x %04x x %04x", drgnmst_vidregs2[0], drgnmst_vidregs[12], drgnmst_vidregs[13], drgnmst_vidregs[14], drgnmst_vidregs[15]);
-//	usrintf_showmessage	("x %04x x %04x y %04x y %04x z %04x z %04x",drgnmst_vidregs[0],drgnmst_vidregs[1],drgnmst_vidregs[2],drgnmst_vidregs[3],drgnmst_vidregs[4],drgnmst_vidregs[5]);
+//  usrintf_showmessage ("x %04x x %04x x %04x x %04x x %04x", drgnmst_vidregs2[0], drgnmst_vidregs[12], drgnmst_vidregs[13], drgnmst_vidregs[14], drgnmst_vidregs[15]);
+//  usrintf_showmessage ("x %04x x %04x y %04x y %04x z %04x z %04x",drgnmst_vidregs[0],drgnmst_vidregs[1],drgnmst_vidregs[2],drgnmst_vidregs[3],drgnmst_vidregs[4],drgnmst_vidregs[5]);
 
 }

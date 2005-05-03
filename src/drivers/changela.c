@@ -13,9 +13,9 @@ Tomasz Slanina
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
 
-static unsigned char portA_in,portA_out,ddrA; 
-static unsigned char portB_out,ddrB; 
-static unsigned char portC_in,portC_out,ddrC; 
+static unsigned char portA_in,portA_out,ddrA;
+static unsigned char portB_out,ddrB;
+static unsigned char portC_in,portC_out,ddrC;
 
 static unsigned char mcu_out;
 static unsigned char mcu_in;
@@ -49,38 +49,38 @@ at+-------------------+-----------------------------------------------------+---
 e:|7 6 5 4 3 2 1 0 Hex|/RAMw /RAMr /ROM  /AdderOutput  AdderInput TrainInputs|
   |                   |           enable GateU61Enable Enable     Enable    |
 --+-------------------+-----------------------------------------------------+-----------------------------------------------------------------
-00|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1		|										(noop ROM 00-lsb to adder)
-01|0 0 0 0 1 1 1 1 0f | 0     1      0      1            1          0		|	ROM 00-lsb to train, and to RAM 00
-02|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1		|										(noop RAM 00 to adder)
-03|0 0 1 0 1 1 1 1 2f | 0     1      0      1            1          0		|	ROM 00-msb to train, and to RAM 01
-04|1 1 0 0 1 1 0 1 cd | 1     0      1      1            0          1		|										(noop RAM 00 to adder)
-05|0 0 0 0 1 1 1 1 0f | 0     1      0      1            1          0		|	ROM 01-lsb to train, and to RAM 02
-06|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1		|										(noop RAM 02 to adder)
-07|0 0 1 0 1 1 1 1 2f | 0     1      0      1            1          0		|	ROM 01-msb to train, and to RAM 03
-08|1 1 0 0 0 1 0 1 c5 | 1     0      1      1            0          1		|	CLR carry
-09|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1		|	ROM 02-lsb to adder
-0a|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1		|	RAM 05 to adder
-0b|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0		|	Adder to train, and to RAM 05, CLOCK carry
-0c|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1		|	ROM 02-msb to adder
-0d|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1		|	RAM 07 to adder
-0e|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0		|	Adder to train, and to RAM 07, CLOCK carry
-0f|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1		|	ROM 03-lsb to adder
-10|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1		|	RAM 09 to adder
-11|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0		|	Adder to train, and to RAM 09, CLOCK carry
-12|1 0 0 0 1 1 0 1 8d | 1     1      0      1            0          1		|										(noop ROM 03-msb to adder)
-13|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1		|										(noop RAM 0c to adder)
-14|0 0 0 0 0 0 0 1 01 | 1     1      0      1            0          1		|	ROM 04-lsb to adder, CLR carry
-15|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1		|	RAM 0d to adder
-16|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0		|	Adder to train and to RAM 0d, CLOCK carry
-17|0 0 0 0 1 0 0 1 09 | 1     1      0      1            0          1		|	ROM 04-msb to adder
-18|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1		|	RAM 0f to adder
-19|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0		|	Adder to train and to RAM 0f, CLOCK carry
-1a|0 0 0 1 1 0 0 1 19 | 1     1      0      1            0          1		|	ROM 05-lsb to adder, /LD HOSC
-1b|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1		|	RAM 11 to adder
-1c|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0		|	Adder to train and to RAM 11, CLOCK carry
-1d|0 0 0 0 1 0 0 1 09 | 1     1      0      1            0          1		|	ROM 05-msb to adder
-1e|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1		|	RAM 13 to adder
-1f|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0		|	Adder to train and to RAM 13, CLOCK carry
+00|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1       |                                       (noop ROM 00-lsb to adder)
+01|0 0 0 0 1 1 1 1 0f | 0     1      0      1            1          0       |   ROM 00-lsb to train, and to RAM 00
+02|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1       |                                       (noop RAM 00 to adder)
+03|0 0 1 0 1 1 1 1 2f | 0     1      0      1            1          0       |   ROM 00-msb to train, and to RAM 01
+04|1 1 0 0 1 1 0 1 cd | 1     0      1      1            0          1       |                                       (noop RAM 00 to adder)
+05|0 0 0 0 1 1 1 1 0f | 0     1      0      1            1          0       |   ROM 01-lsb to train, and to RAM 02
+06|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1       |                                       (noop RAM 02 to adder)
+07|0 0 1 0 1 1 1 1 2f | 0     1      0      1            1          0       |   ROM 01-msb to train, and to RAM 03
+08|1 1 0 0 0 1 0 1 c5 | 1     0      1      1            0          1       |   CLR carry
+09|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1       |   ROM 02-lsb to adder
+0a|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1       |   RAM 05 to adder
+0b|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0       |   Adder to train, and to RAM 05, CLOCK carry
+0c|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1       |   ROM 02-msb to adder
+0d|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1       |   RAM 07 to adder
+0e|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0       |   Adder to train, and to RAM 07, CLOCK carry
+0f|0 0 0 0 1 1 0 1 0d | 1     1      0      1            0          1       |   ROM 03-lsb to adder
+10|0 1 1 0 1 1 0 1 6d | 1     0      1      1            0          1       |   RAM 09 to adder
+11|1 1 1 0 1 1 1 0 ee | 0     1      1      0            1          0       |   Adder to train, and to RAM 09, CLOCK carry
+12|1 0 0 0 1 1 0 1 8d | 1     1      0      1            0          1       |                                       (noop ROM 03-msb to adder)
+13|0 1 0 0 1 1 0 1 4d | 1     0      1      1            0          1       |                                       (noop RAM 0c to adder)
+14|0 0 0 0 0 0 0 1 01 | 1     1      0      1            0          1       |   ROM 04-lsb to adder, CLR carry
+15|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1       |   RAM 0d to adder
+16|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0       |   Adder to train and to RAM 0d, CLOCK carry
+17|0 0 0 0 1 0 0 1 09 | 1     1      0      1            0          1       |   ROM 04-msb to adder
+18|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1       |   RAM 0f to adder
+19|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0       |   Adder to train and to RAM 0f, CLOCK carry
+1a|0 0 0 1 1 0 0 1 19 | 1     1      0      1            0          1       |   ROM 05-lsb to adder, /LD HOSC
+1b|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1       |   RAM 11 to adder
+1c|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0       |   Adder to train and to RAM 11, CLOCK carry
+1d|0 0 0 0 1 0 0 1 09 | 1     1      0      1            0          1       |   ROM 05-msb to adder
+1e|0 1 1 0 1 0 0 1 69 | 1     0      1      1            0          1       |   RAM 13 to adder
+1f|1 1 1 0 1 0 1 0 ea | 0     1      1      0            1          0       |   Adder to train and to RAM 13, CLOCK carry
                         *   =========================   ====================
                         *   only one of these signals   these signals select
                         *   can be active at a time     the output for the result
@@ -637,7 +637,7 @@ static WRITE8_HANDLER (colors_w)
 {
 	int bit0, bit1, bit2, r, g, b;
 	UINT32 c, color_index;
-	
+
 	c = (data) | ((offset&1)<<8); /* a0 used as D8 bit input */
 
 	c ^= 0x1ff; /* active low */
@@ -681,13 +681,13 @@ static WRITE8_HANDLER( mcu_w )
 
 
 /*********************************
-		MCU
-*********************************/		
+        MCU
+*********************************/
 
 
 
 READ8_HANDLER( changela_68705_portA_r )
-{	
+{
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
@@ -697,13 +697,13 @@ WRITE8_HANDLER( changela_68705_portA_w )
 }
 
 WRITE8_HANDLER( changela_68705_ddrA_w )
-{	
-	ddrA = data; 
+{
+	ddrA = data;
 }
 
 
 READ8_HANDLER( changela_68705_portB_r )
-{	
+{
 	return (portB_out & ddrB) | (readinputport(4) & ~ddrB);
 }
 
@@ -713,20 +713,20 @@ WRITE8_HANDLER( changela_68705_portB_w )
 }
 
 WRITE8_HANDLER( changela_68705_ddrB_w )
-{	
-	ddrB = data; 
+{
+	ddrB = data;
 }
 
 
 READ8_HANDLER( changela_68705_portC_r )
-{	
+{
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
 WRITE8_HANDLER( changela_68705_portC_w )
 {
 	/* PC3 is connected to the CLOCK input of the LS374,
-		so we latch the data on positive going edge of the clock */
+        so we latch the data on positive going edge of the clock */
 
 /* this is strange because if we do this corectly - it just doesn't work */
 	if( (data&8) /*& (!(portC_out&8))*/ )
@@ -742,8 +742,8 @@ WRITE8_HANDLER( changela_68705_portC_w )
 }
 
 WRITE8_HANDLER( changela_68705_ddrC_w )
-{	
-	ddrC = data; 
+{
+	ddrC = data;
 }
 
 
@@ -852,14 +852,14 @@ static WRITE8_HANDLER( mem_device_select_w )
 	mem_dev_selected = dev_sel * 0x800;
 
 	/*
-	dev_sel possible settings:
-	0 - not connected (no device)
-	1 - ADR1 is 2114 RAM at U59 (state machine) (accessible range: 0x0000-0x003f)
-	2 - ADR2 is 2128 RAM at U109 (River RAM)    (accessible range: 0x0000-0x07ff)
-	3 - ADR3 is 2128 RAM at U114? (Tree RAM)    (accessible range: 0x0000-0x07ff)
-	4 - ADR4 is 2732 ROM at U7    (Tree ROM)    (accessible range: 0x0000-0x07ff)
-	5 - SLOPE is ROM at U44 (state machine)     (accessible range: 0x0000-0x07ff)
-	*/
+    dev_sel possible settings:
+    0 - not connected (no device)
+    1 - ADR1 is 2114 RAM at U59 (state machine) (accessible range: 0x0000-0x003f)
+    2 - ADR2 is 2128 RAM at U109 (River RAM)    (accessible range: 0x0000-0x07ff)
+    3 - ADR3 is 2128 RAM at U114? (Tree RAM)    (accessible range: 0x0000-0x07ff)
+    4 - ADR4 is 2732 ROM at U7    (Tree ROM)    (accessible range: 0x0000-0x07ff)
+    5 - SLOPE is ROM at U44 (state machine)     (accessible range: 0x0000-0x07ff)
+    */
 }
 
 static WRITE8_HANDLER( mem_device_w )
@@ -881,7 +881,7 @@ static READ8_HANDLER( mem_device_r )
 static WRITE8_HANDLER( slope_rom_addr_hi_w )
 {
 	slopeROM_bank = (data&3)<<9;
-//	usrintf_showmessage("bank = %04x", slopeROM_bank);
+//  usrintf_showmessage("bank = %04x", slopeROM_bank);
 }
 
 static WRITE8_HANDLER( slope_rom_addr_lo_w )
@@ -923,13 +923,13 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_ROM)				/* Processor ROM */
 
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(mem_device_w)			/* River-Tree RAMs, slope ROM, tree ROM */
-	
+
 	/* LS138 - U16 */
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(MWA8_NOP)				/* not connected */
 	AM_RANGE(0xc900, 0xc900) AM_WRITE(mem_device_select_w)	/* selects the memory device to be accessible at 0xc000-0xc7ff */
 	AM_RANGE(0xca00, 0xca00) AM_WRITE(slope_rom_addr_hi_w)
 	AM_RANGE(0xcb00, 0xcb00) AM_WRITE(slope_rom_addr_lo_w)
-		
+
 	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0xd010, 0xd010) AM_WRITE(AY8910_control_port_1_w)
@@ -1043,9 +1043,9 @@ INPUT_PORTS_START( changela )
 
 	PORT_START /* port 4 */ /* MCU */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 ) 
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR(Free_Play) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -1070,7 +1070,7 @@ INPUT_PORTS_START( changela )
 	PORT_BIT( 0x0f, 0x00, IPT_PADDLE ) PORT_MINMAX(0,0x0f) PORT_SENSITIVITY(50) PORT_KEYDELTA(1)
 //PORT_BIT(  mask,default,type ) PORT_MINMAX(min,max) PORT_SENSITIVITY(sensitivity) PORT_KEYDELTA(delta)
 
-	
+
 INPUT_PORTS_END
 
 
@@ -1135,14 +1135,14 @@ static MACHINE_DRIVER_START( changela )
 
 	MDRV_CPU_ADD(Z80,5000000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(chl_interrupt,4) 
+	MDRV_CPU_VBLANK_INT(chl_interrupt,4)
 
 	MDRV_CPU_ADD(M68705,2000000)
 	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(changela)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1162,7 +1162,7 @@ static MACHINE_DRIVER_START( changela )
 
 	MDRV_SOUND_ADD(AY8910, 1250000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1183,7 +1183,7 @@ ROM_START( changela )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )	/* obj 1 data */
 	ROM_LOAD( "cl46",	0x0000, 0x1000, CRC(9c0a7d28) SHA1(fac9180ea0d9aeea56a84b35cc0958f0dd86a801) )
-	
+
 	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* obj 0 data */
 	ROM_LOAD( "cl100",	0x0000, 0x2000, CRC(3fa9e4fa) SHA1(9abd7df5fcf143a0c476bd8c8753c5ea294b9f74) )
 	ROM_LOAD( "cl99",	0x2000, 0x2000, CRC(67b27b9e) SHA1(7df0f93851959359218c8d2272e30d242a77039d) )

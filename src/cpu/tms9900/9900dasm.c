@@ -1,19 +1,19 @@
 /*****************************************************************************
  *
- *	 9900dasm.c
- *	 TMS 9900 family disassembler
+ *   9900dasm.c
+ *   TMS 9900 family disassembler
  *
- *	 Raphael Nabet 2003
- *	 Based on previous work Copyright (c) 1998 John Butler.
- *	 Based on 6502dasm.c 6502/65c02/6510 disassembler by Juergen Buchmueller
+ *   Raphael Nabet 2003
+ *   Based on previous work Copyright (c) 1998 John Butler.
+ *   Based on 6502dasm.c 6502/65c02/6510 disassembler by Juergen Buchmueller
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - The author of this copywritten work reserves the right to change the
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - The author of this copywritten work reserves the right to change the
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
@@ -65,7 +65,7 @@ enum
 	/* processor set on which opcodes are available */
 	ps_any		= 0x01,		/* every processor in the tms9900/ti990 family */
 	ps_mapper	= 0x02,		/* processors with memory mapper (ti990/10, ti990/12,
-									and tms99000 with mapper coprocessor) */
+                                    and tms99000 with mapper coprocessor) */
 	ps_tms9995	= 0x04,		/* ti990/12, tms9995, and later */
 	ps_tms99000	= 0x08,		/* ti990/12, tms99000, and later */
 	ps_ti990_12	= 0x10,		/* ti990/12 only */
@@ -156,7 +156,7 @@ static const description_t descriptions[144+3+1] =
 	{ "stwp",	format_18,	ps_any|sd_11 },		{ "rtwp",	format_7,	ps_any|sd_11|sd_11_15 },
 	{ "idle",	format_7,	ps_any|sd_11|sd_11_15 },	{ "rset",	format_7,	ps_any|sd_11|sd_11_15 },
 	{ "ckof",	format_7,	ps_any|sd_11|sd_11_15 },	{ "ckon",	format_7,	ps_any|sd_11|sd_11_15 },
-	{ "lrex",	format_7,	ps_any|sd_11|sd_11_15 },	
+	{ "lrex",	format_7,	ps_any|sd_11|sd_11_15 },
 
 	/* mapper instruction set */
 	{ "lds",	format_6,	ps_mapper },		{ "ldd",	format_6,	ps_mapper },
@@ -207,9 +207,9 @@ static const description_t descriptions[144+3+1] =
 
 	/* tms9940-only instruction set */
 	/* these instructions are said to be format 9 (xop), but since the xop
-	level is interpreted as part of the opcode, dca and dcs should be handled
-	like format 6.  liim looks like format 18, but slightly different,
-	therefore it is handled like a special format. */
+    level is interpreted as part of the opcode, dca and dcs should be handled
+    like format 6.  liim looks like format 18, but slightly different,
+    therefore it is handled like a special format. */
 	{ "liim",	format_liim,/*ps_tms9940*/0	},	{ "dca",	format_6,	/*ps_tms9940*/0 },
 	{ "dcs",	format_6,	/*ps_tms9940*/0 },
 
@@ -343,7 +343,7 @@ static int print_arg (char *dest, int mode, int arg, data16_t (*readop_arg)(offs
 
 
 /*****************************************************************************
- *	Disassemble a single command and return the number of bytes it uses.
+ *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
 unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address))
 {
@@ -358,12 +358,12 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(o
 	int flags;
 
 	/*
-		Under tms9900, opcodes >0400->07FF are incompletely decoded: bits 11 is ignored, and so are
-		bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
-		generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
-		Additionally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
-		non-zero.
-	*/
+        Under tms9900, opcodes >0400->07FF are incompletely decoded: bits 11 is ignored, and so are
+        bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
+        generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
+        Additionally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
+        non-zero.
+    */
 	#define BETTER_0200_DECODING (model_id == TI990_10_ID)
 	#define COMPLETE_0200_DECODING (/*(model_id == TI990_12_ID) ||*/ (model_id >= TMS9995_ID))
 
@@ -371,7 +371,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(o
 
 	if ((model_id == TI990_10_ID) /*|| (model_id == TI990_12_ID)*/ || (model_id >= TMS99000_ID))
 		processor_mask |= ps_mapper;		/* processors with memory mapper (ti990/10, ti990/12,
-												and tms99000 with mapper coprocessor) */
+                                                and tms99000 with mapper coprocessor) */
 	if (/*(model_id == TI990_12_ID) ||*/ (model_id >= TMS9995_ID))
 		processor_mask |= ps_tms9995;		/* ti990/12, tms9995, and later */
 
@@ -379,7 +379,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(o
 		processor_mask |= ps_tms99000;		/* ti990/12, tms99000, and later */
 
 	/*if ((model_id == TI990_12_ID))
-		processor_mask |= ps_ti990_12;*/	/* ti990/12, tms99000, and later */
+        processor_mask |= ps_ti990_12;*/	/* ti990/12, tms99000, and later */
 
 	PC = pc;
  	OP = (*readop)(PC); PC+=2;
@@ -464,9 +464,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(o
 				opc = _liim;
 			else
 				/* I don't know what happens when ts != 0.  Maybe the CPU does
-				the complete address decoding, and liim gets a bogus value
-				instead of the immediate.  Since I do not know, I handle this
-				as an illegal instruction. */
+                the complete address decoding, and liim gets a bogus value
+                instead of the immediate.  Since I do not know, I handle this
+                as an illegal instruction. */
 				opc = _ill;
 				break;
 

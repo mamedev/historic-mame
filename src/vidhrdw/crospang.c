@@ -65,20 +65,20 @@ static void get_fg_tile_info(int tile_index)
 
  offset
 
-	  0		-------yyyyyyyyy  y offset
-			-----hh---------  sprite height
-			---a------------  alpha blending enable
-			f---------------  flip x
-			-??-?-----------  unused
+      0     -------yyyyyyyyy  y offset
+            -----hh---------  sprite height
+            ---a------------  alpha blending enable
+            f---------------  flip x
+            -??-?-----------  unused
 
-	  1		--ssssssssssssss  sprite code
-			??--------------  unused
+      1     --ssssssssssssss  sprite code
+            ??--------------  unused
 
-	  2		-------xxxxxxxxx  x offset
-			---cccc---------  colors
-			???-------------  unused
+      2     -------xxxxxxxxx  x offset
+            ---cccc---------  colors
+            ???-------------  unused
 
-	  3		----------------  unused
+      3     ----------------  unused
 
 */
 
@@ -111,8 +111,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		if (x & 0x100)
 		{
 			x -= 0x200;
-		
-			if(x < -32) 
+
+			if(x < -32)
 				x += 512;
 		}
 

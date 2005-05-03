@@ -1,6 +1,6 @@
 /****************************************************************************
-*			  real mode i286 emulator v1.4 by Fabrice Frances				*
-*				(initial work based on David Hedley's pcemu)                *
+*             real mode i286 emulator v1.4 by Fabrice Frances               *
+*               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
 /*
@@ -387,7 +387,7 @@ static void PREFIX86(_rotate_shift_Word)(unsigned ModRM, unsigned count)
 static void PREFIX(rep)(int flagval)
 {
     /* Handles rep- and repnz- prefixes. flagval is the value of ZF for the
-		 loop  to continue for CMPS and SCAS instructions. */
+         loop  to continue for CMPS and SCAS instructions. */
 
 	unsigned next = FETCHOP;
 	unsigned count = I.regs.w[CX];
@@ -1385,7 +1385,7 @@ static void PREFIX86(_jo)(void)    /* Opcode 0x70 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1396,7 +1396,7 @@ static void PREFIX86(_jno)(void)    /* Opcode 0x71 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1407,7 +1407,7 @@ static void PREFIX86(_jb)(void)    /* Opcode 0x72 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1418,7 +1418,7 @@ static void PREFIX86(_jnb)(void)    /* Opcode 0x73 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1429,7 +1429,7 @@ static void PREFIX86(_jz)(void)    /* Opcode 0x74 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1440,7 +1440,7 @@ static void PREFIX86(_jnz)(void)    /* Opcode 0x75 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1451,7 +1451,7 @@ static void PREFIX86(_jbe)(void)    /* Opcode 0x76 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1462,7 +1462,7 @@ static void PREFIX86(_jnbe)(void)    /* Opcode 0x77 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1473,7 +1473,7 @@ static void PREFIX86(_js)(void)    /* Opcode 0x78 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1484,7 +1484,7 @@ static void PREFIX86(_jns)(void)    /* Opcode 0x79 */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1495,7 +1495,7 @@ static void PREFIX86(_jp)(void)    /* Opcode 0x7a */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1506,7 +1506,7 @@ static void PREFIX86(_jnp)(void)    /* Opcode 0x7b */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1517,7 +1517,7 @@ static void PREFIX86(_jl)(void)    /* Opcode 0x7c */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1528,7 +1528,7 @@ static void PREFIX86(_jnl)(void)    /* Opcode 0x7d */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1539,7 +1539,7 @@ static void PREFIX86(_jle)(void)    /* Opcode 0x7e */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -1550,7 +1550,7 @@ static void PREFIX86(_jnle)(void)    /* Opcode 0x7f */
 		I.pc += tmp;
 		ICOUNT -= cycles.jcc_t;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.jcc_nt;
 }
 
@@ -2528,9 +2528,9 @@ static void PREFIX86(_aad)(void)    /* Opcode 0xd5 */
 	SetPF(I.regs.b[AL]);
 	I.SignVal = 0;
 #else
-/* OB: Opcode works on NEC V-Series but not the Variants 	*/
+/* OB: Opcode works on NEC V-Series but not the Variants    */
 /*     one could specify any byte value as operand but the NECs */
-/*     always substitute 0x0a.					*/
+/*     always substitute 0x0a.                  */
 	I.regs.b[AL] = I.regs.b[AH] * 10 + I.regs.b[AL];
 	I.regs.b[AH] = 0;
 
@@ -2568,7 +2568,7 @@ static void PREFIX86(_loopne)(void)    /* Opcode 0xe0 */
 		ICOUNT -= cycles.loop_t;
 		I.pc += disp;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.loop_nt;
 }
 
@@ -2583,7 +2583,7 @@ static void PREFIX86(_loope)(void)    /* Opcode 0xe1 */
 		ICOUNT -= cycles.loope_t;
 		 I.pc += disp;
 /* ASG - can probably assume this is safe
-		 CHANGE_PC(I.pc);*/
+         CHANGE_PC(I.pc);*/
 	 } else ICOUNT -= cycles.loope_nt;
 }
 
@@ -2598,7 +2598,7 @@ static void PREFIX86(_loop)(void)    /* Opcode 0xe2 */
 		ICOUNT -= cycles.loop_t;
 		I.pc += disp;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else ICOUNT -= cycles.loop_nt;
 }
 
@@ -2610,7 +2610,7 @@ static void PREFIX86(_jcxz)(void)    /* Opcode 0xe3 */
 		ICOUNT -= cycles.jcxz_t;
 		I.pc += disp;
 /* ASG - can probably assume this is safe
-		CHANGE_PC(I.pc);*/
+        CHANGE_PC(I.pc);*/
 	} else
 		ICOUNT -= cycles.jcxz_nt;
 }
@@ -2699,7 +2699,7 @@ static void PREFIX86(_jmp_d8)(void)    /* Opcode 0xeb */
 	int tmp = (int)((INT8)FETCH);
 	I.pc += tmp;
 /* ASG - can probably assume this is safe
-	CHANGE_PC(I.pc);*/
+    CHANGE_PC(I.pc);*/
 	ICOUNT -= cycles.jmp_short;
 }
 

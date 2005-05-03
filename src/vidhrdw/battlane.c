@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Battle Lane Vol. 5
+    Battle Lane Vol. 5
 
 ***************************************************************************/
 
@@ -117,26 +117,26 @@ static void get_tile_info_bg(int tile_index)
 
 static UINT32 battlane_tilemap_scan_rows_2x2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	/* 
-			Tilemap Memory Organization
+	/*
+            Tilemap Memory Organization
 
-		 0              15 16            31
-		+-----------------+----------------+
-		|0				15|256			   |0
-		|				  |				   |
-		|     screen 0    |    screen 1    |
-		|                 |                |
-		|240           255|             511|15
-		+-----------------+----------------+
-		|512              |768             |16
-		|                 |                |
-		|     screen 2    |    screen 3    |
-		|                 |                |
-		|              767|            1023|31
-		+-----------------+-----------------
+         0              15 16            31
+        +-----------------+----------------+
+        |0              15|256             |0
+        |                 |                |
+        |     screen 0    |    screen 1    |
+        |                 |                |
+        |240           255|             511|15
+        +-----------------+----------------+
+        |512              |768             |16
+        |                 |                |
+        |     screen 2    |    screen 3    |
+        |                 |                |
+        |              767|            1023|31
+        +-----------------+-----------------
 
-	*/
-	
+    */
+
 	return (row & 0xf) * 16 + (col & 0xf) + (row & 0x10) * 32 + (col & 0x10) * 16;
 }
 
@@ -149,7 +149,7 @@ VIDEO_START( battlane )
 {
 	bg_tilemap = tilemap_create(get_tile_info_bg, battlane_tilemap_scan_rows_2x2,
 		TILEMAP_OPAQUE, 16, 16, 32, 32);
-	
+
 	if (!bg_tilemap)
 		return 1;
 
@@ -168,15 +168,15 @@ static void battlane_draw_sprites( struct mame_bitmap *bitmap )
 	for (offs = 0; offs < 0x100; offs += 4)
 	{
 		/*
-			0x80 = Bank 2
-			0x40 =
-			0x20 = Bank 1
-			0x10 = Y Double
-			0x08 = Color
-			0x04 = X Flip
-			0x02 = Y Flip
-			0x01 = Sprite Enable
-		*/
+            0x80 = Bank 2
+            0x40 =
+            0x20 = Bank 1
+            0x10 = Y Double
+            0x08 = Color
+            0x04 = X Flip
+            0x02 = Y Flip
+            0x01 = Sprite Enable
+        */
 
 		attr = battlane_spriteram[offs + 1];
 		code = battlane_spriteram[offs + 3];

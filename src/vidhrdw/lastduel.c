@@ -265,7 +265,7 @@ VIDEO_UPDATE( lastduel )
 VIDEO_EOF( lastduel )
 {
 	/* Spriteram is always 1 frame ahead, suggesting buffering.  I can't find
-		a register to control this so I assume it happens automatically
-		every frame at the end of vblank */
+        a register to control this so I assume it happens automatically
+        every frame at the end of vblank */
 	buffer_spriteram16_w(0,0,0);
 }

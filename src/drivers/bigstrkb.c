@@ -46,7 +46,7 @@ VIDEO_UPDATE(bigstrkb);
 static ADDRESS_MAP_START( bigstrkb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	/* most region sizes are unknown */
-//	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(megasys1_vregs_C_r)
+//  AM_RANGE(0x0c0000, 0x0cffff) AM_READ(megasys1_vregs_C_r)
 	AM_RANGE(0x0D0000, 0x0dffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0E0000, 0x0E3fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0e8000, 0x0ebfff) AM_READ(MRA16_RAM)
@@ -68,7 +68,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bigstrkb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-//	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(megasys1_vregs_C_w) AM_BASE(&megasys1_vregs)
+//  AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(megasys1_vregs_C_w) AM_BASE(&megasys1_vregs)
 
 	AM_RANGE(0x0C2004, 0x0C2005) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x0C200C, 0x0C200d) AM_WRITE(MWA16_NOP)
@@ -246,7 +246,7 @@ static MACHINE_DRIVER_START( bigstrkb )
 	MDRV_VIDEO_UPDATE(bigstrkb)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-//	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+//  MDRV_SOUND_ADD(YM2151, ym2151_interface)
 
 	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)

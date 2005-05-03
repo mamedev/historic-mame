@@ -217,13 +217,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( kingofb )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -243,7 +243,7 @@ static void kingofb_draw_sprites( struct mame_bitmap *bitmap )
 		int bank = (spriteram[offs + 3] & 0x04) >> 2;
 		int code = spriteram[offs + 2] + ((spriteram[offs + 3] & 0x03) << 8);
 		int color = ((spriteram[offs + 3] & 0x70) >> 4) + 8 * palette_bank;
-		int flipx = 0;		
+		int flipx = 0;
 		int flipy = spriteram[offs + 3] & 0x80;
 		int sx = spriteram[offs+1];
 		int sy = spriteram[offs];
@@ -284,13 +284,13 @@ static void ringking_get_bg_tile_info(int tile_index)
 
 VIDEO_START( ringking )
 {
-	bg_tilemap = tilemap_create(ringking_get_bg_tile_info, tilemap_scan_cols_flip_y, 
+	bg_tilemap = tilemap_create(ringking_get_bg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

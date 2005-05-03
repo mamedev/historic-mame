@@ -10,30 +10,30 @@ Main CPU
 
 Memory mapped:
 
-0000-dfff	ROM
-e000-e7ff	RAM
-e800-ebff	Sprite RAM
-f000-fbff	Background Video RAM
-f400-ffff	Background Color RAM
-f800-fbff	Foreground Video RAM
-fc00-ffff	Foreground Color RAM
+0000-dfff   ROM
+e000-e7ff   RAM
+e800-ebff   Sprite RAM
+f000-fbff   Background Video RAM
+f400-ffff   Background Color RAM
+f800-fbff   Foreground Video RAM
+fc00-ffff   Foreground Color RAM
 
 Ports:
 
-00		R	DSW #1
-20		R	DSW #2
-40		R	Input Ports Player 1
-60		R   Input Ports Player 2
-80		 W  Sound Commnand
-c0		 W  Flip Screen
-c1		 W  ???
-c2-c4	 W  ???
-c6-c7	 W  ??? (Loads the sound latch?)
-c8		 W	???
-c9		 W	???
-ca-cd	 W  ???
-ce		 W  ???
-e0		 W	Watchdog
+00      R   DSW #1
+20      R   DSW #2
+40      R   Input Ports Player 1
+60      R   Input Ports Player 2
+80       W  Sound Commnand
+c0       W  Flip Screen
+c1       W  ???
+c2-c4    W  ???
+c6-c7    W  ??? (Loads the sound latch?)
+c8       W  ???
+c9       W  ???
+ca-cd    W  ???
+ce       W  ???
+e0       W  Watchdog
 
 
 Sound CPU
@@ -41,13 +41,13 @@ Sound CPU
 
 Memory mapped:
 
-0000-7fff		ROM
-8000-87ff		RAM
-a000	     W  ADPCM trigger
-c000-c001	 W	YM3812
-e000		R   Sound latch
-e000-e006	 W  ???
-e00e-e00f	 W  ???
+0000-7fff       ROM
+8000-87ff       RAM
+a000         W  ADPCM trigger
+c000-c001    W  YM3812
+e000        R   Sound latch
+e000-e006    W  ???
+e00e-e00f    W  ???
 
 
 TODO
@@ -172,7 +172,7 @@ static ADDRESS_MAP_START( sauro_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM3812_control_port_0_w)
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM3812_write_port_0_w)
-//	AM_RANGE(0xa000, 0xa000) AM_WRITE(ADPCM_trigger)
+//  AM_RANGE(0xa000, 0xa000) AM_WRITE(ADPCM_trigger)
 	AM_RANGE(0xe000, 0xe006) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xe00e, 0xe00f) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
@@ -447,7 +447,7 @@ ROM_END
 static DRIVER_INIT( tecfri )
 {
 	/* This game doesn't like all memory to be initialized to zero, it won't
-	   initialize the high scores */
+       initialize the high scores */
 
 	UINT8 *RAM = memory_region(REGION_CPU1);
 

@@ -29,8 +29,8 @@ int polepos_gear_bit;
   The palette PROMs are connected to the RGB output this way:
 
   bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-		-- 470 ohm resistor  -- RED/GREEN/BLUE
-		-- 1  kohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+        -- 1  kohm resistor  -- RED/GREEN/BLUE
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
@@ -40,24 +40,24 @@ PALETTE_INIT( polepos )
 	int i, j;
 
 	/*******************************************************
-	 * Color PROMs
-	 * Sheet 15B: middle, 136014-137,138,139
-	 * Inputs: MUX0 ... MUX3, ALPHA/BACK, SPRITE/BACK, 128V, COMPBLANK
-	 *
-	 * Note that we only decode the lower 128 colors because
-	 * the upper 128 are all black and used during the
-	 * horizontal and vertical blanking periods.
-	 * The purpose of the 128V input is to use a different palette for the
-	 * background and for the road; it is irrelevant for alpha and
-	 * sprites because their palette is the same in both halves.
-	 * Anyway, we emulate that to a certain extent, using different
-	 * colortables for the two halves of the screen. We don't support the
-	 * palette change in the middle of a sprite, however.
-	 * Also, note that priority encoding is done is such a way that alpha
-	 * will use palette bank 2 or 3 depending on whether there is a sprite
-	 * below the pixel or not. That would be tricky to emulate, and it's
-	 * not needed because of course the two banks are the same.
-	 *******************************************************/
+     * Color PROMs
+     * Sheet 15B: middle, 136014-137,138,139
+     * Inputs: MUX0 ... MUX3, ALPHA/BACK, SPRITE/BACK, 128V, COMPBLANK
+     *
+     * Note that we only decode the lower 128 colors because
+     * the upper 128 are all black and used during the
+     * horizontal and vertical blanking periods.
+     * The purpose of the 128V input is to use a different palette for the
+     * background and for the road; it is irrelevant for alpha and
+     * sprites because their palette is the same in both halves.
+     * Anyway, we emulate that to a certain extent, using different
+     * colortables for the two halves of the screen. We don't support the
+     * palette change in the middle of a sprite, however.
+     * Also, note that priority encoding is done is such a way that alpha
+     * will use palette bank 2 or 3 depending on whether there is a sprite
+     * below the pixel or not. That would be tricky to emulate, and it's
+     * not needed because of course the two banks are the same.
+     *******************************************************/
 	for (i = 0; i < 128; i++)
 	{
 		int bit0,bit1,bit2,bit3,r,g,b;
@@ -87,10 +87,10 @@ PALETTE_INIT( polepos )
 	}
 
 	/*******************************************************
-	 * Alpha colors (colors 0x000-0x1ff)
-	 * Sheet 15B: top left, 136014-140
-	 * Inputs: SHFT0, SHFT1 and CHA8* ... CHA13*
-	 *******************************************************/
+     * Alpha colors (colors 0x000-0x1ff)
+     * Sheet 15B: top left, 136014-140
+     * Inputs: SHFT0, SHFT1 and CHA8* ... CHA13*
+     *******************************************************/
 	for (i = 0; i < 64*4; i++)
 	{
 		int color = color_prom[0x300 + i];
@@ -99,11 +99,11 @@ PALETTE_INIT( polepos )
 	}
 
 	/*******************************************************
-	 * Background colors (colors 0x200-0x2ff)
-	 * Sheet 13A: left, 136014-141
-	 * Inputs: SHFT2, SHFT3 and CHA8 ... CHA13
+     * Background colors (colors 0x200-0x2ff)
+     * Sheet 13A: left, 136014-141
+     * Inputs: SHFT2, SHFT3 and CHA8 ... CHA13
      * The background is only in the top half of the screen
-	 *******************************************************/
+     *******************************************************/
 	for (i = 0; i < 64*4; i++)
 	{
 		int color = color_prom[0x400 + i];
@@ -111,10 +111,10 @@ PALETTE_INIT( polepos )
 	}
 
 	/*******************************************************
-	 * Sprite colors (colors 0x300-0xaff)
-	 * Sheet 14B: right, 136014-146
-	 * Inputs: CUSTOM0 ... CUSTOM3 and DATA0 ... DATA5
-	 *******************************************************/
+     * Sprite colors (colors 0x300-0xaff)
+     * Sheet 14B: right, 136014-146
+     * Inputs: CUSTOM0 ... CUSTOM3 and DATA0 ... DATA5
+     *******************************************************/
 	for (i = 0; i < 64*16; i++)
 	{
 		int color = color_prom[0xc00 + i];
@@ -123,11 +123,11 @@ PALETTE_INIT( polepos )
 	}
 
 	/*******************************************************
-	 * Road colors (colors 0xb00-0x0eff)
-	 * Sheet 13A: bottom left, 136014-145
-	 * Inputs: R1 ... R6 and CHA0 ... CHA3
+     * Road colors (colors 0xb00-0x0eff)
+     * Sheet 13A: bottom left, 136014-145
+     * Inputs: R1 ... R6 and CHA0 ... CHA3
      * The road is only in the bottom half of the screen
-	 *******************************************************/
+     *******************************************************/
 	for (i = 0; i < 64*16; i++)
 	{
 		int color = color_prom[0x800 + i];
@@ -169,8 +169,8 @@ static void tx_get_tile_info(int tile_index)
 	int color = (word & 0x3f00) >> 8;
 
 	/* I assume the purpose of CHACL is to allow the Z80 to control
-	   the display (therefore using only the bottom 8 bits of tilemap RAM)
-	   in case the Z8002 is not working. */
+       the display (therefore using only the bottom 8 bits of tilemap RAM)
+       in case the Z8002 is not working. */
 	if (polepos_chacl == 0)
 	{
 		code &= 0xff;

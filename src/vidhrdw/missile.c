@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Missile Command hardware
+    Atari Missile Command hardware
 
 ***************************************************************************/
 
@@ -103,13 +103,13 @@ WRITE8_HANDLER( missile_video2_w )
 WRITE8_HANDLER( missile_video_mult_w )
 {
 	/*
-		$1900 - $3fff
+        $1900 - $3fff
 
-		2-bit color writes in 4-byte blocks.
-		The 2 color bits are in x000x000.
+        2-bit color writes in 4-byte blocks.
+        The 2 color bits are in x000x000.
 
-		Note that the address range is smaller because 1 byte covers 4 screen pixels.
-	*/
+        Note that the address range is smaller because 1 byte covers 4 screen pixels.
+    */
 
 	data = (data & 0x80) + ((data & 8) << 3);
 	offset = offset << 2;

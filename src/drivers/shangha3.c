@@ -517,7 +517,7 @@ static MACHINE_DRIVER_START( shangha3 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
@@ -554,7 +554,7 @@ static MACHINE_DRIVER_START( heberpop )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(YM3438, 8000000)
 	MDRV_SOUND_CONFIG(ym3438_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.40)
@@ -592,7 +592,7 @@ static MACHINE_DRIVER_START( blocken )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(YM3438, 8000000)
 	MDRV_SOUND_CONFIG(ym3438_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.40)

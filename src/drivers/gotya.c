@@ -1,14 +1,14 @@
 /****************************************************************************
 
-	Gotya / The Hand driver by Zsolt Vasvari
+    Gotya / The Hand driver by Zsolt Vasvari
 
 
 TODO: Emulated sound
 
-	  Hitachi HD38880BP
-         	  HD38882PA06
+      Hitachi HD38880BP
+              HD38882PA06
 
-	  I think HD38880 is a CPU/MCU, because the game just sends it a sound command (0-0x1a)
+      I think HD38880 is a CPU/MCU, because the game just sends it a sound command (0-0x1a)
 
 ****************************************************************************/
 
@@ -161,13 +161,13 @@ static const char *sample_names[] =
 	"07.wav",	/* door close */				// 1965
 
 	"08.wav",	/* theme song */				// 0821
-	//"09.wav"									// 1569
+	//"09.wav"                                  // 1569
 
 	/* one of these two is played after eating the last dot */
 	"0a.wav",	/* piccolo */					// 17af
 	"0b.wav",	/* tune */						// 17af
 
-	//"0f.wav"									// 08ee
+	//"0f.wav"                                  // 08ee
 	"10.wav",	/* 'We're even. Bye Bye!' */	// 162a
 	"11.wav",	/* 'You got me!' */				// 1657
 	"12.wav",	/* 'You have lost out' */		// 085e
@@ -216,7 +216,7 @@ static MACHINE_DRIVER_START( gotya )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

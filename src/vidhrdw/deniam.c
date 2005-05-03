@@ -272,7 +272,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					{
 						if (rom[i] & 0x0f)
 						{
-							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
@@ -292,7 +292,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					{
 						if (rom[i] & 0xf0)
 						{
-							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
@@ -316,7 +316,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					{
 						if (rom[i] & 0xf0)
 						{
-							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
@@ -336,7 +336,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					{
 						if (rom[i] & 0x0f)
 						{
-							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)

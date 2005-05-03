@@ -126,19 +126,19 @@ READ8_HANDLER( arkanoid_input_2_r )
 
 /*
 
-	Paddle 2 MCU simulation
+    Paddle 2 MCU simulation
 
-	TODO:
-	\-Fix crashes and level finishing.
-	\-Finish the level pointer table & check the real thing for true level pattern...
-	\-(track_kludge_r)Find a better way to handle the paddle inputs.
-	\-Code optimizations + add this into machine/arkanoid.c
+    TODO:
+    \-Fix crashes and level finishing.
+    \-Finish the level pointer table & check the real thing for true level pattern...
+    \-(track_kludge_r)Find a better way to handle the paddle inputs.
+    \-Code optimizations + add this into machine/arkanoid.c
 
-	Notes:
-	\-This game is an Arkanoid 1 bootleg but with level edited to match the Arkanoid 2 ones.
-	\-Returning the right values for commands 0x38,0xff and 0x8a gives the level that has to
-	be played,but I don't have any clue about the true level pattern used.Checking Arkanoid 2
-	doesn't help much BTW...
+    Notes:
+    \-This game is an Arkanoid 1 bootleg but with level edited to match the Arkanoid 2 ones.
+    \-Returning the right values for commands 0x38,0xff and 0x8a gives the level that has to
+    be played,but I don't have any clue about the true level pattern used.Checking Arkanoid 2
+    doesn't help much BTW...
 
 */
 
@@ -161,7 +161,7 @@ READ8_HANDLER( paddle2_prot_r )
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
 	};
 	UINT8 *RAM = memory_region(REGION_CPU1);
-//	usrintf_showmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
+//  usrintf_showmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
 
 	switch (paddle2_prot)
 	{
@@ -174,7 +174,7 @@ READ8_HANDLER( paddle2_prot_r )
 		case 0xff:
 		if(RAM[0xed83] == 0)	return level_table_b[RAM[0xed72]];
 		else 					return RAM[0xed83];
-		/* Guess this is used for building level 	   */
+		/* Guess this is used for building level       */
 		/* pointers too,but I haven't tested yet...    */
 		case 0x8a: return 0x0a;
 		/* Goes into sub-routine $2050,controls level finishing(WRONG!!!) */

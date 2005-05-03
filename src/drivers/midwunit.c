@@ -1,21 +1,21 @@
 /*************************************************************************
 
-	Midway Wolf-unit system
+    Midway Wolf-unit system
 
     driver by Ernesto Corvi, Aaron Giles
     based on Y/Z-unit driver by Alex Pasadyn, Zsolt Vasvari, Kurt Mahan
 
-	Games supported:
-		* Mortal Kombat 3
-		* Ultimate Mortal Kombat 3
-		* NBA Hangtime
-		* NBA Maximum Hangtime
-		* 2 On 2 Open Ice Challenge
-		* WWF Wrestlemania
-		* Rampage World Tour
+    Games supported:
+        * Mortal Kombat 3
+        * Ultimate Mortal Kombat 3
+        * NBA Hangtime
+        * NBA Maximum Hangtime
+        * 2 On 2 Open Ice Challenge
+        * WWF Wrestlemania
+        * Rampage World Tour
 
-	Known bugs:
-		* WWF has an unimplemented and not Y2K compatible real-time clock
+    Known bugs:
+        * WWF has an unimplemented and not Y2K compatible real-time clock
 
 **************************************************************************/
 
@@ -30,7 +30,7 @@
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -54,7 +54,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -325,15 +325,15 @@ INPUT_PORTS_START( nbahangt )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x7000, 0x7000, DEF_STR( Coinage ))
 	PORT_DIPSETTING(      0x7000, "1" )
 	PORT_DIPSETTING(      0x3000, "2" )
 	PORT_DIPSETTING(      0x5000, "3" )
 	PORT_DIPSETTING(      0x1000, "4" )
 	PORT_DIPSETTING(      0x6000, "ECA" )
-//	PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x8000, "Dipswitch" )
@@ -504,15 +504,15 @@ INPUT_PORTS_START( wwfmania )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( French ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( German ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
 	PORT_DIPNAME( 0x7000, 0x7000, DEF_STR( Coinage ))
 	PORT_DIPSETTING(      0x7000, "1" )
 	PORT_DIPSETTING(      0x3000, "2" )
 	PORT_DIPSETTING(      0x5000, "3" )
 	PORT_DIPSETTING(      0x1000, "4" )
 	PORT_DIPSETTING(      0x6000, "ECA" )
-//	PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
-//	PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x4000, DEF_STR( Unused ))
+//  PORT_DIPSETTING(      0x2000, DEF_STR( Unused ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x8000, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x8000, "Dipswitch" )
@@ -541,7 +541,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -559,21 +559,21 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
 /*
-	all games use identical visible areas and VBLANK timing
-	based on these video params:
+    all games use identical visible areas and VBLANK timing
+    based on these video params:
 
-	          VERTICAL                   HORIZONTAL
-	mk3:      0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
-	umk3:     0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
-	wwfmania: 0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
-	openice:  0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
-	nbahangt: 0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
-	nbamht:   0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+              VERTICAL                   HORIZONTAL
+    mk3:      0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+    umk3:     0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+    wwfmania: 0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+    openice:  0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+    nbahangt: 0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
+    nbamht:   0014-0112 / 0120 (254)     0065-001F5 / 01F9 (400)
 */
 
 static MACHINE_DRIVER_START( wunit )
@@ -604,7 +604,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1097,7 +1097,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

@@ -81,7 +81,7 @@ INTERRUPT_GEN( nyny_interrupt )
 }
 
 /***************************************************************************
-	6821 PIA handlers
+    6821 PIA handlers
 ***************************************************************************/
 
 void cpu0_irq(int state)
@@ -368,15 +368,15 @@ static MACHINE_DRIVER_START( nyny )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.03)
 

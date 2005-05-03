@@ -1,81 +1,81 @@
 /***************************************************************************
 
-	Midway DCS Audio Board
+    Midway DCS Audio Board
 
 ****************************************************************************
 
-	There are several variations of this board, which was in use by
-	Midway and eventually Atari for almost 10 years.
-	
-	DCS ROM-based mono:
-		* ADSP-2105 @ 10MHz
-		* single channel output
-		* ROM-based, up to 8MB total
-		* used in:
-			Mortal Kombat 2 (1993)
-			Mortal Kombat 3 (1994)
-			Ultimate Mortal Kombat 3 (1994)
-			Cruisin' USA (1994)
-			Revolution X (1994)
-			Killer Instinct (1994)
-			2 On 2 Open Ice Challenge (1995)
-			WWF Wrestlemania (1995)
-			Killer Instinct 2 (1995)
-			NBA Hangtime (1996)
-			NBA Maximum Hangtime (1996)
-			Cruisin' World (1996)
-			Rampage World Tour (1997)
-			Offroad Challenge (1997)
-	
-	DCS RAM-based stereo (Seattle):
-		* ADSP-2115 @ 16MHz
-		* dual channel output (stereo)
-		* RAM-based, 2-4MB total
-		* used in:
-			War Gods (1995)
-			Wayne Gretzky's 3D Hockey (1996)
-			Mace: The Dark Age (1996)
-			Biofreaks (1997)
-			NFL Blitz (1997)
-			California Speed (1998)
-			Vapor TRX (1998)
-			NFL Blitz '99 (1998)
-			CarnEvil (1998)
-			Hyperdrive (1998)
-			NFL Blitz 2000 Gold (1999)
-			
-	DCS ROM-based stereo (Zeus):
-		* ADSP-2104 @ 16MHz
-		* dual channel output (stereo)
-		* ROM-based, up to 12MB total
-		* used in:
-			Mortal Kombat 4 (1997)
-			Invasion (1999)
-			Cruisin' Exotica (1999)
-			The Grid (2001)
-	
-	DCS RAM-based stereo (Vegas):
-		* ADSP-2104 @ 16MHz
-		* dual channel output (stereo)
-		* RAM-based, 4MB total
-		* used in:
-			Gauntlet Legends (1998)
-			Tenth Degree (1998)
-			Gauntlet Dark Legacy (1999)
-			War: The Final Assault (1999)
-	
-	ADAGE/ADCS RAM-based multichannel:
-		* ADSP-2181 @ 16.667MHz
-		* 2-6 channel output
-		* RAM-based, 4MB total
-		* used in:
-			San Francisco Rush: 2049 (1998)
-			Road Burners (1999)
-			
-	Unknown other DCS boards:
-		* NBA Showtime
-		* NBA Showtime / NFL Blitz 2000 Gold
-		* Cart Fury
+    There are several variations of this board, which was in use by
+    Midway and eventually Atari for almost 10 years.
+
+    DCS ROM-based mono:
+        * ADSP-2105 @ 10MHz
+        * single channel output
+        * ROM-based, up to 8MB total
+        * used in:
+            Mortal Kombat 2 (1993)
+            Mortal Kombat 3 (1994)
+            Ultimate Mortal Kombat 3 (1994)
+            Cruisin' USA (1994)
+            Revolution X (1994)
+            Killer Instinct (1994)
+            2 On 2 Open Ice Challenge (1995)
+            WWF Wrestlemania (1995)
+            Killer Instinct 2 (1995)
+            NBA Hangtime (1996)
+            NBA Maximum Hangtime (1996)
+            Cruisin' World (1996)
+            Rampage World Tour (1997)
+            Offroad Challenge (1997)
+
+    DCS RAM-based stereo (Seattle):
+        * ADSP-2115 @ 16MHz
+        * dual channel output (stereo)
+        * RAM-based, 2-4MB total
+        * used in:
+            War Gods (1995)
+            Wayne Gretzky's 3D Hockey (1996)
+            Mace: The Dark Age (1996)
+            Biofreaks (1997)
+            NFL Blitz (1997)
+            California Speed (1998)
+            Vapor TRX (1998)
+            NFL Blitz '99 (1998)
+            CarnEvil (1998)
+            Hyperdrive (1998)
+            NFL Blitz 2000 Gold (1999)
+
+    DCS ROM-based stereo (Zeus):
+        * ADSP-2104 @ 16MHz
+        * dual channel output (stereo)
+        * ROM-based, up to 12MB total
+        * used in:
+            Mortal Kombat 4 (1997)
+            Invasion (1999)
+            Cruisin' Exotica (1999)
+            The Grid (2001)
+
+    DCS RAM-based stereo (Vegas):
+        * ADSP-2104 @ 16MHz
+        * dual channel output (stereo)
+        * RAM-based, 4MB total
+        * used in:
+            Gauntlet Legends (1998)
+            Tenth Degree (1998)
+            Gauntlet Dark Legacy (1999)
+            War: The Final Assault (1999)
+
+    ADAGE/ADCS RAM-based multichannel:
+        * ADSP-2181 @ 16.667MHz
+        * 2-6 channel output
+        * RAM-based, 4MB total
+        * used in:
+            San Francisco Rush: 2049 (1998)
+            Road Burners (1999)
+
+    Unknown other DCS boards:
+        * NBA Showtime
+        * NBA Showtime / NFL Blitz 2000 Gold
+        * Cart Fury
 
 ****************************************************************************/
 
@@ -96,7 +96,7 @@
 
 
 /***************************************************************************
-	CONSTANTS
+    CONSTANTS
 ****************************************************************************/
 
 #define LCTRL_OUTPUT_EMPTY			0x400
@@ -137,7 +137,7 @@ enum
 
 
 /***************************************************************************
-	STRUCTURES
+    STRUCTURES
 ****************************************************************************/
 
 struct dcs_state
@@ -177,7 +177,7 @@ struct dcs_state
 
 
 /***************************************************************************
-	STATIC GLOBALS
+    STATIC GLOBALS
 ****************************************************************************/
 
 static INT8 dcs_cpunum;
@@ -209,7 +209,7 @@ static mame_timer *transfer_watchdog;
 
 
 /***************************************************************************
-	PROTOTYPES
+    PROTOTYPES
 ****************************************************************************/
 
 static READ16_HANDLER( dcs_sdrc_asic_ver_r );
@@ -241,7 +241,7 @@ static int preprocess_write(data16_t data);
 
 
 /***************************************************************************
-	PROCESSOR STRUCTURES
+    PROCESSOR STRUCTURES
 ****************************************************************************/
 
 /* DCS readmem/writemem structures */
@@ -354,7 +354,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-	MACHINE DRIVERS
+    MACHINE DRIVERS
 ****************************************************************************/
 
 MACHINE_DRIVER_START( dcs_audio )
@@ -437,7 +437,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-	INITIALIZATION
+    INITIALIZATION
 ****************************************************************************/
 
 static void dcs_boot(void)
@@ -445,7 +445,7 @@ static void dcs_boot(void)
 	UINT32 max_banks = dcs.databank_count * bank20_size / 0x1000;
 	UINT8 buffer[0x1000];
 	int i;
-	
+
 	for (i = 0; i < 0x1000; i++)
 		buffer[i] = dcs.soundboot[(dcs.databank % max_banks) * 0x1000 + i];
 	adsp2105_load_boot_data(buffer, dcs_program_ram);
@@ -614,7 +614,7 @@ void dcs_set_auto_ack(int state)
 
 
 /***************************************************************************
-	DCS ASIC VERSION
+    DCS ASIC VERSION
 ****************************************************************************/
 
 static READ16_HANDLER( dcs_sdrc_asic_ver_r )
@@ -625,7 +625,7 @@ static READ16_HANDLER( dcs_sdrc_asic_ver_r )
 
 
 /***************************************************************************
-	DCS ROM BANK SELECT
+    DCS ROM BANK SELECT
 ****************************************************************************/
 
 static WRITE16_HANDLER( dcs_data_bank_select_w )
@@ -648,7 +648,7 @@ static READ16_HANDLER( dcs_data_bank_select_r )
 
 
 /***************************************************************************
-	DCS STATIC RAM BANK SELECT
+    DCS STATIC RAM BANK SELECT
 ****************************************************************************/
 
 static WRITE16_HANDLER( dcs2_sram_bank_w )
@@ -670,7 +670,7 @@ static READ16_HANDLER( dcs2_sram_bank_r )
 
 
 /***************************************************************************
-	DCS COMMUNICATIONS
+    DCS COMMUNICATIONS
 ****************************************************************************/
 
 void dcs_set_io_callbacks(void (*output_full_cb)(int), void (*input_empty_cb)(int))
@@ -740,7 +740,7 @@ static READ16_HANDLER( fifo_input_r )
 
 
 /***************************************************************************
-	INPUT LATCH (data from host to DCS)
+    INPUT LATCH (data from host to DCS)
 ****************************************************************************/
 
 static void dcs_delayed_data_w(int data)
@@ -799,7 +799,7 @@ static READ16_HANDLER( input_latch_r )
 
 
 /***************************************************************************
-	OUTPUT LATCH (data from DCS to host)
+    OUTPUT LATCH (data from DCS to host)
 ****************************************************************************/
 
 static void latch_delayed_w(int data)
@@ -847,7 +847,7 @@ int dcs_data_r(void)
 
 
 /***************************************************************************
-	OUTPUT CONTROL BITS (has 3 additional lines to the host)
+    OUTPUT CONTROL BITS (has 3 additional lines to the host)
 ****************************************************************************/
 
 static void output_control_delayed_w(int data)
@@ -882,26 +882,26 @@ int dcs_data2_r(void)
 
 
 /***************************************************************************
-	ADSP CONTROL & TRANSMIT CALLBACK
+    ADSP CONTROL & TRANSMIT CALLBACK
 ****************************************************************************/
 
 /*
-	The ADSP2105 memory map when in boot rom mode is as follows:
+    The ADSP2105 memory map when in boot rom mode is as follows:
 
-	Program Memory:
-	0x0000-0x03ff = Internal Program Ram (contents of boot rom gets copied here)
-	0x0400-0x07ff = Reserved
-	0x0800-0x3fff = External Program Ram
+    Program Memory:
+    0x0000-0x03ff = Internal Program Ram (contents of boot rom gets copied here)
+    0x0400-0x07ff = Reserved
+    0x0800-0x3fff = External Program Ram
 
-	Data Memory:
-	0x0000-0x03ff = External Data - 0 Waitstates
-	0x0400-0x07ff = External Data - 1 Waitstates
-	0x0800-0x2fff = External Data - 2 Waitstates
-	0x3000-0x33ff = External Data - 3 Waitstates
-	0x3400-0x37ff = External Data - 4 Waitstates
-	0x3800-0x39ff = Internal Data Ram
-	0x3a00-0x3bff = Reserved (extra internal ram space on ADSP2101, etc)
-	0x3c00-0x3fff = Memory Mapped control registers & reserved.
+    Data Memory:
+    0x0000-0x03ff = External Data - 0 Waitstates
+    0x0400-0x07ff = External Data - 1 Waitstates
+    0x0800-0x2fff = External Data - 2 Waitstates
+    0x3000-0x33ff = External Data - 3 Waitstates
+    0x3400-0x37ff = External Data - 4 Waitstates
+    0x3800-0x39ff = Internal Data Ram
+    0x3a00-0x3bff = Reserved (extra internal ram space on ADSP2101, etc)
+    0x3c00-0x3fff = Memory Mapped control registers & reserved.
 */
 
 static WRITE16_HANDLER( dcs_control_w )
@@ -947,7 +947,7 @@ static WRITE16_HANDLER( dcs_control_w )
 
 
 /***************************************************************************
-	DCS IRQ GENERATION CALLBACKS
+    DCS IRQ GENERATION CALLBACKS
 ****************************************************************************/
 
 static void dcs_irq(int state)
@@ -1057,7 +1057,7 @@ static void sound_tx_callback(int port, INT32 data)
 
 
 /***************************************************************************
-	VERY BASIC & SAFE OPTIMIZATIONS
+    VERY BASIC & SAFE OPTIMIZATIONS
 ****************************************************************************/
 
 static READ16_HANDLER( dcs_polling_r )
@@ -1069,7 +1069,7 @@ static READ16_HANDLER( dcs_polling_r )
 
 
 /***************************************************************************
-	DATA TRANSFER HLE MECHANISM
+    DATA TRANSFER HLE MECHANISM
 ****************************************************************************/
 
 void dcs_fifo_notify(int count, int max)
@@ -1080,7 +1080,7 @@ void dcs_fifo_notify(int count, int max)
 		transfer_fifo_entries = 0;
 		return;
 	}
-	
+
 	/* preprocess a word */
 	transfer_fifo_entries = count;
 	if (transfer_state != 5 || transfer_fifo_entries == transfer_writes_left || transfer_fifo_entries >= 256)
@@ -1343,7 +1343,7 @@ static int preprocess_stage_2(data16_t data)
 static int preprocess_write(data16_t data)
 {
 	int result;
-	
+
 	/* if we're not DCS2, skip */
 	if (!dcs.sport_timer)
 		return 0;
@@ -1353,7 +1353,7 @@ static int preprocess_write(data16_t data)
 		result = preprocess_stage_1(data);
 	else
 		result = preprocess_stage_2(data);
-	
+
 	/* if we did the write, toggle the full/not full state so interrupts are generated */
 	if (result && dcs.input_empty_cb)
 	{

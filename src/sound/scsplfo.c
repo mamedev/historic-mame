@@ -1,11 +1,11 @@
 /*
-	SCSP LFO handling
+    SCSP LFO handling
 
-	Part of the SCSP (YMF292-F) emulator package.
-	(not compiled directly, #included from scsp.c)
+    Part of the SCSP (YMF292-F) emulator package.
+    (not compiled directly, #included from scsp.c)
 
-	By ElSemi
-	MAME/M1 conversion and cleanup by R. Belmont
+    By ElSemi
+    MAME/M1 conversion and cleanup by R. Belmont
 */
 
 #define LFO_SHIFT 	8
@@ -41,16 +41,16 @@ void LFO_Init(void)
     for(i=0;i<256;++i)
     {
 		int a,p;
-//		float TL;
+//      float TL;
 		//Saw
 		a=255-i;
 		if(i<128)
 			p=i;
 		else
-			p=255-i;    
+			p=255-i;
 		ALFO_SAW[i]=a;
 		PLFO_SAW[i]=p;
-	
+
 		//Square
 		if(i<128)
 		{
@@ -64,7 +64,7 @@ void LFO_Init(void)
 		}
 		ALFO_SQR[i]=a;
 		PLFO_SQR[i]=p;
-	
+
 		//Tri
 		if(i<128)
 			a=255-(i*2);
@@ -80,7 +80,7 @@ void LFO_Init(void)
 			p=i*2-511;
 		ALFO_TRI[i]=a;
 		PLFO_TRI[i]=p;
-	
+
 		//noise
 		//a=lfo_noise[i];
 		a=rand()&0xff;
@@ -107,10 +107,10 @@ void LFO_Init(void)
 INLINE signed int PLFO_Step(struct _LFO *LFO)
 {
 	int p;
-    LFO->phase+=LFO->phase_step;    
-#if LFO_SHIFT!=8    
+    LFO->phase+=LFO->phase_step;
+#if LFO_SHIFT!=8
     LFO->phase&=(1<<(LFO_SHIFT+8))-1;
-#endif    
+#endif
     p=LFO->table[LFO->phase>>LFO_SHIFT];
 	p=LFO->scale[p+128];
 	return p<<(SHIFT-LFO_SHIFT);
@@ -119,10 +119,10 @@ INLINE signed int PLFO_Step(struct _LFO *LFO)
 INLINE signed int ALFO_Step(struct _LFO *LFO)
 {
 	int p;
-    LFO->phase+=LFO->phase_step;    
-#if LFO_SHIFT!=8    
+    LFO->phase+=LFO->phase_step;
+#if LFO_SHIFT!=8
     LFO->phase&=(1<<(LFO_SHIFT+8))-1;
-#endif    
+#endif
     p=LFO->table[LFO->phase>>LFO_SHIFT];
 	p=LFO->scale[p];
 	return p<<(SHIFT-LFO_SHIFT);

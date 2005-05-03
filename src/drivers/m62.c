@@ -2150,7 +2150,7 @@ ROM_START( yanchamr )
 	ROM_LOAD( "ky_a-4d-.bin", 0x04000, 0x04000, CRC(401af828) SHA1(eec1c082f42e441071fcf005803205b2275b0327) )
 	ROM_LOAD( "ky_t-8k-.bin", 0x10000, 0x08000, CRC(e967de88) SHA1(75c0890eb98feb882fe01de5e93e228690e00904) )	/* banked at 8000-9fff */
 	ROM_LOAD( "ky_t-8l-.bin", 0x18000, 0x08000, CRC(a929110b) SHA1(87334f946e14c79426bc7a14e8da984bb8ef9cfc) )
-/*	ROM_CONTINUE(             0x28000, 0x08000 ) */
+/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, CRC(cb365f3b) SHA1(fefad25459eb00d228ee29931c5714ae895b76c7) )
@@ -2199,7 +2199,7 @@ ROM_START( lithero )
 	ROM_LOAD( "4.bin",        0x00000, 0x08000, CRC(80903766) SHA1(f16d603798f8a9ad62df8d89334758326257201a) )
 	ROM_LOAD( "11.bin",       0x10000, 0x08000, CRC(7a1ef8cb) SHA1(5c94a06a5f64365068daee3d7da7f2a8e52479da) ) /* banked at 8000-9fff */
 	ROM_LOAD( "12.bin",       0x18000, 0x08000, CRC(a929110b) SHA1(87334f946e14c79426bc7a14e8da984bb8ef9cfc) )
-/*	ROM_CONTINUE(             0x28000, 0x08000 ) */
+/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, CRC(cb365f3b) SHA1(fefad25459eb00d228ee29931c5714ae895b76c7) )

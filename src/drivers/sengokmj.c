@@ -34,17 +34,17 @@ Notes:
 Sengoku Mahjong (JPN Ver.)
 (c)1991 Sigma
 
-CPU:	uPD70116C-8 (V30)
-Sound:	Z80-A
-		YM3812
-		M6295
-OSC:	14.31818MHz
-		16.000MHz
-Chips:	SEI0100
-		SEI0160
-		SEI0200
-		SEI0210
-		SEI0220
+CPU:    uPD70116C-8 (V30)
+Sound:  Z80-A
+        YM3812
+        M6295
+OSC:    14.31818MHz
+        16.000MHz
+Chips:  SEI0100
+        SEI0160
+        SEI0200
+        SEI0210
+        SEI0220
 
 
 MAH1-1-1.915  samples
@@ -101,7 +101,7 @@ READ8_HANDLER( mahjong_panel_0_r )
 		case 0x10: return readinputport(7);
 		case 0x20: return readinputport(8);
 	}
-//	usrintf_showmessage("Reading input port %02x at PC = %05x",sengokumj_mux_data,activecpu_get_pc());
+//  usrintf_showmessage("Reading input port %02x at PC = %05x",sengokumj_mux_data,activecpu_get_pc());
 	return readinputport(3);
 }
 

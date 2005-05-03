@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugcpu.h
-**		Debugger CPU/memory interface engine.
-**		Written by Aaron Giles
+**      debugcpu.h
+**      Debugger CPU/memory interface engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -15,7 +15,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define TRACE_LOOPS				64
@@ -37,7 +37,7 @@ enum
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 #define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & address_space[spc].addrmask)
@@ -46,7 +46,7 @@ enum
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 struct debug_trace_info
@@ -57,8 +57,8 @@ struct debug_trace_info
 	int				loops;						/* number of instructions in a loop */
 	int				nextdex;					/* next index */
 	offs_t			trace_over_target;			/* target for tracing over
-													(0 = not tracing over,
-													~0 = not currently tracing over) */
+                                                    (0 = not tracing over,
+                                                    ~0 = not currently tracing over) */
 };
 
 
@@ -114,7 +114,7 @@ struct watchpoint
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 extern FILE *debug_source_file;
@@ -122,7 +122,7 @@ extern FILE *debug_source_file;
 
 
 /*###################################################################################################
-**	FUNCTION PROTOTYPES
+**  FUNCTION PROTOTYPES
 **#################################################################################################*/
 
 /* initialization */

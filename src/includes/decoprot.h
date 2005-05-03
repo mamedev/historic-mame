@@ -6,6 +6,7 @@ READ16_HANDLER( deco16_104_rohga_prot_r );
 READ16_HANDLER( deco16_146_funkyjet_prot_r );
 READ16_HANDLER( deco16_146_nitroball_prot_r );
 READ32_HANDLER( deco32_fghthist_prot_r );
+READ16_HANDLER( deco16_104_pktgaldx_prot_r );
 
 WRITE16_HANDLER( deco16_60_prot_w );
 WRITE16_HANDLER( deco16_66_prot_w );
@@ -14,6 +15,7 @@ WRITE16_HANDLER( deco16_104_cninja_prot_w );
 WRITE16_HANDLER( deco16_104_rohga_prot_w );
 WRITE16_HANDLER( deco16_146_funkyjet_prot_w );
 WRITE16_HANDLER( deco16_146_nitroball_prot_w );
+WRITE16_HANDLER( deco16_104_pktgaldx_prot_w );
 WRITE32_HANDLER( deco32_fghthist_prot_w );
 
 void deco16_104_rohga_reset(void);

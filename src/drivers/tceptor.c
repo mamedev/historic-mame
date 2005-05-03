@@ -1,9 +1,9 @@
 /*
- *	Thunder Ceptor board
- *	(C) 1986 Namco
+ *  Thunder Ceptor board
+ *  (C) 1986 Namco
  *
- *	Hardware analyzed by nono
- *	Driver by BUT
+ *  Hardware analyzed by nono
+ *  Driver by BUT
  */
 
 #include "driver.h"

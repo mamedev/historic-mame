@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	Driver for Gaelco 3D games
+    Driver for Gaelco 3D games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
 **************************************************************************/
 

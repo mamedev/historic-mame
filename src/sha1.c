@@ -6,17 +6,17 @@
 /* nettle, low-level cryptographics library
  *
  * Copyright (C) 2001 Peter Gutmann, Andrew Kuchling, Niels Möller
- *  
+ *
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or (at your
  * option) any later version.
- * 
+ *
  * The nettle library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the nettle library; see the file COPYING.LIB.  If not, write to
  * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
@@ -132,7 +132,7 @@ sha1_init(struct sha1_ctx *ctx)
 
   /* Initialize bit count */
   ctx->count_low = ctx->count_high = 0;
-  
+
   /* Initialize buffer */
   ctx->index = 0;
 }
@@ -297,7 +297,7 @@ sha1_update(struct sha1_ctx *ctx,
     /* Buffer leftovers */
     memcpy(ctx->block, buffer, length);
 }
-	  
+
 /* Final wrapup - pad to SHA1_DATA_SIZE-byte boundary with the bit pattern
    1 0* (64-bit count of bits processed, MSB-first) */
 
@@ -309,7 +309,7 @@ sha1_final(struct sha1_ctx *ctx)
   int words;
 
   i = ctx->index;
-  
+
   /* Set the first char of padding to 0x80.  This is safe since there is
      always at least one byte free */
 
@@ -324,7 +324,7 @@ sha1_final(struct sha1_ctx *ctx)
   words = i >> 2;
   for (i = 0; i < words; i++)
     data[i] = READ_UINT32(ctx->block + 4*i);
-  
+
   if (words > (SHA1_DATA_LENGTH-2))
     { /* No room for length in this block. Process it and
        * pad with another one */
@@ -352,7 +352,7 @@ sha1_digest(const struct sha1_ctx *ctx,
   unsigned i;
   unsigned words;
   unsigned leftover;
-  
+
   assert(length <= SHA1_DIGEST_SIZE);
 
   words = length / 4;
@@ -365,11 +365,11 @@ sha1_digest(const struct sha1_ctx *ctx,
     {
       UINT32 word;
       unsigned j = leftover;
-      
+
       assert(i < _SHA1_DIGEST_LENGTH);
-      
+
       word = ctx->digest[i];
-      
+
       switch (leftover)
 	{
 	default:

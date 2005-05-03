@@ -1,6 +1,6 @@
 //============================================================
 //
-//	wind3d.c - Win32 Direct3D 7 (with DirectDraw 7) code
+//  wind3d.c - Win32 Direct3D 7 (with DirectDraw 7) code
 //
 //============================================================
 
@@ -31,7 +31,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -47,7 +47,7 @@ extern UINT32 win_d3d_preprocess_tfactor;
 
 
 //============================================================
-//	DEBUGGING
+//  DEBUGGING
 //============================================================
 
 #define SHOW_FLIP_TIMES 		0
@@ -57,7 +57,7 @@ extern UINT32 win_d3d_preprocess_tfactor;
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // effects surfaces
@@ -87,7 +87,7 @@ int win_d3d_prescalex, win_d3d_prescaley;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // DirectDraw7
@@ -156,7 +156,7 @@ static int pixel_aspect_ratio;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static double compute_mode_score(int width, int height, int depth, int refresh);
@@ -179,7 +179,7 @@ static void init_vertices_screen(LPRECT src, LPRECT dst);
 
 
 //============================================================
-//	erase_outer_rect
+//  erase_outer_rect
 //============================================================
 
 INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE7 surface)
@@ -230,7 +230,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE7 surf
 
 
 //============================================================
-//	win_d3d_test_hardware_caps
+//  win_d3d_test_hardware_caps
 //============================================================
 
 static int win_d3d_test_hardware_caps(void)
@@ -372,7 +372,7 @@ static int win_d3d_test_hardware_caps(void)
 
 
 //============================================================
-//	adjust prescale levels
+//  adjust prescale levels
 //============================================================
 
 static void adjust_prescale(int width, int height)
@@ -507,7 +507,7 @@ static void adjust_prescale(int width, int height)
 
 
 //============================================================
-//	win_d3d_wait_vsync
+//  win_d3d_wait_vsync
 //============================================================
 
 void win_d3d_wait_vsync(void)
@@ -524,7 +524,7 @@ void win_d3d_wait_vsync(void)
 
 
 //============================================================
-//	win_d3d_kill
+//  win_d3d_kill
 //============================================================
 
 void win_d3d_kill(void)
@@ -559,7 +559,7 @@ void win_d3d_kill(void)
 
 
 //============================================================
-//	win_d3d_init
+//  win_d3d_init
 //============================================================
 
 int win_d3d_init(int width, int height, int depth, int attributes, double aspect, const struct win_effect_data *effect)
@@ -743,7 +743,7 @@ error_handling:
 
 
 //============================================================
-//	enum_callback
+//  enum_callback
 //============================================================
 
 static HRESULT WINAPI enum_callback(LPDDSURFACEDESC2 desc, LPVOID context)
@@ -771,14 +771,14 @@ static HRESULT WINAPI enum_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 
 
 //============================================================
-//	compute_mode_score
+//  compute_mode_score
 //============================================================
 
 static double compute_mode_score(int width, int height, int depth, int refresh)
 {
 	static const double depth_matrix[4][2][4] =
 	{
-			// needs < 24bpp mode		  // needs >= 24bpp mode
+			// needs < 24bpp mode         // needs >= 24bpp mode
 		{ { 0.00, 0.75, 0.25, 0.50 },	{ 0.00, 0.25, 0.50, 0.75 } },	// 8bpp source
 		{ { 0.00, 1.00, 0.25, 0.50 },	{ 0.00, 0.50, 0.75, 1.00 } },	// 16bpp source
 		{ { 0.00, 0.00, 0.00, 0.00 },	{ 0.00, 0.00, 0.00, 0.00 } },	// 24bpp source (doesn't exist)
@@ -904,7 +904,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 
 
 //============================================================
-//	set_resolution
+//  set_resolution
 //============================================================
 
 static int set_resolution(void)
@@ -990,7 +990,7 @@ error_handling:
 
 
 //============================================================
-//	print_surface_size & print_surface_colour
+//  print_surface_size & print_surface_colour
 //============================================================
 
 static int print_surface_size(LPDIRECTDRAWSURFACE7 surface, char *string)
@@ -1026,7 +1026,7 @@ static int print_surface_colour(LPDIRECTDRAWSURFACE7 surface, char *string)
 
 
 //============================================================
-//	create_surfaces
+//  create_surfaces
 //============================================================
 
 static int create_surfaces(void)
@@ -1147,7 +1147,7 @@ error_handling:
 
 
 //============================================================
-//	create_effects_surfaces
+//  create_effects_surfaces
 //============================================================
 
 static int create_effects_surfaces(void)
@@ -1245,7 +1245,7 @@ error_handling:
 
 
 //============================================================
-//	callback for IDirect3DDevice7_EnumTextureFormats
+//  callback for IDirect3DDevice7_EnumTextureFormats
 //============================================================
 
 static HRESULT CALLBACK enum_textures_callback(LPDDPIXELFORMAT pixelformat, LPVOID preferred_pixelformat)
@@ -1277,7 +1277,7 @@ static HRESULT CALLBACK enum_textures_callback(LPDDPIXELFORMAT pixelformat, LPVO
 
 
 //============================================================
-//	create_blit_surface
+//  create_blit_surface
 //============================================================
 
 static int create_blit_surface(void)
@@ -1548,7 +1548,7 @@ error_handling:
 
 
 //============================================================
-//	set_brightness
+//  set_brightness
 //============================================================
 
 static void set_brightness(void)
@@ -1589,7 +1589,7 @@ static void set_brightness(void)
 
 
 //============================================================
-//	create_clipper
+//  create_clipper
 //============================================================
 
 static int create_clipper(void)
@@ -1631,7 +1631,7 @@ cant_create_clipper:
 
 
 //============================================================
-//	erase_surfaces
+//  erase_surfaces
 //============================================================
 
 static void erase_surfaces(void)
@@ -1683,7 +1683,7 @@ static void erase_surfaces(void)
 
 
 //============================================================
-//	restore_surfaces
+//  restore_surfaces
 //============================================================
 
 static int restore_surfaces(void)
@@ -1727,7 +1727,7 @@ static int restore_surfaces(void)
 }
 
 //============================================================
-//	release_surfaces
+//  release_surfaces
 //============================================================
 
 static void release_surfaces(void)
@@ -1780,7 +1780,7 @@ static void release_surfaces(void)
 
 
 //============================================================
-//	compute_color_masks
+//  compute_color_masks
 //============================================================
 
 static void compute_color_masks(const DDSURFACEDESC2 *desc)
@@ -1847,7 +1847,7 @@ static void compute_color_masks(const DDSURFACEDESC2 *desc)
 
 
 //============================================================
-//	win_d3d_draw
+//  win_d3d_draw
 //============================================================
 
 int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -1874,7 +1874,7 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 
 
 //============================================================
-//	lock_must_succeed
+//  lock_must_succeed
 //============================================================
 
 static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -1903,7 +1903,7 @@ static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_
 
 
 //============================================================
-//	render_to_blit
+//  render_to_blit
 //============================================================
 
 static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -2112,7 +2112,7 @@ surface_lost:
 
 
 //============================================================
-//	render_and_flip
+//  render_and_flip
 //============================================================
 
 static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock)
@@ -2485,7 +2485,7 @@ surface_lost:
 
 
 //============================================================
-//	blit_rgb_pattern
+//  blit_rgb_pattern
 //============================================================
 
 static HRESULT blit_rgb_pattern(LPRECT dst, LPDIRECTDRAWSURFACE7 surface)
@@ -2523,7 +2523,7 @@ static HRESULT blit_rgb_pattern(LPRECT dst, LPDIRECTDRAWSURFACE7 surface)
 
 
 //============================================================
-//	set_texture_coordinates
+//  set_texture_coordinates
 //============================================================
 
 static void set_texture_coordinates(LPRECT src, int texture_width, int texture_height)
@@ -2567,7 +2567,7 @@ static void set_texture_coordinates(LPRECT src, int texture_width, int texture_h
 
 
 //============================================================
-//	init_vertices_screen
+//  init_vertices_screen
 //============================================================
 
 static void init_vertices_screen(LPRECT src, LPRECT dst)
@@ -2624,7 +2624,7 @@ static void init_vertices_screen(LPRECT src, LPRECT dst)
 
 
 //============================================================
-//	init_vertices_preprocess
+//  init_vertices_preprocess
 //============================================================
 
 static void init_vertices_preprocess(LPRECT src)

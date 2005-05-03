@@ -230,7 +230,7 @@ static WRITE16_HANDLER( tmnt_sound_command_w )
 static READ16_HANDLER( punkshot_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return 0x80;
 }
@@ -238,7 +238,7 @@ static READ16_HANDLER( punkshot_sound_r )
 static READ16_HANDLER( detatwin_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return offset ? 0xfe : 0x00;
 }
@@ -246,7 +246,7 @@ static READ16_HANDLER( detatwin_sound_r )
 static READ16_HANDLER( glfgreat_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset) << 8;
 	else return 0;
 }
@@ -300,7 +300,7 @@ static WRITE8_HANDLER( prmrsocr_s_bankswitch_w )
 static READ16_HANDLER( tmnt2_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return offset ? 0x00 : 0x80;
 }
@@ -332,13 +332,13 @@ static void tmnt_decode_sample(void)
 
 	sampledata = auto_malloc(0x40000*sizeof(sampledata[0]));
 
-	/*	Sound sample for TMNT.D05 is stored in the following mode (ym3012 format):
-	 *
-	 *	Bit 15-13:	Exponent (2 ^ x)
-	 *	Bit 12-3 :	Sound data (10 bit)
-	 *
-	 *	(Sound info courtesy of Dave <dave@finalburn.com>)
-	 */
+	/*  Sound sample for TMNT.D05 is stored in the following mode (ym3012 format):
+     *
+     *  Bit 15-13:  Exponent (2 ^ x)
+     *  Bit 12-3 :  Sound data (10 bit)
+     *
+     *  (Sound info courtesy of Dave <dave@finalburn.com>)
+     */
 
 	for (i = 0;i < 0x40000;i++)
 	{
@@ -346,7 +346,7 @@ static void tmnt_decode_sample(void)
 		int expo = val >> 13;
 
 	  	val = (val >> 3) & (0x3ff);	/* 10 bit, Max Amplitude 0x400 */
-		val -= 0x200;					/* Centralize value	*/
+		val -= 0x200;					/* Centralize value */
 
 		val <<= (expo-3);
 
@@ -372,7 +372,7 @@ static void nmi_callback(int param)
 
 static WRITE8_HANDLER( sound_arm_nmi_w )
 {
-//	sound_nmi_enabled = 1;
+//  sound_nmi_enabled = 1;
 	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
@@ -793,7 +793,7 @@ static ADDRESS_MAP_START( mia_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x107fff) AM_WRITE(K052109_word_noA12_w)
 	AM_RANGE(0x140000, 0x140007) AM_WRITE(K051937_word_w)
 	AM_RANGE(0x140400, 0x1407ff) AM_WRITE(K051960_word_w)
-//	AM_RANGE(0x10e800, 0x10e801) AM_WRITE(MWA16_NOP) ???
+//  AM_RANGE(0x10e800, 0x10e801) AM_WRITE(MWA16_NOP) ???
 #if 0
 	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(tmnt_priority_w)
 #endif
@@ -825,7 +825,7 @@ static ADDRESS_MAP_START( tmnt_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0a0010, 0x0a0011) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(tmnt_priority_w)
 	AM_RANGE(0x100000, 0x107fff) AM_WRITE(K052109_word_noA12_w)
-//	AM_RANGE(0x10e800, 0x10e801) AM_WRITE(MWA16_NOP) ???
+//  AM_RANGE(0x10e800, 0x10e801) AM_WRITE(MWA16_NOP) ???
 	AM_RANGE(0x140000, 0x140007) AM_WRITE(K051937_word_w)
 	AM_RANGE(0x140400, 0x1407ff) AM_WRITE(K051960_word_w)
 ADDRESS_MAP_END
@@ -1003,7 +1003,7 @@ static ADDRESS_MAP_START( tmnt2_readmem, ADDRESS_SPACE_PROGRAM, 16 ) //*
 	AM_RANGE(0x1c0102, 0x1c0103) AM_READ(ssriders_eeprom_r)
 	AM_RANGE(0x1c0400, 0x1c0401) AM_READ(watchdog_reset16_r)
 	AM_RANGE(0x1c0500, 0x1c057f) AM_READ(MRA16_RAM)	/* TMNT2 only (1J) unknown, mostly MCU blit offsets */
-//	AM_RANGE(0x1c0800, 0x1c0801) AM_READ(ssriders_protection_r)	/* protection device */
+//  AM_RANGE(0x1c0800, 0x1c0801) AM_READ(ssriders_protection_r) /* protection device */
 	AM_RANGE(0x5a0000, 0x5a001f) AM_READ(K053244_word_noA1_r)
 	AM_RANGE(0x5c0600, 0x5c0603) AM_READ(tmnt2_sound_r)	/* K053260 */
 	AM_RANGE(0x600000, 0x603fff) AM_READ(K052109_word_r)
@@ -1077,7 +1077,7 @@ WRITE16_HANDLER( tmnt2_1c0800_w )
 	keepaspect = (i & 0x0014) == 0x0014;
 	if (i & 0x8000) { attr1 |= 0x8000; }	// active
 	if (keepaspect)	{ attr1 |= 0x4000; }	// keep aspect
-//	if (i & 0x????) { attr1 ^= 0x2000; yoffs = -yoffs; }	// flip y (not used?)
+//  if (i & 0x????) { attr1 ^= 0x2000; yoffs = -yoffs; }    // flip y (not used?)
 	if (i & 0x4000) { attr1 ^= 0x1000; xoffs = -xoffs; }	// flip x
 
 	xmod = (INT16)mod[6];	// global x
@@ -1089,30 +1089,30 @@ WRITE16_HANDLER( tmnt2_1c0800_w )
 	ylock = xlock = (i & 0x0020 && (!xzoom || xzoom == 0x100));
 
 	/*
-		Scale factor is non-linear. The zoom vales are looked-up from
-		two to three nested tables and passed through a series of math
-		operations. The MCU is suspected to have its own tables for
-		translating zoom values to final scale factors or it knows where
-		to fetch them in ROM. There is no access to its internal code so
-		the scale curve is only approximated.
+        Scale factor is non-linear. The zoom vales are looked-up from
+        two to three nested tables and passed through a series of math
+        operations. The MCU is suspected to have its own tables for
+        translating zoom values to final scale factors or it knows where
+        to fetch them in ROM. There is no access to its internal code so
+        the scale curve is only approximated.
 
-		The most accurate method is to trace how MCU zoom is transformed
-		from ROM data, reverse the maths, plug the result into the sprite
-		zoom code and derive the scale factor from there; but zooming
-		would still suffer from precision loss in K053245_sprites_draw()
-		and drawgfx() producing gaps in logical sprite groups.
+        The most accurate method is to trace how MCU zoom is transformed
+        from ROM data, reverse the maths, plug the result into the sprite
+        zoom code and derive the scale factor from there; but zooming
+        would still suffer from precision loss in K053245_sprites_draw()
+        and drawgfx() producing gaps in logical sprite groups.
 
-		A few sample points on the real curve:
+        A few sample points on the real curve:
 
-		 Zoom | Scale factor
-		------+--------------
-		 0    | 0.0
-		 0x2c | 0x40/0x8d
-		 0x2f | 0x40/0x80
-		 0x4f | 1.0
-		 0x60 | 0x40/0x2f
-		 0x7b | 0x40/0x14
-	*/
+         Zoom | Scale factor
+        ------+--------------
+         0    | 0.0
+         0x2c | 0x40/0x8d
+         0x2f | 0x40/0x80
+         0x4f | 1.0
+         0x60 | 0x40/0x2f
+         0x7b | 0x40/0x14
+    */
 	if (!xlock)
 	{
 		i = xzoom - 0x4f00;
@@ -1184,9 +1184,9 @@ WRITE16_HANDLER( tmnt2_1c0800_w )
 		/* It fixes the enemies, though, they are not all purple when you throw them around. */
 		/* Also, the bosses don't blink when they are about to die - don't know */
 		/* if this is correct or not. */
-//		if (sunset_104000[CellVar + 0x15] & 0x001f)
-//			cpu_writemem24bew_word(dst+0x18,(program_read_word(dst+0x18) & 0xffe0) |
-//					(sunset_104000[CellVar + 0x15] & 0x001f));
+//      if (sunset_104000[CellVar + 0x15] & 0x001f)
+//          cpu_writemem24bew_word(dst+0x18,(program_read_word(dst+0x18) & 0xffe0) |
+//                  (sunset_104000[CellVar + 0x15] & 0x001f));
 
 		x = src[2];
 		if (sunset_104000[CellVar + 0x00] & 0x4000)
@@ -1575,7 +1575,7 @@ INPUT_PORTS_START( mia )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -1707,7 +1707,7 @@ INPUT_PORTS_START( tmnt2p )
 	KONAMI_PLAYERS_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2 )
 
 	PORT_START      /* PLAYER 3 */
-//	KONAMI_PLAYERS_INPUT_LSB( 3, IPT_UNKNOWN, IPT_START3 )
+//  KONAMI_PLAYERS_INPUT_LSB( 3, IPT_UNKNOWN, IPT_START3 )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -1743,7 +1743,7 @@ INPUT_PORTS_START( tmnt2p )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -1770,7 +1770,7 @@ INPUT_PORTS_START( tmnt2p )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* PLAYER 4 */
-//	KONAMI_PLAYERS_INPUT_LSB( 4, IPT_UNKNOWN, IPT_START4 )
+//  KONAMI_PLAYERS_INPUT_LSB( 4, IPT_UNKNOWN, IPT_START4 )
 
 	PORT_START	/* DSW3 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -2028,7 +2028,7 @@ INPUT_PORTS_START( lgtnfght )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW3 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -2110,7 +2110,7 @@ INPUT_PORTS_START( glfgreat )
 	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(      0x0090, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(      0x0000, "Invalid" )
+//  PORT_DIPSETTING(      0x0000, "Invalid" )
 	PORT_DIPNAME( 0x0300, 0x0100, "Players/Controllers" )
 	PORT_DIPSETTING(      0x0300, "4/1" )
 	PORT_DIPSETTING(      0x0200, "4/2" )
@@ -2154,7 +2154,7 @@ INPUT_PORTS_START( glfgreat )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-//	PORT_SERVICE( 0x4000, IP_ACTIVE_LOW )
+//  PORT_SERVICE( 0x4000, IP_ACTIVE_LOW )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
@@ -3909,10 +3909,10 @@ static DRIVER_INIT( mia )
 	init_gfx();
 
 	/*
-		along with the normal byte reordering, TMNT also needs the bits to
-		be shuffled around because the ROMs are connected differently to the
-		051962 custom IC.
-	*/
+        along with the normal byte reordering, TMNT also needs the bits to
+        be shuffled around because the ROMs are connected differently to the
+        051962 custom IC.
+    */
 	gfxdata = memory_region(REGION_GFX1);
 	len = memory_region_length(REGION_GFX1);
 	for (i = 0;i < len;i += 4)
@@ -3930,10 +3930,10 @@ static DRIVER_INIT( mia )
 	}
 
 	/*
-		along with the normal byte reordering, MIA also needs the bits to
-		be shuffled around because the ROMs are connected differently to the
-		051937 custom IC.
-	*/
+        along with the normal byte reordering, MIA also needs the bits to
+        be shuffled around because the ROMs are connected differently to the
+        051937 custom IC.
+    */
 	gfxdata = memory_region(REGION_GFX2);
 	len = memory_region_length(REGION_GFX2);
 	for (i = 0;i < len;i += 4)
@@ -4005,10 +4005,10 @@ static DRIVER_INIT( tmnt )
 	init_gfx();
 
 	/*
-		along with the normal byte reordering, TMNT also needs the bits to
-		be shuffled around because the ROMs are connected differently to the
-		051962 custom IC.
-	*/
+        along with the normal byte reordering, TMNT also needs the bits to
+        be shuffled around because the ROMs are connected differently to the
+        051962 custom IC.
+    */
 	gfxdata = memory_region(REGION_GFX1);
 	len = memory_region_length(REGION_GFX1);
 	for (i = 0;i < len;i += 4)
@@ -4026,10 +4026,10 @@ static DRIVER_INIT( tmnt )
 	}
 
 	/*
-		along with the normal byte reordering, TMNT also needs the bits to
-		be shuffled around because the ROMs are connected differently to the
-		051937 custom IC.
-	*/
+        along with the normal byte reordering, TMNT also needs the bits to
+        be shuffled around because the ROMs are connected differently to the
+        051937 custom IC.
+    */
 	gfxdata = memory_region(REGION_GFX2);
 	len = memory_region_length(REGION_GFX2);
 	for (i = 0;i < len;i += 4)

@@ -1,36 +1,36 @@
 /*** konami: Portable Konami cpu emulator ******************************************
 
-	Copyright (C) The MAME Team 1999
+    Copyright (C) The MAME Team 1999
 
-	Based on M6809 cpu core	copyright (C) John Butler 1997
+    Based on M6809 cpu core copyright (C) John Butler 1997
 
-	References:
+    References:
 
-		6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
+        6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
 
-		m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
-			the 6809 Simulator V09)
+        m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
+            the 6809 Simulator V09)
 
-		6809 Microcomputer Programming & Interfacing with Experiments"
-			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
+        6809 Microcomputer Programming & Interfacing with Experiments"
+            by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	UINT16 must be 16 bit unsigned int
-							UINT8 must be 8 bit unsigned int
-							UINT32 must be more than 16 bits
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
+    System dependencies:    UINT16 must be 16 bit unsigned int
+                            UINT8 must be 8 bit unsigned int
+                            UINT32 must be more than 16 bits
+                            arrays up to 65536 bytes must be supported
+                            machine must be twos complement
 
-	History:
+    History:
 991022 HJB:
-	Tried to improve speed: Using bit7 of cycles1 as flag for multi
-	byte opcodes is gone, those opcodes now instead go through opcode2().
-	Inlined fetch_effective_address() into that function as well.
-	Got rid of the slow/fast flags for stack (S and U) memory accesses.
-	Minor changes to use 32 bit values as arguments to memory functions
-	and added defines for that purpose (e.g. X = 16bit XD = 32bit).
+    Tried to improve speed: Using bit7 of cycles1 as flag for multi
+    byte opcodes is gone, those opcodes now instead go through opcode2().
+    Inlined fetch_effective_address() into that function as well.
+    Got rid of the slow/fast flags for stack (S and U) memory accesses.
+    Minor changes to use 32 bit values as arguments to memory functions
+    and added defines for that purpose (e.g. X = 16bit XD = 32bit).
 
 990720 EHC:
-	Created this file
+    Created this file
 
 *****************************************************************************/
 
@@ -352,7 +352,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 /* opcode timings */
 static UINT8 cycles1[] =
 {
-	/*	 0	1  2  3  4	5  6  7  8	9  A  B  C	D  E  F */
+	/*   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
   /*0*/  1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 5, 5, 5, 5,
   /*1*/  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   /*2*/  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -405,7 +405,7 @@ static void konami_set_context(void *src)
 }
 
 /****************************************************************************/
-/* Reset registers to their initial values									*/
+/* Reset registers to their initial values                                  */
 /****************************************************************************/
 static void konami_init(void)
 {
@@ -598,7 +598,7 @@ static void konami_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + KONAMI_X:			X = info->i;							break;
 		case CPUINFO_INT_REGISTER + KONAMI_Y:			Y = info->i;							break;
 		case CPUINFO_INT_REGISTER + KONAMI_DP:			DP = info->i;							break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					konami.irq_callback = info->irqcallback; break;
 	case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->f; break;
@@ -625,7 +625,7 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 13;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

@@ -116,11 +116,11 @@ static MACHINE_INIT( chinagat )
 WRITE8_HANDLER( chinagat_video_ctrl_w )
 {
 	/***************************
-	---- ---x   X Scroll MSB
-	---- --x-   Y Scroll MSB
-	---- -x--   Flip screen
-	--x- ----   Enable video ???
-	****************************/
+    ---- ---x   X Scroll MSB
+    ---- --x-   Y Scroll MSB
+    ---- -x--   Flip screen
+    --x- ----   Enable video ???
+    ****************************/
 
 	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
@@ -197,12 +197,12 @@ static WRITE8_HANDLER( saiyugb1_adpcm_control_w )
 		{
 			if ((saiyugb1_i8748_P2 & 0xc) == 0)	/* Latch MSB Address */
 			{
-///				logerror("Latching MSB\n");
+///             logerror("Latching MSB\n");
 				saiyugb1_adpcm_addr = (saiyugb1_adpcm_addr & 0x3807f) | (saiyugb1_i8748_P1 << 7);
 			}
 			if ((saiyugb1_i8748_P2 & 0xc) == 4)	/* Latch LSB Address */
 			{
-///				logerror("Latching LSB\n");
+///             logerror("Latching LSB\n");
 				saiyugb1_adpcm_addr = (saiyugb1_adpcm_addr & 0x3ff80) | (saiyugb1_i8748_P1 >> 1);
 				saiyugb1_pcm_shift = (saiyugb1_i8748_P1 & 1) * 4;
 			}
@@ -214,7 +214,7 @@ static WRITE8_HANDLER( saiyugb1_adpcm_control_w )
 
 		saiyugb1_pcm_nibble = (saiyugb1_pcm_nibble >> saiyugb1_pcm_shift) & 0x0f;
 
-///		logerror("Writing %02x to m5205. $ROM=%08x  P1=%02x  P2=%02x  Prev_P2=%02x  Nibble=%08x\n",saiyugb1_pcm_nibble,saiyugb1_adpcm_addr,saiyugb1_i8748_P1,data,saiyugb1_i8748_P2,saiyugb1_pcm_shift);
+///     logerror("Writing %02x to m5205. $ROM=%08x  P1=%02x  P2=%02x  Prev_P2=%02x  Nibble=%08x\n",saiyugb1_pcm_nibble,saiyugb1_adpcm_addr,saiyugb1_i8748_P1,data,saiyugb1_i8748_P2,saiyugb1_pcm_shift);
 
 		if ( ((saiyugb1_i8748_P2 & 0xc) >= 8) && ((data & 0xc) == 4) )
 		{
@@ -281,9 +281,9 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3400, 0x357f) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
 	AM_RANGE(0x3800, 0x397f) AM_WRITE(MWA8_BANK3) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(chinagat_cpu_sound_cmd_w)
-//	AM_RANGE(0x3e01, 0x3e01) AM_WRITE(MWA8_NOP)
-//	AM_RANGE(0x3e02, 0x3e02) AM_WRITE(MWA8_NOP)
-//	AM_RANGE(0x3e03, 0x3e03) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0x3e01, 0x3e01) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0x3e02, 0x3e02) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0x3e03, 0x3e03) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x3e04, 0x3e04) AM_WRITE(chinagat_sub_IRQ_w)
 	AM_RANGE(0x3e06, 0x3e06) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrolly_lo)
 	AM_RANGE(0x3e07, 0x3e07) AM_WRITE(MWA8_RAM) AM_BASE(&ddragon_scrollx_lo)
@@ -294,8 +294,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK2)
-//	AM_RANGE(0x2a2b, 0x2a2b) AM_READ(MRA8_NOP) /* What lives here? */
-//	AM_RANGE(0x2a30, 0x2a30) AM_READ(MRA8_NOP) /* What lives here? */
+//  AM_RANGE(0x2a2b, 0x2a2b) AM_READ(MRA8_NOP) /* What lives here? */
+//  AM_RANGE(0x2a30, 0x2a30) AM_READ(MRA8_NOP) /* What lives here? */
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK4)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
@@ -327,10 +327,10 @@ static ADDRESS_MAP_START( ym2203c_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8800, 0x8800) AM_READ(YM2203_status_port_0_r)
-//	AM_RANGE(0x8802, 0x8802) AM_READ(OKIM6295_status_0_r)
+//  AM_RANGE(0x8802, 0x8802) AM_READ(OKIM6295_status_0_r)
 	AM_RANGE(0x8804, 0x8804) AM_READ(YM2203_status_port_1_r)
-//	AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
-//	AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
+//  AM_RANGE(0x8801, 0x8801) AM_READ(YM2151_status_port_0_r)
+//  AM_RANGE(0x9800, 0x9800) AM_READ(OKIM6295_status_0_r)
 	AM_RANGE(0xA000, 0xA000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
@@ -342,16 +342,16 @@ static ADDRESS_MAP_START( ym2203c_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2203_write_port_0_w)
-//	AM_RANGE(0x8802, 0x8802) AM_WRITE(OKIM6295_data_0_w)
-//	AM_RANGE(0x8803, 0x8803) AM_WRITE(OKIM6295_data_0_w)
+//  AM_RANGE(0x8802, 0x8802) AM_WRITE(OKIM6295_data_0_w)
+//  AM_RANGE(0x8803, 0x8803) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0x8804, 0x8804) AM_WRITE(YM2203_control_port_1_w)
 	AM_RANGE(0x8805, 0x8805) AM_WRITE(YM2203_write_port_1_w)
-//	AM_RANGE(0x8804, 0x8804) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0x8805, 0x8805) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0x8804, 0x8804) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0x8805, 0x8805) AM_WRITE(MWA8_RAM)
 
-//	AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
-//	AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
-//	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
+//  AM_RANGE(0x8800, 0x8800) AM_WRITE(YM2151_register_port_0_w)
+//  AM_RANGE(0x8801, 0x8801) AM_WRITE(YM2151_data_port_0_w)
+//  AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( saiyugb1_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -420,8 +420,8 @@ INPUT_PORTS_START( chinagat )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	/*PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Cocktail ) )*/
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )*/
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -751,17 +751,17 @@ ROM_START( saiyugb1 )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* Main CPU: 128KB for code (bankswitched using $3F01) */
 	ROM_LOAD( "23j3-0.51",  0x10000, 0x18000, CRC(aa8132a2) SHA1(87c3bd447767f263113c4865afc905a0e484a625) )	/* Banks 0x4000 long @ 0x4000 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "a-5.bin", 0x10000, 0x10000, CRC(39795aa5) )	   Banks 0x4000 long @ 0x4000
-	   ROM_LOAD( "a-9.bin", 0x20000, 0x08000, CRC(051ebe92) )	   Banks 0x4000 long @ 0x4000
-	*/
+       ROM_LOAD( "a-5.bin", 0x10000, 0x10000, CRC(39795aa5) )      Banks 0x4000 long @ 0x4000
+       ROM_LOAD( "a-9.bin", 0x20000, 0x08000, CRC(051ebe92) )      Banks 0x4000 long @ 0x4000
+    */
 	ROM_CONTINUE(           0x08000, 0x08000 )				/* Static code */
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )	/* Slave CPU: 128KB for code (bankswitched using $2000) */
 	ROM_LOAD( "23j4-0.48",  0x10000, 0x18000, CRC(2914af38) SHA1(3d690fa50b7d36a22de82c026d59a16126a7b73c) )	/* Banks 0x4000 long @ 0x4000 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "a-4.bin", 0x10000, 0x10000, CRC(9effddc1) )	   Banks 0x4000 long @ 0x4000
-	   ROM_LOAD( "a-8.bin", 0x20000, 0x08000, CRC(a436edb8) )	   Banks 0x4000 long @ 0x4000
-	*/
+       ROM_LOAD( "a-4.bin", 0x10000, 0x10000, CRC(9effddc1) )      Banks 0x4000 long @ 0x4000
+       ROM_LOAD( "a-8.bin", 0x20000, 0x08000, CRC(a436edb8) )      Banks 0x4000 long @ 0x4000
+    */
 	ROM_CONTINUE(           0x08000, 0x08000 )				/* Static code */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Music CPU, 64KB */
@@ -773,9 +773,9 @@ ROM_START( saiyugb1 )
 	ROM_REGION(0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* Text */
 	ROM_LOAD( "23j6-0.18",  0x00000, 0x20000, CRC(86d33df0) SHA1(3419959c28703c5177de9c11b61e1dba9e76aca5) )	/* 0,1,2,3 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "a-2.bin", 0x00000, 0x10000, CRC(baa5a3b9) )	   0,1
-	   ROM_LOAD( "a-3.bin", 0x10000, 0x10000, CRC(532d59be) )	   2,3
-	*/
+       ROM_LOAD( "a-2.bin", 0x00000, 0x10000, CRC(baa5a3b9) )      0,1
+       ROM_LOAD( "a-3.bin", 0x10000, 0x10000, CRC(532d59be) )      2,3
+    */
 
 	ROM_REGION(0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "23j7-0.103",  0x00000, 0x20000, CRC(2f445030) SHA1(3fcf32097e655e963d952d01a30396dc195269ca) )	/* 2,3 */
@@ -783,15 +783,15 @@ ROM_START( saiyugb1 )
 	ROM_LOAD( "23j9-0.101",  0x40000, 0x20000, CRC(8caf6097) SHA1(50ad192f831b055586a4a9974f8c6c2f2063ede5) )	/* 0,1 */
 	ROM_LOAD( "23ja-0.100",  0x60000, 0x20000, CRC(f678594f) SHA1(4bdcf9407543925f4630a8c7f1f48b85f76343a9) )	/* 0,1 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same
-	   ROM_LOAD( "a-23.bin", 0x00000, 0x10000, CRC(12b56225) )	   2,3
-	   ROM_LOAD( "a-22.bin", 0x10000, 0x10000, CRC(b592aa9b) )	   2,3
-	   ROM_LOAD( "a-21.bin", 0x20000, 0x10000, CRC(a331ba3d) )	   2,3
-	   ROM_LOAD( "a-20.bin", 0x30000, 0x10000, CRC(2515d742) )	   2,3
-	   ROM_LOAD( "a-19.bin", 0x40000, 0x10000, CRC(d796f2e4) )	   0,1
-	   ROM_LOAD( "a-18.bin", 0x50000, 0x10000, CRC(c9e1c2f9) )	   0,1
-	   ROM_LOAD( "a-17.bin", 0x60000, 0x10000, CRC(00b6db0a) )	   0,1
-	   ROM_LOAD( "a-16.bin", 0x70000, 0x10000, CRC(f196818b) )	   0,1
-	*/
+       ROM_LOAD( "a-23.bin", 0x00000, 0x10000, CRC(12b56225) )     2,3
+       ROM_LOAD( "a-22.bin", 0x10000, 0x10000, CRC(b592aa9b) )     2,3
+       ROM_LOAD( "a-21.bin", 0x20000, 0x10000, CRC(a331ba3d) )     2,3
+       ROM_LOAD( "a-20.bin", 0x30000, 0x10000, CRC(2515d742) )     2,3
+       ROM_LOAD( "a-19.bin", 0x40000, 0x10000, CRC(d796f2e4) )     0,1
+       ROM_LOAD( "a-18.bin", 0x50000, 0x10000, CRC(c9e1c2f9) )     0,1
+       ROM_LOAD( "a-17.bin", 0x60000, 0x10000, CRC(00b6db0a) )     0,1
+       ROM_LOAD( "a-16.bin", 0x70000, 0x10000, CRC(f196818b) )     0,1
+    */
 
 	ROM_REGION(0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* Background */
 	ROM_LOAD( "a-13", 0x00000, 0x10000, CRC(b745cac4) SHA1(759767ca7c5123b03b9e1a42bb105d194cb76400) )
@@ -816,31 +816,31 @@ ROM_START( saiyugb2 )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* Main CPU: 128KB for code (bankswitched using $3F01) */
 	ROM_LOAD( "23j3-0.51",   0x10000, 0x18000, CRC(aa8132a2) SHA1(87c3bd447767f263113c4865afc905a0e484a625) )	/* Banks 0x4000 long @ 0x4000 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "sai5.bin", 0x10000, 0x10000, CRC(39795aa5) )	   Banks 0x4000 long @ 0x4000
-	   ROM_LOAD( "sai9.bin", 0x20000, 0x08000, CRC(051ebe92) )	   Banks 0x4000 long @ 0x4000
-	*/
+       ROM_LOAD( "sai5.bin", 0x10000, 0x10000, CRC(39795aa5) )     Banks 0x4000 long @ 0x4000
+       ROM_LOAD( "sai9.bin", 0x20000, 0x08000, CRC(051ebe92) )     Banks 0x4000 long @ 0x4000
+    */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* Static code */
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )	/* Slave CPU: 128KB for code (bankswitched using $2000) */
 	ROM_LOAD( "23j4-0.48", 0x10000, 0x18000, CRC(2914af38) SHA1(3d690fa50b7d36a22de82c026d59a16126a7b73c) )	/* Banks 0x4000 long @ 0x4000 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "sai4.bin", 0x10000, 0x10000, CRC(9effddc1) )	   Banks 0x4000 long @ 0x4000
-	   ROM_LOAD( "sai8.bin", 0x20000, 0x08000, CRC(a436edb8) )	   Banks 0x4000 long @ 0x4000
-	*/
+       ROM_LOAD( "sai4.bin", 0x10000, 0x10000, CRC(9effddc1) )     Banks 0x4000 long @ 0x4000
+       ROM_LOAD( "sai8.bin", 0x20000, 0x08000, CRC(a436edb8) )     Banks 0x4000 long @ 0x4000
+    */
 	ROM_CONTINUE(         0x08000, 0x08000 )				/* Static code */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Music CPU, 64KB */
 	ROM_LOAD( "sai-alt1.bin", 0x00000, 0x8000, CRC(8d397a8d) SHA1(52599521c3dbcecc1ae56bb80dc855e76d700134) )
 
-//	ROM_REGION( 0x800, REGION_CPU4, 0 )		/* ADPCM CPU, 1KB */
-//	ROM_LOAD( "sgr-8749.bin", 0x000, 0x800, CRC(9237e8c5) ) /* same as above but padded with 00 for different mcu */
+//  ROM_REGION( 0x800, REGION_CPU4, 0 )     /* ADPCM CPU, 1KB */
+//  ROM_LOAD( "sgr-8749.bin", 0x000, 0x800, CRC(9237e8c5) ) /* same as above but padded with 00 for different mcu */
 
 	ROM_REGION(0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* Text */
 	ROM_LOAD( "23j6-0.18", 0x00000, 0x20000, CRC(86d33df0) SHA1(3419959c28703c5177de9c11b61e1dba9e76aca5) )	/* 0,1,2,3 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same.
-	   ROM_LOAD( "sai2.bin", 0x00000, 0x10000, CRC(baa5a3b9) )	   0,1
-	   ROM_LOAD( "sai3.bin", 0x10000, 0x10000, CRC(532d59be) )	   2,3
-	*/
+       ROM_LOAD( "sai2.bin", 0x00000, 0x10000, CRC(baa5a3b9) )     0,1
+       ROM_LOAD( "sai3.bin", 0x10000, 0x10000, CRC(532d59be) )     2,3
+    */
 
 	ROM_REGION(0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "23j7-0.103",   0x00000, 0x20000, CRC(2f445030) SHA1(3fcf32097e655e963d952d01a30396dc195269ca) )	/* 2,3 */
@@ -848,15 +848,15 @@ ROM_START( saiyugb2 )
 	ROM_LOAD( "23j9-0.101",   0x40000, 0x20000, CRC(8caf6097) SHA1(50ad192f831b055586a4a9974f8c6c2f2063ede5) )	/* 0,1 */
 	ROM_LOAD( "23ja-0.100",   0x60000, 0x20000, CRC(f678594f) SHA1(4bdcf9407543925f4630a8c7f1f48b85f76343a9) )	/* 0,1 */
 	/* Orientation of bootleg ROMs which are split, but otherwise the same
-	   ROM_LOAD( "sai23.bin", 0x00000, 0x10000, CRC(12b56225) )	   2,3
-	   ROM_LOAD( "sai22.bin", 0x10000, 0x10000, CRC(b592aa9b) )	   2,3
-	   ROM_LOAD( "sai21.bin", 0x20000, 0x10000, CRC(a331ba3d) )	   2,3
-	   ROM_LOAD( "sai20.bin", 0x30000, 0x10000, CRC(2515d742) )	   2,3
-	   ROM_LOAD( "sai19.bin", 0x40000, 0x10000, CRC(d796f2e4) )	   0,1
-	   ROM_LOAD( "sai18.bin", 0x50000, 0x10000, CRC(c9e1c2f9) )	   0,1
-	   ROM_LOAD( "roku17.bin",0x60000, 0x10000, CRC(00b6db0a) )	   0,1
-	   ROM_LOAD( "sai16.bin", 0x70000, 0x10000, CRC(f196818b) )	   0,1
-	*/
+       ROM_LOAD( "sai23.bin", 0x00000, 0x10000, CRC(12b56225) )    2,3
+       ROM_LOAD( "sai22.bin", 0x10000, 0x10000, CRC(b592aa9b) )    2,3
+       ROM_LOAD( "sai21.bin", 0x20000, 0x10000, CRC(a331ba3d) )    2,3
+       ROM_LOAD( "sai20.bin", 0x30000, 0x10000, CRC(2515d742) )    2,3
+       ROM_LOAD( "sai19.bin", 0x40000, 0x10000, CRC(d796f2e4) )    0,1
+       ROM_LOAD( "sai18.bin", 0x50000, 0x10000, CRC(c9e1c2f9) )    0,1
+       ROM_LOAD( "roku17.bin",0x60000, 0x10000, CRC(00b6db0a) )    0,1
+       ROM_LOAD( "sai16.bin", 0x70000, 0x10000, CRC(f196818b) )    0,1
+    */
 
 	ROM_REGION(0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* Background */
 	ROM_LOAD( "a-13", 0x00000, 0x10000, CRC(b745cac4) SHA1(759767ca7c5123b03b9e1a42bb105d194cb76400) )

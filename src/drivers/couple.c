@@ -35,8 +35,8 @@ static void get_bg_tile_info(int tile_index)
 {
 	int code;
 	code = bg_vram[tile_index];
-//	color = colorram[tile_index] & 0x0f;
-//	region = (colorram[tile_index] & 0x10) >> 4;
+//  color = colorram[tile_index] & 0x0f;
+//  region = (colorram[tile_index] & 0x10) >> 4;
 
 	SET_TILE_INFO(0, code, 0, 0)
 }
@@ -45,8 +45,8 @@ static void get_tx_tile_info(int tile_index)
 {
 	int code;
 	code = tx_vram[tile_index]*2;
-//	color = colorram[tile_index] & 0x0f;
-//	region = (colorram[tile_index] & 0x10) >> 4;
+//  color = colorram[tile_index] & 0x0f;
+//  region = (colorram[tile_index] & 0x10) >> 4;
 
 	SET_TILE_INFO(1, code, 0, 0)
 }

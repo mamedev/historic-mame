@@ -361,7 +361,7 @@ int i;
 static INT16 calc_A(struct namco_54xx *chip)
 {
 //if (chip->type_A_active)
-//	logerror("calc a: env_state=%2i vol=%2i noise=%2i\n", chip->type_A_state, chip->type_A_curr_vol, chip->noise_out_A);
+//  logerror("calc a: env_state=%2i vol=%2i noise=%2i\n", chip->type_A_state, chip->type_A_curr_vol, chip->noise_out_A);
 
 	switch (chip->type_A_state)
 	{
@@ -558,7 +558,7 @@ void NAMCO54xxUpdateOne(void *param, stream_sample_t **inputs, stream_sample_t *
 		{
 			filter2_step(&chip->filter54[loop]);
 			/* The op-amp powered @ 5V will clip to 0V & 3.5V.
-			 * Adjusted to vRef of 2V, we will clip as follows: */
+             * Adjusted to vRef of 2V, we will clip as follows: */
 			if (chip->filter54[loop].y0 > 1.5) chip->filter54[loop].y0 = 1.5;
 			if (chip->filter54[loop].y0 < -2) chip->filter54[loop].y0 = -2;
 		}
@@ -667,7 +667,7 @@ static void *namco_54xx_start(int sndindex, int clock, const void *config)
 
 	double scaler, c_value, r_in, r_min;
 	int i;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

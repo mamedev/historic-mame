@@ -1,168 +1,168 @@
 /***************************************************************************
 
-	Driver for Atari polygon racer games
+    Driver for Atari polygon racer games
 
-	This collection of games uses many CPUs and many boards in many
-	different combinations. There are 3 different main boards:
+    This collection of games uses many CPUs and many boards in many
+    different combinations. There are 3 different main boards:
 
-		- the "driver" board (A045988) is the original Hard Drivin' PCB
-			- Hard Drivin'
-			- Race Drivin' Upgrade
+        - the "driver" board (A045988) is the original Hard Drivin' PCB
+            - Hard Drivin'
+            - Race Drivin' Upgrade
 
-		- the "multisync" board (A046901)
-			- STUN Runner
-			- Steel Talons
-			- Hard Drivin' Compact
-			- Race Drivin' Compact
-			- Street Drivin'
+        - the "multisync" board (A046901)
+            - STUN Runner
+            - Steel Talons
+            - Hard Drivin' Compact
+            - Race Drivin' Compact
+            - Street Drivin'
 
-		- the "multisync II" board (A049852)
-			- Hard Drivin's Airborne
+        - the "multisync II" board (A049852)
+            - Hard Drivin's Airborne
 
-	To first order, all of the above boards had the same basic features:
+    To first order, all of the above boards had the same basic features:
 
-		a 68010 @ 8MHz to drive the whole game
-		a TMS34010 @ 48MHz (GSP) to render the polygons and graphics
-		a TMS34012 @ 50MHz (PSP, labelled SCX6218UTP) to expand pixels
-		a TMS34010 @ 50MHz (MSP, optional) to handle in-game calculations
+        a 68010 @ 8MHz to drive the whole game
+        a TMS34010 @ 48MHz (GSP) to render the polygons and graphics
+        a TMS34012 @ 50MHz (PSP, labelled SCX6218UTP) to expand pixels
+        a TMS34010 @ 50MHz (MSP, optional) to handle in-game calculations
 
-	The original "driver" board had 1MB of VRAM. The "multisync" board
-	reduced that to 512k. The "multisync II" board went back to a full
-	MB again.
+    The original "driver" board had 1MB of VRAM. The "multisync" board
+    reduced that to 512k. The "multisync II" board went back to a full
+    MB again.
 
-	Stacked on top of the main board were two or more additional boards
-	that were accessible through an expansion bus. Each game had at least
-	an ADSP board and a sound board. Later games had additional boards for
-	extra horsepower or for communications between multiple players.
+    Stacked on top of the main board were two or more additional boards
+    that were accessible through an expansion bus. Each game had at least
+    an ADSP board and a sound board. Later games had additional boards for
+    extra horsepower or for communications between multiple players.
 
-	-----------------------------------------------------------------------
+    -----------------------------------------------------------------------
 
-	The ADSP board is usually the board stacked closest to the main board.
-	It also comes in four varieties, though these do not match
-	one-for-one with the main boards listed above. They are:
+    The ADSP board is usually the board stacked closest to the main board.
+    It also comes in four varieties, though these do not match
+    one-for-one with the main boards listed above. They are:
 
-		- the "ADSP" board (A044420)
-			- early Hard Drivin' revisions
+        - the "ADSP" board (A044420)
+            - early Hard Drivin' revisions
 
-		- the "ADSP II" board (A047046)
-			- later Hard Drivin'
-			- STUN Runner
-			- Hard Drivin' Compact
-			- Race Drivin' Upgrade
-			- Race Drivin' Compact
+        - the "ADSP II" board (A047046)
+            - later Hard Drivin'
+            - STUN Runner
+            - Hard Drivin' Compact
+            - Race Drivin' Upgrade
+            - Race Drivin' Compact
 
-		- the "DS III" board (A049096)
-			- Steel Talons
-			- Street Drivin'
+        - the "DS III" board (A049096)
+            - Steel Talons
+            - Street Drivin'
 
-		- the "DS IV" board (A051973)
-			- Hard Drivin's Airborne
+        - the "DS IV" board (A051973)
+            - Hard Drivin's Airborne
 
-	These boards are the workhorses of the game. They contain a single
-	8MHz ADSP-2100 (ADSP and ADSP II) or 12MHz ADSP-2101 (DS III and DS IV)
-	chip that is responsible for all the polygon transformations, lighting,
-	and slope computations. Along with the DSP, there are several high-speed
-	serial-access ROMs and RAMs.
+    These boards are the workhorses of the game. They contain a single
+    8MHz ADSP-2100 (ADSP and ADSP II) or 12MHz ADSP-2101 (DS III and DS IV)
+    chip that is responsible for all the polygon transformations, lighting,
+    and slope computations. Along with the DSP, there are several high-speed
+    serial-access ROMs and RAMs.
 
-	The "ADSP II" board is nearly identical to the original "ADSP" board
-	except that is has space for extra serial ROM data. The "DS III" is
-	an advanced design that contains space for a bunch of complex sound
-	circuitry that was not used on Steel Talons, but was used for the
-	prototype Street Drivin'. The "DS IV" looks to have the same board
-	layout as the "DS III", but the sound circuitry is actually populated.
+    The "ADSP II" board is nearly identical to the original "ADSP" board
+    except that is has space for extra serial ROM data. The "DS III" is
+    an advanced design that contains space for a bunch of complex sound
+    circuitry that was not used on Steel Talons, but was used for the
+    prototype Street Drivin'. The "DS IV" looks to have the same board
+    layout as the "DS III", but the sound circuitry is actually populated.
 
-	-----------------------------------------------------------------------
+    -----------------------------------------------------------------------
 
-	Three sound boards were used:
+    Three sound boards were used:
 
-		- the "driver sound" board (A046491)
-			- Hard Drivin'
-			- Hard Drivin' Compact
-			- Race Drivin' Upgrade
-			- Race Drivin' Compact
+        - the "driver sound" board (A046491)
+            - Hard Drivin'
+            - Hard Drivin' Compact
+            - Race Drivin' Upgrade
+            - Race Drivin' Compact
 
-		- the "JSA II" board
-			- STUN Runner
+        - the "JSA II" board
+            - STUN Runner
 
-		- the "JSA IIIS" board
-			- Steel Talons
+        - the "JSA IIIS" board
+            - Steel Talons
 
-	The "driver sound" board runs with a 68000 master and a TMS32010 slave
-	driving a DAC. The "JSA" boards are both standard Atari sound boards
-	with a 6502 driving a YM2151 and an OKI6295 ADPCM chip. Hard Drivin's
-	Airborne uses the "DS IV" board for its sound.
+    The "driver sound" board runs with a 68000 master and a TMS32010 slave
+    driving a DAC. The "JSA" boards are both standard Atari sound boards
+    with a 6502 driving a YM2151 and an OKI6295 ADPCM chip. Hard Drivin's
+    Airborne uses the "DS IV" board for its sound.
 
-	-----------------------------------------------------------------------
+    -----------------------------------------------------------------------
 
-	In addition, there were a number of supplemental boards that were
-	included with certain games:
+    In addition, there were a number of supplemental boards that were
+    included with certain games:
 
-		- the "DSK" board (A047724)
-			- Race Drivin' Upgrade
-			- Race Drivin' Compact
-			- Street Drivin'
+        - the "DSK" board (A047724)
+            - Race Drivin' Upgrade
+            - Race Drivin' Compact
+            - Street Drivin'
 
-		- the "DSPCOM" board (A049349)
-			- Steel Talons
+        - the "DSPCOM" board (A049349)
+            - Steel Talons
 
-		- the "DSK II" board (A051028)
-			- Hard Drivin' Airborne
+        - the "DSK II" board (A051028)
+            - Hard Drivin' Airborne
 
-	-----------------------------------------------------------------------
+    -----------------------------------------------------------------------
 
-	There are a total of 8 known games (plus variants) on this hardware:
+    There are a total of 8 known games (plus variants) on this hardware:
 
-	Hard Drivin' Cockpit
-		- "driver" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
-		- "ADSP" or "ADSP II" board (8MHz ADSP-2100)
-		- "driver sound" board (8MHz 68000, 20MHz TMS32010)
+    Hard Drivin' Cockpit
+        - "driver" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
+        - "ADSP" or "ADSP II" board (8MHz ADSP-2100)
+        - "driver sound" board (8MHz 68000, 20MHz TMS32010)
 
-	Hard Drivin' Compact
-		- "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
-		- "ADSP II" board (8MHz ADSP-2100)
-		- "driver sound" board (8MHz 68000, 20MHz TMS32010)
+    Hard Drivin' Compact
+        - "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
+        - "ADSP II" board (8MHz ADSP-2100)
+        - "driver sound" board (8MHz 68000, 20MHz TMS32010)
 
-	S.T.U.N. Runner
-		- "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
-		- "ADSP II" board (8MHz ADSP-2100)
-		- "JSA II" sound board (1.7MHz 6502, YM2151, OKI6295)
+    S.T.U.N. Runner
+        - "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
+        - "ADSP II" board (8MHz ADSP-2100)
+        - "JSA II" sound board (1.7MHz 6502, YM2151, OKI6295)
 
-	Race Drivin' Cockpit
-		- "driver" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
-		- "ADSP" or "ADSP II" board (8MHz ADSP-2100)
-		- "DSK" board (40MHz DSP32C, 20MHz TMS32015)
-		- "driver sound" board (8MHz 68000, 20MHz TMS32010)
+    Race Drivin' Cockpit
+        - "driver" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
+        - "ADSP" or "ADSP II" board (8MHz ADSP-2100)
+        - "DSK" board (40MHz DSP32C, 20MHz TMS32015)
+        - "driver sound" board (8MHz 68000, 20MHz TMS32010)
 
-	Race Drivin' Compact
-		- "multisync" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
-		- "ADSP II" board (8MHz ADSP-2100)
-		- "DSK" board (40MHz DSP32C, 20MHz TMS32015)
-		- "driver sound" board (8MHz 68000, 20MHz TMS32010)
+    Race Drivin' Compact
+        - "multisync" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
+        - "ADSP II" board (8MHz ADSP-2100)
+        - "DSK" board (40MHz DSP32C, 20MHz TMS32015)
+        - "driver sound" board (8MHz 68000, 20MHz TMS32010)
 
-	Steel Talons
-		- "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
-		- "DS III" board (12MHz ADSP-2101)
-		- "JSA IIIS" sound board (1.7MHz 6502, YM2151, OKI6295)
-		- "DSPCOM" I/O board (10MHz ADSP-2105)
+    Steel Talons
+        - "multisync" board (8MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
+        - "DS III" board (12MHz ADSP-2101)
+        - "JSA IIIS" sound board (1.7MHz 6502, YM2151, OKI6295)
+        - "DSPCOM" I/O board (10MHz ADSP-2105)
 
-	Street Drivin'
-		- "multisync" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
-		- "DS III" board (12MHz ADSP-2101, plus 10MHz ADSP-2105 for sound)
-		- "DSK" board (40MHz DSP32C, 20MHz TMS32015)
+    Street Drivin'
+        - "multisync" board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
+        - "DS III" board (12MHz ADSP-2101, plus 10MHz ADSP-2105 for sound)
+        - "DSK" board (40MHz DSP32C, 20MHz TMS32015)
 
-	Hard Drivin's Airborne (prototype)
-		- "multisync ii" main board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
-		- "DS IV" board (12MHz ADSP-2101, plus 2x10MHz ADSP-2105s for sound)
-		- "DSK II" board (40MHz DSP32C, 20MHz TMS32015)
+    Hard Drivin's Airborne (prototype)
+        - "multisync ii" main board (8MHz 68010, 50MHz TMS34010, 50MHz TMS34012)
+        - "DS IV" board (12MHz ADSP-2101, plus 2x10MHz ADSP-2105s for sound)
+        - "DSK II" board (40MHz DSP32C, 20MHz TMS32015)
 
-	BMX Heat (prototype)
-		- unknown boards ???
+    BMX Heat (prototype)
+        - unknown boards ???
 
-	Police Trainer (prototype)
-		- unknown boards ???
+    Police Trainer (prototype)
+        - unknown boards ???
 
-	Metal Maniax (prototype)
-		- reworked hardware that is similar but not of the same layout
+    Metal Maniax (prototype)
+        - reworked hardware that is similar but not of the same layout
 
 ****************************************************************************/
 
@@ -185,7 +185,7 @@ void slapstic_init(int chip);
 
 /*************************************
  *
- *	CPU configs
+ *  CPU configs
  *
  *************************************/
 
@@ -218,7 +218,7 @@ static struct dsp32_config dsp32c_config =
 
 /*************************************
  *
- *	Driver board memory maps
+ *  Driver board memory maps
  *
  *************************************/
 
@@ -266,7 +266,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Multisync board memory maps
+ *  Multisync board memory maps
  *
  *************************************/
 
@@ -305,7 +305,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Multisync II board memory maps
+ *  Multisync II board memory maps
  *
  *************************************/
 
@@ -344,7 +344,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	ADSP/ADSP II board memory maps
+ *  ADSP/ADSP II board memory maps
  *
  *************************************/
 
@@ -364,7 +364,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	DS III/IV board memory maps
+ *  DS III/IV board memory maps
  *
  *************************************/
 
@@ -395,26 +395,26 @@ static ADDRESS_MAP_START( ds3snd_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x3800, 0x3bff) AM_RAM						/* internal RAM */
 	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(hdds3_control_r, hdds3_control_w)	/* adsp control regs */
 //
-//	/SIRQ2 = IRQ2
-//	/SRES -> RESET
+//  /SIRQ2 = IRQ2
+//  /SRES -> RESET
 //
-//	2xx0 W = SWR0 (POUT)
-//	2xx1 W = SWR1 (SINT)
-//	2xx2 W = SWR2 (TFLAG)
-//	2xx3 W = SWR3 (INTSRC)
-//	2xx4 W = DACL
-//	2xx5 W = DACR
-//	2xx6 W = SRMADL
-//	2xx7 W = SRMADH
+//  2xx0 W = SWR0 (POUT)
+//  2xx1 W = SWR1 (SINT)
+//  2xx2 W = SWR2 (TFLAG)
+//  2xx3 W = SWR3 (INTSRC)
+//  2xx4 W = DACL
+//  2xx5 W = DACR
+//  2xx6 W = SRMADL
+//  2xx7 W = SRMADH
 //
-//	2xx0 R = SRD0 (PIN)
-//	2xx1 R = SRD1 (RSAT)
-//	2xx4 R = SROM
-//	2xx7 R = SFWCLR
+//  2xx0 R = SRD0 (PIN)
+//  2xx1 R = SRD1 (RSAT)
+//  2xx4 R = SROM
+//  2xx7 R = SFWCLR
 //
 //
-//	/XRES -> RESET
-//	communicate over serial I/O
+//  /XRES -> RESET
+//  communicate over serial I/O
 
 ADDRESS_MAP_END
 #endif
@@ -422,7 +422,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	DSK board memory maps
+ *  DSK board memory maps
  *
  *************************************/
 
@@ -437,7 +437,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	DSK II board memory maps
+ *  DSK II board memory maps
  *
  *************************************/
 
@@ -453,7 +453,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Driver sound board memory maps
+ *  Driver sound board memory maps
  *
  *************************************/
 
@@ -496,7 +496,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -920,21 +920,21 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Main board pieces
+ *  Main board pieces
  *
  *************************************/
 
 /*
-	Video timing:
+    Video timing:
 
-				VERTICAL					HORIZONTAL
-	Harddriv:	001D-019D / 01A0 (384)		001A-0099 / 009F (508)
-	Harddrvc:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
-	Racedriv:	001D-019D / 01A0 (384)		001A-0099 / 009F (508)
-	Racedrvc:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
-	Stunrun:	0013-00F8 / 0105 (229)		0037-0137 / 013C (512)
-	Steeltal:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
-	Hdrivair:	0011-0131 / 0133 (288)		003A-013A / 0142 (512)
+                VERTICAL                    HORIZONTAL
+    Harddriv:   001D-019D / 01A0 (384)      001A-0099 / 009F (508)
+    Harddrvc:   0011-0131 / 0133 (288)      003A-013A / 0142 (512)
+    Racedriv:   001D-019D / 01A0 (384)      001A-0099 / 009F (508)
+    Racedrvc:   0011-0131 / 0133 (288)      003A-013A / 0142 (512)
+    Stunrun:    0013-00F8 / 0105 (229)      0037-0137 / 013C (512)
+    Steeltal:   0011-0131 / 0133 (288)      003A-013A / 0142 (512)
+    Hdrivair:   0011-0131 / 0133 (288)      003A-013A / 0142 (512)
 */
 
 /* Driver board without MSP (used by Race Drivin' cockpit) */
@@ -1029,7 +1029,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ADSP board pieces
+ *  ADSP board pieces
  *
  *************************************/
 
@@ -1063,13 +1063,13 @@ static MACHINE_DRIVER_START( ds4 )
 	MDRV_CPU_PROGRAM_MAP(ds3_program_map,0)
 	MDRV_CPU_DATA_MAP(ds3_data_map,0)
 
-//	MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
-//	/* audio CPU */
-//	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
+//  MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
+//  /* audio CPU */
+//  MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
-//	MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
-//	/* audio CPU */
-//	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
+//  MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
+//  /* audio CPU */
+//  MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
@@ -1084,7 +1084,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	DSK board pieces
+ *  DSK board pieces
  *
  *************************************/
 
@@ -1111,7 +1111,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Sound board pieces
+ *  Sound board pieces
  *
  *************************************/
 
@@ -1139,7 +1139,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -1226,15 +1226,15 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /*
-	these sound ROMs were original being used in MAME:
-		ROM_LOAD16_BYTE( "hd_s.70n", 0x00000, 0x08000, CRC(0c77fab6) SHA1(4efcb64c261c7c4bfdd1f94d082404d6b4d25e54) )
-		ROM_LOAD16_BYTE( "hd_s.45n", 0x00001, 0x08000, CRC(54d6dd5f) SHA1(b93e918a395f6cdea787650d4b7beffba1a77b8f) )
-	they look legit, but I can't find any official record of them
+    these sound ROMs were original being used in MAME:
+        ROM_LOAD16_BYTE( "hd_s.70n", 0x00000, 0x08000, CRC(0c77fab6) SHA1(4efcb64c261c7c4bfdd1f94d082404d6b4d25e54) )
+        ROM_LOAD16_BYTE( "hd_s.45n", 0x00001, 0x08000, CRC(54d6dd5f) SHA1(b93e918a395f6cdea787650d4b7beffba1a77b8f) )
+    they look legit, but I can't find any official record of them
 */
 
 ROM_START( harddriv )
@@ -3437,7 +3437,7 @@ ROM_END
 
 /*************************************
  *
- *	Common initialization
+ *  Common initialization
  *
  *************************************/
 
@@ -3557,7 +3557,7 @@ static void init_ds3(void)
 
 /DMEM   = RVASB & EXTB &         /AB20 & /AB19 & /AB18 & /AB17 & /AB16 &  AB15
         = 0 0000 1xxx xxxx xxxx xxxx (read/write)
-		= 0x008000-0x00ffff
+        = 0x008000-0x00ffff
 
 /G68WR  = RVASB & EXTB &  EWRB & /AB20 & /AB19 & /AB18 &  AB17 & /AB16 & /AB15 & /AB14 & /AB13 & /AB12 & /AB11
         = 0 0010 0000 0xxx xxxx xxxx (write)
@@ -3600,8 +3600,8 @@ static void init_ds3(void)
 
 /SBUFF  =         EXTB & /EWRB & /AB20 & /AB19 & /AB18 & AB17 & /AB16 & /AB15 & /AB14 & AB13 & /AB12
         |         EXTB &         /AB20 & /AB19 & /AB18 & AB17 & /AB16 & /AB15 & /AB14 & AB13 & /AB12 & /AB11
-		= 0 0010 0010 xxxx xxxx xxxx (read)
-		| 0 0010 0010 0xxx xxxx xxxx (read/write)
+        = 0 0010 0010 xxxx xxxx xxxx (read)
+        | 0 0010 0010 0xxx xxxx xxxx (read/write)
 
 /GBUFF  =         EXTB &         /AB20 & /AB19 & /AB18 & /AB17 & /AB16
         |         EXTB & /EWRB & /AB20 & /AB19 & /AB18 &         /AB16 & /AB15 & /AB14 & /AB13 &         /AB11
@@ -3713,7 +3713,7 @@ static void init_driver_sound(void)
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -4009,7 +4009,7 @@ static DRIVER_INIT( hdrivaip )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Pit&Run  
-	
-	Based on TaitsoSJ driver
-	68705 has access to Z80 memory space
+    Pit&Run
+
+    Based on TaitsoSJ driver
+    68705 has access to Z80 memory space
 
 ***************************************************************************/
 

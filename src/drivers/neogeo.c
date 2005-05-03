@@ -1,243 +1,243 @@
 
 /***************************************************************************
-	M.A.M.E. Neo Geo driver presented to you by the Shin Emu Keikaku team.
+    M.A.M.E. Neo Geo driver presented to you by the Shin Emu Keikaku team.
 
-	The following people have all spent probably far too much time on this:
+    The following people have all spent probably far too much time on this:
 
-	AVDB
-	Bryan McPhail
-	Fuzz
-	Ernesto Corvi
-	Andrew Prime
+    AVDB
+    Bryan McPhail
+    Fuzz
+    Ernesto Corvi
+    Andrew Prime
 
-	Neogeo Motherboard (info - courtesy of Guru)
-	--------------------------------------------
+    Neogeo Motherboard (info - courtesy of Guru)
+    --------------------------------------------
 
-	PCB Layout (single slot, older version)
+    PCB Layout (single slot, older version)
 
-	NEO-MVH MV1
-	|---------------------------------------------------------------------|
-	|       4558                                                          |
-	|                                          HC04  HC32                 |
-	|                      SP-S2.SP1  NEO-E0   000-L0.L0   LS244  AS04    |
-	|             YM2610                                                  |
-	| 4558                                                                |
-	|       4558                        5814  HC259   SFIX.SFIX           |
-	|                                                             NEO-I0  |
-	| HA13001 YM3016                    5814                              |
-	--|                                                                   |
-	  |     4558                                                          |
-	--|                                                 SM1.SM1   LS32    |
-	|                                                                     |
-	|                           LSPC-A0         PRO-C0            LS244   |
-	|                                                                     |
-	|J              68000                                                 |
-	|A                                                                    |
-	|M                                                                    |
-	|M                                                      NEO-ZMC2      |
-	|A                                                                    |
-	|   LS273  NEO-G0                          58256  58256     Z80A      |
-	|                           58256  58256   58256  58256     6116      |
-	|   LS273 5864                                                        |
-	--| LS05  5864  PRO-B0                                                |
-	  |                                                                   |
-	--|             LS06   HC32           D4990A    NEO-F0   24.000MHz    |
-	|                      DSW1    BATT3.6V 32.768kHz       NEO-D0        |
-	|                                           2003  2003                |
-	|---------------------------------------------------------------------|
+    NEO-MVH MV1
+    |---------------------------------------------------------------------|
+    |       4558                                                          |
+    |                                          HC04  HC32                 |
+    |                      SP-S2.SP1  NEO-E0   000-L0.L0   LS244  AS04    |
+    |             YM2610                                                  |
+    | 4558                                                                |
+    |       4558                        5814  HC259   SFIX.SFIX           |
+    |                                                             NEO-I0  |
+    | HA13001 YM3016                    5814                              |
+    --|                                                                   |
+      |     4558                                                          |
+    --|                                                 SM1.SM1   LS32    |
+    |                                                                     |
+    |                           LSPC-A0         PRO-C0            LS244   |
+    |                                                                     |
+    |J              68000                                                 |
+    |A                                                                    |
+    |M                                                                    |
+    |M                                                      NEO-ZMC2      |
+    |A                                                                    |
+    |   LS273  NEO-G0                          58256  58256     Z80A      |
+    |                           58256  58256   58256  58256     6116      |
+    |   LS273 5864                                                        |
+    --| LS05  5864  PRO-B0                                                |
+      |                                                                   |
+    --|             LS06   HC32           D4990A    NEO-F0   24.000MHz    |
+    |                      DSW1    BATT3.6V 32.768kHz       NEO-D0        |
+    |                                           2003  2003                |
+    |---------------------------------------------------------------------|
 
-	Notes:
-	      68k clock: 12.000MHz
-	      Z80 clock: 4.000MHz
-	   YM2610 clock: 8.000MHz
-	          VSync: 60Hz
-	          HSync: 15.21kHz
+    Notes:
+          68k clock: 12.000MHz
+          Z80 clock: 4.000MHz
+       YM2610 clock: 8.000MHz
+              VSync: 60Hz
+              HSync: 15.21kHz
 
-	         Custom SNK chips
-	         ----------------
-	         NEO-G0: QFP64
-	         NEO-E0: QFP64
-	         PRO-B0: QFP136
-	        LSPC-A0: QFP160
-	         PRO-C0: QFP136
-	         NEO-F0: QFP64
-	         NEO-D0: QFP64
-	       NEO-ZMC2: QFP80
-	         NEO-I0: QFP64
+             Custom SNK chips
+             ----------------
+             NEO-G0: QFP64
+             NEO-E0: QFP64
+             PRO-B0: QFP136
+            LSPC-A0: QFP160
+             PRO-C0: QFP136
+             NEO-F0: QFP64
+             NEO-D0: QFP64
+           NEO-ZMC2: QFP80
+             NEO-I0: QFP64
 
-	         ROMs        Type
-	         ----------------------------
-	         SP-S2.SP1   TC531024 (DIP40)
-	         000-L0.L0   TC531000 (DIP28)
-	         SFIX.SFIX   D27C1000 (DIP32)
-	         SM1.SM1     MB832001 (DIP32)
+             ROMs        Type
+             ----------------------------
+             SP-S2.SP1   TC531024 (DIP40)
+             000-L0.L0   TC531000 (DIP28)
+             SFIX.SFIX   D27C1000 (DIP32)
+             SM1.SM1     MB832001 (DIP32)
 
-	------------------------------------------------------
+    ------------------------------------------------------
 
-	GRAPHICAL ISSUES :
+    GRAPHICAL ISSUES :
 
-	- Effects created using the Raster Interrupt are probably not 100% correct,
-	  e.g.:
-	  - full screen zoom in trally and tpgolf is broken again :-( I think this was
-	    caused by the fix for kof94 japan stage.
-	  - Tests on the hardware show that there are 264 raster lines; however, there
-	    are one or two line alignemnt issues with some games, SCANLINE_ADJUST is
-	    a kludge to get the alignment almost right in most cases.
-	    Some good places to test raster effects handling and alignment:
-	    - aodk 100 mega shock logo
-		- viewpoin Sammy logo
-	    - zedblade parallax scrolling
-		- ridhero road
-	    - turfmast Japan course hole 4 (the one with the waterfall)
-	    - fatfury3, 7th stage (Port Town). Raster effects are used for the background.
-	  - spinmast uses IRQ2 with no noticeable effect (it seems to be always near
-	    the bottom of the screen).
-	  - garoup enables IRQ2 on Terry's stage, but with no noticeable effect. Note
-	    that it is NOT enabled in 2 players mode, only vs cpu.
-	  - strhoop enables IRQ2 on every scanline during attract mode, with no
-	    noticeable effect.
-	  - Money Idol Exchanger runs slow during the "vs. Computer" mode. Solo mode
-	    works fine.
+    - Effects created using the Raster Interrupt are probably not 100% correct,
+      e.g.:
+      - full screen zoom in trally and tpgolf is broken again :-( I think this was
+        caused by the fix for kof94 japan stage.
+      - Tests on the hardware show that there are 264 raster lines; however, there
+        are one or two line alignemnt issues with some games, SCANLINE_ADJUST is
+        a kludge to get the alignment almost right in most cases.
+        Some good places to test raster effects handling and alignment:
+        - aodk 100 mega shock logo
+        - viewpoin Sammy logo
+        - zedblade parallax scrolling
+        - ridhero road
+        - turfmast Japan course hole 4 (the one with the waterfall)
+        - fatfury3, 7th stage (Port Town). Raster effects are used for the background.
+      - spinmast uses IRQ2 with no noticeable effect (it seems to be always near
+        the bottom of the screen).
+      - garoup enables IRQ2 on Terry's stage, but with no noticeable effect. Note
+        that it is NOT enabled in 2 players mode, only vs cpu.
+      - strhoop enables IRQ2 on every scanline during attract mode, with no
+        noticeable effect.
+      - Money Idol Exchanger runs slow during the "vs. Computer" mode. Solo mode
+        works fine.
 
-	- Full screen zoom has some glitches in tpgolf.
+    - Full screen zoom has some glitches in tpgolf.
 
-	- Gururin has bad tiles all over the place (used to work ..)
+    - Gururin has bad tiles all over the place (used to work ..)
 
-	- Bad clipping during scrolling at the sides on some games.
-		(tpgolf for example)
+    - Bad clipping during scrolling at the sides on some games.
+        (tpgolf for example)
 
-	AUDIO ISSUES :
+    AUDIO ISSUES :
 
-	- Sound (Music) was cutting out in ncommand and ncombat due to a bug in the
-	  original code, which should obviously have no ill effect on the real YM2610 but
-	  confused the emulated one. This is fixed in the YM2610 emulator.
+    - Sound (Music) was cutting out in ncommand and ncombat due to a bug in the
+      original code, which should obviously have no ill effect on the real YM2610 but
+      confused the emulated one. This is fixed in the YM2610 emulator.
 
-	- Some rather bad sounding parts in a couple of Games
-		(shocktro End of Intro)
+    - Some rather bad sounding parts in a couple of Games
+        (shocktro End of Intro)
 
-	- In mahretsu music should stop when you begin play (correct after a continue) *untested*
+    - In mahretsu music should stop when you begin play (correct after a continue) *untested*
 
-	GAMEPLAY ISSUES / LOCKUPS :
+    GAMEPLAY ISSUES / LOCKUPS :
 
-	- Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
+    - Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
 
-	- magdrop2 behaves strangely when P2 wins a 2 Player game (reports both as losing)
+    - magdrop2 behaves strangely when P2 wins a 2 Player game (reports both as losing)
 
-	- popbounc without a patch this locks up when sound is disabled, also for this game 'paddle'
-	  conroller can be selected in the setup menus, but Mame doesn't support this.
+    - popbounc without a patch this locks up when sound is disabled, also for this game 'paddle'
+      conroller can be selected in the setup menus, but Mame doesn't support this.
 
-	- ssideki2 locks up sometimes during play *not tested recently, certainly used to*
+    - ssideki2 locks up sometimes during play *not tested recently, certainly used to*
 
-	- 2020bb apparently resets when the batter gets hit by the pitcher *not tested*
+    - 2020bb apparently resets when the batter gets hit by the pitcher *not tested*
 
-	- some games apparently crash / reset when you finish them before you get the ending *untested*
+    - some games apparently crash / reset when you finish them before you get the ending *untested*
 
-	- fatfury3 locks up when you complete the game.
+    - fatfury3 locks up when you complete the game.
 
-	NON-ISSUES / FIXED ISSUES :
+    NON-ISSUES / FIXED ISSUES :
 
-	- Auto Animation Speed is not quite right in Many Games
-		(mslug waterfalls, some bg's in samsho4, blazstar lev 2 etc.)
+    - Auto Animation Speed is not quite right in Many Games
+        (mslug waterfalls, some bg's in samsho4, blazstar lev 2 etc.)
 
-	- shocktro locking up at the bosses, this was fixed a long long time ago, it was due to bugs
-	  in the 68k Core.
+    - shocktro locking up at the bosses, this was fixed a long long time ago, it was due to bugs
+      in the 68k Core.
 
-	- sound, graphic, the odd game crash & any other strange happenings in kof99p and garoup are
-	  probably because these machines are prototypes, the games are therefore not finished.  There
-	  are 'patched' versions of these romsets available in some locations, however these will not
-	  be supported.
+    - sound, graphic, the odd game crash & any other strange happenings in kof99p and garoup are
+      probably because these machines are prototypes, the games are therefore not finished.  There
+      are 'patched' versions of these romsets available in some locations, however these will not
+      be supported.
 
-	OTHER MINOR THINGS :
+    OTHER MINOR THINGS :
 
-	- 2020bb version display, the program roms contains two version numbers, the one which always
-	  get displayed when running in Mame is that which would be displayed on a console.
-	  This depends on location 0x46 of nvram. That location is the BIOS "Demo sound" bit ('00' for
-	  'set up in each game' and '01' for 'without'). If you set 0x46 to '01' ALL Demosound
-	  (Neo Splash screen and in game attract mode) is off, and version number is 1.32X. If you set
-	  0x46 to '00' and set 0x229 (Demosound bit for the game itself. '00' for 'ON' and '01' for
-	  'OFF') to '01' The Neo splashscreen has sound but the ingame attract mode does not and
-	  version is set to 1.32X. So it would seem that 1.32X gets displayed when demosund is off
-	  and 1.02C when Demosound is on.
+    - 2020bb version display, the program roms contains two version numbers, the one which always
+      get displayed when running in Mame is that which would be displayed on a console.
+      This depends on location 0x46 of nvram. That location is the BIOS "Demo sound" bit ('00' for
+      'set up in each game' and '01' for 'without'). If you set 0x46 to '01' ALL Demosound
+      (Neo Splash screen and in game attract mode) is off, and version number is 1.32X. If you set
+      0x46 to '00' and set 0x229 (Demosound bit for the game itself. '00' for 'ON' and '01' for
+      'OFF') to '01' The Neo splashscreen has sound but the ingame attract mode does not and
+      version is set to 1.32X. So it would seem that 1.32X gets displayed when demosund is off
+      and 1.02C when Demosound is on.
 
-	NOTES ABOUT UNSUPPORTED GAMES :
+    NOTES ABOUT UNSUPPORTED GAMES :
 
-	- Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
+    - Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
 
-	VIEWPOINT CRASH
+    VIEWPOINT CRASH
 
-	"Viewpoint resets under the ASM core due to nested IRQ1."
+    "Viewpoint resets under the ASM core due to nested IRQ1."
 
 
 =============================================================================
 
 Points to note, known and proven information deleted from this map:
 
-	0x3000001		Dipswitches
-				bit 0 : Selftest
-				bit 1 : Unknown (Unused ?) \ something to do with
-				bit 2 : Unknown (Unused ?) / auto repeating keys ?
-				bit 3 : \
-				bit 4 :  | communication setting ?
-				bit 5 : /
-				bit 6 : free play
-				bit 7 : stop mode ?
+    0x3000001       Dipswitches
+                bit 0 : Selftest
+                bit 1 : Unknown (Unused ?) \ something to do with
+                bit 2 : Unknown (Unused ?) / auto repeating keys ?
+                bit 3 : \
+                bit 4 :  | communication setting ?
+                bit 5 : /
+                bit 6 : free play
+                bit 7 : stop mode ?
 
-	0x320001		bit 0 : COIN 1
-				bit 1 : COIN 2
-				bit 2 : SERVICE
-				bit 3 : UNKNOWN
-				bit 4 : UNKNOWN
-				bit 5 : UNKNOWN
-				bit 6 : 4990 test pulse bit.
-				bit 7 : 4990 data bit.
+    0x320001        bit 0 : COIN 1
+                bit 1 : COIN 2
+                bit 2 : SERVICE
+                bit 3 : UNKNOWN
+                bit 4 : UNKNOWN
+                bit 5 : UNKNOWN
+                bit 6 : 4990 test pulse bit.
+                bit 7 : 4990 data bit.
 
-	0x380051		4990 control write register
-				bit 0: C0
-				bit 1: C1
-				bit 2: C2
-				bit 3-7: unused.
+    0x380051        4990 control write register
+                bit 0: C0
+                bit 1: C1
+                bit 2: C2
+                bit 3-7: unused.
 
-				0x02 = shift.
-				0x00 = register hold.
-				0x04 = ????.
-				0x03 = time read (reset register).
+                0x02 = shift.
+                0x00 = register hold.
+                0x04 = ????.
+                0x03 = time read (reset register).
 
-	0x3c000c		IRQ acknowledge
+    0x3c000c        IRQ acknowledge
 
-	0x380011		Backup bank select
+    0x380011        Backup bank select
 
-	0x3a0001		Enable display.
-	0x3a0011		Disable display
+    0x3a0001        Enable display.
+    0x3a0011        Disable display
 
-	0x3a0003		Swap in Bios (0x80 bytes vector table of BIOS)
-	0x3a0013		Swap in Rom  (0x80 bytes vector table of ROM bank)
+    0x3a0003        Swap in Bios (0x80 bytes vector table of BIOS)
+    0x3a0013        Swap in Rom  (0x80 bytes vector table of ROM bank)
 
-	0x3a000d		lock backup ram
-	0x3a001d		unlock backup ram
+    0x3a000d        lock backup ram
+    0x3a001d        unlock backup ram
 
-	0x3a000b		set game vector table (?)  mirror ?
-	0x3a001b		set bios vector table (?)  mirror ?
+    0x3a000b        set game vector table (?)  mirror ?
+    0x3a001b        set bios vector table (?)  mirror ?
 
-	0x3a000c		Unknown (ghost pilots)
-	0x31001c		Unknown (ghost pilots)
+    0x3a000c        Unknown (ghost pilots)
+    0x31001c        Unknown (ghost pilots)
 
-	IO word read
+    IO word read
 
-	0x3c0002		return vidram word (pointed to by 0x3c0000)
-	0x3c0006		?????.
-	0x3c0008		shadow adress for 0x3c0000 (not confirmed).
-	0x3c000a		shadow adress for 0x3c0002 (confirmed, see
-							   Puzzle de Pon).
-	IO word write
+    0x3c0002        return vidram word (pointed to by 0x3c0000)
+    0x3c0006        ?????.
+    0x3c0008        shadow adress for 0x3c0000 (not confirmed).
+    0x3c000a        shadow adress for 0x3c0002 (confirmed, see
+                               Puzzle de Pon).
+    IO word write
 
-	0x3c0006		Unknown, set vblank counter (?)
+    0x3c0006        Unknown, set vblank counter (?)
 
-	0x3c0008		shadow address for 0x3c0000 (not confirmed)
-	0x3c000a		shadow address for 0x3c0002 (not confirmed)
+    0x3c0008        shadow address for 0x3c0000 (not confirmed)
+    0x3c000a        shadow address for 0x3c0002 (not confirmed)
 
-	The Neo Geo contains an NEC 4990 Serial I/O calendar & clock.
-	accesed through 0x320001, 0x380050, 0x280050 (shadow adress).
-	A schematic for this device can be found on the NEC webpages.
+    The Neo Geo contains an NEC 4990 Serial I/O calendar & clock.
+    accesed through 0x320001, 0x380050, 0x280050 (shadow adress).
+    A schematic for this device can be found on the NEC webpages.
 
 ******************************************************************************/
 
@@ -293,32 +293,32 @@ static int current_rastercounter,current_rasterline,scanline_read;
 static UINT32 irq2pos_value;
 static int vblank_int,scanline_int;
 
-/*	flags for irq2control:
+/*  flags for irq2control:
 
-	0x07 unused? kof94 sets some random combination of these at the character
-		 selection screen but only because it does andi.w #$ff2f, $3c0006. It
-		 clears them immediately after.
+    0x07 unused? kof94 sets some random combination of these at the character
+         selection screen but only because it does andi.w #$ff2f, $3c0006. It
+         clears them immediately after.
 
-	0x08 shocktro2, stops autoanim counter
+    0x08 shocktro2, stops autoanim counter
 
-	Maybe 0x07 writes to the autoanim counter, meaning that in conjunction with
-	0x08 one could fine control it. However, if that was the case, writing the
-	the IRQ2 control bits would interfere with autoanimation, so I'm probably
-	wrong.
+    Maybe 0x07 writes to the autoanim counter, meaning that in conjunction with
+    0x08 one could fine control it. However, if that was the case, writing the
+    the IRQ2 control bits would interfere with autoanimation, so I'm probably
+    wrong.
 
-	0x10 irq2 enable, tile engine scanline irq that is triggered
-	when a certain scanline is reached.
+    0x10 irq2 enable, tile engine scanline irq that is triggered
+    when a certain scanline is reached.
 
-	0x20 when set, the next values written in the irq position register
-	sets irq2 to happen N lines after the current one
+    0x20 when set, the next values written in the irq position register
+    sets irq2 to happen N lines after the current one
 
-	0x40 when set, irq position register is automatically loaded at vblank to
-	set the irq2 line.
+    0x40 when set, irq position register is automatically loaded at vblank to
+    set the irq2 line.
 
-	0x80 when set, every time irq2 is triggered the irq position register is
-	automatically loaded to set the next irq2 line.
+    0x80 when set, every time irq2 is triggered the irq position register is
+    automatically loaded to set the next irq2 line.
 
-	0x80 and 0x40 may be set at the same time (Viewpoint does this).
+    0x80 and 0x40 may be set at the same time (Viewpoint does this).
 */
 
 #define IRQ2CTRL_AUTOANIM_STOP		0x08
@@ -512,7 +512,7 @@ static READ16_HANDLER( timer16_r )
 	int coinflip = pd4990a_testbit_r(0);
 	int databit = pd4990a_databit_r(0);
 
-//	logerror("CPU %04x - Read timer\n",activecpu_get_pc());
+//  logerror("CPU %04x - Read timer\n",activecpu_get_pc());
 
 	res = (readinputport(4) & ~(readinputport(5) & 0x20)) ^ (coinflip << 6) ^ (databit << 7);
 
@@ -530,14 +530,14 @@ static READ16_HANDLER( timer16_r )
 static WRITE16_HANDLER( neo_z80_w )
 {
 	/* tpgold uses 16-bit writes, this can't be correct */
-//	if (ACCESSING_LSB)
-//		return;
+//  if (ACCESSING_LSB)
+//      return;
 
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
-//	cpu_spinuntil_time(TIME_IN_USEC(20));
+//  cpu_spinuntil_time(TIME_IN_USEC(20));
 	cpu_boost_interleave(0, TIME_IN_USEC(20));
 }
 
@@ -673,26 +673,26 @@ static READ16_HANDLER( neo_control_16_r )
 	int res;
 
 	/*
-		The format of this very important location is:	AAAA AAAA A??? BCCC
+        The format of this very important location is:  AAAA AAAA A??? BCCC
 
-		A is the raster line counter. mosyougi relies solely on this to do the
-		  raster effects on the title screen; sdodgeb loops waiting for the top
-		  bit to be 1; zedblade heavily depends on it to work correctly (it
-		  checks the top bit in the IRQ2 handler).
-		B is definitely a PAL/NTSC flag. Evidence:
-		  1) trally changes the position of the speed indicator depending on
-			 it (0 = lower 1 = higher).
-		  2) samsho3 sets a variable to 60 when the bit is 0 and 50 when it's 1.
-			 This is obviously the video refresh rate in Hz.
-		  3) samsho3 sets another variable to 256 or 307. This could be the total
-			 screen height (including vblank), or close to that.
-		  Some games (e.g. lstbld2, samsho3) do this (or similar):
-		  bclr	  #$0, $3c000e.l
-		  when the bit is set, so 3c000e (whose function is unknown) has to be
-		  related
-		C is a variable speed counter. In blazstar, it controls the background
-		  speed in level 2.
-	*/
+        A is the raster line counter. mosyougi relies solely on this to do the
+          raster effects on the title screen; sdodgeb loops waiting for the top
+          bit to be 1; zedblade heavily depends on it to work correctly (it
+          checks the top bit in the IRQ2 handler).
+        B is definitely a PAL/NTSC flag. Evidence:
+          1) trally changes the position of the speed indicator depending on
+             it (0 = lower 1 = higher).
+          2) samsho3 sets a variable to 60 when the bit is 0 and 50 when it's 1.
+             This is obviously the video refresh rate in Hz.
+          3) samsho3 sets another variable to 256 or 307. This could be the total
+             screen height (including vblank), or close to that.
+          Some games (e.g. lstbld2, samsho3) do this (or similar):
+          bclr    #$0, $3c000e.l
+          when the bit is set, so 3c000e (whose function is unknown) has to be
+          related
+        C is a variable speed counter. In blazstar, it controls the background
+          speed in level 2.
+    */
 
 	scanline_read = 1;	/* needed for raster_busy optimization */
 
@@ -727,7 +727,7 @@ static WRITE16_HANDLER( neo_irq2pos_16_w )
 
 	if (irq2control & IRQ2CTRL_LOAD_RELATIVE)
 	{
-//		int line = (irq2pos_value + 3) / 0x180;	/* ridhero gives 0x17d */
+//      int line = (irq2pos_value + 3) / 0x180; /* ridhero gives 0x17d */
 		int line = (irq2pos_value + 0x3b) / 0x180;	/* turfmast goes as low as 0x145 */
 
 		irq2start = current_rasterline + line;
@@ -765,7 +765,7 @@ static READ16_HANDLER ( neogeo_video_r )
 
 	/* 8-bit reads of the low byte do NOT return the correct value on real hardware */
 	/* they actually seem to return 0xcf in tests, but kof2002 requires 0xff for the
-	   'how to play' screen to work correctly */
+       'how to play' screen to work correctly */
 	data16_t retdata=0xffff;
 
 	if (!ACCESSING_MSB)
@@ -1433,7 +1433,7 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_CPU_IO_MAP(neo_readio,neo_writeio)
 
 	/* using a framerate of 59 will fix the sync of the kof98 video / sound however
-	   using it would be a kludge as 60 has been measured using the hardware */
+       using it would be a kludge as 60 has been measured using the hardware */
 	MDRV_FRAMES_PER_SECOND(15625.0 / 264) /* verified with real PCB */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1444,11 +1444,11 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	/* Screen width *should* be 320, at least in the test mode for the crosshatch,
-	   this has been verified on original hardware, glitches that occur at 320 in
-	   Metal Slug have been verified to also appear on the MVS itself so its
-	   probably correct in all cases, however to avoid confusion we use 304 unless
-	   a game *needs* 320 */
-//	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+       this has been verified on original hardware, glitches that occur at 320 in
+       Metal Slug have been verified to also appear on the MVS itself so its
+       probably correct in all cases, however to avoid confusion we use 304 unless
+       a game *needs* 320 */
+//  MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_VISIBLE_AREA(1*8, 39*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(neogeo_mvs_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
@@ -1493,10 +1493,10 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( neo320 )
 	MDRV_IMPORT_FROM(neogeo)
 	/* Screen width *should* be 320, at least in the test mode for the crosshatch,
-	   this has been verified on original hardware, glitches that occur at 320 in
-	   Metal Slug have been verified to also appear on the MVS itself so its
-	   probably correct in all cases, however to avoid confusion we use 304 unless
-	   a game *needs* 320 */
+       this has been verified on original hardware, glitches that occur at 320 in
+       Metal Slug have been verified to also appear on the MVS itself so its
+       probably correct in all cases, however to avoid confusion we use 304 unless
+       a game *needs* 320 */
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 MACHINE_DRIVER_END
 
@@ -1537,10 +1537,10 @@ SYSTEM_BIOS_START( neogeo )
 	SYSTEM_BIOS_ADD( 6, "japan-s2",   "Japan MVS (Ver. 2)" )
 	SYSTEM_BIOS_ADD( 7, "japan-s1",   "Japan MVS (Ver. 1)" )
 
-//	SYSTEM_BIOS_ADD( 8, "uni-bios.10","Unibios MVS (Hack, Ver. 1.0)" )
-//	SYSTEM_BIOS_ADD( 9, "uni-bios.11","Unibios MVS (Hack, Ver. 1.1)" )
-//	SYSTEM_BIOS_ADD(10, "debug",      "Debug MVS (Hack?)" )
-//	SYSTEM_BIOS_ADD(11, "asia-aes",   "Asia AES" )
+//  SYSTEM_BIOS_ADD( 8, "uni-bios.10","Unibios MVS (Hack, Ver. 1.0)" )
+//  SYSTEM_BIOS_ADD( 9, "uni-bios.11","Unibios MVS (Hack, Ver. 1.1)" )
+//  SYSTEM_BIOS_ADD(10, "debug",      "Debug MVS (Hack?)" )
+//  SYSTEM_BIOS_ADD(11, "asia-aes",   "Asia AES" )
 SYSTEM_BIOS_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
@@ -1556,10 +1556,10 @@ SYSTEM_BIOS_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 6, "sp-j2.rom",    0x00000, 0x020000, CRC(acede59c) SHA1(b6f97acd282fd7e94d9426078a90f059b5e9dd91) ) /* Japan, Older */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 7, "sp1.jipan.1024",0x00000, 0x020000,  CRC(9fb0abe4) SHA1(18a987ce2229df79a8cf6a84f968f0e42ce4e59d) ) /* Japan, Older */ \
 
-//	ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
-//	ROM_LOAD16_WORD_SWAP_BIOS( 9, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
-//	ROM_LOAD16_WORD_SWAP_BIOS(10, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
-//	ROM_LOAD16_WORD_SWAP_BIOS(11, "aes-bios.bin", 0x00000, 0x020000, CRC(d27a71f1) SHA1(1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07) ) /* AES Console (Asia?) Bios */
+//  ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
+//  ROM_LOAD16_WORD_SWAP_BIOS( 9, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
+//  ROM_LOAD16_WORD_SWAP_BIOS(10, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
+//  ROM_LOAD16_WORD_SWAP_BIOS(11, "aes-bios.bin", 0x00000, 0x020000, CRC(d27a71f1) SHA1(1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07) ) /* AES Console (Asia?) Bios */
 
 /* note you'll have to modify the last for lines of each block to use the extra bios roms,
    they're hacks / homebrew / console bios roms so Mame doesn't list them by default */
@@ -2553,7 +2553,7 @@ ROM_START( sengoku2 )
 
 	NEO_SFIX_128K( "040-s1.bin", CRC(cd9802a3) SHA1(f685d4638f4f68e7e3f101c0c39128454536721b) )
 
-//	NEO_BIOS_SOUND_128K( "040-m1o.bin", CRC(9902dfa2) SHA1(af6284c5298328156726b76b968995ad25fdf4de) )  // old rom, bad?, diff rev?
+//  NEO_BIOS_SOUND_128K( "040-m1o.bin", CRC(9902dfa2) SHA1(af6284c5298328156726b76b968995ad25fdf4de) )  // old rom, bad?, diff rev?
 	NEO_BIOS_SOUND_128K( "040-m1.bin", CRC(d4de4bca) SHA1(ecf604d06f01d40b04e285facef66a6ae2d35661) )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )
@@ -2616,7 +2616,7 @@ ROM_END
 
 /*
 3countb > corrected Cx
-	> do P1 & P2 set exist ? my set is 8Mbit P1
+    > do P1 & P2 set exist ? my set is 8Mbit P1
 */
 
 ROM_START( 3countb )
@@ -3135,7 +3135,7 @@ ROM_START( fightfva )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "060-p1a.bin", 0x0000000, 0x100000, CRC(2a104b50) SHA1(3eb663d3df7074e1cdf4c0e450a35c9cf55d8979) )
 	/* there was also a copy of the 060-p1.bin with the name 060-p2.bin maybe it should be loaded over the top or this
-	   larger rom is an older revision... */
+       larger rom is an older revision... */
 
 	NEO_SFIX_128K( "060-s1.bin", CRC(70727a1e) SHA1(e0d226be0578adbe7c1d41baba79e61d4d8fac39) )
 
@@ -3626,7 +3626,7 @@ ROM_START( kof95 )
 	NEO_BIOS_SOUND_128K( "084-m1.bin", CRC(6f2d7429) SHA1(6f8462e4f07af82a5ca3197895d5dcbb67bdaa61) )
 
 	ROM_REGION( 0x900000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-//	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(21469561) SHA1(f35c72d31f026efc9e74bc4f198a123999ab3fc3) ) // bad old rom ?
+//  ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(21469561) SHA1(f35c72d31f026efc9e74bc4f198a123999ab3fc3) ) // bad old rom ?
  	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(84861b56) SHA1(1b6c91ddaed01f45eb9b7e49d9c2b9b479d50da6) )
 	ROM_LOAD( "084-v2.bin", 0x400000, 0x200000, CRC(b38a2803) SHA1(dbc2c8606ca09ed7ff20906b022da3cf053b2f09) )
 	/* 600000-7fffff empty */
@@ -5820,7 +5820,7 @@ ROM_END
 
 ROM_START( sengoku3 ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, CRC(5b557201) SHA1(d01421d1dc80fe7d2a46b9f79c0f344b3c81c1e7) ) this one is almost certainly bad
+//  ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, CRC(5b557201) SHA1(d01421d1dc80fe7d2a46b9f79c0f344b3c81c1e7) ) this one is almost certainly bad
 	ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, CRC(e0d4bc0a) SHA1(8df366097f224771ca6d1aa5c1691cd46776cd12) )
 	ROM_CONTINUE(                       0x000000, 0x100000 )
 
@@ -5861,7 +5861,7 @@ ROM_START( kof2001 )
 	/* The M1 ROM is encrypted, we load it here for reference and replace it with a decrypted version */
 	ROM_REGION( 0x40000, REGION_USER4, 0 )
 	ROM_LOAD( "265-262-m1.bin", 0x00000, 0x20000, CRC(1d5aab51) SHA1(52327c5bcad87770419057097cca20a3b187bec3) ) /* yes it really does have a strange name */
-//	NEO_BIOS_SOUND_128K( "262-m1d.bin",  CRC(73c1f5b0) SHA1(27975713e091ecc2a370061080d0920a3c4fde63) )
+//  NEO_BIOS_SOUND_128K( "262-m1d.bin",  CRC(73c1f5b0) SHA1(27975713e091ecc2a370061080d0920a3c4fde63) )
 	NEO_BIOS_SOUND_128K( "265-262_decrypted-m1.bin",   CRC(2fb0a8a5) SHA1(9878370ff8cef3e9c9f307ad64c29522dd625c8f) )
 
 
@@ -5900,7 +5900,7 @@ ROM_START( kof2001h )
 	/* The M1 ROM is encrypted, we load it here for reference and replace it with a decrypted version */
 	ROM_REGION( 0x40000, REGION_USER4, 0 )
 	ROM_LOAD( "265-262-m1.bin", 0x00000, 0x20000, CRC(1d5aab51) SHA1(52327c5bcad87770419057097cca20a3b187bec3) ) /* yes it really does have a strange name */
-//	NEO_BIOS_SOUND_128K( "262-m1d.bin",  CRC(73c1f5b0) SHA1(27975713e091ecc2a370061080d0920a3c4fde63) )
+//  NEO_BIOS_SOUND_128K( "262-m1d.bin",  CRC(73c1f5b0) SHA1(27975713e091ecc2a370061080d0920a3c4fde63) )
 	NEO_BIOS_SOUND_128K( "265-262_decrypted-m1.bin",  CRC(2fb0a8a5) SHA1(9878370ff8cef3e9c9f307ad64c29522dd625c8f) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
@@ -6710,9 +6710,9 @@ DRIVER_INIT( jockeygp )
 	kof2000_neogeo_gfx_decrypt(0xac);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x201FFF, 0, 0, brza_sram16_2_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x201FFF, 0, 0, brza_sram16_2_w);
-//	memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x320000, 0x320001, 0, 0, vliner_timer16_r );
-//	memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x280000, 0x280001, 0, 0, vliner_coins_r );
-//	memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2c0000, 0x2c0001, 0, 0, vliner_2c0000_r );
+//  memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x320000, 0x320001, 0, 0, vliner_timer16_r );
+//  memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x280000, 0x280001, 0, 0, vliner_coins_r );
+//  memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2c0000, 0x2c0001, 0, 0, vliner_2c0000_r );
 
 	init_neogeo();
 }
@@ -7013,9 +7013,8 @@ GAMEB( 1998, flipshot, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco
 GAMEB( 1999, ctomaday, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
 GAMEB( 1999, ganryu,   neogeo,   neogeo, neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */
 GAMEB( 2000, bangbead, neogeo,   neogeo, raster, neogeo,  bangbead, ROT0, "Visco", "Bang Bead" )
-#if 0
-GAMEB( 2000, bangbedp, bangbead, neogeo, raster, neogeo,  neogeo,   ROT0, "Visco", "Bang Bead (prototype)" )
-#endif
+//GAMEB( 2000, bangbedp, bangbead, neogeo, raster, neogeo,  neogeo,   ROT0, "Visco", "Bang Bead (prototype)" )
+
 /* Mega Enterprise */
 GAMEB( 2002, mslug4,   neogeo,   neogeo, neogeo, neogeo,  mslug4,   ROT0, "Mega", "Metal Slug 4" )
 GAMEB( 2002, ms4plus,  mslug4,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "bootleg", "Metal Slug 4 Plus (bootleg)" )

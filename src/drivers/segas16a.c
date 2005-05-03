@@ -1,11 +1,11 @@
 /***************************************************************************
 
-	Sega pre-System 16 & System 16A hardware
+    Sega pre-System 16 & System 16A hardware
 
 ****************************************************************************
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ***************************************************************************
 
@@ -141,7 +141,7 @@ Tetris         -         -         -         -         EPR12169  EPR12170  -    
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -162,7 +162,7 @@ static UINT32 n7751_rom_address;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -180,7 +180,7 @@ static WRITE8_HANDLER( sound_control_w );
 
 /*************************************
  *
- *	PPI interfaces
+ *  PPI interfaces
  *
  *************************************/
 
@@ -199,7 +199,7 @@ static ppi8255_interface single_ppi_intf =
 
 /*************************************
  *
- *	Configuration
+ *  Configuration
  *
  *************************************/
 
@@ -225,7 +225,7 @@ static void system16a_generic_init(void)
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -242,7 +242,7 @@ MACHINE_INIT( system16a )
 
 /*************************************
  *
- *	I/O space
+ *  I/O space
  *
  *************************************/
 
@@ -300,24 +300,24 @@ static WRITE16_HANDLER( misc_io_w )
 
 /*************************************
  *
- *	Video control
+ *  Video control
  *
  *************************************/
 
 static WRITE8_HANDLER( video_control_w )
 {
 	/*
-		PPI port B
+        PPI port B
 
-		D7 : Screen flip (1= flip, 0= normal orientation)
-		D6 : To 8751 pin 13 (/INT1)
-		D5 : To 315-5149 pin 17.
-		D4 : Screen enable (1= display, 0= blank)
-		D3 : Lamp #2 (1= on, 0= off)
-		D2 : Lamp #1 (1= on, 0= off)
-		D1 : Coin meter #2
-		D0 : Coin meter #1
-	*/
+        D7 : Screen flip (1= flip, 0= normal orientation)
+        D6 : To 8751 pin 13 (/INT1)
+        D5 : To 315-5149 pin 17.
+        D4 : Screen enable (1= display, 0= blank)
+        D3 : Lamp #2 (1= on, 0= off)
+        D2 : Lamp #1 (1= on, 0= off)
+        D1 : Coin meter #2
+        D0 : Coin meter #1
+    */
 	if (((video_control ^ data) & 0x0c) && lamp_changed_w)
 		(*lamp_changed_w)(video_control ^ data, data);
 	video_control = data;
@@ -334,7 +334,7 @@ static WRITE8_HANDLER( video_control_w )
 
 /*************************************
  *
- *	Sound control
+ *  Sound control
  *
  *************************************/
 
@@ -348,19 +348,19 @@ static WRITE8_HANDLER( sound_command_w )
 static WRITE8_HANDLER( sound_control_w )
 {
 	/*
-		PPI port C
+        PPI port C
 
-		D7 : Port A handshaking signal /OBF
-		D6 : Port A handshaking signal ACK
-		D5 : Port A handshaking signal IBF
-		D4 : Port A handshaking signal /STB
-		D3 : Port A handshaking signal INTR
-		D2 : To PAL 315-5107 pin 9 (SCONT1)
-		D1 : To PAL 315-5108 pin 19 (SCONT0)
-		D0 : To MUTE input on MB3733 amplifier.
-			 0= Sound is disabled
-			 1= sound is enabled
-	*/
+        D7 : Port A handshaking signal /OBF
+        D6 : Port A handshaking signal ACK
+        D5 : Port A handshaking signal IBF
+        D4 : Port A handshaking signal /STB
+        D3 : Port A handshaking signal INTR
+        D2 : To PAL 315-5107 pin 9 (SCONT1)
+        D1 : To PAL 315-5108 pin 19 (SCONT0)
+        D0 : To MUTE input on MB3733 amplifier.
+             0= Sound is disabled
+             1= sound is enabled
+    */
 	segaic16_tilemap_set_colscroll(0, ~data & 0x04);
 	segaic16_tilemap_set_rowscroll(0, ~data & 0x02);
 }
@@ -369,22 +369,22 @@ static WRITE8_HANDLER( sound_control_w )
 
 /*************************************
  *
- *	Sound interaction
+ *  Sound interaction
  *
  *************************************/
 
 WRITE8_HANDLER( n7751_command_w )
 {
 	/*
-		Z80 7751 control port
+        Z80 7751 control port
 
-		D7-D5 = connected to 7751 port C
-		D4    = /CS for ROM 3
-		D3    = /CS for ROM 2
-		D2    = /CS for ROM 1
-		D1    = /CS for ROM 0
-		D0    = A14 line to ROMs
-	*/
+        D7-D5 = connected to 7751 port C
+        D4    = /CS for ROM 3
+        D3    = /CS for ROM 2
+        D2    = /CS for ROM 1
+        D1    = /CS for ROM 0
+        D0    = A14 line to ROMs
+    */
 	int numroms = memory_region_length(REGION_SOUND1) / 0x8000;
 	n7751_rom_address &= 0x3fff;
 	n7751_rom_address |= (data & 0x01) << 14;
@@ -399,11 +399,11 @@ WRITE8_HANDLER( n7751_command_w )
 static WRITE8_HANDLER( n7751_control_w )
 {
 	/*
-		YM2151 output port
+        YM2151 output port
 
-		D1 = /RESET line on 7751
-		D0 = /IRQ line on 7751
-	*/
+        D1 = /RESET line on 7751
+        D0 = /IRQ line on 7751
+    */
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
 	cpunum_set_input_line(2, 0, (data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
 	cpu_boost_interleave(0, TIME_IN_USEC(100));
@@ -455,7 +455,7 @@ READ8_HANDLER( n7751_t1_r )
 
 /*************************************
  *
- *	I8751 interrupt generation
+ *  I8751 interrupt generation
  *
  *************************************/
 
@@ -470,7 +470,7 @@ static INTERRUPT_GEN( i8751_main_cpu_vblank )
 
 /*************************************
  *
- *	Per-game I8751 workarounds
+ *  Per-game I8751 workarounds
  *
  *************************************/
 
@@ -537,7 +537,7 @@ static void quartet_i8751_sim(void)
 
 /*************************************
  *
- *	Major League custom I/O
+ *  Major League custom I/O
  *
  *************************************/
 
@@ -621,7 +621,7 @@ static READ16_HANDLER( mjleague_custom_io_r )
 
 /*************************************
  *
- *	SDI custom I/O
+ *  SDI custom I/O
  *
  *************************************/
 
@@ -644,7 +644,7 @@ static READ16_HANDLER( sdi_custom_io_r )
 
 /*************************************
  *
- *	Sukeban Jansi Ryuko custom I/O
+ *  Sukeban Jansi Ryuko custom I/O
  *
  *************************************/
 
@@ -681,7 +681,7 @@ static void sjryuko_lamp_changed_w(UINT8 changed, UINT8 newval)
 
 /*************************************
  *
- *	Capacitor-backed RAM
+ *  Capacitor-backed RAM
  *
  *************************************/
 
@@ -697,7 +697,7 @@ static NVRAM_HANDLER( system16a )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -717,7 +717,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -740,7 +740,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	N7751 handlers
+ *  N7751 handlers
  *
  *************************************/
 
@@ -761,7 +761,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	i8751 MCU memory handlers
+ *  i8751 MCU memory handlers
  *
  *************************************/
 
@@ -778,7 +778,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Generic port definitions
+ *  Generic port definitions
  *
  *************************************/
 
@@ -883,7 +883,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Game-specific port definitions
+ *  Game-specific port definitions
  *
  *************************************/
 
@@ -1425,10 +1425,10 @@ static INPUT_PORTS_START( timescan )
 	PORT_DIPSETTING(    0x40, "Well" )
 	PORT_DIPSETTING(    0x00, "A Little" )
 	/*
-		Pin Rebound = The Setting of "Well" or "A Little" signifies the
-		rebound strength and the resulting difficulty or ease in which the
-		ball goes out of play.
-	*/
+        Pin Rebound = The Setting of "Well" or "A Little" signifies the
+        rebound strength and the resulting difficulty or ease in which the
+        ball goes out of play.
+    */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -1469,7 +1469,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -1483,7 +1483,7 @@ static struct YM2151interface ym2151_interface =
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1509,7 +1509,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1586,15 +1586,15 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Action Fighter, Sega System 16A
-	CPU: FD1089A 317-0018
+    Action Fighter, Sega System 16A
+    CPU: FD1089A 317-0018
  */
 ROM_START( afighter )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1628,8 +1628,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Alex Kidd, Sega System 16A
-	CPU: 68000
+    Alex Kidd, Sega System 16A
+    CPU: 68000
  */
 ROM_START( alexkidd )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1665,8 +1665,8 @@ ROM_START( alexkidd )
 ROM_END
 
 /**************************************************************************************************************************
-	Alex Kidd, Sega System 16A
-	CPU: FD1094? 317-????
+    Alex Kidd, Sega System 16A
+    CPU: FD1094? 317-????
  */
 ROM_START( alexkid1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1705,8 +1705,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Alien Syndrome, pre-System 16
-	CPU: FD1089A
+    Alien Syndrome, pre-System 16
+    CPU: FD1089A
  */
 ROM_START( aliensy2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1753,8 +1753,8 @@ ROM_START( aliensy2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Alien Syndrome, pre-System 16
-	CPU: FD1089A 317-0033
+    Alien Syndrome, pre-System 16
+    CPU: FD1089A 317-0033
  */
 ROM_START( aliensy1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Custom 68000 code */
@@ -1804,8 +1804,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Body Slam, pre-System 16
-	CPU: 68000
+    Body Slam, pre-System 16
+    CPU: 68000
  */
 ROM_START( bodyslam )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1848,8 +1848,8 @@ ROM_START( bodyslam )
 ROM_END
 
 /**************************************************************************************************************************
-	Dump Matsumoto, pre-System 16
-	CPU: 68000
+    Dump Matsumoto, pre-System 16
+    CPU: 68000
  */
 ROM_START( dumpmtmt )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1895,8 +1895,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Fantasy Zone, Sega System 16A
-	CPU: 68000
+    Fantasy Zone, Sega System 16A
+    CPU: 68000
  */
 ROM_START( fantzone )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1925,8 +1925,8 @@ ROM_START( fantzone )
 ROM_END
 
 /**************************************************************************************************************************
-	Fantasy Zone, Sega System 16A
-	CPU: 68000
+    Fantasy Zone, Sega System 16A
+    CPU: 68000
  */
 ROM_START( fantzon1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1958,8 +1958,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Major League, pre-System 16
-	CPU: 68000
+    Major League, pre-System 16
+    CPU: 68000
  */
 ROM_START( mjleague )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2002,8 +2002,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Quartet, pre-System 16
-	CPU: 68000
+    Quartet, pre-System 16
+    CPU: 68000
  */
 ROM_START( quartet )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2046,8 +2046,8 @@ ROM_START( quartet )
 ROM_END
 
 /**************************************************************************************************************************
-	Quartet, pre-System 16
-	CPU: 68000
+    Quartet, pre-System 16
+    CPU: 68000
  */
 ROM_START( quartetj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2093,8 +2093,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Quartet 2, pre-System 16
-	CPU: 68000
+    Quartet 2, pre-System 16
+    CPU: 68000
  */
 ROM_START( quartet2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2137,8 +2137,8 @@ ROM_START( quartet2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Quartet 2, pre-System 16
-	CPU: 68000
+    Quartet 2, pre-System 16
+    CPU: 68000
  */
 ROM_START( quartt2j )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2184,8 +2184,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	SDI, Sega System 16A
-	CPU: FD1089B (317-0027)
+    SDI, Sega System 16A
+    CPU: FD1089B (317-0027)
  */
 ROM_START( sdi )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2223,8 +2223,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Shinobi, Sega System 16A
-	CPU: 68000 (unprotected)
+    Shinobi, Sega System 16A
+    CPU: 68000 (unprotected)
  */
 ROM_START( shinobi )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2267,8 +2267,8 @@ ROM_START( shinobi )
 ROM_END
 
 /**************************************************************************************************************************
-	Shinobi, Sega System 16A
-	CPU: FD1094 (317-0050)
+    Shinobi, Sega System 16A
+    CPU: FD1094 (317-0050)
  */
 ROM_START( shinobi1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2317,18 +2317,18 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Sukeban Jansi Ryuko, Sega System 16A
-	CPU: FD1089B (317-5021)
+    Sukeban Jansi Ryuko, Sega System 16A
+    CPU: FD1089B (317-5021)
 
-	 (JPN Ver.)
-	(c)1988 White Board
+     (JPN Ver.)
+    (c)1988 White Board
 
-	Sega System 16A/16B
+    Sega System 16A/16B
 
-	IC61:	839-0068 (16A)
-	IC69:	315-5150 (16A)
+    IC61:   839-0068 (16A)
+    IC69:   315-5150 (16A)
 
-	CPU:	317-5021 (16A/16B)
+    CPU:    317-5021 (16A/16B)
 */
 ROM_START( sjryuko1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2379,36 +2379,36 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Tetris, Sega System 16A
-	CPU: FD1094 (317-0093)
+    Tetris, Sega System 16A
+    CPU: FD1094 (317-0093)
 
-	Top board
+    Top board
 
-	Pos.   Label       Part        Notes
+    Pos.   Label       Part        Notes
 
-	D4     EPR-12205   27C256      Z80 program
-	D8     EPR-12200   27C256      68000 program
-	C8     Unused                  68000 program
-	B8     Unused                  68000 program
-	D11    EPR-12201   27C256      68000 program
-	C11    Unused                  68000 program
-	B11    Unused                  68000 program
-	C18    EPR-12204   27C512      Tile data
-	D18    EPR-12203   27C512      Tile data
-	E18    EPR-12202   27C512      Tile data
+    D4     EPR-12205   27C256      Z80 program
+    D8     EPR-12200   27C256      68000 program
+    C8     Unused                  68000 program
+    B8     Unused                  68000 program
+    D11    EPR-12201   27C256      68000 program
+    C11    Unused                  68000 program
+    B11    Unused                  68000 program
+    C18    EPR-12204   27C512      Tile data
+    D18    EPR-12203   27C512      Tile data
+    E18    EPR-12202   27C512      Tile data
 
-	Bottom board
+    Bottom board
 
-	Pos.   Label       Part        Notes
+    Pos.   Label       Part        Notes
 
-	D3     EPR-12169   27C256      Sprite data
-	D4     Unused                  Sprite data
-	D5     Unused                  Sprite data
-	D6     Unused                  Sprite data
-	F3     EPR-12170   27C256      Sprite data
-	F4     Unused                  Sprite data
-	F5     Unused                  Sprite data
-	F6     Unused                  Sprite data
+    D3     EPR-12169   27C256      Sprite data
+    D4     Unused                  Sprite data
+    D5     Unused                  Sprite data
+    D6     Unused                  Sprite data
+    F3     EPR-12170   27C256      Sprite data
+    F4     Unused                  Sprite data
+    F5     Unused                  Sprite data
+    F6     Unused                  Sprite data
  */
 ROM_START( tetris )
 	ROM_REGION( 0x40000, REGION_CPU1, ROMREGION_ERASEFF ) /* 68000 code */
@@ -2432,8 +2432,8 @@ ROM_START( tetris )
 ROM_END
 
 /**************************************************************************************************************************
-	Tetris, Sega System 16A
-	CPU: FD1094 (317-0093a)
+    Tetris, Sega System 16A
+    CPU: FD1094 (317-0093a)
 */
 ROM_START( tetris3 )
 	ROM_REGION( 0x40000, REGION_CPU1, ROMREGION_ERASEFF ) /* 68000 code */
@@ -2460,52 +2460,52 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Time Scanner, Sega System 16A
-	CPU: FD1089B (317-0024)
+    Time Scanner, Sega System 16A
+    CPU: FD1089B (317-0024)
 
-	GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
-	CPU: FD1089B 6J2 317-0024
+    GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
+    CPU: FD1089B 6J2 317-0024
 
-	BOARD: SYSTEM 16B
+    BOARD: SYSTEM 16B
 
-	GAME NUMBER: ???-????-??
-	CPU: MC68000
+    GAME NUMBER: ???-????-??
+    CPU: MC68000
 
-	IC POSITIONS	EPROMS		EPROMS
-	S16A	S16B	NUMBERS		FUNCTIONS
+    IC POSITIONS    EPROMS      EPROMS
+    S16A    S16B    NUMBERS     FUNCTIONS
 
-	26	-	EPR10537A	PROGRAM 317-0024
-	25	-	EPR10538	"
-	24	-	EPR10539	"
-	43	-	EPR10540A	"
-	42	-	EPR10541	"
-	41	-	EPR10542	"
+    26  -   EPR10537A   PROGRAM 317-0024
+    25  -   EPR10538    "
+    24  -   EPR10539    "
+    43  -   EPR10540A   "
+    42  -   EPR10541    "
+    41  -   EPR10542    "
 
-	95	B9	EPR10543	SCREEN
-	94	B10	EPR10544	"
-	93	B11	EPR10545	"
+    95  B9  EPR10543    SCREEN
+    94  B10 EPR10544    "
+    93  B11 EPR10545    "
 
-	12	-	EPR10546	SOUND PROGRAM
-	1	-	EPR10547	SPEECH
+    12  -   EPR10546    SOUND PROGRAM
+    1   -   EPR10547    SPEECH
 
-	10	B1	EPR10548	OBJECT
-	17	B2	EPR10549	"
-	23	B3	EPR10550	"
-	29	B4	EPR10551	"
-	11	B5	EPR10552	"
-	18	B6	EPR10553	"
-	24	B7	EPR10554	"
-	30	B8	EPR10555	"
+    10  B1  EPR10548    OBJECT
+    17  B2  EPR10549    "
+    23  B3  EPR10550    "
+    29  B4  EPR10551    "
+    11  B5  EPR10552    "
+    18  B6  EPR10553    "
+    24  B7  EPR10554    "
+    30  B8  EPR10555    "
 
-	-	A7	EPR10562	SOUND PROGRAM
-	-	A8	EPR10563	SPEECH
+    -   A7  EPR10562    SOUND PROGRAM
+    -   A8  EPR10563    SPEECH
 
-	-	A1	EPR10850	PROGRAM MC68000
-	-	A2	EPR10851	"
-	-	A3	EPR10852	"
-	-	A4	EPR10853	"
-	-	A5	EPR10854	"
-	-	A6	EPR10855	"
+    -   A1  EPR10850    PROGRAM MC68000
+    -   A2  EPR10851    "
+    -   A3  EPR10852    "
+    -   A4  EPR10853    "
+    -   A5  EPR10854    "
+    -   A6  EPR10855    "
 */
 ROM_START( timesca1 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2545,8 +2545,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Wonder Boy III, Sega System 16A
-	CPU: FD1094 (317-0084)
+    Wonder Boy III, Sega System 16A
+    CPU: FD1094 (317-0084)
  */
 ROM_START( wb31 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2589,7 +2589,7 @@ ROM_END
 
 /*************************************
  *
- *	Generic driver initialization
+ *  Generic driver initialization
  *
  *************************************/
 
@@ -2676,7 +2676,7 @@ static DRIVER_INIT( timesca1 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

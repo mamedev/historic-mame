@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Sega Out Run hardware
+    Sega Out Run hardware
 
 ****************************************************************************
 
-	Known bugs:
-		* LED connected to stop lights no longer working
+    Known bugs:
+        * LED connected to stop lights no longer working
 
-	To do for each game:
-		* verify memory test
-		* verify inputs
-		* verify DIP switches
-		* verify protection
-		* check playability
+    To do for each game:
+        * verify memory test
+        * verify inputs
+        * verify DIP switches
+        * verify protection
+        * check playability
 
 ***************************************************************************/
 
@@ -32,7 +32,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -53,7 +53,7 @@ static const UINT8 *custom_map;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -71,7 +71,7 @@ static WRITE8_HANDLER( video_control_w );
 
 /*************************************
  *
- *	PPI interfaces
+ *  PPI interfaces
  *
  *************************************/
 
@@ -90,7 +90,7 @@ static ppi8255_interface single_ppi_intf =
 
 /*************************************
  *
- *	Memory mapping tables
+ *  Memory mapping tables
  *
  *************************************/
 
@@ -114,7 +114,7 @@ static const struct segaic16_memory_map_entry outrun_info[] =
 
 /*************************************
  *
- *	Configuration
+ *  Configuration
  *
  *************************************/
 
@@ -155,7 +155,7 @@ static void outrun_generic_init(void)
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -191,7 +191,7 @@ static void irq2_gen(int param)
 static void scanline_callback(int scanline)
 {
 	int next_scanline = scanline;
-	
+
 	/* trigger IRQs on certain scanlines */
 	switch (scanline)
 	{
@@ -202,8 +202,8 @@ static void scanline_callback(int scanline)
 			timer_set(cpu_getscanlineperiod() * 0.9, 0, irq2_gen);
 			next_scanline = scanline + 1;
 			break;
-		
-		/* IRQ2 turns off at the start of scanlines 66, 130, 194 */ 
+
+		/* IRQ2 turns off at the start of scanlines 66, 130, 194 */
 		case 66:
 		case 130:
 		case 194:
@@ -211,13 +211,13 @@ static void scanline_callback(int scanline)
 			next_scanline = (scanline == 194) ? 223 : (scanline + 63);
 			break;
 
-		/* VBLANK triggers on scanline 223 */		
+		/* VBLANK triggers on scanline 223 */
 		case 223:
 			vblank_irq_state = 1;
 			next_scanline = scanline + 1;
 			cpunum_set_input_line(1, 4, ASSERT_LINE);
 			break;
-		
+
 		/* VBLANK turns off at the start of scanline 224 */
 		case 224:
 			vblank_irq_state = 0;
@@ -225,7 +225,7 @@ static void scanline_callback(int scanline)
 			cpunum_set_input_line(1, 4, CLEAR_LINE);
 			break;
 	}
-	
+
 	/* update IRQs on the main CPU */
 	update_main_irqs();
 
@@ -237,7 +237,7 @@ static void scanline_callback(int scanline)
 
 /*************************************
  *
- *	Basic machine setup
+ *  Basic machine setup
  *
  *************************************/
 
@@ -259,7 +259,7 @@ static MACHINE_INIT( outrun )
 
 	/* hook the RESET line, which resets CPU #1 */
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)outrun_reset);
-	
+
 	/* start timers to track interrupts */
 	timer_set(cpu_getscanlinetime(223), 223, scanline_callback);
 }
@@ -268,7 +268,7 @@ static MACHINE_INIT( outrun )
 
 /*************************************
  *
- *	8255 handlers
+ *  8255 handlers
  *
  *************************************/
 
@@ -287,13 +287,13 @@ static WRITE8_HANDLER( unknown_portb_w )
 static WRITE8_HANDLER( video_control_w )
 {
 	/* Output port:
-		D7: SG1 -- connects to sprite chip
-		D6: SG0 -- connects to mixing
-		D5: Screen display (1= blanked, 0= displayed)
-		D4-D2: (ADC2-0)
-		D1: (CONT) - affects sprite hardware
-		D0: Sound section reset (1= normal operation, 0= reset)
-	*/
+        D7: SG1 -- connects to sprite chip
+        D6: SG0 -- connects to mixing
+        D5: Screen display (1= blanked, 0= displayed)
+        D4-D2: (ADC2-0)
+        D1: (CONT) - affects sprite hardware
+        D0: Sound section reset (1= normal operation, 0= reset)
+    */
 	segaic16_set_display_enable(data & 0x20);
 	adc_select = (data >> 2) & 7;
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
@@ -303,7 +303,7 @@ static WRITE8_HANDLER( video_control_w )
 
 /*************************************
  *
- *	I/O space
+ *  I/O space
  *
  *************************************/
 
@@ -367,9 +367,9 @@ static WRITE16_HANDLER( outrun_custom_io_w )
 			if (ACCESSING_LSB)
 			{
 				/* Output port:
-					D7: /MUTE
-					D6-D0: unknown
-				*/
+                    D7: /MUTE
+                    D6-D0: unknown
+                */
 				sound_global_enable(data & 0x80);
 			}
 			return;
@@ -419,17 +419,17 @@ static WRITE16_HANDLER( shangon_custom_io_w )
 	{
 		case 0x0000/2:
 			/* Output port:
-				D7-D6: (ADC1-0)
-				D5: Screen display
-			*/
+                D7-D6: (ADC1-0)
+                D5: Screen display
+            */
 			adc_select = (data >> 6) & 3;
 			segaic16_set_display_enable((data >> 5) & 1);
 			return;
 
 		case 0x0020/2:
 			/* Output port:
-				D0: Sound section reset (1= normal operation, 0= reset)
-			*/
+                D0: Sound section reset (1= normal operation, 0= reset)
+            */
 			cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
 			return;
 
@@ -448,7 +448,7 @@ static WRITE16_HANDLER( shangon_custom_io_w )
 
 /*************************************
  *
- *	Capacitor-backed RAM
+ *  Capacitor-backed RAM
  *
  *************************************/
 
@@ -464,7 +464,7 @@ static NVRAM_HANDLER( outrun )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -477,7 +477,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Second CPU memory handlers
+ *  Second CPU memory handlers
  *
  *************************************/
 
@@ -493,7 +493,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -515,7 +515,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Generic port definitions
+ *  Generic port definitions
  *
  *************************************/
 
@@ -600,7 +600,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Game-specific port definitions
+ *  Game-specific port definitions
  *
  *************************************/
 
@@ -615,7 +615,7 @@ static INPUT_PORTS_START( outrun )
 	PORT_DIPSETTING(    0x02, "Up Cockpit" )
 	PORT_DIPSETTING(    0x01, "Mini Up" )
 	PORT_DIPSETTING(    0x03, "Moving" )
-//	PORT_DIPSETTING(    0x00, "No Use" )
+//  PORT_DIPSETTING(    0x00, "No Use" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -759,7 +759,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -773,7 +773,7 @@ static struct SEGAPCMinterface segapcm_interface =
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -799,7 +799,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Generic machine drivers
+ *  Generic machine drivers
  *
  *************************************/
 
@@ -858,15 +858,15 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Outrun
-	CPU: 68000
+    Outrun
+    CPU: 68000
 */
 ROM_START( outrun )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -916,8 +916,8 @@ ROM_START( outrun )
 ROM_END
 
 /**************************************************************************************************************************
-	Outrun
-	CPU: 68000
+    Outrun
+    CPU: 68000
 */
 ROM_START( outrun2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -967,69 +967,69 @@ ROM_START( outrun2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Outrun
-	CPU: 68000 (317-????)
+    Outrun
+    CPU: 68000 (317-????)
 
-	Sega Outrun Japan version
-	-------------------------
+    Sega Outrun Japan version
+    -------------------------
 
-	CPU Board (837-6063)
-	---------
-	EPR10173 - IC66 - 5826
-	EPR10174 - IC67 - 1817
-	EPR10175 - IC68 - EAE0
-	EPR10176 - IC69 - 05F3
-	EPR10178 - IC86 - 5494
-	EPR10179 - IC87 - E63D
-	EPR10180 - IC88 - 14C5
-	EPR10181 - IC89 - 999E
+    CPU Board (837-6063)
+    ---------
+    EPR10173 - IC66 - 5826
+    EPR10174 - IC67 - 1817
+    EPR10175 - IC68 - EAE0
+    EPR10176 - IC69 - 05F3
+    EPR10178 - IC86 - 5494
+    EPR10179 - IC87 - E63D
+    EPR10180 - IC88 - 14C5
+    EPR10181 - IC89 - 999E
 
-	EPR10183 - IC115 - 089E
-	EPR10184 - IC116 - 1CD2
-	EPR10258 - IC117 - 40FE
-	EPR10259 - IC118 - 9CBF
-	EPR10261 - IC130 - 7DCE
-	EPR10262 - IC131 - 43C1
-	EPR10263 - IC132 - 905E
-	EPR10264 - IC133 - 8498
+    EPR10183 - IC115 - 089E
+    EPR10184 - IC116 - 1CD2
+    EPR10258 - IC117 - 40FE
+    EPR10259 - IC118 - 9CBF
+    EPR10261 - IC130 - 7DCE
+    EPR10262 - IC131 - 43C1
+    EPR10263 - IC132 - 905E
+    EPR10264 - IC133 - 8498
 
-	Video Board (834-6065 Revision A)
-	-----------
-	EPR10194 - IC26 - 8C35
-	EPR10195 - IC27 - 4012
-	EPR10196 - IC28 - C4D8
-	EPR10197 - IC29 - FD47
-	EPR10198 - IC30 - BF34
-	EPR10199 - IC31 - DD89
-	EPR10200 - IC32 - A707
-	EPR10201 - IC33 - E288
+    Video Board (834-6065 Revision A)
+    -----------
+    EPR10194 - IC26 - 8C35
+    EPR10195 - IC27 - 4012
+    EPR10196 - IC28 - C4D8
+    EPR10197 - IC29 - FD47
+    EPR10198 - IC30 - BF34
+    EPR10199 - IC31 - DD89
+    EPR10200 - IC32 - A707
+    EPR10201 - IC33 - E288
 
-	EPR10203 - IC38 - 3703
-	EPR10204 - IC39 - 861B
-	EPR10205 - IC40 - 36C5
-	EPR10206 - IC41 - 5F40
-	EPR10207 - IC42 - F500
-	EPR10208 - IC43 - D932
-	EPR10209 - IC44 - D464
-	EPR10210 - IC45 - 4D74
+    EPR10203 - IC38 - 3703
+    EPR10204 - IC39 - 861B
+    EPR10205 - IC40 - 36C5
+    EPR10206 - IC41 - 5F40
+    EPR10207 - IC42 - F500
+    EPR10208 - IC43 - D932
+    EPR10209 - IC44 - D464
+    EPR10210 - IC45 - 4D74
 
-	EPR10212 - IC52 - 707D
-	EPR10213 - IC53 - 8204
-	EPR10214 - IC54 - 79C4
-	EPR10215 - IC55 - 0236
-	EPR10216 - IC56 - 5738
-	EPR10217 - IC57 - E265
-	EPR10218 - IC58 - 9571
-	EPR10219 - IC59 - A8C9
+    EPR10212 - IC52 - 707D
+    EPR10213 - IC53 - 8204
+    EPR10214 - IC54 - 79C4
+    EPR10215 - IC55 - 0236
+    EPR10216 - IC56 - 5738
+    EPR10217 - IC57 - E265
+    EPR10218 - IC58 - 9571
+    EPR10219 - IC59 - A8C9
 
-	EPR10221 - IC66 - 224E
-	EPR10222 - IC67 - 4677
-	EPR10223 - IC68 - D3BF
-	EPR10224 - IC69 - 03A7
-	EPR10225 - IC70 - 1215
-	EPR10226 - IC71 - C3B8
-	EPR10227 - IC72 - 5595
-	EPR10228 - IC73 - 934B
+    EPR10221 - IC66 - 224E
+    EPR10222 - IC67 - 4677
+    EPR10223 - IC68 - D3BF
+    EPR10224 - IC69 - 03A7
+    EPR10225 - IC70 - 1215
+    EPR10226 - IC71 - C3B8
+    EPR10227 - IC72 - 5595
+    EPR10228 - IC73 - 934B
 */
 
 ROM_START( outrun1 )
@@ -1111,7 +1111,7 @@ ROM_START( outrun1 )
 ROM_END
 
 /**************************************************************************************************************************
-	Outrun (bootleg)
+    Outrun (bootleg)
 */
 ROM_START( outrunb )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1154,7 +1154,7 @@ ROM_START( outrunb )
 
 	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* road gfx */
 	ROM_LOAD( "orun_me.rom", 0x0000, 0x8000, CRC(666fe754) SHA1(606090db53d658d7b04dca4748014a411e12f259) )
-//	ROM_LOAD( "orun_mf.rom", 0x0000, 0x8000, CRC(ed5bda9c) )	//??
+//  ROM_LOAD( "orun_mf.rom", 0x0000, 0x8000, CRC(ed5bda9c) )    //??
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
 	ROM_LOAD( "orun_ma.rom", 0x00000, 0x8000, CRC(a3ff797a) SHA1(d97318a0602965cb5059c69a68609691d55a8e41) )
@@ -1172,8 +1172,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Turbo Outrun
-	CPU: FD1094 (317-0118)
+    Turbo Outrun
+    CPU: FD1094 (317-0118)
 */
 ROM_START( toutrun )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1224,8 +1224,8 @@ ROM_START( toutrun )
 ROM_END
 
 /**************************************************************************************************************************
-	Turbo Outrun
-	CPU: FD1094 (317-????)
+    Turbo Outrun
+    CPU: FD1094 (317-????)
 */
 ROM_START( toutrun2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1284,8 +1284,8 @@ ROM_START( toutrun2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Turbo Outrun
-	CPU: FD1094 (317-????)
+    Turbo Outrun
+    CPU: FD1094 (317-????)
 */
 ROM_START( toutrun1 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1344,8 +1344,8 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Super Hangon
-	CPU: 68000 (317-????)
+    Super Hangon
+    CPU: 68000 (317-????)
 */
 ROM_START( shangon )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1389,8 +1389,8 @@ ROM_START( shangon )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Hangon
-	CPU: FD1089B (317-0034)
+    Super Hangon
+    CPU: FD1089B (317-0034)
 */
 ROM_START( shangon3 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1440,8 +1440,8 @@ ROM_START( shangon3 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Hangon
-	CPU: FD1089B (317-0034)
+    Super Hangon
+    CPU: FD1089B (317-0034)
 */
 ROM_START( shangon2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1491,8 +1491,8 @@ ROM_START( shangon2 )
 ROM_END
 
 /**************************************************************************************************************************
-	Super Hangon
-	CPU: FD1089B (317-0034)
+    Super Hangon
+    CPU: FD1089B (317-0034)
 */
 ROM_START( shangon1 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1542,8 +1542,8 @@ ROM_START( shangon1 )
 ROM_END
 
 /**************************************************************************************************************************
-	Limited Edition Hangon
-	CPU: 68000 (317-????)
+    Limited Edition Hangon
+    CPU: 68000 (317-????)
 */
 ROM_START( shangnle )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code  */
@@ -1596,7 +1596,7 @@ ROM_END
 
 /*************************************
  *
- *	Generic driver initialization
+ *  Generic driver initialization
  *
  *************************************/
 
@@ -1670,7 +1670,7 @@ static DRIVER_INIT( shangon3 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

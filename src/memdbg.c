@@ -37,11 +37,11 @@ struct MemPtr
 	size_t numBytes;
 	struct MemPtr *pNextAllocation;
 	/* This header is exactly 16 bytes; it should not interfere with any alignment
-	 * requirements for the data chunk itself, which immediately follows this header.
-	 *
-	 * uint8_t data[numBytes];
-	 * uint8_t guardData[]; // copy of mGuardData string
-	 */
+     * requirements for the data chunk itself, which immediately follows this header.
+     *
+     * uint8_t data[numBytes];
+     * uint8_t guardData[]; // copy of mGuardData string
+     */
 };
 typedef struct MemPtr MemPtr;
 

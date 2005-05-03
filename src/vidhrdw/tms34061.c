@@ -1,13 +1,13 @@
 /****************************************************************************
- *																			*
- *	Functions to emulate the TMS34061 video controller						*
- *																			*
- *  Created by Zsolt Vasvari on 5/26/1998.									*
- *	Updated by Aaron Giles on 11/21/2000.									*
- *																			*
- *  This is far from complete. See the TMS34061 User's Guide available on	*
- *  www.spies.com/arcade													*
- *																			*
+ *                                                                          *
+ *  Functions to emulate the TMS34061 video controller                      *
+ *                                                                          *
+ *  Created by Zsolt Vasvari on 5/26/1998.                                  *
+ *  Updated by Aaron Giles on 11/21/2000.                                   *
+ *                                                                          *
+ *  This is far from complete. See the TMS34061 User's Guide available on   *
+ *  www.spies.com/arcade                                                    *
+ *                                                                          *
  ****************************************************************************/
 
 #include "driver.h"
@@ -19,7 +19,7 @@
 
 /*************************************
  *
- *	Internal structure
+ *  Internal structure
  *
  *************************************/
 
@@ -41,7 +41,7 @@ struct tms34061_data
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -60,7 +60,7 @@ static const char *regnames[] =
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -70,7 +70,7 @@ static void tms34061_interrupt(int param);
 
 /*************************************
  *
- *	Hardware startup
+ *  Hardware startup
  *
  *************************************/
 
@@ -129,7 +129,7 @@ int tms34061_start(struct tms34061_interface *interface)
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -151,15 +151,15 @@ INLINE double get_verint_scanline_time(void)
 {
 	int scanline = tms34061.regs[TMS34061_VERINT] - tms34061.regs[TMS34061_VERENDBLNK];
 	double result;
-	
+
 	if (scanline < 0)
 		result += tms34061.regs[TMS34061_VERTOTAL];
-	
+
 	/* we fire at the HBLANK signal */
 	result = cpu_getscanlinetime(scanline) + cpu_getscanlineperiod() * 0.9;
 	if (result < cpu_getscanlineperiod() * 10)
 		result += TIME_IN_HZ(Machine->refresh_rate);
-	
+
 	return result;
 }
 
@@ -180,7 +180,7 @@ static void tms34061_interrupt(int param)
 
 /*************************************
  *
- *	Register writes
+ *  Register writes
  *
  *************************************/
 
@@ -198,7 +198,7 @@ static WRITE8_HANDLER( register_w )
 		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0x00ff) | (data << 8);
 	else
 		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0xff00) | data;
-	
+
 	/* log it */
 	if (VERBOSE) logerror("%04X:tms34061 %s = %04X\n", activecpu_get_pc(), regnames[regnum], tms34061.regs[regnum]);
 
@@ -242,7 +242,7 @@ static WRITE8_HANDLER( register_w )
 
 /*************************************
  *
- *	Register reads
+ *  Register reads
  *
  *************************************/
 
@@ -278,7 +278,7 @@ static READ8_HANDLER( register_r )
 
 /*************************************
  *
- *	XY addressing
+ *  XY addressing
  *
  *************************************/
 
@@ -405,7 +405,7 @@ static READ8_HANDLER( xypixel_r )
 
 /*************************************
  *
- *	Core writes
+ *  Core writes
  *
  *************************************/
 
@@ -528,7 +528,7 @@ data8_t tms34061_r(int col, int row, int func)
 
 /*************************************
  *
- *	Misc functions
+ *  Misc functions
  *
  *************************************/
 

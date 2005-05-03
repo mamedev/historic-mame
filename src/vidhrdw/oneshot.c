@@ -207,7 +207,7 @@ VIDEO_UPDATE( maddonna )
 	tilemap_draw(bitmap,cliprect,oneshot_fg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,oneshot_bg_tilemap,0,0);
 	oneshot_drawsprites(bitmap,cliprect);
-//	oneshot_drawcrosshairs(bitmap,cliprect); // not a gun game
+//  oneshot_drawcrosshairs(bitmap,cliprect); // not a gun game
 
-//	usrintf_showmessage	("%04x %04x %04x %04x %04x %04x %04x %04x", oneshot_scroll[0],oneshot_scroll[1],oneshot_scroll[2],oneshot_scroll[3],oneshot_scroll[4],oneshot_scroll[5],oneshot_scroll[6],oneshot_scroll[7]);
+//  usrintf_showmessage ("%04x %04x %04x %04x %04x %04x %04x %04x", oneshot_scroll[0],oneshot_scroll[1],oneshot_scroll[2],oneshot_scroll[3],oneshot_scroll[4],oneshot_scroll[5],oneshot_scroll[6],oneshot_scroll[7]);
 }

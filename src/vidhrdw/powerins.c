@@ -1,38 +1,38 @@
 /***************************************************************************
 
-						  -= Power Instinct =-
-							(C) 1993 Atlus
+                          -= Power Instinct =-
+                            (C) 1993 Atlus
 
-				driver by	Luca Elia (l.elia@tin.it)
+                driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Q			shows layer 1
-		W			shows layer 2
-		A			shows the sprites
+        Q           shows layer 1
+        W           shows layer 2
+        A           shows the sprites
 
-		Keys can be used togheter!
+        Keys can be used togheter!
 
-		[ 2 Scrolling Layers ]
+        [ 2 Scrolling Layers ]
 
-		Each Layer is made of various pages of 256x256 pixels.
+        Each Layer is made of various pages of 256x256 pixels.
 
-			[Layer 0]
-				Pages:				16x2
-				Tiles:				16x16x4
-				Scroll:				X,Y
+            [Layer 0]
+                Pages:              16x2
+                Tiles:              16x16x4
+                Scroll:             X,Y
 
-			[Layer 1]
-				Pages:				2x1
-				Tiles:				8x8x4
-				Scroll:				No
+            [Layer 1]
+                Pages:              2x1
+                Tiles:              8x8x4
+                Scroll:             No
 
-		[ 256 Sprites ]
+        [ 256 Sprites ]
 
-		Each sprite is made of a variable amount of 16x16 tiles.
-		Size can therefore vary from 16x16 (1 tile) to 256x256
-		(16x16 tiles)
+        Each sprite is made of a variable amount of 16x16 tiles.
+        Size can therefore vary from 16x16 (1 tile) to 256x256
+        (16x16 tiles)
 
 
 **************************************************************************/
@@ -51,7 +51,7 @@ static int tile_bank;
 
 /***************************************************************************
 
-						Hardware registers access
+                        Hardware registers access
 
 ***************************************************************************/
 
@@ -77,16 +77,16 @@ WRITE16_HANDLER( powerins_tilebank_w )
 
 /***************************************************************************
 
-									Palette
+                                    Palette
 
 ***************************************************************************/
 
 
 WRITE16_HANDLER( powerins_paletteram16_w )
 {
-	/*	byte 0    byte 1	*/
-	/*	RRRR GGGG BBBB RGBx	*/
-	/*	4321 4321 4321 000x	*/
+	/*  byte 0    byte 1    */
+	/*  RRRR GGGG BBBB RGBx */
+	/*  4321 4321 4321 000x */
 
 	data16_t newword = COMBINE_DATA(&paletteram16[offset]);
 
@@ -100,19 +100,19 @@ WRITE16_HANDLER( powerins_paletteram16_w )
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
 ***************************************************************************/
 
 
 /***************************************************************************
-						  [ Tiles Format VRAM 0]
+                          [ Tiles Format VRAM 0]
 
 Offset:
 
-0.w		fedc ---- ---- ----		Color Low  Bits
-		---- b--- ---- ----		Color High Bit
-		---- -a98 7654 3210		Code (Banked)
+0.w     fedc ---- ---- ----     Color Low  Bits
+        ---- b--- ---- ----     Color High Bit
+        ---- -a98 7654 3210     Code (Banked)
 
 
 ***************************************************************************/
@@ -155,12 +155,12 @@ UINT32 powerins_get_memory_offset_0(UINT32 col,UINT32 row,UINT32 num_cols,UINT32
 
 
 /***************************************************************************
-						  [ Tiles Format VRAM 1]
+                          [ Tiles Format VRAM 1]
 
 Offset:
 
-0.w		fedc ---- ---- ----		Color
-		---- ba98 7654 3210		Code
+0.w     fedc ---- ---- ----     Color
+        ---- ba98 7654 3210     Code
 
 
 ***************************************************************************/
@@ -193,7 +193,7 @@ WRITE16_HANDLER( powerins_vram_1_w )
 /***************************************************************************
 
 
-								Vh_Start
+                                Vh_Start
 
 
 ***************************************************************************/
@@ -235,7 +235,7 @@ VIDEO_START( powerins )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
 ***************************************************************************/
@@ -244,31 +244,31 @@ VIDEO_START( powerins )
 
 /* --------------------------[ Sprites Format ]----------------------------
 
-Offset:		Format:					Value:
+Offset:     Format:                 Value:
 
-	00 		fedc ba98 7654 321-		-
-	 		---- ---- ---- ---0		Display this sprite
+    00      fedc ba98 7654 321-     -
+            ---- ---- ---- ---0     Display this sprite
 
-	02 		fed- ---- ---- ----		-
-	 		---c ---- ---- ----		Flip X
-	 		---- ba9- ---- ----		-
-	 		---- ---8 ---- ----		Code High Bit
-			---- ---- 7654 ----		Number of tiles along Y, minus 1 (1-16)
-			---- ---- ---- 3210		Number of tiles along X, minus 1 (1-16)
+    02      fed- ---- ---- ----     -
+            ---c ---- ---- ----     Flip X
+            ---- ba9- ---- ----     -
+            ---- ---8 ---- ----     Code High Bit
+            ---- ---- 7654 ----     Number of tiles along Y, minus 1 (1-16)
+            ---- ---- ---- 3210     Number of tiles along X, minus 1 (1-16)
 
-	04 								Unused?
+    04                              Unused?
 
-	06		f--- ---- ---- ----		-
-			-edc ba98 7654 3210		Code Low Bits
+    06      f--- ---- ---- ----     -
+            -edc ba98 7654 3210     Code Low Bits
 
-	08 								X
+    08                              X
 
-	0A 								Unused?
+    0A                              Unused?
 
-	0C								Y
+    0C                              Y
 
-	0E		fedc ba98 76-- ----		-
-			---- ---- --54 3210		Color
+    0E      fedc ba98 76-- ----     -
+            ---- ---- --54 3210     Color
 
 
 ------------------------------------------------------------------------ */
@@ -343,7 +343,7 @@ static void powerins_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -369,7 +369,7 @@ if (code_pressed(KEYCODE_Z))
 
 	if (code_pressed(KEYCODE_Q))	msk |= 1;
 	if (code_pressed(KEYCODE_W))	msk |= 2;
-//	if (code_pressed(KEYCODE_E))	msk |= 4;
+//  if (code_pressed(KEYCODE_E))    msk |= 4;
 	if (code_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 }

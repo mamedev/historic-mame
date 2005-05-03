@@ -31,8 +31,8 @@ Write
  3001      OUT2  Coin Counter 2
  3002      OUT1  Coin Counter 1
  3003      MUT
- 3004      HREV	 Flip Screen X
- 3005      VREV	 Flip Screen Y
+ 3004      HREV  Flip Screen X
+ 3005      VREV  Flip Screen Y
  3006      -
  3007      GMED
  3800      SON   Sound on
@@ -144,7 +144,7 @@ static WRITE8_HANDLER( tp84_filter_w )
 	C = 0;
 	if (offset & 0x020) C +=  47000;	/*  47000pF = 0.047uF */
 	if (offset & 0x040) C += 470000;	/* 470000pF = 0.47uF */
-//	filter_rc_set_RC(1,1000,2200,1000,C);
+//  filter_rc_set_RC(1,1000,2200,1000,C);
 
 	/* 76489 #2 */
 	C = 0;
@@ -198,7 +198,7 @@ ADDRESS_MAP_END
 
 /* CPU 2 read addresses */
 static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-//	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_RAM)
+//  AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x2000) AM_READ(tp84_scanline_r) /* beam position */
 	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(sharedram_r)
@@ -207,7 +207,7 @@ ADDRESS_MAP_END
 
 /* CPU 2 write addresses */
 static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-//	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_RAM) /* Watch dog ?*/
+//  AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_RAM) /* Watch dog ?*/
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(interrupt_enable_w) /* IRQ enable */
 	AM_RANGE(0x6000, 0x679f) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x67a0, 0x67ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	/* REAL (multiplexed) */
@@ -493,7 +493,7 @@ static MACHINE_DRIVER_START( tp84 )
 
 	MDRV_SOUND_ADD(SN76496, 14318180/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "filter3", 0.75)
-	
+
 	MDRV_SOUND_ADD_TAG("filter1", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter2", FILTER_RC, 0)

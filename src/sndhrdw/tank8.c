@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	sndhrdw\tank8.c
+    sndhrdw\tank8.c
 
 *************************************************************************/
 #include "driver.h"
@@ -110,8 +110,8 @@ struct discrete_dac_r1_ladder tank8_dac =
 
 DISCRETE_SOUND_START(tank8_discrete_interface)
 	/************************************************/
-	/* Tank8 sound system: 10 Sound Sources			*/
-	/*    Motor 1-8									*/
+	/* Tank8 sound system: 10 Sound Sources         */
+	/*    Motor 1-8                                 */
 	/*    Crash                                     */
 	/*    Explosion                                 */
 	/*    Bugle                                     */
@@ -120,7 +120,7 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	/************************************************/
 	/* Input register mapping for tank8           */
 	/************************************************/
-	/*                   NODE		 */
+	/*                   NODE        */
 	DISCRETE_INPUT_LOGIC(TANK8_CRASH_EN)
 	DISCRETE_INPUT_LOGIC(TANK8_EXPLOSION_EN)
 	DISCRETE_INPUT_LOGIC(TANK8_MOTOR1_EN)
@@ -219,7 +219,7 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	/*    = 15750/4                                 */
 	/************************************************/
 	/* The A2 address line is also mixed in to the noise generator,
-	 * but that is currently not implemented. */
+     * but that is currently not implemented. */
 	DISCRETE_CONSTANT(TANK8_A2_LINE,1)
 	DISCRETE_LFSR_NOISE(NODE_120, TANK8_ATTRACT_EN, TANK8_ATTRACT_EN, 15750.0/4, 1, TANK8_A2_LINE, 0, &tank8_lfsr)
 

@@ -1,35 +1,35 @@
 /***************************************************************************
-					Gaelco Sound Hardware
+                    Gaelco Sound Hardware
 
-				By Manuel Abadia <manu@teleline.es>
+                By Manuel Abadia <manu@teleline.es>
 
 CG-1V/GAE1 (Gaelco custom GFX & Sound chip):
-	The CG-1V/GAE1 can handle up to 7 stereo channels.
-	The chip output is connected to a TDA1543 (16 bit DAC).
+    The CG-1V/GAE1 can handle up to 7 stereo channels.
+    The chip output is connected to a TDA1543 (16 bit DAC).
 
 Registers per channel:
 ======================
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | xxxxxxxx xxxxxxxx | not used?
-	  1  | xxxx---- -------- | left channel volume (0x00..0x0f)
-	  1  | ----xxxx -------- | right channel volume (0x00..0x0f)
-	  1  | -------- xxxx---- | sample type (0x0c = PCM 8 bits mono, 0x08 = PCM 8 bits stereo)
-	  1  | -------- ----xxxx | ROM Bank
-	  2  | xxxxxxxx xxxxxxxx | sample end position
-	  3  | xxxxxxxx xxxxxxxx | remaining bytes to play
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | xxxxxxxx xxxxxxxx | not used?
+      1  | xxxx---- -------- | left channel volume (0x00..0x0f)
+      1  | ----xxxx -------- | right channel volume (0x00..0x0f)
+      1  | -------- xxxx---- | sample type (0x0c = PCM 8 bits mono, 0x08 = PCM 8 bits stereo)
+      1  | -------- ----xxxx | ROM Bank
+      2  | xxxxxxxx xxxxxxxx | sample end position
+      3  | xxxxxxxx xxxxxxxx | remaining bytes to play
 
-	  the following are used only when looping (usually used for music)
+      the following are used only when looping (usually used for music)
 
-	  4  | xxxxxxxx xxxxxxxx | not used?
-	  5  | xxxx---- -------- | left channel volume (0x00..0x0f)
-	  5  | ----xxxx -------- | right channel volume (0x00..0x0f)
-	  5  | -------- xxxx---- | sample type (0x0c = PCM 8 bits mono, 0x08 = PCM 8 bits stereo)
-	  5  | -------- ----xxxx | ROM Bank
-	  6  | xxxxxxxx xxxxxxxx | sample end position
-	  7  | xxxxxxxx xxxxxxxx | remaining bytes to play
+      4  | xxxxxxxx xxxxxxxx | not used?
+      5  | xxxx---- -------- | left channel volume (0x00..0x0f)
+      5  | ----xxxx -------- | right channel volume (0x00..0x0f)
+      5  | -------- xxxx---- | sample type (0x0c = PCM 8 bits mono, 0x08 = PCM 8 bits stereo)
+      5  | -------- ----xxxx | ROM Bank
+      6  | xxxxxxxx xxxxxxxx | sample end position
+      7  | xxxxxxxx xxxxxxxx | remaining bytes to play
 
-	The samples are played from (end position + length) to (end position)!
+    The samples are played from (end position + length) to (end position)!
 
 ***************************************************************************/
 
@@ -40,7 +40,7 @@ Registers per channel:
 
 //#define LOG_SOUND 1
 //#define LOG_READ_WRITES 1
-//#define LOG_WAVE	1
+//#define LOG_WAVE  1
 //#define ALT_MIX
 
 #define GAELCO_NUM_CHANNELS 	0x07
@@ -76,9 +76,9 @@ void *	wavraw;					/* raw waveform */
 #endif
 
 /*============================================================================
-						CG-1V/GAE1 Sound Update
+                        CG-1V/GAE1 Sound Update
 
-			Writes length bytes to the sound buffer
+            Writes length bytes to the sound buffer
   ============================================================================*/
 
 static void gaelco_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
@@ -185,7 +185,7 @@ static void gaelco_update(void *param, stream_sample_t **inputs, stream_sample_t
 }
 
 /*============================================================================
-						CG-1V/GAE1 Read Handler
+                        CG-1V/GAE1 Read Handler
   ============================================================================*/
 
 READ16_HANDLER( gaelcosnd_r )
@@ -198,7 +198,7 @@ READ16_HANDLER( gaelcosnd_r )
 }
 
 /*============================================================================
-						CG-1V/GAE1 Write Handler
+                        CG-1V/GAE1 Write Handler
   ============================================================================*/
 
 WRITE16_HANDLER( gaelcosnd_w )
@@ -248,7 +248,7 @@ WRITE16_HANDLER( gaelcosnd_w )
 }
 
 /*============================================================================
-						CG-1V/GAE1 Init
+                        CG-1V/GAE1 Init
   ============================================================================*/
 
 static void *gaelcosnd_start(int sndtype, int sndindex, int clock, const void *config)
@@ -259,7 +259,7 @@ static void *gaelcosnd_start(int sndtype, int sndindex, int clock, const void *c
 	struct GAELCOSND *info;
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
 	chip_type = sndtype;
 
 	/* bag on a 0 sample_rate */

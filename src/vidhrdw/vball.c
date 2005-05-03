@@ -128,8 +128,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	unsigned char *src = spriteram;
 	int i;
 
-/*	240-Y    S|X|CLR|WCH WHICH    240-X
-	xxxxxxxx x|x|xxx|xxx xxxxxxxx xxxxxxxx
+/*  240-Y    S|X|CLR|WCH WHICH    240-X
+    xxxxxxxx x|x|xxx|xxx xxxxxxxx xxxxxxxx
 */
 	for (i = 0;i < spriteram_size;i += 4)
 	{

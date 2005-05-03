@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
- *	 i8051.c
- *	 Portable MCS-51 Family Emulator
+ *   i8051.c
+ *   Portable MCS-51 Family Emulator
  *
  *   Chips in the family:
  *   8051 Product Line (8031,8051,8751)
@@ -9,22 +9,22 @@
  *   8054 Product Line (8054)
  *   8058 Product Line (8058)
  *
- *	 Copyright (c) 2003 Steve Ellenoff, all rights reserved.
+ *   Copyright (c) 2003 Steve Ellenoff, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   sellenoff@hotmail.com
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     sellenoff@hotmail.com
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	This work is based on:
- *	#1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
+ *  This work is based on:
+ *  #1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
  *  #2) 8051 simulator by Travis Marlatte
  *  #3) Portable UPI-41/8041/8741/8042/8742 emulator V0.1 by Juergen Buchmueller (MAME CORE)
  *
@@ -32,34 +32,34 @@
 
 /******************************************************************************
  *  Notes:
- *		  *Important*: Internal ROM needs to be treated the same as external rom by the programmer
- *		               creating the driver (ie, use standard cpu rom region)
+ *        *Important*: Internal ROM needs to be treated the same as external rom by the programmer
+ *                     creating the driver (ie, use standard cpu rom region)
  *
- *		  The term cycles is used here to really refer to clock oscilations, because 1 machine cycle
- *		  actually takes 12 oscilations.
+ *        The term cycles is used here to really refer to clock oscilations, because 1 machine cycle
+ *        actually takes 12 oscilations.
  *
- *		  Read/Write/Modify Instruction -
- *			Data is read from the Port Latch (not the Port Pin!), possibly modified, and
+ *        Read/Write/Modify Instruction -
+ *          Data is read from the Port Latch (not the Port Pin!), possibly modified, and
  *          written back to (the pin? and) the latch!
  *
- *		    The following all perform this on a port address..
- *		    (anl, orl, xrl, jbc, cpl, inc, dec, djnz, mov px.y,c, clr px.y, setb px.y)
+ *          The following all perform this on a port address..
+ *          (anl, orl, xrl, jbc, cpl, inc, dec, djnz, mov px.y,c, clr px.y, setb px.y)
  *
- *		  Serial UART emulation is not really accurate, but faked enough to work as far as i can tell
+ *        Serial UART emulation is not really accurate, but faked enough to work as far as i can tell
  *
  *        August 27,2003: Currently support for only 8031/8051/8751 chips (ie 128 RAM)
- *		  October 14,2003: Added initial support for the 8752 (ie 256 RAM)
- *		  October 22,2003: Full support for the 8752 (ie 256 RAM)
+ *        October 14,2003: Added initial support for the 8752 (ie 256 RAM)
+ *        October 22,2003: Full support for the 8752 (ie 256 RAM)
  *        July 28,2004: Fixed MOVX command and added External Ram Paging Support
  *        July 31,2004: Added Serial Mode 0 Support & Fixed Interrupt Flags for Serial Port
  *
- *		  Todo: Full Timer support (all modes)
+ *        Todo: Full Timer support (all modes)
  *
- *		  NOW Implemented: RAM paging using hardware configured addressing...
+ *        NOW Implemented: RAM paging using hardware configured addressing...
  *        (July 28,2004)   the "MOVX a,@R0/R1" and "MOVX @R0/R1,a" commands can use any of the other ports
- *   			   to output a page offset into external ram, but it is totally based on the hardware setup.
+ *                 to output a page offset into external ram, but it is totally based on the hardware setup.
  *
- *		  Timing needs to be implemented via MAME timers perhaps?
+ *        Timing needs to be implemented via MAME timers perhaps?
  *
  *****************************************************************************/
 
@@ -128,7 +128,7 @@ typedef struct {
 	int last_int1;			//Store state of int1
 	UINT8 int_vec;			//Pending Interrupt Vector
 	int priority_request;	//Priority level of incoming new irq
-	//SFR Registers			(Note: Appear in order as they do in memory)
+	//SFR Registers         (Note: Appear in order as they do in memory)
 	UINT8	po;				//Port 0
 	UINT8	sp;				//Stack Pointer
 	UINT8	dpl;			//Data Pointer (DPTR) (Hi bit)
@@ -219,7 +219,7 @@ static READ32_HANDLER((*hold_eram_iaddr_callback));
  * Read/Write a byte from/to External Data Memory (Usually RAM or other I/O)
  *****************************************************************************
  This area is *ALSO* mapped from 0-FFFF internally (64K)
-						** HOWEVER **
+                        ** HOWEVER **
  We *FORCE* the address space into the range 10000-1FFFF to allow both
  Code Memory and Data Memory to be pyshically separate while mapped @ the same
  addresses, w/o any contention.
@@ -635,7 +635,7 @@ int i8051_execute(int cycles)
 			case 0x00:						/* 1: 0000 0000 */
 				nop();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0x01:
 				ajmp();
 				break;
@@ -657,12 +657,12 @@ int i8051_execute(int cycles)
 				inc_mem();
 				RWM=0;
 			break;
-			//INC @R0/@R1					/* 1: 0000 011i */
+			//INC @R0/@R1                   /* 1: 0000 011i */
 			case 0x06:
 			case 0x07:
 				inc_ir(op&1);
 				break;
-			//INC R0 to R7					/* 1: 0000 1rrr */
+			//INC R0 to R7                  /* 1: 0000 1rrr */
 			case 0x08:
 			case 0x09:
 			case 0x0a:
@@ -679,7 +679,7 @@ int i8051_execute(int cycles)
 				jbc();
 				RWM=0;
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0x11:
 				acall();
 				break;
@@ -701,12 +701,12 @@ int i8051_execute(int cycles)
 				dec_mem();
 				RWM=0;
 				break;
-			//DEC @R0/@R1					/* 1: 0001 011i */
+			//DEC @R0/@R1                   /* 1: 0001 011i */
 			case 0x16:
 			case 0x17:
 				dec_ir(op&1);
 				break;
-			//DEC R0 to R7					/* 1: 0001 1rrr */
+			//DEC R0 to R7                  /* 1: 0001 1rrr */
 			case 0x18:
 			case 0x19:
 			case 0x1a:
@@ -721,7 +721,7 @@ int i8051_execute(int cycles)
 			case 0x20:						/* 1: 0010 0000 */
 				jb();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0x21:
 				ajmp();
 				break;
@@ -741,12 +741,12 @@ int i8051_execute(int cycles)
 			case 0x25:						/* 1: 0010 0101 */
 				add_a_mem();
 				break;
-			//ADD A, @R0/@R1				/* 1: 0010 011i */
+			//ADD A, @R0/@R1                /* 1: 0010 011i */
 			case 0x26:
 			case 0x27:
 				add_a_ir(op&1);
 				break;
-			//ADD A, R0 to R7				/* 1: 0010 1rrr */
+			//ADD A, R0 to R7               /* 1: 0010 1rrr */
 			case 0x28:
 			case 0x29:
 			case 0x2a:
@@ -761,7 +761,7 @@ int i8051_execute(int cycles)
 			case 0x30:						/* 1: 0011 0000 */
 				jnb();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0x31:
 				acall();
 				break;
@@ -781,12 +781,12 @@ int i8051_execute(int cycles)
 			case 0x35:						/* 1: 0011 0101 */
 				addc_a_mem();
 				break;
-			//ADDC A, @R0/@R1				/* 1: 0011 011i */
+			//ADDC A, @R0/@R1               /* 1: 0011 011i */
 			case 0x36:
 			case 0x37:
 				addc_a_ir(op&1);
 				break;
-			//ADDC A, R0 to R7				/* 1: 0011 1rrr */
+			//ADDC A, R0 to R7              /* 1: 0011 1rrr */
 			case 0x38:
 			case 0x39:
 			case 0x3a:
@@ -801,7 +801,7 @@ int i8051_execute(int cycles)
 			case 0x40:						/* 1: 0100 0000 */
 				jc();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0x41:
 				ajmp();
 				break;
@@ -825,12 +825,12 @@ int i8051_execute(int cycles)
 			case 0x45:						/* 1: 0100 0101 */
 				orl_a_mem();
 				break;
-			//ORL A, @RO/@R1				/* 1: 0100 011i */
+			//ORL A, @RO/@R1                /* 1: 0100 011i */
 			case 0x46:
 			case 0x47:
 				orl_a_ir(op&1);
 				break;
-			//ORL A, RO to R7				/* 1: 0100 1rrr */
+			//ORL A, RO to R7               /* 1: 0100 1rrr */
 			case 0x48:
 			case 0x49:
 			case 0x4a:
@@ -845,7 +845,7 @@ int i8051_execute(int cycles)
 			case 0x50:						/* 1: 0101 0000 */
 				jnc();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0x51:
 				acall();
 				break;
@@ -869,12 +869,12 @@ int i8051_execute(int cycles)
 			case 0x55:						/* 1: 0101 0101 */
 				anl_a_mem();
 				break;
-			//ANL A, @RO/@R1				/* 1: 0101 011i */
+			//ANL A, @RO/@R1                /* 1: 0101 011i */
 			case 0x56:
 			case 0x57:
 				anl_a_ir(op&1);
 				break;
-			//ANL A, RO to R7				/* 1: 0101 1rrr */
+			//ANL A, RO to R7               /* 1: 0101 1rrr */
 			case 0x58:
 			case 0x59:
 			case 0x5a:
@@ -889,7 +889,7 @@ int i8051_execute(int cycles)
 			case 0x60:						/* 1: 0110 0000 */
 				jz();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0x61:
 				ajmp();
 				break;
@@ -913,12 +913,12 @@ int i8051_execute(int cycles)
 			case 0x65:						/* 1: 0110 0101 */
 				xrl_a_mem();
 				break;
-			//XRL A, @R0/@R1				/* 1: 0110 011i */
+			//XRL A, @R0/@R1                /* 1: 0110 011i */
 			case 0x66:
 			case 0x67:
 				xrl_a_ir(op&1);
 				break;
-			//XRL A, R0 to R7				/* 1: 0110 1rrr */
+			//XRL A, R0 to R7               /* 1: 0110 1rrr */
 			case 0x68:
 			case 0x69:
 			case 0x6a:
@@ -933,7 +933,7 @@ int i8051_execute(int cycles)
 			case 0x70:						/* 1: 0111 0000 */
 				jnz();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0x71:
 				acall();
 				break;
@@ -953,12 +953,12 @@ int i8051_execute(int cycles)
 			case 0x75:						/* 1: 0111 0101 */
 				mov_mem_byte();
 				break;
-			//MOV @R0/@R1, #data			/* 1: 0111 011i */
+			//MOV @R0/@R1, #data            /* 1: 0111 011i */
 			case 0x76:
 			case 0x77:
 				mov_ir_byte(op&1);
 				break;
-			//MOV R0 to R7, #data			/* 1: 0111 1rrr */
+			//MOV R0 to R7, #data           /* 1: 0111 1rrr */
 			case 0x78:
 			case 0x79:
 			case 0x7a:
@@ -973,7 +973,7 @@ int i8051_execute(int cycles)
 			case 0x80:						/* 1: 1000 0000 */
 				sjmp();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0x81:
 				ajmp();
 				break;
@@ -993,12 +993,12 @@ int i8051_execute(int cycles)
 			case 0x85:						/* 1: 1000 0101 */
 				mov_mem_mem();
 				break;
-			//MOV data addr, @R0/@R1		/* 1: 1000 011i */
+			//MOV data addr, @R0/@R1        /* 1: 1000 011i */
 			case 0x86:
 			case 0x87:
 				mov_mem_ir(op&1);
 				break;
-			//MOV data addr,R0 to R7		/* 1: 1000 1rrr */
+			//MOV data addr,R0 to R7        /* 1: 1000 1rrr */
 			case 0x88:
 			case 0x89:
 			case 0x8a:
@@ -1013,7 +1013,7 @@ int i8051_execute(int cycles)
 			case 0x90:						/* 1: 1001 0000 */
 				mov_dptr_byte();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0x91:
 				acall();
 				break;
@@ -1035,12 +1035,12 @@ int i8051_execute(int cycles)
 			case 0x95:						/* 1: 1001 0101 */
 				subb_a_mem();
 				break;
-			//SUBB A, @R0/@R1				/* 1: 1001 011i */
+			//SUBB A, @R0/@R1               /* 1: 1001 011i */
 			case 0x96:
 			case 0x97:
 				subb_a_ir(op&1);
 				break;
-			//SUBB A, R0 to R7				/* 1: 1001 1rrr */
+			//SUBB A, R0 to R7              /* 1: 1001 1rrr */
 			case 0x98:
 			case 0x99:
 			case 0x9a:
@@ -1055,7 +1055,7 @@ int i8051_execute(int cycles)
 			case 0xa0:						/* 1: 1010 0000 */
 				orl_c_nbitaddr();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0xa1:
 				ajmp();
 				break;
@@ -1075,12 +1075,12 @@ int i8051_execute(int cycles)
 			case 0xa5:						/* 1: 1010 0101 */
 				illegal();
 				break;
-			//MOV @R0/@R1, data addr		/* 1: 1010 011i */
+			//MOV @R0/@R1, data addr        /* 1: 1010 011i */
 			case 0xa6:
 			case 0xa7:
 				mov_ir_mem(op&1);
 				break;
-			//MOV R0 to R7, data addr		/* 1: 1010 1rrr */
+			//MOV R0 to R7, data addr       /* 1: 1010 1rrr */
 			case 0xa8:
 			case 0xa9:
 			case 0xaa:
@@ -1095,7 +1095,7 @@ int i8051_execute(int cycles)
 			case 0xb0:						/* 1: 1011 0000 */
 				anl_c_nbitaddr();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0xb1:
 				acall();
 				break;
@@ -1137,7 +1137,7 @@ int i8051_execute(int cycles)
 			case 0xc0:						/* 1: 1100 0000 */
 				push();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0xc1:
 				ajmp();
 				break;
@@ -1159,12 +1159,12 @@ int i8051_execute(int cycles)
 			case 0xc5:						/* 1: 1100 0101 */
 				xch_a_mem();
 				break;
-			//XCH A, @RO/@R1				/* 1: 1100 011i */
+			//XCH A, @RO/@R1                /* 1: 1100 011i */
 			case 0xc6:
 			case 0xc7:
 				xch_a_ir(op&1);
 				break;
-			//XCH A, RO to R7				/* 1: 1100 1rrr */
+			//XCH A, RO to R7               /* 1: 1100 1rrr */
 			case 0xc8:
 			case 0xc9:
 			case 0xca:
@@ -1179,7 +1179,7 @@ int i8051_execute(int cycles)
 			case 0xd0:						/* 1: 1101 0000 */
 				pop();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0xd1:
 				acall();
 				break;
@@ -1203,12 +1203,12 @@ int i8051_execute(int cycles)
 				djnz_mem();
 				RWM=0;
 				break;
-			//XCHD A, @R0/@R1				/* 1: 1101 011i */
+			//XCHD A, @R0/@R1               /* 1: 1101 011i */
 			case 0xd6:
 			case 0xd7:
 				xchd_a_ir(op&1);
 				break;
-			//DJNZ R0 to R7,code addr		/* 1: 1101 1rrr */
+			//DJNZ R0 to R7,code addr       /* 1: 1101 1rrr */
 			case 0xd8:
 			case 0xd9:
 			case 0xda:
@@ -1223,11 +1223,11 @@ int i8051_execute(int cycles)
 			case 0xe0:						/* 1: 1110 0000 */
 				movx_a_idptr();
 				break;
-			//AJMP code addr				/* 1: aaa0 0001 */
+			//AJMP code addr                /* 1: aaa0 0001 */
 			case 0xe1:
 				ajmp();
 				break;
-			//MOVX A, @R0/@R1				/* 1: 1110 001i */
+			//MOVX A, @R0/@R1               /* 1: 1110 001i */
 			case 0xe2:
 			case 0xe3:
 				movx_a_ir(op&1);
@@ -1240,12 +1240,12 @@ int i8051_execute(int cycles)
 			case 0xe5:						/* 1: 1110 0101 */
 				mov_a_mem();
 				break;
-			//MOV A,@RO/@R1					/* 1: 1110 011i */
+			//MOV A,@RO/@R1                 /* 1: 1110 011i */
 			case 0xe6:
 			case 0xe7:
 				mov_a_ir(op&1);
 				break;
-			//MOV A,R0 to R7				/* 1: 1110 1rrr */
+			//MOV A,R0 to R7                /* 1: 1110 1rrr */
 			case 0xe8:
 			case 0xe9:
 			case 0xea:
@@ -1260,11 +1260,11 @@ int i8051_execute(int cycles)
 			case 0xf0:						/* 1: 1111 0000 */
 				movx_idptr_a();
 				break;
-			//ACALL code addr				/* 1: aaa1 0001 */
+			//ACALL code addr               /* 1: aaa1 0001 */
 			case 0xf1:
 				acall();
 				break;
-			//MOVX @R0/@R1,A				/* 1: 1111 001i */
+			//MOVX @R0/@R1,A                /* 1: 1111 001i */
 			case 0xf2:
 			case 0xf3:
 				movx_ir_a(op&1);
@@ -1277,12 +1277,12 @@ int i8051_execute(int cycles)
 			case 0xf5:						/* 1: 1111 0101 */
 				mov_mem_a();
 				break;
-			//MOV @R0/@R1, A				/* 1: 1111 011i */
+			//MOV @R0/@R1, A                /* 1: 1111 011i */
 			case 0xf6:
 			case 0xf7:
 				mov_ir_a(op&1);
 				break;
-			//MOV R0 to R7, A				/* 1: 1111 1rrr */
+			//MOV R0 to R7, A               /* 1: 1111 1rrr */
 			case 0xf8:
 			case 0xf9:
 			case 0xfa:
@@ -1463,14 +1463,14 @@ void i8051_set_irq_line(int irqline, int state)
  2) A low priority interrupt can ONLY be interrupted by a high priority interrupt
  3) If more than 1 Interrupt Flag is set (ie, 2 simultaneous requests occur),
     the following logic works as follows:
-	1) If two requests come in of different priority levels, the higher one is selected..
-	2) If the requests are of the same level, an internal order is used:
-		a) IEO
-		b) TFO
-		c) IE1
-		d) TF1
-		e) RI+TI
-		f) TF2+EXF2
+    1) If two requests come in of different priority levels, the higher one is selected..
+    2) If the requests are of the same level, an internal order is used:
+        a) IEO
+        b) TFO
+        c) IE1
+        d) TF1
+        e) RI+TI
+        f) TF2+EXF2
  **********************************************************************************/
 INLINE UINT8 check_interrupts(void)
 {
@@ -1543,7 +1543,7 @@ INLINE UINT8 check_interrupts(void)
 	switch(i8051.cur_irq) {
 		case V_IE0:
 			//External Int Flag only cleared when configured as Edge Triggered..
-			//if(GET_IT0)	- for some reason having this, breaks alving dmd games
+			//if(GET_IT0)   - for some reason having this, breaks alving dmd games
 				SET_IE0(0);
 			break;
 		case V_TF0:
@@ -1552,7 +1552,7 @@ INLINE UINT8 check_interrupts(void)
 			break;
 		case V_IE1:
 			//External Int Flag only cleared when configured as Edge Triggered..
-			//if(GET_IT1)	- for some reason having this, breaks alving dmd games
+			//if(GET_IT1)   - for some reason having this, breaks alving dmd games
 				SET_IE1(0);
 			break;
 		case V_TF1:
@@ -1658,7 +1658,7 @@ static WRITE8_HANDLER(sfr_write)
 		}
 
 		case SBUF:
-			//R_SBUF = data;		//This register is used only for "Receiving data coming in!"
+			//R_SBUF = data;        //This register is used only for "Receiving data coming in!"
 			serial_transmit(data);	//Set up to transmit the data
 			break;
 
@@ -1813,10 +1813,10 @@ static WRITE8_HANDLER(internal_ram_iwrite)
 */
 static READ32_HANDLER(external_ram_iaddr)
 {
-/*	if(i8051.eram_iaddr_callback)
-		return i8051.eram_iaddr_callback(offset,mem_mask);
-	else
-		LOG(("i8051 #%d: external ram address requested (8 bit offset=%02x), but no callback available! at PC:%04x\n", cpu_getactivecpu(), offset, PC));
+/*  if(i8051.eram_iaddr_callback)
+        return i8051.eram_iaddr_callback(offset,mem_mask);
+    else
+        LOG(("i8051 #%d: external ram address requested (8 bit offset=%02x), but no callback available! at PC:%04x\n", cpu_getactivecpu(), offset, PC));
 */
 	return offset;
 }
@@ -1959,7 +1959,7 @@ INLINE void do_add_flags(UINT8 a, UINT8 data, UINT8 c)
 	SET_OV(ov);
 
 #ifdef MAME_DEBUG
-//	printf("add: result=%x, c=%x, ac=%x, ov=%x\n",a+data+c,cy,ac,ov);
+//  printf("add: result=%x, c=%x, ac=%x, ov=%x\n",a+data+c,cy,ac,ov);
 #endif
 }
 
@@ -1977,7 +1977,7 @@ INLINE void do_sub_flags(UINT8 a, UINT8 data, UINT8 c)
 	SET_OV(ov);
 
 #ifdef MAME_DEBUG
-//	printf("sub: a=%x, d=%x, c=%x, result=%x, cy=%x, ac=%x, ov=%x\n",a,data,c,a-data-c,cy,ac,ov);
+//  printf("sub: a=%x, d=%x, c=%x, result=%x, cy=%x, ac=%x, ov=%x\n",a,data,c,a-data-c,cy,ac,ov);
 #endif
 }
 
@@ -2307,7 +2307,7 @@ void i8752_set_serial_rx_callback(int (*callback)(void))	{ i8051_set_serial_rx_c
 void i8752_state_save(void *file)				{ i8051_state_save(file); }
 void i8752_state_load(void *file)				{ i8051_state_load(file); }
 #if 0
-const char *i8752_info(void *context, int regnum)		
+const char *i8752_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
@@ -2402,19 +2402,19 @@ static void i8051_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8051_SP: 			R_SP = info->i; break;
 		case CPUINFO_INT_REGISTER + I8051_PSW:			i8051.psw = info->i; break;
 		case CPUINFO_INT_REGISTER + I8051_ACC:			i8051.acc = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_B:  			i8051.b = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_DPH:			i8051.dph = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_DPL:			i8051.dpl = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_IE: 			i8051.ie = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R0: 			i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R1: 			i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R2: 			i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R3: 			i8051.IntRam[3+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R4: 			i8051.IntRam[4+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R5: 			i8051.IntRam[5+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R6: 			i8051.IntRam[6+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_R7: 			i8051.IntRam[7+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
-		case CPUINFO_INT_REGISTER + I8051_RB: 			i8051.IntRam[8+(8*((i8051.psw & 0x18)>>3))] = info->i; break; 
+		case CPUINFO_INT_REGISTER + I8051_B:  			i8051.b = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_DPH:			i8051.dph = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_DPL:			i8051.dpl = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_IE: 			i8051.ie = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R0: 			i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R1: 			i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R2: 			i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R3: 			i8051.IntRam[3+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R4: 			i8051.IntRam[4+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R5: 			i8051.IntRam[5+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R6: 			i8051.IntRam[6+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_R7: 			i8051.IntRam[7+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_RB: 			i8051.IntRam[8+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:				 i8051_set_irq_callback(info->irqcallback); break;
@@ -2460,19 +2460,19 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8051_SP: 			info->i = R_SP; break;
 		case CPUINFO_INT_REGISTER + I8051_PSW:			info->i = i8051.psw; break;
 		case CPUINFO_INT_REGISTER + I8051_ACC:			info->i = i8051.acc; break;
-		case CPUINFO_INT_REGISTER + I8051_B:  			info->i = i8051.b; break; 
-		case CPUINFO_INT_REGISTER + I8051_DPH:			info->i = i8051.dph; break; 
-		case CPUINFO_INT_REGISTER + I8051_DPL:			info->i = i8051.dpl; break; 
-		case CPUINFO_INT_REGISTER + I8051_IE: 			info->i = i8051.ie; break; 
-		case CPUINFO_INT_REGISTER + I8051_R0: 			info->i = i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R1: 			info->i = i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R2: 			info->i = i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R3: 			info->i = i8051.IntRam[3+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R4: 			info->i = i8051.IntRam[4+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R5: 			info->i = i8051.IntRam[5+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R6: 			info->i = i8051.IntRam[6+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_R7: 			info->i = i8051.IntRam[7+(8*((i8051.psw & 0x18)>>3))]; break; 
-		case CPUINFO_INT_REGISTER + I8051_RB: 			info->i = i8051.IntRam[8+(8*((i8051.psw & 0x18)>>3))]; break; 
+		case CPUINFO_INT_REGISTER + I8051_B:  			info->i = i8051.b; break;
+		case CPUINFO_INT_REGISTER + I8051_DPH:			info->i = i8051.dph; break;
+		case CPUINFO_INT_REGISTER + I8051_DPL:			info->i = i8051.dpl; break;
+		case CPUINFO_INT_REGISTER + I8051_IE: 			info->i = i8051.ie; break;
+		case CPUINFO_INT_REGISTER + I8051_R0: 			info->i = i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R1: 			info->i = i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R2: 			info->i = i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R3: 			info->i = i8051.IntRam[3+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R4: 			info->i = i8051.IntRam[4+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R5: 			info->i = i8051.IntRam[5+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R6: 			info->i = i8051.IntRam[6+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_R7: 			info->i = i8051.IntRam[7+(8*((i8051.psw & 0x18)>>3))]; break;
+		case CPUINFO_INT_REGISTER + I8051_RB: 			info->i = i8051.IntRam[8+(8*((i8051.psw & 0x18)>>3))]; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = i8051_set_info;		break;
@@ -2512,14 +2512,14 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 				r->psw & 0x01 ? 'P':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I8051_PC:        	sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", r->pc); break;                                
-		case CPUINFO_STR_REGISTER + I8051_SP:        	sprintf(info->s = cpuintrf_temp_str(), "SP:%02X", r->sp); break;                                
-		case CPUINFO_STR_REGISTER + I8051_PSW:       	sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", r->psw); break;                              
-		case CPUINFO_STR_REGISTER + I8051_ACC:       	sprintf(info->s = cpuintrf_temp_str(), "A:%02X", r->acc); break;                                
-		case CPUINFO_STR_REGISTER + I8051_B:         	sprintf(info->s = cpuintrf_temp_str(), "B:%02X", r->b); break;                                  
-		case CPUINFO_STR_REGISTER + I8051_DPH:       	sprintf(info->s = cpuintrf_temp_str(), "DPH:%02X", r->dph); break;                              
-		case CPUINFO_STR_REGISTER + I8051_DPL:       	sprintf(info->s = cpuintrf_temp_str(), "DPL:%02X", r->dpl); break;                              
-		case CPUINFO_STR_REGISTER + I8051_IE:        	sprintf(info->s = cpuintrf_temp_str(), "IE:%02X", r->ie); break;                                
+		case CPUINFO_STR_REGISTER + I8051_PC:        	sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", r->pc); break;
+		case CPUINFO_STR_REGISTER + I8051_SP:        	sprintf(info->s = cpuintrf_temp_str(), "SP:%02X", r->sp); break;
+		case CPUINFO_STR_REGISTER + I8051_PSW:       	sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", r->psw); break;
+		case CPUINFO_STR_REGISTER + I8051_ACC:       	sprintf(info->s = cpuintrf_temp_str(), "A:%02X", r->acc); break;
+		case CPUINFO_STR_REGISTER + I8051_B:         	sprintf(info->s = cpuintrf_temp_str(), "B:%02X", r->b); break;
+		case CPUINFO_STR_REGISTER + I8051_DPH:       	sprintf(info->s = cpuintrf_temp_str(), "DPH:%02X", r->dph); break;
+		case CPUINFO_STR_REGISTER + I8051_DPL:       	sprintf(info->s = cpuintrf_temp_str(), "DPL:%02X", r->dpl); break;
+		case CPUINFO_STR_REGISTER + I8051_IE:        	sprintf(info->s = cpuintrf_temp_str(), "IE:%02X", r->ie); break;
 		case CPUINFO_STR_REGISTER + I8051_R0:        	sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", r->IntRam[0+(8*((r->psw & 0x18)>>3))]); break;
 		case CPUINFO_STR_REGISTER + I8051_R1:        	sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", r->IntRam[1+(8*((r->psw & 0x18)>>3))]); break;
 		case CPUINFO_STR_REGISTER + I8051_R2:        	sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", r->IntRam[2+(8*((r->psw & 0x18)>>3))]); break;
@@ -2528,7 +2528,7 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + I8051_R5: 	sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", r->IntRam[5+(8*((r->psw & 0x18)>>3))]); break;
 		case CPUINFO_STR_REGISTER + I8051_R6: 	sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", r->IntRam[6+(8*((r->psw & 0x18)>>3))]); break;
 		case CPUINFO_STR_REGISTER + I8051_R7: 	sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", r->IntRam[7+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_RB: 	sprintf(info->s = cpuintrf_temp_str(), "RB:%02X", ((r->psw & 0x18)>>3)); break;                 
+		case CPUINFO_STR_REGISTER + I8051_RB: 	sprintf(info->s = cpuintrf_temp_str(), "RB:%02X", ((r->psw & 0x18)>>3)); break;
 	}
 }
 

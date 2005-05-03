@@ -220,7 +220,7 @@ static void *iremga20_start(int sndindex, int clock, const void *config)
 {
 	struct IremGA20_chip_def *chip;
 	int i;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

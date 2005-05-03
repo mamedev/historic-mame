@@ -199,41 +199,41 @@ VIDEO_UPDATE( pntnpuzl )
 	static int yyy=512;
 	static int sss=0xa8;
 /*
-	if ( code_pressed_memory(KEYCODE_Q) )
-	{
-		xxx--;
-		printf("xxx %04x\n",xxx);
-	}
+    if ( code_pressed_memory(KEYCODE_Q) )
+    {
+        xxx--;
+        printf("xxx %04x\n",xxx);
+    }
 
-	if ( code_pressed_memory(KEYCODE_W) )
-	{
-		xxx++;
-		printf("xxx %04x\n",xxx);
-	}
+    if ( code_pressed_memory(KEYCODE_W) )
+    {
+        xxx++;
+        printf("xxx %04x\n",xxx);
+    }
 
-	if ( code_pressed_memory(KEYCODE_A) )
-	{
-		yyy--;
-		printf("yyy %04x\n",yyy);
-	}
+    if ( code_pressed_memory(KEYCODE_A) )
+    {
+        yyy--;
+        printf("yyy %04x\n",yyy);
+    }
 
-	if ( code_pressed_memory(KEYCODE_S) )
-	{
-		yyy++;
-		printf("yyy %04x\n",yyy);
-	}
+    if ( code_pressed_memory(KEYCODE_S) )
+    {
+        yyy++;
+        printf("yyy %04x\n",yyy);
+    }
 
-	if ( code_pressed_memory(KEYCODE_Z) )
-	{
-		sss--;
-		printf("sss %04x\n",sss);
-	}
+    if ( code_pressed_memory(KEYCODE_Z) )
+    {
+        sss--;
+        printf("sss %04x\n",sss);
+    }
 
-	if ( code_pressed_memory(KEYCODE_X) )
-	{
-		sss++;
-		printf("sss %04x\n",sss);
-	}
+    if ( code_pressed_memory(KEYCODE_X) )
+    {
+        sss++;
+        printf("sss %04x\n",sss);
+    }
 */
 
 
@@ -289,13 +289,13 @@ READ16_HANDLER ( pntnpuzl_random_r )
 
 READ16_HANDLER( pntnpuzl_vid_r )
 {
-//	logerror("read_videoram: pc = %06x : offset %04x reg %04x\n",activecpu_get_pc(),offset*2, pntnpuzl_bank[0]);
+//  logerror("read_videoram: pc = %06x : offset %04x reg %04x\n",activecpu_get_pc(),offset*2, pntnpuzl_bank[0]);
 	return pntnpuzl_3a0000ram[offset+ (pntnpuzl_bank[0]&0x0001)*0x8000 ];
 }
 
 WRITE16_HANDLER( pntnpuzl_vid_w )
 {
-//	logerror("write_to_videoram: pc = %06x : offset %04x data %04x reg %04x\n",activecpu_get_pc(),offset*2, data, pntnpuzl_bank[0]);
+//  logerror("write_to_videoram: pc = %06x : offset %04x data %04x reg %04x\n",activecpu_get_pc(),offset*2, data, pntnpuzl_bank[0]);
 	COMBINE_DATA(&pntnpuzl_3a0000ram[offset+ (pntnpuzl_bank[0]&0x0001)*0x8000 ]);
 }
 
@@ -488,9 +488,9 @@ ROM_END
 
 static DRIVER_INIT(pip)
 {
-//	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-//	rom[0x2696/2] = 0x4e71;
-//	rom[0x26a0/2] = 0x4e71;
+//  UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+//  rom[0x2696/2] = 0x4e71;
+//  rom[0x26a0/2] = 0x4e71;
 }
 
 GAMEX( 199?, pntnpuzl,    0, pntnpuzl,    pntnpuzl,    pip, ROT90,  "Century?", "Paint & Puzzle",GAME_NO_SOUND|GAME_NOT_WORKING )

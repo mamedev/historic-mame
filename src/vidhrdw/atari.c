@@ -1,9 +1,9 @@
 /******************************************************************************
-	Atari 400/800
+    Atari 400/800
 
-	Video handler
+    Video handler
 
-	Juergen Buchmueller, June 1998
+    Juergen Buchmueller, June 1998
 ******************************************************************************/
 
 #include "driver.h"
@@ -42,18 +42,18 @@ static int tv_artifacts = 0;
  * calculate player/missile priorities (GTIA prior at $D00D)
  * prior   color priorities in descending order
  * ------------------------------------------------------------------
- * bit 0   PL0	  PL1	 PL2	PL3    PF0	  PF1	 PF2	PF3/P4 BK
- *		   all players in front of all playfield colors
- * bit 1   PL0	  PL1	 PF0	PF1    PF2	  PF3/P4 PL2	PL3    BK
- *		   pl 0+1 in front of pf 0-3 in front of pl 2+3
+ * bit 0   PL0    PL1    PL2    PL3    PF0    PF1    PF2    PF3/P4 BK
+ *         all players in front of all playfield colors
+ * bit 1   PL0    PL1    PF0    PF1    PF2    PF3/P4 PL2    PL3    BK
+ *         pl 0+1 in front of pf 0-3 in front of pl 2+3
  * bit 2   PF0    PF1    PF2    PF3/P4 PL0    PL1    PL2    PL3    BK
- *		   all playfield colors in front of all players
+ *         all playfield colors in front of all players
  * bit 3   PF0    PF1    PL0    PL1    PL2    PL3    PF2    PF3/P4 BK
- *		   pf 0+1 in front of all players in front of pf 2+3
+ *         pf 0+1 in front of all players in front of pf 2+3
  * bit 4   missiles colors are PF3 (P4)
- *		   missiles have the same priority as pf3
+ *         missiles have the same priority as pf3
  * bit 5   PL0+PL1 and PL2+PL3 bits xored
- *		   00: playfield, 01: PL0/2, 10: PL1/3 11: black (EOR)
+ *         00: playfield, 01: PL0/2, 10: PL1/3 11: black (EOR)
  * bit 7+6 CTIA mod (00) or GTIA mode 1 to 3 (01, 10, 11)
  *************************************************************************/
 
@@ -1016,7 +1016,7 @@ static void antic_linerefresh(void)
 	else
 	{
 		/* if hscroll is enabled, more data are fetched by ANTIC, but it still renders playfield
-		   of width defined by pfwidth. */
+           of width defined by pfwidth. */
 		switch( antic.pfwidth )
 		{
 			case 0:
@@ -1035,7 +1035,7 @@ static void antic_linerefresh(void)
 			case 40:
 				{
 					dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
-					dst += 4;				
+					dst += 4;
 					for ( x = 1; x < HCHARS-2; x++ )
 					{
 						if ( x == 1 )
@@ -1097,7 +1097,7 @@ static void antic_issue_dli(int param)
 
 
 static  renderer_function renderer[2][19][5] = {
-	/*	 no playfield	 narrow 		 normal 		 wide		  */
+	/*   no playfield    narrow          normal          wide         */
 	{
 		{antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx},
 		{antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx},
@@ -1119,8 +1119,8 @@ static  renderer_function renderer[2][19][5] = {
 		{antic_mode_0_xx, gtia_mode_2_32, gtia_mode_2_40, gtia_mode_2_48},
 		{antic_mode_0_xx, gtia_mode_3_32, gtia_mode_3_40, gtia_mode_3_48},
 	},
-	/*	 with hscrol enabled playfield width is +32 color clocks	  */
-	/*	 no playfield	 narrow->normal  normal->wide	 wide->wide   */
+	/*   with hscrol enabled playfield width is +32 color clocks      */
+	/*   no playfield    narrow->normal  normal->wide    wide->wide   */
 	{
 		{antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx},
 		{antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx,antic_mode_0_xx},
@@ -1146,7 +1146,7 @@ static  renderer_function renderer[2][19][5] = {
 
 /*****************************************************************************
  *
- *	Antic Line Done
+ *  Antic Line Done
  *
  *****************************************************************************/
 static void antic_line_done(int param)
@@ -1170,7 +1170,7 @@ static void antic_line_done(int param)
 
 /*****************************************************************************
  *
- *	Antic Steal Cycles
+ *  Antic Steal Cycles
  *  This is called once per scanline by a interrupt issued in the
  *  atari_scanline_render function. Set a new timer for the HSYNC
  *  position and release the CPU; but hold it again immediately until
@@ -1188,8 +1188,8 @@ static void antic_steal_cycles(int param)
 
 /*****************************************************************************
  *
- *	Antic Scan Line Render
- *	Render the scanline to the scrbitmap buffer.
+ *  Antic Scan Line Render
+ *  Render the scanline to the scrbitmap buffer.
  *  Also transport player/missile data to the grafp and grafm registers
  *  of the GTIA if enabled (DMA_PLAYER or DMA_MISSILE)
  *
@@ -1278,12 +1278,12 @@ INLINE void LMS(int new_cmd)
 
 /*****************************************************************************
  *
- *	Antic Scan Line DMA
- *	This is called once per scanline from Atari Interrupt
- *	If the ANTIC DMA is active (DMA_ANTIC) and the scanline not inside
- *	the VBL range (VBL_START - TOTAL_LINES or 0 - VBL_END)
- *	check if all mode lines of the previous ANTIC command were done and
- *	if so, read a new command and set up the renderer function
+ *  Antic Scan Line DMA
+ *  This is called once per scanline from Atari Interrupt
+ *  If the ANTIC DMA is active (DMA_ANTIC) and the scanline not inside
+ *  the VBL range (VBL_START - TOTAL_LINES or 0 - VBL_END)
+ *  check if all mode lines of the previous ANTIC command were done and
+ *  if so, read a new command and set up the renderer function
  *
  *****************************************************************************/
 static void antic_scanline_dma(int param)
@@ -1498,10 +1498,10 @@ static void antic_scanline_dma(int param)
 
 /*****************************************************************************
  *
- *	Generic Atari Interrupt Dispatcher
- *	This is called once per scanline and handles:
- *	vertical blank interrupt
- *	ANTIC DMA to possibly access the next display list command
+ *  Generic Atari Interrupt Dispatcher
+ *  This is called once per scanline and handles:
+ *  vertical blank interrupt
+ *  ANTIC DMA to possibly access the next display list command
  *
  *****************************************************************************/
 

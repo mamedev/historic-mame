@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Raster Elite Tickee Tickats hardware
+    Raster Elite Tickee Tickats hardware
 
 ***************************************************************************/
 
@@ -19,7 +19,7 @@ static void *setup_gun_timer;
 
 /*************************************
  *
- *	Compute X/Y coordinates
+ *  Compute X/Y coordinates
  *
  *************************************/
 
@@ -33,7 +33,7 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 
 /*************************************
  *
- *	Light gun interrupts
+ *  Light gun interrupts
  *
  *************************************/
 
@@ -82,7 +82,7 @@ static void setup_gun_interrupts(int param)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -99,7 +99,7 @@ VIDEO_START( tickee )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 

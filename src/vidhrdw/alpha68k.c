@@ -159,20 +159,20 @@ VIDEO_UPDATE( alpha68k_II )
 /******************************************************************************/
 
 /*
-	Video banking:
+    Video banking:
 
-	Write to these locations in this order for correct bank:
+    Write to these locations in this order for correct bank:
 
-	20 28 30 for Bank 0
-	60 28 30 for Bank 1
-	20 68 30 etc
-	60 68 30
-	20 28 70
-	60 28 70
-	20 68 70
-	60 68 70 for Bank 7
+    20 28 30 for Bank 0
+    60 28 30 for Bank 1
+    20 68 30 etc
+    60 68 30
+    20 28 70
+    60 28 70
+    20 68 70
+    60 68 70 for Bank 7
 
-	Actual data values written don't matter!
+    Actual data values written don't matter!
 
 */
 
@@ -478,7 +478,7 @@ static void kyros_draw_sprites(struct mame_bitmap *bitmap, const struct rectangl
 				{
 					fy = data & 0x1000;
 					fx = 0;
-					
+
 					if(flipscreen)
 					{
 						if (fy) fy=0; else fy=1;
@@ -534,7 +534,7 @@ static void sstingry_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 			{
 				fy = data & 0x1000;
 				fx = 0;
-				
+
 				if(flipscreen)
 				{
 					if (fy) fy=0; else fy=1;

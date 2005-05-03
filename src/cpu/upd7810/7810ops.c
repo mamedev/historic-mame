@@ -1,9 +1,9 @@
 /*****************************************************************************
  *
- *	 Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.2
- *	 Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
+ *   Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 emulator V0.2
+ *   Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
  *
- *	 7810ops.c	- opcode functions
+ *   7810ops.c  - opcode functions
  *
  *****************************************************************************/
 
@@ -8704,9 +8704,9 @@ static void SETB(void)
 		case 0x1d:	/* TMM */
 			TMM |= (1 << bit);
 			break;
-//		case 0x1e:	/* PT */
-//			PT is input only
-//			break;
+//      case 0x1e:  /* PT */
+//          PT is input only
+//          break;
 		default:
 			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
 			break;
@@ -8754,9 +8754,9 @@ static void CLR(void)
 		case 0x1d:	/* TMM */
 			TMM &= ~(1 << bit);
 			break;
-//		case 0x1e:	/* PT */
-//			PT is input only
-//			break;
+//      case 0x1e:  /* PT */
+//          PT is input only
+//          break;
 		default:
 			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
 			break;

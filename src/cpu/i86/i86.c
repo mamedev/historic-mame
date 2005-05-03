@@ -1,6 +1,6 @@
 /****************************************************************************
-*			  real mode i286 emulator v1.4 by Fabrice Frances				*
-*				(initial work based on David Hedley's pcemu)                *
+*             real mode i286 emulator v1.4 by Fabrice Frances               *
+*               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 /* 26.March 2000 PeT changed set_irq_line */
 
@@ -86,7 +86,7 @@ static UINT8 parity_table[256];
 
 static struct i86_timing cycles;
 
-/* The interrupt number of a pending external interrupt pending NMI is 2.	*/
+/* The interrupt number of a pending external interrupt pending NMI is 2.   */
 /* For INTR interrupts, the level is caught on the bus during an INTA cycle */
 
 #define PREFIX(name) i86##name
@@ -380,7 +380,7 @@ static void v30_interrupt(unsigned int_num, BOOLEAN md_flag)
 	if (int_num == -1)
 	{
 		int_num = (*I.irq_callback) (0);
-/*		logerror(" (indirect ->%02d) ",int_num); */
+/*      logerror(" (indirect ->%02d) ",int_num); */
 	}
 
 	dest_off = ReadWord(int_num * 4);
@@ -392,7 +392,7 @@ static void v30_interrupt(unsigned int_num, BOOLEAN md_flag)
 	I.base[CS] = SegBase(CS);
 	I.pc = (I.base[CS] + dest_off) & AMASK;
 	change_pc(I.pc);
-/*	logerror("=%06x\n",activecpu_get_pc()); */
+/*  logerror("=%06x\n",activecpu_get_pc()); */
 }
 
 static void v30_trap(void)
@@ -508,7 +508,7 @@ static void i86_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I86_SS:				I.sregs[SS] = info->i;	I.base[SS] = SegBase(SS); break;
 		case CPUINFO_INT_REGISTER + I86_DS:				I.sregs[DS] = info->i;	I.base[DS] = SegBase(DS); break;
 		case CPUINFO_INT_REGISTER + I86_VECTOR:			I.int_vector = info->i; 				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
@@ -547,7 +547,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = I.irq_state;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = I.nmi_state;					break;
-		
+
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	info->i = I.test_state;	                                break; /* PJB 03/05 */
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = I.prevpc;						break;

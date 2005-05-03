@@ -1,27 +1,27 @@
  /**************************************************************************\
- *				  Texas Instruments TMS32010 DSP Disassembler				*
- *																			*
- *					Copyright (C) 1999-2002+ Tony La Porta					*
- *				 To be used with TMS32010 DSP Emulator engine.				*
- *		You are not allowed to distribute this software commercially.		*
- *						Written for the MAME project.						*
- *																			*
- *		   Many thanks to those involved in the i8039 Disassembler			*
- *						  as this was based on it.							*
- *																			*
- *																			*
- *																			*
- * A Memory address															*
- * B Branch Address for Branch instructions (Requires next opcode read)		*
- * D Immediate byte load													*
- * K Immediate bit  load													*
- * W Immediate word load (Actually 13 bit)									*
- * M AR[x] register modification type (for indirect addressing)				*
- * N ARP register to change ARP pointer to (for indirect addressing)		*
- * P I/O port address number												*
- * R AR[R] register to use													*
- * S Shift ALU left															*
- *																			*
+ *                Texas Instruments TMS32010 DSP Disassembler               *
+ *                                                                          *
+ *                  Copyright (C) 1999-2002+ Tony La Porta                  *
+ *               To be used with TMS32010 DSP Emulator engine.              *
+ *      You are not allowed to distribute this software commercially.       *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *         Many thanks to those involved in the i8039 Disassembler          *
+ *                        as this was based on it.                          *
+ *                                                                          *
+ *                                                                          *
+ *                                                                          *
+ * A Memory address                                                         *
+ * B Branch Address for Branch instructions (Requires next opcode read)     *
+ * D Immediate byte load                                                    *
+ * K Immediate bit  load                                                    *
+ * W Immediate word load (Actually 13 bit)                                  *
+ * M AR[x] register modification type (for indirect addressing)             *
+ * N ARP register to change ARP pointer to (for indirect addressing)        *
+ * P I/O port address number                                                *
+ * R AR[R] register to use                                                  *
+ * S Shift ALU left                                                         *
+ *                                                                          *
  \**************************************************************************/
 
 #include <stdio.h>
@@ -95,9 +95,9 @@ static const char *TMS32010Formats[] = {
 	FMT("0110011110mmn00n", "tblr %M%N"),
 	FMT("011010001000000k", "larp %K"),
 	FMT("011010000aaaaaaa", "mar  %A"),		/* Actually this is executed as a NOP */
-/*	FMT("0110100010mmn00n", "mar  %M%N"),	*/
-/*	MAR indirect has been expanded out to all its variations because one of */
-/*	its opcodes is the same as LARP (actually performs the same function) */
+/*  FMT("0110100010mmn00n", "mar  %M%N"),   */
+/*  MAR indirect has been expanded out to all its variations because one of */
+/*  its opcodes is the same as LARP (actually performs the same function) */
 
 	FMT("0110100010001000", "mar  *"),
 	FMT("0110100010001001", "mar  *"),

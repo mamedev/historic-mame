@@ -1,34 +1,34 @@
 /*
-	Namco NA1/2 Sound Hardware
+    Namco NA1/2 Sound Hardware
 
-	PCM samples and sound sequencing metadata are written by the main CPU to
-	shared RAM.
+    PCM samples and sound sequencing metadata are written by the main CPU to
+    shared RAM.
 
-	The sound CPU's type is unknown, though it appears to be little endian.
-	It has an internal BIOS.
+    The sound CPU's type is unknown, though it appears to be little endian.
+    It has an internal BIOS.
 
-	RAM[0x820]:			song select
-	RAM[0x822]:			song control (fade?)
-	RAM[0x824..0x89e]:
-		Even addresses are used to select the sound effect.
-		0x40 is written to odd addresses as a signal to play the requested sound.
+    RAM[0x820]:         song select
+    RAM[0x822]:         song control (fade?)
+    RAM[0x824..0x89e]:
+        Even addresses are used to select the sound effect.
+        0x40 is written to odd addresses as a signal to play the requested sound.
 
-	Metadata vectors:
-	addr  sample
-	0000: 0012   // table of addresses for each VOX sequence
-	0002: 07e4   // table of wave records (5 words each record)
-	0004: 0794   // unknown table (5 words each record)
-	0006: 0000   // unknown (always zero?)
-	0008: 0102   // unknown address table
-	000a: 0384   // unknown address table
-	000c: 0690   // unknown chunk
-	000e: 07bc   // unknown table (5 words each record)
-	0010: 7700   // unknown
-	0012: addresses for each song sequence start here
+    Metadata vectors:
+    addr  sample
+    0000: 0012   // table of addresses for each VOX sequence
+    0002: 07e4   // table of wave records (5 words each record)
+    0004: 0794   // unknown table (5 words each record)
+    0006: 0000   // unknown (always zero?)
+    0008: 0102   // unknown address table
+    000a: 0384   // unknown address table
+    000c: 0690   // unknown chunk
+    000e: 07bc   // unknown table (5 words each record)
+    0010: 7700   // unknown
+    0012: addresses for each song sequence start here
 
-	Known issues:
-	- many opcodes are ignored or implemented imperfectly
-	- the metadata contains several mystery tables
+    Known issues:
+    - many opcodes are ignored or implemented imperfectly
+    - the metadata contains several mystery tables
 */
 
 #include <math.h>
@@ -529,10 +529,10 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 						data8_t reg23_0 = ReadMetaDataByte(chip,pSequence->addr++); /* Channel select */
 						data8_t reg23_1 = ReadMetaDataByte(chip,pSequence->addr++); /* PCM bank select */
 						/* reg23_0: 0 = Ch. 0- 3 PCM Bank select
-						            1 = Ch. 4- 7 PCM Bank select
-						            2 = Ch. 8-11 PCM Bank select
-						            3 = Ch.12-15 PCM Bank select
-						*/
+                                    1 = Ch. 4- 7 PCM Bank select
+                                    2 = Ch. 8-11 PCM Bank select
+                                    3 = Ch.12-15 PCM Bank select
+                        */
 						if( reg23_0 < 4 )
 						{
 							chip->mVoice[reg23_0*4 + 0].bank = reg23_1;

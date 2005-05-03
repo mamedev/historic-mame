@@ -1,22 +1,22 @@
 /*****************************************************************************
  *
- *	 ill02.h
- *	 Addressing mode and opcode macros for the NMOS 6502 illegal opcodes
+ *   ill02.h
+ *   Addressing mode and opcode macros for the NMOS 6502 illegal opcodes
  *
- *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 65sc02 core Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *   65sc02 core Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -29,12 +29,12 @@
 
 /***************************************************************
  ***************************************************************
- *			Macros to emulate the 6510 opcodes
+ *          Macros to emulate the 6510 opcodes
  ***************************************************************
  ***************************************************************/
 
 /* 6510 ********************************************************
- *	ANC logical and, set carry from bit of A
+ *  ANC logical and, set carry from bit of A
  ***************************************************************/
 #define ANC 													\
 	P &= ~F_C;													\
@@ -44,14 +44,14 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- *	ASR logical and, logical shift right
+ *  ASR logical and, logical shift right
  ***************************************************************/
 #define ASR 													\
 	tmp &= A; 									\
 	LSR
 
 /* 6510 ********************************************************
- * AST	and stack; transfer to accumulator and index X
+ * AST  and stack; transfer to accumulator and index X
  * logical and stack (LSB) with data, transfer result to S
  * transfer result to accumulator and index X also
  ***************************************************************/
@@ -61,7 +61,7 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- *	ARR logical and, rotate right
+ *  ARR logical and, rotate right
  ***************************************************************/
 #define ARR 													\
 	if( P & F_D )												\
@@ -111,7 +111,7 @@
 	}
 
 /* 6510 ********************************************************
- *	ASX logical and X w/ A, subtract data from X
+ *  ASX logical and X w/ A, subtract data from X
  ***************************************************************/
 #define ASX 													\
 	P &= ~F_C;													\
@@ -122,7 +122,7 @@
 	SET_NZ(X)
 
 /* 6510 ********************************************************
- *	AXA transfer index X to accumulator, logical and
+ *  AXA transfer index X to accumulator, logical and
  * depends on the data of the dma device (videochip) fetched
  * between opcode read and operand read
  ***************************************************************/
@@ -131,7 +131,7 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- *	DCP decrement data and compare
+ *  DCP decrement data and compare
  ***************************************************************/
 #define DCP 													\
 	tmp = (UINT8)(tmp-1); 										\
@@ -141,35 +141,35 @@
 	SET_NZ((UINT8)(A - tmp))
 
 /* 6502 ********************************************************
- *	DOP double no operation
+ *  DOP double no operation
  ***************************************************************/
 #define DOP 													\
 	PCW++
 
 /* 6510 ********************************************************
- *	ISB increment and subtract with carry
+ *  ISB increment and subtract with carry
  ***************************************************************/
 #define ISB 													\
 	tmp = (UINT8)(tmp+1); 										\
 	SBC
 
 /* 6510 ********************************************************
- *	LAX load accumulator and index X
+ *  LAX load accumulator and index X
  ***************************************************************/
 #define LAX 													\
 	A = X = (UINT8)tmp; 										\
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- *	OAL load accumulator and index X
+ *  OAL load accumulator and index X
  ***************************************************************/
 #define OAL 													\
 	A = X = (UINT8)((A|0xee)&tmp);								\
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- * RLA	rotate left and logical and accumulator
- *	new C <- [7][6][5][4][3][2][1][0] <- C
+ * RLA  rotate left and logical and accumulator
+ *  new C <- [7][6][5][4][3][2][1][0] <- C
  ***************************************************************/
 #define RLA 													\
 	tmp = (tmp << 1) | (P & F_C);								\
@@ -179,8 +179,8 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- * RRA	rotate right and add with carry
- *	C -> [7][6][5][4][3][2][1][0] -> C
+ * RRA  rotate right and add with carry
+ *  C -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define RRA 													\
 	tmp |= (P & F_C) << 8;										\
@@ -189,13 +189,13 @@
 	ADC
 
 /* 6510 ********************************************************
- * SAX	logical and accumulator with index X and store
+ * SAX  logical and accumulator with index X and store
  ***************************************************************/
 #define SAX 													\
 	tmp = A & X
 
 /* 6510 ********************************************************
- *	SLO shift left and logical or
+ *  SLO shift left and logical or
  ***************************************************************/
 #define SLO 													\
 	P = (P & ~F_C) | ((tmp >> 7) & F_C);						\
@@ -204,8 +204,8 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- *	SRE logical shift right and logical exclusive or
- *	0 -> [7][6][5][4][3][2][1][0] -> C
+ *  SRE logical shift right and logical exclusive or
+ *  0 -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define SRE 													\
 	P = (P & ~F_C) | (tmp & F_C);								\
@@ -214,13 +214,13 @@
 	SET_NZ(A)
 
 /* 6510 ********************************************************
- * SAH	store accumulator and index X and high + 1
+ * SAH  store accumulator and index X and high + 1
  * result = accumulator and index X and memory [PC+1] + 1
  ***************************************************************/
 #define SAH tmp = A & X & (EAH+1)
 
 /* 6510 ********************************************************
- * SSH	store stack high
+ * SSH  store stack high
  * logical and accumulator with index X, transfer result to S
  * logical and result with memory [PC+1] + 1
  ***************************************************************/
@@ -233,25 +233,25 @@
 #endif
 
 /* 6510 ********************************************************
- * SXH	store index X high
+ * SXH  store index X high
  * logical and index X with memory[PC+1] and store the result
  ***************************************************************/
 #define SXH tmp = X & (EAH+1)
 
 /* 6510 ********************************************************
- * SYH	store index Y and (high + 1)
+ * SYH  store index Y and (high + 1)
  * logical and index Y with memory[PC+1] + 1 and store the result
  ***************************************************************/
 #define SYH tmp = Y & (EAH+1)
 
 /* 6510 ********************************************************
- *	TOP triple no operation
+ *  TOP triple no operation
  ***************************************************************/
 #define TOP 													\
 	PCW+=2
 
 /* 6510 ********************************************************
- *	KIL Illegal opcode
+ *  KIL Illegal opcode
  * processor halted: no hardware interrupt will help,
  * only reset
  ***************************************************************/

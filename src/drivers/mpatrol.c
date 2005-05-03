@@ -240,7 +240,7 @@ MPATROL_COMMON
 	PORT_DIPSETTING(    0x04, "10000" )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Gets filled in based on the coin mode */
-	
+
 MPATROL_COMMON2
 INPUT_PORTS_END
 

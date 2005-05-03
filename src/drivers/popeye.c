@@ -304,7 +304,7 @@ INPUT_PORTS_START( popeye )
 	PORT_DIPSETTING(    0x40, "Nintendo" )
 	PORT_DIPSETTING(    0x20, "Nintendo Co.,Ltd" )
 	PORT_DIPSETTING(    0x60, "Nintendo of America" )
-//	PORT_DIPSETTING(    0x00, "Nintendo of America" )
+//  PORT_DIPSETTING(    0x00, "Nintendo of America" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* scans DSW1 one bit at a time */
 
 	PORT_START	/* DSW1 (FAKE - appears as bit 7 of DSW0, see code below) */
@@ -388,7 +388,7 @@ INPUT_PORTS_START( popeyef )
 	PORT_DIPSETTING(    0x40, "Nintendo" )
 	PORT_DIPSETTING(    0x20, "Nintendo Co.,Ltd" )
 	PORT_DIPSETTING(    0x60, "Nintendo of America" )
-//	PORT_DIPSETTING(    0x00, "Nintendo of America" )
+//  PORT_DIPSETTING(    0x00, "Nintendo of America" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* scans DSW1 one bit at a time */
 
 	PORT_START	/* DSW1 (FAKE - appears as bit 7 of DSW0, see code below) */
@@ -506,7 +506,7 @@ static MACHINE_DRIVER_START( skyskipr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 8000000/4)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)

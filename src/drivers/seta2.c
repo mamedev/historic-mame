@@ -1,33 +1,33 @@
 /***************************************************************************
 
-						  -= Newer Seta Hardware =-
+                          -= Newer Seta Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU    :	TMP68301*
+CPU    :    TMP68301*
 
-Custom :	X1-010				Sound: 8 Bit PCM
-			DX-101				Sprites
-			DX-102 x3
+Custom :    X1-010              Sound: 8 Bit PCM
+            DX-101              Sprites
+            DX-102 x3
 
-OSC:	50.0000MHz
+OSC:    50.0000MHz
         32.5304MHz
 
-*	The Toshiba TMP68301 is a 68HC000 + serial I/O, parallel I/O,
-	3 timers, address decoder, wait generator, interrupt controller,
-	all integrated in a single chip.
+*   The Toshiba TMP68301 is a 68HC000 + serial I/O, parallel I/O,
+    3 timers, address decoder, wait generator, interrupt controller,
+    all integrated in a single chip.
 
 -------------------------------------------------------------------------------------------
-Ordered by Board		Year	Game									By
+Ordered by Board        Year    Game                                    By
 -------------------------------------------------------------------------------------------
-P-FG01-1				1995	Guardians / Denjin Makai II				Banpresto
-PO-113A					1994	Mobile Suit Gundam EX Revue				Banpresto
-P0-123A					1996	Wakakusamonogatari Mahjong Yonshimai	Maboroshi Ware
-P0-125A ; KE (Namco)	1996	Kosodate Quiz My Angel					Namco
-P0-136A ; KL (Namco)	1997	Kosodate Quiz My Angel 2				Namco
-P0-142A					1999	Puzzle De Bowling						Nihon System / Moss
-P0-142A + extra parts	2000	Penguin Brothers						Subsino
+P-FG01-1                1995    Guardians / Denjin Makai II             Banpresto
+PO-113A                 1994    Mobile Suit Gundam EX Revue             Banpresto
+P0-123A                 1996    Wakakusamonogatari Mahjong Yonshimai    Maboroshi Ware
+P0-125A ; KE (Namco)    1996    Kosodate Quiz My Angel                  Namco
+P0-136A ; KL (Namco)    1997    Kosodate Quiz My Angel 2                Namco
+P0-142A                 1999    Puzzle De Bowling                       Nihon System / Moss
+P0-142A + extra parts   2000    Penguin Brothers                        Subsino
 -------------------------------------------------------------------------------------------
 
 TODO:
@@ -144,21 +144,21 @@ Notes:
 
 /***************************************************************************
 
-							Penguin Brothers (Japan)
+                            Penguin Brothers (Japan)
 
 (c)2000 Subsino
-Board:	P0-142A
-CPU:	TMP68301 (68000 core)
+Board:  P0-142A
+CPU:    TMP68301 (68000 core)
 
-OSC:	50.0000MHz
+OSC:    50.0000MHz
         32.5304MHz
         28.0000MHz
 
-Chips.:	DX-101
+Chips.: DX-101
         DX-102 x3
-Sound:	X1-010
+Sound:  X1-010
 
-Notes:	pzlbowl PCB with extra parts:
+Notes:  pzlbowl PCB with extra parts:
         28MHz OSC
         2x 62256 SRAM
         74HC00
@@ -175,7 +175,7 @@ Notes:	pzlbowl PCB with extra parts:
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
@@ -197,7 +197,7 @@ WRITE16_HANDLER( seta2_sound_bank_w )
 
 
 /***************************************************************************
-								Guardians
+                                Guardians
 ***************************************************************************/
 
 static WRITE16_HANDLER( grdians_lockout_w )
@@ -208,7 +208,7 @@ static WRITE16_HANDLER( grdians_lockout_w )
 		coin_counter_w(0,data & 0x01);	// or 0x04
 		coin_counter_w(1,data & 0x02);	// or 0x08
 	}
-//	usrintf_showmessage("%04X", data & 0xffff);
+//  usrintf_showmessage("%04X", data & 0xffff);
 }
 
 static ADDRESS_MAP_START( grdians_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -242,7 +242,7 @@ static ADDRESS_MAP_START( grdians_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-						Mobile Suit Gundam EX Revue
+                        Mobile Suit Gundam EX Revue
 ***************************************************************************/
 
 static NVRAM_HANDLER(93C46_gundamex)
@@ -368,7 +368,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Kosodate Quiz My Angel
+                            Kosodate Quiz My Angel
 ***************************************************************************/
 
 static ADDRESS_MAP_START( myangel_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -400,7 +400,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Kosodate Quiz My Angel 2
+                            Kosodate Quiz My Angel 2
 ***************************************************************************/
 
 static ADDRESS_MAP_START( myangel2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -432,11 +432,11 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Puzzle De Bowling
+                                Puzzle De Bowling
 ***************************************************************************/
 
-/*	The game checks for a specific value read from the ROM region.
-	The offset to use is stored in RAM at address 0x20BA16 */
+/*  The game checks for a specific value read from the ROM region.
+    The offset to use is stored in RAM at address 0x20BA16 */
 READ16_HANDLER( pzlbowl_protection_r )
 {
 	UINT32 address = (program_read_word(0x20ba16) << 16) | program_read_word(0x20ba18);
@@ -487,7 +487,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Penguin Bros
+                            Penguin Bros
 ***************************************************************************/
 
 static ADDRESS_MAP_START( penbros_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -501,7 +501,7 @@ static ADDRESS_MAP_START( penbros_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600002, 0x600003) AM_READ(input_port_3_word_r		)	// P2
 	AM_RANGE(0x600004, 0x600005) AM_READ(input_port_4_word_r		)	// Coins
 	AM_RANGE(0x600006, 0x600007) AM_READ(watchdog_reset16_r		)	// Watchdog
-//	AM_RANGE(0x700000, 0x700001) AM_READ(pzlbowl_protection_r		)	// Protection
+//  AM_RANGE(0x700000, 0x700001) AM_READ(pzlbowl_protection_r       )   // Protection
 	AM_RANGE(0xb00000, 0xb3ffff) AM_READ(MRA16_RAM					)	// Sprites
 	AM_RANGE(0xb40000, 0xb4ffff) AM_READ(MRA16_RAM					)	// Palette
 	AM_RANGE(0xa00000, 0xa03fff) AM_READ(seta_sound_word_r 		)	// Sound
@@ -526,12 +526,12 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
 /***************************************************************************
-						Mobile Suit Gundam EX Revue
+                        Mobile Suit Gundam EX Revue
 ***************************************************************************/
 
 INPUT_PORTS_START( gundamex )
@@ -646,7 +646,7 @@ INPUT_PORTS_START( gundamex )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Guardians
+                                Guardians
 ***************************************************************************/
 
 INPUT_PORTS_START( grdians )
@@ -867,7 +867,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Kosodate Quiz My Angel
+                            Kosodate Quiz My Angel
 ***************************************************************************/
 
 INPUT_PORTS_START( myangel )
@@ -968,7 +968,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Kosodate Quiz My Angel 2
+                            Kosodate Quiz My Angel 2
 ***************************************************************************/
 
 INPUT_PORTS_START( myangel2 )
@@ -1069,7 +1069,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Puzzle De Bowling
+                                Puzzle De Bowling
 ***************************************************************************/
 
 INPUT_PORTS_START( pzlbowl )
@@ -1084,16 +1084,16 @@ INPUT_PORTS_START( pzlbowl )
 	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0038, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0028, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0018, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0010, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0008, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(      0x0028, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(      0x0018, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(      0x0010, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(      0x0008, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, "Winning Rounds (Player VS Player)" )
 	PORT_DIPSETTING(      0x0040, "1" )
 	PORT_DIPSETTING(      0x00c0, "2" )
-//	PORT_DIPSETTING(      0x0000, "2" )
+//  PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x0080, "3" )
 
 	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1103,13 +1103,13 @@ INPUT_PORTS_START( pzlbowl )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_2C ) )
-//	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(      0x0002, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_5C ) )
-//	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
+//  PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
@@ -1170,7 +1170,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Penguin Bros
+                            Penguin Bros
 ***************************************************************************/
 
 INPUT_PORTS_START( penbros )
@@ -1263,7 +1263,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -1343,8 +1343,8 @@ static struct GfxLayout layout_2bpp_hi =
 	8*8*2
 };
 
-/*	Tiles are 8bpp, but the hardware is additionally able to discard
-	some bitplanes and use the low 4 bits only, or the high 4 bits only	*/
+/*  Tiles are 8bpp, but the hardware is additionally able to discard
+    some bitplanes and use the low 4 bits only, or the high 4 bits only */
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_4bpp_lo, 0, 0x8000/16 },
@@ -1359,7 +1359,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
@@ -1491,7 +1491,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 

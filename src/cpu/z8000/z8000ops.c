@@ -1,21 +1,21 @@
 /*****************************************************************************
  *
- *	 z8000ops.c
- *	 Portable Z8000(2) emulator
- *	 Opcode functions
+ *   z8000ops.c
+ *   Portable Z8000(2) emulator
+ *   Opcode functions
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
- *	 Bug fixes and MSB_FIRST compliance Ernesto Corvi.
+ *   Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *   Bug fixes and MSB_FIRST compliance Ernesto Corvi.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
@@ -120,8 +120,8 @@ INLINE UINT8 ADDB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     CLR_DA;         /* clear DA (decimal adjust) flag for addb */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_ADDX_C; 	/* set C if result overflowed			   */
-	CHK_ADDB_V; 	/* set V if result has incorrect sign	   */
+	CHK_ADDX_C; 	/* set C if result overflowed              */
+	CHK_ADDB_V; 	/* set V if result has incorrect sign      */
     CHK_ADDB_H;     /* set H if lower nibble overflowed        */
 	return result;
 }
@@ -135,8 +135,8 @@ INLINE UINT16 ADDW(UINT16 dest, UINT16 value)
 	UINT16 result = dest + value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_ADDX_C; 	/* set C if result overflowed			   */
-	CHK_ADDW_V; 	/* set V if result has incorrect sign	   */
+	CHK_ADDX_C; 	/* set C if result overflowed              */
+	CHK_ADDW_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -149,8 +149,8 @@ INLINE UINT32 ADDL(UINT32 dest, UINT32 value)
 	UINT32 result = dest + value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-	CHK_ADDX_C; 	/* set C if result overflowed			   */
-	CHK_ADDL_V; 	/* set V if result has incorrect sign	   */
+	CHK_ADDX_C; 	/* set C if result overflowed              */
+	CHK_ADDL_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -164,9 +164,9 @@ INLINE UINT8 ADCB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     CLR_DA;         /* clear DA (decimal adjust) flag for adcb */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_ADCX_C; 	/* set C if result overflowed			   */
-	CHK_ADDB_V; 	/* set V if result has incorrect sign	   */
-	CHK_ADCB_H; 	/* set H if lower nibble overflowed 	   */
+	CHK_ADCX_C; 	/* set C if result overflowed              */
+	CHK_ADDB_V; 	/* set V if result has incorrect sign      */
+	CHK_ADCB_H; 	/* set H if lower nibble overflowed        */
 	return result;
 }
 
@@ -179,8 +179,8 @@ INLINE UINT16 ADCW(UINT16 dest, UINT16 value)
 	UINT16 result = dest + value + GET_C;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_ADCX_C; 	/* set C if result overflowed			   */
-	CHK_ADDW_V; 	/* set V if result has incorrect sign	   */
+	CHK_ADCX_C; 	/* set C if result overflowed              */
+	CHK_ADDW_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -194,8 +194,8 @@ INLINE UINT8 SUBB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     SET_DA;         /* set DA (decimal adjust) flag for subb   */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
-	CHK_SUBB_V; 	/* set V if result has incorrect sign	   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
+	CHK_SUBB_V; 	/* set V if result has incorrect sign      */
     CHK_SUBB_H;     /* set H if lower nibble underflowed       */
 	return result;
 }
@@ -209,8 +209,8 @@ INLINE UINT16 SUBW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
-	CHK_SUBW_V; 	/* set V if result has incorrect sign	   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
+	CHK_SUBW_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -223,8 +223,8 @@ INLINE UINT32 SUBL(UINT32 dest, UINT32 value)
 	UINT32 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
-	CHK_SUBL_V; 	/* set V if result has incorrect sign	   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
+	CHK_SUBL_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -238,9 +238,9 @@ INLINE UINT8 SBCB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     SET_DA;         /* set DA (decimal adjust) flag for sbcb   */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_SBCX_C; 	/* set C if result underflowed			   */
-	CHK_SUBB_V; 	/* set V if result has incorrect sign	   */
-	CHK_SBCB_H; 	/* set H if lower nibble underflowed	   */
+	CHK_SBCX_C; 	/* set C if result underflowed             */
+	CHK_SUBB_V; 	/* set V if result has incorrect sign      */
+	CHK_SBCB_H; 	/* set H if lower nibble underflowed       */
 	return result;
 }
 
@@ -253,8 +253,8 @@ INLINE UINT16 SBCW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value - GET_C;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_SBCX_C; 	/* set C if result underflowed			   */
-	CHK_SUBW_V; 	/* set V if result has incorrect sign	   */
+	CHK_SBCX_C; 	/* set C if result underflowed             */
+	CHK_SUBW_V; 	/* set V if result has incorrect sign      */
 	return result;
 }
 
@@ -265,7 +265,7 @@ INLINE UINT16 SBCW(UINT16 dest, UINT16 value)
 INLINE UINT8 ORB(UINT8 dest, UINT8 value)
 {
 	UINT8 result = dest | value;
-	CLR_ZSP;		/* first clear Z, S, P/V flags			   */
+	CLR_ZSP;		/* first clear Z, S, P/V flags             */
 	CHK_XXXB_ZSP;	/* set Z, S and P flags for result byte    */
 	return result;
 }
@@ -277,7 +277,7 @@ INLINE UINT8 ORB(UINT8 dest, UINT8 value)
 INLINE UINT16 ORW(UINT16 dest, UINT16 value)
 {
 	UINT16 result = dest | value;
-	CLR_ZS; 		/* first clear Z, and S flags			   */
+	CLR_ZS; 		/* first clear Z, and S flags              */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
 	return result;
 }
@@ -340,7 +340,7 @@ INLINE void CPB(UINT8 dest, UINT8 value)
 	UINT8 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S and P/V flags       */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
 	CHK_SUBB_V;
 }
 
@@ -353,7 +353,7 @@ INLINE void CPW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value;
 	CLR_CZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
 	CHK_SUBW_V;
 }
 
@@ -366,7 +366,7 @@ INLINE void CPL(UINT32 dest, UINT32 value)
 	UINT32 result = dest - value;
 	CLR_CZSV;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-	CHK_SUBX_C; 	/* set C if result underflowed			   */
+	CHK_SUBX_C; 	/* set C if result underflowed             */
 	CHK_SUBL_V;
 }
 
@@ -429,7 +429,7 @@ INLINE UINT16 NEGW(UINT16 dest)
 INLINE void TESTB(UINT8 result)
 {
 	CLR_ZSP;
-	CHK_XXXB_ZSP;	/* set Z and S flags for result byte	   */
+	CHK_XXXB_ZSP;	/* set Z and S flags for result byte       */
 }
 
 /******************************************
@@ -461,7 +461,7 @@ INLINE UINT8 INCB(UINT8 dest, UINT8 value)
     UINT8 result = dest + value;
 	CLR_ZSV;
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_ADDB_V; 	/* set V if result overflowed			   */
+	CHK_ADDB_V; 	/* set V if result overflowed              */
 	return result;
 }
 
@@ -474,7 +474,7 @@ INLINE UINT16 INCW(UINT16 dest, UINT16 value)
     UINT16 result = dest + value;
 	CLR_ZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result byte       */
-	CHK_ADDW_V; 	/* set V if result overflowed			   */
+	CHK_ADDW_V; 	/* set V if result overflowed              */
 	return result;
 }
 
@@ -487,7 +487,7 @@ INLINE UINT8 DECB(UINT8 dest, UINT8 value)
     UINT8 result = dest - value;
 	CLR_ZSV;
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-	CHK_SUBB_V; 	/* set V if result overflowed			   */
+	CHK_SUBB_V; 	/* set V if result overflowed              */
 	return result;
 }
 
@@ -500,7 +500,7 @@ INLINE UINT16 DECW(UINT16 dest, UINT16 value)
     UINT16 result = dest - value;
 	CLR_ZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-	CHK_SUBW_V; 	/* set V if result overflowed			   */
+	CHK_SUBW_V; 	/* set V if result overflowed              */
 	return result;
 }
 
@@ -1103,7 +1103,7 @@ static void  zinvalid(void)
 }
 
 /******************************************
- addb	 rbd,imm8
+ addb    rbd,imm8
  flags:  CZSVDH
  ******************************************/
 static void  Z00_0000_dddd_imm8(void)
@@ -1114,7 +1114,7 @@ static void  Z00_0000_dddd_imm8(void)
 }
 
 /******************************************
- addb	 rbd,@rs
+ addb    rbd,@rs
  flags:  CZSVDH
  ******************************************/
 static void Z00_ssN0_dddd(void)
@@ -1125,7 +1125,7 @@ static void Z00_ssN0_dddd(void)
 }
 
 /******************************************
- add	 rd,imm16
+ add     rd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z01_0000_dddd_imm16(void)
@@ -1136,7 +1136,7 @@ static void Z01_0000_dddd_imm16(void)
 }
 
 /******************************************
- add	 rd,@rs
+ add     rd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z01_ssN0_dddd(void)
@@ -1147,7 +1147,7 @@ static void Z01_ssN0_dddd(void)
 }
 
 /******************************************
- subb	 rbd,imm8
+ subb    rbd,imm8
  flags:  CZSVDH
  ******************************************/
 static void Z02_0000_dddd_imm8(void)
@@ -1158,7 +1158,7 @@ static void Z02_0000_dddd_imm8(void)
 }
 
 /******************************************
- subb	 rbd,@rs
+ subb    rbd,@rs
  flags:  CZSVDH
  ******************************************/
 static void Z02_ssN0_dddd(void)
@@ -1169,7 +1169,7 @@ static void Z02_ssN0_dddd(void)
 }
 
 /******************************************
- sub	 rd,imm16
+ sub     rd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z03_0000_dddd_imm16(void)
@@ -1180,7 +1180,7 @@ static void Z03_0000_dddd_imm16(void)
 }
 
 /******************************************
- sub	 rd,@rs
+ sub     rd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z03_ssN0_dddd(void)
@@ -1191,7 +1191,7 @@ static void Z03_ssN0_dddd(void)
 }
 
 /******************************************
- orb	 rbd,imm8
+ orb     rbd,imm8
  flags:  CZSP--
  ******************************************/
 static void Z04_0000_dddd_imm8(void)
@@ -1202,7 +1202,7 @@ static void Z04_0000_dddd_imm8(void)
 }
 
 /******************************************
- orb	 rbd,@rs
+ orb     rbd,@rs
  flags:  CZSP--
  ******************************************/
 static void Z04_ssN0_dddd(void)
@@ -1213,7 +1213,7 @@ static void Z04_ssN0_dddd(void)
 }
 
 /******************************************
- or 	 rd,imm16
+ or      rd,imm16
  flags:  CZS---
  ******************************************/
 static void Z05_0000_dddd_imm16(void)
@@ -1224,7 +1224,7 @@ static void Z05_0000_dddd_imm16(void)
 }
 
 /******************************************
- or 	 rd,@rs
+ or      rd,@rs
  flags:  CZS---
  ******************************************/
 static void Z05_ssN0_dddd(void)
@@ -1235,7 +1235,7 @@ static void Z05_ssN0_dddd(void)
 }
 
 /******************************************
- andb	 rbd,imm8
+ andb    rbd,imm8
  flags:  -ZSP--
  ******************************************/
 static void Z06_0000_dddd_imm8(void)
@@ -1246,7 +1246,7 @@ static void Z06_0000_dddd_imm8(void)
 }
 
 /******************************************
- andb	 rbd,@rs
+ andb    rbd,@rs
  flags:  -ZSP--
  ******************************************/
 static void Z06_ssN0_dddd(void)
@@ -1257,7 +1257,7 @@ static void Z06_ssN0_dddd(void)
 }
 
 /******************************************
- and	 rd,imm16
+ and     rd,imm16
  flags:  -ZS---
  ******************************************/
 static void Z07_0000_dddd_imm16(void)
@@ -1268,7 +1268,7 @@ static void Z07_0000_dddd_imm16(void)
 }
 
 /******************************************
- and	 rd,@rs
+ and     rd,@rs
  flags:  -ZS---
  ******************************************/
 static void Z07_ssN0_dddd(void)
@@ -1279,7 +1279,7 @@ static void Z07_ssN0_dddd(void)
 }
 
 /******************************************
- xorb	 rbd,imm8
+ xorb    rbd,imm8
  flags:  -ZSP--
  ******************************************/
 static void Z08_0000_dddd_imm8(void)
@@ -1290,7 +1290,7 @@ static void Z08_0000_dddd_imm8(void)
 }
 
 /******************************************
- xorb	 rbd,@rs
+ xorb    rbd,@rs
  flags:  -ZSP--
  ******************************************/
 static void Z08_ssN0_dddd(void)
@@ -1301,7 +1301,7 @@ static void Z08_ssN0_dddd(void)
 }
 
 /******************************************
- xor	 rd,imm16
+ xor     rd,imm16
  flags:  -ZS---
  ******************************************/
 static void Z09_0000_dddd_imm16(void)
@@ -1312,7 +1312,7 @@ static void Z09_0000_dddd_imm16(void)
 }
 
 /******************************************
- xor	 rd,@rs
+ xor     rd,@rs
  flags:  -ZS---
  ******************************************/
 static void Z09_ssN0_dddd(void)
@@ -1323,7 +1323,7 @@ static void Z09_ssN0_dddd(void)
 }
 
 /******************************************
- cpb	 rbd,imm8
+ cpb     rbd,imm8
  flags:  CZSV--
  ******************************************/
 static void Z0A_0000_dddd_imm8(void)
@@ -1334,7 +1334,7 @@ static void Z0A_0000_dddd_imm8(void)
 }
 
 /******************************************
- cpb	 rbd,@rs
+ cpb     rbd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z0A_ssN0_dddd(void)
@@ -1345,7 +1345,7 @@ static void Z0A_ssN0_dddd(void)
 }
 
 /******************************************
- cp 	 rd,imm16
+ cp      rd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z0B_0000_dddd_imm16(void)
@@ -1356,7 +1356,7 @@ static void Z0B_0000_dddd_imm16(void)
 }
 
 /******************************************
- cp 	 rd,@rs
+ cp      rd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z0B_ssN0_dddd(void)
@@ -1367,7 +1367,7 @@ static void Z0B_ssN0_dddd(void)
 }
 
 /******************************************
- comb	 @rd
+ comb    @rd
  flags:  -ZSP--
  ******************************************/
 static void Z0C_ddN0_0000(void)
@@ -1377,7 +1377,7 @@ static void Z0C_ddN0_0000(void)
 }
 
 /******************************************
- cpb	 @rd,imm8
+ cpb     @rd,imm8
  flags:  CZSV--
  ******************************************/
 static void Z0C_ddN0_0001_imm8(void)
@@ -1388,7 +1388,7 @@ static void Z0C_ddN0_0001_imm8(void)
 }
 
 /******************************************
- negb	 @rd
+ negb    @rd
  flags:  CZSV--
  ******************************************/
 static void Z0C_ddN0_0010(void)
@@ -1398,7 +1398,7 @@ static void Z0C_ddN0_0010(void)
 }
 
 /******************************************
- testb	 @rd
+ testb   @rd
  flags:  -ZSP--
  ******************************************/
 static void Z0C_ddN0_0100(void)
@@ -1408,7 +1408,7 @@ static void Z0C_ddN0_0100(void)
 }
 
 /******************************************
- ldb	 @rd,imm8
+ ldb     @rd,imm8
  flags:  ------
  ******************************************/
 static void Z0C_ddN0_0101_imm8(void)
@@ -1419,7 +1419,7 @@ static void Z0C_ddN0_0101_imm8(void)
 }
 
 /******************************************
- tsetb	 @rd
+ tsetb   @rd
  flags:  --S---
  ******************************************/
 static void Z0C_ddN0_0110(void)
@@ -1430,7 +1430,7 @@ static void Z0C_ddN0_0110(void)
 }
 
 /******************************************
- clrb	 @rd
+ clrb    @rd
  flags:  ------
  ******************************************/
 static void Z0C_ddN0_1000(void)
@@ -1440,7 +1440,7 @@ static void Z0C_ddN0_1000(void)
 }
 
 /******************************************
- com	 @rd
+ com     @rd
  flags:  -ZS---
  ******************************************/
 static void Z0D_ddN0_0000(void)
@@ -1450,7 +1450,7 @@ static void Z0D_ddN0_0000(void)
 }
 
 /******************************************
- cp 	 @rd,imm16
+ cp      @rd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z0D_ddN0_0001_imm16(void)
@@ -1461,7 +1461,7 @@ static void Z0D_ddN0_0001_imm16(void)
 }
 
 /******************************************
- neg	 @rd
+ neg     @rd
  flags:  CZSV--
  ******************************************/
 static void Z0D_ddN0_0010(void)
@@ -1471,7 +1471,7 @@ static void Z0D_ddN0_0010(void)
 }
 
 /******************************************
- test	 @rd
+ test    @rd
  flags:  -ZS---
  ******************************************/
 static void Z0D_ddN0_0100(void)
@@ -1481,7 +1481,7 @@ static void Z0D_ddN0_0100(void)
 }
 
 /******************************************
- ld 	 @rd,imm16
+ ld      @rd,imm16
  flags:  ------
  ******************************************/
 static void Z0D_ddN0_0101_imm16(void)
@@ -1492,7 +1492,7 @@ static void Z0D_ddN0_0101_imm16(void)
 }
 
 /******************************************
- tset	 @rd
+ tset    @rd
  flags:  --S---
  ******************************************/
 static void Z0D_ddN0_0110(void)
@@ -1503,7 +1503,7 @@ static void Z0D_ddN0_0110(void)
 }
 
 /******************************************
- clr	 @rd
+ clr     @rd
  flags:  ------
  ******************************************/
 static void Z0D_ddN0_1000(void)
@@ -1513,7 +1513,7 @@ static void Z0D_ddN0_1000(void)
 }
 
 /******************************************
- push	 @rd,imm16
+ push    @rd,imm16
  flags:  ------
  ******************************************/
 static void Z0D_ddN0_1001_imm16(void)
@@ -1524,7 +1524,7 @@ static void Z0D_ddN0_1001_imm16(void)
 }
 
 /******************************************
- ext0e	 imm8
+ ext0e   imm8
  flags:  ------
  ******************************************/
 static void Z0E_imm8(void)
@@ -1538,7 +1538,7 @@ static void Z0E_imm8(void)
 }
 
 /******************************************
- ext0f	 imm8
+ ext0f   imm8
  flags:  ------
  ******************************************/
 static void Z0F_imm8(void)
@@ -1552,7 +1552,7 @@ static void Z0F_imm8(void)
 }
 
 /******************************************
- cpl	 rrd,imm32
+ cpl     rrd,imm32
  flags:  CZSV--
  ******************************************/
 static void Z10_0000_dddd_imm32(void)
@@ -1563,7 +1563,7 @@ static void Z10_0000_dddd_imm32(void)
 }
 
 /******************************************
- cpl	 rrd,@rs
+ cpl     rrd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z10_ssN0_dddd(void)
@@ -1574,7 +1574,7 @@ static void Z10_ssN0_dddd(void)
 }
 
 /******************************************
- pushl	 @rd,@rs
+ pushl   @rd,@rs
  flags:  ------
  ******************************************/
 static void Z11_ddN0_ssN0(void)
@@ -1585,7 +1585,7 @@ static void Z11_ddN0_ssN0(void)
 }
 
 /******************************************
- subl	 rrd,imm32
+ subl    rrd,imm32
  flags:  CZSV--
  ******************************************/
 static void Z12_0000_dddd_imm32(void)
@@ -1596,7 +1596,7 @@ static void Z12_0000_dddd_imm32(void)
 }
 
 /******************************************
- subl	 rrd,@rs
+ subl    rrd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z12_ssN0_dddd(void)
@@ -1607,7 +1607,7 @@ static void Z12_ssN0_dddd(void)
 }
 
 /******************************************
- push	 @rd,@rs
+ push    @rd,@rs
  flags:  ------
  ******************************************/
 static void Z13_ddN0_ssN0(void)
@@ -1618,7 +1618,7 @@ static void Z13_ddN0_ssN0(void)
 }
 
 /******************************************
- ldl	 rrd,imm32
+ ldl     rrd,imm32
  flags:  ------
  ******************************************/
 static void Z14_0000_dddd_imm32(void)
@@ -1629,7 +1629,7 @@ static void Z14_0000_dddd_imm32(void)
 }
 
 /******************************************
- ldl	 rrd,@rs
+ ldl     rrd,@rs
  flags:  ------
  ******************************************/
 static void Z14_ssN0_dddd(void)
@@ -1640,7 +1640,7 @@ static void Z14_ssN0_dddd(void)
 }
 
 /******************************************
- popl	 @rd,@rs
+ popl    @rd,@rs
  flags:  ------
  ******************************************/
 static void Z15_ssN0_ddN0(void)
@@ -1651,7 +1651,7 @@ static void Z15_ssN0_ddN0(void)
 }
 
 /******************************************
- addl	 rrd,imm32
+ addl    rrd,imm32
  flags:  CZSV--
  ******************************************/
 static void Z16_0000_dddd_imm32(void)
@@ -1662,7 +1662,7 @@ static void Z16_0000_dddd_imm32(void)
 }
 
 /******************************************
- addl	 rrd,@rs
+ addl    rrd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z16_ssN0_dddd(void)
@@ -1673,7 +1673,7 @@ static void Z16_ssN0_dddd(void)
 }
 
 /******************************************
- pop	 @rd,@rs
+ pop     @rd,@rs
  flags:  ------
  ******************************************/
 static void Z17_ssN0_ddN0(void)
@@ -1684,7 +1684,7 @@ static void Z17_ssN0_ddN0(void)
 }
 
 /******************************************
- multl	 rqd,@rs
+ multl   rqd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z18_ssN0_dddd(void)
@@ -1695,7 +1695,7 @@ static void Z18_ssN0_dddd(void)
 }
 
 /******************************************
- mult	 rrd,imm16
+ mult    rrd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z19_0000_dddd_imm16(void)
@@ -1706,7 +1706,7 @@ static void Z19_0000_dddd_imm16(void)
 }
 
 /******************************************
- mult	 rrd,@rs
+ mult    rrd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z19_ssN0_dddd(void)
@@ -1717,7 +1717,7 @@ static void Z19_ssN0_dddd(void)
 }
 
 /******************************************
- divl	 rqd,imm32
+ divl    rqd,imm32
  flags:  CZSV--
  ******************************************/
 static void Z1A_0000_dddd_imm32(void)
@@ -1728,7 +1728,7 @@ static void Z1A_0000_dddd_imm32(void)
 }
 
 /******************************************
- divl	 rqd,@rs
+ divl    rqd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z1A_ssN0_dddd(void)
@@ -1739,7 +1739,7 @@ static void Z1A_ssN0_dddd(void)
 }
 
 /******************************************
- div	 rrd,imm16
+ div     rrd,imm16
  flags:  CZSV--
  ******************************************/
 static void Z1B_0000_dddd_imm16(void)
@@ -1750,7 +1750,7 @@ static void Z1B_0000_dddd_imm16(void)
 }
 
 /******************************************
- div	 rrd,@rs
+ div     rrd,@rs
  flags:  CZSV--
  ******************************************/
 static void Z1B_ssN0_dddd(void)
@@ -1761,7 +1761,7 @@ static void Z1B_ssN0_dddd(void)
 }
 
 /******************************************
- testl	 @rd
+ testl   @rd
  flags:  -ZS---
  ******************************************/
 static void Z1C_ddN0_1000(void)
@@ -1788,7 +1788,7 @@ static void Z1C_ddN0_1001_0000_ssss_0000_nmin1(void)
 }
 
 /******************************************
- ldm	 rd,@rs,n
+ ldm     rd,@rs,n
  flags:  ------
  ******************************************/
 static void Z1C_ssN0_0001_0000_dddd_0000_nmin1(void)
@@ -1805,7 +1805,7 @@ static void Z1C_ssN0_0001_0000_dddd_0000_nmin1(void)
 }
 
 /******************************************
- ldl	 @rd,rrs
+ ldl     @rd,rrs
  flags:  ------
  ******************************************/
 static void Z1D_ddN0_ssss(void)
@@ -1845,7 +1845,7 @@ static void Z1E_ddN0_cccc(void)
 }
 
 /******************************************
- call	 @rd
+ call    @rd
  flags:  ------
  ******************************************/
 static void Z1F_ddN0_0000(void)
@@ -1857,7 +1857,7 @@ static void Z1F_ddN0_0000(void)
 }
 
 /******************************************
- ldb	 rbd,@rs
+ ldb     rbd,@rs
  flags:  ------
  ******************************************/
 static void Z20_ssN0_dddd(void)
@@ -1868,7 +1868,7 @@ static void Z20_ssN0_dddd(void)
 }
 
 /******************************************
- ld 	 rd,imm16
+ ld      rd,imm16
  flags:  ------
  ******************************************/
 static void Z21_0000_dddd_imm16(void)
@@ -1879,7 +1879,7 @@ static void Z21_0000_dddd_imm16(void)
 }
 
 /******************************************
- ld 	 rd,@rs
+ ld      rd,@rs
  flags:  ------
  ******************************************/
 static void Z21_ssN0_dddd(void)
@@ -1890,7 +1890,7 @@ static void Z21_ssN0_dddd(void)
 }
 
 /******************************************
- resb	 rbd,rs
+ resb    rbd,rs
  flags:  ------
  ******************************************/
 static void Z22_0000_ssss_0000_dddd_0000_0000(void)
@@ -1901,7 +1901,7 @@ static void Z22_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- resb	 @rd,imm4
+ resb    @rd,imm4
  flags:  ------
  ******************************************/
 static void Z22_ddN0_imm4(void)
@@ -1912,7 +1912,7 @@ static void Z22_ddN0_imm4(void)
 }
 
 /******************************************
- result 	rd,rs
+ result     rd,rs
  flags:  ------
  ******************************************/
 static void Z23_0000_ssss_0000_dddd_0000_0000(void)
@@ -1923,7 +1923,7 @@ static void Z23_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- res	 @rd,imm4
+ res     @rd,imm4
  flags:  ------
  ******************************************/
 static void Z23_ddN0_imm4(void)
@@ -1934,7 +1934,7 @@ static void Z23_ddN0_imm4(void)
 }
 
 /******************************************
- setb	 rbd,rs
+ setb    rbd,rs
  flags:  ------
  ******************************************/
 static void Z24_0000_ssss_0000_dddd_0000_0000(void)
@@ -1945,7 +1945,7 @@ static void Z24_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- setb	 @rd,imm4
+ setb    @rd,imm4
  flags:  ------
  ******************************************/
 static void Z24_ddN0_imm4(void)
@@ -1956,7 +1956,7 @@ static void Z24_ddN0_imm4(void)
 }
 
 /******************************************
- set	 rd,rs
+ set     rd,rs
  flags:  ------
  ******************************************/
 static void Z25_0000_ssss_0000_dddd_0000_0000(void)
@@ -1967,7 +1967,7 @@ static void Z25_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- set	 @rd,imm4
+ set     @rd,imm4
  flags:  ------
  ******************************************/
 static void Z25_ddN0_imm4(void)
@@ -1978,7 +1978,7 @@ static void Z25_ddN0_imm4(void)
 }
 
 /******************************************
- bitb	 rbd,rs
+ bitb    rbd,rs
  flags:  -Z----
  ******************************************/
 static void Z26_0000_ssss_0000_dddd_0000_0000(void)
@@ -1989,7 +1989,7 @@ static void Z26_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- bitb	 @rd,imm4
+ bitb    @rd,imm4
  flags:  -Z----
  ******************************************/
 static void Z26_ddN0_imm4(void)
@@ -2000,7 +2000,7 @@ static void Z26_ddN0_imm4(void)
 }
 
 /******************************************
- bit	 rd,rs
+ bit     rd,rs
  flags:  -Z----
  ******************************************/
 static void Z27_0000_ssss_0000_dddd_0000_0000(void)
@@ -2011,7 +2011,7 @@ static void Z27_0000_ssss_0000_dddd_0000_0000(void)
 }
 
 /******************************************
- bit	 @rd,imm4
+ bit     @rd,imm4
  flags:  -Z----
  ******************************************/
 static void Z27_ddN0_imm4(void)
@@ -2022,7 +2022,7 @@ static void Z27_ddN0_imm4(void)
 }
 
 /******************************************
- incb	 @rd,imm4m1
+ incb    @rd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z28_ddN0_imm4m1(void)
@@ -2044,7 +2044,7 @@ static void Z29_ddN0_imm4m1(void)
 }
 
 /******************************************
- decb	 @rd,imm4m1
+ decb    @rd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z2A_ddN0_imm4m1(void)
@@ -2066,7 +2066,7 @@ static void Z2B_ddN0_imm4m1(void)
 }
 
 /******************************************
- exb	 rbd,@rs
+ exb     rbd,@rs
  flags:  ------
  ******************************************/
 static void Z2C_ssN0_dddd(void)
@@ -2079,7 +2079,7 @@ static void Z2C_ssN0_dddd(void)
 }
 
 /******************************************
- ex 	 rd,@rs
+ ex      rd,@rs
  flags:  ------
  ******************************************/
 static void Z2D_ssN0_dddd(void)
@@ -2092,7 +2092,7 @@ static void Z2D_ssN0_dddd(void)
 }
 
 /******************************************
- ldb	 @rd,rbs
+ ldb     @rd,rbs
  flags:  ------
  ******************************************/
 static void Z2E_ddN0_ssss(void)
@@ -2103,7 +2103,7 @@ static void Z2E_ddN0_ssss(void)
 }
 
 /******************************************
- ld 	 @rd,rs
+ ld      @rd,rs
  flags:  ------
  ******************************************/
 static void Z2F_ddN0_ssss(void)
@@ -2114,7 +2114,7 @@ static void Z2F_ddN0_ssss(void)
 }
 
 /******************************************
- ldrb	 rbd,dsp16
+ ldrb    rbd,dsp16
  flags:  ------
  ******************************************/
 static void Z30_0000_dddd_dsp16(void)
@@ -2125,7 +2125,7 @@ static void Z30_0000_dddd_dsp16(void)
 }
 
 /******************************************
- ldb	 rbd,rs(imm16)
+ ldb     rbd,rs(imm16)
  flags:  ------
  ******************************************/
 static void Z30_ssN0_dddd_imm16(void)
@@ -2138,7 +2138,7 @@ static void Z30_ssN0_dddd_imm16(void)
 }
 
 /******************************************
- ldr	 rd,dsp16
+ ldr     rd,dsp16
  flags:  ------
  ******************************************/
 static void Z31_0000_dddd_dsp16(void)
@@ -2149,7 +2149,7 @@ static void Z31_0000_dddd_dsp16(void)
 }
 
 /******************************************
- ld 	 rd,rs(imm16)
+ ld      rd,rs(imm16)
  flags:  ------
  ******************************************/
 static void Z31_ssN0_dddd_imm16(void)
@@ -2162,7 +2162,7 @@ static void Z31_ssN0_dddd_imm16(void)
 }
 
 /******************************************
- ldrb	 dsp16,rbs
+ ldrb    dsp16,rbs
  flags:  ------
  ******************************************/
 static void Z32_0000_ssss_dsp16(void)
@@ -2173,7 +2173,7 @@ static void Z32_0000_ssss_dsp16(void)
 }
 
 /******************************************
- ldb	 rd(imm16),rbs
+ ldb     rd(imm16),rbs
  flags:  ------
  ******************************************/
 static void Z32_ddN0_ssss_imm16(void)
@@ -2186,7 +2186,7 @@ static void Z32_ddN0_ssss_imm16(void)
 }
 
 /******************************************
- ldr	 dsp16,rs
+ ldr     dsp16,rs
  flags:  ------
  ******************************************/
 static void Z33_0000_ssss_dsp16(void)
@@ -2197,7 +2197,7 @@ static void Z33_0000_ssss_dsp16(void)
 }
 
 /******************************************
- ld 	 rd(imm16),rs
+ ld      rd(imm16),rs
  flags:  ------
  ******************************************/
 static void Z33_ddN0_ssss_imm16(void)
@@ -2210,7 +2210,7 @@ static void Z33_ddN0_ssss_imm16(void)
 }
 
 /******************************************
- ldar	 prd,dsp16
+ ldar    prd,dsp16
  flags:  ------
  ******************************************/
 static void Z34_0000_dddd_dsp16(void)
@@ -2221,7 +2221,7 @@ static void Z34_0000_dddd_dsp16(void)
 }
 
 /******************************************
- lda	 prd,rs(imm16)
+ lda     prd,rs(imm16)
  flags:  ------
  ******************************************/
 static void Z34_ssN0_dddd_imm16(void)
@@ -2234,7 +2234,7 @@ static void Z34_ssN0_dddd_imm16(void)
 }
 
 /******************************************
- ldrl	 rrd,dsp16
+ ldrl    rrd,dsp16
  flags:  ------
  ******************************************/
 static void Z35_0000_dddd_dsp16(void)
@@ -2245,7 +2245,7 @@ static void Z35_0000_dddd_dsp16(void)
 }
 
 /******************************************
- ldl	 rrd,rs(imm16)
+ ldl     rrd,rs(imm16)
  flags:  ------
  ******************************************/
 static void Z35_ssN0_dddd_imm16(void)
@@ -2282,7 +2282,7 @@ static void Z36_imm8(void)
 }
 
 /******************************************
- ldrl	 dsp16,rrs
+ ldrl    dsp16,rrs
  flags:  ------
  ******************************************/
 static void Z37_0000_ssss_dsp16(void)
@@ -2293,7 +2293,7 @@ static void Z37_0000_ssss_dsp16(void)
 }
 
 /******************************************
- ldl	 rd(imm16),rrs
+ ldl     rd(imm16),rrs
  flags:  ------
  ******************************************/
 static void Z37_ddN0_ssss_imm16(void)
@@ -2320,7 +2320,7 @@ static void Z38_imm8(void)
 }
 
 /******************************************
- ldps	 @rs
+ ldps    @rs
  flags:  CZSVDH
  ******************************************/
 static void Z39_ssN0_0000(void)
@@ -2350,7 +2350,7 @@ static void Z3A_ssss_0000_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- sinib	 @rd,@rs,ra
+ sinib   @rd,@rs,ra
  sinibr  @rd,@rs,ra
  flags:  ------
  ******************************************/
@@ -2367,7 +2367,7 @@ static void Z3A_ssss_0001_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- outib	 @rd,@rs,ra
+ outib   @rd,@rs,ra
  outibr  @rd,@rs,ra
  flags:  ---V--
  ******************************************/
@@ -2445,8 +2445,8 @@ static void Z3A_ssss_0111_imm16(void)
 }
 
 /******************************************
- indb	 @rd,@rs,rba
- indbr	 @rd,@rs,rba
+ indb    @rd,@rs,rba
+ indbr   @rd,@rs,rba
  flags:  ---V--
  ******************************************/
 static void Z3A_ssss_1000_0000_aaaa_dddd_x000(void)
@@ -2462,7 +2462,7 @@ static void Z3A_ssss_1000_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- sindb	 @rd,@rs,rba
+ sindb   @rd,@rs,rba
  sindbr  @rd,@rs,rba
  flags:  ------
  ******************************************/
@@ -2479,7 +2479,7 @@ static void Z3A_ssss_1001_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- outdb	 @rd,@rs,rba
+ outdb   @rd,@rs,rba
  outdbr  @rd,@rs,rba
  flags:  ---V--
  ******************************************/
@@ -2513,8 +2513,8 @@ static void Z3A_ssss_1011_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- ini	 @rd,@rs,ra
- inir	 @rd,@rs,ra
+ ini     @rd,@rs,ra
+ inir    @rd,@rs,ra
  flags:  ---V--
  ******************************************/
 static void Z3B_ssss_0000_0000_aaaa_dddd_x000(void)
@@ -2530,8 +2530,8 @@ static void Z3B_ssss_0000_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- sini	 @rd,@rs,ra
- sinir	 @rd,@rs,ra
+ sini    @rd,@rs,ra
+ sinir   @rd,@rs,ra
  flags:  ------
  ******************************************/
 static void Z3B_ssss_0001_0000_aaaa_dddd_x000(void)
@@ -2547,8 +2547,8 @@ static void Z3B_ssss_0001_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- outi	 @rd,@rs,ra
- outir	 @rd,@rs,ra
+ outi    @rd,@rs,ra
+ outir   @rd,@rs,ra
  flags:  ---V--
  ******************************************/
 static void Z3B_ssss_0010_0000_aaaa_dddd_x000(void)
@@ -2564,7 +2564,7 @@ static void Z3B_ssss_0010_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- souti	 @rd,@rs,ra
+ souti   @rd,@rs,ra
  soutir  @rd,@rs,ra
  flags:  ------
  ******************************************/
@@ -2581,7 +2581,7 @@ static void Z3B_ssss_0011_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- in 	 rd,imm16
+ in      rd,imm16
  flags:  ------
  ******************************************/
 static void Z3B_dddd_0100_imm16(void)
@@ -2592,7 +2592,7 @@ static void Z3B_dddd_0100_imm16(void)
 }
 
 /******************************************
- sin	 rd,imm16
+ sin     rd,imm16
  flags:  ------
  ******************************************/
 static void Z3B_dddd_0101_imm16(void)
@@ -2603,7 +2603,7 @@ static void Z3B_dddd_0101_imm16(void)
 }
 
 /******************************************
- out	 imm16,rs
+ out     imm16,rs
  flags:  ---V--
  ******************************************/
 static void Z3B_ssss_0110_imm16(void)
@@ -2614,7 +2614,7 @@ static void Z3B_ssss_0110_imm16(void)
 }
 
 /******************************************
- sout	 imm16,rbs
+ sout    imm16,rbs
  flags:  ------
  ******************************************/
 static void Z3B_ssss_0111_imm16(void)
@@ -2625,8 +2625,8 @@ static void Z3B_ssss_0111_imm16(void)
 }
 
 /******************************************
- ind	 @rd,@rs,ra
- indr	 @rd,@rs,ra
+ ind     @rd,@rs,ra
+ indr    @rd,@rs,ra
  flags:  ---V--
  ******************************************/
 static void Z3B_ssss_1000_0000_aaaa_dddd_x000(void)
@@ -2642,8 +2642,8 @@ static void Z3B_ssss_1000_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- sind	 @rd,@rs,ra
- sindr	 @rd,@rs,ra
+ sind    @rd,@rs,ra
+ sindr   @rd,@rs,ra
  flags:  ------
  ******************************************/
 static void Z3B_ssss_1001_0000_aaaa_dddd_x000(void)
@@ -2659,8 +2659,8 @@ static void Z3B_ssss_1001_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- outd	 @rd,@rs,ra
- outdr	 @rd,@rs,ra
+ outd    @rd,@rs,ra
+ outdr   @rd,@rs,ra
  flags:  ---V--
  ******************************************/
 static void Z3B_ssss_1010_0000_aaaa_dddd_x000(void)
@@ -2676,7 +2676,7 @@ static void Z3B_ssss_1010_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- soutd	 @rd,@rs,ra
+ soutd   @rd,@rs,ra
  soutdr  @rd,@rs,ra
  flags:  ------
  ******************************************/
@@ -2693,7 +2693,7 @@ static void Z3B_ssss_1011_0000_aaaa_dddd_x000(void)
 }
 
 /******************************************
- inb	 rbd,@rs
+ inb     rbd,@rs
  flags:  ------
  ******************************************/
 static void Z3C_ssss_dddd(void)
@@ -2704,7 +2704,7 @@ static void Z3C_ssss_dddd(void)
 }
 
 /******************************************
- in 	 rd,@rs
+ in      rd,@rs
  flags:  ------
  ******************************************/
 static void Z3D_ssss_dddd(void)
@@ -2715,7 +2715,7 @@ static void Z3D_ssss_dddd(void)
 }
 
 /******************************************
- outb	 @rd,rbs
+ outb    @rd,rbs
  flags:  ---V--
  ******************************************/
 static void Z3E_dddd_ssss(void)
@@ -2726,7 +2726,7 @@ static void Z3E_dddd_ssss(void)
 }
 
 /******************************************
- out	 @rd,rs
+ out     @rd,rs
  flags:  ---V--
  ******************************************/
 static void Z3F_dddd_ssss(void)
@@ -2737,7 +2737,7 @@ static void Z3F_dddd_ssss(void)
 }
 
 /******************************************
- addb	 rbd,addr
+ addb    rbd,addr
  flags:  CZSVDH
  ******************************************/
 static void Z40_0000_dddd_addr(void)
@@ -2748,7 +2748,7 @@ static void Z40_0000_dddd_addr(void)
 }
 
 /******************************************
- addb	 rbd,addr(rs)
+ addb    rbd,addr(rs)
  flags:  CZSVDH
  ******************************************/
 static void Z40_ssN0_dddd_addr(void)
@@ -2761,7 +2761,7 @@ static void Z40_ssN0_dddd_addr(void)
 }
 
 /******************************************
- add	 rd,addr
+ add     rd,addr
  flags:  CZSV--
  ******************************************/
 static void Z41_0000_dddd_addr(void)
@@ -2772,7 +2772,7 @@ static void Z41_0000_dddd_addr(void)
 }
 
 /******************************************
- add	 rd,addr(rs)
+ add     rd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z41_ssN0_dddd_addr(void)
@@ -2785,7 +2785,7 @@ static void Z41_ssN0_dddd_addr(void)
 }
 
 /******************************************
- subb	 rbd,addr
+ subb    rbd,addr
  flags:  CZSVDH
  ******************************************/
 static void Z42_0000_dddd_addr(void)
@@ -2796,7 +2796,7 @@ static void Z42_0000_dddd_addr(void)
 }
 
 /******************************************
- subb	 rbd,addr(rs)
+ subb    rbd,addr(rs)
  flags:  CZSVDH
  ******************************************/
 static void Z42_ssN0_dddd_addr(void)
@@ -2809,7 +2809,7 @@ static void Z42_ssN0_dddd_addr(void)
 }
 
 /******************************************
- sub	 rd,addr
+ sub     rd,addr
  flags:  CZSV--
  ******************************************/
 static void Z43_0000_dddd_addr(void)
@@ -2820,7 +2820,7 @@ static void Z43_0000_dddd_addr(void)
 }
 
 /******************************************
- sub	 rd,addr(rs)
+ sub     rd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z43_ssN0_dddd_addr(void)
@@ -2833,7 +2833,7 @@ static void Z43_ssN0_dddd_addr(void)
 }
 
 /******************************************
- orb	 rbd,addr
+ orb     rbd,addr
  flags:  CZSP--
  ******************************************/
 static void Z44_0000_dddd_addr(void)
@@ -2844,7 +2844,7 @@ static void Z44_0000_dddd_addr(void)
 }
 
 /******************************************
- orb	 rbd,addr(rs)
+ orb     rbd,addr(rs)
  flags:  CZSP--
  ******************************************/
 static void Z44_ssN0_dddd_addr(void)
@@ -2857,7 +2857,7 @@ static void Z44_ssN0_dddd_addr(void)
 }
 
 /******************************************
- or 	 rd,addr
+ or      rd,addr
  flags:  CZS---
  ******************************************/
 static void Z45_0000_dddd_addr(void)
@@ -2868,7 +2868,7 @@ static void Z45_0000_dddd_addr(void)
 }
 
 /******************************************
- or 	 rd,addr(rs)
+ or      rd,addr(rs)
  flags:  CZS---
  ******************************************/
 static void Z45_ssN0_dddd_addr(void)
@@ -2881,7 +2881,7 @@ static void Z45_ssN0_dddd_addr(void)
 }
 
 /******************************************
- andb	 rbd,addr
+ andb    rbd,addr
  flags:  -ZSP--
  ******************************************/
 static void Z46_0000_dddd_addr(void)
@@ -2892,7 +2892,7 @@ static void Z46_0000_dddd_addr(void)
 }
 
 /******************************************
- andb	 rbd,addr(rs)
+ andb    rbd,addr(rs)
  flags:  -ZSP--
  ******************************************/
 static void Z46_ssN0_dddd_addr(void)
@@ -2905,7 +2905,7 @@ static void Z46_ssN0_dddd_addr(void)
 }
 
 /******************************************
- and	 rd,addr
+ and     rd,addr
  flags:  -ZS---
  ******************************************/
 static void Z47_0000_dddd_addr(void)
@@ -2916,7 +2916,7 @@ static void Z47_0000_dddd_addr(void)
 }
 
 /******************************************
- and	 rd,addr(rs)
+ and     rd,addr(rs)
  flags:  -ZS---
  ******************************************/
 static void Z47_ssN0_dddd_addr(void)
@@ -2929,7 +2929,7 @@ static void Z47_ssN0_dddd_addr(void)
 }
 
 /******************************************
- xorb	 rbd,addr
+ xorb    rbd,addr
  flags:  -ZSP--
  ******************************************/
 static void Z48_0000_dddd_addr(void)
@@ -2940,7 +2940,7 @@ static void Z48_0000_dddd_addr(void)
 }
 
 /******************************************
- xorb	 rbd,addr(rs)
+ xorb    rbd,addr(rs)
  flags:  -ZSP--
  ******************************************/
 static void Z48_ssN0_dddd_addr(void)
@@ -2953,7 +2953,7 @@ static void Z48_ssN0_dddd_addr(void)
 }
 
 /******************************************
- xor	 rd,addr
+ xor     rd,addr
  flags:  -ZS---
  ******************************************/
 static void Z49_0000_dddd_addr(void)
@@ -2964,7 +2964,7 @@ static void Z49_0000_dddd_addr(void)
 }
 
 /******************************************
- xor	 rd,addr(rs)
+ xor     rd,addr(rs)
  flags:  -ZS---
  ******************************************/
 static void Z49_ssN0_dddd_addr(void)
@@ -2977,7 +2977,7 @@ static void Z49_ssN0_dddd_addr(void)
 }
 
 /******************************************
- cpb	 rbd,addr
+ cpb     rbd,addr
  flags:  CZSV--
  ******************************************/
 static void Z4A_0000_dddd_addr(void)
@@ -2988,7 +2988,7 @@ static void Z4A_0000_dddd_addr(void)
 }
 
 /******************************************
- cpb	 rbd,addr(rs)
+ cpb     rbd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z4A_ssN0_dddd_addr(void)
@@ -3001,7 +3001,7 @@ static void Z4A_ssN0_dddd_addr(void)
 }
 
 /******************************************
- cp 	 rd,addr
+ cp      rd,addr
  flags:  CZSV--
  ******************************************/
 static void Z4B_0000_dddd_addr(void)
@@ -3012,7 +3012,7 @@ static void Z4B_0000_dddd_addr(void)
 }
 
 /******************************************
- cp 	 rd,addr(rs)
+ cp      rd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z4B_ssN0_dddd_addr(void)
@@ -3025,7 +3025,7 @@ static void Z4B_ssN0_dddd_addr(void)
 }
 
 /******************************************
- comb	 addr
+ comb    addr
  flags:  -ZSP--
  ******************************************/
 static void Z4C_0000_0000_addr(void)
@@ -3035,7 +3035,7 @@ static void Z4C_0000_0000_addr(void)
 }
 
 /******************************************
- cpb	 addr,imm8
+ cpb     addr,imm8
  flags:  CZSV--
  ******************************************/
 static void Z4C_0000_0001_addr_imm8(void)
@@ -3046,7 +3046,7 @@ static void Z4C_0000_0001_addr_imm8(void)
 }
 
 /******************************************
- negb	 addr
+ negb    addr
  flags:  CZSV--
  ******************************************/
 static void Z4C_0000_0010_addr(void)
@@ -3056,7 +3056,7 @@ static void Z4C_0000_0010_addr(void)
 }
 
 /******************************************
- testb	 addr
+ testb   addr
  flags:  -ZSP--
  ******************************************/
 static void Z4C_0000_0100_addr(void)
@@ -3066,7 +3066,7 @@ static void Z4C_0000_0100_addr(void)
 }
 
 /******************************************
- ldb	 addr,imm8
+ ldb     addr,imm8
  flags:  ------
  ******************************************/
 static void Z4C_0000_0101_addr_imm8(void)
@@ -3077,7 +3077,7 @@ static void Z4C_0000_0101_addr_imm8(void)
 }
 
 /******************************************
- tsetb	 addr
+ tsetb   addr
  flags:  --S---
  ******************************************/
 static void Z4C_0000_0110_addr(void)
@@ -3088,7 +3088,7 @@ static void Z4C_0000_0110_addr(void)
 }
 
 /******************************************
- clrb	 addr
+ clrb    addr
  flags:  ------
  ******************************************/
 static void Z4C_0000_1000_addr(void)
@@ -3098,7 +3098,7 @@ static void Z4C_0000_1000_addr(void)
 }
 
 /******************************************
- comb	 addr(rd)
+ comb    addr(rd)
  flags:  -ZSP--
  ******************************************/
 static void Z4C_ddN0_0000_addr(void)
@@ -3110,7 +3110,7 @@ static void Z4C_ddN0_0000_addr(void)
 }
 
 /******************************************
- cpb	 addr(rd),imm8
+ cpb     addr(rd),imm8
  flags:  CZSV--
  ******************************************/
 static void Z4C_ddN0_0001_addr_imm8(void)
@@ -3123,7 +3123,7 @@ static void Z4C_ddN0_0001_addr_imm8(void)
 }
 
 /******************************************
- negb	 addr(rd)
+ negb    addr(rd)
  flags:  CZSV--
  ******************************************/
 static void Z4C_ddN0_0010_addr(void)
@@ -3135,7 +3135,7 @@ static void Z4C_ddN0_0010_addr(void)
 }
 
 /******************************************
- testb	 addr(rd)
+ testb   addr(rd)
  flags:  -ZSP--
  ******************************************/
 static void Z4C_ddN0_0100_addr(void)
@@ -3147,7 +3147,7 @@ static void Z4C_ddN0_0100_addr(void)
 }
 
 /******************************************
- ldb	 addr(rd),imm8
+ ldb     addr(rd),imm8
  flags:  ------
  ******************************************/
 static void Z4C_ddN0_0101_addr_imm8(void)
@@ -3160,7 +3160,7 @@ static void Z4C_ddN0_0101_addr_imm8(void)
 }
 
 /******************************************
- tsetb	 addr(rd)
+ tsetb   addr(rd)
  flags:  --S---
  ******************************************/
 static void Z4C_ddN0_0110_addr(void)
@@ -3173,7 +3173,7 @@ static void Z4C_ddN0_0110_addr(void)
 }
 
 /******************************************
- clrb	 addr(rd)
+ clrb    addr(rd)
  flags:  ------
  ******************************************/
 static void Z4C_ddN0_1000_addr(void)
@@ -3185,7 +3185,7 @@ static void Z4C_ddN0_1000_addr(void)
 }
 
 /******************************************
- com	 addr
+ com     addr
  flags:  -ZS---
  ******************************************/
 static void Z4D_0000_0000_addr(void)
@@ -3195,7 +3195,7 @@ static void Z4D_0000_0000_addr(void)
 }
 
 /******************************************
- cp 	 addr,imm16
+ cp      addr,imm16
  flags:  CZSV--
  ******************************************/
 static void Z4D_0000_0001_addr_imm16(void)
@@ -3206,7 +3206,7 @@ static void Z4D_0000_0001_addr_imm16(void)
 }
 
 /******************************************
- neg	 addr
+ neg     addr
  flags:  CZSV--
  ******************************************/
 static void Z4D_0000_0010_addr(void)
@@ -3216,7 +3216,7 @@ static void Z4D_0000_0010_addr(void)
 }
 
 /******************************************
- test	 addr
+ test    addr
  flags:  ------
  ******************************************/
 static void Z4D_0000_0100_addr(void)
@@ -3226,7 +3226,7 @@ static void Z4D_0000_0100_addr(void)
 }
 
 /******************************************
- ld 	 addr,imm16
+ ld      addr,imm16
  flags:  ------
  ******************************************/
 static void Z4D_0000_0101_addr_imm16(void)
@@ -3237,7 +3237,7 @@ static void Z4D_0000_0101_addr_imm16(void)
 }
 
 /******************************************
- tset	 addr
+ tset    addr
  flags:  --S---
  ******************************************/
 static void Z4D_0000_0110_addr(void)
@@ -3248,7 +3248,7 @@ static void Z4D_0000_0110_addr(void)
 }
 
 /******************************************
- clr	 addr
+ clr     addr
  flags:  ------
  ******************************************/
 static void Z4D_0000_1000_addr(void)
@@ -3258,7 +3258,7 @@ static void Z4D_0000_1000_addr(void)
 }
 
 /******************************************
- com	 addr(rd)
+ com     addr(rd)
  flags:  -ZS---
  ******************************************/
 static void Z4D_ddN0_0000_addr(void)
@@ -3270,7 +3270,7 @@ static void Z4D_ddN0_0000_addr(void)
 }
 
 /******************************************
- cp 	 addr(rd),imm16
+ cp      addr(rd),imm16
  flags:  CZSV--
  ******************************************/
 static void Z4D_ddN0_0001_addr_imm16(void)
@@ -3283,7 +3283,7 @@ static void Z4D_ddN0_0001_addr_imm16(void)
 }
 
 /******************************************
- neg	 addr(rd)
+ neg     addr(rd)
  flags:  CZSV--
  ******************************************/
 static void Z4D_ddN0_0010_addr(void)
@@ -3295,7 +3295,7 @@ static void Z4D_ddN0_0010_addr(void)
 }
 
 /******************************************
- test	 addr(rd)
+ test    addr(rd)
  flags:  ------
  ******************************************/
 static void Z4D_ddN0_0100_addr(void)
@@ -3307,7 +3307,7 @@ static void Z4D_ddN0_0100_addr(void)
 }
 
 /******************************************
- ld 	 addr(rd),imm16
+ ld      addr(rd),imm16
  flags:  ------
  ******************************************/
 static void Z4D_ddN0_0101_addr_imm16(void)
@@ -3320,7 +3320,7 @@ static void Z4D_ddN0_0101_addr_imm16(void)
 }
 
 /******************************************
- tset	 addr(rd)
+ tset    addr(rd)
  flags:  --S---
  ******************************************/
 static void Z4D_ddN0_0110_addr(void)
@@ -3333,7 +3333,7 @@ static void Z4D_ddN0_0110_addr(void)
 }
 
 /******************************************
- clr	 addr(rd)
+ clr     addr(rd)
  flags:  ------
  ******************************************/
 static void Z4D_ddN0_1000_addr(void)
@@ -3345,7 +3345,7 @@ static void Z4D_ddN0_1000_addr(void)
 }
 
 /******************************************
- ldb	 addr(rd),rbs
+ ldb     addr(rd),rbs
  flags:  ------
  ******************************************/
 static void Z4E_ddN0_ssN0_addr(void)
@@ -3358,7 +3358,7 @@ static void Z4E_ddN0_ssN0_addr(void)
 }
 
 /******************************************
- cpl	 rrd,addr
+ cpl     rrd,addr
  flags:  CZSV--
  ******************************************/
 static void Z50_0000_dddd_addr(void)
@@ -3369,7 +3369,7 @@ static void Z50_0000_dddd_addr(void)
 }
 
 /******************************************
- cpl	 rrd,addr(rs)
+ cpl     rrd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z50_ssN0_dddd_addr(void)
@@ -3382,7 +3382,7 @@ static void Z50_ssN0_dddd_addr(void)
 }
 
 /******************************************
- pushl	 @rd,addr
+ pushl   @rd,addr
  flags:  ------
  ******************************************/
 static void Z51_ddN0_0000_addr(void)
@@ -3393,7 +3393,7 @@ static void Z51_ddN0_0000_addr(void)
 }
 
 /******************************************
- pushl	 @rd,addr(rs)
+ pushl   @rd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z51_ddN0_ssN0_addr(void)
@@ -3406,7 +3406,7 @@ static void Z51_ddN0_ssN0_addr(void)
 }
 
 /******************************************
- subl	 rrd,addr
+ subl    rrd,addr
  flags:  CZSV--
  ******************************************/
 static void Z52_0000_dddd_addr(void)
@@ -3417,7 +3417,7 @@ static void Z52_0000_dddd_addr(void)
 }
 
 /******************************************
- subl	 rrd,addr(rs)
+ subl    rrd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z52_ssN0_dddd_addr(void)
@@ -3430,7 +3430,7 @@ static void Z52_ssN0_dddd_addr(void)
 }
 
 /******************************************
- push	 @rd,addr
+ push    @rd,addr
  flags:  ------
  ******************************************/
 static void Z53_ddN0_0000_addr(void)
@@ -3441,7 +3441,7 @@ static void Z53_ddN0_0000_addr(void)
 }
 
 /******************************************
- push	 @rd,addr(rs)
+ push    @rd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z53_ddN0_ssN0_addr(void)
@@ -3454,7 +3454,7 @@ static void Z53_ddN0_ssN0_addr(void)
 }
 
 /******************************************
- ldl	 rrd,addr
+ ldl     rrd,addr
  flags:  ------
  ******************************************/
 static void Z54_0000_dddd_addr(void)
@@ -3465,7 +3465,7 @@ static void Z54_0000_dddd_addr(void)
 }
 
 /******************************************
- ldl	 rrd,addr(rs)
+ ldl     rrd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z54_ssN0_dddd_addr(void)
@@ -3478,7 +3478,7 @@ static void Z54_ssN0_dddd_addr(void)
 }
 
 /******************************************
- popl	 addr,@rs
+ popl    addr,@rs
  flags:  ------
  ******************************************/
 static void Z55_ssN0_0000_addr(void)
@@ -3489,7 +3489,7 @@ static void Z55_ssN0_0000_addr(void)
 }
 
 /******************************************
- popl	 addr(rd),@rs
+ popl    addr(rd),@rs
  flags:  ------
  ******************************************/
 static void Z55_ssN0_ddN0_addr(void)
@@ -3502,7 +3502,7 @@ static void Z55_ssN0_ddN0_addr(void)
 }
 
 /******************************************
- addl	 rrd,addr
+ addl    rrd,addr
  flags:  CZSV--
  ******************************************/
 static void Z56_0000_dddd_addr(void)
@@ -3513,7 +3513,7 @@ static void Z56_0000_dddd_addr(void)
 }
 
 /******************************************
- addl	 rrd,addr(rs)
+ addl    rrd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z56_ssN0_dddd_addr(void)
@@ -3526,7 +3526,7 @@ static void Z56_ssN0_dddd_addr(void)
 }
 
 /******************************************
- pop	 addr,@rs
+ pop     addr,@rs
  flags:  ------
  ******************************************/
 static void Z57_ssN0_0000_addr(void)
@@ -3537,7 +3537,7 @@ static void Z57_ssN0_0000_addr(void)
 }
 
 /******************************************
- pop	 addr(rd),@rs
+ pop     addr(rd),@rs
  flags:  ------
  ******************************************/
 static void Z57_ssN0_ddN0_addr(void)
@@ -3550,7 +3550,7 @@ static void Z57_ssN0_ddN0_addr(void)
 }
 
 /******************************************
- multl	 rqd,addr
+ multl   rqd,addr
  flags:  CZSV--
  ******************************************/
 static void Z58_0000_dddd_addr(void)
@@ -3561,7 +3561,7 @@ static void Z58_0000_dddd_addr(void)
 }
 
 /******************************************
- multl	 rqd,addr(rs)
+ multl   rqd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z58_ssN0_dddd_addr(void)
@@ -3574,7 +3574,7 @@ static void Z58_ssN0_dddd_addr(void)
 }
 
 /******************************************
- mult	 rrd,addr
+ mult    rrd,addr
  flags:  CZSV--
  ******************************************/
 static void Z59_0000_dddd_addr(void)
@@ -3585,7 +3585,7 @@ static void Z59_0000_dddd_addr(void)
 }
 
 /******************************************
- mult	 rrd,addr(rs)
+ mult    rrd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z59_ssN0_dddd_addr(void)
@@ -3598,7 +3598,7 @@ static void Z59_ssN0_dddd_addr(void)
 }
 
 /******************************************
- divl	 rqd,addr
+ divl    rqd,addr
  flags:  CZSV--
  ******************************************/
 static void Z5A_0000_dddd_addr(void)
@@ -3609,7 +3609,7 @@ static void Z5A_0000_dddd_addr(void)
 }
 
 /******************************************
- divl	 rqd,addr(rs)
+ divl    rqd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z5A_ssN0_dddd_addr(void)
@@ -3622,7 +3622,7 @@ static void Z5A_ssN0_dddd_addr(void)
 }
 
 /******************************************
- div	 rrd,addr
+ div     rrd,addr
  flags:  CZSV--
  ******************************************/
 static void Z5B_0000_dddd_addr(void)
@@ -3633,7 +3633,7 @@ static void Z5B_0000_dddd_addr(void)
 }
 
 /******************************************
- div	 rrd,addr(rs)
+ div     rrd,addr(rs)
  flags:  CZSV--
  ******************************************/
 static void Z5B_ssN0_dddd_addr(void)
@@ -3646,7 +3646,7 @@ static void Z5B_ssN0_dddd_addr(void)
 }
 
 /******************************************
- ldm	 rd,addr,n
+ ldm     rd,addr,n
  flags:  ------
  ******************************************/
 static void Z5C_0000_0001_0000_dddd_0000_nmin1_addr(void)
@@ -3662,7 +3662,7 @@ static void Z5C_0000_0001_0000_dddd_0000_nmin1_addr(void)
 }
 
 /******************************************
- testl	 addr
+ testl   addr
  flags:  -ZS---
  ******************************************/
 static void Z5C_0000_1000_addr(void)
@@ -3672,7 +3672,7 @@ static void Z5C_0000_1000_addr(void)
 }
 
 /******************************************
- ldm	 addr,rs,n
+ ldm     addr,rs,n
  flags:  ------
  ******************************************/
 static void Z5C_0000_1001_0000_ssss_0000_nmin1_addr(void)
@@ -3688,7 +3688,7 @@ static void Z5C_0000_1001_0000_ssss_0000_nmin1_addr(void)
 }
 
 /******************************************
- testl	 addr(rd)
+ testl   addr(rd)
  flags:  -ZS---
  ******************************************/
 static void Z5C_ddN0_1000_addr(void)
@@ -3700,7 +3700,7 @@ static void Z5C_ddN0_1000_addr(void)
 }
 
 /******************************************
- ldm	 addr(rd),rs,n
+ ldm     addr(rd),rs,n
  flags:  ------
  ******************************************/
 static void Z5C_ddN0_1001_0000_ssN0_0000_nmin1_addr(void)
@@ -3718,7 +3718,7 @@ static void Z5C_ddN0_1001_0000_ssN0_0000_nmin1_addr(void)
 }
 
 /******************************************
- ldm	 rd,addr(rs),n
+ ldm     rd,addr(rs),n
  flags:  ------
  ******************************************/
 static void Z5C_ssN0_0001_0000_dddd_0000_nmin1_addr(void)
@@ -3736,7 +3736,7 @@ static void Z5C_ssN0_0001_0000_dddd_0000_nmin1_addr(void)
 }
 
 /******************************************
- ldl	 addr,rrs
+ ldl     addr,rrs
  flags:  ------
  ******************************************/
 static void Z5D_0000_ssss_addr(void)
@@ -3747,7 +3747,7 @@ static void Z5D_0000_ssss_addr(void)
 }
 
 /******************************************
- ldl	 addr(rd),rrs
+ ldl     addr(rd),rrs
  flags:  ------
  ******************************************/
 static void Z5D_ddN0_ssss_addr(void)
@@ -3760,7 +3760,7 @@ static void Z5D_ddN0_ssss_addr(void)
 }
 
 /******************************************
- jp 	 cc,addr
+ jp      cc,addr
  flags:  ------
  ******************************************/
 static void Z5E_0000_cccc_addr(void)
@@ -3789,7 +3789,7 @@ static void Z5E_0000_cccc_addr(void)
 }
 
 /******************************************
- jp 	 cc,addr(rd)
+ jp      cc,addr(rd)
  flags:  ------
  ******************************************/
 static void Z5E_ddN0_cccc_addr(void)
@@ -3820,7 +3820,7 @@ static void Z5E_ddN0_cccc_addr(void)
 }
 
 /******************************************
- call	 addr
+ call    addr
  flags:  ------
  ******************************************/
 static void Z5F_0000_0000_addr(void)
@@ -3832,7 +3832,7 @@ static void Z5F_0000_0000_addr(void)
 }
 
 /******************************************
- call	 addr(rd)
+ call    addr(rd)
  flags:  ------
  ******************************************/
 static void Z5F_ddN0_0000_addr(void)
@@ -3846,7 +3846,7 @@ static void Z5F_ddN0_0000_addr(void)
 }
 
 /******************************************
- ldb	 rbd,addr
+ ldb     rbd,addr
  flags:  ------
  ******************************************/
 static void Z60_0000_dddd_addr(void)
@@ -3857,7 +3857,7 @@ static void Z60_0000_dddd_addr(void)
 }
 
 /******************************************
- ldb	 rbd,addr(rs)
+ ldb     rbd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z60_ssN0_dddd_addr(void)
@@ -3870,7 +3870,7 @@ static void Z60_ssN0_dddd_addr(void)
 }
 
 /******************************************
- ld 	 rd,addr
+ ld      rd,addr
  flags:  ------
  ******************************************/
 static void Z61_0000_dddd_addr(void)
@@ -3881,7 +3881,7 @@ static void Z61_0000_dddd_addr(void)
 }
 
 /******************************************
- ld 	 rd,addr(rs)
+ ld      rd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z61_ssN0_dddd_addr(void)
@@ -3894,7 +3894,7 @@ static void Z61_ssN0_dddd_addr(void)
 }
 
 /******************************************
- resb	 addr,imm4
+ resb    addr,imm4
  flags:  ------
  ******************************************/
 static void Z62_0000_imm4_addr(void)
@@ -3905,7 +3905,7 @@ static void Z62_0000_imm4_addr(void)
 }
 
 /******************************************
- resb	 addr(rd),imm4
+ resb    addr(rd),imm4
  flags:  ------
  ******************************************/
 static void Z62_ddN0_imm4_addr(void)
@@ -3918,7 +3918,7 @@ static void Z62_ddN0_imm4_addr(void)
 }
 
 /******************************************
- res	 addr,imm4
+ res     addr,imm4
  flags:  ------
  ******************************************/
 static void Z63_0000_imm4_addr(void)
@@ -3929,7 +3929,7 @@ static void Z63_0000_imm4_addr(void)
 }
 
 /******************************************
- res	 addr(rd),imm4
+ res     addr(rd),imm4
  flags:  ------
  ******************************************/
 static void Z63_ddN0_imm4_addr(void)
@@ -3942,7 +3942,7 @@ static void Z63_ddN0_imm4_addr(void)
 }
 
 /******************************************
- setb	 addr,imm4
+ setb    addr,imm4
  flags:  ------
  ******************************************/
 static void Z64_0000_imm4_addr(void)
@@ -3953,7 +3953,7 @@ static void Z64_0000_imm4_addr(void)
 }
 
 /******************************************
- setb	 addr(rd),imm4
+ setb    addr(rd),imm4
  flags:  ------
  ******************************************/
 static void Z64_ddN0_imm4_addr(void)
@@ -3966,7 +3966,7 @@ static void Z64_ddN0_imm4_addr(void)
 }
 
 /******************************************
- set	 addr,imm4
+ set     addr,imm4
  flags:  ------
  ******************************************/
 static void Z65_0000_imm4_addr(void)
@@ -3977,7 +3977,7 @@ static void Z65_0000_imm4_addr(void)
 }
 
 /******************************************
- set	 addr(rd),imm4
+ set     addr(rd),imm4
  flags:  ------
  ******************************************/
 static void Z65_ddN0_imm4_addr(void)
@@ -3990,7 +3990,7 @@ static void Z65_ddN0_imm4_addr(void)
 }
 
 /******************************************
- bitb	 addr,imm4
+ bitb    addr,imm4
  flags:  -Z----
  ******************************************/
 static void Z66_0000_imm4_addr(void)
@@ -4001,7 +4001,7 @@ static void Z66_0000_imm4_addr(void)
 }
 
 /******************************************
- bitb	 addr(rd),imm4
+ bitb    addr(rd),imm4
  flags:  -Z----
  ******************************************/
 static void Z66_ddN0_imm4_addr(void)
@@ -4014,7 +4014,7 @@ static void Z66_ddN0_imm4_addr(void)
 }
 
 /******************************************
- bit	 addr,imm4
+ bit     addr,imm4
  flags:  -Z----
  ******************************************/
 static void Z67_0000_imm4_addr(void)
@@ -4025,7 +4025,7 @@ static void Z67_0000_imm4_addr(void)
 }
 
 /******************************************
- bit	 addr(rd),imm4
+ bit     addr(rd),imm4
  flags:  -Z----
  ******************************************/
 static void Z67_ddN0_imm4_addr(void)
@@ -4038,7 +4038,7 @@ static void Z67_ddN0_imm4_addr(void)
 }
 
 /******************************************
- incb	 addr,imm4m1
+ incb    addr,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z68_0000_imm4m1_addr(void)
@@ -4049,7 +4049,7 @@ static void Z68_0000_imm4m1_addr(void)
 }
 
 /******************************************
- incb	 addr(rd),imm4m1
+ incb    addr(rd),imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z68_ddN0_imm4m1_addr(void)
@@ -4062,7 +4062,7 @@ static void Z68_ddN0_imm4m1_addr(void)
 }
 
 /******************************************
- inc	 addr,imm4m1
+ inc     addr,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z69_0000_imm4m1_addr(void)
@@ -4073,7 +4073,7 @@ static void Z69_0000_imm4m1_addr(void)
 }
 
 /******************************************
- inc	 addr(rd),imm4m1
+ inc     addr(rd),imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z69_ddN0_imm4m1_addr(void)
@@ -4086,7 +4086,7 @@ static void Z69_ddN0_imm4m1_addr(void)
 }
 
 /******************************************
- decb	 addr,imm4m1
+ decb    addr,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z6A_0000_imm4m1_addr(void)
@@ -4097,7 +4097,7 @@ static void Z6A_0000_imm4m1_addr(void)
 }
 
 /******************************************
- decb	 addr(rd),imm4m1
+ decb    addr(rd),imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z6A_ddN0_imm4m1_addr(void)
@@ -4110,7 +4110,7 @@ static void Z6A_ddN0_imm4m1_addr(void)
 }
 
 /******************************************
- dec	 addr,imm4m1
+ dec     addr,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z6B_0000_imm4m1_addr(void)
@@ -4121,7 +4121,7 @@ static void Z6B_0000_imm4m1_addr(void)
 }
 
 /******************************************
- dec	 addr(rd),imm4m1
+ dec     addr(rd),imm4m1
  flags:  -ZSV--
  ******************************************/
 static void Z6B_ddN0_imm4m1_addr(void)
@@ -4134,7 +4134,7 @@ static void Z6B_ddN0_imm4m1_addr(void)
 }
 
 /******************************************
- exb	 rbd,addr
+ exb     rbd,addr
  flags:  ------
  ******************************************/
 static void Z6C_0000_dddd_addr(void)
@@ -4147,7 +4147,7 @@ static void Z6C_0000_dddd_addr(void)
 }
 
 /******************************************
- exb	 rbd,addr(rs)
+ exb     rbd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z6C_ssN0_dddd_addr(void)
@@ -4163,7 +4163,7 @@ static void Z6C_ssN0_dddd_addr(void)
 }
 
 /******************************************
- ex 	 rd,addr
+ ex      rd,addr
  flags:  ------
  ******************************************/
 static void Z6D_0000_dddd_addr(void)
@@ -4176,7 +4176,7 @@ static void Z6D_0000_dddd_addr(void)
 }
 
 /******************************************
- ex 	 rd,addr(rs)
+ ex      rd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z6D_ssN0_dddd_addr(void)
@@ -4192,7 +4192,7 @@ static void Z6D_ssN0_dddd_addr(void)
 }
 
 /******************************************
- ldb	 addr,rbs
+ ldb     addr,rbs
  flags:  ------
  ******************************************/
 static void Z6E_0000_ssss_addr(void)
@@ -4203,7 +4203,7 @@ static void Z6E_0000_ssss_addr(void)
 }
 
 /******************************************
- ldb	 addr(rd),rbs
+ ldb     addr(rd),rbs
  flags:  ------
  ******************************************/
 static void Z6E_ddN0_ssss_addr(void)
@@ -4216,7 +4216,7 @@ static void Z6E_ddN0_ssss_addr(void)
 }
 
 /******************************************
- ld 	 addr,rs
+ ld      addr,rs
  flags:  ------
  ******************************************/
 static void Z6F_0000_ssss_addr(void)
@@ -4227,7 +4227,7 @@ static void Z6F_0000_ssss_addr(void)
 }
 
 /******************************************
- ld 	 addr(rd),rs
+ ld      addr(rd),rs
  flags:  ------
  ******************************************/
 static void Z6F_ddN0_ssss_addr(void)
@@ -4240,7 +4240,7 @@ static void Z6F_ddN0_ssss_addr(void)
 }
 
 /******************************************
- ldb	 rbd,rs(rx)
+ ldb     rbd,rs(rx)
  flags:  ------
  ******************************************/
 static void Z70_ssN0_dddd_0000_xxxx_0000_0000(void)
@@ -4252,7 +4252,7 @@ static void Z70_ssN0_dddd_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- ld 	 rd,rs(rx)
+ ld      rd,rs(rx)
  flags:  ------
  ******************************************/
 static void Z71_ssN0_dddd_0000_xxxx_0000_0000(void)
@@ -4264,7 +4264,7 @@ static void Z71_ssN0_dddd_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- ldb	 rd(rx),rbs
+ ldb     rd(rx),rbs
  flags:  ------
  ******************************************/
 static void Z72_ddN0_ssss_0000_xxxx_0000_0000(void)
@@ -4276,7 +4276,7 @@ static void Z72_ddN0_ssss_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- ld 	 rd(rx),rs
+ ld      rd(rx),rs
  flags:  ------
  ******************************************/
 static void Z73_ddN0_ssss_0000_xxxx_0000_0000(void)
@@ -4288,7 +4288,7 @@ static void Z73_ddN0_ssss_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- lda	 prd,rs(rx)
+ lda     prd,rs(rx)
  flags:  ------
  ******************************************/
 static void Z74_ssN0_dddd_0000_xxxx_0000_0000(void)
@@ -4300,7 +4300,7 @@ static void Z74_ssN0_dddd_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- ldl	 rrd,rs(rx)
+ ldl     rrd,rs(rx)
  flags:  ------
  ******************************************/
 static void Z75_ssN0_dddd_0000_xxxx_0000_0000(void)
@@ -4312,7 +4312,7 @@ static void Z75_ssN0_dddd_0000_xxxx_0000_0000(void)
 }
 
 /******************************************
- lda	 prd,addr
+ lda     prd,addr
  flags:  ------
  ******************************************/
 static void Z76_0000_dddd_addr(void)
@@ -4323,7 +4323,7 @@ static void Z76_0000_dddd_addr(void)
 }
 
 /******************************************
- lda	 prd,addr(rs)
+ lda     prd,addr(rs)
  flags:  ------
  ******************************************/
 static void Z76_ssN0_dddd_addr(void)
@@ -4336,7 +4336,7 @@ static void Z76_ssN0_dddd_addr(void)
 }
 
 /******************************************
- ldl	 rd(rx),rrs
+ ldl     rd(rx),rrs
  flags:  ------
  ******************************************/
 static void Z77_ddN0_ssss_0000_xxxx_0000_0000(void)
@@ -4362,7 +4362,7 @@ static void Z78_imm8(void)
 }
 
 /******************************************
- ldps	 addr
+ ldps    addr
  flags:  CZSVDH
  ******************************************/
 static void Z79_0000_0000_addr(void)
@@ -4376,7 +4376,7 @@ static void Z79_0000_0000_addr(void)
 }
 
 /******************************************
- ldps	 addr(rs)
+ ldps    addr(rs)
  flags:  CZSVDH
  ******************************************/
 static void Z79_ssN0_0000_addr(void)
@@ -4409,8 +4409,8 @@ static void Z7B_0000_0000(void)
 {
 	UINT16 tag, fcw;
 	tag = POPW( SP );	/* get type tag */
-	fcw = POPW( SP );	/* get FCW	*/
-	PC	= POPW( SP );	/* get PC	*/
+	fcw = POPW( SP );	/* get FCW  */
+	PC	= POPW( SP );	/* get PC   */
     IRQ_SRV &= ~tag;    /* remove IRQ serviced flag */
 	CHANGE_FCW(fcw);		 /* check for user/system mode change */
     change_pc(PC);
@@ -4445,7 +4445,7 @@ static void Z7B_0000_1010(void)
 }
 
 /******************************************
- mreq	 rd
+ mreq    rd
  flags:  -ZS---
  ******************************************/
 static void Z7B_dddd_1101(void)
@@ -4454,7 +4454,7 @@ static void Z7B_dddd_1101(void)
 }
 
 /******************************************
- di 	 i2
+ di      i2
  flags:  ------
  ******************************************/
 static void Z7C_0000_00ii(void)
@@ -4466,7 +4466,7 @@ static void Z7C_0000_00ii(void)
 }
 
 /******************************************
- ei 	 i2
+ ei      i2
  flags:  ------
  ******************************************/
 static void Z7C_0000_01ii(void)
@@ -4478,7 +4478,7 @@ static void Z7C_0000_01ii(void)
 }
 
 /******************************************
- ldctl	 rd,ctrl
+ ldctl   rd,ctrl
  flags:  ------
  ******************************************/
 static void Z7D_dddd_0ccc(void)
@@ -4504,7 +4504,7 @@ static void Z7D_dddd_0ccc(void)
 }
 
 /******************************************
- ldctl	 ctrl,rs
+ ldctl   ctrl,rs
  flags:  ------
  ******************************************/
 static void Z7D_ssss_1ccc(void)
@@ -4548,7 +4548,7 @@ static void Z7E_imm8(void)
 }
 
 /******************************************
- sc 	 imm8
+ sc      imm8
  flags:  CZSVDH
  ******************************************/
 static void Z7F_imm8(void)
@@ -4560,7 +4560,7 @@ static void Z7F_imm8(void)
 }
 
 /******************************************
- addb	 rbd,rbs
+ addb    rbd,rbs
  flags:  CZSVDH
  ******************************************/
 static void Z80_ssss_dddd(void)
@@ -4571,7 +4571,7 @@ static void Z80_ssss_dddd(void)
 }
 
 /******************************************
- add	 rd,rs
+ add     rd,rs
  flags:  CZSV--
  ******************************************/
 static void Z81_ssss_dddd(void)
@@ -4582,7 +4582,7 @@ static void Z81_ssss_dddd(void)
 }
 
 /******************************************
- subb	 rbd,rbs
+ subb    rbd,rbs
  flags:  CZSVDH
  ******************************************/
 static void Z82_ssss_dddd(void)
@@ -4593,7 +4593,7 @@ static void Z82_ssss_dddd(void)
 }
 
 /******************************************
- sub	 rd,rs
+ sub     rd,rs
  flags:  CZSV--
  ******************************************/
 static void Z83_ssss_dddd(void)
@@ -4604,7 +4604,7 @@ static void Z83_ssss_dddd(void)
 }
 
 /******************************************
- orb	 rbd,rbs
+ orb     rbd,rbs
  flags:  CZSP--
  ******************************************/
 static void Z84_ssss_dddd(void)
@@ -4615,7 +4615,7 @@ static void Z84_ssss_dddd(void)
 }
 
 /******************************************
- or 	 rd,rs
+ or      rd,rs
  flags:  CZS---
  ******************************************/
 static void Z85_ssss_dddd(void)
@@ -4626,7 +4626,7 @@ static void Z85_ssss_dddd(void)
 }
 
 /******************************************
- andb	 rbd,rbs
+ andb    rbd,rbs
  flags:  -ZSP--
  ******************************************/
 static void Z86_ssss_dddd(void)
@@ -4637,7 +4637,7 @@ static void Z86_ssss_dddd(void)
 }
 
 /******************************************
- and	 rd,rs
+ and     rd,rs
  flags:  -ZS---
  ******************************************/
 static void Z87_ssss_dddd(void)
@@ -4648,7 +4648,7 @@ static void Z87_ssss_dddd(void)
 }
 
 /******************************************
- xorb	 rbd,rbs
+ xorb    rbd,rbs
  flags:  -ZSP--
  ******************************************/
 static void Z88_ssss_dddd(void)
@@ -4659,7 +4659,7 @@ static void Z88_ssss_dddd(void)
 }
 
 /******************************************
- xor	 rd,rs
+ xor     rd,rs
  flags:  -ZS---
  ******************************************/
 static void Z89_ssss_dddd(void)
@@ -4670,7 +4670,7 @@ static void Z89_ssss_dddd(void)
 }
 
 /******************************************
- cpb	 rbd,rbs
+ cpb     rbd,rbs
  flags:  CZSV--
  ******************************************/
 static void Z8A_ssss_dddd(void)
@@ -4681,7 +4681,7 @@ static void Z8A_ssss_dddd(void)
 }
 
 /******************************************
- cp 	 rd,rs
+ cp      rd,rs
  flags:  CZSV--
  ******************************************/
 static void Z8B_ssss_dddd(void)
@@ -4692,7 +4692,7 @@ static void Z8B_ssss_dddd(void)
 }
 
 /******************************************
- comb	 rbd
+ comb    rbd
  flags:  -ZSP--
  ******************************************/
 static void Z8C_dddd_0000(void)
@@ -4702,7 +4702,7 @@ static void Z8C_dddd_0000(void)
 }
 
 /******************************************
- negb	 rbd
+ negb    rbd
  flags:  CZSV--
  ******************************************/
 static void Z8C_dddd_0010(void)
@@ -4712,7 +4712,7 @@ static void Z8C_dddd_0010(void)
 }
 
 /******************************************
- testb	 rbd
+ testb   rbd
  flags:  -ZSP--
  ******************************************/
 static void Z8C_dddd_0100(void)
@@ -4722,7 +4722,7 @@ static void Z8C_dddd_0100(void)
 }
 
 /******************************************
- tsetb	 rbd
+ tsetb   rbd
  flags:  --S---
  ******************************************/
 static void Z8C_dddd_0110(void)
@@ -4733,7 +4733,7 @@ static void Z8C_dddd_0110(void)
 }
 
 /******************************************
- clrb	 rbd
+ clrb    rbd
  flags:  ------
  ******************************************/
 static void Z8C_dddd_1000(void)
@@ -4752,7 +4752,7 @@ static void Z8D_0000_0111(void)
 }
 
 /******************************************
- com	 rd
+ com     rd
  flags:  -ZS---
  ******************************************/
 static void Z8D_dddd_0000(void)
@@ -4762,7 +4762,7 @@ static void Z8D_dddd_0000(void)
 }
 
 /******************************************
- neg	 rd
+ neg     rd
  flags:  CZSV--
  ******************************************/
 static void Z8D_dddd_0010(void)
@@ -4772,7 +4772,7 @@ static void Z8D_dddd_0010(void)
 }
 
 /******************************************
- test	 rd
+ test    rd
  flags:  ------
  ******************************************/
 static void Z8D_dddd_0100(void)
@@ -4782,7 +4782,7 @@ static void Z8D_dddd_0100(void)
 }
 
 /******************************************
- tset	 rd
+ tset    rd
  flags:  --S---
  ******************************************/
 static void Z8D_dddd_0110(void)
@@ -4793,7 +4793,7 @@ static void Z8D_dddd_0110(void)
 }
 
 /******************************************
- clr	 rd
+ clr     rd
  flags:  ------
  ******************************************/
 static void Z8D_dddd_1000(void)
@@ -4830,7 +4830,7 @@ static void Z8D_imm4_0101(void)
 }
 
 /******************************************
- ext8e	 imm8
+ ext8e   imm8
  flags:  ------
  ******************************************/
 static void Z8E_imm8(void)
@@ -4844,7 +4844,7 @@ static void Z8E_imm8(void)
 }
 
 /******************************************
- ext8f	 imm8
+ ext8f   imm8
  flags:  ------
  ******************************************/
 static void Z8F_imm8(void)
@@ -4858,7 +4858,7 @@ static void Z8F_imm8(void)
 }
 
 /******************************************
- cpl	 rrd,rrs
+ cpl     rrd,rrs
  flags:  CZSV--
  ******************************************/
 static void Z90_ssss_dddd(void)
@@ -4869,7 +4869,7 @@ static void Z90_ssss_dddd(void)
 }
 
 /******************************************
- pushl	 @rd,rrs
+ pushl   @rd,rrs
  flags:  ------
  ******************************************/
 static void Z91_ddN0_ssss(void)
@@ -4880,7 +4880,7 @@ static void Z91_ddN0_ssss(void)
 }
 
 /******************************************
- subl	 rrd,rrs
+ subl    rrd,rrs
  flags:  CZSV--
  ******************************************/
 static void Z92_ssss_dddd(void)
@@ -4891,7 +4891,7 @@ static void Z92_ssss_dddd(void)
 }
 
 /******************************************
- push	 @rd,rs
+ push    @rd,rs
  flags:  ------
  ******************************************/
 static void Z93_ddN0_ssss(void)
@@ -4902,7 +4902,7 @@ static void Z93_ddN0_ssss(void)
 }
 
 /******************************************
- ldl	 rrd,rrs
+ ldl     rrd,rrs
  flags:  ------
  ******************************************/
 static void Z94_ssss_dddd(void)
@@ -4913,7 +4913,7 @@ static void Z94_ssss_dddd(void)
 }
 
 /******************************************
- popl	 rrd,@rs
+ popl    rrd,@rs
  flags:  ------
  ******************************************/
 static void Z95_ssN0_dddd(void)
@@ -4924,7 +4924,7 @@ static void Z95_ssN0_dddd(void)
 }
 
 /******************************************
- addl	 rrd,rrs
+ addl    rrd,rrs
  flags:  CZSV--
  ******************************************/
 static void Z96_ssss_dddd(void)
@@ -4935,7 +4935,7 @@ static void Z96_ssss_dddd(void)
 }
 
 /******************************************
- pop	 rd,@rs
+ pop     rd,@rs
  flags:  ------
  ******************************************/
 static void Z97_ssN0_dddd(void)
@@ -4946,7 +4946,7 @@ static void Z97_ssN0_dddd(void)
 }
 
 /******************************************
- multl	 rqd,rrs
+ multl   rqd,rrs
  flags:  CZSV--
  ******************************************/
 static void Z98_ssss_dddd(void)
@@ -4957,7 +4957,7 @@ static void Z98_ssss_dddd(void)
 }
 
 /******************************************
- mult	 rrd,rs
+ mult    rrd,rs
  flags:  CZSV--
  ******************************************/
 static void Z99_ssss_dddd(void)
@@ -4968,7 +4968,7 @@ static void Z99_ssss_dddd(void)
 }
 
 /******************************************
- divl	 rqd,rrs
+ divl    rqd,rrs
  flags:  CZSV--
  ******************************************/
 static void Z9A_ssss_dddd(void)
@@ -4979,7 +4979,7 @@ static void Z9A_ssss_dddd(void)
 }
 
 /******************************************
- div	 rrd,rs
+ div     rrd,rs
  flags:  CZSV--
  ******************************************/
 static void Z9B_ssss_dddd(void)
@@ -4990,7 +4990,7 @@ static void Z9B_ssss_dddd(void)
 }
 
 /******************************************
- testl	 rrd
+ testl   rrd
  flags:  -ZS---
  ******************************************/
 static void Z9C_dddd_1000(void)
@@ -5016,7 +5016,7 @@ static void Z9D_imm8(void)
 }
 
 /******************************************
- ret	 cc
+ ret     cc
  flags:  ------
  ******************************************/
 static void Z9E_0000_cccc(void)
@@ -5058,7 +5058,7 @@ static void Z9F_imm8(void)
 }
 
 /******************************************
- ldb	 rbd,rbs
+ ldb     rbd,rbs
  flags:  ------
  ******************************************/
 static void ZA0_ssss_dddd(void)
@@ -5069,7 +5069,7 @@ static void ZA0_ssss_dddd(void)
 }
 
 /******************************************
- ld 	 rd,rs
+ ld      rd,rs
  flags:  ------
  ******************************************/
 static void ZA1_ssss_dddd(void)
@@ -5080,7 +5080,7 @@ static void ZA1_ssss_dddd(void)
 }
 
 /******************************************
- resb	 rbd,imm4
+ resb    rbd,imm4
  flags:  ------
  ******************************************/
 static void ZA2_dddd_imm4(void)
@@ -5091,7 +5091,7 @@ static void ZA2_dddd_imm4(void)
 }
 
 /******************************************
- res	 rd,imm4
+ res     rd,imm4
  flags:  ------
  ******************************************/
 static void ZA3_dddd_imm4(void)
@@ -5102,7 +5102,7 @@ static void ZA3_dddd_imm4(void)
 }
 
 /******************************************
- setb	 rbd,imm4
+ setb    rbd,imm4
  flags:  ------
  ******************************************/
 static void ZA4_dddd_imm4(void)
@@ -5113,7 +5113,7 @@ static void ZA4_dddd_imm4(void)
 }
 
 /******************************************
- set	 rd,imm4
+ set     rd,imm4
  flags:  ------
  ******************************************/
 static void ZA5_dddd_imm4(void)
@@ -5124,7 +5124,7 @@ static void ZA5_dddd_imm4(void)
 }
 
 /******************************************
- bitb	 rbd,imm4
+ bitb    rbd,imm4
  flags:  -Z----
  ******************************************/
 static void ZA6_dddd_imm4(void)
@@ -5135,7 +5135,7 @@ static void ZA6_dddd_imm4(void)
 }
 
 /******************************************
- bit	 rd,imm4
+ bit     rd,imm4
  flags:  -Z----
  ******************************************/
 static void ZA7_dddd_imm4(void)
@@ -5146,7 +5146,7 @@ static void ZA7_dddd_imm4(void)
 }
 
 /******************************************
- incb	 rbd,imm4m1
+ incb    rbd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void ZA8_dddd_imm4m1(void)
@@ -5157,7 +5157,7 @@ static void ZA8_dddd_imm4m1(void)
 }
 
 /******************************************
- inc	 rd,imm4m1
+ inc     rd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void ZA9_dddd_imm4m1(void)
@@ -5168,7 +5168,7 @@ static void ZA9_dddd_imm4m1(void)
 }
 
 /******************************************
- decb	 rbd,imm4m1
+ decb    rbd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void ZAA_dddd_imm4m1(void)
@@ -5179,7 +5179,7 @@ static void ZAA_dddd_imm4m1(void)
 }
 
 /******************************************
- dec	 rd,imm4m1
+ dec     rd,imm4m1
  flags:  -ZSV--
  ******************************************/
 static void ZAB_dddd_imm4m1(void)
@@ -5190,7 +5190,7 @@ static void ZAB_dddd_imm4m1(void)
 }
 
 /******************************************
- exb	 rbd,rbs
+ exb     rbd,rbs
  flags:  ------
  ******************************************/
 static void ZAC_ssss_dddd(void)
@@ -5203,7 +5203,7 @@ static void ZAC_ssss_dddd(void)
 }
 
 /******************************************
- ex 	 rd,rs
+ ex      rd,rs
  flags:  ------
  ******************************************/
 static void ZAD_ssss_dddd(void)
@@ -5216,7 +5216,7 @@ static void ZAD_ssss_dddd(void)
 }
 
 /******************************************
- tccb	 cc,rbd
+ tccb    cc,rbd
  flags:  ------
  ******************************************/
 static void ZAE_dddd_cccc(void)
@@ -5246,7 +5246,7 @@ static void ZAE_dddd_cccc(void)
 }
 
 /******************************************
- tcc	 cc,rd
+ tcc     cc,rd
  flags:  ------
  ******************************************/
 static void ZAF_dddd_cccc(void)
@@ -5276,7 +5276,7 @@ static void ZAF_dddd_cccc(void)
 }
 
 /******************************************
- dab	 rbd
+ dab     rbd
  flags:  CZS---
  ******************************************/
 static void ZB0_dddd_0000(void)
@@ -5295,7 +5295,7 @@ static void ZB0_dddd_0000(void)
 }
 
 /******************************************
- extsb	 rd
+ extsb   rd
  flags:  ------
  ******************************************/
 static void ZB1_dddd_0000(void)
@@ -5305,7 +5305,7 @@ static void ZB1_dddd_0000(void)
 }
 
 /******************************************
- extsl	 rqd
+ extsl   rqd
  flags:  ------
  ******************************************/
 static void ZB1_dddd_0111(void)
@@ -5316,7 +5316,7 @@ static void ZB1_dddd_0111(void)
 }
 
 /******************************************
- exts	 rrd
+ exts    rrd
  flags:  ------
  ******************************************/
 static void ZB1_dddd_1010(void)
@@ -5327,9 +5327,9 @@ static void ZB1_dddd_1010(void)
 }
 
 /******************************************
- sllb	 rbd,imm8
+ sllb    rbd,imm8
  flags:  CZS---
- srlb	 rbd,imm8
+ srlb    rbd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB2_dddd_0001_imm8(void)
@@ -5343,7 +5343,7 @@ static void ZB2_dddd_0001_imm8(void)
 }
 
 /******************************************
- sdlb	 rbd,rs
+ sdlb    rbd,rs
  flags:  CZS---
  ******************************************/
 static void ZB2_dddd_0011_0000_ssss_0000_0000(void)
@@ -5354,7 +5354,7 @@ static void ZB2_dddd_0011_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rlb	 rbd,imm1or2
+ rlb     rbd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB2_dddd_00I0(void)
@@ -5365,7 +5365,7 @@ static void ZB2_dddd_00I0(void)
 }
 
 /******************************************
- rrb	 rbd,imm1or2
+ rrb     rbd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB2_dddd_01I0(void)
@@ -5376,9 +5376,9 @@ static void ZB2_dddd_01I0(void)
 }
 
 /******************************************
- slab	 rbd,imm8
+ slab    rbd,imm8
  flags:  CZSV--
- srab	 rbd,imm8
+ srab    rbd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB2_dddd_1001_imm8(void)
@@ -5392,7 +5392,7 @@ static void ZB2_dddd_1001_imm8(void)
 }
 
 /******************************************
- sdab	 rbd,rs
+ sdab    rbd,rs
  flags:  CZSV--
  ******************************************/
 static void ZB2_dddd_1011_0000_ssss_0000_0000(void)
@@ -5403,7 +5403,7 @@ static void ZB2_dddd_1011_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rlcb	 rbd,imm1or2
+ rlcb    rbd,imm1or2
  flags:  -Z----
  ******************************************/
 static void ZB2_dddd_10I0(void)
@@ -5414,7 +5414,7 @@ static void ZB2_dddd_10I0(void)
 }
 
 /******************************************
- rrcb	 rbd,imm1or2
+ rrcb    rbd,imm1or2
  flags:  -Z----
  ******************************************/
 static void ZB2_dddd_11I0(void)
@@ -5425,9 +5425,9 @@ static void ZB2_dddd_11I0(void)
 }
 
 /******************************************
- sll	 rd,imm8
+ sll     rd,imm8
  flags:  CZS---
- srl	 rd,imm8
+ srl     rd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_0001_imm8(void)
@@ -5441,7 +5441,7 @@ static void ZB3_dddd_0001_imm8(void)
 }
 
 /******************************************
- sdl	 rd,rs
+ sdl     rd,rs
  flags:  CZS---
  ******************************************/
 static void ZB3_dddd_0011_0000_ssss_0000_0000(void)
@@ -5452,7 +5452,7 @@ static void ZB3_dddd_0011_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rl 	 rd,imm1or2
+ rl      rd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_00I0(void)
@@ -5463,9 +5463,9 @@ static void ZB3_dddd_00I0(void)
 }
 
 /******************************************
- slll	 rrd,imm8
+ slll    rrd,imm8
  flags:  CZS---
- srll	 rrd,imm8
+ srll    rrd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_0101_imm8(void)
@@ -5479,7 +5479,7 @@ static void ZB3_dddd_0101_imm8(void)
 }
 
 /******************************************
- sdll	 rrd,rs
+ sdll    rrd,rs
  flags:  CZS---
  ******************************************/
 static void ZB3_dddd_0111_0000_ssss_0000_0000(void)
@@ -5490,7 +5490,7 @@ static void ZB3_dddd_0111_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rr 	 rd,imm1or2
+ rr      rd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_01I0(void)
@@ -5501,9 +5501,9 @@ static void ZB3_dddd_01I0(void)
 }
 
 /******************************************
- sla	 rd,imm8
+ sla     rd,imm8
  flags:  CZSV--
- sra	 rd,imm8
+ sra     rd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_1001_imm8(void)
@@ -5517,7 +5517,7 @@ static void ZB3_dddd_1001_imm8(void)
 }
 
 /******************************************
- sda	 rd,rs
+ sda     rd,rs
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_1011_0000_ssss_0000_0000(void)
@@ -5528,7 +5528,7 @@ static void ZB3_dddd_1011_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rlc	 rd,imm1or2
+ rlc     rd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_10I0(void)
@@ -5539,9 +5539,9 @@ static void ZB3_dddd_10I0(void)
 }
 
 /******************************************
- slal	 rrd,imm8
+ slal    rrd,imm8
  flags:  CZSV--
- sral	 rrd,imm8
+ sral    rrd,imm8
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_1101_imm8(void)
@@ -5555,7 +5555,7 @@ static void ZB3_dddd_1101_imm8(void)
 }
 
 /******************************************
- sdal	 rrd,rs
+ sdal    rrd,rs
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_1111_0000_ssss_0000_0000(void)
@@ -5566,7 +5566,7 @@ static void ZB3_dddd_1111_0000_ssss_0000_0000(void)
 }
 
 /******************************************
- rrc	 rd,imm1or2
+ rrc     rd,imm1or2
  flags:  CZSV--
  ******************************************/
 static void ZB3_dddd_11I0(void)
@@ -5577,7 +5577,7 @@ static void ZB3_dddd_11I0(void)
 }
 
 /******************************************
- adcb	 rbd,rbs
+ adcb    rbd,rbs
  flags:  CZSVDH
  ******************************************/
 static void ZB4_ssss_dddd(void)
@@ -5588,7 +5588,7 @@ static void ZB4_ssss_dddd(void)
 }
 
 /******************************************
- adc	 rd,rs
+ adc     rd,rs
  flags:  CZSV--
  ******************************************/
 static void ZB5_ssss_dddd(void)
@@ -5599,7 +5599,7 @@ static void ZB5_ssss_dddd(void)
 }
 
 /******************************************
- sbcb	 rbd,rbs
+ sbcb    rbd,rbs
  flags:  CZSVDH
  ******************************************/
 static void ZB6_ssss_dddd(void)
@@ -5610,7 +5610,7 @@ static void ZB6_ssss_dddd(void)
 }
 
 /******************************************
- sbc	 rd,rs
+ sbc     rd,rs
  flags:  CZSV--
  ******************************************/
 static void ZB7_ssss_dddd(void)
@@ -5621,7 +5621,7 @@ static void ZB7_ssss_dddd(void)
 }
 
 /******************************************
- trtib	 @rd,@rs,rr
+ trtib   @rd,@rs,rr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_0010_0000_rrrr_ssN0_0000(void)
@@ -5653,7 +5653,7 @@ static void ZB8_ddN0_0110_0000_rrrr_ssN0_1110(void)
 }
 
 /******************************************
- trtdb	 @rd,@rs,rbr
+ trtdb   @rd,@rs,rbr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_1010_0000_rrrr_ssN0_0000(void)
@@ -5685,7 +5685,7 @@ static void ZB8_ddN0_1110_0000_rrrr_ssN0_1110(void)
 }
 
 /******************************************
- trib	 @rd,@rs,rbr
+ trib    @rd,@rs,rbr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_0000_0000_rrrr_ssN0_0000(void)
@@ -5700,7 +5700,7 @@ static void ZB8_ddN0_0000_0000_rrrr_ssN0_0000(void)
 }
 
 /******************************************
- trirb	 @rd,@rs,rbr
+ trirb   @rd,@rs,rbr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_0100_0000_rrrr_ssN0_0000(void)
@@ -5715,7 +5715,7 @@ static void ZB8_ddN0_0100_0000_rrrr_ssN0_0000(void)
 }
 
 /******************************************
- trdb	 @rd,@rs,rbr
+ trdb    @rd,@rs,rbr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_1000_0000_rrrr_ssN0_0000(void)
@@ -5730,7 +5730,7 @@ static void ZB8_ddN0_1000_0000_rrrr_ssN0_0000(void)
 }
 
 /******************************************
- trdrb	 @rd,@rs,rbr
+ trdrb   @rd,@rs,rbr
  flags:  -ZSV--
  ******************************************/
 static void ZB8_ddN0_1100_0000_rrrr_ssN0_0000(void)
@@ -5760,7 +5760,7 @@ static void ZB9_imm8(void)
 }
 
 /******************************************
- cpib	 rbd,@rs,rr,cc
+ cpib    rbd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_0000_0000_rrrr_dddd_cccc(void)
@@ -5793,8 +5793,8 @@ static void ZBA_ssN0_0000_0000_rrrr_dddd_cccc(void)
 }
 
 /******************************************
- ldib	 @rd,@rs,rr
- ldibr	 @rd,@rs,rr
+ ldib    @rd,@rs,rr
+ ldibr   @rd,@rs,rr
  flags:  ---V--
  ******************************************/
 static void ZBA_ssN0_0001_0000_rrrr_ddN0_x000(void)
@@ -5810,7 +5810,7 @@ static void ZBA_ssN0_0001_0000_rrrr_ddN0_x000(void)
 }
 
 /******************************************
- cpsib	 @rd,@rs,rr,cc
+ cpsib   @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_0010_0000_rrrr_ddN0_cccc(void)
@@ -5844,7 +5844,7 @@ static void ZBA_ssN0_0010_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpirb	 rbd,@rs,rr,cc
+ cpirb   rbd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_0100_0000_rrrr_dddd_cccc(void)
@@ -5911,7 +5911,7 @@ static void ZBA_ssN0_0110_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpdb	 rbd,@rs,rr,cc
+ cpdb    rbd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_1000_0000_rrrr_dddd_cccc(void)
@@ -5944,8 +5944,8 @@ static void ZBA_ssN0_1000_0000_rrrr_dddd_cccc(void)
 }
 
 /******************************************
- lddb	 @rs,@rd,rr
- lddbr	 @rs,@rd,rr
+ lddb    @rs,@rd,rr
+ lddbr   @rs,@rd,rr
  flags:  ---V--
  ******************************************/
 static void ZBA_ssN0_1001_0000_rrrr_ddN0_x000(void)
@@ -5961,7 +5961,7 @@ static void ZBA_ssN0_1001_0000_rrrr_ddN0_x000(void)
 }
 
 /******************************************
- cpsdb	 @rd,@rs,rr,cc
+ cpsdb   @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_1010_0000_rrrr_ddN0_cccc(void)
@@ -5995,7 +5995,7 @@ static void ZBA_ssN0_1010_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpdrb	 rbd,@rs,rr,cc
+ cpdrb   rbd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBA_ssN0_1100_0000_rrrr_dddd_cccc(void)
@@ -6062,7 +6062,7 @@ static void ZBA_ssN0_1110_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpi	 rd,@rs,rr,cc
+ cpi     rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_0000_0000_rrrr_dddd_cccc(void)
@@ -6095,8 +6095,8 @@ static void ZBB_ssN0_0000_0000_rrrr_dddd_cccc(void)
 }
 
 /******************************************
- ldi	 @rd,@rs,rr
- ldir	 @rd,@rs,rr
+ ldi     @rd,@rs,rr
+ ldir    @rd,@rs,rr
  flags:  ---V--
  ******************************************/
 static void ZBB_ssN0_0001_0000_rrrr_ddN0_x000(void)
@@ -6112,7 +6112,7 @@ static void ZBB_ssN0_0001_0000_rrrr_ddN0_x000(void)
 }
 
 /******************************************
- cpsi	 @rd,@rs,rr,cc
+ cpsi    @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_0010_0000_rrrr_ddN0_cccc(void)
@@ -6146,7 +6146,7 @@ static void ZBB_ssN0_0010_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpir	 rd,@rs,rr,cc
+ cpir    rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_0100_0000_rrrr_dddd_cccc(void)
@@ -6179,7 +6179,7 @@ static void ZBB_ssN0_0100_0000_rrrr_dddd_cccc(void)
 }
 
 /******************************************
- cpsir	 @rd,@rs,rr,cc
+ cpsir   @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_0110_0000_rrrr_ddN0_cccc(void)
@@ -6213,7 +6213,7 @@ static void ZBB_ssN0_0110_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpd	 rd,@rs,rr,cc
+ cpd     rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_1000_0000_rrrr_dddd_cccc(void)
@@ -6247,7 +6247,7 @@ static void ZBB_ssN0_1000_0000_rrrr_dddd_cccc(void)
 
 /******************************************
  ldd     @rs,@rd,rr
- lddr	 @rs,@rd,rr
+ lddr    @rs,@rd,rr
  flags:  ---V--
  ******************************************/
 static void ZBB_ssN0_1001_0000_rrrr_ddN0_x000(void)
@@ -6263,7 +6263,7 @@ static void ZBB_ssN0_1001_0000_rrrr_ddN0_x000(void)
 }
 
 /******************************************
- cpsd	 @rd,@rs,rr,cc
+ cpsd    @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_1010_0000_rrrr_ddN0_cccc(void)
@@ -6297,7 +6297,7 @@ static void ZBB_ssN0_1010_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- cpdr	 rd,@rs,rr,cc
+ cpdr    rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_1100_0000_rrrr_dddd_cccc(void)
@@ -6330,7 +6330,7 @@ static void ZBB_ssN0_1100_0000_rrrr_dddd_cccc(void)
 }
 
 /******************************************
- cpsdr	 @rd,@rs,rr,cc
+ cpsdr   @rd,@rs,rr,cc
  flags:  CZSV--
  ******************************************/
 static void ZBB_ssN0_1110_0000_rrrr_ddN0_cccc(void)
@@ -6364,7 +6364,7 @@ static void ZBB_ssN0_1110_0000_rrrr_ddN0_cccc(void)
 }
 
 /******************************************
- rrdb	 rbb,rba
+ rrdb    rbb,rba
  flags:  -Z----
  ******************************************/
 static void ZBC_aaaa_bbbb(void)
@@ -6378,7 +6378,7 @@ static void ZBC_aaaa_bbbb(void)
 }
 
 /******************************************
- ldk	 rd,imm4
+ ldk     rd,imm4
  flags:  ------
  ******************************************/
 static void ZBD_dddd_imm4(void)
@@ -6389,7 +6389,7 @@ static void ZBD_dddd_imm4(void)
 }
 
 /******************************************
- rldb	 rbb,rba
+ rldb    rbb,rba
  flags:  -Z----
  ******************************************/
 static void ZBE_aaaa_bbbb(void)
@@ -6418,7 +6418,7 @@ static void ZBF_imm8(void)
 }
 
 /******************************************
- ldb	 rbd,imm8
+ ldb     rbd,imm8
  flags:  ------
  ******************************************/
 static void ZC_dddd_imm8(void)
@@ -6429,7 +6429,7 @@ static void ZC_dddd_imm8(void)
 }
 
 /******************************************
- calr	 dsp12
+ calr    dsp12
  flags:  ------
  ******************************************/
 static void ZD_dsp12(void)
@@ -6442,7 +6442,7 @@ static void ZD_dsp12(void)
 }
 
 /******************************************
- jr 	 cc,dsp8
+ jr      cc,dsp8
  flags:  ------
  ******************************************/
 static void ZE_cccc_dsp8(void)
@@ -6486,7 +6486,7 @@ static void ZF_dddd_0dsp7(void)
 }
 
 /******************************************
- djnz	 rd,dsp7
+ djnz    rd,dsp7
  flags:  ------
  ******************************************/
 static void ZF_dddd_1dsp7(void)

@@ -5,8 +5,8 @@ Driver by Tomasz Slanina  dox@space.pl
 ***************************************************************************
 
 RAM :
-	1 x GM76c28-10 (6116) RAM
-	3 x 2114  - VRAM (only 10 bits are used )
+    1 x GM76c28-10 (6116) RAM
+    3 x 2114  - VRAM (only 10 bits are used )
 
 ROM:
   27256 + 27128 for code/data
@@ -15,25 +15,25 @@ ROM:
 PROM:
  82S123 32x8
  Used for system control
- 	(d0 - connected to ROM5 /CS , d1 - ROM4 /CS, d2 - RAM /CS , d3 - to some logic(gfx control), and Z80 WAIT )
+    (d0 - connected to ROM5 /CS , d1 - ROM4 /CS, d2 - RAM /CS , d3 - to some logic(gfx control), and Z80 WAIT )
 
 Memory Map :
   0x0000 - 0xbfff - ROM
   0xc000 - 0xcfff - RAM
   0xd000 - 0xdfff - VRAM mirrored write,
-  		tilemap offset = address & 0x3ff
-  		tile number =  bits 0-7 = data, bits 8,9  = address bits 10,11
+        tilemap offset = address & 0x3ff
+        tile number =  bits 0-7 = data, bits 8,9  = address bits 10,11
 
 Video :
-	No scrolling , no sprites.
-	32x32 Tilemap stored in VRAM (10 bits/tile (tile numebr 0-1023))
+    No scrolling , no sprites.
+    32x32 Tilemap stored in VRAM (10 bits/tile (tile numebr 0-1023))
 
-	3 gfx ROMS
-	ROM1 - R component (ROM ->(parallel in) shift register 74166 (serial out) -> jamma output
-	ROM2 - B component
-	ROM3 - G component
+    3 gfx ROMS
+    ROM1 - R component (ROM ->(parallel in) shift register 74166 (serial out) -> jamma output
+    ROM2 - B component
+    ROM3 - G component
 
-	Default MAME color palette is used
+    Default MAME color palette is used
 
 Sound :
  AY 3 8910

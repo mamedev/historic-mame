@@ -160,7 +160,7 @@ void dsd_555_astbl_step(struct node_description *node)
 	if (context->use_ctrlv)
 	{
 		/* If CV is less then .25V, the circuit will oscillate way out of range.
-		 * So we will just ignore it when it happens. */
+         * So we will just ignore it when it happens. */
 		if (DSD_555_ASTBL__CTRLV < .25) return;
 		/* If it is a node then calculate thresholds based on Control Voltage */
 		context->threshold = DSD_555_ASTBL__CTRLV;
@@ -180,29 +180,29 @@ void dsd_555_astbl_step(struct node_description *node)
 	}
 
 	/* Calculate future capacitor voltage.
-	 * ref@ http://www.physics.rutgers.edu/ugrad/205/capacitance.html
-	 * The formulas from the ref pages have been modified to reflect that we are stepping the change.
-	 * dt = time of sample (1/sample frequency)
-	 * VC = Voltage across capacitor
-	 * VC' = Future voltage across capacitor
-	 * Vc = Voltage change
-	 * Vr = is the voltage across the resistor.  For charging it is Vcc - VC.  Discharging it is VC - 0.
-	 * R = R1+R2 (for charging)  R = R2 for discharging.
-	 * Vc = Vr*(1-exp(-dt/(R*C)))
-	 * VC' = VC + Vc (for charging) VC' = VC - Vc for discharging.
-	 *
-	 * We will also need to calculate the amount of time we overshoot the thresholds
-	 * dt = amount of time we overshot
-	 * Vc = voltage change overshoot
-	 * dt = R*C(log(1/(1-(Vc/Vr))))
-	 */
+     * ref@ http://www.physics.rutgers.edu/ugrad/205/capacitance.html
+     * The formulas from the ref pages have been modified to reflect that we are stepping the change.
+     * dt = time of sample (1/sample frequency)
+     * VC = Voltage across capacitor
+     * VC' = Future voltage across capacitor
+     * Vc = Voltage change
+     * Vr = is the voltage across the resistor.  For charging it is Vcc - VC.  Discharging it is VC - 0.
+     * R = R1+R2 (for charging)  R = R2 for discharging.
+     * Vc = Vr*(1-exp(-dt/(R*C)))
+     * VC' = VC + Vc (for charging) VC' = VC - Vc for discharging.
+     *
+     * We will also need to calculate the amount of time we overshoot the thresholds
+     * dt = amount of time we overshot
+     * Vc = voltage change overshoot
+     * dt = R*C(log(1/(1-(Vc/Vr))))
+     */
 
 	dt = context->step;
 	xTime = context->x_init;
 
 	/* Sometimes a switching network is used to setup the capacitance.
-	 * These may select no capacitor, causing oscillation to stop.
-	 */
+     * These may select no capacitor, causing oscillation to stop.
+     */
 	if (DSD_555_ASTBL__C == 0)
 	{
 		context->flip_flop = 1;
@@ -402,8 +402,8 @@ void dsd_555_mstbl_step(struct node_description *node)
 			vC = context->vCap;
 
 			/* Sometimes a switching network is used to setup the capacitance.
-			 * These may select 'no' capacitor, causing oscillation to stop.
-			 */
+             * These may select 'no' capacitor, causing oscillation to stop.
+             */
 			if (DSD_555_MSTBL__C == 0)
 			{
 				context->flip_flop = 0;
@@ -419,7 +419,7 @@ void dsd_555_mstbl_step(struct node_description *node)
 
 				/* Has it charged past upper limit? */
 				/* If trigger is still enabled, then we keep charging,
-				 * regardless of threshold. */
+                 * regardless of threshold. */
 				if ((vCnext >= context->threshold) && !trigger)
 				{
 					vCnext = 0;
@@ -597,8 +597,8 @@ void dsd_555_cc_step(struct node_description *node)
 				if (i == 0)
 				{
 					/* No charging current, so we have to discharge the cap
-					 * due to cap and circuit losses.
-					 */
+                     * due to cap and circuit losses.
+                     */
 					tRC = DEFAULT_555_CAP_BLEED * DSD_555_CC__C;
 					vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
@@ -609,10 +609,10 @@ void dsd_555_cc_step(struct node_description *node)
 					/* iC=C*dv/dt  works out to dv=iC*dt/C */
 					vCnext = vC + (i * dt / DSD_555_CC__C);
 					/* Yes, if the cap voltage has reached the max voltage it can,
-					 * and the 555 threshold has not been reached, then oscillation stops.
-					 * This is the way the actual electronics works.
-					 * This is why you never play with the pots after being factory adjusted
-					 * to work in the proper range. */
+                     * and the 555 threshold has not been reached, then oscillation stops.
+                     * This is the way the actual electronics works.
+                     * This is why you never play with the pots after being factory adjusted
+                     * to work in the proper range. */
 					if (vCnext > viLimit) vCnext = viLimit;
 					dt = 0;
 
@@ -660,8 +660,8 @@ void dsd_555_cc_step(struct node_description *node)
 				if ((i == 0) && (DSD_555_CC__RBIAS == 0))
 				{
 					/* No charging current, so we have to discharge the cap
-					 * due to rGnd.
-					 */
+                     * due to rGnd.
+                     */
 					tRC = DSD_555_CC__RGND * DSD_555_CC__C;
 					vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
@@ -670,7 +670,7 @@ void dsd_555_cc_step(struct node_description *node)
 				{
 					/* Charging */
 					/* If the cap voltage is past the current source charging limit
-					 * then only the bias voltage will charge the cap. */
+                     * then only the bias voltage will charge the cap. */
 					v = vB;
 					if (vC < viLimit) v += vi;
 					else if (context->type <= 3) v = viLimit;
@@ -787,120 +787,120 @@ void dsd_555_cc_reset(struct node_description *node)
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 
 	/* There are 8 different types of basic oscillators
-	 * depending on the resistors used.  We will determine
-	 * the type of circuit at reset, because the ciruit type
-	 * is constant. */
+     * depending on the resistors used.  We will determine
+     * the type of circuit at reset, because the ciruit type
+     * is constant. */
 	context->type = (DSD_555_CC__RDIS > 0) | ((DSD_555_CC__RGND  > 0) << 1) | ((DSD_555_CC__RBIAS  > 0) << 2);
 	/*
-	 * TYPES:
-	 * Note: These are equivalent circuits shown without the 555 circuitry.
-	 *       See the schematic in src\sound\discrete.h for full hookup info.
-	 *
-	 * [0]
-	 * No resistors.  Straight constant current charge of capacitor.
-	 * When there is not any charge current, the cap will bleed off.
-	 * Once the lower threshold(trigger) is reached, the output will
-	 * go high but the cap will continue to discharge due to losses.
-	 *   .------+---> vCap      CHARGING:
-	 *   |      |                 dv (change in voltage) compared to dt (change in time in seconds).
-	 * .---.   ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
-	 * | i |   --- C              vCap = vCap + dv
-	 * '---'    |
-	 *   |      |               DISCHARGING:
-	 *  gnd    gnd                instantaneous
-	 *
-	 * [1]
-	 * Same as type 1 but with rDischarge.  rDischarge has no effect on the charge rate because
-	 * of the constant current source i.
-	 * When there is not any charge current, the cap will bleed off.
-	 * Once the lower threshold(trigger) is reached, the output will
-	 * go high but the cap will continue to discharge due to losses.
-	 *   .----ZZZ-----+---> vCap      CHARGING:
-	 *   | rDischarge |                 dv (change in voltage) compared to dt (change in time in seconds).
-	 * .---.         ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
-	 * | i |         --- C              vCap = vCap + dv
-	 * '---'          |
-	 *   |            |               DISCHARGING:
-	 *  gnd          gnd                thru rDischarge
-	 *
-	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 * !!!!! IMPORTANT NOTE ABOUT TYPES 3 - 7 !!!!!
-	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 *
-	 * From here on in all the circuits have either an rBias or rGnd resistor.
-	 * This converts the constant current into a voltage source.
-	 * So all the remaining circuit types will be converted to this circuit.
-	 * When discharging, rBias is out of the equation because the 555 is grounding the circuit
-	 * after that point.
-	 *
-	 * .------------.     Rc                  Rc is the equivilent circuit resistance.
-	 * |     v      |----ZZZZ---+---> vCap    v  is the equivilent circuit voltage.
-	 * |            |           |
-	 * '------------'          ---            Then the standard RC charging formula applies.
-	 *       |                 --- C
-	 *       |                  |             NOTE: All the following types are converted to Rc and v values.
-	 *      gnd                gnd
-	 *
-	 * [2]
-	 * When there is not any charge current, the cap will bleed off.
-	 * Once the lower threshold(trigger) is reached, the output will
-	 * go high but the cap will continue to discharge due to rGnd.
-	 *   .-------+------+------> vCap         CHARGING:
-	 *   |       |      |                       v = vi = i * rGnd
-	 * .---.    ---     Z                       Rc = rGnd
-	 * | i |    --- C   Z rGnd
-	 * '---'     |      |                     DISCHARGING:
-	 *   |       |      |                       instantaneous
-	 *  gnd     gnd    gnd
-	 *
-	 * [3]
-	 * When there is not any charge current, the cap will bleed off.
-	 * Once the lower threshold(trigger) is reached, the output will
-	 * go high but the cap will continue to discharge due to rGnd.
-	 *   .----ZZZ-----+------+------> vCap    CHARGING:
-	 *   | rDischarge |      |                  v = vi = i * rGnd
-	 * .---.         ---     Z                  Rc = rGnd
-	 * | i |         --- C   Z rGnd
-	 * '---'          |      |                DISCHARGING:
-	 *   |            |      |                  thru rDischarge || rGnd  ( || means in parallel)
-	 *  gnd          gnd    gnd
-	 *
-	 * [4]
-	 *     .---ZZZ---+------------+-------------> vCap      CHARGING:
-	 *     |  rBias  |            |                           Rc = rBias
-	 * .-------.   .---.         ---                          vi = i * rBias
-	 * | vBias |   | i |         --- C                        v = vBias + vi
-	 * '-------'   '---'          |
-	 *     |         |            |                         DISCHARGING:
-	 *    gnd       gnd          gnd                          instantaneous
-	 *
-	 * [5]
-	 *     .---ZZZ---+----ZZZ-----+-------------> vCap      CHARGING:
-	 *     |  rBias  | rDischarge |                           Rc = rBias + rDischarge
-	 * .-------.   .---.         ---                          vi = i * rBias
-	 * | vBias |   | i |         --- C                        v = vBias + vi
-	 * '-------'   '---'          |
-	 *     |         |            |                         DISCHARGING:
-	 *    gnd       gnd          gnd                          thru rDischarge
-	 *
-	 * [6]
-	 *     .---ZZZ---+------------+------+------> vCap      CHARGING:
-	 *     |  rBias  |            |      |                    Rc = rBias || rGnd
-	 * .-------.   .---.         ---     Z                    vi = i * Rc
-	 * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rGnd)) + vi
-	 * '-------'   '---'          |      |
-	 *     |         |            |      |                  DISCHARGING:
-	 *    gnd       gnd          gnd    gnd                   instantaneous
-	 *
-	 * [7]
-	 *     .---ZZZ---+----ZZZ-----+------+------> vCap      CHARGING:
-	 *     |  rBias  | rDischarge |      |                    Rc = (rBias + rDischarge) || rGnd
-	 * .-------.   .---.         ---     Z                    vi = i * rBias * (rGnd / (rBias + rDischarge + rGnd))
-	 * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rDischarge + rGnd)) + vi
-	 * '-------'   '---'          |      |
-	 *     |         |            |      |                  DISCHARGING:
-	 *    gnd       gnd          gnd    gnd                   thru rDischarge || rGnd
-	 */
+     * TYPES:
+     * Note: These are equivalent circuits shown without the 555 circuitry.
+     *       See the schematic in src\sound\discrete.h for full hookup info.
+     *
+     * [0]
+     * No resistors.  Straight constant current charge of capacitor.
+     * When there is not any charge current, the cap will bleed off.
+     * Once the lower threshold(trigger) is reached, the output will
+     * go high but the cap will continue to discharge due to losses.
+     *   .------+---> vCap      CHARGING:
+     *   |      |                 dv (change in voltage) compared to dt (change in time in seconds).
+     * .---.   ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
+     * | i |   --- C              vCap = vCap + dv
+     * '---'    |
+     *   |      |               DISCHARGING:
+     *  gnd    gnd                instantaneous
+     *
+     * [1]
+     * Same as type 1 but with rDischarge.  rDischarge has no effect on the charge rate because
+     * of the constant current source i.
+     * When there is not any charge current, the cap will bleed off.
+     * Once the lower threshold(trigger) is reached, the output will
+     * go high but the cap will continue to discharge due to losses.
+     *   .----ZZZ-----+---> vCap      CHARGING:
+     *   | rDischarge |                 dv (change in voltage) compared to dt (change in time in seconds).
+     * .---.         ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
+     * | i |         --- C              vCap = vCap + dv
+     * '---'          |
+     *   |            |               DISCHARGING:
+     *  gnd          gnd                thru rDischarge
+     *
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     * !!!!! IMPORTANT NOTE ABOUT TYPES 3 - 7 !!!!!
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     *
+     * From here on in all the circuits have either an rBias or rGnd resistor.
+     * This converts the constant current into a voltage source.
+     * So all the remaining circuit types will be converted to this circuit.
+     * When discharging, rBias is out of the equation because the 555 is grounding the circuit
+     * after that point.
+     *
+     * .------------.     Rc                  Rc is the equivilent circuit resistance.
+     * |     v      |----ZZZZ---+---> vCap    v  is the equivilent circuit voltage.
+     * |            |           |
+     * '------------'          ---            Then the standard RC charging formula applies.
+     *       |                 --- C
+     *       |                  |             NOTE: All the following types are converted to Rc and v values.
+     *      gnd                gnd
+     *
+     * [2]
+     * When there is not any charge current, the cap will bleed off.
+     * Once the lower threshold(trigger) is reached, the output will
+     * go high but the cap will continue to discharge due to rGnd.
+     *   .-------+------+------> vCap         CHARGING:
+     *   |       |      |                       v = vi = i * rGnd
+     * .---.    ---     Z                       Rc = rGnd
+     * | i |    --- C   Z rGnd
+     * '---'     |      |                     DISCHARGING:
+     *   |       |      |                       instantaneous
+     *  gnd     gnd    gnd
+     *
+     * [3]
+     * When there is not any charge current, the cap will bleed off.
+     * Once the lower threshold(trigger) is reached, the output will
+     * go high but the cap will continue to discharge due to rGnd.
+     *   .----ZZZ-----+------+------> vCap    CHARGING:
+     *   | rDischarge |      |                  v = vi = i * rGnd
+     * .---.         ---     Z                  Rc = rGnd
+     * | i |         --- C   Z rGnd
+     * '---'          |      |                DISCHARGING:
+     *   |            |      |                  thru rDischarge || rGnd  ( || means in parallel)
+     *  gnd          gnd    gnd
+     *
+     * [4]
+     *     .---ZZZ---+------------+-------------> vCap      CHARGING:
+     *     |  rBias  |            |                           Rc = rBias
+     * .-------.   .---.         ---                          vi = i * rBias
+     * | vBias |   | i |         --- C                        v = vBias + vi
+     * '-------'   '---'          |
+     *     |         |            |                         DISCHARGING:
+     *    gnd       gnd          gnd                          instantaneous
+     *
+     * [5]
+     *     .---ZZZ---+----ZZZ-----+-------------> vCap      CHARGING:
+     *     |  rBias  | rDischarge |                           Rc = rBias + rDischarge
+     * .-------.   .---.         ---                          vi = i * rBias
+     * | vBias |   | i |         --- C                        v = vBias + vi
+     * '-------'   '---'          |
+     *     |         |            |                         DISCHARGING:
+     *    gnd       gnd          gnd                          thru rDischarge
+     *
+     * [6]
+     *     .---ZZZ---+------------+------+------> vCap      CHARGING:
+     *     |  rBias  |            |      |                    Rc = rBias || rGnd
+     * .-------.   .---.         ---     Z                    vi = i * Rc
+     * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rGnd)) + vi
+     * '-------'   '---'          |      |
+     *     |         |            |      |                  DISCHARGING:
+     *    gnd       gnd          gnd    gnd                   instantaneous
+     *
+     * [7]
+     *     .---ZZZ---+----ZZZ-----+------+------> vCap      CHARGING:
+     *     |  rBias  | rDischarge |      |                    Rc = (rBias + rDischarge) || rGnd
+     * .-------.   .---.         ---     Z                    vi = i * rBias * (rGnd / (rBias + rDischarge + rGnd))
+     * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rDischarge + rGnd)) + vi
+     * '-------'   '---'          |      |
+     *     |         |            |      |                  DISCHARGING:
+     *    gnd       gnd          gnd    gnd                   thru rDischarge || rGnd
+     */
 
 	/* Step to set the output */
 	dsd_555_cc_step(node);
@@ -962,11 +962,11 @@ void dsd_566_step(struct node_description *node)
 					vC = context->thresholdLow;
 					context->flip_flop = 0;
 					/*
-					 * If the sampling rate is too low and the desired frequency is too high
-					 * then we will start getting too many outputs that can't catch up.  We will
-					 * limit this to 3.  The output is already incorrect because of the low sampling,
-					 * but at least this way it can recover.
-					 */
+                     * If the sampling rate is too low and the desired frequency is too high
+                     * then we will start getting too many outputs that can't catch up.  We will
+                     * limit this to 3.  The output is already incorrect because of the low sampling,
+                     * but at least this way it can recover.
+                     */
 					context->state[0] = (context->state[0] + 1) & 0x03;
 				}
 			}
@@ -977,10 +977,10 @@ void dsd_566_step(struct node_description *node)
 				vCnext = vC + (i * dt / DSD_566__C);
 				dt = 0;
 				/* Yes, if the cap voltage has reached the max voltage it can,
-				 * and the 566 threshold has not been reached, then oscillation stops.
-				 * This is the way the actual electronics works.
-				 * This is why you never play with the pots after being factory adjusted
-				 * to work in the proper range. */
+                 * and the 566 threshold has not been reached, then oscillation stops.
+                 * This is the way the actual electronics works.
+                 * This is why you never play with the pots after being factory adjusted
+                 * to work in the proper range. */
 				if (vCnext > DSD_566__VMOD) vCnext = DSD_566__VMOD;
 
 				/* has it charged past upper limit? */
@@ -1024,7 +1024,7 @@ void dsd_566_step(struct node_description *node)
 				break;
 			case DISC_566_OUT_TRIANGLE:
 				/* we can ignore any unused states when
-				 * outputting the cap voltage */
+                 * outputting the cap voltage */
 				node->output = vCnext;
 				if (info->options & DISC_566_OUT_AC)
 					node->output -= context->triOffset;
@@ -1057,7 +1057,7 @@ void dsd_566_reset(struct node_description *node)
 	context->state[1] = 0;
 
 	/* The data sheets are crap on this IC.  I will have to get my hands on a chip
-	 * to make real measurements.  For now this should work fine for 12V. */
+     * to make real measurements.  For now this should work fine for 12V. */
 	context->thresholdHigh = context->vDiff / 2 + info->vNeg;
 	context->thresholdLow = context->thresholdHigh - (0.2 * context->vDiff);
 	context->vSqrHigh = info->vPlus - 0.6;

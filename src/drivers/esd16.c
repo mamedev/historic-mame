@@ -1,20 +1,20 @@
 /***************************************************************************
 
-						  -= ESD 16 Bit Games =-
+                          -= ESD 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Main  CPU	:	M68000
-Video Chips	:	2 x ACTEL A40MX04 (84 Pin Square Socketed)
+Main  CPU   :   M68000
+Video Chips :   2 x ACTEL A40MX04 (84 Pin Square Socketed)
 
-Sound CPU	:	Z80
-Sound Chips	:	M6295 (AD-65)  +  YM3812 (U6612)  +  YM3014 (U6614)
+Sound CPU   :   Z80
+Sound Chips :   M6295 (AD-65)  +  YM3812 (U6612)  +  YM3014 (U6614)
 
 ---------------------------------------------------------------------------
-Year + Game			PCB				Notes
+Year + Game         PCB             Notes
 ---------------------------------------------------------------------------
-98	Multi Champ		ESD 11-09-98
+98  Multi Champ     ESD 11-09-98
 00  Head Panic      ESD 08-26-1999 (with Fuuki)
 ---------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ data16_t* headpanic_platform_y;
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
@@ -141,7 +141,7 @@ static READ16_HANDLER( esd_eeprom_r )
 		return ((EEPROM_read_bit() & 0x01) << 15);
 	}
 
-//	logerror("(0x%06x) unk EEPROM read: %04x\n", activecpu_get_pc(), mem_mask);
+//  logerror("(0x%06x) unk EEPROM read: %04x\n", activecpu_get_pc(), mem_mask);
 	return 0;
 }
 
@@ -159,7 +159,7 @@ static WRITE16_HANDLER( esd_eeprom_w )
 		EEPROM_set_cs_line((data & 0x0100) ? CLEAR_LINE : ASSERT_LINE );
 	}
 
-//	logerror("(0x%06x) Unk EEPROM write: %04x %04x\n", activecpu_get_pc(), data, mem_mask);
+//  logerror("(0x%06x) Unk EEPROM write: %04x %04x\n", activecpu_get_pc(), data, mem_mask);
 }
 
 
@@ -185,11 +185,11 @@ static ADDRESS_MAP_START( hedpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xb00004, 0xb00007) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_1	)	//
 	AM_RANGE(0xb00008, 0xb00009) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_x)
 	AM_RANGE(0xb0000a, 0xb0000b) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_y)
-//	AM_RANGE(0xb0000c, 0xb0000d) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown1) // ??
+//  AM_RANGE(0xb0000c, 0xb0000d) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown1) // ??
 	AM_RANGE(0xb0000e, 0xb0000f) AM_WRITE(MWA16_RAM) AM_BASE(&head_layersize) // ??
-//	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown3	)	// IRQ Ack
-//	AM_RANGE(0xc00008, 0xc00009) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown5		)	// Flip Screen + ? // not checked
-//	AM_RANGE(0xc0000a, 0xc0000b) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown4	)	// ? 2 not checked
+//  AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown3 )   // IRQ Ack
+//  AM_RANGE(0xc00008, 0xc00009) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown5     )   // Flip Screen + ? // not checked
+//  AM_RANGE(0xc0000a, 0xc0000b) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown4 )   // ? 2 not checked
 	AM_RANGE(0xc0000c, 0xc0000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU // ok
 	AM_RANGE(0xc0000e, 0xc0000f) AM_WRITE(esd_eeprom_w)
 	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w)
@@ -199,7 +199,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							Memory Maps - Sound CPU
+                            Memory Maps - Sound CPU
 
 
 ***************************************************************************/
@@ -252,7 +252,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -292,7 +292,7 @@ INPUT_PORTS_START( multchmp )
 	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, "Coinage Type" )	// Not Supported
 	PORT_DIPSETTING(      0x0002, "1" )
-//	PORT_DIPSETTING(      0x0000, "2" )
+//  PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -310,7 +310,7 @@ INPUT_PORTS_START( multchmp )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
 
-//	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty" ) )	CRASH CPP??
+//  PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty" ) )  CRASH CPP??
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
@@ -371,7 +371,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -459,7 +459,7 @@ static struct GfxDecodeInfo hedpanic_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -521,14 +521,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Multi Champ
+                                Multi Champ
 
 (C) ESD 1998
 PCB No. ESD 11-09-98    (Probably the manufacture date)
@@ -657,7 +657,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

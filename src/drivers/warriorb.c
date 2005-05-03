@@ -12,7 +12,7 @@ David Graves
 Nicola Salmoria. Thanks to Richard Bush and the Raine team, whose open
 source was very helpful in many areas particularly the sprites.)
 
-				*****
+                *****
 
 The dual screen games operate on hardware with various similarities to
 the Taito F2 system, as they share some custom ics e.g. the TC0100SCN.
@@ -59,10 +59,10 @@ Darius II (Dual Screen Old & New JPN Ver.)
 J1100204A
 K1100483A
 
-CPU 	:MC68000P12F(16MHz),Z80A
-Sound	:YM2610
-OSC 	:26.686MHz,16.000MHz
-Other	:
+CPU     :MC68000P12F(16MHz),Z80A
+Sound   :YM2610
+OSC     :26.686MHz,16.000MHz
+Other   :
 TC0140SYT
 TC0220IOC
 TC0110PCR x2
@@ -75,10 +75,10 @@ Warrior Blade (JPN Ver.)
 J1100295A
 K1100710A (Label K11J0710A)
 
-CPU 	:MC68000P12F(16MHz),Z80A
-Sound	:YM2610B
-OSC 	:26.686MHz,16.000MHz
-Other	:
+CPU     :MC68000P12F(16MHz),Z80A
+Sound   :YM2610B
+OSC     :26.686MHz,16.000MHz
+Other   :
 TC0140SYT
 TC0510NIO
 TC0110PCR x2
@@ -166,7 +166,7 @@ WRITE8_HANDLER( warriorb_pancontrol )
 	offset = offset&3;
 	ninjaw_pandata[offset] = (data<<1) + data;   /* original volume*3 */
 
-//	usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+//  usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
 
 	flt_volume_set_volume(offset, ninjaw_pandata[offset] / 100.0);
 }
@@ -203,7 +203,7 @@ static ADDRESS_MAP_START( darius2d_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x420000, 0x420007) AM_WRITE(TC0110PCR_step1_word_1_w)	/* palette (2nd screen) */
 	AM_RANGE(0x600000, 0x6013ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x800000, 0x80000f) AM_WRITE(TC0220IOC_halfword_w)
-//	AM_RANGE(0x820000, 0x820001) AM_WRITE(MWA16_NOP)	// ???
+//  AM_RANGE(0x820000, 0x820001) AM_WRITE(MWA16_NOP)    // ???
 	AM_RANGE(0x830000, 0x830003) AM_WRITE(warriorb_sound_w)
 ADDRESS_MAP_END
 
@@ -233,7 +233,7 @@ static ADDRESS_MAP_START( warriorb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x420000, 0x420007) AM_WRITE(TC0110PCR_step1_word_1_w)	/* palette (2nd screen) */
 	AM_RANGE(0x600000, 0x6013ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x800000, 0x80000f) AM_WRITE(TC0510NIO_halfword_w)
-//	AM_RANGE(0x820000, 0x820001) AM_WRITE(MWA16_NOP)	// ? uses bits 0,2,3
+//  AM_RANGE(0x820000, 0x820001) AM_WRITE(MWA16_NOP)    // ? uses bits 0,2,3
 	AM_RANGE(0x830000, 0x830003) AM_WRITE(warriorb_sound_w)
 ADDRESS_MAP_END
 
@@ -547,7 +547,7 @@ static MACHINE_DRIVER_START( darius2d )
 	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
@@ -597,7 +597,7 @@ static MACHINE_DRIVER_START( warriorb )
 	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
@@ -640,8 +640,8 @@ ROM_START( darius2d )
 	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screen 2) */
 
 /* The actual board duplicates the SCR gfx roms for the 2nd TC0100SCN */
-//	ROM_LOAD( "c07-03.47", 0x00000, 0x80000, CRC(189bafce) SHA1(d885e444523489fe24269b90dec58e0d92cfbd6e) )
-//	ROM_LOAD( "c07-04.48", 0x80000, 0x80000, CRC(50421e81) SHA1(27ac420602f1dac00dc32903543a518e6f47fb2f) )
+//  ROM_LOAD( "c07-03.47", 0x00000, 0x80000, CRC(189bafce) SHA1(d885e444523489fe24269b90dec58e0d92cfbd6e) )
+//  ROM_LOAD( "c07-04.48", 0x80000, 0x80000, CRC(50421e81) SHA1(27ac420602f1dac00dc32903543a518e6f47fb2f) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, CRC(4bbe0ed9) SHA1(081b73c4e4d4fa548445e5548573099bcb1e9213) )
@@ -655,8 +655,8 @@ ROM_START( darius2d )
 	ROM_LOAD( "c07-14.38", 0x00000, 0x00400, CRC(baf2a193) SHA1(b7f103b5f5aab0702dd21fd7e3a82261ae1760e9) )
 
 // Pals, not dumped
-//	ROM_LOAD( "C07-15.78", 0x00000, 0x00?00, NO_DUMP )
-//	ROM_LOAD( "C07-16.79", 0x00000, 0x00?00, NO_DUMP )
+//  ROM_LOAD( "C07-15.78", 0x00000, 0x00?00, NO_DUMP )
+//  ROM_LOAD( "C07-16.79", 0x00000, 0x00?00, NO_DUMP )
 ROM_END
 
 ROM_START( drius2do )
@@ -686,8 +686,8 @@ ROM_START( drius2do )
 	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screen 2) */
 
 /* The actual board duplicates the SCR gfx roms for the 2nd TC0100SCN */
-//	ROM_LOAD( "c07-03.47", 0x00000, 0x80000, CRC(189bafce) SHA1(d885e444523489fe24269b90dec58e0d92cfbd6e) )
-//	ROM_LOAD( "c07-04.48", 0x80000, 0x80000, CRC(50421e81) SHA1(27ac420602f1dac00dc32903543a518e6f47fb2f) )
+//  ROM_LOAD( "c07-03.47", 0x00000, 0x80000, CRC(189bafce) SHA1(d885e444523489fe24269b90dec58e0d92cfbd6e) )
+//  ROM_LOAD( "c07-04.48", 0x80000, 0x80000, CRC(50421e81) SHA1(27ac420602f1dac00dc32903543a518e6f47fb2f) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, CRC(4bbe0ed9) SHA1(081b73c4e4d4fa548445e5548573099bcb1e9213) )
@@ -739,8 +739,8 @@ ROM_START( warriorb )
 	ROM_REGION( 0x01000, REGION_USER1, 0 )	/* unknown roms */
 	ROM_LOAD( "d24-13.37", 0x00000, 0x400, CRC(3ca18eb3) SHA1(54560f02c2be67993940831222130e90cd171991) )
 	ROM_LOAD( "d24-14.38", 0x00000, 0x400, CRC(baf2a193) SHA1(b7f103b5f5aab0702dd21fd7e3a82261ae1760e9) )
-//	ROM_LOAD( "d24-15.78", 0x00000, 0xa??, NO_DUMP )	/* Pals */
-//	ROM_LOAD( "d24-16.79", 0x00000, 0xa??, NO_DUMP )
+//  ROM_LOAD( "d24-15.78", 0x00000, 0xa??, NO_DUMP )    /* Pals */
+//  ROM_LOAD( "d24-16.79", 0x00000, 0xa??, NO_DUMP )
 ROM_END
 
 

@@ -1,24 +1,24 @@
 /*****************************************************************************
  *
- *	 m4510.c
- *	 Portable 4510 emulator V1.0beta1
+ *   m4510.c
+ *   Portable 4510 emulator V1.0beta1
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved
+ *   Copyright (c) 2000 Peter Trauner, all rights reserved
  *   documentation preliminary databook
- *	 documentation by michael steil mist@c64.org
- *	 available at ftp://ftp.funet.fi/pub/cbm/c65
+ *   documentation by michael steil mist@c64.org
+ *   available at ftp://ftp.funet.fi/pub/cbm/c65
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -380,7 +380,7 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM_HIGH:		m4510.high = info->i;					break;
 		case CPUINFO_INT_REGISTER + M4510_EA:			m4510.ea.w.l = info->i;					break;
 		case CPUINFO_INT_REGISTER + M4510_ZP:			m4510.zp.w.l = info->i;					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m4510.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f;	break;
@@ -408,7 +408,7 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

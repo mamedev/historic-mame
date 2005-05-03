@@ -1,6 +1,6 @@
 /*************************************
  *
- *	Implementation of ASIC65
+ *  Implementation of ASIC65
  *
  *************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	!$#@$ asic
+ *  !$#@$ asic
  *
  *************************************/
 
@@ -108,7 +108,7 @@ static const UINT8 command_map[3][MAX_COMMANDS] =
 
 /*************************************
  *
- *	Configure the chip
+ *  Configure the chip
  *
  *************************************/
 
@@ -121,7 +121,7 @@ void asic65_config(int asictype)
 
 /*************************************
  *
- *	Reset the chip
+ *  Reset the chip
  *
  *************************************/
 
@@ -146,7 +146,7 @@ void asic65_reset(int state)
 
 /*************************************
  *
- *	Handle writes to the chip
+ *  Handle writes to the chip
  *
  *************************************/
 
@@ -344,11 +344,11 @@ READ16_HANDLER( asic65_r )
 				result = result64 & 0xffff;
 			}
 			break;
-		
+
 		case OP_INITBANKS:	/* initialize banking */
 			asic65_last_bank = 0;
 			break;
-		
+
 		case OP_SETBANK:	/* set a bank */
 		{
 			static const UINT8 banklist[] =
@@ -374,7 +374,7 @@ READ16_HANDLER( asic65_r )
 			}
 			break;
 		}
-		
+
 		case OP_VERIFYBANK:	/* verify a bank */
 		{
 			static const UINT16 bankverify[] =
@@ -404,204 +404,204 @@ READ16_HANDLER( asic65_io_r )
 
 /***********************************************************************
 
-	Information about various versions:
+    Information about various versions:
 
-	Notation:
-		C = command write
-		W = write
-		R = read
-		7 = wait for bit 7
-		6 = wait for bit 6
+    Notation:
+        C = command write
+        W = write
+        R = read
+        7 = wait for bit 7
+        6 = wait for bit 6
 
-	Guardians of the Hood:
-		Version = 0040
-		Checksum = ????
+    Guardians of the Hood:
+        Version = 0040
+        Checksum = ????
 
-		Command $08: C7
-		Command $09: C7W6R
-		Command $0a: C7
-		Command $0b: C7W7W7W7W7WW7W7W7W
-		Command $0c: C7W7W7W7W7W7W
-		Command $0d: C7W7W
-		Command $0e: C7W7W7W7W7WW7W7W7WWWWWWW6R6R6R6R6R6R
-		Command $0f: C7W7W7W7W7W7W6R6R6R6R6R6R
-		Command $10: C7W7W7W7W7WW7W7W7WWWWWWW6R6R6R6R6R6R
-		Command $11: C7W7W7W7W7W7W6R6R6R6R6R6R
-		Command $12: C7W7W7W7W7WW7W7W7W6R6R6R6R6R6R6R6R6R
-		Command $13: C7W7W7W7W7WW7W7W7W
-		Command $14: C7W6R
-		Command $15: C7W6R
-		Command $16: C7W6R6R
-		Command $17: C7W
-		Command $18: C76R6R6R6R6R6R6R6R6R
-		Command $19: C7
-		Command $1a: C76R6R6R6R6R6R6R6R6R
-		Command $1b: C7
-		Command $1c: C76R6R6R6R6R6R6R6R6R
-		Command $1d: C7
-		Command $1e: C76R6R6R6R6R6R6R6R6R
-		Command $1f: C7
-		Command $20: C76R6R6R6R6R6R6R6R6R
-		Command $21: C7
-		Command $22: C76R6R6R6R6R6R6R6R6R
-		Command $23: C7
-		Command $24: C7
+        Command $08: C7
+        Command $09: C7W6R
+        Command $0a: C7
+        Command $0b: C7W7W7W7W7WW7W7W7W
+        Command $0c: C7W7W7W7W7W7W
+        Command $0d: C7W7W
+        Command $0e: C7W7W7W7W7WW7W7W7WWWWWWW6R6R6R6R6R6R
+        Command $0f: C7W7W7W7W7W7W6R6R6R6R6R6R
+        Command $10: C7W7W7W7W7WW7W7W7WWWWWWW6R6R6R6R6R6R
+        Command $11: C7W7W7W7W7W7W6R6R6R6R6R6R
+        Command $12: C7W7W7W7W7WW7W7W7W6R6R6R6R6R6R6R6R6R
+        Command $13: C7W7W7W7W7WW7W7W7W
+        Command $14: C7W6R
+        Command $15: C7W6R
+        Command $16: C7W6R6R
+        Command $17: C7W
+        Command $18: C76R6R6R6R6R6R6R6R6R
+        Command $19: C7
+        Command $1a: C76R6R6R6R6R6R6R6R6R
+        Command $1b: C7
+        Command $1c: C76R6R6R6R6R6R6R6R6R
+        Command $1d: C7
+        Command $1e: C76R6R6R6R6R6R6R6R6R
+        Command $1f: C7
+        Command $20: C76R6R6R6R6R6R6R6R6R
+        Command $21: C7
+        Command $22: C76R6R6R6R6R6R6R6R6R
+        Command $23: C7
+        Command $24: C7
 
-		Command $0e: C76RRRRRRRRR
-		Command $0f: C7W6RRRRRRRR
-		Command $16: C7W
-		Command $17: C7W7W7W7W6R6R6R
+        Command $0e: C76RRRRRRRRR
+        Command $0f: C7W6RRRRRRRR
+        Command $16: C7W
+        Command $17: C7W7W7W7W6R6R6R
 
-	Road Riot 4WD:
-		Version = ????
-		Checksum = ????
+    Road Riot 4WD:
+        Version = ????
+        Checksum = ????
 
-		Command $08: C7
-		Command $09: C7W6R
-		Command $0a: C7
-		Command $0b: C7W7WWWWWWWW
-		Command $0c: C7W7WWWWW
-		Command $0d: C7W7W
-		Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $0f: C7W7WWWWW6RRRRRR
-		Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $11: C7W7WWWWW6RRRRRR
-		Command $12: C7W7WWWWWWWW6RRRRRRRRR
-		Command $13: C7W7WWWWWWWW
-		Command $14: C7W6R
-		Command $15: C7W6R
-		Command $16: C7W6RR
-		Command $17: C7W
-		Command $18: C76RRRRRRRRR
-		Command $19: C7
-		Command $1a: C76RRRRRRRRR
-		Command $1b: C7
-		Command $1c: C76RRRRRRRRR
-		Command $1d: C7
-		Command $1e: C76RRRRRRRRR
-		Command $1f: C7
-		Command $20: C76RRRRRRRRR
-		Command $21: C7
-		Command $22: C76RRRRRRRRR
-		Command $23: C7
-		Command $24: C7
+        Command $08: C7
+        Command $09: C7W6R
+        Command $0a: C7
+        Command $0b: C7W7WWWWWWWW
+        Command $0c: C7W7WWWWW
+        Command $0d: C7W7W
+        Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $0f: C7W7WWWWW6RRRRRR
+        Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $11: C7W7WWWWW6RRRRRR
+        Command $12: C7W7WWWWWWWW6RRRRRRRRR
+        Command $13: C7W7WWWWWWWW
+        Command $14: C7W6R
+        Command $15: C7W6R
+        Command $16: C7W6RR
+        Command $17: C7W
+        Command $18: C76RRRRRRRRR
+        Command $19: C7
+        Command $1a: C76RRRRRRRRR
+        Command $1b: C7
+        Command $1c: C76RRRRRRRRR
+        Command $1d: C7
+        Command $1e: C76RRRRRRRRR
+        Command $1f: C7
+        Command $20: C76RRRRRRRRR
+        Command $21: C7
+        Command $22: C76RRRRRRRRR
+        Command $23: C7
+        Command $24: C7
 
-		Command $16: C7W
-		Command $17: C7W7WWW6RRR
-		Command $17: C7WRWRWR
+        Command $16: C7W
+        Command $17: C7W7WWW6RRR
+        Command $17: C7WRWRWR
 
-	Race Drivin':
-		Version = ????
-		Checksum = ????
+    Race Drivin':
+        Version = ????
+        Checksum = ????
 
-		Command $08: C7
-		Command $09: C7W6R
-		Command $0a: C7
-		Command $0b: C7W7WWWWWWWW
-		Command $0c: C7W7WWWWW
-		Command $0d: C7W7W
-		Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $0f: C7W7WWWWW6RRRRRR
-		Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $11: C7W7WWWWW6RRRRRR
-		Command $12: C7W7WWWWWWWW6RRRRRRRRR
-		Command $13: C7W7WWWWWWWW
-		Command $14: C7W6R
-		Command $15: C7W6R
-		Command $16: C7W6RR
-		Command $17: C7W
-		Command $18: C76RRRRRRRRR
-		Command $19: C7
-		Command $1a: C76RRRRRRRRR
-		Command $1b: C7
-		Command $1c: C76RRRRRRRRR
-		Command $1d: C7
-		Command $1e: C76RRRRRRRRR
-		Command $1f: C7
-		Command $20: C76RRRRRRRRR
-		Command $21: C7
-		Command $22: C76RRRRRRRRR
-		Command $23: C7
-		Command $24: C7
+        Command $08: C7
+        Command $09: C7W6R
+        Command $0a: C7
+        Command $0b: C7W7WWWWWWWW
+        Command $0c: C7W7WWWWW
+        Command $0d: C7W7W
+        Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $0f: C7W7WWWWW6RRRRRR
+        Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $11: C7W7WWWWW6RRRRRR
+        Command $12: C7W7WWWWWWWW6RRRRRRRRR
+        Command $13: C7W7WWWWWWWW
+        Command $14: C7W6R
+        Command $15: C7W6R
+        Command $16: C7W6RR
+        Command $17: C7W
+        Command $18: C76RRRRRRRRR
+        Command $19: C7
+        Command $1a: C76RRRRRRRRR
+        Command $1b: C7
+        Command $1c: C76RRRRRRRRR
+        Command $1d: C7
+        Command $1e: C76RRRRRRRRR
+        Command $1f: C7
+        Command $20: C76RRRRRRRRR
+        Command $21: C7
+        Command $22: C76RRRRRRRRR
+        Command $23: C7
+        Command $24: C7
 
-		Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $14: C7W6R
-		Command $15: C7W6R
+        Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $14: C7W6R
+        Command $15: C7W6R
 
-	Steel Talons:
-		Version = ????
-		Checksum = ????
+    Steel Talons:
+        Version = ????
+        Checksum = ????
 
-		Command $08: C7
-		Command $09: C7W6R
-		Command $0a: C7
-		Command $0b: C7W7WWWWWWWW
-		Command $0c: C7W7WWWWW
-		Command $0d: C7W7W
-		Command $14: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $15: C7W7WWWWW6RRRRRR
-		Command $16: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $17: C7W7WWWWW6RRRRRR
-		Command $12: C7W7WWWWWWWW6RRRRRRRRR
-		Command $13: C7W7WWWWWWWW
-		Command $1e: C7W6R
-		Command $1f: C7W6R
-		Command $16: C7W6RR
-		Command $17: C7W
-		Command $20: C7W7WWW6R
-		Command $18: C76RRRRRRRRR
-		Command $19: C7
-		Command $1a: C76RRRRRRRRR
-		Command $1b: C7
-		Command $1c: C76RRRRRRRRR
-		Command $1d: C7
-		Command $1e: C76RRRRRRRRR
-		Command $1f: C7
-		Command $20: C76RRRRRRRRR
-		Command $21: C7
-		Command $22: C76RRRRRRRRR
-		Command $23: C7
-		Command $24: C7
+        Command $08: C7
+        Command $09: C7W6R
+        Command $0a: C7
+        Command $0b: C7W7WWWWWWWW
+        Command $0c: C7W7WWWWW
+        Command $0d: C7W7W
+        Command $14: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $15: C7W7WWWWW6RRRRRR
+        Command $16: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $17: C7W7WWWWW6RRRRRR
+        Command $12: C7W7WWWWWWWW6RRRRRRRRR
+        Command $13: C7W7WWWWWWWW
+        Command $1e: C7W6R
+        Command $1f: C7W6R
+        Command $16: C7W6RR
+        Command $17: C7W
+        Command $20: C7W7WWW6R
+        Command $18: C76RRRRRRRRR
+        Command $19: C7
+        Command $1a: C76RRRRRRRRR
+        Command $1b: C7
+        Command $1c: C76RRRRRRRRR
+        Command $1d: C7
+        Command $1e: C76RRRRRRRRR
+        Command $1f: C7
+        Command $20: C76RRRRRRRRR
+        Command $21: C7
+        Command $22: C76RRRRRRRRR
+        Command $23: C7
+        Command $24: C7
 
-	Hard Drivin's Airborne:
-		Version = ????
-		Checksum = ????
+    Hard Drivin's Airborne:
+        Version = ????
+        Checksum = ????
 
-		Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $14: C7W6R
+        Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $14: C7W6R
 
-		Command $08: C7
-		Command $09: C7W6R
-		Command $0a: C7
-		Command $0b: C7W7WWWWWWWW
-		Command $0c: C7W7WWWWW
-		Command $0d: C7W7W
-		Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $0f: C7W7WWWWW6RRRRRR
-		Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
-		Command $11: C7W7WWWWW6RRRRRR
-		Command $12: C7W7WWWWWWWW6RRRRRRRRR
-		Command $13: C7W7WWWWWWWW
-		Command $14: C7W6R
-		Command $15: C7W6R
-		Command $16: C7W6RR
-		Command $17: C7W
-		Command $18: C76RRRRRRRRR
-		Command $19: C7
-		Command $1a: C76RRRRRRRRR
-		Command $1b: C7
-		Command $1c: C76RRRRRRRRR
-		Command $1d: C7
-		Command $1e: C76RRRRRRRRR
-		Command $1f: C7
-		Command $20: C76RRRRRRRRR
-		Command $21: C7
-		Command $22: C76RRRRRRRRR
-		Command $23: C7
-		Command $24: C7
-		Command $26: C7W
-		Command $27: C7W7WWWWW
-		Command $28: C7
-		Command $2a: C76RRRRRRRRR
+        Command $08: C7
+        Command $09: C7W6R
+        Command $0a: C7
+        Command $0b: C7W7WWWWWWWW
+        Command $0c: C7W7WWWWW
+        Command $0d: C7W7W
+        Command $0e: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $0f: C7W7WWWWW6RRRRRR
+        Command $10: C7W7WWWWWWWWWWWWWW6RRRRRR
+        Command $11: C7W7WWWWW6RRRRRR
+        Command $12: C7W7WWWWWWWW6RRRRRRRRR
+        Command $13: C7W7WWWWWWWW
+        Command $14: C7W6R
+        Command $15: C7W6R
+        Command $16: C7W6RR
+        Command $17: C7W
+        Command $18: C76RRRRRRRRR
+        Command $19: C7
+        Command $1a: C76RRRRRRRRR
+        Command $1b: C7
+        Command $1c: C76RRRRRRRRR
+        Command $1d: C7
+        Command $1e: C76RRRRRRRRR
+        Command $1f: C7
+        Command $20: C76RRRRRRRRR
+        Command $21: C7
+        Command $22: C76RRRRRRRRR
+        Command $23: C7
+        Command $24: C7
+        Command $26: C7W
+        Command $27: C7W7WWWWW
+        Command $28: C7
+        Command $2a: C76RRRRRRRRR
 
 ***********************************************************************/

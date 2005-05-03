@@ -1,8 +1,8 @@
 /*##########################################################################
 
-	atarimo.c
+    atarimo.c
 
-	Common motion object management functions for Atari raster games.
+    Common motion object management functions for Atari raster games.
 
 ##########################################################################*/
 
@@ -12,7 +12,7 @@
 
 
 /*##########################################################################
-	TYPES & STRUCTURES
+    TYPES & STRUCTURES
 ##########################################################################*/
 
 /* internal structure containing a word index, shift and mask */
@@ -112,7 +112,7 @@ struct atarimo_data
 
 
 /*##########################################################################
-	MACROS
+    MACROS
 ##########################################################################*/
 
 /* verification macro for void functions */
@@ -128,7 +128,7 @@ struct atarimo_data
 
 
 /*##########################################################################
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ##########################################################################*/
 
 data16_t *atarimo_0_spriteram;
@@ -140,7 +140,7 @@ data16_t *atarimo_1_slipram;
 
 
 /*##########################################################################
-	STATIC VARIABLES
+    STATIC VARIABLES
 ##########################################################################*/
 
 static struct atarimo_data atarimo[ATARIMO_MAX];
@@ -148,7 +148,7 @@ static struct atarimo_data atarimo[ATARIMO_MAX];
 
 
 /*##########################################################################
-	STATIC FUNCTION DECLARATIONS
+    STATIC FUNCTION DECLARATIONS
 ##########################################################################*/
 
 static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const struct rectangle *cliprect);
@@ -156,13 +156,13 @@ static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry 
 
 
 /*##########################################################################
-	INLINE FUNCTIONS
+    INLINE FUNCTIONS
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	compute_log: Computes the number of bits necessary to
-	hold a given value. The input must be an even power of
-	two.
+    compute_log: Computes the number of bits necessary to
+    hold a given value. The input must be an even power of
+    two.
 ---------------------------------------------------------------*/
 
 INLINE int compute_log(int value)
@@ -180,9 +180,9 @@ INLINE int compute_log(int value)
 
 
 /*---------------------------------------------------------------
-	round_to_powerof2: Rounds a number up to the nearest
-	power of 2. Even powers of 2 are rounded up to the
-	next greatest power (e.g., 4 returns 8).
+    round_to_powerof2: Rounds a number up to the nearest
+    power of 2. Even powers of 2 are rounded up to the
+    next greatest power (e.g., 4 returns 8).
 ---------------------------------------------------------------*/
 
 INLINE int round_to_powerof2(int value)
@@ -198,8 +198,8 @@ INLINE int round_to_powerof2(int value)
 
 
 /*---------------------------------------------------------------
-	convert_mask: Converts a 4-word mask into a word index,
-	shift, and adjusted mask. Returns 0 if invalid.
+    convert_mask: Converts a 4-word mask into a word index,
+    shift, and adjusted mask. Returns 0 if invalid.
 ---------------------------------------------------------------*/
 
 INLINE int convert_mask(const struct atarimo_entry *input, struct atarimo_mask *result)
@@ -238,8 +238,8 @@ INLINE int convert_mask(const struct atarimo_entry *input, struct atarimo_mask *
 
 
 /*---------------------------------------------------------------
-	init_gfxelement: Make a copy of the main gfxelement that
-	gives us full control over colors.
+    init_gfxelement: Make a copy of the main gfxelement that
+    gives us full control over colors.
 ---------------------------------------------------------------*/
 
 INLINE void init_gfxelement(struct atarimo_data *mo, int idx)
@@ -254,7 +254,7 @@ INLINE void init_gfxelement(struct atarimo_data *mo, int idx)
 
 
 /*##########################################################################
-	GLOBAL FUNCTIONS
+    GLOBAL FUNCTIONS
 ##########################################################################*/
 
 static void force_update(int scanline)
@@ -269,9 +269,9 @@ static void force_update(int scanline)
 }
 
 /*---------------------------------------------------------------
-	atarimo_init: Configures the motion objects using the input
-	description. Allocates all memory necessary and generates
-	the attribute lookup table.
+    atarimo_init: Configures the motion objects using the input
+    description. Allocates all memory necessary and generates
+    the attribute lookup table.
 ---------------------------------------------------------------*/
 
 int atarimo_init(int map, const struct atarimo_desc *desc)
@@ -405,8 +405,8 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_code_lookup: Returns a pointer to the code
-	lookup table.
+    atarimo_get_code_lookup: Returns a pointer to the code
+    lookup table.
 ---------------------------------------------------------------*/
 
 UINT16 *atarimo_get_code_lookup(int map, int *size)
@@ -420,8 +420,8 @@ UINT16 *atarimo_get_code_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_color_lookup: Returns a pointer to the color
-	lookup table.
+    atarimo_get_color_lookup: Returns a pointer to the color
+    lookup table.
 ---------------------------------------------------------------*/
 
 UINT8 *atarimo_get_color_lookup(int map, int *size)
@@ -435,8 +435,8 @@ UINT8 *atarimo_get_color_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_gfx_lookup: Returns a pointer to the graphics
-	lookup table.
+    atarimo_get_gfx_lookup: Returns a pointer to the graphics
+    lookup table.
 ---------------------------------------------------------------*/
 
 UINT8 *atarimo_get_gfx_lookup(int map, int *size)
@@ -451,7 +451,7 @@ UINT8 *atarimo_get_gfx_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	update_active_list: Update the list of active objects.
+    update_active_list: Update the list of active objects.
 ---------------------------------------------------------------*/
 
 static void update_active_list(struct atarimo_data *mo, int link)
@@ -489,8 +489,8 @@ static void update_active_list(struct atarimo_data *mo, int link)
 
 
 /*---------------------------------------------------------------
-	get_dirty_base: Return the dirty grid pointer for a given
-	X and Y position.
+    get_dirty_base: Return the dirty grid pointer for a given
+    X and Y position.
 ---------------------------------------------------------------*/
 
 INLINE UINT8 *get_dirty_base(struct atarimo_data *mo, int x, int y)
@@ -503,8 +503,8 @@ INLINE UINT8 *get_dirty_base(struct atarimo_data *mo, int x, int y)
 
 
 /*---------------------------------------------------------------
-	erase_dirty_grid: Erases the dirty grid within a given
-	cliprect.
+    erase_dirty_grid: Erases the dirty grid within a given
+    cliprect.
 ---------------------------------------------------------------*/
 
 static void erase_dirty_grid(struct atarimo_data *mo, const struct rectangle *cliprect)
@@ -526,8 +526,8 @@ static void erase_dirty_grid(struct atarimo_data *mo, const struct rectangle *cl
 
 
 /*---------------------------------------------------------------
-	convert_dirty_grid_to_rects: Converts a dirty grid into a
-	series of cliprects.
+    convert_dirty_grid_to_rects: Converts a dirty grid into a
+    series of cliprects.
 ---------------------------------------------------------------*/
 
 static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist)
@@ -589,8 +589,8 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
 
 
 /*---------------------------------------------------------------
-	atarimo_render: Render the motion objects to the
-	destination bitmap.
+    atarimo_render: Render the motion objects to the
+    destination bitmap.
 ---------------------------------------------------------------*/
 
 struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist)
@@ -692,9 +692,9 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 
 
 /*---------------------------------------------------------------
-	mo_render_object: Internal processing callback that
-	renders to the backing bitmap and then copies the result
-	to the destination.
+    mo_render_object: Internal processing callback that
+    renders to the backing bitmap and then copies the result
+    to the destination.
 ---------------------------------------------------------------*/
 
 static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const struct rectangle *cliprect)
@@ -867,8 +867,8 @@ if ((temp & 0xff00) == 0xc800)
 
 
 /*---------------------------------------------------------------
-	atarimo_set_bank: Set the banking value for
-	the motion objects.
+    atarimo_set_bank: Set the banking value for
+    the motion objects.
 ---------------------------------------------------------------*/
 
 void atarimo_set_bank(int map, int bank)
@@ -883,8 +883,8 @@ void atarimo_set_bank(int map, int bank)
 
 
 /*---------------------------------------------------------------
-	atarimo_set_palettebase: Set the palette base for
-	the motion objects.
+    atarimo_set_palettebase: Set the palette base for
+    the motion objects.
 ---------------------------------------------------------------*/
 
 void atarimo_set_palettebase(int map, int base)
@@ -899,8 +899,8 @@ void atarimo_set_palettebase(int map, int base)
 
 
 /*---------------------------------------------------------------
-	atarimo_set_xscroll: Set the horizontal scroll value for
-	the motion objects.
+    atarimo_set_xscroll: Set the horizontal scroll value for
+    the motion objects.
 ---------------------------------------------------------------*/
 
 void atarimo_set_xscroll(int map, int xscroll)
@@ -911,8 +911,8 @@ void atarimo_set_xscroll(int map, int xscroll)
 
 
 /*---------------------------------------------------------------
-	atarimo_set_yscroll: Set the vertical scroll value for
-	the motion objects.
+    atarimo_set_yscroll: Set the vertical scroll value for
+    the motion objects.
 ---------------------------------------------------------------*/
 
 void atarimo_set_yscroll(int map, int yscroll)
@@ -923,8 +923,8 @@ void atarimo_set_yscroll(int map, int yscroll)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_bank: Returns the banking value
-	for the motion objects.
+    atarimo_get_bank: Returns the banking value
+    for the motion objects.
 ---------------------------------------------------------------*/
 
 int atarimo_get_bank(int map)
@@ -934,8 +934,8 @@ int atarimo_get_bank(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_palettebase: Returns the palette base
-	for the motion objects.
+    atarimo_get_palettebase: Returns the palette base
+    for the motion objects.
 ---------------------------------------------------------------*/
 
 int atarimo_get_palettebase(int map)
@@ -945,8 +945,8 @@ int atarimo_get_palettebase(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_xscroll: Returns the horizontal scroll value
-	for the motion objects.
+    atarimo_get_xscroll: Returns the horizontal scroll value
+    for the motion objects.
 ---------------------------------------------------------------*/
 
 int atarimo_get_xscroll(int map)
@@ -956,8 +956,8 @@ int atarimo_get_xscroll(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_yscroll: Returns the vertical scroll value for
-	the motion objects.
+    atarimo_get_yscroll: Returns the vertical scroll value for
+    the motion objects.
 ---------------------------------------------------------------*/
 
 int atarimo_get_yscroll(int map)
@@ -967,7 +967,7 @@ int atarimo_get_yscroll(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_0_spriteram_w: Write handler for the spriteram.
+    atarimo_0_spriteram_w: Write handler for the spriteram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_0_spriteram_w )
@@ -992,7 +992,7 @@ WRITE16_HANDLER( atarimo_0_spriteram_w )
 
 
 /*---------------------------------------------------------------
-	atarimo_1_spriteram_w: Write handler for the spriteram.
+    atarimo_1_spriteram_w: Write handler for the spriteram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_1_spriteram_w )
@@ -1017,8 +1017,8 @@ WRITE16_HANDLER( atarimo_1_spriteram_w )
 
 
 /*---------------------------------------------------------------
-	atarimo_0_spriteram_expanded_w: Write handler for the
-	expanded form of spriteram.
+    atarimo_0_spriteram_expanded_w: Write handler for the
+    expanded form of spriteram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_0_spriteram_expanded_w )
@@ -1047,7 +1047,7 @@ WRITE16_HANDLER( atarimo_0_spriteram_expanded_w )
 
 
 /*---------------------------------------------------------------
-	atarimo_0_slipram_w: Write handler for the slipram.
+    atarimo_0_slipram_w: Write handler for the slipram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_0_slipram_w )
@@ -1057,7 +1057,7 @@ WRITE16_HANDLER( atarimo_0_slipram_w )
 
 
 /*---------------------------------------------------------------
-	atarimo_1_slipram_w: Write handler for the slipram.
+    atarimo_1_slipram_w: Write handler for the slipram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_1_slipram_w )

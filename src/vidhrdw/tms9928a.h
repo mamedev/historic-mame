@@ -12,7 +12,7 @@
 */
 typedef enum
 {
-	TMS99x8,		
+	TMS99x8,
 	TMS9929,
 	TMS99x8A,
 	TMS9929A
@@ -54,7 +54,7 @@ int TMS9928A_interrupt (void);
 void TMS9928A_set_spriteslimit (int);
 
 /*
-** After loading a state, call this function 
+** After loading a state, call this function
 */
 void TMS9928A_post_load (void);
 
@@ -66,7 +66,7 @@ typedef struct TMS9928a_interface
 	tms9928a_model model;		/* model: tms9929(a) runs at 50Hz instead of 60Hz */
 	int vram;					/* VRAM size in bytes (4k, 8k or 16k) */
 	void (*int_callback)(int);	/* callback which is called whenever the state
-								** of the INT output of the TMS9918A changes (may be NULL)*/
+                                ** of the INT output of the TMS9918A changes (may be NULL)*/
 } TMS9928a_interface;
 
 extern void mdrv_tms9928a(struct InternalMachineDriver *machine, const TMS9928a_interface *intf);

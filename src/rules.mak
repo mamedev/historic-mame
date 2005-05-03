@@ -602,7 +602,7 @@ endif
 CPU=$(strip $(findstring M68EC020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
-CPUDEFS += -DHAS_M68EC020=1 
+CPUDEFS += -DHAS_M68EC020=1
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
@@ -1383,11 +1383,11 @@ CPU=$(strip $(findstring M37710@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m37710
 CPUDEFS += -DHAS_M37710=1
-CPUOBJS += $(OBJ)/cpu/m37710/m37710.o 
-CPUOBJS += $(OBJ)/cpu/m37710/m37710o0.o 
-CPUOBJS += $(OBJ)/cpu/m37710/m37710o1.o 
-CPUOBJS += $(OBJ)/cpu/m37710/m37710o2.o 
-CPUOBJS += $(OBJ)/cpu/m37710/m37710o3.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m37710.o
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o0.o
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o1.o
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o2.o
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o3.o
 CPUOBJS += $(OBJ)/cpu/m37710/m7700ds.o
 $(OBJ)/cpu/m37710/m37710.o: m37710.c m37710.h m37710o0.c m37710o1.c m37710o2.c m37710o3.c m37710op.h m7700ds.h
 $(OBJ)/cpu/m37710/m37710o0.o: m37710.h m37710o0.c m37710op.h m7700ds.h

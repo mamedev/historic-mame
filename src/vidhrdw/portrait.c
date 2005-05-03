@@ -70,7 +70,7 @@ VIDEO_START( portrait )
 {
 	background = tilemap_create( get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32 );
 	foreground = tilemap_create( get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
-	
+
 	if( background && foreground )
 	{
 		tilemap_set_transparent_pen( foreground, 0 );
@@ -112,16 +112,16 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		int sx      = source[1];
 		int attr    = source[2];
 			/* xx-x---- ?
-			 * --x----- flipy
-			 * ----x--- msb source[0]
-			 * -----x-- msb source[1]
-			 */
+             * --x----- flipy
+             * ----x--- msb source[0]
+             * -----x-- msb source[1]
+             */
 		int tilenum = source[3];
 		int color = 0;
 		int fy = attr & 0x20;
 
 		if(attr & 0x04) sx |= 0x100;
-		
+
 		if(attr & 0x08) sy |= 0x100;
 
 		sx += (source - spriteram) - 8;

@@ -1,14 +1,14 @@
 /******************************************************************************
 
-	Game Driver for Nichibutsu Mahjong series.
+    Game Driver for Nichibutsu Mahjong series.
 
-	Taisen Quiz HYHOO
-	(c)1987 Nihon Bussan Co.,Ltd.
+    Taisen Quiz HYHOO
+    (c)1987 Nihon Bussan Co.,Ltd.
 
-	Taisen Quiz HYHOO 2
-	(c)1987 Nihon Bussan Co.,Ltd.
+    Taisen Quiz HYHOO 2
+    (c)1987 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/01/28 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/01/28 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -86,7 +86,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_hyhoo, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+//  AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x90, 0x97) AM_WRITE(hyhoo_blitter_w)
@@ -95,7 +95,7 @@ static ADDRESS_MAP_START( writeport_hyhoo, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xc0, 0xcf) AM_WRITE(hyhoo_clut_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_WRITE)
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(hyhoo_romsel_w)
-//	AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
+//  AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 

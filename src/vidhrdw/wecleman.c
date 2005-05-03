@@ -1,9 +1,9 @@
 /***************************************************************************
-						WEC Le Mans 24  &   Hot Chase
+                        WEC Le Mans 24  &   Hot Chase
 
-						  (C)   1986 & 1988 Konami
+                          (C)   1986 & 1988 Konami
 
-					driver by       Luca Elia (l.elia@tin.it)
+                    driver by       Luca Elia (l.elia@tin.it)
 
 ***************************************************************************/
 
@@ -63,36 +63,36 @@ static int cloud_blend, cloud_ds, cloud_visible;
 
 /***************************************************************************
 
-						Sprite Description and Routines
-						-------------------------------
+                        Sprite Description and Routines
+                        -------------------------------
 
-	Sprites: 256 entries, 16 bytes each, first ten bytes used (and tested)
+    Sprites: 256 entries, 16 bytes each, first ten bytes used (and tested)
 
-	Offset  Bits               		Meaning
+    Offset  Bits                    Meaning
 
-	00.w    fedc ba98 ---- ----		Screen Y stop
-			---- ---- 7654 3210		Screen Y start
+    00.w    fedc ba98 ---- ----     Screen Y stop
+            ---- ---- 7654 3210     Screen Y start
 
-	02.w    fedc ba-- ---- ----		High bits of sprite "address"
-			---- --9- ---- ----		Flip Y ?
-			---- ---8 7654 3210		Screen X start
+    02.w    fedc ba-- ---- ----     High bits of sprite "address"
+            ---- --9- ---- ----     Flip Y ?
+            ---- ---8 7654 3210     Screen X start
 
-	04.w    fedc ba98 ---- ----		Color
-			---- ---- 7654 3210		Source Width / 8
+    04.w    fedc ba98 ---- ----     Color
+            ---- ---- 7654 3210     Source Width / 8
 
-	06.w    f--- ---- ---- ----		Flip X
-			-edc ba98 7654 3210		Low bits of sprite "address"
+    06.w    f--- ---- ---- ----     Flip X
+            -edc ba98 7654 3210     Low bits of sprite "address"
 
-	08.w    --dc ba98 ---- ----		Y? Shrink Factor
-			---- ---- --54 3210		X? Shrink Factor
+    08.w    --dc ba98 ---- ----     Y? Shrink Factor
+            ---- ---- --54 3210     X? Shrink Factor
 
-	Sprite "address" is the index of the pixel the hardware has to start
-	fetching data from, divided by 8. Only the on-screen height and source data
-	width are provided, along with two shrinking factors. So on screen width
-	and source height are calculated by the hardware using the shrink factors.
-	The factors are in the range 0 (no shrinking) - 3F (half size).
+    Sprite "address" is the index of the pixel the hardware has to start
+    fetching data from, divided by 8. Only the on-screen height and source data
+    width are provided, along with two shrinking factors. So on screen width
+    and source height are calculated by the hardware using the shrink factors.
+    The factors are in the range 0 (no shrinking) - 3F (half size).
 
-	Hot Chase: shadow of trees is pen 0x0a
+    Hot Chase: shadow of trees is pen 0x0a
 
 ***************************************************************************/
 
@@ -440,62 +440,62 @@ static void sprite_draw(void)
 
 /***************************************************************************
 
-					Background Description and Routines
-					-----------------------------------
+                    Background Description and Routines
+                    -----------------------------------
 
-							[WEC Le Mans 24]
+                            [WEC Le Mans 24]
 
 [ 2 Scrolling Layers ]
-	[Background]
-	[Foreground]
-		Tile Size:				8x8
+    [Background]
+    [Foreground]
+        Tile Size:              8x8
 
-		Tile Format:			see wecleman_get_bg_tile_info()
+        Tile Format:            see wecleman_get_bg_tile_info()
 
-		Layer Size:				4 Pages - Page0 Page1 Page2 Page3
-								each page is 512 x 256 (64 x 32 tiles)
+        Layer Size:             4 Pages - Page0 Page1 Page2 Page3
+                                each page is 512 x 256 (64 x 32 tiles)
 
-		Page Selection Reg.:	108efe  [Bg]
-								108efc  [Fg]
-								4 pages to choose from
+        Page Selection Reg.:    108efe  [Bg]
+                                108efc  [Fg]
+                                4 pages to choose from
 
-		Scrolling Columns:		1
-		Scrolling Columns Reg.:	108f26  [Bg]
-								108f24  [Fg]
+        Scrolling Columns:      1
+        Scrolling Columns Reg.: 108f26  [Bg]
+                                108f24  [Fg]
 
-		Scrolling Rows:			224 / 8 (Screen-wise scrolling)
-		Scrolling Rows Reg.:	108f82/4/6..    [Bg]
-								108f80/2/4..    [Fg]
+        Scrolling Rows:         224 / 8 (Screen-wise scrolling)
+        Scrolling Rows Reg.:    108f82/4/6..    [Bg]
+                                108f80/2/4..    [Fg]
 
 [ 1 Text Layer ]
-		Tile Size:				8x8
+        Tile Size:              8x8
 
-		Tile Format:			see wecleman_get_txt_tile_info()
+        Tile Format:            see wecleman_get_txt_tile_info()
 
-		Layer Size:				1 Page: 512 x 256 (64 x 32 tiles)
+        Layer Size:             1 Page: 512 x 256 (64 x 32 tiles)
 
-		Scrolling:				-
+        Scrolling:              -
 
 [ 1 Road Layer ]
 
 [ 256 Sprites ]
-	Zooming Sprites, see below
+    Zooming Sprites, see below
 
 
-								[Hot Chase]
+                                [Hot Chase]
 
 [ 3 Zooming Layers ]
-	[Background]
-	[Foreground (text)]
-	[Road]
+    [Background]
+    [Foreground (text)]
+    [Road]
 
 [ 256 Sprites ]
-	Zooming Sprites, see below
+    Zooming Sprites, see below
 
 ***************************************************************************/
 
 /***************************************************************************
-								WEC Le Mans 24
+                                WEC Le Mans 24
 ***************************************************************************/
 
 #define PAGE_GFX		(0)
@@ -504,7 +504,7 @@ static void sprite_draw(void)
 #define TILEMAP_DIMY	(PAGE_NY * 2 * 8)
 
 /*------------------------------------------------------------------------
-				[ Frontmost (text) layer + video registers ]
+                [ Frontmost (text) layer + video registers ]
 ------------------------------------------------------------------------*/
 
 void wecleman_get_txt_tile_info( int tile_index )
@@ -550,7 +550,7 @@ WRITE16_HANDLER( wecleman_txtram_w )
 }
 
 /*------------------------------------------------------------------------
-							[ Background ]
+                            [ Background ]
 ------------------------------------------------------------------------*/
 
 void wecleman_get_bg_tile_info( int tile_index )
@@ -562,7 +562,7 @@ void wecleman_get_bg_tile_info( int tile_index )
 }
 
 /*------------------------------------------------------------------------
-							[ Foreground ]
+                            [ Foreground ]
 ------------------------------------------------------------------------*/
 
 void wecleman_get_fg_tile_info( int tile_index )
@@ -575,7 +575,7 @@ void wecleman_get_fg_tile_info( int tile_index )
 }
 
 /*------------------------------------------------------------------------
-					[ Pages (Background & Foreground) ]
+                    [ Pages (Background & Foreground) ]
 ------------------------------------------------------------------------*/
 
 /* Pages that compose both the background and the foreground */
@@ -607,22 +607,22 @@ WRITE16_HANDLER( wecleman_pageram_w )
 }
 
 /*------------------------------------------------------------------------
-								Road Drawing
+                                Road Drawing
 
-	This layer is composed of horizontal lines gfx elements
-	There are 256 lines in ROM, each is 512 pixels wide
+    This layer is composed of horizontal lines gfx elements
+    There are 256 lines in ROM, each is 512 pixels wide
 
-	Offset:			Elements:		Data:
-	0000-01ff		100 Words		Code
+    Offset:         Elements:       Data:
+    0000-01ff       100 Words       Code
 
-		fedcba98--------	Priority?
-		--------76543210	Line Number
+        fedcba98--------    Priority?
+        --------76543210    Line Number
 
-	0200-03ff		100 Words		Horizontal Scroll
-	0400-05ff		100 Words		Color
-	0600-07ff		100 Words		??
+    0200-03ff       100 Words       Horizontal Scroll
+    0400-05ff       100 Words       Color
+    0600-07ff       100 Words       ??
 
-	We draw each line using a bunch of 64x1 tiles
+    We draw each line using a bunch of 64x1 tiles
 
 ------------------------------------------------------------------------*/
 
@@ -788,7 +788,7 @@ static void wecleman_draw_road(struct mame_bitmap *bitmap, const struct rectangl
 }
 
 /*------------------------------------------------------------------------
-								Sky Drawing
+                                Sky Drawing
 ------------------------------------------------------------------------*/
 
 // blends two 8x8x16bpp direct RGB tilemaps
@@ -999,29 +999,29 @@ static void wecleman_draw_cloud( struct mame_bitmap *bitmap,
 }
 
 /***************************************************************************
-								Hot Chase
+                                Hot Chase
 ***************************************************************************/
 
 /*------------------------------------------------------------------------
-								Road Drawing
+                                Road Drawing
 
-	This layer is composed of horizontal lines gfx elements
-	There are 512 lines in ROM, each is 512 pixels wide
+    This layer is composed of horizontal lines gfx elements
+    There are 512 lines in ROM, each is 512 pixels wide
 
-	Offset:			Elements:		Data:
-	0000-03ff		00-FF			Code (4 bytes)
+    Offset:         Elements:       Data:
+    0000-03ff       00-FF           Code (4 bytes)
 
-	Code:
-		00.w
-			fedc ba98 ---- ----		Unused?
-			---- ---- 7654 ----		color
-			---- ---- ---- 3210		scroll x
-		02.w
-			fedc ba-- ---- ----		scroll x
-			---- --9- ---- ----		?
-			---- ---8 7654 3210		code
+    Code:
+        00.w
+            fedc ba98 ---- ----     Unused?
+            ---- ---- 7654 ----     color
+            ---- ---- ---- 3210     scroll x
+        02.w
+            fedc ba-- ---- ----     scroll x
+            ---- --9- ---- ----     ?
+            ---- ---8 7654 3210     code
 
-	We draw each line using a bunch of 64x1 tiles
+    We draw each line using a bunch of 64x1 tiles
 
 ------------------------------------------------------------------------*/
 
@@ -1062,7 +1062,7 @@ void hotchase_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 
 /***************************************************************************
-							Palette Routines
+                            Palette Routines
 ***************************************************************************/
 
 // new video and palette code
@@ -1108,7 +1108,7 @@ WRITE16_HANDLER( wecleman_paletteram16_SSSSBBBBGGGGRRRR_word_w )
 	newword = COMBINE_DATA(&paletteram16[offset]);
 
 	// the highest nibble has some unknown functions
-//	if (newword & 0xf000) logerror("MSN set on color %03x: %1x\n", offset, newword>>12);
+//  if (newword & 0xf000) logerror("MSN set on color %03x: %1x\n", offset, newword>>12);
 
 	r0 = newword; g0 = newword; b0 = newword;
 	g0 >>=4;      b0 >>=8;
@@ -1122,15 +1122,15 @@ WRITE16_HANDLER( wecleman_paletteram16_SSSSBBBBGGGGRRRR_word_w )
 
 
 /***************************************************************************
-							Initializations
+                            Initializations
 ***************************************************************************/
 
 VIDEO_START( wecleman )
 {
 	/*
-		Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
-		This game has ROMs for 16 banks
-	*/
+        Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
+        This game has ROMs for 16 banks
+    */
 	static int bank[0x40] =
 	{
 		0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,
@@ -1237,9 +1237,9 @@ static void zoom_callback_1(int *code,int *color)
 VIDEO_START( hotchase )
 {
 	/*
-		Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
-		This game has ROMs for 0x30 banks
-	*/
+        Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
+        This game has ROMs for 0x30 banks
+    */
 	static int bank[0x40] =
 	{
 		0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
@@ -1268,7 +1268,7 @@ VIDEO_START( hotchase )
 	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_1)) return 1;
 
 	K051316_wraparound_enable(0,1);
-//	K051316_wraparound_enable(1,1);
+//  K051316_wraparound_enable(1,1);
 	K051316_set_offset(0, -0xB0/2, -16);
 	K051316_set_offset(1, -0xB0/2, -16);
 
@@ -1277,7 +1277,7 @@ VIDEO_START( hotchase )
 
 
 /***************************************************************************
-							Video Updates
+                            Video Updates
 ***************************************************************************/
 
 VIDEO_UPDATE ( wecleman )
@@ -1366,7 +1366,7 @@ VIDEO_UPDATE ( wecleman )
 }
 
 /***************************************************************************
-								Hot Chase
+                                Hot Chase
 ***************************************************************************/
 
 VIDEO_UPDATE( hotchase )

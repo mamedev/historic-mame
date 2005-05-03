@@ -22,7 +22,7 @@ static int irq_line;
 static void galaxian_7474_9M_2_callback(void)
 {
 	/* Q bar clocks the other flip-flop,
-	   Q is VBLANK (not visible to the CPU) */
+       Q is VBLANK (not visible to the CPU) */
 	TTL7474_clock_w(1, TTL7474_output_comp_r(0));
 	TTL7474_update(1);
 }
@@ -431,8 +431,8 @@ static READ8_HANDLER( kingball_IN0_r )
 static READ8_HANDLER( kingball_IN1_r )
 {
 	/* bit 5 is the NOISE line from the sound circuit.  The code just verifies
-	   that it's working, doesn't actually use return value, so we can just use
-	   rand() */
+       that it's working, doesn't actually use return value, so we can just use
+       rand() */
 
 	return (readinputport(1) & ~0x20) | (rand() & 0x20);
 }
@@ -530,8 +530,8 @@ READ8_HANDLER( gmgalax_input_port_2_r )
 static void cavelon_banksw(void)
 {
 	/* any read/write access in the 0x8000-0xffff region causes a bank switch.
-	   Only the lower 0x2000 is switched but we switch the whole region
-	   to keep the CPU core happy at the boundaries */
+       Only the lower 0x2000 is switched but we switch the whole region
+       to keep the CPU core happy at the boundaries */
 
 	static int cavelon_bank;
 
@@ -1066,7 +1066,7 @@ DRIVER_INIT( mars )
 DRIVER_INIT( hotshock )
 {
 	/* protection??? The game jumps into never-neverland here. I think
-	   it just expects a RET there */
+       it just expects a RET there */
 	memory_region(REGION_CPU1)[0x2ef9] = 0xc9;
 }
 
@@ -1084,7 +1084,7 @@ DRIVER_INIT( cavelon )
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2000, 0, 0, MWA8_NOP);	/* ??? */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3800, 0x3801, 0, 0, MWA8_NOP);  /* looks suspicously like
-															   an AY8910, but not sure */
+                                                               an AY8910, but not sure */
 }
 
 DRIVER_INIT( moonwar )
@@ -1175,9 +1175,9 @@ DRIVER_INIT( anteater )
 	init_scobra();
 
 	/*
-	*   Code To Decode Lost Tomb by Mirko Buffoni
-	*   Optimizations done by Fabio Buffoni
-	*/
+    *   Code To Decode Lost Tomb by Mirko Buffoni
+    *   Optimizations done by Fabio Buffoni
+    */
 
 	RAM = memory_region(REGION_GFX1);
 
@@ -1214,9 +1214,9 @@ DRIVER_INIT( rescue )
 	init_scobra();
 
 	/*
-	*   Code To Decode Lost Tomb by Mirko Buffoni
-	*   Optimizations done by Fabio Buffoni
-	*/
+    *   Code To Decode Lost Tomb by Mirko Buffoni
+    *   Optimizations done by Fabio Buffoni
+    */
 
 	RAM = memory_region(REGION_GFX1);
 
@@ -1253,8 +1253,8 @@ DRIVER_INIT( minefld )
 	init_scobra();
 
 	/*
-	*   Code To Decode Minefield by Mike Balfour and Nicola Salmoria
-	*/
+    *   Code To Decode Minefield by Mike Balfour and Nicola Salmoria
+    */
 
 	RAM = memory_region(REGION_GFX1);
 
@@ -1292,9 +1292,9 @@ DRIVER_INIT( losttomb )
 	init_scramble();
 
 	/*
-	*   Code To Decode Lost Tomb by Mirko Buffoni
-	*   Optimizations done by Fabio Buffoni
-	*/
+    *   Code To Decode Lost Tomb by Mirko Buffoni
+    *   Optimizations done by Fabio Buffoni
+    */
 
 	RAM = memory_region(REGION_GFX1);
 
@@ -1501,7 +1501,7 @@ DRIVER_INIT( scorpion )
 	/* extra ROM */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_ROM);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MWA8_ROM);
-	
+
 	/* no background related */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, MWA8_NOP);
 

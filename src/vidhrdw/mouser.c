@@ -3,13 +3,13 @@
      Mouser - Video Hardware:
 
      Character map with scrollable rows, 1024 possible characters.
-     	- index = byte from videoram + 2 bits from colorram)
-     	- (if row is scrolled, videoram is offset, colorram is not)
-     	- 16 4-color combinations for each char, from colorram
+        - index = byte from videoram + 2 bits from colorram)
+        - (if row is scrolled, videoram is offset, colorram is not)
+        - 16 4-color combinations for each char, from colorram
 
      15 Sprites controlled by 4-byte records
-     	- 16 4-color combinations
-     	- 2 banks of 64 sprite characters each
+        - 16 4-color combinations
+        - 2 banks of 64 sprite characters each
 
 *******************************************************************************/
 

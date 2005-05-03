@@ -1,8 +1,8 @@
 /*********************************************************************
 
-	common.c
+    common.c
 
-	Generic functions, mostly ROM and graphics related.
+    Generic functions, mostly ROM and graphics related.
 
 *********************************************************************/
 
@@ -20,7 +20,7 @@
 
 /***************************************************************************
 
-	Constants
+    Constants
 
 ***************************************************************************/
 
@@ -35,7 +35,7 @@
 
 /***************************************************************************
 
-	Type definitions
+    Type definitions
 
 ***************************************************************************/
 
@@ -49,7 +49,7 @@ struct malloc_info
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -83,7 +83,7 @@ static int system_bios;
 
 /***************************************************************************
 
-	Functions
+    Functions
 
 ***************************************************************************/
 
@@ -103,13 +103,13 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 
 /***************************************************************************
 
-	Memory region code
+    Memory region code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	memory_region - returns pointer to a memory
-	region
+    memory_region - returns pointer to a memory
+    region
 -------------------------------------------------*/
 
 unsigned char *memory_region(int num)
@@ -132,8 +132,8 @@ unsigned char *memory_region(int num)
 
 
 /*-------------------------------------------------
-	memory_region_length - returns length of a
-	memory region
+    memory_region_length - returns length of a
+    memory region
 -------------------------------------------------*/
 
 size_t memory_region_length(int num)
@@ -156,8 +156,8 @@ size_t memory_region_length(int num)
 
 
 /*-------------------------------------------------
-	new_memory_region - allocates memory for a
-	region
+    new_memory_region - allocates memory for a
+    region
 -------------------------------------------------*/
 
 int new_memory_region(int num, size_t length, UINT32 flags)
@@ -189,8 +189,8 @@ int new_memory_region(int num, size_t length, UINT32 flags)
 
 
 /*-------------------------------------------------
-	free_memory_region - releases memory for a
-	region
+    free_memory_region - releases memory for a
+    region
 -------------------------------------------------*/
 
 void free_memory_region(int num)
@@ -220,7 +220,7 @@ void free_memory_region(int num)
 
 /***************************************************************************
 
-	Coin counter code
+    Coin counter code
 
 ***************************************************************************/
 
@@ -236,7 +236,7 @@ void coin_counter_reset(void)
 
 
 /*-------------------------------------------------
-	coin_counter_w - sets input for coin counter
+    coin_counter_w - sets input for coin counter
 -------------------------------------------------*/
 
 void coin_counter_w(int num,int on)
@@ -252,7 +252,7 @@ void coin_counter_w(int num,int on)
 
 
 /*-------------------------------------------------
-	coin_lockout_w - locks out one coin input
+    coin_lockout_w - locks out one coin input
 -------------------------------------------------*/
 
 void coin_lockout_w(int num,int on)
@@ -264,8 +264,8 @@ void coin_lockout_w(int num,int on)
 
 
 /*-------------------------------------------------
-	coin_lockout_global_w - locks out all the coin
-	inputs
+    coin_lockout_global_w - locks out all the coin
+    inputs
 -------------------------------------------------*/
 
 void coin_lockout_global_w(int on)
@@ -282,7 +282,7 @@ void coin_lockout_global_w(int on)
 
 /***************************************************************************
 
-	Generic NVRAM code
+    Generic NVRAM code
 
 ***************************************************************************/
 
@@ -299,8 +299,8 @@ void *nvram_select(void)
 }
 
 /*-------------------------------------------------
-	nvram_handler_generic_0fill - generic NVRAM
-	with a 0 fill
+    nvram_handler_generic_0fill - generic NVRAM
+    with a 0 fill
 -------------------------------------------------*/
 
 void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
@@ -315,8 +315,8 @@ void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
 
 
 /*-------------------------------------------------
-	nvram_handler_generic_1fill - generic NVRAM
-	with a 1 fill
+    nvram_handler_generic_1fill - generic NVRAM
+    with a 1 fill
 -------------------------------------------------*/
 
 void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
@@ -333,12 +333,12 @@ void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
 
 /***************************************************************************
 
-	Bitmap allocation/freeing code
+    Bitmap allocation/freeing code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	bitmap_alloc_core
+    bitmap_alloc_core
 -------------------------------------------------*/
 
 struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
@@ -421,8 +421,8 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
 
 
 /*-------------------------------------------------
-	bitmap_alloc - allocate a bitmap at the
-	current screen depth
+    bitmap_alloc - allocate a bitmap at the
+    current screen depth
 -------------------------------------------------*/
 
 struct mame_bitmap *bitmap_alloc(int width,int height)
@@ -432,8 +432,8 @@ struct mame_bitmap *bitmap_alloc(int width,int height)
 
 
 /*-------------------------------------------------
-	bitmap_alloc_depth - allocate a bitmap for a
-	specific depth
+    bitmap_alloc_depth - allocate a bitmap for a
+    specific depth
 -------------------------------------------------*/
 
 struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
@@ -443,7 +443,7 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 
 
 /*-------------------------------------------------
-	bitmap_free - free a bitmap
+    bitmap_free - free a bitmap
 -------------------------------------------------*/
 
 void bitmap_free(struct mame_bitmap *bitmap)
@@ -464,12 +464,12 @@ void bitmap_free(struct mame_bitmap *bitmap)
 
 /***************************************************************************
 
-	Resource tracking code
+    Resource tracking code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	auto_malloc - allocate auto-freeing memory
+    auto_malloc - allocate auto-freeing memory
 -------------------------------------------------*/
 
 void *auto_malloc(size_t size)
@@ -499,7 +499,7 @@ void *auto_malloc(size_t size)
 
 
 /*-------------------------------------------------
-	auto_strdup - allocate auto-freeing string
+    auto_strdup - allocate auto-freeing string
 -------------------------------------------------*/
 
 char *auto_strdup(const char *str)
@@ -514,8 +514,8 @@ char *auto_strdup(const char *str)
 
 
 /*-------------------------------------------------
-	end_resource_tracking - stop tracking
-	resources
+    end_resource_tracking - stop tracking
+    resources
 -------------------------------------------------*/
 
 void auto_free(void)
@@ -532,8 +532,8 @@ void auto_free(void)
 
 
 /*-------------------------------------------------
-	bitmap_alloc - allocate a bitmap at the
-	current screen depth
+    bitmap_alloc - allocate a bitmap at the
+    current screen depth
 -------------------------------------------------*/
 
 struct mame_bitmap *auto_bitmap_alloc(int width,int height)
@@ -543,8 +543,8 @@ struct mame_bitmap *auto_bitmap_alloc(int width,int height)
 
 
 /*-------------------------------------------------
-	bitmap_alloc_depth - allocate a bitmap for a
-	specific depth
+    bitmap_alloc_depth - allocate a bitmap for a
+    specific depth
 -------------------------------------------------*/
 
 struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
@@ -554,8 +554,8 @@ struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
 
 
 /*-------------------------------------------------
-	begin_resource_tracking - start tracking
-	resources
+    begin_resource_tracking - start tracking
+    resources
 -------------------------------------------------*/
 
 void begin_resource_tracking(void)
@@ -566,8 +566,8 @@ void begin_resource_tracking(void)
 
 
 /*-------------------------------------------------
-	end_resource_tracking - stop tracking
-	resources
+    end_resource_tracking - stop tracking
+    resources
 -------------------------------------------------*/
 
 void end_resource_tracking(void)
@@ -584,13 +584,13 @@ void end_resource_tracking(void)
 
 /***************************************************************************
 
-	Screen snapshot code
+    Screen snapshot code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	save_screen_snapshot_as - save a snapshot to
-	the given filename
+    save_screen_snapshot_as - save a snapshot to
+    the given filename
 -------------------------------------------------*/
 
 void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
@@ -698,7 +698,7 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 
 
 /*-------------------------------------------------
-	save_screen_snapshot - save a screen snapshot
+    save_screen_snapshot - save a screen snapshot
 -------------------------------------------------*/
 
 void save_screen_snapshot(struct mame_bitmap *bitmap)
@@ -729,7 +729,7 @@ void save_screen_snapshot(struct mame_bitmap *bitmap)
 
 /***************************************************************************
 
-	Hard disk handling
+    Hard disk handling
 
 ***************************************************************************/
 
@@ -742,13 +742,13 @@ struct chd_file *get_disk_handle(int diskindex)
 
 /***************************************************************************
 
-	ROM loading code
+    ROM loading code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	rom_first_region - return pointer to first ROM
-	region
+    rom_first_region - return pointer to first ROM
+    region
 -------------------------------------------------*/
 
 const struct RomModule *rom_first_region(const struct GameDriver *drv)
@@ -758,8 +758,8 @@ const struct RomModule *rom_first_region(const struct GameDriver *drv)
 
 
 /*-------------------------------------------------
-	rom_next_region - return pointer to next ROM
-	region
+    rom_next_region - return pointer to next ROM
+    region
 -------------------------------------------------*/
 
 const struct RomModule *rom_next_region(const struct RomModule *romp)
@@ -772,8 +772,8 @@ const struct RomModule *rom_next_region(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	rom_first_file - return pointer to first ROM
-	file
+    rom_first_file - return pointer to first ROM
+    file
 -------------------------------------------------*/
 
 const struct RomModule *rom_first_file(const struct RomModule *romp)
@@ -786,8 +786,8 @@ const struct RomModule *rom_first_file(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	rom_next_file - return pointer to next ROM
-	file
+    rom_next_file - return pointer to next ROM
+    file
 -------------------------------------------------*/
 
 const struct RomModule *rom_next_file(const struct RomModule *romp)
@@ -800,8 +800,8 @@ const struct RomModule *rom_next_file(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	rom_first_chunk - return pointer to first ROM
-	chunk
+    rom_first_chunk - return pointer to first ROM
+    chunk
 -------------------------------------------------*/
 
 const struct RomModule *rom_first_chunk(const struct RomModule *romp)
@@ -811,8 +811,8 @@ const struct RomModule *rom_first_chunk(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	rom_next_chunk - return pointer to next ROM
-	chunk
+    rom_next_chunk - return pointer to next ROM
+    chunk
 -------------------------------------------------*/
 
 const struct RomModule *rom_next_chunk(const struct RomModule *romp)
@@ -823,7 +823,7 @@ const struct RomModule *rom_next_chunk(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	debugload - log data to a file
+    debugload - log data to a file
 -------------------------------------------------*/
 
 void CLIB_DECL debugload(const char *string, ...)
@@ -846,8 +846,8 @@ void CLIB_DECL debugload(const char *string, ...)
 
 
 /*-------------------------------------------------
-	determine_bios_rom - determine system_bios
-	from SystemBios structure and options.bios
+    determine_bios_rom - determine system_bios
+    from SystemBios structure and options.bios
 -------------------------------------------------*/
 
 int determine_bios_rom(const struct SystemBios *bios)
@@ -891,8 +891,8 @@ int determine_bios_rom(const struct SystemBios *bios)
 
 
 /*-------------------------------------------------
-	count_roms - counts the total number of ROMs
-	that will need to be loaded
+    count_roms - counts the total number of ROMs
+    that will need to be loaded
 -------------------------------------------------*/
 
 static int count_roms(const struct RomModule *romp)
@@ -915,8 +915,8 @@ static int count_roms(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	fill_random - fills an area of memory with
-	random data
+    fill_random - fills an area of memory with
+    random data
 -------------------------------------------------*/
 
 static void fill_random(UINT8 *base, UINT32 length)
@@ -927,8 +927,8 @@ static void fill_random(UINT8 *base, UINT32 length)
 
 
 /*-------------------------------------------------
-	handle_missing_file - handles error generation
-	for missing files
+    handle_missing_file - handles error generation
+    for missing files
 -------------------------------------------------*/
 
 static void handle_missing_file(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -956,9 +956,9 @@ static void handle_missing_file(struct rom_load_data *romdata, const struct RomM
 }
 
 /*-------------------------------------------------
-	dump_wrong_and_correct_checksums - dump an
-	error message containing the wrong and the
-	correct checksums for a given ROM
+    dump_wrong_and_correct_checksums - dump an
+    error message containing the wrong and the
+    correct checksums for a given ROM
 -------------------------------------------------*/
 
 static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, const char* hash, const char* acthash)
@@ -974,16 +974,16 @@ static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, cons
 	sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "    EXPECTED: %s\n", chksum);
 
 	/* We dump informations only of the functions for which MAME provided
-		a correct checksum. Other functions we might have calculated are
-		useless here */
+        a correct checksum. Other functions we might have calculated are
+        useless here */
 	hash_data_print(acthash, found_functions, chksum);
 	sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "       FOUND: %s\n", chksum);
 
 	/* For debugging purposes, we check if the checksums available in the
-	   driver are correctly specified or not. This can be done by checking
-	   the return value of one of the extract functions. Maybe we want to
-	   activate this only in debug buils, but many developers only use
-	   release builds, so I keep it as is for now. */
+       driver are correctly specified or not. This can be done by checking
+       the return value of one of the extract functions. Maybe we want to
+       activate this only in debug buils, but many developers only use
+       release builds, so I keep it as is for now. */
 	wrong_functions = 0;
 	for (i=0;i<HASH_NUM_FUNCTIONS;i++)
 		if (hash_data_extract_printable_checksum(hash, 1<<i, chksum) == 2)
@@ -1005,8 +1005,8 @@ static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, cons
 
 
 /*-------------------------------------------------
-	verify_length_and_hash - verify the length
-	and hash signatures of a file
+    verify_length_and_hash - verify the length
+    and hash signatures of a file
 -------------------------------------------------*/
 
 static void verify_length_and_hash(struct rom_load_data *romdata, const char *name, UINT32 explength, const char* hash)
@@ -1055,8 +1055,8 @@ static void verify_length_and_hash(struct rom_load_data *romdata, const char *na
 
 
 /*-------------------------------------------------
-	display_rom_load_results - display the final
-	results of ROM loading
+    display_rom_load_results - display the final
+    results of ROM loading
 -------------------------------------------------*/
 
 static int display_rom_load_results(struct rom_load_data *romdata)
@@ -1113,8 +1113,8 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 
 
 /*-------------------------------------------------
-	region_post_process - post-process a region,
-	byte swapping and inverting data as necessary
+    region_post_process - post-process a region,
+    byte swapping and inverting data as necessary
 -------------------------------------------------*/
 
 static void region_post_process(struct rom_load_data *romdata, const struct RomModule *regiondata)
@@ -1167,8 +1167,8 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 
 
 /*-------------------------------------------------
-	open_rom_file - open a ROM file, searching
-	up the parent and loading by checksum
+    open_rom_file - open a ROM file, searching
+    up the parent and loading by checksum
 -------------------------------------------------*/
 
 static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1182,7 +1182,7 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
        return 0;
 
 	/* Attempt reading up the chain through the parents. It automatically also
-	   attempts any kind of load by checksum supported by the archives. */
+       attempts any kind of load by checksum supported by the archives. */
 	romdata->file = NULL;
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
 		if (drv->name && *drv->name)
@@ -1194,8 +1194,8 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
 
 
 /*-------------------------------------------------
-	rom_fread - cheesy fread that fills with
-	random data for a NULL file
+    rom_fread - cheesy fread that fills with
+    random data for a NULL file
 -------------------------------------------------*/
 
 static int rom_fread(struct rom_load_data *romdata, UINT8 *buffer, int length)
@@ -1213,8 +1213,8 @@ static int rom_fread(struct rom_load_data *romdata, UINT8 *buffer, int length)
 
 
 /*-------------------------------------------------
-	read_rom_data - read ROM data for a single
-	entry
+    read_rom_data - read ROM data for a single
+    entry
 -------------------------------------------------*/
 
 static int read_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1332,7 +1332,7 @@ static int read_rom_data(struct rom_load_data *romdata, const struct RomModule *
 
 
 /*-------------------------------------------------
-	fill_rom_data - fill a region of ROM space
+    fill_rom_data - fill a region of ROM space
 -------------------------------------------------*/
 
 static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1361,7 +1361,7 @@ static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *
 
 
 /*-------------------------------------------------
-	copy_rom_data - copy a region of ROM space
+    copy_rom_data - copy a region of ROM space
 -------------------------------------------------*/
 
 static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1408,8 +1408,8 @@ static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *
 
 
 /*-------------------------------------------------
-	process_rom_entries - process all ROM entries
-	for a region
+    process_rom_entries - process all ROM entries
+    for a region
 -------------------------------------------------*/
 
 static int process_rom_entries(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1527,8 +1527,8 @@ fatalerror:
 
 
 /*-------------------------------------------------
-	process_disk_entries - process all disk entries
-	for a region
+    process_disk_entries - process all disk entries
+    for a region
 -------------------------------------------------*/
 
 static int process_disk_entries(struct rom_load_data *romdata, const struct RomModule *romp)
@@ -1628,8 +1628,8 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 
 
 /*-------------------------------------------------
-	rom_load - new, more flexible ROM
-	loading system
+    rom_load - new, more flexible ROM
+    loading system
 -------------------------------------------------*/
 
 int rom_load(const struct RomModule *romp)
@@ -1730,7 +1730,7 @@ int rom_load(const struct RomModule *romp)
 
 
 /*-------------------------------------------------
-	printromlist - print list of ROMs
+    printromlist - print list of ROMs
 -------------------------------------------------*/
 
 void printromlist(const struct RomModule *romp,const char *basename)

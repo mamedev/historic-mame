@@ -1,59 +1,59 @@
 /***************************************************************************
 Namco System 21
 
-	There are at least three hardware variations, all of which are based on
-	Namco System2:
+    There are at least three hardware variations, all of which are based on
+    Namco System2:
 
-	1. Winning Run was a mass-produced prototype; it uses 3 68k CPUs
+    1. Winning Run was a mass-produced prototype; it uses 3 68k CPUs
 
-	2. Cyber Sled uses 4xTMS320C25
+    2. Cyber Sled uses 4xTMS320C25
 
-	3. Starblade uses 5xTMS320C20
+    3. Starblade uses 5xTMS320C20
 
 Notes:
-	ROLT (roll type) specifies the order in which rotation transformations
-	should be applied, i.e. xyz or xzy (matrix multiplication is not associative).
-	The current meaning of ROLT seems to be consistant across System21 games, and even
-	System22.
+    ROLT (roll type) specifies the order in which rotation transformations
+    should be applied, i.e. xyz or xzy (matrix multiplication is not associative).
+    The current meaning of ROLT seems to be consistant across System21 games, and even
+    System22.
 
-	The priority between polygons and sprites is currently hard-coded.
+    The priority between polygons and sprites is currently hard-coded.
 
-	In StarBlade, the sprite list is stored at a different location during startup tests.
+    In StarBlade, the sprite list is stored at a different location during startup tests.
 
-	Starblade has some missing background graphics (i.e. the spaceport runway at
-	beginning of stage#1, various large startship cruisers drifting in space, etc.
-	The main CPU doesn't write descriptors for these objects in its display list, nor does it
-	write any obvious "high level commands" to control background graphics sequencing.
+    Starblade has some missing background graphics (i.e. the spaceport runway at
+    beginning of stage#1, various large startship cruisers drifting in space, etc.
+    The main CPU doesn't write descriptors for these objects in its display list, nor does it
+    write any obvious "high level commands" to control background graphics sequencing.
 
-	Starblade's EPROM may be incorrect.
+    Starblade's EPROM may be incorrect.
 
-	Starblade may require the use of custom MCU code.
+    Starblade may require the use of custom MCU code.
 
-	Starblade's point ROMs frequently contain an apparently garbage value in the most
-  	significant byte, but the ROMs have been confirmed to be good.  We currently apply
-  	a heuristic at runtime to try and correct for it, and don't see any obvious problems.
-  	For the polygon data, it is almost invariably just sign extension bits, that can
-  	be computed from the middle byte.
+    Starblade's point ROMs frequently contain an apparently garbage value in the most
+    significant byte, but the ROMs have been confirmed to be good.  We currently apply
+    a heuristic at runtime to try and correct for it, and don't see any obvious problems.
+    For the polygon data, it is almost invariably just sign extension bits, that can
+    be computed from the middle byte.
 
-	Starblade (and other games) write a lot of data/code to the DSP processors on
-	startup.  Once it is disassembled and understood, it may be possible to insert a
-	trojan to fetch the DSP kernel ROM code, and faithfully emulate all aspects of
-	the system.
+    Starblade (and other games) write a lot of data/code to the DSP processors on
+    startup.  Once it is disassembled and understood, it may be possible to insert a
+    trojan to fetch the DSP kernel ROM code, and faithfully emulate all aspects of
+    the system.
 
-	Solvalou does some interesting communication with the DSP processors on startup, and
-  	refuses to run if a problem occurs.  The routines testing the return code have been
-  	patched out for now.
+    Solvalou does some interesting communication with the DSP processors on startup, and
+    refuses to run if a problem occurs.  The routines testing the return code have been
+    patched out for now.
 
-	CyberSled appears to use the "POSIRQ" feature seen in various Namco System 2 games for
-	split screen effects.  This IRQ is triggered at a designated scanline.  It's purpose in
-	CyberSled is unknown.
+    CyberSled appears to use the "POSIRQ" feature seen in various Namco System 2 games for
+    split screen effects.  This IRQ is triggered at a designated scanline.  It's purpose in
+    CyberSled is unknown.
 
-	There appears to be support for at least 16 levels of lighting for the flat-shaded
-	polygons.  The palette is organized into multiple banks, that differ only in respect
-	to shading.  If Namco System22 is any indication, it's likely that System21 has
-	a light vector encoded somewhere in the camera attributes.
+    There appears to be support for at least 16 levels of lighting for the flat-shaded
+    polygons.  The palette is organized into multiple banks, that differ only in respect
+    to shading.  If Namco System22 is any indication, it's likely that System21 has
+    a light vector encoded somewhere in the camera attributes.
 
-	Lamps/vibration outputs are not yet mapped
+    Lamps/vibration outputs are not yet mapped
 
 -----------------------------------------------------------------------
 Board 1 : DSP Board - 1st PCB. (Uppermost)
@@ -283,7 +283,7 @@ static WRITE16_HANDLER( dsp_XF_output_w )
 
 static READ16_HANDLER( dsp_port1_r )
 {
-//	debug_key_pressed = 1;
+//  debug_key_pressed = 1;
 	return 0x8000;
 }
 #if 0
@@ -327,13 +327,13 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_dsp_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x01,0x01)  AM_READ(dsp_port1_r)
-//	AM_RANGE(0x02,0x02)  AM_WRITE(dsp_port2_w)
-//	AM_RANGE(0x03,0x03)  AM_READ(dsp_port3_r)
-//	AM_RANGE(0x04,0x04)  AM_WRITE(dsp_port4_w)
+//  AM_RANGE(0x02,0x02)  AM_WRITE(dsp_port2_w)
+//  AM_RANGE(0x03,0x03)  AM_READ(dsp_port3_r)
+//  AM_RANGE(0x04,0x04)  AM_WRITE(dsp_port4_w)
 	AM_RANGE(0x08,0x08)  AM_READ(dsp_port8_r)
 	AM_RANGE(0x09,0x09)  AM_READ(dsp_port9_r)
-//	AM_RANGE(0x0a,0x0a)  AM_WRITE(dsp_portA_w)
-//	AM_RANGE(0x0b,0x0b)  AM_WRITE(dsp_portB_w)
+//  AM_RANGE(0x0a,0x0a)  AM_WRITE(dsp_portA_w)
+//  AM_RANGE(0x0b,0x0b)  AM_WRITE(dsp_portB_w)
 	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
 	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
 	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
@@ -459,7 +459,7 @@ WRITE16_HANDLER( unk_48000X_w )
 }
 
 /*************************************************************/
-/* MASTER 68000 CPU Memory declarations 					 */
+/* MASTER 68000 CPU Memory declarations                      */
 /*************************************************************/
 static ADDRESS_MAP_START( readmem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM )
@@ -503,7 +503,7 @@ static ADDRESS_MAP_START( writemem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/* SLAVE 68000 CPU Memory declarations						 */
+/* SLAVE 68000 CPU Memory declarations                       */
 /*************************************************************/
 
 static ADDRESS_MAP_START( readmem_slave_default, ADDRESS_SPACE_PROGRAM, 16 )
@@ -652,7 +652,7 @@ static ADDRESS_MAP_START( writemem_master_winrun, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x3c0000, 0x3c0fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(namcos21_dsp_control_w)
 	AM_RANGE(0x440000, 0x440001) AM_WRITE(namcos21_dsp_data_w)
-//	AM_RANGE(0x600000, 0x600fff) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x600000, 0x600fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(shareram1_w) AM_BASE(&mpSharedRAM1)
 	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(namcos2_68k_dualportram_word_w)
@@ -667,7 +667,7 @@ static ADDRESS_MAP_START( readmem_slave_winrun, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x280000, 0x281fff) AM_READ(dspram16_r)
 	AM_RANGE(0x400000, 0x400001) AM_READ(namcos21_dsp_control_r)
 	AM_RANGE(0x440000, 0x440001) AM_READ(namcos21_dsp_data_r)
-//	AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
+//  AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x800000, 0x87ffff) AM_READ(data_r)
 	AM_RANGE(0x900000, 0x90ffff) AM_READ(shareram1_r)
 	AM_RANGE(0xa00000, 0xa00fff) AM_READ(namcos2_68k_dualportram_word_r)
@@ -681,7 +681,7 @@ static ADDRESS_MAP_START( writemem_slave_winrun, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x280000, 0x281fff) AM_WRITE(dspram16_w)
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(namcos21_dsp_control_w)
 	AM_RANGE(0x440000, 0x440001) AM_WRITE(namcos21_dsp_data_w)
-//	AM_RANGE(0x600000, 0x600fff) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x600000, 0x600fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(shareram1_w)
 	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(namcos2_68k_dualportram_word_w)
 	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(NAMCO_C139_SCI_buffer_w)
@@ -689,7 +689,7 @@ static ADDRESS_MAP_START( writemem_slave_winrun, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/* SOUND 6809 CPU Memory declarations						 */
+/* SOUND 6809 CPU Memory declarations                        */
 /*************************************************************/
 
 static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
@@ -717,7 +717,7 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /*************************************************************/
-/* I/O HD63705 MCU Memory declarations						 */
+/* I/O HD63705 MCU Memory declarations                       */
 /*************************************************************/
 
 static ADDRESS_MAP_START( readmem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1283,9 +1283,9 @@ DRIVER_INIT( solvalou )
 }
 
 /*************************************************************/
-/*															 */
-/*	NAMCO SYSTEM 21 INPUT PORTS								 */
-/*															 */
+/*                                                           */
+/*  NAMCO SYSTEM 21 INPUT PORTS                              */
+/*                                                           */
 /*************************************************************/
 
 static INPUT_PORTS_START( s21default )
@@ -1524,7 +1524,7 @@ static INPUT_PORTS_START( aircombt )
 INPUT_PORTS_END
 
 
-/*    YEAR, NAME,     PARENT,   MACHINE,          INPUT,        INIT,     MONITOR,    COMPANY, FULLNAME,	    	FLAGS */
+/*    YEAR, NAME,     PARENT,   MACHINE,          INPUT,        INIT,     MONITOR,    COMPANY, FULLNAME,            FLAGS */
 GAMEX( 1992, aircombj, 0,       poly_c140_typeB,  aircombt, 	aircombt, ROT0,	      "Namco", "Air Combat (Japan)",	GAME_NOT_WORKING ) /* mostly working */
 GAMEX( 1992, aircombu, aircombj,poly_c140_typeB,  aircombt, 	aircombt, ROT0,       "Namco", "Air Combat (US)",	GAME_NOT_WORKING ) /* mostly working */
 GAMEX( 1993, cybsled,  0,       poly_c140_typeA,  cybsled,      cybsled,  ROT0,       "Namco", "Cyber Sled",		GAME_NOT_WORKING ) /* mostly working */

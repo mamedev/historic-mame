@@ -1,6 +1,6 @@
 /* Main Event - SNK
-   driver by	David Haywood
-   		Tomasz Slanina
+   driver by    David Haywood
+        Tomasz Slanina
 
  ROM doesn't pass its internal checksum
 
@@ -231,10 +231,10 @@ static MACHINE_DRIVER_START( mainsnk)
 	MDRV_VIDEO_UPDATE(mainsnk)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 

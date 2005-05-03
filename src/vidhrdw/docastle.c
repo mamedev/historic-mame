@@ -109,8 +109,8 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 	for (i = 0;i < 32;i++)
 	{
 		/* build two versions of the colortable, one with the covering color
-		   mapped to transparent, and one with all colors but the covering one
-		   mapped to transparent. */
+           mapped to transparent, and one with all colors but the covering one
+           mapped to transparent. */
 		for (j = 0;j < 16;j++)
 		{
 			if (j < 8)
@@ -235,20 +235,20 @@ static void docastle_draw_sprites( struct mame_bitmap *bitmap )
 		{
 			/* spriteram
 
-			 indoor soccer appears to have a slightly different spriteram
-			 format to the other games, allowing a larger number of sprite
-			 tiles
+             indoor soccer appears to have a slightly different spriteram
+             format to the other games, allowing a larger number of sprite
+             tiles
 
-			 yyyy yyyy  xxxx xxxx  TX-T pppp  tttt tttt
+             yyyy yyyy  xxxx xxxx  TX-T pppp  tttt tttt
 
-			 y = ypos
-			 x = xpos
-			 X = x-flip
-			 T = extra tile number bits
-			 p = palette
-			 t = tile number
+             y = ypos
+             x = xpos
+             X = x-flip
+             T = extra tile number bits
+             p = palette
+             t = tile number
 
-			 */
+             */
 
 			code = spriteram[offs + 3];
 			color = spriteram[offs + 2] & 0x0f;
@@ -263,18 +263,18 @@ static void docastle_draw_sprites( struct mame_bitmap *bitmap )
 		{
 			/* spriteram
 
-			this is the standard spriteram layout, used by most games
+            this is the standard spriteram layout, used by most games
 
-			 yyyy yyyy  xxxx xxxx  YX-p pppp  tttt tttt
+             yyyy yyyy  xxxx xxxx  YX-p pppp  tttt tttt
 
-			 y = ypos
-			 x = xpos
-			 X = x-flip
-			 Y = y-flip
-			 p = palette
-			 t = tile number
+             y = ypos
+             x = xpos
+             X = x-flip
+             Y = y-flip
+             p = palette
+             t = tile number
 
-			 */
+             */
 
 			code = spriteram[offs + 3];
 			color = spriteram[offs + 2] & 0x1f;

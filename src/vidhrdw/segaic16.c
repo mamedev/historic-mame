@@ -1,259 +1,259 @@
 /***************************************************************************
 
-	Sega 16-bit common hardware
+    Sega 16-bit common hardware
 
 ****************************************************************************
 
-	Hang On
-	-------
-		Control Board (834-5668):
-			315-5011       -- sprite line comparitor
-			315-5012       -- sprite generator control
-			315-5049 (x2)  -- tilemaps
-			315-5107 (PAL x2) -- horizontal timing control
-			315-5108       -- vertical timing control
-			315-5122 (PAL) -- timing
+    Hang On
+    -------
+        Control Board (834-5668):
+            315-5011       -- sprite line comparitor
+            315-5012       -- sprite generator control
+            315-5049 (x2)  -- tilemaps
+            315-5107 (PAL x2) -- horizontal timing control
+            315-5108       -- vertical timing control
+            315-5122 (PAL) -- timing
 
-	Enduro Racer
-	------------
-		CPU Side (171-5319):
-			315-5164 (PAL)
-			315-5165 (PAL)
-			315-5166 (PAL)
-			315-5167 (PAL)
+    Enduro Racer
+    ------------
+        CPU Side (171-5319):
+            315-5164 (PAL)
+            315-5165 (PAL)
+            315-5166 (PAL)
+            315-5167 (PAL)
 
-		Video Side (171-5320):
-			315-5049 (x2)  -- tilemaps
-			315-5011       -- sprite line comparitor
-			315-5012       -- sprite generator control
-			315-5106 (PAL)
-			315-5107 (PAL)
-			315-5108 (PAL)
-			315-5168 (PAL)
-			315-5170 (PAL)
-			315-5171 (PAL)
-			315-5172 (PAL)
+        Video Side (171-5320):
+            315-5049 (x2)  -- tilemaps
+            315-5011       -- sprite line comparitor
+            315-5012       -- sprite generator control
+            315-5106 (PAL)
+            315-5107 (PAL)
+            315-5108 (PAL)
+            315-5168 (PAL)
+            315-5170 (PAL)
+            315-5171 (PAL)
+            315-5172 (PAL)
 
-	Pre-System 16
-	-------------
-		Main Board (171-5335):
-			315-5011       -- sprite line comparitor
-			315-5012       -- sprite generator control
-			315-5049 (x2)  -- tilemaps
-			315-5107 (PAL) -- display timing
-			315-5108 (PAL) -- display timing
-			315-5141 (PAL) -- Z80 address decoding
-			315-5143 (PAL) -- sprite-related?
-			315-5144 (PAL) -- sprite-related?
-			315-5147 (PAL) -- unknown, DTACK-related
-			315-5149 (PAL) -- video mixing
-			315-5193 (PAL) -- 68000/MCU interface & address decoding
-			315-5202 (PAL) -- 68000/MCU interface & address decoding
+    Pre-System 16
+    -------------
+        Main Board (171-5335):
+            315-5011       -- sprite line comparitor
+            315-5012       -- sprite generator control
+            315-5049 (x2)  -- tilemaps
+            315-5107 (PAL) -- display timing
+            315-5108 (PAL) -- display timing
+            315-5141 (PAL) -- Z80 address decoding
+            315-5143 (PAL) -- sprite-related?
+            315-5144 (PAL) -- sprite-related?
+            315-5147 (PAL) -- unknown, DTACK-related
+            315-5149 (PAL) -- video mixing
+            315-5193 (PAL) -- 68000/MCU interface & address decoding
+            315-5202 (PAL) -- 68000/MCU interface & address decoding
 
-	Sega System 16A
-	---------------
-		Bottom Board (171-5307):
-			315-5011       -- sprite line comparitor
-			315-5012       -- sprite generator control
-			315-5049 (x2)  -- tilemaps
-			315-5107 (PAL) -- display timing
-			315-5108 (PAL) -- display timing
-			315-5143 (PAL) -- sprite-related?
-			315-5144 (PAL) -- sprite-related?
-			315-5145 (PAL)
+    Sega System 16A
+    ---------------
+        Bottom Board (171-5307):
+            315-5011       -- sprite line comparitor
+            315-5012       -- sprite generator control
+            315-5049 (x2)  -- tilemaps
+            315-5107 (PAL) -- display timing
+            315-5108 (PAL) -- display timing
+            315-5143 (PAL) -- sprite-related?
+            315-5144 (PAL) -- sprite-related?
+            315-5145 (PAL)
 
-		Top Board (171-5306):
-			315-5141 (PAL) -- Z80 address decoding
-			315-5142 (PAL)
-			315-5149 (PAL) -- video mixing
-			315-5150 (PAL)
+        Top Board (171-5306):
+            315-5141 (PAL) -- Z80 address decoding
+            315-5142 (PAL)
+            315-5149 (PAL) -- video mixing
+            315-5150 (PAL)
 
-	Sega System 16B
-	---------------
-		Main Board (171-5357):
-			315-5195       -- memory mapper
-			315-5196       -- sprite generator
-			315-5197       -- tilemap generator
-			315-5213 (PAL) -- sprite-related
-			315-5214 (PAL) -- unknown
+    Sega System 16B
+    ---------------
+        Main Board (171-5357):
+            315-5195       -- memory mapper
+            315-5196       -- sprite generator
+            315-5197       -- tilemap generator
+            315-5213 (PAL) -- sprite-related
+            315-5214 (PAL) -- unknown
 
-		ROM Board (171-5521):
-			315-5298 (PAL)
+        ROM Board (171-5521):
+            315-5298 (PAL)
 
-		ROM Board (171-5704):
-			315-5298 (PAL)
+        ROM Board (171-5704):
+            315-5298 (PAL)
 
-		ROM Board (171-5797):
-			315-5248       -- hardware multiplier
-			315-5250       -- compare/timer
-			315-5298 (PAL)
+        ROM Board (171-5797):
+            315-5248       -- hardware multiplier
+            315-5250       -- compare/timer
+            315-5298 (PAL)
 
-	Sega System 18
-	--------------
-		Main Board (171-5873B):
-			315-5242       -- color encoder
-			315-5296       -- I/O chip
-			315-5313       -- VDP
-			315-5360       -- memory mapper?
-			315-5361       -- sprite generator
-			315-5362       -- tilemap generator
-			315-5373 (PAL) -- video mixing
-			315-5374 (PAL) -- sprite timing
-			315-5375 (PAL) -- system timing
-			315-5389 (PAL) -- VDP sync
-			315-5390 (PAL)
-			315-5391 (PAL) -- Z80 address decoding
+    Sega System 18
+    --------------
+        Main Board (171-5873B):
+            315-5242       -- color encoder
+            315-5296       -- I/O chip
+            315-5313       -- VDP
+            315-5360       -- memory mapper?
+            315-5361       -- sprite generator
+            315-5362       -- tilemap generator
+            315-5373 (PAL) -- video mixing
+            315-5374 (PAL) -- sprite timing
+            315-5375 (PAL) -- system timing
+            315-5389 (PAL) -- VDP sync
+            315-5390 (PAL)
+            315-5391 (PAL) -- Z80 address decoding
 
-		Main Board (171-5873-02B):
-			315-5242       -- color encoder
-			315-5296       -- I/O chip
-			315-5313       -- VDP
-			315-5360       -- memory mapper?
-			315-5361       -- sprite generator
-			315-5362       -- tilemap generator
-			315-5374 (PAL) -- sprite timing
-			315-5375 (PAL) -- system timing
-			315-5389 (PAL) -- VDP sync
-			315-5391 (PAL) -- Z80 address decoding
-			315-5430 (PAL) -- video mixing
+        Main Board (171-5873-02B):
+            315-5242       -- color encoder
+            315-5296       -- I/O chip
+            315-5313       -- VDP
+            315-5360       -- memory mapper?
+            315-5361       -- sprite generator
+            315-5362       -- tilemap generator
+            315-5374 (PAL) -- sprite timing
+            315-5375 (PAL) -- system timing
+            315-5389 (PAL) -- VDP sync
+            315-5391 (PAL) -- Z80 address decoding
+            315-5430 (PAL) -- video mixing
 
-		ROM Board (171-5987A):
-			315-5436       -- tile/sprite banking
+        ROM Board (171-5987A):
+            315-5436       -- tile/sprite banking
 
-	Sega System C
-	-------------
-		Main Board:
-			315-5242       -- color encoder
-			315-5296       -- I/O chip
-			315-5313       -- VDP
-			315-5393 (PAL)
-			315-5394 (PAL)
-			315-5395 (PAL)
+    Sega System C
+    -------------
+        Main Board:
+            315-5242       -- color encoder
+            315-5296       -- I/O chip
+            315-5313       -- VDP
+            315-5393 (PAL)
+            315-5394 (PAL)
+            315-5395 (PAL)
 
-	Super Hang On
-	-------------
-		CPU Board 171-5376-01:
-			315-5195       -- memory mapper
-			315-5218       -- PCM sound controller
-			315-5155 (PAL x2) -- road bit extraction
-			315-5222 (PAL) -- road mixing
-			315-5223a (PAL)
-			315-5224 (PAL)
-			315-5225 (PAL)
-			315-5226 (PAL)
+    Super Hang On
+    -------------
+        CPU Board 171-5376-01:
+            315-5195       -- memory mapper
+            315-5218       -- PCM sound controller
+            315-5155 (PAL x2) -- road bit extraction
+            315-5222 (PAL) -- road mixing
+            315-5223a (PAL)
+            315-5224 (PAL)
+            315-5225 (PAL)
+            315-5226 (PAL)
 
-		VIDEO Board: (not the same as out run !) 171-5480
-			315-5196       -- sprite generator
-			315-5197       -- tilemap generator
-			315-5213 (PAL) -- sprite-related
-			315-5242       -- color encoder
-			315-5251 (PAL)
+        VIDEO Board: (not the same as out run !) 171-5480
+            315-5196       -- sprite generator
+            315-5197       -- tilemap generator
+            315-5213 (PAL) -- sprite-related
+            315-5242       -- color encoder
+            315-5251 (PAL)
 
-	Out Run
-	-------
-		CPU Board 837-6063-01:
-			315-5195       -- memory mapper
-			315-5218       -- PCM sound controller
-			315-5155 (PAL x2) -- road bit extraction
-			315-5222 (PAL) -- road mixing
-			315-5223a (PAL)
-			315-5224 (PAL)
-			315-5225 (PAL)
-			315-5226 (PAL)
+    Out Run
+    -------
+        CPU Board 837-6063-01:
+            315-5195       -- memory mapper
+            315-5218       -- PCM sound controller
+            315-5155 (PAL x2) -- road bit extraction
+            315-5222 (PAL) -- road mixing
+            315-5223a (PAL)
+            315-5224 (PAL)
+            315-5225 (PAL)
+            315-5226 (PAL)
 
-		VIDEO Board: 837-6064, 171-5377-01
-			315-5197       -- tilemap generator
-			315-5211       -- sprite generator
-			315-5227a (PAL)
-			315-5228 (PAL)
-			315-5242       -- color encoder
+        VIDEO Board: 837-6064, 171-5377-01
+            315-5197       -- tilemap generator
+            315-5211       -- sprite generator
+            315-5227a (PAL)
+            315-5228 (PAL)
+            315-5242       -- color encoder
 
-	Sega System 32
-	--------------
-		Main Board (317-5964):
-			315-5242       -- color encoder
-			315-5296       -- I/O chip
-			315-5385
-			315-5386       -- tilemap generator
-			315-5387       -- sprite generator
-			315-5388       -- video mixing
-			315-5441 (PAL)
-			315-5476
+    Sega System 32
+    --------------
+        Main Board (317-5964):
+            315-5242       -- color encoder
+            315-5296       -- I/O chip
+            315-5385
+            315-5386       -- tilemap generator
+            315-5387       -- sprite generator
+            315-5388       -- video mixing
+            315-5441 (PAL)
+            315-5476
 
-	X-Board
-	-------
-		Main Board:
-			315-5197       -- tilemap generator
-			315-5211A      -- sprite generator
-			315-5218       -- PCM sound controller
-			315-5242       -- color encoder
-			315-5248 (x2)  -- hardware multiplier
-			315-5249 (x2)  -- hardware divider
-			315-5250 (x2)  -- compare/timer
-			315-5275       -- road generator
-			315-5278 (PAL) -- sprite ROM bank control
-			315-5279 (PAL) -- video mixing (Afterburner)
-			315-5280 (PAL) -- Z80 address decoding
-			315-5290 (PAL) -- main CPU address decoding
-			315-5291 (PAL) -- main CPU address decoding
-			315-5304 (PAL) -- video mixing (Line of Fire)
+    X-Board
+    -------
+        Main Board:
+            315-5197       -- tilemap generator
+            315-5211A      -- sprite generator
+            315-5218       -- PCM sound controller
+            315-5242       -- color encoder
+            315-5248 (x2)  -- hardware multiplier
+            315-5249 (x2)  -- hardware divider
+            315-5250 (x2)  -- compare/timer
+            315-5275       -- road generator
+            315-5278 (PAL) -- sprite ROM bank control
+            315-5279 (PAL) -- video mixing (Afterburner)
+            315-5280 (PAL) -- Z80 address decoding
+            315-5290 (PAL) -- main CPU address decoding
+            315-5291 (PAL) -- main CPU address decoding
+            315-5304 (PAL) -- video mixing (Line of Fire)
 
-	Y-Board
-	-------
-		Main Board (837-6565):
-			315-5218       -- PCM sound controller
-			315-5248 (x3)  -- hardware multiplier
-			315-5249 (x3)  -- hardware divider
-			315-5280 (PAL) -- Z80 address decoding
-			315-5296       -- I/O chip
-			315-5314 (PAL)
-			315-5315 (PAL)
-			315-5316 (PAL)
-			315-5317 (PAL)
-			315-5318 (PAL)
-			315-5328 (PAL)
+    Y-Board
+    -------
+        Main Board (837-6565):
+            315-5218       -- PCM sound controller
+            315-5248 (x3)  -- hardware multiplier
+            315-5249 (x3)  -- hardware divider
+            315-5280 (PAL) -- Z80 address decoding
+            315-5296       -- I/O chip
+            315-5314 (PAL)
+            315-5315 (PAL)
+            315-5316 (PAL)
+            315-5317 (PAL)
+            315-5318 (PAL)
+            315-5328 (PAL)
 
-		Video Board (837-6566):
-			315-5196       -- sprite generator
-			315-5213 (PAL) -- sprite-related
-			315-5242       -- color encoder
-			315-5305       -- sprite generator
-			315-5306 (x2)  -- video sync and rotation
-			315-5312       -- video mixing
-			315-5319 (PAL)
-			315-5325 (PAL)
+        Video Board (837-6566):
+            315-5196       -- sprite generator
+            315-5213 (PAL) -- sprite-related
+            315-5242       -- color encoder
+            315-5305       -- sprite generator
+            315-5306 (x2)  -- video sync and rotation
+            315-5312       -- video mixing
+            315-5319 (PAL)
+            315-5325 (PAL)
 
 
-	Custom parts
-	------------
-		           SYS1  SYS2  HANG  ENDU  PR16  S16A  S16B  SY18  SHNG  ORUN  XBRD  YBRD  SYSC  SY24  SY32
-		315-5011:   xx    xx    xx    xx    xx    xx                                                         -- sprite line comparitor
-		315-5012:   xx    xx    xx    xx    xx    xx                                                         -- sprite generator control
-		315-5049:         xx    x2    x2    x2    x2                                                         -- tilemap generator
-		315-5195:                                       xx          xx    xx                                 -- memory mapper
-		315-5196:                                       xx          xx                xx                     -- sprite genereator
-		315-5197:                                       xx          xx    xx    xx                           -- tilemap generator
-		315-5211:                                                         xx                                 -- sprite generator
-		315-5211A:                                                              xx                           -- sprite generator
-		315-5218:                                                   xx    xx                                 -- PCM sound controller
-		315-5242:                                             xx    xx    xx    xx    xx    xx    xx    xx   -- color encoder
-		315-5248:                                       xx                      x2    x3                     -- hardware multiplier
-		315-5249:                                                               x2    x3                     -- hardware divider
-		315-5250:                                       xx                      x2                           -- compare/timer
-		315-5275:                                                               xx                           -- road generator
-		315-5296:                                             xx                      xx    xx          xx   -- I/O chip
-		315-5305:                                                                     xx                     --
-		315-5312:                                                                     xx                     -- video mixing
-		315-5313:                                             xx                            xx               -- VDP
-		315-5360:                                             xx                                             -- memory mapper
-		315-5361:                                             xx                                             -- sprite generator
-		315-5362:                                             xx                                             -- tilemap generator
-		315-5385:                                                                                       xx   -- ???
-		315-5386:                                                                                       xx   -- tilemap generator
-		315-5387:                                                                                       xx   -- sprite generator
-		315-5388:                                                                                       xx   -- video mixing
-		315-5436:                                             xx                                             -- sprite/tile banking
-		315-5476:                                                                                       xx   -- ????
+    Custom parts
+    ------------
+                   SYS1  SYS2  HANG  ENDU  PR16  S16A  S16B  SY18  SHNG  ORUN  XBRD  YBRD  SYSC  SY24  SY32
+        315-5011:   xx    xx    xx    xx    xx    xx                                                         -- sprite line comparitor
+        315-5012:   xx    xx    xx    xx    xx    xx                                                         -- sprite generator control
+        315-5049:         xx    x2    x2    x2    x2                                                         -- tilemap generator
+        315-5195:                                       xx          xx    xx                                 -- memory mapper
+        315-5196:                                       xx          xx                xx                     -- sprite genereator
+        315-5197:                                       xx          xx    xx    xx                           -- tilemap generator
+        315-5211:                                                         xx                                 -- sprite generator
+        315-5211A:                                                              xx                           -- sprite generator
+        315-5218:                                                   xx    xx                                 -- PCM sound controller
+        315-5242:                                             xx    xx    xx    xx    xx    xx    xx    xx   -- color encoder
+        315-5248:                                       xx                      x2    x3                     -- hardware multiplier
+        315-5249:                                                               x2    x3                     -- hardware divider
+        315-5250:                                       xx                      x2                           -- compare/timer
+        315-5275:                                                               xx                           -- road generator
+        315-5296:                                             xx                      xx    xx          xx   -- I/O chip
+        315-5305:                                                                     xx                     --
+        315-5312:                                                                     xx                     -- video mixing
+        315-5313:                                             xx                            xx               -- VDP
+        315-5360:                                             xx                                             -- memory mapper
+        315-5361:                                             xx                                             -- sprite generator
+        315-5362:                                             xx                                             -- tilemap generator
+        315-5385:                                                                                       xx   -- ???
+        315-5386:                                                                                       xx   -- tilemap generator
+        315-5387:                                                                                       xx   -- sprite generator
+        315-5388:                                                                                       xx   -- video mixing
+        315-5436:                                             xx                                             -- sprite/tile banking
+        315-5476:                                                                                       xx   -- ????
 
 ****************************************************************************
 
@@ -353,7 +353,7 @@ Quick review of the system16 hardware:
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -364,7 +364,7 @@ Quick review of the system16 hardware:
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -455,7 +455,7 @@ struct rotate_info
 
 /*************************************
  *
- *	Globals
+ *  Globals
  *
  *************************************/
 
@@ -471,7 +471,7 @@ data16_t *segaic16_rotateram_0;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -485,7 +485,7 @@ static struct rotate_info rotate[SEGAIC16_MAX_ROTATE];
 
 /*************************************
  *
- *	Misc functions
+ *  Misc functions
  *
  *************************************/
 
@@ -503,25 +503,25 @@ void segaic16_set_display_enable(int enable)
 
 /*************************************
  *
- *	Palette computation
+ *  Palette computation
  *
  *************************************/
 
 /*
-	Color generation details
+    Color generation details
 
-	Each color is made up of 5 bits, connected through one or more resistors like so:
+    Each color is made up of 5 bits, connected through one or more resistors like so:
 
-	Bit 0 = 1 x 3.9K ohm
-	Bit 1 = 1 x 2.0K ohm
-	Bit 2 = 1 x 1.0K ohm
-	Bit 3 = 2 x 1.0K ohm
-	Bit 4 = 4 x 1.0K ohm
+    Bit 0 = 1 x 3.9K ohm
+    Bit 1 = 1 x 2.0K ohm
+    Bit 2 = 1 x 1.0K ohm
+    Bit 3 = 2 x 1.0K ohm
+    Bit 4 = 4 x 1.0K ohm
 
-	Another data bit is connected by a tristate buffer to the color output through a
-	470 ohm resistor. The buffer allows the resistor to have no effect (tristate),
-	halve brightness (pull-down) or double brightness (pull-up). The data bit source
-	is bit 15 of each color RAM entry.
+    Another data bit is connected by a tristate buffer to the color output through a
+    470 ohm resistor. The buffer allows the resistor to have no effect (tristate),
+    halve brightness (pull-down) or double brightness (pull-up). The data bit source
+    is bit 15 of each color RAM entry.
 */
 
 void segaic16_palette_init(int entries)
@@ -565,7 +565,7 @@ void segaic16_palette_init(int entries)
 
 /*************************************
  *
- *	Palette accessors
+ *  Palette accessors
  *
  *************************************/
 
@@ -579,9 +579,9 @@ WRITE16_HANDLER( segaic16_paletteram_w )
 	COMBINE_DATA(&newval);
 	paletteram16[offset] = newval;
 
-	/*	   byte 0    byte 1 */
-	/*	sBGR BBBB GGGG RRRR */
-	/*	x000 4321 4321 4321 */
+	/*     byte 0    byte 1 */
+	/*  sBGR BBBB GGGG RRRR */
+	/*  x000 4321 4321 4321 */
 	r = ((newval >> 12) & 0x01) | ((newval << 1) & 0x1e);
 	g = ((newval >> 13) & 0x01) | ((newval >> 3) & 0x1e);
 	b = ((newval >> 14) & 0x01) | ((newval >> 7) & 0x1e);
@@ -596,8 +596,8 @@ WRITE16_HANDLER( segaic16_paletteram_w )
 
 /*************************************
  *
- *	Draw a split tilemap in up to
- *	four pieces
+ *  Draw a split tilemap in up to
+ *  four pieces
  *
  *************************************/
 
@@ -674,8 +674,8 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 			leftmax = Machine->drv->screen_width - 1 - temp;
 		}
 		if (rightmin != -1)
-		{	
-			int temp = rightmin; 
+		{
+			int temp = rightmin;
 			rightmin = Machine->drv->screen_width - 1 - rightmax;
 			rightmax = Machine->drv->screen_width - 1 - temp;
 		}
@@ -762,41 +762,41 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 
 /*******************************************************************************************
  *
- *	Hang On/System 16A-style tilemaps
+ *  Hang On/System 16A-style tilemaps
  *
- *	4 total pages (Hang On)
- *	8 total pages (System 16A)
- *	Column/rowscroll enabled via external signals
+ *  4 total pages (Hang On)
+ *  8 total pages (System 16A)
+ *  Column/rowscroll enabled via external signals
  *
- *	Tile format:
- *		Bits               Usage
- *		??------ --------  Unknown
- *		--b----- --------  Tile bank select
- *		---p---- --------  Tile priority versus sprites
- *		----cccc ccc-----  Tile color palette
- *		----nnnn nnnnnnnn  Tile index
+ *  Tile format:
+ *      Bits               Usage
+ *      ??------ --------  Unknown
+ *      --b----- --------  Tile bank select
+ *      ---p---- --------  Tile priority versus sprites
+ *      ----cccc ccc-----  Tile color palette
+ *      ----nnnn nnnnnnnn  Tile index
  *
- *	Text format:
- *		Bits               Usage
- *		????---- --------  Unknown
- *		----p--- --------  Priority
- *		-----ccc --------  Tile color palette
- *		-------- nnnnnnnn  Tile index
+ *  Text format:
+ *      Bits               Usage
+ *      ????---- --------  Unknown
+ *      ----p--- --------  Priority
+ *      -----ccc --------  Tile color palette
+ *      -------- nnnnnnnn  Tile index
  *
- *	Text RAM:
- *		Offset   Bits               Usage
- *		E8C      -aaa-bbb -ccc-ddd  Background tilemap page select (screen flipped)
- *		E8E      -aaa-bbb -ccc-ddd  Foreground tilemap page select (screen flipped)
- *		E9C      -aaa-bbb -ccc-ddd  Background tilemap page select
- *		E9E      -aaa-bbb -ccc-ddd  Foreground tilemap page select
- *		F24      -------- vvvvvvvv  Foreground tilemap vertical scroll
- *		F26      -------- vvvvvvvv  Background tilemap vertical scroll
- *		F30-F7D  -------- vvvvvvvv  Foreground tilemap per-16-pixel-column vertical scroll (every 2 words)
- *		F32-F7F  -------- vvvvvvvv  Background tilemap per-16-pixel-column vertical scroll (every 2 words)
- *		F80-FED  -------h hhhhhhhh  Foreground tilemap per-8-pixel-row horizontal scroll (every 2 words)
- *		F82-FEF  -------h hhhhhhhh  Background tilemap per-8-pixel-row horizontal scroll (every 2 words)
- *		FF8      -------h hhhhhhhh  Foreground tilemap horizontal scroll
- *		FFA      -------h hhhhhhhh  Background tilemap horizontal scroll
+ *  Text RAM:
+ *      Offset   Bits               Usage
+ *      E8C      -aaa-bbb -ccc-ddd  Background tilemap page select (screen flipped)
+ *      E8E      -aaa-bbb -ccc-ddd  Foreground tilemap page select (screen flipped)
+ *      E9C      -aaa-bbb -ccc-ddd  Background tilemap page select
+ *      E9E      -aaa-bbb -ccc-ddd  Foreground tilemap page select
+ *      F24      -------- vvvvvvvv  Foreground tilemap vertical scroll
+ *      F26      -------- vvvvvvvv  Background tilemap vertical scroll
+ *      F30-F7D  -------- vvvvvvvv  Foreground tilemap per-16-pixel-column vertical scroll (every 2 words)
+ *      F32-F7F  -------- vvvvvvvv  Background tilemap per-16-pixel-column vertical scroll (every 2 words)
+ *      F80-FED  -------h hhhhhhhh  Foreground tilemap per-8-pixel-row horizontal scroll (every 2 words)
+ *      F82-FEF  -------h hhhhhhhh  Background tilemap per-8-pixel-row horizontal scroll (every 2 words)
+ *      FF8      -------h hhhhhhhh  Foreground tilemap horizontal scroll
+ *      FFA      -------h hhhhhhhh  Background tilemap horizontal scroll
  *
  *******************************************************************************************/
 
@@ -950,64 +950,64 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 
 /*******************************************************************************************
  *
- *	System 16B-style tilemaps
+ *  System 16B-style tilemaps
  *
- *	16 total pages
- *	Column/rowscroll enabled via bits in text layer
- *	Alternate tilemap support
+ *  16 total pages
+ *  Column/rowscroll enabled via bits in text layer
+ *  Alternate tilemap support
  *
- *	Tile format:
- *		Bits               Usage
- *		p------- --------  Tile priority versus sprites
- *		-??----- --------  Unknown
- *		---ccccc cc------  Tile color palette
- *		---nnnnn nnnnnnnn  Tile index
+ *  Tile format:
+ *      Bits               Usage
+ *      p------- --------  Tile priority versus sprites
+ *      -??----- --------  Unknown
+ *      ---ccccc cc------  Tile color palette
+ *      ---nnnnn nnnnnnnn  Tile index
  *
- *	Text format:
- *		Bits               Usage
- *		p------- --------  Tile priority versus sprites
- *		-???---- --------  Unknown
- *		----ccc- --------  Tile color palette
- *		-------n nnnnnnnn  Tile index
+ *  Text format:
+ *      Bits               Usage
+ *      p------- --------  Tile priority versus sprites
+ *      -???---- --------  Unknown
+ *      ----ccc- --------  Tile color palette
+ *      -------n nnnnnnnn  Tile index
  *
- *	Alternate tile format:
- *		Bits               Usage
- *		p------- --------  Tile priority versus sprites
- *		-??----- --------  Unknown
- *		----cccc ccc-----  Tile color palette
- *		---nnnnn nnnnnnnn  Tile index
+ *  Alternate tile format:
+ *      Bits               Usage
+ *      p------- --------  Tile priority versus sprites
+ *      -??----- --------  Unknown
+ *      ----cccc ccc-----  Tile color palette
+ *      ---nnnnn nnnnnnnn  Tile index
  *
- *	Alternate text format:
- *		Bits               Usage
- *		p------- --------  Tile priority versus sprites
- *		-???---- --------  Unknown
- *		-----ccc --------  Tile color palette
- *		-------- nnnnnnnn  Tile index
+ *  Alternate text format:
+ *      Bits               Usage
+ *      p------- --------  Tile priority versus sprites
+ *      -???---- --------  Unknown
+ *      -----ccc --------  Tile color palette
+ *      -------- nnnnnnnn  Tile index
  *
- *	Text RAM:
- *		Offset   Bits               Usage
- *		E80      aaaabbbb ccccdddd  Foreground tilemap page select
- *		E82      aaaabbbb ccccdddd  Background tilemap page select
- *		E84      aaaabbbb ccccdddd  Alternate foreground tilemap page select
- *		E86      aaaabbbb ccccdddd  Alternate background tilemap page select
- *		E90      c------- --------  Foreground tilemap column scroll enable
- *		         -------v vvvvvvvv  Foreground tilemap vertical scroll
- *	    E92      c------- --------  Background tilemap column scroll enable
- *		         -------v vvvvvvvv  Background tilemap vertical scroll
- *		E94      -------v vvvvvvvv  Alternate foreground tilemap vertical scroll
- *	    E96      -------v vvvvvvvv  Alternate background tilemap vertical scroll
- *	    E98      r------- --------  Foreground tilemap row scroll enable
- *		         ------hh hhhhhhhh  Foreground tilemap horizontal scroll
- *	    E9A      r------- --------  Background tilemap row scroll enable
- *		         ------hh hhhhhhhh  Background tilemap horizontal scroll
- *	    E9C      ------hh hhhhhhhh  Alternate foreground tilemap horizontal scroll
- *	    E9E      ------hh hhhhhhhh  Alternate background tilemap horizontal scroll
- *	    F16-F3F  -------- vvvvvvvv  Foreground tilemap per-16-pixel-column vertical scroll
- *		F56-F7F  -------- vvvvvvvv  Background tilemap per-16-pixel-column vertical scroll
- *		F80-FB7  a------- --------  Foreground tilemap per-8-pixel-row alternate tilemap enable
- *		         -------h hhhhhhhh  Foreground tilemap per-8-pixel-row horizontal scroll
- *		FC0-FF7  a------- --------  Background tilemap per-8-pixel-row alternate tilemap enable
- *		         -------h hhhhhhhh  Background tilemap per-8-pixel-row horizontal scroll
+ *  Text RAM:
+ *      Offset   Bits               Usage
+ *      E80      aaaabbbb ccccdddd  Foreground tilemap page select
+ *      E82      aaaabbbb ccccdddd  Background tilemap page select
+ *      E84      aaaabbbb ccccdddd  Alternate foreground tilemap page select
+ *      E86      aaaabbbb ccccdddd  Alternate background tilemap page select
+ *      E90      c------- --------  Foreground tilemap column scroll enable
+ *               -------v vvvvvvvv  Foreground tilemap vertical scroll
+ *      E92      c------- --------  Background tilemap column scroll enable
+ *               -------v vvvvvvvv  Background tilemap vertical scroll
+ *      E94      -------v vvvvvvvv  Alternate foreground tilemap vertical scroll
+ *      E96      -------v vvvvvvvv  Alternate background tilemap vertical scroll
+ *      E98      r------- --------  Foreground tilemap row scroll enable
+ *               ------hh hhhhhhhh  Foreground tilemap horizontal scroll
+ *      E9A      r------- --------  Background tilemap row scroll enable
+ *               ------hh hhhhhhhh  Background tilemap horizontal scroll
+ *      E9C      ------hh hhhhhhhh  Alternate foreground tilemap horizontal scroll
+ *      E9E      ------hh hhhhhhhh  Alternate background tilemap horizontal scroll
+ *      F16-F3F  -------- vvvvvvvv  Foreground tilemap per-16-pixel-column vertical scroll
+ *      F56-F7F  -------- vvvvvvvv  Background tilemap per-16-pixel-column vertical scroll
+ *      F80-FB7  a------- --------  Foreground tilemap per-8-pixel-row alternate tilemap enable
+ *               -------h hhhhhhhh  Foreground tilemap per-8-pixel-row horizontal scroll
+ *      FC0-FF7  a------- --------  Background tilemap per-8-pixel-row alternate tilemap enable
+ *               -------h hhhhhhhh  Background tilemap per-8-pixel-row horizontal scroll
  *
  *******************************************************************************************/
 
@@ -1188,7 +1188,7 @@ void segaic16_tilemap_16b_reset(struct tilemap_info *info)
 
 /*************************************
  *
- *	General tilemap initialization
+ *  General tilemap initialization
  *
  *************************************/
 
@@ -1297,7 +1297,7 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 
 /*************************************
  *
- *	General tilemap rendering
+ *  General tilemap rendering
  *
  *************************************/
 
@@ -1318,7 +1318,7 @@ void segaic16_tilemap_draw(int which, struct mame_bitmap *bitmap, const struct r
 
 /*************************************
  *
- *	General tilemap reset
+ *  General tilemap reset
  *
  *************************************/
 
@@ -1334,7 +1334,7 @@ void segaic16_tilemap_reset(int which)
 
 /*************************************
  *
- *	General tilemap banking
+ *  General tilemap banking
  *
  *************************************/
 
@@ -1354,7 +1354,7 @@ void segaic16_tilemap_set_bank(int which, int banknum, int offset)
 
 /*************************************
  *
- *	General tilemap screen flipping
+ *  General tilemap screen flipping
  *
  *************************************/
 
@@ -1378,7 +1378,7 @@ void segaic16_tilemap_set_flip(int which, int flip)
 
 /*************************************
  *
- *	General tilemap row scroll enable
+ *  General tilemap row scroll enable
  *
  *************************************/
 
@@ -1398,7 +1398,7 @@ void segaic16_tilemap_set_rowscroll(int which, int enable)
 
 /*************************************
  *
- *	General tilemap column scroll enable
+ *  General tilemap column scroll enable
  *
  *************************************/
 
@@ -1418,7 +1418,7 @@ void segaic16_tilemap_set_colscroll(int which, int enable)
 
 /*************************************
  *
- *	General tilemap write handlers
+ *  General tilemap write handlers
  *
  *************************************/
 
@@ -1443,30 +1443,30 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 
 /*******************************************************************************************
  *
- *	Hang On-style sprites
+ *  Hang On-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
- *		 +0   -------- tttttttt  Top scanline of sprite - 1
- *		 +2   bbbb---- --------  Sprite bank
- *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
- *		 +4   pppppppp pppppppp  Signed 16-bit pitch value between scanlines
- *		 +6   -ooooooo oooooooo  Offset within selected sprite bank
- *		 +6   f------- --------  Horizontal flip: read the data backwards if set
- *		 +8   --cccccc --------  Sprite color palette
- *		 +8   -------- zzzzzz--  Zoom factor
- *		 +8   -------- ------pp  Sprite priority
- *		 +E   dddddddd dddddddd  Scratch space for current address
+ *      Offs  Bits               Usage
+ *       +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *       +0   -------- tttttttt  Top scanline of sprite - 1
+ *       +2   bbbb---- --------  Sprite bank
+ *       +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *       +4   pppppppp pppppppp  Signed 16-bit pitch value between scanlines
+ *       +6   -ooooooo oooooooo  Offset within selected sprite bank
+ *       +6   f------- --------  Horizontal flip: read the data backwards if set
+ *       +8   --cccccc --------  Sprite color palette
+ *       +8   -------- zzzzzz--  Zoom factor
+ *       +8   -------- ------pp  Sprite priority
+ *       +E   dddddddd dddddddd  Scratch space for current address
  *
- *	Special notes:
+ *  Special notes:
  *
- *		There is an interaction between the horizonal flip bit and the offset.
- *		The offset is maintained as a 16-bit value, even though only the lower
- *		15 bits are used for the address. The top bit is used to control flipping.
- *		This means that if the low 15 bits overflow during rendering, the sprite
- *		data will be read backwards after the overflow. This is important to
- *		emulate correctly as many games make use of this feature to render sprites
- *		at the beginning of a bank.
+ *      There is an interaction between the horizonal flip bit and the offset.
+ *      The offset is maintained as a 16-bit value, even though only the lower
+ *      15 bits are used for the address. The top bit is used to control flipping.
+ *      This means that if the low 15 bits overflow during rendering, the sprite
+ *      data will be read backwards after the overflow. This is important to
+ *      emulate correctly as many games make use of this feature to render sprites
+ *      at the beginning of a bank.
  *
  *******************************************************************************************/
 
@@ -1605,32 +1605,32 @@ static void segaic16_sprites_hangon_draw(struct sprite_info *info, struct mame_b
 
 /*******************************************************************************************
  *
- *	Space Harrier-style sprites
+ *  Space Harrier-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
- *		 +0   -------- tttttttt  Top scanline of sprite - 1
- *		 +2   bbbb---- --------  Sprite bank
- *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
- *		 +4   s------- --------  Sprite shadow enable (0=enable, 1=disable)
- *		 +4   -p------ --------  Sprite priority
- *		 +4   --cccccc --------  Sprite color palette
- *		 +4   -------- -ppppppp  Signed 7-bit pitch value between scanlines
- *		 +6   f------- --------  Horizontal flip: read the data backwards if set
- *		 +6   -ooooooo oooooooo  Offset within selected sprite bank
- *		 +8   --zzzzzz --------  Horizontal zoom factor
- *		 +8   -------- --zzzzzz  Vertical zoom factor
- *		 +E   dddddddd dddddddd  Scratch space for current address
+ *      Offs  Bits               Usage
+ *       +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *       +0   -------- tttttttt  Top scanline of sprite - 1
+ *       +2   bbbb---- --------  Sprite bank
+ *       +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *       +4   s------- --------  Sprite shadow enable (0=enable, 1=disable)
+ *       +4   -p------ --------  Sprite priority
+ *       +4   --cccccc --------  Sprite color palette
+ *       +4   -------- -ppppppp  Signed 7-bit pitch value between scanlines
+ *       +6   f------- --------  Horizontal flip: read the data backwards if set
+ *       +6   -ooooooo oooooooo  Offset within selected sprite bank
+ *       +8   --zzzzzz --------  Horizontal zoom factor
+ *       +8   -------- --zzzzzz  Vertical zoom factor
+ *       +E   dddddddd dddddddd  Scratch space for current address
  *
- *	Special notes:
+ *  Special notes:
  *
- *		There is an interaction between the horizonal flip bit and the offset.
- *		The offset is maintained as a 16-bit value, even though only the lower
- *		15 bits are used for the address. The top bit is used to control flipping.
- *		This means that if the low 15 bits overflow during rendering, the sprite
- *		data will be read backwards after the overflow. This is important to
- *		emulate correctly as many games make use of this feature to render sprites
- *		at the beginning of a bank.
+ *      There is an interaction between the horizonal flip bit and the offset.
+ *      The offset is maintained as a 16-bit value, even though only the lower
+ *      15 bits are used for the address. The top bit is used to control flipping.
+ *      This means that if the low 15 bits overflow during rendering, the sprite
+ *      data will be read backwards after the overflow. This is important to
+ *      emulate correctly as many games make use of this feature to render sprites
+ *      at the beginning of a bank.
  *
  *******************************************************************************************/
 
@@ -1778,29 +1778,29 @@ static void segaic16_sprites_sharrier_draw(struct sprite_info *info, struct mame
 
 /*******************************************************************************************
  *
- *	System 16A-style sprites
+ *  System 16A-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
- *		 +0   -------- tttttttt  Top scanline of sprite - 1
- *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
- *		 +4   pppppppp pppppppp  Signed 16-bit pitch value between scanlines
- *		 +6   -ooooooo oooooooo  Offset within selected sprite bank
- *		 +6   f------- --------  Horizontal flip: read the data backwards if set
- *		 +8   --cccccc --------  Sprite color palette
- *		 +8   -------- -bbb----  Sprite bank
- *		 +8   -------- ------pp  Sprite priority
- *		 +E   dddddddd dddddddd  Scratch space for current address
+ *      Offs  Bits               Usage
+ *       +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *       +0   -------- tttttttt  Top scanline of sprite - 1
+ *       +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *       +4   pppppppp pppppppp  Signed 16-bit pitch value between scanlines
+ *       +6   -ooooooo oooooooo  Offset within selected sprite bank
+ *       +6   f------- --------  Horizontal flip: read the data backwards if set
+ *       +8   --cccccc --------  Sprite color palette
+ *       +8   -------- -bbb----  Sprite bank
+ *       +8   -------- ------pp  Sprite priority
+ *       +E   dddddddd dddddddd  Scratch space for current address
  *
- *	Special notes:
+ *  Special notes:
  *
- *		There is an interaction between the horizonal flip bit and the offset.
- *		The offset is maintained as a 16-bit value, even though only the lower
- *		15 bits are used for the address. The top bit is used to control flipping.
- *		This means that if the low 15 bits overflow during rendering, the sprite
- *		data will be read backwards after the overflow. This is important to
- *		emulate correctly as many games make use of this feature to render sprites
- *		at the beginning of a bank.
+ *      There is an interaction between the horizonal flip bit and the offset.
+ *      The offset is maintained as a 16-bit value, even though only the lower
+ *      15 bits are used for the address. The top bit is used to control flipping.
+ *      This means that if the low 15 bits overflow during rendering, the sprite
+ *      data will be read backwards after the overflow. This is important to
+ *      emulate correctly as many games make use of this feature to render sprites
+ *      at the beginning of a bank.
  *
  *******************************************************************************************/
 
@@ -1937,25 +1937,25 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 
 /*******************************************************************************************
  *
- *	System 16B-style sprites
+ *  System 16B-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
- *		 +0   -------- tttttttt  Top scanline of sprite - 1
- *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
- *		 +4   e------- --------  Signify end of sprite list
- *		 +4   -h------ --------  Hide this sprite
- *		 +4   -------f --------  Horizontal flip: read the data backwards if set
- *		 +4   -------- pppppppp  Signed 8-bit pitch value between scanlines
- *		 +6   oooooooo oooooooo  Offset within selected sprite bank
- *		 +8   ----bbbb --------  Sprite bank
- *		 +8   -------- pp------  Sprite priority, relative to tilemaps
- *		 +8   -------- --cccccc  Sprite color palette
- *		 +A   ------vv vvv-----  Vertical zoom factor (0 = full size, 0x10 = half size)
- *		 +A   -------- ---hhhhh  Horizontal zoom factor (0 = full size, 0x10 = half size)
- *		 +E   dddddddd dddddddd  Scratch space for current address
+ *      Offs  Bits               Usage
+ *       +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *       +0   -------- tttttttt  Top scanline of sprite - 1
+ *       +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *       +4   e------- --------  Signify end of sprite list
+ *       +4   -h------ --------  Hide this sprite
+ *       +4   -------f --------  Horizontal flip: read the data backwards if set
+ *       +4   -------- pppppppp  Signed 8-bit pitch value between scanlines
+ *       +6   oooooooo oooooooo  Offset within selected sprite bank
+ *       +8   ----bbbb --------  Sprite bank
+ *       +8   -------- pp------  Sprite priority, relative to tilemaps
+ *       +8   -------- --cccccc  Sprite color palette
+ *       +A   ------vv vvv-----  Vertical zoom factor (0 = full size, 0x10 = half size)
+ *       +A   -------- ---hhhhh  Horizontal zoom factor (0 = full size, 0x10 = half size)
+ *       +E   dddddddd dddddddd  Scratch space for current address
  *
- *	Note that the zooming described below is 100% accurate to the real board.
+ *  Note that the zooming described below is 100% accurate to the real board.
  *
  *******************************************************************************************/
 
@@ -2106,8 +2106,8 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 
 /*******************************************************************************************
  *
- *	The Y-board variant has different mixing properties. The sprite implementation itself
- *	is identical, however.
+ *  The Y-board variant has different mixing properties. The sprite implementation itself
+ *  is identical, however.
  *
  *******************************************************************************************/
 
@@ -2259,32 +2259,32 @@ static void segaic16_sprites_yboard_16b_draw(struct sprite_info *info, struct ma
 
 /*******************************************************************************************
  *
- *	Out Run/X-Board-style sprites
+ *  Out Run/X-Board-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   e------- --------  Signify end of sprite list
- *		 +0   -h-h---- --------  Hide this sprite if either bit is set
- *		 +0   ----bbb- --------  Sprite bank
- *		 +0   -------t tttttttt  Top scanline of sprite + 256
- *		 +2   oooooooo oooooooo  Offset within selected sprite bank
- *		 +4   ppppppp- --------  Signed 7-bit pitch value between scanlines
- *		 +4   -------x xxxxxxxx  X position of sprite (position $BE is screen position 0)
- *		 +6   -s------ --------  Enable shadows
- *		 +6   --pp---- --------  Sprite priority, relative to tilemaps
- *		 +6   ------vv vvvvvvvv  Vertical zoom factor (0x200 = full size, 0x100 = half size, 0x300 = 2x size)
- *		 +8   y------- --------  Render from top-to-bottom (1) or bottom-to-top (0) on screen
- *		 +8   -f------ --------  Horizontal flip: read the data backwards if set
- *		 +8   --x----- --------  Render from left-to-right (1) or right-to-left (0) on screen
- *		 +8   ------hh hhhhhhhh  Horizontal zoom factor (0x200 = full size, 0x100 = half size, 0x300 = 2x size)
- *		 +E   dddddddd dddddddd  Scratch space for current address
+ *      Offs  Bits               Usage
+ *       +0   e------- --------  Signify end of sprite list
+ *       +0   -h-h---- --------  Hide this sprite if either bit is set
+ *       +0   ----bbb- --------  Sprite bank
+ *       +0   -------t tttttttt  Top scanline of sprite + 256
+ *       +2   oooooooo oooooooo  Offset within selected sprite bank
+ *       +4   ppppppp- --------  Signed 7-bit pitch value between scanlines
+ *       +4   -------x xxxxxxxx  X position of sprite (position $BE is screen position 0)
+ *       +6   -s------ --------  Enable shadows
+ *       +6   --pp---- --------  Sprite priority, relative to tilemaps
+ *       +6   ------vv vvvvvvvv  Vertical zoom factor (0x200 = full size, 0x100 = half size, 0x300 = 2x size)
+ *       +8   y------- --------  Render from top-to-bottom (1) or bottom-to-top (0) on screen
+ *       +8   -f------ --------  Horizontal flip: read the data backwards if set
+ *       +8   --x----- --------  Render from left-to-right (1) or right-to-left (0) on screen
+ *       +8   ------hh hhhhhhhh  Horizontal zoom factor (0x200 = full size, 0x100 = half size, 0x300 = 2x size)
+ *       +E   dddddddd dddddddd  Scratch space for current address
  *
- *	  Out Run only:
- *		 +A   hhhhhhhh --------  Height in scanlines - 1
- *		 +A   -------- -ccccccc  Sprite color palette
+ *    Out Run only:
+ *       +A   hhhhhhhh --------  Height in scanlines - 1
+ *       +A   -------- -ccccccc  Sprite color palette
  *
- *	  X-Board only:
- *		 +A   ----hhhh hhhhhhhh  Height in scanlines - 1
- *		 +C   -------- cccccccc  Sprite color palette
+ *    X-Board only:
+ *       +A   ----hhhh hhhhhhhh  Height in scanlines - 1
+ *       +C   -------- cccccccc  Sprite color palette
  *
  *******************************************************************************************/
 
@@ -2437,30 +2437,30 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_b
 
 /*******************************************************************************************
  *
- *	Y-Board-style sprites
+ *  Y-Board-style sprites
  *
- *		Offs  Bits               Usage
- *		 +0   e------- --------  Signify end of sprite list
- *		 +0   -----iii iiiiiiii  Address of indirection table (/16)
- *		 +2   bbbb---- --------  Upper 4 bits of bank index
- *		 +2   ----xxxx xxxxxxxx  X position of sprite (position $600 is screen position 0)
- *		 +4   bbbb---- --------  Lower 4 bits of bank index
- *		 +4   ----yyyy yyyyyyyy  Y position of sprite (position $600 is screen position 0)
- *		 +6   oooooooo oooooooo  Offset within selected sprite bank
- *		 +8   hhhhhhhh hhhhhhhh  Height of sprite
- *		 +A   -y------ --------  Render from top-to-bottom (1) or bottom-to-top (0) on screen
- *		 +A   --f----- --------  Horizontal flip: read the data backwards if set
- *		 +A   ---x---- --------  Render from left-to-right (1) or right-to-left (0) on screen
- *		 +A   -----zzz zzzzzzzz  Zoom factor
- *		 +C   -ccc---- --------  Sprite color
- *		 +C   ----rrrr --------  Sprite priority
- *		 +C   -------- pppppppp  Signed 8-bit pitch value between scanlines
- *		 +E   ----nnnn nnnnnnnn  Index of next sprite
+ *      Offs  Bits               Usage
+ *       +0   e------- --------  Signify end of sprite list
+ *       +0   -----iii iiiiiiii  Address of indirection table (/16)
+ *       +2   bbbb---- --------  Upper 4 bits of bank index
+ *       +2   ----xxxx xxxxxxxx  X position of sprite (position $600 is screen position 0)
+ *       +4   bbbb---- --------  Lower 4 bits of bank index
+ *       +4   ----yyyy yyyyyyyy  Y position of sprite (position $600 is screen position 0)
+ *       +6   oooooooo oooooooo  Offset within selected sprite bank
+ *       +8   hhhhhhhh hhhhhhhh  Height of sprite
+ *       +A   -y------ --------  Render from top-to-bottom (1) or bottom-to-top (0) on screen
+ *       +A   --f----- --------  Horizontal flip: read the data backwards if set
+ *       +A   ---x---- --------  Render from left-to-right (1) or right-to-left (0) on screen
+ *       +A   -----zzz zzzzzzzz  Zoom factor
+ *       +C   -ccc---- --------  Sprite color
+ *       +C   ----rrrr --------  Sprite priority
+ *       +C   -------- pppppppp  Signed 8-bit pitch value between scanlines
+ *       +E   ----nnnn nnnnnnnn  Index of next sprite
  *
- *	In addition to these parameters, the sprite area is clipped using scanline extents
- *	stored for every pair of scanlines in the rotation RAM. It's a bit of a cheat for us
- *	to poke our nose into the rotation structure, but there are no known cases of Y-board
- *	sprites without rotation RAM.
+ *  In addition to these parameters, the sprite area is clipped using scanline extents
+ *  stored for every pair of scanlines in the rotation RAM. It's a bit of a cheat for us
+ *  to poke our nose into the rotation structure, but there are no known cases of Y-board
+ *  sprites without rotation RAM.
  *
  *******************************************************************************************/
 
@@ -2481,7 +2481,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_b
 
 	/* reset the visited list */
 	memset(visited, 0, sizeof(visited));
-	
+
 	/* clear out any scanlines we might be using */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		if (!(rotatebase[y & ~1] & 0xc000))
@@ -2534,15 +2534,15 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_b
 				int minx = rotatebase[y & ~1];
 				int maxx = rotatebase[y |  1];
 				int xacc = 0;
-				
+
 				/* bit 0x8000 from rotate RAM means that Y is above the top of the screen */
 				if ((minx & 0x8000) && ydelta < 0)
 					break;
-				
+
 				/* bit 0x4000 from rotate RAM means that Y is below the bottom of the screen */
 				if ((minx & 0x4000) && ydelta > 0)
 					break;
-				
+
 				/* if either bit is set, skip the rest for this scanline */
 				if (!(minx & 0xc000))
 				{
@@ -2634,7 +2634,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, struct mame_b
 
 /*************************************
  *
- *	General sprite initialization
+ *  General sprite initialization
  *
  *************************************/
 
@@ -2701,7 +2701,7 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 			info->draw = segaic16_sprites_yboard_draw;
 			info->ramsize = 0x10000;
 			break;
-		
+
 		case SEGAIC16_SPRITES_YBOARD_16B:
 			info->draw = segaic16_sprites_yboard_16b_draw;
 			info->ramsize = 0x800;
@@ -2722,7 +2722,7 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 
 /*************************************
  *
- *	General sprite drawing
+ *  General sprite drawing
  *
  *************************************/
 
@@ -2736,7 +2736,7 @@ void segaic16_sprites_draw(int which, struct mame_bitmap *bitmap, const struct r
 
 /*************************************
  *
- *	General sprite banking
+ *  General sprite banking
  *
  *************************************/
 
@@ -2755,7 +2755,7 @@ void segaic16_sprites_set_bank(int which, int banknum, int offset)
 
 /*************************************
  *
- *	General sprite screen flipping
+ *  General sprite screen flipping
  *
  *************************************/
 
@@ -2775,7 +2775,7 @@ void segaic16_sprites_set_flip(int which, int flip)
 
 /*************************************
  *
- *	General sprite shadows
+ *  General sprite shadows
  *
  *************************************/
 
@@ -2795,7 +2795,7 @@ void segaic16_sprites_set_shadow(int which, int shadow)
 
 /*************************************
  *
- *	General sprite buffer control
+ *  General sprite buffer control
  *
  *************************************/
 
@@ -2838,39 +2838,39 @@ WRITE16_HANDLER( segaic16_sprites_draw_1_w )
 
 /*******************************************************************************************
  *
- *	Hang On/Space Harrier-style road chip
+ *  Hang On/Space Harrier-style road chip
  *
- *	Road RAM:
- *		Offset   Bits               Usage
- *		000-1FF  ----pp-- --------  road priority versus tilemaps and sprites
- *		         ------s- --------  (Hang On only) Stripe coloring enable (1=enable)
- *		         ------s- --------  (Space Harrier only) Solid color fill (1=solid, 0=from ROM)
- *		         -------m --------  mirror enable (1=enable)
- *		         -------- iiiiiiii  index for other tables
- *		         -------- rrrrrrrr  road ROM line select
- *		200-3FF  ----hhhh hhhhhhhh  horizontal scroll
- *		400-5FF  --bbbbbb --------  background color (colorset 0)
- *		         -------- --bbbbbb  background color (colorset 1)
- *		600-7FF  -------- s-------  stripe color index (colorset 1)
- *		         -------- -s------  stripe color index (colorset 0)
- *		         -------- --a-----  pixel value 2 color index (colorset 1)
- *		         -------- ---a----  pixel value 2 color index (colorset 0)
- *		         -------- ----b---  pixel value 1 color index (colorset 1)
- *		         -------- -----b--  pixel value 1 color index (colorset 0)
- *		         -------- ------c-  pixel value 0 color index (colorset 1)
- *		         -------- -------c  pixel value 0 color index (colorset 0)
+ *  Road RAM:
+ *      Offset   Bits               Usage
+ *      000-1FF  ----pp-- --------  road priority versus tilemaps and sprites
+ *               ------s- --------  (Hang On only) Stripe coloring enable (1=enable)
+ *               ------s- --------  (Space Harrier only) Solid color fill (1=solid, 0=from ROM)
+ *               -------m --------  mirror enable (1=enable)
+ *               -------- iiiiiiii  index for other tables
+ *               -------- rrrrrrrr  road ROM line select
+ *      200-3FF  ----hhhh hhhhhhhh  horizontal scroll
+ *      400-5FF  --bbbbbb --------  background color (colorset 0)
+ *               -------- --bbbbbb  background color (colorset 1)
+ *      600-7FF  -------- s-------  stripe color index (colorset 1)
+ *               -------- -s------  stripe color index (colorset 0)
+ *               -------- --a-----  pixel value 2 color index (colorset 1)
+ *               -------- ---a----  pixel value 2 color index (colorset 0)
+ *               -------- ----b---  pixel value 1 color index (colorset 1)
+ *               -------- -----b--  pixel value 1 color index (colorset 0)
+ *               -------- ------c-  pixel value 0 color index (colorset 1)
+ *               -------- -------c  pixel value 0 color index (colorset 0)
  *
- *	Logic:
- *		First, the scanline is used to index into the table at 000-1FF
+ *  Logic:
+ *      First, the scanline is used to index into the table at 000-1FF
  *
- *		The index is taken from the low 8 bits of the table value from 000-1FF
+ *      The index is taken from the low 8 bits of the table value from 000-1FF
  *
- *		The horizontal scroll value is looked up using the index in the table at
- *			200-3FF
+ *      The horizontal scroll value is looked up using the index in the table at
+ *          200-3FF
  *
- *		The background color information is looked up using the index in the table at 400-5FF.
+ *      The background color information is looked up using the index in the table at 400-5FF.
  *
- *		The pixel color information is looked up using the index in the table at 600-7FF.
+ *      The pixel color information is looked up using the index in the table at 600-7FF.
  *
  *******************************************************************************************/
 
@@ -3075,96 +3075,96 @@ static void segaic16_road_hangon_draw(struct road_info *info, struct mame_bitmap
 
 /*******************************************************************************************
  *
- *	Out Run/X-Board-style road chip
+ *  Out Run/X-Board-style road chip
  *
- *	Road control register:
- *		Bits               Usage
- *		-------- -----d--  (X-board only) Direct scanline mode (1) or indirect mode (0)
- *		-------- ------pp  Road enable/priorities:
- *		                      0 = road 0 only visible
- *		                      1 = both roads visible, road 0 has priority
- *		                      2 = both roads visible, road 1 has priority
- *		                      3 = road 1 only visible
+ *  Road control register:
+ *      Bits               Usage
+ *      -------- -----d--  (X-board only) Direct scanline mode (1) or indirect mode (0)
+ *      -------- ------pp  Road enable/priorities:
+ *                            0 = road 0 only visible
+ *                            1 = both roads visible, road 0 has priority
+ *                            2 = both roads visible, road 1 has priority
+ *                            3 = road 1 only visible
  *
- *	Road RAM:
- *		Offset   Bits               Usage
- *		000-1FF  ----s--- --------  Road 0: Solid fill (1) or ROM fill
- *		         -------- -ccccccc  Road 0: Solid color (if solid fill)
- *		         -------i iiiiiiii  Road 0: Index for other tables (if in indirect mode)
- *		         -------r rrrrrrr-  Road 0: Road ROM line select
- *		200-3FF  ----s--- --------  Road 1: Solid fill (1) or ROM fill
- *		         -------- -ccccccc  Road 1: Solid color (if solid fill)
- *		         -------i iiiiiiii  Road 1: Index for other tables (if in indirect mode)
- *		         -------r rrrrrrr-  Road 1: Road ROM line select
- *		400-7FF  ----hhhh hhhhhhhh  Road 0: horizontal scroll
- *		800-BFF  ----hhhh hhhhhhhh  Road 1: horizontal scroll
- *		C00-FFF  ----bbbb --------  Background color index
- *		         -------- s-------  Road 1: stripe color index
- *		         -------- -a------  Road 1: pixel value 2 color index
- *		         -------- --b-----  Road 1: pixel value 1 color index
- *		         -------- ---c----  Road 1: pixel value 0 color index
- *		         -------- ----s---  Road 0: stripe color index
- *		         -------- -----a--  Road 0: pixel value 2 color index
- *		         -------- ------b-  Road 0: pixel value 1 color index
- *		         -------- -------c  Road 0: pixel value 0 color index
+ *  Road RAM:
+ *      Offset   Bits               Usage
+ *      000-1FF  ----s--- --------  Road 0: Solid fill (1) or ROM fill
+ *               -------- -ccccccc  Road 0: Solid color (if solid fill)
+ *               -------i iiiiiiii  Road 0: Index for other tables (if in indirect mode)
+ *               -------r rrrrrrr-  Road 0: Road ROM line select
+ *      200-3FF  ----s--- --------  Road 1: Solid fill (1) or ROM fill
+ *               -------- -ccccccc  Road 1: Solid color (if solid fill)
+ *               -------i iiiiiiii  Road 1: Index for other tables (if in indirect mode)
+ *               -------r rrrrrrr-  Road 1: Road ROM line select
+ *      400-7FF  ----hhhh hhhhhhhh  Road 0: horizontal scroll
+ *      800-BFF  ----hhhh hhhhhhhh  Road 1: horizontal scroll
+ *      C00-FFF  ----bbbb --------  Background color index
+ *               -------- s-------  Road 1: stripe color index
+ *               -------- -a------  Road 1: pixel value 2 color index
+ *               -------- --b-----  Road 1: pixel value 1 color index
+ *               -------- ---c----  Road 1: pixel value 0 color index
+ *               -------- ----s---  Road 0: stripe color index
+ *               -------- -----a--  Road 0: pixel value 2 color index
+ *               -------- ------b-  Road 0: pixel value 1 color index
+ *               -------- -------c  Road 0: pixel value 0 color index
  *
- *	Logic:
- *		First, the scanline is used to index into the tables at 000-1FF/200-3FF
- *			- if solid fill, the background is filled with the specified color index
- *			- otherwise, the remaining tables are used
+ *  Logic:
+ *      First, the scanline is used to index into the tables at 000-1FF/200-3FF
+ *          - if solid fill, the background is filled with the specified color index
+ *          - otherwise, the remaining tables are used
  *
- *		If indirect mode is selected, the index is taken from the low 9 bits of the
- *			table value from 000-1FF/200-3FF
- *		If direct scanline mode is selected, the index is set equal to the scanline
- *			for road 0, or the scanline + 256 for road 1
+ *      If indirect mode is selected, the index is taken from the low 9 bits of the
+ *          table value from 000-1FF/200-3FF
+ *      If direct scanline mode is selected, the index is set equal to the scanline
+ *          for road 0, or the scanline + 256 for road 1
  *
- *		The horizontal scroll value is looked up using the index in the tables at
- *			400-7FF/800-BFF
+ *      The horizontal scroll value is looked up using the index in the tables at
+ *          400-7FF/800-BFF
  *
- *		The color information is looked up using the index in the table at C00-FFF. Note
- *			that the same table is used for both roads.
+ *      The color information is looked up using the index in the table at C00-FFF. Note
+ *          that the same table is used for both roads.
  *
  *
- *	Out Run road priorities are controlled by a PAL that maps as indicated below.
- *	This was used to generate the priority_map. It is assumed that X-board is the
- *	same, though this logic is locked inside a Sega custom.
+ *  Out Run road priorities are controlled by a PAL that maps as indicated below.
+ *  This was used to generate the priority_map. It is assumed that X-board is the
+ *  same, though this logic is locked inside a Sega custom.
  *
- *	RRC0 =	CENTA & (RDA == 3) & !RRC2
- *		| CENTB & (RDB == 3) & RRC2
- *		| (RDA == 1) & !RRC2
- *		| (RDB == 1) & RRC2
+ *  RRC0 =  CENTA & (RDA == 3) & !RRC2
+ *      | CENTB & (RDB == 3) & RRC2
+ *      | (RDA == 1) & !RRC2
+ *      | (RDB == 1) & RRC2
  *
- *	RRC1 = 	CENTA & (RDA == 3) & !RRC2
- *		| CENTB & (RDB == 3) & RRC2
- *		| (RDA == 2) & !RRC2
- *		| (RDB == 2) & RRC2
+ *  RRC1 =  CENTA & (RDA == 3) & !RRC2
+ *      | CENTB & (RDB == 3) & RRC2
+ *      | (RDA == 2) & !RRC2
+ *      | (RDB == 2) & RRC2
  *
- *	RRC2 = !/HSYNC & IIQ
- *		| (CTRL == 3)
- *		| !CENTA & (RDA == 3) & !CENTB & (RDB == 3) & (CTRL == 2)
- *		| CENTB & (RDB == 3) & (CTRL == 2)
- *		| !CENTA & (RDA == 3) & !M2 & (CTRL == 2)
- *		| !CENTA & (RDA == 3) & !M3 & (CTRL == 2)
- *		| !M0 & (RDB == 0) & (CTRL == 2)
- *		| !M1 & (RDB == 0) & (CTRL == 2)
- *		| !CENTA & (RDA == 3) & CENTB & (RDB == 3) & (CTRL == 1)
- *		| !M0 & CENTB & (RDB == 3) & (CTRL == 1)
- *		| !M1 & CENTB & (RDB == 3) & (CTRL == 1)
- *		| !CENTA & M0 & (RDB == 0) & (CTRL == 1)
- *		| !CENTA & M1 & (RDB == 0) & (CTRL == 1)
- *		| !CENTA & (RDA == 3) & (RDB == 1) & (CTRL == 1)
- *		| !CENTA & (RDA == 3) & (RDB == 2) & (CTRL == 1)
+ *  RRC2 = !/HSYNC & IIQ
+ *      | (CTRL == 3)
+ *      | !CENTA & (RDA == 3) & !CENTB & (RDB == 3) & (CTRL == 2)
+ *      | CENTB & (RDB == 3) & (CTRL == 2)
+ *      | !CENTA & (RDA == 3) & !M2 & (CTRL == 2)
+ *      | !CENTA & (RDA == 3) & !M3 & (CTRL == 2)
+ *      | !M0 & (RDB == 0) & (CTRL == 2)
+ *      | !M1 & (RDB == 0) & (CTRL == 2)
+ *      | !CENTA & (RDA == 3) & CENTB & (RDB == 3) & (CTRL == 1)
+ *      | !M0 & CENTB & (RDB == 3) & (CTRL == 1)
+ *      | !M1 & CENTB & (RDB == 3) & (CTRL == 1)
+ *      | !CENTA & M0 & (RDB == 0) & (CTRL == 1)
+ *      | !CENTA & M1 & (RDB == 0) & (CTRL == 1)
+ *      | !CENTA & (RDA == 3) & (RDB == 1) & (CTRL == 1)
+ *      | !CENTA & (RDA == 3) & (RDB == 2) & (CTRL == 1)
  *
- *	RRC3 =	VA11 & VB11
- *		| VA11 & (CTRL == 0)
- *		| (CTRL == 3) & VB11
+ *  RRC3 =  VA11 & VB11
+ *      | VA11 & (CTRL == 0)
+ *      | (CTRL == 3) & VB11
  *
- *	RRC4 = 	!CENTA & (RDA == 3) & !CENTB & (RDB == 3)
- *		| VA11 & VB11
- *		| VA11 & (CTRL == 0)
- *		| (CTRL == 3) & VB11
- *		| !CENTB & (RDB == 3) & (CTRL == 3)
- *		| !CENTA & (RDA == 3) & (CTRL == 0)
+ *  RRC4 =  !CENTA & (RDA == 3) & !CENTB & (RDB == 3)
+ *      | VA11 & VB11
+ *      | VA11 & (CTRL == 0)
+ *      | (CTRL == 3) & VB11
+ *      | !CENTB & (RDB == 3) & (CTRL == 3)
+ *      | !CENTA & (RDA == 3) & (CTRL == 0)
  *
  *******************************************************************************************/
 
@@ -3236,8 +3236,8 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 			{ 0x81,0x81,0x81,0x8f,0,0,0,0x80 }
 //
 // Original guesses from X-board priorities:
-//			{ 0x80,0x81,0x81,0x83,0,0,0,0x00 },
-//			{ 0x81,0x87,0x87,0x8f,0,0,0,0x00 }
+//          { 0x80,0x81,0x81,0x83,0,0,0,0x00 },
+//          { 0x81,0x87,0x87,0x8f,0,0,0,0x00 }
 		};
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
 		int data0 = roadram[0x000 + y];
@@ -3391,7 +3391,7 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 
 /*************************************
  *
- *	General road initialization
+ *  General road initialization
  *
  *************************************/
 
@@ -3445,7 +3445,7 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 
 /*************************************
  *
- *	General road drawing
+ *  General road drawing
  *
  *************************************/
 
@@ -3459,7 +3459,7 @@ void segaic16_road_draw(int which, struct mame_bitmap *bitmap, const struct rect
 
 /*************************************
  *
- *	General road control read/write
+ *  General road control read/write
  *
  *************************************/
 
@@ -3500,7 +3500,7 @@ WRITE16_HANDLER( segaic16_road_control_0_w )
 
 /*************************************
  *
- *	General rotation initialization
+ *  General rotation initialization
  *
  *************************************/
 
@@ -3535,10 +3535,10 @@ int segaic16_rotate_init(int which, int type, int colorbase)
 		default:
 			osd_die("Invalid rotate system specified in segaic16_rotate_init\n");
 	}
-	
+
 	/* allocate a buffer for swapping */
 	info->buffer = auto_malloc(info->ramsize);
-	
+
 	return 0;
 }
 
@@ -3546,7 +3546,7 @@ int segaic16_rotate_init(int which, int type, int colorbase)
 
 /*************************************
  *
- *	General rotation drawing
+ *  General rotation drawing
  *
  *************************************/
 
@@ -3561,10 +3561,10 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 	INT32 dyx = (info->buffer[0x3fa] << 16) | info->buffer[0x3fb];
 	int x, y;
 
-	/* advance forward based on the clip rect */	
+	/* advance forward based on the clip rect */
 	currx += dxx * (cliprect->min_x + 27) + dxy * cliprect->min_y;
 	curry += dyx * (cliprect->min_x + 27) + dyy * cliprect->min_y;
-	
+
 	/* loop over screen Y coordinates */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
@@ -3573,7 +3573,7 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
 		INT32 tx = currx;
 		INT32 ty = curry;
-		
+
 		/* loop over screen X coordinates */
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
@@ -3581,7 +3581,7 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 			int sx = (tx >> 14) & 0x1ff;
 			int sy = (ty >> 14) & 0x1ff;
 			int pix = src[sy * srcbitmap->rowpixels + (sx & 0x1ff)];
-			
+
 			/* non-zero pixels get written; everything else is the scanline color */
 			if (pix != 0xffff)
 			{
@@ -3609,7 +3609,7 @@ void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct re
 
 /*************************************
  *
- *	General road control read/write
+ *  General road control read/write
  *
  *************************************/
 

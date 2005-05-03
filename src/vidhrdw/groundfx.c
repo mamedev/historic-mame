@@ -43,17 +43,17 @@ VIDEO_START( groundfx )
 }
 
 /***************************************************************
-			SPRITE DRAW ROUTINES
+            SPRITE DRAW ROUTINES
 
 We draw a series of small tiles ("chunks") together to
 create each big sprite. The spritemap rom provides the lookup
 table for this. The game hardware looks up 16x16 sprite chunks
 from the spritemap rom, creating a 64x64 sprite like this:
 
-	 0  1  2  3
-	 4  5  6  7
-	 8  9 10 11
-	12 13 14 15
+     0  1  2  3
+     4  5  6  7
+     8  9 10 11
+    12 13 14 15
 
 (where the number is the word offset into the spritemap rom).
 It can also create 32x32 sprites.
@@ -65,27 +65,27 @@ spriteram is being tested, take no notice of that.]
 
 Heavy use is made of sprite zooming.
 
-		***
+        ***
 
-	Sprite table layout (4 long words per entry)
+    Sprite table layout (4 long words per entry)
 
-	------------------------------------------
-	 0 | ........ x....... ........ ........ | Flip X
-	 0 | ........ .xxxxxxx ........ ........ | ZoomX
-	 0 | ........ ........ .xxxxxxx xxxxxxxx | Sprite Tile
-	   |                                     |
-	 2 | ........ ....xx.. ........ ........ | Sprite/tile priority [*]
-	 2 | ........ ......xx xxxxxx.. ........ | Palette bank
-	 2 | ........ ........ ......xx xxxxxxxx | X position
-	   |                                     |
-	 3 | ........ .....x.. ........ ........ | Sprite size (0=32x32, 1=64x64)
-	 3 | ........ ......x. ........ ........ | Flip Y
-	 3 | ........ .......x xxxxxx.. ........ | ZoomY
-	 3 | ........ ........ ......xx xxxxxxxx | Y position
-	------------------------------------------
+    ------------------------------------------
+     0 | ........ x....... ........ ........ | Flip X
+     0 | ........ .xxxxxxx ........ ........ | ZoomX
+     0 | ........ ........ .xxxxxxx xxxxxxxx | Sprite Tile
+       |                                     |
+     2 | ........ ....xx.. ........ ........ | Sprite/tile priority [*]
+     2 | ........ ......xx xxxxxx.. ........ | Palette bank
+     2 | ........ ........ ......xx xxxxxxxx | X position
+       |                                     |
+     3 | ........ .....x.. ........ ........ | Sprite size (0=32x32, 1=64x64)
+     3 | ........ ......x. ........ ........ | Flip Y
+     3 | ........ .......x xxxxxx.. ........ | ZoomY
+     3 | ........ ........ ......xx xxxxxxxx | Y position
+    ------------------------------------------
 
-	[*  00=over BG0, 01=BG1, 10=BG2, 11=BG3 ]
-	[or 00=over BG1, 01=BG2, 10=BG3, 11=BG3 ]
+    [*  00=over BG0, 01=BG1, 10=BG2, 11=BG3 ]
+    [or 00=over BG1, 01=BG2, 10=BG3, 11=BG3 ]
 
 ***************************************************************/
 
@@ -101,7 +101,7 @@ static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 	int primasks[4] = {0xffff, 0xfffc, 0xfff0, 0xff00 };
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
+       while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
 	for (offs = (spriteram_size/4-4);offs >= 0;offs -= 4)
@@ -122,7 +122,7 @@ static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 		zoomy =    (data & 0x0001fc00) >> 10;
 		y =        (data & 0x000003ff);
 
-//		color |= (0x100 + (priority << 6));		/* priority bits select color bank */
+//      color |= (0x100 + (priority << 6));     /* priority bits select color bank */
 		color /= 2;		/* as sprites are 5bpp */
 		flipy = !flipy;
 		y = (-y &0x3ff);
@@ -175,8 +175,8 @@ static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 				if (sprites_flipscreen)
 				{
 					/* -zx/y is there to fix zoomed sprite coords in screenflip.
-					   drawgfxzoom does not know to draw from flip-side of sprites when
-					   screen is flipped; so we must correct the coords ourselves. */
+                       drawgfxzoom does not know to draw from flip-side of sprites when
+                       screen is flipped; so we must correct the coords ourselves. */
 
 					curx = 320 - curx - zx;
 					cury = 256 - cury - zy;
@@ -223,7 +223,7 @@ static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 }
 
 /**************************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 **************************************************************/
 
 VIDEO_UPDATE( groundfx )
@@ -253,27 +253,27 @@ VIDEO_UPDATE( groundfx )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[0],0,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[1],0,0);
 
-	/*	BIG HACK!
+	/*  BIG HACK!
 
-		The rear view mirror is a big priority trick - the text
-		layer of TC0100SCN is used as a stencil to display
-		the bottom layer of TC0480SCP and a particular sprite
-		priority.  These never appear outside of the stencil.
+        The rear view mirror is a big priority trick - the text
+        layer of TC0100SCN is used as a stencil to display
+        the bottom layer of TC0480SCP and a particular sprite
+        priority.  These never appear outside of the stencil.
 
-		I'm not sure how the game turns this effect on/off
-		(the 480 layer is used normally in the frontend
-		of the game).
+        I'm not sure how the game turns this effect on/off
+        (the 480 layer is used normally in the frontend
+        of the game).
 
-		I haven't implemented it properly yet, instead I'm
-		doing a hacky cliprect around the rearview and drawing
-		it's contents the usual way.
+        I haven't implemented it properly yet, instead I'm
+        doing a hacky cliprect around the rearview and drawing
+        it's contents the usual way.
 
-	*/
+    */
 	if (TC0100SCN_long_r(0x4090/4,0) || TC0480SCP_long_r(0x20/4,0)==0x240866) { /* Anything in text layer - really stupid hack */
 		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,2);
 		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,4);
 		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,8);
-//		TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[2],0,0);
+//      TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[2],0,0);
 		if (TC0480SCP_long_r(0x20/4,0)!=0x240866) /* Stupid hack for start of race */
 			TC0480SCP_tilemap_draw(bitmap,&hack_cliprect,layer[0],0,0);
 		groundfx_draw_sprites_16x16(bitmap,cliprect,1,44,-574);

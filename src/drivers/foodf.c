@@ -1,73 +1,73 @@
 /***************************************************************************
 
-	Atari Food Fight hardware
+    Atari Food Fight hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Food Fight
+    Games supported:
+        * Food Fight
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-00FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	014000-01BFFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
-	01C000-01CFFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (1024 entries x 2 words)
-	                R/W   x------- --------      (0: Horizontal flip)
-	                R/W   -x------ --------      (0: Vertical flip)
-	                R/W   ---xxxxx --------      (0: Palette select)
-	                R/W   -------- xxxxxxxx      (0: Tile index)
-	                R/W   xxxxxxxx --------      (1: X position)
-	                R/W   -------- xxxxxxxx      (1: Y position)
-	800000-8007FF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (32x32 tiles)
-	                R/W   x------- --------      (Tile index MSB)
-	                R/W   --xxxxxx --------      (Palette select)
-	                R/W   -------- xxxxxxxx      (Tile index LSBs)
-	900000-9001FF   R/W   -------- ----xxxx   NVRAM
-	940000-940007   R     -------- xxxxxxxx   Analog input read
-	944000-944007     W   -------- --------   Analog input select
-	948000          R     -------- xxxxxxxx   Digital inputs
-	                R     -------- x-------      (Self test)
-	                R     -------- -x------      (Player 2 throw)
-	                R     -------- --x-----      (Player 1 throw)
-	                R     -------- ---x----      (Aux coin)
-	                R     -------- ----x---      (2 player start)
-	                R     -------- -----x--      (1 player start)
-	                R     -------- ------x-      (Right coin)
-	                R     -------- -------x      (Left coin)
-	948000            W   -------- xxxxxxxx   Digital outputs
-	                  W   -------- x-------      (Right coin counter)
-	                  W   -------- -x------      (Left coin counter)
-	                  W   -------- --x-----      (LED 2)
-	                  W   -------- ---x----      (LED 1)
-	                  W   -------- ----x---      (INT2 reset)
-	                  W   -------- -----x--      (INT1 reset)
-	                  W   -------- ------x-      (Update)
-	                  W   -------- -------x      (Playfield flip)
-	94C000            W   -------- --------   Unknown
-	950000-9501FF     W   -------- xxxxxxxx   Palette RAM (256 entries)
-	                  W   -------- xx------      (Blue)
-	                  W   -------- --xxx---      (Green)
-	                  W   -------- -----xxx      (Red)
-	954000            W   -------- --------   NVRAM recall
-	958000            W   -------- --------   Watchdog
-	A40000-A4001F   R/W   -------- xxxxxxxx   POKEY 2
-	A80000-A8001F   R/W   -------- xxxxxxxx   POKEY 1
-	AC0000-AC001F   R/W   -------- xxxxxxxx   POKEY 3
-	========================================================================
-	Interrupts:
-		IRQ1 = 32V
-		IRQ2 = VBLANK
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-00FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    014000-01BFFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+    01C000-01CFFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (1024 entries x 2 words)
+                    R/W   x------- --------      (0: Horizontal flip)
+                    R/W   -x------ --------      (0: Vertical flip)
+                    R/W   ---xxxxx --------      (0: Palette select)
+                    R/W   -------- xxxxxxxx      (0: Tile index)
+                    R/W   xxxxxxxx --------      (1: X position)
+                    R/W   -------- xxxxxxxx      (1: Y position)
+    800000-8007FF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (32x32 tiles)
+                    R/W   x------- --------      (Tile index MSB)
+                    R/W   --xxxxxx --------      (Palette select)
+                    R/W   -------- xxxxxxxx      (Tile index LSBs)
+    900000-9001FF   R/W   -------- ----xxxx   NVRAM
+    940000-940007   R     -------- xxxxxxxx   Analog input read
+    944000-944007     W   -------- --------   Analog input select
+    948000          R     -------- xxxxxxxx   Digital inputs
+                    R     -------- x-------      (Self test)
+                    R     -------- -x------      (Player 2 throw)
+                    R     -------- --x-----      (Player 1 throw)
+                    R     -------- ---x----      (Aux coin)
+                    R     -------- ----x---      (2 player start)
+                    R     -------- -----x--      (1 player start)
+                    R     -------- ------x-      (Right coin)
+                    R     -------- -------x      (Left coin)
+    948000            W   -------- xxxxxxxx   Digital outputs
+                      W   -------- x-------      (Right coin counter)
+                      W   -------- -x------      (Left coin counter)
+                      W   -------- --x-----      (LED 2)
+                      W   -------- ---x----      (LED 1)
+                      W   -------- ----x---      (INT2 reset)
+                      W   -------- -----x--      (INT1 reset)
+                      W   -------- ------x-      (Update)
+                      W   -------- -------x      (Playfield flip)
+    94C000            W   -------- --------   Unknown
+    950000-9501FF     W   -------- xxxxxxxx   Palette RAM (256 entries)
+                      W   -------- xx------      (Blue)
+                      W   -------- --xxx---      (Green)
+                      W   -------- -----xxx      (Red)
+    954000            W   -------- --------   NVRAM recall
+    958000            W   -------- --------   Watchdog
+    A40000-A4001F   R/W   -------- xxxxxxxx   POKEY 2
+    A80000-A8001F   R/W   -------- xxxxxxxx   POKEY 1
+    AC0000-AC001F   R/W   -------- xxxxxxxx   POKEY 3
+    ========================================================================
+    Interrupts:
+        IRQ1 = 32V
+        IRQ2 = VBLANK
+    ========================================================================
 
 
 ***************************************************************************/
@@ -83,7 +83,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -93,7 +93,7 @@ static UINT8 whichport = 0;
 
 /*************************************
  *
- *	NVRAM
+ *  NVRAM
  *
  *************************************/
 
@@ -106,7 +106,7 @@ static READ16_HANDLER( nvram_r )
 
 /*************************************
  *
- *	Interrupts
+ *  Interrupts
  *
  *************************************/
 
@@ -144,7 +144,7 @@ static MACHINE_INIT( foodf )
 
 /*************************************
  *
- *	Digital outputs
+ *  Digital outputs
  *
  *************************************/
 
@@ -168,7 +168,7 @@ static WRITE16_HANDLER( digital_w )
 
 /*************************************
  *
- *	Analog inputs
+ *  Analog inputs
  *
  *************************************/
 
@@ -187,7 +187,7 @@ static WRITE16_HANDLER( analog_w )
 
 /*************************************
  *
- *	POKEY I/O
+ *  POKEY I/O
  *
  *************************************/
 
@@ -203,7 +203,7 @@ static WRITE16_HANDLER( pokey3_word_w ) { if (ACCESSING_LSB) pokey3_w(offset, da
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -229,7 +229,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -282,7 +282,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -321,7 +321,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -339,7 +339,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -384,7 +384,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -451,7 +451,7 @@ ROM_END
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

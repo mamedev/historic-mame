@@ -65,18 +65,18 @@ Update: some games uses transparent windows,others uses a transparency pen table
 In other words,the first three types uses the offset and not the color allocated...
 
 -Debug key list(only on a debug build):
-	\-T: NBG3 layer toggle
-	\-Y: NBG2 layer toggle
-	\-U: NBG1 layer toggle
-	\-I: NBG0 layer toggle
-	\-O: SPRITE toggle
-	\-K: RBG0 layer toggle
-	\-Z: Enables Window processing debug screen
-		\-C: Window 0 toggle
-		\-V: Window 1 toggle
-	\-W Decodes the graphics for F4 menu.
-	\-M Stores VDP1 ram contents from a file.
-	\-N Stores VDP1 ram contents into a file.
+    \-T: NBG3 layer toggle
+    \-Y: NBG2 layer toggle
+    \-U: NBG1 layer toggle
+    \-I: NBG0 layer toggle
+    \-O: SPRITE toggle
+    \-K: RBG0 layer toggle
+    \-Z: Enables Window processing debug screen
+        \-C: Window 0 toggle
+        \-V: Window 1 toggle
+    \-W Decodes the graphics for F4 menu.
+    \-M Stores VDP1 ram contents from a file.
+    \-N Stores VDP1 ram contents into a file.
 */
 
 #include "driver.h"
@@ -97,8 +97,13 @@ static void stv_vdp2_fade_effects(void);
 static void refresh_palette_data(void);
 static int stv_vdp2_window_process(int x,int y);
 
+#ifdef MAME_DEBUG
 #define LOG_VDP2 1
 #define LOG_ROZ 0
+#else
+#define LOG_VDP2 0
+#define LOG_ROZ 0
+#endif
 
 /*
 
@@ -314,8 +319,8 @@ static int stv_vdp2_window_process(int x,int y);
 	#define STV_VDP2_R1ON ((STV_VDP2_BGON & 0x0020) >> 5) /* R1On = RBG1 Enable */
 
 	// NxTPON - Transparency Pen Enable Registers
-	#define STV_VDP2_N0TPON ((STV_VDP2_BGON & 0x0100) >> 8) /* 	N0TPON = NBG0 Draw Transparent Pen (as solid) /or/ RBG1 Draw Transparent Pen */
-	#define STV_VDP2_N1TPON ((STV_VDP2_BGON & 0x0200) >> 9) /* 	N1TPON = NBG1 Draw Transparent Pen (as solid) /or/ EXBG Draw Transparent Pen */
+	#define STV_VDP2_N0TPON ((STV_VDP2_BGON & 0x0100) >> 8) /*  N0TPON = NBG0 Draw Transparent Pen (as solid) /or/ RBG1 Draw Transparent Pen */
+	#define STV_VDP2_N1TPON ((STV_VDP2_BGON & 0x0200) >> 9) /*  N1TPON = NBG1 Draw Transparent Pen (as solid) /or/ EXBG Draw Transparent Pen */
 	#define STV_VDP2_N2TPON ((STV_VDP2_BGON & 0x0400) >> 10)/*  N2TPON = NBG2 Draw Transparent Pen (as solid) */
 	#define STV_VDP2_N3TPON ((STV_VDP2_BGON & 0x0800) >> 11)/*  N3TPON = NBG3 Draw Transparent Pen (as solid) */
 	#define STV_VDP2_R0TPON ((STV_VDP2_BGON & 0x1000) >> 12)/*  R0TPON = RBG0 Draw Transparent Pen (as solid) */
@@ -351,58 +356,58 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 /* -------------------------- NBG0 Character Control Registers -------------------------- */
 
-/*	N0CHCNx  NBG0 (or RGB1) Colour Depth
-	000 - 16 Colours
-	001 - 256 Colours
-	010 - 2048 Colours
-	011 - 32768 Colours (RGB5)
-	100 - 16770000 Colours (RGB8)
-	101 - invalid
-	110 - invalid
-	111 - invalid   */
+/*  N0CHCNx  NBG0 (or RGB1) Colour Depth
+    000 - 16 Colours
+    001 - 256 Colours
+    010 - 2048 Colours
+    011 - 32768 Colours (RGB5)
+    100 - 16770000 Colours (RGB8)
+    101 - invalid
+    110 - invalid
+    111 - invalid   */
 	#define STV_VDP2_N0CHCN ((STV_VDP2_CHCTLA & 0x0070) >> 4)
 
-/*	N0BMSZx - NBG0 Bitmap Size *guessed*
-	00 - 512 x 256
-	01 - 512 x 512
-	10 - 1024 x 256
-	11 - 1024 x 512   */
+/*  N0BMSZx - NBG0 Bitmap Size *guessed*
+    00 - 512 x 256
+    01 - 512 x 512
+    10 - 1024 x 256
+    11 - 1024 x 512   */
 	#define STV_VDP2_N0BMSZ ((STV_VDP2_CHCTLA & 0x000c) >> 2)
 
-/*	N0BMEN - NBG0 Bitmap Enable
-	0 - use cell mode
-	1 - use bitmap mode   */
+/*  N0BMEN - NBG0 Bitmap Enable
+    0 - use cell mode
+    1 - use bitmap mode   */
 	#define STV_VDP2_N0BMEN ((STV_VDP2_CHCTLA & 0x0002) >> 1)
 
-/*	N0CHSZ - NBG0 Character (Tile) Size
-	0 - 1 cell  x 1 cell  (8x8)
-	1 - 2 cells x 2 cells (16x16)  */
+/*  N0CHSZ - NBG0 Character (Tile) Size
+    0 - 1 cell  x 1 cell  (8x8)
+    1 - 2 cells x 2 cells (16x16)  */
 	#define STV_VDP2_N0CHSZ ((STV_VDP2_CHCTLA & 0x0001) >> 0)
 
 /* -------------------------- NBG1 Character Control Registers -------------------------- */
 
-/*	N1CHCNx - NBG1 (or EXB1) Colour Depth
-	00 - 16 Colours
-	01 - 256 Colours
-	10 - 2048 Colours
-	11 - 32768 Colours (RGB5)  */
+/*  N1CHCNx - NBG1 (or EXB1) Colour Depth
+    00 - 16 Colours
+    01 - 256 Colours
+    10 - 2048 Colours
+    11 - 32768 Colours (RGB5)  */
 	#define STV_VDP2_N1CHCN ((STV_VDP2_CHCTLA & 0x3000) >> 12)
 
-/*	N1BMSZx - NBG1 Bitmap Size *guessed*
-	00 - 512 x 256
-	01 - 512 x 512
-	10 - 1024 x 256
-	11 - 1024 x 512   */
+/*  N1BMSZx - NBG1 Bitmap Size *guessed*
+    00 - 512 x 256
+    01 - 512 x 512
+    10 - 1024 x 256
+    11 - 1024 x 512   */
 	#define STV_VDP2_N1BMSZ ((STV_VDP2_CHCTLA & 0x0c00) >> 10)
 
-/*	N1BMEN - NBG1 Bitmap Enable
-	0 - use cell mode
-	1 - use bitmap mode   */
+/*  N1BMEN - NBG1 Bitmap Enable
+    0 - use cell mode
+    1 - use bitmap mode   */
 	#define STV_VDP2_N1BMEN ((STV_VDP2_CHCTLA & 0x0200) >> 9)
 
-/*	N1CHSZ - NBG1 Character (Tile) Size
-	0 - 1 cell  x 1 cell  (8x8)
-	1 - 2 cells x 2 cells (16x16)  */
+/*  N1CHSZ - NBG1 Character (Tile) Size
+    0 - 1 cell  x 1 cell  (8x8)
+    1 - 2 cells x 2 cells (16x16)  */
 	#define STV_VDP2_N1CHSZ ((STV_VDP2_CHCTLA & 0x0100) >> 8)
 
 /*
@@ -418,30 +423,30 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 /* -------------------------- RBG0 Character Control Registers -------------------------- */
 
 
-/*	R0CHCNx  RBG0  Colour Depth
-	000 - 16 Colours
-	001 - 256 Colours
-	010 - 2048 Colours
-	011 - 32768 Colours (RGB5)
-	100 - 16770000 Colours (RGB8)
-	101 - invalid
-	110 - invalid
-	111 - invalid   */
+/*  R0CHCNx  RBG0  Colour Depth
+    000 - 16 Colours
+    001 - 256 Colours
+    010 - 2048 Colours
+    011 - 32768 Colours (RGB5)
+    100 - 16770000 Colours (RGB8)
+    101 - invalid
+    110 - invalid
+    111 - invalid   */
 	#define STV_VDP2_R0CHCN ((STV_VDP2_CHCTLB & 0x7000) >> 12)
 
-/*	R0BMSZx - RBG0 Bitmap Size *guessed*
-	00 - 512 x 256
-	01 - 512 x 512  */
+/*  R0BMSZx - RBG0 Bitmap Size *guessed*
+    00 - 512 x 256
+    01 - 512 x 512  */
 	#define STV_VDP2_R0BMSZ ((STV_VDP2_CHCTLB & 0x0400) >> 10)
 
-/*	R0BMEN - RBG0 Bitmap Enable
-	0 - use cell mode
-	1 - use bitmap mode   */
+/*  R0BMEN - RBG0 Bitmap Enable
+    0 - use cell mode
+    1 - use bitmap mode   */
 	#define STV_VDP2_R0BMEN ((STV_VDP2_CHCTLB & 0x0200) >> 9)
 
-/*	R0CHSZ - NBG0 Character (Tile) Size
-	0 - 1 cell  x 1 cell  (8x8)
-	1 - 2 cells x 2 cells (16x16)  */
+/*  R0CHSZ - NBG0 Character (Tile) Size
+    0 - 1 cell  x 1 cell  (8x8)
+    1 - 2 cells x 2 cells (16x16)  */
 	#define STV_VDP2_R0CHSZ ((STV_VDP2_CHCTLB & 0x0100) >> 8)
 
 	#define STV_VDP2_N3CHCN ((STV_VDP2_CHCTLB & 0x0020) >> 5)
@@ -483,26 +488,26 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_PNCN0 ((stv_vdp2_regs[0x030/4] >> 16)&0x0000ffff)
 
-/*	Pattern Data Size
-	0 = 2 bytes
-	1 = 1 byte */
+/*  Pattern Data Size
+    0 = 2 bytes
+    1 = 1 byte */
 	#define STV_VDP2_N0PNB  ((STV_VDP2_PNCN0 & 0x8000) >> 15)
 
-/*	Character Number Supplement (in 1 byte mode)
-	0 = Character Number = 10bits + 2bits for flip
-	1 = Character Number = 12 bits, no flip  */
+/*  Character Number Supplement (in 1 byte mode)
+    0 = Character Number = 10bits + 2bits for flip
+    1 = Character Number = 12 bits, no flip  */
 	#define STV_VDP2_N0CNSM ((STV_VDP2_PNCN0 & 0x4000) >> 14)
 
 /*  NBG0 Special Priority Register (in 1 byte mode) */
 	#define STV_VDP2_N0SPR ((STV_VDP2_PNCN0 & 0x0200) >> 9)
 
-/*	NBG0 Special Colour Control Register (in 1 byte mode) */
+/*  NBG0 Special Colour Control Register (in 1 byte mode) */
 	#define STV_VDP2_N0SCC ((STV_VDP2_PNCN0 & 0x0100) >> 8)
 
-/*	Supplementary Palette Bits (in 1 byte mode) */
+/*  Supplementary Palette Bits (in 1 byte mode) */
 	#define STV_VDP2_N0SPLT ((STV_VDP2_PNCN0 & 0x00e0) >> 5)
 
-/*	Supplementary Character Bits (in 1 byte mode) */
+/*  Supplementary Character Bits (in 1 byte mode) */
 	#define STV_VDP2_N0SPCN ((STV_VDP2_PNCN0 & 0x001f) >> 0)
 
 /* 180032 - Pattern Name Control (NBG1)
@@ -514,26 +519,26 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_PNCN1 ((stv_vdp2_regs[0x030/4] >> 0)&0x0000ffff)
 
-/*	Pattern Data Size
-	0 = 2 bytes
-	1 = 1 byte */
+/*  Pattern Data Size
+    0 = 2 bytes
+    1 = 1 byte */
 	#define STV_VDP2_N1PNB  ((STV_VDP2_PNCN1 & 0x8000) >> 15)
 
-/*	Character Number Supplement (in 1 byte mode)
-	0 = Character Number = 10bits + 2bits for flip
-	1 = Character Number = 12 bits, no flip  */
+/*  Character Number Supplement (in 1 byte mode)
+    0 = Character Number = 10bits + 2bits for flip
+    1 = Character Number = 12 bits, no flip  */
 	#define STV_VDP2_N1CNSM ((STV_VDP2_PNCN1 & 0x4000) >> 14)
 
 /*  NBG0 Special Priority Register (in 1 byte mode) */
 	#define STV_VDP2_N1SPR ((STV_VDP2_PNCN1 & 0x0200) >> 9)
 
-/*	NBG0 Special Colour Control Register (in 1 byte mode) */
+/*  NBG0 Special Colour Control Register (in 1 byte mode) */
 	#define STV_VDP2_N1SCC ((STV_VDP2_PNCN1 & 0x0100) >> 8)
 
-/*	Supplementary Palette Bits (in 1 byte mode) */
+/*  Supplementary Palette Bits (in 1 byte mode) */
 	#define STV_VDP2_N1SPLT ((STV_VDP2_PNCN1 & 0x00e0) >> 5)
 
-/*	Supplementary Character Bits (in 1 byte mode) */
+/*  Supplementary Character Bits (in 1 byte mode) */
 	#define STV_VDP2_N1SPCN ((STV_VDP2_PNCN1 & 0x001f) >> 0)
 
 
@@ -546,26 +551,26 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_PNCN2 ((stv_vdp2_regs[0x034/4] >> 16)&0x0000ffff)
 
-/*	Pattern Data Size
-	0 = 2 bytes
-	1 = 1 byte */
+/*  Pattern Data Size
+    0 = 2 bytes
+    1 = 1 byte */
 	#define STV_VDP2_N2PNB  ((STV_VDP2_PNCN2 & 0x8000) >> 15)
 
-/*	Character Number Supplement (in 1 byte mode)
-	0 = Character Number = 10bits + 2bits for flip
-	1 = Character Number = 12 bits, no flip  */
+/*  Character Number Supplement (in 1 byte mode)
+    0 = Character Number = 10bits + 2bits for flip
+    1 = Character Number = 12 bits, no flip  */
 	#define STV_VDP2_N2CNSM ((STV_VDP2_PNCN2 & 0x4000) >> 14)
 
 /*  NBG0 Special Priority Register (in 1 byte mode) */
 	#define STV_VDP2_N2SPR ((STV_VDP2_PNCN2 & 0x0200) >> 9)
 
-/*	NBG0 Special Colour Control Register (in 1 byte mode) */
+/*  NBG0 Special Colour Control Register (in 1 byte mode) */
 	#define STV_VDP2_N2SCC ((STV_VDP2_PNCN2 & 0x0100) >> 8)
 
-/*	Supplementary Palette Bits (in 1 byte mode) */
+/*  Supplementary Palette Bits (in 1 byte mode) */
 	#define STV_VDP2_N2SPLT ((STV_VDP2_PNCN2 & 0x00e0) >> 5)
 
-/*	Supplementary Character Bits (in 1 byte mode) */
+/*  Supplementary Character Bits (in 1 byte mode) */
 	#define STV_VDP2_N2SPCN ((STV_VDP2_PNCN2 & 0x001f) >> 0)
 
 
@@ -578,26 +583,26 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_PNCN3 ((stv_vdp2_regs[0x034/4] >> 0)&0x0000ffff)
 
-/*	Pattern Data Size
-	0 = 2 bytes
-	1 = 1 byte */
+/*  Pattern Data Size
+    0 = 2 bytes
+    1 = 1 byte */
 	#define STV_VDP2_N3PNB  ((STV_VDP2_PNCN3 & 0x8000) >> 15)
 
-/*	Character Number Supplement (in 1 byte mode)
-	0 = Character Number = 10bits + 2bits for flip
-	1 = Character Number = 12 bits, no flip  */
+/*  Character Number Supplement (in 1 byte mode)
+    0 = Character Number = 10bits + 2bits for flip
+    1 = Character Number = 12 bits, no flip  */
 	#define STV_VDP2_N3CNSM ((STV_VDP2_PNCN3 & 0x4000) >> 14)
 
 /*  NBG0 Special Priority Register (in 1 byte mode) */
 	#define STV_VDP2_N3SPR ((STV_VDP2_PNCN3 & 0x0200) >> 9)
 
-/*	NBG0 Special Colour Control Register (in 1 byte mode) */
+/*  NBG0 Special Colour Control Register (in 1 byte mode) */
 	#define STV_VDP2_N3SCC ((STV_VDP2_PNCN3 & 0x0100) >> 8)
 
-/*	Supplementary Palette Bits (in 1 byte mode) */
+/*  Supplementary Palette Bits (in 1 byte mode) */
 	#define STV_VDP2_N3SPLT ((STV_VDP2_PNCN3 & 0x00e0) >> 5)
 
-/*	Supplementary Character Bits (in 1 byte mode) */
+/*  Supplementary Character Bits (in 1 byte mode) */
 	#define STV_VDP2_N3SPCN ((STV_VDP2_PNCN3 & 0x001f) >> 0)
 
 
@@ -610,26 +615,26 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_PNCR ((stv_vdp2_regs[0x038/4] >> 16)&0x0000ffff)
 
-/*	Pattern Data Size
-	0 = 2 bytes
-	1 = 1 byte */
+/*  Pattern Data Size
+    0 = 2 bytes
+    1 = 1 byte */
 	#define STV_VDP2_R0PNB  ((STV_VDP2_PNCR & 0x8000) >> 15)
 
-/*	Character Number Supplement (in 1 byte mode)
-	0 = Character Number = 10bits + 2bits for flip
-	1 = Character Number = 12 bits, no flip  */
+/*  Character Number Supplement (in 1 byte mode)
+    0 = Character Number = 10bits + 2bits for flip
+    1 = Character Number = 12 bits, no flip  */
 	#define STV_VDP2_R0CNSM ((STV_VDP2_PNCR & 0x4000) >> 14)
 
 /*  NBG0 Special Priority Register (in 1 byte mode) */
 	#define STV_VDP2_R0SPR ((STV_VDP2_PNCR & 0x0200) >> 9)
 
-/*	NBG0 Special Colour Control Register (in 1 byte mode) */
+/*  NBG0 Special Colour Control Register (in 1 byte mode) */
 	#define STV_VDP2_R0SCC ((STV_VDP2_PNCR & 0x0100) >> 8)
 
-/*	Supplementary Palette Bits (in 1 byte mode) */
+/*  Supplementary Palette Bits (in 1 byte mode) */
 	#define STV_VDP2_R0SPLT ((STV_VDP2_PNCR & 0x00e0) >> 5)
 
-/*	Supplementary Character Bits (in 1 byte mode) */
+/*  Supplementary Character Bits (in 1 byte mode) */
 	#define STV_VDP2_R0SPCN ((STV_VDP2_PNCR & 0x001f) >> 0)
 
 /* 18003A - PLSZ - Plane Size (incomplete)
@@ -642,10 +647,10 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 	#define STV_VDP2_PLSZ ((stv_vdp2_regs[0x038/4] >> 0)&0x0000ffff)
 
 	/* NBG0 Plane Size
-	00 1H Page x 1V Page
-	01 2H Pages x 1V Page
-	10 invalid
-	11 2H Pages x 2V Pages  */
+    00 1H Page x 1V Page
+    01 2H Pages x 1V Page
+    10 invalid
+    11 2H Pages x 2V Pages  */
 	#define STV_VDP2_N0PLSZ ((STV_VDP2_PLSZ & 0x0003) >> 0)
 	#define STV_VDP2_N1PLSZ ((STV_VDP2_PLSZ & 0x000c) >> 2)
 	#define STV_VDP2_N2PLSZ ((STV_VDP2_PLSZ & 0x0030) >> 4)
@@ -1248,7 +1253,7 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 	#define STV_VDP2_BKCLMD ((STV_VDP2_BKTA_UL & 0x80000000) >> 31)
 	#define STV_VDP2_BKTA   ((STV_VDP2_BKTA_UL & 0x0003ffff) >> 0)
 	/*MSB of this register is used when the extra RAM cart is used,ignore it for now.*/
-	//	#define STV_VDP2_BKTA   ((STV_VDP2_BKTA_UL & 0x0007ffff) >> 0)
+	//  #define STV_VDP2_BKTA   ((STV_VDP2_BKTA_UL & 0x0007ffff) >> 0)
 
 /* 1800b0 - Rotation Parameter Mode
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1848,6 +1853,7 @@ static struct stv_vdp2_debugging
 	UINT8 l_en;	 /*For Layer enable/disable*/
 	UINT8 win;	 /*Enters into Window effect debug menu*/
 	UINT32 error; /*bits for VDP2 error logging*/
+	UINT8 roz;   /*Debug roz on screen*/
 } debug;
 
 /*
@@ -1968,16 +1974,44 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 
 #define RP	stv_current_rotation_parameter_table
 
-	if(LOG_ROZ) logerror( "Rotation parameter table (%d)\n", rot_parameter );
-	if(LOG_ROZ) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
-	if(LOG_ROZ) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
-	if(LOG_ROZ) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
-	if(LOG_ROZ) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
-	if(LOG_ROZ) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
-	if(LOG_ROZ) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
-	if(LOG_ROZ) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
-	if(LOG_ROZ) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
-	if(LOG_ROZ) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+	if(LOG_ROZ == 1) logerror( "Rotation parameter table (%d)\n", rot_parameter );
+	if(LOG_ROZ == 1) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
+	if(LOG_ROZ == 1) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
+	if(LOG_ROZ == 1) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
+	if(LOG_ROZ == 1) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
+	if(LOG_ROZ == 1) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
+	if(LOG_ROZ == 1) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
+	if(LOG_ROZ == 1) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
+	if(LOG_ROZ == 1) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
+	if(LOG_ROZ == 1) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+
+	/*Attempt to show on screen the rotation table*/
+	if(LOG_ROZ == 2)
+	{
+		if(code_pressed_memory(JOYCODE_1_UP))
+			debug.roz++;
+
+		if(code_pressed_memory(JOYCODE_1_DOWN))
+			debug.roz--;
+
+		if(debug.roz > 10)
+			debug.roz = 10;
+
+		switch(debug.roz)
+		{
+	    	case 0: usrintf_showmessage( "Rotation parameter Table (%d)", rot_parameter ); break;
+	        case 1: usrintf_showmessage( "xst = %x, yst = %x, zst = %x", RP.xst, RP.yst, RP.zst ); break;
+	        case 2: usrintf_showmessage( "dxst = %x, dyst = %x", RP.dxst, RP.dyst ); break;
+	        case 3: usrintf_showmessage( "dx = %x, dy = %x", RP.dx, RP.dy ); break;
+	        case 4: usrintf_showmessage( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F ); break;
+	        case 5: usrintf_showmessage( "px = %x, py = %x, pz = %x", RP.px, RP.py, RP.pz ); break;
+			case 6:	usrintf_showmessage( "cx = %x, cy = %x, cz = %x", RP.cx, RP.cy, RP.cz ); break;
+			case 7:	usrintf_showmessage( "mx = %x, my = %x", RP.mx, RP.my ); break;
+			case 8:	usrintf_showmessage( "kx = %x, ky = %x", RP.kx, RP.ky ); break;
+	 		case 9:	usrintf_showmessage( "kast = %x, dkast = %x, dkax = %x", RP.kast, RP.dkast, RP.dkax ); break;
+			case 10: break;
+		}
+	}
 }
 
 #define STV_VDP2_CP_NBG0_PNMDR		0x0
@@ -2056,11 +2090,11 @@ static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxE
 	if (!scalex || !scaley) return;
 
 	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
+    scalex and scaley are 16.16 fixed point numbers
+    1<<15 : shrink to 50%
+    1<<16 : uniform scale
+    1<<17 : double to 200%
+    */
 
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
@@ -2288,8 +2322,8 @@ static void stv_vdp2_compute_color_offset_RGB555( int *r, int *g, int *b, int co
 
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-//	if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
-//	usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
+//  if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
+//  usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
 	//usrintf_showmessage("%04x",STV_VDP2_SCRCTL);
 
 	int xsize = 0;
@@ -2319,9 +2353,9 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	}
 
 	/*guess,myfairld has only this activated (i.e. no linescroll/vertical char
-	scroll and so on) so I think this is the only possible way to get the NBG1 enabled,
-	obviously this should be changed again when the roz effects for bitmaps will
-	be added...*/
+    scroll and so on) so I think this is the only possible way to get the NBG1 enabled,
+    obviously this should be changed again when the roz effects for bitmaps will
+    be added...*/
 	if(STV_VDP2_LSMD == 3)
 	{
 		yoffs = (stv2_current_tilemap.scrolly & 1)*(ysize);
@@ -2350,7 +2384,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	);
 	gfxdatahigh = gfxdatalow + xlinesize*ysize;
 
-//	usrintf_showmessage("%04x %04x",stv2_current_tilemap.scrollx,stv2_current_tilemap.scrolly);
+//  usrintf_showmessage("%04x %04x",stv2_current_tilemap.scrollx,stv2_current_tilemap.scrolly);
 
 	/*Enable fading bit*/
 	if(stv2_current_tilemap.fade_control & 1)
@@ -2426,11 +2460,11 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			break;
 		/*RGB format*/
 		/*
-		M                     L
-		S                     S
-		B                     B
-		--------BBBBBGGGGGRRRRR
-		*/
+        M                     L
+        S                     S
+        B                     B
+        --------BBBBBGGGGGRRRRR
+        */
 		case 3:
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
@@ -2465,11 +2499,11 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 			}
 			break;
 		/*
-		M                              L
-		S                              S
-		B                              B
-		--------BBBBBBBBGGGGGGGGRRRRRRRR
-		*/
+        M                              L
+        S                              S
+        B                              B
+        --------BBBBBBBBGGGGGGGGRRRRRRRR
+        */
 		case 4:
 			//usrintf_showmessage("BITMAP type 4 enabled");
 			for (ycnt = 0; ycnt <ysize;ycnt++)
@@ -2612,9 +2646,9 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 	/* Calculate the Page Size in BYTES */
 	/* 64 * 64 * (1 * 2) = 0x2000 bytes
-	   32 * 32 * (1 * 2) = 0x0800 bytes
-	   64 * 64 * (2 * 2) = 0x4000 bytes
-	   32 * 32 * (2 * 2) = 0x1000 bytes */
+       32 * 32 * (1 * 2) = 0x0800 bytes
+       64 * 64 * (2 * 2) = 0x4000 bytes
+       32 * 32 * (2 * 2) = 0x1000 bytes */
 
 	pgsize_bytes = (pgtiles_x * pgtiles_y) * ((2-stv2_current_tilemap.pattern_data_size)*2);
 
@@ -2670,21 +2704,21 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 	/* Plane Size in BYTES */
 	/* still the same as before
-	   (64 * 1) * (64 * 1) * (1 * 2) = 0x02000 bytes
-	   (32 * 1) * (32 * 1) * (1 * 2) = 0x00800 bytes
-	   (64 * 1) * (64 * 1) * (2 * 2) = 0x04000 bytes
-	   (32 * 1) * (32 * 1) * (2 * 2) = 0x01000 bytes
-	   changed
-	   (64 * 2) * (64 * 1) * (1 * 2) = 0x04000 bytes
-	   (32 * 2) * (32 * 1) * (1 * 2) = 0x01000 bytes
-	   (64 * 2) * (64 * 1) * (2 * 2) = 0x08000 bytes
-	   (32 * 2) * (32 * 1) * (2 * 2) = 0x02000 bytes
-	   changed
-	   (64 * 2) * (64 * 1) * (1 * 2) = 0x08000 bytes
-	   (32 * 2) * (32 * 1) * (1 * 2) = 0x02000 bytes
-	   (64 * 2) * (64 * 1) * (2 * 2) = 0x10000 bytes
-	   (32 * 2) * (32 * 1) * (2 * 2) = 0x04000 bytes
-	*/
+       (64 * 1) * (64 * 1) * (1 * 2) = 0x02000 bytes
+       (32 * 1) * (32 * 1) * (1 * 2) = 0x00800 bytes
+       (64 * 1) * (64 * 1) * (2 * 2) = 0x04000 bytes
+       (32 * 1) * (32 * 1) * (2 * 2) = 0x01000 bytes
+       changed
+       (64 * 2) * (64 * 1) * (1 * 2) = 0x04000 bytes
+       (32 * 2) * (32 * 1) * (1 * 2) = 0x01000 bytes
+       (64 * 2) * (64 * 1) * (2 * 2) = 0x08000 bytes
+       (32 * 2) * (32 * 1) * (2 * 2) = 0x02000 bytes
+       changed
+       (64 * 2) * (64 * 1) * (1 * 2) = 0x08000 bytes
+       (32 * 2) * (32 * 1) * (1 * 2) = 0x02000 bytes
+       (64 * 2) * (64 * 1) * (2 * 2) = 0x10000 bytes
+       (32 * 2) * (32 * 1) * (2 * 2) = 0x04000 bytes
+    */
 
 	plsize_bytes = (pltiles_x * pltiles_y) * ((2-stv2_current_tilemap.pattern_data_size)*2);
 
@@ -2760,8 +2794,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 	plsize_dwords = plsize_bytes /4;
 	mpsize_dwords = mpsize_bytes /4;
 
-//	if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x", stv2_current_tilemap.map_offset[0]);
-//	if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
+//  if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x", stv2_current_tilemap.map_offset[0]);
+//  if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
 
 	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
@@ -2836,7 +2870,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 				data = stv_vdp2_vram[newbase + offs];
 				tilecode = (data & 0x00007fff);
 				pal   = (data &    0x007f0000)>>16;
-	//			specialc = (data & 0x10000000)>>28;;
+	//          specialc = (data & 0x10000000)>>28;;
 				flipyx   = (data & 0xc0000000)>>30;
 			}
 /* WE'VE GOT THE TILE INFO ... */
@@ -3005,7 +3039,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/* the idea is here we check the tilemap capabilities / whats enabled and call an appropriate tilemap drawing routine, or
-	  at the very list throw up a few errors if the tilemaps want to do something we don't support yet */
+      at the very list throw up a few errors if the tilemaps want to do something we don't support yet */
 
 	if (stv2_current_tilemap.bitmap_enable) // this layer is a bitmap
 	{
@@ -3033,22 +3067,22 @@ static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rect
 static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	   Colours           : 16, 256, 2048, 32768, 16770000
-	   Char Size         : 1x1 cells, 2x2 cells
-	   Pattern Data Size : 1 word, 2 words
-	   Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-	   Planes            : 4
-	   Bitmap            : Possible
-	   Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
-	   Scale             : 0.25 x - 256 x
-	   Rotation          : No
-	   Linescroll        : Yes
-	   Column Scroll     : Yes
-	   Mosaic            : Yes
-	*/
+       Colours           : 16, 256, 2048, 32768, 16770000
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : Possible
+       Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
+       Scale             : 0.25 x - 256 x
+       Rotation          : No
+       Linescroll        : Yes
+       Column Scroll     : Yes
+       Mosaic            : Yes
+    */
 	stv2_current_tilemap.enabled = STV_VDP2_N0ON;
 
-//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	//stv2_current_tilemap.trans_enabled = STV_VDP2_N0TPON;
 	if ( STV_VDP2_N0CCEN )
@@ -3111,22 +3145,22 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	   Colours           : 16, 256, 2048, 32768
-	   Char Size         : 1x1 cells, 2x2 cells
-	   Pattern Data Size : 1 word, 2 words
-	   Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-	   Planes            : 4
-	   Bitmap            : Possible
-	   Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
-	   Scale             : 0.25 x - 256 x
-	   Rotation          : No
-	   Linescroll        : Yes
-	   Column Scroll     : Yes
-	   Mosaic            : Yes
-	*/
+       Colours           : 16, 256, 2048, 32768
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : Possible
+       Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
+       Scale             : 0.25 x - 256 x
+       Rotation          : No
+       Linescroll        : Yes
+       Column Scroll     : Yes
+       Mosaic            : Yes
+    */
 	stv2_current_tilemap.enabled = STV_VDP2_N1ON;
 
-//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	//stv2_current_tilemap.trans_enabled = STV_VDP2_N1TPON;
 	if ( STV_VDP2_N1CCEN )
@@ -3189,21 +3223,21 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	   NBG2 is the first of the 2 more basic tilemaps, it has exactly the same capabilities as NBG3
+       NBG2 is the first of the 2 more basic tilemaps, it has exactly the same capabilities as NBG3
 
-	   Colours           : 16, 256
-	   Char Size         : 1x1 cells, 2x2 cells
-	   Pattern Data Size : 1 word, 2 words
-	   Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-	   Planes            : 4
-	   Bitmap            : No
-	   Bitmap Sizes      : N/A
-	   Scale             : No
-	   Rotation          : No
-	   Linescroll        : No
-	   Column Scroll     : No
-	   Mosaic            : Yes
-	*/
+       Colours           : 16, 256
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : No
+       Bitmap Sizes      : N/A
+       Scale             : No
+       Rotation          : No
+       Linescroll        : No
+       Column Scroll     : No
+       Mosaic            : Yes
+    */
 
 	stv2_current_tilemap.enabled = STV_VDP2_N2ON;
 
@@ -3211,7 +3245,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	if (STV_VDP2_N0CHCN == 0x03) stv2_current_tilemap.enabled = 0;
 	if (STV_VDP2_N0CHCN == 0x04) stv2_current_tilemap.enabled = 0;
 
-//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	//stv2_current_tilemap.trans_enabled = STV_VDP2_N2TPON;
 	if ( STV_VDP2_N2CCEN )
@@ -3277,25 +3311,25 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	   NBG3 is the second of the 2 more basic tilemaps, it has exactly the same capabilities as NBG2
+       NBG3 is the second of the 2 more basic tilemaps, it has exactly the same capabilities as NBG2
 
-	   Colours           : 16, 256
-	   Char Size         : 1x1 cells, 2x2 cells
-	   Pattern Data Size : 1 word, 2 words
-	   Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-	   Planes            : 4
-	   Bitmap            : No
-	   Bitmap Sizes      : N/A
-	   Scale             : No
-	   Rotation          : No
-	   Linescroll        : No
-	   Column Scroll     : No
-	   Mosaic            : Yes
-	*/
+       Colours           : 16, 256
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : No
+       Bitmap Sizes      : N/A
+       Scale             : No
+       Rotation          : No
+       Linescroll        : No
+       Column Scroll     : No
+       Mosaic            : Yes
+    */
 
 	stv2_current_tilemap.enabled = STV_VDP2_N3ON;
 
-//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	/* these modes for N1 disable this layer */
 	if (STV_VDP2_N1CHCN == 0x03) stv2_current_tilemap.enabled = 0;
@@ -3366,22 +3400,22 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
-	   Colours           : 16, 256, 2048, 32768, 16770000
-	   Char Size         : 1x1 cells, 2x2 cells
-	   Pattern Data Size : 1 word, 2 words
-	   Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-	   Planes            : 4
-	   Bitmap            : Possible
-	   Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
-	   Scale             : 0.25 x - 256 x
-	   Rotation          : Yes
-	   Linescroll        : Yes
-	   Column Scroll     : Yes
-	   Mosaic            : Yes
-	*/
+       Colours           : 16, 256, 2048, 32768, 16770000
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : Possible
+       Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
+       Scale             : 0.25 x - 256 x
+       Rotation          : Yes
+       Linescroll        : Yes
+       Column Scroll     : Yes
+       Mosaic            : Yes
+    */
 	stv2_current_tilemap.enabled = STV_VDP2_R0ON;
 
-//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	//stv2_current_tilemap.trans_enabled = STV_VDP2_R0TPON;
 	if ( STV_VDP2_R0CCEN )
@@ -3431,10 +3465,10 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv_vdp2_fill_rotation_parameter_table(1);
 
-//	stv2_current_tilemap.scrollx = STV_VDP2_SCXIR0;
-//	stv2_current_tilemap.scrolly = STV_VDP2_SCYIR0;
-//	stv2_current_tilemap.incx = STV_VDP2_ZMXR0;
-//	stv2_current_tilemap.incy = STV_VDP2_ZMYR0;
+//  stv2_current_tilemap.scrollx = STV_VDP2_SCXIR0;
+//  stv2_current_tilemap.scrolly = STV_VDP2_SCYIR0;
+//  stv2_current_tilemap.incx = STV_VDP2_ZMXR0;
+//  stv2_current_tilemap.incy = STV_VDP2_ZMYR0;
 	stv2_current_tilemap.scrollx = stv_current_rotation_parameter_table.mx >> 16;
 	stv2_current_tilemap.scrolly = stv_current_rotation_parameter_table.my >> 16;
 	stv2_current_tilemap.incx = 0x10000;
@@ -3522,7 +3556,7 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 	int r,g,b;
 	COMBINE_DATA(&stv_vdp2_cram[offset]);
 
-//	usrintf_showmessage("%01x",STV_VDP2_CRMD);
+//  usrintf_showmessage("%01x",STV_VDP2_CRMD);
 
 	switch( STV_VDP2_CRMD )
 	{
@@ -3666,7 +3700,7 @@ WRITE32_HANDLER ( stv_vdp2_regs_w )
 extern int stv_vblank,stv_hblank;
 READ32_HANDLER ( stv_vdp2_regs_r )
 {
-//	if (offset!=1) if(LOG_VDP2) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
+//  if (offset!=1) if(LOG_VDP2) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
 
 	switch(offset)
 	{
@@ -3704,8 +3738,8 @@ int stv_vdp2_start ( void )
 	{
 		stv_vdp2_render_rbg0 = 0;
 	}
-//	Machine->gfx[0]->color_granularity=4;
-//	Machine->gfx[1]->color_granularity=4;
+//  Machine->gfx[0]->color_granularity=4;
+//  Machine->gfx[1]->color_granularity=4;
 
 	return 0;
 }
@@ -3717,6 +3751,7 @@ VIDEO_START( stv_vdp2 )
 	stv_vdp1_start();
 	debug.l_en = 0xff;
 	debug.error = 0xffffffff;
+	debug.roz = 0;
 
 	return 0;
 }
@@ -3746,7 +3781,7 @@ static void stv_vdp2_dynamic_res_change()
 		case 2: horz = 640; break;
 		case 3: horz = 704; break;
 		/*Exclusive modes,they sets the Vertical Resolution without considering the
-			VRES register.*/
+            VRES register.*/
 		case 4: horz = 320; vert = 480; break;
 		case 5: horz = 352; vert = 480; break;
 		case 6: horz = 640; vert = 480; break;
@@ -3762,9 +3797,9 @@ static void stv_vdp2_dynamic_res_change()
 static void	stv_vdp2_fade_effects()
 {
 	/*
-	Note:We have to use temporary storages because palette_get_color must use
-	variables setted with unsigned int8
-	*/
+    Note:We have to use temporary storages because palette_get_color must use
+    variables setted with unsigned int8
+    */
 	INT16 t_r,t_g,t_b;
 	UINT8 r,g,b;
 	int i;
@@ -3824,17 +3859,17 @@ Not Done:
 -Rotation parameter Window.
 
 Window Registers are hooked up like this ATM:
-	x--- ---- UNUSED
-	-x-- ---- Sprite Window Area
-	--x- ---- Window 1 Area
-	---x ---- Window 0 Area
-				  (0 = Inside,1 = Outside)
-	---- x--- Sprite Window Enable
-	---- -x-- Window 1 Enable
-	---- --x- Window 0 Enable
-				  (0 = Disabled,1 = Enabled)
-	---- ---x Window Logic
-				  (0 = OR,1 = AND)
+    x--- ---- UNUSED
+    -x-- ---- Sprite Window Area
+    --x- ---- Window 1 Area
+    ---x ---- Window 0 Area
+                  (0 = Inside,1 = Outside)
+    ---- x--- Sprite Window Enable
+    ---- -x-- Window 1 Enable
+    ---- --x- Window 0 Enable
+                  (0 = Disabled,1 = Enabled)
+    ---- ---x Window Logic
+                  (0 = OR,1 = AND)
 ******************************************************************************************/
 static int stv_vdp2_window_process(int x,int y)
 {
@@ -3893,7 +3928,7 @@ static int stv_vdp2_window_process(int x,int y)
 				if(x < s_x || x > e_x)
 					return 1;
 				//else
-				//	return 0;
+				//  return 0;
 			}
 		}
 		/*Inside Area*/
@@ -3905,7 +3940,7 @@ static int stv_vdp2_window_process(int x,int y)
 					return 1;
 			}
 			//else
-			//	return 0;
+			//  return 0;
 		}
 	}
 	/*W1*/
@@ -3961,7 +3996,7 @@ static int stv_vdp2_window_process(int x,int y)
 				if(x < s_x || x > e_x)
 					return 1;
 				//else
-				//	return 0;
+				//  return 0;
 			}
 		}
 		/*Inside Area*/
@@ -3973,11 +4008,11 @@ static int stv_vdp2_window_process(int x,int y)
 					return 1;
 			}
 			//else
-			//	return 0;
+			//  return 0;
 		}
 	}
 	return 0;
-//	return 1;
+//  return 1;
 }
 
 /* VDP1 Framebuffer handling */
@@ -3986,6 +4021,7 @@ extern UINT16	 **stv_framebuffer_lines;
 extern int		 stv_framebuffer_width;
 extern int		 stv_framebuffer_height;
 extern int		 stv_framebuffer_double_interlace;
+extern int       stv_framebuffer_mode;
 
 void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 pri)
 {
@@ -3995,6 +4031,7 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	UINT16 *framebuffer_line;
 	UINT16 *bitmap_line, *bitmap_line2 = NULL;
 	UINT8  interlace_framebuffer;
+	UINT8  double_x;
 	static const UINT16 sprite_colormask_table[] = { 0x07ff, 0x07ff, 0x07ff, 0x07ff, 0x03ff, 0x07ff, 0x03ff, 0x01ff,
 										0x007f, 0x003f, 0x003f, 0x003f, 0x0ff, 0x0ff, 0x0ff, 0x0ff };
 	static const UINT16 priority_shift_table[] = { 14, 13, 14, 13, 13, 12, 12, 12, 7, 7, 6, 0, 7, 7, 6, 0 };
@@ -4073,6 +4110,13 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	else
 		interlace_framebuffer = 0;
 
+	/*Guess:Some games needs that the horizontal sprite size to be doubled
+      (TODO: understand the proper settings,it might not work like this)*/
+	if(STV_VDP2_LSMD == 3 && /*((STV_VDP2_HRES & 3) != 3) &&*/ (!(stv_framebuffer_mode & 1)))
+		double_x = 1;
+	else
+		double_x = 0;
+
 	for ( y = cliprect->min_y; y <= cliprect->max_y; y++ )
 	{
 		framebuffer_line = stv_framebuffer_lines[y];
@@ -4086,7 +4130,7 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 			bitmap_line2 = (UINT16*)bitmap->line[2*y + 1];
 		}
 
-		for ( x = cliprect->min_x; x <= cliprect->max_x; x++ )
+		for ( x = cliprect->min_x; double_x ? x <= ((cliprect->max_x)/2) : (x <= cliprect->max_x); x++ )
 		{
 			pix = framebuffer_line[x];
 			if ( pix & 0x8000 )
@@ -4099,8 +4143,18 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 				{
 					stv_vdp2_compute_color_offset_RGB555( &r, &g, &b, STV_VDP2_SPCOSL );
 				}
-				bitmap_line[x] = b | g << 5 | r << 10;
-				if ( interlace_framebuffer == 1 ) bitmap_line2[x] = b | g << 5 | r << 10;
+				if(double_x)
+				{
+					bitmap_line[x*2] = b | g << 5 | r << 10;
+					if ( interlace_framebuffer == 1 ) bitmap_line2[x*2] = b | g << 5 | r << 10;
+					bitmap_line[x*2+1] = b | g << 5 | r << 10;
+					if ( interlace_framebuffer == 1 ) bitmap_line2[x*2+1] = b | g << 5 | r << 10;
+				}
+				else
+				{
+					bitmap_line[x] = b | g << 5 | r << 10;
+					if ( interlace_framebuffer == 1 ) bitmap_line2[x] = b | g << 5 | r << 10;
+				}
 			}
 			else
 			{
@@ -4126,13 +4180,33 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 					pix += color_offset_pal;
 					if ( alpha_enabled == 0 )
 					{
-						bitmap_line[x] = Machine->pens[ pix ];
-						if ( interlace_framebuffer == 1 ) bitmap_line2[x] = Machine->pens[ pix ];
+						if(double_x)
+						{
+							bitmap_line[x*2] = Machine->pens[ pix ];
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x*2] = Machine->pens[ pix ];
+							bitmap_line[x*2+1] = Machine->pens[ pix ];
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x*2+1] = Machine->pens[ pix ];
+						}
+						else
+						{
+							bitmap_line[x] = Machine->pens[ pix ];
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x] = Machine->pens[ pix ];
+						}
 					}
 					else
 					{
-						bitmap_line[x] = alpha_blend_r16( bitmap_line[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
-						if ( interlace_framebuffer == 1 ) bitmap_line2[x] = alpha_blend_r16( bitmap_line2[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+						if(double_x)
+						{
+							bitmap_line[x*2] = alpha_blend_r16( bitmap_line[x*2], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x*2] = alpha_blend_r16( bitmap_line2[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+							bitmap_line[x*2+1] = alpha_blend_r16( bitmap_line[x*2+1], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x*2+1] = alpha_blend_r16( bitmap_line2[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+						}
+						else
+						{
+							bitmap_line[x] = alpha_blend_r16( bitmap_line[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+							if ( interlace_framebuffer == 1 ) bitmap_line2[x] = alpha_blend_r16( bitmap_line2[x], Machine->pens[pix], ((UINT16)(0x1f-ccr)*0xff)/0x1f );
+						}
 					}
 				}
 			}
@@ -4214,10 +4288,10 @@ VIDEO_UPDATE( stv_vdp2 )
 	}
 
 	/*usrintf_showmessage("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"
-	,STV_VDP2_N0ZMXI,STV_VDP2_N0ZMXD
-	,STV_VDP2_N0ZMYI,STV_VDP2_N0ZMYD
-	,STV_VDP2_N1ZMXI,STV_VDP2_N1ZMXD
-	,STV_VDP2_N1ZMYI,STV_VDP2_N1ZMYD);*/
+    ,STV_VDP2_N0ZMXI,STV_VDP2_N0ZMXD
+    ,STV_VDP2_N0ZMYI,STV_VDP2_N0ZMYD
+    ,STV_VDP2_N1ZMXI,STV_VDP2_N1ZMXD
+    ,STV_VDP2_N1ZMYI,STV_VDP2_N1ZMYD);*/
 
 	if ( code_pressed_memory(KEYCODE_W) )
 	{

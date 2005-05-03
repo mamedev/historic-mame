@@ -1,42 +1,42 @@
 /***************************************************************************
 
-					  -= Fantasy Land / Galaxy Gunners =-
+                      -= Fantasy Land / Galaxy Gunners =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-	This game has sprites only:
+    This game has sprites only:
 
-	tiles are 16 x 16 x 6. There are $400 sprites, each one is allotted
-	8 bytes of memory (but only 5 are used) :
+    tiles are 16 x 16 x 6. There are $400 sprites, each one is allotted
+    8 bytes of memory (but only 5 are used) :
 
-	Offset: 	Bits:			Value:
+    Offset:     Bits:           Value:
 
-		0						X (low bits)
+        0                       X (low bits)
 
-		1		7--- ----		X (high bit)
-				-6-- ----		Y (high bit)
-				--5- ----		Flip X
-				---4 ----		Flip Y
-				---- 32--
-				---- --10		Color
+        1       7--- ----       X (high bit)
+                -6-- ----       Y (high bit)
+                --5- ----       Flip X
+                ---4 ----       Flip Y
+                ---- 32--
+                ---- --10       Color
 
-		2						Code (high bits)
+        2                       Code (high bits)
 
-		3						Code (low bits)
+        3                       Code (low bits)
 
-		4						Y (low bits)
+        4                       Y (low bits)
 
-	Then follows a table with 1 byte per sprite: the index of a x,y
-	and code offset	that sprite will use, from a table with 256 entries:
+    Then follows a table with 1 byte per sprite: the index of a x,y
+    and code offset that sprite will use, from a table with 256 entries:
 
-		0						Y offset (low bits)
+        0                       Y offset (low bits)
 
-		1		7654 321-		Code offset
-				---- ---0		Y offset (high bit)
+        1       7654 321-       Code offset
+                ---- ---0       Y offset (high bit)
 
-		2						X offset (low bits)
+        2                       X offset (low bits)
 
-		3						X offset (high bit)
+        3                       X offset (high bit)
 
 ***************************************************************************/
 

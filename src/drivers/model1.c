@@ -72,8 +72,8 @@ static int last_irq;
 
 static void irq_raise(int level)
 {
-	//	logerror("irq: raising %d\n", level);
-	//	irq_status |= (1 << level);
+	//  logerror("irq: raising %d\n", level);
+	//  irq_status |= (1 << level);
 	last_irq = level;
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
@@ -708,7 +708,7 @@ ROM_START( swa )
 	ROM_REGION32_LE( 0xc00000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "mpr-16476.26", 0x000000, 0x200000, CRC(d48609ae) SHA1(8c8686a5c9ca4837447a7f70ed194e2f1882b66d) )
 // original dump (which one is right?)
-//	ROM_LOAD32_WORD( "mpr-16477.27", 0x000002, 0x200000, CRC(b979b082) SHA1(0c60d259093e987f3856730b57b43bde7e9562e3) )
+//  ROM_LOAD32_WORD( "mpr-16477.27", 0x000002, 0x200000, CRC(b979b082) SHA1(0c60d259093e987f3856730b57b43bde7e9562e3) )
 // new dump
         ROM_LOAD32_WORD( "mpr16477.bin", 0x000002, 0x200000, CRC(971ff194) SHA1(9665ede3ca22885489f1f1b5865ccfac42364206) )
 	ROM_LOAD32_WORD( "mpr-16478.28", 0x400000, 0x200000, CRC(80c780f7) SHA1(2f57c5373b02765d302bcd81e24f7b7bc4181387) )

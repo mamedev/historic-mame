@@ -1,60 +1,60 @@
 /***************************************************************************
 
-	Atari Cloud 9 (prototype) hardware
+    Atari Cloud 9 (prototype) hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Cloud 9
+    Games supported:
+        * Cloud 9
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Cloud9 (prototype) driver.
+    Cloud9 (prototype) driver.
 
-	This hardware is yet another variant of the Centipede/Millipede hardware,
-	but as you can see there are some significant deviations...
+    This hardware is yet another variant of the Centipede/Millipede hardware,
+    but as you can see there are some significant deviations...
 
-	0000			R/W 	X index into the bitmap
-	0001			R/W 	Y index into the bitmap
-	0002			R/W 	Current bitmap pixel value
-	0003-05FF 	R/W 	RAM
-	0600-3FFF 	R/W 	Bitmap RAM bank 0 (and bank 1 ?)
-	5000-5073 	R/W 	Motion Object RAM
-	5400			W		Watchdog
-	5480			W		IRQ Acknowledge
-	5500-557F 	W		Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
+    0000            R/W     X index into the bitmap
+    0001            R/W     Y index into the bitmap
+    0002            R/W     Current bitmap pixel value
+    0003-05FF   R/W     RAM
+    0600-3FFF   R/W     Bitmap RAM bank 0 (and bank 1 ?)
+    5000-5073   R/W     Motion Object RAM
+    5400            W       Watchdog
+    5480            W       IRQ Acknowledge
+    5500-557F   W       Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
 
-	5580			W		Auto-increment X bitmap index (~D7)
-	5581			W		Auto-increment Y bitmap index (~D7)
-	5584			W		VRAM Both Banks - (D7) seems to allow writing to both banks
-	5585			W		Invert screen?
-	5586			W		VRAM Bank select?
-	5587			W		Color bank select
+    5580            W       Auto-increment X bitmap index (~D7)
+    5581            W       Auto-increment Y bitmap index (~D7)
+    5584            W       VRAM Both Banks - (D7) seems to allow writing to both banks
+    5585            W       Invert screen?
+    5586            W       VRAM Bank select?
+    5587            W       Color bank select
 
-	5600			W		Coin Counter 1 (D7)
-	5601			W		Coin Counter 2 (D7)
-	5602			W		Start1 LED (~D7)
-	5603			W		Start2 LED (~D7)
+    5600            W       Coin Counter 1 (D7)
+    5601            W       Coin Counter 2 (D7)
+    5602            W       Start1 LED (~D7)
+    5603            W       Start2 LED (~D7)
 
-	5680			W		Force Write to EAROM?
-	5700			W		EAROM Off?
-	5780			W		EAROM On?
+    5680            W       Force Write to EAROM?
+    5700            W       EAROM Off?
+    5780            W       EAROM On?
 
-	5800			R		IN0 (D7=Vblank, D6=Right Coin, D5=Left Coin, D4=Aux, D3=Self Test)
-	5801			R		IN1 (D7=Start1, D6=Start2, D5=Fire, D4=Zap)
-	5900			R		Trackball Vert
-	5901			R		Trackball Horiz
+    5800            R       IN0 (D7=Vblank, D6=Right Coin, D5=Left Coin, D4=Aux, D3=Self Test)
+    5801            R       IN1 (D7=Start1, D6=Start2, D5=Fire, D4=Zap)
+    5900            R       Trackball Vert
+    5901            R       Trackball Horiz
 
-	5A00-5A0F 	R/W 	Pokey 1
-	5B00-5B0F 	R/W 	Pokey 2
-	5C00-5CFF 	W		EAROM
-	6000-FFFF 	R		Program ROM
+    5A00-5A0F   R/W     Pokey 1
+    5B00-5B0F   R/W     Pokey 2
+    5C00-5CFF   W       EAROM
+    6000-FFFF   R       Program ROM
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -66,7 +66,7 @@
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -85,7 +85,7 @@ static WRITE8_HANDLER( cloud9_coin_counter_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -118,7 +118,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -173,7 +173,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -214,7 +214,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -234,7 +234,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -274,7 +274,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -297,7 +297,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

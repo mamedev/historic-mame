@@ -19,7 +19,7 @@
 /*********************************************/
 /* IF GAME SPECIFIC HACKS ARE REQUIRED THEN  */
 /* USE THE namcos2_gametype VARIABLE TO FIND */
-/* OUT WHAT GAME IS RUNNING 				 */
+/* OUT WHAT GAME IS RUNNING                  */
 /*********************************************/
 
 enum
@@ -123,7 +123,7 @@ READ16_HANDLER( namcos2_sprite_ram_r );
 READ16_HANDLER( namcos2_flap_prot_r );
 
 /**************************************************************/
-/*	EEPROM memory function handlers 						  */
+/*  EEPROM memory function handlers                           */
 /**************************************************************/
 #define NAMCOS2_68K_EEPROM_W	namcos2_68k_eeprom_w
 #define NAMCOS2_68K_EEPROM_R	namcos2_68k_eeprom_r
@@ -134,7 +134,7 @@ extern data16_t *namcos2_eeprom;
 extern size_t namcos2_eeprom_size;
 
 /**************************************************************/
-/*	Shared video palette function handlers					  */
+/*  Shared video palette function handlers                    */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_video_palette_r );
 WRITE16_HANDLER( namcos2_68k_video_palette_w );
@@ -144,12 +144,12 @@ extern data16_t *namcos2_68k_palette_ram;
 extern size_t namcos2_68k_palette_size;
 
 /**************************************************************/
-/*	Shared data ROM memory handlerhandlers					  */
+/*  Shared data ROM memory handlerhandlers                    */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_data_rom_r );
 
 /**************************************************************/
-/* Shared serial communications processory (CPU5 ????)		  */
+/* Shared serial communications processory (CPU5 ????)        */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_serial_comms_ram_r );
 WRITE16_HANDLER( namcos2_68k_serial_comms_ram_w );
@@ -160,13 +160,13 @@ extern data16_t  namcos2_68k_serial_comms_ctrl[];
 extern data16_t *namcos2_68k_serial_comms_ram;
 
 /**************************************************************/
-/* Shared protection/random number generator				  */
+/* Shared protection/random number generator                  */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_key_r );
 WRITE16_HANDLER( namcos2_68k_key_w );
 
 /**************************************************************/
-/* Non-shared memory custom IO device - IRQ/Inputs/Outputs	 */
+/* Non-shared memory custom IO device - IRQ/Inputs/Outputs   */
 /**************************************************************/
 
 #define NAMCOS2_C148_0			0		/* 0x1c0000 */
@@ -192,21 +192,21 @@ INTERRUPT_GEN( namcos2_68k_slave_vblank );
 void namcos2_68k_slave_posirq( int moog );
 
 /**************************************************************/
-/* MASTER CPU RAM MEMORY									  */
+/* MASTER CPU RAM MEMORY                                      */
 /**************************************************************/
 
 #define NAMCOS2_68K_MASTER_RAM_W	MWA16_BANK3
 #define NAMCOS2_68K_MASTER_RAM_R	MRA16_BANK3
 
 /**************************************************************/
-/* SLAVE CPU RAM MEMORY 									  */
+/* SLAVE CPU RAM MEMORY                                       */
 /**************************************************************/
 
 #define NAMCOS2_68K_SLAVE_RAM_W 	MWA16_BANK4
 #define NAMCOS2_68K_SLAVE_RAM_R 	MRA16_BANK4
 
 /**************************************************************/
-/*	ROZ - Rotate & Zoom memory function handlers			  */
+/*  ROZ - Rotate & Zoom memory function handlers              */
 /**************************************************************/
 
 WRITE16_HANDLER( namcos2_68k_roz_ctrl_w );
@@ -217,19 +217,19 @@ READ16_HANDLER( namcos2_68k_roz_ram_r );
 extern data16_t *namcos2_68k_roz_ram;
 
 /**************************************************************/
-/*															  */
+/*                                                            */
 /**************************************************************/
 #define BANKED_SOUND_ROM_R		MRA8_BANK6
 #define CPU3_ROM1				6			/* Bank number */
 
 /**************************************************************/
-/* Sound CPU support handlers - 6809						  */
+/* Sound CPU support handlers - 6809                          */
 /**************************************************************/
 
 WRITE8_HANDLER( namcos2_sound_bankselect_w );
 
 /**************************************************************/
-/* MCU Specific support handlers - HD63705					  */
+/* MCU Specific support handlers - HD63705                    */
 /**************************************************************/
 
 WRITE8_HANDLER( namcos2_mcu_analog_ctrl_w );

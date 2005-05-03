@@ -1,17 +1,17 @@
-/************************************************ 
- * Result table for Z8000 DAB instruction         
- *                                                
- * bits    description                            
- * ---------------------------------------------- 
- * 0..7    destination value                      
- * 8       carry flag before                      
- * 9       half carry flag before                 
- * 10      D flag (0 add/adc, 1 sub/sbc)          
- *                                                
- * result  description                            
- * ---------------------------------------------- 
- * 0..7    result value                           
- * 8       carry flag after                       
+/************************************************
+ * Result table for Z8000 DAB instruction
+ *
+ * bits    description
+ * ----------------------------------------------
+ * 0..7    destination value
+ * 8       carry flag before
+ * 9       half carry flag before
+ * 10      D flag (0 add/adc, 1 sub/sbc)
+ *
+ * result  description
+ * ----------------------------------------------
+ * 0..7    result value
+ * 8       carry flag after
  ************************************************/
 static UINT16 Z8000_dab[0x800] = {
 	/* add/adc results */

@@ -33,7 +33,7 @@ static ADDRESS_MAP_START( dommy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2800, 0x2bff) AM_READ(btime_mirrorvideoram_r)
 	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_2_r)     /* DSW1 */
 	AM_RANGE(0x4001, 0x4001) AM_READ(input_port_3_r)     /* DSW2 */
-/*	AM_RANGE(0x4004, 0x4004)  */ /* this is read */
+/*  AM_RANGE(0x4004, 0x4004)  */ /* this is read */
 	AM_RANGE(0x4002, 0x4002) AM_READ(input_port_0_r)     /* IN0 */
 	AM_RANGE(0x4003, 0x4003) AM_READ(input_port_1_r)     /* IN1 */
 	AM_RANGE(0xa000, 0xffff) AM_READ(MRA8_ROM)
@@ -212,10 +212,10 @@ static MACHINE_DRIVER_START( dommy )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
 MACHINE_DRIVER_END
@@ -245,10 +245,10 @@ static MACHINE_DRIVER_START( scregg )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
 MACHINE_DRIVER_END

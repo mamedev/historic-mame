@@ -98,15 +98,15 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 #define GetModRM UINT32 ModRM=cpu_readop_arg((I.sregs[CS]<<4)+I.ip++)
 
 /* Cycle count macros:
-	CLK  - cycle count is the same on all processors
-	CLKS - cycle count differs between processors, list all counts
-	CLKW - cycle count for word read/write differs for odd/even source/destination address
-	CLKM - cycle count for reg/mem instructions
-	CLKR - cycle count for reg/mem instructions with different counts for odd/even addresses
+    CLK  - cycle count is the same on all processors
+    CLKS - cycle count differs between processors, list all counts
+    CLKW - cycle count for word read/write differs for odd/even source/destination address
+    CLKM - cycle count for reg/mem instructions
+    CLKR - cycle count for reg/mem instructions with different counts for odd/even addresses
 
 
-	Prefetch & buswait time is not emulated.
-	Extra cycles for PUSH'ing or POP'ing registers to odd addresses is not emulated.
+    Prefetch & buswait time is not emulated.
+    Extra cycles for PUSH'ing or POP'ing registers to odd addresses is not emulated.
 */
 
 #define CLK(all) nec_ICount-=all

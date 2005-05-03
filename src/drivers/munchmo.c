@@ -7,10 +7,10 @@
   15 MHz crystal
 
   Known Issues:
-	- sprite priority problems
-	- it's unclear if mirroring the videoram chunks is correct behavior
-	- several unmapped registers
-	- sustained sounds (when there should be silence)
+    - sprite priority problems
+    - it's unclear if mirroring the videoram chunks is correct behavior
+    - several unmapped registers
+    - sustained sounds (when there should be silence)
 
 ***************************************************************************/
 
@@ -162,14 +162,14 @@ INPUT_PORTS_START( mnchmobl )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1e, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x14, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(    0x12, DEF_STR( 2C_1C ) )
+//  PORT_DIPSETTING(    0x12, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x16, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x1a, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x1a, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
@@ -311,10 +311,10 @@ static MACHINE_DRIVER_START( munchmo )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

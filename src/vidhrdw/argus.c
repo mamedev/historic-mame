@@ -1184,7 +1184,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 									tile + td,
 									color,
 									flipx, flipy,
-									sx + j * 16, sy - i * 16,									
+									sx + j * 16, sy - i * 16,
 									cliprect,
 									TRANSPARENCY_PEN, 7);
 					}

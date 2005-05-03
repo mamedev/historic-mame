@@ -1,76 +1,76 @@
 /***************************************************************************
 
-	Atari I, Robot hardware
+    Atari I, Robot hardware
 
-	Games supported:
-		* I, Robot
+    Games supported:
+        * I, Robot
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	I-Robot Memory Map
+    I-Robot Memory Map
 
-	0000 - 07FF  R/W    RAM
-	0800 - 0FFF  R/W    Banked RAM
-	1000 - 1000  INRD1  Bit 7 = Right Coin
-	                    Bit 6 = Left Coin
-	                    Bit 5 = Aux Coin
-	                    Bit 4 = Self Test
-	                    Bit 3 = ?
-	                    Bit 2 = ?
-	                    Bit 1 = ?
-	                    Bit 0 = ?
-	1040 - 1040  INRD2  Bit 7 = Start 1
-	                    Bit 6 = Start 2
-	                    Bit 5 = ?
-	                    Bit 4 = Fire
-	                    Bit 3 = ?
-	                    Bit 2 = ?
-	                    Bit 1 = ?
-	                    Bit 0 = ?
-	1080 - 1080  STATRD Bit 7 = VBLANK
-	                    Bit 6 = Polygon generator done
-	                    Bit 5 = Mathbox done
-	                    Bit 4 = Unused
-	                    Bit 3 = ?
-	                    Bit 2 = ?
-	                    Bit 1 = ?
-	                    Bit 0 = ?
-	10C0 - 10C0  INRD3  Dip switch
-	1140 - 1140  STATWR Bit 7 = Select Polygon RAM banks
-	                    Bit 6 = BFCALL
-	                    Bit 5 = Cocktail Flip
-	                    Bit 4 = Start Mathbox
-	                    Bit 3 = Connect processor bus to mathbox bus
-	                    Bit 2 = Start polygon generator
-	                    Bit 1 = Select polygon image RAM bank
-	                    Bit 0 = Erase polygon image memory
-	1180 - 1180  OUT0   Bit 7 = Alpha Map 1
-	                    Bit 6,5 = RAM bank select
-	                    Bit 4,3 = Mathbox memory select
-	                    Bit 2,1 = Mathbox bank select
-	11C0 - 11C0  OUT1   Bit 7 = Coin Counter R
-	                    Bit 6 = Coin Counter L
-	                    Bit 5 = LED2
-	                    Bit 4 = LED1
-	                    Bit 3,2,1 = ROM bank select
-	1200 - 12FF  R/W    NVRAM (bits 0..3 only)
-	1300 - 13FF  W      Select analog controller
-	1300 - 13FF  R      Read analog controller
-	1400 - 143F  R/W    Quad Pokey
-	1800 - 18FF         Palette RAM
-	1900 - 1900  W      Watchdog reset
-	1A00 - 1A00  W      FIREQ Enable
-	1B00 - 1BFF  W      Start analog controller ADC
-	1C00 - 1FFF  R/W    Character RAM
-	2000 - 3FFF  R/W    Mathbox/Vector Gen Shared RAM
-	4000 - 5FFF  R      Banked ROM
-	6000 - FFFF  R      Fixed ROM
+    0000 - 07FF  R/W    RAM
+    0800 - 0FFF  R/W    Banked RAM
+    1000 - 1000  INRD1  Bit 7 = Right Coin
+                        Bit 6 = Left Coin
+                        Bit 5 = Aux Coin
+                        Bit 4 = Self Test
+                        Bit 3 = ?
+                        Bit 2 = ?
+                        Bit 1 = ?
+                        Bit 0 = ?
+    1040 - 1040  INRD2  Bit 7 = Start 1
+                        Bit 6 = Start 2
+                        Bit 5 = ?
+                        Bit 4 = Fire
+                        Bit 3 = ?
+                        Bit 2 = ?
+                        Bit 1 = ?
+                        Bit 0 = ?
+    1080 - 1080  STATRD Bit 7 = VBLANK
+                        Bit 6 = Polygon generator done
+                        Bit 5 = Mathbox done
+                        Bit 4 = Unused
+                        Bit 3 = ?
+                        Bit 2 = ?
+                        Bit 1 = ?
+                        Bit 0 = ?
+    10C0 - 10C0  INRD3  Dip switch
+    1140 - 1140  STATWR Bit 7 = Select Polygon RAM banks
+                        Bit 6 = BFCALL
+                        Bit 5 = Cocktail Flip
+                        Bit 4 = Start Mathbox
+                        Bit 3 = Connect processor bus to mathbox bus
+                        Bit 2 = Start polygon generator
+                        Bit 1 = Select polygon image RAM bank
+                        Bit 0 = Erase polygon image memory
+    1180 - 1180  OUT0   Bit 7 = Alpha Map 1
+                        Bit 6,5 = RAM bank select
+                        Bit 4,3 = Mathbox memory select
+                        Bit 2,1 = Mathbox bank select
+    11C0 - 11C0  OUT1   Bit 7 = Coin Counter R
+                        Bit 6 = Coin Counter L
+                        Bit 5 = LED2
+                        Bit 4 = LED1
+                        Bit 3,2,1 = ROM bank select
+    1200 - 12FF  R/W    NVRAM (bits 0..3 only)
+    1300 - 13FF  W      Select analog controller
+    1300 - 13FF  R      Read analog controller
+    1400 - 143F  R/W    Quad Pokey
+    1800 - 18FF         Palette RAM
+    1900 - 1900  W      Watchdog reset
+    1A00 - 1A00  W      FIREQ Enable
+    1B00 - 1BFF  W      Start analog controller ADC
+    1C00 - 1FFF  R/W    Character RAM
+    2000 - 3FFF  R/W    Mathbox/Vector Gen Shared RAM
+    4000 - 5FFF  R      Banked ROM
+    6000 - FFFF  R      Fixed ROM
 
-	Notes:
-	- There is no flip screen nor cocktail mode in the original game
+    Notes:
+    - There is no flip screen nor cocktail mode in the original game
 
 ****************************************************************************/
 
@@ -84,7 +84,7 @@
 
 /*************************************
  *
- *	NVRAM handler
+ *  NVRAM handler
  *
  *************************************/
 
@@ -97,7 +97,7 @@ WRITE8_HANDLER( irobot_nvram_w )
 
 /*************************************
  *
- *	IRQ acknowledgement
+ *  IRQ acknowledgement
  *
  *************************************/
 
@@ -116,7 +116,7 @@ static WRITE8_HANDLER( irobot_clearfirq_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -159,7 +159,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -253,7 +253,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -279,7 +279,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -293,7 +293,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -316,7 +316,7 @@ static MACHINE_DRIVER_START( irobot )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64 + 32)
 	MDRV_COLORTABLE_LENGTH(64 + 32)	/* 64 for polygons, 32 for text */
-	
+
 	MDRV_PALETTE_INIT(irobot)
 	MDRV_VIDEO_START(irobot)
 	MDRV_VIDEO_UPDATE(irobot)
@@ -342,7 +342,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -390,7 +390,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

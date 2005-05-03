@@ -1,5 +1,5 @@
 /**************************************************************************
- Portraits 
+ Portraits
  (c) 1983 Olympia
 
 Preliminary Driver by Steve Ellenoff & Peo
@@ -102,7 +102,7 @@ WRITE8_HANDLER( portrait_fgvideo_write );
 static WRITE8_HANDLER( portrait_ctrl_w )
 {
 	/* bits 4 and 5 are unknown */
-	
+
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 	coin_counter_w(2, data & 0x04);
@@ -271,14 +271,14 @@ static MACHINE_DRIVER_START( portrait )
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x800)
-//	MDRV_PALETTE_INIT(portrait)
+//  MDRV_PALETTE_INIT(portrait)
 
 	MDRV_VIDEO_START(portrait)
 	MDRV_VIDEO_UPDATE(portrait)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(TMS5220, 640000) // actually it uses a tms5200 chip
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -348,7 +348,7 @@ ROM_START( portrata )
 
 	ROM_REGION( 0x0800, REGION_USER1, 0 ) // sound related?
 	ROM_LOAD( "port_sa.bin", 0x0000, 0x0800, CRC(50510897) SHA1(8af0f42699602a5b33500968c958e3784e03377f) )
-	
+
 	ROM_REGION( 0x840, REGION_PROMS, 0 )
 	/* color prom? */
 	ROM_LOAD( "93z511.bin",   0x0000, 0x0800, CRC(d66d9036) SHA1(7a25efbd8f2f94a01aad9e2be9cb18da7b9ec1d1) )

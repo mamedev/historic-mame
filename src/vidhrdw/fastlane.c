@@ -78,7 +78,7 @@ static void get_tile_info1(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -138,7 +138,7 @@ VIDEO_UPDATE( fastlane )
 {
 	struct rectangle finalclip0 = clip0, finalclip1 = clip1;
 	int i, xoffs;
-	
+
 	sect_rect(&finalclip0, cliprect);
 	sect_rect(&finalclip1, cliprect);
 

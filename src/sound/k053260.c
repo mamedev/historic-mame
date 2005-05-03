@@ -1,6 +1,6 @@
 /*********************************************************
 
-	Konami 053260 PCM Sound Chip
+    Konami 053260 PCM Sound Chip
 
 *********************************************************/
 
@@ -141,11 +141,11 @@ void K053260_update( void * param, stream_sample_t **inputs, stream_sample_t **b
 						/* we only update the signal if we're starting or a real sound sample has gone by */
 						/* this is all due to the dynamic sample rate convertion */
 						if ( pos[i] == 0 || ( ( pos[i] ^ ( pos[i] - delta[i] ) ) & 0x8000 ) == 0x8000 )
-								
+
 						 {
 							int newdata;
 							if ( pos[i] & 0x8000 ){
-													
+
 								newdata = ((rom[i][pos[i] >> BASE_SHIFT]) >> 4) & 0x0f; /*high nybble*/
 							}
 							else{
@@ -153,16 +153,16 @@ void K053260_update( void * param, stream_sample_t **inputs, stream_sample_t **b
 							}
 
 							ppcm_data[i] = (( ( ppcm_data[i] * 62 ) >> 6 ) + dpcmcnv[newdata]);
-							
+
 							if ( ppcm_data[i] > 127 )
 								ppcm_data[i] = 127;
 							else
 								if ( ppcm_data[i] < -128 )
 									ppcm_data[i] = -128;
 						}
-                                                                                   
-                                               
-                                           		
+
+
+
 						d = ppcm_data[i];
 
 						pos[i] += delta[i];
@@ -195,7 +195,7 @@ static void *k053260_start(int sndindex, int clock, const void *config)
 {
 	struct K053260_chip_def *ic;
 	int i;
-	
+
 	ic = auto_malloc(sizeof(*ic));
 	memset(ic, 0, sizeof(*ic));
 

@@ -1,23 +1,23 @@
 /***************************************************************************
 
-	Dynamite Duke						(c) 1989 Seibu Kaihatsu/Fabtek
-	The Double Dynamites				(c) 1989 Seibu Kaihatsu/Fabtek
+    Dynamite Duke                       (c) 1989 Seibu Kaihatsu/Fabtek
+    The Double Dynamites                (c) 1989 Seibu Kaihatsu/Fabtek
 
 
-	To access test mode, reset with both start buttons held.
+    To access test mode, reset with both start buttons held.
 
-	Coin inputs are handled by the sound CPU, so they don't work with sound
-	disabled. Just put the game in Free Play mode.
+    Coin inputs are handled by the sound CPU, so they don't work with sound
+    disabled. Just put the game in Free Play mode.
 
-	The background layer is 5bpp and I'm not 100% sure the colours are
-	correct on it, although the layer is 5bpp the palette data is 4bpp.
-	My current implementation looks pretty good though I've never seen
-	the real game.
+    The background layer is 5bpp and I'm not 100% sure the colours are
+    correct on it, although the layer is 5bpp the palette data is 4bpp.
+    My current implementation looks pretty good though I've never seen
+    the real game.
 
-	There is a country code byte in the program to select between
-	Seibu Kaihatsu/Fabtek/Taito licenses.
+    There is a country code byte in the program to select between
+    Seibu Kaihatsu/Fabtek/Taito licenses.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

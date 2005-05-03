@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Video Hardware for Nichibutsu Mahjong series.
+    Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
 ******************************************************************************/
 
@@ -404,7 +404,7 @@ static void mbmj8688_gfxdraw(int gfxtype)
 					// lookup table mode
 
 					// unknown flag (seiha, seiham)
-				//	if (mjsikaku_gfxflag3 & 0x80) return;
+				//  if (mjsikaku_gfxflag3 & 0x80) return;
 
 					// unknown (seiha, seiham, iemoto, ojousan)
 					if (!(mjsikaku_gfxflag2 & 0x20)) return;
@@ -478,9 +478,9 @@ static void mbmj8688_gfxdraw(int gfxtype)
 				if (gfxtype == GFXTYPE_HYBRID_12BIT && (mjsikaku_gfxflag2 & 0x20))
 				{
 					/* 4096 colors mode, wedged in on top of normal mode
-					   Here we affect only the 4 least significant bits, the others are
-					   changed as usual.
-					 */
+                       Here we affect only the 4 least significant bits, the others are
+                       changed as usual.
+                     */
 
 					if (mjsikaku_gfxflag2 & 0x10)
 					{

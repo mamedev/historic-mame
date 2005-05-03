@@ -16,14 +16,14 @@ WRITE8_HANDLER(homerun_banking_w)
 		homerun_gc_down=data&3;
 	else
 		homerun_gc_up=data&3;
-  
+
   	tilemap_mark_all_tiles_dirty(homerun_tilemap);
 
 	data>>=5;
 	if(!data)
 		cpu_setbank(1, memory_region(REGION_CPU1) );
 	else
-		cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + (((data-1)&0x7)*0x4000 ));	
+		cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + (((data-1)&0x7)*0x4000 ));
 }
 
 WRITE8_HANDLER( homerun_videoram_w )
@@ -91,19 +91,19 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 VIDEO_UPDATE(homerun)
 {
-	struct rectangle myclip=*cliprect; 
-	
+	struct rectangle myclip=*cliprect;
+
 	/* upper part */
-	
-	tilemap_set_scrollx(homerun_tilemap, 0, homerun_xpc+((homerun_xpa&2)<<7) ); 
-	tilemap_set_scrolly(homerun_tilemap, 0, homerun_xpb+((homerun_xpa&1)<<8) ); 
+
+	tilemap_set_scrollx(homerun_tilemap, 0, homerun_xpc+((homerun_xpa&2)<<7) );
+	tilemap_set_scrolly(homerun_tilemap, 0, homerun_xpb+((homerun_xpa&1)<<8) );
 	myclip.max_y/=2;
 	homerun_gfx_ctrl=homerun_gc_up;
 	tilemap_draw(bitmap,&myclip,homerun_tilemap,0,0);
 	draw_sprites(bitmap,&myclip);
 
 	/* lower part */
-	
+
 	myclip.min_y+=myclip.max_y;
 	myclip.max_y*=2;
 	homerun_gfx_ctrl=homerun_gc_down;

@@ -61,7 +61,7 @@ WRITE8_HANDLER( rockrage_vreg_w ){
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 

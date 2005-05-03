@@ -1,89 +1,89 @@
 /***************************************************************************
 
-	Coors Light Bowling/Bowl-O-Rama hardware
+    Coors Light Bowling/Bowl-O-Rama hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
-	Games supported:
-		* Capcom/Coors Light Bowling
-		* Bowlorama
+    Games supported:
+        * Capcom/Coors Light Bowling
+        * Bowlorama
 
-	Known issues:
-		* none
+    Known issues:
+        * none
 
 ****************************************************************************
 
-	CPU Board:
+    CPU Board:
 
-	0000-3fff     3 Graphics ROMS mapped in using 0x4800 (Coors Light Bowling only)
-	0000-001f		Turbo board area (Bowl-O-Rama only) See Below.
-	4000          Display row selected
-	4800          Graphics ROM select
-	5000-57ff     Battery backed up RAM (Saves machine state after shut off)
-	           Enter setup menu by holding down the F2 key on the
-	           high score screen
-	5800-5fff		TMS34061 area
+    0000-3fff     3 Graphics ROMS mapped in using 0x4800 (Coors Light Bowling only)
+    0000-001f       Turbo board area (Bowl-O-Rama only) See Below.
+    4000          Display row selected
+    4800          Graphics ROM select
+    5000-57ff     Battery backed up RAM (Saves machine state after shut off)
+               Enter setup menu by holding down the F2 key on the
+               high score screen
+    5800-5fff       TMS34061 area
 
-	           First 0x20 bytes of each row provide a 16 color palette for this
-	           row. 2 bytes per color: 0000RRRR GGGGBBBB.
+               First 0x20 bytes of each row provide a 16 color palette for this
+               row. 2 bytes per color: 0000RRRR GGGGBBBB.
 
-	           Remaining 0xe0 bytes contain 2 pixels each for a total of
-	           448 pixels, but only 360 seem to be displayed.
-	           (Each row appears vertically because the monitor is rotated)
+               Remaining 0xe0 bytes contain 2 pixels each for a total of
+               448 pixels, but only 360 seem to be displayed.
+               (Each row appears vertically because the monitor is rotated)
 
-	6000          Sound command
-	6800			Trackball Reset. Double duties as a watchdog.
-	7000          Input port 1    Bit 0-3 Trackball Vertical Position
-							  	Bit 4   Player 2 Hook Left
-								Bit 5   Player 2 Hook Right
-								Bit 6   Upright/Cocktail DIP Switch
-	                           Bit 7   Coin 2
-	7800          Input port 2    Bit 0-3 Trackball Horizontal Positon
-	                           Bit 4   Player 1 Hook Left
-	                           Bit 5   Player 1 Hook Right
-	                           Bit 6   Start
-	                           Bit 7   Coin 1
-	8000-ffff		ROM
-
-
-	Sound Board:
-
-	0000-07ff		RAM
-	1000-1001		YM2203
-			  	Port A D7 Read  is ticket sensor
-				Port B D7 Write is ticket dispenser enable
-				Port B D6 looks like a diagnostics LED to indicate that
-				          the PCB is operating. It's pulsated by the
-						  sound CPU. It is kind of pointless to emulate it.
-	2000			Not hooked up according to the schematics
-	6000			DAC write
-	7000			Sound command read (0x34 is used to dispense a ticket)
-	8000-ffff		ROM
+    6000          Sound command
+    6800            Trackball Reset. Double duties as a watchdog.
+    7000          Input port 1    Bit 0-3 Trackball Vertical Position
+                                Bit 4   Player 2 Hook Left
+                                Bit 5   Player 2 Hook Right
+                                Bit 6   Upright/Cocktail DIP Switch
+                               Bit 7   Coin 2
+    7800          Input port 2    Bit 0-3 Trackball Horizontal Positon
+                               Bit 4   Player 1 Hook Left
+                               Bit 5   Player 1 Hook Right
+                               Bit 6   Start
+                               Bit 7   Coin 1
+    8000-ffff       ROM
 
 
-	Turbo Board Layout (Plugs in place of GR0):
+    Sound Board:
 
-	Bowl-O-Rama	Copyright 1991 P&P Marketing
-				Marquee says "EXIT Entertainment"
+    0000-07ff       RAM
+    1000-1001       YM2203
+                Port A D7 Read  is ticket sensor
+                Port B D7 Write is ticket dispenser enable
+                Port B D6 looks like a diagnostics LED to indicate that
+                          the PCB is operating. It's pulsated by the
+                          sound CPU. It is kind of pointless to emulate it.
+    2000            Not hooked up according to the schematics
+    6000            DAC write
+    7000            Sound command read (0x34 is used to dispense a ticket)
+    8000-ffff       ROM
 
-				This portion: Mike Appolo with the help of Andrew Pines.
-				Andrew was one of the game designers for Capcom Bowling,
-				Coors Light Bowling, Strata Bowling, and Bowl-O-Rama.
 
-				This game was an upgrade for Capcom Bowling and included a
-				"Turbo PCB" that had a GAL address decoder / data mask
+    Turbo Board Layout (Plugs in place of GR0):
 
-	Memory Map for turbo board (where GR0 is on Capcom Bowling PCBs:
+    Bowl-O-Rama Copyright 1991 P&P Marketing
+                Marquee says "EXIT Entertainment"
 
-	0000   		Read Mask
-	0001-0003		Unused
-	0004  		Read Data
-	0005-0007		Unused
-	0008  		GR Address High Byte (GR17-16)
-	0009-0016		Unused
-	0017			GR Address Middle Byte (GR15-0 written as a word to 0017-0018)
-	0018  		GR address Low byte
-	0019-001f		Unused
+                This portion: Mike Appolo with the help of Andrew Pines.
+                Andrew was one of the game designers for Capcom Bowling,
+                Coors Light Bowling, Strata Bowling, and Bowl-O-Rama.
+
+                This game was an upgrade for Capcom Bowling and included a
+                "Turbo PCB" that had a GAL address decoder / data mask
+
+    Memory Map for turbo board (where GR0 is on Capcom Bowling PCBs:
+
+    0000        Read Mask
+    0001-0003       Unused
+    0004        Read Data
+    0005-0007       Unused
+    0008        GR Address High Byte (GR17-16)
+    0009-0016       Unused
+    0017            GR Address Middle Byte (GR15-0 written as a word to 0017-0018)
+    0018        GR address Low byte
+    0019-001f       Unused
 
 ***************************************************************************/
 
@@ -103,9 +103,9 @@ static UINT8 last_trackball_val[2];
 
 /*************************************
  *
- *	NMI is to trigger the self test.
- *	We use a fake input port to tie
- *	that event to a keypress
+ *  NMI is to trigger the self test.
+ *  We use a fake input port to tie
+ *  that event to a keypress
  *
  *************************************/
 
@@ -119,7 +119,7 @@ static INTERRUPT_GEN( capbowl_interrupt )
 
 /*************************************
  *
- *	Graphics ROM banking
+ *  Graphics ROM banking
  *
  *************************************/
 
@@ -133,7 +133,7 @@ WRITE8_HANDLER( capbowl_rom_select_w )
 
 /*************************************
  *
- *	Trackball input handlers
+ *  Trackball input handlers
  *
  *************************************/
 
@@ -162,7 +162,7 @@ static WRITE8_HANDLER( track_reset_w )
 
 /*************************************
  *
- *	Sound commands
+ *  Sound commands
  *
  *************************************/
 
@@ -176,8 +176,8 @@ static WRITE8_HANDLER( capbowl_sndcmd_w )
 
 /*************************************
  *
- *	Handler called by the 2203 emulator
- *	when the internal timers cause an IRQ
+ *  Handler called by the 2203 emulator
+ *  when the internal timers cause an IRQ
  *
  *************************************/
 
@@ -190,7 +190,7 @@ static void firqhandler(int irq)
 
 /*************************************
  *
- *	NVRAM
+ *  NVRAM
  *
  *************************************/
 
@@ -203,8 +203,8 @@ static NVRAM_HANDLER( capbowl )
 	else
 	{
 		/* invalidate nvram to make the game initialize it.
-		   A 0xff fill will cause the game to malfunction, so we use a
-		   0x01 fill which seems OK */
+           A 0xff fill will cause the game to malfunction, so we use a
+           0x01 fill which seems OK */
 		memset(generic_nvram,0x01,generic_nvram_size);
 	}
 }
@@ -213,7 +213,7 @@ static NVRAM_HANDLER( capbowl )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -247,7 +247,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -265,7 +265,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -302,7 +302,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -319,7 +319,7 @@ static struct YM2203interface ym2203_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -379,7 +379,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -458,7 +458,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -473,7 +473,7 @@ static DRIVER_INIT( capbowl )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

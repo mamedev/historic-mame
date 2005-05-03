@@ -1,6 +1,6 @@
 /*
- *	Beatmania DJ Main Board (GX753)
- *	emulate video hardware
+ *  Beatmania DJ Main Board (GX753)
+ *  emulate video hardware
  */
 
 #include "driver.h"
@@ -142,7 +142,7 @@ VIDEO_START( djmain )
 	 	{{ 0, 0}, {0, 0}, {0, 0}, {0, 0}}
 	};
 
-	if (K056832_vh_start(REGION_GFX2, K056832_BPP_4dj, 1, scrolld, game_tile_callback))
+	if (K056832_vh_start(REGION_GFX2, K056832_BPP_4dj, 1, scrolld, game_tile_callback, 1))
 		return 1;
 
 	K055555_vh_start();

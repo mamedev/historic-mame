@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Generic (PC-style) IDE controller implementation
+    Generic (PC-style) IDE controller implementation
 
 ***************************************************************************/
 
@@ -10,7 +10,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -36,7 +36,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -103,7 +103,7 @@
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -123,7 +123,7 @@ struct ide_state
 
 	UINT16	block_count;
 	UINT16	sectors_until_int;
-	
+
 	UINT8	dma_active;
 	UINT8	dma_cpu;
 	UINT8	dma_address_xor;
@@ -131,7 +131,7 @@ struct ide_state
 	offs_t	dma_address;
 	offs_t	dma_descriptor;
 	UINT32	dma_bytes_left;
-	
+
 	UINT8	bus_master_command;
 	UINT8	bus_master_status;
 	UINT32	bus_master_descriptor;
@@ -166,7 +166,7 @@ struct ide_state
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -176,7 +176,7 @@ static struct ide_state idestate[MAX_IDE_CONTROLLERS];
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -196,7 +196,7 @@ static void ide_controller_write(struct ide_state *ide, offs_t offset, int size,
 
 /*************************************
  *
- *	Interrupts
+ *  Interrupts
  *
  *************************************/
 
@@ -226,7 +226,7 @@ INLINE void clear_interrupt(struct ide_state *ide)
 
 /*************************************
  *
- *	Delayed interrupt handling
+ *  Delayed interrupt handling
  *
  *************************************/
 
@@ -252,7 +252,7 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
 	/* clear buffer ready and set the busy flag */
 	ide->status &= ~IDE_STATUS_BUFFER_READY;
 	ide->status |= IDE_STATUS_BUSY;
-	
+
 	/* set a timer */
 	if (buffer_ready)
 		timer_set(time, ide - idestate, delayed_interrupt_buffer_ready);
@@ -264,7 +264,7 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
 
 /*************************************
  *
- *	Initialization & reset
+ *  Initialization & reset
  *
  *************************************/
 
@@ -412,8 +412,8 @@ static void reset_callback(int param)
 
 /*************************************
  *
- *	Convert offset/mem_mask to offset
- *	and size
+ *  Convert offset/mem_mask to offset
+ *  and size
  *
  *************************************/
 
@@ -464,7 +464,7 @@ INLINE int convert_to_offset_and_size16(offs_t *offset, data32_t mem_mask)
 
 /*************************************
  *
- *	Compute the LBA address
+ *  Compute the LBA address
  *
  *************************************/
 
@@ -483,7 +483,7 @@ INLINE UINT32 lba_address(struct ide_state *ide)
 
 /*************************************
  *
- *	Advance to the next sector
+ *  Advance to the next sector
  *
  *************************************/
 
@@ -526,7 +526,7 @@ INLINE void next_sector(struct ide_state *ide)
 
 /*************************************
  *
- *	Build a features page
+ *  Build a features page
  *
  *************************************/
 
@@ -703,7 +703,7 @@ static void ide_build_features(struct ide_state *ide)
 
 /*************************************
  *
- *	security error handling
+ *  security error handling
  *
  *************************************/
 
@@ -730,7 +730,7 @@ static void security_error(struct ide_state *ide)
 
 /*************************************
  *
- *	Sector reading
+ *  Sector reading
  *
  *************************************/
 
@@ -771,7 +771,7 @@ static void write_buffer_to_dma(struct ide_state *ide)
 	int bytesleft = IDE_DISK_SECTOR_SIZE;
 	UINT8 *data = ide->buffer;
 
-//	LOG(("Writing sector to %08X\n", ide->dma_address));
+//  LOG(("Writing sector to %08X\n", ide->dma_address));
 
 	/* loop until we've consumed all bytes */
 	while (bytesleft--)
@@ -803,7 +803,7 @@ static void write_buffer_to_dma(struct ide_state *ide)
 			if (ide->dma_bytes_left == 0)
 				ide->dma_bytes_left = 0x10000;
 
-//			LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
+//          LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
 		}
 
 		/* write the next byte */
@@ -918,7 +918,7 @@ static void read_next_sector(struct ide_state *ide)
 
 /*************************************
  *
- *	Sector writing
+ *  Sector writing
  *
  *************************************/
 
@@ -959,7 +959,7 @@ static void read_buffer_from_dma(struct ide_state *ide)
 	int bytesleft = IDE_DISK_SECTOR_SIZE;
 	UINT8 *data = ide->buffer;
 
-//	LOG(("Reading sector from %08X\n", ide->dma_address));
+//  LOG(("Reading sector from %08X\n", ide->dma_address));
 
 	/* loop until we've consumed all bytes */
 	while (bytesleft--)
@@ -991,7 +991,7 @@ static void read_buffer_from_dma(struct ide_state *ide)
 			if (ide->dma_bytes_left == 0)
 				ide->dma_bytes_left = 0x10000;
 
-//			LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
+//          LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
 		}
 
 		/* read the next byte */
@@ -1070,7 +1070,7 @@ static void write_sector_done(int which)
 
 /*************************************
  *
- *	Handle IDE commands
+ *  Handle IDE commands
  *
  *************************************/
 
@@ -1228,7 +1228,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			/* signal an interrupt */
 			signal_delayed_interrupt(ide, MINIMUM_COMMAND_TIME, 0);
 			break;
-		
+
 		case IDE_COMMAND_SET_BLOCK_COUNT:
 			LOGPRINT(("IDE Set block count (%02X)\n", ide->sector_count));
 
@@ -1256,7 +1256,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 
 /*************************************
  *
- *	IDE controller read
+ *  IDE controller read
  *
  *************************************/
 
@@ -1345,7 +1345,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 				if (ide->interrupt_pending)
 					clear_interrupt(ide);
 			}
-			
+
 			/* take a bit of time to speed up people who poll hard */
 			activecpu_adjust_icount(-100);
 			break;
@@ -1364,7 +1364,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 
 /*************************************
  *
- *	IDE controller write
+ *  IDE controller write
  *
  *************************************/
 
@@ -1511,7 +1511,7 @@ static void ide_controller_write(struct ide_state *ide, offs_t offset, int size,
 
 /*************************************
  *
- *	Bus master read
+ *  Bus master read
  *
  *************************************/
 
@@ -1522,15 +1522,15 @@ static UINT32 ide_bus_master_read(struct ide_state *ide, offs_t offset, int size
 	/* command register */
 	if (offset == 0)
 		return ide->bus_master_command | (ide->bus_master_status << 16);
-	
+
 	/* status register */
 	if (offset == 2)
 		return ide->bus_master_status;
-	
+
 	/* descriptor table register */
 	if (offset == 4)
 		return ide->bus_master_descriptor;
-	
+
 	return 0xffffffff;
 }
 
@@ -1538,7 +1538,7 @@ static UINT32 ide_bus_master_read(struct ide_state *ide, offs_t offset, int size
 
 /*************************************
  *
- *	Bus master write
+ *  Bus master write
  *
  *************************************/
 
@@ -1551,11 +1551,11 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 	{
 		UINT8 old = ide->bus_master_command;
 		UINT8 val = data & 0xff;
-		
+
 		/* save the read/write bit and the start/stop bit */
 		ide->bus_master_command = (old & 0xf6) | (val & 0x09);
 		ide->bus_master_status = (ide->bus_master_status & ~IDE_BUSMASTER_STATUS_ACTIVE) | (val & 0x01);
-		
+
 		/* handle starting a transfer */
 		if (!(old & 1) && (val & 1))
 		{
@@ -1565,7 +1565,7 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 			ide->dma_descriptor = ide->bus_master_descriptor;
 			ide->dma_cpu = cpu_getactivecpu();
 			ide->dma_address_xor = (activecpu_endianness() == CPU_IS_LE) ? 0 : 3;
-			
+
 			/* if we're going live, start the pending read/write */
 			if (ide->dma_active)
 			{
@@ -1579,23 +1579,23 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 			}
 		}
 	}
-	
+
 	/* status register */
 	if (offset <= 2 && offset + size > 2)
 	{
 		UINT8 old = ide->bus_master_status;
 		UINT8 val = data >> (8 * (2 - offset));
-		
+
 		/* save the DMA capable bits */
 		ide->bus_master_status = (old & 0x9f) | (val & 0x60);
-		
+
 		/* clear interrupt and error bits */
 		if (val & IDE_BUSMASTER_STATUS_IRQ)
 			ide->bus_master_status &= ~IDE_BUSMASTER_STATUS_IRQ;
 		if (val & IDE_BUSMASTER_STATUS_ERROR)
 			ide->bus_master_status &= ~IDE_BUSMASTER_STATUS_ERROR;
 	}
-	
+
 	/* descriptor table register */
 	if (offset == 4)
 		ide->bus_master_descriptor = data & 0xfffffffc;
@@ -1605,17 +1605,17 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 
 /*************************************
  *
- *	IDE direct handlers (16-bit)
+ *  IDE direct handlers (16-bit)
  *
  *************************************/
 
 /*
-	ide_bus_0_r()
+    ide_bus_0_r()
 
-	Read a 16-bit word from the IDE bus directly.
+    Read a 16-bit word from the IDE bus directly.
 
-	select: 0->CS1Fx active, 1->CS3Fx active
-	offset: register offset (state of DA2-DA0)
+    select: 0->CS1Fx active, 1->CS3Fx active
+    offset: register offset (state of DA2-DA0)
 */
 int ide_bus_0_r(int select, int offset)
 {
@@ -1624,13 +1624,13 @@ int ide_bus_0_r(int select, int offset)
 }
 
 /*
-	ide_bus_0_w()
+    ide_bus_0_w()
 
-	Write a 16-bit word to the IDE bus directly.
+    Write a 16-bit word to the IDE bus directly.
 
-	select: 0->CS1Fx active, 1->CS3Fx active
-	offset: register offset (state of DA2-DA0)
-	data: data written (state of D0-D15 or D0-D7)
+    select: 0->CS1Fx active, 1->CS3Fx active
+    offset: register offset (state of DA2-DA0)
+    data: data written (state of D0-D15 or D0-D7)
 */
 void ide_bus_0_w(int select, int offset, int data)
 {
@@ -1654,7 +1654,7 @@ void ide_controller_0_w(int reg, int data)
 
 /*************************************
  *
- *	32-bit IDE handlers
+ *  32-bit IDE handlers
  *
  *************************************/
 
@@ -1705,7 +1705,7 @@ WRITE32_HANDLER( ide_bus_master32_0_w )
 
 /*************************************
  *
- *	16-bit IDE handlers
+ *  16-bit IDE handlers
  *
  *************************************/
 

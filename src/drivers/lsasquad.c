@@ -356,7 +356,7 @@ static MACHINE_DRIVER_START( lsasquad )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 3000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
@@ -446,8 +446,8 @@ static void init_common(void)
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
 	/* an instruction at $7FFF straddles the bank switch boundary at
-	   $8000 into rom bank #0 and then continues into the bank so
-	   copy this bank as the CPU bank switching won't catch it */
+       $8000 into rom bank #0 and then continues into the bank so
+       copy this bank as the CPU bank switching won't catch it */
 	memcpy(&ROM[0x08000], &ROM[0x10000], 0x2000);
 }
 

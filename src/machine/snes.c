@@ -69,8 +69,8 @@ static void snes_init_ram(void)
 	cgram_address = 0;
 	vram_read_offset = 2;
 	/* Force the use of the SPCSkipper for now.
-	 * Once the two CPU's are running in sync. we should check that sound is
-	 * enabled here and only use the SPCSkipper if it is. */
+     * Once the two CPU's are running in sync. we should check that sound is
+     * enabled here and only use the SPCSkipper if it is. */
 	spc_usefakeapu = 1;
 }
 
@@ -544,8 +544,8 @@ READ8_HANDLER( snes_r_io )
 #else
 			return readinputport(9);
 #endif	/* MAME_DEBUG */
-//		case 0x4101: //PC: a104 - a10e - a12a	//only nss_actr
-//		case 0x420c: //PC: 9c7d - 8fab			//only nss_ssoc
+//      case 0x4101: //PC: a104 - a10e - a12a   //only nss_actr
+//      case 0x420c: //PC: 9c7d - 8fab          //only nss_ssoc
 
 		default:
 			printf("offset = %x pc = %x\n",offset,activecpu_get_pc());
@@ -840,7 +840,7 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case CGADD:		/* Initial address for colour RAM writing */
 			/* CGRAM is 16-bit, but when reading/writing we treat it as
-			 * 8-bit, so we need to double the address */
+             * 8-bit, so we need to double the address */
 			cgram_address = data << 1;
 			break;
 		case CGDATA:	/* Data for colour RAM */
@@ -884,7 +884,7 @@ WRITE8_HANDLER( snes_w_io )
 		case COLDATA:	/* Fixed colour data for fixed colour addition/subtraction */
 			{
 				/* Store it in the extra space we made in the CGRAM
-				 * It doesn't really go there, but it's as good a place as any. */
+                 * It doesn't really go there, but it's as good a place as any. */
 				UINT8 r,g,b,fade;
 
 				/* Get existing value. */
@@ -997,7 +997,7 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case MEMSEL:	/* Access cycle designation in memory (2) area */
 			/* FIXME: Need to adjust the speed only during access of banks 0x80+
-			 * Currently we are just increasing it no matter what */
+             * Currently we are just increasing it no matter what */
 			cpunum_set_clockscale( 0, (data & 0x1) ? 1.335820896 : 1.0 );
 #ifdef SNES_DBG_REG_W
 			if( (data & 0x1) != (snes_ram[MEMSEL] & 0x1) )
@@ -1115,14 +1115,14 @@ DRIVER_INIT( snes )
 	readblocks = 0;
 	{
 		/* In mode 20, all blocks are 32kb. There are upto 96 blocks, giving a
-		 * total of 24mbit(3mb) of ROM.
-		 * The first 48 blocks are located in banks 0x00 to 0x2f at address
-		 * 0x8000.  They are mirrored in banks 0x80 to 0xaf.
-		 * The next 16 blocks are located in banks 0x30 to 0x3f at address
-		 * 0x8000.  They are mirrored in banks 0xb0 to 0xbf.
-		 * The final 32 blocks are located in banks 0x40 - 0x5f at address
-		 * 0x8000.  They are mirrored in banks 0xc0 to 0xdf.
-		 */
+         * total of 24mbit(3mb) of ROM.
+         * The first 48 blocks are located in banks 0x00 to 0x2f at address
+         * 0x8000.  They are mirrored in banks 0x80 to 0xaf.
+         * The next 16 blocks are located in banks 0x30 to 0x3f at address
+         * 0x8000.  They are mirrored in banks 0xb0 to 0xbf.
+         * The final 32 blocks are located in banks 0x40 - 0x5f at address
+         * 0x8000.  They are mirrored in banks 0xc0 to 0xdf.
+         */
 		i = 0;
 		while( i < 96 && readblocks <= totalblocks )
 		{
@@ -1196,14 +1196,14 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	}
 	/* Horizontal IRQ timer */
 	/* FIXME: Commented out as it causes heaps of trouble right now */
-/*	if( snes_ram[NMITIMEN] & 0x10 )
-	{
-		if( (((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff) )
-		{
-			snes_ram[TIMEUP] = 0x80;
-			cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
-		}
-	} */
+/*  if( snes_ram[NMITIMEN] & 0x10 )
+    {
+        if( (((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff) )
+        {
+            snes_ram[TIMEUP] = 0x80;
+            cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
+        }
+    } */
 
 	/* Increase current line */
 	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);

@@ -1,67 +1,67 @@
 /***************************************************************************
 
-							  -= Metro Games =-
+                              -= Metro Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  MC68000
 
-Video Chips  :  Imagetek 14100 052 9227KK701	Or
-                Imagetek 14220 071 9338EK707	Or
-				Imagetek 14300 095
+Video Chips  :  Imagetek 14100 052 9227KK701    Or
+                Imagetek 14220 071 9338EK707    Or
+                Imagetek 14300 095
 
 Sound CPU    :  NEC78C10 [Optional]
 
-Sound Chips  :	OKIM6295 + YM2413  or
+Sound Chips  :  OKIM6295 + YM2413  or
                 YRW801-M + YMF278B (YM2610 compatible)
 
 Other        :  Memory Blitter
 
 ---------------------------------------------------------------------------
-Year + Game						PCB			Video Chip	Issues / Notes
+Year + Game                     PCB         Video Chip  Issues / Notes
 ---------------------------------------------------------------------------
-92	Last Fortress - Toride		VG420		14100
-92	Last Fortress - Toride (Ger)VG460-(A)	14100
-92	Pang Poms					VG420		14100
-92	Sky Alert					VG420		14100
-92	The Karate Tournament		VG460-B		14100
-93?	Lady Killer / Moeyo Gonta!! VG460-B		14100
-93	Poitto!						MTR5260-A	14100
-94	Dharma Doujou				?			?
-94	Toride II Adauchi Gaiden	MTR5260-A	14220
-94	Blazing Tornado				?			14220		Also has Konami 053936 gfx chip
-96  Grand Striker 2             HUM-003(A)  14220		Also has Konami 053936 gfx chip
-95	Daitoride					MTR5260-A	14220
-95	Pururun						MTR5260-A	14220
-95	Puzzli 						MTR5260-A	14220
-96	Sankokushi					MTR5260-A	14220
-96	Bal Cube					?			14220		No sound CPU
-96	Bang Bang Ball				?			14220		No sound CPU
-95	Mahjong Doukyuhsei			VG330-B		14300		No sound CPU
-95	Mahjong Doukyuusei Special	VG340-A		14300		No sound CPU
-97	Mahjong Gakuensai			VG340-A		14300		No sound CPU
-98	Mahjong Gakuensai 2			VG340-A		14300		No sound CPU
-96	Mouja						VG410-B		14300		No sound CPU
+92  Last Fortress - Toride      VG420       14100
+92  Last Fortress - Toride (Ger)VG460-(A)   14100
+92  Pang Poms                   VG420       14100
+92  Sky Alert                   VG420       14100
+92  The Karate Tournament       VG460-B     14100
+93? Lady Killer / Moeyo Gonta!! VG460-B     14100
+93  Poitto!                     MTR5260-A   14100
+94  Dharma Doujou               ?           ?
+94  Toride II Adauchi Gaiden    MTR5260-A   14220
+94  Blazing Tornado             ?           14220       Also has Konami 053936 gfx chip
+96  Grand Striker 2             HUM-003(A)  14220       Also has Konami 053936 gfx chip
+95  Daitoride                   MTR5260-A   14220
+95  Pururun                     MTR5260-A   14220
+95  Puzzli                      MTR5260-A   14220
+96  Sankokushi                  MTR5260-A   14220
+96  Bal Cube                    ?           14220       No sound CPU
+96  Bang Bang Ball              ?           14220       No sound CPU
+95  Mahjong Doukyuhsei          VG330-B     14300       No sound CPU
+95  Mahjong Doukyuusei Special  VG340-A     14300       No sound CPU
+97  Mahjong Gakuensai           VG340-A     14300       No sound CPU
+98  Mahjong Gakuensai 2         VG340-A     14300       No sound CPU
+96  Mouja                       VG410-B     14300       No sound CPU
 ---------------------------------------------------------------------------
 Not dumped yet:
-94	Gun Master
-94	Toride II
+94  Gun Master
+94  Toride II
 
 To Do:
 
--	1 pixel granularity in the window's placement (8 pixels now, see daitorid title)
--	Coin lockout
--	Some gfx problems in ladykill, 3kokushi, puzzli, gakusai
--	Are the 16x16 tiles used by Mouja a Imagetek 14300-only feature?
--	Flip screen doesn't work correctly in Mouja due to asymmetrical visible area
+-   1 pixel granularity in the window's placement (8 pixels now, see daitorid title)
+-   Coin lockout
+-   Some gfx problems in ladykill, 3kokushi, puzzli, gakusai
+-   Are the 16x16 tiles used by Mouja a Imagetek 14300-only feature?
+-   Flip screen doesn't work correctly in Mouja due to asymmetrical visible area
 
 Notes:
 
--	To enter service mode in Lady Killer, toggle the dip switch and reset
-	keeping  start 2 pressed.
--	Sprite zoom in Mouja at the end of a match looks wrong, but it's been verified
-	to be the same on the original board
+-   To enter service mode in Lady Killer, toggle the dip switch and reset
+    keeping  start 2 pressed.
+-   Sprite zoom in Mouja at the end of a match looks wrong, but it's been verified
+    to be the same on the original board
 
 lastfort info from guru
 ---
@@ -124,7 +124,7 @@ VIDEO_UPDATE( metro );
 /***************************************************************************
 
 
-								Interrupts
+                                Interrupts
 
 
 ***************************************************************************/
@@ -151,14 +151,14 @@ READ16_HANDLER( metro_irq_cause_r )
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
 {
-	/*	Get the pending IRQs (only the enabled ones, e.g. where
-		irq_enable is *0*)	*/
+	/*  Get the pending IRQs (only the enabled ones, e.g. where
+        irq_enable is *0*)  */
 	data16_t irq = metro_irq_cause_r(0,0) & ~*metro_irq_enable;
 
 	if (irq_line == -1)	/* mouja, gakusai, gakusai2, dokyusei, dokyusp */
 	{
-		/*	This is for games that supply an *IRQ Vector* on the data bus
-			together with an IRQ level for each possible IRQ source */
+		/*  This is for games that supply an *IRQ Vector* on the data bus
+            together with an IRQ level for each possible IRQ source */
 
 		int i = 0;
 		while ( i < 8 )
@@ -174,9 +174,9 @@ static void update_irq_state(void)
 	}
 	else
 	{
-		/*	This is for games where every IRQ source generates the same
-			IRQ level. The interrupt service routine then reads the actual
-			source by peeking a register (metro_irq_cause_r) */
+		/*  This is for games where every IRQ source generates the same
+            IRQ level. The interrupt service routine then reads the actual
+            source by peeking a register (metro_irq_cause_r) */
 
 		int state =	(irq ? ASSERT_LINE : CLEAR_LINE);
 		cpunum_set_input_line(0, irq_line, state);
@@ -187,7 +187,7 @@ static void update_irq_state(void)
 /* For games that supply an *IRQ Vector* on the data bus */
 int metro_irq_callback(int int_level)
 {
-//	logerror("CPU #0 PC %06X: irq callback returns %04X\n",activecpu_get_pc(),metro_irq_vectors[int_level]);
+//  logerror("CPU #0 PC %06X: irq callback returns %04X\n",activecpu_get_pc(),metro_irq_vectors[int_level]);
 	return metro_irq_vectors[int_level]&0xff;
 }
 
@@ -200,7 +200,7 @@ MACHINE_INIT( metro )
 
 WRITE16_HANDLER( metro_irq_cause_w )
 {
-//if (data & ~0x15)	logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",activecpu_get_pc(),data);
+//if (data & ~0x15) logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",activecpu_get_pc(),data);
 
 	if (ACCESSING_LSB)
 	{
@@ -325,7 +325,7 @@ static void ymf278b_interrupt(int active)
 /***************************************************************************
 
 
-							Sound Communication
+                            Sound Communication
 
 
 ***************************************************************************/
@@ -416,15 +416,15 @@ static WRITE8_HANDLER( metro_porta_w )
 static WRITE8_HANDLER( metro_portb_w )
 {
 	/* port B layout:
-	   7 !clock latch for message to main CPU
+       7 !clock latch for message to main CPU
        6
-	   5 !clock YM2413 I/O
-	   4 !clock MSM6295 I/O
-	   3
-	   2 !enable write to YM2413/6295
-	   1 select YM2151 register or data port
-	   0
-	*/
+       5 !clock YM2413 I/O
+       4 !clock MSM6295 I/O
+       3
+       2 !enable write to YM2413/6295
+       1 select YM2151 register or data port
+       0
+    */
 
 	if (BIT(portb,7) && !BIT(data,7))	/* clock 1->0 */
 	{
@@ -460,15 +460,15 @@ static WRITE8_HANDLER( metro_portb_w )
 static WRITE8_HANDLER( daitorid_portb_w )
 {
 	/* port B layout:
-	   7 !clock latch for message to main CPU
-	   6 !clock YM2151 I/O
-	   5
-	   4 !clock MSM6295 I/O
-	   3 !enable read from YM2151/6295
-	   2 !enable write to YM2151/6295
-	   1 select YM2151 register or data port
-	   0
-	*/
+       7 !clock latch for message to main CPU
+       6 !clock YM2151 I/O
+       5
+       4 !clock MSM6295 I/O
+       3 !enable read from YM2151/6295
+       2 !enable write to YM2151/6295
+       1 select YM2151 register or data port
+       0
+    */
 
 	if (BIT(portb,7) && !BIT(data,7))	/* clock 1->0 */
 	{
@@ -574,7 +574,7 @@ static struct YMF278B_interface ymf278b_interface =
 /***************************************************************************
 
 
-								Coin Lockout
+                                Coin Lockout
 
 
 ***************************************************************************/
@@ -585,8 +585,8 @@ WRITE16_HANDLER( metro_coin_lockout_1word_w )
 {
 	if (ACCESSING_LSB)
 	{
-//		coin_lockout_w(0, data & 1);
-//		coin_lockout_w(1, data & 2);
+//      coin_lockout_w(0, data & 1);
+//      coin_lockout_w(1, data & 2);
 	}
 	if (data & ~3)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",activecpu_get_pc(),data);
 }
@@ -594,7 +594,7 @@ WRITE16_HANDLER( metro_coin_lockout_1word_w )
 
 WRITE16_HANDLER( metro_coin_lockout_4words_w )
 {
-//	coin_lockout_w( (offset >> 1) & 1, offset & 1 );
+//  coin_lockout_w( (offset >> 1) & 1, offset & 1 );
 	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",activecpu_get_pc(),data);
 }
 
@@ -604,17 +604,17 @@ WRITE16_HANDLER( metro_coin_lockout_4words_w )
 /***************************************************************************
 
 
-								Banked ROM access
+                                Banked ROM access
 
 
 ***************************************************************************/
 
 /*
-	The main CPU has access to the ROMs that hold the graphics through
-	a banked window of 64k. Those ROMs also usually store the tables for
-	the virtual tiles set. The tile codes to be written to the tilemap
-	memory to render the backgrounds are also stored here, in a format
-	that the blitter can readily use (which is a form of compression)
+    The main CPU has access to the ROMs that hold the graphics through
+    a banked window of 64k. Those ROMs also usually store the tables for
+    the virtual tiles set. The tile codes to be written to the tilemap
+    memory to render the backgrounds are also stored here, in a format
+    that the blitter can readily use (which is a form of compression)
 */
 
 static data16_t *metro_rombank;
@@ -638,45 +638,45 @@ READ16_HANDLER( metro_bankedrom_r )
 /***************************************************************************
 
 
-									Blitter
+                                    Blitter
 
-	[ Registers ]
+    [ Registers ]
 
-		Offset:		Value:
+        Offset:     Value:
 
-		0.l			Destination Tilemap      (1,2,3)
-		4.l			Blitter Data Address     (byte offset into the gfx ROMs)
-		8.l			Destination Address << 7 (byte offset into the tilemap)
+        0.l         Destination Tilemap      (1,2,3)
+        4.l         Blitter Data Address     (byte offset into the gfx ROMs)
+        8.l         Destination Address << 7 (byte offset into the tilemap)
 
-		The Blitter reads a byte and looks at the most significative
-		bits for the opcode, while the remaining bits define a value
-		(usually how many bytes to write). The opcode byte may be
-		followed by a number of other bytes:
+        The Blitter reads a byte and looks at the most significative
+        bits for the opcode, while the remaining bits define a value
+        (usually how many bytes to write). The opcode byte may be
+        followed by a number of other bytes:
 
-			76------			Opcode
-			--543210			N
-			(at most N+1 bytes follow)
+            76------            Opcode
+            --543210            N
+            (at most N+1 bytes follow)
 
 
-		The blitter is designed to write every other byte (e.g. it
-		writes a byte and skips the next). Hence 2 blits are needed
-		to fill a tilemap (first even, then odd addresses)
+        The blitter is designed to write every other byte (e.g. it
+        writes a byte and skips the next). Hence 2 blits are needed
+        to fill a tilemap (first even, then odd addresses)
 
-	[ Opcodes ]
+    [ Opcodes ]
 
-			0		Copy the following N+1 bytes. If the whole byte
-					is $00:	stop and generate an IRQ
+            0       Copy the following N+1 bytes. If the whole byte
+                    is $00: stop and generate an IRQ
 
-			1		Fill N+1 bytes with a sequence, starting with
-					the  value in the following byte
+            1       Fill N+1 bytes with a sequence, starting with
+                    the  value in the following byte
 
-			2		Fill N+1 bytes with the value in the following
-					byte
+            2       Fill N+1 bytes with the value in the following
+                    byte
 
-			3		Skip N+1 bytes. If the whole byte is $C0:
-					skip to the next row of the tilemap (+0x200 bytes)
-					but preserve the column passed at the start of the
-					blit (destination address % 0x200)
+            3       Skip N+1 bytes. If the whole byte is $C0:
+                    skip to the next row of the tilemap (+0x200 bytes)
+                    but preserve the column passed at the start of the
+                    blit (destination address % 0x200)
 
 
 ***************************************************************************/
@@ -702,7 +702,7 @@ INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, co
 		case 2:	metro_vram_1_w(offs,data,mask);	break;
 		case 3:	metro_vram_2_w(offs,data,mask);	break;
 	}
-//	logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
+//  logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
 }
 
 
@@ -727,7 +727,7 @@ WRITE16_HANDLER( metro_blitter_w )
 		int shift			=	(dst_offs & 0x80) ? 0 : 8;
 		data16_t mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
 
-//		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
+//      logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
 
 		dst_offs >>= 7+1;
 		switch( tmap )
@@ -747,7 +747,7 @@ WRITE16_HANDLER( metro_blitter_w )
 
 			src_offs %= src_len;
 			b1 = blt_read(src,src_offs);
-//			logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs);
+//          logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs);
 			src_offs++;
 
 			count = ((~b1) & 0x3f) + 1;
@@ -757,10 +757,10 @@ WRITE16_HANDLER( metro_blitter_w )
 				case 0:
 
 					/* Stop and Generate an IRQ. We can't generate it now
-					   both because it's unlikely that the blitter is so
-					   fast and because some games (e.g. lastfort) need to
-					   complete the blitter irq service routine before doing
-					   another blit. */
+                       both because it's unlikely that the blitter is so
+                       fast and because some games (e.g. lastfort) need to
+                       complete the blitter irq service routine before doing
+                       another blit. */
 					if (b1 == 0)
 					{
 						timer_set(TIME_IN_USEC(500),0,metro_blit_done);
@@ -844,7 +844,7 @@ WRITE16_HANDLER( metro_blitter_w )
 /***************************************************************************
 
 
-								Memory Maps
+                                Memory Maps
 
 
 ***************************************************************************/
@@ -907,7 +907,7 @@ static ADDRESS_MAP_START( daitorid_snd_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-									Bal Cube
+                                    Bal Cube
 ***************************************************************************/
 
 /* Really weird way of mapping 3 DSWs */
@@ -985,7 +985,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Bang Bang Ball
+                                Bang Bang Ball
 ***************************************************************************/
 
 static ADDRESS_MAP_START( bangball_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1033,7 +1033,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Dai Toride
+                                Dai Toride
 ***************************************************************************/
 
 static ADDRESS_MAP_START( daitorid_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1079,7 +1079,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Dharma Doujou
+                                Dharma Doujou
 ***************************************************************************/
 
 static ADDRESS_MAP_START( dharma_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1125,7 +1125,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Karate Tournament
+                                Karate Tournament
 ***************************************************************************/
 
 /* This game uses almost only the blitter to write to the tilemaps.
@@ -1193,7 +1193,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sankokushi
+                                Sankokushi
 ***************************************************************************/
 
 /* same limited tilemap access as karatour */
@@ -1226,7 +1226,7 @@ static ADDRESS_MAP_START( kokushi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x878840, 0x87884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
 	AM_RANGE(0x878860, 0x87886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
 	AM_RANGE(0x878870, 0x87887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll Regs - WRONG
-//	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)	// ? increasing
+//  AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP                     )   // ? increasing
 	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)	// ? increasing
 	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
 	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
@@ -1241,7 +1241,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Last Fortress
+                                Last Fortress
 ***************************************************************************/
 
 static ADDRESS_MAP_START( lastfort_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1337,7 +1337,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Mahjong Gakuensai
+                                Mahjong Gakuensai
 ***************************************************************************/
 
 static int gakusai_oki_bank_lo, gakusai_oki_bank_hi;
@@ -1450,7 +1450,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Mahjong Gakuensai 2
+                                Mahjong Gakuensai 2
 ***************************************************************************/
 
 static ADDRESS_MAP_START( gakusai2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1505,7 +1505,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Mahjong Doukyuusei Special
+                        Mahjong Doukyuusei Special
 ***************************************************************************/
 
 READ16_HANDLER( dokyusp_eeprom_r )
@@ -1589,7 +1589,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Mahjong Doukyuusei
+                            Mahjong Doukyuusei
 ***************************************************************************/
 
 static ADDRESS_MAP_START( dokyusei_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1602,7 +1602,7 @@ static ADDRESS_MAP_START( dokyusei_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x470000, 0x473fff) AM_READ(MRA16_RAM					)	// Palette
 	AM_RANGE(0x474000, 0x474fff) AM_READ(MRA16_RAM					)	// Sprites
 	AM_RANGE(0x478000, 0x4787ff) AM_READ(MRA16_RAM					)	// Tiles Set
-//	AM_RANGE(0x478832, 0x478833) AM_READ(metro_irq_cause_r			)	// IRQ Cause
+//  AM_RANGE(0x478832, 0x478833) AM_READ(metro_irq_cause_r          )   // IRQ Cause
 	AM_RANGE(0x478880, 0x478881) AM_READ(gakusai_input_r			)	// Inputs
 	AM_RANGE(0x478882, 0x478883) AM_READ(input_port_5_word_r		)	//
 	AM_RANGE(0x478884, 0x478885) AM_READ(input_port_6_word_r		)	// 2 x DSW
@@ -1642,7 +1642,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Pang Poms
+                                Pang Poms
 ***************************************************************************/
 
 static ADDRESS_MAP_START( pangpoms_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1692,7 +1692,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Poitto!
+                                Poitto!
 ***************************************************************************/
 
 static ADDRESS_MAP_START( poitto_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1738,7 +1738,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Sky Alert
+                                Sky Alert
 ***************************************************************************/
 
 static ADDRESS_MAP_START( skyalert_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1788,7 +1788,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Pururun
+                                Pururun
 ***************************************************************************/
 
 static ADDRESS_MAP_START( pururun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1834,7 +1834,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Toride II Adauchi Gaiden
+                            Toride II Adauchi Gaiden
 ***************************************************************************/
 
 static ADDRESS_MAP_START( toride2g_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1880,7 +1880,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Blazing Tornado
+                            Blazing Tornado
 ***************************************************************************/
 
 static WRITE16_HANDLER( blzntrnd_sound_w )
@@ -1942,7 +1942,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( blzntrnd_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM				)	// ROM
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM				)	// RAM
-//	AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP				)	// Sound
+//  AM_RANGE(0x300000, 0x300001) AM_READ(MRA16_NOP              )   // Sound
 	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM				)	// Layer 0
 	AM_RANGE(0x220000, 0x23ffff) AM_READ(MRA16_RAM				)	// Layer 1
 	AM_RANGE(0x240000, 0x25ffff) AM_READ(MRA16_RAM				)	// Layer 2
@@ -1986,7 +1986,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Mouja
+                                    Mouja
 ***************************************************************************/
 
 static ADDRESS_MAP_START( mouja_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2045,7 +2045,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -2111,7 +2111,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Bal Cube
+                                    Bal Cube
 ***************************************************************************/
 
 INPUT_PORTS_START( balcube )
@@ -2154,7 +2154,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Bang Bang Ball
+                                Bang Bang Ball
 ***************************************************************************/
 
 INPUT_PORTS_START( bangball )
@@ -2196,7 +2196,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Blazing Tornado
+                            Blazing Tornado
 ***************************************************************************/
 
 INPUT_PORTS_START( blzntrnd )
@@ -2221,7 +2221,7 @@ INPUT_PORTS_START( blzntrnd )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x00c0, 0x0000, "Control Panel" )
 	PORT_DIPSETTING(      0x0000, "4 Players" )
-//	PORT_DIPSETTING(      0x0040, "4 Players" )
+//  PORT_DIPSETTING(      0x0040, "4 Players" )
 	PORT_DIPSETTING(      0x0080, "1P & 2P Tag only" )
 	PORT_DIPSETTING(      0x00c0, "1P & 2P vs only" )
 	PORT_DIPNAME( 0x0300, 0x0300, "Half Continue" )
@@ -2313,7 +2313,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Grand Striker 2
+                            Grand Striker 2
 ***************************************************************************/
 
 INPUT_PORTS_START( gstrik2 )
@@ -2447,7 +2447,7 @@ INPUT_PORTS_START( gstrik2 )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Dai Toride
+                                Dai Toride
 ***************************************************************************/
 
 /* If only ONE of the "Coinage" is set to "Free Play", it is in fact "5C_1C".
@@ -2502,7 +2502,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Dharma Doujou
+                                Dharma Doujou
 ***************************************************************************/
 
 /* I don't really know HOW to describe the effect of IN2 bits 8 and 9.
@@ -2525,8 +2525,8 @@ INPUT_PORTS_START( dharma )
 
 	PORT_DIPNAME( 0x0300, 0x0300, "Time" )				// Check code at 0x00da0a and see notes
 	PORT_DIPSETTING(      0x0000, "Table 1" )				//   Table offset : 0x00e668
-//	PORT_DIPSETTING(      0x0100, "Table 1" )				//   Table offset : 0x00e6c0
-//	PORT_DIPSETTING(      0x0200, "Table 2" )				//   Table offset : 0x00e718
+//  PORT_DIPSETTING(      0x0100, "Table 1" )               //   Table offset : 0x00e6c0
+//  PORT_DIPSETTING(      0x0200, "Table 2" )               //   Table offset : 0x00e718
 	PORT_DIPSETTING(      0x0300, "Table 2" )				//   Table offset : 0x00e770
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )		// Timer (crab) speed
 	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )				//   Slow
@@ -2552,7 +2552,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Karate Tournament
+                                Karate Tournament
 ***************************************************************************/
 
 INPUT_PORTS_START( karatour )
@@ -2616,7 +2616,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Lady Killer
+                                Lady Killer
 ***************************************************************************/
 
 #define LKILL_COMMON1\
@@ -2684,7 +2684,7 @@ INPUT_PORTS_END
 /* Same as 'ladykill' but NO "Nudity" Dip Switch */
 INPUT_PORTS_START( moegonta )
 	LKILL_COMMON1
-	
+
 	PORT_START_TAG("IN2")	// $400006
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0001, "1" )
@@ -2706,13 +2706,13 @@ INPUT_PORTS_START( moegonta )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	
+
 	LKILL_COMMON2
 	INPUT_PORTS_END
 
 
 /***************************************************************************
-								Last Fortress
+                                Last Fortress
 ***************************************************************************/
 
 /* The code which tests IN4 bit 7 is the SAME as the one for 'lastfero'.
@@ -2732,7 +2732,7 @@ INPUT_PORTS_START( moegonta )
 
 INPUT_PORTS_START( lastfort )
 	LFORT_COMMON
-	
+
 	PORT_START_TAG("IN4")// $c0000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
 	PORT_DIPSETTING(      0x0000, DEF_STR( Easiest ) )			//   Slowest
@@ -2756,7 +2756,7 @@ INPUT_PORTS_START( lastfort )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0080, "Tiles" )
 	PORT_DIPSETTING(      0x0080, "Mahjong" )
-//	PORT_DIPSETTING(      0x0000, "Cards" )				// Not working - See notes
+//  PORT_DIPSETTING(      0x0000, "Cards" )             // Not working - See notes
 
 	PORT_START_TAG("IN5")// $c0000e
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2764,7 +2764,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Last Fortress (Erotic)
+                            Last Fortress (Erotic)
 ***************************************************************************/
 
 /* Same as 'lastfort' but WORKING "Tiles" Dip Switch */
@@ -2802,7 +2802,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Mahjong Doukyuusei
+                            Mahjong Doukyuusei
 ***************************************************************************/
 
 #define MAHJONG_PANEL\
@@ -2916,7 +2916,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-						Mahjong Gakuensai 1 & 2
+                        Mahjong Gakuensai 1 & 2
 ***************************************************************************/
 
 /* Same as dokyusei, without the DSWs (these games have an eeprom) */
@@ -2929,7 +2929,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-									Mouja
+                                    Mouja
 ***************************************************************************/
 
 INPUT_PORTS_START( mouja )
@@ -3014,7 +3014,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Pang Poms
+                                Pang Poms
 ***************************************************************************/
 
 INPUT_PORTS_START( pangpoms )
@@ -3059,7 +3059,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Poitto!
+                                Poitto!
 ***************************************************************************/
 
 INPUT_PORTS_START( poitto )
@@ -3103,7 +3103,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Puzzli
+                                Puzzli
 ***************************************************************************/
 
 INPUT_PORTS_START( puzzli )
@@ -3120,7 +3120,7 @@ INPUT_PORTS_START( puzzli )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
-//	PORT_DIPSETTING(      0x0100, DEF_STR( Normal ) )			// Duplicated setting
+//  PORT_DIPSETTING(      0x0100, DEF_STR( Normal ) )           // Duplicated setting
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0400, 0x0400, "Join In" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
@@ -3147,7 +3147,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Sankokushi
+                                Sankokushi
 ***************************************************************************/
 
 INPUT_PORTS_START( 3kokushi )
@@ -3209,7 +3209,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Pururun
+                                Pururun
 ***************************************************************************/
 
 INPUT_PORTS_START( pururun )
@@ -3253,7 +3253,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Sky Alert
+                                Sky Alert
 ***************************************************************************/
 
 /* The game shows wrong values on screen for the "Bonus Life" Dip Switch !
@@ -3313,7 +3313,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Toride II Adauchi Gaiden
+                            Toride II Adauchi Gaiden
 ***************************************************************************/
 
 /* I don't really know HOW to describe the effect of IN2 bit 10.
@@ -3364,7 +3364,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -3487,7 +3487,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_14300[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -4300,7 +4300,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -4310,11 +4310,11 @@ static void metro_common(void)
 	int i;
 
 	/*
-	  Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
-	  time. The transparent pen is the last one, that is 15 or 255. To make
-	  tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
-	  for both tile depths.
-	*/
+      Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
+      time. The transparent pen is the last one, that is 15 or 255. To make
+      tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
+      for both tile depths.
+    */
 	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
 		memory_region(REGION_GFX1)[i] ^= 0xff;
 
@@ -4507,13 +4507,13 @@ ROM_END
 Blazing Tornado
 (c)1994 Human
 
-CPU:	68000-16
-Sound:	Z80-8
-	YMF286K
-OSC:	16.0000MHz
-	26.666MHz
-Chips:	Imagetek 14220 071
-	Konami 053936 (PSAC2)
+CPU:    68000-16
+Sound:  Z80-8
+    YMF286K
+OSC:    16.0000MHz
+    26.666MHz
+Chips:  Imagetek 14220 071
+    Konami 053936 (PSAC2)
 
 ***************************************************************************/
 
@@ -4616,14 +4616,14 @@ ROM_START( gstrik2 )
 	ROMX_LOAD( "chr6.82", 0x0800004, 0x200000, CRC(32eb33b0) SHA1(2ea06484ca326b44a35ee470343147a9d91d5626) , ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "chr7.81", 0x0800006, 0x200000, CRC(2d30a21e) SHA1(749e86b7935ef71556eaee4caf6f954634e9bcbf) , ROM_GROUPWORD | ROM_SKIP(6))
 	/* not populated */
-//	ROMX_LOAD( "chr8.88", 0x1000000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr9.87", 0x1000002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr10.86", 0x1000004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr11.85", 0x1000006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr12.92", 0x1800000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr13.91", 0x1800002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr14.90", 0x1800004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
-//	ROMX_LOAD( "chr15.89", 0x1800006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr8.88", 0x1000000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr9.87", 0x1000002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr10.86", 0x1000004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr11.85", 0x1000006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr12.92", 0x1800000, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr13.91", 0x1800002, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr14.90", 0x1800004, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
+//  ROMX_LOAD( "chr15.89", 0x1800006, 0x200000, CRC() SHA1() , ROM_GROUPWORD | ROM_SKIP(6))
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 053936 gfx data */
 	ROM_LOAD( "psacrom.60", 0x000000, 0x200000,  CRC(73f1f279) SHA1(1135b2b1eb4c52249bc12ee178340bbb202a94c8) )
@@ -4742,17 +4742,17 @@ ImageTek Inc.
 052
 9227KK702
 
-Filename	Type		Location
-KT001.BIN	27C010	 	1I
-KT002.BIN	27C2001		8G
-KT003.BIN	27C2001		10G
-KT008.BIN	27C2001		1D
+Filename    Type        Location
+KT001.BIN   27C010      1I
+KT002.BIN   27C2001     8G
+KT003.BIN   27C2001     10G
+KT008.BIN   27C2001     1D
 
-Filename	Chip Markings	Location
-KTMASK1.BIN	361A04 9241D	15F
-KTMASK2.BIN	361A05 9239D	17F
-KTMASK3.BIN	361A06 9239D	15D
-KTMASK4.BIN	361A07 9239D	17D
+Filename    Chip Markings   Location
+KTMASK1.BIN 361A04 9241D    15F
+KTMASK2.BIN 361A05 9239D    17F
+KTMASK3.BIN 361A06 9239D    15D
+KTMASK4.BIN 361A07 9239D    17D
 
 ***************************************************************************/
 
@@ -4991,15 +4991,15 @@ ROM_END
 Mahjong Doukyuusei Special
 (c)1995 Make Software / Elf / Media Trading
 
-Board:	VG340-A
+Board:  VG340-A
 
-CPU:	68000-16
-Sound:	M6295
-		YM2413
-OSC:	32.0000MHz
-		3.579545MHz
-EEPROM:	93C46
-Custom:	14300 095
+CPU:    68000-16
+Sound:  M6295
+        YM2413
+OSC:    32.0000MHz
+        3.579545MHz
+EEPROM: 93C46
+Custom: 14300 095
 
 ***************************************************************************/
 
@@ -5024,15 +5024,15 @@ ROM_END
 Mahjong Gakuensai (JPN Ver.)
 (c)1997 Make Software
 
-Board:	VG340-A
+Board:  VG340-A
 
-CPU:	68000-16
-Sound:	M6295
-		YM2413
-OSC:	26.6660MHz
-		3.5795MHz
+CPU:    68000-16
+Sound:  M6295
+        YM2413
+OSC:    26.6660MHz
+        3.5795MHz
 
-Custom:	14300 095
+Custom: 14300 095
 
 ***************************************************************************/
 
@@ -5061,15 +5061,15 @@ ROM_END
 Mahjong Gakuensai 2 (JPN Ver.)
 (c)1998 Make Software
 
-Board:	VG340-A
+Board:  VG340-A
 
-CPU:	68000-16
-Sound:	M6295
-		YM2413
-OSC:	26.6660MHz
-		3.579545MHz
+CPU:    68000-16
+Sound:  M6295
+        YM2413
+OSC:    26.6660MHz
+        3.579545MHz
 
-Custom:	14300 095
+Custom: 14300 095
 
 ***************************************************************************/
 
@@ -5099,10 +5099,10 @@ Mouja (JPN Ver.)
 (c)1996 Etona / (c)1995 FPS/FWS
 VG410-B
 
-CPU 	:TMP68H000P-12
-Sound	:YM2413,OKI M6295
-OSC 	:16000.00KHz,3.579545MHz,26.666MHz
-other	:Imagetek Inc 14300 095
+CPU     :TMP68H000P-12
+Sound   :YM2413,OKI M6295
+OSC     :16000.00KHz,3.579545MHz,26.666MHz
+other   :Imagetek Inc 14300 095
 
 ***************************************************************************/
 
@@ -5367,10 +5367,10 @@ Sky Alert (JPN Ver.)
 (c)1992 Metro
 VG420
 
-CPU 	:MC68000P12
-Sound	:YM2413,OKI M6295
-OSC 	:24.0000MHz,3.579545MHz
-other	:D78C10ACW,Imagetek Inc 14100 052
+CPU     :MC68000P12
+Sound   :YM2413,OKI M6295
+OSC     :24.0000MHz,3.579545MHz
+other   :D78C10ACW,Imagetek Inc 14100 052
 
 ***************************************************************************/
 
@@ -5452,7 +5452,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

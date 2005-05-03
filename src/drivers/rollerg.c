@@ -51,7 +51,7 @@ static READ8_HANDLER( rollerg_K051316_r )
 static READ8_HANDLER( rollerg_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return 0x00;
 }
@@ -129,7 +129,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -188,7 +188,7 @@ INPUT_PORTS_START( rollerg )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Disabled" )
+//  PORT_DIPSETTING(    0x00, "Disabled" )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -234,7 +234,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 

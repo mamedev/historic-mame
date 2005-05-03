@@ -4,7 +4,7 @@
 
 /***************************************************************************
 
-	Xexex  (c) 1991 Konami
+    Xexex  (c) 1991 Konami
 
 
 Change Log
@@ -23,15 +23,15 @@ The following bugs appear to be fixed:
 General:
 
 - game doesn't slow down like the arcade
-	IRQ 5 is the "OBJDMA end interrupt" and shouldn't be triggered
-	if DMA didn't complete within the frame.
+    IRQ 5 is the "OBJDMA end interrupt" and shouldn't be triggered
+    if DMA didn't complete within the frame.
 
-	* game speed may not be 100% correct but close to that on the
-	Gamest video especially in stage 6. Xexex is 384x256 which suggests
-	an 8Mhz horizontal dotclock and DMA delay can range up to 32.0us(clear)
-	+ 256.0us(transfer). Increase XE_DMADELAY if emulation runs faster
-	than the original or use cheat to overclock CPU 0 if you prefer faster
-	gameplay.
+    * game speed may not be 100% correct but close to that on the
+    Gamest video especially in stage 6. Xexex is 384x256 which suggests
+    an 8Mhz horizontal dotclock and DMA delay can range up to 32.0us(clear)
+    + 256.0us(transfer). Increase XE_DMADELAY if emulation runs faster
+    than the original or use cheat to overclock CPU 0 if you prefer faster
+    gameplay.
 
 - sprite lag, dithering, flicking (DMA)
 - line effects go out of sync (K053250 also does DMA)
@@ -510,7 +510,7 @@ static MACHINE_DRIVER_START( xexex )
 	MDRV_SOUND_ROUTE(0, "filter1r", 0.50)
 	MDRV_SOUND_ROUTE(1, "filter2l", 0.50)
 	MDRV_SOUND_ROUTE(1, "filter2r", 0.50)
-	
+
 	MDRV_SOUND_ADD(K054539, 48000)
 	MDRV_SOUND_CONFIG(k054539_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -599,8 +599,8 @@ static DRIVER_INIT( xexex )
 	if (!strcmp(Machine->gamedrv->name, "xexex"))
 	{
 		// Invulnerability
-//		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
-//		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
+//      *(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
+//      *(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
 		xexex_strip0x1a = 1;
 	}
 

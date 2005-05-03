@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	vidhrdw.c
+    vidhrdw.c
 
-	Functions to emulate the video hardware of the machine.
+    Functions to emulate the video hardware of the machine.
 
-	There are only a few differences between the video hardware of Mysterious
-	Stones and Mat Mania. The tile bank select bit is different and the sprite
-	selection seems to be different as well. Additionally, the palette is stored
-	differently. I'm also not sure that the 2nd tile page is really used in
-	Mysterious Stones.
+    There are only a few differences between the video hardware of Mysterious
+    Stones and Mat Mania. The tile bank select bit is different and the sprite
+    selection seems to be different as well. Additionally, the palette is stored
+    differently. I'm also not sure that the 2nd tile page is really used in
+    Mysterious Stones.
 
 ***************************************************************************/
 

@@ -365,8 +365,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( daisenpu_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-//	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP)	/* written each frame at $2ac, values change */
-//	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP)	/* written each frame at $2a2, values change */
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP)    /* written each frame at $2ac, values change */
+//  AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP)    /* written each frame at $2a2, values change */
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(taitosound_port16_lsb_w)
 	AM_RANGE(0x800002, 0x800003) AM_WRITE(taitosound_comm16_lsb_w)
 	AM_RANGE(0x900000, 0x90000f) AM_WRITE(daisenpu_input_w)

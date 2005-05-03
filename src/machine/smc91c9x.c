@@ -1,14 +1,14 @@
 /*************************************************************************
 
-	SMC91C9X ethernet controller implementation
+    SMC91C9X ethernet controller implementation
 
-	by Aaron Giles
+    by Aaron Giles
 
 ***************************************************************************
 
-	Notes:
-		* only loopback mode really works
-	
+    Notes:
+        * only loopback mode really works
+
 **************************************************************************/
 
 #include "driver.h"
@@ -18,7 +18,7 @@
 
 /*************************************
  *
- *	Debugging constants
+ *  Debugging constants
  *
  *************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Ethernet constants
+ *  Ethernet constants
  *
  *************************************/
 
@@ -98,9 +98,9 @@ static const char *ethernet_regname[64] =
 	"CONFIG", "BASE", "IA0-1", "IA2-3", "IA4-5", "GENERAL PURPOSE", "CONTROL", "BANK",
 	"MMU COMMAND", "PNR ARR", "FIFO PORTS", "POINTER", "DATA", "DATA", "INTERRUPT", "BANK",
 	"MT0-1", "MT2-3", "MT4-5", "MT6-7", "MGMT", "REVISION", "ERCV", "BANK",
-	"(4.0)", "(4.1)", "(4.2)", "(4.3)", "(4.4)", "(4.5)", "(4.6)", "BANK", 
-	"(5.0)", "(5.1)", "(5.2)", "(5.3)", "(5.4)", "(5.5)", "(5.6)", "BANK", 
-	"(6.0)", "(6.1)", "(6.2)", "(6.3)", "(6.4)", "(6.5)", "(6.6)", "BANK", 
+	"(4.0)", "(4.1)", "(4.2)", "(4.3)", "(4.4)", "(4.5)", "(4.6)", "BANK",
+	"(5.0)", "(5.1)", "(5.2)", "(5.3)", "(5.4)", "(5.5)", "(5.6)", "BANK",
+	"(6.0)", "(6.1)", "(6.2)", "(6.3)", "(6.4)", "(6.5)", "(6.6)", "BANK",
 	"(7.0)", "(7.1)", "(7.2)", "(7.3)", "(7.4)", "(7.5)", "(7.6)", "BANK"
 };
 
@@ -108,7 +108,7 @@ static const char *ethernet_regname[64] =
 
 /*************************************
  *
- *	Structures
+ *  Structures
  *
  *************************************/
 
@@ -119,18 +119,18 @@ struct smc91c94_data
 	/* raw register data and masks */
 	UINT16			reg[64];
 	UINT16			regmask[64];
-	
+
 	/* IRQ information */
 	UINT8			irq_state;
-	
+
 	/* allocate information */
 	UINT8			alloc_count;
-	
+
 	/* transmit/receive FIFOs */
 	UINT8 			fifo_count;
 	UINT8			rx[ETHER_BUFFER_SIZE * ETHER_RX_BUFFERS];
 	UINT8			tx[ETHER_BUFFER_SIZE];
-	
+
 	/* counters */
 	UINT32			sent;
 	UINT32			recd;
@@ -140,7 +140,7 @@ struct smc91c94_data
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -150,7 +150,7 @@ static struct smc91c94_data ethernet;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -160,7 +160,7 @@ static void update_ethernet_irq(void);
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -173,7 +173,7 @@ void smc91c94_init(struct smc91c9x_interface *config)
 
 /*************************************
  *
- *	Reset
+ *  Reset
  *
  *************************************/
 
@@ -190,7 +190,7 @@ void smc91c94_reset(void)
 	ethernet.reg[EREG_MIR]			= 0x1212;	ethernet.regmask[EREG_MIR]			= 0x0000;
 	ethernet.reg[EREG_MCR]			= 0x3300;	ethernet.regmask[EREG_MCR]			= 0x00ff;
 	ethernet.reg[EREG_BANK]			= 0x3300;	ethernet.regmask[EREG_BANK]			= 0x0007;
-	
+
 	ethernet.reg[EREG_CONFIG]		= 0x0030;	ethernet.regmask[EREG_CONFIG]		= 0x17c6;
 	ethernet.reg[EREG_BASE]			= 0x1866;	ethernet.regmask[EREG_BASE]			= 0xfffe;
 	ethernet.reg[EREG_IA0_1]		= 0x0000;	ethernet.regmask[EREG_IA0_1]		= 0xffff;
@@ -198,7 +198,7 @@ void smc91c94_reset(void)
 	ethernet.reg[EREG_IA4_5]		= 0x0000;	ethernet.regmask[EREG_IA4_5]		= 0xffff;
 	ethernet.reg[EREG_GENERAL_PURP]	= 0x0000;	ethernet.regmask[EREG_GENERAL_PURP]	= 0xffff;
 	ethernet.reg[EREG_CONTROL]		= 0x0100;	ethernet.regmask[EREG_CONTROL]		= 0x68e7;
-	
+
 	ethernet.reg[EREG_MMU_COMMAND]	= 0x0000;	ethernet.regmask[EREG_MMU_COMMAND]	= 0x00e7;
 	ethernet.reg[EREG_PNR_ARR]		= 0x8000;	ethernet.regmask[EREG_PNR_ARR]		= 0x00ff;
 	ethernet.reg[EREG_FIFO_PORTS]	= 0x8080;	ethernet.regmask[EREG_FIFO_PORTS]	= 0x0000;
@@ -206,7 +206,7 @@ void smc91c94_reset(void)
 	ethernet.reg[EREG_DATA_0]		= 0x0000;	ethernet.regmask[EREG_DATA_0]		= 0xffff;
 	ethernet.reg[EREG_DATA_1]		= 0x0000;	ethernet.regmask[EREG_DATA_1]		= 0xffff;
 	ethernet.reg[EREG_INTERRUPT]	= 0x0004;	ethernet.regmask[EREG_INTERRUPT]	= 0x7f00;
-	
+
 	ethernet.reg[EREG_MT0_1]		= 0x0000;	ethernet.regmask[EREG_MT0_1]		= 0xffff;
 	ethernet.reg[EREG_MT2_3]		= 0x0000;	ethernet.regmask[EREG_MT2_3]		= 0xffff;
 	ethernet.reg[EREG_MT4_5]		= 0x0000;	ethernet.regmask[EREG_MT4_5]		= 0xffff;
@@ -222,7 +222,7 @@ void smc91c94_reset(void)
 
 /*************************************
  *
- *	Internal IRQ handling
+ *  Internal IRQ handling
  *
  *************************************/
 
@@ -241,7 +241,7 @@ static void update_ethernet_irq(void)
 
 /*************************************
  *
- *	Draw the stats
+ *  Draw the stats
  *
  *************************************/
 
@@ -256,7 +256,7 @@ static void update_stats(void)
 
 /*************************************
  *
- *	Complete an enqueued packet
+ *  Complete an enqueued packet
  *
  *************************************/
 
@@ -278,7 +278,7 @@ static void finish_enqueue(int param)
 	ethernet.reg[EREG_FIFO_PORTS] |= 0x0080;
 	ethernet.sent++;
 	update_stats();
-	
+
 	/* loopback? */
 	if (ethernet.reg[EREG_TCR] & 0x2000)
 		if (ethernet.fifo_count < ETHER_RX_BUFFERS)
@@ -286,12 +286,12 @@ static void finish_enqueue(int param)
 			int buffer_len = ((ethernet.tx[3] << 8) | ethernet.tx[2]) & 0x7ff;
 			data8_t *packet = &ethernet.rx[ethernet.fifo_count++ * ETHER_BUFFER_SIZE];
 			int packet_len;
-			
+
 			/* compute the packet length */
 			packet_len = buffer_len - 6;
 			if (packet[buffer_len - 1] & 0x20)
 				packet_len++;
-		
+
 			/* build up the packet */
 			packet[0] = 0x0000;
 			packet[1] = 0x0000;
@@ -300,7 +300,7 @@ static void finish_enqueue(int param)
 			memcpy(&packet[4], &ethernet.tx[4], 6);
 			memcpy(&packet[10], &ethernet.tx[10], 6);
 			memcpy(&packet[16], &ethernet.tx[16], buffer_len - 16);
-			
+
 			/* set the broadcast flag */
 			if (is_broadcast)
 				packet[1] |= 0x40;
@@ -315,7 +315,7 @@ static void finish_enqueue(int param)
 					packet[2] = buffer_len;
 					packet[3] = buffer_len >> 8;
 				}
-			
+
 			/* signal a receive */
 			ethernet.reg[EREG_INTERRUPT] |= EINT_RCV;
 			ethernet.reg[EREG_FIFO_PORTS] &= ~0x8000;
@@ -327,7 +327,7 @@ static void finish_enqueue(int param)
 
 /*************************************
  *
- *	MMU command processing
+ *  MMU command processing
  *
  *************************************/
 
@@ -339,7 +339,7 @@ static void process_command(UINT16 data)
 			if (LOG_ETHERNET)
 				logerror("   NOP\n");
 			break;
-			
+
 		case ECMD_ALLOCATE:
 			if (LOG_ETHERNET)
 				logerror("   ALLOCATE MEMORY FOR TX (%d)\n", (data & 7));
@@ -348,17 +348,17 @@ static void process_command(UINT16 data)
 			ethernet.reg[EREG_INTERRUPT] |= 0x0008;
 			update_ethernet_irq();
 			break;
-			
+
 		case ECMD_RESET_MMU:
 			if (LOG_ETHERNET)
 				logerror("   RESET MMU\n");
 			break;
-			
+
 		case ECMD_REMOVE:
 			if (LOG_ETHERNET)
 				logerror("   REMOVE FRAME FROM RX FIFO\n");
 			break;
-			
+
 		case ECMD_REMOVE_RELEASE:
 			if (LOG_ETHERNET)
 				logerror("   REMOVE AND RELEASE FRAME FROM RX FIFO\n");
@@ -377,18 +377,18 @@ static void process_command(UINT16 data)
 			ethernet.recd++;
 			update_stats();
 			break;
-			
+
 		case ECMD_RELEASE_PACKET:
 			if (LOG_ETHERNET)
 				logerror("   RELEASE SPECIFIC PACKET\n");
 			break;
-			
+
 		case ECMD_ENQUEUE_PACKET:
 			if (LOG_ETHERNET)
 				logerror("   ENQUEUE TX PACKET\n");
 			finish_enqueue(0);
 			break;
-			
+
 		case ECMD_RESET_FIFOS:
 			if (LOG_ETHERNET)
 				logerror("   RESET TX FIFOS\n");
@@ -401,7 +401,7 @@ static void process_command(UINT16 data)
 
 /*************************************
  *
- *	Core read handler
+ *  Core read handler
  *
  *************************************/
 
@@ -414,7 +414,7 @@ READ16_HANDLER( smc91c94_r )
 	if (offset != EREG_BANK)
 		offset += 8 * (ethernet.reg[EREG_BANK] & 7);
 	result = ethernet.reg[offset];
-	
+
 	switch (offset)
 	{
 		case EREG_PNR_ARR:
@@ -422,9 +422,9 @@ READ16_HANDLER( smc91c94_r )
 			{
 				ethernet.reg[EREG_INTERRUPT] &= ~0x0008;
 				update_ethernet_irq();
-			}	
+			}
 			break;
-	
+
 		case EREG_DATA_0:	/* data register */
 		case EREG_DATA_1:	/* data register */
 		{
@@ -438,7 +438,7 @@ READ16_HANDLER( smc91c94_r )
 			break;
 		}
 	}
-	
+
 	if (LOG_ETHERNET && offset != EREG_BANK)
 		logerror("%08X:ethernet_r(%s) = %04X & %04X\n", activecpu_get_pc(), ethernet_regname[offset], result, mem_mask ^ 0xffff);
 	return result;
@@ -448,19 +448,19 @@ READ16_HANDLER( smc91c94_r )
 
 /*************************************
  *
- *	Core write handler
+ *  Core write handler
  *
  *************************************/
 
 WRITE16_HANDLER( smc91c94_w )
 {
 	UINT16 olddata;
-	
+
 	/* determine the effective register */
 	offset %= 8;
 	if (offset != EREG_BANK)
 		offset += 8 * (ethernet.reg[EREG_BANK] & 7);
-		
+
 	/* update the data generically */
 	olddata = ethernet.reg[offset];
 	mem_mask |= ~ethernet.regmask[offset];
@@ -486,7 +486,7 @@ WRITE16_HANDLER( smc91c94_w )
 				if (data & 0x0001) logerror("   TXENA\n");
 			}
 			break;
-		
+
 		case EREG_RCR:		/* receive control register */
 			if (LOG_ETHERNET)
 			{
@@ -514,7 +514,7 @@ WRITE16_HANDLER( smc91c94_w )
 				if (data & 0x0002) logerror("   INT SEL0\n");
 			}
 			break;
-		
+
 		case EREG_BASE:		/* base address register */
 			if (LOG_ETHERNET)
 			{
@@ -542,7 +542,7 @@ WRITE16_HANDLER( smc91c94_w )
 		case EREG_MMU_COMMAND:	/* command register */
 			process_command(data);
 			break;
-		
+
 		case EREG_DATA_0:	/* data register */
 		case EREG_DATA_1:	/* data register */
 		{
@@ -555,7 +555,7 @@ WRITE16_HANDLER( smc91c94_w )
 				ethernet.reg[EREG_POINTER] = (ethernet.reg[EREG_POINTER] & ~0x7ff) | (addr & 0x7ff);
 			break;
 		}
-		
+
 		case EREG_INTERRUPT:
 			ethernet.reg[EREG_INTERRUPT] &= ~(data & 0x56);
 			update_ethernet_irq();

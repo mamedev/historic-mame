@@ -1,164 +1,164 @@
 /***************************************************************************
 
-	Namco PuckMan
+    Namco PuckMan
 
     driver by Nicola Salmoria and many others
 
     Games supported:
-		* PuckMan
-		* Pac-Man Plus
-		* Ms. Pac-Man
-		* Crush Roller
-		* Ponpoko
-		* Eyes
-		* Mr. TNT
-		* Gorkans
-		* Lizard Wizard
-		* The Glob
-		* Dream Shopper
-		* Van Van Car
-		* Ali Baba and 40 Thieves
-		* Jump Shot
-		* Shoot the Bull
-		* Big Bucks
-		* Driving Force
-		* Eight Ball Action
-		* Porky
-		* MTV Rock-N-Roll Trivia (Part 2)
-		* Woodpecker
+        * PuckMan
+        * Pac-Man Plus
+        * Ms. Pac-Man
+        * Crush Roller
+        * Ponpoko
+        * Eyes
+        * Mr. TNT
+        * Gorkans
+        * Lizard Wizard
+        * The Glob
+        * Dream Shopper
+        * Van Van Car
+        * Ali Baba and 40 Thieves
+        * Jump Shot
+        * Shoot the Bull
+        * Big Bucks
+        * Driving Force
+        * Eight Ball Action
+        * Porky
+        * MTV Rock-N-Roll Trivia (Part 2)
+        * Woodpecker
 
 
-	Known issues:
-		* mystery items in Ali Baba don't work correctly because of protection
+    Known issues:
+        * mystery items in Ali Baba don't work correctly because of protection
 
-	Known to exist but dumps needed
-	    * Eeeek!
-	    * Ms Pac Plus
-	    * Ms Pac Man Twin
-	    * MTV Rock-N-Roll Trivia (Part 2), 1 bad rom. It's not a bad dump, the rom is bad.
-
-****************************************************************************
-
-	Pac-Man memory map (preliminary)
-
-	0000-3fff ROM
-	4000-43ff Video RAM
-	4400-47ff Color RAM
-	4800-4bff RAM Dream Shopper, Van Van Car only.  Pacman uses this block due to a bug in the routine to
-	     translate the internal pacman location to a screen address when in the right tunnel.
-	4c00-4fff RAM
-	8000-bfff ROM Ms Pac-Man, Ponpoko, Lizard Wizard, Dream Shopper, Van Van Car, Woodpecker, Ali Babba all use
-	     portions of the upper memory area.  Pacman and most bootlegs don't have an A15 line to the cpu so most
-	     boards that use upper memmory have an auxillary board that plugs into the cpu socket with a ribbon cable.
-	     There is also a common Ms Pacman hack for pacman bootlegs to wire A15 from the cpu to the address decoder
-	     in place of the refresh line. The extra eproms are stacked on lower eproms or placed in unused sockets for
-	     2k roms.
-
-
-	memory mapped ports:
-
-	read:
-	5000      IN0
-	5040      IN1
-	5080      DSW 1
-	50c0	  DSW 2 (Ponpoko, mschamp, Van Van Car, Rock and Roll Trivia 2 only)
-	see the input_ports definition below for details on the input bits
-
-	write:
-	4ff0-4fff 8 pairs of two bytes:
-	          the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
-			  X flip (bit 1); the second byte the color.  Note: Only Ponpoko has 8 sprites
-			  an original Midway Pacman board containls only the center 6 sprites.
-	5000      interrupt enable
-	5001      sound enable
-	5002      latch at location 8K has no connection for this address
-	5003      flip screen
-	5004      1 player start lamp
-	5005      2 players start lamp
-	5006      coin lockout		   				Note: no boards are known to contain the output
-			transistors to drive a lamp or coin lockout.   The schematics and boards show no connection
-			to the output of the latch at location 8k
-	5007      coin counter
-	5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
-	5045      sound voice 1 waveform (nibble)
-	5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
-	504a      sound voice 2 waveform (nibble)
-	504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
-	504f      sound voice 3 waveform (nibble)
-	5050-5054 sound voice 1 frequency (nibbles)
-	5055      sound voice 1 volume (nibble)
-	5056-5059 sound voice 2 frequency (nibbles)
-	505a      sound voice 2 volume (nibble)
-	505b-505e sound voice 3 frequency (nibbles)
-	505f      sound voice 3 volume (nibble)
-	5060-506f Sprite coordinates, x/y pairs for 8 sprites
-	50c0      Watchdog reset
-
-	I/O ports:
-	OUT on port $0 sets the interrupt vector
-
+    Known to exist but dumps needed
+        * Eeeek!
+        * Ms Pac Plus
+        * Ms Pac Man Twin
+        * MTV Rock-N-Roll Trivia (Part 2), 1 bad rom. It's not a bad dump, the rom is bad.
 
 ****************************************************************************
 
-	Make Trax protection description:
+    Pac-Man memory map (preliminary)
 
-	Make Trax has a "Special" chip that it uses for copy protection.
-	The following chart shows when reads and writes may occur:
+    0000-3fff ROM
+    4000-43ff Video RAM
+    4400-47ff Color RAM
+    4800-4bff RAM Dream Shopper, Van Van Car only.  Pacman uses this block due to a bug in the routine to
+         translate the internal pacman location to a screen address when in the right tunnel.
+    4c00-4fff RAM
+    8000-bfff ROM Ms Pac-Man, Ponpoko, Lizard Wizard, Dream Shopper, Van Van Car, Woodpecker, Ali Babba all use
+         portions of the upper memory area.  Pacman and most bootlegs don't have an A15 line to the cpu so most
+         boards that use upper memmory have an auxillary board that plugs into the cpu socket with a ribbon cable.
+         There is also a common Ms Pacman hack for pacman bootlegs to wire A15 from the cpu to the address decoder
+         in place of the refresh line. The extra eproms are stacked on lower eproms or placed in unused sockets for
+         2k roms.
 
-	AAAAAAAA AAAAAAAA
-	11111100 00000000  <- address bits
-	54321098 76543210
-	xxx1xxxx 01xxxxxx - read data bits 4 and 7
-	xxx1xxxx 10xxxxxx - read data bits 6 and 7
-	xxx1xxxx 11xxxxxx - read data bits 0 through 5
 
-	xxx1xxxx 00xxx100 - write to Special
-	xxx1xxxx 00xxx101 - write to Special
-	xxx1xxxx 00xxx110 - write to Special
-	xxx1xxxx 00xxx111 - write to Special
+    memory mapped ports:
 
-	In practical terms, it reads from Special when it reads from
-	location $5040-$50FF.  Note that these locations overlap our
-	inputs and Dip Switches.  Yuk.
+    read:
+    5000      IN0
+    5040      IN1
+    5080      DSW 1
+    50c0      DSW 2 (Ponpoko, mschamp, Van Van Car, Rock and Roll Trivia 2 only)
+    see the input_ports definition below for details on the input bits
 
-	I don't bother trapping the writes right now, because I don't
-	know how to interpret them.  However, comparing against Crush
-	Roller gives most of the values necessary on the reads.
+    write:
+    4ff0-4fff 8 pairs of two bytes:
+              the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
+              X flip (bit 1); the second byte the color.  Note: Only Ponpoko has 8 sprites
+              an original Midway Pacman board containls only the center 6 sprites.
+    5000      interrupt enable
+    5001      sound enable
+    5002      latch at location 8K has no connection for this address
+    5003      flip screen
+    5004      1 player start lamp
+    5005      2 players start lamp
+    5006      coin lockout                      Note: no boards are known to contain the output
+            transistors to drive a lamp or coin lockout.   The schematics and boards show no connection
+            to the output of the latch at location 8k
+    5007      coin counter
+    5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
+    5045      sound voice 1 waveform (nibble)
+    5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
+    504a      sound voice 2 waveform (nibble)
+    504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
+    504f      sound voice 3 waveform (nibble)
+    5050-5054 sound voice 1 frequency (nibbles)
+    5055      sound voice 1 volume (nibble)
+    5056-5059 sound voice 2 frequency (nibbles)
+    505a      sound voice 2 volume (nibble)
+    505b-505e sound voice 3 frequency (nibbles)
+    505f      sound voice 3 volume (nibble)
+    5060-506f Sprite coordinates, x/y pairs for 8 sprites
+    50c0      Watchdog reset
 
-	Instead of always reading from $5040, $5080, and $50C0, the Make
-	Trax programmers chose to read from a wide variety of locations,
-	probably to make debugging easier.  To us, it means that for the most
-	part we can just assign a specific value to return for each address and
-	we'll be OK.  This falls apart for the following addresses:  $50C0, $508E,
-	$5090, and $5080.  These addresses should return multiple values.  The other
-	ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
-	different values of $50C0 and $5080, and weird things happen if it gets
-	the wrong values.  The only way I've found around these is to patch the
-	ROMs using the same patches Crush Roller uses.  The only thing to watch
-	with this is that changing the ROMs will break the beginning checksum.
-	That's why we use the rom opcode decode function to do our patches.
+    I/O ports:
+    OUT on port $0 sets the interrupt vector
 
-	Incidentally, there are extremely few differences between Crush Roller
-	and Make Trax.  About 98% of the differences appear to be either unused
-	bytes, the name of the game, or code related to the protection.  I've
-	only spotted two or three actual differences in the games, and they all
-	seem minor.
 
-	If anybody cares, here's a list of disassembled addresses for every
-	read and write to the Special chip (not all of the reads are
-	specifically for checking the Special bits, some are for checking
-	player inputs and Dip Switches):
+****************************************************************************
 
-	Writes: $0084, $012F, $0178, $023C, $0C4C, $1426, $1802, $1817,
-		$280C, $2C2E, $2E22, $3205, $3AB7, $3ACC, $3F3D, $3F40,
-		$3F4E, $3F5E
-	Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
-		$0560, $0568, $05B0, $05B8, $096D, $0972, $0981, $0C27,
-		$0C2C, $0F0A, $10B8, $10BE, $111F, $1127, $1156, $115E,
-		$11E3, $11E8, $18B7, $18BC, $18CA, $1973, $197A, $1BE7,
-		$1C06, $1C9F, $1CAA, $1D79, $213D, $2142, $2389, $238F,
-		$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
-		$3EE9, $3F07, $3F0D
+    Make Trax protection description:
+
+    Make Trax has a "Special" chip that it uses for copy protection.
+    The following chart shows when reads and writes may occur:
+
+    AAAAAAAA AAAAAAAA
+    11111100 00000000  <- address bits
+    54321098 76543210
+    xxx1xxxx 01xxxxxx - read data bits 4 and 7
+    xxx1xxxx 10xxxxxx - read data bits 6 and 7
+    xxx1xxxx 11xxxxxx - read data bits 0 through 5
+
+    xxx1xxxx 00xxx100 - write to Special
+    xxx1xxxx 00xxx101 - write to Special
+    xxx1xxxx 00xxx110 - write to Special
+    xxx1xxxx 00xxx111 - write to Special
+
+    In practical terms, it reads from Special when it reads from
+    location $5040-$50FF.  Note that these locations overlap our
+    inputs and Dip Switches.  Yuk.
+
+    I don't bother trapping the writes right now, because I don't
+    know how to interpret them.  However, comparing against Crush
+    Roller gives most of the values necessary on the reads.
+
+    Instead of always reading from $5040, $5080, and $50C0, the Make
+    Trax programmers chose to read from a wide variety of locations,
+    probably to make debugging easier.  To us, it means that for the most
+    part we can just assign a specific value to return for each address and
+    we'll be OK.  This falls apart for the following addresses:  $50C0, $508E,
+    $5090, and $5080.  These addresses should return multiple values.  The other
+    ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
+    different values of $50C0 and $5080, and weird things happen if it gets
+    the wrong values.  The only way I've found around these is to patch the
+    ROMs using the same patches Crush Roller uses.  The only thing to watch
+    with this is that changing the ROMs will break the beginning checksum.
+    That's why we use the rom opcode decode function to do our patches.
+
+    Incidentally, there are extremely few differences between Crush Roller
+    and Make Trax.  About 98% of the differences appear to be either unused
+    bytes, the name of the game, or code related to the protection.  I've
+    only spotted two or three actual differences in the games, and they all
+    seem minor.
+
+    If anybody cares, here's a list of disassembled addresses for every
+    read and write to the Special chip (not all of the reads are
+    specifically for checking the Special bits, some are for checking
+    player inputs and Dip Switches):
+
+    Writes: $0084, $012F, $0178, $023C, $0C4C, $1426, $1802, $1817,
+        $280C, $2C2E, $2E22, $3205, $3AB7, $3ACC, $3F3D, $3F40,
+        $3F4E, $3F5E
+    Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
+        $0560, $0568, $05B0, $05B8, $096D, $0972, $0981, $0C27,
+        $0C2C, $0F0A, $10B8, $10BE, $111F, $1127, $1156, $115E,
+        $11E3, $11E8, $18B7, $18BC, $18CA, $1973, $197A, $1BE7,
+        $1C06, $1C9F, $1CAA, $1D79, $213D, $2142, $2389, $238F,
+        $2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
+        $3EE9, $3F07, $3F0D
 
 
 *****************************************************************************************
@@ -218,7 +218,7 @@ notes:
   0FFF: 36 54  checksum
   2795: 29 00  pink ghost ai, points target to 2 tiles in front of pac instead of 4.
   281F: 40 24  orange ghost ai, change close/far breakpoint from $40 to $24.
-  2FFF: 4C 91	 checksum
+  2FFF: 4C 91    checksum
   37F8,3d28,3d43:  change 1980 to 1981
   Notice the harder upgrade was 2 roms only. 6e,6h.  The others are from a newer set.
 
@@ -242,7 +242,7 @@ notes:
   make trax colors.  Other than that this is an insignificant set.
 
   Comparing files boot3 and PACMAN.7FH
-  0000069F: 01 03  	;runs on boot only, probably garbage bit
+  0000069F: 01 03   ;runs on boot only, probably garbage bit
   Comparing files boot4 and PACMAN.7HJ
   00000807-812:  ;Changes "MS PAC-MAN" to "PAC-GAL"
   00000D3E-D4C:  ;Erases  c MIDWAY MFG CO
@@ -338,7 +338,7 @@ Boards:
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -355,7 +355,7 @@ MACHINE_INIT( mschamp )
 
 /*************************************
  *
- *	Interrupts
+ *  Interrupts
  *
  *************************************/
 
@@ -455,7 +455,7 @@ static WRITE8_HANDLER( nmouse_interrupt_vector_w)
 
 /*************************************
  *
- *	LEDs/coin counters
+ *  LEDs/coin counters
  *
  *************************************/
 
@@ -480,14 +480,14 @@ static WRITE8_HANDLER( pacman_coin_lockout_global_w )
 
 /*************************************
  *
- *	Ali Baba sound
+ *  Ali Baba sound
  *
  *************************************/
 
 static WRITE8_HANDLER( alibaba_sound_w )
 {
 	/* since the sound region in Ali Baba is not contiguous, translate the
-	   offset into the 0-0x1f range */
+       offset into the 0-0x1f range */
  	if (offset < 0x10)
 		pacman_sound_w(offset, data);
 	else if (offset < 0x20)
@@ -500,7 +500,7 @@ static WRITE8_HANDLER( alibaba_sound_w )
 static READ8_HANDLER( alibaba_mystery_1_r )
 {
 	/* The return value determines what the mystery item is.  Each bit corresponds
-	   to a question mark */
+       to a question mark */
 	return rand() & 0x0f;
 }
 
@@ -508,7 +508,7 @@ static READ8_HANDLER( alibaba_mystery_1_r )
 static READ8_HANDLER( alibaba_mystery_2_r )
 {
 	/* The single bit return value determines when the mystery is lit up.
-	   This is certainly wrong */
+       This is certainly wrong */
 	static int mystery = 0;
 	mystery++;
 	return (mystery >> 10) & 1;
@@ -518,7 +518,7 @@ static READ8_HANDLER( alibaba_mystery_2_r )
 
 /*************************************
  *
- *	Make Trax input handlers
+ *  Make Trax input handlers
  *
  *************************************/
 
@@ -609,7 +609,7 @@ static READ8_HANDLER( korosuke_special_port3_r )
 
 /*************************************
  *
- *	Zola kludge
+ *  Zola kludge
  *
  *************************************/
 
@@ -621,7 +621,7 @@ static READ8_HANDLER( mschamp_kludge_r )
 
 /************************************
  *
- *	Big Bucks questions roms handlers
+ *  Big Bucks questions roms handlers
  *
  ************************************/
 
@@ -645,7 +645,7 @@ static READ8_HANDLER( bigbucks_question_r )
 
 /************************************
  *
- *	S2650 cpu based games
+ *  S2650 cpu based games
  *
  ************************************/
 
@@ -692,9 +692,9 @@ static READ8_HANDLER( porky_port1_r )
 
 /************************************
  *
- *	Rock-N-Roll Trivia (Part 2)
+ *  Rock-N-Roll Trivia (Part 2)
  *  questions roms and protection
- *	handlers
+ *  handlers
  *
  ************************************/
 
@@ -751,7 +751,7 @@ static READ8_HANDLER( pacman_read_nop )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -877,13 +877,13 @@ static ADDRESS_MAP_START( dremshpr_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4800, 0x4fef) AM_MIRROR(0xa000) AM_RAM
 	AM_RANGE(0x4ff0, 0x4fff) AM_MIRROR(0xa000) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x5000, 0x5000) AM_MIRROR(0xaf38) AM_WRITE(interrupt_enable_w)
-//	AM_RANGE(0x5001, 0x5001) AM_MIRROR(0xaf38) AM_WRITE(pacman_sound_enable_w)
+//  AM_RANGE(0x5001, 0x5001) AM_MIRROR(0xaf38) AM_WRITE(pacman_sound_enable_w)
 	AM_RANGE(0x5002, 0x5002) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) /* unknown */
 	AM_RANGE(0x5003, 0x5003) AM_MIRROR(0xaf38) AM_WRITE(pacman_flipscreen_w)
 	AM_RANGE(0x5004, 0x5005) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) // AM_WRITE(pacman_leds_w)
 	AM_RANGE(0x5006, 0x5006) AM_MIRROR(0xaf38) AM_WRITE(MWA8_NOP) // AM_WRITE(pacman_coin_lockout_global_w)
 	AM_RANGE(0x5007, 0x5007) AM_MIRROR(0xaf38) AM_WRITE(pacman_coin_counter_w)
-//	AM_RANGE(0x5040, 0x505f) AM_MIRROR(0xaf00) AM_WRITE(pacman_sound_w) AM_BASE(&pacman_soundregs)
+//  AM_RANGE(0x5040, 0x505f) AM_MIRROR(0xaf00) AM_WRITE(pacman_sound_w) AM_BASE(&pacman_soundregs)
 	AM_RANGE(0x5060, 0x506f) AM_MIRROR(0xaf00) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
 	AM_RANGE(0x5070, 0x507f) AM_MIRROR(0xaf00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x5080, 0x5080) AM_MIRROR(0xaf3f) AM_WRITE(MWA8_NOP)
@@ -1059,7 +1059,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Main CPU port handlers
+ *  Main CPU port handlers
  *
  *************************************/
 
@@ -1134,7 +1134,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -2126,7 +2126,7 @@ INPUT_PORTS_START( jumpshot )
 
 	PORT_START_TAG("DSW 1")
 	PORT_DIPNAME( 0x03, 0x01, "Time"  )
-//	PORT_DIPSETTING(    0x00,  "2 Minutes"  )
+//  PORT_DIPSETTING(    0x00,  "2 Minutes"  )
 	PORT_DIPSETTING(    0x02,  "2 Minutes" )
 	PORT_DIPSETTING(    0x03,  "3 Minutes" )
 	PORT_DIPSETTING(    0x01,  "4 Minutes"  )
@@ -2712,7 +2712,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -2760,7 +2760,7 @@ static struct GfxDecodeInfo s2650games_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -2774,7 +2774,7 @@ static struct namco_interface namco_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -3029,7 +3029,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -3978,7 +3978,7 @@ ROM_START( eggor )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	/* the board was stripped of its proms, these are the standard ones from Pacman, they look reasonable
-	   but without another board its impossible to say if they are actually good */
+       but without another board its impossible to say if they are actually good */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, BAD_DUMP CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, BAD_DUMP CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
 
@@ -4568,7 +4568,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -4771,7 +4771,7 @@ static DRIVER_INIT( rocktrv2 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

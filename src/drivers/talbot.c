@@ -1,8 +1,8 @@
 /*
-	Talbot (c) 1982 Volt Electronics
+    Talbot (c) 1982 Volt Electronics
 
-	TODO:
-	- finish the simulation of the protection
+    TODO:
+    - finish the simulation of the protection
 
 */
 
@@ -40,7 +40,7 @@ static WRITE8_HANDLER( talbot_colorram_w )
 mcu_write
 
 PC: 0x00DD -> writes values from 0x8C30 to 0x63C0
-			  and another similar one some offsets below
+              and another similar one some offsets below
 
 others:
 
@@ -53,7 +53,7 @@ static READ8_HANDLER( talbot_mcu_r )
 	int pc = activecpu_get_pc();
 	static int count = 0;
 
-	if( 
+	if(
 		pc != 0x1D11 && /* check values written in talbot_mcu_ram */
 		pc != 0x1D84 && /* check 0x08 at 0x6003 */
 		pc != 0x1D8C && /* get the value to jump (= 0x010F) from 0x60C0 and bytes sum MUST be 0x10 */
@@ -116,7 +116,7 @@ static WRITE8_HANDLER( talbot_mcu_control_1_w )
 	if( data != mcu_control_1 )
 	{
 		mcu_control_1 = data;
-//		logerror("MCU Control 1 = %02X PC = %04X\n",data,activecpu_get_pc());
+//      logerror("MCU Control 1 = %02X PC = %04X\n",data,activecpu_get_pc());
 	}
 }
 
@@ -125,7 +125,7 @@ static WRITE8_HANDLER( talbot_mcu_control_2_w )
 	if( data != mcu_control_2 )
 	{
 		mcu_control_2 = data;
-//		logerror("MCU Control 2 = %02X PC = %04X\n",data,activecpu_get_pc());
+//      logerror("MCU Control 2 = %02X PC = %04X\n",data,activecpu_get_pc());
 	}
 }
 
@@ -182,7 +182,7 @@ INPUT_PORTS_START( talbot )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )	
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
@@ -203,7 +203,7 @@ INPUT_PORTS_START( talbot )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Has to be 0 */
-	
+
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -257,7 +257,7 @@ static void get_tile_info_bg(int tile_index)
 VIDEO_START( talbot )
 {
 	bg_tilemap = tilemap_create(get_tile_info_bg, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
-	
+
 	if (!bg_tilemap)
 		return 1;
 
@@ -326,7 +326,7 @@ PALETTE_INIT( talbot )
 
 	/* Colortable entry */
 	for(i = 0; i < 0x100; i++)
-		colortable[i] = color_prom[i];	
+		colortable[i] = color_prom[i];
 }
 
 static MACHINE_DRIVER_START( talbot )

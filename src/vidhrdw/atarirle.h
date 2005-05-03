@@ -1,9 +1,9 @@
 /*##########################################################################
 
-	atarirle.h
-	
-	Common RLE-based motion object management functions for early 90's
-	Atari raster games.
+    atarirle.h
+
+    Common RLE-based motion object management functions for early 90's
+    Atari raster games.
 
 ##########################################################################*/
 
@@ -12,7 +12,7 @@
 
 
 /*##########################################################################
-	CONSTANTS
+    CONSTANTS
 ##########################################################################*/
 
 /* maximum number of motion object processors */
@@ -33,7 +33,7 @@
 
 
 /*##########################################################################
-	TYPES & STRUCTURES
+    TYPES & STRUCTURES
 ##########################################################################*/
 
 /* description for an eight-word mask */
@@ -49,10 +49,10 @@ struct atarirle_desc
 	UINT16				spriteramentries;	/* number of entries in sprite RAM */
 	UINT16				leftclip;			/* left clip coordinate */
 	UINT16				rightclip;			/* right clip coordinate */
-	
+
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
-	
+
 	struct atarirle_entry codemask;			/* mask for the code index */
 	struct atarirle_entry colormask;		/* mask for the color */
 	struct atarirle_entry xposmask;			/* mask for the X position */
@@ -67,7 +67,7 @@ struct atarirle_desc
 
 
 /*##########################################################################
-	FUNCTION PROTOTYPES
+    FUNCTION PROTOTYPES
 ##########################################################################*/
 
 /* setup/shutdown */
@@ -88,7 +88,7 @@ struct mame_bitmap *atarirle_get_vram(int map, int idx);
 
 
 /*##########################################################################
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ##########################################################################*/
 
 extern data16_t *atarirle_0_spriteram;

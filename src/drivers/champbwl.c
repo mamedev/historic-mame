@@ -69,7 +69,7 @@ Notes:
       DIP32         - Empty DIP32 socket for connection of ROM Sub Board
       CN1           - 4-pin Connector
 
-      Custom IC's - 
+      Custom IC's -
                     X1-001A (SDIP64) \ Sprite Generators
                     X1-002A (SDIP64) /
                     X1-007  (SDIP42)   Video DAC? (connected to RGB output)
@@ -88,10 +88,10 @@ Notes:
             AB001008.U26   82S147 PROM (DIP20)
             AB001009.U27   82S147 PROM (DIP20)
 
-            AB002002.2-2   2M MaskROM (DIP32)   \ 
+            AB002002.2-2   2M MaskROM (DIP32)   \
             AB002003.2-3   2M MaskROM (DIP32)   | PCM Samples (Connected to X1-010 via a sub-board)
-            AB003002.3-2   2M MaskROM (DIP32)   | 
-            AB003003.3-3   2M MaskROM (DIP32)   / 
+            AB003002.3-2   2M MaskROM (DIP32)   |
+            AB003003.3-3   2M MaskROM (DIP32)   /
 
 */
 
@@ -112,7 +112,7 @@ static READ8_HANDLER( trackball_r )
 	UINT8 ret;
 	UINT8 port4 = readinputport(4);
 	UINT8 port5 = readinputport(5);
-	
+
 	ret = (((port4 - last_trackball_val[0]) & 0x0f)<<4) | ((port5 - last_trackball_val[1]) & 0x0f);
 
 	last_trackball_val[0] = port4;
@@ -299,7 +299,7 @@ static MACHINE_DRIVER_START( champbwl )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(X1_010, 16000000)
 	MDRV_SOUND_CONFIG(champbwl_sound_intf)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -320,7 +320,7 @@ ROM_START( champbwl )
 	ROM_LOAD( "ab001008.u26", 0x0000, 0x0200, CRC(30ac8d48) SHA1(af034de3f3b8548534effdf4e3717fe3838b7754) )
 	ROM_LOAD( "ab001009.u27", 0x0200, 0x0200, CRC(3bbd4bcd) SHA1(8c87ccc42ece2432b8ad25f8679cdf886e12a43c) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */	
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "ab003003.3-3", 0x00000, 0x40000, CRC(ad40ad10) SHA1(db0e5744ea3fcda87345b545031f82fcb3fec175) )
 	ROM_LOAD( "ab003002.3-2", 0x40000, 0x40000, CRC(7ede8f28) SHA1(b5519c09b4f0019dc76cadca725da1d581912540) )
 	ROM_LOAD( "ab002003.2-3", 0x80000, 0x40000, CRC(3051b8c3) SHA1(5f53596d7af1c79db1dde4bdca3878e07c67b5d1) )

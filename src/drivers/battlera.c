@@ -1,22 +1,22 @@
 /*******************************************************************************
 
-	Battle Rangers					(c) 1988 Data East Corporation
-	Bloody Wolf						(c) 1988 Data East USA
+    Battle Rangers                  (c) 1988 Data East Corporation
+    Bloody Wolf                     (c) 1988 Data East USA
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
-	This board is a modified PC-Engine PCB, differences from PC-Engine console:
+    This board is a modified PC-Engine PCB, differences from PC-Engine console:
 
-	Input ports are different (2 dips, 2 joysticks, 1 coin port)
-	_Interface_ to palette chip is different, palette data is the same.
-	Extra sound chips, and extra processor to drive them.
-	Twice as much VRAM.
+    Input ports are different (2 dips, 2 joysticks, 1 coin port)
+    _Interface_ to palette chip is different, palette data is the same.
+    Extra sound chips, and extra processor to drive them.
+    Twice as much VRAM.
 
-	Todo:
-	- Priority is wrong for the submarine at the end of level 1.
-	- There seems to be a bug with a stuck note from the YM2203 FM channel
-	  at the start of scene 3 and near the ending when your characters are
-	  flying over a forest in a helicopter.
+    Todo:
+    - Priority is wrong for the submarine at the end of level 1.
+    - There seems to be a bug with a stuck note from the YM2203 FM channel
+      at the start of scene 3 and near the ending when your characters are
+      flying over a forest in a helicopter.
 
 **********************************************************************/
 
@@ -265,7 +265,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct MSM5205interface msm5205_interface =
 {
 	battlera_adpcm_int,/* interrupt function */
-	MSM5205_S48_4B		/* 8KHz			   */
+	MSM5205_S48_4B		/* 8KHz            */
 };
 
 /******************************************************************************/

@@ -1,8 +1,8 @@
 /*
 
-	SunA 8 Bit Games samples
-	
-	Format: PCM unsigned 8 bit mono 4Khz
+    SunA 8 Bit Games samples
+
+    Format: PCM unsigned 8 bit mono 4Khz
 
 */
 
@@ -37,7 +37,7 @@ void suna8_sh_start(void)
 {
 	int i;
 	unsigned char *ROM = memory_region(REGION_SOUND1);
-	
+
 	samplebuf = auto_malloc(memory_region_length(REGION_SOUND1) * sizeof(samplebuf[0]));
 
 	for(i=0;i<memory_region_length(REGION_SOUND1);i++)

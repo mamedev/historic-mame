@@ -3,7 +3,7 @@
 Mahjong Sisters (c) 1986 Toa Plan
 
 Video hardware
-	driver by Uki
+    driver by Uki
 
 *****************************************************************************/
 

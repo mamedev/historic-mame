@@ -1,7 +1,7 @@
 /*
- *	Pulsar sound routines
+ *  Pulsar sound routines
  *
- *	TODO: change heart rate based on bit 7 of Port 1
+ *  TODO: change heart rate based on bit 7 of Port 1
  *
  */
 

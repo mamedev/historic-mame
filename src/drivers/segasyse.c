@@ -40,74 +40,74 @@
 
 ********************************************************************************
 
-	ROMs + CPU Board (32kb ROMs)
+    ROMs + CPU Board (32kb ROMs)
 
-	IC 07 (Good)	IC 05 (Good)
-	IC 04 (Good)	IC 03 (Good)
-	IC 02 (Good)
+    IC 07 (Good)    IC 05 (Good)
+    IC 04 (Good)    IC 03 (Good)
+    IC 02 (Good)
 
-	(834-5803) MAIN Board (8kb RAMs)
+    (834-5803) MAIN Board (8kb RAMs)
 
-	IC 49 (Good)	IC 55 (Good)	System RAM (0xc000 - 0xffff)
-	IC 03 (Good)	IC 07 (Good)	Front Layer VRAM (Bank 1)	Port F7 -0------
-	IC 04 (Good)	IC 08 (Good)	Front Layer VRAM (Bank 2)	Port F7 -1------
-	IC 01 (Good)	IC 05 (Good)	Back Layer VRAM (Bank 1)	Port F7 0-------
-	IC 02 (Good)	IC 06 (Good)	Back Layer VRAM (Bank 2)	Port F7 1-------
-	(or at least this is how it appears from HangOnJr's RAMs Test)
+    IC 49 (Good)    IC 55 (Good)    System RAM (0xc000 - 0xffff)
+    IC 03 (Good)    IC 07 (Good)    Front Layer VRAM (Bank 1)   Port F7 -0------
+    IC 04 (Good)    IC 08 (Good)    Front Layer VRAM (Bank 2)   Port F7 -1------
+    IC 01 (Good)    IC 05 (Good)    Back Layer VRAM (Bank 1)    Port F7 0-------
+    IC 02 (Good)    IC 06 (Good)    Back Layer VRAM (Bank 2)    Port F7 1-------
+    (or at least this is how it appears from HangOnJr's RAMs Test)
 
-	2x (315-5124)'s here too, these are the VDP chips
+    2x (315-5124)'s here too, these are the VDP chips
 
-	PORTS (to be completed)
+    PORTS (to be completed)
 
-	0xba - 0xbb r/w		Back Layer VDP
-	0xbe - 0xbf	r/w		Front Layer VDP
+    0xba - 0xbb r/w     Back Layer VDP
+    0xbe - 0xbf r/w     Front Layer VDP
 
-	0xf7 w/o			Banking Controls
+    0xf7 w/o            Banking Controls
 
-	0xe0 r/o			Inputs (Coins, Start Btns)
-	0xe1 r/o			Controls (Transformer)
+    0xe0 r/o            Inputs (Coins, Start Btns)
+    0xe1 r/o            Controls (Transformer)
 
-	0xf2 - 0xf3 r/o		Dipswitches
+    0xf2 - 0xf3 r/o     Dipswitches
 
-	0xf8 r/o			Analog Input (Hang On Jr)
+    0xf8 r/o            Analog Input (Hang On Jr)
 
-	0x7e r/o			V Counter (vertical beam pos in scanlines)
-	0x7f r/o			H Counter (horizontal beam pos in 'pixel clock cycles')
+    0x7e r/o            V Counter (vertical beam pos in scanlines)
+    0x7f r/o            H Counter (horizontal beam pos in 'pixel clock cycles')
 
 ********************************************************************************
 
  Change Log:
  14 Jun 2001 | Stephh added the dipswitches to ROP (and coinage to the others
-			 | I added Save State support
+             | I added Save State support
  14 Jun 2001 | Nicola improved the Controls for Riddle, stephh added a New
-			 | SEGASYSE_COINAGE macro and fixed sorted out the dips in ROP
+             | SEGASYSE_COINAGE macro and fixed sorted out the dips in ROP
  13 Jun 2001 | After A Lot of Messing about, Hair Pulling out etc. Riddle is
-			 | now playable :p
+             | now playable :p
  12 Jun 2001 | First Submitted Version, still a couple of things need doing,
-			 | Riddle isn't playable at this stage
+             | Riddle isn't playable at this stage
  12 Jun 2001 | Cleaned Up The Code (removed a lot of now redundant stuff in the
-			 | interrupt functions, rendering code (dirty tile marking etc.))
+             | interrupt functions, rendering code (dirty tile marking etc.))
  12 Jun 2001 | Major Updates made, Sound Added, Controls, Sprites, Raster
-			 | Corrected, Horizontal Scrolling Corrected, Colours Corrected,
-			 | Transformer is now Fully Playable, HangOn-Jr Likewise with
-			 | minor gfx glitches in places.
+             | Corrected, Horizontal Scrolling Corrected, Colours Corrected,
+             | Transformer is now Fully Playable, HangOn-Jr Likewise with
+             | minor gfx glitches in places.
  11 Jun 2001 | Progressing Nicely, Improvements to the Banking, inc. Writes to
-			 | the 0x8000+ range, Raster Interrupts hooked up and sort of
-			 | working (looks ok in Transformer, not in Hang-On Jr
+             | the 0x8000+ range, Raster Interrupts hooked up and sort of
+             | working (looks ok in Transformer, not in Hang-On Jr
  07 Jun 2001 | Big Clean-Up of Driver so far, lots of things moved around to
-			 | make it easier to follow and develop
+             | make it easier to follow and develop
  06 Jun 2001 | Improved the Banking a bit, based on what the program seems to be
-			 | trying to do as it goes through its RAM/ROM tests, still some
-			 | bits of Port 0xF7 writes remain unclear however.
+             | trying to do as it goes through its RAM/ROM tests, still some
+             | bits of Port 0xF7 writes remain unclear however.
  05 Jun 2001 | Put in place some very crude rendering code, the RAM / ROM checks
-			 | of transfrm now display on the screen
+             | of transfrm now display on the screen
  04 Jun 2001 | transfrm (Transformer) is showing signs of life, the RAM / ROM
-			 | check info can clearly be seen in VRAM, now to try and get some
-			 | rendering code working.  Tiles (SEGA logo, Font etc, now also
-			 | appear in VRAM)
+             | check info can clearly be seen in VRAM, now to try and get some
+             | rendering code working.  Tiles (SEGA logo, Font etc, now also
+             | appear in VRAM)
  03 Jun 2001 | Driver Rewritten from Scratch after a long period of inactivity,
-			 | the VDP core now seems to be running correctly, valid colours can
-			 | be seen in CRAM
+             | the VDP core now seems to be running correctly, valid colours can
+             | be seen in CRAM
 
 ********************************************************************************
 
@@ -148,7 +148,7 @@
  E543 : bit 0 : ON = player 1 one still has lives
         bit 1 : ON = player 2 one still has lives
         bit 2 : ON = player 1 is the current player - OFF = player 2 is the
-		 current player
+         current player
 
  E572 : table with L. slot infos (5 bytes wide)
  E577 : table with R. slot infos (5 bytes wide)
@@ -274,15 +274,15 @@ static WRITE8_HANDLER (segae_mem_8000_w)
  ROM and RAM
 
  bit:
-  7	- Back Layer VDP (0) Vram Bank Select
-  6	- Front Layer VDP (1) Vram Bank Select
-  5	- Select 0x8000 write location (1 = Back Layer VDP RAM, 0 = Front Layer VDP RAM)
-		*writes are to the non-selected bank*
+  7 - Back Layer VDP (0) Vram Bank Select
+  6 - Front Layer VDP (1) Vram Bank Select
+  5 - Select 0x8000 write location (1 = Back Layer VDP RAM, 0 = Front Layer VDP RAM)
+        *writes are to the non-selected bank*
   4 - unknown
   3 - unknown
   2 - \
   1 - | Rom Bank Select for 0x8000 -
-  0 - |					0xbfff reads
+  0 - |                 0xbfff reads
 
 ***************************************/
 
@@ -451,9 +451,9 @@ static WRITE8_HANDLER (segae_ridleofp_port_fa_w)
 *******************************************************************************/
 
 	/* The Coinage is similar to Sega System 1 and C2, but
-	it seems that Free Play is not used in all games
-	(in fact, the only playable game that use it is
-	Riddle of Pythagoras) */
+    it seems that Free Play is not used in all games
+    (in fact, the only playable game that use it is
+    Riddle of Pythagoras) */
 
 #define SEGA_COIN_A \
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) ) \
@@ -811,9 +811,9 @@ static DRIVER_INIT( astrofl )
  ridleofp - Riddle of Pythagoras (Jp.)
  transfrm - Transformer
  astrofl  - Astro Flash (Jp. Version of Transformer) *Custom CPU, scratched
-													  surface 'NEC??'*
+                                                      surface 'NEC??'*
  fantzn2  - Fantasy Zone 2 (set 2) *Rom at IC7 Encrypted*
- opaopa	  - Opa Opa				   *Roms Encrypted/Bad?*
+ opaopa   - Opa Opa                *Roms Encrypted/Bad?*
 *******************************************************************************/
 
 ROM_START( hangonjr )

@@ -1,21 +1,21 @@
 /*****************************************************************************
  *
  *   z8000cpu.h
- *	 Portable Z8000(2) emulator
- *	 Macros and types used in z8000.c / z8000ops.c / z8000tbl.c
+ *   Portable Z8000(2) emulator
+ *   Macros and types used in z8000.c / z8000ops.c / z8000tbl.c
  *
- *	 Copyright (c) 1998,1999 Juergen Buchmueller, all rights reserved.
- *	 Bug fixes and MSB_FIRST compliance Ernesto Corvi.
+ *   Copyright (c) 1998,1999 Juergen Buchmueller, all rights reserved.
+ *   Bug fixes and MSB_FIRST compliance Ernesto Corvi.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
@@ -145,8 +145,8 @@
 #define CCF !GET_C						/* not carry / unsigned greater than */
 
 /* get data from the opcode words */
-/* o is the opcode word offset	  */
-/* s is a nibble shift factor	  */
+/* o is the opcode word offset    */
+/* s is a nibble shift factor     */
 #define GET_BIT(o)      UINT16 bit = 1 << (Z.op[o] & 15)
 #define GET_CCC(o,s)	UINT8 cc = (Z.op[o] >> (s)) & 15
 

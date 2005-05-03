@@ -5,8 +5,8 @@ Kusayakyuu (Sandlot Baseball)
 driver by Tomasz Slanina
 
 TODO:
-- colors 
-- correct communication between main and the sound cpu 
+- colors
+- correct communication between main and the sound cpu
 - DAC
 - sprite glitches (sometimes) .. missing vertical flip flag?
 - sound cpu int freq (timer ? $a008/$a010 writes ?)
@@ -56,7 +56,7 @@ ROMs:
 18.9R [9d75b104] /
 
 PROM:
-6309-1.9F 
+6309-1.9F
 
 SRAM:
 93422(256x4) (x4)
@@ -78,30 +78,30 @@ static int sound_status=0xff;
 
 static WRITE8_HANDLER( bank_select_w )
 {
-	/* 
-		bits:
-		76543210
-		       x - ROM bank
-		xxxxxxx  - unused ?       
-    
-    */    
+	/*
+        bits:
+        76543210
+               x - ROM bank
+        xxxxxxx  - unused ?
+
+    */
 	cpu_setbank( 1, memory_region(REGION_CPU1) + ((data&1) * 0x4000) + 0x10000 );
 }
 
 static WRITE8_HANDLER( latch_w )
 {
-	sound_status&=~0x80; 
+	sound_status&=~0x80;
 	soundlatch_w(0,data|0x80);
 }
 
 static READ8_HANDLER (sound_status_r)
 {
-	return sound_status|4;  
+	return sound_status|4;
 }
 
 static WRITE8_HANDLER(tomaincpu_w)
 {
-	sound_status|=0x80;  
+	sound_status|=0x80;
 }
 
 static ADDRESS_MAP_START( maincpu_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -130,8 +130,8 @@ static ADDRESS_MAP_START( soundcpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa003, 0xa003) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xa006, 0xa006) AM_WRITE(AY8910_write_port_1_w)
 	AM_RANGE(0xa007, 0xa007) AM_WRITE(AY8910_control_port_1_w)
-	AM_RANGE(0xa008, 0xa008) AM_WRITE(MWA8_NOP) 
-	AM_RANGE(0xa00c, 0xa00c) AM_WRITE(tomaincpu_w)  
+	AM_RANGE(0xa008, 0xa008) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xa00c, 0xa00c) AM_WRITE(tomaincpu_w)
 	AM_RANGE(0xa010, 0xa010) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
@@ -142,9 +142,9 @@ INPUT_PORTS_START( ksayakyu )
 	  PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	  PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	  PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	  
+
 	  PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 ) 
+	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START
 	  PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT) PORT_COCKTAIL
@@ -154,9 +154,9 @@ INPUT_PORTS_START( ksayakyu )
 	  PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_COCKTAIL
 
 	  PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_COCKTAIL
-	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 ) 
+	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 
-	PORT_START 
+	PORT_START
 	  PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	  PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
 	  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -169,7 +169,7 @@ INPUT_PORTS_START( ksayakyu )
 	  PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
 	  PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	  PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
-	  PORT_DIPNAME( 0x040, 0x00, "Continue" ) 
+	  PORT_DIPNAME( 0x040, 0x00, "Continue" )
 	  PORT_DIPSETTING(    0x00, "7th inning" )
 	  PORT_DIPSETTING(    0x040, "1st inning" )
 	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -184,15 +184,15 @@ static struct AY8910interface ay8910_interface_1 =
 {
 	soundlatch_r,
 	0,
-	0, 
+	0,
 	dummy_w
 };
 
 static struct AY8910interface ay8910_interface_2 =
 {
 	0,
-	0, 
-	dummy_w, 
+	0,
+	dummy_w,
 	dummy_w
 };
 
@@ -221,15 +221,15 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  
+	16,16,
 	RGN_FRAC(1,3),
-	3,      
+	3,
 	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{ 0, 1, 2, 3, 4,5, 6, 7,
 		8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	8*8*4   
+	8*8*4
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -241,14 +241,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 static MACHINE_DRIVER_START( ksayakyu )
-	MDRV_CPU_ADD(Z80,8000000/2)		
+	MDRV_CPU_ADD(Z80,8000000/2)
 	MDRV_CPU_PROGRAM_MAP(maincpu_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
-	MDRV_CPU_ADD(Z80, 80000000/2)     
-	/* audio CPU */	
+
+	MDRV_CPU_ADD(Z80, 80000000/2)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(soundcpu_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
@@ -257,23 +257,23 @@ static MACHINE_DRIVER_START( ksayakyu )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(256, 256)
-	
+
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_INIT(ksayakyu)
 	MDRV_PALETTE_LENGTH(256)
-	
+
 	MDRV_VIDEO_START(ksayakyu)
 	MDRV_VIDEO_UPDATE(ksayakyu)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -291,7 +291,7 @@ ROM_START( ksayakyu )
 	ROM_LOAD( "4.3d", 0x08000, 0x2000, CRC(db0ca023) SHA1(1356fa0239209dea6a4ac0af177fe8be47f12cd0) )
 	ROM_LOAD( "3.3c", 0x14000, 0x4000, CRC(bb4104a5) SHA1(1f793c4431a3476eeb92556228bf855efb73fb83) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "8.5l",  0x0000, 0x2000, CRC(3fbae535) SHA1(87b66091e33eee66f4d63c213a5a19b70e7b1e5a) )
 	ROM_LOAD( "7.5j",  0x2000, 0x2000, CRC(ad242eda) SHA1(928c04e4a48077ec9db148cb71d52ebfe01efa53) )
 	ROM_LOAD( "6.5h",  0x4000, 0x2000, CRC(17986662) SHA1(81b65e381b923c5544f4708efef09f0894c716b2) )
@@ -301,12 +301,12 @@ ROM_START( ksayakyu )
 	ROM_LOAD( "9.3j",  0x0000, 0x2000, CRC(ef8411dd) SHA1(1dbc959d3aec9face19b2a5ae873ca34bfeff5cd) )
 	ROM_LOAD( "10.3k", 0x2000, 0x2000, CRC(1bdee573) SHA1(7b92a8133cb83404505d21f462e3ca6c85647dca) )
 	ROM_LOAD( "11.3l", 0x4000, 0x2000, CRC(c5859887) SHA1(41685fb8f8e7c44acd5e0e3ccc629e5f64a59fbd) )
-	
+
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "14.9j", 0x0000, 0x2000, CRC(982d06f0) SHA1(e107c56ee4f2695a790b8cec6d52337ba9d8b2ad) )
 	ROM_LOAD( "15.9k", 0x2000, 0x2000, CRC(dc126df9) SHA1(368efb36bf197e3eac23ef543e25e9f4efba785e) )
 	ROM_LOAD( "16.9m", 0x4000, 0x2000, CRC(574a172d) SHA1(7dee073b5c8ff5825062e30cff29343dc767daaa) )
-	
+
 	ROM_REGION( 0x4000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "17.9n", 0x0000, 0x2000, CRC(a4c4e4ce) SHA1(f8b0a8dfab972e23f268c69fd9ef30fc80f62533) )
 	ROM_LOAD( "18.9r", 0x2000, 0x2000, CRC(9d75b104) SHA1(062884fdca9f705f555b828aff136d8f52fbf6eb) )

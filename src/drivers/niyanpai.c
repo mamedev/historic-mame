@@ -1,20 +1,20 @@
 /******************************************************************************
 
-	Game Driver for Nichibutsu Mahjong series.
+    Game Driver for Nichibutsu Mahjong series.
 
-	Niyanpai
-	(c)1996 Nihon Bussan Co.,Ltd.
+    Niyanpai
+    (c)1996 Nihon Bussan Co.,Ltd.
 
-	Musoubana
-	(c)1995 Nihon Bussan Co.,Ltd. / Yubis Co.,Ltd.
+    Musoubana
+    (c)1995 Nihon Bussan Co.,Ltd. / Yubis Co.,Ltd.
 
-	Mahjong 4P Simasyo
-	(c)1994 SPHINX/AV JAPAN
+    Mahjong 4P Simasyo
+    (c)1994 SPHINX/AV JAPAN
 
-	Mahjong Housoukyoku Honbanchuu
-	(c)199? Nihon Bussan Co.,Ltd.
+    Mahjong Housoukyoku Honbanchuu
+    (c)199? Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -297,9 +297,9 @@ static READ16_HANDLER( musobana_inputport_0_r )
 static READ16_HANDLER( musobana_inputport_1_r )
 {
 	// tmp68301_parallel_interface[0x05]
-	// 	bit 0	coin counter
-	// 	bit 2	motor on
-	// 	bit 3	coin lock
+	//  bit 0   coin counter
+	//  bit 2   motor on
+	//  bit 3   coin lock
 
 	if (tmp68301_parallel_interface_r(0x0005, 0x00ff) & 0x0004) musobana_outcoin_flag ^= 1;
 	else musobana_outcoin_flag = 1;
@@ -974,7 +974,7 @@ ROM_START( mhhonban )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* TMP68301 main program */
 	ROM_LOAD16_BYTE( "u209.bin", 0x00000, 0x20000, CRC(121c861f) SHA1(70a6b695998904dccb8791ea5d9acbf7484bd812) )
 	ROM_LOAD16_BYTE( "u208.bin", 0x00001, 0x20000, CRC(d6712d0b) SHA1(a384c8f508ec6885bccb989d150cfd7f36a6898d) )
-                                                    
+
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* TMPZ84C011 sound program */
 	ROM_LOAD( "u804.bin",  0x000000, 0x20000, CRC(48407507) SHA1(afd24d16d487fd2b6548d967e2f1ae122e2633a2) )
 

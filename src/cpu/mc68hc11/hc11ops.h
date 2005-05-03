@@ -6,7 +6,7 @@ typedef struct {
 
 static HC11_OPCODE_LIST hc11_opcode_list[] =
 {
-	/*	page	opcode			handler						*/
+	/*  page    opcode          handler                     */
 	{	0,		0x1b,			HC11OP(aba)					},
 	{	0,		0x3a,			HC11OP(abx)					},
 	{	0x18,	0x3a,			HC11OP(aby)					},

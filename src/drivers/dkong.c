@@ -79,27 +79,27 @@ write:
 7808      ?
 7c00      Background sound/music select:
           00 - nothing
-		  01 - Intro tune
-		  02 - How High? (intermisson) tune
-		  03 - Out of time
-		  04 - Hammer
-		  05 - Rivet level 2 completed (end tune)
-		  06 - Hammer hit
-		  07 - Standard level end
-		  08 - Background 1	(first screen)
-		  09 - ???
-		  0A - Background 3	(springs)
-		  0B - Background 2 (rivet)
-		  0C - Rivet level 1 completed (end tune)
-		  0D - Rivet removed
-		  0E - Rivet level completed
-		  0F - Gorilla roar
+          01 - Intro tune
+          02 - How High? (intermisson) tune
+          03 - Out of time
+          04 - Hammer
+          05 - Rivet level 2 completed (end tune)
+          06 - Hammer hit
+          07 - Standard level end
+          08 - Background 1 (first screen)
+          09 - ???
+          0A - Background 3 (springs)
+          0B - Background 2 (rivet)
+          0C - Rivet level 1 completed (end tune)
+          0D - Rivet removed
+          0E - Rivet level completed
+          0F - Gorilla roar
 7c80      gfx bank select (Donkey Kong Jr. only)
 7d00      digital sound trigger - walk
 7d01      digital sound trigger - jump
 7d02      digital sound trigger - boom (gorilla stomps foot)
 7d03      digital sound trigger - coin input/spring
-7d04      digital sound trigger	- gorilla fall
+7d04      digital sound trigger - gorilla fall
 7d05      digital sound trigger - barrel jump/prize
 7d06      ?
 7d07      ?
@@ -153,11 +153,11 @@ write:
 00        ?
 
 Changes:
-	Apr 7 98 Howie Cohen
-	* Added samples for the climb, jump, land and walking sounds
+    Apr 7 98 Howie Cohen
+    * Added samples for the climb, jump, land and walking sounds
 
-	Jul 27 99 Chad Hendrickson
-	* Added cocktail mode flipscreen
+    Jul 27 99 Chad Hendrickson
+    * Added cocktail mode flipscreen
 
 ***************************************************************************/
 
@@ -256,10 +256,10 @@ static WRITE8_HANDLER( dkong_sh_p1_w )
 static WRITE8_HANDLER( dkong_sh_p2_w )
 {
 	/*   If P2.Bit7 -> is apparently an external signal decay or other output control
-	 *   If P2.Bit6 -> activates the external compressed sample ROM
-	 *   If P2.Bit4 -> status code to main cpu
-	 *   P2.Bit2-0  -> select the 256 byte bank for external ROM
-	 */
+     *   If P2.Bit6 -> activates the external compressed sample ROM
+     *   If P2.Bit4 -> status code to main cpu
+     *   P2.Bit2-0  -> select the 256 byte bank for external ROM
+     */
 
 	decay = !(data & 0x80);
 	page = (data & 0x47);
@@ -379,7 +379,7 @@ static ADDRESS_MAP_START( dkong_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7800, 0x7803) AM_WRITE(MWA8_RAM)	/* ???? */
 	AM_RANGE(0x7808, 0x7808) AM_WRITE(MWA8_RAM)	/* ???? */
 	AM_RANGE(0x7c00, 0x7c00) AM_WRITE(dkong_sh_tuneselect_w)
-//	AM_RANGE(0x7c80, 0x7c80)
+//  AM_RANGE(0x7c80, 0x7c80)
 	AM_RANGE(0x7d00, 0x7d02) AM_WRITE(dkong_sh1_w)	/* walk/jump/boom sample trigger */
 	AM_RANGE(0x7d03, 0x7d03) AM_WRITE(dkong_sh_sound3_w)
 	AM_RANGE(0x7d04, 0x7d04) AM_WRITE(dkong_sh_sound4_w)
@@ -398,7 +398,7 @@ static ADDRESS_MAP_START( hunchbkd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_0_r)		/* IN0 */
 	AM_RANGE(0x1480, 0x1480) AM_READ(input_port_1_r)		/* IN1 */
 	AM_RANGE(0x1500, 0x1500) AM_READ(input_port_2_r)		/* IN2/DSW2 */
-//	AM_RANGE(0x1507, 0x1507) AM_READ(herbiedk_iack_r)  	/* Clear Int */
+//  AM_RANGE(0x1507, 0x1507) AM_READ(herbiedk_iack_r)   /* Clear Int */
 	AM_RANGE(0x1580, 0x1580) AM_READ(input_port_3_r)		/* DSW1 */
 	AM_RANGE(0x1600, 0x1bff) AM_READ(MRA8_RAM)			/* video RAM */
 	AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
@@ -1939,10 +1939,10 @@ ROM_START( dkong )
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
+    ROM_REGION( 0x0300, REGION_PROMS, 0 )
+    ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+    ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+    ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
@@ -1975,10 +1975,10 @@ ROM_START( dkongo )
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
+    ROM_REGION( 0x0300, REGION_PROMS, 0 )
+    ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+    ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+    ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
@@ -2010,10 +2010,10 @@ ROM_START( dkongjp )
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
+    ROM_REGION( 0x0300, REGION_PROMS, 0 )
+    ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+    ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+    ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
@@ -2045,10 +2045,10 @@ ROM_START( dkongjo )
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
+    ROM_REGION( 0x0300, REGION_PROMS, 0 )
+    ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+    ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+    ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 
@@ -2080,10 +2080,10 @@ ROM_START( dkongjo1 )
 
 /*********************************************************
 I use more appropreate filenames for color PROMs.
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
-	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
-	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
+    ROM_REGION( 0x0300, REGION_PROMS, 0 )
+    ROM_LOAD( "dkong.2k",     0x0000, 0x0100, CRC(1e82d375) )
+    ROM_LOAD( "dkong.2j",     0x0100, 0x0100, CRC(2ab01dc8) )
+    ROM_LOAD( "dkong.5f",     0x0200, 0x0100, CRC(44988665) )
 *********************************************************/
 ROM_END
 

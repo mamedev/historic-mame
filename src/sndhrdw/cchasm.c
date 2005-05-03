@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Cinematronics Cosmic Chasm hardware
+    Cinematronics Cosmic Chasm hardware
 
 ***************************************************************************/
 
@@ -197,7 +197,7 @@ void *cchasm_sh_start(int clock, const struct CustomSound_interface *config)
 
 	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
 	z80ctc_init (&ctc_intf);
-	
+
 	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, cchasm_sh_update);
 
 	return auto_malloc(1);

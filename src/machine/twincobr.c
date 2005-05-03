@@ -1,6 +1,6 @@
 /****************************************************************************
- *	Twin Cobra																*
- *	Communications and memory functions between shared CPU memory spaces	*
+ *  Twin Cobra                                                              *
+ *  Communications and memory functions between shared CPU memory spaces    *
  ****************************************************************************/
 
 #include "driver.h"
@@ -52,12 +52,12 @@ INTERRUPT_GEN( wardner_interrupt )
 WRITE16_HANDLER( twincobr_dsp_addrsel_w )
 {
 	/* This sets the main CPU RAM address the DSP should */
-	/*	read/write, via the DSP IO port 0 */
+	/*  read/write, via the DSP IO port 0 */
 	/* Top three bits of data need to be shifted left 3 places */
-	/*	to select which memory bank from main CPU address */
-	/*	space to use */
+	/*  to select which memory bank from main CPU address */
+	/*  space to use */
 	/* Lower thirteen bits of this data is shifted left one position */
-	/*	to move it to an even address word boundary */
+	/*  to move it to an even address word boundary */
 
 	main_ram_seg = ((data & 0xe000) << 3);
 	dsp_addr_w   = ((data & 0x1fff) << 1);
@@ -106,9 +106,9 @@ WRITE16_HANDLER( twincobr_dsp_w )
 WRITE16_HANDLER( wardner_dsp_addrsel_w )
 {
 	/* This sets the main CPU RAM address the DSP should */
-	/*	read/write, via the DSP IO port 0 */
+	/*  read/write, via the DSP IO port 0 */
 	/* Lower twelve bits of this data is shifted left one position */
-	/*	to move it to an even address boundary */
+	/*  to move it to an even address boundary */
 
 	main_ram_seg =  (data & 0xe000);
 	dsp_addr_w   = ((data & 0x07ff) << 1);
@@ -160,11 +160,11 @@ WRITE16_HANDLER( wardner_dsp_w )
 
 WRITE16_HANDLER( twincobr_dsp_bio_w )
 {
-	/* data 0xffff	means inhibit BIO line to DSP and enable */
-	/*				communication to main processor */
-	/*				Actually only DSP data bit 15 controls this */
-	/* data 0x0000	means set DSP BIO line active and disable */
-	/*				communication to main processor*/
+	/* data 0xffff  means inhibit BIO line to DSP and enable */
+	/*              communication to main processor */
+	/*              Actually only DSP data bit 15 controls this */
+	/* data 0x0000  means set DSP BIO line active and disable */
+	/*              communication to main processor*/
 #if LOG_DSP_CALLS
 	logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
 #endif
@@ -188,7 +188,7 @@ READ16_HANDLER( fsharkbt_dsp_r )
 	/* IO Port 2 used by Flying Shark bootleg */
 	/* DSP reads data from an extra MCU (8741) at IO port 2 */
 	/* Port is read three times during startup. First and last data */
-	/*	 read must equal, but second data read must be different */
+	/*   read must equal, but second data read must be different */
 	fsharkbt_8741 += 1;
 #if LOG_DSP_CALLS
 	logerror("DSP PC:%04x IO read %04x from 8741 MCU (port 2)\n",activecpu_get_previouspc(),(fsharkbt_8741 & 0x08));

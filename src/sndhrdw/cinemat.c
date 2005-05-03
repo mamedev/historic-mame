@@ -1,16 +1,16 @@
 /***************************************************************************
 
-	Cinematronics vector hardware
+    Cinematronics vector hardware
 
-	Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
-	Retrocade Alliance
+    Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
+    Retrocade Alliance
 
-	Update:
-	6/27/99 Jim Hernandez -- 1st Attempt at Fixing Drone Star Castle sound and
-	                         pitch adjustments.
-	6/30/99 MLR added Rip Off, Solar Quest, Armor Attack (no samples yet)
+    Update:
+    6/27/99 Jim Hernandez -- 1st Attempt at Fixing Drone Star Castle sound and
+                             pitch adjustments.
+    6/30/99 MLR added Rip Off, Solar Quest, Armor Attack (no samples yet)
 
-	Bugs: Sometimes the death explosion (small explosion) does not trigger.
+    Bugs: Sometimes the death explosion (small explosion) does not trigger.
 
 ***************************************************************************/
 
@@ -24,7 +24,7 @@
 
 /*************************************
  *
- *	Macros
+ *  Macros
  *
  *************************************/
 
@@ -44,7 +44,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -68,14 +68,14 @@ static UINT8 last_portb_write;
 
 /*************************************
  *
- *	Generic sound write
+ *  Generic sound write
  *
  *************************************/
 
 WRITE8_HANDLER( cinemat_sound_control_w )
 {
 	UINT8 oldval = sound_control;
-	
+
 	/* form an 8-bit value with the new bit */
 	sound_control = (sound_control & ~(1 << offset)) | ((data & 1) << offset);
 
@@ -88,7 +88,7 @@ WRITE8_HANDLER( cinemat_sound_control_w )
 
 /*************************************
  *
- *	Generic sound init
+ *  Generic sound init
  *
  *************************************/
 
@@ -96,7 +96,7 @@ static void generic_init(void (*callback)(UINT8, UINT8))
 {
 	/* call the standard init */
 	machine_init_cinemat();
-	
+
 	/* set the sound handler */
 	sound_handler = callback;
 
@@ -119,7 +119,7 @@ static void generic_init(void (*callback)(UINT8, UINT8))
 
 /*************************************
  *
- *	Space Wars
+ *  Space Wars
  *
  *************************************/
 
@@ -201,7 +201,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Barrier
+ *  Barrier
  *
  *************************************/
 
@@ -254,7 +254,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Speed Freak
+ *  Speed Freak
  *
  *************************************/
 
@@ -279,7 +279,7 @@ static void speedfrk_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		current_shift = ((current_shift >> 1) & 0x7fff) | ((~sound_val << 13) & 1);
 		/* high 12 bits control the frequency - counts from value to $FFF, carry triggers */
 		/* another counter */
-		
+
 		/* low 4 bits control the volume of the noise output (explosion?) */
 	}
 
@@ -312,7 +312,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Star Hawk
+ *  Star Hawk
  *
  *************************************/
 
@@ -347,19 +347,19 @@ static void starhawk_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	/* left laser - falling edge */
 	if (SOUNDVAL_FALLING_EDGE(0x04))
 		sample_start(2, 2, 0);
-	
+
 	/* K - 0=on, 1=off */
 	if (SOUNDVAL_FALLING_EDGE(0x08))
 		sample_start(3, 3, 1);
 	if (SOUNDVAL_RISING_EDGE(0x08))
 		sample_stop(3);
-	
+
 	/* master - 0=on, 1=off */
 	if (SOUNDVAL_FALLING_EDGE(0x10))
 		sample_start(4, 4, 1);
 	if (SOUNDVAL_RISING_EDGE(0x10))
 		sample_stop(4);
-	
+
 	/* K exit - 1=on, 0=off */
 	if (SOUNDVAL_RISING_EDGE(0x80))
 		sample_start(3, 5, 1);
@@ -386,7 +386,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Sundance
+ *  Sundance
  *
  *************************************/
 
@@ -454,7 +454,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Tail Gunner
+ *  Tail Gunner
  *
  *************************************/
 
@@ -507,13 +507,13 @@ static void tailg_sound_w(UINT8 sound_val, UINT8 bits_changed)
 			sample_stop(3);
 
 		/* bounce - falling edge */
-		if (SHIFTREG_FALLING_EDGE(0x10))	
+		if (SHIFTREG_FALLING_EDGE(0x10))
 			sample_start(4, 4, 0);
 
 		/* hyperspace - falling edge */
 		if (SHIFTREG_FALLING_EDGE(0x20))
 			sample_start(5, 5, 0);
-		
+
 		/* LED */
 		set_led_status(0, current_shift & 0x40);
 
@@ -541,7 +541,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Warrior
+ *  Warrior
  *
  *************************************/
 
@@ -608,7 +608,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Armor Attack
+ *  Armor Attack
  *
  *************************************/
 
@@ -641,11 +641,11 @@ static void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	if (SOUNDVAL_RISING_EDGE(0x01))
 	{
 		/* bits 0-4 control the tank sound speed */
-		
+
 		/* lo explosion - falling edge */
 		if (SHIFTREG_FALLING_EDGE(0x10))
 			sample_start(0, 0, 0);
-		
+
 		/* jeep fire - falling edge */
 		if (SHIFTREG_FALLING_EDGE(0x20))
 			sample_start(1, 1, 0);
@@ -701,7 +701,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Ripoff
+ *  Ripoff
  *
  *************************************/
 
@@ -754,7 +754,7 @@ static void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 			sample_start(1, 1, 1);
 		if (SHIFTREG_RISING_EDGE(0x01))
 			sample_stop(1);
-		
+
 		/* remember the previous value */
 		last_shift = current_shift;
 	}
@@ -791,7 +791,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Star Castle
+ *  Star Castle
  *
  *************************************/
 
@@ -855,7 +855,7 @@ static void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* latch the drone pitch */
 		target_pitch = (current_shift & 7) + ((current_shift & 2) << 2);
         target_pitch = 0x10000 + (target_pitch << 12);
-        
+
         /* once per frame slide the pitch toward the target */
         if (cpu_getcurrentframe() > last_frame)
         {
@@ -903,7 +903,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Solar Quest
+ *  Solar Quest
  *
  *************************************/
 
@@ -940,7 +940,7 @@ static void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	{
 		/* only the upper 8 bits matter */
 		current_shift >>= 8;
-		
+
 		/* loud explosion - falling edge */
 		if (SHIFTREG_FALLING_EDGE(0x80))
 			sample_start(0, 0, 0);
@@ -999,7 +999,7 @@ static void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	if (SOUNDVAL_RISING_EDGE(0x01))
 	{
 		int freq, vol;
-		
+
 		/* start/stop the music sample on the high bit */
 		if (SHIFTREG2_RISING_EDGE(0x8000))
 			sample_start(7, 7, 1);
@@ -1009,7 +1009,7 @@ static void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* set the frequency */
 		freq = 56818.181818 / (4096 - (current_shift & 0xfff));
 		sample_set_freq(7, 44100 * freq / 1050);
-		
+
 		/* set the volume */
 		vol = (~current_shift >> 12) & 7;
 		sample_set_volume(7, vol / 7.0);
@@ -1038,7 +1038,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Boxing Bugs
+ *  Boxing Bugs
  *
  *************************************/
 
@@ -1077,7 +1077,7 @@ static void boxingb_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	{
 		/* only the upper 8 bits matter */
 		current_shift >>= 8;
-		
+
 		/* soft explosion - falling edge */
 		if (SHIFTREG_FALLING_EDGE(0x80))
 			sample_start(0, 0, 0);
@@ -1115,12 +1115,12 @@ static void boxingb_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* remember the previous value */
 		last_shift = current_shift;
 	}
-	
+
 	/* clock music data on the rising edge of bit 0x01 */
 	if (SOUNDVAL_RISING_EDGE(0x01))
 	{
 		int freq, vol;
-		
+
 		/* start/stop the music sample on the high bit */
 		if (SHIFTREG2_RISING_EDGE(0x8000))
 			sample_start(8, 8, 1);
@@ -1130,7 +1130,7 @@ static void boxingb_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* set the frequency */
 		freq = 56818.181818 / (4096 - (current_shift & 0xfff));
 		sample_set_freq(8, 44100 * freq / 1050);
-		
+
 		/* set the volume */
 		vol = (~current_shift >> 12) & 3;
 		sample_set_volume(8, vol / 3.0);
@@ -1171,7 +1171,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	War of the Worlds (B&W)
+ *  War of the Worlds (B&W)
  *
  *************************************/
 
@@ -1235,7 +1235,7 @@ static void wotw_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* latch the drone pitch */
 		target_pitch = (current_shift & 7) + ((current_shift & 2) << 2);
         target_pitch = 0x10000 + (target_pitch << 12);
-        
+
         /* once per frame slide the pitch toward the target */
         if (cpu_getcurrentframe() > last_frame)
         {
@@ -1283,7 +1283,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	War of the Worlds (color)
+ *  War of the Worlds (color)
  *
  *************************************/
 
@@ -1347,7 +1347,7 @@ static void wotwc_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		/* latch the drone pitch */
 		target_pitch = (current_shift & 7) + ((current_shift & 2) << 2);
         target_pitch = 0x10000 + (target_pitch << 12);
-        
+
         /* once per frame slide the pitch toward the target */
         if (cpu_getcurrentframe() > last_frame)
         {
@@ -1395,7 +1395,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Demon
+ *  Demon
  *
  *************************************/
 
@@ -1439,12 +1439,12 @@ static WRITE8_HANDLER( sound_portb_w )
 	/* watch for a 0->1 edge of bit 1 ("hard reset") to reset the FIFO */
 	if ((data & 2) != (last_portb_write & 2) && (data & 2) != 0)
 		sound_fifo_in = sound_fifo_out = 0;
-	
+
 	/* bit 2 controls the global mute */
 	if ((data & 4) != (last_portb_write & 4))
 		sound_global_enable(!(data & 4));
 
-	/* remember the last value written */	
+	/* remember the last value written */
 	last_portb_write = data;
 }
 
@@ -1502,7 +1502,7 @@ static MACHINE_INIT( demon_sound )
 	/* reset the FIFO */
 	sound_fifo_in = sound_fifo_out = 0;
 	last_portb_write = 0xff;
-	
+
 	/* turn off channel A on AY8910 #0 because it is used as a low-pass filter */
 	AY8910_set_volume(0, 0, 0);
 }
@@ -1568,7 +1568,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	QB3
+ *  QB3
  *
  *************************************/
 
@@ -1583,7 +1583,7 @@ static MACHINE_INIT( qb3_sound )
 {
 	machine_init_demon_sound();
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, qb3_sound_w);
-	
+
 	/* this patch prevents the sound ROM from eating itself when command $0A is sent */
 	/* on a cube rotate */
 	memory_region(REGION_CPU2)[0x11dc] = 0x09;

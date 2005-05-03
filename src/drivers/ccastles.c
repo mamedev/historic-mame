@@ -1,83 +1,83 @@
 /***************************************************************************
 
-	Atari Crystal Castles hardware
+    Atari Crystal Castles hardware
 
-	driver by Pat Lawrence
+    driver by Pat Lawrence
 
-	Games supported:
-		* Crystal Castles (1983) [3 sets]
+    Games supported:
+        * Crystal Castles (1983) [3 sets]
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Crystal Castles memory map.
+    Crystal Castles memory map.
 
-	 Address  A A A A A A A A A A A A A A A A  R  D D D D D D D D  Function
-	          1 1 1 1 1 1 9 8 7 6 5 4 3 2 1 0  /  7 6 5 4 3 2 1 0
-	          5 4 3 2 1 0                      W
-	-------------------------------------------------------------------------------
-	0000      X X X X X X X X X X X X X X X X  W  X X X X X X X X  X Coordinate
-	0001      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1  W  D D D D D D D D  Y Coordinate
-	0002      0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 R/W D D D D          Bit Mode
-	0003-0BFF 0 0 0 0 A A A A A A A A A A A A R/W D D D D D D D D  RAM (DRAM)
-	0C00-7FFF 0 A A A A A A A A A A A A A A A R/W D D D D D D D D  Screen RAM
-	8000-8DFF 1 0 0 0 A A A A A A A A A A A A R/W D D D D D D D D  RAM (STATIC)
-	8E00-8EFF 1 0 0 0 1 1 1 0 A A A A A A A A R/W D D D D D D D D  MOB BUF 2
-	-------------------------------------------------------------------------------
-	8F00-8FFF 1 0 0 0 1 1 1 1 A A A A A A A A R/W D D D D D D D D  MOB BUF 1
-	                                      0 0 R/W D D D D D D D D  MOB Picture
-	                                      0 1 R/W D D D D D D D D  MOB Vertical
-	                                      1 0 R/W D D D D D D D D  MOB Priority
-	                                      1 1 R/W D D D D D D D D  MOB Horizontal
-	-------------------------------------------------------------------------------
-	9000-90FF 1 0 0 1 0 0 X X A A A A A A A A R/W D D D D D D D D  NOVRAM
-	9400-9401 1 0 0 1 0 1 0 X X X X X X X 0 A  R                   TRAK-BALL 1
-	9402-9403 1 0 0 1 0 1 0 X X X X X X X 1 A  R                   TRAK-BALL 2
-	9500-9501 1 0 0 1 0 1 0 X X X X X X X X A  R                   TRAK-BALL 1 mirror
-	9600      1 0 0 1 0 1 1 X X X X X X X X X  R                   IN0
-	                                           R                D  COIN R
-	                                           R              D    COIN L
-	                                           R            D      COIN AUX
-	                                           R          D        SLAM
-	                                           R        D          SELF TEST
-	                                           R      D            VBLANK
-	                                           R    D              JMP1
-	                                           R  D                JMP2
-	-------------------------------------------------------------------------------
-	9800-980F 1 0 0 1 1 0 0 X X X X X A A A A R/W D D D D D D D D  CI/O 0
-	9A00-9A0F 1 0 0 1 1 0 1 X X X X X A A A A R/W D D D D D D D D  CI/O 1
-	9A08                                                    D D D  Option SW
-	                                                      D        SPARE
-	                                                    D          SPARE
-	                                                  D            SPARE
-	9C00      1 0 0 1 1 1 0 0 0 X X X X X X X  W                   RECALL
-	-------------------------------------------------------------------------------
-	9C80      1 0 0 1 1 1 0 0 1 X X X X X X X  W  D D D D D D D D  H Scr Ctr Load
-	9D00      1 0 0 1 1 1 0 1 0 X X X X X X X  W  D D D D D D D D  V Scr Ctr Load
-	9D80      1 0 0 1 1 1 0 1 1 X X X X X X X  W                   Int. Acknowledge
-	9E00      1 0 0 1 1 1 1 0 0 X X X X X X X  W                   WDOG
-	          1 0 0 1 1 1 1 0 1 X X X X A A A  W                D  OUT0
-	9E80                                0 0 0  W                D  Trak Ball Light P1
-	9E81                                0 0 1  W                D  Trak Ball Light P2
-	9E82                                0 1 0  W                D  Store Low
-	9E83                                0 1 1  W                D  Store High
-	9E84                                1 0 0  W                D  Spare
-	9E85                                1 0 1  W                D  Coin Counter R
-	9E86                                1 1 0  W                D  Coin Counter L
-	9E87                                1 1 1  W                D  BANK0-BANK1
-	          1 0 0 1 1 1 1 1 0 X X X X A A A  W          D        OUT1
-	9F00                                0 0 0  W          D        ^AX
-	9F01                                0 0 1  W          D        ^AY
-	9F02                                0 1 0  W          D        ^XINC
-	9F03                                0 1 1  W          D        ^YINC
-	9F04                                1 0 0  W          D        PLAYER2 (flip screen)
-	9F05                                1 0 1  W          D        ^SIRE
-	9F06                                1 1 0  W          D        BOTHRAM
-	9F07                                1 1 1  W          D        BUF1/^BUF2 (sprite bank)
-	9F80-9FBF 1 0 0 1 1 1 1 1 1 X A A A A A A  W  D D D D D D D D  COLORAM
-	A000-FFFF 1 A A A A A A A A A A A A A A A  R  D D D D D D D D  Program ROM
+     Address  A A A A A A A A A A A A A A A A  R  D D D D D D D D  Function
+              1 1 1 1 1 1 9 8 7 6 5 4 3 2 1 0  /  7 6 5 4 3 2 1 0
+              5 4 3 2 1 0                      W
+    -------------------------------------------------------------------------------
+    0000      X X X X X X X X X X X X X X X X  W  X X X X X X X X  X Coordinate
+    0001      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1  W  D D D D D D D D  Y Coordinate
+    0002      0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 R/W D D D D          Bit Mode
+    0003-0BFF 0 0 0 0 A A A A A A A A A A A A R/W D D D D D D D D  RAM (DRAM)
+    0C00-7FFF 0 A A A A A A A A A A A A A A A R/W D D D D D D D D  Screen RAM
+    8000-8DFF 1 0 0 0 A A A A A A A A A A A A R/W D D D D D D D D  RAM (STATIC)
+    8E00-8EFF 1 0 0 0 1 1 1 0 A A A A A A A A R/W D D D D D D D D  MOB BUF 2
+    -------------------------------------------------------------------------------
+    8F00-8FFF 1 0 0 0 1 1 1 1 A A A A A A A A R/W D D D D D D D D  MOB BUF 1
+                                          0 0 R/W D D D D D D D D  MOB Picture
+                                          0 1 R/W D D D D D D D D  MOB Vertical
+                                          1 0 R/W D D D D D D D D  MOB Priority
+                                          1 1 R/W D D D D D D D D  MOB Horizontal
+    -------------------------------------------------------------------------------
+    9000-90FF 1 0 0 1 0 0 X X A A A A A A A A R/W D D D D D D D D  NOVRAM
+    9400-9401 1 0 0 1 0 1 0 X X X X X X X 0 A  R                   TRAK-BALL 1
+    9402-9403 1 0 0 1 0 1 0 X X X X X X X 1 A  R                   TRAK-BALL 2
+    9500-9501 1 0 0 1 0 1 0 X X X X X X X X A  R                   TRAK-BALL 1 mirror
+    9600      1 0 0 1 0 1 1 X X X X X X X X X  R                   IN0
+                                               R                D  COIN R
+                                               R              D    COIN L
+                                               R            D      COIN AUX
+                                               R          D        SLAM
+                                               R        D          SELF TEST
+                                               R      D            VBLANK
+                                               R    D              JMP1
+                                               R  D                JMP2
+    -------------------------------------------------------------------------------
+    9800-980F 1 0 0 1 1 0 0 X X X X X A A A A R/W D D D D D D D D  CI/O 0
+    9A00-9A0F 1 0 0 1 1 0 1 X X X X X A A A A R/W D D D D D D D D  CI/O 1
+    9A08                                                    D D D  Option SW
+                                                          D        SPARE
+                                                        D          SPARE
+                                                      D            SPARE
+    9C00      1 0 0 1 1 1 0 0 0 X X X X X X X  W                   RECALL
+    -------------------------------------------------------------------------------
+    9C80      1 0 0 1 1 1 0 0 1 X X X X X X X  W  D D D D D D D D  H Scr Ctr Load
+    9D00      1 0 0 1 1 1 0 1 0 X X X X X X X  W  D D D D D D D D  V Scr Ctr Load
+    9D80      1 0 0 1 1 1 0 1 1 X X X X X X X  W                   Int. Acknowledge
+    9E00      1 0 0 1 1 1 1 0 0 X X X X X X X  W                   WDOG
+              1 0 0 1 1 1 1 0 1 X X X X A A A  W                D  OUT0
+    9E80                                0 0 0  W                D  Trak Ball Light P1
+    9E81                                0 0 1  W                D  Trak Ball Light P2
+    9E82                                0 1 0  W                D  Store Low
+    9E83                                0 1 1  W                D  Store High
+    9E84                                1 0 0  W                D  Spare
+    9E85                                1 0 1  W                D  Coin Counter R
+    9E86                                1 1 0  W                D  Coin Counter L
+    9E87                                1 1 1  W                D  BANK0-BANK1
+              1 0 0 1 1 1 1 1 0 X X X X A A A  W          D        OUT1
+    9F00                                0 0 0  W          D        ^AX
+    9F01                                0 0 1  W          D        ^AY
+    9F02                                0 1 0  W          D        ^XINC
+    9F03                                0 1 1  W          D        ^YINC
+    9F04                                1 0 0  W          D        PLAYER2 (flip screen)
+    9F05                                1 0 1  W          D        ^SIRE
+    9F06                                1 1 0  W          D        BOTHRAM
+    9F07                                1 1 1  W          D        BUF1/^BUF2 (sprite bank)
+    9F80-9FBF 1 0 0 1 1 1 1 1 1 X A A A A A A  W  D D D D D D D D  COLORAM
+    A000-FFFF 1 A A A A A A A A A A A A A A A  R  D D D D D D D D  Program ROM
 
 ***************************************************************************/
 
@@ -90,7 +90,7 @@
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -126,7 +126,7 @@ static WRITE8_HANDLER( flip_screen_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -168,7 +168,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -203,7 +203,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -230,7 +230,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -244,7 +244,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -285,7 +285,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -352,7 +352,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

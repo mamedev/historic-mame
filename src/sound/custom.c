@@ -13,10 +13,10 @@ struct custom_info
 static void *custom_start(int sndindex, int clock, const void *config)
 {
 	struct custom_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
 	/* stash a pointer and call the start routine */
 	info->intf = config;
 	if (info->intf->start)

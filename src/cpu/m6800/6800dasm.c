@@ -96,11 +96,11 @@ static const char *op_name_str[] = {
 /*
  * This table defines the opcodes:
  * byte meaning
- * 0	token (menmonic)
- * 1	addressing mode
- * 2	EA access mode
- * 3	EA access size
- * 4	invalid opcode for 1:6800/6802/6808, 2:6801/6803, 4:HD63701
+ * 0    token (menmonic)
+ * 1    addressing mode
+ * 2    EA access mode
+ * 3    EA access size
+ * 4    invalid opcode for 1:6800/6802/6808, 2:6801/6803, 4:HD63701
  */
 
 static UINT8 table[0x102][5] = {

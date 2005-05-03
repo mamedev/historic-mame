@@ -1,34 +1,34 @@
 /***************************************************************************
 
-							  -= Tetris Plus 2 =-
+                              -= Tetris Plus 2 =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  TMP68HC000P-12
 
-Video Chips  :	SS91022-03 9428XX001
-				GS91022-04 9721PD008
-				SS91022-05 9347EX002
-				GS91022-05 048 9726HX002
+Video Chips  :  SS91022-03 9428XX001
+                GS91022-04 9721PD008
+                SS91022-05 9347EX002
+                GS91022-05 048 9726HX002
 
-Sound Chips  :	Yamaha YMZ280B-F
+Sound Chips  :  Yamaha YMZ280B-F
 
 Other        :  XILINX XC5210 PQ240C X68710M AKJ9544
-				XC7336 PC44ACK9633 A63458A
-				NVRAM
+                XC7336 PC44ACK9633 A63458A
+                NVRAM
 
 
 To Do:
 
--	There is a 3rd unimplemented layer capable of rotation (not used by
-	the game, can be tested in service mode).
--	Priority RAM is not taken into account.
+-   There is a 3rd unimplemented layer capable of rotation (not used by
+    the game, can be tested in service mode).
+-   Priority RAM is not taken into account.
 
 Notes:
 
--	The Japan set doesn't seem to have (or use) NVRAM. I can't enter
-	a test mode or use the service coin either !?
+-   The Japan set doesn't seem to have (or use) NVRAM. I can't enter
+    a test mode or use the service coin either !?
 
 ***************************************************************************/
 
@@ -72,7 +72,7 @@ VIDEO_UPDATE( rockntread );
 /***************************************************************************
 
 
-									Sound
+                                    Sound
 
 
 ***************************************************************************/
@@ -104,7 +104,7 @@ static WRITE16_HANDLER( rockn_systemregs_w )
 /***************************************************************************
 
 
-									Sound
+                                    Sound
 
 
 ***************************************************************************/
@@ -158,7 +158,7 @@ static WRITE16_HANDLER( rockn_soundvolume_w )
 /***************************************************************************
 
 
-								Protection
+                                Protection
 
 
 ***************************************************************************/
@@ -174,7 +174,7 @@ static READ16_HANDLER( tetrisp2_ip_1_word_r )
 /***************************************************************************
 
 
-									NVRAM
+                                    NVRAM
 
 
 ***************************************************************************/
@@ -234,7 +234,7 @@ WRITE16_HANDLER( tetrisp2_coincounter_w )
 /***************************************************************************
 
 
-								Memory Map
+                                Memory Map
 
 
 ***************************************************************************/
@@ -343,13 +343,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 /***************************************************************************
-							Tetris Plus 2 (World)
+                            Tetris Plus 2 (World)
 ***************************************************************************/
 
 #define TETPLUS2_COMMON\
@@ -443,7 +443,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Tetris Plus 2 (Japan)
+                            Tetris Plus 2 (Japan)
 ***************************************************************************/
 
 
@@ -451,8 +451,8 @@ INPUT_PORTS_START( teplus2j )
 TETPLUS2_COMMON
 
 /*
-	The code for checking the "service mode" and "free play" DSWs
-	is (deliberately?) bugged in this set
+    The code for checking the "service mode" and "free play" DSWs
+    is (deliberately?) bugged in this set
 */
 	PORT_START_TAG("IN2")	// $be0008.w
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
@@ -505,7 +505,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Rock'n Tread (Japan)
+                            Rock'n Tread (Japan)
 ***************************************************************************/
 
 
@@ -550,7 +550,7 @@ INPUT_PORTS_START( rockn )
 	PORT_DIPNAME( 0x0001, 0x0001, "DIPSW 1-1") // All these used to be marked 'Cheat', can't think why.
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, "DIPSW 1-2") 
+	PORT_DIPNAME( 0x0002, 0x0002, "DIPSW 1-2")
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0004, 0x0004, "DIPSW 1-3")
@@ -602,7 +602,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
@@ -645,7 +645,7 @@ static struct GfxDecodeInfo tetrisp2_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -744,7 +744,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -752,7 +752,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								Tetris Plus 2
+                                Tetris Plus 2
 
 (C) Jaleco 1996
 
@@ -768,12 +768,12 @@ OSC: 12.000MHz, 48.000MHz, 16.9344MHz
 
 Listing of custom chips. (Some on scan are hard to read).
 
-IC38	JALECO SS91022-03 9428XX001
-IC31	JALECO SS91022-05 9347EX002
-IC32	JALECO GS91022-05    048  9726HX002
-IC30	JALECO GS91022-04 9721PD008
-IC39	XILINX XC5210 PQ240C X68710M AKJ9544
-IC49	XILINX XC7336 PC44ACK9633 A63458A
+IC38    JALECO SS91022-03 9428XX001
+IC31    JALECO SS91022-05 9347EX002
+IC32    JALECO GS91022-05    048  9726HX002
+IC30    JALECO GS91022-04 9721PD008
+IC39    XILINX XC5210 PQ240C X68710M AKJ9544
+IC49    XILINX XC7336 PC44ACK9633 A63458A
 
 ***************************************************************************/
 
@@ -787,9 +787,9 @@ ROM_START( tetrisp2 )
 	ROM_LOAD32_WORD( "96019-01.9", 0x000000, 0x400000, CRC(06f7dc64) SHA1(722c51b707b9854c0293afdff18b27ec7cae6719) )
 	ROM_LOAD32_WORD( "96019-02.8", 0x000002, 0x400000, CRC(3e613bed) SHA1(038b5e43fa3d69654107c8093126eeb2e8fa4ddc) )
 	/* If t2p_m01&2 from this board were correctly read, since they
-	   hold the same data of the above but with swapped halves, it
-	   means they had to invert the top bit of the "page select"
-	   register in the sprite's hardware on this board! */
+       hold the same data of the above but with swapped halves, it
+       means they had to invert the top bit of the "page select"
+       register in the sprite's hardware on this board! */
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 (Background) */
 	ROM_LOAD( "96019-06.13", 0x000000, 0x400000, CRC(16f7093c) SHA1(2be77c6a692c5d762f5553ae24e8c415ab194cc6) )
@@ -809,23 +809,23 @@ ROM_END
 
 /***************************************************************************
 
-							Tetris Plus 2 (Japan)
+                            Tetris Plus 2 (Japan)
 
 (c)1997 Jaleco / The Tetris Company
 
 TP-97222
 96019 EB-00-20117-0
 
-CPU:	68000-12
-Sound:	YMZ280B-F
-OSC:	12.000MHz
-		48.0000MHz
-		16.9344MHz
+CPU:    68000-12
+Sound:  YMZ280B-F
+OSC:    12.000MHz
+        48.0000MHz
+        16.9344MHz
 
-Custom:	SS91022-03
-		GS91022-04
-		GS91022-05
-		SS91022-05
+Custom: SS91022-03
+        GS91022-04
+        GS91022-05
+        SS91022-05
 
 ***************************************************************************/
 
@@ -886,7 +886,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

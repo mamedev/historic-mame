@@ -1,11 +1,11 @@
 /*******************************************************************************
 
-	Todo:
-		There are some kind of resistors hooked up to the background colours,
-		the same prom colours can change for the background but not the
-		foreground.  It's rarely used (Liberation title screen only?).
+    Todo:
+        There are some kind of resistors hooked up to the background colours,
+        the same prom colours can change for the background but not the
+        foreground.  It's rarely used (Liberation title screen only?).
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 *******************************************************************************/
 
@@ -215,8 +215,8 @@ static void liberate_drawsprites(struct mame_bitmap *bitmap)
 		sy = 240-spriteram[offs+2];
 		color = 0;//(spriteram[offs+1] & 0x03);// + ((spriteram[offs+1] & 0x08) >> 1);
 
-//		if (pri==0 && color!=0) continue;
-//		if (pri==1 && color==0) continue;
+//      if (pri==0 && color!=0) continue;
+//      if (pri==1 && color==0) continue;
 
 		fx = spriteram[offs+0] & 0x04;
 		fy = spriteram[offs+0] & 0x08; // or 0x02 ?
@@ -256,7 +256,7 @@ static void prosport_drawsprites(struct mame_bitmap *bitmap)
 
 	for (offs = 0x000;offs < 0x800;offs += 4)
 	{
-	//	if ((spriteram[offs+0]&1)!=1) continue;
+	//  if ((spriteram[offs+0]&1)!=1) continue;
 
 		code = spriteram[offs+1] + ((spriteram[offs+0]&0x3)<<8);
 		code2=code+1;
@@ -266,7 +266,7 @@ static void prosport_drawsprites(struct mame_bitmap *bitmap)
 		sy=spriteram[offs+2];
 		if (multi) sy+=16;
 		sx = (240 - spriteram[offs+3]);
-//		sy = (240-spriteram[offs+2]);//-16;
+//      sy = (240-spriteram[offs+2]);//-16;
 		sy = 240-sy;
 
 		color = 1;//(spriteram[offs+0]&0x4)>>2;
@@ -275,7 +275,7 @@ static void prosport_drawsprites(struct mame_bitmap *bitmap)
 		fy = spriteram[offs+0] & 0x04;
 		multi = 0;// spriteram[offs+0] & 0x10;
 
-//		if (multi) sy-=16;
+//      if (multi) sy-=16;
 		if (fy && multi) { code2=code; code++; }
 
 		if (flip_screen) {
@@ -322,7 +322,7 @@ static void boomrang_drawsprites(struct mame_bitmap *bitmap, int pri)
 		sy=spriteram[offs+2];
 		if (multi) sy+=16;
 		sx = (240 - spriteram[offs+3]);
-//		sy = (240-spriteram[offs+2]);//-16;
+//      sy = (240-spriteram[offs+2]);//-16;
 		sy = 240-sy;
 
 		color = (spriteram[offs+0]&0x4)>>2;
@@ -331,7 +331,7 @@ static void boomrang_drawsprites(struct mame_bitmap *bitmap, int pri)
 		fy = spriteram[offs+0] & 0x02;
 		multi = spriteram[offs+0] & 0x10;
 
-//		if (multi) sy-=16;
+//      if (multi) sy-=16;
 		if (fy && multi) { code2=code; code++; }
 
 		if (flip_screen) {

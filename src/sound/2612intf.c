@@ -113,7 +113,7 @@ static void *ym2612_start(int sndindex, int clock, const void *config)
 	static const struct YM2612interface dummy = { 0 };
 	int rate = Machine->sample_rate;
 	struct ym2612_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
@@ -156,7 +156,7 @@ static void ym2612_reset(void *token)
 
 
 /************************************************/
-/* Status Read for YM2612 - Chip 0				*/
+/* Status Read for YM2612 - Chip 0              */
 /************************************************/
 READ8_HANDLER( YM2612_status_port_0_A_r )
 {
@@ -171,7 +171,7 @@ READ8_HANDLER( YM2612_status_port_0_B_r )
 }
 
 /************************************************/
-/* Status Read for YM2612 - Chip 1				*/
+/* Status Read for YM2612 - Chip 1              */
 /************************************************/
 READ8_HANDLER( YM2612_status_port_1_A_r ) {
   struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
@@ -184,7 +184,7 @@ READ8_HANDLER( YM2612_status_port_1_B_r ) {
 }
 
 /************************************************/
-/* Port Read for YM2612 - Chip 0				*/
+/* Port Read for YM2612 - Chip 0                */
 /************************************************/
 READ8_HANDLER( YM2612_read_port_0_r ){
   struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
@@ -192,7 +192,7 @@ READ8_HANDLER( YM2612_read_port_0_r ){
 }
 
 /************************************************/
-/* Port Read for YM2612 - Chip 1				*/
+/* Port Read for YM2612 - Chip 1                */
 /************************************************/
 READ8_HANDLER( YM2612_read_port_1_r ){
   struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
@@ -200,8 +200,8 @@ READ8_HANDLER( YM2612_read_port_1_r ){
 }
 
 /************************************************/
-/* Control Write for YM2612 - Chip 0			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2612 - Chip 0            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2612_control_port_0_A_w )
 {
@@ -216,8 +216,8 @@ WRITE8_HANDLER( YM2612_control_port_0_B_w )
 }
 
 /************************************************/
-/* Control Write for YM2612 - Chip 1			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2612 - Chip 1            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2612_control_port_1_A_w ){
   struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
@@ -230,8 +230,8 @@ WRITE8_HANDLER( YM2612_control_port_1_B_w ){
 }
 
 /************************************************/
-/* Data Write for YM2612 - Chip 0				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2612 - Chip 0               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2612_data_port_0_A_w )
 {
@@ -246,8 +246,8 @@ WRITE8_HANDLER( YM2612_data_port_0_B_w )
 }
 
 /************************************************/
-/* Data Write for YM2612 - Chip 1				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2612 - Chip 1               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2612_data_port_1_A_w ){
   struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
@@ -260,7 +260,7 @@ WRITE8_HANDLER( YM2612_data_port_1_B_w ){
 
 
 /************************************************/
-/* Status Read for YM3438 - Chip 0				*/
+/* Status Read for YM3438 - Chip 0              */
 /************************************************/
 READ8_HANDLER( YM3438_status_port_0_A_r )
 {
@@ -275,7 +275,7 @@ READ8_HANDLER( YM3438_status_port_0_B_r )
 }
 
 /************************************************/
-/* Status Read for YM3438 - Chip 1				*/
+/* Status Read for YM3438 - Chip 1              */
 /************************************************/
 READ8_HANDLER( YM3438_status_port_1_A_r ) {
   struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
@@ -288,7 +288,7 @@ READ8_HANDLER( YM3438_status_port_1_B_r ) {
 }
 
 /************************************************/
-/* Port Read for YM3438 - Chip 0				*/
+/* Port Read for YM3438 - Chip 0                */
 /************************************************/
 READ8_HANDLER( YM3438_read_port_0_r ){
   struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
@@ -296,7 +296,7 @@ READ8_HANDLER( YM3438_read_port_0_r ){
 }
 
 /************************************************/
-/* Port Read for YM3438 - Chip 1				*/
+/* Port Read for YM3438 - Chip 1                */
 /************************************************/
 READ8_HANDLER( YM3438_read_port_1_r ){
   struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
@@ -304,8 +304,8 @@ READ8_HANDLER( YM3438_read_port_1_r ){
 }
 
 /************************************************/
-/* Control Write for YM3438 - Chip 0			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM3438 - Chip 0            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM3438_control_port_0_A_w )
 {
@@ -320,8 +320,8 @@ WRITE8_HANDLER( YM3438_control_port_0_B_w )
 }
 
 /************************************************/
-/* Control Write for YM3438 - Chip 1			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM3438 - Chip 1            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM3438_control_port_1_A_w ){
   struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
@@ -334,8 +334,8 @@ WRITE8_HANDLER( YM3438_control_port_1_B_w ){
 }
 
 /************************************************/
-/* Data Write for YM3438 - Chip 0				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM3438 - Chip 0               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM3438_data_port_0_A_w )
 {
@@ -350,8 +350,8 @@ WRITE8_HANDLER( YM3438_data_port_0_B_w )
 }
 
 /************************************************/
-/* Data Write for YM3438 - Chip 1				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM3438 - Chip 1               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM3438_data_port_1_A_w ){
   struct ym2612_info *info = sndti_token(SOUND_YM3438,1);

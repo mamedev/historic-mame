@@ -1,45 +1,45 @@
 /*****************************************************************************
  *
- *	 z8000.c
- *	 Portable Z8000(2) emulator
- *	 Z8000 MAME interface
+ *   z8000.c
+ *   Portable Z8000(2) emulator
+ *   Z8000 MAME interface
  *
  *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *   You can contact me at juergen@mame.net or pullmoll@stop1984.com
  *
  *   - This source code is released as freeware for non-commercial purposes
  *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
- *	   The licensing terms of MAME apply to this piece of code for the MAME
- *	   project and derviative works, as defined by the MAME license. You
- *	   may opt to make modifications, improvements or derivative works under
- *	   that same conditions, and the MAME project may opt to keep
- *	   modifications, improvements or derivatives under their terms exclusively.
+ *     The licensing terms of MAME apply to this piece of code for the MAME
+ *     project and derviative works, as defined by the MAME license. You
+ *     may opt to make modifications, improvements or derivative works under
+ *     that same conditions, and the MAME project may opt to keep
+ *     modifications, improvements or derivatives under their terms exclusively.
  *
- *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *   - Alternatively you can choose to apply the terms of the "GPL" (see
  *     below) to this - and only this - piece of code or your derivative works.
- *	   Note that in no case your choice can have any impact on any other
- *	   source code of the MAME project, or binary, or executable, be it closely
- *	   or losely related to this piece of code.
+ *     Note that in no case your choice can have any impact on any other
+ *     source code of the MAME project, or binary, or executable, be it closely
+ *     or losely related to this piece of code.
  *
- *	-  At your choice you are also free to remove either licensing terms from
- *	   this file and continue to use it under only one of the two licenses. Do this
- *	   if you think that licenses are not compatible (enough) for you, or if you
- *	   consider either license 'too restrictive' or 'too free'.
+ *  -  At your choice you are also free to remove either licensing terms from
+ *     this file and continue to use it under only one of the two licenses. Do this
+ *     if you think that licenses are not compatible (enough) for you, or if you
+ *     consider either license 'too restrictive' or 'too free'.
  *
- *	-  GPL (GNU General Public License)
- *	   This program is free software; you can redistribute it and/or
- *	   modify it under the terms of the GNU General Public License
- *	   as published by the Free Software Foundation; either version 2
- *	   of the License, or (at your option) any later version.
+ *  -  GPL (GNU General Public License)
+ *     This program is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License
+ *     as published by the Free Software Foundation; either version 2
+ *     of the License, or (at your option) any later version.
  *
- *	   This program is distributed in the hope that it will be useful,
- *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	   GNU General Public License for more details.
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
  *
- *	   You should have received a copy of the GNU General Public License
- *	   along with this program; if not, write to the Free Software
- *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program; if not, write to the Free Software
+ *     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *****************************************************************************/
 
@@ -113,24 +113,24 @@ static UINT8 z8000_zsp[256];
 /**************************************************************************
  * This is the register file layout:
  *
- * BYTE 	   WORD 		LONG		   QUAD
- * msb	 lsb	   bits 		  bits			 bits
- * RH0 - RL0   R 0 15- 0	RR 0  31-16    RQ 0  63-48
- * RH1 - RL1   R 1 15- 0		  15- 0 		 47-32
- * RH2 - RL2   R 2 15- 0	RR 2  31-16 		 31-16
- * RH3 - RL3   R 3 15- 0		  15- 0 		 15- 0
- * RH4 - RL4   R 4 15- 0	RR 4  31-16    RQ 4  63-48
- * RH5 - RL5   R 5 15- 0		  15- 0 		 47-32
- * RH6 - RL6   R 6 15- 0	RR 6  31-16 		 31-16
- * RH7 - RL7   R 7 15- 0		  15- 0 		 15- 0
- *			   R 8 15- 0	RR 8  31-16    RQ 8  63-48
- *			   R 9 15- 0		  15- 0 		 47-32
- *			   R10 15- 0	RR10  31-16 		 31-16
- *			   R11 15- 0		  15- 0 		 15- 0
- *			   R12 15- 0	RR12  31-16    RQ12  63-48
- *			   R13 15- 0		  15- 0 		 47-32
- *			   R14 15- 0	RR14  31-16 		 31-16
- *			   R15 15- 0		  15- 0 		 15- 0
+ * BYTE        WORD         LONG           QUAD
+ * msb   lsb       bits           bits           bits
+ * RH0 - RL0   R 0 15- 0    RR 0  31-16    RQ 0  63-48
+ * RH1 - RL1   R 1 15- 0          15- 0          47-32
+ * RH2 - RL2   R 2 15- 0    RR 2  31-16          31-16
+ * RH3 - RL3   R 3 15- 0          15- 0          15- 0
+ * RH4 - RL4   R 4 15- 0    RR 4  31-16    RQ 4  63-48
+ * RH5 - RL5   R 5 15- 0          15- 0          47-32
+ * RH6 - RL6   R 6 15- 0    RR 6  31-16          31-16
+ * RH7 - RL7   R 7 15- 0          15- 0          15- 0
+ *             R 8 15- 0    RR 8  31-16    RQ 8  63-48
+ *             R 9 15- 0          15- 0          47-32
+ *             R10 15- 0    RR10  31-16          31-16
+ *             R11 15- 0          15- 0          15- 0
+ *             R12 15- 0    RR12  31-16    RQ12  63-48
+ *             R13 15- 0          15- 0          47-32
+ *             R14 15- 0    RR14  31-16          31-16
+ *             R15 15- 0          15- 0          15- 0
  *
  * Note that for LSB_FIRST machines we have the case that the RR registers
  * use the lower numbered R registers in the higher bit positions.
@@ -639,7 +639,7 @@ static void z8000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z8000_R13:			RW(13) = info->i;						break;
 		case CPUINFO_INT_REGISTER + Z8000_R14:			RW(14) = info->i;						break;
 		case CPUINFO_INT_REGISTER + Z8000_R15:			RW(15) = info->i;						break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					Z.irq_callback = info->irqcallback;		break;
 	}
@@ -665,7 +665,7 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

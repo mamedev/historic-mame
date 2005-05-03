@@ -89,7 +89,7 @@ VIDEO_START( gradius3 )
 	K052109_set_layer_offsets(2, -2, 0);
 
 	/* re-decode the sprites because the ROMs are connected to the custom IC differently
-	   from how they are connected to the CPU. */
+       from how they are connected to the CPU. */
 	for (i = 0;i < TOTAL_SPRITES;i++)
 		decodechar(Machine->gfx[1],i,memory_region(REGION_GFX2),&spritelayout);
 

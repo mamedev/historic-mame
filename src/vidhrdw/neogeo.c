@@ -7,40 +7,40 @@
 
 Graphics information:
 
-0x00000 - 0xdfff	: Blocks of sprite data, each 0x80 bytes:
-	Each 0x80 block is made up of 0x20 double words, their format is:
-	Word: Sprite number (16 bits)
-	Byte: Palette number (8 bits)
-	Byte: Bit 0: X flip
-		  Bit 1: Y flip
-		  Bit 2: Automatic animation flag (4 tiles?)
-		  Bit 3: Automatic animation flag (8 tiles?)
-		  Bit 4: MSB of sprite number (confirmed, Karnov_r, Mslug). See note.
-		  Bit 5: MSB of sprite number (MSlug2)
-		  Bit 6: MSB of sprite number (Kof97)
-		  Bit 7: Unknown for now
+0x00000 - 0xdfff    : Blocks of sprite data, each 0x80 bytes:
+    Each 0x80 block is made up of 0x20 double words, their format is:
+    Word: Sprite number (16 bits)
+    Byte: Palette number (8 bits)
+    Byte: Bit 0: X flip
+          Bit 1: Y flip
+          Bit 2: Automatic animation flag (4 tiles?)
+          Bit 3: Automatic animation flag (8 tiles?)
+          Bit 4: MSB of sprite number (confirmed, Karnov_r, Mslug). See note.
+          Bit 5: MSB of sprite number (MSlug2)
+          Bit 6: MSB of sprite number (Kof97)
+          Bit 7: Unknown for now
 
-	Each double word sprite is drawn directly underneath the previous one,
-	based on the starting coordinates.
+    Each double word sprite is drawn directly underneath the previous one,
+    based on the starting coordinates.
 
-0x0e000 - 0x0ea00	: Front plane fix tiles (8*8), 2 bytes each
+0x0e000 - 0x0ea00   : Front plane fix tiles (8*8), 2 bytes each
 
 0x10000: Control for sprites banks, arranged in words
 
-	Bit 0 to 3 - Y zoom LSB
-	Bit 4 to 7 - Y zoom MSB (ie, 1 byte for Y zoom).
-	Bit 8 to 11 - X zoom, 0xf is full size (no scale).
-	Bit 12 to 15 - Unknown, probably unused
+    Bit 0 to 3 - Y zoom LSB
+    Bit 4 to 7 - Y zoom MSB (ie, 1 byte for Y zoom).
+    Bit 8 to 11 - X zoom, 0xf is full size (no scale).
+    Bit 12 to 15 - Unknown, probably unused
 
 0x10400: Control for sprite banks, arranged in words
 
-	Bit 0 to 5: Number of sprites in this bank (see note below).
-	Bit 6 - If set, this bank is placed to right of previous bank (same Y-coord).
-	Bit 7 to 15 - Y position for sprite bank.
+    Bit 0 to 5: Number of sprites in this bank (see note below).
+    Bit 6 - If set, this bank is placed to right of previous bank (same Y-coord).
+    Bit 7 to 15 - Y position for sprite bank.
 
 0x10800: Control for sprite banks, arranged in words
-	Bit 0 to 5: Unknown
-	Bit 7 to 15 - X position for sprite bank.
+    Bit 0 to 5: Unknown
+    Bit 7 to 15 - X position for sprite bank.
 
 Notes:
 
@@ -81,23 +81,23 @@ int neogeo_fix_bank_type;
 
 
 /*
-	X zoom table - verified on real hardware
-	        8         = 0
-	    4   8         = 1
-	    4   8  c      = 2
-	  2 4   8  c      = 3
-	  2 4   8  c e    = 4
-	  2 4 6 8  c e    = 5
-	  2 4 6 8 a c e   = 6
-	0 2 4 6 8 a c e   = 7
-	0 2 4 6 89a c e   = 8
-	0 234 6 89a c e   = 9
-	0 234 6 89a c ef  = A
-	0 234 6789a c ef  = B
-	0 234 6789a cdef  = C
-	01234 6789a cdef  = D
-	01234 6789abcdef  = E
-	0123456789abcdef  = F
+    X zoom table - verified on real hardware
+            8         = 0
+        4   8         = 1
+        4   8  c      = 2
+      2 4   8  c      = 3
+      2 4   8  c e    = 4
+      2 4 6 8  c e    = 5
+      2 4 6 8 a c e   = 6
+    0 2 4 6 8 a c e   = 7
+    0 2 4 6 89a c e   = 8
+    0 234 6 89a c e   = 9
+    0 234 6 89a c ef  = A
+    0 234 6789a c ef  = B
+    0 234 6789a cdef  = C
+    01234 6789a cdef  = D
+    01234 6789abcdef  = E
+    0123456789abcdef  = F
 */
 static char zoomx_draw_tables[16][16] =
 {
@@ -512,9 +512,9 @@ profiler_mark(PROFILER_VIDEO);
 				//if (sy < 248)
 					fullmode = 1;
 				//else
-				//	/* kludge to avoid a white line in KOF94 Japan stage... */
-				//	/* probably indication of a subtle bug somewhere else */
-				//	fullmode = 0;
+				//  /* kludge to avoid a white line in KOF94 Japan stage... */
+				//  /* probably indication of a subtle bug somewhere else */
+				//  fullmode = 0;
 			}
 			else
 				fullmode = 0;

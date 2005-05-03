@@ -679,23 +679,23 @@ NVRAM_HANDLER( neogeo )
 
 
 /*
-	INFORMATION:
+    INFORMATION:
 
-	Memory card is a 2kb battery backed RAM.
-	It is accessed thru 0x800000-0x800FFF.
-	Even bytes are always 0xFF
-	Odd bytes are memcard data (0x800 bytes)
+    Memory card is a 2kb battery backed RAM.
+    It is accessed thru 0x800000-0x800FFF.
+    Even bytes are always 0xFF
+    Odd bytes are memcard data (0x800 bytes)
 
-	Status byte at 0x380000: (BITS ARE ACTIVE *LOW*)
+    Status byte at 0x380000: (BITS ARE ACTIVE *LOW*)
 
-	0 PAD1 START
-	1 PAD1 SELECT
-	2 PAD2 START
-	3 PAD2 SELECT
-	4 --\  MEMORY CARD
-	5 --/  INSERTED
-	6 MEMORY CARD WRITE PROTECTION
-	7 UNUSED (?)
+    0 PAD1 START
+    1 PAD1 SELECT
+    2 PAD2 START
+    3 PAD2 SELECT
+    4 --\  MEMORY CARD
+    5 --/  INSERTED
+    6 MEMORY CARD WRITE PROTECTION
+    7 UNUSED (?)
 */
 
 

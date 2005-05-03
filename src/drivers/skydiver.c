@@ -1,88 +1,88 @@
 /***************************************************************************
 
-	Atari Sky Diver hardware
+    Atari Sky Diver hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Sky Diver
+    Games supported:
+        * Sky Diver
 
-	Known issues:
-		* There is a problem with coin input not starting when in demo mode.
-		* The NMI interrupt needs to be more accurate, to do 32V, adjusted
-		  to VBLANK.  This also affects sound.
-		* The cuurent value of 5 interrupts per frame, works pretty good,
-		  but is not 100% accurate timing wise.
+    Known issues:
+        * There is a problem with coin input not starting when in demo mode.
+        * The NMI interrupt needs to be more accurate, to do 32V, adjusted
+          to VBLANK.  This also affects sound.
+        * The cuurent value of 5 interrupts per frame, works pretty good,
+          but is not 100% accurate timing wise.
 
 ****************************************************************************
 
-	Memory Map:
-	0000-00FF    R/W    PAGE ZERO RAM
-	0010         R/W    H POS PLANE 1
-	0011         R/W    H POS PLANE 2
-	0012         R/W    H POS MAN 1
-	0013         R/W    H POS MAN 2
-	0014         R/W    RANGE LOAD
-	0015         R/W    NOTE LOAD
-	0016         R/W    NAM LD
-	0017         R/W    UNUSED
-	0018         R/W    V POS PLANE 1
-	0019         R/W    PICTURE PLANE 1
-	001A         R/W    V POS PLANE 2
-	001B         R/W    PICTURE PLANE 2
-	001C         R/W    V POS MAN 1
-	001D         R/W    PICTURE MAN 1
-	001E         R/W    V POS MAN 2
-	001F         R/W    PICTURE MAN 2
-	0400-077F    R/W    PLAYFIELD
-	0780-07FF    R/W    MAPS TO 0000-D0
-	0800-0801     W     S LAMP
-	0802-0803     W     K LAMP
-	0804-0805     W     START LITE 1
-	0806-0807     W     START LITE 2
-	0808-0809     W     Y LAMP
-	080A-080B     W     D LAMP
-	080C-080D     W     SOUND ENABLE
-	1000-1001     W     JUMP LITE 1
-	1002-1003     W     COIN LOCK OUT
-	1006-1007     W     JUMP LITE 2
-	1008-1009     W     WHISTLE 1
-	100A-100B     W     WHISTLE 2
-	100C-100D     W     NMION
-	100E-100F     W     WIDTH
-	1800          R     D6=LEFT 1, D7=RIGHT 1
-	1801          R     D6=LEFT 2, D7=RIGHT 2
-	1802          R     D6=JUMP 1, D7=CHUTE 1
-	1803          R     D6=JUMP 2, D7=CHUTE 2
-	1804          R     D6=(D) OPT SW: NEXT TEST, D7=(F) OPT SW
-	1805          R     D6=(E) OPT SW, D7= (H) OPT SW: DIAGNOSTICS
-	1806          R     D6=START 1, D7=COIN 1
-	1807          R     D6=START 2, D7=COIN 2
-	1808          R     D6=MISSES 2, D7=MISSES 1
-	1809          R     D6=COIN 2, D7=COIN1
-	180A          R     D6=HARD/EASY, D7=EXTENDED PLAY
-	180B          R     D6=LANGUAGE 2, D7=LANGUAGE 1
-	1810          R     D6=TEST, D7=!VBLANK
-	1811          R     D6=!SLAM, D7=UNUSED
-	2000          W     TIMER RESET
-	2002-2003     W     I LAMP
-	2004-2005     W     V LAMP
-	2006-2007     W     E LAMP
-	2008-2009     W     R LAMP
-	200A-200B     W     OCT 1
-	200C-200D     W     OCT 2
-	200E-200F     W     NOISE RESET
-	2800-2FFF     R     ROM 0
-	3000-37FF     R     ROM 1
-	3800-3FFF     R     ROM 2A
-	7800-7FFF     R     ROM 2B
+    Memory Map:
+    0000-00FF    R/W    PAGE ZERO RAM
+    0010         R/W    H POS PLANE 1
+    0011         R/W    H POS PLANE 2
+    0012         R/W    H POS MAN 1
+    0013         R/W    H POS MAN 2
+    0014         R/W    RANGE LOAD
+    0015         R/W    NOTE LOAD
+    0016         R/W    NAM LD
+    0017         R/W    UNUSED
+    0018         R/W    V POS PLANE 1
+    0019         R/W    PICTURE PLANE 1
+    001A         R/W    V POS PLANE 2
+    001B         R/W    PICTURE PLANE 2
+    001C         R/W    V POS MAN 1
+    001D         R/W    PICTURE MAN 1
+    001E         R/W    V POS MAN 2
+    001F         R/W    PICTURE MAN 2
+    0400-077F    R/W    PLAYFIELD
+    0780-07FF    R/W    MAPS TO 0000-D0
+    0800-0801     W     S LAMP
+    0802-0803     W     K LAMP
+    0804-0805     W     START LITE 1
+    0806-0807     W     START LITE 2
+    0808-0809     W     Y LAMP
+    080A-080B     W     D LAMP
+    080C-080D     W     SOUND ENABLE
+    1000-1001     W     JUMP LITE 1
+    1002-1003     W     COIN LOCK OUT
+    1006-1007     W     JUMP LITE 2
+    1008-1009     W     WHISTLE 1
+    100A-100B     W     WHISTLE 2
+    100C-100D     W     NMION
+    100E-100F     W     WIDTH
+    1800          R     D6=LEFT 1, D7=RIGHT 1
+    1801          R     D6=LEFT 2, D7=RIGHT 2
+    1802          R     D6=JUMP 1, D7=CHUTE 1
+    1803          R     D6=JUMP 2, D7=CHUTE 2
+    1804          R     D6=(D) OPT SW: NEXT TEST, D7=(F) OPT SW
+    1805          R     D6=(E) OPT SW, D7= (H) OPT SW: DIAGNOSTICS
+    1806          R     D6=START 1, D7=COIN 1
+    1807          R     D6=START 2, D7=COIN 2
+    1808          R     D6=MISSES 2, D7=MISSES 1
+    1809          R     D6=COIN 2, D7=COIN1
+    180A          R     D6=HARD/EASY, D7=EXTENDED PLAY
+    180B          R     D6=LANGUAGE 2, D7=LANGUAGE 1
+    1810          R     D6=TEST, D7=!VBLANK
+    1811          R     D6=!SLAM, D7=UNUSED
+    2000          W     TIMER RESET
+    2002-2003     W     I LAMP
+    2004-2005     W     V LAMP
+    2006-2007     W     E LAMP
+    2008-2009     W     R LAMP
+    200A-200B     W     OCT 1
+    200C-200D     W     OCT 2
+    200E-200F     W     NOISE RESET
+    2800-2FFF     R     ROM 0
+    3000-37FF     R     ROM 1
+    3800-3FFF     R     ROM 2A
+    7800-7FFF     R     ROM 2B
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
-	Notes:
+    Notes:
 
-	The NMI interrupts are only used to read the coin switches.
+    The NMI interrupts are only used to read the coin switches.
 
 ***************************************************************************/
 
@@ -96,7 +96,7 @@ static int skydiver_nmion;
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -121,7 +121,7 @@ static PALETTE_INIT( skydiver )
 
 /*************************************
  *
- *	Interrupt generation
+ *  Interrupt generation
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static INTERRUPT_GEN( skydiver_interrupt )
 
 /*************************************
  *
- *	Sound handlers
+ *  Sound handlers
  *
  *************************************/
 
@@ -166,7 +166,7 @@ static WRITE8_HANDLER( skydiver_whistle_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -213,7 +213,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -312,7 +312,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -353,7 +353,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -383,7 +383,7 @@ static MACHINE_DRIVER_START( skydiver )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(skydiver_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -393,7 +393,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -416,7 +416,7 @@ ROM_END
 
 /*************************************
  *
- *	Game driver
+ *  Game driver
  *
  *************************************/
 

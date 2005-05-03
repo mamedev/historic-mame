@@ -91,7 +91,7 @@ static UINT8 ds2404_readmem(void)
 		return value;
 	} else {
 		time_t current_time;
-		
+
 		time( &current_time );
 		current_time -= ds2404.clock_adjust;
 
@@ -194,7 +194,7 @@ READ8_HANDLER( DS2404_data_r )
 WRITE8_HANDLER( DS2404_data_w )
 {
 	int i;
-		
+
 	switch( ds2404.state[ds2404.state_ptr] )
 	{
 		case DS2404_STATE_IDLE:

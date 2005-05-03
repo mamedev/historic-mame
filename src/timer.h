@@ -16,7 +16,7 @@ extern "C" {
 
 
 /*-------------------------------------------------
-	mame_time definitions
+    mame_time definitions
 -------------------------------------------------*/
 
 #define MAX_SUBSECONDS				((subseconds_t)1000000000 * (subseconds_t)1000000000)
@@ -45,7 +45,7 @@ extern UINT32 cycles_per_second[];
 
 
 /*-------------------------------------------------
-	timing macros
+    timing macros
 -------------------------------------------------*/
 
 extern double cycles_to_sec[];
@@ -72,7 +72,7 @@ typedef struct _mame_timer mame_timer;
 
 
 /*-------------------------------------------------
-	core functions
+    core functions
 -------------------------------------------------*/
 
 void timer_init(void);
@@ -100,7 +100,7 @@ mame_time mame_timer_firetime(mame_timer *which);
 
 
 /*-------------------------------------------------
-	macros to pass debugging information
+    macros to pass debugging information
 -------------------------------------------------*/
 
 #define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__)
@@ -113,7 +113,7 @@ mame_time mame_timer_firetime(mame_timer *which);
 
 
 /*-------------------------------------------------
-	old functions mapped to new ones
+    old functions mapped to new ones
 -------------------------------------------------*/
 
 #define timer_alloc(c)					mame_timer_alloc(c)
@@ -136,7 +136,7 @@ mame_time mame_timer_firetime(mame_timer *which);
 
 
 /*-------------------------------------------------
-	make a MAME time
+    make a MAME time
 -------------------------------------------------*/
 
 INLINE mame_time make_mame_time(seconds_t _secs, subseconds_t _subsecs)
@@ -149,7 +149,7 @@ INLINE mame_time make_mame_time(seconds_t _secs, subseconds_t _subsecs)
 
 
 /*-------------------------------------------------
-	convert from mame_time to double
+    convert from mame_time to double
 -------------------------------------------------*/
 
 INLINE double mame_time_to_double(mame_time _time)
@@ -159,20 +159,20 @@ INLINE double mame_time_to_double(mame_time _time)
 
 
 /*-------------------------------------------------
-	convert from double to mame_time
+    convert from double to mame_time
 -------------------------------------------------*/
 
 INLINE mame_time double_to_mame_time(double _time)
 {
 	mame_time abstime;
-	
+
 	/* special case for TIME_NEVER */
 	if (_time >= TIME_NEVER)
 		return time_never;
-	
+
 	/* set seconds to the integral part */
 	abstime.seconds = (INT64)_time;
-	
+
 	/* set subseconds to the fractional part */
 	_time -= (double)abstime.seconds;
 	abstime.subseconds = DOUBLE_TO_SUBSECONDS(_time);
@@ -181,21 +181,21 @@ INLINE mame_time double_to_mame_time(double _time)
 
 
 /*-------------------------------------------------
-	add two mame_times
+    add two mame_times
 -------------------------------------------------*/
 
 INLINE mame_time add_mame_times(mame_time _time1, mame_time _time2)
 {
 	mame_time result;
-	
+
 	/* if one of the items is time_never, return time_never */
 	if (_time1.seconds >= MAX_SECONDS || _time2.seconds >= MAX_SECONDS)
 		return time_never;
-	
+
 	/* add the seconds and subseconds */
 	result.subseconds = _time1.subseconds + _time2.subseconds;
 	result.seconds = _time1.seconds + _time2.seconds;
-	
+
 	/* normalize and return */
 	if (result.subseconds >= MAX_SUBSECONDS)
 	{
@@ -207,21 +207,21 @@ INLINE mame_time add_mame_times(mame_time _time1, mame_time _time2)
 
 
 /*-------------------------------------------------
-	add subseconds to a mame_time
+    add subseconds to a mame_time
 -------------------------------------------------*/
 
 INLINE mame_time add_subseconds_to_mame_time(mame_time _time1, subseconds_t _subseconds)
 {
 	mame_time result;
-	
+
 	/* if one of the items is time_never, return time_never */
 	if (_time1.seconds >= MAX_SECONDS)
 		return time_never;
-	
+
 	/* add the seconds and subseconds */
 	result.subseconds = _time1.subseconds + _subseconds;
 	result.seconds = _time1.seconds;
-	
+
 	/* normalize and return */
 	if (result.subseconds >= MAX_SUBSECONDS)
 	{
@@ -233,7 +233,7 @@ INLINE mame_time add_subseconds_to_mame_time(mame_time _time1, subseconds_t _sub
 
 
 /*-------------------------------------------------
-	subtract two mame_times
+    subtract two mame_times
 -------------------------------------------------*/
 
 INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
@@ -243,7 +243,7 @@ INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
 	/* if time1 is time_never, return time_never */
 	if (_time1.seconds >= MAX_SECONDS)
 		return time_never;
-	
+
 	/* add the seconds and subseconds */
 	result.subseconds = _time1.subseconds - _time2.subseconds;
 	result.seconds = _time1.seconds - _time2.seconds;
@@ -259,7 +259,7 @@ INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
 
 
 /*-------------------------------------------------
-	subtract subseconds from a mame_time
+    subtract subseconds from a mame_time
 -------------------------------------------------*/
 
 INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _subseconds)
@@ -269,7 +269,7 @@ INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _s
 	/* if time1 is time_never, return time_never */
 	if (_time1.seconds >= MAX_SECONDS)
 		return time_never;
-	
+
 	/* add the seconds and subseconds */
 	result.subseconds = _time1.subseconds - _subseconds;
 	result.seconds = _time1.seconds;
@@ -285,7 +285,7 @@ INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _s
 
 
 /*-------------------------------------------------
-	compare two mame_times
+    compare two mame_times
 -------------------------------------------------*/
 
 INLINE int compare_mame_times(mame_time _time1, mame_time _time2)

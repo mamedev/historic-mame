@@ -32,7 +32,7 @@ static void pgm_drawsprite(int wide, int high, int xpos, int ypos, int palt, int
 	aoffset = (bdata[(boffset+3) & bdatasize] << 24) | (bdata[(boffset+2) & bdatasize] << 16) | (bdata[(boffset+1) & bdatasize] << 8) | (bdata[(boffset+0) & bdatasize] << 0);
 	aoffset = aoffset >> 2; aoffset *= 3;
 
-// 	if(aoffset)	logerror ("aoffset %08x boffset %08x\n",aoffset,boffset);
+//  if(aoffset) logerror ("aoffset %08x boffset %08x\n",aoffset,boffset);
 
 	boffset += 4; /* because the first dword is the a data offset */
 	if (!(flip & 0x02)) { /* NO Y FLIP */
@@ -167,11 +167,11 @@ static UINT16 *pgm_sprite_source;
 static void pgm_drawsprites(int priority)
 {
 	/* ZZZZ Zxxx xxxx xxxx
-	   zzzz z-yy yyyy yyyy
-	   -ffp pppp Pvvv vvvv
-	   vvvv vvvv vvvv vvvv
-	   wwww wwwh hhhh hhhh
-	*/
+       zzzz z-yy yyyy yyyy
+       -ffp pppp Pvvv vvvv
+       vvvv vvvv vvvv vvvv
+       wwww wwwh hhhh hhhh
+    */
 
 	const UINT16 *finish = pgm_spritebufferram+0xa00;
 	int y;
@@ -184,8 +184,8 @@ static void pgm_drawsprites(int priority)
 	{
 		int xpos = pgm_sprite_source[0] & 0x07ff;
 		int ypos = pgm_sprite_source[1] & 0x03ff;
-//		int xzom = (pgm_sprite_source[0] & 0xf800) >> 11;
-//		int yzom = (pgm_sprite_source[1] & 0xf800) >> 11;
+//      int xzom = (pgm_sprite_source[0] & 0xf800) >> 11;
+//      int yzom = (pgm_sprite_source[1] & 0xf800) >> 11;
 		int palt = (pgm_sprite_source[2] & 0x1f00) >> 8;
 		int flip = (pgm_sprite_source[2] & 0x6000) >> 13;
 		int boff = ((pgm_sprite_source[2] & 0x007f) << 16) | (pgm_sprite_source[3] & 0xffff);
@@ -222,18 +222,18 @@ static void get_pgm_tx_tilemap_tile_info(int tile_index)
 {
 
 /* 0x904000 - 0x90ffff is the Text Overlay Ram (pgm_tx_videoram)
-	each tile uses 4 bytes, the tilemap is 64x128?
+    each tile uses 4 bytes, the tilemap is 64x128?
 
    the layer uses 4bpp 8x8 tiles from the 'T' roms
    colours from 0xA01000 - 0xA017FF
 
    scroll registers are at 0xB05000 (Y) and 0xB06000 (X)
 
-	---- ---- ffpp ppp- nnnn nnnn nnnn nnnn
+    ---- ---- ffpp ppp- nnnn nnnn nnnn nnnn
 
-	n = tile number
-	p = palette
-	f = flip
+    n = tile number
+    p = palette
+    f = flip
 */
 	int tileno,colour,flipyx; //,game;
 

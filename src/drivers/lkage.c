@@ -96,7 +96,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf084, 0xf084) AM_READ(input_port_4_r)	/* P1 controls */
 	AM_RANGE(0xf086, 0xf086) AM_READ(input_port_5_r)	/* P2 controls */
 	AM_RANGE(0xf087, 0xf087) AM_READ(lkage_mcu_status_r)
-//	AM_RANGE(0xf0a3, 0xf0a3) AM_READ(MRA8_NOP) /* unknown */
+//  AM_RANGE(0xf0a3, 0xf0a3) AM_READ(MRA8_NOP) /* unknown */
 	AM_RANGE(0xf0c0, 0xf0c5) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf100, 0xf15f) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
@@ -106,16 +106,16 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&paletteram)
-//	paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
+//  paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
 	AM_RANGE(0xf000, 0xf003) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_vreg) /* video registers */
 	AM_RANGE(0xf060, 0xf060) AM_WRITE(lkage_sound_command_w)
 	AM_RANGE(0xf061, 0xf061) AM_WRITE(MWA8_NOP) /* unknown */
 	AM_RANGE(0xf062, 0xf062) AM_WRITE(lkage_mcu_w)
-//	AM_RANGE(0xf063, 0xf063) AM_WRITE(MWA8_NOP) /* unknown */
-//	AM_RANGE(0xf0a2, 0xf0a2) AM_WRITE(MWA8_NOP) /* unknown */
-//	AM_RANGE(0xf0a3, 0xf0a3) AM_WRITE(MWA8_NOP) /* unknown */
+//  AM_RANGE(0xf063, 0xf063) AM_WRITE(MWA8_NOP) /* unknown */
+//  AM_RANGE(0xf0a2, 0xf0a2) AM_WRITE(MWA8_NOP) /* unknown */
+//  AM_RANGE(0xf0a3, 0xf0a3) AM_WRITE(MWA8_NOP) /* unknown */
 	AM_RANGE(0xf0c0, 0xf0c5) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_scroll) /* scrolling */
-//	AM_RANGE(0xf0e1, 0xf0e1) AM_WRITE(MWA8_NOP) /* unknown */
+//  AM_RANGE(0xf0e1, 0xf0e1) AM_WRITE(MWA8_NOP) /* unknown */
 	AM_RANGE(0xf100, 0xf15f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* spriteram */
 	AM_RANGE(0xf400, 0xffff) AM_WRITE(lkage_videoram_w) AM_BASE(&videoram) /* videoram */
 ADDRESS_MAP_END
@@ -376,9 +376,9 @@ static MACHINE_DRIVER_START( lkage )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(176)
 		/*
-			there are actually 1024 colors in paletteram, however, we use a 100% correct
-			reduced "virtual palette" to achieve some optimizations in the video driver.
-		*/
+            there are actually 1024 colors in paletteram, however, we use a 100% correct
+            reduced "virtual palette" to achieve some optimizations in the video driver.
+        */
 
 	MDRV_VIDEO_START(lkage)
 	MDRV_VIDEO_UPDATE(lkage)
@@ -423,9 +423,9 @@ static MACHINE_DRIVER_START( lkageb )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(176)
 		/*
-			there are actually 1024 colors in paletteram, however, we use a 100% correct
-			reduced "virtual palette" to achieve some optimizations in the video driver.
-		*/
+            there are actually 1024 colors in paletteram, however, we use a 100% correct
+            reduced "virtual palette" to achieve some optimizations in the video driver.
+        */
 
 	MDRV_VIDEO_START(lkage)
 	MDRV_VIDEO_UPDATE(lkage)
@@ -562,7 +562,7 @@ static READ8_HANDLER( fake_mcu_r )
 static WRITE8_HANDLER( fake_mcu_w )
 {
 	//if(data != 1 && data != 0xa6 && data != 0x34 && data != 0x48)
-	//	usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
+	//  usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
 
 	mcu_val = data;
 }

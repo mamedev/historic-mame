@@ -108,7 +108,7 @@ VIDEO_UPDATE( jack )
 	jack_draw_sprites(bitmap);
 }
 
-/* 
+/*
    Joinem has a bit different video hardware with proms based palette,
    3bpp gfx and different banking / colors bits
 */

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari G1 hardware
+    Atari G1 hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -22,7 +22,7 @@ UINT8 atarig1_pitfight;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -36,7 +36,7 @@ static UINT16 playfield_yscroll;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -74,10 +74,10 @@ VIDEO_START( atarig1 )
 		256,		/* number of entries in sprite RAM */
 		0,			/* left clip coordinate */
 		255,		/* right clip coordinate */
-		
+
 		0x200,		/* base palette entry */
 		0x100,		/* maximum number of colors */
-	
+
 		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
 		{{ 0,0x00f0,0,0,0,0,0,0 }},	/* mask for the color */
 		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
@@ -95,10 +95,10 @@ VIDEO_START( atarig1 )
 		256,		/* number of entries in sprite RAM */
 		40,			/* left clip coordinate */
 		295,		/* right clip coordinate */
-		
+
 		0x200,		/* base palette entry */
 		0x100,		/* maximum number of colors */
-	
+
 		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
 		{{ 0,0x00f0,0,0,0,0,0,0 }},	/* mask for the color */
 		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
@@ -141,7 +141,7 @@ VIDEO_START( atarig1 )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -209,7 +209,7 @@ void atarig1_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -217,10 +217,10 @@ VIDEO_UPDATE( atarig1 )
 {
 	/* draw the playfield */
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	
+
 	/* copy the motion objects on top */
 	copybitmap(bitmap, atarirle_get_vram(0, 0), 0, 0, 0, 0, cliprect, TRANSPARENCY_PEN, 0);
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

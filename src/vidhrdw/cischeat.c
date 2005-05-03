@@ -1,55 +1,55 @@
 /***************************************************************************
 
-							-= Jaleco Driving Games =-
+                            -= Jaleco Driving Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z or X with:
+Note:   if MAME_DEBUG is defined, pressing Z or X with:
 
-		Q,W,E		shows scroll 0,1,2
-		R,T			shows road 0,1
-		A,S,D,F		shows sprites with priority 0,1,2,3
-		X			shows some info on each sprite
-		M			disables sprites zooming
-		U			toggles the display of some hardware registers'
-					values ($80000/2/4/6)
+        Q,W,E       shows scroll 0,1,2
+        R,T         shows road 0,1
+        A,S,D,F     shows sprites with priority 0,1,2,3
+        X           shows some info on each sprite
+        M           disables sprites zooming
+        U           toggles the display of some hardware registers'
+                    values ($80000/2/4/6)
 
-		Keys can be used together!
-		Additionally, layers can be disabled, writing to $82400
-		(fake video register):
+        Keys can be used together!
+        Additionally, layers can be disabled, writing to $82400
+        (fake video register):
 
-			---- ---- --54 ----		Enable Road 1,0
-			---- ---- ---- 3---		Enable Sprites
-			---- ---- ---- -210		Enable Scroll 2,1,0
+            ---- ---- --54 ----     Enable Road 1,0
+            ---- ---- ---- 3---     Enable Sprites
+            ---- ---- ---- -210     Enable Scroll 2,1,0
 
-		0 is the same as 0x3f
+        0 is the same as 0x3f
 
 [ 3 Scrolling Layers ]
 
-	see Megasys1.c
+    see Megasys1.c
 
-		Tile Format:			Cisco Heat				F1 GP Star
+        Tile Format:            Cisco Heat              F1 GP Star
 
-				Colour		fedc b--- ---- ----		fedc ---- ---- ----
-				Code		---- -a98 7654 3210		---- ba98 7654 3210
+                Colour      fedc b--- ---- ----     fedc ---- ---- ----
+                Code        ---- -a98 7654 3210     ---- ba98 7654 3210
 
-		Layer Size:			May be different from Megasys1?
+        Layer Size:         May be different from Megasys1?
 
 [ 2 Road Layers ]
 
-	Each of the 256 (not all visible) lines of the screen
-	can display any of the lines of gfx in ROM, which are
-	larger than the sceen and can therefore be scrolled
+    Each of the 256 (not all visible) lines of the screen
+    can display any of the lines of gfx in ROM, which are
+    larger than the sceen and can therefore be scrolled
 
-									Cisco Heat				F1 GP Star
-				Line Width			1024					1024
-				Zoom				No						Yes
+                                    Cisco Heat              F1 GP Star
+                Line Width          1024                    1024
+                Zoom                No                      Yes
 
 [ 256 Sprites ]
 
-	Sprites are made of several 16x16 tiles (up to 256x256 pixels)
-	and can be zoomed in and out. See below for sprite RAM format.
+    Sprites are made of several 16x16 tiles (up to 256x256 pixels)
+    and can be zoomed in and out. See below for sprite RAM format.
 
 ***************************************************************************/
 
@@ -124,7 +124,7 @@ data16_t *f1gpstr2_ioready;
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -140,7 +140,7 @@ void prepare_shadows(void)
 }
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 /* 32 colour codes for the tiles */
@@ -156,7 +156,7 @@ VIDEO_START( cischeat )
 }
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 /* 16 colour codes for the tiles */
@@ -179,17 +179,17 @@ VIDEO_START( bigrun )
 /***************************************************************************
 
 
-						Hardware registers access
+                        Hardware registers access
 
 
 ***************************************************************************/
 
-/*	This function returns the status of the shift (ACTIVE_LOW):
+/*  This function returns the status of the shift (ACTIVE_LOW):
 
-		1 - low  shift
-		0 - high shift
+        1 - low  shift
+        0 - high shift
 
-	and allows the shift to be handled using two buttons */
+    and allows the shift to be handled using two buttons */
 
 static int read_shift(void)
 {
@@ -204,12 +204,12 @@ static int read_shift(void)
 
 
 /*
-	F1 GP Star has a real pedal, while Cisco Heat's is connected to
-	a switch. The Former game stores, during boot, the value that
-	corresponds to the pedal not pressed, and compares against it:
+    F1 GP Star has a real pedal, while Cisco Heat's is connected to
+    a switch. The Former game stores, during boot, the value that
+    corresponds to the pedal not pressed, and compares against it:
 
-	The value returned must decrease when the pedal is pressed.
-	We support just 2 values for now..
+    The value returned must decrease when the pedal is pressed.
+    We support just 2 values for now..
 */
 
 static int read_accelerator(void)
@@ -220,7 +220,7 @@ static int read_accelerator(void)
 
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 READ16_HANDLER( bigrun_vregs_r )
@@ -317,7 +317,7 @@ WRITE16_HANDLER( bigrun_vregs_w )
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 READ16_HANDLER( cischeat_vregs_r )
@@ -411,7 +411,7 @@ WRITE16_HANDLER( cischeat_vregs_w )
 
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 READ16_HANDLER( f1gpstar_vregs_r )
@@ -425,7 +425,7 @@ READ16_HANDLER( f1gpstar_vregs_r )
 			else				return readinputport(7) | val; 	// UK, FR
 		}
 
-//		case 0x0002/2 :	return 0xFFFF;
+//      case 0x0002/2 : return 0xFFFF;
 		case 0x0004/2 :	return readinputport(2) +
 						       (read_shift()<<5);	// Buttons
 
@@ -458,7 +458,7 @@ READ16_HANDLER( f1gpstr2_vregs_r )
 }
 
 /**************************************************************************
-							Wild Pilot
+                            Wild Pilot
 **************************************************************************/
 
 READ16_HANDLER( wildplt_vregs_r )
@@ -488,7 +488,7 @@ READ16_HANDLER( wildplt_vregs_r )
 
 WRITE16_HANDLER( f1gpstar_vregs_w )
 {
-//	data16_t old_data = megasys1_vregs[offset];
+//  data16_t old_data = megasys1_vregs[offset];
 	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
@@ -545,7 +545,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 WRITE16_HANDLER( f1gpstr2_vregs_w )
 {
-//	data16_t old_data = megasys1_vregs[offset];
+//  data16_t old_data = megasys1_vregs[offset];
 	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	if ((offset >= 0x1000/2) && (offset < 0x2000/2))
@@ -567,12 +567,12 @@ WRITE16_HANDLER( f1gpstr2_vregs_w )
 }
 
 /**************************************************************************
-								Scud Hammer
+                                Scud Hammer
 **************************************************************************/
 
 WRITE16_HANDLER( scudhamm_vregs_w )
 {
-//	int old_data = megasys1_vregs[offset];
+//  int old_data = megasys1_vregs[offset];
 	int new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
@@ -581,10 +581,10 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 		case 0x000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
 		case 0x000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
 
-// 		UNUSED LAYER
-//		case 0x008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
-//		case 0x008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
-//		case 0x008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+//      UNUSED LAYER
+//      case 0x008/2+0 : MEGASYS1_VREG_SCROLL(1,x)      break;
+//      case 0x008/2+1 : MEGASYS1_VREG_SCROLL(1,y)      break;
+//      case 0x008/2+2 : MEGASYS1_VREG_FLAG(1)          break;
 
 		case 0x100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
@@ -602,7 +602,7 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 /***************************************************************************
 
 
-								Road Drawing
+                                Road Drawing
 
 
 ***************************************************************************/
@@ -614,26 +614,26 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 
 /**************************************************************************
 
-						Cisco Heat road format
+                        Cisco Heat road format
 
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	00.w								Code
+    00.w                                Code
 
-	02.w								X Scroll
+    02.w                                X Scroll
 
-	04.w		fedc ---- ---- ----		unused?
-				---- ba98 ---- ----		Priority
-				---- ---- 76-- ----		unused?
-				---- ---- --54 3210		Color
+    04.w        fedc ---- ---- ----     unused?
+                ---- ba98 ---- ----     Priority
+                ---- ---- 76-- ----     unused?
+                ---- ---- --54 3210     Color
 
-	06.w								Unused
+    06.w                                Unused
 
 **************************************************************************/
 
-/*	Draw the road in the given bitmap. The priority1 and priority2 parameters
-	specify the range of lines to draw	*/
+/*  Draw the road in the given bitmap. The priority1 and priority2 parameters
+    specify the range of lines to draw  */
 
 void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
@@ -695,35 +695,35 @@ void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 /**************************************************************************
 
-						F1 GrandPrix Star road format
+                        F1 GrandPrix Star road format
 
-	Offset:		Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	00.w		fedc ---- ---- ----		Priority
-				---- ba98 7654 3210		X Scroll (After Zoom)
+    00.w        fedc ---- ---- ----     Priority
+                ---- ba98 7654 3210     X Scroll (After Zoom)
 
-	02.w		fedc ba-- ---- ----		unused?
-				---- --98 7654 3210		X Zoom
+    02.w        fedc ba-- ---- ----     unused?
+                ---- --98 7654 3210     X Zoom
 
-	04.w		fe-- ---- ---- ----		unused?
-				--dc ba98 ---- ----		Color
-				---- ---- 7654 3210		?
+    04.w        fe-- ---- ---- ----     unused?
+                --dc ba98 ---- ----     Color
+                ---- ---- 7654 3210     ?
 
-	06.w								Code
+    06.w                                Code
 
 
-	Imagine an "empty" line, 2 * X_SIZE wide, with the gfx from
-	the ROM - whose original size is X_SIZE - in the middle.
+    Imagine an "empty" line, 2 * X_SIZE wide, with the gfx from
+    the ROM - whose original size is X_SIZE - in the middle.
 
-	Zooming acts on this latter and can shrink it to 1 pixel or
-	widen it to 2 * X_SIZE, while *keeping it centered* in the
-	empty line.	Scrolling acts on the resulting line.
+    Zooming acts on this latter and can shrink it to 1 pixel or
+    widen it to 2 * X_SIZE, while *keeping it centered* in the
+    empty line. Scrolling acts on the resulting line.
 
 
 **************************************************************************/
 
-/*	Draw the road in the given bitmap. The priority1 and priority2 parameters
-	specify the range of lines to draw	*/
+/*  Draw the road in the given bitmap. The priority1 and priority2 parameters
+    specify the range of lines to draw  */
 
 void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
@@ -762,7 +762,7 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 		if ( ((xscroll & 0x7000) < min_priority) || ((xscroll & 0x7000) > max_priority) )
 			continue;
 
-		/* zoom code range: 000-3ff		scale range: 0.0-2.0 */
+		/* zoom code range: 000-3ff     scale range: 0.0-2.0 */
 		xscale = ( ((xzoom & 0x3ff)+1) << (16+1) ) / 0x400;
 
 		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
@@ -777,7 +777,7 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 		xstart -= (X_SIZE * xscale) / 2;
 
 		/* let's approximate to the nearest greater integer value
-		   to avoid holes in between tiles */
+           to avoid holes in between tiles */
 		xscale += (1<<16)/TILE_SIZE;
 
 		/* Draw the line */
@@ -802,44 +802,44 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 /***************************************************************************
 
-				Cisco Heat & F1 GP Star Sprites Drawing
+                Cisco Heat & F1 GP Star Sprites Drawing
 
-	Offset:	Bits:					Value:
+    Offset: Bits:                   Value:
 
-	00 		fed- ---- ---- ----		unused?
-	 		---c ---- ---- ----		Don't display this sprite
-			---- ba98 ---- ----		unused?
-			---- ---- 7654 ----		Number of tiles along Y, minus 1 (1-16)
-			---- ---- ---- 3210		Number of tiles along X, minus 1 (1-16)
+    00      fed- ---- ---- ----     unused?
+            ---c ---- ---- ----     Don't display this sprite
+            ---- ba98 ---- ----     unused?
+            ---- ---- 7654 ----     Number of tiles along Y, minus 1 (1-16)
+            ---- ---- ---- 3210     Number of tiles along X, minus 1 (1-16)
 
-	02/04 	fed- ---- ---- ----		unused?
-	 		---c ---- ---- ----		Flip X/Y
-			---- ba9- ---- ----		? X/Y zoom ?
-			---- ---8 7654 3210		X/Y zoom
+    02/04   fed- ---- ---- ----     unused?
+            ---c ---- ---- ----     Flip X/Y
+            ---- ba9- ---- ----     ? X/Y zoom ?
+            ---- ---8 7654 3210     X/Y zoom
 
-	06/08	fedc ba-- ---- ----		? X/Y position ?
-			---- --98 7654 3210		X/Y position
+    06/08   fedc ba-- ---- ----     ? X/Y position ?
+            ---- --98 7654 3210     X/Y position
 
-	0A								0 ?
+    0A                              0 ?
 
-	0C								Code
+    0C                              Code
 
-	0E		fed- ---- ---- ----		unused?
-			---c ---- ---- ----		Use pen 0 as shadow
-			---- ba98 ---- ----		Priority
-			---- ---- 7--- ----		unused?
-			---- ---- -654 3210		Color
+    0E      fed- ---- ---- ----     unused?
+            ---c ---- ---- ----     Use pen 0 as shadow
+            ---- ba98 ---- ----     Priority
+            ---- ---- 7--- ----     unused?
+            ---- ---- -654 3210     Color
 
 ***************************************************************************/
 
 #define SHRINK(_org_,_fact_) ( ( ( (_org_) << 16 ) * (_fact_ & 0x01ff) ) / 0x80 )
 
-/*	Draw sprites, in the given priority range, to a bitmap.
+/*  Draw sprites, in the given priority range, to a bitmap.
 
-	Priorities between 0 and 15 cover sprites whose priority nibble
-	is between 0 and 15. Priorities between	0+16 and 15+16 cover
-	sprites whose priority nibble is between 0 and 15 and whose
-	colour code's high bit is set.	*/
+    Priorities between 0 and 15 cover sprites whose priority nibble
+    is between 0 and 15. Priorities between 0+16 and 15+16 cover
+    sprites whose priority nibble is between 0 and 15 and whose
+    colour code's high bit is set.  */
 
 static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rectangle *cliprect, int priority1, int priority2)
 {
@@ -901,7 +901,7 @@ static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rect
 		if ( ( (xdim / 0x10000) == 0 ) || ( (ydim / 0x10000) == 0) )	continue;
 
 		/* the y pos passed to the hardware is the that of the last line,
-		   we need the y pos of the first line  */
+           we need the y pos of the first line  */
 		sy -= (ydim * ynum);
 
 		code	=	source[ 6 ];
@@ -925,7 +925,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 
 
 		/* let's approximate to the nearest greater integer value
-		   to avoid holes in between tiles */
+           to avoid holes in between tiles */
 		if (xscale & 0xffff)	xscale += (1<<16)/16;
 		if (yscale & 0xffff)	yscale += (1<<16)/16;
 
@@ -968,34 +968,34 @@ if (code_pressed(KEYCODE_X))
 
 /***************************************************************************
 
-							Big Run Sprites Drawing
+                            Big Run Sprites Drawing
 
-	Offset:	Bits:					Value:
+    Offset: Bits:                   Value:
 
-	00 		fed- ---- ---- ----		unused?
-	 		---c ---- ---- ----		Don't display this sprite
-			---- ba98 ---- ----		unused?
-			---- ---- 7654 ----		Number of tiles along Y, minus 1 (1-16)
-			---- ---- ---- 3210		Number of tiles along X, minus 1 (1-16)
+    00      fed- ---- ---- ----     unused?
+            ---c ---- ---- ----     Don't display this sprite
+            ---- ba98 ---- ----     unused?
+            ---- ---- 7654 ----     Number of tiles along Y, minus 1 (1-16)
+            ---- ---- ---- 3210     Number of tiles along X, minus 1 (1-16)
 
-	02	 	fedc ba98 ---- ----		Y zoom
-			---- ---- 7654 3210		X zoom
+    02      fedc ba98 ---- ----     Y zoom
+            ---- ---- 7654 3210     X zoom
 
-	04/06	fed- ---- ---- ----
-	 		---c ---- ---- ----		X/Y flip
-			---- ba9- ---- ----
-			---- ---8 7654 3210		X/Y position (signed)
+    04/06   fed- ---- ---- ----
+            ---c ---- ---- ----     X/Y flip
+            ---- ba9- ---- ----
+            ---- ---8 7654 3210     X/Y position (signed)
 
-	08								?
-	0A								?
+    08                              ?
+    0A                              ?
 
-	0C								Code
+    0C                              Code
 
-	0E		fed- ---- ---- ----		unused?
-			---c ---- ---- ----		Use pen 0 as shadow
-			---- ba98 ---- ----		Priority
-			---- ---- 76-- ----		unused?
-			---- ---- --54 3210		Color
+    0E      fed- ---- ---- ----     unused?
+            ---c ---- ---- ----     Use pen 0 as shadow
+            ---- ba98 ---- ----     Priority
+            ---- ---- 76-- ----     unused?
+            ---- ---- --54 3210     Color
 
 ***************************************************************************/
 
@@ -1034,8 +1034,8 @@ static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectan
 		sy		=	source[ 3 ];
 		flipx	=	sx & 0x1000;
 		flipy	=	sy & 0x1000;
-//		sx		=	(sx & 0x1ff) - (sx & 0x200);
-//		sy		=	(sy & 0x1ff) - (sy & 0x200);
+//      sx      =   (sx & 0x1ff) - (sx & 0x200);
+//      sy      =   (sy & 0x1ff) - (sy & 0x200);
 		sx		=	(sx & 0x0ff) - (sx & 0x100);
 		sy		=	(sy & 0x0ff) - (sy & 0x100);
 
@@ -1059,7 +1059,7 @@ static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectan
 
 		if ( ( (xdim / 0x10000) == 0 ) || ( (ydim / 0x10000) == 0) )	continue;
 
-//		sy -= (ydim * ynum);
+//      sy -= (ydim * ynum);
 
 		code	=	source[ 6 ];
 		attr	=	source[ 7 ];
@@ -1082,7 +1082,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 
 
 		/* let's approximate to the nearest greater integer value
-		   to avoid holes in between tiles */
+           to avoid holes in between tiles */
 		if (xscale & 0xffff)	xscale += (1<<16)/16;
 		if (yscale & 0xffff)	yscale += (1<<16)/16;
 
@@ -1126,7 +1126,7 @@ if (code_pressed(KEYCODE_X))
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -1160,7 +1160,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) ) \
 
 
 /**************************************************************************
-								Big Run
+                                Big Run
 **************************************************************************/
 
 VIDEO_UPDATE( bigrun )
@@ -1213,7 +1213,7 @@ VIDEO_UPDATE( bigrun )
 
 
 /**************************************************************************
-								Cisco Heat
+                                Cisco Heat
 **************************************************************************/
 
 VIDEO_UPDATE( cischeat )
@@ -1246,7 +1246,7 @@ VIDEO_UPDATE( cischeat )
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
+//  else fillbitmap(bitmap,Machine->pens[0],cliprect);
 	cischeat_tmap_DRAW(1)
 
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,15,3);
@@ -1268,7 +1268,7 @@ VIDEO_UPDATE( cischeat )
 
 
 /**************************************************************************
-							F1 GrandPrix Star
+                            F1 GrandPrix Star
 **************************************************************************/
 
 VIDEO_UPDATE( f1gpstar )
@@ -1295,7 +1295,7 @@ VIDEO_UPDATE( f1gpstar )
 
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-/*	1: clouds 5, grad 7, road 0		2: clouds 5, grad 7, road 0, tunnel roof 0 */
+/*  1: clouds 5, grad 7, road 0     2: clouds 5, grad 7, road 0, tunnel roof 0 */
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
 	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,cliprect,1,6,7,TRANSPARENCY_PEN);
@@ -1303,7 +1303,7 @@ VIDEO_UPDATE( f1gpstar )
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
+//  else fillbitmap(bitmap,Machine->pens[0],cliprect);
 	cischeat_tmap_DRAW(1)
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
@@ -1327,7 +1327,7 @@ VIDEO_UPDATE( f1gpstar )
 
 
 /**************************************************************************
-								Scud Hammer
+                                Scud Hammer
 **************************************************************************/
 
 extern data16_t scudhamm_motor_command;
@@ -1368,15 +1368,15 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 #endif
 
 	cischeat_tmap_SET_SCROLL(0)
-//	cischeat_tmap_SET_SCROLL(1)
+//  cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
-//	cischeat_tmap_DRAW(1)
+//  else fillbitmap(bitmap,Machine->pens[0],cliprect);
+//  cischeat_tmap_DRAW(1)
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,0,15);
 	cischeat_tmap_DRAW(2)
 

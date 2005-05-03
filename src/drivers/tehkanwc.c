@@ -555,12 +555,12 @@ INPUT_PORTS_START( gridiron )
 	PORT_DIPNAME( 0x03, 0x03, "Start Credits (P1&P2)/Extra" )
 	PORT_DIPSETTING (   0x01, "1&1/200%" )
 	PORT_DIPSETTING (   0x03, "1&2/100%" )
-//	PORT_DIPSETTING (   0x00, "2&1/200%" )				// Is this setting possible ?
+//  PORT_DIPSETTING (   0x00, "2&1/200%" )              // Is this setting possible ?
 	PORT_DIPSETTING (   0x02, "2&2/100%" )
 	/* This Dip Switch only has an effect in a 2 players game.
-	   If offense player selects his formation before defense player,
-	   defense formation time will be set to 3, 5 or 7 seconds.
-	   Check code at 0x3ed9 and table at 0x3f89. */
+       If offense player selects his formation before defense player,
+       defense formation time will be set to 3, 5 or 7 seconds.
+       Check code at 0x3ed9 and table at 0x3f89. */
 	PORT_DIPNAME( 0x0c, 0x0c, "Formation Time (Defense)" )
 	PORT_DIPSETTING (   0x0c, "Same as Offense" )
 	PORT_DIPSETTING (   0x00, "7" )
@@ -827,11 +827,11 @@ static MACHINE_DRIVER_START( tehkanwc )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1536000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1536000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -865,18 +865,18 @@ static DRIVER_INIT( teedoff )
 
 	/* Code at 0x0233 (main CPU) :
 
-		0233: 3A 00 DA    ld   a,($DA00)
-		0236: CB 7F       bit  7,a
-		0238: CA 00 C8    jp   z,$C800
+        0233: 3A 00 DA    ld   a,($DA00)
+        0236: CB 7F       bit  7,a
+        0238: CA 00 C8    jp   z,$C800
 
-	   changed to :
+       changed to :
 
-		0233: 3A 00 DA    ld   a,($DA00)
-		0236: CB 7F       bit  7,a
-		0238: 00          nop
-		0239: 00          nop
-		023A: 00          nop
-	*/
+        0233: 3A 00 DA    ld   a,($DA00)
+        0236: CB 7F       bit  7,a
+        0238: 00          nop
+        0239: 00          nop
+        023A: 00          nop
+    */
 
 	data8_t *ROM = memory_region(REGION_CPU1);
 

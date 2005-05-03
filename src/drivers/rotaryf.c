@@ -34,9 +34,9 @@ INTERRUPT_GEN( rotaryf_interrupt )
 static ADDRESS_MAP_START( rotaryf_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x57ff) AM_READ(MRA8_ROM)
-//	AM_RANGE(0x6ffb, 0x6ffb) AM_READ(random_r) ??
-//	AM_RANGE(0x6ffd, 0x6ffd) AM_READ(random_r) ??
-//	AM_RANGE(0x6fff, 0x6fff) AM_READ(random_r) ??
+//  AM_RANGE(0x6ffb, 0x6ffb) AM_READ(random_r) ??
+//  AM_RANGE(0x6ffd, 0x6ffd) AM_READ(random_r) ??
+//  AM_RANGE(0x6fff, 0x6fff) AM_READ(random_r) ??
 	AM_RANGE(0x7000, 0x73ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa000, 0xa1ff) AM_READ(MRA8_RAM)
@@ -51,16 +51,16 @@ static ADDRESS_MAP_START( rotaryf_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rotaryf_readport, ADDRESS_SPACE_IO, 8 )
-//	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+//  AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
 	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
 	AM_RANGE(0x29, 0x29) AM_READ(input_port_2_r)
 	AM_RANGE(0x26, 0x26) AM_READ(input_port_3_r)
-//	AM_RANGE(0x28, 0x28) AM_READ(c8080bw_shift_data_r)
+//  AM_RANGE(0x28, 0x28) AM_READ(c8080bw_shift_data_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rotaryf_writeport, ADDRESS_SPACE_IO, 8 )
-//	AM_RANGE(0x21, 0x21) AM_WRITE(c8080bw_shift_amount_w)
-//	AM_RANGE(0x28, 0x28) AM_WRITE(c8080bw_shift_data_w)
+//  AM_RANGE(0x21, 0x21) AM_WRITE(c8080bw_shift_amount_w)
+//  AM_RANGE(0x28, 0x28) AM_WRITE(c8080bw_shift_data_w)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( rotaryf )
@@ -111,9 +111,9 @@ INPUT_PORTS_START( rotaryf )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x40, DEF_STR( On ) )
-//	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-//	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-//	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+//  PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+//  PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+//  PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 
 	PORT_START		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )

@@ -1,13 +1,13 @@
 /******************************************************************************
 
-	Video Hardware for Video System Games.
+    Video Hardware for Video System Games.
 
-	Quiz & Variety Sukusuku Inufuku
-	(c)1998 Video System Co.,Ltd.
+    Quiz & Variety Sukusuku Inufuku
+    (c)1998 Video System Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2003/08/09 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2003/08/09 -
 
-	based on other Video System drivers
+    based on other Video System drivers
 
 ******************************************************************************/
 
@@ -35,7 +35,7 @@ static struct tilemap *inufuku_text_tilemap;
 
 /******************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ******************************************************************************/
 
@@ -65,7 +65,7 @@ WRITE16_HANDLER( inufuku_scrollreg_w )
 
 /******************************************************************************
 
-	Sprite routines
+    Sprite routines
 
 ******************************************************************************/
 
@@ -85,27 +85,27 @@ static void inufuku_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 			attr_start = 4 * (inufuku_spriteram1[offs] & 0x03ff);
 
 			/*
-				attr_start + 0x0000
-				---- ---x xxxx xxxx oy
-				---- xxx- ---- ---- ysize
-				xxxx ---- ---- ---- zoomy
+                attr_start + 0x0000
+                ---- ---x xxxx xxxx oy
+                ---- xxx- ---- ---- ysize
+                xxxx ---- ---- ---- zoomy
 
-				attr_start + 0x0001
-				---- ---x xxxx xxxx ox
-				---- xxx- ---- ---- xsize
-				xxxx ---- ---- ---- zoomx
+                attr_start + 0x0001
+                ---- ---x xxxx xxxx ox
+                ---- xxx- ---- ---- xsize
+                xxxx ---- ---- ---- zoomx
 
-				attr_start + 0x0002
-				-x-- ---- ---- ---- flipx
-				x--- ---- ---- ---- flipy
-				--xx xxxx ---- ---- color
-				--xx ---- ---- ---- priority?
-				---- ---- xxxx xxxx unused?
+                attr_start + 0x0002
+                -x-- ---- ---- ---- flipx
+                x--- ---- ---- ---- flipy
+                --xx xxxx ---- ---- color
+                --xx ---- ---- ---- priority?
+                ---- ---- xxxx xxxx unused?
 
-				attr_start + 0x0003
-				-xxx xxxx xxxx xxxx map start
-				x--- ---- ---- ---- unused?
-			*/
+                attr_start + 0x0003
+                -xxx xxxx xxxx xxxx map start
+                x--- ---- ---- ---- unused?
+            */
 
 			ox = (inufuku_spriteram1[attr_start + 1] & 0x01ff) + 0;
 			xsize = (inufuku_spriteram1[attr_start + 1] & 0x0e00) >> 9;
@@ -170,7 +170,7 @@ static void inufuku_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 /******************************************************************************
 
-	Tilemap callbacks
+    Tilemap callbacks
 
 ******************************************************************************/
 
@@ -221,7 +221,7 @@ WRITE16_HANDLER( inufuku_text_videoram_w )
 
 /******************************************************************************
 
-	Start the video hardware emulation
+    Start the video hardware emulation
 
 ******************************************************************************/
 
@@ -241,7 +241,7 @@ VIDEO_START( inufuku )
 
 /******************************************************************************
 
-	Display refresh
+    Display refresh
 
 ******************************************************************************/
 

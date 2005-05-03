@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	3dfx Voodoo register handlers and tables
+    3dfx Voodoo register handlers and tables
 
 **************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Fixed point writers
+ *  Fixed point writers
  *
  *************************************/
 
@@ -176,7 +176,7 @@ static void dTdY_w(int chips, offs_t regnum, data32_t data)
 	if (chips & 2) tri_dt0dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_dt1dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
-		
+
 
 
 #ifdef __MWERKS__
@@ -186,7 +186,7 @@ static void dTdY_w(int chips, offs_t regnum, data32_t data)
 
 /*************************************
  *
- *	Floating point writers
+ *  Floating point writers
  *
  *************************************/
 
@@ -361,7 +361,7 @@ static void fdTdY_w(int chips, offs_t regnum, data32_t data)
 
 /*************************************
  *
- *	Misc register handlers
+ *  Misc register handlers
  *
  *************************************/
 
@@ -451,7 +451,7 @@ static void fbiInit0_w(int chips, offs_t regnum, data32_t data)
 	/* writes 0x00000002 */
 	/* writes 0x00000000 */
 	/* writes 0x00000411 */
-	
+
 	/* bit 0 = VGA passtrough */
 	/* bit 1 = FBI reset (1) */
 	/* bit 2 = FBI FIFO reset (1) */
@@ -464,16 +464,16 @@ static void fbiInit0_w(int chips, offs_t regnum, data32_t data)
 		num_pending_swaps = 0;
 	}
 }
-			
+
 
 static void fbiInit3_w(int chips, offs_t regnum, data32_t data)
 {
 	/* writes 0x00114000 */
-	
+
 	/* bit 16-13 = FBI-to-TREX bus clock delay (0xa) */
 	/* bit 21-17 = TREX-to-FBI bus FIFO full thresh (0x8) */
 	/* bit 31-22 = Y origin swap subtraction value */
-	
+
 	inverted_yorigin = (data >> 22) & 0x3ff;
 }
 
@@ -481,11 +481,11 @@ static void fbiInit3_w(int chips, offs_t regnum, data32_t data)
 static void clutData_w(int chips, offs_t regnum, data32_t data)
 {
 	int index = (data >> 24) & 0x3f;
-	
+
 	if (index <= 32)
 	{
 		clut_table[index] = data & 0xffffff;
-		
+
 		// fix me
 		/* recompute the lookup tables */
 	}
@@ -498,7 +498,7 @@ static void dacData_w(int chips, offs_t regnum, data32_t data)
 	/* bit 8-10 = register number */
 	/* bit 11 = write (0) or read (1) */
 	UINT8 reg = (data >> 8) & 7;
-	
+
 	if (data & 0x800)
 	{
 		dac_read_result = dac_regs[reg];
@@ -577,7 +577,7 @@ static void cmdFifoBump_w(int chips, offs_t regnum, data32_t data)
 
 /*************************************
  *
- *	Command writes
+ *  Command writes
  *
  *************************************/
 
@@ -586,7 +586,7 @@ static void triangleCMD_w(int chips, offs_t regnum, data32_t data)
 	cheating_allowed = (tri_va.x != 0 || tri_va.y != 0 || tri_vb.x > 50 || tri_vb.y != 0 || tri_vc.x != 0 || tri_vc.y > 50);
 	draw_triangle();
 }
-		
+
 
 static void ftriangleCMD_w(int chips, offs_t regnum, data32_t data)
 {
@@ -611,7 +611,7 @@ static void nopCMD_w(int chips, offs_t regnum, data32_t data)
 		voodoo_regs[fbiTrianglesOut] = 0;
 }
 
-	
+
 static void fastfillCMD_w(int chips, offs_t regnum, data32_t data)
 {
 	if (LOG_COMMANDS)
@@ -637,7 +637,7 @@ static void swapbufferCMD_w(int chips, offs_t regnum, data32_t data)
 	else
 	{
 		blocked_on_swap = 1;
-		
+
 		/* if we're not executing from the FIFO, we need to bump the pending swap count */
 		if (!memory_fifo_in_process)
 			num_pending_swaps++;
@@ -713,7 +713,7 @@ static void blt_start_w(int chips, offs_t regnum, data32_t data)
 
 /*************************************
  *
- *	Table writers
+ *  Table writers
  *
  *************************************/
 
@@ -903,7 +903,7 @@ static void nccTable1qrgb_w(int chips, offs_t regnum, data32_t data)
 		texel_lookup_dirty[1][15] = 1;
 	}
 }
-		
+
 
 static void fogTable_w(int chips, offs_t regnum, data32_t data)
 {
@@ -923,7 +923,7 @@ static void fogTable_w(int chips, offs_t regnum, data32_t data)
 
 /*************************************
  *
- *	Voodoo 1 tables
+ *  Voodoo 1 tables
  *
  *************************************/
 
@@ -1022,7 +1022,7 @@ static const UINT8 register_alias_map[0x40] =
 	startA,		dAdX,		dAdY,		startS,
 	dSdX,		dSdY,		startT,		dTdX,
 	dTdY,		startW,		dWdX,		dWdY,
-	
+
 	triangleCMD,0x084/4,	fvertexAx,	fvertexAy,
 	fvertexBx,	fvertexBy,	fvertexCx,	fvertexCy,
 	fstartR,	fdRdX,		fdRdY,		fstartG,
@@ -1041,7 +1041,7 @@ static const UINT8 register_alias_map[0x40] =
 
 /*************************************
  *
- *	Voodoo 2 tables
+ *  Voodoo 2 tables
  *
  *************************************/
 

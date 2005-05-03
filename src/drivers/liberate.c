@@ -1,16 +1,16 @@
 /*******************************************************************************
 
-	Pro Soccer						(c) 1983 Data East Corporation
-	Pro Sport						(c) 1983 Data East Corporation
-	Boomer Rang'R / Genesis			(c) 1983 Data East Corporation
-	Kamikaze Cabbie / Yellow Cab	(c) 1984 Data East Corporation
-	Liberation						(c) 1984 Data East Corporation
+    Pro Soccer                      (c) 1983 Data East Corporation
+    Pro Sport                       (c) 1983 Data East Corporation
+    Boomer Rang'R / Genesis         (c) 1983 Data East Corporation
+    Kamikaze Cabbie / Yellow Cab    (c) 1984 Data East Corporation
+    Liberation                      (c) 1984 Data East Corporation
 
-	Liberation was available on two pcbs - a dedicated twin pcb set and
-	a version on the Genesis/Yellow Cab pcb that had an extra cpu pcb attached
-	for the different protection.  The program is the same on both versions.
+    Liberation was available on two pcbs - a dedicated twin pcb set and
+    a version on the Genesis/Yellow Cab pcb that had an extra cpu pcb attached
+    for the different protection.  The program is the same on both versions.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 *******************************************************************************/
 
@@ -729,10 +729,10 @@ static MACHINE_DRIVER_START( prosoccr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -765,10 +765,10 @@ static MACHINE_DRIVER_START( prosport )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -803,10 +803,10 @@ static MACHINE_DRIVER_START( boomrang )
 
 	/* sound hardware */
 		MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -841,10 +841,10 @@ static MACHINE_DRIVER_START( liberate )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -878,10 +878,10 @@ static MACHINE_DRIVER_START( liberatb )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

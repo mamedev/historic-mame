@@ -1,93 +1,93 @@
 /***************************************************************************
 
-							-= Jaleco Mega System 1 =-
+                            -= Jaleco Mega System 1 =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 To enter service mode in some games press service1+F3.
 
 
-Year + Game							System		Protection
+Year + Game                         System      Protection
 ----------------------------------------------------------------------------
-88	Legend of Makai (World) /		Z
-	Makai Densetsu  (Japan)			Z
-	P-47  (World) /					A
-	P-47  (Japan)					A
-	Kick Off (Japan)				A		*
-	Takeda Shingen (Japan)			A		*	      Encryption (key 1)
-	Iga Ninjyutsuden (Japan)		A		*	Yes + Encryption (key 1)
-89	Astyanax          (World) /		A		*	Yes + Encryption (key 2)
-	The Lord of King  (Japan)		A	 	*	Yes + Encryption (key 2)
-	Hachoo!							A		*	Yes + Encryption (key 2)
-	Jitsuryoku!! Pro Yakyuu (Japan)	A			Yes + Encryption (key 2)
-	Plus Alpha						A			Yes + Encryption (key 2)
-	Saint Dragon					A			Yes + Encryption (key 1)
-90	RodLand  (World) /				A			      Encryption (key 3)
-	RodLand  (Japan)				A			      Encryption (key 2)
-	Phantasm        (Japan)	/		A			      Encryption (key 1)
-91	Avenging Spirit (World) 		B			Inputs
-	Earth Defense Force				B			Inputs
-	64th Street  (World) /			C		*	Inputs
-	64th Street  (Japan)			C		*	Inputs
-92	Soldam (Japan)					A			      Encryption (key 2)
-	Big Striker						C		*	Inputs
-93	Chimera Beast					C		*	Inputs
-	Cybattler						C			Inputs
-	Peek-a-Boo!						D			Inputs
+88  Legend of Makai (World) /       Z
+    Makai Densetsu  (Japan)         Z
+    P-47  (World) /                 A
+    P-47  (Japan)                   A
+    Kick Off (Japan)                A       *
+    Takeda Shingen (Japan)          A       *         Encryption (key 1)
+    Iga Ninjyutsuden (Japan)        A       *   Yes + Encryption (key 1)
+89  Astyanax          (World) /     A       *   Yes + Encryption (key 2)
+    The Lord of King  (Japan)       A       *   Yes + Encryption (key 2)
+    Hachoo!                         A       *   Yes + Encryption (key 2)
+    Jitsuryoku!! Pro Yakyuu (Japan) A           Yes + Encryption (key 2)
+    Plus Alpha                      A           Yes + Encryption (key 2)
+    Saint Dragon                    A           Yes + Encryption (key 1)
+90  RodLand  (World) /              A                 Encryption (key 3)
+    RodLand  (Japan)                A                 Encryption (key 2)
+    Phantasm        (Japan) /       A                 Encryption (key 1)
+91  Avenging Spirit (World)         B           Inputs
+    Earth Defense Force             B           Inputs
+    64th Street  (World) /          C       *   Inputs
+    64th Street  (Japan)            C       *   Inputs
+92  Soldam (Japan)                  A                 Encryption (key 2)
+    Big Striker                     C       *   Inputs
+93  Chimera Beast                   C       *   Inputs
+    Cybattler                       C           Inputs
+    Peek-a-Boo!                     D           Inputs
 --------------------------------------------^-------------------------------
-											|
-							The Priority Prom is missing for these games !
+                                            |
+                            The Priority Prom is missing for these games !
 
 
 
-Hardware	Main CPU	Sound CPU	Sound Chips
+Hardware    Main CPU    Sound CPU   Sound Chips
 -----------------------------------------------------------
-MS1 - Z		68000		Z80			YM2203c
-MS1 - A		68000		68000		YM2151		2xOKI-M6295
-MS1 - B		68000		68000		YM2151		2xOKI-M6295
-MS1 - C		68000		68000		YM2151		2xOKI-M6295
-MS1 - D		68000		-			-			  OKI-M6295
+MS1 - Z     68000       Z80         YM2203c
+MS1 - A     68000       68000       YM2151      2xOKI-M6295
+MS1 - B     68000       68000       YM2151      2xOKI-M6295
+MS1 - C     68000       68000       YM2151      2xOKI-M6295
+MS1 - D     68000       -           -             OKI-M6295
 -----------------------------------------------------------
 
 
 
-Main CPU	RW		MS1-A/Z			MS1-B			MS1-C			MS1-D
+Main CPU    RW      MS1-A/Z         MS1-B           MS1-C           MS1-D
 -----------------------------------------------------------------------------------
-ROM			R	000000-03ffff	000000-03ffff	000000-07ffff	000000-03ffff
-								080000-0bffff
-Video Regs	 W	084000-0843ff	044000-0443ff	0c0000-0cffff	0c0000-0cffff
-Palette		RW	088000-0887ff	048000-0487ff	0f8000-0f87ff	0d8000-0d87ff
-Object RAM	RW	08e000-08ffff	04e000-04ffff	0d2000-0d3fff	0ca000-0cbfff
-Scroll 0	RW	090000-093fff	050000-053fff	0e0000-0e3fff	0d0000-0d3fff
-Scroll 1	RW	094000-097fff	054000-057fff	0e8000-0ebfff	0e8000-0ebfff
-Scroll 2	RW	098000-09bfff	058000-05bfff	0f0000-0f3fff	-
-Work RAM	RW	0f0000-0fffff*	060000-07ffff*	1f0000-1fffff*	1f0000-1fffff
-Input Ports R	080000-080009	0e0000-0e0001**	0d8000-d80001**	100000-100001**
+ROM         R   000000-03ffff   000000-03ffff   000000-07ffff   000000-03ffff
+                                080000-0bffff
+Video Regs   W  084000-0843ff   044000-0443ff   0c0000-0cffff   0c0000-0cffff
+Palette     RW  088000-0887ff   048000-0487ff   0f8000-0f87ff   0d8000-0d87ff
+Object RAM  RW  08e000-08ffff   04e000-04ffff   0d2000-0d3fff   0ca000-0cbfff
+Scroll 0    RW  090000-093fff   050000-053fff   0e0000-0e3fff   0d0000-0d3fff
+Scroll 1    RW  094000-097fff   054000-057fff   0e8000-0ebfff   0e8000-0ebfff
+Scroll 2    RW  098000-09bfff   058000-05bfff   0f0000-0f3fff   -
+Work RAM    RW  0f0000-0fffff*  060000-07ffff*  1f0000-1fffff*  1f0000-1fffff
+Input Ports R   080000-080009   0e0000-0e0001** 0d8000-d80001** 100000-100001**
 -----------------------------------------------------------------------------------
 *  Some games use mirror addresses
 ** Through protection.
 
 
 
-Sound CPU		RW		MS1-A			MS1-B			MS1-C			MS1-D
+Sound CPU       RW      MS1-A           MS1-B           MS1-C           MS1-D
 -----------------------------------------------------------------------------------
-ROM			R		000000-01ffff		000000-01ffff		000000-01ffff	 	No Sound CPU
-Latch #1		R		040000-040001		<			060000-060001
-Latch #2		 W		060000-060001		<			<
-2151 reg		 W		080000-080001		<			<
-2151 data		 W		080002-080003		<			<
-2151 status		R 		080002-080003		<			<
-6295 #1 data	 	 W 		0a0000-0a0003		<			<
-6295 #1 status		R 		0a0000-0a0001		<			<
-6295 #2 data	 	 W 		0c0000-0c0003		<			<
-6295 #2 status		R 		0c0000-0c0001		<			<
-RAM			RW		0f0000-0f3fff		0e0000-0effff?		<
+ROM         R       000000-01ffff       000000-01ffff       000000-01ffff       No Sound CPU
+Latch #1        R       040000-040001       <           060000-060001
+Latch #2         W      060000-060001       <           <
+2151 reg         W      080000-080001       <           <
+2151 data        W      080002-080003       <           <
+2151 status     R       080002-080003       <           <
+6295 #1 data         W      0a0000-0a0003       <           <
+6295 #1 status      R       0a0000-0a0001       <           <
+6295 #2 data         W      0c0000-0c0003       <           <
+6295 #2 status      R       0c0000-0c0001       <           <
+RAM         RW      0f0000-0f3fff       0e0000-0effff?      <
 -----------------------------------------------------------------------------------
 
 
-								Issues / To Do
-								--------------
+                                Issues / To Do
+                                --------------
 
 - There's a 512 byte PROM in the video section (different for every game)
   that controls the priorities. It's been dumped for only a few games, so
@@ -162,14 +162,14 @@ MACHINE_INIT( megasys1 )
 
 /*
 **
-**	Main cpu data
+**  Main cpu data
 **
 **
 */
 
 
 /***************************************************************************
-						[ Main CPU - System A / Z ]
+                        [ Main CPU - System A / Z ]
 ***************************************************************************/
 
 static READ16_HANDLER( coins_r )	{return readinputport(0);}	// < 00 | Coins >
@@ -199,7 +199,7 @@ INTERRUPT_GEN( interrupt_A_iganinju )
 	{
 		case 0:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
 		case 1:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
-	//	case 2:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
+	//  case 2:     cpunum_set_input_line(0, 1, HOLD_LINE); break;
 	}
 }
 
@@ -238,7 +238,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							[ Main CPU - System B ]
+                            [ Main CPU - System B ]
 ***************************************************************************/
 
 #define INTERRUPT_NUM_B		3
@@ -254,25 +254,25 @@ INTERRUPT_GEN( interrupt_B )
 
 
 
-/*			 Read the input ports, through a protection device:
+/*           Read the input ports, through a protection device:
 
  ip_select_values must contain the 5 codes sent to the protection device
  in order to obtain the status of the following 5 input ports:
 
-		 Coins	Player1		Player2		DSW1		DSW2
+         Coins  Player1     Player2     DSW1        DSW2
 
- in that order.			*/
+ in that order.         */
 
 static READ16_HANDLER( ip_select_r )
 {
 	int i;
 
-//	Coins	P1		P2		DSW1	DSW2
-//	57		53		54		55		56		< 64street
-//	37		35		36		33		34		< avspirit
-//	58		54		55		56		57		< bigstrik
-//	56		52		53		54		55		< cybattlr
-// 	20		21		22		23		24		< edf
+//  Coins   P1      P2      DSW1    DSW2
+//  57      53      54      55      56      < 64street
+//  37      35      36      33      34      < avspirit
+//  58      54      55      56      57      < bigstrik
+//  56      52      53      54      55      < cybattlr
+//  20      21      22      23      24      < edf
 
 	/* f(x) = ((x*x)>>4)&0xFF ; f(f($D)) == 6 */
 	if ((ip_select & 0xF0) == 0xF0) return 0x000D;
@@ -328,7 +328,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							[ Main CPU - System C ]
+                            [ Main CPU - System C ]
 ***************************************************************************/
 
 
@@ -365,7 +365,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							[ Main CPU - System D ]
+                            [ Main CPU - System D ]
 ***************************************************************************/
 
 #define INTERRUPT_NUM_D		1
@@ -386,7 +386,7 @@ static ADDRESS_MAP_START( readmem_D, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0e8000, 0x0ebfff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0f0000, 0x0f0001) AM_READ(coins_r) /* Coins + P1&P2 Buttons */
 	AM_RANGE(0x0f8000, 0x0f8001) AM_READ(OKIM6295_status_0_lsb_r)
-//	{ 0x100000, 0x100001  protection
+//  { 0x100000, 0x100001  protection
 	AM_RANGE(0x1f0000, 0x1fffff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
@@ -400,7 +400,7 @@ static ADDRESS_MAP_START( writemem_D, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0db000, 0x0db7ff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x0e8000, 0x0ebfff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram_0)
 	AM_RANGE(0x0f8000, 0x0f8001) AM_WRITE(OKIM6295_data_0_lsb_w)
-//	{ 0x100000, 0x100001  protection
+//  { 0x100000, 0x100001  protection
 	AM_RANGE(0x1f0000, 0x1fffff) AM_WRITE(MWA16_RAM) AM_BASE(&megasys1_ram)
 ADDRESS_MAP_END
 
@@ -409,36 +409,36 @@ ADDRESS_MAP_END
 
 /*
 **
-**	Sound cpu data
+**  Sound cpu data
 **
 **
 */
 
 /*
-							[ Sound CPU interrupts ]
+                            [ Sound CPU interrupts ]
 
-	[MS1-A]
-		astyanax				all rte
-		hachoo					all reset the program, but the status
-								register is set to 2700
-		iganinju				all rte
-		p47 & p47j				all rte
-		phantasm				all rte (4 is different, but rte)
-		plusalph				all rte
-		rodland	& rodlandj		all rte (4 is different, but rte)
-		stdragon				4]read & store sound command and echo to main cpu
-								rest: rte
-	[MS1-B]
-		avspirit				all rte (4 is different, but rte)
-		edf						all rte (4 is different, but rte)
+    [MS1-A]
+        astyanax                all rte
+        hachoo                  all reset the program, but the status
+                                register is set to 2700
+        iganinju                all rte
+        p47 & p47j              all rte
+        phantasm                all rte (4 is different, but rte)
+        plusalph                all rte
+        rodland & rodlandj      all rte (4 is different, but rte)
+        stdragon                4]read & store sound command and echo to main cpu
+                                rest: rte
+    [MS1-B]
+        avspirit                all rte (4 is different, but rte)
+        edf                     all rte (4 is different, but rte)
 
-	[MS1-C]
-		64street				all rte (4 is different, but rte)
-		chimerab				all rte
-		cybattlr
-			1;3;5-7]400	busy loop
-			2]40c	read & store sound command and echo to main cpu
-			4]446	rte
+    [MS1-C]
+        64street                all rte (4 is different, but rte)
+        chimerab                all rte
+        cybattlr
+            1;3;5-7]400 busy loop
+            2]40c   read & store sound command and echo to main cpu
+            4]446   rte
 
 
  These games almost always don't use the interrupts to drive the music
@@ -492,7 +492,7 @@ static READ16_HANDLER( oki_status_1_r )
 
 
 /***************************************************************************
-							[ Sound CPU - System A ]
+                            [ Sound CPU - System A ]
 ***************************************************************************/
 
 
@@ -521,7 +521,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						[ Sound CPU - System B / C ]
+                        [ Sound CPU - System B / C ]
 ***************************************************************************/
 
 
@@ -552,7 +552,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						[ Sound CPU - System Z ]
+                        [ Sound CPU - System Z ]
 ***************************************************************************/
 
 
@@ -629,15 +629,15 @@ static struct GfxDecodeInfo gfxdecodeinfo_ABC[] =
 
 /***************************************************************************
 
-							Machine Driver Macros
+                            Machine Driver Macros
 
 ***************************************************************************/
 
 /***************************************************************************
 
-						[  Mega System 1 A,B and C ]
+                        [  Mega System 1 A,B and C ]
 
-						  2x68000 2xM6295 1xYM2151
+                          2x68000 2xM6295 1xYM2151
 
 ***************************************************************************/
 
@@ -732,9 +732,9 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-							[ Mega System 1 D ]
+                            [ Mega System 1 D ]
 
-							  1x68000 1xM6295
+                              1x68000 1xM6295
 
 KLOV entry for peekaboo: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10
 
@@ -777,11 +777,11 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-							[  Mega System 1 Z ]
+                            [  Mega System 1 Z ]
 
-							 68000+Z80 1xYM2203
+                             68000+Z80 1xYM2203
 
-							OSC:	5, 12 MHz
+                            OSC:    5, 12 MHz
 
 ***************************************************************************/
 
@@ -840,7 +840,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
@@ -848,36 +848,36 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-							[ 64th Street ]
+                            [ 64th Street ]
 
 (World version)
-interrupts:	1] 10eac:	disabled while b6c4=6 (10fb6 test)
-						if (8b1c)	8b1c<-0
-							color cycle
-							copies 800 bytes 98da->8008
+interrupts: 1] 10eac:   disabled while b6c4=6 (10fb6 test)
+                        if (8b1c)   8b1c<-0
+                            color cycle
+                            copies 800 bytes 98da->8008
 
-			2] 10f28:	switch b6c4
-						0	RTE
-						2	10f44:	M[b6c2]<-d8000; b6c4<-4
-						4	10f6c:	next b6c2 & d8000.	if (b6c2>A)	b6c2,4<-0
-														else		b6c4  <-2
-						6	10f82: b6c6<-(d8001) b6c7<-FF (test)
+            2] 10f28:   switch b6c4
+                        0   RTE
+                        2   10f44:  M[b6c2]<-d8000; b6c4<-4
+                        4   10f6c:  next b6c2 & d8000.  if (b6c2>A) b6c2,4<-0
+                                                        else        b6c4  <-2
+                        6   10f82: b6c6<-(d8001) b6c7<-FF (test)
 
-			4] 10ed0:	disabled while b6c4=6 (10fb6 test)
-						watchdog 8b1e
-						many routines...
-						b6c2<-0
+            4] 10ed0:   disabled while b6c4=6 (10fb6 test)
+                        watchdog 8b1e
+                        many routines...
+                        b6c2<-0
 
-13ca	print a string: a7->screen disp.l(base=f0004),src.l
-13ea	print a string: a1->(chars)*
-1253c	hw test (table of tests at 125c6)		*TRAP#D*
-125f8	mem test (table of mem tests at 126d4)
-1278e	input test (table of tests at 12808)
-128a8	sound test	12a08	crt test
-12aca	dsw test (b68e.w = dswa.b|dswb.b)
+13ca    print a string: a7->screen disp.l(base=f0004),src.l
+13ea    print a string: a1->(chars)*
+1253c   hw test (table of tests at 125c6)       *TRAP#D*
+125f8   mem test (table of mem tests at 126d4)
+1278e   input test (table of tests at 12808)
+128a8   sound test  12a08   crt test
+12aca   dsw test (b68e.w = dswa.b|dswb.b)
 
-ff8b1e.w	incremented by int4, when >= b TRAP#E (software watchdog error)
-ff9df8.w	*** level ***
+ff8b1e.w    incremented by int4, when >= b TRAP#E (software watchdog error)
+ff9df8.w    *** level ***
 
 ***************************************************************************/
 
@@ -950,7 +950,7 @@ ROM_END
 
 INPUT_PORTS_START( 64street )
 	COINS
-//	fire	jump
+//  fire    jump
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)
 	PORT_START_TAG("IN2")
@@ -988,9 +988,9 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-					[ The Astyanax ] / [ The Lord of King ]
+                    [ The Astyanax ] / [ The Lord of King ]
 
-interrupts:	1] 1aa	2] 1b4
+interrupts: 1] 1aa  2] 1b4
 
 ***************************************************************************/
 
@@ -1086,7 +1086,7 @@ ROM_END
 
 INPUT_PORTS_START( astyanax )
 	COINS						/* IN0 0x80001.b */
-//	fire	jump	magic
+//  fire    jump    magic
 	PORT_START_TAG("IN1")
 	JOY_3BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -1100,19 +1100,19 @@ INPUT_PORTS_START( astyanax )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )	// 1_2 shown in test mode
-//	PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )	// 1_3
-//	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )	// 1_4
-//	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )	// 1_5
+//  PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )    // 1_2 shown in test mode
+//  PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )    // 1_3
+//  PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )    // 1_4
+//  PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )    // 1_5
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )	// 1_2 shown in test mode
-//	PORT_DIPSETTING(    0x28, DEF_STR( 1C_1C ) )	// 1_3
-//	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )	// 1_4
-//	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )	// 1_5
+//  PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )    // 1_2 shown in test mode
+//  PORT_DIPSETTING(    0x28, DEF_STR( 1C_1C ) )    // 1_3
+//  PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )    // 1_4
+//  PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )    // 1_5
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1151,23 +1151,23 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-					[ Avenging Spirit ] / [ Phantasm ]
+                    [ Avenging Spirit ] / [ Phantasm ]
 
 (Avspirit)
-interrupts:	2,3, 5,6,7]		move.w  $e0000.l, $78e9e.l
-							andi.w  #$ff, $78e9e.l
-			4] 78b20 software watchdog (78ea0 enables it)
+interrupts: 2,3, 5,6,7]     move.w  $e0000.l, $78e9e.l
+                            andi.w  #$ff, $78e9e.l
+            4] 78b20 software watchdog (78ea0 enables it)
 
 
-fd6		reads e0000 (values FF,06,34,35,36,37)
-ffa		e0000<-6 test
+fd6     reads e0000 (values FF,06,34,35,36,37)
+ffa     e0000<-6 test
 
 79584.w *** level ***
 
 1] E9C
 2] ED4
-3] F4C		rte
-4-7] ED2	rte
+3] F4C      rte
+4-7] ED2    rte
 
 ***************************************************************************/
 
@@ -1217,27 +1217,27 @@ ROM_START( phantasm )
 	ROM_LOAD16_BYTE( "phntsm06.bin", 0x000001, 0x010000, CRC(df2dfb2e) SHA1(b2542fa478917d44dffcf9e11ff7eaac6019676d) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
-//	ROM_LOAD( "phntsm14.bin",  0x000000, 0x080000, CRC(728335d4) SHA1(bbf13378ac0bff5e732eb30081b421ed89d12fa2) )
+//  ROM_LOAD( "phntsm14.bin",  0x000000, 0x080000, CRC(728335d4) SHA1(bbf13378ac0bff5e732eb30081b421ed89d12fa2) )
 	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, CRC(728335d4) SHA1(bbf13378ac0bff5e732eb30081b421ed89d12fa2) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
-//	ROM_LOAD( "phntsm18.bin",  0x000000, 0x080000, CRC(7896f6b0) SHA1(f09c1592aaa34eb5b7fe096ad4ccdcb155a5cadd) )
+//  ROM_LOAD( "phntsm18.bin",  0x000000, 0x080000, CRC(7896f6b0) SHA1(f09c1592aaa34eb5b7fe096ad4ccdcb155a5cadd) )
 	ROM_LOAD( "spirit11.rom",  0x000000, 0x080000, CRC(7896f6b0) SHA1(f09c1592aaa34eb5b7fe096ad4ccdcb155a5cadd) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
-//	ROM_LOAD( "phntsm19.bin",  0x000000, 0x020000, CRC(0c37edf7) SHA1(4074377f756b231b905b9b6a087c6d6ad3d49f52) )
+//  ROM_LOAD( "phntsm19.bin",  0x000000, 0x020000, CRC(0c37edf7) SHA1(4074377f756b231b905b9b6a087c6d6ad3d49f52) )
 	ROM_LOAD( "spirit09.rom",  0x000000, 0x020000, CRC(0c37edf7) SHA1(4074377f756b231b905b9b6a087c6d6ad3d49f52) )
 
 	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
-//	ROM_LOAD( "phntsm23.bin",  0x000000, 0x080000, CRC(2b1180b3) SHA1(6d62b6bd73b9dd23670a0683f28609be29ac1d98) )
+//  ROM_LOAD( "phntsm23.bin",  0x000000, 0x080000, CRC(2b1180b3) SHA1(6d62b6bd73b9dd23670a0683f28609be29ac1d98) )
 	ROM_LOAD( "spirit10.rom",  0x000000, 0x080000, CRC(2b1180b3) SHA1(6d62b6bd73b9dd23670a0683f28609be29ac1d98) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */
-//	ROM_LOAD( "phntsm10.bin", 0x000000, 0x040000, CRC(13be9979) SHA1(828ae745867e25834e51d08308b4ab5d8e80f2c8) )
+//  ROM_LOAD( "phntsm10.bin", 0x000000, 0x040000, CRC(13be9979) SHA1(828ae745867e25834e51d08308b4ab5d8e80f2c8) )
 	ROM_LOAD( "spirit14.rom", 0x000000, 0x040000, CRC(13be9979) SHA1(828ae745867e25834e51d08308b4ab5d8e80f2c8) )
 
 	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */
-//	ROM_LOAD( "phntsm08.bin", 0x000000, 0x040000, CRC(05bc04d9) SHA1(b903edf39393cad2b4b6b58b10651304793aaa3e) )
+//  ROM_LOAD( "phntsm08.bin", 0x000000, 0x040000, CRC(05bc04d9) SHA1(b903edf39393cad2b4b6b58b10651304793aaa3e) )
 	ROM_LOAD( "spirit13.rom", 0x000000, 0x040000, CRC(05bc04d9) SHA1(b903edf39393cad2b4b6b58b10651304793aaa3e) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
@@ -1285,17 +1285,17 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Big Striker ]
+                            [ Big Striker ]
 
 PCB: RB-91105A EB911009-20045
 
 Note: RAM is ff0000-ffffff while sprites live in 1f8000-1f87ff
 
-interrupts:	1]
-			2]
-			4]
+interrupts: 1]
+            2]
+            4]
 
-$885c/e.w	*** time (BCD) ***
+$885c/e.w   *** time (BCD) ***
 
 ***************************************************************************/
 
@@ -1333,7 +1333,7 @@ ROM_END
 
 INPUT_PORTS_START( bigstrik )
 	COINS
-//	pass	shoot	feint
+//  pass    shoot   feint
 	PORT_START_TAG("IN1")
 	JOY_3BUTTONS(1)
 	PORT_START_TAG("IN2")
@@ -1348,11 +1348,11 @@ INPUT_PORTS_START( bigstrik )
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x02, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
@@ -1365,11 +1365,11 @@ INPUT_PORTS_START( bigstrik )
 	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x20, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x10, DEF_STR( 2C_3C ) )
-//	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x20, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x10, DEF_STR( 2C_3C ) )
+//  PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
@@ -1404,11 +1404,11 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Chimera Beast ]
+                            [ Chimera Beast ]
 
-interrupts:	1,3]
-			2, 5,6]
-			4]
+interrupts: 1,3]
+            2, 5,6]
+            4]
 
 Note: This game was a prototype
 
@@ -1449,7 +1449,7 @@ ROM_END
 INPUT_PORTS_START( chimerab )
 
 	COINS
-//	fire	jump	unused?(shown in service mode, but not in instructions)
+//  fire    jump    unused?(shown in service mode, but not in instructions)
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)
 	PORT_START_TAG("IN2")
@@ -1488,31 +1488,31 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-								[ Cybattler ]
+                                [ Cybattler ]
 
-interrupts:	1,3]	408
-			2, 5,6]	498
-					1fd2c2.w routine index:
-					0:	4be>	1fd2c0.w <- d8000
-					2:	4ca>	1fd2d0+(1fd2c4.w) <- d8000.	next
-					4:	4ee>	1fd2c4.w += 2.
-											S	P1	P2	DB	DA
-								d8000 <-	56	52	53	55	54
-								1fd000+ 	00	02	04	06	08
-								depending on 1fd2c4.		previous
-					6:	4be again
+interrupts: 1,3]    408
+            2, 5,6] 498
+                    1fd2c2.w routine index:
+                    0:  4be>    1fd2c0.w <- d8000
+                    2:  4ca>    1fd2d0+(1fd2c4.w) <- d8000. next
+                    4:  4ee>    1fd2c4.w += 2.
+                                            S   P1  P2  DB  DA
+                                d8000 <-    56  52  53  55  54
+                                1fd000+     00  02  04  06  08
+                                depending on 1fd2c4.        previous
+                    6:  4be again
 
-			4]		452
+            4]      452
 
-c2208 <- 1fd040	(layers enable)
-c2200 <- 1fd042	(sprite control)
-c2308 <- 1fd046	(screen control)
-c2004 <- 1fd054 (scroll 0 ctrl)	c2000 <- 1fd220 (scroll 0 x)	c2002 <- 1fd222 (scroll 1 y)
-c200c <- 1fd05a (scroll 1 ctrl)	c2008 <- 1fd224 (scroll 1 x)	c200a <- 1fd226 (scroll 2 y)
-c2104 <- 1fd060 (scroll 2 ctrl)	c2100 <- 1fd228 (scroll 2 x)	c2102 <- 1fd22a (scroll 3 y)
+c2208 <- 1fd040 (layers enable)
+c2200 <- 1fd042 (sprite control)
+c2308 <- 1fd046 (screen control)
+c2004 <- 1fd054 (scroll 0 ctrl) c2000 <- 1fd220 (scroll 0 x)    c2002 <- 1fd222 (scroll 1 y)
+c200c <- 1fd05a (scroll 1 ctrl) c2008 <- 1fd224 (scroll 1 x)    c200a <- 1fd226 (scroll 2 y)
+c2104 <- 1fd060 (scroll 2 ctrl) c2100 <- 1fd228 (scroll 2 x)    c2102 <- 1fd22a (scroll 3 y)
 
-1f0010.w	*** level (0,1,..) ***
-1fb044.l	*** score / 10 ***
+1f0010.w    *** level (0,1,..) ***
+1fb044.l    *** score / 10 ***
 
 ***************************************************************************/
 
@@ -1551,7 +1551,7 @@ ROM_END
 INPUT_PORTS_START( cybattlr )
 
 	COINS
-//	fire	sword
+//  fire    sword
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)
 	PORT_START_TAG("IN2")
@@ -1616,18 +1616,18 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-						 [ Earth Defense Force ]
+                         [ Earth Defense Force ]
 
-interrupts:	2,3]	543C>	move.w  $e0000.l,	$60da6.l
-							move.w  #$ffff,		$60da8.l
-			4,5,6]	5928 +	move.w	#$ffff,		$60010.l
+interrupts: 2,3]    543C>   move.w  $e0000.l,   $60da6.l
+                            move.w  #$ffff,     $60da8.l
+            4,5,6]  5928 +  move.w  #$ffff,     $60010.l
 
-89e			(a7)+ -> 44000.w & 6000e.w
-8cc			(a7)+ -> 44204.w ; 4420c.w ; 4400c.w
-fc0			(a7)+ -> 58000 (string)
+89e         (a7)+ -> 44000.w & 6000e.w
+8cc         (a7)+ -> 44204.w ; 4420c.w ; 4400c.w
+fc0         (a7)+ -> 58000 (string)
 
-616f4.w		*** lives ***
-60d8a.w		*** level(1..) ***
+616f4.w     *** lives ***
+60d8a.w     *** level(1..) ***
 
 ***************************************************************************/
 
@@ -1666,7 +1666,7 @@ ROM_END
 
 INPUT_PORTS_START( edf )
 	COINS
-//	fire	unfold_weapons
+//  fire    unfold_weapons
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)
 	PORT_START_TAG("IN2")
@@ -1712,7 +1712,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-								[ Hachoo! ]
+                                [ Hachoo! ]
 
 ***************************************************************************/
 
@@ -1759,7 +1759,7 @@ ROM_END
 
 INPUT_PORTS_START( hachoo )
 	COINS						/* 0x80001.b */
-//	fire	jump
+//  fire    jump
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -1807,16 +1807,16 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Iga Ninjyutsuden ]
+                            [ Iga Ninjyutsuden ]
 
-interrupts:	1] 420(does nothing)
-			2] 500
-			3] 410(it doesn't save registers on the stack!!)
+interrupts: 1] 420(does nothing)
+            2] 500
+            3] 410(it doesn't save registers on the stack!!)
 
-f0004.l		*** hi score (BCD) ***
-f000c.l		*** score (BCD) ***
-f002a.w		*** lives ***
-f010c.w		credits
+f0004.l     *** hi score (BCD) ***
+f000c.l     *** score (BCD) ***
+f002a.w     *** lives ***
+f010c.w     credits
 
 ***************************************************************************/
 
@@ -1858,7 +1858,7 @@ ROM_END
 INPUT_PORTS_START( iganinju )
 
 	COINS						/* IN0 0x80001.b */
-//	fire	jump
+//  fire    jump
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -1905,7 +1905,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-						[ Jitsuryoku!! Pro Yakyuu ]
+                        [ Jitsuryoku!! Pro Yakyuu ]
 
 (JPN Ver.)
 (c)1989 Jaleco
@@ -1963,7 +1963,7 @@ ROM_END
 INPUT_PORTS_START( jitsupro )
 
 	COINS						/* 0x80001.b */
-	//	shoot	change view		change bat
+	//  shoot   change view     change bat
 	PORT_START_TAG("IN1")
 	JOY_3BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -2017,25 +2017,25 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Kick Off ]
+                            [ Kick Off ]
 
 WARNING: The sound CPU writes and read in the 9000-ffff area
 
-interrupts:	1-2]	rte
-			3]		timer
-			4-7]	loop forever
+interrupts: 1-2]    rte
+            3]      timer
+            4-7]    loop forever
 
-f0128/a.w	*** Time (minutes/seconds BCD) ***
-f012c/e.w	*** Goals (P1/P2) ***
+f0128/a.w   *** Time (minutes/seconds BCD) ***
+f012c/e.w   *** Goals (P1/P2) ***
 
 Notes:
-	* Coin B and Test are ignored
-	* The alternate control method (selectable through a DSW)
-	  isn't implemented: the program tests the low 4 bits of
-	  the joystick inputs ($80002, $80004) but not the buttons.
-	  I can't get the players to move
-	* Pressing P1 or P2 Start while the game boots pops up
-	  a rudimental sprites or tiles browser
+    * Coin B and Test are ignored
+    * The alternate control method (selectable through a DSW)
+      isn't implemented: the program tests the low 4 bits of
+      the joystick inputs ($80002, $80004) but not the buttons.
+      I can't get the players to move
+    * Pressing P1 or P2 Start while the game boots pops up
+      a rudimental sprites or tiles browser
 
 ***************************************************************************/
 
@@ -2081,7 +2081,7 @@ ROM_END
 
 INPUT_PORTS_START( kickoff )
 	COINS						/* 0x80001.b ->  !f0008/a.w  */
-//	shoot	pass
+//  shoot   pass
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b ->  !f000c/e.w  */
 	PORT_START_TAG("IN2")
@@ -2144,7 +2144,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Legend of Makai ]
+                            [ Legend of Makai ]
 
 ***************************************************************************/
 
@@ -2194,7 +2194,7 @@ ROM_END
 
 INPUT_PORTS_START( lomakai )
 	COINS						/* 0x80001.b */
-//	fire	jump
+//  fire    jump
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -2240,55 +2240,55 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							 [ P - 47 ]
+                             [ P - 47 ]
 
 (Japan version)
-interrupts:	1]	53e		2] 540
+interrupts: 1]  53e     2] 540
 
-517a		print word string: (a6)+,(a5)+$40. FFFF ends
-5dbc		print string(s) to (a1)+$40: a6-> len.b,x.b,y.b,(chars.b)*
-726a		prints screen
-7300		ram test
-7558		ip test
-75e6(7638 loop)	sound test
-	84300.w		<-f1002.w	?portrait F/F on(0x0100)/off(0x0000)
-	84308.w		<-f1004.w	sound code
+517a        print word string: (a6)+,(a5)+$40. FFFF ends
+5dbc        print string(s) to (a1)+$40: a6-> len.b,x.b,y.b,(chars.b)*
+726a        prints screen
+7300        ram test
+7558        ip test
+75e6(7638 loop) sound test
+    84300.w     <-f1002.w   ?portrait F/F on(0x0100)/off(0x0000)
+    84308.w     <-f1004.w   sound code
 
-7736(7eb4 loop)	scroll 0 test
-	9809c		color
-	980a0		hscroll
-	980a4		vscroll
-	980a8		charsize
+7736(7eb4 loop) scroll 0 test
+    9809c       color
+    980a0       hscroll
+    980a4       vscroll
+    980a8       charsize
 
-	7e1e		prepare screen
-	7e84		get user input
-	7faa		vhscroll
-	80ce		print value.l from a0
+    7e1e        prepare screen
+    7e84        get user input
+    7faa        vhscroll
+    80ce        print value.l from a0
 
-785c(78b8 loop)	obj check 1		84000.w	<-0x0E	84100.w	<-0x101
-	9804c	size
-	98050	number		(0e.w bit 11-0)
-	98054	color code	(08.w bit 2-0)
-	98058	H flip		(08.w bit 6)
-	9805c	V flip		(08.w bit 7)
-	98060	priority	(08.w bit 3)
-	98064	mosaic		(08.w bit 11-8)
-	98068	mosaic sol.	(08.w bit 12)
+785c(78b8 loop) obj check 1     84000.w <-0x0E  84100.w <-0x101
+    9804c   size
+    98050   number      (0e.w bit 11-0)
+    98054   color code  (08.w bit 2-0)
+    98058   H flip      (08.w bit 6)
+    9805c   V flip      (08.w bit 7)
+    98060   priority    (08.w bit 3)
+    98064   mosaic      (08.w bit 11-8)
+    98068   mosaic sol. (08.w bit 12)
 
-7afe(7cfe loop)	obj check 2		84000.w	<-0x0f	84100.w	<-0x00
-	9804a	obj num	(a4-8e000)/8
-	9804e	H-rev	a4+02.w
-	98052	V-rev	a4+04.w
-	98056	CG-rev	a4+06.w
-	9805a	Rem.Eff bit   4 of 84100
-	98060	Rem.Num bit 3-0 of 84100 (see 7dd4)
+7afe(7cfe loop) obj check 2     84000.w <-0x0f  84100.w <-0x00
+    9804a   obj num (a4-8e000)/8
+    9804e   H-rev   a4+02.w
+    98052   V-rev   a4+04.w
+    98056   CG-rev  a4+06.w
+    9805a   Rem.Eff bit   4 of 84100
+    98060   Rem.Num bit 3-0 of 84100 (see 7dd4)
 
-TRAP#2		pause?
-f0104.w		*** initial lives ***
-f002a/116.w	<-!80000
-f0810.w		<-!80002
-f0c00.w		<-!80004
-f0018.w		*** level ***
+TRAP#2      pause?
+f0104.w     *** initial lives ***
+f002a/116.w <-!80000
+f0810.w     <-!80002
+f0c00.w     <-!80004
+f0018.w     *** level ***
 
 
 ***************************************************************************/
@@ -2377,7 +2377,7 @@ ROM_END
 INPUT_PORTS_START( p47 )
 
 	COINS						/* 0x80001.b */
-//	fire	bomb
+//  fire    bomb
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -2425,61 +2425,61 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Peek-a-Boo! ]
+                            [ Peek-a-Boo! ]
 
 interrupts:
-	1] 		506>	rte
-	2] 		50a>	move.w  #$ffff, $1f0006.l
-					jsr     $46e0.l				rte
-	3] 		51c>	rte
-	4] 		520>	move.w  #$ffff, $1f000a.l	rte
-	5-7]	53c>	rte
+    1]      506>    rte
+    2]      50a>    move.w  #$ffff, $1f0006.l
+                    jsr     $46e0.l             rte
+    3]      51c>    rte
+    4]      520>    move.w  #$ffff, $1f000a.l   rte
+    5-7]    53c>    rte
 
-3832	Show error (d7 = ram segment where error occurred)
-		1 after d8000 ok. 3 after e0000&d0000 ok. 4 after ram&rom ok
+3832    Show error (d7 = ram segment where error occurred)
+        1 after d8000 ok. 3 after e0000&d0000 ok. 4 after ram&rom ok
 
-003E5E: 0000 3E72	[0]	Color Ram
-003E62: 0000 3E86	[1]	Video Ram
-003E66: 0000 3E9A	[2]	Sprite Ram
-003E6A: 0000 3EB0	[3]	Work Ram
-003E6E: 0000 3EC4	[4]	ROM
+003E5E: 0000 3E72   [0] Color Ram
+003E62: 0000 3E86   [1] Video Ram
+003E66: 0000 3E9A   [2] Sprite Ram
+003E6A: 0000 3EB0   [3] Work Ram
+003E6E: 0000 3EC4   [4] ROM
 
-000000-03ffff	rom (3f760 chksum)
-1f0000-1fffff	ram
-0d0000-0d3fff	text
-0d8000-0d87ff	palette (+200 = text palette)
-0e8000-0ebfff	layer
-0e0000-0e0001	2 dips, 1f003a<-!
-0f0000-0f0001	2 controls
-0f8000-0f8001	???
+000000-03ffff   rom (3f760 chksum)
+1f0000-1fffff   ram
+0d0000-0d3fff   text
+0d8000-0d87ff   palette (+200 = text palette)
+0e8000-0ebfff   layer
+0e0000-0e0001   2 dips, 1f003a<-!
+0f0000-0f0001   2 controls
+0f8000-0f8001   ???
 
-010000-010001	protection\watchdog;
-	fb -> fb
-	9x ->	0		watchdog reset?
-			else	samples bank?
-					$1ff010 = sample
-					$1ff014 = bank = sample - $22 (33DC: 1 1 2 3 4 5 6 6 6 6)
-						samples:	bank:
-						$00-21		0
-						$22-2b		1-6
+010000-010001   protection\watchdog;
+    fb -> fb
+    9x ->   0       watchdog reset?
+            else    samples bank?
+                    $1ff010 = sample
+                    $1ff014 = bank = sample - $22 (33DC: 1 1 2 3 4 5 6 6 6 6)
+                        samples:    bank:
+                        $00-21      0
+                        $22-2b      1-6
 000000-01ffff
-020000-03ffff	banked
+020000-03ffff   banked
 
-	51 -> paddle p1
-	52 -> paddle p2
-	4bba waits for 1f000a to go !0, then clears 1f000a (int 4)
-	4bca waits (100000) & FF == 3
-	sequence $81, $71, $67 written
+    51 -> paddle p1
+    52 -> paddle p2
+    4bba waits for 1f000a to go !0, then clears 1f000a (int 4)
+    4bca waits (100000) & FF == 3
+    sequence $81, $71, $67 written
 
-
-Scroll x,y,ctrl:
-c2000<-1f0010		c2002<-1f0014		c2004<-1f000c
 
 Scroll x,y,ctrl:
-c2008<-1f0018		c200a<-1f001c		c200c<-1f000e
+c2000<-1f0010       c2002<-1f0014       c2004<-1f000c
+
+Scroll x,y,ctrl:
+c2008<-1f0018       c200a<-1f001c       c200c<-1f000e
 
 Layers ctrl:
-c2208<-1f0024<<8 + 1f0026		c2308<-1f0022 | 1f002c
+c2208<-1f0024<<8 + 1f0026       c2308<-1f0022 | 1f002c
 
 Sprite bank + ??
 c2108<-1f005a + 1f0060 + 1f0062 + 1f0068
@@ -2487,22 +2487,22 @@ c2108<-1f005a + 1f0060 + 1f0062 + 1f0068
 Sprite ctrl:
 c2200<-0
 
-1f0000.w	routine index, table at $fae:
-	0: 4E40
-	1: 4EC2
-	2: 4F2C
-	3: 4F70
-	4: 4FBC
-	5: 533A
-	6: 5382
-	7: 556E
+1f0000.w    routine index, table at $fae:
+    0: 4E40
+    1: 4EC2
+    2: 4F2C
+    3: 4F70
+    4: 4FBC
+    5: 533A
+    6: 5382
+    7: 556E
 
-1f003c/40	paddle p1/p2
-1f0260/4.l	*** p1/p2 score/10 (BCD) ***
-1f02e6/8.w	*** p1/p2 current lives ***
-			Bonus lives:	20K  100K  250K  500K 1000K
-1f02ee		current player (0/1)
-1f0380		hi score
+1f003c/40   paddle p1/p2
+1f0260/4.l  *** p1/p2 score/10 (BCD) ***
+1f02e6/8.w  *** p1/p2 current lives ***
+            Bonus lives:    20K  100K  250K  500K 1000K
+1f02ee      current player (0/1)
+1f0380      hi score
 
 
 ***************************************************************************/
@@ -2636,12 +2636,12 @@ static WRITE16_HANDLER( protection_peekaboo_w )
 
 /***************************************************************************
 
-							[ Plus Alpha ]
-						  (aka Flight Alpha)
+                            [ Plus Alpha ]
+                          (aka Flight Alpha)
 
-f2ef8.w		bombs
-f309e.w		*** lives       ***
-f30a4.l		*** score (BCD) ***
+f2ef8.w     bombs
+f309e.w     *** lives       ***
+f30a4.l     *** score (BCD) ***
 
 ***************************************************************************/
 
@@ -2691,7 +2691,7 @@ ROM_END
 
 INPUT_PORTS_START( plusalph )
 	COINS						/* IN0 0x80001.b */
-//	fire	bomb
+//  fire    bomb
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -2737,19 +2737,19 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ RodLand ]
+                            [ RodLand ]
 
 (World version)
-interrupts:	1] 418->3864: rts	2] 420: move.w #-1,f0010; jsr 3866	3] rte
+interrupts: 1] 418->3864: rts   2] 420: move.w #-1,f0010; jsr 3866  3] rte
 
-213da	print test error (20c12 = string address 0-4)
+213da   print test error (20c12 = string address 0-4)
 
-f0018->84200	f0020->84208	f0028->84008
-f001c->84202	f0024->8420a	f002c->8400a
-f0012->84204	f0014->8420c	f0016->8400c
+f0018->84200    f0020->84208    f0028->84008
+f001c->84202    f0024->8420a    f002c->8400a
+f0012->84204    f0014->8420c    f0016->8400c
 
-7fe		d0.w -> 84000.w & f000e.w
-81a		d0/d1/d2 & $D -> 84204 / 8420c /8400c
+7fe     d0.w -> 84000.w & f000e.w
+81a     d0/d1/d2 & $D -> 84204 / 8420c /8400c
 
 ***************************************************************************/
 
@@ -2871,7 +2871,7 @@ ROM_END
 INPUT_PORTS_START( rodland )
 
 	COINS						/* 0x80001.b */
-//	fire	ladder
+//  fire    ladder
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -2915,11 +2915,11 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							[ Saint Dragon ]
+                            [ Saint Dragon ]
 
-			*** Press coin on startup to enter test mode ***
+            *** Press coin on startup to enter test mode ***
 
-interrupts:	1] rte	2] 620	3] 5e6
+interrupts: 1] rte  2] 620  3] 5e6
 
 ***************************************************************************/
 
@@ -2967,7 +2967,7 @@ ROM_END
 
 INPUT_PORTS_START( stdragon )
 	COINS						/* 0x80001.b */
-//	fire	fire
+//  fire    fire
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -3013,10 +3013,10 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-								[ Soldam ]
+                                [ Soldam ]
 
 (Japan version)
-f00c2.l	*** score/10 (BCD) ***
+f00c2.l *** score/10 (BCD) ***
 
 The country code is at ROM address $3a9d, copied to RAM address
 f0025: 0 = japan, 1 = USA. Change f0025 to 1 to have all the
@@ -3059,7 +3059,7 @@ ROM_END
 
 INPUT_PORTS_START( soldamj )
 	COINS						/* 0x80001.b */
-	//	turn	turn	(3rd button is shown in service mode, but seems unused)
+	//  turn    turn    (3rd button is shown in service mode, but seems unused)
 	PORT_START_TAG("IN1")
 	JOY_2BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -3113,7 +3113,7 @@ WRITE16_HANDLER( soldamj_spriteram16_w )
 
 /***************************************************************************
 
-							[ Takeda Shingen ]
+                            [ Takeda Shingen ]
 
 ***************************************************************************/
 
@@ -3197,7 +3197,7 @@ ROM_END
 
 INPUT_PORTS_START( tshingen )
 	COINS						/* 0x80001.b */
-	// sword_left	sword_right		jump
+	// sword_left   sword_right     jump
 	PORT_START_TAG("IN1")
 	JOY_3BUTTONS(1)	/* 0x80003.b */
 	PORT_START_TAG("IN2")
@@ -3244,7 +3244,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							 Code Decryption
+                             Code Decryption
 
 ***************************************************************************/
 
@@ -3328,8 +3328,8 @@ void rodland_rom_decode(int cpu)
 
 		x = RAM[i];
 
-// [0] d0a9 6ebf 5c72 3814	[1] 4567 0123 ba98 fedc
-// [2] fdb9 ce07 5318 a246	[3] 4512 ed3b a967 08fc
+// [0] d0a9 6ebf 5c72 3814  [1] 4567 0123 ba98 fedc
+// [2] fdb9 ce07 5318 a246  [3] 4512 ed3b a967 08fc
 #define BITSWAP_0	BITSWAP16(x,0xd,0x0,0xa,0x9,0x6,0xe,0xb,0xf,0x5,0xc,0x7,0x2,0x3,0x8,0x1,0x4);
 #define BITSWAP_1	BITSWAP16(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc);
 #define	BITSWAP_2	BITSWAP16(x,0xf,0xd,0xb,0x9,0xc,0xe,0x0,0x7,0x5,0x3,0x1,0x8,0xa,0x2,0x4,0x6);
@@ -3417,9 +3417,9 @@ static void jitsupro_gfx_unmangle(int region)
 
 static DRIVER_INIT( 64street )
 {
-//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
-//	RAM[0x006b8/2] = 0x6004;		// d8001 test
-//	RAM[0x10EDE/2] = 0x6012;		// watchdog
+//  data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+//  RAM[0x006b8/2] = 0x6004;        // d8001 test
+//  RAM[0x10EDE/2] = 0x6012;        // watchdog
 
 	ip_select_values[0] = 0x57;
 	ip_select_values[1] = 0x53;

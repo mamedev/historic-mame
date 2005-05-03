@@ -12,14 +12,14 @@ Air Inferno             (c) 1990 Taito
 
 Controls:
 
-	P2 y analogue = throttle
-	P1 analogue = pitch/yaw control
+    P2 y analogue = throttle
+    P1 analogue = pitch/yaw control
 
 Can someone with flight sim stick confirm this is sensible.
 I think we need OSD display for P1 l/r.
 
 
-System specs	(from TaitoH: incorrect!)
+System specs    (from TaitoH: incorrect!)
 ------------
 
  CPU   : MC68000 (12 MHz) x 1, Z80 (4 MHz?, sound CPU) x 1
@@ -78,7 +78,7 @@ Notes:  CPU - CPU PCB      K1100586A  M4300186A
         VID - Video PCB    K1100576A  M4300186A
 
 
-Known TC0080VCO issues	(from TaitoH driver)
+Known TC0080VCO issues  (from TaitoH driver)
 ----------------------
 
  - Y coordinate of sprite zooming is non-linear, so currently implemented
@@ -90,7 +90,7 @@ Known TC0080VCO issues	(from TaitoH driver)
  - Sprite zoom is a bit wrong.
 
 
-TODO	(TC0080VCO issues shared with TaitoH driver)
+TODO    (TC0080VCO issues shared with TaitoH driver)
 ----
 
  - Need to implement BG1 : sprite priority. Currently not clear how this works.
@@ -196,7 +196,7 @@ VIDEO_UPDATE( taitoair );
 
 
 /***********************************************************
-				MEMORY handlers
+                MEMORY handlers
 ***********************************************************/
 
 static WRITE16_HANDLER( system_control_w )
@@ -238,7 +238,7 @@ static WRITE16_HANDLER( dspram_w )
 static READ16_HANDLER( dsp_HOLD_signal_r )
 {
 	/* HOLD signal is active low */
-	//	logerror("TMS32025:%04x Reading %01x level from HOLD signal\n",activecpu_get_previouspc(),dsp_HOLD_signal);
+	//  logerror("TMS32025:%04x Reading %01x level from HOLD signal\n",activecpu_get_previouspc(),dsp_HOLD_signal);
 
 	return dsp_HOLD_signal;
 }
@@ -270,7 +270,7 @@ static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
 
 
 /***********************************************************
-				INPUTS
+                INPUTS
 ***********************************************************/
 
 static READ16_HANDLER( stick_input_r )
@@ -323,7 +323,7 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( airsys_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -350,7 +350,7 @@ static ADDRESS_MAP_START( airsys_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (0)" */
 	AM_RANGE(0x184000, 0x187fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (1)" */
 	AM_RANGE(0x188000, 0x18bfff) AM_WRITE(airsys_paletteram16_w) AM_BASE(&paletteram16)
-//	AM_RANGE(0x188000, 0x18bfff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+//  AM_RANGE(0x188000, 0x18bfff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x800000, 0x820fff) AM_WRITE(TC0080VCO_word_w)		/* tilemaps, sprites */
 	AM_RANGE(0x908000, 0x90ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoair_line_ram)	/* "line ram" */
 	AM_RANGE(0x910000, 0x91ffff) AM_WRITE(MWA16_RAM) AM_BASE(&dsp_ram)	/* "dsp common ram" (TMS320C25) */
@@ -419,7 +419,7 @@ ADDRESS_MAP_END
 
 
 /************************************************************
-			   INPUT PORTS & DIPS
+               INPUT PORTS & DIPS
 ************************************************************/
 
 #define TAITO_COINAGE_JAPAN_8 \
@@ -506,9 +506,9 @@ INPUT_PORTS_START( topland )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	/* The range of these sticks reflects the range test mode displays.
-	   Eventually we want standard 0-0xff input range and a scale-up later
-	   in the stick_r routines.  And fake DSW with self-centering option
-	   to make keyboard control feasible! */
+       Eventually we want standard 0-0xff input range and a scale-up later
+       in the stick_r routines.  And fake DSW with self-centering option
+       to make keyboard control feasible! */
 
 	PORT_START  /* Stick 1 (4) */
 	PORT_BIT( 0xffff, 0x0000, IPT_AD_STICK_X ) PORT_MINMAX(0xf800,0x7ff) PORT_SENSITIVITY(30) PORT_KEYDELTA(40) PORT_PLAYER(1)
@@ -573,9 +573,9 @@ INPUT_PORTS_START( ainferno )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	/* The range of these sticks reflects the range test mode displays.
-	   Eventually we want standard 0-0xff input range and a scale-up later
-	   in the stick_r routines. And fake DSW with self-centering option
-	   to make keyboard control feasible! */
+       Eventually we want standard 0-0xff input range and a scale-up later
+       in the stick_r routines. And fake DSW with self-centering option
+       to make keyboard control feasible! */
 
 	PORT_START  /* Stick 1 (4) */
 	PORT_BIT( 0xffff, 0x0000, IPT_AD_STICK_X ) PORT_MINMAX(0xf800,0x7ff) PORT_SENSITIVITY(30) PORT_KEYDELTA(40) PORT_PLAYER(1)
@@ -589,7 +589,7 @@ INPUT_PORTS_END
 
 
 /************************************************************
-				GFX DECODING
+                GFX DECODING
 ************************************************************/
 
 static struct GfxLayout tilelayout =
@@ -615,7 +615,7 @@ static struct GfxDecodeInfo airsys_gfxdecodeinfo[] =
 
 
 /************************************************************
-				YM2610 (SOUND)
+                YM2610 (SOUND)
 ************************************************************/
 
 /* Handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -633,7 +633,7 @@ static struct YM2610interface airsys_ym2610_interface =
 
 
 /************************************************************
-				MACHINE DRIVERS
+                MACHINE DRIVERS
 ************************************************************/
 
 static MACHINE_DRIVER_START( airsys )
@@ -677,7 +677,7 @@ MACHINE_DRIVER_END
 
 
 /*************************************************************
-				   DRIVERS
+                   DRIVERS
 
 Ainferno may be missing an 0x2000 byte rom from the video
 board - possibly?

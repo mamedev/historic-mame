@@ -113,7 +113,7 @@ VIDEO_START( dleague )
 static void syvalion_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
-	   is always 64 pixels. */
+       is always 64 pixels. */
 
 	int size[] = { 1, 2, 4, 4 };
 	int x0, y0, x, y, dx, ex, zx;
@@ -206,7 +206,7 @@ static void syvalion_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 static void recordbr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
-	   is always 64 pixels. */
+       is always 64 pixels. */
 
 	int size[] = { 1, 2, 4, 4 };
 	int x0, y0, x, y, dx, dy, ex, ey, zx, zy;
@@ -318,7 +318,7 @@ static void recordbr_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 static void dleague_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
-	   is always 64 pixels. */
+       is always 64 pixels. */
 
 	int size[] = { 1, 2, 4, 4 };
 	int x0, y0, x, y, dx, ex, zx;

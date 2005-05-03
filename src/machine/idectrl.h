@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Generic (PC-style) IDE controller implementation
+    Generic (PC-style) IDE controller implementation
 
 ***************************************************************************/
 

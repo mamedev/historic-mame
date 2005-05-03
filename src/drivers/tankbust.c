@@ -6,13 +6,13 @@ driver by Jaroslaw Burczynski
 
 
 Note:
-	To enter the test mode:
-	reset the game and keep start1 and start2 buttons pressed.
+    To enter the test mode:
+    reset the game and keep start1 and start2 buttons pressed.
 
 To do:
-	- verify colors: prom to output mapping is unknown, resistor values are guess
-	- remove the 'some_changing_input' hack (see below)
-	- from time to time the game just hangs
+    - verify colors: prom to output mapping is unknown, resistor values are guess
+    - remove the 'some_changing_input' hack (see below)
+    - from time to time the game just hangs
 
 ***************************************************************************/
 
@@ -105,8 +105,8 @@ static WRITE8_HANDLER( tankbust_e0xx_w )
 
 	case 6:	/* 0xe006 screen disable ?? or disable screen update */
 		/* program sets this to 0,
-		   clears screen memory,
-		   and sets this to 1 */
+           clears screen memory,
+           and sets this to 1 */
 
 		/* ???? */
 	break;
@@ -201,7 +201,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
 
-//AM_RANGE(0xf800, 0xffff) AM_READ(read_from_unmapped_memory)	/* a bug in game code ? */
+//AM_RANGE(0xf800, 0xffff) AM_READ(read_from_unmapped_memory)   /* a bug in game code ? */
 
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
 	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
@@ -389,7 +389,7 @@ static MACHINE_DRIVER_START( tankbust )
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE   ( 64*8, 32*8 )
 	MDRV_VISIBLE_AREA  ( 16*8, 56*8-1, 1*8, 31*8-1 )
-//	MDRV_VISIBLE_AREA  (  0*8, 64*8-1, 1*8, 31*8-1 )
+//  MDRV_VISIBLE_AREA  (  0*8, 64*8-1, 1*8, 31*8-1 )
 	MDRV_GFXDECODE( gfxdecodeinfo )
 
 	MDRV_PALETTE_LENGTH( 128 )
@@ -427,8 +427,8 @@ ROM_START( tankbust )
 	ROM_LOAD( "a-s6-8.bin",		0x16000, 0x2000, CRC(f8801238) SHA1(fd3abe18542660a8c31dc316012a99d48c9bb5aa) )	/* banked at 0x6000-0x9fff */
 	ROM_CONTINUE(                   0x14000, 0x2000)
 
-//	ROM_LOAD( "a-s5_7.bin",		0x10000, 0x4000, CRC(dd4800ca) SHA1(73a6caa029c27fb45217f9372d9541c6fe206f08) )	/* banked at 0x6000-0x9fff */
-//	ROM_LOAD( "a-s6-8.bin",		0x14000, 0x4000, CRC(f8801238) SHA1(fd3abe18542660a8c31dc316012a99d48c9bb5aa) )	/* banked at 0x6000-0x9fff */
+//  ROM_LOAD( "a-s5_7.bin",     0x10000, 0x4000, CRC(dd4800ca) SHA1(73a6caa029c27fb45217f9372d9541c6fe206f08) ) /* banked at 0x6000-0x9fff */
+//  ROM_LOAD( "a-s6-8.bin",     0x14000, 0x4000, CRC(f8801238) SHA1(fd3abe18542660a8c31dc316012a99d48c9bb5aa) ) /* banked at 0x6000-0x9fff */
 
 	ROM_LOAD( "a-s8-10.bin",	0x18000, 0x4000, CRC(9e826faa) SHA1(6a252428c69133d3e9d7a9938140d5ae37fb0c7d) )	/* banked at 0xa000-0xbfff */
 

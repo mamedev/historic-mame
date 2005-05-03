@@ -1,6 +1,6 @@
 //============================================================
 //
-//	window.c - Win32 window handling
+//  window.c - Win32 window handling
 //
 //============================================================
 
@@ -53,7 +53,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -70,7 +70,7 @@ int win_d3d_effects_in_use(void);
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // window styles
@@ -94,7 +94,7 @@ int win_d3d_effects_in_use(void);
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 // command line config
@@ -157,7 +157,7 @@ int win_physical_height;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // config
@@ -217,7 +217,7 @@ static struct mame_bitmap *last_bitmap;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult);
@@ -234,7 +234,7 @@ static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t 
 
 
 //============================================================
-//	wnd_extra_width
+//  wnd_extra_width
 //============================================================
 
 INLINE int wnd_extra_width(void)
@@ -249,7 +249,7 @@ INLINE int wnd_extra_width(void)
 
 
 //============================================================
-//	wnd_extra_height
+//  wnd_extra_height
 //============================================================
 
 INLINE int wnd_extra_height(void)
@@ -264,7 +264,7 @@ INLINE int wnd_extra_height(void)
 
 
 //============================================================
-//	wnd_extra_left
+//  wnd_extra_left
 //============================================================
 
 INLINE int wnd_extra_left(void)
@@ -279,7 +279,7 @@ INLINE int wnd_extra_left(void)
 
 
 //============================================================
-//	get_aligned_window_pos
+//  get_aligned_window_pos
 //============================================================
 
 INLINE int get_aligned_window_pos(int x)
@@ -307,7 +307,7 @@ INLINE int get_aligned_window_pos(int x)
 
 
 //============================================================
-//	get_screen_bounds
+//  get_screen_bounds
 //============================================================
 
 INLINE void get_screen_bounds(RECT *bounds)
@@ -348,7 +348,7 @@ INLINE void get_screen_bounds(RECT *bounds)
 
 
 //============================================================
-//	set_aligned_window_pos
+//  set_aligned_window_pos
 //============================================================
 
 INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
@@ -359,7 +359,7 @@ INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, 
 
 
 //============================================================
-//	erase_outer_rect
+//  erase_outer_rect
 //============================================================
 
 INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc)
@@ -407,7 +407,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc)
 
 
 //============================================================
-//	get_work_area
+//  get_work_area
 //============================================================
 
 INLINE void get_work_area(RECT *maximum)
@@ -444,7 +444,7 @@ INLINE void get_work_area(RECT *maximum)
 
 
 //============================================================
-//	win_init_window
+//  win_init_window
 //============================================================
 
 int win_init_window(void)
@@ -517,7 +517,7 @@ int win_init_window(void)
 
 
 //============================================================
-//	win_create_window
+//  win_create_window
 //============================================================
 
 int win_create_window(int width, int height, int depth, int attributes, double aspect)
@@ -645,7 +645,7 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 
 
 //============================================================
-//	win_destroy_window
+//  win_destroy_window
 //============================================================
 
 void win_destroy_window(void)
@@ -671,7 +671,7 @@ void win_destroy_window(void)
 
 
 //============================================================
-//	win_update_cursor_state
+//  win_update_cursor_state
 //============================================================
 
 void win_update_cursor_state(void)
@@ -685,7 +685,7 @@ void win_update_cursor_state(void)
 
 
 //============================================================
-//	update_system_menu
+//  update_system_menu
 //============================================================
 
 static void update_system_menu(void)
@@ -704,7 +704,7 @@ static void update_system_menu(void)
 
 
 //============================================================
-//	win_update_video_window
+//  win_update_video_window
 //============================================================
 
 void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
@@ -721,7 +721,7 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 
 
 //============================================================
-//	draw_video_contents
+//  draw_video_contents
 //============================================================
 
 static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -779,7 +779,7 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 
 //============================================================
-//	win_video_window_proc
+//  win_video_window_proc
 //============================================================
 
 LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -893,7 +893,7 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 
 
 //============================================================
-//	win_constrain_to_aspect_ratio
+//  win_constrain_to_aspect_ratio
 //============================================================
 
 void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, int coordinate_system)
@@ -1056,7 +1056,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, 
 
 
 //============================================================
-//	adjust_window_for_visible
+//  adjust_window_for_visible
 //============================================================
 
 void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
@@ -1168,7 +1168,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 
 //============================================================
-//	win_toggle_maximize
+//  win_toggle_maximize
 //============================================================
 
 void win_toggle_maximize(int force_maximize)
@@ -1283,7 +1283,7 @@ void win_toggle_maximize(int force_maximize)
 
 
 //============================================================
-//	win_toggle_full_screen
+//  win_toggle_full_screen
 //============================================================
 
 void win_toggle_full_screen(void)
@@ -1383,7 +1383,7 @@ void win_toggle_full_screen(void)
 
 
 //============================================================
-//	win_adjust_window
+//  win_adjust_window
 //============================================================
 
 void win_adjust_window(void)
@@ -1428,7 +1428,7 @@ void win_adjust_window(void)
 
 
 //============================================================
-//	win_process_events_periodic
+//  win_process_events_periodic
 //============================================================
 
 void win_process_events_periodic(void)
@@ -1442,7 +1442,7 @@ void win_process_events_periodic(void)
 
 
 //============================================================
-//	win_process_events
+//  win_process_events
 //============================================================
 
 int win_process_events(int ingame)
@@ -1534,7 +1534,7 @@ int win_process_events(int ingame)
 
 
 //============================================================
-//	wait_for_vsync
+//  wait_for_vsync
 //============================================================
 
 void win_wait_for_vsync(void)
@@ -1556,7 +1556,7 @@ void win_wait_for_vsync(void)
 
 
 //============================================================
-//	win_prepare_palette
+//  win_prepare_palette
 //============================================================
 
 UINT32 *win_prepare_palette(struct win_blit_params *params)
@@ -1572,7 +1572,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 
 
 //============================================================
-//	dib_draw_window
+//  dib_draw_window
 //============================================================
 
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
@@ -1662,7 +1662,7 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rec
 
 
 //============================================================
-//	lookup_effect
+//  lookup_effect
 //============================================================
 
 int win_lookup_effect(const char *arg)
@@ -1680,7 +1680,7 @@ int win_lookup_effect(const char *arg)
 
 
 //============================================================
-//	win_determine_effect
+//  win_determine_effect
 //============================================================
 
 int win_determine_effect(const struct win_blit_params *params)
@@ -1701,7 +1701,7 @@ int win_determine_effect(const struct win_blit_params *params)
 
 
 //============================================================
-//	compute_multipliers_internal
+//  compute_multipliers_internal
 //============================================================
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult)
@@ -1760,7 +1760,7 @@ static void compute_multipliers_internal(const RECT *rect, int visible_width, in
 
 
 //============================================================
-//	win_compute_multipliers
+//  win_compute_multipliers
 //============================================================
 
 void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult)
@@ -1772,7 +1772,7 @@ void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 
 #ifndef NEW_DEBUGGER
 //============================================================
-//	debugwin_init_windows
+//  debugwin_init_windows
 //============================================================
 
 int debugwin_init_windows(void)
@@ -1852,7 +1852,7 @@ int debugwin_init_windows(void)
 
 
 //============================================================
-//	debugwin_update_windows
+//  debugwin_update_windows
 //============================================================
 
 void debugwin_update_windows(struct mame_bitmap *bitmap, const rgb_t *palette)
@@ -1871,7 +1871,7 @@ void debugwin_update_windows(struct mame_bitmap *bitmap, const rgb_t *palette)
 
 
 //============================================================
-//	draw_debug_contents
+//  draw_debug_contents
 //============================================================
 
 static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette)
@@ -1923,7 +1923,7 @@ static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t 
 
 
 //============================================================
-//	debug_window_proc
+//  debug_window_proc
 //============================================================
 
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -1973,7 +1973,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 
 //============================================================
-//	debugwin_show
+//  debugwin_show
 //============================================================
 
 void debugwin_show(int type)
@@ -1985,7 +1985,7 @@ void debugwin_show(int type)
 
 
 //============================================================
-//	debugwin_set_focus
+//  debugwin_set_focus
 //============================================================
 
 void debugwin_set_focus(int focus)

@@ -5,12 +5,12 @@ Top Speed / Full Throttle    (c) Taito 1987
 
 David Graves
 
-Sources:		Rastan driver by Jarek Burczynski
-			MAME Taito F2 & Z drivers
-			Raine source - special thanks to Richard Bush
-			  and the Raine Team.
+Sources:        Rastan driver by Jarek Burczynski
+            MAME Taito F2 & Z drivers
+            Raine source - special thanks to Richard Bush
+              and the Raine Team.
 
-				*****
+                *****
 
 Top Speed / Full Throttle is the forerunner of the Taito Z system on
 which Taito's driving games were based from 1988-91. (You can spot some
@@ -122,24 +122,24 @@ to top of screen):
 
 (i) White lines in center of road
 
-12	%10010
-1f	%11111
-00	%00000
-0d	%01101
+12  %10010
+1f  %11111
+00  %00000
+0d  %01101
 
 (ii) No lines in center of road
 
-08	%01000
-0c	%01100
-1a	%11010
-1e	%11110
+08  %01000
+0c  %01100
+1a  %11010
+1e  %11110
 
 (iii) Under bridge or in tunnel [note almost identical to (i)]
 
-ffe0	%00000
-ffed	%01101
-fff2	%10010
-ffef	%01111
+ffe0    %00000
+ffed    %01101
+fff2    %10010
+ffef    %01111
 
 (iv) Unknown 4th group for tunnels in later parts of the game that have
 no white lines, analogous to (ii) ?
@@ -231,7 +231,7 @@ static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
-	   if cpu B is disabled !! */
+       if cpu B is disabled !! */
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
@@ -311,7 +311,7 @@ static READ16_HANDLER( topspeed_input_bypass_r )
 			steer = 0xff80;
 
 		/* To allow hiscore input we must let you return to
-		   continuous input type while you press up */
+           continuous input type while you press up */
 
 		if (fake & 0x4)	/* pressing up */
 			steer = analogue_steer;
@@ -480,13 +480,13 @@ static ADDRESS_MAP_START( z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(topspeed_msm5205_address_w)
-//	AM_RANGE(0xb400, 0xb400) // msm5205 start? doesn't seem to work right
+//  AM_RANGE(0xb400, 0xb400) // msm5205 start? doesn't seem to work right
 	AM_RANGE(0xb800, 0xb800) AM_WRITE(topspeed_msm5205_stop_w)
-//	AM_RANGE(0xc000, 0xc000) // ??
-//	AM_RANGE(0xc400, 0xc400) // ??
-//	AM_RANGE(0xc800, 0xc800) // ??
-//	AM_RANGE(0xcc00, 0xcc00) // ??
-//	AM_RANGE(0xd000, 0xd000) // ??
+//  AM_RANGE(0xc000, 0xc000) // ??
+//  AM_RANGE(0xc400, 0xc400) // ??
+//  AM_RANGE(0xc800, 0xc800) // ??
+//  AM_RANGE(0xcc00, 0xcc00) // ??
+//  AM_RANGE(0xd000, 0xd000) // ??
 ADDRESS_MAP_END
 
 
@@ -594,8 +594,8 @@ INPUT_PORTS_START( topspeed )
 	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
-	   sound selection in test mode and hi score name entry). With
-	   an analogue wheel, the user will need to adjust this. */
+       sound selection in test mode and hi score name entry). With
+       an analogue wheel, the user will need to adjust this. */
 
 	PORT_START	/* continuous steer */
 	PORT_BIT( 0xffff, 0x00, IPT_AD_STICK_X ) PORT_MINMAX(0xff7f,0x80) PORT_SENSITIVITY(10) PORT_KEYDELTA(2) PORT_PLAYER(1)
@@ -667,8 +667,8 @@ INPUT_PORTS_START( topspedu )
 	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
-	   sound selection in test mode and hi score name entry). With
-	   an analogue wheel, the user will need to adjust this. */
+       sound selection in test mode and hi score name entry). With
+       an analogue wheel, the user will need to adjust this. */
 
 	PORT_START	/* continuous steer */
 	PORT_BIT( 0xffff, 0x00, IPT_AD_STICK_X ) PORT_MINMAX(0xff7f,0x80) PORT_SENSITIVITY(10) PORT_KEYDELTA(2) PORT_PLAYER(1)
@@ -740,8 +740,8 @@ INPUT_PORTS_START( fullthrl )
 	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
-	   sound selection in test mode and hi score name entry). With
-	   an analogue wheel, the user will need to adjust this. */
+       sound selection in test mode and hi score name entry). With
+       an analogue wheel, the user will need to adjust this. */
 
 	PORT_START	/* continuous steer */
 	PORT_BIT( 0xffff, 0x00, IPT_AD_STICK_X ) PORT_MINMAX(0xff7f,0x80) PORT_SENSITIVITY(10) PORT_KEYDELTA(2) PORT_PLAYER(1)
@@ -996,7 +996,7 @@ ROM_END
 
 DRIVER_INIT( topspeed )
 {
-//	taitosnd_setz80_soundcpu( 2 );
+//  taitosnd_setz80_soundcpu( 2 );
 
 	cpua_ctrl = 0xff;
 	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);

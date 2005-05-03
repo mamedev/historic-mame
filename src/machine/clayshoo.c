@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Atari Clay Shoot hardware
+    Atari Clay Shoot hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 
@@ -16,7 +16,7 @@ static data8_t analog_port_val;
 
 /*************************************
  *
- *	Digital control handling functions
+ *  Digital control handling functions
  *
  *************************************/
 
@@ -87,7 +87,7 @@ MACHINE_INIT( clayshoo )
 
 /*************************************
  *
- *	Analog control handling functions
+ *  Analog control handling functions
  *
  *************************************/
 
@@ -100,7 +100,7 @@ static void reset_analog_bit(int bit)
 static double compute_duration(int analog_pos)
 {
 	/* the 58 comes from the length of the loop used to
-	   read the analog position */
+       read the analog position */
 	return TIME_IN_CYCLES(58*analog_pos, 0);
 }
 
@@ -108,8 +108,8 @@ static double compute_duration(int analog_pos)
 WRITE8_HANDLER( clayshoo_analog_reset_w )
 {
 	/* reset the analog value, and start two times that will fire
-	   off in a short period proportional to the position of the
-	   analog control and set the appropriate bit. */
+       off in a short period proportional to the position of the
+       analog control and set the appropriate bit. */
 
 	analog_port_val = 0xff;
 

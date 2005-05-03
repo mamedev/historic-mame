@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	config.h
+    config.h
 
-	Wrappers for handling MAME configuration files
+    Wrappers for handling MAME configuration files
 
 ***************************************************************************/
 
@@ -15,7 +15,7 @@
 
 /*************************************
  *
- *	Function prototypes
+ *  Function prototypes
  *
  *************************************/
 

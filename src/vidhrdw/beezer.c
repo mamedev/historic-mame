@@ -28,22 +28,22 @@ VIDEO_UPDATE( beezer )
 				plot_pixel (tmpbitmap, x, y, Machine->pens[(videoram[0x80*y+x] >> 4)& 0x0f]);
 			}
 		}
-	
+
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 WRITE8_HANDLER( beezer_map_w )
 {
 	/*
-	  bit 7 -- 330  ohm resistor  -- BLUE
-	        -- 560  ohm resistor  -- BLUE
-			-- 330	ohm resistor  -- GREEN
-			-- 560	ohm resistor  -- GREEN
-			-- 1.2 kohm resistor  -- GREEN
-			-- 330	ohm resistor  -- RED
-			-- 560	ohm resistor  -- RED
-	  bit 0 -- 1.2 kohm resistor  -- RED
-	*/
+      bit 7 -- 330  ohm resistor  -- BLUE
+            -- 560  ohm resistor  -- BLUE
+            -- 330  ohm resistor  -- GREEN
+            -- 560  ohm resistor  -- GREEN
+            -- 1.2 kohm resistor  -- GREEN
+            -- 330  ohm resistor  -- RED
+            -- 560  ohm resistor  -- RED
+      bit 0 -- 1.2 kohm resistor  -- RED
+    */
 
 	int r, g, b, bit0, bit1, bit2;;
 

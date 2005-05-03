@@ -1,9 +1,9 @@
 /******************************************************************************
-	Atari 400/800
+    Atari 400/800
 
-	ANTIC video controller
+    ANTIC video controller
 
-	Juergen Buchmueller, June 1998
+    Juergen Buchmueller, June 1998
 ******************************************************************************/
 
 #include "driver.h"
@@ -239,7 +239,7 @@ WRITE8_HANDLER ( atari_antic_w )
 	}
 }
 
-/*************	ANTIC mode 00: *********************************
+/*************  ANTIC mode 00: *********************************
  * generate 1-8 empty scanlines
  ***************************************************************/
 void antic_mode_0_xx(VIDEO *video)
@@ -249,12 +249,12 @@ void antic_mode_0_xx(VIDEO *video)
 	POST();
 }
 
-/*************	ANTIC mode 01: *********************************
+/*************  ANTIC mode 01: *********************************
  * display list jump, eventually wait for vsync
  ***************************************************************/
 
 
-/*************	ANTIC mode 02: *********************************
+/*************  ANTIC mode 02: *********************************
  * character mode 8x8:2 (32/40/48 byte per line)
  ***************************************************************/
 #define MODE2(s) COPY4(dst, antic.pf_21[video->data[s]])
@@ -278,7 +278,7 @@ void antic_mode_2_48(VIDEO *video)
 	POST_TXT(48);
 }
 
-/*************	ANTIC mode 03: *********************************
+/*************  ANTIC mode 03: *********************************
  * character mode 8x10:2 (32/40/48 byte per line)
  ***************************************************************/
 #define MODE3(s) COPY4(dst, antic.pf_21[video->data[s]])
@@ -302,7 +302,7 @@ void antic_mode_3_48(VIDEO *video)
 	POST_TXT(48);
 }
 
-/*************	ANTIC mode 04: *********************************
+/*************  ANTIC mode 04: *********************************
  * character mode 8x8:4 multi color (32/40/48 byte per line)
  ***************************************************************/
 #define MODE4(s) COPY4(dst, antic.pf_x10b[video->data[s]])
@@ -326,7 +326,7 @@ void antic_mode_4_48(VIDEO *video)
 	POST_TXT(48);
 }
 
-/*************	ANTIC mode 05: *********************************
+/*************  ANTIC mode 05: *********************************
  * character mode 8x16:4 multi color (32/40/48 byte per line)
  ***************************************************************/
 #define MODE5(s) COPY4(dst, antic.pf_x10b[video->data[s]])
@@ -350,7 +350,7 @@ void antic_mode_5_48(VIDEO *video)
 	POST_TXT(48);
 }
 
-/*************	ANTIC mode 06: *********************************
+/*************  ANTIC mode 06: *********************************
  * character mode 16x8:5 single color (16/20/24 byte per line)
  ***************************************************************/
 #define MODE6(s) COPY8(dst, antic.pf_3210b2[video->data[s]], antic.pf_3210b2[video->data[s]+1])
@@ -374,7 +374,7 @@ void antic_mode_6_48(VIDEO *video)
 	POST_TXT(24);
 }
 
-/*************	ANTIC mode 07: *********************************
+/*************  ANTIC mode 07: *********************************
  * character mode 16x16:5 single color (16/20/24 byte per line)
  ***************************************************************/
 #define MODE7(s) COPY8(dst, antic.pf_3210b2[video->data[s]], antic.pf_3210b2[video->data[s]+1])
@@ -398,7 +398,7 @@ void antic_mode_7_48(VIDEO *video)
 	POST_TXT(24);
 }
 
-/*************	ANTIC mode 08: *********************************
+/*************  ANTIC mode 08: *********************************
  * graphics mode 8x8:4 (8/10/12 byte per line)
  ***************************************************************/
 #define MODE8(s) COPY16(dst, antic.pf_210b4[video->data[s]],antic.pf_210b4[video->data[s]+1],antic.pf_210b4[video->data[s]+2],antic.pf_210b4[video->data[s]+3])
@@ -422,7 +422,7 @@ void antic_mode_8_48(VIDEO *video)
 	POST_GFX(12);
 }
 
-/*************	ANTIC mode 09: *********************************
+/*************  ANTIC mode 09: *********************************
  * graphics mode 4x4:2 (8/10/12 byte per line)
  ***************************************************************/
 #define MODE9(s) COPY8(dst, antic.pf_3210b2[video->data[s]], antic.pf_3210b2[video->data[s]+1])
@@ -446,7 +446,7 @@ void antic_mode_9_48(VIDEO *video)
 	POST_GFX(24);
 }
 
-/*************	ANTIC mode 0A: *********************************
+/*************  ANTIC mode 0A: *********************************
  * graphics mode 4x4:4 (16/20/24 byte per line)
  ***************************************************************/
 #define MODEA(s) COPY8(dst, antic.pf_210b2[video->data[s]], antic.pf_210b2[video->data[s]+1])
@@ -470,7 +470,7 @@ void antic_mode_a_48(VIDEO *video)
 	POST_GFX(24);
 }
 
-/*************	ANTIC mode 0B: *********************************
+/*************  ANTIC mode 0B: *********************************
  * graphics mode 2x2:2 (16/20/24 byte per line)
  ***************************************************************/
 #define MODEB(s) COPY8(dst, antic.pf_3210b2[video->data[s]], antic.pf_3210b2[video->data[s]+1])
@@ -494,7 +494,7 @@ void antic_mode_b_48(VIDEO *video)
 	POST_GFX(24);
 }
 
-/*************	ANTIC mode 0C: *********************************
+/*************  ANTIC mode 0C: *********************************
  * graphics mode 2x1:2 (16/20/24 byte per line)
  ***************************************************************/
 #define MODEC(s) COPY8(dst, antic.pf_3210b2[video->data[s]], antic.pf_3210b2[video->data[s]+1])
@@ -518,7 +518,7 @@ void antic_mode_c_48(VIDEO *video)
 	POST_GFX(24);
 }
 
-/*************	ANTIC mode 0D: *********************************
+/*************  ANTIC mode 0D: *********************************
  * graphics mode 2x2:4 (32/40/48 byte per line)
  ***************************************************************/
 #define MODED(s) COPY4(dst, antic.pf_x10b[video->data[s]])
@@ -542,7 +542,7 @@ void antic_mode_d_48(VIDEO *video)
 	POST_GFX(48);
 }
 
-/*************	ANTIC mode 0E: *********************************
+/*************  ANTIC mode 0E: *********************************
  * graphics mode 2x1:4 (32/40/48 byte per line)
  ***************************************************************/
 #define MODEE(s) COPY4(dst, antic.pf_x10b[video->data[s]])
@@ -566,7 +566,7 @@ void antic_mode_e_48(VIDEO *video)
 	POST_GFX(48);
 }
 
-/*************	ANTIC mode 0F: *********************************
+/*************  ANTIC mode 0F: *********************************
  * graphics mode 1x1:2 (32/40/48 byte per line)
  ***************************************************************/
 #define MODEF(s) COPY4(dst, antic.pf_1b[video->data[s]])

@@ -8,7 +8,7 @@ struct YM2612interface
 
 
 /************************************************/
-/* Chip 0 functions								*/
+/* Chip 0 functions                             */
 /************************************************/
 READ8_HANDLER( YM2612_status_port_0_A_r );  /* A=0 : OPN status */
 READ8_HANDLER( YM2612_status_port_0_B_r );  /* A=2 : don't care */
@@ -19,7 +19,7 @@ WRITE8_HANDLER( YM2612_data_port_0_A_w );    /* A=1:OPN  data    */
 WRITE8_HANDLER( YM2612_data_port_0_B_w );    /* A=3:OPN2 data    */
 
 /************************************************/
-/* Chip 1 functions								*/
+/* Chip 1 functions                             */
 /************************************************/
 READ8_HANDLER( YM2612_status_port_1_A_r );
 READ8_HANDLER( YM2612_status_port_1_B_r );
@@ -38,7 +38,7 @@ struct YM3438interface
 
 
 /************************************************/
-/* Chip 0 functions								*/
+/* Chip 0 functions                             */
 /************************************************/
 READ8_HANDLER( YM3438_status_port_0_A_r );  /* A=0 : OPN status */
 READ8_HANDLER( YM3438_status_port_0_B_r );  /* A=2 : don't care */
@@ -49,7 +49,7 @@ WRITE8_HANDLER( YM3438_data_port_0_A_w );    /* A=1:OPN  data    */
 WRITE8_HANDLER( YM3438_data_port_0_B_w );    /* A=3:OPN2 data    */
 
 /************************************************/
-/* Chip 1 functions								*/
+/* Chip 1 functions                             */
 /************************************************/
 READ8_HANDLER( YM3438_status_port_1_A_r );
 READ8_HANDLER( YM3438_status_port_1_B_r );

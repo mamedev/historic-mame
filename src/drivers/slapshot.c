@@ -9,7 +9,7 @@ David Graves
 (this is based on the F2 driver by Bryan McPhail, Brad Oliver, Andrew Prime,
 Nicola Salmoria.)
 
-				*****
+                *****
 
 Slapshot uses one or two newer Taito custom ics, but the hardware is
 very similar to the Taito F2 system, especially F2 games using the same
@@ -37,13 +37,13 @@ Commands are written to it by the 68000 (as in the Taito F2 games).
 Slapshot custom ics
 -------------------
 
-TC0480SCP (IC61)	- known tilemap chip
-TC0640FIO (IC83)	- new version of TC0510NIO io chip?
-TC0650FDA (IC84)	- (palette?)
-TC0360PRI (IC56)	- (common in pri/color combo on F2 boards)
-TC0530SYC (IC58)	- known sound comm chip
-TC0520TBC (IC36)	- known object chip
-TC0540OBN (IC54)	- known object chip
+TC0480SCP (IC61)    - known tilemap chip
+TC0640FIO (IC83)    - new version of TC0510NIO io chip?
+TC0650FDA (IC84)    - (palette?)
+TC0360PRI (IC56)    - (common in pri/color combo on F2 boards)
+TC0530SYC (IC58)    - known sound comm chip
+TC0520TBC (IC36)    - known object chip
+TC0540OBN (IC54)    - known object chip
 
 
 TODO
@@ -124,11 +124,11 @@ ADC0809CNN - 8-bit Microprocessor Compatible A/D Converter
  DataSheet:  http://www.national.com/ds/AD/ADC0808.pdf
 
 Region byte at offset 0x031:
-	d74_21.1  0x02	World Version
-	d74_20.1  0x01	US Version
-	d74_??.1  0x00	Will Produce a Japanese Version, but it's unknown if the
-					actual sound CPU code is the same as the World version,
-					US versions or different then both.
+    d74_21.1  0x02  World Version
+    d74_20.1  0x01  US Version
+    d74_??.1  0x00  Will Produce a Japanese Version, but it's unknown if the
+                    actual sound CPU code is the same as the World version,
+                    US versions or different then both.
 ***************************************************************************/
 
 #include "driver.h"
@@ -153,7 +153,7 @@ extern size_t taito_spriteext_size;
 
 
 /******************************************************
-				COLOR
+                COLOR
 ******************************************************/
 
 static READ16_HANDLER( color_ram_word_r )
@@ -178,7 +178,7 @@ static WRITE16_HANDLER( color_ram_word_w )
 
 
 /***********************************************************
-				INTERRUPTS
+                INTERRUPTS
 ***********************************************************/
 
 void slapshot_interrupt6(int x)
@@ -195,7 +195,7 @@ static INTERRUPT_GEN( slapshot_interrupt )
 
 
 /**********************************************************
-				GAME INPUTS
+                GAME INPUTS
 **********************************************************/
 
 static READ16_HANDLER( slapshot_service_input_r )
@@ -223,7 +223,7 @@ static WRITE16_HANDLER( opwolf3_adc_req_w )
 }
 
 /*****************************************************
-				SOUND
+                SOUND
 *****************************************************/
 
 static int banknum = -1;
@@ -261,7 +261,7 @@ static READ16_HANDLER( slapshot_msb_sound_r )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( slapshot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -353,7 +353,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS (DIPs in nvram)
+             INPUT PORTS (DIPs in nvram)
 ***********************************************************/
 
 INPUT_PORTS_START( slapshot )
@@ -479,7 +479,7 @@ INPUT_PORTS_START( opwolf3 )
 INPUT_PORTS_END
 
 /***********************************************************
-				GFX DECODING
+                GFX DECODING
 
 ***********************************************************/
 
@@ -520,7 +520,7 @@ static struct GfxDecodeInfo slapshot_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2610B (SOUND)
+                 YM2610B (SOUND)
 **************************************************************/
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -538,7 +538,7 @@ static struct YM2610interface ym2610_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_DRIVER_START( slapshot )
@@ -620,7 +620,7 @@ static MACHINE_DRIVER_START( opwolf3 )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( slapshot )
@@ -647,13 +647,13 @@ ROM_START( slapshot )
 
 	/* no Delta-T samples */
 
-//	Pals (not dumped)
-//	ROM_LOAD( "d71-08.40",  0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "d71-09.57",  0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "d71-10.60",  0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "d71-11.42",  0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "d71-12.59",  0x00000, 0x00???, NO_DUMP )
-//	ROM_LOAD( "d71-13.8",   0x00000, 0x00???, NO_DUMP )
+//  Pals (not dumped)
+//  ROM_LOAD( "d71-08.40",  0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "d71-09.57",  0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "d71-10.60",  0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "d71-11.42",  0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "d71-12.59",  0x00000, 0x00???, NO_DUMP )
+//  ROM_LOAD( "d71-13.8",   0x00000, 0x00???, NO_DUMP )
 ROM_END
 
 ROM_START( opwolf3 )

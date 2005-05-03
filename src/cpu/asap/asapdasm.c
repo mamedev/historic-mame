@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		asapdasm.c
-**		Disassembler for the portable ASAP emulator.
-**		Written by Aaron Giles
+**      asapdasm.c
+**      Disassembler for the portable ASAP emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -34,14 +34,14 @@ static const char *condition[16] =
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32(pc)
 
 
 /*###################################################################################################
-**	CODE CODE
+**  CODE CODE
 **#################################################################################################*/
 
 INLINE char *src2(UINT32 op, int scale)
@@ -63,7 +63,7 @@ unsigned dasmasap(char *buffer, unsigned pc)
 	int rsrc1 = (op >> 16) & 31;
 	int rsrc2 = op & 0xffff;
 	int rsrc2_iszero = (!rsrc2 || rsrc2 == 0xffe0);
-	
+
 	switch (opcode)
 	{
 		case 0x00:	sprintf(buffer, "trap   $00");															break;
@@ -87,7 +87,7 @@ unsigned dasmasap(char *buffer, unsigned pc)
 		case 0x06:	sprintf(buffer, "xor%s  %s,%s,%s", setcond[cond], reg[rsrc1], src2(op,0), reg[rdst]);	break;
 		case 0x07:	sprintf(buffer, "xorn%s %s,%s,%s", setcond[cond], reg[rsrc1], src2(op,0), reg[rdst]);	break;
 		case 0x08:	if (!rsrc1 && !rdst && rsrc2_iszero)
-					sprintf(buffer, "nop");	
+					sprintf(buffer, "nop");
 					else if (!rsrc1)
 					sprintf(buffer, "mov%s  %s,%s", setcond[cond], src2(op,0), reg[rdst]);
 					else if (rsrc2_iszero)

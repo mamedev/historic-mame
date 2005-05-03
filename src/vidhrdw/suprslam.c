@@ -13,25 +13,25 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 {
 	/* SPRITE INFO
 
-	Video System hardware, like aerofgt etc.
+    Video System hardware, like aerofgt etc.
 
-	the sprites use 2 areas of ram, one containing a spritelist + sprite attributes, the other
-	contains the sprite tile #'s to use
+    the sprites use 2 areas of ram, one containing a spritelist + sprite attributes, the other
+    contains the sprite tile #'s to use
 
-	sprite attribute info (4 words per sprite)
+    sprite attribute info (4 words per sprite)
 
-	|  ZZZZ hhhy yyyy yyyy  |  zzzz wwwx xxxx xxxx  |  -fpp pppp ---- ----  |  -ooo oooo oooo oooo  |
+    |  ZZZZ hhhy yyyy yyyy  |  zzzz wwwx xxxx xxxx  |  -fpp pppp ---- ----  |  -ooo oooo oooo oooo  |
 
-	x  = x position
-	y  = y position
-	w  = width
-	h  = height
-	zZ = y zoom / x zoom
-	f  = xflip
-	p  = palette / colour
-	o  = offset to tile data in other ram area
+    x  = x position
+    y  = y position
+    w  = width
+    h  = height
+    zZ = y zoom / x zoom
+    f  = xflip
+    p  = palette / colour
+    o  = offset to tile data in other ram area
 
-	*/
+    */
 
 
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -59,7 +59,7 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 			int col = (source2[sprnum+2] & 0x3f00) >> 8;
 			int flipx = (source2[sprnum+2] & 0x4000) >> 14;
-//			int flipy = (source2[sprnum+2] & 0x8000) >> 15;
+//          int flipy = (source2[sprnum+2] & 0x8000) >> 15;
 
 			int word_offset = source2[sprnum+3] & 0x7fff;
 			int xcnt, ycnt;

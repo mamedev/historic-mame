@@ -7,19 +7,19 @@
 
   Basic memory map
 
-	0x0000 - 0x0fff | S2650 code [malzak.5, malzak.4, malzak.2 (data only)]
-	0x1000 - 0x13ff | Work RAM
-	0x1400 - 0x14ff | S2636 #1 video
-	0x1500 - 0x15ff | S2636 #2 video
-	0x1600 - 0x16ff | Playfield gfx
-	0x1700 - 0x17ff | Work RAM - contains hiscore table, coin count
-	0x1800 - 0x1fff | SAA 5050 video RAM
+    0x0000 - 0x0fff | S2650 code [malzak.5, malzak.4, malzak.2 (data only)]
+    0x1000 - 0x13ff | Work RAM
+    0x1400 - 0x14ff | S2636 #1 video
+    0x1500 - 0x15ff | S2636 #2 video
+    0x1600 - 0x16ff | Playfield gfx
+    0x1700 - 0x17ff | Work RAM - contains hiscore table, coin count
+    0x1800 - 0x1fff | SAA 5050 video RAM
 
   TODO - I/O ports (0x00 for sprite->background collisions)
          sound (2x SN76477)
-		 playfield graphics may be banked, tiles above 0x1f are incorrect
-		 sprite->sprite collision aren't quite perfect
-		   (you can often fly through flying missiles)
+         playfield graphics may be banked, tiles above 0x1f are incorrect
+         sprite->sprite collision aren't quite perfect
+           (you can often fly through flying missiles)
 
 */
 
@@ -139,11 +139,11 @@ static READ8_HANDLER( s2650_data_r )
 
 static WRITE8_HANDLER( port40_w )
 {
-//	usrintf_showmessage("S2650 [0x%04x]: port 0x40 write: 0x%02x",cpunum_get_pc_byte(0),data);
-//	if(data & 0x01)
-//		irqenable = 1;
-//	else
-//		irqenable = 0;
+//  usrintf_showmessage("S2650 [0x%04x]: port 0x40 write: 0x%02x",cpunum_get_pc_byte(0),data);
+//  if(data & 0x01)
+//      irqenable = 1;
+//  else
+//      irqenable = 0;
 }
 
 static WRITE8_HANDLER( port60_w )
@@ -183,7 +183,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( malzak )
 
 	/* Malzak has a stick (not sure if it's 4-way or 8-way),
-	   and only one button (firing and bomb dropping on the same button) */
+       and only one button (firing and bomb dropping on the same button) */
 
 	PORT_START /* I/O port 0x80 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -196,37 +196,37 @@ INPUT_PORTS_START( malzak )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    )
 
     PORT_START
-//	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
-//	PORT_DIPSETTING(    0x00, "3" )
-//	PORT_DIPSETTING(    0x01, "4" )
+//  PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
+//  PORT_DIPSETTING(    0x00, "3" )
+//  PORT_DIPSETTING(    0x01, "4" )
 //    PORT_DIPNAME( 0x02, 0x00, "Lightning Speed" )
-//	PORT_DIPSETTING(    0x00, "Slow" )
-//	PORT_DIPSETTING(    0x02, "Fast" )
-//	PORT_DIPNAME( 0x1C, 0x04, DEF_STR( Coinage ) )
-//	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(	0x04, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(	0x08, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(	0x0C, DEF_STR( 1C_3C ) )
-//	PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(	0x14, DEF_STR( 1C_5C ) )
-//	PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
-//	PORT_DIPSETTING(	0x1C, DEF_STR( 1C_7C ) )
-//	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
-//	PORT_DIPSETTING(    0x00, "1000" )
-//	PORT_DIPSETTING(    0x20, "1500" )
+//  PORT_DIPSETTING(    0x00, "Slow" )
+//  PORT_DIPSETTING(    0x02, "Fast" )
+//  PORT_DIPNAME( 0x1C, 0x04, DEF_STR( Coinage ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+//  PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+//  PORT_DIPSETTING(    0x0C, DEF_STR( 1C_3C ) )
+//  PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+//  PORT_DIPSETTING(    0x14, DEF_STR( 1C_5C ) )
+//  PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+//  PORT_DIPSETTING(    0x1C, DEF_STR( 1C_7C ) )
+//  PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
+//  PORT_DIPSETTING(    0x00, "1000" )
+//  PORT_DIPSETTING(    0x20, "1500" )
   //  PORT_DIPNAME( 0x40, 0x00, "Extended Play" )
-//	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+//  PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 
 	PORT_START
-//	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-//	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
-//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+//  PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+//  PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+//  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
 
 	PORT_START	/* SENSE */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
@@ -242,9 +242,9 @@ static struct GfxLayout charlayout =
 	{ 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-//	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+//  { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*16
-//	8*8
+//  8*8
 };
 
 static struct GfxLayout s2636_character10 =
@@ -349,22 +349,22 @@ MACHINE_INIT(malzak)
 
 static struct SN76477interface sn76477_intf =
 {
-	0,	/* N/C */		/*	4  noise_res		 */
-	0,	/* N/C */		/*	5  filter_res		 */
-	0,	/* N/C */		/*	6  filter_cap		 */
-	0,	/* N/C */		/*	7  decay_res		 */
-	0,	/* N/C */		/*	8  attack_decay_cap  */
-	RES_K(100),			/* 10  attack_res		 */
-	RES_K(56),			/* 11  amplitude_res	 */
-	RES_K(10),			/* 12  feedback_res 	 */
-	0,	/* N/C */		/* 16  vco_voltage		 */
-	CAP_U(0.1),			/* 17  vco_cap			 */
-	RES_K(8.2),			/* 18  vco_res			 */
-	5.0,				/* 19  pitch_voltage	 */
-	RES_K(120),			/* 20  slf_res			 */
-	CAP_U(1.0),			/* 21  slf_cap			 */
-	0,	/* N/C */		/* 23  oneshot_cap		 */
-	0	/* N/C */		/* 24  oneshot_res		 */
+	0,	/* N/C */		/*  4  noise_res         */
+	0,	/* N/C */		/*  5  filter_res        */
+	0,	/* N/C */		/*  6  filter_cap        */
+	0,	/* N/C */		/*  7  decay_res         */
+	0,	/* N/C */		/*  8  attack_decay_cap  */
+	RES_K(100),			/* 10  attack_res        */
+	RES_K(56),			/* 11  amplitude_res     */
+	RES_K(10),			/* 12  feedback_res      */
+	0,	/* N/C */		/* 16  vco_voltage       */
+	CAP_U(0.1),			/* 17  vco_cap           */
+	RES_K(8.2),			/* 18  vco_res           */
+	5.0,				/* 19  pitch_voltage     */
+	RES_K(120),			/* 20  slf_res           */
+	CAP_U(1.0),			/* 21  slf_cap           */
+	0,	/* N/C */		/* 23  oneshot_cap       */
+	0	/* N/C */		/* 24  oneshot_res       */
 };
 
 

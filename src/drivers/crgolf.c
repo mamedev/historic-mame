@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	Kitco Crowns Golf hardware
+    Kitco Crowns Golf hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Crowns Golf (4 sets)
+    Games supported:
+        * Crowns Golf (4 sets)
 
-	Known bugs:
-		* not sure if the analog inputs are handled correctly
+    Known bugs:
+        * not sure if the analog inputs are handled correctly
 
 Text Strings in sound CPU ROM read:
 ARIES ELECA
@@ -21,7 +21,7 @@ WHO AM I?      (In place of "ARIES ELECA")
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -42,7 +42,7 @@ static data8_t main_to_sound_data, sound_to_main_data;
 
 /*************************************
  *
- *	ROM banking
+ *  ROM banking
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static MACHINE_INIT( crgolf )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -99,7 +99,7 @@ static WRITE8_HANDLER( unknown_w )
 
 /*************************************
  *
- *	Main->Sound CPU communications
+ *  Main->Sound CPU communications
  *
  *************************************/
 
@@ -126,7 +126,7 @@ static READ8_HANDLER( main_to_sound_r )
 
 /*************************************
  *
- *	Sound->Main CPU communications
+ *  Sound->Main CPU communications
  *
  *************************************/
 
@@ -153,7 +153,7 @@ static READ8_HANDLER( sound_to_main_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -188,7 +188,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -216,7 +216,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -292,7 +292,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -333,7 +333,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -442,7 +442,7 @@ ROM_END
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

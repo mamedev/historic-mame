@@ -1,21 +1,21 @@
 /***************************************************************************
 
-							-=  SunA 8 Bit Games =-
+                            -=  SunA 8 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Main  CPU:		Encrypted Z80 (Epoxy Module)
-Sound CPU:		Z80 [Music]  +  Z80 [8 Bit PCM, Optional]
-Sound Chips:	AY8910  +  YM3812/YM2203  + DAC x 4 [Optional]
+Main  CPU:      Encrypted Z80 (Epoxy Module)
+Sound CPU:      Z80 [Music]  +  Z80 [8 Bit PCM, Optional]
+Sound Chips:    AY8910  +  YM3812/YM2203  + DAC x 4 [Optional]
 
 
 ---------------------------------------------------------------------------
 Year + Game         Game     PCB         Epoxy CPU    Notes
 ---------------------------------------------------------------------------
 88  Hard Head       KRB-14   60138-0083  S562008      Encryption + Protection
-88  Rough Ranger	K030087  ?           S562008
-89  Spark Man    	?        ?           ?            Not Working (Protection)
+88  Rough Ranger    K030087  ?           S562008
+89  Spark Man       ?        ?           ?            Not Working (Protection)
 90  Star Fighter    ?        ?           ?            Not Working
 91  Hard Head 2     ?        ?           T568009      Encryption + Protection
 92  Brick Zone      ?        ?           Yes          Not Working
@@ -74,13 +74,13 @@ void suna8_sh_start(void);
 /***************************************************************************
 
 
-								ROMs Decryption
+                                ROMs Decryption
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 DRIVER_INIT( hardhead )
@@ -117,7 +117,7 @@ static DRIVER_INIT( hardhedb )
 }
 
 /***************************************************************************
-								Brick Zone
+                                Brick Zone
 ***************************************************************************/
 
 /* !! BRICKZN3 !! */
@@ -169,14 +169,14 @@ DRIVER_INIT( brickzn3 )
 		{
 //825b  ->  see 715a!
 //8280  ->  see 7192!
-//8280:	e=2 m=90
-//8281:	e=2 m=90
-//8283:	e=2 m=90
-//8250:	e=0
-//8262:	e=0
-//9a42:	e=0
-//9a43:	e=0
-//8253:	e=0
+//8280: e=2 m=90
+//8281: e=2 m=90
+//8283: e=2 m=90
+//8250: e=0
+//8262: e=0
+//9a42: e=0
+//9a43: e=0
+//8253: e=0
 			case 0x0:
 			case 0x1:
 			case 0x2:
@@ -184,26 +184,26 @@ DRIVER_INIT( brickzn3 )
 				if (i & 0x40)	encry = 0;
 				else			encry = 2;
 				break;
-//828c:	e=0
-//9a3d:	e=0
-//825e:	e=0
-//826e:	e=0
-//9a3f:	e=0
+//828c: e=0
+//9a3d: e=0
+//825e: e=0
+//826e: e=0
+//9a3f: e=0
 			case 0xc:
 			case 0xd:
 			case 0xe:
 			case 0xf:
 				encry = 0;
 				break;
-//8264:	e=2 m=90
-//9a44:	e=2 m=90
-//8255:	e=2 m=90
-//8255:	e=2 m=90
-//8285:	e=2 m=90
-//9a37:	e=2 m=90
-//8268:	e=2 m=90
-//9a3a:	e=2 m=90
-//825b:	e=2 m=90
+//8264: e=2 m=90
+//9a44: e=2 m=90
+//8255: e=2 m=90
+//8255: e=2 m=90
+//8285: e=2 m=90
+//9a37: e=2 m=90
+//8268: e=2 m=90
+//9a3a: e=2 m=90
+//825b: e=2 m=90
 			case 0x4:
 			case 0x5:
 			case 0x6:
@@ -381,9 +381,9 @@ DRIVER_INIT( brickzn3 )
 /* !!!!!! PATCHES !!!!!! */
 
 RAM[0x3337+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
-//RAM[0x3338+size] = 0x00;	// jp $C800 -> NOP
-//RAM[0x3339+size] = 0x00;	// jp $C800 -> NOP
-//RAM[0x333a+size] = 0x00;	// jp $C800 -> NOP
+//RAM[0x3338+size] = 0x00;  // jp $C800 -> NOP
+//RAM[0x3339+size] = 0x00;  // jp $C800 -> NOP
+//RAM[0x333a+size] = 0x00;  // jp $C800 -> NOP
 
 RAM[0x1406+size] = 0x00;	// HALT -> NOP (NMI source??)
 RAM[0x2487+size] = 0x00;	// HALT -> NOP
@@ -393,7 +393,7 @@ RAM[0x256c+size] = 0x00;	// HALT -> NOP
 
 
 /***************************************************************************
-								Hard Head 2
+                                Hard Head 2
 ***************************************************************************/
 
 INLINE data8_t hardhea2_decrypt(data8_t x, int encry, int mask)
@@ -553,17 +553,17 @@ DRIVER_INIT( hardhea2 )
 		{
 /*
 0x1000 to scramble:
-		dump				screen
-rom10:	0y, 1y, 2n, 3n		0y,1y,2n,3n
-		4n?,5n, 6n, 7n		4n,5n,6n,7n
-		8?, 9n, an, bn		8n,9n,an,bn
-		cy, dy, ey?,		cy,dy,en,fn
-rom11:						n
-rom12:						n
-rom13:	0?, 1y, 2n, 3n		?,?,?,? (palettes)
-		4n, 5n, 6n, 7?		?,?,n,n (intro anim)
-		8?, 9n?,an, bn		y,y,?,? (player anims)
-		cn, dy, en, fn		y,y,n,n
+        dump                screen
+rom10:  0y, 1y, 2n, 3n      0y,1y,2n,3n
+        4n?,5n, 6n, 7n      4n,5n,6n,7n
+        8?, 9n, an, bn      8n,9n,an,bn
+        cy, dy, ey?,        cy,dy,en,fn
+rom11:                      n
+rom12:                      n
+rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
+        4n, 5n, 6n, 7?      ?,?,n,n (intro anim)
+        8?, 9n?,an, bn      y,y,?,? (player anims)
+        cn, dy, en, fn      y,y,n,n
 */
 		case 0x00000:
 		case 0x01000:
@@ -589,7 +589,7 @@ rom13:	0?, 1y, 2n, 3n		?,?,?,? (palettes)
 
 
 /***************************************************************************
-								Star Fighter
+                                Star Fighter
 ***************************************************************************/
 
 /* SAME AS HARDHEA2 */
@@ -724,7 +724,7 @@ DRIVER_INIT( starfigh )
 
 
 /***************************************************************************
-								Spark Man
+                                Spark Man
 ***************************************************************************/
 
 static DRIVER_INIT( sparkman )
@@ -752,14 +752,14 @@ static DRIVER_INIT( sparkman )
 		data8_t x = RAM[i];
 
 /*
-		0000 2fff	44	0
-		3000 37ff	40	1
-		3800 3bff	44	0
-		3c00 3fff	40	1
-		4000 63ff	44	0
-		6400 67ff	40	1
-		6800 6bff	04	0
-		6c00 7fff	44	0
+        0000 2fff   44  0
+        3000 37ff   40  1
+        3800 3bff   44  0
+        3c00 3fff   40  1
+        4000 63ff   44  0
+        6400 67ff   40  1
+        6800 6bff   04  0
+        6c00 7fff   44  0
 */
 
 		switch(i & 0x7c00)
@@ -835,13 +835,13 @@ static DRIVER_INIT( sparkman )
 /***************************************************************************
 
 
-								Protection
+                                Protection
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 static data8_t protection_val;
@@ -867,13 +867,13 @@ static WRITE8_HANDLER( hardhead_protection_w )
 /***************************************************************************
 
 
-							Memory Maps - Main CPU
+                            Memory Maps - Main CPU
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 static data8_t *hardhead_ip;
@@ -893,9 +893,9 @@ static READ8_HANDLER( hardhead_ip_r )
 }
 
 /*
-	765- ----	Unused (eg. they go into hardhead_flipscreen_w)
-	---4 ----
-	---- 3210	ROM Bank
+    765- ----   Unused (eg. they go into hardhead_flipscreen_w)
+    ---4 ----
+    ---- 3210   ROM Bank
 */
 static WRITE8_HANDLER( hardhead_bankswitch_w )
 {
@@ -910,10 +910,10 @@ static WRITE8_HANDLER( hardhead_bankswitch_w )
 
 
 /*
-	765- ----
-	---4 3---	Coin Lockout
-	---- -2--	Flip Screen
-	---- --10
+    765- ----
+    ---4 3---   Coin Lockout
+    ---- -2--   Flip Screen
+    ---- --10
 */
 static WRITE8_HANDLER( hardhead_flipscreen_w )
 {
@@ -942,7 +942,7 @@ static ADDRESS_MAP_START( hardhead_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xda80, 0xda80) AM_WRITE(hardhead_bankswitch_w	)	// ROM Banking
 	AM_RANGE(0xdb00, 0xdb00) AM_WRITE(soundlatch_w			)	// To Sound CPU
 	AM_RANGE(0xdb80, 0xdb80) AM_WRITE(hardhead_flipscreen_w	)	// Flip Screen + Coin Lockout
-	AM_RANGE(0xdc00, 0xdc00) AM_WRITE(MWA8_NOP				)	// <- R	(after bank select)
+	AM_RANGE(0xdc00, 0xdc00) AM_WRITE(MWA8_NOP				)	// <- R (after bank select)
 	AM_RANGE(0xdc80, 0xdc80) AM_WRITE(MWA8_NOP				)	// <- R (after bank select)
 	AM_RANGE(0xdd00, 0xdd00) AM_WRITE(MWA8_NOP				)	// <- R (after ip select)
 	AM_RANGE(0xdd80, 0xddff) AM_WRITE(hardhead_protection_w	)	// Protection
@@ -960,15 +960,15 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Rough Ranger
+                                Rough Ranger
 ***************************************************************************/
 
 /*
-	76-- ----	Coin Lockout
-	--5- ----	Flip Screen
-	---4 ----	ROM Bank
-	---- 3---
-	---- -210	ROM Bank
+    76-- ----   Coin Lockout
+    --5- ----   Flip Screen
+    ---4 ----   ROM Bank
+    ---- 3---
+    ---- -210   ROM Bank
 */
 static WRITE8_HANDLER( rranger_bankswitch_w )
 {
@@ -988,12 +988,12 @@ static WRITE8_HANDLER( rranger_bankswitch_w )
 }
 
 /*
-	7--- ----	1 -> Garbled title (another romset?)
-	-654 ----
-	---- 3---	1 -> No sound (soundlatch full?)
-	---- -2--
-	---- --1-	1 -> Interlude screens
-	---- ---0
+    7--- ----   1 -> Garbled title (another romset?)
+    -654 ----
+    ---- 3---   1 -> No sound (soundlatch full?)
+    ---- -2--
+    ---- --1-   1 -> Interlude screens
+    ---- ---0
 */
 static READ8_HANDLER( rranger_soundstatus_r )
 {
@@ -1038,7 +1038,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Brick Zone
+                                Brick Zone
 ***************************************************************************/
 
 /*
@@ -1061,9 +1061,9 @@ static WRITE8_HANDLER( brickzn_palettebank_w )
 }
 
 /*
-	7654 32--
-	---- --1-	Ram Bank
-	---- ---0	Flip Screen
+    7654 32--
+    ---- --1-   Ram Bank
+    ---- ---0   Flip Screen
 */
 static WRITE8_HANDLER( brickzn_spritebank_w )
 {
@@ -1078,8 +1078,8 @@ static WRITE8_HANDLER( brickzn_unknown_w )
 }
 
 /*
-	7654 ----
-	---- 3210	ROM Bank
+    7654 ----
+    ---- 3210   ROM Bank
 */
 static WRITE8_HANDLER( brickzn_rombank_w )
 {
@@ -1131,7 +1131,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Hard Head 2
+                                Hard Head 2
 ***************************************************************************/
 
 static data8_t suna8_nmi_enable;
@@ -1140,12 +1140,12 @@ static data8_t suna8_nmi_enable;
 static WRITE8_HANDLER( hardhea2_nmi_w )
 {
 	suna8_nmi_enable = data & 0x01;
-//	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",activecpu_get_pc(),data);
+//  if (data & ~0x01)   logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",activecpu_get_pc(),data);
 }
 
 /*
-	7654 321-
-	---- ---0	Flip Screen
+    7654 321-
+    ---- ---0   Flip Screen
 */
 static WRITE8_HANDLER( hardhea2_flipscreen_w )
 {
@@ -1162,9 +1162,9 @@ WRITE8_HANDLER( hardhea2_leds_w )
 }
 
 /*
-	7654 32--
-	---- --1-	Ram Bank
-	---- ---0	Ram Bank?
+    7654 32--
+    ---- --1-   Ram Bank
+    ---- ---0   Ram Bank?
 */
 static WRITE8_HANDLER( hardhea2_spritebank_w )
 {
@@ -1173,8 +1173,8 @@ static WRITE8_HANDLER( hardhea2_spritebank_w )
 }
 
 /*
-	7654 ----
-	---- 3210	ROM Bank
+    7654 ----
+    ---- 3210   ROM Bank
 */
 static WRITE8_HANDLER( hardhea2_rombank_w )
 {
@@ -1258,7 +1258,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Star Fighter
+                                Star Fighter
 ***************************************************************************/
 
 static data8_t spritebank_latch;
@@ -1309,7 +1309,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Spark Man
+                                Spark Man
 ***************************************************************************/
 
 /* Probably wrong: */
@@ -1320,8 +1320,8 @@ static WRITE8_HANDLER( sparkman_nmi_w )
 }
 
 /*
-	7654 321-
-	---- ---0	Flip Screen
+    7654 321-
+    ---- ---0   Flip Screen
 */
 static WRITE8_HANDLER( sparkman_flipscreen_w )
 {
@@ -1338,9 +1338,9 @@ WRITE8_HANDLER( sparkman_leds_w )
 }
 
 /*
-	7654 32--
-	---- --1-	Ram Bank
-	---- ---0	Ram Bank?
+    7654 32--
+    ---- --1-   Ram Bank
+    ---- ---0   Ram Bank?
 */
 static WRITE8_HANDLER( sparkman_spritebank_w )
 {
@@ -1349,8 +1349,8 @@ static WRITE8_HANDLER( sparkman_spritebank_w )
 }
 
 /*
-	7654 ----
-	---- 3210	ROM Bank
+    7654 ----
+    ---- 3210   ROM Bank
 */
 static WRITE8_HANDLER( sparkman_rombank_w )
 {
@@ -1402,13 +1402,13 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-							Memory Maps - Sound CPU(s)
+                            Memory Maps - Sound CPU(s)
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 static ADDRESS_MAP_START( hardhead_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1440,7 +1440,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Rough Ranger
+                                Rough Ranger
 ***************************************************************************/
 
 static ADDRESS_MAP_START( rranger_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1469,7 +1469,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Brick Zone
+                                Brick Zone
 ***************************************************************************/
 
 static ADDRESS_MAP_START( brickzn_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1526,7 +1526,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -1542,7 +1542,7 @@ ADDRESS_MAP_END
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN##_n_  )
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 INPUT_PORTS_START( hardhead )
@@ -1606,7 +1606,7 @@ INPUT_PORTS_START( hardhead )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Rough Ranger
+                                Rough Ranger
 ***************************************************************************/
 
 INPUT_PORTS_START( rranger )
@@ -1671,7 +1671,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Brick Zone
+                                Brick Zone
 ***************************************************************************/
 
 INPUT_PORTS_START( brickzn )
@@ -1701,9 +1701,9 @@ INPUT_PORTS_START( brickzn )
 	PORT_DIPSETTING(    0x10, DEF_STR( Harder ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Very_Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-//	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
-//	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
+//  PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE(       0x40, IP_ACTIVE_LOW )	// + Invulnerability
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -1744,7 +1744,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-						Hard Head 2 / Star Fighter
+                        Hard Head 2 / Star Fighter
 ***************************************************************************/
 
 INPUT_PORTS_START( hardhea2 )
@@ -1818,7 +1818,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Spark Man
+                                Spark Man
 ***************************************************************************/
 
 INPUT_PORTS_START( sparkman )
@@ -1894,7 +1894,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
@@ -1922,7 +1922,7 @@ static struct GfxDecodeInfo suna8_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -1936,7 +1936,7 @@ static void soundirq(int state)
    for sample playing. */
 
 /***************************************************************************
-								Hard Head
+                                Hard Head
 ***************************************************************************/
 
 /* 1 x 24 MHz crystal */
@@ -1994,7 +1994,7 @@ static MACHINE_DRIVER_START( hardhead )
 	MDRV_SOUND_CONFIG(hardhead_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
@@ -2004,7 +2004,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Rough Ranger
+                                Rough Ranger
 ***************************************************************************/
 
 /* 1 x 24 MHz crystal */
@@ -2051,7 +2051,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Brick Zone
+                                Brick Zone
 ***************************************************************************/
 
 /* 1 x 24 MHz crystal */
@@ -2073,7 +2073,7 @@ static MACHINE_DRIVER_START( brickzn )
 	MDRV_CPU_ADD_TAG("main", Z80, 24000000 / 4)		/* SUNA PROTECTION BLOCK */
 	MDRV_CPU_PROGRAM_MAP(brickzn_readmem,brickzn_writemem)
 	MDRV_CPU_IO_MAP(brickzn_readport,brickzn_writeport)
-//	MDRV_CPU_VBLANK_INT(brickzn_interrupt, 2)
+//  MDRV_CPU_VBLANK_INT(brickzn_interrupt, 2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	// nmi breaks ramtest but is needed!
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 24000000 / 4)	/* Z0840006PSC */
@@ -2106,7 +2106,7 @@ static MACHINE_DRIVER_START( brickzn )
 	MDRV_SOUND_CONFIG(brickzn_ym3812_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
-	
+
 	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
@@ -2126,7 +2126,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Hard Head 2
+                                Hard Head 2
 ***************************************************************************/
 
 /* 1 x 24 MHz crystal */
@@ -2158,7 +2158,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Star Fighter
+                                Star Fighter
 ***************************************************************************/
 
 static struct AY8910interface starfigh_ay8910_interface =
@@ -2203,12 +2203,12 @@ static MACHINE_DRIVER_START( starfigh )
 	MDRV_SOUND_ADD(YM3812, 4000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
-	
+
 	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
 	MDRV_SOUND_CONFIG(starfigh_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
@@ -2217,7 +2217,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Spark Man
+                                Spark Man
 ***************************************************************************/
 
 static INTERRUPT_GEN( sparkman_interrupt )
@@ -2266,7 +2266,7 @@ static MACHINE_DRIVER_START( sparkman )
 	MDRV_SOUND_CONFIG(hardhead_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
@@ -2277,14 +2277,14 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
 
 /***************************************************************************
 
-									Hard Head
+                                    Hard Head
 
 Location  Type    File ID  Checksum
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2365,7 +2365,7 @@ ROM_START( hardhedb )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) )
-//	ROM_LOAD( "2_13_9h.rom", 0x00000, 0x8000, CRC(1b20e5ec) )
+//  ROM_LOAD( "2_13_9h.rom", 0x00000, 0x8000, CRC(1b20e5ec) )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
 	ROM_LOAD( "p5",  0x00000, 0x8000, CRC(e9aa6fba) SHA1(f286727541f08b136a7d45e13975652bdc8fd663) )
@@ -2420,7 +2420,7 @@ ROM_END
 
 /***************************************************************************
 
-							Rough Ranger / Super Ranger
+                            Rough Ranger / Super Ranger
 
 (SunA 1988)
 K030087
@@ -2587,7 +2587,7 @@ ROM_END
 
 /***************************************************************************
 
-									Brick Zone
+                                    Brick Zone
 
 SUNA ELECTRONICS IND CO., LTD
 
@@ -2672,7 +2672,7 @@ ROM_END
 
 /***************************************************************************
 
-								Hard Head 2
+                                Hard Head 2
 
 These ROMS are all 27C512
 
@@ -2743,7 +2743,7 @@ ROM_END
 
 /***************************************************************************
 
-								Star Fighter
+                                Star Fighter
 
 ***************************************************************************/
 
@@ -2791,7 +2791,7 @@ ROM_END
 
 /***************************************************************************
 
-								Spark Man
+                                Spark Man
 
 Suna Electronics IND. CO., LTD 1989    Pinout = JAMMA
 
@@ -2838,7 +2838,7 @@ ROM_END
 /***************************************************************************
 
 
-								Games Drivers
+                                Games Drivers
 
 
 ***************************************************************************/

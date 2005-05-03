@@ -6,7 +6,7 @@ Chris Hardy (chrish@kcbbs.gen.nz)
 Thanks to Rob Jarret for the original Tutankham memory map on which both the
 Juno First emu and the mame driver is based on.
 
-		Juno First memory map by Chris Hardy
+        Juno First memory map by Chris Hardy
 
 Read/Write memory
 
@@ -16,37 +16,37 @@ $8100-$8FFF = Work RAM
 
 Write memory
 
-$8030	- interrupt control register D0 = interupts on or off
-$8031	- unknown
-$8032	- unknown
-$8033	- unknown
-$8034	- flip screen x
-$8035	- flip screen y
+$8030   - interrupt control register D0 = interupts on or off
+$8031   - unknown
+$8032   - unknown
+$8033   - unknown
+$8034   - flip screen x
+$8035   - flip screen y
 
-$8040	- Sound CPU req/ack data
-$8050	- Sound CPU command data
-$8060	- Banked memory page select.
+$8040   - Sound CPU req/ack data
+$8050   - Sound CPU command data
+$8060   - Banked memory page select.
 $8070/1 - Blitter source data word
 $8072/3 - Blitter destination word. Write to $8073 triggers a blit
 
 Read memory
 
-$8010	- Dipswitch 2
-$801c	- Watchdog
-$8020	- Start/Credit IO
-				D2 = Credit 1
-				D3 = Start 1
-				D4 = Start 2
-$8024	- P1 IO
-				D0 = left
-				D1 = right
-				D2 = up
-				D3 = down
-				D4 = fire 2
-				D5 = fire 1
+$8010   - Dipswitch 2
+$801c   - Watchdog
+$8020   - Start/Credit IO
+                D2 = Credit 1
+                D3 = Start 1
+                D4 = Start 2
+$8024   - P1 IO
+                D0 = left
+                D1 = right
+                D2 = up
+                D3 = down
+                D4 = fire 2
+                D5 = fire 1
 
-$8028	- P2 IO - same as P1 IO
-$802c	- Dipswitch 1
+$8028   - P2 IO - same as P1 IO
+$802c   - Dipswitch 1
 
 
 
@@ -58,20 +58,20 @@ $E000->$FFFF "juno\\JFC_A10.BIN",
 Banked memory - Paged into $9000->$9FFF..
 
 NOTE - In Tutankhm this only contains graphics, in Juno First it also contains code. (which
-		generally sets up the blitter)
+        generally sets up the blitter)
 
-	"juno\\JFC1_A4.BIN",	$0000->$1FFF
-	"juno\\JFC2_A5.BIN",	$2000->$3FFF
-	"juno\\JFC3_A6.BIN",	$4000->$5FFF
-	"juno\\JFC4_A7.BIN",	$6000->$7FFF
-	"juno\\JFC5_A8.BIN",	$8000->$9FFF
-	"juno\\JFC6_A9.BIN",	$A000->$bFFF
+    "juno\\JFC1_A4.BIN",    $0000->$1FFF
+    "juno\\JFC2_A5.BIN",    $2000->$3FFF
+    "juno\\JFC3_A6.BIN",    $4000->$5FFF
+    "juno\\JFC4_A7.BIN",    $6000->$7FFF
+    "juno\\JFC5_A8.BIN",    $8000->$9FFF
+    "juno\\JFC6_A9.BIN",    $A000->$bFFF
 
 Blitter source graphics
 
-	"juno\\JFS3_C7.BIN",	$C000->$DFFF
-	"juno\\JFS4_D7.BIN",	$E000->$FFFF
-	"juno\\JFS5_E7.BIN",	$10000->$11FFF
+    "juno\\JFS3_C7.BIN",    $C000->$DFFF
+    "juno\\JFS4_D7.BIN",    $E000->$FFFF
+    "juno\\JFS5_E7.BIN",    $10000->$11FFF
 
 
 ***************************************************************************/
@@ -381,7 +381,7 @@ static MACHINE_DRIVER_START( junofrst )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(0, "filter.0.0", 0.30)

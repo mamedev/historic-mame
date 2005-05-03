@@ -318,7 +318,7 @@ UINT32 opRETIU(void) /* TRUSTED */
 
 	// Destroy stack frame
 	SP += amOut;
-	
+
 	v60WritePSW(tempPSW);
 
 	// Update all the flags from PSW
@@ -352,7 +352,7 @@ UINT32 opRETIS(void)
 	SP += amOut;
 
 	// Update only CPU flags from PSW @@@
-//	UPDATECPUFLAGS();
+//  UPDATECPUFLAGS();
 
 	return 0;
 }

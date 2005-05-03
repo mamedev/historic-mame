@@ -211,16 +211,16 @@ VIDEO_START( marvins )
 			break;
 
 			/*
-				Old settings for the the following games:
+                Old settings for the the following games:
 
-				tilemap_set_scrolldx( bg_tilemap, -16, -10 );
-				tilemap_set_scrolldy( bg_tilemap,   0, -40 );
+                tilemap_set_scrolldx( bg_tilemap, -16, -10 );
+                tilemap_set_scrolldy( bg_tilemap,   0, -40 );
 
-				tilemap_set_scrolldx( fg_tilemap,  16,  22 );
-				tilemap_set_scrolldy( fg_tilemap,   0, -40 );
+                tilemap_set_scrolldx( fg_tilemap,  16,  22 );
+                tilemap_set_scrolldy( fg_tilemap,   0, -40 );
 
-				Note that while the new settings are more accurate they cannot handle flipscreen.
-			*/
+                Note that while the new settings are more accurate they cannot handle flipscreen.
+            */
 			case 1:	// Mad Crasher
 				tilemap_set_scrolldx( bg_tilemap,256,  0 );
 				tilemap_set_scrolldy( bg_tilemap, 12,  0 );
@@ -393,13 +393,13 @@ VIDEO_UPDATE( madcrash )
 {
 /***************************************************************************
 **
-**	Game Specific Initialization
+**  Game Specific Initialization
 **
-**	madcrash_vreg defines an offset for the video registers which is
-**	different in Mad Crasher and Vanguard II.
+**  madcrash_vreg defines an offset for the video registers which is
+**  different in Mad Crasher and Vanguard II.
 **
-**	init_sound defines the location of the polled sound CPU busy bit,
-**	which also varies across games.
+**  init_sound defines the location of the polled sound CPU busy bit,
+**  which also varies across games.
 **
 ***************************************************************************/
 

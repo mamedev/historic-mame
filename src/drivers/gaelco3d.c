@@ -1,17 +1,17 @@
 /*************************************************************************
 
-	Driver for Gaelco 3D games
+    Driver for Gaelco 3D games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Speed Up
-		* Surf Planet
-		* Radikal Bikers
-		
-	Known bugs:
-		* EEPROM interface not right
-		* sound not hooked up
+    Games supported:
+        * Speed Up
+        * Surf Planet
+        * Radikal Bikers
+
+    Known bugs:
+        * EEPROM interface not right
+        * sound not hooked up
 
 ***************************************************************************
 
@@ -42,7 +42,7 @@ REF. 980311
 Notes:
       Contents of RAB.24 to RAB.27 = RAB.32 to RAB.35
       * - These ROMs are surface mounted
-      
+
 
 Bottom board
 
@@ -50,11 +50,11 @@ REF. 980512
 |----------------------------------------------------------------|
 |       ALTERA                             TMS320C31      50MHz  |
 |50MHz  EPM7064   68EC020  CY7C199         (QFP132)              |
-|                          CY7C199                               |                                      
-|                          CY7C199         KM4216C256            |                                      
-|93C66                     CY7C199                               |                                      
-|                          CY7C199        |--------|             |                                      
-|                          CY7C199        |3D-3G   |             |                                      
+|                          CY7C199                               |
+|                          CY7C199         KM4216C256            |
+|93C66                     CY7C199                               |
+|                          CY7C199        |--------|             |
+|                          CY7C199        |3D-3G   |             |
 |75LBC176                                 |(QFP206)|             |
 |75LBC176                                 |        |             |
 |                   |------------|        |--------|             |
@@ -103,7 +103,7 @@ REF. 971223
 Notes:
       Contents of PLS.19 to PLS.22 = PLS.27 to PLS.30
       * - These ROMs are surface mounted
-      
+
 
 Bottom board
 
@@ -111,11 +111,11 @@ REF. 970429
 |----------------------------------------------------------------|
 |       PAL                 60MHz          TMS320C31             |
 |          68HC000         CY7C199         (QFP132)              |
-|                          CY7C199                               |                                      
-|                          CY7C199         KM4216C256            |                                      
-|93C66                     CY7C199                               |                                      
-|                          CY7C199        |--------|             |                                      
-|                          CY7C199        |3D-3G   |             |                                      
+|                          CY7C199                               |
+|                          CY7C199         KM4216C256            |
+|93C66                     CY7C199                               |
+|                          CY7C199        |--------|             |
+|                          CY7C199        |3D-3G   |             |
 |75LBC176                                 |(QFP206)|             |
 |75LBC176                                 |        |             |
 |                   |------------|        |--------|             |
@@ -176,7 +176,7 @@ static void adsp_autobuffer_irq(int state);
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -184,9 +184,9 @@ static void init_machine_common(void)
 {
 	UINT16 *src;
 	int i;
-	
+
 	framenum = 0;
-	
+
 	/* boot the ADSP chip */
 	src = (UINT16 *)memory_region(REGION_USER1);
 	for (i = 0; i < (src[3] & 0xff) * 8; i++)
@@ -200,7 +200,7 @@ static void init_machine_common(void)
 
 	/* allocate a timer for feeding the autobuffer */
 	adsp_autobuffer_timer = timer_alloc(adsp_autobuffer_irq);
-	
+
 	cpu_setbank(1, &src[0x0000]);
 
 	/* keep the TMS32031 halted until the code is ready to go */
@@ -225,7 +225,7 @@ static MACHINE_INIT( gaelco3d2 )
 
 /*************************************
  *
- *	IRQ handling
+ *  IRQ handling
  *
  *************************************/
 
@@ -247,7 +247,7 @@ static WRITE32_HANDLER( irq_ack_020_w ) { if ((mem_mask & 0xffff0000) != 0xffff0
 
 /*************************************
  *
- *	EEPROM (93C66)
+ *  EEPROM (93C66)
  *
  *************************************/
 
@@ -260,8 +260,8 @@ static struct EEPROM_interface gaelco2_eeprom_interface =
 	"*111",			/* erase command */
 	"*10000xxxxxx",	/* lock command */
 	"*10011xxxxxx", /* unlock command */
-//	"*10001xxxxxx", /* write all */
-//	"*10010xxxxxx", /* erase all */
+//  "*10001xxxxxx", /* write all */
+//  "*10010xxxxxx", /* erase all */
 };
 
 
@@ -315,7 +315,7 @@ static WRITE32_HANDLER( eeprom_cs_020_w ) { if ((mem_mask & 0xffff) != 0xffff) e
 
 /*************************************
  *
- *	Sound CPU comms
+ *  Sound CPU comms
  *
  *************************************/
 
@@ -364,7 +364,7 @@ static WRITE16_HANDLER( sound_status_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -420,13 +420,13 @@ static WRITE32_HANDLER( analog_port_latch_020_w ) { if ((mem_mask & 0xffff) != 0
 
 /*************************************
  *
- *	TMS32031 interface
+ *  TMS32031 interface
  *
  *************************************/
 
 static READ32_HANDLER( tms_m68k_ram_r )
 {
-//	logerror("%06X:tms_m68k_ram_r(%04X) = %08X\n", activecpu_get_pc(), offset, !(offset & 1) ? ((INT32)m68k_ram_base[offset/2] >> 16) : (int)(INT16)m68k_ram_base[offset/2]);
+//  logerror("%06X:tms_m68k_ram_r(%04X) = %08X\n", activecpu_get_pc(), offset, !(offset & 1) ? ((INT32)m68k_ram_base[offset/2] >> 16) : (int)(INT16)m68k_ram_base[offset/2]);
 	return (INT32)(INT16)m68k_ram_base[offset ^ tms_offset_xor];
 }
 
@@ -447,7 +447,7 @@ static void iack_w(UINT8 state, offs_t addr)
 
 /*************************************
  *
- *	TMS32031 control
+ *  TMS32031 control
  *
  *************************************/
 
@@ -494,7 +494,7 @@ static WRITE32_HANDLER( tms_comm_020_w )
 
 /*************************************
  *
- *	ADSP control registers
+ *  ADSP control registers
  *
  *************************************/
 
@@ -521,12 +521,12 @@ enum
 };
 
 /*
-ADSP control 3FFF W = 0008	(SYSCONTROL_REG)
-ADSP control 3FFE W = 1249	(WAITSTATES_REG)
-ADSP control 3FEF W = 0D82	(S1_AUTOBUF_REG)
-ADSP control 3FF1 W = 0005	(S1_SCLKDIV_REG)
-ADSP control 3FF2 W = 4A0F	(S1_CONTROL_REG)
-ADSP control 3FFF W = 0C08	(SYSCONTROL_REG)
+ADSP control 3FFF W = 0008  (SYSCONTROL_REG)
+ADSP control 3FFE W = 1249  (WAITSTATES_REG)
+ADSP control 3FEF W = 0D82  (S1_AUTOBUF_REG)
+ADSP control 3FF1 W = 0005  (S1_SCLKDIV_REG)
+ADSP control 3FF2 W = 4A0F  (S1_CONTROL_REG)
+ADSP control 3FFF W = 0C08  (SYSCONTROL_REG)
 */
 
 static WRITE16_HANDLER( adsp_control_w )
@@ -574,7 +574,7 @@ static WRITE16_HANDLER( adsp_rombank_w )
 
 /*************************************
  *
- *	ADSP sound generation
+ *  ADSP sound generation
  *
  *************************************/
 
@@ -674,7 +674,7 @@ static void adsp_tx_callback(int port, INT32 data)
 
 /*************************************
  *
- *	Unknown accesses
+ *  Unknown accesses
  *
  *************************************/
 
@@ -737,7 +737,7 @@ static WRITE32_HANDLER( led_1_020_w ) { if ((mem_mask & 0xffff) != 0xffff) led_1
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -819,7 +819,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -833,7 +833,7 @@ INPUT_PORTS_START( surfplnt )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )	// checked
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )	// start
-	
+
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -853,7 +853,7 @@ INPUT_PORTS_START( surfplnt )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	
+
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
 INPUT_PORTS_END
@@ -869,7 +869,7 @@ INPUT_PORTS_START( radikalb )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )	// brake
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 )	// accel
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )	// start
-	
+
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -889,7 +889,7 @@ INPUT_PORTS_START( radikalb )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	
+
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
 INPUT_PORTS_END
@@ -898,7 +898,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -912,12 +912,12 @@ static struct tms32031_config tms_config =
 
 
 MACHINE_DRIVER_START( gaelco3d )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 15000000)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(vblank_gen, 1)
-	
+
 	MDRV_CPU_ADD_TAG("tms", TMS32031, 60000000)
 	MDRV_CPU_PROGRAM_MAP(tms_map,0)
 	MDRV_CPU_CONFIG(tms_config)
@@ -926,13 +926,13 @@ MACHINE_DRIVER_START( gaelco3d )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(adsp_program_map,0)
 	MDRV_CPU_DATA_MAP(adsp_data_map, 0)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(gaelco3d)
 	MDRV_NVRAM_HANDLER(gaelco3d)
-	
+
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
@@ -943,7 +943,7 @@ MACHINE_DRIVER_START( gaelco3d )
 
 	MDRV_VIDEO_START(gaelco3d)
 	MDRV_VIDEO_UPDATE(gaelco3d)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -963,7 +963,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( gaelco3d2 )
 	MDRV_IMPORT_FROM(gaelco3d)
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_REPLACE("main", M68EC020, 25000000)
 	MDRV_CPU_PROGRAM_MAP(main020_map,0)
@@ -977,7 +977,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -985,10 +985,10 @@ ROM_START( speedup )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "ic10.bin", 0x000000, 0x80000, CRC(07e70bae) SHA1(17013d859ec075e12518b094040a056d850b3271) )
 	ROM_LOAD16_BYTE( "ic15.bin", 0x000001, 0x80000, CRC(7947c28d) SHA1(46efb56d0f7fe2e92d0d04dcd2f130aef3be436d) )
-	
+
 	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )	/* ADSP-2115 code & data */
 	ROM_LOAD( "ic25.bin", 0x0000000, 0x400000, BAD_DUMP CRC(7d5b6975) SHA1(d92e064abb09a1a5a5f9f9ac6b165c82844668c8) )
-	
+
 	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 )
 	ROM_LOAD32_WORD( "ic33.bin", 0x000000, 0x400000, BAD_DUMP CRC(1e578fce) SHA1(233546494e040a58c1ca818c6802a7932f5c4264) )
 	ROM_LOAD32_WORD( "ic32.bin", 0x000002, 0x400000, BAD_DUMP CRC(a1f9f6ed) SHA1(eff4d2dfa6fa1a51c1f1799de62995405e4dba4c) )
@@ -1005,8 +1005,8 @@ ROM_START( speedup )
 	ROM_LOAD( "ic34.bin", 0x0000000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
 	ROM_LOAD( "ic35.bin", 0x0020000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
 	/* these 2 are copies of the previous 2 */
-//	ROM_LOAD( "ic42.bin", 0x0000000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
-//	ROM_LOAD( "ic43.bin", 0x0020000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
+//  ROM_LOAD( "ic42.bin", 0x0000000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
+//  ROM_LOAD( "ic43.bin", 0x0020000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
 ROM_END
 
 
@@ -1016,10 +1016,10 @@ ROM_START( surfplnt )
 	ROM_LOAD16_BYTE( "surfplnt.u11", 0x000001, 0x80000, CRC(99211d2d) SHA1(dee5b157489ce9c6988c8eec92fa91fff60d521c) )
 	ROM_LOAD16_BYTE( "surfplnt.u8",  0x100000, 0x80000, CRC(aef9e1d0) SHA1(15258e62fbf61e21e7d77aa7a81fdbf842fd4560) )
 	ROM_LOAD16_BYTE( "surfplnt.u13", 0x100001, 0x80000, CRC(d9754369) SHA1(0d82569cb925402a9f4634e52f15435112ec4878) )
-	
+
 	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )	/* ADSP-2115 code & data */
 	ROM_LOAD( "pls.18", 0x0000000, 0x400000, CRC(a1b64695) SHA1(7487cd51305e30a5b55aada0bae9161fcb3fcd19) )
-	
+
 	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 )
 	ROM_LOAD32_WORD( "pls.40", 0x000000, 0x400000, CRC(26877ad3) SHA1(2e0c15b0e060e0b3d5b5cdaf1e22b9ec8e1abc9a) )
 	ROM_LOAD32_WORD( "pls.37", 0x000002, 0x400000, CRC(75893062) SHA1(81f10243336a309f8cc8532ee9a130ecc35bbcd6) )
@@ -1038,10 +1038,10 @@ ROM_START( surfplnt )
 	ROM_LOAD( "surfplnt.u21", 0x0040000, 0x020000, CRC(b80611fb) SHA1(70d6767ddfb04e94cf2796e3f7090f89fd36fe8c) )
 	ROM_LOAD( "surfplnt.u22", 0x0060000, 0x020000, CRC(ccf88f7e) SHA1(c6a3bb9d6cf14a93a36ed20a47b7c068ccd630aa) )
 	/* these 4 are copies of the previous 4 */
-//	ROM_LOAD( "surfplnt.u27", 0x0000000, 0x020000, CRC(691bd7a7) SHA1(2ff404b3974a64097372ed15fb5fbbe52c503265) )
-//	ROM_LOAD( "surfplnt.u28", 0x0020000, 0x020000, CRC(fb293318) SHA1(d255fe3db1b91ec7cc744b0158e70503bca5ceab) )
-//	ROM_LOAD( "surfplnt.u29", 0x0040000, 0x020000, CRC(b80611fb) SHA1(70d6767ddfb04e94cf2796e3f7090f89fd36fe8c) )
-//	ROM_LOAD( "surfplnt.u30", 0x0060000, 0x020000, CRC(ccf88f7e) SHA1(c6a3bb9d6cf14a93a36ed20a47b7c068ccd630aa) )
+//  ROM_LOAD( "surfplnt.u27", 0x0000000, 0x020000, CRC(691bd7a7) SHA1(2ff404b3974a64097372ed15fb5fbbe52c503265) )
+//  ROM_LOAD( "surfplnt.u28", 0x0020000, 0x020000, CRC(fb293318) SHA1(d255fe3db1b91ec7cc744b0158e70503bca5ceab) )
+//  ROM_LOAD( "surfplnt.u29", 0x0040000, 0x020000, CRC(b80611fb) SHA1(70d6767ddfb04e94cf2796e3f7090f89fd36fe8c) )
+//  ROM_LOAD( "surfplnt.u30", 0x0060000, 0x020000, CRC(ccf88f7e) SHA1(c6a3bb9d6cf14a93a36ed20a47b7c068ccd630aa) )
 ROM_END
 
 
@@ -1051,10 +1051,10 @@ ROM_START( radikalb )
 	ROM_LOAD32_BYTE( "rab.12", 0x000001, 0x80000, CRC(26199506) SHA1(1b7b44895aa296eab8061ae85cbb5b0d30119dc7) )
 	ROM_LOAD32_BYTE( "rab.14", 0x000002, 0x80000, CRC(4a0ac8cb) SHA1(4883e5eddb833dcd39376be435aa8e8e2ec47ab5) )
 	ROM_LOAD32_BYTE( "rab.19", 0x000003, 0x80000, CRC(2631bd61) SHA1(57331ad49e7284b82073f696049de109b7683b03) )
-	
+
 	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )	/* ADSP-2115 code & data */
 	ROM_LOAD( "rab.23", 0x0000000, 0x400000, CRC(dcf52520) SHA1(ab54421c182436660d2a56a334c1aa335424644a) )
-	
+
 	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 )
 	ROM_LOAD32_WORD( "rab.48", 0x000000, 0x400000, CRC(9c56a06a) SHA1(54f12d8b55fa14446c47e31684c92074c4157fe1) )
 	ROM_LOAD32_WORD( "rab.45", 0x000002, 0x400000, CRC(7e698584) SHA1(a9423835a126396902c499e9f7df3b68c2ab28a8) )
@@ -1078,17 +1078,17 @@ ROM_START( radikalb )
 	ROM_LOAD( "rab.26", 0x0040000, 0x020000, CRC(bd9c1b54) SHA1(c9ef679cf7eca9ed315ea62a7ada452bc85f7a6a) )
 	ROM_LOAD( "rab.27", 0x0060000, 0x020000, CRC(bbcf6977) SHA1(0282c8ba79c35ed1240711d5812bfb590d151738) )
 	/* these 4 are copies of the previous 4 */
-//	ROM_LOAD( "rab.32", 0x0000000, 0x020000, CRC(2984bc1d) SHA1(1f62bdaa86feeff96640e325f8241b9c5f383a44) )
-//	ROM_LOAD( "rab.33", 0x0020000, 0x020000, CRC(777758e3) SHA1(bd334b1ba46189ac8509eee3a4ab295c121400fd) )
-//	ROM_LOAD( "rab.34", 0x0040000, 0x020000, CRC(bd9c1b54) SHA1(c9ef679cf7eca9ed315ea62a7ada452bc85f7a6a) )
-//	ROM_LOAD( "rab.35", 0x0060000, 0x020000, CRC(bbcf6977) SHA1(0282c8ba79c35ed1240711d5812bfb590d151738) )
+//  ROM_LOAD( "rab.32", 0x0000000, 0x020000, CRC(2984bc1d) SHA1(1f62bdaa86feeff96640e325f8241b9c5f383a44) )
+//  ROM_LOAD( "rab.33", 0x0020000, 0x020000, CRC(777758e3) SHA1(bd334b1ba46189ac8509eee3a4ab295c121400fd) )
+//  ROM_LOAD( "rab.34", 0x0040000, 0x020000, CRC(bd9c1b54) SHA1(c9ef679cf7eca9ed315ea62a7ada452bc85f7a6a) )
+//  ROM_LOAD( "rab.35", 0x0060000, 0x020000, CRC(bbcf6977) SHA1(0282c8ba79c35ed1240711d5812bfb590d151738) )
 ROM_END
 
 
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -1097,12 +1097,12 @@ static DRIVER_INIT( gaelco3d )
 	UINT8 *src, *dst;
 	int x, y;
 
-	/* compute the mask offset and size */	
+	/* compute the mask offset and size */
 	gaelco3d_mask_offset = memory_region_length(REGION_USER4);
 	gaelco3d_mask_size = memory_region_length(REGION_USER5) * 8;
 	if (memory_region_length(REGION_USER3) < gaelco3d_mask_offset + gaelco3d_mask_size)
 		osd_die("REGION_USER3 must be 0x%08X bytes or greater!\n", gaelco3d_mask_offset + gaelco3d_mask_size);
-	
+
 	/* first expand the pixel data */
 	src = memory_region(REGION_USER4);
 	dst = memory_region(REGION_USER3);
@@ -1127,7 +1127,7 @@ static DRIVER_INIT( gaelco3d )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

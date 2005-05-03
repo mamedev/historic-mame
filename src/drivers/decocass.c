@@ -1,6 +1,6 @@
 /***********************************************************************
 
-	DECO Cassette System driver
+    DECO Cassette System driver
 
 (01) Highway Chase (12/80)
 (02) Sengoku Ninja tai (12/80)
@@ -60,7 +60,7 @@
 
 /***************************************************************************
  *
- *	write decrypted opcodes
+ *  write decrypted opcodes
  *
  ***************************************************************************/
 
@@ -729,7 +729,7 @@ ROM_START( decocass )
 ROM_END
 
 /* The Following use Dongle Type 1 (DE-0061)
-    (dongle data same for each game)		 */
+    (dongle data same for each game)         */
 
 ROM_START( ctsttape )
 	DECOCASS_COMMON_ROMS
@@ -860,7 +860,7 @@ ROM_START( cprogolf )
 ROM_END
 
 /* The Following use Dongle Type 2 (CS82-007)
-    (dongle data differs for each game)		 */
+    (dongle data differs for each game)      */
 
 ROM_START( cmissnx )
 	DECOCASS_COMMON_ROMS
@@ -913,7 +913,7 @@ ROM_START( ctornado )
 ROM_END
 
 /* The Following use Dongle Type 3 (unknown part number?)
-    (dongle data differs for each game)		 */
+    (dongle data differs for each game)      */
 
 ROM_START( cburnrub )
 	DECOCASS_COMMON_ROMS
@@ -1089,12 +1089,12 @@ ROM_START( cscrtry2 )
 ROM_END
 
 /* The Following use Dongle Type 5 (unknown part number?)
-    (dongle data not read)		 */
+    (dongle data not read)       */
 
 ROM_START( cbdash )
 	DECOCASS_COMMON_ROMS
 
-/*	ROM_REGION( 0x01000, REGION_USER1, 0 ) */ /* (max) 4k for dongle data */
+/*  ROM_REGION( 0x01000, REGION_USER1, 0 ) */ /* (max) 4k for dongle data */
 	/* no proms */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
@@ -1102,7 +1102,7 @@ ROM_START( cbdash )
 ROM_END
 
 /* The Following have unknown Dongles
-    (dongle data not read)		 */
+    (dongle data not read)       */
 
 ROM_START( chwy )
 	DECOCASS_COMMON_ROMS
@@ -1150,43 +1150,43 @@ static DRIVER_INIT( decocass )
 	decocass_video_state_save_init();
 }
 
-GAMEBX( 1981, decocass, 0,       decocass, decocass, decocass, decocass, ROT270, "DECO", "Cassette System", NOT_A_DRIVER )
-GAMEB ( 1981, ctsttape, decocass, decocass, ctsttape, decocass, decocass, ROT270, "DECO", "Test Tape (Cassette)" )
-GAMEB ( 1981, clocknch, decocass, decocass, clocknch, decocass, decocass, ROT270, "DECO", "Lock'n'Chase (Cassette)" )
-GAMEBX( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 1)", GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 2)", GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
-GAMEB ( 1981, csuperas, decocass, decocass, csuperas, decocass, decocass, ROT270, "DECO", "Super Astro Fighter (Cassette)" )
-GAMEB ( 1981, castfant, decocass, decocass, castfant, decocass, decocass, ROT270, "DECO", "Astro Fantasia (Cassette)" )
-GAMEB ( 1981, cluckypo, decocass, decocass, cluckypo, decocass, decocass, ROT270, "DECO", "Lucky Poker (Cassette)" )
-GAMEB ( 1981, cterrani, decocass, decocass, cterrani, decocass, decocass, ROT270, "DECO", "Terranean (Cassette)" )
-GAMEBX( 1982, cexplore, decocass, decocass, cexplore, decocass, decocass, ROT270, "DECO", "Explorer (Cassette)", GAME_NOT_WORKING )
-GAMEB ( 1981, cprogolf, decocass, decocass, cprogolf, decocass, decocass, ROT270, "DECO", "Pro Golf (Cassette)" )
-GAMEB ( 1982, cmissnx,  decocass, decocass, cmissnx,  decocass, decocass, ROT270, "DECO", "Mission-X (Cassette)" )
-GAMEB ( 1982, cdiscon1, decocass, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Disco No.1 (Cassette)" )
-GAMEB ( 1982, csweetht, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Sweet Heart (Cassette)" )
-GAMEB ( 1982, cptennis, decocass, decocass, cptennis, decocass, decocass, ROT270, "DECO", "Pro Tennis (Cassette)" )
-GAMEB ( 1982, ctornado, decocass, decocass, ctornado, decocass, decocass, ROT270, "DECO", "Tornado (Cassette)" )
-GAMEB ( 1982, cburnrub, decocass, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 1)" )
-GAMEB ( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 2)" )
-GAMEB ( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "DECO", "Bump N Jump (Cassette)" )
-GAMEB ( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "DECO", "Burger Time (Cassette)" )
-GAMEB ( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
-GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
-GAMEB ( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
-GAMEB ( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
-GAMEB ( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "DECO", "Fighting Ice Hockey (Cassette)" )
-GAMEB ( 1983, cprobowl, decocass, decocass, cprobowl, decocass, decocass, ROT270, "DECO", "Pro Bowling (Cassette)" )
-GAMEB ( 1983, cnightst, decocass, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 1)" )
-GAMEB ( 1983, cnights2, cnightst, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 2)" )
-GAMEB ( 1983, cprosocc, decocass, decocass, cprosocc, decocass, decocass, ROT270, "DECO", "Pro Soccer (Cassette)" )
-GAMEB ( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 1)" )
-GAMEB ( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
-GAMEB ( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 1)" )
-GAMEB ( 1984, cscrtry2, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 2)" )
-GAMEB ( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "DECO", "Flying Ball? (Cassette)" )
-GAMEB ( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "DECO", "Boulder Dash (Cassette)" )
+GAMEBX( 1981, decocass, 0,       decocass, decocass, decocass, decocass, ROT270, "Data East Corporation", "Cassette System", NOT_A_DRIVER )
+GAMEB ( 1981, ctsttape, decocass, decocass, ctsttape, decocass, decocass, ROT270, "Data East Corporation", "Test Tape (Cassette)" )
+GAMEB ( 1981, clocknch, decocass, decocass, clocknch, decocass, decocass, ROT270, "Data East Corporation", "Lock'n'Chase (Cassette)" )
+GAMEBX( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 2)", GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
+GAMEB ( 1981, csuperas, decocass, decocass, csuperas, decocass, decocass, ROT270, "Data East Corporation", "Super Astro Fighter (Cassette)" )
+GAMEB ( 1981, castfant, decocass, decocass, castfant, decocass, decocass, ROT270, "Data East Corporation", "Astro Fantasia (Cassette)" )
+GAMEB ( 1981, cluckypo, decocass, decocass, cluckypo, decocass, decocass, ROT270, "Data East Corporation", "Lucky Poker (Cassette)" )
+GAMEB ( 1981, cterrani, decocass, decocass, cterrani, decocass, decocass, ROT270, "Data East Corporation", "Terranean (Cassette)" )
+GAMEBX( 1982, cexplore, decocass, decocass, cexplore, decocass, decocass, ROT270, "Data East Corporation", "Explorer (Cassette)", GAME_NOT_WORKING )
+GAMEB ( 1981, cprogolf, decocass, decocass, cprogolf, decocass, decocass, ROT270, "Data East Corporation", "Pro Golf (Cassette)" )
+GAMEB ( 1982, cmissnx,  decocass, decocass, cmissnx,  decocass, decocass, ROT270, "Data East Corporation", "Mission-X (Cassette)" )
+GAMEB ( 1982, cdiscon1, decocass, decocass, cdiscon1, decocass, decocass, ROT270, "Data East Corporation", "Disco No.1 (Cassette)" )
+GAMEB ( 1982, csweetht, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "Data East Corporation", "Sweet Heart (Cassette)" )
+GAMEB ( 1982, cptennis, decocass, decocass, cptennis, decocass, decocass, ROT270, "Data East Corporation", "Pro Tennis (Cassette)" )
+GAMEB ( 1982, ctornado, decocass, decocass, ctornado, decocass, decocass, ROT270, "Data East Corporation", "Tornado (Cassette)" )
+GAMEB ( 1982, cburnrub, decocass, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 1)" )
+GAMEB ( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 2)" )
+GAMEB ( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "Data East Corporation", "Bump N Jump (Cassette)" )
+GAMEB ( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "Data East Corporation", "Burger Time (Cassette)" )
+GAMEB ( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
+GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
+GAMEB ( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
+GAMEB ( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
+GAMEB ( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "Data East Corporation", "Fighting Ice Hockey (Cassette)" )
+GAMEB ( 1983, cprobowl, decocass, decocass, cprobowl, decocass, decocass, ROT270, "Data East Corporation", "Pro Bowling (Cassette)" )
+GAMEB ( 1983, cnightst, decocass, decocass, cnightst, decocass, decocass, ROT270, "Data East Corporation", "Night Star (Cassette, set 1)" )
+GAMEB ( 1983, cnights2, cnightst, decocass, cnightst, decocass, decocass, ROT270, "Data East Corporation", "Night Star (Cassette, set 2)" )
+GAMEB ( 1983, cprosocc, decocass, decocass, cprosocc, decocass, decocass, ROT270, "Data East Corporation", "Pro Soccer (Cassette)" )
+GAMEB ( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270, "Data East Corporation", "Peter Pepper's Ice Cream Factory (Cassette, set 1)" )
+GAMEB ( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "Data East Corporation", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
+GAMEB ( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "Data East Corporation", "Scrum Try (Cassette, set 1)" )
+GAMEB ( 1984, cscrtry2, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "Data East Corporation", "Scrum Try (Cassette, set 2)" )
+GAMEB ( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "Data East Corporation", "Flying Ball? (Cassette)" )
+GAMEB ( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "Data East Corporation", "Boulder Dash (Cassette)" )
 
 /* The following may be missing dongle data if they're not Type 1 */
-GAMEBX( 1985, chwy,     decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
-GAMEBX( 1985, czeroize, decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Zeroize? (Cassette)", GAME_NOT_WORKING )
+GAMEBX( 1985, chwy,     decocass, decocass, decocass,   decocass, decocass, ROT270, "Data East Corporation", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
+GAMEBX( 1985, czeroize, decocass, decocass, decocass,   decocass, decocass, ROT270, "Data East Corporation", "Zeroize? (Cassette)", GAME_NOT_WORKING )

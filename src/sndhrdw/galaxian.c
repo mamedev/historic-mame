@@ -186,10 +186,10 @@ static void galaxian_sh_start(void)
 #endif
 
 	/*
-	 * The RNG shifter is clocked with RNG_RATE, bit 17 is
-	 * latched every 2V cycles (every 2nd scanline).
-	 * This signal is used as a noise source.
-	 */
+     * The RNG shifter is clocked with RNG_RATE, bit 17 is
+     * latched every 2V cycles (every 2nd scanline).
+     * This signal is used as a noise source.
+     */
 	generator = 0;
 	countdown = NOISE_RATE / 2;
 	for( i = 0; i < NOISE_LENGTH; i++ )
@@ -228,15 +228,15 @@ static void galaxian_sh_start(void)
 #define NOISE_L 0.2   /* 7474 L level */
 #define NOISE_H 4.5   /* 7474 H level */
 /*
-	key on/off time is programmable
-	Therefore,  it is necessary to make separate sample with key on/off.
-	And,  calculate the playback point according to the voltage of c28.
+    key on/off time is programmable
+    Therefore,  it is necessary to make separate sample with key on/off.
+    And,  calculate the playback point according to the voltage of c28.
 */
 #define SHOOT_KEYON_TIME 0.1  /* second */
 /*
-	NE555-FM input calculation is wrong.
-	The frequency is not proportional to the voltage of FM input.
-	And,  duty will be changed,too.
+    NE555-FM input calculation is wrong.
+    The frequency is not proportional to the voltage of FM input.
+    And,  duty will be changed,too.
 */
 #define NE555_FM_ADJUST_RATE 0.80
 		/* discharge : 100K * 1uF */
@@ -298,16 +298,16 @@ static void galaxian_sh_start(void)
 	}
 #else
 	/*
-	 * Ra is 10k, Rb is 22k, C is 0.01uF
-	 * charge time t1 = 0.693 * (Ra + Rb) * C -> 221.76us
-	 * discharge time t2 = 0.693 * (Rb) *  C -> 152.46us
-	 * average period 374.22us -> 2672Hz
-	 * I use an array of 10 values to define some points
-	 * of the charge/discharge curve. The wave is modulated
-	 * using the charge/discharge timing of C28, a 47uF capacitor,
-	 * over a 2k2 resistor. This will change the frequency from
-	 * approx. Favg-Favg/3 up to Favg+Favg/3 down to Favg-Favg/3 again.
-	 */
+     * Ra is 10k, Rb is 22k, C is 0.01uF
+     * charge time t1 = 0.693 * (Ra + Rb) * C -> 221.76us
+     * discharge time t2 = 0.693 * (Rb) *  C -> 152.46us
+     * average period 374.22us -> 2672Hz
+     * I use an array of 10 values to define some points
+     * of the charge/discharge curve. The wave is modulated
+     * using the charge/discharge timing of C28, a 47uF capacitor,
+     * over a 2k2 resistor. This will change the frequency from
+     * approx. Favg-Favg/3 up to Favg+Favg/3 down to Favg-Favg/3 again.
+     */
 	sweep = 100;
 	charge = +2;
 	countdown = sweep / 2;
@@ -321,9 +321,9 @@ static void galaxian_sh_start(void)
 		shootwave[i] = charge_discharge[j];
 		LOG(("shoot[%5d] $%04x (sweep: %3d, j:%d)\n", i, shootwave[i] & 0xffff, sweep, j));
 		/*
-		 * The current sweep and a 2200/10000 fraction (R45 and R48)
-		 * of the noise are frequency modulating the NE555 chip.
-		 */
+         * The current sweep and a 2200/10000 fraction (R45 and R48)
+         * of the noise are frequency modulating the NE555 chip.
+         */
 		countdown -= sweep + noisewave[i % NOISE_LENGTH] / (2200*NOISE_AMPLITUDE/10000);
 		while( countdown < 0 )
 		{
@@ -349,8 +349,8 @@ static void galaxian_sh_start(void)
 		double r0b = 1.0/1e12, r1b = 1.0/1e12;
 
 		/* #0: VOL1=0 and VOL2=0
-		 * only the 33k and the 22k resistors R51 and R50
-		 */
+         * only the 33k and the 22k resistors R51 and R50
+         */
 		if( i & 1 )
 		{
 			r1a += 1.0/33000;
@@ -374,8 +374,8 @@ static void galaxian_sh_start(void)
 		tonewave[0][i] = V(1.0/r0a, 1.0/r1a);
 
 		/* #1: VOL1=1 and VOL2=0
-		 * add the 10k resistor R49 for bit QC
-		 */
+         * add the 10k resistor R49 for bit QC
+         */
 		if( i & 4 )
 			r1a += 1.0/10000;
 		else
@@ -383,8 +383,8 @@ static void galaxian_sh_start(void)
 		tonewave[1][i] = V(1.0/r0a, 1.0/r1a);
 
 		/* #2: VOL1=0 and VOL2=1
-		 * add the 15k resistor R52 for bit QD
-		 */
+         * add the 15k resistor R52 for bit QD
+         */
 		if( i & 8 )
 			r1b += 1.0/15000;
 		else
@@ -392,8 +392,8 @@ static void galaxian_sh_start(void)
 		tonewave[2][i] = V(1.0/r0b, 1.0/r1b);
 
 		/* #3: VOL1=1 and VOL2=1
-		 * add the 10k resistor R49 for QC
-		 */
+         * add the 10k resistor R49 for QC
+         */
 		if( i & 4 )
 			r0b += 1.0/10000;
 		else
@@ -454,17 +454,17 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 		return;
 
 	/*
-	 * NE555 9R is setup as astable multivibrator
-	 * - this circuit looks LINEAR RAMP V-F converter
-	   I  = 1/Re * ( R1/(R1+R2)-Vbe)
-	   td = (2/3VCC*Re*(R1+R2)*C) / (R1*VCC-Vbe*(R1+R2))
-	  parts assign
-	   R1  : (R15* L1)|(R16* L2)|(R17* L3)|(R18* L1)
-	   R2  : (R15*~L1)|(R16*~L2)|(R17*~L3)|(R18*~L4)|R??(330K)
-	   Re  : R21(100K)
-	   Vbe : Q2(2SA1015)-Vbe
-	 * - R20(15K) and Q1 is unknown,maybe current booster.
-	*/
+     * NE555 9R is setup as astable multivibrator
+     * - this circuit looks LINEAR RAMP V-F converter
+       I  = 1/Re * ( R1/(R1+R2)-Vbe)
+       td = (2/3VCC*Re*(R1+R2)*C) / (R1*VCC-Vbe*(R1+R2))
+      parts assign
+       R1  : (R15* L1)|(R16* L2)|(R17* L3)|(R18* L1)
+       R2  : (R15*~L1)|(R16*~L2)|(R17*~L3)|(R18*~L4)|R??(330K)
+       Re  : R21(100K)
+       Vbe : Q2(2SA1015)-Vbe
+     * - R20(15K) and Q1 is unknown,maybe current booster.
+    */
 
 	lfobit[offset] = data & 1;
 
@@ -501,16 +501,16 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 		return;
 
 	/*
-	 * NE555 9R is setup as astable multivibrator
-	 * - Ra is between 100k and ??? (open?)
-	 * - Rb is zero here (bridge between pins 6 and 7)
-	 * - C is 1uF
-	 * charge time t1 = 0.693 * (Ra + Rb) * C
-	 * discharge time t2 = 0.693 * (Rb) *  C
-	 * period T = t1 + t2 = 0.693 * (Ra + 2 * Rb) * C
-	 * -> min period: 0.693 * 100 kOhm * 1uF -> 69300 us = 14.4Hz
-	 * -> max period: no idea, since I don't know the max. value for Ra :(
-	 */
+     * NE555 9R is setup as astable multivibrator
+     * - Ra is between 100k and ??? (open?)
+     * - Rb is zero here (bridge between pins 6 and 7)
+     * - C is 1uF
+     * charge time t1 = 0.693 * (Ra + Rb) * C
+     * discharge time t2 = 0.693 * (Rb) *  C
+     * period T = t1 + t2 = 0.693 * (Ra + 2 * Rb) * C
+     * -> min period: 0.693 * 100 kOhm * 1uF -> 69300 us = 14.4Hz
+     * -> max period: no idea, since I don't know the max. value for Ra :(
+     */
 
 	lfobit[offset] = data & 1;
 
@@ -559,14 +559,14 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 static void galaxian_sh_update(int dummy)
 {
 	/*
-	 * NE555 8R, 8S and 8T are used as pulse position modulators
-	 * FS1 Ra=100k, Rb=470k and C=0.01uF
-	 *	-> 0.693 * 1040k * 0.01uF -> 7207.2us = 139Hz
-	 * FS2 Ra=100k, Rb=330k and C=0.01uF
-	 *	-> 0.693 * 760k * 0.01uF -> 5266.8us = 190Hz
-	 * FS2 Ra=100k, Rb=220k and C=0.01uF
-	 *	-> 0.693 * 540k * 0.01uF -> 3742.2us = 267Hz
-	 */
+     * NE555 8R, 8S and 8T are used as pulse position modulators
+     * FS1 Ra=100k, Rb=470k and C=0.01uF
+     *  -> 0.693 * 1040k * 0.01uF -> 7207.2us = 139Hz
+     * FS2 Ra=100k, Rb=330k and C=0.01uF
+     *  -> 0.693 * 760k * 0.01uF -> 5266.8us = 190Hz
+     * FS2 Ra=100k, Rb=220k and C=0.01uF
+     *  -> 0.693 * 540k * 0.01uF -> 3742.2us = 267Hz
+     */
 
 	sample_set_freq(CHANNEL_LFO+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
 	sample_set_freq(CHANNEL_LFO+1, sizeof(backgroundwave)*freq*(100+2*330)/(100+2*470) );

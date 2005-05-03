@@ -6,16 +6,16 @@
 UINT32 opBRK(void)
 {
 /*
-	UPDATEPSW();
+    UPDATEPSW();
 
-	SP -=4;
-	MemWrite32(SP, 0x0d00);
-	SP -=4;
-	MemWrite32(SP, PSW);
-	SP -=4;
-	MemWrite32(SP, PC + 1);
-	PC = GETINTVECT(13);
-	ChangePC(PC);
+    SP -=4;
+    MemWrite32(SP, 0x0d00);
+    SP -=4;
+    MemWrite32(SP, PSW);
+    SP -=4;
+    MemWrite32(SP, PC + 1);
+    PC = GETINTVECT(13);
+    ChangePC(PC);
 */
 	logerror("Skipping BRK opcode! PC=%x", PC);
 
@@ -84,8 +84,7 @@ UINT32 opTRAPFL(void)
 	if ((TKCW & 0x1F0) & ((PSW & 0x1F00) >> 4))
 	{
 		// @@@ FPU exception
-		logerror("Hit TRAPFL! PC=%x\n", PC);
-		abort();
+		osd_die("Hit TRAPFL! PC=%x\n", PC);
 	}
 
 	return 1;

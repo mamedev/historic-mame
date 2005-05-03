@@ -1,27 +1,27 @@
 /***************************************************************************
 
-	Konami 005289 - SCC sound as used in Bubblesystem
+    Konami 005289 - SCC sound as used in Bubblesystem
 
-	This file is pieced together by Bryan McPhail from a combination of
-	Namco Sound, Amuse by Cab, Nemesis schematics and whoever first
-	figured out SCC!
+    This file is pieced together by Bryan McPhail from a combination of
+    Namco Sound, Amuse by Cab, Nemesis schematics and whoever first
+    figured out SCC!
 
-	The 005289 is a 2 channel sound generator, each channel gets it's
-	waveform from a prom (4 bits wide).
+    The 005289 is a 2 channel sound generator, each channel gets it's
+    waveform from a prom (4 bits wide).
 
-	(From Nemesis schematics)
+    (From Nemesis schematics)
 
-	Address lines A0-A4 of the prom run to the 005289, giving 32 bytes
-	per waveform.  Address lines A5-A7 of the prom run to PA5-PA7 of
-	the AY8910 control port A, giving 8 different waveforms. PA0-PA3
-	of the AY8910 control volume.
+    Address lines A0-A4 of the prom run to the 005289, giving 32 bytes
+    per waveform.  Address lines A5-A7 of the prom run to PA5-PA7 of
+    the AY8910 control port A, giving 8 different waveforms. PA0-PA3
+    of the AY8910 control volume.
 
-	The second channel is the same as above except port B is used.
+    The second channel is the same as above except port B is used.
 
-	The 005289 has no data bus, so data values written don't matter.
+    The 005289 has no data bus, so data values written don't matter.
 
-	There are 4 unknown pins, LD1, LD2, TG1, TG2.  Two of them look to be
-	the selector for changing frequency.  The other two seem unused.
+    There are 4 unknown pins, LD1, LD2, TG1, TG2.  Two of them look to be
+    the selector for changing frequency.  The other two seem unused.
 
 ***************************************************************************/
 
@@ -156,7 +156,7 @@ static void *k005289_start(int sndindex, int clock, const void *config)
 	k005289_sound_channel *voice;
 	const struct k005289_interface *intf = config;
 	struct k005289_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 	voice = info->channel_list;

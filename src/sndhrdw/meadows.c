@@ -1,9 +1,9 @@
 /***************************************************************************
-	meadows.c
-	Sound handler
-	Dead Eye, Gypsy Juggler
+    meadows.c
+    Sound handler
+    Dead Eye, Gypsy Juggler
 
-	J. Buchmueller, June '98
+    J. Buchmueller, June '98
 ****************************************************************************/
 
 #include "driver.h"
@@ -35,7 +35,7 @@ static	int freq2 = 1000;
 static	INT16 waveform[2] = { -120*256, 120*256 };
 
 /************************************/
-/* Sound handler start				*/
+/* Sound handler start              */
 /************************************/
 void meadows_sh_start(void)
 {
@@ -50,7 +50,7 @@ void meadows_sh_start(void)
 }
 
 /************************************/
-/* Sound handler update 			*/
+/* Sound handler update             */
 /************************************/
 void meadows_sh_update(void)
 {
@@ -111,7 +111,7 @@ int preset, amp;
 }
 
 /************************************/
-/* Write DAC value					*/
+/* Write DAC value                  */
 /************************************/
 void meadows_sh_dac_w(int data)
 {

@@ -63,13 +63,13 @@ PALETTE_INIT( zaccaria )
 
 
 		/*
-		  TODO: I'm not sure, but I think that pen 0 must always be black, otherwise
-		  there's some junk brown background in Jack Rabbit.
-		  From the schematics it seems that the background color can be changed, but
-		  I'm not sure where it would be taken from; I think the high bits of
-		  attributesram, but they are always 0 in these games so they would turn out
-		  black anyway.
-		 */
+          TODO: I'm not sure, but I think that pen 0 must always be black, otherwise
+          there's some junk brown background in Jack Rabbit.
+          From the schematics it seems that the background color can be changed, but
+          I'm not sure where it would be taken from; I think the high bits of
+          attributesram, but they are always 0 in these games so they would turn out
+          black anyway.
+         */
 		if (((i % 64) / 8) == 0)
 		{
 			palette_set_color(i,0,0,0);
@@ -226,19 +226,19 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		sect_rect(&clip, &spritevisiblearea);
 
 	/*
-	  TODO: sprites have 32 color codes, but we are using only 8. In Jack
-	  Rabbit the extra codes are all duplicates, but there is a quadruple
-	  of codes in Money Money which contains two different combinations. That
-	  color code seems to be used only by crocodiles, so the one we are picking
-	  seems the correct one (otherwise they would be red).
-	*/
+      TODO: sprites have 32 color codes, but we are using only 8. In Jack
+      Rabbit the extra codes are all duplicates, but there is a quadruple
+      of codes in Money Money which contains two different combinations. That
+      color code seems to be used only by crocodiles, so the one we are picking
+      seems the correct one (otherwise they would be red).
+    */
 
 	/*
-	  TODO: sprite placement is not perfect, I made the Jack Rabbit mouth
-	  animation correct but this moves one pixel to the left the sprite
-	  which masks the holes when you fall in them. The hardware is probably
-	  similar to Amidar, but the code in the Amidar driver is not good either.
-	*/
+      TODO: sprite placement is not perfect, I made the Jack Rabbit mouth
+      animation correct but this moves one pixel to the left the sprite
+      which masks the holes when you fall in them. The hardware is probably
+      similar to Amidar, but the code in the Amidar driver is not good either.
+    */
 	for (offs = 0;offs < spriteram_2_size;offs += 4)
 	{
 		int sx = spriteram_2[offs + 3] + 1;

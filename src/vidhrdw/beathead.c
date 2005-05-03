@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari "Stella on Steroids" hardware
+    Atari "Stella on Steroids" hardware
 
 ****************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -22,7 +22,7 @@ data32_t *	beathead_palette_select;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -41,7 +41,7 @@ static UINT8 *				hsyncram;
 
 /*************************************
  *
- *	Video start/stop
+ *  Video start/stop
  *
  *************************************/
 
@@ -57,7 +57,7 @@ VIDEO_START( beathead )
 
 /*************************************
  *
- *	VRAM handling
+ *  VRAM handling
  *
  *************************************/
 
@@ -108,7 +108,7 @@ WRITE32_HANDLER( beathead_vram_copy_w )
 
 /*************************************
  *
- *	Scroll offset handling
+ *  Scroll offset handling
  *
  *************************************/
 
@@ -129,7 +129,7 @@ WRITE32_HANDLER( beathead_finescroll_w )
 
 /*************************************
  *
- *	Palette handling
+ *  Palette handling
  *
  *************************************/
 
@@ -151,7 +151,7 @@ WRITE32_HANDLER( beathead_palette_w )
 
 /*************************************
  *
- *	HSYNC RAM handling
+ *  HSYNC RAM handling
  *
  *************************************/
 
@@ -187,7 +187,7 @@ WRITE32_HANDLER( beathead_hsync_ram_w )
 
 /*************************************
  *
- *	Scanline updater
+ *  Scanline updater
  *
  *************************************/
 
@@ -210,7 +210,7 @@ void beathead_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main screen refresher
+ *  Main screen refresher
  *
  *************************************/
 

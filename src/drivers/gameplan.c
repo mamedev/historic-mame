@@ -143,8 +143,8 @@ static void via_irq_delayed(int state)
 static void via_irq(int state)
 {
 	/* Kaos sits in a tight loop polling the VIA irq flags register, but that register is
-	   cleared by the irq handler. Therefore, I wait a bit before triggering the irq to
-	   leave time for the program to see the flag change. */
+       cleared by the irq handler. Therefore, I wait a bit before triggering the irq to
+       leave time for the program to see the flag change. */
 	timer_set(TIME_IN_USEC(50), state, via_irq_delayed);
 }
 

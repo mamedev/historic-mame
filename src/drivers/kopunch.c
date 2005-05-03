@@ -46,8 +46,8 @@ static WRITE8_HANDLER( kopunch_lamp_w )
 {
 	set_led_status(0,~data & 0x80);
 
-//	if ((data & 0x7f) != 0x7f)
-//		usrintf_showmessage("port 38 = %02x",data);
+//  if ((data & 0x7f) != 0x7f)
+//      usrintf_showmessage("port 38 = %02x",data);
 }
 
 static WRITE8_HANDLER( kopunch_coin_w )
@@ -55,8 +55,8 @@ static WRITE8_HANDLER( kopunch_coin_w )
 	coin_counter_w(0,~data & 0x80);
 	coin_counter_w(1,~data & 0x40);
 
-//	if ((data & 0x3f) != 0x3f)
-//		usrintf_showmessage("port 34 = %02x",data);
+//  if ((data & 0x3f) != 0x3f)
+//      usrintf_showmessage("port 34 = %02x",data);
 }
 
 
@@ -223,20 +223,20 @@ ROM_END
 
 static DRIVER_INIT( kopunch )
 {
-//	UINT8 *rom = memory_region(REGION_CPU1);
+//  UINT8 *rom = memory_region(REGION_CPU1);
 
 	/* It looks like there is a security chip, that changes instruction of the form:
-		0334: 3E 0C       ld   a,$0C
-		0336: 30 FB       jr   nc,$0333
-	   into something else (maybe just a nop) with the effect of resuming execution
-	   from the operand of the JR  NC instruction (in the example above, 0337).
-	   For now, I'm just patching the affected instructions. */
+        0334: 3E 0C       ld   a,$0C
+        0336: 30 FB       jr   nc,$0333
+       into something else (maybe just a nop) with the effect of resuming execution
+       from the operand of the JR  NC instruction (in the example above, 0337).
+       For now, I'm just patching the affected instructions. */
 
-/*	rom[0x119] = 0;
-	rom[0x336] = 0;
-	rom[0x381] = 0;
-	rom[0xf0b] = 0;
-	rom[0xf33] = 0;*/
+/*  rom[0x119] = 0;
+    rom[0x336] = 0;
+    rom[0x381] = 0;
+    rom[0xf0b] = 0;
+    rom[0xf33] = 0;*/
 }
 
 

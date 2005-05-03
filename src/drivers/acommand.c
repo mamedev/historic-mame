@@ -100,7 +100,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			int w = (spriteram16[offs+0] & 0x0f);
 			int h = ((spriteram16[offs+0] & 0xf0) >> 4);
 			/*Unlike NMK16,the given Y offset is where the sprite must end instead
-			of where it starts.*/
+            of where it starts.*/
 			int sy = (spriteram16[offs+4] & 0x0ff) - ((h+1)*0x10);
 /**/		int pri = spriteram16[offs+5];
 /**/		int flipy = ((spriteram16[offs+1] & 0x0200) >> 9);
@@ -286,56 +286,56 @@ data16_t *ac_devram;
 
 static READ16_HANDLER(ac_devices_r)
 {
-//	usrintf_showmessage("(PC=%06x) read at %04x",activecpu_get_pc(),offset*2);
+//  usrintf_showmessage("(PC=%06x) read at %04x",activecpu_get_pc(),offset*2);
 	switch(offset)
 	{
 		case 0x0008/2:
 			/*
-				--x- ---- ---- ---- Ticket Dispenser - 2
-				---x ---- ---- ---- Ticket Dispenser - 1
-				---- -x-- ---- ---- Right Gun HIT
-				---- ---x ---- ---- Left Gun HIT
-				---- ---- --x- ---- Service Mode (Toggle)
-				---- ---- ---x ---- Service Coin
-				---- ---- ---- x--- COIN2
-				---- ---- ---- -x-- COIN1
-				---- ---- ---- --x- (Activate Test)
-				---- ---- ---- ---x (Advance Thru Tests)
-			*/
+                --x- ---- ---- ---- Ticket Dispenser - 2
+                ---x ---- ---- ---- Ticket Dispenser - 1
+                ---- -x-- ---- ---- Right Gun HIT
+                ---- ---x ---- ---- Left Gun HIT
+                ---- ---- --x- ---- Service Mode (Toggle)
+                ---- ---- ---x ---- Service Coin
+                ---- ---- ---- x--- COIN2
+                ---- ---- ---- -x-- COIN1
+                ---- ---- ---- --x- (Activate Test)
+                ---- ---- ---- ---x (Advance Thru Tests)
+            */
 			return input_port_0_word_r(0,0);
 		case 0x0014/2:
 			/*
-				write 0x40,read (~0x08)
-				write 0x08,read (~0x01)
+                write 0x40,read (~0x08)
+                write 0x08,read (~0x01)
 
-				---- ---- ---- ---x Boss Door - limit switch
-			*/
+                ---- ---- ---- ---x Boss Door - limit switch
+            */
 			return (ac_devram[offset]);
 		case 0x0016/2:
 			return OKIM6295_status_0_r(0);
 		case 0x0018/2:
 			/*
-				---- ---- ---- x--- Astronaut - switch
-			*/
+                ---- ---- ---- x--- Astronaut - switch
+            */
 			return ac_devram[offset];
 		case 0x001a/2:
 			return OKIM6295_status_1_r(0);
 		case 0x0040/2:
 			/*
-				x-x- x-x- x-x- xx-- (ACTIVE HIGH?) [eori #$aaac, D0]
-				---- ---- ---- --xx Boss Door - Motor
-			*/
+                x-x- x-x- x-x- xx-- (ACTIVE HIGH?) [eori #$aaac, D0]
+                ---- ---- ---- --xx Boss Door - Motor
+            */
 			return ac_devram[offset];
 		case 0x0044/2:
 			/*
-				xxxx xxxx x-x- x-x- (ACTIVE HIGH?) [eori #$ffaa, D0]
-			*/
+                xxxx xxxx x-x- x-x- (ACTIVE HIGH?) [eori #$ffaa, D0]
+            */
 			return ac_devram[offset];
 		case 0x005c/2:
 			/*
-				xxxx xxxx ---- ---- DIPSW4
-				---- ---- xxxx xxxx DIPSW3
-			*/
+                xxxx xxxx ---- ---- DIPSW4
+                ---- ---- xxxx xxxx DIPSW3
+            */
 			return input_port_1_word_r(0,0);
 	}
 	return ac_devram[offset];

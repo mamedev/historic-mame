@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
- *	 i8051.h
- *	 Portable MCS-51 Family Emulator
+ *   i8051.h
+ *   Portable MCS-51 Family Emulator
  *
  *   Chips in the family:
  *   8051 Product Line (8031,8051,8751)
@@ -9,22 +9,22 @@
  *   8054 Product Line (8054)
  *   8058 Product Line (8058)
  *
- *	 Copyright (c) 2003 Steve Ellenoff, all rights reserved.
+ *   Copyright (c) 2003 Steve Ellenoff, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   sellenoff@hotmail.com
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     sellenoff@hotmail.com
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
- *	This work is based on:
- *	#1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
+ *  This work is based on:
+ *  #1) 'Intel(tm) MC51 Microcontroller Family Users Manual' and
  *  #2) 8051 simulator by Travis Marlatte
  *  #3) Portable UPI-41/8041/8741/8042/8742 emulator V0.1 by Juergen Buchmueller (MAME CORE)
  *

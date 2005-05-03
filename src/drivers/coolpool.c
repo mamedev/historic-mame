@@ -93,8 +93,8 @@ WRITE16_HANDLER( coolpool_34010_io_register_w )
 
 void coolpool_dpyint_callback(int scanline)
 {
-//	if (scanline < Machine->visible_area.max_y)
-//		force_partial_update(scanline - 1);
+//  if (scanline < Machine->visible_area.max_y)
+//      force_partial_update(scanline - 1);
 }
 
 
@@ -127,7 +127,7 @@ INTERRUPT_GEN( coolpool_vblank_start )
 	cpuintrf_push_context(0);
 
 	/* due to timing issues, we sometimes set the DPYADR just before we get here;
-	   in order to avoid trouncing that value, we look for the last scanline */
+       in order to avoid trouncing that value, we look for the last scanline */
 	if (dpyadrscan < Machine->visible_area.max_y)
 		dpyadr = ~tms34010_io_register_r(REG_DPYSTRT, 0) & 0xfffc;
 	dpyadrscan = 0;
@@ -158,10 +158,10 @@ VIDEO_UPDATE( coolpool )
 	offset = (dpyadr << 4) + dpytap;
 /*
 {
-	static int temp;
-	if (code_pressed(KEYCODE_J) && temp > 0) temp -= 2;
-	else if (code_pressed(KEYCODE_K)) temp += 2;
-	offset = temp;
+    static int temp;
+    if (code_pressed(KEYCODE_J) && temp > 0) temp -= 2;
+    else if (code_pressed(KEYCODE_K)) temp += 2;
+    offset = temp;
 }*/
 
 	/* adjust for when DPYADR was written */
@@ -246,7 +246,7 @@ static WRITE16_HANDLER( coolpool_iop_w )
 
 static READ16_HANDLER( coolpool_iop_r )
 {
-//	logerror("%08x:IOP read %04x\n",activecpu_get_pc(),iop_answer);
+//  logerror("%08x:IOP read %04x\n",activecpu_get_pc(),iop_answer);
 	cpunum_set_input_line(0, 1, CLEAR_LINE);
 
 	return iop_answer;
@@ -255,7 +255,7 @@ static READ16_HANDLER( coolpool_iop_r )
 static READ16_HANDLER( dsp_cmd_r )
 {
 	cmd_pending = 0;
-//	logerror("%08x:IOP cmd_r %04x\n",activecpu_get_pc(),iop_cmd);
+//  logerror("%08x:IOP cmd_r %04x\n",activecpu_get_pc(),iop_cmd);
 	return iop_cmd;
 }
 
@@ -308,7 +308,7 @@ WRITE16_HANDLER( dsp_dac_w )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -322,7 +322,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( amerdart_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)
-//	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(???_w)	DSP reset, coin counters
+//  AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(???_w)    DSP reset, coin counters
 	AM_RANGE(0x05000000, 0x0500000f) AM_WRITE(amerdart_input_w)	// IOP
 	AM_RANGE(0x06000000, 0x06007fff) AM_WRITE(MWA16_RAM)	// NVRAM
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
@@ -348,7 +348,7 @@ static ADDRESS_MAP_START( coolpool_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x01000000, 0x010000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
 	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
-//	{ 0x02000010, 0x0200001f, 				// "IOP"
+//  { 0x02000010, 0x0200001f,               // "IOP"
 	AM_RANGE(0x03000000, 0x03ffffff) AM_READ(coolpool_gfxrom_r)
 	AM_RANGE(0x06000000, 0x06007fff) AM_READ(MRA16_RAM)	// NVRAM
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
@@ -368,7 +368,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( nballsht_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
-//	{ 0x02000010, 0x0200001f, 				// "IOP"
+//  { 0x02000010, 0x0200001f,               // "IOP"
 	AM_RANGE(0x04000000, 0x040000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
 	AM_RANGE(0x06000000, 0x0601ffff) AM_READ(MRA16_RAM)	// more NVRAM?
 	AM_RANGE(0x06020000, 0x0603ffff) AM_READ(MRA16_RAM)	// NVRAM
@@ -417,7 +417,7 @@ static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x00, 0x01) AM_WRITE(dsp_romaddr_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(dsp_answer_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(dsp_dac_w)
-//	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
+//  AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
 ADDRESS_MAP_END
 
 
@@ -425,7 +425,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -550,7 +550,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -568,7 +568,7 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -682,7 +682,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -831,7 +831,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -847,8 +847,8 @@ DRIVER_INIT( coolpool )
 
 	/* remove IOP check */
 	/* the check would pass, but the game crashes afterwards!
-	   Disabling the check effectively disables the IOP communication, so inputs don't
-	   work but the attract mode does. */
+       Disabling the check effectively disables the IOP communication, so inputs don't
+       work but the attract mode does. */
 	code_rom[TOWORD(0xffe02c90-0xffe00000)] = 0x0300;
 	code_rom[TOWORD(0xffe02ca0-0xffe00000)] = 0x0300;
 
@@ -938,7 +938,7 @@ DRIVER_INIT( 9ballsh3 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

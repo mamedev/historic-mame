@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Atari Clay Shoot hardware
+    Atari Clay Shoot hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 

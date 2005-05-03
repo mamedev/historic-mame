@@ -6,8 +6,8 @@ driver by Nicola Salmoria
 
 Yam! Yam!? runs on the same hardware but has a protection device which can
            access RAM at e000. Program writes to e000 and expects a value back
-		   at e001, then jumps to subroutines at e010 and e020. Also, the
-		   player and coin inputs appear magically at e004-e006.
+           at e001, then jumps to subroutines at e010 and e020. Also, the
+           player and coin inputs appear magically at e004-e006.
 
 0000-7fff ROM
 8000-bfff ROM (banked)
@@ -105,12 +105,12 @@ logerror("e000 = %02x\n",RAM[0xe000]);
 	if (data == 0x03)
 	{
 		/*
-		read dip switches
-		3a 00 c0  ld   a,($c000)
-		47        ld   b,a
-		3a 01 c0  ld   a,($c001)
-		c9        ret
-		*/
+        read dip switches
+        3a 00 c0  ld   a,($c000)
+        47        ld   b,a
+        3a 01 c0  ld   a,($c001)
+        c9        ret
+        */
 		RAM[0xe010] = 0x3a;
 		RAM[0xe011] = 0x00;
 		RAM[0xe012] = 0xc0;
@@ -123,14 +123,14 @@ logerror("e000 = %02x\n",RAM[0xe000]);
 	if (data == 0x05)
 	{
 		/*
-		add a to hl
-		c5        push    bc
-		010000    ld      bc,#0000
-		4f        ld      c,a
-		09        add     hl,bc
-		c1        pop     bc
-		c9        ret
-		*/
+        add a to hl
+        c5        push    bc
+        010000    ld      bc,#0000
+        4f        ld      c,a
+        09        add     hl,bc
+        c1        pop     bc
+        c9        ret
+        */
 		RAM[0xe020] = 0xc5;
 		RAM[0xe021] = 0x01;
 		RAM[0xe022] = 0x00;
@@ -140,11 +140,11 @@ logerror("e000 = %02x\n",RAM[0xe000]);
 		RAM[0xe026] = 0xc1;
 		RAM[0xe027] = 0xc9;
 		/*
-		lookup data in table
-		cd20e0    call    #e020
-		7e        ld      a,(hl)
-		c9        ret
-		*/
+        lookup data in table
+        cd20e0    call    #e020
+        7e        ld      a,(hl)
+        c9        ret
+        */
 		RAM[0xe010] = 0xcd;
 		RAM[0xe011] = 0x20;
 		RAM[0xe012] = 0xe0;
@@ -386,18 +386,18 @@ INPUT_PORTS_START( yamyam )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-/*	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) ) */
-/*	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) ) */
-/*	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) ) */
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-/*	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) ) */
-/*	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) ) */
-/*	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) ) */
+/*  PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) ) */
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )

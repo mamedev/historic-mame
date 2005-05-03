@@ -1,6 +1,6 @@
 /****************************************************************************
-*			  real mode i286 emulator v1.4 by Fabrice Frances				*
-*				(initial work based on David Hedley's pcemu)                *
+*             real mode i286 emulator v1.4 by Fabrice Frances               *
+*               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
 #include <stdio.h>
@@ -191,7 +191,7 @@ static void i286_reset (void *param)
 		urinit=0;
 
 		/* this function seams to be called as a result of
-		   cpu_set_reset_line */
+           cpu_set_reset_line */
 		/* If a reset parameter is given, take it as pointer to an address mask */
 		if( param )
 			I.amask = *(unsigned*)param;
@@ -420,7 +420,7 @@ static void i286_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I286_SS:			I.sregs[SS] = info->i;	I.base[SS] = SegBase(SS); break;
 		case CPUINFO_INT_REGISTER + I286_DS:			I.sregs[DS] = info->i;	I.base[DS] = SegBase(DS); break;
 		case CPUINFO_INT_REGISTER + I286_VECTOR:		I.int_vector = info->i; 				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
@@ -446,7 +446,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 8;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 50;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -462,9 +462,9 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = I.prevpc;						break;
 
-		case CPUINFO_INT_PC:							
+		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I286_PC:			info->i = I.pc;							break;
-		case CPUINFO_INT_REGISTER + I286_IP:			info->i = I.pc - I.base[CS];			break;		
+		case CPUINFO_INT_REGISTER + I286_IP:			info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I286_SP:			info->i = I.regs.w[SP];					break;
 		case CPUINFO_INT_REGISTER + I286_FLAGS: 		CompressFlags(); info->i = I.flags;		break;

@@ -1,35 +1,35 @@
 /***************************************************************************
 
-	Data East 32 bit ARM based games:
+    Data East 32 bit ARM based games:
 
-	Captain America
-	Dragon Gun
-	Fighter's History
-	Locked 'N Loaded
-	Tattoo Assassins
+    Captain America
+    Dragon Gun
+    Fighter's History
+    Locked 'N Loaded
+    Tattoo Assassins
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk.  Thank you to Tim,
-	Avedis and Stiletto for many things including work on Fighter's
-	History protection and tracking down Tattoo Assassins!
+    Emulation by Bryan McPhail, mish@tendril.co.uk.  Thank you to Tim,
+    Avedis and Stiletto for many things including work on Fighter's
+    History protection and tracking down Tattoo Assassins!
 
-	Captain America & Fighter's History - reset with both start buttons
-	held down for test mode.  Reset with player 1 start held in Fighter's
-	History for 'Pattern Editor'.
+    Captain America & Fighter's History - reset with both start buttons
+    held down for test mode.  Reset with player 1 start held in Fighter's
+    History for 'Pattern Editor'.
 
-	Tattoo Assassins is a prototype, it is thought only 25 test units
-	were manufactured and distributed to test arcades before the game
-	was recalled.  TA is the only game developed by Data East Pinball
-	in USA, rather than Data East Corporation in Japan.
+    Tattoo Assassins is a prototype, it is thought only 25 test units
+    were manufactured and distributed to test arcades before the game
+    was recalled.  TA is the only game developed by Data East Pinball
+    in USA, rather than Data East Corporation in Japan.
 
-	Tattoo Assassins uses DE Pinball soundboard 520-5077-00 R
+    Tattoo Assassins uses DE Pinball soundboard 520-5077-00 R
 
 
-	Todo:
+    Todo:
 
-	Tattoo Assassins & Dragongun use an unemulated chip (Ace/Jack) for
-	special blending effects.  It's exact effect is unclear.
+    Tattoo Assassins & Dragongun use an unemulated chip (Ace/Jack) for
+    special blending effects.  It's exact effect is unclear.
 
-	Video backgrounds in Dragongun and Lock N Load?
+    Video backgrounds in Dragongun and Lock N Load?
 
 
 
@@ -142,20 +142,20 @@ static READ32_HANDLER( deco32_irq_controller_r )
 
 	case 3: /* Irq controller
 
-		Bit 0:  1 = Vblank active
-		Bit 1:  ? (Hblank active?  Captain America raster IRQ waits for this to go low)
-		Bit 2:
-		Bit 3:
-		Bit 4:	VBL Irq
-		Bit 5:	Raster IRQ
-		Bit 6:	Lightgun IRQ (on Lock N Load only)
-		Bit 7:
-		*/
+        Bit 0:  1 = Vblank active
+        Bit 1:  ? (Hblank active?  Captain America raster IRQ waits for this to go low)
+        Bit 2:
+        Bit 3:
+        Bit 4:  VBL Irq
+        Bit 5:  Raster IRQ
+        Bit 6:  Lightgun IRQ (on Lock N Load only)
+        Bit 7:
+        */
 		if (cpu_getvblank())
 			return 0xffffff80 | 0x1 | 0x10; /* Assume VBL takes priority over possible raster/lightgun irq */
 
 		return 0xffffff80 | cpu_getvblank() | (cpu_getiloops() ? 0x40 : 0x20);
-//		return 0xffffff80 | cpu_getvblank() | (0x40); //test for lock load guns
+//      return 0xffffff80 | cpu_getvblank() | (0x40); //test for lock load guns
 	}
 
 	logerror("%08x: Unmapped IRQ read %08x (%08x)\n",activecpu_get_pc(),offset,mem_mask);
@@ -168,7 +168,7 @@ static WRITE32_HANDLER( deco32_irq_controller_w )
 
 	switch (offset) {
 	case 0: /* IRQ enable - probably an irq mask, but only values used are 0xc8 and 0xca */
-//		logerror("%08x:  IRQ write %d %08x\n",activecpu_get_pc(),offset,data);
+//      logerror("%08x:  IRQ write %d %08x\n",activecpu_get_pc(),offset,data);
 		raster_enable=(data&0xff)==0xc8; /* 0xca seems to be off */
 		break;
 
@@ -193,7 +193,7 @@ static WRITE32_HANDLER( deco32_sound_w )
 static READ32_HANDLER( deco32_71_r )
 {
 	/* Bit 0x80 goes high when sprite DMA is complete, and low
-	while it's in progress, we don't bother to emulate it */
+    while it's in progress, we don't bother to emulate it */
 	return 0xffffffff;
 }
 
@@ -240,7 +240,7 @@ static WRITE32_HANDLER( fghthist_eeprom_w )
 
 static READ32_HANDLER( dragngun_service_r )
 {
-//	logerror("%08x:Read service\n",activecpu_get_pc());
+//  logerror("%08x:Read service\n",activecpu_get_pc());
 	return readinputport(3);
 }
 
@@ -255,7 +255,7 @@ static READ32_HANDLER( lockload_gun_mirror_r )
 
 static READ32_HANDLER( dragngun_prot_r )
 {
-//	logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+//  logerror("%08x:Read prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 
 	static int strobe=0;
 	if (!strobe) strobe=8;
@@ -283,13 +283,13 @@ static READ32_HANDLER( dragngun_lightgun_r )
 	case 7: return readinputport(7); break;
 	}
 
-//	logerror("Illegal lightgun port %d read \n",dragngun_lightgun_port);
+//  logerror("Illegal lightgun port %d read \n",dragngun_lightgun_port);
 	return 0;
 }
 
 static WRITE32_HANDLER( dragngun_lightgun_w )
 {
-//	logerror("Lightgun port %d\n",dragngun_lightgun_port);
+//  logerror("Lightgun port %d\n",dragngun_lightgun_port);
 	dragngun_lightgun_port=offset;
 }
 
@@ -360,25 +360,25 @@ static WRITE32_HANDLER( tattass_control_w )
 	/* Eprom in low byte */
 	if (mem_mask==0xffffff00) { /* Byte write to low byte only (different from word writing including low byte) */
 		/*
-			The Tattoo Assassins eprom seems strange...  It's 1024 bytes in size, and 8 bit
-			in width, but offers a 'multiple read' mode where a bit stream can be read
-			starting at any byte boundary.
+            The Tattoo Assassins eprom seems strange...  It's 1024 bytes in size, and 8 bit
+            in width, but offers a 'multiple read' mode where a bit stream can be read
+            starting at any byte boundary.
 
-			Multiple read mode:
-			Write 110aa000		[Read command, top two bits of address, 4 zeroes]
-			Write 00000000		[8 zeroes]
-			Write aaaaaaaa		[Bottom 8 bits of address]
+            Multiple read mode:
+            Write 110aa000      [Read command, top two bits of address, 4 zeroes]
+            Write 00000000      [8 zeroes]
+            Write aaaaaaaa      [Bottom 8 bits of address]
 
-			Then bits are read back per clock, for as many bits as needed (NOT limited to byte
-			boundaries).
+            Then bits are read back per clock, for as many bits as needed (NOT limited to byte
+            boundaries).
 
-			Write mode:
-			Write 000aa000		[Write command, top two bits of address, 4 zeroes]
-			Write 00000000		[8 zeroes]
-			Write aaaaaaaa		[Bottom 8 bits of address]
-			Write dddddddd		[8 data bits]
+            Write mode:
+            Write 000aa000      [Write command, top two bits of address, 4 zeroes]
+            Write 00000000      [8 zeroes]
+            Write aaaaaaaa      [Bottom 8 bits of address]
+            Write dddddddd      [8 data bits]
 
-		*/
+        */
 		if ((data&0x40)==0) {
 			if (bufPtr) {
 				int i;
@@ -764,7 +764,7 @@ static ADDRESS_MAP_START( lockload_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0x400000, 0x400003) AM_READ(dragngun_oki_2_r)
 	AM_RANGE(0x420000, 0x420003) AM_READ(dragngun_eeprom_r)
-//	AM_RANGE(0x438000, 0x438003) AM_READ(dragngun_lightgun_r)
+//  AM_RANGE(0x438000, 0x438003) AM_READ(dragngun_lightgun_r)
 	AM_RANGE(0x440000, 0x440003) AM_READ(dragngun_service_r)
 ADDRESS_MAP_END
 
@@ -807,7 +807,7 @@ static ADDRESS_MAP_START( lockload_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x400000, 0x400003) AM_WRITE(dragngun_oki_2_w)
 	AM_RANGE(0x420000, 0x420003) AM_WRITE(dragngun_eeprom_w)
-//	AM_RANGE(0x430000, 0x43001f) AM_WRITE(dragngun_lightgun_w)
+//  AM_RANGE(0x430000, 0x43001f) AM_WRITE(dragngun_lightgun_w)
 	AM_RANGE(0x500000, 0x500003) AM_WRITE(dragngun_sprite_control_w)
 ADDRESS_MAP_END
 
@@ -1289,7 +1289,7 @@ INPUT_PORTS_START( lockload )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 ) //IPT_VBLANK )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT(0x0004, 0x04, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Service_Mode )) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
-//	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+//  PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) //check  //test BUTTON F2
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
@@ -1374,7 +1374,7 @@ static struct GfxLayout spritelayout =
 	RGN_FRAC(1,1),
 	4,
 	{ 16, 0, 24, 8 },
-//	{ 24, 16, 8, 0 },
+//  { 24, 16, 8, 0 },
 	{ 64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
 		0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
@@ -1542,8 +1542,8 @@ static const UINT8 tattass_default_eprom[0x160] =
 
 static struct EEPROM_interface eeprom_interface_tattass =
 {
-	10,				// address bits	10  ==> } 1024 byte eprom
-	8,				// data bits	8
+	10,				// address bits 10  ==> } 1024 byte eprom
+	8,				// data bits    8
 };
 
 static NVRAM_HANDLER(tattass)
@@ -2298,8 +2298,8 @@ ROM_START( fghthsta )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD32_WORD( "le-00.1f", 0x000000, 0x80000, CRC(a5c410eb) SHA1(e2b0cb2351782e1155ecc4029010beb7326fd874) )
 	ROM_LOAD32_WORD( "le-01.2f", 0x000002, 0x80000, CRC(7e148aa2) SHA1(b21e16604c4d29611f91d629deb9f041eaf41e9b) )
-//	ROM_LOAD32_WORD( "kz00.out", 0x000000, 0x80000, CRC(03a3dd5c) )
-//	ROM_LOAD32_WORD( "kz01.out", 0x000002, 0x80000, CRC(086796d6) )
+//  ROM_LOAD32_WORD( "kz00.out", 0x000000, 0x80000, CRC(03a3dd5c) )
+//  ROM_LOAD32_WORD( "kz01.out", 0x000002, 0x80000, CRC(086796d6) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "kz02.18k",  0x00000,  0x10000,  CRC(5fd2309c) SHA1(2fb7af54d5cd9bf7dd6fb4f6b82aa52b03294f1f) )
@@ -2389,18 +2389,18 @@ ROM_START( lockload )
 	ROM_LOAD32_BYTE( "mbm-15.a25",  0x400003, 0x100000,  CRC(789ce7b1) SHA1(3fb390ce0620ce7a63f7f46eac1ff0eb8ed76d26) )
 
 	ROM_REGION( 0x100000, REGION_GFX5, 0 ) /* Video data - same as Dragongun, probably leftover from a conversion */
-//	ROM_LOAD( "dgma17.bin",  0x00000,  0x100000,  CRC(7799ed23) SHA1(ae28ad4fa6033a3695fa83356701b3774b26e6b0) ) /* Todo - fix filenames */
-//	ROM_LOAD( "dgma18.bin",  0x00000,  0x100000,  CRC(ded66da9) SHA1(5134cb47043cc190a35ebdbf1912166669f9c055) )
-//	ROM_LOAD( "dgma19.bin",  0x00000,  0x100000,  CRC(bdd1ed20) SHA1(2435b23210b8fee4d39c30d4d3c6ea40afaa3b93) )
-//	ROM_LOAD( "dgma20.bin",  0x00000,  0x100000,  CRC(fa0462f0) SHA1(1a52617ad4d7abebc0f273dd979f4cf2d6a0306b) )
-//	ROM_LOAD( "dgma21.bin",  0x00000,  0x100000,  CRC(2d0a28ae) SHA1(d87f6f71bb76880e4d4f1eab8e0451b5c3df69a5) )
-//	ROM_LOAD( "dgma22.bin",  0x00000,  0x100000,  CRC(c85f3559) SHA1(a5d5cf9b18c9ef6a92d7643ca1ec9052de0d4a01) )
-//	ROM_LOAD( "dgma23.bin",  0x00000,  0x100000,  CRC(ba907d6a) SHA1(1fd99b66e6297c8d927c1cf723a613b4ee2e2f90) )
-//	ROM_LOAD( "dgma24.bin",  0x00000,  0x100000,  CRC(5cec45c8) SHA1(f99a26afaca9d9320477e469b09e3873bc8c156f) )
-//	ROM_LOAD( "dgma25.bin",  0x00000,  0x100000,  CRC(d65d895c) SHA1(4508dfff95a7aff5109dc74622cbb4503b0b5840) )
-//	ROM_LOAD( "dgma26.bin",  0x00000,  0x100000,  CRC(246a06c5) SHA1(447252be976a5059925f4ad98df8564b70198f62) )
-//	ROM_LOAD( "dgma27.bin",  0x00000,  0x100000,  CRC(3fcbd10f) SHA1(70fc7b88bbe35bbae1de14364b03d0a06d541de5) )
-//	ROM_LOAD( "dgma28.bin",  0x00000,  0x100000,  CRC(5a2ec71d) SHA1(447c404e6bb696f7eb7c61992a99b9be56f5d6b0) )
+//  ROM_LOAD( "dgma17.bin",  0x00000,  0x100000,  CRC(7799ed23) SHA1(ae28ad4fa6033a3695fa83356701b3774b26e6b0) ) /* Todo - fix filenames */
+//  ROM_LOAD( "dgma18.bin",  0x00000,  0x100000,  CRC(ded66da9) SHA1(5134cb47043cc190a35ebdbf1912166669f9c055) )
+//  ROM_LOAD( "dgma19.bin",  0x00000,  0x100000,  CRC(bdd1ed20) SHA1(2435b23210b8fee4d39c30d4d3c6ea40afaa3b93) )
+//  ROM_LOAD( "dgma20.bin",  0x00000,  0x100000,  CRC(fa0462f0) SHA1(1a52617ad4d7abebc0f273dd979f4cf2d6a0306b) )
+//  ROM_LOAD( "dgma21.bin",  0x00000,  0x100000,  CRC(2d0a28ae) SHA1(d87f6f71bb76880e4d4f1eab8e0451b5c3df69a5) )
+//  ROM_LOAD( "dgma22.bin",  0x00000,  0x100000,  CRC(c85f3559) SHA1(a5d5cf9b18c9ef6a92d7643ca1ec9052de0d4a01) )
+//  ROM_LOAD( "dgma23.bin",  0x00000,  0x100000,  CRC(ba907d6a) SHA1(1fd99b66e6297c8d927c1cf723a613b4ee2e2f90) )
+//  ROM_LOAD( "dgma24.bin",  0x00000,  0x100000,  CRC(5cec45c8) SHA1(f99a26afaca9d9320477e469b09e3873bc8c156f) )
+//  ROM_LOAD( "dgma25.bin",  0x00000,  0x100000,  CRC(d65d895c) SHA1(4508dfff95a7aff5109dc74622cbb4503b0b5840) )
+//  ROM_LOAD( "dgma26.bin",  0x00000,  0x100000,  CRC(246a06c5) SHA1(447252be976a5059925f4ad98df8564b70198f62) )
+//  ROM_LOAD( "dgma27.bin",  0x00000,  0x100000,  CRC(3fcbd10f) SHA1(70fc7b88bbe35bbae1de14364b03d0a06d541de5) )
+//  ROM_LOAD( "dgma28.bin",  0x00000,  0x100000,  CRC(5a2ec71d) SHA1(447c404e6bb696f7eb7c61992a99b9be56f5d6b0) )
 
 	ROM_REGION(0x100000, REGION_SOUND1, 0 )
 	ROM_LOAD( "mbm-06.n17",  0x00000, 0x100000,  CRC(f34d5999) SHA1(265b5f4e8598bcf9183bf9bd95db69b01536acb2) )
@@ -2592,7 +2592,7 @@ static READ32_HANDLER( captaven_skip )
 	data32_t ret=deco32_ram[0x748c/4];
 
 	if (activecpu_get_pc()==0x39e8 && (ret&0xff)!=0) {
-//		logerror("CPU Spin - %d cycles left this frame ran %d (%d)\n",cycles_left_to_run(),cycles_currently_ran(),cycles_left_to_run()+cycles_currently_ran());
+//      logerror("CPU Spin - %d cycles left this frame ran %d (%d)\n",cycles_left_to_run(),cycles_currently_ran(),cycles_left_to_run()+cycles_currently_ran());
 		cpu_spinuntil_int();
 	}
 
@@ -2663,7 +2663,7 @@ static DRIVER_INIT( fghthist )
 static DRIVER_INIT( lockload )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
-//	data32_t *ROM = (UINT32 *)memory_region(REGION_CPU1);
+//  data32_t *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	deco74_decrypt(REGION_GFX1);
 	deco74_decrypt(REGION_GFX2);
@@ -2673,9 +2673,9 @@ static DRIVER_INIT( lockload )
 	memcpy(RAM+0x300000,RAM+0x100000,0x100000);
 	memset(RAM+0x100000,0,0x100000);
 
-//	ROM[0x3fe3c0/4]=0xe1a00000;//  NOP test switch lock
-//	ROM[0x3fe3cc/4]=0xe1a00000;//  NOP test switch lock
-//	ROM[0x3fe40c/4]=0xe1a00000;//  NOP test switch lock
+//  ROM[0x3fe3c0/4]=0xe1a00000;//  NOP test switch lock
+//  ROM[0x3fe3cc/4]=0xe1a00000;//  NOP test switch lock
+//  ROM[0x3fe40c/4]=0xe1a00000;//  NOP test switch lock
 }
 
 static DRIVER_INIT( tattass )
@@ -2722,7 +2722,7 @@ static DRIVER_INIT( nslasher )
 	deco74_decrypt(REGION_GFX2);
 
 	/* The board for Night Slashers is very close to the Fighter's History and
-	Tattoo Assassins boards, but has an encrypted ARM cpu. */
+    Tattoo Assassins boards, but has an encrypted ARM cpu. */
 }
 
 /**********************************************************************************/

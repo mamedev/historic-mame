@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Sasuke vs. Commander
-	SNK/Rock-Ola
+    Sasuke vs. Commander
+    SNK/Rock-Ola
 
-	driver by ?
+    driver by ?
 
-	Games supported:
-		* Sasuke vs. Commander
-		* Satan of Saturn
-		* Zarzon
-		* Vanguard
-		* Fantasy					G-202
-		* Pioneer Balloon				G-204
-		* Nibbler					G-208
+    Games supported:
+        * Sasuke vs. Commander
+        * Satan of Saturn
+        * Zarzon
+        * Vanguard
+        * Fantasy                   G-202
+        * Pioneer Balloon               G-204
+        * Nibbler                   G-208
 
 ****************************************************************************
 
@@ -72,35 +72,35 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 Pioneer Balloon memory map (preliminary)
 
-0000-03ff RAM		   IC13 cpu
+0000-03ff RAM          IC13 cpu
 0400-07ff Video RAM 1  IC67 video
 0800-0bff Video RAM 2  ???? video
 0c00-0fff Color RAM    IC68 (3 bits for VRAM 1 and 3 bits for VRAM 2)
-1000-1fff RAM		   ???? Character generator
-3000-3fff ROM 4/5	   IC12
-4000-4fff ROM 1 	   IC07
-5000-5fff ROM 2 	   IC08
-6000-6fff ROM 3 	   IC09
-7000-7fff ROM 4 	   IC10
-8000-8fff ROM 5 	   IC14
-9000-9fff ROM 6 	   IC15
+1000-1fff RAM          ???? Character generator
+3000-3fff ROM 4/5      IC12
+4000-4fff ROM 1        IC07
+5000-5fff ROM 2        IC08
+6000-6fff ROM 3        IC09
+7000-7fff ROM 4        IC10
+8000-8fff ROM 5        IC14
+9000-9fff ROM 6        IC15
 read:
-b104	  IN0
-b105	  IN1
-b106	  DSW
-b107	  IN2
+b104      IN0
+b105      IN1
+b106      DSW
+b107      IN2
 
 write
-b000	  Sound Port 0
-b001	  Sound Port 1
-b100	  ????
-b103	  bit 7 = flip screen
+b000      Sound Port 0
+b001      Sound Port 1
+b100      ????
+b103      bit 7 = flip screen
           bit 4-6 = music 2
           bit 3 = char bank selector
           bit 0-2 = background color
-b106	  ????
-b200	  y scroll register
-b300	  x scroll register
+b106      ????
+b200      y scroll register
+b300      x scroll register
 
 Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
@@ -108,15 +108,15 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 /*
 
-	TODO:
+    TODO:
 
-	- sasuke/satansat/vanguard discrete sound
-	- vanguard/fantasy speech (hd38880/hd38882 emulation)
-	- music freq (Satan of Saturn and clone)
-	- correct music waveform/volume control
-	- clean up dips/inputs for all games
-	- correct ROM names
-	- fantasy is German? (the continue text is in German)
+    - sasuke/satansat/vanguard discrete sound
+    - vanguard/fantasy speech (hd38880/hd38882 emulation)
+    - music freq (Satan of Saturn and clone)
+    - correct music waveform/volume control
+    - clean up dips/inputs for all games
+    - correct ROM names
+    - fantasy is German? (the continue text is in German)
 
 */
 
@@ -448,19 +448,19 @@ INPUT_PORTS_START( vanguard )
 	PORT_DIPSETTING(    0x4c, "1 Coin/6 Credits 2/13" )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_7C ) )
 /*
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
 */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-/*	PORT_DIPSETTING(    0x30, "3" ) */
+/*  PORT_DIPSETTING(    0x30, "3" ) */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	// IN2
@@ -510,19 +510,19 @@ INPUT_PORTS_START( fantasy )
 	PORT_DIPSETTING(    0x4c, "1 Coin/6 Credits 2/13" )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_7C ) )
 /*
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
 */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-/*	PORT_DIPSETTING(    0x30, "3" ) */
+/*  PORT_DIPSETTING(    0x30, "3" ) */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
@@ -628,19 +628,19 @@ INPUT_PORTS_START( pballoon )
 	PORT_DIPSETTING(    0x4c, "1 Coin/6 Credits 2/11" )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_7C ) )
 /*
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
-	PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0a, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
+    PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
 */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-/*	PORT_DIPSETTING(    0x30, "3" ) */
+/*  PORT_DIPSETTING(    0x30, "3" ) */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -742,156 +742,156 @@ static struct Samplesinterface fantasy_samples_interface =
 
 static struct SN76477interface sasuke_sn76477_intf_1 =
 {
-	RES_K(470),		/*  4  noise_res	 */
-	RES_K(150),		/*  5  filter_res	 */
-	CAP_P(4700),	/*  6  filter_cap	 */
-	RES_K(22),		/*  7  decay_res	 */
-	CAP_U(10),		/*  8  attack_decay_cap	 */
-	RES_K(10),		/* 10  attack_res	 */
-	RES_K(100),		/* 11  amplitude_res	 */
-	RES_K(47),		/* 12  feedback_res 	 */
-	0 /* NC */,		/* 16  vco_voltage	 */
-	0 /* NC */,		/* 17  vco_cap		 */
-	0 /* NC */,		/* 18  vco_res		 */
-	0 /* NC */,		/* 19  pitch_voltage	 */
-	RES_K(10),		/* 20  slf_res		 */
-	0 /* NC */,		/* 21  slf_cap		 */
-	CAP_U(2.2),		/* 23  oneshot_cap	 */
-	RES_K(100)		/* 24  oneshot_res	 */
+	RES_K(470),		/*  4  noise_res     */
+	RES_K(150),		/*  5  filter_res    */
+	CAP_P(4700),	/*  6  filter_cap    */
+	RES_K(22),		/*  7  decay_res     */
+	CAP_U(10),		/*  8  attack_decay_cap  */
+	RES_K(10),		/* 10  attack_res    */
+	RES_K(100),		/* 11  amplitude_res     */
+	RES_K(47),		/* 12  feedback_res      */
+	0 /* NC */,		/* 16  vco_voltage   */
+	0 /* NC */,		/* 17  vco_cap       */
+	0 /* NC */,		/* 18  vco_res       */
+	0 /* NC */,		/* 19  pitch_voltage     */
+	RES_K(10),		/* 20  slf_res       */
+	0 /* NC */,		/* 21  slf_cap       */
+	CAP_U(2.2),		/* 23  oneshot_cap   */
+	RES_K(100)		/* 24  oneshot_res   */
 
-	// ic48		GND: 2,22,26,27,28	+5V: 1,15,25
+	// ic48     GND: 2,22,26,27,28  +5V: 1,15,25
 };
 
 static struct SN76477interface sasuke_sn76477_intf_2 =
 {
-	RES_K(340),		/*  4  noise_res	 */
-	RES_K(47),		/*  5  filter_res	 */
-	CAP_P(100),		/*  6  filter_cap	 */
-	RES_K(470),		/*  7  decay_res	 */
-	CAP_U(4.7),		/*  8  attack_decay_cap	 */
-	RES_K(10),		/* 10  attack_res	 */
-	RES_K(100),		/* 11  amplitude_res	 */
-	RES_K(47),		/* 12  feedback_res 	 */
-	0 /* NC */,		/* 16  vco_voltage	 */
-	CAP_P(220),		/* 17  vco_cap		 */
-	RES_K(1000),	/* 18  vco_res		 */
-	0 /* NC */,		/* 19  pitch_voltage	 */
-	RES_K(220),		/* 20  slf_res		 */
-	0 /* NC */,		/* 21  slf_cap		 */
-	CAP_U(22),		/* 23  oneshot_cap	 */
-	RES_K(47)		/* 24  oneshot_res	 */
+	RES_K(340),		/*  4  noise_res     */
+	RES_K(47),		/*  5  filter_res    */
+	CAP_P(100),		/*  6  filter_cap    */
+	RES_K(470),		/*  7  decay_res     */
+	CAP_U(4.7),		/*  8  attack_decay_cap  */
+	RES_K(10),		/* 10  attack_res    */
+	RES_K(100),		/* 11  amplitude_res     */
+	RES_K(47),		/* 12  feedback_res      */
+	0 /* NC */,		/* 16  vco_voltage   */
+	CAP_P(220),		/* 17  vco_cap       */
+	RES_K(1000),	/* 18  vco_res       */
+	0 /* NC */,		/* 19  pitch_voltage     */
+	RES_K(220),		/* 20  slf_res       */
+	0 /* NC */,		/* 21  slf_cap       */
+	CAP_U(22),		/* 23  oneshot_cap   */
+	RES_K(47)		/* 24  oneshot_res   */
 
-	// ic51		GND: 2,26,27		+5V: 1,15,22,25,28
+	// ic51     GND: 2,26,27        +5V: 1,15,22,25,28
 };
 
 static struct SN76477interface sasuke_sn76477_intf_3 =
 {
-	RES_K(330),		/*  4  noise_res	 */
-	RES_K(47),		/*  5  filter_res	 */
-	CAP_P(100),		/*  6  filter_cap	 */
-	RES_K(1),		/*  7  decay_res	 */
-	0 /* NC */,		/*  8  attack_decay_cap	 */
-	RES_K(1),		/* 10  attack_res	 */
-	RES_K(100),		/* 11  amplitude_res	 */
-	RES_K(47),		/* 12  feedback_res 	 */
-	0 /* NC */,		/* 16  vco_voltage	 */
-	CAP_P(1000),	/* 17  vco_cap		 */
-	RES_K(1000),	/* 18  vco_res		 */
-	0 /* NC */,		/* 19  pitch_voltage	 */
-	RES_K(10),		/* 20  slf_res		 */
-	CAP_U(1),		/* 21  slf_cap		 */
-	CAP_U(2.2),		/* 23  oneshot_cap	 */
-	RES_K(150)		/* 24  oneshot_res	 */
+	RES_K(330),		/*  4  noise_res     */
+	RES_K(47),		/*  5  filter_res    */
+	CAP_P(100),		/*  6  filter_cap    */
+	RES_K(1),		/*  7  decay_res     */
+	0 /* NC */,		/*  8  attack_decay_cap  */
+	RES_K(1),		/* 10  attack_res    */
+	RES_K(100),		/* 11  amplitude_res     */
+	RES_K(47),		/* 12  feedback_res      */
+	0 /* NC */,		/* 16  vco_voltage   */
+	CAP_P(1000),	/* 17  vco_cap       */
+	RES_K(1000),	/* 18  vco_res       */
+	0 /* NC */,		/* 19  pitch_voltage     */
+	RES_K(10),		/* 20  slf_res       */
+	CAP_U(1),		/* 21  slf_cap       */
+	CAP_U(2.2),		/* 23  oneshot_cap   */
+	RES_K(150)		/* 24  oneshot_res   */
 
-	// ic52		GND: 2,22,27,28		+5V: 1,15,25,26
+	// ic52     GND: 2,22,27,28     +5V: 1,15,25,26
 };
 
 static struct SN76477interface satansat_sn76477_intf =
 {
-	RES_K(470),		/*  4  noise_res	 */
-	RES_M(1.5),		/*  5  filter_res	 */
-	CAP_P(220),		/*  6  filter_cap	 */
-	0,				/*  7  decay_res	 */
-	0,				/*  8  attack_decay_cap	 */
-	0,				/* 10  attack_res	 */
-	RES_K(47),		/* 11  amplitude_res	 */
-	RES_K(47),		/* 12  feedback_res 	 */
-	0,				/* 16  vco_voltage	 */
-	0,				/* 17  vco_cap		 */
-	0,				/* 18  vco_res		 */
-	0,				/* 19  pitch_voltage	 */
-	0,				/* 20  slf_res		 */
-	0,				/* 21  slf_cap		 */
-	0,				/* 23  oneshot_cap	 */
-	0				/* 24  oneshot_res	 */
+	RES_K(470),		/*  4  noise_res     */
+	RES_M(1.5),		/*  5  filter_res    */
+	CAP_P(220),		/*  6  filter_cap    */
+	0,				/*  7  decay_res     */
+	0,				/*  8  attack_decay_cap  */
+	0,				/* 10  attack_res    */
+	RES_K(47),		/* 11  amplitude_res     */
+	RES_K(47),		/* 12  feedback_res      */
+	0,				/* 16  vco_voltage   */
+	0,				/* 17  vco_cap       */
+	0,				/* 18  vco_res       */
+	0,				/* 19  pitch_voltage     */
+	0,				/* 20  slf_res       */
+	0,				/* 21  slf_cap       */
+	0,				/* 23  oneshot_cap   */
+	0				/* 24  oneshot_res   */
 
-	// ???		GND: 2,26,27		+5V: 15,25
+	// ???      GND: 2,26,27        +5V: 15,25
 };
 
 static struct SN76477interface vanguard_sn76477_intf_1 =
 {
-	RES_K(470),		/*  4  noise_res	 */
-	RES_M(1.5),		/*  5  filter_res	 */
-	CAP_P(220),		/*  6  filter_cap	 */
-	0,				/*  7  decay_res	 */
+	RES_K(470),		/*  4  noise_res     */
+	RES_M(1.5),		/*  5  filter_res    */
+	CAP_P(220),		/*  6  filter_cap    */
+	0,				/*  7  decay_res     */
 	0,				/*  8  attack_decay_cap  */
-	0,				/* 10  attack_res	 */
-	RES_K(47),		/* 11  amplitude_res	 */
-	RES_K(4.7),		/* 12  feedback_res 	 */
-	0,				/* 16  vco_voltage	 */
-	0,				/* 17  vco_cap		 */
-	0,				/* 18  vco_res		 */
-	0,				/* 19  pitch_voltage	 */
-	0,				/* 20  slf_res		 */
-	0,				/* 21  slf_cap		 */
-	0,				/* 23  oneshot_cap	 */
-	0				/* 24  oneshot_res	 */
+	0,				/* 10  attack_res    */
+	RES_K(47),		/* 11  amplitude_res     */
+	RES_K(4.7),		/* 12  feedback_res      */
+	0,				/* 16  vco_voltage   */
+	0,				/* 17  vco_cap       */
+	0,				/* 18  vco_res       */
+	0,				/* 19  pitch_voltage     */
+	0,				/* 20  slf_res       */
+	0,				/* 21  slf_cap       */
+	0,				/* 23  oneshot_cap   */
+	0				/* 24  oneshot_res   */
 
-	// SHOT A	GND: 2,9,26,27	+5V: 15,25
+	// SHOT A   GND: 2,9,26,27  +5V: 15,25
 };
 
 static struct SN76477interface vanguard_sn76477_intf_2 =
 {
-	RES_K(10),		/*  4  noise_res	 */
-	RES_K(30),		/*  5  filter_res	 */
-	0,				/*  6  filter_cap	 */
-	0,				/*  7  decay_res	 */
+	RES_K(10),		/*  4  noise_res     */
+	RES_K(30),		/*  5  filter_res    */
+	0,				/*  6  filter_cap    */
+	0,				/*  7  decay_res     */
 	0,				/*  8  attack_decay_cap  */
-	0,				/* 10  attack_res	 */
-	RES_K(47),		/* 11  amplitude_res	 */
-	RES_K(4.7),		/* 12  feedback_res 	 */
-	0,				/* 16  vco_voltage	 */
-	0,				/* 17  vco_cap		 */
-	0,				/* 18  vco_res		 */
-	0,				/* 19  pitch_voltage	 */
-	0,				/* 20  slf_res		 */
-	0,				/* 21  slf_cap		 */
-	0,				/* 23  oneshot_cap	 */
-	0				/* 24  oneshot_res	 */
+	0,				/* 10  attack_res    */
+	RES_K(47),		/* 11  amplitude_res     */
+	RES_K(4.7),		/* 12  feedback_res      */
+	0,				/* 16  vco_voltage   */
+	0,				/* 17  vco_cap       */
+	0,				/* 18  vco_res       */
+	0,				/* 19  pitch_voltage     */
+	0,				/* 20  slf_res       */
+	0,				/* 21  slf_cap       */
+	0,				/* 23  oneshot_cap   */
+	0				/* 24  oneshot_res   */
 
-	// SHOT B	GND: 1,2,26,27	+5V: 15,25,28
+	// SHOT B   GND: 1,2,26,27  +5V: 15,25,28
 };
 
 static struct SN76477interface fantasy_sn76477_intf =
 {
-	RES_K(470),		/*  4  noise_res	 */
-	RES_M(1.5),		/*  5  filter_res	 */
-	CAP_P(220),		/*  6  filter_cap	 */
-	0,				/*  7  decay_res	 */
+	RES_K(470),		/*  4  noise_res     */
+	RES_M(1.5),		/*  5  filter_res    */
+	CAP_P(220),		/*  6  filter_cap    */
+	0,				/*  7  decay_res     */
 	0,				/*  8  attack_decay_cap  */
-	0,				/* 10  attack_res	 */
-	RES_K(470),		/* 11  amplitude_res	 */
-	RES_K(4.7),		/* 12  feedback_res 	 */
-	0,				/* 16  vco_voltage	 */
-	0,				/* 17  vco_cap		 */
-	0,				/* 18  vco_res		 */
-	0,				/* 19  pitch_voltage	 */
-	0,				/* 20  slf_res		 */
-	0,				/* 21  slf_cap		 */
-	0,				/* 23  oneshot_cap	 */
-	0				/* 24  oneshot_res	 */
+	0,				/* 10  attack_res    */
+	RES_K(470),		/* 11  amplitude_res     */
+	RES_K(4.7),		/* 12  feedback_res      */
+	0,				/* 16  vco_voltage   */
+	0,				/* 17  vco_cap       */
+	0,				/* 18  vco_res       */
+	0,				/* 19  pitch_voltage     */
+	0,				/* 20  slf_res       */
+	0,				/* 21  slf_cap       */
+	0,				/* 23  oneshot_cap   */
+	0				/* 24  oneshot_res   */
 
-	// BOMB		GND:	2,9,26,27		+5V: 15,25
+	// BOMB     GND:    2,9,26,27       +5V: 15,25
 };
 
 /* Interrupt Generators */
@@ -1041,11 +1041,11 @@ static MACHINE_DRIVER_START( sasuke )
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD_TAG("samples", SAMPLES, 0)
 	MDRV_SOUND_CONFIG(sasuke_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
@@ -1082,14 +1082,14 @@ static MACHINE_DRIVER_START( satansat )
 	MDRV_SOUND_REPLACE("SN76477.1", SN76477, 0)
 	MDRV_SOUND_CONFIG(satansat_sn76477_intf)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_REMOVE("SN76477.2")
 	MDRV_SOUND_REMOVE("SN76477.3")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( vanguard )
 	// basic machine hardware
-	//MDRV_CPU_ADD_TAG("main", M6502, 11289000/8)	// 1.4 MHz
+	//MDRV_CPU_ADD_TAG("main", M6502, 11289000/8)   // 1.4 MHz
 	MDRV_CPU_ADD_TAG("main", M6502, 930000)		// adjusted
 	MDRV_CPU_PROGRAM_MAP(vanguard_map, 0)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt, 2)
@@ -1113,7 +1113,7 @@ static MACHINE_DRIVER_START( vanguard )
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -1147,7 +1147,7 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_SOUND_REPLACE("SN76477.1", SN76477, 0)
 	MDRV_SOUND_CONFIG(fantasy_sn76477_intf)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_REMOVE("SN76477.2")
 MACHINE_DRIVER_END
 
@@ -1277,7 +1277,7 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* sound ROM 2 */
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
 	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
 	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
@@ -1308,7 +1308,7 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, NO_DUMP CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* missing, using the SNK one */
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
 	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
 	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
@@ -1339,7 +1339,7 @@ ROM_START( vanguarj )
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* sound ROM 2 */
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
 	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
 	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
@@ -1372,7 +1372,7 @@ ROM_START( fantasyu )
 	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
 	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
 	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
@@ -1405,7 +1405,7 @@ ROM_START( fantasy )
 	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
 	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
 	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
@@ -1438,7 +1438,7 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */
 	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
 	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
 	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )

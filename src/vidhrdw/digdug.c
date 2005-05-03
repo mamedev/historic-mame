@@ -98,10 +98,10 @@ static void bg_get_tile_info(int tile_index)
 	data8_t *rom = memory_region(REGION_GFX4);
 	int code = rom[tile_index | (bg_select << 10)];
 	/* when the background is "disabled", it is actually still drawn, but using
-	   a color code that makes all pixels black. There are pullups setting the
-	   code to 0xf, but also solder pads that optionally connect the lines with
-	   tilemap RAM, therefore allowing to pick some bits of the color code from
-	   the top 4 bits of alpha code. This feature is not used by Dig Dug. */
+       a color code that makes all pixels black. There are pullups setting the
+       code to 0xf, but also solder pads that optionally connect the lines with
+       tilemap RAM, therefore allowing to pick some bits of the color code from
+       the top 4 bits of alpha code. This feature is not used by Dig Dug. */
 	int color = bg_disable ? 0xf : (code >> 4);
 	SET_TILE_INFO(
 			2,
@@ -116,20 +116,20 @@ static void tx_get_tile_info(int tile_index)
 	int color;
 
 	/* the hardware has two ways to pick the color, either straight from the
-	   bottom 4 bits of the character code, or from the top 4 bits through a
-	   formula. The former method isnot used by Dig Dug and seems kind of
-	   useless (I don't know what use they were thinking of when they added
-	   it), anyway here it is reproduced faithfully. */
+       bottom 4 bits of the character code, or from the top 4 bits through a
+       formula. The former method isnot used by Dig Dug and seems kind of
+       useless (I don't know what use they were thinking of when they added
+       it), anyway here it is reproduced faithfully. */
 	if (tx_color_mode)
 		color = code & 0x0f;
 	else
 		color = ((code >> 4) & 0x0e) | ((code >> 3) & 2);
 
 	/* the hardware has two character sets, one normal and one x-flipped. When
-	   screen is flipped, character y flip is done by the hardware inverting the
-	   timing signals, while x flip is done by selecting the 2nd character set.
-	   We reproduce this here, but since the tilemap system automatically flips
-	   characters when screen is flipped, we have to flip them back. */
+       screen is flipped, character y flip is done by the hardware inverting the
+       timing signals, while x flip is done by selecting the 2nd character set.
+       We reproduce this here, but since the tilemap system automatically flips
+       characters when screen is flipped, we have to flip them back. */
 	SET_TILE_INFO(
 			0,
 			(code & 0x7f) | (flip_screen ? 0x80 : 0),

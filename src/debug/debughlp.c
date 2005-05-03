@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugcmd.c
-**		Debugger help engine.
-**		Written by Aaron Giles
+**      debugcmd.c
+**      Debugger help engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -13,7 +13,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG			0
@@ -21,7 +21,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define CONSOLE_HISTORY		(10000)
@@ -30,7 +30,7 @@
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 struct help_item
@@ -42,19 +42,19 @@ struct help_item
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	TABLE OF HELP
+**  TABLE OF HELP
 **#################################################################################################*/
 
 static struct help_item static_help_list[] =
@@ -809,7 +809,7 @@ static struct help_item static_help_list[] =
 
 
 /*###################################################################################################
-**	CODE
+**  CODE
 **#################################################################################################*/
 
 const char *debug_get_help(const char *tag)
@@ -819,11 +819,11 @@ const char *debug_get_help(const char *tag)
 	int i, msglen, foundcount = 0;
 	int taglen = strlen(tag);
 	char tagcopy[256];
-	
+
 	/* make a lowercase copy of the tag */
 	for (i = 0; i <= taglen; i++)
 		tagcopy[i] = tolower(tag[i]);
-	
+
 	/* find a match */
 	for (i = 0; i < sizeof(static_help_list) / sizeof(static_help_list[0]); i++)
 		if (!strncmp(static_help_list[i].tag, tagcopy, taglen))
@@ -836,15 +836,15 @@ const char *debug_get_help(const char *tag)
 				break;
 			}
 		}
-	
+
 	/* only a single match makes sense */
 	if (foundcount == 1)
 		return found->help;
-	
+
 	/* if not found, return the first entry */
 	if (foundcount == 0)
 		return static_help_list[0].help;
-	
+
 	/* otherwise, indicate ambiguous help */
 	msglen = sprintf(ambig_message, "Ambiguous help request, did you mean:\n");
 	for (i = 0; i < sizeof(static_help_list) / sizeof(static_help_list[0]); i++)

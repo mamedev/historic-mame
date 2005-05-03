@@ -1,12 +1,12 @@
 /*
-*	Video Driver for Metal Soldier Isaac II (1985)
+*   Video Driver for Metal Soldier Isaac II (1985)
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /*
-*	variables
+*   variables
 */
 unsigned char *msisaac_videoram;
 unsigned char *msisaac_videoram2;

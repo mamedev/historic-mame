@@ -1,12 +1,12 @@
 /*
-*	Video Driver for Forty-Love
+*   Video Driver for Forty-Love
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /*
-*	variables
+*   variables
 */
 
 unsigned char *fortyl_video_ctrl;
@@ -25,7 +25,7 @@ static struct tilemap *background;
 int fortyl_pix_color[4];
 
 /*
-*	color prom decoding
+*   color prom decoding
 */
 
 PALETTE_INIT( fortyl )
@@ -42,21 +42,21 @@ PALETTE_INIT( fortyl )
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		/* green component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		/* blue component */
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		palette_set_color(i,r,g,b);
 
 		color_prom++;
@@ -72,11 +72,11 @@ PALETTE_INIT( fortyl )
 /*
 colorram format (2 bytes per one tilemap character line, 8 pixels height):
 
-	offset 0	x... ....	x scroll (1 MSB bit)
-	offset 0	.xxx x...	tile bank (see code below for banking formula)
-	offset 0	.... .xxx	tiles color (one color code per whole tilemap line)
+    offset 0    x... ....   x scroll (1 MSB bit)
+    offset 0    .xxx x...   tile bank (see code below for banking formula)
+    offset 0    .... .xxx   tiles color (one color code per whole tilemap line)
 
-	offset 1	xxxx xxxx	x scroll (8 LSB bits)
+    offset 1    xxxx xxxx   x scroll (8 LSB bits)
 */
 
 static void get_bg_tile_info(int tile_index)
@@ -252,17 +252,17 @@ READ8_HANDLER( fortyl_bg_colorram_r )
 /*
 spriteram format (4 bytes per sprite):
 
-	offset	0	xxxxxxxx	y position
+    offset  0   xxxxxxxx    y position
 
-	offset	1	x.......	flip Y
-	offset	1	.x......	flip X
-	offset	1	..xxxxxx	gfx code (6 LSB bits)
+    offset  1   x.......    flip Y
+    offset  1   .x......    flip X
+    offset  1   ..xxxxxx    gfx code (6 LSB bits)
 
-	offset	2	...xx...	gfx code (2 MSB bits)
-	offset	2	.....xxx	color code
-	offset	2	???.....	??? (not used, always 0)
+    offset  2   ...xx...    gfx code (2 MSB bits)
+    offset  2   .....xxx    color code
+    offset  2   ???.....    ??? (not used, always 0)
 
-	offset	3	xxxxxxxx	x position
+    offset  3   xxxxxxxx    x position
 */
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )

@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
-**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**  TMS34010: Portable Texas Instruments TMS34010 emulator
 **
-**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-**	 Parts based on code by Aaron Giles
+**  Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**   Parts based on code by Aaron Giles
 **
 **#################################################################################################*/
 
@@ -148,22 +148,22 @@ static int apply_window(const char *inst_name,int srcbpp, UINT32 *srcaddr, XY *d
 
 /*******************************************************************
 
-	About the timing of gfx operations:
+    About the timing of gfx operations:
 
-	The 34010 manual lists a fairly intricate and accurate way of
-	computing cycle timings for graphics ops. However, there are
-	enough typos and misleading statements to make the reliability
-	of the timing info questionable.
+    The 34010 manual lists a fairly intricate and accurate way of
+    computing cycle timings for graphics ops. However, there are
+    enough typos and misleading statements to make the reliability
+    of the timing info questionable.
 
-	So, to address this, here is a simplified approximate version
-	of the timing.
+    So, to address this, here is a simplified approximate version
+    of the timing.
 
-		timing = setup + (srcwords * 2 + dstwords * gfxop) * rows
+        timing = setup + (srcwords * 2 + dstwords * gfxop) * rows
 
-	Each read access takes 2 cycles. Each gfx operation has
-	its own timing as specified in the 34010 manual. So, it's 2
-	cycles per read plus gfxop cycles per operation. Pretty
-	simple, no?
+    Each read access takes 2 cycles. Each gfx operation has
+    its own timing as specified in the 34010 manual. So, it's 2
+    cycles per read plus gfxop cycles per operation. Pretty
+    simple, no?
 
 *******************************************************************/
 

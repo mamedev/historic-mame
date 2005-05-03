@@ -4,18 +4,18 @@ Some Dynax games using the first version of their blitter
 
 driver by Nicola Salmoria, blitter support based on work by Luca Elia
 
-CPU:	Z80-A
-Sound:	YM2203C
-		M5205
-OSC:	20.0000MHz
-Video:	HD46505SP
+CPU:    Z80-A
+Sound:  YM2203C
+        M5205
+OSC:    20.0000MHz
+Video:  HD46505SP
 
 ---------------------------------------
-Year + Game					Board
+Year + Game                 Board
 ---------------------------------------
-87 Hana Yayoi				D0208298L1
-87 Hana Fubuki				D0602048
-87 Untouchable				D0806298
+87 Hana Yayoi               D0208298L1
+87 Hana Fubuki              D0602048
+87 Untouchable              D0806298
 ---------------------------------------
 
 Notes:
@@ -129,8 +129,8 @@ static ADDRESS_MAP_START( hnayayoi_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(adpcm_data_w)
-//	AM_RANGE(0x08, 0x08) AM_WRITE(MWA8_NOP)	// CRT Controller
-//	AM_RANGE(0x09, 0x09) AM_WRITE(MWA8_NOP)	// CRT Controller
+//  AM_RANGE(0x08, 0x08) AM_WRITE(MWA8_NOP) // CRT Controller
+//  AM_RANGE(0x09, 0x09) AM_WRITE(MWA8_NOP) // CRT Controller
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(dynax_blitter_rev1_start_w)
 	AM_RANGE(0x0c, 0x0c) AM_WRITE(dynax_blitter_rev1_clear_w)
 	AM_RANGE(0x23, 0x23) AM_WRITE(adpcm_vclk_w)
@@ -160,8 +160,8 @@ static ADDRESS_MAP_START( hnfubuki_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xff00, 0xff00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0xff01, 0xff01) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xff06, 0xff06) AM_WRITE(adpcm_data_w)
-//	AM_RANGE(0xff08, 0xff08) AM_WRITE(MWA8_NOP)	// CRT Controller
-//	AM_RANGE(0xff09, 0xff09) AM_WRITE(MWA8_NOP)	// CRT Controller
+//  AM_RANGE(0xff08, 0xff08) AM_WRITE(MWA8_NOP) // CRT Controller
+//  AM_RANGE(0xff09, 0xff09) AM_WRITE(MWA8_NOP) // CRT Controller
 	AM_RANGE(0xff0a, 0xff0a) AM_WRITE(dynax_blitter_rev1_start_w)
 	AM_RANGE(0xff0c, 0xff0c) AM_WRITE(dynax_blitter_rev1_clear_w)
 	AM_RANGE(0xff23, 0xff23) AM_WRITE(adpcm_vclk_w)
@@ -208,8 +208,8 @@ static ADDRESS_MAP_START( untoucha_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x10, 0x10) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x50, 0x50) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x13, 0x13) AM_WRITE(adpcm_data_w)
-//	AM_RANGE(0x12, 0x12) AM_WRITE(MWA8_NOP)	// CRT Controller
-//	AM_RANGE(0x52, 0x52) AM_WRITE(MWA8_NOP)	// CRT Controller
+//  AM_RANGE(0x12, 0x12) AM_WRITE(MWA8_NOP) // CRT Controller
+//  AM_RANGE(0x52, 0x52) AM_WRITE(MWA8_NOP) // CRT Controller
 	AM_RANGE(0x28, 0x28) AM_WRITE(dynax_blitter_rev1_start_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_blitter_rev1_clear_w)
 	AM_RANGE(0x31, 0x31) AM_WRITE(adpcm_vclk_w)
@@ -598,7 +598,7 @@ INPUT_PORTS_END
 static void irqhandler(int irq)
 {
 usrintf_showmessage("irq");
-//	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//  cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

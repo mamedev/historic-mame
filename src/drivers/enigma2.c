@@ -12,9 +12,9 @@ Enigma2 (1981)
 Enigma2a (1984?)
  Conversion applied to a Taito Space Invaders Part II board set. Bootleg ?
 
-Writes to ROM/unmapped area = only durning gfx scrolling 
-					  (enigma and zilec logo, big spaceships)
-					    Probably a bit buggy game code 
+Writes to ROM/unmapped area = only durning gfx scrolling
+                      (enigma and zilec logo, big spaceships)
+                        Probably a bit buggy game code
 TODO:
  - enigma2  - More accurate starfield emulation (screen flipping , blinking freq measured at 0.001 kHz)
  - enigma2a - bad sound ROM
@@ -43,11 +43,11 @@ static WRITE8_HANDLER(sound_w)
 {
 	if((!(data&4)) && (prevdata&4)) // 0->1
 		sndlatch=((sndlatch<<1)|((data&1)^1))&0xff;
-	
+
 	if(data&2)
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-		
-	prevdata=data;	
+
+	prevdata=data;
 }
 
 static READ8_HANDLER(sound_r)
@@ -145,14 +145,14 @@ static ADDRESS_MAP_START( main_cpu, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x23ff) AM_RAM
 	AM_RANGE(0x2400, 0x3fff) AM_RAM AM_BASE(&videoram)
 	AM_RANGE(0x4000, 0x4fff) AM_ROM
-	AM_RANGE(0x5001, 0x5001) AM_READ(dipsw_r) 
+	AM_RANGE(0x5001, 0x5001) AM_READ(dipsw_r)
 	AM_RANGE(0x5002, 0x5002) AM_READ(unknown_r1)
-	AM_RANGE(0x5803, 0x5803) AM_WRITE(sound_w) 
-	AM_RANGE(0x5805, 0x5805) AM_WRITE(videoctrl_w) 
-	AM_RANGE(0x5806, 0x5806) AM_WRITE(MWA8_RAM) 
-	AM_RANGE(0x5035, 0x5035) AM_READ(unknown_r2)		
-	AM_RANGE(0x5051, 0x5051) AM_READ(unknown_r3)		
-	AM_RANGE(0x5079, 0x5079) AM_READ(unknown_r4)		
+	AM_RANGE(0x5803, 0x5803) AM_WRITE(sound_w)
+	AM_RANGE(0x5805, 0x5805) AM_WRITE(videoctrl_w)
+	AM_RANGE(0x5806, 0x5806) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x5035, 0x5035) AM_READ(unknown_r2)
+	AM_RANGE(0x5051, 0x5051) AM_READ(unknown_r3)
+	AM_RANGE(0x5079, 0x5079) AM_READ(unknown_r4)
 	AM_RANGE(0x5801, 0x5801) AM_READ(input_port_0_r)
 	AM_RANGE(0x5802, 0x5802) AM_READ(enigma2_player2_r)
 ADDRESS_MAP_END
@@ -164,19 +164,19 @@ static ADDRESS_MAP_START( main2a_cpu, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x23ff) AM_RAM
 	AM_RANGE(0x2400, 0x3fff) AM_READ(videoram_r) AM_WRITE(enigma2a_videoram_w) AM_BASE(&videoram) AM_BASE(&videoram)
 	AM_RANGE(0x4000, 0x4fff) AM_ROM
-	AM_RANGE(0x5001, 0x5001) AM_READ(dipsw_r) 
+	AM_RANGE(0x5001, 0x5001) AM_READ(dipsw_r)
 	AM_RANGE(0x5002, 0x5002) AM_READ(unknown_r1)
-	AM_RANGE(0x5035, 0x5035) AM_READ(unknown_r2)		
-	AM_RANGE(0x5051, 0x5051) AM_READ(unknown_r3)		
-	AM_RANGE(0x5079, 0x5079) AM_READ(unknown_r4)		
+	AM_RANGE(0x5035, 0x5035) AM_READ(unknown_r2)
+	AM_RANGE(0x5051, 0x5051) AM_READ(unknown_r3)
+	AM_RANGE(0x5079, 0x5079) AM_READ(unknown_r4)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
 	AM_RANGE(0x02, 0x02) AM_READ(enigma2_player2_r)
 	AM_RANGE(0x03, 0x03) AM_WRITE(sound_w)
-	AM_RANGE(0x05, 0x05) AM_WRITE(videoctrl2a_w) 
-	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP) 
+	AM_RANGE(0x05, 0x05) AM_WRITE(videoctrl2a_w)
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 
@@ -204,9 +204,9 @@ PALETTE_INIT( enigma2 )
 VIDEO_UPDATE( enigma2 )
 {
 	int i,x,y,col,offs,data;
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area); 
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	blink_cnt++;
-		
+
 	/* starfield */
 	for(y=0;y<32;y++)
 		for(x=0;x<32;x++)
@@ -214,14 +214,14 @@ VIDEO_UPDATE( enigma2 )
 		 	offs = y * 32 + x + 1024 * ((blink_cnt>>3)&1);
 			plot_pixel(bitmap,x*8,255-y*8,Machine->pens[memory_region(REGION_USER1)[offs]]);
 		}
-		
+
 	/* gfx */
 	for(offs=0;offs<0x1c00;offs++)
-	{	
+	{
 		y = offs / 32;
 		col = 8 * (offs % 32);
 		x = 255 - col;
-		
+
 		data=videoram[offs];
 
 		for (i = 0; i < 8; i++)
@@ -233,11 +233,11 @@ VIDEO_UPDATE( enigma2 )
 				else
 					plot_pixel(bitmap, 255+15-x, y+31, memory_region(REGION_PROMS)[((35-((y+32) >> 3)) << 5) + (31-(col >> 3))+0x400] & 0x07);
 			}
-					
+
 			x++;
 			data <<= 1;
 		}
-	}	
+	}
 }
 
 INPUT_PORTS_START( enigma2 )
@@ -267,7 +267,7 @@ INPUT_PORTS_START( enigma2 )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x1c, 0x00, "Skill level" ) 
+	PORT_DIPNAME( 0x1c, 0x00, "Skill level" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
@@ -350,9 +350,9 @@ static MACHINE_DRIVER_START( enigma2 )
 	MDRV_CPU_ADD_TAG("main", Z80, 2500000)
 	MDRV_CPU_PROGRAM_MAP(main_cpu,0)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
-	
+
 	MDRV_CPU_ADD(Z80, 2500000)
-	/* audio CPU */	
+	/* audio CPU */
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 
@@ -370,7 +370,7 @@ static MACHINE_DRIVER_START( enigma2 )
 	MDRV_VIDEO_UPDATE(enigma2)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2500000/2)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -381,9 +381,9 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_CPU_PROGRAM_MAP(main2a_cpu,0)
 	MDRV_CPU_IO_MAP(portmap,0)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
-	
+
 	MDRV_CPU_ADD(Z80, 2500000)
-	/* audio CPU */	
+	/* audio CPU */
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 
@@ -399,9 +399,9 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_PALETTE_INIT(black_and_white)
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
-	
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2500000/2)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -438,14 +438,14 @@ ROM_START( enigma2a )
 	ROM_LOAD( "5.11d",        0x4000, 0x0800, CRC(098ac15b) SHA1(cce28a2540a9eabb473391fff92895129ae41751) )
 	ROM_LOAD( "6.13d",   	  0x4800, 0x0800, CRC(240a9d4b) SHA1(ca1c69fafec0471141ce1254ddfaef54fecfcbf0) )
 
-	
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound.bin",    0x0000, 0x0800, BAD_DUMP CRC(5f092d3c) SHA1(17c70f6af1b5560a45e6b1bdb330a98b27570fe9) )
 ROM_END
 
 
-static DRIVER_INIT(enigma2) 
-{	
+static DRIVER_INIT(enigma2)
+{
 	int i;
 	for(i=0;i<0x2000;i++)
 		memory_region(REGION_CPU2)[i]=BITSWAP8(memory_region(REGION_CPU2)[i],4,5,6,0,7,1,3,2);

@@ -1,62 +1,62 @@
 /****************************************************************************
 
-	Gottlieb Exterminator hardware
+    Gottlieb Exterminator hardware
 
-	driver by Zsolt Vasvari and Alex Pasadyn
+    driver by Zsolt Vasvari and Alex Pasadyn
 
 *****************************************************************************
 
-	Master CPU (TMS34010, all addresses are in bits)
+    Master CPU (TMS34010, all addresses are in bits)
 
-	------00 0---xxxx xxxxxxxx xxxxxxxx = Background VRAM
-	------00 1-xxxxxx xxxxxxxx xxxxxxxx = Master GSP DRAM
-	------01 000000-- -------- ----xxxx = Slave HSTADRL
-	------01 000100-- -------- ----xxxx = Slave HSTADRH
-	------01 001000-- -------- ----xxxx = Slave HSTDATA
-	------01 001100-- -------- ----xxxx = Slave HSTCTL
-	------01 010000-- -------- ----xxxx = IP0S
-	------01 010001-- -------- ----xxxx = IP1S
-	------01 010010-- -------- ----xxxx = IP2S
-	------01 010100-- -------- ----xxxx = OP0S
-	------01 010110-- -------- ----xxxx = SOUND
-	------01 010111-- -------- ----xxxx = WDOG
-	------01 1------- -xxxxxxx xxxxxxxx = CLUT
-	------10 1------- -xxxxxxx xxxxxxxx = EEPROM
-	------11 xxxxxxxx xxxxxxxx xxxxxxxx = EPROM
+    ------00 0---xxxx xxxxxxxx xxxxxxxx = Background VRAM
+    ------00 1-xxxxxx xxxxxxxx xxxxxxxx = Master GSP DRAM
+    ------01 000000-- -------- ----xxxx = Slave HSTADRL
+    ------01 000100-- -------- ----xxxx = Slave HSTADRH
+    ------01 001000-- -------- ----xxxx = Slave HSTDATA
+    ------01 001100-- -------- ----xxxx = Slave HSTCTL
+    ------01 010000-- -------- ----xxxx = IP0S
+    ------01 010001-- -------- ----xxxx = IP1S
+    ------01 010010-- -------- ----xxxx = IP2S
+    ------01 010100-- -------- ----xxxx = OP0S
+    ------01 010110-- -------- ----xxxx = SOUND
+    ------01 010111-- -------- ----xxxx = WDOG
+    ------01 1------- -xxxxxxx xxxxxxxx = CLUT
+    ------10 1------- -xxxxxxx xxxxxxxx = EEPROM
+    ------11 xxxxxxxx xxxxxxxx xxxxxxxx = EPROM
 
-	--------------------------------------------------------------------
+    --------------------------------------------------------------------
 
-	Slave CPU (TMS34010, all addresses are in bits)
-	-----0-- ----xxxx xxxxxxxx xxxxxxxx = Foreground VRAM
-	-----1-- -0xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 1
-	-----1-- -1xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 0
+    Slave CPU (TMS34010, all addresses are in bits)
+    -----0-- ----xxxx xxxxxxxx xxxxxxxx = Foreground VRAM
+    -----1-- -0xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 1
+    -----1-- -1xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 0
 
-	--------------------------------------------------------------------
+    --------------------------------------------------------------------
 
-	Master sound CPU (6502)
-	
-	000--xxx xxxxxxxx = RAM
-	010----- -------- = YM2151 data write
-	01100--- -------- = set NMI down counter
-	01101--- -------- = read input latch and clear IRQ
-	01110--- -------- = send NMI to slave sound CPU
-	01111--- -------- = connected to S4-13 (unknown)
-	101----- -------- = sound control register
-					  		D7 = to S4-15
-					  		D6 = to S4-12
-					  		D5 = to S4-11
-					  		D1 = to LED
-					  		D0 = enable NMI timer
-	1xxxxxxx xxxxxxxx = ROM
+    Master sound CPU (6502)
 
-	--------------------------------------------------------------------
+    000--xxx xxxxxxxx = RAM
+    010----- -------- = YM2151 data write
+    01100--- -------- = set NMI down counter
+    01101--- -------- = read input latch and clear IRQ
+    01110--- -------- = send NMI to slave sound CPU
+    01111--- -------- = connected to S4-13 (unknown)
+    101----- -------- = sound control register
+                            D7 = to S4-15
+                            D6 = to S4-12
+                            D5 = to S4-11
+                            D1 = to LED
+                            D0 = enable NMI timer
+    1xxxxxxx xxxxxxxx = ROM
 
-	Slave sound CPU (6502)
-	
-	00---xxx xxxxxxxx = RAM
-	01------ -------- = read input latch and clear IRQ
-	10------ -------x = DAC write
-	1xxxxxxx xxxxxxxx = ROM
+    --------------------------------------------------------------------
+
+    Slave sound CPU (6502)
+
+    00---xxx xxxxxxxx = RAM
+    01------ -------- = read input latch and clear IRQ
+    10------ -------x = DAC write
+    1xxxxxxx xxxxxxxx = ROM
 
 ****************************************************************************/
 
@@ -71,7 +71,7 @@
 
 /*************************************
  *
- *	Globals
+ *  Globals
  *
  *************************************/
 
@@ -88,7 +88,7 @@ static UINT8 dac_value[2];
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -98,7 +98,7 @@ static void master_sound_nmi_callback(int param);
 
 /*************************************
  *
- *	System init
+ *  System init
  *
  *************************************/
 
@@ -111,7 +111,7 @@ static MACHINE_INIT( exterm )
 
 /*************************************
  *
- *	Master/slave communications
+ *  Master/slave communications
  *
  *************************************/
 
@@ -130,7 +130,7 @@ READ16_HANDLER( exterm_host_data_r )
 
 /*************************************
  *
- *	Input port handlers
+ *  Input port handlers
  *
  *************************************/
 
@@ -177,7 +177,7 @@ READ16_HANDLER( exterm_input_port_1_r )
 
 /*************************************
  *
- *	Output port handlers
+ *  Output port handlers
  *
  *************************************/
 
@@ -229,7 +229,7 @@ WRITE16_HANDLER( sound_latch_w )
 
 /*************************************
  *
- *	Sound handlers
+ *  Sound handlers
  *
  *************************************/
 
@@ -297,11 +297,11 @@ static READ8_HANDLER( sound_nmi_to_slave_r )
 static WRITE8_HANDLER( sound_control_w )
 {
 /*
-	D7 = to S4-15
-	D6 = to S4-12
-	D5 = to S4-11
-	D1 = to LED
-	D0 = enable NMI timer
+    D7 = to S4-15
+    D6 = to S4-12
+    D5 = to S4-11
+    D1 = to LED
+    D0 = enable NMI timer
 */
 	sound_control = data;
 }
@@ -310,7 +310,7 @@ static WRITE8_HANDLER( sound_control_w )
 
 /*************************************
  *
- *	Master/slave memory maps
+ *  Master/slave memory maps
  *
  *************************************/
 
@@ -341,7 +341,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Audio memory maps
+ *  Audio memory maps
  *
  *************************************/
 
@@ -351,7 +351,7 @@ static ADDRESS_MAP_START( sound_master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0x67ff) AM_WRITE(sound_nmi_rate_w)
 	AM_RANGE(0x6800, 0x6fff) AM_READ(sound_master_latch_r)
 	AM_RANGE(0x7000, 0x77ff) AM_READ(sound_nmi_to_slave_r)
-/*	AM_RANGE(0x7800, 0x7fff) unknown - to S4-13 */
+/*  AM_RANGE(0x7800, 0x7fff) unknown - to S4-13 */
 	AM_RANGE(0xa000, 0xbfff) AM_WRITE(sound_control_w)
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -368,7 +368,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -403,8 +403,8 @@ INPUT_PORTS_START( exterm )
 	PORT_DIPSETTING(	  0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 	/* Note that the coin settings don't match the setting shown on the test screen,
-	   but instead what the game appears to used. This is either a bug in the game,
-	   or I don't know what else. */
+       but instead what the game appears to used. This is either a bug in the game,
+       or I don't know what else. */
 	PORT_DIPNAME( 0x0006, 0x0006, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_2C ) )
@@ -438,7 +438,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configurations
+ *  34010 configurations
  *
  *************************************/
 
@@ -462,7 +462,7 @@ static struct tms34010_config slave_config =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -513,7 +513,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -551,7 +551,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

@@ -66,15 +66,15 @@ static READ8_HANDLER( hotblock_video_read )
 static READ8_HANDLER( hotblock_port4_r )
 {
 
-//	printf("port4_r\n");
+//  printf("port4_r\n");
 	return 0x00;//return rand(); // WHAT HERE?
 }
 
 
 static WRITE8_HANDLER( hotblock_port4_w )
 {
-//	printf("port4_w: pc = %06x : data %04x\n",activecpu_get_pc(),data);
-//	usrintf_showmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
+//  printf("port4_w: pc = %06x : data %04x\n",activecpu_get_pc(),data);
+//  usrintf_showmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
 	hotblock_port4=data;
 }
 
@@ -82,7 +82,7 @@ static WRITE8_HANDLER( hotblock_port4_w )
 
 WRITE8_HANDLER( hotblock_port0_w )
 {
-//	usrintf_showmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
+//  usrintf_showmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
 	hotblock_port0=data;
 }
 
@@ -209,7 +209,7 @@ static MACHINE_DRIVER_START( hotblock )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

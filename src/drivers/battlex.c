@@ -91,7 +91,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x23, 0x23) AM_WRITE(AY8910_control_port_0_w)
 
 	/* 0x30 looks like scroll, but can't be ? changes (increases or decreases)
-		depending on the direction your ship is facing on lev 2. at least */
+        depending on the direction your ship is facing on lev 2. at least */
 	AM_RANGE(0x30, 0x30) AM_WRITE(MWA8_NOP)
 
 	AM_RANGE(0x32, 0x32) AM_WRITE(battlex_scroll_x_lsb_w)
@@ -249,7 +249,7 @@ ROM_START( battlex )
 
 	ROM_REGION( 0x4000, REGION_GFX1, 0 )
 	/* filled in later */
-//	ROM_LOAD( "2732.e",    0x0000, 0x1000, CRC(126842b7) SHA1(2da4f64e077232c1dd0853d07d801f9781517850) )
+//  ROM_LOAD( "2732.e",    0x0000, 0x1000, CRC(126842b7) SHA1(2da4f64e077232c1dd0853d07d801f9781517850) )
 
 	ROM_REGION( 0x3000, REGION_GFX2, 0 )
 	ROM_LOAD( "2732.f",    0x0000, 0x1000, CRC(2b69287a) SHA1(30c0edaec44118b95ec390bd41c1bd49a2802451) )

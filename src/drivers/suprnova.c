@@ -282,10 +282,10 @@ static void hit_recalc(void)
 	hit.flag |= hit.x_in >= 0 && hit.y_in >= 0                  ? 1 : 0;
 /*  if(0)
     log_event("HIT", "Recalc, (%d,%d)-(%d,%d)-(%d,%d):(%d,%d)-(%d,%d)-(%d,%d):%04x, (%d,%d,%d), %04x",
-	      hit.x1p, hit.x1s, hit.y1p, hit.y1s, hit.z1p, hit.z1s,
-	      hit.x2p, hit.x2s, hit.y2p, hit.y2s, hit.z2p, hit.z2s,
-	      hit.org,
-	      hit.x_in, hit.y_in, hit.z_in, hit.flag);
+          hit.x1p, hit.x1s, hit.y1p, hit.y1s, hit.z1p, hit.z1s,
+          hit.x2p, hit.x2s, hit.y2p, hit.y2s, hit.z2p, hit.z2s,
+          hit.org,
+          hit.x_in, hit.y_in, hit.z_in, hit.flag);
 */
 }
 
@@ -347,7 +347,7 @@ WRITE32_HANDLER ( skns_hit_w )
 		hit.org = data;
 	break;
 	default:
-//		log_write("HIT", adr, data, type);
+//      log_write("HIT", adr, data, type);
 	break;
 	}
 	hit_recalc();
@@ -355,7 +355,7 @@ WRITE32_HANDLER ( skns_hit_w )
 
 WRITE32_HANDLER ( skns_hit2_w )
 {
-//	log_event("HIT", "Set disconnect to %02x", data);
+//  log_event("HIT", "Set disconnect to %02x", data);
 	hit.disconnect = data;
 }
 
@@ -365,7 +365,7 @@ READ32_HANDLER( skns_hit_r )
 {
 	int adr = offset *4;
 
-//	log_read("HIT", adr, type);
+//  log_read("HIT", adr, type);
 
 	if(hit.disconnect)
 		return 0x0000;
@@ -441,7 +441,7 @@ READ32_HANDLER( skns_hit_r )
 	case 0xbc:
 		return hit.z2_p2;
 	default:
-//		log_read("HIT", adr, type);
+//      log_read("HIT", adr, type);
 	return 0;
 	}
 }
@@ -677,10 +677,10 @@ static WRITE32_HANDLER( skns_io_w )
 	case 2:
 		if(((mem_mask & 0xff000000) == 0))
 		{ /* Coin Lock/Count */
-//			coin_counter_w(0, data & 0x01000000);
-//			coin_counter_w(1, data & 0x02000000);
-//			coin_lockout_w(0, ~data & 0x04000000);
-//			coin_lockout_w(1, ~data & 0x08000000); // Works in puzzloop, others behave strange.
+//          coin_counter_w(0, data & 0x01000000);
+//          coin_counter_w(1, data & 0x02000000);
+//          coin_lockout_w(0, ~data & 0x04000000);
+//          coin_lockout_w(1, ~data & 0x08000000); // Works in puzzloop, others behave strange.
 		}
 		if(((mem_mask & 0x00ff0000) == 0))
 		{ /* Analogue Input Select */
@@ -695,22 +695,22 @@ static WRITE32_HANDLER( skns_io_w )
 	case 3:
 		if(((mem_mask & 0x0000ff00) == 0))
 		{ /* Interrupt Clear, do we need these? */
-/*			if(data&0x01)
-				cpunum_set_input_line(0,1,CLEAR_LINE);
-			if(data&0x02)
-				cpunum_set_input_line(0,3,CLEAR_LINE);
-			if(data&0x04)
-				cpunum_set_input_line(0,5,CLEAR_LINE);
-			if(data&0x08)
-				cpunum_set_input_line(0,7,CLEAR_LINE);
-			if(data&0x10)
-				cpunum_set_input_line(0,9,CLEAR_LINE);
-			if(data&0x20)
-				cpunum_set_input_line(0,0xb,CLEAR_LINE);
-			if(data&0x40)
-				cpunum_set_input_line(0,0xd,CLEAR_LINE);
-			if(data&0x80)
-				cpunum_set_input_line(0,0xf,CLEAR_LINE);*/
+/*          if(data&0x01)
+                cpunum_set_input_line(0,1,CLEAR_LINE);
+            if(data&0x02)
+                cpunum_set_input_line(0,3,CLEAR_LINE);
+            if(data&0x04)
+                cpunum_set_input_line(0,5,CLEAR_LINE);
+            if(data&0x08)
+                cpunum_set_input_line(0,7,CLEAR_LINE);
+            if(data&0x10)
+                cpunum_set_input_line(0,9,CLEAR_LINE);
+            if(data&0x20)
+                cpunum_set_input_line(0,0xb,CLEAR_LINE);
+            if(data&0x40)
+                cpunum_set_input_line(0,0xd,CLEAR_LINE);
+            if(data&0x80)
+                cpunum_set_input_line(0,0xf,CLEAR_LINE);*/
 
 			/* idle skip for vblokbrk/sarukani, i can't find a better place to put it :-( but i think it works ok unless its making the game too fast */
 			if (activecpu_get_pc()==0x04013B44)
@@ -969,7 +969,7 @@ static ADDRESS_MAP_START( skns_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	/* In between is write only */
 	AM_RANGE(0x0040000c, 0x0040000f) AM_READ(nova_input_port_3_r)
 	AM_RANGE(0x00800000, 0x00801fff) AM_READ(MRA32_RAM) /* 'backup' RAM */
-//	AM_RANGE(0x00c00000, 0x00c00003) AM_READ(skns_ymz280_r) /* ymz280 (sound) */
+//  AM_RANGE(0x00c00000, 0x00c00003) AM_READ(skns_ymz280_r) /* ymz280 (sound) */
 	AM_RANGE(0x01000000, 0x0100000f) AM_READ(msm6242_r)
 	AM_RANGE(0x02000000, 0x02003fff) AM_READ(MRA32_RAM) /* 'spc' RAM */
 	AM_RANGE(0x02100000, 0x0210003f) AM_READ(MRA32_RAM) /* 'spc' */
@@ -1098,12 +1098,12 @@ static READ32_HANDLER( bios_skip_r )
 static READ32_HANDLER( gutsn_speedup_r )
 {
 /*
-	0402206A: MOV.L   @($8C,PC),R5
-	0402206C: MOV.L   @($8C,PC),R1
-	0402206E: MOV.L   @R1,R2       // R1 == 600C780
-	04022070: MOV.L   @R5,R3       // R5 == 6000078
-	04022072: CMP/EQ  R2,R3
-	04022074: BT      $0402206C
+    0402206A: MOV.L   @($8C,PC),R5
+    0402206C: MOV.L   @($8C,PC),R1
+    0402206E: MOV.L   @R1,R2       // R1 == 600C780
+    04022070: MOV.L   @R5,R3       // R5 == 6000078
+    04022072: CMP/EQ  R2,R3
+    04022074: BT      $0402206C
 */
 	if (activecpu_get_pc()==0x4022070)
 	{
@@ -1134,11 +1134,11 @@ static READ32_HANDLER( puzloopu_speedup_r )
 static READ32_HANDLER( puzzloop_speedup_r )
 {
 /*
-	0401DA12: MOV.L   @($80,PC),R1
-	0401DA14: MOV.L   @R1,R0 (R1=0x6081d38)
-	0401DA16: TST     R0,R0
-	0401DA18: BF      $0401DA26
-	0401DA26: BRA     $0401DA12
+    0401DA12: MOV.L   @($80,PC),R1
+    0401DA14: MOV.L   @R1,R0 (R1=0x6081d38)
+    0401DA16: TST     R0,R0
+    0401DA18: BF      $0401DA26
+    0401DA26: BRA     $0401DA12
 */
 	if (activecpu_get_pc()==0x401da16) cpu_spinuntil_int();
 	return skns_main_ram[0x81d38/4];

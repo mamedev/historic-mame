@@ -88,8 +88,8 @@ WRITE8_HANDLER( gotya_colorram_w )
 WRITE8_HANDLER( gotya_video_control_w )
 {
 	/* bit 0 - scroll bit 8
-	   bit 1 - flip screen
-	   bit 2 - sound disable ??? */
+       bit 1 - flip screen
+       bit 2 - sound disable ??? */
 
 	scroll_bit_8 = data & 0x01;
 

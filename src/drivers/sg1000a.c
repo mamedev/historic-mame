@@ -12,7 +12,7 @@ Memory map :
 0xC000 - 0xC3FF RAM
 
 CPU:
-Z80 A  			 	           3.57954 MHz (Champion Boxing)
+Z80 A                          3.57954 MHz (Champion Boxing)
 315-5114 (encrypted Z80) 3.57954 MHz (Champion Pro Wrestling)
 
 8255 for I/O port work

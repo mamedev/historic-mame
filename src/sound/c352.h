@@ -1,7 +1,7 @@
 #ifndef _C352_H_
 #define _C352_H_
 
-struct C352interface 
+struct C352interface
 {
 	int region;				/* memory region of sample ROMs */
 };

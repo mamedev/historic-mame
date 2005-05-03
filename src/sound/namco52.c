@@ -59,7 +59,7 @@ struct namco_52xx
 	double n52_pb_cycle;	/* playback clock time based on machine sample rate */
 	double n52_step;		/* playback clock step based on machine sample rate */
 	/* n52_pb_cycle is incremented by n52_step every machine-sample.
-	 * At every integer value of n52_pb_cycle the next 4bit value is used. */
+     * At every integer value of n52_pb_cycle the next 4bit value is used. */
 	int n52_start;		/* current effect start position in the ROM */
 	int n52_end;			/* current effect end position in the ROM */
 	int n52_length;		/* # of 4bit samples in current effect */
@@ -131,10 +131,10 @@ static void namco_52xx_reset(void *_chip)
 static void *namco_52xx_start(int sndindex, int clock, const void *config)
 {
 	struct namco_52xx *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
-	
+
 	chip->intf = config;
 	chip->rom     = memory_region(chip->intf->region);
 	chip->rom_len = memory_region_length(chip->intf->region);

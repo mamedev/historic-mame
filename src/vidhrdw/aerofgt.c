@@ -408,7 +408,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		int map_start;
 		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color,pri;
 // some other drivers still use this wrong table, they have to be upgraded
-//		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+//      int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 
 		if (!(aerofgt_spriteram3[attr_start + 2] & 0x0080)) continue;
 
@@ -425,8 +425,8 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		map_start = aerofgt_spriteram3[attr_start + 3];
 
 // aerofgt has this adjustment, but doing it here would break turbo force title screen
-//		ox += (xsize*zoomx+2)/4;
-//		oy += (ysize*zoomy+2)/4;
+//      ox += (xsize*zoomx+2)/4;
+//      oy += (ysize*zoomy+2)/4;
 
 		zoomx = 32 - zoomx;
 		zoomy = 32 - zoomy;
@@ -505,15 +505,15 @@ static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	int attr_start;//,base,first;
 
 
-//	base = chip * 0x0200;
-//	first = 4 * aerofgt_spriteram3[0x1fe + base];
+//  base = chip * 0x0200;
+//  first = 4 * aerofgt_spriteram3[0x1fe + base];
 
 	for (attr_start = aerofgt_spriteram3_size/2 - 4;attr_start >= 0;attr_start -= 4)
 	{
 		int code;
 		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color,pri;
 // some other drivers still use this wrong table, they have to be upgraded
-//		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+//      int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 
 		ox = aerofgt_spriteram3[attr_start + 1] & 0x01ff;
 		oy = aerofgt_spriteram3[attr_start + 0] & 0x01ff;
@@ -521,10 +521,10 @@ static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		flipy = aerofgt_spriteram3[attr_start + 2] & 0x8000;
 		color = aerofgt_spriteram3[attr_start + 2] & 0x000f;
 
-//		xsize = (aerofgt_spriteram3[attr_start + 2] & 0x0700) >> 8;
+//      xsize = (aerofgt_spriteram3[attr_start + 2] & 0x0700) >> 8;
 		xsize = (aerofgt_spriteram3[attr_start + 1] & 0x0e00) >> 9;
 		zoomx = (aerofgt_spriteram3[attr_start + 1] & 0xf000) >> 12;
-//		ysize = (aerofgt_spriteram3[attr_start + 2] & 0x7000) >> 12;
+//      ysize = (aerofgt_spriteram3[attr_start + 2] & 0x7000) >> 12;
 		ysize = (aerofgt_spriteram3[attr_start + 0] & 0x0e00) >> 9;
 		zoomy = (aerofgt_spriteram3[attr_start + 0] & 0xf000) >> 12;
 
@@ -533,8 +533,8 @@ static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 
 
 // aerofgt has this adjustment, but doing it here would break turbo force title screen
-//		ox += (xsize*zoomx+2)/4;
-//		oy += (ysize*zoomy+2)/4;
+//      ox += (xsize*zoomx+2)/4;
+//      oy += (ysize*zoomy+2)/4;
 
 		zoomx = 32 - zoomx;
 		zoomy = 32 - zoomy;
@@ -562,10 +562,10 @@ static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 				code++;
 			}
 
-//			if (xsize == 2) code += 1;
-//			if (xsize == 4) code += 3;
-//			if (xsize == 5) code += 2;
-//			if (xsize == 6) code += 1;
+//          if (xsize == 2) code += 1;
+//          if (xsize == 4) code += 3;
+//          if (xsize == 5) code += 2;
+//          if (xsize == 6) code += 1;
 		}
 	}
 }
@@ -651,9 +651,9 @@ VIDEO_UPDATE( spinlbrk )
 	scrolly = 0;
 	for (i = 0;i < 256;i++)
 		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0x1ff,aerofgt_rasterram[i]-8);
-//	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
+//  tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-4);
-//	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
+//  tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
@@ -672,7 +672,7 @@ VIDEO_UPDATE( turbofrc )
 	tilemap_set_scroll_rows(bg1_tilemap,512);
 	scrolly = bg1scrolly+2;
 	for (i = 0;i < 256;i++)
-//		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0x1ff,aerofgt_rasterram[i]-11);
+//      tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0x1ff,aerofgt_rasterram[i]-11);
 		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0x1ff,aerofgt_rasterram[7]-11);
 	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-7);

@@ -292,7 +292,7 @@ static void draw_missile_helper(UINT8* p, int horz,
 }
 
 
-static void draw_playfield_helper(UINT8* p, int horz, 
+static void draw_playfield_helper(UINT8* p, int horz,
 	UINT8 COLU, UINT8 REFPF)
 {
 	UINT32 PF =
@@ -589,7 +589,7 @@ static WRITE8_HANDLER( VSYNC_w )
 			update_bitmap(
 				Machine->drv->screen_width,
 				Machine->drv->screen_height);
-			
+
 			current_bitmap ^= 1;
 
 			prev_y = 0;
@@ -877,14 +877,14 @@ WRITE8_HANDLER( tia_w )
 		 0,	// RESM1
 		 0,	// RESBL
 		-1,	// AUDC0
-		-1,	// AUDC1 
+		-1,	// AUDC1
 		-1,	// AUDF0
 		-1,	// AUDF1
 		-1,	// AUDV0
 		-1,	// AUDV1
 		 1,	// GRP0
 		 1,	// GRP1
-		 0,	// ENAM0 
+		 0,	// ENAM0
 		 0,	// ENAM1
 		 0,	// ENABL
 		-1,	// HMP0

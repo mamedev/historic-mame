@@ -39,7 +39,7 @@ VIDEO_START( mole )
 	if ( !tile_data )
 		return 1;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 40, 25);
 
 	if ( !bg_tilemap )

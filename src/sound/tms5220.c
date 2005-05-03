@@ -49,12 +49,12 @@ struct tms5220
 
 	/* these contain global status bits */
 	/*
-		R Nabet : speak_external is only set when a speak external command is going on.
-		tms5220_speaking is set whenever a speak or speak external command is going on.
-		Note that we really need to do anything in tms5220_process and play samples only when
-		tms5220_speaking is true.  Else, we can play nothing as well, which is a
-		speed-up...
-	*/
+        R Nabet : speak_external is only set when a speak external command is going on.
+        tms5220_speaking is set whenever a speak or speak external command is going on.
+        Note that we really need to do anything in tms5220_process and play samples only when
+        tms5220_speaking is true.  Else, we can play nothing as well, which is a
+        speed-up...
+    */
 	UINT8 tms5220_speaking;	/* Speak or Speak External command in progress */
 	UINT8 speak_external;	/* Speak External command in progress */
 	#if USE_OBSOLETE_HACK
@@ -104,15 +104,15 @@ struct tms5220
 	void (*load_address_callback)(int data);
 	void (*read_and_branch_callback)(void);
 	int schedule_dummy_read;			/* set after each load address, so that next read operation
-											  is preceded by a dummy read */
+                                              is preceded by a dummy read */
 
 	UINT8 data_register;				/* data register, used by read command */
 	int RDB_flag;					/* whether we should read data register or status register */
 
 	/* flag for tms0285 emulation */
 	/* The tms0285 is an early variant of the tms5220 used in the ti-99/4(a)
-	computer.  The exact relationship of this chip with tms5200 & tms5220 is
-	unknown, but it seems to use slightly different tables for LPC parameters. */
+    computer.  The exact relationship of this chip with tms5200 & tms5220 is
+    unknown, but it seems to use slightly different tables for LPC parameters. */
 	tms5220_variant variant;
 };
 
@@ -131,7 +131,7 @@ static void set_interrupt_state(struct tms5220 *tms, int state);
 void *tms5220_create(void)
 {
 	struct tms5220 *tms;
-	
+
 	tms = malloc(sizeof(*tms));
 	memset(tms, 0, sizeof(*tms));
 	return tms;
@@ -152,7 +152,7 @@ void tms5220_destroy(void *chip)
 void tms5220_reset_chip(void *chip)
 {
 	struct tms5220 *tms = chip;
-	
+
 	/* initialize the FIFO */
 	/*memset(tms->fifo, 0, sizeof(tms->fifo));*/
 	tms->fifo_head = tms->fifo_tail = tms->fifo_count = tms->fifo_bits_taken = 0;
@@ -296,7 +296,7 @@ void tms5220_data_write(void *chip, int data)
 
      tms5220_status_read -- read status or data from the TMS5220
 
-	  From the data sheet:
+      From the data sheet:
         bit 0 = TS - Talk Status is active (high) when the VSP is processing speech data.
                 Talk Status goes active at the initiation of a Speak command or after nine
                 bytes of data are loaded into the FIFO following a Speak External command. It
@@ -379,13 +379,13 @@ int tms5220_cycles_to_ready(void *chip)
 			val = (tms->fifo[tms->fifo_head] >> tms->fifo_bits_taken) & 0xf;
 			if (val == 0)
 				/* 0 -> silence frame: we will only read 4 bits, and we will
-				therefore need to read another frame before the FIFO is not
-				full any more */
+                therefore need to read another frame before the FIFO is not
+                full any more */
 				answer += 200;
 			/* 15 -> stop frame, we will only read 4 bits, but the FIFO will
-			we cleared */
+            we cleared */
 			/* otherwise, we need to parse the repeat flag (1 bit) and the
-			pitch (6 bits), so everything will be OK. */
+            pitch (6 bits), so everything will be OK. */
 		}
 	}
 
@@ -423,7 +423,7 @@ tryagain:
 
     /* if we're not speaking, parse commands */
 	/*while (!tms->speak_external && tms->fifo_count > 0)
-		process_command(tms);*/
+        process_command(tms);*/
 
     /* if we're empty and still not speaking, fill with nothingness */
 	if ((!tms->tms5220_speaking) && (!tms->last_frame))
@@ -697,7 +697,7 @@ static void process_command(struct tms5220 *tms)
 
 		case 0x40 : /* load address */
 			/* tms5220 data sheet says that if we load only one 4-bit nibble, it won't work.
-			  This code does not care about this. */
+              This code does not care about this. */
 			if (tms->load_address_callback)
 				(*tms->load_address_callback)(cmd & 0x0f);
 			tms->schedule_dummy_read = TRUE;

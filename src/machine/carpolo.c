@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Exidy Car Polo hardware
+    Exidy Car Polo hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 
@@ -16,7 +16,7 @@
 
 /*************************************
  *
- *	Interrupt system
+ *  Interrupt system
  *
  *************************************/
 
@@ -24,16 +24,16 @@
    with the following interrupt priorites.  A lower number
    indicates a lower priority (coins handled first):
 
-	7 - player 1 coin
-	6 - player 2 coin
-	5 - player 3 coin
-	4 - player 4 coin
-	3 - ball/screen object collision
-	2 - car/car collision
-	1 - car/goal collision
-	0 - timer 				(bit 4=0, bit 6=0)
-	0 - car/ball collision  (bit 4=0, bit 6=1)
-	0 - car/border			(bit 4=1, bit 6=1)
+    7 - player 1 coin
+    6 - player 2 coin
+    5 - player 3 coin
+    4 - player 4 coin
+    3 - ball/screen object collision
+    2 - car/car collision
+    1 - car/goal collision
+    0 - timer               (bit 4=0, bit 6=0)
+    0 - car/ball collision  (bit 4=0, bit 6=1)
+    0 - car/border          (bit 4=1, bit 6=1)
 
    After the interrupt is serviced, the code clears the
    priority encoder's appropriate line by pulling it HI.  This
@@ -168,9 +168,9 @@ void carpolo_generate_car_border_interrupt(int car, int horizontal_border)
 READ8_HANDLER( carpolo_ball_screen_collision_cause_r )
 {
 	/* bit 0 - 0=ball collided with border
-	   bit 1 - 0=ball collided with goal
-	   bit 2 - 0=ball collided with score area
-	   bit 3 - which goal/score collided (0=left, 1=right) */
+       bit 1 - 0=ball collided with goal
+       bit 2 - 0=ball collided with score area
+       bit 3 - which goal/score collided (0=left, 1=right) */
 	return ball_screen_collision_cause;
 }
 
@@ -189,31 +189,31 @@ READ8_HANDLER( carpolo_car_ball_collision_y_r )
 READ8_HANDLER( carpolo_car_car_collision_cause_r )
 {
 	/* bit 0 - car 4 collided
-	   bit 1 - car 3 collided
-	   bit 2 - car 2 collided
-	   bit 3 - car 1 collided */
+       bit 1 - car 3 collided
+       bit 2 - car 2 collided
+       bit 3 - car 1 collided */
 	return car_car_collision_cause;
 }
 
 READ8_HANDLER( carpolo_car_goal_collision_cause_r )
 {
 	/* bit 0-1 - which car collided
-	   bit 2   - horizontal timing bit 1TEC4 (not accessed)
-	   bit 3   - which goal collided (0=left, 1=right) */
+       bit 2   - horizontal timing bit 1TEC4 (not accessed)
+       bit 3   - which goal collided (0=left, 1=right) */
 	return car_goal_collision_cause;
 }
 
 READ8_HANDLER( carpolo_car_ball_collision_cause_r )
 {
 	/* bit 0-1 - which car collided
-	   bit 2-3 - unconnected */
+       bit 2-3 - unconnected */
 	return car_ball_collision_cause;
 }
 
 READ8_HANDLER( carpolo_car_border_collision_cause_r )
 {
 	/* bit 0-1 - which car collided
-	   bit 2   - 0=vertical border, 1=horizontal border */
+       bit 2   - 0=vertical border, 1=horizontal border */
 	return car_border_collision_cause;
 }
 
@@ -285,7 +285,7 @@ INTERRUPT_GEN( carpolo_timer_interrupt )
 	for (player = 0; player < 4; player++)
 	{
 		/* one line indicates if the pedal is pressed and the other
-		   how much, resulting in only two different possible levels */
+           how much, resulting in only two different possible levels */
 		if (port_value & 0x01)
 		{
 			TTL74153_input_line_w(TTL74153_1K, 0, player, 1);
@@ -372,20 +372,20 @@ WRITE8_HANDLER( carpolo_timer_interrupt_clear_w )
 
 /*************************************
  *
- *	Input port handling
+ *  Input port handling
  *
  *************************************/
 
 static WRITE8_HANDLER( pia_0_port_a_w )
 {
 	/* bit 0 - Coin counter
-	   bit 1 - Player 4 crash sound
-	   bit 2 - Player 3 crash sound
-	   bit 3 - Clear steering wheel logic
-	   bit 4 - Player 2 crash sound
-	   bit 5 - Score pulse sound
-	   bit 6 - Player 1 crash sound
-	   bit 7 - Ball hit pulse sound */
+       bit 1 - Player 4 crash sound
+       bit 2 - Player 3 crash sound
+       bit 3 - Clear steering wheel logic
+       bit 4 - Player 2 crash sound
+       bit 5 - Score pulse sound
+       bit 6 - Player 1 crash sound
+       bit 7 - Ball hit pulse sound */
 
 	coin_counter_w(0, data & 0x01);
 
@@ -405,11 +405,11 @@ static WRITE8_HANDLER( pia_0_port_a_w )
 static WRITE8_HANDLER( pia_0_port_b_w )
 {
 	/* bit 0 - Strobe speed bits sound
-	   bit 1 - Speed bit 0 sound
-	   bit 2 - Speed bit 1 sound
-	   bit 3 - Speed bit 2 sound
-	   bit 6 - Select pedal 0
-	   bit 7 - Select pdeal 1 */
+       bit 1 - Speed bit 0 sound
+       bit 2 - Speed bit 1 sound
+       bit 3 - Speed bit 2 sound
+       bit 6 - Select pedal 0
+       bit 7 - Select pdeal 1 */
 
 	TTL74153_a_w(TTL74153_1K, data & 0x40);
 	TTL74153_b_w(TTL74153_1K, data & 0x80);
@@ -420,7 +420,7 @@ static WRITE8_HANDLER( pia_0_port_b_w )
 static READ8_HANDLER( pia_0_port_b_r )
 {
 	/* bit 4 - Pedal bit 0
-	   bit 5 - Pedal bit 1 */
+       bit 5 - Pedal bit 1 */
 
 	return (TTL74153_output_r(TTL74153_1K, 0) << 5) |
 		   (TTL74153_output_r(TTL74153_1K, 1) << 4);
@@ -432,13 +432,13 @@ static READ8_HANDLER( pia_1_port_a_r )
 	data8_t ret;
 
 	/* bit 0 - Player 4 steering input (left or right)
-	   bit 1 - Player 3 steering input (left or right)
-	   bit 2 - Player 2 steering input (left or right)
-	   bit 3 - Player 1 steering input (left or right)
-	   bit 4 - Player 4 forward/reverse input
-	   bit 5 - Player 3 forward/reverse input
-	   bit 6 - Player 2 forward/reverse input
-	   bit 7 - Player 1 forward/reverse input */
+       bit 1 - Player 3 steering input (left or right)
+       bit 2 - Player 2 steering input (left or right)
+       bit 3 - Player 1 steering input (left or right)
+       bit 4 - Player 4 forward/reverse input
+       bit 5 - Player 3 forward/reverse input
+       bit 6 - Player 2 forward/reverse input
+       bit 7 - Player 1 forward/reverse input */
 
 	ret = (TTL7474_output_r(TTL7474_1A_2) ? 0x01 : 0x00) |
 		  (TTL7474_output_r(TTL7474_1C_2) ? 0x02 : 0x00) |
@@ -455,9 +455,9 @@ static READ8_HANDLER( pia_1_port_b_r )
 	data8_t ret;
 
 	/* bit 4 - Player 4 steering input (wheel moving or stopped)
-	   bit 5 - Player 3 steering input (wheel moving or stopped)
-	   bit 6 - Player 2 steering input (wheel moving or stopped)
-	   bit 7 - Player 1 steering input (wheel moving or stopped) */
+       bit 5 - Player 3 steering input (wheel moving or stopped)
+       bit 6 - Player 2 steering input (wheel moving or stopped)
+       bit 7 - Player 1 steering input (wheel moving or stopped) */
 
 	ret = (TTL7474_output_r(TTL7474_1A_1) ? 0x10 : 0x00) |
 		  (TTL7474_output_r(TTL7474_1C_1) ? 0x20 : 0x00) |

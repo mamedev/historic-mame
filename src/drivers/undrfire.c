@@ -1,89 +1,89 @@
 /***************************************************************************
 
-	Underfire  							(c) 1993 Taito
+    Underfire                           (c) 1993 Taito
 
-	Driver by Bryan McPhail & David Graves.
+    Driver by Bryan McPhail & David Graves.
 
-	Board Info:
+    Board Info:
 
-		TC0470LIN : ?
-		TC0480SCP : known tilemap chip
-		TC0510NIO : known input chip
-		TC0570SPC : must be the object chip (next to spritemap and OBJ roms)
-		TC0590PIV : Piv tilemaps
-		TC0620SCC : lightgun ??? pivot port ???
-		TC0650FDA : palette ? (Slapshot and F3 games also have one)
+        TC0470LIN : ?
+        TC0480SCP : known tilemap chip
+        TC0510NIO : known input chip
+        TC0570SPC : must be the object chip (next to spritemap and OBJ roms)
+        TC0590PIV : Piv tilemaps
+        TC0620SCC : lightgun ??? pivot port ???
+        TC0650FDA : palette ? (Slapshot and F3 games also have one)
 
-	M43E0278A
-	K1100744A Main Board
+    M43E0278A
+    K1100744A Main Board
 
-	2018 2088           43256    43256   68020-25
-	2018 2088           D67-23   D67-17                    93C46
-	2018 2088           43256    43256
-	2018                D67-18   D67-19                TC0510NIO
-	2018
-	2018 TC0570 SPC                      43256
-		                                     43256
-	 D67-13                              43256  TC0650FDA
-	          D67-07                            2018
-	          D67-06
-	TC0470LIN D67-05
-	          D67-04                      43256
-	TC0590PIV D67-03    43256    D67-10   43256
-	                    43256    D67-11
-	   D67-09    TC0480SCP       D67-12   TC0620SCC
-	   D67-08
+    2018 2088           43256    43256   68020-25
+    2018 2088           D67-23   D67-17                    93C46
+    2018 2088           43256    43256
+    2018                D67-18   D67-19                TC0510NIO
+    2018
+    2018 TC0570 SPC                      43256
+                                             43256
+     D67-13                              43256  TC0650FDA
+              D67-07                            2018
+              D67-06
+    TC0470LIN D67-05
+              D67-04                      43256
+    TC0590PIV D67-03    43256    D67-10   43256
+                        43256    D67-11
+       D67-09    TC0480SCP       D67-12   TC0620SCC
+       D67-08
 
-	  MB8421
-	  MB8421   43256             EnsoniqOTIS
-	           D67-20    D67-01
-	           43256                             EnsoniqESP-R6
-	 68000-12  D67-21    D67-02     EnsoniqSuperGlu
+      MB8421
+      MB8421   43256             EnsoniqOTIS
+               D67-20    D67-01
+               43256                             EnsoniqESP-R6
+     68000-12  D67-21    D67-02     EnsoniqSuperGlu
 
-	           40MHz            16MHz   30.476MHz    68681
-
-
-	Under Fire combines the sprite system used in Taito Z games with
-	the TC0480SCP tilemap chip plus some features from the Taito F3 system.
-	It has an extra tilemap chip which is a dead ringer for the TC0100SCN
-	(check the inits). Why did Taito give it a different name in this
-	incarnation?
+               40MHz            16MHz   30.476MHz    68681
 
 
-	Game misbehaviours
-	------------------
-
-	(i) Sprites on some rounds had sprite/tile priority issues.
-	Solved by upping sprite priority while TC0480SCP row zoom is
-	enabled - kludge.
-
-
-	Todo
-	----
-
-	This game needs a fake aim target!
-
-	What does the 0xb00000 area do... alpha blending ??
-
-	What is the unknown hardware at 0x600000... an alternative
-	or legacy lightgun hookup?
-
-	Pivot port which may be used for rotation: but not
-	seen changing except in game inits. Perhaps only used
-	in later levels?
+    Under Fire combines the sprite system used in Taito Z games with
+    the TC0480SCP tilemap chip plus some features from the Taito F3 system.
+    It has an extra tilemap chip which is a dead ringer for the TC0100SCN
+    (check the inits). Why did Taito give it a different name in this
+    incarnation?
 
 
-	Gun calibration
-	---------------
+    Game misbehaviours
+    ------------------
 
-	The values below work well (set speed down to 4 so you can enter
-	them). They give a little reloading margin all around screen.
+    (i) Sprites on some rounds had sprite/tile priority issues.
+    Solved by upping sprite priority while TC0480SCP row zoom is
+    enabled - kludge.
 
-	Use X=0x2000  Y=0x100 for top center
-	Use X=0x3740  (same Y) top left
-	Use X=0x8c0   (same Y) top right
-	Then for the points from left to right near bottom (all Y=0x3400):
-	X=0x3f00,0x3740,0x2f80,0x27c0,0x2000,0x1840,0x1080,0x8c0,0x100
+
+    Todo
+    ----
+
+    This game needs a fake aim target!
+
+    What does the 0xb00000 area do... alpha blending ??
+
+    What is the unknown hardware at 0x600000... an alternative
+    or legacy lightgun hookup?
+
+    Pivot port which may be used for rotation: but not
+    seen changing except in game inits. Perhaps only used
+    in later levels?
+
+
+    Gun calibration
+    ---------------
+
+    The values below work well (set speed down to 4 so you can enter
+    them). They give a little reloading margin all around screen.
+
+    Use X=0x2000  Y=0x100 for top center
+    Use X=0x3740  (same Y) top left
+    Use X=0x8c0   (same Y) top right
+    Then for the points from left to right near bottom (all Y=0x3400):
+    X=0x3f00,0x3740,0x2f80,0x27c0,0x2000,0x1840,0x1080,0x8c0,0x100
 
 
 Code documentation
@@ -149,7 +149,7 @@ data32_t *undrfire_ram;	/* will be read in vidhrdw for gun target calcs */
 
 
 /***********************************************************
-				COLOR RAM
+                COLOR RAM
 
 Extract a standard version of this
 ("taito_8bpg_palette_word_w"?) to Taitoic.c ?
@@ -172,7 +172,7 @@ static WRITE32_HANDLER( color_ram_w )
 
 
 /***********************************************************
-				INTERRUPTS
+                INTERRUPTS
 ***********************************************************/
 
 void undrfire_interrupt5(int x)
@@ -182,7 +182,7 @@ void undrfire_interrupt5(int x)
 
 
 /**********************************************************
-				EPROM
+                EPROM
 **********************************************************/
 
 static data8_t default_eeprom[128]=
@@ -223,7 +223,7 @@ static NVRAM_HANDLER( undrfire )
 
 
 /**********************************************************
-			GAME INPUTS
+            GAME INPUTS
 **********************************************************/
 
 static READ32_HANDLER( undrfire_input_r )
@@ -317,9 +317,9 @@ static READ32_HANDLER( undrfire_lightgun_r )
 	switch (offset)
 	{
 		/* NB we are raising the raw inputs by an arbitrary amount,
-		   but presumably the guns on the original will not have had
-		   full 0-0xffff travel. We don't center around 0x8000... but
-		   who knows if the real machine does. */
+           but presumably the guns on the original will not have had
+           full 0-0xffff travel. We don't center around 0x8000... but
+           who knows if the real machine does. */
 
 		case 0x00:	/* P1 */
 		{
@@ -364,30 +364,30 @@ static WRITE32_HANDLER( rotate_control_w )	/* only a guess that it's rotation */
 static WRITE32_HANDLER( motor_control_w )
 {
 /*
-	Standard value poked is 0x00910200 (we ignore lsb and msb
-	which seem to be always zero)
+    Standard value poked is 0x00910200 (we ignore lsb and msb
+    which seem to be always zero)
 
-	0x0, 0x8000 and 0x9100 are written at startup
+    0x0, 0x8000 and 0x9100 are written at startup
 
-	Two bits are written in test mode to this middle word
-	to test gun vibration:
+    Two bits are written in test mode to this middle word
+    to test gun vibration:
 
-	........ .x......   P1 gun vibration
-	........ x.......   P2 gun vibration
+    ........ .x......   P1 gun vibration
+    ........ x.......   P2 gun vibration
 */
 }
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( undrfire_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA32_RAM)	/* main CPUA ram */
 	AM_RANGE(0x300000, 0x303fff) AM_READ(MRA32_RAM)	/* sprite ram */
-//	AM_RANGE(0x304000, 0x304003) AM_READ(MRA32_RAM)	// debugging
-//	AM_RANGE(0x304400, 0x304403) AM_READ(MRA32_RAM)	// debugging
+//  AM_RANGE(0x304000, 0x304003) AM_READ(MRA32_RAM) // debugging
+//  AM_RANGE(0x304400, 0x304403) AM_READ(MRA32_RAM) // debugging
 	AM_RANGE(0x500000, 0x500007) AM_READ(undrfire_input_r)
 	AM_RANGE(0x600000, 0x600007) AM_READ(unknown_hardware_r)	/* unknown byte reads at $156e */
 	AM_RANGE(0x700000, 0x7007ff) AM_READ(MRA32_RAM)
@@ -404,8 +404,8 @@ static ADDRESS_MAP_START( undrfire_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(MWA32_RAM) AM_BASE(&undrfire_ram)
 	AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-//	AM_RANGE(0x304000, 0x304003) AM_WRITE(MWA32_RAM)	// ??? doesn't change
-//	AM_RANGE(0x304400, 0x304403) AM_WRITE(MWA32_RAM)	// ??? doesn't change
+//  AM_RANGE(0x304000, 0x304003) AM_WRITE(MWA32_RAM)    // ??? doesn't change
+//  AM_RANGE(0x304400, 0x304403) AM_WRITE(MWA32_RAM)    // ??? doesn't change
 	AM_RANGE(0x400000, 0x400003) AM_WRITE(motor_control_w)	/* gun vibration */
 	AM_RANGE(0x500000, 0x500007) AM_WRITE(undrfire_input_w)	/* eerom etc. */
 	AM_RANGE(0x600000, 0x600007) AM_WRITE(unknown_int_req_w)	/* int request for unknown hardware */
@@ -445,7 +445,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS (dips in eprom)
+             INPUT PORTS (dips in eprom)
 ***********************************************************/
 
 INPUT_PORTS_START( undrfire )
@@ -518,7 +518,7 @@ INPUT_PORTS_END
 
 
 /**********************************************************
-				GFX DECODING
+                GFX DECODING
 **********************************************************/
 
 static struct GfxLayout tile16x16_layout =
@@ -565,7 +565,7 @@ static struct GfxDecodeInfo undrfire_gfxdecodeinfo[] =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_INIT( undrfire )
@@ -633,7 +633,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( undrfire )

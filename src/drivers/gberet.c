@@ -1,67 +1,67 @@
 /***************************************************************************
 
-	Green Beret
-	Konami
+    Green Beret
+    Konami
 
-	driver by Nicola Salmoria
-	correct rom naming information by Belgium Dump Team (17/06/2003)
+    driver by Nicola Salmoria
+    correct rom naming information by Belgium Dump Team (17/06/2003)
 
-	Games supported:
-		* Green Beret
-		* Rush'n Attack (US)
-		* Green Beret (bootleg)
-		* Mr. Goemon (Japan)
-		
-	gberetb is a bootleg hacked to run on different hardware.
+    Games supported:
+        * Green Beret
+        * Rush'n Attack (US)
+        * Green Beret (bootleg)
+        * Mr. Goemon (Japan)
 
-****************************************************************************
-
-	Memory map
-
-	0000-bfff	ROM
-	c000-c7ff	Color RAM
-	c800-cfff	Video RAM
-	d000-d0c0	Sprites (bank 0)
-	d100-d1c0	Sprites (bank 1)
-	d200-dfff	RAM
-	e000-e01f	ZRAM1 line scroll registers
-	e020-e03f	ZRAM2 bit 8 of line scroll registers
-
-	read:
-	f200      DSW1
-					bit 0-1 lives
-					bit 2   cocktail/upright cabinet (0 = upright)
-					bit 3-4 bonus
-					bit 5-6 difficulty
-					bit 7   demo sounds
-	f400      DSW2
-					bit 0 = screen flip
-					bit 1 = single/dual upright controls
-	f600      DSW0
-					bit 0-1-2-3 coins per play Coin1
-					bit 4-5-6-7 coins per play Coin2
-	f601      IN1 player 2 controls
-	f602      IN0 player 1 controls
-	f603      IN2
-					bit 0-1-2 coin  bit 3 1 player start  bit 4 2 players start
-
-	write:
-	e040      ?
-	e041      ?
-	e042      ?
-	e043      bit 3 = sprite RAM bank select; other bits = ?
-	e044      bit 0-2 = interrupt control; bit 3 = flip screen
-	f000      ?
-	f200      SN76496 command
-	f400      SN76496 trigger (write command to f200, then write to this location
-								to cause the chip to read it)
-	f600      watchdog reset
+    gberetb is a bootleg hacked to run on different hardware.
 
 ****************************************************************************
 
-	Interrupts
+    Memory map
 
-	The game uses both IRQ (mode 1) and NMI.
+    0000-bfff   ROM
+    c000-c7ff   Color RAM
+    c800-cfff   Video RAM
+    d000-d0c0   Sprites (bank 0)
+    d100-d1c0   Sprites (bank 1)
+    d200-dfff   RAM
+    e000-e01f   ZRAM1 line scroll registers
+    e020-e03f   ZRAM2 bit 8 of line scroll registers
+
+    read:
+    f200      DSW1
+                    bit 0-1 lives
+                    bit 2   cocktail/upright cabinet (0 = upright)
+                    bit 3-4 bonus
+                    bit 5-6 difficulty
+                    bit 7   demo sounds
+    f400      DSW2
+                    bit 0 = screen flip
+                    bit 1 = single/dual upright controls
+    f600      DSW0
+                    bit 0-1-2-3 coins per play Coin1
+                    bit 4-5-6-7 coins per play Coin2
+    f601      IN1 player 2 controls
+    f602      IN0 player 1 controls
+    f603      IN2
+                    bit 0-1-2 coin  bit 3 1 player start  bit 4 2 players start
+
+    write:
+    e040      ?
+    e041      ?
+    e042      ?
+    e043      bit 3 = sprite RAM bank select; other bits = ?
+    e044      bit 0-2 = interrupt control; bit 3 = flip screen
+    f000      ?
+    f200      SN76496 command
+    f400      SN76496 trigger (write command to f200, then write to this location
+                                to cause the chip to read it)
+    f600      watchdog reset
+
+****************************************************************************
+
+    Interrupts
+
+    The game uses both IRQ (mode 1) and NMI.
 
 ***************************************************************************/
 
@@ -253,7 +253,7 @@ INPUT_PORTS_START( gberet )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	// DSW1
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -333,7 +333,7 @@ INPUT_PORTS_START( gberetb )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	// IN2
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -430,7 +430,7 @@ INPUT_PORTS_START( mrgoemon )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	// DSW1
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )

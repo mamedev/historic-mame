@@ -163,17 +163,17 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9c00, 0x9dff) AM_WRITE(paletteram_IIBBGGRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0x9e00, 0x9e1f) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_fgscroll)
 	AM_RANGE(0x9e20, 0x9e21) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly3)
-/*	{ 0x9e22, 0x9e23, height of the layer (Senjyo only, fixed at 0x380) */
+/*  { 0x9e22, 0x9e23, height of the layer (Senjyo only, fixed at 0x380) */
 	AM_RANGE(0x9e25, 0x9e25) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx3)
 	AM_RANGE(0x9e27, 0x9e27) AM_WRITE(senjyo_bgstripes_w) AM_BASE(&senjyo_bgstripesram)	/* controls width of background stripes */
 	AM_RANGE(0x9e28, 0x9e29) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly2)
-/*	{ 0x9e2a, 0x9e2b, height of the layer (Senjyo only, fixed at 0x200) */
+/*  { 0x9e2a, 0x9e2b, height of the layer (Senjyo only, fixed at 0x200) */
 	AM_RANGE(0x9e2d, 0x9e2d) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx2)
 	AM_RANGE(0x9e30, 0x9e31) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrolly1)
-/*	{ 0x9e32, 0x9e33, height of the layer (Senjyo only, fixed at 0x100) */
+/*  { 0x9e32, 0x9e33, height of the layer (Senjyo only, fixed at 0x100) */
 	AM_RANGE(0x9e35, 0x9e35) AM_WRITE(MWA8_RAM) AM_BASE(&senjyo_scrollx1)
-/*	{ 0x9e38, 0x9e38, probably radar y position (Senjyo only, fixed at 0x61) */
-/*	{ 0x9e3d, 0x9e3d, probably radar x position (Senjyo only, 0x00/0xc0 depending on screen flip) */
+/*  { 0x9e38, 0x9e38, probably radar y position (Senjyo only, fixed at 0x61) */
+/*  { 0x9e3d, 0x9e3d, probably radar x position (Senjyo only, 0x00/0xc0 depending on screen flip) */
 AM_RANGE(0x9e00, 0x9e3f) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(senjyo_bg3videoram_w) AM_BASE(&senjyo_bg3videoram)
 	AM_RANGE(0xa800, 0xafff) AM_WRITE(senjyo_bg2videoram_w) AM_BASE(&senjyo_bg2videoram)

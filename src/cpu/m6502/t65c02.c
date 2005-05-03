@@ -1,21 +1,21 @@
 /*****************************************************************************
  *
- *	 tbl65c02.c
- *	 65c02 opcode functions and function pointer table
+ *   tbl65c02.c
+ *   65c02 opcode functions and function pointer table
  *
- *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *   Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
- *	   terms of its usage and license at any time, including retroactively
- *	 - This entire notice must remain in the source code.
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
+ *     terms of its usage and license at any time, including retroactively
+ *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -25,10 +25,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *	 overrides for 65C02 opcodes
+ *   overrides for 65C02 opcodes
  *
  *****************************************************************************
- * op	 temp	  cycles			 rdmem	 opc  wrmem   ********************/
+ * op    temp     cycles             rdmem   opc  wrmem   ********************/
 OP(00) {		  m6502_ICount -= 7;		 BRK;		  } /* 7 BRK */
 #define m65c02_20 m6502_20									/* 6 JSR ABS */
 #define m65c02_40 m6502_40									/* 6 RTI */

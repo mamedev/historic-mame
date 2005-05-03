@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	3dfx Voodoo rasterization
+    3dfx Voodoo rasterization
 
 **************************************************************************/
 
@@ -32,7 +32,7 @@ static void render_0c002c35_40515119_000b4739_0c26180f(void);
 
 /*************************************
  *
- *	Dither helper
+ *  Dither helper
  *
  *************************************/
 
@@ -57,7 +57,7 @@ INLINE void dither_to_matrix(UINT32 color, UINT16 *matrix)
 
 /*************************************
  *
- *	FASTFILL handler
+ *  FASTFILL handler
  *
  *************************************/
 
@@ -174,7 +174,7 @@ static void fastfill(void)
 
 /*************************************
  *
- *	Triangle renderer
+ *  Triangle renderer
  *
  *************************************/
 
@@ -260,12 +260,12 @@ static void draw_triangle(void)
 			continue;
 		if (info->needs_texMode0 && info->val_textureMode0 != voodoo_regs[0x100 + textureMode])
 			continue;
-//		if (info->needs_texMode0 && info->val_tlod0 != voodoo_regs[0x100 + tLOD])
-//			continue;
+//      if (info->needs_texMode0 && info->val_tlod0 != voodoo_regs[0x100 + tLOD])
+//          continue;
 		if (info->needs_texMode1 && info->val_textureMode1 != voodoo_regs[0x200 + textureMode])
 			continue;
-//		if (info->needs_texMode1 && info->val_tlod1 != voodoo_regs[0x200 + tLOD])
-//			continue;
+//      if (info->needs_texMode1 && info->val_tlod1 != voodoo_regs[0x200 + tLOD])
+//          continue;
 
 		/* call the rasterizer */
 		(*info->callback)();
@@ -535,7 +535,7 @@ static void setup_and_draw_triangle(void)
 
 /*************************************
  *
- *	Texel lookups
+ *  Texel lookups
  *
  *************************************/
 
@@ -816,7 +816,7 @@ static void (*update_texel_lookup[16])(int which) =
 
 /*************************************
  *
- *	Generate blitters
+ *  Generate blitters
  *
  *************************************/
 
@@ -825,7 +825,7 @@ static void (*update_texel_lookup[16])(int which) =
 #endif
 
 /*
-	WG3dh:
+    WG3dh:
 
     816782: 0C000035 00000000 00045119 000B4779 082410DF
     629976: 0C000035 00000000 00045119 000B4779 0824109F
@@ -874,7 +874,7 @@ static void (*update_texel_lookup[16])(int which) =
 
 /*
 
-	mace:
+    mace:
 
 000000001173E00C: 0C000035 00000000 00045119 000B4779 082418DF (done)
 000000000D3EB6D7: 0C600C09 00000000 00045119 000B4779 0824100F
@@ -938,7 +938,7 @@ static void (*update_texel_lookup[16])(int which) =
 
 
 /*
-	blitz99:
+    blitz99:
 
 389BA0CA: 0C000035 00000000 00040400 000B4739 0C26180F 00000000 00000000
 0667BB5A: 0C582C35 00000000 00515110 000B4739 0C26180F 00000000 00000000
@@ -1052,7 +1052,7 @@ static void (*update_texel_lookup[16])(int which) =
 
 
 /*
-	Sfrush:
+    Sfrush:
 
 One of these is bad:
        175: 0C000035 00000000 00045119 000B4779 082418DF 00000000 00000000

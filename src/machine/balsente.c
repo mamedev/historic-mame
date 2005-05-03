@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Bally/Sente SAC-1 system
+    Bally/Sente SAC-1 system
 
     driver by Aaron Giles
 
@@ -96,7 +96,7 @@ static UINT8 grudge_last_steering[3];
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -192,10 +192,10 @@ MACHINE_INIT( balsente )
 
 /*************************************
  *
- *	MM5837 noise generator
+ *  MM5837 noise generator
  *
- *	NOTE: this is stolen straight from
- *			POKEY.c
+ *  NOTE: this is stolen straight from
+ *          POKEY.c
  *
  *************************************/
 
@@ -263,7 +263,7 @@ void balsente_noise_gen(int chip, int count, short *buffer)
 
 /*************************************
  *
- *	Hardware random numbers
+ *  Hardware random numbers
  *
  *************************************/
 
@@ -289,7 +289,7 @@ READ8_HANDLER( balsente_random_num_r )
 
 /*************************************
  *
- *	ROM banking
+ *  ROM banking
  *
  *************************************/
 
@@ -330,7 +330,7 @@ WRITE8_HANDLER( balsente_rombank2_select_w )
 
 /*************************************
  *
- *	Special outputs
+ *  Special outputs
  *
  *************************************/
 
@@ -347,7 +347,7 @@ WRITE8_HANDLER( balsente_misc_output_w )
 	}
 	else
 	{
-//		set_led_status(offset, data);
+//      set_led_status(offset, data);
 	}
 }
 
@@ -355,7 +355,7 @@ WRITE8_HANDLER( balsente_misc_output_w )
 
 /*************************************
  *
- *	6850 UART communications
+ *  6850 UART communications
  *
  *************************************/
 
@@ -447,7 +447,7 @@ static void m6850_update_io(void)
 
 /*************************************
  *
- *	6850 UART (main CPU)
+ *  6850 UART (main CPU)
  *
  *************************************/
 
@@ -516,7 +516,7 @@ WRITE8_HANDLER( balsente_m6850_w )
 
 /*************************************
  *
- *	6850 UART (sound CPU)
+ *  6850 UART (sound CPU)
  *
  *************************************/
 
@@ -565,7 +565,7 @@ WRITE8_HANDLER( balsente_m6850_sound_w )
 
 /*************************************
  *
- *	ADC handlers
+ *  ADC handlers
  *
  *************************************/
 
@@ -633,9 +633,9 @@ logerror("adc_select %d\n", offset & 7);
 
 /*************************************
  *
- *	8253-5 timer utilities
+ *  8253-5 timer utilities
  *
- *	NOTE: this is far from complete!
+ *  NOTE: this is far from complete!
  *
  *************************************/
 
@@ -678,9 +678,9 @@ INLINE void counter_update_count(int which)
 
 /*************************************
  *
- *	8253-5 timer internals
+ *  8253-5 timer internals
  *
- *	NOTE: this is far from complete!
+ *  NOTE: this is far from complete!
  *
  *************************************/
 
@@ -750,9 +750,9 @@ static void counter_callback(int param)
 
 /*************************************
  *
- *	8253-5 timer handlers
+ *  8253-5 timer handlers
  *
- *	NOTE: this is far from complete!
+ *  NOTE: this is far from complete!
  *
  *************************************/
 
@@ -860,7 +860,7 @@ WRITE8_HANDLER( balsente_counter_8253_w )
 
 /*************************************
  *
- *	Sound CPU counter 0 emulation
+ *  Sound CPU counter 0 emulation
  *
  *************************************/
 
@@ -930,7 +930,7 @@ static void update_counter_0_timer(void)
 
 /*************************************
  *
- *	Sound CPU counter handlers
+ *  Sound CPU counter handlers
  *
  *************************************/
 
@@ -990,7 +990,7 @@ WRITE8_HANDLER( balsente_counter_control_w )
 
 /*************************************
  *
- *	CEM3394 Interfaces
+ *  CEM3394 Interfaces
  *
  *************************************/
 
@@ -1081,7 +1081,7 @@ WRITE8_HANDLER( balsente_register_addr_w )
 
 /*************************************
  *
- *	Game-specific handlers
+ *  Game-specific handlers
  *
  *************************************/
 
@@ -1178,7 +1178,7 @@ READ8_HANDLER( grudge_steering_r )
 
 /*************************************
  *
- *	Shrike Avenger CPU memory handlers
+ *  Shrike Avenger CPU memory handlers
  *
  *************************************/
 

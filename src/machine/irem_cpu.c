@@ -1,37 +1,37 @@
 /*****************************************************************************
 
-	Irem Custom V30 CPU:
+    Irem Custom V30 CPU:
 
-	It uses a simple opcode lookup encryption, the painful part is that it's
-	preprogrammed into the cpu and isn't a algorithmic based one.
+    It uses a simple opcode lookup encryption, the painful part is that it's
+    preprogrammed into the cpu and isn't a algorithmic based one.
 
-	Hasamu							Nanao   08J27261A1 011 9102KK700
-	Gunforce						Nanao 	08J27261A  011 9106KK701
-	Ken-Go							?		? (Same as Gunforce)
-	Bomberman						Nanao   08J27261A1 012 9123KK200
-	Blade Master					?		? (Same as Bomberman)
-	Quiz F-1 1,2 Finish          	Nanao	08J27291A4 014 9147KK700
-	Gunforce 2						Nanao	08J27291A4 014 92457KK700
-	Lethal Thunder					?		? (Same as Quiz F1 and Gunforce 2)
-	Bomberman World/Atomic Punk				?
-	Undercover Cops							? (Same as BMan World)
-	Gun Hohki						Nanao	08J27291A6 016
-	Skins Game						Nanao 	08J27291A7 017
+    Hasamu                          Nanao   08J27261A1 011 9102KK700
+    Gunforce                        Nanao   08J27261A  011 9106KK701
+    Ken-Go                          ?       ? (Same as Gunforce)
+    Bomberman                       Nanao   08J27261A1 012 9123KK200
+    Blade Master                    ?       ? (Same as Bomberman)
+    Quiz F-1 1,2 Finish             Nanao   08J27291A4 014 9147KK700
+    Gunforce 2                      Nanao   08J27291A4 014 92457KK700
+    Lethal Thunder                  ?       ? (Same as Quiz F1 and Gunforce 2)
+    Bomberman World/Atomic Punk             ?
+    Undercover Cops                         ? (Same as BMan World)
+    Gun Hohki                       Nanao   08J27291A6 016
+    Skins Game                      Nanao   08J27291A7 017
 
-	Hook							Irem?	D80001 ?
-	R-Type Leo						Irem 	D800001A1
-	Fire Barrel						?		? (same as R-Type Leo)
-	In The Hunt						Irem 	D8000011A1 020
-	Risky Challenge/Gussun Oyoyo 			D8000019A1
-	Shisensho II                 			D8000020A1 023 9320NK700
-	World PK Soccer					Irem	D8000021A1
-	Ninja Baseball Batman			?		?  (same as World PK Soccer)
-	Perfect Soldiers				Irem	D8000022A1
-	Dream Soccer '94				Irem	D8000023A1 026
+    Hook                            Irem?   D80001 ?
+    R-Type Leo                      Irem    D800001A1
+    Fire Barrel                     ?       ? (same as R-Type Leo)
+    In The Hunt                     Irem    D8000011A1 020
+    Risky Challenge/Gussun Oyoyo            D8000019A1
+    Shisensho II                            D8000020A1 023 9320NK700
+    World PK Soccer                 Irem    D8000021A1
+    Ninja Baseball Batman           ?       ?  (same as World PK Soccer)
+    Perfect Soldiers                Irem    D8000022A1
+    Dream Soccer '94                Irem    D8000023A1 026
 
-	Please let me know if you can fill in any of the blanks.
+    Please let me know if you can fill in any of the blanks.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy too!
+    Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy too!
 
 *****************************************************************************/
 
@@ -104,7 +104,7 @@ const unsigned char bomberman_decryption_table[256] = {
 const unsigned char lethalth_decryption_table[256] = {
 	0x7f,0x26,0x5d,xxxx,0xba,xxxx,0x1e,0x5e, 0xb8,xxxx,0xbc,0xe8,0x01,xxxx,0x4a,0x25, /* 00 */
 	xxxx,0xbd,xxxx,0x22,0x10,xxxx,0x02,0x57, 0x70,xxxx,0x7c,xxxx,0xe7,0x52,xxxx,0xa9, /* 10 */
-//						^^^^				 ^^^^
+//                      ^^^^                 ^^^^
 	xxxx,xxxx,0xc6,0x06,0xa0,0xfe,0xcf,0x8e, 0x43,0x8f,0x2d,xxxx,0xd4,0x85,0x75,0xa2, /* 20 */
 //                                                ^^^^
 	0x3d,xxxx,xxxx,0x38,0x7c,0x89,0xd1,0x80, 0x3b,0x72,0x07,xxxx,0x42,0x37,0x0a,0x18, /* 30 */
@@ -114,7 +114,7 @@ const unsigned char lethalth_decryption_table[256] = {
 	0x93,0x91,xxxx,0xeb,xxxx,0x50,0x41,0x29, 0x47,xxxx,xxxx,0x60,xxxx,0xab,xxxx,xxxx, /* 50 */
 	0xc3,0xe2,0xd0,0xb2,0x11,0x79,xxxx,0x08, xxxx,0xfb,xxxx,0x2c,0x23,xxxx,0x28,0x0d, /* 60 */
 	xxxx,xxxx,xxxx,0x83,0x3c,xxxx,0x1b,0x34, 0x5b,xxxx,0x40,xxxx,xxxx,0x04,0xfc,0x09, /* 70 */
-//																				^^^^
+//                                                                              ^^^^
 	0xb1,0xf3,0x8a,xxxx,xxxx,0x87,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,0xbe,0x84,0x1f,0xe6, /* 80 */
 	0xff,xxxx,0x12,xxxx,0xb5,0x36,xxxx,0xb3, xxxx,xxxx,xxxx,0xd2,0x4e,xxxx,xxxx,xxxx, /* 90 */
 	0xa5,xxxx,xxxx,0xc7,xxxx,0x27,0x0b,xxxx, 0x20,xxxx,xxxx,xxxx,xxxx,xxxx,0x61,0x7f, /* A0 */
@@ -123,7 +123,7 @@ const unsigned char lethalth_decryption_table[256] = {
 	0x81,0xfa,0x9d,0xe9,0x2e,0xa1,0xc1,0x33, xxxx,0x78,xxxx,0x0c,xxxx,0x24,0xaa,0xac, /* D0 */
 	xxxx,0xb6,xxxx,0xea,xxxx,0x73,0xe5,0x58, 0x00,0xf7,xxxx,0x74,xxxx,0x7e,xxxx,0xa3, /* E0 */
 	xxxx,0x5a,0xf6,0x32,0x46,0x2a,xxxx,xxxx, 0x53,0x4b,0x90,xxxx,0x51,0x68,0x99,0x13, /* F0 */
-//  							   			                                    ^^^^
+//                                                                              ^^^^
 };
 // 0x2c (0xd4) complete guess
 // 0x2d (0x85) complete guess
@@ -250,9 +250,9 @@ const unsigned char hook_decryption_table[256] = {
 const unsigned char rtypeleo_decryption_table[256] = {
 	0x5d,xxxx,0xc6,xxxx,xxxx,xxxx,0x2a,0x3a, xxxx,xxxx,xxxx,0x86,xxxx,0x22,xxxx,0xf3, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,0x38,0x01,0x42, 0x04,xxxx,xxxx,0x1f,xxxx,xxxx,xxxx,0x58, /* 10 */
-//								  ^^^^
+//                                ^^^^
 	0x57,0x2e,xxxx,xxxx,0x53,xxxx,0xb9,xxxx, xxxx,xxxx,xxxx,xxxx,0x20,0x55,xxxx,0x3d, /* 20 */
-//																				^^^^
+//                                                                              ^^^^
 	0xa0,xxxx,xxxx,0x0c,0x03,xxxx,0x83,xxxx, xxxx,xxxx,0x8a,xxxx,xxxx,0xaa,xxxx,xxxx, /* 30 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,0x41,0x0a,0x26,0x8b,0x56,0x5e,xxxx, /* 40 */
 	xxxx,0x74,xxxx,xxxx,xxxx,xxxx,0x06,xxxx, xxxx,0x89,0x5b,0xc7,0x43,xxxx,xxxx,xxxx, /* 50 */
@@ -266,7 +266,7 @@ const unsigned char rtypeleo_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,0x81,xxxx,0x79,xxxx, xxxx,0x24,0x23,xxxx,xxxx,0xb0,0x07,0xff, /* D0 */
 	xxxx,0xba,0xf6,0x51,xxxx,xxxx,xxxx,0xfe, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xe9,xxxx, /* E0 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xe8,0xd2, xxxx,0x18,xxxx,xxxx,xxxx,0xd1,xxxx,xxxx, /* F0 */
-//																	  ^^^^
+//                                                                    ^^^^
 };
 // 0xf9 (0x18) opcode is right but arguments could be swapped
 // 0x80 (0x2b) not sure, could be 0x1b
@@ -308,11 +308,11 @@ const unsigned char gussun_decryption_table[256] = {
 	xxxx,0x53,xxxx,0xc0,0xc3,0x41,0xfc,0xe7, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xba,xxxx, /* 50 */
 //                 ^^^^      ^^^^
 	0xb0,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x07, 0xb9,xxxx,xxxx,0x46,0xf9,xxxx,xxxx,xxxx, /* 60 */
-//																 ^^^^
+//                                                               ^^^^
 	xxxx,0xea,0x72,0x73,0xad,0xd1,0x3b,0x5e, 0xe5,0x57,xxxx,0x0d,xxxx,xxxx,xxxx,0x3c, /* 70 */
 //                      ^^^^
 	xxxx,0x86,xxxx,xxxx,xxxx,0x25,0x2d,xxxx, 0x9a,0xeb,0x04,0x0b,xxxx,0xb8,0x81,xxxx, /* 80 */
-//													   ^^^^
+//                                                     ^^^^
 	xxxx,xxxx,0x9d,xxxx,0xbb,xxxx,xxxx,0xcb, 0xa8,0xcf,xxxx,xxxx,0x43,0x56,xxxx,xxxx, /* 90 */
 //            ^^^^                     ^^^^       ^^^^
 	xxxx,0xa3,xxxx,xxxx,xxxx,xxxx,0xfa,xxxx, xxxx,0x81,0xe6,xxxx,0x80,xxxx,xxxx,xxxx, /* a0 */
@@ -362,152 +362,152 @@ add iy,sp [e7]
 clc
 ret
 
-Unused: [2] 00	add %Eb,%Gb
-Unused: [2] 01	add %Ev,%Gv
-Unused: [2] 08	or %Eb,%Gb
-Unused: [2] 09	or %Ev,%Gv
-Unused: [2] 0a	or %Gb,%Eb
-Unused: [2] 0c	or al,%Ib
-Unused: [1] 0e	push cs
-Unused: [2] 10	adc %Eb,%Gb
-Unused: [2] 11	adc %Ev,%Gv
-Unused: [2] 12	adc %Gb,%Eb
-Unused: [2] 13	adc %Gv,%Ev
-Unused: [2] 14	adc al,%Ib
-Unused: [3] 15	adc aw,%Iv
-Unused: [1] 16	push ss
-Unused: [1] 17	pop ss
-Unused: [2] 18	sbb %Eb,%Gb
-Unused: [2] 19	sbb %Ev,%Gv
-Unused: [2] 1a	sbb %Gb,%Eb
-Unused: [2] 1b	sbb %Gv,%Ev
-Unused: [2] 1c	sbb al,%Ib
-Unused: [3] 1d	sbb aw,%Iv
-Unused: [2] 20	and %Eb,%Gb
-Unused: [2] 22	and %Gb,%Eb
-Unused: [2] 24	and al,%Ib
-Unused: [1] 27	adj4a
-Unused: [2] 28	sub %Eb,%Gb
-Unused: [2] 29	sub %Ev,%Gv
-Unused: [2] 2a	sub %Gb,%Eb
-Unused: [2] 2b	sub %Gv,%Ev
-Unused: [2] 2c	sub al,%Ib
-Unused: [1] 2f	adj4s
-Unused: [2] 30	xor %Eb,%Gb
-Unused: [2] 31	xor %Ev,%Gv
-Unused: [2] 34	xor al,%Ib
-Unused: [3] 35	xor aw,%Iv
-Unused: [1] 37	adjba
-Unused: [1] 3f	adjbs
-Unused: [1] 40	inc aw
-Unused: [1] 42	inc dw
-Unused: [1] 44	inc sp
-Unused: [1] 45	inc bp
-Unused: [1] 47	inc iy
-Unused: [1] 48	dec aw
-Unused: [1] 49	dec cw
-Unused: [1] 4a	dec dw
-Unused: [1] 4b	dec bw
-Unused: [1] 4c	dec sp
-Unused: [1] 4d	dec bp
-Unused: [1] 4e	dec ix
-Unused: [1] 54	push sp
-Unused: [1] 5c	pop sp
-Unused: [1] 60	pusha
-Unused: [1] 61	popa
-Unused: [0] 62	chkind %Gv,%Ma
-Unused: [0] 63	(null)
-Unused: [0] 64	repnc %p
-Unused: [0] 65	repc %p
-Unused: [0] 66	(null)
-Unused: [0] 67	(null)
-Unused: [0] 69	imul %Gw,%Ew,%Iw
-Unused: [0] 6a	push %Ix
-Unused: [0] 6b	imul %Gw,%Ew,%Ib
-Unused: [0] 6c	insb
-Unused: [0] 6d	insw
-Unused: [0] 6e	outsb
-Unused: [0] 6f	outsw
-Unused: [1] 71	jno %Jb
-Unused: [1] 76	jbe %Jb
-Unused: [1] 77	ja %Jb
-Unused: [1] 78	js %Jb
-Unused: [1] 79	jns %Jb
-Unused: [1] 7a	jpe %Jb
-Unused: [1] 7b	jpo %Jb
-Unused: [1] 7c	jl %Jb
-Unused: [1] 7e	jle %Jb
-Unused: [1] 7f	jg %Jb
-DUPLICATE: 81	%g0 %Ew,%Iw
-Unused: [2] 84	test %Eb,%Gb
-Unused: [2] 85	test %Ew,%Gw
-Unused: [2] 87	xch %Ew,%Gw
-Unused: [0] 8c	mov %Ew,%Sw
-Unused: [0] 8d	ldea %Gw,%M
-Unused: [0] 8f	pop %Ev
-Unused: [1] 92	xch dw,aw
-Unused: [1] 94	xch sp,aw
-Unused: [1] 95	xch bp,aw
-Unused: [1] 96	xch ix,aw
-Unused: [1] 97	xch iy,aw
-Unused: [0] 98	cvtbw
-Unused: [0] 99	cvtwl
-Unused: [0] 9b	fwait
-Unused: [0] 9e	sahf
-Unused: [0] 9f	lahf
-Unused: [0] a0	mov al,%Oc
-Unused: [0] a2	mov %Oc,al
-Unused: [0] a5	%P movsw
-Unused: [0] a6	%P cmpsb
-Unused: [0] a7	%P cmpsw
-Unused: [0] a9	test aw,%Iv
-Unused: [0] aa	%P stosb
-Unused: [0] ae	%P scasb
-Unused: [0] af	%P scasw
-Unused: [2] b4	mov ah,%Ib
-Unused: [2] b5	mov ch,%Ib
-Unused: [2] b6	mov dh,%Ib
-Unused: [2] b7	mov bh,%Ib
-Unused: [3] bd	mov bp,%Iv
-Unused: [0] c2	ret %Iw
-Unused: [0] c4	les %Gv,%Mp
-Unused: [0] c5	lds %Gv,%Mp
-Unused: [0] c8	enter %Iw,%Ib
-Unused: [0] c9	leave
-Unused: [0] ca	retf %Iw
-Unused: [0] cc	int 03
-Unused: [0] cd	int %Ib
-Unused: [0] ce	into
-Unused: [0] d2	%g1 %Eb,cl
-Unused: [0] d3	%g1 %Ev,cl
-Unused: [0] d4	aam ; %Ib
-Unused: [0] d5	aad ; %Ib
-Unused: [0] d6	(null)
-Unused: [0] d7	trans
-Unused: [0] d8	%f0
-Unused: [0] d9	%f1
-Unused: [0] da	%f2
-Unused: [0] db	%f3
-Unused: [0] dc	%f4
-Unused: [0] dd	%f5
-Unused: [0] de	%f6
-Unused: [0] df	%f7
-Unused: [0] e0	loopne %Jb
-Unused: [0] e1	loope %Jb
-Unused: [0] e3	j%j cxz %Jb
-Unused: [0] e4	in al,%Ib
-Unused: [0] ec	in al,dw
-Unused: [0] ed	in aw,dw
-Unused: [0] ee	out dw,al
-Unused: [0] ef	out dx,aw
-Unused: [0] f0	lock %p
-DUPLICATE: f1	(null)
-Unused: [0] f2	repne %p
-Unused: [0] f4	hlt
-Unused: [0] f5	not1 CY(cmc)
-Unused: [0] f6	%g2
-Unused: [1] fb	ei
-Unused: [1] fd	std
+Unused: [2] 00  add %Eb,%Gb
+Unused: [2] 01  add %Ev,%Gv
+Unused: [2] 08  or %Eb,%Gb
+Unused: [2] 09  or %Ev,%Gv
+Unused: [2] 0a  or %Gb,%Eb
+Unused: [2] 0c  or al,%Ib
+Unused: [1] 0e  push cs
+Unused: [2] 10  adc %Eb,%Gb
+Unused: [2] 11  adc %Ev,%Gv
+Unused: [2] 12  adc %Gb,%Eb
+Unused: [2] 13  adc %Gv,%Ev
+Unused: [2] 14  adc al,%Ib
+Unused: [3] 15  adc aw,%Iv
+Unused: [1] 16  push ss
+Unused: [1] 17  pop ss
+Unused: [2] 18  sbb %Eb,%Gb
+Unused: [2] 19  sbb %Ev,%Gv
+Unused: [2] 1a  sbb %Gb,%Eb
+Unused: [2] 1b  sbb %Gv,%Ev
+Unused: [2] 1c  sbb al,%Ib
+Unused: [3] 1d  sbb aw,%Iv
+Unused: [2] 20  and %Eb,%Gb
+Unused: [2] 22  and %Gb,%Eb
+Unused: [2] 24  and al,%Ib
+Unused: [1] 27  adj4a
+Unused: [2] 28  sub %Eb,%Gb
+Unused: [2] 29  sub %Ev,%Gv
+Unused: [2] 2a  sub %Gb,%Eb
+Unused: [2] 2b  sub %Gv,%Ev
+Unused: [2] 2c  sub al,%Ib
+Unused: [1] 2f  adj4s
+Unused: [2] 30  xor %Eb,%Gb
+Unused: [2] 31  xor %Ev,%Gv
+Unused: [2] 34  xor al,%Ib
+Unused: [3] 35  xor aw,%Iv
+Unused: [1] 37  adjba
+Unused: [1] 3f  adjbs
+Unused: [1] 40  inc aw
+Unused: [1] 42  inc dw
+Unused: [1] 44  inc sp
+Unused: [1] 45  inc bp
+Unused: [1] 47  inc iy
+Unused: [1] 48  dec aw
+Unused: [1] 49  dec cw
+Unused: [1] 4a  dec dw
+Unused: [1] 4b  dec bw
+Unused: [1] 4c  dec sp
+Unused: [1] 4d  dec bp
+Unused: [1] 4e  dec ix
+Unused: [1] 54  push sp
+Unused: [1] 5c  pop sp
+Unused: [1] 60  pusha
+Unused: [1] 61  popa
+Unused: [0] 62  chkind %Gv,%Ma
+Unused: [0] 63  (null)
+Unused: [0] 64  repnc %p
+Unused: [0] 65  repc %p
+Unused: [0] 66  (null)
+Unused: [0] 67  (null)
+Unused: [0] 69  imul %Gw,%Ew,%Iw
+Unused: [0] 6a  push %Ix
+Unused: [0] 6b  imul %Gw,%Ew,%Ib
+Unused: [0] 6c  insb
+Unused: [0] 6d  insw
+Unused: [0] 6e  outsb
+Unused: [0] 6f  outsw
+Unused: [1] 71  jno %Jb
+Unused: [1] 76  jbe %Jb
+Unused: [1] 77  ja %Jb
+Unused: [1] 78  js %Jb
+Unused: [1] 79  jns %Jb
+Unused: [1] 7a  jpe %Jb
+Unused: [1] 7b  jpo %Jb
+Unused: [1] 7c  jl %Jb
+Unused: [1] 7e  jle %Jb
+Unused: [1] 7f  jg %Jb
+DUPLICATE: 81   %g0 %Ew,%Iw
+Unused: [2] 84  test %Eb,%Gb
+Unused: [2] 85  test %Ew,%Gw
+Unused: [2] 87  xch %Ew,%Gw
+Unused: [0] 8c  mov %Ew,%Sw
+Unused: [0] 8d  ldea %Gw,%M
+Unused: [0] 8f  pop %Ev
+Unused: [1] 92  xch dw,aw
+Unused: [1] 94  xch sp,aw
+Unused: [1] 95  xch bp,aw
+Unused: [1] 96  xch ix,aw
+Unused: [1] 97  xch iy,aw
+Unused: [0] 98  cvtbw
+Unused: [0] 99  cvtwl
+Unused: [0] 9b  fwait
+Unused: [0] 9e  sahf
+Unused: [0] 9f  lahf
+Unused: [0] a0  mov al,%Oc
+Unused: [0] a2  mov %Oc,al
+Unused: [0] a5  %P movsw
+Unused: [0] a6  %P cmpsb
+Unused: [0] a7  %P cmpsw
+Unused: [0] a9  test aw,%Iv
+Unused: [0] aa  %P stosb
+Unused: [0] ae  %P scasb
+Unused: [0] af  %P scasw
+Unused: [2] b4  mov ah,%Ib
+Unused: [2] b5  mov ch,%Ib
+Unused: [2] b6  mov dh,%Ib
+Unused: [2] b7  mov bh,%Ib
+Unused: [3] bd  mov bp,%Iv
+Unused: [0] c2  ret %Iw
+Unused: [0] c4  les %Gv,%Mp
+Unused: [0] c5  lds %Gv,%Mp
+Unused: [0] c8  enter %Iw,%Ib
+Unused: [0] c9  leave
+Unused: [0] ca  retf %Iw
+Unused: [0] cc  int 03
+Unused: [0] cd  int %Ib
+Unused: [0] ce  into
+Unused: [0] d2  %g1 %Eb,cl
+Unused: [0] d3  %g1 %Ev,cl
+Unused: [0] d4  aam ; %Ib
+Unused: [0] d5  aad ; %Ib
+Unused: [0] d6  (null)
+Unused: [0] d7  trans
+Unused: [0] d8  %f0
+Unused: [0] d9  %f1
+Unused: [0] da  %f2
+Unused: [0] db  %f3
+Unused: [0] dc  %f4
+Unused: [0] dd  %f5
+Unused: [0] de  %f6
+Unused: [0] df  %f7
+Unused: [0] e0  loopne %Jb
+Unused: [0] e1  loope %Jb
+Unused: [0] e3  j%j cxz %Jb
+Unused: [0] e4  in al,%Ib
+Unused: [0] ec  in al,dw
+Unused: [0] ed  in aw,dw
+Unused: [0] ee  out dw,al
+Unused: [0] ef  out dx,aw
+Unused: [0] f0  lock %p
+DUPLICATE: f1   (null)
+Unused: [0] f2  repne %p
+Unused: [0] f4  hlt
+Unused: [0] f5  not1 CY(cmc)
+Unused: [0] f6  %g2
+Unused: [1] fb  ei
+Unused: [1] fd  std
 */
 
 const unsigned char leagueman_decryption_table[256] = {
@@ -607,7 +607,7 @@ const unsigned char shisen2_decryption_table[256] = {
 	0x73,xxxx,xxxx,0x45,0x92,0x99,xxxx,0xf7, 0x3d,0xd0,0xb6,0x36,0xf9,0xfa,0x0f,xxxx, /* C0 */
 //  new            new  new  new       new   new  new  !!!! new  new
 	0x75,xxxx,xxxx,0x9c,xxxx,0x11,xxxx,xxxx, 0x27,0x4b,xxxx,0x2c,0x51,0x2e,0xfd,xxxx, /* D0 */
-//	new	           new		 new			 new  new		new  new  new  !!!!
+//  new            new       new             new  new       new  new  new  !!!!
 	0x55,0x3c,xxxx,0xb7,xxxx,0xd1,0x8e,xxxx, 0xb2,xxxx,0x78,xxxx,0x12,xxxx,0x29,0x0c, /* E0 */
 //  new  new       new  ???? new  new        new       new       new       new  new
 	0x33,xxxx,0xf2,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,0x03,0x06,0xa8,xxxx,xxxx,0xcf,xxxx, /* F0 */
@@ -684,7 +684,7 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 {
 	int A,diff;
 	unsigned char *rom;
-//	int t[256];
+//  int t[256];
 #ifdef MAME_DEBUG
 //    extern char *opmap1[];
 #endif
@@ -697,12 +697,12 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 		rom[A + diff] = decryption_table[rom[A]];
 
 /*
-	for (A=0; A<256; A++) {
-		t[A]=0;
-		for (diff=0; diff<256; diff++)
-			if (decryption_table[diff]==A) {
-				t[A]++;
-			}
+    for (A=0; A<256; A++) {
+        t[A]=0;
+        for (diff=0; diff<256; diff++)
+            if (decryption_table[diff]==A) {
+                t[A]++;
+            }
 #ifdef MAME_DEBUG
 //        if (t[A]==0) logerror("Unused: [%d] %02x\t%s\n",byte_count_table[A],A,opmap1[A]);
 //        if (t[A]>1) logerror("DUPLICATE: %02x\t%s\n",A,opmap1[A]);

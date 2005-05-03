@@ -123,7 +123,7 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( redclash )
 {
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -227,7 +227,7 @@ static void redclash_draw_bullets( struct mame_bitmap *bitmap )
 
 	for (offs = 0; offs < 0x20; offs++)
 	{
-//		sx = videoram[offs];
+//      sx = videoram[offs];
 		int sx = 8 * offs + (videoram[offs] & 0x07);	/* ?? */
 		int sy = 0xff - videoram[offs + 0x20];
 

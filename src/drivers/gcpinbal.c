@@ -53,7 +53,7 @@ void gcpinbal_interrupt1(int x)
 void gcpinbal_interrupt3(int x)
 {
 	// IRQ3 is from the M6585
-//	if (!ADPCM_playing(0))
+//  if (!ADPCM_playing(0))
 	{
 		cpunum_set_input_line(0,3,HOLD_LINE);
 	}
@@ -105,16 +105,16 @@ static WRITE16_HANDLER( ioc_w )
 {
 	COMBINE_DATA(&gcpinbal_ioc_ram[offset]);
 
-//	switch (offset)
-//	{
-//		case 0x??:	/* */
-//			return;
+//  switch (offset)
+//  {
+//      case 0x??:  /* */
+//          return;
 //
-//		case 0x88/2:	/* coin control (+ others) ??? */
-//			coin_lockout_w(0, ~data & 0x01);
-//			coin_lockout_w(1, ~data & 0x02);
+//      case 0x88/2:    /* coin control (+ others) ??? */
+//          coin_lockout_w(0, ~data & 0x01);
+//          coin_lockout_w(1, ~data & 0x02);
 //usrintf_showmessage(" address %04x value %04x",offset,data);
-//	}
+//  }
 
 	switch (offset)
 	{
@@ -179,8 +179,8 @@ static WRITE16_HANDLER( ioc_w )
 		case 0x66:
 			if (start < end)
 			{
-//				ADPCM_stop(0);
-//				ADPCM_play(0, start+bank, end-start);
+//              ADPCM_stop(0);
+//              ADPCM_play(0, start+bank, end-start);
 			}
 			break;
 
@@ -347,7 +347,7 @@ static struct GfxLayout tilelayout =
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
 	4,	/* 4 bits per pixel */
-//	{ 16, 48, 0, 32 },
+//  { 16, 48, 0, 32 },
 	{ 48, 16, 32, 0 },
 	{ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64, 8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
@@ -379,7 +379,7 @@ static struct MSM5205interface msm5205_interface =
 
 VIDEO_EOF( gcpinbal )
 {
-//	buffer_spriteram16_w(0,0,0);
+//  buffer_spriteram16_w(0,0,0);
 }
 
 static MACHINE_DRIVER_START( gcpinbal )

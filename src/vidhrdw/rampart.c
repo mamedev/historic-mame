@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Rampart hardware
+    Atari Rampart hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -23,7 +23,7 @@ data16_t *rampart_bitmap;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -35,7 +35,7 @@ static int xdim, ydim;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -95,7 +95,7 @@ VIDEO_START( rampart )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -119,7 +119,7 @@ VIDEO_UPDATE( rampart )
 				if (mo[x])
 				{
 					/* not yet verified
-					*/
+                    */
 					pf[x] = mo[x];
 
 					/* erase behind ourselves */
@@ -132,7 +132,7 @@ VIDEO_UPDATE( rampart )
 
 /*************************************
  *
- *	Bitmap initialization
+ *  Bitmap initialization
  *
  *************************************/
 
@@ -159,7 +159,7 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 
 /*************************************
  *
- *	Bitmap RAM write handler
+ *  Bitmap RAM write handler
  *
  *************************************/
 
@@ -186,7 +186,7 @@ WRITE16_HANDLER( rampart_bitmap_w )
 
 /*************************************
  *
- *	Bitmap rendering
+ *  Bitmap rendering
  *
  *************************************/
 

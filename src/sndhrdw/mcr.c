@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	sndhrdw/mcr.c
+    sndhrdw/mcr.c
 
-	Functions to emulate general the various MCR sound cards.
+    Functions to emulate general the various MCR sound cards.
 
 ***************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -32,7 +32,7 @@ UINT8 mcr_sound_config;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -72,7 +72,7 @@ extern struct pia6821_interface squawkntalk_pia1_intf;
 
 /*************************************
  *
- *	Generic MCR sound initialization
+ *  Generic MCR sound initialization
  *
  *************************************/
 
@@ -147,9 +147,9 @@ void mcr_sound_init(void)
 
 /*************************************
  *
- *	MCR SSIO communications
+ *  MCR SSIO communications
  *
- *	Z80, 2 AY-3812
+ *  Z80, 2 AY-3812
  *
  *************************************/
 
@@ -282,7 +282,7 @@ MACHINE_DRIVER_START(mcr_ssio)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(ssio_readmem,ssio_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
-	
+
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD_TAG("ssio.1", AY8910, 2000000)
@@ -298,9 +298,9 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Chip Squeak Deluxe communications
+ *  Chip Squeak Deluxe communications
  *
- *	MC68000, 1 PIA, 10-bit DAC
+ *  MC68000, 1 PIA, 10-bit DAC
  *
  *************************************/
 
@@ -369,7 +369,7 @@ MACHINE_DRIVER_START(chip_squeak_deluxe)
 	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(csdeluxe_readmem,csdeluxe_writemem)
-	
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("csd", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -379,9 +379,9 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	MCR Sounds Good communications
+ *  MCR Sounds Good communications
  *
- *	MC68000, 1 PIA, 10-bit DAC
+ *  MC68000, 1 PIA, 10-bit DAC
  *
  *************************************/
 
@@ -459,7 +459,7 @@ MACHINE_DRIVER_START(sounds_good)
 	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(soundsgood_readmem,soundsgood_writemem)
-	
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("sg", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -469,9 +469,9 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	MCR Turbo Chip Squeak communications
+ *  MCR Turbo Chip Squeak communications
  *
- *	MC6809, 1 PIA, 8-bit DAC
+ *  MC6809, 1 PIA, 8-bit DAC
  *
  *************************************/
 
@@ -548,7 +548,7 @@ MACHINE_DRIVER_START(turbo_chip_squeak)
 	MDRV_CPU_ADD_TAG("tcs", M6809, 9000000/4)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(turbocs_readmem,turbocs_writemem)
-	
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("tcs", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -559,7 +559,7 @@ MACHINE_DRIVER_START(turbo_chip_squeak_plus_sounds_good)
 	MDRV_IMPORT_FROM(turbo_chip_squeak)
 	MDRV_SPEAKER_REMOVE("mono")
 	MDRV_IMPORT_FROM(sounds_good)
-	
+
 	MDRV_SOUND_REPLACE("tcs", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
@@ -571,9 +571,9 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	MCR Squawk n Talk communications
+ *  MCR Squawk n Talk communications
  *
- *	MC6802, 2 PIAs, TMS5220, AY8912 (not used), 8-bit DAC (not used)
+ *  MC6802, 2 PIAs, TMS5220, AY8912 (not used), 8-bit DAC (not used)
  *
  *************************************/
 
@@ -678,9 +678,9 @@ MACHINE_DRIVER_START(squawk_n_talk)
 	MDRV_CPU_ADD_TAG("snt", M6802, 3580000/4)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(squawkntalk_readmem,squawkntalk_writemem)
-	
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("snt", TMS5220, 640000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END

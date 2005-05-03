@@ -4,7 +4,7 @@
  *
  *      Written by J. Buchmueller for use with MAME
  *
- *		Partially based on Z80Em by Marcel De Kogel
+ *      Partially based on Z80Em by Marcel De Kogel
  *
  *      CPU related macros
  *

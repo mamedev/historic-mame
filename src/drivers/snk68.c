@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	POW - Prisoners Of War (US) 		A7008	SNK 1988
-	POW - Prisoners Of War (Japan)		A7008	SNK 1988
-	SAR - Search And Rescue (World) 	A8007	SNK 1989
-	SAR - Search And Rescue (US)		A8007	SNK 1989
-	Street Smart (US version 1) 		A8007	SNK 1989
-	Street Smart (US version 2) 		A7008	SNK 1989
-	Street Smart (World version 1) 		A8007	SNK 1989
-	Street Smart (Japan version 1)		A8007	SNK 1989
-	Ikari III - The Rescue (US) 		A7007	SNK 1989
+    POW - Prisoners Of War (US)         A7008   SNK 1988
+    POW - Prisoners Of War (Japan)      A7008   SNK 1988
+    SAR - Search And Rescue (World)     A8007   SNK 1989
+    SAR - Search And Rescue (US)        A8007   SNK 1989
+    Street Smart (US version 1)         A8007   SNK 1989
+    Street Smart (US version 2)         A7008   SNK 1989
+    Street Smart (World version 1)      A8007   SNK 1989
+    Street Smart (Japan version 1)      A8007   SNK 1989
+    Ikari III - The Rescue (US)         A7007   SNK 1989
 
-	For some strange reason version 2 of Street Smart runs on Pow hardware!
+    For some strange reason version 2 of Street Smart runs on Pow hardware!
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
 Change Log:

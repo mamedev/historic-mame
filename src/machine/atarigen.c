@@ -1,8 +1,8 @@
 /*##########################################################################
 
-	atarigen.c
+    atarigen.c
 
-	General functions for Atari raster games.
+    General functions for Atari raster games.
 
 ##########################################################################*/
 
@@ -15,7 +15,7 @@
 
 
 /*##########################################################################
-	CONSTANTS
+    CONSTANTS
 ##########################################################################*/
 
 #define SOUND_INTERLEAVE_RATE		TIME_IN_USEC(50)
@@ -24,7 +24,7 @@
 
 
 /*##########################################################################
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 ##########################################################################*/
 
 UINT8 				atarigen_scanline_int_state;
@@ -61,7 +61,7 @@ struct atarivc_state_desc atarivc_state;
 
 
 /*##########################################################################
-	STATIC VARIABLES
+    STATIC VARIABLES
 ##########################################################################*/
 
 static atarigen_int_callback update_int_callback;
@@ -95,7 +95,7 @@ static int			playfield2_latch;
 
 
 /*##########################################################################
-	STATIC FUNCTION DECLARATIONS
+    STATIC FUNCTION DECLARATIONS
 ##########################################################################*/
 
 static void scanline_interrupt_callback(int param);
@@ -121,12 +121,12 @@ static void unhalt_cpu(int param);
 
 
 /*##########################################################################
-	INTERRUPT HANDLING
+    INTERRUPT HANDLING
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_interrupt_reset: Initializes the state of all
-	the interrupt sources.
+    atarigen_interrupt_reset: Initializes the state of all
+    the interrupt sources.
 ---------------------------------------------------------------*/
 
 void atarigen_interrupt_reset(atarigen_int_callback update_int)
@@ -144,9 +144,9 @@ void atarigen_interrupt_reset(atarigen_int_callback update_int)
 
 
 /*---------------------------------------------------------------
-	atarigen_update_interrupts: Forces the interrupt callback
-	to be called with the current VBLANK and sound interrupt
-	states.
+    atarigen_update_interrupts: Forces the interrupt callback
+    to be called with the current VBLANK and sound interrupt
+    states.
 ---------------------------------------------------------------*/
 
 void atarigen_update_interrupts(void)
@@ -157,8 +157,8 @@ void atarigen_update_interrupts(void)
 
 
 /*---------------------------------------------------------------
-	atarigen_scanline_int_set: Sets the scanline when the next
-	scanline interrupt should be generated.
+    atarigen_scanline_int_set: Sets the scanline when the next
+    scanline interrupt should be generated.
 ---------------------------------------------------------------*/
 
 void atarigen_scanline_int_set(int scanline)
@@ -168,8 +168,8 @@ void atarigen_scanline_int_set(int scanline)
 
 
 /*---------------------------------------------------------------
-	atarigen_scanline_int_gen: Standard interrupt routine
-	which sets the scanline interrupt state.
+    atarigen_scanline_int_gen: Standard interrupt routine
+    which sets the scanline interrupt state.
 ---------------------------------------------------------------*/
 
 INTERRUPT_GEN( atarigen_scanline_int_gen )
@@ -180,8 +180,8 @@ INTERRUPT_GEN( atarigen_scanline_int_gen )
 
 
 /*---------------------------------------------------------------
-	atarigen_scanline_int_ack_w: Resets the state of the
-	scanline interrupt.
+    atarigen_scanline_int_ack_w: Resets the state of the
+    scanline interrupt.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_scanline_int_ack_w )
@@ -198,8 +198,8 @@ WRITE32_HANDLER( atarigen_scanline_int_ack32_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_int_gen: Standard interrupt routine which
-	sets the sound interrupt state.
+    atarigen_sound_int_gen: Standard interrupt routine which
+    sets the sound interrupt state.
 ---------------------------------------------------------------*/
 
 INTERRUPT_GEN( atarigen_sound_int_gen )
@@ -210,8 +210,8 @@ INTERRUPT_GEN( atarigen_sound_int_gen )
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_int_ack_w: Resets the state of the sound
-	interrupt.
+    atarigen_sound_int_ack_w: Resets the state of the sound
+    interrupt.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_sound_int_ack_w )
@@ -228,8 +228,8 @@ WRITE32_HANDLER( atarigen_sound_int_ack32_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_video_int_gen: Standard interrupt routine which
-	sets the video interrupt state.
+    atarigen_video_int_gen: Standard interrupt routine which
+    sets the video interrupt state.
 ---------------------------------------------------------------*/
 
 INTERRUPT_GEN( atarigen_video_int_gen )
@@ -240,8 +240,8 @@ INTERRUPT_GEN( atarigen_video_int_gen )
 
 
 /*---------------------------------------------------------------
-	atarigen_video_int_ack_w: Resets the state of the video
-	interrupt.
+    atarigen_video_int_ack_w: Resets the state of the video
+    interrupt.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_video_int_ack_w )
@@ -258,7 +258,7 @@ WRITE32_HANDLER( atarigen_video_int_ack32_w )
 
 
 /*---------------------------------------------------------------
-	scanline_interrupt_callback: Signals an interrupt.
+    scanline_interrupt_callback: Signals an interrupt.
 ---------------------------------------------------------------*/
 
 static void scanline_interrupt_callback(int param)
@@ -273,12 +273,12 @@ static void scanline_interrupt_callback(int param)
 
 
 /*##########################################################################
-	EEPROM HANDLING
+    EEPROM HANDLING
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_eeprom_reset: Makes sure that the unlocked state
-	is cleared when we reset.
+    atarigen_eeprom_reset: Makes sure that the unlocked state
+    is cleared when we reset.
 ---------------------------------------------------------------*/
 
 void atarigen_eeprom_reset(void)
@@ -288,9 +288,9 @@ void atarigen_eeprom_reset(void)
 
 
 /*---------------------------------------------------------------
-	atarigen_eeprom_enable_w: Any write to this handler will
-	allow one byte to be written to the EEPROM data area the
-	next time.
+    atarigen_eeprom_enable_w: Any write to this handler will
+    allow one byte to be written to the EEPROM data area the
+    next time.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_eeprom_enable_w )
@@ -305,10 +305,10 @@ WRITE32_HANDLER( atarigen_eeprom_enable32_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_eeprom_w: Writes a "word" to the EEPROM, which is
-	almost always accessed via the low byte of the word only.
-	If the EEPROM hasn't been unlocked, the write attempt is
-	ignored.
+    atarigen_eeprom_w: Writes a "word" to the EEPROM, which is
+    almost always accessed via the low byte of the word only.
+    If the EEPROM hasn't been unlocked, the write attempt is
+    ignored.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_eeprom_w )
@@ -334,8 +334,8 @@ WRITE32_HANDLER( atarigen_eeprom32_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_eeprom_r: Reads a "word" from the EEPROM, which is
-	almost always accessed via the low byte of the word only.
+    atarigen_eeprom_r: Reads a "word" from the EEPROM, which is
+    almost always accessed via the low byte of the word only.
 ---------------------------------------------------------------*/
 
 READ16_HANDLER( atarigen_eeprom_r )
@@ -355,7 +355,7 @@ READ32_HANDLER( atarigen_eeprom_upper32_r )
 
 
 /*---------------------------------------------------------------
-	nvram_handler_atarigen: Loads the EEPROM data.
+    nvram_handler_atarigen: Loads the EEPROM data.
 ---------------------------------------------------------------*/
 
 NVRAM_HANDLER( atarigen )
@@ -382,8 +382,8 @@ NVRAM_HANDLER( atarigen )
 
 
 /*---------------------------------------------------------------
-	decompress_eeprom_word: Used for decompressing EEPROM data
-	that has every other byte invalid.
+    decompress_eeprom_word: Used for decompressing EEPROM data
+    that has every other byte invalid.
 ---------------------------------------------------------------*/
 
 void decompress_eeprom_word(const data16_t *data)
@@ -403,8 +403,8 @@ void decompress_eeprom_word(const data16_t *data)
 
 
 /*---------------------------------------------------------------
-	decompress_eeprom_byte: Used for decompressing EEPROM data
-	that is byte-packed.
+    decompress_eeprom_byte: Used for decompressing EEPROM data
+    that is byte-packed.
 ---------------------------------------------------------------*/
 
 void decompress_eeprom_byte(const data16_t *data)
@@ -425,7 +425,7 @@ void decompress_eeprom_byte(const data16_t *data)
 
 
 /*##########################################################################
-	SLAPSTIC HANDLING
+    SLAPSTIC HANDLING
 ##########################################################################*/
 
 INLINE void update_bank(int bank)
@@ -446,8 +446,8 @@ INLINE void update_bank(int bank)
 
 
 /*---------------------------------------------------------------
-	atarigen_slapstic_init: Installs memory handlers for the
-	slapstic and sets the chip number.
+    atarigen_slapstic_init: Installs memory handlers for the
+    slapstic and sets the chip number.
 ---------------------------------------------------------------*/
 
 void atarigen_slapstic_init(int cpunum, int base, int chipnum)
@@ -474,8 +474,8 @@ void atarigen_slapstic_init(int cpunum, int base, int chipnum)
 
 
 /*---------------------------------------------------------------
-	atarigen_slapstic_reset: Makes the selected slapstic number
-	active and resets its state.
+    atarigen_slapstic_reset: Makes the selected slapstic number
+    active and resets its state.
 ---------------------------------------------------------------*/
 
 void atarigen_slapstic_reset(void)
@@ -489,9 +489,9 @@ void atarigen_slapstic_reset(void)
 
 
 /*---------------------------------------------------------------
-	atarigen_slapstic_w: Assuming that the slapstic sits in
-	ROM memory space, we just simply tweak the slapstic at this
-	address and do nothing more.
+    atarigen_slapstic_w: Assuming that the slapstic sits in
+    ROM memory space, we just simply tweak the slapstic at this
+    address and do nothing more.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_slapstic_w )
@@ -501,8 +501,8 @@ WRITE16_HANDLER( atarigen_slapstic_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_slapstic_r: Tweaks the slapstic at the appropriate
-	address and then reads a word from the underlying memory.
+    atarigen_slapstic_r: Tweaks the slapstic at the appropriate
+    address and then reads a word from the underlying memory.
 ---------------------------------------------------------------*/
 
 READ16_HANDLER( atarigen_slapstic_r )
@@ -518,11 +518,11 @@ READ16_HANDLER( atarigen_slapstic_r )
 
 
 /*##########################################################################
-	SOUND I/O
+    SOUND I/O
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_sound_io_reset: Resets the state of the sound I/O.
+    atarigen_sound_io_reset: Resets the state of the sound I/O.
 ---------------------------------------------------------------*/
 
 void atarigen_sound_io_reset(int cpu_num)
@@ -540,8 +540,8 @@ void atarigen_sound_io_reset(int cpu_num)
 
 
 /*---------------------------------------------------------------
-	atarigen_6502_irq_gen: Generates an IRQ signal to the 6502
-	sound processor.
+    atarigen_6502_irq_gen: Generates an IRQ signal to the 6502
+    sound processor.
 ---------------------------------------------------------------*/
 
 INTERRUPT_GEN( atarigen_6502_irq_gen )
@@ -552,8 +552,8 @@ INTERRUPT_GEN( atarigen_6502_irq_gen )
 
 
 /*---------------------------------------------------------------
-	atarigen_6502_irq_ack_r: Resets the IRQ signal to the 6502
-	sound processor. Both reads and writes can be used.
+    atarigen_6502_irq_ack_r: Resets the IRQ signal to the 6502
+    sound processor. Both reads and writes can be used.
 ---------------------------------------------------------------*/
 
 READ8_HANDLER( atarigen_6502_irq_ack_r )
@@ -571,8 +571,8 @@ WRITE8_HANDLER( atarigen_6502_irq_ack_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_ym2151_irq_gen: Sets the state of the YM2151's
-	IRQ line.
+    atarigen_ym2151_irq_gen: Sets the state of the YM2151's
+    IRQ line.
 ---------------------------------------------------------------*/
 
 void atarigen_ym2151_irq_gen(int irq)
@@ -583,8 +583,8 @@ void atarigen_ym2151_irq_gen(int irq)
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_reset_w: Write handler which resets the
-	sound CPU in response.
+    atarigen_sound_reset_w: Write handler which resets the
+    sound CPU in response.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_sound_reset_w )
@@ -594,8 +594,8 @@ WRITE16_HANDLER( atarigen_sound_reset_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_reset: Resets the state of the sound CPU
-	manually.
+    atarigen_sound_reset: Resets the state of the sound CPU
+    manually.
 ---------------------------------------------------------------*/
 
 void atarigen_sound_reset(void)
@@ -605,10 +605,10 @@ void atarigen_sound_reset(void)
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_w: Handles communication from the main CPU
-	to the sound CPU. Two versions are provided, one with the
-	data byte in the low 8 bits, and one with the data byte in
-	the upper 8 bits.
+    atarigen_sound_w: Handles communication from the main CPU
+    to the sound CPU. Two versions are provided, one with the
+    data byte in the low 8 bits, and one with the data byte in
+    the upper 8 bits.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_sound_w )
@@ -631,10 +631,10 @@ WRITE32_HANDLER( atarigen_sound_upper32_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_sound_r: Handles reading data communicated from the
-	sound CPU to the main CPU. Two versions are provided, one
-	with the data byte in the low 8 bits, and one with the data
-	byte in the upper 8 bits.
+    atarigen_sound_r: Handles reading data communicated from the
+    sound CPU to the main CPU. Two versions are provided, one
+    with the data byte in the low 8 bits, and one with the data
+    byte in the upper 8 bits.
 ---------------------------------------------------------------*/
 
 READ16_HANDLER( atarigen_sound_r )
@@ -660,8 +660,8 @@ READ32_HANDLER( atarigen_sound_upper32_r )
 
 
 /*---------------------------------------------------------------
-	atarigen_6502_sound_w: Handles communication from the sound
-	CPU to the main CPU.
+    atarigen_6502_sound_w: Handles communication from the sound
+    CPU to the main CPU.
 ---------------------------------------------------------------*/
 
 WRITE8_HANDLER( atarigen_6502_sound_w )
@@ -671,8 +671,8 @@ WRITE8_HANDLER( atarigen_6502_sound_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_6502_sound_r: Handles reading data communicated
-	from the main CPU to the sound CPU.
+    atarigen_6502_sound_r: Handles reading data communicated
+    from the main CPU to the sound CPU.
 ---------------------------------------------------------------*/
 
 READ8_HANDLER( atarigen_6502_sound_r )
@@ -684,10 +684,10 @@ READ8_HANDLER( atarigen_6502_sound_r )
 
 
 /*---------------------------------------------------------------
-	update_6502_irq: Called whenever the IRQ state changes. An
-	interrupt is generated if either atarigen_6502_irq_gen()
-	was called, or if the YM2151 generated an interrupt via
-	the atarigen_ym2151_irq_gen() callback.
+    update_6502_irq: Called whenever the IRQ state changes. An
+    interrupt is generated if either atarigen_6502_irq_gen()
+    was called, or if the YM2151 generated an interrupt via
+    the atarigen_ym2151_irq_gen() callback.
 ---------------------------------------------------------------*/
 
 void update_6502_irq(void)
@@ -700,10 +700,10 @@ void update_6502_irq(void)
 
 
 /*---------------------------------------------------------------
-	sound_comm_timer: Set whenever a command is written from
-	the main CPU to the sound CPU, in order to temporarily bump
-	up the interleave rate. This helps ensure that communications
-	between the two CPUs works properly.
+    sound_comm_timer: Set whenever a command is written from
+    the main CPU to the sound CPU, in order to temporarily bump
+    up the interleave rate. This helps ensure that communications
+    between the two CPUs works properly.
 ---------------------------------------------------------------*/
 
 static void sound_comm_timer(int reps_left)
@@ -714,8 +714,8 @@ static void sound_comm_timer(int reps_left)
 
 
 /*---------------------------------------------------------------
-	delayed_sound_reset: Synchronizes the sound reset command
-	between the two CPUs.
+    delayed_sound_reset: Synchronizes the sound reset command
+    between the two CPUs.
 ---------------------------------------------------------------*/
 
 static void delayed_sound_reset(int param)
@@ -734,8 +734,8 @@ static void delayed_sound_reset(int param)
 
 
 /*---------------------------------------------------------------
-	delayed_sound_w: Synchronizes a data write from the main
-	CPU to the sound CPU.
+    delayed_sound_w: Synchronizes a data write from the main
+    CPU to the sound CPU.
 ---------------------------------------------------------------*/
 
 static void delayed_sound_w(int param)
@@ -756,8 +756,8 @@ static void delayed_sound_w(int param)
 
 
 /*---------------------------------------------------------------
-	delayed_6502_sound_w: Synchronizes a data write from the
-	sound CPU to the main CPU.
+    delayed_6502_sound_w: Synchronizes a data write from the
+    sound CPU to the main CPU.
 ---------------------------------------------------------------*/
 
 static void delayed_6502_sound_w(int param)
@@ -775,12 +775,12 @@ static void delayed_6502_sound_w(int param)
 
 
 /*##########################################################################
-	SOUND HELPERS
+    SOUND HELPERS
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_set_vol: Scans for a particular sound chip and
-	changes the volume on all channels associated with it.
+    atarigen_set_vol: Scans for a particular sound chip and
+    changes the volume on all channels associated with it.
 ---------------------------------------------------------------*/
 
 void atarigen_set_vol(int volume, int type)
@@ -800,8 +800,8 @@ void atarigen_set_vol(int volume, int type)
 
 
 /*---------------------------------------------------------------
-	atarigen_set_XXXXX_vol: Sets the volume for a given type
-	of chip.
+    atarigen_set_XXXXX_vol: Sets the volume for a given type
+    of chip.
 ---------------------------------------------------------------*/
 
 void atarigen_set_ym2151_vol(int volume)
@@ -832,11 +832,11 @@ void atarigen_set_oki6295_vol(int volume)
 
 
 /*##########################################################################
-	SCANLINE TIMING
+    SCANLINE TIMING
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_scanline_timer_reset: Sets up the scanline timer.
+    atarigen_scanline_timer_reset: Sets up the scanline timer.
 ---------------------------------------------------------------*/
 
 void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, int frequency)
@@ -855,8 +855,8 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 
 
 /*---------------------------------------------------------------
-	vblank_timer: Called once every VBLANK to prime the scanline
-	timers.
+    vblank_timer: Called once every VBLANK to prime the scanline
+    timers.
 ---------------------------------------------------------------*/
 
 static void vblank_timer(int param)
@@ -870,8 +870,8 @@ static void vblank_timer(int param)
 
 
 /*---------------------------------------------------------------
-	scanline_timer: Called once every n scanlines to generate
-	the periodic callback to the main system.
+    scanline_timer: Called once every n scanlines to generate
+    the periodic callback to the main system.
 ---------------------------------------------------------------*/
 
 static void scanline_timer(int scanline)
@@ -891,12 +891,12 @@ static void scanline_timer(int scanline)
 
 
 /*##########################################################################
-	VIDEO CONTROLLER
+    VIDEO CONTROLLER
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarivc_eof_update: Callback that slurps up data and feeds
-	it into the video controller registers every refresh.
+    atarivc_eof_update: Callback that slurps up data and feeds
+    it into the video controller registers every refresh.
 ---------------------------------------------------------------*/
 
 static void atarivc_eof_update(int param)
@@ -907,7 +907,7 @@ static void atarivc_eof_update(int param)
 
 
 /*---------------------------------------------------------------
-	atarivc_reset: Initializes the video controller.
+    atarivc_reset: Initializes the video controller.
 ---------------------------------------------------------------*/
 
 void atarivc_reset(data16_t *eof_data, int playfields)
@@ -931,8 +931,8 @@ void atarivc_reset(data16_t *eof_data, int playfields)
 
 
 /*---------------------------------------------------------------
-	atarivc_update: Copies the data from the specified location
-	once/frame into the video controller registers.
+    atarivc_update: Copies the data from the specified location
+    once/frame into the video controller registers.
 ---------------------------------------------------------------*/
 
 void atarivc_update(const data16_t *data)
@@ -975,7 +975,7 @@ void atarivc_update(const data16_t *data)
 
 
 /*---------------------------------------------------------------
-	atarivc_w: Handles an I/O write to the video controller.
+    atarivc_w: Handles an I/O write to the video controller.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarivc_w )
@@ -990,8 +990,8 @@ WRITE16_HANDLER( atarivc_w )
 
 
 /*---------------------------------------------------------------
-	atarivc_common_w: Does the bulk of the word for an I/O
-	write.
+    atarivc_common_w: Does the bulk of the word for an I/O
+    write.
 ---------------------------------------------------------------*/
 
 static void atarivc_common_w(offs_t offset, data16_t newword)
@@ -1003,11 +1003,11 @@ static void atarivc_common_w(offs_t offset, data16_t newword)
 	switch (offset)
 	{
 		/*
-			additional registers:
+            additional registers:
 
-				01 = vertical start (for centering)
-				04 = horizontal start (for centering)
-		*/
+                01 = vertical start (for centering)
+                04 = horizontal start (for centering)
+        */
 
 		/* set the scanline interrupt here */
 		case 0x03:
@@ -1099,7 +1099,7 @@ static void atarivc_common_w(offs_t offset, data16_t newword)
 
 
 /*---------------------------------------------------------------
-	atarivc_r: Handles an I/O read from the video controller.
+    atarivc_r: Handles an I/O read from the video controller.
 ---------------------------------------------------------------*/
 
 READ16_HANDLER( atarivc_r )
@@ -1126,11 +1126,11 @@ READ16_HANDLER( atarivc_r )
 
 
 /*##########################################################################
-	PLAYFIELD/ALPHA MAP HELPERS
+    PLAYFIELD/ALPHA MAP HELPERS
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_alpha_w: Generic write handler for alpha RAM.
+    atarigen_alpha_w: Generic write handler for alpha RAM.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_alpha_w )
@@ -1157,8 +1157,8 @@ WRITE16_HANDLER( atarigen_alpha2_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_set_playfield_latch: Sets the latch for the latched
-	playfield handlers below.
+    atarigen_set_playfield_latch: Sets the latch for the latched
+    playfield handlers below.
 ---------------------------------------------------------------*/
 
 void atarigen_set_playfield_latch(int data)
@@ -1174,7 +1174,7 @@ void atarigen_set_playfield2_latch(int data)
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_w: Generic write handler for PF RAM.
+    atarigen_playfield_w: Generic write handler for PF RAM.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_w )
@@ -1201,8 +1201,8 @@ WRITE16_HANDLER( atarigen_playfield2_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_large_w: Generic write handler for
-	large (2-word) playfield RAM.
+    atarigen_playfield_large_w: Generic write handler for
+    large (2-word) playfield RAM.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_large_w )
@@ -1214,8 +1214,8 @@ WRITE16_HANDLER( atarigen_playfield_large_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_upper_w: Generic write handler for
-	upper word of split playfield RAM.
+    atarigen_playfield_upper_w: Generic write handler for
+    upper word of split playfield RAM.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_upper_w )
@@ -1227,8 +1227,8 @@ WRITE16_HANDLER( atarigen_playfield_upper_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_dual_upper_w: Generic write handler for
-	upper word of split dual playfield RAM.
+    atarigen_playfield_dual_upper_w: Generic write handler for
+    upper word of split dual playfield RAM.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_dual_upper_w )
@@ -1241,9 +1241,9 @@ WRITE16_HANDLER( atarigen_playfield_dual_upper_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_latched_lsb_w: Generic write handler for
-	lower word of playfield RAM with a latch in the LSB of the
-	upper word.
+    atarigen_playfield_latched_lsb_w: Generic write handler for
+    lower word of playfield RAM with a latch in the LSB of the
+    upper word.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_latched_lsb_w )
@@ -1258,9 +1258,9 @@ WRITE16_HANDLER( atarigen_playfield_latched_lsb_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_latched_lsb_w: Generic write handler for
-	lower word of playfield RAM with a latch in the MSB of the
-	upper word.
+    atarigen_playfield_latched_lsb_w: Generic write handler for
+    lower word of playfield RAM with a latch in the MSB of the
+    upper word.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield_latched_msb_w )
@@ -1275,9 +1275,9 @@ WRITE16_HANDLER( atarigen_playfield_latched_msb_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_playfield_latched_lsb_w: Generic write handler for
-	lower word of second playfield RAM with a latch in the MSB
-	of the upper word.
+    atarigen_playfield_latched_lsb_w: Generic write handler for
+    lower word of second playfield RAM with a latch in the MSB
+    of the upper word.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_playfield2_latched_msb_w )
@@ -1293,13 +1293,13 @@ WRITE16_HANDLER( atarigen_playfield2_latched_msb_w )
 
 
 /*##########################################################################
-	VIDEO HELPERS
+    VIDEO HELPERS
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_get_hblank: Returns a guesstimate about the current
-	HBLANK state, based on the assumption that HBLANK represents
-	10% of the scanline period.
+    atarigen_get_hblank: Returns a guesstimate about the current
+    HBLANK state, based on the assumption that HBLANK represents
+    10% of the scanline period.
 ---------------------------------------------------------------*/
 
 int atarigen_get_hblank(void)
@@ -1309,8 +1309,8 @@ int atarigen_get_hblank(void)
 
 
 /*---------------------------------------------------------------
-	atarigen_halt_until_hblank_0_w: Halts CPU 0 until the
-	next HBLANK.
+    atarigen_halt_until_hblank_0_w: Halts CPU 0 until the
+    next HBLANK.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_halt_until_hblank_0_w )
@@ -1332,7 +1332,7 @@ WRITE16_HANDLER( atarigen_halt_until_hblank_0_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_666_paletteram_w: 6-6-6 RGB palette RAM handler.
+    atarigen_666_paletteram_w: 6-6-6 RGB palette RAM handler.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_666_paletteram_w )
@@ -1355,8 +1355,8 @@ WRITE16_HANDLER( atarigen_666_paletteram_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_expanded_666_paletteram_w: 6-6-6 RGB expanded
-	palette RAM handler.
+    atarigen_expanded_666_paletteram_w: 6-6-6 RGB expanded
+    palette RAM handler.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarigen_expanded_666_paletteram_w )
@@ -1384,7 +1384,7 @@ WRITE16_HANDLER( atarigen_expanded_666_paletteram_w )
 
 
 /*---------------------------------------------------------------
-	atarigen_666_paletteram32_w: 6-6-6 RGB palette RAM handler.
+    atarigen_666_paletteram32_w: 6-6-6 RGB palette RAM handler.
 ---------------------------------------------------------------*/
 
 WRITE32_HANDLER( atarigen_666_paletteram32_w )
@@ -1426,7 +1426,7 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w )
 
 
 /*---------------------------------------------------------------
-	unhalt_cpu: Timer callback to release the CPU from a halted state.
+    unhalt_cpu: Timer callback to release the CPU from a halted state.
 ---------------------------------------------------------------*/
 
 static void unhalt_cpu(int param)
@@ -1437,11 +1437,11 @@ static void unhalt_cpu(int param)
 
 
 /*##########################################################################
-	MISC HELPERS
+    MISC HELPERS
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	atarigen_swap_mem: Inverts the bits in a region.
+    atarigen_swap_mem: Inverts the bits in a region.
 ---------------------------------------------------------------*/
 
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
@@ -1458,8 +1458,8 @@ void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
 
 
 /*---------------------------------------------------------------
-	atarigen_blend_gfx: Takes two GFXElements and blends their
-	data together to form one. Then frees the second.
+    atarigen_blend_gfx: Takes two GFXElements and blends their
+    data together to form one. Then frees the second.
 ---------------------------------------------------------------*/
 
 void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1)

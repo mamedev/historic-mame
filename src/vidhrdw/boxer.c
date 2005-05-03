@@ -17,7 +17,7 @@ static void draw_boxer(struct mame_bitmap* bitmap, const struct rectangle* clipr
 	for (n = 0; n < 2; n++)
 	{
 		const UINT8* p = memory_region(n == 0 ? REGION_USER1 : REGION_USER2);
-		
+
 		int i;
 		int j;
 
@@ -32,7 +32,7 @@ static void draw_boxer(struct mame_bitmap* bitmap, const struct rectangle* clipr
 			for (j = 0; j < 4; j++)
 			{
 				UINT8 code;
-				
+
 				code = p[32 * l + 4 * i + j];
 
 				drawgfx(bitmap, Machine->gfx[n],

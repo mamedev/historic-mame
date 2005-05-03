@@ -34,15 +34,15 @@ typedef enum {
 #endif
 
 #ifdef LSB_FIRST
-typedef enum { 
-	AX = 0, 
-	CX = 2, 
-	DX = 4, 
-	BX = 6, 
-	SP = 8, 
-	BP = 10, 
-	SI = 12, 
-	DI = 14 
+typedef enum {
+	AX = 0,
+	CX = 2,
+	DX = 4,
+	BX = 6,
+	SP = 8,
+	BP = 10,
+	SI = 12,
+	DI = 14
 } WREGS;
 #else
 typedef enum {

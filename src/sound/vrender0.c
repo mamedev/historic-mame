@@ -3,8 +3,8 @@
 #include "vrender0.h"
 
 /***********************************
-		VRENDER ZERO
-		AUDIO EMULATION
+        VRENDER ZERO
+        AUDIO EMULATION
 ************************************/
 /************
 MISSING:
@@ -86,15 +86,15 @@ static const unsigned short ULawTo16[]=
 #define GETSOUNDREG16(Chan,Offs) program_read_word_32le(VR0->Intf.RegBase+0x20*Chan+Offs)
 #define GETSOUNDREG32(Chan,Offs) program_read_dword_32le(VR0->Intf.RegBase+0x20*Chan+Offs)
 
-#define CURSADDR(chan)	GETSOUNDREG32(chan,0x00)
-#define DSADDR(chan)	GETSOUNDREG16(chan,0x08)
-#define LOOPBEGIN(chan)	(GETSOUNDREG32(chan,0x0c)&0x3fffff)
-#define LOOPEND(chan)	(GETSOUNDREG32(chan,0x10)&0x3fffff)
-#define ENVVOL(chan)	(GETSOUNDREG32(chan,0x04)&0xffffff)
+#define CURSADDR(chan)  GETSOUNDREG32(chan,0x00)
+#define DSADDR(chan)    GETSOUNDREG16(chan,0x08)
+#define LOOPBEGIN(chan) (GETSOUNDREG32(chan,0x0c)&0x3fffff)
+#define LOOPEND(chan)   (GETSOUNDREG32(chan,0x10)&0x3fffff)
+#define ENVVOL(chan)    (GETSOUNDREG32(chan,0x04)&0xffffff)
 */
 void VR0_Snd_Set_Areas(UINT32 *Texture,UINT32 *Frame)
 {
-	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0);
 	VR0->TexBase=Texture;
 	VR0->FBBase=Frame;
 }
@@ -103,7 +103,7 @@ static void *vrender0_start(int sndindex, int clock, const void *config)
 {
 	const struct VR0Interface *intf;
 	struct _VR0Chip *VR0;
-	
+
 	VR0 = auto_malloc(sizeof(*VR0));
 	memset(VR0, 0, sizeof(*VR0));
 
@@ -111,15 +111,15 @@ static void *vrender0_start(int sndindex, int clock, const void *config)
 
 	memcpy(&(VR0->Intf),intf,sizeof(struct VR0Interface));
 	memset(VR0->SOUNDREGS,0,0x10000);
-	
+
 	VR0->stream = stream_create(0, 2, 44100, VR0, VR0_Update);
-	
+
 	return VR0;
 }
 
 WRITE32_HANDLER(VR0_Snd_Write)
 {
-	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0);
 	if(offset==0x404/4)
 	{
 		data&=0xffff;
@@ -144,7 +144,7 @@ WRITE32_HANDLER(VR0_Snd_Write)
 
 READ32_HANDLER(VR0_Snd_Read)
 {
-	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0);
 	return VR0->SOUNDREGS[offset];
 }
 
@@ -160,7 +160,7 @@ static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *
 	int div;
 	int s;
 
-	
+
 	if(CT1&0x20)
 		SAMPLES=(INT16 *)VR0->TexBase;
 	else
@@ -170,12 +170,12 @@ static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *
 		div=((30<<16)|0x8000)/(CLK+1);
 	else
 		div=1<<16;
-	
+
 	for(s=0;s<nsamples;++s)
 	{
 		int i;
 		lsample=rsample=0;
-		for(i=0;i<=NCH;++i)	
+		for(i=0;i<=NCH;++i)
 		{
 			signed int sample;
 			UINT32 cur=CURSADDR(i);
@@ -183,7 +183,7 @@ static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *
 			UINT8 Mode=VR0->SOUNDREGS[(0x20/4)*i+0x8/4]>>24;
 			signed int LVOL=VR0->SOUNDREGS[(0x20/4)*i+0xc/4]>>24;
 			signed int RVOL=VR0->SOUNDREGS[(0x20/4)*i+0x10/4]>>24;
-			
+
 			INT32 DSADD=(DSADDR(i)*div)>>16;
 
 			if(!(st&(1<<i)) || !(CT2&0x80))
@@ -222,8 +222,8 @@ static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *
 					break;
 				}
 			}
-//			UINT32 v=(ENVVOL(i))>>8;
-//			sample=(sample*v)>>16;
+//          UINT32 v=(ENVVOL(i))>>8;
+//          sample=(sample*v)>>16;
 			lsample+=(sample*LVOL)>>8;
 			rsample+=(sample*RVOL)>>8;
 		}

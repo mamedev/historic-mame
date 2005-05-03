@@ -79,29 +79,29 @@ DrawDirectPolys( void )
 	{
 		const data16_t *pSource = mDirectPolyBuf[--mDirectPolyCount];
 		/**
-		 * 0x03a2 // 0x0fff zcode?
-		 * 0x0001 // 0x000f tpage?
-		 * 0xbd00 // color
-		 * 0x13a2 // flags
-		 *
-		 * 0x0100 0x009c // u,v
-		 * 0x0072 0xf307 // sx,sy
-		 * 0x602b 0x9f28 // i,zpos
-		 *
-		 * 0x00bf 0x0060 // u,v
-		 * 0x0040 0xf3ec // sx,sy
-		 * 0x602b 0xad48 // i,zpos
-		 *
-		 * 0x00fb 0x00ca // u,v
-		 * 0x0075 0xf205 // sx,sy
-		 * 0x602b 0x93e8 // i,zpos
-		 *
-		 * 0x00fb 0x00ca // u,v
-		 * 0x0075 0xf205 // sx,sy
-		 * 0x602b 0x93e8 // i,zpos
-		 */
+         * 0x03a2 // 0x0fff zcode?
+         * 0x0001 // 0x000f tpage?
+         * 0xbd00 // color
+         * 0x13a2 // flags
+         *
+         * 0x0100 0x009c // u,v
+         * 0x0072 0xf307 // sx,sy
+         * 0x602b 0x9f28 // i,zpos
+         *
+         * 0x00bf 0x0060 // u,v
+         * 0x0040 0xf3ec // sx,sy
+         * 0x602b 0xad48 // i,zpos
+         *
+         * 0x00fb 0x00ca // u,v
+         * 0x0075 0xf205 // sx,sy
+         * 0x602b 0x93e8 // i,zpos
+         *
+         * 0x00fb 0x00ca // u,v
+         * 0x0075 0xf205 // sx,sy
+         * 0x602b 0x93e8 // i,zpos
+         */
 		INT32 zcode = pSource[0];
-//		int unk = pSource[1];
+//      int unk = pSource[1];
 		unsigned color = pSource[2]&0x7f00;
 		INT32 flags = pSource[3];
 		struct VerTex v[5];
@@ -117,10 +117,10 @@ DrawDirectPolys( void )
 			pVerTex->z = DspFloatToNativeFloat( (pSource[4]<<16) | pSource[5] );
 			pVerTex->i = pSource[4]>>8;
 			/**
-			 * (x,y) are already in screen window coordinates.
-			 * for now, as a quick workaround, we assign an arbitrary z coordinate to all
-			 * four vertexes, big enough to avoid near-plane clipping.
-			 */
+             * (x,y) are already in screen window coordinates.
+             * for now, as a quick workaround, we assign an arbitrary z coordinate to all
+             * four vertexes, big enough to avoid near-plane clipping.
+             */
 			pVerTex->z = 1000;
 			pSource += 6;
 		}
@@ -211,10 +211,10 @@ static void TextTilemapGetInfo( int tile_index )
 {
 	data16_t data = nthword( namcos22_textram,tile_index );
 	/**
-	 * xxxx------------ palette select
-	 * ----xx---------- flip
-	 * ------xxxxxxxxxx code
-	 */
+     * xxxx------------ palette select
+     * ----xx---------- flip
+     * ------xxxxxxxxxx code
+     */
 	SET_TILE_INFO( NAMCOS22_ALPHA_GFX,data&0x3ff,data>>12,TILE_FLIPYX((data>>10)&3) );
 }
 
@@ -355,18 +355,18 @@ DrawSpritesHelper(
 	for( i=0; i<num_sprites; i++ )
 	{
 		/*
-		pSource:
-		    xxxx---- -------- -------- -------- xpos
-			----xxxx -------- -------- -------- ypos
-			-------- xxxx---- -------- -------- zoomx
-			-------- ----xxxx -------- -------- zoomy
-			-------- -------- -x------ -------- hide this sprite
-			-------- -------- --xxxx-- -------- ?
-			-------- -------- ------x- -------- flipx,numcols
-			-------- -------- -------x -------- flipy,numrows
-			-------- -------- -------- xxxx---- tile number
-			-------- -------- -------- ----xxxx ?
-		*/
+        pSource:
+            xxxx---- -------- -------- -------- xpos
+            ----xxxx -------- -------- -------- ypos
+            -------- xxxx---- -------- -------- zoomx
+            -------- ----xxxx -------- -------- zoomy
+            -------- -------- -x------ -------- hide this sprite
+            -------- -------- --xxxx-- -------- ?
+            -------- -------- ------x- -------- flipx,numcols
+            -------- -------- -------x -------- flipy,numrows
+            -------- -------- -------- xxxx---- tile number
+            -------- -------- -------- ----xxxx ?
+        */
 		attrs = pSource[2];
 		if( (attrs&0x04000000)==0 )
 		{ /* sprite is not hidden */
@@ -452,56 +452,56 @@ static void
 DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	/*
-		0x980000:	00060000 00010000 02ff0000 000007ff
+        0x980000:   00060000 00010000 02ff0000 000007ff
                              ^^^^                       num sprites
 
-		0x980010:	00200020 000002ff 000007ff 00000000
+        0x980010:   00200020 000002ff 000007ff 00000000
                              ^^^^                       delta xpos
                                       ^^^^              delta ypos
 
-		0x980200:	000007ff 000007ff		delta xpos, delta ypos
-		0x980208:	000007ff 000007ff
-		0x980210:	000007ff 000007ff
-		0x980218:	000007ff 000007ff
-		0x980220:	000007ff 000007ff
-		0x980228:	000007ff 000007ff
-		0x980230:	000007ff 000007ff
-		0x980238:	000007ff 000007ff
+        0x980200:   000007ff 000007ff       delta xpos, delta ypos
+        0x980208:   000007ff 000007ff
+        0x980210:   000007ff 000007ff
+        0x980218:   000007ff 000007ff
+        0x980220:   000007ff 000007ff
+        0x980228:   000007ff 000007ff
+        0x980230:   000007ff 000007ff
+        0x980238:   000007ff 000007ff
 
-		0x980400:	?
-		0x980600:	?
-			0000	0000.0000.0000.0000
-			8000	1000.0000.0000.0000
-			8080	1000.0000.1000.0000
-			8880	1000.1000.1000.0000
-			8888	1000.1000.1000.1000
-			a888	1010.1000.1000.1000
-			a8a8	1010.1000.1010.1000
-			aaa8	1010.1010.1010.1000
-			aaaa	1010.1010.1010.1010
-			eaaa	1110.1010.1010.1010
-			eaea	1110.1010.1110.1010
-			eeea	1110.1110.1110.1010
-			eeee	1110.1110.1110.1110
-			feee	1111.1110.1110.1110
-			fefe	1111.1110.1111.1110
-			fffe	1111.1111.1111.1110
-			ffff	1111.1111.1111.1111
+        0x980400:   ?
+        0x980600:   ?
+            0000    0000.0000.0000.0000
+            8000    1000.0000.0000.0000
+            8080    1000.0000.1000.0000
+            8880    1000.1000.1000.0000
+            8888    1000.1000.1000.1000
+            a888    1010.1000.1000.1000
+            a8a8    1010.1000.1010.1000
+            aaa8    1010.1010.1010.1000
+            aaaa    1010.1010.1010.1010
+            eaaa    1110.1010.1010.1010
+            eaea    1110.1010.1110.1010
+            eeea    1110.1110.1110.1010
+            eeee    1110.1110.1110.1110
+            feee    1111.1110.1110.1110
+            fefe    1111.1110.1111.1110
+            fffe    1111.1111.1111.1110
+            ffff    1111.1111.1111.1111
 
-		0x980800:	0000 0001 0002 0003 ... 03ff (probably indirection for sprite list)
+        0x980800:   0000 0001 0002 0003 ... 03ff (probably indirection for sprite list)
 
-		eight words per sprite:
-		0x984000:	010f 007b	xpos, ypos
-		0x984004:	0020 0020	size x, size y
-		0x984008:	00ff 0311	00ff, chr x;chr y;flip x;flip y
-		0x98400c:	0001 0000	sprite code, ????
-		...
+        eight words per sprite:
+        0x984000:   010f 007b   xpos, ypos
+        0x984004:   0020 0020   size x, size y
+        0x984008:   00ff 0311   00ff, chr x;chr y;flip x;flip y
+        0x98400c:   0001 0000   sprite code, ????
+        ...
 
-		additional sorting/color data for sprite:
-		0x9a0000:	C381 Z (sort)
-		0x9a0004:	palette, C381 ZC (depth cueing?)
-		...
-	*/
+        additional sorting/color data for sprite:
+        0x9a0000:   C381 Z (sort)
+        0x9a0004:   palette, C381 ZC (depth cueing?)
+        ...
+    */
 	int num_sprites = (spriteram32[0x04/4]>>16)&0x3ff; /* max 1024 sprites? */
 	const data32_t *pSource = &spriteram32[0x4000/4]+num_sprites*4;
 	const data32_t *pPal = &spriteram32[0x20000/4]+num_sprites*2;
@@ -515,8 +515,8 @@ To see sprites in Cyber Cycles (*HACK*):
 
 if (game_load == CYBER_CYCLES)
 {
-	deltax = 0x0280;
-	deltay = 0x0400;
+    deltax = 0x0280;
+    deltay = 0x0400;
 }
 
 And: The y-size is right, but wrong (!!!). Don't know _why_, but the
@@ -537,31 +537,31 @@ positioned well this way.
 
 	/* VICS RAM provides two additional banks */
 	/*
-		0x940000 -x------		sprite chip busy
-		0x940018 xxxx----		clr.w   $940018.l
+        0x940000 -x------       sprite chip busy
+        0x940018 xxxx----       clr.w   $940018.l
 
-		0x940030 ----xxxx
-		0x940034 xxxxxxxx		0x3070b0f
-		0x940038 xxxxxxxx
+        0x940030 ----xxxx
+        0x940034 xxxxxxxx       0x3070b0f
+        0x940038 xxxxxxxx
 
-		0x940040 xxxxxxxx		sprite attribute size
-		0x940044 xxxxxxxx		?
-		0x940048 xxxxxxxx		sprite attribute list baseaddr
-		0x94004c xxxxxxxx		?
-		0x940050 xxxxxxxx		sprite color size
-		0x940054 xxxxxxxx		?
-		0x940058 xxxxxxxx		sprite color list baseaddr
-		0x94005c xxxxxxxx		?
+        0x940040 xxxxxxxx       sprite attribute size
+        0x940044 xxxxxxxx       ?
+        0x940048 xxxxxxxx       sprite attribute list baseaddr
+        0x94004c xxxxxxxx       ?
+        0x940050 xxxxxxxx       sprite color size
+        0x940054 xxxxxxxx       ?
+        0x940058 xxxxxxxx       sprite color list baseaddr
+        0x94005c xxxxxxxx       ?
 
-		0x940060 xxxxxxxx		sprite attribute size
-		0x940064 xxxxxxxx		?
-		0x940068 xxxxxxxx		sprite attribute list baseaddr
-		0x94006c xxxxxxxx		?
-		0x940070 xxxxxxxx		sprite color size
-		0x940074 xxxxxxxx		?
-		0x940078 xxxxxxxx		sprite color list baseaddr
-		0x94007c xxxxxxxx		?
-	*/
+        0x940060 xxxxxxxx       sprite attribute size
+        0x940064 xxxxxxxx       ?
+        0x940068 xxxxxxxx       sprite attribute list baseaddr
+        0x94006c xxxxxxxx       ?
+        0x940070 xxxxxxxx       sprite color size
+        0x940074 xxxxxxxx       ?
+        0x940078 xxxxxxxx       sprite color list baseaddr
+        0x94007c xxxxxxxx       ?
+    */
 
 	num_sprites = (namcos22_vics_control[0x40/4]&0xffff)/0x10;
 	if( num_sprites>=1 )
@@ -622,11 +622,11 @@ UpdatePaletteS( void ) /* for Super System22 - apply gamma correction and prelim
 
 				if( fade )
 				{ /**
-				   * if flags&0x01 is set, fader affects polygon layer
-				   * flags&0x02 and flags&0x04 are used to fade text/sprite layer
-				   *
-				   * for now, ignore flags and fade all palette entries
-				   */
+                   * if flags&0x01 is set, fader affects polygon layer
+                   * flags&0x02 and flags&0x04 are used to fade text/sprite layer
+                   *
+                   * for now, ignore flags and fade all palette entries
+                   */
 					r = (r*(0x100-fade)+red*fade)/256;
 					g = (g*(0x100-fade)+green*fade)/256;
 					b = (b*(0x100-fade)+blue*fade)/256;
@@ -729,23 +729,23 @@ TransformNormal( double *nx, double *ny, double *nz, double m[4][4] )
  * @brief render a single quad
  *
  * @param flags
- *		x.----.-x--.--x- (1042) (always set?)
- *		-.-xxx.----.---- (0700) representative z algorithm to use?
- *		-.----.--x-.---- (0020) one-sided poly
- *		-.----.----.---x (0001) poly/tilemap priority?
+ *      x.----.-x--.--x- (1042) (always set?)
+ *      -.-xxx.----.---- (0700) representative z algorithm to use?
+ *      -.----.--x-.---- (0020) one-sided poly
+ *      -.----.----.---x (0001) poly/tilemap priority?
  *
- *		1163 // sky
- *		1262 // score (front)
- *		1242 // score (hinge)
- *		1243 // ?
- *		1063 // n/a
- *		1243 // various (2-sided?)
- *		1263 // everything else (1-sided?)
- *		1663 // ?
+ *      1163 // sky
+ *      1262 // score (front)
+ *      1242 // score (hinge)
+ *      1243 // ?
+ *      1063 // n/a
+ *      1243 // various (2-sided?)
+ *      1263 // everything else (1-sided?)
+ *      1663 // ?
  *
  * @param color
- *		-------- xxxxxxxx unused?
- *		-xxxxxxx -------- palette select
+ *      -------- xxxxxxxx unused?
+ *      -xxxxxxx -------- palette select
  *      x------- -------- unknown
  */
 static void
@@ -762,14 +762,14 @@ BlitQuadHelper(
 	struct VerTex v[5];
 	int i;
 
-//	if( (flags&0x0400) && code_pressed(KEYCODE_W) ) color = (rand()&0x7f)<<8;
-//	if( (flags&0x0200) && code_pressed(KEYCODE_E) ) color = (rand()&0x7f)<<8;
-//	if( (flags&0x0100) && code_pressed(KEYCODE_R) ) color = (rand()&0x7f)<<8;
-//	if( (flags&0x0020) && code_pressed(KEYCODE_T) ) color = (rand()&0x7f)<<8;
-//	if( (flags&0x0001) && code_pressed(KEYCODE_Y) ) color = (rand()&0x7f)<<8;
+//  if( (flags&0x0400) && code_pressed(KEYCODE_W) ) color = (rand()&0x7f)<<8;
+//  if( (flags&0x0200) && code_pressed(KEYCODE_E) ) color = (rand()&0x7f)<<8;
+//  if( (flags&0x0100) && code_pressed(KEYCODE_R) ) color = (rand()&0x7f)<<8;
+//  if( (flags&0x0020) && code_pressed(KEYCODE_T) ) color = (rand()&0x7f)<<8;
+//  if( (flags&0x0001) && code_pressed(KEYCODE_Y) ) color = (rand()&0x7f)<<8;
 
-//	if( (color&0x8000) && code_pressed(KEYCODE_U) ) color = (rand()&0x7f)<<8;
-//	if( (color&0x00ff) && code_pressed(KEYCODE_I) ) color = (rand()&0x7f)<<8;
+//  if( (color&0x8000) && code_pressed(KEYCODE_U) ) color = (rand()&0x7f)<<8;
+//  if( (color&0x00ff) && code_pressed(KEYCODE_I) ) color = (rand()&0x7f)<<8;
 
 	zmin = zmax = 0;
 
@@ -826,25 +826,25 @@ BlitQuadHelper(
 	} /* for( i=0; i<4; i++ ) */
 
 	/**
-	 * The method for computing represenative z value may vary per polygon.
-	 * Possible methods include:
-	 * - minimum value: zmin
-	 * - maximum value: zmax
-	 * - average value: (zmin+zmax)/2
-	 * - average of all four z coordinates
-	 */
+     * The method for computing represenative z value may vary per polygon.
+     * Possible methods include:
+     * - minimum value: zmin
+     * - maximum value: zmax
+     * - average value: (zmin+zmax)/2
+     * - average of all four z coordinates
+     */
 	zrep = (zmin+zmax)/2.0; /* for now just always use the simpler average */
 
 	/**
-	 * hardware supports two types priority modes:
-	 *
-	 * direct: use explicit zcode, ignoring the polygon's z coordinate
-	 * ---xxxxx xxxxxxxx xxxxxxxx
-	 *
-	 * relative: representative z + shift values
-	 * ---xxx-- -------- -------- shift absolute priority
-	 * ------xx xxxxxxxx xxxxxxxx shift z-representative value
-	 */
+     * hardware supports two types priority modes:
+     *
+     * direct: use explicit zcode, ignoring the polygon's z coordinate
+     * ---xxxxx xxxxxxxx xxxxxxxx
+     *
+     * relative: representative z + shift values
+     * ---xxx-- -------- -------- shift absolute priority
+     * ------xx xxxxxxxx xxxxxxxx shift z-representative value
+     */
 
 	if( namcos22_gametype == NAMCOS22_PROP_CYCLE || namcos22_gametype == NAMCOS22_TIME_CRISIS )
 	{ /* for now, assume all polygons use relative priority */
@@ -868,18 +868,18 @@ BlitQuadHelper(
 		if( dz<0 ) dz = 0; else if( dz>0x1fffff ) dz = 0x1fffff; /* cap it at min/max */
 
 		/**
-		 * xxx----- -------- -------- master-priority
-		 * ---xxxxx xxxxxxxx xxxxxxxx sub-priority
-		 */
+         * xxx----- -------- -------- master-priority
+         * ---xxxxx xxxxxxxx xxxxxxxx sub-priority
+         */
 		zcode = dw|dz;
 	}
 	else if( namcos22_gametype == NAMCOS22_RAVE_RACER ||
 			 namcos22_gametype == NAMCOS22_VICTORY_LAP )
 	{
 		/** Rave Racer:
-		 * 3b7740
-		 * --11.1011.0111.0111.0100.0000
-		 */
+         * 3b7740
+         * --11.1011.0111.0111.0100.0000
+         */
 		INT32 dw = mWindowPri<<24;
 		INT32 dz = zcode;
 		dz += (INT32)zrep;
@@ -913,10 +913,10 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 		{
 		case 0x17:
 			/**
-			 * word 0: opcode (8a24c0)
-			 * word 1: flags
-			 * word 2: color
-			 */
+             * word 0: opcode (8a24c0)
+             * word 1: flags
+             * word 2: color
+             */
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias = 0;
@@ -925,11 +925,11 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 
 		case 0x18:
 			/**
-			 * word 0: opcode (0b3480 for first N-1 quads or 8b3480 for final quad in primitive)
-			 * word 1: flags
-			 * word 2: color
-			 * word 3: depth bias
-			 */
+             * word 0: opcode (0b3480 for first N-1 quads or 8b3480 for final quad in primitive)
+             * word 1: flags
+             * word 2: color
+             * word 3: depth bias
+             */
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias  = GetPolyData(addr+3);
@@ -938,13 +938,13 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 
 		case 0x10: /* vertex lighting */
 			/*
-			333401 (opcode)
-				000000 000000 004000 (parameters; 2nd param is num 300401 following)
-			  	000000 000000 007fff // normal vector
-			  	000000 000000 007fff // normal vector
-			  	000000 000000 007fff // normal vector
-  				000000 000000 007fff // normal vector
-			*/
+            333401 (opcode)
+                000000 000000 004000 (parameters; 2nd param is num 300401 following)
+                000000 000000 007fff // normal vector
+                000000 000000 007fff // normal vector
+                000000 000000 007fff // normal vector
+                000000 000000 007fff // normal vector
+            */
 			mLitSurfaceCount = 0;
 			mLitSurfaceIndex = 0;
 			if( mLitSurfaceCount < MAX_LIT_SURFACES )
@@ -962,12 +962,12 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 
 		case 0x0d: /* additional normals */
 			/*
-			300401 (opcode)
-				007b09 ffdd04 0004c2
-				007a08 ffd968 0001c1
-				ff8354 ffe401 000790
-				ff84f7 ffdd04 0004c2
-			*/
+            300401 (opcode)
+                007b09 ffdd04 0004c2
+                007a08 ffd968 0001c1
+                ff8354 ffe401 000790
+                ff84f7 ffdd04 0004c2
+            */
 			if( mLitSurfaceCount < MAX_LIT_SURFACES )
 			{
 				struct LitSurfaceInfo *pLitSurfaceInfo = &mLitSurfaceInfo[mLitSurfaceCount++];
@@ -1024,16 +1024,16 @@ WRITE32_HANDLER( namcos22_dspram_w )
  * feature - both opcodes exist in Ridge Racer's display-list processing
  *
  * record format:
- *	header (3 words)
- *		zcode
- *		color
- *		flags
+ *  header (3 words)
+ *      zcode
+ *      color
+ *      flags
  *
- *	per-vertex data (4*6 words)
- *		u,v
- *		sx,sy
- *		intensity/z.exponent
- *		z.mantissa
+ *  per-vertex data (4*6 words)
+ *      u,v
+ *      sx,sy
+ *      intensity/z.exponent
+ *      z.mantissa
  *
  * master DSP can specify 3d objects indirectly (along with view transforms),
  * via the "transmit" PDP opcode.  the "render device" sends quad data to the slave DSP
@@ -1062,26 +1062,26 @@ static void
 HandleBB0003( const INT32 *pSource )
 {
 	/*
-		w.setViewport (float (320 + vx0 - vw), float (240 - vy0 - vh),
+        w.setViewport (float (320 + vx0 - vw), float (240 - vy0 - vh),
                  float (vw * 2), float (vh * 2),
                   z0, z1, margin);
 
-		00bb0003
-		001400c8			light.ambient     light.power
-		00010000			?                 light.dx
-		00065a82			window priority   light.dy
-		0000a57e			?                 light.dz
-		00c80081			cx,cy
+        00bb0003
+        001400c8            light.ambient     light.power
+        00010000            ?                 light.dx
+        00065a82            window priority   light.dy
+        0000a57e            ?                 light.dz
+        00c80081            cx,cy
 
-		00296092			zoom = 772.5625
-		001e95f8 001e95f8		     0.5858154296875
-		001eb079 001eb079            0.6893463134765625
-		002958e8				   711.25 (see time crisis)
+        00296092            zoom = 772.5625
+        001e95f8 001e95f8            0.5858154296875
+        001eb079 001eb079            0.6893463134765625
+        002958e8                   711.25 (see time crisis)
 
-		7ffe 0000 0000
-		0000 7ffe 0000
-		0000 0000 7ffe
-	*/
+        7ffe 0000 0000
+        0000 7ffe 0000
+        0000 0000 7ffe
+    */
 	mCamera.power   = pSource[0x1]&0xffff;
 	mCamera.ambient = pSource[0x1]>>16;
 
@@ -1095,14 +1095,14 @@ HandleBB0003( const INT32 *pSource )
 	/* HACK! contains cx in upper 16 bits, cy in lower 16 bits; for now just ignore these polygons */
 	if( pSource[5] ) mCamera.zoom = 0;
 	/*
-		DspFloatToNativeFloat(pSource[0x7]);
-		DspFloatToNativeFloat(pSource[0x8]);
+        DspFloatToNativeFloat(pSource[0x7]);
+        DspFloatToNativeFloat(pSource[0x8]);
 
-		DspFloatToNativeFloat(pSource[0x9]);
-		DspFloatToNativeFloat(pSource[0xa]);
+        DspFloatToNativeFloat(pSource[0x9]);
+        DspFloatToNativeFloat(pSource[0xa]);
 
-		DspFloatToNativeFloat(pSource[0xb]);
-	*/
+        DspFloatToNativeFloat(pSource[0xb]);
+    */
 
 	mViewMatrix[0][0] = DSP_FIXED_TO_FLOAT(pSource[0x0c]);
 	mViewMatrix[1][0] = DSP_FIXED_TO_FLOAT(pSource[0x0d]);
@@ -1166,16 +1166,16 @@ Handle300000( const INT32 *pSource )
 static void
 Handle233002( const INT32 *pSource )
 { /* set modal rendering options */
-//	mMasterBias = pSource[2];
+//  mMasterBias = pSource[2];
 /*
-	00233002 (always?)
-	00000000
-	0003dd00 // z bias adjust
-	001fffff
-	00007fff 00000000 00000000
-	00000000 00007fff 00000000
-	00000000 00000000 00007fff
-	00000000 00000000 00000000
+    00233002 (always?)
+    00000000
+    0003dd00 // z bias adjust
+    001fffff
+    00007fff 00000000 00000000
+    00000000 00007fff 00000000
+    00000000 00000000 00007fff
+    00000000 00000000 00000000
 */
 } /* Handle233002 */
 
@@ -1303,16 +1303,16 @@ READ32_HANDLER( namcos22_gamma_r )
 }
 
 /*
-	+0x0002.w	Fader Enable(?) (0: disabled)
-	+0x0011.w	Display Fader (R) (0x0100 = 1.0)
-	+0x0013.w	Display Fader (G) (0x0100 = 1.0)
-	+0x0015.w	Display Fader (B) (0x0100 = 1.0)
-	+0x0100.b	Fog1 Color (R) (world fogging)
-	+0x0101.b	Fog2 Color (R) (used for heating of brake-disc on RV1)
-	+0x0180.b	Fog1 Color (G)
-	+0x0181.b	Fog2 Color (G)
-	+0x0200.b	Fog1 Color (B)
-	+0x0201.b	Fog2 Color (B)
+    +0x0002.w   Fader Enable(?) (0: disabled)
+    +0x0011.w   Display Fader (R) (0x0100 = 1.0)
+    +0x0013.w   Display Fader (G) (0x0100 = 1.0)
+    +0x0015.w   Display Fader (B) (0x0100 = 1.0)
+    +0x0100.b   Fog1 Color (R) (world fogging)
+    +0x0101.b   Fog2 Color (R) (used for heating of brake-disc on RV1)
+    +0x0180.b   Fog1 Color (G)
+    +0x0181.b   Fog2 Color (G)
+    +0x0200.b   Fog1 Color (B)
+    +0x0201.b   Fog2 Color (B)
 */
 
 /**
@@ -1322,20 +1322,20 @@ READ32_HANDLER( namcos22_gamma_r )
  *           ^^^^ ^^^^ ^^^^ ^^^^      fog thickness? 0 if disabled
  *
  * 0x810200..0x8103ff: 0x100 words (depth cueing table)
- *		0000 0015 002a 003f 0054 0069 007e 0093
- *		00a8 00bd 00d2 00e7 00fc 0111 0126 013b
+ *      0000 0015 002a 003f 0054 0069 007e 0093
+ *      00a8 00bd 00d2 00e7 00fc 0111 0126 013b
  *
  * 0x810400..0x810403: (air combat22?)
  * 0x820000..0x8202ff: ?
  *
  * 0x824000..0x8243ff: gamma
- *	 Prop Cycle: start of stage#2
- *	 ffffff00 00ffffff 0000007f 00000000
- *	 0000ff00 0f00ffff ff00017f 00010007
- *	 00000001
+ *   Prop Cycle: start of stage#2
+ *   ffffff00 00ffffff 0000007f 00000000
+ *   0000ff00 0f00ffff ff00017f 00010007
+ *   00000001
  *
- *	 Prop Cycle: submerged in swamp
- *	 ffffff00 0003ffae 0000007f 00000000
+ *   Prop Cycle: submerged in swamp
+ *   ffffff00 0003ffae 0000007f 00000000
  *   0000ff00 0f00ffff ff00017f 00010007
  *   00000001
  *
@@ -1350,24 +1350,24 @@ WRITE32_HANDLER( namcos22_gamma_w )
 		memset( dirtypal, 1, NAMCOS22_PALETTE_SIZE/4 );
 	}
 	/**
-	 * 824000: ffffff00 00ffffff 0000007f 00000000
-	 *                    ^^^^^^                    RGB(fog)
-	 *
-	 * 824010: 0000ff00 0f00RRGG BBII017f 00010007
-	 *                      ^^^^ ^^                 RGB(fade)
-	 *                             ^^               fade (zero for none, 0xff for max)
-	 *                               ^^             flags; fader targer
-	 *                                                     1: affects polygon layer
-	 *                                                     2: affects text(?)
-	 *                                                     4: affects sprites(?)
-	 *                                 ^^           tilemap palette base
-	 *
-	 * 824020: 00000001 00000000 00000000 00000000
-	 *
-	 * 824100: 00 05 0a 0f 13 17 1a 1e ... (red)
-	 * 824200: 00 05 0a 0f 13 17 1a 1e ... (green)
-	 * 824300: 00 05 0a 0f 13 17 1a 1e ... (blue)
-	 */
+     * 824000: ffffff00 00ffffff 0000007f 00000000
+     *                    ^^^^^^                    RGB(fog)
+     *
+     * 824010: 0000ff00 0f00RRGG BBII017f 00010007
+     *                      ^^^^ ^^                 RGB(fade)
+     *                             ^^               fade (zero for none, 0xff for max)
+     *                               ^^             flags; fader targer
+     *                                                     1: affects polygon layer
+     *                                                     2: affects text(?)
+     *                                                     4: affects sprites(?)
+     *                                 ^^           tilemap palette base
+     *
+     * 824020: 00000001 00000000 00000000 00000000
+     *
+     * 824100: 00 05 0a 0f 13 17 1a 1e ... (red)
+     * 824200: 00 05 0a 0f 13 17 1a 1e ... (green)
+     * 824300: 00 05 0a 0f 13 17 1a 1e ... (blue)
+     */
 }
 
 READ32_HANDLER( namcos22_paletteram_r )
@@ -1399,80 +1399,80 @@ VIDEO_START( namcos22s )
 	mbDSPisActive = 0;
 	memset( namcos22_polygonram, 0xcc, 0x20000 );
 /**
- * +0x00 0	always 0xf?
- * +0x04 1	sin(x) world-view matrix
- * +0x08 2	cos(x)
- * +0x0c 3	sin(y)
- * +0x10 4	cos(y)
- * +0x14 5	sin(z)
- * +0x18 6	cos(z)
- * +0x1c 7	ROLT? always 0x0002?
- * +0x20 8	light power
- * +0x24 9	light ambient
- * +0x28 10	light vector(x)
- * +0x2c 11	light vector(y)
- * +0x30 12	light vector(z)
- * +0x34 13	always 0x0002?
- * +0x38 14	field of view angle (fovx) in degrees
- * +0x3c 15	viewport width
- * +0x40 16	viewport height
+ * +0x00 0  always 0xf?
+ * +0x04 1  sin(x) world-view matrix
+ * +0x08 2  cos(x)
+ * +0x0c 3  sin(y)
+ * +0x10 4  cos(y)
+ * +0x14 5  sin(z)
+ * +0x18 6  cos(z)
+ * +0x1c 7  ROLT? always 0x0002?
+ * +0x20 8  light power
+ * +0x24 9  light ambient
+ * +0x28 10 light vector(x)
+ * +0x2c 11 light vector(y)
+ * +0x30 12 light vector(z)
+ * +0x34 13 always 0x0002?
+ * +0x38 14 field of view angle (fovx) in degrees
+ * +0x3c 15 viewport width
+ * +0x40 16 viewport height
  * +0x44 17
  * +0x48 18
  * +0x4c 19
- * +0x50 20	priority (top 7 > .. > 0 behind)
- * +0x54 21	viewport center x
- * +0x58 22	viewport center y
- * +0x5c 23	sin(x) ?
- * +0x60 24	cos(x)
- * +0x64 25	sin(y)
- * +0x68 26	cos(y)
- * +0x6c 27	sin(z)
- * +0x70 28	cos(z)
- * +0x74 29	flags (axis flipping?) 0004, 0003
- * +0x78 30	6630, 0001
- * +0x7c 31	7f02
+ * +0x50 20 priority (top 7 > .. > 0 behind)
+ * +0x54 21 viewport center x
+ * +0x58 22 viewport center y
+ * +0x5c 23 sin(x) ?
+ * +0x60 24 cos(x)
+ * +0x64 25 sin(y)
+ * +0x68 26 cos(y)
+ * +0x6c 27 sin(z)
+ * +0x70 28 cos(z)
+ * +0x74 29 flags (axis flipping?) 0004, 0003
+ * +0x78 30 6630, 0001
+ * +0x7c 31 7f02
  */
 	/*
-	namcos22_polygonram[0x100] = 0x7fff;
-	namcos22_polygonram[0x101] = 0x0000;
-	namcos22_polygonram[0x102] = 0x0000;
-	namcos22_polygonram[0x103] = 0x0000;
-	namcos22_polygonram[0x104] = 0x7fff;
-	namcos22_polygonram[0x105] = 0x0000;
-	namcos22_polygonram[0x106] = 0x0000;
-	namcos22_polygonram[0x107] = 0x0000;
-	namcos22_polygonram[0x108] = 0x7fff;
+    namcos22_polygonram[0x100] = 0x7fff;
+    namcos22_polygonram[0x101] = 0x0000;
+    namcos22_polygonram[0x102] = 0x0000;
+    namcos22_polygonram[0x103] = 0x0000;
+    namcos22_polygonram[0x104] = 0x7fff;
+    namcos22_polygonram[0x105] = 0x0000;
+    namcos22_polygonram[0x106] = 0x0000;
+    namcos22_polygonram[0x107] = 0x0000;
+    namcos22_polygonram[0x108] = 0x7fff;
 
-	namcos22_polygonram[0x112] = 0x3c; // fov
-	namcos22_polygonram[0x113] = 0x0; // xsize exp
-	namcos22_polygonram[0x114] = 0x0; // xsize mantissa
+    namcos22_polygonram[0x112] = 0x3c; // fov
+    namcos22_polygonram[0x113] = 0x0; // xsize exp
+    namcos22_polygonram[0x114] = 0x0; // xsize mantissa
 
-	namcos22_polygonram[0x119] = 0;// (45d3)
-	namcos22_polygonram[0x11a] = 0;// (45d5)
-	namcos22_polygonram[0x11b] = 0;// 0x4294
-	namcos22_polygonram[0x11c] = 0;// 0x4294
+    namcos22_polygonram[0x119] = 0;// (45d3)
+    namcos22_polygonram[0x11a] = 0;// (45d5)
+    namcos22_polygonram[0x11b] = 0;// 0x4294
+    namcos22_polygonram[0x11c] = 0;// 0x4294
 
-	namcos22_polygonram[0x120] = 0x00c8;
-	namcos22_polygonram[0x121] = 0x0014;
-	namcos22_polygonram[0x122] = 0x0000;
-	namcos22_polygonram[0x123] = 0x5a82;
-	namcos22_polygonram[0x123] = 0xa57e;
-	namcos22_polygonram[0x124] = 0x0002; // 0x4291
-	namcos22_polygonram[0x125] = 0x0140;
-	namcos22_polygonram[0x126] = 0x00f0;
-	namcos22_polygonram[0x127] = 0x0000;
-	namcos22_polygonram[0x128] = 0x0000;
-	namcos22_polygonram[0x129] = 0x0000;
-	namcos22_polygonram[0x12a] = 0x0007;
-	namcos22_polygonram[0x12b] = 0x0000;
-	namcos22_polygonram[0x12c] = 0x0000;
-	namcos22_polygonram[0x12d] = 0x0000;
-	namcos22_polygonram[0x12e] = 0x7fff;
-	namcos22_polygonram[0x12f] = 0x0000;
-	namcos22_polygonram[0x130] = 0x7fff;
-	namcos22_polygonram[0x131] = 0x0000;
-	namcos22_polygonram[0x132] = 0x7fff; // 0x4293
-	namcos22_polygonram[0x133] = 0x0002; // 0x429b
+    namcos22_polygonram[0x120] = 0x00c8;
+    namcos22_polygonram[0x121] = 0x0014;
+    namcos22_polygonram[0x122] = 0x0000;
+    namcos22_polygonram[0x123] = 0x5a82;
+    namcos22_polygonram[0x123] = 0xa57e;
+    namcos22_polygonram[0x124] = 0x0002; // 0x4291
+    namcos22_polygonram[0x125] = 0x0140;
+    namcos22_polygonram[0x126] = 0x00f0;
+    namcos22_polygonram[0x127] = 0x0000;
+    namcos22_polygonram[0x128] = 0x0000;
+    namcos22_polygonram[0x129] = 0x0000;
+    namcos22_polygonram[0x12a] = 0x0007;
+    namcos22_polygonram[0x12b] = 0x0000;
+    namcos22_polygonram[0x12c] = 0x0000;
+    namcos22_polygonram[0x12d] = 0x0000;
+    namcos22_polygonram[0x12e] = 0x7fff;
+    namcos22_polygonram[0x12f] = 0x0000;
+    namcos22_polygonram[0x130] = 0x7fff;
+    namcos22_polygonram[0x131] = 0x0000;
+    namcos22_polygonram[0x132] = 0x7fff; // 0x4293
+    namcos22_polygonram[0x133] = 0x0002; // 0x429b
 */
 	if( namcos3d_Init(
 		NAMCOS22_SCREEN_WIDTH,

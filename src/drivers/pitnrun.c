@@ -1,19 +1,19 @@
 /****************************************************
    Pit&Run - Taito 1984
 
- driver by  Tomasz Slanina and	Pierpaolo Prazzoli
+ driver by  Tomasz Slanina and  Pierpaolo Prazzoli
 
 
 TODO:
 
  - analog sound
    writes to $a8xx triggering analog sound :
-   	$a800 - drivers are gettin into the cars
-   	$a801 - collisions
-   	$a802 - same as above
-   	$a803 - slide on water
-   	$a804 - accelerate
-   	$a807 - analog sound reset
+    $a800 - drivers are gettin into the cars
+    $a801 - collisions
+    $a802 - same as above
+    $a803 - slide on water
+    $a804 - accelerate
+    $a807 - analog sound reset
 
 
 -----------------------------------------------------
@@ -317,7 +317,7 @@ static MACHINE_DRIVER_START( pitnrun )
 	MDRV_PALETTE_INIT(pitnrun)
 	MDRV_VIDEO_START(pitnrun)
 	MDRV_VIDEO_UPDATE(pitnrun)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -387,7 +387,7 @@ ROM_START( pitnruna )
 	ROM_REGION( 0x4000, REGION_GFX2, 0 )
 	ROM_LOAD( "pr-4.6d", 0x0000, 0x2000, CRC(fbae3504) SHA1(ce799dfd653462c0814e7530f3f8a686ab0ad7f4) )
 	ROM_LOAD( "pr-5.6f", 0x2000, 0x2000, CRC(c9177180) SHA1(98c8f8f586b78b88dba254bd662642ee27f9b131) )
-	
+
 	ROM_REGION( 0x2000, REGION_GFX3, 0 )
 	ROM_LOAD( "pr-6.3m", 0x0000, 0x1000, CRC(c53cb897) SHA1(81a73e6031b52fa45ec507ff4264b14474ef42a2) )
 	ROM_LOAD( "pr-7.3p", 0x1000, 0x1000, CRC(7cdf9a55) SHA1(404dface7e09186e486945981e39063929599efc) )

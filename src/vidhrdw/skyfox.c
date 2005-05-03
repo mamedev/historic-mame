@@ -1,36 +1,36 @@
 /***************************************************************************
 
-						-= Sky Fox / Exerizer =-
+                        -= Sky Fox / Exerizer =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+                driver by   Luca Elia (l.elia@tin.it)
 
 
-							[ 1 Background ]
+                            [ 1 Background ]
 
-	The stars in the background are not tile based (I think!) and
-	their rendering	is entirely guesswork for now..
+    The stars in the background are not tile based (I think!) and
+    their rendering is entirely guesswork for now..
 
-	I draw a star for each horizontal line using 2 bytes in the
-	background rom:
+    I draw a star for each horizontal line using 2 bytes in the
+    background rom:
 
-	- the first byte seems a color / shape info
-	- the second byte seems a position info
+    - the first byte seems a color / shape info
+    - the second byte seems a position info
 
-	The rom holds 4 chunks of $2000 bytes. Most of the data does not
-	change between chunks, while the remaining part (which is rendered
-	to what seems a "milky way") pulsates in color and/or shape
-	to simulate the shimmering of stars (?!) if we draw one chunk only
-	and cycle through the four. Indeed, there's a register cycling
-	through 4 values.
+    The rom holds 4 chunks of $2000 bytes. Most of the data does not
+    change between chunks, while the remaining part (which is rendered
+    to what seems a "milky way") pulsates in color and/or shape
+    to simulate the shimmering of stars (?!) if we draw one chunk only
+    and cycle through the four. Indeed, there's a register cycling
+    through 4 values.
 
-	Since the result kind of matches a screenshot we have, I feel the
-	drawn result is not that far from reality. On the other hand we
-	have a random arrangement of stars, so it's hard to tell for sure..
+    Since the result kind of matches a screenshot we have, I feel the
+    drawn result is not that far from reality. On the other hand we
+    have a random arrangement of stars, so it's hard to tell for sure..
 
-							[ 256 Sprites ]
+                            [ 256 Sprites ]
 
-	Sprites are 8 planes deep and can be 8x8, 16x16 or 32x32 pixels
-	in size. They are stored as 32x32x8 tiles in the ROMs.
+    Sprites are 8 planes deep and can be 8x8, 16x16 or 32x32 pixels
+    in size. They are stored as 32x32x8 tiles in the ROMs.
 
 
 ***************************************************************************/
@@ -50,7 +50,7 @@ int skyfox_bg_pos, skyfox_bg_ctrl;
 
 /***************************************************************************
 
-							Memory Handlers
+                            Memory Handlers
 
 ***************************************************************************/
 
@@ -134,32 +134,32 @@ PALETTE_INIT( skyfox )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-Offset:			Value:
+Offset:         Value:
 
-03				Code: selects one of the 32x32 tiles in the ROMs.
-				(Tiles $80-ff are bankswitched to cover $180 tiles)
+03              Code: selects one of the 32x32 tiles in the ROMs.
+                (Tiles $80-ff are bankswitched to cover $180 tiles)
 
-02				Code + Attr
+02              Code + Attr
 
-					7654 ----	Code (low 4 bits)
-								8x8   sprites use bits 7654	(since there are 16 8x8  tiles in the 32x32 one)
-								16x16 sprites use bits --54 (since there are 4 16x16 tiles in the 32x32 one)
-								32x32 sprites use no bits	(since the 32x32 tile is already selected)
+                    7654 ----   Code (low 4 bits)
+                                8x8   sprites use bits 7654 (since there are 16 8x8  tiles in the 32x32 one)
+                                16x16 sprites use bits --54 (since there are 4 16x16 tiles in the 32x32 one)
+                                32x32 sprites use no bits   (since the 32x32 tile is already selected)
 
-					7--- 3---	Size
-								1--- 1--- : 32x32 sprites
-								0--- 1--- : 16x16 sprites
-								8x8 sprites otherwise
+                    7--- 3---   Size
+                                1--- 1--- : 32x32 sprites
+                                0--- 1--- : 16x16 sprites
+                                8x8 sprites otherwise
 
-					---- -2--	Flip Y
-					---- --1-	Flip X
-					---- ---0	X Low Bit
+                    ---- -2--   Flip Y
+                    ---- --1-   Flip X
+                    ---- ---0   X Low Bit
 
-00				Y
+00              Y
 
-01				X (High 8 Bits)
+01              X (High 8 Bits)
 
 ***************************************************************************/
 
@@ -238,7 +238,7 @@ void skyfox_draw_sprites(struct mame_bitmap *bitmap)
 
 /***************************************************************************
 
-							Background Rendering
+                            Background Rendering
 
 ***************************************************************************/
 
@@ -248,7 +248,7 @@ void skyfox_draw_background(struct mame_bitmap *bitmap)
 	int x,y,i;
 
 	/* The foreground stars (sprites) move at twice this speed when
-	   the bg scroll rate [e.g. (skyfox_bg_reg >> 1) & 7] is 4 */
+       the bg scroll rate [e.g. (skyfox_bg_reg >> 1) & 7] is 4 */
 	int pos = (skyfox_bg_pos >> 4) & (512*2-1);
 
 	for (i = 0 ; i < 0x1000; i++)
@@ -279,7 +279,7 @@ void skyfox_draw_background(struct mame_bitmap *bitmap)
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

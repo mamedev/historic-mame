@@ -4,19 +4,19 @@
 
 
 /*
-lambda = log base 2 of rho(x,y). 
+lambda = log base 2 of rho(x,y).
 
-rho(x,y) = max { sqrt( (du/dx)^2 + (dv/dx)^2 ), sqrt( (du/dy)^2 + (dv/dy)^2 ) }. 
+rho(x,y) = max { sqrt( (du/dx)^2 + (dv/dx)^2 ), sqrt( (du/dy)^2 + (dv/dy)^2 ) }.
 
-From the results at iXBT, it looks like ATI uses a linear approximation to log base 2. (natural log of x = ln x = 1 + x + x^2 / 2 + x^3 / 3 + ..., so 1 + x would be a linear approximation to ln x. For log base 2, just take ln x and divide by ln 2). 
+From the results at iXBT, it looks like ATI uses a linear approximation to log base 2. (natural log of x = ln x = 1 + x + x^2 / 2 + x^3 / 3 + ..., so 1 + x would be a linear approximation to ln x. For log base 2, just take ln x and divide by ln 2).
 
 
-A correct formula is: 
-ln (1+x) = x - x^2 / 2 + x^3 / 3 - x^4 / 4 + ... 
+A correct formula is:
+ln (1+x) = x - x^2 / 2 + x^3 / 3 - x^4 / 4 + ...
 
-So, to first order, one can approximate the log by simply using ln(1+x) = x, or ln(x) = (x-1)/x. 
+So, to first order, one can approximate the log by simply using ln(1+x) = x, or ln(x) = (x-1)/x.
 
-As a side note, if you better-approximate the log, it can become easier to properly do the calculation: 
+As a side note, if you better-approximate the log, it can become easier to properly do the calculation:
 sqrt(x^2 + y^2) that is necessary for LOD calculations, as the square root becomes trivial (a simple divide by two after the log).
 
 
@@ -33,7 +33,7 @@ lod = 0.5 * log2(w^2 * max(dsdx^2 + dtdx^2, dsdy^2 + dvdy^2))
 
 /*************************************
  *
- *	float to custom 16-bit float converter
+ *  float to custom 16-bit float converter
  *
  *************************************/
 
@@ -138,7 +138,7 @@ void RENDERFUNC(void)
 					float_to_depth((float)(tri_startz) * (1.0 / 4096.0)),
 					float_to_depth((float)(tri_startz + (INT32)((tri_vb.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)),
 					float_to_depth((float)(tri_startz + (INT32)((tri_vc.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)));
-			
+
 			if (FBZMODE_BITS(16,1))
 				logerror(" + %04X\n", (UINT16)voodoo_regs[zaColor]);
 		}
@@ -164,7 +164,7 @@ void RENDERFUNC(void)
 		starty = fbz_cliprect->max_y;
 	if (starty >= stopy)
 		return;
-	
+
 	/* compute the slopes */
 	fptemp = vmid->y - vmin->y;
 	if (fptemp == 0.0f) fptemp = 1.0f;
@@ -185,7 +185,7 @@ void RENDERFUNC(void)
 		t = TEXTUREMODE0_BITS(8,4);
 		if ((t & 7) == 1 && TEXTUREMODE0_BITS(5,1))
 			t += 6;
-		
+
 		/* handle dirty tables */
 		if (texel_lookup_dirty[0][t])
 		{
@@ -193,7 +193,7 @@ void RENDERFUNC(void)
 			texel_lookup_dirty[0][t] = 0;
 		}
 		lookup0 = &texel_lookup[0][t][0];
-		
+
 #if (NUM_TMUS > 1)
 		/* determine the lookup */
 		if (NEEDS_TEX1 && tmus > 1)
@@ -201,7 +201,7 @@ void RENDERFUNC(void)
 			t = TEXTUREMODE1_BITS(8,4);
 			if ((t & 7) == 1 && TEXTUREMODE1_BITS(5,1))
 				t += 6;
-			
+
 			/* handle dirty tables */
 			if (texel_lookup_dirty[1][t])
 			{
@@ -237,7 +237,7 @@ void RENDERFUNC(void)
 			if (cheating_allowed && (effy & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
 				continue;
 #endif
-			
+
 			/* compute X endpoints */
 			fpy = (float)y + 0.5f;
 			startx = TRUNC_TO_INT((fpy - vmin->y) * dxdy_minmax + vmin->x + 0.5f);
@@ -278,7 +278,7 @@ void RENDERFUNC(void)
 			{
 				INT32 r = 0, g = 0, b = 0, a = 0, depthval;
 				UINT32 texel = 0, c_local = 0;
-				
+
 #if (RESOLUTION_DIVIDE_SHIFT != 0)
 				if (cheating_allowed && (x & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
 					goto skipdrawdepth;
@@ -286,7 +286,7 @@ void RENDERFUNC(void)
 				/* rotate stipple pattern */
 				if (!FBZMODE_BITS(12,1))
 					voodoo_regs[stipple] = (voodoo_regs[stipple] << 1) | (voodoo_regs[stipple] >> 31);
-				
+
 				/* handle stippling */
 				if (FBZMODE_BITS(2,1))
 				{
@@ -296,7 +296,7 @@ void RENDERFUNC(void)
 						if ((voodoo_regs[stipple] & 0x80000000) == 0)
 							goto skipdrawdepth;
 					}
-					
+
 					/* pattern mode */
 					else
 					{
@@ -319,12 +319,12 @@ void RENDERFUNC(void)
 					float_to_depth(curw, depthval);
 				else
 					float_to_depth((float)curz * (1.0 / 4096.0), depthval);
-					
+
 				/* handle depth buffer testing */
 				if (FBZMODE_BITS(4,1))
 				{
 					INT32 depthsource;
-				
+
 					/* the source depth is either the iterated W/Z+bias or a constant value */
 					if (!FBZMODE_BITS(20,1))
 					{
@@ -334,7 +334,7 @@ void RENDERFUNC(void)
 						if (FBZMODE_BITS(16,1))
 						{
 							depthsource += (INT16)voodoo_regs[zaColor];
-						
+
 							if (depthsource >= 0xffff)
 								depthsource = 0xffff;
 							else if (depthsource < 0)
@@ -369,7 +369,7 @@ void RENDERFUNC(void)
 							if (depthsource == depth[x])
 								goto skipdrawdepth;
 							break;
-						case 6: 
+						case 6:
 							if (depthsource < depth[x])
 								goto skipdrawdepth;
 							break;
@@ -377,7 +377,7 @@ void RENDERFUNC(void)
 							break;
 					}
 				}
-				
+
 				/* load the texel if necessary */
 				if (FBZCOLORPATH_BITS(0,2) == 1 || FBZCOLORPATH_BITS(2,2) == 1)
 				{
@@ -387,7 +387,7 @@ void RENDERFUNC(void)
 					float fs, ft, flod;
 					UINT8 lodshift;
 					INT32 lod;
-					
+
 #if (NUM_TMUS > 1)
 invw1 = 0;
 					/* import from TMU 1 if needed */
@@ -409,7 +409,7 @@ invw1 = 0;
 #if (PER_PIXEL_LOD)
 						else
 							lod = lod_lookup[f2u(lodbase1) >> 16];
-							
+
 						/* clamp LOD */
 						lod += trex_lodbias[1];
 						if (TEXTUREMODE1_BITS(4,1))
@@ -425,8 +425,8 @@ invw1 = 0;
 
 						/* point-sampled filter */
 #if (BILINEAR_FILTER)
-						if ((TEXTUREMODE1_BITS(1,2) == 0) || 
-							(lod == trex_lodmin[1] && !TEXTUREMODE1_BITS(2,1)) || 
+						if ((TEXTUREMODE1_BITS(1,2) == 0) ||
+							(lod == trex_lodmin[1] && !TEXTUREMODE1_BITS(2,1)) ||
 							(lod != trex_lodmin[1] && !TEXTUREMODE1_BITS(1,1)))
 #endif
 						{
@@ -438,7 +438,7 @@ invw1 = 0;
 							/* clamp W */
 							if (TEXTUREMODE1_BITS(3,1) && curw1 < 0.0f)
 								s = t = 0;
-								
+
 							/* clamp S */
 							if (TEXTUREMODE1_BITS(6,1))
 							{
@@ -448,7 +448,7 @@ invw1 = 0;
 							else
 								s &= trex_width[1] - 1;
 							s >>= ilod;
-								
+
 							/* clamp T */
 							if (TEXTUREMODE1_BITS(7,1))
 							{
@@ -458,24 +458,24 @@ invw1 = 0;
 							else
 								t &= trex_height[1] - 1;
 							t >>= ilod;
-							
+
 							/* fetch raw texel data */
 							if (!TEXTUREMODE1_BITS(11,1))
 								texel = *((UINT8 *)texturebase + (t << lodshift) + s);
 							else
 								texel = *((UINT16 *)texturebase + (t << lodshift) + s);
-							
+
 							/* convert to ARGB */
 							c_local = lookup1[texel];
 						}
-						
+
 #if (BILINEAR_FILTER)
 						/* bilinear filter */
 						else
 						{
 							INT32 ts0, tt0, ts1, tt1;
 							UINT32 factor, factorsum, ag, rb;
-						
+
 							/* convert to int */
 							INT32 s, t;
 							int ilod = lod >> 8;
@@ -496,7 +496,7 @@ invw1 = 0;
 							else
 								ts0 &= trex_width[1] - 1;
 							ts0 >>= ilod;
-								
+
 							/* clamp S1 */
 							ts1 = (s >> 8) + (1 << ilod);
 							if (TEXTUREMODE1_BITS(6,1))
@@ -507,7 +507,7 @@ invw1 = 0;
 							else
 								ts1 &= trex_width[1] - 1;
 							ts1 >>= ilod;
-								
+
 							/* clamp T0 */
 							tt0 = t >> 8;
 							if (TEXTUREMODE1_BITS(7,1))
@@ -518,7 +518,7 @@ invw1 = 0;
 							else
 								tt0 &= trex_height[1] - 1;
 							tt0 >>= ilod;
-								
+
 							/* clamp T1 */
 							tt1 = (t >> 8) + (1 << ilod);
 							if (TEXTUREMODE1_BITS(7,1))
@@ -529,24 +529,24 @@ invw1 = 0;
 							else
 								tt1 &= trex_height[1] - 1;
 							tt1 >>= ilod;
-							
+
 							s >>= ilod;
 							t >>= ilod;
-								
+
 							/* texel 0 */
 							factorsum = factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
-							
+
 							/* fetch raw texel data */
 							if (!TEXTUREMODE1_BITS(11,1))
 								texel = *((UINT8 *)texturebase + (tt0 << lodshift) + ts0);
 							else
 								texel = *((UINT16 *)texturebase + (tt0 << lodshift) + ts0);
-							
+
 							/* convert to ARGB */
 							texel = lookup1[texel];
 							ag = ((texel >> 8) & 0x00ff00ff) * factor;
 							rb = (texel & 0x00ff00ff) * factor;
-								
+
 							/* texel 1 */
 							factorsum += factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
 							if (factor)
@@ -556,7 +556,7 @@ invw1 = 0;
 									texel = *((UINT8 *)texturebase + (tt0 << lodshift) + ts1);
 								else
 									texel = *((UINT16 *)texturebase + (tt0 << lodshift) + ts1);
-								
+
 								/* convert to ARGB */
 								texel = lookup1[texel];
 								ag += ((texel >> 8) & 0x00ff00ff) * factor;
@@ -572,13 +572,13 @@ invw1 = 0;
 									texel = *((UINT8 *)texturebase + (tt1 << lodshift) + ts0);
 								else
 									texel = *((UINT16 *)texturebase + (tt1 << lodshift) + ts0);
-								
+
 								/* convert to ARGB */
 								texel = lookup1[texel];
 								ag += ((texel >> 8) & 0x00ff00ff) * factor;
 								rb += (texel & 0x00ff00ff) * factor;
 							}
-								
+
 							/* texel 3 */
 							factor = 0x100 - factorsum;
 							if (factor)
@@ -588,13 +588,13 @@ invw1 = 0;
 									texel = *((UINT8 *)texturebase + (tt1 << lodshift) + ts1);
 								else
 									texel = *((UINT16 *)texturebase + (tt1 << lodshift) + ts1);
-								
+
 								/* convert to ARGB */
 								texel = lookup1[texel];
 								ag += ((texel >> 8) & 0x00ff00ff) * factor;
 								rb += (texel & 0x00ff00ff) * factor;
 							}
-							
+
 							/* this becomes the local color */
 							c_local = (ag & 0xff00ff00) | ((rb >> 8) & 0x00ff00ff);
 						}
@@ -621,7 +621,7 @@ invw1 = 0;
 						if (TEXTUREMODE1_BITS(14,3) != 0)			/* tc_mselect mux */
 						{
 							INT32 rm = 0, gm = 0, bm = 0;
-							
+
 							switch (TEXTUREMODE1_BITS(14,3))
 							{
 								case 1:		/* tc_mselect mux == c_local */
@@ -674,13 +674,13 @@ invw1 = 0;
 							tg += c_local >> 24;
 							tb += c_local >> 24;
 						}
-						
+
 						/* zero/other selection */
 						if (!TEXTUREMODE1_BITS(21,1))				/* tca_zero_other */
 							ta = (c_other >> 24) & 0xff;
 						else
 							ta = 0;
-						
+
 						/* subtract local alpha */
 						if (TEXTUREMODE1_BITS(22,1))				/* tca_sub_clocal */
 							ta -= (c_local >> 24) & 0xff;
@@ -689,7 +689,7 @@ invw1 = 0;
 						if (TEXTUREMODE1_BITS(23,3) != 0)			/* tca_mselect mux */
 						{
 							INT32 am = 0;
-							
+
 							switch (TEXTUREMODE1_BITS(23,3))
 							{
 								case 1:		/* tca_mselect mux == c_local */
@@ -719,7 +719,7 @@ invw1 = 0;
 						if (TEXTUREMODE1_BITS(27,1) ||
 							TEXTUREMODE1_BITS(28,1))				/* tca_add_clocal/tca_add_alocal */
 							ta += (c_local >> 24) & 0xff;
-						
+
 						/* clamp */
 						if (tr < 0) tr = 0;
 						else if (tr > 255) tr = 255;
@@ -754,7 +754,7 @@ invw1 = 0;
 #if (PER_PIXEL_LOD)
 					else
 						lod = lod_lookup[f2u(lodbase0) >> 16];
-						
+
 					/* clamp LOD */
 					lod += trex_lodbias[0];
 					if (TEXTUREMODE0_BITS(4,1))
@@ -773,8 +773,8 @@ invw1 = 0;
 
 #if (BILINEAR_FILTER)
 					/* point-sampled filter */
-					if ((TEXTUREMODE0_BITS(1,2) == 0) || 
-						(lod == trex_lodmin[0] && !TEXTUREMODE0_BITS(2,1)) || 
+					if ((TEXTUREMODE0_BITS(1,2) == 0) ||
+						(lod == trex_lodmin[0] && !TEXTUREMODE0_BITS(2,1)) ||
 						(lod != trex_lodmin[0] && !TEXTUREMODE0_BITS(1,1)))
 #endif
 					{
@@ -786,7 +786,7 @@ invw1 = 0;
 						/* clamp W */
 						if (TEXTUREMODE0_BITS(3,1) && curw0 < 0.0f)
 							s = t = 0;
-							
+
 						/* clamp S */
 						if (TEXTUREMODE0_BITS(6,1))
 						{
@@ -796,7 +796,7 @@ invw1 = 0;
 						else
 							s &= trex_width[0] - 1;
 						s >>= ilod;
-							
+
 						/* clamp T */
 						if (TEXTUREMODE0_BITS(7,1))
 						{
@@ -806,24 +806,24 @@ invw1 = 0;
 						else
 							t &= trex_height[0] - 1;
 						t >>= ilod;
-						
+
 						/* fetch raw texel data */
 						if (!TEXTUREMODE0_BITS(11,1))
 							texel = *((UINT8 *)texturebase + (t << lodshift) + s);
 						else
 							texel = *((UINT16 *)texturebase + (t << lodshift) + s);
-						
+
 						/* convert to ARGB */
 						c_local = lookup0[texel];
 					}
-					
+
 #if (BILINEAR_FILTER)
 					/* bilinear filter */
 					else
 					{
 						INT32 ts0, tt0, ts1, tt1;
 						UINT32 factor, factorsum, ag, rb;
-					
+
 						/* convert to int */
 						INT32 s, t;
 						int ilod = lod >> 8;
@@ -844,7 +844,7 @@ invw1 = 0;
 						else
 							ts0 &= trex_width[0] - 1;
 						ts0 >>= ilod;
-							
+
 						/* clamp S1 */
 						ts1 = (s >> 8) + (1 << ilod);
 						if (TEXTUREMODE0_BITS(6,1))
@@ -855,7 +855,7 @@ invw1 = 0;
 						else
 							ts1 &= trex_width[0] - 1;
 						ts1 >>= ilod;
-							
+
 						/* clamp T0 */
 						tt0 = t >> 8;
 						if (TEXTUREMODE0_BITS(7,1))
@@ -866,7 +866,7 @@ invw1 = 0;
 						else
 							tt0 &= trex_height[0] - 1;
 						tt0 >>= ilod;
-							
+
 						/* clamp T1 */
 						tt1 = (t >> 8) + (1 << ilod);
 						if (TEXTUREMODE0_BITS(7,1))
@@ -877,13 +877,13 @@ invw1 = 0;
 						else
 							tt1 &= trex_height[0] - 1;
 						tt1 >>= ilod;
-						
+
 						s >>= ilod;
 						t >>= ilod;
-							
+
 						/* texel 0 */
 						factorsum = factor = ((0x100 - (s & 0xff)) * (0x100 - (t & 0xff))) >> 8;
-						
+
 						/* fetch raw texel data */
 						if (!TEXTUREMODE0_BITS(11,1))
 							texel = *((UINT8 *)texturebase + (tt0 << lodshift) + ts0);
@@ -894,7 +894,7 @@ invw1 = 0;
 						texel = lookup0[texel];
 						ag = ((texel >> 8) & 0x00ff00ff) * factor;
 						rb = (texel & 0x00ff00ff) * factor;
-							
+
 						/* texel 1 */
 						factorsum += factor = ((s & 0xff) * (0x100 - (t & 0xff))) >> 8;
 						if (factor)
@@ -904,7 +904,7 @@ invw1 = 0;
 								texel = *((UINT8 *)texturebase + (tt0 << lodshift) + ts1);
 							else
 								texel = *((UINT16 *)texturebase + (tt0 << lodshift) + ts1);
-							
+
 							/* convert to ARGB */
 							texel = lookup0[texel];
 							ag += ((texel >> 8) & 0x00ff00ff) * factor;
@@ -920,13 +920,13 @@ invw1 = 0;
 								texel = *((UINT8 *)texturebase + (tt1 << lodshift) + ts0);
 							else
 								texel = *((UINT16 *)texturebase + (tt1 << lodshift) + ts0);
-							
+
 							/* convert to ARGB */
 							texel = lookup0[texel];
 							ag += ((texel >> 8) & 0x00ff00ff) * factor;
 							rb += (texel & 0x00ff00ff) * factor;
 						}
-							
+
 						/* texel 3 */
 						factor = 0x100 - factorsum;
 						if (factor)
@@ -936,13 +936,13 @@ invw1 = 0;
 								texel = *((UINT8 *)texturebase + (tt1 << lodshift) + ts1);
 							else
 								texel = *((UINT16 *)texturebase + (tt1 << lodshift) + ts1);
-							
+
 							/* convert to ARGB */
 							texel = lookup0[texel];
 							ag += ((texel >> 8) & 0x00ff00ff) * factor;
 							rb += (texel & 0x00ff00ff) * factor;
 						}
-						
+
 						/* this becomes the local color */
 						c_local = (ag & 0xff00ff00) | ((rb >> 8) & 0x00ff00ff);
 					}
@@ -969,7 +969,7 @@ invw1 = 0;
 					if (TEXTUREMODE0_BITS(14,3) != 0)			/* tc_mselect mux */
 					{
 						INT32 rm = 0, gm = 0, bm = 0;
-						
+
 						switch (TEXTUREMODE0_BITS(14,3))
 						{
 							case 1:		/* tc_mselect mux == c_local */
@@ -1022,13 +1022,13 @@ invw1 = 0;
 						tg += c_local >> 24;
 						tb += c_local >> 24;
 					}
-					
+
 					/* zero/other selection */
 					if (!TEXTUREMODE0_BITS(21,1))				/* tca_zero_other */
 						ta = (c_other >> 24) & 0xff;
 					else
 						ta = 0;
-					
+
 					/* subtract local alpha */
 					if (TEXTUREMODE0_BITS(22,1))				/* tca_sub_clocal */
 						ta -= (c_local >> 24) & 0xff;
@@ -1037,7 +1037,7 @@ invw1 = 0;
 					if (TEXTUREMODE0_BITS(23,3) != 0)			/* tca_mselect mux */
 					{
 						INT32 am = 0;
-						
+
 						switch (TEXTUREMODE0_BITS(23,3))
 						{
 							case 1:		/* tca_mselect mux == c_local */
@@ -1070,7 +1070,7 @@ invw1 = 0;
 						ta += (c_local >> 24) & 0xff;
 					if (TEXTUREMODE0_BITS(28,1))				/* tca_add_alocal */
 						ta += (c_local >> 24) & 0xff;
-					
+
 					/* clamp */
 					if (tr < 0) tr = 0;
 					else if (tr > 255) tr = 255;
@@ -1092,7 +1092,7 @@ invw1 = 0;
 				/* handle chroma key */
 				if (FBZMODE_BITS(1,1) && ((texel ^ voodoo_regs[chromaKey]) & 0xffffff) == 0)
 					goto skipdrawdepth;
-				
+
 				/* compute c_local */
 				if (!FBZCOLORPATH_BITS(7,1))
 				{
@@ -1108,7 +1108,7 @@ invw1 = 0;
 					else									/* cc_localselect mux == color0 RGB */
 						c_local = voodoo_regs[color0] & 0xffffff;
 				}
-				
+
 				/* compute a_local */
 				if (FBZCOLORPATH_BITS(5,2) == 0)		/* cca_localselect mux == iterated alpha */
 					c_local |= (cura << 8) & 0xff000000;
@@ -1141,7 +1141,7 @@ invw1 = 0;
 				}
 				else
 					r = g = b = 0;
-				
+
 				/* subtract local color */
 				if (FBZCOLORPATH_BITS(9,1))					/* cc_sub_clocal */
 				{
@@ -1149,12 +1149,12 @@ invw1 = 0;
 					g -= (c_local >> 8) & 0xff;
 					b -= (c_local >> 0) & 0xff;
 				}
-				
+
 				/* scale RGB */
 				if (FBZCOLORPATH_BITS(10,3) != 0)			/* cc_mselect mux */
 				{
 					INT32 rm, gm, bm;
-					
+
 					switch (FBZCOLORPATH_BITS(10,3))
 					{
 						case 1:		/* cc_mselect mux == c_local */
@@ -1173,21 +1173,21 @@ invw1 = 0;
 							else
 								rm = gm = bm = 0;
 							break;
-						
+
 						case 3:		/* cc_mselect mux == a_local */
 							rm = gm = bm = c_local >> 24;
 							break;
-						
+
 						case 4:		/* cc_mselect mux == texture alpha */
 							rm = gm = bm = texel >> 24;
 							break;
-						
+
 						case 5:		/* cc_mselect mux == texture RGB (voodoo 2 only) */
 							rm = (texel >> 16) & 0xff;
 							gm = (texel >> 8) & 0xff;
 							bm = (texel >> 0) & 0xff;
 							break;
-						
+
 						default:
 							rm = gm = bm = 0;
 							break;
@@ -1222,7 +1222,7 @@ invw1 = 0;
 					g += c_local >> 24;
 					b += c_local >> 24;
 				}
-				
+
 				/* determine the A value */
 				if (!FBZCOLORPATH_BITS(17,1))				/* cca_zero_other */
 				{
@@ -1235,16 +1235,16 @@ invw1 = 0;
 				}
 				else
 					a = 0;
-				
+
 				/* subtract local alpha */
 				if (FBZCOLORPATH_BITS(18,1))				/* cca_sub_clocal */
 					a -= c_local >> 24;
-				
+
 				/* scale alpha */
 				if (FBZCOLORPATH_BITS(19,3) != 0)			/* cca_mselect mux */
 				{
 					INT32 am;
-					
+
 					switch (FBZCOLORPATH_BITS(19,3))
 					{
 						case 1:		/* cca_mselect mux == a_local */
@@ -1262,22 +1262,22 @@ invw1 = 0;
 							else
 								am = 0;
 							break;
-						
+
 						case 4:		/* cca_mselect mux == texture alpha */
 							am = texel >> 24;
 							break;
-						
+
 						default:
 							am = 0;
 							break;
 					}
-					
+
 					if (FBZCOLORPATH_BITS(22,1))			/* cca_reverse_blend */
 						a = (a * (am + 1)) >> 8;
 					else
 						a = (a * ((am ^ 0xff) + 1)) >> 8;
 				}
-				
+
 				/* add local alpha */
 				if (FBZCOLORPATH_BITS(23,2))				/* cca_add_clocal */
 					a += c_local >> 24;
@@ -1317,7 +1317,7 @@ invw1 = 0;
 							break;
 					}
 				}
-				
+
 				/* invert */
 				if (FBZCOLORPATH_BITS(16,1))				/* cc_invert_output */
 				{
@@ -1327,7 +1327,7 @@ invw1 = 0;
 				}
 				if (FBZCOLORPATH_BITS(25,1))				/* cca_invert_output */
 					a ^= 0xff;
-					
+
 				/* fog */
 #if (FOGGING)
 				if (FOGMODE_BITS(0,1))
@@ -1341,7 +1341,7 @@ invw1 = 0;
 					else
 					{
 						INT32 fogalpha;
-					
+
 						if (FOGMODE_BITS(4,1))				/* fogz */
 							fogalpha = (curz >> 20) & 0xff;
 						else if (FOGMODE_BITS(3,1))			/* fogalpha */
@@ -1353,7 +1353,7 @@ invw1 = 0;
 							fogalpha = fog_blend[wval >> 10];
 							fogalpha += (fog_delta[wval >> 10] * ((wval >> 2) & 0xff)) >> 10;
 						}
-						
+
 						if (!FOGMODE_BITS(2,1))				/* fogmult */
 						{
 							if (fogalpha)
@@ -1365,7 +1365,7 @@ invw1 = 0;
 						}
 						else
 							r = g = b = 0;
-						
+
 						if (!FOGMODE_BITS(1,1) && fogalpha)	/* fogadd */
 						{
 							r += (((voodoo_regs[fogColor] >> 16) & 0xff) * fogalpha) >> 8;
@@ -1393,10 +1393,10 @@ invw1 = 0;
 						int sb = b;
 						int sa = a;
 						int ta;
-						
+
 // fix me -- add dither subtraction here
-//						if (FBZMODE_BITS(19,1))
-						
+//                      if (FBZMODE_BITS(19,1))
+
 						/* compute source portion */
 						switch (ALPHAMODE_BITS(8,4))
 						{
@@ -1442,7 +1442,7 @@ invw1 = 0;
 								b = (sb * (0x100 - ta)) >> 8;
 								break;
 						}
-						
+
 						/* add in dest portion */
 						switch (ALPHAMODE_BITS(12,4))
 						{
@@ -1488,10 +1488,10 @@ invw1 = 0;
 								break;
 						}
 					}
-					
+
 					// fix me -- alpha blending on the alpha channel not implemented
 				}
-#endif				
+#endif
 				/* clamp */
 				if (r < 0) r = 0;
 				else if (r > 255) r = 255;
@@ -1499,9 +1499,9 @@ invw1 = 0;
 				else if (g > 255) g = 255;
 				if (b < 0) b = 0;
 				else if (b > 255) b = 255;
-//				if (a < 0) a = 0;
-//				else if (a > 255) a = 255;
-				
+//              if (a < 0) a = 0;
+//              else if (a > 255) a = 255;
+
 				/* apply dithering */
 				if (FBZMODE_BITS(8,1))
 				{
@@ -1509,9 +1509,9 @@ invw1 = 0;
 					r = DITHER_VAL(r,dith);
 					g = DITHER_VAL(g,dith);
 					b = DITHER_VAL(b,dith);
-//					a = DITHER_VAL(a,dith);
+//                  a = DITHER_VAL(a,dith);
 				}
-				
+
 #if DEBUG_LOD
 				if (lodhit)
 					r = g = b = 0xff;
@@ -1522,7 +1522,7 @@ invw1 = 0;
 					dest[x] = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | ((b & 0xf8) >> 3);
 				if (FBZMODE_BITS(10,1))
 					depth[x] = depthval;
-				
+
 		skipdrawdepth:
 				/* advance */
 				curr += tri_drdx;

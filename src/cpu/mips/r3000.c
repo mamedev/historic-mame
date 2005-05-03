@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		r3000.c
-**		Core implementation for the portable MIPS R3000 emulator.
-**		Written by Aaron Giles
+**      r3000.c
+**      Core implementation for the portable MIPS R3000 emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -21,7 +21,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define COP0_Index			0
@@ -79,7 +79,7 @@
 
 
 /*###################################################################################################
-**	HELPER MACROS
+**  HELPER MACROS
 **#################################################################################################*/
 
 #define RSREG		((op >> 21) & 31)
@@ -118,7 +118,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* memory access function table */
@@ -178,7 +178,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void lwl_be(UINT32 op);
@@ -207,7 +207,7 @@ static void writecache_le_dword(offs_t offset, data32_t data);
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
+**  PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
 static int	r3000_icount;
@@ -215,7 +215,7 @@ static int	r3000_icount;
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static r3000_regs r3000;
@@ -248,7 +248,7 @@ static const memory_handlers le_cache =
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32(pc)
@@ -256,7 +256,7 @@ static const memory_handlers le_cache =
 
 
 /*###################################################################################################
-**	EXECEPTION HANDLING
+**  EXECEPTION HANDLING
 **#################################################################################################*/
 
 INLINE void generate_exception(int exception)
@@ -300,7 +300,7 @@ INLINE void invalid_instruction(UINT32 op)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 static void check_irqs(void)
@@ -322,7 +322,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void r3000_get_context(void *dst)
@@ -348,7 +348,7 @@ static void r3000_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void r3000_init(void)
@@ -432,7 +432,7 @@ static void r3000_exit(void)
 
 
 /*###################################################################################################
-**	COP0 (SYSTEM) EXECUTION HANDLING
+**  COP0 (SYSTEM) EXECUTION HANDLING
 **#################################################################################################*/
 
 INLINE UINT32 get_cop0_reg(int idx)
@@ -545,7 +545,7 @@ INLINE void handle_cop0(UINT32 op)
 
 
 /*###################################################################################################
-**	COP1 (FPU) EXECUTION HANDLING
+**  COP1 (FPU) EXECUTION HANDLING
 **#################################################################################################*/
 
 INLINE UINT32 get_cop1_reg(int idx)
@@ -614,7 +614,7 @@ INLINE void handle_cop1(UINT32 op)
 
 
 /*###################################################################################################
-**	COP2 (CUSTOM) EXECUTION HANDLING
+**  COP2 (CUSTOM) EXECUTION HANDLING
 **#################################################################################################*/
 
 INLINE UINT32 get_cop2_reg(int idx)
@@ -681,7 +681,7 @@ INLINE void handle_cop2(UINT32 op)
 
 
 /*###################################################################################################
-**	COP3 (CUSTOM) EXECUTION HANDLING
+**  COP3 (CUSTOM) EXECUTION HANDLING
 **#################################################################################################*/
 
 INLINE UINT32 get_cop3_reg(int idx)
@@ -748,7 +748,7 @@ INLINE void handle_cop3(UINT32 op)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 static int r3000_execute(int cycles)
@@ -947,7 +947,7 @@ static int r3000_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 r3000_reg_layout[] =
@@ -983,7 +983,7 @@ static UINT8 r3000_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t r3000_dasm(char *buffer, offs_t pc)
@@ -1000,7 +1000,7 @@ static offs_t r3000_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	CACHE I/O
+**  CACHE I/O
 **#################################################################################################*/
 
 static data8_t readcache_be(offs_t offset)
@@ -1078,7 +1078,7 @@ static void writecache_le_dword(offs_t offset, data32_t data)
 
 
 /*###################################################################################################
-**	COMPLEX OPCODE IMPLEMENTATIONS
+**  COMPLEX OPCODE IMPLEMENTATIONS
 **#################################################################################################*/
 
 static void lwl_be(UINT32 op)
@@ -1245,9 +1245,9 @@ static void r3000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + R3000_R28:			r3000.r[28] = info->i;					break;
 		case CPUINFO_INT_REGISTER + R3000_R29:			r3000.r[29] = info->i;					break;
 		case CPUINFO_INT_REGISTER + R3000_R30:			r3000.r[30] = info->i;					break;
-		case CPUINFO_INT_SP:	
+		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + R3000_R31:			r3000.r[31] = info->i;					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					r3000.irq_callback = info->irqcallback;	break;
 	}
@@ -1273,7 +1273,7 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 29;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

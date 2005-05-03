@@ -1,7 +1,7 @@
 /***************************************************************************
 
 
-							MCU Code Simulation
+                            MCU Code Simulation
 
 
 ***************************************************************************/
@@ -10,9 +10,9 @@ extern data16_t *mcu_ram; /* for calc3 and toybox */
 
 
 /***************************************************************************
-								Gals Panic (set 2)
-								Gals Panic (set 3)
-								Sand Scorpion
+                                Gals Panic (set 2)
+                                Gals Panic (set 3)
+                                Sand Scorpion
 ***************************************************************************/
 
 READ16_HANDLER( galpanib_calc_r );
@@ -20,11 +20,11 @@ WRITE16_HANDLER( galpanib_calc_w );
 
 
 /***************************************************************************
-								CALC3 MCU:
+                                CALC3 MCU:
 
-								Shogun Warriors
-								Fujiyama Buster
-								B.Rap Boys
+                                Shogun Warriors
+                                Fujiyama Buster
+                                B.Rap Boys
 ***************************************************************************/
 
 void calc3_mcu_init(void);
@@ -36,12 +36,12 @@ WRITE16_HANDLER( calc3_mcu_com3_w );
 
 
 /***************************************************************************
-								TOYBOX MCU:
+                                TOYBOX MCU:
 
-								Bonk's Adventure
-								Blood Warrior
-								Great 1000 Miles Rally
-								...
+                                Bonk's Adventure
+                                Blood Warrior
+                                Great 1000 Miles Rally
+                                ...
 ***************************************************************************/
 
 void toybox_mcu_init(void);

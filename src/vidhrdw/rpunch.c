@@ -17,7 +17,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -36,7 +36,7 @@ static UINT8 bins, gins;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -71,7 +71,7 @@ static void get_bg1_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -108,7 +108,7 @@ VIDEO_START( rpunch )
 
 /*************************************
  *
- *	Write handlers
+ *  Write handlers
  *
  *************************************/
 
@@ -216,7 +216,7 @@ WRITE16_HANDLER( rpunch_ins_w )
 
 /*************************************
  *
- *	Sprite routines
+ *  Sprite routines
  *
  *************************************/
 
@@ -252,7 +252,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /*************************************
  *
- *	Bitmap routines
+ *  Bitmap routines
  *
  *************************************/
 
@@ -284,7 +284,7 @@ static void draw_bitmap(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 /*************************************
  *
- *	Main screen refresh
+ *  Main screen refresh
  *
  *************************************/
 

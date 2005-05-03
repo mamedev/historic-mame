@@ -982,7 +982,7 @@ static MACHINE_DRIVER_START( buggyboy )
 
 	/* Sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("Front Left", "Front Right")
-     /*	MDRV_SPEAKER_STANDARD_STEREO("Rear Left", "Rear Right") */
+     /* MDRV_SPEAKER_STANDARD_STEREO("Rear Left", "Rear Right") */
 
 	MDRV_SOUND_ADD(AY8910, 1875000)
 	MDRV_SOUND_CONFIG(buggyboy_ay8910_interface_1)
@@ -1029,7 +1029,7 @@ static MACHINE_DRIVER_START( buggyb1 )
 
 	/* Sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("Front Left", "Front Right")
-     /*	MDRV_SPEAKER_STANDARD_STEREO("Rear Left", "Rear Right") */
+     /* MDRV_SPEAKER_STANDARD_STEREO("Rear Left", "Rear Right") */
 
 	MDRV_SOUND_ADD(AY8910, 1875000)
 	MDRV_SOUND_CONFIG(buggyboy_ay8910_interface_1)

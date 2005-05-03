@@ -1,32 +1,32 @@
 /***************************************************************************
 
-	xain.c
+    xain.c
 
-	The priority prom has 7 inputs:
+    The priority prom has 7 inputs:
 
-	A0: Text layer (MAP)
-	A1: Sprite layer (OBJ)
-	A2: BG1
-	A3: BG2
-	A4-A6:	From CPU priority register
+    A0: Text layer (MAP)
+    A1: Sprite layer (OBJ)
+    A2: BG1
+    A3: BG2
+    A4-A6:  From CPU priority register
 
-	The 2 bit data output from the prom selects:
+    The 2 bit data output from the prom selects:
 
-	0 - Text layer
-	1 - Sprite layer
-	2 - BG1
-	3 - BG2
+    0 - Text layer
+    1 - Sprite layer
+    2 - BG1
+    3 - BG2
 
-	Decoding the prom manually gives the following rules:
+    Decoding the prom manually gives the following rules:
 
-	PRI mode 0 - text (top) -> sprite -> bg1 -> bg2 (bottom)
-	PRI mode 1 - text (top) -> sprite -> bg2 -> bg1 (bottom)
-	PRI mode 2 - bg1 (top) -> sprite -> bg2 -> text (bottom)
-	PRI mode 3 - bg2 (top) -> sprite -> bg1 -> text (bottom)
-	PRI mode 4 - bg1 (top) -> sprite -> text -> bg2 (bottom)
-	PRI mode 5 - bg2 (top) -> sprite -> text -> bg1 (bottom)
-	PRI mode 6 - text (top) -> bg1 -> sprite -> bg2 (bottom)
-	PRI mode 7 - text (top) -> bg2 -> sprite -> bg1 (bottom)
+    PRI mode 0 - text (top) -> sprite -> bg1 -> bg2 (bottom)
+    PRI mode 1 - text (top) -> sprite -> bg2 -> bg1 (bottom)
+    PRI mode 2 - bg1 (top) -> sprite -> bg2 -> text (bottom)
+    PRI mode 3 - bg2 (top) -> sprite -> bg1 -> text (bottom)
+    PRI mode 4 - bg1 (top) -> sprite -> text -> bg2 (bottom)
+    PRI mode 5 - bg2 (top) -> sprite -> text -> bg1 (bottom)
+    PRI mode 6 - text (top) -> bg1 -> sprite -> bg2 (bottom)
+    PRI mode 7 - text (top) -> bg2 -> sprite -> bg1 (bottom)
 
 ***************************************************************************/
 

@@ -6,171 +6,171 @@
 
 Brief overview:
 
-	4 scrolling layers (512x512 or 1024x512) of 4/5/6 bpp tiles.
-	1 scrolling text layer (512x512, characters generated in vram), 4bpp chars.
-	1 scrolling pixel layer (512x256 pixels generated in pivot ram), 4bpp pixels.
-	2 sprite banks (for double buffering of sprites)
-	Sprites can be 4, 5 or 6 bpp
-	Sprite scaling.
-	Rowscroll on all playfields
-	Line by line zoom on all playfields
-	Column scroll on all playfields
-	Line by line sprite and playfield priority mixing
+    4 scrolling layers (512x512 or 1024x512) of 4/5/6 bpp tiles.
+    1 scrolling text layer (512x512, characters generated in vram), 4bpp chars.
+    1 scrolling pixel layer (512x256 pixels generated in pivot ram), 4bpp pixels.
+    2 sprite banks (for double buffering of sprites)
+    Sprites can be 4, 5 or 6 bpp
+    Sprite scaling.
+    Rowscroll on all playfields
+    Line by line zoom on all playfields
+    Column scroll on all playfields
+    Line by line sprite and playfield priority mixing
 
 Notes:
-	All special effects are controlled by an area in 'line ram'.  Typically
-	there are 256 values, one for each line of the screen (including clipped
-	lines at the top of the screen).  For example, at 0x8000 in lineram,
-	there are 4 sets of 256 values (one for each playfield) and each value
-	is the scale control for that line in the destination bitmap (screen).
-	Therefore each line can have a different zoom value for special effects.
+    All special effects are controlled by an area in 'line ram'.  Typically
+    there are 256 values, one for each line of the screen (including clipped
+    lines at the top of the screen).  For example, at 0x8000 in lineram,
+    there are 4 sets of 256 values (one for each playfield) and each value
+    is the scale control for that line in the destination bitmap (screen).
+    Therefore each line can have a different zoom value for special effects.
 
-	This also applies to playfield priority, rowscroll, column scroll, sprite
-	priority and VRAM/pivot layers.
+    This also applies to playfield priority, rowscroll, column scroll, sprite
+    priority and VRAM/pivot layers.
 
-	However - at the start of line ram there are also sets of 256 values
-	controlling each effect - effects can be selectively applied to individual
-	playfields or only certain lines out of the 256 can be active - in which
-	case the last allowed value can be latched (typically used so a game can
-	use one zoom or row value over the whole playfield).
+    However - at the start of line ram there are also sets of 256 values
+    controlling each effect - effects can be selectively applied to individual
+    playfields or only certain lines out of the 256 can be active - in which
+    case the last allowed value can be latched (typically used so a game can
+    use one zoom or row value over the whole playfield).
 
-	The programmers of some of these games made strange use of flipscreen -
-	some games have all their graphics flipped in ROM, and use the flipscreen
-	bit to display them correctly!.
+    The programmers of some of these games made strange use of flipscreen -
+    some games have all their graphics flipped in ROM, and use the flipscreen
+    bit to display them correctly!.
 
-	Most games display 232 scanlines, but some use lineram effects to clip
-	themselves to 224 or less.
+    Most games display 232 scanlines, but some use lineram effects to clip
+    themselves to 224 or less.
 
 ****************************************************************************
 
 Line ram memory map:
 
-	Here 'playfield 1' refers to the first playfield in memory, etc
+    Here 'playfield 1' refers to the first playfield in memory, etc
 
-	0x0000: Column line control ram (256 lines)
-		100x:	Where bit 0 of x enables effect on playfield 1
-				Where bit 1 of x enables effect on playfield 2
-				Where bit 2 of x enables effect on playfield 3
-				Where bit 3 of x enables effect on playfield 4
-	0x0200: Line control ram for 0x5000 section.
-	0x0400: Line control ram for 0x6000 section.
-		180x:   Where bit 0 of x latches sprite alpha value
-				Where bit 1 of x latches tilemap alpha value
-	0x0600: Sprite control ram
-		1c0x:	Where x enables sprite control word for that line
-	0x0800: Zoom line control ram (256 lines)
-		200x:	Where bit 0 of x enables effect on playfield 1
-				Where bit 1 of x enables effect on playfield 2
-				Where bit 2 of x enables effect on playfield 3
-				Where bit 3 of x enables effect on playfield 4
-	0x0a00: Assumed unused.
-	0x0c00: Rowscroll line control ram (256 lines)
-		280x:	Where bit 0 of x enables effect on playfield 1
-				Where bit 1 of x enables effect on playfield 2
-				Where bit 2 of x enables effect on playfield 3
-				Where bit 3 of x enables effect on playfield 4
-	0x0e00: Priority line control ram (256 lines)
-		2c0x:	Where bit 0 of x enables effect on playfield 1
-				Where bit 1 of x enables effect on playfield 2
-				Where bit 2 of x enables effect on playfield 3
-				Where bit 3 of x enables effect on playfield 4
+    0x0000: Column line control ram (256 lines)
+        100x:   Where bit 0 of x enables effect on playfield 1
+                Where bit 1 of x enables effect on playfield 2
+                Where bit 2 of x enables effect on playfield 3
+                Where bit 3 of x enables effect on playfield 4
+    0x0200: Line control ram for 0x5000 section.
+    0x0400: Line control ram for 0x6000 section.
+        180x:   Where bit 0 of x latches sprite alpha value
+                Where bit 1 of x latches tilemap alpha value
+    0x0600: Sprite control ram
+        1c0x:   Where x enables sprite control word for that line
+    0x0800: Zoom line control ram (256 lines)
+        200x:   Where bit 0 of x enables effect on playfield 1
+                Where bit 1 of x enables effect on playfield 2
+                Where bit 2 of x enables effect on playfield 3
+                Where bit 3 of x enables effect on playfield 4
+    0x0a00: Assumed unused.
+    0x0c00: Rowscroll line control ram (256 lines)
+        280x:   Where bit 0 of x enables effect on playfield 1
+                Where bit 1 of x enables effect on playfield 2
+                Where bit 2 of x enables effect on playfield 3
+                Where bit 3 of x enables effect on playfield 4
+    0x0e00: Priority line control ram (256 lines)
+        2c0x:   Where bit 0 of x enables effect on playfield 1
+                Where bit 1 of x enables effect on playfield 2
+                Where bit 2 of x enables effect on playfield 3
+                Where bit 3 of x enables effect on playfield 4
 
-	0x4000: Playfield 1 column scroll (on source bitmap, not destination)
-	0x4200: Playfield 2 column scroll (on source bitmap, not destination)
-	0x4400: Playfield 3 column scroll (on source bitmap, not destination)
-	0x4600: Playfield 4 column scroll (on source bitmap, not destination)
+    0x4000: Playfield 1 column scroll (on source bitmap, not destination)
+    0x4200: Playfield 2 column scroll (on source bitmap, not destination)
+    0x4400: Playfield 3 column scroll (on source bitmap, not destination)
+    0x4600: Playfield 4 column scroll (on source bitmap, not destination)
 
-	0x5000: ?????
+    0x5000: ?????
 
-	0x6000:	Pivot layer control
-		Cupfinal a255 display, 0255 don't
-		Bubsymph a255 display  0255 don't
-		Pbobbl4u a2ff display (colour 0xa) 02ff don't
-		Landmakr 00df dont display
-		qtheater 01ff dont display
-		0x00p0 - p = priority? (See BubSymph continue screen)
-	0x6200: Alpha blending control
-		Cupfinal 3000
-		Landmakr bbbb
-		qtheater bbbb
-		bubsymph 3000
-	0x6400: Pivot layer control?
-		Cupfinal 7000
-		landmakr 7000
-		qtheater 7000
-		bubsymph 7000
-		pbobbl4u 7000
-	0x6600: Always zero?
+    0x6000: Pivot layer control
+        Cupfinal a255 display, 0255 don't
+        Bubsymph a255 display  0255 don't
+        Pbobbl4u a2ff display (colour 0xa) 02ff don't
+        Landmakr 00df dont display
+        qtheater 01ff dont display
+        0x00p0 - p = priority? (See BubSymph continue screen)
+    0x6200: Alpha blending control
+        Cupfinal 3000
+        Landmakr bbbb
+        qtheater bbbb
+        bubsymph 3000
+    0x6400: Pivot layer control?
+        Cupfinal 7000
+        landmakr 7000
+        qtheater 7000
+        bubsymph 7000
+        pbobbl4u 7000
+    0x6600: Always zero?
 
-	0x7000: ?
-	0x7200: ?
-	0x7400: ?
-	0x7600: Sprite priority values
-		0xf000:	Relative priority for sprites with pri value 0xc0
-		0x0f00:	Relative priority for sprites with pri value 0x80
-		0x00f0:	Relative priority for sprites with pri value 0x40
-		0x000f:	Relative priority for sprites with pri value 0x00
+    0x7000: ?
+    0x7200: ?
+    0x7400: ?
+    0x7600: Sprite priority values
+        0xf000: Relative priority for sprites with pri value 0xc0
+        0x0f00: Relative priority for sprites with pri value 0x80
+        0x00f0: Relative priority for sprites with pri value 0x40
+        0x000f: Relative priority for sprites with pri value 0x00
 
-	0x8000: Playfield 1 scale (1 word per line, 256 lines, 0x80 = no scale)
-	0x8200: Playfield 2 scale
-	0x8400: Playfield 3 scale
-	0x8600: Playfield 4 scale
-		0x0080 = No scale
-		< 0x80 = Zoom Out
-		> 0x80 = Zoom in
+    0x8000: Playfield 1 scale (1 word per line, 256 lines, 0x80 = no scale)
+    0x8200: Playfield 2 scale
+    0x8400: Playfield 3 scale
+    0x8600: Playfield 4 scale
+        0x0080 = No scale
+        < 0x80 = Zoom Out
+        > 0x80 = Zoom in
 
-	0xa000: Playfield 1 rowscroll (1 word per line, 256 lines)
-	0xa200: Playfield 2 rowscroll
-	0xa400: Playfield 3 rowscroll
-	0xa600: Playfield 4 rowscroll
+    0xa000: Playfield 1 rowscroll (1 word per line, 256 lines)
+    0xa200: Playfield 2 rowscroll
+    0xa400: Playfield 3 rowscroll
+    0xa600: Playfield 4 rowscroll
 
-	0xb000: Playfield 1 priority (1 word per line, 256 lines)
-	0xb200: Playfield 2 priority
-	0xb400: Playfield 3 priority
-	0xb600: Playfield 4 priority
-		0xf000 = Disable playfield (ElvAct2 second level)
-		0xc000 = 0x4000 = alpha mode 1, 0x8000 = alpha mode 2, 0 = no alpha, 0xc000 = disable
-		0x2000 = Enable line? (Darius Gaiden 0x5000 = disable, 0x3000, 0xb000 & 0x7000 = display)
-		0x1000 = ?
-		0x0800 = Disable line (Used by KTiger2 to clip screen)
-		0x07f0 = ?
-		0x000f = Playfield priority
+    0xb000: Playfield 1 priority (1 word per line, 256 lines)
+    0xb200: Playfield 2 priority
+    0xb400: Playfield 3 priority
+    0xb600: Playfield 4 priority
+        0xf000 = Disable playfield (ElvAct2 second level)
+        0xc000 = 0x4000 = alpha mode 1, 0x8000 = alpha mode 2, 0 = no alpha, 0xc000 = disable
+        0x2000 = Enable line? (Darius Gaiden 0x5000 = disable, 0x3000, 0xb000 & 0x7000 = display)
+        0x1000 = ?
+        0x0800 = Disable line (Used by KTiger2 to clip screen)
+        0x07f0 = ?
+        0x000f = Playfield priority
 
-	0xc000 - 0xffff: Unused.
+    0xc000 - 0xffff: Unused.
 
-	When sprite priority==playfield priority sprite takes precedence (Bubble Symph title)
-
-****************************************************************************
-
-	F3 sprite format:
-
-	Word 0:	0xffff		Tile number (LSB)
-	Word 1:	0xff00		X zoom
-			0x00ff		Y zoom
-	Word 2:	0x03ff		X position
-	Word 3:	0x03ff		Y position
-	Word 4:	0xf000		Sprite block controls
-			0x0800		Sprite block start
-			0x0400		Use same colour on this sprite as block start
-			0x0200		Y flip
-			0x0100		X flip
-			0x00ff		Colour
-	Word 5: 0xffff		Tile number (MSB), probably only low bits used
-	Word 6:	0x8000		If set, jump to sprite location in low bits
-			0x03ff		Location to jump to.
-	Word 7: 0xffff		Unused?  Always zero?
+    When sprite priority==playfield priority sprite takes precedence (Bubble Symph title)
 
 ****************************************************************************
 
-	Playfield control information (0x660000-1f):
+    F3 sprite format:
 
-	Word 0- 3: X scroll values for the 4 playfields.
-	Word 4- 7: Y scroll values for the 4 playfields.
-	Word 8-11: Unused.  Always zero.
-	Word   12: Pixel + VRAM playfields X scroll
-	Word   13: Pixel + VRAM playfields Y scroll
-	Word   14: Unused. Always zero.
-	Word   15: If set to 0x80, then 1024x512 playfields are used, else 512x512
+    Word 0: 0xffff      Tile number (LSB)
+    Word 1: 0xff00      X zoom
+            0x00ff      Y zoom
+    Word 2: 0x03ff      X position
+    Word 3: 0x03ff      Y position
+    Word 4: 0xf000      Sprite block controls
+            0x0800      Sprite block start
+            0x0400      Use same colour on this sprite as block start
+            0x0200      Y flip
+            0x0100      X flip
+            0x00ff      Colour
+    Word 5: 0xffff      Tile number (MSB), probably only low bits used
+    Word 6: 0x8000      If set, jump to sprite location in low bits
+            0x03ff      Location to jump to.
+    Word 7: 0xffff      Unused?  Always zero?
+
+****************************************************************************
+
+    Playfield control information (0x660000-1f):
+
+    Word 0- 3: X scroll values for the 4 playfields.
+    Word 4- 7: Y scroll values for the 4 playfields.
+    Word 8-11: Unused.  Always zero.
+    Word   12: Pixel + VRAM playfields X scroll
+    Word   13: Pixel + VRAM playfields Y scroll
+    Word   14: Unused. Always zero.
+    Word   15: If set to 0x80, then 1024x512 playfields are used, else 512x512
 
 ***************************************************************************/
 
@@ -847,11 +847,11 @@ WRITE32_HANDLER( f3_pivot_w )
 WRITE32_HANDLER( f3_lineram_w )
 {
 	/* DariusGX has an interesting bug at the start of Round D - the clearing of lineram
-	(0xa000->0x0xa7ff) overflows into priority RAM (0xb000) and creates garbage priority
-	values.  I'm not sure what the real machine would do with these values, and this
-	emulation certainly doesn't like it, so I've chosen to catch the bug here, and prevent
-	the trashing of priority ram.  If anyone has information on what the real machine does,
-	please let me know! */
+    (0xa000->0x0xa7ff) overflows into priority RAM (0xb000) and creates garbage priority
+    values.  I'm not sure what the real machine would do with these values, and this
+    emulation certainly doesn't like it, so I've chosen to catch the bug here, and prevent
+    the trashing of priority ram.  If anyone has information on what the real machine does,
+    please let me know! */
 	if (f3_game==DARIUSG) {
 		if (skip_this_frame)
 			return;
@@ -863,16 +863,16 @@ WRITE32_HANDLER( f3_lineram_w )
 
 	COMBINE_DATA(&f3_line_ram[offset]);
 
-//	if ((offset&0xfe00)==0x2800)
-//		scroll_dirty=1;
+//  if ((offset&0xfe00)==0x2800)
+//      scroll_dirty=1;
 
-//	if (offset>=0x6000/4 && offset<0x7000/4)
-//	if (offset==0x18c0)
-//		logerror("%08x:  Write 6000 %08x, %08x\n",activecpu_get_pc(),offset,data);
-//	if (offset>=0xa000/4 && offset<0xb000/4)
-//		logerror("%08x:  Write a000 %08x, %08x\n",activecpu_get_pc(),offset,data);
-//	if (offset>=0xb000/4 && offset<0xc000/4)
-//		logerror("%08x:  Write b000 %08x, %08x\n",activecpu_get_pc(),offset,data);
+//  if (offset>=0x6000/4 && offset<0x7000/4)
+//  if (offset==0x18c0)
+//      logerror("%08x:  Write 6000 %08x, %08x\n",activecpu_get_pc(),offset,data);
+//  if (offset>=0xa000/4 && offset<0xb000/4)
+//      logerror("%08x:  Write a000 %08x, %08x\n",activecpu_get_pc(),offset,data);
+//  if (offset>=0xb000/4 && offset<0xc000/4)
+//      logerror("%08x:  Write b000 %08x, %08x\n",activecpu_get_pc(),offset,data);
 
 }
 
@@ -989,19 +989,19 @@ static int (**dpix_sp[9])(UINT32 s_pix);
 
 INLINE void f3_alpha_set_level(void)
 {
-//	SET_ALPHA_LEVEL(alpha_s_1_1, f3_alpha_level_2ad)
+//  SET_ALPHA_LEVEL(alpha_s_1_1, f3_alpha_level_2ad)
 	SET_ALPHA_LEVEL(alpha_s_1_1, 255-f3_alpha_level_2as)
-//	SET_ALPHA_LEVEL(alpha_s_1_2, f3_alpha_level_2bd)
+//  SET_ALPHA_LEVEL(alpha_s_1_2, f3_alpha_level_2bd)
 	SET_ALPHA_LEVEL(alpha_s_1_2, 255-f3_alpha_level_2bs)
 	SET_ALPHA_LEVEL(alpha_s_1_4, f3_alpha_level_3ad)
-//	SET_ALPHA_LEVEL(alpha_s_1_5, f3_alpha_level_3ad*f3_alpha_level_2ad/255)
+//  SET_ALPHA_LEVEL(alpha_s_1_5, f3_alpha_level_3ad*f3_alpha_level_2ad/255)
 	SET_ALPHA_LEVEL(alpha_s_1_5, f3_alpha_level_3ad*(255-f3_alpha_level_2as)/255)
-//	SET_ALPHA_LEVEL(alpha_s_1_6, f3_alpha_level_3ad*f3_alpha_level_2bd/255)
+//  SET_ALPHA_LEVEL(alpha_s_1_6, f3_alpha_level_3ad*f3_alpha_level_2bd/255)
 	SET_ALPHA_LEVEL(alpha_s_1_6, f3_alpha_level_3ad*(255-f3_alpha_level_2bs)/255)
 	SET_ALPHA_LEVEL(alpha_s_1_8, f3_alpha_level_3bd)
-//	SET_ALPHA_LEVEL(alpha_s_1_9, f3_alpha_level_3bd*f3_alpha_level_2ad/255)
+//  SET_ALPHA_LEVEL(alpha_s_1_9, f3_alpha_level_3bd*f3_alpha_level_2ad/255)
 	SET_ALPHA_LEVEL(alpha_s_1_9, f3_alpha_level_3bd*(255-f3_alpha_level_2as)/255)
-//	SET_ALPHA_LEVEL(alpha_s_1_a, f3_alpha_level_3bd*f3_alpha_level_2bd/255)
+//  SET_ALPHA_LEVEL(alpha_s_1_a, f3_alpha_level_3bd*f3_alpha_level_2bd/255)
 	SET_ALPHA_LEVEL(alpha_s_1_a, f3_alpha_level_3bd*(255-f3_alpha_level_2bs)/255)
 
 	SET_ALPHA_LEVEL(alpha_s_2a_0, f3_alpha_level_2as)
@@ -1527,7 +1527,7 @@ INLINE void f3_drawscanlines(
 	tr_3b =(f3_alpha_level_3bs==0 && f3_alpha_level_3bd==255) ? -1 : 1;
 
 
-//	if (bitmap->depth == 32)
+//  if (bitmap->depth == 32)
 	{
 		UINT32 *dsti0,*dsti;
 		dsti0 = (UINT32 *)bitmap->line[ty] + x;
@@ -1660,7 +1660,7 @@ INLINE void clear_scanlines(struct mame_bitmap *bitmap,int x,int xsize,INT16 *dr
 		yadv = -yadv;
 	}
 
-//	if (bitmap->depth == 32)
+//  if (bitmap->depth == 32)
 	{
 		UINT32 *dsti0,*dsti;
 		dsti0 = (UINT32 *)bitmap->line[ty] + x;
@@ -1870,7 +1870,7 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos,data
 		if(y_zoom && line_enable && (colscroll!=0 || x_zoom!=y_zoom)) y_zoom=0x10000;
 
 
-//		if (line_enable)
+//      if (line_enable)
 		{
 			if (!pri || (!flipscreen && y<24) || (flipscreen && y>231) ||
 				(pri&0xc000)==0xc000 || !(pri&0x2000)/**/)
@@ -2007,8 +2007,8 @@ static void f3_tilemap_draw(struct mame_bitmap *bitmap,
 		ys=24;
 		ye=256;
 	}
-//	ys=0;
-//	ye=256;
+//  ys=0;
+//  ye=256;
 
 #if DEBUG_F3
 deb_loop=0;
@@ -2373,10 +2373,10 @@ deb_loop++;
 				sp=pri_sp[i];
 
 				/*
-					sprite priority==playfield priority
-						BUBSYMPH (title)       ---> sprite
-						DARIUSG (ZONE V' BOSS) ---> playfield
-				*/
+                    sprite priority==playfield priority
+                        BUBSYMPH (title)       ---> sprite
+                        DARIUSG (ZONE V' BOSS) ---> playfield
+                */
 
 				if (f3_game == BUBSYMPH ) sp++;		//BUBSYMPH (title)
 
@@ -2440,7 +2440,7 @@ static void f3_update_pivot_layer(void)
 	int tile,i,pivot_base;
 
 	/* A poor way to guess if the pivot layer is enabled, but quicker than
-		parsing control ram. */
+        parsing control ram. */
 	int ctrl  = f3_line_ram[0x180f]&0xa000; /* SpcInvDX sets only this address */
 	int ctrl2 = f3_line_ram[0x1870]&0xa0000000; /* SpcInvDX flipscreen */
 	int ctrl3 = f3_line_ram[0x1820]&0xa000; /* Other games set the whole range 0x6000-0x61ff */
@@ -2611,7 +2611,7 @@ INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const struct GfxElement *gf
 	if( gfx && gfx->colortable )
 	{
 		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-//		int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
+//      int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
 		int source_base = (code % gfx->total_elements) * 16;
 
 		{
@@ -2674,7 +2674,7 @@ INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const struct GfxElement *gf
 
 			if( ex>sx && ey>sy)
 			{ /* skip if inner loop doesn't draw anything */
-//				if (dest_bmp->depth == 32)
+//              if (dest_bmp->depth == 32)
 				{
 					int y=ey-sy;
 					int x=(ex-sx-1)|(tile_opaque_sp[code % gfx->total_elements]<<4);
@@ -2776,7 +2776,7 @@ INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement
 	if( gfx && gfx->colortable )
 	{
 		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-//		int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
+//      int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
 		int source_base = (code % gfx->total_elements) * 16;
 
 		{
@@ -2839,7 +2839,7 @@ INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement
 
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
-//				if (dest_bmp->depth == 32)
+//              if (dest_bmp->depth == 32)
 				{
 					int y;
 					for( y=sy; y<ey; y++ )
@@ -2923,10 +2923,10 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 			data32_t cntrl=(spriteram32_ptr[current_offs+2])&0xffff;
 			flipscreen=cntrl&0x2000;
 
-			/*	cntrl&0x1000 = disabled?  (From F2 driver, doesn't seem used anywhere)
-				cntrl&0x0010 = ???
-				cntrl&0x0020 = ???
-			*/
+			/*  cntrl&0x1000 = disabled?  (From F2 driver, doesn't seem used anywhere)
+                cntrl&0x0010 = ???
+                cntrl&0x0020 = ???
+            */
 
 			/* Sprite bank select */
 			if (cntrl&1) {
@@ -2965,7 +2965,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 		spritecont = spriteram32_ptr[current_offs+2]>>24;
 
 /* These games either don't set the XY control bits properly (68020 bug?), or
-	have some different mode from the others */
+    have some different mode from the others */
 #ifdef DARIUSG_KLUDGE
 		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR || f3_game==RECALH)
 			multi=spritecont&0xf0;
@@ -3207,7 +3207,7 @@ VIDEO_UPDATE( f3 )
 			}
 	vram_changed=0;
 
-//	if (scroll_dirty)
+//  if (scroll_dirty)
 	{
 		sy_fix[0]=((f3_control_0[2]&0xffff0000)>> 7)+(scroll_kludge_y<<16);
 		sy_fix[1]=((f3_control_0[2]&0x0000ffff)<< 9)+((scroll_kludge_y+pf23_y_kludge)<<16);
@@ -3246,7 +3246,7 @@ VIDEO_UPDATE( f3 )
 			sx_fix[3]=-0x1a00000-sx_fix[3];
 		}
 	}
-//	scroll_dirty=1;// 0
+//  scroll_dirty=1;// 0
 
 	/* Update pivot layer */
 	f3_update_pivot_layer();
@@ -3471,7 +3471,7 @@ if (!deb_enable || !code_pressed(KEYCODE_M))
 
 					int a=(f3_line_ram[(0x6000+1*256*2+cz_line*2)/4]>>sft)&0xffff;
 					int b=(a>>8)&0xf;
-//					int c=(a>>4)&0xf;
+//                  int c=(a>>4)&0xf;
 					int d=(a>>0)&0xf;
 					a>>=12;
 

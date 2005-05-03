@@ -53,15 +53,15 @@ Stephh's notes (based on the games M68000 code and some tests) :
     but NEVER reports an error if the checksum isn't correct due
     to the instruction at 0x000480 (see where it branches) :
 
-	000466: 7000                     moveq   #$0, D0
-	000468: 41FA FC98                lea     (-$368,PC), A0; ($102)
-	00046C: D058                     add.w   (A0)+, D0
-	00046E: B1FC 0004 0000           cmpa.l  #$40000, A0
-	000474: 66F6                     bne     46c
-	000476: 33C0 0006 2CAE           move.w  D0, $62cae.l
-	00047C: B078 0100                cmp.w   $100.w, D0
-	000480: 6600 0002                bne     484
-	000484: 41FA FF86                lea     (-$7a,PC), A0; ($40c)
+    000466: 7000                     moveq   #$0, D0
+    000468: 41FA FC98                lea     (-$368,PC), A0; ($102)
+    00046C: D058                     add.w   (A0)+, D0
+    00046E: B1FC 0004 0000           cmpa.l  #$40000, A0
+    000474: 66F6                     bne     46c
+    000476: 33C0 0006 2CAE           move.w  D0, $62cae.l
+    00047C: B078 0100                cmp.w   $100.w, D0
+    000480: 6600 0002                bne     484
+    000484: 41FA FF86                lea     (-$7a,PC), A0; ($40c)
 
   - 3 Dip Switches which are told to be unused have an effect if
     [0x062d53] != 0x00 (check code at 0x00d7ea).
@@ -87,16 +87,16 @@ Stephh's notes (based on the games M68000 code and some tests) :
   - The ROM test (code at 0x000292) ALWAYS displays "OK", but memory is
     in fact NEVER scanned ! Original behaviour or is the game a bootleg ?
 
-	000292: 45F8 0000                lea     $0.w, A2
-	000296: 303C 7FFF                move.w  #$7fff, D0
-	00029A: 7200                     moveq   #$0, D1
-	00029C: D29A                     add.l   (A2)+, D1
-	00029E: 0C81 0000 0000           cmpi.l  #$0, D1
-	0002A4: 4E71                     nop
-	0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
-	0002B0: 4EF9 0000 0124           jmp     $124.l
-	...
-	0002C2: 4EF9 0000 0124           jmp     $124.l
+    000292: 45F8 0000                lea     $0.w, A2
+    000296: 303C 7FFF                move.w  #$7fff, D0
+    00029A: 7200                     moveq   #$0, D1
+    00029C: D29A                     add.l   (A2)+, D1
+    00029E: 0C81 0000 0000           cmpi.l  #$0, D1
+    0002A4: 4E71                     nop
+    0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
+    0002B0: 4EF9 0000 0124           jmp     $124.l
+    ...
+    0002C2: 4EF9 0000 0124           jmp     $124.l
 
 
 2b) 'terrafu'
@@ -104,16 +104,16 @@ Stephh's notes (based on the games M68000 code and some tests) :
   - The ROM test (code at 0x000292) NEVER displays "OK", but memory is
     in fact NEVER scanned ! Original behaviour or is the game a bootleg ?
 
-	000292: 45F8 0000                lea     $0.w, A2
-	000296: 303C 7FFF                move.w  #$7fff, D0
-	00029A: 7200                     moveq   #$0, D1
-	00029C: D29A                     add.l   (A2)+, D1
-	00029E: 0C81 0000 0000           cmpi.l  #$0, D1
-	0002A4: 661C                     bne     2c2
-	0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
-	0002B0: 4EF9 0000 0124           jmp     $124.l
-	...
-	0002C2: 4EF9 0000 0124           jmp     $124.l
+    000292: 45F8 0000                lea     $0.w, A2
+    000296: 303C 7FFF                move.w  #$7fff, D0
+    00029A: 7200                     moveq   #$0, D1
+    00029C: D29A                     add.l   (A2)+, D1
+    00029E: 0C81 0000 0000           cmpi.l  #$0, D1
+    0002A4: 661C                     bne     2c2
+    0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
+    0002B0: 4EF9 0000 0124           jmp     $124.l
+    ...
+    0002C2: 4EF9 0000 0124           jmp     $124.l
 
 
 3)  'kodure'
@@ -139,9 +139,9 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 /*
 
-	2003-06-01	Added cocktail support to all games
-	
-	2005-04-02	Sebastien Chevalier : various update to video on terrafu, plus some typos here and there
+    2003-06-01  Added cocktail support to all games
+
+    2005-04-02  Sebastien Chevalier : various update to video on terrafu, plus some typos here and there
 
 */
 
@@ -379,8 +379,8 @@ static ADDRESS_MAP_START( legiono_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x07c002, 0x07c003) AM_WRITE(armedf_bg_scrollx_w)
 	AM_RANGE(0x07c004, 0x07c005) AM_WRITE(armedf_bg_scrolly_w)
 	AM_RANGE(0x07c00a, 0x07c00b) AM_WRITE(sound_command_w)
-	//AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(armedf_mcu_cmd)		/* MCU Command ? */
-	//AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)		/* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
+	//AM_RANGE(0x07c00e, 0x07c00f) AM_WRITE(armedf_mcu_cmd)     /* MCU Command ? */
+	//AM_RANGE(0x07c00c, 0x07c00d) AM_WRITE(MWA16_NOP)      /* Watchdog ? cycle 0000 -> 0100 -> 0200 back to 0000 */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( armedf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -588,12 +588,12 @@ INPUT_PORTS_START( terraf )
 
 	PORT_START_TAG("DSW0")
 	NIHON_LIVES
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "20k" )
-//	PORT_DIPSETTING(    0x00, "50k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "60k" )
-//	PORT_DIPSETTING(    0x00, "90k" )
+//  PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//  PORT_DIPSETTING(    0x04, "20k" )
+//  PORT_DIPSETTING(    0x00, "50k" )
+//  PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//  PORT_DIPSETTING(    0x08, "60k" )
+//  PORT_DIPSETTING(    0x00, "90k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x0c, "20k then every 60k" )
 	PORT_DIPSETTING(    0x04, "20k then every 90k" )
@@ -638,12 +638,12 @@ INPUT_PORTS_START( kodure )
 
 	PORT_START_TAG("DSW0")
 	NIHON_LIVES
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "00k" )
-//	PORT_DIPSETTING(    0x00, "50k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "60k" )
-//	PORT_DIPSETTING(    0x00, "90k" )
+//  PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//  PORT_DIPSETTING(    0x04, "00k" )
+//  PORT_DIPSETTING(    0x00, "50k" )
+//  PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//  PORT_DIPSETTING(    0x08, "60k" )
+//  PORT_DIPSETTING(    0x00, "90k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "50k then every 60k" )
 	PORT_DIPSETTING(    0x00, "50k then every 90k" )
@@ -704,12 +704,12 @@ INPUT_PORTS_START( cclimbr2 )
 
 	PORT_START_TAG("DSW0")
 	NIHON_LIVES
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "30k" )
-//	PORT_DIPSETTING(    0x00, "60k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "70k" )
-//	PORT_DIPSETTING(    0x00, "00k" )
+//  PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//  PORT_DIPSETTING(    0x04, "30k" )
+//  PORT_DIPSETTING(    0x00, "60k" )
+//  PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//  PORT_DIPSETTING(    0x08, "70k" )
+//  PORT_DIPSETTING(    0x00, "00k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x0c, "30K and 100k" )
 	PORT_DIPSETTING(    0x08, "60k and 130k" )
@@ -757,12 +757,12 @@ INPUT_PORTS_START( armedf )
 
 	PORT_START_TAG("DSW0")
 	NIHON_LIVES
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "20k" )
-//	PORT_DIPSETTING(    0x00, "40k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "60k" )
-//	PORT_DIPSETTING(    0x00, "80k" )
+//  PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//  PORT_DIPSETTING(    0x04, "20k" )
+//  PORT_DIPSETTING(    0x00, "40k" )
+//  PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//  PORT_DIPSETTING(    0x08, "60k" )
+//  PORT_DIPSETTING(    0x00, "80k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x0c, "20k then every 60k" )
 	PORT_DIPSETTING(    0x04, "20k then every 80k" )

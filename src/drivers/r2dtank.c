@@ -46,15 +46,15 @@ Should be very similar to Sigma's Spiders hardware.
 static int dipsw_bank;
 static WRITE8_HANDLER( dipsw_bank_w )
 {
-//	printf("bank = %x\n",data);
+//  printf("bank = %x\n",data);
 	dipsw_bank = data;
 }
 
 static int r2dtank_video_flip;
 WRITE8_HANDLER( r2dtank_video_flip_w )
 {
-	/*	0 -> flipped
-		1 -> not flipped */
+	/*  0 -> flipped
+        1 -> not flipped */
 
 	r2dtank_video_flip = !data;
 }
@@ -72,37 +72,37 @@ static READ8_HANDLER( dipsw_r )
 	case 0xfd: // @ $156
 		return readinputportbytag("DSWB");
 
-//	case 0xfc:
+//  case 0xfc:
 
-//	case 0xfb: 
+//  case 0xfb:
 
-//	case 0xfa: // insert a coin
+//  case 0xfa: // insert a coin
 
 	case 0xf8: // finish level
 		return 0;
-		
+
 	case 0xf9: // game starts
 		return 0;
 
-//	case 0xf3:
+//  case 0xf3:
 
-//	case 0xf0:
+//  case 0xf0:
 
-//	case 0xf1:
-		
-//	case 0xec:
+//  case 0xf1:
 
-//	case 0xeb:
+//  case 0xec:
 
-//	case 0xea:
+//  case 0xeb:
+
+//  case 0xea:
 
 	case 0xe9: // game over
 		return 0;
 
-//	case 0xe8: // lose a life?
-		
+//  case 0xe8: // lose a life?
+
 	default:
-//		logerror("Unknown dipsw_r bank = %x\n",dipsw_bank);
+//      logerror("Unknown dipsw_r bank = %x\n",dipsw_bank);
 		return 0xff;
 	}
 }
@@ -121,17 +121,17 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0x8003) AM_READ(pia_0_r)
 	AM_RANGE(0x8004, 0x8004) AM_READ(dipsw_r)
-//	AM_RANGE(0x8004, 0x8007) AM_READ(pia_1_r)
+//  AM_RANGE(0x8004, 0x8007) AM_READ(pia_1_r)
 	AM_RANGE(0xc000, 0xc007) AM_READ(MRA8_RAM)
 	AM_RANGE(0xc800, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM)	
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x8000, 0x8003) AM_WRITE(r2dtank_pia_0_w)
-//	AM_RANGE(0x8004, 0x8007) AM_WRITE(r2dtank_pia_1_w)
+//  AM_RANGE(0x8004, 0x8007) AM_WRITE(r2dtank_pia_1_w)
 	AM_RANGE(0x8004, 0x8004) AM_WRITE(dipsw_bank_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(crtc6845_address_w) 
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(crtc6845_register_w)
 	AM_RANGE(0xc000, 0xc007) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xc800, 0xffff) AM_WRITE(MWA8_ROM)

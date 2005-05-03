@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	BattleToads
+    BattleToads
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
 **************************************************************************/
 
@@ -16,7 +16,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -31,7 +31,7 @@ static UINT8 sound_int_state;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -44,7 +44,7 @@ static MACHINE_INIT( btoads )
 
 /*************************************
  *
- *	Main -> sound CPU communication
+ *  Main -> sound CPU communication
  *
  *************************************/
 
@@ -88,7 +88,7 @@ static READ16_HANDLER( main_sound_r )
 
 /*************************************
  *
- *	Sound -> main CPU communication
+ *  Sound -> main CPU communication
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static READ8_HANDLER( sound_data_ready_r )
 
 /*************************************
  *
- *	Sound CPU interrupt generation
+ *  Sound CPU interrupt generation
  *
  *************************************/
 
@@ -149,7 +149,7 @@ static WRITE8_HANDLER( sound_int_state_w )
 
 /*************************************
  *
- *	Sound CPU BSMT2000 communication
+ *  Sound CPU BSMT2000 communication
  *
  *************************************/
 
@@ -170,7 +170,7 @@ static WRITE8_HANDLER( bsmt2000_port_w )
 
 /*************************************
  *
- *	Main CPU memory map
+ *  Main CPU memory map
  *
  *************************************/
 
@@ -206,7 +206,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory map
+ *  Sound CPU memory map
  *
  *************************************/
 
@@ -228,7 +228,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -305,7 +305,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	34010 configuration
+ *  34010 configuration
  *
  *************************************/
 
@@ -323,7 +323,7 @@ static struct tms34010_config cpu_config =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -337,7 +337,7 @@ static struct BSMT2000interface bsmt2000_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -379,7 +379,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -399,7 +399,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

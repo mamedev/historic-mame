@@ -79,6 +79,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/segacrpt.h"
 #include "sound/ay8910.h"
 
 static data8_t *calorie_fg;
@@ -408,11 +409,9 @@ MACHINE_DRIVER_END
 
 ROM_START( calorie )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
-	ROM_LOAD( "epr10072.1j", 0x10000, 0x4000, CRC(ade792c1) SHA1(6ea5afb00a87037d502c17adda7e4060d12680d7) )
-	ROM_LOAD( "epr10073.1k", 0x14000, 0x4000, CRC(b53e109f) SHA1(a41c5affe917232e7adf40d7c15cff778b197e90) )
-
-	ROM_LOAD( "epr10074.1m", 0x18000, 0x4000, CRC(a08da685) SHA1(69f9cfebc771312dbb1726350c2d9e9e8c46353f) )
-	ROM_RELOAD(              0x08000, 0x4000 )
+	ROM_LOAD( "epr10072.1j", 0x00000, 0x4000, CRC(ade792c1) SHA1(6ea5afb00a87037d502c17adda7e4060d12680d7) )
+	ROM_LOAD( "epr10073.1k", 0x04000, 0x4000, CRC(b53e109f) SHA1(a41c5affe917232e7adf40d7c15cff778b197e90) )
+	ROM_LOAD( "epr10074.1m", 0x08000, 0x4000, CRC(a08da685) SHA1(69f9cfebc771312dbb1726350c2d9e9e8c46353f) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "epr10075.4d", 0x0000, 0x4000, CRC(ca547036) SHA1(584a65482f2b92a4c08c37560450d6db68a56c7b) )
@@ -467,7 +466,13 @@ ROM_START( calorieb )
 	ROM_LOAD( "epr10076.5d", 0x8000, 0x4000, CRC(b1529782) SHA1(8e0e92aae4c8dd8720414372aa767054cc316a0f) )
 ROM_END
 
-static DRIVER_INIT( bootleg )
+
+static DRIVER_INIT( calorie )
+{
+	calorie_decode();
+}
+
+static DRIVER_INIT( calorieb )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -475,5 +480,7 @@ static DRIVER_INIT( bootleg )
 	memory_set_opcode_base(0,rom+diff);
 }
 
-GAMEX(1986, calorie,  0,       calorie, calorie, 0,       ROT0, "Sega",    "Calorie Kun vs Moguranian", GAME_NOT_WORKING )
-GAME( 1986, calorieb, calorie, calorie, calorie, bootleg, ROT0, "bootleg", "Calorie Kun vs Moguranian (bootleg)" )
+
+/* Note: the bootleg is identical to the original once decrypted */
+GAME( 1986, calorie,  0,       calorie, calorie, calorie,  ROT0, "Sega",    "Calorie Kun vs Moguranian" )
+GAME( 1986, calorieb, calorie, calorie, calorie, calorieb, ROT0, "bootleg", "Calorie Kun vs Moguranian (bootleg)" )

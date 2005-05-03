@@ -1,30 +1,30 @@
 /***************************************************************************
 
-	Atari Super Breakout hardware
+    Atari Super Breakout hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Super Breakout
+    Games supported:
+        * Super Breakout
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	Note:  I'm cheating a little bit with the paddle control.  The original
-	game handles the paddle control as following.  The paddle is a potentiometer.
-	Every VBlank signal triggers the start of a voltage ramp.  Whenever the
-	ramp has the same value as the potentiometer, an NMI is generated.	In the
-	NMI code, the current scanline value is used to calculate the value to
-	put into location $1F in memory.  I cheat in this driver by just putting
-	the paddle value directly into $1F, which has the same net result.
+    Note:  I'm cheating a little bit with the paddle control.  The original
+    game handles the paddle control as following.  The paddle is a potentiometer.
+    Every VBlank signal triggers the start of a voltage ramp.  Whenever the
+    ramp has the same value as the potentiometer, an NMI is generated.  In the
+    NMI code, the current scanline value is used to calculate the value to
+    put into location $1F in memory.  I cheat in this driver by just putting
+    the paddle value directly into $1F, which has the same net result.
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
-	CHANGES:
-	MAB 05 MAR 99 - changed overlay support to use artwork functions
+    CHANGES:
+    MAB 05 MAR 99 - changed overlay support to use artwork functions
 
 ***************************************************************************/
 
@@ -52,7 +52,7 @@ extern VIDEO_UPDATE( sbrkout );
 
 /*************************************
  *
- *	Video overlay
+ *  Video overlay
  *
  *************************************/
 
@@ -68,7 +68,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Temporary sound hardware
+ *  Temporary sound hardware
  *
  *************************************/
 
@@ -103,7 +103,7 @@ static MACHINE_INIT( sbrkout )
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -117,7 +117,7 @@ static PALETTE_INIT( sbrkout )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -161,7 +161,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -221,7 +221,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -260,7 +260,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -298,7 +298,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -325,7 +325,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -338,7 +338,7 @@ static DRIVER_INIT( sbrkout )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

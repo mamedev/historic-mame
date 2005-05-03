@@ -1,100 +1,100 @@
 /***************************************************************************
 
-	Bally/Midway Jr. Pac-Man
+    Bally/Midway Jr. Pac-Man
 
     Games supported:
-		* Jr. Pac-Man
+        * Jr. Pac-Man
 
-	Known issues:
-		* none
+    Known issues:
+        * none
 
 ****************************************************************************
 
-	Jr. Pac Man memory map (preliminary)
+    Jr. Pac Man memory map (preliminary)
 
-	0000-3fff ROM
-	4000-47ff Video RAM (also color RAM)
-	4800-4fff RAM
-	8000-dfff ROM
+    0000-3fff ROM
+    4000-47ff Video RAM (also color RAM)
+    4800-4fff RAM
+    8000-dfff ROM
 
-	memory mapped ports:
+    memory mapped ports:
 
-	read:
-	5000      IN0
-	5040      IN1
-	5080      DSW1
+    read:
+    5000      IN0
+    5040      IN1
+    5080      DSW1
 
-	*
-	 * IN0 (all bits are inverted)
-	 * bit 7 : CREDIT
-	 * bit 6 : COIN 2
-	 * bit 5 : COIN 1
-	 * bit 4 : RACK TEST
-	 * bit 3 : DOWN player 1
-	 * bit 2 : RIGHT player 1
-	 * bit 1 : LEFT player 1
-	 * bit 0 : UP player 1
-	 *
-	*
-	 * IN1 (all bits are inverted)
-	 * bit 7 : TABLE or UPRIGHT cabinet select (1 = UPRIGHT)
-	 * bit 6 : START 2
-	 * bit 5 : START 1
-	 * bit 4 : TEST SWITCH
-	 * bit 3 : DOWN player 2 (TABLE only)
-	 * bit 2 : RIGHT player 2 (TABLE only)
-	 * bit 1 : LEFT player 2 (TABLE only)
-	 * bit 0 : UP player 2 (TABLE only)
-	 *
-	*
-	 * DSW1 (all bits are inverted)
-	 * bit 7 :  ?
-	 * bit 6 :  difficulty level
-	 *                       1 = Normal  0 = Harder
-	 * bit 5 :\ bonus pac at xx000 pts
-	 * bit 4 :/ 00 = 10000  01 = 15000  10 = 20000  11 = 30000
-	 * bit 3 :\ nr of lives
-	 * bit 2 :/ 00 = 1  01 = 2  10 = 3  11 = 5
-	 * bit 1 :\ play mode
-	 * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
-	 *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
-	 *
+    *
+     * IN0 (all bits are inverted)
+     * bit 7 : CREDIT
+     * bit 6 : COIN 2
+     * bit 5 : COIN 1
+     * bit 4 : RACK TEST
+     * bit 3 : DOWN player 1
+     * bit 2 : RIGHT player 1
+     * bit 1 : LEFT player 1
+     * bit 0 : UP player 1
+     *
+    *
+     * IN1 (all bits are inverted)
+     * bit 7 : TABLE or UPRIGHT cabinet select (1 = UPRIGHT)
+     * bit 6 : START 2
+     * bit 5 : START 1
+     * bit 4 : TEST SWITCH
+     * bit 3 : DOWN player 2 (TABLE only)
+     * bit 2 : RIGHT player 2 (TABLE only)
+     * bit 1 : LEFT player 2 (TABLE only)
+     * bit 0 : UP player 2 (TABLE only)
+     *
+    *
+     * DSW1 (all bits are inverted)
+     * bit 7 :  ?
+     * bit 6 :  difficulty level
+     *                       1 = Normal  0 = Harder
+     * bit 5 :\ bonus pac at xx000 pts
+     * bit 4 :/ 00 = 10000  01 = 15000  10 = 20000  11 = 30000
+     * bit 3 :\ nr of lives
+     * bit 2 :/ 00 = 1  01 = 2  10 = 3  11 = 5
+     * bit 1 :\ play mode
+     * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
+     *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
+     *
 
-	write:
-	4ff2-4ffd 6 pairs of two bytes:
-	          the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
-			  X flip (bit 1); the second byte the color
-	5000      interrupt enable
-	5001      sound enable
-	5002      unused
-	5003      flip screen
-	5004      unused
-	5005      unused
-	5006      unused
-	5007      coin counter
-	5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
-	5045      sound voice 1 waveform (nibble)
-	5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
-	504a      sound voice 2 waveform (nibble)
-	504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
-	504f      sound voice 3 waveform (nibble)
-	5050-5054 sound voice 1 frequency (nibbles)
-	5055      sound voice 1 volume (nibble)
-	5056-5059 sound voice 2 frequency (nibbles)
-	505a      sound voice 2 volume (nibble)
-	505b-505e sound voice 3 frequency (nibbles)
-	505f      sound voice 3 volume (nibble)
-	5062-506d Sprite coordinates, x/y pairs for 6 sprites
-	5070      palette bank
-	5071      colortable bank
-	5073      background priority over sprites
-	5074      char gfx bank
-	5075      sprite gfx bank
-	5080      scroll
-	50c0      Watchdog reset
+    write:
+    4ff2-4ffd 6 pairs of two bytes:
+              the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
+              X flip (bit 1); the second byte the color
+    5000      interrupt enable
+    5001      sound enable
+    5002      unused
+    5003      flip screen
+    5004      unused
+    5005      unused
+    5006      unused
+    5007      coin counter
+    5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
+    5045      sound voice 1 waveform (nibble)
+    5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
+    504a      sound voice 2 waveform (nibble)
+    504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
+    504f      sound voice 3 waveform (nibble)
+    5050-5054 sound voice 1 frequency (nibbles)
+    5055      sound voice 1 volume (nibble)
+    5056-5059 sound voice 2 frequency (nibbles)
+    505a      sound voice 2 volume (nibble)
+    505b-505e sound voice 3 frequency (nibbles)
+    505f      sound voice 3 volume (nibble)
+    5062-506d Sprite coordinates, x/y pairs for 6 sprites
+    5070      palette bank
+    5071      colortable bank
+    5073      background priority over sprites
+    5074      char gfx bank
+    5075      sprite gfx bank
+    5080      scroll
+    50c0      Watchdog reset
 
-	I/O ports:
-	OUT on port $0 sets the interrupt vector
+    I/O ports:
+    OUT on port $0 sets the interrupt vector
 
 ***************************************************************************/
 
@@ -107,7 +107,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -144,7 +144,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -201,7 +201,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -242,7 +242,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -256,7 +256,7 @@ static struct namco_interface namco_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -295,7 +295,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -325,7 +325,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -378,7 +378,7 @@ static DRIVER_INIT( jrpacman )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

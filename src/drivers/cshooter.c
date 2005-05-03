@@ -34,13 +34,13 @@ Stephh's notes (based on the game Z80 code and some tests) :
 
       * I think that they aren't handled correctly : after a few frames,
         the number of lives are reset to 0, causing a "GAME OVER" 8(
-			* - or is this protection from the 68705, haze
+            * - or is this protection from the 68705, haze
 
 
   - Inputs notes :
 
       * COINx don't work correcly : see "cshooter_coin_r" read handler.
-	* In game, bits 3 and 4 of 0xc202 ("START") are tested,
+    * In game, bits 3 and 4 of 0xc202 ("START") are tested,
         while bits 4 and 5 are tested in the "test mode".
       * Pressing STARTx while in game adds lives (depending on the
         "Lives" Dip Switch) for player x.
@@ -141,8 +141,8 @@ static MACHINE_INIT( cshooter )
 READ8_HANDLER ( cshooter_coin_r )
 {
 	/* Even reads must return 0xff - Odd reads must return the contents of input port 5.
-	   Code at 0x5061 is executed once during P.O.S.T. where there is one read.
-	   Code at 0x50b4 is then executed each frame (not sure) where there are 2 reads. */
+       Code at 0x5061 is executed once during P.O.S.T. where there is one read.
+       Code at 0x50b4 is then executed each frame (not sure) where there are 2 reads. */
 
 	return ( (cshooter_counter++ & 1) ? 0xff : input_port_5_r(0) );
 }
@@ -220,7 +220,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( cshooter )
-	PORT_START	/* IN0	(0xc200) */
+	PORT_START	/* IN0  (0xc200) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
@@ -230,7 +230,7 @@ INPUT_PORTS_START( cshooter )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN1	(0xc201) */
+	PORT_START	/* IN1  (0xc201) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
@@ -240,7 +240,7 @@ INPUT_PORTS_START( cshooter )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* START	(0xc202) */
+	PORT_START	/* START    (0xc202) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -250,7 +250,7 @@ INPUT_PORTS_START( cshooter )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW2	(0xc203) */
+	PORT_START	/* DSW2 (0xc203) */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
@@ -273,7 +273,7 @@ INPUT_PORTS_START( cshooter )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* DSW1	(0xc204) */
+	PORT_START	/* DSW1 (0xc204) */
 	PORT_DIPNAME( 0x01, 0x01, "Coin Slots" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -297,7 +297,7 @@ INPUT_PORTS_START( cshooter )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* COIN	(0xc205) */
+	PORT_START	/* COIN (0xc205) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -348,7 +348,7 @@ static MACHINE_DRIVER_START( cshooter )
 	MDRV_CPU_ADD(Z80,6000000)		 /* ? MHz */
 	MDRV_CPU_PROGRAM_MAP(s_readmem,s_writemem)
 	MDRV_CPU_IO_MAP(s_readport,s_writeport)
-//	MDRV_CPU_VBLANK_INT(cshooter_interrupt,1)
+//  MDRV_CPU_VBLANK_INT(cshooter_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

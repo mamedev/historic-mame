@@ -6,12 +6,12 @@
  *   Written by Buffoni Mirko in 08/06/97
  *   References: various sources and documents.
  *
- *	 HJB 08/31/98
- *	 modified to use an automatically selected oversampling factor
- *	 for the current Machine->sample_rate
+ *   HJB 08/31/98
+ *   modified to use an automatically selected oversampling factor
+ *   for the current Machine->sample_rate
  *
- *	 01/06/99
- *	separate MSM5205 emulator form adpcm.c and some fix
+ *   01/06/99
+ *  separate MSM5205 emulator form adpcm.c and some fix
  */
 
 #include <stdio.h>
@@ -23,11 +23,11 @@
 
 /*
  *
- *	MSM 5205 ADPCM chip:
+ *  MSM 5205 ADPCM chip:
  *
- *	Data is streamed from a CPU by means of a clock generated on the chip.
+ *  Data is streamed from a CPU by means of a clock generated on the chip.
  *
- *	A reset signal is set high or low to determine whether playback (and interrupts) are occuring
+ *  A reset signal is set high or low to determine whether playback (and interrupts) are occuring
  *
  */
 
@@ -174,7 +174,7 @@ static void msm5205_reset(void *chip)
 static void *msm5205_start(int sndindex, int clock, const void *config)
 {
 	struct MSM5205Voice *voice;
-	
+
 	voice = auto_malloc(sizeof(*voice));
 	memset(voice, 0, sizeof(*voice));
 	sound_register_token(voice);
@@ -204,7 +204,7 @@ static void *msm5205_start(int sndindex, int clock, const void *config)
 void MSM5205_vclk_w (int num, int vclk)
 {
 	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
-	
+
 	if( voice->prescaler != 0 )
 	{
 		logerror("error: MSM5205_vclk_w() called with chip = %d, but VCLK selected master mode\n", num);

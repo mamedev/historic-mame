@@ -38,21 +38,21 @@ PALETTE_INIT( 1943 )
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		bit3 = (color_prom[i] >> 3) & 0x01;
-		
+
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
-		
+
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
-		
+
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		palette_set_color(i, r, g, b);
@@ -186,19 +186,19 @@ static void c1943_get_fg_tile_info(int tile_index)
 
 VIDEO_START( 1943 )
 {
-	bg2_tilemap = tilemap_create(c1943_get_bg2_tile_info, tilemap_scan_cols, 
+	bg2_tilemap = tilemap_create(c1943_get_bg2_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 32, 32, 2048, 8);
 
 	if ( !bg2_tilemap )
 		return 1;
 
-	bg_tilemap = tilemap_create(c1943_get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(c1943_get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 32, 32, 2048, 8);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(c1943_get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(c1943_get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -231,7 +231,7 @@ static void c1943_draw_sprites( struct mame_bitmap *bitmap, const struct rectang
 		// the priority is actually selected by bit 3 of BMPROM.07
 		if (priority)
 		{
-			if (color != 0x0a && color != 0x0b)	
+			if (color != 0x0a && color != 0x0b)
 			{
 				drawgfx(bitmap, Machine->gfx[3], code, color, flip_screen, flip_screen,
 					sx, sy, cliprect, TRANSPARENCY_PEN, 0);

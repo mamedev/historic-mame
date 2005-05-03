@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Cinematronics vector hardware
+    Cinematronics vector hardware
 
 ***************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -29,7 +29,7 @@ enum
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -42,20 +42,20 @@ static UINT8 last_control;
 
 /*************************************
  *
- *	Vector rendering
+ *  Vector rendering
  *
  *************************************/
 
 void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift)
 {
 	int intensity = 0xff;
-	
+
 	/* adjust for slop */
 	sx = sx - Machine->visible_area.min_x;
 	ex = ex - Machine->visible_area.min_x;
 	sy = sy - Machine->visible_area.min_y;
 	ey = ey - Machine->visible_area.min_y;
-	
+
 	/* point intensity is determined by the shift value */
 	if (sx == ex && sy == ey)
 		intensity = 0x1ff * shift / 8;
@@ -63,10 +63,10 @@ void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift
 	/* move to the starting position if we're not there already */
 	if (sx != lastx || sy != lasty)
 		vector_add_point(sx << 16, sy << 16, 0, 0);
-	
+
 	/* draw the vector */
 	vector_add_point(ex << 16, ey << 16, vector_color, intensity);
-	
+
 	/* remember the last point */
 	lastx = ex;
 	lasty = ey;
@@ -76,7 +76,7 @@ void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift
 
 /*************************************
  *
- *	Vector color handling
+ *  Vector color handling
  *
  *************************************/
 
@@ -90,7 +90,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 			/* color is either bright or dim, selected by the value sent to the port */
 			vector_color = (data & 1) ? MAKE_RGB(0x80,0x80,0x80) : MAKE_RGB(0xff,0xff,0xff);
 			break;
-		
+
 		case COLOR_16LEVEL:
 			/* on the rising edge of the data value, latch bits 0-3 of the */
 			/* X register as the intensity */
@@ -101,7 +101,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 				vector_color = MAKE_RGB(i,i,i);
 			}
 			break;
-		
+
 		case COLOR_64LEVEL:
 			/* on the rising edge of the data value, latch bits 2-7 of the */
 			/* X register as the intensity */
@@ -113,7 +113,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 				vector_color = MAKE_RGB(i,i,i);
 			}
 			break;
-		
+
 		case COLOR_RGB:
 			/* on the rising edge of the data value, latch the X register */
 			/* as 4-4-4 BGR values */
@@ -129,11 +129,11 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 				vector_color = MAKE_RGB(r,g,b);
 			}
 			break;
-		
+
 		case COLOR_QB3:
 			{
 				static int lastx, lasty;
-				
+
 				/* on the falling edge of the data value, remember the original X,Y values */
 				/* they will be restored on the rising edge; this is to simulate the fact */
 				/* that the Rockola color hardware did not overwrite the beam X,Y position */
@@ -156,7 +156,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 					b = (~yval >> 6) & 0x03;
 					b = b * 255 / 3;
 					vector_color = MAKE_RGB(r,g,b);
-					
+
 					/* restore the original X,Y values */
 					cpunum_set_reg(0, CCPU_X, lastx);
 					cpunum_set_reg(0, CCPU_Y, lasty);
@@ -164,7 +164,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 			}
 			break;
 	}
-	
+
 	/* remember the last value */
 	last_control = data;
 }
@@ -173,7 +173,7 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -215,7 +215,7 @@ VIDEO_START( cinemat_qb3color )
 
 /*************************************
  *
- *	End-of-frame
+ *  End-of-frame
  *
  *************************************/
 
@@ -228,7 +228,7 @@ VIDEO_EOF( cinemat )
 
 /*************************************
  *
- *	Space War update
+ *  Space War update
  *
  *************************************/
 

@@ -1,6 +1,6 @@
 /*
-	Video Hardware for Shoot Out
-	prom GB09.K6 may be related to background tile-sprite priority
+    Video Hardware for Shoot Out
+    prom GB09.K6 may be related to background tile-sprite priority
 */
 
 #include "driver.h"
@@ -97,14 +97,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	for( count=0; count<128; count++ ){
 		int attributes = source[1];
 		/*
-		    76543210
-			xxx-----	bank
-			---x----	vertical size
-			----x---	priority
-			-----x--	horizontal flip
-			------x-	flicker
-			-------x	enable
-		*/
+            76543210
+            xxx-----    bank
+            ---x----    vertical size
+            ----x---    priority
+            -----x--    horizontal flip
+            ------x-    flicker
+            -------x    enable
+        */
 		if ( attributes & 0x01 ){ /* visible */
 			if( bFlicker || (attributes&0x02)==0 ){
 				int priority_mask = (attributes&0x08)?0x2:0;

@@ -278,9 +278,9 @@ INLINE int tone4(int samplerate)
 	int sum;
 
 	/* Two resistors divide the output voltage of the op-amp between
-	 * polybit = 0: 0V and level: x * opamp_resistor / (opamp_resistor + polybit_resistor)
-	 * polybit = 1: level and 5V: x * polybit_resistor / (opamp_resistor + polybit_resistor)
-	 */
+     * polybit = 0: 0V and level: x * opamp_resistor / (opamp_resistor + polybit_resistor)
+     * polybit = 1: level and 5V: x * polybit_resistor / (opamp_resistor + polybit_resistor)
+     */
 	if (polybit)
 		level = level + (VMAX - level) * opamp_resistor / (opamp_resistor + polybit_resistor);
 	else
@@ -353,9 +353,9 @@ INLINE int noise(int samplerate)
 	int sum = 0;
 
 	/*
-	 * bit 4 of latch A: noise counter rate modulation?
-	 * CV2 input of lower 556 is connected via 2k resistor
-	 */
+     * bit 4 of latch A: noise counter rate modulation?
+     * CV2 input of lower 556 is connected via 2k resistor
+     */
 	if ( sound_latch_a & 0x10 )
 		counter -= noise_freq * 2 / 3; /* ????? */
 	else
@@ -370,12 +370,12 @@ INLINE int noise(int samplerate)
 	}
 
 	/* The polynome output bit is used to gate bits 6 + 7 of
-	 * sound latch A through the upper half of a 4066 chip.
-	 * Bit 6 is sweeping a capacitor between 0V and 4.7V
-	 * while bit 7 is connected directly to the 4066.
-	 * Both outputs are then filtered, bit 7 even twice,
-	 * but it's beyond me what the filters there are doing...
-	 */
+     * sound latch A through the upper half of a 4066 chip.
+     * Bit 6 is sweeping a capacitor between 0V and 4.7V
+     * while bit 7 is connected directly to the 4066.
+     * Both outputs are then filtered, bit 7 even twice,
+     * but it's beyond me what the filters there are doing...
+     */
 	if (polybit)
 	{
 		sum += c_pa6_level;
@@ -420,10 +420,10 @@ WRITE8_HANDLER( pleiads_sound_control_a_w )
 WRITE8_HANDLER( pleiads_sound_control_b_w )
 {
 	/*
-	 * pitch selects one of 4 possible clock inputs
-	 * (actually 3, because IC2 and IC3 are tied together)
-	 * write note value to TMS3615; voice b1 & b2
-	 */
+     * pitch selects one of 4 possible clock inputs
+     * (actually 3, because IC2 and IC3 are tied together)
+     * write note value to TMS3615; voice b1 & b2
+     */
 	int note = data & 15;
 	int pitch = (data >> 6) & 3;
 
@@ -483,8 +483,8 @@ static void *common_sh_start(const struct CustomSound_interface *config, const c
 void *pleiads_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* The real values are _unknown_!
-	 * I took the ones from Naughty Boy / Pop Flamer
-	 */
+     * I took the ones from Naughty Boy / Pop Flamer
+     */
 
 	/* charge 10u?? (C??) through 330K?? (R??) -> 3.3s */
 	pa5_charge_time = 3.3;
@@ -503,11 +503,11 @@ void *pleiads_sh_start(int clock, const struct CustomSound_interface *config)
 	pb4_discharge_time = 0.1;
 
 	/* charge C49 (22u?) via R47 (2k?) and R48 (1k)
-	 * time constant (1000+2000) * 22e-6 = 0.066s */
+     * time constant (1000+2000) * 22e-6 = 0.066s */
 	pc4_charge_time = 0.066;
 
 	/* discharge C49 (22u?) via R48 (1k) and diode D1
-	 * time constant 1000 * 22e-6 = 0.022s */
+     * time constant 1000 * 22e-6 = 0.022s */
 	pc4_discharge_time = 0.022;
 
 	/* charge 10u?? through 330 -> 0.0033s */
@@ -527,7 +527,7 @@ void *pleiads_sh_start(int clock, const struct CustomSound_interface *config)
 	tone3_max_freq = 582;
 
 	/* lower 556 upper half: Ra=33k??, Rb=100k??, C=0.0047uF??
-	   freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
+       freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
 	tone4_max_freq = 1315;
 
 	/* how to divide the V/C voltage for tone #4 */
@@ -535,7 +535,7 @@ void *pleiads_sh_start(int clock, const struct CustomSound_interface *config)
 	opamp_resistor = 20;
 
 	/* lower 556 lower half: Ra=100k??, Rb=1k??, C=0.01uF??
-	  freq = 1.44 / ((100000+2*1000) * 0.01e-6) = approx. 1412 Hz */
+      freq = 1.44 / ((100000+2*1000) * 0.01e-6) = approx. 1412 Hz */
 	noise_freq = 1412;	/* higher noise rate than popflame/naughtyb??? */
 
 	return common_sh_start(config, "Custom (Pleiads)");
@@ -560,11 +560,11 @@ void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config)
 	pb4_discharge_time = 0.1;
 
 	/* charge 10uF? (C??) via 3k?? (R??) and 2k?? (R28?)
-	 * time constant (3000+2000) * 10e-6 = 0.05s */
+     * time constant (3000+2000) * 10e-6 = 0.05s */
 	pc4_charge_time = 0.05 * 10;
 
 	/* discharge 10uF? (C??) via 2k?? R28??  and diode D?
-	 * time constant 2000 * 10e-6 = 0.02s */
+     * time constant 2000 * 10e-6 = 0.02s */
 	pc4_discharge_time = 0.02 * 10;
 
 	/* charge 10u through 330 -> 0.0033s */
@@ -584,7 +584,7 @@ void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config)
 	tone3_max_freq = 322;
 
 	/* lower 556 upper half: Ra=33k, Rb=100k, C=0.0047uF
-	   freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
+       freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
 	tone4_max_freq = 1315;
 
 	/* how to divide the V/C voltage for tone #4 */
@@ -592,7 +592,7 @@ void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config)
 	opamp_resistor = 20;
 
 	/* lower 556 lower half: Ra=200k, Rb=1k, C=0.01uF
-	  freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
+      freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
 	noise_freq = 713;
 
 	return common_sh_start(config, "Custom (Naughty Boy)");
@@ -617,11 +617,11 @@ void *popflame_sh_start(int clock, const struct CustomSound_interface *config)
 	pb4_discharge_time = 0.02;
 
 	/* charge 2.2uF (C49?) via R47 (100) and R48 (1k)
-	 * time constant (100+1000) * 2.2e-6 = 0.00242 */
+     * time constant (100+1000) * 2.2e-6 = 0.00242 */
 	pc4_charge_time = 0.000242;
 
 	/* discharge 2.2uF (C49?) via R48 (1k) and diode D1
-	 * time constant 1000 * 22e-6 = 0.0022s */
+     * time constant 1000 * 22e-6 = 0.0022s */
 	pc4_discharge_time = 0.00022;
 
 	/* charge 22u (C52 in Pop Flamer) through 10k -> 0.22s */
@@ -641,7 +641,7 @@ void *popflame_sh_start(int clock, const struct CustomSound_interface *config)
 	tone3_max_freq = 1108;
 
 	/* lower 556 upper half: Ra=33k, Rb=100k, C=0.0047uF
-	   freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
+       freq = 1.44 / ((33000+2*100000) * 0.0047e-6) = approx. 1315 Hz */
 	tone4_max_freq = 1315;
 
 	/* how to divide the V/C voltage for tone #4 */
@@ -649,7 +649,7 @@ void *popflame_sh_start(int clock, const struct CustomSound_interface *config)
 	opamp_resistor = 20;
 
 	/* lower 556 lower half: Ra=200k, Rb=1k, C=0.01uF
-	  freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
+      freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
 	noise_freq = 713;
 
 	return common_sh_start(config, "Custom (Pop Flamer)");

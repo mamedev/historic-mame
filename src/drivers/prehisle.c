@@ -1,10 +1,10 @@
 /***************************************************************************
 
-	Prehistoric Isle in 1930 (World)		(c) 1989 SNK
-	Prehistoric Isle in 1930 (USA)			(c) 1989 SNK
-	Genshi-Tou 1930's (Japan)               (c) 1989 SNK
+    Prehistoric Isle in 1930 (World)        (c) 1989 SNK
+    Prehistoric Isle in 1930 (USA)          (c) 1989 SNK
+    Genshi-Tou 1930's (Japan)               (c) 1989 SNK
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

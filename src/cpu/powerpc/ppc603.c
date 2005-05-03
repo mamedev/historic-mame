@@ -146,12 +146,12 @@ static int ppc603_execute(int cycles)
 		ppc_icount--;
 
 		ppc.tb += 1;
-		
+
 		DEC -= 1;
 		if(DEC > dec_old) {
 			ppc603_exception(EXCEPTION_DECREMENTER);
 		}
 	}
-	
+
 	return cycles - ppc_icount;
 }

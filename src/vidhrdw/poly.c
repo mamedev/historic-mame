@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	poly.c
+    poly.c
 
-	Helper routines for polygon rendering.
+    Helper routines for polygon rendering.
 
 ***************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -21,7 +21,7 @@ static struct poly_scanline_data scanlines;
 
 
 /*------------------------------------------------------------------
-	setup_triangle_n
+    setup_triangle_n
 ------------------------------------------------------------------*/
 
 #define RECURSIVE_INCLUDE
@@ -100,12 +100,12 @@ const struct poly_scanline_data *FUNC_NAME(const struct poly_vertex *v1, const s
 
 	/* imagine the triangle divided into two parts vertically, splitting at v2:
 
-				* (v1)			------- part 1 starts here
+                * (v1)          ------- part 1 starts here
 
-		(v2) *					------- part 1 ends here, part 2 starts here
+        (v2) *                  ------- part 1 ends here, part 2 starts here
 
-					* (v3)		------- part 2 ends here
-	*/
+                    * (v3)      ------- part 2 ends here
+    */
 
 	/* determine what portion of the triangle lives in the upper part (16.16) */
 	temp = v3->y - v1->y;

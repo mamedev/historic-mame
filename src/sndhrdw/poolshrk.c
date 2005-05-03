@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	sndhrdw\poolshrk.c
+    sndhrdw\poolshrk.c
 
 *************************************************************************/
 #include "driver.h"
@@ -115,10 +115,10 @@ DISCRETE_SOUND_START(poolshrk_discrete_interface)
 
 
 	/*
-	 * The TC ouput of E8 is sent to a one shot made up by
-	 * C12/R62.  Clamped by CR16. Shaped to square by L9.
-	 * This causes click to be triggered at the end of score.
-	 */
+     * The TC ouput of E8 is sent to a one shot made up by
+     * C12/R62.  Clamped by CR16. Shaped to square by L9.
+     * This causes click to be triggered at the end of score.
+     */
 	DISCRETE_ONESHOT(NODE_39,	// buffer L9 pin 12
 			 NODE_31,	// from TC pin 15 of E8
 			 1, 0,		// output 0/1 for the minimum sample period
@@ -152,7 +152,7 @@ DISCRETE_SOUND_END
 
 /*************************************
  *
- *	Write handlers
+ *  Write handlers
  *
  *************************************/
 

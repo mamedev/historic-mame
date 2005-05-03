@@ -151,15 +151,15 @@ WRITE8_HANDLER( kncljoe_control_w )
 	switch(offset)
 	{
 		/*
-			0x01	screen flip
-			0x02	coin counter#1
-			0x04	sprite bank
-			0x10	character bank
-			0x20	coin counter#2
+            0x01    screen flip
+            0x02    coin counter#1
+            0x04    sprite bank
+            0x10    character bank
+            0x20    coin counter#2
 
-			reset when IN0 - Coin 1 goes low (active)
-			set after IN0 - Coin 1 goes high AND the credit has been added
-		*/
+            reset when IN0 - Coin 1 goes low (active)
+            set after IN0 - Coin 1 goes high AND the credit has been added
+        */
 		case 0:
 			flipscreen = data & 0x01;
 			tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPX : TILEMAP_FLIPY);

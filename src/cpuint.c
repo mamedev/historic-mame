@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	cpuint.c
+    cpuint.c
 
-	Core multi-CPU interrupt engine.
+    Core multi-CPU interrupt engine.
 
 ***************************************************************************/
 
@@ -20,7 +20,7 @@
 
 /*************************************
  *
- *	Debug logging
+ *  Debug logging
  *
  *************************************/
 
@@ -36,7 +36,7 @@
 
 /*************************************
  *
- *	Macros to help verify active CPU
+ *  Macros to help verify active CPU
  *
  *************************************/
 
@@ -60,7 +60,7 @@
 
 /*************************************
  *
- *	CPU interrupt variables
+ *  CPU interrupt variables
  *
  *************************************/
 
@@ -81,7 +81,7 @@ static int input_event_index[MAX_CPU][MAX_INPUT_LINES];
 
 /*************************************
  *
- *	IRQ acknowledge callbacks
+ *  IRQ acknowledge callbacks
  *
  *************************************/
 
@@ -116,7 +116,7 @@ static int (*drv_irq_callbacks[MAX_CPU])(int);
 
 /*************************************
  *
- *	Initialize a CPU's interrupt states
+ *  Initialize a CPU's interrupt states
  *
  *************************************/
 
@@ -149,7 +149,7 @@ int cpuint_init(void)
 
 /*************************************
  *
- *	Reset a CPU's interrupt states
+ *  Reset a CPU's interrupt states
  *
  *************************************/
 
@@ -180,8 +180,8 @@ void cpuint_reset_cpu(int cpunum)
 
 /*************************************
  *
- *	Empty a CPU's event queue for
- *	a specific input line
+ *  Empty a CPU's event queue for
+ *  a specific input line
  *
  *************************************/
 
@@ -206,7 +206,7 @@ static void cpunum_empty_event_queue(int cpu_and_inputline)
 		/* set the input line state and vector */
 		input_line_state[cpunum][line] = state;
 		input_line_vector[cpunum][line] = vector;
-		
+
 		/* special case: RESET */
 		if (line == INPUT_LINE_RESET)
 		{
@@ -224,7 +224,7 @@ static void cpunum_empty_event_queue(int cpu_and_inputline)
 				cpunum_resume(cpunum, SUSPEND_REASON_RESET);
 			}
 		}
-		
+
 		/* special case: HALT */
 		else if (line == INPUT_LINE_HALT)
 		{
@@ -236,7 +236,7 @@ static void cpunum_empty_event_queue(int cpu_and_inputline)
 			else if (state == CLEAR_LINE)
 				cpunum_resume(cpunum, SUSPEND_REASON_HALT);
 		}
-		
+
 		/* all other cases */
 		else
 		{
@@ -278,8 +278,8 @@ static void cpunum_empty_event_queue(int cpu_and_inputline)
 
 /*************************************
  *
- *	Set the state of a CPU's input
- *	line
+ *  Set the state of a CPU's input
+ *  line
  *
  *************************************/
 
@@ -324,7 +324,7 @@ void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vecto
 		if (event_index < MAX_INPUT_EVENTS)
 		{
 			input_event_queue[cpunum][line][event_index] = input_event;
-			
+
 			/* if this is the first one, set the timer */
 			if (event_index == 0)
 				mame_timer_set(time_zero, cpunum | (line << 8), cpunum_empty_event_queue);
@@ -342,7 +342,7 @@ void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vecto
 
 /*************************************
  *
- *	Set IRQ callback for drivers
+ *  Set IRQ callback for drivers
  *
  *************************************/
 
@@ -355,7 +355,7 @@ void cpu_set_irq_callback(int cpunum, int (*callback)(int))
 
 /*************************************
  *
- *	Internal IRQ callbacks
+ *  Internal IRQ callbacks
  *
  *************************************/
 
@@ -399,7 +399,7 @@ static int cpu_7_irq_callback(int line) { return cpu_irq_callback(7, line); }
 
 /*************************************
  *
- *	NMI interrupt generation
+ *  NMI interrupt generation
  *
  *************************************/
 
@@ -421,7 +421,7 @@ INTERRUPT_GEN( nmi_line_assert )
 
 /*************************************
  *
- *	IRQ n interrupt generation
+ *  IRQ n interrupt generation
  *
  *************************************/
 
@@ -459,7 +459,7 @@ INLINE void irqn_line_assert(int line)
 
 /*************************************
  *
- *	IRQ interrupt generation
+ *  IRQ interrupt generation
  *
  *************************************/
 
@@ -504,7 +504,7 @@ INTERRUPT_GEN( irq7_line_assert )	{ irqn_line_assert(7); }
 
 /*************************************
  *
- *	Interrupt enabling
+ *  Interrupt enabling
  *
  *************************************/
 

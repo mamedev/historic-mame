@@ -1,278 +1,278 @@
 /***************************************************************************
 
-	Atari Centipede hardware
+    Atari Centipede hardware
 
-	Games supported:
-		* Centipede (5 sets)
-		* Warlords
-		* Millipede
-		* Bulls Eye Darts
+    Games supported:
+        * Centipede (5 sets)
+        * Warlords
+        * Millipede
+        * Bulls Eye Darts
 
-	Known bugs:
-		* are coins supposed to take over a second to register?
+    Known bugs:
+        * are coins supposed to take over a second to register?
 
-	Centipede sync-prom added by HIGHWAYMAN.
-	The prom pcb location is:P4 and is 256x4
-	(i need to update the dump, this one is read in 8bit-mode)
-
-****************************************************************************
-
-	Main clock: XTAL = 12.096 MHz
-	6502 Clock: XTAL/8 = 1.512 MHz (0.756 when accessing playfield RAM)
-	Horizontal video frequency: HSYNC = XTAL/256/3 = 15.75 kHz
-	Video frequency: VSYNC = HSYNC/263 ?? = 59.88593 Hz (not sure, could be /262)
-	VBlank duration: 1/VSYNC * (23/263) = 1460 us
-
-
-	              Centipede Memory map and Dip Switches
-	              -------------------------------------
-
-	Memory map for Centipede directly from the Atari schematics (1981).
-
-	 Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
-	--------------------------------------------------------------------------------------
-	0000-03FF       D  D  D  D  D  D  D  D   RAM
-	--------------------------------------------------------------------------------------
-	0400-07BF       D  D  D  D  D  D  D  D   Playfield RAM
-	07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
-	07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
-	07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
-	07F0-07FF             D  D  D  D  D  D   Motion Object Color
-	--------------------------------------------------------------------------------------
-	0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On)
-	0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On)
-	--------------------------------------------------------------------------------------
-	0C00       R    D           D  D  D  D   Horizontal Mini-Track Ball tm Inputs
-	           R       D                     VBLANK  (1 = VBlank)
-	           R          D                  Self-Test  (0 = On)
-	           R             D               Cocktail Cabinet  (1 = Cocktail)
-	0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
-	           R             D               SLAM  (0 = On)
-	           R                D            Player 2 Fire Switch (0 = On)
-	           R                   D         Player 1 Fire Switch (0 = On)
-	           R                      D      Player 2 Start Switch (0 = On)
-	           R                         D   Player 1 Start Switch (0 = On)
-
-	0C02       R    D           D  D  D  D   Vertical Mini-Track Ball tm Inputs
-	0C03       R    D  D  D  D               Player 1 Joystick (R,L,Down,Up)
-	           R                D  D  D  D   Player 2 Joystick   (0 = On)
-	--------------------------------------------------------------------------------------
-	1000-100F R/W   D  D  D  D  D  D  D  D   Custom Audio Chip
-	1404       W                D  D  D  D   Playfield Color RAM
-	140C       W                D  D  D  D   Motion Object Color RAM
-	--------------------------------------------------------------------------------------
-	1600       W    D  D  D  D  D  D  D  D   EA ROM Address & Data Latch
-	1680       W                D  D  D  D   EA ROM Control Latch
-	1700       R    D  D  D  D  D  D  D  D   EA ROM Read Data
-	--------------------------------------------------------------------------------------
-	1800       W                             IRQ Acknowledge
-	--------------------------------------------------------------------------------------
-	1C00       W    D                        Left Coin Counter (1 = On)
-	1C01       W    D                        Center Coin Counter (1 = On)
-	1C02       W    D                        Right Coin Counter (1 = On)
-	1C03       W    D                        Player 1 Start LED (0 = On)
-	1C04       W    D                        Player 2 Start LED (0 = On)
-	1C07       W    D                        Track Ball Flip Control (0 = Player 1)
-	--------------------------------------------------------------------------------------
-	2000       W                             WATCHDOG
-	2400       W                             Clear Mini-Track Ball Counters
-	--------------------------------------------------------------------------------------
-	2000-3FFF  R                             Program ROM
-	--------------------------------------------------------------------------------------
-
-	-EA ROM is an Erasable Reprogrammable rom to save the top 3 high scores
-	  and other stuff.
-
-
-	 Dip switches at N9 on the PCB
-
-	 8    7    6    5    4    3    2    1    Option
-	-------------------------------------------------------------------------------------
-	                              On   On    English $
-	                              On   Off   German
-	                              Off  On    French
-	                              Off  Off   Spanish
-	-------------------------------------------------------------------------------------
-	                    On   On              2 lives per game
-	                    On   Off             3 lives per game $
-	                    Off  On              4 lives per game
-	                    Off  Off             5 lives per game
-	-------------------------------------------------------------------------------------
-	                                         Bonus life granted at every:
-	          On   On                        10,000 points
-	          On   Off                       12.000 points $
-	          Off  On                        15,000 points
-	          Off  Off                       20,000 points
-	-------------------------------------------------------------------------------------
-	     On                                  Hard game difficulty
-	     Off                                 Easy game difficulty $
-	-------------------------------------------------------------------------------------
-	On                                       1-credit minimum $
-	Off                                      2-credit minimum
-	-------------------------------------------------------------------------------------
-
-	$ = Manufacturer's suggested settings
-
-
-	 Dip switches at N8 on the PCB
-
-	 8    7    6    5    4    3    2    1    Option
-	-------------------------------------------------------------------------------------
-	                              On   On    Free play
-	                              On   Off   1 coin for 2 credits
-	                              Off  On    1 coin for 1 credit $
-	                              Off  Off   2 coins for 1 credit
-	-------------------------------------------------------------------------------------
-	                    On   On              Right coin mech X 1 $
-	                    On   Off             Right coin mech X 4
-	                    Off  On              Right coin mech X 5
-	                    Off  Off             Right coin mech X 6
-	-------------------------------------------------------------------------------------
-	               On                        Left coin mech X 1 $
-	               Off                       Left coin mech X 2
-	-------------------------------------------------------------------------------------
-	On   On   On                             No bonus coins $
-	On   On   Off                            For every 2 coins inserted, game logic
-	                                          adds 1 more coin
-	On   Off  On                             For every 4 coins inserted, game logic
-	                                          adds 1 more coin
-	On   Off  Off                            For every 4 coins inserted, game logic
-	                                          adds 2 more coin
-	Off  On   On                             For every 5 coins inserted, game logic
-	                                          adds 1 more coin
-	Off  On   Off                            For every 3 coins inserted, game logic
-	                                          adds 1 more coin
-	-------------------------------------------------------------------------------------
-	$ = Manufacturer's suggested settings
-
-	Changes:
-		30 Apr 98 LBO
-		* Fixed test mode
-		* Changed high score to use earom routines
-		* Added support for alternate rom set
+    Centipede sync-prom added by HIGHWAYMAN.
+    The prom pcb location is:P4 and is 256x4
+    (i need to update the dump, this one is read in 8bit-mode)
 
 ****************************************************************************
 
-	Millipede memory map (preliminary)
+    Main clock: XTAL = 12.096 MHz
+    6502 Clock: XTAL/8 = 1.512 MHz (0.756 when accessing playfield RAM)
+    Horizontal video frequency: HSYNC = XTAL/256/3 = 15.75 kHz
+    Video frequency: VSYNC = HSYNC/263 ?? = 59.88593 Hz (not sure, could be /262)
+    VBlank duration: 1/VSYNC * (23/263) = 1460 us
 
-	driver by Ivan Mackintosh
 
-	0400-040F		POKEY 1
-	0800-080F		POKEY 2
-	1000-13BF		SCREEN RAM (8x8 TILES, 32x30 SCREEN)
-	13C0-13CF		SPRITE IMAGE OFFSETS
-	13D0-13DF		SPRITE HORIZONTAL OFFSETS
-	13E0-13EF		SPRITE VERTICAL OFFSETS
-	13F0-13FF		SPRITE COLOR OFFSETS
+                  Centipede Memory map and Dip Switches
+                  -------------------------------------
 
-	2000			BIT 1-4 trackball
-					BIT 5 IS P1 FIRE
-					BIT 6 IS P1 START
-					BIT 7 IS VBLANK
+    Memory map for Centipede directly from the Atari schematics (1981).
 
-	2001			BIT 1-4 trackball
-					BIT 5 IS P2 FIRE
-					BIT 6 IS P2 START
-					BIT 7,8 (?)
+     Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
+    --------------------------------------------------------------------------------------
+    0000-03FF       D  D  D  D  D  D  D  D   RAM
+    --------------------------------------------------------------------------------------
+    0400-07BF       D  D  D  D  D  D  D  D   Playfield RAM
+    07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
+    07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
+    07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
+    07F0-07FF             D  D  D  D  D  D   Motion Object Color
+    --------------------------------------------------------------------------------------
+    0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On)
+    0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On)
+    --------------------------------------------------------------------------------------
+    0C00       R    D           D  D  D  D   Horizontal Mini-Track Ball tm Inputs
+               R       D                     VBLANK  (1 = VBlank)
+               R          D                  Self-Test  (0 = On)
+               R             D               Cocktail Cabinet  (1 = Cocktail)
+    0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
+               R             D               SLAM  (0 = On)
+               R                D            Player 2 Fire Switch (0 = On)
+               R                   D         Player 1 Fire Switch (0 = On)
+               R                      D      Player 2 Start Switch (0 = On)
+               R                         D   Player 1 Start Switch (0 = On)
 
-	2010			BIT 1 IS P1 RIGHT
-					BIT 2 IS P1 LEFT
-					BIT 3 IS P1 DOWN
-					BIT 4 IS P1 UP
-					BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
-					BIT 6,7 (?)
-					BIT 8 IS RIGHT COIN
-	2030			earom read
-	2480-249F		COLOR RAM
-	2500-2502		Coin counters
-	2503-2504		LEDs
-	2505-2507		Coin door lights ??
-	2600			INTERRUPT ACKNOWLEDGE
-	2680			CLEAR WATCHDOG
-	2700			earom control
-	2780			earom write
-	4000-7FFF		GAME CODE
+    0C02       R    D           D  D  D  D   Vertical Mini-Track Ball tm Inputs
+    0C03       R    D  D  D  D               Player 1 Joystick (R,L,Down,Up)
+               R                D  D  D  D   Player 2 Joystick   (0 = On)
+    --------------------------------------------------------------------------------------
+    1000-100F R/W   D  D  D  D  D  D  D  D   Custom Audio Chip
+    1404       W                D  D  D  D   Playfield Color RAM
+    140C       W                D  D  D  D   Motion Object Color RAM
+    --------------------------------------------------------------------------------------
+    1600       W    D  D  D  D  D  D  D  D   EA ROM Address & Data Latch
+    1680       W                D  D  D  D   EA ROM Control Latch
+    1700       R    D  D  D  D  D  D  D  D   EA ROM Read Data
+    --------------------------------------------------------------------------------------
+    1800       W                             IRQ Acknowledge
+    --------------------------------------------------------------------------------------
+    1C00       W    D                        Left Coin Counter (1 = On)
+    1C01       W    D                        Center Coin Counter (1 = On)
+    1C02       W    D                        Right Coin Counter (1 = On)
+    1C03       W    D                        Player 1 Start LED (0 = On)
+    1C04       W    D                        Player 2 Start LED (0 = On)
+    1C07       W    D                        Track Ball Flip Control (0 = Player 1)
+    --------------------------------------------------------------------------------------
+    2000       W                             WATCHDOG
+    2400       W                             Clear Mini-Track Ball Counters
+    --------------------------------------------------------------------------------------
+    2000-3FFF  R                             Program ROM
+    --------------------------------------------------------------------------------------
+
+    -EA ROM is an Erasable Reprogrammable rom to save the top 3 high scores
+      and other stuff.
+
+
+     Dip switches at N9 on the PCB
+
+     8    7    6    5    4    3    2    1    Option
+    -------------------------------------------------------------------------------------
+                                  On   On    English $
+                                  On   Off   German
+                                  Off  On    French
+                                  Off  Off   Spanish
+    -------------------------------------------------------------------------------------
+                        On   On              2 lives per game
+                        On   Off             3 lives per game $
+                        Off  On              4 lives per game
+                        Off  Off             5 lives per game
+    -------------------------------------------------------------------------------------
+                                             Bonus life granted at every:
+              On   On                        10,000 points
+              On   Off                       12.000 points $
+              Off  On                        15,000 points
+              Off  Off                       20,000 points
+    -------------------------------------------------------------------------------------
+         On                                  Hard game difficulty
+         Off                                 Easy game difficulty $
+    -------------------------------------------------------------------------------------
+    On                                       1-credit minimum $
+    Off                                      2-credit minimum
+    -------------------------------------------------------------------------------------
+
+    $ = Manufacturer's suggested settings
+
+
+     Dip switches at N8 on the PCB
+
+     8    7    6    5    4    3    2    1    Option
+    -------------------------------------------------------------------------------------
+                                  On   On    Free play
+                                  On   Off   1 coin for 2 credits
+                                  Off  On    1 coin for 1 credit $
+                                  Off  Off   2 coins for 1 credit
+    -------------------------------------------------------------------------------------
+                        On   On              Right coin mech X 1 $
+                        On   Off             Right coin mech X 4
+                        Off  On              Right coin mech X 5
+                        Off  Off             Right coin mech X 6
+    -------------------------------------------------------------------------------------
+                   On                        Left coin mech X 1 $
+                   Off                       Left coin mech X 2
+    -------------------------------------------------------------------------------------
+    On   On   On                             No bonus coins $
+    On   On   Off                            For every 2 coins inserted, game logic
+                                              adds 1 more coin
+    On   Off  On                             For every 4 coins inserted, game logic
+                                              adds 1 more coin
+    On   Off  Off                            For every 4 coins inserted, game logic
+                                              adds 2 more coin
+    Off  On   On                             For every 5 coins inserted, game logic
+                                              adds 1 more coin
+    Off  On   Off                            For every 3 coins inserted, game logic
+                                              adds 1 more coin
+    -------------------------------------------------------------------------------------
+    $ = Manufacturer's suggested settings
+
+    Changes:
+        30 Apr 98 LBO
+        * Fixed test mode
+        * Changed high score to use earom routines
+        * Added support for alternate rom set
 
 ****************************************************************************
 
-				  Warlords Memory map and Dip Switches
-				  ------------------------------------
+    Millipede memory map (preliminary)
 
-	 Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0	 Function
-	--------------------------------------------------------------------------------------
-	0000-03FF		D  D  D  D	D  D  D  D	 RAM
-	--------------------------------------------------------------------------------------
-	0400-07BF		D  D  D  D	D  D  D  D	 Screen RAM (8x8 TILES, 32x32 SCREEN)
-	07C0-07CF		D  D  D  D	D  D  D  D	 Motion Object Picture
-	07D0-07DF		D  D  D  D	D  D  D  D	 Motion Object Vert.
-	07E0-07EF		D  D  D  D	D  D  D  D	 Motion Object Horiz.
-	--------------------------------------------------------------------------------------
-	0800	   R	D  D  D  D	D  D  D  D	 Option Switch 1 (0 = On) (DSW 1)
-	0801	   R	D  D  D  D	D  D  D  D	 Option Switch 2 (0 = On) (DSW 2)
-	--------------------------------------------------------------------------------------
-	0C00	   R	D						 Cocktail Cabinet  (0 = Cocktail)
-			   R	   D					 VBLANK  (1 = VBlank)
-			   R		  D 				 SELF TEST
-			   R			 D				 DIAG STEP (Unused)
-	0C01	   R	D  D  D 				 R,C,L Coin Switches (0 = On)
-			   R			 D				 Slam (0 = On)
-			   R				D			 Player 4 Start Switch (0 = On)
-			   R				   D		 Player 3 Start Switch (0 = On)
-			   R					  D 	 Player 2 Start Switch (0 = On)
-			   R						 D	 Player 1 Start Switch (0 = On)
-	--------------------------------------------------------------------------------------
-	1000-100F  W   D  D  D	D  D  D  D	D	 Pokey
-	--------------------------------------------------------------------------------------
-	1800	   W							 IRQ Acknowledge
-	--------------------------------------------------------------------------------------
-	1C00-1C02  W	D  D  D  D	D  D  D  D	 Coin Counters
-	--------------------------------------------------------------------------------------
-	1C03-1C06  W	D  D  D  D	D  D  D  D	 LEDs
-	--------------------------------------------------------------------------------------
-	4000	   W							 Watchdog
-	--------------------------------------------------------------------------------------
-	5000-7FFF  R							 Program ROM
-	--------------------------------------------------------------------------------------
+    driver by Ivan Mackintosh
 
-	Game Option Settings - J2 (DSW1)
-	=========================
+    0400-040F       POKEY 1
+    0800-080F       POKEY 2
+    1000-13BF       SCREEN RAM (8x8 TILES, 32x30 SCREEN)
+    13C0-13CF       SPRITE IMAGE OFFSETS
+    13D0-13DF       SPRITE HORIZONTAL OFFSETS
+    13E0-13EF       SPRITE VERTICAL OFFSETS
+    13F0-13FF       SPRITE COLOR OFFSETS
 
-	8	7	6	5	4	3	2	1		Option
-	------------------------------------------
-							On	On		English
-							On	Off 	French
-							Off On		Spanish
-							Off Off 	German
-						On				Music at end of each game
-						Off 			Music at end of game for new highscore
-			On	On						1 or 2 player game costs 1 credit
-			On	Off 					1 player game=1 credit, 2 player=2 credits
-			Off Off 					1 or 2 player game costs 2 credits
-			Off On						Not used
-	-------------------------------------------
+    2000            BIT 1-4 trackball
+                    BIT 5 IS P1 FIRE
+                    BIT 6 IS P1 START
+                    BIT 7 IS VBLANK
+
+    2001            BIT 1-4 trackball
+                    BIT 5 IS P2 FIRE
+                    BIT 6 IS P2 START
+                    BIT 7,8 (?)
+
+    2010            BIT 1 IS P1 RIGHT
+                    BIT 2 IS P1 LEFT
+                    BIT 3 IS P1 DOWN
+                    BIT 4 IS P1 UP
+                    BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
+                    BIT 6,7 (?)
+                    BIT 8 IS RIGHT COIN
+    2030            earom read
+    2480-249F       COLOR RAM
+    2500-2502       Coin counters
+    2503-2504       LEDs
+    2505-2507       Coin door lights ??
+    2600            INTERRUPT ACKNOWLEDGE
+    2680            CLEAR WATCHDOG
+    2700            earom control
+    2780            earom write
+    4000-7FFF       GAME CODE
+
+****************************************************************************
+
+                  Warlords Memory map and Dip Switches
+                  ------------------------------------
+
+     Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
+    --------------------------------------------------------------------------------------
+    0000-03FF       D  D  D  D  D  D  D  D   RAM
+    --------------------------------------------------------------------------------------
+    0400-07BF       D  D  D  D  D  D  D  D   Screen RAM (8x8 TILES, 32x32 SCREEN)
+    07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
+    07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
+    07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
+    --------------------------------------------------------------------------------------
+    0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On) (DSW 1)
+    0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On) (DSW 2)
+    --------------------------------------------------------------------------------------
+    0C00       R    D                        Cocktail Cabinet  (0 = Cocktail)
+               R       D                     VBLANK  (1 = VBlank)
+               R          D                  SELF TEST
+               R             D               DIAG STEP (Unused)
+    0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
+               R             D               Slam (0 = On)
+               R                D            Player 4 Start Switch (0 = On)
+               R                   D         Player 3 Start Switch (0 = On)
+               R                      D      Player 2 Start Switch (0 = On)
+               R                         D   Player 1 Start Switch (0 = On)
+    --------------------------------------------------------------------------------------
+    1000-100F  W   D  D  D  D  D  D  D  D    Pokey
+    --------------------------------------------------------------------------------------
+    1800       W                             IRQ Acknowledge
+    --------------------------------------------------------------------------------------
+    1C00-1C02  W    D  D  D  D  D  D  D  D   Coin Counters
+    --------------------------------------------------------------------------------------
+    1C03-1C06  W    D  D  D  D  D  D  D  D   LEDs
+    --------------------------------------------------------------------------------------
+    4000       W                             Watchdog
+    --------------------------------------------------------------------------------------
+    5000-7FFF  R                             Program ROM
+    --------------------------------------------------------------------------------------
+
+    Game Option Settings - J2 (DSW1)
+    =========================
+
+    8   7   6   5   4   3   2   1       Option
+    ------------------------------------------
+                            On  On      English
+                            On  Off     French
+                            Off On      Spanish
+                            Off Off     German
+                        On              Music at end of each game
+                        Off             Music at end of game for new highscore
+            On  On                      1 or 2 player game costs 1 credit
+            On  Off                     1 player game=1 credit, 2 player=2 credits
+            Off Off                     1 or 2 player game costs 2 credits
+            Off On                      Not used
+    -------------------------------------------
 
 
-	Game Price Settings - M2 (DSW2)
-	========================
+    Game Price Settings - M2 (DSW2)
+    ========================
 
-	8	7	6	5	4	3	2	1		Option
-	------------------------------------------
-							On	On		Free play
-							On	Off 	1 coin for 2 credits
-							Off On		1 coin for 1 credit
-							Off Off 	2 coins for 1 credit
-					On	On				Right coin mech x 1
-					On	Off 			Right coin mech x 4
-					Off On				Right coin mech x 5
-					Off Off 			Right coin mech x 6
-				On						Left coin mech x 1
-				Off 					Left coin mech x 2
-	On	On	On							No bonus coins
-	On	On	Off 						For every 2 coins, add 1 coin
-	On	Off On							For every 4 coins, add 1 coin
-	On	Off Off 						For every 4 coins, add 2 coins
-	Off On	On							For every 5 coins, add 1 coin
-	------------------------------------------
+    8   7   6   5   4   3   2   1       Option
+    ------------------------------------------
+                            On  On      Free play
+                            On  Off     1 coin for 2 credits
+                            Off On      1 coin for 1 credit
+                            Off Off     2 coins for 1 credit
+                    On  On              Right coin mech x 1
+                    On  Off             Right coin mech x 4
+                    Off On              Right coin mech x 5
+                    Off Off             Right coin mech x 6
+                On                      Left coin mech x 1
+                Off                     Left coin mech x 2
+    On  On  On                          No bonus coins
+    On  On  Off                         For every 2 coins, add 1 coin
+    On  Off On                          For every 4 coins, add 1 coin
+    On  Off Off                         For every 4 coins, add 2 coins
+    Off On  On                          For every 5 coins, add 1 coin
+    ------------------------------------------
 
 ***************************************************************************/
 
@@ -295,7 +295,7 @@ static data8_t *rambase;
 
 /*************************************
  *
- *	Interrupts
+ *  Interrupts
  *
  *************************************/
 
@@ -339,7 +339,7 @@ static WRITE8_HANDLER( irq_ack_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -418,7 +418,7 @@ static READ8_HANDLER( bullsdrt_data_port_r )
 		case 0x6b19:
 			return 0x01;
 	}
-	
+
 	return 0;
 }
 
@@ -426,7 +426,7 @@ static READ8_HANDLER( bullsdrt_data_port_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -457,7 +457,7 @@ static WRITE8_HANDLER( bullsdrt_coin_count_w )
 
 /*************************************
  *
- *	Bootleg sound
+ *  Bootleg sound
  *
  *************************************/
 
@@ -478,7 +478,7 @@ static READ8_HANDLER( caterplr_AY8910_r )
 
 /*************************************
  *
- *	Centipede CPU memory handlers
+ *  Centipede CPU memory handlers
  *
  *************************************/
 
@@ -537,7 +537,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Millipede CPU memory handlers
+ *  Millipede CPU memory handlers
  *
  *************************************/
 
@@ -557,7 +557,7 @@ static ADDRESS_MAP_START( milliped_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2500, 0x2502) AM_WRITE(coin_count_w)
 	AM_RANGE(0x2503, 0x2504) AM_WRITE(led_w)
 	AM_RANGE(0x2505, 0x2505) AM_WRITE(input_select_w)
-//	AM_RANGE(0x2506, 0x2507) AM_WRITE(MWA8_NOP) /* ? */
+//  AM_RANGE(0x2506, 0x2507) AM_WRITE(MWA8_NOP) /* ? */
 	AM_RANGE(0x2600, 0x2600) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x2680, 0x2680) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x2700, 0x2700) AM_WRITE(atari_vg_earom_ctrl_w)
@@ -569,7 +569,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Warlords CPU memory handlers
+ *  Warlords CPU memory handlers
  *
  *************************************/
 
@@ -594,7 +594,7 @@ ADDRESS_MAP_END
 
 /****************************************
  *
- *	Bulls Eye Darts CPU memory handlers
+ *  Bulls Eye Darts CPU memory handlers
  *
  ****************************************/
 
@@ -631,7 +631,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -1185,7 +1185,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts: Centipede/Millipede
+ *  Graphics layouts: Centipede/Millipede
  *
  *************************************/
 
@@ -1230,7 +1230,7 @@ static struct GfxDecodeInfo milliped_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Graphics layouts: Warlords
+ *  Graphics layouts: Warlords
  *
  *************************************/
 
@@ -1256,7 +1256,7 @@ static struct GfxDecodeInfo warlords_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -1289,7 +1289,7 @@ static struct POKEYinterface warlords_pokey_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -1447,7 +1447,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1508,7 +1508,7 @@ ROM_START( caterplr )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, CRC(d91b9724) SHA1(5ff9ccb2769c853b44764bfe829ad1df08686dc6) )
-	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, CRC(c2b08489) SHA1(9427e54537312ee0a70ec7bd1c039e92f8cfadad) ) 
+	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, CRC(c2b08489) SHA1(9427e54537312ee0a70ec7bd1c039e92f8cfadad) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "136001.213",   0x0000, 0x0100, CRC(6fa3093a) SHA1(2b7aeca74c1ae4156bf1878453a047330f96f0a8) )
@@ -1614,7 +1614,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1643,7 +1643,7 @@ static DRIVER_INIT( bullsdrt )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

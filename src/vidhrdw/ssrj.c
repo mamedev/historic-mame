@@ -107,7 +107,7 @@ static const int fakecols[4*4][8][3]=
  {0x00,0xa0,0x00},
  {0x00,0xc0,0x00},
  {0x00,0xf0,0x00}},
- 
+
  {{0x00,0x00,0x00},
  {0x20,0x00,0x20},
  {0x40,0x00,0x40},
@@ -180,7 +180,7 @@ static const int fakecols[4*4][8][3]=
  {0x00,0xaf,0x00},
  {0xff,0xff,0xff},
  {0x7f,0xff,0x7f}},
- 
+
 {{0x00,0x00,0x00},
  {0x20,0x20,0x20},
  {0x40,0x40,0x40},
@@ -253,11 +253,11 @@ static void draw_objects( struct mame_bitmap *bitmap, const struct rectangle *cl
 	  if(!ssrj_scrollram[0x80+20*i+3])
 	    for(k=0;k<5;k++,y+=8)
 	     for(j=0;j<0x20;j++)
-	     {	
+	     {
 		int code;
 		code=ssrj_vram3[(i*5+k)*64+(31-j)*2]+256*ssrj_vram3[(i*5+k)*64+(31-j)*2+1];
 		drawgfx(bitmap,
-			Machine->gfx[0], 
+			Machine->gfx[0],
 			code&1023,
 			((code>>12)&0x3)+8,
 			code&0x8000,
@@ -276,7 +276,7 @@ PALETTE_INIT( ssrj )
 	int i,j;
 	for(i=0;i<4*4;i++)
 	 for(j=0;j<8;j++)
-	  palette_set_color(i*8+j,fakecols[i][j][0],fakecols[i][j][1],fakecols[i][j][2]);	
+	  palette_set_color(i*8+j,fakecols[i][j][0],fakecols[i][j][1],fakecols[i][j][2]);
 }
 
 VIDEO_UPDATE( ssrj )

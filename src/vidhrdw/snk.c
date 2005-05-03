@@ -11,18 +11,18 @@
  Games Not Using Shadows?
 
  those using gwar_vh_screenrefresh (gwar, bermudat, psychos, chopper1)
-	(0-15 , 15 is transparent)
+    (0-15 , 15 is transparent)
 
  Games Using Shadows?
 
  those using tnk3_vh_screenrefresh (tnk3, athena, fitegolf) sgladiat is similar
-	(0-7  , 6  is shadow, 7  is transparent) * these are using aso colour prom convert *
+    (0-7  , 6  is shadow, 7  is transparent) * these are using aso colour prom convert *
  those using tdfever_vh_screenrefresh (tdfever)
-	(0-15 , 14(13 for tdfeverj) is shadow, 15 is transparent)
+    (0-15 , 14(13 for tdfeverj) is shadow, 15 is transparent)
  those using ftsoccer_vh_screenrefresh (ftsoccer)
-	(0-15 , 14 is shadow/highlight, 15 is transparent)
+    (0-15 , 14 is shadow/highlight, 15 is transparent)
  those using ikari_vh_screenrefresh (ikari, victroad)
-	(0-7  , 6  is shadow, 7  is transparent)
+    (0-7  , 6  is shadow, 7  is transparent)
 
 *******************************************************************************/
 
@@ -222,15 +222,15 @@ VIDEO_UPDATE( tnk3 )
 	unsigned char *ram = memory_region(REGION_CPU1);
 	int attributes = ram[0xc800];
 	/*
-		X-------
-		-X------	character bank (for text layer)
-		--X-----
-		---X----	scrolly MSB (background)
-		----X---	scrolly MSB (sprites)
-		-----X--
-		------X-	scrollx MSB (background)
-		-------X	scrollx MSB (sprites)
-	*/
+        X-------
+        -X------    character bank (for text layer)
+        --X-----
+        ---X----    scrolly MSB (background)
+        ----X---    scrolly MSB (sprites)
+        -----X--
+        ------X-    scrollx MSB (background)
+        -------X    scrollx MSB (sprites)
+    */
 
 	/* to be moved to memmap */
 	spriteram = &ram[0xd000];
@@ -435,21 +435,21 @@ byte1: tile number
 byte2: x offset
 byte3: attributes
 
-	mode 0/1 attributes:
+    mode 0/1 attributes:
 
-	76543210
-	----xxxx (color)
-	---x---- (y offset bit8)
-	-xx----- (bank number)
-	x------- (x offset bit8)
+    76543210
+    ----xxxx (color)
+    ---x---- (y offset bit8)
+    -xx----- (bank number)
+    x------- (x offset bit8)
 
-	mode 2 attributes:
+    mode 2 attributes:
 
-	76543210
-	-----xxx (color)
-	---x---- (y offset bit8)
-	-xx-x--- (bank number)
-	x------- (x offset bit8)
+    76543210
+    -----xxx (color)
+    ---x---- (y offset bit8)
+    -xx-x--- (bank number)
+    x------- (x offset bit8)
 */
 static void tdfever_draw_sp( struct mame_bitmap *bitmap, int xscroll, int yscroll, int mode )
 {

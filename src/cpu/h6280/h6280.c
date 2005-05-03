@@ -1,60 +1,60 @@
 /*****************************************************************************
 
-	h6280.c - Portable HuC6280 emulator
+    h6280.c - Portable HuC6280 emulator
 
-	Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
+    Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
 
-	This source code is based (with permission!) on the 6502 emulator by
-	Juergen Buchmueller.  It is released as part of the Mame emulator project.
-	Let me know if you intend to use this code in any other project.
-
-
-	NOTICE:
-
-	This code is around 99% complete!  Several things are unimplemented,
-	some due to lack of time, some due to lack of documentation, mainly
-	due to lack of programs using these features.
-
-	csh, csl opcodes are not supported.
-	set opcode and T flag behaviour are not supported.
-
-	I am unsure if instructions like SBC take an extra cycle when used in
-	decimal mode.  I am unsure if flag B is set upon execution of rti.
-
-	Cycle counts should be quite accurate, illegal instructions are assumed
-	to take two cycles.
+    This source code is based (with permission!) on the 6502 emulator by
+    Juergen Buchmueller.  It is released as part of the Mame emulator project.
+    Let me know if you intend to use this code in any other project.
 
 
-	Changelog, version 1.02:
-		JMP + indirect X (0x7c) opcode fixed.
-		SMB + RMB opcodes fixed in disassembler.
-		change_pc function calls removed.
-		TSB & TRB now set flags properly.
-		BIT opcode altered.
+    NOTICE:
 
-	Changelog, version 1.03:
-		Swapped IRQ mask for IRQ1 & IRQ2 (thanks Yasuhiro)
+    This code is around 99% complete!  Several things are unimplemented,
+    some due to lack of time, some due to lack of documentation, mainly
+    due to lack of programs using these features.
 
-	Changelog, version 1.04, 28/9/99-22/10/99:
-		Adjusted RTI (thanks Karl)
- 		TST opcodes fixed in disassembler (missing break statements in a case!).
-		TST behaviour fixed.
-		SMB/RMB/BBS/BBR fixed in disassembler.
+    csh, csl opcodes are not supported.
+    set opcode and T flag behaviour are not supported.
 
-	Changelog, version 1.05, 8/12/99-16/12/99:
-		Added CAB's timer implementation (note: irq ack & timer reload are changed).
-		Fixed STA IDX.
-		Fixed B flag setting on BRK.
-		Assumed CSH & CSL to take 2 cycles each.
+    I am unsure if instructions like SBC take an extra cycle when used in
+    decimal mode.  I am unsure if flag B is set upon execution of rti.
 
-		Todo:  Performance could be improved by precalculating timer fire position.
+    Cycle counts should be quite accurate, illegal instructions are assumed
+    to take two cycles.
 
-	Changelog, version 1.06, 4/5/00 - last opcode bug found?
-		JMP indirect was doing a EAL++; instead of EAD++; - Obviously causing
-		a corrupt read when L = 0xff!  This fixes Bloody Wolf and Trio The Punch!
 
-	Changelog, version 1.07, 3/9/00:
-		Changed timer to be single shot - fixes Crude Buster music in level 1.
+    Changelog, version 1.02:
+        JMP + indirect X (0x7c) opcode fixed.
+        SMB + RMB opcodes fixed in disassembler.
+        change_pc function calls removed.
+        TSB & TRB now set flags properly.
+        BIT opcode altered.
+
+    Changelog, version 1.03:
+        Swapped IRQ mask for IRQ1 & IRQ2 (thanks Yasuhiro)
+
+    Changelog, version 1.04, 28/9/99-22/10/99:
+        Adjusted RTI (thanks Karl)
+        TST opcodes fixed in disassembler (missing break statements in a case!).
+        TST behaviour fixed.
+        SMB/RMB/BBS/BBR fixed in disassembler.
+
+    Changelog, version 1.05, 8/12/99-16/12/99:
+        Added CAB's timer implementation (note: irq ack & timer reload are changed).
+        Fixed STA IDX.
+        Fixed B flag setting on BRK.
+        Assumed CSH & CSL to take 2 cycles each.
+
+        Todo:  Performance could be improved by precalculating timer fire position.
+
+    Changelog, version 1.06, 4/5/00 - last opcode bug found?
+        JMP indirect was doing a EAL++; instead of EAD++; - Obviously causing
+        a corrupt read when L = 0xff!  This fixes Bloody Wolf and Trio The Punch!
+
+    Changelog, version 1.07, 3/9/00:
+        Changed timer to be single shot - fixes Crude Buster music in level 1.
 
 ******************************************************************************/
 
@@ -417,7 +417,7 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 17 + 6*65536;					break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 21;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

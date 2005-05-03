@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	cpuexec.c
+    cpuexec.c
 
-	Core multi-CPU execution engine.
+    Core multi-CPU execution engine.
 
 ***************************************************************************/
 
@@ -20,7 +20,7 @@
 
 /*************************************
  *
- *	Debug logging
+ *  Debug logging
  *
  *************************************/
 
@@ -36,7 +36,7 @@
 
 /*************************************
  *
- *	Macros to help verify active CPU
+ *  Macros to help verify active CPU
  *
  *************************************/
 
@@ -60,7 +60,7 @@
 
 /*************************************
  *
- *	Macros to help verify executing CPU
+ *  Macros to help verify executing CPU
  *
  *************************************/
 
@@ -84,7 +84,7 @@
 
 /*************************************
  *
- *	Macros to help verify CPU index
+ *  Macros to help verify CPU index
  *
  *************************************/
 
@@ -106,7 +106,7 @@
 
 /*************************************
  *
- *	Triggers for the timer system
+ *  Triggers for the timer system
  *
  *************************************/
 
@@ -122,7 +122,7 @@ enum
 
 /*************************************
  *
- *	Internal CPU info structure
+ *  Internal CPU info structure
  *
  *************************************/
 
@@ -154,7 +154,7 @@ struct cpudata
 
 /*************************************
  *
- *	General CPU variables
+ *  General CPU variables
  *
  *************************************/
 
@@ -174,7 +174,7 @@ static int cycles_stolen;
 
 /*************************************
  *
- *	Timer variables
+ *  Timer variables
  *
  *************************************/
 
@@ -201,7 +201,7 @@ static mame_timer *watchdog_timer;
 
 /*************************************
  *
- *	Save/load variables
+ *  Save/load variables
  *
  *************************************/
 
@@ -212,7 +212,7 @@ static char *loadsave_schedule_name;
 
 /*************************************
  *
- *	Static prototypes
+ *  Static prototypes
  *
  *************************************/
 
@@ -230,7 +230,7 @@ static void handle_loadsave(void);
 
 /*************************************
  *
- *	Watchdog Flags
+ *  Watchdog Flags
  *
  *************************************/
 #define WATCHDOG_IS_STARTED_DISABLED	-1
@@ -245,7 +245,7 @@ static void handle_loadsave(void);
 
 /*************************************
  *
- *	Initialize all the CPUs
+ *  Initialize all the CPUs
  *
  *************************************/
 
@@ -301,7 +301,7 @@ int cpu_init(void)
 
 /*************************************
  *
- *	Prepare the system for execution
+ *  Prepare the system for execution
  *
  *************************************/
 
@@ -362,7 +362,7 @@ static void cpu_pre_run(void)
 
 /*************************************
  *
- *	Finish up execution
+ *  Finish up execution
  *
  *************************************/
 
@@ -382,7 +382,7 @@ static void cpu_post_run(void)
 
 /*************************************
  *
- *	Execute until done
+ *  Execute until done
  *
  *************************************/
 
@@ -432,7 +432,7 @@ void cpu_run(void)
 
 /*************************************
  *
- *	Deinitialize all the CPUs
+ *  Deinitialize all the CPUs
  *
  *************************************/
 
@@ -449,8 +449,8 @@ void cpu_exit(void)
 
 /*************************************
  *
- *	Force a reset at the end of this
- *	timeslice
+ *  Force a reset at the end of this
+ *  timeslice
  *
  *************************************/
 
@@ -469,7 +469,7 @@ void machine_reset(void)
 
 /*************************************
  *
- *	Handle saves at runtime
+ *  Handle saves at runtime
  *
  *************************************/
 
@@ -522,7 +522,7 @@ static void handle_save(void)
 
 /*************************************
  *
- *	Handle loads at runtime
+ *  Handle loads at runtime
  *
  *************************************/
 
@@ -577,7 +577,7 @@ static void handle_load(void)
 
 /*************************************
  *
- *	Handle saves & loads at runtime
+ *  Handle saves & loads at runtime
  *
  *************************************/
 
@@ -597,7 +597,7 @@ static void handle_loadsave(void)
 
 /*************************************
  *
- *	Schedules a save/load for later
+ *  Schedules a save/load for later
  *
  *************************************/
 
@@ -617,7 +617,7 @@ void cpu_loadsave_schedule_file(int type, const char *name)
 
 /*************************************
  *
- *	Schedules a save/load for later
+ *  Schedules a save/load for later
  *
  *************************************/
 
@@ -632,7 +632,7 @@ void cpu_loadsave_schedule(int type, char id)
 
 /*************************************
  *
- *	Unschedules any saves or loads
+ *  Unschedules any saves or loads
  *
  *************************************/
 
@@ -654,7 +654,7 @@ void cpu_loadsave_reset(void)
 
 /*************************************
  *
- *	Watchdog routines
+ *  Watchdog routines
  *
  *************************************/
 
@@ -687,21 +687,21 @@ static void watchdog_setup(void)
 		if (watchdog_counter == WATCHDOG_IS_INVALID)
 		{
 			/* The watchdog was not initialized in the MACHINE_DRIVER,
-			 * so we will start with it disabled.
-			 */
+             * so we will start with it disabled.
+             */
 			watchdog_counter = WATCHDOG_IS_STARTED_DISABLED;
 		}
 		else
 		{
 			/* The watchdog was not initialized in the MACHINE_DRIVER.
-			 * But it has been manually started, so we will default to
-			 * using a vblank watchdog.  We will set up a default time
-			 * of 3 times the refresh rate.  Which is 3 seconds @ 60Hz
-			 * refresh.
-	
-			 * The 3 seconds delay is targeted at qzshowby, which otherwise
-			 * would reset at the start of a game.
-			 */
+             * But it has been manually started, so we will default to
+             * using a vblank watchdog.  We will set up a default time
+             * of 3 times the refresh rate.  Which is 3 seconds @ 60Hz
+             * refresh.
+
+             * The 3 seconds delay is targeted at qzshowby, which otherwise
+             * would reset at the start of a game.
+             */
 			watchdog_counter = 3 * Machine->refresh_rate;
 		}
 	}
@@ -795,8 +795,8 @@ READ32_HANDLER( watchdog_reset32_r )
 
 /*************************************
  *
- *	Execute all the CPUs for one
- *	timeslice
+ *  Execute all the CPUs for one
+ *  timeslice
  *
  *************************************/
 
@@ -901,8 +901,8 @@ static void cpu_timeslice(void)
 
 /*************************************
  *
- *	Abort the timeslice for the
- *	active CPU
+ *  Abort the timeslice for the
+ *  active CPU
  *
  *************************************/
 
@@ -924,9 +924,9 @@ void activecpu_abort_timeslice(void)
 
 /*************************************
  *
- *	Return the current local time for
- *	a CPU, relative to the current
- *	timeslice
+ *  Return the current local time for
+ *  a CPU, relative to the current
+ *  timeslice
  *
  *************************************/
 
@@ -950,8 +950,8 @@ mame_time cpunum_get_localtime(int cpunum)
 
 /*************************************
  *
- *	Set a suspend reason for the
- *	given CPU
+ *  Set a suspend reason for the
+ *  given CPU
  *
  *************************************/
 
@@ -971,8 +971,8 @@ void cpunum_suspend(int cpunum, int reason, int eatcycles)
 
 /*************************************
  *
- *	Clear a suspend reason for a
- *	given CPU
+ *  Clear a suspend reason for a
+ *  given CPU
  *
  *************************************/
 
@@ -991,8 +991,8 @@ void cpunum_resume(int cpunum, int reason)
 
 /*************************************
  *
- *	Return true if a given CPU is
- *	suspended
+ *  Return true if a given CPU is
+ *  suspended
  *
  *************************************/
 
@@ -1006,10 +1006,10 @@ int cpunum_is_suspended(int cpunum, int reason)
 
 /*************************************
  *
- *	Gets the current CPU's clock speed
+ *  Gets the current CPU's clock speed
  *
  *************************************/
- 
+
 int cpunum_get_clock(int cpunum)
 {
 	VERIFY_CPUNUM(1.0, cpunum_get_clock);
@@ -1020,10 +1020,10 @@ int cpunum_get_clock(int cpunum)
 
 /*************************************
  *
- *	Sets the current CPU's clock speed
+ *  Sets the current CPU's clock speed
  *
  *************************************/
- 
+
 void cpunum_set_clock(int cpunum, int clock)
 {
 	VERIFY_CPUNUM_VOID(cpunum_set_clock);
@@ -1042,8 +1042,8 @@ void cpunum_set_clock(int cpunum, int clock)
 
 /*************************************
  *
- *	Returns the current scaling factor
- *	for a CPU's clock speed
+ *  Returns the current scaling factor
+ *  for a CPU's clock speed
  *
  *************************************/
 
@@ -1057,8 +1057,8 @@ double cpunum_get_clockscale(int cpunum)
 
 /*************************************
  *
- *	Sets the current scaling factor
- *	for a CPU's clock speed
+ *  Sets the current scaling factor
+ *  for a CPU's clock speed
  *
  *************************************/
 
@@ -1080,8 +1080,8 @@ void cpunum_set_clockscale(int cpunum, double clockscale)
 
 /*************************************
  *
- *	Temporarily boosts the interleave
- *	factor
+ *  Temporarily boosts the interleave
+ *  factor
  *
  *************************************/
 
@@ -1112,7 +1112,7 @@ void cpu_boost_interleave(double _timeslice_time, double _boost_duration)
 
 /*************************************
  *
- *	Return cycles ran this iteration
+ *  Return cycles ran this iteration
  *
  *************************************/
 
@@ -1126,8 +1126,8 @@ int cycles_currently_ran(void)
 
 /*************************************
  *
- *	Return cycles remaining in this
- *	iteration
+ *  Return cycles remaining in this
+ *  iteration
  *
  *************************************/
 
@@ -1141,22 +1141,22 @@ int cycles_left_to_run(void)
 
 /*************************************
  *
- *	Return total number of CPU cycles
- *	for the active CPU or for a given CPU.
+ *  Return total number of CPU cycles
+ *  for the active CPU or for a given CPU.
  *
  *************************************/
 
 /*--------------------------------------------------------------
 
-	IMPORTANT: this value wraps around in a relatively short
-	time. For example, for a 6MHz CPU, it will wrap around in
-	2^32/6000000 = 716 seconds = 12 minutes.
+    IMPORTANT: this value wraps around in a relatively short
+    time. For example, for a 6MHz CPU, it will wrap around in
+    2^32/6000000 = 716 seconds = 12 minutes.
 
-	Make sure you don't do comparisons between values returned
-	by this function, but only use the difference (which will
-	be correct regardless of wraparound).
+    Make sure you don't do comparisons between values returned
+    by this function, but only use the difference (which will
+    be correct regardless of wraparound).
 
-	Alternatively, use the new 64-bit variants instead.
+    Alternatively, use the new 64-bit variants instead.
 
 --------------------------------------------------------------*/
 
@@ -1195,8 +1195,8 @@ UINT64 cpunum_gettotalcycles64(int cpunum)
 
 /*************************************
  *
- *	Return cycles until next interrupt
- *	handler call
+ *  Return cycles until next interrupt
+ *  handler call
  *
  *************************************/
 
@@ -1214,8 +1214,8 @@ int activecpu_geticount(void)
 
 /*************************************
  *
- *	Safely eats cycles so we don't
- *	cross a timeslice boundary
+ *  Safely eats cycles so we don't
+ *  cross a timeslice boundary
  *
  *************************************/
 
@@ -1231,8 +1231,8 @@ void activecpu_eat_cycles(int cycles)
 
 /*************************************
  *
- *	Scales a given value by the fraction
- *	of time elapsed between refreshes
+ *  Scales a given value by the fraction
+ *  of time elapsed between refreshes
  *
  *************************************/
 
@@ -1261,7 +1261,7 @@ int cpu_scalebyfcount(int value)
 
 /*************************************
  *
- *	Creates the refresh timer
+ *  Creates the refresh timer
  *
  *************************************/
 
@@ -1281,7 +1281,7 @@ void cpu_init_refresh_timer(void)
 
 /*************************************
  *
- *	Computes the scanline timing
+ *  Computes the scanline timing
  *
  *************************************/
 
@@ -1312,16 +1312,16 @@ void cpu_compute_scanline_timing(void)
 
 /*************************************
  *
- *	Returns the current scanline
+ *  Returns the current scanline
  *
  *************************************/
 
 /*--------------------------------------------------------------
 
-	Note: cpu_getscanline() counts from 0, 0 being the first
-	visible line. You might have to adjust this value to match
-	the hardware, since in many cases the first visible line
-	is >0.
+    Note: cpu_getscanline() counts from 0, 0 being the first
+    visible line. You might have to adjust this value to match
+    the hardware, since in many cases the first visible line
+    is >0.
 
 --------------------------------------------------------------*/
 
@@ -1335,7 +1335,7 @@ int cpu_getscanline(void)
 
 /*************************************
  *
- *	Returns time until given scanline
+ *  Returns time until given scanline
  *
  *************************************/
 
@@ -1370,7 +1370,7 @@ double cpu_getscanlinetime(int scanline)
 
 /*************************************
  *
- *	Returns time for one scanline
+ *  Returns time for one scanline
  *
  *************************************/
 
@@ -1390,9 +1390,9 @@ double cpu_getscanlineperiod(void)
 
 /*************************************
  *
- *	Returns a crude approximation
- *	of the horizontal position of the
- *	bream
+ *  Returns a crude approximation
+ *  of the horizontal position of the
+ *  bream
  *
  *************************************/
 
@@ -1408,7 +1408,7 @@ int cpu_gethorzbeampos(void)
 
 /*************************************
  *
- *	Returns the VBLANK state
+ *  Returns the VBLANK state
  *
  *************************************/
 
@@ -1421,7 +1421,7 @@ int cpu_getvblank(void)
 
 /*************************************
  *
- *	Returns the current frame count
+ *  Returns the current frame count
  *
  *************************************/
 
@@ -1439,7 +1439,7 @@ int cpu_getcurrentframe(void)
 
 /*************************************
  *
- *	Generate a specific trigger
+ *  Generate a specific trigger
  *
  *************************************/
 
@@ -1471,7 +1471,7 @@ void cpu_trigger(int trigger)
 
 /*************************************
  *
- *	Generate a trigger in the future
+ *  Generate a trigger in the future
  *
  *************************************/
 
@@ -1484,7 +1484,7 @@ void cpu_triggertime(double duration, int trigger)
 
 /*************************************
  *
- *	Generate a trigger for an int
+ *  Generate a trigger for an int
  *
  *************************************/
 
@@ -1497,7 +1497,7 @@ void cpu_triggerint(int cpunum)
 
 /*************************************
  *
- *	Burn/yield CPU cycles until a trigger
+ *  Burn/yield CPU cycles until a trigger
  *
  *************************************/
 
@@ -1517,7 +1517,7 @@ void cpu_spinuntil_trigger(int trigger)
 void cpunum_spinuntil_trigger( int cpunum, int trigger )
 {
 	VERIFY_CPUNUM_VOID(cpunum_spinuntil_trigger);
-	
+
 	/* suspend the CPU immediately if it's not already */
 	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 1);
 
@@ -1542,8 +1542,8 @@ void cpu_yielduntil_trigger(int trigger)
 
 /*************************************
  *
- *	Burn/yield CPU cycles until an
- *	interrupt
+ *  Burn/yield CPU cycles until an
+ *  interrupt
  *
  *************************************/
 
@@ -1564,8 +1564,8 @@ void cpu_yielduntil_int(void)
 
 /*************************************
  *
- *	Burn/yield CPU cycles until the
- *	end of the current timeslice
+ *  Burn/yield CPU cycles until the
+ *  end of the current timeslice
  *
  *************************************/
 
@@ -1584,8 +1584,8 @@ void cpu_yield(void)
 
 /*************************************
  *
- *	Burn/yield CPU cycles for a
- *	specific period of time
+ *  Burn/yield CPU cycles for a
+ *  specific period of time
  *
  *************************************/
 
@@ -1617,19 +1617,19 @@ void cpu_yielduntil_time(double duration)
 
 /*************************************
  *
- *	Returns the number of times the
- *	interrupt handler will be called
- *	before the end of the current
- *	video frame.
+ *  Returns the number of times the
+ *  interrupt handler will be called
+ *  before the end of the current
+ *  video frame.
  *
  *************************************/
 
 /*--------------------------------------------------------------
 
-	This can be useful to interrupt handlers to synchronize
-	their operation. If you call this from outside an interrupt
-	handler, add 1 to the result, i.e. if it returns 0, it means
-	that the interrupt handler will be called once.
+    This can be useful to interrupt handlers to synchronize
+    their operation. If you call this from outside an interrupt
+    handler, add 1 to the result, i.e. if it returns 0, it means
+    that the interrupt handler will be called once.
 
 --------------------------------------------------------------*/
 
@@ -1643,8 +1643,8 @@ int cpu_getiloops(void)
 
 /*************************************
  *
- *	Hook for updating things on the
- *	real VBLANK (once per frame)
+ *  Hook for updating things on the
+ *  real VBLANK (once per frame)
  *
  *************************************/
 
@@ -1672,7 +1672,7 @@ static void cpu_vblankreset(void)
 
 /*************************************
  *
- *	First-run callback for VBLANKs
+ *  First-run callback for VBLANKs
  *
  *************************************/
 
@@ -1689,7 +1689,7 @@ static void cpu_firstvblankcallback(int param)
 
 /*************************************
  *
- *	VBLANK core handler
+ *  VBLANK core handler
  *
  *************************************/
 
@@ -1750,7 +1750,7 @@ static void cpu_vblankcallback(int param)
 
 		/* reset the counter */
 		vblank_countdown = vblank_multiplier;
-		
+
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 		/* notify the debugger */
 		debug_vblank_hook();
@@ -1762,7 +1762,7 @@ static void cpu_vblankcallback(int param)
 
 /*************************************
  *
- *	End-of-VBLANK callback
+ *  End-of-VBLANK callback
  *
  *************************************/
 
@@ -1798,8 +1798,8 @@ static void cpu_updatecallback(int param)
 
 /*************************************
  *
- *	Callback for timed interrupts
- *	(not tied to a VBLANK)
+ *  Callback for timed interrupts
+ *  (not tied to a VBLANK)
  *
  *************************************/
 
@@ -1818,18 +1818,18 @@ static void cpu_timedintcallback(int param)
 
 /*************************************
  *
- *	Converts an integral timing rate
- *	into a period
+ *  Converts an integral timing rate
+ *  into a period
  *
  *************************************/
 
 /*--------------------------------------------------------------
 
-	Rates can be specified as follows:
+    Rates can be specified as follows:
 
-		rate <= 0		-> 0
-		rate < 50000	-> 'rate' cycles per frame
-		rate >= 50000	-> 'rate' nanoseconds
+        rate <= 0       -> 0
+        rate < 50000    -> 'rate' cycles per frame
+        rate >= 50000   -> 'rate' nanoseconds
 
 --------------------------------------------------------------*/
 
@@ -1852,7 +1852,7 @@ static mame_time cpu_computerate(int value)
 
 /*************************************
  *
- *	Callback to force a timeslice
+ *  Callback to force a timeslice
  *
  *************************************/
 
@@ -1865,8 +1865,8 @@ static void cpu_timeslicecallback(int param)
 
 /*************************************
  *
- *	Callback to end a temporary
- *	interleave boost
+ *  Callback to end a temporary
+ *  interleave boost
  *
  *************************************/
 
@@ -1880,8 +1880,8 @@ static void end_interleave_boost(int param)
 
 /*************************************
  *
- *	Compute the "perfect" interleave
- *	interval
+ *  Compute the "perfect" interleave
+ *  interval
  *
  *************************************/
 
@@ -1916,7 +1916,7 @@ static void compute_perfect_interleave(void)
 
 /*************************************
  *
- *	Setup all the core timers
+ *  Setup all the core timers
  *
  *************************************/
 
@@ -1938,10 +1938,10 @@ static void cpu_inittimers(void)
 	interleave_boost_timer_end = mame_timer_alloc(end_interleave_boost);
 
 	/*
-	 *	The following code finds all the CPUs that are interrupting in sync with the VBLANK
-	 *	and sets up the VBLANK timer to run at the minimum number of cycles per frame in
-	 *	order to service all the synced interrupts
-	 */
+     *  The following code finds all the CPUs that are interrupting in sync with the VBLANK
+     *  and sets up the VBLANK timer to run at the minimum number of cycles per frame in
+     *  order to service all the synced interrupts
+     */
 
 	/* find the CPU with the maximum interrupts per frame */
 	max = 1;
@@ -1983,9 +1983,9 @@ static void cpu_inittimers(void)
 	vblank_countdown = vblank_multiplier;
 
 	/*
-	 *		The following code creates individual timers for each CPU whose interrupts are not
-	 *		synced to the VBLANK, and computes the typical number of cycles per interrupt
-	 */
+     *      The following code creates individual timers for each CPU whose interrupts are not
+     *      synced to the VBLANK, and computes the typical number of cycles per interrupt
+     */
 
 	/* start the CPU interrupt timers */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -2009,8 +2009,8 @@ static void cpu_inittimers(void)
 	}
 
 	/* note that since we start the first frame on the refresh, we can't pulse starting
-	   immediately; instead, we back up one VBLANK period, and inch forward until we hit
-	   positive time. That time will be the time of the first VBLANK timer callback */
+       immediately; instead, we back up one VBLANK period, and inch forward until we hit
+       positive time. That time will be the time of the first VBLANK timer callback */
 	first_time = add_mame_times(double_to_mame_time(-TIME_IN_USEC(Machine->drv->vblank_duration)), vblank_period);
 	while (compare_mame_times(first_time, time_zero) < 0)
 	{

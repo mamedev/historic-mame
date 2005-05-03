@@ -94,7 +94,7 @@ static void ssbl_tile_callback(int layer,int bank,int *code,int *color)
 	{
 		*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
 				| (bank << 13);
-//		printf("L%d: bank %d code %x color %x\n", layer, bank, *code, *color);
+//      printf("L%d: bank %d code %x color %x\n", layer, bank, *code, *color);
 	}
 
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
@@ -583,22 +583,22 @@ WRITE16_HANDLER( tmnt_priority_w )
 	{
 		/* bit 2/3 = priority; other bits unused */
 		/* bit2 = PRI bit3 = PRI2
-			  sprite/playfield priority is controlled by these two bits, by bit 3
-			  of the background tile color code, and by the SHADOW sprite
-			  attribute bit.
-			  Priorities are encoded in a PROM (G19 for TMNT). However, in TMNT,
-			  the PROM only takes into account the PRI and SHADOW bits.
-			  PRI  Priority
-			   0   bg fg spr text
-			   1   bg spr fg text
-			  The SHADOW bit, when set, torns a sprite into a shadow which makes
-			  color below it darker (this is done by turning off three resistors
-			  in parallel with the RGB output).
+              sprite/playfield priority is controlled by these two bits, by bit 3
+              of the background tile color code, and by the SHADOW sprite
+              attribute bit.
+              Priorities are encoded in a PROM (G19 for TMNT). However, in TMNT,
+              the PROM only takes into account the PRI and SHADOW bits.
+              PRI  Priority
+               0   bg fg spr text
+               1   bg spr fg text
+              The SHADOW bit, when set, torns a sprite into a shadow which makes
+              color below it darker (this is done by turning off three resistors
+              in parallel with the RGB output).
 
-			  Note: the background color (color used when all of the four layers
-			  are 0) is taken from the *foreground* palette, not the background
-			  one as would be more intuitive.
-		*/
+              Note: the background color (color used when all of the four layers
+              are 0) is taken from the *foreground* palette, not the background
+              one as would be more intuitive.
+        */
 		priorityflag = (data & 0x0c) >> 2;
 	}
 }
@@ -781,12 +781,12 @@ VIDEO_UPDATE( tmnt2 )
 		lasten  = newen;
 
 		/*
-			Only affect the background and sprites, not text layer.
-			Instead of dimming each layer we dim the entire palette
-			except text colors because palette bases may change
-			anytime and there's no guarantee a dimmed color will be
-			reset properly.
-		*/
+            Only affect the background and sprites, not text layer.
+            Instead of dimming each layer we dim the entire palette
+            except text colors because palette bases may change
+            anytime and there's no guarantee a dimmed color will be
+            reset properly.
+        */
 
 		// find the text layer's palette range
 		cb = layer_colorbase[sorted_layer[2]] << 4;

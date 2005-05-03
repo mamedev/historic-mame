@@ -1,9 +1,9 @@
 /***************************************************************************
-						WEC Le Mans 24  &   Hot Chase
+                        WEC Le Mans 24  &   Hot Chase
 
-						  (C)   1986 & 1988 Konami
+                          (C)   1986 & 1988 Konami
 
-					driver by       Luca Elia (l.elia@tin.it)
+                    driver by       Luca Elia (l.elia@tin.it)
 
 - Note: press F2 to enter service mode -
 
@@ -16,10 +16,10 @@ Hardware                Main    Sub             Sound   Sound Chips
 [Hot Chase]             68000   68000   68B09E                3x007232
 
 [CPU PCB GX763 350861B]
-	007641  007770  3x007232  051550
+    007641  007770  3x007232  051550
 
 [VID PCB GX763 350860A AI AM-1]
-	007634  007635  3x051316  007558  007557
+    007634  007635  3x051316  007558  007557
 ----------------------------------------------------------------------
 
 
@@ -55,12 +55,12 @@ Shared RAM         RW        070000-073fff        040000-043fff
 
 
 ---------------------------------------------------------------------------
-								Game code
-							[WEC Le Mans 24]
+                                Game code
+                            [WEC Le Mans 24]
 ---------------------------------------------------------------------------
 
-					Interesting locations (main cpu)
-					--------------------------------
+                    Interesting locations (main cpu)
+                    --------------------------------
 
 There's some 68000 assembly code in ASCII around d88 :-)
 
@@ -116,8 +116,8 @@ c08.b                   routine select: 1>1e1a4 2>1e1ec 3>1e19e other>1e288 (map
 2800                    Sprite data: 40 entries x 40 bytes = 1000
 3800                    Sprite data: 40 entries x 10 bytes =  400
 
-					Interesting routines (main cpu)
-					-------------------------------
+                    Interesting routines (main cpu)
+                    -------------------------------
 
 804                     mem test
 818                     end mem test (cksums at 100, addresses at A90)
@@ -148,11 +148,11 @@ IRQs                    [4]      1004->124c
 IRQs                    [5]      106c->1222      calls sequence: $3d24 $1984 $28ca $36d2 $3e78
 
 
-					Interesting locations (sub cpu)
-					-------------------------------
+                    Interesting locations (sub cpu)
+                    -------------------------------
 
-					Interesting routines (sub cpu)
-					------------------------------
+                    Interesting routines (sub cpu)
+                    ------------------------------
 
 1028    'wait for command' loop.
 1138    lev4 irq
@@ -160,14 +160,14 @@ IRQs                    [5]      106c->1222      calls sequence: $3d24 $1984 $28
 
 
 ---------------------------------------------------------------------------
-								 Game code
-								[Hot Chase]
+                                 Game code
+                                [Hot Chase]
 ---------------------------------------------------------------------------
 
 This game has been probably coded by the same programmers of WEC Le Mans 24
 It shares some routines and there is the (hidden?) string "WEC 2" somewhere
 
-							Main CPU                Sub CPU
+                            Main CPU                Sub CPU
 
 Interrupts: [1, 7]          FFFFFFFF                FFFFFFFF
 Interrupts: [2,3,4,5,6]     221c                    1288
@@ -184,15 +184,15 @@ Self Test:
 15] 195c start of game
 
 
-					Interesting locations (main cpu)
-					--------------------------------
+                    Interesting locations (main cpu)
+                    --------------------------------
 
 60024.b                 <- !140017.b (DSW 1 - coinage)
 60025.b                 <- !140015.b (DSW 2 - options)
 6102c.w                 *** time ***
 
-					Interesting routines (main cpu)
-					-------------------------------
+                    Interesting routines (main cpu)
+                    -------------------------------
 
 18d2                    (d7.d6)?print BAD/OK to (a5)+, jmp(D0)
 1d58                    print d2.w to (a4)+, jmp(a6)
@@ -202,16 +202,16 @@ Self Test:
 
 
 ---------------------------------------------------------------------------
-								   Issues
-							  [WEC Le Mans 24]
+                                   Issues
+                              [WEC Le Mans 24]
 ---------------------------------------------------------------------------
 
 - The parallactic scrolling is sometimes wrong
 
 
 ---------------------------------------------------------------------------
-								   Issues
-								[Hot Chase]
+                                   Issues
+                                [Hot Chase]
 ---------------------------------------------------------------------------
 
 - Samples pitch is too low
@@ -219,7 +219,7 @@ Self Test:
 
 
 ---------------------------------------------------------------------------
-							   Common Issues
+                               Common Issues
 ---------------------------------------------------------------------------
 
 - One ROM unused (32K in hotchase, 16K in wecleman)
@@ -306,7 +306,7 @@ VIDEO_START( hotchase );
 
 
 /***************************************************************************
-							Common Routines
+                            Common Routines
 ***************************************************************************/
 
 static READ16_HANDLER( wecleman_protection_r )
@@ -362,7 +362,7 @@ static WRITE16_HANDLER( sharedram_w )   { COMBINE_DATA(&sharedram[offset]); }
 |       2| NSUBRST   1
 |       1| SUBINT    0
 |__CLR___|
-	|
+    |
   NEXRES
 
  Schems: SUBRESET does a RST+HALT
@@ -393,13 +393,13 @@ static WRITE16_HANDLER( irqctrl_w )
 
 /* 140003.b (usually paired with a write to 140021.b)
 
-	Bit:
+    Bit:
 
-	7-------        ?
-	-65-----        input selection (0-3)
-	---43---        ?
-	-----2--        start light
-	------10        ? out 1/2
+    7-------        ?
+    -65-----        input selection (0-3)
+    ---43---        ?
+    -----2--        start light
+    ------10        ? out 1/2
 
 */
 static WRITE16_HANDLER( selected_ip_w )
@@ -424,36 +424,36 @@ static READ16_HANDLER( selected_ip_r )
 /* Word Blitter - Copies data around (Work RAM, Sprite RAM etc.)
                   It's fed with a list of blits to do
 
-	Offset:
+    Offset:
 
-	00.b            ? Number of words - 1 to add to address per transfer
-	01.b            ? logic function / blit mode
-	02.w            ? (always 0)
-	04.l            Source address (Base address of source data)
-	08.l            List of blits address
-	0c.l            Destination address
-	01.b            ? Number of transfers
-	10.b            Triggers the blit
-	11.b            Number of words per transfer
+    00.b            ? Number of words - 1 to add to address per transfer
+    01.b            ? logic function / blit mode
+    02.w            ? (always 0)
+    04.l            Source address (Base address of source data)
+    08.l            List of blits address
+    0c.l            Destination address
+    01.b            ? Number of transfers
+    10.b            Triggers the blit
+    11.b            Number of words per transfer
 
-	The list contains 4 bytes per blit:
-
-
-	Offset:
-
-	00.w            ?
-	02.w            offset from Base address
+    The list contains 4 bytes per blit:
 
 
-	Note:
+    Offset:
 
-	Hot Chase explicitly copies color information from sprite parameters back to list[4n+1](byte ptr)
-	and that tips me off where the colors are actually encoded. List[4n+0] is believed to hold the
-	sprites' depth value. Wec Le Mans will z-sort the sprites before writing them to video RAM but
-	the order is not always right. It is possible the video hardware performs additional sorting.
+    00.w            ?
+    02.w            offset from Base address
 
-	The color code in the original sprite encoding has special meanings on the other hand. I'll take
-	a shortcut by manually copying list[0] and list[1] to sprite RAM for further process.
+
+    Note:
+
+    Hot Chase explicitly copies color information from sprite parameters back to list[4n+1](byte ptr)
+    and that tips me off where the colors are actually encoded. List[4n+0] is believed to hold the
+    sprites' depth value. Wec Le Mans will z-sort the sprites before writing them to video RAM but
+    the order is not always right. It is possible the video hardware performs additional sorting.
+
+    The color code in the original sprite encoding has special meanings on the other hand. I'll take
+    a shortcut by manually copying list[0] and list[1] to sprite RAM for further process.
 */
 static WRITE16_HANDLER( blitter_w )
 {
@@ -530,7 +530,7 @@ static WRITE16_HANDLER( blitter_w )
 
 
 /***************************************************************************
-					WEC Le Mans 24 Main CPU Handlers
+                    WEC Le Mans 24 Main CPU Handlers
 ***************************************************************************/
 
 static WRITE16_HANDLER( wecleman_soundlatch_w );
@@ -574,7 +574,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Hot Chase Main CPU Handlers
+                        Hot Chase Main CPU Handlers
 ***************************************************************************/
 
 static READ16_HANDLER( hotchase_K051316_0_r )
@@ -649,7 +649,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-					WEC Le Mans 24 Sub CPU Handlers
+                    WEC Le Mans 24 Sub CPU Handlers
 ***************************************************************************/
 
 static ADDRESS_MAP_START( wecleman_sub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -666,7 +666,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Hot Chase Sub CPU Handlers
+                        Hot Chase Sub CPU Handlers
 ***************************************************************************/
 
 static ADDRESS_MAP_START( hotchase_sub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -685,7 +685,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-					WEC Le Mans 24 Sound CPU Handlers
+                    WEC Le Mans 24 Sound CPU Handlers
 ***************************************************************************/
 
 /* 140001.b */
@@ -753,7 +753,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Hot Chase Sound CPU Handlers
+                        Hot Chase Sound CPU Handlers
 ***************************************************************************/
 
 /* 140001.b */
@@ -796,10 +796,10 @@ WRITE8_HANDLER( hotchase_sound_control_w )
 		case 0x4:
 		case 0x5:
 			/* change volume
-				offset 00000xxx----- channel select (0:channel 0, 1:channel 1)
-				++------ chip select ( 0:chip 1, 1:chip2, 2:chip3)
-				data&0x0f left volume  (data>>4)&0x0f right volume
-			*/
+                offset 00000xxx----- channel select (0:channel 0, 1:channel 1)
+                ++------ chip select ( 0:chip 1, 1:chip2, 2:chip3)
+                data&0x0f left volume  (data>>4)&0x0f right volume
+            */
 		  K007232_set_volume( offset>>1, offset&1,  (data&0x0f) * 0x08, (data>>4) * 0x08 );
 		  break;
 
@@ -867,7 +867,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						WEC Le Mans 24 Input Ports
+                        WEC Le Mans 24 Input Ports
 ***************************************************************************/
 
 INPUT_PORTS_START( wecleman )
@@ -880,7 +880,7 @@ INPUT_PORTS_START( wecleman )
 	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("Shift") PORT_TOGGLE
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Brake")
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-	
+
 	PORT_START	/* IN1 - Motor? - $140013.b */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2 )	// right sw
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE3 )	// left sw
@@ -957,7 +957,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Hot Chase Input Ports
+                            Hot Chase Input Ports
 ***************************************************************************/
 
 INPUT_PORTS_START( hotchase )
@@ -1048,7 +1048,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							WEC Le Mans 24 Graphics Layout
+                            WEC Le Mans 24 Graphics Layout
 ***************************************************************************/
 
 static struct GfxLayout wecleman_bg_layout =
@@ -1092,7 +1092,7 @@ static struct GfxDecodeInfo wecleman_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-							Hot Chase Graphics Layout
+                            Hot Chase Graphics Layout
 ***************************************************************************/
 
 /* We draw the road, made of 512 pixel lines, using 64x1 tiles */
@@ -1121,7 +1121,7 @@ static struct GfxDecodeInfo hotchase_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-						WEC Le Mans 24 Hardware Definitions
+                        WEC Le Mans 24 Hardware Definitions
 ***************************************************************************/
 
 static INTERRUPT_GEN( wecleman_interrupt )
@@ -1180,7 +1180,7 @@ static MACHINE_DRIVER_START( wecleman )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 0.85)
 	MDRV_SOUND_ROUTE(1, "mono", 0.85)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(wecleman_k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -1189,7 +1189,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Hot Chase Hardware Definitions
+                        Hot Chase Hardware Definitions
 ***************************************************************************/
 
 static INTERRUPT_GEN( hotchase_sound_timer )
@@ -1229,17 +1229,17 @@ static MACHINE_DRIVER_START( hotchase )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(hotchase_k007232_interface_1)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
 	MDRV_SOUND_ROUTE(1, "mono", 0.20)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(hotchase_k007232_interface_2)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
 	MDRV_SOUND_ROUTE(1, "mono", 0.20)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(hotchase_k007232_interface_3)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -1248,7 +1248,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						WEC Le Mans 24 ROM Definitions
+                        WEC Le Mans 24 ROM Definitions
 ***************************************************************************/
 
 ROM_START( wecleman )
@@ -1342,14 +1342,14 @@ DRIVER_INIT( wecleman )
 {
 	int i;
 	unsigned char *RAM;
-//	data16_t *RAM1 = (data16_t *) memory_region(REGION_CPU1);	/* Main CPU patches */
-//	RAM1[0x08c2/2] = 0x601e;	// faster self test
+//  data16_t *RAM1 = (data16_t *) memory_region(REGION_CPU1);   /* Main CPU patches */
+//  RAM1[0x08c2/2] = 0x601e;    // faster self test
 
 	/* Decode GFX Roms - Compensate for the address lines scrambling */
 
 	/*  Sprites - decrypting the sprites nearly KILLED ME!
-	    It's been the main cause of the delay of this driver ...
-	    I hope you'll appreciate this effort!  */
+        It's been the main cause of the delay of this driver ...
+        I hope you'll appreciate this effort!  */
 
 	/* let's swap even and odd *pixels* of the sprites */
 	RAM = memory_region(REGION_GFX1);
@@ -1380,7 +1380,7 @@ DRIVER_INIT( wecleman )
 
 
 /***************************************************************************
-							Hot Chase ROM Definitions
+                            Hot Chase ROM Definitions
 ***************************************************************************/
 
 ROM_START( hotchase )
@@ -1429,8 +1429,8 @@ ROM_START( hotchase )
 ROM_END
 
 /*      Important: you must leave extra space when listing sprite ROMs
-	in a ROM module definition.  This routine unpacks each sprite nibble
-	into a byte, doubling the memory consumption. */
+    in a ROM module definition.  This routine unpacks each sprite nibble
+    into a byte, doubling the memory consumption. */
 
 void hotchase_sprite_decode( int num16_banks, int bank_size )
 {
@@ -1483,8 +1483,8 @@ void hotchase_sprite_decode( int num16_banks, int bank_size )
 /* Unpack sprites data and do some patching */
 DRIVER_INIT( hotchase )
 {
-//	data16_t *RAM1 = (data16_t) memory_region(REGION_CPU1);	/* Main CPU patches */
-//	RAM[0x1140/2] = 0x0015; RAM[0x195c/2] = 0x601A;	// faster self test
+//  data16_t *RAM1 = (data16_t) memory_region(REGION_CPU1); /* Main CPU patches */
+//  RAM[0x1140/2] = 0x0015; RAM[0x195c/2] = 0x601A; // faster self test
 
 	unsigned char *RAM;
 
@@ -1505,7 +1505,7 @@ DRIVER_INIT( hotchase )
 
 
 /***************************************************************************
-								Game driver(s)
+                                Game driver(s)
 ***************************************************************************/
 
 GAME( 1986, wecleman, 0, wecleman, wecleman, wecleman, ROT0, "Konami", "WEC Le Mans 24" )

@@ -163,7 +163,7 @@ WRITE8_HANDLER( intrepid_graphics_bank_select_w )
 READ8_HANDLER( thepit_input_port_0_r )
 {
 	/* Read either the real or the fake input ports depending on the
-	   horizontal flip switch. (This is how the real PCB does it) */
+       horizontal flip switch. (This is how the real PCB does it) */
 	if (flip_screen_x)
 	{
 		return input_port_3_r(offset);

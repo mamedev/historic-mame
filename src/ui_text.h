@@ -92,7 +92,7 @@ enum
 	UI_centerspeed,
 	UI_reverse,
 	UI_sensitivity,
-	
+
 	/* input groups */
 	UI_uigroup,
 	UI_p1group,
@@ -183,7 +183,7 @@ enum
 	UI_search_select_value,
 	UI_search_all_values_saved,
 	UI_search_one_match_found_added,
-	
+
 	/* refresh rate */
 	UI_refresh_rate,
 

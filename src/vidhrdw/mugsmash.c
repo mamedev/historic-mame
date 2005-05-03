@@ -15,19 +15,19 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	/* ---- ----  xxxx xxxx  ---- ----  aaaa aaaa  ---- ----  NNNN NNNN  ---- ----  nnnn nnnn  ---- ----  yyyy yyyy (rest unused?) */
 
 	/* x = xpos LSB
-	   y = ypos LSB
-	   N = tile number MSB
-	   n = tile number LSB
-	   a = attribute / extra
-	   		f?XY cccc
+       y = ypos LSB
+       N = tile number MSB
+       n = tile number LSB
+       a = attribute / extra
+            f?XY cccc
 
-	   	f = x-flip
-	   	? = unknown, probably y-flip
-	   	X = xpos MSB
-	   	y = ypos MSB
-	   	c = colour
+        f = x-flip
+        ? = unknown, probably y-flip
+        X = xpos MSB
+        y = ypos MSB
+        c = colour
 
-	*/
+    */
 
 	const UINT16 *source = mugs_spriteram;
 	const UINT16 *finish = source+0x2000;
@@ -70,10 +70,10 @@ static void get_mugsmash_tile_info1(int tile_index)
 	/* fF-- cccc  nnnn nnnn */
 
 	/* c = colour?
-	   n = number?
-	   F = flip-X
-	   f = flip-Y
-	*/
+       n = number?
+       F = flip-X
+       f = flip-Y
+    */
 
 	int tileno,colour,fx;
 
@@ -99,10 +99,10 @@ static void get_mugsmash_tile_info2(int tile_index)
 	/* fF-- cccc  nnnn nnnn */
 
 	/* c = colour?
-	   n = number?
-	   F = flip-X
-	   f = flip-Y
-	*/
+       n = number?
+       F = flip-X
+       f = flip-Y
+    */
 
 	int tileno,colour,fx;
 
@@ -125,7 +125,7 @@ WRITE16_HANDLER( mugsmash_videoram2_w )
 WRITE16_HANDLER (mugsmash_reg_w)
 {
 	mugsmash_regs1[offset] = data;
-//	usrintf_showmessage	("Regs %04x, %04x, %04x, %04x", mugsmash_regs1[0], mugsmash_regs1[1],mugsmash_regs1[2], mugsmash_regs1[3]);
+//  usrintf_showmessage ("Regs %04x, %04x, %04x, %04x", mugsmash_regs1[0], mugsmash_regs1[1],mugsmash_regs1[2], mugsmash_regs1[3]);
 
 	switch (offset)
 	{

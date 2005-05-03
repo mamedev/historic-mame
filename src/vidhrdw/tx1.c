@@ -254,7 +254,7 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 		int bit_12, PSA0_12, PSA, object_flip_x;
 		int index_y,index_x,index=0;
 
-		  
+
 		  if(bb_objram[offs+1] == 0xff)   /* End of object list marker? */
                 return;
 

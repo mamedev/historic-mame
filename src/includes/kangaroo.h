@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Sun Electronics Kangaroo hardware
+    Sun Electronics Kangaroo hardware
 
-	driver by Ville Laitinen
+    driver by Ville Laitinen
 
 ***************************************************************************/
 

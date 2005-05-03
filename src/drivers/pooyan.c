@@ -14,11 +14,11 @@ Thanks must go to Mike Cuddy for providing information on this one.
 Sound processor memory map.
 0x3000-0x33ff RAM.
 AY-8910 #1 : reg 0x5000
-	     wr  0x4000
+         wr  0x4000
              rd  0x4000
 
 AY-8910 #2 : reg 0x7000
-	     wr  0x6000
+         wr  0x6000
              rd  0x6000
 
 Main processor memory map.
@@ -31,7 +31,7 @@ Main processor memory map.
 memory mapped ports:
 
 read:
-0xA000	Dipswitch 2 adddbtll
+0xA000  Dipswitch 2 adddbtll
         a = attract mode
         ddd = difficulty 0=easy, 7=hardest.
         b = bonus setting (easy/hard)
@@ -41,21 +41,21 @@ read:
 0xA0E0  llllrrrr
         l == left coin mech, r = right coinmech.
 
-0xA080	IN0 Port
-0xA0A0	IN1 Port
-0xA0C0	IN2 Port
+0xA080  IN0 Port
+0xA0A0  IN1 Port
+0xA0C0  IN2 Port
 
 write:
-0xA100	command for the audio CPU.
-0xA180	NMI enable. (0xA180 == 1 = deliver NMI to CPU).
+0xA100  command for the audio CPU.
+0xA180  NMI enable. (0xA180 == 1 = deliver NMI to CPU).
 
-0xA181	interrupt trigger on audio CPU.
+0xA181  interrupt trigger on audio CPU.
 
-0xA183	maybe reset sound cpu?
+0xA183  maybe reset sound cpu?
 
-0xA184	????
+0xA184  ????
 
-0xA187	Flip screen
+0xA187  Flip screen
 
 interrupts:
 standard NMI at 0x66
@@ -256,7 +256,7 @@ static MACHINE_DRIVER_START( pooyan )
 	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
 	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
 	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
-	
+
 	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)

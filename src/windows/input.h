@@ -1,6 +1,6 @@
 //============================================================
 //
-//	input.h - Win32 implementation of MAME input routines
+//  input.h - Win32 implementation of MAME input routines
 //
 //============================================================
 
@@ -8,7 +8,7 @@
 #define __INPUT_H
 
 //============================================================
-//	MACROS
+//  MACROS
 //============================================================
 
 // Define the keyboard indicators.
@@ -21,7 +21,7 @@
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 #define KEYBOARD_CAPS_LOCK_ON     4
@@ -42,7 +42,7 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 extern const int win_key_trans_table[][4];

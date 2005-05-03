@@ -11,12 +11,12 @@
 #include "driver.h"
 #include "osd_cpu.h"
 
-/*#define TI990_9_ID	0*//* early implementation, used in a few real-world applications, 1974 */
+/*#define TI990_9_ID    0*//* early implementation, used in a few real-world applications, 1974 */
                           /* very similar to mapper-less 990/10 and tms9900, but the Load process */
                           /* is different */
                           /* ("ti990/9" is likely to be a nickname) */
 #define TI990_10_ID		1 /* original multi-chip implementation for minicomputer systems, 1975 */
-/*#define TI990_12_ID		2*//* multi-chip implementation, faster than 990/10. huge instruction set */
+/*#define TI990_12_ID       2*//* multi-chip implementation, faster than 990/10. huge instruction set */
                           /* (144 instructions, with up to 16 additional custom instructions simulteanously) */
                           /* 1979 (or before) */
 #define TMS9900_ID      3 /* mono-chip implementation, 1976 */
@@ -50,7 +50,7 @@ enum {
 extern void ti990_10_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with the parameters ti990_10_reset wants.
+    structure with the parameters ti990_10_reset wants.
 */
 typedef struct ti990_10reset_param
 {
@@ -79,7 +79,7 @@ extern WRITE8_HANDLER(ti990_10_eir_cru_w);
 extern void tms9900_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms9900_reset.
+    structure with optional parameters for tms9900_reset.
 */
 typedef struct tms9900reset_param
 {
@@ -93,7 +93,7 @@ typedef struct tms9900reset_param
 extern void tms9940_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms9940_reset.
+    structure with optional parameters for tms9940_reset.
 */
 typedef struct tms9940reset_param
 {
@@ -107,7 +107,7 @@ typedef struct tms9940reset_param
 extern void tms9980a_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms9980a_reset.
+    structure with optional parameters for tms9980a_reset.
 */
 typedef struct tms9980areset_param
 {
@@ -121,7 +121,7 @@ typedef struct tms9980areset_param
 extern void tms9985_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms9985_reset.
+    structure with optional parameters for tms9985_reset.
 */
 typedef struct tms9985reset_param
 {
@@ -135,7 +135,7 @@ typedef struct tms9985reset_param
 extern void tms9989_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms9989_reset.
+    structure with optional parameters for tms9989_reset.
 */
 typedef struct tms9989reset_param
 {
@@ -154,15 +154,15 @@ extern void tms9995_get_info(UINT32 state, union cpuinfo *info);
 typedef struct tms9995reset_param
 {
 	/* auto_wait_state : a non-zero value makes tms9995 generate a wait state automatically on each
-	   memory access */
+       memory access */
 	int auto_wait_state;
 
 	void (*idle_callback)(int state);
 
 	/* on the tms9995-mp9537, internal RAM and decrementer register are
-		disabled.  This chip is used by the ti99/8 so that internal RAM does
-		not prevent the mapper from working correctly. */
-	int is_mp9537;	
+        disabled.  This chip is used by the ti99/8 so that internal RAM does
+        not prevent the mapper from working correctly. */
+	int is_mp9537;
 } tms9995reset_param;
 
 /* accessor for the first 252 bytes of internal RAM */
@@ -179,7 +179,7 @@ extern WRITE8_HANDLER(tms9995_internal2_w);
 extern void tms99000_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms99000_reset.
+    structure with optional parameters for tms99000_reset.
 */
 typedef struct tms99000reset_param
 {
@@ -193,7 +193,7 @@ typedef struct tms99000reset_param
 extern void tms99105a_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms99105a_reset.
+    structure with optional parameters for tms99105a_reset.
 */
 typedef struct tms99105areset_param
 {
@@ -207,7 +207,7 @@ typedef struct tms99105areset_param
 extern void tms99110a_get_info(UINT32 state, union cpuinfo *info);
 
 /*
-	structure with optional parameters for tms99110a_reset.
+    structure with optional parameters for tms99110a_reset.
 */
 typedef struct tms99110areset_param
 {

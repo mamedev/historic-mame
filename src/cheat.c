@@ -1,209 +1,209 @@
 /*****************************************************************************
  *
- *	cheat.c
- *	by Ian Patterson [ianpatt at pacbell dot net]
+ *  cheat.c
+ *  by Ian Patterson [ianpatt at pacbell dot net]
  *
- *	The cheat engine for MAME. Allows you to search for locations in memory
- *	where gameplay-related values are stored, and change them. In other words,
- *	it lets you cheat.
+ *  The cheat engine for MAME. Allows you to search for locations in memory
+ *  where gameplay-related values are stored, and change them. In other words,
+ *  it lets you cheat.
  *
- *	TODO:
- *		- conflict checking
- *		- look in to adding auto-fire
- *		- bounds checks for relative address cheats
+ *  TODO:
+ *      - conflict checking
+ *      - look in to adding auto-fire
+ *      - bounds checks for relative address cheats
  *
- *	Known Issues:
- *		- signed fields displayed in hex don't accept negative values from
- *		  direct keyboard input
+ *  Known Issues:
+ *      - signed fields displayed in hex don't accept negative values from
+ *        direct keyboard input
  *
  *****************************************************************************/
 
-/******	Cheat File Specification **********************************************
+/****** Cheat File Specification **********************************************
 
 Type Field:
 
-MSB						 	    LSB
+MSB                             LSB
 33222222 22221111 11111100 00000000
 10987654 32109876 54321098 76543210
 
-									[ type ]
--------- -------- -------- -------x		one-shot cheat
--------- -------- -------- -----xx-		type
-											00 =	normal/delay
-											01 =	wait for modification
-											10 =	ignore if decrementing
-											11 =	watch
--------- -------- -------- ---xx---		operation (combined	with operation
-										extend bit)
-											[extend	= 0]
-												00 =	write with mask
-												01 =	add/subtract
-												10 =	force range
-												11 =	set/clear bits (for
-														relative address mode)
-											[extend	= 1]
-												00 =	unused
-												01 =	unused
-												10 =	unused
-												11 =	nothing
--------- -------- -------- xxx-----		parameter
-											type ==	00	delay in seconds
-														between	operations
-											type ==	01	delay after
-														modification before
-														operation in seconds
-											type ==	10	decrement ignore value
-											type ==	11	watch options
-															display format
-												-00 =	hex
-												-01 =	decimal
-												-10 =	binary
-												-11 =	ascii
-															show label
-												0-- =	no
-												1-- =	yes, copy from comment
-									[ user-selected	value ]
--------- -------- -------x --------		enable
--------- -------- ------x- --------		displayed value
-											0 =	value
-											1 =	value + 1
--------- -------- -----x-- --------		minimum	value
-											0 =	0
-											1 =	1
--------- -------- ----x--- --------		BCD
-									[ prefill ]
--------- -------- --xx---- --------		value/enable
-											00 =	disable
-											01 =	prefill	with 0xFF
-											10 =	prefill	with 0x00
-											11 =	prefill	with 0x01
-									[ link / options ]
--------- -------- -x------ --------		don't add to list (used for commands)
--------- -------- x------- --------		add as extend for previous cheat
--------- -------x -------- --------		enable
--------- ------x- -------- --------		copy previous value
--------- -----x-- -------- --------		operation parameter
-											operation == 001	add/subtract
-												0 =	add
-												1 =	subtract
-											operation == 011	set/clear
-												0 = set
-												1 = clear
--------- ----x--- -------- --------		operation extend bit
--------- --xx---- -------- --------		bytes used
-											00 =	1
-											01 =	2
-											10 =	3
-											11 =	4
--------- -x------ -------- --------		endianness
-											locations associated with a
-											processor
-												0 =		same endianness	as
-														target processor
-												1 =		different endianness
-											generic	locations
-												0 =		big	endian
-												1 =		little endian
--------- x------- -------- --------		restore previous value on disable
-									[ location / effective address ]
----xxxxx -------- -------- --------		parameter
-											type ==	000	CPU	index
-											type ==	001	region offset
-														(REGION_xxx)
-											type ==	010	CPU	index
-											type ==	011	custom cheat type
-												00000		comment
-												00001		EEPROM
-												00010		select
-												00011		assign activation key
-												00100		enable
-												00101		overclock
-												00110		refresh rate
-												...			others?
-											type ==	100	address	size, CPU
-												---00		8 bit
-												---01		16 bit
-												---10		24 bit
-												---11		32 bit
-												xxx--		cpu
-xxx----- -------- -------- --------		type
-											000	=	standard memory	write
-											001	=	memory region
-											010	=	write handler mapped memory
-											011	=	custom
-											100	=	relative address (CPU)
-											101	=	cheatscript
-											110	=	unused
-											111	=	unused
+                                    [ type ]
+-------- -------- -------- -------x     one-shot cheat
+-------- -------- -------- -----xx-     type
+                                            00 =    normal/delay
+                                            01 =    wait for modification
+                                            10 =    ignore if decrementing
+                                            11 =    watch
+-------- -------- -------- ---xx---     operation (combined with operation
+                                        extend bit)
+                                            [extend = 0]
+                                                00 =    write with mask
+                                                01 =    add/subtract
+                                                10 =    force range
+                                                11 =    set/clear bits (for
+                                                        relative address mode)
+                                            [extend = 1]
+                                                00 =    unused
+                                                01 =    unused
+                                                10 =    unused
+                                                11 =    nothing
+-------- -------- -------- xxx-----     parameter
+                                            type == 00  delay in seconds
+                                                        between operations
+                                            type == 01  delay after
+                                                        modification before
+                                                        operation in seconds
+                                            type == 10  decrement ignore value
+                                            type == 11  watch options
+                                                            display format
+                                                -00 =   hex
+                                                -01 =   decimal
+                                                -10 =   binary
+                                                -11 =   ascii
+                                                            show label
+                                                0-- =   no
+                                                1-- =   yes, copy from comment
+                                    [ user-selected value ]
+-------- -------- -------x --------     enable
+-------- -------- ------x- --------     displayed value
+                                            0 = value
+                                            1 = value + 1
+-------- -------- -----x-- --------     minimum value
+                                            0 = 0
+                                            1 = 1
+-------- -------- ----x--- --------     BCD
+                                    [ prefill ]
+-------- -------- --xx---- --------     value/enable
+                                            00 =    disable
+                                            01 =    prefill with 0xFF
+                                            10 =    prefill with 0x00
+                                            11 =    prefill with 0x01
+                                    [ link / options ]
+-------- -------- -x------ --------     don't add to list (used for commands)
+-------- -------- x------- --------     add as extend for previous cheat
+-------- -------x -------- --------     enable
+-------- ------x- -------- --------     copy previous value
+-------- -----x-- -------- --------     operation parameter
+                                            operation == 001    add/subtract
+                                                0 = add
+                                                1 = subtract
+                                            operation == 011    set/clear
+                                                0 = set
+                                                1 = clear
+-------- ----x--- -------- --------     operation extend bit
+-------- --xx---- -------- --------     bytes used
+                                            00 =    1
+                                            01 =    2
+                                            10 =    3
+                                            11 =    4
+-------- -x------ -------- --------     endianness
+                                            locations associated with a
+                                            processor
+                                                0 =     same endianness as
+                                                        target processor
+                                                1 =     different endianness
+                                            generic locations
+                                                0 =     big endian
+                                                1 =     little endian
+-------- x------- -------- --------     restore previous value on disable
+                                    [ location / effective address ]
+---xxxxx -------- -------- --------     parameter
+                                            type == 000 CPU index
+                                            type == 001 region offset
+                                                        (REGION_xxx)
+                                            type == 010 CPU index
+                                            type == 011 custom cheat type
+                                                00000       comment
+                                                00001       EEPROM
+                                                00010       select
+                                                00011       assign activation key
+                                                00100       enable
+                                                00101       overclock
+                                                00110       refresh rate
+                                                ...         others?
+                                            type == 100 address size, CPU
+                                                ---00       8 bit
+                                                ---01       16 bit
+                                                ---10       24 bit
+                                                ---11       32 bit
+                                                xxx--       cpu
+xxx----- -------- -------- --------     type
+                                            000 =   standard memory write
+                                            001 =   memory region
+                                            010 =   write handler mapped memory
+                                            011 =   custom
+                                            100 =   relative address (CPU)
+                                            101 =   cheatscript
+                                            110 =   unused
+                                            111 =   unused
 
 Conversion Table:
 
-MSB								LSB
-33222222 22221111 11111100 0000	0000
-10987654 32109876 54321098 7654	3210
-000xxxxx 00000000 00000000 0000	0000	000
-000xxxxx 00000000 00000000 0000	0001	001
-000xxxxx 00000000 00000000 0010	0000	002
-000xxxxx 00000000 00000000 0100	0000	003
-000xxxxx 00000000 00000000 1010	0000	004
-000xxxxx 00000000 00000000 0010	0010	005
-000xxxxx 00000000 00000000 0100	0010	006
-000xxxxx 00000000 00000000 1010	0010	007
-000xxxxx 00000000 00000000 0010	0100	008
-000xxxxx 00000000 00000000 0100	0100	009
-000xxxxx 00000000 00000000 0110	0100	010
-000xxxxx 00000000 00000000 1000	0100	011
-000xxxxx 00000000 00000000 0010	0011	015
-000xxxxx 00000000 00000000 0100	0011	016
-000xxxxx 00000000 00000000 1010	0011	017
-000xxxxx 00000000 00000000 0000	0000	020	(mask used)
-000xxxxx 00000000 00000000 0000	0001	021	(mask used)
-000xxxxx 00000000 00000000 0010	0000	022	(mask used)
-000xxxxx 00000000 00000000 0100	0000	023	(mask used)
-000xxxxx 00000000 00000000 1010	0000	024	(mask used)
-000xxxxx 00000000 00000000 0000	0000	040	(mask used)
-000xxxxx 00000000 00000000 0000	0001	041	(mask used)
-000xxxxx 00000000 00000000 0010	0000	042	(mask used)
-000xxxxx 00000000 00000000 0100	0000	043	(mask used)
-000xxxxx 00000000 00000000 1010	0000	044	(mask used)
-000xxxxx 00000000 00000001 0000	0011	060
-000xxxxx 00000000 00000011 0000	0011	061
-000xxxxx 00000000 00000101 0000	0011	062
-000xxxxx 00000000 00001001 0000	0011	063
-000xxxxx 00000000 00001011 0000	0011	064
-000xxxxx 00000000 00001101 0000	0011	065
-000xxxxx 00000000 00000001 0000	0001	070
-000xxxxx 00000000 00000011 0000	0001	071
-000xxxxx 00000000 00000101 0000	0001	072
-000xxxxx 00000000 00001001 0000	0001	073
-000xxxxx 00000000 00001011 0000	0001	074
-000xxxxx 00000000 00001101 0000	0001	075
-000xxxxx 00000000 00000000 0000	0011	080
-000xxxxx 00000000 00000010 0000	0011	081
-000xxxxx 00000000 00000100 0000	0011	082
-000xxxxx 00000000 00001000 0000	0011	083
-000xxxxx 00000000 00001010 0000	0011	084
-000xxxxx 00000000 00001100 0000	0011	085
-000xxxxx 00000000 00000000 0000	0001	090
-000xxxxx 00000000 00000010 0000	0001	091
-000xxxxx 00000000 00000100 0000	0001	092
-000xxxxx 00000000 00001000 0000	0001	093
-000xxxxx 00000000 00001010 0000	0001	094
-000xxxxx 00000000 00001100 0000	0001	095
-001xxxxx 10000000 00000000 0000	0000	100
-001xxxxx 00000000 00000000 0000	0001	101
-001xxxxx 10000000 00000000 0000	0000	102
-001xxxxx 00000000 00000000 0000	0001	103
-010xxxxx 10000000 00000000 0000	0000	110
-010xxxxx 00000000 00000000 0000	0001	111
-010xxxxx 10000000 00000000 0000	0000	112
-010xxxxx 00000000 00000000 0000	0001	113
-01100011 00000000 00000000 0000 0001	120
-01100011 00000000 00000000 0000 0001	121 (mask used)
-01100011 00000000 00000000 0000 0001	122 (mask used)
-00000000 00000001 00000000 0000	0000	5xx
-000xxxxx 00000000 00000000 0000	0110	998
-01100000 00000000 00000000 0000	0000	999
+MSB                             LSB
+33222222 22221111 11111100 0000 0000
+10987654 32109876 54321098 7654 3210
+000xxxxx 00000000 00000000 0000 0000    000
+000xxxxx 00000000 00000000 0000 0001    001
+000xxxxx 00000000 00000000 0010 0000    002
+000xxxxx 00000000 00000000 0100 0000    003
+000xxxxx 00000000 00000000 1010 0000    004
+000xxxxx 00000000 00000000 0010 0010    005
+000xxxxx 00000000 00000000 0100 0010    006
+000xxxxx 00000000 00000000 1010 0010    007
+000xxxxx 00000000 00000000 0010 0100    008
+000xxxxx 00000000 00000000 0100 0100    009
+000xxxxx 00000000 00000000 0110 0100    010
+000xxxxx 00000000 00000000 1000 0100    011
+000xxxxx 00000000 00000000 0010 0011    015
+000xxxxx 00000000 00000000 0100 0011    016
+000xxxxx 00000000 00000000 1010 0011    017
+000xxxxx 00000000 00000000 0000 0000    020 (mask used)
+000xxxxx 00000000 00000000 0000 0001    021 (mask used)
+000xxxxx 00000000 00000000 0010 0000    022 (mask used)
+000xxxxx 00000000 00000000 0100 0000    023 (mask used)
+000xxxxx 00000000 00000000 1010 0000    024 (mask used)
+000xxxxx 00000000 00000000 0000 0000    040 (mask used)
+000xxxxx 00000000 00000000 0000 0001    041 (mask used)
+000xxxxx 00000000 00000000 0010 0000    042 (mask used)
+000xxxxx 00000000 00000000 0100 0000    043 (mask used)
+000xxxxx 00000000 00000000 1010 0000    044 (mask used)
+000xxxxx 00000000 00000001 0000 0011    060
+000xxxxx 00000000 00000011 0000 0011    061
+000xxxxx 00000000 00000101 0000 0011    062
+000xxxxx 00000000 00001001 0000 0011    063
+000xxxxx 00000000 00001011 0000 0011    064
+000xxxxx 00000000 00001101 0000 0011    065
+000xxxxx 00000000 00000001 0000 0001    070
+000xxxxx 00000000 00000011 0000 0001    071
+000xxxxx 00000000 00000101 0000 0001    072
+000xxxxx 00000000 00001001 0000 0001    073
+000xxxxx 00000000 00001011 0000 0001    074
+000xxxxx 00000000 00001101 0000 0001    075
+000xxxxx 00000000 00000000 0000 0011    080
+000xxxxx 00000000 00000010 0000 0011    081
+000xxxxx 00000000 00000100 0000 0011    082
+000xxxxx 00000000 00001000 0000 0011    083
+000xxxxx 00000000 00001010 0000 0011    084
+000xxxxx 00000000 00001100 0000 0011    085
+000xxxxx 00000000 00000000 0000 0001    090
+000xxxxx 00000000 00000010 0000 0001    091
+000xxxxx 00000000 00000100 0000 0001    092
+000xxxxx 00000000 00001000 0000 0001    093
+000xxxxx 00000000 00001010 0000 0001    094
+000xxxxx 00000000 00001100 0000 0001    095
+001xxxxx 10000000 00000000 0000 0000    100
+001xxxxx 00000000 00000000 0000 0001    101
+001xxxxx 10000000 00000000 0000 0000    102
+001xxxxx 00000000 00000000 0000 0001    103
+010xxxxx 10000000 00000000 0000 0000    110
+010xxxxx 00000000 00000000 0000 0001    111
+010xxxxx 10000000 00000000 0000 0000    112
+010xxxxx 00000000 00000000 0000 0001    113
+01100011 00000000 00000000 0000 0001    120
+01100011 00000000 00000000 0000 0001    121 (mask used)
+01100011 00000000 00000000 0000 0001    122 (mask used)
+00000000 00000001 00000000 0000 0000    5xx
+000xxxxx 00000000 00000000 0000 0110    998
+01100000 00000000 00000000 0000 0000    999
 
 Cheat Format:
 
@@ -213,18 +213,18 @@ Cheat Format:
 
 :[ drivername ]:[ CRC ]:[ type ]:[ address ]:[ data ]:[ extended data ]:[ name ]:[ description ]
 
-drivername		string	maximum	8 chars
-type			hex		32 bits
-CRC				hex		32 bits
-address			hex		32 bits
-data			hex		32 bits
-extended data	hex		32 bits
-name			string	maximum	255	chars
-description		string	maximum	255	chars
+drivername      string  maximum 8 chars
+type            hex     32 bits
+CRC             hex     32 bits
+address         hex     32 bits
+data            hex     32 bits
+extended data   hex     32 bits
+name            string  maximum 255 chars
+description     string  maximum 255 chars
 
 Extended Data Field:
 
-[ force	range ]
+[ force range ]
 
 0xAABB
 
@@ -233,36 +233,36 @@ BB = maximum value accepted
 
 [ add/subtract ]
 
-The	field will store either	the	minimum	or maximum boundary	for	modification,
+The field will store either the minimum or maximum boundary for modification,
 depending on the operation parameter.
 
-[ write	with mask ]
+[ write with mask ]
 
-The	field will store a mask	containing which bits are modified by the
+The field will store a mask containing which bits are modified by the
 operation. For normal operation, set the mask to 0xFFFFFFFF.
-Example	code: data = (data & ~mask)	| (input & mask);
+Example code: data = (data & ~mask) | (input & mask);
 
 Copy Previous Value:
 
-If this	field is true, the value for this cheat	is determined by taking	the
-value read from	the	previous cheat and adding the value	stored in the data
+If this field is true, the value for this cheat is determined by taking the
+value read from the previous cheat and adding the value stored in the data
 field.
 
 Relative Address:
 
-The	extend data	field will store the the signed	offset to be applied to	the
-address	read. Because of this, any operation using the extend data field may
+The extend data field will store the the signed offset to be applied to the
+address read. Because of this, any operation using the extend data field may
 have interesting results. Use the special set/clear bits operations instead of
 a masked write.
 
 Select Cheat Type: (01100010 -------0 -------- --------) 0x62000000
 
-May	be used	only as	the	first cheat	of a linked	cheat. In the "Enable/Disable
-Cheat" menu, instead of	simple listing On/Off or Set as	the	menu option, the
-engine will	list the name fields of	each of	the	subcheats. If the current
-selected subcheat is a one-shot	cheat, pressing	Enter will activate	the
-currently subcheat.	If the subcheat	is an on/off cheat,	the	currently selected
-subcheat (and only that	subcheat) will be activated.
+May be used only as the first cheat of a linked cheat. In the "Enable/Disable
+Cheat" menu, instead of simple listing On/Off or Set as the menu option, the
+engine will list the name fields of each of the subcheats. If the current
+selected subcheat is a one-shot cheat, pressing Enter will activate the
+currently subcheat. If the subcheat is an on/off cheat, the currently selected
+subcheat (and only that subcheat) will be activated.
 
 Assign Activation Key: (01100011 -------- -1------ --------) 0x63004000
 
@@ -276,22 +276,22 @@ pressed, add this cheat to the file.
 
 Key Index List:
 
-	A		00	Q		10	6		20	F3		30	[		40	PGDN	50	RCTRL	60
-	B		01	R		11	7		21	F4		31	]		41	LEFT	51	LALT	61
-	C		02	S		12	8		22	F5		32	ENTER	42	RIGHT	52	RALT	62
-	D		03	T		13	9		23	F6		33	:		43	UP		53	SCRLOCK	63
-	E		04	U		14	[0]		24	F7		34	'		44	DOWN	54	NUMLOCK	64
-	F		05	V		15	[1]		25	F8		35	\		45	[/]		55	CAPSLCK	65
-	G		06	W		16	[2]		26	F9		36	\		46	[*]		56	LWIN	66
-	H		07	X		17	[3]		27	F10		37	,		47	[-]		57	RWIN	67
-	I		08	Y		18	[4]		28	F11		38	.		48	[+]		58	MENU	68
-	J		09	Z		19	[5]		29	F12		39	/		49	[DEL]	59
-	K		0A	0		1A	[6]		2A	ESC		3A	SPACE	4A	[ENTER]	5A
-	L		0B	1		1B	[7]		2B	~		3B	INS		4B	PRTSCR	5B
-	M		0C	2		1C	[8]		2C	-		3C	DEL		4C	PAUSE	5C
-	N		0D	3		1D	[9]		2D	=		3D	HOME	4D	LSHIFT	5D
-	O		0E	4		1E	F1		2E	BACKSP	3E	END		4E	RSHIFT	5E
-	P		0F	5		1F	F2		2F	TAB		3F	PGUP	4F	LCTRL	5F
+    A       00  Q       10  6       20  F3      30  [       40  PGDN    50  RCTRL   60
+    B       01  R       11  7       21  F4      31  ]       41  LEFT    51  LALT    61
+    C       02  S       12  8       22  F5      32  ENTER   42  RIGHT   52  RALT    62
+    D       03  T       13  9       23  F6      33  :       43  UP      53  SCRLOCK 63
+    E       04  U       14  [0]     24  F7      34  '       44  DOWN    54  NUMLOCK 64
+    F       05  V       15  [1]     25  F8      35  \       45  [/]     55  CAPSLCK 65
+    G       06  W       16  [2]     26  F9      36  \       46  [*]     56  LWIN    66
+    H       07  X       17  [3]     27  F10     37  ,       47  [-]     57  RWIN    67
+    I       08  Y       18  [4]     28  F11     38  .       48  [+]     58  MENU    68
+    J       09  Z       19  [5]     29  F12     39  /       49  [DEL]   59
+    K       0A  0       1A  [6]     2A  ESC     3A  SPACE   4A  [ENTER] 5A
+    L       0B  1       1B  [7]     2B  ~       3B  INS     4B  PRTSCR  5B
+    M       0C  2       1C  [8]     2C  -       3C  DEL     4C  PAUSE   5C
+    N       0D  3       1D  [9]     2D  =       3D  HOME    4D  LSHIFT  5D
+    O       0E  4       1E  F1      2E  BACKSP  3E  END     4E  RSHIFT  5E
+    P       0F  5       1F  F2      2F  TAB     3F  PGUP    4F  LCTRL   5F
 
 There are similar codes for joystick buttons; look at the table in input.h for those.
 
@@ -346,11 +346,11 @@ this format:
 The lower byte of the data field stores the command, and the remaining bytes store data
 for the command. Here is a list of the commands:
 
-0x00	disable help boxes (once I add them)
-0x01	use old-style cheat search box (now redundant)
-0x02	use new-style cheat search box
-0x03	don't print labels in new-style search menu
-0x04	auto-save cheats on exit
+0x00    disable help boxes (once I add them)
+0x01    use old-style cheat search box (now redundant)
+0x02    use new-style cheat search box
+0x03    don't print labels in new-style search menu
+0x04    auto-save cheats on exit
 
 So, if you wanted to use the old-style cheat box, you would add this line to your cheat.dat:
 
@@ -360,14 +360,14 @@ Watches:
 
 You can specify options for watches using the data field. Specify fields like this:
 
-MSB								LSB
+MSB                             LSB
 33222222 22221111 11111100 00000000
 10987654 32109876 54321098 76543210
--------- -------- -------- xxxxxxxx		number of elements - 1
--------- -------- xxxxxxxx --------		bytes to skip after each element
--------- xxxxxxxx -------- --------		elements per line
-											0 = all on one line
-xxxxxxxx -------- -------- --------		signed value to add
+-------- -------- -------- xxxxxxxx     number of elements - 1
+-------- -------- xxxxxxxx --------     bytes to skip after each element
+-------- xxxxxxxx -------- --------     elements per line
+                                            0 = all on one line
+xxxxxxxx -------- -------- --------     signed value to add
 
 So, to make a watch on CPU1 address 0064407F with six elements, skipping three bytes after each element,
 showing two elements per line, you would do this:
@@ -376,17 +376,17 @@ showing two elements per line, you would do this:
 
 The extend data field is used to position the watch display.
 
-MSB							  LSB
+MSB                           LSB
 3322222222221111 1111110000000000
 1098765432109876 5432109876543210
-xxxxxxxxxxxxxxxx ----------------	x pixel offset
----------------- xxxxxxxxxxxxxxxx	y pixel offset
+xxxxxxxxxxxxxxxx ----------------   x pixel offset
+---------------- xxxxxxxxxxxxxxxx   y pixel offset
 
 Notes:
 
-- if you want to have a	list of	many on/off	subcheats, include a "None"	option,
-or there will be no	way	to disable the cheat
-- the engine will display "Press Enter to Activate Cheat" if a one-shot	cheat
+- if you want to have a list of many on/off subcheats, include a "None" option,
+or there will be no way to disable the cheat
+- the engine will display "Press Enter to Activate Cheat" if a one-shot cheat
 is selected
 
 *******************************************************************************/
@@ -406,8 +406,8 @@ is selected
 
 /**** Macros *****************************************************************/
 
-//	easy bitfield extraction and setting
-//	uses *_Shift, *_ShiftedMask, and *_Mask enums
+//  easy bitfield extraction and setting
+//  uses *_Shift, *_ShiftedMask, and *_Mask enums
 #define EXTRACT_FIELD(data, name)				(((data) >> k##name##_Shift) & k##name##_ShiftedMask)
 #define SET_FIELD(data, name, in)				(data = (data & ~(k##name##_ShiftedMask << k##name##_Shift)) | (((in) & k##name##_ShiftedMask) << k##name##_Shift))
 #define TEST_FIELD(data, name)					((data) & k##name##_Mask)
@@ -1217,7 +1217,7 @@ static UINT32	ReadSearchOperand(UINT8 type, SearchInfo * search, SearchRegion * 
 static UINT32	ReadSearchOperandBit(UINT8 type, SearchInfo * search, SearchRegion * region, UINT32 address);
 static UINT8	DoSearchComparison(SearchInfo * search, UINT32 lhs, UINT32 rhs);
 static UINT32	DoSearchComparisonBit(SearchInfo * search, UINT32 lhs, UINT32 rhs);
-//static UINT8	IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UINT32 offset);
+//static UINT8  IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UINT32 offset);
 
 #define IsRegionOffsetValid	IsRegionOffsetValidBit
 
@@ -1292,8 +1292,8 @@ static int AltKeyPressed(void)
 
 #if OSD_READKEY_KLUDGE
 
-/*	dirty hack until osd_readkey_unicode is supported in MAMEW
-	re-implementation of osd_readkey_unicode */
+/*  dirty hack until osd_readkey_unicode is supported in MAMEW
+    re-implementation of osd_readkey_unicode */
 static int ReadKeyAsync(int flush)
 {
 	int	code;
@@ -2922,98 +2922,98 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 
 	enum
 	{
-		kType_Name = 0,					//	text		name
-										//	NOTE:	read from base cheat (for idx == 0)
-		kType_ExtendName,				//	text		extraName
-										//	NOTE:	read from subcheat for (idx > 0) && (cheat[0].type == Select)
-		kType_Comment,					//	text		comment
-										//	NOTE:	read from base cheat (for idx == 0)
-		kType_ActivationKey,			//	key			activationKey
-										//	NOTE:	read from base cheat (for idx == 0)
-		kType_Type,						//	select		Type				Normal/Delay - Wait - Ignore Decrement - Watch -
-										//									Comment - Select
-										//	NOTE: also uses location type field for comment and select
+		kType_Name = 0,					//  text        name
+										//  NOTE:   read from base cheat (for idx == 0)
+		kType_ExtendName,				//  text        extraName
+										//  NOTE:   read from subcheat for (idx > 0) && (cheat[0].type == Select)
+		kType_Comment,					//  text        comment
+										//  NOTE:   read from base cheat (for idx == 0)
+		kType_ActivationKey,			//  key         activationKey
+										//  NOTE:   read from base cheat (for idx == 0)
+		kType_Type,						//  select      Type                Normal/Delay - Wait - Ignore Decrement - Watch -
+										//                                  Comment - Select
+										//  NOTE: also uses location type field for comment and select
 		// if((Type != Comment) && (Type != Select))
 			// if(Type != Watch)
-				kType_OneShot,			//	select		OneShot				Off - On
+				kType_OneShot,			//  select      OneShot             Off - On
 				kType_RestorePreviousValue,
-										//	select		RestorePreviousValue
-										//									Off - On
+										//  select      RestorePreviousValue
+										//                                  Off - On
 			// if((Type == Normal/Delay) || (Type == Wait))
-				kType_Delay,			//	value		TypeParameter		0 - 7
+				kType_Delay,			//  value       TypeParameter       0 - 7
 			// if(Type == Ignore Decrement)
-				kType_IgnoreDecrementBy,//	value		TypeParameter		0 - 7
+				kType_IgnoreDecrementBy,//  value       TypeParameter       0 - 7
 			// if(Type == Watch)
-				kType_WatchSize,		//	value		Data				0x01 - 0xFF (stored as 0x00 - 0xFE)
-										//	NOTE: value is packed in to 0x000000FF
-				kType_WatchSkip,		//	value		Data				0x00 - 0xFF
-										//	NOTE: value is packed in to 0x0000FF00
-				kType_WatchPerLine,		//	value		Data				0x00 - 0xFF
-										//	NOTE: value is packed in to 0x00FF0000
-				kType_WatchAddValue,	//	value		Data				-0x80 - 0x7F
-										//	NOTE: value is packed in to 0xFF000000
-				kType_WatchFormat,		//	select		TypeParameter		Hex - Decimal - Binary - ASCII
-										//	NOTE: value is packed in to 0x03
-				kType_WatchLabel,		//	select		TypeParameter		Off - On
-										//	NOTE: value is packed in to 0x04
+				kType_WatchSize,		//  value       Data                0x01 - 0xFF (stored as 0x00 - 0xFE)
+										//  NOTE: value is packed in to 0x000000FF
+				kType_WatchSkip,		//  value       Data                0x00 - 0xFF
+										//  NOTE: value is packed in to 0x0000FF00
+				kType_WatchPerLine,		//  value       Data                0x00 - 0xFF
+										//  NOTE: value is packed in to 0x00FF0000
+				kType_WatchAddValue,	//  value       Data                -0x80 - 0x7F
+										//  NOTE: value is packed in to 0xFF000000
+				kType_WatchFormat,		//  select      TypeParameter       Hex - Decimal - Binary - ASCII
+										//  NOTE: value is packed in to 0x03
+				kType_WatchLabel,		//  select      TypeParameter       Off - On
+										//  NOTE: value is packed in to 0x04
 				// and set operation to null
 			// else
-				kType_Operation,		//	select		Operation			Write - Add/Subtract - Force Range - Set/Clear Bits -
-										//									Null
+				kType_Operation,		//  select      Operation           Write - Add/Subtract - Force Range - Set/Clear Bits -
+										//                                  Null
 			// if((Operation == Write) && (LocationType != Relative Address))
-				kType_WriteMask,		//	value		extendData			0x00000000 - 0xFFFFFFFF
+				kType_WriteMask,		//  value       extendData          0x00000000 - 0xFFFFFFFF
 			// if(Operation == Add/Subtract)
-				kType_AddSubtract,		//	select		OperationParameter	Add - Subtract
+				kType_AddSubtract,		//  select      OperationParameter  Add - Subtract
 				// if(LocationType != Relative Address)
 					// if(OperationParameter == Add)
 						kType_AddMaximum,
-										//	value		extendData			0x00000000 - 0xFFFFFFFF
+										//  value       extendData          0x00000000 - 0xFFFFFFFF
 					// else
 						kType_SubtractMinimum,
-										//	value		extendData			0x00000000 - 0xFFFFFFFF
+										//  value       extendData          0x00000000 - 0xFFFFFFFF
 			// if((Operation == Force Range) && (LocationType != Relative Address))
-				kType_RangeMinimum,		//	value		extendData			0x00 - 0xFF
-										//	NOTE: value is packed in to upper byte of extendData (as a word)
-				kType_RangeMaximum,		//	value		extendData			0x00 - 0xFF
-										//	NOTE: value is packed in to lower byte of extendData (as a word)
+				kType_RangeMinimum,		//  value       extendData          0x00 - 0xFF
+										//  NOTE: value is packed in to upper byte of extendData (as a word)
+				kType_RangeMaximum,		//  value       extendData          0x00 - 0xFF
+										//  NOTE: value is packed in to lower byte of extendData (as a word)
 			// if(Operation == Set/Clear)
-				kType_SetClear,			//	select		OperationParameter	Set - Clear
+				kType_SetClear,			//  select      OperationParameter  Set - Clear
 			// if((Operation != Null) || (Type == Watch))
 				// if(Type != Watch)
 					kType_Data,
-					kType_UserSelect,		//	select		UserSelectEnable	Off - On
+					kType_UserSelect,		//  select      UserSelectEnable    Off - On
 					// if(UserSelect == On)
 						kType_UserSelectMinimumDisp,
-											//	value		UserSelectMinimumDisplay
-											//									0 - 1
+											//  value       UserSelectMinimumDisplay
+											//                                  0 - 1
 						kType_UserSelectMinimum,
-											//	value		UserSelectMinimum	0 - 1
-						kType_UserSelectBCD,//	select		UserSelectBCD		Off - On
-						kType_Prefill,		//	select		UserSelectPrefill	None - FF - 00 - 01
+											//  value       UserSelectMinimum   0 - 1
+						kType_UserSelectBCD,//  select      UserSelectBCD       Off - On
+						kType_Prefill,		//  select      UserSelectPrefill   None - FF - 00 - 01
 					// if(idx > 0)
-						kType_CopyPrevious,	//	select		LinkCopyPreviousValue
-										//									Off - On
-				kType_ByteLength,		//	value		BytesUsed			1 - 4
+						kType_CopyPrevious,	//  select      LinkCopyPreviousValue
+										//                                  Off - On
+				kType_ByteLength,		//  value       BytesUsed           1 - 4
 				// if(bytesUsed > 0)
-					kType_Endianness,	//	select		Endianness			Normal - Swap
-				kType_LocationType,		//	select		LocationType		Normal - Region - Mapped Memory - EEPROM -
-										//									Relative Address
-										//	NOTE: also uses LocationParameter for EEPROM type
+					kType_Endianness,	//  select      Endianness          Normal - Swap
+				kType_LocationType,		//  select      LocationType        Normal - Region - Mapped Memory - EEPROM -
+										//                                  Relative Address
+										//  NOTE: also uses LocationParameter for EEPROM type
 				// if((LocationType == Normal) || (LocationType == HandlerMemory))
-					kType_CPU,			//	value		LocationParameter	0 - 31
+					kType_CPU,			//  value       LocationParameter   0 - 31
 				// if(LocationType == Region)
-					kType_Region,		//	select		LocationParameter	CPU1 - CPU2 - CPU3 - CPU4 - CPU5 - CPU6 - CPU7 -
-										//									CPU8 - GFX1 - GFX2 - GFX3 - GFX4 - GFX5 - GFX6 -
-										//									GFX7 - GFX8 - PROMS - SOUND1 - SOUND2 - SOUND3 -
-										//									SOUND4 - SOUND5 - SOUND6 - SOUND7 - SOUND8 -
-										//									USER1 - USER2 - USER3 - USER4 - USER5 - USER6 -
-										//									USER7
+					kType_Region,		//  select      LocationParameter   CPU1 - CPU2 - CPU3 - CPU4 - CPU5 - CPU6 - CPU7 -
+										//                                  CPU8 - GFX1 - GFX2 - GFX3 - GFX4 - GFX5 - GFX6 -
+										//                                  GFX7 - GFX8 - PROMS - SOUND1 - SOUND2 - SOUND3 -
+										//                                  SOUND4 - SOUND5 - SOUND6 - SOUND7 - SOUND8 -
+										//                                  USER1 - USER2 - USER3 - USER4 - USER5 - USER6 -
+										//                                  USER7
 				// if(LocationType == RelativeAddress)
-					kType_PackedCPU,	//	value		LocationParameter	0 - 7
-										//	NOTE: packed in to upper three bits of LocationParameter
-					kType_PackedSize,	//	value		LocationParameter	1 - 4
-										//	NOTE: packed in to lower two bits of LocationParameter
-					kType_AddressIndex,	//	value		extendData			-0x80000000 - 0x7FFFFFFF
+					kType_PackedCPU,	//  value       LocationParameter   0 - 7
+										//  NOTE: packed in to upper three bits of LocationParameter
+					kType_PackedSize,	//  value       LocationParameter   1 - 4
+										//  NOTE: packed in to lower two bits of LocationParameter
+					kType_AddressIndex,	//  value       extendData          -0x80000000 - 0x7FFFFFFF
 				kType_Address,
 
 		kType_Return,
@@ -4608,7 +4608,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 	INT32			sel = selection - 1;
 	const char		* menu_item[kMenu_Max + 2] = { 0 };
 	const char		* menu_subitem[kMenu_Max + 2] = { 0 };
-	//char			flagBuf[kMenu_Max + 2] = { 0 };
+	//char          flagBuf[kMenu_Max + 2] = { 0 };
 	char			valueBuffer[60];
 	char			valueSignedBuffer[60];
 	char			cpuBuffer[20];
@@ -4617,7 +4617,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 
 	SearchInfo		* search = GetCurrentSearch();
 
-	//static UINT8	editActive = 0;
+	//static UINT8  editActive = 0;
 	UINT32			increment = 1;
 	UINT8			doSearch = 0;
 	UINT8			willHaveResults = 0;
@@ -5609,7 +5609,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 
 					i++;
 				}
-				
+
 				traverse += kSearchByteStep[search->bytes];
 				resultsFound++;
 				hadResults = 1;
@@ -7110,7 +7110,7 @@ UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
 			buf[2] = 0;
 
 			return 2;
-			
+
 		case kSearchSize_24Bit:
 			buf[0] = (data >> 16)& 0xFF;
 			buf[1] = (data >> 8) & 0xFF;
@@ -8342,7 +8342,7 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 	if(traverse->customField & kCustomField_SubtractOne)
 		(*data)--;	// yaay for C operator precedence
 
-	//	set up the extend data
+	//  set up the extend data
 	if(traverse->customField & kCustomField_BitMask)
 	{
 		*extendData = *data;
@@ -9053,22 +9053,22 @@ static UINT32 DoSearchComparisonBit(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 /*
 static UINT8 IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UINT32 offset)
 {
-	switch(kSearchByteIncrementTable[search->bytes])
-	{
-		case 1:
-			return *((UINT8  *)&region->status[offset]) == 0xFF;
-			break;
+    switch(kSearchByteIncrementTable[search->bytes])
+    {
+        case 1:
+            return *((UINT8  *)&region->status[offset]) == 0xFF;
+            break;
 
-		case 2:
-			return *((UINT16 *)&region->status[offset]) == 0xFFFF;
-			break;
+        case 2:
+            return *((UINT16 *)&region->status[offset]) == 0xFFFF;
+            break;
 
-		case 4:
-			return *((UINT32 *)&region->status[offset]) == 0xFFFFFFFF;
-			break;
-	}
+        case 4:
+            return *((UINT32 *)&region->status[offset]) == 0xFFFFFFFF;
+            break;
+    }
 
-	return 0;
+    return 0;
 }
 */
 
@@ -9107,7 +9107,7 @@ static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, U
 		case 2:
 			*((UINT16 *)&region->status[offset]) = 0;
 			break;
-			
+
 		case 3:
 			*((UINT16 *)&region->status[offset]) = 0;
 			*((UINT8  *)&region->status[offset+2]) = 0;
@@ -9381,7 +9381,7 @@ static UINT32 DoMemoryRead(UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap,
 							((data << 8) & 0xFF00);
 				}
 				break;
-				
+
 			case 4:
 				data = *((UINT32 *)&buf[address]);
 

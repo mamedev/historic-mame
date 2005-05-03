@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Wiping sound driver (quick hack of the Namco sound driver)
+    Wiping sound driver (quick hack of the Namco sound driver)
 
-	used by wiping.c and clshroad.c
+    used by wiping.c and clshroad.c
 
 ***************************************************************************/
 

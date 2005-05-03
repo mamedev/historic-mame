@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Taito Qix hardware
+    Taito Qix hardware
 
-	driver by John Butler, Ed Mueller, Aaron Giles
+    driver by John Butler, Ed Mueller, Aaron Giles
 
 ***************************************************************************/
 

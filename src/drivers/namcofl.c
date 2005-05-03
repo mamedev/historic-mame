@@ -1,7 +1,7 @@
 /*
-	Namco System FL
-	Preliminary driver by R. Belmont
-	Thanks to ElSemi for some hardware info
+    Namco System FL
+    Preliminary driver by R. Belmont
+    Thanks to ElSemi for some hardware info
 
 PCB Layout
 ----------
@@ -310,8 +310,8 @@ static MACHINE_DRIVER_START( sysfl )
 	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
 	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
 // for debugger
-//	MDRV_SCREEN_SIZE(96*8, 64*8)
-//	MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
+//  MDRV_SCREEN_SIZE(96*8, 64*8)
+//  MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_GFXDECODE(gfxdecodeinfo2)

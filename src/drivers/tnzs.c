@@ -126,48 +126,48 @@ f000-f003 inputs (used only by Arkanoid 2)
 ****************************************************************************/
 /***************************************************************************
 
-				Arkanoid 2 - Revenge of Doh!
-					(C) 1987 Taito
+                Arkanoid 2 - Revenge of Doh!
+                    (C) 1987 Taito
 
-						driver by
+                        driver by
 
-				Luca Elia (l.elia@tin.it)
-				Mirko Buffoni
+                Luca Elia (l.elia@tin.it)
+                Mirko Buffoni
 
 - The game doesn't write to f800-fbff (static palette)
 
 
 
-			Interesting routines (main cpu)
-			-------------------------------
+            Interesting routines (main cpu)
+            -------------------------------
 
-1ed	prints the test screen (first string at 206)
+1ed prints the test screen (first string at 206)
 
-47a	prints dipsw1&2 e 1p&2p paddleL values:
-	e821		IN DIPSW1		e823-4	1P PaddleL (lo-hi)
-	e822		IN DIPSW2		e825-6	2P PaddleL (lo-hi)
+47a prints dipsw1&2 e 1p&2p paddleL values:
+    e821        IN DIPSW1       e823-4  1P PaddleL (lo-hi)
+    e822        IN DIPSW2       e825-6  2P PaddleL (lo-hi)
 
-584	prints OK or NG on each entry:
-	if (*addr)!=0 { if (*addr)!=2 OK else NG }
-	e880	1P PADDLEL		e88a	IN SERVICE
-	e881	1P PADDLER		e88b	IN TILT
-	e882	1P BUTTON		e88c	OUT LOCKOUT1
-	e883	1P START		e88d	OUT LOCKOUT2
-	e884	2P PADDLEL		e88e	IN DIP-SW1
-	e885	2P PADDLER		e88f	IN DIP-SW2
-	e886	2P BUTTON		e890	SND OPN
-	e887	2P START		e891	SND SSGCH1
-	e888	IN COIN1		e892	SND SSGCH2
-	e889	IN COIN2		e893	SND SSGCH3
+584 prints OK or NG on each entry:
+    if (*addr)!=0 { if (*addr)!=2 OK else NG }
+    e880    1P PADDLEL      e88a    IN SERVICE
+    e881    1P PADDLER      e88b    IN TILT
+    e882    1P BUTTON       e88c    OUT LOCKOUT1
+    e883    1P START        e88d    OUT LOCKOUT2
+    e884    2P PADDLEL      e88e    IN DIP-SW1
+    e885    2P PADDLER      e88f    IN DIP-SW2
+    e886    2P BUTTON       e890    SND OPN
+    e887    2P START        e891    SND SSGCH1
+    e888    IN COIN1        e892    SND SSGCH2
+    e889    IN COIN2        e893    SND SSGCH3
 
-672	prints a char
-715	prints a string (0 terminated)
+672 prints a char
+715 prints a string (0 terminated)
 
-		Shared Memory (values written mainly by the sound cpu)
-		------------------------------------------------------
+        Shared Memory (values written mainly by the sound cpu)
+        ------------------------------------------------------
 
-e001=dip-sw A 	e399=coin counter value		e72c-d=1P paddle (lo-hi)
-e002=dip-sw B 	e3a0-2=1P score/10 (BCD)	e72e-f=2P paddle (lo-hi)
+e001=dip-sw A   e399=coin counter value     e72c-d=1P paddle (lo-hi)
+e002=dip-sw B   e3a0-2=1P score/10 (BCD)    e72e-f=2P paddle (lo-hi)
 e008=level=2*(shown_level-1)+x <- remember it's a binary tree (42 last)
 e7f0=country code(from 9fde in sound rom)
 e807=counter, reset by sound cpu, increased by main cpu each vblank
@@ -175,31 +175,31 @@ e80b=test progress=0(start) 1(first 8) 2(all ok) 3(error)
 ec09-a~=ed05-6=xy pos of cursor in hi-scores
 ec81-eca8=hi-scores(8bytes*5entries)
 
-addr	bit	name		active	addr	bit	name		active
-e72d	6	coin[1]		low		e729	1	2p select	low
-		5	service		high			0	1p select	low
-		4	coin[2]		low
+addr    bit name        active  addr    bit name        active
+e72d    6   coin[1]     low     e729    1   2p select   low
+        5   service     high            0   1p select   low
+        4   coin[2]     low
 
-addr	bit	name		active	addr	bit	name		active
-e730	7	tilt		low		e7e7	4	1p fire		low
-										0	2p fire		low
+addr    bit name        active  addr    bit name        active
+e730    7   tilt        low     e7e7    4   1p fire     low
+                                        0   2p fire     low
 
-			Interesting routines (sound cpu)
-			--------------------------------
+            Interesting routines (sound cpu)
+            --------------------------------
 
-4ae	check starts	B73,B7a,B81,B99	coin related
-8c1	check coins		62e lockout check		664	dsw check
+4ae check starts    B73,B7a,B81,B99 coin related
+8c1 check coins     62e lockout check       664 dsw check
 
-			Interesting locations (sound cpu)
-			---------------------------------
+            Interesting locations (sound cpu)
+            ---------------------------------
 
 d006=each bit is on if a corresponding location (e880-e887) has changed
 d00b=(c001)>>4=tilt if 0E (security sequence must be reset?)
-addr	bit	name		active
-d00c	7	tilt
-		6	?service?
-		5	coin2		low
-		4	coin1		low
+addr    bit name        active
+d00c    7   tilt
+        6   ?service?
+        5   coin2       low
+        4   coin1       low
 
 d00d=each bit is on if the corresponding location (e880-e887) is 1 (OK)
 d00e=each of the 4 MSBs is on if ..
@@ -300,7 +300,7 @@ void kageki_init_samples(void)
 		{
 			*dest++ = (INT8)((*scan++) ^ 0x80) * 256;
 		}
-	//	logerror("samples num:%02X ofs:%04X lng:%04X\n", i, start, size);
+	//  logerror("samples num:%02X ofs:%04X lng:%04X\n", i, start, size);
 	}
 }
 
@@ -329,7 +329,7 @@ static READ8_HANDLER( kageki_csport_r )
 			break;
 		default:
 			dsw = 0x00;
-		//	logerror("kageki_csport_sel error !! (0x%08X)\n", kageki_csport_sel);
+		//  logerror("kageki_csport_sel error !! (0x%08X)\n", kageki_csport_sel);
 	}
 
 	return (dsw & 0xff);
@@ -354,7 +354,7 @@ static WRITE8_HANDLER( kageki_csport_w )
 			sample_start_raw(0, sampledata[data], samplesize[data], 7000, 0);
 			sprintf(mess, "VOICE:%02X PLAY", data);
 		}
-	//	usrintf_showmessage(mess);
+	//  usrintf_showmessage(mess);
 	}
 }
 

@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	SMC91C9X ethernet controller implementation
+    SMC91C9X ethernet controller implementation
 
-	by Aaron Giles
+    by Aaron Giles
 
 **************************************************************************/
 

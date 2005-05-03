@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Sun Electronics Arabian hardware
+    Sun Electronics Arabian hardware
 
-	driver by Dan Boris
+    driver by Dan Boris
 
 ***************************************************************************/
 

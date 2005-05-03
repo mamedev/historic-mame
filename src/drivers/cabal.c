@@ -77,7 +77,7 @@ static void cabalbl_play_adpcm( int channel, int which ){
 			start = RAM[offset+which] + 256*RAM[offset+which+1];
 			len = (RAM[offset+start]*256 + RAM[offset+start+1])*2;
 			start+=2;
-//			ADPCM_play( channel,offset+start,len );
+//          ADPCM_play( channel,offset+start,len );
 		}
 	}
 }
@@ -340,9 +340,9 @@ ADDRESS_MAP_END
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )\
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )\
 	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
-  
+
   INPUT_PORTS_START( cabal )
-  
+
 CABALDSW
 	PORT_START_TAG("IN0")
   	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)

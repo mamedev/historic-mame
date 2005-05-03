@@ -1,26 +1,26 @@
 /*****************************************************************************
 
-	Irem M90 system.  There is 1 video chip - NANAO GA-25, it produces
-	2 tilemaps and sprites.  16 control bytes:
+    Irem M90 system.  There is 1 video chip - NANAO GA-25, it produces
+    2 tilemaps and sprites.  16 control bytes:
 
-	0:  Playfield 1 X scroll
-	2:  Playfield 1 Y scroll
-	4:  Playfield 2 X scroll
-	6:  Playfield 2 Y scroll
-	8:  Bit 0x01 - unknown (set by hasamu)
-	10: Playfield 1 control
-		Bits0x03 - Playfield 1 VRAM base
- 		Bit 0x04 - Playfield 1 width (0 is 64 tiles, 0x4 is 128 tiles)
-		Bit 0x10 - Playfield 1 disable
-		Bit 0x20 - Playfield 1 rowscroll enable
-	12: Playfield 2 control
-		Bits0x03 - Playfield 2 VRAM base
- 		Bit 0x04 - Playfield 2 width (0 is 64 tiles, 0x4 is 128 tiles)
-		Bit 0x10 - Playfield 2 disable
-		Bit 0x20 - Playfield 2 rowscroll enable
-	14: Bit 0x02 - unknown (set by hasamu)
+    0:  Playfield 1 X scroll
+    2:  Playfield 1 Y scroll
+    4:  Playfield 2 X scroll
+    6:  Playfield 2 Y scroll
+    8:  Bit 0x01 - unknown (set by hasamu)
+    10: Playfield 1 control
+        Bits0x03 - Playfield 1 VRAM base
+        Bit 0x04 - Playfield 1 width (0 is 64 tiles, 0x4 is 128 tiles)
+        Bit 0x10 - Playfield 1 disable
+        Bit 0x20 - Playfield 1 rowscroll enable
+    12: Playfield 2 control
+        Bits0x03 - Playfield 2 VRAM base
+        Bit 0x04 - Playfield 2 width (0 is 64 tiles, 0x4 is 128 tiles)
+        Bit 0x10 - Playfield 2 disable
+        Bit 0x20 - Playfield 2 rowscroll enable
+    14: Bit 0x02 - unknown (set by hasamu)
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy!
+    Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy!
 
 *****************************************************************************/
 
@@ -173,10 +173,10 @@ VIDEO_UPDATE( m90 )
 
 	if (m90_video_control_data[0xa]&0x10) pf1_enable=0; else pf1_enable=1;
 	if (m90_video_control_data[0xc]&0x10) pf2_enable=0; else pf2_enable=1;
-//	tilemap_set_enable(pf1_layer,pf1_enable);
-//	tilemap_set_enable(pf2_layer,pf2_enable);
-//	tilemap_set_enable(pf1_wide_layer,pf1_enable);
-//	tilemap_set_enable(pf2_wide_layer,pf2_enable);
+//  tilemap_set_enable(pf1_layer,pf1_enable);
+//  tilemap_set_enable(pf2_layer,pf2_enable);
+//  tilemap_set_enable(pf1_wide_layer,pf1_enable);
+//  tilemap_set_enable(pf2_wide_layer,pf2_enable);
 
 	/* Dirty tilemaps if VRAM base changes */
 	if (pf1_base!=last_pf1)

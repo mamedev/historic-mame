@@ -22,7 +22,7 @@ Stephh's notes :
   IPF_CHEAT flag for the Dip Switch and the 3rd button of each player.
 
 TODO:
-	* adpcm samples don't seem to be playing at the proper tempo - too fast?
+    * adpcm samples don't seem to be playing at the proper tempo - too fast?
 
 
 ***************************************************************************/

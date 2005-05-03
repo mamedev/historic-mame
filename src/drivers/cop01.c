@@ -100,10 +100,10 @@ static READ8_HANDLER( mightguy_dsw_r )
 
 	switch (offset)
 	{
-		case 0 :				
+		case 0 :
 			data = (readinputportbytag("DSW1") & 0x7f) | ((readinputportbytag("FAKE") & 0x04) << 5);
 			break;
-		case 1 :				
+		case 1 :
 			data = (readinputportbytag("DSW2") & 0x3f) | ((readinputportbytag("FAKE") & 0x03) << 6);
 			break;
 		}
@@ -602,7 +602,7 @@ static DRIVER_INIT( mightguy )
 {
 #if MIGHTGUY_HACK
 	/* This is a hack to fix the game code to get a fully working
-	   "Starting Area" fake Dip Switch */
+       "Starting Area" fake Dip Switch */
 	data8_t *RAM = (data8_t *)memory_region(REGION_CPU1);
 	RAM[0x00e4] = 0x07;	// rlca
 	RAM[0x00e5] = 0x07;	// rlca

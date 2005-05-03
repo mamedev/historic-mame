@@ -55,7 +55,7 @@ static data16_t *meijinsn_fg_videoram;
 READ16_HANDLER( meijinsn_read_random )
 {
 	return mame_rand();
-//	return 0xffff;
+//  return 0xffff;
 }
 
 static ADDRESS_MAP_START( meijinsn_readmem, ADDRESS_SPACE_PROGRAM, 16 )

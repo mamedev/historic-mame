@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Exidy 6502 hardware
+    Exidy 6502 hardware
 
 *************************************************************************/
 
@@ -15,7 +15,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -38,7 +38,7 @@ enum
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -108,7 +108,7 @@ static double freq_to_step;
 
 /*************************************
  *
- *	PIA interface
+ *  PIA interface
  *
  *************************************/
 
@@ -146,7 +146,7 @@ static struct pia6821_interface victory_pia_0_intf =
 
 /*************************************
  *
- *	Interrupt generation helpers
+ *  Interrupt generation helpers
  *
  *************************************/
 
@@ -166,7 +166,7 @@ static void exidy_irq(int state)
 
 /*************************************
  *
- *	6840 clock counting helper
+ *  6840 clock counting helper
  *
  *************************************/
 
@@ -221,7 +221,7 @@ INLINE void sh6840_apply_clock(struct sh6840_timer_channel *t, int clocks)
 
 /*************************************
  *
- *	Noise generation helper
+ *  Noise generation helper
  *
  *************************************/
 
@@ -254,7 +254,7 @@ INLINE int sh6840_update_noise(int clocks)
 
 /*************************************
  *
- *	Core sound generation
+ *  Core sound generation
  *
  *************************************/
 
@@ -366,7 +366,7 @@ static void exidy_stream_update(void *param, stream_sample_t **inputs, stream_sa
 
 /*************************************
  *
- *	Sound startup routines
+ *  Sound startup routines
  *
  *************************************/
 
@@ -439,7 +439,7 @@ void *victory_sh_start(int clock, const struct CustomSound_interface *config)
 
 /*************************************
  *
- *	6532 RIOT timer callback
+ *  6532 RIOT timer callback
  *
  *************************************/
 
@@ -470,7 +470,7 @@ static void riot_interrupt(int parm)
 
 /*************************************
  *
- *	6532 RIOT write handler
+ *  6532 RIOT write handler
  *
  *************************************/
 
@@ -548,7 +548,7 @@ WRITE8_HANDLER( exidy_shriot_w )
 
 /*************************************
  *
- *	6532 RIOT read handler
+ *  6532 RIOT read handler
  *
  *************************************/
 
@@ -620,7 +620,7 @@ READ8_HANDLER( exidy_shriot_r )
 
 /*************************************
  *
- *	8253 timer handlers
+ *  8253 timer handlers
  *
  *************************************/
 
@@ -671,7 +671,7 @@ READ8_HANDLER( exidy_sh8253_r )
 
 /*************************************
  *
- *	6840 timer handlers
+ *  6840 timer handlers
  *
  *************************************/
 
@@ -728,7 +728,7 @@ WRITE8_HANDLER( exidy_sh6840_w )
 
 /*************************************
  *
- *	External sound effect controls
+ *  External sound effect controls
  *
  *************************************/
 
@@ -755,7 +755,7 @@ WRITE8_HANDLER( exidy_sfxctrl_w )
 
 /*************************************
  *
- *	Sound filter control
+ *  Sound filter control
  *
  *************************************/
 
@@ -768,7 +768,7 @@ WRITE8_HANDLER( exidy_sound_filter_w )
 
 /*************************************
  *
- *	CVSD sound for Mouse Trap
+ *  CVSD sound for Mouse Trap
  *
  *************************************/
 

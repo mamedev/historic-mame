@@ -2,14 +2,14 @@
 
 /*
 
-	Hit Me  (c) Ramtek  1976
+    Hit Me  (c) Ramtek  1976
 ---------------------------------------
 
-	Memory map
+    Memory map
 
-	0000-07ff r    Rom
-	0c00-0eff w    Video Ram
-	1000-13ff r/w  Scratch Ram
+    0000-07ff r    Rom
+    0c00-0eff w    Video Ram
+    1000-13ff r/w  Scratch Ram
 
 
 */
@@ -26,7 +26,7 @@ static data8_t *hitme_vidram;
 
 /*************************************
  *
- *	Video RAM access
+ *  Video RAM access
  *
  *************************************/
 
@@ -49,7 +49,7 @@ WRITE8_HANDLER( hitme_vidram_w )
 
 /*************************************
  *
- *	Video start/update
+ *  Video start/update
  *
  *************************************/
 
@@ -122,7 +122,7 @@ static VIDEO_UPDATE(barricad)
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -171,18 +171,18 @@ static READ8_HANDLER( hitme_port_3_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
 static WRITE8_HANDLER( output_port_0_w )
 {
 	/*
-		Note: We compute the timeout time on a write here. Unfortunately, the situation is
-		kind of weird, because the discrete sound system is also affected by this timeout.
-		In fact, it is very important that our timing calculation timeout AFTER the sound
-		system's equivalent computation, or else we will hang notes.
-	*/
+        Note: We compute the timeout time on a write here. Unfortunately, the situation is
+        kind of weird, because the discrete sound system is also affected by this timeout.
+        In fact, it is very important that our timing calculation timeout AFTER the sound
+        system's equivalent computation, or else we will hang notes.
+    */
 	data8_t raw_game_speed = readinputport(6);
 	double resistance = raw_game_speed * 25000 / 100;
 	mame_time duration = make_mame_time(0, MAX_SUBSECONDS * 0.45 * 6.8e-6 * resistance * (data+1));
@@ -203,15 +203,15 @@ static WRITE8_HANDLER( output_port_1_w )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
 /*
-	Note: the 8080 puts I/O port addresses out on the upper 8 address bits and asserts
-	IORQ. Most systems decode IORQ, but hitme doesn't, which means that all the I/O
-	port accesses can also be made via memory mapped accesses with the port number in the
-	upper 8 bits.
+    Note: the 8080 puts I/O port addresses out on the upper 8 address bits and asserts
+    IORQ. Most systems decode IORQ, but hitme doesn't, which means that all the I/O
+    port accesses can also be made via memory mapped accesses with the port number in the
+    upper 8 bits.
 */
 
 static ADDRESS_MAP_START( hitme_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -245,14 +245,14 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
 /*
-	Note: the hitme video generator adds two blank lines to the beginning of each
-	row. In order to simulate this, we decode an extra two lines at the top of each
-	character.
+    Note: the hitme video generator adds two blank lines to the beginning of each
+    row. In order to simulate this, we decode an extra two lines at the top of each
+    character.
 */
 
 static struct GfxLayout hitme_charlayout =
@@ -295,7 +295,7 @@ static struct GfxDecodeInfo barricad_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -330,10 +330,10 @@ MACHINE_DRIVER_END
 
 
 /*
-	Note: The Barricade rom is using a resolution of 32x24 which suggests slightly
-	different hardware from HitMe (40x19) however the screenshot on the arcade
-	flyer is using a 40x19 resolution. So is this a different version of
-	Barricade or is the resolution set by a dip switch?
+    Note: The Barricade rom is using a resolution of 32x24 which suggests slightly
+    different hardware from HitMe (40x19) however the screenshot on the arcade
+    flyer is using a 40x19 resolution. So is this a different version of
+    Barricade or is the resolution set by a dip switch?
 */
 
 static MACHINE_DRIVER_START( barricad )
@@ -352,7 +352,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -475,9 +475,9 @@ INPUT_PORTS_START( barricad )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Time out counter (*TO) */
 
 	/* On the flyer it says that barricade has both user adjustable points per
-		game, and speed. From experimenting it looks like points per game is the
-		same dipswitch as hitme's chips, and speed is hitme's hands. The flyer
-	  says 1-7 points per games, but it really can go to 8. */
+        game, and speed. From experimenting it looks like points per game is the
+        same dipswitch as hitme's chips, and speed is hitme's hands. The flyer
+      says 1-7 points per games, but it really can go to 8. */
 
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x07, "Points Per Game" )
@@ -491,7 +491,7 @@ INPUT_PORTS_START( barricad )
 	PORT_DIPSETTING(    0x07, "8 Points" )
 
 	/* These are like lives, you lose a point if you crash. The last person with
-		points wins the game. */
+        points wins the game. */
 
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x00, "Game Speed" )
@@ -509,7 +509,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -564,7 +564,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

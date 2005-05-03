@@ -1,53 +1,53 @@
 /*** m6800: Portable 6800 class  emulator *************************************
 
-	m6800.c
+    m6800.c
 
-	References:
+    References:
 
-		6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
+        6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
 
-		m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
-			the 6809 Simulator V09)
+        m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
+            the 6809 Simulator V09)
 
-		6809 Microcomputer Programming & Interfacing with Experiments"
-			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
+        6809 Microcomputer Programming & Interfacing with Experiments"
+            by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	UINT16 must be 16 bit unsigned int
-							UINT8 must be 8 bit unsigned int
-							UINT32 must be more than 16 bits
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
+    System dependencies:    UINT16 must be 16 bit unsigned int
+                            UINT8 must be 8 bit unsigned int
+                            UINT32 must be more than 16 bits
+                            arrays up to 65536 bytes must be supported
+                            machine must be twos complement
 
 History
-991031	ZV
-	Added NSC-8105 support
+991031  ZV
+    Added NSC-8105 support
 
-990319	HJB
+990319  HJB
     Fixed wrong LSB/MSB order for push/pull word.
-	Subtract .extra_cycles at the beginning/end of the exectuion loops.
+    Subtract .extra_cycles at the beginning/end of the exectuion loops.
 
 990316  HJB
-	Renamed to 6800, since that's the basic CPU.
-	Added different cycle count tables for M6800/2/8, M6801/3 and HD63701.
+    Renamed to 6800, since that's the basic CPU.
+    Added different cycle count tables for M6800/2/8, M6801/3 and HD63701.
 
 990314  HJB
-	Also added the M6800 subtype.
+    Also added the M6800 subtype.
 
 990311  HJB
-	Added _info functions. Now uses static m6808_Regs struct instead
-	of single statics. Changed the 16 bit registers to use the generic
-	PAIR union. Registers defined using macros. Split the core into
-	four execution loops for M6802, M6803, M6808 and HD63701.
-	TST, TSTA and TSTB opcodes reset carry flag.
+    Added _info functions. Now uses static m6808_Regs struct instead
+    of single statics. Changed the 16 bit registers to use the generic
+    PAIR union. Registers defined using macros. Split the core into
+    four execution loops for M6802, M6803, M6808 and HD63701.
+    TST, TSTA and TSTB opcodes reset carry flag.
 TODO:
-	Verify invalid opcodes for the different CPU types.
-	Add proper credits to _info functions.
-	Integrate m6808_Flags into the registers (multiple m6808 type CPUs?)
+    Verify invalid opcodes for the different CPU types.
+    Add proper credits to _info functions.
+    Integrate m6808_Flags into the registers (multiple m6808 type CPUs?)
 
-990301	HJB
-	Modified the interrupt handling. No more pending interrupt checks.
-	WAI opcode saves state, when an interrupt is taken (IRQ or OCI),
-	the state is only saved if not already done by WAI.
+990301  HJB
+    Modified the interrupt handling. No more pending interrupt checks.
+    WAI opcode saves state, when an interrupt is taken (IRQ or OCI),
+    the state is only saved if not already done by WAI.
 
 *****************************************************************************/
 
@@ -85,7 +85,7 @@ enum {
 /* 6800 Registers */
 typedef struct
 {
-//	int 	subtype;		/* CPU subtype */
+//  int     subtype;        /* CPU subtype */
 	PAIR	ppc;			/* Previous program counter */
 	PAIR	pc; 			/* Program counter */
 	PAIR	s;				/* Stack pointer */
@@ -269,7 +269,7 @@ static UINT8 m6800_win_layout[] = {
 }
 
 /* CC masks                       HI NZVC
-								7654 3210	*/
+                                7654 3210   */
 #define CLR_HNZVC	CC&=0xd0
 #define CLR_NZV 	CC&=0xf1
 #define CLR_HNZC	CC&=0xd2
@@ -581,7 +581,7 @@ static void state_register(const char *type)
 
 static void m6800_init(void)
 {
-//	m6800.subtype   = SUBTYPE_M6800;
+//  m6800.subtype   = SUBTYPE_M6800;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
 	state_register("m6800");
@@ -995,7 +995,7 @@ static offs_t m6800_dasm(char *buffer, offs_t pc)
 #if (HAS_M6801)
 static void m6801_init(void)
 {
-//	m6800.subtype = SUBTYPE_M6801;
+//  m6800.subtype = SUBTYPE_M6801;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
 	state_register("m6801");
@@ -1019,7 +1019,7 @@ static offs_t m6801_dasm(char *buffer, offs_t pc)
 #if (HAS_M6802)
 static void m6802_init(void)
 {
-//	m6800.subtype   = SUBTYPE_M6802;
+//  m6800.subtype   = SUBTYPE_M6802;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
 	state_register("m6802");
@@ -1043,7 +1043,7 @@ static offs_t m6802_dasm(char *buffer, offs_t pc)
 #if (HAS_M6803)
 void m6803_init(void)
 {
-//	m6800.subtype = SUBTYPE_M6803;
+//  m6800.subtype = SUBTYPE_M6803;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
 	state_register("m6803");
@@ -1366,7 +1366,7 @@ static WRITE8_HANDLER( m6803_internal_registers_w );
 static ADDRESS_MAP_START(m6803_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(m6803_internal_registers_r, m6803_internal_registers_w)
 	AM_RANGE(0x0020, 0x007f) AM_NOP        /* unused */
-	AM_RANGE(0x0080, 0x00ff) AM_RAM        /* 6803 internal RAM */ 
+	AM_RANGE(0x0080, 0x00ff) AM_RAM        /* 6803 internal RAM */
 ADDRESS_MAP_END
 
 #endif
@@ -1377,7 +1377,7 @@ ADDRESS_MAP_END
 #if (HAS_M6808)
 static void m6808_init(void)
 {
-//	m6800.subtype = SUBTYPE_M6808;
+//  m6800.subtype = SUBTYPE_M6808;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
 	state_register("m6808");
@@ -1400,7 +1400,7 @@ static offs_t m6808_dasm(char *buffer, offs_t pc)
 #if (HAS_HD63701)
 static void hd63701_init(void)
 {
-//	m6800.subtype = SUBTYPE_HD63701;
+//  m6800.subtype = SUBTYPE_HD63701;
 	m6800.insn = hd63701_insn;
 	m6800.cycles = cycles_63701;
 	state_register("hd63701");
@@ -1700,11 +1700,11 @@ static int hd63701_execute(int cycles)
 }
 
 /*
-	if change_pc() direccted these areas ,Call hd63701_trap_pc().
-	'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
-	mode 0,1,2,4,6 : $0000-$001f
-	mode 5         : $0000-$001f,$0200-$efff
-	mode 7         : $0000-$001f,$0100-$efff
+    if change_pc() direccted these areas ,Call hd63701_trap_pc().
+    'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
+    mode 0,1,2,4,6 : $0000-$001f
+    mode 5         : $0000-$001f,$0200-$efff
+    mode 7         : $0000-$001f,$0100-$efff
 */
 void hd63701_trap_pc(void)
 {
@@ -1739,7 +1739,7 @@ static offs_t hd63701_dasm(char *buffer, offs_t pc)
 #if (HAS_NSC8105)
 static void nsc8105_init(void)
 {
-//	m6800.subtype = SUBTYPE_NSC8105;
+//  m6800.subtype = SUBTYPE_NSC8105;
 	m6800.insn = nsc8105_insn;
 	m6800.cycles = cycles_nsc8105;
 	state_register("nsc8105");
@@ -2277,7 +2277,7 @@ static void m6800_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6800_A:			m6800.d.b.h = info->i;					break;
 		case CPUINFO_INT_REGISTER + M6800_B:			m6800.d.b.l = info->i;					break;
 		case CPUINFO_INT_REGISTER + M6800_X:			m6800.x.w.l = info->i;					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m6800.irq_callback = info->irqcallback;	break;
 	}
@@ -2303,7 +2303,7 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 12;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

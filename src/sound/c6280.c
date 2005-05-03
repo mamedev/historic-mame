@@ -289,7 +289,7 @@ void c6280_update(void *param, stream_sample_t **inputs, stream_sample_t **buffe
 static void *c6280_start(int sndindex, int clock, const void *config)
 {
     c6280_t *info;
-    
+
     info = auto_malloc(sizeof(*info));
     memset(info, 0, sizeof(*info));
 

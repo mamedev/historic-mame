@@ -138,7 +138,7 @@ static void *ym2608_start(int sndindex, int clock, const void *config)
 	int  pcmsizea;
 
 	struct ym2608_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
@@ -187,7 +187,7 @@ static void ym2608_reset(void *token)
 }
 
 /************************************************/
-/* Status Read for YM2608 - Chip 0				*/
+/* Status Read for YM2608 - Chip 0              */
 /************************************************/
 READ8_HANDLER( YM2608_status_port_0_A_r )
 {
@@ -204,7 +204,7 @@ READ8_HANDLER( YM2608_status_port_0_B_r )
 }
 
 /************************************************/
-/* Status Read for YM2608 - Chip 1				*/
+/* Status Read for YM2608 - Chip 1              */
 /************************************************/
 READ8_HANDLER( YM2608_status_port_1_A_r ) {
 	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
@@ -217,7 +217,7 @@ READ8_HANDLER( YM2608_status_port_1_B_r ) {
 }
 
 /************************************************/
-/* Port Read for YM2608 - Chip 0				*/
+/* Port Read for YM2608 - Chip 0                */
 /************************************************/
 READ8_HANDLER( YM2608_read_port_0_r ){
 	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
@@ -225,7 +225,7 @@ READ8_HANDLER( YM2608_read_port_0_r ){
 }
 
 /************************************************/
-/* Port Read for YM2608 - Chip 1				*/
+/* Port Read for YM2608 - Chip 1                */
 /************************************************/
 READ8_HANDLER( YM2608_read_port_1_r ){
 	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
@@ -233,8 +233,8 @@ READ8_HANDLER( YM2608_read_port_1_r ){
 }
 
 /************************************************/
-/* Control Write for YM2608 - Chip 0			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2608 - Chip 0            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2608_control_port_0_A_w )
 {
@@ -249,8 +249,8 @@ WRITE8_HANDLER( YM2608_control_port_0_B_w )
 }
 
 /************************************************/
-/* Control Write for YM2608 - Chip 1			*/
-/* Consists of 2 addresses						*/
+/* Control Write for YM2608 - Chip 1            */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2608_control_port_1_A_w ){
 	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
@@ -263,8 +263,8 @@ WRITE8_HANDLER( YM2608_control_port_1_B_w ){
 }
 
 /************************************************/
-/* Data Write for YM2608 - Chip 0				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2608 - Chip 0               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2608_data_port_0_A_w )
 {
@@ -279,8 +279,8 @@ WRITE8_HANDLER( YM2608_data_port_0_B_w )
 }
 
 /************************************************/
-/* Data Write for YM2608 - Chip 1				*/
-/* Consists of 2 addresses						*/
+/* Data Write for YM2608 - Chip 1               */
+/* Consists of 2 addresses                      */
 /************************************************/
 WRITE8_HANDLER( YM2608_data_port_1_A_w ){
 	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);

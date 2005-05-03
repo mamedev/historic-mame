@@ -62,9 +62,9 @@ Revision History:
  - fixed subscription range of attack/decay tables
 
 
-	To do:
-		add delay before key off in CSM mode (see CSMKeyControll)
-		verify volume of the FM part on the Y8950
+    To do:
+        add delay before key off in CSM mode (see CSMKeyControll)
+        verify volume of the FM part on the Y8950
 */
 
 #include <stdio.h>
@@ -198,10 +198,10 @@ static FILE *sample[1];
 
 
 
-#define OPL_TYPE_WAVESEL   0x01  /* waveform select		*/
-#define OPL_TYPE_ADPCM     0x02  /* DELTA-T ADPCM unit	*/
-#define OPL_TYPE_KEYBOARD  0x04  /* keyboard interface	*/
-#define OPL_TYPE_IO        0x08  /* I/O port			*/
+#define OPL_TYPE_WAVESEL   0x01  /* waveform select     */
+#define OPL_TYPE_ADPCM     0x02  /* DELTA-T ADPCM unit  */
+#define OPL_TYPE_KEYBOARD  0x04  /* keyboard interface  */
+#define OPL_TYPE_IO        0x08  /* I/O port            */
 
 /* ---------- Generic interface section ---------- */
 #define OPL_TYPE_YM3526 (0)
@@ -211,36 +211,36 @@ static FILE *sample[1];
 
 
 typedef struct{
-	UINT32	ar;			/* attack rate: AR<<2			*/
-	UINT32	dr;			/* decay rate:  DR<<2			*/
-	UINT32	rr;			/* release rate:RR<<2			*/
-	UINT8	KSR;		/* key scale rate				*/
-	UINT8	ksl;		/* keyscale level				*/
-	UINT8	ksr;		/* key scale rate: kcode>>KSR	*/
-	UINT8	mul;		/* multiple: mul_tab[ML]		*/
+	UINT32	ar;			/* attack rate: AR<<2           */
+	UINT32	dr;			/* decay rate:  DR<<2           */
+	UINT32	rr;			/* release rate:RR<<2           */
+	UINT8	KSR;		/* key scale rate               */
+	UINT8	ksl;		/* keyscale level               */
+	UINT8	ksr;		/* key scale rate: kcode>>KSR   */
+	UINT8	mul;		/* multiple: mul_tab[ML]        */
 
 	/* Phase Generator */
-	UINT32	Cnt;		/* frequency counter			*/
-	UINT32	Incr;		/* frequency counter step		*/
-	UINT8   FB;			/* feedback shift value			*/
-	INT32   *connect1;	/* slot1 output pointer			*/
-	INT32   op1_out[2];	/* slot1 output for feedback	*/
-	UINT8   CON;		/* connection (algorithm) type	*/
+	UINT32	Cnt;		/* frequency counter            */
+	UINT32	Incr;		/* frequency counter step       */
+	UINT8   FB;			/* feedback shift value         */
+	INT32   *connect1;	/* slot1 output pointer         */
+	INT32   op1_out[2];	/* slot1 output for feedback    */
+	UINT8   CON;		/* connection (algorithm) type  */
 
 	/* Envelope Generator */
 	UINT8	eg_type;	/* percussive/non-percussive mode */
-	UINT8	state;		/* phase type					*/
-	UINT32	TL;			/* total level: TL << 2			*/
-	INT32	TLL;		/* adjusted now TL				*/
-	INT32	volume;		/* envelope counter				*/
-	UINT32	sl;			/* sustain level: sl_tab[SL]	*/
-	UINT8	eg_sh_ar;	/* (attack state)				*/
-	UINT8	eg_sel_ar;	/* (attack state)				*/
-	UINT8	eg_sh_dr;	/* (decay state)				*/
-	UINT8	eg_sel_dr;	/* (decay state)				*/
-	UINT8	eg_sh_rr;	/* (release state)				*/
-	UINT8	eg_sel_rr;	/* (release state)				*/
-	UINT32	key;		/* 0 = KEY OFF, >0 = KEY ON		*/
+	UINT8	state;		/* phase type                   */
+	UINT32	TL;			/* total level: TL << 2         */
+	INT32	TLL;		/* adjusted now TL              */
+	INT32	volume;		/* envelope counter             */
+	UINT32	sl;			/* sustain level: sl_tab[SL]    */
+	UINT8	eg_sh_ar;	/* (attack state)               */
+	UINT8	eg_sel_ar;	/* (attack state)               */
+	UINT8	eg_sh_dr;	/* (decay state)                */
+	UINT8	eg_sel_dr;	/* (decay state)                */
+	UINT8	eg_sh_rr;	/* (release state)              */
+	UINT8	eg_sel_rr;	/* (release state)              */
+	UINT32	key;		/* 0 = KEY OFF, >0 = KEY ON     */
 
 	/* LFO */
 	UINT32	AMmask;		/* LFO Amplitude Modulation enable mask */
@@ -253,10 +253,10 @@ typedef struct{
 typedef struct{
 	OPL_SLOT SLOT[2];
 	/* phase generator state */
-	UINT32  block_fnum;	/* block+fnum					*/
-	UINT32  fc;			/* Freq. Increment base			*/
-	UINT32  ksl_base;	/* KeyScaleLevel Base step		*/
-	UINT8   kcode;		/* key code (for key scaling)	*/
+	UINT32  block_fnum;	/* block+fnum                   */
+	UINT32  fc;			/* Freq. Increment base         */
+	UINT32  ksl_base;	/* KeyScaleLevel Base step      */
+	UINT8   kcode;		/* key code (for key scaling)   */
 } OPL_CH;
 
 /* OPL state */
@@ -264,14 +264,14 @@ typedef struct fm_opl_f {
 	/* FM channel slots */
 	OPL_CH	P_CH[9];				/* OPL/OPL2 chips have 9 channels*/
 
-	UINT32	eg_cnt;					/* global envelope generator counter	*/
+	UINT32	eg_cnt;					/* global envelope generator counter    */
 	UINT32	eg_timer;				/* global envelope generator counter works at frequency = chipclock/72 */
-	UINT32	eg_timer_add;			/* step of eg_timer						*/
+	UINT32	eg_timer_add;			/* step of eg_timer                     */
 	UINT32	eg_timer_overflow;		/* envelope generator timer overlfows every 1 sample (on real chip) */
 
-	UINT8	rhythm;					/* Rhythm mode					*/
+	UINT8	rhythm;					/* Rhythm mode                  */
 
-	UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
+	UINT32	fn_tab[1024];			/* fnumber->increment counter   */
 
 	/* LFO */
 	UINT8	lfo_am_depth;
@@ -281,14 +281,14 @@ typedef struct fm_opl_f {
 	UINT32	lfo_pm_cnt;
 	UINT32	lfo_pm_inc;
 
-	UINT32	noise_rng;				/* 23 bit noise shift register	*/
-	UINT32	noise_p;				/* current noise 'phase'		*/
-	UINT32	noise_f;				/* current noise period			*/
+	UINT32	noise_rng;				/* 23 bit noise shift register  */
+	UINT32	noise_p;				/* current noise 'phase'        */
+	UINT32	noise_f;				/* current noise period         */
 
-	UINT8	wavesel;				/* waveform select enable flag	*/
+	UINT8	wavesel;				/* waveform select enable flag  */
 
-	int		T[2];					/* timer counters				*/
-	UINT8	st[2];					/* timer enable					*/
+	int		T[2];					/* timer counters               */
+	UINT8	st[2];					/* timer enable                 */
 
 #if BUILD_Y8950
 	/* Delta-T ADPCM unit (Y8950) */
@@ -307,22 +307,22 @@ typedef struct fm_opl_f {
 #endif
 
 	/* external event callback handlers */
-	OPL_TIMERHANDLER  TimerHandler;	/* TIMER handler				*/
-	void *TimerParam;					/* TIMER parameter				*/
-	OPL_IRQHANDLER    IRQHandler;	/* IRQ handler					*/
-	void *IRQParam;					/* IRQ parameter				*/
-	OPL_UPDATEHANDLER UpdateHandler;/* stream update handler		*/
-	void *UpdateParam;				/* stream update parameter		*/
+	OPL_TIMERHANDLER  TimerHandler;	/* TIMER handler                */
+	void *TimerParam;					/* TIMER parameter              */
+	OPL_IRQHANDLER    IRQHandler;	/* IRQ handler                  */
+	void *IRQParam;					/* IRQ parameter                */
+	OPL_UPDATEHANDLER UpdateHandler;/* stream update handler        */
+	void *UpdateParam;				/* stream update parameter      */
 
-	UINT8 type;						/* chip type					*/
-	UINT8 address;					/* address register				*/
-	UINT8 status;					/* status flag					*/
-	UINT8 statusmask;				/* status mask					*/
-	UINT8 mode;						/* Reg.08 : CSM,notesel,etc.	*/
+	UINT8 type;						/* chip type                    */
+	UINT8 address;					/* address register             */
+	UINT8 status;					/* status flag                  */
+	UINT8 statusmask;				/* status mask                  */
+	UINT8 mode;						/* Reg.08 : CSM,notesel,etc.    */
 
-	int clock;						/* master clock  (Hz)			*/
-	int rate;						/* sampling rate (Hz)			*/
-	double freqbase;				/* frequency base				*/
+	int clock;						/* master clock  (Hz)           */
+	int rate;						/* sampling rate (Hz)           */
+	double freqbase;				/* frequency base               */
 	double TimerBase;				/* Timer base time (==sampling time)*/
 } FM_OPL;
 
@@ -512,10 +512,10 @@ static const UINT8 mul_tab[16]= {
 };
 #undef ML
 
-/*	TL_TAB_LEN is calculated as:
-*	12 - sinus amplitude bits     (Y axis)
-*	2  - sinus sign bit           (Y axis)
-*	TL_RES_LEN - sinus resolution (X axis)
+/*  TL_TAB_LEN is calculated as:
+*   12 - sinus amplitude bits     (Y axis)
+*   2  - sinus sign bit           (Y axis)
+*   TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (12*2*TL_RES_LEN)
 static signed int tl_tab[TL_TAB_LEN];
@@ -532,12 +532,12 @@ static unsigned int sin_tab[SIN_LEN * 4];
 
    Length: 210 elements.
 
-	Each of the elements has to be repeated
-	exactly 64 times (on 64 consecutive samples).
-	The whole table takes: 64 * 210 = 13440 samples.
+    Each of the elements has to be repeated
+    exactly 64 times (on 64 consecutive samples).
+    The whole table takes: 64 * 210 = 13440 samples.
 
-	When AM = 1 data is used directly
-	When AM = 0 data is divided by 4 before being used (loosing precision is important)
+    When AM = 1 data is used directly
+    When AM = 0 data is divided by 4 before being used (loosing precision is important)
 */
 
 #define LFO_AM_TAB_ELEMENTS 210
@@ -779,8 +779,8 @@ INLINE void advance(FM_OPL *OPL)
 			case EG_SUS:	/* sustain phase */
 
 				/* this is important behaviour:
-				one can change percusive/non-percussive modes on the fly and
-				the chip will remain in sustain phase - verified on real YM3812 */
+                one can change percusive/non-percussive modes on the fly and
+                the chip will remain in sustain phase - verified on real YM3812 */
 
 				if(op->eg_type)		/* non-percussive mode */
 				{
@@ -852,16 +852,16 @@ INLINE void advance(FM_OPL *OPL)
 		}
 	}
 
-	/*	The Noise Generator of the YM3812 is 23-bit shift register.
-	*	Period is equal to 2^23-2 samples.
-	*	Register works at sampling frequency of the chip, so output
-	*	can change on every sample.
-	*
-	*	Output of the register and input to the bit 22 is:
-	*	bit0 XOR bit14 XOR bit15 XOR bit22
-	*
-	*	Simply use bit 22 as the noise output.
-	*/
+	/*  The Noise Generator of the YM3812 is 23-bit shift register.
+    *   Period is equal to 2^23-2 samples.
+    *   Register works at sampling frequency of the chip, so output
+    *   can change on every sample.
+    *
+    *   Output of the register and input to the bit 22 is:
+    *   bit0 XOR bit14 XOR bit15 XOR bit22
+    *
+    *   Simply use bit 22 as the noise output.
+    */
 
 	OPL->noise_p += OPL->noise_f;
 	i = OPL->noise_p >> FREQ_SH;		/* number of events (shifts of the shift register) */
@@ -869,18 +869,18 @@ INLINE void advance(FM_OPL *OPL)
 	while (i)
 	{
 		/*
-		UINT32 j;
-		j = ( (OPL->noise_rng) ^ (OPL->noise_rng>>14) ^ (OPL->noise_rng>>15) ^ (OPL->noise_rng>>22) ) & 1;
-		OPL->noise_rng = (j<<22) | (OPL->noise_rng>>1);
-		*/
+        UINT32 j;
+        j = ( (OPL->noise_rng) ^ (OPL->noise_rng>>14) ^ (OPL->noise_rng>>15) ^ (OPL->noise_rng>>22) ) & 1;
+        OPL->noise_rng = (j<<22) | (OPL->noise_rng>>1);
+        */
 
 		/*
-			Instead of doing all the logic operations above, we
-			use a trick here (and use bit 0 as the noise output).
-			The difference is only that the noise bit changes one
-			step ahead. This doesn't matter since we don't know
-			what is real state of the noise_rng after the reset.
-		*/
+            Instead of doing all the logic operations above, we
+            use a trick here (and use bit 0 as the noise output).
+            The difference is only that the noise bit changes one
+            step ahead. This doesn't matter since we don't know
+            what is real state of the noise_rng after the reset.
+        */
 
 		if (OPL->noise_rng & 1) OPL->noise_rng ^= 0x800302;
 		OPL->noise_rng >>= 1;
@@ -946,9 +946,9 @@ INLINE void OPL_CALC_CH( OPL_CH *CH )
 }
 
 /*
-	operators used in the rhythm sounds generation process:
+    operators used in the rhythm sounds generation process:
 
-	Envelope Generator:
+    Envelope Generator:
 
 channel  operator  register number   Bass  High  Snare Tom  Top
 / slot   number    TL ARDR SLRR Wave Drum  Hat   Drum  Tom  Cymbal
@@ -959,7 +959,7 @@ channel  operator  register number   Bass  High  Snare Tom  Top
  8 / 0   14        52  72   92   f2                    +
  8 / 1   17        55  75   95   f5                          +
 
-	Phase Generator:
+    Phase Generator:
 
 channel  operator  register number   Bass  High  Snare Tom  Top
 / slot   number    MULTIPLE          Drum  Hat   Drum  Tom  Cymbal
@@ -990,11 +990,11 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 
 
 	/* Bass Drum (verified on real YM3812):
-	  - depends on the channel 6 'connect' register:
-	      when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
-	      when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
-	  - output sample always is multiplied by 2
-	*/
+      - depends on the channel 6 'connect' register:
+          when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
+          when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
+      - output sample always is multiplied by 2
+    */
 
 	phase_modulation = 0;
 	/* SLOT 1 */
@@ -1037,8 +1037,8 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 
 
 	/* The following formulas can be well optimized.
-	   I leave them in direct form for now (in case I've missed something).
-	*/
+       I leave them in direct form for now (in case I've missed something).
+    */
 
 	/* High Hat (verified on real YM3812) */
 	env = volume_calc(SLOT7_1);
@@ -1046,9 +1046,9 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 	{
 
 		/* high hat phase generation:
-			phase = d0 or 234 (based on frequency only)
-			phase = 34 or 2d0 (based on noise)
-		*/
+            phase = d0 or 234 (based on frequency only)
+            phase = 34 or 2d0 (based on noise)
+        */
 
 		/* base frequency derived from operator 1 in channel 7 */
 		unsigned char bit7 = ((SLOT7_1->Cnt>>FREQ_SH)>>7)&1;
@@ -1242,8 +1242,8 @@ static int init_tables(void)
 			sin_tab[3*SIN_LEN+i] = sin_tab[i & (SIN_MASK>>2)];
 
 		/*logerror("FMOPL.C: sin1[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[1*SIN_LEN+i], tl_tab[sin_tab[1*SIN_LEN+i]] );
-		logerror("FMOPL.C: sin2[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[2*SIN_LEN+i], tl_tab[sin_tab[2*SIN_LEN+i]] );
-		logerror("FMOPL.C: sin3[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[3*SIN_LEN+i], tl_tab[sin_tab[3*SIN_LEN+i]] );*/
+        logerror("FMOPL.C: sin2[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[2*SIN_LEN+i], tl_tab[sin_tab[2*SIN_LEN+i]] );
+        logerror("FMOPL.C: sin3[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[3*SIN_LEN+i], tl_tab[sin_tab[3*SIN_LEN+i]] );*/
 	}
 	/*logerror("FMOPL.C: ENV_QUIET= %08x (dec*8=%i)\n", ENV_QUIET, ENV_QUIET*8 );*/
 
@@ -1925,9 +1925,9 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 		{
 			return (OPL->status & (OPL->statusmask|0x80)) | (OPL->deltat->PCM_BSY&1);
 		}
-		
+
 		#endif
-		
+
 		/* OPL and OPL2 */
 		return OPL->status & (OPL->statusmask|0x80);
 	}

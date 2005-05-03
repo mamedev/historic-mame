@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	sndintrf.h
+    sndintrf.h
 
-	Core sound interface functions and definitions.
+    Core sound interface functions and definitions.
 
 ***************************************************************************/
 
@@ -15,7 +15,7 @@
 
 /*************************************
  *
- *	Enum listing all the sound chips
+ *  Enum listing all the sound chips
  *
  *************************************/
 
@@ -117,7 +117,7 @@ enum
 
 /*************************************
  *
- *	Sound information constants
+ *  Sound information constants
  *
  *************************************/
 
@@ -131,7 +131,7 @@ enum
 {
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	SNDINFO_INT_FIRST = 0x00000,
-	
+
 	SNDINFO_INT_CORE_SPECIFIC = 0x08000,				/* R/W: core-specific values start here */
 
 	/* --- the following bits of info are returned as pointers to data or functions --- */
@@ -145,7 +145,7 @@ enum
 	SNDINFO_PTR_CORE_SPECIFIC = 0x18000,				/* R/W: core-specific values start here */
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
-	SNDINFO_STR_FIRST = 0x20000,	
+	SNDINFO_STR_FIRST = 0x20000,
 
 	SNDINFO_STR_NAME = SNDINFO_STR_FIRST,				/* R/O: name of the sound chip */
 	SNDINFO_STR_CORE_FAMILY,							/* R/O: family of the sound chip */
@@ -174,7 +174,7 @@ union sndinfo
 
 /*************************************
  *
- *	Core sound interface structure
+ *  Core sound interface structure
  *
  *************************************/
 
@@ -192,7 +192,7 @@ struct snd_interface
 
 /*************************************
  *
- *	Per-chip info in the machine driver
+ *  Per-chip info in the machine driver
  *
  *************************************/
 
@@ -225,7 +225,7 @@ struct MachineSpeaker
 
 /*************************************
  *
- *	 Specific sound chip acccessors
+ *   Specific sound chip acccessors
  *
  *************************************/
 
@@ -254,7 +254,7 @@ void *sndnum_token(int sndnum);
 
 /*************************************
  *
- *	 Specific sound chip acccessors
+ *   Specific sound chip acccessors
  *
  *************************************/
 
@@ -283,7 +283,7 @@ void *sndti_token(int sndtype, int sndindex);
 
 /*************************************
  *
- *	 Sound type acccessors
+ *   Sound type acccessors
  *
  *************************************/
 
@@ -303,7 +303,7 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state);
 
 /*************************************
  *
- *	 MAME core controls
+ *   MAME core controls
  *
  *************************************/
 
@@ -319,7 +319,7 @@ int sound_scalebufferpos(int value);
 
 /*************************************
  *
- *	 Misc helpers
+ *   Misc helpers
  *
  *************************************/
 
@@ -346,7 +346,7 @@ const char *sound_get_user_gain_name(int index);
 
 /*************************************
  *
- *	 Sound latch helpers
+ *   Sound latch helpers
  *
  *************************************/
 

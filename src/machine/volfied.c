@@ -44,25 +44,25 @@ WRITE16_HANDLER( volfied_cchip_w )
 		{
 			/*******************
 
-			round 01 => data $0A
-			round 02 => data $01
-			round 03 => data $03
-			round 04 => data $08
-			round 05 => data $05
-			round 06 => data $04
-			round 07 => data $0B
-			round 08 => data $09
-			round 09 => data $07
-			round 10 => data $06
-			round 11 => data $0E
-			round 12 => data $0D
-			round 13 => data $02
-			round 14 => data $0C
-			round 15 => data $0F
-			round 16 => data $10
-			final    => data $11
+            round 01 => data $0A
+            round 02 => data $01
+            round 03 => data $03
+            round 04 => data $08
+            round 05 => data $05
+            round 06 => data $04
+            round 07 => data $0B
+            round 08 => data $09
+            round 09 => data $07
+            round 10 => data $06
+            round 11 => data $0E
+            round 12 => data $0D
+            round 13 => data $02
+            round 14 => data $0C
+            round 15 => data $0F
+            round 16 => data $10
+            final    => data $11
 
-			********************/
+            ********************/
 
 			current_data = data;
 		}

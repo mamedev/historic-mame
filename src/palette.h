@@ -1,69 +1,69 @@
 /******************************************************************************
 
-	palette.c
+    palette.c
 
-	Palette handling functions.
+    Palette handling functions.
 
-	There are several levels of abstraction in the way MAME handles the palette,
-	and several display modes which can be used by the drivers.
+    There are several levels of abstraction in the way MAME handles the palette,
+    and several display modes which can be used by the drivers.
 
-	Palette
-	-------
-	Note: in the following text, "color" refers to a color in the emulated
-	game's virtual palette. For example, a game might be able to display 1024
-	colors at the same time. If the game uses RAM to change the available
-	colors, the term "palette" refers to the colors available at any given time,
-	not to the whole range of colors which can be produced by the hardware. The
-	latter is referred to as "color space".
-	The term "pen" refers to one of the maximum MAX_PENS colors that can be
-	used to generate the display.
+    Palette
+    -------
+    Note: in the following text, "color" refers to a color in the emulated
+    game's virtual palette. For example, a game might be able to display 1024
+    colors at the same time. If the game uses RAM to change the available
+    colors, the term "palette" refers to the colors available at any given time,
+    not to the whole range of colors which can be produced by the hardware. The
+    latter is referred to as "color space".
+    The term "pen" refers to one of the maximum MAX_PENS colors that can be
+    used to generate the display.
 
-	So, to summarize, the three layers of palette abstraction are:
+    So, to summarize, the three layers of palette abstraction are:
 
-	P1) The game virtual palette (the "colors")
-	P2) MAME's MAX_PENS colors palette (the "pens")
-	P3) The OS specific hardware color registers (the "OS specific pens")
+    P1) The game virtual palette (the "colors")
+    P2) MAME's MAX_PENS colors palette (the "pens")
+    P3) The OS specific hardware color registers (the "OS specific pens")
 
-	The array Machine->pens[] is a lookup table which maps game colors to OS
-	specific pens (P1 to P3). When you are working on bitmaps at the pixel level,
-	*always* use Machine->pens to map the color numbers. *Never* use constants.
-	For example if you want to make pixel (x,y) of color 3, do:
-	bitmap->line[y][x] = Machine->pens[3];
-
-
-	Lookup table
-	------------
-	Palettes are only half of the story. To map the gfx data to colors, the
-	graphics routines use a lookup table. For example if we have 4bpp tiles,
-	which can have 256 different color codes, the lookup table for them will have
-	256 * 2^4 = 4096 elements. For games using a palette RAM, the lookup table is
-	usually a 1:1 map. For games using PROMs, the lookup table is often larger
-	than the palette itself so for example the game can display 256 colors out
-	of a palette of 16.
-
-	The palette and the lookup table are initialized to default values by the
-	main core, but can be initialized by the driver using the function
-	MachineDriver->vh_init_palette(). For games using palette RAM, that
-	function is usually not needed, and the lookup table can be set up by
-	properly initializing the color_codes_start and total_color_codes fields in
-	the GfxDecodeInfo array.
-	When vh_init_palette() initializes the lookup table, it maps gfx codes
-	to game colors (P1 above). The lookup table will be converted by the core to
-	map to OS specific pens (P3 above), and stored in Machine->remapped_colortable.
+    The array Machine->pens[] is a lookup table which maps game colors to OS
+    specific pens (P1 to P3). When you are working on bitmaps at the pixel level,
+    *always* use Machine->pens to map the color numbers. *Never* use constants.
+    For example if you want to make pixel (x,y) of color 3, do:
+    bitmap->line[y][x] = Machine->pens[3];
 
 
-	Display modes
-	-------------
-	The available display modes can be summarized in three categories:
-	1) Static palette. Use this for games which use PROMs for color generation.
-		The palette is initialized by palette_init(), and never changed
-		again.
-	2) Dynamic palette. Use this for games which use RAM for color generation.
-		The palette can be dynamically modified by the driver using the function
-		palette_set_color().
-	3) Direct mapped 16-bit or 32-bit color. This should only be used in special
-		cases, e.g. to support alpha blending.
-		MachineDriver->video_attributes must contain VIDEO_RGB_DIRECT.
+    Lookup table
+    ------------
+    Palettes are only half of the story. To map the gfx data to colors, the
+    graphics routines use a lookup table. For example if we have 4bpp tiles,
+    which can have 256 different color codes, the lookup table for them will have
+    256 * 2^4 = 4096 elements. For games using a palette RAM, the lookup table is
+    usually a 1:1 map. For games using PROMs, the lookup table is often larger
+    than the palette itself so for example the game can display 256 colors out
+    of a palette of 16.
+
+    The palette and the lookup table are initialized to default values by the
+    main core, but can be initialized by the driver using the function
+    MachineDriver->vh_init_palette(). For games using palette RAM, that
+    function is usually not needed, and the lookup table can be set up by
+    properly initializing the color_codes_start and total_color_codes fields in
+    the GfxDecodeInfo array.
+    When vh_init_palette() initializes the lookup table, it maps gfx codes
+    to game colors (P1 above). The lookup table will be converted by the core to
+    map to OS specific pens (P3 above), and stored in Machine->remapped_colortable.
+
+
+    Display modes
+    -------------
+    The available display modes can be summarized in three categories:
+    1) Static palette. Use this for games which use PROMs for color generation.
+        The palette is initialized by palette_init(), and never changed
+        again.
+    2) Dynamic palette. Use this for games which use RAM for color generation.
+        The palette can be dynamically modified by the driver using the function
+        palette_set_color().
+    3) Direct mapped 16-bit or 32-bit color. This should only be used in special
+        cases, e.g. to support alpha blending.
+        MachineDriver->video_attributes must contain VIDEO_RGB_DIRECT.
 
 ******************************************************************************/
 
@@ -76,7 +76,7 @@ extern "C" {
 
 
 /*-------------------------------------------------
-	TYPE DEFINITIONS
+    TYPE DEFINITIONS
 -------------------------------------------------*/
 
 struct mame_display;		/* declared elsewhere */
@@ -87,7 +87,7 @@ typedef UINT32 rgb_t;
 
 
 /*-------------------------------------------------
-	CONSTANTS
+    CONSTANTS
 -------------------------------------------------*/
 
 #define PALETTE_DEFAULT_SHADOW_FACTOR (0.6)
@@ -99,7 +99,7 @@ typedef UINT32 rgb_t;
 
 
 /*-------------------------------------------------
-	MACROS
+    MACROS
 -------------------------------------------------*/
 
 #define MAKE_RGB(r,g,b) 	((((r) & 0xff) << 16) | (((g) & 0xff) << 8) | ((b) & 0xff))
@@ -112,7 +112,7 @@ typedef UINT32 rgb_t;
 
 
 /*-------------------------------------------------
-	GLOBAL VARIABLES
+    GLOBAL VARIABLES
 -------------------------------------------------*/
 
 extern UINT32 direct_rgb_components[3];
@@ -127,7 +127,7 @@ extern data32_t *paletteram32;
 
 
 /*-------------------------------------------------
-	PROTOTYPES
+    PROTOTYPES
 -------------------------------------------------*/
 
 int palette_start(void);
@@ -145,23 +145,23 @@ void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
 /*
-	Shadows(Highlights) Quick Reference
-	-----------------------------------
+    Shadows(Highlights) Quick Reference
+    -----------------------------------
 
-	1) declare MDRV_VIDEO_ATTRIBUTES( ... VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS ... )
+    1) declare MDRV_VIDEO_ATTRIBUTES( ... VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS ... )
 
-	2) set gfx_drawmode_table[0-n] to DRAWMODE_NONE, DRAWMODE_SOURCE or DRAWMODE_SHADOW
+    2) set gfx_drawmode_table[0-n] to DRAWMODE_NONE, DRAWMODE_SOURCE or DRAWMODE_SHADOW
 
-	3) (optional) set shadow darkness or highlight brightness by
-		palette_set_shadow_factor32(0.0-1.0) or
-		palette_set_highlight_factor32(1.0-n.n)
+    3) (optional) set shadow darkness or highlight brightness by
+        palette_set_shadow_factor32(0.0-1.0) or
+        palette_set_highlight_factor32(1.0-n.n)
 
-	4) before calling drawgfx use
-		palette_set_shadow_mode(0) to arm shadows or
-		palette_set_shadow_mode(1) to arm highlights
+    4) before calling drawgfx use
+        palette_set_shadow_mode(0) to arm shadows or
+        palette_set_shadow_mode(1) to arm highlights
 
-	5) call drawgfx with the TRANSPARENCY_PEN_TABLE flag
-		drawgfx( ..., cliprect, TRANSPARENCY_PEN_TABLE, transparent_color )
+    5) call drawgfx with the TRANSPARENCY_PEN_TABLE flag
+        drawgfx( ..., cliprect, TRANSPARENCY_PEN_TABLE, transparent_color )
 */
 void palette_set_shadow_mode(int mode);
 void palette_set_shadow_factor32(double factor);

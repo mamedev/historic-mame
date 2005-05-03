@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Coors Light Bowling/Bowl-O-Rama hardware
+    Coors Light Bowling/Bowl-O-Rama hardware
 
 ***************************************************************************/
 
@@ -17,7 +17,7 @@ static offs_t blitter_addr;
 
 /*************************************
  *
- *	TMS34061 interfacing
+ *  TMS34061 interfacing
  *
  *************************************/
 
@@ -37,7 +37,7 @@ static struct tms34061_interface tms34061intf =
 
 /*************************************
  *
- *	Video start
+ *  Video start
  *
  *************************************/
 
@@ -51,7 +51,7 @@ VIDEO_START( capbowl )
 
 /*************************************
  *
- *	TMS34061 I/O
+ *  TMS34061 I/O
  *
  *************************************/
 
@@ -61,7 +61,7 @@ WRITE8_HANDLER( capbowl_tms34061_w )
 	int col = offset & 0xff;
 
 	/* Column address (CA0-CA8) is hooked up the A0-A7, with A1 being inverted
-	   during register access. CA8 is ignored */
+       during register access. CA8 is ignored */
 	if (func == 0 || func == 2)
 		col ^= 2;
 
@@ -76,7 +76,7 @@ READ8_HANDLER( capbowl_tms34061_r )
 	int col = offset & 0xff;
 
 	/* Column address (CA0-CA8) is hooked up the A0-A7, with A1 being inverted
-	   during register access. CA8 is ignored */
+       during register access. CA8 is ignored */
 	if (func == 0 || func == 2)
 		col ^= 2;
 
@@ -88,7 +88,7 @@ READ8_HANDLER( capbowl_tms34061_r )
 
 /*************************************
  *
- *	Bowl-o-rama blitter
+ *  Bowl-o-rama blitter
  *
  *************************************/
 
@@ -123,9 +123,9 @@ READ8_HANDLER( bowlrama_blitter_r )
 	switch (offset)
 	{
 		/* Read Mask: Graphics data are 4bpp (2 pixels per byte).
-			This function returns 0's for new pixel data.
-			This allows data to be read as a mask, AND the mask with
-			the screen data, then OR new data read by read data command. */
+            This function returns 0's for new pixel data.
+            This allows data to be read as a mask, AND the mask with
+            the screen data, then OR new data read by read data command. */
 		case 0:
 			if (!(data & 0xf0))
 				result |= 0xf0;		/* High nibble is transparent */
@@ -151,7 +151,7 @@ READ8_HANDLER( bowlrama_blitter_r )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -176,7 +176,7 @@ VIDEO_UPDATE( capbowl )
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
 		UINT8 *src = &state.vram[256 * y];
 		int ybase = 16 * y;
-		
+
 		/* first update the palette for this scanline */
 		for (x = 0; x < 16; x++)
 		{
@@ -185,7 +185,7 @@ VIDEO_UPDATE( capbowl )
 			int b = *src++ & 0x0f;
 			palette_set_color(ybase + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
 		}
-		
+
 		/* expand row to 8bpp */
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
 		{

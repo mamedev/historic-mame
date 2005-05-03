@@ -9,7 +9,7 @@ David Graves
 Nicola Salmoria. Thanks to Richard Bush and the Raine team, whose open
 source was very helpful in many areas particularly the sprites.)
 
-				*****
+                *****
 
 Operation Thunderbolt
 Taito, 1988
@@ -212,7 +212,7 @@ extern data16_t *othunder_ram;
 
 
 /***********************************************************
-				INTERRUPTS
+                INTERRUPTS
 ***********************************************************/
 
 static int vblank_irq, ad_irq, last_irq_level;
@@ -272,7 +272,7 @@ static void ad_interrupt(int x)
 
 
 /******************************************************************
-					EEPROM
+                    EEPROM
 
 This is an earlier version of the eeprom used in some TaitoB games.
 The eeprom unlock command is different, and the write/clock/reset
@@ -331,14 +331,14 @@ static WRITE16_HANDLER( othunder_TC0220IOC_w )
 		{
 			case 0x03:
 
-/*				0000000x	SOL-1 (gun solenoid)
-				000000x0	SOL-2 (gun solenoid)
-				00000x00	OBPRI (sprite priority)
-				0000x000	(unused)
-				000x0000	eeprom reset (active low)
-				00x00000	eeprom clock
-				0x000000	eeprom in data
-				x0000000	eeprom out data  */
+/*              0000000x    SOL-1 (gun solenoid)
+                000000x0    SOL-2 (gun solenoid)
+                00000x00    OBPRI (sprite priority)
+                0000x000    (unused)
+                000x0000    eeprom reset (active low)
+                00x00000    eeprom clock
+                0x000000    eeprom in data
+                x0000000    eeprom out data  */
 
 				set_led_status(0, data & 1);
 				set_led_status(1, data & 2);
@@ -359,7 +359,7 @@ if (data & 4)
 
 
 /**********************************************************
-			GAME INPUTS
+            GAME INPUTS
 **********************************************************/
 
 static READ16_HANDLER( othunder_TC0220IOC_r )
@@ -399,16 +399,16 @@ static READ16_HANDLER( othunder_lightgun_r )
 static WRITE16_HANDLER( othunder_lightgun_w )
 {
 	/* A write starts the A/D conversion. An interrupt will be triggered when
-	   the conversion is complete.
-	   The ADC60808 clock is 512kHz. Conversion takes between 0 and 8 clock
-	   cycles, so would end in a maximum of 15.625us. We'll use 10. */
+       the conversion is complete.
+       The ADC60808 clock is 512kHz. Conversion takes between 0 and 8 clock
+       cycles, so would end in a maximum of 15.625us. We'll use 10. */
 
 	timer_set(TIME_IN_USEC(10),0, ad_interrupt);
 }
 
 
 /*****************************************
-			SOUND
+            SOUND
 *****************************************/
 
 static int banknum = -1;
@@ -442,14 +442,14 @@ static READ16_HANDLER( othunder_sound_r )
 static WRITE8_HANDLER( othunder_TC0310FAM_w )
 {
 	/* there are two TC0310FAM, one for CH1 and one for CH2 from the YM2610. The
-	   PSG output is routed to both chips. */
+       PSG output is routed to both chips. */
 	static int pan[4];
 	int voll,volr;
 
 	pan[offset] = data & 0x1f;
 
 	/* PSG output (single ANALOG OUT pin on the YM2610, but we have three channels
-	   because we are using the AY-3-8910 emulation. */
+       because we are using the AY-3-8910 emulation. */
 	volr = (pan[0] + pan[2]) * 100 / (2 * 0x1f);
 	voll = (pan[1] + pan[3]) * 100 / (2 * 0x1f);
 	flt_volume_set_volume(0, voll / 100.0);
@@ -470,15 +470,15 @@ static WRITE8_HANDLER( othunder_TC0310FAM_w )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( othunder_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x080000, 0x08ffff) AM_RAM AM_BASE(&othunder_ram)
 	AM_RANGE(0x090000, 0x09000f) AM_READWRITE(othunder_TC0220IOC_r, othunder_TC0220IOC_w)
-//	AM_RANGE(0x090006, 0x090007) AM_WRITE(eeprom_w)
-//	AM_RANGE(0x09000c, 0x09000d) AM_WRITE(MWA16_NOP)   /* ?? (keeps writing 0x77) */
+//  AM_RANGE(0x090006, 0x090007) AM_WRITE(eeprom_w)
+//  AM_RANGE(0x09000c, 0x09000d) AM_WRITE(MWA16_NOP)   /* ?? (keeps writing 0x77) */
 	AM_RANGE(0x100000, 0x100007) AM_READWRITE(TC0110PCR_word_r, TC0110PCR_step1_rbswap_word_w)	/* palette */
 	AM_RANGE(0x200000, 0x20ffff) AM_READWRITE(TC0100SCN_word_0_r, TC0100SCN_word_0_w)	/* tilemaps */
 	AM_RANGE(0x220000, 0x22000f) AM_READWRITE(TC0100SCN_ctrl_word_0_r, TC0100SCN_ctrl_word_0_w)
@@ -512,7 +512,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 INPUT_PORTS_START( othundrj )
@@ -584,8 +584,8 @@ INPUT_PORTS_START( othundrj )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* speed of 13 is compromise between moving aim around screen fast
-	   enough and being accurate enough not to miss targets. 20 is too
-	   inaccurate, and 10 is too slow. */
+       enough and being accurate enough not to miss targets. 20 is too
+       inaccurate, and 10 is too slow. */
 
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(13) PORT_REVERSE PORT_PLAYER(1)
@@ -635,7 +635,7 @@ INPUT_PORTS_END
 
 
 /***********************************************************
-				GFX DECODING
+                GFX DECODING
 ***********************************************************/
 
 static struct GfxLayout tile16x8_layout =
@@ -670,7 +670,7 @@ static struct GfxDecodeInfo othunder_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2610 (SOUND)
+                 YM2610 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -689,13 +689,13 @@ static struct YM2610interface ym2610_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_DRIVER_START( othunder )
 
 	/* basic machine hardware */
-//	MDRV_CPU_ADD(M68000, 24000000/2 )	/* 12 MHz */
+//  MDRV_CPU_ADD(M68000, 24000000/2 )   /* 12 MHz */
 	MDRV_CPU_ADD(M68000, 13000000 )	/* fixes garbage graphics on startup */
 	MDRV_CPU_PROGRAM_MAP(othunder_map,0)
 	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
@@ -731,7 +731,7 @@ static MACHINE_DRIVER_START( othunder )
 	MDRV_SOUND_ROUTE(1, "2610.1r", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2l", 1.0)
 	MDRV_SOUND_ROUTE(2, "2610.2r", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("2610.0l", FILTER_VOLUME, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ADD_TAG("2610.0r", FILTER_VOLUME, 0)
@@ -749,7 +749,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( othunder )
@@ -782,10 +782,10 @@ ROM_START( othunder )
 	ROM_LOAD( "b67-07", 0x00000, 0x80000, CRC(4f834357) SHA1(f34705ce64870a8b24ec2639505079cc031fb719) )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* PALs */
-//	ROM_LOAD( "b67-09", 0x00000, 0xd56, CRC(130fd2ab) )		// PAL read as PLHS18P8A/B but I don't see that in the schematics
-//	ROM_LOAD( "b67-10.33", 0x00000, 0xcd5, CRC(312f9e2a) )	// address decoding (PAL 20L8B)
-//	ROM_LOAD( "b67-11.36", 0x00000, 0xada, CRC(f863b864) )	// interrupt control (PAL 16L8B)
-//	ROM_LOAD( "b67-12.37", 0x00000, 0xcd5, CRC(653d86bb) )	// address decoding (PAL 20L8B)
+//  ROM_LOAD( "b67-09", 0x00000, 0xd56, CRC(130fd2ab) )     // PAL read as PLHS18P8A/B but I don't see that in the schematics
+//  ROM_LOAD( "b67-10.33", 0x00000, 0xcd5, CRC(312f9e2a) )  // address decoding (PAL 20L8B)
+//  ROM_LOAD( "b67-11.36", 0x00000, 0xada, CRC(f863b864) )  // interrupt control (PAL 16L8B)
+//  ROM_LOAD( "b67-12.37", 0x00000, 0xcd5, CRC(653d86bb) )  // address decoding (PAL 20L8B)
 ROM_END
 
 ROM_START( othunduo )

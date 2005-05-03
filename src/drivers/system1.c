@@ -9,10 +9,10 @@ Up'n Down, Mister Viking, Flicky, SWAT, Water Match and Bull Fight are known
 to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 
 TODO: - background is misplaced in wbmlju
-	  - sprites stick in Pitfall II
-	  - sprite priorities are probably wrong
-	  - remove patch in noboranb if possible and fully understand the
-	    ports involved in the protection
+      - sprites stick in Pitfall II
+      - sprite priorities are probably wrong
+      - remove patch in noboranb if possible and fully understand the
+        ports involved in the protection
 
 ******************************************************************************/
 
@@ -28,8 +28,8 @@ static MACHINE_INIT( system1 )
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
+//  memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+//  memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
@@ -39,8 +39,8 @@ static MACHINE_INIT( wbml )
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
+//  memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+//  memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 }
@@ -51,43 +51,43 @@ static int inport16_step,inport17_step,inport23_step;
 
 static READ8_HANDLER( inport16_r )
 {
-//	logerror("IN  $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport16_step);
+//  logerror("IN  $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport16_step);
 	return(inport16_step);
 }
 
 static READ8_HANDLER( inport1c_r )
 {
-//	logerror("IN  $1c : pc = %04x - data = 0x80\n",activecpu_get_pc());
+//  logerror("IN  $1c : pc = %04x - data = 0x80\n",activecpu_get_pc());
 	return(0x80);	// infinite loop (at 0x0fb3) until bit 7 is set
 }
 
 static READ8_HANDLER( inport22_r )
 {
-//	logerror("IN  $22 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport17_step);
+//  logerror("IN  $22 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport17_step);
 	return(inport17_step);
 }
 
 static READ8_HANDLER( inport23_r )
 {
-//	logerror("IN  $23 : pc = %04x - step = %02x\n",activecpu_get_pc(),inport23_step);
+//  logerror("IN  $23 : pc = %04x - step = %02x\n",activecpu_get_pc(),inport23_step);
 	return(inport23_step);
 }
 
 static WRITE8_HANDLER( outport16_w )
 {
-//	logerror("OUT $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+//  logerror("OUT $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport16_step = data;
 }
 
 static WRITE8_HANDLER( outport17_w )
 {
-//	logerror("OUT $17 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+//  logerror("OUT $17 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport17_step = data;
 }
 
 static WRITE8_HANDLER( outport24_w )
 {
-//	logerror("OUT $24 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+//  logerror("OUT $24 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport23_step = data;
 }
 
@@ -97,9 +97,9 @@ WRITE8_HANDLER( hvymetal_videomode_w )
 	unsigned char *rom = memory_region(REGION_CPU1);
 
 	/* patch out the obnoxiously long startup RAM tests */
-//	rom[0x4a55 + memory_region_length(REGION_CPU1) / 2] = 0xc3;
-//	rom[0x4a56] = 0xb6;
-//	rom[0x4a57] = 0x4a;
+//  rom[0x4a55 + memory_region_length(REGION_CPU1) / 2] = 0xc3;
+//  rom[0x4a56] = 0xb6;
+//  rom[0x4a57] = 0x4a;
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
 	cpu_setbank(1,&rom[bankaddress]);
@@ -388,7 +388,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(	0x0b, DEF_STR( 1C_5C ) ) \
 	PORT_DIPSETTING(	0x0a, DEF_STR( 1C_6C ) ) \
-/*  PORT_DIPSETTING(	0x00, "1/1" ) */ \
+/*  PORT_DIPSETTING(    0x00, "1/1" ) */ \
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) ) \
 	PORT_DIPSETTING(	0x70, DEF_STR( 4C_1C ) ) \
 	PORT_DIPSETTING(	0x80, DEF_STR( 3C_1C ) ) \
@@ -405,7 +405,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(	0xb0, DEF_STR( 1C_5C ) ) \
 	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
-/*  PORT_DIPSETTING(	0x00, "1/1" ) */
+/*  PORT_DIPSETTING(    0x00, "1/1" ) */
 
 /* If you don't like the description, feel free to change it */
 #define DSW0_BIT7 \
@@ -2114,9 +2114,9 @@ INPUT_PORTS_START( noboranb )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-/* 
+/*
 
- To enter Test Mode all DIP Switches in DSW1 must be ON (example Difficulty = Easy) 
+ To enter Test Mode all DIP Switches in DSW1 must be ON (example Difficulty = Easy)
  To get Infinite Lives all DIP Switches in DSW0 must be ON
 
 */
@@ -2153,7 +2153,7 @@ INPUT_PORTS_START( ufosensi )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-//	PORT_DIPSETTING(	0x08, "4" )
+//  PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
@@ -4154,16 +4154,16 @@ static DRIVER_INIT( noboranb )
 	/* Patch to get PRG ROMS ('T', 'R' and 'S) status as "GOOD" in the "test mode" */
 	/* not really needed */
 
-//	data8_t *ROM = memory_region(REGION_CPU1);
+//  data8_t *ROM = memory_region(REGION_CPU1);
 
-//	ROM[0x3296] = 0x18;		// 'jr' instead of 'jr z' - 'T' (PRG Main ROM)
-//	ROM[0x32be] = 0x18;		// 'jr' instead of 'jr z' - 'R' (Banked ROM 1)
-//	ROM[0x32ea] = 0x18;		// 'jr' instead of 'jr z' - 'S' (Banked ROM 2)
+//  ROM[0x3296] = 0x18;     // 'jr' instead of 'jr z' - 'T' (PRG Main ROM)
+//  ROM[0x32be] = 0x18;     // 'jr' instead of 'jr z' - 'R' (Banked ROM 1)
+//  ROM[0x32ea] = 0x18;     // 'jr' instead of 'jr z' - 'S' (Banked ROM 2)
 
 	/* Patch to avoid the internal checksum that will hang the game after an amount of time
-	   (check code at 0x3313 in 'R' (banked ROM 1)) */
+       (check code at 0x3313 in 'R' (banked ROM 1)) */
 
-//	ROM[0x10000 + 0 * 0x8000 + 0x3347] = 0x18;	// 'jr' instead of 'jr z'
+//  ROM[0x10000 + 0 * 0x8000 + 0x3347] = 0x18;  // 'jr' instead of 'jr z'
 
 	/* Patch to get sound in later levels(the program enters into a tight loop)*/
 	data8_t *ROM2 = memory_region(REGION_CPU2);

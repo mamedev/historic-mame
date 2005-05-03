@@ -1,8 +1,8 @@
 /*********************************************************************
 
-	usrintrf.c
+    usrintrf.c
 
-	Functions used to handle MAME's user interface.
+    Functions used to handle MAME's user interface.
 
 *********************************************************************/
 
@@ -25,7 +25,7 @@
 
 /***************************************************************************
 
-	Externals
+    Externals
 
 ***************************************************************************/
 
@@ -49,7 +49,7 @@ static int game_paused = 0; /* not zero if the game is paused */
 
 /***************************************************************************
 
-	Local variables
+    Local variables
 
 ***************************************************************************/
 
@@ -78,7 +78,7 @@ UINT8 ui_dirty;
 
 /***************************************************************************
 
-	Font data
+    Font data
 
 ***************************************************************************/
 
@@ -234,7 +234,7 @@ static const struct GfxLayout uifontlayout =
 #endif
 
 /*-------------------------------------------------
-	ui_markdirty - mark a raw rectangle dirty
+    ui_markdirty - mark a raw rectangle dirty
 -------------------------------------------------*/
 
 INLINE void ui_markdirty(const struct rectangle *rect)
@@ -246,8 +246,8 @@ INLINE void ui_markdirty(const struct rectangle *rect)
 
 
 /*-------------------------------------------------
-	ui_raw2rot_rect - convert a rect from raw
-	coordinates to rotated coordinates
+    ui_raw2rot_rect - convert a rect from raw
+    coordinates to rotated coordinates
 -------------------------------------------------*/
 
 static void ui_raw2rot_rect(struct rectangle *rect)
@@ -284,8 +284,8 @@ static void ui_raw2rot_rect(struct rectangle *rect)
 
 
 /*-------------------------------------------------
-	ui_rot2raw_rect - convert a rect from rotated
-	coordinates to raw coordinates
+    ui_rot2raw_rect - convert a rect from rotated
+    coordinates to raw coordinates
 -------------------------------------------------*/
 
 static void ui_rot2raw_rect(struct rectangle *rect)
@@ -322,8 +322,8 @@ static void ui_rot2raw_rect(struct rectangle *rect)
 
 
 /*-------------------------------------------------
-	set_ui_visarea - called by the OSD code to
-	set the UI's domain
+    set_ui_visarea - called by the OSD code to
+    set the UI's domain
 -------------------------------------------------*/
 
 void set_ui_visarea(int xmin, int ymin, int xmax, int ymax)
@@ -355,7 +355,7 @@ void set_ui_visarea(int xmin, int ymin, int xmax, int ymax)
 
 
 /*-------------------------------------------------
-	erase_screen - erase the screen
+    erase_screen - erase the screen
 -------------------------------------------------*/
 
 static void erase_screen(struct mame_bitmap *bitmap)
@@ -372,7 +372,7 @@ static void erase_screen(struct mame_bitmap *bitmap)
 #endif
 
 /*-------------------------------------------------
-	builduifont - build the user interface fonts
+    builduifont - build the user interface fonts
 -------------------------------------------------*/
 
 struct GfxElement *builduifont(void)
@@ -460,7 +460,7 @@ struct GfxElement *builduifont(void)
 
 
 /*-------------------------------------------------
-	ui_drawchar - draw a rotated character
+    ui_drawchar - draw a rotated character
 -------------------------------------------------*/
 
 void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
@@ -489,7 +489,7 @@ void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
 
 
 /*-------------------------------------------------
-	ui_text_ex - draw a string to the screen
+    ui_text_ex - draw a string to the screen
 -------------------------------------------------*/
 
 static void ui_text_ex(struct mame_bitmap *bitmap, const char *buf_begin, const char *buf_end, int x, int y, int color)
@@ -504,7 +504,7 @@ static void ui_text_ex(struct mame_bitmap *bitmap, const char *buf_begin, const 
 
 
 /*-------------------------------------------------
-	ui_text_ex - draw a string to the screen
+    ui_text_ex - draw a string to the screen
 -------------------------------------------------*/
 
 void ui_text(struct mame_bitmap *bitmap, const char *buf, int x, int y)
@@ -515,7 +515,7 @@ void ui_text(struct mame_bitmap *bitmap, const char *buf, int x, int y)
 
 
 /*-------------------------------------------------
-	displaytext - display a series of text lines
+    displaytext - display a series of text lines
 -------------------------------------------------*/
 
 void displaytext(struct mame_bitmap *bitmap, const struct DisplayText *dt)
@@ -530,10 +530,10 @@ void displaytext(struct mame_bitmap *bitmap, const struct DisplayText *dt)
 
 
 /*-------------------------------------------------
-	multiline_extract - extract one line from a
-	multiline buffer; return the number of
-	characters in the line; pbegin points to the
-	start of the next line
+    multiline_extract - extract one line from a
+    multiline buffer; return the number of
+    characters in the line; pbegin points to the
+    start of the next line
 -------------------------------------------------*/
 
 static unsigned multiline_extract(const char **pbegin, const char *end, unsigned maxchars)
@@ -600,8 +600,8 @@ static unsigned multiline_extract(const char **pbegin, const char *end, unsigned
 
 
 /*-------------------------------------------------
-	multiline_size - compute the output size of a
-	multiline string
+    multiline_size - compute the output size of a
+    multiline string
 -------------------------------------------------*/
 
 static void multiline_size(int *dx, int *dy, const char *begin, const char *end, unsigned maxchars)
@@ -627,8 +627,8 @@ static void multiline_size(int *dx, int *dy, const char *begin, const char *end,
 
 
 /*-------------------------------------------------
-	multilinebox_size - compute the output size of
-	a multiline string with box
+    multilinebox_size - compute the output size of
+    a multiline string with box
 -------------------------------------------------*/
 
 static void multilinebox_size(int *dx, int *dy, const char *begin, const char *end, unsigned maxchars)
@@ -642,7 +642,7 @@ static void multilinebox_size(int *dx, int *dy, const char *begin, const char *e
 
 
 /*-------------------------------------------------
-	ui_multitext_ex - display a multiline string
+    ui_multitext_ex - display a multiline string
 -------------------------------------------------*/
 
 static void ui_multitext_ex(struct mame_bitmap *bitmap, const char *begin, const char *end, unsigned maxchars, int x, int y, int color)
@@ -660,8 +660,8 @@ static void ui_multitext_ex(struct mame_bitmap *bitmap, const char *begin, const
 
 
 /*-------------------------------------------------
-	ui_multitextbox_ex - display a multiline
-	string with box
+    ui_multitextbox_ex - display a multiline
+    string with box
 -------------------------------------------------*/
 
 static void ui_multitextbox_ex(struct mame_bitmap *bitmap, const char *begin, const char *end, unsigned maxchars, int x, int y, int dx, int dy, int color)
@@ -680,7 +680,7 @@ static void ui_multitextbox_ex(struct mame_bitmap *bitmap, const char *begin, co
 
 
 /*-------------------------------------------------
-	ui_drawbox - draw a black box with white border
+    ui_drawbox - draw a black box with white border
 -------------------------------------------------*/
 
 void ui_drawbox(struct mame_bitmap *bitmap, int leftx, int topy, int width, int height)
@@ -740,7 +740,7 @@ void ui_drawbox(struct mame_bitmap *bitmap, int leftx, int topy, int width, int 
 
 
 /*-------------------------------------------------
-	drawbar - draw a thermometer bar
+    drawbar - draw a thermometer bar
 -------------------------------------------------*/
 
 static void drawbar(struct mame_bitmap *bitmap, int leftx, int topy, int width, int height, int percentage, int default_percentage)
@@ -1314,7 +1314,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			{
 				bank = next_bank;
 				mode = next_mode;
-//				firstdrawn = 0;
+//              firstdrawn = 0;
 				changed = 1;
 			}
 		}
@@ -1350,7 +1350,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			{
 				bank = next_bank;
 				mode = next_mode;
-//				firstdrawn = 0;
+//              firstdrawn = 0;
 				changed = 1;
 			}
 		}
@@ -4018,7 +4018,7 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 	int done = 0;
 	int x, y = 0;
 	/* remember which area we cover so that we can
-	   schedule a full refresh if it gets smaller */
+       schedule a full refresh if it gets smaller */
 	int len_hash = 0;
 	static int old_len_hash = -1;
 
@@ -4140,7 +4140,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	if (single_step || input_ui_pressed(IPT_UI_PAUSE) || mess_pause_for_ui) /* pause the game */
 	{
 #endif
-/*		osd_selected = 0;	   disable on screen display, since we are going   */
+/*      osd_selected = 0;      disable on screen display, since we are going   */
 							/* to change parameters affected by it */
 
 		if (single_step == 0)

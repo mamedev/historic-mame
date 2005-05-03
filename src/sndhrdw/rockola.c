@@ -385,17 +385,17 @@ WRITE8_HANDLER( sasuke_sound_w )
 	{
 	case 0:
 		/*
-			bit	description
+            bit description
 
-			0	hit (ic52)
-			1	boss start (ic51)
-			2	shot
-			3	boss attack (ic48?)
-			4	??
-			5
-			6
-			7	reset counter
-		*/
+            0   hit (ic52)
+            1   boss start (ic51)
+            2   shot
+            3   boss attack (ic48?)
+            4   ??
+            5
+            6
+            7   reset counter
+        */
 
 		if ((~data & 0x01) && (LastPort1 & 0x01))
 			sample_start(0, 0, 0);
@@ -420,17 +420,17 @@ WRITE8_HANDLER( sasuke_sound_w )
 
 	case 1:
 		/*
-			bit	description
+            bit description
 
-			0
-			1	wave form
-			2	wave form
-			3	wave form
-			4	MUSIC A8
-			5	MUSIC A9
-			6	MUSIC A10
-			7
-		*/
+            0
+            1   wave form
+            2   wave form
+            3   wave form
+            4   MUSIC A8
+            5   MUSIC A9
+            6   MUSIC A10
+            7
+        */
 
 		/* select tune in ROM based on sound command byte */
 		tone_channels[0].base = 0x0000 + ((data & 0x70) << 4);
@@ -450,9 +450,9 @@ WRITE8_HANDLER( satansat_sound_w )
 	{
 	case 0:
 		/*
-			bit	description
+            bit description
 
-		*/
+        */
 
 		/* bit 0 = analog sound trigger */
 
@@ -478,9 +478,9 @@ WRITE8_HANDLER( satansat_sound_w )
 		break;
 	case 1:
 		/*
-			bit	description
+            bit description
 
-		*/
+        */
 
 		/* select tune in ROM based on sound command byte */
 		tone_channels[0].base = 0x0000 + ((data & 0x0e) << 7);
@@ -512,17 +512,17 @@ WRITE8_HANDLER( vanguard_sound_w )
 	{
 	case 0:
 		/*
-			bit	description
+            bit description
 
-			0	MUSIC A10
-			1	MUSIC A9
-			2	MUSIC A8
-			3	LS05 PORT 1
-			4	LS04 PORT 2
-			5	SHOT A
-			6	SHOT B
-			7	BOMB
-		*/
+            0   MUSIC A10
+            1   MUSIC A9
+            2   MUSIC A8
+            3   LS05 PORT 1
+            4   LS04 PORT 2
+            5   SHOT A
+            6   SHOT B
+            7   BOMB
+        */
 
 		/* select musical tune in ROM based on sound command byte */
 		tone_channels[0].base = ((data & 0x07) << 8);
@@ -559,17 +559,17 @@ WRITE8_HANDLER( vanguard_sound_w )
 		break;
 	case 1:
 		/*
-			bit	description
+            bit description
 
-			0	MUSIC A10
-			1	MUSIC A9
-			2	MUSIC A8
-			3	LS04 PORT 3
-			4	EXTP A (HD38880 external pitch control A)
-			5	EXTP B (HD38880 external pitch control B)
-			6
-			7
-		*/
+            0   MUSIC A10
+            1   MUSIC A9
+            2   MUSIC A8
+            3   LS04 PORT 3
+            4   EXTP A (HD38880 external pitch control A)
+            5   EXTP B (HD38880 external pitch control B)
+            6
+            7
+        */
 
 		/* select tune in ROM based on sound command byte */
 		tone_channels[1].base = 0x0800 + ((data & 0x07) << 8);
@@ -585,17 +585,17 @@ WRITE8_HANDLER( vanguard_sound_w )
 		break;
 	case 2:
 		/*
-			bit	description
+            bit description
 
-			0	AS 1	(sound0 waveform)
-			1	AS 2	(sound0 waveform)
-			2	AS 4	(sound0 waveform)
-			3	AS 3	(sound0 waveform)
-			4	AS 5	(sound1 waveform)
-			5	AS 6	(sound1 waveform)
-			6	AS 7	(sound1 waveform)
-			7	AS 8	(sound1 waveform)
-		*/
+            0   AS 1    (sound0 waveform)
+            1   AS 2    (sound0 waveform)
+            2   AS 4    (sound0 waveform)
+            3   AS 3    (sound0 waveform)
+            4   AS 5    (sound1 waveform)
+            5   AS 6    (sound1 waveform)
+            6   AS 7    (sound1 waveform)
+            7   AS 8    (sound1 waveform)
+        */
 
 		build_waveform(0, (data & 0x3) | ((data & 4) << 1) | ((data & 8) >> 1));
 		build_waveform(1, data >> 4);
@@ -608,17 +608,17 @@ WRITE8_HANDLER( fantasy_sound_w )
 	{
 	case 0:
 		/*
-			bit	description
+            bit description
 
-			0	MUSIC A10
-			1	MUSIC A9
-			2	MUSIC A8
-			3	LS04 PART 1
-			4	LS04 PART 2
-			5
-			6
-			7	BOMB
-		*/
+            0   MUSIC A10
+            1   MUSIC A9
+            2   MUSIC A8
+            3   LS04 PART 1
+            4   LS04 PART 2
+            5
+            6
+            7   BOMB
+        */
 
 		/* select musical tune in ROM based on sound command byte */
 		tone_channels[0].base = 0x0000 + ((data & 0x07) << 8);
@@ -646,26 +646,26 @@ WRITE8_HANDLER( fantasy_sound_w )
 		SN76477_enable_w(0, (data & 0x80) ? 0 : 1);
 		/*
 
-			In the real hardware the SN76477 enable line is grounded
-			and the sound output is switched on/off by a 4066 IC.
+            In the real hardware the SN76477 enable line is grounded
+            and the sound output is switched on/off by a 4066 IC.
 
-		*/
+        */
 
 		LastPort1 = data;
 		break;
 	case 1:
 		/*
-			bit	description
+            bit description
 
-			0	MUSIC A10
-			1	MUSIC A9
-			2	MUSIC A8
-			3	LS04 PART 3
-			4	EXT PA (HD38880 external pitch control A)
-			5	EXT PB (HD38880 external pitch control B)
-			6
-			7
-		*/
+            0   MUSIC A10
+            1   MUSIC A9
+            2   MUSIC A8
+            3   LS04 PART 3
+            4   EXT PA (HD38880 external pitch control A)
+            5   EXT PB (HD38880 external pitch control B)
+            6
+            7
+        */
 
 		/* select tune in ROM based on sound command byte */
 		tone_channels[1].base = 0x0800 + ((data & 0x07) << 8);
@@ -681,34 +681,34 @@ WRITE8_HANDLER( fantasy_sound_w )
 		break;
 	case 2:
 		/*
-			bit	description
+            bit description
 
-			0	AS 1	(sound0 waveform)
-			1	AS 3	(sound0 waveform)
-			2	AS 2	(sound0 waveform)
-			3	AS 4	(sound0 waveform)
-			4	AS 5	(sound1 waveform)
-			5	AS 6	(sound1 waveform)
-			6	AS 7	(sound1 waveform)
-			7	AS 8	(sound1 waveform)
-		*/
+            0   AS 1    (sound0 waveform)
+            1   AS 3    (sound0 waveform)
+            2   AS 2    (sound0 waveform)
+            3   AS 4    (sound0 waveform)
+            4   AS 5    (sound1 waveform)
+            5   AS 6    (sound1 waveform)
+            6   AS 7    (sound1 waveform)
+            7   AS 8    (sound1 waveform)
+        */
 
 		build_waveform(0, (data & 0x9) | ((data & 2) << 1) | ((data & 4) >> 1));
 		build_waveform(1, data >> 4);
 		break;
 	case 3:
 		/*
-			bit	description
+            bit description
 
-			0	BC 1
-			1	BC 2
-			2	BC 3
-			3	MUSIC A10
-			4	MUSIC A9
-			5	MUSIC A8
-			6
-			7	INV
-		*/
+            0   BC 1
+            1   BC 2
+            2   BC 3
+            3   MUSIC A10
+            4   MUSIC A9
+            5   MUSIC A8
+            6
+            7   INV
+        */
 
 		/* select tune in ROM based on sound command byte */
 		tone_channels[2].base = 0x1000 + ((data & 0x70) << 4);
@@ -753,16 +753,16 @@ double	hd38880_speed;
 static void rockola_speech_w(data8_t data, data16_t *table, int start)
 {
 	/*
-		bit	description
-		0	SYBS1
-		1	SYBS2
-		2	SYBS3
-		3	SYBS4
-		4	CTP
-		5	CMV
-		6
-		7
-	*/
+        bit description
+        0   SYBS1
+        1   SYBS2
+        2   SYBS3
+        3   SYBS4
+        4   CTP
+        5   CMV
+        6
+        7
+    */
 
 	if ((data & HD38880_CTP) && (data & HD38880_CMV))
 	{

@@ -13,7 +13,7 @@ static unsigned int rom_bank = 0;
 static void trigger_7751_sound(int data)
 {
 	/* I think this is correct for 128k sound roms,
-	     it's OK for smaller roms */
+         it's OK for smaller roms */
 	if((data&0xf) == 0xc) rom_bank=0;
 	else if((data&0xf) == 0xd) rom_bank=0x4000;
 	else if((data&0xf) == 0xb) rom_bank=0xc000;

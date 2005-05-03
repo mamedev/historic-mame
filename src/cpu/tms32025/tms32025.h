@@ -1,18 +1,18 @@
  /**************************************************************************\
- *				  Texas Instruments TMS320x25 DSP Emulator					*
- *																			*
- *				   Copyright (C) 2001-2002+ Tony La Porta					*
- *						Written for the MAME project.						*
- *																			*
- *		Note :	This is a word based microcontroller, with addressing		*
- *				architecture based on the Harvard addressing scheme.		*
- *																			*
- *	Three versions of the chip are available, and they are: 				*
- *	TMS320C25   Internal ROM one time programmed at TI						*
- *	TMS320E25   Internal ROM programmable as a normal EPROM					*
- *	TMS320P25   Internal ROM programmable once as a normal EPROM only		*
- *	These devices can also be used as a MicroController with external ROM	*
- *																			*
+ *                Texas Instruments TMS320x25 DSP Emulator                  *
+ *                                                                          *
+ *                 Copyright (C) 2001-2002+ Tony La Porta                   *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *      Note :  This is a word based microcontroller, with addressing       *
+ *              architecture based on the Harvard addressing scheme.        *
+ *                                                                          *
+ *  Three versions of the chip are available, and they are:                 *
+ *  TMS320C25   Internal ROM one time programmed at TI                      *
+ *  TMS320E25   Internal ROM programmable as a normal EPROM                 *
+ *  TMS320P25   Internal ROM programmable once as a normal EPROM only       *
+ *  These devices can also be used as a MicroController with external ROM   *
+ *                                                                          *
  \***************************************************************************/
 
 #ifndef _TMS32025_H
@@ -39,7 +39,7 @@
 
 
 /****************************************************************************
- *	Interrupt constants
+ *  Interrupt constants
  */
 
 #define TMS32025_INT0			  0			/* External INT0 */
@@ -66,7 +66,7 @@ enum {
 
 
 /****************************************************************************
- *	Public Functions
+ *  Public Functions
  */
 
 extern void tms32025_get_info(UINT32 state, union cpuinfo *info);

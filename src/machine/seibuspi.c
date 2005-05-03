@@ -280,8 +280,8 @@ cpu #0 (PC=002A097D): unmapped program memory dword write to 0000054C = 0000A346
 cpu #0 (PC=002A097D): unmapped program memory dword write to 0000054C = 00005237 & 0000FFFF
 cpu #0 (PC=002A097D): unmapped program memory dword write to 0000054C = 0000A948 & 0000FFFF
 
-		plane543 = partial_carry_sum24( plane543, 0x??????, 0x??2199 ) ^ 0x??d9aa;
-		plane210 = partial_carry_sum24( plane210,        i, 0x990c52 ) ^ 0xaa1d37;
+        plane543 = partial_carry_sum24( plane543, 0x??????, 0x??2199 ) ^ 0x??d9aa;
+        plane210 = partial_carry_sum24( plane210,        i, 0x990c52 ) ^ 0xaa1d37;
 
 rfjet
 
@@ -289,18 +289,18 @@ cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00000000
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00000000 & 0000FFFF
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 000055AB & 0000FFFF
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00000000 & 0000FFFF
-cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000AA6A & 0000FFFF	//
+cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000AA6A & 0000FFFF //
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000ABCB & 0000FFFF
-cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000DD4C & 0000FFFF	//
+cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000DD4C & 0000FFFF //
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00006543 & 0000FFFF
-cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000D68B & 0000FFFF	//
-cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 000037F2 & 0000FFFF	//
+cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 0000D68B & 0000FFFF //
+cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 000037F2 & 0000FFFF //
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 000021D9 & 0000FFFF
-cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00005B3B & 0000FFFF	//
+cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00005B3B & 0000FFFF //
 cpu #0 (PC=002C40F9): unmapped program memory dword write to 0000054C = 00000300 & 0000FFFF
 
-		plane543 = partial_carry_sum24( plane543, 0x01cb64, 0x01aadd ) ^ 0x016a4c;
-		plane210 = partial_carry_sum24( plane210,        i, 0xd6375b ) ^ 0x8bf23b;
+        plane543 = partial_carry_sum24( plane543, 0x01cb64, 0x01aadd ) ^ 0x016a4c;
+        plane210 = partial_carry_sum24( plane210,        i, 0xd6375b ) ^ 0x8bf23b;
 
 ******************************************************************************************/
 

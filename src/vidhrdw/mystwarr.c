@@ -119,7 +119,7 @@ VIDEO_START(gaiapols)
 
 	gametype = 0;
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -165,7 +165,7 @@ VIDEO_START(dadandrn)
 
 	gametype = 1;
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -200,7 +200,7 @@ VIDEO_START(mystwarr)
 
 	gametype = 0;
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, mystwarr_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, mystwarr_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -232,7 +232,7 @@ VIDEO_START(metamrph)
 	K054338_vh_start();
 	K053250_vh_start(1, &rgn_250);
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -262,7 +262,7 @@ VIDEO_START(viostorm)
 	K055555_vh_start();
 	K054338_vh_start();
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -289,7 +289,7 @@ VIDEO_START(martchmp)
 	K055555_vh_start();
 	K054338_vh_start();
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback, 0))
 	{
 		return 1;
 	}

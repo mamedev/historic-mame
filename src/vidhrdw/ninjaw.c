@@ -62,7 +62,7 @@ VIDEO_START( ninjaw )
 }
 
 /************************************************************
-			SPRITE DRAW ROUTINE
+            SPRITE DRAW ROUTINE
 ************************************************************/
 
 static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int primask,int y_offs)
@@ -76,7 +76,7 @@ static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 #endif
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
+       while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -87,7 +87,7 @@ static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 		if (!tilenum) continue;
 
 		data = spriteram16[offs+0];
-//		x = (data - 8) & 0x3ff;
+//      x = (data - 8) & 0x3ff;
 		x = (data - 32) & 0x3ff;	/* aligns sprites on rock outcrops and sewer hole */
 
 		data = spriteram16[offs+1];
@@ -102,8 +102,8 @@ static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 		invis    = (data & 0x8) >> 3;
 		color    = (data & 0x7f00) >> 8;
 
-//	Ninjaw: this stops your player flickering black and cutting into tank sprites
-//		if (invis && (priority==1)) continue;
+//  Ninjaw: this stops your player flickering black and cutting into tank sprites
+//      if (invis && (priority==1)) continue;
 
 #ifdef MAME_DEBUG
 		if (data & 0x80f0)   unknown |= (data &0x80f0);
@@ -142,7 +142,7 @@ static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 
 
 /**************************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 **************************************************************/
 
 VIDEO_UPDATE( ninjaw )

@@ -84,81 +84,81 @@
     - Changed MOVI to use unsigned values instead of signed, correcting
       an ugly glitch when loading 32-bit immediates.
  Pierpaolo Prazzoli
-	- Same fix in get_const
+    - Same fix in get_const
 
  MooglyGuy - 02/27/04
     - Fixed delayed branching
     - const_val for CALL should always have bit 0 clear
 
  Pierpaolo Prazzoli - 02/25/04
-	- Fixed some wrong addresses to address local registers instead of memory
-	- Fixed FRAME and RET instruction
-	- Added preliminary I/O space
-	- Fixed some load / store instructions
+    - Fixed some wrong addresses to address local registers instead of memory
+    - Fixed FRAME and RET instruction
+    - Added preliminary I/O space
+    - Fixed some load / store instructions
 
  Pierpaolo Prazzoli - 02/20/04
-	- Added execute_exception function
-	- Added FL == 0 always interpreted as 16
+    - Added execute_exception function
+    - Added FL == 0 always interpreted as 16
 
  Pierpaolo Prazzoli - 02/19/04
-	- Changed the reset to use the execute_trap(reset) which should be right to set
-	  the initiale state of the cpu
-	- Added Trace exception
-	- Set of T flag in RET instruction
-	- Set I flag in interrupts entries and resetted by a RET instruction
-	- Added correct set instruction for SR
+    - Changed the reset to use the execute_trap(reset) which should be right to set
+      the initiale state of the cpu
+    - Added Trace exception
+    - Set of T flag in RET instruction
+    - Set I flag in interrupts entries and resetted by a RET instruction
+    - Added correct set instruction for SR
 
  Pierpaolo Prazzoli - 10/26/03
-	- Changed get_lrconst to get_const and changed it to use the removed GET_CONST_RR
-	  macro.
-	- Removed the High flag used in some opcodes, it should be used only in
-	  MOV and MOVI instruction.
-	- Fixed MOV and MOVI instruction.
-	- Set to 1 FP is SR register at reset.
-	  (From the doc: A Call, Trap or Software instruction increments the FP and sets FL
-	  to 6, thus creating a new stack frame with the length of 6 registers).
+    - Changed get_lrconst to get_const and changed it to use the removed GET_CONST_RR
+      macro.
+    - Removed the High flag used in some opcodes, it should be used only in
+      MOV and MOVI instruction.
+    - Fixed MOV and MOVI instruction.
+    - Set to 1 FP is SR register at reset.
+      (From the doc: A Call, Trap or Software instruction increments the FP and sets FL
+      to 6, thus creating a new stack frame with the length of 6 registers).
 
  MooglyGuy - 10/25/03
- 	- Fixed CALL enough that it at least jumps to the right address, no word
- 	  yet as to whether or not it's working enough to return.
- 	- Added get_lrconst() to get the const value for the CALL operand, since
- 	  apparently using immediate_value() was wrong. The code is ugly, but it
- 	  works properly. Vampire 1/2 now gets far enough to try to test its RAM.
- 	- Just from looking at it, CALL apparently doesn't frame properly. I'm not
- 	  sure about FRAME, but perhaps it doesn't work properly - I'm not entirely
- 	  positive. The return address when vamphalf's memory check routine is
- 	  called at FFFFFD7E is stored in register L8, and then the RET instruction
- 	  at the end of the routine uses L1 as the return address, so that might
- 	  provide some clues as to how it works.
- 	- I'd almost be willing to bet money that there's no framing at all since
- 	  the values in L0 - L15 as displayed by the debugger would change during a
- 	  CALL or FRAME operation. I'll look when I'm in the mood.
- 	- The mood struck me, and I took a look at SET_L_REG and GET_L_REG.
- 	  Apparently no matter what the current frame pointer is they'll always use
- 	  local_regs[0] through local_regs[15].
+    - Fixed CALL enough that it at least jumps to the right address, no word
+      yet as to whether or not it's working enough to return.
+    - Added get_lrconst() to get the const value for the CALL operand, since
+      apparently using immediate_value() was wrong. The code is ugly, but it
+      works properly. Vampire 1/2 now gets far enough to try to test its RAM.
+    - Just from looking at it, CALL apparently doesn't frame properly. I'm not
+      sure about FRAME, but perhaps it doesn't work properly - I'm not entirely
+      positive. The return address when vamphalf's memory check routine is
+      called at FFFFFD7E is stored in register L8, and then the RET instruction
+      at the end of the routine uses L1 as the return address, so that might
+      provide some clues as to how it works.
+    - I'd almost be willing to bet money that there's no framing at all since
+      the values in L0 - L15 as displayed by the debugger would change during a
+      CALL or FRAME operation. I'll look when I'm in the mood.
+    - The mood struck me, and I took a look at SET_L_REG and GET_L_REG.
+      Apparently no matter what the current frame pointer is they'll always use
+      local_regs[0] through local_regs[15].
 
  MooglyGuy - 08/20/03
- 	- Added H flag support for MOV and MOVI
- 	- Changed init routine to set S flag on boot. Apparently the CPU defaults to
- 	  supervisor mode as opposed to user mode when it powers on, as shown by the
- 	  vamphalf power-on routines. Makes sense, too, since if the machine booted
- 	  in user mode, it would be impossible to get into supervisor mode.
+    - Added H flag support for MOV and MOVI
+    - Changed init routine to set S flag on boot. Apparently the CPU defaults to
+      supervisor mode as opposed to user mode when it powers on, as shown by the
+      vamphalf power-on routines. Makes sense, too, since if the machine booted
+      in user mode, it would be impossible to get into supervisor mode.
 
- Pierpaolo Prazzoli	- 08/19/03
-	- Added check for D_BIT and S_BIT where PC or SR must or must not be denoted.
-	  (movd, divu, divs, ldxx1, ldxx2, stxx1, stxx2, mulu, muls, set, mul
-	  call, chk)
+ Pierpaolo Prazzoli - 08/19/03
+    - Added check for D_BIT and S_BIT where PC or SR must or must not be denoted.
+      (movd, divu, divs, ldxx1, ldxx2, stxx1, stxx2, mulu, muls, set, mul
+      call, chk)
 
  MooglyGuy - 08/17/03
-	- Working on support for H flag, nothing quite done yet
-	- Added trap Range Error for CHK PC, PC
-	- Fixed relative jumps, they have to be taken from the opcode following the
-	  jump minstead of the jump opcode itself.
+    - Working on support for H flag, nothing quite done yet
+    - Added trap Range Error for CHK PC, PC
+    - Fixed relative jumps, they have to be taken from the opcode following the
+      jump minstead of the jump opcode itself.
 
- Pierpaolo Prazzoli	- 08/17/03
-	- Fixed get_pcrel() when OP & 0x80 is set.
-	- Decremented PC by 2 also in MOV, ADD, ADDI, SUM, SUB and added the check if
-	  D_BIT is not set. (when pc is changed they are implicit branch)
+ Pierpaolo Prazzoli - 08/17/03
+    - Fixed get_pcrel() when OP & 0x80 is set.
+    - Decremented PC by 2 also in MOV, ADD, ADDI, SUM, SUB and added the check if
+      D_BIT is not set. (when pc is changed they are implicit branch)
 
  MooglyGuy - 08/17/03
     - Implemented a crude hack to set FL in the SR to 6, since according to the docs
@@ -177,24 +177,24 @@
       this is the desired effect. Check for signed/unsigned relative branch, maybe?
 
  MooglyGuy - 08/16/03
- 	- Fixed the debugger at least somewhat so that it displays hex instead of decimal,
- 	  and so that it disassembles opcodes properly.
- 	- Fixed hyperstone_execute() to increment PC *after* executing the opcode instead of
- 	  before. This is probably why vamphalf was booting to fffffff8, but executing at
- 	  fffffffa instead.
- 	- Changed execute_trap to decrement PC by 2 so that the next opcode isn't skipped
- 	  after a trap
- 	- Changed execute_br to decrement PC by 2 so that the next opcode isn't skipped
- 	  after a branch
- 	- Changed hyperstone_movi to decrement PC by 2 when G0 (PC) is modified so that the
- 	  next opcode isn't skipped after a branch
- 	- Changed hyperstone_movi to default to a UINT32 being moved into the register
- 	  as opposed to a UINT8. This is wrong, the bit width is quite likely to be
- 	  dependent on the n field in the Rimm instruction type. However, vamphalf uses
- 	  MOVI G0,[FFFF]FBAC (n=$13) since there's apparently no absolute branch opcode.
- 	  What kind of CPU is this that it doesn't have an absolute jump in its branch
- 	  instructions and you have to use an immediate MOV to do an abs. jump!?
- 	- Replaced usage of logerror() with smf's verboselog()
+    - Fixed the debugger at least somewhat so that it displays hex instead of decimal,
+      and so that it disassembles opcodes properly.
+    - Fixed hyperstone_execute() to increment PC *after* executing the opcode instead of
+      before. This is probably why vamphalf was booting to fffffff8, but executing at
+      fffffffa instead.
+    - Changed execute_trap to decrement PC by 2 so that the next opcode isn't skipped
+      after a trap
+    - Changed execute_br to decrement PC by 2 so that the next opcode isn't skipped
+      after a branch
+    - Changed hyperstone_movi to decrement PC by 2 when G0 (PC) is modified so that the
+      next opcode isn't skipped after a branch
+    - Changed hyperstone_movi to default to a UINT32 being moved into the register
+      as opposed to a UINT8. This is wrong, the bit width is quite likely to be
+      dependent on the n field in the Rimm instruction type. However, vamphalf uses
+      MOVI G0,[FFFF]FBAC (n=$13) since there's apparently no absolute branch opcode.
+      What kind of CPU is this that it doesn't have an absolute jump in its branch
+      instructions and you have to use an immediate MOV to do an abs. jump!?
+    - Replaced usage of logerror() with smf's verboselog()
 
 *********************************************************************/
 
@@ -714,8 +714,8 @@ void hyperstone_set_trap_entry(int which)
 #define PC				hyperstone.global_regs[0] //Program Counter
 #define SR				hyperstone.global_regs[1] //Status Register
 #define FER				hyperstone.global_regs[2] //Floating-Point Exception Register
-// 03 - 15	General Purpose Registers
-// 16 - 17	Reserved
+// 03 - 15  General Purpose Registers
+// 16 - 17  Reserved
 #define SP				hyperstone.global_regs[18] //Stack Pointer
 #define UB				hyperstone.global_regs[19] //Upper Stack Bound
 #define BCR				hyperstone.global_regs[20] //Bus Control Register
@@ -726,7 +726,7 @@ void hyperstone_set_trap_entry(int which)
 #define ISR				hyperstone.global_regs[25] //Input Status Register
 #define FCR				hyperstone.global_regs[26] //Function Control Register
 #define MCR				hyperstone.global_regs[27] //Memory Control Register
-// 28 - 31	Reserved
+// 28 - 31  Reserved
 
 /* SR flags */
 #define GET_C					( SR & 0x00000001)      // bit 0 //CARRY
@@ -737,7 +737,7 @@ void hyperstone_set_trap_entry(int which)
 #define GET_H					((SR & 0x00000020)>>5)  // bit 5 //HIGHGLOBAL
 // bit 6 RESERVED (always 0)
 #define GET_I					((SR & 0x00000080)>>7)  // bit 7 //INTERRUPT-MODE
-#define GET_FTE					((SR & 0x00001f00)>>8)  // bits 12 - 8 	//Floating-Point Trap Enable
+#define GET_FTE					((SR & 0x00001f00)>>8)  // bits 12 - 8  //Floating-Point Trap Enable
 #define GET_FRM					((SR & 0x00006000)>>13) // bits 14 - 13 //Floating-Point Rounding Mode
 #define GET_L					((SR & 0x00008000)>>15) // bit 15 //INTERRUPT-LOCK
 #define GET_T					((SR & 0x00010000)>>16) // bit 16 //TRACE-MODE
@@ -874,15 +874,15 @@ void set_global_register(UINT8 code, UINT32 val)
 				break;
 
 			case 22:
-//				printf("written %08X to TCR register\n",val);
+//              printf("written %08X to TCR register\n",val);
 				break;
 
 			case 23:
-//				printf("written %08X to TR register\n",val);
+//              printf("written %08X to TR register\n",val);
 				break;
 
 			case 24:
-//				printf("written %08X to WCR register\n",val);
+//              printf("written %08X to WCR register\n",val);
 				break;
 
 			case 16:
@@ -1218,43 +1218,43 @@ static void decode_registers(void)
 			break;
 /*
 
-		// PCrel decode
-		case 0xe0: // DBV
-		case 0xe1: // DBNV
-		case 0xe2: // DBE
-		case 0xe3: // DBNE
-		case 0xe4: // DBC
-		case 0xe5: // DBNC
-		case 0xe6: // DBSE
-		case 0xe7: // DBHT
-		case 0xe8: // DBN
-		case 0xe9: // DBNN
-		case 0xea: // DBLE
-		case 0xeb: // DBGT
-		case 0xec: // DBR
-		case 0xf0: // BV
-		case 0xf1: // BNV
-		case 0xf2: // BE
-		case 0xf3: // BNE
-		case 0xf4: // BC
-		case 0xf5: // BNC
-		case 0xf6: // BSE
-		case 0xf7: // BHT
-		case 0xf8: // BN
-		case 0xf9: // BNN
-		case 0xfa: // BLE
-		case 0xfb: // BGT
-		case 0xfc: // BR
-			break;
+        // PCrel decode
+        case 0xe0: // DBV
+        case 0xe1: // DBNV
+        case 0xe2: // DBE
+        case 0xe3: // DBNE
+        case 0xe4: // DBC
+        case 0xe5: // DBNC
+        case 0xe6: // DBSE
+        case 0xe7: // DBHT
+        case 0xe8: // DBN
+        case 0xe9: // DBNN
+        case 0xea: // DBLE
+        case 0xeb: // DBGT
+        case 0xec: // DBR
+        case 0xf0: // BV
+        case 0xf1: // BNV
+        case 0xf2: // BE
+        case 0xf3: // BNE
+        case 0xf4: // BC
+        case 0xf5: // BNC
+        case 0xf6: // BSE
+        case 0xf7: // BHT
+        case 0xf8: // BN
+        case 0xf9: // BNN
+        case 0xfa: // BLE
+        case 0xfb: // BGT
+        case 0xfc: // BR
+            break;
 
-		// PCadr decode
-		case 0xfd: case 0xfe: case 0xff: // TRAPxx - TRAP
-			break;
+        // PCadr decode
+        case 0xfd: case 0xfe: case 0xff: // TRAPxx - TRAP
+            break;
 
-		// RESERVED
-		case 0x8c: case 0x8d:
-		case 0xac: case 0xad: case 0xae: case 0xaf:
-			break;
+        // RESERVED
+        case 0x8c: case 0x8d:
+        case 0xac: case 0xad: case 0xae: case 0xaf:
+            break;
 */
 	}
 }
@@ -1602,15 +1602,15 @@ void execute_software(void)
 
 
 /*
-	IRQ lines :
-		0 - IO2 	(trap 48)
-		1 - IO1 	(trap 49)
-		2 - INT4 	(trap 50)
-		3 - INT3	(trap 51)
-		4 - INT2	(trap 52)
-		5 - INT1	(trap 53)
-		6 - IO3		(trap 54)
-		7 - TIMER	(trap 55)
+    IRQ lines :
+        0 - IO2     (trap 48)
+        1 - IO1     (trap 49)
+        2 - INT4    (trap 50)
+        3 - INT3    (trap 51)
+        4 - INT2    (trap 52)
+        5 - INT1    (trap 53)
+        6 - IO3     (trap 54)
+        7 - TIMER   (trap 55)
 */
 static void set_irq_line(int irqline, int state)
 {
@@ -1642,21 +1642,21 @@ static void set_irq_line(int irqline, int state)
 				break;
 		}
 /*
-		if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) printf("IO2 en\n"); // IO2
+        if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) printf("IO2 en\n"); // IO2
 
-		if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) printf("IO1 en\n"); // IO1
+        if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) printf("IO1 en\n"); // IO1
 
-		if( !(FCR&(1<<31)) ) printf("int4 en\n"); //  int 4
+        if( !(FCR&(1<<31)) ) printf("int4 en\n"); //  int 4
 
-		if( !(FCR&(1<<30)) ) printf("int3 en\n"); //  int 3
+        if( !(FCR&(1<<30)) ) printf("int3 en\n"); //  int 3
 
-		if( !(FCR&(1<<29)) ) printf("int2 en\n"); //  int 2
+        if( !(FCR&(1<<29)) ) printf("int2 en\n"); //  int 2
 
-		if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
+        if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
 
-		if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3
+        if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3
 
-		if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
+        if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
 */
 		if(execint)
 		{
@@ -2206,7 +2206,7 @@ void hyperstone_sums(void)
 	CHECK_VADD(SREG,const_val,tmp);
 
 //#if SETCARRYS
-//	CHECK_C(tmp);
+//  CHECK_C(tmp);
 //#endif
 
 	res = (INT32)(SREG) + const_val;
@@ -2309,7 +2309,7 @@ void hyperstone_adds(void)
 	CHECK_VADD(SREG,DREG,tmp);
 
 //#if SETCARRYS
-//	CHECK_C(tmp);
+//  CHECK_C(tmp);
 //#endif
 
 	res = (INT32)(SREG) + (INT32)(DREG);
@@ -2442,7 +2442,7 @@ void hyperstone_subs(void)
 	tmp = (INT64)((INT32)(DREG)) - (INT64)((INT32)(SREG));
 
 //#ifdef SETCARRYS
-//	CHECK_C(tmp);
+//  CHECK_C(tmp);
 //#endif
 
 	CHECK_VSUB(SREG,DREG,tmp);
@@ -2480,10 +2480,10 @@ void hyperstone_addc(void)
 		//CHECK_VADD1: V = (DREG == 0x7FFF) && (C == 1);
 		//OVERFLOW = CHECK_VADD1(DREG, C, DREG+C) | CHECK_VADD(SREG, DREG+C, SREG+DREG+C)
 		/* check if DREG + GET_C overflows */
-//		if( (DREG == 0x7FFFFFFF) && (GET_C == 1) )
-//			SET_V(1);
-//		else
-//			CHECK_VADD(SREG,DREG + GET_C,tmp);
+//      if( (DREG == 0x7FFFFFFF) && (GET_C == 1) )
+//          SET_V(1);
+//      else
+//          CHECK_VADD(SREG,DREG + GET_C,tmp);
 
 		CHECK_VADD3(SREG,DREG,GET_C,tmp);
 	}
@@ -2547,7 +2547,7 @@ void hyperstone_negs(void)
 	CHECK_VSUB(SREG,0,tmp);
 
 //#if SETCARRYS
-//	CHECK_C(tmp);
+//  CHECK_C(tmp);
 //#endif
 
 	res = -(INT32)(SREG);
@@ -2668,7 +2668,7 @@ void hyperstone_addsi(void)
 	CHECK_VADD(imm,DREG,tmp);
 
 //#if SETCARRYS
-//	CHECK_C(tmp);
+//  CHECK_C(tmp);
 //#endif
 
 	res = imm + (INT32)(DREG);

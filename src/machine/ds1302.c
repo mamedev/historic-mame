@@ -2,8 +2,8 @@
 #include "ds1302.h"
 #include "time.h"
 /********************
-	DALLAS
-	DS1302
+    DALLAS
+    DS1302
 
    RTC+BACKUP RAM
 
@@ -13,7 +13,7 @@
 /********************
 Missing:
 Burst Mode
-Clock programming	(useless)
+Clock programming   (useless)
 ********************/
 
 static UINT32 ShiftIn=0;
@@ -68,7 +68,7 @@ void DS1302_CLK(UINT8 val)
 						break;
 					case 0x83:	//Min
 						ShiftOut=bcd(tm2->tm_min);
-						break;	
+						break;
 					case 0x85:	//Hour
 						ShiftOut=bcd(tm2->tm_hour);
 						break;
@@ -99,25 +99,25 @@ void DS1302_CLK(UINT8 val)
 				switch(LastCmd)
 				{
 					case 0x80:	//Sec
-						
+
 						break;
 					case 0x82:	//Min
-						
-						break;	
+
+						break;
 					case 0x84:	//Hour
-						
+
 						break;
 					case 0x86:	//Day
-						
+
 						break;
 					case 0x88:	//Month
-						
+
 						break;
 					case 0x8a:	//weekday
-						
+
 						break;
 					case 0x8c:	//Year
-						
+
 						break;
 					default:
 						ShiftOut=0x0;

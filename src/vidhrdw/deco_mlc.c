@@ -1,11 +1,11 @@
 /*
-	The MLC graphics hardware is quite complicated - the usual method of having 'object ram' that
-	controls sprites is expanded into object ram that controls sprite blocks that may be stored
-	in RAM or ROM.  Each tile in a block may be specified explicitly via a display list in ROM or
-	calculated as part of a block offset.
+    The MLC graphics hardware is quite complicated - the usual method of having 'object ram' that
+    controls sprites is expanded into object ram that controls sprite blocks that may be stored
+    in RAM or ROM.  Each tile in a block may be specified explicitly via a display list in ROM or
+    calculated as part of a block offset.
 
-	Blocks can be scaled and subpositioned, and are usually 4bpp but blocks can be combined
-	into 8bpp with a flag.
+    Blocks can be scaled and subpositioned, and are usually 4bpp but blocks can be combined
+    into 8bpp with a flag.
 */
 
 #include "driver.h"
@@ -30,11 +30,11 @@ static void mlc_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElemen
 	if (!scalex || !scaley) return;
 
 	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
+    scalex and scaley are 16.16 fixed point numbers
+    1<<15 : shrink to 50%
+    1<<16 : uniform scale
+    1<<17 : double to 200%
+    */
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
 	if(clip)
@@ -193,7 +193,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	int yscale,xscale;
 	int ybase,yinc;
 
-//	for (offs = 0; offs<0x3000/4; offs+=8)
+//  for (offs = 0; offs<0x3000/4; offs+=8)
 	for (offs = (0x3000/4)-8; offs>=0x100; offs-=8) // TEST - REMOVE TOP ENTRIES!
 	{
 		if ((spriteram32[offs+0]&0x8000)==0) {
@@ -209,8 +209,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 		fx = spriteram32[offs+1]&0x8000;
 		fy = spriteram32[offs+1]&0x4000;
-//		fx = spriteram32[offs+2]&0x01000000; // Alpha blend??
-//		fy = spriteram32[offs+3]&0x01000000; // Alpha blend??
+//      fx = spriteram32[offs+2]&0x01000000; // Alpha blend??
+//      fy = spriteram32[offs+3]&0x01000000; // Alpha blend??
 		color = spriteram32[offs+1]&0x7f;
 		indx = spriteram32[offs+0]&0x3fff;
 		yscale = spriteram32[offs+4]&0x1ff;
@@ -237,13 +237,13 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			if (!w) w=16; //test above in sprites too
 
 			sprite = (index_ptr8[7]<<8)|index_ptr8[6];
-//			bank = index_ptr8[4]&3;
+//          bank = index_ptr8[4]&3;
 			sprite |= (index_ptr8[4]&3)<<16;
 
 			if (use8bppMode) {
 				data8_t* index_ptr28=rom + indx2*8;
 				sprite2=(index_ptr28[7]<<8)|index_ptr28[6];
-			//	fx=spriteram32[offs+1]&0x10;
+			//  fx=spriteram32[offs+1]&0x10;
 			}
 			//unused byte 5
 			yoffs=index_ptr8[0]&0xff;
@@ -328,26 +328,26 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 /*
 
-	0100 0000 bug...
+    0100 0000 bug...
 
   4964 - calls function
-	6a6c - which sets 3c@SP
+    6a6c - which sets 3c@SP
 
-	6bf8 - uses 3c@SP
+    6bf8 - uses 3c@SP
 
-	SHLR8 at 6a4e creates 0100 0000
-
-
-	other:
-
-	6a90 - unaligned sp access??  72@sp
-	6a92 - puts $30 into r0 for sp access and calculates flip
+    SHLR8 at 6a4e creates 0100 0000
 
 
-	6b18 - alters r13 - ORs in flip information - uses 30@sp
-	6b66 - sets up r13 (palette)
-	6d14 - extu r13 into r5, then call function below
-	463a - moves R5 into spriteram (contains flip X part for CA)
+    other:
+
+    6a90 - unaligned sp access??  72@sp
+    6a92 - puts $30 into r0 for sp access and calculates flip
+
+
+    6b18 - alters r13 - ORs in flip information - uses 30@sp
+    6b66 - sets up r13 (palette)
+    6d14 - extu r13 into r5, then call function below
+    463a - moves R5 into spriteram (contains flip X part for CA)
 
 */
 
@@ -357,16 +357,16 @@ VIDEO_UPDATE( avengrgs )
 	data32_t *vram_ptr=avengrgs_vram + (0x1dc00/4);
 
 #if 0
-//	data8_t *rom = memory_region(REGION_GFX4);
+//  data8_t *rom = memory_region(REGION_GFX4);
 
-//	static int bank=0;
-//	static int base=0x40000;
-//	int o=0;
+//  static int bank=0;
+//  static int base=0x40000;
+//  int o=0;
 
-//	if (code_pressed_memory(KEYCODE_X))
-//		base+=0x200;
-//	if (code_pressed_memory(KEYCODE_Z))
-//		base-=0x200;
+//  if (code_pressed_memory(KEYCODE_X))
+//      base+=0x200;
+//  if (code_pressed_memory(KEYCODE_Z))
+//      base-=0x200;
 
 // 22a65c0 == linescroll
 

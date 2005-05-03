@@ -38,10 +38,10 @@
 typedef stream_sample_t SAMP;
 /*
 #if (SAMPLE_BITS==16)
-	typedef INT16 SAMP;
+    typedef INT16 SAMP;
 #endif
 #if (SAMPLE_BITS==8)
-	typedef signed char SAMP;
+    typedef signed char SAMP;
 #endif
 */
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Rohga Video emulation - Bryan McPhail, mish@tendril.co.uk
+    Rohga Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -8,7 +8,17 @@
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
+static data16_t * rohga_spriteram;
+
 /******************************************************************************/
+
+WRITE16_HANDLER( rohga_buffer_spriteram16_w )
+{
+	// Spriteram seems to be triple buffered (no sprite lag on real pcb, but there
+	// is on driver with only double buffering)
+	memcpy(rohga_spriteram, buffered_spriteram16, 0x800);
+	memcpy(buffered_spriteram16, spriteram16, 0x800);
+}
 
 static int wizdfire_bank_callback(const int bank)
 {
@@ -17,15 +27,15 @@ static int wizdfire_bank_callback(const int bank)
 
 VIDEO_START( rohga )
 {
-	if (deco16_2_video_init(0))
+	rohga_spriteram = (data16_t*)auto_malloc(0x800);
+
+	if (!rohga_spriteram || deco16_2_video_init(0))
 		return 1;
 
 	deco16_set_tilemap_bank_callback(0,wizdfire_bank_callback);
 	deco16_set_tilemap_bank_callback(1,wizdfire_bank_callback);
 	deco16_set_tilemap_bank_callback(2,wizdfire_bank_callback);
 	deco16_set_tilemap_bank_callback(3,wizdfire_bank_callback);
-
-	Machine->gfx[3]->color_granularity=64;
 
 	return 0;
 }
@@ -69,7 +79,7 @@ VIDEO_START( nitrobal )
 
 /******************************************************************************/
 
-static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *spriteptr)
+static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *spriteptr, int is_schmeisr)
 {
 	int offs;
 
@@ -82,17 +92,28 @@ static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *sprite
 		x = spriteptr[offs+2];
 
 		/* Sprite/playfield priority */
-		switch (x&0xc000) {
+		switch (x&0x6000) {
 		case 0x0000: pri=0; break;
 		case 0x4000: pri=0xf0; break;
-		case 0x8000: pri=0xf0|0xcc; break;
-		case 0xc000: pri=0xf0|0xcc; break; /* Perhaps 0xf0|0xcc|0xaa (Sprite under bottom layer) */
+		case 0x6000: pri=0xf0|0xcc; break;
+		case 0x2000: pri=0;//0xf0|0xcc; break; /* Perhaps 0xf0|0xcc|0xaa (Sprite under bottom layer) */
 		}
 
 		y = spriteptr[offs];
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
-		colour = (x >> 9) &0xf;
+
+		// Sprite colour is different between Rohga (6bpp) and Schmeisr (4bpp plus wire mods on pcb)
+		if (is_schmeisr)
+		{
+			colour = ((x >> 9) &0xf)<<2;
+			if (x&0x8000)
+				colour++;
+		}
+		else
+		{
+			colour = (x >> 9) &0xf;
+		}
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -150,12 +171,12 @@ static void wizdfire_drawsprites(struct mame_bitmap *bitmap, data16_t *spriteptr
 		x = spriteptr[offs+2];
 
 		/*
-		Sprite/playfield priority - we can't use pdrawgfx because we need alpha'd sprites overlaid
-		over non-alpha'd sprites, plus sprites underneath and above an alpha'd background layer.
+        Sprite/playfield priority - we can't use pdrawgfx because we need alpha'd sprites overlaid
+        over non-alpha'd sprites, plus sprites underneath and above an alpha'd background layer.
 
-		Hence, we rely on the hardware sorting everything correctly and not relying on any orthoganality
-		effects (it doesn't seem to), and instead draw seperate passes for each sprite priority.  :(
-		*/
+        Hence, we rely on the hardware sorting everything correctly and not relying on any orthoganality
+        effects (it doesn't seem to), and instead draw seperate passes for each sprite priority.  :(
+        */
 		switch (mode) {
 		case 4:
 			if ((x&0xc000)!=0xc000)
@@ -237,33 +258,33 @@ static void nitrobal_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 	int offs,end,inc;
 
 	/*
-		Alternate format from most 16 bit games - same as Captain America and Mutant Fighter
+        Alternate format from most 16 bit games - same as Captain America and Mutant Fighter
 
-		Word 0:
-			0x8000:	Y flip
-			0x4000: X flip
-			0x2000:	Flash (Sprite toggles on/off every frame)
-			0x1fff:	Y value
-		Word 1:
-			0xffff: X value
-		Word 2:
-			0xf000:	Block height
-			0x0f00: Block width
-			0x00e0: Unused?
+        Word 0:
+            0x8000: Y flip
+            0x4000: X flip
+            0x2000: Flash (Sprite toggles on/off every frame)
+            0x1fff: Y value
+        Word 1:
+            0xffff: X value
+        Word 2:
+            0xf000: Block height
+            0x0f00: Block width
+            0x00e0: Unused?
 
 sprites1:
-	bit 0x40 set for under PF2
-	bit 0x20 set on others...
-	bit 0x80 set in game pf3 (split)
+    bit 0x40 set for under PF2
+    bit 0x20 set on others...
+    bit 0x80 set in game pf3 (split)
 
 Sprites 2:
-	bit 0x10 set on alpha sprites..
-	bit 0x80 set is above pf2 else under pf2
+    bit 0x10 set on alpha sprites..
+    bit 0x80 set is above pf2 else under pf2
 
-			0x001f: Colour
-		Word 3:
-			0xffff:	Sprite value
-	*/
+            0x001f: Colour
+        Word 3:
+            0xffff: Sprite value
+    */
 
 	offs=0x3fc;
 	end=-4;
@@ -297,7 +318,7 @@ Sprites 2:
 		if (gfxbank==3) {
 			/* Sprite chip 1 */
 			switch (spriteptr[offs+2]&0xe0) {
-//			case 0xc0: colour=rand()%0xff; tilemap_pri=256; break; //todo
+//          case 0xc0: colour=rand()%0xff; tilemap_pri=256; break; //todo
 			case 0xc0: tilemap_pri=8; break; //? under other sprites
 			case 0x80: tilemap_pri=32; break; //? under other sprites
 			case 0x20: tilemap_pri=32; break; /* Over pf2 and under other sprite chip */
@@ -306,54 +327,54 @@ Sprites 2:
 			case 0:
 				tilemap_pri=128; break;
 			default:
-				tilemap_pri=128; 
-				break; 
+				tilemap_pri=128;
+				break;
 			}
 
 /*
 Intro:
-	0x40 is under pf2 and other sprites
-	0x20 is under pf2
+    0x40 is under pf2 and other sprites
+    0x20 is under pf2
 
 Level 1
-	0xa0 means under other sprites and pf2?
-  
+    0xa0 means under other sprites and pf2?
+
 Level 2 (tank scene)
 
-	Chip 1:
+    Chip 1:
 
   0x20 set means under pf2 else above??
   0x80 set means under other sprites else above
 
 Level 3:
-	0xc0 means under other sprites and pf2		check??
-	0x40 means under pf2
-	0xa0 means under pf2..  
+    0xc0 means under other sprites and pf2      check??
+    0x40 means under pf2
+    0xa0 means under pf2..
 
-	always over other sprites..?
+    always over other sprites..?
 
 
 PRI MODE 2:  (Level 4)
 sprite 1:
-	mode 0xa0 is under pf2 (sprites unknown)
-	mode 0x40 is under pf2 (sprites unknown)
+    mode 0xa0 is under pf2 (sprites unknown)
+    mode 0x40 is under pf2 (sprites unknown)
 
 sprite 2:
 
-	mode 0x40 is under pf2
-	mode 0 is under pf2 
+    mode 0x40 is under pf2
+    mode 0 is under pf2
 
 
 Level 5 (Space, pri mode 1)
 
 sprite 1:
-	mode 0x80 is over pf2 and over other sprites
+    mode 0x80 is over pf2 and over other sprites
 
 
 
 sprite 2:
 
-	mode 0 is over pf2
+    mode 0 is over pf2
 
   */
 
@@ -362,10 +383,10 @@ sprite 2:
 			/* Sprite chip 2 (with alpha blending) */
 
 			/* Sprite above playfield 2, but still below other sprite chip */
-//			if (spriteptr[offs+2]&0x80)
-				tilemap_pri=64; 
-//			else
-//				tilemap_pri=8; 
+//          if (spriteptr[offs+2]&0x80)
+				tilemap_pri=64;
+//          else
+//              tilemap_pri=8;
 
 			if (deco16_priority)
 				tilemap_pri=8;
@@ -414,7 +435,7 @@ sprite 2:
 						colour,
 						fx,fy,
 						sx + x_mult * (w-x),sy + y_mult * (h-y),
-						&Machine->visible_area,trans,0,tilemap_pri,sprite_pri);
+						&Machine->visible_area,trans,0,tilemap_pri,sprite_pri,1);
 			}
 		}
 
@@ -424,7 +445,7 @@ sprite 2:
 
 /******************************************************************************/
 
-VIDEO_UPDATE( rohga )
+static void update_rohga(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int is_schmeisr)
 {
 	/* Update playfields */
 	flip_screen_set( deco16_pf12_control[0]&0x80 );
@@ -433,19 +454,50 @@ VIDEO_UPDATE( rohga )
 
 	/* Draw playfields */
 	fillbitmap(priority_bitmap,0,cliprect);
-	fillbitmap(bitmap,Machine->pens[512],cliprect);
+	fillbitmap(bitmap,Machine->pens[768],cliprect);
 
-//	if (!code_pressed(KEYCODE_Z))
-	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
-//	if (!code_pressed(KEYCODE_X))
-	deco16_tilemap_3_draw(bitmap,cliprect,0,2);
-//	if (!code_pressed(KEYCODE_C))
-	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
+	switch (deco16_priority&3)
+	{
+	case 0:
+		if (deco16_priority&4)
+		{
+			// Draw as 1 8BPP layer
+			deco16_tilemap_34_combine_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,3);
+		}
+		else
+		{
+			// Draw as 2 4BPP layers
+			deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
+			deco16_tilemap_3_draw(bitmap,cliprect,0,2);
+		}
+		deco16_tilemap_2_draw(bitmap,cliprect,0,4);
+		break;
+	case 1:
+		deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
+		deco16_tilemap_2_draw(bitmap,cliprect,0,2);
+		deco16_tilemap_3_draw(bitmap,cliprect,0,4);
+		break;
+	case 2:
+		deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
+		deco16_tilemap_4_draw(bitmap,cliprect,0,2);
+		deco16_tilemap_3_draw(bitmap,cliprect,0,4);
+		break;
+	}
 
-	rohga_drawsprites(bitmap,spriteram16);
+	rohga_drawsprites(bitmap,rohga_spriteram,is_schmeisr);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+}
 
-//	deco16_print_debug_info();
+VIDEO_UPDATE( rohga )
+{
+	update_rohga(bitmap, cliprect, 0);
+}
+
+VIDEO_UPDATE( schmeisr )
+{
+	// The Schmeisr pcb has wire mods which seem to remap sprite palette indices.
+	// Otherwise video update is the same as Rohga.
+	update_rohga(bitmap, cliprect, 1);
 }
 
 VIDEO_UPDATE( wizdfire )
@@ -486,13 +538,14 @@ VIDEO_UPDATE( nitrobal )
 	/* Draw playfields - Palette of 2nd playfield chip visible if playfields turned off */
 	fillbitmap(bitmap,Machine->pens[512],&Machine->visible_area);
 	fillbitmap(priority_bitmap,0,NULL);
-	deco16_clear_sprite_priority_bitmap(); 
+	deco16_clear_sprite_priority_bitmap();
 	deco16_tilemap_3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 
-	/* We don't draw pf3 because it's always the same data as pf4 - the 4bpp outputs
-	are combined into a single 8bpp bitmap.  We can precompute the 8bpp tiles to avoid
-	combining them at runtime (see also Robocop 2)
-	-> Changed to draw pf3 because in high-score screen there's no background in pf4 tilemap */
+	/* We don't draw pf4 because it's always the same data as pf4 - the 4bpp outputs
+    are combined into a single 8bpp bitmap.  We can precompute the 8bpp tiles to avoid
+    combining them at runtime (see also Robocop 2) */
+
+	// (todo: actually pf3/4 differ on the high score screen)
 
 	deco16_tilemap_2_draw(bitmap,cliprect,0,16);
 	nitrobal_drawsprites(bitmap,cliprect,buffered_spriteram16,3);

@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
-**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**  TMS34010: Portable Texas Instruments TMS34010 emulator
 **
-**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-**	 Parts based on code by Aaron Giles
+**  Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**   Parts based on code by Aaron Giles
 **
 **#################################################################################################*/
 
@@ -16,7 +16,7 @@
 
 
 /*###################################################################################################
-**	FIELD WRITE FUNCTIONS
+**  FIELD WRITE FUNCTIONS
 **#################################################################################################*/
 
 void wfield_01(offs_t offset,data32_t data)
@@ -189,7 +189,7 @@ void wfield_32(offs_t offset,data32_t data)
 
 
 /*###################################################################################################
-**	FIELD READ FUNCTIONS (ZERO-EXTEND)
+**  FIELD READ FUNCTIONS (ZERO-EXTEND)
 **#################################################################################################*/
 
 data32_t rfield_z_01(offs_t offset)
@@ -423,7 +423,7 @@ data32_t rfield_32(offs_t offset)
 
 
 /*###################################################################################################
-**	FIELD READ FUNCTIONS (SIGN-EXTEND)
+**  FIELD READ FUNCTIONS (SIGN-EXTEND)
 **#################################################################################################*/
 
 data32_t rfield_s_01(offs_t offset)

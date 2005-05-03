@@ -1,56 +1,56 @@
 /***************************************************************************
 
-							-= Psikyo Games =-
+                            -= Psikyo Games =-
 
-				driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q			shows layer 0
-		W			shows layer 1
-		A			shows the sprites
-
-		Keys can be used together!
+                driver by   Luca Elia (l.elia@tin.it)
 
 
-							[ 2 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		- Dynamic Size
-		- Line Scroll
+        Q           shows layer 0
+        W           shows layer 1
+        A           shows the sprites
 
-		Layer Sizes:			 512 x 2048 ( $20 x $80 tiles)
-								1024 x 1048 ( $40 x $40 tiles)
-								2048 x  512 ( $80 x $20 tiles)
-								4096 x  256 ($100 x $10 tiles)
-
-		Tengai uses all four above
-
-		Tiles:					16x16x4
-		Color Codes:			8
+        Keys can be used together!
 
 
-					[ ~ $300 Multi-Tile Sprites With Zoom ]
+                            [ 2 Scrolling Layers ]
+
+        - Dynamic Size
+        - Line Scroll
+
+        Layer Sizes:             512 x 2048 ( $20 x $80 tiles)
+                                1024 x 1048 ( $40 x $40 tiles)
+                                2048 x  512 ( $80 x $20 tiles)
+                                4096 x  256 ($100 x $10 tiles)
+
+        Tengai uses all four above
+
+        Tiles:                  16x16x4
+        Color Codes:            8
 
 
-		Each sprite is made of 16x16 tiles, up to 8x8 tiles.
-
-		There are $300 sprites, followed by a list of the indexes
-		of the sprites to actually display ($400 max). The list is
-		terminated by the special index value FFFF.
-
-		The tile code specified for a sprite is actually fed to a
-		ROM holding a look-up table with the real tile code to display.
-
-		Sprites can be shrinked up to ~50% following a linear curve of
-		sizes.
+                    [ ~ $300 Multi-Tile Sprites With Zoom ]
 
 
-		Since the tilemaps can change size its safest to allocate all
-		the possible sizes at startup, as opposed to during the emulation
+        Each sprite is made of 16x16 tiles, up to 8x8 tiles.
 
-		By doing it this way theres no chance of a memory allocation
-		failing during gameplay and crashing MAME
+        There are $300 sprites, followed by a list of the indexes
+        of the sprites to actually display ($400 max). The list is
+        terminated by the special index value FFFF.
+
+        The tile code specified for a sprite is actually fed to a
+        ROM holding a look-up table with the real tile code to display.
+
+        Sprites can be shrinked up to ~50% following a linear curve of
+        sizes.
+
+
+        Since the tilemaps can change size its safest to allocate all
+        the possible sizes at startup, as opposed to during the emulation
+
+        By doing it this way theres no chance of a memory allocation
+        failing during gameplay and crashing MAME
 
 **************************************************************************/
 
@@ -71,14 +71,14 @@ static UINT32 *spritebuf1, *spritebuf2;
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
-							  [ Tiles Format ]
+                              [ Tiles Format ]
 
 Offset:
 
-0000.w			fed- ---- ---- ----		Color
-				---c ba98 7654 3210		Code
+0000.w          fed- ---- ---- ----     Color
+                ---c ba98 7654 3210     Code
 
 ***************************************************************************/
 
@@ -171,7 +171,7 @@ void psikyo_switch_banks( int tilemap, int bank )
 VIDEO_START( psikyo )
 {
 	/* The Hardware is Capable of Changing the Dimensions of the Tilemaps, its safer to create
-	   the various sized tilemaps now as opposed to later */
+       the various sized tilemaps now as opposed to later */
 
 	tilemap_0_size0	=	tilemap_create(	get_tile_info_0,
 									tilemap_scan_rows,
@@ -260,44 +260,44 @@ VIDEO_START( psikyo )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-Offset:			Value:
+Offset:         Value:
 
-0000/2.w		Y/X + Y/X Size
+0000/2.w        Y/X + Y/X Size
 
-					fedc ---- ---- ----		Zoom Y/X ???
-					---- ba9- ---- ----		Tiles along Y/X
-					---- ---8 7654 3210		Position
-
-
-0004.w			Color + Flags
-
-					f--- ---- ---- ----		Flip Y
-					-e-- ---- ---- ----		Flip X
-					--d- ---- ---- ----		? USED
-					---c ba98 ---- ----		Color
-					---- ---- 76-- ----		Priority
-					---- ---- --54 321-		-
-					---- ---- ---- ---0		Code High Bit
+                    fedc ---- ---- ----     Zoom Y/X ???
+                    ---- ba9- ---- ----     Tiles along Y/X
+                    ---- ---8 7654 3210     Position
 
 
-0006.w										Code Low Bits
+0004.w          Color + Flags
 
-				(Code goes into a LUT in ROM where
-				 the real tile code is.)
+                    f--- ---- ---- ----     Flip Y
+                    -e-- ---- ---- ----     Flip X
+                    --d- ---- ---- ----     ? USED
+                    ---c ba98 ---- ----     Color
+                    ---- ---- 76-- ----     Priority
+                    ---- ---- --54 321-     -
+                    ---- ---- ---- ---0     Code High Bit
 
 
-Note:	Not all sprites are displayed: in the top part of spriteram
-		(e.g. 401800-401fff) there's the list of sprites indexes to
-		actually display, terminated by FFFF.
+0006.w                                      Code Low Bits
 
-		The last entry (e.g. 401ffe) is special and holds some flags:
+                (Code goes into a LUT in ROM where
+                 the real tile code is.)
 
-			fedc ba98 7654 ----
-			---- ---- ---- 32--		Transparent Pen select? 10 for 0xf, 01 for 0x0.
-			---- ---- ---- --1-
-			---- ---- ---- ---0		Sprites Disable
+
+Note:   Not all sprites are displayed: in the top part of spriteram
+        (e.g. 401800-401fff) there's the list of sprites indexes to
+        actually display, terminated by FFFF.
+
+        The last entry (e.g. 401ffe) is special and holds some flags:
+
+            fedc ba98 7654 ----
+            ---- ---- ---- 32--     Transparent Pen select? 10 for 0xf, 01 for 0x0.
+            ---- ---- ---- --1-
+            ---- ---- ---- ---0     Sprites Disable
 
 
 ***************************************************************************/
@@ -328,7 +328,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 	}
 	offs -= 2/2;
 
-	//	fprintf(stderr, "\n");
+	//  fprintf(stderr, "\n");
 	for ( ; offs >= 0/2 ; offs -= 2/2 )
 	{
 		data32_t *source;
@@ -361,8 +361,8 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 		y		=	((y & 0x00ff)) - (y & 0x100);
 
 		/* 180-1ff are negative coordinates. Note that $80 pixels is
-		   the maximum extent of a sprite, which can therefore be moved
-		   out of screen without problems */
+           the maximum extent of a sprite, which can therefore be moved
+           out of screen without problems */
 		if (x >= 0x180)	x -= 0x200;
 
 		x += (nx*zoomx+2)/4;
@@ -421,7 +421,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
 ***************************************************************************/
 
@@ -452,31 +452,31 @@ VIDEO_UPDATE( psikyo )
 	/* Layers enable (not quite right) */
 
 	/* bit  0   : layer enable
-	        1   : opaque tiles (used in Gunbird attract mode)
-	        2   : ?
-	        3   : transparent colour (0 or 15)
-	        4- 5: ?
-	        6- 7: tilemap size
-	        8   : per-line rowscroll
-	        9   : per-tile rowscroll
-	       10   : tilebank (btlkroad/gunbird/s1945jn only)
-	       11-15: ? */
+            1   : opaque tiles (used in Gunbird attract mode)
+            2   : ?
+            3   : transparent colour (0 or 15)
+            4- 5: ?
+            6- 7: tilemap size
+            8   : per-line rowscroll
+            9   : per-tile rowscroll
+           10   : tilebank (btlkroad/gunbird/s1945jn only)
+           11-15: ? */
 
 /*
-	gunbird:	L:00d0-04d0	S:0008 (00e1 04e1 0009 or 00e2 04e2 000a, for a blink, on scene transitions)
-	sngkace:	L:00d0-00d0	S:0008 (00d1 00d1 0009, for a blink, on scene transitions)
-	s1945:		L:00d0-04d0	S:0008
-	btlkrodj:	L:0120-0510	S:0008 (0121 0511 0009, for a blink, on scene transitions)
-	tengai:	L:0178-0508	S:0004 <-- Transpen is 0 as opposed to 15.
+    gunbird:    L:00d0-04d0 S:0008 (00e1 04e1 0009 or 00e2 04e2 000a, for a blink, on scene transitions)
+    sngkace:    L:00d0-00d0 S:0008 (00d1 00d1 0009, for a blink, on scene transitions)
+    s1945:      L:00d0-04d0 S:0008
+    btlkrodj:   L:0120-0510 S:0008 (0121 0511 0009, for a blink, on scene transitions)
+    tengai: L:0178-0508 S:0004 <-- Transpen is 0 as opposed to 15.
 
-	tengai:
-		L:01f8-05c8, 1 needs size 0, 2 needs size 0 Title
-		L:00f8-05c8, 1 needs size 0, 2 needs size 0 No RowScroll on layer 0
-		L:01b8-05c8, 1 needs size 3, 2 needs size 0
-		L:0178-0508, 1 needs size ?, 2 needs size 1 Psikyo logo
-		L:0178-0508, 1 needs size 2, 2 needs size 1 Intro
-		L:0178-0548, 1 needs size 2, 2 needs size ? Test
-		L:0178-0588,                 2 needs size 3 More Intro
+    tengai:
+        L:01f8-05c8, 1 needs size 0, 2 needs size 0 Title
+        L:00f8-05c8, 1 needs size 0, 2 needs size 0 No RowScroll on layer 0
+        L:01b8-05c8, 1 needs size 3, 2 needs size 0
+        L:0178-0508, 1 needs size ?, 2 needs size 1 Psikyo logo
+        L:0178-0508, 1 needs size 2, 2 needs size 1 Intro
+        L:0178-0548, 1 needs size 2, 2 needs size ? Test
+        L:0178-0588,                 2 needs size 3 More Intro
 */
 
 	/* For gfx banking for s1945jn/gunbird/btlkroad */

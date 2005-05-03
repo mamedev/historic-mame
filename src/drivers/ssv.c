@@ -1,58 +1,58 @@
 /***************************************************************************
 
-					-= Seta, Sammy, Visco (SSV) System =-
+                    -= Seta, Sammy, Visco (SSV) System =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU          :		NEC V60
+CPU          :      NEC V60
 
-Sound Chip   :		Ensoniq ES5506 (OTTOR2)
+Sound Chip   :      Ensoniq ES5506 (OTTOR2)
 
-Custom Chips :		ST-0004		(Video DAC)
-					ST-0005		(Parallel I/O)
-					ST-0006		(Video controller)
-					ST-0007		(System controller)
+Custom Chips :      ST-0004     (Video DAC)
+                    ST-0005     (Parallel I/O)
+                    ST-0006     (Video controller)
+                    ST-0007     (System controller)
 
-Others       :		Battery + MB3790 + LH5168D-10L (NVRAM)
-					DX-102				(I/O)
-					M62X42B				(RTC)
-					ST010
-					TA8210				(Audio AMP)
-					uPD71051/7001C		(UART)
+Others       :      Battery + MB3790 + LH5168D-10L (NVRAM)
+                    DX-102              (I/O)
+                    M62X42B             (RTC)
+                    ST010
+                    TA8210              (Audio AMP)
+                    uPD71051/7001C      (UART)
 
 -----------------------------------------------------------------------------------
-Main Board	ROM Board	Year + Game									By
+Main Board  ROM Board   Year + Game                                 By
 -----------------------------------------------------------------------------------
-STA-0001	STS-0001	93	Super Real Mahjong PIV					Seta
-STA-0001	STS-0001	93	Dramatic Adventure Quiz Keith & Lucy	Visco
-STA-0001	SAM-5127	93	Survival Arts							Sammy
+STA-0001    STS-0001    93  Super Real Mahjong PIV                  Seta
+STA-0001    STS-0001    93  Dramatic Adventure Quiz Keith & Lucy    Visco
+STA-0001    SAM-5127    93  Survival Arts                           Sammy
 STA-0001    SAM-5127    93  DynaGears                               Sammy
-STA-0001B	VISCO-001B	94	Drift Out '94							Visco
-STA-0001B	GOLF ROM	94	Eagle Shot Golf							Sammy
-STA-0001B	?			94	Twin Eagle II - The Rescue Mission		Seta
-STA-0001B	P1-102A		95	Mahjong Hyper Reaction					Sammy
-?			?			95	Ultra X Weapons / Ultra Keibitai 	Banpresto + Tsuburaya Prod.
-STA-0001B	VISCO-JJ1	96	Lovely Pop Mahjong Jan Jan Shimasyo		Visco
-STA-0001B	VISCO-001B	96	Storm Blade								Visco
-STA-0001B	P1-105A		96?	Meosis Magic							Sammy
-STA-0001B	?			97	Joryuu Syougi Kyoushitsu (1)			Visco
-STA-0001B	VISCO-JJ1	97	Koi Koi Shimasyo 2						Visco
-STA-0001B	P1-112A		97	Mahjong Hyper Reaction 2				Sammy
-STA-0001B	?			97	Monster Slider							Visco / Datt
-STA-0001	?			97	Super Real Mahjong P7					Seta
-STA-0001B	?			98	Gourmet Battle Quiz Ryorioh CooKing		Visco
-STA-0001B	P1-112C		98	Pachinko Sexy Reaction					Sammy
-STA-0001B	P1-112C		99  Change Air Blade						Visco
-STA-0001B	SSV_SUB     00  Vasara									Visco
-STA-0001B	SSV_SUB		01  Vasara 2								Visco
+STA-0001B   VISCO-001B  94  Drift Out '94                           Visco
+STA-0001B   GOLF ROM    94  Eagle Shot Golf                         Sammy
+STA-0001B   ?           94  Twin Eagle II - The Rescue Mission      Seta
+STA-0001B   P1-102A     95  Mahjong Hyper Reaction                  Sammy
+?           ?           95  Ultra X Weapons / Ultra Keibitai    Banpresto + Tsuburaya Prod.
+STA-0001B   VISCO-JJ1   96  Lovely Pop Mahjong Jan Jan Shimasyo     Visco
+STA-0001B   VISCO-001B  96  Storm Blade                             Visco
+STA-0001B   P1-105A     96? Meosis Magic                            Sammy
+STA-0001B   ?           97  Joryuu Syougi Kyoushitsu (1)            Visco
+STA-0001B   VISCO-JJ1   97  Koi Koi Shimasyo 2                      Visco
+STA-0001B   P1-112A     97  Mahjong Hyper Reaction 2                Sammy
+STA-0001B   ?           97  Monster Slider                          Visco / Datt
+STA-0001    ?           97  Super Real Mahjong P7                   Seta
+STA-0001B   ?           98  Gourmet Battle Quiz Ryorioh CooKing     Visco
+STA-0001B   P1-112C     98  Pachinko Sexy Reaction                  Sammy
+STA-0001B   P1-112C     99  Change Air Blade                        Visco
+STA-0001B   SSV_SUB     00  Vasara                                  Visco
+STA-0001B   SSV_SUB     01  Vasara 2                                Visco
 -----------------------------------------------------------------------------------
 
 (1) Uses NEC V810 CPU as sub cpu
 
 
 Games not yet dumped:
-						?	Kidou Senshi Gundam Final Shooting		Visco / Banpresto
+                        ?   Kidou Senshi Gundam Final Shooting      Visco / Banpresto
 
 
 STA-0001 & STA-0001B should be fully interchangable, its reported that STA-0001 runs at
@@ -60,29 +60,29 @@ STA-0001 & STA-0001B should be fully interchangable, its reported that STA-0001 
 
 To Do:
 
-- all games	:	CRT controller (resolution+visible area+flip screen?)
-				Proper "shadows" support: the low 4 bits of the pens from a "shadowing"
-				tile (regardless of color code) substitute the top 4 bits of the
-				color index (0-7fff) in the frame buffer.
+- all games :   CRT controller (resolution+visible area+flip screen?)
+                Proper "shadows" support: the low 4 bits of the pens from a "shadowing"
+                tile (regardless of color code) substitute the top 4 bits of the
+                color index (0-7fff) in the frame buffer.
 
-- hypreac2	:	communication with other units
-				tilemap sprites use the yoffset specified in the sprites-list?
-				(see the 8 pixel gap between the backgrounds and the black rows)
+- hypreac2  :   communication with other units
+                tilemap sprites use the yoffset specified in the sprites-list?
+                (see the 8 pixel gap between the backgrounds and the black rows)
 
 - mslider   :   V60 issues?  the correct tiles don't always vanish, depending on
                 the layout of the 3 tiles you put together sometimes only 2 vanish
                 and a blank are off the bottom of the game board flashes instead
                 of the correct 3rd tile *fixed* (Needed RAM mirror)
 
-- srmp4		:	Backgrounds are offset by $60 pixels, so they're kludged to work
+- srmp4     :   Backgrounds are offset by $60 pixels, so they're kludged to work
 
-- srmp7		:	Needs interrupts by the sound chip (unsupported yet). Kludged to work.
+- srmp7     :   Needs interrupts by the sound chip (unsupported yet). Kludged to work.
 
-- stmblade	:	There is a rogue "tilemap" sprite that pops up at level 2 and stays
-				there till the end of the game (a piece of sky to the left of the screen).
-				It seems that the x&y offsets in the sprite list should be apllied
-				to it (-$200,-$200) to move it off screen. But currently those offsets
-				are ignored for "tilemap" sprites. This may be related to the kludge for srmp4.
+- stmblade  :   There is a rogue "tilemap" sprite that pops up at level 2 and stays
+                there till the end of the game (a piece of sky to the left of the screen).
+                It seems that the x&y offsets in the sprite list should be apllied
+                to it (-$200,-$200) to move it off screen. But currently those offsets
+                are ignored for "tilemap" sprites. This may be related to the kludge for srmp4.
 
 - ultrax    :   bad gfx offsets and wrong visible area
 - twineag2  :   bad gfx offsets on some scenes
@@ -90,16 +90,16 @@ To Do:
 - dynagear  :   Requires 2 kludges for the video emulation and has some bad shadow sprites
                 on the left side of the screen
 
-	code @ $e75cdc
+    code @ $e75cdc
 
-	 W:
-	 		0x482000 - 0x482007 - values taken from obj table
-	 		0x482040 - 0x482043 - write latch ?
+     W:
+            0x482000 - 0x482007 - values taken from obj table
+            0x482040 - 0x482043 - write latch ?
 
-	 R:
-	 		0x482022 - 0x482023 - result = direction ,
-	 													probably : 00 = down, 40 = left, 80 = up, c0 = right
-	 		0x482042 - 0x482043 - protection status bits ?
+     R:
+            0x482022 - 0x482023 - result = direction ,
+                                                        probably : 00 = down, 40 = left, 80 = up, c0 = right
+            0x482042 - 0x482043 - protection status bits ?
 
 ***************************************************************************/
 
@@ -114,7 +114,7 @@ To Do:
 /***************************************************************************
 
 
-								Interrupts
+                                Interrupts
 
 
 ***************************************************************************/
@@ -153,22 +153,22 @@ WRITE16_HANDLER( ssv_irq_ack_w )
 }
 
 /*
-	IRQ Enable Register:
+    IRQ Enable Register:
 
-	drifto94:	c at the start
-	hypreact:	ff at the start
-	hypreac2:	ff at the start
-	janjans1:	0,6c,60
-	keithlcy:	c at the start
-	meosism:	ff at the start
-	mslider:	c at the start
-	ryorioh:	0,c at the start
-	srmp4:		8 at the start
-	srmp7:		8 at the start, 28, 40 (seems related to 21000e writes)
-	survarts:	0,8 at the start
-	sxyreact:	ff at the start
-	ultrax:		40,00 at the start then 42,4a
-	twineag2:	40,00 at the start then 42,4a
+    drifto94:   c at the start
+    hypreact:   ff at the start
+    hypreac2:   ff at the start
+    janjans1:   0,6c,60
+    keithlcy:   c at the start
+    meosism:    ff at the start
+    mslider:    c at the start
+    ryorioh:    0,c at the start
+    srmp4:      8 at the start
+    srmp7:      8 at the start, 28, 40 (seems related to 21000e writes)
+    survarts:   0,8 at the start
+    sxyreact:   ff at the start
+    ultrax:     40,00 at the start then 42,4a
+    twineag2:   40,00 at the start then 42,4a
 */
 WRITE16_HANDLER( ssv_irq_enable_w )
 {
@@ -197,36 +197,36 @@ INTERRUPT_GEN( ssv_interrupt )
 /***************************************************************************
 
 
-							Coins Lockout / Counter
+                            Coins Lockout / Counter
 
 
 ***************************************************************************/
 
 /*
-	drifto94:	c3
-	janjans1:	c3
-	keithlcy:	c3
-	mslider:	c3, 83 in test mode
-	ryorioh:	c3
+    drifto94:   c3
+    janjans1:   c3
+    keithlcy:   c3
+    mslider:    c3, 83 in test mode
+    ryorioh:    c3
 
-	hypreac2:	80
-	hypreact:	80
-	meosism:	83
-	srmp4:		83, c0 in test mode (where only tilemap sprites are used)
-	srmp7:		80
-	survarts:	83
-	sxyreact:	80
+    hypreac2:   80
+    hypreact:   80
+    meosism:    83
+    srmp4:      83, c0 in test mode (where only tilemap sprites are used)
+    srmp7:      80
+    survarts:   83
+    sxyreact:   80
 */
 static WRITE16_HANDLER( ssv_lockout_w )
 {
-//	usrintf_showmessage("%02X",data & 0xff);
+//  usrintf_showmessage("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1,~data & 0x01);
 		coin_lockout_w(0,~data & 0x02);
 		coin_counter_w(1, data & 0x04);
 		coin_counter_w(0, data & 0x08);
-//		                  data & 0x40?
+//                        data & 0x40?
 		ssv_enable_video( data & 0x80);
 	}
 }
@@ -234,14 +234,14 @@ static WRITE16_HANDLER( ssv_lockout_w )
 /* Same as above but with inverted lockout lines */
 static WRITE16_HANDLER( ssv_lockout_inv_w )
 {
-//	usrintf_showmessage("%02X",data & 0xff);
+//  usrintf_showmessage("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1, data & 0x01);
 		coin_lockout_w(0, data & 0x02);
 		coin_counter_w(1, data & 0x04);
 		coin_counter_w(0, data & 0x08);
-//		                  data & 0x40?
+//                        data & 0x40?
 		ssv_enable_video( data & 0x80);
 	}
 }
@@ -257,7 +257,7 @@ MACHINE_INIT( ssv )
 /***************************************************************************
 
 
-							Non-Volatile RAM
+                            Non-Volatile RAM
 
 
 ***************************************************************************/
@@ -278,7 +278,7 @@ NVRAM_HANDLER( ssv )
 /***************************************************************************
 
 
-								DSP
+                                DSP
 
 
 ***************************************************************************/
@@ -308,30 +308,30 @@ static WRITE16_HANDLER( dsp_w )
 /***************************************************************************
 
 
-								Memory Maps
+                                Memory Maps
 
 
 ***************************************************************************/
 
-//static READ16_HANDLER( fake_r )	{	return ssv_scroll[offset];	}
+//static READ16_HANDLER( fake_r )   {   return ssv_scroll[offset];  }
 
 #define SSV_READMEM( _ROM  )										\
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM				)	/*	RAM		*/	\
-	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM				)	/*	Sprites	*/	\
-	AM_RANGE(0x140000, 0x15ffff) AM_READ(MRA16_RAM				)	/*	Palette	*/	\
-	AM_RANGE(0x160000, 0x17ffff) AM_READ(MRA16_RAM				)	/*			*/	\
-	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(ssv_vblank_r			)	/*	Vblank?	*/	\
-/**/AM_RANGE(0x1c0002, 0x1c007f) AM_READ(MRA16_RAM				)	/*	Scroll	*/	\
-	AM_RANGE(0x210002, 0x210003) AM_READ(input_port_0_word_r	)	/*	DSW		*/	\
-	AM_RANGE(0x210004, 0x210005) AM_READ(input_port_1_word_r	)	/*	DSW		*/	\
-	AM_RANGE(0x210008, 0x210009) AM_READ(input_port_2_word_r	)	/*	P1		*/	\
-	AM_RANGE(0x21000a, 0x21000b) AM_READ(input_port_3_word_r	)	/*	P2		*/	\
-	AM_RANGE(0x21000c, 0x21000d) AM_READ(input_port_4_word_r	)	/*	Coins	*/	\
-	AM_RANGE(0x21000e, 0x21000f) AM_READ(MRA16_NOP				)	/*			*/	\
-	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*	Sound	*/	\
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM				)	/*  RAM     */	\
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM				)	/*  Sprites */	\
+	AM_RANGE(0x140000, 0x15ffff) AM_READ(MRA16_RAM				)	/*  Palette */	\
+	AM_RANGE(0x160000, 0x17ffff) AM_READ(MRA16_RAM				)	/*          */	\
+	AM_RANGE(0x1c0000, 0x1c0001) AM_READ(ssv_vblank_r			)	/*  Vblank? */	\
+/**/AM_RANGE(0x1c0002, 0x1c007f) AM_READ(MRA16_RAM				)	/*  Scroll  */	\
+	AM_RANGE(0x210002, 0x210003) AM_READ(input_port_0_word_r	)	/*  DSW     */	\
+	AM_RANGE(0x210004, 0x210005) AM_READ(input_port_1_word_r	)	/*  DSW     */	\
+	AM_RANGE(0x210008, 0x210009) AM_READ(input_port_2_word_r	)	/*  P1      */	\
+	AM_RANGE(0x21000a, 0x21000b) AM_READ(input_port_3_word_r	)	/*  P2      */	\
+	AM_RANGE(0x21000c, 0x21000d) AM_READ(input_port_4_word_r	)	/*  Coins   */	\
+	AM_RANGE(0x21000e, 0x21000f) AM_READ(MRA16_NOP				)	/*          */	\
+	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*  Sound   */	\
 	AM_RANGE(0x482000, 0x482fff) AM_READWRITE(MRA16_RAM, dsp_w) AM_BASE(&dsp_ram)   \
-	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*	ROM		*/	    \
-	/*{ 0x990000, 0x99007f, fake_r	)*/
+	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*  ROM     */	    \
+	/*{ 0x990000, 0x99007f, fake_r  )*/
 
 #define SSV_WRITEMEM														                                \
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_mainram)                    /* RAM */     \
@@ -345,13 +345,13 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w )                                 /* IRQ Ack */     \
 	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w)                               /* IRQ Enable */  \
 	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w)                           /* Sound */       \
-	/*AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w	)*/
+	/*AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w    )*/
 
 
 static data16_t *ssv_input_sel;
 
 /***************************************************************************
-								Drift Out '94
+                                Drift Out '94
 ***************************************************************************/
 
 static READ16_HANDLER( drifto94_rand_r )
@@ -367,7 +367,7 @@ static ADDRESS_MAP_START( drifto94_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xc00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( drifto94_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 1 at the start
 	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM				)	// ?
 	AM_RANGE(0x480000, 0x480001) AM_WRITE(MWA16_NOP				)	// ?
 	AM_RANGE(0x483000, 0x485fff) AM_WRITE(MWA16_NOP				)	// ?
@@ -378,15 +378,15 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Hyper Reaction
+                                Hyper Reaction
 ***************************************************************************/
 
 /*
-	The game prints "backup ram ok" and there is code to test some ram
-	at 0x580000-0x5bffff. The test is skipped and this ram isn't used
-	though. I guess it's either a left-over or there are different
-	version with some battery backed RAM (which would indeed be on the
-	rom-board, AFAIK)
+    The game prints "backup ram ok" and there is code to test some ram
+    at 0x580000-0x5bffff. The test is skipped and this ram isn't used
+    though. I guess it's either a left-over or there are different
+    version with some battery backed RAM (which would indeed be on the
+    rom-board, AFAIK)
 */
 
 static READ16_HANDLER( hypreact_input_r )
@@ -402,14 +402,14 @@ static READ16_HANDLER( hypreact_input_r )
 
 static ADDRESS_MAP_START( hypreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r		)	// Watchdog
-//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP					)	// ? read at the start, value not used
+//  AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP                  )   // ? read at the start, value not used
 	AM_RANGE(0xc00000, 0xc00001) AM_READ(hypreact_input_r			)	// Inputs
 	AM_RANGE(0xc00006, 0xc00007) AM_READ(MRA16_RAM					)	//
 	AM_RANGE(0xc00008, 0xc00009) AM_READ(MRA16_NOP					)	//
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( hypreact_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 5 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP                 )   // ? 5 at the start
 	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Inverted lockout lines
 	AM_RANGE(0xc00006, 0xc00007) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	AM_RANGE(0xc00008, 0xc00009) AM_WRITE(MWA16_NOP					)	//
@@ -418,28 +418,28 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Hyper Reaction 2
+                                Hyper Reaction 2
 ***************************************************************************/
 
 static ADDRESS_MAP_START( hypreac2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r		)	// Watchdog
-//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP					)	// ? read at the start, value not used
+//  AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP                  )   // ? read at the start, value not used
 	AM_RANGE(0x500000, 0x500001) AM_READ(hypreact_input_r			)	// Inputs
 	AM_RANGE(0x500002, 0x500003) AM_READ(hypreact_input_r			)	// (again?)
-//	  0x540000, 0x540003  communication with another unit
+//    0x540000, 0x540003  communication with another unit
 	SSV_READMEM( 0xe00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( hypreac2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 5 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP                 )   // ? 5 at the start
 	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Inverted lockout lines
 	AM_RANGE(0x520000, 0x520001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
-//	  0x540000, 0x540003  communication with other units
+//    0x540000, 0x540003  communication with other units
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Jan Jan Simasyo
+                                Jan Jan Simasyo
 ***************************************************************************/
 
 static READ16_HANDLER( srmp4_input_r );
@@ -451,14 +451,14 @@ static ADDRESS_MAP_START( janjans1_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( janjans1_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_WRITE(MWA16_NOP					)	// koikois2 but not janjans1
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 1 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP                 )   // ? 1 at the start
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Keith & Lucy
+                                Keith & Lucy
 ***************************************************************************/
 
 static ADDRESS_MAP_START( keithlcy_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -466,7 +466,7 @@ static ADDRESS_MAP_START( keithlcy_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xe00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( keithlcy_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 1 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP         )   // ? 1 at the start
 	AM_RANGE(0x210010, 0x210011) AM_WRITE(MWA16_NOP			)	//
 	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM			)	// ?
 	SSV_WRITEMEM
@@ -474,24 +474,24 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Meosis Magic
+                                Meosis Magic
 ***************************************************************************/
 
 static ADDRESS_MAP_START( meosism_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
-//	AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP				)	// ? read once, value not used
+//  AM_RANGE(0x280000, 0x280001) AM_READ(MRA16_NOP              )   // ? read once, value not used
 	AM_RANGE(0x580000, 0x58ffff) AM_READ(MRA16_RAM				)	// NVRAM
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( meosism_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 5 at the start
-//	AM_RANGE(0x500004, 0x500005) AM_WRITE(MWA16_NOP				)	// ? 0,58,18
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 5 at the start
+//  AM_RANGE(0x500004, 0x500005) AM_WRITE(MWA16_NOP             )   // ? 0,58,18
 	AM_RANGE(0x580000, 0x58ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Monster Slider
+                                Monster Slider
 ***************************************************************************/
 
 /* Monster Slider needs the RAM mirrored for the gameplay logic to work correctly */
@@ -512,15 +512,15 @@ static ADDRESS_MAP_START( mslider_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( mslider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x01ffff) AM_WRITE(ssv_mainram_w) // RAM Mirror
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 1 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP         )   // ? 1 at the start
 	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM			)	// ?
-//	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP			)	// ? ff at the start
+//  AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP         )   // ? ff at the start
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-					Gourmet Battle Quiz Ryohrioh CooKing
+                    Gourmet Battle Quiz Ryohrioh CooKing
 ***************************************************************************/
 
 static ADDRESS_MAP_START( ryorioh_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -528,13 +528,13 @@ static ADDRESS_MAP_START( ryorioh_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( ryorioh_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_WRITE(watchdog_reset16_w	)	// Watchdog
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 1 at the start
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Super Real Mahjong PIV
+                            Super Real Mahjong PIV
 ***************************************************************************/
 
 static READ16_HANDLER( srmp4_input_r )
@@ -554,7 +554,7 @@ static ADDRESS_MAP_START( srmp4_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( srmp4_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 1,5 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP                 )   // ? 1,5 at the start
 	AM_RANGE(0xc0000e, 0xc0000f) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	AM_RANGE(0xc00010, 0xc00011) AM_WRITE(MWA16_NOP					)	//
 	SSV_WRITEMEM
@@ -562,12 +562,12 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Super Real Mahjong P7
+                            Super Real Mahjong P7
 ***************************************************************************/
 
 /*
-	Interrupts aren't supported by the chip emulator yet
-	(lev 5 in this case, I guess)
+    Interrupts aren't supported by the chip emulator yet
+    (lev 5 in this case, I guess)
 */
 static READ16_HANDLER( srmp7_irqv_r )
 {
@@ -582,7 +582,7 @@ static WRITE16_HANDLER( srmp7_sound_bank_w )
 		ES5506_voice_bank_0_w(2, bank);
 		ES5506_voice_bank_0_w(3, bank);
 	}
-//	usrintf_showmessage("%04X",data);
+//  usrintf_showmessage("%04X",data);
 }
 
 static READ16_HANDLER( srmp7_input_r )
@@ -600,15 +600,15 @@ static ADDRESS_MAP_START( srmp7_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x050faf) AM_READ(MRA16_RAM				)	// More RAM
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
 	AM_RANGE(0x300076, 0x300077) AM_READ(srmp7_irqv_r			)	// Sound
-//	  0x540000, 0x540003, related to lev 5 irq?
+//    0x540000, 0x540003, related to lev 5 irq?
 	AM_RANGE(0x600000, 0x600001) AM_READ(srmp7_input_r			)	// Inputs
 	SSV_READMEM( 0xc00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( srmp7_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x050faf) AM_WRITE(MWA16_RAM					)	// More RAM
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP					)	// ? 0,4 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP                 )   // ? 0,4 at the start
 	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w			)	// Coin Counters / Lockouts
-//	  0x540000, 0x540003, related to lev 5 irq?
+//    0x540000, 0x540003, related to lev 5 irq?
 	AM_RANGE(0x580000, 0x580001) AM_WRITE(srmp7_sound_bank_w		)	// Sound Bank
 	AM_RANGE(0x680000, 0x680001) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_input_sel	)	// Inputs
 	SSV_WRITEMEM
@@ -616,13 +616,13 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Survival Arts
+                                Survival Arts
 ***************************************************************************/
 
 static ADDRESS_MAP_START( survarts_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
-//	AM_RANGE(0x290000, 0x290001) AM_READ(MRA16_NOP				)	// ?
-//	AM_RANGE(0x2a0000, 0x2a0001) AM_READ(MRA16_NOP				)	// ?
+//  AM_RANGE(0x290000, 0x290001) AM_READ(MRA16_NOP              )   // ?
+//  AM_RANGE(0x2a0000, 0x2a0001) AM_READ(MRA16_NOP              )   // ?
 
 	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_RAM) // dyna
 
@@ -630,7 +630,7 @@ static ADDRESS_MAP_START( survarts_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( survarts_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 0,4 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 0,4 at the start
 	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA16_RAM) // dyna
 
 	SSV_WRITEMEM
@@ -638,7 +638,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Pachinko Sexy Reaction
+                            Pachinko Sexy Reaction
 ***************************************************************************/
 
 static data16_t serial;
@@ -671,11 +671,11 @@ static WRITE16_HANDLER( sxyreact_dial_w )
 
 static WRITE16_HANDLER( sxyreact_motor_w )
 {
-//	usrintf_showmessage("%04X",data);	// 8 = motor on; 0 = motor off
+//  usrintf_showmessage("%04X",data);   // 8 = motor on; 0 = motor off
 }
 
 static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x020000, 0x03ffff) AM_READ(ssv_mainram_r ) // sxyreac2 reads / writes here, why?
+//  AM_RANGE(0x020000, 0x03ffff) AM_READ(ssv_mainram_r ) // sxyreac2 reads / writes here, why?
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
 	AM_RANGE(0x500002, 0x500003) AM_READ(sxyreact_ballswitch_r	)	// ?
 	AM_RANGE(0x500004, 0x500005) AM_READ(sxyreact_dial_r		)	// Dial Value (serial)
@@ -683,8 +683,8 @@ static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xe00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( sxyreact_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-//	AM_RANGE(0x020000, 0x03ffff) AM_WRITE(ssv_mainram_w ) // sxyreac2 reads / writes here, why?
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
+//  AM_RANGE(0x020000, 0x03ffff) AM_WRITE(ssv_mainram_w ) // sxyreac2 reads / writes here, why?
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 1 at the start
 	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w		)	// Inverted lockout lines
 	AM_RANGE(0x520000, 0x520001) AM_WRITE(sxyreact_dial_w		)	// Dial Value (advance 1 bit)
 	AM_RANGE(0x520004, 0x520005) AM_WRITE(sxyreact_motor_w		)	// Dial Motor?
@@ -694,7 +694,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Twin Eagle II
+                                Twin Eagle II
 ***************************************************************************/
 
 /* standalone board based on SSV hardware */
@@ -711,7 +711,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-									Ultra X
+                                    Ultra X
 ***************************************************************************/
 
 /* standalone board based on SSV hardware */
@@ -723,12 +723,12 @@ static ADDRESS_MAP_START( ultrax_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( ultrax_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x03ffff) AM_WRITE(MWA16_RAM			)	// More RAM
-//	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 2,6 at the start
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP         )   // ? 2,6 at the start
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
 /***************************************************************************
-			Joryuu Syougi Kyoushitsu
+            Joryuu Syougi Kyoushitsu
 ***************************************************************************/
 
 static ADDRESS_MAP_START( jsk_mem,ADDRESS_SPACE_PROGRAM, 32 )
@@ -743,14 +743,14 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
 
 
 /***************************************************************************
-	                       Change Air Blade
+                           Change Air Blade
 ***************************************************************************/
 
 INPUT_PORTS_START( cairblad )
@@ -832,7 +832,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Drift Out '94
+                                Drift Out '94
 ***************************************************************************/
 
 INPUT_PORTS_START( drifto94 )
@@ -912,9 +912,9 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Eagle Shot Golf
+                                Eagle Shot Golf
 
-				Place holder for corrected dip switch settings
+                Place holder for corrected dip switch settings
 ***************************************************************************/
 
 INPUT_PORTS_START( eaglshot )
@@ -1006,7 +1006,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Hyper Reaction
+                                Hyper Reaction
 ***************************************************************************/
 
 INPUT_PORTS_START( hypreact )
@@ -1122,7 +1122,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Hyper Reaction 2
+                                Hyper Reaction 2
 ***************************************************************************/
 
 INPUT_PORTS_START( hypreac2 )
@@ -1237,7 +1237,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Jan Jan Simasyo
+                                Jan Jan Simasyo
 ***************************************************************************/
 
 INPUT_PORTS_START( janjans1 )
@@ -1282,7 +1282,7 @@ INPUT_PORTS_START( janjans1 )
 	PORT_DIPSETTING(      0x0010, "2000" )
 	PORT_DIPSETTING(      0x0000, "3000" )
 	PORT_DIPNAME( 0x00c0, 0x00c0, "Communication" )
-//	PORT_DIPSETTING(      0x0080, "unused" )
+//  PORT_DIPSETTING(      0x0080, "unused" )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( None ) )
 	PORT_DIPSETTING(      0x0040, "Board 1 (Main)" )
 	PORT_DIPSETTING(      0x0000, "Board 2 (Sub)" )
@@ -1343,7 +1343,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Keith & Lucy
+                                Keith & Lucy
 ***************************************************************************/
 
 INPUT_PORTS_START( keithlcy )
@@ -1422,7 +1422,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Koi Koi Simasyo 2
+                            Koi Koi Simasyo 2
 ***************************************************************************/
 
 INPUT_PORTS_START( koikois2 )
@@ -1468,7 +1468,7 @@ INPUT_PORTS_START( koikois2 )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, "Communication" )
-//	PORT_DIPSETTING(      0x0080, "unused" )
+//  PORT_DIPSETTING(      0x0080, "unused" )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( None ) )
 	PORT_DIPSETTING(      0x0040, "Board 1 (Main)" )
 	PORT_DIPSETTING(      0x0000, "Board 2 (Sub)" )
@@ -1543,7 +1543,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Meosis Magic
+                                Meosis Magic
 ***************************************************************************/
 
 INPUT_PORTS_START( meosism )
@@ -1588,7 +1588,7 @@ INPUT_PORTS_START( meosism )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Controls ) )
-//	PORT_DIPSETTING(      0x0020, "Simple") )
+//  PORT_DIPSETTING(      0x0020, "Simple") )
 	PORT_DIPSETTING(      0x0000, "Complex" )
 	PORT_DIPNAME( 0x0040, 0x0000, "Coin Sensor" )
 	PORT_DIPSETTING(      0x0040, "Active High" )
@@ -1628,7 +1628,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Monster Slider
+                                Monster Slider
 ***************************************************************************/
 
 INPUT_PORTS_START( mslider )
@@ -1710,7 +1710,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-					Gourmet Battle Quiz Ryohrioh CooKing
+                    Gourmet Battle Quiz Ryohrioh CooKing
 ***************************************************************************/
 
 INPUT_PORTS_START( ryorioh )
@@ -1792,7 +1792,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Super Real Mahjong PIV
+                            Super Real Mahjong PIV
 ***************************************************************************/
 
 INPUT_PORTS_START( srmp4 )
@@ -1902,7 +1902,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Super Real Mahjong P7
+                            Super Real Mahjong P7
 ***************************************************************************/
 
 INPUT_PORTS_START( srmp7 )
@@ -2013,7 +2013,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Storm Blade
+                                Storm Blade
 ***************************************************************************/
 
 INPUT_PORTS_START( stmblade )
@@ -2095,7 +2095,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Survival Arts
+                                Survival Arts
 ***************************************************************************/
 
 INPUT_PORTS_START( survarts )
@@ -2222,7 +2222,7 @@ INPUT_PORTS_START( dynagear )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" ) 
+	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" )
 // "** ADDED MULTIPLE COIN FEATURE **"
 	PORT_DIPSETTING(      0x0005, "Multiple Coin Feature A" )
 // 2c-1c, 4c-2c, 5c-3c & 6c-4c
@@ -2307,7 +2307,7 @@ INPUT_PORTS_START( dynagear )
 INPUT_PORTS_END
 
 /***************************************************************************
-							Pachinko Sexy Reaction
+                            Pachinko Sexy Reaction
 ***************************************************************************/
 
 INPUT_PORTS_START( sxyreact )
@@ -2322,15 +2322,15 @@ INPUT_PORTS_START( sxyreact )
 	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
 	PORT_BIT(     0x0038, IP_ACTIVE_LOW, IPT_UNUSED )
-//	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
-//	PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_3C ) )
-//	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_5C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+//  PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+//  PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
+//  PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+//  PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+//  PORT_DIPSETTING(      0x0018, DEF_STR( 1C_3C ) )
+//  PORT_DIPSETTING(      0x0010, DEF_STR( 1C_4C ) )
+//  PORT_DIPSETTING(      0x0008, DEF_STR( 1C_5C ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x0040, 0x0040, "Credits To Play" )
 	PORT_DIPSETTING(      0x0040, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
@@ -2391,7 +2391,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Twin Eagle II
+                                Twin Eagle II
 ***************************************************************************/
 
 INPUT_PORTS_START( twineag2 )
@@ -2499,7 +2499,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Ultra X
+                                Ultra X
 ***************************************************************************/
 
 INPUT_PORTS_START( ultrax )
@@ -2532,7 +2532,7 @@ INPUT_PORTS_START( ultrax )
 	PORT_DIPNAME( 0x0014, 0x0004, "Country" )
 	PORT_DIPSETTING(      0x0000, "China" )
 	PORT_DIPSETTING(      0x0014, DEF_STR( Japan ) )
-//	PORT_DIPSETTING(      0x0010, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(      0x0010, DEF_STR( Japan ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( World ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
@@ -2577,7 +2577,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-		                       Vasara
+                               Vasara
 ***************************************************************************/
 
 INPUT_PORTS_START( vasara )
@@ -2655,7 +2655,7 @@ INPUT_PORTS_START( vasara )
 INPUT_PORTS_END
 
 /***************************************************************************
-		                       Vasara 2
+                               Vasara 2
 ***************************************************************************/
 
 INPUT_PORTS_START( vasara2 )
@@ -2737,13 +2737,13 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-							Graphics Layouts
+                            Graphics Layouts
 
 
 ***************************************************************************/
 
-/*	16 x 8 tiles. Depth is 8 bits, but can be decreased to 6 (and maybe
-	less) at runtime.	*/
+/*  16 x 8 tiles. Depth is 8 bits, but can be decreased to 6 (and maybe
+    less) at runtime.   */
 
 static struct GfxLayout layout_16x8x8 =
 {
@@ -2812,7 +2812,7 @@ static struct GfxDecodeInfo eaglshot_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
@@ -2833,12 +2833,12 @@ static struct ES5506interface es5506_interface =
 
 /***************************************************************************
 
-	Some games (e.g. hypreac2) oddly map the high bits of the tile code
-	to the gfx roms: arranging the roms accordingly would waste tens of
-	megabytes. So we use a look-up table.
+    Some games (e.g. hypreac2) oddly map the high bits of the tile code
+    to the gfx roms: arranging the roms accordingly would waste tens of
+    megabytes. So we use a look-up table.
 
-	We also need to set up game	specific offsets for sprites and layers
-	(at least until the CRT	controlled will be emulated).
+    We also need to set up game specific offsets for sprites and layers
+    (at least until the CRT controlled will be emulated).
 
 ***************************************************************************/
 
@@ -2897,7 +2897,7 @@ DRIVER_INIT( ryorioh )		{	init_ssv();
 DRIVER_INIT( srmp4 )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;
-//	((data16_t *)memory_region(REGION_USER1))[0x2b38/2] = 0x037a;	/* patch to see gal test mode */
+//  ((data16_t *)memory_region(REGION_USER1))[0x2b38/2] = 0x037a;   /* patch to see gal test mode */
 							}
 DRIVER_INIT( srmp7 )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = -0xf;
@@ -2914,7 +2914,7 @@ DRIVER_INIT( dynagear )		{	init_ssv(); ssv_special = 3;
 DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-DRIVER_INIT( sxyreac2 )		{	hypreac2_init();	
+DRIVER_INIT( sxyreac2 )		{	hypreac2_init();
 								ssv_special=4;
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
@@ -3190,7 +3190,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -3198,7 +3198,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-						Change Air Blade (Japan)
+                        Change Air Blade (Japan)
 
 Change Air Blade
 Sammy, 1999
@@ -3280,7 +3280,7 @@ ROM_END
 
 /***************************************************************************
 
-						Drift Out '94 - The hard order
+                        Drift Out '94 - The hard order
 
 ----------------------
 System SSV (STA-0001B)
@@ -3378,7 +3378,7 @@ ROM_END
 
 /***************************************************************************
 
-						Eagle Shot Golf
+                        Eagle Shot Golf
 Eagle Shot Golf
 Sammy, 1994
 
@@ -3475,7 +3475,7 @@ ROM_END
 
 /***************************************************************************
 
-					(Mahjong) Hyper Reaction (Japan)
+                    (Mahjong) Hyper Reaction (Japan)
 
 (c)1995 Sammy, SSV system
 
@@ -3503,7 +3503,7 @@ ROM_START( hypreact )
 
 	ROM_FILL(                 0x1200000, 0x600000, 0          )
 
-//	The chip seems to use REGION1 too, but produces no sound from there.
+//  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "s14-1-04.u4", 0x000000, 0x200000, CRC(a5955336) SHA1(1ac0f5d27224e93acfe449d8ca5c3ab3b7f5dd8c) )
@@ -3513,7 +3513,7 @@ ROM_END
 
 /***************************************************************************
 
-					(Mahjong) Hyper Reaction 2 (Japan)
+                    (Mahjong) Hyper Reaction 2 (Japan)
 
 (c)1997 Sammy,SSV system
 
@@ -3556,7 +3556,7 @@ ROM_END
 
 /***************************************************************************
 
-							Jan Jan Simasyo (Japan)
+                            Jan Jan Simasyo (Japan)
 
 (c)1996 Visco, SSV System
 
@@ -3597,7 +3597,7 @@ ROM_END
 
 /***************************************************************************
 
-							Joryuu Syougi Kyoushitsu
+                            Joryuu Syougi Kyoushitsu
 
 (c)1997 Visco, System SSV ROM board
 
@@ -3661,7 +3661,7 @@ ROM_END
 
 /***************************************************************************
 
-				Dramatic Adventure Quiz Keith & Lucy (Japan)
+                Dramatic Adventure Quiz Keith & Lucy (Japan)
 
 (c)1993 Visco, SSV system
 
@@ -3689,7 +3689,7 @@ ROM_END
 
 /***************************************************************************
 
-							Koi Koi Simasyo 2 (Japan)
+                            Koi Koi Simasyo 2 (Japan)
 
 (c)1997 Visco, SSV System
 
@@ -3718,7 +3718,7 @@ KK2_SND1.BIN [e5a963e1] /
 
 ROM_START( koikois2 )
 	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )		/* V60 Code */
-//	socket for DATA ROM is empty
+//  socket for DATA ROM is empty
 	ROM_LOAD16_BYTE( "u26.bin", 0x200000, 0x080000, CRC(4be937a1) SHA1(b2c22ec12fc110984bd1914f8e3e16a8cb866816) )
 	ROM_RELOAD(                 0x300000, 0x080000             )
 	ROM_LOAD16_BYTE( "u27.bin", 0x200001, 0x080000, CRC(25f39d93) SHA1(a36bc2fe5657f6ceada724fd42843e19408b39b8) )
@@ -3753,16 +3753,16 @@ ROM_END
 
 /***************************************************************************
 
-						Meosis Magic (Japan, BET?)
+                        Meosis Magic (Japan, BET?)
 
 (c)1996 Sammy, SSV System
 
 P1-105A
 
-Custom:		DX-102 (I/O)
-Others:		M62X42B (RTC?)
-			64k SRAM (Back up)
-			Ni-Cd Battery
+Custom:     DX-102 (I/O)
+Others:     M62X42B (RTC?)
+            64k SRAM (Back up)
+            Ni-Cd Battery
 
 ***************************************************************************/
 
@@ -3777,7 +3777,7 @@ ROM_START( meosism )
 	ROM_LOAD( "s15-1-5.u9", 0x400000, 0x200000, CRC(c0414b97) SHA1(3ca8423e04f606981d158065e38431f2509e1daa) )
 	ROM_LOAD( "s15-1-6.u8", 0x600000, 0x200000, CRC(d721aeb6) SHA1(3bef7e027a0e14fbf589aee32a6d9cab779da7d4) )
 
-//	The chip seems to use REGION1 too, but produces no sound from there.
+//  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "s15-1-4.u45", 0x000000, 0x200000, CRC(0c6738a7) SHA1(acf9056bb052db7a11cf903d77ab16425d813835) )
@@ -3787,7 +3787,7 @@ ROM_END
 
 /***************************************************************************
 
-							Monster Slider (Japan)
+                            Monster Slider (Japan)
 
 (c)1997 Visco/PATT, System SSV
 
@@ -3810,8 +3810,8 @@ vg001-14 \
          |- (GAL16V8. not dumped)
 vg001-15 /
 
-Other parts:	uPD71051
-				OSC 8.0000MHz
+Other parts:    uPD71051
+                OSC 8.0000MHz
 
 ***************************************************************************/
 
@@ -3840,7 +3840,7 @@ ROM_END
 
 /***************************************************************************
 
-					Gourmet Battle Quiz Ryohrioh CooKing (Japan)
+                    Gourmet Battle Quiz Ryohrioh CooKing (Japan)
 
 (c)1998 Visco, SSV System
 
@@ -3874,7 +3874,7 @@ ROM_END
 
 /***************************************************************************
 
-							Super Real Mahjong PIV
+                            Super Real Mahjong PIV
 
 (c)SETA 1993, System SSV
 
@@ -3960,7 +3960,7 @@ ROM_END
 
 /***************************************************************************
 
-							Super Real Mahjong P7 (Japan)
+                            Super Real Mahjong P7 (Japan)
 
 (c)1997 Seta, SSV system
 
@@ -4076,6 +4076,35 @@ ROM_END
 
 ROM_START( survarts )
 	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_BYTE( "prl-r6.u4", 0x000000, 0x080000, CRC(ef5f6e17) SHA1(1857beb15d2214c7ecb60b59e696ba24b2791734) )
+	ROM_LOAD16_BYTE( "prh-r5.u3", 0x000001, 0x080000, CRC(d446f010) SHA1(fb6c349edb2e6d1fcf8ed360dbe82be6d74f91d2) )
+
+	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "si001-01.a0", 0x0000000, 0x200000, CRC(8b38fbab) SHA1(c4a67b24b33d4eef7b0f885bd69cae6c67bd3981) )
+	ROM_LOAD( "si001-04.a1", 0x0200000, 0x200000, CRC(34248b54) SHA1(077198f8de1622b71c580e34d5ad1b6bf3229fe9) )
+	ROM_LOAD( "si001-07.a2", 0x0400000, 0x200000, CRC(497d6151) SHA1(a9860c75943c0fd2991660ce2a9505edc6c2fa46) )
+
+	ROM_LOAD( "si001-02.b0", 0x0600000, 0x200000, CRC(cb4a2dbd) SHA1(26cdd1b54a3fa1dc3c3a8945d1a3562e9c62ace6) )
+	ROM_LOAD( "si001-05.b1", 0x0800000, 0x200000, CRC(8f092381) SHA1(6c49f1f5b3c31bd7c6a93ba0450d9f64fd512633) )
+	ROM_LOAD( "si001-08.b2", 0x0a00000, 0x200000, CRC(182b88c4) SHA1(a5b6a3e1fd67f036b1255385e81b6a3eb69f9f3f) )
+
+	ROM_LOAD( "si001-03.c0", 0x0c00000, 0x200000, CRC(92fdf652) SHA1(cf7aeb3a1e8ffe34cf24cb919a0ab3cc90202fa9) )
+	ROM_LOAD( "si001-06.c1", 0x0e00000, 0x200000, CRC(9a62f532) SHA1(7e7ba1224e52b33a9bd14058230efc871178c4f8) )
+	ROM_LOAD( "si001-09.c2", 0x1000000, 0x200000, CRC(0955e393) SHA1(0be9134190706eaee49177034b0536b05c4bc7ac) )
+
+	ROM_FILL(                0x1200000, 0x600000, 0          )
+
+//  The chip seems to use REGION1 too, but produces no sound from there.
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si001-10.s0", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) )
+	ROM_LOAD16_WORD_SWAP( "si001-11.s1", 0x100000, 0x100000, CRC(a81e6ea6) SHA1(499f070500895ed7b6785b42fb6bbf973fc6dc04) )
+	ROM_LOAD16_WORD_SWAP( "si001-12.s2", 0x200000, 0x100000, CRC(e9b2b45b) SHA1(17fd27cdb8a0b9932cb1e71e0547c0d9d6fc7d06) )
+	ROM_LOAD16_WORD_SWAP( "si001-13.s3", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) )
+ROM_END
+
+ROM_START( survartu )
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
 	ROM_LOAD16_BYTE( "usa-pr-l.u4", 0x000000, 0x080000, CRC(fa328673) SHA1(f7217eaa2a8d3fb7f706fa1aecaaa5b1b8d5e32c) )
 	ROM_LOAD16_BYTE( "usa-pr-h.u3", 0x000001, 0x080000, CRC(6bee2635) SHA1(a2d0517bf599331ef47beb8a902589039e4502e0) )
 
@@ -4094,7 +4123,7 @@ ROM_START( survarts )
 
 	ROM_FILL(                0x1200000, 0x600000, 0          )
 
-//	The chip seems to use REGION1 too, but produces no sound from there.
+//  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "si001-10.s0", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) )
@@ -4166,7 +4195,7 @@ ROM_START( dynagear )
 
 	ROM_FILL(                0xc00000, 0x400000, 0          )
 
-//	The chip seems to use REGION1 too, but produces no sound from there.
+//  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "si002-07.u9", 0x000000, 0x100000, CRC(30d2bf11) SHA1(263e9a4e6a77aa451daf6d1225071cc1147a6541) )
@@ -4178,15 +4207,15 @@ ROM_END
 
 /***************************************************************************
 
-						Pachinko Sexy Reaction (Japan)
+                        Pachinko Sexy Reaction (Japan)
 
 (c)1998 Sammy, SSV system
 
 P1-112C (ROM board)
 
-Chips:	DX-102 x2
-		uPD7001C (ADC?)
-		64k NVRAM
+Chips:  DX-102 x2
+        uPD7001C (ADC?)
+        64k NVRAM
 
 ***************************************************************************/
 
@@ -4227,7 +4256,7 @@ ROM_END
 
 /***************************************************************************
 
-								Storm Blade
+                                Storm Blade
 CPU  : NEC D70615GD-16-S (V60)
 Sound: Ensoniq ES5506 (OTTOR2)
 
@@ -4271,7 +4300,7 @@ ROM_END
 
 /***************************************************************************
 
-								Twin Eagle II
+                                Twin Eagle II
 
 ***************************************************************************/
 
@@ -4310,7 +4339,7 @@ ROM_END
 
 /***************************************************************************
 
-				Ultra Keibitai / Ultra X Weapon
+                Ultra Keibitai / Ultra X Weapon
 
 (c)1995 Banpresto (developed by Seta)
 Hardware is almost identical to SSV system
@@ -4349,7 +4378,7 @@ ROM_END
 
 /***************************************************************************
 
-							Vasara / Vasara 2
+                            Vasara / Vasara 2
 Visco Games, 2000 / 2001
 (info from the vasara 2 board but vasara should be the same)
 
@@ -4383,10 +4412,10 @@ Printed = Info silk-screened/printed on the actual PCB
 
 Vasara 2 has a secret character code like the Raizing games:
 
-	Insert Coin, UP UP UP DOWN DOWN DOWN UP UP UP UP UP UP UP  (Up x3, Down x3, Up x7)
+    Insert Coin, UP UP UP DOWN DOWN DOWN UP UP UP UP UP UP UP  (Up x3, Down x3, Up x7)
 
-	Using this code will add a fifth selectable character called Saiga Magoichi
-	To enable this character full time, set dip 8 of switch 2
+    Using this code will add a fifth selectable character called Saiga Magoichi
+    To enable this character full time, set dip 8 of switch 2
 
 ****************************************************************************/
 
@@ -4456,7 +4485,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/
@@ -4467,7 +4496,8 @@ GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy" 
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
-GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
+GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts",                                    GAME_NO_COCKTAIL )
+GAMEX( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
 GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )
@@ -4489,7 +4519,7 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",
 // Games not working properly:
 
 GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-//	Games not working at all:
+//  Games not working at all:
 
 GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )

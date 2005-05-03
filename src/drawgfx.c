@@ -246,7 +246,7 @@ struct GfxElement *decodegfx(const UINT8 *src,const struct GfxLayout *gl)
 	else
 	{
 		if (0 && gl->planes <= 4 && !(gfx->width & 1))
-//		if (gl->planes <= 4 && !(gfx->width & 1))
+//      if (gl->planes <= 4 && !(gfx->width & 1))
 		{
 			gfx->flags |= GFX_PACKED;
 			gfx->line_modulo = gfx->width/2;
@@ -827,17 +827,17 @@ INLINE UINT32 SHADOW32(UINT32 c) {
   transparency == TRANSPARENCY_NONE - no transparency.
   transparency == TRANSPARENCY_PEN - bits whose _original_ value is == transparent_color
                                      are transparent. This is the most common kind of
-									 transparency.
+                                     transparency.
   transparency == TRANSPARENCY_PENS - as above, but transparent_color is a mask of
-  									 transparent pens.
+                                     transparent pens.
   transparency == TRANSPARENCY_COLOR - bits whose _remapped_ palette index (taken from
                                      Machine->game_colortable) is == transparent_color
 
   transparency == TRANSPARENCY_PEN_TABLE - the transparency condition is same as TRANSPARENCY_PEN
-					A special drawing is done according to gfx_drawmode_table[source pixel].
-					DRAWMODE_NONE      transparent
-					DRAWMODE_SOURCE    normal, draw source pixel.
-					DRAWMODE_SHADOW    destination is changed through palette_shadow_table[]
+                    A special drawing is done according to gfx_drawmode_table[source pixel].
+                    DRAWMODE_NONE      transparent
+                    DRAWMODE_SOURCE    normal, draw source pixel.
+                    DRAWMODE_SHADOW    destination is changed through palette_shadow_table[]
 
 ***************************************************************************/
 
@@ -1392,11 +1392,11 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 
 
 	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
+    scalex and scaley are 16.16 fixed point numbers
+    1<<15 : shrink to 50%
+    1<<16 : uniform scale
+    1<<17 : double to 200%
+    */
 
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */

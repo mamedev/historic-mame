@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Exidy 440 sound system
+    Exidy 440 sound system
 
-	Special thanks to Zonn Moore and Neil Bradley for letting me hack
-	their Retrocade CVSD decoder into the sound system here.
+    Special thanks to Zonn Moore and Neil Bradley for letting me hack
+    their Retrocade CVSD decoder into the sound system here.
 
 ***************************************************************************/
 
@@ -149,7 +149,7 @@ static void finish_wav_file(void);
 
 /*************************************
  *
- *	Initialize the sound system
+ *  Initialize the sound system
  *
  *************************************/
 
@@ -196,7 +196,7 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 
 /*************************************
  *
- *	Tear down the sound system
+ *  Tear down the sound system
  *
  *************************************/
 
@@ -210,7 +210,7 @@ void exidy440_sh_stop(void *token)
 
 /*************************************
  *
- *	Add a bunch of samples to the mix
+ *  Add a bunch of samples to the mix
  *
  *************************************/
 
@@ -254,7 +254,7 @@ static void add_and_scale_samples(int ch, INT32 *dest, int samples, int volume)
 
 /*************************************
  *
- *	Mix the result to 16 bits
+ *  Mix the result to 16 bits
  *
  *************************************/
 
@@ -283,14 +283,14 @@ static void mix_to_16(int length, stream_sample_t *dest_left, stream_sample_t *d
 
 /*************************************
  *
- *	Stream callback
+ *  Stream callback
  *
  *************************************/
 
 static void channel_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	int ch;
-	
+
 	/* reset the mixer buffers */
 	memset(mixer_buffer_left, 0, length * sizeof(INT32));
 	memset(mixer_buffer_right, 0, length * sizeof(INT32));
@@ -344,7 +344,7 @@ static void channel_update(void *param, stream_sample_t **inputs, stream_sample_
 
 /*************************************
  *
- *	Sound command register
+ *  Sound command register
  *
  *************************************/
 
@@ -361,7 +361,7 @@ READ8_HANDLER( exidy440_sound_command_r )
 
 /*************************************
  *
- *	Sound volume registers
+ *  Sound volume registers
  *
  *************************************/
 
@@ -381,7 +381,7 @@ WRITE8_HANDLER( exidy440_sound_volume_w )
 
 /*************************************
  *
- *	Sound interrupt handling
+ *  Sound interrupt handling
  *
  *************************************/
 
@@ -394,7 +394,7 @@ WRITE8_HANDLER( exidy440_sound_interrupt_clear_w )
 
 /*************************************
  *
- *	MC6844 DMA controller interface
+ *  MC6844 DMA controller interface
  *
  *************************************/
 
@@ -425,7 +425,7 @@ void m6844_finished(int ch)
 
 /*************************************
  *
- *	MC6844 DMA controller I/O
+ *  MC6844 DMA controller I/O
  *
  *************************************/
 
@@ -613,7 +613,7 @@ WRITE8_HANDLER( exidy440_m6844_w )
 
 /*************************************
  *
- *	Sound cache management
+ *  Sound cache management
  *
  *************************************/
 
@@ -665,7 +665,7 @@ INT16 *find_or_add_to_sound_cache(int address, int length, int bits, int frequen
 
 /*************************************
  *
- *	Internal CVSD decoder and player
+ *  Internal CVSD decoder and player
  *
  *************************************/
 
@@ -730,7 +730,7 @@ void stop_cvsd(int ch)
 
 /*************************************
  *
- *	FIR digital filter
+ *  FIR digital filter
  *
  *************************************/
 
@@ -765,7 +765,7 @@ void fir_filter(INT32 *input, INT16 *output, int count)
 
 /*************************************
  *
- *	CVSD decoder
+ *  CVSD decoder
  *
  *************************************/
 
@@ -921,7 +921,7 @@ void decode_and_filter_cvsd(UINT8 *input, int bytes, int maskbits, int frequency
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 

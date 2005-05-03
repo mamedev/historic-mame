@@ -1,7 +1,7 @@
 /*************************************************************************
 
-	Incredible Technologies/Strata system
-	(8-bit blitter variant)
+    Incredible Technologies/Strata system
+    (8-bit blitter variant)
 
 **************************************************************************/
 

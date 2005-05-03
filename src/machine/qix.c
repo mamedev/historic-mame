@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Taito Qix hardware
+    Taito Qix hardware
 
-	driver by John Butler, Ed Mueller, Aaron Giles
+    driver by John Butler, Ed Mueller, Aaron Giles
 
 ***************************************************************************/
 
@@ -53,52 +53,52 @@ static READ8_HANDLER( slither_trak_ud_r );
 
 /***************************************************************************
 
-	Qix has 6 PIAs on board:
+    Qix has 6 PIAs on board:
 
-	From the ROM I/O schematic:
+    From the ROM I/O schematic:
 
-	PIA 0 = U11: (mapped to $9400 on the data CPU)
-		port A = external input (input_port_0)
-		port B = external input (input_port_1) (coin)
+    PIA 0 = U11: (mapped to $9400 on the data CPU)
+        port A = external input (input_port_0)
+        port B = external input (input_port_1) (coin)
 
-	PIA 1 = U20: (mapped to $9800/$9900 on the data CPU)
-		port A = external input (input_port_2)
-		port B = external input (input_port_3)
+    PIA 1 = U20: (mapped to $9800/$9900 on the data CPU)
+        port A = external input (input_port_2)
+        port B = external input (input_port_3)
 
-	PIA 2 = U30: (mapped to $9c00 on the data CPU)
-		port A = external input (input_port_4)
-		port B = external output (coin control)
+    PIA 2 = U30: (mapped to $9c00 on the data CPU)
+        port A = external input (input_port_4)
+        port B = external output (coin control)
 
 
-	From the data/sound processor schematic:
+    From the data/sound processor schematic:
 
-	PIA 3 = U20: (mapped to $9000 on the data CPU)
-		port A = data CPU to sound CPU communication
-		port B = stereo volume control, 2 4-bit values
-		CA1 = interrupt signal from sound CPU
-		CA2 = interrupt signal to sound CPU
-		CB1 = VS input signal (vertical sync)
-		CB2 = INV output signal (cocktail flip)
-		IRQA = /DINT1 signal
-		IRQB = /DINT1 signal
+    PIA 3 = U20: (mapped to $9000 on the data CPU)
+        port A = data CPU to sound CPU communication
+        port B = stereo volume control, 2 4-bit values
+        CA1 = interrupt signal from sound CPU
+        CA2 = interrupt signal to sound CPU
+        CB1 = VS input signal (vertical sync)
+        CB2 = INV output signal (cocktail flip)
+        IRQA = /DINT1 signal
+        IRQB = /DINT1 signal
 
-	PIA 4 = U8: (mapped to $4000 on the sound CPU)
-		port A = sound CPU to data CPU communication
-		port B = DAC value (port B)
-		CA1 = interrupt signal from data CPU
-		CA2 = interrupt signal to data CPU
-		IRQA = /SINT1 signal
-		IRQB = /SINT1 signal
+    PIA 4 = U8: (mapped to $4000 on the sound CPU)
+        port A = sound CPU to data CPU communication
+        port B = DAC value (port B)
+        CA1 = interrupt signal from data CPU
+        CA2 = interrupt signal to data CPU
+        IRQA = /SINT1 signal
+        IRQB = /SINT1 signal
 
-	PIA 5 = U7: (never actually used, mapped to $2000 on the sound CPU)
-		port A = unused
-		port B = sound CPU to TMS5220 communication
-		CA1 = interrupt signal from TMS5220
-		CA2 = write signal to TMS5220
-		CB1 = ready signal from TMS5220
-		CB2 = read signal to TMS5220
-		IRQA = /SINT2 signal
-		IRQB = /SINT2 signal
+    PIA 5 = U7: (never actually used, mapped to $2000 on the sound CPU)
+        port A = unused
+        port B = sound CPU to TMS5220 communication
+        CA1 = interrupt signal from TMS5220
+        CA2 = write signal to TMS5220
+        CB1 = ready signal from TMS5220
+        CB2 = read signal to TMS5220
+        IRQA = /SINT2 signal
+        IRQB = /SINT2 signal
 
 ***************************************************************************/
 
@@ -153,8 +153,8 @@ static WRITE8_HANDLER( pia_5_warning_w )
 
 /***************************************************************************
 
-	Games with an MCU need to handle coins differently, and provide
-	communication with the MCU
+    Games with an MCU need to handle coins differently, and provide
+    communication with the MCU
 
 ***************************************************************************/
 
@@ -176,8 +176,8 @@ static struct pia6821_interface qixmcu_pia_2_intf =
 
 /***************************************************************************
 
-	Slither uses 2 SN76489's for sound instead of the 6802+DAC; these
-	are accessed via the PIAs.
+    Slither uses 2 SN76489's for sound instead of the 6802+DAC; these
+    are accessed via the PIAs.
 
 ***************************************************************************/
 
@@ -206,7 +206,7 @@ static struct pia6821_interface slither_pia_3_intf =
 
 /*************************************
  *
- *	Machine initialization
+ *  Machine initialization
  *
  *************************************/
 
@@ -265,7 +265,7 @@ MACHINE_INIT( slither )
 
 /*************************************
  *
- *	VSYNC interrupt handling
+ *  VSYNC interrupt handling
  *
  *************************************/
 
@@ -285,7 +285,7 @@ INTERRUPT_GEN( qix_vblank_start )
 
 /*************************************
  *
- *	Shared RAM
+ *  Shared RAM
  *
  *************************************/
 
@@ -304,7 +304,7 @@ WRITE8_HANDLER( qix_sharedram_w )
 
 /*************************************
  *
- *	Zoo Keeper bankswitching
+ *  Zoo Keeper bankswitching
  *
  *************************************/
 
@@ -325,7 +325,7 @@ WRITE8_HANDLER( zoo_bankswitch_w )
 
 /*************************************
  *
- *	Data CPU FIRQ generation/ack
+ *  Data CPU FIRQ generation/ack
  *
  *************************************/
 
@@ -358,7 +358,7 @@ READ8_HANDLER( qix_data_firq_ack_r )
 
 /*************************************
  *
- *	Video CPU FIRQ generation/ack
+ *  Video CPU FIRQ generation/ack
  *
  *************************************/
 
@@ -391,7 +391,7 @@ READ8_HANDLER( qix_video_firq_ack_r )
 
 /*************************************
  *
- *	Sound PIA interfaces
+ *  Sound PIA interfaces
  *
  *************************************/
 
@@ -411,7 +411,7 @@ static WRITE8_HANDLER( sync_pia_4_porta_w )
 
 /*************************************
  *
- *	IRQ generation
+ *  IRQ generation
  *
  *************************************/
 
@@ -432,7 +432,7 @@ static void qix_pia_sint(int state)
 
 /*************************************
  *
- *	68705 Communication
+ *  68705 Communication
  *
  *************************************/
 
@@ -471,7 +471,7 @@ static WRITE8_HANDLER( qixmcu_coinctrl_w )
 
 /*************************************
  *
- *	68705 Port Inputs
+ *  68705 Port Inputs
  *
  *************************************/
 
@@ -505,7 +505,7 @@ READ8_HANDLER( qix_68705_portC_r )
 
 /*************************************
  *
- *	68705 Port Outputs
+ *  68705 Port Outputs
  *
  *************************************/
 
@@ -532,7 +532,7 @@ WRITE8_HANDLER( qix_68705_portC_w )
 
 /*************************************
  *
- *	Data CPU PIA 0 synchronization
+ *  Data CPU PIA 0 synchronization
  *
  *************************************/
 
@@ -553,7 +553,7 @@ WRITE8_HANDLER( qix_pia_0_w )
 
 /*************************************
  *
- *	PIA/Protection(?) workarounds
+ *  PIA/Protection(?) workarounds
  *
  *************************************/
 
@@ -582,7 +582,7 @@ WRITE8_HANDLER( zookeep_pia_2_w )
 
 /*************************************
  *
- *	Cocktail flip
+ *  Cocktail flip
  *
  *************************************/
 
@@ -595,7 +595,7 @@ static WRITE8_HANDLER( qix_inv_flag_w )
 
 /*************************************
  *
- *	Coin I/O for games without coin CPU
+ *  Coin I/O for games without coin CPU
  *
  *************************************/
 
@@ -616,7 +616,7 @@ static WRITE8_HANDLER( slither_coinctl_w )
 
 /*************************************
  *
- *	Slither SN76489 I/O
+ *  Slither SN76489 I/O
  *
  *************************************/
 
@@ -645,7 +645,7 @@ static WRITE8_HANDLER( slither_76489_1_w )
 
 /*************************************
  *
- *	Slither trackball I/O
+ *  Slither trackball I/O
  *
  *************************************/
 

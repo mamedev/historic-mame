@@ -96,7 +96,7 @@ static WRITE8_HANDLER( parodius_3fc0_w )
 static READ8_HANDLER( parodius_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
-	   just make it pass the test */
+       just make it pass the test */
 	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return offset ? 0x00 : 0x80;
 }
@@ -124,7 +124,7 @@ static void nmi_callback(int param)
 
 static WRITE8_HANDLER( sound_arm_nmi_w )
 {
-//	sound_nmi_enabled = 1;
+//  sound_nmi_enabled = 1;
 	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
@@ -192,7 +192,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -251,7 +251,7 @@ INPUT_PORTS_START( parodius )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "No Use" )
+//  PORT_DIPSETTING(    0x00, "No Use" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -297,7 +297,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 

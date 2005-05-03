@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Toobin' hardware
+    Atari Toobin' hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -22,7 +22,7 @@ static double brightness;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -49,7 +49,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -114,7 +114,7 @@ VIDEO_START( toobin )
 
 /*************************************
  *
- *	Palette RAM write handler
+ *  Palette RAM write handler
  *
  *************************************/
 
@@ -161,7 +161,7 @@ WRITE16_HANDLER( toobin_intensity_w )
 
 /*************************************
  *
- *	X/Y scroll handlers
+ *  X/Y scroll handlers
  *
  *************************************/
 
@@ -206,7 +206,7 @@ WRITE16_HANDLER( toobin_yscroll_w )
 
 /*************************************
  *
- *	X/Y scroll handlers
+ *  X/Y scroll handlers
  *
  *************************************/
 
@@ -228,7 +228,7 @@ WRITE16_HANDLER( toobin_slip_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -258,9 +258,9 @@ VIDEO_UPDATE( toobin )
 				{
 					/* not verified: logic is all controlled in a PAL
 
-						factors: LBPRI1-0, LBPIX3, ANPIX1-0, PFPIX3, PFPRI1-0,
-						         (~LBPIX3 & ~LBPIX2 & ~LBPIX1 & ~LBPIX0)
-					*/
+                        factors: LBPRI1-0, LBPIX3, ANPIX1-0, PFPIX3, PFPRI1-0,
+                                 (~LBPIX3 & ~LBPIX2 & ~LBPIX1 & ~LBPIX0)
+                    */
 
 					/* only draw if not high priority PF */
 					if (!pri[x] || !(pf[x] & 8))

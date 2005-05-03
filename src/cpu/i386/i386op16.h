@@ -241,12 +241,12 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(out_al_dx),			/* 0xee */
 	I386OP(out_ax_dx),			/* 0xef */
 	I386OP(lock),				/* 0xf0 */
-	I386OP(invalid),			/* 0xf1 */		
+	I386OP(invalid),			/* 0xf1 */
 	I386OP(repne),				/* 0xf2 */
 	I386OP(rep),				/* 0xf3 */
 	I386OP(hlt),				/* 0xf4 */
 	I386OP(cmc),				/* 0xf5 */
-	I386OP(groupF6_8),			/* 0xf6 */		
+	I386OP(groupF6_8),			/* 0xf6 */
 	I386OP(groupF7_16),			/* 0xf7 */
 	I386OP(clc),				/* 0xf8 */
 	I386OP(stc),				/* 0xf9 */
@@ -269,7 +269,7 @@ static void (*i386_opcode_table2_16[256])(void) =
 	I386OP(invalid),			/* 0x04 */
 	I386OP(invalid),			/* 0x05 */
 	I386OP(clts),				/* 0x06 */
-	I386OP(invalid),			/* 0x07 */		
+	I386OP(invalid),			/* 0x07 */
 	I386OP(invalid),			/* 0x08 */		/* INVD (486) */
 	I386OP(invalid),			/* 0x09 */		/* WBINVD (486) */
 	I386OP(invalid),			/* 0x0a */

@@ -39,11 +39,11 @@ write:
 6801 AY8910 #2 Write Port
 7800 Bit 0 - Coin Counter 1
      Bit 1 - Coin Counter 2
-	 Bit 2 - ??? Pulsated when the player is hit
-	 Bit 3 - ??? Seems to be unused
-	 Bit 4 - Tied to AY8910 RST. Used to turn off sound
-	 Bit 5 - ??? Seem to be always on
-	 Bit 6 - Search light enable
+     Bit 2 - ??? Pulsated when the player is hit
+     Bit 3 - ??? Seems to be unused
+     Bit 4 - Tied to AY8910 RST. Used to turn off sound
+     Bit 5 - ??? Seem to be always on
+     Bit 6 - Search light enable
      Bit 7 - ???
 
 

@@ -1,50 +1,50 @@
 /***************************************************************************
 
-	Atari Tunnel Hunt hardware
+    Atari Tunnel Hunt hardware
 
-	Games supported:
-		* Tunnel Hunt
+    Games supported:
+        * Tunnel Hunt
 
-	Known issues:
-		* see below
+    Known issues:
+        * see below
 
 ****************************************************************************
 
-	MAME driver for Tunnel Hunt (C)1981
-		(aka Tube Chase)
-		Developed by Atari
-		Hardware by Dave Sherman
-  		Game Programmed by Owen Rubin
-  		Licensed and Distributed by Centuri
-  
-  	Many thanks to Owen Rubin for invaluable hardware information and
-  	game description!
-  
-  	Known Issues:
-  
-  	Coin Input seems unresponsive.
-  
-  	Colors:
-  	- Hues are hardcoded.  There doesn't appear to be any logical way to
-  		map the color proms so that the correct colors appear.
-  		See last page of schematics for details.  Are color proms bad?
-  		(shouldn't be, both sets were the same)
-  
-  	Alphanumeric Layer:
-  	- placement for some characters seems strange (but may well be correct).
-  
-  	Shell Objects:
-  	- vstretch/placement/color handling isn't confirmed
-  	- two bitplanes per character or two banks?
-  
-  	Motion Object:
-  	- enemy ships look funny when they get close (to ram player)
-  	- stretch probably isn't implemented correctly (see splash screen
-  		with zooming "TUNNEL HUNT" logo.
-  	- colors may not be mapped correctly.
-  
-  	Square Generator:
-  	- needs optimization
+    MAME driver for Tunnel Hunt (C)1981
+        (aka Tube Chase)
+        Developed by Atari
+        Hardware by Dave Sherman
+        Game Programmed by Owen Rubin
+        Licensed and Distributed by Centuri
+
+    Many thanks to Owen Rubin for invaluable hardware information and
+    game description!
+
+    Known Issues:
+
+    Coin Input seems unresponsive.
+
+    Colors:
+    - Hues are hardcoded.  There doesn't appear to be any logical way to
+        map the color proms so that the correct colors appear.
+        See last page of schematics for details.  Are color proms bad?
+        (shouldn't be, both sets were the same)
+
+    Alphanumeric Layer:
+    - placement for some characters seems strange (but may well be correct).
+
+    Shell Objects:
+    - vstretch/placement/color handling isn't confirmed
+    - two bitplanes per character or two banks?
+
+    Motion Object:
+    - enemy ships look funny when they get close (to ram player)
+    - stretch probably isn't implemented correctly (see splash screen
+        with zooming "TUNNEL HUNT" logo.
+    - colors may not be mapped correctly.
+
+    Square Generator:
+    - needs optimization
 
 ***************************************************************************/
 
@@ -63,7 +63,7 @@ extern VIDEO_UPDATE( tunhunt );
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -72,14 +72,14 @@ UINT8 tunhunt_control;
 WRITE8_HANDLER( tunhunt_control_w )
 {
 	/*
-		0x01	coin counter#2	"right counter"
-		0x02	coin counter#1	"center counter"
-		0x04	"left counter"
-		0x08	cover screen (shell0 hstretch)
-		0x10	cover screen (shell1 hstretch)
-		0x40	start LED
-		0x80	in-game
-	*/
+        0x01    coin counter#2  "right counter"
+        0x02    coin counter#1  "center counter"
+        0x04    "left counter"
+        0x08    cover screen (shell0 hstretch)
+        0x10    cover screen (shell1 hstretch)
+        0x40    start LED
+        0x80    in-game
+    */
 	tunhunt_control = data;
 	coin_counter_w( 0,data&0x01 );
 	coin_counter_w( 1,data&0x02 );
@@ -90,7 +90,7 @@ WRITE8_HANDLER( tunhunt_control_w )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -140,7 +140,7 @@ static READ8_HANDLER( dsw2_4r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -177,7 +177,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -189,7 +189,7 @@ INPUT_PORTS_START( tunhunt )
 	PORT_DIPSETTING (	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (	0x04, DEF_STR( On ) )
 	//Should the above switch be described as:
-	//PORT_SERVICE(0x04, IP_ACTIVE_HIGH) 	?
+	//PORT_SERVICE(0x04, IP_ACTIVE_HIGH)    ?
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -243,7 +243,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -293,7 +293,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -312,7 +312,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -354,7 +354,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -432,10 +432,10 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 
-/*         rom   parent  machine    inp       	init */
+/*         rom   parent  machine    inp         init */
 GAME( 1979,tunhunt,  0,       tunhunt,   tunhunt,	0,  ORIENTATION_SWAP_XY, "Atari", "Tunnel Hunt" )
 GAME( 1981,tunhuntc, tunhunt, tunhunt,   tunhunt,	0,  ORIENTATION_SWAP_XY, "Atari (Centuri license)", "Tunnel Hunt (Centuri)" )

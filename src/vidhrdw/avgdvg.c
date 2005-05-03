@@ -1,38 +1,38 @@
 /*************************************************************************
 
-	avgdvg.c: Atari DVG and AVG simulators
+    avgdvg.c: Atari DVG and AVG simulators
 
-	Copyright 1991, 1992, 1996 Eric Smith
+    Copyright 1991, 1992, 1996 Eric Smith
 
-	Modified for the MAME project 1997 by
-	Brad Oliver, Bernd Wiebelt, Aaron Giles, Andrew Caldwell
+    Modified for the MAME project 1997 by
+    Brad Oliver, Bernd Wiebelt, Aaron Giles, Andrew Caldwell
 
-	971108 Disabled vector timing routines, introduced an ugly (but fast!)
-			busy flag hack instead. BW
-	980202 New anti aliasing code by Andrew Caldwell (.ac)
-	980206 New (cleaner) busy flag handling.
-			Moved LBO's buffered point into generic vector code. BW
-	980212 Introduced timing code based on Aaron timer routines. BW
-	980318 Better color handling, Bzone and MHavoc clipping. BW
+    971108 Disabled vector timing routines, introduced an ugly (but fast!)
+            busy flag hack instead. BW
+    980202 New anti aliasing code by Andrew Caldwell (.ac)
+    980206 New (cleaner) busy flag handling.
+            Moved LBO's buffered point into generic vector code. BW
+    980212 Introduced timing code based on Aaron timer routines. BW
+    980318 Better color handling, Bzone and MHavoc clipping. BW
 
-	Battlezone uses a red overlay for the top of the screen and a green one
-	for the rest. There is a circuit to clip color 0 lines extending to the
-	red zone. This is emulated now. Thanks to Neil Bradley for the info. BW
+    Battlezone uses a red overlay for the top of the screen and a green one
+    for the rest. There is a circuit to clip color 0 lines extending to the
+    red zone. This is emulated now. Thanks to Neil Bradley for the info. BW
 
-	Frame and interrupt rates (Neil Bradley) BW
-		~60 fps/4.0ms: Asteroid, Asteroid Deluxe
-		~40 fps/4.0ms: Lunar Lander
-		~40 fps/4.1ms: Battle Zone
-		~45 fps/5.4ms: Space Duel, Red Baron
-		~30 fps/5.4ms: StarWars
+    Frame and interrupt rates (Neil Bradley) BW
+        ~60 fps/4.0ms: Asteroid, Asteroid Deluxe
+        ~40 fps/4.0ms: Lunar Lander
+        ~40 fps/4.1ms: Battle Zone
+        ~45 fps/5.4ms: Space Duel, Red Baron
+        ~30 fps/5.4ms: StarWars
 
-	Games with self adjusting framerate
-		4.1ms: Black Widow, Gravitar
-		4.1ms: Tempest
-		Major Havoc
-		Quantum
+    Games with self adjusting framerate
+        4.1ms: Black Widow, Gravitar
+        4.1ms: Tempest
+        Major Havoc
+        Quantum
 
-	TODO: accurate vector timing (need timing diagramm)
+    TODO: accurate vector timing (need timing diagramm)
 
 ************************************************************************/
 
@@ -51,7 +51,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -83,7 +83,7 @@
 
 /*************************************
  *
- *	Static variables
+ *  Static variables
  *
  *************************************/
 
@@ -112,7 +112,7 @@ static rgb_t sparkle_callback(void);
 
 /*************************************
  *
- *	Compute 2's complement value
+ *  Compute 2's complement value
  *
  *************************************/
 
@@ -125,7 +125,7 @@ INLINE int twos_comp_val(int num, int bits)
 
 /*************************************
  *
- *	Vector RAM accesses
+ *  Vector RAM accesses
  *
  *************************************/
 
@@ -150,7 +150,7 @@ INLINE UINT16 vector_word(UINT16 offset)
 
 /*************************************
  *
- *	Vector timing
+ *  Vector timing
  *
  *************************************/
 
@@ -174,7 +174,7 @@ INLINE int dvg_vector_timer(int scale)
 
 /*************************************
  *
- *	AVG brightness computation
+ *  AVG brightness computation
  *
  *************************************/
 
@@ -213,7 +213,7 @@ INLINE int effective_z(int z, int statz)
 
 /*************************************
  *
- *	DVG vector generator
+ *  DVG vector generator
  *
  *************************************/
 
@@ -486,65 +486,65 @@ void avg_add_point_callback(int x, int y, rgb_t (*color_callback)(void), int int
 
 /*************************************
  *
- *	AVG vector generator
+ *  AVG vector generator
  *
  *************************************
 
-	Atari Analog Vector Generator Instruction Set
+    Atari Analog Vector Generator Instruction Set
 
-	Compiled from Atari schematics and specifications
-	Eric Smith  7/2/92
-	---------------------------------------------
+    Compiled from Atari schematics and specifications
+    Eric Smith  7/2/92
+    ---------------------------------------------
 
-	NOTE: The vector generator is little-endian.  The instructions are 16 bit
-	      words, which need to be stored with the least significant byte in the
-	      lower (even) address.  They are shown here with the MSB on the left.
+    NOTE: The vector generator is little-endian.  The instructions are 16 bit
+          words, which need to be stored with the least significant byte in the
+          lower (even) address.  They are shown here with the MSB on the left.
 
-	The stack allows four levels of subroutine calls in the TTL version, but only
-	three levels in the gate array version.
+    The stack allows four levels of subroutine calls in the TTL version, but only
+    three levels in the gate array version.
 
-	inst  bit pattern          description
-	----  -------------------  -------------------
-	VCTR  000- yyyy yyyy yyyy  normal vector
-	      zzz- xxxx xxxx xxxx
-	HALT  001- ---- ---- ----  halt - does CNTR also on newer hardware
-	SVEC  010y yyyy zzzx xxxx  short vector - don't use zero length
-	STAT  0110 ---- zzzz cccc  status
-	SCAL  0111 -bbb llll llll  scaling
-	CNTR  100- ---- dddd dddd  center
-	JSRL  101a aaaa aaaa aaaa  jump to subroutine
-	RTSL  110- ---- ---- ----  return
-	JMPL  111a aaaa aaaa aaaa  jump
+    inst  bit pattern          description
+    ----  -------------------  -------------------
+    VCTR  000- yyyy yyyy yyyy  normal vector
+          zzz- xxxx xxxx xxxx
+    HALT  001- ---- ---- ----  halt - does CNTR also on newer hardware
+    SVEC  010y yyyy zzzx xxxx  short vector - don't use zero length
+    STAT  0110 ---- zzzz cccc  status
+    SCAL  0111 -bbb llll llll  scaling
+    CNTR  100- ---- dddd dddd  center
+    JSRL  101a aaaa aaaa aaaa  jump to subroutine
+    RTSL  110- ---- ---- ----  return
+    JMPL  111a aaaa aaaa aaaa  jump
 
-	-     unused bits
-	x, y  relative x and y coordinates in two's complement (5 or 13 bit,
-	      5 bit quantities are scaled by 2, so x=1 is really a length 2 vector.
-	z     intensity, 0 = blank, 1 means use z from STAT instruction,  2-7 are
-	      doubled for actual range of 4-14
-	c     color
-	b     binary scaling, multiplies all lengths by 2**(1-b), 0 is double size,
-	      1 is normal, 2 is half, 3 is 1/4, etc.
-	l     linear scaling, multiplies all lengths by 1-l/256, don't exceed $80
-	d     delay time, use $40
-	a     address (word address relative to base of vector memory)
+    -     unused bits
+    x, y  relative x and y coordinates in two's complement (5 or 13 bit,
+          5 bit quantities are scaled by 2, so x=1 is really a length 2 vector.
+    z     intensity, 0 = blank, 1 means use z from STAT instruction,  2-7 are
+          doubled for actual range of 4-14
+    c     color
+    b     binary scaling, multiplies all lengths by 2**(1-b), 0 is double size,
+          1 is normal, 2 is half, 3 is 1/4, etc.
+    l     linear scaling, multiplies all lengths by 1-l/256, don't exceed $80
+    d     delay time, use $40
+    a     address (word address relative to base of vector memory)
 
-	Notes:
+    Notes:
 
-	Quantum:
-	        the VCTR instruction has a four bit Z field, that is not
-	        doubled.  The value 2 means use Z from STAT instruction.
+    Quantum:
+            the VCTR instruction has a four bit Z field, that is not
+            doubled.  The value 2 means use Z from STAT instruction.
 
-	        the SVEC instruction can't be used
+            the SVEC instruction can't be used
 
-	Major Havoc:
-	        SCAL bit 11 is used for setting a Y axis window.
+    Major Havoc:
+            SCAL bit 11 is used for setting a Y axis window.
 
-	        STAT bit 11 is used to enable "sparkle" color.
-	        STAT bit 10 inverts the X axis of vectors.
-	        STAT bits 9 and 8 are the Vector ROM bank select.
+            STAT bit 11 is used to enable "sparkle" color.
+            STAT bit 10 inverts the X axis of vectors.
+            STAT bits 9 and 8 are the Vector ROM bank select.
 
-	Star Wars:
-	        STAT bits 10, 9, and 8 are used directly for R, G, and B.
+    Star Wars:
+            STAT bits 10, 9, and 8 are used directly for R, G, and B.
 
  *************************************/
 
@@ -862,7 +862,7 @@ static int avg_generate_vector_list(void)
 
 /*************************************
  *
- *	AVG execution/busy detection
+ *  AVG execution/busy detection
  *
  ************************************/
 
@@ -923,7 +923,7 @@ WRITE16_HANDLER( avgdvg_go_word_w )
 
 /*************************************
  *
- *	AVG reset
+ *  AVG reset
  *
  ************************************/
 
@@ -942,7 +942,7 @@ WRITE16_HANDLER( avgdvg_reset_word_w )
 
 /*************************************
  *
- *	Vector generator init
+ *  Vector generator init
  *
  ************************************/
 
@@ -1017,7 +1017,7 @@ int avgdvg_init(int vector_type)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  ************************************/
 
@@ -1078,7 +1078,7 @@ VIDEO_START( avg_redbaron )
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  ************************************/
 
@@ -1103,7 +1103,7 @@ PALETTE_INIT( avg_multi )
 
 /*************************************
  *
- *	Color RAM handling
+ *  Color RAM handling
  *
  ************************************/
 

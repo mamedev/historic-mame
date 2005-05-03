@@ -190,7 +190,7 @@ static void ironhors_draw_sprites( struct mame_bitmap *bitmap )
 		int flipy = sr[offs+4] & 0x40;
 		int code = (sr[offs] << 2) + ((sr[offs+1] & 0x03) << 10) + ((sr[offs+1] & 0x0c) >> 2);
 		int color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
-	//	int mod = flip_screen ? -8 : 8;
+	//  int mod = flip_screen ? -8 : 8;
 
 		if (flip_screen)
 		{

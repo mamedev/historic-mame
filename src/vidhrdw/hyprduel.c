@@ -4,53 +4,53 @@
 
 /***************************************************************************
 
-							  -= Metro Games =-
+                              -= Metro Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-				Q		Shows Layer 0
-				W		Shows Layer 1
-				E		Shows Layer 2
-				A		Shows Sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-							[ 3 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		There is memory for a huge layer, but the actual tilemap
-		is a smaller window (of fixed size) carved from anywhere
-		inside that layer.
+                Q       Shows Layer 0
+                W       Shows Layer 1
+                E       Shows Layer 2
+                A       Shows Sprites
 
-		Tile Size:				  	8 x 8 x 4
-		(later games can switch to  8 x 8 x 8, 16 x 16 x 4/8 at run time)
-
-		Big Layer Size:			2048 x 2048 (8x8 tiles) or 4096 x 4096 (16x16 tiles)
-
-		Tilemap Window Size:	512 x 256 (8x8 tiles) or 1024 x 512 (16x16 tiles)
-
-		The tile codes in memory do not map directly to tiles. They
-		are indexes into a table (with 0x200 entries) that defines
-		a virtual set of tiles for the 3 layers. Each entry in that
-		table adds 16 tiles to the set of available tiles, and decides
-		their color code.
-
-		Tile code with their msbit set are different as they mean:
-		draw a tile filled with a single color (0-1ff)
+        Keys can be used together!
 
 
-							[ 512 Zooming Sprites ]
+                            [ 3 Scrolling Layers ]
 
-		The sprites are NOT tile based: the "tile" size can vary from
-		8 to 64 (independently for width and height) with an 8 pixel
-		granularity. The "tile" address is a multiple of 8x8 pixels.
+        There is memory for a huge layer, but the actual tilemap
+        is a smaller window (of fixed size) carved from anywhere
+        inside that layer.
 
-		Each sprite can be shrinked to ~1/4 or enlarged to ~32x following
-		an exponential curve of sizes (with one zoom value for both width
-		and height)
+        Tile Size:                  8 x 8 x 4
+        (later games can switch to  8 x 8 x 8, 16 x 16 x 4/8 at run time)
+
+        Big Layer Size:         2048 x 2048 (8x8 tiles) or 4096 x 4096 (16x16 tiles)
+
+        Tilemap Window Size:    512 x 256 (8x8 tiles) or 1024 x 512 (16x16 tiles)
+
+        The tile codes in memory do not map directly to tiles. They
+        are indexes into a table (with 0x200 entries) that defines
+        a virtual set of tiles for the 3 layers. Each entry in that
+        table adds 16 tiles to the set of available tiles, and decides
+        their color code.
+
+        Tile code with their msbit set are different as they mean:
+        draw a tile filled with a single color (0-1ff)
+
+
+                            [ 512 Zooming Sprites ]
+
+        The sprites are NOT tile based: the "tile" size can vary from
+        8 to 64 (independently for width and height) with an 8 pixel
+        granularity. The "tile" address is a multiple of 8x8 pixels.
+
+        Each sprite can be shrinked to ~1/4 or enlarged to ~32x following
+        an exponential curve of sizes (with one zoom value for both width
+        and height)
 
 ***************************************************************************/
 
@@ -77,7 +77,7 @@ static data16_t *hypr_tiletable_old;
 
 
 /***************************************************************************
-							Palette GGGGGRRRRRBBBBBx
+                            Palette GGGGGRRRRRBBBBBx
 ***************************************************************************/
 
 WRITE16_HANDLER( hyprduel_paletteram_w )
@@ -96,24 +96,24 @@ WRITE16_HANDLER( hyprduel_paletteram_w )
 
 
 /***************************************************************************
-						Tilemaps: Tiles Set & Window
+                        Tilemaps: Tiles Set & Window
 
-	Each entry in the Tiles Set RAM uses 2 words to specify a starting
-	tile code and a color code. This adds 16 consecutive tiles with
-	that color code to the set of available tiles.
+    Each entry in the Tiles Set RAM uses 2 words to specify a starting
+    tile code and a color code. This adds 16 consecutive tiles with
+    that color code to the set of available tiles.
 
-		Offset:		Bits:					Value:
+        Offset:     Bits:                   Value:
 
-		0.w			fedc ---- ---- ----
-					---- ba98 7654 ----		Color Code
-					---- ---- ---- 3210		Code High Bits
+        0.w         fedc ---- ---- ----
+                    ---- ba98 7654 ----     Color Code
+                    ---- ---- ---- 3210     Code High Bits
 
-		2.w									Code Low Bits
+        2.w                                 Code Low Bits
 ***************************************************************************/
 
 
 /***************************************************************************
-							Tilemaps: Rendering
+                            Tilemaps: Rendering
 ***************************************************************************/
 
 static struct tilemap *tilemap[3];
@@ -128,8 +128,8 @@ static UINT8 *empty_tiles;
 
 #define WIN_NX		(0x40)
 #define WIN_NY		(0x20)
-//#define WIN_NX		(0x40+1)
-//#define WIN_NY		(0x20+1)
+//#define WIN_NX        (0x40+1)
+//#define WIN_NY        (0x20+1)
 
 
 /* 8x8x4 tiles only */
@@ -300,7 +300,7 @@ WRITE16_HANDLER( hyprduel_window_w )
 
 
 /***************************************************************************
-							Video Init Routines
+                            Video Init Routines
 ***************************************************************************/
 
 /*
@@ -351,30 +351,30 @@ VIDEO_START( hyprduel_14220 )
 
 /***************************************************************************
 
-								Video Registers
+                                Video Registers
 
 
-		Offset:		Bits:					Value:
+        Offset:     Bits:                   Value:
 
-		0.w									Number Of Sprites To Draw
-		2.w			f--- ---- ---- ----		Disabled Sprites Layer Priority
-					-edc ---- ---- ----
-					---- ba-- ---- ----		Sprites Masked Layer
-					---- --98 ---- ----		Sprites Priority
-					---- ---- 765- ----
-					---- ---- ---4 3210		Sprites Masked Number
-		4.w									Sprites Y Offset
-		6.w									Sprites X Offset
-		8.w									Sprites Color Codes Start
+        0.w                                 Number Of Sprites To Draw
+        2.w         f--- ---- ---- ----     Disabled Sprites Layer Priority
+                    -edc ---- ---- ----
+                    ---- ba-- ---- ----     Sprites Masked Layer
+                    ---- --98 ---- ----     Sprites Priority
+                    ---- ---- 765- ----
+                    ---- ---- ---4 3210     Sprites Masked Number
+        4.w                                 Sprites Y Offset
+        6.w                                 Sprites X Offset
+        8.w                                 Sprites Color Codes Start
 
-		-
+        -
 
-		10.w		fedc ba98 76-- ----
-					---- ---- --54 ----		Layer 2 Priority (3 backmost, 0 frontmost)
-					---- ---- ---- 32--		Layer 1 Priority
-					---- ---- ---- --10		Layer 0 Priority
+        10.w        fedc ba98 76-- ----
+                    ---- ---- --54 ----     Layer 2 Priority (3 backmost, 0 frontmost)
+                    ---- ---- ---- 32--     Layer 1 Priority
+                    ---- ---- ---- --10     Layer 0 Priority
 
-		12.w								Backround Color
+        12.w                                Backround Color
 
 ***************************************************************************/
 
@@ -382,25 +382,25 @@ VIDEO_START( hyprduel_14220 )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
-		Offset:		Bits:					Value:
+        Offset:     Bits:                   Value:
 
-		0.w			fedc b--- ---- ----		Priority (0 = Max)
-					---- -a98 7654 3210		X
+        0.w         fedc b--- ---- ----     Priority (0 = Max)
+                    ---- -a98 7654 3210     X
 
-		2.w			fedc ba-- ---- ----		Zoom (Both X & Y)
-					---- --98 7654 3210		Y
+        2.w         fedc ba-- ---- ----     Zoom (Both X & Y)
+                    ---- --98 7654 3210     Y
 
-		4.w			f--- ---- ---- ----		Flip X
-					-e-- ---- ---- ----		Flip Y
-					--dc b--- ---- ----		Size X *
-					---- -a98 ---- ----		Size Y *
-					---- ---- 7654 ----		Color
-					---- ---- ---- 3210		Code High Bits **
+        4.w         f--- ---- ---- ----     Flip X
+                    -e-- ---- ---- ----     Flip Y
+                    --dc b--- ---- ----     Size X *
+                    ---- -a98 ---- ----     Size Y *
+                    ---- ---- 7654 ----     Color
+                    ---- ---- ---- 3210     Code High Bits **
 
-		6.w									Code Low Bits  **
+        6.w                                 Code Low Bits  **
 
 *  8 pixel increments
 ** 8x8 pixel increments
@@ -555,7 +555,7 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 
 
 /***************************************************************************
-								Screen Drawing
+                                Screen Drawing
 ***************************************************************************/
 
 /* Draw all the layers that match the given priority */
@@ -658,23 +658,23 @@ VIDEO_UPDATE( hyprduel )
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[((hyprduel_videoregs[0x12/2] & 0x0fff) ^ 0x0ff) + 0x1000],cliprect);
 
-	/*	Screen Control Register:
+	/*  Screen Control Register:
 
-		f--- ---- ---- ----		?
-		-edc b--- ---- ----
-		---- -a98 ---- ----		? Leds
-		---- ---- 7--- ----		16x16 Tiles (Layer 2)
-		---- ---- -6-- ----		16x16 Tiles (Layer 1)
-		---- ---- --5- ----		16x16 Tiles (Layer 0)
-		---- ---- ---4 32--
-		---- ---- ---- --1-		? Blank Screen
-		---- ---- ---- ---0		Flip  Screen	*/
+        f--- ---- ---- ----     ?
+        -edc b--- ---- ----
+        ---- -a98 ---- ----     ? Leds
+        ---- ---- 7--- ----     16x16 Tiles (Layer 2)
+        ---- ---- -6-- ----     16x16 Tiles (Layer 1)
+        ---- ---- --5- ----     16x16 Tiles (Layer 0)
+        ---- ---- ---4 32--
+        ---- ---- ---- --1-     ? Blank Screen
+        ---- ---- ---- ---0     Flip  Screen    */
 	if (screenctrl & 2)	return;
 	flip_screen_set(screenctrl & 1);
 
 	/* If the game supports 16x16 tiles, make sure that the
-	   16x16 and 8x8 tilemaps of a given layer are not simultaneously
-	   enabled! */
+       16x16 and 8x8 tilemaps of a given layer are not simultaneously
+       enabled! */
 
 #if 0
 if (code_pressed(KEYCODE_Z))

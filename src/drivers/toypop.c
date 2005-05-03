@@ -240,7 +240,7 @@ WRITE16_HANDLER( toypop_m68000_interrupt_disable_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -304,7 +304,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -325,7 +325,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	68k CPU memory handlers
+ *  68k CPU memory handlers
  *
  *************************************/
 
@@ -615,7 +615,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 

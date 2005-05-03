@@ -9,7 +9,6 @@ endif
 
 # uncomment one of the next lines to build a target-optimized build
 # ATHLON = 1
-# K6 = 1
 # I686 = 1
 # P4 = 1
 # PM = 1
@@ -76,11 +75,6 @@ ARCH = -march=pentium
 ifdef ATHLON
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
 ARCH = -march=athlon
-endif
-
-ifdef K6
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
-ARCH = -march=k6
 endif
 
 ifdef I686

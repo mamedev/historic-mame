@@ -61,7 +61,7 @@ read:
           bit 7 = seems unused
 
 write:
-	(ports 1 and 2: see definitions in sound driver)
+    (ports 1 and 2: see definitions in sound driver)
 
 08        ?
 
@@ -287,20 +287,20 @@ INPUT_PORTS_START( frogs )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
 
-//	PORT_START_TAG("IN2")
-//	PORT_ADJUSTER( 25, "Boing Volume" )
+//  PORT_START_TAG("IN2")
+//  PORT_ADJUSTER( 25, "Boing Volume" )
 
-//	PORT_START_TAG("IN3")
-//	PORT_ADJUSTER( 25, "Buzzz Volume" )
+//  PORT_START_TAG("IN3")
+//  PORT_ADJUSTER( 25, "Buzzz Volume" )
 
-//	PORT_START_TAG("IN4")
-//	PORT_ADJUSTER( 25, "Croak Volume" )
+//  PORT_START_TAG("IN4")
+//  PORT_ADJUSTER( 25, "Croak Volume" )
 
-//	PORT_START_TAG("IN5")
-//	PORT_ADJUSTER( 25, "Hop Volume" )
+//  PORT_START_TAG("IN5")
+//  PORT_ADJUSTER( 25, "Hop Volume" )
 
-//	PORT_START_TAG("IN6")
-//	PORT_ADJUSTER( 50, "Splash Volume" )
+//  PORT_START_TAG("IN6")
+//  PORT_ADJUSTER( 50, "Splash Volume" )
 
 	PORT_START_TAG("IN2")
 	PORT_ADJUSTER( 50, "Zip Volume" )
@@ -376,10 +376,10 @@ INPUT_PORTS_START( sspaceat )
 	PORT_DIPSETTING(    0x0a, "5" )
 	PORT_DIPSETTING(    0x06, "6" )
 /* the following are duplicates
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x02, "5" ) */
+    PORT_DIPSETTING(    0x00, "4" )
+    PORT_DIPSETTING(    0x04, "4" )
+    PORT_DIPSETTING(    0x08, "4" )
+    PORT_DIPSETTING(    0x02, "5" ) */
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
@@ -433,7 +433,7 @@ INPUT_PORTS_START( headon2 )
 	PORT_DIPSETTING(    0x18, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-/*	PORT_DIPSETTING(    0x08, "5" )*/
+/*  PORT_DIPSETTING(    0x08, "5" )*/
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 
 	PORT_START	/* IN2 */
@@ -529,7 +529,7 @@ INPUT_PORTS_START( samurai )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) /* either vblank, or a timer. In the */
                                             /* Carnival schematics, it's a timer. */
-//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* timer */
+//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* timer */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1422,8 +1422,8 @@ N-Sub by SEGA 1979
 97399-P-16 N-SUB UPRIGHT
 
 Label says : U41(U20) ~ U48(U27)
-		EPR	  EPR
-		268	  275
+        EPR   EPR
+        268   275
 
 and also : PR69
 

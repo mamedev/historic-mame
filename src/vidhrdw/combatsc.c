@@ -87,7 +87,7 @@ PALETTE_INIT( combascb )
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -205,7 +205,7 @@ static void get_tile_info1_bootleg(int tile_index)
 
 static void get_text_info_bootleg(int tile_index)
 {
-//	unsigned char attributes = combasc_page[0][tile_index + 0x800];
+//  unsigned char attributes = combasc_page[0][tile_index + 0x800];
 	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16;// + (attributes & 0x0f);
 
@@ -218,7 +218,7 @@ static void get_text_info_bootleg(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -279,7 +279,7 @@ VIDEO_START( combascb )
 
 /***************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ***************************************************************************/
 
@@ -457,7 +457,7 @@ WRITE8_HANDLER( combasc_scrollram_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 
@@ -563,22 +563,22 @@ VIDEO_UPDATE( combasc )
 
 /***************************************************************************
 
-	bootleg Combat School sprites. Each sprite has 5 bytes:
+    bootleg Combat School sprites. Each sprite has 5 bytes:
 
-byte #0:	sprite number
-byte #1:	y position
-byte #2:	x position
+byte #0:    sprite number
+byte #1:    y position
+byte #2:    x position
 byte #3:
-	bit 0:		x position (bit 0)
-	bits 1..3:	???
-	bit 4:		flip x
-	bit 5:		unused?
-	bit 6:		sprite bank # (bit 2)
-	bit 7:		???
+    bit 0:      x position (bit 0)
+    bits 1..3:  ???
+    bit 4:      flip x
+    bit 5:      unused?
+    bit 6:      sprite bank # (bit 2)
+    bit 7:      ???
 byte #4:
-	bits 0,1:	sprite bank # (bits 0 & 1)
-	bits 2,3:	unused?
-	bits 4..7:	sprite color
+    bits 0,1:   sprite bank # (bits 0 & 1)
+    bits 2,3:   unused?
+    bits 4..7:  sprite color
 
 ***************************************************************************/
 
@@ -613,10 +613,10 @@ static void bootleg_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 
 			color = (circuit*4)*16 + (color >> 4);
 
-			/*	hacks to select alternate palettes */
-//			if(combasc_vreg == 0x40 && (attributes & 0x40)) color += 1*16;
-//			if(combasc_vreg == 0x23 && (attributes & 0x02)) color += 1*16;
-//			if(combasc_vreg == 0x66 ) color += 2*16;
+			/*  hacks to select alternate palettes */
+//          if(combasc_vreg == 0x40 && (attributes & 0x40)) color += 1*16;
+//          if(combasc_vreg == 0x23 && (attributes & 0x02)) color += 1*16;
+//          if(combasc_vreg == 0x66 ) color += 2*16;
 
 			drawgfx( bitmap, gfx,
 				number, color,

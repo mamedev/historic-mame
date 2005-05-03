@@ -1,20 +1,20 @@
 /***************************************************************************
 
-							  -= Metal Clash =-
+                              -= Metal Clash =-
 
-	Sprites:
-		16x16 tiles with 8 pens and 2 color codes,
-		each sprite can be 1 or 2 tiles tall
+    Sprites:
+        16x16 tiles with 8 pens and 2 color codes,
+        each sprite can be 1 or 2 tiles tall
 
-	Background:
-		size is 512x256 (scrolling, peculiar memory layout),
-		16x16 tiles with 8 pens and no color code,
-		1 byte per tile (tiles are banked)
+    Background:
+        size is 512x256 (scrolling, peculiar memory layout),
+        16x16 tiles with 8 pens and no color code,
+        1 byte per tile (tiles are banked)
 
-	Foreground:
-		size is 256x256 (no scrolling),
-		8x8 tiles with 4 pens and 4 color codes,
-		2 bytes per tile, low and high per tile priority
+    Foreground:
+        size is 256x256 (no scrolling),
+        8x8 tiles with 4 pens and 4 color codes,
+        2 bytes per tile, low and high per tile priority
 
 ***************************************************************************/
 
@@ -58,18 +58,18 @@ WRITE8_HANDLER( metlclsh_gfxbank_w )
 
 /***************************************************************************
 
-							Background tilemap
+                            Background tilemap
 
-				memory offset of each tile of the tilemap:
+                memory offset of each tile of the tilemap:
 
-					00 08  ..  78 100 108  ..  178
-					 .  .       .   .   .        .
-					 .  .       .   .   .        .
-					07 0f  ..  7f 107 10f  ..  17f
-					80 88  ..  f8 180 188  ..  1f8
-					 .  .       .   .   .        .
-					 .  .       .   .   .        .
-					87 8f  ..  ff 187 18f  ..  1ff
+                    00 08  ..  78 100 108  ..  178
+                     .  .       .   .   .        .
+                     .  .       .   .   .        .
+                    07 0f  ..  7f 107 10f  ..  17f
+                    80 88  ..  f8 180 188  ..  1f8
+                     .  .       .   .   .        .
+                     .  .       .   .   .        .
+                    87 8f  ..  ff 187 18f  ..  1ff
 
 ***************************************************************************/
 
@@ -85,8 +85,8 @@ static void get_bg_tile_info(int tile_index)
 
 WRITE8_HANDLER( metlclsh_bgram_w )
 {
-	/*	This ram is banked: it's either the tilemap (e401 = 1)
-		or bit n of another area (e401 = n << 1)? (that I don't understand) */
+	/*  This ram is banked: it's either the tilemap (e401 = 1)
+        or bit n of another area (e401 = n << 1)? (that I don't understand) */
 	if (metlclsh_write_mask)
 	{
 		/* unknown area - the following is almost surely wrong */
@@ -95,7 +95,7 @@ WRITE8_HANDLER( metlclsh_bgram_w )
 // 4085 (e401 = e a 6 2) writes d000++
 // 405b (e401 = e a 6 2) writes d000++
 
-//		metlclsh_otherram[offset] |= (data & metlclsh_write_mask);
+//      metlclsh_otherram[offset] |= (data & metlclsh_write_mask);
 		metlclsh_otherram[offset] = (metlclsh_otherram[offset] & ~metlclsh_write_mask) | (data & metlclsh_write_mask);
 	}
 	else
@@ -111,14 +111,14 @@ WRITE8_HANDLER( metlclsh_bgram_w )
 
 /***************************************************************************
 
-							Foreground tilemap
+                            Foreground tilemap
 
-	Offset: 	Bits:			Value:
+    Offset:     Bits:           Value:
 
-		0x000					Code
-		0x400	7--- ----		Priority (0/1 -> over/below sprites and background)
-				-65- ----		Color
-				---- --10		Code
+        0x000                   Code
+        0x400   7--- ----       Priority (0/1 -> over/below sprites and background)
+                -65- ----       Color
+                ---- --10       Code
 
 ***************************************************************************/
 
@@ -142,7 +142,7 @@ WRITE8_HANDLER( metlclsh_fgram_w )
 
 /***************************************************************************
 
-							Video Hardware Init
+                            Video Hardware Init
 
 ***************************************************************************/
 
@@ -165,21 +165,21 @@ VIDEO_START( metlclsh )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset: 	Bits:			Value:
+    Offset:     Bits:           Value:
 
-		0		7--- ----		0
-				-65- ----		Code (high bits)
-				---4 ----		Double height (2 tiles)
-				---- 3---		Color
-				---- -2--		Flip X
-				---- --1-		Flip Y
-				---- ---0		Enable
+        0       7--- ----       0
+                -65- ----       Code (high bits)
+                ---4 ----       Double height (2 tiles)
+                ---- 3---       Color
+                ---- -2--       Flip X
+                ---- --1-       Flip Y
+                ---- ---0       Enable
 
-		1						Code (low bits)
-		2						Y (bottom -> top)
-		3						X (right -> left)
+        1                       Code (low bits)
+        2                       Y (bottom -> top)
+        3                       X (right -> left)
 
 ***************************************************************************/
 
@@ -234,15 +234,15 @@ static void metlclsh_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
-	Video register e402 (metlclsh seems to only use the values 0,8,9,b):
+    Video register e402 (metlclsh seems to only use the values 0,8,9,b):
 
-		7654 ----		0
-		---- 3---		Background enable
-		---- -2--		0
-		---- --1-		Background scroll x high bit
-		---- ---0		? (not bg flipx!)
+        7654 ----       0
+        ---- 3---       Background enable
+        ---- -2--       0
+        ---- --1-       Background scroll x high bit
+        ---- ---0       ? (not bg flipx!)
 
 ***************************************************************************/
 
@@ -261,6 +261,6 @@ VIDEO_UPDATE( metlclsh )
 	metlclsh_draw_sprites(bitmap,cliprect);			// sprites
 	tilemap_draw(bitmap,cliprect,fg_tilemap,2,0);	// high priority tiles of foreground
 
-//	usrintf_showmessage("%02X",metlclsh_scrollx[0]);
+//  usrintf_showmessage("%02X",metlclsh_scrollx[0]);
 }
 

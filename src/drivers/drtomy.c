@@ -1,6 +1,6 @@
 /*
 
-Dr. Tomy	-	(c) 1993 Playmark
+Dr. Tomy    -   (c) 1993 Playmark
 
 A rip-off of Dr. Mario by Playmark, using some code from Gaelco's Big Karnak on
 similar hardware.
@@ -31,20 +31,20 @@ static void get_tile_info_bg(int tile_index)
 
 
 /*
-	Sprite Format (almost like gaelco.c)
-	-------------
+    Sprite Format (almost like gaelco.c)
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | y position
-	  0  | ----x--- -------- | sprite size
-	  0  | -x------ -------- | flipx
-	  0  | x------- -------- | flipy
-	  1  | xxxxxxxx xxxxxxxx | not used
-	  2  | -------x xxxxxxxx | x position
-	  2  | ---xxxx- -------- | sprite color
-	  3	 | -------- ------xx | sprite code (8x8 cuadrant)
-	  3  | xxxxxxxx xxxxxx-- | sprite code
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | y position
+      0  | ----x--- -------- | sprite size
+      0  | -x------ -------- | flipx
+      0  | x------- -------- | flipy
+      1  | xxxxxxxx xxxxxxxx | not used
+      2  | -------x xxxxxxxx | x position
+      2  | ---xxxx- -------- | sprite color
+      3  | -------- ------xx | sprite code (8x8 cuadrant)
+      3  | xxxxxxxx xxxxxx-- | sprite code
 */
 
 static void drtomy_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)

@@ -1,65 +1,65 @@
 /*************************************************************************
 
-	Driver for Atari/Midway Vegas hardware games
+    Driver for Atari/Midway Vegas hardware games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Gauntlet Legends [Atari, 200MHz, 8MB RAM, 2-TMU * 4MB]
-		* Gauntlet Dark Legacy [Atari, 200MHz]
-		* War: Final Assault [Midway, 250MHz, 2-TMU]
-		* NBA on NBC
-		* Tenth Degree/ Juko Threat
-		* NBA Showtime Gold + NFL Blitz 2000 Gold
+    Games supported:
+        * Gauntlet Legends [Atari, 200MHz, 8MB RAM, 2-TMU * 4MB]
+        * Gauntlet Dark Legacy [Atari, 200MHz]
+        * War: Final Assault [Midway, 250MHz, 2-TMU]
+        * NBA on NBC
+        * Tenth Degree/ Juko Threat
+        * NBA Showtime Gold + NFL Blitz 2000 Gold
 
-	Durango PCB (uses an RM7000 or RM5271 @ 250MHz):
-		* Road Burners [Atari, 250MHz, 32MB RAM, 2-TMU * 4MB]
-		* San Francisco Rush 2049 [Atari, RM7000 @ 250MHz, 32MB RAM, Voodoo3 w/16MB]
-		* San Francisco Rush 2049 Tournament Edition (PIC ID = 348)
-		* CART Fury
-		
-	Known bugs:
-		* not working yet
+    Durango PCB (uses an RM7000 or RM5271 @ 250MHz):
+        * Road Burners [Atari, 250MHz, 32MB RAM, 2-TMU * 4MB]
+        * San Francisco Rush 2049 [Atari, RM7000 @ 250MHz, 32MB RAM, Voodoo3 w/16MB]
+        * San Francisco Rush 2049 Tournament Edition (PIC ID = 348)
+        * CART Fury
+
+    Known bugs:
+        * not working yet
 
 ***************************************************************************
 
-	Interrupt summary:
+    Interrupt summary:
 
-	                    __________
-	UART clear-to-send |          |  
-	-------(0x2000)--->|          |
-	                   |          |
-	UART data ready    |          |
-	-------(0x1000)--->|          |                     __________
-	                   |          |   VSYNC            |          |
-	Main-to-sound empty|  IOASIC  |   -------(0x20)--->|          |
-	-------(0x0080)--->|          |                    |          |
-	                   |          |   Ethernet         |          |   SIO Summary
-	Sound-to-main full |          |   -------(0x10)--->|   SIO    |--------------+
-	-------(0x0040)--->|          |                    |          |              |
-	                   |          |                    |          |              |
-	Sound FIFO empty   |          |   IOASIC Summary   |          |              |
-	-------(0x0008)--->|          |----------(0x04)--->|          |              |
-	                   |__________|                    |__________|              |
+                        __________
+    UART clear-to-send |          |
+    -------(0x2000)--->|          |
+                       |          |
+    UART data ready    |          |
+    -------(0x1000)--->|          |                     __________
+                       |          |   VSYNC            |          |
+    Main-to-sound empty|  IOASIC  |   -------(0x20)--->|          |
+    -------(0x0080)--->|          |                    |          |
+                       |          |   Ethernet         |          |   SIO Summary
+    Sound-to-main full |          |   -------(0x10)--->|   SIO    |--------------+
+    -------(0x0040)--->|          |                    |          |              |
+                       |          |                    |          |              |
+    Sound FIFO empty   |          |   IOASIC Summary   |          |              |
+    -------(0x0008)--->|          |----------(0x04)--->|          |              |
+                       |__________|                    |__________|              |
                                                                                  |
  +-------------------------------------------------------------------------------+
- |	                                                   
- |	                    __________                      __________
- |	IDE Controller     |          |                    |          |
- |	-------(0x0800)--->|          |                    |          |   
- |	                   |          |----------(IRQ5)--->|          |
- |	SIO Summary        |          |                    |          |
+ |
+ |                      __________                      __________
+ |  IDE Controller     |          |                    |          |
+ |  -------(0x0800)--->|          |                    |          |
+ |                     |          |----------(IRQ5)--->|          |
+ |  SIO Summary        |          |                    |          |
  +---------(0x0400)--->|          |----------(IRQ4)--->|          |
-	                   |          |                    |          |
-	Timer 2            |          |----------(IRQ3)--->|   CPU    |
-	-------(0x0040)--->|   NILE   |                    |          |
-	                   |          |----------(IRQ2)--->|          |
-	Timer 3            |          |                    |          |
-	-------(0x0020)--->|          |----------(IRQ1)--->|          |
-	                   |          |                    |          |
-	UART Transmit      |          |----------(IRQ0)--->|          |
-	-------(0x0010)--->|          |                    |__________|
-	                   |__________|
+                       |          |                    |          |
+    Timer 2            |          |----------(IRQ3)--->|   CPU    |
+    -------(0x0040)--->|   NILE   |                    |          |
+                       |          |----------(IRQ2)--->|          |
+    Timer 3            |          |                    |          |
+    -------(0x0020)--->|          |----------(IRQ1)--->|          |
+                       |          |                    |          |
+    UART Transmit      |          |----------(IRQ0)--->|          |
+    -------(0x0010)--->|          |                    |__________|
+                       |__________|
 
 **************************************************************************/
 
@@ -76,7 +76,7 @@
 
 /*************************************
  *
- *	Debugging constants
+ *  Debugging constants
  *
  *************************************/
 
@@ -92,7 +92,7 @@
 
 /*************************************
  *
- *	Core constants
+ *  Core constants
  *
  *************************************/
 
@@ -105,7 +105,7 @@
 
 /*************************************
  *
- *	NILE constants
+ *  NILE constants
  *
  *************************************/
 
@@ -234,7 +234,7 @@
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -284,7 +284,7 @@ static struct dynamic_address
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -296,7 +296,7 @@ static void remap_dynamic_addresses(void);
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -310,13 +310,13 @@ static MACHINE_INIT( vegas )
 	timer[1] = timer_alloc(NULL);
 	timer[2] = timer_alloc(timer_callback);
 	timer[3] = timer_alloc(timer_callback);
-	
+
 	/* reset dynamic addressing */
 	memset(nile_regs, 0, 0x1000);
 	memset(pci_ide_regs, 0, sizeof(pci_ide_regs));
 	memset(pci_3dfx_regs, 0, sizeof(pci_3dfx_regs));
 
-	/* reset the DCS system if we have one */	
+	/* reset the DCS system if we have one */
 	if (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dcs3") != -1)
 	{
 		dcs_reset_w(1);
@@ -327,12 +327,12 @@ static MACHINE_INIT( vegas )
 	ide_controller_reset(0);
 	voodoo_reset();
 	smc91c94_reset();
-	
+
 	/* initialize IRQ states */
 	ide_irq_state = 0;
 	nile_irq_state = 0;
 	sio_irq_state = 0;
-	
+
 	/* find out what type of voodoo we have */
 	voodoo_type = voodoo_get_type();
 	has_dcs3 = (mame_find_cpu_index("dcs3") != -1);
@@ -342,7 +342,7 @@ static MACHINE_INIT( vegas )
 
 /*************************************
  *
- *	Timekeeper access
+ *  Timekeeper access
  *
  *************************************/
 
@@ -375,7 +375,7 @@ INLINE UINT8 make_bcd(UINT8 data)
 static READ32_HANDLER( timekeeper_r )
 {
 	data32_t result = timekeeper_nvram[offset];
-	
+
 	/* upper bytes are a realtime clock */
 	if ((offset*4) >= 0x7ff0)
 	{
@@ -427,14 +427,14 @@ static NVRAM_HANDLER( timekeeper_save )
 
 /*************************************
  *
- *	PCI bridge accesses
+ *  PCI bridge accesses
  *
  *************************************/
 
 static READ32_HANDLER( pci_bridge_r )
 {
 	data32_t result = pci_bridge_regs[offset];
-	
+
 	switch (offset)
 	{
 		case 0x00:		/* ID register: 0x005a = VRC 5074, 0x1033 = NEC */
@@ -459,7 +459,7 @@ static WRITE32_HANDLER( pci_bridge_w )
 
 /*************************************
  *
- *	PCI IDE accesses
+ *  PCI IDE accesses
  *
  *************************************/
 
@@ -472,7 +472,7 @@ static READ32_HANDLER( pci_ide_r )
 		case 0x00:		/* ID register: 0x0646 = 646 EIDE controller, 0x1095 = CMD */
 			result = 0x06461095;
 			break;
-		
+
 		case 0x14:		/* interrupt pending */
 			result &= 0xffffff00;
 			if (ide_irq_state)
@@ -489,7 +489,7 @@ static READ32_HANDLER( pci_ide_r )
 static WRITE32_HANDLER( pci_ide_w )
 {
 	pci_ide_regs[offset] = data;
-	
+
 	switch (offset)
 	{
 		case 0x04:		/* address register */
@@ -506,7 +506,7 @@ static WRITE32_HANDLER( pci_ide_w )
 			pci_ide_regs[offset] &= 0xfffffff0;
 			remap_dynamic_addresses();
 			break;
-		
+
 		case 0x14:		/* interrupt pending */
 			if (data & 4)
 				ide_interrupt(0);
@@ -520,7 +520,7 @@ static WRITE32_HANDLER( pci_ide_w )
 
 /*************************************
  *
- *	PCI 3dfx accesses
+ *  PCI 3dfx accesses
  *
  *************************************/
 
@@ -536,15 +536,15 @@ static READ32_HANDLER( pci_3dfx_r )
 			else
 				result = 0x0003121a;
 			break;
-		
+
 		case 0x02:		/* revision ID register */
 			result = 0x00000002;
 			break;
-		
+
 		case 0x10:		/* fab ID register?? */
 			result = 0x00044000;
 			break;
-		
+
 		case 0x15:		/* ???? -- gauntleg want's 0s in the bits below */
 			result &= 0xf000ffff;
 			break;
@@ -559,7 +559,7 @@ static READ32_HANDLER( pci_3dfx_r )
 static WRITE32_HANDLER( pci_3dfx_w )
 {
 	pci_3dfx_regs[offset] = data;
-	
+
 	switch (offset)
 	{
 		case 0x04:		/* address register */
@@ -569,25 +569,25 @@ static WRITE32_HANDLER( pci_3dfx_w )
 				pci_3dfx_regs[offset] &= 0xfe000000;
 			remap_dynamic_addresses();
 			break;
-		
+
 		case 0x05:		/* address register */
 			if (voodoo_type == 3)
 				pci_3dfx_regs[offset] &= 0xfe000000;
 			remap_dynamic_addresses();
 			break;
-		
+
 		case 0x06:		/* I/O register */
 			if (voodoo_type == 3)
 				pci_3dfx_regs[offset] &= 0xffffff00;
 			remap_dynamic_addresses();
 			break;
-		
+
 		case 0x0c:		/* romBaseAddr register */
 			if (voodoo_type == 3)
 				pci_3dfx_regs[offset] &= 0xffff0000;
 			remap_dynamic_addresses();
 			break;
-		
+
 		case 0x10:		/* initEnable register */
 			voodoo_set_init_enable(data);
 			break;
@@ -601,7 +601,7 @@ static WRITE32_HANDLER( pci_3dfx_w )
 
 /*************************************
  *
- *	nile timers & interrupts
+ *  nile timers & interrupts
  *
  *************************************/
 
@@ -611,13 +611,13 @@ static void update_nile_irqs(void)
 	UINT32 intctlh = nile_regs[NREG_INTCTRL+1];
 	UINT8 irq[6];
 	int i;
-	
+
 	/* check for UART transmit IRQ enable and synthsize one */
 	if (nile_regs[NREG_UARTIER] & 2)
 		nile_irq_state |= 0x0010;
 	else
 		nile_irq_state &= ~0x0010;
-	
+
 	irq[0] = irq[1] = irq[2] = irq[3] = irq[4] = irq[5] = 0;
 	nile_regs[NREG_INTSTAT0+0] = 0;
 	nile_regs[NREG_INTSTAT0+1] = 0;
@@ -649,7 +649,7 @@ static void update_nile_irqs(void)
 					nile_regs[NREG_INTSTAT0 + vector/2] |= 1 << (i + 8 + 16*(vector&1));
 				}
 			}
-	
+
 	/* push out the state */
 	if (LOG_NILE_IRQS) logerror("NILE IRQs:");
 	for (i = 0; i < 6; i++)
@@ -673,7 +673,7 @@ static void timer_callback(int which)
 {
 	UINT32 *regs = &nile_regs[NREG_T0CTRL + which * 4];
 	if (LOG_TIMERS) logerror("timer %d fired\n", which);
-	
+
 	/* adjust the timer to fire again */
 	{
 		double period = TIMER_CLOCK;
@@ -681,7 +681,7 @@ static void timer_callback(int which)
 			logerror("Unexpected value: timer %d is prescaled\n", which);
 		timer_adjust(timer[which], period * (regs[0] + 1), which, TIME_NEVER);
 	}
-	
+
 	/* trigger the interrupt */
 	if (which == 2)
 		nile_irq_state |= 1 << 6;
@@ -695,7 +695,7 @@ static void timer_callback(int which)
 
 /*************************************
  *
- *	Nile system controller
+ *  Nile system controller
  *
  *************************************/
 
@@ -703,7 +703,7 @@ static READ32_HANDLER( nile_r )
 {
 	data32_t result = nile_regs[offset];
 	int logit = 1, which;
-	
+
 	switch (offset)
 	{
 		case NREG_CPUSTAT+0:	/* CPU status */
@@ -711,37 +711,37 @@ static READ32_HANDLER( nile_r )
 			if (LOG_NILE) logerror("%08X:NILE READ: CPU status(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTCTRL+0:	/* Interrupt control */
 		case NREG_INTCTRL+1:	/* Interrupt control */
 			if (LOG_NILE) logerror("%08X:NILE READ: interrupt control(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTSTAT0+0:	/* Interrupt status 0 */
 		case NREG_INTSTAT0+1:	/* Interrupt status 0 */
 			if (LOG_NILE) logerror("%08X:NILE READ: interrupt status 0(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTSTAT1+0:	/* Interrupt status 1 */
 		case NREG_INTSTAT1+1:	/* Interrupt status 1 */
 			if (LOG_NILE) logerror("%08X:NILE READ: interrupt status 1/enable(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTCLR+0:		/* Interrupt clear */
 		case NREG_INTCLR+1:		/* Interrupt clear */
 			if (LOG_NILE) logerror("%08X:NILE READ: interrupt clear(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTPPES+0:	/* PCI Interrupt control */
 		case NREG_INTPPES+1:	/* PCI Interrupt control */
 			if (LOG_NILE) logerror("%08X:NILE READ: PCI interrupt control(%03X) = %08X\n", activecpu_get_pc(), offset*4, result);
 			logit = 0;
 			break;
-		
+
 		case NREG_PCIERR+0:		/* PCI error */
 		case NREG_PCIERR+1:		/* PCI error */
 		case NREG_PCICTRL+0:	/* PCI control */
@@ -752,7 +752,7 @@ static READ32_HANDLER( nile_r )
 		case NREG_PCIINIT1+1:	/* PCI master */
 			logit = 0;
 			break;
-			
+
 		case NREG_T0CNTR:		/* SDRAM timer control (counter) */
 		case NREG_T1CNTR:		/* bus timeout timer control (counter) */
 		case NREG_T2CNTR:		/* general purpose timer control (counter) */
@@ -776,7 +776,7 @@ static READ32_HANDLER( nile_r )
 			else
 				result = 0x01;			/* no IRQ pending */
 			break;
-			
+
 		case NREG_UARTLSR:			/* serial port line status */
 			result = 0x60;
 			logit = 0;
@@ -803,9 +803,9 @@ static READ32_HANDLER( nile_r )
 		case NREG_BARB:
 			result = pci_bridge_r(offset & 0x3f, mem_mask);
 			break;
-		
+
 	}
-	
+
 	if (LOG_NILE && logit)
 		logerror("%06X:nile read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
 	return result;
@@ -818,7 +818,7 @@ static WRITE32_HANDLER( nile_w )
 	int logit = 1, which;
 
 	COMBINE_DATA(&nile_regs[offset]);
-	
+
 	switch (offset)
 	{
 		case NREG_CPUSTAT+0:	/* CPU status */
@@ -826,28 +826,28 @@ static WRITE32_HANDLER( nile_w )
 			if (LOG_NILE) logerror("%08X:NILE WRITE: CPU status(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
 			break;
-			
+
 		case NREG_INTCTRL+0:	/* Interrupt control */
 		case NREG_INTCTRL+1:	/* Interrupt control */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: interrupt control(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
 			update_nile_irqs();
 			break;
-			
+
 		case NREG_INTSTAT0+0:	/* Interrupt status 0 */
 		case NREG_INTSTAT0+1:	/* Interrupt status 0 */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: interrupt status 0(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
 			update_nile_irqs();
 			break;
-			
+
 		case NREG_INTSTAT1+0:	/* Interrupt status 1 */
 		case NREG_INTSTAT1+1:	/* Interrupt status 1 */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: interrupt status 1/enable(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
 			update_nile_irqs();
 			break;
-			
+
 		case NREG_INTCLR+0:		/* Interrupt clear */
 		case NREG_INTCLR+1:		/* Interrupt clear */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: interrupt clear(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
@@ -855,13 +855,13 @@ static WRITE32_HANDLER( nile_w )
 			nile_irq_state &= ~nile_regs[offset];
 			update_nile_irqs();
 			break;
-			
+
 		case NREG_INTPPES+0:	/* PCI Interrupt control */
 		case NREG_INTPPES+1:	/* PCI Interrupt control */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: PCI interrupt control(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
 			break;
-		
+
 		case NREG_PCIERR+0:		/* PCI error */
 		case NREG_PCIERR+1:		/* PCI error */
 		case NREG_PCICTRL+0:	/* PCI control */
@@ -871,13 +871,13 @@ static WRITE32_HANDLER( nile_w )
 		case NREG_PCIINIT1+1:	/* PCI master */
 			logit = 0;
 			break;
-			
+
 		case NREG_PCIINIT1+0:	/* PCI master */
 			if (((olddata & 0xe) == 0xa) != ((nile_regs[offset] & 0xe) == 0xa))
 				remap_dynamic_addresses();
 			logit = 0;
 			break;
-			
+
 		case NREG_T0CTRL+1:		/* SDRAM timer control (control bits) */
 		case NREG_T1CTRL+1:		/* bus timeout timer control (control bits) */
 		case NREG_T2CTRL+1:		/* general purpose timer control (control bits) */
@@ -885,7 +885,7 @@ static WRITE32_HANDLER( nile_w )
 			which = (offset - NREG_T0CTRL) / 4;
 			if (LOG_NILE) logerror("%08X:NILE WRITE: timer %d control(%03X) = %08X & %08X\n", activecpu_get_pc(), which, offset*4, data, ~mem_mask);
 			logit = 0;
-		
+
 			/* timer just enabled? */
 			if (!(olddata & 1) && (nile_regs[offset] & 1))
 			{
@@ -895,7 +895,7 @@ static WRITE32_HANDLER( nile_w )
 				timer_adjust(timer[which], period + period * nile_regs[offset + 1], which, TIME_NEVER);
 				if (LOG_TIMERS) logerror("Starting timer %d at a rate of %d Hz\n", which, (int)(1.0 / (period + period * nile_regs[offset + 1])));
 			}
-			
+
 			/* timer disabled? */
 			else if ((olddata & 1) && !(nile_regs[offset] & 1))
 			{
@@ -906,7 +906,7 @@ static WRITE32_HANDLER( nile_w )
 				timer_adjust(timer[which], TIME_NEVER, which, TIME_NEVER);
 			}
 			break;
-		
+
 		case NREG_T0CNTR:		/* SDRAM timer control (counter) */
 		case NREG_T1CNTR:		/* bus timeout timer control (counter) */
 		case NREG_T2CNTR:		/* general purpose timer control (counter) */
@@ -924,7 +924,7 @@ static WRITE32_HANDLER( nile_w )
 				timer_adjust(timer[which], period, which, TIME_NEVER);
 			}
 			break;
-			
+
 		case NREG_UARTTHR:		/* serial port output */
 			printf("%c", data & 0xff);
 			logit = 0;
@@ -954,7 +954,7 @@ static WRITE32_HANDLER( nile_w )
 		case NREG_BARB:
 			pci_bridge_w(offset & 0x3f, data, mem_mask);
 			break;
-		
+
 		case NREG_DCS2:
 		case NREG_DCS3:
 		case NREG_DCS4:
@@ -967,7 +967,7 @@ static WRITE32_HANDLER( nile_w )
 			remap_dynamic_addresses();
 			break;
 	}
-	
+
 	if (LOG_NILE && logit)
 		logerror("%06X:nile write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 }
@@ -976,7 +976,7 @@ static WRITE32_HANDLER( nile_w )
 
 /*************************************
  *
- *	IDE interrupts
+ *  IDE interrupts
  *
  *************************************/
 
@@ -999,7 +999,7 @@ static struct ide_interface ide_intf =
 
 /*************************************
  *
- *	SIO interrupts
+ *  SIO interrupts
  *
  *************************************/
 
@@ -1021,12 +1021,12 @@ static void vblank_assert(int state)
 		update_sio_irqs();
 	}
 	vblank_state = state;
-	
+
 	/* if we have stalled DMA, restart */
-//	if (dma_pending_on_vblank[0]) { cpuintrf_push_context(0); perform_dma(0); cpuintrf_pop_context(); }
-//	if (dma_pending_on_vblank[1]) { cpuintrf_push_context(0); perform_dma(1); cpuintrf_pop_context(); }
-//	if (dma_pending_on_vblank[2]) { cpuintrf_push_context(0); perform_dma(2); cpuintrf_pop_context(); }
-//	if (dma_pending_on_vblank[3]) { cpuintrf_push_context(0); perform_dma(3); cpuintrf_pop_context(); }
+//  if (dma_pending_on_vblank[0]) { cpuintrf_push_context(0); perform_dma(0); cpuintrf_pop_context(); }
+//  if (dma_pending_on_vblank[1]) { cpuintrf_push_context(0); perform_dma(1); cpuintrf_pop_context(); }
+//  if (dma_pending_on_vblank[2]) { cpuintrf_push_context(0); perform_dma(2); cpuintrf_pop_context(); }
+//  if (dma_pending_on_vblank[3]) { cpuintrf_push_context(0); perform_dma(3); cpuintrf_pop_context(); }
 }
 
 
@@ -1061,14 +1061,14 @@ static WRITE32_HANDLER( sio_irq_clear_w )
 	if (!(mem_mask & 0x000000ff))
 	{
 		sio_irq_clear = data;
-		
+
 		/* bit 0x01 seems to be used to reset the IOASIC */
 		if (!(data & 0x01))
 		{
 			midway_ioasic_reset();
 			dcs_reset_w(data & 0x01);
 		}
-		
+
 		/* they toggle bit 0x08 low to reset the VBLANK */
 		if (!(data & 0x08))
 		{
@@ -1117,7 +1117,7 @@ static READ32_HANDLER( sio_led_r )
 
 /*************************************
  *
- *	SIO FPGA accesses
+ *  SIO FPGA accesses
  *
  *************************************/
 
@@ -1154,7 +1154,7 @@ static READ32_HANDLER( sio_r )
 
 /*************************************
  *
- *	Analog input handling
+ *  Analog input handling
  *
  *************************************/
 
@@ -1175,7 +1175,7 @@ static WRITE32_HANDLER( analog_port_w )
 
 /*************************************
  *
- *	Misc accesses
+ *  Misc accesses
  *
  *************************************/
 
@@ -1254,7 +1254,7 @@ static WRITE32_HANDLER( sound_dma_data_w )
 
 /*************************************
  *
- *	Dynamic addressing
+ *  Dynamic addressing
  *
  *************************************/
 
@@ -1276,14 +1276,14 @@ static void remap_dynamic_addresses(void)
 {
 	offs_t base;
 	int addr;
-	
+
 	/* unmap everything we know about */
 	for (addr = 0; addr < dynamic_count; addr++)
 	{
 		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, MRA32_NOP);
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, MWA32_NOP);
 	}
-	
+
 	/* the build the list of stuff */
 	dynamic_count = 0;
 
@@ -1299,12 +1299,12 @@ static void remap_dynamic_addresses(void)
 		add_dynamic_address(base + 0x6000, base + 0x6003, NULL, cmos_unlock_w);
 		add_dynamic_address(base + 0x7000, base + 0x7003, NULL, vegas_watchdog_w);
 	}
-	
+
 	/* DCS3 */
 	base = nile_regs[NREG_DCS3] & 0x1fffff00;
 	if (base >= ramsize)
 		add_dynamic_address(base + 0x0000, base + 0x0003, analog_port_r, analog_port_w);
-	
+
 	/* DCS4 */
 	base = nile_regs[NREG_DCS4] & 0x1fffff00;
 	if (base >= ramsize)
@@ -1332,7 +1332,7 @@ static void remap_dynamic_addresses(void)
 	base = nile_regs[NREG_DCS7] & 0x1fffff00;
 	if (base >= ramsize)
 		add_dynamic_address(base + 0x1000, base + 0x100f, ethernet_r, ethernet_w);
-	
+
 	/* PCI config space */
 	if ((nile_regs[NREG_PCIINIT1] & 0xe) == 0xa)
 	{
@@ -1343,7 +1343,7 @@ static void remap_dynamic_addresses(void)
 			add_dynamic_address(base + (1 << (21 + 5)) + 0x0000, base + (1 << (21 + 5)) + 0x00ff, pci_ide_r, pci_ide_w);
 		}
 	}
-	
+
 	/* PCI real space */
 	else
 	{
@@ -1359,7 +1359,7 @@ static void remap_dynamic_addresses(void)
 		base = pci_ide_regs[0x08] & 0xfffffff0;
 		if (base >= ramsize && base < 0x20000000)
 			add_dynamic_address(base + 0x0000, base + 0x0007, ide_bus_master32_0_r, ide_bus_master32_0_w);
-		
+
 		/* 3dfx card */
 		base = pci_3dfx_regs[0x04] & 0xfffffff0;
 		if (base >= ramsize && base < 0x20000000)
@@ -1381,7 +1381,7 @@ static void remap_dynamic_addresses(void)
 				add_dynamic_address(base + 0x1000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);
 			}
 		}
-		
+
 		if (voodoo_type >= 3)
 		{
 			base = pci_3dfx_regs[0x05] & 0xfffffff0;
@@ -1397,7 +1397,7 @@ static void remap_dynamic_addresses(void)
 				add_dynamic_address(base + 0x0000000, base + 0x000ffff, voodoo3_rom_r, NULL);
 		}
 	}
-	
+
 	/* now remap everything */
 	if (LOG_DYNAMIC) logerror("remap_dynamic_addresses:\n");
 	for (addr = 0; addr < dynamic_count; addr++)
@@ -1421,7 +1421,7 @@ static void remap_dynamic_addresses(void)
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -1444,7 +1444,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -1919,14 +1919,14 @@ INPUT_PORTS_START( nbashowt )
 	PORT_DIPSETTING(      0x0009, "Mode 3" )
 	PORT_DIPSETTING(      0x0002, "Mode 4" )
 	PORT_DIPSETTING(      0x000c, "Mode ECA" )
-//	PORT_DIPSETTING(      0x0004, "Not Used 1" )		/* Marked as Unused in the manual */
-//	PORT_DIPSETTING(      0x0008, "Not Used 2" )		/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0004, "Not Used 1" )        /* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0008, "Not Used 2" )        /* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x0030, 0x0030, "Curency Type" )
 	PORT_DIPSETTING(      0x0030, DEF_STR( USA ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( French ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( German ))
-//	PORT_DIPSETTING(      0x0000, "Not Used" )		/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0000, "Not Used" )      /* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	/* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0040, "0" )
@@ -1940,8 +1940,8 @@ INPUT_PORTS_START( nbashowt )
 	PORT_DIPNAME( 0x0600, 0x0200, "Graphics Mode" )
 	PORT_DIPSETTING(      0x0200, "512x385 @ 25KHz" )
 	PORT_DIPSETTING(      0x0400, "512x256 @ 15KHz" )
-//	PORT_DIPSETTING(      0x0600, "0" )			/* Marked as Unused in the manual */
-//	PORT_DIPSETTING(      0x0000, "3" )			/* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0600, "0" )         /* Marked as Unused in the manual */
+//  PORT_DIPSETTING(      0x0000, "3" )         /* Marked as Unused in the manual */
 	PORT_DIPNAME( 0x1800, 0x1800, "Graphics Speed" )
 	PORT_DIPSETTING(      0x0000, "45 MHz" )
 	PORT_DIPSETTING(      0x0800, "47 MHz" )
@@ -2117,7 +2117,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -2129,12 +2129,12 @@ static struct mips3_config config =
 };
 
 MACHINE_DRIVER_START( vegascore )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", R5000LE, SYSTEM_CLOCK*2)
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(vegas_map_8mb,0)
-	
+
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
@@ -2190,7 +2190,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -2284,7 +2284,7 @@ ROM_START( nbanfl )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "u27nflnba.bin", 0x000000, 0x80000, CRC(6a9bd382) SHA1(18b942df6af86ea944c24166dbe88148334eaff9) )
-//	ROM_LOAD( "bootnflnba.bin", 0x000000, 0x80000, CRC(3def7053) SHA1(8f07567929f40a2269a42495dfa9dd5edef688fe) )
+//  ROM_LOAD( "bootnflnba.bin", 0x000000, 0x80000, CRC(3def7053) SHA1(8f07567929f40a2269a42495dfa9dd5edef688fe) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "nbanfl", 0, MD5(9e3748957c672f6d7a1e464546f46b15) SHA1(4256c7487a55fd0d0e4241f595cc886d4402fd7d) )
@@ -2318,7 +2318,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -2337,7 +2337,7 @@ static void init_common(int ioasic, int serialnum)
 
 	/* set our VBLANK callback */
 	voodoo_set_vblank_callback(vblank_assert);
-	
+
 	/* allocate RAM for the timekeeper */
 	timekeeper_nvram_size = 0x8000;
 	timekeeper_nvram = auto_malloc(timekeeper_nvram_size);
@@ -2411,7 +2411,7 @@ static DRIVER_INIT( sfru2049 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

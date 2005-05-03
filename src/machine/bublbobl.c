@@ -161,7 +161,7 @@ fc76      RW unknown but should be in the range 00-1e, or even 00-28
 fc78-fc79  W stop clock counter (initialized to 0258 = 10 seconds)
 fc7a-fc7b RW related to stop clock item. Z80 sets fc7a to 01 when time is stopped.
              The MCU counts down fc78-fc79, and when it reaches 0 sets fc7a to 00
-			 and fc7b to 01.
+             and fc7b to 01.
 fc7c      R  EXTEND randomization (must be in range 00-05)
 fc7d      R  MCU I/O error (must be 00)
 fc82-fc83 R  MCU ROM checksum (must be 00)
@@ -262,8 +262,8 @@ static int ic43_a,ic43_b;
 
 READ8_HANDLER( boblbobl_ic43_a_r )
 {
-//	if (offset >= 2)
-//		logerror("%04x: ic43_a_r (offs %d) res = %02x\n",activecpu_get_pc(),offset,res);
+//  if (offset >= 2)
+//      logerror("%04x: ic43_a_r (offs %d) res = %02x\n",activecpu_get_pc(),offset,res);
 
 	if (offset == 0)
 		return ic43_a << 4;
@@ -313,13 +313,13 @@ WRITE8_HANDLER( boblbobl_ic43_b_w )
 {
 	static int xor[4] = { 4, 1, 8, 2 };
 
-//	logerror("%04x: ic43_b_w (offs %d) %02x\n",activecpu_get_pc(),offset,data);
+//  logerror("%04x: ic43_b_w (offs %d) %02x\n",activecpu_get_pc(),offset,data);
 	ic43_b = (data >> 4) ^ xor[offset];
 }
 
 READ8_HANDLER( boblbobl_ic43_b_r )
 {
-//	logerror("%04x: ic43_b_r (offs %d)\n",activecpu_get_pc(),offset);
+//  logerror("%04x: ic43_b_r (offs %d)\n",activecpu_get_pc(),offset);
 	if (offset == 0)
 		return ic43_b << 4;
 	else

@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	BattleToads
+    BattleToads
 
-	Video hardware emulation
+    Video hardware emulation
 
 **************************************************************************/
 
@@ -18,7 +18,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -43,7 +43,7 @@ static UINT16 misc_control;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -59,7 +59,7 @@ VIDEO_START( btoads )
 
 /*************************************
  *
- *	Control registers
+ *  Control registers
  *
  *************************************/
 
@@ -100,7 +100,7 @@ WRITE16_HANDLER( btoads_display_control_w )
 
 /*************************************
  *
- *	Scroll registers
+ *  Scroll registers
  *
  *************************************/
 
@@ -133,7 +133,7 @@ WRITE16_HANDLER( btoads_scroll1_w )
 
 /*************************************
  *
- *	Palette RAM
+ *  Palette RAM
  *
  *************************************/
 
@@ -152,7 +152,7 @@ READ16_HANDLER( btoads_paletteram_r )
 
 /*************************************
  *
- *	Background video RAM
+ *  Background video RAM
  *
  *************************************/
 
@@ -183,7 +183,7 @@ READ16_HANDLER( btoads_vram_bg1_r )
 
 /*************************************
  *
- *	Foreground video RAM
+ *  Foreground video RAM
  *
  *************************************/
 
@@ -216,7 +216,7 @@ READ16_HANDLER( btoads_vram_fg_draw_r )
 
 /*************************************
  *
- *	Sprite rendering
+ *  Sprite rendering
  *
  *************************************/
 
@@ -269,7 +269,7 @@ static void render_sprite_row(UINT16 *sprite_source, UINT32 address)
 
 /*************************************
  *
- *	Shift register read/write
+ *  Shift register read/write
  *
  *************************************/
 
@@ -328,7 +328,7 @@ void btoads_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -336,14 +336,20 @@ VIDEO_UPDATE( btoads )
 {
 	int x, y;
 
+	/* check for disabled video */
+	if (tms34010_io_display_blanked(0))
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+		return;
+	}
+
 	/* loop over all scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *bg0_base = &btoads_vram_bg0[((y + yscroll0) & 0xff) * TOWORD(0x4000)];
 		UINT16 *bg1_base = &btoads_vram_bg1[((y + yscroll1) & 0xff) * TOWORD(0x4000)];
 		UINT8 *spr_base = &vram_fg_display[y * TOWORD(0x4000)];
-		UINT8 scanline[512];
-		UINT8 *dst = scanline;
+		UINT16 *dst = (UINT16 *)bitmap->line[y];
 
 		/* for each scanline, switch off the render mode */
 		switch (screen_control & 3)
@@ -368,9 +374,9 @@ VIDEO_UPDATE( btoads )
 						UINT16 bg1pix = bg1_base[(x + xscroll1) & 0xff];
 
 						if (bg1pix & 0xff)
-							dst[0] = bg1pix;
+							dst[0] = bg1pix & 0xff;
 						else
-							dst[0] = bg0pix;
+							dst[0] = bg0pix & 0xff;
 
 						if (bg1pix >> 8)
 							dst[1] = bg1pix >> 8;
@@ -397,13 +403,13 @@ VIDEO_UPDATE( btoads )
 						UINT16 bg1pix = bg1_base[(x + xscroll1) & 0xff];
 
 						if (bg0pix & 0xff)
-							dst[0] = bg0pix;
+							dst[0] = bg0pix & 0xff;
 						else if (bg1pix & 0x80)
-							dst[0] = bg1pix;
+							dst[0] = bg1pix & 0xff;
 						else if (sprpix)
 							dst[0] = sprpix;
 						else
-							dst[0] = bg1pix;
+							dst[0] = bg1pix & 0xff;
 
 						if (bg0pix >> 8)
 							dst[1] = bg0pix >> 8;
@@ -426,15 +432,15 @@ VIDEO_UPDATE( btoads )
 					UINT8 sprpix = spr_base[x];
 
 					if (bg1pix & 0x80)
-						dst[0] = bg1pix;
+						dst[0] = bg1pix & 0xff;
 					else if (sprpix & 0x80)
 						dst[0] = sprpix;
 					else if (bg1pix & 0xff)
-						dst[0] = bg1pix;
+						dst[0] = bg1pix & 0xff;
 					else if (sprpix)
 						dst[0] = sprpix;
 					else
-						dst[0] = bg0pix;
+						dst[0] = bg0pix & 0xff;
 
 					if (bg1pix & 0x8000)
 						dst[1] = bg1pix >> 8;
@@ -449,9 +455,6 @@ VIDEO_UPDATE( btoads )
 				}
 				break;
 		}
-
-		/* render the scanline */
-		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], NULL, -1);
 	}
 
 	/* debugging - dump the screen contents to a file */

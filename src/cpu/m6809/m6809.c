@@ -1,72 +1,72 @@
 /*** m6809: Portable 6809 emulator ******************************************
 
-	Copyright (C) John Butler 1997
+    Copyright (C) John Butler 1997
 
-	References:
+    References:
 
-		6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
+        6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
 
-		m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
-			the 6809 Simulator V09)
+        m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
+            the 6809 Simulator V09)
 
-		6809 Microcomputer Programming & Interfacing with Experiments"
-			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
+        6809 Microcomputer Programming & Interfacing with Experiments"
+            by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	UINT16 must be 16 bit unsigned int
-							UINT8 must be 8 bit unsigned int
-							UINT32 must be more than 16 bits
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
+    System dependencies:    UINT16 must be 16 bit unsigned int
+                            UINT8 must be 8 bit unsigned int
+                            UINT32 must be more than 16 bits
+                            arrays up to 65536 bytes must be supported
+                            machine must be twos complement
 
-	History:
+    History:
 991026 HJB:
-	Fixed missing calls to cpu_changepc() for the TFR and EXG ocpodes.
-	Replaced m6809_slapstic checks by a macro (CHANGE_PC). ESB still
-	needs the tweaks.
+    Fixed missing calls to cpu_changepc() for the TFR and EXG ocpodes.
+    Replaced m6809_slapstic checks by a macro (CHANGE_PC). ESB still
+    needs the tweaks.
 
 991024 HJB:
-	Tried to improve speed: Using bit7 of cycles1/2 as flag for multi
-	byte opcodes is gone, those opcodes now call fetch_effective_address().
-	Got rid of the slow/fast flags for stack (S and U) memory accesses.
-	Minor changes to use 32 bit values as arguments to memory functions
+    Tried to improve speed: Using bit7 of cycles1/2 as flag for multi
+    byte opcodes is gone, those opcodes now call fetch_effective_address().
+    Got rid of the slow/fast flags for stack (S and U) memory accesses.
+    Minor changes to use 32 bit values as arguments to memory functions
     and added defines for that purpose (e.g. X = 16bit XD = 32bit).
 
 990312 HJB:
-	Added bugfixes according to Aaron's findings.
-	Reset only sets CC_II and CC_IF, DP to zero and PC from reset vector.
+    Added bugfixes according to Aaron's findings.
+    Reset only sets CC_II and CC_IF, DP to zero and PC from reset vector.
 990311 HJB:
-	Added _info functions. Now uses static m6808_Regs struct instead
-	of single statics. Changed the 16 bit registers to use the generic
-	PAIR union. Registers defined using macros. Split the core into
-	four execution loops for M6802, M6803, M6808 and HD63701.
+    Added _info functions. Now uses static m6808_Regs struct instead
+    of single statics. Changed the 16 bit registers to use the generic
+    PAIR union. Registers defined using macros. Split the core into
+    four execution loops for M6802, M6803, M6808 and HD63701.
     TST, TSTA and TSTB opcodes reset carry flag.
-	Modified the read/write stack handlers to push LSB first then MSB
-	and pull MSB first then LSB.
+    Modified the read/write stack handlers to push LSB first then MSB
+    and pull MSB first then LSB.
 
 990228 HJB:
-	Changed the interrupt handling again. Now interrupts are taken
-	either right at the moment the lines are asserted or whenever
-	an interrupt is enabled and the corresponding line is still
-	asserted. That way the pending_interrupts checks are not
-	needed anymore. However, the CWAI and SYNC flags still need
-	some flags, so I changed the name to 'int_state'.
-	This core also has the code for the old interrupt system removed.
+    Changed the interrupt handling again. Now interrupts are taken
+    either right at the moment the lines are asserted or whenever
+    an interrupt is enabled and the corresponding line is still
+    asserted. That way the pending_interrupts checks are not
+    needed anymore. However, the CWAI and SYNC flags still need
+    some flags, so I changed the name to 'int_state'.
+    This core also has the code for the old interrupt system removed.
 
 990225 HJB:
-	Cleaned up the code here and there, added some comments.
-	Slightly changed the SAR opcodes (similiar to other CPU cores).
-	Added symbolic names for the flag bits.
-	Changed the way CWAI/Interrupt() handle CPU state saving.
-	A new flag M6809_STATE in pending_interrupts is used to determine
-	if a state save is needed on interrupt entry or already done by CWAI.
-	Added M6809_IRQ_LINE and M6809_FIRQ_LINE defines to m6809.h
-	Moved the internal interrupt_pending flags from m6809.h to m6809.c
-	Changed CWAI cycles2[0x3c] to be 2 (plus all or at least 19 if
-	CWAI actually pushes the entire state).
-	Implemented undocumented TFR/EXG for undefined source and mixed 8/16
-	bit transfers (they should transfer/exchange the constant $ff).
-	Removed unused jmp/jsr _slap functions from 6809ops.c,
-	m6809_slapstick check moved into the opcode functions.
+    Cleaned up the code here and there, added some comments.
+    Slightly changed the SAR opcodes (similiar to other CPU cores).
+    Added symbolic names for the flag bits.
+    Changed the way CWAI/Interrupt() handle CPU state saving.
+    A new flag M6809_STATE in pending_interrupts is used to determine
+    if a state save is needed on interrupt entry or already done by CWAI.
+    Added M6809_IRQ_LINE and M6809_FIRQ_LINE defines to m6809.h
+    Moved the internal interrupt_pending flags from m6809.h to m6809.c
+    Changed CWAI cycles2[0x3c] to be 2 (plus all or at least 19 if
+    CWAI actually pushes the entire state).
+    Implemented undocumented TFR/EXG for undefined source and mixed 8/16
+    bit transfers (they should transfer/exchange the constant $ff).
+    Removed unused jmp/jsr _slap functions from 6809ops.c,
+    m6809_slapstick check moved into the opcode functions.
 
 *****************************************************************************/
 
@@ -385,7 +385,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 /* timings for 1-byte opcodes */
 static UINT8 cycles1[] =
 {
-	/*	 0	1  2  3  4	5  6  7  8	9  A  B  C	D  E  F */
+	/*   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
   /*0*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
   /*1*/  0, 0, 2, 4, 0, 0, 5, 9, 0, 2, 3, 0, 3, 2, 8, 6,
   /*2*/  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -440,7 +440,7 @@ static void m6809_set_context(void *src)
 
 
 /****************************************************************************/
-/* Reset registers to their initial values									*/
+/* Reset registers to their initial values                                  */
 /****************************************************************************/
 static void m6809_init(void)
 {
@@ -1145,7 +1145,7 @@ static void m6809_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6809_X:			X = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6809_Y:			Y = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6809_DP:			DP = info->i;							break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m6809.irq_callback = info->irqcallback;			break;
 	}
@@ -1171,7 +1171,7 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 19;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

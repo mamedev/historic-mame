@@ -386,7 +386,7 @@ static UINT16 ics2115_reg_r(struct ics2115 *chip, UINT8 reg)
 	switch(reg) {
 	case 0x0d: // [osc] Volume Enveloppe Control
 		logerror("ICS2115: %2d: read vctl (%04x)\n", chip->osc, caller_get_pc());
-		//		res = chip->voice[chip->osc].vctl << 8;
+		//      res = chip->voice[chip->osc].vctl << 8;
 		// may expect |8 on voice irq with &40 == 0
 		// may expect |8 on reg 0 on voice irq with &80 == 0
 		return 0x100;
@@ -405,9 +405,9 @@ static UINT16 ics2115_reg_r(struct ics2115 *chip, UINT8 reg)
 		logerror("ICS2115: read irqv %02x (%04x)\n", res, caller_get_pc());
 		return res << 8;
 	}
-		
+
 	case 0x40: // Timer 0 clear irq
-		//		logerror("ICS2115: clear timer 0 (%04x)\n", caller_get_pc());
+		//      logerror("ICS2115: clear timer 0 (%04x)\n", caller_get_pc());
 		chip->irq_pend &= ~(1<<0);
 		recalc_irq(chip);
 		return chip->timer[0].preset;
@@ -419,7 +419,7 @@ static UINT16 ics2115_reg_r(struct ics2115 *chip, UINT8 reg)
 		return chip->timer[1].preset;
 
 	case 0x43: // Timer status
-		//		logerror("ICS2115: read timer status %02x (%04x)\n", chip->irq_pend & 3, caller_get_pc());
+		//      logerror("ICS2115: read timer status %02x (%04x)\n", chip->irq_pend & 3, caller_get_pc());
 		return chip->irq_pend & 3;
 
 	case 0x4a: // IRQ Pending
@@ -445,7 +445,7 @@ static void *ics2115_start(int sndindex, int clock, const void *config)
 {
 	struct ics2115 *chip;
 	int i;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
@@ -492,8 +492,8 @@ READ8_HANDLER( ics2115_r )
 					break;
 				}
 		}
-		//		logerror("ICS2115: read status %02x (%04x)\n", res, caller_get_pc());
-		
+		//      logerror("ICS2115: read status %02x (%04x)\n", res, caller_get_pc());
+
 		return res;
 	}
 	case 1:
@@ -520,7 +520,7 @@ WRITE8_HANDLER( ics2115_w )
 		ics2115_reg_w(chip, chip->reg, data, 1);
 		break;
 	}
-	//	logerror("ICS2115: wi %d, %02x (%04x)\n", offset, data, caller_get_pc());
+	//  logerror("ICS2115: wi %d, %02x (%04x)\n", offset, data, caller_get_pc());
 }
 
 void ics2115_reset(void *_chip)

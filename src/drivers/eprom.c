@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari Escape hardware
+    Atari Escape hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Escape From The Planet Of The Robot Monsters (1989) [2 sets]
-		* Klax prototypes [2 sets]
+    Games supported:
+        * Escape From The Planet Of The Robot Monsters (1989) [2 sets]
+        * Klax prototypes [2 sets]
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -27,7 +27,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -37,7 +37,7 @@ static data16_t *sync_data;
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -75,7 +75,7 @@ static MACHINE_INIT( eprom )
 
 /*************************************
  *
- *	I/O handling
+ *  I/O handling
  *
  *************************************/
 
@@ -103,7 +103,7 @@ static READ16_HANDLER( adc_r )
 
 /*************************************
  *
- *	Latch write handler
+ *  Latch write handler
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static WRITE16_HANDLER( eprom_latch_w )
 
 /*************************************
  *
- *	Synchronization
+ *  Synchronization
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static WRITE16_HANDLER( sync_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -180,7 +180,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Extra CPU memory handlers
+ *  Extra CPU memory handlers
  *
  *************************************/
 
@@ -202,7 +202,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -287,7 +287,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -326,7 +326,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -336,27 +336,27 @@ static MACHINE_DRIVER_START( eprom )
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(extra_map,0)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
-	
+
 	MDRV_MACHINE_INIT(eprom)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_VIDEO_START(eprom)
 	MDRV_VIDEO_UPDATE(eprom)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_i_mono_speech)
 MACHINE_DRIVER_END
@@ -368,24 +368,24 @@ static MACHINE_DRIVER_START( klaxp )
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
-	
+
 	MDRV_MACHINE_INIT(eprom)
 	MDRV_NVRAM_HANDLER(atarigen)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_VIDEO_START(eprom)
 	MDRV_VIDEO_UPDATE(eprom)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 MACHINE_DRIVER_END
@@ -394,7 +394,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -537,7 +537,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -564,7 +564,7 @@ static DRIVER_INIT( klaxp )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

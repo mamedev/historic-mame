@@ -1,25 +1,25 @@
 /******************************************************************
 
-	Double Dragon 3 					Technos Japan Corp 1990
-	The Combatribes 					Technos Japan Corp 1990
+    Double Dragon 3                     Technos Japan Corp 1990
+    The Combatribes                     Technos Japan Corp 1990
 
 
-	Notes:
+    Notes:
 
-	Both games have original and bootleg versions supported.
-	Double Dragon 3 bootleg has some misplaced graphics, but I
-	think this is how the real thing would look.
-	Combatribes has sprite lag but it seems to be caused by poor
-	programming and I think the original does the same.
+    Both games have original and bootleg versions supported.
+    Double Dragon 3 bootleg has some misplaced graphics, but I
+    think this is how the real thing would look.
+    Combatribes has sprite lag but it seems to be caused by poor
+    programming and I think the original does the same.
 
 ******************************************************************/
 
 /*
 
-	TODO:
+    TODO:
 
-	- coin counters/lockouts
-	- convert MACHINE_DRIVER_START( ctribe ) to use MDRV_IMPORT_FROM(ddragon3)
+    - coin counters/lockouts
+    - convert MACHINE_DRIVER_START( ctribe ) to use MDRV_IMPORT_FROM(ddragon3)
 
 */
 
@@ -70,14 +70,14 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 		break;
 
 		case 2:
-		/*	this gets written to on startup and at the end of IRQ6
-		**	possibly trigger IRQ on sound CPU
-		*/
+		/*  this gets written to on startup and at the end of IRQ6
+        **  possibly trigger IRQ on sound CPU
+        */
 		break;
 
 		case 3:
-		/*	this gets written to on startup,
-		**	and at the end of IRQ5 (input port read) */
+		/*  this gets written to on startup,
+        **  and at the end of IRQ5 (input port read) */
 		break;
 
 		case 4:
@@ -291,7 +291,7 @@ INPUT_PORTS_START( ddrago3b )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )	// jump
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )	// kick
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	
+
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -372,7 +372,7 @@ INPUT_PORTS_START( ctribe )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )	// jump
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	
+
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -602,7 +602,7 @@ ROM_START( ddragon3 )
 	ROM_LOAD( "dd3.a",   0x0c0000, 0x40000, CRC(0f74ea1c) SHA1(6bd8dd89bd22b29038cf502a898336e95e50a9cc) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	/* sprites	*/
+	/* sprites  */
 	ROM_LOAD( "dd3.3e",   0x000000, 0x20000, CRC(726c49b7) SHA1(dbafad47bb6b717c409fdc5d81c413f1282f2bbb) ) //4a
 	ROM_LOAD( "dd3.3d",   0x020000, 0x20000, CRC(37a1c335) SHA1(de70ba51788b601591c3aff71cb94aae349b272d) ) //3a
 	ROM_LOAD( "dd3.3c",   0x040000, 0x20000, CRC(2bcfe63c) SHA1(678ef0e7cc38e4df1e1d1e3f5cba6601aa520ec6) ) //2a
@@ -653,7 +653,7 @@ ROM_START( ddrago3b )
 	ROM_LOAD( "dd3.a",   0x0c0000, 0x40000, CRC(0f74ea1c) SHA1(6bd8dd89bd22b29038cf502a898336e95e50a9cc) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	/* sprites	*/
+	/* sprites  */
 	ROM_LOAD( "dd3.3e",   0x000000, 0x20000, CRC(726c49b7) SHA1(dbafad47bb6b717c409fdc5d81c413f1282f2bbb) ) //4a
 	ROM_LOAD( "dd3.3d",   0x020000, 0x20000, CRC(37a1c335) SHA1(de70ba51788b601591c3aff71cb94aae349b272d) ) //3a
 	ROM_LOAD( "dd3.3c",   0x040000, 0x20000, CRC(2bcfe63c) SHA1(678ef0e7cc38e4df1e1d1e3f5cba6601aa520ec6) ) //2a

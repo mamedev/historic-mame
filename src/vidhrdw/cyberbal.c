@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Cyberball hardware
+    Atari Cyberball hardware
 
 ****************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -33,7 +33,7 @@ data16_t *cyberbal_paletteram_1;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -48,7 +48,7 @@ static UINT16 playfield_yscroll[2];
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -91,7 +91,7 @@ static void get_playfield2_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -248,7 +248,7 @@ VIDEO_START( cyberb2p )
 
 /*************************************
  *
- *	Screen switcher
+ *  Screen switcher
  *
  *************************************/
 
@@ -262,7 +262,7 @@ void cyberbal_set_screen(int which)
 
 /*************************************
  *
- *	Palette tweaker
+ *  Palette tweaker
  *
  *************************************/
 
@@ -285,7 +285,7 @@ INLINE void set_palette_entry(int entry, UINT16 value)
 
 /*************************************
  *
- *	Palette RAM write handlers
+ *  Palette RAM write handlers
  *
  *************************************/
 
@@ -316,7 +316,7 @@ READ16_HANDLER( cyberbal_paletteram_1_r )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -382,7 +382,7 @@ void cyberbal_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -417,7 +417,7 @@ static void update_one_screen(int screen, struct mame_bitmap *bitmap, struct rec
 				if (mo[x])
 				{
 					/* not verified: logic is all controlled in a PAL
-					*/
+                    */
 					pf[x] = mo[x];
 
 					/* erase behind ourselves */
@@ -434,7 +434,7 @@ VIDEO_UPDATE( cyberbal )
 {
 #if (CYBERBALL_DUAL_MODE)
 	struct rectangle rect;
-	
+
 	if (cliprect->min_x < SCREEN_WIDTH)
 	{
 		rect = *cliprect;

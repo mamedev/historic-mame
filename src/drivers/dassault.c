@@ -433,7 +433,7 @@ INPUT_PORTS_START( dassault )
 	PORT_DIPSETTING(    0x30, "2" )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
-//	PORT_DIPSETTING(    0x00, "4 (buggy)" )
+//  PORT_DIPSETTING(    0x00, "4 (buggy)" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -834,8 +834,8 @@ static void init_dassault(void)
 	data8_t *tmp = (data8_t *)malloc(0x80000);
 
 	/* Playfield 4 also has access to the char graphics, make things easier
-	by just copying the chars to both banks (if I just used a different gfx
-	bank then the colours would be wrong). */
+    by just copying the chars to both banks (if I just used a different gfx
+    bank then the colours would be wrong). */
 	memcpy(tmp+0x000000,dst+0x80000,0x80000);
 	memcpy(dst+0x090000,tmp+0x00000,0x80000);
 	memcpy(dst+0x080000,src+0x00000,0x10000);
@@ -854,8 +854,8 @@ static void init_thndzone(void)
 	data8_t *tmp = (data8_t *)malloc(0x80000);
 
 	/* Playfield 4 also has access to the char graphics, make things easier
-	by just copying the chars to both banks (if I just used a different gfx
-	bank then the colours would be wrong). */
+    by just copying the chars to both banks (if I just used a different gfx
+    bank then the colours would be wrong). */
 	memcpy(tmp+0x000000,dst+0x80000,0x80000);
 	memcpy(dst+0x090000,tmp+0x00000,0x80000);
 	memcpy(dst+0x080000,src+0x00000,0x10000);

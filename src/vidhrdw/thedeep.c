@@ -1,30 +1,30 @@
 /***************************************************************************
 
-							-= Run Deep / The Deep =-
+                            -= Run Deep / The Deep =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-	[ 1 Horizontally Scrolling Layer ]
+    [ 1 Horizontally Scrolling Layer ]
 
-		Size :	512 x 512
-		Tiles:	16 x 16 x 4.
+        Size :  512 x 512
+        Tiles:  16 x 16 x 4.
 
-		In addition to a global x & y scroll register each tile-wide column
-		has its own y scroll register.
+        In addition to a global x & y scroll register each tile-wide column
+        has its own y scroll register.
 
-	[ 1 Fixed Layer ]
+    [ 1 Fixed Layer ]
 
-		Size :	256 x 256
-		Tiles:	8 x 8 x 2.
+        Size :  256 x 256
+        Tiles:  8 x 8 x 2.
 
-	[ 128? sprites ]
+    [ 128? sprites ]
 
-		Sprites tiles are 16 x 16 x 4. Each sprite has a height and width
-		specified (1,2,4, or 8 tiles).
+        Sprites tiles are 16 x 16 x 4. Each sprite has a height and width
+        specified (1,2,4, or 8 tiles).
 
-		A sprite of width N uses N consecutive sprites: the first one specifies
-		all the data (position,flip), the following ones only the tile code and
-		color for that column (tile codes in each column are consecutive).
+        A sprite of width N uses N consecutive sprites: the first one specifies
+        all the data (position,flip), the following ones only the tile code and
+        color for that column (tile codes in each column are consecutive).
 
 ***************************************************************************/
 
@@ -44,7 +44,7 @@ data8_t *thedeep_scroll, *thedeep_scroll2;
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -96,7 +96,7 @@ WRITE8_HANDLER( thedeep_vram_1_w )
 
 /***************************************************************************
 
-								Palette Init
+                                Palette Init
 
 ***************************************************************************/
 
@@ -114,7 +114,7 @@ PALETTE_INIT( thedeep )
 
 /***************************************************************************
 
-								Video Init
+                                Video Init
 
 ***************************************************************************/
 
@@ -136,32 +136,32 @@ VIDEO_START( thedeep )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-Offset:		Bits:		Value:
+Offset:     Bits:       Value:
 
-	0					Y (low bits, 0 is bottom)
+    0                   Y (low bits, 0 is bottom)
 
-	1		7-------	Enable
-			-6------	Flip Y
-			--5-----	Flip X ? (unused)
-			---43---	Height: 1,2,4 or 8 tiles
-			-----21-	Width: 1,2,4 or 8 tiles*
-			-------0	Y (High bit)
+    1       7-------    Enable
+            -6------    Flip Y
+            --5-----    Flip X ? (unused)
+            ---43---    Height: 1,2,4 or 8 tiles
+            -----21-    Width: 1,2,4 or 8 tiles*
+            -------0    Y (High bit)
 
-	2					Code (low bits)
+    2                   Code (low bits)
 
-	3					Code (high bits)
+    3                   Code (high bits)
 
-	4					X (low bits, 0 is right)
+    4                   X (low bits, 0 is right)
 
-	5		7654----	Color
-			----321-
-			-------0	X (High bit)
+    5       7654----    Color
+            ----321-
+            -------0    X (High bit)
 
-	6					Unused
+    6                   Unused
 
-	7					Unused
+    7                   Unused
 
 * a sprite of width N uses N consecutive sprites. The first one specifies
   all the data, the following ones only the tile code and color.
@@ -226,7 +226,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
 ***************************************************************************/
 

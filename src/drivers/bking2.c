@@ -94,8 +94,8 @@ static READ8_HANDLER( bk3_r )
 static WRITE8_HANDLER( unk_w )
 {
 /*
-	0 = finished reading extra rom
-	1 = started reading extra rom
+    0 = finished reading extra rom
+    1 = started reading extra rom
 */
 }
 
@@ -126,15 +126,15 @@ static WRITE8_HANDLER( mcu_data_w )
 	mcu_val = data;
 	/* HW test */
 	/* all bits of port ($02) except the MSB are connected to the command,
-	   in all cases it should return 0x5e.This one is here to avoid to get a big
-   	   switch-case statement in the mcu_data_r function... */
+       in all cases it should return 0x5e.This one is here to avoid to get a big
+       switch-case statement in the mcu_data_r function... */
 	if(mcu_val >= 0x80)
 		mcu_val = 0x5e;
 }
 
 static READ8_HANDLER( mcu_data_r )
 {
-//	usrintf_showmessage("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
+//  usrintf_showmessage("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	switch(mcu_val)
 	{
 		/* Shot counter control at the green (check $bdf and afterwards in that condition)*/
@@ -145,7 +145,7 @@ static READ8_HANDLER( mcu_data_r )
 
 static READ8_HANDLER( mcu_data_r2 )
 {
-//	usrintf_showmessage("MCU-r2 PC = %04x %02x",activecpu_get_pc(),mcu_val);
+//  usrintf_showmessage("MCU-r2 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	return 0x31; //no "bad rom.", no "bad ext."
 }
 
@@ -192,7 +192,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x09, 0x09) AM_WRITE(bking2_cont2_w)
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(bking2_cont3_w)
 	AM_RANGE(0x0b, 0x0b) AM_WRITE(bking2_soundlatch_w)
-//	AM_RANGE(0x0c, 0x0c) AM_WRITE(bking2_eport2_w)   this is not shown to be connected anywhere
+//  AM_RANGE(0x0c, 0x0c) AM_WRITE(bking2_eport2_w)   this is not shown to be connected anywhere
 	AM_RANGE(0x0d, 0x0d) AM_WRITE(bking2_hitclr_w)
 
 	AM_RANGE(0x2f, 0x2f) AM_WRITE(mcu_data_w)
@@ -210,8 +210,8 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4800, 0x4800) AM_READ(soundlatch_r)
 	AM_RANGE(0x4802, 0x4802) AM_READ(bking2_sndnmi_disable_r)
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)   /* space for some other ROM???
-									  It's checked if there is valid code there
-									  [Probably diagnostic ROM like other early Taito games -AS]*/
+                                      It's checked if there is valid code there
+                                      [Probably diagnostic ROM like other early Taito games -AS]*/
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -557,11 +557,11 @@ static MACHINE_DRIVER_START( bking2 )
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
@@ -694,8 +694,8 @@ ROM_START( bking3 )
 	ROM_LOAD( "a24-21.25",    0x0000, 0x1000, CRC(3106fcac) SHA1(08454adfb58e5df84140d86ed52fa4ef684df9f1) ) /* extra rom on the same SUB PCB where is the mcu */
 
 //missing?
-//"a24_03" 	A24_03 - TI TBP28S46N - Not read
-//"a24_04" 	A24_04 - Bipolar PROM - Not read
+//"a24_03"  A24_03 - TI TBP28S46N - Not read
+//"a24_04"  A24_04 - Bipolar PROM - Not read
 
 ROM_END
 

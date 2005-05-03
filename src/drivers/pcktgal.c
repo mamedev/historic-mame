@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	Pocket Gal						(c) 1987 Data East Corporation
-	Pocket Gal (Bootleg)			(c) 1989 Yada East Corporation(!!!)
-	Super Pool III					(c) 1989 Data East Corporation
-	Pocket Gal 2					(c) 1989 Data East Corporation
-	Super Pool III (I-Vics Inc)		(c) 1990 Data East Corporation
+    Pocket Gal                      (c) 1987 Data East Corporation
+    Pocket Gal (Bootleg)            (c) 1989 Yada East Corporation(!!!)
+    Super Pool III                  (c) 1989 Data East Corporation
+    Pocket Gal 2                    (c) 1989 Data East Corporation
+    Super Pool III (I-Vics Inc)     (c) 1990 Data East Corporation
 
-	Pocket Gal (Bootleg) is often called 'Sexy Billiards'
+    Pocket Gal (Bootleg) is often called 'Sexy Billiards'
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -236,7 +236,7 @@ static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
 static struct MSM5205interface msm5205_interface =
 {
 	pcktgal_adpcm_int,	/* interrupt function */
-	MSM5205_S48_4B		/* 8KHz			   */
+	MSM5205_S48_4B		/* 8KHz            */
 };
 
 /***************************************************************************/

@@ -104,9 +104,9 @@ static void update_color(int color)
 	int r,g,b;
 
 	/* I'm not sure how the brightness should be applied, currently I'm only
-	   affecting bg & sprites, not fg.
-	   The second brightness control might apply to shadows, see gametngk.
-	 */
+       affecting bg & sprites, not fg.
+       The second brightness control might apply to shadows, see gametngk.
+     */
 	if (~color & 0x4000)
 	{
 		r = ((ms32_palram[color*2] & 0xff00) >>8 ) * brt_r / 0x100;
@@ -245,37 +245,37 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset:		Bits:					Meaning:
+    Offset:     Bits:                   Meaning:
 
-	0.w			fedc ba98 ---- ----
-				---- ---- 7654 ----		Priority
-				---- ---- ---- 3---
-				---- ---- ---- -2--		Draw this sprite
-				---- ---- ---- --1-		Flip Y
-				---- ---- ---- ---0		Flip X
+    0.w         fedc ba98 ---- ----
+                ---- ---- 7654 ----     Priority
+                ---- ---- ---- 3---
+                ---- ---- ---- -2--     Draw this sprite
+                ---- ---- ---- --1-     Flip Y
+                ---- ---- ---- ---0     Flip X
 
-	1.w			fedc ba98 ---- ----		Tile's Y position in the tile page (*)
-				---- ---- 7654 3210		Tile's X position in the tile page (*)
+    1.w         fedc ba98 ---- ----     Tile's Y position in the tile page (*)
+                ---- ---- 7654 3210     Tile's X position in the tile page (*)
 
-	2.w			fedc ---- ---- ----		Color
-				---- ba98 7654 3210		Tile Page (32x32 tiles = 256x256 pixels each)
+    2.w         fedc ---- ---- ----     Color
+                ---- ba98 7654 3210     Tile Page (32x32 tiles = 256x256 pixels each)
 
-	3.w			fedc ba98 ---- ----		Y Size - 1 (*)
-				---- ---- 7654 3210		X Size - 1 (*)
+    3.w         fedc ba98 ---- ----     Y Size - 1 (*)
+                ---- ---- 7654 3210     X Size - 1 (*)
 
-	4.w			fedc ba-- ---- ----
-				---- --98 7654 3210		Y (Signed)
+    4.w         fedc ba-- ---- ----
+                ---- --98 7654 3210     Y (Signed)
 
-	5.w			fedc b--- ---- ----
-				---- -a98 7654 3210		X (Signed)
+    5.w         fedc b--- ---- ----
+                ---- -a98 7654 3210     X (Signed)
 
-	6.w			fedc ba98 7654 3210		Zoom Y
+    6.w         fedc ba98 7654 3210     Zoom Y
 
-	7.w			fedc ba98 7654 3210		Zoom X
+    7.w         fedc ba98 7654 3210     Zoom X
 
-(*)	1 pixel granularity
+(*) 1 pixel granularity
 
 ***************************************************************************/
 
@@ -467,13 +467,13 @@ VIDEO_UPDATE( ms32 )
 	int scrollx,scrolly;
 
 	/* TODO: registers 0x04/4 and 0x10/4 are used too; the most interesting case
-	   is gametngk, where they are *usually*, but not always, copies of 0x00/4
-	   and 0x0c/4 (used for scrolling).
-	   0x10/4 is 0xdf in most games (apart from gametngk's special case), but
-	   it's 0x00 in hayaosi1 and kirarast, and 0xe2 (!) in gratia's tx layer.
-	   The two registers might be somewhat related to the width and height of the
-	   tilemaps, but there's something that just doesn't fit.
-	 */
+       is gametngk, where they are *usually*, but not always, copies of 0x00/4
+       and 0x0c/4 (used for scrolling).
+       0x10/4 is 0xdf in most games (apart from gametngk's special case), but
+       it's 0x00 in hayaosi1 and kirarast, and 0xe2 (!) in gratia's tx layer.
+       The two registers might be somewhat related to the width and height of the
+       tilemaps, but there's something that just doesn't fit.
+     */
 	scrollx = ms32_tx_scroll[0x00/4] + ms32_tx_scroll[0x08/4] + 0x18;
 	scrolly = ms32_tx_scroll[0x0c/4] + ms32_tx_scroll[0x14/4];
 	tilemap_set_scrollx(ms32_tx_tilemap, 0, scrollx);
@@ -488,7 +488,7 @@ VIDEO_UPDATE( ms32 )
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* TODO: 0 is correct for gametngk, but break f1superb scrolling grid (text at
-	   top and bottom of the screen becomes black on black) */
+       top and bottom of the screen becomes black on black) */
 	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* bg color */
 
 #ifdef MAME_DEBUG

@@ -5,7 +5,7 @@ Quiz Gakuen Paradise (c) 1991 NMK
 Quiz Gekiretsu Scramble (Gakuen Paradise 2) (c) 1993 Face
 
 Video hardware
-	driver by Uki
+    driver by Uki
 
 ******************************************************************************/
 

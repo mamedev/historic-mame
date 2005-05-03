@@ -12,7 +12,7 @@ Driver by Jarek Burczynski
      DIPSW-8     AY-3-8912                               DIPSW-4
                                                          DIPSW-4
 
-						74s288
+                        74s288
 
 
                                                WAC1   WAC2   WAC3
@@ -153,7 +153,7 @@ static ADDRESS_MAP_START( wallc_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0x83ff) AM_RAM AM_MIRROR(0xc00) AM_WRITE(wallc_videoram_w) AM_BASE(&videoram)	/* 2114, 2114 */
 	AM_RANGE(0xa000, 0xa3ff) AM_RAM		/* 2114, 2114 */
-	
+
 	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_0_r)
 	AM_RANGE(0xb200, 0xb200) AM_READ(input_port_1_r)
 	AM_RANGE(0xb400, 0xb400) AM_READ(input_port_2_r)

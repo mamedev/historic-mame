@@ -1,8 +1,8 @@
 /*********************************************************************
 
-	hash.h
+    hash.h
 
-	Function to handle hash functions (checksums)
+    Function to handle hash functions (checksums)
 
 *********************************************************************/
 
@@ -77,5 +77,5 @@ int hash_verify_string(const char *hash);
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif

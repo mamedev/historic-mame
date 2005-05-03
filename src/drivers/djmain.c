@@ -1,39 +1,39 @@
 /*
- *	Beatmania DJ Main Board (GX753)
+ *  Beatmania DJ Main Board (GX753)
  *
- *	Product numbers:
- *	GQ753 beatmania (first release in 1997)
- *	Gx853 beatmania 2nd MIX (1998)
- *	Gx825 beatmania 3rd MIX
- *	Gx858 beatmania complete MIX (1999)
- *	Gx847 beatmania 4th MIX
- *	Gx981 beatmania 5th MIX
- *	Gx993 beatmania Club MIX (2000)
- *	Gx988 beatmania complete MIX 2
- *	Gx995 beatmania featuring Dreams Come True
- *	GxA05 beatmania CORE REMIX
- *	GxA21 beatmania 6th MIX (2001)
- *	GxB07 beatmania 7th MIX
- *	GxC01 beatmania THE FINAL (2002)
+ *  Product numbers:
+ *  GQ753 beatmania (first release in 1997)
+ *  Gx853 beatmania 2nd MIX (1998)
+ *  Gx825 beatmania 3rd MIX
+ *  Gx858 beatmania complete MIX (1999)
+ *  Gx847 beatmania 4th MIX
+ *  Gx981 beatmania 5th MIX
+ *  Gx993 beatmania Club MIX (2000)
+ *  Gx988 beatmania complete MIX 2
+ *  Gx995 beatmania featuring Dreams Come True
+ *  GxA05 beatmania CORE REMIX
+ *  GxA21 beatmania 6th MIX (2001)
+ *  GxB07 beatmania 7th MIX
+ *  GxC01 beatmania THE FINAL (2002)
  *
- *	Gx803 Pop'n Music 1 (1998)
- *	Gx831 Pop'n Music 2
- *	Gx980 Pop'n Music 3 (1999)
+ *  Gx803 Pop'n Music 1 (1998)
+ *  Gx831 Pop'n Music 2
+ *  Gx980 Pop'n Music 3 (1999)
  *
- *	????? Pop'n Stage
- *	Gx970 Pop'n Stage EX (1999)
+ *  ????? Pop'n Stage
+ *  Gx970 Pop'n Stage EX (1999)
  *
- *	Chips:
- *	15a:	MC68EC020FG25
- *	25b:	001642
- *	18d:	055555 (priority encoder)
- *	 5f:	056766 (sprites)
- *	18f:	056832 (tiles)
- *	22f:	058143 = 054156 (tiles)
- *	12j:	058141 = 054539 (x2) (2 sound chips in one)
+ *  Chips:
+ *  15a:    MC68EC020FG25
+ *  25b:    001642
+ *  18d:    055555 (priority encoder)
+ *   5f:    056766 (sprites)
+ *  18f:    056832 (tiles)
+ *  22f:    058143 = 054156 (tiles)
+ *  12j:    058141 = 054539 (x2) (2 sound chips in one)
  *
- *	TODO:
- *	- correct FPS
+ *  TODO:
+ *  - correct FPS
  *
  */
 
@@ -68,7 +68,7 @@ static data32_t obj_regs[0xa0/4];
 
 /*************************************
  *
- *	68k CPU memory handlers
+ *  68k CPU memory handlers
  *
  *************************************/
 
@@ -342,31 +342,31 @@ static WRITE32_HANDLER( ide_alt_w )
 
 /*
  beatmania/hiphopmania
-	0x5d0000 (MSW16):
-	bit 0: 1P button 1 LED
-	    1: 1P button 2 LED
-	    2: 1P button 3 LED
-	    3: 1P button 4 LED
-	    4: 1P button 5 LED
-	    5: Right blue HIGHLIGHT	(active low)
-	    6: 2P button 1 LED
-	    7: 2P button 2 LED
-	    8: 2P button 3 LED
-	    9: Left blue HIGHLIGHT	(active low)
-	   10: Left red HIGHLIGHT	(active low)
-	   11: Right red HIGHLIGHT	(active low)
-	12-15: not used?		(always low)
+    0x5d0000 (MSW16):
+    bit 0: 1P button 1 LED
+        1: 1P button 2 LED
+        2: 1P button 3 LED
+        3: 1P button 4 LED
+        4: 1P button 5 LED
+        5: Right blue HIGHLIGHT (active low)
+        6: 2P button 1 LED
+        7: 2P button 2 LED
+        8: 2P button 3 LED
+        9: Left blue HIGHLIGHT  (active low)
+       10: Left red HIGHLIGHT   (active low)
+       11: Right red HIGHLIGHT  (active low)
+    12-15: not used?        (always low)
 
-	0x5d2000 (MSW16):
-	    0: 1P START button LED
-	    1: 2P START button LED
-	    2: EFFECT button LED
-	 3-10: not used?		(always low)
-	   11: SSR
-	   12: 2P button 4 LED
-	   13: 2P button 5 LED
-	   14: COIN BLOCKER		(active low)
-	   15: not used?		(always low)
+    0x5d2000 (MSW16):
+        0: 1P START button LED
+        1: 2P START button LED
+        2: EFFECT button LED
+     3-10: not used?        (always low)
+       11: SSR
+       12: 2P button 4 LED
+       13: 2P button 5 LED
+       14: COIN BLOCKER     (active low)
+       15: not used?        (always low)
 */
 
 static WRITE32_HANDLER( light_ctrl_1_w )
@@ -416,7 +416,7 @@ static WRITE32_HANDLER( unknownc02000_w )
 
 /*************************************
  *
- *	Interrupt handlers
+ *  Interrupt handlers
  *
  *************************************/
 
@@ -454,7 +454,7 @@ static void ide_interrupt(int state)
 
 /*************************************
  *
- *	Memory definitions
+ *  Memory definitions
  *
  *************************************/
 
@@ -493,7 +493,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -790,7 +790,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -817,7 +817,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	IDE interfaces
+ *  IDE interfaces
  *
  *************************************/
 
@@ -830,7 +830,7 @@ static struct ide_interface ide_intf =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -843,7 +843,7 @@ static struct K054539interface k054539_interface =
 
 /*************************************
  *
- *	Machine-specific init
+ *  Machine-specific init
  *
  *************************************/
 
@@ -866,7 +866,7 @@ static MACHINE_INIT( djmain )
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -874,7 +874,7 @@ static MACHINE_DRIVER_START( djmain )
 
 	/* basic machine hardware */
 	// popn3 works 9.6 MHz or slower in some songs */
-	//MDRV_CPU_ADD(M68EC020, 18432000/2)	/*  9.216 MHz!? */
+	//MDRV_CPU_ADD(M68EC020, 18432000/2)    /*  9.216 MHz!? */
 	MDRV_CPU_ADD(M68EC020, 32000000/4)	/*  8.000 MHz!? */
 	MDRV_CPU_PROGRAM_MAP(memory_map, 0)
 	MDRV_CPU_VBLANK_INT(vb_interrupt, 1)
@@ -911,7 +911,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -934,7 +934,7 @@ ROM_START( bm1stmix )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
 	// There is an alternate image
-	//DISK_IMAGE( "753jaa11", 0, MD5(260c9b72f4a03055e3abad61c6225324) SHA1(2cc3e149744516bf2353a2b47d33bc9d2072b6c4) )	/* ver 1.00 JA */
+	//DISK_IMAGE( "753jaa11", 0, MD5(260c9b72f4a03055e3abad61c6225324) SHA1(2cc3e149744516bf2353a2b47d33bc9d2072b6c4) ) /* ver 1.00 JA */
 	DISK_IMAGE( "753jaa11", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) SHA1(71d200d1bd3f1f3a01f4daa78dc9abcca8b8a1fb) )	/* ver 1.00 JA */
 ROM_END
 
@@ -1171,7 +1171,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver-specific init
+ *  Driver-specific init
  *
  *************************************/
 
@@ -1339,7 +1339,7 @@ static DRIVER_INIT( bm6thmix )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

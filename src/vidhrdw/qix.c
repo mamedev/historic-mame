@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Taito Qix hardware
+    Taito Qix hardware
 
-	driver by John Butler, Ed Mueller, Aaron Giles
+    driver by John Butler, Ed Mueller, Aaron Giles
 
 ***************************************************************************/
 
@@ -28,7 +28,7 @@ static int leds;
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -48,7 +48,7 @@ VIDEO_START( qix )
 
 /*************************************
  *
- *	Scanline caching
+ *  Scanline caching
  *
  *************************************/
 
@@ -68,7 +68,7 @@ void qix_scanline_callback(int scanline)
 
 /*************************************
  *
- *	Current scanline read
+ *  Current scanline read
  *
  *************************************/
 
@@ -82,7 +82,7 @@ READ8_HANDLER( qix_scanline_r )
 
 /*************************************
  *
- *	Video RAM mask
+ *  Video RAM mask
  *
  *************************************/
 
@@ -98,16 +98,16 @@ WRITE8_HANDLER( slither_vram_mask_w )
 
 /*************************************
  *
- *	Direct video RAM read/write
+ *  Direct video RAM read/write
  *
- *	The screen is 256x256 with eight
- *	bit pixels (64K).  The screen is
- *	divided into two halves each half
- *	mapped by the video CPU at
- *	$0000-$7FFF.  The high order bit
- *	of the address latch at $9402
- *	specifies which half of the screen
- *	is being accessed.
+ *  The screen is 256x256 with eight
+ *  bit pixels (64K).  The screen is
+ *  divided into two halves each half
+ *  mapped by the video CPU at
+ *  $0000-$7FFF.  The high order bit
+ *  of the address latch at $9402
+ *  specifies which half of the screen
+ *  is being accessed.
  *
  *************************************/
 
@@ -132,16 +132,16 @@ WRITE8_HANDLER( qix_videoram_w )
 
 /*************************************
  *
- *	Latched video RAM read/write
+ *  Latched video RAM read/write
  *
- *	The address latch works as follows.
- *	When the video CPU accesses $9400,
- *	the screen address is computed by
- *	using the values at $9402 (high
- *	byte) and $9403 (low byte) to get
- *	a value between $0000-$FFFF.  The
- *	value at that location is either
- *	returned or written.
+ *  The address latch works as follows.
+ *  When the video CPU accesses $9400,
+ *  the screen address is computed by
+ *  using the values at $9402 (high
+ *  byte) and $9403 (low byte) to get
+ *  a value between $0000-$FFFF.  The
+ *  value at that location is either
+ *  returned or written.
  *
  *************************************/
 
@@ -167,7 +167,7 @@ WRITE8_HANDLER( qix_addresslatch_w )
 
 /*************************************
  *
- *	Palette RAM
+ *  Palette RAM
  *
  *************************************/
 
@@ -231,7 +231,7 @@ WRITE8_HANDLER( qix_palettebank_w )
 
 /*************************************
  *
- *	Core video refresh
+ *  Core video refresh
  *
  *************************************/
 

@@ -1,20 +1,20 @@
 /*****************************************************************************
  *
- *	 ops09.h
+ *   ops09.h
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   Copyright (c) 2000 Peter Trauner, all rights reserved.
  *   documentation by michael steil mist@c64.org
  *   available at ftp://ftp.funet.fi/pub/cbm/c65
  *
- *	 - This source code is released as freeware for non-commercial purposes.
- *	 - You are free to use and redistribute this code in modified or
- *	   unmodified form, provided you list me in the credits.
- *	 - If you modify this source code, you must add a notice to each modified
- *	   source file that it has been changed.  If you're a nice person, you
- *	   will clearly mark each change too.  :)
- *	 - If you wish to use this for commercial purposes, please contact me at
- *	   pullmoll@t-online.de
- *	 - The author of this copywritten work reserves the right to change the
+ *   - This source code is released as freeware for non-commercial purposes.
+ *   - You are free to use and redistribute this code in modified or
+ *     unmodified form, provided you list me in the credits.
+ *   - If you modify this source code, you must add a notice to each modified
+ *     source file that it has been changed.  If you're a nice person, you
+ *     will clearly mark each change too.  :)
+ *   - If you wish to use this for commercial purposes, please contact me at
+ *     pullmoll@t-online.de
+ *   - The author of this copywritten work reserves the right to change the
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
@@ -123,7 +123,7 @@
 
 /***************************************************************
  *  EA = zero page indirect + Y (post indexed)
- *	subtract 1 cycle if page boundary is crossed
+ *  subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #undef EA_IDY
 #define EA_IDY													\
@@ -140,7 +140,7 @@
 
 /***************************************************************
  *  EA = zero page indirect + Y (post indexed)
- *	subtract 1 cycle if page boundary is crossed
+ *  subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #define EA_IDY_6509 											\
 	ZPL = RDOPARG();											\
@@ -154,7 +154,7 @@
 	EAW += Y
 
 /***************************************************************
- *	EA = indirect (only used by JMP)
+ *  EA = indirect (only used by JMP)
  ***************************************************************/
 #undef EA_IND
 #define EA_IND													\
@@ -163,14 +163,14 @@
 	EAL++;	/* booby trap: stay in same page! ;-) */			\
 	EAH = RDMEM(EAD);											\
 	EAL = tmp;
-/*	EAWH = PBWH */
+/*  EAWH = PBWH */
 
 #define RD_IDY_6509	EA_IDY_6509; tmp = RDMEM(EAD)
 #define WR_IDY_6509	EA_IDY_6509; WRMEM(EAD, tmp)
 
 /***************************************************************
- *	BRA  branch relative
- *	extra cycle if page boundary is crossed
+ *  BRA  branch relative
+ *  extra cycle if page boundary is crossed
  ***************************************************************/
 #undef BRA
 #define BRA(cond)                                               \
@@ -189,9 +189,9 @@
 	}
 
 /* 6502 ********************************************************
- *	JSR Jump to subroutine
- *	decrement PC (sic!) push PC hi, push PC lo and set
- *	PC to the effective address
+ *  JSR Jump to subroutine
+ *  decrement PC (sic!) push PC hi, push PC lo and set
+ *  PC to the effective address
  ***************************************************************/
 #undef JSR
 #define JSR 													\
@@ -204,7 +204,7 @@
 	CHANGE_PC
 
 /* 6510 ********************************************************
- *	KIL Illegal opcode
+ *  KIL Illegal opcode
  * processor haltet, no hardware interrupt will help
  * only reset
  ***************************************************************/

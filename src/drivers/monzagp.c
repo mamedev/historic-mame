@@ -8,33 +8,33 @@ Dumped by Andy Welburn on a windy and rainy day 07/07/04
 
 Possibly has clk/dir type steering.
 
-Shows RB BO ITALY on the title screen and is a top-down driving game, 
+Shows RB BO ITALY on the title screen and is a top-down driving game,
 a lot like monaco GP, it even has stages where you have headlights.
-Board colour, screening, track patterns, and most importantly 
-component type and colour of sockets indicates to me a pcb made in 
-the same factory as 'Sidam' and some 'Olympia' games. There is no 
-manufacturer name, no game name, all i see is : AA20/80 etched 
+Board colour, screening, track patterns, and most importantly
+component type and colour of sockets indicates to me a pcb made in
+the same factory as 'Sidam' and some 'Olympia' games. There is no
+manufacturer name, no game name, all i see is : AA20/80 etched
 on the underside of the pcb.
 
-I have had this pcb for a number of years, i always thought it was 
+I have had this pcb for a number of years, i always thought it was
 some sort of pinball logic pcb so didn't treat it too well. When it
-came to clearing out my boxes of junk i took another look at it, and 
+came to clearing out my boxes of junk i took another look at it, and
 it was the bank of 4116 rams that made me take a closer look.
 
-I hooked it up and saw some video on my scope, then it died. 
-The +12v had shorted.. Suspecting the godamn tantalum capacitors 
-(often short out for no reason) i found a shorted one, removed 
-it and away we went. It had seperate H + V sync, so i loaded 
-a 74ls08 into a spare ic space and AND'ed the two signals to get 
-composite, voila, i got a stable picture. The colours aren't right, 
-and maybe the video isn't quite right either, but it worked enough 
+I hooked it up and saw some video on my scope, then it died.
+The +12v had shorted.. Suspecting the godamn tantalum capacitors
+(often short out for no reason) i found a shorted one, removed
+it and away we went. It had seperate H + V sync, so i loaded
+a 74ls08 into a spare ic space and AND'ed the two signals to get
+composite, voila, i got a stable picture. The colours aren't right,
+and maybe the video isn't quite right either, but it worked enough
 for me to realise i had never seen a game like it, so i dumped it.
 
-I couldn't get any sound out of it, could be broken, or not 
+I couldn't get any sound out of it, could be broken, or not
 hooked up right, i would suspect the latter is the case.
 
 
-Hardware : 
+Hardware :
 ==========
 2x  z80's
 1x  AY-3-8910
@@ -45,21 +45,21 @@ Hardware :
 12x 2708 (ROM)
 
 
-ROMS layout: 
+ROMS layout:
 ------------
 (add .bin to the end to get the filenames)
 YC,YD,YA and YB are all 2716 eproms, everything else is 2708's.
 
 (tabulation used here, see photo for clarity)
 
-YC	YD		XX
-YA	YB
-			XC
-		XI	XM
-		X-*	XD
-		XP	XS
-		XA	XE
-		XR	XO
+YC  YD      XX
+YA  YB
+            XC
+        XI  XM
+        X-* XD
+        XP  XS
+        XA  XE
+        XR  XO
 
 *- denotes a rom where the label had fallen off.. so its X-.bin
 
@@ -89,7 +89,7 @@ VIDEO_UPDATE( monzagp )
 { /* WRONG */
 	unsigned char *source = videoram;
 	int sy;
-//	return;
+//  return;
 	for( sy=0; sy<256; sy++ )
 	{
 		data16_t *dest = bitmap->line[sy];
@@ -208,7 +208,7 @@ static MACHINE_DRIVER_START( monzagp )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -284,16 +284,16 @@ ROM_START( monzagp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code */
 	ROM_LOAD( "xx.bin", 0x0000, 0x400, CRC(059d6294) SHA1(38f075753e7a9fcabb857e5587e8a5966052cbcd) )
 	ROM_LOAD( "xc.bin", 0x1000, 0x400, CRC(397fd1f3) SHA1(e6b927933847ddcdbbcbeb5e5f37fea063356b24) )
-//	ROM_LOAD( "xp.bin", 0x1800, 0x400, CRC(4b6d63ef) SHA1(16f9e31e588b989f5259ab59c0a3a2c7787f3a16) ) // ? where mapped?
+//  ROM_LOAD( "xp.bin", 0x1800, 0x400, CRC(4b6d63ef) SHA1(16f9e31e588b989f5259ab59c0a3a2c7787f3a16) ) // ? where mapped?
 	ROM_LOAD( "xi.bin", 0x1c00, 0x400, CRC(ef54efa2) SHA1(c8464f11ccfd9eaf9aefb2cd3ac2b9e8bc2d11b6) ) // contains bitmap for "R.B."
 	ROM_LOAD( "x-.bin", 0x2000, 0x400, CRC(fea8e31e) SHA1(f85eac74d32ebd28170b466b136faf21a8ab220f) )
 	ROM_LOAD( "xd.bin", 0x2400, 0x400, CRC(0c601fc9) SHA1(e655f292b502a14068f5c35428001f8ceedf3637) )
 	ROM_LOAD( "xs.bin", 0x2800, 0x400, CRC(5d15ac52) SHA1(b4f97854018f72e4086c7d830d1b312aea1420a7) )
-//	ROM_LOAD( "xa.bin", 0x2c00, 0x400, CRC(a95f5461) SHA1(2645fb93bc4ad5354eef5a385fa94021fb7291dc) ) // ? where mapped?
-//	ROM_LOAD( "xr.bin", 0x3000, 0x400, CRC(8a8667aa) SHA1(53f34b6c5327d4398de644d7f318d460da56c2de) ) // ? where mapped?
-//	ROM_LOAD( "xm.bin", 0x3400, 0x400, CRC(64ebb7de) SHA1(fc5477bbedf44e93a578a71d2ff376f6f0b51a71) ) // ? where mapped?
-//	ROM_LOAD( "xo.bin", 0x3800, 0x400, CRC(c1d7f67c) SHA1(2ddfe9e59e323cd041fd760531b9e15ccd050058) ) // ? where mapped?
-//	ROM_LOAD( "xe.bin", 0x3c00, 0x400, CRC(e0e81120) SHA1(14a77dfd069be342df4dbb1b747443c6d121d3fe) ) // ? where mapped?
+//  ROM_LOAD( "xa.bin", 0x2c00, 0x400, CRC(a95f5461) SHA1(2645fb93bc4ad5354eef5a385fa94021fb7291dc) ) // ? where mapped?
+//  ROM_LOAD( "xr.bin", 0x3000, 0x400, CRC(8a8667aa) SHA1(53f34b6c5327d4398de644d7f318d460da56c2de) ) // ? where mapped?
+//  ROM_LOAD( "xm.bin", 0x3400, 0x400, CRC(64ebb7de) SHA1(fc5477bbedf44e93a578a71d2ff376f6f0b51a71) ) // ? where mapped?
+//  ROM_LOAD( "xo.bin", 0x3800, 0x400, CRC(c1d7f67c) SHA1(2ddfe9e59e323cd041fd760531b9e15ccd050058) ) // ? where mapped?
+//  ROM_LOAD( "xe.bin", 0x3c00, 0x400, CRC(e0e81120) SHA1(14a77dfd069be342df4dbb1b747443c6d121d3fe) ) // ? where mapped?
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE ) /* fake - for viewing purposes; these are actually mapped in CPU address space */
 	ROM_LOAD( "xp.bin", 0x0000, 0x400, CRC(4b6d63ef) SHA1(16f9e31e588b989f5259ab59c0a3a2c7787f3a16) )/* contains characters: "AEIOSXTDNMVGYRPL" */

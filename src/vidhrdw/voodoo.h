@@ -1,8 +1,8 @@
 /*************************************************************************
 
-	3dfx Voodoo Graphics SST-1 emulator
+    3dfx Voodoo Graphics SST-1 emulator
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
 **************************************************************************/
 

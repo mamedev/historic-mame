@@ -49,7 +49,7 @@ extern void psx_sio_input( int, int, int );
 #define PSX_SIO_IN_DATA ( 1 )	/* DATA */
 #define PSX_SIO_IN_DSR ( 2 )	/* ACK */
 #define PSX_SIO_IN_CTS ( 4 )
-	
+
 WRITE32_HANDLER( psx_mdec_w );
 READ32_HANDLER( psx_mdec_r );
 extern void psx_machine_init( void );

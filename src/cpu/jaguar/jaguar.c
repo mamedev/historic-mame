@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		jaguar.c
-**		Core implementation for the portable Jaguar DSP emulator.
-**		Written by Aaron Giles
+**      jaguar.c
+**      Core implementation for the portable Jaguar DSP emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -22,7 +22,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define ZFLAG				0x00001
@@ -60,7 +60,7 @@
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 #define PC				ctrl[G_PC]
@@ -79,7 +79,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* Jaguar Registers */
@@ -108,7 +108,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
+**  PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
 static int	jaguar_icount;
@@ -117,7 +117,7 @@ static int bankswitch_icount;
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static jaguar_regs	jaguar;
@@ -131,7 +131,7 @@ static const UINT32 convert_zero[32] =
 
 
 /*###################################################################################################
-**	FUNCTION TABLES
+**  FUNCTION TABLES
 **#################################################################################################*/
 
 static void abs_rn(void);
@@ -248,7 +248,7 @@ static void (*dsp_op_table[64])(void) =
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		(cpu_readop16(WORD_XOR_BE((UINT32)(pc))))
@@ -256,7 +256,7 @@ static void (*dsp_op_table[64])(void) =
 
 
 /*###################################################################################################
-**	INLINES
+**  INLINES
 **#################################################################################################*/
 
 INLINE void update_register_banks(void)
@@ -295,7 +295,7 @@ INLINE void update_register_banks(void)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 static void check_irqs(void)
@@ -356,7 +356,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void jaguar_get_context(void *dst)
@@ -379,7 +379,7 @@ static void jaguar_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void init_tables(void)
@@ -486,7 +486,7 @@ static void jaguar_exit(void)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 int jaguargpu_execute(int cycles)
@@ -584,7 +584,7 @@ int jaguardsp_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 jaguar_reg_layout[] =
@@ -620,7 +620,7 @@ static UINT8 jaguar_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t jaguargpu_dasm(char *buffer, offs_t pc)
@@ -648,7 +648,7 @@ static offs_t jaguardsp_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	OPCODES
+**  OPCODES
 **#################################################################################################*/
 
 void abs_rn(void)
@@ -1326,7 +1326,7 @@ void xor_rn_rn(void)
 
 
 /*###################################################################################################
-**	I/O HANDLING
+**  I/O HANDLING
 **#################################################################################################*/
 
 data32_t jaguargpu_ctrl_r(int cpunum, offs_t offset)
@@ -1438,7 +1438,7 @@ void jaguargpu_ctrl_w(int cpunum, offs_t offset, data32_t data, data32_t mem_mas
 
 
 /*###################################################################################################
-**	I/O HANDLING
+**  I/O HANDLING
 **#################################################################################################*/
 
 data32_t jaguardsp_ctrl_r(int cpunum, offs_t offset)
@@ -1603,7 +1603,7 @@ static void jaguargpu_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + JAGUAR_R30:		jaguar.r[30] = info->i;						break;
 		case CPUINFO_INT_REGISTER + JAGUAR_R31:		jaguar.r[31] = info->i;						break;
 		case CPUINFO_INT_SP:						jaguar.b0[31] = info->i; 					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:				jaguar.irq_callback = info->irqcallback;	break;
 	}
@@ -1629,7 +1629,7 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

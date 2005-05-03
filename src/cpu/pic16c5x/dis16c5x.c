@@ -1,12 +1,12 @@
  /**************************************************************************\
- *						Microchip PIC16C5x Emulator							*
- *																			*
- *					  Copyright (C) 2003+ Tony La Porta						*
- *				   Originally written for the MAME project.					*
- *																			*
- *																			*
- *		Notes : Data is expected to be read from source file as LSB first.	*
- *																			*
+ *                      Microchip PIC16C5x Emulator                         *
+ *                                                                          *
+ *                    Copyright (C) 2003+ Tony La Porta                     *
+ *                 Originally written for the MAME project.                 *
+ *                                                                          *
+ *                                                                          *
+ *      Notes : Data is expected to be read from source file as LSB first.  *
+ *                                                                          *
  \**************************************************************************/
 
 #include <stdio.h>

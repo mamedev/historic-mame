@@ -1,6 +1,6 @@
 /*
- *	Thunder Ceptor board
- *	emulate video hardware
+ *  Thunder Ceptor board
+ *  emulate video hardware
  */
 
 #include "driver.h"
@@ -78,12 +78,12 @@ PALETTE_INIT( tceptor )
 	/* color_prom now points to the beginning of the lookup table */
 
 	/*
-	  color lookup table:
-		0-    +1024 ( 4 * 256) colors: text   (use 0-   256 colors)
-		1024- +1024 (16 *  64) colors: sprite (use 768- 256 colors)
-		2048-  +512 ( 8 *  64) colors: bg     (use 0-   512 colors)
-		3840-  +256 ( 4 *  64) colors: road   (use 512- 256 colors)
-	*/
+      color lookup table:
+        0-    +1024 ( 4 * 256) colors: text   (use 0-   256 colors)
+        1024- +1024 (16 *  64) colors: sprite (use 768- 256 colors)
+        2048-  +512 ( 8 *  64) colors: bg     (use 0-   512 colors)
+        3840-  +256 ( 4 *  64) colors: road   (use 512- 256 colors)
+    */
 
 	/* tiles lookup table (1024 colors) */
 	for (i = 0; i < 1024;i++)
@@ -503,24 +503,24 @@ VIDEO_START( tceptor )
 /*******************************************************************/
 
 /*
-	Sprite data format
+    Sprite data format
 
-	000: zzzzzzBB BTTTTTTT
-	002: ZZZZZZPP PPCCCCCC
-	100: fFL---YY YYYYYYYY
-	102: ------XX XXXXXXXX
+    000: zzzzzzBB BTTTTTTT
+    002: ZZZZZZPP PPCCCCCC
+    100: fFL---YY YYYYYYYY
+    102: ------XX XXXXXXXX
 
-	B: bank
-	T: number
-	P: priority
-	C: color
-	X: x
-	Y: y
-	L: large sprite
-	F: flip x
-	f: flip y
-	Z: zoom x
-	z: zoom y
+    B: bank
+    T: number
+    P: priority
+    C: color
+    X: x
+    Y: y
+    L: large sprite
+    F: flip x
+    f: flip y
+    Z: zoom x
+    z: zoom y
 */
 
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_priority)

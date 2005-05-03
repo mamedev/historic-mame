@@ -1,18 +1,18 @@
 /***************************************************************************
 
-	Atari ThunderJaws hardware
+    Atari ThunderJaws hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* ThunderJaws (1990)
+    Games supported:
+        * ThunderJaws (1990)
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -30,7 +30,7 @@ static data16_t *rom_base[2];
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static MACHINE_INIT( thunderj )
 	atarivc_reset(atarivc_eof_data, 2);
 	atarigen_interrupt_reset(update_interrupts);
 	atarijsa_reset();
-	
+
 	rom_base[0] = (data16_t *)memory_region(REGION_CPU1);
 	rom_base[1] = (data16_t *)memory_region(REGION_CPU2);
 	cpu_setbank(1, shared_ram);
@@ -72,7 +72,7 @@ static MACHINE_INIT( thunderj )
 
 /*************************************
  *
- *	I/O handling
+ *  I/O handling
  *
  *************************************/
 
@@ -113,10 +113,10 @@ static WRITE16_HANDLER( latch_w )
 
 /*************************************
  *
- *	Synchronization helper
+ *  Synchronization helper
  *
  *************************************/
- 
+
 static void shared_sync_callback(int param)
 {
 	if (--param)
@@ -127,7 +127,7 @@ static void shared_sync_callback(int param)
 static READ16_HANDLER( shared_ram_r )
 {
 	data16_t result = shared_ram[offset];
-	
+
 	/* look for a byte access, and then check for the high bit and a TAS opcode */
 	if (mem_mask != 0 && (result & ~mem_mask & 0x8080))
 	{
@@ -147,7 +147,7 @@ static READ16_HANDLER( shared_ram_r )
 			}
 		}
 	}
-	
+
 	return result;
 }
 
@@ -155,29 +155,29 @@ static READ16_HANDLER( shared_ram_r )
 
 /*************************************
  *
- *	Video Controller Hack
+ *  Video Controller Hack
  *
  *************************************/
 
 READ16_HANDLER( thunderj_video_control_r )
 {
 	/* Sigh. CPU #1 reads the video controller register twice per frame, once at
-	   the beginning of interrupt and once near the end. It stores these values in a
-	   table starting at $163484. CPU #2 periodically looks at this table to make
-	   sure that it is getting interrupts at the appropriate times, and that the
-	   VBLANK bit is set appropriately. Unfortunately, due to all the cpu_yield()
-	   calls we make to synchronize the two CPUs, we occasionally get out of time
-	   and generate the interrupt outside of the tight tolerances CPU #2 expects.
+       the beginning of interrupt and once near the end. It stores these values in a
+       table starting at $163484. CPU #2 periodically looks at this table to make
+       sure that it is getting interrupts at the appropriate times, and that the
+       VBLANK bit is set appropriately. Unfortunately, due to all the cpu_yield()
+       calls we make to synchronize the two CPUs, we occasionally get out of time
+       and generate the interrupt outside of the tight tolerances CPU #2 expects.
 
-	   So we fake it. Returning scanlines $f5 and $f7 alternately provides the
-	   correct answer that causes CPU #2 to be happy and not aggressively trash
-	   memory (which is what it does if this interrupt test fails -- see the code
-	   at $1E56 to see!) */
+       So we fake it. Returning scanlines $f5 and $f7 alternately provides the
+       correct answer that causes CPU #2 to be happy and not aggressively trash
+       memory (which is what it does if this interrupt test fails -- see the code
+       at $1E56 to see!) */
 
 	/* Use these lines to detect when things go south:
 
-	if (cpu_readmem24bew_word(0x163482) > 0xfff)
-		printf("You're screwed!");*/
+    if (cpu_readmem24bew_word(0x163482) > 0xfff)
+        printf("You're screwed!");*/
 
 	return atarivc_r(offset,0);
 }
@@ -186,7 +186,7 @@ READ16_HANDLER( thunderj_video_control_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -229,7 +229,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Extra CPU memory handlers
+ *  Extra CPU memory handlers
  *
  *************************************/
 
@@ -258,7 +258,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -300,7 +300,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -340,7 +340,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -349,27 +349,27 @@ static MACHINE_DRIVER_START( thunderj )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
-	
+
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_PROGRAM_MAP(extra_readmem,extra_writemem)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(thunderj)
 	MDRV_NVRAM_HANDLER(atarigen)
 	MDRV_INTERLEAVE(100)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
-	
+
 	MDRV_VIDEO_START(thunderj)
 	MDRV_VIDEO_UPDATE(thunderj)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 MACHINE_DRIVER_END
@@ -378,7 +378,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -454,7 +454,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -468,7 +468,7 @@ static DRIVER_INIT( thunderj )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

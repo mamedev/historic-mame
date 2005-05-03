@@ -192,7 +192,7 @@ static ADDRESS_MAP_START( mcatadv_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x200005) AM_READ(MRA16_RAM)
 	AM_RANGE(0x300000, 0x300005) AM_READ(MRA16_RAM)
 
-//	AM_RANGE(0x180018, 0x18001f) AM_READ(MRA16_NOP) // ?
+//  AM_RANGE(0x180018, 0x18001f) AM_READ(MRA16_NOP) // ?
 
 	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM) // Tilemap 0
 	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM) // Tilemap 1
@@ -228,7 +228,7 @@ static ADDRESS_MAP_START( mcatadv_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700000, 0x707fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) // Sprites, two halves for double buffering
 	AM_RANGE(0x708000, 0x70ffff) AM_WRITE(MWA16_RAM) // Tests more than is needed?
 
-//	AM_RANGE(0x900000, 0x900001) AM_WRITE(mcat_coin_w) // Lockout / Counter MCAT Only
+//  AM_RANGE(0x900000, 0x900001) AM_WRITE(mcat_coin_w) // Lockout / Counter MCAT Only
 	AM_RANGE(0xb00000, 0xb0000f) AM_WRITE(MWA16_RAM) AM_BASE(&mcatadv_vidregs)
 	AM_RANGE(0xb00018, 0xb00019) AM_WRITE(watchdog_reset16_w) // NOST Only
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(mcat_soundlatch_w)
@@ -379,7 +379,7 @@ INPUT_PORTS_START( mcatadv )
 	PORT_DIPSETTING(    0x40, "Upright 1 Player" )
 	PORT_DIPSETTING(    0xc0, "Upright 2 Players" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
-//	PORT_DIPSETTING(    0x00, "Upright 2 Players" )		// duplicated setting (NEVER tested)
+//  PORT_DIPSETTING(    0x00, "Upright 2 Players" )     // duplicated setting (NEVER tested)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nost )

@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Atari Football hardware
+    Atari Football hardware
 
 *************************************************************************/
 
@@ -36,7 +36,7 @@ WRITE8_HANDLER( atarifb_out1_w )
 		/* bit 4 = 2/4 Player LED */	// Say what?
 		/* bit 5-6 = trackball CTRL bits */
 		/* bit 7 = Rule LED */
-//		set_led_status(0,data & 0x10);	// !!!!!!!!!! Is this correct????
+//      set_led_status(0,data & 0x10);  // !!!!!!!!!! Is this correct????
 		set_led_status(1,data & 0x80);
 	}
 
@@ -77,7 +77,7 @@ WRITE8_HANDLER( atarifb_out2_w )
 
 /*************************************
  *
- *	LED control
+ *  LED control
  *
  *************************************/
 
@@ -108,7 +108,7 @@ WRITE8_HANDLER( atarifb_out3_w )
 		case 0x03:
 			break;
 	}
-//	logerror("out3_w, %02x:%02x\n", loop, data);
+//  logerror("out3_w, %02x:%02x\n", loop, data);
 }
 
 

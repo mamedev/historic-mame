@@ -148,15 +148,15 @@ WRITE16_HANDLER( armedf_text_videoram_w )
 			tilemap_mark_tile_dirty(tx_tilemap,offset & 0xbff);
 		}
 	}
-		
-/*	if (offset<0x10)
-		logerror("%04x %04x %04x %04x %04x %04x %04x %04x-%04x %04x %04x %04x %04x %04x %04x %04x (%04x)\n",
-			terraf_text_videoram[0], terraf_text_videoram[1], terraf_text_videoram[2],
-			terraf_text_videoram[3], terraf_text_videoram[4], terraf_text_videoram[5],
-			terraf_text_videoram[6], terraf_text_videoram[7], terraf_text_videoram[8],
-			terraf_text_videoram[9], terraf_text_videoram[10], terraf_text_videoram[11],
-			terraf_text_videoram[12], terraf_text_videoram[13], terraf_text_videoram[14],
-			terraf_text_videoram[15], offset);*/
+
+/*  if (offset<0x10)
+        logerror("%04x %04x %04x %04x %04x %04x %04x %04x-%04x %04x %04x %04x %04x %04x %04x %04x (%04x)\n",
+            terraf_text_videoram[0], terraf_text_videoram[1], terraf_text_videoram[2],
+            terraf_text_videoram[3], terraf_text_videoram[4], terraf_text_videoram[5],
+            terraf_text_videoram[6], terraf_text_videoram[7], terraf_text_videoram[8],
+            terraf_text_videoram[9], terraf_text_videoram[10], terraf_text_videoram[11],
+            terraf_text_videoram[12], terraf_text_videoram[13], terraf_text_videoram[14],
+            terraf_text_videoram[15], offset);*/
 }
 
 
@@ -230,7 +230,7 @@ WRITE16_HANDLER( armedf_bg_scrolly_w )
 
 WRITE16_HANDLER( armedf_mcu_cmd )
 {
-	COMBINE_DATA(&mcu_mode);	
+	COMBINE_DATA(&mcu_mode);
 }
 
 
@@ -282,7 +282,7 @@ VIDEO_UPDATE( armedf )
 	tilemap_set_enable( bg_tilemap, armedf_vreg&0x800 );
 	tilemap_set_enable( fg_tilemap, armedf_vreg&0x400 );
 	tilemap_set_enable( tx_tilemap, armedf_vreg&0x100 );
-	
+
 	if ((scroll_type == 0)||(scroll_type == 5 )) {
 		if (old_mcu_mode!=mcu_mode) {
 			if ((mcu_mode&0x000f)==0x0004) {		// transparent tx
@@ -295,7 +295,7 @@ VIDEO_UPDATE( armedf )
 				tilemap_mark_all_tiles_dirty( tx_tilemap );
 				//logerror("? Opaque TX\n");
 			}
-			
+
 			old_mcu_mode = mcu_mode;
 			//logerror("MCU Change => %04x\n",mcu_mode);
 		}
@@ -328,27 +328,27 @@ VIDEO_UPDATE( armedf )
 				scrolly = (terraf_text_videoram[11] & 0xff) | (terraf_text_videoram[12] << 8);
 				tilemap_set_scrollx( fg_tilemap, 0, scrollx);
 				tilemap_set_scrolly( fg_tilemap, 0, scrolly);
-				
+
 			}
 			break;
 		case 5: /* terra force (US) */
 			tilemap_set_scrollx( fg_tilemap, 0, (terraf_text_videoram[13] & 0xff) | ((terraf_text_videoram[14] & 0x3)<<8) );
 			tilemap_set_scrolly( fg_tilemap, 0, (terraf_text_videoram[11] & 0xff) | ((terraf_text_videoram[12] & 0x3)<<8) );
 			break;
-			
+
 	}
 
 
 	fillbitmap( bitmap, 0xff, cliprect );
 	if (armedf_vreg & 0x0800) tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
 	/*if( armedf_vreg & 0x0800 )
-	{
-		tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
-	}
-	else
-	{
-		fillbitmap( bitmap, get_black_pen()&0x0f, cliprect );
-	}*/
+    {
+        tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
+    }
+    else
+    {
+        fillbitmap( bitmap, get_black_pen()&0x0f, cliprect );
+    }*/
 
 	if ((mcu_mode&0x0030)==0x0030) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
@@ -358,7 +358,7 @@ VIDEO_UPDATE( armedf )
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
 	if ((mcu_mode&0x0030)==0x0000) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
-	
+
 }
 
 VIDEO_EOF( armedf )

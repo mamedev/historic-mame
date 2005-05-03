@@ -1,10 +1,10 @@
 /*****************************************************************************
  *
- *	 i8085.c
- *	 Portable I8085A emulator V1.2
+ *   i8085.c
+ *   Portable I8085A emulator V1.2
  *
- *	 Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
- *	 Partially based on information out of Z80Em by Marcel De Kogel
+ *   Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
+ *   Partially based on information out of Z80Em by Marcel De Kogel
  *
  * changes in V1.3
  *   - Added undocumented opcodes for the 8085A, based on a german
@@ -17,62 +17,62 @@
  *     Thanks for the info and a copy of the tables go to Timo Sachsenberg
  *     <timo.sachsenberg@student.uni-tuebingen.de>
  * changes in V1.2
- *	 - corrected cycle counts for these classes of opcodes
- *	   Thanks go to Jim Battle <frustum@pacbell.bet>
+ *   - corrected cycle counts for these classes of opcodes
+ *     Thanks go to Jim Battle <frustum@pacbell.bet>
  *
- *					808x	 Z80
- *	   DEC A		   5	   4	\
- *	   INC A		   5	   4	 \
- *	   LD A,B		   5	   4	  >-- Z80 is faster
- *	   JP (HL)		   5	   4	 /
- *	   CALL cc,nnnn: 11/17	 10/17	/
+ *                  808x     Z80
+ *     DEC A           5       4    \
+ *     INC A           5       4     \
+ *     LD A,B          5       4      >-- Z80 is faster
+ *     JP (HL)         5       4     /
+ *     CALL cc,nnnn: 11/17   10/17  /
  *
- *	   INC HL		   5	   6	\
- *	   DEC HL		   5	   6	 \
- *	   LD SP,HL 	   5	   6	  \
- *	   ADD HL,BC	  10	  11	   \
- *	   INC (HL) 	  10	  11		>-- 8080 is faster
- *	   DEC (HL) 	  10	  11	   /
- *	   IN A,(#) 	  10	  11	  /
- *	   OUT (#),A	  10	  11	 /
- *	   EX (SP),HL	  18	  19	/
+ *     INC HL          5       6    \
+ *     DEC HL          5       6     \
+ *     LD SP,HL        5       6      \
+ *     ADD HL,BC      10      11       \
+ *     INC (HL)       10      11        >-- 8080 is faster
+ *     DEC (HL)       10      11       /
+ *     IN A,(#)       10      11      /
+ *     OUT (#),A      10      11     /
+ *     EX (SP),HL     18      19    /
  *
  *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
- *	 You can contact me at juergen@mame.net or pullmoll@stop1984.com
+ *   You can contact me at juergen@mame.net or pullmoll@stop1984.com
  *
  *   - This source code is released as freeware for non-commercial purposes
  *     as part of the M.A.M.E. (Multiple Arcade Machine Emulator) project.
- *	   The licensing terms of MAME apply to this piece of code for the MAME
- *	   project and derviative works, as defined by the MAME license. You
- *	   may opt to make modifications, improvements or derivative works under
- *	   that same conditions, and the MAME project may opt to keep
- *	   modifications, improvements or derivatives under their terms exclusively.
+ *     The licensing terms of MAME apply to this piece of code for the MAME
+ *     project and derviative works, as defined by the MAME license. You
+ *     may opt to make modifications, improvements or derivative works under
+ *     that same conditions, and the MAME project may opt to keep
+ *     modifications, improvements or derivatives under their terms exclusively.
  *
- *	 - Alternatively you can choose to apply the terms of the "GPL" (see
+ *   - Alternatively you can choose to apply the terms of the "GPL" (see
  *     below) to this - and only this - piece of code or your derivative works.
- *	   Note that in no case your choice can have any impact on any other
- *	   source code of the MAME project, or binary, or executable, be it closely
- *	   or losely related to this piece of code.
+ *     Note that in no case your choice can have any impact on any other
+ *     source code of the MAME project, or binary, or executable, be it closely
+ *     or losely related to this piece of code.
  *
- *	-  At your choice you are also free to remove either licensing terms from
- *	   this file and continue to use it under only one of the two licenses. Do this
- *	   if you think that licenses are not compatible (enough) for you, or if you
- *	   consider either license 'too restrictive' or 'too free'.
+ *  -  At your choice you are also free to remove either licensing terms from
+ *     this file and continue to use it under only one of the two licenses. Do this
+ *     if you think that licenses are not compatible (enough) for you, or if you
+ *     consider either license 'too restrictive' or 'too free'.
  *
- *	-  GPL (GNU General Public License)
- *	   This program is free software; you can redistribute it and/or
- *	   modify it under the terms of the GNU General Public License
- *	   as published by the Free Software Foundation; either version 2
- *	   of the License, or (at your option) any later version.
+ *  -  GPL (GNU General Public License)
+ *     This program is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License
+ *     as published by the Free Software Foundation; either version 2
+ *     of the License, or (at your option) any later version.
  *
- *	   This program is distributed in the hope that it will be useful,
- *	   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	   GNU General Public License for more details.
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
  *
- *	   You should have received a copy of the GNU General Public License
- *	   along with this program; if not, write to the Free Software
- *	   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program; if not, write to the Free Software
+ *     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *
  * Revisions:
@@ -204,29 +204,29 @@ INLINE void execute_one(int opcode)
 {
 	switch (opcode)
 	{
-		case 0x00: i8085_ICount -= 4;	/* NOP	*/
+		case 0x00: i8085_ICount -= 4;	/* NOP  */
 			/* no op */
 			break;
-		case 0x01: i8085_ICount -= 10;	/* LXI	B,nnnn */
+		case 0x01: i8085_ICount -= 10;	/* LXI  B,nnnn */
 			I.BC.w.l = ARG16();
 			break;
 		case 0x02: i8085_ICount -= 7;	/* STAX B */
 			WM(I.BC.d, I.AF.b.h);
 			break;
-		case 0x03: i8085_ICount -= 5;	/* INX	B */
+		case 0x03: i8085_ICount -= 5;	/* INX  B */
 			I.BC.w.l++;
 			if (I.BC.b.l == 0x00) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x04: i8085_ICount -= 5;	/* INR	B */
+		case 0x04: i8085_ICount -= 5;	/* INR  B */
 			M_INR(I.BC.b.h);
 			break;
-		case 0x05: i8085_ICount -= 5;	/* DCR	B */
+		case 0x05: i8085_ICount -= 5;	/* DCR  B */
 			M_DCR(I.BC.b.h);
 			break;
-		case 0x06: i8085_ICount -= 7;	/* MVI	B,nn */
+		case 0x06: i8085_ICount -= 7;	/* MVI  B,nn */
 			M_MVI(I.BC.b.h);
 			break;
-		case 0x07: i8085_ICount -= 4;	/* RLC	*/
+		case 0x07: i8085_ICount -= 4;	/* RLC  */
 			M_RLC;
 			break;
 
@@ -238,26 +238,26 @@ INLINE void execute_one(int opcode)
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
-		case 0x09: i8085_ICount -= 10;	/* DAD	B */
+		case 0x09: i8085_ICount -= 10;	/* DAD  B */
 			M_DAD(BC);
 			break;
 		case 0x0a: i8085_ICount -= 7;	/* LDAX B */
 			I.AF.b.h = RM(I.BC.d);
 			break;
-		case 0x0b: i8085_ICount -= 5;	/* DCX	B */
+		case 0x0b: i8085_ICount -= 5;	/* DCX  B */
 			I.BC.w.l--;
 			if (I.BC.b.l == 0xff) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x0c: i8085_ICount -= 5;	/* INR	C */
+		case 0x0c: i8085_ICount -= 5;	/* INR  C */
 			M_INR(I.BC.b.l);
 			break;
-		case 0x0d: i8085_ICount -= 5;	/* DCR	C */
+		case 0x0d: i8085_ICount -= 5;	/* DCR  C */
 			M_DCR(I.BC.b.l);
 			break;
-		case 0x0e: i8085_ICount -= 7;	/* MVI	C,nn */
+		case 0x0e: i8085_ICount -= 7;	/* MVI  C,nn */
 			M_MVI(I.BC.b.l);
 			break;
-		case 0x0f: i8085_ICount -= 4;	/* RRC	*/
+		case 0x0f: i8085_ICount -= 4;	/* RRC  */
 			M_RRC;
 			break;
 
@@ -270,26 +270,26 @@ INLINE void execute_one(int opcode)
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
-		case 0x11: i8085_ICount -= 10;	/* LXI	D,nnnn */
+		case 0x11: i8085_ICount -= 10;	/* LXI  D,nnnn */
 			I.DE.w.l = ARG16();
 			break;
 		case 0x12: i8085_ICount -= 7;	/* STAX D */
 			WM(I.DE.d, I.AF.b.h);
 			break;
-		case 0x13: i8085_ICount -= 5;	/* INX	D */
+		case 0x13: i8085_ICount -= 5;	/* INX  D */
 			I.DE.w.l++;
 			if (I.DE.b.l == 0x00) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x14: i8085_ICount -= 5;	/* INR	D */
+		case 0x14: i8085_ICount -= 5;	/* INR  D */
 			M_INR(I.DE.b.h);
 			break;
-		case 0x15: i8085_ICount -= 5;	/* DCR	D */
+		case 0x15: i8085_ICount -= 5;	/* DCR  D */
 			M_DCR(I.DE.b.h);
 			break;
-		case 0x16: i8085_ICount -= 7;	/* MVI	D,nn */
+		case 0x16: i8085_ICount -= 7;	/* MVI  D,nn */
 			M_MVI(I.DE.b.h);
 			break;
-		case 0x17: i8085_ICount -= 4;	/* RAL	*/
+		case 0x17: i8085_ICount -= 4;	/* RAL  */
 			M_RAL;
 			break;
 
@@ -304,40 +304,40 @@ INLINE void execute_one(int opcode)
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
-		case 0x19: i8085_ICount -= 10;	/* DAD	D */
+		case 0x19: i8085_ICount -= 10;	/* DAD  D */
 			M_DAD(DE);
 			break;
 		case 0x1a: i8085_ICount -= 7;	/* LDAX D */
 			I.AF.b.h = RM(I.DE.d);
 			break;
-		case 0x1b: i8085_ICount -= 5;	/* DCX	D */
+		case 0x1b: i8085_ICount -= 5;	/* DCX  D */
 			I.DE.w.l--;
 			if (I.DE.b.l == 0xff) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x1c: i8085_ICount -= 5;	/* INR	E */
+		case 0x1c: i8085_ICount -= 5;	/* INR  E */
 			M_INR(I.DE.b.l);
 			break;
-		case 0x1d: i8085_ICount -= 5;	/* DCR	E */
+		case 0x1d: i8085_ICount -= 5;	/* DCR  E */
 			M_DCR(I.DE.b.l);
 			break;
-		case 0x1e: i8085_ICount -= 7;	/* MVI	E,nn */
+		case 0x1e: i8085_ICount -= 7;	/* MVI  E,nn */
 			M_MVI(I.DE.b.l);
 			break;
-		case 0x1f: i8085_ICount -= 4;	/* RAR	*/
+		case 0x1f: i8085_ICount -= 4;	/* RAR  */
 			M_RAR;
 			break;
 
 		case 0x20:
 			if( I.cputype ) {
-				i8085_ICount -= 7;		/* RIM	*/
+				i8085_ICount -= 7;		/* RIM  */
 				I.AF.b.h = I.IM;
 				I.AF.b.h |= RIM_IEN; RIM_IEN = 0; //AT: read and clear IEN status latch
-/*				survival_prot ^= 0x01; */
+/*              survival_prot ^= 0x01; */
 			} else {
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
-		case 0x21: i8085_ICount -= 10;	/* LXI	H,nnnn */
+		case 0x21: i8085_ICount -= 10;	/* LXI  H,nnnn */
 			I.HL.w.l = ARG16();
 			break;
 		case 0x22: i8085_ICount -= 16;	/* SHLD nnnn */
@@ -346,20 +346,20 @@ INLINE void execute_one(int opcode)
 			I.XX.w.l++;
 			WM(I.XX.d, I.HL.b.h);
 			break;
-		case 0x23: i8085_ICount -= 5;	/* INX	H */
+		case 0x23: i8085_ICount -= 5;	/* INX  H */
 			I.HL.w.l++;
 			if (I.HL.b.l == 0x00) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x24: i8085_ICount -= 5;	/* INR	H */
+		case 0x24: i8085_ICount -= 5;	/* INR  H */
 			M_INR(I.HL.b.h);
 			break;
-		case 0x25: i8085_ICount -= 5;	/* DCR	H */
+		case 0x25: i8085_ICount -= 5;	/* DCR  H */
 			M_DCR(I.HL.b.h);
 			break;
-		case 0x26: i8085_ICount -= 7;	/* MVI	H,nn */
+		case 0x26: i8085_ICount -= 7;	/* MVI  H,nn */
 			M_MVI(I.HL.b.h);
 			break;
-		case 0x27: i8085_ICount -= 4;	/* DAA	*/
+		case 0x27: i8085_ICount -= 4;	/* DAA  */
 			I.XX.d = I.AF.b.h;
 			if (I.AF.b.l & CF) I.XX.d |= 0x100;
 			if (I.AF.b.l & HF) I.XX.d |= 0x200;
@@ -376,7 +376,7 @@ INLINE void execute_one(int opcode)
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
-		case 0x29: i8085_ICount -= 10;	/* DAD	H */
+		case 0x29: i8085_ICount -= 10;	/* DAD  H */
 			M_DAD(HL);
 			break;
 		case 0x2a: i8085_ICount -= 16;	/* LHLD nnnn */
@@ -385,27 +385,27 @@ INLINE void execute_one(int opcode)
 			I.XX.w.l++;
 			I.HL.b.h = RM(I.XX.d);
 			break;
-		case 0x2b: i8085_ICount -= 5;	/* DCX	H */
+		case 0x2b: i8085_ICount -= 5;	/* DCX  H */
 			I.HL.w.l--;
 			if (I.HL.b.l == 0xff) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x2c: i8085_ICount -= 5;	/* INR	L */
+		case 0x2c: i8085_ICount -= 5;	/* INR  L */
 			M_INR(I.HL.b.l);
 			break;
-		case 0x2d: i8085_ICount -= 5;	/* DCR	L */
+		case 0x2d: i8085_ICount -= 5;	/* DCR  L */
 			M_DCR(I.HL.b.l);
 			break;
-		case 0x2e: i8085_ICount -= 7;	/* MVI	L,nn */
+		case 0x2e: i8085_ICount -= 7;	/* MVI  L,nn */
 			M_MVI(I.HL.b.l);
 			break;
-		case 0x2f: i8085_ICount -= 4;	/* CMA	*/
+		case 0x2f: i8085_ICount -= 4;	/* CMA  */
 			I.AF.b.h ^= 0xff;
 			I.AF.b.l |= HF + NF;
 			break;
 
 		case 0x30:
 			if( I.cputype ) {
-				i8085_ICount -= 7;		/* SIM	*/
+				i8085_ICount -= 7;		/* SIM  */
 				if ((I.IM ^ I.AF.b.h) & 0x80)
 					if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7);
 //AT
@@ -428,25 +428,25 @@ INLINE void execute_one(int opcode)
 			I.XX.d = ARG16();
 			WM(I.XX.d, I.AF.b.h);
 			break;
-		case 0x33: i8085_ICount -= 5;	/* INX	SP */
+		case 0x33: i8085_ICount -= 5;	/* INX  SP */
 			I.SP.w.l++;
 			if (I.SP.b.l == 0x00) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x34: i8085_ICount -= 10;	/* INR	M */
+		case 0x34: i8085_ICount -= 10;	/* INR  M */
 			I.XX.b.l = RM(I.HL.d);
 			M_INR(I.XX.b.l);
 			WM(I.HL.d, I.XX.b.l);
 			break;
-		case 0x35: i8085_ICount -= 10;	/* DCR	M */
+		case 0x35: i8085_ICount -= 10;	/* DCR  M */
 			I.XX.b.l = RM(I.HL.d);
 			M_DCR(I.XX.b.l);
 			WM(I.HL.d, I.XX.b.l);
 			break;
-		case 0x36: i8085_ICount -= 10;	/* MVI	M,nn */
+		case 0x36: i8085_ICount -= 10;	/* MVI  M,nn */
 			I.XX.b.l = ARG();
 			WM(I.HL.d, I.XX.b.l);
 			break;
-		case 0x37: i8085_ICount -= 4;	/* STC	*/
+		case 0x37: i8085_ICount -= 4;	/* STC  */
 			I.AF.b.l = (I.AF.b.l & ~(HF + NF)) | CF;
 			break;
 
@@ -466,190 +466,190 @@ INLINE void execute_one(int opcode)
 			I.XX.d = ARG16();
 			I.AF.b.h = RM(I.XX.d);
 			break;
-		case 0x3b: i8085_ICount -= 5;	/* DCX	SP */
+		case 0x3b: i8085_ICount -= 5;	/* DCX  SP */
 			I.SP.w.l--;
 			if (I.SP.b.l == 0xff) I.AF.b.l |= XF; else I.AF.b.l &= ~XF;
 			break;
-		case 0x3c: i8085_ICount -= 5;	/* INR	A */
+		case 0x3c: i8085_ICount -= 5;	/* INR  A */
 			M_INR(I.AF.b.h);
 			break;
-		case 0x3d: i8085_ICount -= 5;	/* DCR	A */
+		case 0x3d: i8085_ICount -= 5;	/* DCR  A */
 			M_DCR(I.AF.b.h);
 			break;
-		case 0x3e: i8085_ICount -= 7;	/* MVI	A,nn */
+		case 0x3e: i8085_ICount -= 7;	/* MVI  A,nn */
 			M_MVI(I.AF.b.h);
 			break;
-		case 0x3f: i8085_ICount -= 4;	/* CMF	*/
+		case 0x3f: i8085_ICount -= 4;	/* CMF  */
 			I.AF.b.l = ((I.AF.b.l & ~(HF + NF)) |
 					   ((I.AF.b.l & CF) << 4)) ^ CF;
 			break;
 
-		case 0x40: i8085_ICount -= 5;	/* MOV	B,B */
+		case 0x40: i8085_ICount -= 5;	/* MOV  B,B */
 			/* no op */
 			break;
-		case 0x41: i8085_ICount -= 5;	/* MOV	B,C */
+		case 0x41: i8085_ICount -= 5;	/* MOV  B,C */
 			I.BC.b.h = I.BC.b.l;
 			break;
-		case 0x42: i8085_ICount -= 5;	/* MOV	B,D */
+		case 0x42: i8085_ICount -= 5;	/* MOV  B,D */
 			I.BC.b.h = I.DE.b.h;
 			break;
-		case 0x43: i8085_ICount -= 5;	/* MOV	B,E */
+		case 0x43: i8085_ICount -= 5;	/* MOV  B,E */
 			I.BC.b.h = I.DE.b.l;
 			break;
-		case 0x44: i8085_ICount -= 5;	/* MOV	B,H */
+		case 0x44: i8085_ICount -= 5;	/* MOV  B,H */
 			I.BC.b.h = I.HL.b.h;
 			break;
-		case 0x45: i8085_ICount -= 5;	/* MOV	B,L */
+		case 0x45: i8085_ICount -= 5;	/* MOV  B,L */
 			I.BC.b.h = I.HL.b.l;
 			break;
-		case 0x46: i8085_ICount -= 7;	/* MOV	B,M */
+		case 0x46: i8085_ICount -= 7;	/* MOV  B,M */
 			I.BC.b.h = RM(I.HL.d);
 			break;
-		case 0x47: i8085_ICount -= 5;	/* MOV	B,A */
+		case 0x47: i8085_ICount -= 5;	/* MOV  B,A */
 			I.BC.b.h = I.AF.b.h;
 			break;
 
-		case 0x48: i8085_ICount -= 5;	/* MOV	C,B */
+		case 0x48: i8085_ICount -= 5;	/* MOV  C,B */
 			I.BC.b.l = I.BC.b.h;
 			break;
-		case 0x49: i8085_ICount -= 5;	/* MOV	C,C */
+		case 0x49: i8085_ICount -= 5;	/* MOV  C,C */
 			/* no op */
 			break;
-		case 0x4a: i8085_ICount -= 5;	/* MOV	C,D */
+		case 0x4a: i8085_ICount -= 5;	/* MOV  C,D */
 			I.BC.b.l = I.DE.b.h;
 			break;
-		case 0x4b: i8085_ICount -= 5;	/* MOV	C,E */
+		case 0x4b: i8085_ICount -= 5;	/* MOV  C,E */
 			I.BC.b.l = I.DE.b.l;
 			break;
-		case 0x4c: i8085_ICount -= 5;	/* MOV	C,H */
+		case 0x4c: i8085_ICount -= 5;	/* MOV  C,H */
 			I.BC.b.l = I.HL.b.h;
 			break;
-		case 0x4d: i8085_ICount -= 5;	/* MOV	C,L */
+		case 0x4d: i8085_ICount -= 5;	/* MOV  C,L */
 			I.BC.b.l = I.HL.b.l;
 			break;
-		case 0x4e: i8085_ICount -= 7;	/* MOV	C,M */
+		case 0x4e: i8085_ICount -= 7;	/* MOV  C,M */
 			I.BC.b.l = RM(I.HL.d);
 			break;
-		case 0x4f: i8085_ICount -= 5;	/* MOV	C,A */
+		case 0x4f: i8085_ICount -= 5;	/* MOV  C,A */
 			I.BC.b.l = I.AF.b.h;
 			break;
 
-		case 0x50: i8085_ICount -= 5;	/* MOV	D,B */
+		case 0x50: i8085_ICount -= 5;	/* MOV  D,B */
 			I.DE.b.h = I.BC.b.h;
 			break;
-		case 0x51: i8085_ICount -= 5;	/* MOV	D,C */
+		case 0x51: i8085_ICount -= 5;	/* MOV  D,C */
 			I.DE.b.h = I.BC.b.l;
 			break;
-		case 0x52: i8085_ICount -= 5;	/* MOV	D,D */
+		case 0x52: i8085_ICount -= 5;	/* MOV  D,D */
 			/* no op */
 			break;
-		case 0x53: i8085_ICount -= 5;	/* MOV	D,E */
+		case 0x53: i8085_ICount -= 5;	/* MOV  D,E */
 			I.DE.b.h = I.DE.b.l;
 			break;
-		case 0x54: i8085_ICount -= 5;	/* MOV	D,H */
+		case 0x54: i8085_ICount -= 5;	/* MOV  D,H */
 			I.DE.b.h = I.HL.b.h;
 			break;
-		case 0x55: i8085_ICount -= 5;	/* MOV	D,L */
+		case 0x55: i8085_ICount -= 5;	/* MOV  D,L */
 			I.DE.b.h = I.HL.b.l;
 			break;
-		case 0x56: i8085_ICount -= 7;	/* MOV	D,M */
+		case 0x56: i8085_ICount -= 7;	/* MOV  D,M */
 			I.DE.b.h = RM(I.HL.d);
 			break;
-		case 0x57: i8085_ICount -= 5;	/* MOV	D,A */
+		case 0x57: i8085_ICount -= 5;	/* MOV  D,A */
 			I.DE.b.h = I.AF.b.h;
 			break;
 
-		case 0x58: i8085_ICount -= 5;	/* MOV	E,B */
+		case 0x58: i8085_ICount -= 5;	/* MOV  E,B */
 			I.DE.b.l = I.BC.b.h;
 			break;
-		case 0x59: i8085_ICount -= 5;	/* MOV	E,C */
+		case 0x59: i8085_ICount -= 5;	/* MOV  E,C */
 			I.DE.b.l = I.BC.b.l;
 			break;
-		case 0x5a: i8085_ICount -= 5;	/* MOV	E,D */
+		case 0x5a: i8085_ICount -= 5;	/* MOV  E,D */
 			I.DE.b.l = I.DE.b.h;
 			break;
-		case 0x5b: i8085_ICount -= 5;	/* MOV	E,E */
+		case 0x5b: i8085_ICount -= 5;	/* MOV  E,E */
 			/* no op */
 			break;
-		case 0x5c: i8085_ICount -= 5;	/* MOV	E,H */
+		case 0x5c: i8085_ICount -= 5;	/* MOV  E,H */
 			I.DE.b.l = I.HL.b.h;
 			break;
-		case 0x5d: i8085_ICount -= 5;	/* MOV	E,L */
+		case 0x5d: i8085_ICount -= 5;	/* MOV  E,L */
 			I.DE.b.l = I.HL.b.l;
 			break;
-		case 0x5e: i8085_ICount -= 7;	/* MOV	E,M */
+		case 0x5e: i8085_ICount -= 7;	/* MOV  E,M */
 			I.DE.b.l = RM(I.HL.d);
 			break;
-		case 0x5f: i8085_ICount -= 5;	/* MOV	E,A */
+		case 0x5f: i8085_ICount -= 5;	/* MOV  E,A */
 			I.DE.b.l = I.AF.b.h;
 			break;
 
-		case 0x60: i8085_ICount -= 5;	/* MOV	H,B */
+		case 0x60: i8085_ICount -= 5;	/* MOV  H,B */
 			I.HL.b.h = I.BC.b.h;
 			break;
-		case 0x61: i8085_ICount -= 5;	/* MOV	H,C */
+		case 0x61: i8085_ICount -= 5;	/* MOV  H,C */
 			I.HL.b.h = I.BC.b.l;
 			break;
-		case 0x62: i8085_ICount -= 5;	/* MOV	H,D */
+		case 0x62: i8085_ICount -= 5;	/* MOV  H,D */
 			I.HL.b.h = I.DE.b.h;
 			break;
-		case 0x63: i8085_ICount -= 5;	/* MOV	H,E */
+		case 0x63: i8085_ICount -= 5;	/* MOV  H,E */
 			I.HL.b.h = I.DE.b.l;
 			break;
-		case 0x64: i8085_ICount -= 5;	/* MOV	H,H */
+		case 0x64: i8085_ICount -= 5;	/* MOV  H,H */
 			/* no op */
 			break;
-		case 0x65: i8085_ICount -= 5;	/* MOV	H,L */
+		case 0x65: i8085_ICount -= 5;	/* MOV  H,L */
 			I.HL.b.h = I.HL.b.l;
 			break;
-		case 0x66: i8085_ICount -= 7;	/* MOV	H,M */
+		case 0x66: i8085_ICount -= 7;	/* MOV  H,M */
 			I.HL.b.h = RM(I.HL.d);
 			break;
-		case 0x67: i8085_ICount -= 5;	/* MOV	H,A */
+		case 0x67: i8085_ICount -= 5;	/* MOV  H,A */
 			I.HL.b.h = I.AF.b.h;
 			break;
 
-		case 0x68: i8085_ICount -= 5;	/* MOV	L,B */
+		case 0x68: i8085_ICount -= 5;	/* MOV  L,B */
 			I.HL.b.l = I.BC.b.h;
 			break;
-		case 0x69: i8085_ICount -= 5;	/* MOV	L,C */
+		case 0x69: i8085_ICount -= 5;	/* MOV  L,C */
 			I.HL.b.l = I.BC.b.l;
 			break;
-		case 0x6a: i8085_ICount -= 5;	/* MOV	L,D */
+		case 0x6a: i8085_ICount -= 5;	/* MOV  L,D */
 			I.HL.b.l = I.DE.b.h;
 			break;
-		case 0x6b: i8085_ICount -= 5;	/* MOV	L,E */
+		case 0x6b: i8085_ICount -= 5;	/* MOV  L,E */
 			I.HL.b.l = I.DE.b.l;
 			break;
-		case 0x6c: i8085_ICount -= 5;	/* MOV	L,H */
+		case 0x6c: i8085_ICount -= 5;	/* MOV  L,H */
 			I.HL.b.l = I.HL.b.h;
 			break;
-		case 0x6d: i8085_ICount -= 5;	/* MOV	L,L */
+		case 0x6d: i8085_ICount -= 5;	/* MOV  L,L */
 			/* no op */
 			break;
-		case 0x6e: i8085_ICount -= 7;	/* MOV	L,M */
+		case 0x6e: i8085_ICount -= 7;	/* MOV  L,M */
 			I.HL.b.l = RM(I.HL.d);
 			break;
-		case 0x6f: i8085_ICount -= 5;	/* MOV	L,A */
+		case 0x6f: i8085_ICount -= 5;	/* MOV  L,A */
 			I.HL.b.l = I.AF.b.h;
 			break;
 
-		case 0x70: i8085_ICount -= 7;	/* MOV	M,B */
+		case 0x70: i8085_ICount -= 7;	/* MOV  M,B */
 			WM(I.HL.d, I.BC.b.h);
 			break;
-		case 0x71: i8085_ICount -= 7;	/* MOV	M,C */
+		case 0x71: i8085_ICount -= 7;	/* MOV  M,C */
 			WM(I.HL.d, I.BC.b.l);
 			break;
-		case 0x72: i8085_ICount -= 7;	/* MOV	M,D */
+		case 0x72: i8085_ICount -= 7;	/* MOV  M,D */
 			WM(I.HL.d, I.DE.b.h);
 			break;
-		case 0x73: i8085_ICount -= 7;	/* MOV	M,E */
+		case 0x73: i8085_ICount -= 7;	/* MOV  M,E */
 			WM(I.HL.d, I.DE.b.l);
 			break;
-		case 0x74: i8085_ICount -= 7;	/* MOV	M,H */
+		case 0x74: i8085_ICount -= 7;	/* MOV  M,H */
 			WM(I.HL.d, I.HL.b.h);
 			break;
-		case 0x75: i8085_ICount -= 7;	/* MOV	M,L */
+		case 0x75: i8085_ICount -= 7;	/* MOV  M,L */
 			WM(I.HL.d, I.HL.b.l);
 			break;
 		case 0x76: i8085_ICount -= 4;	/* HALT */
@@ -657,268 +657,268 @@ INLINE void execute_one(int opcode)
 			I.HALT = 1;
 			if (i8085_ICount > 0) i8085_ICount = 0;
 			break;
-		case 0x77: i8085_ICount -= 7;	/* MOV	M,A */
+		case 0x77: i8085_ICount -= 7;	/* MOV  M,A */
 			WM(I.HL.d, I.AF.b.h);
 			break;
 
-		case 0x78: i8085_ICount -= 5;	/* MOV	A,B */
+		case 0x78: i8085_ICount -= 5;	/* MOV  A,B */
 			I.AF.b.h = I.BC.b.h;
 			break;
-		case 0x79: i8085_ICount -= 5;	/* MOV	A,C */
+		case 0x79: i8085_ICount -= 5;	/* MOV  A,C */
 			I.AF.b.h = I.BC.b.l;
 			break;
-		case 0x7a: i8085_ICount -= 5;	/* MOV	A,D */
+		case 0x7a: i8085_ICount -= 5;	/* MOV  A,D */
 			I.AF.b.h = I.DE.b.h;
 			break;
-		case 0x7b: i8085_ICount -= 5;	/* MOV	A,E */
+		case 0x7b: i8085_ICount -= 5;	/* MOV  A,E */
 			I.AF.b.h = I.DE.b.l;
 			break;
-		case 0x7c: i8085_ICount -= 5;	/* MOV	A,H */
+		case 0x7c: i8085_ICount -= 5;	/* MOV  A,H */
 			I.AF.b.h = I.HL.b.h;
 			break;
-		case 0x7d: i8085_ICount -= 5;	/* MOV	A,L */
+		case 0x7d: i8085_ICount -= 5;	/* MOV  A,L */
 			I.AF.b.h = I.HL.b.l;
 			break;
-		case 0x7e: i8085_ICount -= 7;	/* MOV	A,M */
+		case 0x7e: i8085_ICount -= 7;	/* MOV  A,M */
 			I.AF.b.h = RM(I.HL.d);
 			break;
-		case 0x7f: i8085_ICount -= 5;	/* MOV	A,A */
+		case 0x7f: i8085_ICount -= 5;	/* MOV  A,A */
 			/* no op */
 			break;
 
-		case 0x80: i8085_ICount -= 4;	/* ADD	B */
+		case 0x80: i8085_ICount -= 4;	/* ADD  B */
 			M_ADD(I.BC.b.h);
 			break;
-		case 0x81: i8085_ICount -= 4;	/* ADD	C */
+		case 0x81: i8085_ICount -= 4;	/* ADD  C */
 			M_ADD(I.BC.b.l);
 			break;
-		case 0x82: i8085_ICount -= 4;	/* ADD	D */
+		case 0x82: i8085_ICount -= 4;	/* ADD  D */
 			M_ADD(I.DE.b.h);
 			break;
-		case 0x83: i8085_ICount -= 4;	/* ADD	E */
+		case 0x83: i8085_ICount -= 4;	/* ADD  E */
 			M_ADD(I.DE.b.l);
 			break;
-		case 0x84: i8085_ICount -= 4;	/* ADD	H */
+		case 0x84: i8085_ICount -= 4;	/* ADD  H */
 			M_ADD(I.HL.b.h);
 			break;
-		case 0x85: i8085_ICount -= 4;	/* ADD	L */
+		case 0x85: i8085_ICount -= 4;	/* ADD  L */
 			M_ADD(I.HL.b.l);
 			break;
-		case 0x86: i8085_ICount -= 7;	/* ADD	M */
+		case 0x86: i8085_ICount -= 7;	/* ADD  M */
 			M_ADD(RM(I.HL.d));
 			break;
-		case 0x87: i8085_ICount -= 4;	/* ADD	A */
+		case 0x87: i8085_ICount -= 4;	/* ADD  A */
 			M_ADD(I.AF.b.h);
 			break;
 
-		case 0x88: i8085_ICount -= 4;	/* ADC	B */
+		case 0x88: i8085_ICount -= 4;	/* ADC  B */
 			M_ADC(I.BC.b.h);
 			break;
-		case 0x89: i8085_ICount -= 4;	/* ADC	C */
+		case 0x89: i8085_ICount -= 4;	/* ADC  C */
 			M_ADC(I.BC.b.l);
 			break;
-		case 0x8a: i8085_ICount -= 4;	/* ADC	D */
+		case 0x8a: i8085_ICount -= 4;	/* ADC  D */
 			M_ADC(I.DE.b.h);
 			break;
-		case 0x8b: i8085_ICount -= 4;	/* ADC	E */
+		case 0x8b: i8085_ICount -= 4;	/* ADC  E */
 			M_ADC(I.DE.b.l);
 			break;
-		case 0x8c: i8085_ICount -= 4;	/* ADC	H */
+		case 0x8c: i8085_ICount -= 4;	/* ADC  H */
 			M_ADC(I.HL.b.h);
 			break;
-		case 0x8d: i8085_ICount -= 4;	/* ADC	L */
+		case 0x8d: i8085_ICount -= 4;	/* ADC  L */
 			M_ADC(I.HL.b.l);
 			break;
-		case 0x8e: i8085_ICount -= 7;	/* ADC	M */
+		case 0x8e: i8085_ICount -= 7;	/* ADC  M */
 			M_ADC(RM(I.HL.d));
 			break;
-		case 0x8f: i8085_ICount -= 4;	/* ADC	A */
+		case 0x8f: i8085_ICount -= 4;	/* ADC  A */
 			M_ADC(I.AF.b.h);
 			break;
 
-		case 0x90: i8085_ICount -= 4;	/* SUB	B */
+		case 0x90: i8085_ICount -= 4;	/* SUB  B */
 			M_SUB(I.BC.b.h);
 			break;
-		case 0x91: i8085_ICount -= 4;	/* SUB	C */
+		case 0x91: i8085_ICount -= 4;	/* SUB  C */
 			M_SUB(I.BC.b.l);
 			break;
-		case 0x92: i8085_ICount -= 4;	/* SUB	D */
+		case 0x92: i8085_ICount -= 4;	/* SUB  D */
 			M_SUB(I.DE.b.h);
 			break;
-		case 0x93: i8085_ICount -= 4;	/* SUB	E */
+		case 0x93: i8085_ICount -= 4;	/* SUB  E */
 			M_SUB(I.DE.b.l);
 			break;
-		case 0x94: i8085_ICount -= 4;	/* SUB	H */
+		case 0x94: i8085_ICount -= 4;	/* SUB  H */
 			M_SUB(I.HL.b.h);
 			break;
-		case 0x95: i8085_ICount -= 4;	/* SUB	L */
+		case 0x95: i8085_ICount -= 4;	/* SUB  L */
 			M_SUB(I.HL.b.l);
 			break;
-		case 0x96: i8085_ICount -= 7;	/* SUB	M */
+		case 0x96: i8085_ICount -= 7;	/* SUB  M */
 			M_SUB(RM(I.HL.d));
 			break;
-		case 0x97: i8085_ICount -= 4;	/* SUB	A */
+		case 0x97: i8085_ICount -= 4;	/* SUB  A */
 			M_SUB(I.AF.b.h);
 			break;
 
-		case 0x98: i8085_ICount -= 4;	/* SBB	B */
+		case 0x98: i8085_ICount -= 4;	/* SBB  B */
 			M_SBB(I.BC.b.h);
 			break;
-		case 0x99: i8085_ICount -= 4;	/* SBB	C */
+		case 0x99: i8085_ICount -= 4;	/* SBB  C */
 			M_SBB(I.BC.b.l);
 			break;
-		case 0x9a: i8085_ICount -= 4;	/* SBB	D */
+		case 0x9a: i8085_ICount -= 4;	/* SBB  D */
 			M_SBB(I.DE.b.h);
 			break;
-		case 0x9b: i8085_ICount -= 4;	/* SBB	E */
+		case 0x9b: i8085_ICount -= 4;	/* SBB  E */
 			M_SBB(I.DE.b.l);
 			break;
-		case 0x9c: i8085_ICount -= 4;	/* SBB	H */
+		case 0x9c: i8085_ICount -= 4;	/* SBB  H */
 			M_SBB(I.HL.b.h);
 			break;
-		case 0x9d: i8085_ICount -= 4;	/* SBB	L */
+		case 0x9d: i8085_ICount -= 4;	/* SBB  L */
 			M_SBB(I.HL.b.l);
 			break;
-		case 0x9e: i8085_ICount -= 7;	/* SBB	M */
+		case 0x9e: i8085_ICount -= 7;	/* SBB  M */
 			M_SBB(RM(I.HL.d));
 			break;
-		case 0x9f: i8085_ICount -= 4;	/* SBB	A */
+		case 0x9f: i8085_ICount -= 4;	/* SBB  A */
 			M_SBB(I.AF.b.h);
 			break;
 
-		case 0xa0: i8085_ICount -= 4;	/* ANA	B */
+		case 0xa0: i8085_ICount -= 4;	/* ANA  B */
 			M_ANA(I.BC.b.h);
 			break;
-		case 0xa1: i8085_ICount -= 4;	/* ANA	C */
+		case 0xa1: i8085_ICount -= 4;	/* ANA  C */
 			M_ANA(I.BC.b.l);
 			break;
-		case 0xa2: i8085_ICount -= 4;	/* ANA	D */
+		case 0xa2: i8085_ICount -= 4;	/* ANA  D */
 			M_ANA(I.DE.b.h);
 			break;
-		case 0xa3: i8085_ICount -= 4;	/* ANA	E */
+		case 0xa3: i8085_ICount -= 4;	/* ANA  E */
 			M_ANA(I.DE.b.l);
 			break;
-		case 0xa4: i8085_ICount -= 4;	/* ANA	H */
+		case 0xa4: i8085_ICount -= 4;	/* ANA  H */
 			M_ANA(I.HL.b.h);
 			break;
-		case 0xa5: i8085_ICount -= 4;	/* ANA	L */
+		case 0xa5: i8085_ICount -= 4;	/* ANA  L */
 			M_ANA(I.HL.b.l);
 			break;
-		case 0xa6: i8085_ICount -= 7;	/* ANA	M */
+		case 0xa6: i8085_ICount -= 7;	/* ANA  M */
 			M_ANA(RM(I.HL.d));
 			break;
-		case 0xa7: i8085_ICount -= 4;	/* ANA	A */
+		case 0xa7: i8085_ICount -= 4;	/* ANA  A */
 			M_ANA(I.AF.b.h);
 			break;
 
-		case 0xa8: i8085_ICount -= 4;	/* XRA	B */
+		case 0xa8: i8085_ICount -= 4;	/* XRA  B */
 			M_XRA(I.BC.b.h);
 			break;
-		case 0xa9: i8085_ICount -= 4;	/* XRA	C */
+		case 0xa9: i8085_ICount -= 4;	/* XRA  C */
 			M_XRA(I.BC.b.l);
 			break;
-		case 0xaa: i8085_ICount -= 4;	/* XRA	D */
+		case 0xaa: i8085_ICount -= 4;	/* XRA  D */
 			M_XRA(I.DE.b.h);
 			break;
-		case 0xab: i8085_ICount -= 4;	/* XRA	E */
+		case 0xab: i8085_ICount -= 4;	/* XRA  E */
 			M_XRA(I.DE.b.l);
 			break;
-		case 0xac: i8085_ICount -= 4;	/* XRA	H */
+		case 0xac: i8085_ICount -= 4;	/* XRA  H */
 			M_XRA(I.HL.b.h);
 			break;
-		case 0xad: i8085_ICount -= 4;	/* XRA	L */
+		case 0xad: i8085_ICount -= 4;	/* XRA  L */
 			M_XRA(I.HL.b.l);
 			break;
-		case 0xae: i8085_ICount -= 7;	/* XRA	M */
+		case 0xae: i8085_ICount -= 7;	/* XRA  M */
 			M_XRA(RM(I.HL.d));
 			break;
-		case 0xaf: i8085_ICount -= 4;	/* XRA	A */
+		case 0xaf: i8085_ICount -= 4;	/* XRA  A */
 			M_XRA(I.AF.b.h);
 			break;
 
-		case 0xb0: i8085_ICount -= 4;	/* ORA	B */
+		case 0xb0: i8085_ICount -= 4;	/* ORA  B */
 			M_ORA(I.BC.b.h);
 			break;
-		case 0xb1: i8085_ICount -= 4;	/* ORA	C */
+		case 0xb1: i8085_ICount -= 4;	/* ORA  C */
 			M_ORA(I.BC.b.l);
 			break;
-		case 0xb2: i8085_ICount -= 4;	/* ORA	D */
+		case 0xb2: i8085_ICount -= 4;	/* ORA  D */
 			M_ORA(I.DE.b.h);
 			break;
-		case 0xb3: i8085_ICount -= 4;	/* ORA	E */
+		case 0xb3: i8085_ICount -= 4;	/* ORA  E */
 			M_ORA(I.DE.b.l);
 			break;
-		case 0xb4: i8085_ICount -= 4;	/* ORA	H */
+		case 0xb4: i8085_ICount -= 4;	/* ORA  H */
 			M_ORA(I.HL.b.h);
 			break;
-		case 0xb5: i8085_ICount -= 4;	/* ORA	L */
+		case 0xb5: i8085_ICount -= 4;	/* ORA  L */
 			M_ORA(I.HL.b.l);
 			break;
-		case 0xb6: i8085_ICount -= 7;	/* ORA	M */
+		case 0xb6: i8085_ICount -= 7;	/* ORA  M */
 			M_ORA(RM(I.HL.d));
 			break;
-		case 0xb7: i8085_ICount -= 4;	/* ORA	A */
+		case 0xb7: i8085_ICount -= 4;	/* ORA  A */
 			M_ORA(I.AF.b.h);
 			break;
 
-		case 0xb8: i8085_ICount -= 4;	/* CMP	B */
+		case 0xb8: i8085_ICount -= 4;	/* CMP  B */
 			M_CMP(I.BC.b.h);
 			break;
-		case 0xb9: i8085_ICount -= 4;	/* CMP	C */
+		case 0xb9: i8085_ICount -= 4;	/* CMP  C */
 			M_CMP(I.BC.b.l);
 			break;
-		case 0xba: i8085_ICount -= 4;	/* CMP	D */
+		case 0xba: i8085_ICount -= 4;	/* CMP  D */
 			M_CMP(I.DE.b.h);
 			break;
-		case 0xbb: i8085_ICount -= 4;	/* CMP	E */
+		case 0xbb: i8085_ICount -= 4;	/* CMP  E */
 			M_CMP(I.DE.b.l);
 			break;
-		case 0xbc: i8085_ICount -= 4;	/* CMP	H */
+		case 0xbc: i8085_ICount -= 4;	/* CMP  H */
 			M_CMP(I.HL.b.h);
 			break;
-		case 0xbd: i8085_ICount -= 4;	/* CMP	L */
+		case 0xbd: i8085_ICount -= 4;	/* CMP  L */
 			M_CMP(I.HL.b.l);
 			break;
-		case 0xbe: i8085_ICount -= 7;	/* CMP	M */
+		case 0xbe: i8085_ICount -= 7;	/* CMP  M */
 			M_CMP(RM(I.HL.d));
 			break;
-		case 0xbf: i8085_ICount -= 4;	/* CMP	A */
+		case 0xbf: i8085_ICount -= 4;	/* CMP  A */
 			M_CMP(I.AF.b.h);
 			break;
 
-		case 0xc0: i8085_ICount -= 5;	/* RNZ	*/
+		case 0xc0: i8085_ICount -= 5;	/* RNZ  */
 			M_RET( !(I.AF.b.l & ZF) );
 			break;
-		case 0xc1: i8085_ICount -= 10;	/* POP	B */
+		case 0xc1: i8085_ICount -= 10;	/* POP  B */
 			M_POP(BC);
 			break;
-		case 0xc2: i8085_ICount -= 7;	/* JNZ	nnnn */
+		case 0xc2: i8085_ICount -= 7;	/* JNZ  nnnn */
 			M_JMP( !(I.AF.b.l & ZF) );
 			break;
-		case 0xc3: i8085_ICount -= 7;	/* JMP	nnnn */
+		case 0xc3: i8085_ICount -= 7;	/* JMP  nnnn */
 			M_JMP(1);
 			break;
-		case 0xc4: i8085_ICount -= 11;	/* CNZ	nnnn */
+		case 0xc4: i8085_ICount -= 11;	/* CNZ  nnnn */
 			M_CALL( !(I.AF.b.l & ZF) );
 			break;
 		case 0xc5: i8085_ICount -= 11;	/* PUSH B */
 			M_PUSH(BC);
 			break;
-		case 0xc6: i8085_ICount -= 7;	/* ADI	nn */
+		case 0xc6: i8085_ICount -= 7;	/* ADI  nn */
 			I.XX.b.l = ARG();
 			M_ADD(I.XX.b.l);
 				break;
-		case 0xc7: i8085_ICount -= 11;	/* RST	0 */
+		case 0xc7: i8085_ICount -= 11;	/* RST  0 */
 			M_RST(0);
 			break;
 
-		case 0xc8: i8085_ICount -= 5;	/* RZ	*/
+		case 0xc8: i8085_ICount -= 5;	/* RZ   */
 			M_RET( I.AF.b.l & ZF );
 			break;
-		case 0xc9: i8085_ICount -= 4;	/* RET	*/
+		case 0xc9: i8085_ICount -= 4;	/* RET  */
 			M_RET(1);
 			break;
-		case 0xca: i8085_ICount -= 7;	/* JZ	nnnn */
+		case 0xca: i8085_ICount -= 7;	/* JZ   nnnn */
 			M_JMP( I.AF.b.l & ZF );
 			break;
 		case 0xcb:
@@ -930,51 +930,51 @@ INLINE void execute_one(int opcode)
 					i8085_ICount -= 6;	/* RST  V */
 				}
 			} else {
-				i8085_ICount -= 7;	/* JMP	nnnn undocumented*/
+				i8085_ICount -= 7;	/* JMP  nnnn undocumented*/
 				M_JMP(1);
 			}
 			break;
-		case 0xcc: i8085_ICount -= 11;	/* CZ	nnnn */
+		case 0xcc: i8085_ICount -= 11;	/* CZ   nnnn */
 			M_CALL( I.AF.b.l & ZF );
 			break;
 		case 0xcd: i8085_ICount -= 11;	/* CALL nnnn */
 			M_CALL(1);
 			break;
-		case 0xce: i8085_ICount -= 7;	/* ACI	nn */
+		case 0xce: i8085_ICount -= 7;	/* ACI  nn */
 			I.XX.b.l = ARG();
 			M_ADC(I.XX.b.l);
 			break;
-		case 0xcf: i8085_ICount -= 11;	/* RST	1 */
+		case 0xcf: i8085_ICount -= 11;	/* RST  1 */
 			M_RST(1);
 			break;
 
-		case 0xd0: i8085_ICount -= 5;	/* RNC	*/
+		case 0xd0: i8085_ICount -= 5;	/* RNC  */
 			M_RET( !(I.AF.b.l & CF) );
 			break;
-		case 0xd1: i8085_ICount -= 10;	/* POP	D */
+		case 0xd1: i8085_ICount -= 10;	/* POP  D */
 			M_POP(DE);
 			break;
-		case 0xd2: i8085_ICount -= 7;	/* JNC	nnnn */
+		case 0xd2: i8085_ICount -= 7;	/* JNC  nnnn */
 			M_JMP( !(I.AF.b.l & CF) );
 			break;
-		case 0xd3: i8085_ICount -= 10;	/* OUT	nn */
+		case 0xd3: i8085_ICount -= 10;	/* OUT  nn */
 			M_OUT;
 			break;
-		case 0xd4: i8085_ICount -= 11;	/* CNC	nnnn */
+		case 0xd4: i8085_ICount -= 11;	/* CNC  nnnn */
 			M_CALL( !(I.AF.b.l & CF) );
 			break;
 		case 0xd5: i8085_ICount -= 11;	/* PUSH D */
 			M_PUSH(DE);
 			break;
-		case 0xd6: i8085_ICount -= 7;	/* SUI	nn */
+		case 0xd6: i8085_ICount -= 7;	/* SUI  nn */
 			I.XX.b.l = ARG();
 			M_SUB(I.XX.b.l);
 			break;
-		case 0xd7: i8085_ICount -= 11;	/* RST	2 */
+		case 0xd7: i8085_ICount -= 11;	/* RST  2 */
 			M_RST(2);
 			break;
 
-		case 0xd8: i8085_ICount -= 5;	/* RC	*/
+		case 0xd8: i8085_ICount -= 5;	/* RC   */
 			M_RET( I.AF.b.l & CF );
 			break;
 		case 0xd9:
@@ -989,13 +989,13 @@ INLINE void execute_one(int opcode)
 				M_RET(1);
 			}
 			break;
-		case 0xda: i8085_ICount -= 7;	/* JC	nnnn */
+		case 0xda: i8085_ICount -= 7;	/* JC   nnnn */
 			M_JMP( I.AF.b.l & CF );
 			break;
-		case 0xdb: i8085_ICount -= 10;	/* IN	nn */
+		case 0xdb: i8085_ICount -= 10;	/* IN   nn */
 			M_IN;
 			break;
-		case 0xdc: i8085_ICount -= 11;	/* CC	nnnn */
+		case 0xdc: i8085_ICount -= 11;	/* CC   nnnn */
 			M_CALL( I.AF.b.l & CF );
 			break;
 		case 0xdd:
@@ -1007,21 +1007,21 @@ INLINE void execute_one(int opcode)
 				M_CALL(1);
 			}
 			break;
-		case 0xde: i8085_ICount -= 7;	/* SBI	nn */
+		case 0xde: i8085_ICount -= 7;	/* SBI  nn */
 			I.XX.b.l = ARG();
 			M_SBB(I.XX.b.l);
 			break;
-		case 0xdf: i8085_ICount -= 11;	/* RST	3 */
+		case 0xdf: i8085_ICount -= 11;	/* RST  3 */
 			M_RST(3);
 			break;
 
-		case 0xe0: i8085_ICount -= 5;	/* RPE	  */
+		case 0xe0: i8085_ICount -= 5;	/* RPE    */
 			M_RET( !(I.AF.b.l & VF) );
 			break;
-		case 0xe1: i8085_ICount -= 10;	/* POP	H */
+		case 0xe1: i8085_ICount -= 10;	/* POP  H */
 			M_POP(HL);
 			break;
-		case 0xe2: i8085_ICount -= 7;	/* JPO	nnnn */
+		case 0xe2: i8085_ICount -= 7;	/* JPO  nnnn */
 			M_JMP( !(I.AF.b.l & VF) );
 			break;
 		case 0xe3: i8085_ICount -= 18;	/* XTHL */
@@ -1029,28 +1029,28 @@ INLINE void execute_one(int opcode)
 			M_PUSH(HL);
 			I.HL.d = I.XX.d;
 			break;
-		case 0xe4: i8085_ICount -= 11;	/* CPE	nnnn */
+		case 0xe4: i8085_ICount -= 11;	/* CPE  nnnn */
 			M_CALL( !(I.AF.b.l & VF) );
 			break;
 		case 0xe5: i8085_ICount -= 11;	/* PUSH H */
 			M_PUSH(HL);
 			break;
-		case 0xe6: i8085_ICount -= 7;	/* ANI	nn */
+		case 0xe6: i8085_ICount -= 7;	/* ANI  nn */
 			I.XX.b.l = ARG();
 			M_ANA(I.XX.b.l);
 			break;
-		case 0xe7: i8085_ICount -= 11;	/* RST	4 */
+		case 0xe7: i8085_ICount -= 11;	/* RST  4 */
 			M_RST(4);
 			break;
 
-		case 0xe8: i8085_ICount -= 5;	/* RPO	*/
+		case 0xe8: i8085_ICount -= 5;	/* RPO  */
 			M_RET( I.AF.b.l & VF );
 			break;
 		case 0xe9: i8085_ICount -= 5;	/* PCHL */
 			I.PC.d = I.HL.w.l;
 			change_pc(I.PC.d);
 			break;
-		case 0xea: i8085_ICount -= 7;	/* JPE	nnnn */
+		case 0xea: i8085_ICount -= 7;	/* JPE  nnnn */
 			M_JMP( I.AF.b.l & VF );
 			break;
 		case 0xeb: i8085_ICount -= 4;	/* XCHG */
@@ -1058,7 +1058,7 @@ INLINE void execute_one(int opcode)
 			I.DE.d = I.HL.d;
 			I.HL.d = I.XX.d;
 			break;
-		case 0xec: i8085_ICount -= 11;	/* CPO	nnnn */
+		case 0xec: i8085_ICount -= 11;	/* CPO  nnnn */
 			M_CALL( I.AF.b.l & VF );
 			break;
 		case 0xed:
@@ -1073,48 +1073,48 @@ INLINE void execute_one(int opcode)
 				M_CALL(1);
 			}
 			break;
-		case 0xee: i8085_ICount -= 7;	/* XRI	nn */
+		case 0xee: i8085_ICount -= 7;	/* XRI  nn */
 			I.XX.b.l = ARG();
 			M_XRA(I.XX.b.l);
 			break;
-		case 0xef: i8085_ICount -= 11;	/* RST	5 */
+		case 0xef: i8085_ICount -= 11;	/* RST  5 */
 			M_RST(5);
 			break;
 
-		case 0xf0: i8085_ICount -= 5;	/* RP	*/
+		case 0xf0: i8085_ICount -= 5;	/* RP   */
 			M_RET( !(I.AF.b.l&SF) );
 			break;
-		case 0xf1: i8085_ICount -= 10;	/* POP	A */
+		case 0xf1: i8085_ICount -= 10;	/* POP  A */
 			M_POP(AF);
 			break;
-		case 0xf2: i8085_ICount -= 7;	/* JP	nnnn */
+		case 0xf2: i8085_ICount -= 7;	/* JP   nnnn */
 			M_JMP( !(I.AF.b.l & SF) );
 			break;
-		case 0xf3: i8085_ICount -= 4;	/* DI	*/
+		case 0xf3: i8085_ICount -= 4;	/* DI   */
 			/* remove interrupt enable */
 			I.IM &= ~IM_IEN;
 			break;
-		case 0xf4: i8085_ICount -= 11;	/* CP	nnnn */
+		case 0xf4: i8085_ICount -= 11;	/* CP   nnnn */
 			M_CALL( !(I.AF.b.l & SF) );
 			break;
 		case 0xf5: i8085_ICount -= 11;	/* PUSH A */
 			M_PUSH(AF);
 			break;
-		case 0xf6: i8085_ICount -= 7;	/* ORI	nn */
+		case 0xf6: i8085_ICount -= 7;	/* ORI  nn */
 			I.XX.b.l = ARG();
 			M_ORA(I.XX.b.l);
 			break;
-		case 0xf7: i8085_ICount -= 11;	/* RST	6 */
+		case 0xf7: i8085_ICount -= 11;	/* RST  6 */
 			M_RST(6);
 			break;
 
-		case 0xf8: i8085_ICount -= 5;	/* RM	*/
+		case 0xf8: i8085_ICount -= 5;	/* RM   */
 			M_RET( I.AF.b.l & SF );
 			break;
 		case 0xf9: i8085_ICount -= 5;	/* SPHL */
 			I.SP.d = I.HL.d;
 			break;
-		case 0xfa: i8085_ICount -= 7;	/* JM	nnnn */
+		case 0xfa: i8085_ICount -= 7;	/* JM   nnnn */
 			M_JMP( I.AF.b.l & SF );
 			break;
 		case 0xfb: i8085_ICount -= 4;	/* EI */
@@ -1143,7 +1143,7 @@ INLINE void execute_one(int opcode)
 					I.IREQ |= IM_RST75;
 				}
 				/* find highest priority IREQ flag with
-				   IM enabled and schedule for execution */
+                   IM enabled and schedule for execution */
 				if( !(I.IM & IM_RST75) && (I.IREQ & IM_RST75) ) {
 					I.ISRV = IM_RST75;
 					I.IRQ2 = ADDR_RST75;
@@ -1166,7 +1166,7 @@ INLINE void execute_one(int opcode)
 				}
 			}
 			break;
-		case 0xfc: i8085_ICount -= 11;	/* CM	nnnn */
+		case 0xfc: i8085_ICount -= 11;	/* CM   nnnn */
 			M_CALL( I.AF.b.l & SF );
 			break;
 		case 0xfd:
@@ -1178,11 +1178,11 @@ INLINE void execute_one(int opcode)
 				M_CALL(1);
 			}
 			break;
-		case 0xfe: i8085_ICount -= 7;	/* CPI	nn */
+		case 0xfe: i8085_ICount -= 7;	/* CPI  nn */
 			I.XX.b.l = ARG();
 			M_CMP(I.XX.b.l);
 			break;
-		case 0xff: i8085_ICount -= 11;	/* RST	7 */
+		case 0xff: i8085_ICount -= 11;	/* RST  7 */
 			M_RST(7);
 			break;
 	}
@@ -1237,7 +1237,7 @@ static void Interrupt(void)
 		case 0xcd0000:	/* CALL nnnn */
 			i8085_ICount -= 7;
 			M_PUSH(PC);
-		case 0xc30000:	/* JMP	nnnn */
+		case 0xc30000:	/* JMP  nnnn */
 			i8085_ICount -= 10;
 			I.PC.d = I.IRQ1 & 0xffff;
 			change_pc(I.PC.d);
@@ -1385,7 +1385,7 @@ static void i8085_set_context(void *src)
 }
 
 /****************************************************************************/
-/* Set TRAP signal state													*/
+/* Set TRAP signal state                                                    */
 /****************************************************************************/
 static void i8085_set_TRAP(int state)
 {
@@ -1404,7 +1404,7 @@ static void i8085_set_TRAP(int state)
 }
 
 /****************************************************************************/
-/* Set RST7.5 signal state													*/
+/* Set RST7.5 signal state                                                  */
 /****************************************************************************/
 static void i8085_set_RST75(int state)
 {
@@ -1424,7 +1424,7 @@ static void i8085_set_RST75(int state)
 }
 
 /****************************************************************************/
-/* Set RST6.5 signal state													*/
+/* Set RST6.5 signal state                                                  */
 /****************************************************************************/
 static void i8085_set_RST65(int state)
 {
@@ -1446,7 +1446,7 @@ static void i8085_set_RST65(int state)
 }
 
 /****************************************************************************/
-/* Set RST5.5 signal state													*/
+/* Set RST5.5 signal state                                                  */
 /****************************************************************************/
 static void i8085_set_RST55(int state)
 {
@@ -1468,7 +1468,7 @@ static void i8085_set_RST55(int state)
 }
 
 /****************************************************************************/
-/* Set INTR signal															*/
+/* Set INTR signal                                                          */
 /****************************************************************************/
 static void i8085_set_INTR(int state)
 {

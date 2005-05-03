@@ -66,7 +66,7 @@ static void get_back_info(int cgindex)
 	int attr = compgolf_bg_ram[cgindex*2];
 	int code = compgolf_bg_ram[cgindex*2+1] + ((attr & 1) << 8);
 	int color = (attr & 0x3e) >> 1;
-	
+
 	SET_TILE_INFO(1,code,color,0)
 }
 

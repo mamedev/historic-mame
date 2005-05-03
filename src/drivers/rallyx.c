@@ -231,7 +231,7 @@ static WRITE8_HANDLER( rallyx_latch_w )
 
 		case 0x02:	/* SOUND ON */
 			/* this doesn't work in New Rally X so I'm not supporting it */
-//			pacman_sound_enable_w(0,bit);
+//          pacman_sound_enable_w(0,bit);
 			break;
 
 		case 0x03:	/* FLIP */
@@ -272,7 +272,7 @@ static WRITE8_HANDLER( locomotn_latch_w )
 			break;
 
 		case 0x02:	/* MUT */
-//			sound disable
+//          sound disable
 			break;
 
 		case 0x03:	/* FLIP */
@@ -624,12 +624,12 @@ INPUT_PORTS_START( tactcian )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	/*
-	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )			// Mode 2
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, "A 2C/1C  B 1C/3C" )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, "A 1C/1C  B 1C/6C" )
-	*/
+    PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )          // Mode 2
+    PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x04, "A 2C/1C  B 1C/3C" )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x06, "A 1C/1C  B 1C/6C" )
+    */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10k, 80k then every 100k" )
 	PORT_DIPSETTING(    0x01, "20k, 80k then every 100k" )
@@ -905,7 +905,7 @@ static MACHINE_DRIVER_START( tactcian )
 	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
 	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
 	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
-	
+
 	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)
@@ -1084,7 +1084,7 @@ ROM_START( tactcian )
 	ROM_LOAD( "tact6331.002", 0x0000, 0x0020, CRC(b7ef83b7) SHA1(5ffab25c2dc5be0856a43a93711d39c4aec6660b) ) /* palette */
 	ROM_LOAD( "tact6301.003", 0x0020, 0x0100, CRC(a92796f2) SHA1(0faab2dc0f868f4023a34ecfcf972d1c86a224a0) ) /* loookup table */	// tac.b4
 	ROM_LOAD( "tact6331.001", 0x0120, 0x0020, CRC(8f574815) SHA1(4f84162db9d58b64742c67dc689eb665b9862fb3) ) /* video layout (not used) */
-//	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) ) /* video timing (not used) */
+//  ROM_LOAD( "10a.bpr",      0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) ) /* video timing (not used) */
 ROM_END
 
 ROM_START( tactcan2 )
@@ -1112,7 +1112,7 @@ ROM_START( tactcan2 )
 	ROM_LOAD( "tact6331.002", 0x0000, 0x0020, CRC(b7ef83b7) SHA1(5ffab25c2dc5be0856a43a93711d39c4aec6660b) ) /* palette */
 	ROM_LOAD( "tact6301.003", 0x0020, 0x0100, CRC(a92796f2) SHA1(0faab2dc0f868f4023a34ecfcf972d1c86a224a0) ) /* loookup table */	// tac.b4
 	ROM_LOAD( "tact6331.001", 0x0120, 0x0020, CRC(8f574815) SHA1(4f84162db9d58b64742c67dc689eb665b9862fb3) ) /* video layout (not used) */
-//	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) ) /* video timing (not used) */
+//  ROM_LOAD( "10a.bpr",      0x0140, 0x0020, CRC(b8861096) SHA1(26fad384ed7a1a1e0ba719b5578e2dbb09334a25) ) /* video timing (not used) */
 ROM_END
 
 ROM_START( locomotn )

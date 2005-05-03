@@ -66,14 +66,14 @@ static WRITE8_HANDLER( pandoras_sharedram2_w ){
 }
 
 static WRITE8_HANDLER( pandoras_int_control_w ){
-	/*	byte 0:	irq enable (CPU A)
-		byte 2:	coin counter 1
-		byte 3: coin counter 2
-		byte 5: flip screen
-		byte 6:	irq enable (CPU B)
-		byte 7:	NMI to CPU B
+	/*  byte 0: irq enable (CPU A)
+        byte 2: coin counter 1
+        byte 3: coin counter 2
+        byte 5: flip screen
+        byte 6: irq enable (CPU B)
+        byte 7: NMI to CPU B
 
-		other bytes unknown */
+        other bytes unknown */
 
 	switch (offset){
 		case 0x00:	if (!data) cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
@@ -168,7 +168,7 @@ static ADDRESS_MAP_START( pandoras_readmem_b, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1a02, 0x1a02) AM_READ(input_port_5_r)			/* 2P inputs */
 	AM_RANGE(0x1a03, 0x1a03) AM_READ(input_port_2_r)			/* DIPSW #3 */
 	AM_RANGE(0x1c00, 0x1c00) AM_READ(input_port_1_r)			/* DISPW #2 */
-//	AM_RANGE(0x1e00, 0x1e00) AM_READ(MRA8_NOP)				/* ??? seems to be important */
+//  AM_RANGE(0x1e00, 0x1e00) AM_READ(MRA8_NOP)              /* ??? seems to be important */
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(pandoras_sharedram2_r)	/* Shared RAM with the CPU A */
 	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
 ADDRESS_MAP_END
@@ -220,7 +220,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -259,7 +259,7 @@ INPUT_PORTS_START( pandoras )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -371,7 +371,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -437,7 +437,7 @@ static MACHINE_DRIVER_START( pandoras )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)

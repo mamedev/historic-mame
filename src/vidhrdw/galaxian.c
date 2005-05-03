@@ -232,9 +232,9 @@ PALETTE_INIT( turtles )
 
 	/*  The background color generator is connected this way:
 
-		RED   - 390 ohm resistor
-		GREEN - 470 ohm resistor
-		BLUE  - 390 ohm resistor */
+        RED   - 390 ohm resistor
+        GREEN - 470 ohm resistor
+        BLUE  - 390 ohm resistor */
 
 	for (i = 0; i < 8; i++)
 	{
@@ -256,9 +256,9 @@ PALETTE_INIT( stratgyx )
 
 	/*  The background color generator is connected this way:
 
-		RED   - 270 ohm resistor
-		GREEN - 560 ohm resistor
-		BLUE  - 470 ohm resistor */
+        RED   - 270 ohm resistor
+        GREEN - 560 ohm resistor
+        BLUE  - 470 ohm resistor */
 
 	for (i = 0; i < 8; i++)
 	{
@@ -425,10 +425,10 @@ PALETTE_INIT( mariner )
 
 	/* 16 shades of blue - the 4 bits are connected to the following resistors:
 
-		bit 0 -- 4.7 kohm resistor
-			  -- 2.2 kohm resistor
-			  -- 1   kohm resistor
-		bit 0 -- .47 kohm resistor */
+        bit 0 -- 4.7 kohm resistor
+              -- 2.2 kohm resistor
+              -- 1   kohm resistor
+        bit 0 -- .47 kohm resistor */
 
 	for (i = 0; i < 16; i++)
 	{
@@ -1406,10 +1406,10 @@ static void stratgyx_draw_background(struct mame_bitmap *bitmap)
 
 	/* the background PROM is connected the following way:
 
-	   bit 0 = 0 enables the blue gun if BCB is asserted
-	   bit 1 = 0 enables the red gun if BCR is asserted and
-	             the green gun if BCG is asserted
-	   bits 2-7 are unconnected */
+       bit 0 = 0 enables the blue gun if BCB is asserted
+       bit 1 = 0 enables the red gun if BCR is asserted and
+                 the green gun if BCG is asserted
+       bits 2-7 are unconnected */
 
 	prom = memory_region(REGION_USER1);
 
@@ -1494,8 +1494,8 @@ static void mariner_draw_background(struct mame_bitmap *bitmap)
 
 
 	/* the background PROM contains the color codes for each 8 pixel
-	   line (column) of the screen.  The first 0x20 bytes for unflipped,
-	   and the 2nd 0x20 bytes for flipped screen. */
+       line (column) of the screen.  The first 0x20 bytes for unflipped,
+       and the 2nd 0x20 bytes for flipped screen. */
 
 	prom = memory_region(REGION_USER1);
 

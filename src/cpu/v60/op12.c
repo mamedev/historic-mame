@@ -461,8 +461,7 @@ UINT32 opCHLVL(void)
 
 	if (f12Op1>3)
 	{
-		logerror("Illegal data field on opCHLVL, PC=%x\n", PC);
-		abort();
+		osd_die("Illegal data field on opCHLVL, PC=%x\n", PC);
 	}
 
 	UPDATEPSW();
@@ -748,8 +747,7 @@ UINT32 opLDPR(void)
 	}
 	else
 	{
-		logerror("Invalid operand on LDPR PC=%x\n", PC);
-		abort();
+		osd_die("Invalid operand on LDPR PC=%x\n", PC);
 	}
 	F12END();
 }
@@ -1703,12 +1701,12 @@ UINT32 opSETF(void)
 /*
 #define SHIFTLEFT_OY(val, count, bitsize) \
 {\
-	UINT32 tmp = ((val) >> (bitsize-1)) & 1; \
-	tmp <<= count; \
-	tmp -= 1; \
-	tmp <<= (bitsize - (count)); \
-	_OV = (((val) & tmp) != tmp); \
-	_CY = (((val) & (1 << (count-1))) != 0); \
+    UINT32 tmp = ((val) >> (bitsize-1)) & 1; \
+    tmp <<= count; \
+    tmp -= 1; \
+    tmp <<= (bitsize - (count)); \
+    _OV = (((val) & tmp) != tmp); \
+    _CY = (((val) & (1 << (count-1))) != 0); \
 }
 */
 
@@ -1788,7 +1786,7 @@ UINT32 opSHAB(void)
 		SetSZPF_Byte(appb);
 	}
 
-//	printf("SHAB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
+//  printf("SHAB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
 
 	F12STOREOP2BYTE();
 	F12END();
@@ -1842,7 +1840,7 @@ UINT32 opSHAH(void)
 		SetSZPF_Word(apph);
 	}
 
-//	printf("SHAH: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, apph, _CY, _Z, _OV, _S);
+//  printf("SHAH: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, apph, _CY, _Z, _OV, _S);
 
 	F12STOREOP2HALF();
 	F12END();
@@ -1896,7 +1894,7 @@ UINT32 opSHAW(void)
 		SetSZPF_Long(appw);
 	}
 
-//	printf("SHAW: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, appw, _CY, _Z, _OV, _S);
+//  printf("SHAW: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, appw, _CY, _Z, _OV, _S);
 
 	F12STOREOP2WORD();
 	F12END();
@@ -1956,7 +1954,7 @@ UINT32 opSHLB(void) /* TRUSTED */
 		}
 	}
 
-//	printf("SHLB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
+//  printf("SHLB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
 
 	F12STOREOP2BYTE();
 	F12END();
@@ -1973,7 +1971,7 @@ UINT32 opSHLH(void) /* TRUSTED */
 	F12LOADOP2HALF();
 
 	count=(INT8)(f12Op1&0xFF);
-//	printf("apph: %x count: %d  ", apph, count);
+//  printf("apph: %x count: %d  ", apph, count);
 	if (count>0)
 	{
 		// left shift flags:
@@ -2016,7 +2014,7 @@ UINT32 opSHLH(void) /* TRUSTED */
 		}
 	}
 
-//	printf("SHLH: %x _CY: %d _Z: %d _OV: %d _S: %d\n", apph, _CY, _Z, _OV, _S);
+//  printf("SHLH: %x _CY: %d _Z: %d _OV: %d _S: %d\n", apph, _CY, _Z, _OV, _S);
 
 	F12STOREOP2HALF();
 	F12END();
@@ -2075,7 +2073,7 @@ UINT32 opSHLW(void) /* TRUSTED */
 		}
 	}
 
-//	printf("SHLW: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appw, _CY, _Z, _OV, _S);
+//  printf("SHLW: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appw, _CY, _Z, _OV, _S);
 
 	F12STOREOP2WORD();
 	F12END();
@@ -2088,8 +2086,7 @@ UINT32 opSTPR(void)
 		modWriteValW = v60.reg[f12Op1 + 36];
 	else
 	{
-		logerror("Invalid operand on STPR PC=%x\n", PC);
-		abort();
+		osd_die("Invalid operand on STPR PC=%x\n", PC);
 	}
 	F12WriteSecondOperand(2);
 	F12END();

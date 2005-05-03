@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Sky Diver hardware
+    Atari Sky Diver hardware
 
 ***************************************************************************/
 
@@ -50,7 +50,7 @@ static void get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -64,7 +64,7 @@ VIDEO_START( skydiver )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 
@@ -167,7 +167,7 @@ WRITE8_HANDLER( skydiver_2000_201F_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -177,7 +177,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 
 	/* draw each one of our four motion objects, the two PLANE sprites
-	   can be drawn double width */
+       can be drawn double width */
 	for (pic = 3; pic >= 0; pic--)
 	{
 		int sx,sy;

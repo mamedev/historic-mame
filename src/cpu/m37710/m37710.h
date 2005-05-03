@@ -37,7 +37,7 @@ enum
 	M37710_LINE_TIMERA0,
 	M37710_LINE_IRQ2,
 	M37710_LINE_IRQ1,
-	M37710_LINE_IRQ0, 
+	M37710_LINE_IRQ0,
 	// these interrupts are non-maskable
 	M37710_LINE_WATCHDOG,
 	M37710_LINE_DEBUG,
@@ -70,7 +70,7 @@ enum
 /* I/O ports */
 enum
 {
-	M37710_PORT0 = 0, 
+	M37710_PORT0 = 0,
 	M37710_PORT1, M37710_PORT2, M37710_PORT3, M37710_PORT4,
 	M37710_PORT5, M37710_PORT6, M37710_PORT7, M37710_PORT8,
 
@@ -108,10 +108,10 @@ unsigned m37710_dasm(char *buffer, unsigned pc);
 #undef M37710_CALL_DEBUGGER
 
 #define M37710_CALL_DEBUGGER CALL_MAME_DEBUG
-#define m37710_read_8(addr) 			program_read_byte_16le(addr)      
+#define m37710_read_8(addr) 			program_read_byte_16le(addr)
 #define m37710_write_8(addr,data)		program_write_byte_16le(addr,data)
-#define m37710_read_8_immediate(A)		program_read_byte_16le(A)         
-#define m37710_read_16(addr) 			program_read_word_16le(addr)      
+#define m37710_read_8_immediate(A)		program_read_byte_16le(A)
+#define m37710_read_16(addr) 			program_read_word_16le(addr)
 #define m37710_write_16(addr,data)		program_write_word_16le(addr,data)
 #define m37710_jumping(A)			change_pc(A)
 #define m37710_branching(A)

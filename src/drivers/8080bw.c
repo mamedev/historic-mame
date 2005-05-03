@@ -859,8 +859,8 @@ INPUT_PORTS_START( spclaser )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	/*PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
     PORT_DIPNAME( 0x80, 0x00, DEF_STR(Coinage) )
     PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Players" )
     PORT_DIPSETTING(    0x80, "1 Coin/1 Player  2 Coins/2 Players" )   Irrelevant, causes bugs*/
@@ -1495,7 +1495,7 @@ INPUT_PORTS_START( boothill )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-//	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+//  PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x00, "Time" )
 	PORT_DIPSETTING(    0x00, "64" )
 	PORT_DIPSETTING(    0x04, "74" )
@@ -2080,8 +2080,8 @@ INPUT_PORTS_START( polaris )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	/* 0x04 should be Cabinet - Upright/Cocktail,
-	   but until the cocktail hack is changed,
-	   this will have to do. */
+       but until the cocktail hack is changed,
+       this will have to do. */
 	PORT_DIPNAME( 0x04, 0x00, "Number of Controls" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
@@ -2089,7 +2089,7 @@ INPUT_PORTS_START( polaris )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	/* The Demo Sounds dip switch does function.
-	 * It allows the sonar sounds to play in demo mode. */
+     * It allows the sonar sounds to play in demo mode. */
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -4030,7 +4030,7 @@ ROM_END
 /* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_NO_SOUND )
 /* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_IMPERFECT_SOUND )
 /* 630 */ GAMEX(1978, clowns1,  clowns,   clowns,   clowns1,  8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND )
-/* 640    																		"Midway", "Space Walk" */
+/* 640                                                                          "Midway", "Space Walk" */
 /* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
 /* 644 */ GAMEX(1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   "Midway", "Dog Patch", GAME_NO_SOUND )
@@ -4041,7 +4041,7 @@ ROM_END
 /* 742 */ GAMEX(1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   "Midway", "Blue Shark", GAME_NO_SOUND )
 /* 851 */ GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, invad2ct, ROT90,  "Midway", "Space Invaders II (Midway, cocktail)" )
 /* 852 */ GAME( 1980, invaddlx, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Midway", "Space Invaders Deluxe" )
-/* 870    																		"Midway", "Space Invaders Deluxe (cocktail) "*/
+/* 870                                                                          "Midway", "Space Invaders Deluxe (cocktail) "*/
 
 /* Taito games */
 

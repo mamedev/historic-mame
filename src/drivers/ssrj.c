@@ -11,11 +11,11 @@
 
 HW info :
 
-	0000-7fff ROM
-	c000-dfff VRAM ( 4 tilemaps (4 x $800) )
-	e000-e7ff RAM
-	e800-efff SCROLL RAM
-	f003      ??
+    0000-7fff ROM
+    c000-dfff VRAM ( 4 tilemaps (4 x $800) )
+    e000-e7ff RAM
+    e800-efff SCROLL RAM
+    f003      ??
   f400-f401 AY 8910
   fc00      ??
   f800      ??
@@ -196,7 +196,7 @@ static MACHINE_DRIVER_START( ssrj )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 8000000/5)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)

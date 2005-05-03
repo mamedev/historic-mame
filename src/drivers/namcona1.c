@@ -2,45 +2,45 @@
 Namco NA-1 / NA-2 System
 
 NA-1 Games:
--	Bakuretsu Quiz Ma-Q Dai Bouken
--	F/A
--	Super World Court (C354, C357)
--	Nettou! Gekitou! Quiztou!! (C354, C365 - both are 32pin)
--	Exvania (C350, C354)
--	Cosmo Gang the Puzzle (C356)
--	Tinkle Pit (C354, C367)
--	Emeraldia (C354, C358)
+-   Bakuretsu Quiz Ma-Q Dai Bouken
+-   F/A
+-   Super World Court (C354, C357)
+-   Nettou! Gekitou! Quiztou!! (C354, C365 - both are 32pin)
+-   Exvania (C350, C354)
+-   Cosmo Gang the Puzzle (C356)
+-   Tinkle Pit (C354, C367)
+-   Emeraldia (C354, C358)
 
 NA-2 Games:
--	Knuckle Heads
--	Numan Athletics
--	X-Day 2
+-   Knuckle Heads
+-   Numan Athletics
+-   X-Day 2
 
 To Do:
 
 - Pressing "F3" (reset) crashes MAME
 
 - Emeralda:
-	After selecting the game type, tilemap scrolling is briefly incorrect
+    After selecting the game type, tilemap scrolling is briefly incorrect
 
 - Emeralda:
-	Shadow sprites, if enabled, make the score display invisible
+    Shadow sprites, if enabled, make the score display invisible
 
 - Hook up ROZ registers
 
 - Is view area controlled by registers?
 
 - Xday 2:
-	has some graphics glitches (wrong sprite tiles); probably blitter-related
-	input ports are wonky; can add "coins" while in free-play mode, but can't start game
+    has some graphics glitches (wrong sprite tiles); probably blitter-related
+    input ports are wonky; can add "coins" while in free-play mode, but can't start game
 
-	Rom board  M112
-	Rom board custom Key chip i.d. C394
-	Game uses a small cash-register type printer (connects to rom board)
-	Game also has a large L.E.D. type score board with several
+    Rom board  M112
+    Rom board custom Key chip i.d. C394
+    Game uses a small cash-register type printer (connects to rom board)
+    Game also has a large L.E.D. type score board with several
     displays for various scores. (connects to rom board)
-	Game uses coin-type battery on rom board. (not suicide)
-	Game won't startup unless printer is connected and with paper.
+    Game uses coin-type battery on rom board. (not suicide)
+    Game won't startup unless printer is connected and with paper.
 
 The board has a 28c16 EEPROM
 
@@ -55,21 +55,21 @@ Plus 1 or 2 custom chips on ROM board.
 
 Notes:
 
--	NA-2 is backwards compatible with NA-1.
+-   NA-2 is backwards compatible with NA-1.
 
--	NA-2 games use a different MCU BIOS
+-   NA-2 games use a different MCU BIOS
 
--	Test mode for NA2 games includes an additional item: UART Test.
-	No games are known to actually link up and use the UART feature.
-	It's been confirmed that a Numan Athletics fails the UART test,
-	behaving as it does in MAME.
+-   Test mode for NA2 games includes an additional item: UART Test.
+    No games are known to actually link up and use the UART feature.
+    It's been confirmed that a Numan Athletics fails the UART test,
+    behaving as it does in MAME.
 
--	Quiz games use 1p button 1 to pick test, 2p button 1 to begin test,
-	and 2p button 2 to exit. Because quiz games doesn't have joystick.
+-   Quiz games use 1p button 1 to pick test, 2p button 1 to begin test,
+    and 2p button 2 to exit. Because quiz games doesn't have joystick.
 
--	Almost all quiz games using JAMMA edge connector assign
-	button1 to up, button 2 to down, button 3 to left, button 4 to right.
-	But Taito F2 quiz games assign button 3 to right and button 4 to left.
+-   Almost all quiz games using JAMMA edge connector assign
+    button1 to up, button 2 to down, button 3 to left, button 4 to right.
+    But Taito F2 quiz games assign button 3 to right and button 4 to left.
 
 ***************************************************************************/
 
@@ -423,8 +423,8 @@ simulate_mcu( void )
 	}
 
 	/* "analog" and "encoder" ports are polled during test mode,
-	 * but I haven't found any games that make use of them.
-	 */
+     * but I haven't found any games that make use of them.
+     */
 	mcu_ram[0xfc0/2+0x05] = 0xffff; /* analog0,1 */
 	mcu_ram[0xfc0/2+0x06] = 0xffff; /* analog2,3 */
 	mcu_ram[0xfc0/2+0x07] = 0xffff; /* analog4,5 */
@@ -474,29 +474,29 @@ static WRITE16_HANDLER( namcona1_mcu_w )
 		logerror( "0x%03x: 0x%04x\n", offset*2, mcu_ram[offset] );
 	}
 	/*
-		400..53d  code for MCU?
+        400..53d  code for MCU?
 
-		820:					song select
-		822:					song control (volume? tempo?)
-		824,826,828,....89e:	sample select
-			0x40 is written to odd addresses to signal the MCU that a sound command has been issued
+        820:                    song select
+        822:                    song control (volume? tempo?)
+        824,826,828,....89e:    sample select
+            0x40 is written to odd addresses to signal the MCU that a sound command has been issued
 
-		8f0: 0x07 unknown
-		8f2: 0x01 unknown
-		8f4: 0xa4 unknown
+        8f0: 0x07 unknown
+        8f2: 0x01 unknown
+        8f4: 0xa4 unknown
 
-		f30..f71	data for MCU
-		f72: MCU command:
-			0x07 = identify version
-			0x03 = process data
-			0x87 = ?
+        f30..f71    data for MCU
+        f72: MCU command:
+            0x07 = identify version
+            0x03 = process data
+            0x87 = ?
 
-		fc0..fc9: used by knuckleheads (NA2-specific?)
+        fc0..fc9: used by knuckleheads (NA2-specific?)
 
-		fd8: ?
+        fd8: ?
 
-		fbf: watchdog
-	*/
+        fbf: watchdog
+    */
 }
 
 /* NA2 hardware sends a special command to the MCU, then tests to
@@ -523,29 +523,29 @@ static WRITE16_HANDLER( mcu_command_w )
 	switch( cmd ){
 	case 0x03:
 		/* Process data at 0xf30..0xf71
-		 *
-		 * f30: 0101 0020 0400 013e 8a00 0000 0000 011e
-		 * f40: 0301 0000 0000 0000 8a16 0000 0000 012c
-		 * f50: 0301 0000 0000 0000 8a61 0000 0000 019e
-		 * f60: 0301 0000 0000 0000 8a61 0000 0000 01ae
-		 * f70: 0000
-		 *
-		 * f30: 0301 0000 0000 0000 8a88 0000 0000 0120
-		 * f40: 0301 0000 0000 0000 8ad1 0000 0000 015a
-		 * f50: 0301 0000 0000 0000 8af6 0000 0000 011c
-		 * f60: 0301 0000 0000 0000 8b08 0000 0000 0114
-		 * f70: 0000
-		 *
-		 * f30: 0300 0000 0000 0000 8b1f 2004 0000 0000
-		 * f40: 0301 0000 0000 0000 8b33 0000 0000 8902
-		 * f50: 0000
-		 */
+         *
+         * f30: 0101 0020 0400 013e 8a00 0000 0000 011e
+         * f40: 0301 0000 0000 0000 8a16 0000 0000 012c
+         * f50: 0301 0000 0000 0000 8a61 0000 0000 019e
+         * f60: 0301 0000 0000 0000 8a61 0000 0000 01ae
+         * f70: 0000
+         *
+         * f30: 0301 0000 0000 0000 8a88 0000 0000 0120
+         * f40: 0301 0000 0000 0000 8ad1 0000 0000 015a
+         * f50: 0301 0000 0000 0000 8af6 0000 0000 011c
+         * f60: 0301 0000 0000 0000 8b08 0000 0000 0114
+         * f70: 0000
+         *
+         * f30: 0300 0000 0000 0000 8b1f 2004 0000 0000
+         * f40: 0301 0000 0000 0000 8b33 0000 0000 8902
+         * f50: 0000
+         */
 		break;
 
 	case 0x07:
 		/* This command is used to detect Namco NA-2 hardware; without it,
-		 * NA-2 games (Knuckleheads, Numan Athletics) refuse to run.
-		 */
+         * NA-2 games (Knuckleheads, Numan Athletics) refuse to run.
+         */
 		write_version_info();
 		break;
 	}
@@ -557,12 +557,12 @@ static WRITE16_HANDLER( mcu_command_w )
  * 8 bit signed PCM data
  * copied to workram
  *
- *	0x01fffc: pointer
- *	0x020000: samples
- *	0x040000: samples
- *	0x060000: samples
+ *  0x01fffc: pointer
+ *  0x020000: samples
+ *  0x040000: samples
+ *  0x060000: samples
  *
- *	0x070000: metadata; 10 byte frames
+ *  0x070000: metadata; 10 byte frames
  */
 
 /***************************************************************************/
@@ -738,9 +738,9 @@ blit_setup( int format, int *bytes_per_row, int *pitch, int mode )
 			break;
 
 		default:
-//		case 0x00f1:
-//		case 0x00f9:
-//		case 0x00fd:
+//      case 0x00f1:
+//      case 0x00f9:
+//      case 0x00fd:
 			*bytes_per_row = (64 - (format>>2))*0x08;
 			*pitch = 0x200;
 			break;
@@ -760,12 +760,12 @@ blit_setup( int format, int *bytes_per_row, int *pitch, int mode )
 			break;
 
 		case 0x0000: /* Numan (used to clear spriteram) */
-//		0000 0000 0000 : src0
-//		0000 0001 0000 : dst0
-//		003d 75a0      : src (7AEB40)
-//		---- ----      : spriteram
-//		0800		   : numbytes
-//		0000		   : blit
+//      0000 0000 0000 : src0
+//      0000 0001 0000 : dst0
+//      003d 75a0      : src (7AEB40)
+//      ---- ----      : spriteram
+//      0800           : numbytes
+//      0000           : blit
 			*bytes_per_row = 0x10;
 			*pitch = 0;
 			break;
@@ -781,10 +781,10 @@ blit_setup( int format, int *bytes_per_row, int *pitch, int mode )
 			break;
 
 		default:
-//		case 0x00f1:
-//		case 0x0781:
-//		case 0x07c1:
-//		case 0x07e1:
+//      case 0x00f1:
+//      case 0x0781:
+//      case 0x07c1:
+//      case 0x07e1:
 			*bytes_per_row = (64 - (format>>5))*0x40;
 			*pitch = 0x1000;
 			break;
@@ -794,25 +794,25 @@ blit_setup( int format, int *bytes_per_row, int *pitch, int mode )
 
 /*
 $efff20: sprite control: 0x3a,0x3e,0x3f
-			bit 0x01 selects spriteram bank
+            bit 0x01 selects spriteram bank
 
                0    2    4    6    8    a    c    e
-$efff00:	src0 src1 src2 dst0 dst1 dst2 BANK [src
-$efff10:	src] [dst dst] #BYT BLIT eINT 001f 0001
-$efff20:	003f 003f IACK ---- ---- ---- ---- ----
-$efff30:	---- ---- ---- ---- ---- ---- ---- ----
-$efff40:	---- ---- ---- ---- ---- ---- ---- ----
-$efff50:	---- ---- ---- ---- ---- ---- ---- ----
-$efff60:	---- ---- ---- ---- ---- ---- ---- ----
-$efff70:	---- ---- ---- ---- ---- ---- ---- ----
-$efff80:	0050 0170 0020 0100 0000 0000 0000 GFXE
-$efff90:	0000 0001 0002 0003 FLIP ---- ---- ----
-$efffa0:	PRI  PRI  PRI  PRI  ---- ---- 00c0 ----		priority (0..7)
-$efffb0:	COLR COLR COLR COLR 0001 0004 0000 ----		color (0..f)
-$efffc0:	???? ???? ???? ????	???? ???? ???? ----		ROZ
+$efff00:    src0 src1 src2 dst0 dst1 dst2 BANK [src
+$efff10:    src] [dst dst] #BYT BLIT eINT 001f 0001
+$efff20:    003f 003f IACK ---- ---- ---- ---- ----
+$efff30:    ---- ---- ---- ---- ---- ---- ---- ----
+$efff40:    ---- ---- ---- ---- ---- ---- ---- ----
+$efff50:    ---- ---- ---- ---- ---- ---- ---- ----
+$efff60:    ---- ---- ---- ---- ---- ---- ---- ----
+$efff70:    ---- ---- ---- ---- ---- ---- ---- ----
+$efff80:    0050 0170 0020 0100 0000 0000 0000 GFXE
+$efff90:    0000 0001 0002 0003 FLIP ---- ---- ----
+$efffa0:    PRI  PRI  PRI  PRI  ---- ---- 00c0 ----     priority (0..7)
+$efffb0:    COLR COLR COLR COLR 0001 0004 0000 ----     color (0..f)
+$efffc0:    ???? ???? ???? ???? ???? ???? ???? ----     ROZ
 
 Emeralda:
-$efff80:	0048 0177 0020 0100 0000 00fd 0000 GFXE
+$efff80:    0048 0177 0020 0100 0000 00fd 0000 GFXE
 */
 
 static void namcona1_blit( void )
@@ -914,13 +914,13 @@ static WRITE16_HANDLER( namcona1_vreg_w )
 
 static WRITE16_HANDLER( bogus_w )
 {
-//	extern int debug_key_pressed;
-//	debug_key_pressed = 1;
+//  extern int debug_key_pressed;
+//  debug_key_pressed = 1;
 }
 static READ16_HANDLER( bogus_r )
 {
-//	extern int debug_key_pressed;
-//	debug_key_pressed = 1;
+//  extern int debug_key_pressed;
+//  debug_key_pressed = 1;
 	return 0;
 }
 
@@ -1011,7 +1011,7 @@ static MACHINE_DRIVER_START( namcona1 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD(NAMCONA, 4*8000)
 	MDRV_SOUND_CONFIG(NAMCONA_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)

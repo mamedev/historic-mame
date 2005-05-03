@@ -1,32 +1,32 @@
 /*###################################################################################################
 **
 **
-**		dsp32.c
-**		Core implementation for the portable DSP32 emulator.
-**		Written by Aaron Giles
+**      dsp32.c
+**      Core implementation for the portable DSP32 emulator.
+**      Written by Aaron Giles
 **
 **
 **##################################################################################################
 **
 **
-**		Important note:
+**      Important note:
 **
-**		At this time, the emulator is rather incomplete. However, it is sufficiently
-**		complete to run both Race Drivin' and Hard Drivin's Airborne, which is all I
-**		was after.
+**      At this time, the emulator is rather incomplete. However, it is sufficiently
+**      complete to run both Race Drivin' and Hard Drivin's Airborne, which is all I
+**      was after.
 **
-**		Things that still need to be implemented:
+**      Things that still need to be implemented:
 **
-**			* interrupts
-**			* carry-reverse add operations
-**			* do loops
-**			* ieee/dsp conversions
-**			* input/output conversion
-**			* serial I/O
+**          * interrupts
+**          * carry-reverse add operations
+**          * do loops
+**          * ieee/dsp conversions
+**          * input/output conversion
+**          * serial I/O
 **
-**		In addition, there are several optimizations enabled which make assumptions
-**		about the code which may not be valid for other applications. Check dsp32ops.c
-**		for details.
+**      In addition, there are several optimizations enabled which make assumptions
+**      about the code which may not be valid for other applications. Check dsp32ops.c
+**      for details.
 **
 **
 **#################################################################################################*/
@@ -43,7 +43,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DETECT_MISALIGNED_MEMORY	0
@@ -51,7 +51,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 /* internal register numbering for PIO registers */
@@ -88,7 +88,7 @@
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 /* register mapping */
@@ -144,7 +144,7 @@
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 /* DSP32 Registers */
@@ -199,7 +199,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void dsp32c_reset(void *param);
@@ -207,7 +207,7 @@ static void dsp32c_reset(void *param);
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static dsp32_regs dsp32;
@@ -216,7 +216,7 @@ static int dsp32_icount;
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)			cpu_readop32(pc)
@@ -266,7 +266,7 @@ INLINE void WLONG(offs_t addr, data32_t data)
 
 
 /*###################################################################################################
-**	EXECEPTION HANDLING
+**  EXECEPTION HANDLING
 **#################################################################################################*/
 
 INLINE void generate_exception(int exception)
@@ -281,7 +281,7 @@ INLINE void invalid_instruction(UINT32 op)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 static void check_irqs(void)
@@ -298,7 +298,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	REGISTER HANDLING
+**  REGISTER HANDLING
 **#################################################################################################*/
 
 static void update_pcr(data16_t newval)
@@ -325,7 +325,7 @@ static void update_pcr(data16_t newval)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void dsp32c_get_context(void *dst)
@@ -350,7 +350,7 @@ static void dsp32c_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void dsp32c_init(void)
@@ -396,7 +396,7 @@ static void dsp32c_exit(void)
 
 
 /*###################################################################################################
-**	CORE INCLUDE
+**  CORE INCLUDE
 **#################################################################################################*/
 
 #include "dsp32ops.c"
@@ -404,7 +404,7 @@ static void dsp32c_exit(void)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 static int dsp32c_execute(int cycles)
@@ -442,7 +442,7 @@ static int dsp32c_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 dsp32c_reg_layout[] =
@@ -478,7 +478,7 @@ static UINT8 dsp32c_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t dsp32c_dasm(char *buffer, offs_t pc)
@@ -495,7 +495,7 @@ static offs_t dsp32c_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	PARALLEL INTERFACE WRITES
+**  PARALLEL INTERFACE WRITES
 **#################################################################################################*/
 
 /* context finder */
@@ -538,7 +538,7 @@ static UINT32 regmap[4][16] =
 
 
 /*###################################################################################################
-**	PARALLEL INTERFACE WRITES
+**  PARALLEL INTERFACE WRITES
 **#################################################################################################*/
 
 INLINE void dma_increment(void)
@@ -678,7 +678,7 @@ void dsp32c_pio_w(int cpunum, int reg, int data)
 
 
 /*###################################################################################################
-**	PARALLEL INTERFACE READS
+**  PARALLEL INTERFACE READS
 **#################################################################################################*/
 
 int dsp32c_pio_r(int cpunum, int reg)
@@ -841,7 +841,7 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

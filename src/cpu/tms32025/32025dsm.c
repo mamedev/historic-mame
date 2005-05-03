@@ -1,31 +1,31 @@
  /**************************************************************************\
- *				Texas Instruments TMS320x25 DSP Disassembler				*
- *																			*
- *				   Copyright (C) 2001-2002+ Tony La Porta					*
- *				To be used with TMS320x25 DSP Emulator engine.				*
- *						Written for the MAME project.						*
- *																			*
- *		   Many thanks to those involved in the i8039 Disassembler			*
- *				 as the structure here was borrowed from it.				*
- *																			*
- *		Note :	This is a word based microcontroller, with addressing		*
- *				architecture based on the Harvard addressing scheme.		*
- *																			*
- *																			*
- * A Memory Address															*
- * B Opcode Address Argument (Requires next opcode read)					*
- * C Compare mode															*
- * D Immediate byte load													*
- * K Immediate bit load														*
- * W Immediate word load													*
- * M AR[x] register modification type (for indirect addressing)				*
- * N ARP register to change ARP pointer to (for indirect addressing)		*
- * P I/O port address number												*
- * R AR[R] register to use													*
- * S Shift ALU left															*
- * T Shift ALU left (Hex) / Nibble data										*
- * X Don't care bit															*
- *																			*
+ *              Texas Instruments TMS320x25 DSP Disassembler                *
+ *                                                                          *
+ *                 Copyright (C) 2001-2002+ Tony La Porta                   *
+ *              To be used with TMS320x25 DSP Emulator engine.              *
+ *                      Written for the MAME project.                       *
+ *                                                                          *
+ *         Many thanks to those involved in the i8039 Disassembler          *
+ *               as the structure here was borrowed from it.                *
+ *                                                                          *
+ *      Note :  This is a word based microcontroller, with addressing       *
+ *              architecture based on the Harvard addressing scheme.        *
+ *                                                                          *
+ *                                                                          *
+ * A Memory Address                                                         *
+ * B Opcode Address Argument (Requires next opcode read)                    *
+ * C Compare mode                                                           *
+ * D Immediate byte load                                                    *
+ * K Immediate bit load                                                     *
+ * W Immediate word load                                                    *
+ * M AR[x] register modification type (for indirect addressing)             *
+ * N ARP register to change ARP pointer to (for indirect addressing)        *
+ * P I/O port address number                                                *
+ * R AR[R] register to use                                                  *
+ * S Shift ALU left                                                         *
+ * T Shift ALU left (Hex) / Nibble data                                     *
+ * X Don't care bit                                                         *
+ *                                                                          *
  \**************************************************************************/
 
 #include <stdio.h>
@@ -134,9 +134,9 @@ static const char *TMS32025Formats[] = {
 	FMT("010101000aaaaaaa", "pshd %A"),		/* 54xx */
 	FMT("010101001mmmnnnn", "pshd %M%N"),
 
-/*	FMT("010101010aaaaaaa", "mar  %A"),		   55xx */
-/*	MAR direct has been expanded out to all its variations because one of its */
-/*	its opcodes is the same as NOP.  Actually MAR direct just performs a NOP */
+/*  FMT("010101010aaaaaaa", "mar  %A"),        55xx */
+/*  MAR direct has been expanded out to all its variations because one of its */
+/*  its opcodes is the same as NOP.  Actually MAR direct just performs a NOP */
 		FMT("0101010100000000", "nop"),			/* 5500 */
 		FMT("0101010100000001", "mar  $01"),
 		FMT("0101010100000010", "mar  $02"),
@@ -161,9 +161,9 @@ static const char *TMS32025Formats[] = {
 		FMT("010101010110tttt", "mar  $6%T"),
 		FMT("010101010111tttt", "mar  $7%T"),
 
-/*	FMT("010101011mmmnnnn", "mar  %M%N"),	   55xx */
-/*	MAR indirect has been expanded out to all its variations because one of */
-/*	its opcodes, is the same as LARP (actually performs the same function) */
+/*  FMT("010101011mmmnnnn", "mar  %M%N"),      55xx */
+/*  MAR indirect has been expanded out to all its variations because one of */
+/*  its opcodes, is the same as LARP (actually performs the same function) */
 		FMT("0101010110000xxx", "mar  *"),		/* 558x */
 		FMT("0101010110001kkk", "larp %K"),		/* 558x */
 		FMT("010101011001nnnn", "mar  *-%N"),	/* 558x */
@@ -221,9 +221,9 @@ static const char *TMS32025Formats[] = {
 	FMT("101wwwwwwwwwwwww", "mpyk %W"),		/* Axxx-Bxxx */
 	FMT("11000rrrdddddddd", "lark %R,%D"),	/* Cxxx */
 	FMT("1100100kdddddddd", "ldpk %K%D"),	/* Cxxx */
-/*	FMT("11001010dddddddd", "lack %D"),		   CAxx */
-/*	LACK has been expanded out to all its variations because one of its */
-/*	its opcodes is the same as ZAC. Actually, it performs the same function */
+/*  FMT("11001010dddddddd", "lack %D"),        CAxx */
+/*  LACK has been expanded out to all its variations because one of its */
+/*  its opcodes is the same as ZAC. Actually, it performs the same function */
 		FMT("1100101000000000", "zac"),			/* CA00 */
 		FMT("1100101000000001", "lack 01h"),	/* CAxx */
 		FMT("1100101000000010", "lack 02h"),

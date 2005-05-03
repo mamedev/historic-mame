@@ -1,4 +1,4 @@
-/* 
+/*
    Motorola M68HC11 disassembler
 
    Written by Ville Linde
@@ -1280,7 +1280,7 @@ static void decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
 offs_t mc68hc11_dasm_one(char *buffer, data32_t pc)
 {
 	UINT8 opcode;
-	
+
 	output = buffer;
 	mem_offset = pc;
 

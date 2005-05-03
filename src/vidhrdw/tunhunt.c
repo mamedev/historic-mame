@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Atari Tunnel Hunt hardware
+    Atari Tunnel Hunt hardware
 
 *************************************************************************/
 
@@ -80,10 +80,10 @@ static void get_fg_tile_info(int tile_index)
 VIDEO_START( tunhunt )
 {
 	/*
-	Motion Object RAM contains 64 lines of run-length encoded data.
-	We keep track of dirty lines and cache the expanded bitmap.
-	With max RLE expansion, bitmap size is 256x64.
-	*/
+    Motion Object RAM contains 64 lines of run-length encoded data.
+    We keep track of dirty lines and cache the expanded bitmap.
+    With max RLE expansion, bitmap size is 256x64.
+    */
 	dirtybuffer = auto_malloc(64);
 	if (!dirtybuffer)
 		return 1;
@@ -93,7 +93,7 @@ VIDEO_START( tunhunt )
 	if (!tmpbitmap)
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -108,15 +108,15 @@ VIDEO_START( tunhunt )
 PALETTE_INIT( tunhunt )
 {
 	/* Tunnel Hunt uses a combination of color proms and palette RAM to specify a 16 color
-	 * palette.  Here, we manage only the mappings for alphanumeric characters and SHELL
-	 * graphics, which are unpacked ahead of time and drawn using MAME's drawgfx primitives.
-	 */
+     * palette.  Here, we manage only the mappings for alphanumeric characters and SHELL
+     * graphics, which are unpacked ahead of time and drawn using MAME's drawgfx primitives.
+     */
 
 	/* AlphaNumerics (1bpp)
-	 *	2 bits of hilite select from 4 different background colors
-	 *	Foreground color is always pen#4
-	 *	Background color is mapped as follows:
-	 */
+     *  2 bits of hilite select from 4 different background colors
+     *  Foreground color is always pen#4
+     *  Background color is mapped as follows:
+     */
 
 	/* alpha hilite#0 */
 	colortable[0] = 0x0; /* background color#0 (transparent) */
@@ -135,8 +135,8 @@ PALETTE_INIT( tunhunt )
 	colortable[7] = 0x4; /* foreground color */
 
 	/* shell graphics; these are either 1bpp (2 banks) or 2bpp.  It isn't clear which.
-	 * In any event, the following pens are associated with the shell graphics:
-	 */
+     * In any event, the following pens are associated with the shell graphics:
+     */
 	colortable[0x8] = 0;
 	colortable[0x9] = 4;//1;
 	colortable[0xa] = 2;
@@ -158,18 +158,18 @@ Color Array Ram Assignments:
 */
 static void update_palette( void )
 {
-//	const unsigned char *color_prom = memory_region( REGION_PROMS );
+//  const unsigned char *color_prom = memory_region( REGION_PROMS );
 /*
-	The actual contents of the color proms (unused by this driver)
-	are as follows:
+    The actual contents of the color proms (unused by this driver)
+    are as follows:
 
-	D11 "blue/green"
-	0000:	00 00 8b 0b fb 0f ff 0b
-			00 00 0f 0f fb f0 f0 ff
+    D11 "blue/green"
+    0000:   00 00 8b 0b fb 0f ff 0b
+            00 00 0f 0f fb f0 f0 ff
 
-	C11 "red"
-	0020:	00 f0 f0 f0 b0 b0 00 f0
-			00 f0 f0 00 b0 00 f0 f0
+    C11 "red"
+    0020:   00 f0 f0 f0 b0 b0 00 f0
+            00 f0 f0 00 b0 00 f0 f0
 */
 	int color;
 	int shade;
@@ -217,17 +217,17 @@ static void update_palette( void )
 static void draw_motion_object( struct mame_bitmap *bitmap )
 {
 /*
- *		VSTRLO	0x1202
- *			normally 0x02 (gameplay, attract1)
- *			in attract2 (with "Tunnel Hunt" graphic), decrements from 0x2f down to 0x01
- *			goes to 0x01 for some enemy shots
+ *      VSTRLO  0x1202
+ *          normally 0x02 (gameplay, attract1)
+ *          in attract2 (with "Tunnel Hunt" graphic), decrements from 0x2f down to 0x01
+ *          goes to 0x01 for some enemy shots
  *
- *		MOBSC0	0x1080
- *		MOBSC1	0x1081
- *			always 0x00?
+ *      MOBSC0  0x1080
+ *      MOBSC1  0x1081
+ *          always 0x00?
  */
 	const UINT8 *pMem = memory_region( REGION_CPU1 );
-//	int skip = pMem[MOBST];
+//  int skip = pMem[MOBST];
 	int x0 = 255-pMem[MOBJV];
 	int y0 = 255-pMem[MOBJH];
 	int scalex,scaley;
@@ -298,28 +298,28 @@ static void draw_motion_object( struct mame_bitmap *bitmap )
 static void draw_box( struct mame_bitmap *bitmap )
 {
 /*
-	This is unnecessarily slow, but the box priorities aren't completely understood,
-	yet.  Once understood, this function should be converted to use fillbitmap with
-	rectangular chunks instead of plot_pixel.
+    This is unnecessarily slow, but the box priorities aren't completely understood,
+    yet.  Once understood, this function should be converted to use fillbitmap with
+    rectangular chunks instead of plot_pixel.
 
-	Tunnels:
-		1080: 00 00 00 		01	e7 18   ae 51   94 6b   88 77   83 7c   80 7f  	x0
-		1480: 00 f0 17 		00	22 22   5b 5b   75 75   81 81   86 86   89 89  	y0
-		1400: 00 00 97 		ff	f1 f1   b8 b8   9e 9e   92 92   8d 8d   8a 8a  	y1
-		1280: 07 03 00 		07	07 0c   0c 0d   0d 0e   0e 08   08 09   09 0a  	palette select
+    Tunnels:
+        1080: 00 00 00      01  e7 18   ae 51   94 6b   88 77   83 7c   80 7f   x0
+        1480: 00 f0 17      00  22 22   5b 5b   75 75   81 81   86 86   89 89   y0
+        1400: 00 00 97      ff  f1 f1   b8 b8   9e 9e   92 92   8d 8d   8a 8a   y1
+        1280: 07 03 00      07  07 0c   0c 0d   0d 0e   0e 08   08 09   09 0a   palette select
 
-	Color Bars:
-		1080: 00 00 00 		01	00 20 40 60 80 a0 c0 e0		01 2a	50 7a		x0
-		1480: 00 f0 00 		00	40 40 40 40 40 40 40 40		00 00	00 00		y0
-		1400: 00 00 00 		ff	ff ff ff ff ff ff ff ff		40 40	40 40		y1
-		1280: 07 03 00 		01	07 06 04 05 02 07 03 00		09 0a	0b 0c		palette select
-		->hue 06 02 ff 		60	06 05 03 04 01 06 02 ff		d2 00	c2 ff
+    Color Bars:
+        1080: 00 00 00      01  00 20 40 60 80 a0 c0 e0     01 2a   50 7a       x0
+        1480: 00 f0 00      00  40 40 40 40 40 40 40 40     00 00   00 00       y0
+        1400: 00 00 00      ff  ff ff ff ff ff ff ff ff     40 40   40 40       y1
+        1280: 07 03 00      01  07 06 04 05 02 07 03 00     09 0a   0b 0c       palette select
+        ->hue 06 02 ff      60  06 05 03 04 01 06 02 ff     d2 00   c2 ff
 */
 	int span,x,y;
 	UINT8 *pMem;
 	int color;
 	int pen;
-//	struct rectangle bbox;
+//  struct rectangle bbox;
 	int z;
 	int x0,y0,y1;
 	pMem = memory_region( REGION_CPU1 );
@@ -378,20 +378,20 @@ static void draw_shell(
 	}
 	else
 	/*
-		vstretch is normally 0x01
+        vstretch is normally 0x01
 
-		targeting cursor:
-			hposition	= 0x78
-			vstart		= 0x90
-			vstop		= 0x80
+        targeting cursor:
+            hposition   = 0x78
+            vstart      = 0x90
+            vstop       = 0x80
 
-		during grid test:
-			vstretch	= 0xff
-			hposition	= 0xff
-			vstart		= 0xff
-			vstop		= 0x00
+        during grid test:
+            vstretch    = 0xff
+            hposition   = 0xff
+            vstart      = 0xff
+            vstop       = 0x00
 
-	*/
+    */
 	drawgfx( bitmap, Machine->gfx[1],
 			picture_code,
 			0, /* color */

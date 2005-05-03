@@ -1,24 +1,24 @@
 /***************************************************************************
 
-	Midway/Williams Audio Boards
-	----------------------------
+    Midway/Williams Audio Boards
+    ----------------------------
 
-	6809 MEMORY MAP
+    6809 MEMORY MAP
 
-	Function                                  Address     R/W  Data
-	---------------------------------------------------------------
-	Program RAM                               0000-07FF   R/W  D0-D7
+    Function                                  Address     R/W  Data
+    ---------------------------------------------------------------
+    Program RAM                               0000-07FF   R/W  D0-D7
 
-	Music (YM-2151)                           2000-2001   R/W  D0-D7
+    Music (YM-2151)                           2000-2001   R/W  D0-D7
 
-	6821 PIA                                  4000-4003   R/W  D0-D7
+    6821 PIA                                  4000-4003   R/W  D0-D7
 
-	HC55516 clock low, digit latch            6000        W    D0
-	HC55516 clock high                        6800        W    xx
+    HC55516 clock low, digit latch            6000        W    D0
+    HC55516 clock high                        6800        W    xx
 
-	Bank select                               7800        W    D0-D2
+    Bank select                               7800        W    D0-D2
 
-	Banked Program ROM                        8000-FFFF   R    D0-D7
+    Banked Program ROM                        8000-FFFF   R    D0-D7
 
 ****************************************************************************/
 
@@ -33,7 +33,7 @@
 
 
 /***************************************************************************
-	STATIC GLOBALS
+    STATIC GLOBALS
 ****************************************************************************/
 
 UINT8 williams_sound_int_state;
@@ -47,7 +47,7 @@ static UINT8 adpcm_bank_count;
 
 
 /***************************************************************************
-	PROTOTYPES
+    PROTOTYPES
 ****************************************************************************/
 
 static void init_audio_state(void);
@@ -75,7 +75,7 @@ static WRITE8_HANDLER( narc_slave_bank_select_w );
 
 
 /***************************************************************************
-	PROCESSOR STRUCTURES
+    PROCESSOR STRUCTURES
 ****************************************************************************/
 
 /* CVSD readmem/writemem structures */
@@ -182,7 +182,7 @@ static struct pia6821_interface cvsd_pia_intf =
 
 
 /***************************************************************************
-	AUDIO STRUCTURES
+    AUDIO STRUCTURES
 ****************************************************************************/
 
 /* YM2151 structure (CVSD variant) */
@@ -201,7 +201,7 @@ static struct YM2151interface adpcm_ym2151_interface =
 
 
 /***************************************************************************
-	MACHINE DRIVERS
+    MACHINE DRIVERS
 ****************************************************************************/
 
 MACHINE_DRIVER_START( williams_cvsd_sound )
@@ -281,7 +281,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-	INLINES
+    INLINES
 ****************************************************************************/
 
 INLINE UINT8 *get_cvsd_bank_base(int data)
@@ -321,7 +321,7 @@ INLINE UINT8 *get_narc_slave_bank_base(int data)
 
 
 /***************************************************************************
-	INITIALIZATION
+    INITIALIZATION
 ****************************************************************************/
 
 void williams_cvsd_init(int cpunum, int pianum)
@@ -436,8 +436,8 @@ static void locate_audio_hotspot(UINT8 *base, UINT16 start)
 			base[i + 8] == 0xaf && base[i + 9] == 0x4c &&			/* AF 4C       STX   $000C,U */
 			base[i +10] == 0x1c && base[i +11] == 0xaf)				/* 1C AF       ANDCC #$00AF  */
 		{
-//			counter.hotspot_start = i;
-//			counter.hotspot_stop = i + 12;
+//          counter.hotspot_start = i;
+//          counter.hotspot_stop = i + 12;
 			logerror("Found hotspot @ %04X", i);
 			return;
 		}
@@ -449,7 +449,7 @@ static void locate_audio_hotspot(UINT8 *base, UINT16 start)
 
 
 /***************************************************************************
-	CVSD IRQ GENERATION CALLBACKS
+    CVSD IRQ GENERATION CALLBACKS
 ****************************************************************************/
 
 static void cvsd_ym2151_irq(int state)
@@ -472,7 +472,7 @@ static void cvsd_irqb(int state)
 
 
 /***************************************************************************
-	ADPCM IRQ GENERATION CALLBACKS
+    ADPCM IRQ GENERATION CALLBACKS
 ****************************************************************************/
 
 static void adpcm_ym2151_irq(int state)
@@ -483,7 +483,7 @@ static void adpcm_ym2151_irq(int state)
 
 
 /***************************************************************************
-	CVSD BANK SELECT
+    CVSD BANK SELECT
 ****************************************************************************/
 
 static WRITE8_HANDLER( cvsd_bank_select_w )
@@ -494,7 +494,7 @@ static WRITE8_HANDLER( cvsd_bank_select_w )
 
 
 /***************************************************************************
-	ADPCM BANK SELECT
+    ADPCM BANK SELECT
 ****************************************************************************/
 
 static WRITE8_HANDLER( adpcm_bank_select_w )
@@ -525,7 +525,7 @@ static WRITE8_HANDLER( adpcm_6295_bank_select_w )
 
 
 /***************************************************************************
-	NARC BANK SELECT
+    NARC BANK SELECT
 ****************************************************************************/
 
 static WRITE8_HANDLER( narc_master_bank_select_w )
@@ -542,7 +542,7 @@ static WRITE8_HANDLER( narc_slave_bank_select_w )
 
 
 /***************************************************************************
-	PIA INTERFACES
+    PIA INTERFACES
 ****************************************************************************/
 
 static READ8_HANDLER( cvsd_pia_r )
@@ -559,7 +559,7 @@ static WRITE8_HANDLER( cvsd_pia_w )
 
 
 /***************************************************************************
-	CVSD COMMUNICATIONS
+    CVSD COMMUNICATIONS
 ****************************************************************************/
 
 static void williams_cvsd_delayed_data_w(int param)
@@ -593,7 +593,7 @@ void williams_cvsd_reset_w(int state)
 
 
 /***************************************************************************
-	ADPCM COMMUNICATIONS
+    ADPCM COMMUNICATIONS
 ****************************************************************************/
 
 static READ8_HANDLER( adpcm_command_r )
@@ -632,7 +632,7 @@ void williams_adpcm_reset_w(int state)
 
 
 /***************************************************************************
-	NARC COMMUNICATIONS
+    NARC COMMUNICATIONS
 ****************************************************************************/
 
 static READ8_HANDLER( narc_command_r )

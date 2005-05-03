@@ -228,7 +228,7 @@ static void mcu63705_update_inputs(void)
 
 static READ8_HANDLER( mcu63701_r )
 {
-//	logerror("CPU #0 PC %04x: read from port %02x of 63701 data address 3801\n",activecpu_get_pc(),offset);
+//  logerror("CPU #0 PC %04x: read from port %02x of 63701 data address 3801\n",activecpu_get_pc(),offset);
 
 	if (mcu63701_command == 0) return 0x6a;
 	else switch (offset)
@@ -244,7 +244,7 @@ static READ8_HANDLER( mcu63701_r )
 
 static WRITE8_HANDLER( mcu63701_w )
 {
-//	logerror("CPU #0 PC %04x: write %02x to 63701 control address 3800\n",activecpu_get_pc(),data);
+//  logerror("CPU #0 PC %04x: write %02x to 63701 control address 3800\n",activecpu_get_pc(),data);
 	mcu63701_command = data;
 	mcu63705_update_inputs();
 }
@@ -275,12 +275,12 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(spdodgeb_videoram_w) AM_BASE(&spdodgeb_videoram)
-//	AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0x3000, 0x3000) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0x3001, 0x3001) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x3002, 0x3002) AM_WRITE(sound_command_w)
-//	AM_RANGE(0x3003, 0x3003) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0x3003, 0x3003) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x3004, 0x3004) AM_WRITE(spdodgeb_scrollx_lo_w)
-//	AM_RANGE(0x3005, 0x3005) AM_WRITE(MWA8_RAM) /* mcu63701_output_w */
+//  AM_RANGE(0x3005, 0x3005) AM_WRITE(MWA8_RAM) /* mcu63701_output_w */
 	AM_RANGE(0x3006, 0x3006) AM_WRITE(spdodgeb_ctrl_w)	/* scroll hi, flip screen, bank switch, palette select */
 	AM_RANGE(0x3800, 0x3800) AM_WRITE(mcu63701_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)

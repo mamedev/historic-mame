@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari GT hardware
+    Atari GT hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* T-Mek (1994) [2 sets]
-		* Primal Rage (1994) [2 sets]
+    Games supported:
+        * T-Mek (1994) [2 sets]
+        * Primal Rage (1994) [2 sets]
 
-	Known bugs:
-		* protection devices unknown
+    Known bugs:
+        * protection devices unknown
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -33,7 +33,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -50,7 +50,7 @@ static void cage_irq_callback(int reason);
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -83,7 +83,7 @@ static MACHINE_INIT( atarigt )
 
 /*************************************
  *
- *	CAGE sound interrupts
+ *  CAGE sound interrupts
  *
  *************************************/
 
@@ -99,7 +99,7 @@ static void cage_irq_callback(int reason)
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -187,22 +187,22 @@ static READ32_HANDLER( analog_port1_r )
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
 static WRITE32_HANDLER( latch_w )
 {
 	/*
-		D13 = 68.DISA
-		D12 = ERASE
-		D11 = /MOGO
-		D8  = VCR
-		D5  = /XRESET
-		D4  = /SNDRES
-		D3  = CC.L
-		D0  = CC.R
-	*/
+        D13 = 68.DISA
+        D12 = ERASE
+        D11 = /MOGO
+        D8  = VCR
+        D5  = /XRESET
+        D4  = /SNDRES
+        D3  = CC.L
+        D0  = CC.R
+    */
 
 	/* upper byte */
 	if (!(mem_mask & 0xff000000))
@@ -213,7 +213,7 @@ static WRITE32_HANDLER( latch_w )
 
 	if (!(mem_mask & 0x00ff0000))
 	{
-//		cage_reset_w(data & 0x00100000);
+//      cage_reset_w(data & 0x00100000);
 		coin_counter_w(0, data & 0x00080000);
 		coin_counter_w(1, data & 0x00010000);
 	}
@@ -230,21 +230,21 @@ static WRITE32_HANDLER( mo_command_w )
 
 static WRITE32_HANDLER( led_w )
 {
-//	logerror("LED = %08X & %08X\n", data, ~mem_mask);
+//  logerror("LED = %08X & %08X\n", data, ~mem_mask);
 }
 
 
 
 /*************************************
  *
- *	Sound I/O
+ *  Sound I/O
  *
  *************************************/
 
 static READ32_HANDLER( sound_data_r )
 {
 	data32_t result = 0;
-	
+
 	if (ACCESSING_LSW32)
 		result |= cage_control_r();
 	if (ACCESSING_MSW32)
@@ -265,7 +265,7 @@ static WRITE32_HANDLER( sound_data_w )
 
 /*************************************
  *
- *	T-Mek protection
+ *  T-Mek protection
  *
  *************************************/
 
@@ -298,7 +298,7 @@ static void tmek_protection_w(offs_t offset, UINT16 data)
 
 	/* track accesses */
 	tmek_update_mode(offset);
-	
+
 	switch (offset)
 	{
 		case 0xdb0000:
@@ -322,7 +322,7 @@ static void tmek_protection_r(offs_t offset, data16_t *data)
 		/* status register; the code spins on this waiting for the high bit to be set */
 		case 0xdb8700:
 		case 0xdb87c0:
-//			if (protmode != 0)
+//          if (protmode != 0)
 			{
 				*data = -1;//0x8000;
 			}
@@ -334,7 +334,7 @@ static void tmek_protection_r(offs_t offset, data16_t *data)
 
 /*************************************
  *
- *	Primal Rage protection
+ *  Primal Rage protection
  *
  *************************************/
 
@@ -353,21 +353,21 @@ static void primage_update_mode(offs_t offset)
 		/* this is from the code at $20f90 */
 		if (protaddr[1] == 0xdcc7c4 && protaddr[2] == 0xdcc7c4 && protaddr[3] == 0xdc4010)
 		{
-//			logerror("prot:Entering mode 1\n");
+//          logerror("prot:Entering mode 1\n");
 			protmode = 1;
 		}
 
 		/* this is from the code at $27592 */
 		if (protaddr[0] == 0xdcc7ca && protaddr[1] == 0xdcc7ca && protaddr[2] == 0xdcc7c6 && protaddr[3] == 0xdc4022)
 		{
-//			logerror("prot:Entering mode 2\n");
+//          logerror("prot:Entering mode 2\n");
 			protmode = 2;
 		}
 
 		/* this is from the code at $3d8dc */
 		if (protaddr[0] == 0xdcc7c0 && protaddr[1] == 0xdcc7c0 && protaddr[2] == 0xdc80f2 && protaddr[3] == 0xdc7af2)
 		{
-//			logerror("prot:Entering mode 3\n");
+//          logerror("prot:Entering mode 3\n");
 			protmode = 3;
 		}
 	}
@@ -430,7 +430,7 @@ static void primrage_protection_w(offs_t offset, data16_t data)
 	if (protmode == 2)
 	{
 		int temp = (offset - 0xdc7800) / 2;
-//		logerror("prot:mode 2 param = %04X\n", temp);
+//      logerror("prot:mode 2 param = %04X\n", temp);
 		protresult = temp * 0x6915 + 0x6915;
 	}
 
@@ -438,7 +438,7 @@ static void primrage_protection_w(offs_t offset, data16_t data)
 	{
 		if (offset == 0xdc4700)
 		{
-//			logerror("prot:Clearing mode 3\n");
+//          logerror("prot:Clearing mode 3\n");
 			protmode = 0;
 		}
 	}
@@ -527,7 +527,7 @@ static void primrage_protection_r(offs_t offset, data16_t *data)
 	{
 		/* status register; the code spins on this waiting for the high bit to be set */
 		case 0xdc4700:
-//			if (protmode != 0)
+//          if (protmode != 0)
 			{
 				*data = 0x8000;
 			}
@@ -539,7 +539,7 @@ static void primrage_protection_r(offs_t offset, data16_t *data)
 			{
 				*data = protresult;
 				protmode = 0;
-//				logerror("prot:Clearing mode 2\n");
+//              logerror("prot:Clearing mode 2\n");
 			}
 			break;
 
@@ -547,7 +547,7 @@ static void primrage_protection_r(offs_t offset, data16_t *data)
 			if (protmode == 1)
 			{
 				protmode = 0;
-//				logerror("prot:Clearing mode 1\n");
+//              logerror("prot:Clearing mode 1\n");
 			}
 			break;
 	}
@@ -557,7 +557,7 @@ static void primrage_protection_r(offs_t offset, data16_t *data)
 
 /*************************************
  *
- *	Protection/color RAM
+ *  Protection/color RAM
  *
  *************************************/
 
@@ -606,7 +606,7 @@ static WRITE32_HANDLER( colorram_protection_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -638,7 +638,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -693,11 +693,11 @@ INPUT_PORTS_START( tmek )
 	COMMON_IN0		/* 68.SW (A1=0) */
 
 	COMMON_IN1		/* 68.SW (A1=1) */
-	
+
 	COMMON_IN2
-	
+
 	COMMON_IN3
-	
+
 #if (HACK_TMEK_CONTROLS)
 	PORT_START_TAG("FAKE")		/* single digital joystick */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
@@ -725,11 +725,11 @@ INPUT_PORTS_START( primrage )
 	COMMON_IN0		/* 68.SW (A1=0) */
 
 	COMMON_IN1		/* 68.SW (A1=1) bit 0x0008 does something */
-	
+
 	COMMON_IN2      /* 68.STATUS (A2=0) */
-	
+
 	COMMON_IN3      /* 68.STATUS (A2=1) */
-	
+
 	PORT_START_TAG("IN4")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -747,7 +747,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -799,7 +799,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -836,7 +836,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -1075,7 +1075,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1135,7 +1135,7 @@ static DRIVER_INIT( primraga ) { primrage_init_common(0x48a4); }
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

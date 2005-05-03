@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugcmd.c
-**		Debugger command interface engine.
-**		Written by Aaron Giles
+**      debugcmd.c
+**      Debugger command interface engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -21,7 +21,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG			0
@@ -29,25 +29,25 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static UINT64 execute_min(UINT32 ref, UINT32 params, UINT64 *param);
@@ -88,12 +88,12 @@ static void execute_source(int ref, int params, const char **param);
 
 
 /*###################################################################################################
-**	CODE
+**  CODE
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_command_init - initializes the command
-	system
+    debug_command_init - initializes the command
+    system
 -------------------------------------------------*/
 
 void debug_command_init(void)
@@ -164,8 +164,8 @@ void debug_command_init(void)
 
 
 /*-------------------------------------------------
-	debug_command_exit - frees the command
-	system
+    debug_command_exit - frees the command
+    system
 -------------------------------------------------*/
 
 void debug_command_exit(void)
@@ -175,11 +175,11 @@ void debug_command_exit(void)
 
 
 /*###################################################################################################
-**	SIMPLE GLOBAL FUNCTIONS
+**  SIMPLE GLOBAL FUNCTIONS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	execute_min - return the minimum of two values
+    execute_min - return the minimum of two values
 -------------------------------------------------*/
 
 static UINT64 execute_min(UINT32 ref, UINT32 params, UINT64 *param)
@@ -189,7 +189,7 @@ static UINT64 execute_min(UINT32 ref, UINT32 params, UINT64 *param)
 
 
 /*-------------------------------------------------
-	execute_max - return the maximum of two values
+    execute_max - return the maximum of two values
 -------------------------------------------------*/
 
 static UINT64 execute_max(UINT32 ref, UINT32 params, UINT64 *param)
@@ -199,7 +199,7 @@ static UINT64 execute_max(UINT32 ref, UINT32 params, UINT64 *param)
 
 
 /*-------------------------------------------------
-	execute_if - if (a) return b; else return c;
+    execute_if - if (a) return b; else return c;
 -------------------------------------------------*/
 
 static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param)
@@ -210,12 +210,12 @@ static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param)
 
 
 /*###################################################################################################
-**	PARAMETER VALIDATION HELPERS
+**  PARAMETER VALIDATION HELPERS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	validate_parameter_number - validates a
-	number parameter
+    validate_parameter_number - validates a
+    number parameter
 -------------------------------------------------*/
 
 static int validate_parameter_number(const char *param, UINT64 *result)
@@ -231,8 +231,8 @@ static int validate_parameter_number(const char *param, UINT64 *result)
 
 
 /*-------------------------------------------------
-	validate_parameter_expression - validates an
-	expression parameter
+    validate_parameter_expression - validates an
+    expression parameter
 -------------------------------------------------*/
 
 static int validate_parameter_expression(const char *param, struct parsed_expression **result)
@@ -248,8 +248,8 @@ static int validate_parameter_expression(const char *param, struct parsed_expres
 
 
 /*-------------------------------------------------
-	validate_parameter_command - validates a
-	command parameter
+    validate_parameter_command - validates a
+    command parameter
 -------------------------------------------------*/
 
 static int validate_parameter_command(const char *param)
@@ -266,11 +266,11 @@ static int validate_parameter_command(const char *param)
 
 
 /*###################################################################################################
-**	COMMAND HANDLERS
+**  COMMAND HANDLERS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	execute_help - execute the help command
+    execute_help - execute the help command
 -------------------------------------------------*/
 
 static void execute_help(int ref, int params, const char *param[])
@@ -283,7 +283,7 @@ static void execute_help(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	mini_printf - safe printf to a buffer
+    mini_printf - safe printf to a buffer
 -------------------------------------------------*/
 
 static int mini_printf(char *buffer, const char *format, int params, UINT64 *param)
@@ -377,7 +377,7 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 
 
 /*-------------------------------------------------
-	execute_printf - execute the printf command
+    execute_printf - execute the printf command
 -------------------------------------------------*/
 
 static void execute_printf(int ref, int params, const char *param[])
@@ -398,7 +398,7 @@ static void execute_printf(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_tracelog - execute the tracelog command
+    execute_tracelog - execute the tracelog command
 -------------------------------------------------*/
 
 static void execute_tracelog(int ref, int params, const char *param[])
@@ -424,7 +424,7 @@ static void execute_tracelog(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_quit - execute the quit command
+    execute_quit - execute the quit command
 -------------------------------------------------*/
 
 static void execute_quit(int ref, int params, const char *param[])
@@ -440,7 +440,7 @@ static void execute_quit(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_do - execute the do command
+    execute_do - execute the do command
 -------------------------------------------------*/
 
 static void execute_do(int ref, int params, const char *param[])
@@ -451,7 +451,7 @@ static void execute_do(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_step - execute the step command
+    execute_step - execute the step command
 -------------------------------------------------*/
 
 static void execute_step(int ref, int params, const char *param[])
@@ -467,7 +467,7 @@ static void execute_step(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_over - execute the over command
+    execute_over - execute the over command
 -------------------------------------------------*/
 
 static void execute_over(int ref, int params, const char *param[])
@@ -483,7 +483,7 @@ static void execute_over(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_out - execute the out command
+    execute_out - execute the out command
 -------------------------------------------------*/
 
 static void execute_out(int ref, int params, const char *param[])
@@ -493,7 +493,7 @@ static void execute_out(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_go - execute the go command
+    execute_go - execute the go command
 -------------------------------------------------*/
 
 static void execute_go(int ref, int params, const char *param[])
@@ -509,8 +509,8 @@ static void execute_go(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_go_vblank - execute the govblank
-	command
+    execute_go_vblank - execute the govblank
+    command
 -------------------------------------------------*/
 
 static void execute_go_vblank(int ref, int params, const char *param[])
@@ -520,7 +520,7 @@ static void execute_go_vblank(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_go_interrupt - execute the goint command
+    execute_go_interrupt - execute the goint command
 -------------------------------------------------*/
 
 static void execute_go_interrupt(int ref, int params, const char *param[])
@@ -536,7 +536,7 @@ static void execute_go_interrupt(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_next - execute the next command
+    execute_next - execute the next command
 -------------------------------------------------*/
 
 static void execute_next(int ref, int params, const char *param[])
@@ -546,7 +546,7 @@ static void execute_next(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_focus - execute the focus command
+    execute_focus - execute the focus command
 -------------------------------------------------*/
 
 static void execute_focus(int ref, int params, const char *param[])
@@ -578,7 +578,7 @@ static void execute_focus(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_ignore - execute the ignore command
+    execute_ignore - execute the ignore command
 -------------------------------------------------*/
 
 static void execute_ignore(int ref, int params, const char *param[])
@@ -649,7 +649,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_observe - execute the observe command
+    execute_observe - execute the observe command
 -------------------------------------------------*/
 
 static void execute_observe(int ref, int params, const char *param[])
@@ -707,8 +707,8 @@ static void execute_observe(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_bpset - execute the breakpoint set
-	command
+    execute_bpset - execute the breakpoint set
+    command
 -------------------------------------------------*/
 
 static void execute_bpset(int ref, int params, const char *param[])
@@ -737,8 +737,8 @@ static void execute_bpset(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_bpclear - execute the breakpoint
-	clear command
+    execute_bpclear - execute the breakpoint
+    clear command
 -------------------------------------------------*/
 
 static void execute_bpclear(int ref, int params, const char *param[])
@@ -778,8 +778,8 @@ static void execute_bpclear(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_bpdisenable - execute the breakpoint
-	disable/enable commands
+    execute_bpdisenable - execute the breakpoint
+    disable/enable commands
 -------------------------------------------------*/
 
 static void execute_bpdisenable(int ref, int params, const char *param[])
@@ -822,8 +822,8 @@ static void execute_bpdisenable(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_bplist - execute the breakpoint list
-	command
+    execute_bplist - execute the breakpoint list
+    command
 -------------------------------------------------*/
 
 static void execute_bplist(int ref, int params, const char *param[])
@@ -863,8 +863,8 @@ static void execute_bplist(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_wpset - execute the watchpoint set
-	command
+    execute_wpset - execute the watchpoint set
+    command
 -------------------------------------------------*/
 
 static void execute_wpset(int ref, int params, const char *param[])
@@ -911,8 +911,8 @@ static void execute_wpset(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_wpclear - execute the watchpoint
-	clear command
+    execute_wpclear - execute the watchpoint
+    clear command
 -------------------------------------------------*/
 
 static void execute_wpclear(int ref, int params, const char *param[])
@@ -957,8 +957,8 @@ static void execute_wpclear(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_wpdisenable - execute the watchpoint
-	disable/enable commands
+    execute_wpdisenable - execute the watchpoint
+    disable/enable commands
 -------------------------------------------------*/
 
 static void execute_wpdisenable(int ref, int params, const char *param[])
@@ -1006,8 +1006,8 @@ static void execute_wpdisenable(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_wplist - execute the watchpoint list
-	command
+    execute_wplist - execute the watchpoint list
+    command
 -------------------------------------------------*/
 
 static void execute_wplist(int ref, int params, const char *param[])
@@ -1057,7 +1057,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_save - execute the save command
+    execute_save - execute the save command
 -------------------------------------------------*/
 
 static void execute_save(int ref, int params, const char *param[])
@@ -1105,7 +1105,7 @@ static void execute_save(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_dump - execute the dump command
+    execute_dump - execute the dump command
 -------------------------------------------------*/
 
 static void execute_dump(int ref, int params, const char *param[])
@@ -1236,7 +1236,7 @@ static void execute_dump(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_dasm - execute the dasm command
+    execute_dasm - execute the dasm command
 -------------------------------------------------*/
 
 static void execute_dasm(int ref, int params, const char *param[])
@@ -1357,8 +1357,8 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_trace_internal - functionality for
-	trace over and trace info
+    execute_trace_internal - functionality for
+    trace over and trace info
 -------------------------------------------------*/
 
 static void execute_trace_internal(int ref, int params, const char *param[], int trace_over)
@@ -1405,7 +1405,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 
 
 /*-------------------------------------------------
-	execute_trace - execute the trace command
+    execute_trace - execute the trace command
 -------------------------------------------------*/
 
 static void execute_trace(int ref, int params, const char *param[])
@@ -1415,7 +1415,7 @@ static void execute_trace(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_traceover - execute the trace over command
+    execute_traceover - execute the trace over command
 -------------------------------------------------*/
 
 static void execute_traceover(int ref, int params, const char *param[])
@@ -1425,7 +1425,7 @@ static void execute_traceover(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_snap - execute the trace over command
+    execute_snap - execute the trace over command
 -------------------------------------------------*/
 
 static void execute_snap(int ref, int params, const char *param[])
@@ -1454,7 +1454,7 @@ static void execute_snap(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_source - execute the source command
+    execute_source - execute the source command
 -------------------------------------------------*/
 
 static void execute_source(int ref, int params, const char *param[])

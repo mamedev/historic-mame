@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Midway MCR-III system
+    Midway MCR-III system
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -29,7 +29,7 @@ size_t spyhunt_alpharam_size;
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -40,7 +40,7 @@ static struct tilemap *alpha_tilemap;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -86,7 +86,7 @@ static void spyhunt_get_alpha_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -130,7 +130,7 @@ VIDEO_START( spyhunt )
 
 /*************************************
  *
- *	Palette RAM writes
+ *  Palette RAM writes
  *
  *************************************/
 
@@ -158,7 +158,7 @@ WRITE8_HANDLER( mcr3_paletteram_w )
 
 /*************************************
  *
- *	Video RAM writes
+ *  Video RAM writes
  *
  *************************************/
 
@@ -186,7 +186,7 @@ WRITE8_HANDLER( spyhunt_alpharam_w )
 
 /*************************************
  *
- *	Sprite update
+ *  Sprite update
  *
  *************************************/
 
@@ -220,7 +220,7 @@ void mcr3_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		sy += dy;
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
-			The color 8 is used to cover over other sprites. */
+            The color 8 is used to cover over other sprites. */
 		if (!mcr_cocktail_flip)
 		{
 			/* first draw the sprite, visible */
@@ -248,7 +248,7 @@ void mcr3_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /*************************************
  *
- *	Generic MCR3 redraw
+ *  Generic MCR3 redraw
  *
  *************************************/
 
@@ -284,7 +284,7 @@ VIDEO_UPDATE( spyhunt )
 
 /*************************************
  *
- *	Spy Hunter-specific color PROM decoder
+ *  Spy Hunter-specific color PROM decoder
  *
  *************************************/
 

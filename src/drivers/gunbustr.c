@@ -1,46 +1,46 @@
 /****************************************************************************
 
-	Gunbuster  							(c) 1992 Taito
+    Gunbuster                           (c) 1992 Taito
 
-	Driver by Bryan McPhail & David Graves.
+    Driver by Bryan McPhail & David Graves.
 
-	Board Info:
+    Board Info:
 
-		CPU   : 68EC020 68000
-		SOUND : Ensoniq
-		OSC.  : 40.000MHz 16.000MHz 30.47618MHz
+        CPU   : 68EC020 68000
+        SOUND : Ensoniq
+        OSC.  : 40.000MHz 16.000MHz 30.47618MHz
 
-		* This board (K11J0717A) uses following chips:
-		  - TC0470LIN
-		  - TC0480SCP
-		  - TC0570SPC
-		  - TC0260DAR
-		  - TC0510NIO
+        * This board (K11J0717A) uses following chips:
+          - TC0470LIN
+          - TC0480SCP
+          - TC0570SPC
+          - TC0260DAR
+          - TC0510NIO
 
-	Gunbuster uses a slightly enhanced sprite system from the one
-	in Taito Z games.
+    Gunbuster uses a slightly enhanced sprite system from the one
+    in Taito Z games.
 
-	The key feature remains the use of a sprite map rom which allows
-	the sprite hardware to create many large zoomed sprites on screen
-	while minimizing the main cpu load.
+    The key feature remains the use of a sprite map rom which allows
+    the sprite hardware to create many large zoomed sprites on screen
+    while minimizing the main cpu load.
 
-	This feature makes the SZ system complementary to the F3 system
-	which, owing to its F2 sprite hardware, is not very well suited to
-	3d games. (Taito abandoned the SZ system once better 3d hardware
-	platforms were available in the mid 1990s.)
+    This feature makes the SZ system complementary to the F3 system
+    which, owing to its F2 sprite hardware, is not very well suited to
+    3d games. (Taito abandoned the SZ system once better 3d hardware
+    platforms were available in the mid 1990s.)
 
-	Gunbuster also uses the TC0480SCP tilemap chip (like the last Taito
-	Z game, Double Axle).
+    Gunbuster also uses the TC0480SCP tilemap chip (like the last Taito
+    Z game, Double Axle).
 
-	Todo:
+    Todo:
 
-		FLIPX support in taitoic.c is not quite correct - the Taito logo is wrong,
-		and the floor in the Doom levels has horizontal scrolling where it shouldn't.
+        FLIPX support in taitoic.c is not quite correct - the Taito logo is wrong,
+        and the floor in the Doom levels has horizontal scrolling where it shouldn't.
 
-		No networked machine support
+        No networked machine support
 
-		Coin lockout not working (see gunbustr_input_w): perhaps this
-		was a prototype version without proper coin handling?
+        Coin lockout not working (see gunbustr_input_w): perhaps this
+        was a prototype version without proper coin handling?
 
 ***************************************************************************/
 
@@ -166,8 +166,8 @@ usrintf_showmessage(t);
 			if (ACCESSING_MSB32)
 			{
 				/* game does not write a separate counter for coin 2!
-				   It should disable both coins when 9 credits reached
-				   see code $1d8a-f6... but for some reason it's not */
+                   It should disable both coins when 9 credits reached
+                   see code $1d8a-f6... but for some reason it's not */
 				coin_lockout_w(0, data & 0x01000000);
 				coin_lockout_w(1, data & 0x02000000);
 				coin_counter_w(0, data & 0x04000000);
@@ -182,15 +182,15 @@ usrintf_showmessage(t);
 static WRITE32_HANDLER( motor_control_w )
 {
 /*
-	Standard value poked into MSW is 0x3c00
-	(0x2000 and zero are written at startup)
+    Standard value poked into MSW is 0x3c00
+    (0x2000 and zero are written at startup)
 
-	Three bits are written in test mode to test
-	lamps and motors:
+    Three bits are written in test mode to test
+    lamps and motors:
 
-	......x. ........   Hit motor
-	.......x ........   Solenoid
-	........ .....x..   Hit lamp
+    ......x. ........   Hit motor
+    .......x ........   Solenoid
+    ........ .....x..   Hit lamp
 */
 }
 
@@ -209,7 +209,7 @@ static WRITE32_HANDLER( gunbustr_gun_w )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( gunbustr_readmem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -264,7 +264,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***********************************************************
-			 INPUT PORTS (dips in eprom)
+             INPUT PORTS (dips in eprom)
 ***********************************************************/
 
 INPUT_PORTS_START( gunbustr )
@@ -339,7 +339,7 @@ INPUT_PORTS_END
 
 
 /***********************************************************
-				GFX DECODING
+                GFX DECODING
 **********************************************************/
 
 static struct GfxLayout tile16x16_layout =
@@ -374,7 +374,7 @@ static struct GfxDecodeInfo gunbustr_gfxdecodeinfo[] =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_INIT( gunbustr )

@@ -432,7 +432,7 @@ static MACHINE_DRIVER_START( ironhors )
 	MDRV_SOUND_ROUTE(1, "filter2", 0.40)
 	MDRV_SOUND_ROUTE(2, "filter3", 0.40)
 	MDRV_SOUND_ROUTE(3, "mono", 0.40)
-	
+
 	MDRV_SOUND_ADD_TAG("filter1", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter2", FILTER_RC, 0)

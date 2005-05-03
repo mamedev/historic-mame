@@ -2,35 +2,35 @@
 
 Various Data East 8 bit games:
 
-	Cobra Command (World)       (c) 1988 Data East Corporation (6809)
-	Cobra Command (Japan)       (c) 1988 Data East Corporation (6809)
-	The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
-	The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
-	Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
-	Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
-	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
-	Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
-	Gondomania                  (c) 1987 Data East USA (6809 + I8751)
-	Makyou Senshi               (c) 1987 Data East Corporation (6809 + I8751)
-	Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
-	Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
-	Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
-	Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
-	Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
-	Garyo Retsuden (Japan)      (c) 1987 Data East Corporation (6809 + I8751)
+    Cobra Command (World)       (c) 1988 Data East Corporation (6809)
+    Cobra Command (Japan)       (c) 1988 Data East Corporation (6809)
+    The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
+    The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
+    Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
+    Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
+    Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
+    Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
+    Gondomania                  (c) 1987 Data East USA (6809 + I8751)
+    Makyou Senshi               (c) 1987 Data East Corporation (6809 + I8751)
+    Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
+    Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
+    Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
+    Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
+    Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
+    Garyo Retsuden (Japan)      (c) 1987 Data East Corporation (6809 + I8751)
 
-	All games use a 6502 for sound (some are encrypted), all games except Cobracom
-	use an Intel 8751 for protection & coinage.  For these games the coinage dip
-	switch is not currently supported, they are fixed at 1 coin 1 credit.
+    All games use a 6502 for sound (some are encrypted), all games except Cobracom
+    use an Intel 8751 for protection & coinage.  For these games the coinage dip
+    switch is not currently supported, they are fixed at 1 coin 1 credit.
 
-	Meikyuu Hunter G was formerly known as Mazehunter.
+    Meikyuu Hunter G was formerly known as Mazehunter.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 To do:
-	Support coinage options for all i8751 emulations.
-	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
-	Strangely coloured butterfly on Garyo Retsuden water levels!
+    Support coinage options for all i8751 emulations.
+    Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
+    Strangely coloured butterfly on Garyo Retsuden water levels!
 
   Thanks to José Miguel Morales Farreras for Super Real Darwin information!
 
@@ -182,13 +182,13 @@ static WRITE8_HANDLER( srdarwin_i8751_w )
  	if ((readinputport(4)&1)!=1 && latch) {coins++; latch=0;}
 
 	/* This next value is the index to a series of tables,
-	each table controls the end of level bad guy, wrong values crash the
-	cpu right away via a bogus jump.
+    each table controls the end of level bad guy, wrong values crash the
+    cpu right away via a bogus jump.
 
-	Level number requested is in low byte
+    Level number requested is in low byte
 
-	Addresses on left hand side are from the protection vector table which is
-	stored at location 0xf580 in rom dy_01.rom
+    Addresses on left hand side are from the protection vector table which is
+    stored at location 0xf580 in rom dy_01.rom
 
 ba5e (lda #00) = Level 0?
 ba82 (lda #01) = Pyramid boss, Level 1?
@@ -196,7 +196,7 @@ baaa           = No boss appears, game hangs
 bacc (lda #04) = Killer Bee boss, Level 4?
 bae0 (lda #03) = Snake type boss, Level 3?
 baf9           = Double grey thing boss...!
-bb0a      	   = Single grey thing boss!
+bb0a           = Single grey thing boss!
 bb18 (lda #00) = Hailstorm from top of screen.
 bb31 (lda #28) = Small hailstorm
 bb47 (ldb #05) = Small hailstorm
@@ -213,8 +213,8 @@ bb63           = Square things again
 (40)           = Grey bird
 (42)           = Crash (end of table)
 
-	The table below is hopefully correct thanks to José Miguel Morales Farreras,
-	but Boss #6 is uncomfirmed as correct.
+    The table below is hopefully correct thanks to José Miguel Morales Farreras,
+    but Boss #6 is uncomfirmed as correct.
 
 */
 	if (i8751_value==0x8000) i8751_return=0xf580 +  0; /* Boss #1: Snake + Bees */
@@ -389,11 +389,11 @@ static WRITE8_HANDLER( ghostb_bank_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Bit 0: Interrupt enable/disable (I think..)
-	   Bit 1: NMI enable/disable
-	   Bit 2: ??
-	   Bit 3: Screen flip
-	   Bits 4-7: Bank switch
-	*/
+       Bit 1: NMI enable/disable
+       Bit 2: ??
+       Bit 3: Screen flip
+       Bits 4-7: Bank switch
+    */
 
 	bankaddress = 0x10000 + (data >> 4) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -408,12 +408,12 @@ WRITE8_HANDLER( csilver_control_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/*
-		Bit 0x0f - ROM bank switch.
-		Bit 0x10 - Always set(?)
-		Bit 0x20 - Unused.
-		Bit 0x40 - Unused.
-		Bit 0x80 - Hold subcpu reset line high if clear, else low?  (Not needed anyway)
-	*/
+        Bit 0x0f - ROM bank switch.
+        Bit 0x10 - Always set(?)
+        Bit 0x20 - Unused.
+        Bit 0x40 - Unused.
+        Bit 0x80 - Hold subcpu reset line high if clear, else low?  (Not needed anyway)
+    */
 	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 }
 
@@ -486,8 +486,8 @@ static WRITE8_HANDLER( shackled_int_w )
 {
 #if 0
 /* This is correct, but the cpus in Shackled need an interleave of about 5000!
-	With lower interleave CPU 0 misses an interrupt at the start of the game
-	(The last interrupt has not finished and been ack'd when the new one occurs */
+    With lower interleave CPU 0 misses an interrupt at the start of the game
+    (The last interrupt has not finished and been ack'd when the new one occurs */
 	switch (offset) {
 		case 0: /* CPU 2 - IRQ acknowledge */
 			cpunum_set_input_line(1,M6809_IRQ_LINE,CLEAR_LINE);

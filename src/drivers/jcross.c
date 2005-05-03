@@ -233,7 +233,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 **
-**	Graphics Layout
+**  Graphics Layout
 **
 ***************************************************************************/
 
@@ -276,7 +276,7 @@ static struct GfxDecodeInfo jcross_gfxdecodeinfo[] =
 
 /***************************************************************************
 **
-**	Machine Driver
+**  Machine Driver
 **
 ***************************************************************************/
 
@@ -311,10 +311,10 @@ static MACHINE_DRIVER_START( jcross )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 

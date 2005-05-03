@@ -10,14 +10,14 @@ static int priority,scroll_x,scroll_y;
 
 /***************************************************************************
 
-	Convert the color PROMs.
+    Convert the color PROMs.
 
-	The palette PROMs are connected to the RGB output this way:
+    The palette PROMs are connected to the RGB output this way:
 
-	bit 3	-- 220 ohm resistor  -- RED/GREEN/BLUE
-			-- 470 ohm resistor  -- RED/GREEN/BLUE
-			-- 1  kohm resistor  -- RED/GREEN/BLUE
-	bit 0	-- 2.2kohm resistor  -- RED/GREEN/BLUE
+    bit 3   -- 220 ohm resistor  -- RED/GREEN/BLUE
+            -- 470 ohm resistor  -- RED/GREEN/BLUE
+            -- 1  kohm resistor  -- RED/GREEN/BLUE
+    bit 0   -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
 
@@ -96,9 +96,9 @@ static UINT32 tx_tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_r
 static void tx_get_tile_info(int tile_index)
 {
 	/* the hardware has two character sets, one normal and one flipped. When
-	   screen is flipped, character flip is done by selecting the 2nd character set.
-	   We reproduce this here, but since the tilemap system automatically flips
-	   characters when screen is flipped, we have to flip them back. */
+       screen is flipped, character flip is done by selecting the 2nd character set.
+       We reproduce this here, but since the tilemap system automatically flips
+       characters when screen is flipped, we have to flip them back. */
 	SET_TILE_INFO(
 			0,
 			skykid_textram[tile_index] | (flip_screen ? 0x100 : 0),

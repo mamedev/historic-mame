@@ -22,7 +22,7 @@ extern VIDEO_UPDATE( higemaru );
 
 INTERRUPT_GEN( higemaru_interrupt )
 {
-	if (cpu_getiloops() == 0) 
+	if (cpu_getiloops() == 0)
 		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xcf);	/* RST 08h */
 	else
 		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
@@ -196,10 +196,10 @@ static MACHINE_DRIVER_START( higemaru )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END

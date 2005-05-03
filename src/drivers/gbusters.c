@@ -3,7 +3,7 @@
 Gangbusters(GX878) (c) 1988 Konami
 
 Preliminary driver by:
-	Manuel Abadia <manu@teleline.es>
+    Manuel Abadia <manu@teleline.es>
 
 ***************************************************************************/
 
@@ -84,7 +84,7 @@ static WRITE8_HANDLER( gbusters_coin_counter_w )
 		char baf[40];
 		logerror("%04x: (ccount) write %02x\n",activecpu_get_pc(), data);
 		sprintf(baf,"ccnt = %02x", data);
-//		usrintf_showmessage(baf);
+//      usrintf_showmessage(baf);
 	}
 }
 
@@ -95,7 +95,7 @@ static WRITE8_HANDLER( gbusters_unknown_w )
 {
 char baf[40];
 	sprintf(baf,"??? = %02x", data);
-//	usrintf_showmessage(baf);
+//  usrintf_showmessage(baf);
 }
 }
 
@@ -166,7 +166,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-	Input Ports
+    Input Ports
 
 ***************************************************************************/
 
@@ -205,7 +205,7 @@ INPUT_PORTS_START( gbusters )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//  PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -278,7 +278,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-	Machine Driver
+    Machine Driver
 
 ***************************************************************************/
 
@@ -325,7 +325,7 @@ static MACHINE_DRIVER_START( gbusters )
 	MDRV_SOUND_ADD(YM2151, 3579545)
 	MDRV_SOUND_ROUTE(0, "mono", 0.60)
 	MDRV_SOUND_ROUTE(1, "mono", 0.60)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.30)

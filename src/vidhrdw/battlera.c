@@ -1,9 +1,9 @@
 /*******************************************************************************
 
-	Battle Rangers - Bryan McPhail, mish@tendril.co.uk
+    Battle Rangers - Bryan McPhail, mish@tendril.co.uk
 
-	This file only implements necessary features - not all PC-Engine video
-	features are used in this game (no DMA for one).
+    This file only implements necessary features - not all PC-Engine video
+    features are used in this game (no DMA for one).
 
 *******************************************************************************/
 

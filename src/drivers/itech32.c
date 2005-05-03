@@ -1,107 +1,107 @@
 /***************************************************************************
 
-	Incredible Technologies/Strata system
-	(32-bit blitter variant)
+    Incredible Technologies/Strata system
+    (32-bit blitter variant)
 
     driver by Aaron Giles
-	Golden Tee variants & World Class Bowling Deluxe additions by Brian A. Troha
+    Golden Tee variants & World Class Bowling Deluxe additions by Brian A. Troha
 
     Games supported:
-		* Time Killers (2 sets)
-		* Bloodstorm (4 sets)
-		* Hard Yardage (2 sets)
-		* Pairs (2 sets)
-		* Driver's Edge (1 set)
-		* World Class Bowling (4 sets)
-		* Street Fighter: The Movie (4 sets)
-		* Shuffleshot (2 sets)
-		* Golden Tee 3D Golf (10 sets)
-		* Golden Tee Golf '97 (6 sets)
-		* Golden Tee Golf '98 (4 sets)
-		* Golden Tee Golf '99 (3 Sets)
-		* Golden Tee Golf 2K (3 Sets)
-		* Golden Tee Classic (3 Sets)
+        * Time Killers (2 sets)
+        * Bloodstorm (4 sets)
+        * Hard Yardage (2 sets)
+        * Pairs (2 sets)
+        * Driver's Edge (1 set)
+        * World Class Bowling (4 sets)
+        * Street Fighter: The Movie (4 sets)
+        * Shuffleshot (2 sets)
+        * Golden Tee 3D Golf (11 sets)
+        * Golden Tee Golf '97 (6 sets)
+        * Golden Tee Golf '98 (4 sets)
+        * Golden Tee Golf '99 (3 Sets)
+        * Golden Tee Golf 2K (3 Sets)
+        * Golden Tee Classic (3 Sets)
 
-	Known issues:
-		* volume controls don't work in the Golden Tee games
+    Known issues:
+        * volume controls don't work in the Golden Tee games
 
 ****************************************************************************
 
-	There are at least 4 types of Golden Tee PCBs
-		* 3 Tier long ROM board
-			- Versions end in "L"
-			- No cocktail mode
-			- 2 trackball connectors
-			- GT3D
-		* 3 Tier short ROM board
-			- Versions end in "S"
-			- No cocktail mode
-			- 2 trackball connectors
-			- GT3D
-		* 3 Tier short ROM board
-			- Versions end in "S"
-			- No cocktail mode
-			- 1 trackball connector
-			- GT97 through Classic
-		* Large single layer PCB
-			- GT3D for this board ends in "N" for "Non-Tournament"
-			- Tournament versions end in "T" (requires optional chips, see below)
-			- 2 trackball connectors
-			- Cocktail mode support with most recent version of each chipset, except GT3D
-			- GT3D through GT Classic
+    There are at least 4 types of Golden Tee PCBs
+        * 3 Tier long ROM board
+            - Versions end in "L"
+            - No cocktail mode
+            - 2 trackball connectors
+            - GT3D
+        * 3 Tier short ROM board
+            - Versions end in "S"
+            - No cocktail mode
+            - 2 trackball connectors
+            - GT3D
+        * 3 Tier short ROM board
+            - Versions end in "S"
+            - No cocktail mode
+            - 1 trackball connector
+            - GT97 through Classic
+        * Large single layer PCB
+            - GT3D for this board ends in "N" for "Non-Tournament"
+            - Tournament versions end in "T" (requires optional chips, see below)
+            - 2 trackball connectors
+            - Cocktail mode support with most recent version of each chipset, except GT3D
+            - GT3D through GT Classic
 
-	There are at least 3 different revisions of the sound board for the 3-tier Golden Tee boards
-		P/N 1066 Rev 2: Ensoniq sample MX J9426, sound CPU code is V1.0 to V1.2
-		P/N 1078 Rev 1: Ensoniq sample 2MX16U, sound CPU code is V2.0 to V2.2, this is the same
-				sample rom IT used on the 3-tier World Class Bowling for SROM 0.
-		P/N 1078 Rev 1: This revision dropped the Ensoniq samples and converted to the samples
-			currently used on the single PCB format.  Roms are identified by the use of "NR"
-			on the label and the sound code is labeled "GTG3_NR(U23)"
+    There are at least 3 different revisions of the sound board for the 3-tier Golden Tee boards
+        P/N 1066 Rev 2: Ensoniq sample MX J9426, sound CPU code is V1.0 to V1.2
+        P/N 1078 Rev 1: Ensoniq sample 2MX16U, sound CPU code is V2.0 to V2.2, this is the same
+                sample rom IT used on the 3-tier World Class Bowling for SROM 0.
+        P/N 1078 Rev 1: This revision dropped the Ensoniq samples and converted to the samples
+            currently used on the single PCB format.  Roms are identified by the use of "NR"
+            on the label and the sound code is labeled "GTG3_NR(U23)"
 
-	GT Classic was the last chipset for this platform and was sold mainly as an upgrade for GT99/GT2K
+    GT Classic was the last chipset for this platform and was sold mainly as an upgrade for GT99/GT2K
 
-	Starting with GT Fore!, I.T. moved to a redesigned hardware platform based on a PC like main board
-		with a 3Dfx video card and is hard drive based.  This series starts with GT Fore! in 2000
-		and continues through 2005, it is also I.T.'s current gaming platform.  Some time in 2004
-		I.T. introduced a new bowling game called Silver Strike Bowling on a full blown PC type
+    Starting with GT Fore!, I.T. moved to a redesigned hardware platform based on a PC like main board
+        with a 3Dfx video card and is hard drive based.  This series starts with GT Fore! in 2000
+        and continues through 2005, it is also I.T.'s current gaming platform.  Some time in 2004
+        I.T. introduced a new bowling game called Silver Strike Bowling on a full blown PC type
                 system to replace it's aging World Class Bowling game.
 
-	Later versions of games (Golden Tee Golf, Shuffle Shot & World Class
-	Bowling) converged to a single platform, the large single PCB 
-	(P/N 1082 Rev 2).  With the correct jumpers setting (surface mounted) 
-	and chipset this board can run any of the 3 listed programs.
+    Later versions of games (Golden Tee Golf, Shuffle Shot & World Class
+    Bowling) converged to a single platform, the large single PCB
+    (P/N 1082 Rev 2).  With the correct jumpers setting (surface mounted)
+    and chipset this board can run any of the 3 listed programs.
 
 ****************************************************************************
 
-	Memory map TBD
+    Memory map TBD
 
 ****************************************************************************
 
-	Memory sizes:
-		Time Killers:
-			2 * MS6264L    = 2 *   8k =   16k (main RAM)
-			6 * V52C8126K  = 6 * 128k =  768k (video RAM)
-			3 * NMS64X8AM  = 3 *  32k =   96k (palette RAM)
+    Memory sizes:
+        Time Killers:
+            2 * MS6264L    = 2 *   8k =   16k (main RAM)
+            6 * V52C8126K  = 6 * 128k =  768k (video RAM)
+            3 * NMS64X8AM  = 3 *  32k =   96k (palette RAM)
 
-		Hard Yardage:
-			2 * MS62256    = 2 *  32k =   64k (main RAM)
-			4 * V52C8128K  = 4 * 128k =  512k (video RAM)
-			3 * MB84256    = 3 *  32k =   96k (palette RAM)
+        Hard Yardage:
+            2 * MS62256    = 2 *  32k =   64k (main RAM)
+            4 * V52C8128K  = 4 * 128k =  512k (video RAM)
+            3 * MB84256    = 3 *  32k =   96k (palette RAM)
 
-		Bloodstorm:
-			2 * MS62256    = 2 *  32k =   64k (main RAM)
-			6 * V52C8128K  = 6 * 128k =  768k (video RAM)
-			3 * MB84256    = 3 *  32k =   96k (palette RAM)
+        Bloodstorm:
+            2 * MS62256    = 2 *  32k =   64k (main RAM)
+            6 * V52C8128K  = 6 * 128k =  768k (video RAM)
+            3 * MB84256    = 3 *  32k =   96k (palette RAM)
 
-		Driver's Edge:
-			4 * CXK58258   = 4 *  32k =  128k (main RAM)
-			4 * CY7C199    = 4 *  32k =  128k (main RAM)
-			8 * V52C8128K  = 8 * 128k = 1024k (video RAM)
-			3 * CXK58257AM = 3 *  32k =   96k (palette RAM)
-			8 * CY7C141    = 8 *   1k =    8k (dual ported shared RAM btw 68k and TMS)
-			8 * CXK581000AM= 8 * 128k = 1024k (TMS1 RAM)
-			4 * CY7C185    = 4 *   8k =   32k (TMS1 RAM)
-			8 * CY7C199    = 8 *  32k =  256k (TMS2 RAM)
+        Driver's Edge:
+            4 * CXK58258   = 4 *  32k =  128k (main RAM)
+            4 * CY7C199    = 4 *  32k =  128k (main RAM)
+            8 * V52C8128K  = 8 * 128k = 1024k (video RAM)
+            3 * CXK58257AM = 3 *  32k =   96k (palette RAM)
+            8 * CY7C141    = 8 *   1k =    8k (dual ported shared RAM btw 68k and TMS)
+            8 * CXK581000AM= 8 * 128k = 1024k (TMS1 RAM)
+            4 * CY7C185    = 4 *   8k =   32k (TMS1 RAM)
+            8 * CY7C199    = 8 *  32k =  256k (TMS2 RAM)
 
 ***************************************************************************/
 
@@ -128,7 +128,7 @@
 
 /*************************************
  *
- *	Static data
+ *  Static data
  *
  *************************************/
 
@@ -161,7 +161,7 @@ static UINT8 tms_spinning[2];
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -215,7 +215,7 @@ static WRITE16_HANDLER( int1_ack_w )
 
 /*************************************
  *
- *	Machine initialization
+ *  Machine initialization
  *
  *************************************/
 
@@ -248,7 +248,7 @@ static MACHINE_INIT( drivedge )
 
 /*************************************
  *
- *	Input handlers
+ *  Input handlers
  *
  *************************************/
 
@@ -389,7 +389,7 @@ static READ32_HANDLER( drivedge_gas_r )
 
 /*************************************
  *
- *	Protection?
+ *  Protection?
  *
  *************************************/
 
@@ -416,7 +416,7 @@ static READ32_HANDLER( gtclass_prot_result_r )
 
 /*************************************
  *
- *	Sound banking
+ *  Sound banking
  *
  *************************************/
 
@@ -429,7 +429,7 @@ static WRITE8_HANDLER( sound_bank_w )
 
 /*************************************
  *
- *	Sound communication
+ *  Sound communication
  *
  *************************************/
 
@@ -484,13 +484,13 @@ static READ8_HANDLER( sound_data_buffer_r )
 
 /*************************************
  *
- *	Sound I/O port handling
+ *  Sound I/O port handling
  *
  *************************************/
 
 static WRITE8_HANDLER( drivedge_portb_out )
 {
-//	logerror("PIA port B write = %02x\n", data);
+//  logerror("PIA port B write = %02x\n", data);
 
 	/* bit 0 controls the fan light */
 	/* bit 1 controls the tow light */
@@ -514,7 +514,7 @@ static WRITE8_HANDLER( drivedge_turbo_light )
 
 static WRITE8_HANDLER( pia_portb_out )
 {
-//	logerror("PIA port B write = %02x\n", data);
+//  logerror("PIA port B write = %02x\n", data);
 
 	/* bit 4 controls the ticket dispenser */
 	/* bit 5 controls the coin counter */
@@ -527,7 +527,7 @@ static WRITE8_HANDLER( pia_portb_out )
 
 /*************************************
  *
- *	Sound 6522 VIA handling
+ *  Sound 6522 VIA handling
  *
  *************************************/
 
@@ -561,7 +561,7 @@ static struct via6522_interface drivedge_via_interface =
 
 /*************************************
  *
- *	Additional sound code
+ *  Additional sound code
  *
  *************************************/
 
@@ -574,7 +574,7 @@ static WRITE8_HANDLER( firq_clear_w )
 
 /*************************************
  *
- *	Driver's Edge stuff
+ *  Driver's Edge stuff
  *
  *************************************/
 
@@ -651,7 +651,7 @@ static READ32_HANDLER( drivedge_tms2_speedup_r )
 
 /*************************************
  *
- *	32-bit shunts
+ *  32-bit shunts
  *
  *************************************/
 
@@ -689,7 +689,7 @@ static WRITE32_HANDLER( int1_ack32_w )
 
 /*************************************
  *
- *	NVRAM read/write
+ *  NVRAM read/write
  *
  *************************************/
 
@@ -728,7 +728,7 @@ static NVRAM_HANDLER( gt3dt )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -776,7 +776,7 @@ static ADDRESS_MAP_START( drivedge_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x080000, 0x080003) AM_READ(input_port_3_msw_r)
 	AM_RANGE(0x082000, 0x082003) AM_READ(input_port_4_msw_r)
 	AM_RANGE(0x084000, 0x084003) AM_READWRITE(sound_data32_r, sound_data32_w)
-//	AM_RANGE(0x086000, 0x08623f) AM_RAM -- networking -- first 0x40 bytes = our data, next 0x40*8 bytes = their data, r/w on IRQ2
+//  AM_RANGE(0x086000, 0x08623f) AM_RAM -- networking -- first 0x40 bytes = our data, next 0x40*8 bytes = their data, r/w on IRQ2
 	AM_RANGE(0x088000, 0x088003) AM_READ(drivedge_steering_r)
 	AM_RANGE(0x08a000, 0x08a003) AM_READWRITE(drivedge_gas_r, MWA32_NOP)
 	AM_RANGE(0x08c000, 0x08c003) AM_READWRITE(input_port_0_msw_r, MWA32_NOP)
@@ -834,7 +834,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -869,7 +869,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -968,7 +968,7 @@ INPUT_PORTS_START( itech32_base )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
-	
+
 	PORT_START_TAG("EXTRA")	/* 78000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -1102,7 +1102,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( wcbowl )
 	PORT_INCLUDE(itech32_base)
-	
+
 	PORT_MODIFY("P1")
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1158,7 +1158,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sftm )
 	PORT_INCLUDE(itech32_base)
-	
+
 	PORT_MODIFY("P3")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
@@ -1178,7 +1178,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( shufshot ) /* ShuffleShot version 1.39 supports cocktail mode */
 	PORT_INCLUDE(itech32_base)
-	
+
 	PORT_MODIFY("P1")
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1210,11 +1210,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( shufbowl )
 	/*
-	Earlier versions of Shuffleshot & World Class Bowling share the same input
-	port set up. IE: "Freeze Screen" and no support for a cocktail mode
-	*/
+    Earlier versions of Shuffleshot & World Class Bowling share the same input
+    port set up. IE: "Freeze Screen" and no support for a cocktail mode
+    */
 	PORT_INCLUDE(itech32_base)
-	
+
 	PORT_MODIFY("P1")
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1246,7 +1246,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gt3d )
 	PORT_INCLUDE(itech32_base)
-	
+
 	PORT_MODIFY("P1")
 	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1384,7 +1384,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -1400,7 +1400,7 @@ static struct ES5506interface es5506_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1476,7 +1476,7 @@ static MACHINE_DRIVER_START( drivedge )
 	MDRV_CPU_ADD(TMS32031, 40000000)
 	MDRV_CPU_PROGRAM_MAP(drivedge_tms2_map,0)
 
-//	MDRV_CPU_ADD(M6803, 8000000/4) -- network CPU
+//  MDRV_CPU_ADD(M6803, 8000000/4) -- network CPU
 
 	MDRV_MACHINE_INIT(drivedge)
 	MDRV_INTERLEAVE(100)
@@ -1522,7 +1522,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1611,7 +1611,7 @@ ROM_START( bloodstm )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1649,7 +1649,7 @@ ROM_START( bloods22 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1687,7 +1687,7 @@ ROM_START( bloods21 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1725,7 +1725,7 @@ ROM_START( bloods11 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1758,7 +1758,7 @@ ROM_START( hardyard )
 	ROM_LOAD32_BYTE( "itfb11.bin", 0x800003, 0x020000, CRC(cd4f0df0) SHA1(632eb0cf27d7bf3df09d03f373a3195dd5a702b8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "fbsrom00.bin", 0x000000, 0x080000, CRC(b0a76ad2) SHA1(d1125cf96f6b9613840b8d22afa59748fb32ab90) )
@@ -1790,7 +1790,7 @@ ROM_START( hardyd10 )
 	ROM_LOAD32_BYTE( "itfb11.bin", 0x800003, 0x020000, CRC(cd4f0df0) SHA1(632eb0cf27d7bf3df09d03f373a3195dd5a702b8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "fbsrom00.bin", 0x000000, 0x080000, CRC(b0a76ad2) SHA1(d1125cf96f6b9613840b8d22afa59748fb32ab90) )
@@ -1818,7 +1818,7 @@ ROM_START( pairs )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x40000, CRC(b2975259) SHA1(aa82f8e855f2ebf1d7178a46f2b515d7c9a26299) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x80000, CRC(19a857f9) SHA1(2515b4c127191d52d3b5a72477384847d8cabad3) )
@@ -1845,7 +1845,7 @@ ROM_START( pairsa )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x40000, CRC(b2975259) SHA1(aa82f8e855f2ebf1d7178a46f2b515d7c9a26299) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, CRC(1d96c581) SHA1(3b7c84b7db3b098ec28c7058c16f97e9cf0e4733) )
@@ -2021,7 +2021,7 @@ ROM_END
 
 
 ROM_START( wcbwl12 )	/* Version 1.2 (unique Hardware, 3-tier type board) */
-	/* v1.3 & v1.5 for this platform has been confirmed, but not dumped */
+	/* v1.0, v1.3 & v1.5 for this platform has been confirmed, but not dumped */
 	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "wcb_prgm.u83", 0x00000, 0x20000, CRC(0602c5ce) SHA1(4339f77301f9c607c6f1dc81270d03681e874e69) )
 	ROM_LOAD16_BYTE( "wcb_prgm.u88", 0x00001, 0x20000, CRC(49573493) SHA1(42813573f4ab951cd830193c0ffe2ce7d79c354b) )
@@ -2042,7 +2042,7 @@ ROM_START( wcbwl12 )	/* Version 1.2 (unique Hardware, 3-tier type board) */
 	ROM_FILL(                      0x400000, 0x480000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "wcb_rom.0",   0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) )
+	ROM_LOAD16_BYTE( "wcb_rom.0",   0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "wcb_srm.0",  0x000000, 0x080000, CRC(115bcd1f) SHA1(c321bf3145c11de1351c8f9cd554ab3d6600e854) )
@@ -2084,7 +2084,7 @@ ROM_START( drivedge )
 	ROM_LOAD32_BYTE( "de-grm19.bin", 0x800003, 0x20000, CRC(4ced78e1) SHA1(7995c8684ca28cbdf620d10297850463fa473fe8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "de-srom0.bin", 0x000000, 0x80000, CRC(649c685f) SHA1(95d8f257cac621c8bd4abaa88ea5f7b3b8adea4c) )
@@ -2627,6 +2627,37 @@ ROM_START( gt3dt231 ) /* Version 2.31 Tournament Edition (PCB P/N 1082 Rev 2) */
 	ROM_LOAD32_BYTE( "gtg3prm1.231", 0x00001, 0x100000, CRC(a3b60226) SHA1(2b78fb2917ad66883d2353d82f48b5aeb599d444) )
 	ROM_LOAD32_BYTE( "gtg3prm2.231", 0x00002, 0x100000, CRC(d1659616) SHA1(7035ce46bde63024237e6c4777ddd10b58caeb98) )
 	ROM_LOAD32_BYTE( "gtg3prm3.231", 0x00003, 0x100000, CRC(1d231ea2) SHA1(3001f25a337055d6fba522d10f5098c0acf6ff7a) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "gt_nr.u88", 0x10000, 0x18000, CRC(2cee9e98) SHA1(02edac7abab2335c1cd824d1d9b26aa32238a2de) )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x600000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "gtg3_grm.0_0", 0x000000, 0x80000, CRC(1b10379d) SHA1(b6d61771e2bc3909ea4229777867b217a3e9e580) )
+	ROM_LOAD32_BYTE( "gtg3_grm.0_1", 0x000001, 0x80000, CRC(3b852e1a) SHA1(4b3653d55c52fc2eb5438d1604247a8e68d569a5) )
+	ROM_LOAD32_BYTE( "gtg3_grm.0_2", 0x000002, 0x80000, CRC(d43ffb35) SHA1(748be07e03bbbb40cd7a725c708cacc46f33d9ca) )
+	ROM_LOAD32_BYTE( "gtg3_grm.0_3", 0x000003, 0x80000, CRC(2d24e93e) SHA1(505272c1a509d013c2ce9fb8e8e0ac88870d74e7) )
+	ROM_LOAD32_BYTE( "gtg3_grm.1_0", 0x200000, 0x80000, CRC(4476b239) SHA1(71b8258ca94859eb4bdf83b855a87aff79d3df2b) )
+	ROM_LOAD32_BYTE( "gtg3_grm.1_1", 0x200001, 0x80000, CRC(0aadfad2) SHA1(56a283b30a13b77ec53b7ae2b4129d44b7fa25d4) )
+	ROM_LOAD32_BYTE( "gtg3_grm.1_2", 0x200002, 0x80000, CRC(27871980) SHA1(fe473d12cb4805e25dcac8f9ae187891936b961b) )
+	ROM_LOAD32_BYTE( "gtg3_grm.1_3", 0x200003, 0x80000, CRC(7dbc242b) SHA1(9aa5074cad633446e0110a1a3d9c6e1f2158070a) )
+	ROM_LOAD32_BYTE( "gtg3tgrm.2_0", 0x400000, 0x80000, CRC(80ae7148) SHA1(e19d3390a2a0dad260d770fdbbb64d1f8e43d53f) )
+	ROM_LOAD32_BYTE( "gtg3tgrm.2_1", 0x400001, 0x80000, CRC(0f85a618) SHA1(d9ced21c20f9ed6b7f19e7645d75b239ea709b79) )
+	ROM_LOAD32_BYTE( "gtg3tgrm.2_2", 0x400002, 0x80000, CRC(09ca5fbf) SHA1(6a6ed4d5d76035d8acc33c6494fba6012194362e) )
+	ROM_LOAD32_BYTE( "gtg3tgrm.2_3", 0x400003, 0x80000, CRC(d136853a) SHA1(0777d6bfab9e3d57c2a61d058fd185fc1f547698) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "gt_srom0.nr", 0x000000, 0x100000, CRC(44983bd7) SHA1(a6ac966ec113b079434d7f871e4ce7266206d234) )
+	ROM_LOAD16_BYTE( "gt_srom1.nr", 0x200000, 0x080000, CRC(1b3f18b6) SHA1(3b65de6a90c5ede183b5f8ca1875736bc1425772) )
+ROM_END
+
+
+ROM_START( gt3dt211 ) /* Version 2.11 Tournament Edition (PCB P/N 1082 Rev 2) */
+	ROM_REGION32_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD32_BYTE( "gtg3prm0.211", 0x00000, 0x100000, CRC(54360fdf) SHA1(05687f7f41f719458ee72b4517c7be3e33ee80cf) )
+	ROM_LOAD32_BYTE( "gtg3prm1.211", 0x00001, 0x100000, CRC(9142ebb7) SHA1(ae3c9bf1a954c2f790cdb7953a6fea3d1d277aa9) )
+	ROM_LOAD32_BYTE( "gtg3prm2.211", 0x00002, 0x100000, CRC(058b906a) SHA1(ff2cb3b955f7ce8041c967ed08b92e355d9abe2d) )
+	ROM_LOAD32_BYTE( "gtg3prm3.211", 0x00003, 0x100000, CRC(8dbeee1b) SHA1(76f003619f3b4e7c55949f8ebf85364b0c9e7115) )
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )
 	ROM_LOAD( "gt_nr.u88", 0x10000, 0x18000, CRC(2cee9e98) SHA1(02edac7abab2335c1cd824d1d9b26aa32238a2de) )
@@ -3245,7 +3276,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver-specific init
+ *  Driver-specific init
  *
  *************************************/
 
@@ -3347,10 +3378,10 @@ static DRIVER_INIT( sftm110 )
 static void init_shuffle_bowl_common(int prot_addr)
 {
 	/*
-		The newest versions of World Class Bowling are on the same exact
-		platform as Shuffle Shot. So We'll use the same general INIT
-		routine for these two programs.  IE: PCB P/N 1082 Rev 2
-	*/
+        The newest versions of World Class Bowling are on the same exact
+        platform as Shuffle Shot. So We'll use the same general INIT
+        routine for these two programs.  IE: PCB P/N 1082 Rev 2
+    */
 	init_program_rom();
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
@@ -3401,12 +3432,12 @@ static void init_gt_common(void)
 static DRIVER_INIT( gt3d )
 {
 	/*
-		This is the 3 tier PCB with the short ROM board:  
-		Known GT versions on this board:  GT3D v1.4 through v1.92S
+        This is the 3 tier PCB with the short ROM board:
+        Known GT versions on this board:  GT3D v1.4 through v1.92S
 
-		Hacked versions of this PCB have been found with GT97
-		through GTClassic. This is _NOT_ a factory modification
-	*/
+        Hacked versions of this PCB have been found with GT97
+        through GTClassic. This is _NOT_ a factory modification
+    */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200003, 0, 0, trackball32_8bit_r);
 	init_gt_common();
 }
@@ -3415,11 +3446,11 @@ static DRIVER_INIT( gt3d )
 static DRIVER_INIT( aama )
 {
 	/*
-		This is the single PCB style board commonly referred to as: 
-		"AAMA Serial Numbers 676266 and Up." All versions of GT on this 
-		board share the same sound CPU code and sample ROMs.
-		This board has all versions of GT for it, GT3D through GTClassic
-	*/
+        This is the single PCB style board commonly referred to as:
+        "AAMA Serial Numbers 676266 and Up." All versions of GT on this
+        board share the same sound CPU code and sample ROMs.
+        This board has all versions of GT for it, GT3D through GTClassic
+    */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
 	init_gt_common();
@@ -3429,8 +3460,8 @@ static DRIVER_INIT( aama )
 static DRIVER_INIT( aamat )
 {
 	/*
-		Tournament Version
-	*/
+        Tournament Version
+    */
 	init_aama();
 	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
 	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
@@ -3441,11 +3472,11 @@ static DRIVER_INIT( aamat )
 static DRIVER_INIT( s_ver )
 {
 	/*
-		This is a special 3 tier PCB with a short ROM board and 1 trackball
-		connector, P/N 1088 Rev 0. Known versions of Golden Tee for this
-		board: GT97 v1.21S, GT98, GT99, GT2K & GT Classic Versions 1.00S
-		Trackball info is read through 200202 (actually 200203).
-	*/
+        This is a special 3 tier PCB with a short ROM board and 1 trackball
+        connector, P/N 1088 Rev 0. Known versions of Golden Tee for this
+        board: GT97 v1.21S, GT98, GT99, GT2K & GT Classic Versions 1.00S
+        Trackball info is read through 200202 (actually 200203).
+    */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200200, 0x200203, 0, 0, trackball32_4bit_r);
 	init_gt_common();
 }
@@ -3454,12 +3485,12 @@ static DRIVER_INIT( s_ver )
 static DRIVER_INIT( gt3dl )
 {
 	/*
-		This is the 3 tier PCB with the long ROM board:  
-		Known GT versions on this board:  GT3D v1.92L & v1.91L
+        This is the 3 tier PCB with the long ROM board:
+        Known GT versions on this board:  GT3D v1.92L & v1.91L
 
-		Player 1 trackball read through 200003
-		Player 2 trackball read through 200002
-	*/
+        Player 1 trackball read through 200003
+        Player 2 trackball read through 200002
+    */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200003, 0, 0, trackball32_4bit_combined_r);
 	init_gt_common();
 }
@@ -3473,23 +3504,23 @@ static DRIVER_INIT( gtclassp )
 
 	/* The protection code is:
 
-		addq #1,	1132.w
-		clr.l		d0
-		clr.l		d1
-		move.b		680002,d0		; Read protection result
-		andi.b		#$C0,d0
-		cmpi.b		#$80,d0
-Label1	bne.s		Label1			; Infinite loop if retsult isn't 0x80
-		rts							; Otherwise just return to the game :-)
+        addq #1,    1132.w
+        clr.l       d0
+        clr.l       d1
+        move.b      680002,d0       ; Read protection result
+        andi.b      #$C0,d0
+        cmpi.b      #$80,d0
+Label1  bne.s       Label1          ; Infinite loop if retsult isn't 0x80
+        rts                         ; Otherwise just return to the game :-)
 
-	*/
+    */
 }
 
 
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 
@@ -3517,35 +3548,35 @@ GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incr
 GAME( 1997, sshot137, shufshot, sftm,     shufbowl, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.37)" ) /* PIC 16C54 labeled as ITSHF-1 */
 GAME( 1999, wcbowldx, 0,        sftm,     wcbowldx, shufshot, ROT0, "Incredible Technologies",        "World Class Bowling Deluxe (v2.00)" ) /* PIC 16C54 labeled as ITBWL-4 */
 
-/*  
-	The following naming conventions are used:
+/*
+    The following naming conventions are used:
 
-	gt3d s 192
-	  ^^ ^ ^^^
-	Game | Version
-	     |
-	v = Version (AAMA 676266+ PCB P/N 1082 Rev 2)
-	l = Long ROM board:
-		Main  P/N 1064 Rev 1
-		ROM   P/N 1080 Rev 5
-		Sound P/N 1078 Rev 1
-	s = Short ROM board: 
-		Main  P/N 1064 Rev 1
-		ROM   P/N 1069 Rev 2 or P/N 1088 Rev 0 (1 Trackball Connector)
-		Sound P/N 1078 Rev 1 or P/N 1066 Rev 2
-	n = Non-tournament (AAMA 676266+) PCB P/N 1082 Rev 2 - Applies only for GT3D
-	t = Tournament PCB P/N 1082 Rev 2, with necessary chips on board
-		Philips SCN68681 (DUART):
-			http://www.semiconductors.philips.com/acrobat/datasheets/SCN68681_2.pdf
-		ST Timekeeper (M48T02-120PC1):
-			http://us.st.com/stonline/books/pdf/docs/2410.pdf
+    gt3d s 192
+      ^^ ^ ^^^
+    Game | Version
+         |
+    v = Version (AAMA 676266+ PCB P/N 1082 Rev 2)
+    l = Long ROM board:
+        Main  P/N 1064 Rev 1
+        ROM   P/N 1080 Rev 5
+        Sound P/N 1078 Rev 1
+    s = Short ROM board:
+        Main  P/N 1064 Rev 1
+        ROM   P/N 1069 Rev 2 or P/N 1088 Rev 0 (1 Trackball Connector)
+        Sound P/N 1078 Rev 1 or P/N 1066 Rev 2
+    n = Non-tournament (AAMA 676266+) PCB P/N 1082 Rev 2 - Applies only for GT3D
+    t = Tournament PCB P/N 1082 Rev 2, with necessary chips on board
+        Philips SCN68681 (DUART):
+            http://www.semiconductors.philips.com/acrobat/datasheets/SCN68681_2.pdf
+        ST Timekeeper (M48T02-120PC1):
+            http://us.st.com/stonline/books/pdf/docs/2410.pdf
 
-	NOTE: Due to various different upgrade packages from IT, the 3 tier boards can end up with any combination
-		of rom boards and sound boards.  For historical reasons, GTG3 3 tier S versions will use the oldest
-		sound file set up. Version L will use the newer Ensoniq sample rom and v2.X sound code, while gt97
-		through gtclassic will use the lastest "NR" versions.
+    NOTE: Due to various different upgrade packages from IT, the 3 tier boards can end up with any combination
+        of rom boards and sound boards.  For historical reasons, GTG3 3 tier S versions will use the oldest
+        sound file set up. Version L will use the newer Ensoniq sample rom and v2.X sound code, while gt97
+        through gtclassic will use the lastest "NR" versions.
 
-	Parent set will always be gt(year) with the most recent version.  IE: gt97 is Golden Tee '97 v1.30
+    Parent set will always be gt(year) with the most recent version.  IE: gt97 is Golden Tee '97 v1.30
 
 */
 GAME( 1995, gt3d,     0,        gt3d,    gt3d,  aama,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.93N)" ) /* PIC 16C54 labeled as ITGF-2 */
@@ -3558,6 +3589,7 @@ GAME( 1995, gt3dv16,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Tech
 GAME( 1995, gt3dv15,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.5)" ) /* PIC 16C54 labeled as ITGF-1 */
 GAME( 1995, gt3dv14,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.4)" ) /* PIC 16C54 labeled as ITGF-1 */
 GAME( 1995, gt3dt231, gt3d,     gt3dt,   gt3d,  aamat,    ROT0, "Incredible Technologies", "Golden Tee 3D Golf Tournament (v2.31)" ) /* PIC 16C54 labeled as ITGF-2 */
+GAME( 1995, gt3dt211, gt3d,     gt3dt,   gt3d,  aamat,    ROT0, "Incredible Technologies", "Golden Tee 3D Golf Tournament (v2.11)" ) /* PIC 16C54 labeled as ITGF-2 */
 
 GAME( 1997, gt97,     0,        gt3d,    gt97,  aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.30)" ) /* PIC 16C54 labeled as ITGFS-3 */
 GAME( 1997, gt97v122, gt97,     gt3d,    gt97o, aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.22)" ) /* PIC 16C54 labeled as ITGFS-3 */

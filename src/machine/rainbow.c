@@ -19,28 +19,28 @@
 
 
   BANK 0  000 - 002  set by the 68000 during initialization
-	      003 - 006  joystick and other input bits
-	      008        coin counters and lock-out
-	      00D        round number for world data request
-	      01D        internal use
+          003 - 006  joystick and other input bits
+          008        coin counters and lock-out
+          00D        round number for world data request
+          01D        internal use
   BANK 1  000        internal use
           001 - 002  round height (LSB first)
-	      004 - 0ff  unknown data
+          004 - 0ff  unknown data
           100        request round data
-	      101 - 140  walking on the rainbow offsets
-	      141        round number for round data request
-	      142 - 145  round address (MSB first)
-	      148        boss or secret room flag
+          101 - 140  walking on the rainbow offsets
+          141        round number for round data request
+          142 - 145  round address (MSB first)
+          148        boss or secret room flag
           149        request goal-in data
-	      14A - 155  goal-in data
+          14A - 155  goal-in data
   BANK 2  000 - 01f  rainbow dissolve graphics
-	      020 - 03f  rainbow smashing graphics
-	      040 - 061  unused data
+          020 - 03f  rainbow smashing graphics
+          040 - 061  unused data
   BANK 4  002 - XXX  monster animation sequences /
-	                 starts with directory of 2-byte offsets
+                     starts with directory of 2-byte offsets
   BANK 5  000        request world data
           002 - XXX  monster property records /
-	                 starts with directory of 2-byte offsets
+                     starts with directory of 2-byte offsets
   BANK 6  002 - 141  unknown, has $20 bytes per world
   BANK 7  002 - XXX  monster to Bubble Bobble sprite mapping
 

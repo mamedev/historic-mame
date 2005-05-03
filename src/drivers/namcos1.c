@@ -44,7 +44,7 @@ CUS30       sound control
 CUS39       sprite generator
 CUS48       sprite address generator
 CUS64       MCU (63701)
-CUS95(x5)	I/O interface
+CUS95(x5)   I/O interface
 CUS99(x2)   sound volume
 CUS116      display output generator
 CUS117      main/sub CPU MMU
@@ -471,7 +471,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(namcos1_bankswitch_w)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(namcos1_cpu_control_w)
 	AM_RANGE(0xf200, 0xf200) AM_WRITE(namcos1_watchdog_w)
-//	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // unknown
+//  AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // unknown
 	AM_RANGE(0xf600, 0xf600) AM_WRITE(irq_ack_w)
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(firq_ack_w)
 	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(namcos1_sub_firq_w) // asserts FIRQ on CPU1
@@ -489,9 +489,9 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xbfff) AM_RAMBANK(14)
 	AM_RANGE(0xc000, 0xdfff) AM_RAMBANK(15)
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(namcos1_bankswitch_w)
-//	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // IO Chip
+//  AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) // IO Chip
 	AM_RANGE(0xf200, 0xf200) AM_WRITE(namcos1_watchdog_w)
-//	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // ?
+//  AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP) // ?
 	AM_RANGE(0xf600, 0xf600) AM_WRITE(irq_ack_w)
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(firq_ack_w)
 	AM_RANGE(0xe000, 0xffff) AM_ROMBANK(16)
@@ -705,15 +705,15 @@ INPUT_PORTS_START( berabohm )
 
 #ifdef PRESSURE_SENSITIVE
 	/*
-	buttons (pressure sensitive)
-	each button has two switches: the first is closed as soon as the button is
-	pressed, the second a little later, depending on how hard the button is
-	pressed.
-	bits 0-5 control strength (0x00 = max 0x3f = min)
-	bit 6 indicates the button is pressed
-	bit 7 is not actually read by the game but I use it to simulate the second
-		  switch
-	*/
+    buttons (pressure sensitive)
+    each button has two switches: the first is closed as soon as the button is
+    pressed, the second a little later, depending on how hard the button is
+    pressed.
+    bits 0-5 control strength (0x00 = max 0x3f = min)
+    bit 6 indicates the button is pressed
+    bit 7 is not actually read by the game but I use it to simulate the second
+          switch
+    */
 	PORT_START_TAG( "IN0" )
 	PORT_BIT( 0x3f, 0x00, IPT_SPECIAL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -981,9 +981,9 @@ static struct namco_interface namco_interface =
 };
 
 /*
-	namcos1 has two 8bit dac channel. But They are mixed before pre-amp.
-	And,they are connected with pre-amp through active LPF.
-	LPF info : Fco = 3.3KHz , g = -12dB/oct
+    namcos1 has two 8bit dac channel. But They are mixed before pre-amp.
+    And,they are connected with pre-amp through active LPF.
+    LPF info : Fco = 3.3KHz , g = -12dB/oct
 */
 
 static MACHINE_DRIVER_START( ns1 )

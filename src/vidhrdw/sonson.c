@@ -128,13 +128,13 @@ static void get_bg_tile_info(int tile_index)
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index] + 256 * (attr & 0x03);
 	int color = attr >> 2;
-	
+
 	SET_TILE_INFO(0, code, color, 0)
 }
 
 VIDEO_START( sonson )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -155,7 +155,7 @@ static void sonson_draw_sprites( struct mame_bitmap *bitmap )
 		int color = spriteram[offs + 1] & 0x1f;
 		int flipx = ~spriteram[offs + 1] & 0x40;
 		int flipy = ~spriteram[offs + 1] & 0x80;
-		int sx = spriteram[offs + 3]; 
+		int sx = spriteram[offs + 3];
 		int sy = spriteram[offs + 0];
 
 		if (flip_screen)

@@ -67,7 +67,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( sichuan2 )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if ( !bg_tilemap )

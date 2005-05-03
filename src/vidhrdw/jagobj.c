@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Jaguar object processor
+    Atari Jaguar object processor
 
 ****************************************************************************/
 
@@ -20,7 +20,7 @@ static UINT8 *blend_y, *blend_cc;
 
 /*************************************
  *
- *	Object processor init
+ *  Object processor init
  *
  *************************************/
 
@@ -65,7 +65,7 @@ int jagobj_init(void)
 
 /*************************************
  *
- *	Blending function
+ *  Blending function
  *
  *************************************/
 
@@ -76,7 +76,7 @@ int jagobj_init(void)
 
 /*************************************
  *
- *	4bpp bitmap renderers
+ *  4bpp bitmap renderers
  *
  *************************************/
 
@@ -242,7 +242,7 @@ static void (*bitmap4[8])(INT32, INT32, data32_t *, INT32) =
 
 /*************************************
  *
- *	8bpp bitmap renderers
+ *  8bpp bitmap renderers
  *
  *************************************/
 
@@ -372,7 +372,7 @@ static void (*bitmap8[8])(INT32, INT32, data32_t *, INT32) =
 
 /*************************************
  *
- *	16bpp bitmap renderers
+ *  16bpp bitmap renderers
  *
  *************************************/
 
@@ -489,7 +489,7 @@ INLINE UINT8 lookup_pixel(const data32_t *src, int i, int pitch, int depth)
 
 /*************************************
  *
- *	Standard bitmap processor
+ *  Standard bitmap processor
  *
  *************************************/
 
@@ -662,7 +662,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 
 /*************************************
  *
- *	Scaled bitmap object processor
+ *  Scaled bitmap object processor
  *
  *************************************/
 
@@ -835,7 +835,7 @@ static data32_t *process_scaled_bitmap(data32_t *objdata, int vc, int logit)
 
 /*************************************
  *
- *	Brach object processor
+ *  Brach object processor
  *
  *************************************/
 
@@ -900,7 +900,7 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
 
 /*************************************
  *
- *	Process object list
+ *  Process object list
  *
  *************************************/
 

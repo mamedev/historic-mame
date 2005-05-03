@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Gomoku sound driver (quick hack of the Wiping sound driver)
+    Gomoku sound driver (quick hack of the Wiping sound driver)
 
-	used by wiping.c
+    used by wiping.c
 
 ***************************************************************************/
 

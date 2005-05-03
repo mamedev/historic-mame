@@ -129,22 +129,22 @@ static void captaven_drawsprites(struct mame_bitmap *bitmap, const data32_t *spr
 	int offs;
 
 	/*
-		Word 0:
-			0x8000:	Y flip
-			0x4000: X flip
-			0x2000:	Flash (Sprite toggles on/off every frame)
-			0x1fff:	Y value
-		Word 1:
-			0xffff: X value
-		Word 2:
-			0xf000:	Block height
-			0x0f00: Block width
-			0x00c0: Unused?
-			0x0020: Priority
-			0x001f: Colour
-		Word 3:
-			0xffff:	Sprite value
-	*/
+        Word 0:
+            0x8000: Y flip
+            0x4000: X flip
+            0x2000: Flash (Sprite toggles on/off every frame)
+            0x1fff: Y value
+        Word 1:
+            0xffff: X value
+        Word 2:
+            0xf000: Block height
+            0x0f00: Block width
+            0x00c0: Unused?
+            0x0020: Priority
+            0x001f: Colour
+        Word 3:
+            0xffff: Sprite value
+    */
 
 	for (offs = 0x400-4;offs >=0;offs -= 4)
 	{
@@ -277,7 +277,7 @@ static void tattass_drawsprites(struct mame_bitmap *bitmap, const data32_t *spri
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,trans,0,pri,1<<gfxbank);
+					&Machine->visible_area,trans,0,pri,1<<gfxbank, 1);
 
 			multi--;
 		}
@@ -294,11 +294,11 @@ INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxE
 	if (!scalex || !scaley) return;
 
 	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
+    scalex and scaley are 16.16 fixed point numbers
+    1<<15 : shrink to 50%
+    1<<16 : uniform scale
+    1<<17 : double to 200%
+    */
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
 	if(clip)
@@ -322,8 +322,8 @@ INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxE
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
-//			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
-//			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
+//          int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
+//          int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
 
 			if (sprite_screen_width && sprite_screen_height)
 			{
@@ -494,49 +494,49 @@ static void dragngun_drawsprites(struct mame_bitmap *bitmap, const data32_t *spr
 	int offs;
 
 	/*
-		Sprites are built from main control ram, which references tile
-		layout ram, which finally references tile lookup ram which holds
-		the actual tile indices to draw and index into the banking
-		control.  Tile lookup and tile layout ram are double buffered.
+        Sprites are built from main control ram, which references tile
+        layout ram, which finally references tile lookup ram which holds
+        the actual tile indices to draw and index into the banking
+        control.  Tile lookup and tile layout ram are double buffered.
 
 
-		Main sprite control ram, 8 * 32 bit words per sprite, so
+        Main sprite control ram, 8 * 32 bit words per sprite, so
 
-		Word 0:
-			0x0400 - Banking control for tile layout RAM + tile lookup ram
-			0x0200 - ?
-			0x01ff - Index into tile layout RAM
-		Word 1 :
-		Word 2 : X base position
-		Word 3 : Y base position
-		Word 4 :
-			0x8000: X flip
-			0x03ff: X size of block in pixels (for scaling)
-		Word 5 :
-			0x8000: Y flip
-			0x03ff: Y size of block in pixels (for scaling)
-		Word 6 :
-			0x1f - colour.
-			0x20 - ?  Used for background at 'frog' boss and title screen dragon.
-			0x40 - ?  priority?
-			0x80 - Alpha blending enable
-		Word 7 :
+        Word 0:
+            0x0400 - Banking control for tile layout RAM + tile lookup ram
+            0x0200 - ?
+            0x01ff - Index into tile layout RAM
+        Word 1 :
+        Word 2 : X base position
+        Word 3 : Y base position
+        Word 4 :
+            0x8000: X flip
+            0x03ff: X size of block in pixels (for scaling)
+        Word 5 :
+            0x8000: Y flip
+            0x03ff: Y size of block in pixels (for scaling)
+        Word 6 :
+            0x1f - colour.
+            0x20 - ?  Used for background at 'frog' boss and title screen dragon.
+            0x40 - ?  priority?
+            0x80 - Alpha blending enable
+        Word 7 :
 
 
-		Tile layout ram, 4 * 32 bit words per sprite, so
+        Tile layout ram, 4 * 32 bit words per sprite, so
 
-		Word 0:
-			0x2000 - Selector for tile lookup bank!?!?!?!?!?!?
-			0x1fff - Index into tile lookup ram (16 bit word based, NOT 32)
-		Word 1:
-			0xff00 - ?
-			0x00f0 - Width
-			0x000f - Height
-		Word 2:
-			0x01ff - X block offset
-		Word 3:
-			0x01ff - Y block offset
-	*/
+        Word 0:
+            0x2000 - Selector for tile lookup bank!?!?!?!?!?!?
+            0x1fff - Index into tile lookup ram (16 bit word based, NOT 32)
+        Word 1:
+            0xff00 - ?
+            0x00f0 - Width
+            0x000f - Height
+        Word 2:
+            0x01ff - X block offset
+        Word 3:
+            0x01ff - Y block offset
+    */
 
 	/* Sprite global disable bit */
 	if (dragngun_sprite_ctrl&0x40000000)
@@ -581,7 +581,7 @@ static void dragngun_drawsprites(struct mame_bitmap *bitmap, const data32_t *spr
 		fx = spritedata[offs+4]&0x8000;
 		fy = spritedata[offs+5]&0x8000;
 
-//		if (spritedata[offs+0]&0x400)
+//      if (spritedata[offs+0]&0x400)
 		if (layout_ram[0]&0x2000)
 			lookup_ram = dragngun_sprite_lookup_1_ram + (layout_ram[0]&0x1fff);
 		else
@@ -616,7 +616,7 @@ static void dragngun_drawsprites(struct mame_bitmap *bitmap, const data32_t *spr
 				}
 
 				/* Because of the unusual interleaved rom layout, we have to mangle the bank bits
-				even further to suit our gfx decode */
+                even further to suit our gfx decode */
 				switch (sprite&0xf000) {
 				case 0x0000: sprite=0xc000 | (sprite&0xfff); break;
 				case 0x1000: sprite=0xd000 | (sprite&0xfff); break;
@@ -982,7 +982,7 @@ static void combined_tilemap_draw(struct mame_bitmap *bitmap)
 	const data16_t width_mask=0x3ff;
 	const data16_t height_mask=0x1ff;
 	const data16_t y_src=deco32_pf34_control[2];
-//	const data32_t *rows=deco32_pf3_rowscroll;
+//  const data32_t *rows=deco32_pf3_rowscroll;
 
 	const data16_t *bitmap0_y;
 	const data16_t *bitmap1_y;
@@ -1230,10 +1230,10 @@ VIDEO_UPDATE( tattass )
 	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
 
 	/* Enable registers - pf3/4 enable is not set on the 'fire' stage - hardware bug?  Maybe enable isn't hooked up */
-//	tilemap_set_enable(pf1_tilemap, deco32_pf12_control[5]&0x0080);
-//	tilemap_set_enable(pf2_tilemap, deco32_pf12_control[5]&0x8000);
-//	tilemap_set_enable(pf3_tilemap, deco32_pf34_control[5]&0x0080);
-//	tilemap_set_enable(pf4_tilemap, deco32_pf34_control[5]&0x8000);
+//  tilemap_set_enable(pf1_tilemap, deco32_pf12_control[5]&0x0080);
+//  tilemap_set_enable(pf2_tilemap, deco32_pf12_control[5]&0x8000);
+//  tilemap_set_enable(pf3_tilemap, deco32_pf34_control[5]&0x0080);
+//  tilemap_set_enable(pf4_tilemap, deco32_pf34_control[5]&0x8000);
 
 	deco16_clear_sprite_priority_bitmap();
 	fillbitmap(priority_bitmap,0,cliprect);
@@ -1302,5 +1302,5 @@ if (!code_pressed(KEYCODE_W))	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
 if (!code_pressed(KEYCODE_E))	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
 if (!code_pressed(KEYCODE_R))	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
-//	print_debug_info();
+//  print_debug_info();
 }

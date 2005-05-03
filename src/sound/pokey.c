@@ -1,49 +1,49 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.5
- *	Copyright (c) 2000 by The MAME Team
+ *  POKEY chip emulator 4.5
+ *  Copyright (c) 2000 by The MAME Team
  *
- *	Based on original info found in Ron Fries' Pokey emulator,
- *	with additions by Brad Oliver, Eric Smith and Juergen Buchmueller,
- *	paddle (a/d conversion) details from the Atari 400/800 Hardware Manual.
- *	Polynome algorithms according to info supplied by Perry McFarlane.
+ *  Based on original info found in Ron Fries' Pokey emulator,
+ *  with additions by Brad Oliver, Eric Smith and Juergen Buchmueller,
+ *  paddle (a/d conversion) details from the Atari 400/800 Hardware Manual.
+ *  Polynome algorithms according to info supplied by Perry McFarlane.
  *
- *	This code is subject to the MAME license, which besides other
+ *  This code is subject to the MAME license, which besides other
  *  things means it is distributed as is, no warranties whatsoever.
- *	For more details read mame.txt that comes with MAME.
+ *  For more details read mame.txt that comes with MAME.
  *
- *	4.5:
- *	- changed the 9/17 bit polynomial formulas such that the values
- *	  required for the Tempest Pokey protection will be found.
- *	  Tempest expects the upper 4 bits of the RNG to appear in the
- *	  lower 4 bits after four cycles, so there has to be a shift
- *	  of 1 per cycle (which was not the case before). Bits #6-#13 of the
- *	  new RNG give this expected result now, bits #0-7 of the 9 bit poly.
- *	- reading the RNG returns the shift register contents ^ 0xff.
- *	  That way resetting the Pokey with SKCTL (which resets the
- *	  polynome shifters to 0) returns the expected 0xff value.
+ *  4.5:
+ *  - changed the 9/17 bit polynomial formulas such that the values
+ *    required for the Tempest Pokey protection will be found.
+ *    Tempest expects the upper 4 bits of the RNG to appear in the
+ *    lower 4 bits after four cycles, so there has to be a shift
+ *    of 1 per cycle (which was not the case before). Bits #6-#13 of the
+ *    new RNG give this expected result now, bits #0-7 of the 9 bit poly.
+ *  - reading the RNG returns the shift register contents ^ 0xff.
+ *    That way resetting the Pokey with SKCTL (which resets the
+ *    polynome shifters to 0) returns the expected 0xff value.
  *  4.4:
- *	- reversed sample values to make OFF channels produce a zero signal.
- *	  actually de-reversed them; don't remember that I reversed them ;-/
- *	4.3:
- *	- for POT inputs returning zero, immediately assert the ALLPOT
- *	  bit after POTGO is written, otherwise start trigger timer
- *	  depending on SK_PADDLE mode, either 1-228 scanlines or 1-2
- *	  scanlines, depending on the SK_PADDLE bit of SKCTL.
- *	4.2:
- *	- half volume for channels which are inaudible (this should be
- *	  close to the real thing).
- *	4.1:
- *	- default gain increased to closely match the old code.
- *	- random numbers repeat rate depends on POLY9 flag too!
- *	- verified sound output with many, many Atari 800 games,
- *	  including the SUPPRESS_INAUDIBLE optimizations.
- *	4.0:
- *	- rewritten from scratch.
- *	- 16bit stream interface.
- *	- serout ready/complete delayed interrupts.
- *	- reworked pot analog/digital conversion timing.
- *	- optional non-indexing pokey update functions.
+ *  - reversed sample values to make OFF channels produce a zero signal.
+ *    actually de-reversed them; don't remember that I reversed them ;-/
+ *  4.3:
+ *  - for POT inputs returning zero, immediately assert the ALLPOT
+ *    bit after POTGO is written, otherwise start trigger timer
+ *    depending on SK_PADDLE mode, either 1-228 scanlines or 1-2
+ *    scanlines, depending on the SK_PADDLE bit of SKCTL.
+ *  4.2:
+ *  - half volume for channels which are inaudible (this should be
+ *    close to the real thing).
+ *  4.1:
+ *  - default gain increased to closely match the old code.
+ *  - random numbers repeat rate depends on POLY9 flag too!
+ *  - verified sound output with many, many Atari 800 games,
+ *    including the SUPPRESS_INAUDIBLE optimizations.
+ *  4.0:
+ *  - rewritten from scratch.
+ *  - 16bit stream interface.
+ *  - serout ready/complete delayed interrupts.
+ *  - reworked pot analog/digital conversion timing.
+ *  - optional non-indexing pokey update functions.
  *
  *****************************************************************************/
 
@@ -594,7 +594,7 @@ static void rand_init(UINT8 *rng, int size, int left, int right, int add)
 static void *pokey_start(int sndindex, int clock, const void *config)
 {
 	struct POKEYregisters *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
@@ -847,10 +847,10 @@ static int pokey_register_r(int chip, int offs)
 		if( p->pot_r[pot] )
 		{
 			/*
-			 * If the conversion is not yet finished (ptimer running),
-			 * get the current value by the linear interpolation of
-			 * the final value using the elapsed time.
-			 */
+             * If the conversion is not yet finished (ptimer running),
+             * get the current value by the linear interpolation of
+             * the final value using the elapsed time.
+             */
 			if( p->ALLPOT & (1 << pot) )
 			{
 				data = (UINT8)(timer_timeelapsed(p->ptimer[pot]) / AD_TIME);
@@ -868,9 +868,9 @@ static int pokey_register_r(int chip, int offs)
 
     case ALLPOT_C:
 		/****************************************************************
-		 * If the 2 least significant bits of SKCTL are 0, the ALLPOTs
-		 * are disabled (SKRESET). Thanks to MikeJ for pointing this out.
-		 ****************************************************************/
+         * If the 2 least significant bits of SKCTL are 0, the ALLPOTs
+         * are disabled (SKRESET). Thanks to MikeJ for pointing this out.
+         ****************************************************************/
     	if( (p->SKCTL & SK_RESET) == 0)
     	{
     		data = 0;
@@ -894,13 +894,13 @@ static int pokey_register_r(int chip, int offs)
 
 	case RANDOM_C:
 		/****************************************************************
-		 * If the 2 least significant bits of SKCTL are 0, the random
-		 * number generator is disabled (SKRESET). Thanks to Eric Smith
-		 * for pointing out this critical bit of info! If the random
-		 * number generator is enabled, get a new random number. Take
-		 * the time gone since the last read into account and read the
-		 * new value from an appropriate offset in the rand17 table.
-		 ****************************************************************/
+         * If the 2 least significant bits of SKCTL are 0, the random
+         * number generator is disabled (SKRESET). Thanks to Eric Smith
+         * for pointing out this critical bit of info! If the random
+         * number generator is enabled, get a new random number. Take
+         * the time gone since the last read into account and read the
+         * new value from an appropriate offset in the rand17 table.
+         ****************************************************************/
 		if( p->SKCTL & SK_RESET )
 		{
 			adjust = (UINT32)(timer_timeelapsed(p->rtimer) * p->clock + 0.5);
@@ -1228,12 +1228,12 @@ void pokey_register_w(int chip, int offs, int data)
     }
 
 	/************************************************************
-	 * As defined in the manual, the exact counter values are
-	 * different depending on the frequency and resolution:
-	 *	  64 kHz or 15 kHz - AUDF + 1
-	 *	  1.79 MHz, 8-bit  - AUDF + 4
-	 *	  1.79 MHz, 16-bit - AUDF[CHAN1]+256*AUDF[CHAN2] + 7
-	 ************************************************************/
+     * As defined in the manual, the exact counter values are
+     * different depending on the frequency and resolution:
+     *    64 kHz or 15 kHz - AUDF + 1
+     *    1.79 MHz, 8-bit  - AUDF + 4
+     *    1.79 MHz, 16-bit - AUDF[CHAN1]+256*AUDF[CHAN2] + 7
+     ************************************************************/
 
     /* only reset the channels that have changed */
 

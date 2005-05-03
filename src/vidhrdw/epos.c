@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Epos games
+    Epos games
 
 ***************************************************************************/
 
@@ -76,11 +76,11 @@ WRITE8_HANDLER( epos_videoram_w )
 WRITE8_HANDLER( epos_port_1_w )
 {
 	/* D0 - start light #1
-	   D1 - start light #2
-	   D2 - coin counter
-	   D3 - palette select
-	   D4-D7 - unused
-	 */
+       D1 - start light #2
+       D2 - coin counter
+       D3 - palette select
+       D4-D7 - unused
+     */
 
 	set_led_status(0, data & 1);
 	set_led_status(1, data & 2);

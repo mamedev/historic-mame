@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Cinemat/Leland driver
+    Cinemat/Leland driver
 
-	driver by Aaron Giles and Paul Leaman
+    driver by Aaron Giles and Paul Leaman
 
 ***************************************************************************/
 
@@ -16,7 +16,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -34,7 +34,7 @@
 
 /*************************************
  *
- *	Global variables
+ *  Global variables
  *
  *************************************/
 
@@ -87,7 +87,7 @@ static void ataxx_interrupt_callback(int scanline);
 
 /*************************************
  *
- *	Generic dial encoding
+ *  Generic dial encoding
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static int dial_compute_value(int new_val, int indx)
 
 /*************************************
  *
- *	Cerberus inputs
+ *  Cerberus inputs
  *
  *************************************/
 
@@ -146,7 +146,7 @@ READ8_HANDLER( cerberus_dial_2_r )
 
 /*************************************
  *
- *	Alley Master inputs
+ *  Alley Master inputs
  *
  *************************************/
 
@@ -176,7 +176,7 @@ WRITE8_HANDLER( alleymas_joystick_kludge )
 
 /*************************************
  *
- *	Danger Zone inputs
+ *  Danger Zone inputs
  *
  *************************************/
 
@@ -228,7 +228,7 @@ READ8_HANDLER( dangerz_input_upper_r )
 
 /*************************************
  *
- *	Red Line Racer inputs
+ *  Red Line Racer inputs
  *
  *************************************/
 
@@ -263,7 +263,7 @@ READ8_HANDLER( redline_wheel_2_r )
 
 /*************************************
  *
- *	Super Offroad inputs
+ *  Super Offroad inputs
  *
  *************************************/
 
@@ -288,7 +288,7 @@ READ8_HANDLER( offroad_wheel_3_r )
 
 /*************************************
  *
- *	Ataxx inputs
+ *  Ataxx inputs
  *
  *************************************/
 
@@ -301,7 +301,7 @@ READ8_HANDLER( ataxx_trackball_r )
 
 /*************************************
  *
- *	Indy Heat inputs
+ *  Indy Heat inputs
  *
  *************************************/
 
@@ -352,7 +352,7 @@ WRITE8_HANDLER( indyheat_analog_w )
 
 /*************************************
  *
- *	Machine initialization
+ *  Machine initialization
  *
  *************************************/
 
@@ -446,7 +446,7 @@ MACHINE_INIT( ataxx )
 
 /*************************************
  *
- *	Master CPU interrupt handling
+ *  Master CPU interrupt handling
  *
  *************************************/
 
@@ -491,7 +491,7 @@ INTERRUPT_GEN( leland_master_interrupt )
 
 /*************************************
  *
- *	Master CPU bankswitch handlers
+ *  Master CPU bankswitch handlers
  *
  *************************************/
 
@@ -657,7 +657,7 @@ void ataxx_bankswitch(void)
 
 /*************************************
  *
- *	EEPROM handling (64 x 16bits)
+ *  EEPROM handling (64 x 16bits)
  *
  *************************************/
 
@@ -688,9 +688,9 @@ void leland_init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offs
 
 	/* pick a serial number -- examples of real serial numbers:
 
-		Team QB:      21101957
-		AAFB:         26101119 and 26101039
-	*/
+        Team QB:      21101957
+        AAFB:         26101119 and 26101039
+    */
 	serial = 0x12345678;
 
 	/* switch off the serial number type */
@@ -750,7 +750,7 @@ void leland_init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offs
 
 /*************************************
  *
- *	EEPROM handling (128 x 16bits)
+ *  EEPROM handling (128 x 16bits)
  *
  *************************************/
 
@@ -783,9 +783,9 @@ void ataxx_init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offse
 
 	/* pick a serial number -- examples of real serial numbers:
 
-		WSF:         30101190
-		Indy Heat:   31201339
-	*/
+        WSF:         30101190
+        Indy Heat:   31201339
+    */
 	serial = 0x12345678;
 
 	/* encrypt the serial number */
@@ -828,7 +828,7 @@ void ataxx_init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offse
 
 /*************************************
  *
- *	Ataxx EEPROM interfacing
+ *  Ataxx EEPROM interfacing
  *
  *************************************/
 
@@ -853,7 +853,7 @@ WRITE8_HANDLER( ataxx_eeprom_w )
 
 /*************************************
  *
- *	Battery backed RAM
+ *  Battery backed RAM
  *
  *************************************/
 
@@ -925,7 +925,7 @@ NVRAM_HANDLER( ataxx )
 
 /*************************************
  *
- *	Master CPU keycard I/O
+ *  Master CPU keycard I/O
  *
  ************************************/
 
@@ -942,15 +942,15 @@ NVRAM_HANDLER( ataxx )
   written; each command is 3 bytes and accesses 128 bytes of
   data from the keycard:
 
-  		62 00 80
-  		9D 00 80
+        62 00 80
+        9D 00 80
 
   the last byte appears to specify the length of data to transfer.
 
   The format of the data on the card is pretty heavily encrypted.
   The first 7 bytes read serves as a header:
 
-  		D5 43 49 4E 2A xx yy
+        D5 43 49 4E 2A xx yy
 
   where xx is a game-specific key, and yy is the complement of the
   key. For example, World Series Baseball uses 04/FB. Alley Master
@@ -958,13 +958,13 @@ NVRAM_HANDLER( ataxx )
 
   The last 112 bytes of data is encrypted via the following method:
 
-		for (i = 16, b = 0x70, r = 0x08; i < 128; i++, b--, r += 0x10)
-		{
-			UINT8 a = original_data[i] ^ 0xff;
-			a = (a >> 3) | (a << 5);
-			a = (((a ^ r) + 1 + b) ^ b) - b;
-			encrypted_data[i] = a;
-		}
+        for (i = 16, b = 0x70, r = 0x08; i < 128; i++, b--, r += 0x10)
+        {
+            UINT8 a = original_data[i] ^ 0xff;
+            a = (a >> 3) | (a << 5);
+            a = (((a ^ r) + 1 + b) ^ b) - b;
+            encrypted_data[i] = a;
+        }
 
   The data that is encrypted is stored alternating with a checksum
   byte. The checksum for a value A is ((A ^ 0xa5) + 0x27) ^ 0x34.
@@ -1065,7 +1065,7 @@ static void keycard_w(int data)
 
 /*************************************
  *
- *	Master CPU analog and keycard I/O
+ *  Master CPU analog and keycard I/O
  *
  *************************************/
 
@@ -1124,7 +1124,7 @@ WRITE8_HANDLER( leland_master_analog_key_w )
 
 /*************************************
  *
- *	Master CPU internal I/O
+ *  Master CPU internal I/O
  *
  *************************************/
 
@@ -1274,7 +1274,7 @@ WRITE8_HANDLER( ataxx_master_output_w )
 
 /*************************************
  *
- *	Master CPU palette gates
+ *  Master CPU palette gates
  *
  *************************************/
 
@@ -1348,7 +1348,7 @@ READ8_HANDLER( ataxx_paletteram_and_misc_r )
 
 /*************************************
  *
- *	AY8910-controlled graphics latch
+ *  AY8910-controlled graphics latch
  *
  *************************************/
 
@@ -1384,7 +1384,7 @@ WRITE8_HANDLER( leland_sound_port_w )
 
 /*************************************
  *
- *	Slave CPU bankswitching
+ *  Slave CPU bankswitching
  *
  *************************************/
 
@@ -1445,7 +1445,7 @@ WRITE8_HANDLER( ataxx_slave_banksw_w )
 
 /*************************************
  *
- *	Slave CPU I/O
+ *  Slave CPU I/O
  *
  *************************************/
 
@@ -1459,7 +1459,7 @@ READ8_HANDLER( leland_raster_r )
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 

@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Battle Lane Vol. 5
-	1986 Taito
+    Battle Lane Vol. 5
+    1986 Taito
 
-	2x6809
+    2x6809
 
     Driver provided by Paul Leaman (paul@vortexcomputing.demon.co.uk)
 
@@ -38,14 +38,14 @@ WRITE8_HANDLER( battlane_cpu_command_w )
 	battlane_cpu_control = data;
 
 	/*
-	CPU control register
+    CPU control register
 
         0x80    = Video Flip
         0x08    = NMI
         0x04    = CPU 0 IRQ   (0=Activate)
         0x02    = CPU 1 IRQ   (0=Activate)
         0x01    = Y Scroll MSB
-	*/
+    */
 
 	flip_screen_set(data & 0x80);
 
@@ -55,7 +55,7 @@ WRITE8_HANDLER( battlane_cpu_command_w )
 
         However, it could also be that setting to zero could
         cause the NMI to trigger. I really don't know.
-	*/
+    */
 
     /*
     if (~battlane_cpu_control & 0x08)
@@ -68,24 +68,24 @@ WRITE8_HANDLER( battlane_cpu_command_w )
 	/*
         CPU2's SWI will trigger an 6809 IRQ on the master by resetting 0x04
         Master will respond by setting the bit back again
-	*/
+    */
     cpunum_set_input_line(0, M6809_IRQ_LINE,  data & 0x04 ? CLEAR_LINE : HOLD_LINE);
 
 	/*
-	Slave function call (e.g. ROM test):
-	FA7F: 86 03       LDA   #$03	; Function code
-	FA81: 97 6B       STA   $6B
-	FA83: 86 0E       LDA   #$0E
-	FA85: 84 FD       ANDA  #$FD	; Trigger IRQ
-	FA87: 97 66       STA   $66
-	FA89: B7 1C 03    STA   $1C03	; Do Trigger
-	FA8C: C6 40       LDB   #$40
-	FA8E: D5 68       BITB  $68
-	FA90: 27 FA       BEQ   $FA8C	; Wait for slave IRQ pre-function dispatch
-	FA92: 96 68       LDA   $68
-	FA94: 84 01       ANDA  #$01
-	FA96: 27 FA       BEQ   $FA92	; Wait for bit to be set
-	*/
+    Slave function call (e.g. ROM test):
+    FA7F: 86 03       LDA   #$03    ; Function code
+    FA81: 97 6B       STA   $6B
+    FA83: 86 0E       LDA   #$0E
+    FA85: 84 FD       ANDA  #$FD    ; Trigger IRQ
+    FA87: 97 66       STA   $66
+    FA89: B7 1C 03    STA   $1C03   ; Do Trigger
+    FA8C: C6 40       LDB   #$40
+    FA8E: D5 68       BITB  $68
+    FA90: 27 FA       BEQ   $FA8C   ; Wait for slave IRQ pre-function dispatch
+    FA92: 96 68       LDA   $68
+    FA94: 84 01       ANDA  #$01
+    FA96: 27 FA       BEQ   $FA92   ; Wait for bit to be set
+    */
 
 	cpunum_set_input_line(1, M6809_IRQ_LINE, data & 0x02 ? CLEAR_LINE : HOLD_LINE);
 }

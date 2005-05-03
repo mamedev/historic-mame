@@ -411,8 +411,8 @@ static void system1_draw_bg(struct mame_bitmap *bitmap,int priority)
 		/* optimized far background */
 
 		/* for every character in the background video RAM, check if it has
-		 * been modified since last time and update it accordingly.
-		 */
+         * been modified since last time and update it accordingly.
+         */
 
 		for (offs = 0;offs < system1_backgroundram_size;offs += 2)
 		{
@@ -552,8 +552,8 @@ static void chplft_draw_bg(struct mame_bitmap *bitmap, int priority)
 		/* optimized far background */
 
 		/* for every character in the background video RAM, check if it has
-		 * been modified since last time and update it accordingly.
-		 */
+         * been modified since last time and update it accordingly.
+         */
 
 		for (offs = 0;offs < system1_backgroundram_size;offs += 2)
 		{

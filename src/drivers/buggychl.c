@@ -41,25 +41,25 @@ c800 - cbff = videoram
 cc00 - cfff = videoram
 
 d100 = /ANYOUT
-	bit7 = lamp
-	bit6 = lockout
-	bit4 = OJMODE (sprite palette bank)
-	bit3 = SKY OFF
-	bit2 = /SN3OFF
-	bit1 = flip screen X
-	bit0 = flip screen Y
+    bit7 = lamp
+    bit6 = lockout
+    bit4 = OJMODE (sprite palette bank)
+    bit3 = SKY OFF
+    bit2 = /SN3OFF
+    bit1 = flip screen X
+    bit0 = flip screen Y
 d200 = bank switch
-	bit2 = Bank Select bit 1
-	bit1 = Bank Select bit 0
-	bit0 = EA13 (high/low part of banked ROM)
+    bit2 = Bank Select bit 1
+    bit1 = Bank Select bit 0
+    bit0 = EA13 (high/low part of banked ROM)
 d300 = /TRESET (Watchdog reset?)
 d301 = No name?
-	bit6 = FLPF2 (W-6)
-	bit5 = FLPE2 (W-5)
-	bit4 = FLPD2 (W-4)
-	bot2 = FLPF1 (W-3)
-	bit1 = FLPE1 (W-2)
-	bit0 = FLPD1 (W-1)
+    bit6 = FLPF2 (W-6)
+    bit5 = FLPE2 (W-5)
+    bit4 = FLPD2 (W-4)
+    bot2 = FLPF1 (W-3)
+    bit1 = FLPE1 (W-2)
+    bit0 = FLPD1 (W-1)
 d302 - bit 0 = /RESET line on the 68705
 
 d304 - d307 = SCCON1 to SCCON4
@@ -172,8 +172,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd603, 0xd603) AM_READ(input_port_3_r)	/* player inputs */
 	AM_RANGE(0xd608, 0xd608) AM_READ(input_port_4_r)	/* wheel */
 	AM_RANGE(0xd609, 0xd609) AM_READ(input_port_5_r)	/* coin + accelerator */
-//	{ 0xd60a, 0xd60a, other inputs, not used?
-//	{ 0xd60b, 0xd60b, other inputs, not used?
+//  { 0xd60a, 0xd60a, other inputs, not used?
+//  { 0xd60b, 0xd60b, other inputs, not used?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -184,18 +184,18 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9000, 0x9fff) AM_WRITE(buggychl_sprite_lookup_w)
 	AM_RANGE(0xa000, 0xbfff) AM_WRITE(buggychl_chargen_w) AM_BASE(&buggychl_character_ram)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-//	{ 0xd000, 0xd000, horizon
+//  { 0xd000, 0xd000, horizon
 	AM_RANGE(0xd100, 0xd100) AM_WRITE(buggychl_ctrl_w)
 	AM_RANGE(0xd200, 0xd200) AM_WRITE(bankswitch_w)
 	AM_RANGE(0xd300, 0xd300) AM_WRITE(watchdog_reset_w)
-//	{ 0xd301, 0xd301,
-//	{ 0xd302, 0xd302, reset mcu
+//  { 0xd301, 0xd301,
+//  { 0xd302, 0xd302, reset mcu
 	AM_RANGE(0xd303, 0xd303) AM_WRITE(buggychl_sprite_lookup_bank_w)
-//	{ 0xd304, 0xd307, sccon 1-4
+//  { 0xd304, 0xd307, sccon 1-4
 	AM_RANGE(0xd400, 0xd400) AM_WRITE(buggychl_mcu_w)
 	AM_RANGE(0xd500, 0xd57f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xd610, 0xd610) AM_WRITE(sound_command_w)
-//	{ 0xd613, 0xd613, reset sound cpu & sound chips
+//  { 0xd613, 0xd613, reset sound cpu & sound chips
 	AM_RANGE(0xd618, 0xd618) AM_WRITE(MWA8_NOP)	/* accelerator clear */
 	AM_RANGE(0xd700, 0xd7ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_swap_w) AM_BASE(&paletteram)
 	AM_RANGE(0xd840, 0xd85f) AM_WRITE(MWA8_RAM) AM_BASE(&buggychl_scrollv)
@@ -208,7 +208,7 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x5000, 0x5000) AM_READ(soundlatch_r)
-//	AM_RANGE(0x5001, 0x5001) AM_READ(MRA8_RAM)	/* is command pending? */
+//  AM_RANGE(0x5001, 0x5001) AM_READ(MRA8_RAM)  /* is command pending? */
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostics ROM */
 ADDRESS_MAP_END
 
@@ -222,7 +222,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4810, 0x481d) AM_WRITE(MSM5232_0_w)
 	AM_RANGE(0x4820, 0x4820) AM_WRITE(MWA8_RAM)	/* VOL/BAL   for the 7630 on the MSM5232 output */
 	AM_RANGE(0x4830, 0x4830) AM_WRITE(MWA8_RAM)	/* TRBL/BASS for the 7630 on the MSM5232 output  */
-//	AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM)	/* to main cpu */
+//  AM_RANGE(0x5000, 0x5000) AM_WRITE(MWA8_RAM) /* to main cpu */
 	AM_RANGE(0x5001, 0x5001) AM_WRITE(nmi_enable_w)
 	AM_RANGE(0x5002, 0x5002) AM_WRITE(nmi_disable_w)
 	AM_RANGE(0x5003, 0x5003) AM_WRITE(sound_enable_w)

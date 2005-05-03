@@ -94,7 +94,7 @@ PALETTE_INIT( dday )
 
 
 	/* HACK!!! This table is handgenerated, but it matches the screenshot.
-	   I have no clue how it really works */
+       I have no clue how it really works */
 
 	colortable[0*8+0] = 0;
 	colortable[0*8+1] = 1;

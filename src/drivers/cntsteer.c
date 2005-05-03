@@ -1,26 +1,26 @@
 /*******************************************************************************
 
-	Counter Steer					(c) 1985 Data East Corporation
-	Zero Target						(c) 1985 Data East Corporation
-	Gekitsui Oh						(c) 1985 Data East Corporation
+    Counter Steer                   (c) 1985 Data East Corporation
+    Zero Target                     (c) 1985 Data East Corporation
+    Gekitsui Oh                     (c) 1985 Data East Corporation
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
-	Improvements by Pierpaolo Prazzoli, David Haywood
+    Emulation by Bryan McPhail, mish@tendril.co.uk
+    Improvements by Pierpaolo Prazzoli, David Haywood
 
-	Various things aren't fully understood, for example the rotating BG layer
+    Various things aren't fully understood, for example the rotating BG layer
 
-	todo:
-	finish
-		sprite fixes
-		roz fixes
-		colour fixes?
-		input fixes?
-		sound
-		make cntsteer work
-	cleanup
-		split into driver/vidhrdw
-		add any missing sha info etc.
-		remove unneeded debug code
+    todo:
+    finish
+        sprite fixes
+        roz fixes
+        colour fixes?
+        input fixes?
+        sound
+        make cntsteer work
+    cleanup
+        split into driver/vidhrdw
+        add any missing sha info etc.
+        remove unneeded debug code
 
 
 *******************************************************************************/
@@ -114,8 +114,8 @@ static void drawsprites(struct mame_bitmap *bitmap, int pri)
 		sy = 241 - spriteram[offs];
 		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
 
-//		if (pri==0 && color!=0) continue;
-//		if (pri==1 && color==0) continue;
+//      if (pri==0 && color!=0) continue;
+//      if (pri==1 && color==0) continue;
 
 		fx = spriteram[offs+1] & 0x04;
 		fy = spriteram[offs+1] & 0x02;  //check
@@ -228,12 +228,12 @@ static int scroll=0;
 		printf("scrollx = %d\n",scrollx);
 	}
 
-//	if (code_pressed(KEYCODE_A)) cpu_cause_interrupt(0,M6809_INT_IRQ);
+//  if (code_pressed(KEYCODE_A)) cpu_cause_interrupt(0,M6809_INT_IRQ);
 
 
-//	spriteram=batwings_ram+0x100;
-//	tilemap_set_scrolly( bg_tilemap, 0, scrolly | scrolly_hi);
-//	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+//  spriteram=batwings_ram+0x100;
+//  tilemap_set_scrolly( bg_tilemap, 0, scrolly | scrolly_hi);
+//  tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	scrollx = 256;
 
@@ -294,12 +294,12 @@ WRITE8_HANDLER( cntsteer_background_w )
 #if 0
 static WRITE8_HANDLER( gekitsui_int_w )
 {
-//	if (errorlog) fprintf(errorlog,"%04x: CPU 2 causes NMI\n",cpu_get_pc());
+//  if (errorlog) fprintf(errorlog,"%04x: CPU 2 causes NMI\n",cpu_get_pc());
 	cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
 static WRITE8_HANDLER( gekitsui_int2_w ) // not used..
 {
-//	if (errorlog) fprintf(errorlog,"%04x: CPU 1 causes IRQ\n",cpu_get_pc());
+//  if (errorlog) fprintf(errorlog,"%04x: CPU 1 causes IRQ\n",cpu_get_pc());
 	cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
 #endif
@@ -324,24 +324,24 @@ static WRITE8_HANDLER( cntsteer_sound_w )
 static WRITE8_HANDLER( zerotrgt_ctrl_w )
 {
 	logerror("CTRL: %04x: %04x: %04x\n",activecpu_get_pc(),offset,data);
-//	if (offset==0) cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+//  if (offset==0) cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 	// Wrong - bits 0 & 1 used on this
 	if (offset==1) cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
-//	if (offset==2) cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
+//  if (offset==2) cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 #if 0
 static WRITE8_HANDLER( cntsteer_halt_cpu0_w )
 {
-//	if (errorlog) fprintf(errorlog,"%04x: CPU halt %02x\n",cpu_get_pc(),data);
-//	cpu_halt(0,0); /* Halt cpu */
+//  if (errorlog) fprintf(errorlog,"%04x: CPU halt %02x\n",cpu_get_pc(),data);
+//  cpu_halt(0,0); /* Halt cpu */
 }
 
 static WRITE8_HANDLER( cntsteer_restart_cpu0_w )
 {
-//	if (errorlog) fprintf(errorlog,"%04x: CPU restart %02x\n",cpu_get_pc(),data);
-//if (data&0x4)	cpu_halt(0,1); /* Restart cpu */
+//  if (errorlog) fprintf(errorlog,"%04x: CPU restart %02x\n",cpu_get_pc(),data);
+//if (data&0x4) cpu_halt(0,1); /* Restart cpu */
 }
 #endif
 
@@ -356,13 +356,13 @@ static ADDRESS_MAP_START( cntsteer_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x27ff) AM_READWRITE(MRA8_RAM, cntsteer_foreground_w) AM_BASE(&videoram)
 	AM_RANGE(0x2800, 0x2fff) AM_RAM
 
-//	{ 0x1b00, 0x1b00, input_port_0_r },
-//	{ 0x1b01, 0x1b01, input_port_0_r },
-//	{ 0x3000, 0x3003, zerotrgt_ctrl_w },
-//	{ 0x3000, 0x3000, cntsteer_halt_cpu0_w },
-//	{ 0x3001, 0x3001, gekitsui_int2_w },
+//  { 0x1b00, 0x1b00, input_port_0_r },
+//  { 0x1b01, 0x1b01, input_port_0_r },
+//  { 0x3000, 0x3003, zerotrgt_ctrl_w },
+//  { 0x3000, 0x3000, cntsteer_halt_cpu0_w },
+//  { 0x3001, 0x3001, gekitsui_int2_w },
 
-//	AM_RANGE(0x3003, 0x3003) AM_READ(input_port_1_r)
+//  AM_RANGE(0x3003, 0x3003) AM_READ(input_port_1_r)
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -374,15 +374,15 @@ static ADDRESS_MAP_START( cntsteer_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3001, 0x3001) AM_READ(input_port_1_r)
 	AM_RANGE(0x3002, 0x3002) AM_READ(input_port_2_r)
 	AM_RANGE(0x3003, 0x3003) AM_READ(input_port_3_r)
-//	{ 0x3002, 0x3002, gekitsui_int_w },
-//	{ 0x3000, 0x3003, zerotrgt_ctrl_w },
+//  { 0x3002, 0x3002, gekitsui_int_w },
+//  { 0x3000, 0x3003, zerotrgt_ctrl_w },
 //  wrong 0 1 2 3 are scroll/rotate
-//	{ 0x3002, 0x3002, cntsteer_restart_cpu0_w },
-//	{ 0x3000, 0x3003, MWA_NOP },
+//  { 0x3002, 0x3002, cntsteer_restart_cpu0_w },
+//  { 0x3000, 0x3003, MWA_NOP },
 //  3007 and 3003 have values..
 	AM_RANGE(0x3007, 0x3007) AM_WRITE(cntsteer_sound_w)
-//	{ 0x300a, 0x300a, cntsteer_int_w },
-//	{ 0x3004, 0x3004, cntsteer_int_w },
+//  { 0x300a, 0x300a, cntsteer_int_w },
+//  { 0x3004, 0x3004, cntsteer_int_w },
 	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 #endif
@@ -409,7 +409,7 @@ static WRITE8_HANDLER(scrivi)
 	if(offset == 1)
 	{
 		//rotation related? zoom?
-//		increment or decrement.. incyx?
+//      increment or decrement.. incyx?
 		rotation_y = data;
 	}
 
@@ -429,8 +429,8 @@ static WRITE8_HANDLER(scrivi)
 	if(offset == 2)
 	{
 		bg_bank = (data & 0x30) << 4;
-	//	scrollx = data & 0x0f;
-	//	printf("scrollx = %d %X\n",scrollx<<8,scrollx);
+	//  scrollx = data & 0x0f;
+	//  printf("scrollx = %d %X\n",scrollx<<8,scrollx);
 		if(data != newdata[offset])
 		{newdata[offset] = data;
 			if(data & ~0x30)
@@ -486,7 +486,7 @@ static INTERRUPT_GEN ( sound_interrupt ) { if (!nmimask) cpunum_set_input_line(2
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_RAM
-//	AM_RANGE(0x1000, 0x1000) AM_WRITE(nmiack_w)
+//  AM_RANGE(0x1000, 0x1000) AM_WRITE(nmiack_w)
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_write_port_1_w)
@@ -569,8 +569,8 @@ INPUT_PORTS_START( cntsteer )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON5 )
-//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 )
+//  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 )
 	PORT_DIPNAME( 0x80, 0x80, "vblank" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -735,12 +735,12 @@ static MACHINE_DRIVER_START( cntsteer )
 
 	MDRV_CPU_ADD(M6809, 2000000)		 /* ? */
 	MDRV_CPU_PROGRAM_MAP(gekitsui_cpu2_map,0)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) /* ? */
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) /* ? */
 
-//	MDRV_CPU_ADD(M6502, 1500000)		/* ? */
-//	/* audio CPU */
-//	MDRV_CPU_PROGRAM_MAP(sound_map,0)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16) /* ? */ // should be interrupt, 16?
+//  MDRV_CPU_ADD(M6502, 1500000)        /* ? */
+//  /* audio CPU */
+//  MDRV_CPU_PROGRAM_MAP(sound_map,0)
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,16) /* ? */ // should be interrupt, 16?
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -753,14 +753,14 @@ static MACHINE_DRIVER_START( cntsteer )
 	// interleave 200?
 	MDRV_GFXDECODE(cntsteer_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
-//	MDRV_PALETTE_INIT(zerotrgt)
+//  MDRV_PALETTE_INIT(zerotrgt)
 
 	MDRV_VIDEO_START(zerotrgt)
 	MDRV_VIDEO_UPDATE(zerotrgt)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-//	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+//  MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( zerotrgt )
@@ -770,7 +770,7 @@ static MACHINE_DRIVER_START( zerotrgt )
 
 	MDRV_CPU_ADD(M6809, 2000000)		 /* ? */
 	MDRV_CPU_PROGRAM_MAP(gekitsui_cpu2_map,0)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) /* ? */
+//  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) /* ? */
 
 	MDRV_CPU_ADD(M6502, 1500000)		/* ? */
 	/* audio CPU */

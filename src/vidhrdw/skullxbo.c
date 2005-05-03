@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Skull & Crossbones hardware
+    Atari Skull & Crossbones hardware
 
 ****************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -38,7 +38,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -103,7 +103,7 @@ VIDEO_START( skullxbo )
 
 /*************************************
  *
- *	Video data latch
+ *  Video data latch
  *
  *************************************/
 
@@ -157,7 +157,7 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 
 /*************************************
  *
- *	Motion object bank handler
+ *  Motion object bank handler
  *
  *************************************/
 
@@ -171,7 +171,7 @@ WRITE16_HANDLER( skullxbo_mobmsb_w )
 
 /*************************************
  *
- *	Playfield latch write handler
+ *  Playfield latch write handler
  *
  *************************************/
 
@@ -184,7 +184,7 @@ WRITE16_HANDLER( skullxbo_playfieldlatch_w )
 
 /*************************************
  *
- *	Periodic playfield updater
+ *  Periodic playfield updater
  *
  *************************************/
 
@@ -235,7 +235,7 @@ void skullxbo_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -260,31 +260,31 @@ VIDEO_UPDATE( skullxbo )
 				{
 					/* verified from the GALs on the real PCB; equations follow
 
-						--- O17 is an intermediate value
-						O17=PFPIX3*PFPAL2S*PFPAL3S
+                        --- O17 is an intermediate value
+                        O17=PFPIX3*PFPAL2S*PFPAL3S
 
-						--- CRAM.A10 controls the high bit of the palette select; used for shadows
-						CRAM.A10=BA11*CRAMD
-						    +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX==1)*(ANPIX==0)
-						    +!CRAMD*LBPRI0*!LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL3S
-						    +!CRAMD*LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL2S*!PFPAL3S
-						    +!CRAMD*!PFPIX3*(LBPIX==1)*(ANPIX==0)
+                        --- CRAM.A10 controls the high bit of the palette select; used for shadows
+                        CRAM.A10=BA11*CRAMD
+                            +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX==1)*(ANPIX==0)
+                            +!CRAMD*LBPRI0*!LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL3S
+                            +!CRAMD*LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL2S*!PFPAL3S
+                            +!CRAMD*!PFPIX3*(LBPIX==1)*(ANPIX==0)
 
-						--- SA and SB are the mux select lines:
-						---		0 = motion objects
-						---		1 = playfield
-						---		2 = alpha
-						---		3 = color RAM access from CPU
-						!SA=!CRAMD*(ANPIX!=0)
-						    +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX!=1)*(LBPIX!=0)
-						    +!CRAMD*LBPRI0*!LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL3S
-						    +!CRAMD*LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL2S*!PFPAL3S
-						    +!CRAMD*!PFPIX3*(LBPIX!=1)*(LBPIX!=0)
+                        --- SA and SB are the mux select lines:
+                        ---     0 = motion objects
+                        ---     1 = playfield
+                        ---     2 = alpha
+                        ---     3 = color RAM access from CPU
+                        !SA=!CRAMD*(ANPIX!=0)
+                            +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX!=1)*(LBPIX!=0)
+                            +!CRAMD*LBPRI0*!LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL3S
+                            +!CRAMD*LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL2S*!PFPAL3S
+                            +!CRAMD*!PFPIX3*(LBPIX!=1)*(LBPIX!=0)
 
-						!SB=!CRAMD*(ANPIX==0)
-						    +!CRAMD*LBMISC*(LBPIX!=0)
+                        !SB=!CRAMD*(ANPIX==0)
+                            +!CRAMD*LBMISC*(LBPIX!=0)
 
-					*/
+                    */
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
 					int mopix = mo[x] & 0x1f;
 					int pfcolor = (pf[x] >> 4) & 0x0f;

@@ -356,12 +356,12 @@ static MACHINE_DRIVER_START( konamigv )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD( PSXSPU, 0 )
 	MDRV_SOUND_CONFIG( konamigv_psxspu_interface )
 	MDRV_SOUND_ROUTE( 0, "left", 0.75 )
 	MDRV_SOUND_ROUTE( 1, "right", 0.75 )
-	
+
 	MDRV_SOUND_ADD( CDDA, 0 )
 	MDRV_SOUND_ROUTE( 0, "left", 1.0 )
 	MDRV_SOUND_ROUTE( 1, "right", 1.0 )
@@ -652,7 +652,7 @@ static data32_t btc_trackball_data[ 4 ];
 
 static READ32_HANDLER( btc_trackball_r )
 {
-//	printf( "r %08x %08x %08x\n", activecpu_get_pc(), offset, mem_mask );
+//  printf( "r %08x %08x %08x\n", activecpu_get_pc(), offset, mem_mask );
 
 	if( offset == 1 && mem_mask == 0x0000ffff )
 	{
@@ -673,7 +673,7 @@ static READ32_HANDLER( btc_trackball_r )
 
 static WRITE32_HANDLER( btc_trackball_w )
 {
-//	printf( "w %08x %08x %08x %08x\n", activecpu_get_pc(), offset, data, mem_mask );
+//  printf( "w %08x %08x %08x %08x\n", activecpu_get_pc(), offset, data, mem_mask );
 }
 
 static NVRAM_HANDLER( btchamp )
@@ -780,17 +780,17 @@ INPUT_PORTS_END
 Dead Eye
 
 Top board:
-	PWB402610
+    PWB402610
     Xilinx XC3020A
     Xilinx 1718DPC
     74F244N (2 of these)
     LVT245SS (2 of theses)
 
 CD:
-	P/N 002715
-	054
-	UA
-	A01
+    P/N 002715
+    054
+    UA
+    A01
 */
 
 static READ32_HANDLER( kdeadeye_0_r )

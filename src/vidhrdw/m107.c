@@ -1,36 +1,36 @@
 /****************************************************************************
 
-	Irem M107 video hardware, Bryan McPhail, mish@tendril.co.uk
+    Irem M107 video hardware, Bryan McPhail, mish@tendril.co.uk
 
-	Close to M92 hardware, but with 4 playfields, not 3.
-	Twice as many colours, twice as many sprites.
+    Close to M92 hardware, but with 4 playfields, not 3.
+    Twice as many colours, twice as many sprites.
 
 *****************************************************************************
 
-	Port:
-		0x80: pf1 Y scroll
-		0x82: pf1 X scroll
-		0x84: pf2 Y scroll
-		0x86: pf2 X scroll
-		0x88: pf3 Y scroll
-		0x8a: pf3 X scroll
-		0x8c: pf4 Y scroll
-		0x8e: pf4 X scroll
+    Port:
+        0x80: pf1 Y scroll
+        0x82: pf1 X scroll
+        0x84: pf2 Y scroll
+        0x86: pf2 X scroll
+        0x88: pf3 Y scroll
+        0x8a: pf3 X scroll
+        0x8c: pf4 Y scroll
+        0x8e: pf4 X scroll
 
-		0x90: pf1 control
-		0x92: pf2 control
-		0x94: pf3 control
-		0x96: pf4 control
+        0x90: pf1 control
+        0x92: pf2 control
+        0x94: pf3 control
+        0x96: pf4 control
 
-		0x98: Priority?
-		0x9a:
-		0x9c:
-		0x9e: Raster interrupt value
+        0x98: Priority?
+        0x9a:
+        0x9c:
+        0x9e: Raster interrupt value
 
-	Playfield control:
-		Bit  0x0f00: 	Playfield location in VRAM (in steps of 0x1000)
-		Bit  0x0080:	0 = Playfield enable, 1 = disable
-		Bit  0x0002:	1 = Rowscroll enable, 0 = disable
+    Playfield control:
+        Bit  0x0f00:    Playfield location in VRAM (in steps of 0x1000)
+        Bit  0x0080:    0 = Playfield enable, 1 = disable
+        Bit  0x0002:    1 = Rowscroll enable, 0 = disable
 
 *****************************************************************************/
 
@@ -363,11 +363,11 @@ static void m107_update_scroll_positions(void)
 {
 	int i;
 
-	/*	Playfield 4 rowscroll data is 0xde800 - 0xdebff???
-		Playfield 3 rowscroll data is 0xdf800 - 0xdfbff
-		Playfield 2 rowscroll data is 0xdf400 - 0xdf7ff
-		Playfield 1 rowscroll data is 0xde800 - 0xdebff		??
-	*/
+	/*  Playfield 4 rowscroll data is 0xde800 - 0xdebff???
+        Playfield 3 rowscroll data is 0xdf800 - 0xdfbff
+        Playfield 2 rowscroll data is 0xdf400 - 0xdf7ff
+        Playfield 1 rowscroll data is 0xde800 - 0xdebff     ??
+    */
 
 	if (pf1_rowscroll) {
 		tilemap_set_scroll_rows(pf1_layer,512);
@@ -407,10 +407,10 @@ static void m107_update_scroll_positions(void)
 	tilemap_set_scrolly( pf3_layer,0, (m107_control[9]<<8)+m107_control[8] );
 	tilemap_set_scrolly( pf4_layer,0, (m107_control[13]<<8)+m107_control[12] );
 
-//	pf4_layer->scrolled=1;
-//	pf3_layer->scrolled=1;
-//	pf2_layer->scrolled=1;
-//	pf1_layer->scrolled=1;
+//  pf4_layer->scrolled=1;
+//  pf3_layer->scrolled=1;
+//  pf2_layer->scrolled=1;
+//  pf1_layer->scrolled=1;
 }
 
 /*****************************************************************************/
@@ -433,7 +433,7 @@ void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clipr
 	m107_drawsprites(bitmap,cliprect,1);
 
 	/* This hardware probably has more priority values - but I haven't found
-		any used yet */
+        any used yet */
 }
 
 void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
@@ -461,7 +461,7 @@ void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,in
 WRITE8_HANDLER( m107_spritebuffer_w )
 {
 	if (offset==0) {
-//		logerror("%04x: buffered spriteram\n",activecpu_get_pc());
+//      logerror("%04x: buffered spriteram\n",activecpu_get_pc());
 		memcpy(m107_spriteram,spriteram,0x1000);
 	}
 }

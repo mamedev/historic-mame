@@ -1,15 +1,15 @@
 /***************************************************************************
 
-	Killer Instinct hardware
+    Killer Instinct hardware
 
-	driver by Aaron Giles and Bryan McPhail
+    driver by Aaron Giles and Bryan McPhail
 
-	Games supported:
-		* Killer Instinct
-		* Killer Instinct 2
+    Games supported:
+        * Killer Instinct
+        * Killer Instinct 2
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ***************************************************************************/
 
@@ -37,7 +37,7 @@ static const UINT8 *control_map;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -65,7 +65,7 @@ static MACHINE_INIT( kinst )
 
 /*************************************
  *
- *	Video refresh
+ *  Video refresh
  *
  *************************************/
 
@@ -98,7 +98,7 @@ VIDEO_UPDATE( kinst )
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -130,7 +130,7 @@ static struct ide_interface ide_intf =
 
 /*************************************
  *
- *	IDE controller access
+ *  IDE controller access
  *
  *************************************/
 
@@ -161,7 +161,7 @@ static WRITE32_HANDLER( ide_controller_extra_w )
 
 /*************************************
  *
- *	Control handling
+ *  Control handling
  *
  *************************************/
 
@@ -235,7 +235,7 @@ static WRITE32_HANDLER( kinst_control_w )
 
 /*************************************
  *
- *	Speedups
+ *  Speedups
  *
  *************************************/
 
@@ -266,7 +266,7 @@ static READ32_HANDLER( kinst_speedup_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -285,7 +285,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -501,7 +501,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -541,7 +541,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -719,7 +719,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -795,7 +795,7 @@ static DRIVER_INIT( kinst2 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

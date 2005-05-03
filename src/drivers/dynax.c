@@ -10,24 +10,24 @@ VDP:    HD46505SP (6845) (CRT controller)
 Custom: TC17G032AP-0246 (blitter)
 
 ----------------------------------------------------------------------------------------
-Year + Game					Board(s)					Sound						Palette
+Year + Game                 Board(s)                    Sound                       Palette
 ----------------------------------------------------------------------------------------
-88 Hana no Mai				D1610088L1					AY8912 YM2203        M5205	PROM
-88 Hana Kochou				D201901L2 + D201901L1-0		AY8912 YM2203        M5205	PROM
-89 Hana Oriduru				D2304268L					AY8912        YM2413 M5205	RAM
-89 Dragon Punch				D24?		 				       YM2203				PROM
-89 Mahjong Friday			D2607198L1					              YM2413		PROM
-89 Sports Match				D31?		 	    		       YM2203				PROM
-90 Jong Tou Ki (1)			D1505178-A + D2711078L-B	AY8912 YM2203        M5205	PROM
-90 Mahjong Campus Hunting	D3312108L1-1 + D23SUB1		AY8912        YM2413 M5205	RAM
-90 7jigen no Youseitachi	D3707198L1 + D23SUB1		AY8912        YM2413 M5205	RAM
-90 Mahjong Electron Base								AY8912        YM2413      	RAM
-90 Neruton Haikujiradan		D4005208L1-1 + D4508308L-2	AY8912        YM2413 M5205	RAM
-91 Mahjong Yarunara			D5512068L1-1 + D4508308L-2	AY8912        YM2413 M5205	RAM
-91 Mahjong Angels			D5512068L1-1 + D6107068L-1	AY8912        YM2413 M5205	RAM
-91 Mahjong Dial Q2			D5212298L-1		    		              YM2413		PROM
-92 Quiz TV Gassyuukoku Q&Q	D5512068L1-2 + D6410288L-1	AY8912        YM2413 M5205	RAM
-94 Maya												    	  YM2203				PROM
+88 Hana no Mai              D1610088L1                  AY8912 YM2203        M5205  PROM
+88 Hana Kochou              D201901L2 + D201901L1-0     AY8912 YM2203        M5205  PROM
+89 Hana Oriduru             D2304268L                   AY8912        YM2413 M5205  RAM
+89 Dragon Punch             D24?                               YM2203               PROM
+89 Mahjong Friday           D2607198L1                                YM2413        PROM
+89 Sports Match             D31?                               YM2203               PROM
+90 Jong Tou Ki (1)          D1505178-A + D2711078L-B    AY8912 YM2203        M5205  PROM
+90 Mahjong Campus Hunting   D3312108L1-1 + D23SUB1      AY8912        YM2413 M5205  RAM
+90 7jigen no Youseitachi    D3707198L1 + D23SUB1        AY8912        YM2413 M5205  RAM
+90 Mahjong Electron Base                                AY8912        YM2413        RAM
+90 Neruton Haikujiradan     D4005208L1-1 + D4508308L-2  AY8912        YM2413 M5205  RAM
+91 Mahjong Yarunara         D5512068L1-1 + D4508308L-2  AY8912        YM2413 M5205  RAM
+91 Mahjong Angels           D5512068L1-1 + D6107068L-1  AY8912        YM2413 M5205  RAM
+91 Mahjong Dial Q2          D5212298L-1                               YM2413        PROM
+92 Quiz TV Gassyuukoku Q&Q  D5512068L1-2 + D6410288L-1  AY8912        YM2413 M5205  RAM
+94 Maya                                                       YM2203                PROM
 9? Inca                                                      TM2203               PROM
 ----------------------------------------------------------------------------------------
 (1) quite different from the others: it has a slave Z80 and *two* blitters
@@ -80,13 +80,13 @@ TODO:
 /***************************************************************************
 
 
-								Interrupts
+                                Interrupts
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Sports Match
+                                Sports Match
 ***************************************************************************/
 
 UINT8 dynax_blitter_irq;
@@ -128,7 +128,7 @@ void sprtmtch_sound_callback(int state)
 
 
 /***************************************************************************
-							Jantouki - Main CPU
+                            Jantouki - Main CPU
 ***************************************************************************/
 
 UINT8 dynax_blitter2_irq;
@@ -168,7 +168,7 @@ INTERRUPT_GEN( jantouki_vblank_interrupt )
 
 
 /***************************************************************************
-							Jantouki - Sound CPU
+                            Jantouki - Sound CPU
 ***************************************************************************/
 
 UINT8 dynax_soundlatch_irq;
@@ -204,13 +204,13 @@ void jantouki_sound_callback(int state)
 /***************************************************************************
 
 
-								Memory Maps
+                                Memory Maps
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Sports Match
+                                Sports Match
 ***************************************************************************/
 
 static WRITE8_HANDLER( dynax_coincounter_0_w )
@@ -573,7 +573,7 @@ static ADDRESS_MAP_START( hanamai_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(dynax_extra_scrollx_w		)	// screen scroll X
 	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_extra_scrolly_w		)	// screen scroll Y
 	AM_RANGE(0x41, 0x47) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
-	AM_RANGE(0x50, 0x50) AM_WRITE(dynax_rombank_w			)	// BANK ROM Select	hnkochou only
+	AM_RANGE(0x50, 0x50) AM_WRITE(dynax_rombank_w			)	// BANK ROM Select  hnkochou only
 	AM_RANGE(0x64, 0x64) AM_WRITE(hanamai_keyboard_w			)	// keyboard row select
 	AM_RANGE(0x65, 0x65) AM_WRITE(dynax_rombank_w			)	// BANK ROM Select  hanamai only
 	AM_RANGE(0x66, 0x66) AM_WRITE(dynax_vblank_ack_w			)	// VBlank IRQ Ack
@@ -596,8 +596,8 @@ static ADDRESS_MAP_START( hanamai_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x79, 0x79) AM_WRITE(YM2203_write_port_0_w		)	//
 	AM_RANGE(0x7a, 0x7a) AM_WRITE(AY8910_control_port_0_w	)	// AY8910
 	AM_RANGE(0x7b, 0x7b) AM_WRITE(AY8910_write_port_0_w		)	//
-//	AM_RANGE(0x7c, 0x7c) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x7d, 0x7d) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x7c, 0x7c) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x7d, 0x7d) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 ADDRESS_MAP_END
 
 
@@ -622,8 +622,8 @@ static ADDRESS_MAP_START( hnoridur_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x35, 0x35) AM_WRITE(YM2413_data_port_0_w		)	//
 	AM_RANGE(0x38, 0x38) AM_WRITE(AY8910_write_port_0_w		)	// AY8910
 	AM_RANGE(0x3a, 0x3a) AM_WRITE(AY8910_control_port_0_w	)	//
-//	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x40, 0x40) AM_WRITE(dynax_blit_pen_w			)	// Destination Pen
 	AM_RANGE(0x41, 0x41) AM_WRITE(dynax_blit_dest_w			)	// Destination Layer
 	AM_RANGE(0x42, 0x42) AM_WRITE(dynax_blit_palette01_w		)	// Layers Palettes
@@ -659,8 +659,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mcnpshnt_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x07) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
-//	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x20, 0x20) AM_WRITE(hanamai_keyboard_w			)	// keyboard row select
 	AM_RANGE(0x30, 0x30) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
 	AM_RANGE(0x32, 0x32) AM_WRITE(adpcm_data_w				)	// MSM5205 data
@@ -702,8 +702,8 @@ static ADDRESS_MAP_START( sprtmtch_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x07) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0x10, 0x10) AM_WRITE(YM2203_control_port_0_w	)	// YM2203
 	AM_RANGE(0x11, 0x11) AM_WRITE(YM2203_write_port_0_w		)	//
-//	AM_RANGE(0x12, 0x12) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x13, 0x13) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x12, 0x12) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x13, 0x13) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x30, 0x30) AM_WRITE(dynax_layer_enable_w		)	// Layers Enable
 	AM_RANGE(0x31, 0x31) AM_WRITE(dynax_rombank_w			)	// BANK ROM Select
 	AM_RANGE(0x32, 0x32) AM_WRITE(dynax_blit_dest_w			)	// Destination Layer
@@ -712,7 +712,7 @@ static ADDRESS_MAP_START( sprtmtch_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x35, 0x35) AM_WRITE(dynax_blit_palette23_w		)	//
 	AM_RANGE(0x36, 0x36) AM_WRITE(dynax_blit_backpen_w		)	// Background Color
 	AM_RANGE(0x37, 0x37) AM_WRITE(dynax_vblank_ack_w			)	// VBlank IRQ Ack
-//	AM_RANGE(0x40, 0x40) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
+//  AM_RANGE(0x40, 0x40) AM_WRITE(adpcm_reset_w             )   // MSM5205 reset
 	AM_RANGE(0x41, 0x41) AM_WRITE(dynax_flipscreen_w			)	// Flip Screen
 	AM_RANGE(0x42, 0x42) AM_WRITE(dynax_coincounter_0_w		)	// Coin Counters
 	AM_RANGE(0x43, 0x43) AM_WRITE(dynax_coincounter_1_w		)	//
@@ -733,8 +733,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mjfriday_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x41, 0x47) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
-//	AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x51, 0x51) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x51, 0x51) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x60, 0x60) AM_WRITE(hanamai_keyboard_w			)	// keyboard row select
 	AM_RANGE(0x70, 0x70) AM_WRITE(YM2413_register_port_0_w	)	// YM2413
 	AM_RANGE(0x71, 0x71) AM_WRITE(YM2413_data_port_0_w		)	//
@@ -748,7 +748,7 @@ static ADDRESS_MAP_START( mjfriday_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x14, 0x14) AM_WRITE(dynax_coincounter_0_w		)	// Coin Counters
 	AM_RANGE(0x15, 0x15) AM_WRITE(dynax_coincounter_1_w		)	//
 	AM_RANGE(0x16, 0x17) AM_WRITE(mjdialq2_layer_enable_w	)	// Layers Enable
-//	AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP					)	// IRQ ack?
+//  AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP                  )   // IRQ ack?
 ADDRESS_MAP_END
 
 
@@ -770,7 +770,7 @@ static ADDRESS_MAP_START( nanajign_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_write_port_0_w		)	// AY8910
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(AY8910_control_port_0_w	)	//
 	AM_RANGE(0x10, 0x10) AM_WRITE(hanamai_keyboard_w			)	// keyboard row select
-//	AM_RANGE(0x20, 0x21) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x20, 0x21) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x31, 0x37) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0x40, 0x40) AM_WRITE(dynax_coincounter_0_w		)	// Coin Counter
 	AM_RANGE(0x50, 0x50) AM_WRITE(dynax_flipscreen_w			)	// Flip Screen
@@ -793,7 +793,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-					Yarunara / Quiz TV Q&Q / Mahjong Angels
+                    Yarunara / Quiz TV Q&Q / Mahjong Angels
 ***************************************************************************/
 
 static data8_t yarunara_select, yarunara_ip;
@@ -905,7 +905,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Jantouki - Main CPU
+                            Jantouki - Main CPU
 ***************************************************************************/
 
 UINT8 dynax_soundlatch_ack;
@@ -949,7 +949,7 @@ static ADDRESS_MAP_START( jantouki_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( jantouki_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//	AM_RANGE(0x40, 0x41) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x40, 0x41) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x48, 0x48) AM_WRITE(jantouki_rombank_w			)	// BANK ROM Select
 	AM_RANGE(0x49, 0x49) AM_WRITE(jantouki_soundlatch_w		)	// To Sound CPU
 	AM_RANGE(0x4b, 0x4b) AM_WRITE(dynax_blit2_dest_w			)	// Destination Layer 2
@@ -975,7 +975,7 @@ static ADDRESS_MAP_START( jantouki_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-							Jantouki - Sound CPU
+                            Jantouki - Sound CPU
 ***************************************************************************/
 
 WRITE8_HANDLER( jantouki_soundlatch_ack_w )
@@ -1020,7 +1020,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Mahjong Electron Base
+                            Mahjong Electron Base
 ***************************************************************************/
 
 static READ8_HANDLER( mjelctrn_keyboard_1_r )
@@ -1058,21 +1058,21 @@ AM_RANGE(0x11, 0x12) AM_WRITE(mjelctrn_blitter_ack_w)			//?
 	//neruton
 	AM_RANGE(0x00, 0x00) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
 	AM_RANGE(0x02, 0x02) AM_WRITE(adpcm_data_w				)	// MSM5205 data
-//	AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP					)	// CRT Controller
-//	AM_RANGE(0x21, 0x21) AM_WRITE(MWA8_NOP					)	// CRT Controller
+//  AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP                  )   // CRT Controller
+//  AM_RANGE(0x21, 0x21) AM_WRITE(MWA8_NOP                  )   // CRT Controller
 	AM_RANGE(0x40, 0x40) AM_WRITE(dynax_coincounter_0_w		)	// Coin Counters
 	AM_RANGE(0x41, 0x41) AM_WRITE(dynax_coincounter_1_w		)	//
 	AM_RANGE(0x60, 0x60) AM_WRITE(dynax_extra_scrollx_w		)	// screen scroll X
 	AM_RANGE(0x62, 0x62) AM_WRITE(dynax_extra_scrolly_w		)	// screen scroll Y
-//	AM_RANGE(0x64, 0x64) AM_WRITE(dynax_extra_scrollx_w		)	// screen scroll X
-//	AM_RANGE(0x66, 0x66) AM_WRITE(dynax_extra_scrolly_w		)	// screen scroll Y
+//  AM_RANGE(0x64, 0x64) AM_WRITE(dynax_extra_scrollx_w     )   // screen scroll X
+//  AM_RANGE(0x66, 0x66) AM_WRITE(dynax_extra_scrolly_w     )   // screen scroll Y
 	AM_RANGE(0x6a, 0x6a) AM_WRITE(hnoridur_rombank_w		)	// BANK ROM Select
 	AM_RANGE(0x80, 0x80) AM_WRITE(hanamai_keyboard_w		)	// keyboard row select
 	AM_RANGE(0xa1, 0xa7) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(dynax_flipscreen_w		)	// Flip Screen
 	AM_RANGE(0xc1, 0xc1) AM_WRITE(hanamai_layer_half_w		)	// half of the interleaved layer to write to
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(hnoridur_layer_half2_w	)	//
-//	c3,c4	seem to be related to wrap around enable
+//  c3,c4   seem to be related to wrap around enable
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(dynax_blit_pen_w			)	// Destination Pen
 	AM_RANGE(0xe1, 0xe1) AM_WRITE(dynax_blit_dest_w			)	// Destination Layer
 	AM_RANGE(0xe2, 0xe2) AM_WRITE(dynax_blit_palette01_w	)	// Layers Palettes
@@ -1086,7 +1086,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -1883,7 +1883,7 @@ INPUT_PORTS_START( mcnpshnt )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	//*
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -2052,7 +2052,7 @@ INPUT_PORTS_START( jantouki )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	//*
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -2224,8 +2224,8 @@ INPUT_PORTS_START( mjelct3 )
 	PORT_DIPSETTING(    0x04, "500" )
 	PORT_DIPSETTING(    0x03, "700" )
 	PORT_DIPSETTING(    0x02, "1000" )
-//	PORT_DIPSETTING(    0x01, "1000" )
-//	PORT_DIPSETTING(    0x00, "1000" )
+//  PORT_DIPSETTING(    0x01, "1000" )
+//  PORT_DIPSETTING(    0x00, "1000" )
 	PORT_DIPNAME( 0x08, 0x08, "YAKU times" )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -2357,8 +2357,8 @@ INPUT_PORTS_START( mjelctrn )
 	PORT_DIPSETTING(    0x04, "500" )
 	PORT_DIPSETTING(    0x03, "700" )
 	PORT_DIPSETTING(    0x02, "1000" )
-//	PORT_DIPSETTING(    0x01, "1000" )
-//	PORT_DIPSETTING(    0x00, "1000" )
+//  PORT_DIPSETTING(    0x01, "1000" )
+//  PORT_DIPSETTING(    0x00, "1000" )
 	PORT_DIPNAME( 0x08, 0x08, "YAKU times" )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -2474,13 +2474,13 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
 
 /***************************************************************************
-								Hana no Mai
+                                Hana no Mai
 ***************************************************************************/
 
 static struct YM2203interface hanamai_ym2203_interface =
@@ -2526,7 +2526,7 @@ static MACHINE_DRIVER_START( hanamai )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 22000000 / 8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
@@ -2545,7 +2545,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Hana Oriduru
+                                Hana Oriduru
 ***************************************************************************/
 
 static struct AY8910interface hnoridur_ay8910_interface =
@@ -2593,7 +2593,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Sports Match
+                                Sports Match
 ***************************************************************************/
 
 static struct YM2203interface sprtmtch_ym2203_interface =
@@ -2641,7 +2641,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Mahjong Friday
+                            Mahjong Friday
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( mjfriday )
@@ -2676,7 +2676,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Mahjong Dial Q2
+                            Mahjong Dial Q2
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( mjdialq2 )
@@ -2689,7 +2689,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					Yarunara / Quiz TV Q&Q / Mahjong Angels
+                    Yarunara / Quiz TV Q&Q / Mahjong Angels
 ***************************************************************************/
 
 /* the old code here didn't work..
@@ -2730,7 +2730,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Mahjong Campus Hunting
+                            Mahjong Campus Hunting
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( mcnpshnt )
@@ -2745,7 +2745,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							7jigen
+                            7jigen
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( nanajign )
@@ -2758,7 +2758,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Jantouki
+                                Jantouki
 ***************************************************************************/
 
 // dual monitor, 2 CPU's, 2 blitters
@@ -2828,12 +2828,12 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Mahjong Electron Base
+                            Mahjong Electron Base
 ***************************************************************************/
 
-/*	It runs in IM 2, thus needs a vector on the data bus:
-	0xfa and 0xfc are very similar, they should be triggered by the blitter
-	0xf8 is vblank	*/
+/*  It runs in IM 2, thus needs a vector on the data bus:
+    0xfa and 0xfc are very similar, they should be triggered by the blitter
+    0xf8 is vblank  */
 void mjelctrn_update_irq(void)
 {
 	dynax_blitter_irq = 1;
@@ -2861,13 +2861,13 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Neruton
+                                    Neruton
 ***************************************************************************/
 
-/*	It runs in IM 2, thus needs a vector on the data bus:
-	0x42 and 0x44 are very similar, they should be triggered by the blitter
-	0x40 is vblank
-	0x46 is a periodic irq?	*/
+/*  It runs in IM 2, thus needs a vector on the data bus:
+    0x42 and 0x44 are very similar, they should be triggered by the blitter
+    0x40 is vblank
+    0x46 is a periodic irq? */
 void neruton_update_irq(void)
 {
 	dynax_blitter_irq = 1;
@@ -2899,7 +2899,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -2912,12 +2912,12 @@ Hana no Mai
 
 D1610088L1
 
-CPU:	Z80-A
-Sound:	AY-3-8912A
-	YM2203C
-	M5205
-OSC:	22.000MHz
-Custom:	(TC17G032AP-0246)
+CPU:    Z80-A
+Sound:  AY-3-8912A
+    YM2203C
+    M5205
+OSC:    22.000MHz
+Custom: (TC17G032AP-0246)
 
 ***************************************************************************/
 
@@ -2952,13 +2952,13 @@ Hana Kochou (Hana no Mai BET ver.)
 D201901L2
 D201901L1-0
 
-CPU:	Z80-A
-Sound:	AY-3-8912A
-	YM2203C
-	M5205
-OSC:	22.000MHz
-VDP:	HD46505SP
-Custom:	(TC17G032AP-0246)
+CPU:    Z80-A
+Sound:  AY-3-8912A
+    YM2203C
+    M5205
+OSC:    22.000MHz
+VDP:    HD46505SP
+Custom: (TC17G032AP-0246)
 
 ***************************************************************************/
 
@@ -3420,27 +3420,27 @@ OSC  : 22MHz (X1, near main CPU), 384KHz (X2, near M5205)
        3.58MHz (X3, Sound section)
 
 ROMs:
-3309.20      [0c7d72f0]	OKI M271000ZB
-3310.21      [28f5f194]	 |
-3311.22      [cddbf667]	 |
-3312.1       [cf0afbb5]	 |
-3313.2       [36e25beb]	 |
-3314.3       [f1cf01bc]	 |
-3315.4       [7cac01c7]	/
+3309.20      [0c7d72f0] OKI M271000ZB
+3310.21      [28f5f194]  |
+3311.22      [cddbf667]  |
+3312.1       [cf0afbb5]  |
+3313.2       [36e25beb]  |
+3314.3       [f1cf01bc]  |
+3315.4       [7cac01c7] /
 
-3316.10      [44006ee5]	M5M27C101P
-3317.11      [4bb62bb4]	/
-3318.12      [e3b457a8]	27C010
+3316.10      [44006ee5] M5M27C101P
+3317.11      [4bb62bb4] /
+3318.12      [e3b457a8] 27C010
 
 Subboard ROMs:
-3301.1B      [8ec98d60]	OKI M271000ZB
-3302.2B      [d7024f2d]	 |
-3303.3B      [01548edc]	 |
-3304.4B      [deef9a4e]	 |
-3305.1A      [8a9ebab8]	 |
-3306.2A      [86afcc80]	 |
-3307.3A      [07dbaf8a]	 |
-3308.4A      [a2cac53d]	/
+3301.1B      [8ec98d60] OKI M271000ZB
+3302.2B      [d7024f2d]  |
+3303.3B      [01548edc]  |
+3304.4B      [deef9a4e]  |
+3305.1A      [8a9ebab8]  |
+3306.2A      [86afcc80]  |
+3307.3A      [07dbaf8a]  |
+3308.4A      [a2cac53d] /
 
 PALs:
 D33A.24 (16L8)
@@ -3490,15 +3490,15 @@ ROM_END
 D3707198L1
 D23SUB BOARD1
 
-CPU:	Z80-B
-Sound:	AY-3-8912A
-	YM2413
-	M5205
-OSC:	22.000MHz
-	3.58MHz
-	384KHz
-VDP:	HD46505SP
-Custom:	(TC17G032AP-0246)
+CPU:    Z80-B
+Sound:  AY-3-8912A
+    YM2413
+    M5205
+OSC:    22.000MHz
+    3.58MHz
+    384KHz
+VDP:    HD46505SP
+Custom: (TC17G032AP-0246)
 
 
 3701.1A   prg.
@@ -3557,14 +3557,14 @@ Jantouki
 D1505178-A (main board)
 D2711078L-B (ROM board)
 
-CPU:	Z80-B
-Sound:	Z80-B
-		AY-3-8912A
-		YM2203C
-		M5205
-OSC:	22.000MHz
-VDP:	HD46505SP
-Custom:	(TC17G032AP-0246) x2
+CPU:    Z80-B
+Sound:  Z80-B
+        AY-3-8912A
+        YM2203C
+        M5205
+OSC:    22.000MHz
+VDP:    HD46505SP
+Custom: (TC17G032AP-0246) x2
 
 
 2702.6D  MROM1  main prg.
@@ -3637,7 +3637,7 @@ ROM_END
 
 /***************************************************************************
 
-	Mahjong Electron Base
+    Mahjong Electron Base
 
 ***************************************************************************/
 
@@ -3725,7 +3725,7 @@ static DRIVER_INIT( mjelct3a )
 				case 0x3000:	j |= 0x0200;	break;
 				case 0x4000:	j |= 0x4600;	break;
 				case 0x5000:	j |= 0x4000;	break;
-//				case 0x6000:	j |= 0x0000;	break;
+//              case 0x6000:    j |= 0x0000;    break;
 				case 0x7000:	j |= 0x0600;	break;
 			}
 			switch(i & 0x0e00)
@@ -3735,7 +3735,7 @@ static DRIVER_INIT( mjelct3a )
 				case 0x0400:	j |= 0x2800;	break;
 				case 0x0600:	j |= 0x0800;	break;
 				case 0x0800:	j |= 0x1800;	break;
-//				case 0x0a00:	j |= 0x0000;	break;
+//              case 0x0a00:    j |= 0x0000;    break;
 				case 0x0c00:	j |= 0x1000;	break;
 				case 0x0e00:	j |= 0x3000;	break;
 			}
@@ -3827,7 +3827,7 @@ ROM_END
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

@@ -16,7 +16,7 @@
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -38,7 +38,7 @@ struct cdrom_file
 
 /*************************************
  *
- *	Utility functions
+ *  Utility functions
  *
  *************************************/
 
@@ -99,7 +99,7 @@ UINT32 cdrom_get_chd_start_of_track(struct cdrom_file *file, UINT32 track)
 }
 
 /* convert a physical frame number to a CHD one */
-UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame) 
+UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame)
 {
 	UINT32 trk = cdrom_get_track_phys(file, frame);
 
@@ -110,7 +110,7 @@ UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame)
 }
 
 /* convert a CHD frame number to a physical one */
-UINT32 cdrom_chd_frame_to_phys(struct cdrom_file *file, UINT32 frame) 
+UINT32 cdrom_chd_frame_to_phys(struct cdrom_file *file, UINT32 frame)
 {
 	UINT32 trk = cdrom_get_track_chd(file, frame);
 
@@ -134,7 +134,7 @@ INLINE UINT32 get_bigendian_uint32(const UINT8 *base)
 
 /*************************************
  *
- *	Open a CD-ROM
+ *  Open a CD-ROM
  *
  *************************************/
 
@@ -160,7 +160,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 	file->audio_pause = 0;
 	file->audio_length = 0;
 	file->audio_samples = 0;
-	
+
 	/* read the CD-ROM metadata */
 	metatag = CDROM_STANDARD_METADATA;
 	count = chd_get_metadata(chd, &metatag, 0, metadata, sizeof(metadata));
@@ -201,8 +201,8 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 	#endif
 
 	/* calculate the starting frame for each track, keeping in mind that CHDMAN
-	   pads tracks out with extra frames to fit hunk size boundries
-	*/
+       pads tracks out with extra frames to fit hunk size boundries
+    */
 	physofs = chdofs = 0;
 	for (i = 0; i < file->cdtoc.numtrks; i++)
 	{
@@ -210,7 +210,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 		file->cdtoc.tracks[i].chdframeofs = chdofs;
 
 		physofs += file->cdtoc.tracks[i].frames;
-		chdofs  += file->cdtoc.tracks[i].frames; 
+		chdofs  += file->cdtoc.tracks[i].frames;
 		chdofs  += file->cdtoc.tracks[i].extraframes;
 
 		#if VERBOSE
@@ -229,12 +229,12 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 	/* fill out dummy entries for the last track to help our search */
 	file->cdtoc.tracks[i].physframeofs = physofs;
 	file->cdtoc.tracks[i].chdframeofs = chdofs;
-	
+
 	/* fill in the data */
 	file->chd = chd;
 	file->hunksectors = CD_FRAMES_PER_HUNK;
 	file->cachehunk = -1;
-	
+
 	/* allocate a cache */
 	file->cache = malloc(chd_get_header(chd)->hunkbytes);
 	if (!file->cache)
@@ -258,7 +258,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 
 /*************************************
  *
- *	Close a CD-ROM
+ *  Close a CD-ROM
  *
  *************************************/
 
@@ -276,7 +276,7 @@ void cdrom_close(struct cdrom_file *file)
 
 /*************************************
  *
- *	Return the handle to the CHD
+ *  Return the handle to the CHD
  *
  *************************************/
 
@@ -322,7 +322,7 @@ UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsect
 			return 0;
 		file->cachehunk = hunknum;
 	}
-	
+
 	/* copy out the requested sector */
 	if (datatype == tracktype)
 	{
@@ -334,14 +334,14 @@ UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsect
 		if ((datatype == CD_TRACK_MODE1) && (tracktype == CD_TRACK_MODE1_RAW))
 		{
 			memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + 16], 2048);
-			return 1;		
+			return 1;
 		}
 
 		/* return 2048 bytes of mode1 data from a 2352 byte mode2 form 1 raw sector */
 		if ((datatype == CD_TRACK_MODE1) && (tracktype == CD_TRACK_MODE2_FORM1))
 		{
 			memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + 24], 2048);
-			return 1;		
+			return 1;
 		}
 
 		#if VERBOSE
@@ -374,7 +374,7 @@ UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffe
 			return 0;
 		file->cachehunk = hunknum;
 	}
-	
+
 	/* copy out the requested data */
 	memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + file->cdtoc.tracks[track].datasize], file->cdtoc.tracks[track].subsize);
 	return 1;
@@ -386,7 +386,7 @@ UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffe
  *
  *************************************/
 
-/* 
+/*
  * cdrom_start_audio: begin playback of a Red Book audio track
  */
 
@@ -399,7 +399,7 @@ void cdrom_start_audio(struct cdrom_file *file, UINT32 start_chd_lba, UINT32 blo
 	file->audio_length = blocks;
 }
 
-/* 
+/*
  * cdrom_stop_audio: stop playback of a Red Book audio track
  */
 
@@ -408,7 +408,7 @@ void cdrom_stop_audio(struct cdrom_file *file)
 	file->audio_playing = 0;
 }
 
-/* 
+/*
  * cdrom_pause_audio: pause/unpause playback of a Red Book audio track
  */
 
@@ -417,16 +417,16 @@ void cdrom_pause_audio(struct cdrom_file *file, int pause)
 	file->audio_pause = pause;
 }
 
-/* 
+/*
  * cdrom_audio_active: returns Red Book audio playback status
  */
 
 int cdrom_audio_active(struct cdrom_file *file)
 {
-	return (file->audio_playing);	
+	return (file->audio_playing);
 }
 
-/* 
+/*
  * cdrom_get_audio_lba: returns the current LBA (physical sector) during Red Book playback
  */
 
@@ -435,25 +435,25 @@ UINT32 cdrom_get_audio_lba(struct cdrom_file *file)
 	return file->audio_lba;
 }
 
-/* 
+/*
  * cdrom_audio_paused: returns if Red Book playback is paused
  */
 
-int cdrom_audio_paused(struct cdrom_file *file) 
+int cdrom_audio_paused(struct cdrom_file *file)
 {
 	return (file->audio_pause);
 }
 
-/* 
+/*
  * cdrom_audio_ended: returns if a Red Book track reached it's natural end
  */
 
-int cdrom_audio_ended(struct cdrom_file *file)  
+int cdrom_audio_ended(struct cdrom_file *file)
 {
 	return (file->audio_ended_normally);
 }
 
-/* 
+/*
  * cdrom_get_audio_data: reads Red Book data off the disc if playback is in progress and
  *                       converts it to 2 16-bit 44.1 kHz streams.
  */
@@ -462,8 +462,8 @@ void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream
 {
 	int i, sectoread, remaining;
 
-	/* if no file, audio not playing, audio paused, or out of disc data, 
-	   just zero fill */
+	/* if no file, audio not playing, audio paused, or out of disc data,
+       just zero fill */
 	if (!file || !file->audio_playing || file->audio_pause || (!file->audio_length && !file->audio_samples))
 	{
 		memset(bufL, 0, sizeof(stream_sample_t)*samples_wanted);

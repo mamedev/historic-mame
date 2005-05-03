@@ -1,10 +1,10 @@
 /*
-	Polygonet Commanders (Konami, 1993)
+    Polygonet Commanders (Konami, 1993)
 
-	Video hardware emulation
+    Video hardware emulation
 
-	Currently contains: TTL text plane (probably not complete, needs banking? colors?)
-	Needs: PSAC2 roz plane, polygons
+    Currently contains: TTL text plane (probably not complete, needs banking? colors?)
+    Needs: PSAC2 roz plane, polygons
 */
 
 #include "driver.h"

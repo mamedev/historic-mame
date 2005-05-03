@@ -26,15 +26,15 @@
 /******************************************************************************
  *  Notes:
  *         This file contains the code to run during the CPU EXECUTE METHOD.
- *         It has been split into it's own file (from the arm7core.c) so it can be 
- *         directly compiled into any cpu core that wishes to use it. 
+ *         It has been split into it's own file (from the arm7core.c) so it can be
+ *         directly compiled into any cpu core that wishes to use it.
  *
  *         It should be included as follows in your cpu core:
  *
  *         int arm7_execute( int cycles )
  *         {
  *         #include "arm7exec.c"
- *         } 
+ *         }
  *
 *****************************************************************************/
 
@@ -107,7 +107,7 @@
         }
         /*******************************************************************/
         /* If we got here - condition satisfied, so decode the instruction */
-        /*******************************************************************/       
+        /*******************************************************************/
         switch( (insn & 0xF000000)>>24 )
         {
             case 0:
@@ -116,7 +116,7 @@
             case 3:
                 /* Branch and Exchange (BX) */
                 if( (insn&0x0ffffff0)==0x012fff10 )     //bits 27-4 == 000100101111111111110001
-                { 
+                {
                     R15 = GET_REGISTER(insn & 0x0f);
                     //If new PC address has A0 set, switch to Thumb mode
                     if(R15 & 1) {
@@ -133,7 +133,7 @@
                     {
                         HandleHalfWordDT(insn);
                     }
-                    else 
+                    else
                     /* Swap */
                     if(insn & 0x01000000)   //bit 24 = 1
                     {

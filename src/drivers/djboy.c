@@ -15,23 +15,23 @@ buttons 1,2,3 are used to select and play sound/music
 
 
 - CPU1 manages sprites, which are also used to display text
-		irq (0x10) - timing/watchdog
-		irq (0x30) - processes sprites
-		nmi: wakes up this cpu
+        irq (0x10) - timing/watchdog
+        irq (0x30) - processes sprites
+        nmi: wakes up this cpu
 
 - CPU2 manages the protection device, palette, and tilemap(s)
-		nmi: resets this cpu
-		irq: game update
-		additional protection at d8xx?
+        nmi: resets this cpu
+        irq: game update
+        additional protection at d8xx?
 
 - CPU3 manages sound chips
-		irq: update music
-		nmi: handle sound command
+        irq: update music
+        nmi: handle sound command
 
-	The protection device provides an API to poll dipswitches and inputs.
-	It is probably involved with the memory range 0xd800..0xd8ff, which CPU2 reads.
-	It handles coin input and coinage internally.
-	The real game shouts "DJ Boy!" every time a credit is inserted.
+    The protection device provides an API to poll dipswitches and inputs.
+    It is probably involved with the memory range 0xd800..0xd8ff, which CPU2 reads.
+    It handles coin input and coinage internally.
+    The real game shouts "DJ Boy!" every time a credit is inserted.
 
 
 Genre: Scrolling Fighter
@@ -115,7 +115,7 @@ static WRITE8_HANDLER( cpu1_bankswitch_w )
 static WRITE8_HANDLER( cpu2_bankswitch_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
-	
+
 	djboy_set_videoreg( data );
 
 	switch( data&0xf )
@@ -155,7 +155,7 @@ static WRITE8_HANDLER( cpu2_data_w )
 	case 0x7987: /* 0x03 memtest write */
 		prot_offs = 0;
 		break;
-	
+
 	case 0x73a5: /* 1 is written; preceeds protection read */
 		return;
 
@@ -197,7 +197,7 @@ static WRITE8_HANDLER( cpu2_data_w )
 
 	case 0x726a: /* 0x08 (?) protection */
 		break;
-	
+
 	case 0x7146: break; /* prot(0x01) */
 	case 0x71f4: break; /* prot(0x02) */
 
@@ -246,17 +246,17 @@ static READ8_HANDLER( cpu2_data_r )
 
 	case 0x73b5:
 		/**
-		 * used to poll for "events"
-		 * possible values include:
-		 * 0x00, 0x01, 0x80,0x81,...0x8e
-		 *
-		 * Each value dispatches to a different routine.  Most of them do very little.
-		 */
+         * used to poll for "events"
+         * possible values include:
+         * 0x00, 0x01, 0x80,0x81,...0x8e
+         *
+         * Each value dispatches to a different routine.  Most of them do very little.
+         */
 		result = 0x82; // 'normal' - polls inputs
 		if( code_pressed( KEYCODE_Q ) ) result = 0;
 		if( code_pressed( KEYCODE_5 ) ) result = 1; /* "PUSH 1P START" */
 		if( code_pressed( KEYCODE_6 ) ) result = 0x8b; /* "COIN ERROR" */
-//		if( code_pressed( KEYCODE_B ) ) result = 0x8e;
+//      if( code_pressed( KEYCODE_B ) ) result = 0x8e;
 		return result;
 
 	case 0x7204: result = readinputport(1); break; /* (ix+$42) */
@@ -308,7 +308,7 @@ static READ8_HANDLER( cpu2_status_r )
 	case 0x72b4: return 0;//!0x04
 	case 0x72db: return 1<<2;
 	case 0x72fe: return 0;//!0x04
-	
+
 	case 0x7311: return 0;//!0x04
 	case 0x738f: return 1<<2;
 	case 0x73ac: return 0;//!0x04
@@ -482,8 +482,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static INTERRUPT_GEN( djboy_interrupt )
 {
 	/* CPU1 uses interrupt mode 2.
-	 * For now, just alternate the two interrupts.  It isn't known what triggers them
-	 */
+     * For now, just alternate the two interrupts.  It isn't known what triggers them
+     */
 	static int addr = 0xff;
 	addr ^= 0x02;
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, addr);

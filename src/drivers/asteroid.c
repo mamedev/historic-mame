@@ -1,141 +1,141 @@
 /***************************************************************************
 
-	Atari Asteroids hardware
+    Atari Asteroids hardware
 
-	Games supported:
-		* Asteroids
-		* Asteroids Deluxe
-		* Lunar Lander
+    Games supported:
+        * Asteroids
+        * Asteroids Deluxe
+        * Lunar Lander
 
-	Known bugs:
-		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
+    Known bugs:
+        * the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
-	Asteroids-deluxe state-prom added by HIGHWAYMAN.
-	The prom pcb location is:C8 and is 256x4
-	(i need to update the dump, this one is read in 8bit-mode)
+    Asteroids-deluxe state-prom added by HIGHWAYMAN.
+    The prom pcb location is:C8 and is 256x4
+    (i need to update the dump, this one is read in 8bit-mode)
 ****************************************************************************
 
-	Asteroids Memory Map (preliminary)
+    Asteroids Memory Map (preliminary)
 
-	Asteroids settings:
+    Asteroids settings:
 
-	0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
-
-
-	8 SWITCH DIP
-	87654321
-	--------
-	XXXXXX11   English
-	XXXXXX10   German
-	XXXXXX01   French
-	XXXXXX00   Spanish
-	XXXXX1XX   4-ship game
-	XXXXX0XX   3-ship game
-	11XXXXXX   Free Play
-	10XXXXXX   1 Coin  for 2 Plays
-	01XXXXXX   1 Coin  for 1 Play
-	00XXXXXX   2 Coins for 1 Play
-
-	Asteroids Deluxe settings:
-
-	0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
+    0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
 
 
-	8 SWITCH DIP (R5)
-	87654321
-	--------
-	XXXXXX11   English $
-	XXXXXX10   German
-	XXXXXX01   French
-	XXXXXX00   Spanish
-	XXXX11XX   2-4 ships
-	XXXX10XX   3-5 ships $
-	XXXX01XX   4-6 ships
-	XXXX00XX   5-7 ships
-	XXX1XXXX   1-play minimum $
-	XXX0XXXX   2-play minimum
-	XX1XXXXX   Easier gameplay for first 30000 points +
-	XX0XXXXX   Hard gameplay throughout the game	  +
-	11XXXXXX   Bonus ship every 10,000 points $ !
-	10XXXXXX   Bonus ship every 12,000 points !
-	01XXXXXX   Bonus ship every 15,000 points !
-	00XXXXXX   No bonus ships (adds one ship at game start)
+    8 SWITCH DIP
+    87654321
+    --------
+    XXXXXX11   English
+    XXXXXX10   German
+    XXXXXX01   French
+    XXXXXX00   Spanish
+    XXXXX1XX   4-ship game
+    XXXXX0XX   3-ship game
+    11XXXXXX   Free Play
+    10XXXXXX   1 Coin  for 2 Plays
+    01XXXXXX   1 Coin  for 1 Play
+    00XXXXXX   2 Coins for 1 Play
 
-	+ only with the newer romset
-	! not "every", but "at", e.g. only once.
+    Asteroids Deluxe settings:
 
-	Thanks to Gregg Woodcock for the info.
+    0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
 
-	8 SWITCH DIP (L8)
-	87654321
-	--------
-	XXXXXX11   Free Play
-	XXXXXX10   1 Coin = 2 Plays
-	XXXXXX01   1 Coin = 1 Play
-	XXXXXX00   2 Coins = 1 Play $
-	XXXX11XX   Right coin mech * 1 $
-	XXXX10XX   Right coin mech * 4
-	XXXX01XX   Right coin mech * 5
-	XXXX00XX   Right coin mech * 6
-	XXX1XXXX   Center coin mech * 1 $
-	XXX0XXXX   Center coin mech * 2
-	111XXXXX   No bonus coins
-	110XXXXX   For every 2 coins inserted, game logic adds 1 more coin
-	101XXXXX   For every 4 coins inserted, game logic adds 1 more coin
-	100XXXXX   For every 4 coins inserted, game logic adds 2 more coins $
-	011XXXXX   For every 5 coins inserted, game logic adds 1 more coin
+
+    8 SWITCH DIP (R5)
+    87654321
+    --------
+    XXXXXX11   English $
+    XXXXXX10   German
+    XXXXXX01   French
+    XXXXXX00   Spanish
+    XXXX11XX   2-4 ships
+    XXXX10XX   3-5 ships $
+    XXXX01XX   4-6 ships
+    XXXX00XX   5-7 ships
+    XXX1XXXX   1-play minimum $
+    XXX0XXXX   2-play minimum
+    XX1XXXXX   Easier gameplay for first 30000 points +
+    XX0XXXXX   Hard gameplay throughout the game      +
+    11XXXXXX   Bonus ship every 10,000 points $ !
+    10XXXXXX   Bonus ship every 12,000 points !
+    01XXXXXX   Bonus ship every 15,000 points !
+    00XXXXXX   No bonus ships (adds one ship at game start)
+
+    + only with the newer romset
+    ! not "every", but "at", e.g. only once.
+
+    Thanks to Gregg Woodcock for the info.
+
+    8 SWITCH DIP (L8)
+    87654321
+    --------
+    XXXXXX11   Free Play
+    XXXXXX10   1 Coin = 2 Plays
+    XXXXXX01   1 Coin = 1 Play
+    XXXXXX00   2 Coins = 1 Play $
+    XXXX11XX   Right coin mech * 1 $
+    XXXX10XX   Right coin mech * 4
+    XXXX01XX   Right coin mech * 5
+    XXXX00XX   Right coin mech * 6
+    XXX1XXXX   Center coin mech * 1 $
+    XXX0XXXX   Center coin mech * 2
+    111XXXXX   No bonus coins
+    110XXXXX   For every 2 coins inserted, game logic adds 1 more coin
+    101XXXXX   For every 4 coins inserted, game logic adds 1 more coin
+    100XXXXX   For every 4 coins inserted, game logic adds 2 more coins $
+    011XXXXX   For every 5 coins inserted, game logic adds 1 more coin
 
 ****************************************************************************
 
-	Lunar Lander Memory Map (preliminary)
+    Lunar Lander Memory Map (preliminary)
 
-	Lunar Lander settings:
+    Lunar Lander settings:
 
-	0 = OFF  1 = ON  x = Don't Care  $ = Atari suggests
-
-
-	8 SWITCH DIP (P8) with -01 ROMs on PCB
-	87654321
-	--------
-	11xxxxxx   450 fuel units per coin
-	10xxxxxx   600 fuel units per coin
-	01xxxxxx   750 fuel units per coin	$
-	00xxxxxx   900 fuel units per coin
-	xxx0xxxx   Free play
-	xxx1xxxx   Coined play as determined by toggles 7 & 8  $
-	xxxx00xx   German instructions
-	xxxx01xx   Spanish instructions
-	xxxx10xx   French instructions
-	xxxx11xx   English instructions  $
-	xxxxxx11   Right coin == 1 credit/coin	$
-	xxxxxx10   Right coin == 4 credit/coin
-	xxxxxx01   Right coin == 5 credit/coin
-	xxxxxx00   Right coin == 6 credit/coin
-			   (Left coin always registers 1 credit/coin)
+    0 = OFF  1 = ON  x = Don't Care  $ = Atari suggests
 
 
-	8 SWITCH DIP (P8) with -02 ROMs on PCB
-	87654321
-	--------
-	11x1xxxx   450 fuel units per coin
-	10x1xxxx   600 fuel units per coin
-	01x1xxxx   750 fuel units per coin	$
-	00x1xxxx   900 fuel units per coin
-	11x0xxxx   1100 fuel units per coin
-	10x0xxxx   1300 fuel units per coin
-	01x0xxxx   1550 fuel units per coin
-	00x0xxxx   1800 fuel units per coin
-	xx0xxxxx   Free play
-	xx1xxxxx   Coined play as determined by toggles 5, 7, & 8  $
-	xxxx00xx   German instructions
-	xxxx01xx   Spanish instructions
-	xxxx10xx   French instructions
-	xxxx11xx   English instructions  $
-	xxxxxx11   Right coin == 1 credit/coin	$
-	xxxxxx10   Right coin == 4 credit/coin
-	xxxxxx01   Right coin == 5 credit/coin
-	xxxxxx00   Right coin == 6 credit/coin
-			   (Left coin always registers 1 credit/coin)
+    8 SWITCH DIP (P8) with -01 ROMs on PCB
+    87654321
+    --------
+    11xxxxxx   450 fuel units per coin
+    10xxxxxx   600 fuel units per coin
+    01xxxxxx   750 fuel units per coin  $
+    00xxxxxx   900 fuel units per coin
+    xxx0xxxx   Free play
+    xxx1xxxx   Coined play as determined by toggles 7 & 8  $
+    xxxx00xx   German instructions
+    xxxx01xx   Spanish instructions
+    xxxx10xx   French instructions
+    xxxx11xx   English instructions  $
+    xxxxxx11   Right coin == 1 credit/coin  $
+    xxxxxx10   Right coin == 4 credit/coin
+    xxxxxx01   Right coin == 5 credit/coin
+    xxxxxx00   Right coin == 6 credit/coin
+               (Left coin always registers 1 credit/coin)
+
+
+    8 SWITCH DIP (P8) with -02 ROMs on PCB
+    87654321
+    --------
+    11x1xxxx   450 fuel units per coin
+    10x1xxxx   600 fuel units per coin
+    01x1xxxx   750 fuel units per coin  $
+    00x1xxxx   900 fuel units per coin
+    11x0xxxx   1100 fuel units per coin
+    10x0xxxx   1300 fuel units per coin
+    01x0xxxx   1550 fuel units per coin
+    00x0xxxx   1800 fuel units per coin
+    xx0xxxxx   Free play
+    xx1xxxxx   Coined play as determined by toggles 5, 7, & 8  $
+    xxxx00xx   German instructions
+    xxxx01xx   Spanish instructions
+    xxxx10xx   French instructions
+    xxxx11xx   English instructions  $
+    xxxxxx11   Right coin == 1 credit/coin  $
+    xxxxxx10   Right coin == 4 credit/coin
+    xxxxxx01   Right coin == 5 credit/coin
+    xxxxxx00   Right coin == 6 credit/coin
+               (Left coin always registers 1 credit/coin)
 
 ***************************************************************************/
 
@@ -152,7 +152,7 @@
 
 /*************************************
  *
- *	Coin counters
+ *  Coin counters
  *
  *************************************/
 
@@ -165,7 +165,7 @@ static WRITE8_HANDLER( astdelux_coin_counter_w )
 
 /*************************************
  *
- *	Land Lander LEDs/lamps
+ *  Land Lander LEDs/lamps
  *
  *************************************/
 
@@ -186,7 +186,7 @@ static WRITE8_HANDLER( llander_led_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -254,7 +254,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -262,7 +262,7 @@ INPUT_PORTS_START( asteroid )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* Bit 2 and 3 are handled in the machine dependent part. */
-	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit	  */
+	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit    */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -403,11 +403,11 @@ INPUT_PORTS_START( asterock )
 	PORT_DIPSETTING (	0xc0, DEF_STR( 2C_1C ) )					PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING (	0x80, DEF_STR( 1C_1C ) )					PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING (	0x40, DEF_STR( 1C_2C ) )					PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x00)
-//	PORT_DIPSETTING (	0x00, DEF_STR( 1C_1C ) )					PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x00)
+//  PORT_DIPSETTING (   0x00, DEF_STR( 1C_1C ) )                    PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x00)
 	PORT_DIPSETTING (	0xc0, "Coin A 2/1 Coin B 2/1 Coin C 1/1" )	PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING (	0x80, "Coin A 1/1 Coin B 1/1 Coin C 1/2" )	PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x00)
 	PORT_DIPSETTING (	0x40, "Coin A 1/2 Coin B 1/2 Coin C 1/4" )	PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x00)
-//	PORT_DIPSETTING (	0x00, "Coin A 1/1 Coin B 1/1 Coin C 1/2" )	PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x00)
+//  PORT_DIPSETTING (   0x00, "Coin A 1/1 Coin B 1/1 Coin C 1/2" )  PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x00)
 INPUT_PORTS_END
 
 
@@ -415,7 +415,7 @@ INPUT_PORTS_START( astdelux )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* Bit 2 and 3 are handled in the machine dependent part. */
-	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit	  */
+	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit    */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -579,7 +579,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -593,7 +593,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -619,7 +619,7 @@ static MACHINE_DRIVER_START( asteroid )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("disc", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(asteroid_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -682,7 +682,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -803,7 +803,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -834,7 +834,7 @@ static DRIVER_INIT( astdelux )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

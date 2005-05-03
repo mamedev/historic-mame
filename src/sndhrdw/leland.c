@@ -1,79 +1,79 @@
 /***************************************************************************
 
-	Cinemat/Leland driver
+    Cinemat/Leland driver
 
-	Leland sound hardware
-	driver by Aaron Giles and Paul Leaman
+    Leland sound hardware
+    driver by Aaron Giles and Paul Leaman
 
-	-------------------------------------------------------------------
+    -------------------------------------------------------------------
 
-	1st generation sound hardware was controlled by the master Z80.
-	It drove an AY-8910/AY-8912 pair for music. It also had two DACs
-	that were driven by the video refresh. At the end of each scanline
-	there are 8-bit DAC samples that can be enabled via the output
-	ports on the AY-8910. The DACs run at a fixed frequency of 15.3kHz,
-	since they are clocked once each scanline.
+    1st generation sound hardware was controlled by the master Z80.
+    It drove an AY-8910/AY-8912 pair for music. It also had two DACs
+    that were driven by the video refresh. At the end of each scanline
+    there are 8-bit DAC samples that can be enabled via the output
+    ports on the AY-8910. The DACs run at a fixed frequency of 15.3kHz,
+    since they are clocked once each scanline.
 
-	-------------------------------------------------------------------
+    -------------------------------------------------------------------
 
-	2nd generation sound hardware was used in Redline Racer. It
-	consisted of an 80186 microcontroller driving 8 8-bit DACs. The
-	frequency of the DACs were controlled by one of 3 Intel 8254
-	programmable interval timers (PITs):
+    2nd generation sound hardware was used in Redline Racer. It
+    consisted of an 80186 microcontroller driving 8 8-bit DACs. The
+    frequency of the DACs were controlled by one of 3 Intel 8254
+    programmable interval timers (PITs):
 
-		DAC number	Clock source
-		----------	-----------------
-			0		8254 PIT 1 output 0
-			1		8254 PIT 1 output 1
-			2		8254 PIT 1 output 2
-			3		8254 PIT 2 output 0
-			4		8254 PIT 2 output 1
-			5-7		8254 PIT 3 output 0
+        DAC number  Clock source
+        ----------  -----------------
+            0       8254 PIT 1 output 0
+            1       8254 PIT 1 output 1
+            2       8254 PIT 1 output 2
+            3       8254 PIT 2 output 0
+            4       8254 PIT 2 output 1
+            5-7     8254 PIT 3 output 0
 
-	The clock outputs for each DAC can be read, and are polled to
-	determine when data should be updated on the chips. The 80186's
-	two DMA channels are generally used to drive the first two DACs,
-	with the remaining 6 DACs being fed manually via polling.
+    The clock outputs for each DAC can be read, and are polled to
+    determine when data should be updated on the chips. The 80186's
+    two DMA channels are generally used to drive the first two DACs,
+    with the remaining 6 DACs being fed manually via polling.
 
-	-------------------------------------------------------------------
+    -------------------------------------------------------------------
 
-	3rd generation sound hardware appeared in the football games
-	(Quarterback, AAFB) and the later games up through Pigout. This
-	variant is closely based on the Redline Racer sound system, but
-	they took out two of the DACs and replaced them with a higher
-	resolution (10-bit) DAC. The driving clocks have been rearranged
-	a bit, and the number of PITs reduced from 3 to 2:
+    3rd generation sound hardware appeared in the football games
+    (Quarterback, AAFB) and the later games up through Pigout. This
+    variant is closely based on the Redline Racer sound system, but
+    they took out two of the DACs and replaced them with a higher
+    resolution (10-bit) DAC. The driving clocks have been rearranged
+    a bit, and the number of PITs reduced from 3 to 2:
 
-		DAC number	Clock source
-		----------	-----------------
-			0		8254 PIT 1 output 0
-			1		8254 PIT 1 output 1
-			2		8254 PIT 1 output 2
-			3		8254 PIT 2 output 0
-			4		8254 PIT 2 output 1
-			5		8254 PIT 2 output 2
-			10-bit	80186 timer 0
+        DAC number  Clock source
+        ----------  -----------------
+            0       8254 PIT 1 output 0
+            1       8254 PIT 1 output 1
+            2       8254 PIT 1 output 2
+            3       8254 PIT 2 output 0
+            4       8254 PIT 2 output 1
+            5       8254 PIT 2 output 2
+            10-bit  80186 timer 0
 
-	Like the 2nd generation board, the first two DACs are driven via
-	the DMA channels, and the remaining 5 DACs are polled.
+    Like the 2nd generation board, the first two DACs are driven via
+    the DMA channels, and the remaining 5 DACs are polled.
 
-	-------------------------------------------------------------------
+    -------------------------------------------------------------------
 
-	4th generation sound hardware showed up in Ataxx, Indy Heat, and
-	World Soccer Finals. For this variant, they removed one more PIT
-	and 3 of the 8-bit DACs, and added a YM2151 music chip and an
-	externally-fed 8-bit DAC.
+    4th generation sound hardware showed up in Ataxx, Indy Heat, and
+    World Soccer Finals. For this variant, they removed one more PIT
+    and 3 of the 8-bit DACs, and added a YM2151 music chip and an
+    externally-fed 8-bit DAC.
 
-		DAC number	Clock source
-		----------	-----------------
-			0		8254 PIT 1 output 0
-			1		8254 PIT 1 output 1
-			2		8254 PIT 1 output 2
-			10-bit	80186 timer 0
-			ext		80186 timer 1
+        DAC number  Clock source
+        ----------  -----------------
+            0       8254 PIT 1 output 0
+            1       8254 PIT 1 output 1
+            2       8254 PIT 1 output 2
+            10-bit  80186 timer 0
+            ext     80186 timer 1
 
-	The externally driven DACs have registers for a start/stop address
-	and triggers to control the clocking.
+    The externally driven DACs have registers for a start/stop address
+    and triggers to control the clocking.
 
 ***************************************************************************/
 
@@ -87,7 +87,7 @@
 
 /*************************************
  *
- *	1st generation sound
+ *  1st generation sound
  *
  *************************************/
 
@@ -171,7 +171,7 @@ void leland_dac_update(int dacnum, UINT8 sample)
 
 /*************************************
  *
- *	2nd-4th generation sound
+ *  2nd-4th generation sound
  *
  *************************************/
 
@@ -306,7 +306,7 @@ static WRITE8_HANDLER( peripheral_w );
 
 /*************************************
  *
- *	Manual DAC sound generation
+ *  Manual DAC sound generation
  *
  *************************************/
 
@@ -373,7 +373,7 @@ static void leland_i186_dac_update(void *param, stream_sample_t **inputs, stream
 
 /*************************************
  *
- *	DMA-based DAC sound generation
+ *  DMA-based DAC sound generation
  *
  *************************************/
 
@@ -462,7 +462,7 @@ static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream
 
 /*************************************
  *
- *	Externally-driven DAC sound generation
+ *  Externally-driven DAC sound generation
  *
  *************************************/
 
@@ -503,7 +503,7 @@ static void leland_i186_extern_update(void *param, stream_sample_t **inputs, str
 
 /*************************************
  *
- *	Sound initialization
+ *  Sound initialization
  *
  *************************************/
 
@@ -624,7 +624,7 @@ void leland_i186_sound_init(void)
 
 /*************************************
  *
- *	80186 interrupt controller
+ *  80186 interrupt controller
  *
  *************************************/
 
@@ -812,7 +812,7 @@ static void handle_eoi(int data)
 
 /*************************************
  *
- *	80186 internal timers
+ *  80186 internal timers
  *
  *************************************/
 
@@ -1005,7 +1005,7 @@ static void internal_timer_update(int which, int new_count, int new_maxA, int ne
 
 /*************************************
  *
- *	80186 internal DMA
+ *  80186 internal DMA
  *
  *************************************/
 
@@ -1093,7 +1093,7 @@ static void update_dma_control(int which, int new_control)
 
 /*************************************
  *
- *	80186 internal I/O reads
+ *  80186 internal I/O reads
  *
  *************************************/
 
@@ -1278,7 +1278,7 @@ static READ8_HANDLER( i186_internal_port_r )
 
 /*************************************
  *
- *	80186 internal I/O writes
+ *  80186 internal I/O writes
  *
  *************************************/
 
@@ -1522,7 +1522,7 @@ static WRITE8_HANDLER( i186_internal_port_w )
 				memory_install_read8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_r);
 				memory_install_write8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
-/*			usrintf_showmessage("Sound CPU reset");*/
+/*          usrintf_showmessage("Sound CPU reset");*/
 			break;
 
 		default:
@@ -1535,7 +1535,7 @@ static WRITE8_HANDLER( i186_internal_port_w )
 
 /*************************************
  *
- *	8254 PIT accesses
+ *  8254 PIT accesses
  *
  *************************************/
 
@@ -1667,7 +1667,7 @@ static WRITE8_HANDLER( pit8254_w )
 
 /*************************************
  *
- *	External 80186 control
+ *  External 80186 control
  *
  *************************************/
 
@@ -1694,11 +1694,11 @@ WRITE8_HANDLER( leland_i86_control_w )
 	cpunum_set_input_line(2, INPUT_LINE_RESET, data & 0x80  ? CLEAR_LINE : ASSERT_LINE);
 
 	/* /NMI */
-/* 	If the master CPU doesn't get a response by the time it's ready to send
-	the next command, it uses an NMI to force the issue; unfortunately, this
-	seems to really screw up the sound system. It turns out it's better to
-	just wait for the original interrupt to occur naturally */
-/*	cpunum_set_input_line(2, INPUT_LINE_NMI, data & 0x40  ? CLEAR_LINE : ASSERT_LINE);*/
+/*  If the master CPU doesn't get a response by the time it's ready to send
+    the next command, it uses an NMI to force the issue; unfortunately, this
+    seems to really screw up the sound system. It turns out it's better to
+    just wait for the original interrupt to occur naturally */
+/*  cpunum_set_input_line(2, INPUT_LINE_NMI, data & 0x40  ? CLEAR_LINE : ASSERT_LINE);*/
 
 	/* INT0 */
 	if (data & 0x20)
@@ -1731,7 +1731,7 @@ WRITE8_HANDLER( leland_i86_control_w )
 
 /*************************************
  *
- *	Sound command handling
+ *  Sound command handling
  *
  *************************************/
 
@@ -1774,7 +1774,7 @@ static READ8_HANDLER( main_to_sound_comm_r )
 
 /*************************************
  *
- *	Sound response handling
+ *  Sound response handling
  *
  *************************************/
 
@@ -1784,11 +1784,11 @@ static void delayed_response_r(int checkpc)
 	int oldaf = cpunum_get_reg(0, Z80_AF);
 
 	/* This is pretty cheesy, but necessary. Since the CPUs run in round-robin order,
-	   synchronizing on the write to this register from the slave side does nothing.
-	   In order to make sure the master CPU get the real response, we synchronize on
-	   the read. However, the value we returned the first time around may not be
-	   accurate, so after the system has synced up, we go back into the master CPUs
-	   state and put the proper value into the A register. */
+       synchronizing on the write to this register from the slave side does nothing.
+       In order to make sure the master CPU get the real response, we synchronize on
+       the read. However, the value we returned the first time around may not be
+       accurate, so after the system has synced up, we go back into the master CPUs
+       state and put the proper value into the A register. */
 	if (pc == checkpc)
 	{
 		if (LOG_COMM) logerror("(Updated sound response latch to %02X)\n", sound_response);
@@ -1827,7 +1827,7 @@ static WRITE8_HANDLER( sound_to_main_comm_w )
 
 /*************************************
  *
- *	Low-level DAC I/O
+ *  Low-level DAC I/O
  *
  *************************************/
 
@@ -2037,7 +2037,7 @@ static WRITE8_HANDLER( ataxx_dac_control )
 
 /*************************************
  *
- *	Peripheral chip dispatcher
+ *  Peripheral chip dispatcher
  *
  *************************************/
 
@@ -2152,7 +2152,7 @@ static WRITE8_HANDLER( peripheral_w )
 
 /*************************************
  *
- *	Optimizations
+ *  Optimizations
  *
  *************************************/
 
@@ -2168,7 +2168,7 @@ void leland_i86_optimize_address(offs_t offset)
 
 /*************************************
  *
- *	Game-specific handlers
+ *  Game-specific handlers
  *
  *************************************/
 
@@ -2186,7 +2186,7 @@ WRITE8_HANDLER( ataxx_i86_control_w )
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -2219,23 +2219,23 @@ ADDRESS_MAP_END
 
 Memory configurations:
 
-	Redline Racer:
-		FFDF7:80186 upper chip select = E03C		-> E0000-FFFFF, 128k long
-		FFDF7:80186 lower chip select = 00FC		-> 00000-00FFF, 4k long
-		FFDF7:80186 peripheral chip select = 013C	-> 01000, 01080, 01100, 01180, 01200, 01280, 01300
-		FFDF7:80186 middle chip select = 81FC		-> 80000-C0000, 64k chunks, 256k total
-		FFDF7:80186 middle P chip select = A0FC
+    Redline Racer:
+        FFDF7:80186 upper chip select = E03C        -> E0000-FFFFF, 128k long
+        FFDF7:80186 lower chip select = 00FC        -> 00000-00FFF, 4k long
+        FFDF7:80186 peripheral chip select = 013C   -> 01000, 01080, 01100, 01180, 01200, 01280, 01300
+        FFDF7:80186 middle chip select = 81FC       -> 80000-C0000, 64k chunks, 256k total
+        FFDF7:80186 middle P chip select = A0FC
 
-	Quarterback, Team Quarterback, AAFB, Super Offroad, Track Pack, Pigout, Viper:
-		FFDFA:80186 upper chip select = E03C		-> E0000-FFFFF, 128k long
-		FFDFA:80186 peripheral chip select = 203C	-> 20000, 20080, 20100, 20180, 20200, 20280, 20300
-		FFDFA:80186 middle chip select = 01FC		-> 00000-7FFFF, 128k chunks, 512k total
-		FFDFA:80186 middle P chip select = C0FC
+    Quarterback, Team Quarterback, AAFB, Super Offroad, Track Pack, Pigout, Viper:
+        FFDFA:80186 upper chip select = E03C        -> E0000-FFFFF, 128k long
+        FFDFA:80186 peripheral chip select = 203C   -> 20000, 20080, 20100, 20180, 20200, 20280, 20300
+        FFDFA:80186 middle chip select = 01FC       -> 00000-7FFFF, 128k chunks, 512k total
+        FFDFA:80186 middle P chip select = C0FC
 
-	Ataxx, Indy Heat, World Soccer Finals:
-		FFD9D:80186 upper chip select = E03C		-> E0000-FFFFF, 128k long
-		FFD9D:80186 peripheral chip select = 043C	-> 04000, 04080, 04100, 04180, 04200, 04280, 04300
-		FFD9D:80186 middle chip select = 01FC		-> 00000-7FFFF, 128k chunks, 512k total
-		FFD9D:80186 middle P chip select = C0BC
+    Ataxx, Indy Heat, World Soccer Finals:
+        FFD9D:80186 upper chip select = E03C        -> E0000-FFFFF, 128k long
+        FFD9D:80186 peripheral chip select = 043C   -> 04000, 04080, 04100, 04180, 04200, 04280, 04300
+        FFD9D:80186 middle chip select = 01FC       -> 00000-7FFFF, 128k chunks, 512k total
+        FFD9D:80186 middle P chip select = C0BC
 
 ************************************************************************/

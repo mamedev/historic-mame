@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Food Fight hardware
+    Atari Food Fight hardware
 
 ****************************************************************************/
 
@@ -16,7 +16,7 @@ static UINT8 playfield_flip;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -32,7 +32,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -53,7 +53,7 @@ VIDEO_START( foodf )
 
 /*************************************
  *
- *	Cocktail flip
+ *  Cocktail flip
  *
  *************************************/
 
@@ -70,7 +70,7 @@ void foodf_set_flip(int flip)
 
 /*************************************
  *
- *	Palette RAM write
+ *  Palette RAM write
  *
  *************************************/
 
@@ -105,7 +105,7 @@ WRITE16_HANDLER( foodf_paletteram_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 

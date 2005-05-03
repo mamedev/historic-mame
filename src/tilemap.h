@@ -7,7 +7,7 @@ struct tilemap; /* appease compiler */
 
 #define ALL_TILEMAPS	0
 /* ALL_TILEMAPS may be used with:
-	tilemap_set_flip, tilemap_mark_all_tiles_dirty
+    tilemap_set_flip, tilemap_mark_all_tiles_dirty
 */
 
 #define TILEMAP_OPAQUE					0x00
@@ -19,10 +19,10 @@ struct tilemap; /* appease compiler */
 /* Set transparency_pen to a mask.  pen&mask determines whether each pixel is in front or back half */
 #define TILEMAP_SPLIT_PENBIT			0x10
 /*
-	TILEMAP_SPLIT should be used if the pixels from a single tile
-	can appear in more than one plane.
+    TILEMAP_SPLIT should be used if the pixels from a single tile
+    can appear in more than one plane.
 
-	TILEMAP_BITMASK is used by Namco System1, Namco System2, NamcoNA1/2, Namco NB1
+    TILEMAP_BITMASK is used by Namco System1, Namco System2, NamcoNA1/2, Namco NB1
 */
 
 #define TILEMAP_IGNORE_TRANSPARENCY		0x10
@@ -31,22 +31,22 @@ struct tilemap; /* appease compiler */
 #define TILEMAP_ALPHA					0x80
 
 /*
-	when rendering a split layer, pass TILEMAP_FRONT or TILEMAP_BACK or'd with the
-	tile_priority value to specify the part to draw.
+    when rendering a split layer, pass TILEMAP_FRONT or TILEMAP_BACK or'd with the
+    tile_priority value to specify the part to draw.
 
-	when rendering a layer in alpha mode, the priority parameter
-	becomes the alpha parameter (0..255).  Split mode is still
-	available in alpha mode, ignore_transparency isn't.
+    when rendering a layer in alpha mode, the priority parameter
+    becomes the alpha parameter (0..255).  Split mode is still
+    available in alpha mode, ignore_transparency isn't.
 */
 
 extern struct tile_info
 {
 	/*
-		you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
-		in the callback.  You can use the SET_TILE_INFO() macro below to do this.
-		tile_info.flags and tile_info.priority will be automatically preset to 0,
-		games that don't need them don't need to explicitly set them to 0
-	*/
+        you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
+        in the callback.  You can use the SET_TILE_INFO() macro below to do this.
+        tile_info.flags and tile_info.priority will be automatically preset to 0,
+        games that don't need them don't need to explicitly set them to 0
+    */
 	const UINT8 *pen_data;
 	const pen_t *pal_data;
 	UINT32 flags;
@@ -75,7 +75,7 @@ extern struct tile_info
 #define TILE_FLIPY					0x02
 #define TILE_IGNORE_TRANSPARENCY	0x08
 #define TILE_4BPP					0x10
-/*		TILE_SPLIT					0x60 */
+/*      TILE_SPLIT                  0x60 */
 
 /* TILE_SPLIT is for use with TILEMAP_SPLIT layers.  It selects transparency type. */
 #define TILE_SPLIT_OFFSET			5
@@ -84,9 +84,9 @@ extern struct tile_info
 #define TILE_FLIPYX(YX)				(YX)
 #define TILE_FLIPXY(XY)				((((XY)>>1)|((XY)<<1))&3)
 /*
-	TILE_FLIPYX is a shortcut that can be used by approx 80% of games,
-	since yflip frequently occurs one bit higher than xflip within a
-	tile attributes byte.
+    TILE_FLIPYX is a shortcut that can be used by approx 80% of games,
+    since yflip frequently occurs one bit higher than xflip within a
+    tile attributes byte.
 */
 
 #define TILE_LINE_DISABLED 0x80000000

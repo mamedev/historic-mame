@@ -128,23 +128,23 @@ The eight bits taken as parameter set address lines 16 to 23.
 BRANCH OPCODE TABLE :
 ---------------------
 
-Opcode	M6809	Konami
-BRA		20		60
-BRN		21		70
-BHI		22		61
-BLS		23		71
-BCC		24		62
-BCS		25		72
-BNE		26		63
-BEQ		27		73
-BVC		28		64
-BVS		29		74
-BPL		2a		65
-BMI		2b		75
-BGE		2c		66
-BLT		2d		76
-BGT		2e		67
-BLE		2f		77
+Opcode  M6809   Konami
+BRA     20      60
+BRN     21      70
+BHI     22      61
+BLS     23      71
+BCC     24      62
+BCS     25      72
+BNE     26      63
+BEQ     27      73
+BVC     28      64
+BVS     29      74
+BPL     2a      65
+BMI     2b      75
+BGE     2c      66
+BLT     2d      76
+BGT     2e      67
+BLE     2f      77
 
 Long versions of the branchs are the number + 8.
 
@@ -552,7 +552,7 @@ static void do_addressing( char *buf ) {
 
 /*********************************************************************************
 
-	Opcodes
+    Opcodes
 
 *********************************************************************************/
 
@@ -1571,7 +1571,7 @@ static void absd( char *buf ) {
 
 /*********************************************************************************
 
-	Opcode Table
+    Opcode Table
 
 *********************************************************************************/
 

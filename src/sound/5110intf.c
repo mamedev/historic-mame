@@ -53,16 +53,16 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 {
 	static const struct TMS5110interface dummy = { 0 };
 	struct tms5110_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 	info->intf = config ? config : &dummy;
-	
+
 	info->chip = tms5110_create();
 	if (!info->chip)
 		return NULL;
 	sound_register_token(info);
-	
+
 	/* initialize a stream */
 	info->stream = stream_create(0, 1, Machine->sample_rate, info, tms5110_update);
 

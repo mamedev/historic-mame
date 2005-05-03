@@ -40,121 +40,121 @@ Sound: Z80 slave w/2 AY3910 sound chips
 Graphics: Bitmapped display, no sprites (!)
 Memory Map:
 
-Address		R/W	Bits		Function
+Address     R/W Bits        Function
 ------------------------------------------------------------------------------------------------------
-$0000-$7fff				Video RAM
-					- Screen is stored sideways, 256x256 pixels
-					- 1 byte=2 pixels
-		R/W	aaaaxxxx	- leftmost pixel palette index
-		R/W	xxxxbbbb	- rightmost pixel palette index
-					- **** not correct **** Looks like some of this memory is for I/O state, (I think < $0100)
-					  so you might want to blit from $0100-$7fff
+$0000-$7fff             Video RAM
+                    - Screen is stored sideways, 256x256 pixels
+                    - 1 byte=2 pixels
+        R/W aaaaxxxx    - leftmost pixel palette index
+        R/W xxxxbbbb    - rightmost pixel palette index
+                    - **** not correct **** Looks like some of this memory is for I/O state, (I think < $0100)
+                      so you might want to blit from $0100-$7fff
 
-$8000-$800f	R/W     aaaaaaaa	Palette colors
-					- Don't know how to decode them into RGB values
+$8000-$800f R/W     aaaaaaaa    Palette colors
+                    - Don't know how to decode them into RGB values
 
-$8100		W			Not sure
-					- Video chip function of some sort
-					( split screen y pan position -- TT )
+$8100       W           Not sure
+                    - Video chip function of some sort
+                    ( split screen y pan position -- TT )
 
-$8120		R			Not sure
-					- Read from quite frequently
-					- Some sort of video or interrupt thing?
-					- Or a random number seed?
-					( watchdog reset -- NS )
+$8120       R           Not sure
+                    - Read from quite frequently
+                    - Some sort of video or interrupt thing?
+                    - Or a random number seed?
+                    ( watchdog reset -- NS )
 
-$8160					Dip Switch 2
-					- Inverted bits (ie. 1=off)
-		R	xxxxxxxa	DSWI1
-		R
-		R			.
-		R			.
-		R			.
-		R
-		R
-		R	axxxxxxx	DSWI8
+$8160                   Dip Switch 2
+                    - Inverted bits (ie. 1=off)
+        R   xxxxxxxa    DSWI1
+        R
+        R           .
+        R           .
+        R           .
+        R
+        R
+        R   axxxxxxx    DSWI8
 
-$8180					I/O: Coin slots, service, 1P/2P buttons
-		R
+$8180                   I/O: Coin slots, service, 1P/2P buttons
+        R
 
-$81a0					Player 1 I/O
-		R
+$81a0                   Player 1 I/O
+        R
 
-$81c0					Player 2 I/O
-		R
+$81c0                   Player 2 I/O
+        R
 
-$81e0					Dip Switch 1
-					- Inverted bits
-		R	xxxxxxxa	DSWI1
-		R
-		R			.
-		R			.
-		R			.
-		R
-		R
-		R	axxxxxxx	DSWI8
+$81e0                   Dip Switch 1
+                    - Inverted bits
+        R   xxxxxxxa    DSWI1
+        R
+        R           .
+        R           .
+        R           .
+        R
+        R
+        R   axxxxxxx    DSWI8
 
-$8200					IST on schematics
-					- Enable/disable IRQ
-		R/W	xxxxxxxa	- a=1 IRQ can be fired, a=0 IRQ can't be fired
+$8200                   IST on schematics
+                    - Enable/disable IRQ
+        R/W xxxxxxxa    - a=1 IRQ can be fired, a=0 IRQ can't be fired
 
-$8202					OUT2 (Coin counter)
-		W	xxxxxxxa	- Increment coin counter
+$8202                   OUT2 (Coin counter)
+        W   xxxxxxxa    - Increment coin counter
 
-$8203					OUT1 (Coin counter)
-		W	xxxxxxxa	- Increment coin counter
+$8203                   OUT1 (Coin counter)
+        W   xxxxxxxa    - Increment coin counter
 
-$8204					Not sure - 401 on schematics
-		W
+$8204                   Not sure - 401 on schematics
+        W
 
-$8205					MUT on schematics
-		R/W	xxxxxxxa	- Sound amplification on/off?
+$8205                   MUT on schematics
+        R/W xxxxxxxa    - Sound amplification on/off?
 
-$8206					HFF on schematics
-		W			- Don't know what it does
-					( horizontal screen flip -- NS )
+$8206                   HFF on schematics
+        W           - Don't know what it does
+                    ( horizontal screen flip -- NS )
 
-$8207					Not sure - can't resolve on schematics
-		W
-					( vertical screen flip -- NS )
+$8207                   Not sure - can't resolve on schematics
+        W
+                    ( vertical screen flip -- NS )
 
-$8300					Graphics bank select
-		W	xxxxxaaa	- Selects graphics ROM 0-11 that appears at $9000-9fff
-					- But wait! There's only 9 ROMs not 12! I think the PCB allows 12
-					  ROMs for patches/mods to the game. Just make 9-11 return 0's
+$8300                   Graphics bank select
+        W   xxxxxaaa    - Selects graphics ROM 0-11 that appears at $9000-9fff
+                    - But wait! There's only 9 ROMs not 12! I think the PCB allows 12
+                      ROMs for patches/mods to the game. Just make 9-11 return 0's
 
-$8600		W			SON on schematics
-					( trigger interrupt on audio CPU -- NS )
-$8608		R/W			SON on schematics
-					- Sound on/off? i.e. Run/halt Z80 sound CPU?
+$8600       W           SON on schematics
+                    ( trigger interrupt on audio CPU -- NS )
+$8608       R/W         SON on schematics
+                    - Sound on/off? i.e. Run/halt Z80 sound CPU?
 
-$8700		W	aaaaaaaa	SDA on schematics
-					- Sound data? Maybe Z80 polls here and plays the appropriate sound?
-					- If so, easy to trigger samples here
+$8700       W   aaaaaaaa    SDA on schematics
+                    - Sound data? Maybe Z80 polls here and plays the appropriate sound?
+                    - If so, easy to trigger samples here
 
-$8800-$8fff				RAM
-		R/W			- Memory for the program ROMs
+$8800-$8fff             RAM
+        R/W         - Memory for the program ROMs
 
-$9000-$9fff				Graphics ROMs ra1_1i.cpu - ra1_9i.cpu
-		R	aaaaaaaa	- See address $8300 for usage
+$9000-$9fff             Graphics ROMs ra1_1i.cpu - ra1_9i.cpu
+        R   aaaaaaaa    - See address $8300 for usage
 
-$a000-$afff				ROM ra1_1h.cpu
-		R	aaaaaaaa	- 6809 Code
+$a000-$afff             ROM ra1_1h.cpu
+        R   aaaaaaaa    - 6809 Code
 
-$b000-$bfff				ROM ra1_2h.cpu
-		R	aaaaaaaa	- 6809 Code
+$b000-$bfff             ROM ra1_2h.cpu
+        R   aaaaaaaa    - 6809 Code
 
-$c000-$cfff				ROM ra1_3h.cpu
-		R	aaaaaaaa	- 6809 Code
+$c000-$cfff             ROM ra1_3h.cpu
+        R   aaaaaaaa    - 6809 Code
 
-$d000-$dfff				ROM ra1_4h.cpu
-		R	aaaaaaaa	- 6809 Code
+$d000-$dfff             ROM ra1_4h.cpu
+        R   aaaaaaaa    - 6809 Code
 
-$e000-$efff				ROM ra1_5h.cpu
-		R	aaaaaaaa	- 6809 Code
+$e000-$efff             ROM ra1_5h.cpu
+        R   aaaaaaaa    - 6809 Code
 
-$f000-$ffff				ROM ra1_6h.cpu
-		R	aaaaaaaa	- 6809 Code
+$f000-$ffff             ROM ra1_6h.cpu
+        R   aaaaaaaa    - 6809 Code
 
 Programming notes:
 
@@ -377,7 +377,7 @@ static MACHINE_DRIVER_START( tutankhm )
 	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
 	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
 	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
-	
+
 	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)

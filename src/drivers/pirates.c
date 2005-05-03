@@ -139,19 +139,19 @@ static WRITE16_HANDLER( pirates_out_w )
 		/* bit 7 used (function unknown) */
 	}
 
-//	logerror("%06x: out_w %04x\n",activecpu_get_pc(),data);
+//  logerror("%06x: out_w %04x\n",activecpu_get_pc(),data);
 }
 
 static READ16_HANDLER( pirates_in1_r )
 {
-//	static int prot = 0xa3;
+//  static int prot = 0xa3;
 	int bit;
 
-//	logerror("%06x: IN1_r\n",activecpu_get_pc());
+//  logerror("%06x: IN1_r\n",activecpu_get_pc());
 
 #if 0
 	/* Pirates protection workaround. It more complicated than this... see code at
-	   602e and 62a6 */
+       602e and 62a6 */
 	/* For Genix, see 6576 for setting values and 67c2,d3b4 and dbc2 for tests. */
 
 	if (activecpu_get_pc() == 0x6134)
@@ -182,9 +182,9 @@ static ADDRESS_MAP_START( pirates_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x400000, 0x400001) AM_READ(pirates_in1_r)
-//	AM_RANGE(0x500000, 0x5007ff) AM_READ(MRA16_RAM)
+//  AM_RANGE(0x500000, 0x5007ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM)
-//	AM_RANGE(0x900000, 0x903fff) AM_READ(MRA16_RAM)
+//  AM_RANGE(0x900000, 0x903fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xa00000, 0xa00001) AM_READ(OKIM6295_status_0_lsb_r)
 ADDRESS_MAP_END
 
@@ -192,16 +192,16 @@ static ADDRESS_MAP_START( pirates_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) // main ram
 	AM_RANGE(0x500000, 0x5007ff) AM_WRITE(MWA16_RAM) AM_BASE(&pirates_spriteram)
-//	AM_RANGE(0x500800, 0x50080f) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x500800, 0x50080f) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(pirates_out_w)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(MWA16_RAM) AM_BASE(&pirates_scroll)	// scroll reg
 	AM_RANGE(0x800000, 0x803fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x900000, 0x90017f) AM_WRITE(MWA16_RAM)  // more of tilemaps ?
 	AM_RANGE(0x900180, 0x90137f) AM_WRITE(pirates_tx_tileram_w) AM_BASE(&pirates_tx_tileram)
 	AM_RANGE(0x901380, 0x902a7f) AM_WRITE(pirates_fg_tileram_w) AM_BASE(&pirates_fg_tileram)
-//	AM_RANGE(0x902580, 0x902a7f) AM_WRITE(MWA16_RAM)  // more of tilemaps ?
+//  AM_RANGE(0x902580, 0x902a7f) AM_WRITE(MWA16_RAM)  // more of tilemaps ?
 	AM_RANGE(0x902a80, 0x904187) AM_WRITE(pirates_bg_tileram_w) AM_BASE(&pirates_bg_tileram)
-//	AM_RANGE(0x903c80, 0x904187) AM_WRITE(MWA16_RAM)  // more of tilemaps ?
+//  AM_RANGE(0x903c80, 0x904187) AM_WRITE(MWA16_RAM)  // more of tilemaps ?
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(OKIM6295_data_0_lsb_w)
 ADDRESS_MAP_END
 

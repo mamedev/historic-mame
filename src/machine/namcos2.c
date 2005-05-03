@@ -65,7 +65,7 @@ READ16_HANDLER( namcos2_flap_prot_r )
 }
 
 /*************************************************************/
-/* Perform basic machine initialisation 					 */
+/* Perform basic machine initialisation                      */
 /*************************************************************/
 
 MACHINE_INIT( namcos2 ){
@@ -90,7 +90,7 @@ MACHINE_INIT( namcos2 ){
 }
 
 /*************************************************************/
-/* EEPROM Load/Save and read/write handling 				 */
+/* EEPROM Load/Save and read/write handling                  */
 /*************************************************************/
 
 data16_t *namcos2_eeprom;
@@ -129,7 +129,7 @@ READ16_HANDLER( namcos2_68k_eeprom_r ){
 }
 
 /*************************************************************/
-/* 68000 Shared memory area - Data ROM area 				 */
+/* 68000 Shared memory area - Data ROM area                  */
 /*************************************************************/
 READ16_HANDLER( namcos2_68k_data_rom_r ){
 	data16_t *ROM = (data16_t *)memory_region(REGION_USER1);
@@ -139,7 +139,7 @@ READ16_HANDLER( namcos2_68k_data_rom_r ){
 
 
 /**************************************************************/
-/* 68000 Shared serial communications processor (CPU5?) 	  */
+/* 68000 Shared serial communications processor (CPU5?)       */
 /**************************************************************/
 
 data16_t  namcos2_68k_serial_comms_ctrl[0x8];
@@ -174,38 +174,38 @@ WRITE16_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 }
 
 /*************************************************************/
-/* 68000 Shared protection/random key generator 			 */
+/* 68000 Shared protection/random key generator              */
 /*************************************************************
 
 Custom chip ID numbers:
 
-Game		Year	ID (dec)	ID (hex)
---------	----	---			-----
-finallap	1987
-assault		1988	unused
-metlhawk	1988
-ordyne		1988	176			$00b0
-mirninja	1988	177			$00b1
-phelios		1988	178			$00b2	readme says 179
-dirtfoxj	1989	180			$00b4
-fourtrax	1989
-valkyrie	1989
-finehour	1989	188			$00bc
-burnforc	1989	189			$00bd
-marvland	1989	190			$00be
-kyukaidk	1990	191			$00bf
-dsaber		1990	192			$00c0
-finalap2	1990	318			$013e
-rthun2		1990	319			$013f
-gollygho	1990				$0143
-cosmogng	1991	330			$014a
-sgunner2	1991	346			$015a	ID out of order; gfx board is not standard
-finalap3	1992	318			$013e	same as finalap2
-suzuka8h	1992
-sws92		1992	331			$014b
-sws92g		1992	332			$014c
-suzuk8h2	1993
-sws93		1993	334			$014e
+Game        Year    ID (dec)    ID (hex)
+--------    ----    ---         -----
+finallap    1987
+assault     1988    unused
+metlhawk    1988
+ordyne      1988    176         $00b0
+mirninja    1988    177         $00b1
+phelios     1988    178         $00b2   readme says 179
+dirtfoxj    1989    180         $00b4
+fourtrax    1989
+valkyrie    1989
+finehour    1989    188         $00bc
+burnforc    1989    189         $00bd
+marvland    1989    190         $00be
+kyukaidk    1990    191         $00bf
+dsaber      1990    192         $00c0
+finalap2    1990    318         $013e
+rthun2      1990    319         $013f
+gollygho    1990                $0143
+cosmogng    1991    330         $014a
+sgunner2    1991    346         $015a   ID out of order; gfx board is not standard
+finalap3    1992    318         $013e   same as finalap2
+suzuka8h    1992
+sws92       1992    331         $014b
+sws92g      1992    332         $014c
+suzuk8h2    1993
+sws93       1993    334         $014e
  *************************************************************/
 static int sendval = 0;
 READ16_HANDLER( namcos2_68k_key_r )
@@ -320,9 +320,9 @@ READ16_HANDLER( namcos2_68k_key_r )
 	case NAMCOS2_SUPER_WSTADIUM:
 		switch(offset)
 		{
-	//	case 3: return 0x142;
+	//  case 3: return 0x142;
 		case 4: return 0x142;
-	//	case 3: usrintf_showmessage("blah %08x",activecpu_get_pc());
+	//  case 3: usrintf_showmessage("blah %08x",activecpu_get_pc());
 		default: return mame_rand();
 		}
 		break;
@@ -390,7 +390,7 @@ WRITE16_HANDLER( namcos2_68k_key_w )
 }
 
 /*************************************************************/
-/* 68000 Interrupt/IO Handlers - CUSTOM 148 - NOT SHARED	 */
+/* 68000 Interrupt/IO Handlers - CUSTOM 148 - NOT SHARED     */
 /*************************************************************/
 
 #define NO_OF_LINES 	256
@@ -435,7 +435,7 @@ ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
 	case 0x1d2000:
 		if( bWrite )
 		{
-		//	printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_1], CLEAR_LINE);
 		break;
@@ -451,7 +451,7 @@ ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
 	case 0x1d6000:
 		if( bWrite )
 		{
-		//	printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
 		break;
@@ -459,7 +459,7 @@ ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
 	case 0x1d8000: /* ack EXIRQ */
 		if( bWrite )
 		{
-		//	printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_EXIRQ], CLEAR_LINE);
 		break;
@@ -467,7 +467,7 @@ ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
 	case 0x1da000: /* ack POSIRQ */
 		if( bWrite )
 		{
-		//	printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
 		break;
@@ -475,7 +475,7 @@ ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
 	case 0x1dc000: /* ack SCIRQ */
 		if( bWrite )
 		{
-		//	printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_SERIRQ], CLEAR_LINE);
 		break;
@@ -605,7 +605,7 @@ INTERRUPT_GEN( namcos2_68k_slave_vblank )
 }
 
 /**************************************************************/
-/*	Sound sub-system										  */
+/*  Sound sub-system                                          */
 /**************************************************************/
 
 WRITE8_HANDLER( namcos2_sound_bankselect_w )
@@ -617,9 +617,9 @@ WRITE8_HANDLER( namcos2_sound_bankselect_w )
 }
 
 /**************************************************************/
-/*															  */
-/*	68705 IO CPU Support functions							  */
-/*															  */
+/*                                                            */
+/*  68705 IO CPU Support functions                            */
+/*                                                            */
 /**************************************************************/
 
 static int namcos2_mcu_analog_ctrl=0;

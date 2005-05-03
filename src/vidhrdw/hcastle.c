@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Haunted Castle video emulation
+    Haunted Castle video emulation
 
 ***************************************************************************/
 
@@ -45,7 +45,7 @@ PALETTE_INIT( hcastle )
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -103,7 +103,7 @@ static void get_bg_tile_info(int tile_index)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -124,7 +124,7 @@ VIDEO_START( hcastle )
 
 /***************************************************************************
 
-	Memory handlers
+    Memory handlers
 
 ***************************************************************************/
 
@@ -223,8 +223,8 @@ VIDEO_UPDATE( hcastle )
 	tilemap_set_scrolly(fg_tilemap,0,K007121_ctrlram[0][2]);
 	tilemap_set_scrollx(fg_tilemap,0,((K007121_ctrlram[0][1]<<8)+K007121_ctrlram[0][0]));
 
-//	/* Sprite priority */
-//	if (K007121_ctrlram[0][3]&0x20)
+//  /* Sprite priority */
+//  if (K007121_ctrlram[0][3]&0x20)
 	if ((gfx_bank & 0x04) == 0)
 	{
 		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);

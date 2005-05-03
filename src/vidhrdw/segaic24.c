@@ -503,7 +503,7 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		if(hscr & 0x8000) {
 			//#ifdef MAME_DEBUG
 			usrintf_showmessage("Linescroll with special mode %04x", ctrl);
-			//			return;
+			//          return;
 			//#endif
 		} else {
 			tilemap_set_scrollx(sys24_tile_layer[layer],   0, -(hscr & 0x1ff));
@@ -676,7 +676,7 @@ int sys24_sprite_vh_start(void)
 		return 1;
 
 	state_save_register_UINT16("system24 sprite", 0, "ram", sys24_sprite_ram, 0x20000);
-	//	kc = 0;
+	//  kc = 0;
 	return 0;
 }
 
@@ -684,7 +684,7 @@ int sys24_sprite_vh_start(void)
       Normal sprite:
     0   00Znnnnn    nnnnnnnn    zoom mode (1 = separate x and y), next sprite
     1   xxxxxxxx    yyyyyyyy    zoom x, zoom y (zoom y is used for both when mode = 0)
-	2   --TTTTTT    TTTTTTTT    sprite number
+    2   --TTTTTT    TTTTTTTT    sprite number
     3   -CCCCCCC    CCCCCCCC    indirect palette base
     4   FSSSYYYY    YYYYYYYY    flipy, y size, top
     5   FSSSXXXX    XXXXXXXX    flipx, x size, left
@@ -753,7 +753,7 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		int flipx, flipy;
 		int zoomx, zoomy;
 		UINT8 pm[16];
-		//		int dump;
+		//      int dump;
 		int xmod, ymod;
 		int min_x, min_y, max_x, max_y;
 

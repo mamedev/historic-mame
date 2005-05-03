@@ -71,7 +71,7 @@
  *
  *  DISCRETE_SOUND_START(test_interface)
  *      DISCRETE_INPUT_LOGIC(NODE_01)
- *      DISCRETE_SQUAREWFIX(NODE_11, 1, 0.5, 1, 50, 1.0/2, 0)	// Output 0:1
+ *      DISCRETE_SQUAREWFIX(NODE_11, 1, 0.5, 1, 50, 1.0/2, 0)   // Output 0:1
  *      DISCRETE_SINEWAVE(NODE_12, NODE_11, 2000, 10000, 0, 0)
  *      DISCRETE_LOGIC_INVERT(NODE_13, 1, NODE_11)
  *      DISCRETE_SINEWAVE(NODE_14, NODE_13, 4000, 10000, 0, 0)
@@ -2395,7 +2395,7 @@
 
 /*************************************
  *
- *	Core constants
+ *  Core constants
  *
  *************************************/
 
@@ -2407,7 +2407,7 @@
 
 /*************************************
  *
- *	Node-specific constants
+ *  Node-specific constants
  *
  *************************************/
 
@@ -2528,7 +2528,7 @@ enum
 #define DISC_SCHMITT_OSC_ENAB_IS_NOR	0x06
 
 #define DISC_SCHMITT_OSC_ENAB_MASK		0x06	/* Bits that define output enable type.
-						 						 * Used only internally in module. */
+                                                 * Used only internally in module. */
 
 /* 555 Common output flags */
 #define DISC_555_OUT_DC					0x00
@@ -2547,7 +2547,7 @@ enum
 #define DISC_555_OUT_COUNT_R_X			0x07
 
 #define DISC_555_OUT_MASK				0x07	/* Bits that define output type.
-												 * Used only internally in module. */
+                                                 * Used only internally in module. */
 
 #define DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE		0x80
 
@@ -2560,7 +2560,7 @@ enum
 #define DISC_566_OUT_LOGIC				0x20	/* 0/1 logic output */
 
 #define DISC_566_OUT_MASK				0x30	/* Bits that define output type.
-												 * Used only internally in module. */
+                                                 * Used only internally in module. */
 
 /* Oneshot types */
 #define DISC_ONESHOT_FEDGE				0x00
@@ -2575,8 +2575,8 @@ enum
 
 /*************************************
  *
- *	The discrete sound blocks as
- *	defined in the drivers
+ *  The discrete sound blocks as
+ *  defined in the drivers
  *
  *************************************/
 
@@ -2594,7 +2594,7 @@ struct discrete_sound_block
 
 /*************************************
  *
- *	Discrete module definition
+ *  Discrete module definition
  *
  *************************************/
 
@@ -2612,7 +2612,7 @@ struct discrete_module
 
 /*************************************
  *
- *	Internal structure of a node
+ *  Internal structure of a node
  *
  *************************************/
 
@@ -2635,7 +2635,7 @@ struct node_description
 
 /*************************************
  *
- *	Node-specific struct types
+ *  Node-specific struct types
  *
  *************************************/
 
@@ -2836,7 +2836,7 @@ struct discrete_adsr
 
 /*************************************
  *
- *	The node numbers themselves
+ *  The node numbers themselves
  *
  *************************************/
 
@@ -2883,13 +2883,13 @@ enum { NODE_00=0x40000000
 
 /*************************************
  *
- *	Enumerated values for Node types
- *	in the simulation
+ *  Enumerated values for Node types
+ *  in the simulation
  *
- *		DSS - Discrete Sound Source
- *		DST - Discrete Sound Transform
- *		DSD - Discrete Sound Device
- *		DSO - Discrete Sound Output
+ *      DSS - Discrete Sound Source
+ *      DST - Discrete Sound Transform
+ *      DSD - Discrete Sound Device
+ *      DSO - Discrete Sound Output
  *
  *************************************/
 
@@ -2954,7 +2954,7 @@ enum
 	DST_MIXER,			/* Final Mixing Stage */
 	DST_TVCA_OP_AMP,	/* Triggered Op Amp Voltage controlled  amplifier circuits */
 	DST_VCA,			/* IC Voltage controlled  amplifiers */
-//	DST_DELAY,			/* Phase shift/Delay line */
+//  DST_DELAY,          /* Phase shift/Delay line */
 
 	/* from disc_flt.c */
 	/* generic modules */
@@ -2991,8 +2991,8 @@ enum
 
 /*************************************
  *
- *	Encapsulation macros for defining
- *	your simulation
+ *  Encapsulation macros for defining
+ *  your simulation
  *
  *************************************/
 
@@ -3129,7 +3129,7 @@ enum
 
 /*************************************
  *
- *	Interface to the external world
+ *  Interface to the external world
  *
  *************************************/
 

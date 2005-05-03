@@ -182,7 +182,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( kncljoe )
 
 	/* basic machine hardware */
-//	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz */
+//  MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz */
 	MDRV_CPU_ADD(Z80, 5500000) /* 4 MHz is too low. The game loop never finishes a frame in time. */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

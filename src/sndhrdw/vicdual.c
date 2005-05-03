@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	sndhrdw\vicdual.c
+    sndhrdw\vicdual.c
 
 *************************************************************************/
 
@@ -60,10 +60,10 @@ const struct discrete_mixer_desc frogsMixer =
 
 DISCRETE_SOUND_START(frogs_discrete_interface)
 	/************************************************
-	 * Input register mapping for frogs
-	 *
-	 * All inputs are inverted by initial transistor.
-	 ************************************************/
+     * Input register mapping for frogs
+     *
+     * All inputs are inverted by initial transistor.
+     ************************************************/
 	DISCRETE_INPUT_LOGIC(FROGS_FLY_EN)
 	DISCRETE_INPUT_NOT(FROGS_JUMP_EN)
 	DISCRETE_INPUT_NOT(FROGS_HOP_EN)
@@ -76,18 +76,18 @@ DISCRETE_SOUND_START(frogs_discrete_interface)
 	DISCRETE_555_MSTABLE(NODE_30, 1, FROGS_TONGUE_EN, RES_K(100), CAP_U(1), &frogsZip555m)
 
 	/* Q11 & Q12 transform the voltage from the oneshot U4, to what is
-	 * needed by the 555CC circuit.  Vin to R29 must be > 1V for things
-	 * to change.  <=1 then The Vout of this circuit is 12V.
-	 * The Current thru R28 equals current thru R51. iR28 = iR51
-	 * So when Vin>.5, iR51 = (Vin-.5)/39k.  =0 when Vin<=.5
-	 * So the voltage drop across R28 is vR28 = iR51 * 22k.
-	 * Finally the Vout = 12 - vR28.
-	 * Note this formula only works when Vin < 39/(22+39)*12V+1.
-	 * Which it always is, due to the 555 clamping to 12V*2/3.
-	 * The Zip effect is hard to emulate 100% due to loading effects
-	 * of the output stage on the charge stage.  So I added some values
-	 * to get a similar waveshape to the breadboarded circuit.
-	 */
+     * needed by the 555CC circuit.  Vin to R29 must be > 1V for things
+     * to change.  <=1 then The Vout of this circuit is 12V.
+     * The Current thru R28 equals current thru R51. iR28 = iR51
+     * So when Vin>.5, iR51 = (Vin-.5)/39k.  =0 when Vin<=.5
+     * So the voltage drop across R28 is vR28 = iR51 * 22k.
+     * Finally the Vout = 12 - vR28.
+     * Note this formula only works when Vin < 39/(22+39)*12V+1.
+     * Which it always is, due to the 555 clamping to 12V*2/3.
+     * The Zip effect is hard to emulate 100% due to loading effects
+     * of the output stage on the charge stage.  So I added some values
+     * to get a similar waveshape to the breadboarded circuit.
+     */
 	DISCRETE_TRANSFORM5(NODE_31, 1, 12, NODE_30, .5, RES_K(22)/RES_K(39), 0, "012-P4>*3*-")
 
 	DISCRETE_555_CC(NODE_32, 1, NODE_31, RES_K(1.1), CAP_U(0.14), 0, RES_K(100), 500, &frogsZip555cc)
@@ -128,12 +128,12 @@ WRITE8_HANDLER( frogs_sh_port2_w )
 	int new_croak = data & 0x08;
 	int new_buzzz = data & 0x10;
 
-//	discrete_sound_w(FROGS_HOP_EN, data & 0x01);
-//	discrete_sound_w(FROGS_JUMP_EN, data & 0x02);
+//  discrete_sound_w(FROGS_HOP_EN, data & 0x01);
+//  discrete_sound_w(FROGS_JUMP_EN, data & 0x02);
 	discrete_sound_w(FROGS_TONGUE_EN, data & 0x04);
-//	discrete_sound_w(FROGS_CAPTURE_EN, data & 0x08);
-//	discrete_sound_w(FROGS_FLY_EN, data & 0x10);
-//	discrete_sound_w(FROGS_SPLASH_EN, data & 0x80);
+//  discrete_sound_w(FROGS_CAPTURE_EN, data & 0x08);
+//  discrete_sound_w(FROGS_FLY_EN, data & 0x10);
+//  discrete_sound_w(FROGS_SPLASH_EN, data & 0x80);
 
 	if (data & 0x01)
 		sample_start (3, 3, 0);	// Hop
@@ -152,16 +152,16 @@ WRITE8_HANDLER( frogs_sh_port2_w )
 	if (new_buzzz)
 	{
 		/* The Buzzz sound starts off a little louder in volume then
-		 * settles down to a steady buzzz.  Whenever the trigger goes
-		 * low, the sound is disabled.  If it then goes high, the buzzz
-		 * then starts off louder again.  The games does this every time
-		 * the fly moves.
-		 * So I made the sample start with the louder effect and then play
-		 * for 12 seconds.  A fly should move before this.  If not the
-		 * sample loops, adding the loud part as if the fly moved.
-		 * This is obviously incorrect, but a fly never stands still for
-		 * 12 seconds.
-		 */
+         * settles down to a steady buzzz.  Whenever the trigger goes
+         * low, the sound is disabled.  If it then goes high, the buzzz
+         * then starts off louder again.  The games does this every time
+         * the fly moves.
+         * So I made the sample start with the louder effect and then play
+         * for 12 seconds.  A fly should move before this.  If not the
+         * sample loops, adding the loud part as if the fly moved.
+         * This is obviously incorrect, but a fly never stands still for
+         * 12 seconds.
+         */
 		if (!last_buzzz)
 			sample_start (1, 1, 1);	// Buzzz
 	}

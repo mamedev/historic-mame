@@ -149,7 +149,7 @@ INTERRUPT_GEN( getstar_interrupt )
 
 WRITE8_HANDLER( getstar_port_04_w )
 {
-//	cpu_halt(0,0);
+//  cpu_halt(0,0);
 }
 
 

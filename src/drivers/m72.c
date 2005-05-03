@@ -15,7 +15,7 @@ X Multiply                         1989  M72(1)          Y
 Dragon Breed                       1989  M81             Y
 R-Type II                          1989  M82/M84(2)      N
 Major Title                        1990  M84             N
-Hammerin' Harry	/ Daiku no Gensan  1990  M82(3)          N
+Hammerin' Harry / Daiku no Gensan  1990  M82(3)          N
                   Daiku no Gensan  1990  M72(4)          Y
 Pound for Pound                    1990  M85             N
 Air Duel                           1990  M72?            Y
@@ -64,7 +64,7 @@ poundfor    0x20   17    20 0F 0A
 xmultipl    0x08   13    08 0F FA
 dbreed       "     "     "
 hharry       "     "     "
-cosmccop	0x18   --------------
+cosmccop    0x18   --------------
 kengo       0x18   --------------
 
 ***************************************************************************/
@@ -744,7 +744,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x82, 0x83) AM_WRITE(m72_scrollx1_w)
 	AM_RANGE(0x84, 0x85) AM_WRITE(m72_scrolly2_w)
 	AM_RANGE(0x86, 0x87) AM_WRITE(m72_scrollx2_w)
-/*	{ 0xc0, 0xc0      trigger sample, filled by init_ function */
+/*  { 0xc0, 0xc0      trigger sample, filled by init_ function */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( xmultipl_writeport, ADDRESS_SPACE_IO, 8 )
@@ -757,7 +757,7 @@ static ADDRESS_MAP_START( xmultipl_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x82, 0x83) AM_WRITE(m72_scrollx1_w)
 	AM_RANGE(0x84, 0x85) AM_WRITE(m72_scrolly2_w)
 	AM_RANGE(0x86, 0x87) AM_WRITE(m72_scrollx2_w)
-/*	{ 0xc0, 0xc0      trigger sample, filled by init_ function */
+/*  { 0xc0, 0xc0      trigger sample, filled by init_ function */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rtype2_writeport, ADDRESS_SPACE_IO, 8 )
@@ -800,7 +800,7 @@ static ADDRESS_MAP_START( kengo_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x82, 0x83) AM_WRITE(m72_scrollx1_w)
 	AM_RANGE(0x84, 0x85) AM_WRITE(m72_scrolly2_w)
 	AM_RANGE(0x86, 0x87) AM_WRITE(m72_scrollx2_w)
-//AM_RANGE(0x8c, 0x8f) AM_WRITE(MWA8_NOP)	/* ??? */
+//AM_RANGE(0x8c, 0x8f) AM_WRITE(MWA8_NOP)   /* ??? */
 ADDRESS_MAP_END
 
 
@@ -1763,7 +1763,7 @@ INPUT_PORTS_START( airduel )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
-//	PORT_DIPSETTING(    0x10, DEF_STR( Free-Play ) )  /* another free play */
+//  PORT_DIPSETTING(    0x10, DEF_STR( Free-Play ) )  /* another free play */
 	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_3C ) )

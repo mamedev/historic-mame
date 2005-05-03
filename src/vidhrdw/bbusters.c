@@ -1,23 +1,23 @@
 /***************************************************************************
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
-	Like NeoGeo sprite scale Y line selection is from an external rom.
+    Like NeoGeo sprite scale Y line selection is from an external rom.
 
-	For 16 high sprites scale data starts at 0x3800 (9 scale levels)
-	For 32 high sprites scale data starts at 0x7000 (17 scale levels)
-	For 64 high sprites scale data starts at 0xa000 (33 scale levels)
-	For 128 pixel high sprites scale data starts 0xc000 (65 scale levels)
+    For 16 high sprites scale data starts at 0x3800 (9 scale levels)
+    For 32 high sprites scale data starts at 0x7000 (17 scale levels)
+    For 64 high sprites scale data starts at 0xa000 (33 scale levels)
+    For 128 pixel high sprites scale data starts 0xc000 (65 scale levels)
 
-	0xe000 and up - possibly X scale data?  unconfirmed
+    0xe000 and up - possibly X scale data?  unconfirmed
 
-	Sprites are also double buffered, and this seems to be performed
-	by having two complete sprite chips that are toggled per frame, rather
-	than just ram.  Beast Busters has 4 sprite chips as it has two sprite
-	banks.
+    Sprites are also double buffered, and this seems to be performed
+    by having two complete sprite chips that are toggled per frame, rather
+    than just ram.  Beast Busters has 4 sprite chips as it has two sprite
+    banks.
 
-	Todo: Sprite priority looks to be wrong on level 2 (some sprites should
-	be behind the playfield).
+    Todo: Sprite priority looks to be wrong on level 2 (some sprites should
+    be behind the playfield).
 
 ***************************************************************************/
 
@@ -129,19 +129,19 @@ INLINE const data8_t *get_source_ptr(unsigned int sprite, int dx, int dy, int ba
 		break;
 
 	case 1: /* 32 x 32 block
-				0 1
-		        2 3
-			*/
+                0 1
+                2 3
+            */
 		ADJUST_4x4;
 		break;
 
 	case 2: /* 64 by 64 block
-				0  1	4  5
-				2  3	6  7
+                0  1    4  5
+                2  3    6  7
 
-				8  9	12 13
-				10 11	14 15
-			*/
+                8  9    12 13
+                10 11   14 15
+            */
 		ADJUST_4x4;
 		ADJUST_8x8;
 		break;
@@ -224,21 +224,21 @@ static void draw_sprites(struct mame_bitmap *bitmap, const data16_t *source, int
 		if (x>256) continue; /* Speedup */
 
 		/*
-			Source[0]:
-				0xf000:	Colour
-				0x0800: FX
-				0x0400: FY?
-				0x0300: Block control
-				0x0080: ?
-				0x007f: scale
+            Source[0]:
+                0xf000: Colour
+                0x0800: FX
+                0x0400: FY?
+                0x0300: Block control
+                0x0080: ?
+                0x007f: scale
 
-			Scale varies according to block size.
-			Block type 0: 0x70 = no scale, 0x7f == half size - 16 pixel sprite
-			Block type 1: 0x60 = no scale, 0x6f == half size - 32 pixel sprite
-			Block type 2: 0x40 = no scale, 0x5f == half size - 64 pixel sprite
-			Block type 3: 0x00 = no scale, 0x3f == half size - 128 pixel sprite
+            Scale varies according to block size.
+            Block type 0: 0x70 = no scale, 0x7f == half size - 16 pixel sprite
+            Block type 1: 0x60 = no scale, 0x6f == half size - 32 pixel sprite
+            Block type 2: 0x40 = no scale, 0x5f == half size - 64 pixel sprite
+            Block type 3: 0x00 = no scale, 0x3f == half size - 128 pixel sprite
 
-		*/
+        */
 		colour=colour>>12;
 		block=(source[offs+0]>>8)&0x3;
 		fy=source[offs+0]&0x400;
@@ -287,7 +287,7 @@ VIDEO_UPDATE( bbuster )
 	tilemap_set_scrolly( pf2_tilemap,0, bbuster_pf2_scroll_data[1] );
 
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
-//	draw_sprites(bitmap,buffered_spriteram16_2,2,0x8,0x8);
+//  draw_sprites(bitmap,buffered_spriteram16_2,2,0x8,0x8);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 	draw_sprites(bitmap,buffered_spriteram16_2,2,0,0);
 	draw_sprites(bitmap,buffered_spriteram16,1,0,0);

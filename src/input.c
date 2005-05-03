@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	input.c
+    input.c
 
-	Handle input from the user.
+    Handle input from the user.
 
 ***************************************************************************/
 
@@ -14,7 +14,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -27,7 +27,7 @@
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -43,7 +43,7 @@ struct input_code_info
 
 /*************************************
  *
- *	String <-> code matching
+ *  String <-> code matching
  *
  *************************************/
 
@@ -163,7 +163,7 @@ static struct
 	STANDARD_CODE_STRING(KEYCODE_LWIN)
  	STANDARD_CODE_STRING(KEYCODE_RWIN)
  	STANDARD_CODE_STRING(KEYCODE_MENU)
- 	
+
 	STANDARD_CODE_STRING(JOYCODE_1_LEFT)
 	STANDARD_CODE_STRING(JOYCODE_1_RIGHT)
 	STANDARD_CODE_STRING(JOYCODE_1_UP)
@@ -485,7 +485,7 @@ static struct
 
 /*************************************
  *
- *	Macros
+ *  Macros
  *
  *************************************/
 
@@ -495,7 +495,7 @@ static struct
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -512,7 +512,7 @@ static UINT8 record_analog;						/* are we recording an analog sequence? */
 
 /*************************************
  *
- *	Code table creation
+ *  Code table creation
  *
  *************************************/
 
@@ -526,23 +526,23 @@ int code_init(void)
 	/* go through and count how many non-standard inputs we have */
 	extras = 0;
 	for (info = codelist; info->name != NULL; info++)
-		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE || 
+		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE ||
 			info->inputcode == CODE_OTHER_ANALOG_RELATIVE || info->inputcode >= __code_max)
 		{
 			extras++;
 		}
-	
+
 	/* allocate the table */
 	code_map = (struct input_code_info *)malloc((__code_max + extras) * sizeof(code_map[0]));
 	if (!code_map)
 		return -1;
 	memset(code_map, 0, (__code_max + extras) * sizeof(code_map[0]));
-	
+
 	/* now go through and match up the OS codes to the standard codes */
 	code_count = __code_max;
 	for (info = codelist; info->name != NULL; info++)
 	{
-		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE || 
+		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE ||
 			info->inputcode == CODE_OTHER_ANALOG_RELATIVE || info->inputcode >= __code_max)
 		{
 			if (info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE)
@@ -564,26 +564,26 @@ int code_init(void)
 			code_map[info->inputcode].osinfo = info;
 		}
 	}
-	
+
 	/* finally, go through and make tokens for all the codes */
 	for (codenum = 0; codenum < code_count; codenum++)
 	{
 		int nameindex;
-		
+
 		/* look up the name in the standard table if we can */
 		if (codenum < __code_max)
 			for (nameindex = 0; nameindex < sizeof(standard_code_strings) / sizeof(standard_code_strings[0]); nameindex++)
 				if (standard_code_strings[nameindex].code == codenum)
 					strncpy(code_map[codenum].token, standard_code_strings[nameindex].codename, sizeof(code_map[codenum].token) - 1);
-		
+
 		/* otherwise, make one out of the OSD name */
 		if (code_map[codenum].token[0] == 0 && code_map[codenum].osinfo != NULL && code_map[codenum].osinfo->name != NULL)
 		{
 			int charindex;
-			
+
 			/* copy the user-friendly string */
 			strncpy(code_map[codenum].token, code_map[codenum].osinfo->name, sizeof(code_map[codenum].token) - 1);
-			
+
 			/* replace spaces with underscores and convert to uppercase */
 			for (charindex = 0; code_map[codenum].token[charindex] != 0; charindex++)
 			{
@@ -609,7 +609,7 @@ void code_close(void)
 
 /*************************************
  *
- *	Return the analog value of a code.
+ *  Return the analog value of a code.
  *
  *************************************/
 
@@ -628,9 +628,9 @@ INT32 code_analog_value(input_code_t code)
 
 /*************************************
  *
- *	Is a code currently pressed?
- *	(Returns 1 indefinitely while
- *	the code is pressed.)
+ *  Is a code currently pressed?
+ *  (Returns 1 indefinitely while
+ *  the code is pressed.)
  *
  *************************************/
 
@@ -649,9 +649,9 @@ int code_pressed(input_code_t code)
 
 /*************************************
  *
- *	Is a code currently pressed?
- *	(Returns 1 only once for each
- *	press.)
+ *  Is a code currently pressed?
+ *  (Returns 1 only once for each
+ *  press.)
  *
  *************************************/
 
@@ -688,10 +688,10 @@ int code_pressed_memory(input_code_t code)
 
 /*************************************
  *
- *	Is a code currently pressed?
- *	(Returns 1 only once for each
- *	press, plus once for each
- *	autorepeat.)
+ *  Is a code currently pressed?
+ *  (Returns 1 only once for each
+ *  press, plus once for each
+ *  autorepeat.)
  *
  *************************************/
 
@@ -716,19 +716,19 @@ int code_pressed_memory_repeat(input_code_t code, int speed)
 			keydelay = 3;
 			counter = 0;
 		}
-		
+
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
 		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
 		{
 			keydelay = 1;
 			counter = 0;
 		}
-		
+
 		/* otherwise, reset pressed = 0 */
 		else
 			pressed = 0;
 	}
-	
+
 	/* if we're not pressed, reset the memory field */
 	else
 		code_map[code].memory = 0;
@@ -741,11 +741,11 @@ int code_pressed_memory_repeat(input_code_t code, int speed)
 
 /*************************************
  *
- *	Is a code currently pressed?
- *	(Returns 1 if it is not pressed
- *	and hasn't been tracked by the
- *	code_pressed_memory functions
- *	above.)
+ *  Is a code currently pressed?
+ *  (Returns 1 if it is not pressed
+ *  and hasn't been tracked by the
+ *  code_pressed_memory functions
+ *  above.)
  *
  *************************************/
 
@@ -764,7 +764,7 @@ static int code_pressed_not_memorized(input_code_t code)
 		if (code_map[code].memory != 0)
 			pressed = 0;
 	}
-	
+
 	/* if we're not pressed, reset the memory field */
 	else
 		code_map[code].memory = 0;
@@ -777,9 +777,9 @@ static int code_pressed_not_memorized(input_code_t code)
 
 /*************************************
  *
- *	Return the input code if any
- *	code is pressed; otherwise return
- *	CODE_NONE.
+ *  Return the input code if any
+ *  code is pressed; otherwise return
+ *  CODE_NONE.
  *
  *************************************/
 
@@ -788,7 +788,7 @@ input_code_t code_read_async(void)
 	input_code_t code;
 
 	profiler_mark(PROFILER_INPUT);
-	
+
 	/* scan all codes for one that is pressed */
 	for (code = 0; code < code_count; code++)
 		if (code_pressed_memory(code))
@@ -802,7 +802,7 @@ input_code_t code_read_async(void)
 
 /*************************************
  *
- *	Code utilities.
+ *  Code utilities.
  *
  *************************************/
 
@@ -834,7 +834,7 @@ const char *code_name(input_code_t code)
 input_code_t token_to_code(const char *token)
 {
 	input_code_t code;
-	
+
 	/* look for special cases */
 	if (!stricmp(token, "OR"))
 		return CODE_OR;
@@ -845,7 +845,7 @@ input_code_t token_to_code(const char *token)
 	if (!stricmp(token, "DEFAULT"))
 		return CODE_DEFAULT;
 
-	/* look for a match against any of the codes in the table */	
+	/* look for a match against any of the codes in the table */
 	for (code = 0; code < code_count; code++)
 		if (!strcmp(token, code_map[code].token))
 			return code;
@@ -862,7 +862,7 @@ void code_to_token(input_code_t code, char *token)
 		strcpy(token, code_map[code].token);
 		return;
 	}
-	
+
 	/* some extra names */
 	switch (code)
 	{
@@ -871,7 +871,7 @@ void code_to_token(input_code_t code, char *token)
 		case CODE_NONE:		strcpy(token, "NONE");		return;
 		case CODE_DEFAULT:	strcpy(token, "DEFAULT");	return;
 	}
-	
+
 	/* return an empty token */
 	token[0] = 0;
 	return;
@@ -881,7 +881,7 @@ void code_to_token(input_code_t code, char *token)
 
 /*************************************
  *
- *	Sequence setting helpers.
+ *  Sequence setting helpers.
  *
  *************************************/
 
@@ -951,7 +951,7 @@ void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_c
 
 /*************************************
  *
- *	Copy and compare helpers.
+ *  Copy and compare helpers.
  *
  *************************************/
 
@@ -974,7 +974,7 @@ int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb)
 
 /*************************************
  *
- *	Is a given sequence pressed?
+ *  Is a given sequence pressed?
  *
  *************************************/
 
@@ -989,7 +989,7 @@ int seq_pressed(const input_seq_t *seq)
 	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
 	{
 		input_code_t code = seq->code[codenum];
-		
+
 		switch (code)
 		{
 			/* OR: if the preceding result was non-zero after processing at least one code, stop there */
@@ -1027,8 +1027,8 @@ int seq_pressed(const input_seq_t *seq)
 
 /*************************************
  *
- *	Determine the analog value of
- *	a sequence.
+ *  Determine the analog value of
+ *  a sequence.
  *
  *************************************/
 
@@ -1044,7 +1044,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
 	{
 		input_code_t code = seq->code[codenum];
-		
+
 		switch (code)
 		{
 			/* OR: if the preceding enable was non-zero after processing at least one code, stop there */
@@ -1080,7 +1080,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 							count++;
 						}
 					}
-					
+
 					/* for digital codes, update the enable state */
 					else
 					{
@@ -1106,8 +1106,8 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 
 /*************************************
  *
- *	Return the friendly name for a
- *	sequence
+ *  Return the friendly name for a
+ *  sequence
  *
  *************************************/
 
@@ -1159,7 +1159,7 @@ void seq_name(const input_seq_t *seq, char *buffer, unsigned max)
 
 /*************************************
  *
- *	Sequence validation
+ *  Sequence validation
  *
  *************************************/
 
@@ -1170,60 +1170,60 @@ static int is_seq_valid(const input_seq_t *seq)
 	int pending_not = 0;
 	int analog_count = 0;
 	int seqnum;
-	
+
 	for (seqnum = 0; seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE; seqnum++)
 	{
 		input_code_t code = seq->code[seqnum];
-		
+
 		switch (code)
 		{
 			case CODE_OR:
 				/* if the last code was't an operand or if there were no positive codes, this is invalid */
 				if (!last_code_was_operand || positive_code_count == 0)
 					return 0;
-				
+
 				/* reset the state after an OR */
 				pending_not = 0;
 				positive_code_count = 0;
 				last_code_was_operand = 0;
 				analog_count = 0;
 				break;
-				
+
 			case CODE_NOT:
 				/* disallow a double not */
 				if (pending_not)
 					return 0;
-				
+
 				/* note that there is a pending NOT, and that this was not an operand */
 				pending_not = 1;
 				last_code_was_operand = 0;
 				break;
-				
+
 			default:
 				/* if this code wasn't NOT-ed, increment the number of positive codes */
 				if (!pending_not)
 					positive_code_count++;
-				
+
 				/* some special checks for analog codes */
 				if (ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
 				{
 					/* NOT is invalid before an analog code */
 					if (pending_not)
 						return 0;
-					
+
 					/* there can only be one per OR section */
 					analog_count++;
 					if (analog_count > 1)
 						return 0;
 				}
-				
+
 				/* clear any pending NOTs and note that this was an operand */
 				pending_not = 0;
 				last_code_was_operand = 1;
 				break;
 		}
 	}
-	
+
 	/* we must end with an operand, and must have at least one positive code */
 	return (positive_code_count > 0) && last_code_was_operand;
 }
@@ -1232,7 +1232,7 @@ static int is_seq_valid(const input_seq_t *seq)
 
 /*************************************
  *
- *	Sequence recording
+ *  Sequence recording
  *
  *************************************/
 
@@ -1297,7 +1297,7 @@ int seq_read_async(input_seq_t *seq, int first)
 		/* if the final result is invalid, reset to nothing */
 		if (!is_seq_valid(seq))
 			seq_set_1(seq, CODE_NONE);
-		
+
 		/* return 0 to indicate that we are finished */
 		return 0;
 	}
@@ -1317,7 +1317,7 @@ int seq_read_async(input_seq_t *seq, int first)
 			record_last = clock();
 		}
 	}
-	
+
 	/* analog case: see if we have an analog change of sufficient amount (>25%) */
 	else
 	{
@@ -1335,7 +1335,7 @@ int seq_read_async(input_seq_t *seq, int first)
 						break;
 				}
 			}
-		
+
 		/* if we got one, add it to the sequence and force an update next time round */
 		if (newcode != code_count)
 		{
@@ -1343,7 +1343,7 @@ int seq_read_async(input_seq_t *seq, int first)
 			record_last = clock() - RECORD_TIME;
 		}
 	}
-	
+
 	/* return -1 to indicate that we are still reading */
 	return -1;
 }
@@ -1352,7 +1352,7 @@ int seq_read_async(input_seq_t *seq, int first)
 
 /*************************************
  *
- *	Sequence utilities
+ *  Sequence utilities
  *
  *************************************/
 
@@ -1363,24 +1363,24 @@ int string_to_seq(const char *string, input_seq_t *seq)
 
 	/* start with a blank sequence */
 	seq_set_0(seq);
-	
+
 	/* loop until we're done */
 	while (1)
 	{
 		/* trim any leading spaces */
 		while (*string != 0 && isspace(*string))
 			string++;
-		
+
 		/* bail if we're done */
 		if (*string == 0)
 			break;
-			
+
 		/* build up a token */
 		tokenpos = 0;
 		while (*string != 0 && !isspace(*string) && tokenpos < MAX_TOKEN_LEN)
 			token[tokenpos++] = toupper(*string++);
 		token[tokenpos] = 0;
-		
+
 		/* translate and add to the sequence */
 		seq->code[seqnum++] = token_to_code(token);
 	}
@@ -1391,18 +1391,18 @@ int string_to_seq(const char *string, input_seq_t *seq)
 void seq_to_string(const input_seq_t *seq, char *string, int maxlen)
 {
 	int seqnum;
-	
+
 	/* reset the output string */
 	*string = 0;
-	
+
 	/* loop over each code and translate to a string */
 	for (seqnum = 0; seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE; seqnum++)
 	{
 		char token[MAX_TOKEN_LEN];
-		
+
 		/* get the token */
 		code_to_token(seq->code[seqnum], token);
-		
+
 		/* if we will fit, append the token to the string */
 		if (strlen(string) + strlen(token) + (seqnum != 0) < maxlen)
 		{

@@ -1,5 +1,5 @@
 /*
- *	Invinco sound routines
+ *  Invinco sound routines
  */
 
 #include "driver.h"

@@ -250,7 +250,7 @@ static void f1gp_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *
 						sx,sy,
 						cliprect,TRANSPARENCY_PEN,15,
 						0x1000 * zoomx,0x1000 * zoomy,
-//						pri ? 0 : 0x2);
+//                      pri ? 0 : 0x2);
 						primask);
 				map_start++;
 			}
@@ -352,8 +352,8 @@ static void f1gp2_drawsprites(struct mame_bitmap *bitmap,const struct rectangle 
 		map_start = f1gp2_spritelist[attr_start + 3] & 0x7fff;
 
 // aerofgt has the following adjustment, but doing it here would break the title screen
-//		ox += (xsize*zoomx+2)/4;
-//		oy += (ysize*zoomy+2)/4;
+//      ox += (xsize*zoomx+2)/4;
+//      oy += (ysize*zoomy+2)/4;
 
 		zoomx = 32 - zoomx;
 		zoomy = 32 - zoomy;

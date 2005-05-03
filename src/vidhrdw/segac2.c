@@ -1,9 +1,9 @@
 /***********************************************************************************************
 
-	Sega System C/C2 Driver
-	-----------------------
-	Version 0.54 - 02 Feb 2003
-	(for changes see drivers\segac2.c)
+    Sega System C/C2 Driver
+    -----------------------
+    Version 0.54 - 02 Feb 2003
+    (for changes see drivers\segac2.c)
 
 ***********************************************************************************************/
 
@@ -17,7 +17,7 @@ void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct recta
 void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect );
 
 /******************************************************************************
-	Macros
+    Macros
 ******************************************************************************/
 
 #define BITMAP_WIDTH		320
@@ -42,7 +42,7 @@ void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct recta
 
 
 /******************************************************************************
-	Function Prototypes
+    Function Prototypes
 ******************************************************************************/
 
 static int  vdp_data_r(void);
@@ -64,7 +64,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 
 
 /******************************************************************************
-	Global variables
+    Global variables
 ******************************************************************************/
 
 /* EXTERNALLY ACCESSIBLE */
@@ -111,16 +111,16 @@ static UINT8		window_width;				/* window width */
 
 
 /******************************************************************************
-	Video Start / Stop Functions
+    Video Start / Stop Functions
 *******************************************************************************
 
-	Here we allocate memory used by the VDP and various other video related parts
-	of the System C/C2 hardware such as the Palette RAM. Here is what is needed
+    Here we allocate memory used by the VDP and various other video related parts
+    of the System C/C2 hardware such as the Palette RAM. Here is what is needed
 
-	64kb of VRAM (multi-purpose, storing tiles, tilemaps, hscroll data,
-					spritelist etc.)
+    64kb of VRAM (multi-purpose, storing tiles, tilemaps, hscroll data,
+                    spritelist etc.)
 
-	80bytes of VSRAM (used exclusively for storing Vertical Scroll values)
+    80bytes of VSRAM (used exclusively for storing Vertical Scroll values)
 
 ******************************************************************************/
 
@@ -273,7 +273,7 @@ int start_system18_vdp(void)
 
 	display_enable = 1;
 
-//	scanbase = 0;
+//  scanbase = 0;
 	scanbase = 256*2;
 	return 0;
 }
@@ -281,12 +281,12 @@ int start_system18_vdp(void)
 
 
 /******************************************************************************
-	VBLANK routines
+    VBLANK routines
 *******************************************************************************
 
-	These callbacks are used to track the state of VBLANK. At the end of
-	VBLANK, all the palette information is reset and updates to the cache
-	bitmap are enabled.
+    These callbacks are used to track the state of VBLANK. At the end of
+    VBLANK, all the palette information is reset and updates to the cache
+    bitmap are enabled.
 
 ******************************************************************************/
 
@@ -312,15 +312,15 @@ VIDEO_EOF( segac2 )
 
 
 /******************************************************************************
-	Screen Refresh Functions
+    Screen Refresh Functions
 *******************************************************************************
 
-	These are responsible for the core drawing. The update_display function
-	can be called under several circumstances to cache all the currently
-	displayed lines before a significant palette or scrolling change is
-	set to occur. The actual refresh routine marks the accumulated palette
-	entries and then converts the raw pens in the cache bitmap to their
-	final remapped values.
+    These are responsible for the core drawing. The update_display function
+    can be called under several circumstances to cache all the currently
+    displayed lines before a significant palette or scrolling change is
+    set to occur. The actual refresh routine marks the accumulated palette
+    entries and then converts the raw pens in the cache bitmap to their
+    final remapped values.
 
 ******************************************************************************/
 
@@ -385,7 +385,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 	segac2_sp_palbase = old_sp;
 
 	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
-	   the driver is in development */
+       the driver is in development */
 	/*if (readinputport(5)&0x01)*/
 		update_megatech_video_normal(bitmap, cliprect);
 
@@ -411,7 +411,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 
 	/* generate the final screen - control which screen is
-	   shown by a keystroke for now */
+       shown by a keystroke for now */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y, 0);
 
@@ -438,28 +438,28 @@ void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 /******************************************************************************
-	VDP Read & Write Handlers
+    VDP Read & Write Handlers
 *******************************************************************************
 
-	The VDP is accessed via 8 & 16 bit reads / writes at the addresses 0xC00000 -
-	0xC0001F.  Different locations have different functions in the following
-	layout.  (based on Information in Charles MacDonalds Document)
+    The VDP is accessed via 8 & 16 bit reads / writes at the addresses 0xC00000 -
+    0xC0001F.  Different locations have different functions in the following
+    layout.  (based on Information in Charles MacDonalds Document)
 
-	0xC00000 -   DATA port (8 or 16 bit, Read or Write)
-	0xC00002 -   mirror of above
-	0xC00004 -   CTRL port (8 or 16 bit, Read or Write)
-	0xC00006 -   mirror of above
-	0xC00008 -   HV counter (8 or 16 bit Read Only)
-	0xC0000A -   mirror of above
-	0xC0000C -   mirror of above
-	0xC0000E -   mirror of above
-	0xC00010 -   SN76489 (8 bit Write Only)
-	0xC00012 -   mirror of above
-	0xC00014 -   mirror of above
-	0xC00016 -   mirror of above
+    0xC00000 -   DATA port (8 or 16 bit, Read or Write)
+    0xC00002 -   mirror of above
+    0xC00004 -   CTRL port (8 or 16 bit, Read or Write)
+    0xC00006 -   mirror of above
+    0xC00008 -   HV counter (8 or 16 bit Read Only)
+    0xC0000A -   mirror of above
+    0xC0000C -   mirror of above
+    0xC0000E -   mirror of above
+    0xC00010 -   SN76489 (8 bit Write Only)
+    0xC00012 -   mirror of above
+    0xC00014 -   mirror of above
+    0xC00016 -   mirror of above
 
-	The SN76489 PSG Writes are intercepted before we get here and handled
-	directly.
+    The SN76489 PSG Writes are intercepted before we get here and handled
+    directly.
 
 ******************************************************************************/
 
@@ -532,14 +532,14 @@ WRITE16_HANDLER( segac2_vdp_w )
 
 
 /******************************************************************************
-	VDP DATA Reads / Writes (Accesses to 0xC00000 - 0xC00003)
+    VDP DATA Reads / Writes (Accesses to 0xC00000 - 0xC00003)
 *******************************************************************************
 
-	The functions here are called by the read / write handlers for the VDP.
-	They deal with Data Reads and Writes to and from the VDP Chip.
+    The functions here are called by the read / write handlers for the VDP.
+    They deal with Data Reads and Writes to and from the VDP Chip.
 
-	Read / write mode is set by Writes to VDP Control, Can't Read when in
-	write mode or vice versa.
+    Read / write mode is set by Writes to VDP Control, Can't Read when in
+    write mode or vice versa.
 
 ******************************************************************************/
 
@@ -636,36 +636,36 @@ static void vdp_data_w(int data)
 
 
 /******************************************************************************
-	VDP CTRL Reads / Writes (Accesses to 0xC00004 - 0xC00007)
+    VDP CTRL Reads / Writes (Accesses to 0xC00004 - 0xC00007)
 *******************************************************************************
 
-	A Read from the Control Port will return the Status Register Value.
-	16-bits are used to report the VDP status
-	|  0     |  0     |  1     |  1     |  0     |  1     |  FIFE  |  FIFF  |
-	|  VIP   |  SOF   |  SCL   |  ODD   |  VBLK  |  HBLK  |  DMA   |  PAL   |
+    A Read from the Control Port will return the Status Register Value.
+    16-bits are used to report the VDP status
+    |  0     |  0     |  1     |  1     |  0     |  1     |  FIFE  |  FIFF  |
+    |  VIP   |  SOF   |  SCL   |  ODD   |  VBLK  |  HBLK  |  DMA   |  PAL   |
 
-		0,1 = Set Values
-		FIFE = FIFO Empty
-		FIFF = FIFO Full
-		VIP  = Vertical Interrupt Pending
-		SOF  = Sprite Overflow  (Not used in C2 afaik)
-		SCL  = Sprite Collision (Not used in C2 afaik)
-		ODD  = Odd Frame (Interlace Mode) (Not used in C2 afaik)
-		VBLK = In Vertical Blank
-		HBLK = In Horizontal Blank
-		DMA  = DMA In Progress
-		PAL  = Pal Mode Flag
+        0,1 = Set Values
+        FIFE = FIFO Empty
+        FIFF = FIFO Full
+        VIP  = Vertical Interrupt Pending
+        SOF  = Sprite Overflow  (Not used in C2 afaik)
+        SCL  = Sprite Collision (Not used in C2 afaik)
+        ODD  = Odd Frame (Interlace Mode) (Not used in C2 afaik)
+        VBLK = In Vertical Blank
+        HBLK = In Horizontal Blank
+        DMA  = DMA In Progress
+        PAL  = Pal Mode Flag
 
-	Control Writes are used for setting VDP Registers, setting up DMA Transfers
-	etc.
+    Control Writes are used for setting VDP Registers, setting up DMA Transfers
+    etc.
 
-	A Write to the Control port can consist of 2 16-bit Words.
-	When the VDP _isn't_ expecting the 2nd part of a command the highest 2 bits
-	of the data written will determine what it is we want to do.
-	10xxxxxx xxxxxxxx will cause a register to be set
-	anything else will trigger the 1st half of a 2 Part Mode Setting Command
-	If the VDP is already expecting the 2nd half of a command the data written
-	will be the 2nd half of the Mode setup.
+    A Write to the Control port can consist of 2 16-bit Words.
+    When the VDP _isn't_ expecting the 2nd part of a command the highest 2 bits
+    of the data written will determine what it is we want to do.
+    10xxxxxx xxxxxxxx will cause a register to be set
+    anything else will trigger the 1st half of a 2 Part Mode Setting Command
+    If the VDP is already expecting the 2nd half of a command the data written
+    will be the 2nd half of the Mode setup.
 
 ******************************************************************************/
 
@@ -734,7 +734,7 @@ static void vdp_register_w(int data)
 		force_partial_update((cpu_getscanline())+ scanbase);
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
-	   upon the writes here */
+       upon the writes here */
 	switch (regnum)
 	{
 		case 0x01: /* video modes */
@@ -848,10 +848,10 @@ static void vdp_control_dma(int data)
 
 
 /******************************************************************************
-	DMA handling
+    DMA handling
 *******************************************************************************
 
-	These are currently Pretty much directly from the C2 emu
+    These are currently Pretty much directly from the C2 emu
 
 ******************************************************************************/
 
@@ -915,10 +915,10 @@ static void vdp_dma_fill(int data)
 
 
 /******************************************************************************
-	Scroll calculations
+    Scroll calculations
 *******************************************************************************
 
-	These special routines handle the transparency effects in sprites.
+    These special routines handle the transparency effects in sprites.
 
 ******************************************************************************/
 
@@ -954,22 +954,22 @@ static int vdp_getvscroll(int plane, int column)
 
 
 /******************************************************************************
-	Drawing Functions
+    Drawing Functions
 *******************************************************************************
 
-	These are used by the Screen Refresh functions to do the actual rendering
-	of a screenline to Machine->scrbitmap.
+    These are used by the Screen Refresh functions to do the actual rendering
+    of a screenline to Machine->scrbitmap.
 
-	Draw Planes in Order
-		Scroll B Low
-		Scroll A Low / Window Low
-		Sprites Low
-		Scroll B High
-		Scroll A High / Window High
-		Sprites High
+    Draw Planes in Order
+        Scroll B Low
+        Scroll A Low / Window Low
+        Sprites Low
+        Scroll B High
+        Scroll A High / Window High
+        Sprites High
 
-	NOTE: Low Sprites _can_ overlap High sprites, however none of the C2
-			games do this ever so its safe to draw them in this order.
+    NOTE: Low Sprites _can_ overlap High sprites, however none of the C2
+            games do this ever so its safe to draw them in this order.
 
 ******************************************************************************/
 
@@ -1069,11 +1069,11 @@ static void drawline(UINT16 *bitmap, int line, int bgfill)
 
 
 /******************************************************************************
-	Background rendering
+    Background rendering
 *******************************************************************************
 
-	This code handles all the scroll calculations and rendering of the
-	background layers.
+    This code handles all the scroll calculations and rendering of the
+    background layers.
 
 ******************************************************************************/
 
@@ -1221,10 +1221,10 @@ static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int
 
 
 /******************************************************************************
-	Sprite drawing
+    Sprite drawing
 *******************************************************************************
 
-	These special routines handle the transparency effects in sprites.
+    These special routines handle the transparency effects in sprites.
 
 ******************************************************************************/
 

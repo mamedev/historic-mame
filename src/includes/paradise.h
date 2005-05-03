@@ -1,6 +1,7 @@
 /* Variables defined in vidhrdw: */
 
 extern data8_t *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
+extern int paradise_sprite_inc;
 
 /* Functions defined in vidhrdw: */
 
@@ -18,4 +19,4 @@ WRITE8_HANDLER( paradise_palbank_w );
 
 VIDEO_START( paradise );
 VIDEO_UPDATE( paradise );
-
+VIDEO_UPDATE( torus );

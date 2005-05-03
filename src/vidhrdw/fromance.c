@@ -1,9 +1,9 @@
 /******************************************************************************
 
-	Video Hardware for Video System Mahjong series and Pipe Dream.
+    Video Hardware for Video System Mahjong series and Pipe Dream.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
-	and Bryan McPhail, Nicola Salmoria, Aaron Giles
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
+    and Bryan McPhail, Nicola Salmoria, Aaron Giles
 
 ******************************************************************************/
 
@@ -34,7 +34,7 @@ static void crtc_interrupt_gen(int param);
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -67,7 +67,7 @@ static void get_nekkyoku_fg_tile_info(int tile_index) { get_nekkyoku_tile_info(t
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -125,7 +125,7 @@ VIDEO_START( nekkyoku )
 
 /*************************************
  *
- *	Graphics control register
+ *  Graphics control register
  *
  *************************************/
 
@@ -149,7 +149,7 @@ WRITE8_HANDLER( fromance_gfxreg_w )
 
 /*************************************
  *
- *	Banked palette RAM
+ *  Banked palette RAM
  *
  *************************************/
 
@@ -187,7 +187,7 @@ WRITE8_HANDLER( fromance_paletteram_w )
 
 /*************************************
  *
- *	Video RAM read/write
+ *  Video RAM read/write
  *
  *************************************/
 
@@ -207,7 +207,7 @@ WRITE8_HANDLER( fromance_videoram_w )
 
 /*************************************
  *
- *	Scroll registers
+ *  Scroll registers
  *
  *************************************/
 
@@ -255,7 +255,7 @@ WRITE8_HANDLER( fromance_scroll_w )
 
 /*************************************
  *
- *	Fake video controller
+ *  Fake video controller
  *
  *************************************/
 
@@ -294,7 +294,7 @@ WRITE8_HANDLER( fromance_crtc_register_w )
 
 /*************************************
  *
- *	Sprite routines (Pipe Dream)
+ *  Sprite routines (Pipe Dream)
  *
  *************************************/
 
@@ -399,7 +399,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /*************************************
  *
- *	Main screen refresh
+ *  Main screen refresh
  *
  *************************************/
 

@@ -41,7 +41,7 @@ static void h8itu_timer_0_cb(int num)
 	h8.h8TCNT0 = 0;
 	h8.per_regs[TSR0] |= 4;
 	// interrupt on overflow ?
-	if(h8.per_regs[TIER0] & 4) 
+	if(h8.per_regs[TIER0] & 4)
 	{
 		h8_3002_InterruptRequest(26);
 	}
@@ -53,7 +53,7 @@ static void h8itu_timer_1_cb(int num)
 	h8.h8TCNT1 = 0;
 	h8.per_regs[TSR1] |= 4;
 	// interrupt on overflow ?
-	if(h8.per_regs[TIER1] & 4) 
+	if(h8.per_regs[TIER1] & 4)
 	{
 		h8_3002_InterruptRequest(30);
 	}
@@ -65,7 +65,7 @@ static void h8itu_timer_2_cb(int num)
 	h8.h8TCNT2 = 0;
 	h8.per_regs[TSR2] |= 4;
 	// interrupt on overflow ?
-	if(h8.per_regs[TIER2] & 4) 
+	if(h8.per_regs[TIER2] & 4)
 	{
 		h8_3002_InterruptRequest(34);
 	}
@@ -77,7 +77,7 @@ static void h8itu_timer_3_cb(int num)
 	h8.h8TCNT3 = 0;
 	h8.per_regs[TSR3] |= 4;
 	// interrupt on overflow ?
-	if(h8.per_regs[TIER3] & 4) 
+	if(h8.per_regs[TIER3] & 4)
 	{
 		h8_3002_InterruptRequest(38);
 	}
@@ -89,7 +89,7 @@ static void h8itu_timer_4_cb(int num)
 	h8.h8TCNT4 = 0;
 	h8.per_regs[TSR4] |= 4;
 	// interrupt on overflow ?
-	if(h8.per_regs[TIER4] & 4) 
+	if(h8.per_regs[TIER4] & 4)
 	{
 		h8_3002_InterruptRequest(42);
 	}
@@ -167,7 +167,7 @@ static void h8_itu_sync_timers(int tnum)
 	time = (double)TIME_TO_CYCLES(h8.cpu_number, 1) / tscales[ourTCR & 3];
 	time = 1.0 / time;
 
-	cur = timer_timeelapsed(h8.timer[tnum]);		
+	cur = timer_timeelapsed(h8.timer[tnum]);
 
 	cur /= time;
 
@@ -223,7 +223,7 @@ UINT8 h8_itu_read8(UINT8 reg)
 	case 0x7d:
 		h8_itu_sync_timers(2);
 		val = h8.h8TCNT2&0xff;
-		break;		     
+		break;
 	case 0x86:
 		h8_itu_sync_timers(3);
 		val = h8.h8TCNT3>>8;
@@ -232,7 +232,7 @@ UINT8 h8_itu_read8(UINT8 reg)
 		h8_itu_sync_timers(3);
 		val = h8.h8TCNT3&0xff;
 		break;
-	default: 
+	default:
 		val = h8.per_regs[reg];
 		break;
 	}
@@ -339,7 +339,7 @@ void h8_itu_write8(UINT8 reg, UINT8 val)
 			h8_itu_refresh_timer(4);
 		}
 		break;
-	default: 
+	default:
 		val = 0;
 		break;
 	}
@@ -372,7 +372,7 @@ UINT8 h8_register_read8(UINT32 address)
 		{
 		case 0xb4: // serial port A status
 			val = h8.per_regs[reg];
-			val |= 0xc4;		// transmit finished, receive ready, no errors 
+			val |= 0xc4;		// transmit finished, receive ready, no errors
 			break;
 		case 0xb5: // serial port A receive
 			val = io_read_byte(H8_SERIAL_A);
@@ -490,11 +490,11 @@ void h8_register_write8(UINT32 address, UINT8 val)
 
 void h8_itu_init(void)
 {
-	h8.timer[0] = timer_alloc(h8itu_timer_0_cb); 
-	h8.timer[1] = timer_alloc(h8itu_timer_1_cb); 
-	h8.timer[2] = timer_alloc(h8itu_timer_2_cb); 
-	h8.timer[3] = timer_alloc(h8itu_timer_3_cb); 
-	h8.timer[4] = timer_alloc(h8itu_timer_4_cb); 
+	h8.timer[0] = timer_alloc(h8itu_timer_0_cb);
+	h8.timer[1] = timer_alloc(h8itu_timer_1_cb);
+	h8.timer[2] = timer_alloc(h8itu_timer_2_cb);
+	h8.timer[3] = timer_alloc(h8itu_timer_3_cb);
+	h8.timer[4] = timer_alloc(h8itu_timer_4_cb);
 
 	h8_itu_reset();
 

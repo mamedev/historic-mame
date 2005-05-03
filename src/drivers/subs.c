@@ -1,19 +1,19 @@
 /***************************************************************************
 
-	Atari Subs hardware
+    Atari Subs hardware
 
-	driver by Mike Balfour
+    driver by Mike Balfour
 
-	Games supported:
-		* Subs
+    Games supported:
+        * Subs
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
 ****************************************************************************
 
-	If you have any questions about how this driver works, don't hesitate to
-	ask.  - Mike Balfour (mab22@po.cwru.edu)
+    If you have any questions about how this driver works, don't hesitate to
+    ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************/
 
@@ -25,7 +25,7 @@
 
 /*************************************
  *
- *	Palette generation
+ *  Palette generation
  *
  *************************************/
 
@@ -48,7 +48,7 @@ static PALETTE_INIT( subs )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -66,7 +66,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0000) AM_WRITE(subs_noise_reset_w)
 	AM_RANGE(0x0020, 0x0020) AM_WRITE(subs_steer_reset_w)
-//	AM_RANGE(0x0040, 0x0040) AM_WRITE(subs_timer_reset_w)
+//  AM_RANGE(0x0040, 0x0040) AM_WRITE(subs_timer_reset_w)
 	AM_RANGE(0x0060, 0x0061) AM_WRITE(subs_lamp1_w)
 	AM_RANGE(0x0062, 0x0063) AM_WRITE(subs_lamp2_w)
 	AM_RANGE(0x0064, 0x0065) AM_WRITE(subs_sonar2_w)
@@ -86,7 +86,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -145,7 +145,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -186,7 +186,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -217,7 +217,7 @@ static MACHINE_DRIVER_START( subs )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(subs_discrete_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -228,7 +228,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -239,9 +239,9 @@ ROM_START( subs )
 	ROM_LOAD( "34192.n2",     0x3800, 0x0800, CRC(3ce63d33) SHA1(a413cb3e0d03dc40a50f5b03b76a4edbe7906f3e) )
 	ROM_RELOAD(               0xf800, 0x0800 )
 	/* Note: These are being loaded into a bogus location, */
-	/*		 They are nibble wide rom images which will be */
-	/*		 merged and loaded into the proper place by    */
-	/*		 subs_rom_init()							   */
+	/*       They are nibble wide rom images which will be */
+	/*       merged and loaded into the proper place by    */
+	/*       subs_rom_init()                               */
 	ROM_LOAD( "34196.e2",     0x8000, 0x0100, CRC(7c7a04c3) SHA1(269d9f7573cc5da4412f53d647127c4884435353) )	/* ROM 0 D4-D7 */
 	ROM_LOAD( "34194.e1",     0x9000, 0x0100, CRC(6b1c4acc) SHA1(3a743b721d9e7e9bdc4533aeeab294eb0ea27500) )	/* ROM 0 D0-D3 */
 
@@ -259,7 +259,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -269,7 +269,7 @@ static DRIVER_INIT( subs )
 	int i;
 
 	/* Merge nibble-wide roms together,
-	   and load them into 0x2000-0x20ff */
+       and load them into 0x2000-0x20ff */
 
 	for(i=0;i<0x100;i++)
 		rom[0x2000+i] = (rom[0x8000+i]<<4)+rom[0x9000+i];
@@ -279,7 +279,7 @@ static DRIVER_INIT( subs )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

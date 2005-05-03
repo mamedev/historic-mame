@@ -55,7 +55,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 
 /***************************************************************************
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 ***************************************************************************/
 
 static void get_bg_tile_info(int tile_index)
@@ -101,7 +101,7 @@ static void get_tx_tile_info(int tile_index)
 }
 
 /***************************************************************************
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 ***************************************************************************/
 
 static int twincobr_create_tilemaps(void)
@@ -175,7 +175,7 @@ static void twincobr_restore_screen(void)
 
 
 /***************************************************************************
-	Video I/O interface
+    Video I/O interface
 ***************************************************************************/
 
 void twincobr_display(int enable)
@@ -409,7 +409,7 @@ WRITE8_HANDLER( wardner_CRTC_data_w )
 
 
 /***************************************************************************
-	Ugly sprite hack for Wardner when hero is in shop
+    Ugly sprite hack for Wardner when hero is in shop
 ***************************************************************************/
 
 static void wardner_sprite_priority_hack(void)
@@ -479,7 +479,7 @@ void twincobr_log_vram(void)
 
 
 /***************************************************************************
-	Sprite Handlers
+    Sprite Handlers
 ***************************************************************************/
 
 static void twincobr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
@@ -517,7 +517,7 @@ static void twincobr_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 
 
 /***************************************************************************
-	Draw the game screen in the given mame_bitmap.
+    Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
 VIDEO_UPDATE( toaplan0 )
@@ -542,7 +542,7 @@ VIDEO_UPDATE( toaplan0 )
 VIDEO_EOF( toaplan0 )
 {
 	/* Spriteram is always 1 frame ahead, suggesting spriteram buffering.
-		There are no CPU output registers that control this so we
-		assume it happens automatically every frame, at the end of vblank */
+        There are no CPU output registers that control this so we
+        assume it happens automatically every frame, at the end of vblank */
 	buffer_spriteram16_w(0,0,0);
 }

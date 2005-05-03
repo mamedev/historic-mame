@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Art & Magic hardware
+    Art & Magic hardware
 
 ***************************************************************************/
 
@@ -32,7 +32,7 @@ static double blitter_busy_until;
 
 /*************************************
  *
- *	Inlines
+ *  Inlines
  *
  *************************************/
 
@@ -51,7 +51,7 @@ INLINE UINT16 *address_to_vram(offs_t *address)
 
 /*************************************
  *
- *	Video start
+ *  Video start
  *
  *************************************/
 
@@ -66,7 +66,7 @@ VIDEO_START( artmagic )
 
 /*************************************
  *
- *	Shift register transfers
+ *  Shift register transfers
  *
  *************************************/
 
@@ -89,7 +89,7 @@ void artmagic_from_shiftreg(offs_t address, data16_t *data)
 
 /*************************************
  *
- *	Custom blitter
+ *  Custom blitter
  *
  *************************************/
 
@@ -209,14 +209,14 @@ static void execute_blit(void)
 				sx = x;
 
 				/* The first pixel of every line doesn't have a previous pixel
-				   to depend on, so it takes the "feed" from other bits.
-				   The very first pixel blitted is also treated differently.
+                   to depend on, so it takes the "feed" from other bits.
+                   The very first pixel blitted is also treated differently.
 
-				   ultennis/stonebal use a different encryption from cheesech,
-				   however the former only need to set bits 0 and 2 of the
-				   feed (the others are irrelevant), while the latter only
-				   bits 1 and 3, so I can handle both at the same time.
-				 */
+                   ultennis/stonebal use a different encryption from cheesech,
+                   however the former only need to set bits 0 and 2 of the
+                   feed (the others are irrelevant), while the latter only
+                   bits 1 and 3, so I can handle both at the same time.
+                 */
 				last = 0;
 				if (i == 0)	/* first line */
 				{
@@ -311,10 +311,10 @@ static void execute_blit(void)
 READ16_HANDLER( artmagic_blitter_r )
 {
 	/*
-		bit 1 is a busy flag; loops tightly if clear
-		bit 2 is tested in a similar fashion
-		bit 4 reflects the page
-	*/
+        bit 1 is a busy flag; loops tightly if clear
+        bit 2 is tested in a similar fashion
+        bit 4 reflects the page
+    */
 	UINT16 result = 0xffef | (blitter_page << 4);
 #if (!INSTANT_BLIT)
 	if (timer_get_time() < blitter_busy_until)
@@ -341,7 +341,7 @@ WRITE16_HANDLER( artmagic_blitter_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 

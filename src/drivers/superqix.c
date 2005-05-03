@@ -198,13 +198,13 @@ static int from_mcu_pending, from_z80_pending, invert_coin_lockout;
 
 static READ8_HANDLER( in4_mcu_r )
 {
-//	logerror("%04x: in4_mcu_r\n",activecpu_get_pc());
+//  logerror("%04x: in4_mcu_r\n",activecpu_get_pc());
 	return readinputport(4) | (from_mcu_pending << 6) | (from_z80_pending << 7);
 }
 
 static READ8_HANDLER( sqix_from_mcu_r )
 {
-//	logerror("%04x: read mcu answer (%02x)\n",activecpu_get_pc(),from_mcu);
+//  logerror("%04x: read mcu answer (%02x)\n",activecpu_get_pc(),from_mcu);
 	return from_mcu;
 }
 
@@ -212,7 +212,7 @@ void mcu_acknowledge_callback(int data)
 {
 	from_z80_pending = 1;
 	from_z80 = portb;
-//	logerror("Z80->MCU %02x\n",from_z80);
+//  logerror("Z80->MCU %02x\n",from_z80);
 }
 
 static READ8_HANDLER( mcu_acknowledge_r )
@@ -223,7 +223,7 @@ static READ8_HANDLER( mcu_acknowledge_r )
 
 static WRITE8_HANDLER( sqix_z80_mcu_w )
 {
-//	logerror("%04x: sqix_z80_mcu_w %02x\n",activecpu_get_pc(),data);
+//  logerror("%04x: sqix_z80_mcu_w %02x\n",activecpu_get_pc(),data);
 	portb = data;
 }
 
@@ -259,7 +259,7 @@ static WRITE8_HANDLER( mcu_p1_w )
 		case 7:
 			if ((data & 1) == 0)
 			{
-//				logerror("%04x: MCU -> Z80 %02x\n",activecpu_get_pc(),port3);
+//              logerror("%04x: MCU -> Z80 %02x\n",activecpu_get_pc(),port3);
 				from_mcu = port3_latch;
 				from_mcu_pending = 1;
 				from_z80_pending = 0;	// ????
@@ -280,7 +280,7 @@ static READ8_HANDLER( mcu_p3_r )
 	}
 	else if ((port1 & 0x40) == 0)
 	{
-//		logerror("%04x: read Z80 command %02x\n",activecpu_get_pc(),from_z80);
+//      logerror("%04x: read Z80 command %02x\n",activecpu_get_pc(),from_z80);
 		from_z80_pending = 0;
 		return from_z80;
 	}
@@ -347,26 +347,26 @@ static READ8_HANDLER(pbillian_from_mcu_r)
 		int points_per_game = ((readinputport(1) & 0x10) >> 4) + 4;
 
 		/*
-			When a goal is scored, the Z80 sends a special command - 0x80 or
-			0x81, depending on who scored. It expects the MCU to return a few
-			special commands, telling it what to do (remove ball, increase
-			score etc.)
+            When a goal is scored, the Z80 sends a special command - 0x80 or
+            0x81, depending on who scored. It expects the MCU to return a few
+            special commands, telling it what to do (remove ball, increase
+            score etc.)
 
-			0x80 = ?
-			0x81 = ?
-			0x82 = stop ball
-			0x83 = time over
-			0x84 = P1 score++
-			0x85 = P2 score++
-			0x86 = P1 game++
-			0x87 = P2 game++
-			0x88 = P1 WIN
-			0x89 = P2 WIN
-			0x8a = restart P1 side
-			0x8b = restart P2 side
-			0x8c = next game
-			0x8d = ?
-		*/
+            0x80 = ?
+            0x81 = ?
+            0x82 = stop ball
+            0x83 = time over
+            0x84 = P1 score++
+            0x85 = P2 score++
+            0x86 = P1 game++
+            0x87 = P2 game++
+            0x88 = P1 WIN
+            0x89 = P2 WIN
+            0x8a = restart P1 side
+            0x8b = restart P2 side
+            0x8c = next game
+            0x8d = ?
+        */
 
 		switch (from_z80)
 		{
@@ -423,7 +423,7 @@ static READ8_HANDLER(pbillian_from_mcu_r)
 					}
 				}
 				return 0;
-//			case 0xf0: return 0;	// resync?
+//          case 0xf0: return 0;    // resync?
 		}
 	}
 
@@ -437,7 +437,7 @@ static READ8_HANDLER(ay_port_a_r)
 	if (activecpu_get_pc() == 0x21a)
 		return 0xff;
 
-//	logerror("%04x: ay_port_a_r\n",activecpu_get_pc());
+//  logerror("%04x: ay_port_a_r\n",activecpu_get_pc());
 	 /* bits 76------  MCU status bits */
 	return (rand()&0xc0)|readinputport(3);
 }

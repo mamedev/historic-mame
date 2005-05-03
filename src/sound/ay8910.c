@@ -163,31 +163,31 @@ void _AYWriteReg(struct AY8910 *PSG, int r, int v)
 		break;
 	case AY_ESHAPE:
 		/* envelope shapes:
-		C AtAlH
-		0 0 x x  \___
+        C AtAlH
+        0 0 x x  \___
 
-		0 1 x x  /___
+        0 1 x x  /___
 
-		1 0 0 0  \\\\
+        1 0 0 0  \\\\
 
-		1 0 0 1  \___
+        1 0 0 1  \___
 
-		1 0 1 0  \/\/
-		          ___
-		1 0 1 1  \
+        1 0 1 0  \/\/
+                  ___
+        1 0 1 1  \
 
-		1 1 0 0  ////
-		          ___
-		1 1 0 1  /
+        1 1 0 0  ////
+                  ___
+        1 1 0 1  /
 
-		1 1 1 0  /\/\
+        1 1 1 0  /\/\
 
-		1 1 1 1  /___
+        1 1 1 1  /___
 
-		The envelope counter on the AY-3-8910 has 16 steps. On the YM2149 it
-		has twice the steps, happening twice as fast. Since the end result is
-		just a smoother curve, we always use the YM2149 behaviour.
-		*/
+        The envelope counter on the AY-3-8910 has 16 steps. On the YM2149 it
+        has twice the steps, happening twice as fast. Since the end result is
+        just a smoother curve, we always use the YM2149 behaviour.
+        */
 		PSG->Regs[AY_ESHAPE] &= 0x0f;
 		PSG->Attack = (PSG->Regs[AY_ESHAPE] & 0x04) ? 0x1f : 0x00;
 		if ((PSG->Regs[AY_ESHAPE] & 0x08) == 0)
@@ -305,7 +305,7 @@ static void AY8910Update(void *param,stream_sample_t **inputs, stream_sample_t *
 		buf2 = buffer[1];
 		buf3 = buffer[2];
 	}
-	
+
 	/* hack to prevent us from hanging when starting filtered outputs */
 	if (!PSG->ready)
 	{
@@ -623,8 +623,8 @@ static void AY8910_init(struct AY8910 *PSG, int streams,
 		write8_handler portAwrite,write8_handler portBwrite)
 {
 // causes crashes with YM2610 games - overflow?
-//	if (options.use_filter)
-//		sample_rate = clock/8;
+//  if (options.use_filter)
+//      sample_rate = clock/8;
 
 	PSG->SampleRate = sample_rate;
 	PSG->PortAread = portAread;
@@ -679,12 +679,12 @@ static void AY8910_statesave(struct AY8910 *PSG, int sndindex)
 }
 
 
-void *ay8910_start_ym(int chip_type, int sndindex, int clock, int streams, 
+void *ay8910_start_ym(int chip_type, int sndindex, int clock, int streams,
 		read8_handler portAread, read8_handler portBread,
 		write8_handler portAwrite, write8_handler portBwrite)
 {
 	struct AY8910 *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 	info->index = sndindex;
@@ -778,9 +778,9 @@ int ay8910_read_ym(void *chip)
 		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
 			logerror("warning: read from 8910 #%d Port A set as output\n",PSG->index);
 		/*
-		   even if the port is set as output, we still need to return the external
-		   data. Some games, like kidniki, need this to work.
-		 */
+           even if the port is set as output, we still need to return the external
+           data. Some games, like kidniki, need this to work.
+         */
 		if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
 		else logerror("PC %04x: warning - read 8910 #%d Port A\n",activecpu_get_pc(),PSG->index);
 		break;

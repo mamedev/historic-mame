@@ -20,60 +20,60 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 /*
 
 Changes:
-	0.93 (2003-07-05):
-			Angelo Salese <lordkale@libero.it>
-			- Fixed the BCD conversion when using the Decimal Flag in ADC and SBC.
-			- Removed the two conversion tables for ADC and SBC as they aren't
-			  needed anymore.
+    0.93 (2003-07-05):
+            Angelo Salese <lordkale@libero.it>
+            - Fixed the BCD conversion when using the Decimal Flag in ADC and SBC.
+            - Removed the two conversion tables for ADC and SBC as they aren't
+              needed anymore.
 
-	0.92 (2000-05-28):
-			Lee Hammerton <lee-hammerton@hammerhead.ltd.uk>
-			- Fixed debugger bug that caused D to be misrepresented.
-			- Fixed MVN and MVP (they were reversed)
+    0.92 (2000-05-28):
+            Lee Hammerton <lee-hammerton@hammerhead.ltd.uk>
+            - Fixed debugger bug that caused D to be misrepresented.
+            - Fixed MVN and MVP (they were reversed)
 
-	0.91 (2000-05-22):
-			Lee Hammerton <lee-hammerton@hammerhead.ltd.uk>
-			- Fixed reset vector fetch to be little endian
-			- Fixed disassembler call bug
-			- Fixed C flag in SBC (should be inverted before operation)
-			- Fixed JSR to stack PC-1 and RTS to pull PC and add 1
+    0.91 (2000-05-22):
+            Lee Hammerton <lee-hammerton@hammerhead.ltd.uk>
+            - Fixed reset vector fetch to be little endian
+            - Fixed disassembler call bug
+            - Fixed C flag in SBC (should be inverted before operation)
+            - Fixed JSR to stack PC-1 and RTS to pull PC and add 1
 
-			Karl Stenerud <karl@higashiyama-unet.ocn.ne.jp>
-			- Added correct timing for absolute indexed operations
-			- SBC: fixed corruption of interim values
+            Karl Stenerud <karl@higashiyama-unet.ocn.ne.jp>
+            - Added correct timing for absolute indexed operations
+            - SBC: fixed corruption of interim values
 
-	0.90 (2000-05-17):
-			Karl Stenerud <karl@higashiyama-unet.ocn.ne.jp>
-			- first public release
+    0.90 (2000-05-17):
+            Karl Stenerud <karl@higashiyama-unet.ocn.ne.jp>
+            - first public release
 
 
 Note on timings:
-	- For instructions that write to memory (ASL, ASR, LSL, ROL, ROR, DEC,
-	  INC, STA, STZ), the absolute indexed addressing mode takes 1 extra
-	  cycle to complete.
-	- The spec says fc (JMP axi) is 6 cyles, but elsewhere says 8 cycles
-	  (which is what it should be)
+    - For instructions that write to memory (ASL, ASR, LSL, ROL, ROR, DEC,
+      INC, STA, STZ), the absolute indexed addressing mode takes 1 extra
+      cycle to complete.
+    - The spec says fc (JMP axi) is 6 cyles, but elsewhere says 8 cycles
+      (which is what it should be)
 
 
 TODO general:
-	- WAI will not stop if RDY is held high.
+    - WAI will not stop if RDY is held high.
 
-	- RDY internally held low when WAI executed and returned to hi when RES,
-	  ABORT, NMI, or IRQ asserted.
+    - RDY internally held low when WAI executed and returned to hi when RES,
+      ABORT, NMI, or IRQ asserted.
 
-	- ABORT will terminate WAI instruction but wil not restart the processor
+    - ABORT will terminate WAI instruction but wil not restart the processor
 
-	- If interrupt occurs after ABORT of WAI, processor returns to WAI
-	  instruction.
+    - If interrupt occurs after ABORT of WAI, processor returns to WAI
+      instruction.
 
-	- Add one cycle when indexing across page boundary and E=1 except for STA
-	  and STZ instructions.
+    - Add one cycle when indexing across page boundary and E=1 except for STA
+      and STZ instructions.
 
-	- Add 1 cycle if branch is taken. In Emulation (E= 1 ) mode only --add 1
-	  cycle if the branch is taken and crosses a page boundary.
+    - Add 1 cycle if branch is taken. In Emulation (E= 1 ) mode only --add 1
+      cycle if the branch is taken and crosses a page boundary.
 
-	- Add 1 cycle in Emulation mode (E=1) for (dir),y; abs,x; and abs,y
-	  addressing modes.
+    - Add 1 cycle in Emulation mode (E=1) for (dir),y; abs,x; and abs,y
+      addressing modes.
 
 */
 /* ======================================================================== */
@@ -390,7 +390,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

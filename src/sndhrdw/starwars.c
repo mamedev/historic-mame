@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Atari Star Wars hardware
+    Atari Star Wars hardware
 
-	This file is Copyright 1997, Steve Baines.
-	Modified by Frank Palazzolo for sound support
+    This file is Copyright 1997, Steve Baines.
+    Modified by Frank Palazzolo for sound support
 
 ***************************************************************************/
 
@@ -45,7 +45,7 @@ static int main_data;   /* data for the main  cpu */
 
 /*************************************
  *
- *	Sound interrupt generation
+ *  Sound interrupt generation
  *
  *************************************/
 
@@ -59,7 +59,7 @@ static void snd_interrupt(int foo)
 
 /*************************************
  *
- *	M6532 I/O read
+ *  M6532 I/O read
  *
  *************************************/
 
@@ -100,7 +100,7 @@ READ8_HANDLER( starwars_m6532_r )
 
 /*************************************
  *
- *	M6532 I/O write
+ *  M6532 I/O write
  *
  *************************************/
 
@@ -170,7 +170,7 @@ WRITE8_HANDLER( starwars_m6532_w )
 
 /*************************************
  *
- *	Sound CPU to/from main CPU
+ *  Sound CPU to/from main CPU
  *
  *************************************/
 
@@ -196,7 +196,7 @@ WRITE8_HANDLER( starwars_sout_w )
 
 /*************************************
  *
- *	Main CPU to/from source CPU
+ *  Main CPU to/from source CPU
  *
  *************************************/
 

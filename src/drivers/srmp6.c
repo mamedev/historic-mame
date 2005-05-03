@@ -1,16 +1,16 @@
 /*
-	Super Real Mahjong P6 (JPN Ver.)
-	(c)1996 Seta
+    Super Real Mahjong P6 (JPN Ver.)
+    (c)1996 Seta
 
 WIP driver by Sebastien Volpe
 
 according prg ROM (offset $0fff80):
 
-	S12 SYSTEM
-	SUPER REAL MAJAN P6
-	SETA CO.,LTD
-	19960410
-	V1.00
+    S12 SYSTEM
+    SUPER REAL MAJAN P6
+    SETA CO.,LTD
+    19960410
+    V1.00
 
 TODO:
  - gfx decoding / emulation
@@ -28,14 +28,14 @@ Super Real Mahjong P6 (JPN Ver.)
 SX011
 E47-REV01B
 
-CPU:	68000-16
-Sound:	NiLe
-OSC:	16.0000MHz
-		42.9545MHz
-		56.0000MHz
+CPU:    68000-16
+Sound:  NiLe
+OSC:    16.0000MHz
+        42.9545MHz
+        56.0000MHz
 
-Chips:	ST-0026 NiLe (video, sound)
-		ST-0017
+Chips:  ST-0026 NiLe (video, sound)
+        ST-0017
 
 
 SX011-01.22  chr, samples (?)
@@ -62,7 +62,7 @@ Dumped 06/15/2000
 
 
 /***************************************************************************
-	vidhrdw - VERY preliminary
+    vidhrdw - VERY preliminary
 ***************************************************************************/
 
 VIDEO_START(srmp6)
@@ -72,21 +72,21 @@ VIDEO_START(srmp6)
 
 /* sprite RAM format: 8 words, 1st word = 0x8000 means end of list
 
-Offset:			Format:						Value:
+Offset:         Format:                     Value:
 
-0000.w			
-					f--- ---- ---- ----		End of list
-					-??? ???? ???? ???-		
-					---- ---- ---- ---0		Sprite visible?
+0000.w
+                    f--- ---- ---- ----     End of list
+                    -??? ???? ???? ???-
+                    ---- ---- ---- ---0     Sprite visible?
 
-0002.w										Code
-0004.w										X Position
-0006.w										Y Position
+0002.w                                      Code
+0004.w                                      X Position
+0006.w                                      Y Position
 
-0008.w										attributes/color?
-000a.w										attributes/color?
+0008.w                                      attributes/color?
+000a.w                                      attributes/color?
 
-000c.l										used ?
+000c.l                                      used ?
 
 cpu #0 (PC=00011B2A): unmapped program memory word write to 00400490 = 0001 & FFFF - sprite visible ?
 cpu #0 (PC=00011B2E): unmapped program memory word write to 00400492 = 0233 & FFFF - code
@@ -94,7 +94,7 @@ cpu #0 (PC=00011B32): unmapped program memory word write to 00400494 = 00D8 & FF
 cpu #0 (PC=00011B36): unmapped program memory word write to 00400496 = 0080 & FFFF - y
 cpu #0 (PC=00011B3A): unmapped program memory word write to 00400498 = E000 & FFFF - attributes/color?
 cpu #0 (PC=00011B3E): unmapped program memory word write to 0040049A = 0000 & FFFF - attributes/color?
-cpu #0 (PC=00011B40): unmapped program memory word write to 0040049C = 0000 & FFFF -\ 
+cpu #0 (PC=00011B40): unmapped program memory word write to 0040049C = 0000 & FFFF -\
 cpu #0 (PC=00011B40): unmapped program memory word write to 0040049E = 0000 & FFFF -/ used ?
 
 cpu #0 (PC=00011B4E): unmapped program memory word write to 004004B0 = 8000 & FFFF - end of list
@@ -158,19 +158,19 @@ VIDEO_UPDATE(srmp6)
 }
 
 /***************************************************************************
-	sndhrdw - VERY preliminary
+    sndhrdw - VERY preliminary
 
-	TODO: watch similarities with st0016
+    TODO: watch similarities with st0016
 ***************************************************************************/
 
 /*
-cpu #0 (PC=00011F7C): unmapped program memory word write to 004E0002 = 0000 & FFFF	0?
-cpu #0 (PC=00011F84): unmapped program memory word write to 004E0004 = 0D50 & FFFF	lo word \ sample start
-cpu #0 (PC=00011F8A): unmapped program memory word write to 004E0006 = 0070 & FFFF	hi word / address?
+cpu #0 (PC=00011F7C): unmapped program memory word write to 004E0002 = 0000 & FFFF  0?
+cpu #0 (PC=00011F84): unmapped program memory word write to 004E0004 = 0D50 & FFFF  lo word \ sample start
+cpu #0 (PC=00011F8A): unmapped program memory word write to 004E0006 = 0070 & FFFF  hi word / address?
 
-cpu #0 (PC=00011FBA): unmapped program memory word write to 004E000A = 0000 & FFFF	0?
-cpu #0 (PC=00011FC2): unmapped program memory word write to 004E0018 = 866C & FFFF	lo word \ sample stop
-cpu #0 (PC=00011FC8): unmapped program memory word write to 004E001A = 00AA & FFFF	hi word / address?
+cpu #0 (PC=00011FBA): unmapped program memory word write to 004E000A = 0000 & FFFF  0?
+cpu #0 (PC=00011FC2): unmapped program memory word write to 004E0018 = 866C & FFFF  lo word \ sample stop
+cpu #0 (PC=00011FC8): unmapped program memory word write to 004E001A = 00AA & FFFF  hi word / address?
 
 cpu #0 (PC=00011FD0): unmapped program memory word write to 004E000C = 0FFF & FFFF
 cpu #0 (PC=00011FD8): unmapped program memory word write to 004E001C = FFFF & FFFF
@@ -185,12 +185,12 @@ voice #3: $4E0040-$4E005F
 voice #8: $4E00E0-$4E00FF
 
 voice regs:
-offset	description
+offset  description
 +00
-+02		always 0?
-+04		lo-word \ sample
-+06		hi-word / counter ?
-+0A 
++02     always 0?
++04     lo-word \ sample
++06     hi-word / counter ?
++0A
 +18 \
 +1A /
 +1C \
@@ -199,7 +199,7 @@ offset	description
 */
 
 /***************************************************************************
-	Main CPU memory handlers
+    Main CPU memory handlers
 ***************************************************************************/
 
 static data16_t srmp6_input_select = 0;
@@ -278,30 +278,30 @@ static ADDRESS_MAP_START( srmp6, ADDRESS_SPACE_PROGRAM, 16 )
 	// OBJ RAM: checked [$400000-$47dfff]
 	AM_RANGE(0x400000, 0x401fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	// 512 sprites
 	AM_RANGE(0x402000, 0x47dfff) AM_RAM // tiles? layout is different from sprites
-//	AM_RANGE(0x402000, 0x40200f) AM_RAM // set by routine $11c48
-//	AM_RANGE(0x402010, 0x40806f) AM_RAM // set by routine $11bf6 - 2nd sprite RAM maybe ?
-//	AM_RANGE(0x412000, 0x416ebf) AM_RAM // probably larger
+//  AM_RANGE(0x402000, 0x40200f) AM_RAM // set by routine $11c48
+//  AM_RANGE(0x402010, 0x40806f) AM_RAM // set by routine $11bf6 - 2nd sprite RAM maybe ?
+//  AM_RANGE(0x412000, 0x416ebf) AM_RAM // probably larger
 
 	// CHR RAM: checked [$500000-$5fffff]
 	AM_RANGE(0x500000, 0x5fffff) AM_RAM
-//	AM_RANGE(0x500000, 0x505cff) AM_RAM
-//	AM_RANGE(0x505d00, 0x5fffff) AM_RAM
+//  AM_RANGE(0x500000, 0x505cff) AM_RAM
+//  AM_RANGE(0x505d00, 0x5fffff) AM_RAM
 
 	AM_RANGE(0x4c0000, 0x4c006f) AM_READWRITE(video_regs_r, video_regs_w) AM_BASE(&video_regs)	// ? gfx regs ST-0026 NiLe
-//	AM_RANGE(0x4e0000, 0x4e00ff) AM_READWRITE(sound_regs_r, sound_regs_w) AM_BASE(&sound_regs)	// ? sound regs (data) ST-0026 NiLe
-//	AM_RANGE(0x4e0100, 0x4e0101) AM_READWRITE(sndctrl_reg_r, sndctrl_reg_w)						// ? sound reg  (ctrl) ST-0026 NiLe
-//	AM_RANGE(0x4e0110, 0x4e0111) AM_NOP	// ? accessed once ($268dc, written $b.w)
-//	AM_RANGE(0x5fff00, 0x5fff1f) AM_RAM // ? see routine $5ca8, video_regs related ???
+//  AM_RANGE(0x4e0000, 0x4e00ff) AM_READWRITE(sound_regs_r, sound_regs_w) AM_BASE(&sound_regs)  // ? sound regs (data) ST-0026 NiLe
+//  AM_RANGE(0x4e0100, 0x4e0101) AM_READWRITE(sndctrl_reg_r, sndctrl_reg_w)                     // ? sound reg  (ctrl) ST-0026 NiLe
+//  AM_RANGE(0x4e0110, 0x4e0111) AM_NOP // ? accessed once ($268dc, written $b.w)
+//  AM_RANGE(0x5fff00, 0x5fff1f) AM_RAM // ? see routine $5ca8, video_regs related ???
 
 
-//	AM_RANGE(0xf00004, 0xf00005) AM_RAM // ?
-//	AM_RANGE(0xf00006, 0xf00007) AM_RAM // ?
+//  AM_RANGE(0xf00004, 0xf00005) AM_RAM // ?
+//  AM_RANGE(0xf00006, 0xf00007) AM_RAM // ?
 
 ADDRESS_MAP_END
 
 
 /***************************************************************************
-	Port definitions
+    Port definitions
 ***************************************************************************/
 
 INPUT_PORTS_START( srmp6 )
@@ -324,7 +324,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_J )
 	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_N )
 	PORT_BIT ( 0x0020, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
-	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
+	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT ( 0xfe41, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
@@ -333,7 +333,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_K )
 	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
 	PORT_BIT ( 0x0020, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
-	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
+	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT ( 0xfe61, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
@@ -341,7 +341,7 @@ INPUT_PORTS_START( srmp6 )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_H )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_L )
 	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
-	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED ) 
+	PORT_BIT ( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 16-bit DSW1+DSW2 */
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )		// DSW1
@@ -394,31 +394,31 @@ INPUT_PORTS_START( srmp6 )
 INPUT_PORTS_END
 
 /***************************************************************************
-	Graphics definitions
+    Graphics definitions
 ***************************************************************************/
 
 /* all this is plain wrong, failed attempt at decoding the gfx */
 /*
 static struct GfxLayout wrong_layout =
 {
-	8,8,
-	RGN_FRAC(1,1),
-	8,
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64},
-	8*8*8
+    8,8,
+    RGN_FRAC(1,1),
+    8,
+    { 0, 1, 2, 3, 4, 5, 6, 7 },
+    { 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
+    { 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64},
+    8*8*8
 };
 
 static struct GfxLayout wrong_layout2 =
 {
-	8,8,
-	RGN_FRAC(1,1),
-	1,
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
-	8*8*1
+    8,8,
+    RGN_FRAC(1,1),
+    1,
+    { 0 },
+    { 0, 1, 2, 3, 4, 5, 6, 7 },
+    { 0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8 },
+    8*8*1
 };
 */
 static struct GfxLayout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
@@ -435,14 +435,14 @@ static struct GfxLayout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes gr
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-//	{ REGION_GFX1, 0, &wrong_layout,  0, 0x100 },	// sprites (8x8x?)
-//	{ REGION_GFX1, 0, &wrong_layout2, 0, 0x100 },	// tiles (16x16x?)
+//  { REGION_GFX1, 0, &wrong_layout,  0, 0x100 },   // sprites (8x8x?)
+//  { REGION_GFX1, 0, &wrong_layout2, 0, 0x100 },   // tiles (16x16x?)
 	{ REGION_GFX1, 0, &wrong_layout3, 0, 0x100 },	// tiles (16x16x9)
 	{ -1 }
 };
 
 /***************************************************************************
-	Machine driver
+    Machine driver
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( srmp6 )
@@ -468,21 +468,21 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-	ROM definition(s)
+    ROM definition(s)
 ***************************************************************************/
 /*
 CHR?
-	sx011-05.18	'00':[23a640,300000[
-	sx011-04.19	
-	sx011-03.20	
-	sx011-02.21	
-	sx011-01.22	'00':[266670,400000[ (end)
+    sx011-05.18 '00':[23a640,300000[
+    sx011-04.19
+    sx011-03.20
+    sx011-02.21
+    sx011-01.22 '00':[266670,400000[ (end)
 
 most are 8 bits unsigned PCM 16/32KHz if stereo/mono
 some voices in 2nd rom have lower sample rate
-	sx011-08.15	<- samples: instruments, musics, sound FXs, voices
-	sx011-07.16	<- samples: voices (cont'd), sound FXs, music, theme music
-	sx011-06.17	<- samples: theme music (cont'd)
+    sx011-08.15 <- samples: instruments, musics, sound FXs, voices
+    sx011-07.16 <- samples: voices (cont'd), sound FXs, music, theme music
+    sx011-06.17 <- samples: theme music (cont'd)
 */
 ROM_START( srmp6 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
@@ -518,7 +518,7 @@ ROM_END
 
 
 /***************************************************************************
-	Driver initialization
+    Driver initialization
 ***************************************************************************/
 
 static DRIVER_INIT( srmp6 )
@@ -527,7 +527,7 @@ static DRIVER_INIT( srmp6 )
 
 
 /***************************************************************************
-	Game driver(s)
+    Game driver(s)
 ***************************************************************************/
 
 /*GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)*/

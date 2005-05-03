@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		tms32031.c
-**		Core implementation for the portable TMS32C031 emulator.
-**		Written by Aaron Giles
+**      tms32031.c
+**      Core implementation for the portable TMS32C031 emulator.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -23,7 +23,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 enum
@@ -84,7 +84,7 @@ enum
 
 
 /*###################################################################################################
-**	STRUCTURES & TYPEDEFS
+**  STRUCTURES & TYPEDEFS
 **#################################################################################################*/
 
 union genreg
@@ -120,7 +120,7 @@ typedef struct
 
 
 /*###################################################################################################
-**	PROTOTYPES
+**  PROTOTYPES
 **#################################################################################################*/
 
 static void trap(int trapnum);
@@ -129,7 +129,7 @@ static UINT32 boot_loader(UINT32 boot_rom_addr);
 
 
 /*###################################################################################################
-**	PUBLIC GLOBAL VARIABLES
+**  PUBLIC GLOBAL VARIABLES
 **#################################################################################################*/
 
 static int	tms32031_icount;
@@ -137,7 +137,7 @@ static int	tms32031_icount;
 
 
 /*###################################################################################################
-**	PRIVATE GLOBAL VARIABLES
+**  PRIVATE GLOBAL VARIABLES
 **#################################################################################################*/
 
 static tms32031_regs tms32031;
@@ -145,7 +145,7 @@ static tms32031_regs tms32031;
 
 
 /*###################################################################################################
-**	MEMORY ACCESSORS
+**  MEMORY ACCESSORS
 **#################################################################################################*/
 
 #define ROPCODE(pc)		cpu_readop32((pc) << 2)
@@ -158,7 +158,7 @@ static tms32031_regs tms32031;
 
 
 /*###################################################################################################
-**	HELPER MACROS
+**  HELPER MACROS
 **#################################################################################################*/
 
 #define MANTISSA(r)			((INT32)(r)->i32[0])
@@ -261,7 +261,7 @@ static void double_to_dsp(double val, union genreg *result)
 
 
 /*###################################################################################################
-**	EXECEPTION HANDLING
+**  EXECEPTION HANDLING
 **#################################################################################################*/
 
 INLINE void generate_exception(int exception)
@@ -276,7 +276,7 @@ INLINE void invalid_instruction(UINT32 op)
 
 
 /*###################################################################################################
-**	IRQ HANDLING
+**  IRQ HANDLING
 **#################################################################################################*/
 
 static void check_irqs(void)
@@ -331,7 +331,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /*###################################################################################################
-**	CONTEXT SWITCHING
+**  CONTEXT SWITCHING
 **#################################################################################################*/
 
 static void tms32031_get_context(void *dst)
@@ -356,7 +356,7 @@ static void tms32031_set_context(void *src)
 
 
 /*###################################################################################################
-**	INITIALIZATION AND SHUTDOWN
+**  INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
 static void tms32031_init(void)
@@ -416,7 +416,7 @@ void tms32031_exit(void)
 
 
 /*###################################################################################################
-**	CORE OPCODES
+**  CORE OPCODES
 **#################################################################################################*/
 
 #include "32031ops.c"
@@ -424,7 +424,7 @@ void tms32031_exit(void)
 
 
 /*###################################################################################################
-**	CORE EXECUTION LOOP
+**  CORE EXECUTION LOOP
 **#################################################################################################*/
 
 static int tms32031_execute(int cycles)
@@ -436,7 +436,7 @@ static int tms32031_execute(int cycles)
 
 	/* check IRQs up front */
 	check_irqs();
-	
+
 	/* if we're idling, just eat the cycles */
 	if (tms32031.is_idling)
 		return tms32031_icount;
@@ -475,7 +475,7 @@ static int tms32031_execute(int cycles)
 
 
 /*###################################################################################################
-**	DEBUGGER DEFINITIONS
+**  DEBUGGER DEFINITIONS
 **#################################################################################################*/
 
 static UINT8 tms32031_reg_layout[] =
@@ -513,7 +513,7 @@ static UINT8 tms32031_win_layout[] =
 
 
 /*###################################################################################################
-**	DISASSEMBLY HOOK
+**  DISASSEMBLY HOOK
 **#################################################################################################*/
 
 static offs_t tms32031_dasm(char *buffer, offs_t pc)
@@ -530,7 +530,7 @@ static offs_t tms32031_dasm(char *buffer, offs_t pc)
 
 
 /*###################################################################################################
-**	BOOT LOADER
+**  BOOT LOADER
 **#################################################################################################*/
 
 static UINT32 boot_loader(UINT32 boot_rom_addr)
@@ -651,7 +651,7 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32031_IR0:		IREG(TMR_IR0) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_IR1:		IREG(TMR_IR1) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_BK:		IREG(TMR_BK) = info->i; 				break;
-		case CPUINFO_INT_SP:	
+		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + TMS32031_SP:		IREG(TMR_SP) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_ST:		IREG(TMR_ST) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_IE:		IREG(TMR_IE) = info->i; 				break;
@@ -660,7 +660,7 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32031_RS:		IREG(TMR_RS) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_RE:		IREG(TMR_RE) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_RC:		IREG(TMR_RC) = info->i; 				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					tms32031.irq_callback = info->irqcallback; break;
 	}
@@ -696,7 +696,7 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -2;					break;

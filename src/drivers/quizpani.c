@@ -1,34 +1,34 @@
 /*************************************************************************
-	Quiz Panicuru Fantasy
-	(c) 1993 NMK
+    Quiz Panicuru Fantasy
+    (c) 1993 NMK
 
-	Driver by David Haywood and Pierpaolo Prazzoli
+    Driver by David Haywood and Pierpaolo Prazzoli
 
-	PCB No: QZ93094
-	CPU   : TMP68000P-12
-	SOUND : Oki M6295
-	OSC   : 16.000MHz, 10.000MHz
-	RAM   : 62256 (x2), 6116 (x2), 6264 (x4)
-	DIPSW : 8 position (x2)
-	CUSTOM: NMK112 (QFP64, near ROMs 31,32,4, possible sound chip/CPU?)
-			NMK111 (QFP64, 1x input-related near JAMMA, 2x gfx related near ROMs 11,12,21,22)
-			NMK903 (QFP44, x2, near ROMs 11,12,21,22)
-			NMK005 (QFP64, near DIPs, possible MCU?)
+    PCB No: QZ93094
+    CPU   : TMP68000P-12
+    SOUND : Oki M6295
+    OSC   : 16.000MHz, 10.000MHz
+    RAM   : 62256 (x2), 6116 (x2), 6264 (x4)
+    DIPSW : 8 position (x2)
+    CUSTOM: NMK112 (QFP64, near ROMs 31,32,4, possible sound chip/CPU?)
+            NMK111 (QFP64, 1x input-related near JAMMA, 2x gfx related near ROMs 11,12,21,22)
+            NMK903 (QFP44, x2, near ROMs 11,12,21,22)
+            NMK005 (QFP64, near DIPs, possible MCU?)
 
-	ROMs  :
-			93094-51.127	27c4002     near 68000
-			93094-52.126    27c4001     near 68000
-			93094-53.125    27c1001     near 68000
-			93090-4.56      8M Mask     oki samples
-			93090-31.58     8M Mask     oki samples
-			93090-32.57     8M Mask     oki samples
-			93090-21.10     8M Mask     gfx
-			93090-22.9      8M Mask     gfx
-			93090-11.2      8M Mask     gfx
-			93090-12.1      8M Mask     gfx
-			QZ6.88          82s129      prom
-			QZ7.99          82s129      prom
-			QZ8.121         82s135      prom
+    ROMs  :
+            93094-51.127    27c4002     near 68000
+            93094-52.126    27c4001     near 68000
+            93094-53.125    27c1001     near 68000
+            93090-4.56      8M Mask     oki samples
+            93090-31.58     8M Mask     oki samples
+            93090-32.57     8M Mask     oki samples
+            93090-21.10     8M Mask     gfx
+            93090-22.9      8M Mask     gfx
+            93090-11.2      8M Mask     gfx
+            93090-12.1      8M Mask     gfx
+            QZ6.88          82s129      prom
+            QZ7.99          82s129      prom
+            QZ8.121         82s135      prom
 
 *************************************************************************/
 

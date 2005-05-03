@@ -1,146 +1,146 @@
 /*************************************************************************
 
-	Sega Z80-3D system
+    Sega Z80-3D system
 
-	driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Ernesto Corvi,
-	and Aaron Giles
+    driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Ernesto Corvi,
+    and Aaron Giles
 
-	Games supported:
-		* Turbo
-		* Subroc 3D
-		* Buck Rogers: Planet of Zoom
+    Games supported:
+        * Turbo
+        * Subroc 3D
+        * Buck Rogers: Planet of Zoom
 
 **************************************************************************
-	TURBO
+    TURBO
 **************************************************************************
 
-	Memory Map:  ( * not complete * )
+    Memory Map:  ( * not complete * )
 
-	Address Range:	R/W:	 Function:
-	--------------------------------------------------------------------------
-	0000 - 5fff		R		 Program ROM
-	a000 - a0ff		W		 Sprite RAM
-	a800 - a803		W		 Lamps / Coin Meters
-	b000 - b1ff		R/W		 Collision RAM
-	e000 - e7ff		R/W		 character RAM
-	f000 - f7ff		R/W		 RAM
-	f202					 coinage 2
-	f205					 coinage 1
-	f800 - f803		R/W		 road drawing
-	f900 - f903		R/W		 road drawing
-	fa00 - fa03		R/W		 sound
-	fb00 - fb03		R/W		 x,DS2,x,x
-	fc00 - fc01		R		 DS1,x
-	fc00 - fc01		W		 score
-	fd00			R		 Coin Inputs, etc.
-	fe00			R		 DS3,x
+    Address Range:  R/W:     Function:
+    --------------------------------------------------------------------------
+    0000 - 5fff     R        Program ROM
+    a000 - a0ff     W        Sprite RAM
+    a800 - a803     W        Lamps / Coin Meters
+    b000 - b1ff     R/W      Collision RAM
+    e000 - e7ff     R/W      character RAM
+    f000 - f7ff     R/W      RAM
+    f202                     coinage 2
+    f205                     coinage 1
+    f800 - f803     R/W      road drawing
+    f900 - f903     R/W      road drawing
+    fa00 - fa03     R/W      sound
+    fb00 - fb03     R/W      x,DS2,x,x
+    fc00 - fc01     R        DS1,x
+    fc00 - fc01     W        score
+    fd00            R        Coin Inputs, etc.
+    fe00            R        DS3,x
 
-	Switch settings:
-	Notes:
-		1) Facing the CPU board, with the two large IDC connectors at
-		   the top of the board, and the large and small IDC
-		   connectors at the bottom, DIP switch #1 is upper right DIP
-		   switch, DIP switch #2 is the DIP switch to the right of it.
+    Switch settings:
+    Notes:
+        1) Facing the CPU board, with the two large IDC connectors at
+           the top of the board, and the large and small IDC
+           connectors at the bottom, DIP switch #1 is upper right DIP
+           switch, DIP switch #2 is the DIP switch to the right of it.
 
-		2) Facing the Sound board, with the IDC connector at the
-		   bottom of the board, DIP switch #3 (4 bank) can be seen.
-	----------------------------------------------------------------------------
+        2) Facing the Sound board, with the IDC connector at the
+           bottom of the board, DIP switch #3 (4 bank) can be seen.
+    ----------------------------------------------------------------------------
 
-	Option	   (DIP Swtich #1) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	1 Car On Extended Play	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
-	2 Car On Extended Play	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
-	3 Car On Extended Play	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
-	4 Car On Extended Play	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Game Time Adjustable	   |	 |	   | ON	 |	   |	 |	   |	 |	   |
-	Game Time Fixed (55 Sec.)  |	 |	   | OFF |	   |	 |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Hard Game Difficulty	   |	 |	   |	 | ON  |	 |	   |	 |	   |
-	Easy Game Difficulty	   |	 |	   |	 | OFF |	 |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Normal Game Mode		   |	 |	   |	 |	   | ON	 |	   |	 |	   |
-	No Collisions (cheat)	   |	 |	   |	 |	   | OFF |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Initial Entry Off (?)	   |	 |	   |	 |	   |	 | ON  |	 |	   |
-	Initial Entry On  (?)	   |	 |	   |	 |	   |	 | OFF |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Not Used				   |	 |	   |	 |	   |	 |	   |  X	 |	X  |
-	---------------------------------------------------------------------------
+    Option     (DIP Swtich #1) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    1 Car On Extended Play     | ON  | ON  |     |     |     |     |     |     |
+    2 Car On Extended Play     | OFF | ON  |     |     |     |     |     |     |
+    3 Car On Extended Play     | ON  | OFF |     |     |     |     |     |     |
+    4 Car On Extended Play     | OFF | OFF |     |     |     |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Game Time Adjustable       |     |     | ON  |     |     |     |     |     |
+    Game Time Fixed (55 Sec.)  |     |     | OFF |     |     |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Hard Game Difficulty       |     |     |     | ON  |     |     |     |     |
+    Easy Game Difficulty       |     |     |     | OFF |     |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Normal Game Mode           |     |     |     |     | ON  |     |     |     |
+    No Collisions (cheat)      |     |     |     |     | OFF |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Initial Entry Off (?)      |     |     |     |     |     | ON  |     |     |
+    Initial Entry On  (?)      |     |     |     |     |     | OFF |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Not Used                   |     |     |     |     |     |     |  X  |  X  |
+    ---------------------------------------------------------------------------
 
-	Option	   (DIP Swtich #2) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
-	--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	60 Seconds Game Time	   | ON	 | ON  |	 |	   |	 |	   |	 |	   |
-	70 Seconds Game Time	   | OFF | ON  |	 |	   |	 |	   |	 |	   |
-	80 Seconds Game Time	   | ON	 | OFF |	 |	   |	 |	   |	 |	   |
-	90 Seconds Game Time	   | OFF | OFF |	 |	   |	 |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Slot 1	 1 Coin	 1 Credit  |	 |	   | ON	 | ON  | ON	 |	   |	 |	   |
-	Slot 1	 1 Coin	 2 Credits |	 |	   | OFF | ON  | ON	 |	   |	 |	   |
-	Slot 1	 1 Coin	 3 Credits |	 |	   | ON	 | OFF | ON	 |	   |	 |	   |
-	Slot 1	 1 Coin	 6 Credits |	 |	   | OFF | OFF | ON	 |	   |	 |	   |
-	Slot 1	 2 Coins 1 Credit  |	 |	   | ON	 | ON  | OFF |	   |	 |	   |
-	Slot 1	 3 Coins 1 Credit  |	 |	   | OFF | ON  | OFF |	   |	 |	   |
-	Slot 1	 4 Coins 1 Credit  |	 |	   | ON	 | OFF | OFF |	   |	 |	   |
-	Slot 1	 1 Coin	 1 Credit  |	 |	   | OFF | OFF | OFF |	   |	 |	   |
-	 --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
-	Slot 2	 1 Coin	 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | ON  |
-	Slot 2	 1 Coin	 2 Credits |	 |	   |	 |	   |	 | OFF | ON	 | ON  |
-	Slot 2	 1 Coin	 3 Credits |	 |	   |	 |	   |	 | ON  | OFF | ON  |
-	Slot 2	 1 Coin	 6 Credits |	 |	   |	 |	   |	 | OFF | OFF | ON  |
-	Slot 2	 2 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | ON	 | OFF |
-	Slot 2	 3 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | ON	 | OFF |
-	Slot 2	 4 Coins 1 Credit  |	 |	   |	 |	   |	 | ON  | OFF | OFF |
-	Slot 2	 1 Coins 1 Credit  |	 |	   |	 |	   |	 | OFF | OFF | OFF |
-	---------------------------------------------------------------------------
+    Option     (DIP Swtich #2) | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
+    --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    60 Seconds Game Time       | ON  | ON  |     |     |     |     |     |     |
+    70 Seconds Game Time       | OFF | ON  |     |     |     |     |     |     |
+    80 Seconds Game Time       | ON  | OFF |     |     |     |     |     |     |
+    90 Seconds Game Time       | OFF | OFF |     |     |     |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Slot 1   1 Coin  1 Credit  |     |     | ON  | ON  | ON  |     |     |     |
+    Slot 1   1 Coin  2 Credits |     |     | OFF | ON  | ON  |     |     |     |
+    Slot 1   1 Coin  3 Credits |     |     | ON  | OFF | ON  |     |     |     |
+    Slot 1   1 Coin  6 Credits |     |     | OFF | OFF | ON  |     |     |     |
+    Slot 1   2 Coins 1 Credit  |     |     | ON  | ON  | OFF |     |     |     |
+    Slot 1   3 Coins 1 Credit  |     |     | OFF | ON  | OFF |     |     |     |
+    Slot 1   4 Coins 1 Credit  |     |     | ON  | OFF | OFF |     |     |     |
+    Slot 1   1 Coin  1 Credit  |     |     | OFF | OFF | OFF |     |     |     |
+     --------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+    Slot 2   1 Coin  1 Credit  |     |     |     |     |     | ON  | ON  | ON  |
+    Slot 2   1 Coin  2 Credits |     |     |     |     |     | OFF | ON  | ON  |
+    Slot 2   1 Coin  3 Credits |     |     |     |     |     | ON  | OFF | ON  |
+    Slot 2   1 Coin  6 Credits |     |     |     |     |     | OFF | OFF | ON  |
+    Slot 2   2 Coins 1 Credit  |     |     |     |     |     | ON  | ON  | OFF |
+    Slot 2   3 Coins 1 Credit  |     |     |     |     |     | OFF | ON  | OFF |
+    Slot 2   4 Coins 1 Credit  |     |     |     |     |     | ON  | OFF | OFF |
+    Slot 2   1 Coins 1 Credit  |     |     |     |     |     | OFF | OFF | OFF |
+    ---------------------------------------------------------------------------
 
-	Option	   (DIP Swtich #3) | SW1 | SW2 | SW3 | SW4 |
-	 --------------------------|-----|-----|-----|-----|
-	Not Used				   |  X	 |	X  |	 |	   |
-	 --------------------------|-----|-----|-----|-----|
-	Digital (LED) Tachometer   |	 |	   | ON	 |	   |
-	Analog (Meter) Tachometer  |	 |	   | OFF |	   |
-	 --------------------------|-----|-----|-----|-----|
-	Cockpit Sound System	   |	 |	   |	 | ON  |
-	Upright Sound System	   |	 |	   |	 | OFF |
-	---------------------------------------------------
+    Option     (DIP Swtich #3) | SW1 | SW2 | SW3 | SW4 |
+     --------------------------|-----|-----|-----|-----|
+    Not Used                   |  X  |  X  |     |     |
+     --------------------------|-----|-----|-----|-----|
+    Digital (LED) Tachometer   |     |     | ON  |     |
+    Analog (Meter) Tachometer  |     |     | OFF |     |
+     --------------------------|-----|-----|-----|-----|
+    Cockpit Sound System       |     |     |     | ON  |
+    Upright Sound System       |     |     |     | OFF |
+    ---------------------------------------------------
 
-	Here is a complete list of the ROMs:
+    Here is a complete list of the ROMs:
 
-	Turbo ROMLIST - Frank Palazzolo
-	Name	 Loc			 Function
-	-----------------------------------------------------------------------------
-	Images Acquired:
-	EPR1262,3,4	 IC76, IC89, IC103
-	EPR1363,4,5
-	EPR15xx				Program ROMS
-	EPR1244				Character Data 1
-	EPR1245				Character Data 2
-	EPR-1125			Road ROMS
-	EPR-1126
-	EPR-1127
-	EPR-1238
-	EPR-1239
-	EPR-1240
-	EPR-1241
-	EPR-1242
-	EPR-1243
-	EPR1246-1258		Sprite ROMS
-	EPR1288-1300
+    Turbo ROMLIST - Frank Palazzolo
+    Name     Loc             Function
+    -----------------------------------------------------------------------------
+    Images Acquired:
+    EPR1262,3,4  IC76, IC89, IC103
+    EPR1363,4,5
+    EPR15xx             Program ROMS
+    EPR1244             Character Data 1
+    EPR1245             Character Data 2
+    EPR-1125            Road ROMS
+    EPR-1126
+    EPR-1127
+    EPR-1238
+    EPR-1239
+    EPR-1240
+    EPR-1241
+    EPR-1242
+    EPR-1243
+    EPR1246-1258        Sprite ROMS
+    EPR1288-1300
 
-	PR-1114		IC13	Color 1 (road, etc.)
-	PR-1115		IC18	Road gfx
-	PR-1116		IC20	Crash (collision detection?)
-	PR-1117		IC21	Color 2 (road, etc.)
-	PR-1118		IC99	256x4 Character Color PROM
-	PR-1119		IC50	512x8 Vertical Timing PROM
-	PR-1120		IC62	Horizontal Timing PROM
-	PR-1121		IC29	Color PROM
-	PR-1122		IC11	Pattern 1
-	PR-1123		IC21	Pattern 2
+    PR-1114     IC13    Color 1 (road, etc.)
+    PR-1115     IC18    Road gfx
+    PR-1116     IC20    Crash (collision detection?)
+    PR-1117     IC21    Color 2 (road, etc.)
+    PR-1118     IC99    256x4 Character Color PROM
+    PR-1119     IC50    512x8 Vertical Timing PROM
+    PR-1120     IC62    Horizontal Timing PROM
+    PR-1121     IC29    Color PROM
+    PR-1122     IC11    Pattern 1
+    PR-1123     IC21    Pattern 2
 
-	PA-06R		IC22	Mathbox Timing PAL
-	PA-06L		IC90	Address Decode PAL
+    PA-06R      IC22    Mathbox Timing PAL
+    PA-06L      IC90    Address Decode PAL
 
 **************************************************************************/
 
@@ -154,7 +154,7 @@
 
 /*************************************
  *
- *	Turbo CPU memory handlers
+ *  Turbo CPU memory handlers
  *
  *************************************/
 
@@ -193,7 +193,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Subroc3D CPU memory handlers
+ *  Subroc3D CPU memory handlers
  *
  *************************************/
 
@@ -226,7 +226,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Buck Rogers CPU memory handlers
+ *  Buck Rogers CPU memory handlers
  *
  *************************************/
 
@@ -278,7 +278,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -323,7 +323,7 @@ INPUT_PORTS_START( turbo )
 	PORT_DIPSETTING(	0x18, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(	0x14, DEF_STR( 3C_1C ))
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ))
-/*	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ))*/
+/*  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))*/
 	PORT_DIPSETTING(	0x1c, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(	0x04, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(	0x08, DEF_STR( 1C_3C ))
@@ -332,7 +332,7 @@ INPUT_PORTS_START( turbo )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(	0xa0, DEF_STR( 3C_1C ))
 	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ))
-/*	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ))*/
+/*  PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))*/
 	PORT_DIPSETTING(	0xe0, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ))
@@ -490,7 +490,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -566,7 +566,7 @@ static struct Samplesinterface subroc3d_samples_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -594,7 +594,7 @@ static MACHINE_DRIVER_START( turbo )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(turbo_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -624,7 +624,7 @@ static MACHINE_DRIVER_START( subroc3d )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(subroc3d_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -659,7 +659,7 @@ static MACHINE_DRIVER_START( buckrog )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(buckrog_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -669,7 +669,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -987,18 +987,18 @@ ROM_START( zoom909 )
 	ROM_REGION( 0x0a40, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr-5199.95", 0x0000, 0x0400, CRC(f3cd9254) SHA1(5fc5e4137fa260f5463395719449e4a542f1b08c) ) /* sprite colortable */
 	ROM_LOAD( "5198.93",    0x0400, 0x0200, CRC(32e74bc8) SHA1(dd2c812efd7b8f6b31a45e698d6453ea6bec132e) ) /* char colortable */
-	
+
 	/* unknown */
 	ROM_LOAD( "pr-5194.39", 0x0600, 0x0020, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )
 	ROM_LOAD( "pr-5195.53", 0x0620, 0x0020, CRC(181c6d23) SHA1(4749b205cbaa513ee65a644946235d2cfe275648) )
 	ROM_LOAD( "pr-5196.10", 0x0640, 0x0200, CRC(04204bcf) SHA1(5636eb184463ac58fcfd20012d13d14fb0769124) )
 	ROM_LOAD( "pr-5197.78", 0x0840, 0x0200, CRC(a42674af) SHA1(db3590dd0d0f8a85d4ba32ac4ee33f2f4ee4c348) )
-	
+
 ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -1017,7 +1017,7 @@ static DRIVER_INIT( decode_buckrog )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

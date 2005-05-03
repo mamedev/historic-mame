@@ -1,4 +1,4 @@
-/*	Konami Hornet */
+/*  Konami Hornet */
 
 #include "driver.h"
 #include "machine/timekpr.h"
@@ -513,7 +513,7 @@ ROM_START(sscope2)
 	ROM_REGION(0x800000, REGION_USER3, 0)		/* Comm board ROMs */
 	ROM_LOAD("931a19.bin", 0x000000, 0x400000, CRC(8e8bb6af) SHA1(1bb399f7897fbcbe6852fda3215052b2810437d8))
 	ROM_LOAD("931a20.bin", 0x400000, 0x400000, CRC(a14a7887) SHA1(daf0cbaf83e59680a0d3c4d66fcc48d02c9723d1))
-	
+
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("931a08.bin", 0x000000, 0x80000, CRC(1597d604) SHA1(a1eab4d25907930b59ea558b484c3b6ddcb9303c))
 

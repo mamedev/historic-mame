@@ -1,151 +1,151 @@
 /***************************************************************************
 
-	Atari Missile Command hardware
+    Atari Missile Command hardware
 
-	Games supported:
-		* Missile Command
+    Games supported:
+        * Missile Command
 
-	Known issues:
-		* none at this time
+    Known issues:
+        * none at this time
 
-	Missile-command sync-prom added by HIGHWAYMAN.
-	The prom pcb location is:L6 and is 32x8
+    Missile-command sync-prom added by HIGHWAYMAN.
+    The prom pcb location is:L6 and is 32x8
 ****************************************************************************
 
-	Modified from original schematics...
+    Modified from original schematics...
 
-	MISSILE COMMAND
-	---------------
-	HEX		 R/W   D7 D6 D5 D4 D3 D2 D2 D0	function
-	---------+-----+------------------------+------------------------
-	0000-01FF  R/W   D  D  D	D  D  D  D	D	512 bytes working ram
+    MISSILE COMMAND
+    ---------------
+    HEX      R/W   D7 D6 D5 D4 D3 D2 D2 D0  function
+    ---------+-----+------------------------+------------------------
+    0000-01FF  R/W   D  D  D    D  D  D  D  D   512 bytes working ram
 
-	0200-05FF  R/W   D  D  D	D  D  D  D	D	3rd color bit region
-												of screen ram.
-												Each bit of every odd byte is the low color
-												bit for the bottom scanlines
-												The schematics say that its for the bottom
-												32 scanlines, although the code only accesses
-												$401-$5FF for the bottom 8 scanlines...
-												Pretty wild, huh?
+    0200-05FF  R/W   D  D  D    D  D  D  D  D   3rd color bit region
+                                                of screen ram.
+                                                Each bit of every odd byte is the low color
+                                                bit for the bottom scanlines
+                                                The schematics say that its for the bottom
+                                                32 scanlines, although the code only accesses
+                                                $401-$5FF for the bottom 8 scanlines...
+                                                Pretty wild, huh?
 
-	0600-063F  R/W   D  D  D	D  D  D  D	D	More working ram.
+    0600-063F  R/W   D  D  D    D  D  D  D  D   More working ram.
 
-	0640-3FFF  R/W   D  D  D	D  D  D  D	D	2-color bit region of
-												screen ram.
-												Writes to 4 bytes each to effectively
-												address $1900-$ffff.
+    0640-3FFF  R/W   D  D  D    D  D  D  D  D   2-color bit region of
+                                                screen ram.
+                                                Writes to 4 bytes each to effectively
+                                                address $1900-$ffff.
 
-	1900-FFFF  R/W   D  D 						2-color bit region of
-												screen ram
-												  Only accessed with
-												   LDA ($ZZ,X) and
-												   STA ($ZZ,X)
-												  Those instructions take longer
-												  than 5 cycles.
+    1900-FFFF  R/W   D  D                       2-color bit region of
+                                                screen ram
+                                                  Only accessed with
+                                                   LDA ($ZZ,X) and
+                                                   STA ($ZZ,X)
+                                                  Those instructions take longer
+                                                  than 5 cycles.
 
-	---------+-----+------------------------+------------------------
-	4000-400F  R/W   D  D  D	D  D  D  D	D	POKEY ports.
-	-----------------------------------------------------------------
-	4008		 R	   D  D  D	D  D  D  D	D	Game Option switches
-	-----------------------------------------------------------------
-	4800		 R	   D						Right coin
-	4800		 R		  D 					Center coin
-	4800		 R			 D					Left coin
-	4800		 R				D				1 player start
-	4800		 R				   D			2 player start
-	4800		 R					  D 		2nd player left fire(cocktail)
-	4800		 R						 D		2nd player center fire	"
-	4800		 R							D	2nd player right fire	"
-	---------+-----+------------------------+------------------------
-	4800		 R				   D  D  D	D	Horiz trackball displacement
-														if ctrld=high.
-	4800		 R	   D  D  D	D				Vert trackball displacement
-														if ctrld=high.
-	---------+-----+------------------------+------------------------
-	4800		 W	   D						Unused ??
-	4800		 W		  D 					screen flip
-	4800		 W			 D					left coin counter
-	4800		 W				D				center coin counter
-	4800		 W				   D			right coin counter
-	4800		 W					  D 		2 player start LED.
-	4800		 W						 D		1 player start LED.
-	4800		 W							D	CTRLD, 0=read switches,
-														1= read trackball.
-	---------+-----+------------------------+------------------------
-	4900		 R	   D						VBLANK read
-	4900		 R		  D 					Self test switch input.
-	4900		 R			 D					SLAM switch input.
-	4900		 R				D				Horiz trackball direction input.
-	4900		 R				   D			Vert trackball direction input.
-	4900		 R					  D 		1st player left fire.
-	4900		 R						 D		1st player center fire.
-	4900		 R							D	1st player right fire.
-	---------+-----+------------------------+------------------------
-	4A00		 R	   D  D  D	D  D  D  D	D	Pricing Option switches.
-	4B00-4B07  W				   D  D  D	D	Color RAM.
-	4C00		 W								Watchdog.
-	4D00		 W								Interrupt acknowledge.
-	---------+-----+------------------------+------------------------
-	5000-7FFF  R	   D  D  D	D  D  D  D	D	Program.
-	---------+-----+------------------------+------------------------
-
-
-	MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
-	---------------------------------------------
+    ---------+-----+------------------------+------------------------
+    4000-400F  R/W   D  D  D    D  D  D  D  D   POKEY ports.
+    -----------------------------------------------------------------
+    4008         R     D  D  D  D  D  D  D  D   Game Option switches
+    -----------------------------------------------------------------
+    4800         R     D                        Right coin
+    4800         R        D                     Center coin
+    4800         R           D                  Left coin
+    4800         R              D               1 player start
+    4800         R                 D            2 player start
+    4800         R                    D         2nd player left fire(cocktail)
+    4800         R                       D      2nd player center fire  "
+    4800         R                          D   2nd player right fire   "
+    ---------+-----+------------------------+------------------------
+    4800         R                 D  D  D  D   Horiz trackball displacement
+                                                        if ctrld=high.
+    4800         R     D  D  D  D               Vert trackball displacement
+                                                        if ctrld=high.
+    ---------+-----+------------------------+------------------------
+    4800         W     D                        Unused ??
+    4800         W        D                     screen flip
+    4800         W           D                  left coin counter
+    4800         W              D               center coin counter
+    4800         W                 D            right coin counter
+    4800         W                    D         2 player start LED.
+    4800         W                       D      1 player start LED.
+    4800         W                          D   CTRLD, 0=read switches,
+                                                        1= read trackball.
+    ---------+-----+------------------------+------------------------
+    4900         R     D                        VBLANK read
+    4900         R        D                     Self test switch input.
+    4900         R           D                  SLAM switch input.
+    4900         R              D               Horiz trackball direction input.
+    4900         R                 D            Vert trackball direction input.
+    4900         R                    D         1st player left fire.
+    4900         R                       D      1st player center fire.
+    4900         R                          D   1st player right fire.
+    ---------+-----+------------------------+------------------------
+    4A00         R     D  D  D  D  D  D  D  D   Pricing Option switches.
+    4B00-4B07  W                   D  D  D  D   Color RAM.
+    4C00         W                              Watchdog.
+    4D00         W                              Interrupt acknowledge.
+    ---------+-----+------------------------+------------------------
+    5000-7FFF  R       D  D  D  D  D  D  D  D   Program.
+    ---------+-----+------------------------+------------------------
 
 
-	GAME OPTIONS:
-	(8-position switch at R8)
-
-	1	2	3	4	5	6	7	8	Meaning
-	-------------------------------------------------------------------------
-	Off Off 						Game starts with 7 cities
-	On	On							Game starts with 6 cities
-	On	Off 						Game starts with 5 cities
-	Off On							Game starts with 4 cities
-			On						No bonus credit
-			Off 					1 bonus credit for 4 successive coins
-				On					Large trak-ball input
-				Off 				Mini Trak-ball input
-					On	Off Off 	Bonus city every  8000 pts
-					On	On	On		Bonus city every 10000 pts
-					Off On	On		Bonus city every 12000 pts
-					On	Off On		Bonus city every 14000 pts
-					Off Off On		Bonus city every 15000 pts
-					On	On	Off 	Bonus city every 18000 pts
-					Off On	Off 	Bonus city every 20000 pts
-					Off Off Off 	No bonus cities
-								On	Upright
-								Off Cocktail
+    MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
+    ---------------------------------------------
 
 
+    GAME OPTIONS:
+    (8-position switch at R8)
 
-	PRICING OPTIONS:
-	(8-position switch at R10)
+    1   2   3   4   5   6   7   8   Meaning
+    -------------------------------------------------------------------------
+    Off Off                         Game starts with 7 cities
+    On  On                          Game starts with 6 cities
+    On  Off                         Game starts with 5 cities
+    Off On                          Game starts with 4 cities
+            On                      No bonus credit
+            Off                     1 bonus credit for 4 successive coins
+                On                  Large trak-ball input
+                Off                 Mini Trak-ball input
+                    On  Off Off     Bonus city every  8000 pts
+                    On  On  On      Bonus city every 10000 pts
+                    Off On  On      Bonus city every 12000 pts
+                    On  Off On      Bonus city every 14000 pts
+                    Off Off On      Bonus city every 15000 pts
+                    On  On  Off     Bonus city every 18000 pts
+                    Off On  Off     Bonus city every 20000 pts
+                    Off Off Off     No bonus cities
+                                On  Upright
+                                Off Cocktail
 
-	1	2	3	4	5	6	7	8	Meaning
-	-------------------------------------------------------------------------
-	On	On							1 coin 1 play
-	Off On							Free play
-	On Off							2 coins 1 play
-	Off Off 						1 coin 2 plays
-			On	On					Right coin mech * 1
-			Off On					Right coin mech * 4
-			On	Off 				Right coin mech * 5
-			Off Off 				Right coin mech * 6
-					On				Center coin mech * 1
-					Off 			Center coin mech * 2
-						On	On		English
-						Off On		French
-						On	Off 	German
-						Off Off 	Spanish
-								On	( Unused )
-								Off ( Unused )
 
-	-there are 2 different versions of the Super Missile Attack board.  It's not known if
- 	the roms are different.  The SMA manual mentions a set 3(035822-03E) that will work
-	as well as set 2. Missile Command set 1 will not work with the SMA board. It would
+
+    PRICING OPTIONS:
+    (8-position switch at R10)
+
+    1   2   3   4   5   6   7   8   Meaning
+    -------------------------------------------------------------------------
+    On  On                          1 coin 1 play
+    Off On                          Free play
+    On Off                          2 coins 1 play
+    Off Off                         1 coin 2 plays
+            On  On                  Right coin mech * 1
+            Off On                  Right coin mech * 4
+            On  Off                 Right coin mech * 5
+            Off Off                 Right coin mech * 6
+                    On              Center coin mech * 1
+                    Off             Center coin mech * 2
+                        On  On      English
+                        Off On      French
+                        On  Off     German
+                        Off Off     Spanish
+                                On  ( Unused )
+                                Off ( Unused )
+
+    -there are 2 different versions of the Super Missile Attack board.  It's not known if
+    the roms are different.  The SMA manual mentions a set 3(035822-03E) that will work
+    as well as set 2. Missile Command set 1 will not work with the SMA board. It would
         appear set 1 and set 2 as labeled by mame are reversed.
 
 ******************************************************************************************/
@@ -157,7 +157,7 @@
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -180,7 +180,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -351,7 +351,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -365,7 +365,7 @@ static struct POKEYinterface pokey_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -402,7 +402,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -469,7 +469,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -550,7 +550,7 @@ static DRIVER_INIT( suprmatk )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

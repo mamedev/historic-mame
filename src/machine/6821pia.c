@@ -1,9 +1,9 @@
 /**********************************************************************
 
-	Motorola 6821 PIA interface and emulation
+    Motorola 6821 PIA interface and emulation
 
-	This function emulates all the functionality of up to 8 M6821
-	peripheral interface adapters.
+    This function emulates all the functionality of up to 8 M6821
+    peripheral interface adapters.
 
 **********************************************************************/
 
@@ -375,9 +375,9 @@ int pia_read(int which, int offset)
 				val = (p->out_b & p->ddr_b) + (p->in_b & ~p->ddr_b);
 
 				/* This read will implicitly clear the IRQ B1 flag.  If CB2 is in write-strobe
-				   output mode with CB1 restore, and a CB1 active transition set the flag,
-				   clearing it will cause CB2 to go high again.  Note that this is different
-				   from what happens with port A. */
+                   output mode with CB1 restore, and a CB1 active transition set the flag,
+                   clearing it will cause CB2 to go high again.  Note that this is different
+                   from what happens with port A. */
 				if (p->irq_b1 && C2_OUTPUT(p->ctl_b) && C2_STROBE_MODE(p->ctl_b) && STROBE_C1_RESET(p->ctl_b))
 				{
 					/* call the CB2 output function */
@@ -586,7 +586,7 @@ void pia_write(int which, int offset, int data)
 				}
 
 				/* if we're going from input to output mode, or we're already in output mode
-				   and this change creates a transition, call the CA2 output function */
+                   and this change creates a transition, call the CA2 output function */
 				if (C2_INPUT(p->ctl_a) || (C2_OUTPUT(p->ctl_a) && (p->out_ca2 ^ temp)))
 					if (p->intf->out_ca2_func) p->intf->out_ca2_func(0, temp);
 
@@ -626,7 +626,7 @@ void pia_write(int which, int offset, int data)
 				}
 
 				/* if we're going from input to output mode, or we're already in output mode
-				   and this change creates a transition, call the CB2 output function */
+                   and this change creates a transition, call the CB2 output function */
 				if (C2_INPUT(p->ctl_b) || (C2_OUTPUT(p->ctl_b) && (p->out_cb2 ^ temp)))
 					if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, temp);
 
@@ -767,9 +767,9 @@ void pia_set_input_cb1(int which, int data)
 			update_6821_interrupts(p);
 
 			/* If CB2 is configured as a write-strobe output which is reset by a CB1
-			   transition, this reset will only happen when a read from port B implicitly
-			   clears the IRQ B1 flag.  So we handle the CB2 reset there.  Note that this
-			   is different from what happens with port A. */
+               transition, this reset will only happen when a read from port B implicitly
+               clears the IRQ B1 flag.  So we handle the CB2 reset there.  Note that this
+               is different from what happens with port A. */
 		}
 	}
 

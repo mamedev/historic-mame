@@ -1,493 +1,493 @@
 /***************************************************************************
 
-	Williams 6809 system
+    Williams 6809 system
 
     driver by Michael Soderstrom, Marc LaFontaine, Aaron Giles
 
-	Games supported:
-		* Defender
-		* Mayday
-		* Colony 7
-		* Stargate
-		* Robotron
-		* Joust
-		* Bubbles
-		* Splat!
-		* Sinistar
-		* PlayBall!
-		* Blaster
-		* Mystic Marathon
-		* Turkey Shoot
-		* Inferno
-		* Joust 2
-		* Lotto Fun
+    Games supported:
+        * Defender
+        * Mayday
+        * Colony 7
+        * Stargate
+        * Robotron
+        * Joust
+        * Bubbles
+        * Splat!
+        * Sinistar
+        * PlayBall!
+        * Blaster
+        * Mystic Marathon
+        * Turkey Shoot
+        * Inferno
+        * Joust 2
+        * Lotto Fun
 
 ****************************************************************************
 
-	video-decoder proms added for Defender,Stargate,Robotron,Joust,Sinistar,
-	Bubbles, etc. by HIGHWAYMAN, all decoder proms are 512x8.
-	defender original pcb's used a single prom(decoder1).
-	newer defender pcb's used 2 proms(decoder2,decoder3) this was to allow
-	video inversion for the coctail table, decoders 1 & 2 are the same code.
-	white was first romset, then green/blue the only difference was the chips used,
-	the final version was red, only red can run in a coctail table.
-	(red also has *much* improved enemy AI and is harder to play)
-	Colony7 uses a different chip for decoder2(cs10), but decoder3 is the same.
-	early stargate pcb's used decoder4, and decoder5.
-	newer stargate pcb's and the other games on that hardware used decoder4 and decoder6
-	this was probably just to fix a minor bug in decoder5.
-	Blaster uses decoder4 and decoder6 and 2 other proms.
-	if i could find more proms i would clean this up into a table - maybe later.
-	
-****************************************************************************
-
-	Blitter (Stargate and Defender do not have blitter)
-	---------------------------------------------------
-
-	CA00 start_blitter    Each bits has a function
-	      1000 0000 Do not process half the byte 4-7
-	      0100 0000 Do not process half the byte 0-3
-	      0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
-	      0001 0000 Remap, if shape != 0 then pixel = mask
-	      0000 1000 Source  1 = take source 0 = take Mask only
-	      0000 0100 ?
-	      0000 0010 Transparent
-	      0000 0001
-	CA01 blitter_mask     Not really a mask, more a remap color, see Blitter
-	CA02 blitter_source   hi
-	CA03 blitter_source   lo
-	CA04 blitter_dest     hi
-	CA05 blitter_dest     lo
-	CA06 blitter_w_h      H  Do a XOR with 4 to have the real value (Except Splat)
-	CA07 blitter_w_h      W  Do a XOR with 4 to have the real value (Except Splat)
-
-	CB00 6 bits of the video counters bits 2-7
-
-	CBFF watchdog
-
-	CC00-CFFF 1K X 4 CMOS ram battery backed up (8 bits on Sinistar)
+    video-decoder proms added for Defender,Stargate,Robotron,Joust,Sinistar,
+    Bubbles, etc. by HIGHWAYMAN, all decoder proms are 512x8.
+    defender original pcb's used a single prom(decoder1).
+    newer defender pcb's used 2 proms(decoder2,decoder3) this was to allow
+    video inversion for the coctail table, decoders 1 & 2 are the same code.
+    white was first romset, then green/blue the only difference was the chips used,
+    the final version was red, only red can run in a coctail table.
+    (red also has *much* improved enemy AI and is harder to play)
+    Colony7 uses a different chip for decoder2(cs10), but decoder3 is the same.
+    early stargate pcb's used decoder4, and decoder5.
+    newer stargate pcb's and the other games on that hardware used decoder4 and decoder6
+    this was probably just to fix a minor bug in decoder5.
+    Blaster uses decoder4 and decoder6 and 2 other proms.
+    if i could find more proms i would clean this up into a table - maybe later.
 
 ****************************************************************************
 
-	Blaster Bubbles Joust Robotron Sinistar Splat Stargate
-	------------------------------------------------------
+    Blitter (Stargate and Defender do not have blitter)
+    ---------------------------------------------------
 
-	0000-8FFF ROM   (for Blaster, 0000-3FFF is a bank of 12 ROMs)
-	0000-97FF Video  RAM Bank switched with ROM (96FF for Blaster)
-	9800-BFFF RAM
-		0xBB00 Blaster only, Color 0 for each line (256 entry)
-		0xBC00 Blaster only, Color 0 flags, latch color only if bit 0 = 1 (256 entry)
-		    Do something else with the bit 1, I do not know what
-	C000-CFFF I/O
-	D000-FFFF ROM
+    CA00 start_blitter    Each bits has a function
+          1000 0000 Do not process half the byte 4-7
+          0100 0000 Do not process half the byte 0-3
+          0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
+          0001 0000 Remap, if shape != 0 then pixel = mask
+          0000 1000 Source  1 = take source 0 = take Mask only
+          0000 0100 ?
+          0000 0010 Transparent
+          0000 0001
+    CA01 blitter_mask     Not really a mask, more a remap color, see Blitter
+    CA02 blitter_source   hi
+    CA03 blitter_source   lo
+    CA04 blitter_dest     hi
+    CA05 blitter_dest     lo
+    CA06 blitter_w_h      H  Do a XOR with 4 to have the real value (Except Splat)
+    CA07 blitter_w_h      W  Do a XOR with 4 to have the real value (Except Splat)
 
-	c000-C00F color_registers  (16 bytes of BBGGGRRR)
+    CB00 6 bits of the video counters bits 2-7
 
-	c804 widget_pia_dataa (widget = I/O board)
-	c805 widget_pia_ctrla
-	c806 widget_pia_datab
-	c807 widget_pia_ctrlb (CB2 select between player 1 and player 2
-			       controls if Table or Joust)
-	      bits 5-3 = 110 = player 2
-	      bits 5-3 = 111 = player 1
+    CBFF watchdog
 
-	c80c rom_pia_dataa
-	c80d rom_pia_ctrla
-	c80e rom_pia_datab
-	      bit 0 \
-	      bit 1 |
-	      bit 2 |-6 bits to sound board
-	      bit 3 |
-	      bit 4 |
-	      bit 5 /
-	      bit 6 \
-	      bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
-	c80f rom_pia_ctrlb
-
-	C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
-
-	C940 Blaster only: Select bank in the color Prom for color remap
-	C980 Blaster only: Select which ROM is at 0000-3FFF
-	C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
-			   bit 1 = erase back each frame
+    CC00-CFFF 1K X 4 CMOS ram battery backed up (8 bits on Sinistar)
 
 ****************************************************************************
 
-	Robotron
-	--------
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  Move Up
-	  bit 1  Move Down
-	  bit 2  Move Left
-	  bit 3  Move Right
-	  bit 4  1 Player
-	  bit 5  2 Players
-	  bit 6  Fire Up
-	  bit 7  Fire Down
+    Blaster Bubbles Joust Robotron Sinistar Splat Stargate
+    ------------------------------------------------------
 
-	c806 widget_pia_datab
-	  bit 0  Fire Left
-	  bit 1  Fire Right
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7
+    0000-8FFF ROM   (for Blaster, 0000-3FFF is a bank of 12 ROMs)
+    0000-97FF Video  RAM Bank switched with ROM (96FF for Blaster)
+    9800-BFFF RAM
+        0xBB00 Blaster only, Color 0 for each line (256 entry)
+        0xBC00 Blaster only, Color 0 flags, latch color only if bit 0 = 1 (256 entry)
+            Do something else with the bit 1, I do not know what
+    C000-CFFF I/O
+    D000-FFFF ROM
 
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
+    c000-C00F color_registers  (16 bytes of BBGGGRRR)
 
-****************************************************************************
+    c804 widget_pia_dataa (widget = I/O board)
+    c805 widget_pia_ctrla
+    c806 widget_pia_datab
+    c807 widget_pia_ctrlb (CB2 select between player 1 and player 2
+                   controls if Table or Joust)
+          bits 5-3 = 110 = player 2
+          bits 5-3 = 111 = player 1
 
-	Joust
-	-----
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  Move Left   player 1/2
-	  bit 1  Move Right  player 1/2
-	  bit 2  Flap        player 1/2
-	  bit 3
-	  bit 4  2 Player
-	  bit 5  1 Players
-	  bit 6
-	  bit 7
+    c80c rom_pia_dataa
+    c80d rom_pia_ctrla
+    c80e rom_pia_datab
+          bit 0 \
+          bit 1 |
+          bit 2 |-6 bits to sound board
+          bit 3 |
+          bit 4 |
+          bit 5 /
+          bit 6 \
+          bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
+    c80f rom_pia_ctrlb
 
-	c806 widget_pia_datab
-	  bit 0
-	  bit 1
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7
+    C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
 
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
+    C940 Blaster only: Select bank in the color Prom for color remap
+    C980 Blaster only: Select which ROM is at 0000-3FFF
+    C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
+               bit 1 = erase back each frame
 
 ****************************************************************************
 
-	Stargate
-	--------
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  Fire
-	  bit 1  Thrust
-	  bit 2  Smart Bomb
-	  bit 3  HyperSpace
-	  bit 4  2 Players
-	  bit 5  1 Player
-	  bit 6  Reverse
-	  bit 7  Down
+    Robotron
+    --------
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  Move Up
+      bit 1  Move Down
+      bit 2  Move Left
+      bit 3  Move Right
+      bit 4  1 Player
+      bit 5  2 Players
+      bit 6  Fire Up
+      bit 7  Fire Down
 
-	c806 widget_pia_datab
-	  bit 0  Up
-	  bit 1  Inviso
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7  0 = Upright  1 = Table
+    c806 widget_pia_datab
+      bit 0  Fire Left
+      bit 1  Fire Right
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7
 
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin        (High Score Reset in schematics)
-	  bit 3  High Score Reset  (Left Coin in schematics)
-	  bit 4  Left Coin         (Center Coin in schematics)
-	  bit 5  Center Coin       (Right Coin in schematics)
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
-
-****************************************************************************
-
-	Splat
-	-----
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  Walk Up
-	  bit 1  Walk Down
-	  bit 2  Walk Left
-	  bit 3  Walk Right
-	  bit 4  1 Player
-	  bit 5  2 Players
-	  bit 6  Throw Up
-	  bit 7  Throw Down
-
-	c806 widget_pia_datab
-	  bit 0  Throw Left
-	  bit 1  Throw Right
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7
-
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
 ****************************************************************************
 
-	Blaster
-	-------
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  up/down switch a
-	  bit 1  up/down switch b
-	  bit 2  up/down switch c
-	  bit 3  up/down direction
-	  bit 4  left/right switch a
-	  bit 5  left/right switch b
-	  bit 6  left/right switch c
-	  bit 7  left/right direction
+    Joust
+    -----
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  Move Left   player 1/2
+      bit 1  Move Right  player 1/2
+      bit 2  Flap        player 1/2
+      bit 3
+      bit 4  2 Player
+      bit 5  1 Players
+      bit 6
+      bit 7
 
-	c806 widget_pia_datab
-	  bit 0  Thrust (Panel)
-	  bit 1  Blast
-	  bit 2  Thrust (Joystick)
-	  bit 3
-	  bit 4  1 Player
-	  bit 5  2 Player
-	  bit 6
-	  bit 7
+    c806 widget_pia_datab
+      bit 0
+      bit 1
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7
 
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
-
-****************************************************************************
-
-	Sinistar
-	--------
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  up/down switch a
-	  bit 1  up/down switch b
-	  bit 2  up/down switch c
-	  bit 3  up/down direction
-	  bit 4  left/right switch a
-	  bit 5  left/right switch b
-	  bit 6  left/right switch c
-	  bit 7  left/right direction
-
-	c806 widget_pia_datab
-	  bit 0  Fire
-	  bit 1  Bomb
-	  bit 2
-	  bit 3
-	  bit 4  1 Player
-	  bit 5  2 Player
-	  bit 6
-	  bit 7
-
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
 ****************************************************************************
 
-	Bubbles
-	-------
-	c804 widget_pia_dataa (widget = I/O board)
-	  bit 0  Up
-	  bit 1  Down
-	  bit 2  Left
-	  bit 3  Right
-	  bit 4  2 Players
-	  bit 5  1 Player
-	  bit 6
-	  bit 7
+    Stargate
+    --------
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  Fire
+      bit 1  Thrust
+      bit 2  Smart Bomb
+      bit 3  HyperSpace
+      bit 4  2 Players
+      bit 5  1 Player
+      bit 6  Reverse
+      bit 7  Down
 
-	c806 widget_pia_datab
-	  bit 0
-	  bit 1
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7
+    c806 widget_pia_datab
+      bit 0  Up
+      bit 1  Inviso
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7  0 = Upright  1 = Table
 
-	c80c rom_pia_dataa
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin        (High Score Reset in schematics)
-	  bit 3  High Score Reset  (Left Coin in schematics)
-	  bit 4  Left Coin         (Center Coin in schematics)
-	  bit 5  Center Coin       (Right Coin in schematics)
-	  bit 6  Slam Door Tilt
-	  bit 7  Hand Shake from sound board
-
-****************************************************************************
-
-	Defender
-	--------
-	0000-9800 Video RAM
-	C000-CFFF ROM (4 banks) + I/O
-	d000-ffff ROM
-
-	c000-c00f color_registers  (16 bytes of BBGGGRRR)
-
-	C3FC      WatchDog
-
-	C400-C4FF CMOS ram battery backed up
-
-	C800      6 bits of the video counters bits 2-7
-
-	cc00 pia1_dataa (widget = I/O board)
-	  bit 0  Auto Up
-	  bit 1  Advance
-	  bit 2  Right Coin
-	  bit 3  High Score Reset
-	  bit 4  Left Coin
-	  bit 5  Center Coin
-	  bit 6
-	  bit 7
-	cc01 pia1_ctrla
-
-	cc02 pia1_datab
-	  bit 0 \
-	  bit 1 |
-	  bit 2 |-6 bits to sound board
-	  bit 3 |
-	  bit 4 |
-	  bit 5 /
-	  bit 6 \
-	  bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
-	cc03 pia1_ctrlb (CB2 select between player 1 and player 2 controls if Table)
-
-	cc04 pia2_dataa
-	  bit 0  Fire
-	  bit 1  Thrust
-	  bit 2  Smart Bomb
-	  bit 3  HyperSpace
-	  bit 4  2 Players
-	  bit 5  1 Player
-	  bit 6  Reverse
-	  bit 7  Down
-	cc05 pia2_ctrla
-
-	cc06 pia2_datab
-	  bit 0  Up
-	  bit 1
-	  bit 2
-	  bit 3
-	  bit 4
-	  bit 5
-	  bit 6
-	  bit 7
-	cc07 pia2_ctrlb
-	  Control the IRQ
-
-	d000 Select bank (c000-cfff)
-	  0 = I/O
-	  1 = BANK 1
-	  2 = BANK 2
-	  3 = BANK 3
-	  7 = BANK 4
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin        (High Score Reset in schematics)
+      bit 3  High Score Reset  (Left Coin in schematics)
+      bit 4  Left Coin         (Center Coin in schematics)
+      bit 5  Center Coin       (Right Coin in schematics)
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
 ****************************************************************************
 
-	Mystic Marathon (1983)
-	Turkey Shoot (1984)
-	Inferno (1984)
-	Joust2 Survival of the Fittest (1986)
+    Splat
+    -----
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  Walk Up
+      bit 1  Walk Down
+      bit 2  Walk Left
+      bit 3  Walk Right
+      bit 4  1 Player
+      bit 5  2 Players
+      bit 6  Throw Up
+      bit 7  Throw Down
 
-	All have two boards, a large board with lots of RAM and
-	three ROMs, and a smaller board with lots of ROMs,
-	the CPU, the 6821 PIAs, and the two "Special Chip 2"
-	custom BIT/BLT chips.
-	Joust 2 has an additional music/speech board that has a
-	68B09E CPU, 68B21 PIA, Harris 55564-5 CVSD, and a YM2151.
+    c806 widget_pia_datab
+      bit 0  Throw Left
+      bit 1  Throw Right
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7
 
-	Contact Michael Soderstrom (ichael@geocities.com) if you
-	have any additional information or corrections.
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
-	Memory Map:
+****************************************************************************
 
-	15 14 13 12  11 10  9  8   7  6  5  4   3  2  1  0
-	--------------------------------------------------
-	 x  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-BFFF	48K DRAM
+    Blaster
+    -------
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  up/down switch a
+      bit 1  up/down switch b
+      bit 2  up/down switch c
+      bit 3  up/down direction
+      bit 4  left/right switch a
+      bit 5  left/right switch b
+      bit 6  left/right switch c
+      bit 7  left/right direction
 
-	 0  0  0  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-1FFF	8K ROM
-	 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	8K ROM
-	 0  1  0  x   x  x  x  x   x  x  x  x   x  x  x  x	4000-5FFF	8K ROM
-	 0  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	6000-7FFF	8K ROM
+    c806 widget_pia_datab
+      bit 0  Thrust (Panel)
+      bit 1  Blast
+      bit 2  Thrust (Joystick)
+      bit 3
+      bit 4  1 Player
+      bit 5  2 Player
+      bit 6
+      bit 7
 
-	 1  0  0  0   x  x  x  x   x  x  x  x   x  x  x  x	8000-8FFF	EN_COLOR* (PAGE3 only)
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
-	 0  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-7FFF	OE_DRAM* (PAGE0 and read only) or:
-	 1  0  x  x   x  x  x  x   x  x  x  x   x  x  x  x	9000-BFFF	OE_DRAM* (!EN COLOR and read only)
+****************************************************************************
 
-	 1  1  0  0   x  x  x  x   x  x  x  x   x  x  x  x	C000-CFFF	I/O:
-	 1  1  0  0   0  x  x  x   x  x  x  x   x  x  x  x	C000-C7FF	MAP_EN*
-	 1  1  0  0   1  0  0  0   0  x  x  x   x  x  x  x	C800-C87F	CS_PAGE
-	 1  1  0  0   1  0  0  0   1  x  x  x   x  x  x  x	C880-C87F	CS_INT* (blitter)
-	 1  1  0  0   1  0  0  1   0  x  x  x   x  x  x  x	C900-C97F	CS_WDOG* (data = 0x14)
-	 1  1  0  0   1  0  0  1   1  x  x  x   x  x  x  x	C980-C9FF	CS_PIA
-	 1  1  0  0   1  0  0  1   1  x  x  x   0  0  x  x	C980-C983	PIA IC5
-	 1  1  0  0   1  0  0  1   1  x  x  x   0  1  x  x	C984-C987	PIA IC6
-	 1  1  0  0   1  0  0  1   1  x  x  x   1  1  x  x	C98C		7 segment LED
+    Sinistar
+    --------
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  up/down switch a
+      bit 1  up/down switch b
+      bit 2  up/down switch c
+      bit 3  up/down direction
+      bit 4  left/right switch a
+      bit 5  left/right switch b
+      bit 6  left/right switch c
+      bit 7  left/right direction
 
-	 1  1  0  0   1  0  1  1   0  0  0  x   x  x  x  x	CB00-CB1F	CK_FG
-	 1  1  0  0   1  0  1  1   0  0  1  x   x  x  x  x	CB20-CB3F	CK_BG
-	 1  1  0  0   1  0  1  1   0  1  0  x   x  x  x  x	CB40-CB5F	CK_SCL
-	 1  1  0  0   1  0  1  1   0  1  1  x   x  x  x  x	CB60-CB7F	CK_SCH
-	 1  1  0  0   1  0  1  1   1  0  0  x   x  x  x  x	CB80-CB9F	FLIP clk
-	 1  1  0  0   1  0  1  1   1  0  1  x   x  x  x  x	CBA0-CBBF	DMA_WRINH clk
+    c806 widget_pia_datab
+      bit 0  Fire
+      bit 1  Bomb
+      bit 2
+      bit 3
+      bit 4  1 Player
+      bit 5  2 Player
+      bit 6
+      bit 7
 
-	 1  1  0  0   1  0  1  1   1  1  1  0   x  x  x  x	CBE0-CBEF	EN VPOS*
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
-	 1  1  0  0   1  1  0  0   x  x  x  x   x  x  x  x	CC00-CCFF	1Kx4 CMOS RAM MEM_PROT protected
-	 1  1  0  0   1  1  x  x   x  x  x  x   x  x  x  x	CD00-CFFF	          not MEM_PROT protected
+****************************************************************************
 
-	 Mystic Marathon/Inferno:
-	 1  1  0  1   0  x  x  x   x  x  x  x   x  x  x  x	D000-D7FF	SRAM0*
-	 1  1  0  1   1  x  x  x   x  x  x  x   x  x  x  x	D800-DFFF	SRAM1*
-	 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
-	 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+    Bubbles
+    -------
+    c804 widget_pia_dataa (widget = I/O board)
+      bit 0  Up
+      bit 1  Down
+      bit 2  Left
+      bit 3  Right
+      bit 4  2 Players
+      bit 5  1 Player
+      bit 6
+      bit 7
 
-	 Turkey Shoot/Joust2:
-	 1  1  0  1   x  x  x  x   x  x  x  x   x  x  x  x	D000-DFFF	DXXX* 4K ROM
-	 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
-	 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+    c806 widget_pia_datab
+      bit 0
+      bit 1
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7
 
-	6802/6808 Sound
+    c80c rom_pia_dataa
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin        (High Score Reset in schematics)
+      bit 3  High Score Reset  (Left Coin in schematics)
+      bit 4  Left Coin         (Center Coin in schematics)
+      bit 5  Center Coin       (Right Coin in schematics)
+      bit 6  Slam Door Tilt
+      bit 7  Hand Shake from sound board
 
-	 0  0  0  x   x  x  x  x   0  x  x  x   x  x  x  x	0000-007F	128 bytes RAM
-	 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	CS PIA IC4
-	 1  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	E000-FFFF	8K ROM
+****************************************************************************
+
+    Defender
+    --------
+    0000-9800 Video RAM
+    C000-CFFF ROM (4 banks) + I/O
+    d000-ffff ROM
+
+    c000-c00f color_registers  (16 bytes of BBGGGRRR)
+
+    C3FC      WatchDog
+
+    C400-C4FF CMOS ram battery backed up
+
+    C800      6 bits of the video counters bits 2-7
+
+    cc00 pia1_dataa (widget = I/O board)
+      bit 0  Auto Up
+      bit 1  Advance
+      bit 2  Right Coin
+      bit 3  High Score Reset
+      bit 4  Left Coin
+      bit 5  Center Coin
+      bit 6
+      bit 7
+    cc01 pia1_ctrla
+
+    cc02 pia1_datab
+      bit 0 \
+      bit 1 |
+      bit 2 |-6 bits to sound board
+      bit 3 |
+      bit 4 |
+      bit 5 /
+      bit 6 \
+      bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
+    cc03 pia1_ctrlb (CB2 select between player 1 and player 2 controls if Table)
+
+    cc04 pia2_dataa
+      bit 0  Fire
+      bit 1  Thrust
+      bit 2  Smart Bomb
+      bit 3  HyperSpace
+      bit 4  2 Players
+      bit 5  1 Player
+      bit 6  Reverse
+      bit 7  Down
+    cc05 pia2_ctrla
+
+    cc06 pia2_datab
+      bit 0  Up
+      bit 1
+      bit 2
+      bit 3
+      bit 4
+      bit 5
+      bit 6
+      bit 7
+    cc07 pia2_ctrlb
+      Control the IRQ
+
+    d000 Select bank (c000-cfff)
+      0 = I/O
+      1 = BANK 1
+      2 = BANK 2
+      3 = BANK 3
+      7 = BANK 4
+
+****************************************************************************
+
+    Mystic Marathon (1983)
+    Turkey Shoot (1984)
+    Inferno (1984)
+    Joust2 Survival of the Fittest (1986)
+
+    All have two boards, a large board with lots of RAM and
+    three ROMs, and a smaller board with lots of ROMs,
+    the CPU, the 6821 PIAs, and the two "Special Chip 2"
+    custom BIT/BLT chips.
+    Joust 2 has an additional music/speech board that has a
+    68B09E CPU, 68B21 PIA, Harris 55564-5 CVSD, and a YM2151.
+
+    Contact Michael Soderstrom (ichael@geocities.com) if you
+    have any additional information or corrections.
+
+    Memory Map:
+
+    15 14 13 12  11 10  9  8   7  6  5  4   3  2  1  0
+    --------------------------------------------------
+     x  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x  0000-BFFF   48K DRAM
+
+     0  0  0  x   x  x  x  x   x  x  x  x   x  x  x  x  0000-1FFF   8K ROM
+     0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x  2000-3FFF   8K ROM
+     0  1  0  x   x  x  x  x   x  x  x  x   x  x  x  x  4000-5FFF   8K ROM
+     0  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x  6000-7FFF   8K ROM
+
+     1  0  0  0   x  x  x  x   x  x  x  x   x  x  x  x  8000-8FFF   EN_COLOR* (PAGE3 only)
+
+     0  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x  0000-7FFF   OE_DRAM* (PAGE0 and read only) or:
+     1  0  x  x   x  x  x  x   x  x  x  x   x  x  x  x  9000-BFFF   OE_DRAM* (!EN COLOR and read only)
+
+     1  1  0  0   x  x  x  x   x  x  x  x   x  x  x  x  C000-CFFF   I/O:
+     1  1  0  0   0  x  x  x   x  x  x  x   x  x  x  x  C000-C7FF   MAP_EN*
+     1  1  0  0   1  0  0  0   0  x  x  x   x  x  x  x  C800-C87F   CS_PAGE
+     1  1  0  0   1  0  0  0   1  x  x  x   x  x  x  x  C880-C87F   CS_INT* (blitter)
+     1  1  0  0   1  0  0  1   0  x  x  x   x  x  x  x  C900-C97F   CS_WDOG* (data = 0x14)
+     1  1  0  0   1  0  0  1   1  x  x  x   x  x  x  x  C980-C9FF   CS_PIA
+     1  1  0  0   1  0  0  1   1  x  x  x   0  0  x  x  C980-C983   PIA IC5
+     1  1  0  0   1  0  0  1   1  x  x  x   0  1  x  x  C984-C987   PIA IC6
+     1  1  0  0   1  0  0  1   1  x  x  x   1  1  x  x  C98C        7 segment LED
+
+     1  1  0  0   1  0  1  1   0  0  0  x   x  x  x  x  CB00-CB1F   CK_FG
+     1  1  0  0   1  0  1  1   0  0  1  x   x  x  x  x  CB20-CB3F   CK_BG
+     1  1  0  0   1  0  1  1   0  1  0  x   x  x  x  x  CB40-CB5F   CK_SCL
+     1  1  0  0   1  0  1  1   0  1  1  x   x  x  x  x  CB60-CB7F   CK_SCH
+     1  1  0  0   1  0  1  1   1  0  0  x   x  x  x  x  CB80-CB9F   FLIP clk
+     1  1  0  0   1  0  1  1   1  0  1  x   x  x  x  x  CBA0-CBBF   DMA_WRINH clk
+
+     1  1  0  0   1  0  1  1   1  1  1  0   x  x  x  x  CBE0-CBEF   EN VPOS*
+
+     1  1  0  0   1  1  0  0   x  x  x  x   x  x  x  x  CC00-CCFF   1Kx4 CMOS RAM MEM_PROT protected
+     1  1  0  0   1  1  x  x   x  x  x  x   x  x  x  x  CD00-CFFF             not MEM_PROT protected
+
+     Mystic Marathon/Inferno:
+     1  1  0  1   0  x  x  x   x  x  x  x   x  x  x  x  D000-D7FF   SRAM0*
+     1  1  0  1   1  x  x  x   x  x  x  x   x  x  x  x  D800-DFFF   SRAM1*
+     1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x  E000-EFFF   EXXX* 4K ROM
+     1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x  F000-FFFF   FXXX* 4K ROM
+
+     Turkey Shoot/Joust2:
+     1  1  0  1   x  x  x  x   x  x  x  x   x  x  x  x  D000-DFFF   DXXX* 4K ROM
+     1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x  E000-EFFF   EXXX* 4K ROM
+     1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x  F000-FFFF   FXXX* 4K ROM
+
+    6802/6808 Sound
+
+     0  0  0  x   x  x  x  x   0  x  x  x   x  x  x  x  0000-007F   128 bytes RAM
+     0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x  2000-3FFF   CS PIA IC4
+     1  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x  E000-FFFF   8K ROM
 
 ***************************************************************************/
 
@@ -506,7 +506,7 @@
 
 /*************************************
  *
- *	Defender memory handlers
+ *  Defender memory handlers
  *
  *************************************/
 
@@ -539,7 +539,7 @@ void defender_install_io_space(void)
 
 /*************************************
  *
- *	General Williams memory handlers
+ *  General Williams memory handlers
  *
  *************************************/
 
@@ -561,7 +561,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Blaster memory handlers
+ *  Blaster memory handlers
  *
  *************************************/
 
@@ -589,7 +589,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Later Williams memory handlers
+ *  Later Williams memory handlers
  *
  *************************************/
 
@@ -618,7 +618,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound board memory handlers
+ *  Sound board memory handlers
  *
  *************************************/
 
@@ -640,7 +640,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Later sound board memory handlers
+ *  Later sound board memory handlers
  *
  *************************************/
 
@@ -655,7 +655,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -1232,7 +1232,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1262,7 +1262,7 @@ static struct GfxDecodeInfo williams2_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1306,7 +1306,7 @@ static MACHINE_DRIVER_START( williams )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(williams_map,0)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
@@ -1402,7 +1402,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -2146,7 +2146,7 @@ ROM_END
 ROM_START( tshoot )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
 	ROM_LOAD( "rom18.cpu", 0x0d000, 0x1000, CRC(effc33f1) SHA1(cd1b16b4a4a46ce9d550d10b465b8cf1ab3c5273) )	/* IC55 */
-	ROM_LOAD( "rom2.cpu",  0x0e000, 0x1000, CRC(fd982687) SHA1(70be1ea57ea0a1e75b1bd988492a9c0244e8b91f) )	/* IC9	*/
+	ROM_LOAD( "rom2.cpu",  0x0e000, 0x1000, CRC(fd982687) SHA1(70be1ea57ea0a1e75b1bd988492a9c0244e8b91f) )	/* IC9  */
 	ROM_LOAD( "rom3.cpu",  0x0f000, 0x1000, CRC(9617054d) SHA1(8795b97a6391aa3804f68dc2d2b33866dc17f34c) )	/* IC10 */
 
 	ROM_LOAD( "rom11.cpu", 0x10000, 0x2000, CRC(60d5fab8) SHA1(fe75e46dedb7ca153470d6a39cea0a721e5b7b39) )	/* IC18 */
@@ -2169,7 +2169,7 @@ ROM_START( tshoot )
 
 	/* sound CPU */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "rom1.cpu", 0xe000, 0x2000, CRC(011a94a7) SHA1(9f54a742a87ba56b9517e33e556f57dce6eb2eab) )	/* IC8	*/
+	ROM_LOAD( "rom1.cpu", 0xe000, 0x2000, CRC(011a94a7) SHA1(9f54a742a87ba56b9517e33e556f57dce6eb2eab) )	/* IC8  */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom20.cpu", 0x00000, 0x2000, CRC(c6e1d253) SHA1(c408a29f75ba2958e229996f903400b3d95e3bd3) )	/* IC57 */
@@ -2180,7 +2180,7 @@ ROM_END
 
 ROM_START( mysticm )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
-	ROM_LOAD( "mm02_2.a09", 0x0e000, 0x1000, CRC(3a776ea8) SHA1(1fef5f5cef5e10606c97ac9c365f000a88d51314) )	/* IC9	*/
+	ROM_LOAD( "mm02_2.a09", 0x0e000, 0x1000, CRC(3a776ea8) SHA1(1fef5f5cef5e10606c97ac9c365f000a88d51314) )	/* IC9  */
 	ROM_LOAD( "mm03_2.a10", 0x0f000, 0x1000, CRC(6e247c75) SHA1(4daf5206d29b887cd1a78528fac4b0cd8ec7f39b) )	/* IC10 */
 
 	ROM_LOAD( "mm11_1.a18", 0x10000, 0x2000, CRC(f537968e) SHA1(2660a480d0bba5fe25885453115ef1015f8bdea9) )	/* IC18 */
@@ -2204,7 +2204,7 @@ ROM_START( mysticm )
 
 	/* sound CPU */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "mm01_1.a08", 0x0e000, 0x2000, CRC(65339512) SHA1(144625d2905c953383bcc90cd2435d332394883f) )	/* IC8	*/
+	ROM_LOAD( "mm01_1.a08", 0x0e000, 0x2000, CRC(65339512) SHA1(144625d2905c953383bcc90cd2435d332394883f) )	/* IC8  */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mm20_1.b57", 0x00000, 0x2000, CRC(5c0f4f46) SHA1(7dedbbeda2f34a2eac9fb14277874d9d66f468c7) )	/* IC57 */
@@ -2215,7 +2215,7 @@ ROM_END
 
 ROM_START( inferno )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
-	ROM_LOAD( "ic9.inf",  0x0e000, 0x1000, CRC(1a013185) SHA1(9079c082ec043714f9d8ea92bc81d0b93d2ce715) )		/* IC9	*/
+	ROM_LOAD( "ic9.inf",  0x0e000, 0x1000, CRC(1a013185) SHA1(9079c082ec043714f9d8ea92bc81d0b93d2ce715) )		/* IC9  */
 	ROM_LOAD( "ic10.inf", 0x0f000, 0x1000, CRC(dbf64a36) SHA1(54326bc527797f0a3a55764073eb40030aec1aae) ) 	/* IC10 */
 
 	ROM_LOAD( "ic18.inf", 0x10000, 0x2000, CRC(95bcf7b1) SHA1(66687a3962109a25e26ae00bddd33ed973981b91) )		/* IC18 */
@@ -2235,7 +2235,7 @@ ROM_START( inferno )
 
 	/* sound CPU */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "ic8.inf", 0x0e000, 0x2000, CRC(4e3123b8) SHA1(f453feed3ae3b6430db49eb4325f62eecfee9f5e) )		/* IC8	*/
+	ROM_LOAD( "ic8.inf", 0x0e000, 0x2000, CRC(4e3123b8) SHA1(f453feed3ae3b6430db49eb4325f62eecfee9f5e) )		/* IC8  */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic57.inf", 0x00000, 0x2000, CRC(65a4ef79) SHA1(270c58901e83665bc388cd9cb92022c55e8eae50) ) 	/* IC57 */
@@ -2289,7 +2289,7 @@ ROM_END
 
 /*************************************
  *
- *	Configuration macros
+ *  Configuration macros
  *
  *************************************/
 
@@ -2310,7 +2310,7 @@ ROM_END
 
 /*************************************
  *
- *	Defender hardware driver init
+ *  Defender hardware driver init
  *
  *************************************/
 
@@ -2348,7 +2348,7 @@ static DRIVER_INIT( mayday )
 
 /*************************************
  *
- *	Standard hardware driver init
+ *  Standard hardware driver init
  *
  *************************************/
 
@@ -2377,7 +2377,7 @@ static DRIVER_INIT( spdball )
 {
 	CONFIGURE_BLITTER(WILLIAMS_BLITTER_SC01, 0xc000);
 	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
-	
+
 	/* add a third PIA */
 	pia_config(3, PIA_STANDARD_ORDERING, &spdball_pia_3_intf);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc808, 0xc80b, 0, 0, pia_3_r);
@@ -2457,7 +2457,7 @@ static DRIVER_INIT( blastkit )
 
 /*************************************
  *
- *	2nd gen hardware driver init
+ *  2nd gen hardware driver init
  *
  *************************************/
 
@@ -2512,7 +2512,7 @@ static DRIVER_INIT( joust2 )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

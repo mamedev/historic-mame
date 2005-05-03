@@ -1,8 +1,8 @@
 /***************************************************************************
 
-							-= Gal's Panic II =-
+                            -= Gal's Panic II =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
 ***************************************************************************/
@@ -12,14 +12,14 @@
 #include "kaneko16.h"
 
 /*
-304000:0040 0000 0100 0000-0000 0000 0000 0000		(Sprites regs)
+304000:0040 0000 0100 0000-0000 0000 0000 0000      (Sprites regs)
 304010:16C0 0200 16C0 0200-16C0 0200 16C0 0200
 */
 
 /***************************************************************************
 
 
-						Palettized Background Layers
+                        Palettized Background Layers
 
 
 ***************************************************************************/
@@ -45,11 +45,11 @@ READ16_HANDLER( galpani2_bg8_regs_##_n_##_r ) \
 }
 
 /*
-	000-3ff		row? scroll
-	400			?
-	800-bff		col? scroll
-	c04			0003 flip, 0300 flip?
-	c1c/e		01ff scroll, 3000 ?
+    000-3ff     row? scroll
+    400         ?
+    800-bff     col? scroll
+    c04         0003 flip, 0300 flip?
+    c1c/e       01ff scroll, 3000 ?
 */
 #define galpani2_BG8_REGS_W( _n_ ) \
 WRITE16_HANDLER( galpani2_bg8_regs_##_n_##_w ) \
@@ -94,7 +94,7 @@ galpani2_BG8_PALETTE_W( 1 )
 /***************************************************************************
 
 
-							xRGB  Background Layer
+                            xRGB  Background Layer
 
 
 ***************************************************************************/
@@ -118,7 +118,7 @@ WRITE16_HANDLER( galpani2_bg15_w )
 /***************************************************************************
 
 
-							Video Init Functions
+                            Video Init Functions
 
 
 ***************************************************************************/
@@ -157,7 +157,7 @@ VIDEO_START( galpani2 )
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -190,11 +190,11 @@ if (code_pressed(KEYCODE_Z))
 							cliprect,TRANSPARENCY_PEN,Machine->pens[0x4200 + 0]);
 	}
 
-/*	test mode:
-	304000:0040 0000 0100 0000-0000 0000 0000 0000		(Sprite regs)
-	304010:16C0 0200 16C0 0200-16C0 0200 16C0 0200
-	16c0/40 = 5b		200/40 = 8
-	scrollx = f5, on screen x should be 0 (f5+5b = 150)	*/
+/*  test mode:
+    304000:0040 0000 0100 0000-0000 0000 0000 0000      (Sprite regs)
+    304010:16C0 0200 16C0 0200-16C0 0200 16C0 0200
+    16c0/40 = 5b        200/40 = 8
+    scrollx = f5, on screen x should be 0 (f5+5b = 150) */
 
 	if (layers_ctrl & 0x2)
 	{

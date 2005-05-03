@@ -25,11 +25,11 @@ static int destroyr_noise;
 static void destroyr_dial_callback(int dial)
 {
 	/* Analog inputs come from the player's depth control potentiometer.
-	   The voltage is compared to a voltage ramp provided by a discrete
-	   analog circuit that conditions the VBLANK signal. When the ramp
-	   voltage exceeds the input voltage an NMI signal is generated. The
-	   computer then reads the VSYNC data functions to tell where the
-	   cursor should be located. */
+       The voltage is compared to a voltage ramp provided by a discrete
+       analog circuit that conditions the VBLANK signal. When the ramp
+       voltage exceeds the input voltage an NMI signal is generated. The
+       computer then reads the VSYNC data functions to tell where the
+       cursor should be located. */
 
 	destroyr_potsense[dial] = 1;
 

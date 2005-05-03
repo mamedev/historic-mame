@@ -119,7 +119,7 @@ static void *ym2203_start(int sndindex, int clock, const void *config)
 	static const struct YM2203interface generic_2203 = { 0 };
 	const struct YM2203interface *intf = config ? config : &generic_2203;
 	struct ym2203_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

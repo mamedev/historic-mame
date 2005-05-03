@@ -1,8 +1,8 @@
 /**************************************************************************
 
-	Gorf/Votrax SC-01 Emulator
+    Gorf/Votrax SC-01 Emulator
 
- 	Mike@Dissfulfils.co.uk
+    Mike@Dissfulfils.co.uk
 
         Modified to match phonemes to words
 

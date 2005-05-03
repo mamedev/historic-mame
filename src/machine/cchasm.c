@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Cinematronics Cosmic Chasm hardware
+    Cinematronics Cosmic Chasm hardware
 
 ***************************************************************************/
 
@@ -38,17 +38,17 @@ static void timer_2_timeout(int dummy)
 READ16_HANDLER( cchasm_6840_r )
 {
 	/* From datasheet:
-	   0 - nothing
-	   2		1 - read status register
-	   4		2 - read timer 1 counter
-	   6		3 - read lsb buffer
-	   8		4 - timer 2 counter
-	   a		5 - read lsb buffer
-	   c		6 - timer 3 counter
-	   e		7 - lsb buffer
+       0 - nothing
+       2        1 - read status register
+       4        2 - read timer 1 counter
+       6        3 - read lsb buffer
+       8        4 - timer 2 counter
+       a        5 - read lsb buffer
+       c        6 - timer 3 counter
+       e        7 - lsb buffer
 
 
-	*/
+    */
 
 	switch (offset)
 	{
@@ -96,29 +96,29 @@ WRITE16_HANDLER( cchasm_6840_w )
 	/* From datasheet:
 
 
-	   0		0 - write control reg 1/3 (reg 1 if lsb of Reg 2 is 1, else 3)
-	   2		1 - write control reg 2
-	   4		2 - write msb buffer reg
-	   6		3 - write timer 1 latch
-	   8		4 - msb buffer register
-	   a		5 - write timer 2 latch
-	   c		6 - msb buffer reg
-	   e		7 - write timer 3 latch
+       0        0 - write control reg 1/3 (reg 1 if lsb of Reg 2 is 1, else 3)
+       2        1 - write control reg 2
+       4        2 - write msb buffer reg
+       6        3 - write timer 1 latch
+       8        4 - msb buffer register
+       a        5 - write timer 2 latch
+       c        6 - msb buffer reg
+       e        7 - write timer 3 latch
 
 
-	   So:
+       So:
 
-	   Write ff0100 to 6840 02	 = }
-	   Write ff0000 to 6840 00	 = } Write 0 to control reg 1
+       Write ff0100 to 6840 02   = }
+       Write ff0000 to 6840 00   = } Write 0 to control reg 1
 
-	   Write ff0000 to 6840 02
+       Write ff0000 to 6840 02
 
-	   Write ff0000 to 6840 0c
-	   Write ff3500 to 6840 0e	 = } Write 0035 to timer 3 latch?
+       Write ff0000 to 6840 0c
+       Write ff3500 to 6840 0e   = } Write 0035 to timer 3 latch?
 
-	   Write ff0a00 to 6840 00	 = } Write 0a to control reg 3
+       Write ff0a00 to 6840 00   = } Write 0a to control reg 3
 
-	*/
+    */
 
 	if (ACCESSING_LSB)
 	{

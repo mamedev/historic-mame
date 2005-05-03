@@ -38,14 +38,14 @@ static void taotaido_drawsprite( UINT16 spriteno, struct mame_bitmap *bitmap, co
 {
 	/*- SPR RAM Format -**
 
-	  4 words per sprite
+      4 words per sprite
 
-	  zzzz sssp  pppp pppp (y zoom, y size, y position)
-	  zzzz sssp  pppp pppp (x zoom, x size, x position)
-	  yxpc cccc  ---- ---- (flipy, flipx, priority?, colour)
-	  -nnn nnnn  nnnn nnnn (tile lookup)
+      zzzz sssp  pppp pppp (y zoom, y size, y position)
+      zzzz sssp  pppp pppp (x zoom, x size, x position)
+      yxpc cccc  ---- ---- (flipy, flipx, priority?, colour)
+      -nnn nnnn  nnnn nnnn (tile lookup)
 
-	*/
+    */
 
 	int x,y;
 
@@ -210,8 +210,8 @@ VIDEO_START(taotaido)
 
 VIDEO_UPDATE(taotaido)
 {
-//	tilemap_set_scrollx(bg_tilemap,0,(taotaido_scrollram[0x380/2]>>4)); // the values put here end up being wrong every other frame
-//	tilemap_set_scrolly(bg_tilemap,0,(taotaido_scrollram[0x382/2]>>4)); // the values put here end up being wrong every other frame
+//  tilemap_set_scrollx(bg_tilemap,0,(taotaido_scrollram[0x380/2]>>4)); // the values put here end up being wrong every other frame
+//  tilemap_set_scrolly(bg_tilemap,0,(taotaido_scrollram[0x382/2]>>4)); // the values put here end up being wrong every other frame
 
 	/* not amazingly efficient however it should be functional for row select and linescroll */
 	int line;

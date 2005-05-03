@@ -53,12 +53,12 @@ static void *tms5220_start(int sndindex, int clock, const void *config)
 {
 	static const struct TMS5220interface dummy = { 0 };
 	struct tms5220_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 	info->intf = config ? config : &dummy;
 	info->clock = clock;
-	
+
 	info->chip = tms5220_create();
 	if (!info->chip)
 		return NULL;
@@ -66,7 +66,7 @@ static void *tms5220_start(int sndindex, int clock, const void *config)
 
 	/* initialize a info->stream */
 	info->stream = stream_create(0, 1, Machine->sample_rate, info, tms5220_update);
-	
+
     /* reset the 5220 */
     tms5220_reset_chip(info->chip);
     tms5220_set_irq(info->chip, info->intf->irq);

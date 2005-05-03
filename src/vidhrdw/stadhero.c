@@ -4,8 +4,8 @@
 
 *********************************************************************
 
-	MXC-06 chip to produce sprites, see dec0.c
-	BAC-06 chip for background?
+    MXC-06 chip to produce sprites, see dec0.c
+    BAC-06 chip for background?
 
 ***************************************************************************/
 

@@ -1,8 +1,8 @@
 /*
-	Sega System16 Hardware
-	major cleanup in progress - still a lot to do!
+    Sega System16 Hardware
+    major cleanup in progress - still a lot to do!
 
-	see vidhrdw/system16.c for more information
+    see vidhrdw/system16.c for more information
 
 Changes:
 
@@ -43,107 +43,107 @@ Notes:
           3. In the ending, the 3 heroes are floating into a half bubble. (see picture).
           Also colour problems during ending as well.
           4. In the later Shooting gallery stage (like inside the car shop and the factory (mission 3)),
-		  there is some garbage graphics (sprite of death monsters that appear where they should not)
+          there is some garbage graphics (sprite of death monsters that appear where they should not)
 
-	working:
-		Alex Kidd
-		Alien Storm (bootleg)
-		Alien Syndrome
-		Altered Beast (Ver 1)
-		Altered Beast (Ver 2)	(No Sound)
-		Atomic Point			(No Sound)
-		Aurail					(Speech quality sounds poor)
-		Aurail (317-0168)
-		Bay Route
-		Body Slam
-	    Dump Matsumoto (Japan, Body Slam)
-		Dynamite Dux (bootleg)
-		Enduro Racer (bootleg)
-		Enduro Racer (custom bootleg)
-		E-Swat (bootleg)
-		Fantasy Zone (Old Ver.)
-		Fantasy Zone (New Ver.)
-		Flash Point  (bootleg)
-		Golden Axe (Ver 1)
-		Golden Axe (Ver 2)
-		Hang-on
-		Heavyweight Champ: some minor graphics glitches
-		Major League: No game over.
-		Moonwalker (bootleg): Music Speed varies
-		Outrun (set 1)
-		Outrun (set 2)
-		Outrun (custom bootleg)
-		Passing Shot (bootleg)
-		Passing Shot (4 player bootleg)
-		Quartet: Glitch on highscore list
-		Quartet (Japan): Glitch on highscore list
-		Quartet 2: Glitch on highscore list
-		Riot City
-		SDI
-		Shadow Dancer
-		Shadow Dancer (Japan)
-		Shinobi
-		Shinobi (Sys16A Bootleg?)
-		Space Harrier
-		Super Hangon (bootleg)
-		Tetris (bootleg)
-		Time Scanner
-		Toryumon
-		Tough Turf (Japan)			(No Sound)
-		Tough Turf (US)				(No Sound)
-		Tough Turf (bootleg)	(No Speech Roms)
-		Wonderboy 3 - Monster Lair
-		Wonderboy 3 - Monster Lair (bootleg)
-		Wrestle War
+    working:
+        Alex Kidd
+        Alien Storm (bootleg)
+        Alien Syndrome
+        Altered Beast (Ver 1)
+        Altered Beast (Ver 2)   (No Sound)
+        Atomic Point            (No Sound)
+        Aurail                  (Speech quality sounds poor)
+        Aurail (317-0168)
+        Bay Route
+        Body Slam
+        Dump Matsumoto (Japan, Body Slam)
+        Dynamite Dux (bootleg)
+        Enduro Racer (bootleg)
+        Enduro Racer (custom bootleg)
+        E-Swat (bootleg)
+        Fantasy Zone (Old Ver.)
+        Fantasy Zone (New Ver.)
+        Flash Point  (bootleg)
+        Golden Axe (Ver 1)
+        Golden Axe (Ver 2)
+        Hang-on
+        Heavyweight Champ: some minor graphics glitches
+        Major League: No game over.
+        Moonwalker (bootleg): Music Speed varies
+        Outrun (set 1)
+        Outrun (set 2)
+        Outrun (custom bootleg)
+        Passing Shot (bootleg)
+        Passing Shot (4 player bootleg)
+        Quartet: Glitch on highscore list
+        Quartet (Japan): Glitch on highscore list
+        Quartet 2: Glitch on highscore list
+        Riot City
+        SDI
+        Shadow Dancer
+        Shadow Dancer (Japan)
+        Shinobi
+        Shinobi (Sys16A Bootleg?)
+        Space Harrier
+        Super Hangon (bootleg)
+        Tetris (bootleg)
+        Time Scanner
+        Toryumon
+        Tough Turf (Japan)          (No Sound)
+        Tough Turf (US)             (No Sound)
+        Tough Turf (bootleg)    (No Speech Roms)
+        Wonderboy 3 - Monster Lair
+        Wonderboy 3 - Monster Lair (bootleg)
+        Wrestle War
 
-	not really working:
-		Shadow Dancer (bootleg)
+    not really working:
+        Shadow Dancer (bootleg)
 
-	protected:
-		Alex Kidd (jpn?)
-		Alien Syndrome
-		Alien Syndrome
-		Alien Syndrome (Japan)
-		Alien Storm
-		Alien Storm (2 Player)
-		Bay Route (317-0116)
-		Bay Route (protected bootleg 1)
-		Bay Route (protected bootleg 2)
-		Enduro Racer
-		E-Swat
-		Flash Point
-		Golden Axe (Ver 1 317-0121 Japan)
-		Golden Axe (Ver 2 317-0110)
-		Golden Axe (Ver 2 317-0122)
-		Golden Axe (protected bootleg)
-		Jyuohki (Japan, altered beast)
-		Moonwalker (317-0158)
-		Moonwalker (317-0159)
-		Passing Shot (317-0080)
-		Shinobi (Sys16B 317-0049)
-		Shinobi (Sys16A 317-0050)
-		SDI (Japan, old version)
-		Super Hangon
-		Tetris (Type A)
-		Tetris (Type B 317-0092)
-		Wonderboy 3 - Monster Lair (317-0089)
+    protected:
+        Alex Kidd (jpn?)
+        Alien Syndrome
+        Alien Syndrome
+        Alien Syndrome (Japan)
+        Alien Storm
+        Alien Storm (2 Player)
+        Bay Route (317-0116)
+        Bay Route (protected bootleg 1)
+        Bay Route (protected bootleg 2)
+        Enduro Racer
+        E-Swat
+        Flash Point
+        Golden Axe (Ver 1 317-0121 Japan)
+        Golden Axe (Ver 2 317-0110)
+        Golden Axe (Ver 2 317-0122)
+        Golden Axe (protected bootleg)
+        Jyuohki (Japan, altered beast)
+        Moonwalker (317-0158)
+        Moonwalker (317-0159)
+        Passing Shot (317-0080)
+        Shinobi (Sys16B 317-0049)
+        Shinobi (Sys16A 317-0050)
+        SDI (Japan, old version)
+        Super Hangon
+        Tetris (Type A)
+        Tetris (Type B 317-0092)
+        Wonderboy 3 - Monster Lair (317-0089)
 
-	protected (No driver):
-		Ace Attacker
-		Action Fighter
-		Bloxeed
-		Clutch Hitter
-		Cotton (Japan)
-		Cotton
-		DD Crew
-		Dunk Shot
-		Excite League
-		Laser Ghost
-		MVP
-		Ryukyu
-		Super Leagu
-		Turbo Outrun
-		Turbo Outrun (Set 2)
+    protected (No driver):
+        Ace Attacker
+        Action Fighter
+        Bloxeed
+        Clutch Hitter
+        Cotton (Japan)
+        Cotton
+        DD Crew
+        Dunk Shot
+        Excite League
+        Laser Ghost
+        MVP
+        Ryukyu
+        Super Leagu
+        Turbo Outrun
+        Turbo Outrun (Set 2)
 */
 
 #include "driver.h"
@@ -220,32 +220,32 @@ static INTERRUPT_GEN( sys16_interrupt )
 
 /***************************************************************************/
 /*
-	Tough Turf (Datsu bootleg) sound emulation
+    Tough Turf (Datsu bootleg) sound emulation
 
-	Memory map
+    Memory map
 
-	0000-7fff : ROM (fixed, tt014d68 0000-7fff)
-	8000-bfff : ROM (banked)
-	e000      : Bank control
-	e800      : Sound command latch
-	f000      : MSM5205 sample data buffer
-	f800-ffff : Work RAM
+    0000-7fff : ROM (fixed, tt014d68 0000-7fff)
+    8000-bfff : ROM (banked)
+    e000      : Bank control
+    e800      : Sound command latch
+    f000      : MSM5205 sample data buffer
+    f800-ffff : Work RAM
 
-	Interrupts
+    Interrupts
 
-	IRQ = Read sound command from $E800
-	NMI = Copy data from fixed/banked ROM to $F000
+    IRQ = Read sound command from $E800
+    NMI = Copy data from fixed/banked ROM to $F000
 
-	Bank control values
+    Bank control values
 
-	00 = tt014d68 8000-bfff
-	01 = tt014d68 c000-ffff
-	02 = tt0246ff 0000-3fff
-	03 = tt0246ff 4000-7fff
-	04 = tt0246ff 8000-bfff
+    00 = tt014d68 8000-bfff
+    01 = tt014d68 c000-ffff
+    02 = tt0246ff 0000-3fff
+    03 = tt0246ff 4000-7fff
+    04 = tt0246ff 8000-bfff
 
-	The sample sound codes in the sound test are OK, but in-game sample playback is bad.
-	There seems to be more data in the high bits of the ROM bank control word which may be related.
+    The sample sound codes in the sound test are OK, but in-game sample playback is bad.
+    There seems to be more data in the high bits of the ROM bank control word which may be related.
 */
 
 static int sample_buffer = 0;
@@ -469,7 +469,7 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 		coin_counter_w(1,coinctrl & 0x02);
 		coin_counter_w(0,coinctrl & 0x01);
 		/* bit 6 is also used (1 most of the time; 0 in dduxbl, sdi, wb3;
-		   tturf has it normally 1 but 0 after coin insertion) */
+           tturf has it normally 1 but 0 after coin insertion) */
 		/* eswat sets bit 4 */
 	}
 }
@@ -1072,7 +1072,7 @@ MACHINE_DRIVER_END
 
 static ADDRESS_MAP_START( fpointbl_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_ROM
-//	AM_RANGE(0x02002e, 0x020049) AM_READ(fp_io_service_dummy_r)
+//  AM_RANGE(0x02002e, 0x020049) AM_READ(fp_io_service_dummy_r)
 	AM_RANGE(0x600006, 0x600007) AM_WRITE(sound_command_w)
 	AM_RANGE(0x601000, 0x601001) AM_READ(input_port_0_word_r) // service
 	AM_RANGE(0x601002, 0x601003) AM_READ(input_port_1_word_r) // player1
@@ -1082,10 +1082,10 @@ static ADDRESS_MAP_START( fpointbl_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(SYS16_MRA16_TILERAM, SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
 	AM_RANGE(0x410000, 0x410fff) AM_READWRITE(SYS16_MRA16_TEXTRAM, SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
 	AM_RANGE(0x440000, 0x440fff) AM_READWRITE(SYS16_MRA16_SPRITERAM, SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-//	AM_RANGE(0x44302a, 0x44304d) AM_READ(fp_io_service_dummy_r)
+//  AM_RANGE(0x44302a, 0x44304d) AM_READ(fp_io_service_dummy_r)
 	AM_RANGE(0x840000, 0x840fff) AM_READWRITE(SYS16_MRA16_PALETTERAM, SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-//	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // original
-//	AM_RANGE(0xfe003e, 0xfe003f) AM_READ(fp_io_service_dummy_r)
+//  AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // original
+//  AM_RANGE(0xfe003e, 0xfe003f) AM_READ(fp_io_service_dummy_r)
 	AM_RANGE(0xffc000, 0xffffff) AM_READWRITE(SYS16_MRA16_WORKINGRAM, SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
 ADDRESS_MAP_END
 
@@ -1246,8 +1246,8 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 /*
-	Flash Point (Datsu bootlegs = fpointbl, fpointbj)
-	Has sound latch at $E000 instead of I/O ports $C0-FF
+    Flash Point (Datsu bootlegs = fpointbl, fpointbj)
+    Has sound latch at $E000 instead of I/O ports $C0-FF
 */
 static ADDRESS_MAP_START( fpointbl_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
@@ -1323,11 +1323,11 @@ static ADDRESS_MAP_START( goldnaxe_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x200fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
 	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
 	AM_RANGE(0xc43000, 0xc43001) AM_WRITE(MWA16_NOP) // ?
-//	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(MWA16_NOP) I think this is the real sound out
+//  AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(MWA16_NOP) I think this is the real sound out
 	AM_RANGE(0xffec1c, 0xffec1d) AM_WRITE(goldnaxe_prot_w)// how does this really work?
 	AM_RANGE(0xffecfc, 0xffecfd) AM_WRITE(ga_sound_command_w)// probably just a buffer
 	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram) /* fails SCRATCH RAM test because of hacks */
-//	AM_RANGE(0xfffc00, 0xffffff) AM_WRITE(MWA15_NOP) /* 0x400 bytes; battery backed up */
+//  AM_RANGE(0xfffc00, 0xffffff) AM_WRITE(MWA15_NOP) /* 0x400 bytes; battery backed up */
 ADDRESS_MAP_END
 
 /***************************************************************************/
@@ -1355,8 +1355,8 @@ static MACHINE_INIT( goldnaxe )
 	sys16_obj_bank = bank;
 
 // protection patch; no longer needed
-//	sys16_patch_code( 0x3CB2, 0x60 );
-//	sys16_patch_code( 0x3CB3, 0x1e );
+//  sys16_patch_code( 0x3CB2, 0x60 );
+//  sys16_patch_code( 0x3CB3, 0x1e );
 
 	sys16_sprxoffset = -0xb8;
 	sys16_update_proc = goldnaxe_update_proc;
@@ -1519,7 +1519,7 @@ static ADDRESS_MAP_START( passht4b_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc41006, 0xc41007) AM_READ(passht4b_io3_r)
 	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
 	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc43000, 0xc43001) AM_READ(input_port_0_word_r) // player1		// test mode only
+	AM_RANGE(0xc43000, 0xc43001) AM_READ(input_port_0_word_r) // player1        // test mode only
 	AM_RANGE(0xc43002, 0xc43003) AM_READ(input_port_1_word_r) // player2
 	AM_RANGE(0xc43004, 0xc43005) AM_READ(input_port_5_word_r) // player3
 	AM_RANGE(0xc43006, 0xc43007) AM_READ(input_port_6_word_r) // player4
@@ -1925,8 +1925,8 @@ static void tetris_bootleg_update_proc( void )
 
 static MACHINE_INIT( tetrisbl )
 {
-//	sys16_patch_code( 0xba6, 0x4e );
-//	sys16_patch_code( 0xba7, 0x71 );
+//  sys16_patch_code( 0xba6, 0x4e );
+//  sys16_patch_code( 0xba7, 0x71 );
 
 	sys16_sprxoffset = -0x40;
 	sys16_update_proc = tetris_bootleg_update_proc;
@@ -1999,30 +1999,30 @@ static READ16_HANDLER( tt_io_service_r )
 /***************************************************************************/
 
 /*
-	This game has a MCU which does the following:
-	- Get Z80 sound command out of work RAM and write to Z80 sound command register
-	- Read input ports and store to work RAM
+    This game has a MCU which does the following:
+    - Get Z80 sound command out of work RAM and write to Z80 sound command register
+    - Read input ports and store to work RAM
 
-	The routine which stores the sound code in RAM looks like this:
+    The routine which stores the sound code in RAM looks like this:
 
-	; D0 = sound command
-	movem.l    d0-d1/a0, -(a7)
-	lea        $2001d6, a0         ; base of 16-byte circular buffer
-	move.w     $2001d4, d1         ; get buffer index
-	move.b     d0, (a0, d1.w)      ; write sound command to buffer
-	addq.w     #1, d1              ; next buffer index
-	andi.w     #$000f, d1          ; wrap buffer index
-	move.w     d1, $2001d4         ; save buffer index
-	addq.w     #1, $2001d2         ; bump 'sound code written' flag
-	movem.l    (a7)+, d0-d1/a0
-	rts
+    ; D0 = sound command
+    movem.l    d0-d1/a0, -(a7)
+    lea        $2001d6, a0         ; base of 16-byte circular buffer
+    move.w     $2001d4, d1         ; get buffer index
+    move.b     d0, (a0, d1.w)      ; write sound command to buffer
+    addq.w     #1, d1              ; next buffer index
+    andi.w     #$000f, d1          ; wrap buffer index
+    move.w     d1, $2001d4         ; save buffer index
+    addq.w     #1, $2001d2         ; bump 'sound code written' flag
+    movem.l    (a7)+, d0-d1/a0
+    rts
 
-	Most likely the MCU reads $2001D2 and copies the sound byte from $2001D6+$2001D4 to the sound command register.
-	In tturfbl, a JSR is inserted over the first LEA instruction to a subroutine which copies D0 to the sound command
-	register at $600007, and restores a0 to $2001D6 before returning.
+    Most likely the MCU reads $2001D2 and copies the sound byte from $2001D6+$2001D4 to the sound command register.
+    In tturfbl, a JSR is inserted over the first LEA instruction to a subroutine which copies D0 to the sound command
+    register at $600007, and restores a0 to $2001D6 before returning.
 
-	If the circular buffer is to prioritize sound requests, then this effect is lost in tturfbl. If it's just to
-	be tricky, tturfbl handles it correctly.
+    If the circular buffer is to prioritize sound requests, then this effect is lost in tturfbl. If it's just to
+    be tricky, tturfbl handles it correctly.
 */
 
 
@@ -2564,8 +2564,8 @@ ROM_START( mjleague )
 	ROM_LOAD16_BYTE( "epr-7061.04b", 0x020000, 0x8000, CRC(c808dad5) SHA1(9b65acc8dc23b16e56327298188d1a6ab48b2b5d) )
 	ROM_LOAD16_BYTE( "epr-7058.08a", 0x030001, 0x8000, CRC(b543675f) SHA1(35ffc9295a8849a18fabe156fdbc9801ea2179cd) )
 	ROM_LOAD16_BYTE( "epr-7062.05b", 0x030000, 0x8000, CRC(9168eb47) SHA1(daaa7836e627a0679e65373d8f20a9383ba4c905) )
-//	ROM_LOAD16_BYTE( "epr-7055.05a", 0x040001, 0x8000, CRC(1fb860bd) SHA1(4a4155d0352dfae9e402a2b2f1558ef17b1303b4) ) loaded twice??
-//	ROM_LOAD16_BYTE( "epr-7059.02b", 0x040000, 0x8000, CRC(3d14091d) SHA1(36208415b2012b6e948fefa15b0f7041748066be) ) loaded twice??
+//  ROM_LOAD16_BYTE( "epr-7055.05a", 0x040001, 0x8000, CRC(1fb860bd) SHA1(4a4155d0352dfae9e402a2b2f1558ef17b1303b4) ) loaded twice??
+//  ROM_LOAD16_BYTE( "epr-7059.02b", 0x040000, 0x8000, CRC(3d14091d) SHA1(36208415b2012b6e948fefa15b0f7041748066be) ) loaded twice??
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "eprc7054.01b", 0x00000, 0x8000, CRC(4443b744) SHA1(73359a6e9d62b382dee47fea31b9e17eb26a0321) )
@@ -2638,10 +2638,10 @@ ROM_START( shinobl )
 	ROM_LOAD16_BYTE( "epr11261.25", 0x020001, 0x10000, CRC(a3ceda52) SHA1(97a1c52a162fb1d43b3f8f16613b70ce582a8d26) )
 
 // Beta Bootleg
-//	ROM_LOAD16_BYTE( "4",           0x000000, 0x10000, CRC(c178a39c) )
-//	ROM_LOAD16_BYTE( "2",           0x000001, 0x10000, CRC(5ad8ebf2) )
-//	ROM_LOAD16_BYTE( "epr11263.43", 0x020000, 0x10000, CRC(a2a620bd) SHA1(f8b135ce14d6c5eac5e40ddfd5ad2f1e6f2bc7a6) )
-//	ROM_LOAD16_BYTE( "epr11261.25", 0x020001, 0x10000, CRC(a3ceda52) SHA1(97a1c52a162fb1d43b3f8f16613b70ce582a8d26) )
+//  ROM_LOAD16_BYTE( "4",           0x000000, 0x10000, CRC(c178a39c) )
+//  ROM_LOAD16_BYTE( "2",           0x000001, 0x10000, CRC(5ad8ebf2) )
+//  ROM_LOAD16_BYTE( "epr11263.43", 0x020000, 0x10000, CRC(a2a620bd) SHA1(f8b135ce14d6c5eac5e40ddfd5ad2f1e6f2bc7a6) )
+//  ROM_LOAD16_BYTE( "epr11261.25", 0x020001, 0x10000, CRC(a3ceda52) SHA1(97a1c52a162fb1d43b3f8f16613b70ce582a8d26) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr11264.95", 0x00000, 0x10000, CRC(46627e7d) SHA1(66bb5b22a2100e7b9df303007a837bc2d52cf7ba) )
@@ -2656,7 +2656,7 @@ ROM_START( shinobl )
 	ROM_LOAD16_BYTE( "epr11292.23", 0x40001, 0x10000, CRC(c29ac34e) SHA1(b5e9b8c3233a7d6797f91531a0d9123febcf1660) )
 	ROM_LOAD16_BYTE( "epr11296.24", 0x40000, 0x10000, CRC(04a437f8) SHA1(ea5fed64443236e3404fab243761e60e2e48c84c) )
 	ROM_LOAD16_BYTE( "epr11293.29", 0x60001, 0x10000, CRC(41f41063) SHA1(5cc461e9738dddf9eea06831fce3702d94674163) )
-//	ROM_LOAD16_BYTE( "epr11297.30", 0x60000, 0x10000, CRC(b6e1fd72) SHA1(eb86e4bf880bd1a1d9bcab3f2f2e917bcaa06172) )
+//  ROM_LOAD16_BYTE( "epr11297.30", 0x60000, 0x10000, CRC(b6e1fd72) SHA1(eb86e4bf880bd1a1d9bcab3f2f2e917bcaa06172) )
 	ROM_LOAD16_BYTE( "b17",         0x60000, 0x10000, CRC(0315cf42) SHA1(2d129171aece883cb9c2805f894b3867ec98332b) )	// Beta bootleg uses the rom above.
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound CPU */

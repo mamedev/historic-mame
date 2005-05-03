@@ -5,26 +5,26 @@ unsigned char *lkage_scroll, *lkage_vreg;
 static unsigned char bg_tile_bank, fg_tile_bank;
 
 /*
-	lkage_scroll[0x00]: text layer horizontal scroll
-	lkage_scroll[0x01]: text layer vertical scroll
-	lkage_scroll[0x02]: foreground layer horizontal scroll
-	lkage_scroll[0x03]: foreground layer vertical scroll
-	lkage_scroll[0x04]: background layer horizontal scroll
-	lkage_scroll[0x05]: background layer vertical scroll
+    lkage_scroll[0x00]: text layer horizontal scroll
+    lkage_scroll[0x01]: text layer vertical scroll
+    lkage_scroll[0x02]: foreground layer horizontal scroll
+    lkage_scroll[0x03]: foreground layer vertical scroll
+    lkage_scroll[0x04]: background layer horizontal scroll
+    lkage_scroll[0x05]: background layer vertical scroll
 
-	lkage_vreg[0]:
-		0x04: fg tile bank select
+    lkage_vreg[0]:
+        0x04: fg tile bank select
 
-	lkage_vreg[1]:
-		0xf0: background, foreground palette select
-		0x08: bg tile bank select
-		0x07: text layer palette select (is it?)
+    lkage_vreg[1]:
+        0xf0: background, foreground palette select
+        0x08: bg tile bank select
+        0x07: text layer palette select (is it?)
 
-	lkage_vreg[2]:
-		0x03: flip screen x/y
-		0xf0: normally 1111, but 1001 and 0001 inbetween stages (while the
-		backgrounds are are being redrawn). These bits are probably used to enable
-		individual layers, but we have no way of knowing the mapping.
+    lkage_vreg[2]:
+        0x03: flip screen x/y
+        0xf0: normally 1111, but 1001 and 0001 inbetween stages (while the
+        backgrounds are are being redrawn). These bits are probably used to enable
+        individual layers, but we have no way of knowing the mapping.
 */
 
 struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
@@ -110,13 +110,13 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	{
 		int attributes = source[2];
 		/*
-			bit 0: horizontal flip
-			bit 1: vertical flip
-			bit 2: bank select
-			bit 3: sprite size
-			bit 4..6: color
-			bit 7: priority
-		*/
+            bit 0: horizontal flip
+            bit 1: vertical flip
+            bit 2: bank select
+            bit 3: sprite size
+            bit 4..6: color
+            bit 7: priority
+        */
 
 		if( (attributes>>7) == priority )
 		{

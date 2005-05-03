@@ -49,19 +49,19 @@ cameltry TC0220IOC TC0360PRI TC0260DAR TC0280GRD(x2)(zoom/rot)
 qtorimon TC0220IOC TC0110PCR TC0070RGB
 liquidk  TC0220IOC TC0360PRI TC0260DAR
 quizhq   TMP82C265 TC0110PCR TC0070RGB
-ssi      TC0510NIO 			 TC0260DAR
+ssi      TC0510NIO           TC0260DAR
 gunfront TC0510NIO TC0360PRI TC0260DAR
 growl    TMP82C265 TC0360PRI TC0260DAR                         TC0190FMC(4 players input?sprite banking?)
 mjnquest           TC0110PCR TC0070RGB
 footchmp TE7750    TC0360PRI TC0260DAR TC0480SCP(tilemaps)     TC0190FMC(4 players input?sprite banking?)
 koshien  TC0510NIO TC0360PRI TC0260DAR
-yuyugogo TC0510NIO 			 TC0260DAR
+yuyugogo TC0510NIO           TC0260DAR
 ninjak   TE7750    TC0360PRI TC0260DAR                         TC0190FMC(4 players input?sprite banking?)
 solfigtr ?         TC0360PRI TC0260DAR ?
-qzquest  TC0510NIO 			 TC0260DAR
+qzquest  TC0510NIO           TC0260DAR
 pulirula TC0510NIO TC0360PRI TC0260DAR TC0430GRW(zoom/rot)
 metalb   TC0510NIO TC0360PRI TC0260DAR TC0480SCP(tilemaps)
-qzchikyu TC0510NIO 			 TC0260DAR
+qzchikyu TC0510NIO           TC0260DAR
 yesnoj   TMP82C265           TC0260DAR                         TC8521AP(RTC?)
 deadconx           TC0360PRI TC0260DAR TC0480SCP(tilemaps)     TC0190FMC(4 players input?sprite banking?)
 dinorex  TC0510NIO TC0360PRI TC0260DAR
@@ -375,8 +375,8 @@ static READ16_HANDLER( footchmp_input_r )
 		case 0x02:
 			return input_port_2_word_r(0,mem_mask); /* IN2 */
 
-//		case 0x03:
-//			return (coin_word & ~mem_mask);
+//      case 0x03:
+//          return (coin_word & ~mem_mask);
 
 		case 0x05:
 			return input_port_0_word_r(0,mem_mask); /* IN0 */
@@ -421,8 +421,8 @@ static READ16_HANDLER( ninjak_input_r )
 		case 0x06:
 			return (input_port_2_word_r(0,0) << 8); /* IN 2 */
 
-//		case 0x07:
-//			return (coin_word & ~mem_mask);
+//      case 0x07:
+//          return (coin_word & ~mem_mask);
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",activecpu_get_pc(),offset);
@@ -484,8 +484,8 @@ static READ16_HANDLER( deadconx_input_r )
 		case 0x02:
 			return input_port_2_word_r(0,mem_mask); /* IN2 */
 
-//		case 0x03:
-//			return (coin_word & ~mem_mask);
+//      case 0x03:
+//          return (coin_word & ~mem_mask);
 
 		case 0x05:
 			return input_port_0_word_r(0,mem_mask); /* IN0 */
@@ -650,124 +650,124 @@ some partial buffering going on in the sprite chip, and DMA has to
 play a part in it.
 
 
-             sprite ctrl regs   	  interrupts & sprites
+             sprite ctrl regs         interrupts & sprites
           0006 000a    8006 800a
-          ----------------------	-----------------------------------------------
-finalb    8000 0300    0000 0000	Needs partial buffering like dondokod to avoid glitches
-dondokod  8000 0000/8  0000 0000	IRQ6 just sets a flag. IRQ5 waits for that flag,
-                                	toggles ctrl register 0000<->0008, and copies bytes
-									0 and 8 *ONLY* of sprite data (code, color, flip,
-									ctrl). The other bytes of sprite data (coordinates
-									and zoom) are updated by the main program.
-									Caching sprite data and using bytes 0 and 8 from
-									previous frame and the others from *TWO* frames
-									before is enough to get glitch-free sprites that seem
-									to be perfectly in sync with scrolling (check the tree
-									mouths during level change).
-thundfox  8000 0000    0000 0000	IRQ6 copies bytes 0 and 8 *ONLY* of sprite data (code,
-									color, flip, ctrl). The other bytes of sprite data
-									(coordinates and zoom) are updated (I think) by the
-									main program.
-									The same sprite data caching that works for dondokod
-									improves sprites, but there are still glitches related
-									to zoom (check third round of attract mode). Those
-									glitches can be fixed by buffering also the zoom ctrl
-									byte.
-									Moreover, sprites are not in perfect sync with the
-									background (sometimes they are one frame behind, but
-									not always).
+          ----------------------    -----------------------------------------------
+finalb    8000 0300    0000 0000    Needs partial buffering like dondokod to avoid glitches
+dondokod  8000 0000/8  0000 0000    IRQ6 just sets a flag. IRQ5 waits for that flag,
+                                    toggles ctrl register 0000<->0008, and copies bytes
+                                    0 and 8 *ONLY* of sprite data (code, color, flip,
+                                    ctrl). The other bytes of sprite data (coordinates
+                                    and zoom) are updated by the main program.
+                                    Caching sprite data and using bytes 0 and 8 from
+                                    previous frame and the others from *TWO* frames
+                                    before is enough to get glitch-free sprites that seem
+                                    to be perfectly in sync with scrolling (check the tree
+                                    mouths during level change).
+thundfox  8000 0000    0000 0000    IRQ6 copies bytes 0 and 8 *ONLY* of sprite data (code,
+                                    color, flip, ctrl). The other bytes of sprite data
+                                    (coordinates and zoom) are updated (I think) by the
+                                    main program.
+                                    The same sprite data caching that works for dondokod
+                                    improves sprites, but there are still glitches related
+                                    to zoom (check third round of attract mode). Those
+                                    glitches can be fixed by buffering also the zoom ctrl
+                                    byte.
+                                    Moreover, sprites are not in perfect sync with the
+                                    background (sometimes they are one frame behind, but
+                                    not always).
 qtorimon  8000 0000    0000 0000    IRQ6 does some stuff but doesn't seem to deal with
-									sprites. IRQ5 copies bytes 0, 8 *AND ALSO 2* of sprite
-									data in one routine, and immediately after that the
-									remaining bytes 4 and 6 in another routine, without
-									doing, it seems, any waiting inbetween.
-									Nevertheless, separated sprite data caching like in
-									dondokod is still required to avoid glitches.
-liquidk   8000 0000/8  0000 0000	Same as dondokod. An important difference is that
-									the sprite ctrl register doesn't toggle every frame
-									(because the handler can't complete the frame in
-									time?). This can be seen easily in the attract mode,
-									where sprite glitches appear.
-									Correctly handling the ctrl register and sprite data
-									caching seems to be vital to avoid sprite glitches.
-quizhq    8000 0000    0000 0000	Both IRQ5 and IRQ6 do stuff, I haven't investigated.
-									There is a very subtle sprite glitch if sprite data
-									buffering is not used: the blinking INSERT COIN in
-									the right window will get moved as garbage chars on
-									the left window score and STOCK for one frame when
-									INSERT COINS disappears from the right. This happens
-									because bytes 0 and 8 of the sprite data are one
-									frame behind and haven't been cleared yet.
-ssi       8000 0000    0000 0000	IRQ6 does nothing. IRQ5 copies bytes 0 and 8 *ONLY*
-									of sprite data (code, color, flip, ctrl). The other
-									bytes of sprite data (coordinates and zoom) are
-									updated by the main program.
-									The same sprite data caching that works for dondokod
-									avoids major glitches, but I'm not sure it's working
-									right when the big butterfly (time bonus) is on
-									screen (it flickers on and off every frame).
-gunfront  8000 1000/1  8001 1000/1	The toggling bit in the control register selects the
-									sprite bank used. It normally toggles every frame but
-									sticks for two frame when lots of action is going on
-									(see smart bombs in attract mode) and glitches will
-									appear if it is not respected.
-									IRQ6 writes the sprite ctrl registers, and also writes
-									related data to the sprites at 9033e0/90b3e0. The
-									active one gets 8000/8001 in byte 6 and 1001/1000 in
-									byte 10, while the other gets 0. Note that the value
-									in byte 10 is inverted from the active bank, as if it
-									were a way to tell the sprite hardware "after this, go
-									to the other bank".
-									Note also that IRQ6 isn't the only one writing to the
-									sprite ctrl registers, this is done also in the parts
-									that actually change the sprite data (I think it's
-									main program, not interrupt), so it's not clear who's
-									"in charge". Actually it seems that what IRQ6 writes
-									is soon overwritten so that what I outlined above
-									regarding 9033e0/90b3e0 is no longer true, and they
-									are no longer in sync with the ctrl registers, messing
-									up smart bombs.
-									There don't seem to be other glitches even without
-									sprite data buffering.
-growl     8000 0000    8001 0001	IRQ6 just sets a flag. I haven't investigated who
-									updates the sprite ram.
-									This game uses sprite banks like gunfront, but unlike
-									gunfront it doesn't change the ctrl registers. What it
-									does is change the sprites at 903210/90b210; 8000/8001
-									is always written in byte 6, while byte 10 receives
-									the active bank (1000 or 1001). There are also end of
-									list markers placed before that though, and those seem
-									to always match what's stored in the ctrl registers
-									(8000 1000 for the first bank and 8001 1001 for the
-									second).
-									There don't seem to be sprite glitches even without
-									sprite data buffering, but sprites are not in sync with
-									the background.
+                                    sprites. IRQ5 copies bytes 0, 8 *AND ALSO 2* of sprite
+                                    data in one routine, and immediately after that the
+                                    remaining bytes 4 and 6 in another routine, without
+                                    doing, it seems, any waiting inbetween.
+                                    Nevertheless, separated sprite data caching like in
+                                    dondokod is still required to avoid glitches.
+liquidk   8000 0000/8  0000 0000    Same as dondokod. An important difference is that
+                                    the sprite ctrl register doesn't toggle every frame
+                                    (because the handler can't complete the frame in
+                                    time?). This can be seen easily in the attract mode,
+                                    where sprite glitches appear.
+                                    Correctly handling the ctrl register and sprite data
+                                    caching seems to be vital to avoid sprite glitches.
+quizhq    8000 0000    0000 0000    Both IRQ5 and IRQ6 do stuff, I haven't investigated.
+                                    There is a very subtle sprite glitch if sprite data
+                                    buffering is not used: the blinking INSERT COIN in
+                                    the right window will get moved as garbage chars on
+                                    the left window score and STOCK for one frame when
+                                    INSERT COINS disappears from the right. This happens
+                                    because bytes 0 and 8 of the sprite data are one
+                                    frame behind and haven't been cleared yet.
+ssi       8000 0000    0000 0000    IRQ6 does nothing. IRQ5 copies bytes 0 and 8 *ONLY*
+                                    of sprite data (code, color, flip, ctrl). The other
+                                    bytes of sprite data (coordinates and zoom) are
+                                    updated by the main program.
+                                    The same sprite data caching that works for dondokod
+                                    avoids major glitches, but I'm not sure it's working
+                                    right when the big butterfly (time bonus) is on
+                                    screen (it flickers on and off every frame).
+gunfront  8000 1000/1  8001 1000/1  The toggling bit in the control register selects the
+                                    sprite bank used. It normally toggles every frame but
+                                    sticks for two frame when lots of action is going on
+                                    (see smart bombs in attract mode) and glitches will
+                                    appear if it is not respected.
+                                    IRQ6 writes the sprite ctrl registers, and also writes
+                                    related data to the sprites at 9033e0/90b3e0. The
+                                    active one gets 8000/8001 in byte 6 and 1001/1000 in
+                                    byte 10, while the other gets 0. Note that the value
+                                    in byte 10 is inverted from the active bank, as if it
+                                    were a way to tell the sprite hardware "after this, go
+                                    to the other bank".
+                                    Note also that IRQ6 isn't the only one writing to the
+                                    sprite ctrl registers, this is done also in the parts
+                                    that actually change the sprite data (I think it's
+                                    main program, not interrupt), so it's not clear who's
+                                    "in charge". Actually it seems that what IRQ6 writes
+                                    is soon overwritten so that what I outlined above
+                                    regarding 9033e0/90b3e0 is no longer true, and they
+                                    are no longer in sync with the ctrl registers, messing
+                                    up smart bombs.
+                                    There don't seem to be other glitches even without
+                                    sprite data buffering.
+growl     8000 0000    8001 0001    IRQ6 just sets a flag. I haven't investigated who
+                                    updates the sprite ram.
+                                    This game uses sprite banks like gunfront, but unlike
+                                    gunfront it doesn't change the ctrl registers. What it
+                                    does is change the sprites at 903210/90b210; 8000/8001
+                                    is always written in byte 6, while byte 10 receives
+                                    the active bank (1000 or 1001). There are also end of
+                                    list markers placed before that though, and those seem
+                                    to always match what's stored in the ctrl registers
+                                    (8000 1000 for the first bank and 8001 1001 for the
+                                    second).
+                                    There don't seem to be sprite glitches even without
+                                    sprite data buffering, but sprites are not in sync with
+                                    the background.
 mjnquest  8000 0800/8  0000 0000
-footchmp  8000 0000    8001 0001	IRQ6 just sets a flag (and writes to an unknown memory
-									location).
-									This games uses sprite banks as well, this time it
-									writes markers at 2033e0/20b3e0, it always writes
-									1000/1001 to byte 10, while it writes 8000 or 8001 to
-									byte 6 depending on the active bank. This is the exact
-									opposite of growl...
+footchmp  8000 0000    8001 0001    IRQ6 just sets a flag (and writes to an unknown memory
+                                    location).
+                                    This games uses sprite banks as well, this time it
+                                    writes markers at 2033e0/20b3e0, it always writes
+                                    1000/1001 to byte 10, while it writes 8000 or 8001 to
+                                    byte 6 depending on the active bank. This is the exact
+                                    opposite of growl...
 hthero
-koshien   8000 0000    8001 0001	Another game using banks.The markers are again at
-									9033e0/90b3e0 but this time byte 6 receives 9000/9001.
-									Byte 10 is 1000 or 1001 depending on the active bank.
+koshien   8000 0000    8001 0001    Another game using banks.The markers are again at
+                                    9033e0/90b3e0 but this time byte 6 receives 9000/9001.
+                                    Byte 10 is 1000 or 1001 depending on the active bank.
 yuyugogo  8000 0800/8  0000 0000
-ninjak    8000 0000    8001 0001	uses banks
-solfigtr  8000 0000    8001 0001	uses banks
-qzquest   8000 0000    0000 0000	Separated sprite data caching like in dondokod is
-									required to avoid glitches.
-pulirula  8000 0000    8001 0001	uses banks
-qzchikyu  8000 0000    0000 0000	With this game there are glitches and the sprite data
-									caching done in dondokod does NOT fix them.
+ninjak    8000 0000    8001 0001    uses banks
+solfigtr  8000 0000    8001 0001    uses banks
+qzquest   8000 0000    0000 0000    Separated sprite data caching like in dondokod is
+                                    required to avoid glitches.
+pulirula  8000 0000    8001 0001    uses banks
+qzchikyu  8000 0000    0000 0000    With this game there are glitches and the sprite data
+                                    caching done in dondokod does NOT fix them.
 deadconx 8/9000 0000/1 8/9001 0000/1 I guess it's not a surprise that this game uses banks
-									in yet another different way.
-dinorex   8000 0000    8001 0001	uses banks
-driftout  8000 0000/8  0000 0000	The first control changes from 8000 to 0000 at the end
-									of the attract demo and seems to stay that way.
+                                    in yet another different way.
+dinorex   8000 0000    8001 0001    uses banks
+driftout  8000 0000/8  0000 0000    The first control changes from 8000 to 0000 at the end
+                                    of the attract demo and seems to stay that way.
 
 
 ******************************************************************/
@@ -825,7 +825,7 @@ static int driveout_sound_latch = 0;
 static READ8_HANDLER( driveout_sound_command_r)
 {
 	cpunum_set_input_line(1,0,CLEAR_LINE);
-//	logerror("sound IRQ OFF (sound command=%02x)\n",driveout_sound_latch);
+//  logerror("sound IRQ OFF (sound command=%02x)\n",driveout_sound_latch);
 	return driveout_sound_latch;
 }
 
@@ -1106,7 +1106,7 @@ static ADDRESS_MAP_START( ssi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x301fff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(taitosound_port16_msb_w)
 	AM_RANGE(0x400002, 0x400003) AM_WRITE(taitosound_comm16_msb_w)
-//	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)   /* ?? */
+//  AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)   /* ?? */
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps (not used) */
 	AM_RANGE(0x620000, 0x62000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)   /* sprite ram */
@@ -1133,7 +1133,7 @@ static ADDRESS_MAP_START( gunfront_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
 	AM_RANGE(0x820000, 0x82000f) AM_WRITE(TC0100SCN_ctrl_word_0_w)
 	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-//	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)   /* ?? */
+//  AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)   /* ?? */
 	AM_RANGE(0xb00000, 0xb0001f) AM_WRITE(TC0360PRI_halfword_w)	/* ?? */
 ADDRESS_MAP_END
 
@@ -1231,7 +1231,7 @@ static ADDRESS_MAP_START( koshien_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
 	AM_RANGE(0x820000, 0x82000f) AM_READ(TC0100SCN_ctrl_word_0_r)
 	AM_RANGE(0x900000, 0x90ffff) AM_READ(MRA16_RAM)
-//	AM_RANGE(0xa20000, 0xa20001) AM_READ(koshien_spritebank_r)   /* for debugging spritebank */
+//  AM_RANGE(0xa20000, 0xa20001) AM_READ(koshien_spritebank_r)   /* for debugging spritebank */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( koshien_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1370,7 +1370,7 @@ static ADDRESS_MAP_START( pulirula_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x400000, 0x401fff) AM_WRITE(TC0430GRW_word_w)	/* ROZ tilemap */
 	AM_RANGE(0x402000, 0x40200f) AM_WRITE(TC0430GRW_ctrl_word_w)
-//	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)   /* ??? */
+//  AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)   /* ??? */
 	AM_RANGE(0x600000, 0x603fff) AM_WRITE(taitof2_sprite_extension_w) AM_BASE(&f2_sprite_extension) AM_SIZE(&f2_spriteext_size)
 	AM_RANGE(0x700000, 0x701fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0100SCN_word_0_w)	/* tilemaps */
@@ -1395,7 +1395,7 @@ static ADDRESS_MAP_START( metalb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0bffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x300000, 0x30ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-//	AM_RANGE(0x42000c, 0x42000f) AM_WRITE(MWA16_NOP)   /* zeroed */
+//  AM_RANGE(0x42000c, 0x42000f) AM_WRITE(MWA16_NOP)   /* zeroed */
 	AM_RANGE(0x500000, 0x50ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
 	AM_RANGE(0x530000, 0x53002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x600000, 0x60001f) AM_WRITE(TC0360PRI_halfword_w)
@@ -1403,7 +1403,7 @@ static ADDRESS_MAP_START( metalb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80000f) AM_WRITE(TC0510NIO_halfword_wordswap_w)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(taitosound_port16_msb_w)
 	AM_RANGE(0x900002, 0x900003) AM_WRITE(taitosound_comm16_msb_w)
-//	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)   /* ??? */
+//  AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)   /* ??? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( qzchikyu_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1436,7 +1436,7 @@ static ADDRESS_MAP_START( yesnoj_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x500000, 0x50ffff) AM_READ(TC0100SCN_word_0_r)	/* tilemaps */
 	AM_RANGE(0x520000, 0x52000f) AM_READ(TC0100SCN_ctrl_word_0_r)
 	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA16_RAM)
-//	AM_RANGE(0x700000, 0x70000b) AM_READ(yesnoj_unknown_r)   /* what's this? */
+//  AM_RANGE(0x700000, 0x70000b) AM_READ(yesnoj_unknown_r)   /* what's this? */
 	AM_RANGE(0x800000, 0x800003) AM_READ(taitof2_msb_sound_r)
 	AM_RANGE(0xa00000, 0xa0000f) AM_READ(yesnoj_input_r)
 	AM_RANGE(0xb00000, 0xb00001) AM_READ(yesnoj_dsw_r)   /* ?? (reads this twice in init) */
@@ -1473,7 +1473,7 @@ static ADDRESS_MAP_START( deadconx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x300000, 0x30000f) AM_WRITE(taitof2_spritebank_w)
 	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
-//	AM_RANGE(0x42000c, 0x42000f) AM_WRITE(MWA16_NOP)   /* zeroed */
+//  AM_RANGE(0x42000c, 0x42000f) AM_WRITE(MWA16_NOP)   /* zeroed */
 	AM_RANGE(0x430000, 0x43002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x500000, 0x50001f) AM_WRITE(TC0360PRI_halfword_w)	/* uses 500002 like a watchdog !? */
 	AM_RANGE(0x600000, 0x601fff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
@@ -1550,7 +1550,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( qcrayon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP)   /* unknown */
+//  AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP)   /* unknown */
 	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(taitosound_port16_msb_w)
 	AM_RANGE(0x500002, 0x500003) AM_WRITE(taitosound_comm16_msb_w)
@@ -1681,7 +1681,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( camltrua_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)	// I can't see a bank control, but there ARE some bytes past 0x8000
-//	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+//  AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
@@ -1694,7 +1694,7 @@ static ADDRESS_MAP_START( camltrua_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
-//	AM_RANGE(0xb000, 0xb000) AM_WRITE(unknown_w)	// probably controlling sample player?
+//  AM_RANGE(0xb000, 0xb000) AM_WRITE(unknown_w)    // probably controlling sample player?
 ADDRESS_MAP_END
 
 
@@ -3021,7 +3021,7 @@ INPUT_PORTS_START( pulirula )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-//	PORT_DIPSETTING(    0x00, "5" )
+//  PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
@@ -3072,7 +3072,7 @@ INPUT_PORTS_START( pulirulj )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-//	PORT_DIPSETTING(    0x00, "5" )
+//  PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
@@ -5276,9 +5276,9 @@ ROM_START( finalb )
 	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, CRC(daa11561) SHA1(81dd596c1b36138904971c36466ec29d08d4fd84) ) /* sprites 4-bit format*/
 
 	/* Note: this is intentional to load at 0x180000, not at 0x100000
-	   because finalb_driver_init will move some bits around before data
-	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
-	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+       because finalb_driver_init will move some bits around before data
+       will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+       while above is 4bits-packed format, for a total of 6 bits per pixel. */
 
 	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, CRC(aa90b93a) SHA1(06f41052659959c58d72c9f68f9f6069cb835672) ) /* sprites 2-bit format */
 
@@ -5307,9 +5307,9 @@ ROM_START( finalbj )
 	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, CRC(daa11561) SHA1(81dd596c1b36138904971c36466ec29d08d4fd84) ) /* sprites 4-bit format*/
 
 	/* Note: this is intentional to load at 0x180000, not at 0x100000
-	   because finalb_driver_init will move some bits around before data
-	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
-	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+       because finalb_driver_init will move some bits around before data
+       will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+       while above is 4bits-packed format, for a total of 6 bits per pixel. */
 
 	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, CRC(aa90b93a) SHA1(06f41052659959c58d72c9f68f9f6069cb835672) ) /* sprites 2-bit format */
 
@@ -5339,9 +5339,9 @@ ROM_START( finalbu )
 	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, CRC(daa11561) SHA1(81dd596c1b36138904971c36466ec29d08d4fd84) ) /* sprites 4-bit format*/
 
 	/* Note: this is intentional to load at 0x180000, not at 0x100000
-	   because finalb_driver_init will move some bits around before data
-	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
-	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+       because finalb_driver_init will move some bits around before data
+       will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+       while above is 4bits-packed format, for a total of 6 bits per pixel. */
 
 	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, CRC(aa90b93a) SHA1(06f41052659959c58d72c9f68f9f6069cb835672) ) /* sprites 2-bit format */
 
@@ -6653,7 +6653,7 @@ DRIVER_INIT( mjnquest )
 	UINT8 *gfx = memory_region(REGION_GFX2);
 
 	/* the bytes in each longword are in reversed order, put them in the
-	   order used by the other games. */
+       order used by the other games. */
 	for (i = 0;i < memory_region_length(REGION_GFX2);i += 2)
 	{
 		int t;

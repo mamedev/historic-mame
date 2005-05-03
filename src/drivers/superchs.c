@@ -1,35 +1,35 @@
 /****************************************************************************
 
-	Super Chase  						(c) 1992 Taito
+    Super Chase                         (c) 1992 Taito
 
-	Driver by Bryan McPhail & David Graves.
+    Driver by Bryan McPhail & David Graves.
 
-	Board Info:
+    Board Info:
 
-		CPU board:
-		68000
-		68020
-		TC0570SPC (Taito custom)
-		TC0470LIN (Taito custom)
-		TC0510NIO (Taito custom)
-		TC0480SCP (Taito custom)
-		TC0650FDA (Taito custom)
-		ADC0809CCN
+        CPU board:
+        68000
+        68020
+        TC0570SPC (Taito custom)
+        TC0470LIN (Taito custom)
+        TC0510NIO (Taito custom)
+        TC0480SCP (Taito custom)
+        TC0650FDA (Taito custom)
+        ADC0809CCN
 
-		X2=26.686MHz
-		X1=40MHz
-		X3=32MHz
+        X2=26.686MHz
+        X1=40MHz
+        X3=32MHz
 
-		Sound board:
-		68000
-		68681
-		MB8421 (x2)
-		MB87078
-		Ensoniq 5510
-		Ensoniq 5505
+        Sound board:
+        68000
+        68681
+        MB8421 (x2)
+        MB87078
+        Ensoniq 5510
+        Ensoniq 5505
 
-	(Acknowledgments and thanks to Richard Bush and the Raine team
-	for their preliminary Super Chase driver.)
+    (Acknowledgments and thanks to Richard Bush and the Raine team
+    for their preliminary Super Chase driver.)
 
 ***************************************************************************/
 
@@ -89,13 +89,13 @@ static WRITE16_HANDLER( shared_ram_w )
 static WRITE32_HANDLER( cpua_ctrl_w )
 {
 	/*
-	CPUA writes 0x00, 22, 72, f2 in that order.
-	f2 seems to be the standard in-game value.
-	..x...x.
-	.xxx..x.
-	xxxx..x.
-	is there an irq enable in the top nibble?
-	*/
+    CPUA writes 0x00, 22, 72, f2 in that order.
+    f2 seems to be the standard in-game value.
+    ..x...x.
+    .xxx..x.
+    xxxx..x.
+    is there an irq enable in the top nibble?
+    */
 
 	if (ACCESSING_MSB)
 	{
@@ -230,14 +230,14 @@ static READ32_HANDLER( superchs_stick_r )
 static WRITE32_HANDLER( superchs_stick_w )
 {
 	/* This is guess work - the interrupts are in groups of 4, with each writing to a
-		different byte in this long word before the RTE.  I assume all but the last
-		(top) byte cause an IRQ with the final one being an ACK.  (Total guess but it works). */
+        different byte in this long word before the RTE.  I assume all but the last
+        (top) byte cause an IRQ with the final one being an ACK.  (Total guess but it works). */
 	if (mem_mask!=0x00ffffff)
 		cpunum_set_input_line(0,3,HOLD_LINE);
 }
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( superchs_readmem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -367,7 +367,7 @@ INPUT_PORTS_START( superchs )
 INPUT_PORTS_END
 
 /***********************************************************
-				GFX DECODING
+                GFX DECODING
 **********************************************************/
 
 static struct GfxLayout tile16x16_layout =
@@ -402,7 +402,7 @@ static struct GfxDecodeInfo superchs_gfxdecodeinfo[] =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 static MACHINE_INIT( superchs )

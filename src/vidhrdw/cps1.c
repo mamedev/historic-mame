@@ -75,41 +75,41 @@ OUTPUT PORTS
 
 
 Some registers move from game to game.. following example strider
-0x66-0x67	Layer control register
-			bits 14-15 seem to be unused
-				ghouls sets bits 15 in service mode when you press button 2 in
-				the input test
-			bits 6-13 (4 groups of 2 bits) select layer draw order
-			bits 1-5 enable the three tilemap layers and the two starfield
-				layers (the bit order changes from game to game).
-				Only Forgotten Worlds and Strider use the starfield.
-			bit 0 could be rowscroll related. It is set by captain commando,
-				varth, mtwins, mssword, cawing while rowscroll is active. However
-				kodj and sf2 do NOT set this bit while they are using rowscroll.
-				Games known to use row scrolling:
-				SF2
-				Mega Twins (underwater, cave)
-				Carrier Air Wing (hazy background at beginning of mission 8, put 07 at ff8501 to jump there)
-				Magic Sword (fire on floor 3; screen distort after continue)
-				Varth (title screen)
-				Captain Commando (end game sequence)
-0x68-0x69	Priority mask \   Tiles in the layer just below sprites can have
-0x6a-0x6b	Priority mask |   four priority levels, each one associated with one
-0x6c-0x6d	Priority mask |   of these masks. The masks indicate pens in the tile
-0x6e-0x6f	Priority mask /   that have priority over sprites.
-0x70-0x71	Control register (usually 0x003f). The details of how this register
-			works are unknown, but it definitely affects the palette; experiments
-			on the real board show that values different from 0x3f in the low 6
-			bits cause wrong colors. The other bits seem to be unused.
-			There is one CPS2 game (Slammasters II) setting this to 0x2f: the
-			purpose is unknown.
-			The only other places where this register seems to be set to a value
-			different from 0x3f is during startup tests. Examples:
-			ghouls  0x02
-			strider 0x02
-			unsquad 0x0f
-			kod     0x0f
-			mtwins  0x0f
+0x66-0x67   Layer control register
+            bits 14-15 seem to be unused
+                ghouls sets bits 15 in service mode when you press button 2 in
+                the input test
+            bits 6-13 (4 groups of 2 bits) select layer draw order
+            bits 1-5 enable the three tilemap layers and the two starfield
+                layers (the bit order changes from game to game).
+                Only Forgotten Worlds and Strider use the starfield.
+            bit 0 could be rowscroll related. It is set by captain commando,
+                varth, mtwins, mssword, cawing while rowscroll is active. However
+                kodj and sf2 do NOT set this bit while they are using rowscroll.
+                Games known to use row scrolling:
+                SF2
+                Mega Twins (underwater, cave)
+                Carrier Air Wing (hazy background at beginning of mission 8, put 07 at ff8501 to jump there)
+                Magic Sword (fire on floor 3; screen distort after continue)
+                Varth (title screen)
+                Captain Commando (end game sequence)
+0x68-0x69   Priority mask \   Tiles in the layer just below sprites can have
+0x6a-0x6b   Priority mask |   four priority levels, each one associated with one
+0x6c-0x6d   Priority mask |   of these masks. The masks indicate pens in the tile
+0x6e-0x6f   Priority mask /   that have priority over sprites.
+0x70-0x71   Control register (usually 0x003f). The details of how this register
+            works are unknown, but it definitely affects the palette; experiments
+            on the real board show that values different from 0x3f in the low 6
+            bits cause wrong colors. The other bits seem to be unused.
+            There is one CPS2 game (Slammasters II) setting this to 0x2f: the
+            purpose is unknown.
+            The only other places where this register seems to be set to a value
+            different from 0x3f is during startup tests. Examples:
+            ghouls  0x02
+            strider 0x02
+            unsquad 0x0f
+            kod     0x0f
+            mtwins  0x0f
 
 Fixed registers
 0x80-0x81     Sound command
@@ -187,7 +187,7 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 
 /********************************************************************
 
-			Configuration table:
+            Configuration table:
 
 ********************************************************************/
 
@@ -467,9 +467,9 @@ static MACHINE_INIT( cps )
 	if (strcmp(gamename, "sf2accp2" )==0)
 	{
 		/* Patch out a odd branch which would be incorrectly interpreted
-		   by the cpu core as a 32-bit branch. This branch would make the
-		   game crash (address error, since it would branch to an odd address)
-		   if location 180ca6 (outside ROM space) isn't 0. Protection check? */
+           by the cpu core as a 32-bit branch. This branch would make the
+           game crash (address error, since it would branch to an odd address)
+           if location 180ca6 (outside ROM space) isn't 0. Protection check? */
 		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 		rom[0x11756/2] = 0x4e71;
 	}
@@ -494,13 +494,13 @@ INLINE data16_t *cps1_base(int offset,int boundary)
 {
 	int base=cps1_port(offset)*256;
 	/*
-	The scroll RAM must start on a 0x4000 boundary.
-	Some games do not do this.
-	For example:
-	   Captain commando     - continue screen will not display
-	   Muscle bomber games  - will animate garbage during gameplay
-	Mask out the irrelevant bits.
-	*/
+    The scroll RAM must start on a 0x4000 boundary.
+    Some games do not do this.
+    For example:
+       Captain commando     - continue screen will not display
+       Muscle bomber games  - will animate garbage during gameplay
+    Mask out the irrelevant bits.
+    */
 	base &= ~(boundary-1);
  	return &cps1_gfxram[(base&0x3ffff)/2];
 }
@@ -1055,8 +1055,8 @@ static void get_tile1_info(int tile_index)
 
 	if (code < startcode || code > endcode
 	/*
-	MERCS has an gap in the scroll 2 layout
-	(bad tiles at start of level 2)*/
+    MERCS has an gap in the scroll 2 layout
+    (bad tiles at start of level 2)*/
 		|| (cps1_game_config->kludge == 4 && (code >= 0x1e00 && code < 0x5400))
 	)
 	{
@@ -1260,33 +1260,33 @@ void cps1_build_palette(void)
 
 /***************************************************************************
 
-								Sprites
-								=======
+                                Sprites
+                                =======
 
   Sprites are represented by a number of 8 byte values
 
   xx xx yy yy nn nn aa aa
 
   where xxxx = x position
-		yyyy = y position
-		nnnn = tile number
-		aaaa = attribute word
-					0x0001	colour
-					0x0002	colour
-					0x0004	colour
-					0x0008	colour
-					0x0010	colour
-					0x0020	X Flip
-					0x0040	Y Flip
-					0x0080	X & Y offset toggle (used in Marvel vs. Capcom.)
-					0x0100	X block size (in sprites)
-					0x0200	X block size
-					0x0400	X block size
-					0x0800	X block size
-					0x1000	Y block size (in sprites)
-					0x2000	Y block size
-					0x4000	Y block size
-					0x8000	Y block size
+        yyyy = y position
+        nnnn = tile number
+        aaaa = attribute word
+                    0x0001  colour
+                    0x0002  colour
+                    0x0004  colour
+                    0x0008  colour
+                    0x0010  colour
+                    0x0020  X Flip
+                    0x0040  Y Flip
+                    0x0080  X & Y offset toggle (used in Marvel vs. Capcom.)
+                    0x0100  X block size (in sprites)
+                    0x0200  X block size
+                    0x0400  X block size
+                    0x0800  X block size
+                    0x1000  Y block size (in sprites)
+                    0x2000  Y block size
+                    0x4000  Y block size
+                    0x8000  Y block size
 
   The end of the table (may) be marked by an attribute value of 0xff00.
 
@@ -1355,8 +1355,8 @@ void cps1_render_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		int colour=*(base+3);
 		int col=colour&0x1f;
 
-//		x-=0x20;
-//		y+=0x20;
+//      x-=0x20;
+//      y+=0x20;
 
 		if (cps1_game_config->kludge == 7)
 		{
@@ -1677,8 +1677,8 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 							sy = (y+nys*16+yoffs) & 0x3ff;
 
 							DRAWSPRITE(
-//										code+nxs+0x10*nys,
-									(code & ~0xf) + ((code + nxs) & 0xf) + 0x10*nys,	//	pgear fix
+//                                      code+nxs+0x10*nys,
+									(code & ~0xf) + ((code + nxs) & 0xf) + 0x10*nys,	//  pgear fix
 									(col&0x1f) + palette_basecolor[0],
 									0,0,
 									sx,sy);
@@ -1802,7 +1802,7 @@ void cps1_render_high_layer(struct mame_bitmap *bitmap, const struct rectangle *
 
 /***************************************************************************
 
-	Refresh screen
+    Refresh screen
 
 ***************************************************************************/
 

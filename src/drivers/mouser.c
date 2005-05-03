@@ -4,11 +4,11 @@
 
      Driver by Frank Palazzolo (palazzol@comcast.net)
 
-	- This driver was done with only flyer shots to go by.
-	- Colors are a good guess (might be perfect)
-	- Clock and interrupt speeds for the sound CPU is a guess, but seem
-	  reasonable, especially because the graphics seem to be synched
-	- Sprite priorities are unknown
+    - This driver was done with only flyer shots to go by.
+    - Colors are a good guess (might be perfect)
+    - Clock and interrupt speeds for the sound CPU is a guess, but seem
+      reasonable, especially because the graphics seem to be synched
+    - Sprite priorities are unknown
 
 *******************************************************************************/
 
@@ -228,10 +228,10 @@ static MACHINE_DRIVER_START( mouser )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 4000000/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

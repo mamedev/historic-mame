@@ -16,10 +16,10 @@ static int layer_colorbase[4], layerpri[4];
 
 static void bishi_tile_callback(int layer, int *code, int *color)
 {
-//	*code -= '0';
-//	*color = layer_colorbase[layer] | (*color>>2 & 0x0f);
-//	K055555GX_decode_vmixcolor(layer, color);
-//	if (*color) printf("plane %x col %x [55 %x %x]\n", layer, *color, layer_colorbase[layer], K055555_get_palette_index(layer));
+//  *code -= '0';
+//  *color = layer_colorbase[layer] | (*color>>2 & 0x0f);
+//  K055555GX_decode_vmixcolor(layer, color);
+//  if (*color) printf("plane %x col %x [55 %x %x]\n", layer, *color, layer_colorbase[layer], K055555_get_palette_index(layer));
 
 	*color = layer_colorbase[layer] + ((*color & 0xf0));
 }
@@ -31,7 +31,7 @@ VIDEO_START(bishi)
 	K055555_vh_start();
 	K054338_vh_start();
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, NULL, bishi_tile_callback)) return 1;
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, NULL, bishi_tile_callback, 0)) return 1;
 
 	K056832_set_LayerAssociation(0);
 
@@ -70,7 +70,7 @@ static void sortlayers(int *layer,int *pri)
 VIDEO_UPDATE(bishi)
 {
 	int layers[4], i;/*, old;*/
-/*	int bg_colorbase, new_colorbase, plane, dirty; */
+/*  int bg_colorbase, new_colorbase, plane, dirty; */
 	int pris[4] = { K55_PRIINP_0, K55_PRIINP_3, K55_PRIINP_6, K55_PRIINP_7 };
 	int enables[4] = { K55_INP_VRAM_A, K55_INP_VRAM_B, K55_INP_VRAM_C, K55_INP_VRAM_D };
 

@@ -399,7 +399,7 @@ VIDEO_UPDATE( namcos1 )
 	fillbitmap(priority_bitmap, 0, &new_clip);
 
 	/* bit 0-2 priority */
-	/* bit 3   disable	*/
+	/* bit 3   disable  */
 	for (priority = 0; priority < 8;priority++)
 	{
 		for (i = 0;i < 6;i++)

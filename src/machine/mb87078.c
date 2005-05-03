@@ -110,7 +110,7 @@ void MB87078_start(int which, const struct MB87078interface *intf)
 void MB87078_stop(void)
 {
 	//int i;
-	//for (i = 0; i < MAX_MB87078; i++){	};
+	//for (i = 0; i < MAX_MB87078; i++){    };
 }
 
 

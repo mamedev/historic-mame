@@ -99,7 +99,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( crbaloon )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )

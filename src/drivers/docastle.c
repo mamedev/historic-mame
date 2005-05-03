@@ -29,22 +29,22 @@ c001      DSWB
 c081      coins per play
 c002      DSWA
           bit 6-7 = lives
-		  bit 5 = upright/cocktail (0 = upright)
+          bit 5 = upright/cocktail (0 = upright)
           bit 4 = difficulty of EXTRA (1 = easy)
           bit 3 = unused?
           bit 2 = RACK TEST
-		  bit 0-1 = difficulty
+          bit 0-1 = difficulty
 c003      IN0
           bit 4-7 = joystick player 2
           bit 0-3 = joystick player 1
 c004      flipscreen (proper cocktail mode implemented by Chad Hendrickson Aug 1, 1999)
-c005	  IN1
+c005      IN1
           bit 7 = START 2
-		  bit 6 = unused
-		  bit 5 = jump player 2
-		  bit 4 = fire player 2
-		  bit 3 = START 1
-		  bit 2 = unused
+          bit 6 = unused
+          bit 5 = jump player 2
+          bit 4 = fire player 2
+          bit 3 = START 1
+          bit 2 = unused
           bit 1 = jump player 1(same effect as fire)
           bit 0 = fire player 1
 c085      during the boot sequence, clearing any of bits 0, 1, 3, 4, 5, 7 enters the
@@ -92,10 +92,10 @@ c003      bit 0-3 = joystick
 c004      flipscreen (proper cocktail mode implemented by Chad Hendrickson Aug 1, 1999)
 c005      bit 0 = fire
           bit 1 = fire (again?!)
-		  bit 2 = ?
-		  bit 3 = START 1
-		  bit 4-6 = ?
-		  bit 4 = START 2
+          bit 2 = ?
+          bit 3 = START 1
+          bit 4-6 = ?
+          bit 4 = START 2
 c081      coins per play
 
 write:
@@ -113,15 +113,15 @@ more sprite tiles, it also has a MSM5205 chip for sample playback.
 
 /*
 
-	TODO:
+    TODO:
 
-	- third CPU
-	- dip switch reading bug
-	- unknown ports 0 and 2
-	- bad communication in idsoccer
-	- adpcm status in idsoccer
-	- real values for the adpcm interface in idsoccer
-	- handle flipscreen on/off based on address line A7 (cX0X/cX8X)
+    - third CPU
+    - dip switch reading bug
+    - unknown ports 0 and 2
+    - bad communication in idsoccer
+    - adpcm status in idsoccer
+    - real values for the adpcm interface in idsoccer
+    - handle flipscreen on/off based on address line A7 (cX0X/cX8X)
 
 */
 
@@ -642,14 +642,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct MSM5205interface msm5205_interface =
 {
 	idsoccer_adpcm_int,	// interrupt function
-	MSM5205_S64_4B		// 6 kHz	???
+	MSM5205_S64_4B		// 6 kHz    ???
 };
 
 /* Machine Drivers */
 
 static MACHINE_DRIVER_START( docastle )
 	// basic machine hardware
-//	MDRV_CPU_ADD_TAG("main", Z80, 4000000)	// 4 MHz
+//  MDRV_CPU_ADD_TAG("main", Z80, 4000000)  // 4 MHz
 	MDRV_CPU_ADD_TAG("main", Z80, 3900000)	// make dip switches work in docastle and dorunrun
 	MDRV_CPU_PROGRAM_MAP(docastle_map, 0)
 	MDRV_CPU_IO_MAP(docastle_io_map, 0)
@@ -805,7 +805,7 @@ ROM_START( docastlo )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* which prom? this set has the same gfx as douni so i'm using that prom */
-//	ROM_LOAD( "09c.bin",      0x0000, 0x0200, CRC(066f52bc) SHA1(99f4f2d0181bcaf389c16f127cc3e632d62ee417) ) // color prom
+//  ROM_LOAD( "09c.bin",      0x0000, 0x0200, CRC(066f52bc) SHA1(99f4f2d0181bcaf389c16f127cc3e632d62ee417) ) // color prom
 	ROM_LOAD( "dorevc9.bin",  0x0000, 0x0200, CRC(96624ebe) SHA1(74ff21dc85dcb013c941ec6c06cafdb5bcc16960) ) // color prom
 ROM_END
 

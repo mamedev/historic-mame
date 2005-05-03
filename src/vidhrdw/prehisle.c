@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Prehistoric Isle video routines
+    Prehistoric Isle video routines
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -53,7 +53,7 @@ READ16_HANDLER( prehisle_control16_r )
 WRITE16_HANDLER( prehisle_control16_w )
 {
 	int scroll = 0;
-	
+
 	COMBINE_DATA(&scroll);
 
 	switch (offset)
@@ -103,19 +103,19 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( prehisle )
 {
-	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_cols, 
+	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 16, 16, 1024, 32);
 
 	if ( !bg2_tilemap )
 		return 1;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 16, 16, 256, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

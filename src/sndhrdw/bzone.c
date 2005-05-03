@@ -2,18 +2,18 @@
 
 Battlezone sound info, courtesy of Al Kossow:
 
-D7	motor enable			this enables the engine sound
-D6	start LED
-D5	sound enable			this enables ALL sound outputs
-							including the POKEY output
-D4	engine rev en			this controls the engine speed
-							the engine sound is an integrated square
-							wave (saw tooth) that is frequency modulated
-							by engine rev.
-D3	shell loud, soft/		explosion volume
-D2	shell enable
-D1	explosion loud, soft/	explosion volume
-D0	explosion enable		gates a noise generator
+D7  motor enable            this enables the engine sound
+D6  start LED
+D5  sound enable            this enables ALL sound outputs
+                            including the POKEY output
+D4  engine rev en           this controls the engine speed
+                            the engine sound is an integrated square
+                            wave (saw tooth) that is frequency modulated
+                            by engine rev.
+D3  shell loud, soft/       explosion volume
+D2  shell enable
+D1  explosion loud, soft/   explosion volume
+D0  explosion enable        gates a noise generator
 
 */
 
@@ -115,10 +115,10 @@ static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sam
 			if( explosion_amp > 0 )
 			{
 				/*
-				 * discharge C14 through R17 + R16
-				 * time constant is 10e-6 * 23000 = 0.23 seconds
-				 * (samples were decaying much slower: 1/4th rate? )
-				 */
+                 * discharge C14 through R17 + R16
+                 * time constant is 10e-6 * 23000 = 0.23 seconds
+                 * (samples were decaying much slower: 1/4th rate? )
+                 */
 				explosion_amp_counter -= (int)(32767 / (0.23*4));
 				if( explosion_amp_counter < 0 )
 				{
@@ -129,9 +129,9 @@ static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sam
 				}
 			}
 			/*
-			 * I don't know the amplification of the op-amp
-			 * and feedback, so the loud/soft values are arbitrary
-			 */
+             * I don't know the amplification of the op-amp
+             * and feedback, so the loud/soft values are arbitrary
+             */
 			if( latch & 0x02 )	/* explosion loud ? */
 				sum += EXP(0,explosion_amp)/3;
 			else
@@ -148,10 +148,10 @@ static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sam
 			if( shell_amp > 0 )
 			{
 				/*
-				 * discharge C9 through R14 + R15
-				 * time constant is 4.7e-6 * 23000 = 0.1081 seconds
-				 * (samples were decaying much slower: 1/4th rate? )
-				 */
+                 * discharge C9 through R14 + R15
+                 * time constant is 4.7e-6 * 23000 = 0.1081 seconds
+                 * (samples were decaying much slower: 1/4th rate? )
+                 */
 				shell_amp_counter -= (int)(32767 / (0.1081*4));
 				if( shell_amp_counter < 0 )
 				{
@@ -162,9 +162,9 @@ static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sam
 				}
 			}
 			/*
-			 * I don't know the amplification of the op-amp
-			 * and feedback, so the loud/soft values are arbitrary
-			 */
+             * I don't know the amplification of the op-amp
+             * and feedback, so the loud/soft values are arbitrary
+             */
 			if( latch & 0x08 )	/* shell loud ? */
 				sum += EXP(0,shell_amp)/3;
 			else
@@ -176,14 +176,14 @@ static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sam
 			static double r0 = 1.0/1e12, r1 = 1.0/1e12;
 
 			/* NE5555 timer
-			 * C = 0.018u, Ra = 100k, Rb = 125k
-			 * charge time = 0.693 * (Ra + Rb) * C = 3870us
-			 * discharge time = 0.693 * Rb * C = 1559.25us
-			 * freq approx. 184 Hz
-			 * I have no idea what frequencies are coming from the NE555
-			 * with "MOTOR REV EN" being high or low. I took 240Hz as
-			 * higher rate and sweep up or down to the new rate in 0.25s
-			 */
+             * C = 0.018u, Ra = 100k, Rb = 125k
+             * charge time = 0.693 * (Ra + Rb) * C = 3870us
+             * discharge time = 0.693 * Rb * C = 1559.25us
+             * freq approx. 184 Hz
+             * I have no idea what frequencies are coming from the NE555
+             * with "MOTOR REV EN" being high or low. I took 240Hz as
+             * higher rate and sweep up or down to the new rate in 0.25s
+             */
 			motor_rate_new = (latch & 0x10) ? 240 : 184;
 			if( motor_rate != motor_rate_new )
 			{

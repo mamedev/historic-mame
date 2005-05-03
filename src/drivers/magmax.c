@@ -139,17 +139,17 @@ bit3 - SOUND Chan#8 name=AY-3-8910 #2 Ch C
 
 	percent = (gain_control & 1) ? 1.0 : 0.50;
 	sndti_set_output_gain(SOUND_AY8910, 0, 0, percent);
-//fixme:	set_RC_filter(0,10000,100000000,0,10000);	/* 10K, 10000pF = 0.010uF */
+//fixme:    set_RC_filter(0,10000,100000000,0,10000);   /* 10K, 10000pF = 0.010uF */
 
 	percent = (gain_control & 2) ? 0.45 : 0.23;
 	sndti_set_output_gain(SOUND_AY8910, 0, 1, percent);
 	sndti_set_output_gain(SOUND_AY8910, 0, 2, percent);
 	sndti_set_output_gain(SOUND_AY8910, 1, 0, percent);
 	sndti_set_output_gain(SOUND_AY8910, 1, 1, percent);
-//fixme:	set_RC_filter(1,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-//fixme:	set_RC_filter(2,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-//fixme:	set_RC_filter(3,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-//fixme:	set_RC_filter(4,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+//fixme:    set_RC_filter(1,4700,100000000,0,4700); /*  4.7K, 4700pF = 0.0047uF */
+//fixme:    set_RC_filter(2,4700,100000000,0,4700); /*  4.7K, 4700pF = 0.0047uF */
+//fixme:    set_RC_filter(3,4700,100000000,0,4700); /*  4.7K, 4700pF = 0.0047uF */
+//fixme:    set_RC_filter(4,4700,100000000,0,4700); /*  4.7K, 4700pF = 0.0047uF */
 
 	percent = (gain_control & 4) ? 0.45 : 0.23;
 	sndti_set_output_gain(SOUND_AY8910, 1, 2, percent);
@@ -360,7 +360,7 @@ static MACHINE_DRIVER_START( magmax )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
- 
+
 	MDRV_MACHINE_INIT(magmax)
 
 	/* video hardware */

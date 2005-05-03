@@ -452,7 +452,7 @@ int png_read_info(mame_file *fp, struct png_info *p)
 	return res;
 }
 
-/*	Expands a p->image from p->bit_depth to 8 bit */
+/*  Expands a p->image from p->bit_depth to 8 bit */
 int png_expand_buffer_8bit (struct png_info *p)
 {
 	int i,j, k;
@@ -898,7 +898,7 @@ static int mng_status;
 int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 {
 	UINT8 mhdr[28];
-/*	UINT8 term; */
+/*  UINT8 term; */
 
 	if (mame_fwrite(fp, MNG_Signature, 8) != 8)
 	{
@@ -912,13 +912,13 @@ int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 	convert_to_network_order(Machine->refresh_rate, mhdr+8);
 	convert_to_network_order(0x0041, mhdr+24); /* Simplicity profile */
 	/* frame count and play time unspecified because
-	   we don't know at this stage */
+       we don't know at this stage */
 	if (write_chunk(fp, MNG_CN_MHDR, mhdr, 28)==0)
 		return 0;
 
-/*	term = 0x03;    loop sequence    */
-/*	if (write_chunk(fp, MNG_CN_TERM, &term, 1)==0) */
-/*		return 0; */
+/*  term = 0x03;    loop sequence    */
+/*  if (write_chunk(fp, MNG_CN_TERM, &term, 1)==0) */
+/*      return 0; */
 
 	mng_status = 1;
 	return 1;

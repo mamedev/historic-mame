@@ -1,24 +1,24 @@
 /****************************************************************************
 
-	Forty-Love (c) Taito 1984
+    Forty-Love (c) Taito 1984
 
-	driver by Jaroslaw Burczynski
+    driver by Jaroslaw Burczynski
 
 ****************************************************************************/
 
 /*
-	TO DO:
-	- sprites graphics decoding could be changed to only use
-	  color codes 8-15 (now it decodes all 64 colors). Perhaps the same
-	  applies to character graphics (colors 0-7 only),
+    TO DO:
+    - sprites graphics decoding could be changed to only use
+      color codes 8-15 (now it decodes all 64 colors). Perhaps the same
+      applies to character graphics (colors 0-7 only),
 
-	- sprite memory needs to be buffered ?
+    - sprite memory needs to be buffered ?
 
-	- controls may be wrong (BUTTON 3 - not used ?)
+    - controls may be wrong (BUTTON 3 - not used ?)
 
-	- palette has 1024 colors, but only first 256 are used at the moment
+    - palette has 1024 colors, but only first 256 are used at the moment
 
-	- pixel layer needs priority ?
+    - pixel layer needs priority ?
 */
 
 /*
@@ -54,8 +54,8 @@ Details:
     1 x 8MHz xtal
 
   Video board:   J1100008A / K1100025A
-    4 x AMD AM93422 RAM chips              4 x (4bit x 256) 	1/2 used
-    2 x Mitsubishi M5517P SRAM chips       2 x (8bit x 2048)	1/2 used
+    4 x AMD AM93422 RAM chips              4 x (4bit x 256)     1/2 used
+    2 x Mitsubishi M5517P SRAM chips       2 x (8bit x 2048)    1/2 used
     6 x Mitsubishi M53357P (=LS157)
     1 x 18.432MHz xtal
 
@@ -316,8 +316,8 @@ static WRITE8_HANDLER( bank_select_w )
 
 	if ((data!=0x02) && (data!=0xfd))
 	{
-//		logerror("WRONG BANK SELECT = %x !!!!\n",data);
-//		usrintf_showmessage("WRONG BANK SELECT = %x !!!!\n",data);
+//      logerror("WRONG BANK SELECT = %x !!!!\n",data);
+//      usrintf_showmessage("WRONG BANK SELECT = %x !!!!\n",data);
 	}
 
 	banknum = data&1;
@@ -330,15 +330,15 @@ static UINT8 pix2[2];
 
 static WRITE8_HANDLER( pix1_w )
 {
-//	if ( data > 7 )
-//		logerror("pix1 = %2x\n",data);
+//  if ( data > 7 )
+//      logerror("pix1 = %2x\n",data);
 
 	pix1 = data;
 }
 static WRITE8_HANDLER( pix2_w )
 {
-//	if ( (data!=0x00) && (data!=0xff) )
-//		logerror("pix2 = %2x\n",data);
+//  if ( (data!=0x00) && (data!=0xff) )
+//      logerror("pix2 = %2x\n",data);
 
 	pix2[0] = pix2[1];
 	pix2[1] = data;
@@ -441,7 +441,7 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 	int d;
 	int i;
 
-//	logerror("mcu_w %02x\n",data);
+//  logerror("mcu_w %02x\n",data);
 
 
 	if (mcu_cmd != -1)
@@ -534,8 +534,8 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 				break;
 
 			case 0x05:
-//				mcu_out[0][0] = 255*cos(PI*mcu_in[0][0]/180);
-//				mcu_out[0][1] = 255*sin(PI*mcu_in[0][0]/180);
+//              mcu_out[0][0] = 255*cos(PI*mcu_in[0][0]/180);
+//              mcu_out[0][1] = 255*sin(PI*mcu_in[0][0]/180);
 
 				d = mcu_in[0][0] & 0x7f;
 				mcu_out[0][0] = mcu_data1[d];
@@ -557,7 +557,7 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 						case 0x06: mcu_out[0][0] = 0x14; break;
 						case 0x07: mcu_out[0][0] = 0xb6; break;
 						default:
-						//	usrintf_showmessage("cmd06: %02x %02x",mcu_in[0][0],mcu_in[0][1]);
+						//  usrintf_showmessage("cmd06: %02x %02x",mcu_in[0][0],mcu_in[0][1]);
 							logerror("cmd06: %02x %02x\n",mcu_in[0][0],mcu_in[0][1]);
 					}
 				break;
@@ -586,8 +586,8 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 			default:
 				from_mcu = 0x5d;
 
-//				usrintf_showmessage("unknown cmd%02x: %02x %02x %02x %02x",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
-//				logerror("unknown cmd%02x: %02x %02x %02x %02x\n",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
+//              usrintf_showmessage("unknown cmd%02x: %02x %02x %02x %02x",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
+//              logerror("unknown cmd%02x: %02x %02x %02x %02x\n",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
 		}
 	}
 }
@@ -595,7 +595,7 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 static READ8_HANDLER( undoukai_mcu_r )
 {
 
-//	logerror("mcu_r %02x\n",from_mcu);
+//  logerror("mcu_r %02x\n",from_mcu);
 
 	return from_mcu;
 }
@@ -624,7 +624,7 @@ static DRIVER_INIT( 40love )
 {
 	#if 0
 		/* character ROM hack
-			to show a white line on the opponent side */
+            to show a white line on the opponent side */
 
 		data8_t *ROM = memory_region(REGION_GFX2);
 		int adr = 0x10 * 0x022b;
@@ -716,7 +716,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8802, 0x8802) AM_WRITE(bank_select_w)
 	AM_RANGE(0x8803, 0x8803) AM_WRITE(pix2_w)		//pixel layer related
 	AM_RANGE(0x8804, 0x8804) AM_WRITE(sound_command_w)
-//	AM_RANGE(0x8805, 0x8805) AM_WRITE(MWA8_NOP /*sound_reset*/)	//????
+//  AM_RANGE(0x8805, 0x8805) AM_WRITE(MWA8_NOP /*sound_reset*/) //????
 	AM_RANGE(0x880c, 0x880c) AM_WRITE(fortyl_pixram_sel_w) /* pixram bank select */
 	AM_RANGE(0x880d, 0x880d) AM_WRITE(MWA8_NOP) /* unknown */
 
@@ -808,7 +808,7 @@ static MACHINE_INIT( ta7630 )
 	}
 
 	/* for (i=0; i<8; i++)
-		logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) ); */
+        logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) ); */
 /*
   channels 0-2 AY#0
   channels 3,4 MSM5232 group1,group2
@@ -823,7 +823,7 @@ static UINT8 snd_ctrl3=0;
 static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
-//	usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	/* this definitely controls main melody voice on 2'-1 and 4'-1 outputs */
 	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group1 from msm5232 */
@@ -832,7 +832,7 @@ static WRITE8_HANDLER( sound_control_0_w )
 static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
-//	usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl1>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
 }
 
@@ -841,7 +841,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 	int i;
 
 	snd_ctrl2 = data & 0xff;
-//	usrintf_showmessage("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  usrintf_showmessage("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	for (i=0; i<3; i++)
 		sndti_set_output_gain(SOUND_AY8910, 0, i, vol_ctrl[ (snd_ctrl2>>4) & 15 ] / 100.0);	/* ym2149f all */
@@ -850,7 +850,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
 {
 	snd_ctrl3 = data & 0xff;
-//	usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 }
 
 static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
@@ -970,7 +970,7 @@ INPUT_PORTS_START( 40love )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Score points to: (Cheat)") 
+	PORT_DIPNAME( 0x40, 0x40, "Score points to: (Cheat)")
 	PORT_DIPSETTING(    0x40, "Winner" )
 	PORT_DIPSETTING(    0x00, "Human" )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Door Type" )
@@ -1231,8 +1231,8 @@ static MACHINE_DRIVER_START( undoukai )
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* source/number of IRQs is unknown */
 
-//	MDRV_CPU_ADD(M68705,18432000/6)
-//	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+//  MDRV_CPU_ADD(M68705,18432000/6)
+//  MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

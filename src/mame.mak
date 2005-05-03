@@ -584,7 +584,9 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/funkyjet.o $(OBJ)/drivers/funkyjet.o \
 	$(OBJ)/vidhrdw/deco32.o $(OBJ)/drivers/deco32.o \
 	$(OBJ)/machine/deco102.o \
-	$(OBJ)/drivers/pktgaldx.o \
+	$(OBJ)/vidhrdw/pktgaldx.o $(OBJ)/drivers/pktgaldx.o \
+	$(OBJ)/vidhrdw/boogwing.o $(OBJ)/drivers/boogwing.o \
+	$(OBJ)/drivers/dblewing.o \
 	$(OBJ)/drivers/dietgo.o $(OBJ)/vidhrdw/dietgo.o \
 	$(OBJ)/drivers/deco156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
@@ -1138,6 +1140,7 @@ $(OBJ)/sanritsu.a: \
 	$(OBJ)/vidhrdw/mayumi.o $(OBJ)/drivers/mayumi.o \
 
 $(OBJ)/rare.a: \
+	$(OBJ)/drivers/xtheball.o \
 	$(OBJ)/vidhrdw/btoads.o $(OBJ)/drivers/btoads.o \
 	$(OBJ)/drivers/kinst.o \
 
@@ -1265,6 +1268,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/dynadice.o \
 	$(OBJ)/drivers/hotblock.o \
 	$(OBJ)/drivers/tatsumi.o $(OBJ)/vidhrdw/tatsumi.o $(OBJ)/machine/tatsumi.o \
+	$(OBJ)/drivers/lockon.o \
 	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
 	$(OBJ)/drivers/vamphalf.o $(OBJ)/drivers/dgpix.o \
 	$(OBJ)/vidhrdw/eolith.o $(OBJ)/drivers/eolith.o \

@@ -21,7 +21,7 @@ Address          Dir Data     Name       Description
 10001----------1   W -------- ZINTRQ     trigger IRQ on 68705 [3]
 1001xxxxxxxxxxxx R/W xxxxxxxx CDR1-2     character generator RAM
 101xxxxxxxxxxxxx R/W xxxxxxxx CDR3-6     character generator RAM
-1100xxxxxxxxxxxx R/W xxxxxxxx CHARQ      tilemap RAM
+1100xxxxxxxxxxxx R/W xxxxxxxx CHARQ      tilemap RAM [4]
 11010000xxxxxxxx R/W xxxxxxxx SCRRQ      tilemap column scroll
 11010001xxxxxxxx R/W xxxxxxxx OBJRQ      sprites RAM [1]
 11010010-xxxxxx0   W -------x VCRRQ      palette chip (93419)
@@ -86,17 +86,22 @@ Address          Dir Data     Name       Description
 
 [1] There are 256 bytes of sprite RAM, but only 128 can be accessed by the
     video hardware at a time. OBJEX selects the high or low bank. The CPU can
-	access all the memory linearly. This feature doesn't seem to be ever used.
+    access all the memory linearly. This feature doesn't seem to be ever used
+    although bioatack and spaceskr do initialise the second bank.
 
 [2] Priority is controlled by a 256x4 PROM.
     Bits 0-3 of PRY go to A4-A7 of the PROM, bit 4 selectes D0-D1 or D2-D3.
-	A0-A3 of the PROM is fed with a mask of the inactive planes in the order
-	OBJ-SCN1-SCN2-SCN3. The 2-bit code which comes out from the PROM selects
-	the plane to display.
+    A0-A3 of the PROM is fed with a mask of the inactive planes in the order
+    OBJ-SCN1-SCN2-SCN3. The 2-bit code which comes out from the PROM selects
+    the plane to display.
 
 [3] A jumper selects whether writing to 8800 should also automatically trigger
     the interrupt, or it should be explicitly triggered by a write to 8801.
 
+
+[4] The first page of tilemap RAM c000-c3ff is used by bioatack during sprite
+    collision detection. It is also initialised by wwestern and wwester1
+    although they don't appear to use it.
 
 SOUND CPU:
 
@@ -149,8 +154,8 @@ Kickstart Wheelie King :
 - taitosj_colorbank_w @ $d000-$d001
 - taitosj_scroll @ $d002-$d007
 - strange controls :
-	 - 'revolve type' - 3 pos switch (gears) +  button/pedal (accel)
-	 - two buttons for gear change, auto acceleration
+     - 'revolve type' - 3 pos switch (gears) +  button/pedal (accel)
+     - two buttons for gear change, auto acceleration
 
 TODO:
 -----
@@ -237,8 +242,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8800, 0x8800) AM_READ(taitosj_fake_data_r)
 	AM_RANGE(0x8801, 0x8801) AM_READ(taitosj_fake_status_r)
-	AM_RANGE(0xc400, 0xd015) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd100, 0xd17f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xd015) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd100, 0xd1ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xd400, 0xd403) AM_READ(taitosj_collision_reg_r)
 	AM_RANGE(0xd404, 0xd404) AM_READ(taitosj_gfxrom_r)
 	AM_RANGE(0xd408, 0xd408) AM_READ(input_port_0_r)     /* IN0 */
@@ -256,11 +261,13 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(taitosj_fake_data_w)
 	AM_RANGE(0x9000, 0xbfff) AM_WRITE(taitosj_characterram_w) AM_BASE(&taitosj_characterram)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xc800, 0xcbff) AM_WRITE(taitosj_videoram2_w) AM_BASE(&taitosj_videoram2)
 	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(taitosj_videoram3_w) AM_BASE(&taitosj_videoram3)
 	AM_RANGE(0xd000, 0xd05f) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_colscrolly)
 	AM_RANGE(0xd100, 0xd17f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd180, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
 	AM_RANGE(0xd200, 0xd27f) AM_WRITE(taitosj_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0xd300, 0xd300) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_video_priority)
 	AM_RANGE(0xd40e, 0xd40e) AM_WRITE(AY8910_control_port_0_w)
@@ -284,8 +291,8 @@ static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8800, 0x8800) AM_READ(taitosj_mcu_data_r)
 	AM_RANGE(0x8801, 0x8801) AM_READ(taitosj_mcu_status_r)
-	AM_RANGE(0xc400, 0xd05f) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd100, 0xd17f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xd05f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd100, 0xd1ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xd400, 0xd403) AM_READ(taitosj_collision_reg_r)
 	AM_RANGE(0xd404, 0xd404) AM_READ(taitosj_gfxrom_r)
 	AM_RANGE(0xd408, 0xd408) AM_READ(input_port_0_r)     /* IN0 */
@@ -305,9 +312,11 @@ static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9000, 0xbfff) AM_WRITE(taitosj_characterram_w) AM_BASE(&taitosj_characterram)
 	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xc800, 0xcbff) AM_WRITE(taitosj_videoram2_w) AM_BASE(&taitosj_videoram2)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(taitosj_videoram3_w) AM_BASE(&taitosj_videoram3)
 	AM_RANGE(0xd000, 0xd05f) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_colscrolly)
 	AM_RANGE(0xd100, 0xd17f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd180, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
 	AM_RANGE(0xd200, 0xd27f) AM_WRITE(taitosj_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0xd300, 0xd300) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_video_priority)
 	AM_RANGE(0xd40e, 0xd40e) AM_WRITE(AY8910_control_port_0_w)
@@ -340,7 +349,7 @@ static READ8_HANDLER ( kikstart_gears_read )
 	if (kikstart_gear == 2) portreturn |= (0x03);
 	if (kikstart_gear == 3) portreturn |= (0x01);
 
-//usrintf_showmessage	("Kikstart gear %02x",  kikstart_gear);
+//usrintf_showmessage   ("Kikstart gear %02x",  kikstart_gear);
 //Is there a more attractive way to display this mid game?
 	return portreturn;
 }
@@ -352,8 +361,8 @@ static ADDRESS_MAP_START( kikstart_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8800, 0x8800) AM_READ(taitosj_mcu_data_r)
 	AM_RANGE(0x8801, 0x8801) AM_READ(taitosj_mcu_status_r)
 	AM_RANGE(0x8802, 0x8802) AM_READ(MRA8_NOP)
-	AM_RANGE(0xc400, 0xd05f) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd100, 0xd17f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xd05f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd100, 0xd1ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xd400, 0xd403) AM_READ(taitosj_collision_reg_r)
 	AM_RANGE(0xd404, 0xd404) AM_READ(taitosj_gfxrom_r)
 	AM_RANGE(0xd408, 0xd408) AM_READ(input_port_0_r)     /* IN0 */
@@ -373,11 +382,13 @@ static ADDRESS_MAP_START( kikstart_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(taitosj_mcu_data_w)
 	AM_RANGE(0x8802, 0x8802) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x9000, 0xbfff) AM_WRITE(taitosj_characterram_w) AM_BASE(&taitosj_characterram)
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xc800, 0xcbff) AM_WRITE(taitosj_videoram2_w) AM_BASE(&taitosj_videoram2)
 	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(taitosj_videoram3_w) AM_BASE(&taitosj_videoram3)
 	AM_RANGE(0x8a00, 0x8a5f) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_colscrolly)
 	AM_RANGE(0xd100, 0xd17f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd180, 0xd1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
 	AM_RANGE(0xd200, 0xd27f) AM_WRITE(taitosj_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0xd300, 0xd300) AM_WRITE(MWA8_RAM) AM_BASE(&taitosj_video_priority)
 	AM_RANGE(0xd40e, 0xd40e) AM_WRITE(AY8910_control_port_0_w)
@@ -1895,19 +1906,19 @@ static MACHINE_DRIVER_START( nomcu )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 6000000/4)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 6000000/4)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 6000000/4)
 	MDRV_SOUND_CONFIG(ay8910_interface_3)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 6000000/4)
 	MDRV_SOUND_CONFIG(ay8910_interface_4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)

@@ -7,51 +7,51 @@
 
 /*
 Renderer:
-	each pixel->(BN,TX,TY,BRI,FLAGS,CZ,PAL)
-		BN:    texture bank
-		TX,TY: texture coordinates
-		BRI:   brightness for gouraud shading
-		FLAGS: specifies whether affected by depth cueing
-		CZ:    index for depth cueing
+    each pixel->(BN,TX,TY,BRI,FLAGS,CZ,PAL)
+        BN:    texture bank
+        TX,TY: texture coordinates
+        BRI:   brightness for gouraud shading
+        FLAGS: specifies whether affected by depth cueing
+        CZ:    index for depth cueing
 
 Shader:
-	(TX,TY,BN)->COL
-	(PAL,COL)->palette index
-	(palette index,BRI)->RGB
+    (TX,TY,BN)->COL
+    (PAL,COL)->palette index
+    (palette index,BRI)->RGB
 
 Depth BIAS:
-	notes: blend function is expressed by a table
-	it may be possible to specify multiple backcolors
-	RGB,CZ,BackColor->RGB'
+    notes: blend function is expressed by a table
+    it may be possible to specify multiple backcolors
+    RGB,CZ,BackColor->RGB'
 
 Mixer:
-	(RGB',gamma table)->RGB''
+    (RGB',gamma table)->RGB''
 
-	Other techniques:
-		bump mapping perturbation (BX,BY)
-		normal vector on polygon surface for lighting
-		(normal vector, perturbation) -> N
-		(lighting,N) -> BRI
+    Other techniques:
+        bump mapping perturbation (BX,BY)
+        normal vector on polygon surface for lighting
+        (normal vector, perturbation) -> N
+        (lighting,N) -> BRI
 
 
-		BRI=IaKa+{II/(Z+K)}.times.(Kd cost .phi.+Ks cos.sup.n.psi.) (1)
+        BRI=IaKa+{II/(Z+K)}.times.(Kd cost .phi.+Ks cos.sup.n.psi.) (1)
 
-		Ia: Intensity of ambient light;
-		II: Intensity of incident light;
-		Ka: Diffuse reflection coefficient of ambient light [0];
-		Kd: Diffuse reflection coefficient [0];
-		Ks: Specular reflection coefficient [0];
-		(a: ambient)
-		(d: diffuse)
-		(s: specular)
-		K: Constant (for correcting the brightness in a less distant object [F];
-		Z: Z-axis coordinate for each dot [0 in certain cases];
-		.phi.: Angle between a light source vector L and a normal vector N;
-		=Angle between a reflective light vector R and a normal vector N;
-		.psi.: Angle between a reflective light vector R and a visual vector E =[0, 0, 1]; and
-		n: Constant (sharpness in high-light) [0]
-		[F]: Constant for each scene (field).
-		[O]: Constant for each object (or polygon).
+        Ia: Intensity of ambient light;
+        II: Intensity of incident light;
+        Ka: Diffuse reflection coefficient of ambient light [0];
+        Kd: Diffuse reflection coefficient [0];
+        Ks: Specular reflection coefficient [0];
+        (a: ambient)
+        (d: diffuse)
+        (s: specular)
+        K: Constant (for correcting the brightness in a less distant object [F];
+        Z: Z-axis coordinate for each dot [0 in certain cases];
+        .phi.: Angle between a light source vector L and a normal vector N;
+        =Angle between a reflective light vector R and a normal vector N;
+        .psi.: Angle between a reflective light vector R and a visual vector E =[0, 0, 1]; and
+        n: Constant (sharpness in high-light) [0]
+        [F]: Constant for each scene (field).
+        [O]: Constant for each object (or polygon).
 */
 
 INT32 *namco_zbuffer; /* TBR: Namco System 21 and System22 use sorting, not a real ZBuffer */
@@ -98,7 +98,7 @@ PatchTexture( void )
 	default:
 		return;
 	}
-	
+
 	for( i=0; i<0x100000; i++ )
 	{
 		int tile = mpTextureTileMap16[i];
@@ -134,7 +134,7 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 				}
 
 				mpTextureTileMap16 = pTilemapROM;
-				
+
 				#ifndef LSB_FIRST
 				/* if not little endian, byteswap each word */
 				{
@@ -554,7 +554,7 @@ ProjectPoint( const struct VerTex *v, vertex *pv, const namcos22_camera *camera 
 	pv->u = (v->u+0.5)/v->z;
 	pv->v = (v->v+0.5)/v->z;
 	pv->i = (v->i+0.5 - 0x40)/v->z;
-//	pv->i = (v->i+0.5)/v->z;
+//  pv->i = (v->i+0.5)/v->z;
 	pv->z = 1/v->z;
 }
 

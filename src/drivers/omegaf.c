@@ -34,11 +34,11 @@ NOTE :
 
 /*
 
-	TODO:
+    TODO:
 
-	- "XXX Intturupt Hold ???" msg at post screen
-	- coin counters/lockouts
-	- sprites are invisible in flipscreen mode
+    - "XXX Intturupt Hold ???" msg at post screen
+    - coin counters/lockouts
+    - sprites are invisible in flipscreen mode
 
 */
 

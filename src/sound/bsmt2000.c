@@ -84,7 +84,7 @@ struct BSMT2000Chip
 
 	struct BSMT2000Voice *voice;		/* the voices */
 	struct BSMT2000Voice compressed;	/* the compressed voice */
-	
+
 	INT32 *scratch;
 
 #if MAKE_WAVS
@@ -143,7 +143,7 @@ static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *righ
 	for (v = 0; v < chip->voices; v++)
 	{
 		voice = &chip->voice[v];
-		
+
 		/* compute the region base */
 		if (voice->reg[REG_BANK] < chip->total_banks)
 		{
@@ -338,24 +338,24 @@ INLINE void init_voice(struct BSMT2000Voice *voice)
 INLINE void init_all_voices(struct BSMT2000Chip *chip)
  {
  	int i;
- 
+
  	/* init the voices */
  	for (i = 0; i < chip->voices; i++)
  		init_voice(&chip->voice[i]);
- 
+
  	/* init the compressed voice (runs at a fixed rate of ~8kHz?) */
  	init_voice(&chip->compressed);
  	chip->compressed.adjusted_rate = 0x02aa << 4;
  }
- 
+
 static void *bsmt2000_start(int sndindex, int clock, const void *config)
 {
 	const struct BSMT2000interface *intf = config;
 	struct BSMT2000Chip *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
-	
+
 	/* allocate the voices */
 	chip->voices = intf->voices;
 	chip->voice = auto_malloc(chip->voices * sizeof(struct BSMT2000Voice));
@@ -420,7 +420,7 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 
 	/* force an update */
 	stream_update(chip->stream, 0);
-	
+
 	/* update parameters for standard voices */
 	switch (regindex)
 	{
@@ -444,7 +444,7 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 			COMBINE_DATA(&voice->reg[REG_RIGHTVOL]);
 			break;
 	}
-	
+
 	/* update parameters for compressed voice (11-voice model only) */
 	if (chip->voices == 11 && offset >= 0x6d)
 	{
@@ -455,11 +455,11 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 				COMBINE_DATA(&voice->reg[REG_LOOPEND]);
 				voice->loop_stop_position = voice->reg[REG_LOOPEND] << 16;
 				break;
-				
+
 			case 0x6f:
 				COMBINE_DATA(&voice->reg[REG_BANK]);
 				break;
-			
+
 			case 0x74:
 				COMBINE_DATA(&voice->reg[REG_RIGHTVOL]);
 				break;

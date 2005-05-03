@@ -22,9 +22,9 @@ Chinese Hero hardware differs only slightly from Shanghai Kid:
 Shanghai Kid / (Hokuha Syourin) Hiryu no Ken
 (c)1985 Nihon Game (distributed by Taito)
 
-	3 Z-80A CPU
-	1 AY-3-8910
-	1 XTAL 18.432MHz
+    3 Z-80A CPU
+    1 AY-3-8910
+    1 XTAL 18.432MHz
 
 Also distributed with Data East and Memetron license.
 
@@ -41,11 +41,11 @@ Some company history:
 Nihon Game changed their name to Culture Brain.
 
 Games by Nihon Game/Culture Brain:
-	1982 Monster Zero
-	1983 Space Hunter
-	1984 Chinese Hero
-	1985 Hokuha Syourin Hiryuu no Ken / Shanghai Kid
-	1986 Super Chinese (Nintendo Vs. System)
+    1982 Monster Zero
+    1983 Space Hunter
+    1984 Chinese Hero
+    1985 Hokuha Syourin Hiryuu no Ken / Shanghai Kid
+    1986 Super Chinese (Nintendo Vs. System)
 */
 
 #include "driver.h"
@@ -369,7 +369,7 @@ static MACHINE_DRIVER_START( chinhero )
 
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
@@ -442,7 +442,7 @@ static MACHINE_DRIVER_START( dynamski )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
@@ -562,10 +562,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( shangkid )
 	PORT_START_TAG("DSW")
-	/*	There are also two potentiometers on the PCB for volume:
-	**	RV1 - Music
-	**	RV2 - Sound Effects
-	*/
+	/*  There are also two potentiometers on the PCB for volume:
+    **  RV1 - Music
+    **  RV2 - Sound Effects
+    */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -674,15 +674,15 @@ ROM_END
 
 ROM_START( chinher2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (main) */
-	ROM_LOAD( "1.128",        0x0000, 0x4000, CRC(68e247aa) SHA1(27c2b864e482ba10c81337ed7c03a58b395e52bb) ) 
-	ROM_LOAD( "2.128",        0x4000, 0x4000, CRC(0346d8c9) SHA1(458b9a37b0ad0cafecdb0348f7d93508531bc310) ) 
-	ROM_LOAD( "3.128",        0x8000, 0x4000, CRC(a78b8d78) SHA1(c2b7b2d56e2fdb7a2a11bb8b1aab35a841331b96) ) 
+	ROM_LOAD( "1.128",        0x0000, 0x4000, CRC(68e247aa) SHA1(27c2b864e482ba10c81337ed7c03a58b395e52bb) )
+	ROM_LOAD( "2.128",        0x4000, 0x4000, CRC(0346d8c9) SHA1(458b9a37b0ad0cafecdb0348f7d93508531bc310) )
+	ROM_LOAD( "3.128",        0x8000, 0x4000, CRC(a78b8d78) SHA1(c2b7b2d56e2fdb7a2a11bb8b1aab35a841331b96) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (coprocessor) */
-	ROM_LOAD( "4.128",        0x0000, 0x4000, CRC(6ab2e836) SHA1(61c84c0b685e29bac8020a0051586267ecd20166) ) 
+	ROM_LOAD( "4.128",        0x0000, 0x4000, CRC(6ab2e836) SHA1(61c84c0b685e29bac8020a0051586267ecd20166) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code (sound) */
-	ROM_LOAD( "5.128",        0x0000, 0x4000, CRC(4e4f3f92) SHA1(57d0485f8a0110f5448b554d2fab1caba52551fd) ) 
+	ROM_LOAD( "5.128",        0x0000, 0x4000, CRC(4e4f3f92) SHA1(57d0485f8a0110f5448b554d2fab1caba52551fd) )
 	ROM_LOAD( "ic49.10",      0x4000, 0x2000, CRC(8c0e43d1) SHA1(acaead801b4782875c8b6092e987b73f9973f8b0) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_INVERT ) /* tiles */
@@ -726,22 +726,22 @@ ROM_START( shangkid )
 	ROM_LOAD( "cr03ic05.bin", 0x10000, 0x2000, CRC(3b383863) SHA1(3fb10a7f89cf2387d70b0337916063fd4ec5f754) )	/* banked at 0x8000 */
 
 	/* The BBX coprocessor is burried in an epoxy block.  It contains:
-	**	-	a surface-mounted Z80 (TMPZ84C00P)
-	**	-	LS245 logic IC
-	**	-	battery backed ram chip Fujitsu MB8464
-	**
-	**	The BBX coprocessor receives graphics and sound-related commands from
-	**	the main CPU via shared RAM.  It directly manages an AY8910, is
-	**	responsible for populating spriteram, and forwards appropriate sound
-	**	commands to the sample-playing CPU.
-	*/
+    **  -   a surface-mounted Z80 (TMPZ84C00P)
+    **  -   LS245 logic IC
+    **  -   battery backed ram chip Fujitsu MB8464
+    **
+    **  The BBX coprocessor receives graphics and sound-related commands from
+    **  the main CPU via shared RAM.  It directly manages an AY8910, is
+    **  responsible for populating spriteram, and forwards appropriate sound
+    **  commands to the sample-playing CPU.
+    */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80: bbx module */
 	ROM_LOAD( "bbx.bin",	  0x0000, 0x2000, CRC(560c0abd) SHA1(165beadd55bc29195cc680825f71f3f7f60fa0f6) ) /* battery-backed RAM */
 	ROM_LOAD( "cr04ic31.bin", 0x2000, 0x2000, CRC(cb207885) SHA1(b73458c959a4ebceb4c88931f8e3d1aff01dbaff) )
 	ROM_LOAD( "cr05ic32.bin", 0x4000, 0x4000, CRC(cf3b8d55) SHA1(c2e196e2762dd7884f461fc2be37698b9ed1deef) )
 	ROM_LOAD( "cr06ic33.bin", 0x8000, 0x2000, CRC(0f3bdbd8) SHA1(2e0e81425e4e5592d3e2c8395075720c2ad3f79a) )
 
-	/*	The Sound CPU is a dedicated Sample Player */
+	/*  The Sound CPU is a dedicated Sample Player */
 	ROM_REGION( 0x1e000, REGION_CPU3, 0 ) /* Z80 (NEC D780C-1) */
 	ROM_LOAD( "cr11ic51.bin", 0x00000, 0x4000, CRC(2e2d6afe) SHA1(1414a06b6cf14dfd69ca6cf35e4eb7d75af3f219) )
 	ROM_LOAD( "cr12ic43.bin", 0x04000, 0x4000, CRC(dd29a0c8) SHA1(8411c31fefdce8c9233fe531b5bf3b6c43c03cba) )
@@ -790,15 +790,15 @@ ROM_START( hiryuken )
 	ROM_LOAD( "4.5", 0x10000, 0x2000, CRC(6518943a) SHA1(b5e78267d5a58c466c9ae20ba4f9c5e14e252287) ) /* banked at 0x8000 */
 
 	/* The BBX coprocessor is burried in an epoxy block.  It contains:
-	** - a surface-mounted Z80 (TMPZ84C00P)
-	** - LS245 logic IC
-	** - battery backed ram chip Fujitsu MB8464
-	**
-	** The BBX coprocessor receives graphics and sound-related commands from
-	** the main CPU via shared RAM.  It directly manages an AY8910, is
-	** responsible for populating spriteram, and forwards appropriate sound
-	** commands to the sample-playing CPU.
-	*/
+    ** - a surface-mounted Z80 (TMPZ84C00P)
+    ** - LS245 logic IC
+    ** - battery backed ram chip Fujitsu MB8464
+    **
+    ** The BBX coprocessor receives graphics and sound-related commands from
+    ** the main CPU via shared RAM.  It directly manages an AY8910, is
+    ** responsible for populating spriteram, and forwards appropriate sound
+    ** commands to the sample-playing CPU.
+    */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80: bbx module */
 	ROM_LOAD( "bbxj.bin",     0x0000, 0x2000, CRC(8def4aaf) SHA1(bfb9b2874294499c1026f2a4cd20f9cd0efd30f9) ) /* battery-backed RAM */
 	ROM_LOAD( "5.31",         0x2000, 0x2000, CRC(8ae37ce7) SHA1(6299b0cd4e7348d4599126d61192924f19ae5401) )
@@ -808,8 +808,8 @@ ROM_START( hiryuken )
 	/* The Sound CPU is a dedicated Sample Player */
 	ROM_REGION( 0x1e000, REGION_CPU3, 0 ) /* Z80 (NEC D780C-1) */
 	ROM_LOAD( "cr11ic51.bin", 0x00000, 0x4000, CRC(2e2d6afe) SHA1(1414a06b6cf14dfd69ca6cf35e4eb7d75af3f219) )	// 12.51
-//	ROM_LOAD( "cr12ic43.bin", 0x04000, 0x4000, CRC(dd29a0c8) SHA1(8411c31fefdce8c9233fe531b5bf3b6c43c03cba) )	// not present in this set
-//	ROM_LOAD( "cr13ic44.bin", 0x08000, 0x4000, CRC(879d0de0) SHA1(b1422cf239381ac949867c42ca8101fa8dcac9d6) )	// not present in this set
+//  ROM_LOAD( "cr12ic43.bin", 0x04000, 0x4000, CRC(dd29a0c8) SHA1(8411c31fefdce8c9233fe531b5bf3b6c43c03cba) )   // not present in this set
+//  ROM_LOAD( "cr13ic44.bin", 0x08000, 0x4000, CRC(879d0de0) SHA1(b1422cf239381ac949867c42ca8101fa8dcac9d6) )   // not present in this set
 	ROM_LOAD( "cr07ic47.bin", 0x10000, 0x4000, CRC(20540f7c) SHA1(85c0b913948a67a34b25f0974fdd22e1dbb63166) )	// 8.47
 	ROM_LOAD( "9.48",         0x14000, 0x4000, CRC(8da23cad) SHA1(051459d7b5395336d698b03f1cc8566f33b62c8b) )
 	ROM_LOAD( "10.49",        0x18000, 0x4000, CRC(52b82fee) SHA1(99a2952af6493586745463c33b11ab69251af063) )

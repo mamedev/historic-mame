@@ -28,17 +28,17 @@ VIDEO_START( superchs )
 }
 
 /************************************************************
-			SPRITE DRAW ROUTINES
+            SPRITE DRAW ROUTINES
 
 We draw a series of small tiles ("chunks") together to
 create each big sprite. The spritemap rom provides the lookup
 table for this. The game hardware looks up 16x16 sprite chunks
 from the spritemap rom, creating a 64x64 sprite like this:
 
-	 0  1  2  3
-	 4  5  6  7
-	 8  9 10 11
-	12 13 14 15
+     0  1  2  3
+     4  5  6  7
+     8  9 10 11
+    12 13 14 15
 
 (where the number is the word offset into the spritemap rom).
 It can also create 32x32 sprites.
@@ -50,26 +50,26 @@ spriteram is being tested, take no notice of that.]
 
 Heavy use is made of sprite zooming.
 
-		***
+        ***
 
-	Sprite table layout (4 long words per entry)
+    Sprite table layout (4 long words per entry)
 
-	------------------------------------------
-	 0 | ........ x....... ........ ........ | Flip X
-	 0 | ........ .xxxxxxx ........ ........ | ZoomX
-	 0 | ........ ........ .xxxxxxx xxxxxxxx | Sprite Tile
-	   |                                     |
-	 2 | ........ ....xx.. ........ ........ | Sprite/tile priority [*]
-	 2 | ........ ......xx xxxxxx.. ........ | Palette bank
-	 2 | ........ ........ ......xx xxxxxxxx | X position
-	   |                                     |
-	 3 | ........ .....x.. ........ ........ | Sprite size (0=32x32, 1=64x64)
-	 3 | ........ ......x. ........ ........ | Flip Y
-	 3 | ........ .......x xxxxxx.. ........ | ZoomY
-	 3 | ........ ........ ......xx xxxxxxxx | Y position
-	------------------------------------------
+    ------------------------------------------
+     0 | ........ x....... ........ ........ | Flip X
+     0 | ........ .xxxxxxx ........ ........ | ZoomX
+     0 | ........ ........ .xxxxxxx xxxxxxxx | Sprite Tile
+       |                                     |
+     2 | ........ ....xx.. ........ ........ | Sprite/tile priority [*]
+     2 | ........ ......xx xxxxxx.. ........ | Palette bank
+     2 | ........ ........ ......xx xxxxxxxx | X position
+       |                                     |
+     3 | ........ .....x.. ........ ........ | Sprite size (0=32x32, 1=64x64)
+     3 | ........ ......x. ........ ........ | Flip Y
+     3 | ........ .......x xxxxxx.. ........ | ZoomY
+     3 | ........ ........ ......xx xxxxxxxx | Y position
+    ------------------------------------------
 
-	[* 00=over BG1; 01=BG2; 10=BG3; 11=over text]
+    [* 00=over BG1; 01=BG2; 10=BG3; 11=over text]
 
 ********************************************************/
 
@@ -84,7 +84,7 @@ static void superchs_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 	int dimension,total_chunks,bad_chunks;
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
+       while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
 	for (offs = (spriteram_size/4-4);offs >= 0;offs -= 4)
@@ -155,8 +155,8 @@ static void superchs_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 				if (sprites_flipscreen)
 				{
 					/* -zx/y is there to fix zoomed sprite coords in screenflip.
-					   drawgfxzoom does not know to draw from flip-side of sprites when
-					   screen is flipped; so we must correct the coords ourselves. */
+                       drawgfxzoom does not know to draw from flip-side of sprites when
+                       screen is flipped; so we must correct the coords ourselves. */
 
 					curx = 320 - curx - zx;
 					cury = 256 - cury - zy;
@@ -215,7 +215,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 /**************************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 **************************************************************/
 
 VIDEO_UPDATE( superchs )
@@ -236,7 +236,7 @@ VIDEO_UPDATE( superchs )
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* We have to assume 2nd to bottom layer is always underneath
-	   sprites as pdrawgfx cannot yet cope with more than 4 layers */
+       sprites as pdrawgfx cannot yet cope with more than 4 layers */
 
 #ifdef MAME_DEBUG
 	if (!code_pressed (KEYCODE_Z)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);

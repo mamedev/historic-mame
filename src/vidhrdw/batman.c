@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Batman hardware
+    Atari Batman hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Globals
+ *  Globals
  *
  *************************************/
 
@@ -23,7 +23,7 @@ UINT8 batman_alpha_tile_bank;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static void get_playfield2_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -133,7 +133,7 @@ VIDEO_START( batman )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -198,7 +198,7 @@ void batman_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -232,21 +232,21 @@ VIDEO_UPDATE( batman )
 				{
 					/* verified on real hardware:
 
-						for all MO colors, MO priority 0:
-							obscured by low fg playfield pens priority 1-3
-							obscured by high fg playfield pens priority 3 only
-							obscured by bg playfield priority 3 only
+                        for all MO colors, MO priority 0:
+                            obscured by low fg playfield pens priority 1-3
+                            obscured by high fg playfield pens priority 3 only
+                            obscured by bg playfield priority 3 only
 
-						for all MO colors, MO priority 1:
-							obscured by low fg playfield pens priority 2-3
-							obscured by high fg playfield pens priority 3 only
-							obscured by bg playfield priority 3 only
+                        for all MO colors, MO priority 1:
+                            obscured by low fg playfield pens priority 2-3
+                            obscured by high fg playfield pens priority 3 only
+                            obscured by bg playfield priority 3 only
 
-						for all MO colors, MO priority 2-3:
-							obscured by low fg playfield pens priority 3 only
-							obscured by high fg playfield pens priority 3 only
-							obscured by bg playfield priority 3 only
-					*/
+                        for all MO colors, MO priority 2-3:
+                            obscured by low fg playfield pens priority 3 only
+                            obscured by high fg playfield pens priority 3 only
+                            obscured by bg playfield priority 3 only
+                    */
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
 
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */

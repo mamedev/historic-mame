@@ -22,7 +22,7 @@ static const struct amiga_machine_interface *amiga_intf;
 
 /***************************************************************************
 
-	General routines and registers
+    General routines and registers
 
 ***************************************************************************/
 
@@ -80,7 +80,7 @@ static void check_ints( void ) {
 
 /***************************************************************************
 
-	Blitter emulation
+    Blitter emulation
 
 ***************************************************************************/
 
@@ -373,8 +373,8 @@ static void blitter_proc( int param ) {
 		custom_regs.BLTxPTH[3] = ( ptr[3] >> 16 ) & 0x1f;
 		custom_regs.BLTxPTL[3] = ptr[3] & 0xffff;
 
-//		custom_regs.BLTxDAT[0] = dataA;
-//		custom_regs.BLTxDAT[1] = dataB;
+//      custom_regs.BLTxDAT[0] = dataA;
+//      custom_regs.BLTxDAT[1] = dataB;
 
 	} else { /* Blit mode */
 		if ( custom_regs.BLTCON0 & 0x0f00 ) {
@@ -582,7 +582,7 @@ static void blitter_setup( void ) {
 
 /***************************************************************************
 
-	8520 CIA emulation
+    8520 CIA emulation
 
 ***************************************************************************/
 
@@ -778,13 +778,13 @@ static int cia_0_portB_r( void )
 	return (amiga_intf->cia_0_portB_r) ? amiga_intf->cia_0_portB_r() : 0x00;
 }
 
-static void cia_0_portA_w( int data ) 
+static void cia_0_portA_w( int data )
 {
 	if (amiga_intf->cia_0_portA_w)
 		amiga_intf->cia_0_portA_w(data);
 }
 
-static void cia_0_portB_w( int data ) 
+static void cia_0_portB_w( int data )
 {
 	if (amiga_intf->cia_0_portB_w)
 		amiga_intf->cia_0_portB_w(data);
@@ -800,13 +800,13 @@ static int cia_1_portB_r( void )
 	return (amiga_intf->cia_1_portB_r) ? amiga_intf->cia_1_portB_r() : 0x00;
 }
 
-static void cia_1_portA_w( int data ) 
+static void cia_1_portA_w( int data )
 {
 	if (amiga_intf->cia_1_portA_w)
 		amiga_intf->cia_1_portA_w(data);
 }
 
-static void cia_1_portB_w( int data ) 
+static void cia_1_portB_w( int data )
 {
 	if (amiga_intf->cia_1_portB_w)
 		amiga_intf->cia_1_portB_w(data);
@@ -1094,7 +1094,7 @@ WRITE16_HANDLER ( amiga_cia_w ) {
 
 /***************************************************************************
 
-	Custom chips emulation
+    Custom chips emulation
 
 ***************************************************************************/
 
@@ -1103,7 +1103,7 @@ static void amiga_custom_init( void ) {
 	custom_regs.DDFSTOP = 0xd8;
 }
 
-READ16_HANDLER ( amiga_custom_r ) 
+READ16_HANDLER ( amiga_custom_r )
 {
 
     offset<<=1;
@@ -1113,22 +1113,22 @@ READ16_HANDLER ( amiga_custom_r )
 		case 0x0002: /* DMACON */
 			return custom_regs.DMACON;
 		break;
-		
+
 		case 0x0004: /* VPOSR */
 			return ( ( cpu_getscanline() >> 8 ) & 1 );
 		break;
-		
+
 		case 0x0006: /* VHPOSR */
 			{
 				int h, v;
-				
+
 				h = ( cpu_gethorzbeampos() >> 1 ); /* in color clocks */
 				v = ( cpu_getscanline() & 0xff );
-				
+
 				return ( v << 8 ) | h;
 			}
 		break;
-		
+
 		case 0x000a: /* JOY0DAT */
 			return amiga_intf->read_joy0dat();
 		break;
@@ -1152,7 +1152,7 @@ READ16_HANDLER ( amiga_custom_r )
 			return amiga_intf->read_dskbytr ? amiga_intf->read_dskbytr() : 0x00;
 		break;
 
-				
+
 		case 0x001c: /* INTENA */
 			return custom_regs.INTENA;
 		break;
@@ -1160,11 +1160,11 @@ READ16_HANDLER ( amiga_custom_r )
 		case 0x001e: /* INTREQ */
 			return custom_regs.INTREQ;
 		break;
-		
+
 		case 0x0088: /* COPJMPA */
 			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
 		break;
-		
+
 		case 0x008a: /* COPJMPB */
 			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
 		break;
@@ -1185,7 +1185,7 @@ READ16_HANDLER ( amiga_custom_r )
 	else \
 		reg &= ~( (data) & 0x7fff ); }
 
-WRITE16_HANDLER ( amiga_custom_w ) 
+WRITE16_HANDLER ( amiga_custom_w )
 {
     offset<<=1;
 	offset &= 0xfff;
@@ -1194,41 +1194,41 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x0020: /* DSKPTH */
 			custom_regs.DSKPTH = data;
 		break;
-		
+
 		case 0x0022: /* DSKPTL */
 			custom_regs.DSKPTL = data;
 		break;
-						
+
 		case 0x0024: /* DSKLEN */
 			if (amiga_intf->write_dsklen)
 				amiga_intf->write_dsklen(data);
 			custom_regs.DSKLEN = data;
 		break;
-		
+
 		case 0x002e: /* COPCON */
 			custom_regs.COPCON = data & 2;
 		break;
-		
+
 		case 0x0034: /* POTGO */
 			custom_regs.POTGO = data;
 		break;
-		
+
 		case 0x0040: /* BLTCON0 */
 			custom_regs.BLTCON0 = data;
 		break;
-		
+
 		case 0x0042: /* BLTCON1 */
 			custom_regs.BLTCON1 = data;
 		break;
-		
+
 		case 0x0044: /* BLTAFWM */
 			custom_regs.BLTAFWM = data;
 		break;
-		
+
 		case 0x0046: /* BLTALWM */
 			custom_regs.BLTALWM = data;
 		break;
-		
+
 		case 0x0048: /* BLTCPTH */
 		case 0x004a: /* BLTCPTL */
 		case 0x004c: /* BLTBPTH */
@@ -1241,7 +1241,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 				int lo = ( offset & 2 );
 				int loc = ( offset - 0x48 ) >> 2;
 				int order[4] = { 2, 1, 0, 3 };
-				
+
 				if ( lo )
 					custom_regs.BLTxPTL[order[loc]] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
 				else
@@ -1261,7 +1261,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int loc = ( offset >> 1 ) & 3;
 				int order[4] = { 2, 1, 0, 3 };
-				
+
 				custom_regs.BLTxMOD[order[loc]] = ( signed short )( data & ~1 ); /* strip off lsb */
 			}
 		break;
@@ -1272,7 +1272,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int loc = ( offset >> 1 ) & 3;
 				int order[3] = { 2, 1, 0 };
-				
+
 				custom_regs.BLTxDAT[order[loc]] = data;
 			}
 		break;
@@ -1288,7 +1288,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int lo = ( offset & 2 );
 				int loc = ( offset >> 2 ) & 1;
-				
+
 				if ( lo )
 					custom_regs.COPLCL[loc] = ( data & ~1 ); /* should be word aligned, we make sure it is */
 				else
@@ -1299,49 +1299,49 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x0088: /* COPJMPA */
 			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
 		break;
-		
+
 		case 0x008a: /* COPJMPB */
 			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
 		break;
-		
+
 		case 0x008e: /* DIWSTRT */
 			custom_regs.DIWSTRT = data;
 		break;
-		
+
 		case 0x0090: /* DIWSTOP */
 			custom_regs.DIWSTOP = data;
 		break;
-		
+
 		case 0x0092: /* DDFSTRT */
 			custom_regs.DDFSTRT = data & 0xfc;
 			/* impose hardware limits ( HRM, page 75 ) */
 			if ( custom_regs.DDFSTRT < 0x18 )
 				custom_regs.DDFSTRT = 0x18;
 		break;
-		
+
 		case 0x0094: /* DDFSTOP */
 			custom_regs.DDFSTOP = data & 0xfc;
 			/* impose hardware limits ( HRM, page 75 ) */
 			if ( custom_regs.DDFSTOP > 0xd8 )
 				custom_regs.DDFSTOP = 0xd8;
 		break;
-			
+
 		case 0x0096: /* DMACON */
 			/* bits BBUSY (14) and BZERO (13) are read-only */
 			SETCLR( custom_regs.DMACON, data & 0x9fff )
 			copper_enable();
 		break;
-		
+
 		case 0x009a: /* INTENA */
 			SETCLR( custom_regs.INTENA, data )
 			check_ints();
 		break;
-		
+
 		case 0x009c: /* INTREQ */
 			SETCLR( custom_regs.INTREQ, data )
 			check_ints();
 		break;
-		
+
 		case 0x009e: /* ADKCON */
 			SETCLR( custom_regs.ADKCON, data )
 		break;
@@ -1361,7 +1361,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int lo = ( offset & 2 );
 				int plane = ( offset >> 2 ) & 0x07;
-				
+
 				if ( lo ) {
 					custom_regs.BPLPTR[plane] &= 0x001f0000;
 					custom_regs.BPLPTR[plane] |= ( data & 0xfffe );
@@ -1374,14 +1374,14 @@ WRITE16_HANDLER ( amiga_custom_w )
 
 		case 0x0100: /* BPLCON0 */
 			custom_regs.BPLCON0 = data;
-			
+
 			if ( ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) == ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) {
 				/* planes go from 0 to 6, inclusive */
 				logerror( "This game is doing funky planes stuff. (planes > 6)\n" );
 				custom_regs.BPLCON0 &= ~BPLCON0_BPU0;
 			}
 		break;
-		
+
 		case 0x0102: /* BPLCON1 */
 			custom_regs.BPLCON1 = data & 0xff;
 		break;
@@ -1389,15 +1389,15 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x0104: /* BPLCON2 */
 			custom_regs.BPLCON2 = data & 0x7f;
 		break;
-		
+
 		case 0x0108: /* BPL1MOD */
 			custom_regs.BPL1MOD = data;
 		break;
-		
+
 		case 0x010a: /* BPL2MOD */
 			custom_regs.BPL2MOD = data;
 		break;
-		
+
 		case 0x0110: /* BPL1DAT */
 		case 0x0112: /* BPL2DAT */
 		case 0x0114: /* BPL3DAT */
@@ -1426,7 +1426,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int lo = ( offset & 2 );
 				int num = ( offset >> 2 ) & 0x07;
-				
+
 				if ( lo ) {
 					custom_regs.SPRxPT[num] &= 0x001f0000;
 					custom_regs.SPRxPT[num] |= ( data & 0xfffe );
@@ -1437,7 +1437,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 				}
 			}
 		break;
-		
+
 		case 0x180: /* COLOR00 */
 		case 0x182: /* COLOR01 */
 		case 0x184: /* COLOR02 */
@@ -1472,11 +1472,11 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x1be: /* COLOR31 */
 			{
 				int color = ( offset - 0x180 ) >> 1;
-		
+
 				custom_regs.COLOR[color] = data;
 			}
 		break;
-		
+
 		default:
 #if LOG_CUSTOM
 		logerror( "PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getactivecpu() != -1 ? activecpu_get_pc() : 0, offset, data );
@@ -1487,7 +1487,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 
 /***************************************************************************
 
-	Interrupt handling
+    Interrupt handling
 
 ***************************************************************************/
 
@@ -1504,7 +1504,7 @@ INTERRUPT_GEN(amiga_vblank_irq)
 	}
 
 	amiga_custom_w( 0x009c>>1, 0x8020, 0);
-	
+
 	if (amiga_intf->interrupt_callback)
 		amiga_intf->interrupt_callback();
 }
@@ -1525,7 +1525,7 @@ INTERRUPT_GEN(amiga_irq)
 
 /***************************************************************************
 
-	Init Machine
+    Init Machine
 
 ***************************************************************************/
 
@@ -1540,7 +1540,7 @@ void amiga_m68k_reset( void )
 }
 
 MACHINE_INIT(amiga)
-{	
+{
 	/* set m68k reset  function */
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);
 

@@ -164,12 +164,12 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 
 /******************************************************************************/
 
-/*    YEAR	 NAME     PARENT  MACHINE  INPUT    INIT  MONITOR  */
+/*    YEAR   NAME     PARENT  MACHINE  INPUT    INIT  MONITOR  */
 
 GAMEX( 1991, trucocl,  0,     trucocl, trucocl, 0,    ROT0, "Caloi Miky SRL", "Truco Clemente", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

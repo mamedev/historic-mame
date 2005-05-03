@@ -1,15 +1,15 @@
 /***************************************************************************
 
-	Jaleco Exerion hardware
+    Jaleco Exerion hardware
 
 ****************************************************************************
 
-	Exerion is a unique driver in that it has idiosyncracies that are straight
-	out of Bizarro World. I submit for your approval:
+    Exerion is a unique driver in that it has idiosyncracies that are straight
+    out of Bizarro World. I submit for your approval:
 
-	* The mystery reads from $d802 - timer-based protection?
-	* The freakish graphics encoding scheme, which no other MAME-supported game uses
-	* The sprite-ram, and all the funky parameters that go along with it
+    * The mystery reads from $d802 - timer-based protection?
+    * The freakish graphics encoding scheme, which no other MAME-supported game uses
+    * The sprite-ram, and all the funky parameters that go along with it
 
 ***************************************************************************/
 
@@ -22,7 +22,7 @@
 
 /*************************************
  *
- *	Interrupts & inputs
+ *  Interrupts & inputs
  *
  *************************************/
 
@@ -55,7 +55,7 @@ static INTERRUPT_GEN( exerion_interrupt )
 
 /*************************************
  *
- *	Protection??
+ *  Protection??
  *
  *************************************/
 
@@ -95,7 +95,7 @@ static READ8_HANDLER( exerion_protection_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -129,7 +129,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sub CPU memory handlers
+ *  Sub CPU memory handlers
  *
  *************************************/
 
@@ -151,7 +151,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -224,7 +224,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
+ *  Graphics layouts
  *
  *************************************/
 
@@ -286,7 +286,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -302,7 +302,7 @@ static struct AY8910interface ay8910_interface =
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -344,7 +344,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -441,7 +441,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -513,7 +513,7 @@ static DRIVER_INIT( exerionb )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

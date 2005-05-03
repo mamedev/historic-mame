@@ -1,22 +1,22 @@
 /***************************************************************************
 
-	Atari Star Wars hardware
+    Atari Star Wars hardware
 
-	driver by Steve Baines (sulaco@ntlworld.com) and Frank Palazzolo
+    driver by Steve Baines (sulaco@ntlworld.com) and Frank Palazzolo
 
-	This file is Copyright 1997, Steve Baines.
-	Modified by Frank Palazzolo for sound support
+    This file is Copyright 1997, Steve Baines.
+    Modified by Frank Palazzolo for sound support
 
-	Games supported:
-		* Star Wars
-		* The Empire Strikes Back
+    Games supported:
+        * Star Wars
+        * The Empire Strikes Back
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -42,7 +42,7 @@ UINT8 starwars_is_esb;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -68,7 +68,7 @@ MACHINE_INIT( starwars )
 
 /*************************************
  *
- *	Interrupt generation
+ *  Interrupt generation
  *
  *************************************/
 
@@ -81,7 +81,7 @@ static WRITE8_HANDLER( irq_ack_w )
 
 /*************************************
  *
- *	ESB Slapstic handler
+ *  ESB Slapstic handler
  *
  *************************************/
 
@@ -116,7 +116,7 @@ WRITE8_HANDLER( esb_slapstic_w )
 
 /*************************************
  *
- *	ESB Opcode base handler
+ *  ESB Opcode base handler
  *
  *************************************/
 
@@ -125,9 +125,9 @@ OPBASE_HANDLER( esb_setopbase )
 	int prevpc = activecpu_get_previouspc();
 
 	/*
-	 *	This is a slightly ugly kludge for Empire Strikes Back because it jumps
-	 *	directly to code in the slapstic.
-	 */
+     *  This is a slightly ugly kludge for Empire Strikes Back because it jumps
+     *  directly to code in the slapstic.
+     */
 
 	/* if we're jumping into the slapstic region, tweak the new PC */
 	if ((address & 0xe000) == 0x8000)
@@ -153,7 +153,7 @@ OPBASE_HANDLER( esb_setopbase )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -199,7 +199,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -228,7 +228,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -389,7 +389,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -441,7 +441,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -532,7 +532,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -570,7 +570,7 @@ static DRIVER_INIT( esb )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

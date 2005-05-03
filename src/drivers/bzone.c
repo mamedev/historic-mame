@@ -1,196 +1,196 @@
 /***************************************************************************
 
-	Atari Battlezone hardware
+    Atari Battlezone hardware
 
-	Games supported:
-		* Battlezone
-		* Bradley Trainer
-		* Red Baron
+    Games supported:
+        * Battlezone
+        * Bradley Trainer
+        * Red Baron
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Battlezone memory map (preliminary)
-
-	0000-04ff RAM
-	0800      IN0
-	0a00      IN1
-	0c00      IN2
-
-	1200      Vector generator start (write)
-	1400
-	1600      Vector generator reset (write)
-
-	1800      Mathbox Status register
-	1810      Mathbox value (lo-byte)
-	1818      Mathbox value (hi-byte)
-	1820-182f POKEY I/O
-	1828      Control inputs
-	1860-187f Mathbox RAM
-
-	2000-2fff Vector generator RAM
-	3000-37ff Mathbox ROM
-	5000-7fff ROM
-
-	Battlezone settings:
-
-	0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
-
-	** IMPORTANT - BITS are INVERTED in the game itself **
-
-	TOP 8 SWITCH DIP
-	87654321
-	--------
-	XXXXXX11   Free Play
-	XXXXXX10   1 coin for 2 plays
-	XXXXXX01   1 coin for 1 play
-	XXXXXX00   2 coins for 1 play
-	XXXX11XX   Right coin mech x 1
-	XXXX10XX   Right coin mech x 4
-	XXXX01XX   Right coin mech x 5
-	XXXX00XX   Right coin mech x 6
-	XXX1XXXX   Center (or Left) coin mech x 1
-	XXX0XXXX   Center (or Left) coin mech x 2
-	111XXXXX   No bonus coin
-	110XXXXX   For every 2 coins inserted, game logic adds 1 more
-	101XXXXX   For every 4 coins inserted, game logic adds 1 more
-	100XXXXX   For every 4 coins inserted, game logic adds 2 more
-	011XXXXX   For every 5 coins inserted, game logic adds 1 more
-
-	BOTTOM 8 SWITCH DIP
-	87654321
-	--------
-	XXXXXX11   Game starts with 2 tanks
-	XXXXXX10   Game starts with 3 tanks  $
-	XXXXXX01   Game starts with 4 tanks
-	XXXXXX00   Game starts with 5 tanks
-	XXXX11XX   Missile appears after 5,000 points
-	XXXX10XX   Missile appears after 10,000 points  $
-	XXXX01XX   Missile appears after 20,000 points
-	XXXX00XX   Missile appears after 30,000 points
-	XX11XXXX   No bonus tank
-	XX10XXXX   Bonus taks at 15,000 and 100,000 points  $
-	XX01XXXX   Bonus taks at 20,000 and 100,000 points
-	XX00XXXX   Bonus taks at 50,000 and 100,000 points
-	11XXXXXX   English language
-	10XXXXXX   French language
-	01XXXXXX   German language
-	00XXXXXX   Spanish language
-
-	4 SWITCH DIP
-
-	XX11   All coin mechanisms register on one coin counter
-	XX01   Left and center coin mechanisms on one coin counter, right on second
-	XX10   Center and right coin mechanisms on one coin counter, left on second
-	XX00   Each coin mechanism has it's own counter
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	Red Baron memory map (preliminary)
+    Battlezone memory map (preliminary)
 
-	0000-04ff RAM
-	0800      COIN_IN
-	0a00      IN1
-	0c00      IN2
+    0000-04ff RAM
+    0800      IN0
+    0a00      IN1
+    0c00      IN2
 
-	1200      Vector generator start (write)
-	1400
-	1600      Vector generator reset (write)
+    1200      Vector generator start (write)
+    1400
+    1600      Vector generator reset (write)
 
-	1800      Mathbox Status register
-	1802      Button inputs
-	1804      Mathbox value (lo-byte)
-	1806      Mathbox value (hi-byte)
-	1808      Red Baron Sound (bit 1 selects joystick pot to read also)
-	1810-181f POKEY I/O
-	1818      Joystick inputs
-	1860-187f Mathbox RAM
+    1800      Mathbox Status register
+    1810      Mathbox value (lo-byte)
+    1818      Mathbox value (hi-byte)
+    1820-182f POKEY I/O
+    1828      Control inputs
+    1860-187f Mathbox RAM
 
-	2000-2fff Vector generator RAM
-	3000-37ff Mathbox ROM
-	5000-7fff ROM
+    2000-2fff Vector generator RAM
+    3000-37ff Mathbox ROM
+    5000-7fff ROM
 
-	RED BARON DIP SWITCH SETTINGS
-	Donated by Dana Colbert
+    Battlezone settings:
+
+    0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
+
+    ** IMPORTANT - BITS are INVERTED in the game itself **
+
+    TOP 8 SWITCH DIP
+    87654321
+    --------
+    XXXXXX11   Free Play
+    XXXXXX10   1 coin for 2 plays
+    XXXXXX01   1 coin for 1 play
+    XXXXXX00   2 coins for 1 play
+    XXXX11XX   Right coin mech x 1
+    XXXX10XX   Right coin mech x 4
+    XXXX01XX   Right coin mech x 5
+    XXXX00XX   Right coin mech x 6
+    XXX1XXXX   Center (or Left) coin mech x 1
+    XXX0XXXX   Center (or Left) coin mech x 2
+    111XXXXX   No bonus coin
+    110XXXXX   For every 2 coins inserted, game logic adds 1 more
+    101XXXXX   For every 4 coins inserted, game logic adds 1 more
+    100XXXXX   For every 4 coins inserted, game logic adds 2 more
+    011XXXXX   For every 5 coins inserted, game logic adds 1 more
+
+    BOTTOM 8 SWITCH DIP
+    87654321
+    --------
+    XXXXXX11   Game starts with 2 tanks
+    XXXXXX10   Game starts with 3 tanks  $
+    XXXXXX01   Game starts with 4 tanks
+    XXXXXX00   Game starts with 5 tanks
+    XXXX11XX   Missile appears after 5,000 points
+    XXXX10XX   Missile appears after 10,000 points  $
+    XXXX01XX   Missile appears after 20,000 points
+    XXXX00XX   Missile appears after 30,000 points
+    XX11XXXX   No bonus tank
+    XX10XXXX   Bonus taks at 15,000 and 100,000 points  $
+    XX01XXXX   Bonus taks at 20,000 and 100,000 points
+    XX00XXXX   Bonus taks at 50,000 and 100,000 points
+    11XXXXXX   English language
+    10XXXXXX   French language
+    01XXXXXX   German language
+    00XXXXXX   Spanish language
+
+    4 SWITCH DIP
+
+    XX11   All coin mechanisms register on one coin counter
+    XX01   Left and center coin mechanisms on one coin counter, right on second
+    XX10   Center and right coin mechanisms on one coin counter, left on second
+    XX00   Each coin mechanism has it's own counter
+
+****************************************************************************
+
+    Red Baron memory map (preliminary)
+
+    0000-04ff RAM
+    0800      COIN_IN
+    0a00      IN1
+    0c00      IN2
+
+    1200      Vector generator start (write)
+    1400
+    1600      Vector generator reset (write)
+
+    1800      Mathbox Status register
+    1802      Button inputs
+    1804      Mathbox value (lo-byte)
+    1806      Mathbox value (hi-byte)
+    1808      Red Baron Sound (bit 1 selects joystick pot to read also)
+    1810-181f POKEY I/O
+    1818      Joystick inputs
+    1860-187f Mathbox RAM
+
+    2000-2fff Vector generator RAM
+    3000-37ff Mathbox ROM
+    5000-7fff ROM
+
+    RED BARON DIP SWITCH SETTINGS
+    Donated by Dana Colbert
 
 
-	$=Default
-	"K" = 1,000
+    $=Default
+    "K" = 1,000
 
-	Switch at position P10
-	                                  8    7    6    5    4    3    2    1
-	                                _________________________________________
-	English                        $|    |    |    |    |    |    |Off |Off |
-	Spanish                         |    |    |    |    |    |    |Off | On |
-	French                          |    |    |    |    |    |    | On |Off |
-	German                          |    |    |    |    |    |    | On | On |
-	                                |    |    |    |    |    |    |    |    |
-	 Bonus airplane granted at:     |    |    |    |    |    |    |    |    |
-	Bonus at 2K, 10K and 30K        |    |    |    |    |Off |Off |    |    |
-	Bonus at 4K, 15K and 40K       $|    |    |    |    |Off | On |    |    |
-	Bonus at 6K, 20K and 50K        |    |    |    |    | On |Off |    |    |
-	No bonus airplanes              |    |    |    |    | On | On |    |    |
-	                                |    |    |    |    |    |    |    |    |
-	2 aiplanes per game             |    |    |Off |Off |    |    |    |    |
-	3 airplanes per game           $|    |    |Off | On |    |    |    |    |
-	4 airplanes per game            |    |    | On |Off |    |    |    |    |
-	5 airplanes per game            |    |    | On | On |    |    |    |    |
-	                                |    |    |    |    |    |    |    |    |
-	1-play minimum                 $|    |Off |    |    |    |    |    |    |
-	2-play minimum                  |    | On |    |    |    |    |    |    |
-	                                |    |    |    |    |    |    |    |    |
-	Self-adj. game difficulty: on  $|Off |    |    |    |    |    |    |    |
-	Self-adj. game difficulty: off  | On |    |    |    |    |    |    |    |
-	                                -----------------------------------------
+    Switch at position P10
+                                      8    7    6    5    4    3    2    1
+                                    _________________________________________
+    English                        $|    |    |    |    |    |    |Off |Off |
+    Spanish                         |    |    |    |    |    |    |Off | On |
+    French                          |    |    |    |    |    |    | On |Off |
+    German                          |    |    |    |    |    |    | On | On |
+                                    |    |    |    |    |    |    |    |    |
+     Bonus airplane granted at:     |    |    |    |    |    |    |    |    |
+    Bonus at 2K, 10K and 30K        |    |    |    |    |Off |Off |    |    |
+    Bonus at 4K, 15K and 40K       $|    |    |    |    |Off | On |    |    |
+    Bonus at 6K, 20K and 50K        |    |    |    |    | On |Off |    |    |
+    No bonus airplanes              |    |    |    |    | On | On |    |    |
+                                    |    |    |    |    |    |    |    |    |
+    2 aiplanes per game             |    |    |Off |Off |    |    |    |    |
+    3 airplanes per game           $|    |    |Off | On |    |    |    |    |
+    4 airplanes per game            |    |    | On |Off |    |    |    |    |
+    5 airplanes per game            |    |    | On | On |    |    |    |    |
+                                    |    |    |    |    |    |    |    |    |
+    1-play minimum                 $|    |Off |    |    |    |    |    |    |
+    2-play minimum                  |    | On |    |    |    |    |    |    |
+                                    |    |    |    |    |    |    |    |    |
+    Self-adj. game difficulty: on  $|Off |    |    |    |    |    |    |    |
+    Self-adj. game difficulty: off  | On |    |    |    |    |    |    |    |
+                                    -----------------------------------------
 
-	  If self-adjusting game difficulty feature is
-	turned on, the program strives to maintain the
-	following average game lengths (in seconds):
+      If self-adjusting game difficulty feature is
+    turned on, the program strives to maintain the
+    following average game lengths (in seconds):
 
-	                                        Airplanes per game:
-	     Bonus airplane granted at:          2   3     4     5
-	2,000, 10,000 and 30,000 points         90  105$  120   135
-	4,000, 15,000 and 40,000 points         75   90   105   120
-	6,000, 20,000 and 50,000 points         60   75    90   105
-	             No bonus airplanes         45   60    75    90
+                                            Airplanes per game:
+         Bonus airplane granted at:          2   3     4     5
+    2,000, 10,000 and 30,000 points         90  105$  120   135
+    4,000, 15,000 and 40,000 points         75   90   105   120
+    6,000, 20,000 and 50,000 points         60   75    90   105
+                 No bonus airplanes         45   60    75    90
 
 
 
-	Switch at position M10
-	                                  8    7    6    5    4    3    2    1
-	                                _________________________________________
-	    50  PER PLAY                |    |    |    |    |    |    |    |    |
-	 Straight 25  Door:             |    |    |    |    |    |    |    |    |
-	No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On | On |
-	Bonus $1= 3 plays               |Off | On | On |Off |Off |Off | On | On |
-	Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off |Off | On | On |
-	                                |    |    |    |    |    |    |    |    |
-	 25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
-	No Bonus Coins                  |Off |Off |Off |Off |Off | On | On | On |
-	Bonus $1= 3 plays               |Off | On | On |Off |Off | On | On | On |
-	Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off | On | On | On |
-	                                |    |    |    |    |    |    |    |    |
-	    25  PER PLAY                |    |    |    |    |    |    |    |    |
-	 Straight 25  Door:             |    |    |    |    |    |    |    |    |
-	No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On |Off |
-	Bonus 50 = 3 plays              |Off |Off | On |Off |Off |Off | On |Off |
-	Bonus $1= 5 plays               |Off | On |Off |Off |Off |Off | On |Off |
-	                                |    |    |    |    |    |    |    |    |
-	 25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
-	No Bonus Coins                  |Off |Off |Off |Off |Off | On | On |Off |
-	Bonus 50 = 3 plays              |Off |Off | On |Off |Off | On | On |Off |
-	Bonus $1= 5 plays               |Off | On |Off |Off |Off | On | On |Off |
-	                                -----------------------------------------
+    Switch at position M10
+                                      8    7    6    5    4    3    2    1
+                                    _________________________________________
+        50  PER PLAY                |    |    |    |    |    |    |    |    |
+     Straight 25  Door:             |    |    |    |    |    |    |    |    |
+    No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On | On |
+    Bonus $1= 3 plays               |Off | On | On |Off |Off |Off | On | On |
+    Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off |Off | On | On |
+                                    |    |    |    |    |    |    |    |    |
+     25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
+    No Bonus Coins                  |Off |Off |Off |Off |Off | On | On | On |
+    Bonus $1= 3 plays               |Off | On | On |Off |Off | On | On | On |
+    Bonus $1= 3 plays, 75 = 2 plays |Off |Off | On |Off |Off | On | On | On |
+                                    |    |    |    |    |    |    |    |    |
+        25  PER PLAY                |    |    |    |    |    |    |    |    |
+     Straight 25  Door:             |    |    |    |    |    |    |    |    |
+    No Bonus Coins                  |Off |Off |Off |Off |Off |Off | On |Off |
+    Bonus 50 = 3 plays              |Off |Off | On |Off |Off |Off | On |Off |
+    Bonus $1= 5 plays               |Off | On |Off |Off |Off |Off | On |Off |
+                                    |    |    |    |    |    |    |    |    |
+     25 /$1 Door or 25 /25 /$1 Door |    |    |    |    |    |    |    |    |
+    No Bonus Coins                  |Off |Off |Off |Off |Off | On | On |Off |
+    Bonus 50 = 3 plays              |Off |Off | On |Off |Off | On | On |Off |
+    Bonus $1= 5 plays               |Off | On |Off |Off |Off | On | On |Off |
+                                    -----------------------------------------
 
-	Switch at position L11
-	                                                      1    2    3    4
-	                                                    _____________________
-	All 3 mechs same denomination                       | On | On |    |    |
-	Left and Center same, right different denomination  | On |Off |    |    |
-	Right and Center same, left differnnt denomination  |Off | On |    |    |
-	All different denominations                         |Off |Off |    |    |
+    Switch at position L11
+                                                          1    2    3    4
+                                                        _____________________
+    All 3 mechs same denomination                       | On | On |    |    |
+    Left and Center same, right different denomination  | On |Off |    |    |
+    Right and Center same, left differnnt denomination  |Off | On |    |    |
+    All different denominations                         |Off |Off |    |    |
                                                     ---------------------
 
 ***************************************************************************/
@@ -216,7 +216,7 @@ UINT8 rb_input_select;
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -230,7 +230,7 @@ static INTERRUPT_GEN( bzone_interrupt )
 
 /*************************************
  *
- *	Battlezone input ports
+ *  Battlezone input ports
  *
  *************************************/
 
@@ -263,7 +263,7 @@ static WRITE8_HANDLER( bzone_coin_counter_w )
 
 /*************************************
  *
- *	Red Baron input ports
+ *  Red Baron input ports
  *
  *************************************/
 
@@ -276,7 +276,7 @@ static READ8_HANDLER( redbaron_joy_r )
 
 /*************************************
  *
- *	Battle Zone overlay
+ *  Battle Zone overlay
  *
  *************************************/
 
@@ -289,7 +289,7 @@ OVERLAY_END
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -341,7 +341,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -359,8 +359,8 @@ ADDRESS_MAP_END
 	/* bit 7 is tied to a 3kHz clock */\
  	/* handled by bzone_IN0_r() */\
   	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
-	
-	
+
+
 #define BZONEDSW0\
 	PORT_START_TAG("DSW0")\
 	PORT_DIPNAME(0x03, 0x01, DEF_STR( Lives ) )\
@@ -383,7 +383,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING (  0x40, DEF_STR( German ))\
 	PORT_DIPSETTING (  0x80, DEF_STR( French ))\
   	PORT_DIPSETTING (  0xc0, DEF_STR( Spanish ))
-	
+
 #define BZONEDSW1\
 	PORT_START_TAG("DSW1")\
 	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )\
@@ -405,7 +405,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )\
 	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )\
   	PORT_DIPSETTING (  0x80, "6 credits/5 coins" )
-  
+
 INPUT_PORTS_START( bzone )
 BZONEIN0
 BZONEDSW0
@@ -481,7 +481,7 @@ INPUT_PORTS_START( bradley )
 BZONEIN0
 BZONEDSW0
 BZONEDSW1
-  
+
 	PORT_START_TAG("IN3")
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
@@ -518,7 +518,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -551,7 +551,7 @@ static struct CustomSound_interface redbaron_custom_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -576,11 +576,11 @@ static MACHINE_DRIVER_START( bzone )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("pokey",  POKEY, 1500000)
 	MDRV_SOUND_CONFIG(bzone_pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	
+
 	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(bzone_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -629,7 +629,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -710,7 +710,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -760,7 +760,7 @@ static DRIVER_INIT( redbaron )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

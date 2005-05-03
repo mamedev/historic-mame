@@ -5,19 +5,19 @@ Asuka & Asuka  (+ Taito/Visco games on similar hardware)
 
 David Graves, Brian Troha
 
-Made out of:	Rastan driver by Jarek Burczynski
-				MAME Taito F2 driver
-				Raine source - very special thanks to
-				  Richard Bush and the Raine Team.
-				two different drivers for Bonze Adventure that were
-				  written at the same time by Yochizo and Frotz
+Made out of:    Rastan driver by Jarek Burczynski
+                MAME Taito F2 driver
+                Raine source - very special thanks to
+                  Richard Bush and the Raine Team.
+                two different drivers for Bonze Adventure that were
+                  written at the same time by Yochizo and Frotz
 
-	Bonze Adventure (c) 1988 Taito Corporation
-	Asuka & Asuka   (c) 1988 Taito Corporation
-	Maze of Flott   (c) 1989 Taito Corporation
-	Galmedes        (c) 1992 Visco Corporation
-	Earth Joker     (c) 1993 Visco Corporation
-	Kokontouzai Eto Monogatari (c) 1994 Visco Corporation
+    Bonze Adventure (c) 1988 Taito Corporation
+    Asuka & Asuka   (c) 1988 Taito Corporation
+    Maze of Flott   (c) 1989 Taito Corporation
+    Galmedes        (c) 1992 Visco Corporation
+    Earth Joker     (c) 1993 Visco Corporation
+    Kokontouzai Eto Monogatari (c) 1994 Visco Corporation
 
 Main CPU: MC68000 uses irq 5 (4 in bonze, 4&5 in cadash).
 Sound   : Z80 & YM2151 + MSM5205 (YM2610 in bonze)
@@ -125,7 +125,7 @@ READ16_HANDLER( bonzeadv_c_chip_r );
 
 
 /***********************************************************
-				INTERRUPTS
+                INTERRUPTS
 ***********************************************************/
 
 void cadash_irq_handler(int irq);
@@ -143,7 +143,7 @@ INTERRUPT_GEN( cadash_interrupt )
 
 
 /************************************************
-			SOUND
+            SOUND
 ************************************************/
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -191,7 +191,7 @@ static WRITE8_HANDLER( asuka_msm5205_stop_w )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+             MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( bonzeadv_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -366,7 +366,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 
@@ -702,12 +702,12 @@ INPUT_PORTS_START( cadash )
 	PORT_DIPSETTING(    0x04, "6:00" )
 	PORT_DIPSETTING(    0x0c, "7:00" )
 	PORT_DIPSETTING(    0x08, "8:00" )
-	/* Round cleared   Added time	*/
-	/*       1            8:00	*/
-	/*       2           10:00	*/
-	/*       3            8:00	*/
-	/*       4            7:00	*/
-	/*       5            9:00	*/
+	/* Round cleared   Added time   */
+	/*       1            8:00  */
+	/*       2           10:00  */
+	/*       3            8:00  */
+	/*       4            7:00  */
+	/*       5            9:00  */
 	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
 	PORT_DIPSETTING(    0x00, "Default - 2:00" )
 	PORT_DIPSETTING(    0x10, "Default - 1:00" )
@@ -717,7 +717,7 @@ INPUT_PORTS_START( cadash )
 	PORT_DIPSETTING(    0xc0, "Stand alone" )
 	PORT_DIPSETTING(    0x80, "Master" )
 	PORT_DIPSETTING(    0x00, "Slave" )
-//	PORT_DIPSETTING(    0x40, "Stand alone" )
+//  PORT_DIPSETTING(    0x40, "Stand alone" )
 
 	PORT_START_TAG("IN0")
 	CADASH_PLAYERS_INPUT( 1 )
@@ -759,7 +759,7 @@ INPUT_PORTS_START( cadashj )
 	PORT_DIPSETTING(    0xc0, "Stand alone" )
 	PORT_DIPSETTING(    0x80, "Master" )
 	PORT_DIPSETTING(    0x00, "Slave" )
-//	PORT_DIPSETTING(    0x40, "Stand alone" )
+//  PORT_DIPSETTING(    0x40, "Stand alone" )
 
 	PORT_START_TAG("IN0")
 	CADASH_PLAYERS_INPUT( 1 )
@@ -801,7 +801,7 @@ INPUT_PORTS_START( cadashu )
 	PORT_DIPSETTING(    0xc0, "Stand alone" )
 	PORT_DIPSETTING(    0x80, "Master" )
 	PORT_DIPSETTING(    0x00, "Slave" )
-//	PORT_DIPSETTING(    0x40, "Stand alone" )
+//  PORT_DIPSETTING(    0x40, "Stand alone" )
 
 	PORT_START_TAG("IN0")
 	CADASH_PLAYERS_INPUT( 1 )
@@ -947,7 +947,7 @@ INPUT_PORTS_END
 
 
 /**************************************************************
-				GFX DECODING
+                GFX DECODING
 **************************************************************/
 
 static struct GfxLayout charlayout =
@@ -984,7 +984,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /**************************************************************
-				SOUND
+                SOUND
 **************************************************************/
 
 static void irq_handler(int irq)
@@ -1014,7 +1014,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                 MACHINE DRIVERS
 ***********************************************************/
 
 VIDEO_EOF( asuka )
@@ -1238,7 +1238,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( bonzeadv )
@@ -1377,10 +1377,10 @@ ROM_START( cadash )
 	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 
 	ROM_REGION( 0x01000, REGION_USER2, 0 )	/* pals ? */
-//	ROM_LOAD( "c21-09",   0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
-//	ROM_LOAD( "c21-10",   0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
-//	ROM_LOAD( "c21-11-1", 0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
-//	ROM_LOAD( "c21-12",   0x00000, 0x00cd5, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
+//  ROM_LOAD( "c21-09",   0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
+//  ROM_LOAD( "c21-10",   0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
+//  ROM_LOAD( "c21-11-1", 0x00000, 0x00ada, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
+//  ROM_LOAD( "c21-12",   0x00000, 0x00cd5, CRC(f02292bd) SHA1(0a5c06a048ad67f90e0d766b504582e9eef035f7) )
 ROM_END
 
 ROM_START( cadashj )

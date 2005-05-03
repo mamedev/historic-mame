@@ -7,14 +7,14 @@
 #include "memory.h"
 
 /*
-	SE3208 CPU Emulator by ElSemi
+    SE3208 CPU Emulator by ElSemi
 
-	For information about this CPU:
-	www.adc.co.kr
+    For information about this CPU:
+    www.adc.co.kr
 
 */
 
-typedef struct 
+typedef struct
 {
 	//GPR
 	UINT32 R[8];
@@ -24,7 +24,7 @@ typedef struct
 	UINT32 SP;
 	UINT32 ER;
 	UINT32 PPC;
-	
+
 	int (*irq_callback)(int irqline);
 	UINT8 IRQ;
 	UINT8 NMI;
@@ -50,7 +50,7 @@ static UINT8 SE3208_reg_layout[] = {
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 SE3208_win_layout[] = {
 	0, 0,80, 6,	/* register window (top rows) */
-	0, 7,39,15,	/* disassembler window	*/
+	0, 7,39,15,	/* disassembler window  */
 	40, 7,39, 7,	/* memory #1 window (left) */
 	40,15,39, 7,	/* memory #2 window (right) */
 	0,23,80, 1,	/* command line window (bottom rows) */
@@ -197,7 +197,7 @@ INLINE UINT32 AdcWithFlags(UINT32 a,UINT32 b)
 	if(((((a^r)&(b^r))>>31))&1)
 		SETFLAG(FLAG_V);
 	return r;
-	
+
 }
 
 INLINE UINT32 SbcWithFlags(UINT32 a,UINT32 b)
@@ -284,7 +284,7 @@ INST(LDB)
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
 	UINT32 Val;
-	
+
 	if(Index)
 		Index=Context.R[Index];
 	else
@@ -292,7 +292,7 @@ INST(LDB)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read8(Index+Offset);
 	Context.R[SrcDst]=SEX8(Val);
 
@@ -304,7 +304,7 @@ INST(STB)
 	UINT32 Offset=EXTRACT(Opcode,0,4);
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	if(Index)
 		Index=Context.R[Index];
 	else
@@ -324,7 +324,7 @@ INST(LDS)
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
 	UINT32 Val;
-	
+
 	Offset<<=1;
 
 	if(Index)
@@ -334,7 +334,7 @@ INST(LDS)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read16(Index+Offset);
 	Context.R[SrcDst]=SEX16(Val);
 
@@ -346,7 +346,7 @@ INST(STS)
 	UINT32 Offset=EXTRACT(Opcode,0,4);
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=1;
 
 	if(Index)
@@ -367,7 +367,7 @@ INST(LD)
 	UINT32 Offset=EXTRACT(Opcode,0,4);
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(Index)
@@ -377,7 +377,7 @@ INST(LD)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Context.R[SrcDst]=SE3208_Read32(Index+Offset);
 
 	CLRFLAG(FLAG_E);
@@ -388,7 +388,7 @@ INST(ST)
 	UINT32 Offset=EXTRACT(Opcode,0,4);
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(Index)
@@ -410,7 +410,7 @@ INST(LDBU)
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
 	UINT32 Val;
-	
+
 	if(Index)
 		Index=Context.R[Index];
 	else
@@ -418,7 +418,7 @@ INST(LDBU)
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read8(Index+Offset);
 	Context.R[SrcDst]=ZEX8(Val);
 
@@ -431,7 +431,7 @@ INST(LDSU)
 	UINT32 Index=EXTRACT(Opcode,5,7);
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
 	UINT32 Val;
-	
+
 	Offset<<=1;
 
 	if(Index)
@@ -456,7 +456,7 @@ INST(LERI)
 		Context.ER=(EXTRACT(Context.ER,0,17)<<14)|Imm;
 	else
 		Context.ER=SEX(14,Imm);
-		
+
 
 	SETFLAG(FLAG_E);
 }
@@ -466,12 +466,12 @@ INST(LDSP)
 	UINT32 Offset=EXTRACT(Opcode,0,7);
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Context.R[SrcDst]=SE3208_Read32(Index+Offset);
 
 	CLRFLAG(FLAG_E);
@@ -482,7 +482,7 @@ INST(STSP)
 	UINT32 Offset=EXTRACT(Opcode,0,7);
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,8,10);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
@@ -577,7 +577,7 @@ INST(LEATOSP)
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 	else
 		Offset=SEX(4,Offset);
-	
+
 	Context.SP=Index+Offset;
 
 	CLRFLAG(FLAG_E);
@@ -592,7 +592,7 @@ INST(LEAFROMSP)
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 	else
 		Offset=SEX(4,Offset);
-	
+
 	Context.R[Index]=Context.SP+Offset;
 
 	CLRFLAG(FLAG_E);
@@ -601,14 +601,14 @@ INST(LEAFROMSP)
 INST(LEASPTOSP)
 {
 	UINT32 Offset=EXTRACT(Opcode,0,7);
-	
+
 	Offset<<=2;
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,23)<<8)|(Offset&0xff);
 	else
 		Offset=SEX(10,Offset);
-	
+
 	Context.SP=Context.SP+Offset;
 
 	CLRFLAG(FLAG_E);
@@ -643,10 +643,10 @@ INST(LDBSP)
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,4,6);
 	UINT32 Val;
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read8(Index+Offset);
 	Context.R[SrcDst]=SEX8(Val);
 
@@ -658,7 +658,7 @@ INST(STBSP)
 	UINT32 Offset=EXTRACT(Opcode,0,3);
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
 
@@ -675,10 +675,10 @@ INST(LDSSP)
 	UINT32 Val;
 
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read16(Index+Offset);
 	Context.R[SrcDst]=SEX16(Val);
 
@@ -690,7 +690,7 @@ INST(STSSP)
 	UINT32 Offset=EXTRACT(Opcode,0,3);
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,4,6);
-	
+
 	Offset<<=1;
 
 	if(TESTFLAG(FLAG_E))
@@ -707,10 +707,10 @@ INST(LDBUSP)
 	UINT32 Index=Context.SP;
 	UINT32 SrcDst=EXTRACT(Opcode,4,6);
 	UINT32 Val;
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read8(Index+Offset);
 	Context.R[SrcDst]=ZEX8(Val);
 
@@ -725,10 +725,10 @@ INST(LDSUSP)
 	UINT32 Val;
 
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
-	
+
 	Val=SE3208_Read16(Index+Offset);
 	Context.R[SrcDst]=ZEX16(Val);
 
@@ -992,7 +992,7 @@ INST(TST)
 	UINT32 Dst;
 
 	Dst=Context.R[Src1]&Context.R[Src2];
-	
+
 	CLRFLAG(FLAG_S|FLAG_Z);
 	if(!Dst)
 		SETFLAG(FLAG_Z);
@@ -1044,7 +1044,7 @@ INST(JV)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_V))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1064,7 +1064,7 @@ INST(JNV)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!TESTFLAG(FLAG_V))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1083,7 +1083,7 @@ INST(JC)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_C))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1102,7 +1102,7 @@ INST(JNC)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!TESTFLAG(FLAG_C))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1121,7 +1121,7 @@ INST(JP)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!TESTFLAG(FLAG_S))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1140,7 +1140,7 @@ INST(JM)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_S))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1159,7 +1159,7 @@ INST(JNZ)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!TESTFLAG(FLAG_Z))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1178,7 +1178,7 @@ INST(JZ)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_Z))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1199,7 +1199,7 @@ INST(JGE)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!(S^V))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1220,7 +1220,7 @@ INST(JLE)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_Z) || (S^V))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1238,7 +1238,7 @@ INST(JHI)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!(TESTFLAG(FLAG_Z) || TESTFLAG(FLAG_C)))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1257,7 +1257,7 @@ INST(JLS)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(TESTFLAG(FLAG_Z) || TESTFLAG(FLAG_C))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1278,7 +1278,7 @@ INST(JGT)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(!(TESTFLAG(FLAG_Z) || (S^V)))
 	{
 		Context.PC=Context.PC+Offset;
@@ -1299,7 +1299,7 @@ INST(JLT)
 	else
 		Offset=SEX(8,Offset);
 	Offset<<=1;
-	
+
 	if(S^V)
 	{
 		Context.PC=Context.PC+Offset;
@@ -1321,7 +1321,7 @@ INST(JMP)
 		Offset=SEX(8,Offset);
 
 	Offset<<=1;
-	
+
 	Context.PC=Context.PC+Offset;
 	change_pc(Context.PC+2);
 
@@ -1453,23 +1453,23 @@ INST(SWI)
 
 INST(HALT)
 {
-//	UINT32 Imm=EXTRACT(Opcode,0,3);
+//  UINT32 Imm=EXTRACT(Opcode,0,3);
 
-//	DEBUGMESSAGE("HALT\t0x%x",Imm);
+//  DEBUGMESSAGE("HALT\t0x%x",Imm);
 }
 
 INST(MVTC)
 {
-//	UINT32 Imm=EXTRACT(Opcode,0,3);
+//  UINT32 Imm=EXTRACT(Opcode,0,3);
 
-//	DEBUGMESSAGE("MVTC\t%%R0,%%CR%d",Imm);
+//  DEBUGMESSAGE("MVTC\t%%R0,%%CR%d",Imm);
 }
 
 INST(MVFC)
 {
-//	UINT32 Imm=EXTRACT(Opcode,0,3);
+//  UINT32 Imm=EXTRACT(Opcode,0,3);
 
-//	DEBUGMESSAGE("MVFC\t%%CR0%d,%%R0",Imm);
+//  DEBUGMESSAGE("MVFC\t%%CR0%d,%%R0",Imm);
 }
 
 
@@ -1551,7 +1551,7 @@ static _OP DecodeOp(UINT16 Opcode)
 										return CMPI;
 									case 1:
 										return TSTI;
-									case 2:	
+									case 2:
 										return LEATOSP;
 									case 3:
 										return LEAFROMSP;
@@ -1582,10 +1582,10 @@ static _OP DecodeOp(UINT16 Opcode)
 							return OR;
 						case 6:
 							return XOR;
-						case 7:					
+						case 7:
 							switch(EXTRACT(Opcode,0,2))
 							{
-								case 0:				
+								case 0:
 									return CMP;
 								case 1:
 									return TST;
@@ -1673,7 +1673,7 @@ static _OP DecodeOp(UINT16 Opcode)
 								{
 									switch(EXTRACT(Opcode,4,7))
 									{
-										case 0:							
+										case 0:
 											return EXTB;
 										case 1:
 											return EXTS;
@@ -1710,8 +1710,8 @@ static _OP DecodeOp(UINT16 Opcode)
 									return LSR;
 								case 2:
 									return ASL;
-								//case 3: 
-								//	return LSL;
+								//case 3:
+								//  return LSL;
 							}
 							break;
 						case 4:
@@ -1771,7 +1771,7 @@ static void SE3208_Interrupt(void)
 	PushVal(Context.SR);
 
 	CLRFLAG(FLAG_ENI|FLAG_E|FLAG_M);
-	
+
 
 	if(!(TESTFLAG(FLAG_AUT)))
 		Context.PC=SE3208_Read32(8);
@@ -1874,8 +1874,8 @@ static void SE3208_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SE3208_R5:				Context.R[ 5] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SE3208_R6:				Context.R[ 6] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SE3208_R7:				Context.R[ 7] = info->i;					break;
-		
-		
+
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					Context.irq_callback = info->irqcallback;	break;
 	}
@@ -1896,7 +1896,7 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 2;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -1961,9 +1961,9 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 					Context.SR&FLAG_AUT?'A':'.',
 					Context.SR&FLAG_ENI?'I':'.',
 					Context.SR&FLAG_NMI?'N':'.'
-					
+
 					);
-					
+
 			break;
 
 		case CPUINFO_STR_REGISTER + SE3208_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", Context.PC); break;

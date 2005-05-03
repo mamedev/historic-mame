@@ -184,7 +184,7 @@ VIDEO_START(macrossp)
 static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
-//	data32_t *source = macrossp_spriteram;
+//  data32_t *source = macrossp_spriteram;
 	data32_t *source = spriteram_old2; /* buffers by two frames */
 	data32_t *finish = source + spriteram_size/4;
 
@@ -194,13 +194,13 @@ static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 		/*
 
-		 --hh hhyy yyyy yyyy   CCww wwxx xxxx xxxx
+         --hh hhyy yyyy yyyy   CCww wwxx xxxx xxxx
 
-		 ---- --zz zzzz zzzz   ---- --ZZ ZZZZ ZZZZ
+         ---- --zz zzzz zzzz   ---- --ZZ ZZZZ ZZZZ
 
-		 fFa- pp-- cccc c---   tttt tttt tttt tttt
+         fFa- pp-- cccc c---   tttt tttt tttt tttt
 
-		 */
+         */
 
 
 		int wide = (source[0] & 0x00003c00) >> 10;

@@ -57,10 +57,10 @@ OVERLAY_END
 
 /*
 OVERLAY_START( invdpt2m_overlay )
-	OVERLAY_RECT(  16,   0,  72, 224, OVERLAY_GREEN )
-	OVERLAY_RECT(   0,  16,  16, 134, OVERLAY_GREEN )
-	OVERLAY_RECT(  72,   0, 192, 224, OVERLAY_YELLOW )
-	OVERLAY_RECT( 192,   0, 224, 224, OVERLAY_RED )
+    OVERLAY_RECT(  16,   0,  72, 224, OVERLAY_GREEN )
+    OVERLAY_RECT(   0,  16,  16, 134, OVERLAY_GREEN )
+    OVERLAY_RECT(  72,   0, 192, 224, OVERLAY_YELLOW )
+    OVERLAY_RECT( 192,   0, 224, 224, OVERLAY_RED )
 OVERLAY_END
 */
 
@@ -110,7 +110,7 @@ DRIVER_INIT( invaders )
 DRIVER_INIT( invaddlx )
 {
 	init_8080bw();
-/*	artwork_set_overlay(invdpt2m_overlay);*/
+/*  artwork_set_overlay(invdpt2m_overlay);*/
 }
 
 DRIVER_INIT( invrvnge )
@@ -351,16 +351,16 @@ static WRITE8_HANDLER( polaris_videoram_w )
 	x = 8 * (offset % 32);
 
 	/* for the background color, bit 0 of the map PROM is connected to green gun.
-	   red is 0 and blue is 1, giving cyan and blue for the background.  This
-	   is different from what the schematics shows, but it's supported
-	   by screenshots. */
+       red is 0 and blue is 1, giving cyan and blue for the background.  This
+       is different from what the schematics shows, but it's supported
+       by screenshots. */
 
 	color_map = memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)];
 	back_color = (color_map & 1) ? 6 : 2;
 	fore_color = ~colorram[offset & 0x1f1f] & 0x07;
 
 	/* bit 3 is connected to the cloud enable. bits 1 and 2 are marked 'not use' (sic)
-	   on the schematics */
+       on the schematics */
 
 	cloud_y = y - cloud_pos;
 
@@ -599,8 +599,8 @@ static VIDEO_UPDATE( desertgu )
 WRITE8_HANDLER( bowler_bonus_display_w )
 {
 	/* Bits 0-6 control which score is lit.
-	   Bit 7 appears to be a global enable, but the exact
-	   effect is not known. */
+       Bit 7 appears to be a global enable, but the exact
+       effect is not known. */
 
 	bowler_bonus_display = data;
 }
@@ -619,7 +619,7 @@ static VIDEO_UPDATE( bowler )
 
 
 	/* draw the current bonus value - on the original game this
-	   was done using lamps that lit score displays on the bezel. */
+       was done using lamps that lit score displays on the bezel. */
 
 	x = 33 * 8;
 	y = 31 * 8;

@@ -23,7 +23,7 @@ HCKY5_9.BIN     3700
 ROM board has a part # UVM10B  1984
 Main board has a part # UV-1B Rev 5 1982-83-84
 
-Processor: Z80 
+Processor: Z80
 Support Chips:(2) 8255s
 RAM: 6117on ROM board and (24) MCM4517s on main board
 
@@ -43,7 +43,7 @@ static WRITE8_HANDLER( getrivia_bitmap_w )
 	static int prevoffset, yadd;
 
 	videoram[offset] = data;
-		
+
 	yadd = (offset==prevoffset) ? (yadd+1):0;
 	prevoffset = offset;
 
@@ -55,10 +55,10 @@ static WRITE8_HANDLER( getrivia_bitmap_w )
 	sx = 8 * (offset % 64);
 	sy = offset / 64;
 	sy = (sy + yadd) & 0xff;
-	
+
 
 //if (mask != bits)
-//	usrintf_showmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
+//  usrintf_showmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
 
 	if (mask & 0x80) plot_pixel(tmpbitmap,sx+0,sy,(bits & 0x80) ? fg : bg);
 	if (mask & 0x40) plot_pixel(tmpbitmap,sx+1,sy,(bits & 0x40) ? fg : bg);
@@ -89,8 +89,8 @@ static WRITE8_HANDLER( sound_w )
 	/* bit 7 goes directly to the sound amplifier */
 	DAC_data_w(0,((data & 0x80) >> 7) * 255);
 
-//	logerror("%04x: sound_w %02x\n",activecpu_get_pc(),data);
-//	usrintf_showmessage("%02x",data);
+//  logerror("%04x: sound_w %02x\n",activecpu_get_pc(),data);
+//  usrintf_showmessage("%02x",data);
 }
 
 static WRITE8_HANDLER( banksel_1_1_w )
@@ -139,7 +139,7 @@ static ADDRESS_MAP_START( getrivia_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK(1)
 	AM_RANGE(0x4000, 0x47ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x4800, 0x4803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
-	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)	
+	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
 	AM_RANGE(0x600f, 0x600f) AM_WRITE(banksel_5_1_w)
 	AM_RANGE(0x6017, 0x6017) AM_WRITE(banksel_4_1_w)
 	AM_RANGE(0x601b, 0x601b) AM_WRITE(banksel_3_1_w)
@@ -165,7 +165,7 @@ static ADDRESS_MAP_START( gselect_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4402, 0x4402) AM_WRITE(banksel_2_1_w)
 	AM_RANGE(0x4403, 0x4403) AM_WRITE(banksel_2_2_w)
 	AM_RANGE(0x4800, 0x4803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
-	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)	
+	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
 	AM_RANGE(0x8000, 0x8002) AM_WRITE(MWA8_RAM) AM_BASE(&drawctrl)
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
 ADDRESS_MAP_END
@@ -175,7 +175,7 @@ INPUT_PORTS_START( getrivia )
 	PORT_DIPNAME( 0x03, 0x03, "Questions" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-//	PORT_DIPSETTING(    0x02, "5" )
+//  PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_DIPNAME( 0x04, 0x04, "Show Answer" )
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
@@ -328,7 +328,7 @@ static MACHINE_DRIVER_START( getrivia )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gselect )
-	
+
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(getrivia)
 
@@ -381,7 +381,7 @@ ROM_START( gt102c2 )
 	/* Question roms */
 	ROM_LOAD( "comics",       0x10000, 0x4000, CRC(7efdfe8f) SHA1(ec255777c61677ca32c49b9da5e85e07c0647e5f) )
 	ROM_LOAD( "history-geog", 0x14000, 0x4000, CRC(76d6b026) SHA1(613809b247cb27773631a1bb34af485c2b1bd486) )
-	ROM_LOAD( "science",      0x18000, 0x4000, CRC(68259e09) SHA1(29e848b4744b767c51ff81a756fba7bf96daefec) ) 
+	ROM_LOAD( "science",      0x18000, 0x4000, CRC(68259e09) SHA1(29e848b4744b767c51ff81a756fba7bf96daefec) )
 	ROM_LOAD( "music_#1",     0x1c000, 0x4000, CRC(1b546857) SHA1(31e04bb5016e8ef6dc48f9b3ddaeab5fe04f91c2) )
 ROM_END
 

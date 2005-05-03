@@ -655,7 +655,7 @@ INPUT_PORTS_START( bombbee )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-//	PORT_DIPSETTING(	0x08, "4" )				// duplicated setting
+//  PORT_DIPSETTING(    0x08, "4" )             // duplicated setting
 	PORT_DIPSETTING(	0x0c, "5" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
@@ -699,7 +699,7 @@ INPUT_PORTS_START( cutieq )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-//	PORT_DIPSETTING(	0x08, "4" )				// duplicated setting
+//  PORT_DIPSETTING(    0x08, "4" )             // duplicated setting
 	PORT_DIPSETTING(	0x0c, "5" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
@@ -752,12 +752,12 @@ INPUT_PORTS_START( warpwarp )
 	PORT_DIPSETTING(	0x20, "15000 60000" )
 	PORT_DIPSETTING(	0x30, DEF_STR( None ) )
 	/* Bonus Lives when "Lives" Dip Switch is set to "5"
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "30000" )
-	PORT_DIPSETTING(	0x10, "40000" )
-	PORT_DIPSETTING(	0x20, "60000" )
-	PORT_DIPSETTING(	0x30, DEF_STR( None ) )
-	*/
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+    PORT_DIPSETTING(    0x00, "30000" )
+    PORT_DIPSETTING(    0x10, "40000" )
+    PORT_DIPSETTING(    0x20, "60000" )
+    PORT_DIPSETTING(    0x30, DEF_STR( None ) )
+    */
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -811,12 +811,12 @@ INPUT_PORTS_START( warpwarr )
 	PORT_DIPSETTING(	0x20, "15000 60000" )
 	PORT_DIPSETTING(	0x30, DEF_STR( None ) )
 	/* Bonus Lives when "Lives" Dip Switch is set to "5"
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "30000" )
-	PORT_DIPSETTING(	0x10, "40000" )
-	PORT_DIPSETTING(	0x20, "60000" )
-	PORT_DIPSETTING(	0x30, DEF_STR( None ) )
-	*/
+    PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+    PORT_DIPSETTING(    0x00, "30000" )
+    PORT_DIPSETTING(    0x10, "40000" )
+    PORT_DIPSETTING(    0x20, "60000" )
+    PORT_DIPSETTING(    0x30, DEF_STR( None ) )
+    */
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -917,7 +917,7 @@ static MACHINE_DRIVER_START( geebee )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(geebee_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -959,7 +959,7 @@ static MACHINE_DRIVER_START( bombbee )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(warpwarp_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

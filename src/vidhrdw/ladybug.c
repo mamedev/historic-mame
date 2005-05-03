@@ -187,7 +187,7 @@ VIDEO_START( sraider )
 	tilemap_set_scroll_rows(grid_tilemap, 32);
 
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
-//		TILEMAP_OPAQUE, 8, 8, 32, 32);
+//      TILEMAP_OPAQUE, 8, 8, 32, 32);
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -309,9 +309,9 @@ VIDEO_UPDATE( sraider )
 
 	//for(int i=0;i<8;i++)
 	//{
-	//	plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
+	//  plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
 	//}
-	//	plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
+	//  plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
 	//}
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	ladybug_draw_sprites(bitmap);

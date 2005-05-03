@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	D-Con									(c) 1992 Success
-	SD Gundam Psycho Salamander no Kyoui	(c) 1991 Banpresto/Bandai
+    D-Con                                   (c) 1992 Success
+    SD Gundam Psycho Salamander no Kyoui    (c) 1991 Banpresto/Bandai
 
-	These games run on Seibu hardware.
+    These games run on Seibu hardware.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
-	Coin inputs are handled by the sound CPU, so they don't work with sound
-	disabled. Use the service switch instead.
+    Coin inputs are handled by the sound CPU, so they don't work with sound
+    disabled. Use the service switch instead.
 
 ***************************************************************************/
 
@@ -411,7 +411,7 @@ static DRIVER_INIT( sdgndmps )
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 	RAM[0x1356/2] = 0x4e71; /* beq -> nop */
 	RAM[0x1358/2] = 0x4e71;
-	
+
 	RAM[0x4de/2]  = 0x4245; /* ROM checksum */
 	RAM[0x4e0/2]  = 0x4e71;
 	RAM[0x4e2/2]  = 0x4e71;

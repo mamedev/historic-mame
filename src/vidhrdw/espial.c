@@ -93,7 +93,7 @@ static void get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -126,7 +126,7 @@ VIDEO_START( netwars )
 
 /*************************************
  *
- *	Memory handlers
+ *  Memory handlers
  *
  *************************************/
 
@@ -177,7 +177,7 @@ WRITE8_HANDLER( espial_flipscreen_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 

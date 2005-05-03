@@ -1,10 +1,10 @@
 /****************************************************************************
- *																			*
- *	Function prototypes and constants used by the TMS34061 emulator			*
- *																			*
- *  Created by Zsolt Vasvari on 5/26/1998.	                                *
- *	Updated by Aaron Giles on 11/21/2000.									*
- *																			*
+ *                                                                          *
+ *  Function prototypes and constants used by the TMS34061 emulator         *
+ *                                                                          *
+ *  Created by Zsolt Vasvari on 5/26/1998.                                  *
+ *  Updated by Aaron Giles on 11/21/2000.                                   *
+ *                                                                          *
  ****************************************************************************/
 
 

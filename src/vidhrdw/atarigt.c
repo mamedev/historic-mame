@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	Atari GT hardware
+    Atari GT hardware
 
 *****************************************************************************
 
-	MO data has 12 bits total: MVID0-11
-	MVID9-11 form the priority
-	MVID0-9 form the color bits
+    MO data has 12 bits total: MVID0-11
+    MVID9-11 form the priority
+    MVID0-9 form the color bits
 
-	PF data has 13 bits total: PF.VID0-12
-	PF.VID10-12 form the priority
-	PF.VID0-9 form the color bits
+    PF data has 13 bits total: PF.VID0-12
+    PF.VID10-12 form the priority
+    PF.VID0-9 form the color bits
 
-	Upper bits come from the low 5 bits of the HSCROLL value in alpha RAM
-	Playfield bank comes from low 2 bits of the VSCROLL value in alpha RAM
-	For GX2, there are 4 bits of bank
+    Upper bits come from the low 5 bits of the HSCROLL value in alpha RAM
+    Playfield bank comes from low 2 bits of the VSCROLL value in alpha RAM
+    For GX2, there are 4 bits of bank
 
 ****************************************************************************/
 
@@ -27,7 +27,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -39,7 +39,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -49,7 +49,7 @@ data16_t *atarigt_colorram;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -73,7 +73,7 @@ static UINT8 rshift, gshift, bshift;
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -105,7 +105,7 @@ static UINT32 atarigt_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, UI
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -186,7 +186,7 @@ VIDEO_START( atarigt )
 
 /*************************************
  *
- *	Color RAM access
+ *  Color RAM access
  *
  *************************************/
 
@@ -224,7 +224,7 @@ data16_t atarigt_colorram_r(offs_t address)
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -284,282 +284,282 @@ void atarigt_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
 /*
 
-	How it works:
-	
-		Incoming data from AN = AN.VID0-7
-		Incoming data from PF = PF.VID0-12
-		Incoming data from MO = MVID0-11
-		Incoming data from TMO = TVID0-11
-	
-	!MGEP = 1 if:
-		MVID9-11 < PF.VID10-12
-		or (PF.VID12 and R188 is installed [yes on T-Mek & Rage])
-	!MGEP = 0 if:
-		R177 is installed [no on T-Mek & Rage]
-	
-	First, the CRAM:
-	
-		GAL @ 13M, takes as input:
-			ANZ (AN.VID0-3 == 0)
-			MOZ (MVID0-5 == 0)
-			PFZ (PF.VID0-5 == 0)
-			MVID10
-			MVID11
-			PF.VID10
-			PF.VID11
-			AN.VID7
-			!MGEP
-		And outputs:
-			CRA10-12
-			CRMUXA-B
-		
-		Index to the CRAM:
-			CRA13  = LATCH & 0x08
-			CRA12 \
-			CRA11  = output from GAL
-			CRA10 /
-			CRA9 \
-			CRA8  |
-			CRA7  |
-			CRA6  |
-			CRA5   = output from MUX, as selected by GAL, either PF.VID0-9, MVID0-9, or AN.VID0-7
-			CRA4  |
-			CRA3  |
-			CRA2  |
-			CRA1  |
-			CRA0 /
-		Output from CRAM (16 bits):
-			/TLEN
-			CRR0-4
-			CRG0-4
-			CRB0-4
-	
-	Next, the TRAM:
-	
-		GAL @ 14K, takes as input:
-			ANZ (AN.VID0-3 == 0)
-			MOZ (MVID0-5 == 0)
-			PFZ (PF.VID0-5 == 0)
-			TVID8
-			TVID9
-			TVID10
-			PF.VID10
-			PF.VID11
-			AN.VID7
-			!MGEP
-			!68.TRAN
-		And outputs:
-			TRA8-11
-			TRMUXA-B
+    How it works:
 
-		Index to the TRAM:
-			TRA13  = LATCH & 0x20
-			TRA12  = LATCH & 0x10
-			TRA11 \ 
-			TRA10  = output from GAL
-			TRA9   |
-			TRA8  /
-			TRA7  \
-			TRA6  |
-			TRA5  |
-			TRA4   = output from MUX, as selected by GAL, either PF.VID0-7, MVID0-7, or AN.VID0-7
-			TRA3  |
-			TRA2  |
-			TRA1  |
-			TRA0 /
-		Output from TRAM (16 bits):
-			TLPRI
-			TRR0-4
-			TRG0-4
-			TRB0-4
-	
-	Finally, the MRAM:
-	
-		GAL @ 5F, takes as input:
-			TLPRI
-			!TLEN
-			PFZ
-			PF.VID12
-			TVID9-11
-		And outputs:
-			TLDIS
-			(PFPRI)
-			(TLPRID)
-			enable for CRAM latches
-			MRA10-12
-		
-		The CRAM outputs are gated by the enable signal from 5F; it outputs
-			BMRA0-4
-			GMRA0-4
-			RMRA0-4
-		
-		The TRAM outputs are gated by the TLDIS signal from 5F
-			BMRA5-9
-			GMRA5-9
-			RMRA5-9
+        Incoming data from AN = AN.VID0-7
+        Incoming data from PF = PF.VID0-12
+        Incoming data from MO = MVID0-11
+        Incoming data from TMO = TVID0-11
 
-		Index to MRAM:
-			MRA14  = LATCH & 0x80
-			MRA13  = LATCH & 0x40
-			MRA12 \
-			MRA11  = output from GAL
-			MRA10 /
-			MRA9 \
-			MRA8  | 
-			MRA7   = TRAM output
-			MRA6  |
-			MRA5 /
-			MRA4 \
-			MRA3  | 
-			MRA2   = CRAM output
-			MRA1  |
-			MRA0 /
-		
-	And even beyond that:
-		
-		LATCH & 0x04 -> LCRD2
-		LATCH & 0x02 -> LCRD1
-		LATCH & 0x01 -> LCRD0
+    !MGEP = 1 if:
+        MVID9-11 < PF.VID10-12
+        or (PF.VID12 and R188 is installed [yes on T-Mek & Rage])
+    !MGEP = 0 if:
+        R177 is installed [no on T-Mek & Rage]
 
-		GAL @ 22E, takes as input:
-			LCRD0-2
-			PF.VID12
-			PFZ
-			ANZ
-			MVZ
-		
-		And outputs SUMRED, SUMGRN, SUMBLU,
-		which bypass everything!
+    First, the CRAM:
 
--------------------------------------------------	
+        GAL @ 13M, takes as input:
+            ANZ (AN.VID0-3 == 0)
+            MOZ (MVID0-5 == 0)
+            PFZ (PF.VID0-5 == 0)
+            MVID10
+            MVID11
+            PF.VID10
+            PF.VID11
+            AN.VID7
+            !MGEP
+        And outputs:
+            CRA10-12
+            CRMUXA-B
+
+        Index to the CRAM:
+            CRA13  = LATCH & 0x08
+            CRA12 \
+            CRA11  = output from GAL
+            CRA10 /
+            CRA9 \
+            CRA8  |
+            CRA7  |
+            CRA6  |
+            CRA5   = output from MUX, as selected by GAL, either PF.VID0-9, MVID0-9, or AN.VID0-7
+            CRA4  |
+            CRA3  |
+            CRA2  |
+            CRA1  |
+            CRA0 /
+        Output from CRAM (16 bits):
+            /TLEN
+            CRR0-4
+            CRG0-4
+            CRB0-4
+
+    Next, the TRAM:
+
+        GAL @ 14K, takes as input:
+            ANZ (AN.VID0-3 == 0)
+            MOZ (MVID0-5 == 0)
+            PFZ (PF.VID0-5 == 0)
+            TVID8
+            TVID9
+            TVID10
+            PF.VID10
+            PF.VID11
+            AN.VID7
+            !MGEP
+            !68.TRAN
+        And outputs:
+            TRA8-11
+            TRMUXA-B
+
+        Index to the TRAM:
+            TRA13  = LATCH & 0x20
+            TRA12  = LATCH & 0x10
+            TRA11 \
+            TRA10  = output from GAL
+            TRA9   |
+            TRA8  /
+            TRA7  \
+            TRA6  |
+            TRA5  |
+            TRA4   = output from MUX, as selected by GAL, either PF.VID0-7, MVID0-7, or AN.VID0-7
+            TRA3  |
+            TRA2  |
+            TRA1  |
+            TRA0 /
+        Output from TRAM (16 bits):
+            TLPRI
+            TRR0-4
+            TRG0-4
+            TRB0-4
+
+    Finally, the MRAM:
+
+        GAL @ 5F, takes as input:
+            TLPRI
+            !TLEN
+            PFZ
+            PF.VID12
+            TVID9-11
+        And outputs:
+            TLDIS
+            (PFPRI)
+            (TLPRID)
+            enable for CRAM latches
+            MRA10-12
+
+        The CRAM outputs are gated by the enable signal from 5F; it outputs
+            BMRA0-4
+            GMRA0-4
+            RMRA0-4
+
+        The TRAM outputs are gated by the TLDIS signal from 5F
+            BMRA5-9
+            GMRA5-9
+            RMRA5-9
+
+        Index to MRAM:
+            MRA14  = LATCH & 0x80
+            MRA13  = LATCH & 0x40
+            MRA12 \
+            MRA11  = output from GAL
+            MRA10 /
+            MRA9 \
+            MRA8  |
+            MRA7   = TRAM output
+            MRA6  |
+            MRA5 /
+            MRA4 \
+            MRA3  |
+            MRA2   = CRAM output
+            MRA1  |
+            MRA0 /
+
+    And even beyond that:
+
+        LATCH & 0x04 -> LCRD2
+        LATCH & 0x02 -> LCRD1
+        LATCH & 0x01 -> LCRD0
+
+        GAL @ 22E, takes as input:
+            LCRD0-2
+            PF.VID12
+            PFZ
+            ANZ
+            MVZ
+
+        And outputs SUMRED, SUMGRN, SUMBLU,
+        which bypass everything!
+
+-------------------------------------------------
 
 TMEK GALs:
 
-	13M:
-		CRA12=68.A13*!7M3							-- when writing with 68020's A13 == 1
-		   +MGEP*!AN.VID7*ANZ*!MVZ*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
-		   +PFZ*!AN.VID7*ANZ*!MVZ*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
+    13M:
+        CRA12=68.A13*!7M3                           -- when writing with 68020's A13 == 1
+           +MGEP*!AN.VID7*ANZ*!MVZ*7M3              -- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
+           +PFZ*!AN.VID7*ANZ*!MVZ*7M3               -- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
 
-		CRA11=68.A12*!7M3							-- when writing with 68020's A12 == 1
-		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID11*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix11!=0
-		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID11*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix11!=0
-		   +!AN.VID7*ANZ*MVZ*PF.VID11*7M3			-- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
-		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0
+        CRA11=68.A12*!7M3                           -- when writing with 68020's A12 == 1
+           +MGEP*!AN.VID7*ANZ*!MVZ*MVID11*7M3       -- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix11!=0
+           +PFZ*!AN.VID7*ANZ*!MVZ*MVID11*7M3        -- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix11!=0
+           +!AN.VID7*ANZ*MVZ*PF.VID11*7M3           -- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
+           +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*7M3    -- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0
 
-		CRA10=68.A11*!7M3							-- when writing with 68020's A11 == 1
-		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
-		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
-		   +!AN.VID7*ANZ*MVZ*PF.VID10*7M3			-- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
-		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix10!=0
+        CRA10=68.A11*!7M3                           -- when writing with 68020's A11 == 1
+           +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3       -- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
+           +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3        -- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
+           +!AN.VID7*ANZ*MVZ*PF.VID10*7M3           -- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
+           +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*7M3    -- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix10!=0
 
-		CRMUXB=!AN.VID7*ANZ*7M3						-- !opaque_alpha && apix==0
+        CRMUXB=!AN.VID7*ANZ*7M3                     -- !opaque_alpha && apix==0
 
-		!CRMUXA=!7M3
-		    +MGEP*!AN.VID7*ANZ*!MVZ
-		    +PFZ*!AN.VID7*ANZ*!MVZ
+        !CRMUXA=!7M3
+            +MGEP*!AN.VID7*ANZ*!MVZ
+            +PFZ*!AN.VID7*ANZ*!MVZ
 
 
-	14K:
-		TRA11=68.A12*!7M1					-- when writing with 68020's A12 == 1
+    14K:
+        TRA11=68.A12*!7M1                   -- when writing with 68020's A12 == 1
 
-		TRA10=68.A11*!7M1					-- when writing with 68020's A11 == 1
-		   +!AN.VID7*ANZ*PFZ*7M1*!MVZ		-- !opaque_alpha && apix==0 && pfpix==0 && mopix!=0
-		   +MGEP*!AN.VID7*ANZ*7M1*!MVZ		-- !opaque_alpha && apix==0 && mopri>=pfpri && mopix!=0
+        TRA10=68.A11*!7M1                   -- when writing with 68020's A11 == 1
+           +!AN.VID7*ANZ*PFZ*7M1*!MVZ       -- !opaque_alpha && apix==0 && pfpix==0 && mopix!=0
+           +MGEP*!AN.VID7*ANZ*7M1*!MVZ      -- !opaque_alpha && apix==0 && mopri>=pfpri && mopix!=0
 
-		TRA9=68.A10*!7M1					-- when writing with 68020's A10 == 1
-		   +!AN.VID7*ANZ*TVID9*7M1			-- !opaque_alpha && apix==0 && tvid9==1
+        TRA9=68.A10*!7M1                    -- when writing with 68020's A10 == 1
+           +!AN.VID7*ANZ*TVID9*7M1          -- !opaque_alpha && apix==0 && tvid9==1
 
-		TRA8=68.A9*!7M1						-- when writing with 68020's A9 == 1
-		   +!AN.VID7*ANZ*TVID8*7M1			-- !opaque_alpha && apix==0 && tvid8==1
+        TRA8=68.A9*!7M1                     -- when writing with 68020's A9 == 1
+           +!AN.VID7*ANZ*TVID8*7M1          -- !opaque_alpha && apix==0 && tvid8==1
 
-		TRMUXB=7M1							-- 1
-		TRMUXA=GND							-- 0
+        TRMUXB=7M1                          -- 1
+        TRMUXA=GND                          -- 0
 
-	5F:
-		MRA12:=TVID11
-		MRA11:=TVID10
-		MRA10:=TVID9
-		(PFPRI):=PF.VID12
+    5F:
+        MRA12:=TVID11
+        MRA11:=TVID10
+        MRA10:=TVID9
+        (PFPRI):=PF.VID12
 
-		!TLDIS=PFZ*TLEN						-- enabled if pfpix==0 && tlen
-		    +!(PFPRI)*TLEN					-- or if pf.vid12==0 && tlen
+        !TLDIS=PFZ*TLEN                     -- enabled if pfpix==0 && tlen
+            +!(PFPRI)*TLEN                  -- or if pf.vid12==0 && tlen
 
-		!(CRADIS)=!(PFPRI)*TLPRI			-- enabled if pfvid.12==0 && tlpri 
-		(TLPRID):=TLPRI
-	
-	22E:
-		LCRD0 LCRD1 LCRD2 MVZ ANZ PFZ PF.VID12 LLD3 LLA3 GND J SUMBLU1K SUMGRN1K SUMRED1K (OE2) (OE1) SUMBLU SUMGRN SUMRED VCC
-		SUMRED.OE=(OE1)
-		!SUMRED=!SUMGRN
-		SUMGRN.OE=(OE1)
-		SUMGRN=!LCRD1*LCRD2*LLA3
-		   +LCRD1*LCRD0*LCRD2*J
-		   +LCRD1*LCRD0*!LCRD2*!LLD3
-		   +!LCRD1*LCRD0*!LCRD2*LLD3
-		   +!LCRD0*LCRD2*LLA3
-		   +LCRD1*!LCRD0*!LCRD2*LLD3
-		SUMBLU.OE=(OE1)
-		!SUMBLU=!SUMGRN
+        !(CRADIS)=!(PFPRI)*TLPRI            -- enabled if pfvid.12==0 && tlpri
+        (TLPRID):=TLPRI
 
-		(OE1)=!LCRD1*LCRD2*!PF.VID12*LLD3*J				-- (LCR & 6)==4 && LLD3 && !PF.VID12	[LCR==4 || LCR==5]
-		   +!LCRD1*LCRD2*PFZ*LLD3*J						-- (LCR & 6)==4 && LLD3 && PFZ			[LCR==4 || LCR==5]
-		   +!LCRD0*LCRD2*!PF.VID12*LLD3					-- (LCR & 5)==4 && LLD3 && !PF.VID12	[LCR==4 || LCR==6]
-		   +!LCRD0*LCRD2*PFZ*LLD3						-- (LCR & 5)==4 && LLD3 && PFZ			[LCR==4 || LCR==6]
-		   +!LCRD1*!LCRD0*LCRD2*!PF.VID12*J				-- LCR==4 && !PF.VID12					[LCR==4]
-		   +!LCRD1*!LCRD0*LCRD2*PFZ*J					-- LCR==4 && PFZ						[LCR==4]
+    22E:
+        LCRD0 LCRD1 LCRD2 MVZ ANZ PFZ PF.VID12 LLD3 LLA3 GND J SUMBLU1K SUMGRN1K SUMRED1K (OE2) (OE1) SUMBLU SUMGRN SUMRED VCC
+        SUMRED.OE=(OE1)
+        !SUMRED=!SUMGRN
+        SUMGRN.OE=(OE1)
+        SUMGRN=!LCRD1*LCRD2*LLA3
+           +LCRD1*LCRD0*LCRD2*J
+           +LCRD1*LCRD0*!LCRD2*!LLD3
+           +!LCRD1*LCRD0*!LCRD2*LLD3
+           +!LCRD0*LCRD2*LLA3
+           +LCRD1*!LCRD0*!LCRD2*LLD3
+        SUMBLU.OE=(OE1)
+        !SUMBLU=!SUMGRN
 
-		(OE2)=LCRD1*LCRD0*!LCRD2*!PF.VID12*LLA3*J		-- LCR==3 && LLA3 && !PF.VID12			[LCR==3]
-		   +LCRD1*LCRD0*!LCRD2*PFZ*LLA3*J				-- LCR==3 && LLA3 && PFZ				[LCR==3]
-		   +!LCRD1*LCRD0*!LCRD2*!MVZ*!PF.VID12*J		-- LCR==1 && !MVZ && !PF.VID12			[LCR==1]
-		   +!LCRD1*LCRD0*!LCRD2*!MVZ*PFZ*J				-- LCR==1 && !MVZ && PFZ				[LCR==1]
-		   +LCRD1*!LCRD0*LCRD2*!PF.VID12*LLD3			-- LCR==6 && LLD3 && !PF.VID12			[LCR==6]
-		   +LCRD1*!LCRD0*LCRD2*PFZ*LLD3					-- LCR==6 && LLD3 && PFZ				[LCR==6]
+        (OE1)=!LCRD1*LCRD2*!PF.VID12*LLD3*J             -- (LCR & 6)==4 && LLD3 && !PF.VID12    [LCR==4 || LCR==5]
+           +!LCRD1*LCRD2*PFZ*LLD3*J                     -- (LCR & 6)==4 && LLD3 && PFZ          [LCR==4 || LCR==5]
+           +!LCRD0*LCRD2*!PF.VID12*LLD3                 -- (LCR & 5)==4 && LLD3 && !PF.VID12    [LCR==4 || LCR==6]
+           +!LCRD0*LCRD2*PFZ*LLD3                       -- (LCR & 5)==4 && LLD3 && PFZ          [LCR==4 || LCR==6]
+           +!LCRD1*!LCRD0*LCRD2*!PF.VID12*J             -- LCR==4 && !PF.VID12                  [LCR==4]
+           +!LCRD1*!LCRD0*LCRD2*PFZ*J                   -- LCR==4 && PFZ                        [LCR==4]
 
-		SUMRED1K.OE=(OE2)
-		!SUMRED1K=!LCRD1*!LCRD2*!LLD3					-- (LCR & 6)==0 && !LLD3
-		    +LCRD0*LCRD2*!LLA3							-- (LCR & 5)==5 && !LLA3
-		    +LCRD1*LCRD0*!LCRD2*LLD3					-- LCR==3 && LLD3
-		    +!LCRD0*!LCRD2*!LLD3						-- (LCR & 5)==0 && !LLD3
-		    +LCRD1*!LCRD0*LCRD2*!J						-- LCR==6 && !J
-		    +!LCRD1*!LCRD0*LLD3							-- (LCR & 3)==0 && LLD3
-		SUMGRN1K.OE=(OE2)
-		!SUMGRN1K=!SUMRED1K
-		SUMBLU1K.OE=(OE2)
-		!SUMBLU1K=!SUMRED1K
+        (OE2)=LCRD1*LCRD0*!LCRD2*!PF.VID12*LLA3*J       -- LCR==3 && LLA3 && !PF.VID12          [LCR==3]
+           +LCRD1*LCRD0*!LCRD2*PFZ*LLA3*J               -- LCR==3 && LLA3 && PFZ                [LCR==3]
+           +!LCRD1*LCRD0*!LCRD2*!MVZ*!PF.VID12*J        -- LCR==1 && !MVZ && !PF.VID12          [LCR==1]
+           +!LCRD1*LCRD0*!LCRD2*!MVZ*PFZ*J              -- LCR==1 && !MVZ && PFZ                [LCR==1]
+           +LCRD1*!LCRD0*LCRD2*!PF.VID12*LLD3           -- LCR==6 && LLD3 && !PF.VID12          [LCR==6]
+           +LCRD1*!LCRD0*LCRD2*PFZ*LLD3                 -- LCR==6 && LLD3 && PFZ                [LCR==6]
 
--------------------------------------------------	
+        SUMRED1K.OE=(OE2)
+        !SUMRED1K=!LCRD1*!LCRD2*!LLD3                   -- (LCR & 6)==0 && !LLD3
+            +LCRD0*LCRD2*!LLA3                          -- (LCR & 5)==5 && !LLA3
+            +LCRD1*LCRD0*!LCRD2*LLD3                    -- LCR==3 && LLD3
+            +!LCRD0*!LCRD2*!LLD3                        -- (LCR & 5)==0 && !LLD3
+            +LCRD1*!LCRD0*LCRD2*!J                      -- LCR==6 && !J
+            +!LCRD1*!LCRD0*LLD3                         -- (LCR & 3)==0 && LLD3
+        SUMGRN1K.OE=(OE2)
+        !SUMGRN1K=!SUMRED1K
+        SUMBLU1K.OE=(OE2)
+        !SUMBLU1K=!SUMRED1K
+
+-------------------------------------------------
 
 PrimRage GALs:
 
-	13M:
-		CRA12=68.A13*!7M3									-- when writing with 68020's A13 == 1
-		   +!AN.VID7*ANZ*!MVZ*MVID11*7M3					-- !opaque_alpha && apix==0 && mopix!=0 && mvid11!=0
-		   +MGEP*!AN.VID7*ANZ*!MVZ*7M3						-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
-		   +PFZ*!AN.VID7*ANZ*!MVZ*7M3						-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
+    13M:
+        CRA12=68.A13*!7M3                                   -- when writing with 68020's A13 == 1
+           +!AN.VID7*ANZ*!MVZ*MVID11*7M3                    -- !opaque_alpha && apix==0 && mopix!=0 && mvid11!=0
+           +MGEP*!AN.VID7*ANZ*!MVZ*7M3                      -- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
+           +PFZ*!AN.VID7*ANZ*!MVZ*7M3                       -- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
 
-		CRA11=68.A12*!7M3									-- when writing with 68020's A12 == 1
-		   +!AN.VID7*ANZ*MVZ*PF.VID11*7M3					-- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
-		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*!MVID11*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0 && mvid11==0
+        CRA11=68.A12*!7M3                                   -- when writing with 68020's A12 == 1
+           +!AN.VID7*ANZ*MVZ*PF.VID11*7M3                   -- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
+           +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*!MVID11*7M3    -- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0 && mvid11==0
 
-		CRA10=68.A11*!7M3									-- when writing with 68020's A11 == 1
-		   +!AN.VID7*ANZ*MVZ*PF.VID10*7M3					-- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
-		   +!AN.VID7*ANZ*!MVZ*MVID11*MVID10*7M3				*- !opaque_alpha && apix==0 && mopix!=0 && mvid11 && mvid10
-		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
-		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
-		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*!MVID11*7M3	*- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && mopix11==0
+        CRA10=68.A11*!7M3                                   -- when writing with 68020's A11 == 1
+           +!AN.VID7*ANZ*MVZ*PF.VID10*7M3                   -- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
+           +!AN.VID7*ANZ*!MVZ*MVID11*MVID10*7M3             *- !opaque_alpha && apix==0 && mopix!=0 && mvid11 && mvid10
+           +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3               -- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
+           +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3                -- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
+           +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*!MVID11*7M3    *- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && mopix11==0
 
-		CRMUXB=!AN.VID7*ANZ*7M3
+        CRMUXB=!AN.VID7*ANZ*7M3
 
-		!CRMUXA=!7M3
-		    +!AN.VID7*ANZ*!MVZ*MVID11
-		    +MGEP*!AN.VID7*ANZ*!MVZ
-		    +PFZ*!AN.VID7*ANZ*!MVZ
+        !CRMUXA=!7M3
+            +!AN.VID7*ANZ*!MVZ*MVID11
+            +MGEP*!AN.VID7*ANZ*!MVZ
+            +PFZ*!AN.VID7*ANZ*!MVZ
 
 */
 
@@ -602,7 +602,7 @@ VIDEO_UPDATE( atarigt )
 				UINT8 mgep = (mopri >= pfpri) && !(pfpri & 4);
 				UINT16 cra;
 				UINT32 rgb;
-				
+
 				/* compute CRA -- unlike T-Mek, MVID11 enforces MO priority and is ignored */
 				if (an[x] & 0x8f)
 					cra = an[x] & 0xff;
@@ -611,7 +611,7 @@ VIDEO_UPDATE( atarigt )
 				else
 					cra = pf[x] & 0xfff;
 				cra = cram[cra];
-				
+
 				/* compute the result */
 				rgb  = mram[0 * MRAM_ENTRIES + ((cra >> 10) & 0x01f)];
 				rgb |= mram[1 * MRAM_ENTRIES + ((cra >>  5) & 0x01f)];
@@ -621,11 +621,11 @@ VIDEO_UPDATE( atarigt )
 				if (color_latch & 7)
 					if (!(pf[x] & 0x3f) || !(pf[x] & 0x2000))
 						rgb = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
-						
+
 				dst[x] = rgb;
 			}
 		}
-		
+
 		/* T-Mek: full TRAM and all effects */
 		else
 		{
@@ -637,7 +637,7 @@ VIDEO_UPDATE( atarigt )
 				int no_tra = 0, no_cra = 0;
 				UINT16 cra, tra, mra;
 				UINT32 rgb;
-				
+
 				/* compute CRA/TRA */
 				if (an[x] & 0x8f)
 				{
@@ -656,10 +656,10 @@ VIDEO_UPDATE( atarigt )
 				}
 				cra = cram[cra];
 				tra = tram[tra];
-				
+
 				/* compute MRA */
 				mra = (tm[x] & 0xe00) << 1;
-			
+
 				/* turn off CRA/TRA as appropriate */
 				if (!(pf[x] & 0x1000) && (tra & 0x8000))
 					no_cra = 1;
@@ -669,7 +669,7 @@ VIDEO_UPDATE( atarigt )
 					cra = 0;
 				if (no_tra)
 					tra = 0;
-				
+
 				/* compute the result */
 				rgb  = mram[0 * MRAM_ENTRIES + mra + ((cra >> 10) & 0x01f) + ((tra >> 5) & 0x3e0)];
 				rgb |= mram[1 * MRAM_ENTRIES + mra + ((cra >>  5) & 0x01f) + ((tra >> 0) & 0x3e0)];
@@ -679,7 +679,7 @@ VIDEO_UPDATE( atarigt )
 				if (color_latch & 7)
 					if (!(pf[x] & 0x3f) || !(pf[x] & 0x2000))
 						rgb = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
-						
+
 				dst[x] = rgb;
 			}
 		}

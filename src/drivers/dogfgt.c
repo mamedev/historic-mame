@@ -159,18 +159,18 @@ INPUT_PORTS_START( dogfgt )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
 	PORT_DIPSETTING(    0x80, "Upright 2 Players" )
-//	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )		// "Cocktail 1 Player" - IMPOSSIBLE !
+//  PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )     // "Cocktail 1 Player" - IMPOSSIBLE !
 	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )		// "Cocktail 2 Players"
 
 
 /*  Manual shows:
 
-	Dip #7	TV-Screen
-		OFF	Table type
-		ON	Up-right type use
-	Dip #8	Control Panel
-		OFF	Table type use
-		ON	Up-right use
+    Dip #7  TV-Screen
+        OFF Table type
+        ON  Up-right type use
+    Dip #8  Control Panel
+        OFF Table type use
+        ON  Up-right use
 
 There is a side note for these two: "Change both together"
 */
@@ -195,9 +195,9 @@ There is a side note for these two: "Change both together"
 
 /*  Manual shows:
 
-	Dip #8	TV-Screen
-		OFF	Normal
-		ON	Invert
+    Dip #8  TV-Screen
+        OFF Normal
+        ON  Invert
 */
 
 INPUT_PORTS_END

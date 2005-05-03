@@ -206,7 +206,7 @@ INPUT_PORTS_START( triplhnt )
 
 	PORT_START /* 0C48 */
 // default to service enabled to make users calibrate gun
-//	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+//  PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT(    0x40, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Service_Mode )) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -343,7 +343,7 @@ static MACHINE_DRIVER_START( triplhnt )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(triplhnt_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

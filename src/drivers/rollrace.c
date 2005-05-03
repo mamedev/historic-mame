@@ -33,7 +33,7 @@ READ8_HANDLER( ra_fake_d800_r )
 
 WRITE8_HANDLER( ra_fake_d800_w )
 {
-/*	logerror("d900: %02X\n",data);*/
+/*  logerror("d900: %02X\n",data);*/
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -148,11 +148,11 @@ INPUT_PORTS_START( rollrace )
 	PORT_DIPSETTING( 	0x10, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING( 	0x18, DEF_STR( 1C_6C ) )
 
-/*	PORT_BIT( 0x40, IP_ACTIVE_HIGH , IPT_VBLANK )  freezes frame, could be vblank ?*/
+/*  PORT_BIT( 0x40, IP_ACTIVE_HIGH , IPT_VBLANK )  freezes frame, could be vblank ?*/
 	PORT_DIPNAME( 0x40, 0x00, "Freeze" )
 	PORT_DIPSETTING( 	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING( 	0x40, DEF_STR( On ) )
-/*	PORT_DIPNAME( 0x80, 0x00, "Free Run" ) */
+/*  PORT_DIPNAME( 0x80, 0x00, "Free Run" ) */
 	PORT_BIT(    0x80, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability (Cheat)")
 	PORT_DIPSETTING( 	0x00, DEF_STR( Off ) ) /* test mode, you are invulnerable */
 	PORT_DIPSETTING( 	0x80, DEF_STR( On ) )	/* to 'static' objects */
@@ -202,7 +202,7 @@ static struct GfxLayout charlayout2 =
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 
-//	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+//  { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 
 	8*8	/* every char takes 8 consecutive bytes */
 };
@@ -266,13 +266,13 @@ static MACHINE_DRIVER_START( rollrace )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
-	
+
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END

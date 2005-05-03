@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Gaelco game hardware from 1991-1996
+    Gaelco game hardware from 1991-1996
 
-	Driver by Manuel Abadia
+    Driver by Manuel Abadia
 
 ***************************************************************************/
 
@@ -51,7 +51,7 @@ WRITE16_HANDLER( gaelco_vram_w );
 }
 
 /*============================================================================
-							BIG KARNAK
+                            BIG KARNAK
   ============================================================================*/
 
 VIDEO_START( bigkarnk );
@@ -101,7 +101,7 @@ static ADDRESS_MAP_START( bigkarnk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(gaelco_vram_w) AM_BASE(&gaelco_videoram)		/* Video RAM */
 	AM_RANGE(0x102000, 0x103fff) AM_WRITE(MWA16_RAM)								/* Screen RAM */
 	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_vregs)				/* Video Registers */
-//	AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)						/* INT 6 ACK/Watchdog timer */
+//  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                     /* INT 6 ACK/Watchdog timer */
 	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/* Palette */
 	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_spriteram)			/* Sprite RAM */
 	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(bigkarnk_sound_command_w)				/* Triggers a FIRQ on the sound CPU */
@@ -121,7 +121,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( bigkarnk_writemem_snd, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)				/* RAM */
 	AM_RANGE(0x0800, 0x0800) AM_WRITE(OKIM6295_data_0_w)		/* OKI6295 */
-//	AM_RANGE(0x0900, 0x0900) AM_WRITE(MWA8_NOP)				/* enable sound output? */
+//  AM_RANGE(0x0900, 0x0900) AM_WRITE(MWA8_NOP)             /* enable sound output? */
 	AM_RANGE(0x0a00, 0x0a00) AM_WRITE(YM3812_control_port_0_w)/* YM3812 */
 	AM_RANGE(0x0a01, 0x0a01) AM_WRITE(YM3812_write_port_0_w)	/* YM3812 */
 	AM_RANGE(0x0c00, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
@@ -273,7 +273,7 @@ ROM_END
 
 
 /*============================================================================
-					BIOMECHANICAL TOY & MANIAC SQUARE
+                    BIOMECHANICAL TOY & MANIAC SQUARE
   ============================================================================*/
 
 VIDEO_START( maniacsq );
@@ -308,7 +308,7 @@ static ADDRESS_MAP_START( maniacsq_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(gaelco_vram_w) AM_BASE(&gaelco_videoram)		/* Video RAM */
 	AM_RANGE(0x102000, 0x103fff) AM_WRITE(MWA16_RAM)								/* Screen RAM */
 	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_vregs)				/* Video Registers */
-//	AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)						/* INT 6 ACK/Watchdog timer */
+//  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                     /* INT 6 ACK/Watchdog timer */
 	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/* Palette */
 	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_spriteram)			/* Sprite RAM */
 	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(OKIM6295_bankswitch_w)					/* OKI6295 bankswitch */
@@ -553,7 +553,7 @@ ROM_START( biomtoy )
 ROM_END
 
 /*============================================================================
-					SQUASH & THUNDER HOOP
+                    SQUASH & THUNDER HOOP
 ============================================================================*/
 
 static MACHINE_DRIVER_START( squash )
@@ -609,16 +609,16 @@ ROM_END
 ROM_START( thoop )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	//does it need to be half the size?
-	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) ) 
-	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) ) 
-	
+	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) )
+	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) )
+
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c09", 0x000000, 0x100000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )
 	ROM_LOAD( "c10", 0x100000, 0x100000, CRC(2d227085) SHA1(b224efd59ec83bb786fa92a23ef2d27ed36cab6c) )
 	ROM_LOAD( "c11", 0x200000, 0x100000, CRC(7403ef7e) SHA1(52a737816e25a07ada070ed3a5f40bbbd22ac8e0) )
 	ROM_LOAD( "c12", 0x300000, 0x100000, CRC(29a5ca36) SHA1(fdcfdefb3b02bfe34781fdd0295640caabe2a5fb) )
-	
+
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "sound", 0x000000, 0x100000, CRC(99f80961) SHA1(de3a514a8f46dffd5f762e52aac1f4c3b08e2e18) )
 ROM_END

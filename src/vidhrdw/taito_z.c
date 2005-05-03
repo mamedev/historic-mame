@@ -72,14 +72,14 @@ table for this. E.g. Spacegun looks up 16x8 sprite chunks
 from the spritemap rom, creating this 64x64 sprite (numbers
 are the word offset into the spritemap rom):
 
-	 0  1  2  3
-	 4  5  6  7
-	 8  9 10 11
-	12 13 14 15
-	16 17 18 19
-	20 21 22 23
-	24 25 26 27
-	28 29 30 31
+     0  1  2  3
+     4  5  6  7
+     8  9 10 11
+    12 13 14 15
+    16 17 18 19
+    20 21 22 23
+    24 25 26 27
+    28 29 30 31
 
 Chasehq/Nightstr are the only games to build from 16x16
 tiles. They are also more complicated to draw, as they have
@@ -91,7 +91,7 @@ All the games make heavy use of sprite zooming.
 I'm 99% sure there are probably just two levels of sprite
 priority - under and over the road - but this isn't certain.
 
-		***
+        ***
 
 [The routines for the 16x8 tile games seem to have large
 common elements that could be extracted as subroutines.]
@@ -108,62 +108,62 @@ top bits are thrown away and so accessing chunk 0xfe45 would
 display chunk 0x3e45 etc.
 
 
-		Aquajack/Spacegun (modified table from Raine; size of bit
-		masks verified in Spacegun code)
+        Aquajack/Spacegun (modified table from Raine; size of bit
+        masks verified in Spacegun code)
 
-		Byte | Bit(s) | Description
-		-----+76543210+-------------------------------------
-		  0  |xxxxxxx.| ZoomY (0 min, 63 max - msb unused as sprites are 64x64)
-		  0  |.......x| Y position (High)
-		  1  |xxxxxxxx| Y position (Low)
-		  2  |x.......| Priority (0=sprites high)
-		  2  |.x......| Flip X
-		  2  |..?????.| unknown/unused ?
-		  2  |.......x| X position (High)
-		  3  |xxxxxxxx| X position (Low)
-		  4  |xxxxxxxx| Palette bank
-		  5  |?.......| unknown/unused ?
-		  5  |.xxxxxxx| ZoomX (0 min, 63 max - msb unused as sprites are 64x64)
-		  6  |x.......| Flip Y ?
-		  6  |.??.....| unknown/unused ?
-		  6  |...xxxxx| Sprite Tile high (msb unused - half of spritemap rom empty)
-		  7  |xxxxxxxx| Sprite Tile low
+        Byte | Bit(s) | Description
+        -----+76543210+-------------------------------------
+          0  |xxxxxxx.| ZoomY (0 min, 63 max - msb unused as sprites are 64x64)
+          0  |.......x| Y position (High)
+          1  |xxxxxxxx| Y position (Low)
+          2  |x.......| Priority (0=sprites high)
+          2  |.x......| Flip X
+          2  |..?????.| unknown/unused ?
+          2  |.......x| X position (High)
+          3  |xxxxxxxx| X position (Low)
+          4  |xxxxxxxx| Palette bank
+          5  |?.......| unknown/unused ?
+          5  |.xxxxxxx| ZoomX (0 min, 63 max - msb unused as sprites are 64x64)
+          6  |x.......| Flip Y ?
+          6  |.??.....| unknown/unused ?
+          6  |...xxxxx| Sprite Tile high (msb unused - half of spritemap rom empty)
+          7  |xxxxxxxx| Sprite Tile low
 
-		Continental circus (modified Raine table): note similar format.
-		The zoom msb is actually used, as sprites are 128x128.
+        Continental circus (modified Raine table): note similar format.
+        The zoom msb is actually used, as sprites are 128x128.
 
-		---+-------------------+--------------
-		 0 | xxxxxxx. ........ | ZoomY
-		 0 | .......x xxxxxxxx | Y position
-						// unsure about Flip Y
-		 2 | .....xxx xxxxxxxx | Sprite Tile
-		 4 | x....... ........ | Priority (0=sprites high)
-		 4 | .x...... ........ | Flip X
-		 4 | .......x xxxxxxxx | X position
-		 6 | xxxxxxxx ........ | Palette bank
-		 6 | ........ .xxxxxxx | ZoomX
-		---+-------------------+--------------
+        ---+-------------------+--------------
+         0 | xxxxxxx. ........ | ZoomY
+         0 | .......x xxxxxxxx | Y position
+                        // unsure about Flip Y
+         2 | .....xxx xxxxxxxx | Sprite Tile
+         4 | x....... ........ | Priority (0=sprites high)
+         4 | .x...... ........ | Flip X
+         4 | .......x xxxxxxxx | X position
+         6 | xxxxxxxx ........ | Palette bank
+         6 | ........ .xxxxxxx | ZoomX
+        ---+-------------------+--------------
 
-		 Bshark/Chasehq/Nightstr/SCI (modified Raine table): similar format.
-		 The zoom msb is only used for 128x128 sprites.
+         Bshark/Chasehq/Nightstr/SCI (modified Raine table): similar format.
+         The zoom msb is only used for 128x128 sprites.
 
-		-----+--------+------------------------
-		Byte | Bit(s) | Description
-		-----+76543210+------------------------
-		  0  |xxxxxxx.| ZoomY
-		  0  |.......x| Y position (High)
-		  1  |xxxxxxxx| Y position (Low)
-		  2  |x.......| Priority (0=sprites high)
-		  2  |.xxxxxxx| Palette bank (High)
-		  3  |x.......| Palette bank (Low)
-		  3  |.xxxxxxx| ZoomX
-		  4  |x.......| Flip Y
-		  4  |.x......| Flip X
-		  4  |.......x| X position (High)
-		  5  |xxxxxxxx| X position (Low)
-		  6  |...xxxxx| Sprite Tile (High)
-		  7  |xxxxxxxx| Sprite Tile (Low)
-		-----+--------+------------------------
+        -----+--------+------------------------
+        Byte | Bit(s) | Description
+        -----+76543210+------------------------
+          0  |xxxxxxx.| ZoomY
+          0  |.......x| Y position (High)
+          1  |xxxxxxxx| Y position (Low)
+          2  |x.......| Priority (0=sprites high)
+          2  |.xxxxxxx| Palette bank (High)
+          3  |x.......| Palette bank (Low)
+          3  |.xxxxxxx| ZoomX
+          4  |x.......| Flip Y
+          4  |.x......| Flip X
+          4  |.......x| X position (High)
+          5  |xxxxxxxx| X position (Low)
+          6  |...xxxxx| Sprite Tile (High)
+          7  |xxxxxxxx| Sprite Tile (Low)
+        -----+--------+------------------------
 
  [Raine Chasehq sprite plotting is peculiar. It determines
  the type of big sprite by reference to the zoomx and y.
@@ -244,8 +244,8 @@ static void contcirc_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct r
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -339,8 +339,8 @@ static void chasehq_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct r
 				if (sprites_flipscreen)
 				{
 					/* -zx/y is there to fix zoomed sprite coords in screenflip.
-					   drawgfxzoom does not know to draw from flip-side of sprites when
-					   screen is flipped; so we must correct the coords ourselves. */
+                       drawgfxzoom does not know to draw from flip-side of sprites when
+                       screen is flipped; so we must correct the coords ourselves. */
 
 					curx = 320 - curx - zx;
 					cury = 256 - cury - zy;
@@ -383,8 +383,8 @@ static void chasehq_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct r
 				if (sprites_flipscreen)
 				{
 					/* -zx/y is there to fix zoomed sprite coords in screenflip.
-					   drawgfxzoom does not know to draw from flip-side of sprites when
-					   screen is flipped; so we must correct the coords ourselves. */
+                       drawgfxzoom does not know to draw from flip-side of sprites when
+                       screen is flipped; so we must correct the coords ourselves. */
 
 					curx = 320 - curx - zx;
 					cury = 256 - cury - zy;
@@ -427,8 +427,8 @@ static void chasehq_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct r
 				if (sprites_flipscreen)
 				{
 					/* -zx/y is there to fix zoomed sprite coords in screenflip.
-					   drawgfxzoom does not know to draw from flip-side of sprites when
-					   screen is flipped; so we must correct the coords ourselves. */
+                       drawgfxzoom does not know to draw from flip-side of sprites when
+                       screen is flipped; so we must correct the coords ourselves. */
 
 					curx = 320 - curx - zx;
 					cury = 256 - cury - zy;
@@ -521,8 +521,8 @@ static void bshark_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rec
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -623,8 +623,8 @@ static void sci_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectan
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -715,8 +715,8 @@ static void aquajack_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct r
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -807,8 +807,8 @@ static void spacegun_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct r
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -984,10 +984,10 @@ VIDEO_UPDATE( spacegun )
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 
 		/* A lag of one frame can be seen with the scope pickup and on the test
-		   screen, however there is conflicting evidence so this isn't emulated
-		   During high score entry the scope is displayed slightly offset
-		   from the crosshair, close inspection shows the crosshair location
-		   being used to target letters. */
+           screen, however there is conflicting evidence so this isn't emulated
+           During high score entry the scope is displayed slightly offset
+           from the crosshair, close inspection shows the crosshair location
+           being used to target letters. */
 
 		/* calculate p1 screen co-ords by matching routine at $195D4 */
 		rawx = taitoz_sharedram[0xd94/2];
@@ -1030,7 +1030,7 @@ VIDEO_UPDATE( spacegun )
 		}
 
 		/* fudge x and y to show in centre of scope, note that screenx, screeny
-		   are confirmed to match those stored by the game at $317540, $317542 */
+           are confirmed to match those stored by the game at $317540, $317542 */
 		--screenx;
 		screeny += 15;
 
@@ -1077,7 +1077,7 @@ VIDEO_UPDATE( spacegun )
 		}
 
 		/* fudge x and y to show in centre of scope, note that screenx, screeny
-		   are confirmed to match those stored by the game at $317544, $317546 */
+           are confirmed to match those stored by the game at $317544, $317546 */
 		--screenx;
 		screeny += 15;
 

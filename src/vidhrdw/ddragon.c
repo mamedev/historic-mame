@@ -4,8 +4,8 @@
     Double Dragon, Double Dragon bootleg, Double Dragon II and China Gate
 
   Two Tile layers.
-	Background layer is 512x512 , tiles are 16x16
-	Top        layer is 256x256 , tiles are 8x8
+    Background layer is 512x512 , tiles are 16x16
+    Top        layer is 256x256 , tiles are 8x8
 
   Sprites are 16x16, 16x32, 32x16, or 32x32 (attribute bits set dimension)
 

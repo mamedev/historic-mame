@@ -123,7 +123,7 @@ WRITE8_HANDLER( taitol_bankc_w )
 	if (bankc[offset] != data)
 	{
 		bankc[offset] = data;
-//		logerror("Bankc %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
+//      logerror("Bankc %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
 		tilemap_mark_all_tiles_dirty(bg19_tilemap);
@@ -138,7 +138,7 @@ READ8_HANDLER( taitol_bankc_r )
 
 WRITE8_HANDLER( taitol_control_w )
 {
-//	logerror("Control Write %02x (%04x)\n", data, activecpu_get_pc());
+//  logerror("Control Write %02x (%04x)\n", data, activecpu_get_pc());
 
 	cur_ctrl = data;
 //usrintf_showmessage("%02x",data);
@@ -158,7 +158,7 @@ WRITE8_HANDLER( taitol_control_w )
 
 READ8_HANDLER( taitol_control_r )
 {
-//	logerror("Control Read %02x (%04x)\n", cur_ctrl, activecpu_get_pc());
+//  logerror("Control Read %02x (%04x)\n", cur_ctrl, activecpu_get_pc());
 	return cur_ctrl;
 }
 
@@ -252,18 +252,18 @@ void taitol_obj1b_m(int offset)
 ***************************************************************************/
 
 /*
-	Sprite format:
-	00: xxxxxxxx tile number (low)
-	01: xxxxxxxx tile number (high)
-	02: ----xxxx color
-	    ----x--- priority
-	03: -------x flip x
-	    ------x- flip y
-	04: xxxxxxxx x position (low)
-	05: -------x x position (high)
-	06: xxxxxxxx y position
-	07: xxxxxxxx unknown / ignored? Seems just garbage in many cases, e.g
-	             plgirs2 bullets and raimais big bosses.
+    Sprite format:
+    00: xxxxxxxx tile number (low)
+    01: xxxxxxxx tile number (high)
+    02: ----xxxx color
+        ----x--- priority
+    03: -------x flip x
+        ------x- flip y
+    04: xxxxxxxx x position (low)
+    05: -------x x position (high)
+    06: xxxxxxxx y position
+    07: xxxxxxxx unknown / ignored? Seems just garbage in many cases, e.g
+                 plgirs2 bullets and raimais big bosses.
 */
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
@@ -272,8 +272,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 
 	/* at spriteram + 0x3f0 and 03f8 are the tilemap control registers;
-		spriteram + 0x3e8 seems to be unused
-	*/
+        spriteram + 0x3e8 seems to be unused
+    */
 	for (offs = 0;offs < SPRITERAM_SIZE-3*8;offs += 8)
 	{
 		int code,color,sx,sy,flipx,flipy;

@@ -112,13 +112,13 @@ READ8_HANDLER( starshp1_rng_r )
 WRITE8_HANDLER( starshp1_ssadd_w )
 {
 	/*
-	 * The range of sprite position values doesn't suffice to
-	 * move the zoomed spaceship sprite over the top and left
-	 * edges of the screen. These additional values are used
-	 * to compensate for this. Technically, they cut off the
-	 * first columns and rows of the spaceship sprite, but in
-	 * practice they work like offsets in zoomed pixels.
-	 */
+     * The range of sprite position values doesn't suffice to
+     * move the zoomed spaceship sprite over the top and left
+     * edges of the screen. These additional values are used
+     * to compensate for this. Technically, they cut off the
+     * first columns and rows of the spaceship sprite, but in
+     * practice they work like offsets in zoomed pixels.
+     */
 
 	starshp1_ship_voffset = ((offset & 0xf0) >> 4);
 	starshp1_ship_hoffset = ((offset & 0x0f) << 2) | (data & 3);
@@ -128,10 +128,10 @@ WRITE8_HANDLER( starshp1_ssadd_w )
 WRITE8_HANDLER( starshp1_sspic_w )
 {
 	/*
-	 * Some mysterious game code at address $2CCE is causing
-	 * erratic images in the target explosion sequence. The
-	 * following condition is a hack to filter these images.
-	 */
+     * Some mysterious game code at address $2CCE is causing
+     * erratic images in the target explosion sequence. The
+     * following condition is a hack to filter these images.
+     */
 
 	if (data != 0x87)
 	{
@@ -159,10 +159,10 @@ WRITE8_HANDLER( starshp1_playfield_w )
 static void draw_starfield(struct mame_bitmap* bitmap)
 {
 	/*
-	 * The LSFR is reset once per frame at the position of
-	 * sprite 15. This behavior is quite pointless and not
-	 * really needed by the game. Not emulated.
-	 */
+     * The LSFR is reset once per frame at the position of
+     * sprite 15. This behavior is quite pointless and not
+     * really needed by the game. Not emulated.
+     */
 
 	int x;
 	int y;

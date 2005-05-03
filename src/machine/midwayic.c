@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Emulation of various Midway ICs
+    Emulation of various Midway ICs
 
 ***************************************************************************/
 
@@ -21,7 +21,7 @@
 
 /*************************************
  *
- *	Constants
+ *  Constants
  *
  *************************************/
 
@@ -32,7 +32,7 @@
 
 /*************************************
  *
- *	Type definitions
+ *  Type definitions
  *
  *************************************/
 
@@ -77,7 +77,7 @@ struct ioasic_state
 	UINT8	irq_state;
 	UINT16	sound_irq_state;
 	UINT8	auto_ack;
-	
+
 	UINT16	fifo[FIFO_SIZE];
 	UINT16	fifo_in;
 	UINT16	fifo_out;
@@ -89,7 +89,7 @@ struct ioasic_state
 
 /*************************************
  *
- *	Local variables
+ *  Local variables
  *
  *************************************/
 
@@ -102,7 +102,7 @@ static struct ioasic_state ioasic;
 
 /*************************************
  *
- *	Serial number encoding
+ *  Serial number encoding
  *
  *************************************/
 
@@ -164,8 +164,8 @@ static void generate_serial_data(int upper)
 
 /*************************************
  *
- *	Original serial number PIC
- *	interface
+ *  Original serial number PIC
+ *  interface
  *
  *************************************/
 
@@ -223,10 +223,10 @@ void midway_serial_pic_w(UINT8 data)
 
 /*************************************
  *
- *	Second generation serial number
- *	PIC interface; this version also
- *	contained some NVRAM and a real
- *	time clock
+ *  Second generation serial number
+ *  PIC interface; this version also
+ *  contained some NVRAM and a real
+ *  time clock
  *
  *************************************/
 
@@ -354,7 +354,7 @@ void midway_serial_pic2_w(UINT8 data)
 				/* stuff it into the data bytes */
 				pic.index = 0;
 				pic.total = 0;
-				
+
 				/* if we haven't written a new time recently, use the real live time */
 				if (!pic.time_just_written)
 				{
@@ -371,7 +371,7 @@ void midway_serial_pic2_w(UINT8 data)
 					pic.buffer[pic.total++] = make_bcd(exptime->tm_mon + 1);
 					pic.buffer[pic.total++] = make_bcd(exptime->tm_year - pic.yearoffs);
 				}
-				
+
 				/* otherwise, just parrot back what was written to pass self tests */
 				else
 				{
@@ -385,17 +385,17 @@ void midway_serial_pic2_w(UINT8 data)
 				}
 				break;
 			}
-			
+
 			/* write the clock */
 			case 4:
-				
+
 				/* if coming from state 0, go to state 1 (this is just the command byte) */
 				if (pic.state == 0)
 				{
 					pic.state = 0x14;
 					pic.time_index = 0;
 				}
-				
+
 				/* if in states 1-2 put data in the buffer until it's full */
 				else if (pic.state == 0x14)
 				{
@@ -405,11 +405,11 @@ void midway_serial_pic2_w(UINT8 data)
 				else if (pic.state == 0x24)
 				{
 					pic.time_buf[pic.time_index++] |= pic.latch << 4;
-					
+
 					/* if less than 7 bytes accumulated, go back to state 1 */
 					if (pic.time_index < 7)
 						pic.state = 0x14;
-					
+
 					/* otherwise, flag the time as having just been written for 1/2 second */
 					else
 					{
@@ -485,7 +485,7 @@ void midway_serial_pic2_w(UINT8 data)
 						fprintf(nvramlog, "Read byte %02X = %02X\n", pic.nvram_addr, pic.nvram[pic.nvram_addr]);
 				}
 				break;
-			
+
 			/* reflect inverted? (Cruisin' Exotica) */
 			case 8:
 				pic.latch = 0x400 | (~cmd & 0xff);
@@ -509,9 +509,9 @@ NVRAM_HANDLER( midway_serial_pic2 )
 
 /*************************************
  *
- *	The I/O ASIC was first introduced
- *	in War Gods, then later used on
- *	the Seattle hardware
+ *  The I/O ASIC was first introduced
+ *  in War Gods, then later used on
+ *  the Seattle hardware
  *
  *************************************/
 
@@ -566,14 +566,14 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	ioasic.shuffle_map = &shuffle_maps[shuffle][0];
 	ioasic.auto_ack = 0;
 	ioasic.irq_callback = irq_callback;
-	
+
 	/* initialize the PIC */
 	midway_serial_pic2_init(upper, yearoffs);
-	
+
 	/* reset the chip */
 	midway_ioasic_reset();
 	ioasic.reg[IOASIC_SOUNDCTL] = 0x0001;
-	
+
 	/* configure the fifo */
 	if (ioasic.has_dcs)
 	{
@@ -581,7 +581,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		dcs_set_io_callbacks(ioasic_output_full, ioasic_input_empty);
 	}
 	ioasic_fifo_reset_w(1);
-	
+
 	/* configure the CAGE IRQ */
 	if (ioasic.has_cage)
 		cage_set_irq_handler(cage_irq_handler);
@@ -617,7 +617,7 @@ static void update_ioasic_irq(void)
 	UINT16 fifo_state = ioasic_fifo_status_r();
 	UINT16 irqbits = 0x2000;
 	UINT8 new_state;
-	
+
 	irqbits |= ioasic.sound_irq_state;
 	if (ioasic.reg[IOASIC_UARTIN] & 0x1000)
 		irqbits |= 0x1000;
@@ -627,7 +627,7 @@ static void update_ioasic_irq(void)
 		irqbits |= 0x0001;
 
 	ioasic.reg[IOASIC_INTSTAT] = irqbits;
-	
+
 	new_state = ((ioasic.reg[IOASIC_INTCTL] & 0x0001) != 0) && ((ioasic.reg[IOASIC_INTSTAT] & ioasic.reg[IOASIC_INTCTL] & 0x3ffe) != 0);
 	if (new_state != ioasic.irq_state)
 	{
@@ -652,7 +652,7 @@ static void cage_irq_handler(int reason)
 
 static void ioasic_input_empty(int state)
 {
-//	logerror("ioasic_input_empty(%d)\n", state);
+//  logerror("ioasic_input_empty(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0080;
 	else
@@ -663,7 +663,7 @@ static void ioasic_input_empty(int state)
 
 static void ioasic_output_full(int state)
 {
-//	logerror("ioasic_output_full(%d)\n", state);
+//  logerror("ioasic_output_full(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0040;
 	else
@@ -675,14 +675,14 @@ static void ioasic_output_full(int state)
 
 /*************************************
  *
- *	ASIC sound FIFO; used by CarnEvil
+ *  ASIC sound FIFO; used by CarnEvil
  *
  *************************************/
 
 static UINT16 ioasic_fifo_r(void)
 {
 	UINT16 result = 0;
-	
+
 	/* we can only read data if there's some to read! */
 	if (ioasic.fifo_bytes != 0)
 	{
@@ -693,7 +693,7 @@ static UINT16 ioasic_fifo_r(void)
 
 		if (LOG_FIFO && (ioasic.fifo_bytes < 4 || ioasic.fifo_bytes >= FIFO_SIZE - 4))
 			logerror("fifo_r(%04X): FIFO bytes = %d!\n", result, ioasic.fifo_bytes);
-		
+
 		/* if we just cleared the buffer, this may generate an IRQ on the master CPU */
 		/* because of the way the streaming code works, we need to make sure that the */
 		/* next status read indicates an empty buffer, even if we've timesliced and the */
@@ -717,14 +717,14 @@ static UINT16 ioasic_fifo_r(void)
 static UINT16 ioasic_fifo_status_r(void)
 {
 	UINT16 result = 0;
-	
+
 	if (ioasic.fifo_bytes == 0)
 		result |= 0x08;
 	if (ioasic.fifo_bytes >= FIFO_SIZE/2)
 		result |= 0x10;
 	if (ioasic.fifo_bytes >= FIFO_SIZE)
 		result |= 0x20;
-	
+
 	/* kludge alert: if we're reading this from the DCS CPU itself, and we recently cleared */
 	/* the FIFO, and we're within 16 instructions of the read that cleared the FIFO, make */
 	/* sure the FIFO clear bit is set */
@@ -782,7 +782,7 @@ void midway_ioasic_fifo_w(data16_t data)
 
 /*************************************
  *
- *	I/O ASIC master read/write
+ *  I/O ASIC master read/write
  *
  *************************************/
 
@@ -800,7 +800,7 @@ READ32_HANDLER( midway_ioasic_packed_r )
 READ32_HANDLER( midway_ioasic_r )
 {
 	data32_t result;
-	
+
 	offset = ioasic.shuffle_active ? ioasic.shuffle_map[offset & 15] : offset;
 	result = ioasic.reg[offset];
 
@@ -817,23 +817,23 @@ READ32_HANDLER( midway_ioasic_r )
 				result |= 0x2000;
 			}
 			break;
-			
+
 		case IOASIC_PORT1:
 			result = readinputport(1);
 			break;
-		
+
 		case IOASIC_PORT2:
 			result = readinputport(2);
 			break;
-		
+
 		case IOASIC_PORT3:
 			result = readinputport(3);
 			break;
-		
+
 		case IOASIC_UARTIN:
 			ioasic.reg[offset] &= ~0x1000;
 			break;
-		
+
 		case IOASIC_SOUNDSTAT:
 			/* status from sound CPU */
 			result = 0;
@@ -867,11 +867,11 @@ READ32_HANDLER( midway_ioasic_r )
 				result = val = ~val;
 			}
 			break;
-		
+
 		case IOASIC_PICIN:
 			result = midway_serial_pic2_r() | (midway_serial_pic2_status_r() << 8);
 			break;
-		
+
 		default:
 			break;
 	}
@@ -895,7 +895,7 @@ WRITE32_HANDLER( midway_ioasic_packed_w )
 WRITE32_HANDLER( midway_ioasic_w )
 {
 	UINT32 oldreg, newreg;
-	
+
 	offset = ioasic.shuffle_active ? ioasic.shuffle_map[offset & 15] : offset;
 	oldreg = ioasic.reg[offset];
 	COMBINE_DATA(&ioasic.reg[offset]);
@@ -916,14 +916,14 @@ WRITE32_HANDLER( midway_ioasic_w )
 				ioasic.reg[IOASIC_UARTCONTROL] = 0;	/* bug in 10th Degree assumes this */
 			}
 			break;
-			
+
 		case IOASIC_PORT2:
 		case IOASIC_PORT3:
 			/* ignore writes here if we're not shuffling yet */
 			if (!ioasic.shuffle_active)
 				break;
 			break;
-		
+
 		case IOASIC_UARTOUT:
 			if (ioasic.reg[IOASIC_UARTCONTROL] & 0x800)
 			{
@@ -934,7 +934,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 			else if (PRINTF_DEBUG)
 				printf("%c", data & 0xff);
 			break;
-			
+
 		case IOASIC_SOUNDCTL:
 			/* sound reset? */
 			if (ioasic.has_dcs)
@@ -950,7 +950,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 						cage_control_w(3);
 				}
 			}
-			
+
 			/* FIFO reset? */
 			ioasic_fifo_reset_w(~newreg & 4);
 			break;
@@ -975,7 +975,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 			else
 				midway_serial_pic2_w(newreg);
 			break;
-		
+
 		case IOASIC_INTCTL:
 			/* interrupt enables */
 			/* bit  0 = global interrupt enable */
@@ -997,9 +997,9 @@ WRITE32_HANDLER( midway_ioasic_w )
 
 /*************************************
  *
- *	The IDE ASIC was used on War Gods
- *	and Killer Instinct to map the IDE
- *	registers
+ *  The IDE ASIC was used on War Gods
+ *  and Killer Instinct to map the IDE
+ *  registers
  *
  *************************************/
 

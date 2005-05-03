@@ -259,8 +259,8 @@ WRITE8_HANDLER( pleiads_videoreg_w )
 
 
 	/* the palette table is at $0420-$042f and is set by $06bc.
-	   Four palette changes by level.  The palette selection is
-	   wrong, but the same paletter is used for both layers. */
+       Four palette changes by level.  The palette selection is
+       wrong, but the same paletter is used for both layers. */
 
     if (palette_bank != ((~data >> 1) & 3))
 	{

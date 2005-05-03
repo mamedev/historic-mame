@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Escape hardware
+    Atari Escape hardware
 
 ****************************************************************************/
 
@@ -14,7 +14,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -41,7 +41,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -106,7 +106,7 @@ VIDEO_START( eprom )
 
 /*************************************
  *
- *	Periodic scanline updater
+ *  Periodic scanline updater
  *
  *************************************/
 
@@ -128,7 +128,7 @@ void eprom_scanline_update(int scanline)
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -152,45 +152,45 @@ VIDEO_UPDATE( eprom )
 				if (mo[x])
 				{
 					/* verified from the GALs on the real PCB; equations follow
-					 *
-					 *		--- FORCEMC0 forces 3 bits of the MO color to 0 under some conditions
-					 *		FORCEMC0=!PFX3*PFX4*PFX5*!MPR0
-					 *		    +!PFX3*PFX5*!MPR1
-					 *		    +!PFX3*PFX4*!MPR0*!MPR1
-					 *
-					 *		--- SHADE selects an alternate color bank for the playfield
-					 *		!SHADE=!MPX0
-					 *		    +MPX1
-					 *		    +MPX2
-					 *		    +MPX3
-					 *		    +!MPX4*!MPX5*!MPX6*!MPX7
-					 *		    +FORCEMC0
-					 *
-					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
-					 *		!PF/M=MPR0*MPR1
-					 *		    +PFX3
-					 *		    +!PFX4*MPR1
-					 *		    +!PFX5*MPR1
-					 *		    +!PFX5*MPR0
-					 *		    +!PFX4*!PFX5*!MPR0*!MPR1
-					 *
-					 *		--- M7 is passed as the upper MO bit to the GPC ASIC
-					 *		M7=MPX0*!MPX1*!MPX2*!MPX3
-					 *
-					 *		--- CL10-9 are outputs from the GPC, specifying which layer to render
-					 *		CL10 = 1 if pf
-					 *		CL9 = 1 if mo
-					 *
-					 *		--- CRA10 is the 0x200 bit of the color RAM index; it comes directly from the GPC
-					 *		CRA10 = CL10
-					 *
-					 *		--- CRA9 is the 0x100 bit of the color RAM index; is comes directly from the GPC
-					 *			or if the SHADE flag is set, it affects the playfield color bank
-					 *		CRA9 = SHADE*CL10
-					 *			+CL9
-					 *
-					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
-					 */
+                     *
+                     *      --- FORCEMC0 forces 3 bits of the MO color to 0 under some conditions
+                     *      FORCEMC0=!PFX3*PFX4*PFX5*!MPR0
+                     *          +!PFX3*PFX5*!MPR1
+                     *          +!PFX3*PFX4*!MPR0*!MPR1
+                     *
+                     *      --- SHADE selects an alternate color bank for the playfield
+                     *      !SHADE=!MPX0
+                     *          +MPX1
+                     *          +MPX2
+                     *          +MPX3
+                     *          +!MPX4*!MPX5*!MPX6*!MPX7
+                     *          +FORCEMC0
+                     *
+                     *      --- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+                     *      !PF/M=MPR0*MPR1
+                     *          +PFX3
+                     *          +!PFX4*MPR1
+                     *          +!PFX5*MPR1
+                     *          +!PFX5*MPR0
+                     *          +!PFX4*!PFX5*!MPR0*!MPR1
+                     *
+                     *      --- M7 is passed as the upper MO bit to the GPC ASIC
+                     *      M7=MPX0*!MPX1*!MPX2*!MPX3
+                     *
+                     *      --- CL10-9 are outputs from the GPC, specifying which layer to render
+                     *      CL10 = 1 if pf
+                     *      CL9 = 1 if mo
+                     *
+                     *      --- CRA10 is the 0x200 bit of the color RAM index; it comes directly from the GPC
+                     *      CRA10 = CL10
+                     *
+                     *      --- CRA9 is the 0x100 bit of the color RAM index; is comes directly from the GPC
+                     *          or if the SHADE flag is set, it affects the playfield color bank
+                     *      CRA9 = SHADE*CL10
+                     *          +CL9
+                     *
+                     *      --- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+                     */
 					int mopriority = (mo[x] >> ATARIMO_PRIORITY_SHIFT) & 7;
 					int pfpriority = (pf[x] >> 4) & 3;
 					int forcemc0 = 0, shade = 1, pfm = 1, m7 = 0;

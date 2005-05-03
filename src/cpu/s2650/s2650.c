@@ -3,7 +3,7 @@
  *
  *      Portable Signetics 2650 cpu emulation
  *
- *		Written by Juergen Buchmueller for use with MAME
+ *      Written by Juergen Buchmueller for use with MAME
  *
  *  Version 1.2
  *  - changed to clock cycle counts from machine cycles
@@ -919,13 +919,13 @@ static int s2650_execute(int cycles)
 				M_SPSL();
 				break;
 
-			case 0x14:		/* RETC,0	(zero)	*/
-			case 0x15:		/* RETC,1	(plus)	*/
-			case 0x16:		/* RETC,2	(minus) */
+			case 0x14:		/* RETC,0   (zero)  */
+			case 0x15:		/* RETC,1   (plus)  */
+			case 0x16:		/* RETC,2   (minus) */
 				s2650_ICount -= 5;	/* +2 cycles if condition is true */
 				M_RET( (S.psl >> 6) == S.r );
 				break;
-			case 0x17:		/* RETC,3	(always) */
+			case 0x17:		/* RETC,3   (always) */
 				s2650_ICount -= 5;	/* +2 cycles if condition is true */
 				M_RET( 1 );
 				break;
@@ -1252,7 +1252,7 @@ static int s2650_execute(int cycles)
 				s2650_ICount -= 11;
 				M_BRA( (S.psl >> 6) != S.r );
 				break;
-			case 0x9f:		/* BXA	   (*)a */
+			case 0x9f:		/* BXA     (*)a */
 				s2650_ICount -= 11;
 				M_BXA();
 				break;
@@ -1541,7 +1541,7 @@ static void s2650_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + S2650_HALT:			S.halt = info->i;						break;
 		case CPUINFO_INT_REGISTER + S2650_SI:			s2650_set_sense(info->i);				break;
 		case CPUINFO_INT_REGISTER + S2650_FO:			s2650_set_flag(info->i);				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					S.irq_callback = info->irqcallback;		break;
 	}
@@ -1585,7 +1585,7 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:
 				info->i = 13;
 				break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:
 				info->i = 8;
 				break;

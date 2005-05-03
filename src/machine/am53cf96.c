@@ -19,7 +19,7 @@ static struct AM53CF96interface *intf;
 typedef struct
 {
 	void *data;		// device's "this" pointer
-	pSCSIDispatch handler;	// device's handler routine	
+	pSCSIDispatch handler;	// device's handler routine
 } SCSIDev;
 
 static SCSIDev devices[8];	// SCSI IDs 0-7
@@ -33,7 +33,7 @@ enum
 	REG_COMMAND,		// read/write = command
 
 	REG_STATUS,		// read = status, write = destination SCSI ID (4)
-	REG_IRQSTATE,		// read = IRQ status, write = timeout	      (5)
+	REG_IRQSTATE,		// read = IRQ status, write = timeout         (5)
 	REG_INTSTATE,		// read = internal state, write = sync xfer period (6)
 	REG_FIFOSTATE,		// read = FIFO status, write = sync offset
 	REG_CTRL1,		// read/write = control 1
@@ -76,11 +76,11 @@ READ32_HANDLER( am53cf96_r )
 
 	if (reg == REG_FIFO)
 	{
-//		printf("53cf96: read FIFO PC=%x\n", activecpu_get_pc());
+//      printf("53cf96: read FIFO PC=%x\n", activecpu_get_pc());
 		return 0;
 	}
 
-//	logerror("53cf96: read reg %d = %x (PC=%x)\n", reg, rv>>shift, activecpu_get_pc());
+//  logerror("53cf96: read reg %d = %x (PC=%x)\n", reg, rv>>shift, activecpu_get_pc());
 
 	if (reg == REG_IRQSTATE)
 	{
@@ -113,7 +113,7 @@ WRITE32_HANDLER( am53cf96_w )
 	}
 	val &= 0xff;
 
-//	logerror("53cf96: w %x to reg %d (ofs %02x data %08x mask %08x PC=%x)\n", val, reg, offset, data, mem_mask, activecpu_get_pc());
+//  logerror("53cf96: w %x to reg %d (ofs %02x data %08x mask %08x PC=%x)\n", val, reg, offset, data, mem_mask, activecpu_get_pc());
 
 	// if writing to the target ID, cache it off for later
 	if (reg == REG_STATUS)
@@ -129,7 +129,7 @@ WRITE32_HANDLER( am53cf96_w )
 	// FIFO
 	if (reg == REG_FIFO)
 	{
-//		printf("%02x to FIFO @ %02d\n", val, fptr);
+//      printf("%02x to FIFO @ %02d\n", val, fptr);
 		fifo[fptr++] = val;
 		if (fptr > 15)
 		{
@@ -209,7 +209,7 @@ void am53cf96_init( struct AM53CF96interface *interface )
 	{
 		devices[interface->scsidevs->devices[i].scsiID].handler = interface->scsidevs->devices[i].handler;
 		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (data8_t *)NULL);
-	}	
+	}
 
 	state_save_register_UINT8("53cf96", 0, "registers", scsi_regs, 32);
 	state_save_register_UINT8("53cf96", 0, "fifo", fifo, 16);
@@ -235,7 +235,7 @@ void am53cf96_read_data(int bytes, data8_t *pData)
 // write data to the SCSI controller
 void am53cf96_write_data(int bytes, data8_t *pData)
 {
-//	int i;
+//  int i;
 
 	scsi_regs[REG_STATUS] |= 0x10;	// indicate DMA finished
 

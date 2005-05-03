@@ -183,7 +183,7 @@ WRITE8_HANDLER( yard_scroll_panel_w )
 		col = (data >> i) & 0x11;
 		col = ((col >> 3) | col) & 3;
 
-		plot_pixel(scroll_panel_bitmap, sx + i, sy, 
+		plot_pixel(scroll_panel_bitmap, sx + i, sy,
 			Machine->pens[RADAR_PALETTE_BASE + (sy & 0xfc) + col]);
 	}
 }
@@ -210,7 +210,7 @@ static UINT32 yard_tilemap_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, U
 
 VIDEO_START( yard )
 {
-	bg_tilemap = tilemap_create(yard_get_bg_tile_info, yard_tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(yard_get_bg_tile_info, yard_tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if ( !bg_tilemap )

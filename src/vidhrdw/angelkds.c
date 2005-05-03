@@ -158,20 +158,20 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	{
 	/*
 
-	nnnn nnnn - EeFf B?cc - yyyy yyyy - xxxx xxxx
+    nnnn nnnn - EeFf B?cc - yyyy yyyy - xxxx xxxx
 
-	n = sprite number
-	E = Sprite Enabled in Top Half of Screen
-	e = Sprite Enabled in Bottom Half of Screen
-	F = Flip Y
-	f = Flip X
-	B = Tile Bank
-	? = unknown, nothing / unused? recheck
-	c = color
-	y = Y position
-	x = X position
+    n = sprite number
+    E = Sprite Enabled in Top Half of Screen
+    e = Sprite Enabled in Bottom Half of Screen
+    F = Flip Y
+    f = Flip X
+    B = Tile Bank
+    ? = unknown, nothing / unused? recheck
+    c = color
+    y = Y position
+    x = X position
 
-	*/
+    */
 
 
 	UINT16 tile_no = source[0];

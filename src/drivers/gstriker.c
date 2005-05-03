@@ -9,7 +9,7 @@ Tecmo World Cup '94 (c) 1994 Tecmo
 
 ******************************************************************************
 
-	Hardware notes
+    Hardware notes
 
 Both games seem to be similar hardware, V Goal Soccer doesn't work.
 the hardware is also quite similar to several other Video System games.
@@ -70,9 +70,9 @@ VS9209 (located near DIPs)
 VS920A (located near U79) (score tilemap)
 
 ROMs:
-human-1.u58	27C240	 - Main Program
-human-2.u79	27C1024  - ? (near VS920A)
-human-3.u87	27C010   - Sound Program
+human-1.u58 27C240   - Main Program
+human-2.u79 27C1024  - ? (near VS920A)
+human-3.u87 27C010   - Sound Program
 human-4.u6      27C240   - ?, maybe region specific gfx
 scrgs101.u25    23C16000 - GFX
 scrgs102.u24    23C16000 - GFX
@@ -80,8 +80,8 @@ scrgs103.u23    23C16000 - GFX
 scrgs104.u22    23C16000 - GFX
 scrgs105.u2     23C16000 - GFX   \
 scrgs105.u4     23C16000 - GFX   / note, contents of these are identical.
-scrgs106.u93	232001	 - Sounds
-scrgs107.u99	23c8000  - Sounds
+scrgs106.u93    232001   - Sounds
+scrgs107.u99    23c8000  - Sounds
 
 *** ROMSET: vgoalsoc
 
@@ -115,11 +115,11 @@ VS9209 (located near DIPs)
 VS920A (located near U48) (score tilemap)
 
 ROMs:
-c16_u37.u37	27C4002	 - Main Program
-c16_u48.u48	27C1024  - ?
-c16_u65.u65	27C2001  - Sound Program
-c13_u86.u86	HN62302	 - Sounds
-c13_u104.104	HN624116 - Sounds
+c16_u37.u37 27C4002  - Main Program
+c16_u48.u48 27C1024  - ?
+c16_u65.u65 27C2001  - Sound Program
+c13_u86.u86 HN62302  - Sounds
+c13_u104.104    HN624116 - Sounds
 c13_u20.u20     HN62418  - GFX   \
 c13_u17.u17     HN62418  - GFX   / note, contents of these are identical.
 c13_u11.u11     HN624116 - GFX
@@ -298,7 +298,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
 
-//	AM_RANGE(0x200060, 0x200061) AM_READ(dmmy)
+//  AM_RANGE(0x200060, 0x200061) AM_READ(dmmy)
 	AM_RANGE(0x200080, 0x200081) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x200082, 0x200083) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x200084, 0x200085) AM_READ(input_port_0_word_r)

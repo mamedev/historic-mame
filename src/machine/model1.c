@@ -83,7 +83,7 @@ static UINT32 fifoin_pop(void)
 
 static void fifoin_push(UINT32 data)
 {
-	//	logerror("TGP FIFOIN write %08x (%x)\n", data, activecpu_get_pc());
+	//  logerror("TGP FIFOIN write %08x (%x)\n", data, activecpu_get_pc());
 	fifoin_data[fifoin_wpos++] = data;
 	if(fifoin_wpos == FIFO_SIZE)
 		fifoin_wpos = 0;
@@ -330,7 +330,7 @@ static void f14(void)
 	float d = fifoin_pop_f();
 	int r = 0;
 	logerror("TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
-	//	fprintf(stderr, "TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	//  fprintf(stderr, "TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
 
 	switch(activecpu_get_pc()) {
 	case 0xc7eea: r=1; break; // stars
@@ -351,7 +351,7 @@ static void f14(void)
 static void f15_swa(void)
 {
 	logerror("TGP f15_swa (%x)\n", activecpu_get_pc());
-	//	fprintf(stderr, "TGP f15_swa (%x)\n", activecpu_get_pc());
+	//  fprintf(stderr, "TGP f15_swa (%x)\n", activecpu_get_pc());
 
 	next_fn();
 }
@@ -408,7 +408,7 @@ static void matrix_trans(void)
 
 	logerror("TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc());
 	if(0 && activecpu_get_pc() == 0xfeeaa5)
-		//		fprintf(stderr, "TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc());
+		//      fprintf(stderr, "TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc());
 		a = 0;
 
 	if(activecpu_get_pc() == 0x22f59) {
@@ -673,7 +673,7 @@ static void f42(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	logerror("TGP f42 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
-	//	fifoout_push_f((mame_rand() % 1000) - 500);
+	//  fifoout_push_f((mame_rand() % 1000) - 500);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -1293,7 +1293,7 @@ static void matrix_unrot(void)
 static void f80(void)
 {
 	logerror("TGP f80 (%x)\n", activecpu_get_pc());
-	//	cmat[9] = cmat[10] = cmat[11] = 0;
+	//  cmat[9] = cmat[10] = cmat[11] = 0;
 	next_fn();
 }
 
@@ -1503,10 +1503,10 @@ static void f102(void)
 	py = u2f(ram_data[ram_scanadr+0x17]);
 	pz = u2f(ram_data[ram_scanadr+0x18]);
 
-	//	memset(cmat, 0, sizeof(cmat));
-	//	cmat[0] = 1.0;
-	//	cmat[4] = 1.0;
-	//	cmat[8] = 1.0;
+	//  memset(cmat, 0, sizeof(cmat));
+	//  cmat[0] = 1.0;
+	//  cmat[4] = 1.0;
+	//  cmat[8] = 1.0;
 
 	px = c;
 	py = d;
@@ -1709,7 +1709,7 @@ static void function_get_vf(void)
 	if(fct->cb) {
 		fifoin_cbcount = fct->count;
 		fifoin_cb = fct->cb;
-		//		logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
+		//      logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
 		if(!fifoin_cbcount)
 			fifoin_cb();
 	} else {
@@ -1735,7 +1735,7 @@ static void function_get_swa(void)
 	if(fct->cb) {
 		fifoin_cbcount = fct->count;
 		fifoin_cb = fct->cb;
-		//		logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
+		//      logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
 		if(!fifoin_cbcount)
 			fifoin_cb();
 	} else {

@@ -2,12 +2,12 @@
 #define ATARI_H
 
 /******************************************************************************
-	Atari 400/800
+    Atari 400/800
 
-	ANTIC video controller
-	GTIA  graphics television interface adapter
+    ANTIC video controller
+    GTIA  graphics television interface adapter
 
-	Juergen Buchmueller, June 1998
+    Juergen Buchmueller, June 1998
 ******************************************************************************/
 
 typedef struct {
@@ -131,28 +131,28 @@ DRIVER_INIT( atari );
 #define DLI_NMI         0x80    /* 10000000b bit mask for display list interrupt */
 #define VBL_NMI 		0x40	/* 01000000b bit mask for vertical blank interrupt */
 
-#define ANTIC_DLI		0x80	/* 10000000b cmds with display list intr	*/
-#define ANTIC_LMS		0x40	/* 01000000b cmds with load memory scan 	*/
-#define ANTIC_VSCR		0x20	/* 00100000b cmds with vertical scroll		*/
-#define ANTIC_HSCR		0x10	/* 00010000b cmds with horizontal scroll	*/
-#define ANTIC_MODE		0x0f	/* 00001111b cmd mode mask					*/
+#define ANTIC_DLI		0x80	/* 10000000b cmds with display list intr    */
+#define ANTIC_LMS		0x40	/* 01000000b cmds with load memory scan     */
+#define ANTIC_VSCR		0x20	/* 00100000b cmds with vertical scroll      */
+#define ANTIC_HSCR		0x10	/* 00010000b cmds with horizontal scroll    */
+#define ANTIC_MODE		0x0f	/* 00001111b cmd mode mask                  */
 
-#define DMA_ANTIC		0x20	/* 00100000b ANTIC DMA enable				*/
-#define DMA_PM_DBLLINE	0x10	/* 00010000b double line player/missile 	*/
-#define DMA_PLAYER		0x08	/* 00001000b player DMA enable				*/
-#define DMA_MISSILE 	0x04	/* 00000100b missile DMA enable 			*/
+#define DMA_ANTIC		0x20	/* 00100000b ANTIC DMA enable               */
+#define DMA_PM_DBLLINE	0x10	/* 00010000b double line player/missile     */
+#define DMA_PLAYER		0x08	/* 00001000b player DMA enable              */
+#define DMA_MISSILE 	0x04	/* 00000100b missile DMA enable             */
 
-#define OFS_MIS_SINGLE	3*256	/* offset missiles single line DMA			*/
-#define OFS_PL0_SINGLE	4*256	/* offset player 0 single line DMA			*/
-#define OFS_PL1_SINGLE	5*256	/* offset player 1 single line DMA			*/
-#define OFS_PL2_SINGLE	6*256	/* offset player 2 single line DMA			*/
-#define OFS_PL3_SINGLE	7*256	/* offset player 3 single line DMA			*/
+#define OFS_MIS_SINGLE	3*256	/* offset missiles single line DMA          */
+#define OFS_PL0_SINGLE	4*256	/* offset player 0 single line DMA          */
+#define OFS_PL1_SINGLE	5*256	/* offset player 1 single line DMA          */
+#define OFS_PL2_SINGLE	6*256	/* offset player 2 single line DMA          */
+#define OFS_PL3_SINGLE	7*256	/* offset player 3 single line DMA          */
 
 #define OFS_MIS_DOUBLE  3*128   /* offset missiles double line DMA          */
-#define OFS_PL0_DOUBLE	4*128	/* offset player 0 double line DMA			*/
-#define OFS_PL1_DOUBLE	5*128	/* offset player 1 double line DMA			*/
-#define OFS_PL2_DOUBLE	6*128	/* offset player 2 double line DMA			*/
-#define OFS_PL3_DOUBLE	7*128	/* offset player 3 double line DMA			*/
+#define OFS_PL0_DOUBLE	4*128	/* offset player 0 double line DMA          */
+#define OFS_PL1_DOUBLE	5*128	/* offset player 1 double line DMA          */
+#define OFS_PL2_DOUBLE	6*128	/* offset player 2 double line DMA          */
+#define OFS_PL3_DOUBLE	7*128	/* offset player 3 double line DMA          */
 
 #define PFD 	0x00	/* 00000000b playfield default color */
 
@@ -161,14 +161,14 @@ DRIVER_INIT( atari );
 #define PF1 	0x02	/* 00000010b playfield color #1   */
 #define PF2 	0x04	/* 00000100b playfield color #2   */
 #define PF3 	0x08	/* 00001000b playfield color #3   */
-#define PL0 	0x11	/* 00010001b player #0			  */
-#define PL1 	0x12	/* 00010010b player #1			  */
-#define PL2 	0x14	/* 00010100b player #2			  */
-#define PL3 	0x18	/* 00011000b player #3			  */
-#define MI0 	0x21	/* 00100001b missile #0 		  */
-#define MI1 	0x22	/* 00100010b missile #1 		  */
-#define MI2 	0x24	/* 00100100b missile #2 		  */
-#define MI3 	0x28	/* 00101000b missile #3 		  */
+#define PL0 	0x11	/* 00010001b player #0            */
+#define PL1 	0x12	/* 00010010b player #1            */
+#define PL2 	0x14	/* 00010100b player #2            */
+#define PL3 	0x18	/* 00011000b player #3            */
+#define MI0 	0x21	/* 00100001b missile #0           */
+#define MI1 	0x22	/* 00100010b missile #1           */
+#define MI2 	0x24	/* 00100100b missile #2           */
+#define MI3 	0x28	/* 00101000b missile #3           */
 #define T00 	0x40	/* 01000000b text mode pixels 00  */
 #define P000	0x48	/* 01001000b player #0 pixels 00  */
 #define P100	0x4a	/* 01001010b player #1 pixels 00  */
@@ -197,14 +197,14 @@ DRIVER_INIT( atari );
 #define G01 	0x90	/* 10010000b hires gfx pixels 01  */
 #define G10 	0xa0	/* 10100000b hires gfx pixels 10  */
 #define G11 	0xb0	/* 10110000b hires gfx pixels 11  */
-#define GT1 	0xc0	/* 11000000b gtia mode 1		  */
-#define GT2 	0xd0	/* 11010000b gtia mode 2		  */
-#define GT3 	0xe0	/* 11100000b gtia mode 3		  */
-#define ILL 	0xfe	/* 11111110b illegal priority	  */
-#define EOR 	0xff	/* 11111111b EOR mode color 	  */
+#define GT1 	0xc0	/* 11000000b gtia mode 1          */
+#define GT2 	0xd0	/* 11010000b gtia mode 2          */
+#define GT3 	0xe0	/* 11100000b gtia mode 3          */
+#define ILL 	0xfe	/* 11111110b illegal priority     */
+#define EOR 	0xff	/* 11111111b EOR mode color       */
 
-#define LUM 	0x0f	/* 00001111b luminance bits 	  */
-#define HUE 	0xf0	/* 11110000b hue bits			  */
+#define LUM 	0x0f	/* 00001111b luminance bits       */
+#define HUE 	0xf0	/* 11110000b hue bits             */
 
 #define TRIGGER_VBLANK	64715
 #define TRIGGER_STEAL	64716

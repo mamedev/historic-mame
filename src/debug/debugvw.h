@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugvw.h
-**		Debugger view engine.
-**		Written by Aaron Giles
+**      debugvw.h
+**      Debugger view engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -13,7 +13,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 /* types passed to debug_view_alloc */
@@ -31,8 +31,8 @@
 #define DVP_TOTAL_COLS						(4)		/* r/w - UINT32 */
 #define DVP_TOP_ROW							(5)		/* r/w - UINT32 */
 #define DVP_LEFT_COL						(6)		/* r/w - UINT32 */
-#define DVP_UPDATE_CALLBACK					(7)		/* r/w - void (*update)(struct debug_view *) */ 
-#define DVP_VIEW_DATA						(8)		/* r/o - struct debug_view_char * */ 
+#define DVP_UPDATE_CALLBACK					(7)		/* r/w - void (*update)(struct debug_view *) */
+#define DVP_VIEW_DATA						(8)		/* r/o - struct debug_view_char * */
 #define DVP_CPUNUM							(9)		/* r/w - UINT32 */
 #define DVP_SUPPORTS_CURSOR					(10)	/* r/o - UINT32 */
 #define DVP_CURSOR_VISIBLE					(11)	/* r/w - UINT32 */
@@ -68,13 +68,13 @@
 
 
 /*###################################################################################################
-**	MACROS
+**  MACROS
 **#################################################################################################*/
 
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 /* opaque structure representing a debug view */
@@ -90,7 +90,7 @@ struct debug_view_char
 
 
 /*###################################################################################################
-**	FUNCTION PROTOTYPES
+**  FUNCTION PROTOTYPES
 **#################################################################################################*/
 
 /* initialization */
@@ -114,7 +114,7 @@ void				debug_view_update_type(int type);
 
 
 /*###################################################################################################
-**	INLINE HELPERS
+**  INLINE HELPERS
 **#################################################################################################*/
 
 INLINE UINT32 debug_view_get_property_UINT32(struct debug_view *view, int property)

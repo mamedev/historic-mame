@@ -75,7 +75,7 @@ static const char* g_opnames[] =
  "TYA", "TYX", "WAI", "WDM", "XBA", "XCE", "MPY", "DIV", "MPYS", "DIVS", "RLA",
  "EXTS","EXTZ","LDT", "LDM", "UNK", "SEB", "SEM", "CLM", "STB", "LDB", "ADCB",
  "SBCB","EORB","TBX", "CMPB","INB", "DEB", "TXB", "TYB", "LSRB", "ORB", "CLB",
- "BBC", "BBS", "TBY", "ANDB","PUL", "PSH", "PLB", "XAB", "PHB", 
+ "BBC", "BBS", "TBY", "ANDB","PUL", "PSH", "PLB", "XAB", "PHB",
 };
 
 static opcode_struct g_opcodes[256] =

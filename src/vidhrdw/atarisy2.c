@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari System 2 hardware
+    Atari System 2 hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Globals we own
+ *  Globals we own
  *
  *************************************/
 
@@ -23,7 +23,7 @@ data16_t *atarisy2_slapstic;
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -36,7 +36,7 @@ static data16_t *vram;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -46,7 +46,7 @@ static void reset_yscroll_callback(int param);
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -72,7 +72,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -149,7 +149,7 @@ VIDEO_START( atarisy2 )
 
 /*************************************
  *
- *	Scroll/playfield bank write
+ *  Scroll/playfield bank write
  *
  *************************************/
 
@@ -215,7 +215,7 @@ WRITE16_HANDLER( atarisy2_yscroll_w )
 
 /*************************************
  *
- *	Palette RAM write handler
+ *  Palette RAM write handler
  *
  *************************************/
 
@@ -250,7 +250,7 @@ WRITE16_HANDLER( atarisy2_paletteram_w )
 
 /*************************************
  *
- *	Video RAM bank read/write handlers
+ *  Video RAM bank read/write handlers
  *
  *************************************/
 
@@ -277,7 +277,7 @@ WRITE16_HANDLER( atarisy2_slapstic_w )
 
 /*************************************
  *
- *	Video RAM read/write handlers
+ *  Video RAM read/write handlers
  *
  *************************************/
 
@@ -326,7 +326,7 @@ WRITE16_HANDLER( atarisy2_videoram_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 

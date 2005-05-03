@@ -2,11 +2,11 @@
 
   Nintendo 8080 hardware
 
-	- Space Fever
-	- Space Fever High Splitter
-	- Space Launcher
-	- Sheriff / Bandido
-	- Helifire
+    - Space Fever
+    - Space Fever High Splitter
+    - Space Launcher
+    - Sheriff / Bandido
+    - Helifire
 
 ***************************************************************************/
 

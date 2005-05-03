@@ -29,13 +29,13 @@ VIDEO_EOF( srumbler );
 static WRITE8_HANDLER( srumbler_bankswitch_w )
 {
 	/*
-	  banking is controlled by two PROMs. 0000-4fff is mapped to the same
-	  address (RAM and I/O) for all banks, so we don't handle it here.
-	  e000-ffff is all mapped to the same ROMs, however we do handle it
-	  here anyway.
-	  Note that 5000-8fff can be either ROM or RAM, so we should handle
-	  that as well to be 100% accurate.
-	 */
+      banking is controlled by two PROMs. 0000-4fff is mapped to the same
+      address (RAM and I/O) for all banks, so we don't handle it here.
+      e000-ffff is all mapped to the same ROMs, however we do handle it
+      here anyway.
+      Note that 5000-8fff can be either ROM or RAM, so we should handle
+      that as well to be 100% accurate.
+     */
 	int i;
 	unsigned char *ROM = memory_region(REGION_USER1);
 	unsigned char *prom1 = memory_region(REGION_PROMS) + (data & 0xf0);

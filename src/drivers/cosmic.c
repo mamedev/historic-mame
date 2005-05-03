@@ -4,7 +4,7 @@ Universal board numbers (found on the schematics)
 
 Cosmic Guerilla - 7907A
 Cosmic Alien    - 7910
-Magical Spot	- 8013
+Magical Spot    - 8013
 Magical Spot II - 8013
 Devil Zone      - 8022
 
@@ -168,7 +168,7 @@ WRITE8_HANDLER( cosmicg_output_w )
 				 break;
 
 		case 9:  if (data) sample_start(3, 11, 0); break;	/* Got Ship */
-//		case 11: watchdog_reset_w(0, 0); break;				/* Watchdog */
+//      case 11: watchdog_reset_w(0, 0); break;             /* Watchdog */
 		case 13: if (data) sample_start(8, 13-gun_die_select, 0); break;  /* Got Monster / Gunshot */
 		case 14: gun_die_select = data; break;
 		case 15: if (data) sample_start(5, 14, 0); break;	/* Coin Extend (extra base) */
@@ -216,9 +216,9 @@ static INTERRUPT_GEN( cosmicg_interrupt )
     /* Insert Coin */
 
 	/* R Nabet : fixed to make this piece of code sensible.
-	I assumed that the interrupt request lasted for as long as the coin was "sensed".
-	It makes sense and works fine, but I cannot be 100% sure this is correct,
-	as I have no Cosmic Guerilla console :-) . */
+    I assumed that the interrupt request lasted for as long as the coin was "sensed".
+    It makes sense and works fine, but I cannot be 100% sure this is correct,
+    as I have no Cosmic Guerilla console :-) . */
 
 	if ((readinputport(2) & 1)) /* Coin */
 	{
@@ -528,7 +528,7 @@ INPUT_PORTS_START( cosmicg )
 	PORT_START      /* Hard wired settings */
 
 	/* The coin slots are not memory mapped. Coin causes INT 4  */
-	/* This fake input port is used by the interrupt handler 	*/
+	/* This fake input port is used by the interrupt handler    */
 	/* to be notified of coin insertions. */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 
@@ -830,7 +830,7 @@ INPUT_PORTS_START( nomnlnd )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
@@ -878,7 +878,7 @@ INPUT_PORTS_START( nomnlndg )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
@@ -1069,8 +1069,8 @@ static MACHINE_DRIVER_START( cosmicg )
 	MDRV_CPU_ADD(TMS9980, 1228500)
 			/* 9.828 MHz Crystal */
 			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
-			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
-			1.5MHz.  So, if someone can check this... */
+            fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
+            1.5MHz.  So, if someone can check this... */
 	MDRV_CPU_PROGRAM_MAP(cosmicg_readmem,cosmicg_writemem)
 	MDRV_CPU_IO_MAP(cosmicg_readport,cosmicg_writeport)
 	MDRV_CPU_VBLANK_INT(cosmicg_interrupt,1)

@@ -1,9 +1,14 @@
-/*************************************************************************
-System Control Unit - DSP emulator version 0.05
+/******************************************************************************************
+System Control Unit - DSP emulator version 0.06
 
 Written by Angelo Salese & Mariusz Wojcieszek
 
 Changelog:
+050412: Angelo Salese
+- Fixed the T0F behaviour in the DMA operation,it was causing an hang in Treasure Hunt
+  due of that.
+- Removed the dsp.log file creation when you are not using the debug build
+
 041114: Angelo Salese
 - Finished flags in ALU opcodes
 - SR opcode: MSB does not change.
@@ -18,8 +23,8 @@ Changelog:
 - X-Bus command: MOV [s],X can be executed in parallel to other X-Bus commands
 - Y-Bus command: MOV [s],Y can be executed in parallel to other Y-Bus commands
 - Jump and LPS/BTM support:
-	jump addresses are absolute,
-	prefetched instructions are executed before jump is taken
+    jump addresses are absolute,
+    prefetched instructions are executed before jump is taken
 - after each instruction, X and Y is multiplied and contents are loaded into MUL register
 - fixed RL8
 - fixed MVI
@@ -31,8 +36,9 @@ Changelog:
 - Disassembler: complete it
 - (Maybe) Convert this to cpu structure
 - Add control flags
+- Check DMA in thunt,there's a bug that causes wrong graphics in it.
 
-*************************************************************************/
+******************************************************************************************/
 #include "driver.h"
 #include "machine/scudsp.h"
 
@@ -91,10 +97,16 @@ extern data32_t* stv_scu;
 static UINT32 opcode;
 static UINT8 update_mul = 0;
 
-#define DEBUG_DSP
+#ifdef MAME_DEBUG
+#define DEBUG_DSP 1
+#else
+#define DEBUG_DSP 0
+#endif
 
-static	char dasm_buffer[100];
+static char dasm_buffer[100];
+#if DEBUG_DSP
 static FILE *log_file = NULL;
+#endif
 void dsp_dasm_opcode( UINT32 op, char *buffer );
 
 
@@ -320,7 +332,7 @@ void dsp_ram_addr_ctrl(UINT32 data)
 
 void dsp_ram_addr_w(UINT32 data)
 {
-#ifdef DEBUG_DSP
+#if DEBUG_DSP
     if ( log_file == NULL )
     {
         log_file = fopen( "dsp.log", "a" );
@@ -335,7 +347,7 @@ UINT32 dsp_ram_addr_r()
     UINT32 data;
 
     data = dsp_get_source_mem_value( ((dsp_reg.ra & 0xc0) >> 6) + 4 );
-#ifdef DEBUG_DSP
+#if DEBUG_DSP
     if ( log_file == NULL )
     {
         log_file = fopen( "dsp.log", "a" );
@@ -544,6 +556,8 @@ static void dsp_dma( void )
 	UINT32 counter = 0;
 	UINT32 data;
 
+	T0F_1;
+
 	if ( opcode & 0x2000 )
 	{
 		transfer_cnt = dsp_get_source_mem_value( opcode & 0xf );
@@ -576,13 +590,13 @@ static void dsp_dma( void )
 		source &= 0x07ffffff;
 		dest &= 0x07ffffff;
 		transfer_cnt &= 0xff;
-#ifdef DEBUG_DSP
+#if DEBUG_DSP
         fprintf( log_file, "/*DSP DMA D0,[RAM%d],%d add=%d*/\n", dsp_mem, transfer_cnt, add );
 #endif
 		for ( counter = 0; counter < transfer_cnt ; counter++ )
 		{
 		    data = program_read_dword(source );
-#ifdef DEBUG_DSP
+#if DEBUG_DSP
             fprintf( log_file, "%08X, %08X,\n", source, data );
 #endif
 			dsp_set_dest_dma_mem( dsp_mem, data, counter );
@@ -601,7 +615,9 @@ static void dsp_dma( void )
 		source &= 0x07ffffff;
 		dest &= 0x07ffffff;
 		transfer_cnt &= 0xff;
-#ifdef DEBUG_DSP
+		//logerror("[DSP DMA] SRC = %08x | DEST = %08x | SIZE = %08x | ADD VALUE = %08x\n",source,dest,transfer_cnt,add);
+
+#if DEBUG_DSP
     fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
 #endif
 		for ( counter = 0; counter < transfer_cnt; counter++ )
@@ -615,7 +631,8 @@ static void dsp_dma( void )
 			dsp_reg.wa0 += counter * add;
 		}
 	}
-	T0F_1;
+
+	T0F_0;
 }
 
 static void dsp_jump( void )
@@ -706,9 +723,9 @@ void dsp_execute_program()
 {
 	UINT32 cycles_run = 0;
 	UINT8 cont = 1;
+#if DEBUG_DSP
 	UINT16 i;
 
-#ifdef DEBUG_DSP
     if ( log_file == NULL )
     {
     	log_file = fopen("dsp.log", "a");
@@ -776,7 +793,7 @@ void dsp_execute_program()
 		cycles_run++;
 
 	} while( cont );
-#ifdef DEBUG_DSP
+#if DEBUG_DSP
 	dsp_dump_mem( log_file );
 	fprintf( log_file, "\nRun %d cycles\n\n", cycles_run );
 	fclose( log_file );

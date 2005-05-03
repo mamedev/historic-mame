@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega Z80-3D system
+    Sega Z80-3D system
 
 *************************************************************************/
 
@@ -111,30 +111,30 @@ DISCRETE_SOUND_START(turbo_sound_interface)
 
 /*
 
-	the rest of the circuit looks like this:
+    the rest of the circuit looks like this:
 
-	                  +5V            +12V                                +---+
-	                   ^              ^   +--------+               1K    v   |
-	                   |              |   | |\     |           +---NNN--NNN--+
-	                   Z 1K       10K Z   | | \    |           | |\     20K  |   +--|(----> ALARM_M
-	                   Z              Z   +-|- \   |           | | \         |   |  4.7u
-	                   |              |     |   >--+---NNNN----+-|- \        |   +--|(----> ALARM_F
-	                   +--NNNN--|(----+-----|+ /        22K      |   >-------+---+  4.7u
-	+-\                |  5.1K  4.7u  |     | /             +6V--|+ /            +--|(----> ALARM_R
-	|  >o---(NODE_62)--+              Z     |/                   | /             |  4.7u
-	+-/                |          10K Z                          |/              +--|(----> ALARM_L
+                      +5V            +12V                                +---+
+                       ^              ^   +--------+               1K    v   |
+                       |              |   | |\     |           +---NNN--NNN--+
+                       Z 1K       10K Z   | | \    |           | |\     20K  |   +--|(----> ALARM_M
+                       Z              Z   +-|- \   |           | | \         |   |  4.7u
+                       |              |     |   >--+---NNNN----+-|- \        |   +--|(----> ALARM_F
+                       +--NNNN--|(----+-----|+ /        22K      |   >-------+---+  4.7u
+    +-\                |  5.1K  4.7u  |     | /             +6V--|+ /            +--|(----> ALARM_R
+    |  >o---(NODE_62)--+              Z     |/                   | /             |  4.7u
+    +-/                |          10K Z                          |/              +--|(----> ALARM_L
                        |              |                                             4.7u
-	+-\                |              v
-	|  >o---(NODE_66)--+             GND
-	+-/                |
+    +-\                |              v
+    |  >o---(NODE_66)--+             GND
+    +-/                |
                        |
-	+-\                |
-	|  >o---(NODE_72)--+
-	+-/                |
+    +-\                |
+    |  >o---(NODE_72)--+
+    +-/                |
                        |
-	+-\                |
-	|  >o---(NODE_77)--+
-	+-/
+    +-\                |
+    |  >o---(NODE_77)--+
+    +-/
 
 
 */
@@ -152,7 +152,7 @@ DISCRETE_SOUND_END
 
 /*******************************************
 
-	Sample handling
+    Sample handling
 
 *******************************************/
 
@@ -186,7 +186,7 @@ static void buckrog_update_samples(void)
 
 /*******************************************
 
-	Turbo sound handling
+    Turbo sound handling
 
 *******************************************/
 
@@ -209,8 +209,8 @@ if (!((data >> 2) & 1)) printf("/TRIG2\n");
 if (!((data >> 3) & 1)) printf("/TRIG3\n");
 if (!((data >> 4) & 1)) printf("/TRIG4\n");
 
-//	osel = (osel & 6) | ((data >> 5) & 1);
-//	turbo_update_samples();
+//  osel = (osel & 6) | ((data >> 5) & 1);
+//  turbo_update_samples();
 }
 #endif
 
@@ -218,15 +218,15 @@ if (!((data >> 4) & 1)) printf("/TRIG4\n");
 WRITE8_HANDLER( turbo_sound_A_w )
 {
 	/*
-		2PA0 = /CRASH
-		2PA1 = /TRIG1
-		2PA2 = /TRIG2
-		2PA3 = /TRIG3
-		2PA4 = /TRIG4
-		2PA5 = OSEL0
-		2PA6 = /SLIP
-		2PA7 = /CRASHL
-	*/
+        2PA0 = /CRASH
+        2PA1 = /TRIG1
+        2PA2 = /TRIG2
+        2PA3 = /TRIG3
+        2PA4 = /TRIG4
+        2PA5 = OSEL0
+        2PA6 = /SLIP
+        2PA7 = /CRASHL
+    */
 #if (DISCRETE_TEST)
 	if (((data ^ last_sound_A) & 0x1e) && (last_sound_A & 0x1e) != 0x1e)
 		timer_set(TIME_IN_HZ(20000), data, update_sound_A);
@@ -251,15 +251,15 @@ WRITE8_HANDLER( turbo_sound_A_w )
 WRITE8_HANDLER( turbo_sound_B_w )
 {
 	/*
-		2PB0 = ACC0
-		2PB1 = ACC1
-		2PB2 = ACC2
-		2PB3 = ACC3
-		2PB4 = ACC4
-		2PB5 = ACC5
-		2PB6 = /AMBU
-		2PB7 = /SPIN
-	*/
+        2PB0 = ACC0
+        2PB1 = ACC1
+        2PB2 = ACC2
+        2PB3 = ACC3
+        2PB4 = ACC4
+        2PB5 = ACC5
+        2PB6 = /AMBU
+        2PB7 = /SPIN
+    */
 	turbo_accel = data & 0x3f;
 	turbo_update_samples();
 	if (!(data & 0x40))
@@ -278,15 +278,15 @@ WRITE8_HANDLER( turbo_sound_B_w )
 WRITE8_HANDLER( turbo_sound_C_w )
 {
 	/*
-		2PC0 = OSEL1
-		2PC1 = OSEL2
-		2PC2 = BSEL0
-		2PC3 = BSEL1
-		2PC4 = SPEED0
-		2PC5 = SPEED1
-		2PC6 = SPEED2
-		2PC7 = SPEED3
-	*/
+        2PC0 = OSEL1
+        2PC1 = OSEL2
+        2PC2 = BSEL0
+        2PC3 = BSEL1
+        2PC4 = SPEED0
+        2PC5 = SPEED1
+        2PC6 = SPEED2
+        2PC7 = SPEED3
+    */
 	turbo_speed = (data >> 4) & 0x0f;
 	bsel = (data >> 2) & 3;
 	osel = (osel & 1) | ((data & 3) << 1);
@@ -298,7 +298,7 @@ WRITE8_HANDLER( turbo_sound_C_w )
 
 /*******************************************
 
-	Subroc3D 8255 PPI handling
+    Subroc3D 8255 PPI handling
 
 *******************************************/
 
@@ -354,7 +354,7 @@ WRITE8_HANDLER( subroc3d_sound_C_w )
 
 /*******************************************
 
-	Buck Rogers 8255 PPI handling
+    Buck Rogers 8255 PPI handling
 
 *******************************************/
 

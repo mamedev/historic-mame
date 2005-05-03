@@ -1,10 +1,10 @@
 /***************************************************************************
 
-	TMP68301 basic emulation + Interrupt Handling
+    TMP68301 basic emulation + Interrupt Handling
 
-	The Toshiba TMP68301 is a 68HC000 + serial I/O, parallel I/O,
-	3 timers, address decoder, wait generator, interrupt controller,
-	all integrated in a single chip.
+    The Toshiba TMP68301 is a 68HC000 + serial I/O, parallel I/O,
+    3 timers, address decoder, wait generator, interrupt controller,
+    all integrated in a single chip.
 
 ***************************************************************************/
 
@@ -23,7 +23,7 @@ void tmp68301_update_timer( int i );
 int tmp68301_irq_callback(int int_level)
 {
 	int vector = tmp68301_irq_vector[int_level];
-//	logerror("CPU #0 PC %06X: irq callback returns %04X for level %x\n",activecpu_get_pc(),vector,int_level);
+//  logerror("CPU #0 PC %06X: irq callback returns %04X for level %x\n",activecpu_get_pc(),vector,int_level);
 	return vector;
 }
 
@@ -34,7 +34,7 @@ void tmp68301_timer_callback(int i)
 	data16_t ICR	=	tmp68301_regs[0x8e/2+i];	// Interrupt Controller Register (ICR7..9)
 	data16_t IVNR	=	tmp68301_regs[0x9a/2];		// Interrupt Vector Number Register (IVNR)
 
-//	logerror("CPU #0 PC %06X: callback timer %04X, j = %d\n",activecpu_get_pc(),i,tcount);
+//  logerror("CPU #0 PC %06X: callback timer %04X, j = %d\n",activecpu_get_pc(),i,tcount);
 
 	if	(	(TCR & 0x0004) &&	// INT
 			!(IMR & (0x100<<i))
@@ -96,7 +96,7 @@ void tmp68301_update_timer( int i )
 		break;
 	}
 
-//	logerror("CPU #0 PC %06X: TMP68301 Timer %d, duration %lf, max %04X\n",activecpu_get_pc(),i,duration,max);
+//  logerror("CPU #0 PC %06X: TMP68301 Timer %d, duration %lf, max %04X\n",activecpu_get_pc(),i,duration,max);
 
 	if (!(TCR & 0x0002))				// CS
 	{
@@ -157,7 +157,7 @@ WRITE16_HANDLER( tmp68301_regs_w )
 
 	if (!ACCESSING_LSB)	return;
 
-//	logerror("CPU #0 PC %06X: TMP68301 Reg %04X<-%04X & %04X\n",activecpu_get_pc(),offset*2,data,mem_mask^0xffff);
+//  logerror("CPU #0 PC %06X: TMP68301 Reg %04X<-%04X & %04X\n",activecpu_get_pc(),offset*2,data,mem_mask^0xffff);
 
 	switch( offset * 2 )
 	{

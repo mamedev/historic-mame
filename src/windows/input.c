@@ -1,6 +1,6 @@
 //============================================================
 //
-//	input.c - Win32 implementation of MAME input routines
+//  input.c - Win32 implementation of MAME input routines
 //
 //============================================================
 
@@ -24,7 +24,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 extern int verbose;
@@ -34,7 +34,7 @@ extern int win_window_mode;
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 #define MAX_KEYBOARDS		1
@@ -83,7 +83,7 @@ enum
 
 
 //============================================================
-//	MACROS
+//  MACROS
 //============================================================
 
 #define STRUCTSIZE(x)		((dinput_version == 0x0300) ? sizeof(x##_DX3) : sizeof(x))
@@ -93,7 +93,7 @@ enum
 
 
 //============================================================
-//	TYPEDEFS
+//  TYPEDEFS
 //============================================================
 
 struct axis_history
@@ -105,7 +105,7 @@ struct axis_history
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 UINT8						win_trying_to_quit;
@@ -114,7 +114,7 @@ int							win_use_mouse;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // this will be filled in dynamically
@@ -186,7 +186,7 @@ static int					ledmethod;
 
 
 //============================================================
-//	OPTIONS
+//  OPTIONS
 //============================================================
 
 // prototypes
@@ -225,7 +225,7 @@ struct rc_option input_opts[] =
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static void updatekeyboard(void);
@@ -237,7 +237,7 @@ static void poll_lightguns(void);
 
 
 //============================================================
-//	KEYBOARD/JOYSTICK LIST
+//  KEYBOARD/JOYSTICK LIST
 //============================================================
 
 // macros for building/mapping keyboard codes
@@ -273,7 +273,7 @@ static void poll_lightguns(void);
 // master keyboard translation table
 const int win_key_trans_table[][4] =
 {
-	// MAME key				dinput key			virtual key		ascii
+	// MAME key             dinput key          virtual key     ascii
 	{ KEYCODE_ESC, 			DIK_ESCAPE,			VK_ESCAPE,	 	27 },
 	{ KEYCODE_1, 			DIK_1,				'1',			'1' },
 	{ KEYCODE_2, 			DIK_2,				'2',			'2' },
@@ -387,7 +387,7 @@ const int win_key_trans_table[][4] =
 // master joystick translation table
 static int joy_trans_table[][2] =
 {
-	// internal code					MAME code
+	// internal code                    MAME code
 	{ JOYCODE(0, CODETYPE_AXIS_NEG, 0),	JOYCODE_1_LEFT },
 	{ JOYCODE(0, CODETYPE_AXIS_POS, 0),	JOYCODE_1_RIGHT },
 	{ JOYCODE(0, CODETYPE_AXIS_NEG, 1),	JOYCODE_1_UP },
@@ -608,7 +608,7 @@ static int joy_trans_table[][2] =
 
 
 //============================================================
-//	decode_ledmode
+//  decode_ledmode
 //============================================================
 
 static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
@@ -626,7 +626,7 @@ static int decode_ledmode(struct rc_option *option, const char *arg, int priorit
 
 
 //============================================================
-//	decode_analog_select
+//  decode_analog_select
 //============================================================
 
 static int decode_analog_select(struct rc_option *option, const char *arg, int priority)
@@ -651,7 +651,7 @@ static int decode_analog_select(struct rc_option *option, const char *arg, int p
 
 
 //============================================================
-//	decode_digital
+//  decode_digital
 //============================================================
 
 static int decode_digital(struct rc_option *option, const char *arg, int priority)
@@ -736,7 +736,7 @@ usage:
 
 
 //============================================================
-//	autoselect_analog_devices
+//  autoselect_analog_devices
 //============================================================
 
 static void autoselect_analog_devices(const struct InputPort *inp, int type1, int type2, int type3, int anatype, const char *ananame)
@@ -781,7 +781,7 @@ static void autoselect_analog_devices(const struct InputPort *inp, int type1, in
 
 
 //============================================================
-//	enum_keyboard_callback
+//  enum_keyboard_callback
 //============================================================
 
 static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID ref)
@@ -837,7 +837,7 @@ out_of_keyboards:
 
 
 //============================================================
-//	enum_mouse_callback
+//  enum_mouse_callback
 //============================================================
 
 static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID ref)
@@ -912,7 +912,7 @@ out_of_mice:
 
 
 //============================================================
-//	enum_joystick_callback
+//  enum_joystick_callback
 //============================================================
 
 static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID ref)
@@ -988,7 +988,7 @@ out_of_joysticks:
 
 
 //============================================================
-//	win_init_input
+//  win_init_input
 //============================================================
 
 int win_init_input(void)
@@ -1042,6 +1042,12 @@ int win_init_input(void)
 		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
 		if (result != DI_OK)
 			goto cant_init_mouse;
+
+		// if we have at least one mouse, and the "Dual" option is selected,
+		//  then the lightgun_count is 2 (The two guns are read as a single
+		//  4-button mouse).
+		if (mouse_count && use_lightgun_dual && lightgun_count < 2)
+			lightgun_count = 2;
 	}
 
 	// initialize joystick devices
@@ -1085,7 +1091,7 @@ cant_create_dinput:
 
 
 //============================================================
-//	win_shutdown_input
+//  win_shutdown_input
 //============================================================
 
 void win_shutdown_input(void)
@@ -1135,7 +1141,7 @@ void win_shutdown_input(void)
 
 
 //============================================================
-//	win_pause_input
+//  win_pause_input
 //============================================================
 
 void win_pause_input(int paused)
@@ -1175,7 +1181,7 @@ void win_pause_input(int paused)
 
 
 //============================================================
-//	win_poll_input
+//  win_poll_input
 //============================================================
 
 void win_poll_input(void)
@@ -1293,7 +1299,7 @@ void win_poll_input(void)
 
 
 //============================================================
-//	is_mouse_captured
+//  is_mouse_captured
 //============================================================
 
 int win_is_mouse_captured(void)
@@ -1304,7 +1310,7 @@ int win_is_mouse_captured(void)
 
 
 //============================================================
-//	updatekeyboard
+//  updatekeyboard
 //============================================================
 
 // since the keyboard controller is slow, it is not capable of reporting multiple
@@ -1337,7 +1343,7 @@ static void updatekeyboard(void)
 
 
 //============================================================
-//	is_key_pressed
+//  is_key_pressed
 //============================================================
 
 static int is_key_pressed(os_code_t keycode)
@@ -1383,7 +1389,7 @@ static int is_key_pressed(os_code_t keycode)
 
 
 //============================================================
-//	osd_readkey_unicode
+//  osd_readkey_unicode
 //============================================================
 
 int osd_readkey_unicode(int flush)
@@ -1401,7 +1407,7 @@ int osd_readkey_unicode(int flush)
 
 
 //============================================================
-//	init_keycodes
+//  init_keycodes
 //============================================================
 
 static void init_keycodes(void)
@@ -1456,7 +1462,7 @@ static void init_keycodes(void)
 
 
 //============================================================
-//	update_joystick_axes
+//  update_joystick_axes
 //============================================================
 
 static void update_joystick_axes(void)
@@ -1529,7 +1535,7 @@ static void update_joystick_axes(void)
 
 
 //============================================================
-//	add_joylist_entry
+//  add_joylist_entry
 //============================================================
 
 static void add_joylist_entry(const char *name, os_code_t code, input_code_t standardcode)
@@ -1558,7 +1564,7 @@ static void add_joylist_entry(const char *name, os_code_t code, input_code_t sta
 
 
 //============================================================
-//	init_joycodes
+//  init_joycodes
 //============================================================
 
 static void init_joycodes(void)
@@ -1707,7 +1713,7 @@ static void init_joycodes(void)
 
 
 //============================================================
-//	get_joycode_value
+//  get_joycode_value
 //============================================================
 
 static INT32 get_joycode_value(os_code_t joycode)
@@ -1841,7 +1847,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 
 
 //============================================================
-//	osd_is_code_pressed
+//  osd_is_code_pressed
 //============================================================
 
 INT32 osd_get_code_value(os_code_t code)
@@ -1855,7 +1861,7 @@ INT32 osd_get_code_value(os_code_t code)
 
 
 //============================================================
-//	osd_get_code_list
+//  osd_get_code_list
 //============================================================
 
 const struct OSCodeInfo *osd_get_code_list(void)
@@ -1866,7 +1872,7 @@ const struct OSCodeInfo *osd_get_code_list(void)
 
 
 //============================================================
-//	osd_lightgun_read
+//  osd_lightgun_read
 //============================================================
 
 void input_mouse_button_down(int button, int x, int y)
@@ -1989,7 +1995,7 @@ static void poll_lightguns(void)
 
 
 //============================================================
-//	osd_joystick_needs_calibration
+//  osd_joystick_needs_calibration
 //============================================================
 
 int osd_joystick_needs_calibration(void)
@@ -2000,7 +2006,7 @@ int osd_joystick_needs_calibration(void)
 
 
 //============================================================
-//	osd_joystick_start_calibration
+//  osd_joystick_start_calibration
 //============================================================
 
 void osd_joystick_start_calibration(void)
@@ -2010,7 +2016,7 @@ void osd_joystick_start_calibration(void)
 
 
 //============================================================
-//	osd_joystick_calibrate_next
+//  osd_joystick_calibrate_next
 //============================================================
 
 const char *osd_joystick_calibrate_next(void)
@@ -2021,7 +2027,7 @@ const char *osd_joystick_calibrate_next(void)
 
 
 //============================================================
-//	osd_joystick_calibrate
+//  osd_joystick_calibrate
 //============================================================
 
 void osd_joystick_calibrate(void)
@@ -2031,7 +2037,7 @@ void osd_joystick_calibrate(void)
 
 
 //============================================================
-//	osd_joystick_end_calibration
+//  osd_joystick_end_calibration
 //============================================================
 
 void osd_joystick_end_calibration(void)
@@ -2041,7 +2047,7 @@ void osd_joystick_end_calibration(void)
 
 
 //============================================================
-//	osd_customize_inputport_list
+//  osd_customize_inputport_list
 //============================================================
 
 void osd_customize_inputport_list(struct InputPortDefinition *defaults)
@@ -2110,7 +2116,7 @@ void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 
 
 //============================================================
-//	osd_get_leds
+//  osd_get_leds
 //============================================================
 
 int osd_get_leds(void)
@@ -2171,7 +2177,7 @@ int osd_get_leds(void)
 
 
 //============================================================
-//	osd_set_leds
+//  osd_set_leds
 //============================================================
 
 void osd_set_leds(int state)
@@ -2243,7 +2249,7 @@ void osd_set_leds(int state)
 
 
 //============================================================
-//	start_led
+//  start_led
 //============================================================
 
 void start_led(void)
@@ -2301,7 +2307,7 @@ void start_led(void)
 
 
 //============================================================
-//	stop_led
+//  stop_led
 //============================================================
 
 void stop_led(void)

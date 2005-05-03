@@ -296,7 +296,7 @@ enum
 #define GET_CPSR                ARM7REG(eCPSR)
 #define SET_CPSR(v)             (GET_CPSR = (v))
 #define MODE_FLAG               0xF                                 //Mode bits are 4:0 of CPSR, but we ignore bit 4.
-#define GET_MODE                (GET_CPSR & MODE_FLAG)              
+#define GET_MODE                (GET_CPSR & MODE_FLAG)
 #define SIGN_BIT                ((data32_t)(1<<31))
 #define SIGN_BITS_DIFFER(a,b)   (((a)^(b)) >> 31)
 
@@ -308,7 +308,7 @@ enum
 extern WRITE32_HANDLER((*arm7_coproc_do_callback));
 extern READ32_HANDLER((*arm7_coproc_rt_r_callback));
 extern WRITE32_HANDLER((*arm7_coproc_rt_w_callback));
-extern void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));      
+extern void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));
 extern void (*arm7_coproc_dt_w_callback)(data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data));
 
 #ifdef MAME_DEBUG

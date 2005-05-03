@@ -6,15 +6,15 @@
   Changelog, Hiromitsu Shioya 02/05/2002
   fix start address decode timing. (sample loop bug.)
 
-	Changelog, Mish, August 1999:
-		Removed interface support for different memory regions per channel.
-		Removed interface support for differing channel volume.
+    Changelog, Mish, August 1999:
+        Removed interface support for different memory regions per channel.
+        Removed interface support for differing channel volume.
 
-		Added bankswitching.
-		Added support for multiple chips.
+        Added bankswitching.
+        Added support for multiple chips.
 
-		(Nb:  Should different memory regions per channel be needed
-		the bankswitching function can set this up).
+        (Nb:  Should different memory regions per channel be needed
+        the bankswitching function can set this up).
 
 NS990821
 support for the K007232_VOL() macro.
@@ -294,7 +294,7 @@ static void *k007232_start(int sndindex, int clock, const void *config)
 {
   int i;
   struct kdacApcm *info;
-  
+
   info = auto_malloc(sizeof(*info));
   memset(info, 0, sizeof(*info));
 

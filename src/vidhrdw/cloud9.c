@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Cloud 9 (prototype) hardware
+    Atari Cloud 9 (prototype) hardware
 
 ***************************************************************************/
 
@@ -172,7 +172,7 @@ WRITE8_HANDLER( cloud9_bitmap_regs_w )
 	if (offset == 2)
 	{
 		/* Not quite sure how these writes map to VRAM
-		   (Cloud9 only directly writes 00 to VRAM and doesn't read it) */
+           (Cloud9 only directly writes 00 to VRAM and doesn't read it) */
 
 		/* Don't allow writes to memory at less than 0x600 */
 		if (y >= 0x0c)

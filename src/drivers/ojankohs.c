@@ -1,24 +1,24 @@
 /******************************************************************************
 
-	Game Driver for Video System Mahjong series.
+    Game Driver for Video System Mahjong series.
 
-	Ojanko High School (Japan)
-	(c)1988 Video System Co.,Ltd.
+    Ojanko High School (Japan)
+    (c)1988 Video System Co.,Ltd.
 
-	Ojanko Yakata (Japan)
-	(c)1986 Video System Co.,Ltd.
+    Ojanko Yakata (Japan)
+    (c)1986 Video System Co.,Ltd.
 
-	Ojanko Yakata 2bankan (Japan)
-	(c)1987 Video System Co.,Ltd.
+    Ojanko Yakata 2bankan (Japan)
+    (c)1987 Video System Co.,Ltd.
 
-	Chinese Casino [BET] (Japan)
-	(c)1987 Video System Co.,Ltd.
+    Chinese Casino [BET] (Japan)
+    (c)1987 Video System Co.,Ltd.
 
-	Ojanko Club (Japan)
-	(c)1986 Video System Co.,Ltd.
+    Ojanko Club (Japan)
+    (c)1986 Video System Co.,Ltd.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/06/10 -
-	Driver by Uki 2001/12/10 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/06/10 -
+    Driver by Uki 2001/12/10 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -119,7 +119,7 @@ static void ojankohs_adpcm_int(int irq)
 	}
 
 	/* generate an NMI if we're out of data */
-	if (!ojankohs_vclk_left) 
+	if (!ojankohs_vclk_left)
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
@@ -895,12 +895,12 @@ INPUT_PORTS_START( ojankoc )
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )PORT_PLAYER(2)
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START_TAG("IN12")	/* IN1 (12) */ 
+	PORT_START_TAG("IN12")	/* IN1 (12) */
 	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN13")	/* IN2 (13) */ 
+	PORT_START_TAG("IN13")	/* IN2 (13) */
 	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -977,7 +977,7 @@ static MACHINE_DRIVER_START( ojankohs )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/6)
 	MDRV_SOUND_CONFIG(ojankohs_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
@@ -1014,7 +1014,7 @@ static MACHINE_DRIVER_START( ojankoy )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(ojankoy_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
@@ -1050,7 +1050,7 @@ static MACHINE_DRIVER_START( ccasino )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(ojankoy_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
@@ -1085,7 +1085,7 @@ static MACHINE_DRIVER_START( ojankoc )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 8000000/4)
 	MDRV_SOUND_CONFIG(ojankoc_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)

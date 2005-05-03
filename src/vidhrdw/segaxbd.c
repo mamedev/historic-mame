@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega X-board hardware
+    Sega X-board hardware
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -21,7 +21,7 @@ static UINT8 road_priority;
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -37,7 +37,7 @@ VIDEO_START( xboard )
 	/* initialize the sprites */
 	if (segaic16_sprites_init(0, SEGAIC16_SPRITES_XBOARD, 0x000, 0))
 		return 1;
-		
+
 	/* initialize the road */
 	if (segaic16_road_init(0, SEGAIC16_ROAD_XBOARD, 0x1700, 0x1720, 0x1780, -166))
 		return 1;
@@ -49,7 +49,7 @@ VIDEO_START( xboard )
 
 /*************************************
  *
- *	Miscellaneous setters
+ *  Miscellaneous setters
  *
  *************************************/
 
@@ -63,7 +63,7 @@ void xboard_set_road_priority(int priority)
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -83,7 +83,7 @@ VIDEO_UPDATE( xboard )
 	segaic16_road_draw(0, bitmap, cliprect, SEGAIC16_ROAD_BACKGROUND);
 	if (road_priority == 0)
 		segaic16_road_draw(0, bitmap, cliprect, SEGAIC16_ROAD_FOREGROUND);
-	
+
 	/* draw background */
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);

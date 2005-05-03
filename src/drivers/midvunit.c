@@ -1,20 +1,20 @@
 /*************************************************************************
 
-	Driver for Midway V-Unit games
+    Driver for Midway V-Unit games
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Cruis'n USA (1994) [3 sets]
-		* Cruis'n World (1996) [3 sets]
-		* War Gods (1996)
-		* Off Road Challenge (1997)
+    Games supported:
+        * Cruis'n USA (1994) [3 sets]
+        * Cruis'n World (1996) [3 sets]
+        * War Gods (1996)
+        * Off Road Challenge (1997)
 
-	Known bugs:
-		* textures for automatic/manual selection get overwritten in Cruis'n World
-		* rendering needs to be looked at a little more closely to fix some holes
-		* in Cruis'n World attract mode, right side of sky looks like it has wrapped
-		* Off Road Challenge has polygon sorting issues, among other problems
+    Known bugs:
+        * textures for automatic/manual selection get overwritten in Cruis'n World
+        * rendering needs to be looked at a little more closely to fix some holes
+        * in Cruis'n World attract mode, right side of sky looks like it has wrapped
+        * Off Road Challenge has polygon sorting issues, among other problems
 
 **************************************************************************/
 
@@ -50,7 +50,7 @@ static data32_t *midvplus_misc;
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -83,7 +83,7 @@ static MACHINE_INIT( midvplus )
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -124,7 +124,7 @@ static READ32_HANDLER( port2_r )
 
 /*************************************
  *
- *	ADC input ports
+ *  ADC input ports
  *
  *************************************/
 
@@ -162,7 +162,7 @@ WRITE32_HANDLER( midvunit_adc_w )
 
 /*************************************
  *
- *	CMOS access
+ *  CMOS access
  *
  *************************************/
 
@@ -188,7 +188,7 @@ static READ32_HANDLER( midvunit_cmos_r )
 
 /*************************************
  *
- *	System controls
+ *  System controls
  *
  *************************************/
 
@@ -242,7 +242,7 @@ static WRITE32_HANDLER( midvunit_sound_w )
 
 /*************************************
  *
- *	TMS32031 I/O accesses
+ *  TMS32031 I/O accesses
  *
  *************************************/
 
@@ -254,7 +254,7 @@ READ32_HANDLER( tms32031_control_r )
 		/* timer is clocked at 100ns */
 		int which = (offset >> 4) & 1;
 		INT32 result = timer_timeelapsed(timer[which]) * timer_rate;
-//		logerror("%06X:tms32031_control_r(%02X) = %08X\n", activecpu_get_pc(), offset, result);
+//      logerror("%06X:tms32031_control_r(%02X) = %08X\n", activecpu_get_pc(), offset, result);
 		return result;
 	}
 
@@ -278,7 +278,7 @@ WRITE32_HANDLER( tms32031_control_w )
 	else if (offset == 0x20 || offset == 0x30)
 	{
 		int which = (offset >> 4) & 1;
-//	logerror("%06X:tms32031_control_w(%02X) = %08X\n", activecpu_get_pc(), offset, data);
+//  logerror("%06X:tms32031_control_w(%02X) = %08X\n", activecpu_get_pc(), offset, data);
 		if (data & 0x40)
 			timer_adjust(timer[which], TIME_NEVER, 0, TIME_NEVER);
 
@@ -296,7 +296,7 @@ WRITE32_HANDLER( tms32031_control_w )
 
 /*************************************
  *
- *	Serial number access
+ *  Serial number access
  *
  *************************************/
 
@@ -328,8 +328,8 @@ static WRITE32_HANDLER( crusnwld_serial_data_w )
 
 /*************************************
  *
- *	Some kind of protection-like
- *	device
+ *  Some kind of protection-like
+ *  device
  *
  *************************************/
 
@@ -361,7 +361,7 @@ static WRITE32_HANDLER( bit_reset_w )
 
 /*************************************
  *
- *	Off Road Challenge PIC access
+ *  Off Road Challenge PIC access
  *
  *************************************/
 
@@ -387,7 +387,7 @@ static WRITE32_HANDLER( offroadc_serial_data_w )
 
 /*************************************
  *
- *	War Gods I/O ASICs
+ *  War Gods I/O ASICs
  *
  *************************************/
 
@@ -447,14 +447,14 @@ static WRITE32_HANDLER( midvplus_misc_w )
 
 /*************************************
  *
- *	War Gods RAM grossness
+ *  War Gods RAM grossness
  *
  *************************************/
 
 static void midvplus_xf1_w(UINT8 val)
 {
 	static int lastval;
-//	printf("xf1_w = %d\n", val);
+//  printf("xf1_w = %d\n", val);
 
 	if (lastval && !val)
 		memcpy(ram_base, fastram_base, 0x20000*4);
@@ -466,7 +466,7 @@ static void midvplus_xf1_w(UINT8 val)
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -485,7 +485,7 @@ static ADDRESS_MAP_START( midvunit_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x980082, 0x980083) AM_READ(midvunit_dma_trigger_r)
 	AM_RANGE(0x990000, 0x990000) AM_READ(MRA32_NOP)	// link PAL (low 4 bits must == 4)
 	AM_RANGE(0x991030, 0x991030) AM_READ(port1_r)
-//	AM_RANGE(0x991050, 0x991050) AM_READ(MRA32_RAM)	// seems to be another port
+//  AM_RANGE(0x991050, 0x991050) AM_READ(MRA32_RAM) // seems to be another port
 	AM_RANGE(0x991060, 0x991060) AM_READ(port0_r)
 	AM_RANGE(0x992000, 0x992000) AM_READ(port2_r)
 	AM_RANGE(0x993000, 0x993000) AM_READWRITE(midvunit_adc_r, midvunit_adc_w)
@@ -530,7 +530,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -982,7 +982,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
@@ -1036,7 +1036,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1284,7 +1284,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -1390,7 +1390,7 @@ static DRIVER_INIT( wargods )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

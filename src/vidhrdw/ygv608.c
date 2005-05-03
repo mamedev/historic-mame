@@ -825,8 +825,8 @@ VIDEO_UPDATE( ygv608 )
 
 
 	/*
-	 *    now we can render the screen
-	 */
+     *    now we can render the screen
+     */
 
 #if 1
 	// LBO - need to implement proper pen marking for sprites as well as set aside a non-transparent
@@ -835,7 +835,7 @@ VIDEO_UPDATE( ygv608 )
 	{
 		// If the background tilemap is disabled, we need to clear the bitmap to black
 		fillbitmap (work_bitmap,Machine->pens[0],cliprect);
-//		fillbitmap (work_bitmap,1,&Machine->visible_area);
+//      fillbitmap (work_bitmap,1,&Machine->visible_area);
 	}
 	else
 #endif

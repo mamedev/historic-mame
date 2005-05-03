@@ -1,32 +1,32 @@
 /***************************************************************************
 
-							-= Clash Road =-
+                            -= Clash Road =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-	[ 2 Horizontally Scrolling Layers ]
+    [ 2 Horizontally Scrolling Layers ]
 
-		Size :	512 x 256
-		Tiles:	16 x 16 x 4.
+        Size :  512 x 256
+        Tiles:  16 x 16 x 4.
 
-		These 2 layers share the same graphics and X scroll value.
-		The tile codes are stuffed together in memory too: first one
-		layer's row, then the other's (and so on for all the rows).
+        These 2 layers share the same graphics and X scroll value.
+        The tile codes are stuffed together in memory too: first one
+        layer's row, then the other's (and so on for all the rows).
 
-	[ 1 Fixed Layer ]
+    [ 1 Fixed Layer ]
 
-		Size :	(256 + 32) x 256
-		Tiles:	8 x 8 x 4.
+        Size :  (256 + 32) x 256
+        Tiles:  8 x 8 x 4.
 
-		This is like a 32x32 tilemap, but the top and bottom rows (that
-		fall outside the visible area) are used to widen the tilemap
-		horizontally, adding 2 vertical columns both sides.
+        This is like a 32x32 tilemap, but the top and bottom rows (that
+        fall outside the visible area) are used to widen the tilemap
+        horizontally, adding 2 vertical columns both sides.
 
-		The result is a 36x28 visible tilemap.
+        The result is a 36x28 visible tilemap.
 
-	[ 64? sprites ]
+    [ 64? sprites ]
 
-		Sprites are 16 x 16 x 4.
+        Sprites are 16 x 16 x 4.
 
 ***************************************************************************/
 
@@ -110,21 +110,21 @@ PALETTE_INIT( firebatl )
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+                        Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /***************************************************************************
 
-						  Layers 0 Tiles Format
+                          Layers 0 Tiles Format
 
 Offset:
 
-	00-3f:	Even bytes: Codes	Odd bytes: Colors	<- Layer B First Row
-	40-7f:	Even bytes: Codes	Odd bytes: Colors	<- Layer A First Row
-	..										<- 2nd Row
-	..										<- 3rd Row
-	etc.
+    00-3f:  Even bytes: Codes   Odd bytes: Colors   <- Layer B First Row
+    40-7f:  Even bytes: Codes   Odd bytes: Colors   <- Layer A First Row
+    ..                                      <- 2nd Row
+    ..                                      <- 3rd Row
+    etc.
 
 ***************************************************************************/
 
@@ -133,7 +133,7 @@ static void get_tile_info_0a( int tile_index )
 	data8_t code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x40 ];
-//	color	=	clshroad_vram_0[ tile_index * 2 + 0x41 ];
+//  color   =   clshroad_vram_0[ tile_index * 2 + 0x41 ];
 	SET_TILE_INFO(
 			1,
 			code,
@@ -146,7 +146,7 @@ static void get_tile_info_0b( int tile_index )
 	data8_t code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x00 ];
-//	color	=	clshroad_vram_0[ tile_index * 2 + 0x01 ];
+//  color   =   clshroad_vram_0[ tile_index * 2 + 0x01 ];
 	SET_TILE_INFO(
 			1,
 			code,
@@ -168,19 +168,19 @@ WRITE8_HANDLER( clshroad_vram_0_w )
 
 /***************************************************************************
 
-						  Layer 1 Tiles Format
+                          Layer 1 Tiles Format
 
 Offset:
 
-	000-3ff		Code
-	400-7ff		7654----	Code (High bits)
-				----3210	Color
+    000-3ff     Code
+    400-7ff     7654----    Code (High bits)
+                ----3210    Color
 
-	This is like a 32x32 tilemap, but the top and bottom rows (that
-	fall outside the visible area) are used to widen the tilemap
-	horizontally, adding 2 vertical columns both sides.
+    This is like a 32x32 tilemap, but the top and bottom rows (that
+    fall outside the visible area) are used to widen the tilemap
+    horizontally, adding 2 vertical columns both sides.
 
-	The result is a 36x28 visible tilemap.
+    The result is a 36x28 visible tilemap.
 
 ***************************************************************************/
 
@@ -294,28 +294,28 @@ VIDEO_START( clshroad )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-Offset:		Format:		Value:
+Offset:     Format:     Value:
 
-	0
+    0
 
-	1					Y (Bottom-up)
+    1                   Y (Bottom-up)
 
-	2		765432--
-			------10	Code (high bits)
+    2       765432--
+            ------10    Code (high bits)
 
-	3		76------
-			--543210	Code (low bits)
+    3       76------
+            --543210    Code (low bits)
 
-	4
+    4
 
-	5					X (low bits)
+    5                   X (low bits)
 
-	6					X (High bits)
+    6                   X (High bits)
 
-	7		7654----
-			----3210	Color
+    7       7654----
+            ----3210    Color
 
 - Sprite flipping ?
 
@@ -356,7 +356,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -364,7 +364,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 VIDEO_UPDATE( clshroad )
 {
 	int scrollx  = clshroad_vregs[ 0 ] + (clshroad_vregs[ 1 ] << 8);
-//	int priority = clshroad_vregs[ 2 ];
+//  int priority = clshroad_vregs[ 2 ];
 
 	/* Only horizontal scrolling (these 2 layers use the same value) */
 	tilemap_set_scrollx(tilemap_0a, 0, scrollx);

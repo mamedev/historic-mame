@@ -1,23 +1,23 @@
 /***************************************************************************
 
-							-= Jaleco Mega System 1 =-
+                            -= Jaleco Mega System 1 =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	This file contains definitions used across multiple megasys1
-	and non megasys1 Jaleco games:
+    This file contains definitions used across multiple megasys1
+    and non megasys1 Jaleco games:
 
-	* Input ports
-	* Scrolling layers handling
-	* Code decryption handling
+    * Input ports
+    * Scrolling layers handling
+    * Code decryption handling
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
@@ -77,9 +77,9 @@
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 /* IN4 - Coinage DSWs */
-//	1]	01-41 02-31 03-21 07-11 06-12 05-13 04-14 00-FC	* 2
-//	2]	04-31 02-21 07-11 03-12 05-13 01-14 06-15 00-FC
-//		00-41 20-31 10-21 38-11 18-12 28-13 08-14 30-15
+//  1]  01-41 02-31 03-21 07-11 06-12 05-13 04-14 00-FC * 2
+//  2]  04-31 02-21 07-11 03-12 05-13 01-14 06-15 00-FC
+//      00-41 20-31 10-21 38-11 18-12 28-13 08-14 30-15
 
 
 #define COINAGE_6BITS \
@@ -128,11 +128,11 @@
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )\
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )\
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )\
-/*	PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )*/	\
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )\
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )\
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )\
@@ -145,11 +145,11 @@
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )\
 	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )\
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )\
-/*	PORT_DIPSETTING(    0x50, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ) )*/	\
-/*	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x50, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ) )*/	\
+/*  PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )*/	\
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )\
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )\
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )\
@@ -161,7 +161,7 @@
 
 /***************************************************************************
 
-							Scrolling Layers Handling
+                            Scrolling Layers Handling
 
 ***************************************************************************/
 

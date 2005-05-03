@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Driver for Midway V-Unit games
+    Driver for Midway V-Unit games
 
 **************************************************************************/
 
@@ -49,7 +49,7 @@ static int polycount, pixelcount, lastfps, framecount, totalframes;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -70,8 +70,8 @@ VIDEO_START( midvunit )
 
 /*************************************
  *
- *	Returns true if the quad is
- *	straight-on
+ *  Returns true if the quad is
+ *  straight-on
  *
  *************************************/
 
@@ -165,7 +165,7 @@ INLINE int quad_is_straight(void)
 
 /*************************************
  *
- *	Straight, flat quad renderers
+ *  Straight, flat quad renderers
  *
  *************************************/
 
@@ -244,7 +244,7 @@ static void render_straight_flat_dither_quad(void)
 
 /*************************************
  *
- *	Straight, textured quad renderers
+ *  Straight, textured quad renderers
  *
  *************************************/
 
@@ -466,7 +466,7 @@ static void render_straight_textransmask_quad(void)
 
 /*************************************
  *
- *	Generic flat quad renderer
+ *  Generic flat quad renderer
  *
  *************************************/
 
@@ -543,7 +543,7 @@ static void render_flat_dither_quad(void)
 
 /*************************************
  *
- *	Generic textured quad renderers
+ *  Generic textured quad renderers
  *
  *************************************/
 
@@ -708,7 +708,7 @@ static void render_textransmask_quad(void)
 
 /*************************************
  *
- *	Generic dithered textured quad renderers
+ *  Generic dithered textured quad renderers
  *
  *************************************/
 
@@ -906,7 +906,7 @@ static void render_textransmask_dither_quad(void)
 
 /*************************************
  *
- *	DMA queue processor
+ *  DMA queue processor
  *
  *************************************/
 
@@ -1018,7 +1018,7 @@ static void process_dma_queue(void)
 
 /*************************************
  *
- *	DMA pipe control control
+ *  DMA pipe control control
  *
  *************************************/
 
@@ -1054,7 +1054,7 @@ READ32_HANDLER( midvunit_dma_trigger_r )
 
 /*************************************
  *
- *	Paging control
+ *  Paging control
  *
  *************************************/
 
@@ -1086,7 +1086,7 @@ READ32_HANDLER( midvunit_page_control_r )
 
 /*************************************
  *
- *	Video control
+ *  Video control
  *
  *************************************/
 
@@ -1107,7 +1107,7 @@ READ32_HANDLER( midvunit_scanline_r )
 
 /*************************************
  *
- *	Video RAM access
+ *  Video RAM access
  *
  *************************************/
 
@@ -1126,7 +1126,7 @@ READ32_HANDLER( midvunit_videoram_r )
 
 /*************************************
  *
- *	Palette RAM access
+ *  Palette RAM access
  *
  *************************************/
 
@@ -1152,7 +1152,7 @@ WRITE32_HANDLER( midvunit_paletteram_w )
 
 /*************************************
  *
- *	Texture RAM access
+ *  Texture RAM access
  *
  *************************************/
 
@@ -1175,7 +1175,7 @@ READ32_HANDLER( midvunit_textureram_r )
 
 /*************************************
  *
- *	Video system update
+ *  Video system update
  *
  *************************************/
 

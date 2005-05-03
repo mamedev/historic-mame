@@ -211,8 +211,8 @@ static READ8_HANDLER( sound_reset_r ) {
 static WRITE8_HANDLER( kc_sound_control_w ) {
 	if ( offset == 0 )
 		sound_nmi_enable = ( ( data >> 7 ) & 1 );
-//	else
-//		DAC_set_volume(0,( data == 1 ) ? 255 : 0,0);
+//  else
+//      DAC_set_volume(0,( data == 1 ) ? 255 : 0,0);
 }
 
 static ADDRESS_MAP_START( kc_readport, ADDRESS_SPACE_IO, 8 )
@@ -471,10 +471,10 @@ static MACHINE_DRIVER_START( kchampvs )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
@@ -519,10 +519,10 @@ static MACHINE_DRIVER_START( kchamp )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
@@ -718,14 +718,14 @@ static DRIVER_INIT( kchampvs )
 		rom[A+diff] = (rom[A] & 0x55) | ((rom[A] & 0x88) >> 2) | ((rom[A] & 0x22) << 2);
 
 	/*
-		Note that the first 4 opcodes that the program
-		executes aren't encrypted for some obscure reason.
-		The address for the 2nd opcode (a jump) is encrypted too.
-		It's not clear what the 3rd and 4th opcode are supposed to do,
-		they just write to a RAM location. This write might be what
-		turns the encryption on, but this doesn't explain the
-		encrypted address for the jump.
-	 */
+        Note that the first 4 opcodes that the program
+        executes aren't encrypted for some obscure reason.
+        The address for the 2nd opcode (a jump) is encrypted too.
+        It's not clear what the 3rd and 4th opcode are supposed to do,
+        they just write to a RAM location. This write might be what
+        turns the encryption on, but this doesn't explain the
+        encrypted address for the jump.
+     */
 	rom[0+diff] = rom[0];	/* this is a jump */
 	A = rom[1] + 256 * rom[2];
 	rom[A+diff] = rom[A];	/* fix opcode on first jump address (again, a jump) */

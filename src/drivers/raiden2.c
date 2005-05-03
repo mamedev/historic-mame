@@ -42,26 +42,26 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	const struct GfxElement *gfx = Machine->gfx[2];
 
-//	static int ytlim = 1;
-//	static int xtlim = 1;
+//  static int ytlim = 1;
+//  static int xtlim = 1;
 
-//	if ( code_pressed_memory(KEYCODE_Q) ) ytlim--;
-//	if ( code_pressed_memory(KEYCODE_W) ) ytlim++;
+//  if ( code_pressed_memory(KEYCODE_Q) ) ytlim--;
+//  if ( code_pressed_memory(KEYCODE_W) ) ytlim++;
 
-//	if ( code_pressed_memory(KEYCODE_A) ) xtlim--;
-//	if ( code_pressed_memory(KEYCODE_S) ) xtlim++;
+//  if ( code_pressed_memory(KEYCODE_A) ) xtlim--;
+//  if ( code_pressed_memory(KEYCODE_S) ) xtlim++;
 
 
 	/*00 ???? ????  (colour / priority?)
-	  01 fhhh Fwww   h = height f=flipy w = width F = flipx
-	  02 nnnn nnnn   n = tileno
-	  03 nnnn nnnn   n = tile no
-	  04 xxxx xxxx   x = xpos
-	  05 xxxx xxxx   x = xpos
-	  06 yyyy yyyy   y = ypos
-	  07 yyyy yyyy   y = ypos
+      01 fhhh Fwww   h = height f=flipy w = width F = flipx
+      02 nnnn nnnn   n = tileno
+      03 nnnn nnnn   n = tile no
+      04 xxxx xxxx   x = xpos
+      05 xxxx xxxx   x = xpos
+      06 yyyy yyyy   y = ypos
+      07 yyyy yyyy   y = ypos
 
-	 */
+     */
 
 
 	while( source>finish ){
@@ -187,7 +187,7 @@ static void get_fore_tile_info( int tile_index )
 	int tile=fore_data[offs]+(fore_data[offs+1]<<8);
 	int color=tile >> 12;
 
-	//	tile=tile&0xfff;
+	//  tile=tile&0xfff;
 	tile = (tile & 0xfff) | (3<<12);  // 3000 intro (cliff) 1000 game (bg )
 
 	SET_TILE_INFO(1,tile,color,0)
@@ -272,7 +272,7 @@ VIDEO_UPDATE (raiden2)
 			tilemap_mark_all_tiles_dirty(foreground_layer);
 		}
 	}
-//		fillbitmap(bitmap, get_black_pen(), cliprect);
+//      fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
@@ -327,7 +327,7 @@ static ADDRESS_MAP_START( raiden2_mem, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x00430, 0x0043f) AM_WRITE(sound_w)
 	AM_RANGE(0x620, 0x62f) AM_RAM AM_BASE(&scrollregs)
-//	 AM_RANGE(0x470, 0x47f) AM_WRITE(scroll_w)
+//   AM_RANGE(0x470, 0x47f) AM_WRITE(scroll_w)
 
 	/* I have my doubts these are really mapped here, protection? */
 	AM_RANGE(0x00740, 0x00740) AM_READ(input_port_2_r) // dip 1
@@ -1267,13 +1267,13 @@ ROM_START( zeroteam )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* background gfx */
 	/* not dumped for this set */
-//	ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
-//	ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
+//  ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
+//  ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) (diff encrypt to raiden2? ) */
 	/* not dumped for this set */
-//	ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
-//	ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
+//  ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
+//  ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "pcm", 0x00000, 0x40000,  CRC(48be32b1) SHA1(969d2191a3c46871ee8bf93088b3cecce3eccf0c) ) // 6.4a
@@ -1297,13 +1297,13 @@ ROM_START( zeroteaa )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* background gfx */
 	/* not dumped for this set */
-//	ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
-//	ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
+//  ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
+//  ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) (diff encrypt to raiden2? ) */
 	/* not dumped for this set */
-//	ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
-//	ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
+//  ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
+//  ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "pcm", 0x00000, 0x40000,  CRC(48be32b1) SHA1(969d2191a3c46871ee8bf93088b3cecce3eccf0c) ) // 6.bin
@@ -1328,13 +1328,13 @@ ROM_START( zeroteab )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* background gfx */
 	/* not dumped for this set */
-//	ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
-//	ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
+//  ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
+//  ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) (diff encrypt to raiden2? ) */
 	/* not dumped for this set */
-//	ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
-//	ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
+//  ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
+//  ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "pcm", 0x00000, 0x40000,  CRC(48be32b1) SHA1(969d2191a3c46871ee8bf93088b3cecce3eccf0c) ) // 6.4a

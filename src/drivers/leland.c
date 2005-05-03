@@ -1,40 +1,40 @@
 /***************************************************************************
 
-	Cinemat/Leland driver
+    Cinemat/Leland driver
 
-	driver by Aaron Giles and Paul Leaman
+    driver by Aaron Giles and Paul Leaman
 
-	Games supported:
-		* Cerberus
-		* Mayhem 2002
-		* Power Play
-		* World Series: The Season
-		* Alley Master
-		* Up Your Alley
-		* Danger Zone
-		* Baseball The Season II
-		* Super Baseball Double Play Home Run Derby
-		* Strike Zone Baseball
-		* Redline Racer
-		* Quarterback
-		* Viper
-		* John Elway's Team Quarterback
-		* All American Football
-		* Ironman Stewart's Super Off-Road
-		* Pigout
+    Games supported:
+        * Cerberus
+        * Mayhem 2002
+        * Power Play
+        * World Series: The Season
+        * Alley Master
+        * Up Your Alley
+        * Danger Zone
+        * Baseball The Season II
+        * Super Baseball Double Play Home Run Derby
+        * Strike Zone Baseball
+        * Redline Racer
+        * Quarterback
+        * Viper
+        * John Elway's Team Quarterback
+        * All American Football
+        * Ironman Stewart's Super Off-Road
+        * Pigout
 
-	Known bugs:
-		* none at this time
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	To enter service mode in most games, press 1P start and then press
-	the service switch (F2).
+    To enter service mode in most games, press 1P start and then press
+    the service switch (F2).
 
-	For Redline Racer, hold the service switch down and reset the machine.
+    For Redline Racer, hold the service switch down and reset the machine.
 
-	For Super Offroad, press the blue nitro button (3P button 1) and then
-	press the service switch.
+    For Super Offroad, press the blue nitro button (3P button 1) and then
+    press the service switch.
 
 ***************************************************************************/
 
@@ -50,7 +50,7 @@
 
 /*************************************
  *
- *	Master CPU memory handlers
+ *  Master CPU memory handlers
  *
  *************************************/
 
@@ -77,7 +77,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Slave CPU memory handlers
+ *  Slave CPU memory handlers
  *
  *************************************/
 
@@ -111,7 +111,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -662,7 +662,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -687,7 +687,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
+ *  Sound definitions
  *
  *************************************/
 
@@ -729,7 +729,7 @@ static struct CustomSound_interface redline_custom_interface =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -768,11 +768,11 @@ static MACHINE_DRIVER_START( leland )
 	MDRV_SOUND_ADD_TAG("ay8910.1", AY8910, 10000000/6)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD_TAG("ay8910.2", AY8910, 10000000/6)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(dac_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -821,7 +821,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1915,7 +1915,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1923,27 +1923,27 @@ ROM_END
 /*
 Copy this code into the init function and modify:
 {
-	UINT8 *ram = memory_region(REGION_CPU1);
-	FILE *output;
+    UINT8 *ram = memory_region(REGION_CPU1);
+    FILE *output;
 
-	output = fopen("indyheat.m", "w");
-	dasm_chunk("Resident", 		&ram[0x00000], 0x0000, 0x2000, output);
-	dasm_chunk("Bank 0x02000:", &ram[0x02000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x10000:", &ram[0x10000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x18000:", &ram[0x18000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x20000:", &ram[0x20000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x28000:", &ram[0x28000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x30000:", &ram[0x30000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x38000:", &ram[0x38000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x40000:", &ram[0x40000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x48000:", &ram[0x48000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x50000:", &ram[0x50000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x58000:", &ram[0x58000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x60000:", &ram[0x60000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x68000:", &ram[0x68000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x70000:", &ram[0x70000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x78000:", &ram[0x78000], 0x2000, 0x8000, output);
-	fclose(output);
+    output = fopen("indyheat.m", "w");
+    dasm_chunk("Resident",      &ram[0x00000], 0x0000, 0x2000, output);
+    dasm_chunk("Bank 0x02000:", &ram[0x02000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x10000:", &ram[0x10000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x18000:", &ram[0x18000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x20000:", &ram[0x20000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x28000:", &ram[0x28000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x30000:", &ram[0x30000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x38000:", &ram[0x38000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x40000:", &ram[0x40000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x48000:", &ram[0x48000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x50000:", &ram[0x50000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x58000:", &ram[0x58000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x60000:", &ram[0x60000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x68000:", &ram[0x68000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x70000:", &ram[0x70000], 0x2000, 0x8000, output);
+    dasm_chunk("Bank 0x78000:", &ram[0x78000], 0x2000, 0x8000, output);
+    fclose(output);
 }
 */
 
@@ -2607,7 +2607,7 @@ static DRIVER_INIT( pigout )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

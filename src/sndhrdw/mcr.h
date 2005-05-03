@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	sndhrdw/mcr.c
+    sndhrdw/mcr.c
 
-	Functions to emulate general the various MCR sound cards.
+    Functions to emulate general the various MCR sound cards.
 
 ***************************************************************************/
 

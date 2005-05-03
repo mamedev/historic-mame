@@ -4,28 +4,28 @@
 
   Functions to emulate the video hardware of the machine.
 
-d800-dbff	foreground:			char low bits (1 screen * 1024 chars/screen)
-dc00-dfff	foreground attribute:	7		?
-						 6543		color
-						     21	?
-						       0	char hi bit
+d800-dbff   foreground:         char low bits (1 screen * 1024 chars/screen)
+dc00-dfff   foreground attribute:   7       ?
+                         6543       color
+                             21 ?
+                               0    char hi bit
 
 
-e000-e0ff	spriteram:  64 sprites (4 bytes/sprite)
-		offset :	0		1		2		3
-		meaning:	ypos(lo)	sprite(lo)	attribute	xpos(lo)
-								7   flipy
-								6   flipx
-								5-2 color
-								1   sprite(hi)
-								0   xpos(hi)
+e000-e0ff   spriteram:  64 sprites (4 bytes/sprite)
+        offset :    0       1       2       3
+        meaning:    ypos(lo)    sprite(lo)  attribute   xpos(lo)
+                                7   flipy
+                                6   flipx
+                                5-2 color
+                                1   sprite(hi)
+                                0   xpos(hi)
 
 
-background:	0x4000 bytes of ROM:	76543210	tile code low bits
-		0x4000 bytes of ROM:	7		?
-						 6543		color
-						     2	?
-						      10	tile code high bits
+background: 0x4000 bytes of ROM:    76543210    tile code low bits
+        0x4000 bytes of ROM:    7       ?
+                         6543       color
+                             2  ?
+                              10    tile code high bits
 
 ***************************************************************************/
 
@@ -263,7 +263,7 @@ WRITE8_HANDLER( galivan_gfxbank_w )
 		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
 	}
 
-/*	logerror("Address: %04X - port 40 = %02x\n",activecpu_get_pc(),data); */
+/*  logerror("Address: %04X - port 40 = %02x\n",activecpu_get_pc(),data); */
 }
 
 WRITE8_HANDLER( ninjemak_gfxbank_w )
@@ -389,7 +389,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			flipy = !flipy;
 		}
 
-//		code = spriteram[offs+1] + ((attr & 0x02) << 7);
+//      code = spriteram[offs+1] + ((attr & 0x02) << 7);
 		code = spriteram[offs+1] + ((attr & 0x06) << 7);	// for ninjemak, not sure ?
 
 		drawgfx(bitmap,Machine->gfx[2],

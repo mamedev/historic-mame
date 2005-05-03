@@ -116,18 +116,18 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 
 	/* | ---- ---- hhhf Fe-Y | ---- ---- yyyy yyyy | ---- ---- TTTT TTTT | ---- ---- tttt tttt |
-	   | ---- ---- -pCc cccX | ---- ---- xxxx xxxx | ---- ---- ---- ---- | ---- ---- ---- ---- | */
+       | ---- ---- -pCc cccX | ---- ---- xxxx xxxx | ---- ---- ---- ---- | ---- ---- ---- ---- | */
 
 	/* h  = height
-	   f  = flipx
-	   F  = flipy
-	   e  = enable
-	   Yy = Y Position
-	   Tt = Tile No.
-	   Xx = X Position
-	   Cc = color
-	   P = priority
-	*/
+       f  = flipx
+       F  = flipy
+       e  = enable
+       Yy = Y Position
+       Tt = Tile No.
+       Xx = X Position
+       Cc = color
+       P = priority
+    */
 
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *finish = shadfrce_spvideoram_old;
@@ -172,14 +172,14 @@ VIDEO_UPDATE( shadfrce )
 	tilemap_draw(bitmap,cliprect,shadfrce_fgtilemap, 0,0);
 
 /*
-	usrintf_showmessage	("Regs %04x %04x %04x %04x %04x %04x %04x",
-	shadfrce_videoregs[0],
-	shadfrce_videoregs[1],
-	shadfrce_videoregs[2],
-	shadfrce_videoregs[3],
-	shadfrce_videoregs[4],
-	shadfrce_videoregs[5],
-	shadfrce_videoregs[6]);
+    usrintf_showmessage ("Regs %04x %04x %04x %04x %04x %04x %04x",
+    shadfrce_videoregs[0],
+    shadfrce_videoregs[1],
+    shadfrce_videoregs[2],
+    shadfrce_videoregs[3],
+    shadfrce_videoregs[4],
+    shadfrce_videoregs[5],
+    shadfrce_videoregs[6]);
 */
 
 }

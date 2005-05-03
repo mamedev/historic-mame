@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega vector hardware
+    Sega vector hardware
 
 *************************************************************************/
 
@@ -79,7 +79,7 @@ WRITE8_HANDLER( sega_mult2_w )
 WRITE8_HANDLER( sega_switch_w )
 {
 	ioSwitch = data;
-/*	logerror("ioSwitch: %02x\n",ioSwitch); */
+/*  logerror("ioSwitch: %02x\n",ioSwitch); */
 }
 
 WRITE8_HANDLER( sega_coin_counter_w )

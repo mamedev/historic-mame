@@ -1,17 +1,17 @@
 /*************************************************************************
 
-	Driver for Midway Zeus games
-  
-	driver by Aaron Giles
+    Driver for Midway Zeus games
 
-	Games supported:
-		* Invasion
-		* Mortal Kombat 4
-		* Cruis'n Exotica
-		* The Grid
+    driver by Aaron Giles
 
-	Known bugs:
-		* not done yet
+    Games supported:
+        * Invasion
+        * Mortal Kombat 4
+        * Cruis'n Exotica
+        * The Grid
+
+    Known bugs:
+        * not done yet
 
 **************************************************************************/
 
@@ -74,29 +74,29 @@ VIDEO_UPDATE( midzeus )
 }
 
 /*
-	offset B7 = control....
-	
-		8000 = page 1 enable
-		4000 = page 0 enable
-		
-		0080 = 2nd pixel enable (maybe Z buff?)
-		0040 = 1st pixel enable (maybe Z buff?)
-		0020 = 2nd pixel enable
-		0010 = 1st pixel enable
-		
-		
-	writes 80a2 to write an odd pixel at startup
-	writes 80f6 to write the middle pixels
-	writes 8052 to write an odd pixel at the end
-	
-	writes 8050 before writing an odd pixel
-	writes 80a0 before writing an even pixel
-	
-	writes 44f1 before reading from page 0 of wave ram
-	writes 84f1 before reading from page 1 of wave ram
+    offset B7 = control....
 
-	writes 42f0 before writing to page 0 of wave ram
-	writes 82f0 before writing to page 1 of wave ram
+        8000 = page 1 enable
+        4000 = page 0 enable
+
+        0080 = 2nd pixel enable (maybe Z buff?)
+        0040 = 1st pixel enable (maybe Z buff?)
+        0020 = 2nd pixel enable
+        0010 = 1st pixel enable
+
+
+    writes 80a2 to write an odd pixel at startup
+    writes 80f6 to write the middle pixels
+    writes 8052 to write an odd pixel at the end
+
+    writes 8050 before writing an odd pixel
+    writes 80a0 before writing an even pixel
+
+    writes 44f1 before reading from page 0 of wave ram
+    writes 84f1 before reading from page 1 of wave ram
+
+    writes 42f0 before writing to page 0 of wave ram
+    writes 82f0 before writing to page 1 of wave ram
 
 
 Initialization:
@@ -494,56 +494,56 @@ then:
 (other stuff)
 
 loop over each scanline:
-	A2DD19:graphics_w(0B7) = 00000000
-	A2DD24:graphics_w(0B6) = 82F00001
-	A2DD30:graphics_r(0F6)
-	A2DD34:graphics_w(0B4) = 01FF0000
-	A2DD37:graphics_w(0B0) = AAAAAAAA
-	A2DD39:graphics_w(0B2) = AAAAAAAA
-	A2DD30:graphics_r(0F6)
-	A2DD34:graphics_w(0B4) = 01FF0001
-	A2DD37:graphics_w(0B0) = AAAAAAAA
-	A2DD39:graphics_w(0B2) = AAAAAAAA
-	A2DD30:graphics_r(0F6)
-	...
-	A2DD34:graphics_w(0B4) = 01FF01FE
-	A2DD37:graphics_w(0B0) = AAAAAAAA
-	A2DD39:graphics_w(0B2) = AAAAAAAA
-	A2DD30:graphics_r(0F6)
-	A2DD34:graphics_w(0B4) = 01FF01FF
-	A2DD37:graphics_w(0B0) = AAAAAAAA
-	A2DD39:graphics_w(0B2) = AAAAAAAA
-	A2DD45:graphics_w(0B6) = 00000000
-	A2DD58:graphics_w(0B6) = 00000000
-	A2DD6E:graphics_w(0B6) = 84F10001
-	A2DD6F:graphics_w(0B4) = 01FF0000
-	A2DD71:graphics_r(0F6)
-	A2DD76:graphics_w(0B6) = 00000000
-	A2DD77:graphics_r(0B0)
-	A2DD79:graphics_r(0B2)
-	A2DD6E:graphics_w(0B6) = 84F10001
-	A2DD6F:graphics_w(0B4) = 01FF0001
-	A2DD71:graphics_r(0F6)
-	A2DD76:graphics_w(0B6) = 00000000
-	A2DD77:graphics_r(0B0)
-	A2DD79:graphics_r(0B2)
-	...
-	A2DD6E:graphics_w(0B6) = 84F10001
-	A2DD6F:graphics_w(0B4) = 01FF01FE
-	A2DD71:graphics_r(0F6)
-	A2DD76:graphics_w(0B6) = 00000000
-	A2DD77:graphics_r(0B0)
-	A2DD79:graphics_r(0B2)
-	A2DD6E:graphics_w(0B6) = 84F10001
-	A2DD6F:graphics_w(0B4) = 01FF01FF
-	A2DD71:graphics_r(0F6)
-	A2DD76:graphics_w(0B6) = 00000000
-	A2DD77:graphics_r(0B0)
-	A2DD79:graphics_r(0B2)
-	A2DD82:graphics_w(0B6) = 00000000
-	A2DD19:graphics_w(0B7) = 00000000
-	A2DD24:graphics_w(0B6) = 82F00001
-	A2DD30:graphics_r(0F6)
+    A2DD19:graphics_w(0B7) = 00000000
+    A2DD24:graphics_w(0B6) = 82F00001
+    A2DD30:graphics_r(0F6)
+    A2DD34:graphics_w(0B4) = 01FF0000
+    A2DD37:graphics_w(0B0) = AAAAAAAA
+    A2DD39:graphics_w(0B2) = AAAAAAAA
+    A2DD30:graphics_r(0F6)
+    A2DD34:graphics_w(0B4) = 01FF0001
+    A2DD37:graphics_w(0B0) = AAAAAAAA
+    A2DD39:graphics_w(0B2) = AAAAAAAA
+    A2DD30:graphics_r(0F6)
+    ...
+    A2DD34:graphics_w(0B4) = 01FF01FE
+    A2DD37:graphics_w(0B0) = AAAAAAAA
+    A2DD39:graphics_w(0B2) = AAAAAAAA
+    A2DD30:graphics_r(0F6)
+    A2DD34:graphics_w(0B4) = 01FF01FF
+    A2DD37:graphics_w(0B0) = AAAAAAAA
+    A2DD39:graphics_w(0B2) = AAAAAAAA
+    A2DD45:graphics_w(0B6) = 00000000
+    A2DD58:graphics_w(0B6) = 00000000
+    A2DD6E:graphics_w(0B6) = 84F10001
+    A2DD6F:graphics_w(0B4) = 01FF0000
+    A2DD71:graphics_r(0F6)
+    A2DD76:graphics_w(0B6) = 00000000
+    A2DD77:graphics_r(0B0)
+    A2DD79:graphics_r(0B2)
+    A2DD6E:graphics_w(0B6) = 84F10001
+    A2DD6F:graphics_w(0B4) = 01FF0001
+    A2DD71:graphics_r(0F6)
+    A2DD76:graphics_w(0B6) = 00000000
+    A2DD77:graphics_r(0B0)
+    A2DD79:graphics_r(0B2)
+    ...
+    A2DD6E:graphics_w(0B6) = 84F10001
+    A2DD6F:graphics_w(0B4) = 01FF01FE
+    A2DD71:graphics_r(0F6)
+    A2DD76:graphics_w(0B6) = 00000000
+    A2DD77:graphics_r(0B0)
+    A2DD79:graphics_r(0B2)
+    A2DD6E:graphics_w(0B6) = 84F10001
+    A2DD6F:graphics_w(0B4) = 01FF01FF
+    A2DD71:graphics_r(0F6)
+    A2DD76:graphics_w(0B6) = 00000000
+    A2DD77:graphics_r(0B0)
+    A2DD79:graphics_r(0B2)
+    A2DD82:graphics_w(0B6) = 00000000
+    A2DD19:graphics_w(0B7) = 00000000
+    A2DD24:graphics_w(0B6) = 82F00001
+    A2DD30:graphics_r(0F6)
 
 repeat with 55555555....
 
@@ -697,7 +697,7 @@ READ32_HANDLER( graphics_r )
 {
 	data32_t result;
 	int logit = 1;
-	
+
 	if (offset >= 0xb0 && offset <= 0xb7)
 		logit = graphics_ram[0xb4] < 8;
 
@@ -730,49 +730,49 @@ READ32_HANDLER( graphics_r )
 
 
 /*
-	Writes to even addresses: reg[offs] = data & 0xffff; reg[offs+1] = data >> 16;
-	Writes to odd addresses:  reg[offs] = data & 0xffff;
-	
-	Control in $B7.
-	Enable in $B6.
-	Y/2 in $B5.
-	X | ((Y & 1) << 8) in $B4.
-	Depth data in $B2/$B3.
-	Pixel data in $B0/$B1.
-	
-	Control = $80F6 when doing initial screen clear.
-	   Writes 256 consecutive values to $B0, must mean autoincrement
-	   Uses latched value in $B2 (maybe also in $B0)
+    Writes to even addresses: reg[offs] = data & 0xffff; reg[offs+1] = data >> 16;
+    Writes to odd addresses:  reg[offs] = data & 0xffff;
 
-	Control = $82F0 when doing video RAM test write phase.
-	   Writes 512 values across, but updates address before each one.
-	  
-	Control = $84F1 when doing video RAM test read phase.
-	   Reads 512 values across, but updates address before each one.
-	  
-	Control = $80F2 when doing screen clear.
-	   Writes 256 consecutive values to $B0, must mean autoincrement.
-	   Uses latched value in $B2 (maybe also in $B0)
+    Control in $B7.
+    Enable in $B6.
+    Y/2 in $B5.
+    X | ((Y & 1) << 8) in $B4.
+    Depth data in $B2/$B3.
+    Pixel data in $B0/$B1.
 
-	Control = $80A0/$8050 when plotting pixels.
+    Control = $80F6 when doing initial screen clear.
+       Writes 256 consecutive values to $B0, must mean autoincrement
+       Uses latched value in $B2 (maybe also in $B0)
 
-	Control = $42F0 when doing wave RAM test write phase.
-	   Writes 512 values across, but updates address before each one.
-	  
-	Control = $44F1 when doing wave RAM test read phase.
-	   Reads 512 values across, but updates address before each one.
-	 
-	
-	Low bits = operation?
-	  $0 = write single
-	  $1 = read single
-	  $2 = write autoinc
+    Control = $82F0 when doing video RAM test write phase.
+       Writes 512 values across, but updates address before each one.
+
+    Control = $84F1 when doing video RAM test read phase.
+       Reads 512 values across, but updates address before each one.
+
+    Control = $80F2 when doing screen clear.
+       Writes 256 consecutive values to $B0, must mean autoincrement.
+       Uses latched value in $B2 (maybe also in $B0)
+
+    Control = $80A0/$8050 when plotting pixels.
+
+    Control = $42F0 when doing wave RAM test write phase.
+       Writes 512 values across, but updates address before each one.
+
+    Control = $44F1 when doing wave RAM test read phase.
+       Reads 512 values across, but updates address before each one.
+
+
+    Low bits = operation?
+      $0 = write single
+      $1 = read single
+      $2 = write autoinc
 */
 
 WRITE32_HANDLER( graphics_w )
 {
 	int logit = 1;
-	
+
 	if (offset >= 0xb0 && offset <= 0xb7)
 		logit = graphics_ram[0xb4] < 8;
 
@@ -786,13 +786,13 @@ WRITE32_HANDLER( graphics_w )
 		case 0xb2:
 		{
 			UINT32 *dest = graphics_pixaddr();
-			if (code_pressed(KEYCODE_F11)) logerror("B7=%04X x=%3d y=%3d B0=%04X%04X B2=%04X%04X\n", 
+			if (code_pressed(KEYCODE_F11)) logerror("B7=%04X x=%3d y=%3d B0=%04X%04X B2=%04X%04X\n",
 					graphics_ram[0xb7],
 					(graphics_ram[0xb4] & 0xff) << 1,
 					((graphics_ram[0xb4] >> 8) & 0x01) | ((graphics_ram[0xb5] << 1) & 0xffe),
 					graphics_ram[0xb0],graphics_ram[0xb1],
 					graphics_ram[0xb2],graphics_ram[0xb3]);
-					
+
 			if (graphics_ram[0xb7] != 0)
 			{
 				if (graphics_ram[0xb7] & 0x0050)
@@ -816,7 +816,7 @@ WRITE32_HANDLER( graphics_w )
 			}
 			break;
 		}
-			
+
 		case 0xb4:
 		{
 			if (graphics_ram[0xb7] & 1)
@@ -839,7 +839,7 @@ WRITE32_HANDLER( graphics_w )
 
 /*************************************
  *
- *	Machine init
+ *  Machine init
  *
  *************************************/
 
@@ -848,7 +848,7 @@ static MACHINE_INIT( midzeus )
 	memcpy(ram_base, memory_region(REGION_USER1), 0x20000*4);
 
 	*(UINT32 *)ram_base *= 2;
-	
+
 	timer[0] = timer_alloc(NULL);
 	timer[1] = timer_alloc(NULL);
 }
@@ -857,7 +857,7 @@ static MACHINE_INIT( midzeus )
 
 /*************************************
  *
- *	CMOS access
+ *  CMOS access
  *
  *************************************/
 
@@ -883,7 +883,7 @@ static READ32_HANDLER( cmos_r )
 
 /*************************************
  *
- *	TMS32031 I/O accesses
+ *  TMS32031 I/O accesses
  *
  *************************************/
 
@@ -897,7 +897,7 @@ static READ32_HANDLER( tms32031_control_r )
 		INT32 result = timer_timeelapsed(timer[which]) * 10000000.;
 		return result;
 	}
-	
+
 	/* log anything else except the memory control register */
 	if (offset != 0x64)
 		logerror("%06X:tms32031_control_r(%02X)\n", activecpu_get_pc(), offset);
@@ -909,10 +909,10 @@ static READ32_HANDLER( tms32031_control_r )
 static WRITE32_HANDLER( tms32031_control_w )
 {
 	COMBINE_DATA(&tms32031_control[offset]);
-	
+
 	/* ignore changes to the memory control register */
 	if (offset == 0x64)
-		;	
+		;
 
 	/* watch for accesses to the timers */
 	else if (offset == 0x20 || offset == 0x30)
@@ -929,7 +929,7 @@ static WRITE32_HANDLER( tms32031_control_w )
 
 /*************************************
  *
- *	Memory maps
+ *  Memory maps
  *
  *************************************/
 
@@ -969,7 +969,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Input ports
+ *  Input ports
  *
  *************************************/
 
@@ -1183,7 +1183,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( crusnexo )
 	PORT_START	    /* DS1 */
  	PORT_DIPNAME( 0x0001, 0x0001, "Game Type" )	/* Manual states "*DIP 1, Switch 1 MUST be set */
- 	PORT_DIPSETTING(      0x0001, "Dedicated" )	/*	 to OFF position for proper operation" */
+ 	PORT_DIPSETTING(      0x0001, "Dedicated" )	/*   to OFF position for proper operation" */
  	PORT_DIPSETTING(      0x0000, "Kit" )
  	PORT_DIPNAME( 0x0002, 0x0002, "Seat Motion" )	/* For dedicated Sit Down models with Motion Seat */
   	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
@@ -1401,29 +1401,29 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Machine drivers
+ *  Machine drivers
  *
  *************************************/
 
 MACHINE_DRIVER_START( midzeus )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", TMS32031, 50000000)		// actually, TMS32032
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(midzeus)
 	MDRV_NVRAM_HANDLER(generic_1fill)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(512, 432)
 	MDRV_VISIBLE_AREA(0, 511, 0, 399)
 	MDRV_PALETTE_LENGTH(32768)
-	
+
 	MDRV_VIDEO_START(midzeus)
 	MDRV_VIDEO_UPDATE(midzeus)
 
@@ -1435,7 +1435,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -1529,7 +1529,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver init
+ *  Driver init
  *
  *************************************/
 
@@ -1571,7 +1571,7 @@ static DRIVER_INIT( thegrid )
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

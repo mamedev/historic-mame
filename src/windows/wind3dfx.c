@@ -1,6 +1,6 @@
 //============================================================
 //
-//	wind3dfx.c - Win32 Direct3D 7 (with DirectDraw 7) effects
+//  wind3dfx.c - Win32 Direct3D 7 (with DirectDraw 7) effects
 //
 //============================================================
 
@@ -32,7 +32,7 @@
 
 
 //============================================================
-//	IMPORTS
+//  IMPORTS
 //============================================================
 
 // from input.c
@@ -58,7 +58,7 @@ extern int win_d3d_current_zoom;
 
 
 //============================================================
-//	GLOBAL VARIABLES
+//  GLOBAL VARIABLES
 //============================================================
 
 UINT32 win_d3d_tfactor;
@@ -67,7 +67,7 @@ UINT32 win_d3d_preprocess_tfactor;
 
 
 //============================================================
-//	LOCAL VARIABLES
+//  LOCAL VARIABLES
 //============================================================
 
 // command line parsing
@@ -149,7 +149,7 @@ static struct d3d_preset_info active_preset;
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 static int win_d3d_decode_scan(struct rc_option *option, const char *arg, int priority);
@@ -169,7 +169,7 @@ static void win_ddrawsurf_plot_pixel(const LPDDSURFACEDESC2 surface_desc, int x,
 
 
 //============================================================
-//	Options
+//  Options
 //============================================================
 
 struct rc_option win_d3d_opts[] =
@@ -195,7 +195,7 @@ struct rc_option win_d3d_opts[] =
 
 
 //============================================================
-//	Effect command line parsing
+//  Effect command line parsing
 //============================================================
 
 static int win_d3d_decode_scan(struct rc_option *option, const char *arg, int priority)
@@ -507,7 +507,7 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 
 
 //============================================================
-//	win_d3d_effects_in_use
+//  win_d3d_effects_in_use
 //============================================================
 
 int win_d3d_effects_in_use(void)
@@ -527,7 +527,7 @@ int win_d3d_effects_in_use(void)
 
 
 //============================================================
-//	Global effects initialisation
+//  Global effects initialisation
 //============================================================
 
 int win_d3d_effects_init(int attributes)
@@ -662,7 +662,7 @@ int win_d3d_effects_init(int attributes)
 
 
 //============================================================
-//	Initialise surfaces used for effects
+//  Initialise surfaces used for effects
 //============================================================
 
 int win_d3d_effects_init_surfaces(void)
@@ -681,7 +681,7 @@ int win_d3d_effects_init_surfaces(void)
 
 
 //============================================================
-//	Initialise scanline surfaces
+//  Initialise scanline surfaces
 //============================================================
 
 static int effects_scanline_init(void)
@@ -725,7 +725,7 @@ static int effects_scanline_init(void)
 
 
 //============================================================
-//	Initialise RGB effects surface
+//  Initialise RGB effects surface
 //============================================================
 
 static int effects_rgb_init(void)
@@ -917,7 +917,7 @@ static int replicate_pattern(int pattern_xsize, int pattern_ysize, UINT8 *patter
 
 
 //============================================================
-//	Plot a pixel on a DirectX7 surface (no bounds checking!)
+//  Plot a pixel on a DirectX7 surface (no bounds checking!)
 //============================================================
 
 static void win_ddrawsurf_plot_pixel(const LPDDSURFACEDESC2 surface_desc, int x, int y, int colour)

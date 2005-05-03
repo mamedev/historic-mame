@@ -374,7 +374,7 @@ ROM_START( merlinmm )
 	ROM_LOAD( "merlinmm.7h",  0x0000, 0x2000, CRC(f7d535aa) SHA1(65f100c15b07ec3aa21f5ed132e2fbf6e9120dbe) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "merl_sp.12c",  0x0000, 0x2000, CRC(517ecd57) SHA1(b0d4e2d106cddd6d19acd0e10f2d32544c84a900) )	
+	ROM_LOAD( "merl_sp.12c",  0x0000, 0x2000, CRC(517ecd57) SHA1(b0d4e2d106cddd6d19acd0e10f2d32544c84a900) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "merlinmm.3j",  0x0000, 0x0020, CRC(d56e91f4) SHA1(152d88e4d168f697030d96c02ab9aeb220cc765d) ) /* palette */
@@ -386,7 +386,7 @@ DRIVER_INIT( merlinmm )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
 	int i;
-	
+
 	/* decrypt program code */
 	for( i = 0; i < 0x4000; i++ )
 		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);

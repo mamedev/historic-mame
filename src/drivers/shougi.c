@@ -8,12 +8,12 @@ memory map :
 0000 - 3fff rom
 4000 - 43ff RAM for main CPU
 4800 - 480f  control area (connected to 74LS259 8-bit addressable latch; lines A0,A1,A2 - address input, line A3 - data input)
-	4800,4808 - control shared RAM access between main CPU/sub CPU. 4800=access for sub CPU, 4808=access for main CPU
-	4801,4809 - NMI disable/enable
-	4802,480a -
-	4803,480b -
-	4804,480c -
-	4807,480f -?
+    4800,4808 - control shared RAM access between main CPU/sub CPU. 4800=access for sub CPU, 4808=access for main CPU
+    4801,4809 - NMI disable/enable
+    4802,480a -
+    4803,480b -
+    4804,480c -
+    4807,480f -?
 
 4800 - 4800 read: input
 5000 - 5000 read: input
@@ -69,16 +69,16 @@ CUSTOM: ALPHA 8201 (42 pin DIP)
 DIPSW : 6 position (x1)
        Positions 1, 5 & 6 not used
 
-	4	3	2
+    4   3   2
        ------------------------------
-       OFF	OFF	OFF	1 minutes (time for the opponent to make his decision)
-       OFF	OFF	ON	2
-       OFF	ON	OFF	3
-       OFF	ON	ON	4
-       ON	OFF	OFF	5
-       ON	OFF	ON	10
-       ON	ON	OFF	20
-       ON	ON	ON	30
+       OFF  OFF OFF 1 minutes (time for the opponent to make his decision)
+       OFF  OFF ON  2
+       OFF  ON  OFF 3
+       OFF  ON  ON  4
+       ON   OFF OFF 5
+       ON   OFF ON  10
+       ON   ON  OFF 20
+       ON   ON  ON  30
 
 ROMs  : All type 2732
 PROM  : Type MB7051
@@ -98,7 +98,7 @@ PROM  : Type MB7051
 
 //VIDEO_START( shougi )
 //{
-//	generic_vh_start();
+//  generic_vh_start();
 //}
 
 #include "vidhrdw/res_net.h"
@@ -166,16 +166,16 @@ int offs;
 
 	for (offs = 0;offs <0x4000; offs++)
 	{
-	//	if (dirtybuffer[offs])
+	//  if (dirtybuffer[offs])
 		{
 			int sx, sy, x, data1, data2, color, data;
 
-	//		dirtybuffer[offs] = 0;
+	//      dirtybuffer[offs] = 0;
 
 			sx = offs >> 8;		/*00..0x3f (64*4=256)*/
 			sy = offs & 0xff;	/*00..0xff*/
-	//		if (flipscreen[0]) sx = 31 - sx;
-	//		if (flipscreen[1]) sy = 31 - sy;
+	//      if (flipscreen[0]) sx = 31 - sx;
+	//      if (flipscreen[1]) sy = 31 - sy;
 
 			data1 = videoram[offs];				/* color */
 			data2 = videoram[0x4000 + offs];	/* pixel data */
@@ -392,7 +392,7 @@ static MACHINE_DRIVER_START( shougi )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 10000000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END

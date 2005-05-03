@@ -26,34 +26,34 @@ CPUs related:
 * 1xOSC24MHz @ B20
 * 2xM27C4001 @ C22 & C23 (M68000 program ROMs)
 * 1xPAL20L8 @ B23 (handles 1st level M68000 memory map)
-	0 -> DTACK (M68000 data ack)
-	1 -> SELACT
-	2 -> Input/sound (see below)
-	3 -> ACTEXT
-	4 -> SELMOV
-	5 -> CSW
-	6 -> CSR
-	7 -> EXT
+    0 -> DTACK (M68000 data ack)
+    1 -> SELACT
+    2 -> Input/sound (see below)
+    3 -> ACTEXT
+    4 -> SELMOV
+    5 -> CSW
+    6 -> CSR
+    7 -> EXT
 
 * 1x74LS138 (3 to 8 line decoder) @ B13 (handles 2nd level M68000 memory map)
-	0 -> IN0	DIPSW #1 & #2
-	1 -> IN1	Joystick 1P & 2P, COINSW, STARTSW
-	2 -> IN2	Wheel input
-	3 -> -
-	4 -> IN4	TESTSW & SERVICESW
-	5 -> OUT (see below)
-	6 -> CSBAN	OKIM6295 bankswitch
-	7 -> CSSON	OKIM6295 R/W
+    0 -> IN0    DIPSW #1 & #2
+    1 -> IN1    Joystick 1P & 2P, COINSW, STARTSW
+    2 -> IN2    Wheel input
+    3 -> -
+    4 -> IN4    TESTSW & SERVICESW
+    5 -> OUT (see below)
+    6 -> CSBAN  OKIM6295 bankswitch
+    7 -> CSSON  OKIM6295 R/W
 
 * 1x74LS259 (8 bit addressable latches) @A7 (handles 3rd level M68000 memory map)
-	0 -> Coin lockout 1
-	1 -> Coin lockout 2
-	2 -> Coin counter 1
-	3 -> Coin counter 2
-	4 -> Sound muting
-	5 -> flip screen
-	6 -> ENA/D?
-	7 -> CKA/D?
+    0 -> Coin lockout 1
+    1 -> Coin lockout 2
+    2 -> Coin counter 1
+    3 -> Coin counter 2
+    4 -> Sound muting
+    5 -> flip screen
+    6 -> ENA/D?
+    7 -> CKA/D?
 
 Sound related:
 ==============
@@ -243,7 +243,7 @@ static MACHINE_DRIVER_START( wrally )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*16, 32*16)
 	MDRV_VISIBLE_AREA(0, 64*16-1, 0, 32*16-1)
-//	MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
+//  MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
 	MDRV_GFXDECODE(wrally_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024*8)
 
@@ -289,8 +289,8 @@ ROM_START( wrallya )
 	ROM_LOAD16_BYTE( "worldr19.i09",	0x100000, 0x080000, CRC(018b35bb) SHA1(ca789e23d18cc7d7e48b6858e6b61e03bf88b475) )
 	ROM_LOAD16_BYTE( "worldr18.i07",	0x100001, 0x080000, CRC(b37c807e) SHA1(9e6155a2b5206c0d4dca669d24d9fe9830027651) )
 //  same data, different layout
-//	ROM_LOAD( "h12.bin",	0x000000, 0x100000, CRC(3353dc00) )
-//	ROM_LOAD( "h8.bin",		0x100000, 0x100000, CRC(58dcd024) )
+//  ROM_LOAD( "h12.bin",    0x000000, 0x100000, CRC(3353dc00) )
+//  ROM_LOAD( "h8.bin",     0x100000, 0x100000, CRC(58dcd024) )
 
 	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "worldr14.c01",	0x000000, 0x080000, CRC(e931c2ee) SHA1(ea1cf8ad52713e5136a370e289567eea9e6403d6) )

@@ -1,8 +1,8 @@
 /**************************************************************************
 
-	Interrupt System Hardware for Bally/Midway games
+    Interrupt System Hardware for Bally/Midway games
 
- 	Mike@Dissfulfils.co.uk
+    Mike@Dissfulfils.co.uk
 
 **************************************************************************/
 

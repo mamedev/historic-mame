@@ -1,5 +1,5 @@
 /***************************************************************************
-				Taito Custom Chips
+                Taito Custom Chips
 ***************************************************************************/
 
 extern const int TC0100SCN_SINGLE_VDU;	/* value set in taitoic.c */

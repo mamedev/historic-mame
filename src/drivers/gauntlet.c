@@ -1,119 +1,119 @@
 /***************************************************************************
 
-	Atari Gauntlet hardware
+    Atari Gauntlet hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Gauntlet (1985) [14 sets]
-		* Gauntlet 2-player Version (1985) [6 sets]
-		* Gauntlet II (1986) [2 sets]
-		* Gauntlet II 2-player Version (1986) [3 sets]
-		* Vindicators Part II (1988) [3 sets]
+    Games supported:
+        * Gauntlet (1985) [14 sets]
+        * Gauntlet 2-player Version (1985) [6 sets]
+        * Gauntlet II (1986) [2 sets]
+        * Gauntlet II 2-player Version (1986) [3 sets]
+        * Vindicators Part II (1988) [3 sets]
 
-	Known bugs:
-		* none at this time
-
-****************************************************************************
-
-	Memory map
+    Known bugs:
+        * none at this time
 
 ****************************************************************************
 
-	========================================================================
-	MAIN CPU
-	========================================================================
-	000000-037FFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	038000-03FFFF   R     xxxxxxxx xxxxxxxx   Slapstic-protected ROM
-	040000-07FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
-	800000-801FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
-	802000-802FFF   R/W   -------- xxxxxxxx   EEPROM
-	803000          R     -------- xxxxxxxx   Input port 1
-	803002          R     -------- xxxxxxxx   Input port 2
-	803004          R     -------- xxxxxxxx   Input port 3
-	803006          R     -------- xxxxxxxx   Input port 4
-	803008          R     -------- -xxxx---   Status port
-	                R     -------- -x------      (VBLANK)
-	                R     -------- --x-----      (Sound command buffer full)
-	                R     -------- ---x----      (Sound response buffer full)
-	                R     -------- ----x---      (Self test)
-	80300E          R     -------- xxxxxxxx   Sound response read
-	803100            W   -------- --------   Watchdog reset
-	80312E            W   -------- -------x   Sound CPU reset
-	803140            W   -------- --------   VBLANK IRQ acknowledge
-	803150            W   -------- --------   EEPROM enable
-	803170            W   -------- xxxxxxxx   Sound command write
-	900000-901FFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x64 tiles)
-	                R/W   x------- --------      (Horizontal flip)
-	                R/W   -xxx---- --------      (Palette select)
-	                R/W   ----xxxx xxxxxxxx      (Tile index)
-	902000-903FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (1024 entries x 4 words)
-	                R/W   -xxxxxxx xxxxxxxx      (0: Tile index)
-	                R/W   xxxxxxxx x-------      (1024: X position)
-	                R/W   -------- ----xxxx      (1024: Palette select)
-	                R/W   xxxxxxxx x-------      (2048: Y position)
-	                R/W   -------- -x------      (2048: Horizontal flip)
-	                R/W   -------- --xxx---      (2048: Number of X tiles - 1)
-	                R/W   -------- -----xxx      (2048: Number of Y tiles - 1)
-	                R/W   ------xx xxxxxxxx      (3072: Link to next object)
-	904000-904FFF   R/W   xxxxxxxx xxxxxxxx   Spare video RAM
-	905000-905FFF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics RAM (64x32 tiles)
-	                R/W   x------- --------      (Opaque/transparent)
-	                R/W   -xxxxx-- --------      (Palette select)
-	                R/W   ------xx xxxxxxxx      (Tile index)
-	905F6E          R/W   xxxxxxxx x-----xx   Playfield Y scroll/tile bank select
-	                R/W   xxxxxxxx x-------      (Playfield Y scroll)
-	                R/W   -------- ------xx      (Playfield tile bank select)
-	910000-9101FF   R/W   xxxxxxxx xxxxxxxx   Alphanumercs palette RAM (256 entries)
-	                R/W   xxxx---- --------      (Intensity)
-	                R/W   ----xxxx --------      (Red)
-	                R/W   -------- xxxx----      (Green)
-	                R/W   -------- ----xxxx      (Blue)
-	910200-9103FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
-	910400-9105FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
-	910600-9107FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (256 entries)
-	930000            W   xxxxxxxx x-------   Playfield X scroll
-	========================================================================
-	Interrupts:
-		IRQ4 = VBLANK
-		IRQ6 = sound CPU communications
-	========================================================================
+    Memory map
+
+****************************************************************************
+
+    ========================================================================
+    MAIN CPU
+    ========================================================================
+    000000-037FFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    038000-03FFFF   R     xxxxxxxx xxxxxxxx   Slapstic-protected ROM
+    040000-07FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+    800000-801FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+    802000-802FFF   R/W   -------- xxxxxxxx   EEPROM
+    803000          R     -------- xxxxxxxx   Input port 1
+    803002          R     -------- xxxxxxxx   Input port 2
+    803004          R     -------- xxxxxxxx   Input port 3
+    803006          R     -------- xxxxxxxx   Input port 4
+    803008          R     -------- -xxxx---   Status port
+                    R     -------- -x------      (VBLANK)
+                    R     -------- --x-----      (Sound command buffer full)
+                    R     -------- ---x----      (Sound response buffer full)
+                    R     -------- ----x---      (Self test)
+    80300E          R     -------- xxxxxxxx   Sound response read
+    803100            W   -------- --------   Watchdog reset
+    80312E            W   -------- -------x   Sound CPU reset
+    803140            W   -------- --------   VBLANK IRQ acknowledge
+    803150            W   -------- --------   EEPROM enable
+    803170            W   -------- xxxxxxxx   Sound command write
+    900000-901FFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x64 tiles)
+                    R/W   x------- --------      (Horizontal flip)
+                    R/W   -xxx---- --------      (Palette select)
+                    R/W   ----xxxx xxxxxxxx      (Tile index)
+    902000-903FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (1024 entries x 4 words)
+                    R/W   -xxxxxxx xxxxxxxx      (0: Tile index)
+                    R/W   xxxxxxxx x-------      (1024: X position)
+                    R/W   -------- ----xxxx      (1024: Palette select)
+                    R/W   xxxxxxxx x-------      (2048: Y position)
+                    R/W   -------- -x------      (2048: Horizontal flip)
+                    R/W   -------- --xxx---      (2048: Number of X tiles - 1)
+                    R/W   -------- -----xxx      (2048: Number of Y tiles - 1)
+                    R/W   ------xx xxxxxxxx      (3072: Link to next object)
+    904000-904FFF   R/W   xxxxxxxx xxxxxxxx   Spare video RAM
+    905000-905FFF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics RAM (64x32 tiles)
+                    R/W   x------- --------      (Opaque/transparent)
+                    R/W   -xxxxx-- --------      (Palette select)
+                    R/W   ------xx xxxxxxxx      (Tile index)
+    905F6E          R/W   xxxxxxxx x-----xx   Playfield Y scroll/tile bank select
+                    R/W   xxxxxxxx x-------      (Playfield Y scroll)
+                    R/W   -------- ------xx      (Playfield tile bank select)
+    910000-9101FF   R/W   xxxxxxxx xxxxxxxx   Alphanumercs palette RAM (256 entries)
+                    R/W   xxxx---- --------      (Intensity)
+                    R/W   ----xxxx --------      (Red)
+                    R/W   -------- xxxx----      (Green)
+                    R/W   -------- ----xxxx      (Blue)
+    910200-9103FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
+    910400-9105FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
+    910600-9107FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (256 entries)
+    930000            W   xxxxxxxx x-------   Playfield X scroll
+    ========================================================================
+    Interrupts:
+        IRQ4 = VBLANK
+        IRQ6 = sound CPU communications
+    ========================================================================
 
 
-	========================================================================
-	SOUND CPU
-	========================================================================
-	0000-0FFF   R/W   xxxxxxxx   Program RAM
-	1000          W   xxxxxxxx   Sound response write
-	1010        R     xxxxxxxx   Sound command read
-	1020        R     ----xxxx   Coin inputs
-	            R     ----x---      (Coin 1)
-	            R     -----x--      (Coin 2)
-	            R     ------x-      (Coin 3)
-	            R     -------x      (Coin 4)
-	1020          W   xxxxxxxx   Mixer control
-	              W   xxx-----      (TMS5220 volume)
-	              W   ---xx---      (POKEY volume)
-	              W   -----xxx      (YM2151 volume)
-	1030        R     xxxx----   Sound status read
-	            R     x-------      (Sound command buffer full)
-	            R     -x------      (Sound response buffer full)
-	            R     --x-----      (TMS5220 ready)
-	            R     ---x----      (Self test)
-	1030          W   x-------   YM2151 reset
-	1031          W   x-------   TMS5220 data strobe
-	1032          W   x-------   TMS5220 reset
-	1033          W   x-------   TMS5220 frequency
-	1800-180F   R/W   xxxxxxxx   POKEY communications
-	1810-1811   R/W   xxxxxxxx   YM2151 communications
-	1820          W   xxxxxxxx   TMS5220 data latch
-	1830        R/W   --------   IRQ acknowledge
-	4000-FFFF   R     xxxxxxxx   Program ROM
-	========================================================================
-	Interrupts:
-		IRQ = timed interrupt
-		NMI = latch on sound command
-	========================================================================
+    ========================================================================
+    SOUND CPU
+    ========================================================================
+    0000-0FFF   R/W   xxxxxxxx   Program RAM
+    1000          W   xxxxxxxx   Sound response write
+    1010        R     xxxxxxxx   Sound command read
+    1020        R     ----xxxx   Coin inputs
+                R     ----x---      (Coin 1)
+                R     -----x--      (Coin 2)
+                R     ------x-      (Coin 3)
+                R     -------x      (Coin 4)
+    1020          W   xxxxxxxx   Mixer control
+                  W   xxx-----      (TMS5220 volume)
+                  W   ---xx---      (POKEY volume)
+                  W   -----xxx      (YM2151 volume)
+    1030        R     xxxx----   Sound status read
+                R     x-------      (Sound command buffer full)
+                R     -x------      (Sound response buffer full)
+                R     --x-----      (TMS5220 ready)
+                R     ---x----      (Self test)
+    1030          W   x-------   YM2151 reset
+    1031          W   x-------   TMS5220 data strobe
+    1032          W   x-------   TMS5220 reset
+    1033          W   x-------   TMS5220 frequency
+    1800-180F   R/W   xxxxxxxx   POKEY communications
+    1810-1811   R/W   xxxxxxxx   YM2151 communications
+    1820          W   xxxxxxxx   TMS5220 data latch
+    1830        R/W   --------   IRQ acknowledge
+    4000-FFFF   R     xxxxxxxx   Program ROM
+    ========================================================================
+    Interrupts:
+        IRQ = timed interrupt
+        NMI = latch on sound command
+    ========================================================================
 
 ****************************************************************************/
 
@@ -129,7 +129,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -141,7 +141,7 @@ static data16_t sound_reset_val;
 
 /*************************************
  *
- *	Initialization & interrupts
+ *  Initialization & interrupts
  *
  *************************************/
 
@@ -187,7 +187,7 @@ static MACHINE_INIT( gauntlet )
 
 /*************************************
  *
- *	Controller reads
+ *  Controller reads
  *
  *************************************/
 
@@ -203,7 +203,7 @@ static READ16_HANDLER( port4_r )
 
 /*************************************
  *
- *	Sound reset
+ *  Sound reset
  *
  *************************************/
 
@@ -226,7 +226,7 @@ static WRITE16_HANDLER( sound_reset_w )
 
 /*************************************
  *
- *	Sound I/O inputs
+ *  Sound I/O inputs
  *
  *************************************/
 
@@ -246,7 +246,7 @@ static READ8_HANDLER( switch_6502_r )
 
 /*************************************
  *
- *	Sound TMS5220 write
+ *  Sound TMS5220 write
  *
  *************************************/
 
@@ -259,7 +259,7 @@ static WRITE8_HANDLER( tms5220_w )
 
 /*************************************
  *
- *	Sound control write
+ *  Sound control write
  *
  *************************************/
 
@@ -292,7 +292,7 @@ static WRITE8_HANDLER( sound_ctl_w )
 
 /*************************************
  *
- *	Sound mixer write
+ *  Sound mixer write
  *
  *************************************/
 
@@ -307,7 +307,7 @@ static WRITE8_HANDLER( mixer_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -340,7 +340,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Sound CPU memory handlers
+ *  Sound CPU memory handlers
  *
  *************************************/
 
@@ -362,7 +362,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -477,7 +477,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -516,7 +516,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -556,7 +556,7 @@ static MACHINE_DRIVER_START( gauntlet )
 	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.32)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.32)
-	
+
 	MDRV_SOUND_ADD(TMS5220, ATARI_CLOCK_14MHz/2/11)	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
@@ -566,7 +566,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -1482,7 +1482,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -1530,7 +1530,7 @@ static DRIVER_INIT( vindctr2 )
 	common_init(118, 1);
 
 	/* highly strange -- the address bits on the chip at 2J (and only that
-	   chip) are scrambled -- this is verified on the schematics! */
+       chip) are scrambled -- this is verified on the schematics! */
 	if (data)
 	{
 		memcpy(data, &gfx2_base[0x88000], 0x8000);
@@ -1547,7 +1547,7 @@ static DRIVER_INIT( vindctr2 )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

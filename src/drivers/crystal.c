@@ -1,24 +1,24 @@
 /*
-	CRYSTAL SYSTEM by Brezzasoft (2001)
-	using VRender0 System on a Chip
+    CRYSTAL SYSTEM by Brezzasoft (2001)
+    using VRender0 System on a Chip
 
-	The VRender0 (http://www.mesdigital.com/english/Products/product_vrender0.asp) chip contains:
-		- CPU Core SE3208 (info at www.adc.co.kr) @ 43Mhz
-		- 2 DMA chans
-		- 4 Timers
-		- 32 PIO pins
-		- PWM output
-		- 32 channels wavetable synth (8bit linear, 16bit linear and 8bit ulaw sample format)
-		- Custom 2D video rendering device (texture mapping, alphablend, roz)
+    The VRender0 (http://www.mesdigital.com/english/Products/product_vrender0.asp) chip contains:
+        - CPU Core SE3208 (info at www.adc.co.kr) @ 43Mhz
+        - 2 DMA chans
+        - 4 Timers
+        - 32 PIO pins
+        - PWM output
+        - 32 channels wavetable synth (8bit linear, 16bit linear and 8bit ulaw sample format)
+        - Custom 2D video rendering device (texture mapping, alphablend, roz)
 
-	The protection is a PIC deviced labeled SMART-IC in the rom board, I'm not sure how
-	it exactly works, but it supplies some opcodes that have been replaced with garbage
-	in the main program. I don't know if it traps reads and returns the correct ones when
-	reading from flash, or if it's interfaced by the main program after copying the program
-	from flash to ram and it provides the addresses and values to patch. I patch the flash
-	program with the correct data
+    The protection is a PIC deviced labeled SMART-IC in the rom board, I'm not sure how
+    it exactly works, but it supplies some opcodes that have been replaced with garbage
+    in the main program. I don't know if it traps reads and returns the correct ones when
+    reading from flash, or if it's interfaced by the main program after copying the program
+    from flash to ram and it provides the addresses and values to patch. I patch the flash
+    program with the correct data
 
-	MAME driver by ElSemi
+    MAME driver by ElSemi
 
 The Crystal of Kings
 Brezza Soft Corporation (Japan), 2001
@@ -542,17 +542,17 @@ static void PatchReset(void)
 				0x20,0x3A,0xD0,0xA1,0xFA,0xD4,0xF4,0xDE};
 /*
 Loop1:
-	LDI	1,%R2
-	LDI 	0x30000a6,%R1
-	STS	%R2,(%R1,0x0)
+    LDI 1,%R2
+    LDI     0x30000a6,%R1
+    STS %R2,(%R1,0x0)
 
 loop:
-	LDI	0x30000a6,%R1
-	LDSU	(%R1,0x0),%R2
-	CMP 	%R2,0x0000
-	JNZ	loop
+    LDI 0x30000a6,%R1
+    LDSU    (%R1,0x0),%R2
+    CMP     %R2,0x0000
+    JNZ loop
 
-	JMP	Loop1
+    JMP Loop1
 */
 
 	memcpy(ResetPatch,Patch,sizeof(Patch));
@@ -664,7 +664,7 @@ static VIDEO_UPDATE(crystal)
 	else
 		DrawDest=Back;
 
-//	DrawDest=Visible;
+//  DrawDest=Visible;
 
 	srcline=(UINT16 *) DrawDest;
 
@@ -899,7 +899,7 @@ DRIVER_INIT(evosocc)
 	Rom[0x971060/2]=0x9001; //PUSH R0
 
 	Rom[0x978036/2]=0x900C;	//PUSH R2-R3
-	Rom[0x978038/2]=0x8303;	//LD	(%SP,0xC),R3
+	Rom[0x978038/2]=0x8303;	//LD    (%SP,0xC),R3
 
 	Rom[0x974ED0/2]=0x90FC;	//PUSH R7-R6-R5-R4-R3-R2
 	Rom[0x974ED2/2]=0x9001;	//PUSH R0

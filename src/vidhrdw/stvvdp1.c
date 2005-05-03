@@ -123,12 +123,12 @@ int		 stv_framebuffer_double_interlace;
 
 READ32_HANDLER( stv_vdp1_regs_r )
 {
-//	static int x;
+//  static int x;
 
-//	x ^= 0x00020000;
+//  x ^= 0x00020000;
 
 	logerror ("cpu #%d (PC=%08X) VDP1: Read from Registers, Offset %04x\n",cpu_getactivecpu(), activecpu_get_pc(), offset);
-//	if (offset == 0x04) return x;
+//  if (offset == 0x04) return x;
 
 	return stv_vdp1_regs[offset];
 }
@@ -207,10 +207,10 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 
 	COMBINE_DATA (&stv_vdp1_vram[offset]);
 
-//	if (((offset * 4) > 0xdf) && ((offset * 4) < 0x140))
-//	{
-//		logerror("cpu #%d (PC=%08X): VRAM dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*4, data, mem_mask ^ 0xffffffff);
-//	}
+//  if (((offset * 4) > 0xdf) && ((offset * 4) < 0x140))
+//  {
+//      logerror("cpu #%d (PC=%08X): VRAM dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*4, data, mem_mask ^ 0xffffffff);
+//  }
 
 	data = stv_vdp1_vram[offset];
 	/* put in gfx region for easy decoding */
@@ -517,7 +517,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			pix = pix+(stv2_current_sprite.CMDCOLR&0xff80);
 			transmask = 0x7f;
 			mode = 3;
-		//	pix = rand();
+		//  pix = rand();
 			break;
 		case 0x0020: // mode 4 256 colour bank mode (8bits) (hanagumi title)
 			pix = gfxdata[patterndata+offsetcnt];
@@ -899,18 +899,18 @@ static void vdp1_fill_quad(struct mame_bitmap *bitmap, const struct rectangle *c
 static int x2s(int v)
 {
 	/*int r = v & 0x7ff;
-	if (r & 0x400)
-		r -= 0x800;
-	return r + stvvdp1_local_x;*/
+    if (r & 0x400)
+        r -= 0x800;
+    return r + stvvdp1_local_x;*/
 	return (INT32)(INT16)v + stvvdp1_local_x;
 }
 
 static int y2s(int v)
 {
 	/*int r = v & 0x7ff;
-	if (r & 0x400)
-		r -= 0x800;
-	return r + stvvdp1_local_y;*/
+    if (r & 0x400)
+        r -= 0x800;
+    return r + stvvdp1_local_y;*/
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
@@ -1041,9 +1041,9 @@ void stv_vpd1_draw_scaled_sprite(struct mame_bitmap *bitmap, const struct rectan
 	}
 
 	/*  0----1
-	    |    |
-	    |    |
-	    3----2   */
+        |    |
+        |    |
+        3----2   */
 
 	if (zoompoint)
 	{
@@ -1200,11 +1200,11 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 		draw_this_sprite = 1;
 
-	//	if (position >= ((0x80000/0x20)/4)) // safety check
-	//	{
-	//		if (vdp1_sprite_log) logerror ("Sprite List Position Too High!\n");
-	//		position = 0;
-	//	}
+	//  if (position >= ((0x80000/0x20)/4)) // safety check
+	//  {
+	//      if (vdp1_sprite_log) logerror ("Sprite List Position Too High!\n");
+	//      position = 0;
+	//  }
 
 		stv2_current_sprite.CMDCTRL = (stv_vdp1_vram[position * (0x20/4)+0] & 0xffff0000) >> 16;
 
@@ -1228,7 +1228,7 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 		stv2_current_sprite.CMDXD   = (stv_vdp1_vram[position * (0x20/4)+6] & 0xffff0000) >> 16;
 		stv2_current_sprite.CMDYD   = (stv_vdp1_vram[position * (0x20/4)+6] & 0x0000ffff) >> 0;
 		stv2_current_sprite.CMDGRDA = (stv_vdp1_vram[position * (0x20/4)+7] & 0xffff0000) >> 16;
-//		stv2_current_sprite.UNUSED  = (stv_vdp1_vram[position * (0x20/4)+7] & 0x0000ffff) >> 0;
+//      stv2_current_sprite.UNUSED  = (stv_vdp1_vram[position * (0x20/4)+7] & 0x0000ffff) >> 0;
 
 		/* proecess jump / skip commands, set position for next sprite */
 		switch (stv2_current_sprite.CMDCTRL & 0x7000)
@@ -1382,29 +1382,29 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 	SET_CEF_FROM_0_TO_1;
 
 	/* not here! this is done every frame drawn even if the cpu isn't running eg in the debugger */
-//	if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
-//		cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
+//  if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
+//      cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
 
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }
 
 void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-//	int enable;
-//	if (code_pressed (KEYCODE_R)) vdp1_sprite_log = 1;
-//	if (code_pressed (KEYCODE_T)) vdp1_sprite_log = 0;
+//  int enable;
+//  if (code_pressed (KEYCODE_R)) vdp1_sprite_log = 1;
+//  if (code_pressed (KEYCODE_T)) vdp1_sprite_log = 0;
 
-//	if (code_pressed (KEYCODE_Y)) vdp1_sprite_log = 0;
-//	{
-//		FILE *fp;
+//  if (code_pressed (KEYCODE_Y)) vdp1_sprite_log = 0;
+//  {
+//      FILE *fp;
 //
-//		fp=fopen("vdp1_ram.dmp", "w+b");
-//		if (fp)
-//		{
-//			fwrite(stv_vdp1, 0x00100000, 1, fp);
-//			fclose(fp);
-//		}
-//	}
+//      fp=fopen("vdp1_ram.dmp", "w+b");
+//      if (fp)
+//      {
+//          fwrite(stv_vdp1, 0x00100000, 1, fp);
+//          fclose(fp);
+//      }
+//  }
 	stv_clear_framebuffer();
 	switch(STV_VDP1_PTM & 3)
 	{

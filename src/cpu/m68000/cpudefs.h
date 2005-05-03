@@ -27,7 +27,7 @@ typedef int				LONG;
 typedef unsigned int	CPTR;
 
 /****************************************************************************/
-/* Define a MC68K word. Upper bytes are always zero			    */
+/* Define a MC68K word. Upper bytes are always zero             */
 /****************************************************************************/
 typedef union
 {
@@ -83,7 +83,7 @@ WORD wat_readmemw(void *a);
       	/* Structures for 68KEM */
 		/************************/
 
-/*	Assembler Engine Register Structure */
+/*  Assembler Engine Register Structure */
 
 typedef struct
 {

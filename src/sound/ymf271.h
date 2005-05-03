@@ -1,7 +1,7 @@
 #ifndef _YMF271_H_
 #define _YMF271_H_
 
-struct YMF271interface 
+struct YMF271interface
 {
 	int region;			/* memory region of sample ROMs */
 	read8_handler ext_read;		/* external memory read */

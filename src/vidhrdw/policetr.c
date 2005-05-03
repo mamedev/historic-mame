@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	P&P Marketing Police Trainer hardware
+    P&P Marketing Police Trainer hardware
 
 ***************************************************************************/
 
@@ -35,7 +35,7 @@ static UINT32 srcbitmap_height_mask;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -59,7 +59,7 @@ VIDEO_START( policetr )
 
 /*************************************
  *
- *	Display list processor
+ *  Display list processor
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static void render_display_list(offs_t offset)
 
 /*************************************
  *
- *	Video controller writes
+ *  Video controller writes
  *
  *************************************/
 
@@ -265,7 +265,7 @@ WRITE32_HANDLER( policetr_video_w )
 
 /*************************************
  *
- *	Video controller reads
+ *  Video controller reads
  *
  *************************************/
 
@@ -305,7 +305,7 @@ READ32_HANDLER( policetr_video_r )
 			return srcbitmap[(src_yoffs & srcbitmap_height_mask) * SRCBITMAP_WIDTH + src_xoffs % SRCBITMAP_WIDTH] << 24;
 
 		/* latch 0x50 is read at IRQ 4; the top 2 bits are checked. If they're not 0,
-			they skip the rest of the interrupt processing */
+            they skip the rest of the interrupt processing */
 		case 0x50:
 			return 0;
 	}
@@ -320,7 +320,7 @@ READ32_HANDLER( policetr_video_r )
 
 /*************************************
  *
- *	Palette access
+ *  Palette access
  *
  *************************************/
 
@@ -351,7 +351,7 @@ WRITE32_HANDLER( policetr_palette_data_w )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 

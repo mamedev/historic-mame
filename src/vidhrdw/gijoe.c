@@ -44,7 +44,7 @@ VIDEO_START( gijoe )
 
 	K053251_vh_start();
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, gijoe_tile_callback)) return 1;
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, gijoe_tile_callback, 0)) return 1;
 
 	K056832_linemap_enable(1);
 
@@ -113,11 +113,11 @@ VIDEO_UPDATE( gijoe )
 	}
 
 	/*
-		Layer A is supposed to be a non-scrolling status display with static X-offset.
-		The weird thing is tilemap alignment only follows the 832 standard when 2 is
-		written to the layer's X-scroll register otherwise the chip expects totally
-		different alignment values.
-	*/
+        Layer A is supposed to be a non-scrolling status display with static X-offset.
+        The weird thing is tilemap alignment only follows the 832 standard when 2 is
+        written to the layer's X-scroll register otherwise the chip expects totally
+        different alignment values.
+    */
 	if (K056832_read_register(0x14) == 2)
 	{
 		K056832_set_LayerOffset(0,  2, 0);

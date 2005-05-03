@@ -2,8 +2,8 @@
 
                      -= 68020 + Imagetek 15000 Games =-
 
-			driver by	David Haywood ( hazemamewip (at) hotmail.com )
-			partly based on metro.c driver by Luca Elia
+            driver by   David Haywood ( hazemamewip (at) hotmail.com )
+            partly based on metro.c driver by Luca Elia
 
 
 Main  CPU    :  MC68020
@@ -13,9 +13,9 @@ Sound Chips   : Imagetek 15000 |\- both sound and gfx
 Other Features: Memory Blitter (part of Imagetek 15000)
 
 ---------------------------------------------------------------------------
-Year + Game						PCB			Video Chip	Issues / Notes
+Year + Game                     PCB         Video Chip  Issues / Notes
 ---------------------------------------------------------------------------
-97	Rabbit                  	VG5330-B	15000
+97  Rabbit                      VG5330-B    15000
 97? Tokimeki Mahjong Paradise   VG5550-B    15000
 ---------------------------------------------------------------------------
 Not dumped yet:
@@ -69,13 +69,13 @@ Notes:
 Tokimeki Mahjong Paradise - Dear My Love Board Notes
 ----------------------------------------------------
 
-Board:	VG5550-B
+Board:  VG5550-B
 
-CPU:	MC68EC020FG25
-OSC:	40.00000MHz
-	24.00000MHz
+CPU:    MC68EC020FG25
+OSC:    40.00000MHz
+    24.00000MHz
 
-Custom:	Imagetek 15000 (2ch video & 2ch sound)
+Custom: Imagetek 15000 (2ch video & 2ch sound)
 
 */
 
@@ -223,7 +223,7 @@ static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 	data32_t *source = (rabbit_spriteram+ (todraw*2))-2;
 	data32_t *finish = rabbit_spriteram;
 
-//	fillbitmap(rabbit_sprite_bitmap, 0x0, &rabbit_sprite_clip); // sloooow
+//  fillbitmap(rabbit_sprite_bitmap, 0x0, &rabbit_sprite_clip); // sloooow
 
 	while( source>=finish )
 	{
@@ -243,7 +243,7 @@ static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 		if(xpos&0x800)xpos-=0x1000;
 
 		drawgfx(rabbit_sprite_bitmap,gfx,tileno,colr,!xflip/*wrongdecode?*/,yflip,xpos+0x20-8/*-(rabbit_spriteregs[0]&0x00000fff)*/,ypos-24/*-((rabbit_spriteregs[1]&0x0fff0000)>>16)*/,&rabbit_sprite_clip,TRANSPARENCY_PEN,0);
-//		drawgfx(bitmap,gfx,tileno,colr,!xflip/*wrongdecode?*/,yflip,xpos+0xa0-8/*-(rabbit_spriteregs[0]&0x00000fff)*/,ypos-24+0x80/*-((rabbit_spriteregs[1]&0x0fff0000)>>16)*/,cliprect,TRANSPARENCY_PEN,0);
+//      drawgfx(bitmap,gfx,tileno,colr,!xflip/*wrongdecode?*/,yflip,xpos+0xa0-8/*-(rabbit_spriteregs[0]&0x00000fff)*/,ypos-24+0x80/*-((rabbit_spriteregs[1]&0x0fff0000)>>16)*/,cliprect,TRANSPARENCY_PEN,0);
 
 
 		source-=2;
@@ -398,8 +398,8 @@ static void rabbit_drawtilemap( struct mame_bitmap *bitmap, const struct rectang
 
 
 	/* incxx and incyy and standard zoom, 16.16, a value of 0x10000 means no zoom
-	   startx/starty are also 16.16 scrolling
-	  */
+       startx/starty are also 16.16 scrolling
+      */
 
 	tilemap_draw_roz(bitmap,cliprect,rabbit_tilemap[whichtilemap],startx << 12,starty << 12,
 			incxx << 5,incxy << 8,incyx << 8,incyy << 5,
@@ -413,18 +413,18 @@ VIDEO_UPDATE(rabbit)
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 
-//	usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
-//	usrintf_showmessage("%08x", rabbit_viewregs7[0]);
-//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
-//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
+//  usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
+//  usrintf_showmessage("%08x", rabbit_viewregs7[0]);
+//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
+//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
 
-//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
 
 	/* prio isnt certain but seems to work.. */
 	for (prilevel = 0xf; prilevel >0; prilevel--)
@@ -523,29 +523,29 @@ WRITE32_HANDLER ( rabbit_rombank_w )
 {
 	UINT8 *dataroms = memory_region(REGION_USER1);
 	int bank;
-//	printf("rabbit rombank %08x\n",data&0x3ff);
+//  printf("rabbit rombank %08x\n",data&0x3ff);
 	bank = data & 0x3ff;
 
-//	cpu_setbank(1,&dataroms[0x40000*(bank&0x3ff)]);
+//  cpu_setbank(1,&dataroms[0x40000*(bank&0x3ff)]);
 	cpu_setbank(1,&dataroms[0]);
 }
 
 /*
-	Audio notes:
+    Audio notes:
 
-	There are 16 PCM voices.  Each voice has 4 16-bit wide registers.
-	Voice 0 uses registers 0-3, 1 uses registers 4-7, etc.
+    There are 16 PCM voices.  Each voice has 4 16-bit wide registers.
+    Voice 0 uses registers 0-3, 1 uses registers 4-7, etc.
 
-	The first 2 registers for each voice are the LSW and MSW of the sample
-	starting address.  The remaining 2 haven't been figured out yet.
+    The first 2 registers for each voice are the LSW and MSW of the sample
+    starting address.  The remaining 2 haven't been figured out yet.
 
-	Registers 64 and up are "global", they don't belong to any specific voice.
+    Registers 64 and up are "global", they don't belong to any specific voice.
 
-	Register 66 is key-on (bitmapped so bit 0 = voice 0, bit 15 = voice 15).
-	Register 67 is key-off (bitmapped identically to the key-on register).
+    Register 66 is key-on (bitmapped so bit 0 = voice 0, bit 15 = voice 15).
+    Register 67 is key-off (bitmapped identically to the key-on register).
 
-	There are a few other "global" registers, their purpose is unknown at this
-	time (timer?  the game seems to "play music" fine with just the VBL).
+    There are a few other "global" registers, their purpose is unknown at this
+    time (timer?  the game seems to "play music" fine with just the VBL).
 */
 
 static WRITE32_HANDLER( rabbit_audio_w )
@@ -799,20 +799,20 @@ static WRITE32_HANDLER( tmmjprd_paletteram_dword_w )
 static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
 /* check these are used .. */
-//	AM_RANGE(0x200010, 0x200013) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs0 )
+//  AM_RANGE(0x200010, 0x200013) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs0 )
 	AM_RANGE(0x200100, 0x200117) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[0] ) // tilemap regs1
 	AM_RANGE(0x200120, 0x200137) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[1] ) // tilemap regs2
 	AM_RANGE(0x200140, 0x200157) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[2] ) // tilemap regs3
 	AM_RANGE(0x200160, 0x200177) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[3] ) // tilemap regs4
 	AM_RANGE(0x200200, 0x20021b) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_spriteregs ) // sprregs?
-//	AM_RANGE(0x200300, 0x200303) AM_WRITE(rabbit_rombank_w) // used during rom testing, rombank/area select + something else?
-//	AM_RANGE(0x200400, 0x200413) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs6 ) // some global controls? (brightness etc.?)
-//	AM_RANGE(0x200500, 0x200503) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs7 )
-//	AM_RANGE(0x200700, 0x20070f) AM_WRITE(rabbit_blitter_w) AM_BASE( &rabbit_blitterregs )
-//	AM_RANGE(0x200800, 0x20080f) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs9 ) // never changes?
-//	AM_RANGE(0x200900, 0x20098f) AM_WRITE(rabbit_audio_w)
+//  AM_RANGE(0x200300, 0x200303) AM_WRITE(rabbit_rombank_w) // used during rom testing, rombank/area select + something else?
+//  AM_RANGE(0x200400, 0x200413) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs6 ) // some global controls? (brightness etc.?)
+//  AM_RANGE(0x200500, 0x200503) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs7 )
+//  AM_RANGE(0x200700, 0x20070f) AM_WRITE(rabbit_blitter_w) AM_BASE( &rabbit_blitterregs )
+//  AM_RANGE(0x200800, 0x20080f) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs9 ) // never changes?
+//  AM_RANGE(0x200900, 0x20098f) AM_WRITE(rabbit_audio_w)
 	/* hmm */
-//	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs10 )
+//  AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs10 )
 	/* tilemaps */
 	AM_RANGE(0x280000, 0x283fff) AM_WRITE(rabbit_tilemap0_w)
 	AM_RANGE(0x284000, 0x287fff) AM_WRITE(rabbit_tilemap1_w)
@@ -1072,13 +1072,13 @@ static MACHINE_DRIVER_START( rabbit )
 	MDRV_CPU_PROGRAM_MAP(rabbit_readmem,rabbit_writemem)
 	MDRV_CPU_VBLANK_INT(rabbit_interrupts,262)
 	/* (rabbit) */
-/*	lev 1 : 0x64 : 0000 027c -
-	lev 2 : 0x68 : 0000 3106 - unused?
-	lev 3 : 0x6c : 0000 3106 - unused?
-	lev 4 : 0x70 : 0000 0268 -
-	lev 5 : 0x74 : 0000 0278 -
-	lev 6 : 0x78 : 0000 0204 -
-	lev 7 : 0x7c : 0000 3106 - unused?
+/*  lev 1 : 0x64 : 0000 027c -
+    lev 2 : 0x68 : 0000 3106 - unused?
+    lev 3 : 0x6c : 0000 3106 - unused?
+    lev 4 : 0x70 : 0000 0268 -
+    lev 5 : 0x74 : 0000 0278 -
+    lev 6 : 0x78 : 0000 0204 -
+    lev 7 : 0x7c : 0000 3106 - unused?
 */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1091,8 +1091,8 @@ static MACHINE_DRIVER_START( rabbit )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*16, 64*16)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
-//	MDRV_VISIBLE_AREA(0*8, 64*16-1, 0*16, 64*16-1)
-//	MDRV_VISIBLE_AREA(0*8, 20*16-1, 32*16, 48*16-1)
+//  MDRV_VISIBLE_AREA(0*8, 64*16-1, 0*16, 64*16-1)
+//  MDRV_VISIBLE_AREA(0*8, 20*16-1, 32*16, 48*16-1)
 
 	MDRV_PALETTE_LENGTH(0x4000)
 
@@ -1162,18 +1162,18 @@ VIDEO_UPDATE( tmmjprd )
 	tilemap_set_scrolly(rabbit_tilemap[1], 0, rabbit_tilemap_regs[1][2] >> 20);
 	tilemap_set_scrolly(rabbit_tilemap[0], 0, rabbit_tilemap_regs[0][2] >> 20);
 
-//	usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
-//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
-//	usrintf_showmessage("%08x", rabbit_viewregs7[0]);
-//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
-//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
+//  usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
+//  usrintf_showmessage("%08x", rabbit_viewregs7[0]);
+//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
+//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
 
-//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
+//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[3],0,0);
@@ -1237,16 +1237,16 @@ ROM_START( rabbit )
 	ROM_LOAD32_BYTE( "jpr2.2", 0x000002, 0x080000, CRC(fa3fd91a) SHA1(ac0e658af30b37b752ede833b44ff5423b93bdb1) )
 	ROM_LOAD32_BYTE( "jpr3.3", 0x000003, 0x080000, CRC(d22727ca) SHA1(8415cb2d3864b11fe5623ac65f2e28fd62c61bd1) )
 
-//	ROM_REGION( 0x9000000, REGION_USER1, ROMREGION_ERASE ) /* Other Roms probably accessable by cpu / blitter, order is no doubt wrong */
+//  ROM_REGION( 0x9000000, REGION_USER1, ROMREGION_ERASE ) /* Other Roms probably accessable by cpu / blitter, order is no doubt wrong */
 	/* this seems to be how it tests them? weird ... */
-//	ROM_LOAD32_WORD( "jfv0.00", 0x0000000, 0x400000, CRC(b2a4d3d3) SHA1(0ab71d82a37ff94442b91712a28d3470619ba575) )
-//	ROM_LOAD32_WORD( "jfv1.01", 0x0000002, 0x400000, CRC(83f3926e) SHA1(b1c479e675d35fc08c9a7648ff40348a24654e7e) )
-//	ROM_LOAD32_WORD( "jsn0.11", 0x0800002, 0x400000, CRC(e1f726e8) SHA1(598d75f3ff9e43ec8ce6131ed37f4345bf2f2d8e) )
-//	ROM_LOAD32_WORD( "jfv2.02", 0x2000000, 0x400000, CRC(b264bfb5) SHA1(8fafedb6af74150465b1773e80aef0edc3da4678) )
-//	ROM_LOAD32_WORD( "jfv3.03", 0x2000002, 0x400000, CRC(3e1a9be2) SHA1(2082a4ae8cda84cec5ea0fc08753db387bb70d41) )
-//	ROM_LOAD16_BYTE( "jbg0.40", 0x4000001, 0x200000, CRC(89662944) SHA1(ca916ba38480fa588af19fc9682603f5195ad6c7) ) // how should this one be, it won't pass it.
-//	ROM_LOAD16_BYTE( "jbg1.50", 0x6000000, 0x200000, CRC(1fc7f6e0) SHA1(b36062d2a9683683ffffd3003d5244a185f53280) )
-//	ROM_LOAD16_BYTE( "jbg2.60", 0x8000001, 0x200000, CRC(aee265fc) SHA1(ec420ab30b9b5141162223fc1fbf663ad9f211e6) )
+//  ROM_LOAD32_WORD( "jfv0.00", 0x0000000, 0x400000, CRC(b2a4d3d3) SHA1(0ab71d82a37ff94442b91712a28d3470619ba575) )
+//  ROM_LOAD32_WORD( "jfv1.01", 0x0000002, 0x400000, CRC(83f3926e) SHA1(b1c479e675d35fc08c9a7648ff40348a24654e7e) )
+//  ROM_LOAD32_WORD( "jsn0.11", 0x0800002, 0x400000, CRC(e1f726e8) SHA1(598d75f3ff9e43ec8ce6131ed37f4345bf2f2d8e) )
+//  ROM_LOAD32_WORD( "jfv2.02", 0x2000000, 0x400000, CRC(b264bfb5) SHA1(8fafedb6af74150465b1773e80aef0edc3da4678) )
+//  ROM_LOAD32_WORD( "jfv3.03", 0x2000002, 0x400000, CRC(3e1a9be2) SHA1(2082a4ae8cda84cec5ea0fc08753db387bb70d41) )
+//  ROM_LOAD16_BYTE( "jbg0.40", 0x4000001, 0x200000, CRC(89662944) SHA1(ca916ba38480fa588af19fc9682603f5195ad6c7) ) // how should this one be, it won't pass it.
+//  ROM_LOAD16_BYTE( "jbg1.50", 0x6000000, 0x200000, CRC(1fc7f6e0) SHA1(b36062d2a9683683ffffd3003d5244a185f53280) )
+//  ROM_LOAD16_BYTE( "jbg2.60", 0x8000001, 0x200000, CRC(aee265fc) SHA1(ec420ab30b9b5141162223fc1fbf663ad9f211e6) )
 
 	ROM_REGION( 0x1000000, REGION_USER1, ROMREGION_INVERT ) /* Sprite Roms (and Blitter Data) */
 	ROM_LOAD32_WORD( "jfv0.00", 0x0000002, 0x400000, CRC(b2a4d3d3) SHA1(0ab71d82a37ff94442b91712a28d3470619ba575) )

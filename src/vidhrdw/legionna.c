@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Legionnaire / Heated Barrel video hardware (derived from D-Con)
+    Legionnaire / Heated Barrel video hardware (derived from D-Con)
 
 ***************************************************************************/
 
@@ -179,24 +179,24 @@ VIDEO_START( cupsoc )
 
 /*************************************************************************
 
-	Legionnaire Spriteram (similar to Dcon)
-	---------------------
+    Legionnaire Spriteram (similar to Dcon)
+    ---------------------
 
-	It has "big sprites" created by setting width or height >0. Tile
-	numbers are read consecutively.
+    It has "big sprites" created by setting width or height >0. Tile
+    numbers are read consecutively.
 
     +0   x....... ........  Sprite enable
-	+0   .x...... ........  Flip x
-	+0   ..x..... ........  Flip y ???
-	+0   ...xxx.. ........  Width: do this many tiles horizontally
-	+0   ......xx x.......  Height: do this many tiles vertically
-	+0   ........ .?......  unused ?
- 	+0   ........ ..xxxxxx  Color bank
+    +0   .x...... ........  Flip x
+    +0   ..x..... ........  Flip y ???
+    +0   ...xxx.. ........  Width: do this many tiles horizontally
+    +0   ......xx x.......  Height: do this many tiles vertically
+    +0   ........ .?......  unused ?
+    +0   ........ ..xxxxxx  Color bank
 
-	+1   .x...... ........  Priority? (1=high?)
-	+1   ..xxxxxx xxxxxxxx  Tile number
-	+2   xxxxxxxx xxxxxxxx  X coordinate (signed)
-	+3   xxxxxxxx xxxxxxxx  Y coordinate (signed)
+    +1   .x...... ........  Priority? (1=high?)
+    +1   ..xxxxxx xxxxxxxx  Tile number
+    +2   xxxxxxxx xxxxxxxx  X coordinate (signed)
+    +3   xxxxxxxx xxxxxxxx  Y coordinate (signed)
 
 *************************************************************************/
 
@@ -301,7 +301,7 @@ VIDEO_UPDATE( legionna )
 	tilemap_set_scrollx( foreground_layer, 0, legionna_scrollram16[4] );
 	tilemap_set_scrolly( foreground_layer, 0, legionna_scrollram16[5] );
 
-//	if ((legionna_enable&1)!=1)
+//  if ((legionna_enable&1)!=1)
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);	/* wrong color? */
 
@@ -357,8 +357,8 @@ VIDEO_UPDATE( sdgndmrb )
 	tilemap_set_scrolly( midground_layer,  0, legionna_scrollram16[3] );
 	tilemap_set_scrollx( foreground_layer, 0, legionna_scrollram16[4] );
 	tilemap_set_scrolly( foreground_layer, 0, legionna_scrollram16[5] );
-//	tilemap_set_scrollx( text_layer, 0, 128 /* legionna_scrollram16[6] */);
-//	tilemap_set_scrolly( text_layer, 0, 0 /* legionna_scrollram16[7] */ );
+//  tilemap_set_scrollx( text_layer, 0, 128 /* legionna_scrollram16[6] */);
+//  tilemap_set_scrolly( text_layer, 0, 0 /* legionna_scrollram16[7] */ );
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 

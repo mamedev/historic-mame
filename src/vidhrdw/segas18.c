@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega System 18 hardware
+    Sega System 18 hardware
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Debugging
+ *  Debugging
  *
  *************************************/
 
@@ -21,7 +21,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -35,7 +35,7 @@ static UINT8 vdp_mixing;
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -46,7 +46,7 @@ extern void update_system18_vdp(struct mame_bitmap *bitmap, const struct rectang
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -78,7 +78,7 @@ VIDEO_START( system18 )
 
 /*************************************
  *
- *	Miscellaneous setters
+ *  Miscellaneous setters
  *
  *************************************/
 
@@ -89,7 +89,7 @@ void system18_set_grayscale(int enable)
 	{
 		force_partial_update(cpu_getscanline());
 		grayscale_enable = enable;
-//		printf("Grayscale = %02X\n", enable);
+//      printf("Grayscale = %02X\n", enable);
 	}
 }
 
@@ -124,7 +124,7 @@ void system18_set_vdp_mixing(int mixing)
 
 /*************************************
  *
- *	VDP drawing
+ *  VDP drawing
  *
  *************************************/
 
@@ -154,7 +154,7 @@ static void draw_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -163,35 +163,35 @@ VIDEO_UPDATE( system18 )
 	int vdppri, vdplayer;
 
 /*
-	Current understanding of VDP mixing:
+    Current understanding of VDP mixing:
 
-	mixing = 0x00:
-		astorm: layer = 0, pri = 0x00 or 0x01
-		lghost: layer = 0, pri = 0x00 or 0x01
+    mixing = 0x00:
+        astorm: layer = 0, pri = 0x00 or 0x01
+        lghost: layer = 0, pri = 0x00 or 0x01
 
-	mixing = 0x01:
-		ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02
+    mixing = 0x01:
+        ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02
 
-	mixing = 0x02:
-		never seen
+    mixing = 0x02:
+        never seen
 
-	mixing = 0x03:
-		ddcrew: layer = 1, pri = 0x00 or 0x01 or 0x02
+    mixing = 0x03:
+        ddcrew: layer = 1, pri = 0x00 or 0x01 or 0x02
 
-	mixing = 0x04:
-		astorm: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
-		mwalk:  layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
+    mixing = 0x04:
+        astorm: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
+        mwalk:  layer = 2 or 3, pri = 0x00 or 0x01 or 0x02
 
-	mixing = 0x05:
-		ddcrew: layer = 2, pri = 0x04
-		wwally: layer = 2, pri = 0x04
+    mixing = 0x05:
+        ddcrew: layer = 2, pri = 0x04
+        wwally: layer = 2, pri = 0x04
 
-	mixing = 0x06:
-		never seen
+    mixing = 0x06:
+        never seen
 
-	mixing = 0x07:
-		cltchitr: layer = 1 or 2 or 3, pri = 0x02 or 0x04 or 0x08
-		mwalk:    layer = 3, pri = 0x04 or 0x08
+    mixing = 0x07:
+        cltchitr: layer = 1 or 2 or 3, pri = 0x02 or 0x04 or 0x08
+        mwalk:    layer = 3, pri = 0x04 or 0x08
 */
 	vdplayer = (vdp_mixing >> 1) & 3;
 	vdppri = (vdp_mixing & 1) ? (1 << vdplayer) : 0;

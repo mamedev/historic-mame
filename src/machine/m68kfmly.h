@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	TMP68301 support (dummy) driver
+    TMP68301 support (dummy) driver
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/12/23 -
 
 ******************************************************************************/
 

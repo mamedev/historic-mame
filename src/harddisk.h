@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Generic MAME hard disk implementation, with differencing files
+    Generic MAME hard disk implementation, with differencing files
 
 ***************************************************************************/
 
@@ -25,7 +25,7 @@ struct hard_disk_info
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 

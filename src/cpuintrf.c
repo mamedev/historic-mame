@@ -1,12 +1,12 @@
 /***************************************************************************
 
-	cpuintrf.c
+    cpuintrf.c
 
-	Core CPU interface functions and definitions.
+    Core CPU interface functions and definitions.
 
-	Cleanup phase 1: split into two pieces
-	Cleanup phase 2: simplify CPU core interfaces
-	Cleanup phase 3: phase out old interrupt system
+    Cleanup phase 1: split into two pieces
+    Cleanup phase 2: simplify CPU core interfaces
+    Cleanup phase 3: phase out old interrupt system
 
 ***************************************************************************/
 
@@ -19,7 +19,7 @@
 
 /*************************************
  *
- *	Include headers from all CPUs
+ *  Include headers from all CPUs
  *
  *************************************/
 
@@ -177,7 +177,7 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 /*************************************
  *
- *	Debug logging
+ *  Debug logging
  *
  *************************************/
 
@@ -193,7 +193,7 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 /*************************************
  *
- *	Macros to help verify active CPU
+ *  Macros to help verify active CPU
  *
  *************************************/
 
@@ -215,7 +215,7 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 /*************************************
  *
- *	Macros to help verify CPU index
+ *  Macros to help verify CPU index
  *
  *************************************/
 
@@ -237,7 +237,7 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 /*************************************
  *
- *	Macros to help verify CPU type
+ *  Macros to help verify CPU type
  *
  *************************************/
 
@@ -259,7 +259,7 @@ void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 /*************************************
  *
- *	Internal CPU info type
+ *  Internal CPU info type
  *
  *************************************/
 
@@ -275,7 +275,7 @@ struct cpudata
 
 /*************************************
  *
- *	The core list of CPU interfaces
+ *  The core list of CPU interfaces
  *
  *************************************/
 
@@ -722,7 +722,7 @@ const struct
 
 /*************************************
  *
- *	Default debugger window layout
+ *  Default debugger window layout
  *
  *************************************/
 
@@ -739,7 +739,7 @@ UINT8 default_win_layout[] =
 
 /*************************************
  *
- *	Other variables we own
+ *  Other variables we own
  *
  *************************************/
 
@@ -763,7 +763,7 @@ static int temp_string_pool_index;
 
 /*************************************
  *
- *	Set a new CPU context
+ *  Set a new CPU context
  *
  *************************************/
 
@@ -792,7 +792,7 @@ INLINE void set_cpu_context(int cpunum)
 
 /*************************************
  *
- *	Push/pop to a new CPU context
+ *  Push/pop to a new CPU context
  *
  *************************************/
 
@@ -827,7 +827,7 @@ void cpuintrf_pop_context(void)
 
 /*************************************
  *
- *	Global temp string pool
+ *  Global temp string pool
  *
  *************************************/
 
@@ -842,7 +842,7 @@ char *cpuintrf_temp_str(void)
 
 /*************************************
  *
- *	Initialize the global interface
+ *  Initialize the global interface
  *
  *************************************/
 
@@ -910,7 +910,7 @@ int cpuintrf_init(void)
 
 /*************************************
  *
- *	Set the disassembly override proc
+ *  Set the disassembly override proc
  *
  *************************************/
 
@@ -923,7 +923,7 @@ void cpuintrf_set_dasm_override(unsigned (*dasm_override)(int cpunum, char *buff
 
 /*************************************
  *
- *	Initialize a single CPU
+ *  Initialize a single CPU
  *
  *************************************/
 
@@ -976,7 +976,7 @@ int cpuintrf_init_cpu(int cpunum, int cputype)
 
 /*************************************
  *
- *	Exit/free a single CPU
+ *  Exit/free a single CPU
  *
  *************************************/
 
@@ -996,12 +996,12 @@ void cpuintrf_exit_cpu(int cpunum)
 
 /*************************************
  *
- *	Interfaces to the active CPU
+ *  Interfaces to the active CPU
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 activecpu_get_info_int(UINT32 state)
@@ -1046,7 +1046,7 @@ const char *activecpu_get_info_string(UINT32 state)
 
 
 /*--------------------------
- 	Set info accessors
+    Set info accessors
 --------------------------*/
 
 void activecpu_set_info_int(UINT32 state, INT64 data)
@@ -1075,7 +1075,7 @@ void activecpu_set_info_fct(UINT32 state, genf *data)
 
 
 /*--------------------------
- 	Adjust/get icount
+    Adjust/get icount
 --------------------------*/
 
 void activecpu_adjust_icount(int delta)
@@ -1093,7 +1093,7 @@ int activecpu_get_icount(void)
 
 
 /*--------------------------
- 	Reset banking pointers
+    Reset banking pointers
 --------------------------*/
 
 void activecpu_reset_banking(void)
@@ -1104,7 +1104,7 @@ void activecpu_reset_banking(void)
 
 
 /*--------------------------
- 	Input line setting
+    Input line setting
 --------------------------*/
 
 void activecpu_set_input_line(int irqline, int state)
@@ -1120,7 +1120,7 @@ void activecpu_set_input_line(int irqline, int state)
 
 
 /*--------------------------
- 	Get/set PC
+    Get/set PC
 --------------------------*/
 
 offs_t activecpu_get_pc_byte(void)
@@ -1143,7 +1143,7 @@ void activecpu_set_opbase(unsigned val)
 
 
 /*--------------------------
- 	Disassembly
+    Disassembly
 --------------------------*/
 
 static unsigned internal_dasm(int cpunum, char *buffer, unsigned pc)
@@ -1168,7 +1168,7 @@ unsigned activecpu_dasm(char *buffer, unsigned pc)
 
 
 /*--------------------------
- 	State dumps
+    State dumps
 --------------------------*/
 
 const char *activecpu_dump_state(void)
@@ -1219,12 +1219,12 @@ const char *activecpu_dump_state(void)
 
 /*************************************
  *
- *	Interfaces to a specific CPU
+ *  Interfaces to a specific CPU
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 cpunum_get_info_int(int cpunum, UINT32 state)
@@ -1277,7 +1277,7 @@ const char *cpunum_get_info_string(int cpunum, UINT32 state)
 
 
 /*--------------------------
- 	Set info accessors
+    Set info accessors
 --------------------------*/
 
 void cpunum_set_info_int(int cpunum, UINT32 state, INT64 data)
@@ -1312,7 +1312,7 @@ void cpunum_set_info_fct(int cpunum, UINT32 state, genf *data)
 
 
 /*--------------------------
- 	Execute
+    Execute
 --------------------------*/
 
 int cpunum_execute(int cpunum, int cycles)
@@ -1330,7 +1330,7 @@ int cpunum_execute(int cpunum, int cycles)
 
 
 /*--------------------------
- 	Reset and set IRQ ack
+    Reset and set IRQ ack
 --------------------------*/
 
 void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
@@ -1346,7 +1346,7 @@ void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
 
 
 /*--------------------------
- 	Read a byte
+    Read a byte
 --------------------------*/
 
 data8_t cpunum_read_byte(int cpunum, offs_t address)
@@ -1361,7 +1361,7 @@ data8_t cpunum_read_byte(int cpunum, offs_t address)
 
 
 /*--------------------------
- 	Write a byte
+    Write a byte
 --------------------------*/
 
 void cpunum_write_byte(int cpunum, offs_t address, data8_t data)
@@ -1374,7 +1374,7 @@ void cpunum_write_byte(int cpunum, offs_t address, data8_t data)
 
 
 /*--------------------------
- 	Get context pointer
+    Get context pointer
 --------------------------*/
 
 void *cpunum_get_context_ptr(int cpunum)
@@ -1385,7 +1385,7 @@ void *cpunum_get_context_ptr(int cpunum)
 
 
 /*--------------------------
- 	Get/set PC
+    Get/set PC
 --------------------------*/
 
 offs_t cpunum_get_pc_byte(int cpunum)
@@ -1412,7 +1412,7 @@ void cpunum_set_opbase(int cpunum, unsigned val)
 
 
 /*--------------------------
- 	Disassembly
+    Disassembly
 --------------------------*/
 
 unsigned cpunum_dasm(int cpunum, char *buffer, unsigned pc)
@@ -1427,7 +1427,7 @@ unsigned cpunum_dasm(int cpunum, char *buffer, unsigned pc)
 
 
 /*--------------------------
- 	State dumps
+    State dumps
 --------------------------*/
 
 const char *cpunum_dump_state(int cpunum)
@@ -1444,12 +1444,12 @@ const char *cpunum_dump_state(int cpunum)
 
 /*************************************
  *
- *	Interfaces to a specific CPU type
+ *  Interfaces to a specific CPU type
  *
  *************************************/
 
 /*--------------------------
- 	Get info accessors
+    Get info accessors
 --------------------------*/
 
 INT64 cputype_get_info_int(int cputype, UINT32 state)
@@ -1496,7 +1496,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state)
 
 /*************************************
  *
- *	Dump states of all CPUs
+ *  Dump states of all CPUs
  *
  *************************************/
 
@@ -1513,7 +1513,7 @@ void cpu_dump_states(void)
 
 /*************************************
  *
- *	Dummy CPU definition
+ *  Dummy CPU definition
  *
  *************************************/
 

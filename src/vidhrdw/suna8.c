@@ -1,71 +1,71 @@
 /***************************************************************************
 
-							-=  SunA 8 Bit Games =-
+                            -=  SunA 8 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-	These games have only sprites, of a peculiar type:
+    These games have only sprites, of a peculiar type:
 
-	there is a region of memory where 4 pages of 32x32 tile codes can
-	be written like a tilemap made of 4 pages of 256x256 pixels. Each
-	tile uses 2 bytes. Later games may use more pages through RAM
-	banking.
+    there is a region of memory where 4 pages of 32x32 tile codes can
+    be written like a tilemap made of 4 pages of 256x256 pixels. Each
+    tile uses 2 bytes. Later games may use more pages through RAM
+    banking.
 
-	Sprites are rectangular regions of *tiles* fetched from there and
-	sent to the screen. Each sprite uses 4 bytes, held within the last
-	page of tiles.
+    Sprites are rectangular regions of *tiles* fetched from there and
+    sent to the screen. Each sprite uses 4 bytes, held within the last
+    page of tiles.
 
-	* Note: later games use a more complex format than the following,
-	        which is yet to be completely understood.
+    * Note: later games use a more complex format than the following,
+            which is yet to be completely understood.
 
-							[ Sprites Format ]
-
-
-	Offset:			Bits:				Value:
-
-		0.b								Y (Bottom up)
-
-		1.b			7--- ----			Sprite Size (1 = 2x32 tiles; 0 = 2x2)
-
-					2x2 Sprites:
-					-65- ----			Tiles Row (height = 8 tiles)
-					---4 ----			Page
-
-					2x32 Sprites:
-					-6-- ----			Ignore X (Multisprite)
-					--54 ----			Page
-
-					---- 3210			Tiles Column (width = 2 tiles)
-
-		2.b								X
-
-		3.b			7--- ----
-					-6-- ----			X (Sign Bit)
-					--54 3---
-					---- -210			Tiles Bank
+                            [ Sprites Format ]
 
 
-						[ Sprite's Tiles Format ]
+    Offset:         Bits:               Value:
+
+        0.b                             Y (Bottom up)
+
+        1.b         7--- ----           Sprite Size (1 = 2x32 tiles; 0 = 2x2)
+
+                    2x2 Sprites:
+                    -65- ----           Tiles Row (height = 8 tiles)
+                    ---4 ----           Page
+
+                    2x32 Sprites:
+                    -6-- ----           Ignore X (Multisprite)
+                    --54 ----           Page
+
+                    ---- 3210           Tiles Column (width = 2 tiles)
+
+        2.b                             X
+
+        3.b         7--- ----
+                    -6-- ----           X (Sign Bit)
+                    --54 3---
+                    ---- -210           Tiles Bank
 
 
-	Offset: 		Bits:					Value:
-
-		0.b								Code (Low Bits)
-
-		1.b			7--- ----			Flip Y
-					-6-- ----			Flip X
-					--54 32--			Color
-					---- --10			Code (High Bits)
+                        [ Sprite's Tiles Format ]
 
 
+    Offset:         Bits:                   Value:
 
-	Set TILEMAPS to 1 to debug.
-	Press Z (you see the "tilemaps" in RAM) or
-	Press X (you see the "tilemaps" in ROM) then
+        0.b                             Code (Low Bits)
 
-	- use Q&W to cycle through the pages.
-	- Use E&R to cycle through the tiles banks.
-	- Use A&S to cycle through the ROM banks (only with X pressed, of course).
+        1.b         7--- ----           Flip Y
+                    -6-- ----           Flip X
+                    --54 32--           Color
+                    ---- --10           Code (High Bits)
+
+
+
+    Set TILEMAPS to 1 to debug.
+    Press Z (you see the "tilemaps" in RAM) or
+    Press X (you see the "tilemaps" in ROM) then
+
+    - use Q&W to cycle through the pages.
+    - Use E&R to cycle through the tiles banks.
+    - Use A&S to cycle through the ROM banks (only with X pressed, of course).
 
 ***************************************************************************/
 
@@ -89,7 +89,7 @@ VIDEO_UPDATE( suna8 );
 
 
 /***************************************************************************
-	For Debug: there's no tilemap, just sprites.
+    For Debug: there's no tilemap, just sprites.
 ***************************************************************************/
 #if TILEMAPS
 static struct tilemap *tilemap;
@@ -150,7 +150,7 @@ WRITE8_HANDLER( suna8_banked_spriteram_w )
 }
 
 /*
-	Banked Palette RAM. The data is scrambled
+    Banked Palette RAM. The data is scrambled
 */
 WRITE8_HANDLER( brickzn_banked_paletteram_w )
 {
@@ -210,7 +210,7 @@ VIDEO_START( suna8_textdim12 )	{ return suna8_vh_start_common(12); }
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
 
 ***************************************************************************/
@@ -414,7 +414,7 @@ void suna8_draw_text_sprites(struct mame_bitmap *bitmap,const struct rectangle *
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/

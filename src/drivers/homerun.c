@@ -1,15 +1,15 @@
 /*
  Moero Pro Yakyuu Homerun - (c) 1988 Jaleco
  Driver by Tomasz Slanina
-	
+
  *weird* hardware - based on NES version
- (gfx bank changed in the middle of screen, 
+ (gfx bank changed in the middle of screen,
   sprites in NES format etc)
-  
+
 Todo :
- - voice ( unemulated D7756C )	
+ - voice ( unemulated D7756C )
  - controls/dips
- - better emulation of gfx bank switching  
+ - better emulation of gfx bank switching
  - is there 2 player mode ?
 
 */
@@ -36,7 +36,7 @@ static WRITE8_HANDLER(pc_w){homerun_xpc=data;}
 
 static ppi8255_interface ppi8255_intf =
 {
-	1, 		
+	1,
 	{ 0 },
 	{ 0  },
 	{ 0  },
@@ -77,25 +77,25 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &gfxlayout,   0, 16 }, 
-	{ REGION_GFX2, 0, &spritelayout,   0, 16 }, 
+	{ REGION_GFX1, 0, &gfxlayout,   0, 16 },
+	{ REGION_GFX2, 0, &spritelayout,   0, 16 },
 	{ -1 }
 };
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)		
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)		
-	
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)		
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x9fff) AM_WRITE(homerun_videoram_w) AM_BASE(&homerun_videoram)
-	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	
+	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xb000, 0xb0ff) AM_WRITE(homerun_color_w)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)		
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
 
 ADDRESS_MAP_END
 
@@ -139,11 +139,11 @@ static struct YM2203interface ym2203_interface =
 
 INPUT_PORTS_START( homerun )
 	PORT_START
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1  ) 
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1  )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x80, DEF_STR( On ) )
-	
+
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  )
@@ -151,20 +151,20 @@ INPUT_PORTS_START( homerun )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1   )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-		
+
 	PORT_START
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2  ) 
-		
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2  )
+
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(      0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x03, DEF_STR( Free_Play ) ) 
+	PORT_DIPSETTING(      0x03, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x80, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( 1C_2C ) )
-	
+
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( homerun )
@@ -172,7 +172,7 @@ static MACHINE_DRIVER_START( homerun )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	
+
 	MDRV_MACHINE_INIT(homerun)
 
 	/* video hardware */
@@ -194,23 +194,23 @@ static MACHINE_DRIVER_START( homerun )
 	MDRV_SOUND_ADD(YM2203, 6000000/2)
 	MDRV_SOUND_CONFIG(ym2203_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+
 MACHINE_DRIVER_END
 
 ROM_START( homerun )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	  
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "homerun.43",        0x0000, 0x4000, CRC(e759e476) SHA1(ad4f356ff26209033320a3e6353e4d4d9beb59c1) )
-	ROM_CONTINUE(        0x10000,0x1c000) 
-	
+	ROM_CONTINUE(        0x10000,0x1c000)
+
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "homerun.60",  0x00000, 0x10000, CRC(69a720d1) SHA1(0f0a4877578f358e9e829ece8c31e23f01adcf83) ) 
+	ROM_LOAD( "homerun.60",  0x00000, 0x10000, CRC(69a720d1) SHA1(0f0a4877578f358e9e829ece8c31e23f01adcf83) )
 
 	ROM_REGION( 0x020000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "homerun.120",  0x00000, 0x20000, CRC(52f0709b) SHA1(19e675bcccadb774f60ec5929fc1fb5cf0d3f617) ) 
-	
+	ROM_LOAD( "homerun.120",  0x00000, 0x20000, CRC(52f0709b) SHA1(19e675bcccadb774f60ec5929fc1fb5cf0d3f617) )
+
 	ROM_REGION( 0x01000, REGION_SOUND1, 0 )
 	ROM_LOAD( "homerun.snd",  0x00000, 0x1000, NO_DUMP ) /* D7756C internal rom */
-	
+
 ROM_END
 
 GAMEX( 1988, homerun, 0, homerun, homerun, 0, ROT0, "Jaleco", "Moero Pro Yakyuu Homerun",GAME_IMPERFECT_GRAPHICS)

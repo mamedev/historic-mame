@@ -4,7 +4,7 @@ Markham (c) 1983 Sun Electronics
 
 Video hardware driver by Uki
 
-	17/Jun/2001 -
+    17/Jun/2001 -
 
 ******************************************************************************/
 
@@ -76,7 +76,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( markham )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )

@@ -1,27 +1,27 @@
 /***************************************************************************
 
-							  -= Paradise / Target Ball =-
+                              -= Paradise / Target Ball / Torus =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Q 		shows the background layer
-		W 		shows the midground layer
-		E 		shows the foreground layer
-		R 		shows the pixmap layer
-		A 		shows sprites
+        Q       shows the background layer
+        W       shows the midground layer
+        E       shows the foreground layer
+        R       shows the pixmap layer
+        A       shows sprites
 
-		There are 4 Fixed 256 x 256 Layers.
+        There are 4 Fixed 256 x 256 Layers.
 
-		Background tiles are 8x8x4 with a register selecting which
-		color code to use.
+        Background tiles are 8x8x4 with a register selecting which
+        color code to use.
 
-		midground and foreground tiles are 8x8x8 with no color code.
-		Then there's a 16 color pixel layer.
+        midground and foreground tiles are 8x8x8 with no color code.
+        Then there's a 16 color pixel layer.
 
-		Bog standard 16x16x8 sprites, apparently with no color code nor flipping.
+        Bog standard 16x16x8 sprites, apparently with no color code nor flipping.
 
 ***************************************************************************/
 
@@ -31,6 +31,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 /* Variables that driver has access to: */
 
 data8_t *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
+int paradise_sprite_inc;
 
 /* Variables only used here */
 
@@ -59,12 +60,12 @@ WRITE8_HANDLER( paradise_palette_w )
 
 /***************************************************************************
 
-									Tilemaps
+                                    Tilemaps
 
-	Offset:
+    Offset:
 
-	$000.b		Code (Low  Bits)
-	$400.b		Code (High Bits)
+    $000.b      Code (Low  Bits)
+    $400.b      Code (High Bits)
 
 ***************************************************************************/
 
@@ -156,7 +157,7 @@ WRITE8_HANDLER( paradise_pixmap_w )
 
 /***************************************************************************
 
-							Vide Hardware Init
+                            Vide Hardware Init
 
 ***************************************************************************/
 
@@ -175,7 +176,7 @@ VIDEO_START( paradise )
 	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 	/* paletteram and videoram (pixmap) are accessed through CPU ports, that don't
-	   get memory automatically allocated for them */
+       get memory automatically allocated for them */
 	paletteram	=	auto_malloc(0x1800);
 	videoram	=	auto_malloc(0x8000);
 
@@ -191,7 +192,7 @@ VIDEO_START( paradise )
 
 /***************************************************************************
 
-							Sprites Drawing
+                            Sprites Drawing
 
 ***************************************************************************/
 
@@ -204,11 +205,11 @@ WRITE8_HANDLER( paradise_priority_w )
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
-	for (i = 0; i < spriteram_size ; i += spriteram_size/0x40)
+	for (i = 0; i < spriteram_size ; i += paradise_sprite_inc)
 	{
 		int code	=	spriteram[i+0];
 		int x		=	spriteram[i+1];
-		int y		=	spriteram[i+2];
+		int y		=	spriteram[i+2] - 2;
 		int attr	=	spriteram[i+3];
 
 		int flipx	=	0;	// ?
@@ -223,13 +224,28 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				flipx, flipy,
 				x,y,
 				cliprect,TRANSPARENCY_PEN, 0xff );
+
+		/* wrap around x */
+		drawgfx(bitmap,Machine->gfx[0],
+				code + (attr << 8),
+				0,
+				flipx, flipy,
+				x - 256,y,
+				cliprect,TRANSPARENCY_PEN, 0xff );
+
+		drawgfx(bitmap,Machine->gfx[0],
+				code + (attr << 8),
+				0,
+				flipx, flipy,
+				x + 256,y,
+				cliprect,TRANSPARENCY_PEN, 0xff );
 	}
 }
 
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
 ***************************************************************************/
 
@@ -273,5 +289,34 @@ if (code_pressed(KEYCODE_Z))
 		if (layers_ctrl&8)	tilemap_draw(bitmap,cliprect, tilemap_2, 0,0);
 		if (!(paradise_priority & 1))
 			if (layers_ctrl&16)	draw_sprites(bitmap,cliprect);
+	}
+}
+
+/* no pix layer, no tilemap_0, different priority bits */
+VIDEO_UPDATE( torus )
+{
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	if (!(paradise_priority & 2))	/* Screen blanking */
+		return;
+
+	if (paradise_priority & 1)
+		draw_sprites(bitmap,cliprect);
+
+	tilemap_draw(bitmap,cliprect, tilemap_1, 0,0);
+
+	if(paradise_priority & 4)
+	{
+		if (!(paradise_priority & 1))
+			draw_sprites(bitmap,cliprect);
+
+		tilemap_draw(bitmap,cliprect, tilemap_2, 0,0);
+	}
+	else
+	{
+		tilemap_draw(bitmap,cliprect, tilemap_2, 0,0);
+
+		if (!(paradise_priority & 1))
+			draw_sprites(bitmap,cliprect);
 	}
 }

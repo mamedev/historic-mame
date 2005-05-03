@@ -1,16 +1,16 @@
 /***************************************************************************
 
-						-= Sky Fox / Exerizer =-
+                        -= Sky Fox / Exerizer =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+                driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU  :	Z80A x 2
-Sound:	YM2203C x 2
-Other:	2 HM6116LP-3 (one on each board)
-		1 KM6264L-15 (on bottom board)
+CPU  :  Z80A x 2
+Sound:  YM2203C x 2
+Other:  2 HM6116LP-3 (one on each board)
+        1 KM6264L-15 (on bottom board)
 
-To Do:	The background rendering is entirely guesswork
+To Do:  The background rendering is entirely guesswork
 
 ***************************************************************************/
 #include "driver.h"
@@ -35,14 +35,14 @@ VIDEO_UPDATE( skyfox );
 /***************************************************************************
 
 
-								Main CPU
+                                Main CPU
 
 
 ***************************************************************************/
 
 
 /***************************************************************************
-								Sky Fox
+                                Sky Fox
 ***************************************************************************/
 
 static ADDRESS_MAP_START( skyfox_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -52,7 +52,7 @@ static ADDRESS_MAP_START( skyfox_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_1_r		)	//
 	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_2_r		)	//
 	AM_RANGE(0xf001, 0xf001) AM_READ(input_port_3_r		)	//
-//	AM_RANGE(0xff00, 0xff07) AM_READ(skyfox_vregs_r		)	// fake to read the vregs
+//  AM_RANGE(0xff00, 0xff07) AM_READ(skyfox_vregs_r     )   // fake to read the vregs
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( skyfox_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -71,14 +71,14 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Sound CPU
+                                Sound CPU
 
 
 ***************************************************************************/
 
 
 /***************************************************************************
-								Sky Fox
+                                Sky Fox
 ***************************************************************************/
 
 
@@ -86,17 +86,17 @@ static ADDRESS_MAP_START( skyfox_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM				)	// ROM
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM				)	// RAM
 	AM_RANGE(0xa001, 0xa001) AM_READ(YM2203_read_port_0_r 	)	// YM2203 #1
-//	AM_RANGE(0xc001, 0xc001) AM_READ(YM2203_read_port_1_r 	)	// YM2203 #2
+//  AM_RANGE(0xc001, 0xc001) AM_READ(YM2203_read_port_1_r   )   // YM2203 #2
 	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r			)	// From Main CPU
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( skyfox_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM					)	// ROM
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM					)	// RAM
-//	AM_RANGE(0x9000, 0x9001) AM_WRITE(MWA8_NOP					)	// ??
+//  AM_RANGE(0x9000, 0x9001) AM_WRITE(MWA8_NOP                  )   // ??
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2203_control_port_0_w 	)	// YM2203 #1
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM2203_write_port_0_w 	)	//
-//	AM_RANGE(0xb000, 0xb001) AM_WRITE(MWA8_NOP					)	// ??
+//  AM_RANGE(0xb000, 0xb001) AM_WRITE(MWA8_NOP                  )   // ??
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2203_control_port_1_w 	)	// YM2203 #2
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2203_write_port_1_w 	)	//
 ADDRESS_MAP_END
@@ -107,7 +107,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -172,8 +172,8 @@ INPUT_PORTS_START( skyfox )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-//	PORT_DIPSETTING(    0x05, "5" )
-//	PORT_DIPSETTING(    0x06, "5" )
+//  PORT_DIPSETTING(    0x05, "5" )
+//  PORT_DIPSETTING(    0x06, "5" )
 	PORT_DIPSETTING( 	0x07, "Infinite (Cheat)")
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -194,7 +194,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 
 ***************************************************************************/
@@ -215,7 +215,7 @@ static struct GfxLayout layout_8x8x8 =
 };
 
 /***************************************************************************
-								Sky Fox
+                                Sky Fox
 ***************************************************************************/
 
 static struct GfxDecodeInfo skyfox_gfxdecodeinfo[] =
@@ -232,14 +232,14 @@ static struct GfxDecodeInfo skyfox_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
 
 
 /***************************************************************************
-								Sky Fox
+                                Sky Fox
 ***************************************************************************/
 
 /* Check for coin insertion once a frame (polling a fake input port).
@@ -296,7 +296,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -305,18 +305,18 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-									Sky Fox
+                                    Sky Fox
 
 
-c042	:	Lives
-c044-5	:	Score (BCD)
-c048-9	:	Power (BCD)
+c042    :   Lives
+c044-5  :   Score (BCD)
+c048-9  :   Power (BCD)
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Exerizer [Bootleg]
+                                Exerizer [Bootleg]
 
 malcor
 

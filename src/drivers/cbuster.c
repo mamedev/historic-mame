@@ -1,9 +1,9 @@
 /***************************************************************************
 
-  Crude Buster (World version FX)		(c) 1990 Data East Corporation
-  Crude Buster (World version FU)		(c) 1990 Data East Corporation
-  Crude Buster (Japanese version)		(c) 1990 Data East Corporation
-  Two Crude (USA version)	    		(c) 1990 Data East USA
+  Crude Buster (World version FX)       (c) 1990 Data East Corporation
+  Crude Buster (World version FU)       (c) 1990 Data East Corporation
+  Crude Buster (Japanese version)       (c) 1990 Data East Corporation
+  Two Crude (USA version)               (c) 1990 Data East USA
 
   The 'FX' board is filled with 'FU' roms except for the 4 program roms,
   both boards have 'export' stickers which usually indicates a World version.
@@ -59,21 +59,21 @@ static WRITE16_HANDLER( twocrude_control_w )
 
 	case 4: /* Protection, maybe this is a PAL on the board?
 
-			80046 is level number
-			stop at stage and enter.
-			see also 8216..
+            80046 is level number
+            stop at stage and enter.
+            see also 8216..
 
-				9a 00 = pf4 over pf3 (normal) (level 0)
-				9a f1 =  (level 1 - water), pf3 over ALL sprites + pf4
-				9a 80 = pf3 over pf4 (Level 2 - copter)
-				9a 40 = pf3 over ALL sprites + pf4 (snow) level 3
-				9a c0 = doesn't matter?
-				9a ff = pf 3 over pf4
+                9a 00 = pf4 over pf3 (normal) (level 0)
+                9a f1 =  (level 1 - water), pf3 over ALL sprites + pf4
+                9a 80 = pf3 over pf4 (Level 2 - copter)
+                9a 40 = pf3 over ALL sprites + pf4 (snow) level 3
+                9a c0 = doesn't matter?
+                9a ff = pf 3 over pf4
 
-			I can't find a priority register, I assume it's tied to the
-			protection?!
+            I can't find a priority register, I assume it's tied to the
+            protection?!
 
-		*/
+        */
 		if ((data&0xffff)==0x9a00) prot=0;
 		if ((data&0xffff)==0xaa) prot=0x74;
 		if ((data&0xffff)==0x0200) prot=0x63<<8;

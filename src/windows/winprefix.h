@@ -1,6 +1,6 @@
 //============================================================
 //
-//	win32.h - Win32 prefix file, included by ALL files
+//  win32.h - Win32 prefix file, included by ALL files
 //
 //============================================================
 

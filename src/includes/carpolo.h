@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	Exidy Car Polo hardware
+    Exidy Car Polo hardware
 
-	driver by Zsolt Vasvari
+    driver by Zsolt Vasvari
 
 ****************************************************************************/
 

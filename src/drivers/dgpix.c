@@ -84,7 +84,7 @@ static WRITE32_HANDLER( flash_w )
 
 static WRITE32_HANDLER( vram_w )
 {
-//	int x,y;
+//  int x,y;
 	switch(mem_mask)
 	{
 		case 0:

@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Atari Centipede hardware
+    Atari Centipede hardware
 
 *************************************************************************/
 
@@ -18,7 +18,7 @@ static UINT8 penmask[64];
 
 /*************************************
  *
- *	Tilemap callback
+ *  Tilemap callback
  *
  *************************************/
 
@@ -57,7 +57,7 @@ static void bullsdrt_get_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -110,7 +110,7 @@ VIDEO_START( bullsdrt )
 
 /*************************************
  *
- *	Video RAM writes
+ *  Video RAM writes
  *
  *************************************/
 
@@ -124,7 +124,7 @@ WRITE8_HANDLER( centiped_videoram_w )
 
 /*************************************
  *
- *	Screen flip
+ *  Screen flip
  *
  *************************************/
 
@@ -137,7 +137,7 @@ WRITE8_HANDLER( centiped_flip_screen_w )
 
 /*************************************
  *
- *	Tiles bank
+ *  Tiles bank
  *
  *************************************/
 
@@ -151,7 +151,7 @@ WRITE8_HANDLER( bullsdrt_tilesbank_w )
 
 /*************************************
  *
- *	Sprites bank
+ *  Sprites bank
  *
  *************************************/
 
@@ -164,7 +164,7 @@ WRITE8_HANDLER( bullsdrt_sprites_bank_w )
 
 /*************************************
  *
- *	Palette init
+ *  Palette init
  *
  *************************************/
 
@@ -186,17 +186,17 @@ static void init_penmask(void)
 
 /***************************************************************************
 
-	Centipede doesn't have a color PROM. Eight RAM locations control
-	the color of characters and sprites. The meanings of the four bits are
-	(all bits are inverted):
+    Centipede doesn't have a color PROM. Eight RAM locations control
+    the color of characters and sprites. The meanings of the four bits are
+    (all bits are inverted):
 
-	bit 3 alternate
-	      blue
-	      green
-	bit 0 red
+    bit 3 alternate
+          blue
+          green
+    bit 0 red
 
-	The alternate bit affects blue and green, not red. The way I weighted its
-	effect might not be perfectly accurate, but is reasonably close.
+    The alternate bit affects blue and green, not red. The way I weighted its
+    effect might not be perfectly accurate, but is reasonably close.
 
 ***************************************************************************/
 
@@ -259,13 +259,13 @@ WRITE8_HANDLER( centiped_paletteram_w )
 
 /***************************************************************************
 
-	Convert the color PROM into a more useable format.
+    Convert the color PROM into a more useable format.
 
-	The palette PROM are connected to the RGB output this way:
+    The palette PROM are connected to the RGB output this way:
 
-	bit 2 -- RED
-	      -- GREEN
-	bit 0 -- BLUE
+    bit 2 -- RED
+          -- GREEN
+    bit 0 -- BLUE
 
 ***************************************************************************/
 
@@ -280,7 +280,7 @@ PALETTE_INIT( warlords )
 		int b = ((*color_prom >> 0) & 0x01) * 0xff;
 
 		/* Colors 0x40-0x7f are converted to grey scale as it's used on the
-		   upright version that had an overlay */
+           upright version that had an overlay */
 		if (i >= Machine->drv->total_colors / 2)
 		{
 			/* Use the standard ratios: r = 30%, g = 59%, b = 11% */
@@ -303,17 +303,17 @@ PALETTE_INIT( warlords )
 
 /***************************************************************************
 
-	Millipede doesn't have a color PROM, it uses RAM.
-	The RAM seems to be conncted to the video output this way:
+    Millipede doesn't have a color PROM, it uses RAM.
+    The RAM seems to be conncted to the video output this way:
 
-	bit 7 red
-	      red
-	      red
-	      green
-	      green
-	      blue
-	      blue
-	bit 0 blue
+    bit 7 red
+          red
+          red
+          green
+          green
+          blue
+          blue
+    bit 0 blue
 
 ***************************************************************************/
 
@@ -378,7 +378,7 @@ WRITE8_HANDLER( milliped_paletteram_w )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -438,9 +438,9 @@ VIDEO_UPDATE( warlords )
 		int y = 248 - spriteram[offs + 0x10];
 
 		/* The four quadrants have different colors. This is not 100% accurate,
-		   because right on the middle the sprite could actually have two or more
-		   different color, but this is not noticable, as the color that
-		   changes between the quadrants is mostly used on the paddle sprites */
+           because right on the middle the sprite could actually have two or more
+           different color, but this is not noticable, as the color that
+           changes between the quadrants is mostly used on the paddle sprites */
 		int color = ((y & 0x80) >> 6) | ((x & 0x80) >> 7) | (upright_mode >> 5);
 
 		/* in upright mode, sprites are flipped */

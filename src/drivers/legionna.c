@@ -191,7 +191,7 @@ static READ16_HANDLER( mcu_r )
 		/* Protection is not understood */
 
 		case (0x470/2):	/* read PC $110a, could be some sort of control word:
-				sometimes a bit is changed then it's poked back in... */
+                sometimes a bit is changed then it's poked back in... */
 			return (rand() &0xffff);
 
 		case (0x582/2):	/* read PC $3594 */
@@ -503,8 +503,8 @@ static WRITE16_HANDLER( godzilla_cop_mcu_w )
 			seibu_main_word_w(6,mcu_ram[offset],0xff00);
 			break;
 		}
-//		default:
-//		logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
+//      default:
+//      logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
 	}
 }
 
@@ -540,9 +540,9 @@ static READ16_HANDLER( sdgndmrb_cop_mcu_r )
 		case (0x75c/2):
 			return input_port_5_word_r(0,0);
 	}
-//	return rand();
-//	logerror("CPU0 PC %06x MCU read offset: %04x\n",activecpu_get_previouspc(),offset*2);
-//	usrintf_showmessage("CPU0 PC %06x MCU read offset: %04x",activecpu_get_previouspc(),offset*2);
+//  return rand();
+//  logerror("CPU0 PC %06x MCU read offset: %04x\n",activecpu_get_previouspc(),offset*2);
+//  usrintf_showmessage("CPU0 PC %06x MCU read offset: %04x",activecpu_get_previouspc(),offset*2);
 
 	return mcu_ram[offset];
 }
@@ -635,9 +635,9 @@ static WRITE16_HANDLER( sdgndmrb_cop_mcu_w )
 			break;
 		}
 
-//		default:
-//		logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
-//		usrintf_showmessage("CPU0 PC %06x MCU write offset: %04x data: %04x",activecpu_get_previouspc(),offset*2,data);
+//      default:
+//      logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
+//      usrintf_showmessage("CPU0 PC %06x MCU write offset: %04x data: %04x",activecpu_get_previouspc(),offset*2,data);
 	}
 }
 
@@ -653,10 +653,10 @@ static ADDRESS_MAP_START( legionna_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* The 4000-4fff area contains PALETTE words and may be extra paletteram? */
 	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)	/* palette mirror ? */
-//	AM_RANGE(0x104000, 0x10401f) AM_READ(MRA16_RAM)	/* debugging... */
-//	AM_RANGE(0x104200, 0x1043ff) AM_READ(MRA16_RAM)	/* ??? */
-//	AM_RANGE(0x104600, 0x1047ff) AM_READ(MRA16_RAM)	/* ??? */
-//	AM_RANGE(0x104800, 0x10481f) AM_READ(MRA16_RAM)	/* ??? */
+//  AM_RANGE(0x104000, 0x10401f) AM_READ(MRA16_RAM) /* debugging... */
+//  AM_RANGE(0x104200, 0x1043ff) AM_READ(MRA16_RAM) /* ??? */
+//  AM_RANGE(0x104600, 0x1047ff) AM_READ(MRA16_RAM) /* ??? */
+//  AM_RANGE(0x104800, 0x10481f) AM_READ(MRA16_RAM) /* ??? */
 
 	AM_RANGE(0x105000, 0x105fff) AM_READ(MRA16_RAM)	/* spriteram */
 	AM_RANGE(0x106000, 0x106fff) AM_READ(MRA16_RAM)
@@ -674,11 +674,11 @@ static ADDRESS_MAP_START( legionna_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* The 4000-4fff area contains PALETTE words and may be extra paletteram? */
 	AM_RANGE(0x104000, 0x104fff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x104000, 0x104fff) AM_WRITE(legionna_paletteram16_w)
-//	AM_RANGE(0x104000, 0x10401f) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x104200, 0x1043ff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x104600, 0x1047ff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x104800, 0x10481f) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x104000, 0x104fff) AM_WRITE(legionna_paletteram16_w)
+//  AM_RANGE(0x104000, 0x10401f) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x104200, 0x1043ff) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x104600, 0x1047ff) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x104800, 0x10481f) AM_WRITE(MWA16_RAM)
 
 	AM_RANGE(0x105000, 0x105fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x106000, 0x106fff) AM_WRITE(MWA16_RAM)	/* is this used outside inits ?? */
@@ -882,7 +882,7 @@ INPUT_PORTS_START( legionna )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-//	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -968,7 +968,7 @@ INPUT_PORTS_START( heatbrl )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN4 )	// haven't found coin4, maybe it doesn't exist
-//	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)

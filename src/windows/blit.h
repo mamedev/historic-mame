@@ -1,6 +1,6 @@
 //============================================================
 //
-//	blit.h - Win32 blit handling
+//  blit.h - Win32 blit handling
 //
 //============================================================
 
@@ -9,7 +9,7 @@
 
 
 //============================================================
-//	PARAMETERS
+//  PARAMETERS
 //============================================================
 
 // maximum X/Y scale values
@@ -36,7 +36,7 @@
 
 
 //============================================================
-//	TYPE DEFINITIONS
+//  TYPE DEFINITIONS
 //============================================================
 
 struct win_blit_params
@@ -61,7 +61,7 @@ struct win_blit_params
 	int			srcheight;
 
 	void *		vecdirty;
-	
+
 	int			flipx;
 	int			flipy;
 	int			swapxy;
@@ -70,7 +70,7 @@ struct win_blit_params
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 int win_perform_blit(const struct win_blit_params *blit, int update);

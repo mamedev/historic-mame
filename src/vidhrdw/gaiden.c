@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Ninja Gaiden / Tecmo Knights Video Hardware
+    Ninja Gaiden / Tecmo Knights Video Hardware
 
 ***************************************************************************/
 
@@ -351,7 +351,7 @@ static void blendbitmaps(
 
 /* sprite format:
  *
- *	word		bit					usage
+ *  word        bit                 usage
  * --------+-fedcba9876543210-+----------------
  *    0    | ---------------x | flip x
  *         | --------------x- | flip y
@@ -499,7 +499,7 @@ skip_sprite:
 
 /* sprite format:
  *
- *	word		bit					usage
+ *  word        bit                 usage
  * --------+-fedcba9876543210-+----------------
  *    0    | --------xxxxxxxx | sprite code (lower bits)
  *         | ---xxxxx-------- | unused ?
@@ -580,7 +580,7 @@ VIDEO_UPDATE( raiga )
 	tilemap_draw(tile_bitmap_bg, cliprect,background, 0, 1);
 	tilemap_draw(tile_bitmap_fg, cliprect,foreground, 0, 2);
 	/* draw the blended tiles at a lower priority
-	   so sprites covered by them will still be drawn */
+       so sprites covered by them will still be drawn */
 	tilemap_draw(tile_bitmap_fg, cliprect,foreground, 1, 0);
 	tilemap_draw(tile_bitmap_fg, cliprect,text_layer, 0, 4);
 

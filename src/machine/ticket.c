@@ -5,10 +5,10 @@
   Functions to emulate a prototypical ticket dispenser hardware.
 
   Right now, this is an *extremely* basic ticket dispenser.
-  TODO:	Active Bit may not be Bit 7 in all applications.
-  	    Add a ticket dispenser interface instead of passing a bunch
-		of arguments to ticket_dispenser_init.
-		Add sound, graphical output?
+  TODO: Active Bit may not be Bit 7 in all applications.
+        Add a ticket dispenser interface instead of passing a bunch
+        of arguments to ticket_dispenser_init.
+        Add sound, graphical output?
 ***************************************************************************/
 
 #include "driver.h"

@@ -178,52 +178,52 @@ if division result is wrong, reads again key no. from 03, and doesn't crash if i
 
 wldcourt: (CUS143)
 CPU #0 PC db0a: keychip write 0000=01 [maybe to initialize chip?]
-CPU #0 PC db0d: keychip read 0003	  [return key no.]
+CPU #0 PC db0d: keychip read 0003     [return key no.]
 CPU #0 PC db18: keychip write 0003=d9 [operating mode?]
 CPU #0 PC db21: keychip write 0000=xx [ \ operands]
 CPU #0 PC db26: keychip write 0001=xx [    "    " ]
 CPU #0 PC db26: keychip write 0002=xx [    "    " ]
-CPU #0 PC db29: keychip read 0001	  [   division result (verified to be correct)]
-CPU #0 PC db29: keychip read 0002	  [    "           "  (verified to be correct)]
-CPU #0 PC db2c: keychip read 0000	  [ /  "           "  (verified to be correct)]
+CPU #0 PC db29: keychip read 0001     [   division result (verified to be correct)]
+CPU #0 PC db29: keychip read 0002     [    "           "  (verified to be correct)]
+CPU #0 PC db2c: keychip read 0000     [ /  "           "  (verified to be correct)]
 CPU #0 PC dbfa: keychip write 0003=db [operating mode?]
 CPU #0 PC dbfe: keychip write 0002=00-ff [???????]
 CPU #0 PC dc04: keychip read 0003     [???? - stored in 0001]
 CPU #0 PC dc0b: keychip write 0001=82-ff [ \ ???????]
 CPU #0 PC dc0b: keychip write 0002=8d    [ / ???????]
-CPU #0 PC dc11: keychip read 0003	  [???? - stored in 0002]
-CPU #0 PC dc18: keychip read 0001	  [ \ ???????]
-CPU #0 PC dc18: keychip read 0002	  [   ???????]
+CPU #0 PC dc11: keychip read 0003     [???? - stored in 0002]
+CPU #0 PC dc18: keychip read 0001     [ \ ???????]
+CPU #0 PC dc18: keychip read 0002     [   ???????]
 CPU #0 PC dc1b: keychip write 0001=xx [   ???????]
 CPU #0 PC dc1b: keychip write 0002=xx [ / ???????]
-CPU #0 PC dc21: keychip read 0001	  [???? - stored in 0003]
-CPU #0 PC dc21: keychip read 0002	  [???? - stored in 0004]
+CPU #0 PC dc21: keychip read 0001     [???? - stored in 0003]
+CPU #0 PC dc21: keychip read 0002     [???? - stored in 0004]
 CPU #0 PC dc28: keychip write 0003=d9 [operating mode?]
 ---- end of common checks
 CPU #0 PC e31c: keychip read 0003     [return key no.]
 
 blazer: (CUS144)
 CPU #0 PC da0b: keychip write 0000=01 [maybe to initialize chip?]
-CPU #0 PC da0e: keychip read 0003	  [return key no.]
+CPU #0 PC da0e: keychip read 0003     [return key no.]
 CPU #0 PC da19: keychip write 0003=b7 [operating mode?]
 CPU #0 PC da22: keychip write 0000=12 [ \ operands]
 CPU #0 PC da27: keychip write 0001=0a [    "    " ]
 CPU #0 PC da27: keychip write 0002=95 [    "    " ]
-CPU #0 PC da2a: keychip read 0001	  [   division result (verified to be correct)]
-CPU #0 PC da2a: keychip read 0002	  [    "           "  (verified to be correct)]
-CPU #0 PC da2d: keychip read 0000	  [ /  "           "  (verified to be correct)]
+CPU #0 PC da2a: keychip read 0001     [   division result (verified to be correct)]
+CPU #0 PC da2a: keychip read 0002     [    "           "  (verified to be correct)]
+CPU #0 PC da2d: keychip read 0000     [ /  "           "  (verified to be correct)]
 CPU #0 PC dafb: keychip write 0003=b6 [operating mode?]
 CPU #0 PC daff: keychip write 0002=00-ff [???????]
-CPU #0 PC db05: keychip read 0003	  [???? - stored in 0001]
+CPU #0 PC db05: keychip read 0003     [???? - stored in 0001]
 CPU #0 PC db0c: keychip write 0001=82-ff [ \ ???????]
 CPU #0 PC db0c: keychip write 0002=8d    [ / ???????]
-CPU #0 PC db12: keychip read 0003	  [???? - stored in 0002]
-CPU #0 PC db19: keychip read 0001	  [ \ ???????]
-CPU #0 PC db19: keychip read 0002	  [   ???????]
+CPU #0 PC db12: keychip read 0003     [???? - stored in 0002]
+CPU #0 PC db19: keychip read 0001     [ \ ???????]
+CPU #0 PC db19: keychip read 0002     [   ???????]
 CPU #0 PC db1c: keychip write 0001=xx [   ???????]
 CPU #0 PC db1c: keychip write 0002=xx [ / ???????]
-CPU #0 PC db22: keychip read 0001	  [???? - stored in 0003]
-CPU #0 PC db22: keychip read 0002	  [???? - stored in 0004]
+CPU #0 PC db22: keychip read 0001     [???? - stored in 0003]
+CPU #0 PC db22: keychip read 0002     [???? - stored in 0004]
 CPU #0 PC db29: keychip write 0003=b7 [operating mode?]
 ---- end of common checks
 
@@ -233,7 +233,7 @@ CPU #0 PC e3d4: keychip read 0003     [AND #$37 = key no.]
 */
 static READ8_HANDLER( key_type1_r )
 {
-//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+//  logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 
 	if (offset < 3)
 	{
@@ -264,7 +264,7 @@ static READ8_HANDLER( key_type1_r )
 
 static WRITE8_HANDLER( key_type1_w )
 {
-//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+//  logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 
 	if (offset < 4)
 		key[offset] = data;
@@ -351,7 +351,7 @@ CPU #0 PC 653e: keychip read 0003
 
 galaga88: (CUS153)
 CPU #0 PC db02: keychip write 0004=2d [operating mode?]
-CPU #0 PC db05: keychip read 0004	  [AND #$7F = key no.]
+CPU #0 PC db05: keychip read 0004     [AND #$7F = key no.]
 CPU #0 PC db17: keychip write 0000=xx
 CPU #0 PC db17: keychip write 0001=xx
 CPU #0 PC db1e: keychip write 0002=xx
@@ -368,7 +368,7 @@ CPU #0 PC e82a: keychip read 0004     [AND #$3F = key no.]
 
 bakutotu: (CUS155)
 CPU #0 PC db38: keychip write 0004=03 [operating mode?]
-CPU #0 PC db3b: keychip read 0004	  [AND #$37 = key no.]
+CPU #0 PC db3b: keychip read 0004     [AND #$37 = key no.]
 CPU #0 PC db4f: keychip write 0000=xx
 CPU #0 PC db4f: keychip write 0001=xx
 CPU #0 PC db56: keychip write 0002=xx
@@ -401,7 +401,7 @@ CPU #0 PC e574: keychip read 0001
 
 static READ8_HANDLER( key_type2_r )
 {
-//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+//  logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 
 	if (offset < 4)
 	{
@@ -433,7 +433,7 @@ static READ8_HANDLER( key_type2_r )
 
 static WRITE8_HANDLER( key_type2_w )
 {
-//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+//  logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 
 	if (offset < 5)
 		key[offset] = data;
@@ -519,13 +519,13 @@ static READ8_HANDLER( key_type3_r )
 {
 	int op;
 
-//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+//  logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 
 	/* I need to handle blastoff's read from 0858. The game previously writes to 0858,
-	   using it as temporary storage, so maybe it expects to act as RAM, however
-	   it happens to work correctly also using the standard handling for 0058.
-	   The schematics don't show A11 being used, so I go for this handling.
-	  */
+       using it as temporary storage, so maybe it expects to act as RAM, however
+       it happens to work correctly also using the standard handling for 0058.
+       The schematics don't show A11 being used, so I go for this handling.
+      */
 	op = (offset & 0x70) >> 4;
 
 	if (op == key_reg)		return key_id;
@@ -541,7 +541,7 @@ static READ8_HANDLER( key_type3_r )
 
 static WRITE8_HANDLER( key_type3_w )
 {
-//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+//  logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 
 	key[(offset & 0x70) >> 4] = data;
 }
@@ -575,7 +575,7 @@ static int namcos1_reset = 0;
 
 WRITE8_HANDLER( namcos1_cpu_control_w )
 {
-//	logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
+//  logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
 	if ((data & 1) ^ namcos1_reset)
 	{
 		mcu_patch_data = 0;
@@ -651,14 +651,14 @@ static WRITE8_HANDLER( rom_w )
 static READ8_HANDLER( unknown_r )
 {
 	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
-//	usrintf_showmessage("CPU #%d PC %04x: read from unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
+//  usrintf_showmessage("CPU #%d PC %04x: read from unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 	return 0;
 }
 
 static WRITE8_HANDLER( unknown_w )
 {
 	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
-//	usrintf_showmessage("CPU #%d PC %04x: wrote to unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
+//  usrintf_showmessage("CPU #%d PC %04x: wrote to unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 }
 
 /* Main bankswitching routine */
@@ -723,16 +723,16 @@ void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
 	if( namcos1_active_bank[bank].bank_handler_r == unknown_r)
 	{
 		logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , activecpu_get_pc(), bank , chip[bank] );
-//			if (chip) usrintf_showmessage("CPU #%d PC %04x:unknown chip selected bank %x=$%04x", cpu , activecpu_get_pc(), bank , chip[bank] );
+//          if (chip) usrintf_showmessage("CPU #%d PC %04x:unknown chip selected bank %x=$%04x", cpu , activecpu_get_pc(), bank , chip[bank] );
 	}
 
 	/* renew pc base */
-//	change_pc(activecpu_get_pc());
+//  change_pc(activecpu_get_pc());
 }
 
 WRITE8_HANDLER( namcos1_bankswitch_w )
 {
-//	logerror("cpu %d: namcos1_bankswitch_w offset %04x data %02x\n",cpu_getactivecpu(),offset,data);
+//  logerror("cpu %d: namcos1_bankswitch_w offset %04x data %02x\n",cpu_getactivecpu(),offset,data);
 
 	namcos1_bankswitch(cpu_getactivecpu(), offset, data);
 }
@@ -740,7 +740,7 @@ WRITE8_HANDLER( namcos1_bankswitch_w )
 /* Sub cpu set start bank port */
 WRITE8_HANDLER( namcos1_subcpu_bank_w )
 {
-//	logerror("namcos1_subcpu_bank_w offset %04x data %02x\n",offset,data);
+//  logerror("namcos1_subcpu_bank_w offset %04x data %02x\n",offset,data);
 
 	/* Prepare code for CPU 1 */
 	namcos1_bankswitch( 1, 0x0e00, 0x03 );
@@ -778,12 +778,12 @@ static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 	data8_t *dummyrom = auto_malloc(0x2000);
 
 	/* when the games want to reset because the test switch has been flipped (or
-	   because the protection checks failed!) they just set the top bits of bank #7
-	   to 0, effectively crashing and waiting for the watchdog to kick in.
-	   To avoid crashes in MAME, I prepare a dummy ROM containing just BRA -2 so
-	   the program doesn't start executing code in unmapped areas.
-	   Conveniently, the opcode for BRA -2 is 20 FE, and FE 20 FE is LDU $20FE,
-	   so misaligned entry points get immediatly corrected. */
+       because the protection checks failed!) they just set the top bits of bank #7
+       to 0, effectively crashing and waiting for the watchdog to kick in.
+       To avoid crashes in MAME, I prepare a dummy ROM containing just BRA -2 so
+       the program doesn't start executing code in unmapped areas.
+       Conveniently, the opcode for BRA -2 is 20 FE, and FE 20 FE is LDU $20FE,
+       so misaligned entry points get immediatly corrected. */
 	for (i = 0;i < 0x2000;i+=2)
 	{
 		dummyrom[i]   = 0x20;
@@ -1340,9 +1340,9 @@ static READ8_HANDLER( berabohm_buttons_r )
 		res = readinputportbytag("CONTROL1") & 0x8f;
 
 		/* the strobe cannot happen too often, otherwise the MCU will waste too
-		   much time reading the inputs and won't have enough cycles to play two
-		   digital sounds at once. This value is enough to read all inputs at least
-		   once per frame */
+           much time reading the inputs and won't have enough cycles to play two
+           digital sounds at once. This value is enough to read all inputs at least
+           once per frame */
 		if (++strobe_count > 4)
 		{
 			strobe_count = 0;
@@ -1388,9 +1388,9 @@ static READ8_HANDLER( faceoff_inputs_r )
 		res = readinputportbytag("CONTROL1") & 0x80;
 
 		/* the strobe cannot happen too often, otherwise the MCU will waste too
-		   much time reading the inputs and won't have enough cycles to play two
-		   digital sounds at once. This value is enough to read all inputs at least
-		   once per frame */
+           much time reading the inputs and won't have enough cycles to play two
+           digital sounds at once. This value is enough to read all inputs at least
+           once per frame */
 		if (++strobe_count > 8)
 		{
 			strobe_count = 0;

@@ -73,7 +73,7 @@ UINT8 h8disasm(UINT32 address, char *output)
 		sprintf(output, "%4.4x mov.b %s, @%8.8x", opcode, reg_names8[(opcode>>8) & 0xf], 0xfffff00 | (opcode & 0xff));
 		size = 2;
 		break;
-		// bcc @xx:8 
+		// bcc @xx:8
 	case 0x4:
 		address += 2;
 		sprintf(output, "%4.4x %s %8.8x", opcode, branch_instr[(opcode >> 8) & 0xf], address + (INT8)(opcode &0xff));
@@ -172,7 +172,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 				{
 					sprintf(output, "%4.4x mov.l %s, @%s", opcode, reg_names32[data16&7], reg_names32[(data16>>4)&7]);
 				}
-				else	
+				else
 				{
 					sprintf(output, "%4.4x mov.l @%s, %s", opcode, reg_names32[(data16>>4)&7], reg_names32[data16&7]);
 				}
@@ -197,7 +197,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 				{
 					sprintf(output, "%4.4x %x mov.l %s, @%x", opcode, data16, reg_names32[data16&7], sdata32);
 				}
-				else	
+				else
 				{
 					sprintf(output, "%4.4x %x mov.l @%x, %s", opcode, data16, sdata32, reg_names32[data16&7]);
 				}
@@ -228,7 +228,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 				size = 6;
 				break;
 			case 0x78:
-				// prefix for 
+				// prefix for
 				// mov.l (@aa:x, rx), Rx
 				data16 = h8_mem_read16(address+4);
 				// 24 bit abs ?
@@ -248,7 +248,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 				{
 					sprintf(output, "%4.4x %x mov.l %s, @%x", opcode, data16, reg_names32[data16&7], sdata32);
 				}
-				else	
+				else
 				{
 					sprintf(output, "%4.4x %x mov.l @%x, %s", opcode, data16, sdata32, reg_names32[data16&7]);
 				}
@@ -267,7 +267,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 			size = 2;
 			break;
 			// mulxs
-		case 0xc:	
+		case 0xc:
 			break;
 			// divxs
 		case 0xd:
@@ -344,11 +344,11 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 		{
 			if(opcode & 0x8)
 			{
-				sprintf(output, "%4.4x illegal", opcode);			
+				sprintf(output, "%4.4x illegal", opcode);
 			}
 			else
 			{
-				sprintf(output, "%4.4x add.l %s, %s", opcode, reg_names32[(opcode>>4) & 7], reg_names32[opcode & 7]);			
+				sprintf(output, "%4.4x add.l %s, %s", opcode, reg_names32[(opcode>>4) & 7], reg_names32[opcode & 7]);
 			}
 		}
 		else
@@ -364,7 +364,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 		}
 		size = 2;
 		break;
-		// 
+		//
 	case 0xb:
 		switch((opcode>>4)& 0xf)
 		{
@@ -390,10 +390,10 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 			sprintf(output, "%4.4x inc.l #2, %s", opcode, reg_names32[opcode & 0x7]);
 			break;
 		default:
-			sprintf(output, "%4.4x illegal", opcode);			
+			sprintf(output, "%4.4x illegal", opcode);
 			break;
 		}
-		size = 2; 
+		size = 2;
 		break;
 		// mov.b rx, ry
 	case 0xc:
@@ -426,7 +426,7 @@ static UINT8 h8disasm_0(UINT32 address, UINT32 opcode, char *output)
 		{
 			if((opcode & 0xf0) !=0)
 			{
-				sprintf(output, "%4.4x illegal", opcode);			
+				sprintf(output, "%4.4x illegal", opcode);
 			}
 			else
 			{
@@ -705,11 +705,11 @@ static UINT8 h8disasm_1(UINT32 address, UINT32 opcode, char *output)
 		{
 			if(opcode & 0x8)
 			{
-				sprintf(output, "%4.4x illegal", opcode);			
+				sprintf(output, "%4.4x illegal", opcode);
 			}
 			else
 			{
-				sprintf(output, "%4.4x sub.l %s, %s", opcode, reg_names32[(opcode>>4) & 7], reg_names32[opcode & 7]);			
+				sprintf(output, "%4.4x sub.l %s, %s", opcode, reg_names32[(opcode>>4) & 7], reg_names32[opcode & 7]);
 			}
 		}
 		else
@@ -751,10 +751,10 @@ static UINT8 h8disasm_1(UINT32 address, UINT32 opcode, char *output)
 			sprintf(output, "%4.4x dec.l #2, %s", opcode, reg_names32[opcode & 0x7]);
 			break;
 		default:
-			sprintf(output, "%4.4x ?", opcode);			
+			sprintf(output, "%4.4x ?", opcode);
 			break;
 		}
-		size = 2; 
+		size = 2;
 		break;
 		// cmp.b rs, rd
 	case 0xc:
@@ -787,7 +787,7 @@ static UINT8 h8disasm_1(UINT32 address, UINT32 opcode, char *output)
 		{
 			if((opcode & 0xf0) !=0)
 			{
-				sprintf(output, "%4.4x illegal", opcode);			
+				sprintf(output, "%4.4x illegal", opcode);
 			}
 			else
 			{
@@ -816,22 +816,22 @@ static UINT8 h8disasm_5(UINT32 address, UINT32 opcode, char *output)
 	case 0x0:
 		sprintf(output, "%4.4x mulxu.b %s, %s", opcode, reg_names8[(opcode>>4) & 0xf], reg_names8[opcode & 0xf]);
 		size = 2;
-		break;		
+		break;
 		// divxu.b
 	case 0x1:
 		sprintf(output, "%4.4x divxu.b %s, %s", opcode, reg_names8[(opcode>>4) & 0xf], reg_names8[opcode & 0xf]);
 		size = 2;
-		break;		
+		break;
 		// mulxu.w
 	case 0x2:
 		sprintf(output, "%4.4x mulxu.w %s, %s", opcode, reg_names16[(opcode>>4) & 0xf], reg_names32[opcode & 7]);
 		size = 2;
-		break;		
+		break;
 		// divxu.w
 	case 0x3:
 		sprintf(output, "%4.4x divxu.w %s, %s", opcode, reg_names16[(opcode>>4) & 0xf], reg_names32[opcode & 7]);
 		size = 2;
-		break;		
+		break;
 		// rts
 	case 0x4:
 		if(opcode == 0x5470)
@@ -865,19 +865,19 @@ static UINT8 h8disasm_5(UINT32 address, UINT32 opcode, char *output)
 	case 0x7:
 		if(opcode & 0xcf)
 		{
-			sprintf(output, "%4.4x illegal", opcode);			
+			sprintf(output, "%4.4x illegal", opcode);
 		}
 		else
 		{
 			sprintf(output, "%4.4x trapa #%x", opcode, (opcode >> 4) & 3);
 		}
 		size = 2;
-		break;		
+		break;
 		// bcc 16
 	case 0x8:
 		if(opcode & 0xf)
 		{
-			sprintf(output, "%4.4x illegal", opcode);			
+			sprintf(output, "%4.4x illegal", opcode);
 			size = 2;
 		}
 		else
@@ -908,7 +908,7 @@ static UINT8 h8disasm_5(UINT32 address, UINT32 opcode, char *output)
 	case 0xc:
 		if(opcode & 0xff)
 		{
-			sprintf(output, "%4.4x illegal", opcode);			
+			sprintf(output, "%4.4x illegal", opcode);
 			size = 2;
 		}
 		else
@@ -1049,7 +1049,7 @@ static UINT8 h8disasm_6(UINT32 address, UINT32 opcode, char *output)
 			data16=h8_mem_read16(address+2);
 			sprintf(output, "%4.4x mov.w @%8.8x, %s", opcode, data16, reg_names16[opcode & 0xf]);
 			size = 4;
-			break;			
+			break;
 		case 0x2:
 			data32=h8_mem_read32(address+2);
 			sprintf(output, "%4.4x mov.w @%8.8x, %s", opcode, data32, reg_names16[opcode & 0xf]);
@@ -1178,8 +1178,8 @@ static UINT8 h8disasm_7(UINT32 address, UINT32 opcode, char *output)
 	case 0x9:
 		if( ((opcode>>4) & 0xf) > 0x6)
 		{
-			sprintf(output, "%4.4x illegal", opcode);			
-			size = 2;			
+			sprintf(output, "%4.4x illegal", opcode);
+			size = 2;
 		}
 		else
 		{
@@ -1192,8 +1192,8 @@ static UINT8 h8disasm_7(UINT32 address, UINT32 opcode, char *output)
 	case 0xa:
 		if( (((opcode>>4) & 0xf) > 0x6) || (opcode & 0x8))
 		{
-			sprintf(output, "%4.4x illegal", opcode);			
-			size = 2;			
+			sprintf(output, "%4.4x illegal", opcode);
+			size = 2;
 		}
 		else
 		{

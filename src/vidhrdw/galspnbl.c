@@ -52,7 +52,7 @@ WRITE16_HANDLER( galspnbl_scroll_w )
 
 /* sprite format (see also Ninja Gaiden):
  *
- *	word		bit					usage
+ *  word        bit                 usage
  * --------+-fedcba9876543210-+----------------
  *    0    | ---------------x | flip x
  *         | --------------x- | flip y
@@ -88,7 +88,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 
 		attr = spriteram16[offs];
 		if ((attr & 0x0004) && ((attr & 0x0040) == 0 || (cpu_getcurrentframe() & 1))
-//				&& ((attr & 0x0030) >> 4) == priority)
+//              && ((attr & 0x0030) >> 4) == priority)
 				&& ((attr & 0x0020) >> 5) == priority)
 		{
 			code = spriteram16[offs+1];

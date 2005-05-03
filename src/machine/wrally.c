@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	World Rally
+    World Rally
 
-  	Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  	I/O ports)
+    Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
+    I/O ports)
 
 ***************************************************************************/
 
@@ -13,7 +13,7 @@ data16_t *wrally_encr_table[2];
 
 /***************************************************************************
 
-	World Rally Video RAM encryption
+    World Rally Video RAM encryption
 
 ***************************************************************************/
 
@@ -111,7 +111,7 @@ static int wrally_decode_vram(int data)
 
 /***************************************************************************
 
-	World Rally memory handlers
+    World Rally memory handlers
 
 ***************************************************************************/
 
@@ -136,7 +136,7 @@ WRITE16_HANDLER( wrally_coin_lockout_w )
 
 /***************************************************************************
 
-	World Rally init machine
+    World Rally init machine
 
 ***************************************************************************/
 

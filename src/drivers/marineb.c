@@ -9,13 +9,13 @@ MAIN CPU:
 0000-7fff ROM (not all games use the entire region)
 8000-87ff RAM
 8c18-8c3f sprite RAM (Hoccer only)
-8800-8bff video RAM	 \ (contains sprite RAM in invisible regions)
-9000-93ff color RAM	 /
+8800-8bff video RAM  \ (contains sprite RAM in invisible regions)
+9000-93ff color RAM  /
 
 read:
-a000	  IN0
-a800	  IN1
-b000	  DSW
+a000      IN0
+a800      IN1
+b000      DSW
 b800      IN2/watchdog reset
 
 write:
@@ -25,7 +25,7 @@ write:
 a000      NMI interrupt acknowledge/enable
 a001      flipy
 a002      flipx
-b800	  ???
+b800      ???
 
 
 I/0 ports:

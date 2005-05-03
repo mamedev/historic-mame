@@ -165,13 +165,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( bankp )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -186,18 +186,18 @@ VIDEO_START( bankp )
 VIDEO_UPDATE( bankp )
 {
 	/* The tilemap has to be shifted to the left in flip screen mode
-		because the visible tilemap data is not centered in video memory */
+        because the visible tilemap data is not centered in video memory */
 
 	if (flip_screen)
 	{
 		tilemap_set_scrollx(fg_tilemap, 0, -scroll_x - 16);
 		tilemap_set_scrollx(bg_tilemap, 0, -16);
-	} 
+	}
 	else
 	{
 		tilemap_set_scrollx(fg_tilemap, 0, scroll_x);
 		tilemap_set_scrollx(bg_tilemap, 0, 0);
-	}	
+	}
 
 	switch (priority)
 	{

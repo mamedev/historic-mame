@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Atari Arcade Classics hardware (prototypes)
+    Atari Arcade Classics hardware (prototypes)
 
-	Note: this video hardware has some similarities to Shuuz & company
-	The sprite offset registers are stored to 3EFF80
+    Note: this video hardware has some similarities to Shuuz & company
+    The sprite offset registers are stored to 3EFF80
 
 ****************************************************************************/
 
@@ -16,7 +16,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -26,7 +26,7 @@ static UINT8 has_mo;
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -88,7 +88,7 @@ VIDEO_START( arcadecl )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -114,7 +114,7 @@ VIDEO_UPDATE( arcadecl )
 					if (mo[x])
 					{
 						/* not yet verified
-						*/
+                        */
 						pf[x] = mo[x];
 
 						/* erase behind ourselves */

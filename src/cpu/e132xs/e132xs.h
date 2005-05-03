@@ -99,7 +99,7 @@ extern int hyp_type_16bit;
 #define READ_OP(addr)	       (cpu_readop16(hyp_type_16bit ? addr: WORD_XOR_BE(addr)))
 
 
-/* Registers Number	*/
+/* Registers Number */
 #define PC_REGISTER			 0
 #define SR_REGISTER			 1
 #define BCR_REGISTER		20

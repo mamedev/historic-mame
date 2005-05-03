@@ -1076,8 +1076,8 @@ static void I386OP(repeat)(int invert_flag)
 
 outofcycles:
 	/* if we run out of cycles to execute, and we are still in the repeat, we need
-	 * to exit this instruction in such a way to go right back into it when we have
-	 * time to execute cycles */
+     * to exit this instruction in such a way to go right back into it when we have
+     * time to execute cycles */
 	I.eip = old_eip;
 	CHANGE_PC(I.eip);
 	CYCLES(-cycle_base);
@@ -1771,7 +1771,7 @@ static void I386OP(groupC0_8)(void)			// Opcode 0xc0
 	UINT8 dst;
 	UINT8 modrm = FETCH();
 	UINT8 shift;
-	
+
 	if( modrm >= 0xc0 ) {
 		dst = LOAD_RM8(modrm);
 		shift = FETCH() & 0x1f;
@@ -1790,7 +1790,7 @@ static void I386OP(groupD0_8)(void)			// Opcode 0xd0
 {
 	UINT8 dst;
 	UINT8 modrm = FETCH();
-	
+
 	if( modrm >= 0xc0 ) {
 		dst = LOAD_RM8(modrm);
 		dst = i386_shift_rotate8(modrm, dst, 1);
@@ -1807,7 +1807,7 @@ static void I386OP(groupD2_8)(void)			// Opcode 0xd2
 {
 	UINT8 dst;
 	UINT8 modrm = FETCH();
-	
+
 	if( modrm >= 0xc0 ) {
 		dst = LOAD_RM8(modrm);
 		dst = i386_shift_rotate8(modrm, dst, REG8(CL));
@@ -2233,7 +2233,7 @@ static void I386OP(aam)(void)				// Opcode 0xd4
 
 static void I386OP(clts)(void)				// Opcode 0x0f 0x06
 {
-	// TODO: #GP(0) is executed 
+	// TODO: #GP(0) is executed
 	I.cr[0] &= ~0x08;	/* clear TS bit */
 	CYCLES(5);
 }

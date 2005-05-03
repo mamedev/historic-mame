@@ -164,40 +164,40 @@ static FILE *sample[1];
 
 
 typedef struct{
-	UINT32	ar;			/* attack rate: AR<<2			*/
-	UINT32	dr;			/* decay rate:  DR<<2			*/
-	UINT32	rr;			/* release rate:RR<<2			*/
-	UINT8	KSR;		/* key scale rate				*/
-	UINT8	ksl;		/* keyscale level				*/
-	UINT8	ksr;		/* key scale rate: kcode>>KSR	*/
-	UINT8	mul;		/* multiple: mul_tab[ML]		*/
+	UINT32	ar;			/* attack rate: AR<<2           */
+	UINT32	dr;			/* decay rate:  DR<<2           */
+	UINT32	rr;			/* release rate:RR<<2           */
+	UINT8	KSR;		/* key scale rate               */
+	UINT8	ksl;		/* keyscale level               */
+	UINT8	ksr;		/* key scale rate: kcode>>KSR   */
+	UINT8	mul;		/* multiple: mul_tab[ML]        */
 
 	/* Phase Generator */
-	UINT32	phase;		/* frequency counter			*/
-	UINT32	freq;		/* frequency counter step		*/
-	UINT8   fb_shift;	/* feedback shift value			*/
-	INT32   op1_out[2];	/* slot1 output for feedback	*/
+	UINT32	phase;		/* frequency counter            */
+	UINT32	freq;		/* frequency counter step       */
+	UINT8   fb_shift;	/* feedback shift value         */
+	INT32   op1_out[2];	/* slot1 output for feedback    */
 
 	/* Envelope Generator */
 	UINT8	eg_type;	/* percussive/nonpercussive mode*/
-	UINT8	state;		/* phase type					*/
-	UINT32	TL;			/* total level: TL << 2			*/
-	INT32	TLL;		/* adjusted now TL				*/
-	INT32	volume;		/* envelope counter				*/
-	UINT32	sl;			/* sustain level: sl_tab[SL]	*/
+	UINT8	state;		/* phase type                   */
+	UINT32	TL;			/* total level: TL << 2         */
+	INT32	TLL;		/* adjusted now TL              */
+	INT32	volume;		/* envelope counter             */
+	UINT32	sl;			/* sustain level: sl_tab[SL]    */
 
-	UINT8	eg_sh_dp;	/* (dump state)					*/
-	UINT8	eg_sel_dp;	/* (dump state)					*/
-	UINT8	eg_sh_ar;	/* (attack state)				*/
-	UINT8	eg_sel_ar;	/* (attack state)				*/
-	UINT8	eg_sh_dr;	/* (decay state)				*/
-	UINT8	eg_sel_dr;	/* (decay state)				*/
+	UINT8	eg_sh_dp;	/* (dump state)                 */
+	UINT8	eg_sel_dp;	/* (dump state)                 */
+	UINT8	eg_sh_ar;	/* (attack state)               */
+	UINT8	eg_sel_ar;	/* (attack state)               */
+	UINT8	eg_sh_dr;	/* (decay state)                */
+	UINT8	eg_sel_dr;	/* (decay state)                */
 	UINT8	eg_sh_rr;	/* (release state for non-perc.)*/
 	UINT8	eg_sel_rr;	/* (release state for non-perc.)*/
 	UINT8	eg_sh_rs;	/* (release state for perc.mode)*/
 	UINT8	eg_sel_rs;	/* (release state for perc.mode)*/
 
-	UINT32	key;		/* 0 = KEY OFF, >0 = KEY ON		*/
+	UINT32	key;		/* 0 = KEY OFF, >0 = KEY ON     */
 
 	/* LFO */
 	UINT32	AMmask;		/* LFO Amplitude Modulation enable mask */
@@ -210,10 +210,10 @@ typedef struct{
 typedef struct{
 	OPLL_SLOT SLOT[2];
 	/* phase generator state */
-	UINT32  block_fnum;	/* block+fnum					*/
-	UINT32  fc;			/* Freq. freqement base			*/
-	UINT32  ksl_base;	/* KeyScaleLevel Base step		*/
-	UINT8   kcode;		/* key code (for key scaling)	*/
+	UINT32  block_fnum;	/* block+fnum                   */
+	UINT32  fc;			/* Freq. freqement base         */
+	UINT32  ksl_base;	/* KeyScaleLevel Base step      */
+	UINT8   kcode;		/* key code (for key scaling)   */
 	UINT8   sus;		/* sus on/off (release speed in percussive mode)*/
 } OPLL_CH;
 
@@ -222,12 +222,12 @@ typedef struct {
 	OPLL_CH	P_CH[9];				/* OPLL chips have 9 channels*/
 	UINT8	instvol_r[9];			/* instrument/volume (or volume/volume in percussive mode)*/
 
-	UINT32	eg_cnt;					/* global envelope generator counter	*/
+	UINT32	eg_cnt;					/* global envelope generator counter    */
 	UINT32	eg_timer;				/* global envelope generator counter works at frequency = chipclock/72 */
-	UINT32	eg_timer_add;			/* step of eg_timer						*/
+	UINT32	eg_timer_add;			/* step of eg_timer                     */
 	UINT32	eg_timer_overflow;		/* envelope generator timer overlfows every 1 sample (on real chip) */
 
-	UINT8	rhythm;					/* Rhythm mode					*/
+	UINT8	rhythm;					/* Rhythm mode                  */
 
 	/* LFO */
 	UINT32	lfo_am_cnt;
@@ -235,32 +235,32 @@ typedef struct {
 	UINT32	lfo_pm_cnt;
 	UINT32	lfo_pm_inc;
 
-	UINT32	noise_rng;				/* 23 bit noise shift register	*/
-	UINT32	noise_p;				/* current noise 'phase'		*/
-	UINT32	noise_f;				/* current noise period			*/
+	UINT32	noise_rng;				/* 23 bit noise shift register  */
+	UINT32	noise_p;				/* current noise 'phase'        */
+	UINT32	noise_f;				/* current noise period         */
 
 
 /* instrument settings */
 /*
-	0-user instrument
-	1-15 - fixed instruments
-	16 -bass drum settings
-	17,18 - other percussion instruments
+    0-user instrument
+    1-15 - fixed instruments
+    16 -bass drum settings
+    17,18 - other percussion instruments
 */
 	UINT8 inst_tab[19][8];
 
 	/* external event callback handlers */
-	OPLL_UPDATEHANDLER UpdateHandler; /* stream update handler		*/
-	void * UpdateParam;				/* stream update parameter		*/
+	OPLL_UPDATEHANDLER UpdateHandler; /* stream update handler      */
+	void * UpdateParam;				/* stream update parameter      */
 
-	UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
+	UINT32	fn_tab[1024];			/* fnumber->increment counter   */
 
-	UINT8 address;					/* address register				*/
-	UINT8 status;					/* status flag					*/
+	UINT8 address;					/* address register             */
+	UINT8 status;					/* status flag                  */
 
-	int clock;						/* master clock  (Hz)			*/
-	int rate;						/* sampling rate (Hz)			*/
-	double freqbase;				/* frequency base				*/
+	int clock;						/* master clock  (Hz)           */
+	int rate;						/* sampling rate (Hz)           */
+	double freqbase;				/* frequency base               */
 } YM2413;
 
 /* key scale level */
@@ -438,10 +438,10 @@ static const UINT8 mul_tab[16]= {
 };
 #undef ML
 
-/*	TL_TAB_LEN is calculated as:
-*	11 - sinus amplitude bits     (Y axis)
-*	2  - sinus sign bit           (Y axis)
-*	TL_RES_LEN - sinus resolution (X axis)
+/*  TL_TAB_LEN is calculated as:
+*   11 - sinus amplitude bits     (Y axis)
+*   2  - sinus sign bit           (Y axis)
+*   TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (11*2*TL_RES_LEN)
 static signed int tl_tab[TL_TAB_LEN];
@@ -458,9 +458,9 @@ static unsigned int sin_tab[SIN_LEN * 2];
 
    Length: 210 elements.
 
-	Each of the elements has to be repeated
-	exactly 64 times (on 64 consecutive samples).
-	The whole table takes: 64 * 210 = 13440 samples.
+    Each of the elements has to be repeated
+    exactly 64 times (on 64 consecutive samples).
+    The whole table takes: 64 * 210 = 13440 samples.
 
 We use data>>1, until we find what it really is on real chip...
 
@@ -573,23 +573,23 @@ static unsigned char table[19][8] = {
   {0x13, 0x01, 0x99, 0x04, 0xf2, 0xf4, 0x11, 0x23 },	//3
   {0x21, 0x61, 0x1b, 0x07, 0xaf, 0x64, 0x40, 0x27 },	//4
 
-//{0x22, 0x21, 0x1e, 0x09, 0xf0, 0x76, 0x08, 0x28 },	//5
+//{0x22, 0x21, 0x1e, 0x09, 0xf0, 0x76, 0x08, 0x28 },    //5
   {0x22, 0x21, 0x1e, 0x06, 0xf0, 0x75, 0x08, 0x18 },	//5
 
-//{0x31, 0x22, 0x16, 0x09, 0x90, 0x7f, 0x00, 0x08 },	//6
+//{0x31, 0x22, 0x16, 0x09, 0x90, 0x7f, 0x00, 0x08 },    //6
   {0x31, 0x22, 0x16, 0x05, 0x90, 0x71, 0x00, 0x13 },	//6
 
   {0x21, 0x61, 0x1d, 0x07, 0x82, 0x80, 0x10, 0x17 },	//7
   {0x23, 0x21, 0x2d, 0x16, 0xc0, 0x70, 0x07, 0x07 },	//8
   {0x61, 0x61, 0x1b, 0x06, 0x64, 0x65, 0x10, 0x17 },	//9
 
-//{0x61, 0x61, 0x0c, 0x08, 0x85, 0xa0, 0x79, 0x07 },	//A
+//{0x61, 0x61, 0x0c, 0x08, 0x85, 0xa0, 0x79, 0x07 },    //A
   {0x61, 0x61, 0x0c, 0x18, 0x85, 0xf0, 0x70, 0x07 },	//A
 
   {0x23, 0x01, 0x07, 0x11, 0xf0, 0xa4, 0x00, 0x22 },	//B
   {0x97, 0xc1, 0x24, 0x07, 0xff, 0xf8, 0x22, 0x12 },	//C
 
-//{0x61, 0x10, 0x0c, 0x08, 0xf2, 0xc4, 0x40, 0xc8 },	//D
+//{0x61, 0x10, 0x0c, 0x08, 0xf2, 0xc4, 0x40, 0xc8 },    //D
   {0x61, 0x10, 0x0c, 0x05, 0xf2, 0xf4, 0x40, 0x44 },	//D
 
   {0x01, 0x01, 0x55, 0x03, 0xf3, 0x92, 0xf3, 0xf3 },	//E
@@ -671,8 +671,8 @@ INLINE void advance(YM2413 *chip)
 			case EG_DMP:		/* dump phase */
 			/*dump phase is performed by both operators in each channel*/
 			/*when CARRIER envelope gets down to zero level,
-			**  phases in BOTH opearators are reset (at the same time ?)
-			*/
+            **  phases in BOTH opearators are reset (at the same time ?)
+            */
 				if ( !(chip->eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
 				{
 					op->volume += eg_inc[op->eg_sel_dp + ((chip->eg_cnt>>op->eg_sh_dp)&7)];
@@ -714,8 +714,8 @@ INLINE void advance(YM2413 *chip)
 
 			case EG_SUS:	/* sustain phase */
 				/* this is important behaviour:
-				one can change percusive/non-percussive modes on the fly and
-				the chip will remain in sustain phase - verified on real YM3812 */
+                one can change percusive/non-percussive modes on the fly and
+                the chip will remain in sustain phase - verified on real YM3812 */
 
 				if(op->eg_type)		/* non-percussive mode (sustained tone) */
 				{
@@ -740,19 +740,19 @@ INLINE void advance(YM2413 *chip)
 			/* allowed are only carriers in melody mode and rhythm slots in rhythm mode */
 
 			/*This table shows which operators and on what conditions are allowed to perform EG_REL:
-			(a) - always perform EG_REL
-			(n) - never perform EG_REL
-			(r) - perform EG_REL in Rhythm mode ONLY
-				0: 0 (n),  1 (a)
-				1: 2 (n),  3 (a)
-				2: 4 (n),  5 (a)
-				3: 6 (n),  7 (a)
-				4: 8 (n),  9 (a)
-				5: 10(n),  11(a)
-				6: 12(r),  13(a)
-				7: 14(r),  15(a)
-				8: 16(r),  17(a)
-			*/
+            (a) - always perform EG_REL
+            (n) - never perform EG_REL
+            (r) - perform EG_REL in Rhythm mode ONLY
+                0: 0 (n),  1 (a)
+                1: 2 (n),  3 (a)
+                2: 4 (n),  5 (a)
+                3: 6 (n),  7 (a)
+                4: 8 (n),  9 (a)
+                5: 10(n),  11(a)
+                6: 12(r),  13(a)
+                7: 14(r),  15(a)
+                8: 16(r),  17(a)
+            */
 				if ( (i&1) || ((chip->rhythm&0x20) && (i>=12)) )/* exclude modulators */
 				{
 					if(op->eg_type)		/* non-percussive mode (sustained tone) */
@@ -840,16 +840,16 @@ INLINE void advance(YM2413 *chip)
 		}
 	}
 
-	/*	The Noise Generator of the YM3812 is 23-bit shift register.
-	*	Period is equal to 2^23-2 samples.
-	*	Register works at sampling frequency of the chip, so output
-	*	can change on every sample.
-	*
-	*	Output of the register and input to the bit 22 is:
-	*	bit0 XOR bit14 XOR bit15 XOR bit22
-	*
-	*	Simply use bit 22 as the noise output.
-	*/
+	/*  The Noise Generator of the YM3812 is 23-bit shift register.
+    *   Period is equal to 2^23-2 samples.
+    *   Register works at sampling frequency of the chip, so output
+    *   can change on every sample.
+    *
+    *   Output of the register and input to the bit 22 is:
+    *   bit0 XOR bit14 XOR bit15 XOR bit22
+    *
+    *   Simply use bit 22 as the noise output.
+    */
 
 	chip->noise_p += chip->noise_f;
 	i = chip->noise_p >> FREQ_SH;		/* number of events (shifts of the shift register) */
@@ -857,18 +857,18 @@ INLINE void advance(YM2413 *chip)
 	while (i)
 	{
 		/*
-		UINT32 j;
-		j = ( (chip->noise_rng) ^ (chip->noise_rng>>14) ^ (chip->noise_rng>>15) ^ (chip->noise_rng>>22) ) & 1;
-		chip->noise_rng = (j<<22) | (chip->noise_rng>>1);
-		*/
+        UINT32 j;
+        j = ( (chip->noise_rng) ^ (chip->noise_rng>>14) ^ (chip->noise_rng>>15) ^ (chip->noise_rng>>22) ) & 1;
+        chip->noise_rng = (j<<22) | (chip->noise_rng>>1);
+        */
 
 		/*
-			Instead of doing all the logic operations above, we
-			use a trick here (and use bit 0 as the noise output).
-			The difference is only that the noise bit changes one
-			step ahead. This doesn't matter since we don't know
-			what is real state of the noise_rng after the reset.
-		*/
+            Instead of doing all the logic operations above, we
+            use a trick here (and use bit 0 as the noise output).
+            The difference is only that the noise bit changes one
+            step ahead. This doesn't matter since we don't know
+            what is real state of the noise_rng after the reset.
+        */
 
 		if (chip->noise_rng & 1) chip->noise_rng ^= 0x800302;
 		chip->noise_rng >>= 1;
@@ -953,9 +953,9 @@ outchan=0;
 }
 
 /*
-	operators used in the rhythm sounds generation process:
+    operators used in the rhythm sounds generation process:
 
-	Envelope Generator:
+    Envelope Generator:
 
 channel  operator  register number   Bass  High  Snare Tom  Top
 / slot   number    TL ARDR SLRR Wave Drum  Hat   Drum  Tom  Cymbal
@@ -966,7 +966,7 @@ channel  operator  register number   Bass  High  Snare Tom  Top
  8 / 0   14        52  72   92   f2                    +
  8 / 1   17        55  75   95   f5                          +
 
-	Phase Generator:
+    Phase Generator:
 
 channel  operator  register number   Bass  High  Snare Tom  Top
 / slot   number    MULTIPLE          Drum  Hat   Drum  Tom  Cymbal
@@ -998,11 +998,11 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 
 
 	/* Bass Drum (verified on real YM3812):
-	  - depends on the channel 6 'connect' register:
-	      when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
-	      when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
-	  - output sample always is multiplied by 2
-	*/
+      - depends on the channel 6 'connect' register:
+          when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
+          when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
+      - output sample always is multiplied by 2
+    */
 
 
 	/* SLOT 1 */
@@ -1043,8 +1043,8 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 
 
 	/* The following formulas can be well optimized.
-	   I leave them in direct form for now (in case I've missed something).
-	*/
+       I leave them in direct form for now (in case I've missed something).
+    */
 
 	/* High Hat (verified on real YM3812) */
 	env = volume_calc(SLOT7_1);
@@ -1052,9 +1052,9 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 	{
 
 		/* high hat phase generation:
-			phase = d0 or 234 (based on frequency only)
-			phase = 34 or 2d0 (based on noise)
-		*/
+            phase = d0 or 234 (based on frequency only)
+            phase = 34 or 2d0 (based on noise)
+        */
 
 		/* base frequency derived from operator 1 in channel 7 */
 		unsigned char bit7 = ((SLOT7_1->phase>>FREQ_SH)>>7)&1;

@@ -2,8 +2,8 @@
 Dynamic Dice (??)
 
 Driver by
-	Tomasz Slanina
-	Pierpaolo Prazzoli
+    Tomasz Slanina
+    Pierpaolo Prazzoli
 --
 Old, rusty, not working pcb :
 
@@ -56,12 +56,12 @@ static WRITE8_HANDLER( sound_data_w )
 static WRITE8_HANDLER( sound_control_w )
 {
 /*
-	AY 3-8910 :
+    AY 3-8910 :
 
-	D0 - BC1
-	D1 - BC2
-	D2 - BDIR
-	D3 - /Reset
+    D0 - BC1
+    D1 - BC2
+    D2 - BDIR
+    D3 - /Reset
 
 */
 	if ((data &7)==7) AY8910_control_port_0_w(0,ay_data);

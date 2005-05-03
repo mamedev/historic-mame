@@ -1,40 +1,40 @@
 /***************************************************************************
 
-	Taito F3 Package System (aka F3 Cybercore System)
+    Taito F3 Package System (aka F3 Cybercore System)
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk/mish@mame.net
-	Thanks to Ian Schmidt and Stiletto for sound information!
-	Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
-	rom interface and ES5505 emulator!
-	Thanks to Acho A. Tang for Kirameki Star Road sound banking info!
-	Thank you to Shiriru for the scanline rendering (including alpha blending),
-	sprite sync fixes, sprite zoom fixes and others!
+    Emulation by Bryan McPhail, mish@tendril.co.uk/mish@mame.net
+    Thanks to Ian Schmidt and Stiletto for sound information!
+    Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
+    rom interface and ES5505 emulator!
+    Thanks to Acho A. Tang for Kirameki Star Road sound banking info!
+    Thank you to Shiriru for the scanline rendering (including alpha blending),
+    sprite sync fixes, sprite zoom fixes and others!
 
-	Main Issues:
-	- Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
-	  use by the current ES5505 core (which rightly should be 16 bit).
-	- Zoomed layers are not always positioned quite correctly in flipscreen mode
-	  (Grid Seeker)
+    Main Issues:
+    - Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
+      use by the current ES5505 core (which rightly should be 16 bit).
+    - Zoomed layers are not always positioned quite correctly in flipscreen mode
+      (Grid Seeker)
 
-	Other Issues:
-	- Dsp isn't hooked up.
-	- Crowd/boards not shown in the football games
-	- Sound doesn't work in RidingF/RingRage?
-	- It does work in ringrage but you have to enter test mode first
-	- Sound balance is not emulated (see arabianm test mode)
-	- When playing space invaders dx in original mode, t.t. with overlay, there
-	  should be an alpha blending effect to make tre stripes affect the graphics
-	  below them. Instead, the stripes are drawn as blocks in the background
-	  (note: this effect is correct in the Taito B version of the game)
+    Other Issues:
+    - Dsp isn't hooked up.
+    - Crowd/boards not shown in the football games
+    - Sound doesn't work in RidingF/RingRage?
+    - It does work in ringrage but you have to enter test mode first
+    - Sound balance is not emulated (see arabianm test mode)
+    - When playing space invaders dx in original mode, t.t. with overlay, there
+      should be an alpha blending effect to make tre stripes affect the graphics
+      below them. Instead, the stripes are drawn as blocks in the background
+      (note: this effect is correct in the Taito B version of the game)
 
-	Feel free to report any other issues to me.
+    Feel free to report any other issues to me.
 
-	Taito custom chips on motherboard:
+    Taito custom chips on motherboard:
 
-		TC0630 FDP - Playfield generator?  (Nearest tile roms)
-		TC0640 FI0 - I/O & watchdog?
-		TC0650 FDA - Priority mixer?  (Near paletteram & video output)
-		TC0660 FCM - Sprites? (Nearest sprite roms)
+        TC0630 FDP - Playfield generator?  (Nearest tile roms)
+        TC0640 FI0 - I/O & watchdog?
+        TC0650 FDA - Priority mixer?  (Near paletteram & video output)
+        TC0660 FCM - Sprites? (Nearest sprite roms)
 
 ***************************************************************************/
 
@@ -170,7 +170,7 @@ static WRITE32_HANDLER( f3_sound_bankswitch_w )
 			idx -= 8;
 
 		/* Banks are 0x20000 bytes each, divide by two to get data16
-		pointer rather than byte pointer */
+        pointer rather than byte pointer */
 		cpu_setbank(2, &rom[(idx*0x20000)/2 + 0x80000]);
 
 	} else {
@@ -2408,7 +2408,7 @@ ROM_START( pbobbl2u )
 	ROM_FILL       (              0x200000, 0x100000, 0 )
 
 	/* These sound roms don't work properly with 'Bust-A-Move Again' (the US verison of Puzzle Bobble 2)
-	   I think this version of the game should use different sound roms */
+       I think this version of the game should use different sound roms */
 
 	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
 	ROM_LOAD16_BYTE("e10-12.rom", 0x100000, 0x40000, BAD_DUMP CRC(b92dc8ad) SHA1(0c1428d313507b1ae5a2af3b2fbaaa5650135e1e) )
@@ -3155,12 +3155,12 @@ static void tile_decode(int uses_5bpp_tiles)
 
 	/* Setup ROM formats:
 
-		Some games will only use 4 or 5 bpp sprites, and some only use 4 bpp tiles,
-		I don't believe this is software or prom controlled but simply the unused data lines
-		are tied low on the game board if unused.  This is backed up by the fact the palette
-		indices are always related to 4 bpp data, even in 6 bpp games.
+        Some games will only use 4 or 5 bpp sprites, and some only use 4 bpp tiles,
+        I don't believe this is software or prom controlled but simply the unused data lines
+        are tied low on the game board if unused.  This is backed up by the fact the palette
+        indices are always related to 4 bpp data, even in 6 bpp games.
 
-	*/
+    */
 	if (uses_5bpp_tiles)
 		for (i=half; i<size; i+=2)
 			gfx[i+1]=0;
@@ -3423,9 +3423,9 @@ static DRIVER_INIT( landmkrp )
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
 	/* For some reason the least significant byte in the last 2 long words of
-	ROM is swapped.  As the roms have been verified ok, I assume this is some
-	kind of basic security on the prototype development board to prevent 'release'
-	roms running on it.  Easiest thing to do is switch the data around here */
+    ROM is swapped.  As the roms have been verified ok, I assume this is some
+    kind of basic security on the prototype development board to prevent 'release'
+    roms running on it.  Easiest thing to do is switch the data around here */
 	RAM[0x1ffff8/4]=0xffffffff; /* From 0xffffff03 */
 	RAM[0x1ffffc/4]=0xffff0003; /* From 0xffff00ff */
 

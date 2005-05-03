@@ -75,9 +75,9 @@ static void print_game_switch(FILE* out, const struct GameDriver* game)
 	const struct InputPort* input;
 
 	begin_resource_tracking();
-	
+
 	input = input_port_allocate(game->construct_ipt);
-	
+
 	while (input->type != IPT_END)
 	{
 		if (input->type==IPT_DIPSWITCH_NAME)
@@ -108,7 +108,7 @@ static void print_game_switch(FILE* out, const struct GameDriver* game)
 		else
 			++input;
 	}
-	
+
 	end_resource_tracking();
 }
 
@@ -123,9 +123,9 @@ static void print_game_input(FILE* out, const struct GameDriver* game)
 	const char* tilt = 0;
 
 	begin_resource_tracking();
-	
+
 	input = input_port_allocate(game->construct_ipt);
-	
+
 	while (input->type != IPT_END)
 			{
 		if (nplayer < input->player+1)
@@ -285,7 +285,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 {
 	const struct RomModule *region, *rom, *chunk;
 	const struct RomModule *pregion, *prom, *fprom=NULL;
-//	extern struct GameDriver driver_0;
+//  extern struct GameDriver driver_0;
 
 	if (!game->rom)
 		return;

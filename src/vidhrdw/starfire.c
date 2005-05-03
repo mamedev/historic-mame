@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Star Fire video system
+    Star Fire video system
 
 ***************************************************************************/
 
@@ -23,7 +23,7 @@ static UINT8 starfire_color;
 
 /*************************************
  *
- *	Initialize the video system
+ *  Initialize the video system
  *
  *************************************/
 
@@ -51,7 +51,7 @@ VIDEO_START( starfire )
 
 /*************************************
  *
- *	Video control writes
+ *  Video control writes
  *
  *************************************/
 
@@ -69,7 +69,7 @@ WRITE8_HANDLER( starfire_vidctrl1_w )
 
 /*************************************
  *
- *	Color RAM read/writes
+ *  Color RAM read/writes
  *
  *************************************/
 
@@ -118,7 +118,7 @@ READ8_HANDLER( starfire_colorram_r )
 
 /*************************************
  *
- *	Video RAM read/writes
+ *  Video RAM read/writes
  *
  *************************************/
 
@@ -237,7 +237,7 @@ READ8_HANDLER( starfire_videoram_r )
 
 /*************************************
  *
- *	Periodic screen refresh callback
+ *  Periodic screen refresh callback
  *
  *************************************/
 
@@ -279,7 +279,7 @@ void starfire_video_update(int scanline, int count)
 
 /*************************************
  *
- *	Standard screen refresh callback
+ *  Standard screen refresh callback
  *
  *************************************/
 

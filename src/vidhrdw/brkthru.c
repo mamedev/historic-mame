@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	breakthru:vidhrdw.c
+    breakthru:vidhrdw.c
 
 ***************************************************************************/
 
@@ -85,10 +85,10 @@ PALETTE_INIT( brkthru )
 static void get_bg_tile_info(int tile_index)
 {
 	/* BG RAM format
-		0         1
-		---- -c-- ---- ---- = Color
-		---- --xx xxxx xxxx = Code
-	*/
+        0         1
+        ---- -c-- ---- ---- = Color
+        ---- --xx xxxx xxxx = Code
+    */
 
 	int code = (videoram[tile_index*2] | ((videoram[tile_index*2+1]) << 8)) & 0x3ff;
 	int region = 1 + (code >> 7);
@@ -208,16 +208,16 @@ static void brkthru_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 	/* order, to have the correct priorities. */
 
 	/* Sprite RAM format
-		0         1         2         3
-		ccc- ---- ---- ---- ---- ---- ---- ---- = Color
-		---d ---- ---- ---- ---- ---- ---- ---- = Double Size
-		---- p--- ---- ---- ---- ---- ---- ---- = Priority
-		---- -bb- ---- ---- ---- ---- ---- ---- = Bank
-		---- ---e ---- ---- ---- ---- ---- ---- = Enable/Disable
-		---- ---- ssss ssss ---- ---- ---- ---- = Sprite code
-		---- ---- ---- ---- yyyy yyyy ---- ---- = Y position
-		---- ---- ---- ---- ---- ---- xxxx xxxx = X position
-	*/
+        0         1         2         3
+        ccc- ---- ---- ---- ---- ---- ---- ---- = Color
+        ---d ---- ---- ---- ---- ---- ---- ---- = Double Size
+        ---- p--- ---- ---- ---- ---- ---- ---- = Priority
+        ---- -bb- ---- ---- ---- ---- ---- ---- = Bank
+        ---- ---e ---- ---- ---- ---- ---- ---- = Enable/Disable
+        ---- ---- ssss ssss ---- ---- ---- ---- = Sprite code
+        ---- ---- ---- ---- yyyy yyyy ---- ---- = Y position
+        ---- ---- ---- ---- ---- ---- xxxx xxxx = X position
+    */
 
 	for (offs = 0;offs < spriteram_size; offs += 4)
 	{
@@ -305,6 +305,6 @@ VIDEO_UPDATE( brkthru )
 	/* fg layer */
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 
-/*	show_register(bitmap,8,8,(unsigned long)flipscreen); */
+/*  show_register(bitmap,8,8,(unsigned long)flipscreen); */
 
 }

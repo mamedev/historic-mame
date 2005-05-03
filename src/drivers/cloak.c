@@ -1,109 +1,109 @@
 /***************************************************************************
 
-	Atari Cloak & Dagger hardware
+    Atari Cloak & Dagger hardware
 
-	Games supported:
-		* Cloak & Dagger
+    Games supported:
+        * Cloak & Dagger
 
 ****************************************************************************
 
-	Master processor
+    Master processor
 
-	IRQ: 4 IRQ's per frame at even intervals, 4th IRQ is at start of VBLANK
+    IRQ: 4 IRQ's per frame at even intervals, 4th IRQ is at start of VBLANK
 
-	000-3FF	   Working RAM
-	400-7FF    Playfield RAM
-	800-FFF    Communication RAM (shared with slave processor)
+    000-3FF    Working RAM
+    400-7FF    Playfield RAM
+    800-FFF    Communication RAM (shared with slave processor)
 
-	1000-100F  Pokey 1
-	1008 (R)   bit 7 = Start 2 players
-	   	   bit 6 = Start 1 player
+    1000-100F  Pokey 1
+    1008 (R)   bit 7 = Start 2 players
+           bit 6 = Start 1 player
 
-	1800-180F  Pokey 2
-	1808(R)	   Dipswitches
+    1800-180F  Pokey 2
+    1808(R)    Dipswitches
 
-	2000 (R):  Joysticks
-	2200 (R):  Player 2 joysticks (for cocktail version)
+    2000 (R):  Joysticks
+    2200 (R):  Player 2 joysticks (for cocktail version)
 
-	2400 (R)   bit 0: Vertical Blank
-		   bit 1: Self test switch
-		   bit 2: Left Coin
-		   bit 3: Right Coin
-		   bit 4: Cocktail mode
-		   bit 5: Aux Coin
-		   bit 6: Player 2 Igniter button
-		   bit 7: Player 1 Igniter button
+    2400 (R)   bit 0: Vertical Blank
+           bit 1: Self test switch
+           bit 2: Left Coin
+           bit 3: Right Coin
+           bit 4: Cocktail mode
+           bit 5: Aux Coin
+           bit 6: Player 2 Igniter button
+           bit 7: Player 1 Igniter button
 
-	2600 (W) Custom Write (this has something to do with positioning of the display out, I ignore it)
+    2600 (W) Custom Write (this has something to do with positioning of the display out, I ignore it)
 
-	2800-29FF: (R/W) non-volatile RAM
-	3000-30FF: (R/W) Motion RAM
-	3200-327F: (W) Color RAM, Address bit 6 becomes the 9th bit of color RAM
+    2800-29FF: (R/W) non-volatile RAM
+    3000-30FF: (R/W) Motion RAM
+    3200-327F: (W) Color RAM, Address bit 6 becomes the 9th bit of color RAM
 
-	3800: (W) Right Coin Counter
-	3801: (W) Left Coint Counter
-	3803: (W) Cocktail Output
-	3806: (W) Start 2 LED
-	3807: (W) Start 1 LED
+    3800: (W) Right Coin Counter
+    3801: (W) Left Coint Counter
+    3803: (W) Cocktail Output
+    3806: (W) Start 2 LED
+    3807: (W) Start 1 LED
 
-	3A00: (W) Watchdog reset
-	3C00: (W) Reset IRQ
-	3E00: (W) bit 0: Enable NVRAM
+    3A00: (W) Watchdog reset
+    3C00: (W) Reset IRQ
+    3E00: (W) bit 0: Enable NVRAM
 
-	4000 - FFFF ROM
-		4000-5FFF  136023.501
-		6000-7FFF  136023.502
-		8000-BFFF  136023.503
-		C000-FFFF  136023.504
-
-
-	Slave processor
-
-	IRQ: 1 IRQ per frame at start of VBLANK
-
-	0000-0007: Working RAM
-	0008-000A, 000C-000E: (R/W) bit 0,1,2: Store to/Read From Bit Map RAM
-
-	0008: Decrement X/Increment Y
-	0009: Decrement Y
-	000A: Decrement X
-	000B: Set bitmap X coordinate
-	000C: Increment X/Increment Y  <-- Yes this is correct
-	000D: Increment Y
-	000E: Increment X
-	000F: Set bitmap Y coordinate
-
-	0010-07FF: Working RAM
-	0800-0FFF: Communication RAM (shared with master processor)
-
-	1000 (W): Reset IRQ
-	1200 (W):  bit 0: Swap bit maps
-		   bit 1: Clear bit map
-	1400 (W): Custom Write (this has something to do with positioning of the display out, I ignore it)
-
-	2000-FFFF: Program ROM
-		2000-3FFF: 136023.509
-		4000-5FFF: 136023.510
-		6000-7FFF: 136023.511
-		8000-9FFF: 136023.512
-		A000-BFFF: 136023.513
-		C000-DFFF: 136023.514
-		E000-EFFF: 136023.515
+    4000 - FFFF ROM
+        4000-5FFF  136023.501
+        6000-7FFF  136023.502
+        8000-BFFF  136023.503
+        C000-FFFF  136023.504
 
 
-	Motion object ROM: 136023.307,136023.308
-	Playfield ROM: 136023.306,136023.305
+    Slave processor
+
+    IRQ: 1 IRQ per frame at start of VBLANK
+
+    0000-0007: Working RAM
+    0008-000A, 000C-000E: (R/W) bit 0,1,2: Store to/Read From Bit Map RAM
+
+    0008: Decrement X/Increment Y
+    0009: Decrement Y
+    000A: Decrement X
+    000B: Set bitmap X coordinate
+    000C: Increment X/Increment Y  <-- Yes this is correct
+    000D: Increment Y
+    000E: Increment X
+    000F: Set bitmap Y coordinate
+
+    0010-07FF: Working RAM
+    0800-0FFF: Communication RAM (shared with master processor)
+
+    1000 (W): Reset IRQ
+    1200 (W):  bit 0: Swap bit maps
+           bit 1: Clear bit map
+    1400 (W): Custom Write (this has something to do with positioning of the display out, I ignore it)
+
+    2000-FFFF: Program ROM
+        2000-3FFF: 136023.509
+        4000-5FFF: 136023.510
+        6000-7FFF: 136023.511
+        8000-9FFF: 136023.512
+        A000-BFFF: 136023.513
+        C000-DFFF: 136023.514
+        E000-EFFF: 136023.515
+
+
+    Motion object ROM: 136023.307,136023.308
+    Playfield ROM: 136023.306,136023.305
 
 ****************************************************************************/
 
 /*
 
-	TODO:
+    TODO:
 
-	- slave com bad at startup
-	- is bitmap drawing in service mode correct?
-	- real cpu speeds
-	- custom write
+    - slave com bad at startup
+    - is bitmap drawing in service mode correct?
+    - real cpu speeds
+    - custom write
 
 */
 
@@ -126,7 +126,7 @@ extern VIDEO_UPDATE( cloak );
 
 /*************************************
  *
- *	Output ports
+ *  Output ports
  *
  *************************************/
 
@@ -161,7 +161,7 @@ static WRITE8_HANDLER( cloak_nvram_enable_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -170,7 +170,7 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(MRA8_RAM, cloak_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x0800, 0x0fff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)		/* DSW0 also */
-//	AM_RANGE(0x1008, 0x1008) AM_READ(MRA8_RAM)
+//  AM_RANGE(0x1008, 0x1008) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1800, 0x180f) AM_READWRITE(pokey2_r, pokey2_w)		/* DSW1 also */
 	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0x2200, 0x2200) AM_READ(input_port_1_r)	/* IN1 */
@@ -192,7 +192,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Slave CPU memory handlers
+ *  Slave CPU memory handlers
  *
  *************************************/
 
@@ -210,7 +210,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -267,7 +267,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -303,7 +303,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
+ *  Sound interfaces
  *
  *************************************/
 
@@ -321,7 +321,7 @@ static struct POKEYinterface pokey_interface_2 =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -367,7 +367,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definitions
+ *  ROM definitions
  *
  *************************************/
 
@@ -477,7 +477,7 @@ ROM_END
 
 /*************************************
  *
- *	Game drivers
+ *  Game drivers
  *
  *************************************/
 

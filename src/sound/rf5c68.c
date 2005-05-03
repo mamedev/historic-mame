@@ -64,7 +64,7 @@ static void *rf5c68_start(int sndindex, int clock, const void *config)
 	int rate = Machine->sample_rate;
 	const struct RF5C68interface *inintf = config;
 	struct rf5c68pcm *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

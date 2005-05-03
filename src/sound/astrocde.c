@@ -1,16 +1,16 @@
 /***********************************************************
 
      Astrocade custom 'IO' chip sound chip driver
-	 Frank Palazzolo
+     Frank Palazzolo
 
-	 Portions copied from the Pokey emulator by Ron Fries
+     Portions copied from the Pokey emulator by Ron Fries
 
-	 First Release:
-	 	09/20/98
-	 Updated 11/2004
-	 	Fixed noise generator bug
-	 	Changed to stream system
-	 	Fixed out of bounds memory access bug
+     First Release:
+        09/20/98
+     Updated 11/2004
+        Fixed noise generator bug
+        Changed to stream system
+        Fixed out of bounds memory access bug
 
 ***********************************************************/
 
@@ -191,7 +191,7 @@ static void astrocade_reset(void *_chip)
 static void *astrocade_start(int sndindex, int clock, const void *config)
 {
 	struct astrocade_info *chip;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 

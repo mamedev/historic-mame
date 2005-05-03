@@ -5,7 +5,7 @@
 
 /*
   It turns out the bootleg is the decrypted version with the checksum check
-  removed and interrupt	mode changed to 1.
+  removed and interrupt mode changed to 1.
 
   u7= boot 4($3000-$3fff) other than 4 bytes(checksum check and interupt mode)
   u6= boot 6($9000-$9fff). The second half of u6 gets mirrored to the second

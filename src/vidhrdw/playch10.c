@@ -70,9 +70,9 @@ static void ppu_irq( int num, int *ppu_regs )
 	pc10_int_detect = 1;
 }
 
-/* our ppu interface											*/
-/* things like mirroring and wether to use vrom or vram			*/
-/* can be set by calling 'ppu2c03b_override_hardware_options'	*/
+/* our ppu interface                                            */
+/* things like mirroring and wether to use vrom or vram         */
+/* can be set by calling 'ppu2c03b_override_hardware_options'   */
 
 static struct ppu2c03b_interface ppu_interface =
 {
@@ -95,7 +95,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( playch10 )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -121,11 +121,11 @@ VIDEO_UPDATE( playch10 )
 	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
 
-	/* On Playchoice 10 single monitor, this bit toggles	*/
-	/* between PPU and BIOS display.						*/
-	/* We support the multi-monitor layout. In this case,	*/
-	/* if the bit is not set, then we should display		*/
-	/* the PPU portion.										*/
+	/* On Playchoice 10 single monitor, this bit toggles    */
+	/* between PPU and BIOS display.                        */
+	/* We support the multi-monitor layout. In this case,   */
+	/* if the bit is not set, then we should display        */
+	/* the PPU portion.                                     */
 
 	if ( !pc10_dispmask )
 	{

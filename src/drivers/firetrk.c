@@ -290,22 +290,22 @@ static PALETTE_INIT( montecar )
 	};
 
 	/*
-	 * The color PROM is addressed as follows:
-	 *
-	 *   A0 => PLAYFIELD 1
-	 *   A1 => PLAYFIELD 2
-	 *   A2 => DRONE 1
-	 *   A3 => DRONE 2
-	 *   A4 => CAR 1
-	 *   A5 => CAR 2
-	 *   A6 => DRONE COLOR 1
-	 *   A7 => DRONE COLOR 2
-	 *   A8 => PLAYFIELD WINDOW
-	 *
-	 * This driver hard-codes some behavior which actually depends
-	 * on the PROM, like priorities, clipping and transparency.
-	 *
-	 */
+     * The color PROM is addressed as follows:
+     *
+     *   A0 => PLAYFIELD 1
+     *   A1 => PLAYFIELD 2
+     *   A2 => DRONE 1
+     *   A3 => DRONE 2
+     *   A4 => CAR 1
+     *   A5 => CAR 2
+     *   A6 => DRONE COLOR 1
+     *   A7 => DRONE COLOR 2
+     *   A8 => PLAYFIELD WINDOW
+     *
+     * This driver hard-codes some behavior which actually depends
+     * on the PROM, like priorities, clipping and transparency.
+     *
+     */
 
 	const UINT8* p = memory_region(REGION_PROMS);
 
@@ -1083,7 +1083,7 @@ static MACHINE_DRIVER_START( firetrk )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(firetrk_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

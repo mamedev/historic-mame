@@ -105,24 +105,24 @@ if(keyboard_pressed(KEYCODE_F1))
                 mame_pause(1);
 
                 do
-	        {
-		InputCode code;
+            {
+        InputCode code;
 
-		          update_video_and_audio();
-		          reset_partial_updates();
+                  update_video_and_audio();
+                  reset_partial_updates();
 
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			break;
+        if (input_ui_pressed(IPT_UI_CANCEL))
+            break;
 
-		code = code_read_async();
-		if (code == KEYCODE_F1) code = code_read_async();
+        code = code_read_async();
+        if (code == KEYCODE_F1) code = code_read_async();
 
-		if (code != CODE_NONE)
-		{
-			if (code >= KEYCODE_A && code <= KEYCODE_Z)
-			transmit = code+97;
-			if (code >= KEYCODE_0 && code <= KEYCODE_9)
-			transmit = code+22;
+        if (code != CODE_NONE)
+        {
+            if (code >= KEYCODE_A && code <= KEYCODE_Z)
+            transmit = code+97;
+            if (code >= KEYCODE_0 && code <= KEYCODE_9)
+            transmit = code+22;
                         if (code == KEYCODE_ENTER)
                         transmit = 13;
                         if (code == KEYCODE_MINUS)
@@ -136,18 +136,18 @@ if(keyboard_pressed(KEYCODE_F1))
                         if (code == KEYCODE_SPACE)
                         transmit = 32;
 
-		}
-	}
-	while (!transmit);
+        }
+    }
+    while (!transmit);
 
 
-	ti_uart[0]=transmit;
-	ti_uart[2]|=2;
+    ti_uart[0]=transmit;
+    ti_uart[2]|=2;
 
       M68681.RBA=transmit<<8;
       M68681.SRA|=0x100;
 
-	mame_pause(0);
+    mame_pause(0);
 }
 */
 
@@ -168,8 +168,8 @@ if(keyboard_pressed(KEYCODE_F1))
 	offset = (dpyadr << 4);
 
 	/* adjust for when DPYADR was written */
-//	if (cliprect->min_y > dpyadrscan)
-//		offset += (cliprect->min_y - dpyadrscan) * dudate;
+//  if (cliprect->min_y > dpyadrscan)
+//      offset += (cliprect->min_y - dpyadrscan) * dudate;
 //printf("DPYADR = %04X DPYTAP = %04X (%d-%d)\n", dpyadr, dpytap, cliprect->min_y, cliprect->max_y);
 
 // 7-bits per pixel for the TI 2D, it would seem.

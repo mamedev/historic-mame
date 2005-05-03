@@ -56,7 +56,7 @@ PALETTE_INIT( timelimt ) {
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 
@@ -72,13 +72,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( timelimt )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if (!bg_tilemap)
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if (!fg_tilemap)
@@ -128,7 +128,7 @@ WRITE8_HANDLER( timelimt_scroll_y_w )
 
 /***************************************************************************
 
-	Draw the sprites
+    Draw the sprites
 
 ***************************************************************************/
 static void drawsprites( struct mame_bitmap *bitmap )

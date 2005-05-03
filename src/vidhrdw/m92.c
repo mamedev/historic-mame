@@ -1,41 +1,41 @@
 /*****************************************************************************
 
-	Irem M92 video hardware, Bryan McPhail, mish@tendril.co.uk
+    Irem M92 video hardware, Bryan McPhail, mish@tendril.co.uk
 
-	Brief Overview:
+    Brief Overview:
 
-		3 scrolling playfields, 512 by 512.
-		Each playfield can enable rowscroll, change shape (to 1024 by 512),
-		be enabled/disabled and change position in VRAM.
+        3 scrolling playfields, 512 by 512.
+        Each playfield can enable rowscroll, change shape (to 1024 by 512),
+        be enabled/disabled and change position in VRAM.
 
-		Tiles can have several priority values:
-			0 = standard
-			1 = Top 8 pens appear over sprites (split tilemap)
-			2 = Whole tile appears over sprites
-			3 = ?  Seems to be the whole tile is over sprites (as 2).
+        Tiles can have several priority values:
+            0 = standard
+            1 = Top 8 pens appear over sprites (split tilemap)
+            2 = Whole tile appears over sprites
+            3 = ?  Seems to be the whole tile is over sprites (as 2).
 
-		Sprites have 2 priority values:
-			0 = standard
-			1 = Sprite appears over all tiles, including high priority pf1
+        Sprites have 2 priority values:
+            0 = standard
+            1 = Sprite appears over all tiles, including high priority pf1
 
-		Raster interrupts can be triggered at any line of the screen redraw,
-		typically used in games like R-Type Leo to multiplex the top playfield.
+        Raster interrupts can be triggered at any line of the screen redraw,
+        typically used in games like R-Type Leo to multiplex the top playfield.
 
 *****************************************************************************
 
-	Master Control registers:
+    Master Control registers:
 
-		Word 0:	Playfield 1 control
-			Bit  0x40:  1 = Rowscroll enable, 0 = disable
-			Bit  0x10:	0 = Playfield enable, 1 = disable
-			Bit  0x04:  0 = 512 x 512 playfield, 1 = 1024 x 512 playfield
-			Bits 0x03:  Playfield location in VRAM (0, 0x4000, 0x8000, 0xc000)
-		Word 1: Playfield 2 control (as above)
-		Word 2: Playfield 3 control (as above)
-		Word 3: Raster IRQ position.
+        Word 0: Playfield 1 control
+            Bit  0x40:  1 = Rowscroll enable, 0 = disable
+            Bit  0x10:  0 = Playfield enable, 1 = disable
+            Bit  0x04:  0 = 512 x 512 playfield, 1 = 1024 x 512 playfield
+            Bits 0x03:  Playfield location in VRAM (0, 0x4000, 0x8000, 0xc000)
+        Word 1: Playfield 2 control (as above)
+        Word 2: Playfield 3 control (as above)
+        Word 3: Raster IRQ position.
 
-	The raster IRQ position is offset by 128+8 from the first visible line,
-	suggesting there are 8 lines before the first visible one.
+    The raster IRQ position is offset by 128+8 from the first visible line,
+    suggesting there are 8 lines before the first visible one.
 
 *****************************************************************************/
 
@@ -99,40 +99,40 @@ WRITE8_HANDLER( m92_spritecontrol_w )
 		m92_sprite_buffer_busy=0;
 
 		/* Pixel clock is 26.6666 MHz, we have 0x800 bytes, or 0x400 words
-		to copy from spriteram to the buffer.  It seems safe to assume 1
-		word can be copied per clock.  So:
+        to copy from spriteram to the buffer.  It seems safe to assume 1
+        word can be copied per clock.  So:
 
-			1 MHz clock would be 1 word every 0.000,001s = 1000ns
-			26.6666MHz clock would be 1 word every 0.000,000,037 = 37 ns
-			Buffer should copy in about 37888 ns.
-		*/
+            1 MHz clock would be 1 word every 0.000,001s = 1000ns
+            26.6666MHz clock would be 1 word every 0.000,000,037 = 37 ns
+            Buffer should copy in about 37888 ns.
+        */
 		timer_set (TIME_IN_NSEC(37 * 0x400), 0, spritebuffer_callback);
 	}
-//	logerror("%04x: m92_spritecontrol_w %08x %08x\n",activecpu_get_pc(),offset,data);
+//  logerror("%04x: m92_spritecontrol_w %08x %08x\n",activecpu_get_pc(),offset,data);
 }
 
 WRITE8_HANDLER( m92_videocontrol_w )
 {
 	/*
-		Many games write:
-			0x2000
-			0x201b in alternate frames.
+        Many games write:
+            0x2000
+            0x201b in alternate frames.
 
-		Some games write to this both before and after the sprite buffer
-		register - perhaps some kind of acknowledge bit is in there?
+        Some games write to this both before and after the sprite buffer
+        register - perhaps some kind of acknowledge bit is in there?
 
-		Lethal Thunder fails it's RAM test with the upper palette bank
-		enabled.  This was one of the earlier games and could actually
-		be a different motherboard revision (most games use M92-A-B top
-		pcb, a M92-A-A revision could exist...).
-	*/
+        Lethal Thunder fails it's RAM test with the upper palette bank
+        enabled.  This was one of the earlier games and could actually
+        be a different motherboard revision (most games use M92-A-B top
+        pcb, a M92-A-A revision could exist...).
+    */
 	if (offset==0)
 	{
 		/* Access to upper palette bank */
 		if ((data & 0x2) == 0x2 && m92_game_kludge!=3) m92_palette_bank = 1;
 		else                     m92_palette_bank = 0;
 	}
-//	logerror("%04x: m92_videocontrol_w %d = %02x\n",activecpu_get_pc(),offset,data);
+//  logerror("%04x: m92_videocontrol_w %d = %02x\n",activecpu_get_pc(),offset,data);
 }
 
 READ8_HANDLER( m92_paletteram_r )
@@ -392,12 +392,12 @@ WRITE8_HANDLER( m92_master_control_w )
 			break;
 		case 6:
 		case 7:
-//			if (flip_screen)
-//				m92_raster_irq_position=256-(((pf4_control[7]<<8) | pf4_control[6])-128);
-//			else
+//          if (flip_screen)
+//              m92_raster_irq_position=256-(((pf4_control[7]<<8) | pf4_control[6])-128);
+//          else
 				m92_raster_irq_position=((pf4_control[7]<<8) | pf4_control[6])-128;
-//			if (offset==7)
-//				logerror("%06x: Raster %d %d\n",activecpu_get_pc(),offset, m92_raster_irq_position);
+//          if (offset==7)
+//              logerror("%06x: Raster %d %d\n",activecpu_get_pc(),offset, m92_raster_irq_position);
 			break;
 	}
 }
@@ -591,7 +591,7 @@ static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *
 VIDEO_UPDATE( m92 )
 {
 	/* Screen refresh is handled by raster interrupt routine, here
-		we just check the keyboard */
+        we just check the keyboard */
 	if (code_pressed_memory(KEYCODE_F1)) {
 		m92_raster_enable ^= 1;
 		if (m92_raster_enable)
@@ -611,16 +611,16 @@ static void m92_update_scroll_positions(void)
 {
 	int i,pf1_off,pf2_off,pf3_off;
 
-	/*	Playfield 3 rowscroll data is 0xdfc00 - 0xdffff
-		Playfield 2 rowscroll data is 0xdf800 - 0xdfbff
-		Playfield 1 rowscroll data is 0xdf400 - 0xdf7ff
+	/*  Playfield 3 rowscroll data is 0xdfc00 - 0xdffff
+        Playfield 2 rowscroll data is 0xdf800 - 0xdfbff
+        Playfield 1 rowscroll data is 0xdf400 - 0xdf7ff
 
-		It appears to be hardwired to those locations.
+        It appears to be hardwired to those locations.
 
-		In addition, each playfield is staggered 2 pixels horizontally from the
-		previous one.  This is most obvious in Hook & Blademaster.
+        In addition, each playfield is staggered 2 pixels horizontally from the
+        previous one.  This is most obvious in Hook & Blademaster.
 
-	*/
+    */
 
 	if (flip_screen) {
 		pf1_off=-25;

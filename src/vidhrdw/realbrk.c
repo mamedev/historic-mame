@@ -1,20 +1,20 @@
 /***************************************************************************
 
-					  -= Billiard Academy Real Break =-
+                      -= Billiard Academy Real Break =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
-	This hardware provides for:
+    This hardware provides for:
 
-		-	2 scrolling background layers, 1024 x 512 in size
-			made of 16 x 16 tiles with 256 colors
+        -   2 scrolling background layers, 1024 x 512 in size
+            made of 16 x 16 tiles with 256 colors
 
-		-	1 text layer (fixed?), 512 x 256 in size
-			made of 8 x 8 tiles with 16 colors
+        -   1 text layer (fixed?), 512 x 256 in size
+            made of 8 x 8 tiles with 16 colors
 
-		-	0x300 sprites made of 16x16 tiles, both 256 or 16 colors
-			per tile and from 1 to 32x32 (more?) tiles per sprite.
-			Sprites can zoom / shrink
+        -   0x300 sprites made of 16x16 tiles, both 256 or 16 colors
+            per tile and from 1 to 32x32 (more?) tiles per sprite.
+            Sprites can zoom / shrink
 
 
 ***************************************************************************/
@@ -45,7 +45,7 @@ WRITE16_HANDLER( realbrk_flipscreen_w )
 
 /***************************************************************************
 
-								Tilemaps
+                                Tilemaps
 
 
 ***************************************************************************/
@@ -56,16 +56,16 @@ static struct tilemap	*tilemap_0,*tilemap_1,	// Backgrounds
 
 /***************************************************************************
 
-							Background Tilemaps
+                            Background Tilemaps
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		f--- ---- ---- ----		Flip Y
-				-e-- ---- ---- ----		Flip X
-				--dc ba98 7--- ----
-				---- ---- -654 3210		Color
+        0.w     f--- ---- ---- ----     Flip Y
+                -e-- ---- ---- ----     Flip X
+                --dc ba98 7--- ----
+                ---- ---- -654 3210     Color
 
-		2.w								Code
+        2.w                             Code
 
 ***************************************************************************/
 
@@ -107,15 +107,15 @@ WRITE16_HANDLER( realbrk_vram_1_w )
 
 /***************************************************************************
 
-								Text Tilemap
+                                Text Tilemap
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		fedc ---- ---- ----		Color
-				---- ba98 7654 3210		Code
+        0.w     fedc ---- ---- ----     Color
+                ---- ba98 7654 3210     Code
 
-	The full palette of 0x8000 colors can be used by this tilemap since
-	a video register selects the higher bits of the color code.
+    The full palette of 0x8000 colors can be used by this tilemap since
+    a video register selects the higher bits of the color code.
 
 ***************************************************************************/
 
@@ -141,7 +141,7 @@ WRITE16_HANDLER( realbrk_vram_2_w )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -177,45 +177,45 @@ VIDEO_START(realbrk)
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Sprites RAM is 0x4000 bytes long with each sprite needing 16 bytes.
+    Sprites RAM is 0x4000 bytes long with each sprite needing 16 bytes.
 
-	Not all sprites must be displayed: there is a list of words at offset
-	0x3000. If the high bit of a word is 0 the low bits form the index
-	of a sprite to be drawn. 0x300 items of the list seem to be used.
+    Not all sprites must be displayed: there is a list of words at offset
+    0x3000. If the high bit of a word is 0 the low bits form the index
+    of a sprite to be drawn. 0x300 items of the list seem to be used.
 
-	Each sprite is made of several 16x16 tiles (from 1 to 32x32) and
-	can be zoomed / shrinked in size.
+    Each sprite is made of several 16x16 tiles (from 1 to 32x32) and
+    can be zoomed / shrinked in size.
 
-	There are two set of tiles: with 256 or 16 colors.
+    There are two set of tiles: with 256 or 16 colors.
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Y
+        0.w                             Y
 
-		2.w								X
+        2.w                             X
 
-		4.w		fedc ba98 ---- ----		Number of tiles along Y, minus 1 (5 bits or more ?)
-				---- ---- 7654 3210		Number of tiles along X, minus 1 (5 bits or more ?)
+        4.w     fedc ba98 ---- ----     Number of tiles along Y, minus 1 (5 bits or more ?)
+                ---- ---- 7654 3210     Number of tiles along X, minus 1 (5 bits or more ?)
 
-		6.w		fedc ba98 ---- ----		Zoom factor along Y (0x40 = no zoom)
-				---- ---- 7654 3210		Zoom factor along X (0x40 = no zoom)
+        6.w     fedc ba98 ---- ----     Zoom factor along Y (0x40 = no zoom)
+                ---- ---- 7654 3210     Zoom factor along X (0x40 = no zoom)
 
-		8.w		fe-- ---- ---- ----
-				--d- ---- ---- ----		Flip Y
-				---c ---- ---- ----		Flip X
-				---- ba98 7654 3210		Priority?
+        8.w     fe-- ---- ---- ----
+                --d- ---- ---- ----     Flip Y
+                ---c ---- ---- ----     Flip X
+                ---- ba98 7654 3210     Priority?
 
-		A.w		fedc b--- ---- ----
-				---- -a98 7654 3210		Color
+        A.w     fedc b--- ---- ----
+                ---- -a98 7654 3210     Color
 
-		C.w		fedc ba9- ---- ----
-				---- ---8 ---- ----
-				---- ---- 7654 321-
-				---- ---- ---- ---0		1 = Use 16 color sprites, 0 = Use 256 color sprites 
+        C.w     fedc ba9- ---- ----
+                ---- ---8 ---- ----
+                ---- ---- 7654 321-
+                ---- ---- ---- ---0     1 = Use 16 color sprites, 0 = Use 256 color sprites
 
-		E.w								Code
+        E.w                             Code
 
 ***************************************************************************/
 
@@ -296,28 +296,28 @@ static void realbrk_draw_sprites(struct mame_bitmap *bitmap,const struct rectang
 
 /***************************************************************************
 
-								Screen Drawing
+                                Screen Drawing
 
-	Video Registers:
+    Video Registers:
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-	0.w									Background 0 Scroll Y
+    0.w                                 Background 0 Scroll Y
 
-	2.w									Background 0 Scroll X
+    2.w                                 Background 0 Scroll X
 
-	4.w									Background 1 Scroll Y
+    4.w                                 Background 1 Scroll Y
 
-	6.w									Background 1 Scroll X
+    6.w                                 Background 1 Scroll X
 
-	8.w			fedc ba98 ---- ----		? bit f = flip
-				---- ---- 7654 3210
+    8.w         fedc ba98 ---- ----     ? bit f = flip
+                ---- ---- 7654 3210
 
-	A.w			fedc ba98 7--- ----
-				---- ---- -654 3210		Color codes high bits for the text tilemap
+    A.w         fedc ba98 7--- ----
+                ---- ---- -654 3210     Color codes high bits for the text tilemap
 
-	C.w			f--- ---- ---- ----
-				-edc ba98 7654 3210		Index of the background color
+    C.w         f--- ---- ---- ----
+                -edc ba98 7654 3210     Index of the background color
 
 ***************************************************************************/
 
@@ -367,5 +367,5 @@ if ( code_pressed(KEYCODE_Z) )
 
 	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_2,0,0);
 
-//	usrintf_showmessage("%04x",realbrk_vregs[0x8/2]);
+//  usrintf_showmessage("%04x",realbrk_vregs[0x8/2]);
 }

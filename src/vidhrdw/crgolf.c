@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Kitco Crowns Golf hardware
+    Kitco Crowns Golf hardware
 
 ***************************************************************************/
 
@@ -25,7 +25,7 @@ static struct mame_bitmap *highbit;
 
 /*************************************
  *
- *	Video RAM writes
+ *  Video RAM writes
  *
  *************************************/
 
@@ -86,7 +86,7 @@ WRITE8_HANDLER( crgolf_videoram_bit2_w )
 
 /*************************************
  *
- *	Video RAM reads
+ *  Video RAM reads
  *
  *************************************/
 
@@ -147,7 +147,7 @@ READ8_HANDLER( crgolf_videoram_bit2_r )
 
 /*************************************
  *
- *	Color PROM decoding
+ *  Color PROM decoding
  *
  *************************************/
 
@@ -185,7 +185,7 @@ PALETTE_INIT( crgolf )
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -210,7 +210,7 @@ VIDEO_START( crgolf )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 

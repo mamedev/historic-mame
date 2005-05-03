@@ -52,7 +52,7 @@ static WRITE8_HANDLER( p0c_w )
 
 	flip_screen_set(data & 8);
 
-//	usrintf_showmessage("%02x",data&0x0f);
+//  usrintf_showmessage("%02x",data&0x0f);
 }
 
 static READ8_HANDLER( p1b_r )
@@ -146,7 +146,7 @@ static ADDRESS_MAP_START( writemem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf480, 0xf483) AM_WRITE(ppi8255_2_w)	/* "sprite1" placement */
 	AM_RANGE(0xf500, 0xf503) AM_WRITE(ppi8255_3_w)	/* "sprite2" placement */
 	AM_RANGE(0xf580, 0xf583) AM_WRITE(ppi8255_4_w)	/* "sprite3" placement */
-//	AM_RANGE(0xf780, 0xf781) AM_WRITE(MWA8_RAM)		/* more scroll registers? */
+//  AM_RANGE(0xf780, 0xf781) AM_WRITE(MWA8_RAM)     /* more scroll registers? */
 	AM_RANGE(0xf782, 0xf787) AM_WRITE(MWA8_RAM) AM_BASE(&taxidrvr_scroll)	/* bg scroll (three copies always identical) */
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
@@ -393,11 +393,11 @@ static MACHINE_DRIVER_START( taxidrvr )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1250000)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 1250000)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

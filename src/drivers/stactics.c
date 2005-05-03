@@ -20,7 +20,7 @@ Memory Map:
 6060-606f score display             W
 60a0-60e0 sound triggers2           W
 7000-7fff RNG/swit                  R     LS Nibble are a VBlank counter
-								          used as a RNG
+                                          used as a RNG
 8000-8fff swit/stat                 R
 8000-8fff offset RAM                W
 9000-9fff V pos reg.                R     Reads counter from an encoder wheel
@@ -151,7 +151,7 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( stactics )
 
-    PORT_START  /* 	IN0 */
+    PORT_START  /*  IN0 */
     /*PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) Motor status. see stactics_port_0_r */
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )

@@ -1,36 +1,36 @@
 /*
-	Polygonet Commanders (Konami, 1993)
+    Polygonet Commanders (Konami, 1993)
 
-	Preliminary driver by R. Belmont
+    Preliminary driver by R. Belmont
 
-	This is Konami's first 3D game!
+    This is Konami's first 3D game!
 
-	Hardware:
-	68EC020 @ 16 MHz
-	Motorola XC56156-40 DSP @ 40 MHz (needs core)
-	Z80 + K054539 for sound
-	Network to connect up to 4 PCBs.
+    Hardware:
+    68EC020 @ 16 MHz
+    Motorola XC56156-40 DSP @ 40 MHz (needs core)
+    Z80 + K054539 for sound
+    Network to connect up to 4 PCBs.
 
-	Video hardware:
-	TTL text plane similar to Run and Gun.
-	Konami K054009(x2) + K054010(x2) (polygon rasterizers)
-	Konami K053936 "PSAC2" (3d roz plane, used for backgrounds)
+    Video hardware:
+    TTL text plane similar to Run and Gun.
+    Konami K054009(x2) + K054010(x2) (polygon rasterizers)
+    Konami K053936 "PSAC2" (3d roz plane, used for backgrounds)
 
-	Driver includes:
-	- 68020 memory map
-	- Z80 + sound system
-	- EEPROM
-	- service switch
-	- TTL text plane
+    Driver includes:
+    - 68020 memory map
+    - Z80 + sound system
+    - EEPROM
+    - service switch
+    - TTL text plane
 
-	Driver needs:
-	- 56156 DSP core
-	- Polygon rasterization (K054009 + K054010)
-	- Hook up PSAC2 (gfx decode for it is already present and correct)
-	- Palettes
-	- Controls
-	- Priorities.  From the original board it appears they're fixed, in front to back order:
-	  (all the way in front) TTL text layer -> polygons -> PSAC2 (all the way in back)
+    Driver needs:
+    - 56156 DSP core
+    - Polygon rasterization (K054009 + K054010)
+    - Hook up PSAC2 (gfx decode for it is already present and correct)
+    - Palettes
+    - Controls
+    - Priorities.  From the original board it appears they're fixed, in front to back order:
+      (all the way in front) TTL text layer -> polygons -> PSAC2 (all the way in back)
 
 Notes:
 
@@ -284,7 +284,7 @@ static ADDRESS_MAP_START( polygonet_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x540000, 0x540fff) AM_READ(polygonet_ttl_ram_r)
 	AM_RANGE(0x541000, 0x54101f) AM_READ(MRA32_RAM)
 	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM)
-//	AM_RANGE(0x580800, 0x580803) AM_READ(MRA32_RAM)	// network RAM / registers?
+//  AM_RANGE(0x580800, 0x580803) AM_READ(MRA32_RAM) // network RAM / registers?
 	AM_RANGE(0x600008, 0x60000b) AM_READ(sound_r)
 	AM_RANGE(0x700000, 0x73ffff) AM_READ(psac_rom_r)
 	AM_RANGE(0x780000, 0x79ffff) AM_READ(ttl_rom_r)
@@ -302,7 +302,7 @@ static ADDRESS_MAP_START( polygonet_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x540000, 0x540fff) AM_WRITE(polygonet_ttl_ram_w)
 	AM_RANGE(0x541000, 0x54101f) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA32_RAM)	// A21K
-//	AM_RANGE(0x580800, 0x580803) AM_WRITE(MWA32_RAM)	// network RAM / registers?
+//  AM_RANGE(0x580800, 0x580803) AM_WRITE(MWA32_RAM)    // network RAM / registers?
 	AM_RANGE(0x600004, 0x600007) AM_WRITE(sound_w)
 	AM_RANGE(0x640000, 0x640003) AM_WRITE(sound_irq_w)
 	AM_RANGE(0x680000, 0x680003) AM_WRITE(watchdog_reset32_w)
@@ -444,7 +444,7 @@ INPUT_PORTS_START( polygonet )
 	PORT_DIPNAME(0x10, 0x00, "Monitors")
 	PORT_DIPSETTING(0x00, "1 Monitor")
 	PORT_DIPSETTING(0x10, "2 Monitors")
-//	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+//  PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )

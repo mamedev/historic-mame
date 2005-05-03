@@ -76,12 +76,12 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 
 
 	/* The byte at f200 is the y-scroll value for the first column.
-	   The byte at f204 is the LSB of x-scroll value for the first column.
+       The byte at f204 is the LSB of x-scroll value for the first column.
 
-	   The other columns follow at 16-byte intervals.
+       The other columns follow at 16-byte intervals.
 
-	   The 9th bit of each x-scroll value is combined into 2 bytes
-	   at f302-f303 */
+       The 9th bit of each x-scroll value is combined into 2 bytes
+       at f302-f303 */
 
 	/* f301 controls how many columns are drawn. */
 	tot = tnzs_objctrl[1] & 0x1f;
@@ -200,7 +200,7 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 VIDEO_UPDATE( tnzs )
 {
 	/* If the byte at f300 has bit 6 set, flip the screen
-	   (I'm not 100% sure about this) */
+       (I'm not 100% sure about this) */
 	tnzs_screenflip = (tnzs_objctrl[0] & 0x40) >> 6;
 
 
@@ -213,8 +213,8 @@ VIDEO_UPDATE( tnzs )
 	/* Draw the sprites on top */
 	tnzs_vh_draw_foreground(bitmap,
 							tnzs_objram + 0x0000, /*  chars : c000 */
-							tnzs_objram + 0x0200, /*	  x : c200 */
-							tnzs_vdcram + 0x0000, /*	  y : f000 */
+							tnzs_objram + 0x0200, /*      x : c200 */
+							tnzs_vdcram + 0x0000, /*      y : f000 */
 							tnzs_objram + 0x1000, /*   ctrl : d000 */
 							tnzs_objram + 0x1200); /* color : d200 */
 }

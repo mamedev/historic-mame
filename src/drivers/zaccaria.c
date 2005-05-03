@@ -199,7 +199,7 @@ static WRITE8_HANDLER( zaccaria_port1b_w )
 static READ8_HANDLER( zaccaria_ca2_r )
 {
 // TODO: this doesn't work, why?
-//	return !tms5220_ready_r();
+//  return !tms5220_ready_r();
 
 static int counter;
 counter = (counter+1) & 0x0f;
@@ -692,11 +692,11 @@ static MACHINE_DRIVER_START( zaccaria )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 3580000/2)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
-	
+
 	MDRV_SOUND_ADD(AY8910, 3580000/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 

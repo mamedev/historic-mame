@@ -1,22 +1,22 @@
 /*** m6805: Portable 6805 emulator ******************************************
 
-	m6805.c (Also supports hd68705 and hd63705 variants)
+    m6805.c (Also supports hd68705 and hd63705 variants)
 
-	References:
+    References:
 
-		6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
+        6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
 
-		m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
-			the 6809 Simulator V09)
+        m6809: Portable 6809 emulator, DS (6809 code in MAME, derived from
+            the 6809 Simulator V09)
 
-		6809 Microcomputer Programming & Interfacing with Experiments"
-			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
+        6809 Microcomputer Programming & Interfacing with Experiments"
+            by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	UINT16 must be 16 bit unsigned int
-							UINT8 must be 8 bit unsigned int
-							UINT32 must be more than 16 bits
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
+    System dependencies:    UINT16 must be 16 bit unsigned int
+                            UINT8 must be 8 bit unsigned int
+                            UINT32 must be more than 16 bits
+                            arrays up to 65536 bytes must be supported
+                            machine must be twos complement
 
   Additional Notes:
 
@@ -119,7 +119,7 @@ int m6805_ICount=50000;
 #define PULLWORD(w) rd_s_handler_w(&w)
 
 /* CC masks      H INZC
-              7654 3210	*/
+              7654 3210 */
 #define CFLAG 0x01
 #define ZFLAG 0x02
 #define NFLAG 0x04
@@ -276,7 +276,7 @@ INLINE void RM16( UINT32 Addr, PAIR *p )
 	CLEAR_PAIR(p);
     p->b.h = RM(Addr);
     ++Addr;
-//	if( ++Addr > AMASK ) Addr = 0;
+//  if( ++Addr > AMASK ) Addr = 0;
 	p->b.l = RM(Addr);
 }
 
@@ -284,7 +284,7 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 {
 	WM( Addr, p->b.h );
     ++Addr;
-//	if( ++Addr > AMASK ) Addr = 0;
+//  if( ++Addr > AMASK ) Addr = 0;
 	WM( Addr, p->b.l );
 }
 
@@ -293,9 +293,9 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 /* Generate interrupt - m68705 version */
 static void m68705_Interrupt(void)
 {
-	if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|M68705_INT_MASK)) != 0 ) 
+	if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|M68705_INT_MASK)) != 0 )
 	{
-		if ( (CC & IFLAG) == 0 ) 
+		if ( (CC & IFLAG) == 0 )
 		{
 			PUSHWORD(m6805.pc);
 			PUSHBYTE(m6805.x);
@@ -319,7 +319,7 @@ static void m68705_Interrupt(void)
 		m6805_ICount -= 11;
 	}
 }
-#endif 
+#endif
 
 /* Generate interrupts */
 static void Interrupt(void)
@@ -355,9 +355,9 @@ static void Interrupt(void)
 	{
         /* standard IRQ */
 //#if (HAS_HD63705)
-//		if(SUBTYPE!=SUBTYPE_HD63705)
+//      if(SUBTYPE!=SUBTYPE_HD63705)
 //#endif
-//			PC |= ~AMASK;
+//          PC |= ~AMASK;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -901,7 +901,7 @@ static void m6805_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6805_S:			S = SP_ADJUST(info->i);					break;
 		case CPUINFO_INT_REGISTER + M6805_X:			X = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6805_CC:			CC = info->i;							break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m6805.irq_callback = info->irqcallback;	break;
 	}
@@ -927,7 +927,7 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -1016,7 +1016,7 @@ void m68705_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + M68705_INT_TIMER:	info->i = m6805.irq_state[M68705_INT_TIMER]; break;
-	
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m68705_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = m68705_init;				break;

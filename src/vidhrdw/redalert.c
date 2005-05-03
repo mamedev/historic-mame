@@ -55,9 +55,9 @@ WRITE8_HANDLER( redalert_c040_w )
 	/* D3 connects to a "YI" line */
 
 	/*
-		D0 == 1				-> 1 player
-		D1 == 1 and D0 == 1 -> 2 players
-	*/
+        D0 == 1             -> 1 player
+        D1 == 1 and D0 == 1 -> 2 players
+    */
 	flip = !(data & 0x04);
 }
 
@@ -71,9 +71,9 @@ WRITE8_HANDLER( redalert_backcolor_w )
 WRITE8_HANDLER( demoneye_c040_w )
 {
 	/*
-		D0 == 1				-> 1 player
-		D1 == 1 and D0 == 1 -> 2 players
-	*/
+        D0 == 1             -> 1 player
+        D1 == 1 and D0 == 1 -> 2 players
+    */
 	flip = data & 0x04;
 }
 

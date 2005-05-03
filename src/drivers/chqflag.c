@@ -112,7 +112,7 @@ static WRITE8_HANDLER( chqflag_vreg_w )
 	}
 
 //if ((data & 0xf8) && (data & 0xf8) != 0x88)
-//	usrintf_showmessage("chqflag_vreg_w %02x",data);
+//  usrintf_showmessage("chqflag_vreg_w %02x",data);
 
 
 	/* other bits unknown. bit 5 is used. */
@@ -193,7 +193,7 @@ static ADDRESS_MAP_START( chqflag_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_1_r)	/* 007232 (chip 2) */
 	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)	/* YM2151 */
 	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)			/* soundlatch_r */
-	//AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)				/* ??? */
+	//AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)                /* ??? */
 ADDRESS_MAP_END
 
 static WRITE8_HANDLER( k007232_bankswitch_w )
@@ -260,7 +260,7 @@ INPUT_PORTS_START( chqflag )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalidity" )
+//  PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalidity" )
 
 	PORT_START	/* DSW #2 (according to the manual SW1 thru SW5 are not used) */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
@@ -394,14 +394,14 @@ static MACHINE_DRIVER_START( chqflag )
 	MDRV_SOUND_CONFIG(ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_1)
 	MDRV_SOUND_ROUTE(0, "left", 0.20)
 	MDRV_SOUND_ROUTE(0, "right", 0.20)
 	MDRV_SOUND_ROUTE(1, "left", 0.20)
 	MDRV_SOUND_ROUTE(1, "right", 0.20)
-	
+
 	MDRV_SOUND_ADD(K007232, 3579545)
 	MDRV_SOUND_CONFIG(k007232_interface_2)
 	MDRV_SOUND_ROUTE(0, "left", 0.20)

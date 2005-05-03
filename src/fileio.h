@@ -1,8 +1,8 @@
 /***************************************************************************
 
-	fileio.h
+    fileio.h
 
-	Core file I/O interface functions and definitions.
+    Core file I/O interface functions and definitions.
 
 ***************************************************************************/
 

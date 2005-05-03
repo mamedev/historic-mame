@@ -1,17 +1,17 @@
 /**********************************************************************
 
-	Rockwell 6522 VIA interface and emulation
+    Rockwell 6522 VIA interface and emulation
 
-	This function emulates the functionality of up to 8 6522
-	versatile interface adapters.
+    This function emulates the functionality of up to 8 6522
+    versatile interface adapters.
 
-	This is based on the M6821 emulation in MAME.
+    This is based on the M6821 emulation in MAME.
 
-	To do:
+    To do:
 
-	T2 pulse counting mode
-	Pulse mode handshake output
-	Shift register
+    T2 pulse counting mode
+    Pulse mode handshake output
+    Shift register
 
 **********************************************************************/
 
@@ -210,8 +210,8 @@ logerror("6522VIA chip %d: IFR = %02X.  PC: %08X\n", which, v->ifr, activecpu_ge
 	{
 		if (v->intf->irq_func)
 			(*v->intf->irq_func)(CLEAR_LINE);
-//		else
-//			logerror("6522VIA chip %d: Interrupt is cleared but there is no callback function.  PC: %08X\n", which, activecpu_get_pc());
+//      else
+//          logerror("6522VIA chip %d: Interrupt is cleared but there is no callback function.  PC: %08X\n", which, activecpu_get_pc());
 	}
 }
 
@@ -340,7 +340,7 @@ int via_read(int which, int offset)
 		CLR_PA_INT(v, which);
 
 		/* If CA2 is configured as output and in pulse or handshake mode,
-		   CA2 is set now */
+           CA2 is set now */
 		if (CA2_AUTO_HS(v->pcr))
 		{
 			if (v->out_ca2)
@@ -519,7 +519,7 @@ void via_write(int which, int offset, int data)
 		CLR_PB_INT(v, which);
 
 		/* If CB2 is configured as output and in pulse or handshake mode,
-		   CB2 is set now */
+           CB2 is set now */
 		if (CB2_AUTO_HS(v->pcr))
 		{
 			if (v->out_cb2)
@@ -552,7 +552,7 @@ void via_write(int which, int offset, int data)
 		CLR_PA_INT(v, which);
 
 		/* If CA2 is configured as output and in pulse or handshake mode,
-		   CA2 is set now */
+           CA2 is set now */
 		if (CA2_PULSE_OUTPUT(v->pcr))
 		{
 			/* call the CA2 output function */
@@ -790,8 +790,8 @@ logerror("6522VIA chip %d: PCR = %02X.  PC: %08X\n", which, data, activecpu_get_
 				v->ifr &= ~INT_ANY;
 				if (v->intf->irq_func)
 					(*v->intf->irq_func)(CLEAR_LINE);
-//				else
-//					logerror("6522VIA chip %d: Interrupt is cleared but there is no callback function.  PC: %08X\n", which, activecpu_get_pc());
+//              else
+//                  logerror("6522VIA chip %d: Interrupt is cleared but there is no callback function.  PC: %08X\n", which, activecpu_get_pc());
 			}
 		}
 		else
@@ -853,7 +853,7 @@ logerror("6522VIA chip %d: CA1 = %02X.  PC: %08X\n", which, data, activecpu_get_
 			via_set_int (which, INT_CA1);
 
 			/* CA2 is configured as output and in pulse or handshake mode,
-			   CA2 is cleared now */
+               CA2 is cleared now */
 			if (CA2_AUTO_HS(v->pcr))
 			{
 				if (!v->out_ca2)
@@ -942,7 +942,7 @@ void via_set_input_cb1(int which, int data)
 			via_set_int (which, INT_CB1);
 
 			/* CB2 is configured as output and in pulse or handshake mode,
-			   CB2 is cleared now */
+               CB2 is cleared now */
 			if (CB2_AUTO_HS(v->pcr))
 			{
 				if (!v->out_cb2)

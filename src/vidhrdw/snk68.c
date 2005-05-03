@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	SNK 68000 video routines
+    SNK 68000 video routines
 
 Notes:
-	Search & Rescue uses Y flip on sprites only.
-	Street Smart uses X flip on sprites only.
+    Search & Rescue uses Y flip on sprites only.
+    Street Smart uses X flip on sprites only.
 
-	Seems to be controlled in same byte as flipscreen.
+    Seems to be controlled in same byte as flipscreen.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

@@ -1,18 +1,18 @@
 /***************************************************************************
 
-							  -= Metal Clash =-
+                              -= Metal Clash =-
 
-	driver by Luca Elia, based on brkthru.c by Phil Stroffolino
+    driver by Luca Elia, based on brkthru.c by Phil Stroffolino
 
 
-CPUs 	:	2 x 6809
-Sound	:	YM2203  +  YM3526
-Video	:	TC15G008AP + TC15G032CY (TOSHIBA)
+CPUs    :   2 x 6809
+Sound   :   YM2203  +  YM3526
+Video   :   TC15G008AP + TC15G032CY (TOSHIBA)
 
 ---------------------------------------------------------------------------
-Year + Game			Boards
+Year + Game         Boards
 ---------------------------------------------------------------------------
-85	Metal Clash		DE-0212-1 & DE-0213-1
+85  Metal Clash     DE-0212-1 & DE-0213-1
 ---------------------------------------------------------------------------
 
 Notes:
@@ -53,7 +53,7 @@ VIDEO_UPDATE( metlclsh );
 
 /***************************************************************************
 
-							Memory Maps - CPU #1
+                            Memory Maps - CPU #1
 
 ***************************************************************************/
 
@@ -80,10 +80,10 @@ static ADDRESS_MAP_START( metlclsh_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r			)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r			)
 	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r			)
-//	AM_RANGE(0xc800, 0xc82f) AM_READ(MRA8_RAM					)	// not actually read
-//	AM_RANGE(0xcc00, 0xcc2f) AM_READ(MRA8_RAM					)	// ""
+//  AM_RANGE(0xc800, 0xc82f) AM_READ(MRA8_RAM                   )   // not actually read
+//  AM_RANGE(0xcc00, 0xcc2f) AM_READ(MRA8_RAM                   )   // ""
 	AM_RANGE(0xd000, 0xd000) AM_READ(YM2203_status_port_0_r	)
-//	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM					)	// not actually read
+//  AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM                   )   // not actually read
 	AM_RANGE(0xe800, 0xe9ff) AM_READ(MRA8_RAM					)
 	AM_RANGE(0xfff0, 0xffff) AM_READ(MRA8_ROM					)	// Reset/IRQ vectors
 ADDRESS_MAP_END
@@ -109,7 +109,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-							Memory Maps - CPU #2
+                            Memory Maps - CPU #2
 
 ***************************************************************************/
 
@@ -155,15 +155,15 @@ static ADDRESS_MAP_START( metlclsh_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe301, 0xe301) AM_WRITE(metlclsh_flipscreen_w			)	// 0/1
 	AM_RANGE(0xe401, 0xe401) AM_WRITE(metlclsh_rambank_w			)
 	AM_RANGE(0xe402, 0xe403) AM_WRITE(MWA8_RAM) AM_BASE(&metlclsh_scrollx	)
-//	AM_RANGE(0xe404, 0xe404) AM_WRITE(MWA8_NOP						)	// ? 0
-//	AM_RANGE(0xe410, 0xe410) AM_WRITE(MWA8_NOP						)	// ? 0 on startup only
+//  AM_RANGE(0xe404, 0xe404) AM_WRITE(MWA8_NOP                      )   // ? 0
+//  AM_RANGE(0xe410, 0xe410) AM_WRITE(MWA8_NOP                      )   // ? 0 on startup only
 	AM_RANGE(0xfff0, 0xffff) AM_WRITE(MWA8_ROM						)
 ADDRESS_MAP_END
 
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
@@ -237,7 +237,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-							Graphics Layouts
+                            Graphics Layouts
 
 ***************************************************************************/
 
@@ -285,7 +285,7 @@ static struct GfxDecodeInfo metlclsh_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
@@ -357,7 +357,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
@@ -368,16 +368,16 @@ ROM Type:2764,27256
 
 Name            Size    Location
 --------------------------------
-CS00.BIN	2764	C11 cpu
-CS01.BIN	27256	C12 cpu
-CS02.BIN	27256	C14 cpu
-CS03.BIN	27256	C15 cpu
-CS04.BIN	27256	C17 cpu
-CS05.BIN	27256	H7  sound
+CS00.BIN    2764    C11 cpu
+CS01.BIN    27256   C12 cpu
+CS02.BIN    27256   C14 cpu
+CS03.BIN    27256   C15 cpu
+CS04.BIN    27256   C17 cpu
+CS05.BIN    27256   H7  sound
 
-CS06.BIN	27256	D9  Video
-CS07.BIN	27256	D10 Video
-CS08.BIN	27256	D12 Video
+CS06.BIN    27256   D9  Video
+CS07.BIN    27256   D10 Video
+CS08.BIN    27256   D12 Video
 
 TTL-PROM 82S123(Color Table,8bit x 32Byte).
 0000:3A 78 79 71 75 74 76 32

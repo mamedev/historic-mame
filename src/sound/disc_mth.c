@@ -273,10 +273,10 @@ void dst_dac_r1_step(struct node_description *node)
 	else
 	{
 		/*
-		 * If module is disabled we will just leave the voltage where it was.
-		 * We may want to set it to 0 in the future, but we will probably never
-		 * disable this module.
-		 */
+         * If module is disabled we will just leave the voltage where it was.
+         * We may want to set it to 0 in the future, but we will probably never
+         * disable this module.
+         */
 	}
 }
 
@@ -294,10 +294,10 @@ void dst_dac_r1_reset(struct node_description *node)
 		context->iBias = 0;
 
 	/*
-	 * We will do a small amount of error checking.
-	 * But if you are an idiot and pass a bad ladder table
-	 * then you deserve a crash.
-	 */
+     * We will do a small amount of error checking.
+     * But if you are an idiot and pass a bad ladder table
+     * then you deserve a crash.
+     */
 	if (info->ladderLength < 2)
 	{
 		/* You need at least 2 resistors for a ladder */
@@ -309,10 +309,10 @@ void dst_dac_r1_reset(struct node_description *node)
 	}
 
 	/*
-	 * Calculate the total of all resistors in parallel.
-	 * This is the combined resistance of the voltage sources.
-	 * This is used for the charging curve.
-	 */
+     * Calculate the total of all resistors in parallel.
+     * This is the combined resistance of the voltage sources.
+     * This is used for the charging curve.
+     */
 	context->rTotal = 0;
 	for(bit=0; bit < info->ladderLength; bit++)
 	{
@@ -506,8 +506,8 @@ void dst_integrate_step(struct node_description *node)
 			if (DST_INTEGRATE__TRG0 != 0)
 			{
 				/* This forces the cap to completely charge,
-				 * and the output to go to it's max value.
-				 */
+                 * and the output to go to it's max value.
+                 */
 				node->output = context->vMaxOut;
 				return;
 			}
@@ -915,7 +915,7 @@ void dst_mixer_step(struct node_description *node)
 		rTotal = 1.0 / rTotal;
 
 		/* If resistor network or has rI then Millman is used.
-		 * If op-amp then summing formula is used. */
+         * If op-amp then summing formula is used. */
 		v = i * (((context->type & DISC_MIXER_TYPE_MASK) == DISC_MIXER_IS_OP_AMP) ? info->rF : rTotal);
 
 		if ((context->type & DISC_MIXER_TYPE_MASK) == DISC_MIXER_IS_OP_AMP_WITH_RI)
@@ -959,18 +959,18 @@ void dst_mixer_reset(struct node_description *node)
 	context->size = node->active_inputs - 1;
 
 	/*
-	 * THERE IS NO ERROR CHECKING!!!!!!!!!
-	 * If you are an idiot and pass a bad ladder table
-	 * then you deserve a crash.
-	 */
+     * THERE IS NO ERROR CHECKING!!!!!!!!!
+     * If you are an idiot and pass a bad ladder table
+     * then you deserve a crash.
+     */
 
 	context->type = ((info->type == DISC_MIXER_IS_OP_AMP) && info->rI) ? DISC_MIXER_IS_OP_AMP_WITH_RI : info->type;
 
 	/*
-	 * Calculate the total of all resistors in parallel.
-	 * This is the combined resistance of the voltage sources.
-	 * Also calculate the exponents while we are here.
-	 */
+     * Calculate the total of all resistors in parallel.
+     * This is the combined resistance of the voltage sources.
+     * Also calculate the exponents while we are here.
+     */
 	context->rTotal = 0;
 	for(bit=0; bit < context->size; bit++)
 	{
@@ -1552,10 +1552,10 @@ void dst_tvca_op_amp_step(struct node_description *node)
 	else
 	{
 		/* F2 is at ground.  The diode blocks this so F2 and r5 are out of circuit.
-		 * So now the discharge rate is dependent upon F3.
-		 * If F3 is at ground then we discharge to 0V through r6.
-		 * If F3 is out of circuit then we discharge to OP_AMP_NORTON_VBE through r6+r7.
-		 * Also we don't go lower then OP_AMP_NORTON_VBE unless F3 is at ground. */
+         * So now the discharge rate is dependent upon F3.
+         * If F3 is at ground then we discharge to 0V through r6.
+         * If F3 is out of circuit then we discharge to OP_AMP_NORTON_VBE through r6+r7.
+         * Also we don't go lower then OP_AMP_NORTON_VBE unless F3 is at ground. */
 		if (!(f3 && (context->vCap1 <= OP_AMP_NORTON_VBE)))
 			context->vCap1 += ((f3 ? OP_AMP_NORTON_VBE : 0.0) - context->vCap1) * context->exponentD[f3];
 	}
@@ -1599,7 +1599,7 @@ void dst_tvca_op_amp_reset(struct node_description *node)
 
 	context->vOutMax = info->vP - OP_AMP_NORTON_VBE;
 	/* This is probably overkill because R5 is usually much lower then r6 or r7,
-	 * but it is better to play it safe. */
+     * but it is better to play it safe. */
 	context->vTrig[0] = (info->vP - 0.6) * (info->r6 / (info->r6 + info->r5));
 	context->vTrig[1] = (info->vP - 0.6 - OP_AMP_NORTON_VBE) * (context->r67 / (context->r67 + info->r5)) + OP_AMP_NORTON_VBE;
 	context->iFixed = context->vOutMax / info->r1;

@@ -4,23 +4,23 @@
   ========================
 
   Driver by Paul Leaman (paul@vortexcomputing.demon.co.uk)
-		and Miguel Angel Horna (mahorna@teleline.es)
+        and Miguel Angel Horna (mahorna@teleline.es)
 
   A 16 channel stereo sample player.
 
   QSpace position is simulated by panning the sound in the stereo space.
 
   Register
-  0	 xxbb	xx = unknown bb = start high address
-  1	 ssss	ssss = sample start address
-  2	 pitch
-  3	 unknown (always 0x8000)
-  4	 loop offset from end address
-  5	 end
-  6	 master channel volume
-  7	 not used
-  8	 Balance (left=0x0110  centre=0x0120 right=0x0130)
-  9	 unknown (most fixed samples use 0 for this register)
+  0  xxbb   xx = unknown bb = start high address
+  1  ssss   ssss = sample start address
+  2  pitch
+  3  unknown (always 0x8000)
+  4  loop offset from end address
+  5  end
+  6  master channel volume
+  7  not used
+  8  Balance (left=0x0110  centre=0x0120 right=0x0130)
+  9  unknown (most fixed samples use 0 for this register)
 
   Many thanks to CAB (the author of Amuse), without whom this probably would
   never have been finished.
@@ -75,7 +75,7 @@ typedef stream_sample_t QSOUND_SAMPLE;
 
 struct QSOUND_CHANNEL
 {
-	int bank;	   /* bank (x16)	*/
+	int bank;	   /* bank (x16)    */
 	int address;	/* start address */
 	int pitch;	  /* pitch */
 	int reg3;	   /* unknown (always 0x8000) */
@@ -139,7 +139,7 @@ static void *qsound_start(int sndindex, int clock, const void *config)
 {
 	struct qsound_info *chip;
 	int i;
-	
+
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(chip));
 
@@ -378,7 +378,7 @@ void qsound_set_command(struct qsound_info *chip, int data, int value)
 			chip->channel[ch].reg9=value;
 /*
 #ifdef MAME_DEBUG
-			usrintf_showmessage("QSOUND REG 9=%04x",value);
+            usrintf_showmessage("QSOUND REG 9=%04x",value);
 #endif
 */
 			break;
@@ -458,8 +458,8 @@ void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buf
 #else
 
 /* ----------------------------------------------------------------
-		QSound Sample Mixer (Slow)
-		Miguel Angel Horna mahorna@teleline.es
+        QSound Sample Mixer (Slow)
+        Miguel Angel Horna mahorna@teleline.es
 
  ------------------------------------------------------------------ */
 

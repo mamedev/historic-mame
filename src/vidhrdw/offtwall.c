@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari "Round" hardware
+    Atari "Round" hardware
 
 ****************************************************************************/
 
@@ -12,7 +12,7 @@
 
 /*************************************
  *
- *	Tilemap callbacks
+ *  Tilemap callbacks
  *
  *************************************/
 
@@ -29,7 +29,7 @@ static void get_playfield_tile_info(int tile_index)
 
 /*************************************
  *
- *	Video system start
+ *  Video system start
  *
  *************************************/
 
@@ -87,7 +87,7 @@ VIDEO_START( offtwall )
 
 /*************************************
  *
- *	Main refresh
+ *  Main refresh
  *
  *************************************/
 
@@ -111,7 +111,7 @@ VIDEO_UPDATE( offtwall )
 				if (mo[x])
 				{
 					/* not yet verified
-					*/
+                    */
 					pf[x] = mo[x];
 
 					/* erase behind ourselves */

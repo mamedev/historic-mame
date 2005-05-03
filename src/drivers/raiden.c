@@ -1,39 +1,39 @@
 /***************************************************************************
 
-	Raiden							(c) 1990 Seibu Kaihatsu
-	Raiden (Alternate Hardware)		(c) 1990 Seibu Kaihatsu
-	Raiden (Korean license)			(c) 1990 Seibu Kaihatsu
-	Raiden (Taiwanese license)			(c) 1990 Seibu Kaihatsu
+    Raiden                          (c) 1990 Seibu Kaihatsu
+    Raiden (Alternate Hardware)     (c) 1990 Seibu Kaihatsu
+    Raiden (Korean license)         (c) 1990 Seibu Kaihatsu
+    Raiden (Taiwanese license)          (c) 1990 Seibu Kaihatsu
 
     driver by Oliver Bergmann, Bryan McPhail, Randy Mongenel
 
-	The alternate hardware version is probably earlier than the main set.
-	It looks closer to Dynamite Duke (1989 game), while the main set looks
-	closer to the newer 68000 games in terms of graphics registers used, etc.
+    The alternate hardware version is probably earlier than the main set.
+    It looks closer to Dynamite Duke (1989 game), while the main set looks
+    closer to the newer 68000 games in terms of graphics registers used, etc.
 
-	As well as different graphics registers the alternate set has a
-	different memory map, and different fix char layer memory layout!
+    As well as different graphics registers the alternate set has a
+    different memory map, and different fix char layer memory layout!
 
-	To access test mode, reset with both start buttons held.
+    To access test mode, reset with both start buttons held.
 
-	Coin inputs are handled by the sound CPU, so they don't work with sound
-	disabled. Just put the game in Free Play mode.
+    Coin inputs are handled by the sound CPU, so they don't work with sound
+    disabled. Just put the game in Free Play mode.
 
-	The country byte is stored at 0xffffd in the main cpu region,
-	(that's 0x1fffe in program rom 4).
+    The country byte is stored at 0xffffd in the main cpu region,
+    (that's 0x1fffe in program rom 4).
 
-		0x80  = World/Japan version? (Seibu Kaihatsu)
-		0x81  = USA version (Fabtek license)
-		0x82  = Taiwan version (Liang HWA Electronics license)
-		0x83  = Hong Kong version (Wah Yan Electronics license)
-		0x84  = Korean version (IBL Corporation license)
+        0x80  = World/Japan version? (Seibu Kaihatsu)
+        0x81  = USA version (Fabtek license)
+        0x82  = Taiwan version (Liang HWA Electronics license)
+        0x83  = Hong Kong version (Wah Yan Electronics license)
+        0x84  = Korean version (IBL Corporation license)
 
-		There are also strings for Spanish, Greece, Mexico, Middle &
-		South America though it's not clear if they are used.
+        There are also strings for Spanish, Greece, Mexico, Middle &
+        South America though it's not clear if they are used.
 
-	Todo: add support for Coin Mode B
+    Todo: add support for Coin Mode B
 
-	One of the boards is SEI8904 with SEI9008 subboard.
+    One of the boards is SEI8904 with SEI9008 subboard.
 
 ***************************************************************************/
 
@@ -179,16 +179,16 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	/* Coin Mode B */
-/*	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, "5C/1C or Free if Coin B too" )
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x00, "1C/6C or Free if Coin A too" ) */
+/*  PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x00, "5C/1C or Free if Coin B too" )
+    PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+    PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+    PORT_DIPSETTING(    0x00, "1C/6C or Free if Coin A too" ) */
 
 	PORT_DIPNAME( 0x20, 0x20, "Credits to Start" )
 	PORT_DIPSETTING(    0x20, "1" )

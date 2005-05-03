@@ -1,17 +1,17 @@
 /*
 
-	Konami Twin16 Hardware - Video
+    Konami Twin16 Hardware - Video
 
-	TODO:
+    TODO:
 
-	- convert background to tilemap
-	- clean up sprite drawing
-	- sprite-background priorities
-	- rogue sprites in devilw
-	- corrupt sprites in vulcan end sequence
-	- sprite lag in devilw
-	- sprite Y axis lag in vulcan
-	- add shadow sprites (alpha blending) to sprites in at least devilw
+    - convert background to tilemap
+    - clean up sprite drawing
+    - sprite-background priorities
+    - rogue sprites in devilw
+    - corrupt sprites in vulcan end sequence
+    - sprite lag in devilw
+    - sprite Y axis lag in vulcan
+    - add shadow sprites (alpha blending) to sprites in at least devilw
 
 */
 
@@ -80,7 +80,7 @@ WRITE16_HANDLER( fround_gfx_bank_w )
 WRITE16_HANDLER( twin16_video_register_w )
 {
 	switch (offset) {
-	case 0: 
+	case 0:
 		COMBINE_DATA( &video_register );
 
 		flip_screen_x_set(video_register & TWIN16_SCREEN_FLIPX);
@@ -347,10 +347,10 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 		if(  xpos>-8 && ypos>8 && xpos<320 && ypos<256-16 ){
 			int code = source[i];
 			/*
-				xxx-------------	color
-				---xx-----------	tile bank
-				-----xxxxxxxxxxx	tile number
-			*/
+                xxx-------------    color
+                ---xx-----------    tile bank
+                -----xxxxxxxxxxx    tile number
+            */
 			const UINT16 *gfx_data = gfx_base + (code&0x7ff)*16 + bank_table[(code>>11)&0x3]*0x8000;
 			int color = (code>>13);
 			pen_t *pal_data = Machine->pens + 16*(0x20+color+8*palette);

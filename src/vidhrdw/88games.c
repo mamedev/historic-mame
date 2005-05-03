@@ -50,7 +50,7 @@ static void zoom_callback(int *code,int *color)
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 

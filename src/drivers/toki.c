@@ -446,7 +446,7 @@ SEIBU_SOUND_SYSTEM_YM3812_HARDWARE
 static struct MSM5205interface msm5205_interface =
 {
 	toki_adpcm_int,	/* interrupt function */
-	MSM5205_S96_4B	/* 4KHz 			  */
+	MSM5205_S96_4B	/* 4KHz               */
 };
 
 

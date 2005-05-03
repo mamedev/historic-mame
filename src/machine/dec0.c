@@ -119,35 +119,35 @@ READ16_HANDLER( slyspy_protection_r )
 }
 
 /*
-	The memory map in Sly Spy can change between 4 states according to the protection!
+    The memory map in Sly Spy can change between 4 states according to the protection!
 
-	Default state (called by Traps 1, 3, 4, 7, C)
+    Default state (called by Traps 1, 3, 4, 7, C)
 
-	240000 - 24001f = control   (Playfield 2 area)
-	242000 - 24207f = colscroll
-	242400 - 2425ff = rowscroll
-	246000 - 2467ff = data
+    240000 - 24001f = control   (Playfield 2 area)
+    242000 - 24207f = colscroll
+    242400 - 2425ff = rowscroll
+    246000 - 2467ff = data
 
-	248000 - 24801f = control  (Playfield 1 area)
-	24c000 - 24c07f = colscroll
-	24c400 - 24c4ff = rowscroll
-	24e000 - 24e7ff = data
+    248000 - 24801f = control  (Playfield 1 area)
+    24c000 - 24c07f = colscroll
+    24c400 - 24c4ff = rowscroll
+    24e000 - 24e7ff = data
 
-	State 1 (Called by Trap 9) uses this memory map:
+    State 1 (Called by Trap 9) uses this memory map:
 
-	248000 = pf1 data
-	24c000 = pf2 data
+    248000 = pf1 data
+    24c000 = pf2 data
 
-	State 2 (Called by Trap A) uses this memory map:
+    State 2 (Called by Trap A) uses this memory map:
 
-	240000 = pf2 data
-	242000 = pf1 data
-	24e000 = pf1 data
+    240000 = pf2 data
+    242000 = pf1 data
+    24e000 = pf1 data
 
-	State 3 (Called by Trap B) uses this memory map:
+    State 3 (Called by Trap B) uses this memory map:
 
-	240000 = pf1 data
-	248000 = pf2 data
+    240000 = pf1 data
+    248000 = pf2 data
 
 */
 
@@ -448,7 +448,7 @@ static void birdtry_i8751_write(int data)
 		case 0x534: i8751_return = hgt; 	break; /*Shot height*/
 
 		/*At the ending screen(???)*/
-		//case 0x3b4: i8751_return = 0;		  break;
+		//case 0x3b4: i8751_return = 0;       break;
 
 		/*These are activated after a shot (???)*/
 		case 0x6ca: i8751_return = 0xff;      break;
@@ -480,10 +480,10 @@ void dec0_i8751_write(int data)
 	cpunum_set_input_line(0,5,HOLD_LINE);
 
 	/* Simulate the processing time of the i8751, time value is guessed
-	if (i8751_timer)
-		logerror("i8751:  Missed a timer!!!\n");
-	else
-		i8751_timer = timer_set(TIME_NOW, 0, i8751_callback);*/
+    if (i8751_timer)
+        logerror("i8751:  Missed a timer!!!\n");
+    else
+        i8751_timer = timer_set(TIME_NOW, 0, i8751_callback);*/
 
 /* There is a timing problem in Heavy Barrel if the processing time is not
 simulated - if the interrupt is triggered straight away then HB will reset
@@ -522,7 +522,7 @@ static READ16_HANDLER( robocop_68000_share_r )
 
 static WRITE16_HANDLER( robocop_68000_share_w )
 {
-//	logerror("%08x: Share write %04x %04x\n",activecpu_get_pc(),offset,data);
+//  logerror("%08x: Share write %04x %04x\n",activecpu_get_pc(),offset,data);
 
 	robocop_shared_ram[offset]=data&0xff;
 

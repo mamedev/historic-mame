@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega Outrun hardware
+    Sega Outrun hardware
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -27,7 +27,7 @@ VIDEO_START( shangon )
 	/* initialize the sprites */
 	if (segaic16_sprites_init(0, SEGAIC16_SPRITES_16B, 0x400, 0))
 		return 1;
-		
+
 	/* initialize the road */
 	if (segaic16_road_init(0, SEGAIC16_ROAD_OUTRUN, 0x7f6, 0x7c0, 0x7c0, 0))
 		return 1;
@@ -47,7 +47,7 @@ VIDEO_START( outrun )
 	/* initialize the sprites */
 	if (segaic16_sprites_init(0, SEGAIC16_SPRITES_OUTRUN, 0x800, 0))
 		return 1;
-		
+
 	/* initialize the road */
 	if (segaic16_road_init(0, SEGAIC16_ROAD_OUTRUN, 0x400, 0x420, 0x780, 0))
 		return 1;
@@ -59,7 +59,7 @@ VIDEO_START( outrun )
 
 /*************************************
  *
- *	Video update
+ *  Video update
  *
  *************************************/
 
@@ -70,7 +70,7 @@ VIDEO_UPDATE( shangon )
 
 	/* draw the low priority road layer */
 	segaic16_road_draw(0, bitmap, cliprect, SEGAIC16_ROAD_BACKGROUND);
-	
+
 	/* draw background */
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);
@@ -107,7 +107,7 @@ VIDEO_UPDATE( outrun )
 
 	/* draw the low priority road layer */
 	segaic16_road_draw(0, bitmap, cliprect, SEGAIC16_ROAD_BACKGROUND);
-	
+
 	/* draw background */
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 0, 0x01);
 	segaic16_tilemap_draw(0, bitmap, cliprect, SEGAIC16_TILEMAP_BACKGROUND, 1, 0x02);

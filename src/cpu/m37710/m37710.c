@@ -1,47 +1,47 @@
 /*
-	Mitsubishi M37710 CPU Emulator
+    Mitsubishi M37710 CPU Emulator
 
-	The 7700 series is based on the WDC 65C816 core, with the following
-	notable changes:
+    The 7700 series is based on the WDC 65C816 core, with the following
+    notable changes:
 
-	- Second accumulator called "B" (on the 65816, "A" and "B" were the
-	  two 8-bit halves of the 16-bit "C" accumulator).
-	- 6502 emulation mode and XCE instruction are not present.
-	- No NMI line.  BRK and the watchdog interrupt are non-maskable, but there
-	  is no provision for the traditional 6502/65816 NMI line.
-	- 3-bit interrupt priority levels like the 68000.  Interrupts in general
-	  are very different from the 65816.
-	- New single-instruction immediate-to-memory move instructions (LDM)
-	  replaces STZ.
-	- CLM and SEM (clear and set "M" status bit) replace CLD/SED.  Decimal
-	  mode is still available via REP/SEP instructions.
-	- INC and DEC (0x1A and 0x3A) switch places for no particular reason.
-	- The microcode bug that caused MVN/NVP to take 2 extra cycles per byte
-	  on the 65816 seems to have been fixed.
-	- The WDM (0x42) and BIT immediate (0x89) instructions are now prefixes.
-	  0x42 when used before an instruction involving the A accumulator makes
-	  it use the B accumulator instead.  0x89 adds multiply and divide
-	  opcodes, which the real 65816 doesn't have.
+    - Second accumulator called "B" (on the 65816, "A" and "B" were the
+      two 8-bit halves of the 16-bit "C" accumulator).
+    - 6502 emulation mode and XCE instruction are not present.
+    - No NMI line.  BRK and the watchdog interrupt are non-maskable, but there
+      is no provision for the traditional 6502/65816 NMI line.
+    - 3-bit interrupt priority levels like the 68000.  Interrupts in general
+      are very different from the 65816.
+    - New single-instruction immediate-to-memory move instructions (LDM)
+      replaces STZ.
+    - CLM and SEM (clear and set "M" status bit) replace CLD/SED.  Decimal
+      mode is still available via REP/SEP instructions.
+    - INC and DEC (0x1A and 0x3A) switch places for no particular reason.
+    - The microcode bug that caused MVN/NVP to take 2 extra cycles per byte
+      on the 65816 seems to have been fixed.
+    - The WDM (0x42) and BIT immediate (0x89) instructions are now prefixes.
+      0x42 when used before an instruction involving the A accumulator makes
+      it use the B accumulator instead.  0x89 adds multiply and divide
+      opcodes, which the real 65816 doesn't have.
 
-	The various 7700 series models differ primarily by their on board
-	peripherals.  The 7750 and later models do include some additional
-	instructions, vs. the 770x/1x/2x, notably signed multiply/divide and
-	sign extension opcodes.
+    The various 7700 series models differ primarily by their on board
+    peripherals.  The 7750 and later models do include some additional
+    instructions, vs. the 770x/1x/2x, notably signed multiply/divide and
+    sign extension opcodes.
 
-	Peripherals common across the 7700 series include: programmable timers,
-	digital I/O ports, and analog to digital converters.
+    Peripherals common across the 7700 series include: programmable timers,
+    digital I/O ports, and analog to digital converters.
 
-	Reference: 7700 Family Software User's Manual (instruction set)
-	           7702/7703 Family User's Manual (on-board peripherals)
-		   7720 Family User's Manual
+    Reference: 7700 Family Software User's Manual (instruction set)
+               7702/7703 Family User's Manual (on-board peripherals)
+           7720 Family User's Manual
 
-	Emulator by R. Belmont.
-	Based on G65816 Emulator by Karl Stenrud.
+    Emulator by R. Belmont.
+    Based on G65816 Emulator by Karl Stenrud.
 
-	History:
-	- v1.0	RB	First version, basic operation OK, timers not complete
-	- v1.1  RB	Data bus is 16-bit, dozens of bugfixes to IRQs, opcodes,
-	                and opcode mapping.  New opcodes added, internal timers added.
+    History:
+    - v1.0  RB  First version, basic operation OK, timers not complete
+    - v1.1  RB  Data bus is 16-bit, dozens of bugfixes to IRQs, opcodes,
+                    and opcode mapping.  New opcodes added, internal timers added.
 */
 
 #include "cpuintrf.h"
@@ -827,7 +827,7 @@ void m37710i_update_irqs(void)
 		// let's do it...
 		// push PB, then PC, then status
 		CLK(8);
-//		logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
+//      logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
 		m37710i_push_8(REG_PB>>16);
 		m37710i_push_16(REG_PC);
 		m37710i_push_8(m37710i_get_reg_p());
@@ -840,7 +840,7 @@ void m37710i_update_irqs(void)
 		REG_PB = 0;
 		REG_PC = m37710_read_8(m37710_irq_vectors[wantedIRQ]) |
 			 m37710_read_8(m37710_irq_vectors[wantedIRQ]+1)<<8;
-//		logerror("IRQ @ %06x\n", REG_PB | REG_PC);
+//      logerror("IRQ @ %06x\n", REG_PB | REG_PC);
 		m37710i_jumping(REG_PB | REG_PC);
 	}
 }

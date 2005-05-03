@@ -1,28 +1,28 @@
 /***************************************************************************
 
-							-= Psikyo Games =-
+                            -= Psikyo Games =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+                driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU:	68EC020 + PIC16C57 [Optional MCU]
+CPU:    68EC020 + PIC16C57 [Optional MCU]
 
-Sound:	Z80A				+	YM2610
-   Or:	LZ8420M (Z80 core)	+	YMF286-K (YM2610 compatible)
+Sound:  Z80A                +   YM2610
+   Or:  LZ8420M (Z80 core)  +   YMF286-K (YM2610 compatible)
 
-Chips:	PS2001B
-		PS3103
-		PS3204
-		PS3305
+Chips:  PS2001B
+        PS3103
+        PS3204
+        PS3305
 
 ---------------------------------------------------------------------------
-Name					Year	Board	       Notes
+Name                    Year    Board          Notes
 ---------------------------------------------------------------------------
-Sengoku Ace 		(J)	1993	SH201B
-Gun Bird    		(J)	1994	KA302C
-Battle K-Road       (J) 1994	""
-Strikers 1945		(J)	1995	SH403/SH404    SH403 is similiar to KA302C
-Tengai      		(J)	1996	SH404          SH404 has MCU, ymf278-b for sound and gfx banking
+Sengoku Ace         (J) 1993    SH201B
+Gun Bird            (J) 1994    KA302C
+Battle K-Road       (J) 1994    ""
+Strikers 1945       (J) 1995    SH403/SH404    SH403 is similiar to KA302C
+Tengai              (J) 1996    SH404          SH404 has MCU, ymf278-b for sound and gfx banking
 ---------------------------------------------------------------------------
 
 To Do:
@@ -90,7 +90,7 @@ static int ack_latch;
 /***************************************************************************
 
 
-								Main CPU
+                                Main CPU
 
 
 ***************************************************************************/
@@ -146,7 +146,7 @@ WRITE32_HANDLER( psikyo_soundlatch_w )
 }
 
 /***************************************************************************
-						Strikers 1945 / Tengai
+                        Strikers 1945 / Tengai
 ***************************************************************************/
 
 WRITE32_HANDLER( s1945_soundlatch_w )
@@ -231,7 +231,7 @@ WRITE32_HANDLER( s1945_mcu_w )
 			s1945_mcu_index = s1945_mcu_inlatch;
 			break;
 		case 0x013:
-//			logerror("MCU: Table read index %02x\n", s1945_mcu_index);
+//          logerror("MCU: Table read index %02x\n", s1945_mcu_index);
 			s1945_mcu_latching = 1;
 			s1945_mcu_latch1 = s1945_mcu_table[s1945_mcu_index];
 			break;
@@ -253,12 +253,12 @@ WRITE32_HANDLER( s1945_mcu_w )
 			s1945_mcu_latching |= 4;
 			break;
 		default:
-//			logerror("MCU: function %02x, direction %02x, latch1 %02x, latch2 %02x (%x)\n", data, s1945_mcu_direction, s1945_mcu_latch1, s1945_mcu_latch2, activecpu_get_pc());
+//          logerror("MCU: function %02x, direction %02x, latch1 %02x, latch2 %02x (%x)\n", data, s1945_mcu_direction, s1945_mcu_latch1, s1945_mcu_latch2, activecpu_get_pc());
 			break;
 		}
 		break;
 	default:
-//		logerror("MCU.w %x, %02x (%x)\n", offset, data, activecpu_get_pc());
+//      logerror("MCU.w %x, %02x (%x)\n", offset, data, activecpu_get_pc());
 		;
 	}
 }
@@ -306,7 +306,7 @@ READ32_HANDLER( s1945_input_r )
 /***************************************************************************
 
 
-								Memory Map
+                                Memory Map
 
 
 ***************************************************************************/
@@ -327,7 +327,7 @@ static ADDRESS_MAP_START( psikyo_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA32_RAM			)	// Layer 0
 	AM_RANGE(0x802000, 0x803fff) AM_READ(MRA32_RAM			)	// Layer 1
 	AM_RANGE(0x804000, 0x807fff) AM_READ(MRA32_RAM			)	// RAM + Vregs
-//	AM_RANGE(0xc00000, 0xc0000b) AM_READ(psikyo_input_r	)	Depends on board, see DRIVER_INIT
+//  AM_RANGE(0xc00000, 0xc0000b) AM_READ(psikyo_input_r )   Depends on board, see DRIVER_INIT
 	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA32_RAM			)	// RAM
 ADDRESS_MAP_END
 
@@ -338,8 +338,8 @@ static ADDRESS_MAP_START( psikyo_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x800000, 0x801fff) AM_WRITE(psikyo_vram_0_w) AM_BASE(&psikyo_vram_0	)	// Layer 0
 	AM_RANGE(0x802000, 0x803fff) AM_WRITE(psikyo_vram_1_w) AM_BASE(&psikyo_vram_1	)	// Layer 1
 	AM_RANGE(0x804000, 0x807fff) AM_WRITE(MWA32_RAM) AM_BASE(&psikyo_vregs			)	// RAM + Vregs
-//	AM_RANGE(0xc00004, 0xc0000b) AM_WRITE(s1945_mcu_w						)	MCU on sh404, see DRIVER_INIT
-//	AM_RANGE(0xc00010, 0xc00013) AM_WRITE(psikyo_soundlatch_w				)	Depends on board, see DRIVER_INIT
+//  AM_RANGE(0xc00004, 0xc0000b) AM_WRITE(s1945_mcu_w                       )   MCU on sh404, see DRIVER_INIT
+//  AM_RANGE(0xc00010, 0xc00013) AM_WRITE(psikyo_soundlatch_w               )   Depends on board, see DRIVER_INIT
 	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA32_RAM							)	// RAM
 ADDRESS_MAP_END
 
@@ -348,7 +348,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Sound CPU
+                                Sound CPU
 
 
 ***************************************************************************/
@@ -364,7 +364,7 @@ WRITE8_HANDLER( psikyo_ack_latch_w )
 }
 
 /***************************************************************************
-						Sengoku Ace / Samurai Aces
+                        Sengoku Ace / Samurai Aces
 ***************************************************************************/
 
 WRITE8_HANDLER( sngkace_sound_bankswitch_w )
@@ -406,7 +406,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Gun Bird
+                                Gun Bird
 ***************************************************************************/
 
 WRITE8_HANDLER( gunbird_sound_bankswitch_w )
@@ -415,7 +415,7 @@ WRITE8_HANDLER( gunbird_sound_bankswitch_w )
 	int bank = (data >> 4) & 3;
 
 	/* The banked rom is seen at 8200-ffff, so the last 0x200 bytes
-	   of the rom not reachable. */
+       of the rom not reachable. */
 
 	cpu_setbank(1, &RAM[bank * 0x8000 + 0x10000 + 0x200]);
 }
@@ -453,7 +453,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Strikers 1945 / Tengai
+                        Strikers 1945 / Tengai
 ***************************************************************************/
 
 static ADDRESS_MAP_START( s1945_sound_readport, ADDRESS_SPACE_IO, 8 )
@@ -479,7 +479,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -516,7 +516,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Samurai Aces / Sengoku Ace (Japan)
+                        Samurai Aces / Sengoku Ace (Japan)
 ***************************************************************************/
 
 INPUT_PORTS_START( samuraia )
@@ -608,17 +608,17 @@ INPUT_PORTS_START( samuraia )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	Bit 0 1 2 3
-		1 1 1 1 World
+    Bit 0 1 2 3
+        1 1 1 1 World
 
-		0 1 1 1 USA With FBI logo
-		1 0 1 1 Korea With FBI logo??
-		1 1 0 1 Hong Kong With FBI logo??
-		1 1 1 0 Taiwan With FBI logo??
+        0 1 1 1 USA With FBI logo
+        1 0 1 1 Korea With FBI logo??
+        1 1 0 1 Hong Kong With FBI logo??
+        1 1 1 0 Taiwan With FBI logo??
 
-	************************************************/
+    ************************************************/
 
 	PORT_DIPNAME( 0x00ff, 0x00ff, "Country" )
 	PORT_DIPSETTING(      0x00ff, DEF_STR( World ) )
@@ -727,17 +727,17 @@ INPUT_PORTS_START( sngkace )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	Bit 0 1 2 3
-		1 1 1 1 Japan
+    Bit 0 1 2 3
+        1 1 1 1 Japan
 
-		0 1 1 1 USA With FBI logo
-		1 0 1 1 Korea
-		1 1 0 1 Hong Kong
-		1 1 1 0 Taiwan
+        0 1 1 1 USA With FBI logo
+        1 0 1 1 Korea
+        1 1 0 1 Hong Kong
+        1 1 1 0 Taiwan
 
-	************************************************/
+    ************************************************/
 
 #if 0 // See Patch in MACHINE_INIT, only text not logo
 	PORT_DIPNAME( 0x00ff, 0x00ff, "Country" )
@@ -760,7 +760,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Battle K-Road
+                                Battle K-Road
 ***************************************************************************/
 
 INPUT_PORTS_START( btlkroad )
@@ -832,16 +832,16 @@ INPUT_PORTS_START( btlkroad )
 
 	/***********************************************
 
-	Bit 0 1 2 3
-		1 1 1 1 Japan
+    Bit 0 1 2 3
+        1 1 1 1 Japan
 
-		0 1 1 1 USA & Canada
-		0 0 1 1 Korea
-		0 1 0 1 Hong Kong
-		0 1 1 0 Taiwan
-		Other   World
+        0 1 1 1 USA & Canada
+        0 0 1 1 Korea
+        0 1 0 1 Hong Kong
+        0 1 1 0 Taiwan
+        Other   World
 
-	************************************************/
+    ************************************************/
 
 	PORT_START	// IN3 - c00006&7
 	PORT_DIPNAME( 0x000f, 0x0000, "Copyright (Country)" )
@@ -887,7 +887,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Gun Bird
+                                Gun Bird
 ***************************************************************************/
 
 INPUT_PORTS_START( gunbird )
@@ -960,23 +960,23 @@ INPUT_PORTS_START( gunbird )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	Bit 0 1 2 3
-		1 1 1 1 World (No "For use in ...." screen)
+    Bit 0 1 2 3
+        1 1 1 1 World (No "For use in ...." screen)
 
-		0 x x x USA With FBI logo
-		1 0 x x Korea
-		1 1 0 x Hong Kong
-		1 1 1 0 Taiwan
+        0 x x x USA With FBI logo
+        1 0 x x Korea
+        1 1 0 x Hong Kong
+        1 1 1 0 Taiwan
 
-		x = Doesn't Matter, see routine starting at 0108A4:
+        x = Doesn't Matter, see routine starting at 0108A4:
 
-	Japan is listed in the code but how do you activate it?
+    Japan is listed in the code but how do you activate it?
 
-	Has no effects on Japan or Korea versions.
+    Has no effects on Japan or Korea versions.
 
-	************************************************/
+    ************************************************/
 
 	PORT_DIPNAME( 0x000f, 0x000f, "Country" )
 	PORT_DIPSETTING(      0x000f, DEF_STR( World ) )
@@ -1090,7 +1090,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Strikers 1945
+                                Strikers 1945
 ***************************************************************************/
 
 INPUT_PORTS_START( s1945 )
@@ -1163,24 +1163,24 @@ INPUT_PORTS_START( s1945 )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	Bit 0 1 2 3
-		1 1 1 1 World (No "For use in ...." screen), see:
-						0149B8: tst.w   $fffe58a0.l
+    Bit 0 1 2 3
+        1 1 1 1 World (No "For use in ...." screen), see:
+                        0149B8: tst.w   $fffe58a0.l
 
-		0 1 1 1 USA & Canada
-		1 0 1 1 Korea
-		1 1 0 1 Hong Kong
-		1 1 1 0 Taiwan
-					Other regions check see:
-						005594: move.w  $fffe58a0.l, D0
+        0 1 1 1 USA & Canada
+        1 0 1 1 Korea
+        1 1 0 1 Hong Kong
+        1 1 1 0 Taiwan
+                    Other regions check see:
+                        005594: move.w  $fffe58a0.l, D0
 
-	Came from a Japan board apparently!!!
-	Japan is listed in the code but how do you activate it?
-	No effect on set s1945j
+    Came from a Japan board apparently!!!
+    Japan is listed in the code but how do you activate it?
+    No effect on set s1945j
 
-	************************************************/
+    ************************************************/
 
 	PORT_DIPNAME( 0x000f, 0x000f, "Country" )
 	PORT_DIPSETTING(      0x000f, DEF_STR( World ) )
@@ -1274,11 +1274,11 @@ INPUT_PORTS_START( s1945a )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	Bit 0 1 2 3
-		1 1 1 1 Japan, anything but 0x0f = "World"
-	************************************************/
+    Bit 0 1 2 3
+        1 1 1 1 Japan, anything but 0x0f = "World"
+    ************************************************/
 
 	PORT_DIPNAME( 0x000f, 0x000e, "Country" )
 	PORT_DIPSETTING(      0x000f, DEF_STR( Japan ) )
@@ -1389,7 +1389,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Tengai
+                                Tengai
 ***************************************************************************/
 
 INPUT_PORTS_START( tengai )
@@ -1462,12 +1462,12 @@ INPUT_PORTS_START( tengai )
 
 	/***********************************************
 
-	This Dip port is bit based:
+    This Dip port is bit based:
 
-	If any of the bits are set it becomes World.
-	Text for other regions is present though.
+    If any of the bits are set it becomes World.
+    Text for other regions is present though.
 
-	************************************************/
+    ************************************************/
 
 	PORT_DIPNAME( 0x000f, 0x000e, "Country" )
 	PORT_DIPSETTING(      0x000f, DEF_STR( Japan ) )
@@ -1493,7 +1493,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Gfx Layouts
+                                Gfx Layouts
 
 
 ***************************************************************************/
@@ -1523,13 +1523,13 @@ static struct GfxDecodeInfo psikyo_gfxdecodeinfo[] =
 /***************************************************************************
 
 
-								Machine Drivers
+                                Machine Drivers
 
 
 ***************************************************************************/
 
 /***************************************************************************
-							Samurai Ace / Sengoku Aces
+                            Samurai Ace / Sengoku Aces
 ***************************************************************************/
 
 
@@ -1580,7 +1580,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-		Gun Bird / Battle K-Road / Strikers 1945 (Japan, unprotected)
+        Gun Bird / Battle K-Road / Strikers 1945 (Japan, unprotected)
 ***************************************************************************/
 
 
@@ -1632,7 +1632,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Strikers 1945 / Tengai
+                        Strikers 1945 / Tengai
 ***************************************************************************/
 
 
@@ -1694,7 +1694,7 @@ MACHINE_DRIVER_END
 /***************************************************************************
 
 
-								ROMs Loading
+                                ROMs Loading
 
 
 ***************************************************************************/
@@ -1702,16 +1702,16 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								Samurai Aces
-						  ( WORLD/USA/HK/KOREA/TAIWAN Ver.)
+                                Samurai Aces
+                          ( WORLD/USA/HK/KOREA/TAIWAN Ver.)
 
-								Sengoku Ace
-						  (Samurai Aces JPN Ver.)
+                                Sengoku Ace
+                          (Samurai Aces JPN Ver.)
 
-Board:	SH201B
-CPU:	TMP68EC020F-16
-Sound:	Z80A + YM2610
-OSC:	32.000, 14.31818 MHz
+Board:  SH201B
+CPU:    TMP68EC020F-16
+Sound:  Z80A + YM2610
+OSC:    32.000, 14.31818 MHz
 
 ***************************************************************************/
 
@@ -1732,7 +1732,7 @@ ROM_START( samuraia )
 	ROM_LOAD( "u34.bin",  0x000000, 0x100000, CRC(e6a75bd8) SHA1(1aa84ea54584b6c8b2846194b48bf6d2afa67fee) )
 	ROM_LOAD( "u35.bin",  0x100000, 0x100000, CRC(c4ca0164) SHA1(c75422de2e0127cdc23d8c223b674a5bd85b00fb) )
 
-//	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+//  ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )  /* Samples */
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u68.bin",  0x000000, 0x100000, CRC(9a7f6c34) SHA1(c549b209bce1d2c6eeb512db198ad20c3f5fb0ea) )
 
@@ -1758,7 +1758,7 @@ ROM_START( sngkace )
 	ROM_LOAD( "u34.bin",  0x000000, 0x100000, CRC(e6a75bd8) SHA1(1aa84ea54584b6c8b2846194b48bf6d2afa67fee) )
 	ROM_LOAD( "u35.bin",  0x100000, 0x100000, CRC(c4ca0164) SHA1(c75422de2e0127cdc23d8c223b674a5bd85b00fb) )
 
-//	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+//  ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )  /* Samples */
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u68.bin",  0x000000, 0x100000, CRC(9a7f6c34) SHA1(c549b209bce1d2c6eeb512db198ad20c3f5fb0ea) )
 
@@ -1809,19 +1809,19 @@ DRIVER_INIT( sngkace )
 
 /***************************************************************************
 
-								Gun Bird (Korea)
-								Gun Bird (Japan)
-							Battle K-Road (Japan)
+                                Gun Bird (Korea)
+                                Gun Bird (Japan)
+                            Battle K-Road (Japan)
 
-Board:	KA302C
-CPU:	MC68EC020FG16
-Sound:	LZ8420M (Z80 core) + YMF286-K
-OSC:	16.000,	14.31818 MHz
+Board:  KA302C
+CPU:    MC68EC020FG16
+Sound:  LZ8420M (Z80 core) + YMF286-K
+OSC:    16.000, 14.31818 MHz
 
-Chips:	PS2001B
-		PS3103
-		PS3204
-		PS3305
+Chips:  PS2001B
+        PS3103
+        PS3204
+        PS3305
 
 ***************************************************************************/
 
@@ -1930,7 +1930,7 @@ ROM_START( btlkroad )
 	ROM_LOAD( "u14.bin",  0x000000, 0x200000, CRC(282d89c3) SHA1(3b4b17f4a37efa2f7e232488aaba7c77d10c84d2) )
 	ROM_LOAD( "u24.bin",  0x200000, 0x200000, CRC(bbe9d3d1) SHA1(9da0b0b993e8271a8119e9c2f602e52325983f79) )
 	ROM_LOAD( "u15.bin",  0x400000, 0x200000, CRC(d4d1b07c) SHA1(232109db8f6e137fbc8826f38a96057067cb19dc) )
-//	ROM_LOAD( "u25.bin",  CRC(00600000) , 0x100000	NOT PRESENT
+//  ROM_LOAD( "u25.bin",  CRC(00600000) , 0x100000  NOT PRESENT
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layers 0 + 1 */
 	ROM_LOAD( "u33.bin",  0x000000, 0x200000, CRC(4c8577f1) SHA1(d27043514632954a06667ac63f4a4e4a31870511) )
@@ -1962,17 +1962,17 @@ DRIVER_INIT( gunbird )
 
 /***************************************************************************
 
-							Strikers 1945 (Japan, unprotected)
+                            Strikers 1945 (Japan, unprotected)
 
-Board:	SH403 (Similiar to KA302C)
-CPU:	MC68EC020FG16
-Sound:	LZ8420M (Z80 core) + YMF286-K?
-OSC:	16.000,	14.31818 MHz
+Board:  SH403 (Similiar to KA302C)
+CPU:    MC68EC020FG16
+Sound:  LZ8420M (Z80 core) + YMF286-K?
+OSC:    16.000, 14.31818 MHz
 
-Chips:	PS2001B
-		PS3103
-		PS3204
-		PS3305
+Chips:  PS2001B
+        PS3103
+        PS3204
+        PS3305
 
 ***************************************************************************/
 
@@ -2020,21 +2020,21 @@ DRIVER_INIT( s1945jn )
 
 /***************************************************************************
 
-							Strikers 1945 (Japan)
+                            Strikers 1945 (Japan)
 
-Board:	SH404
-CPU:	MC68EC020FG16
-Sound:	LZ8420M (Z80 core)
-		YMF278B-F
-OSC:	16.000MHz
-		14.3181MHz
-		33.8688MHz (YMF)
-		4.000MHz (PIC)
+Board:  SH404
+CPU:    MC68EC020FG16
+Sound:  LZ8420M (Z80 core)
+        YMF278B-F
+OSC:    16.000MHz
+        14.3181MHz
+        33.8688MHz (YMF)
+        4.000MHz (PIC)
 
-Chips:	PS2001B
-		PS3103
-		PS3204
-		PS3305
+Chips:  PS2001B
+        PS3103
+        PS3204
+        PS3305
 
 
 1-U59      security (PIC16C57; not dumped)
@@ -2052,7 +2052,7 @@ ROM_START( s1945 )
 	ROM_RELOAD(            0x10000, 0x20000             )
 
 	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU? */
-	 //	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+	 // ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "u20.bin",  0x000000, 0x200000, CRC(28a27fee) SHA1(913f3bc4d0c6fb6b776a020c8099bf96f16fd06f) )
@@ -2082,7 +2082,7 @@ ROM_START( s1945a )
 	ROM_RELOAD(            0x10000, 0x20000             )
 
 	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU? */
-	 //	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+	 // ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "u20.bin",  0x000000, 0x200000, CRC(28a27fee) SHA1(913f3bc4d0c6fb6b776a020c8099bf96f16fd06f) )
@@ -2112,7 +2112,7 @@ ROM_START( s1945j )
 	ROM_RELOAD(            0x10000, 0x20000             )
 
 	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU */
-	 //	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+	 // ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "u20.bin",  0x000000, 0x200000, CRC(28a27fee) SHA1(913f3bc4d0c6fb6b776a020c8099bf96f16fd06f) )
@@ -2178,20 +2178,20 @@ DRIVER_INIT( s1945j )
 
 /***************************************************************************
 
-								Tengai (World) / Sengoku Blade (Japan)
+                                Tengai (World) / Sengoku Blade (Japan)
 
-Board:	SH404
-CPU:	MC68EC020FG16
-Sound:	LZ8420M (Z80 core)
-		YMF278B-F
-OSC:	16.000MHz
-		14.3181MHz
-		33.8688MHz (YMF)
-		4.000MHz (PIC)
-Chips:	PS2001B
-		PS3103
-		PS3204
-		PS3305
+Board:  SH404
+CPU:    MC68EC020FG16
+Sound:  LZ8420M (Z80 core)
+        YMF278B-F
+OSC:    16.000MHz
+        14.3181MHz
+        33.8688MHz (YMF)
+        4.000MHz (PIC)
+Chips:  PS2001B
+        PS3103
+        PS3204
+        PS3305
 
 4-U59      security (PIC16C57; not dumped)
 
@@ -2208,7 +2208,7 @@ ROM_START( tengai )
 	ROM_RELOAD(            0x10000, 0x20000             )
 
 	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU */
-	//	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+	//  ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
 
 	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD16_WORD_SWAP( "u20.bin",  0x000000, 0x200000, CRC(ed42ef73) SHA1(74693fcc83a2654ddb18fd513d528033863d6116) )
@@ -2246,7 +2246,7 @@ DRIVER_INIT( tengai )
 /***************************************************************************
 
 
-								Game Drivers
+                                Game Drivers
 
 
 ***************************************************************************/

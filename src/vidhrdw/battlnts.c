@@ -38,7 +38,7 @@ WRITE8_HANDLER( battlnts_spritebank_w )
 
 /***************************************************************************
 
-	Start the video hardware emulation.
+    Start the video hardware emulation.
 
 ***************************************************************************/
 

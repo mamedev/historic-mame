@@ -1,9 +1,9 @@
 /***************************************************************************
  *
- *	Portable Signetics 2650 disassembler
+ *  Portable Signetics 2650 disassembler
  *
- *	Written by J. Buchmueller (pullmoll@t-online.de)
- *	for the MAME project
+ *  Written by J. Buchmueller (pullmoll@t-online.de)
+ *  for the MAME project
  *
  **************************************************************************/
 

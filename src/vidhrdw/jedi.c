@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Return of the Jedi hardware
+    Atari Return of the Jedi hardware
 
 ***************************************************************************/
 
@@ -27,7 +27,7 @@ static struct mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -75,27 +75,27 @@ VIDEO_START( jedi )
 
 /*************************************
  *
- *	Palette RAM
+ *  Palette RAM
  *
  *************************************
  *
- *	Color RAM format
- *	Color RAM is 1024x12
+ *  Color RAM format
+ *  Color RAM is 1024x12
  *
- *	RAM address: A0..A3 = Playfield color code
- *		A4..A7 = Motion object color code
- *		A8..A9 = Alphanumeric color code
+ *  RAM address: A0..A3 = Playfield color code
+ *      A4..A7 = Motion object color code
+ *      A8..A9 = Alphanumeric color code
  *
- *	RAM data:
- *		0..2 = Blue
- *		3..5 = Green
- *		6..8 = Blue
- *		9..11 = Intensity
+ *  RAM data:
+ *      0..2 = Blue
+ *      3..5 = Green
+ *      6..8 = Blue
+ *      9..11 = Intensity
  *
- *	Output resistor values:
- *		bit 0 = 22K
- *		bit 1 = 10K
- *		bit 2 = 4.7K
+ *  Output resistor values:
+ *      bit 0 = 22K
+ *      bit 1 = 10K
+ *      bit 2 = 4.7K
  *
  *************************************/
 
@@ -122,7 +122,7 @@ WRITE8_HANDLER( jedi_paletteram_w )
 
 /*************************************
  *
- *	Background access
+ *  Background access
  *
  *************************************/
 
@@ -139,7 +139,7 @@ WRITE8_HANDLER( jedi_backgroundram_w )
 
 /*************************************
  *
- *	Foreground banking
+ *  Foreground banking
  *
  *************************************/
 
@@ -156,7 +156,7 @@ WRITE8_HANDLER( jedi_alpha_banksel_w )
 
 /*************************************
  *
- *	Scroll offsets
+ *  Scroll offsets
  *
  *************************************/
 
@@ -175,7 +175,7 @@ WRITE8_HANDLER( jedi_hscroll_w )
 
 /*************************************
  *
- *	Video control
+ *  Video control
  *
  *************************************/
 
@@ -195,7 +195,7 @@ WRITE8_HANDLER( jedi_PIXIRAM_w )
 
 /*************************************
  *
- *	Background smoothing
+ *  Background smoothing
  *
  *************************************/
 
@@ -207,15 +207,15 @@ static void update_smoothing(int bgtilerow, int first, int last)
 	int xstart, xstop, x, y;
 
 	/*
-		smoothing notes:
-			* even scanlines blend the previous (Y-1) and current (Y) line
-			* odd scanlines are just taken from the current line (Y)
-			* therefore, if we modify source scanlines 8-15, we must update dest scanlines 16-32
+        smoothing notes:
+            * even scanlines blend the previous (Y-1) and current (Y) line
+            * odd scanlines are just taken from the current line (Y)
+            * therefore, if we modify source scanlines 8-15, we must update dest scanlines 16-32
 
-			* even pixels are just taken from the current pixel (X)
-			* odd pixels blend the current (X) and next (X+1) pixels
-			* therefore, if we modify source pixels 8-15, we must update dest pixels 15-31
-	*/
+            * even pixels are just taken from the current pixel (X)
+            * odd pixels blend the current (X) and next (X+1) pixels
+            * therefore, if we modify source pixels 8-15, we must update dest pixels 15-31
+    */
 
 	/* compute x start/stop in destination coordinates */
 	xstart = first * 16 - 1;
@@ -262,7 +262,7 @@ static void update_smoothing(int bgtilerow, int first, int last)
 
 /*************************************
  *
- *	Core video refresh
+ *  Core video refresh
  *
  *************************************/
 

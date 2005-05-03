@@ -21,7 +21,7 @@ static void ppu_irq( int num, int *ppu_regs )
 	cpunum_set_input_line(num, INPUT_LINE_NMI, PULSE_LINE );
 }
 
-/* our ppu interface											*/
+/* our ppu interface                                            */
 static struct ppu2c03b_interface ppu_interface =
 {
 	1,						/* num */
@@ -32,7 +32,7 @@ static struct ppu2c03b_interface ppu_interface =
 	{ ppu_irq }				/* irq */
 };
 
-/* our ppu interface for dual games								*/
+/* our ppu interface for dual games                             */
 static struct ppu2c03b_interface ppu_dual_interface =
 {
 	2,										/* num */

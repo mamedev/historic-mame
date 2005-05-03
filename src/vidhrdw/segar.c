@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega G-80 raster hardware
+    Sega G-80 raster hardware
 
 ***************************************************************************/
 
@@ -65,12 +65,12 @@ PALETTE_INIT( segar )
 	palette_set_color(0,0,0,0);
 
 	/* Space Odyssey uses a static palette for the background, so
-	   our choice of colors isn't exactly arbitrary.  S.O. uses a
-	   6-bit color setup, so we make sure that every 0x40 colors
-	   gets a nice 6-bit palette.
+       our choice of colors isn't exactly arbitrary.  S.O. uses a
+       6-bit color setup, so we make sure that every 0x40 colors
+       gets a nice 6-bit palette.
 
        (All of the other G80 games overwrite the default colors on startup)
-	*/
+    */
 	for (i = 0;i < (Machine->drv->total_colors - 1);i++)
 	{
 		int r = color_scale[((i & 0x30) >> 4)];
@@ -322,7 +322,7 @@ VIDEO_START( spaceod )
 
 
 /***************************************************************************
-This port controls which background to draw for Space Odyssey.	The temp_scene
+This port controls which background to draw for Space Odyssey.  The temp_scene
 and temp_charset are analogous to control lines used to select the background.
 If the background changed, refresh the screen.
 ***************************************************************************/
@@ -357,7 +357,7 @@ WRITE8_HANDLER( spaceod_back_port_w )
 }
 
 /***************************************************************************
-This port controls the Space Odyssey background scrolling.	Each write to
+This port controls the Space Odyssey background scrolling.  Each write to
 this port scrolls the background by one bit.  Faster speeds are achieved
 by the program writing more often to this port.  Oddly enough, the value
 sent to this port also seems to indicate the speed, but the value itself

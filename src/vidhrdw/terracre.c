@@ -20,8 +20,8 @@ static void
 get_bg_tile_info(int tile_index)
 {
 	/* xxxx.----.----.----
-	 * ----.xx--.----.----
-	 * ----.--xx.xxxx.xxxx */
+     * ----.xx--.----.----
+     * ----.--xx.xxxx.xxxx */
 	unsigned data = amazon_videoram[tile_index];
 	unsigned color = data>>11;
 	SET_TILE_INFO( 1,data&0x3ff,color,0 );

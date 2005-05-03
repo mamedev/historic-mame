@@ -24,25 +24,25 @@ static struct tilemap *pant[2];
 
 /***************************************************************************
 
-	Callbacks for the TileMap code
+    Callbacks for the TileMap code
 
 ***************************************************************************/
 
 /*
-	Tile format
-	-----------
+    Tile format
+    -----------
 
-	Screen 0 & 1: (32*32, 16x16 tiles)
+    Screen 0 & 1: (32*32, 16x16 tiles)
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- ------xx | code (high bits)
-	  0  | xxxxxxxx xxxxxx-- | code (low bits)
-	  1  | -------- --xxxxxx | color
-	  1	 | -------- xx------ | priority
-	  1  | --xxxxxx -------- | not used
-	  1  | -x------ -------- | flip x
-	  1  | x------- -------- | flip y
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- ------xx | code (high bits)
+      0  | xxxxxxxx xxxxxx-- | code (low bits)
+      1  | -------- --xxxxxx | color
+      1  | -------- xx------ | priority
+      1  | --xxxxxx -------- | not used
+      1  | -x------ -------- | flip x
+      1  | x------- -------- | flip y
 */
 
 static void get_tile_info_thoop2_screen0(int tile_index)
@@ -70,7 +70,7 @@ static void get_tile_info_thoop2_screen1(int tile_index)
 
 /***************************************************************************
 
-	Memory Handlers
+    Memory Handlers
 
 ***************************************************************************/
 
@@ -85,7 +85,7 @@ WRITE16_HANDLER( thoop2_vram_w )
 
 /***************************************************************************
 
-	Start/Stop the video hardware emulation.
+    Start/Stop the video hardware emulation.
 
 ***************************************************************************/
 
@@ -114,7 +114,7 @@ VIDEO_START( thoop2 )
 
 /***************************************************************************
 
-	Sprites
+    Sprites
 
 ***************************************************************************/
 
@@ -145,22 +145,22 @@ static void thoop2_sort_sprites(void)
 }
 
 /*
-	Sprite Format
-	-------------
+    Sprite Format
+    -------------
 
-	Word | Bit(s)			 | Description
-	-----+-FEDCBA98-76543210-+--------------------------
-	  0  | -------- xxxxxxxx | y position
-	  0  | -----xxx -------- | not used
-	  0  | ----x--- -------- | sprite size
-	  0  | --xx---- -------- | sprite priority
-	  0  | -x------ -------- | flipx
-	  0  | x------- -------- | flipy
-	  1  | xxxxxxxx xxxxxxxx | not used
-	  2  | -------x xxxxxxxx | x position
-	  2  | -xxxxxx- -------- | sprite color
-	  3	 | -------- ------xx | sprite code (high bits)
-	  3  | xxxxxxxx xxxxxx-- | sprite code (low bits)
+    Word | Bit(s)            | Description
+    -----+-FEDCBA98-76543210-+--------------------------
+      0  | -------- xxxxxxxx | y position
+      0  | -----xxx -------- | not used
+      0  | ----x--- -------- | sprite size
+      0  | --xx---- -------- | sprite priority
+      0  | -x------ -------- | flipx
+      0  | x------- -------- | flipy
+      1  | xxxxxxxx xxxxxxxx | not used
+      2  | -------x xxxxxxxx | x position
+      2  | -xxxxxx- -------- | sprite color
+      3  | -------- ------xx | sprite code (high bits)
+      3  | xxxxxxxx xxxxxx-- | sprite code (low bits)
 */
 
 static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
@@ -210,7 +210,7 @@ static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 

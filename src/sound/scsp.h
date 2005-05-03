@@ -1,12 +1,12 @@
 /*
 
-	SCSP (YMF292-F) header
+    SCSP (YMF292-F) header
 */
 
 #ifndef _SCSP_H_
 #define _SCSP_H_
 
-struct SCSPinterface 
+struct SCSPinterface
 {
 	int region; 				/* region of 512k RAM */
 	int roffset;				/* offset in the region */

@@ -1,21 +1,21 @@
 /***************************************************************************
 
-	Atari Rampart hardware
+    Atari Rampart hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Rampart (1990) [3 sets]
+    Games supported:
+        * Rampart (1990) [3 sets]
 
-	Known bugs:
-		* P3 trackball doesn't work, maybe it needs some kind of fake input port
+    Known bugs:
+        * P3 trackball doesn't work, maybe it needs some kind of fake input port
 
-	Note:
-		P3 buttons 1 and 2 are mapped twice. THIS IS NOT A BUG!
+    Note:
+        P3 buttons 1 and 2 are mapped twice. THIS IS NOT A BUG!
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Interrupt handling
+ *  Interrupt handling
  *
  *************************************/
 
@@ -58,7 +58,7 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -74,7 +74,7 @@ static MACHINE_INIT( rampart )
 
 /*************************************
  *
- *	MSM5295 I/O
+ *  MSM5295 I/O
  *
  *************************************/
 
@@ -94,7 +94,7 @@ static WRITE16_HANDLER( adpcm_w )
 
 /*************************************
  *
- *	YM2413 I/O
+ *  YM2413 I/O
  *
  *************************************/
 
@@ -113,7 +113,7 @@ static WRITE16_HANDLER( ym2413_w )
 
 /*************************************
  *
- *	Latch write
+ *  Latch write
  *
  *************************************/
 
@@ -121,17 +121,17 @@ static WRITE16_HANDLER( latch_w )
 {
 	/* bit layout in this register:
 
-		0x8000 == VCR ???
-		0x2000 == LETAMODE1 (controls right trackball)
-		0x1000 == CBANK (color bank -- is it ever set to non-zero?)
-		0x0800 == LETAMODE0 (controls center and left trackballs)
-		0x0400 == LETARES (reset LETA analog control reader)
+        0x8000 == VCR ???
+        0x2000 == LETAMODE1 (controls right trackball)
+        0x1000 == CBANK (color bank -- is it ever set to non-zero?)
+        0x0800 == LETAMODE0 (controls center and left trackballs)
+        0x0400 == LETARES (reset LETA analog control reader)
 
-		0x0020 == PMIX0 (ADPCM mixer level)
-		0x0010 == /PCMRES (ADPCM reset)
-		0x000E == YMIX2-0 (YM2413 mixer level)
-		0x0001 == /YAMRES (YM2413 reset)
-	*/
+        0x0020 == PMIX0 (ADPCM mixer level)
+        0x0010 == /PCMRES (ADPCM reset)
+        0x000E == YMIX2-0 (YM2413 mixer level)
+        0x0001 == /YAMRES (YM2413 reset)
+    */
 
 	/* upper byte being modified? */
 	if (ACCESSING_MSB)
@@ -152,7 +152,7 @@ static WRITE16_HANDLER( latch_w )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -197,7 +197,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -348,7 +348,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -374,7 +374,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -416,7 +416,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -475,7 +475,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -515,7 +515,7 @@ static DRIVER_INIT( rampart )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

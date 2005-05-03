@@ -23,10 +23,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *	 overrides for 6502 opcodes
+ *   overrides for 6502 opcodes
  *
  *****************************************************************************
- * op	 temp	  cycles			 rdmem	 opc  wrmem   ********************/
+ * op    temp     cycles             rdmem   opc  wrmem   ********************/
 OP(00) {		  m6502_ICount -= 7;		 DECO16_BRK;	 } /* 7 BRK */
 #define deco16_20 m6502_20 								/* 6 JSR ABS */
 #define deco16_40 m6502_40 								/* 6 RTI */
@@ -191,7 +191,7 @@ OP(67) {
 	int tmp; m6502_ICount -= 2; RD_IMM;
 	m6502.a=io_read_byte_8(0);
 
-//	logerror("%04x: VBL (0x67)\n",activecpu_get_pc());
+//  logerror("%04x: VBL (0x67)\n",activecpu_get_pc());
 
 // really - wait for status?
 
@@ -277,7 +277,7 @@ OP(0b) { int tmp; m6502_ICount -= 3; RD_IMM;
 OP(4b) { int tmp; m6502_ICount -= 3; RD_IMM;
 	logerror("%04x: OP4B %02x\n",activecpu_get_pc(),tmp);
 
-//	m6502.a=io_read_byte_8(0);
+//  m6502.a=io_read_byte_8(0);
 
 //tilt??
 

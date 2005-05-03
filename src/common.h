@@ -1,8 +1,8 @@
 /*********************************************************************
 
-	common.h
+    common.h
 
-	Generic functions, mostly ROM related.
+    Generic functions, mostly ROM related.
 
 *********************************************************************/
 
@@ -18,7 +18,7 @@ extern "C" {
 
 /***************************************************************************
 
-	Type definitions
+    Type definitions
 
 ***************************************************************************/
 
@@ -79,7 +79,7 @@ struct rom_load_data
 
 /***************************************************************************
 
-	Constants and macros
+    Constants and macros
 
 ***************************************************************************/
 
@@ -127,7 +127,7 @@ enum
 
 /***************************************************************************
 
-	Core macros for the ROM loading system
+    Core macros for the ROM loading system
 
 ***************************************************************************/
 
@@ -285,7 +285,7 @@ enum
 
 /***************************************************************************
 
-	Derived macros for the ROM loading system
+    Derived macros for the ROM loading system
 
 ***************************************************************************/
 
@@ -345,7 +345,7 @@ enum
 
 /***************************************************************************
 
-	Derived macros for the alternate BIOS loading system
+    Derived macros for the alternate BIOS loading system
 
 ***************************************************************************/
 
@@ -362,7 +362,7 @@ enum
 
 /***************************************************************************
 
-	Global variables
+    Global variables
 
 ***************************************************************************/
 
@@ -375,7 +375,7 @@ extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /***************************************************************************
 
-	Function prototypes
+    Function prototypes
 
 ***************************************************************************/
 
@@ -454,7 +454,7 @@ void printromlist(const struct RomModule *romp,const char *name);
 
 /***************************************************************************
 
-	Useful macros to deal with bit shuffling encryptions
+    Useful macros to deal with bit shuffling encryptions
 
 ***************************************************************************/
 

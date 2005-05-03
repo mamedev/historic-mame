@@ -51,7 +51,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
-//	AM_RANGE(0x4002, 0x4002) AM_READ(AY8910_read_port_0_r)	/* ?? */
+//  AM_RANGE(0x4002, 0x4002) AM_READ(AY8910_read_port_0_r)  /* ?? */
 	AM_RANGE(0x6001, 0x6001) AM_READ(YM2203_read_port_0_r)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
@@ -178,7 +178,7 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-//	{ REGION_GFX1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+//  { REGION_GFX1, 0x00000, &charlayout, 512, 32 }, /* colors 512-639 */
 	{ REGION_GFX1, 0x00000, &charlayout, 640, 32 },	/* colors 512-639 */
 	{ REGION_GFX2, 0x00000, &spritelayout, 0, 16 },	/* colors 0-255 */
 	{ REGION_GFX2, 0x01000, &spritelayout, 0, 16 },
@@ -344,11 +344,11 @@ static DRIVER_INIT( citycon )
 
 
 	/*
-	  City Connection controls the text color code for each _scanline_, not
-	  for each character as happens in most games. To handle that conveniently,
-	  I convert the 2bpp char data into 5bpp, and create a virtual palette so
-	  characters can still be drawn in one pass.
-	  */
+      City Connection controls the text color code for each _scanline_, not
+      for each character as happens in most games. To handle that conveniently,
+      I convert the 2bpp char data into 5bpp, and create a virtual palette so
+      characters can still be drawn in one pass.
+      */
 	for (i = 0x0fff;i >= 0;i--)
 	{
 		int mask;

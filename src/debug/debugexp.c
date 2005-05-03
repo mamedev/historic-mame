@@ -1,9 +1,9 @@
 /*###################################################################################################
 **
 **
-**		debugexp.c
-**		Debugger expressions engine.
-**		Written by Aaron Giles
+**      debugexp.c
+**      Debugger expressions engine.
+**      Written by Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -16,7 +16,7 @@
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 #define DEBUG					0
@@ -24,7 +24,7 @@
 
 
 /*###################################################################################################
-**	CONSTANTS
+**  CONSTANTS
 **#################################################################################################*/
 
 #define MAX_TOKENS				128
@@ -68,7 +68,7 @@ enum
 	TIN_PRECEDENCE_13		= 0x000d,		/* = *= /= %= += -= <<= >>= &= |= ^= */
 	TIN_PRECEDENCE_14		= 0x000e,		/* , */
 	TIN_PRECEDENCE_15		= 0x000f,		/* func() */
-	
+
 	TIN_RIGHT_TO_LEFT		= 0x0040,
 	TIN_FUNCTION			= 0x0080,
 
@@ -78,7 +78,7 @@ enum
 	TIN_MEMORY_WORD			= (1 << TIN_MEMORY_SIZE_SHIFT),
 	TIN_MEMORY_DWORD		= (2 << TIN_MEMORY_SIZE_SHIFT),
 	TIN_MEMORY_QWORD		= (3 << TIN_MEMORY_SIZE_SHIFT),
-	
+
 	TIN_MEMORY_SPACE_SHIFT	= 10,
 	TIN_MEMORY_SPACE_MASK	= (3 << TIN_MEMORY_SPACE_SHIFT),
 	TIN_MEMORY_PROGRAM		= (ADDRESS_SPACE_PROGRAM << TIN_MEMORY_SPACE_SHIFT),
@@ -139,7 +139,7 @@ enum
 
 
 /*###################################################################################################
-**	TYPE DEFINITIONS
+**  TYPE DEFINITIONS
 **#################################################################################################*/
 
 union int_ptr
@@ -176,7 +176,7 @@ struct parsed_expression
 
 
 /*###################################################################################################
-**	LOCAL VARIABLES
+**  LOCAL VARIABLES
 **#################################################################################################*/
 
 static struct symbol_table global_table;
@@ -184,11 +184,11 @@ static struct symbol_table global_table;
 
 
 /*###################################################################################################
-**	STACK MANIPULATION
+**  STACK MANIPULATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	init_token_stack - reset the token stack
+    init_token_stack - reset the token stack
 -------------------------------------------------*/
 
 INLINE void init_token_stack(struct parsed_expression *expr)
@@ -198,7 +198,7 @@ INLINE void init_token_stack(struct parsed_expression *expr)
 
 
 /*-------------------------------------------------
-	push_token - push a token onto the stack
+    push_token - push a token onto the stack
 -------------------------------------------------*/
 
 INLINE EXPRERR push_token(struct parsed_expression *expr, struct token *token)
@@ -206,7 +206,7 @@ INLINE EXPRERR push_token(struct parsed_expression *expr, struct token *token)
 	/* check for overflow */
 	if (expr->token_stack_ptr >= MAX_STACK_DEPTH)
 		return MAKE_EXPRERR_STACK_OVERFLOW(token->offset);
-	
+
 	/* push */
 	expr->token_stack[expr->token_stack_ptr++] = *token;
 	return EXPRERR_NONE;
@@ -214,7 +214,7 @@ INLINE EXPRERR push_token(struct parsed_expression *expr, struct token *token)
 
 
 /*-------------------------------------------------
-	pop_token - pop a token off the stack
+    pop_token - pop a token off the stack
 -------------------------------------------------*/
 
 INLINE EXPRERR pop_token(struct parsed_expression *expr, struct token *token)
@@ -222,7 +222,7 @@ INLINE EXPRERR pop_token(struct parsed_expression *expr, struct token *token)
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
 		return MAKE_EXPRERR_STACK_UNDERFLOW(token->offset);
-	
+
 	/* push */
 	*token = expr->token_stack[--expr->token_stack_ptr];
 	return EXPRERR_NONE;
@@ -230,8 +230,8 @@ INLINE EXPRERR pop_token(struct parsed_expression *expr, struct token *token)
 
 
 /*-------------------------------------------------
-	peek_token - look at a token some number of
-	entries up the stack
+    peek_token - look at a token some number of
+    entries up the stack
 -------------------------------------------------*/
 
 INLINE struct token *peek_token(struct parsed_expression *expr, int count)
@@ -244,12 +244,12 @@ INLINE struct token *peek_token(struct parsed_expression *expr, int count)
 
 
 /*###################################################################################################
-**	LVAL/RVAL EVALUATION
+**  LVAL/RVAL EVALUATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	pop_token_lval - pop a token off the stack
-	and ensure that it is a proper lval
+    pop_token_lval - pop a token off the stack
+    and ensure that it is a proper lval
 -------------------------------------------------*/
 
 INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *token, const struct symbol_table *table)
@@ -257,10 +257,10 @@ INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *toke
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
 		return MAKE_EXPRERR_STACK_UNDERFLOW(token->offset);
-	
+
 	/* pop */
 	*token = expr->token_stack[--expr->token_stack_ptr];
-	
+
 	/* to be an lval, the token must be a valid read/write symbol or a memory token */
 	if (token->type == TOK_SYMBOL)
 	{
@@ -270,14 +270,14 @@ INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *toke
 	}
 	else if (token->type != TOK_MEMORY)
 		return MAKE_EXPRERR_NOT_LVAL(token->offset);
-			
+
 	return 0;
 }
 
 
 /*-------------------------------------------------
-	pop_token_rval - pop a token off the stack
-	and ensure that it is a proper rval
+    pop_token_rval - pop a token off the stack
+    and ensure that it is a proper rval
 -------------------------------------------------*/
 
 INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *token, const struct symbol_table *table)
@@ -285,10 +285,10 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
 		return MAKE_EXPRERR_STACK_UNDERFLOW(token->offset);
-	
+
 	/* pop */
 	*token = expr->token_stack[--expr->token_stack_ptr];
-	
+
 	/* symbol tokens get resolved down to number tokens */
 	if (token->type == TOK_SYMBOL)
 	{
@@ -298,7 +298,7 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 		token->type = TOK_NUMBER;
 		token->value.i = (*symbol->info.reg.getter)(symbol->ref);
 	}
-	
+
 	/* memory tokens get resolved down to number tokens */
 	else if (token->type == TOK_MEMORY)
 	{
@@ -307,7 +307,7 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 		token->type = TOK_NUMBER;
 		token->value.i = debug_read_memory(space, token->value.i, 1 << size);
 	}
-	
+
 	/* to be an rval, the token must be a number */
 	if (token->type != TOK_NUMBER)
 		return MAKE_EXPRERR_NOT_RVAL(token->offset);
@@ -316,8 +316,8 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 
 
 /*-------------------------------------------------
-	get_lval_value - call the getter function
-	for a SYMBOL token
+    get_lval_value - call the getter function
+    for a SYMBOL token
 -------------------------------------------------*/
 
 INLINE UINT64 get_lval_value(struct token *token, const struct symbol_table *table)
@@ -339,8 +339,8 @@ INLINE UINT64 get_lval_value(struct token *token, const struct symbol_table *tab
 
 
 /*-------------------------------------------------
-	set_lval_value - call the setter function
-	for a SYMBOL token
+    set_lval_value - call the setter function
+    for a SYMBOL token
 -------------------------------------------------*/
 
 INLINE void set_lval_value(struct token *token, const struct symbol_table *table, UINT64 value)
@@ -362,19 +362,19 @@ INLINE void set_lval_value(struct token *token, const struct symbol_table *table
 
 
 /*###################################################################################################
-**	DEBUGGING
+**  DEBUGGING
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	print_token - debugging took to print a
-	human readable token representation
+    print_token - debugging took to print a
+    human readable token representation
 -------------------------------------------------*/
 
 static void print_tokens(FILE *out, struct parsed_expression *expr)
 {
 #if DEBUG
 	struct token *token = expr->token;
-	
+
 	printf("----\n");
 	while (token->type != TOK_END)
 	{
@@ -384,23 +384,23 @@ static void print_tokens(FILE *out, struct parsed_expression *expr)
 			case TOK_INVALID:
 				fprintf(out, "INVALID\n");
 				break;
-			
+
 			case TOK_END:
 				fprintf(out, "END\n");
 				break;
-			
+
 			case TOK_NUMBER:
 				fprintf(out, "NUMBER: %08X%08X\n", (UINT32)(token->value.i >> 32), (UINT32)token->value.i);
 				break;
-			
+
 			case TOK_STRING:
 				fprintf(out, "STRING: ""%s""\n", (char *)token->value.p);
 				break;
-			
+
 			case TOK_SYMBOL:
 				fprintf(out, "SYMBOL: %08X%08X\n", (UINT32)(token->value.i >> 32), (UINT32)token->value.i);
 				break;
-			
+
 			case TOK_OPERATOR:
 				switch (token->value.i)
 				{
@@ -461,37 +461,37 @@ static void print_tokens(FILE *out, struct parsed_expression *expr)
 
 
 /*###################################################################################################
-**	TOKENIZING
+**  TOKENIZING
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	parse_memory_operator - parse the several
-	forms of memory operators
+    parse_memory_operator - parse the several
+    forms of memory operators
 -------------------------------------------------*/
 
 static int parse_memory_operator(const char *buffer, UINT16 *flags)
 {
 	int length = strlen(buffer);
 	int space = 'p', size;
-	
+
 	*flags = 0;
-	
+
 	/* length 2 means space, then size */
 	if (length == 2)
 	{
 		space = buffer[0];
 		size = buffer[1];
 	}
-	
+
 	/* length 1 means size */
 	else if (length == 1)
 		size = buffer[0];
-	
+
 	/* anything else is invalid */
 	else
 		return 0;
 
-	/* convert the space to flags */	
+	/* convert the space to flags */
 	switch (space)
 	{
 		case 'p':	*flags |= TIN_MEMORY_PROGRAM;	break;
@@ -500,7 +500,7 @@ static int parse_memory_operator(const char *buffer, UINT16 *flags)
 		default:	return 0;
 	}
 
-	/* convert the size to flags */	
+	/* convert the size to flags */
 	switch (size)
 	{
 		case 'b':	*flags |= TIN_MEMORY_BYTE;		break;
@@ -514,8 +514,8 @@ static int parse_memory_operator(const char *buffer, UINT16 *flags)
 
 
 /*-------------------------------------------------
-	parse_string_into_tokens - take an expression
-	string and break it into a sequence of tokens
+    parse_string_into_tokens - take an expression
+    string and break it into a sequence of tokens
 -------------------------------------------------*/
 
 static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_expression *expr, const struct symbol_table *table)
@@ -530,10 +530,10 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 
 	struct token *token = expr->token;
 	const char *string = stringstart;
-	
+
 	/* zap expression object */
 	memset(expr, 0, sizeof(*expr));
-	
+
 	/* stash the symbol table pointer */
 	expr->table = table;
 
@@ -542,7 +542,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 	if (!expr->original_string)
 		return MAKE_EXPRERR_OUT_OF_MEMORY(0);
 	strcpy(expr->original_string, stringstart);
-	
+
 	/* loop until done */
 	while (string[0] != 0 && token - expr->token < MAX_TOKENS)
 	{
@@ -551,30 +551,30 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 			string++;
 		if (string[0] == 0)
 			break;
-	
+
 		/* initialize the current token object */
 		SET_TOKEN_INFO(0, TOK_INVALID, 0, 0);
 		token->offset = string - stringstart;
-		
+
 		/* switch off the first character */
 		switch (tolower(string[0]))
 		{
 			case '(':
 				SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_LPAREN, TIN_PRECEDENCE_0);
 				break;
-				
+
 			case ')':
 				SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_RPAREN, TIN_PRECEDENCE_0);
 				break;
-				
+
 			case '~':
 				SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_NOT, TIN_PRECEDENCE_2);
 				break;
-				
+
 			case ',':
 				SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_COMMA, TIN_PRECEDENCE_14);
 				break;
-				
+
 			case '+':
 				if (string[1] == '+')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_PLUSPLUS, TIN_PRECEDENCE_1);
@@ -583,7 +583,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_ADD, TIN_PRECEDENCE_4);
 				break;
-				
+
 			case '-':
 				if (string[1] == '-')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_MINUSMINUS, TIN_PRECEDENCE_1);
@@ -592,28 +592,28 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_SUBTRACT, TIN_PRECEDENCE_4);
 				break;
-				
+
 			case '*':
 				if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_ASSIGNMULTIPLY, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_MULTIPLY, TIN_PRECEDENCE_3);
 				break;
-				
+
 			case '/':
 				if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_ASSIGNDIVIDE, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_DIVIDE, TIN_PRECEDENCE_3);
 				break;
-				
+
 			case '%':
 				if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_ASSIGNMODULO, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_MODULO, TIN_PRECEDENCE_3);
 				break;
-				
+
 			case '<':
 				if (string[1] == '<' && string[2] == '=')
 					SET_TOKEN_INFO(3, TOK_OPERATOR, TVL_ASSIGNLSHIFT, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
@@ -624,7 +624,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_LESS, TIN_PRECEDENCE_6);
 				break;
-				
+
 			case '>':
 				if (string[1] == '<' && string[2] == '=')
 					SET_TOKEN_INFO(3, TOK_OPERATOR, TVL_ASSIGNRSHIFT, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
@@ -642,14 +642,14 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_ASSIGN, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
 				break;
-				
+
 			case '!':
 				if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_NOTEQUAL, TIN_PRECEDENCE_7);
 				else
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_COMPLEMENT, TIN_PRECEDENCE_2);
 				break;
-				
+
 			case '&':
 				if (string[1] == '&')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_LAND, TIN_PRECEDENCE_11);
@@ -658,7 +658,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_BAND, TIN_PRECEDENCE_8);
 				break;
-				
+
 			case '|':
 				if (string[1] == '|')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_LOR, TIN_PRECEDENCE_12);
@@ -667,26 +667,26 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_BOR, TIN_PRECEDENCE_10);
 				break;
-				
+
 			case '^':
 				if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_ASSIGNBXOR, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
 				else
 					SET_TOKEN_INFO(1, TOK_OPERATOR, TVL_BXOR, TIN_PRECEDENCE_9);
 				break;
-			
+
 			case '"':
 			{
 				char buffer[MAX_STRING_LENGTH];
 				int bufindex = 0, strindex;
-				
+
 				/* find a free string entry */
 				for (strindex = 0; strindex < MAX_EXPRESSION_STRINGS; strindex++)
 					if (expr->string[strindex] == NULL)
 						break;
 				if (strindex == MAX_EXPRESSION_STRINGS)
 					return MAKE_EXPRERR_TOO_MANY_STRINGS(token->offset);
-				
+
 				/* accumulate a copy of the string */
 				string++;
 				while (string[0] != 0 && bufindex < MAX_STRING_LENGTH)
@@ -700,25 +700,25 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 					}
 					buffer[bufindex++] = *string++;
 				}
-				
+
 				/* if we didn't find the ending quote, report an error */
 				if (string[0] != '"')
 					return MAKE_EXPRERR_UNBALANCED_QUOTES(token->offset);
 				string++;
-				
+
 				/* terminate the string and allocate memory */
 				buffer[bufindex++] = 0;
 				expr->string[strindex] = malloc(bufindex);
 				if (!expr->string[strindex])
 					return MAKE_EXPRERR_OUT_OF_MEMORY(token->offset);
-				
+
 				/* copy the string in and make the token */
 				strcpy(expr->string[strindex], buffer);
 				token->type = TOK_STRING;
 				token->value.p = expr->string[strindex];
 				break;
 			}
-			
+
 			default:
 			{
 				static const char *valid = "abcdefghijklmnopqrstuvwxyz0123456789_$#.";
@@ -726,7 +726,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				int bufindex = 0, must_be_number = 0, numbase = 16;
 				char buffer[MAX_SYMBOL_LENGTH];
 				UINT64 value;
-				
+
 				/* accumulate a lower-case version of the symbol */
 				while (1)
 				{
@@ -759,7 +759,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 					if (buffer[0] == '$') { numbase = 16; bufindex++; must_be_number = 1; }
 					else if (buffer[0] == '0' && buffer[1] == 'x') { numbase = 16; bufindex += 2; must_be_number = 1; }
 					else if (buffer[0] == '#') { numbase = 10; bufindex++; must_be_number = 1; }
-					
+
 					/* if we're not forced to be a number, check for a symbol match first */
 					if (!must_be_number)
 					{
@@ -768,7 +768,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 						{
 							token->type = TOK_SYMBOL;
 							token->value.p = (void *)symbol;
-							
+
 							/* if this is a function symbol, synthesize an execute function operator */
 							if (symbol->type == SMT_FUNCTION)
 							{
@@ -777,7 +777,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 							}
 						}
 					}
-					
+
 					/* see if we parse as a number */
 					if (token->type == TOK_INVALID)
 					{
@@ -786,7 +786,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 						{
 							const char *ptr = strchr(numbers, tolower(buffer[bufindex]));
 							int digit;
-							
+
 							if (ptr == NULL)
 								break;
 							digit = ptr - numbers;
@@ -795,7 +795,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 							value = (value * (UINT64)numbase) + digit;
 							bufindex++;
 						}
-						
+
 						/* if we succeeded as a number, make it so */
 						if (buffer[bufindex] == 0)
 						{
@@ -803,7 +803,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 							token->value.i = value;
 						}
 					}
-					
+
 					/* report errors */
 					if (token->type == TOK_INVALID)
 					{
@@ -816,26 +816,26 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				break;
 			}
 		}
-		
+
 		/* advance to the next token */
 		token++;
 	}
-	
+
 	/* add an ending token */
 	token->type = TOK_END;
 	token->value.i = 0;
-	return EXPRERR_NONE; 
+	return EXPRERR_NONE;
 }
 
 
 
 /*###################################################################################################
-**	INFIX TO POSTFIX CONVERSION
+**  INFIX TO POSTFIX CONVERSION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	normalize_operator - resolve operator
-	ambiguities based on neighboring tokens
+    normalize_operator - resolve operator
+    ambiguities based on neighboring tokens
 -------------------------------------------------*/
 
 static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
@@ -851,7 +851,7 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
 			if (prevtoken != NULL && prevtoken->type == TOK_OPERATOR && prevtoken->value.i == TVL_EXECUTEFUNC)
 				thistoken->info |= TIN_FUNCTION;
 			break;
-		
+
 		/* Determine if ++ is a pre or post increment */
 		case TVL_PLUSPLUS:
 			if (nexttoken->type == TOK_SYMBOL || (nexttoken->type == TOK_OPERATOR && nexttoken->value.i == TVL_MEMORYAT))
@@ -883,12 +883,12 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
 			else
 				return MAKE_EXPRERR_SYNTAX(thistoken->offset);
 			break;
-	
+
 		/* Determine if +/- is a unary or binary */
 		case TVL_ADD:
 		case TVL_SUBTRACT:
-			/* Assume we're unary if we are the first token, or if the previous token is not 
-				a symbol, a number, or a right parenthesis */
+			/* Assume we're unary if we are the first token, or if the previous token is not
+                a symbol, a number, or a right parenthesis */
 			if (prevtoken == NULL ||
 				(prevtoken->type != TOK_SYMBOL && prevtoken->type != TOK_NUMBER &&
 				 (prevtoken->type != TOK_OPERATOR || prevtoken->value.i != TVL_RPAREN)))
@@ -897,12 +897,12 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
 				thistoken->info = TIN_PRECEDENCE_2;
 			}
 			break;
-		
+
 		/* Determine if , refers to a function parameter */
 		case TVL_COMMA:
 		{
 			int lookback;
-		
+
 			for (lookback = 0; lookback < MAX_STACK_DEPTH; lookback++)
 			{
 				struct token *peek = peek_token(expr, lookback);
@@ -928,8 +928,8 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
 
 
 /*-------------------------------------------------
-	infix_to_postfix - convert an infix sequence
-	of tokens to a postfix sequence for processing
+    infix_to_postfix - convert an infix sequence
+    of tokens to a postfix sequence for processing
 -------------------------------------------------*/
 
 static EXPRERR infix_to_postfix(struct parsed_expression *expr)
@@ -939,26 +939,26 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 	struct token *peek;
 	int tokindex = 0;
 	EXPRERR exprerr;
-	
+
 	/* start with an empty stack */
 	init_token_stack(expr);
-	
+
 	/* loop over all the original tokens */
 	for ( ; expr->token[tokindex].type != TOK_END; tokindex++)
 	{
 		struct token *token = &expr->token[tokindex];
-		
-		/* If the character is an operand, append it to the result string */ 
+
+		/* If the character is an operand, append it to the result string */
 		if (token->type == TOK_NUMBER || token->type == TOK_SYMBOL || token->type == TOK_STRING)
 			*dest++ = *token;
-		
+
 		/* If this is an operator, process it */
 		else if (token->type == TOK_OPERATOR)
 		{
 			int exprerr = normalize_operator(expr, tokindex);
 			if (exprerr != 0)
 				return exprerr;
-			
+
 			/* If the token is an opening parenthesis, push it onto the stack. */
 			if (token->value.i == TVL_LPAREN)
 			{
@@ -966,9 +966,9 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 				if (exprerr != 0)
 					return exprerr;
 			}
-		
+
 			/* If the token is a closing parenthesis, pop all operators until we
-			   reach an opening parenthesis and append them to the result string. */
+               reach an opening parenthesis and append them to the result string. */
 			else if (token->value.i == TVL_RPAREN)
 			{
 				/* loop until we can't peek at the stack anymore */
@@ -980,20 +980,20 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 					if (exprerr != 0)
 						return exprerr;
 				}
-				
+
 				/* if we didn't find an open paren, it's an error */
 				if (peek == NULL)
 					return MAKE_EXPRERR_UNBALANCED_PARENS(token->offset);
-				
+
 				/* pop the open paren off the stack */
 				exprerr = pop_token(expr, &dummy);
 				if (exprerr != 0)
 					return exprerr;
 			}
 
-			/* If the token is an operator, pop operators until we reach an opening parenthesis, 
-			   an operator of lower precedence, or a right associative symbol of equal precedence. 
-			   Push the operator onto the stack. */
+			/* If the token is an operator, pop operators until we reach an opening parenthesis,
+               an operator of lower precedence, or a right associative symbol of equal precedence.
+               Push the operator onto the stack. */
 			else
 			{
 				int our_precedence = token->info & TIN_PRECEDENCE_MASK;
@@ -1016,7 +1016,7 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 					if (exprerr != 0)
 						return exprerr;
 				}
-				
+
 				/* push the new operator */
 				exprerr = push_token(expr, token);
 				if (exprerr != 0)
@@ -1024,20 +1024,20 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 			}
 		}
 	}
-	
+
 	/* finish popping the stack */
 	while ((peek = peek_token(expr, 0)) != NULL)
 	{
 		/* it is an error to have a left parenthesis still on the stack */
 		if (peek->value.i == TVL_LPAREN)
 			return MAKE_EXPRERR_UNBALANCED_PARENS(peek->offset);
-		
+
 		/* pop this token */
 		exprerr = pop_token(expr, dest++);
 		if (exprerr != 0)
 			return exprerr;
 	}
-	
+
 	/* copy the end token to the final stream */
 	*dest++ = expr->token[tokindex];
 	return EXPRERR_NONE;
@@ -1046,12 +1046,12 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 
 
 /*###################################################################################################
-**	EXPRESSION EVALUATION
+**  EXPRESSION EVALUATION
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	execute_function - handle an execute function
-	operator
+    execute_function - handle an execute function
+    operator
 -------------------------------------------------*/
 
 static EXPRERR execute_function(struct parsed_expression *expr, struct token *token)
@@ -1069,7 +1069,7 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
 		struct token *peek = peek_token(expr, 0);
 		if (!peek)
 			return MAKE_EXPRERR_INVALID_PARAM_COUNT(token->offset);
-		
+
 		/* if it is a function symbol, break out of the loop */
 		if (peek->type == TOK_SYMBOL)
 		{
@@ -1080,7 +1080,7 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
 				break;
 			}
 		}
-		
+
 		/* otherwise, pop as a standard rval */
 		else
 		{
@@ -1088,7 +1088,7 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
 			funcparams[MAX_FUNCTION_PARAMS - (++paramcount)] = t1.value.i;
 		}
 	}
-	
+
 	/* if we didn't find the symbol, fail */
 	if (paramcount == MAX_FUNCTION_PARAMS)
 		return MAKE_EXPRERR_INVALID_PARAM_COUNT(token->offset);
@@ -1096,20 +1096,20 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
 	/* validate the number of parameters */
 	if (paramcount < symbol->info.func.minparams || paramcount > symbol->info.func.maxparams)
 		return MAKE_EXPRERR_INVALID_PARAM_COUNT(token->offset);
-	
+
 	/* execute the function and push the result */
 	t1.type = TOK_NUMBER;
 	t1.offset = token->offset;
 	t1.value.i = (*symbol->info.func.execute)(symbol->ref, paramcount, &funcparams[MAX_FUNCTION_PARAMS - paramcount]);
 	push_token(expr, &t1);
-	
+
 	return EXPRERR_NONE;
 }
 
 
 /*-------------------------------------------------
-	execute_tokens - execute a postfix sequence
-	of tokens
+    execute_tokens - execute a postfix sequence
+    of tokens
 -------------------------------------------------*/
 
 static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
@@ -1117,10 +1117,10 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 	struct token t1, t2, tempnum, tempmem;
 	EXPRERR exprerr;
 	int tokindex;
-	
+
 	/* reset the token stack */
 	init_token_stack(expr);
-	
+
 	/* create a temporary token for holding intermediate number and memory values */
 	tempnum.type = TOK_NUMBER;
 	tempnum.offset = 0;
@@ -1131,13 +1131,13 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 	for (tokindex = 0; expr->token[tokindex].type != TOK_END; tokindex++)
 	{
 		struct token *token = &expr->token[tokindex];
-		
+
 		switch (token->type)
 		{
 			default:
 			case TOK_INVALID:
 				return MAKE_EXPRERR_INVALID_TOKEN(token->offset);
-			
+
 			case TOK_SYMBOL:
 			case TOK_NUMBER:
 			case TOK_STRING:
@@ -1145,7 +1145,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 				if (exprerr != 0)
 					return exprerr;
 				break;
-			
+
 			case TOK_OPERATOR:
 				switch (token->value.i)
 				{
@@ -1156,7 +1156,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-						
+
 					case TVL_PREDECREMENT:
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						tempnum.value.i = get_lval_value(&t1, expr->table) - 1;
@@ -1164,7 +1164,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-						
+
 					case TVL_POSTINCREMENT:
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						tempnum.value.i = get_lval_value(&t1, expr->table);
@@ -1172,7 +1172,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i + 1);
 						break;
-						
+
 					case TVL_POSTDECREMENT:
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						tempnum.value.i = get_lval_value(&t1, expr->table);
@@ -1180,7 +1180,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i - 1);
 						break;
-						
+
 					case TVL_COMPLEMENT:
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						tempnum.value.i = !t1.value.i;
@@ -1208,7 +1208,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = t1.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_MULTIPLY:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1216,7 +1216,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_DIVIDE:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1225,7 +1225,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_MODULO:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1242,7 +1242,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_SUBTRACT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1250,7 +1250,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_LSHIFT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1258,7 +1258,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_RSHIFT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1266,7 +1266,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_LESS:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1274,7 +1274,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_LESSOREQUAL:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1282,7 +1282,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_GREATER:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1290,7 +1290,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_GREATEROREQUAL:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1298,7 +1298,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_EQUAL:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1306,7 +1306,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_NOTEQUAL:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1314,7 +1314,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_BAND:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1322,7 +1322,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_BXOR:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1330,7 +1330,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_BOR:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1338,7 +1338,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_LAND:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1346,7 +1346,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_LOR:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1354,14 +1354,14 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						tempnum.offset = (t1.offset < t2.offset) ? t1.offset : t2.offset;
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_ASSIGN:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						push_token(expr, &t2);
 						set_lval_value(&t1, expr->table, t2.value.i);
 						break;
-					
+
 					case TVL_ASSIGNMULTIPLY:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1371,7 +1371,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNDIVIDE:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1382,7 +1382,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNMODULO:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1393,7 +1393,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNADD:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1403,7 +1403,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNSUBTRACT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1413,7 +1413,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNLSHIFT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1423,7 +1423,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNRSHIFT:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1433,7 +1433,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNBAND:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1443,7 +1443,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNBXOR:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1453,7 +1453,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_ASSIGNBOR:
 						exprerr = pop_token_rval(expr, &t2, expr->table); if (exprerr != 0) return exprerr;
 						exprerr = pop_token_lval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
@@ -1463,7 +1463,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 						exprerr = push_token(expr, &tempnum); if (exprerr != 0) return exprerr;
 						set_lval_value(&t1, expr->table, tempnum.value.i);
 						break;
-					
+
 					case TVL_COMMA:
 						if (!(token->info & TIN_FUNCTION))
 						{
@@ -1472,34 +1472,34 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 							exprerr = push_token(expr, &t2); if (exprerr != 0) return exprerr;
 						}
 						break;
-					
+
 					case TVL_MEMORYAT:
 						exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
 						tempmem.value.i = t1.value.i;
 						tempmem.info = token->info;
 						exprerr = push_token(expr, &tempmem); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					case TVL_EXECUTEFUNC:
 						exprerr = execute_function(expr, token); if (exprerr != 0) return exprerr;
 						break;
-					
+
 					default:
 						return MAKE_EXPRERR_SYNTAX(token->offset);
 				}
 				break;
 		}
 	}
-	
+
 	/* pop the final result */
 	exprerr = pop_token_rval(expr, &tempnum, expr->table);
 	if (exprerr != 0)
 		return exprerr;
-	
+
 	/* error if our stack isn't empty */
 	if (peek_token(expr, 0) != NULL)
 		return MAKE_EXPRERR_SYNTAX(0);
-	
+
 	*result = tempnum.value.i;
 	return EXPRERR_NONE;
 }
@@ -1507,12 +1507,12 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 
 
 /*###################################################################################################
-**	MISC HELPERS
+**  MISC HELPERS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	free_expression_strings - free all strings
-	allocated to an expression
+    free_expression_strings - free all strings
+    allocated to an expression
 -------------------------------------------------*/
 
 static void free_expression_strings(struct parsed_expression *expr)
@@ -1532,23 +1532,23 @@ static void free_expression_strings(struct parsed_expression *expr)
 			expr->string[strindex] = NULL;
 		}
 }
-	
+
 
 
 /*###################################################################################################
-**	CORE WRAPPER FUNCTIONS
+**  CORE WRAPPER FUNCTIONS
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_expression_evaluate - evaluate a string
-	expression using the passed symbol table
+    debug_expression_evaluate - evaluate a string
+    expression using the passed symbol table
 -------------------------------------------------*/
 
 EXPRERR debug_expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result)
 {
 	struct parsed_expression temp_expression;
 	EXPRERR exprerr;
-	
+
 	/* first parse the tokens into the token array in order */
 	exprerr = parse_string_into_tokens(expression, &temp_expression, table);
 	if (exprerr != EXPRERR_NONE)
@@ -1556,7 +1556,7 @@ EXPRERR debug_expression_evaluate(const char *expression, const struct symbol_ta
 
 	/* debugging */
 	print_tokens(stdout, &temp_expression);
-	
+
 	/* convert the infix order to postfix order */
 	exprerr = infix_to_postfix(&temp_expression);
 	if (exprerr != EXPRERR_NONE)
@@ -1564,7 +1564,7 @@ EXPRERR debug_expression_evaluate(const char *expression, const struct symbol_ta
 
 	/* debugging */
 	print_tokens(stdout, &temp_expression);
-	
+
 	/* execute the expression to get the result */
 	exprerr = execute_tokens(&temp_expression, result);
 
@@ -1575,15 +1575,15 @@ cleanup:
 
 
 /*-------------------------------------------------
-	debug_expression_parse - parse an expression and
-	return an allocated token array
+    debug_expression_parse - parse an expression and
+    return an allocated token array
 -------------------------------------------------*/
 
 EXPRERR debug_expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result)
 {
 	struct parsed_expression temp_expression;
 	EXPRERR exprerr;
-	
+
 	/* first parse the tokens into the token array in order */
 	exprerr = parse_string_into_tokens(expression, &temp_expression, table);
 	if (exprerr != EXPRERR_NONE)
@@ -1593,7 +1593,7 @@ EXPRERR debug_expression_parse(const char *expression, const struct symbol_table
 	exprerr = infix_to_postfix(&temp_expression);
 	if (exprerr != EXPRERR_NONE)
 		goto cleanup;
-	
+
 	/* allocate memory for the result */
 	*result = malloc(sizeof(temp_expression));
 	if (!*result)
@@ -1601,7 +1601,7 @@ EXPRERR debug_expression_parse(const char *expression, const struct symbol_table
 		exprerr = MAKE_EXPRERR_OUT_OF_MEMORY(0);
 		goto cleanup;
 	}
-	
+
 	/* copy the final expression and return */
 	**result = temp_expression;
 	return EXPRERR_NONE;
@@ -1613,8 +1613,8 @@ cleanup:
 
 
 /*-------------------------------------------------
-	debug_expression_execute - execute a
-	previously-parsed expression
+    debug_expression_execute - execute a
+    previously-parsed expression
 -------------------------------------------------*/
 
 EXPRERR debug_expression_execute(struct parsed_expression *expr, UINT64 *result)
@@ -1625,8 +1625,8 @@ EXPRERR debug_expression_execute(struct parsed_expression *expr, UINT64 *result)
 
 
 /*-------------------------------------------------
-	debug_expression_free - free a previously
-	allocated parsed expression
+    debug_expression_free - free a previously
+    allocated parsed expression
 -------------------------------------------------*/
 
 void debug_expression_free(struct parsed_expression *expr)
@@ -1640,8 +1640,8 @@ void debug_expression_free(struct parsed_expression *expr)
 
 
 /*-------------------------------------------------
-	debug_expression_original_string - return a
-	pointer to the original expression string
+    debug_expression_original_string - return a
+    pointer to the original expression string
 -------------------------------------------------*/
 
 const char *debug_expression_original_string(struct parsed_expression *expr)
@@ -1652,12 +1652,12 @@ const char *debug_expression_original_string(struct parsed_expression *expr)
 
 
 /*###################################################################################################
-**	ERROR HANDLING
+**  ERROR HANDLING
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_exprerr_to_string - return a friendly 
-	string for a given expression error
+    debug_exprerr_to_string - return a friendly
+    string for a given expression error
 -------------------------------------------------*/
 
 const char *debug_exprerr_to_string(EXPRERR error)
@@ -1685,22 +1685,22 @@ const char *debug_exprerr_to_string(EXPRERR error)
 
 
 /*###################################################################################################
-**	SYMBOL TABLES
+**  SYMBOL TABLES
 **#################################################################################################*/
 
 /*-------------------------------------------------
-	debug_symtable_alloc - allocate a symbol table
+    debug_symtable_alloc - allocate a symbol table
 -------------------------------------------------*/
 
 struct symbol_table *debug_symtable_alloc(void)
 {
 	struct symbol_table *table;
-	
+
 	/* allocate memory for the table */
 	table = malloc(sizeof(*table));
 	if (!table)
 		return NULL;
-	
+
 	/* initialize the data */
 	table->count = 0;
 	table->alloc = 0;
@@ -1710,8 +1710,8 @@ struct symbol_table *debug_symtable_alloc(void)
 
 
 /*-------------------------------------------------
-	debug_symtable_add - add a new symbol to a 
-	symbol table
+    debug_symtable_add - add a new symbol to a
+    symbol table
 -------------------------------------------------*/
 
 int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *entry)
@@ -1719,11 +1719,11 @@ int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *en
 	struct symbol_entry *symbol;
 	char *newstring;
 	int strindex;
-	
+
 	/* NULL means add to the global table */
 	if (table == GLOBAL_SYMBOL_TABLE)
 		table = &global_table;
-	
+
 	/* see if we already have an entry */
 	symbol = NULL;//(struct symbol_entry *)debug_symtable_find(table, entry->name);
 	if (symbol != NULL)
@@ -1745,7 +1745,7 @@ int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *en
 			/* return 0 on failure */
 			if (!newarray)
 				return 0;
-			
+
 			/* update the table */
 			table->alloc = newalloc;
 			table->symbol = newarray;
@@ -1754,12 +1754,12 @@ int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *en
 		/* allocate the new entry */
 		symbol = &table->symbol[table->count++];
 	}
-	
+
 	/* allocate space for a copy of the string */
 	newstring = malloc(strlen(entry->name) + 1);
 	if (!newstring)
 		return 0;
-	
+
 	/* copy the string, converting to lowercase */
 	for (strindex = 0; entry->name[strindex] != 0; strindex++)
 		newstring[strindex] = tolower(entry->name[strindex]);
@@ -1773,14 +1773,14 @@ int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *en
 
 
 /*-------------------------------------------------
-	debug_symtable_add_register - add a new
-	register symbol to a symbol table
+    debug_symtable_add_register - add a new
+    register symbol to a symbol table
 -------------------------------------------------*/
 
 int	debug_symtable_add_register(struct symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64))
 {
 	struct symbol_entry symbol;
-	
+
 	symbol.name = name;
 	symbol.ref = ref;
 	symbol.type = SMT_REGISTER;
@@ -1791,14 +1791,14 @@ int	debug_symtable_add_register(struct symbol_table *table, const char *name, UI
 
 
 /*-------------------------------------------------
-	debug_symtable_add_function - add a new
-	function symbol to a symbol table
+    debug_symtable_add_function - add a new
+    function symbol to a symbol table
 -------------------------------------------------*/
 
 int debug_symtable_add_function(struct symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *))
 {
 	struct symbol_entry symbol;
-	
+
 	symbol.name = name;
 	symbol.ref = ref;
 	symbol.type = SMT_FUNCTION;
@@ -1810,8 +1810,8 @@ int debug_symtable_add_function(struct symbol_table *table, const char *name, UI
 
 
 /*-------------------------------------------------
-	debug_symtable_find - find a symbol in a symbol
-	table
+    debug_symtable_find - find a symbol in a symbol
+    table
 -------------------------------------------------*/
 
 const struct symbol_entry *debug_symtable_find(const struct symbol_table *table, const char *symbol)
@@ -1826,7 +1826,7 @@ const struct symbol_entry *debug_symtable_find(const struct symbol_table *table,
 			if (!strcmp(symbol, table->symbol[symindex].name))
 				return &table->symbol[symindex];
 	}
-	
+
 	/* if not found, look in the global table */
 	table = &global_table;
 
@@ -1834,13 +1834,13 @@ const struct symbol_entry *debug_symtable_find(const struct symbol_table *table,
 	for (symindex = 0; symindex < table->count; symindex++)
 		if (!strcmp(symbol, table->symbol[symindex].name))
 			return &table->symbol[symindex];
-	
+
 	return NULL;
 }
 
 
 /*-------------------------------------------------
-	debug_symtable_free - free a symbol table
+    debug_symtable_free - free a symbol table
 -------------------------------------------------*/
 
 void debug_symtable_free(struct symbol_table *table)
@@ -1851,11 +1851,11 @@ void debug_symtable_free(struct symbol_table *table)
 	for (symindex = 0; symindex < table->count; symindex++)
 		if (table->symbol[symindex].name)
 			free((void *)table->symbol[symindex].name);
-	
+
 	/* free the list */
 	if (table->symbol)
 		free(table->symbol);
-	
+
 	/* free the structure */
 	free(table);
 }

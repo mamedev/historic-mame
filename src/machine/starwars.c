@@ -1,9 +1,9 @@
 /***************************************************************************
 
-	Atari Star Wars hardware
+    Atari Star Wars hardware
 
-	This file is Copyright 1997, Steve Baines.
-	Modified by Frank Palazzolo for sound support
+    This file is Copyright 1997, Steve Baines.
+    Modified by Frank Palazzolo for sound support
 
 ***************************************************************************/
 
@@ -56,7 +56,7 @@ static void run_mbox(void);
 
 /*************************************
  *
- *	Output latch
+ *  Output latch
  *
  *************************************/
 
@@ -113,7 +113,7 @@ WRITE8_HANDLER( starwars_out_w )
 
 /*************************************
  *
- *	Input port 1
+ *  Input port 1
  *
  *************************************/
 
@@ -139,7 +139,7 @@ READ8_HANDLER( starwars_input_1_r )
 
 /*************************************
  *
- *	ADC input and control
+ *  ADC input and control
  *
  *************************************/
 
@@ -168,7 +168,7 @@ WRITE8_HANDLER( starwars_adc_select_w )
 
 /*************************************
  *
- *	Mathbox initialization
+ *  Mathbox initialization
  *
  *************************************/
 
@@ -196,7 +196,7 @@ void swmathbox_init(void)
 
 /*************************************
  *
- *	Mathbox reset
+ *  Mathbox reset
  *
  *************************************/
 
@@ -210,7 +210,7 @@ void swmathbox_reset(void)
 
 /*************************************
  *
- *	Mathbox execution
+ *  Mathbox execution
  *
  *************************************/
 
@@ -249,7 +249,7 @@ void run_mbox(void)
 			MA = IP6_0;
 
 		/* convert RAM offset to eight bit addressing (2kx8 rather than 1k*16)
-			and apply base address offset */
+            and apply base address offset */
 
 		MA_byte = 0x5000 + (MA << 1);
 		RAMWORD = (RAM[MA_byte + 1] & 0x00ff) | ((RAM[MA_byte] & 0x00ff) << 8);
@@ -257,12 +257,12 @@ void run_mbox(void)
 		logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
 
 		/*
-		 * RAMWORD is the sixteen bit Math RAM value for the selected address
-		 * MA_byte is the base address of this location as seen by the main CPU
-		 * IP is the 16 bit instruction word from the PROM. IP7_0 have already
-		 * been used in the address selection stage
-		 * IP15_8 provide the instruction strobes
-		 */
+         * RAMWORD is the sixteen bit Math RAM value for the selected address
+         * MA_byte is the base address of this location as seen by the main CPU
+         * IP is the 16 bit instruction word from the PROM. IP7_0 have already
+         * been used in the address selection stage
+         * IP15_8 provide the instruction strobes
+         */
 
 		/* 0x01 - LAC */
 		if (IP15_8 & LAC)
@@ -306,11 +306,11 @@ void run_mbox(void)
 			A = RAMWORD;
 
 		/*
-		 * Now update the PROM address counter
-		 * Done like this because the top two bits are not part of the counter
-		 * This means that each of the four pages should wrap around rather than
-		 * leaking from one to another.  It may not matter, but I've put it in anyway
-		 */
+         * Now update the PROM address counter
+         * Done like this because the top two bits are not part of the counter
+         * This means that each of the four pages should wrap around rather than
+         * leaking from one to another.  It may not matter, but I've put it in anyway
+         */
 		tmp = MPA + 1;
 		MPA = (MPA & 0x0300) | (tmp & 0x00ff); /* New MPA value */
 
@@ -322,7 +322,7 @@ void run_mbox(void)
 
 /*************************************
  *
- *	Pseudo-RNG read
+ *  Pseudo-RNG read
  *
  *************************************/
 
@@ -336,7 +336,7 @@ READ8_HANDLER( swmathbx_prng_r )
 
 /*************************************
  *
- *	Mathbox divider
+ *  Mathbox divider
  *
  *************************************/
 

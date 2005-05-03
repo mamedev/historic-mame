@@ -1,15 +1,15 @@
 /*
 
-	SEGA Zaxxon Hardware
+    SEGA Zaxxon Hardware
 
-	TODO:
+    TODO:
 
-	- service coin lockout (needs to be added to MAME core)
-	- razmataz/ixion unknown reads
-	- razmataz/ixion sound
-	- verify congo sound cpu speeds
-	- rename roms properly
-	- discrete sound emulation
+    - service coin lockout (needs to be added to MAME core)
+    - razmataz/ixion unknown reads
+    - razmataz/ixion sound
+    - verify congo sound cpu speeds
+    - rename roms properly
+    - discrete sound emulation
 
 */
 
@@ -33,25 +33,25 @@ Zaxxon memory map (preliminary)
 a000-a0ff sprites
 
 read:
-c000	  IN0
-c001	  IN1
-c002	  DSW0
-c003	  DSW1
-c100	  IN2
+c000      IN0
+c001      IN1
+c002      DSW0
+c003      DSW1
+c100      IN2
 see the input_ports definition below for details on the input bits
 
 write:
-c000	  coin A enable
-c001	  coin B enable
-c002	  coin aux enable
+c000      coin A enable
+c001      coin B enable
+c002      coin aux enable
 c003-c004 coin counters
-c006	  flip screen
+c006      flip screen
 ff3c-ff3f sound (see below)
-fff0	  interrupt enable
-fff1	  character color bank (not used during the game, but used in test mode)
+fff0      interrupt enable
+fff1      character color bank (not used during the game, but used in test mode)
 fff8-fff9 background playfield position (11 bits)
-fffa	  background color bank (0 = standard  1 = reddish)
-fffb	  background enable
+fffa      background color bank (0 = standard  1 = reddish)
+fffb      background enable
 
 interrupts:
 VBlank triggers IRQ, handled with interrupt mode 1
@@ -59,19 +59,19 @@ NMI enters the test mode.
 
 Changes:
 25 Jan 98 LBO
-	* Added crude support for samples based on Frank's info. As of yet, I don't have
-	  a set that matches the names - I need a way to edit the .wav files I have.
-	  Hopefully I'll be able to create a good set shortly. I also don't know which
-	  sounds "loop".
+    * Added crude support for samples based on Frank's info. As of yet, I don't have
+      a set that matches the names - I need a way to edit the .wav files I have.
+      Hopefully I'll be able to create a good set shortly. I also don't know which
+      sounds "loop".
 26 Jan 98 LBO
-	* Fixed the sound support. I lack explosion samples and the base missile sample so
-	  these are untested. I'm also unsure about the background noise. It seems to have
-	  a variable volume so I've tried to reproduce that via just 1 sample.
+    * Fixed the sound support. I lack explosion samples and the base missile sample so
+      these are untested. I'm also unsure about the background noise. It seems to have
+      a variable volume so I've tried to reproduce that via just 1 sample.
 
 12 Mar 98 ATJ
-		* For the moment replaced Brad's version of the samples with mine from the Mame/P
-		  release. As yet, no variable volume, but I will be combining the features from
-		  Brad's driver into mine ASAP.
+        * For the moment replaced Brad's version of the samples with mine from the Mame/P
+          release. As yet, no variable volume, but I will be combining the features from
+          Brad's driver into mine ASAP.
 
 ****************************************************************************
 
@@ -123,28 +123,28 @@ a400-a7ff Color RAM
 8400-8fff sprites
 
 read:
-c000	  IN0
-c001	  IN1
-c002	  DSW1
-c003	  DSW2
-c008	  IN2
+c000      IN0
+c001      IN1
+c002      DSW1
+c003      DSW2
+c008      IN2
 
 write:
 c000-c002 ?
-c006	  ?
-c018	  coinAen, used to enable input on coin slot A
-c019	  coinBen, used to enable input on coin slot B
-c01a	  serven,  used to enable input on service sw
-c01b	  counterA,coin counter for slot A
-c01c	  counterB,coin counter for slot B
-c01d	  background enable
-c01e	  flip screen
-c01f	  interrupt enable
+c006      ?
+c018      coinAen, used to enable input on coin slot A
+c019      coinBen, used to enable input on coin slot B
+c01a      serven,  used to enable input on service sw
+c01b      counterA,coin counter for slot A
+c01c      counterB,coin counter for slot B
+c01d      background enable
+c01e      flip screen
+c01f      interrupt enable
 
 c028-c029 background playfield position
-c031	  sprite enable ?
-c032	  sprite start
-c033	  sprite count
+c031      sprite enable ?
+c032      sprite start
+c033      sprite count
 
 
 interrupts:
@@ -1195,7 +1195,7 @@ static MACHINE_DRIVER_START( zaxxon )
 	MDRV_IMPORT_FROM(root)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(zaxxon_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1265,7 +1265,7 @@ static MACHINE_DRIVER_START( futspy )
 	MDRV_VIDEO_UPDATE(futspy)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(zaxxon_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1584,28 +1584,28 @@ ROM_END
 static DRIVER_INIT( zaxxonb )
 {
 /*
-	the values vary, but the translation mask is always laid out like this:
+    the values vary, but the translation mask is always laid out like this:
 
-	  0 1 2 3 4 5 6 7 8 9 a b c d e f
-	0 A A B B A A B B C C D D C C D D
-	1 A A B B A A B B C C D D C C D D
-	2 E E F F E E F F G G H H G G H H
-	3 E E F F E E F F G G H H G G H H
-	4 A A B B A A B B C C D D C C D D
-	5 A A B B A A B B C C D D C C D D
-	6 E E F F E E F F G G H H G G H H
-	7 E E F F E E F F G G H H G G H H
-	8 H H G G H H G G F F E E F F E E
-	9 H H G G H H G G F F E E F F E E
-	a D D C C D D C C B B A A B B A A
-	b D D C C D D C C B B A A B B A A
-	c H H G G H H G G F F E E F F E E
-	d H H G G H H G G F F E E F F E E
-	e D D C C D D C C B B A A B B A A
-	f D D C C D D C C B B A A B B A A
+      0 1 2 3 4 5 6 7 8 9 a b c d e f
+    0 A A B B A A B B C C D D C C D D
+    1 A A B B A A B B C C D D C C D D
+    2 E E F F E E F F G G H H G G H H
+    3 E E F F E E F F G G H H G G H H
+    4 A A B B A A B B C C D D C C D D
+    5 A A B B A A B B C C D D C C D D
+    6 E E F F E E F F G G H H G G H H
+    7 E E F F E E F F G G H H G G H H
+    8 H H G G H H G G F F E E F F E E
+    9 H H G G H H G G F F E E F F E E
+    a D D C C D D C C B B A A B B A A
+    b D D C C D D C C B B A A B B A A
+    c H H G G H H G G F F E E F F E E
+    d H H G G H H G G F F E E F F E E
+    e D D C C D D C C B B A A B B A A
+    f D D C C D D C C B B A A B B A A
 
-	(e.g. 0xc0 is XORed with H)
-	therefore in the following tables we only keep track of A, B, C, D, E, F, G and H.
+    (e.g. 0xc0 is XORed with H)
+    therefore in the following tables we only keep track of A, B, C, D, E, F, G and H.
 */
 	static const UINT8 data_xortable[2][8] =
 	{

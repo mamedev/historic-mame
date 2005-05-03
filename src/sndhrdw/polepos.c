@@ -1,6 +1,6 @@
 /***************************************************************************
-	polepos.c
-	Sound handler
+    polepos.c
+    Sound handler
 ****************************************************************************/
 #include "driver.h"
 #include "sound/filter.h"
@@ -78,7 +78,7 @@ static void engine_sound_update(void *param, stream_sample_t **inputs, stream_sa
 		{
 			filter2_step(&filter_engine[loop]);
 			/* The op-amp powered @ 5V will clip to 0V & 3.5V.
-			 * Adjusted to vRef of 2V, we will clip as follows: */
+             * Adjusted to vRef of 2V, we will clip as follows: */
 			if (filter_engine[loop].y0 > 1.5) filter_engine[loop].y0 = 1.5;
 			if (filter_engine[loop].y0 < -2)  filter_engine[loop].y0 = -2;
 
@@ -106,7 +106,7 @@ void *polepos_sh_start(int clock, const struct CustomSound_interface *config)
 	filter_opamp_m_bandpass_setup(RES_K(150), RES_K(22), RES_K(330), CAP_U(.0047),  CAP_U(.0047),
 									&filter_engine[1]);
 	/* Filter 3 is a little different.  Because of the input capacitor, it is
-	 * a high pass filter. */
+     * a high pass filter. */
 	filter2_setup(FILTER_HIGHPASS, 950, Q_TO_DAMP(.707), 1,
 									&filter_engine[2]);
 
@@ -123,7 +123,7 @@ void polepos_sh_reset(void *token)
 }
 
 /************************************/
-/* Write LSB of engine sound		*/
+/* Write LSB of engine sound        */
 /************************************/
 WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 {
@@ -134,7 +134,7 @@ WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 }
 
 /************************************/
-/* Write MSB of engine sound		*/
+/* Write MSB of engine sound        */
 /************************************/
 WRITE8_HANDLER( polepos_engine_sound_msb_w )
 {

@@ -1,39 +1,39 @@
 /********************************************************************
 
-			  Bionic Commando
+              Bionic Commando
 
 
 
 ToDo:
 - finish video driver
-	Some attributes are unknown. I don't remember the original game but
-	seems there are some problems:
-	- misplaced sprites ? ( see beginning of level 1 or 2 for example )
-	- sprite / sprite priority ? ( see level 2 the reflectors )
-	- sprite / background priority ? ( see level 1: birds walk through
-		branches of different trees )
-	- see the beginning of level 3: is the background screwed ?
+    Some attributes are unknown. I don't remember the original game but
+    seems there are some problems:
+    - misplaced sprites ? ( see beginning of level 1 or 2 for example )
+    - sprite / sprite priority ? ( see level 2 the reflectors )
+    - sprite / background priority ? ( see level 1: birds walk through
+        branches of different trees )
+    - see the beginning of level 3: is the background screwed ?
 
 - get rid of input port hack
 
-	Controls appear to be mapped at 0xFE4000, alongside dip switches, but there
-	is something strange going on that I can't (yet) figure out.
-	Player controls and coin inputs are supposed to magically appear at
-	0xFFFFFB (coin/start)
-	0xFFFFFD (player 2)
-	0xFFFFFF (player 1)
-	This is probably done by an MPU on the board (whose ROM is not
-	available).
+    Controls appear to be mapped at 0xFE4000, alongside dip switches, but there
+    is something strange going on that I can't (yet) figure out.
+    Player controls and coin inputs are supposed to magically appear at
+    0xFFFFFB (coin/start)
+    0xFFFFFD (player 2)
+    0xFFFFFF (player 1)
+    This is probably done by an MPU on the board (whose ROM is not
+    available).
 
-	The MPU also takes care of the commands for the sound CPU, which are stored
-	at FFFFF9.
+    The MPU also takes care of the commands for the sound CPU, which are stored
+    at FFFFF9.
 
-	IRQ4 seems to be control related.
-	On each interrupt, it reads 0xFE4000 (coin/start), shift the bits around
-	and move the resulting byte into a dword RAM location. The dword RAM location
-	is rotated by 8 bits each time this happens.
-	This is probably done to be pedantic about coin insertions (might be protection
-	related). In fact, currently coin insertions are not consistently recognized.
+    IRQ4 seems to be control related.
+    On each interrupt, it reads 0xFE4000 (coin/start), shift the bits around
+    and move the resulting byte into a dword RAM location. The dword RAM location
+    is rotated by 8 bits each time this happens.
+    This is probably done to be pedantic about coin insertions (might be protection
+    related). In fact, currently coin insertions are not consistently recognized.
 
 ********************************************************************/
 
@@ -119,7 +119,7 @@ static READ16_HANDLER( hacked_soundcommand_r )
 
 INTERRUPT_GEN( bionicc_interrupt )
 {
-	if (cpu_getiloops() == 0) 
+	if (cpu_getiloops() == 0)
 		cpunum_set_input_line(0, 2, HOLD_LINE);
 	else
 		cpunum_set_input_line(0, 4, HOLD_LINE);

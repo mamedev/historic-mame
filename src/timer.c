@@ -6,27 +6,27 @@
   CPUs.
 
   Changes 2/27/99:
-  	- added some rounding to the sorting of timers so that two timers
-  		allocated to go off at the same time will go off in the order
-  		they were allocated, without concern for floating point rounding
-  		errors (thanks Juergen!)
-  	- fixed a bug where the base_time was not updated when a CPU was
-  		suspended, making subsequent calls to get_relative_time() return an
-  		incorrect time (thanks Nicola!)
-  	- changed suspended CPUs so that they don't eat their timeslice until
-  		all other CPUs have used up theirs; this allows a slave CPU to
-  		trigger a higher priority CPU in the middle of the timeslice
-  	- added the ability to call timer_reset() on a oneshot or pulse timer
-  		from within that timer's callback; in this case, the timer won't
-  		get removed (oneshot) or won't get reprimed (pulse)
+    - added some rounding to the sorting of timers so that two timers
+        allocated to go off at the same time will go off in the order
+        they were allocated, without concern for floating point rounding
+        errors (thanks Juergen!)
+    - fixed a bug where the base_time was not updated when a CPU was
+        suspended, making subsequent calls to get_relative_time() return an
+        incorrect time (thanks Nicola!)
+    - changed suspended CPUs so that they don't eat their timeslice until
+        all other CPUs have used up theirs; this allows a slave CPU to
+        trigger a higher priority CPU in the middle of the timeslice
+    - added the ability to call timer_reset() on a oneshot or pulse timer
+        from within that timer's callback; in this case, the timer won't
+        get removed (oneshot) or won't get reprimed (pulse)
 
   Changes 12/17/99 (HJB):
-	- added overclocking factor and functions to set/get it at runtime.
+    - added overclocking factor and functions to set/get it at runtime.
 
   Changes 12/23/99 (HJB):
-	- added burn() function pointer to tell CPU cores when we want to
-	  burn cycles, because the cores might need to adjust internal
-	  counters or timers.
+    - added burn() function pointer to tell CPU cores when we want to
+      burn cycles, because the cores might need to adjust internal
+      counters or timers.
 
 ***************************************************************************/
 
@@ -52,7 +52,7 @@
 
 
 /*-------------------------------------------------
-	internal timer structure
+    internal timer structure
 -------------------------------------------------*/
 
 struct _mame_timer
@@ -77,7 +77,7 @@ struct _mame_timer
 
 
 /*-------------------------------------------------
-	global variables
+    global variables
 -------------------------------------------------*/
 
 /* conversion constants */
@@ -105,7 +105,7 @@ mame_time time_never;
 
 
 /*-------------------------------------------------
-	get_current_time - return the current time
+    get_current_time - return the current time
 -------------------------------------------------*/
 
 INLINE mame_time get_current_time(void)
@@ -116,11 +116,11 @@ INLINE mame_time get_current_time(void)
 	activecpu = cpu_getactivecpu();
 	if (activecpu >= 0)
 		return cpunum_get_localtime(activecpu);
-	
+
 	/* if we're currently in a callback, use the timer's expiration time as a base */
 	if (callback_timer)
 		return callback_timer_expire_time;
-	
+
 	/* otherwise, return the current global base time */
 	return global_basetime;
 }
@@ -128,7 +128,7 @@ INLINE mame_time get_current_time(void)
 
 
 /*-------------------------------------------------
-	timer_new - allocate a new timer
+    timer_new - allocate a new timer
 -------------------------------------------------*/
 
 INLINE mame_timer *timer_new(void)
@@ -149,8 +149,8 @@ INLINE mame_timer *timer_new(void)
 
 
 /*-------------------------------------------------
-	timer_list_insert - insert a new timer into
-	the list at the appropriate location
+    timer_list_insert - insert a new timer into
+    the list at the appropriate location
 -------------------------------------------------*/
 
 INLINE void timer_list_insert(mame_timer *timer)
@@ -205,8 +205,8 @@ INLINE void timer_list_insert(mame_timer *timer)
 
 
 /*-------------------------------------------------
-	timer_list_remove - remove a timer from the
-	linked list
+    timer_list_remove - remove a timer from the
+    linked list
 -------------------------------------------------*/
 
 INLINE void timer_list_remove(mame_timer *timer)
@@ -236,7 +236,7 @@ INLINE void timer_list_remove(mame_timer *timer)
 
 
 /*-------------------------------------------------
-	timer_init - initialize the timer system
+    timer_init - initialize the timer system
 -------------------------------------------------*/
 
 void timer_init(void)
@@ -271,8 +271,8 @@ void timer_init(void)
 
 
 /*-------------------------------------------------
-	timer_free - remove all timers on the current
-	resource tag
+    timer_free - remove all timers on the current
+    resource tag
 -------------------------------------------------*/
 
 void timer_free(void)
@@ -295,8 +295,8 @@ void timer_free(void)
 
 
 /*-------------------------------------------------
-	mame_timer_next_fire_time - return the
-	time when the next timer will fire
+    mame_timer_next_fire_time - return the
+    time when the next timer will fire
 -------------------------------------------------*/
 
 mame_time mame_timer_next_fire_time(void)
@@ -307,8 +307,8 @@ mame_time mame_timer_next_fire_time(void)
 
 
 /*-------------------------------------------------
-	timer_adjust_global_time - adjust the global
-	time; this is also where we fire the timers
+    timer_adjust_global_time - adjust the global
+    time; this is also where we fire the timers
 -------------------------------------------------*/
 
 void mame_timer_set_global_time(mame_time newbase)
@@ -380,8 +380,8 @@ void mame_timer_set_global_time(mame_time newbase)
 
 
 /*-------------------------------------------------
-	timer_alloc - allocate a permament timer that
-	isn't primed yet
+    timer_alloc - allocate a permament timer that
+    isn't primed yet
 -------------------------------------------------*/
 
 INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callback_ptr)(void *), const char *file, int line)
@@ -428,9 +428,9 @@ mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), const char *file
 
 
 /*-------------------------------------------------
-	timer_adjust - adjust the time when this
-	timer will fire, and whether or not it will
-	fire periodically
+    timer_adjust - adjust the time when this
+    timer will fire, and whether or not it will
+    fire periodically
 -------------------------------------------------*/
 
 INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int param, void *ptr_param, mame_time period)
@@ -453,7 +453,7 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int 
 	which->callback_param = param;
 	which->callback_ptr_param = ptr_param;
 	which->enabled = 1;
-	
+
 	/* clamp negative times to 0 */
 	if (duration.seconds < 0)
 		duration = time_zero;
@@ -490,9 +490,9 @@ void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, void *param, m
 
 
 /*-------------------------------------------------
-	timer_pulse - allocate a pulse timer, which
-	repeatedly calls the callback using the given
-	period
+    timer_pulse - allocate a pulse timer, which
+    repeatedly calls the callback using the given
+    period
 -------------------------------------------------*/
 
 void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line)
@@ -522,8 +522,8 @@ void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void 
 
 
 /*-------------------------------------------------
-	timer_set - allocate a one-shot timer, which
-	calls the callback after the given duration
+    timer_set - allocate a one-shot timer, which
+    calls the callback after the given duration
 -------------------------------------------------*/
 
 void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line)
@@ -559,7 +559,7 @@ void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void 
 
 
 /*-------------------------------------------------
-	timer_reset - reset the timing on a timer
+    timer_reset - reset the timing on a timer
 -------------------------------------------------*/
 
 void mame_timer_reset(mame_timer *which, mame_time duration)
@@ -582,7 +582,7 @@ void mame_timer_reset(mame_timer *which, mame_time duration)
 
 
 /*-------------------------------------------------
-	timer_remove - remove a timer from the system
+    timer_remove - remove a timer from the system
 -------------------------------------------------*/
 
 void mame_timer_remove(mame_timer *which)
@@ -613,7 +613,7 @@ void mame_timer_remove(mame_timer *which)
 
 
 /*-------------------------------------------------
-	timer_enable - enable/disable a timer
+    timer_enable - enable/disable a timer
 -------------------------------------------------*/
 
 int mame_timer_enable(mame_timer *which, int enable)
@@ -634,8 +634,8 @@ int mame_timer_enable(mame_timer *which, int enable)
 
 
 /*-------------------------------------------------
-	timer_timeelapsed - return the time since the
-	last trigger
+    timer_timeelapsed - return the time since the
+    last trigger
 -------------------------------------------------*/
 
 mame_time mame_timer_timeelapsed(mame_timer *which)
@@ -646,8 +646,8 @@ mame_time mame_timer_timeelapsed(mame_timer *which)
 
 
 /*-------------------------------------------------
-	timer_timeleft - return the time until the
-	next trigger
+    timer_timeleft - return the time until the
+    next trigger
 -------------------------------------------------*/
 
 mame_time mame_timer_timeleft(mame_timer *which)
@@ -658,7 +658,7 @@ mame_time mame_timer_timeleft(mame_timer *which)
 
 
 /*-------------------------------------------------
-	timer_get_time - return the current time
+    timer_get_time - return the current time
 -------------------------------------------------*/
 
 mame_time mame_timer_get_time(void)
@@ -669,8 +669,8 @@ mame_time mame_timer_get_time(void)
 
 
 /*-------------------------------------------------
-	timer_starttime - return the time when this
-	timer started counting
+    timer_starttime - return the time when this
+    timer started counting
 -------------------------------------------------*/
 
 mame_time mame_timer_starttime(mame_timer *which)
@@ -681,8 +681,8 @@ mame_time mame_timer_starttime(mame_timer *which)
 
 
 /*-------------------------------------------------
-	timer_firetime - return the time when this
-	timer will fire next
+    timer_firetime - return the time when this
+    timer will fire next
 -------------------------------------------------*/
 
 mame_time mame_timer_firetime(mame_timer *which)

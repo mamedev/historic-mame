@@ -1,12 +1,12 @@
 /***************************************************************************
 
-	Atari Runaway hardware
+    Atari Runaway hardware
 
-	Games supported:
-		* Qwak (prototype)
-		* Runaway (prototype)
+    Games supported:
+        * Qwak (prototype)
+        * Runaway (prototype)
 
-	original Qwak driver written by Mike Balfour
+    original Qwak driver written by Mike Balfour
 
 ****************************************************************************/
 

@@ -199,14 +199,14 @@ static MACHINE_DRIVER_START( starcrus )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
-	
+
 	MDRV_PALETTE_INIT(starcrus)
 	MDRV_VIDEO_START(starcrus)
 	MDRV_VIDEO_UPDATE(starcrus)
 
     /* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

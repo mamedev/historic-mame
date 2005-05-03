@@ -1,16 +1,16 @@
-/*	System18 Hardware
+/*  System18 Hardware
 **
-**	MC68000 + Z80
-**	2xYM3438 + Custom PCM
+**  MC68000 + Z80
+**  2xYM3438 + Custom PCM
 **
-**	Alien Storm
-**	Bloxeed
-**	Clutch Hitter
-**	D.D. Crew
-**	Laser Ghost
-**	Michael Jackson's Moonwalker
-**	Shadow Dancer
-**	Search Wally
+**  Alien Storm
+**  Bloxeed
+**  Clutch Hitter
+**  D.D. Crew
+**  Laser Ghost
+**  Michael Jackson's Moonwalker
+**  Shadow Dancer
+**  Search Wally
 */
 
 /*
@@ -134,37 +134,37 @@ static void set_bg2_page( int data ){
 
 /***************************************************************************/
 /*
-	Sound hardware for Shadow Dancer (Datsu bootleg)
+    Sound hardware for Shadow Dancer (Datsu bootleg)
 
-	Z80 memory map
-	0000-7FFF : ROM (fixed)
-	8000-BFFF : ROM (banked)
-	C000-C007 : ?
-	C400      : Sound command (r/o)
-	C800      : MSM5205 sample data output (w/o)
-	CC00-CC03 : YM3438 #1
-	D000-D003 : YM3438 #2
-	D400      : ROM bank control (w/o)
-	DF00-DFFF : ?
-	E000-FFFF : Work RAM
+    Z80 memory map
+    0000-7FFF : ROM (fixed)
+    8000-BFFF : ROM (banked)
+    C000-C007 : ?
+    C400      : Sound command (r/o)
+    C800      : MSM5205 sample data output (w/o)
+    CC00-CC03 : YM3438 #1
+    D000-D003 : YM3438 #2
+    D400      : ROM bank control (w/o)
+    DF00-DFFF : ?
+    E000-FFFF : Work RAM
 
-	The unused memory locations and I/O port access seem to be remnants of the original code that were not patched out:
+    The unused memory locations and I/O port access seem to be remnants of the original code that were not patched out:
 
-	- Program accesses RF5C68A channel registes at $C000-$C007
-	- Program clears RF5C68A wave memory at $DF00-$DFFF
-	- Program writes to port $A0 to access sound ROM banking control latch
-	- Program reads port $C0 to access sound command
+    - Program accesses RF5C68A channel registes at $C000-$C007
+    - Program clears RF5C68A wave memory at $DF00-$DFFF
+    - Program writes to port $A0 to access sound ROM banking control latch
+    - Program reads port $C0 to access sound command
 
-	Interrupts
+    Interrupts
 
-	IRQ = Triggered when 68000 writes sound command. Z80 reads from $C400.
-	NMI = Triggered when second nibble of sample data has been output to the MSM5205.
-	      Program copies sample data from ROM bank to the MSM5205 sample data buffer at $C800.
+    IRQ = Triggered when 68000 writes sound command. Z80 reads from $C400.
+    NMI = Triggered when second nibble of sample data has been output to the MSM5205.
+          Program copies sample data from ROM bank to the MSM5205 sample data buffer at $C800.
 
-	ROM banking seems correct.
-	It doesn't look like there's a way to reset the MSM5205, unless that's related to bit 7 of the
-	ROM bank control register.
-	MSM5205 clock speed hasn't been confirmed.
+    ROM banking seems correct.
+    It doesn't look like there's a way to reset the MSM5205, unless that's related to bit 7 of the
+    ROM bank control register.
+    MSM5205 clock speed hasn't been confirmed.
 */
 /***************************************************************************/
 
@@ -318,9 +318,9 @@ static WRITE8_HANDLER( sys18_soundbank_w )
 static ADDRESS_MAP_START( sound_readport_18, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
-//	AM_RANGE(0x82, 0x82) AM_READ(YM3438_status_port_0_B_r)
-//	AM_RANGE(0x90, 0x90) AM_READ(YM3438_status_port_1_A_r)
-//	AM_RANGE(0x92, 0x92) AM_READ(YM3438_status_port_1_B_r)
+//  AM_RANGE(0x82, 0x82) AM_READ(YM3438_status_port_0_B_r)
+//  AM_RANGE(0x90, 0x90) AM_READ(YM3438_status_port_1_A_r)
+//  AM_RANGE(0x92, 0x92) AM_READ(YM3438_status_port_1_B_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
@@ -347,7 +347,7 @@ static WRITE16_HANDLER( sound_command_nmi_w ){
 /***************************************************************************/
 
 /*
-	315-5313 Video Display Processor (VDP) emulation
+    315-5313 Video Display Processor (VDP) emulation
 */
 
 struct {
@@ -472,7 +472,7 @@ static READ16_HANDLER( vdp_r )
 /***************************************************************************/
 
 /*
-	315-5296 I/O chip emulation
+    315-5296 I/O chip emulation
 */
 
 static int io_reg[0x10];
@@ -639,7 +639,7 @@ static WRITE16_HANDLER( sys18_io_w )
 				break;
 
 			case 0x3000/2: /* Expansion connector */
-//				logerror("write expansion area %06X = %04X (%06X)\n", offset, data, activecpu_get_pc());
+//              logerror("write expansion area %06X = %04X (%06X)\n", offset, data, activecpu_get_pc());
 				break;
 		}
 	}
@@ -655,43 +655,43 @@ static WRITE16_HANDLER( sys18_io_w )
 
 /***************************************************************************/
 /*
-	Shadow Dancer (Bootleg)
+    Shadow Dancer (Bootleg)
 
-	This seems to be a modified version of shdancer. It has no warning screen, displays English text during the
-	attract sequence, and has a 2P input test. The 'Sega' copyright text was changed to 'Datsu', and their
-	logo is missing.
+    This seems to be a modified version of shdancer. It has no warning screen, displays English text during the
+    attract sequence, and has a 2P input test. The 'Sega' copyright text was changed to 'Datsu', and their
+    logo is missing.
 
-	Access to the configuration registers, I/O chip, and VDP are done even though it's likely none of this hardware
-	exists in the bootleg. For example:
+    Access to the configuration registers, I/O chip, and VDP are done even though it's likely none of this hardware
+    exists in the bootleg. For example:
 
-	- Most I/O port access has been redirected to new addresses.
-	- Z80 sound command has been redirected to a new address.
-	- The tilebank routine which saves the bank value in VDP VRAM has a form of protection has been modified to store
-	  the tilebank value directly to $E4001F.
-	- Implementing screen blanking control via $E4001D leaves the screen blanked at the wrong times (after coin-up).
+    - Most I/O port access has been redirected to new addresses.
+    - Z80 sound command has been redirected to a new address.
+    - The tilebank routine which saves the bank value in VDP VRAM has a form of protection has been modified to store
+      the tilebank value directly to $E4001F.
+    - Implementing screen blanking control via $E4001D leaves the screen blanked at the wrong times (after coin-up).
 
-	This is probably due to unmodified parts of the original code accessing these components, which would be ignored
-	on the bootleg hardware. Both the I/O chip and VDP are supported in this driver, just as I don't know for certain
-	how much of either are present on the real board.
+    This is probably due to unmodified parts of the original code accessing these components, which would be ignored
+    on the bootleg hardware. Both the I/O chip and VDP are supported in this driver, just as I don't know for certain
+    how much of either are present on the real board.
 
-	Bootleg specific addresses:
+    Bootleg specific addresses:
 
-	C40001 = DIP switch #1
-	C40003 = DIP switch #2
-	C40007 = Z80 sound command
-	C41001 = Service input
-	C41003 = Player 1 input
-	C41005 = Player 2 input
-	C44000 = Has 'clr.w' done after setting tile bank in $E4000F.
-	C460xx = Extra video hardware controls
+    C40001 = DIP switch #1
+    C40003 = DIP switch #2
+    C40007 = Z80 sound command
+    C41001 = Service input
+    C41003 = Player 1 input
+    C41005 = Player 2 input
+    C44000 = Has 'clr.w' done after setting tile bank in $E4000F.
+    C460xx = Extra video hardware controls
 
-	Here are the I/O chip addresses accessed:
+    Here are the I/O chip addresses accessed:
 
-	E40001 = Player 1
-	E40007 = Miscellaneous outputs (coin control, etc.)
-	E4000F = Tile bank
-	E4001D = CNT2-0 pin output state
-	E4001F = I/O chip port direction
+    E40001 = Player 1
+    E40007 = Miscellaneous outputs (coin control, etc.)
+    E4000F = Tile bank
+    E4001D = CNT2-0 pin output state
+    E4001F = I/O chip port direction
 */
 /***************************************************************************/
 
@@ -791,7 +791,7 @@ static DRIVER_INIT( shdancbl )
 
 /***************************************************************************/
 /*
-	Moonwalker (Bootleg)
+    Moonwalker (Bootleg)
 */
 /***************************************************************************/
 
@@ -1335,7 +1335,7 @@ INPUT_PORTS_START( mwalkbl )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
@@ -1445,10 +1445,10 @@ ROM_START( shdancbl )
 
 	// 12718
 	ROM_LOAD16_BYTE( "ic77", 0x080001, 0x10000, CRC(f93470b7) SHA1(1041afa43aa8d0589d6def9743721cdbda617f78) )
-//	ROM_LOAD16_BYTE( "ic78", 0x0A0001, 0x10000, CRC(4d523ea3) SHA1(053c30778017127dddeae0783af463aef17bcc9a) ) // corrupt? (bad sprite when dog attacts in attract mode)
+//  ROM_LOAD16_BYTE( "ic78", 0x0A0001, 0x10000, CRC(4d523ea3) SHA1(053c30778017127dddeae0783af463aef17bcc9a) ) // corrupt? (bad sprite when dog attacts in attract mode)
 	ROM_LOAD16_BYTE( "sdbl.78", 0x0A0001, 0x10000, CRC(e533be5d) SHA1(926d6ba3f7a3ac289b0ae40d7633c70b2819df4d) )
 	ROM_LOAD16_BYTE( "ic95", 0x0C0001, 0x10000, CRC(828b8294) SHA1(f2cdb882fb0709a909e6ef98f0315aceeb8bf283) )
-//	ROM_LOAD16_BYTE( "ic94", 0x0E0001, 0x10000, CRC(542b2d1e) SHA1(1ce91aea6c49e6e365a91c30ca3049682c2162da) )
+//  ROM_LOAD16_BYTE( "ic94", 0x0E0001, 0x10000, CRC(542b2d1e) SHA1(1ce91aea6c49e6e365a91c30ca3049682c2162da) )
 	ROM_LOAD16_BYTE( "sdbl.94", 0x0E0001, 0x10000, CRC(e2fa2b41) SHA1(7186107734dac5763dee43addcea7c14fb0d9d74) )
 
 	// 12725

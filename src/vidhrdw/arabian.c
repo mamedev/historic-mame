@@ -29,7 +29,7 @@ UINT8 arabian_flip_screen;
 
 /*************************************
  *
- *	Color PROM conversion
+ *  Color PROM conversion
  *
  *************************************/
 
@@ -66,83 +66,83 @@ PALETTE_INIT( arabian )
 		int planea = (az | ar | ag | ab) & ena;
 
 		/*-------------------------------------------------------------------------
-			red derivation:
+            red derivation:
 
-			ROUT.1200	= !IC192.11
-						= !(!(!IC117.11 | !IC118.12))
-						= !IC117.11 | !IC118.12
-						= !(IC99.8 ^ IC119.6) | !(!(!BLNK & IC119.11 & BR))
-						= !((!ARHF & !BLNK & AR & AZ) ^ !(AR & !BLNK)) | (!BLNK & IC119.11 & BR)
-						= !BLNK & (!((!ARHF & AR & AZ) ^ !AR) | (IC119.11 & BR))
-						= !BLNK & ((!(!ARHF & AR & AZ) ^ AR) | (BR & !(AZ | AR | AG | AB)))
+            ROUT.1200   = !IC192.11
+                        = !(!(!IC117.11 | !IC118.12))
+                        = !IC117.11 | !IC118.12
+                        = !(IC99.8 ^ IC119.6) | !(!(!BLNK & IC119.11 & BR))
+                        = !((!ARHF & !BLNK & AR & AZ) ^ !(AR & !BLNK)) | (!BLNK & IC119.11 & BR)
+                        = !BLNK & (!((!ARHF & AR & AZ) ^ !AR) | (IC119.11 & BR))
+                        = !BLNK & ((!(!ARHF & AR & AZ) ^ AR) | (BR & !(AZ | AR | AG | AB)))
 
-			ROUT.1800	= !IC192.3
-						= !(!(!IC119.6 | !IC118.12))
-						= !IC119.6 | !IC118.12
-						= !(!(AR & !BLNK) | !(!(!BLNK & IC119.11 & BZ)))
-						= (AR & !BLNK) | (!BLNK & IC119.11 & BZ)
-						= !BLNK & (AR | (BZ & !(AZ | AR | AG | AB)))
+            ROUT.1800   = !IC192.3
+                        = !(!(!IC119.6 | !IC118.12))
+                        = !IC119.6 | !IC118.12
+                        = !(!(AR & !BLNK) | !(!(!BLNK & IC119.11 & BZ)))
+                        = (AR & !BLNK) | (!BLNK & IC119.11 & BZ)
+                        = !BLNK & (AR | (BZ & !(AZ | AR | AG | AB)))
 
-			RENA		= IC116.6
-						= !IC192.11 | !IC192.3
-						= ROUT.1200 | ROUT.1800
+            RENA        = IC116.6
+                        = !IC192.11 | !IC192.3
+                        = ROUT.1200 | ROUT.1800
 
-			red.hi   = planea ? ar : bz;
-			red.lo   = planea ? ((!arhf & az) ? 0 : ar) : br;
-			red.base = (red.hi | red.lo)
-		-------------------------------------------------------------------------*/
+            red.hi   = planea ? ar : bz;
+            red.lo   = planea ? ((!arhf & az) ? 0 : ar) : br;
+            red.base = (red.hi | red.lo)
+        -------------------------------------------------------------------------*/
 
 		int rhi = planea ? ar : enb ? bz : 0;
 		int rlo = planea ? ((!arhf & az) ? 0 : ar) : enb ? br : 0;
 
 		/*-------------------------------------------------------------------------
-			green derivation:
+            green derivation:
 
-			GOUT.750	= !IC192.8
-						= !(!(!IC119.8 | !IC120.8))
-						= !IC119.8 | !IC120.8
-						= !(!(AG & !BLNK)) | !(!(!BLNK & IC119.11 & BB))
-						= (AG & !BLNK) | (!BLNK & IC119.11 & BB)
-						= !BLNK & (AG | (IC119.11 & BB))
-						= !BLNK & (AG | (BB & !(AZ | AR | AG | AB)))
+            GOUT.750    = !IC192.8
+                        = !(!(!IC119.8 | !IC120.8))
+                        = !IC119.8 | !IC120.8
+                        = !(!(AG & !BLNK)) | !(!(!BLNK & IC119.11 & BB))
+                        = (AG & !BLNK) | (!BLNK & IC119.11 & BB)
+                        = !BLNK & (AG | (IC119.11 & BB))
+                        = !BLNK & (AG | (BB & !(AZ | AR | AG | AB)))
 
-			GOUT.1200	= !IC192.6
-						= !(!(!IC117.3 | !IC118.6))
-						= !IC117.3 | !IC118.6
-						= !(IC99.6 ^ IC119.8) | !(!(!BLNK & IC119.11 & BG))
-						= !((!AGHF & !BLNK & AG & AZ) ^ !(AG & !BLNK)) | (!BLNK & IC119.11 & BG)
-						= !BLNK & (!((!AGHF & AG & AZ) ^ !AG) | (IC119.11 & BG))
-						= !BLNK & ((!(!AGHF & AG & AZ) ^ AG) | (BG & !(AZ | AR | AG | AB)))
+            GOUT.1200   = !IC192.6
+                        = !(!(!IC117.3 | !IC118.6))
+                        = !IC117.3 | !IC118.6
+                        = !(IC99.6 ^ IC119.8) | !(!(!BLNK & IC119.11 & BG))
+                        = !((!AGHF & !BLNK & AG & AZ) ^ !(AG & !BLNK)) | (!BLNK & IC119.11 & BG)
+                        = !BLNK & (!((!AGHF & AG & AZ) ^ !AG) | (IC119.11 & BG))
+                        = !BLNK & ((!(!AGHF & AG & AZ) ^ AG) | (BG & !(AZ | AR | AG | AB)))
 
-			GENA		= IC116.8
-						= !IC192.8 | !IC192.6
-						= GOUT.750 | GOUT.1200
+            GENA        = IC116.8
+                        = !IC192.8 | !IC192.6
+                        = GOUT.750 | GOUT.1200
 
-			grn.hi   = planea ? ag : bb;
-			grn.lo   = planea ? ((!aghf & az) ? 0 : ag) : bg;
-			grn.base = (grn.hi | grn.lo)
-		-------------------------------------------------------------------------*/
+            grn.hi   = planea ? ag : bb;
+            grn.lo   = planea ? ((!aghf & az) ? 0 : ag) : bg;
+            grn.base = (grn.hi | grn.lo)
+        -------------------------------------------------------------------------*/
 
 		int ghi = planea ? ag : enb ? bb : 0;
 		int glo = planea ? ((!aghf & az) ? 0 : ag) : enb ? bg : 0;
 
 		/*-------------------------------------------------------------------------
-			blue derivation:
+            blue derivation:
 
-			BOUT.1200	= !IC117.6
-						= !IC119.3
-						= !(!(AB & !BLNK))
-						= !BLNK & AB
+            BOUT.1200   = !IC117.6
+                        = !IC119.3
+                        = !(!(AB & !BLNK))
+                        = !BLNK & AB
 
-			BENA		= !IC117.8
-						= !(IC189.6 ^ IC119.3)
-						= !((!ABHF & !BLNK & AB & AZ) ^ !(AB & !BLNK))
-						= (!(!ABHF & !BLNK & AB & AZ) ^ (AB & !BLNK))
-						= !BLNK & (!(!ABHF & AB & AZ) ^ AB)
+            BENA        = !IC117.8
+                        = !(IC189.6 ^ IC119.3)
+                        = !((!ABHF & !BLNK & AB & AZ) ^ !(AB & !BLNK))
+                        = (!(!ABHF & !BLNK & AB & AZ) ^ (AB & !BLNK))
+                        = !BLNK & (!(!ABHF & AB & AZ) ^ AB)
 
-			blu.hi   = ab;
-			blu.base = ((!abhf & az) ? 0 : ab);
-		-------------------------------------------------------------------------*/
+            blu.hi   = ab;
+            blu.base = ((!abhf & az) ? 0 : ab);
+        -------------------------------------------------------------------------*/
 
 		int bhi = ab;
 		int bbase = (!abhf & az) ? 0 : ab;
@@ -157,7 +157,7 @@ PALETTE_INIT( arabian )
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -180,22 +180,22 @@ VIDEO_START( arabian )
 
 
 	/*--------------------------------------------------
-		transform graphics data into more usable format
-		which is coded like this:
+        transform graphics data into more usable format
+        which is coded like this:
 
-		  byte adr+0x4000  byte adr
-		  DCBA DCBA        DCBA DCBA
+          byte adr+0x4000  byte adr
+          DCBA DCBA        DCBA DCBA
 
-		D-bits of pixel 4
-		C-bits of pixel 3
-		B-bits of pixel 2
-		A-bits of pixel 1
+        D-bits of pixel 4
+        C-bits of pixel 3
+        B-bits of pixel 2
+        A-bits of pixel 1
 
-		after conversion :
+        after conversion :
 
-		  byte adr+0x4000  byte adr
-		  DDDD CCCC        BBBB AAAA
-	--------------------------------------------------*/
+          byte adr+0x4000  byte adr
+          DDDD CCCC        BBBB AAAA
+    --------------------------------------------------*/
 
 	for (offs = 0; offs < 0x4000; offs++)
 	{
@@ -227,7 +227,7 @@ VIDEO_START( arabian )
 
 /*************************************
  *
- *	DMA blitter simulation
+ *  DMA blitter simulation
  *
  *************************************/
 
@@ -273,7 +273,7 @@ static void blit_area(UINT8 plane, UINT16 src, UINT8 x, UINT8 y, UINT8 sx, UINT8
 
 /*************************************
  *
- *	DMA blitter parameters
+ *  DMA blitter parameters
  *
  *************************************/
 
@@ -303,7 +303,7 @@ WRITE8_HANDLER( arabian_blitter_w )
 
 /*************************************
  *
- *	VRAM direct I/O
+ *  VRAM direct I/O
  *
  *************************************/
 
@@ -321,15 +321,15 @@ WRITE8_HANDLER( arabian_videoram_w )
 
 	/* the data is written as 4 2-bit values, as follows:
 
-			bit 7 = pixel 3, upper bit
-			bit 6 = pixel 2, upper bit
-			bit 5 = pixel 1, upper bit
-			bit 4 = pixel 0, upper bit
-			bit 3 = pixel 3, lower bit
-			bit 2 = pixel 2, lower bit
-			bit 1 = pixel 1, lower bit
-			bit 0 = pixel 0, lower bit
-	*/
+            bit 7 = pixel 3, upper bit
+            bit 6 = pixel 2, upper bit
+            bit 5 = pixel 1, upper bit
+            bit 4 = pixel 0, upper bit
+            bit 3 = pixel 3, lower bit
+            bit 2 = pixel 2, lower bit
+            bit 1 = pixel 1, lower bit
+            bit 0 = pixel 0, lower bit
+    */
 
 	/* enable writes to AZ/AR */
 	if (spriteram[0] & 0x08)
@@ -372,7 +372,7 @@ WRITE8_HANDLER( arabian_videoram_w )
 
 /*************************************
  *
- *	Core video refresh
+ *  Core video refresh
  *
  *************************************/
 

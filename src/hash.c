@@ -1,10 +1,10 @@
 /*********************************************************************
 
-	hash.c
+    hash.c
 
-	Function to handle hash functions (checksums)
+    Function to handle hash functions (checksums)
 
-	Started by Farfetch'd
+    Started by Farfetch'd
 
 *********************************************************************/
 
@@ -17,12 +17,12 @@
  */
 
 /*
- * DONE:	
+ * DONE:
  *
  * hash.c/h: New files, implement the new hashing engine with flexible
  *    support for more functions (for now, CRC, SHA1 and MD5).
  *
- * common.h: transparently support the new RomModule structure through 
+ * common.h: transparently support the new RomModule structure through
  *    ROM_* macros, so that old the legacy code still work
  *
  * common.c: updated ROM loading engine to support the new hash engine,
@@ -46,14 +46,14 @@
  *    the file is within an archive (zip), only the checksums
  *    available in the archive header are used.
  *
- * windows/fronthlp.c:  Updated -identrom to the new hash engine, now 
+ * windows/fronthlp.c:  Updated -identrom to the new hash engine, now
  *    support any hash function available.
  *    Added -crconly to disable advanced integrity checks.
  *    This should be needed for people with very slow computers
  *    whose loading time is affected too much by the new hashing
  *    calculations (hello, stephh).
- *    This also means that for -identrom MAME will not have to 
- *    decompress the ROM from the ZIP to calculate checksum 
+ *    This also means that for -identrom MAME will not have to
+ *    decompress the ROM from the ZIP to calculate checksum
  *    informations, since the CRC will be extracted from the header.
  *    Added -listsha1 and -listmd5. It would be possible to add
  *    also a -listbad now, to list bad dumps (ROMS we need a
@@ -74,38 +74,38 @@
  *
  * Technical details:
  *
- * Checksum informations are now stored inside a string. They are 
+ * Checksum informations are now stored inside a string. They are
  * stored in "printable hex format", which means that they use
  * more memory than before (since a CRC needs 8 characters to
  * be printed, instead of 4 bytes of raw information). In the
- * driver, they are defined with handy macros which rely on 
- * automatic string pasting. 
+ * driver, they are defined with handy macros which rely on
+ * automatic string pasting.
  *
  * Additional flags can also be stored in the string: for now we
- * support NO_DUMP and BAD_DUMP, which replace, respectively, 
+ * support NO_DUMP and BAD_DUMP, which replace, respectively,
  * a CRC of 0 and a bit-inverted CRC.
  *
  * All the code that handles hash data is in hash.c. The rest of
- * the core treats the data as an 'opaque type', so that the 
- * pointers are just passed along through functions but no 
+ * the core treats the data as an 'opaque type', so that the
+ * pointers are just passed along through functions but no
  * operation is performed on the data outside hash.c. This
- * is important in case we want to change the string 
+ * is important in case we want to change the string
  * representation later in the future.
  *
- * When loading a ROM, MAME will calculate and compare the 
+ * When loading a ROM, MAME will calculate and compare the
  * checksum using any function for which the driver has declared
  * an expected checksum. This happens because it would be useless
  * to calculate a checksum if we cannot verify its correctness.
  * For developers, it also means that MAME will not compute the
- * SHA1 for you unless you specify a bogus one in the driver 
- * (like SHA1(0)). 
- * 
+ * SHA1 for you unless you specify a bogus one in the driver
+ * (like SHA1(0)).
+ *
  * When verifying a ROM, MAME will use only the checksums available
  * in the archive header (if zip, CRC). This is by design because
  * -verifyroms has always been very fast. It is feasible to add
  * a -fullverifyroms at a later moment, which will decompress the
  * files and compute every checksum that has been declared in the
- * driver. 
+ * driver.
  *
  * I have also prepared a little tool (SHA1Merger) which takes care
  * of the following tasks:
@@ -113,11 +113,11 @@
  * - Given an existing driver in old syntax (0.66 compatible), it will
  *   convert all the existing ROM_LOAD entries in the new format, and
  *   it will automatically compute and add SHA1 checksum for you if
- *   it can find the romset. 
+ *   it can find the romset.
  *
- * - Given a romset (ZIP file), it will prepare a ROM definition 
- *   skeleton for a driver, containing already rom names, lengths, and 
- *   checksums (both CRC and SHA1). 
+ * - Given a romset (ZIP file), it will prepare a ROM definition
+ *   skeleton for a driver, containing already rom names, lengths, and
+ *   checksums (both CRC and SHA1).
  *
  * The tool is available on www.mame.net as platform-independent source code
  * (in Python), or win32 standalone executable.
@@ -146,12 +146,12 @@
 #define FALSE   0
 #endif
 
-typedef struct 
+typedef struct
 {
 	const char* name;           // human-readable name
 	char code;                  // single-char code used within the hash string
 	unsigned int size;          // checksum size in bytes
-	
+
 	// Functions used to calculate the hash of a memory block
 	void (*calculate_begin)(void);
 	void (*calculate_buffer)(const void* mem, unsigned long len);
@@ -237,8 +237,8 @@ int hash_data_has_checksum(const char* data, unsigned int function)
 	char str[3];
 	const char* res;
 
-	str[0] = info->code; 
-	str[1] = ':'; 
+	str[0] = info->code;
+	str[1] = ':';
 	str[2] = '\0';
 
 	// Check if the specified hash function is used within this data
@@ -256,7 +256,7 @@ static int hash_data_add_binary_checksum(char* d, unsigned int function, const U
 	const hash_function_desc* desc = hash_get_function_desc(function);
 	char* start = d;
 	unsigned i;
-	
+
 	*d++ = desc->code;
 	*d++ = ':';
 
@@ -267,7 +267,7 @@ static int hash_data_add_binary_checksum(char* d, unsigned int function, const U
 		*d++ = binToStr[(c >> 4) & 0xF];
 		*d++ = binToStr[(c >> 0) & 0xF];
 	}
-	
+
 	*d++ = '#';
 
 	// Return the number of written bytes
@@ -304,7 +304,7 @@ int hash_data_is_equal(const char* d1, const char* d2, unsigned int functions)
 	int i;
 	char incomplete = 0;
 	char ok = 0;
-	
+
 	// If no function is specified, it means we need to check for all
 	//  of them
 	if (!functions)
@@ -350,16 +350,16 @@ int hash_data_extract_printable_checksum(const char* data, unsigned int function
 	unsigned int i;
 	const hash_function_desc* info;
 	int offs;
-	
+
 	// Check if the hashdata contains the requested function
 	offs = hash_data_has_checksum(data, function);
-	
+
 	if (!offs)
 		return 0;
-	
+
 	// Move to the beginning of the checksum
 	data += offs;
-	
+
 	info = hash_get_function_desc(function);
 
 	// Return the number of required bytes
@@ -388,7 +388,7 @@ int hash_data_extract_printable_checksum(const char* data, unsigned int function
 			checksum[info->size*2] = '\0';
 			return 2;
 		}
-	
+
 	// Copy the checksum (and make it lowercase)
 	for (i=0;i<info->size*2;i++)
 		checksum[i] = tolower(data[i]);
@@ -406,7 +406,7 @@ static int hex_string_to_binary(unsigned char* binary, const char* data, int siz
 	for (i = 0; i < size * 2; i++)
 	{
 		c = tolower(*data++);
-		
+
 		if (c >= '0' && c <= '9')
 			c -= '0';
 		else if (c >= 'a' && c <= 'f')
@@ -426,7 +426,7 @@ int hash_data_extract_binary_checksum(const char* data, unsigned int function, u
 {
 	const hash_function_desc* info;
 	int offs;
-	
+
 	// Check if the hashdata contains the requested function
 	offs = hash_data_has_checksum(data, function);
 
@@ -454,7 +454,7 @@ int hash_data_extract_binary_checksum(const char* data, unsigned int function, u
 		memset(checksum, '\0', info->size);
 		return 2;
 	}
-	
+
 	// Convert hex string into binary
 	if (hex_string_to_binary(checksum, data, info->size))
 		{
@@ -522,7 +522,7 @@ int hash_data_insert_printable_checksum(char* d, unsigned int function, const ch
 int hash_data_insert_binary_checksum(char* d, unsigned int function, const UINT8* checksum)
 {
 	int offset;
-	
+
 	offset = hash_data_has_checksum(d, function);
 
 	if (!offset)
@@ -538,7 +538,7 @@ int hash_data_insert_binary_checksum(char* d, unsigned int function, const UINT8
 		// Move to the start of the whole checksum signature, not only to the checksum
 		// itself
 		d += offset - 2;
-		
+
 		// Overwrite previous checksum with new one
 		hash_data_add_binary_checksum(d, function, checksum);
 
@@ -550,7 +550,7 @@ void hash_compute(char* dst, const unsigned char* data, unsigned long length, un
 {
 	int i;
 
-	hash_data_clear(dst);	
+	hash_data_clear(dst);
 
 	// Zero means use all the functions
 	if (functions == 0)
@@ -559,7 +559,7 @@ void hash_compute(char* dst, const unsigned char* data, unsigned long length, un
 	for (i=0;i<HASH_NUM_FUNCTIONS;i++)
 	{
 		unsigned func = 1 << i;
-		
+
 		if (functions & func)
 		{
 			const hash_function_desc* desc = hash_get_function_desc(func);
@@ -597,17 +597,17 @@ void hash_data_print(const char* data, unsigned int functions, char* buffer)
 			if (!first)
 				strcat(buffer, " ");
 			first = 0;
-			
+
 			strcpy(temp, hash_function_name(func));
 			for (j = 0; temp[j]; j++)
 				temp[j] = toupper(temp[j]);
 			strcat(buffer, temp);
 			strcat(buffer, "(");
-            
+
 			hash_data_extract_printable_checksum(data, func, temp);
 			strcat(buffer, temp);
 			strcat(buffer, ")");
-		}	
+		}
 	}
 }
 
@@ -644,7 +644,7 @@ int hash_verify_string(const char *hash)
 			/* we have a proper code */
 			len = hash_descs[i].size * 2;
 			hash += 2;
-			
+
 			for (i = 0; (hash[i] != '#') && (i < len); i++)
 			{
 				if (!isxdigit(hash[i]))
@@ -662,7 +662,7 @@ int hash_verify_string(const char *hash)
 
 
 /*********************************************************************
-	Hash functions - Wrappers
+    Hash functions - Wrappers
  *********************************************************************/
 
 static UINT32 crc;
@@ -709,7 +709,7 @@ static struct MD5Context md5_ctx;
 
 static void h_md5_begin(void)
 {
-	MD5Init(&md5_ctx);		
+	MD5Init(&md5_ctx);
 }
 
 static void h_md5_buffer(const void* mem, unsigned long len)

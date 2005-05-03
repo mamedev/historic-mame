@@ -9,7 +9,7 @@ Memory Mapped:
 
 I/O Ports:
 
-00-01		W   AY8910 #0
+00-01       W   AY8910 #0
 
 
 TODO:
@@ -522,7 +522,7 @@ static MACHINE_DRIVER_START( zodiack )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1789750)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

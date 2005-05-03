@@ -1,65 +1,65 @@
 /***************************************************************************
 
-							-= Seta Hardware =-
+                            -= Seta Hardware =-
 
-					driver by	Luca Elia (l.elia@tin.it)
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-CPU    :	68000 + [65C02] (only in the earlier games)
-Custom :	X1-001A  X1-002A			Sprites
-			X1-001
-			X1-002
-			X1-003
-			X1-004
-			X1-005   X0-005
-			X1-006   X0-006
-			X1-007
-			X1-010						Sound: 16 Bit PCM
-			X1-011 [x2]  X1-012 [x2]	Tilemaps
-			X1-014						Sprites?
+CPU    :    68000 + [65C02] (only in the earlier games)
+Custom :    X1-001A  X1-002A            Sprites
+            X1-001
+            X1-002
+            X1-003
+            X1-004
+            X1-005   X0-005
+            X1-006   X0-006
+            X1-007
+            X1-010                      Sound: 16 Bit PCM
+            X1-011 [x2]  X1-012 [x2]    Tilemaps
+            X1-014                      Sprites?
 
 -------------------------------------------------------------------------------
-Ordered by Board		Year + Game							Licensed To
+Ordered by Board        Year + Game                         Licensed To
 -------------------------------------------------------------------------------
-P0-029-A (M6100287A)	88 Thundercade / Twin Formation	(1)	Taito
-?        (M6100326A)	88 Twin Eagle						Taito
-?						89 DownTown							Taito / RomStar
-?        (M6100430A)	89 U.S. Classic(2)					Taito / RomStar
-?						88 Caliber 50						Taito / RomStar
-?						89 Arbalester						Taito / RomStar
+P0-029-A (M6100287A)    88 Thundercade / Twin Formation (1) Taito
+?        (M6100326A)    88 Twin Eagle                       Taito
+?                       89 DownTown                         Taito / RomStar
+?        (M6100430A)    89 U.S. Classic(2)                  Taito / RomStar
+?                       88 Caliber 50                       Taito / RomStar
+?                       89 Arbalester                       Taito / RomStar
 P1-036-A + P0-045-A +
-P1-049-A				89 Meta Fox							Taito / RomStar
-P0-053-1				89 Castle of Dragon/Dragon Unit		Taito / RomStar / Athena
-P0-053-A				91 Strike Gunner S.T.G				Athena / Tecmo
-P0-053-A				92 Quiz Kokology					Tecmo
-P0-055-B				89 Wit's							Athena
-P0-055-D				90 Thunder & Lightning				Romstar / Visco
-Promat PCB				94 Wiggie Waggie(5)    				--
-P0-063-A				91 Rezon							Allumer
-P0-068-B (M6100723A)	92 Block Carnival					Visco
-P0-072-2 (prototype)	92 Blandia (prototype)				Allumer
-P0-077-A (BP922)		92 Ultraman Club					Banpresto
-PO-078-A				92 Blandia							Allumer
-P0-079-A				92 Zing Zing Zip					Allumer + Tecmo
-P0-079-A				94 Eight Forces						Tecmo
-PO-080-A (BP923)		92 SD Gundam Neo Battling (3)		Banpresto
-?						93 Athena no Hatena?				Athena
-?						93 J.J.Squawkers					Athena / Able
-?        (93111A)		93 War Of Aero						Yang Cheng
-P0-081-A				93 Mobile Suit Gundam				Banpresto
-PO-083-A (BP931)		93 Ultra Toukon Densetsu			Banpresto + Tsuburaya Prod.
-PO-092-A				93 Daioh							Athena
-PO-096-A (BP934KA)		93 Kamen Rider						Banpresto
-P0-097-A				93 Oishii Puzzle ..					Sunsoft + Atlus
-bootleg					9? Triple Fun (4)					bootleg (Comad?)
-P0-100-A				93 Quiz Kokology 2					Tecmo
-P0-101-1				94 Pro Mahjong Kiwame				Athena
-PO-102-A				93 Mad Shark						Allumer
-P0-114-A (SKB-001)		94 Krazy Bowl						American Sammy
-P0-117-A (DH-01)		95 Extreme Downhill					Sammy Japan
-P0-117-A?				95 Sokonuke Taisen Game				Sammy Industries
-P0-120-A (BP954KA)		95 Gundhara							Banpresto
-PO-122-A (SZR-001)		95 Zombie Raid						American Sammy
+P1-049-A                89 Meta Fox                         Taito / RomStar
+P0-053-1                89 Castle of Dragon/Dragon Unit     Taito / RomStar / Athena
+P0-053-A                91 Strike Gunner S.T.G              Athena / Tecmo
+P0-053-A                92 Quiz Kokology                    Tecmo
+P0-055-B                89 Wit's                            Athena
+P0-055-D                90 Thunder & Lightning              Romstar / Visco
+Promat PCB              94 Wiggie Waggie(5)                 --
+P0-063-A                91 Rezon                            Allumer
+P0-068-B (M6100723A)    92 Block Carnival                   Visco
+P0-072-2 (prototype)    92 Blandia (prototype)              Allumer
+P0-077-A (BP922)        92 Ultraman Club                    Banpresto
+PO-078-A                92 Blandia                          Allumer
+P0-079-A                92 Zing Zing Zip                    Allumer + Tecmo
+P0-079-A                94 Eight Forces                     Tecmo
+PO-080-A (BP923)        92 SD Gundam Neo Battling (3)       Banpresto
+?                       93 Athena no Hatena?                Athena
+?                       93 J.J.Squawkers                    Athena / Able
+?        (93111A)       93 War Of Aero                      Yang Cheng
+P0-081-A                93 Mobile Suit Gundam               Banpresto
+PO-083-A (BP931)        93 Ultra Toukon Densetsu            Banpresto + Tsuburaya Prod.
+PO-092-A                93 Daioh                            Athena
+PO-096-A (BP934KA)      93 Kamen Rider                      Banpresto
+P0-097-A                93 Oishii Puzzle ..                 Sunsoft + Atlus
+bootleg                 9? Triple Fun (4)                   bootleg (Comad?)
+P0-100-A                93 Quiz Kokology 2                  Tecmo
+P0-101-1                94 Pro Mahjong Kiwame               Athena
+PO-102-A                93 Mad Shark                        Allumer
+P0-114-A (SKB-001)      94 Krazy Bowl                       American Sammy
+P0-117-A (DH-01)        95 Extreme Downhill                 Sammy Japan
+P0-117-A?               95 Sokonuke Taisen Game             Sammy Industries
+P0-120-A (BP954KA)      95 Gundhara                         Banpresto
+PO-122-A (SZR-001)      95 Zombie Raid                      American Sammy
 
 -------------------------------------------------------------------------------
 (1) YM2203 + YM3812 instead of X1-010
@@ -111,7 +111,7 @@ TODO:
 
 /***************************************************************************
 
-						Thundercade / Twin Formation
+                        Thundercade / Twin Formation
 
 CPU: HD68000PS8
 SND: YM3812, YM2203C
@@ -142,9 +142,9 @@ P0-029-A
 
 /***************************************************************************
 
-								Twin Eagle
+                                Twin Eagle
 
-M6100326A	Taito (Seta)
+M6100326A   Taito (Seta)
 
 ua2-4              68000
 ua2-3
@@ -161,7 +161,7 @@ ua2-11              ua2-2
 
 /***************************************************************************
 
-								U.S. Classic
+                                U.S. Classic
 
 M6100430A (Taito 1989)
 
@@ -185,7 +185,7 @@ u75  131                                 u61 004
 ***************************************************************************/
 /***************************************************************************
 
-								Caliber 50
+                                Caliber 50
 
 CPU:   TMP 68000N-8, 65C02
 Other: NEC D4701
@@ -209,7 +209,7 @@ UH-001-013                               UH-002-004-T02
 ***************************************************************************/
 /***************************************************************************
 
-									Meta Fox
+                                    Meta Fox
 
 (Seta 1990)
 
@@ -258,20 +258,20 @@ P1-049-A
 
 /***************************************************************************
 
-								Dragon Unit
-					 [Prototype of "Castle Of Dragon"]
+                                Dragon Unit
+                     [Prototype of "Castle Of Dragon"]
 
-PCB:	P0-053-1
-CPU:	68000-8
-Sound:	X1-010
-OSC:	16.0000MHz
+PCB:    P0-053-1
+CPU:    68000-8
+Sound:  X1-010
+OSC:    16.0000MHz
 
-Chips:	X1-001A, X1-002A, X1-004, X1-006, X1-007, X1-010, X1-011, X1-012
+Chips:  X1-001A, X1-002A, X1-004, X1-006, X1-007, X1-010, X1-011, X1-012
 
 ***************************************************************************/
 /***************************************************************************
 
-									Wit's
+                                    Wit's
 
 (c)1989 Athena (distributed by Visco)
 P0-055B (board is made by Seta)
@@ -292,16 +292,16 @@ UN001006.4L |
 UN001007.5L |
 UN001008.7L /
 
-Custom chips:	X1-001A		X1-002A
-				X1-004 (x2)
-				X1-006
-				X1-007
-				X1-010
+Custom chips:   X1-001A     X1-002A
+                X1-004 (x2)
+                X1-006
+                X1-007
+                X1-010
 
 ***************************************************************************/
 /***************************************************************************
 
-							Thunder & Lightning
+                            Thunder & Lightning
 
 Location      Device      File ID      Checksum
 -----------------------------------------------
@@ -318,11 +318,11 @@ PCB: PO055D
 
 CPU: 68000 8MHz
 
-Custom:	X1-001A		X1-002A
-		X1-004
-		X1-006
-		X1-007
-		X1-010
+Custom: X1-001A     X1-002A
+        X1-004
+        X1-006
+        X1-007
+        X1-010
 
 ***************************************************************************/
 
@@ -330,7 +330,7 @@ Custom:	X1-001A		X1-002A
 
 /***************************************************************************
 
-								Athena no Hatena?
+                                Athena no Hatena?
 
 CPU  : 68000-16
 Sound: X1-010
@@ -343,17 +343,17 @@ fs001002.odd /
 fs001004.pcm - Samples (8M mask - read as 27c800)
 fs001003.gfx - Graphics (16M mask - read as 27c160)
 
-Chips:	X1-001A	X1-002A
-		X1-004
-		X1-006
-		X1-007
-		X1-010
+Chips:  X1-001A X1-002A
+        X1-004
+        X1-006
+        X1-007
+        X1-010
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Blandia
+                                Blandia
 
 Blandia by Allumer
 
@@ -364,24 +364,24 @@ As usually, it use a lot of customs allumer chips !
 ***************************************************************************/
 /***************************************************************************
 
-								Blandia (prototype)
+                                Blandia (prototype)
 
-PCB:	P0-072-2
-CPU:	68000-16
-Sound:	X1-010
-OSC:	16.0000MHz
+PCB:    P0-072-2
+CPU:    68000-16
+Sound:  X1-010
+OSC:    16.0000MHz
 
-Chips:	X1-001A		X1-002A
-		X1-004
-		X1-007
-		X1-010
-		X1-011 x2	X1-012 x2
+Chips:  X1-001A     X1-002A
+        X1-004
+        X1-007
+        X1-010
+        X1-011 x2   X1-012 x2
 
 ***************************************************************************/
 
 /***************************************************************************
 
-					Block Carnival / Thunder & Lightning 2
+                    Block Carnival / Thunder & Lightning 2
 
 P0-068B, M6100723A
 
@@ -398,12 +398,12 @@ bl-chr-1.l3 /
 
 bl-snd-0.a13 - Sound (4M mask)
 
-Custom chips:	X1-001A	X1-002A
-				X1-004
-				X1-006
-				X1-007
-				X1-009
-				X1-010
+Custom chips:   X1-001A X1-002A
+                X1-004
+                X1-006
+                X1-007
+                X1-009
+                X1-010
 
 Other:
 Lithium battery x1
@@ -415,7 +415,7 @@ Lithium battery x1
 
 /***************************************************************************
 
-							Daioh
+                            Daioh
 
 DAIOH
 Alumer 1993, Sammy license
@@ -439,7 +439,7 @@ FG-001-007
 
 /***************************************************************************
 
-								Eight Forces
+                                Eight Forces
 
 PO-079A (Same board as ZingZingZip)
 
@@ -468,17 +468,17 @@ uy-015.36  (PALCE16V8)
 uy-016.76  (PAL16L8A)
 uy-017.116 (PAL16L8A)
 
-Custom:		X1-001A	X1-002A
-			X1-004
-			X1-007
-			X1-010
-			X1-011 (x2)		X1-012 (x2)
+Custom:     X1-001A X1-002A
+            X1-004
+            X1-007
+            X1-010
+            X1-011 (x2)     X1-012 (x2)
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Extreme Downhill
+                                Extreme Downhill
 
 (c)1995 Sammy
 DH-01
@@ -505,18 +505,18 @@ FW-002
 FW-003
 FW-005
 
-Custom chips:	X1-001A		X1-002A
-				X1-004
-				X1-007
-				X1-010
-				X1-011 (x2)	X1-012 (x2)
+Custom chips:   X1-001A     X1-002A
+                X1-004
+                X1-007
+                X1-010
+                X1-011 (x2) X1-012 (x2)
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-									GundHara
+                                    GundHara
 
 (C) 1995 Banpresto
 Seta/Allumer Hardware
@@ -528,30 +528,30 @@ SND: ?
 OSC: 16.000MHz
 RAM: 6264 x 8, 62256 x 4
 DIPS: 2 x 8 position
-Other Chips:	PALs x 6 (not dumped)
-				NEC 71054C
-				X1-004
-				X1-007
-				X1-010
-				X1-011 x2	X1-012 x2
-				X1-001A		X1-002A
+Other Chips:    PALs x 6 (not dumped)
+                NEC 71054C
+                X1-004
+                X1-007
+                X1-010
+                X1-011 x2   X1-012 x2
+                X1-001A     X1-002A
 
 On PCB near JAMMA connector is a small push button to reset the PCB.
 
 ROMS:
-BPGH-001.102	27C040
-BPGH-002.103	27C4000
-BPGH-003.U3		27C4000
-BPGH-004.U4		23C4000
-BPGH-005.200	23C16000
-BPGH-006.201	23C16000
-BPGH-007.U63	23C16000
-BPGH-008.U64	23C16000
-BPGH-009.U65	27C4000
-BPGH-010.U66	TC538200
-BPGH-011.U67	TC538000
-BPGH-012.U68	TC5316200
-BPGH-013.U70	TC538000
+BPGH-001.102    27C040
+BPGH-002.103    27C4000
+BPGH-003.U3     27C4000
+BPGH-004.U4     23C4000
+BPGH-005.200    23C16000
+BPGH-006.201    23C16000
+BPGH-007.U63    23C16000
+BPGH-008.U64    23C16000
+BPGH-009.U65    27C4000
+BPGH-010.U66    TC538200
+BPGH-011.U67    TC538000
+BPGH-012.U68    TC5316200
+BPGH-013.U70    TC538000
 
 ***************************************************************************/
 
@@ -596,7 +596,7 @@ CONN1 = 8 pin header for gun connection
 
 /***************************************************************************
 
-								J.J. Squawkers
+                                J.J. Squawkers
 
 68HC000N -16N
 
@@ -615,7 +615,7 @@ NEC 71054C  ----???
 
 /***************************************************************************
 
-								Kamen Rider
+                                Kamen Rider
 Kamen Riderclub Battleracer
 Banpresto, 1993
 
@@ -636,7 +636,7 @@ CUSTOM: X1-010
 OTHER : NEC71054C, some PALs
 
 ROMs  :
-        FJ001007.152	27c4096     near X1-011 & X1-010 (sound program?)
+        FJ001007.152    27c4096     near X1-011 & X1-010 (sound program?)
         FJ001008.26     8M Mask     connected to X1-010, near FJ001007
         FJ001003.25     27c4096     main program for 68k
         FJ001006.22     16M Mask    gfx
@@ -646,10 +646,10 @@ ROMs  :
 
 /***************************************************************************
 
-								Krazy Bowl
+                                Krazy Bowl
 
-PCB:	SKB-001
-		PO-114A
+PCB:    SKB-001
+        PO-114A
 
 FV   FV                           2465
 001  001                          2465           X1-005
@@ -674,7 +674,7 @@ X1-010           X1-006
 /***************************************************************************
 
 
-									Mad Shark
+                                    Mad Shark
 
 Allumer, 1993
 This game is a vertical shoot'em-up and runs on fairly standard Allumer hardware.
@@ -708,7 +708,7 @@ Notes:
 
 /***************************************************************************
 
-							Mobile Suit Gundam
+                            Mobile Suit Gundam
 
 Banpresto 1993
 P0-081A
@@ -735,7 +735,7 @@ FA-001-004    X1-011  X1-012  5160
 
 /***************************************************************************
 
-							Oishii Puzzle Ha Irimasenka
+                            Oishii Puzzle Ha Irimasenka
 
 PCB  : PO-097A
 CPU  : 68000
@@ -744,17 +744,17 @@ OSC  : 14.31818MHz
 
 All ROMs are 23c4000
 
-Custom chips:	X1-001A	X1-002A
-				X1-004
-				X1-007
-				X1-010
-				X1-011 (x2)	X1-012 (x2)
+Custom chips:   X1-001A X1-002A
+                X1-004
+                X1-007
+                X1-010
+                X1-011 (x2) X1-012 (x2)
 
 ***************************************************************************/
 
 /***************************************************************************
 
-							Triple Fun
+                            Triple Fun
 
 Triple Fun
 ??, 19??
@@ -783,7 +783,7 @@ ROMs  :
 
 /***************************************************************************
 
-							Pro Mahjong Kiwame
+                            Pro Mahjong Kiwame
 
 PCB  : PO-101-1 (the board is made by Allumer/Seta)
 CPU  : TMP68301AF-16 (68000 core)
@@ -797,12 +797,12 @@ fp001003.bin - Graphics (23c4000)
 fp001005.bin - Samples (27c4000, high)
 fp001006.bin - Samples (27c4000, low)
 
-Chips:	X1-001A
-		X1-002A
-		X1-004
-		X1-006
-		X1-007
-		X1-010
+Chips:  X1-001A
+        X1-002A
+        X1-004
+        X1-006
+        X1-007
+        X1-010
 
 - To initialize high scores, power-on holding start button in service mode
 
@@ -811,7 +811,7 @@ Chips:	X1-001A
 
 /***************************************************************************
 
-								Quiz Kokology
+                                Quiz Kokology
 
 (c)1992 Tecmo
 
@@ -821,18 +821,18 @@ CPU  : MC68000B8
 Sound: X1-010
 OSC  : 16.000MHz
 
-Custom chips:	X1-001A	X1-002A
-				X1-004
-				X1-006	X1-007
-				X1-010
-				X1-011	X1-012
+Custom chips:   X1-001A X1-002A
+                X1-004
+                X1-006  X1-007
+                X1-010
+                X1-011  X1-012
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-								Quiz Koko-logy 2
+                                Quiz Koko-logy 2
 
 (c)1992 Tecmo
 
@@ -849,36 +849,36 @@ FN001004.100 - OBJ chr. (42pin mask)
 FN001005.104 - BG chr. (42pin mask)
 FN001006.105 - Samples (32pin mask)
 
-Custom chips:	X1-001A		X1-002A
-				X1-004
-				X1-006
-				X1-007
-				X1-010
-				X1-011		X1-012
+Custom chips:   X1-001A     X1-002A
+                X1-004
+                X1-006
+                X1-007
+                X1-010
+                X1-011      X1-012
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-								Rezon (Japan)
+                                Rezon (Japan)
 
-PCB 	: PO-063A
-CPU 	: TOSHIBA TMP68HC000N-16
-Sound	: X1-010
-OSC 	: 16.000MHz
-Other	: Allumer
-			X1-001A			X1-002A
-			X1-004
-			X1-007
-			X1-011 x 2		X1-012 x 2
+PCB     : PO-063A
+CPU     : TOSHIBA TMP68HC000N-16
+Sound   : X1-010
+OSC     : 16.000MHz
+Other   : Allumer
+            X1-001A         X1-002A
+            X1-004
+            X1-007
+            X1-011 x 2      X1-012 x 2
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-							SD Gundam Neo Battling
+                            SD Gundam Neo Battling
 
 Banpresto, 1992
 This game runs on Seta/Allumer hardware
@@ -920,20 +920,20 @@ Notes:
 
 /***************************************************************************
 
-							Sokonuke Taisen Game (Japan)
+                            Sokonuke Taisen Game (Japan)
 
 (c)1995 Sammy
 
-CPU:	68HC000
-Sound:	All PCM ?
-OSC:	16MHz
+CPU:    68HC000
+Sound:  All PCM ?
+OSC:    16MHz
 
 ***************************************************************************/
 
 
 /***************************************************************************
 
-								Strike Gunner
+                                Strike Gunner
 
 (c)1991 Athena (distributed by Tecmo)
 
@@ -943,17 +943,17 @@ CPU  : TMP68000N-8
 Sound: X1-010
 OSC  : 16.000MHz
 
-Custom chips:	X1-001A	X1-002A
-				X1-004
-				X1-006	X1-007
-				X1-010
-				X1-011	X1-012
+Custom chips:   X1-001A X1-002A
+                X1-004
+                X1-006  X1-007
+                X1-010
+                X1-011  X1-012
 
 ***************************************************************************/
 
 /***************************************************************************
 
-								Ultraman Club
+                                Ultraman Club
 
 Banpresto, 1992
 Board looks similar to Castle of Dragon PCB.
@@ -967,12 +967,12 @@ DIP SW x 2 (8 position)
 
 RAM: Sharp LH5160D-10L x 3, Hitachi S256KLP-12 x 2
 PALs (2 x PAL16L8, not dumped)
-SETA Chips:	X1-010
-			X1-004
-			X1-007
-			X1-006
-			X1-002A
-			X1-001A
+SETA Chips: X1-010
+            X1-004
+            X1-007
+            X1-006
+            X1-002A
+            X1-001A
 
 Controls are 8 way Joystick and 2 buttons.
 
@@ -1037,23 +1037,23 @@ Notes:
 
 /***************************************************************************
 
-							   War of Aero
-							Project M E I O U
+                               War of Aero
+                            Project M E I O U
 
-93111A	YANG CHENG
+93111A  YANG CHENG
 
 CPU   : TOSHIBA TMP68HC000N-16
 Sound : Allumer X1-010
 OSC   : 16.000000MHz
 Other : Allumer
-			X1-001A  X1-002A
-			X1-004
-			X1-007
-			X1-011 x 2
-			X1-012 x 2
-		NEC
-			C324C
-			D71054C
+            X1-001A  X1-002A
+            X1-004
+            X1-007
+            X1-011 x 2
+            X1-012 x 2
+        NEC
+            C324C
+            D71054C
 
 ***************************************************************************/
 
@@ -1061,7 +1061,7 @@ Other : Allumer
 
 /***************************************************************************
 
-								Zing Zing Zip
+                                Zing Zing Zip
 
 P0-079A
 
@@ -1214,7 +1214,7 @@ static unsigned char *sharedram;
 
 #define	USED_TIMER_NUM	1
 /*------------------------------
-	timer(uPD71054) struct
+    timer(uPD71054) struct
 ------------------------------*/
 static struct st_chip {
 	void			*timer[3];			// Timer
@@ -1224,7 +1224,7 @@ static struct st_chip {
 } uPD71054;
 
 /*------------------------------
-	uppdate timer
+    uppdate timer
 ------------------------------*/
 void uPD71054_update_timer( int no )
 {
@@ -1249,7 +1249,7 @@ void uPD71054_update_timer( int no )
 
 
 /*------------------------------
-	callback
+    callback
 ------------------------------*/
 void uPD71054_timer_callback( int no )
 {
@@ -1260,7 +1260,7 @@ void uPD71054_timer_callback( int no )
 
 
 /*------------------------------
-	initialize
+    initialize
 ------------------------------*/
 void uPD71054_timer_init( void )
 {
@@ -1279,7 +1279,7 @@ void uPD71054_timer_init( void )
 
 
 /*------------------------------
-	exit
+    exit
 ------------------------------*/
 void uPD71054_timer_stop( void )
 {
@@ -1289,7 +1289,7 @@ void uPD71054_timer_stop( void )
 
 
 /*------------------------------
-	timer write handler
+    timer write handler
 ------------------------------*/
 WRITE16_HANDLER( timer_regs_w )
 {
@@ -1330,7 +1330,7 @@ WRITE16_HANDLER( timer_regs_w )
 /***************************************************************************
 
 
-									Sound
+                                    Sound
 
 
 ***************************************************************************/
@@ -1357,7 +1357,7 @@ static struct YM3438interface utoukond_ym3438_intf =
 /***************************************************************************
 
 
-								Common Routines
+                                Common Routines
 
 
 ***************************************************************************/
@@ -1377,7 +1377,7 @@ READ16_HANDLER( mirror_ram_r )
 WRITE16_HANDLER( mirror_ram_w )
 {
 	COMBINE_DATA(&mirror_ram[offset]);
-//	logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
+//  logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 
@@ -1445,10 +1445,10 @@ const struct GameDriver driver_gundhara;
 const struct GameDriver driver_kamenrid;
 const struct GameDriver driver_zingzip;
 
-/*	---- 3---		Coin #1 Lock Out
-	---- -2--		Coin #0 Lock Out
-	---- --1-		Coin #1 Counter
-	---- ---0		Coin #0 Counter		*/
+/*  ---- 3---       Coin #1 Lock Out
+    ---- -2--       Coin #0 Lock Out
+    ---- --1-       Coin #1 Counter
+    ---- ---0       Coin #0 Counter     */
 
 void seta_coin_lockout_w(int data)
 {
@@ -1516,7 +1516,7 @@ VIDEO_EOF( seta_buffer_sprites )
 /***************************************************************************
 
 
-									Main CPU
+                                    Main CPU
 
 (for debugging it is useful to be able to peek at some memory regions that
  the game writes to but never reads from. I marked this regions with an empty
@@ -1528,7 +1528,7 @@ VIDEO_EOF( seta_buffer_sprites )
 
 
 /***************************************************************************
-								Thundercade
+                                Thundercade
 ***************************************************************************/
 
 /* Mirror RAM seems necessary since the e00000-e03fff area is not cleared
@@ -1567,8 +1567,8 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-				Twin Eagle, DownTown, Arbalester, Meta Fox
-		(with slight variations, and Meta Fox protection hooked in)
+                Twin Eagle, DownTown, Arbalester, Meta Fox
+        (with slight variations, and Meta Fox protection hooked in)
 ***************************************************************************/
 
 static ADDRESS_MAP_START( downtown_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1605,7 +1605,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Caliber 50
+                                Caliber 50
 ***************************************************************************/
 
 READ16_HANDLER ( calibr50_ip_r )
@@ -1678,7 +1678,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								U.S. Classic
+                                U.S. Classic
 ***************************************************************************/
 
 READ16_HANDLER( usclssic_dsw_r )
@@ -1793,7 +1793,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Athena no Hatena?
+                                Athena no Hatena?
 ***************************************************************************/
 
 static ADDRESS_MAP_START( atehate_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1824,7 +1824,7 @@ static ADDRESS_MAP_START( atehate_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-						Blandia
+                        Blandia
 ***************************************************************************/
 
 static ADDRESS_MAP_START( blandia_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1878,8 +1878,8 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-	Blandia (proto), Gundhara, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
-						(with slight variations)
+    Blandia (proto), Gundhara, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
+                        (with slight variations)
 ***************************************************************************/
 
 static ADDRESS_MAP_START( blandiap_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1933,8 +1933,8 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-	Blandia, Gundhara, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
-					and Zombie Raid (with slight variations)
+    Blandia, Gundhara, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
+                    and Zombie Raid (with slight variations)
 ***************************************************************************/
 
 static int gun_input_bit = 0, gun_input_src = 0;
@@ -2034,7 +2034,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Block Carnival
+                                Block Carnival
 ***************************************************************************/
 
 /* similar to krzybowl */
@@ -2072,7 +2072,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Daioh
+                                Daioh
 ***************************************************************************/
 
 static ADDRESS_MAP_START( daioh_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2122,7 +2122,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-		Dragon Unit, Quiz Kokology, Quiz Kokology 2, Strike Gunner
+        Dragon Unit, Quiz Kokology, Quiz Kokology 2, Strike Gunner
 ***************************************************************************/
 
 static ADDRESS_MAP_START( drgnunit_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2164,7 +2164,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Extreme Downhill / Sokonuke
+                        Extreme Downhill / Sokonuke
 ***************************************************************************/
 
 static ADDRESS_MAP_START( extdwnhl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2217,7 +2217,7 @@ static ADDRESS_MAP_START( extdwnhl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-		(Kamen) Masked Riders Club Battle Race / Mad Shark
+        (Kamen) Masked Riders Club Battle Race / Mad Shark
 ***************************************************************************/
 
 static ADDRESS_MAP_START( kamenrid_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2313,7 +2313,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Krazy Bowl
+                                Krazy Bowl
 ***************************************************************************/
 
 static READ16_HANDLER( krzybowl_input_r )
@@ -2374,7 +2374,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Mobile Suit Gundam
+                            Mobile Suit Gundam
 ***************************************************************************/
 
 WRITE16_HANDLER( msgundam_vregs_w )
@@ -2439,7 +2439,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Oishii Puzzle
+                                Oishii Puzzle
 ***************************************************************************/
 
 /* similar to wrofaero */
@@ -2481,7 +2481,7 @@ static ADDRESS_MAP_START( oisipuzl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Triple Fun
+                                Triple Fun
 ***************************************************************************/
 
 /* the same as oisipuzl with the sound system replaced */
@@ -2525,7 +2525,7 @@ static ADDRESS_MAP_START( triplfun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-							Pro Mahjong Kiwame
+                            Pro Mahjong Kiwame
 ***************************************************************************/
 
 data16_t *kiwame_nvram;
@@ -2555,7 +2555,7 @@ READ16_HANDLER( kiwame_input_r )
 		case 0x00/2:	return readinputport( i );
 		case 0x02/2:	return 0xffff;
 		case 0x04/2:	return readinputport( 2 );
-//		case 0x06/2:
+//      case 0x06/2:
 		case 0x08/2:	return 0xffff;
 
 		default:
@@ -2590,17 +2590,17 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Thunder & Lightning / Wit's
+                        Thunder & Lightning / Wit's
 ***************************************************************************/
 
 static READ16_HANDLER( thunderl_protection_r )
 {
-//	logerror("PC %06X - Protection Read\n", activecpu_get_pc());
+//  logerror("PC %06X - Protection Read\n", activecpu_get_pc());
 	return 0x00dd;
 }
 static WRITE16_HANDLER( thunderl_protection_w )
 {
-//	logerror("PC %06X - Protection Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
+//  logerror("PC %06X - Protection Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 /* Similar to downtown etc. */
@@ -2670,7 +2670,7 @@ static ADDRESS_MAP_START( wiggie_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-					Ultraman Club / SD Gundam Neo Battling
+                    Ultraman Club / SD Gundam Neo Battling
 ***************************************************************************/
 
 static ADDRESS_MAP_START( umanclub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2703,7 +2703,7 @@ static ADDRESS_MAP_START( umanclub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-							Ultra Toukond Densetsu
+                            Ultra Toukond Densetsu
 ***************************************************************************/
 
 static WRITE16_HANDLER( utoukond_soundlatch_w )
@@ -2751,7 +2751,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Sub / Sound CPU
+                                Sub / Sound CPU
 
 
 ***************************************************************************/
@@ -2772,7 +2772,7 @@ static WRITE8_HANDLER( sub_bankswitch_lockout_w )
 
 
 /***************************************************************************
-								Thundercade
+                                Thundercade
 ***************************************************************************/
 
 static READ8_HANDLER( ff_r )	{return 0xff;}
@@ -2780,8 +2780,8 @@ static READ8_HANDLER( ff_r )	{return 0xff;}
 static ADDRESS_MAP_START( tndrcade_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM				)	// RAM
 	AM_RANGE(0x0800, 0x0800) AM_READ(ff_r					)	// ? (bits 0/1/2/3: 1 -> do test 0-ff/100-1e0/5001-57ff/banked rom)
-//	AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r			)	//
-//	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r			)	//
+//  AM_RANGE(0x0800, 0x0800) AM_READ(soundlatch_r           )   //
+//  AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r          )   //
 	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r		)	// P1
 	AM_RANGE(0x1001, 0x1001) AM_READ(input_port_1_r		)	// P2
 	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_2_r		)	// Coins
@@ -2804,7 +2804,7 @@ static ADDRESS_MAP_START( tndrcade_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Twin Eagle
+                                Twin Eagle
 ***************************************************************************/
 
 static ADDRESS_MAP_START( twineagl_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2830,7 +2830,7 @@ static ADDRESS_MAP_START( twineagl_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								DownTown
+                                DownTown
 ***************************************************************************/
 
 READ8_HANDLER( downtown_ip_r )
@@ -2875,7 +2875,7 @@ static ADDRESS_MAP_START( downtown_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-						Caliber 50 / U.S. Classic
+                        Caliber 50 / U.S. Classic
 ***************************************************************************/
 
 WRITE8_HANDLER( calibr50_soundlatch2_w )
@@ -2900,7 +2900,7 @@ static ADDRESS_MAP_START( calibr50_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Meta Fox
+                                Meta Fox
 ***************************************************************************/
 
 static ADDRESS_MAP_START( metafox_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2909,7 +2909,7 @@ static ADDRESS_MAP_START( metafox_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0801, 0x0801) AM_READ(soundlatch2_r		)	//
 	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_2_r	)	// Coins
 	AM_RANGE(0x1002, 0x1002) AM_READ(input_port_0_r	)	// P1
-//	AM_RANGE(0x1004, 0x1004) AM_READ(MRA8_NOP			)	// ?
+//  AM_RANGE(0x1004, 0x1004) AM_READ(MRA8_NOP           )   // ?
 	AM_RANGE(0x1006, 0x1006) AM_READ(input_port_1_r	)	// P2
 	AM_RANGE(0x5000, 0x57ff) AM_READ(MRA8_RAM			)	// Shared RAM
 	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM			)	// ROM
@@ -2928,7 +2928,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-							Ultra Toukon Densetsu
+                            Ultra Toukon Densetsu
 ***************************************************************************/
 
 static ADDRESS_MAP_START( utoukond_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2957,7 +2957,7 @@ static ADDRESS_MAP_START( utoukond_sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************
-								Pairs Love
+                                Pairs Love
 ***************************************************************************/
 
 static ADDRESS_MAP_START( pairlove_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2992,7 +2992,7 @@ ADDRESS_MAP_END
 /***************************************************************************
 
 
-								Input Ports
+                                Input Ports
 
 
 ***************************************************************************/
@@ -3066,7 +3066,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-								Arbalester
+                                Arbalester
 ***************************************************************************/
 
 INPUT_PORTS_START( arbalest )
@@ -3089,7 +3089,7 @@ INPUT_PORTS_START( arbalest )
 	PORT_START_TAG("IN3")	// 2 DSWs - $600001 & 3.b
 	PORT_DIPNAME( 0x4001, 0x0000, "Licensed To" )
 	PORT_DIPSETTING(      0x0000, "Taito" )
-//	PORT_DIPSETTING(      0x4000, "Taito" )
+//  PORT_DIPSETTING(      0x4000, "Taito" )
 	PORT_DIPSETTING(      0x4001, "Romstar" )
 	PORT_DIPSETTING(      0x0001, "Jordan" )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
@@ -3133,7 +3133,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Athena no Hatena?
+                                Athena no Hatena?
 ***************************************************************************/
 
 INPUT_PORTS_START( atehate )
@@ -3216,7 +3216,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Blandia
+                                Blandia
 ***************************************************************************/
 
 INPUT_PORTS_START( blandia )
@@ -3287,7 +3287,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Block Carnival
+                                Block Carnival
 ***************************************************************************/
 
 INPUT_PORTS_START( blockcar )
@@ -3356,7 +3356,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Caliber 50
+                                Caliber 50
 ***************************************************************************/
 
 INPUT_PORTS_START( calibr50 )
@@ -3430,7 +3430,7 @@ INPUT_PORTS_START( calibr50 )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Daioh
+                                Daioh
 ***************************************************************************/
 
 INPUT_PORTS_START( daioh )
@@ -3517,7 +3517,7 @@ INPUT_PORTS_START( daioh )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Dragon Unit
+                                Dragon Unit
 ***************************************************************************/
 
 INPUT_PORTS_START( drgnunit )
@@ -3592,7 +3592,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								DownTown
+                                DownTown
 ***************************************************************************/
 
 INPUT_PORTS_START( downtown )
@@ -3679,7 +3679,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Eight Force
+                                Eight Force
 ***************************************************************************/
 
 INPUT_PORTS_START( eightfrc )
@@ -3750,7 +3750,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Extreme Downhill
+                                Extreme Downhill
 ***************************************************************************/
 
 INPUT_PORTS_START( extdwnhl )
@@ -3782,7 +3782,7 @@ INPUT_PORTS_START( extdwnhl )
 	/* These are NOT Dip Switches but jumpers */
 	PORT_DIPNAME( 0x0030, 0x0030, "Country" )
 	PORT_DIPSETTING(      0x0030, DEF_STR( World ) )
-//	PORT_DIPSETTING(      0x0020, DEF_STR( World ) )	// duplicated settings
+//  PORT_DIPSETTING(      0x0020, DEF_STR( World ) )    // duplicated settings
 	PORT_DIPSETTING(      0x0010, DEF_STR( USA ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Japan ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
@@ -3844,7 +3844,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Gundhara
+                                Gundhara
 ***************************************************************************/
 
 INPUT_PORTS_START( gundhara )
@@ -3913,7 +3913,7 @@ INPUT_PORTS_START( gundhara )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Zombie Raid
+                                Zombie Raid
 ***************************************************************************/
 
 INPUT_PORTS_START( zombraid )
@@ -3995,20 +3995,20 @@ INPUT_PORTS_START( zombraid )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-	PORT_START_TAG("IN5")	/* Player 1 Gun X		($f00003) */
+	PORT_START_TAG("IN5")	/* Player 1 Gun X       ($f00003) */
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(1)
-	PORT_START_TAG("IN6")	/* Player 1 Gun Y		($f00003) */
+	PORT_START_TAG("IN6")	/* Player 1 Gun Y       ($f00003) */
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
-	PORT_START_TAG("IN7")	/* Player 2 Gun X		($f00003) */
+	PORT_START_TAG("IN7")	/* Player 2 Gun X       ($f00003) */
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(2)
-	PORT_START_TAG("IN0")	/* Player 2 Gun Y		($f00003) */
+	PORT_START_TAG("IN0")	/* Player 2 Gun Y       ($f00003) */
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
 /***************************************************************************
-								J.J.Squawkers
+                                J.J.Squawkers
 ***************************************************************************/
 
 INPUT_PORTS_START( jjsquawk )
@@ -4076,7 +4076,7 @@ INPUT_PORTS_START( jjsquawk )
 INPUT_PORTS_END
 
 /***************************************************************************
-				(Kamen) Masked Riders Club Battle Race
+                (Kamen) Masked Riders Club Battle Race
 ***************************************************************************/
 
 INPUT_PORTS_START( kamenrid )
@@ -4159,7 +4159,7 @@ INPUT_PORTS_START( kamenrid )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Krazy Bowl
+                                Krazy Bowl
 ***************************************************************************/
 
 #define KRZYBOWL_TRACKBALL(_dir_, _n_ ) \
@@ -4245,7 +4245,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Mad Shark
+                                Mad Shark
 ***************************************************************************/
 
 INPUT_PORTS_START( madshark )
@@ -4323,7 +4323,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Meta Fox
+                                Meta Fox
 ***************************************************************************/
 
 INPUT_PORTS_START( metafox )
@@ -4382,7 +4382,7 @@ INPUT_PORTS_START( metafox )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x2000, "5" )
-//	PORT_DIPNAME( 0x4000, 0x4000, "License" )
+//  PORT_DIPNAME( 0x4000, 0x4000, "License" )
 	PORT_DIPNAME( 0x8000, 0x8000, "Coinage Type" )	// not supported
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
@@ -4391,7 +4391,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Mobile Suit Gundam
+                            Mobile Suit Gundam
 ***************************************************************************/
 
 
@@ -4480,7 +4480,7 @@ INPUT_PORTS_START( msgunda1 )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	/* this set seems to be a japan set, english mode doesn't work correctly */
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Language ) )
-//	PORT_DIPSETTING(      0x0080, DEF_STR( English ) )
+//  PORT_DIPSETTING(      0x0080, DEF_STR( English ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Japanese ) )
 
 	PORT_START_TAG("IN3") //2 DSWs - $600001 & 3.b
@@ -4534,7 +4534,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Oishii Puzzle
+                            Oishii Puzzle
 ***************************************************************************/
 
 INPUT_PORTS_START( oisipuzl )
@@ -4603,7 +4603,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Pro Mahjong Kiwame
+                            Pro Mahjong Kiwame
 ***************************************************************************/
 
 INPUT_PORTS_START( kiwame )
@@ -4665,13 +4665,13 @@ INPUT_PORTS_START( kiwame )
 	PORT_DIPSETTING(      0x0000, "-8000" )
 
 /*
-		row 0	1	2	3	4
-bit	0		a	b	c	d	lc
-	1		e	f	g	h
-	2		i	j	k	l
-	3		m	n	ch	po	ff
-	4		ka	re	ro
-	5		st	bt
+        row 0   1   2   3   4
+bit 0       a   b   c   d   lc
+    1       e   f   g   h
+    2       i   j   k   l
+    3       m   n   ch  po  ff
+    4       ka  re  ro
+    5       st  bt
 */
 
 	PORT_START_TAG("IN4")
@@ -4718,7 +4718,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Quiz Kokology
+                                Quiz Kokology
 ***************************************************************************/
 
 INPUT_PORTS_START( qzkklogy )
@@ -4798,7 +4798,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Quiz Kokology 2
+                                Quiz Kokology 2
 ***************************************************************************/
 
 INPUT_PORTS_START( qzkklgy2 )
@@ -4877,7 +4877,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-									Rezon
+                                    Rezon
 ***************************************************************************/
 
 INPUT_PORTS_START( rezon )
@@ -4911,7 +4911,7 @@ INPUT_PORTS_START( rezon )
 	PORT_DIPSETTING(      0x0000, "Upright 1 Controller" )
 	PORT_DIPSETTING(      0x0018, "Upright 2 Controllers" )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Cocktail ) )
-//	PORT_DIPSETTING(      0x0010, "10" )				/* Unused / Not Defined */
+//  PORT_DIPSETTING(      0x0010, "10" )                /* Unused / Not Defined */
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -4958,12 +4958,12 @@ INPUT_PORTS_START( rezont )
 INPUT_PORTS_END
 
 /***************************************************************************
-							SD Gundam Neo Battling
+                            SD Gundam Neo Battling
 ***************************************************************************/
 
 /*
-	When the "Stage Select" dip switch is on and button1 is pressed during boot,
-	pressing P1's button3 freezes the game (pressing P2's button3 resumes it).
+    When the "Stage Select" dip switch is on and button1 is pressed during boot,
+    pressing P1's button3 freezes the game (pressing P2's button3 resumes it).
 */
 INPUT_PORTS_START( neobattl )
 	PORT_START_TAG("IN0") // Player 1 - $400000.w
@@ -5038,7 +5038,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Sokonuke
+                                Sokonuke
 ***************************************************************************/
 
 INPUT_PORTS_START( sokonuke )
@@ -5110,7 +5110,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Strike Gunner
+                                Strike Gunner
 ***************************************************************************/
 
 INPUT_PORTS_START( stg )
@@ -5125,9 +5125,9 @@ INPUT_PORTS_START( stg )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-//	PORT_DIPNAME( 0x00f0, 0x00f0, "Title" )
+//  PORT_DIPNAME( 0x00f0, 0x00f0, "Title" )
 	/* This is the index in a table with pointers to the
-	   title logo, but the table is filled with just 1 value */
+       title logo, but the table is filled with just 1 value */
 
 	PORT_START_TAG("IN3") //2 DSWs - $600001 & 3.b
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
@@ -5179,7 +5179,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Thunder & Lightning
+                            Thunder & Lightning
 ***************************************************************************/
 
 INPUT_PORTS_START( thunderl )
@@ -5203,9 +5203,9 @@ INPUT_PORTS_START( thunderl )
 	PORT_DIPSETTING(      0x00e0, "Seta (Visco License)" )
 	PORT_DIPSETTING(      0x00a0, "Visco" )
 	PORT_DIPSETTING(      0x0060, DEF_STR( None ) )
-//	PORT_DIPSETTING(      0x0040, DEF_STR( None ) )
-//	PORT_DIPSETTING(      0x0020, DEF_STR( None ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( None ) )
+//  PORT_DIPSETTING(      0x0040, DEF_STR( None ) )
+//  PORT_DIPSETTING(      0x0020, DEF_STR( None ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( None ) )
 
 	PORT_START_TAG("IN3") //2 DSWs - $600003 & 1.b
 	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
@@ -5269,7 +5269,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Thundercade (US)
+                                Thundercade (US)
 ***************************************************************************/
 
 INPUT_PORTS_START( tndrcade )
@@ -5336,7 +5336,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Thundercade (Japan)
+                                Thundercade (Japan)
 ***************************************************************************/
 
 INPUT_PORTS_START( tndrcadj )
@@ -5404,7 +5404,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Twin Eagle
+                                Twin Eagle
 ***************************************************************************/
 
 INPUT_PORTS_START( twineagl )
@@ -5470,7 +5470,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Ultraman Club
+                                Ultraman Club
 ***************************************************************************/
 
 INPUT_PORTS_START( umanclub )
@@ -5545,7 +5545,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-							Ultra Toukon Densetsu
+                            Ultra Toukon Densetsu
 ***************************************************************************/
 
 INPUT_PORTS_START( utoukond )
@@ -5633,7 +5633,7 @@ INPUT_PORTS_START( utoukond )
 INPUT_PORTS_END
 
 /***************************************************************************
-								U.S. Classic
+                                U.S. Classic
 ***************************************************************************/
 
 #define TRACKBALL(_dir_) \
@@ -5713,7 +5713,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								War of Aero
+                                War of Aero
 ***************************************************************************/
 
 INPUT_PORTS_START( wrofaero )
@@ -5790,7 +5790,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-									Wit's
+                                    Wit's
 ***************************************************************************/
 
 INPUT_PORTS_START( wits )
@@ -5870,7 +5870,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Zing Zing Zip
+                                Zing Zing Zip
 ***************************************************************************/
 
 INPUT_PORTS_START( zingzip )
@@ -6016,7 +6016,7 @@ INPUT_PORTS_END
 /***************************************************************************
 
 
-								Graphics Layouts
+                                Graphics Layouts
 
 Sprites and layers use 16x16 tile, made of four 8x8 tiles. They can be 4
 or 6 planes deep and are stored in a wealth of formats.
@@ -6095,7 +6095,7 @@ static struct GfxLayout layout_packed_6bits_3roms =
 /* The bitplanes are packed togheter: 4 bits in one rom, 2 bits in another.
    Since there isn't simmetry between the two roms, we load the latter with
    ROM_LOAD16_BYTE. This way we can think of it as a 4 planes rom, with the
-   upper 2 planes unused.	 */
+   upper 2 planes unused.    */
 
 static struct GfxLayout layout_packed_6bits_2roms =
 {
@@ -6113,7 +6113,7 @@ static struct GfxLayout layout_packed_6bits_2roms =
 
 
 /***************************************************************************
-								Blandia
+                                Blandia
 ***************************************************************************/
 
 static struct GfxDecodeInfo blandia_gfxdecodeinfo[] =
@@ -6125,7 +6125,7 @@ static struct GfxDecodeInfo blandia_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								DownTown
+                                DownTown
 ***************************************************************************/
 
 static struct GfxDecodeInfo downtown_gfxdecodeinfo[] =
@@ -6136,7 +6136,7 @@ static struct GfxDecodeInfo downtown_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								J.J.Squawkers
+                                J.J.Squawkers
 ***************************************************************************/
 
 static struct GfxDecodeInfo jjsquawk_gfxdecodeinfo[] =
@@ -6148,7 +6148,7 @@ static struct GfxDecodeInfo jjsquawk_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-							Mobile Suit Gundam
+                            Mobile Suit Gundam
 ***************************************************************************/
 
 static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
@@ -6160,7 +6160,7 @@ static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Quiz Kokology 2
+                                Quiz Kokology 2
 ***************************************************************************/
 
 static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
@@ -6171,7 +6171,7 @@ static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
-								Thundercade
+                                Thundercade
 ***************************************************************************/
 
 static struct GfxDecodeInfo tndrcade_gfxdecodeinfo[] =
@@ -6208,7 +6208,7 @@ static struct GfxDecodeInfo wiggie_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-								U.S. Classic
+                                U.S. Classic
 ***************************************************************************/
 
 static struct GfxDecodeInfo usclssic_gfxdecodeinfo[] =
@@ -6220,7 +6220,7 @@ static struct GfxDecodeInfo usclssic_gfxdecodeinfo[] =
 
 
 /***************************************************************************
-								Zing Zing Zip
+                                Zing Zing Zip
 ***************************************************************************/
 
 static struct GfxDecodeInfo zingzip_gfxdecodeinfo[] =
@@ -6242,7 +6242,7 @@ static struct GfxDecodeInfo zingzip_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine drivers
+                                Machine drivers
 
 ***************************************************************************/
 
@@ -6280,7 +6280,7 @@ static INTERRUPT_GEN( seta_sub_interrupt )
 
 
 /***************************************************************************
-								Thundercade
+                                Thundercade
 ***************************************************************************/
 
 static struct YM2203interface tndrcade_ym2203_interface =
@@ -6339,7 +6339,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Twin Eagle
+                                Twin Eagle
 ***************************************************************************/
 
 /* Just like metafox, but:
@@ -6384,7 +6384,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								DownTown
+                                DownTown
 ***************************************************************************/
 
 /* downtown lev 3 = lev 2 + lev 1 ! */
@@ -6425,13 +6425,13 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								U.S. Classic
+                                U.S. Classic
 ***************************************************************************/
 
 
-/*	usclssic lev 6 = lev 2+4 !
-	Test mode shows a 16ms and 4ms counters. I wonder if every game has
-	5 ints per frame
+/*  usclssic lev 6 = lev 2+4 !
+    Test mode shows a 16ms and 4ms counters. I wonder if every game has
+    5 ints per frame
 */
 
 #define calibr50_INTERRUPTS_NUM (4+1)
@@ -6485,13 +6485,13 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Caliber 50
+                                Caliber 50
 ***************************************************************************/
 
-/*	calibr50 lev 6 = lev 2 + lev 4 !
+/*  calibr50 lev 6 = lev 2 + lev 4 !
              lev 3 = lev 2 + lev 1 !
-	Test mode shows a 16ms and 4ms counters. I wonder if every game has
-	5 ints per frame */
+    Test mode shows a 16ms and 4ms counters. I wonder if every game has
+    5 ints per frame */
 
 static MACHINE_DRIVER_START( calibr50 )
 
@@ -6503,7 +6503,7 @@ static MACHINE_DRIVER_START( calibr50 )
 	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
 	MDRV_CPU_PROGRAM_MAP(calibr50_sub_readmem,calibr50_sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQ: 4/frame
-							   NMI: when the 68k writes the sound latch */
+                               NMI: when the 68k writes the sound latch */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -6528,7 +6528,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Meta Fox
+                                Meta Fox
 ***************************************************************************/
 
 /* metafox lev 3 = lev 2 + lev 1 ! */
@@ -6572,7 +6572,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Athena no Hatena?
+                                Athena no Hatena?
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( atehate )
@@ -6606,13 +6606,13 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Blandia
+                                Blandia
 ***************************************************************************/
 
 /*
-	Similar to wrofaero, but the layers are 6 planes deep (and
-	the pens are strangely mapped to palette entries) + the
-	samples are bankswitched
+    Similar to wrofaero, but the layers are 6 planes deep (and
+    the pens are strangely mapped to palette entries) + the
+    samples are bankswitched
 */
 
 static MACHINE_DRIVER_START( blandia )
@@ -6682,7 +6682,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Block Carnival
+                                Block Carnival
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( blockcar )
@@ -6716,7 +6716,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Daioh
+                                Daioh
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( daioh )
@@ -6749,13 +6749,13 @@ static MACHINE_DRIVER_START( daioh )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-				Dragon Unit, Quiz Kokology, Strike Gunner
+                Dragon Unit, Quiz Kokology, Strike Gunner
 ***************************************************************************/
 
 /*
-	drgnunit,qzkklogy,stg:
-	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
-	lev 2 drives the game
+    drgnunit,qzkklogy,stg:
+    lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
+    lev 2 drives the game
 */
 
 static MACHINE_DRIVER_START( drgnunit )
@@ -6788,8 +6788,8 @@ static MACHINE_DRIVER_START( drgnunit )
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
-/*	Same as qzkklogy, but with a 16MHz CPU and different
-	layout for the layer's tiles	*/
+/*  Same as qzkklogy, but with a 16MHz CPU and different
+    layout for the layer's tiles    */
 
 static MACHINE_DRIVER_START( qzkklgy2 )
 
@@ -6823,7 +6823,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Eight Force
+                                Eight Force
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( eightfrc )
@@ -6857,13 +6857,13 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Extreme Downhill / Sokonuke
+                        Extreme Downhill / Sokonuke
 ***************************************************************************/
 
 /*
-	extdwnhl:
-	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
-	lev 2 drives the game
+    extdwnhl:
+    lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
+    lev 2 drives the game
 */
 static MACHINE_DRIVER_START( extdwnhl )
 
@@ -6898,7 +6898,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Gundhara
+                                Gundhara
 ***************************************************************************/
 #if __uPD71054_TIMER
 static INTERRUPT_GEN( wrofaero_interrupt )
@@ -6913,10 +6913,10 @@ MACHINE_STOP( wrofaero ) { uPD71054_timer_stop(); }
 
 
 /*
-	lev 1: sample end? (needed in zombraid otherwise music stops)
-		   gundhara's debug code calls it "BUT_IPL" and does nothing
-	lev 2: VBlank
-	lev 4: Sound (generated by a timer mapped at $d00000-6 ?)
+    lev 1: sample end? (needed in zombraid otherwise music stops)
+           gundhara's debug code calls it "BUT_IPL" and does nothing
+    lev 2: VBlank
+    lev 4: Sound (generated by a timer mapped at $d00000-6 ?)
 */
 static MACHINE_DRIVER_START( gundhara )
 
@@ -6924,7 +6924,7 @@ static MACHINE_DRIVER_START( gundhara )
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_PROGRAM_MAP(wrofaero_readmem,wrofaero_writemem)
 #if	__uPD71054_TIMER
-//	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
+//  MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
 #else
 	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
@@ -6961,12 +6961,12 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								J.J.Squawkers
+                                J.J.Squawkers
 ***************************************************************************/
 
 /*
-	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
-	lev 2 drives the game
+    lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
+    lev 2 drives the game
 */
 static MACHINE_DRIVER_START( jjsquawk )
 
@@ -7000,10 +7000,10 @@ static MACHINE_DRIVER_START( jjsquawk )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-				(Kamen) Masked Riders Club Battle Race
+                (Kamen) Masked Riders Club Battle Race
 ***************************************************************************/
 
-/*	kamenrid: lev 2 by vblank, lev 4 by timer */
+/*  kamenrid: lev 2 by vblank, lev 4 by timer */
 static MACHINE_DRIVER_START( kamenrid )
 
 	/* basic machine hardware */
@@ -7040,7 +7040,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Krazy Bowl
+                                Krazy Bowl
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( krzybowl )
@@ -7074,10 +7074,10 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Mad Shark
+                                Mad Shark
 ***************************************************************************/
 
-/*	madshark: lev 2 by vblank, lev 4 by timer */
+/*  madshark: lev 2 by vblank, lev 4 by timer */
 static MACHINE_DRIVER_START( madshark )
 
 	/* basic machine hardware */
@@ -7117,7 +7117,7 @@ static MACHINE_DRIVER_START( madshark )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Mobile Suit Gundam
+                            Mobile Suit Gundam
 ***************************************************************************/
 
 /* msgundam lev 2 == lev 6 ! */
@@ -7164,7 +7164,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Oishii Puzzle
+                            Oishii Puzzle
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( oisipuzl )
@@ -7197,7 +7197,7 @@ static MACHINE_DRIVER_START( oisipuzl )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Triple Fun
+                            Triple Fun
 ***************************************************************************/
 
 /* same as oisipuzl but with different interrupts and sound */
@@ -7232,7 +7232,7 @@ static MACHINE_DRIVER_START( triplfun )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Pro Mahjong Kiwame
+                            Pro Mahjong Kiwame
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( kiwame )
@@ -7241,7 +7241,7 @@ static MACHINE_DRIVER_START( kiwame )
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_PROGRAM_MAP(kiwame_readmem,kiwame_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* lev 1-7 are the same. WARNING:
-								   the interrupt table is written to. */
+                                   the interrupt table is written to. */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -7267,7 +7267,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-									Rezon
+                                    Rezon
 ***************************************************************************/
 
 /* pretty much like wrofaero, but ints are 1&2, not 2&4 */
@@ -7304,10 +7304,10 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Thunder & Lightning / Wit's
+                        Thunder & Lightning / Wit's
 ***************************************************************************/
 
-/*	thunderl lev 2 = lev 3 - other levels lead to an error */
+/*  thunderl lev 2 = lev 3 - other levels lead to an error */
 
 static MACHINE_DRIVER_START( thunderl )
 
@@ -7403,7 +7403,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					Ultraman Club / SD Gundam Neo Battling
+                    Ultraman Club / SD Gundam Neo Battling
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( umanclub )
@@ -7437,7 +7437,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-							Ultra Toukond Densetsu
+                            Ultra Toukond Densetsu
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( utoukond )
@@ -7482,7 +7482,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								War of Aero
+                                War of Aero
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( wrofaero )
@@ -7527,7 +7527,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-								Zing Zing Zip
+                                Zing Zing Zip
 ***************************************************************************/
 
 /* zingzip lev 3 = lev 2 + lev 1 !
@@ -7567,7 +7567,7 @@ static MACHINE_DRIVER_START( zingzip )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-								Pairs Love
+                                Pairs Love
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( pairlove )
@@ -7602,7 +7602,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
@@ -8256,7 +8256,7 @@ ROM_END
 ROM_START( triplfun )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )
 	/* the program fails its self-check but thats probably because
-	   its a bootleg, it does the same on the real board */
+       its a bootleg, it does the same on the real board */
 	ROM_LOAD16_BYTE( "05.bin", 0x000000, 0x40000, CRC(06eb3821) SHA1(51c67c87b5c28e693dfffd32d25cdb6d2a9448cf) )
 	ROM_CONTINUE(0x100000,0x40000)
 	ROM_LOAD16_BYTE( "04.bin", 0x000001, 0x40000, CRC(37a5c46e) SHA1(80b49b422a7db64d9ba5896da2b01a4588a6cf62) )
@@ -8585,30 +8585,30 @@ ROM_END
 
 READ16_HANDLER( twineagl_debug_r )
 {
-	/*	At several points in the code, the program checks if four
-		consecutive bytes in this range are equal to a string, and if they
-		are, it fetches an address from the following 4 bytes and jumps there.
-		They are probably hooks for debug routines to be found in an extra ROM.
+	/*  At several points in the code, the program checks if four
+        consecutive bytes in this range are equal to a string, and if they
+        are, it fetches an address from the following 4 bytes and jumps there.
+        They are probably hooks for debug routines to be found in an extra ROM.
 
-		0000 "MT00" + jump address
-		0008 "MT01" + jump address
-		0010 "MT02" + jump address
-		0018 "MT03" + jump address
-		0020 "MT04" + jump address
-		0028 "MT05" + jump address
-		0030 "MT06" + jump address
-		0038 "MT07" + jump address
-		0040 "WZ08" + jump address
-		0080 "KB00" + jump address
-		00C0 "MT18" + jump address
-		00C8 "MT19" + jump address
-		00D0 "MT1a" + jump address
-		00D8 "MT1b" + jump address
-		00E0 "MT1c" + jump address
-		00E8 "MT1d" + jump address
-		00F0 "MT1e" + jump address
-		00F8 "MT1f" + jump address
-	*/
+        0000 "MT00" + jump address
+        0008 "MT01" + jump address
+        0010 "MT02" + jump address
+        0018 "MT03" + jump address
+        0020 "MT04" + jump address
+        0028 "MT05" + jump address
+        0030 "MT06" + jump address
+        0038 "MT07" + jump address
+        0040 "WZ08" + jump address
+        0080 "KB00" + jump address
+        00C0 "MT18" + jump address
+        00C8 "MT19" + jump address
+        00D0 "MT1a" + jump address
+        00D8 "MT1b" + jump address
+        00E0 "MT1c" + jump address
+        00E8 "MT1d" + jump address
+        00F0 "MT1e" + jump address
+        00F8 "MT1f" + jump address
+    */
 
 	return 0;
 }
@@ -8672,14 +8672,14 @@ DRIVER_INIT( downtown )
 
 READ16_HANDLER( arbalest_debug_r )
 {
-	/*	At some points in the code, the program checks if four
-		consecutive bytes in this range are equal to a string, and if they
-		are, it fetches an address from the following 4 bytes and jumps there.
-		They are probably hooks for debug routines to be found in an extra ROM.
+	/*  At some points in the code, the program checks if four
+        consecutive bytes in this range are equal to a string, and if they
+        are, it fetches an address from the following 4 bytes and jumps there.
+        They are probably hooks for debug routines to be found in an extra ROM.
 
-		0000 "CHK1" + jump address
-		0008 "CHK2" + jump address
-	*/
+        0000 "CHK1" + jump address
+        0008 "CHK2" + jump address
+    */
 
 	return 0;
 }
@@ -8695,8 +8695,8 @@ DRIVER_INIT( metafox )
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
 	/* This game uses the 21c000-21ffff area for protection? */
-//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MRA16_NOP);
-//	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MWA16_NOP);
+//  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MRA16_NOP);
+//  memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MWA16_NOP);
 
 	RAM[0x8ab1c/2] = 0x4e71;	// patch protection test: "cp error"
 	RAM[0x8ab1e/2] = 0x4e71;
@@ -8758,7 +8758,7 @@ DRIVER_INIT( kiwame )
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
 	/* WARNING: This game writes to the interrupt vector
-	   table. Lev 1 routine address is stored at $100 */
+       table. Lev 1 routine address is stored at $100 */
 
 	RAM[0x64/2] = 0x0000;
 	RAM[0x66/2] = 0x0dca;
@@ -8809,7 +8809,7 @@ static DRIVER_INIT(wiggie)
 
 /***************************************************************************
 
-								Game Drivers
+                                Game Drivers
 
 ***************************************************************************/
 

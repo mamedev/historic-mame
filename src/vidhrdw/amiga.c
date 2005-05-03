@@ -15,7 +15,7 @@ extern custom_regs_def custom_regs;
 #define DT_COLOR_WHITE 0;
 
 struct update_regs_def {
-/* display window */	
+/* display window */
 	int v_start;
 	int v_stop;
 	int h_start;
@@ -52,7 +52,7 @@ static struct update_regs_def update_regs;
 
 /***************************************************************************
 
-	Copper emulation
+    Copper emulation
 
 ***************************************************************************/
 
@@ -91,11 +91,11 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 
 	/*********************************************************************************
 
-		The Copper can only read the lower 8 bits of the vertical counter. To access
-		the next 6 lines, you need to wait for line 255, and then you can check from
-		lines 0 to 6 (corresponding to 256 to 261) to do things before it wraps again.
+        The Copper can only read the lower 8 bits of the vertical counter. To access
+        the next 6 lines, you need to wait for line 255, and then you can check from
+        lines 0 to 6 (corresponding to 256 to 261) to do things before it wraps again.
 
-	 ********************************************************************************/
+     ********************************************************************************/
 
 	y_pos &= 0xff;
 
@@ -147,7 +147,7 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 
 			if ( inst >= min )	/* If not invalid, go at it */
 				/* KT - I've no idea what the memory mask should be so
-				added -1 for now! */
+                added -1 for now! */
 			    amiga_custom_w( inst>>1, param , 0 /*???*/);
 			else {
 				/* stop the copper until the next frame */
@@ -225,44 +225,44 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 
 /***************************************************************************
 
-	Sprites emulation
+    Sprites emulation
 
 ***************************************************************************/
 
 void amiga_sprite_set_pos( int spritenum, unsigned short data ) {
-	
+
 	update_regs.sprite_v_start[spritenum] &= 0x100;
 	update_regs.sprite_v_start[spritenum] |= data >> 8;
-	
+
 	update_regs.sprite_h_start[spritenum] &= 0x01;
 	update_regs.sprite_h_start[spritenum] |= ( data << 1 ) & 0x1fe;
 
 }
 
 void amiga_sprite_set_ctrl( int spritenum, unsigned short data ) {
-	
+
 	update_regs.sprite_h_start[spritenum] &= 0x1fe;
 	update_regs.sprite_h_start[spritenum] |= data & 1;
-	
+
 	update_regs.sprite_v_start[spritenum] &= 0xff;
 	update_regs.sprite_v_start[spritenum] |= ( data << 6 ) & 0x100;
-	
+
 	update_regs.sprite_v_stop[spritenum] = ( data << 7 ) & 0x100;
 	update_regs.sprite_v_stop[spritenum] |= data >> 8;
 
 	if ( spritenum & 1 )
 		update_regs.sprite_attached[spritenum] = data & 0x80;
-	
+
 	/* safety */
 	if ( update_regs.sprite_v_start[spritenum] > update_regs.sprite_v_stop[spritenum] )
 		update_regs.sprite_v_stop[spritenum] = update_regs.sprite_v_start[spritenum];
-	
-}	
+
+}
 
 void amiga_reload_sprite_info( int spritenum ) {
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	
+
 	amiga_sprite_set_pos( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
 
 	amiga_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
@@ -356,13 +356,13 @@ void amiga_sprite_dma( int scanline )
 
 /***************************************************************************
 
-	Raster emulation
+    Raster emulation
 
 ***************************************************************************/
 
 INLINE void amiga_display_msg (struct mame_bitmap *bitmap, const char *str ) {
 	static struct DisplayText dt[2];
-	
+
 	if ( update_regs.once_per_frame == 0 ) {
 		dt[0].text = str;
 		dt[0].color = DT_COLOR_WHITE;
@@ -377,7 +377,7 @@ INLINE void amiga_display_msg (struct mame_bitmap *bitmap, const char *str ) {
 
 INLINE void update_modulos ( int planes ) {
 	int i;
-		
+
 	for ( i = 0; i < planes; i++ )
 		if ( i & 1 )
 			custom_regs.BPLPTR[i] += custom_regs.BPL2MOD;
@@ -394,8 +394,8 @@ INLINE void init_update_regs( void ) {
 		update_regs.h_start	= custom_regs.DIWSTRT & 0xff;
 		update_regs.old_DIWSTRT = custom_regs.DIWSTRT;
 	}
-	
-	if ( update_regs.old_DIWSTOP != custom_regs.DIWSTOP ) {	
+
+	if ( update_regs.old_DIWSTOP != custom_regs.DIWSTOP ) {
 		/* display window */
 		update_regs.v_stop = ( custom_regs.DIWSTOP >> 8 ) & 0xff;
 		update_regs.v_stop |= ( ( update_regs.v_stop << 1 ) ^ 0x0100 ) & 0x0100; /* bit 8 = !bit 7 */
@@ -408,7 +408,7 @@ INLINE void init_update_regs( void ) {
 		update_regs.fetch_count = 0;
 		update_regs.old_DDFSTRT = custom_regs.DDFSTRT;
 	}
-		
+
 	/* display data fetch */
 	if ( custom_regs.BPLCON0 & BPLCON0_HIRES ) {
 		ddf_color_clocks_offs = 9; /* 4.5 color clocks * 2 in hi res */
@@ -417,7 +417,7 @@ INLINE void init_update_regs( void ) {
 		ddf_color_clocks_offs = 17; /* 8.5 color clocks * 2 in lo res */
 		ddf_res_offs = 3;
 	}
-	
+
 	update_regs.ddf_start_pixel = ( custom_regs.DDFSTRT << 1 ) + ddf_color_clocks_offs;
 	update_regs.ddf_word_count = ( -( custom_regs.DDFSTRT - custom_regs.DDFSTOP - 12 ) ) >> ddf_res_offs;
 
@@ -425,16 +425,16 @@ INLINE void init_update_regs( void ) {
 		update_regs.back_color = Machine->pens[custom_regs.COLOR[0]];
 		update_regs.old_COLOR0 = custom_regs.COLOR[0];
 	}
-	
+
 	update_regs.sprite_dma_enabled = ( custom_regs.DMACON & ( DMACON_SPREN | DMACON_DMAEN ) ) == ( DMACON_SPREN | DMACON_DMAEN );
 	update_regs.h_scroll[0] = custom_regs.BPLCON1 & 0xf;
 	update_regs.h_scroll[1] = (custom_regs.BPLCON1 >> 4) & 0xf;
-}	
+}
 
 /***********************************************************************************
 
-	Common update stuff coming. (aka abusing the preprocessor)
-	
+    Common update stuff coming. (aka abusing the preprocessor)
+
 ***********************************************************************************/
 #define BEGIN_UPDATE( name ) \
 static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
@@ -531,14 +531,14 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 
 /***********************************************************************************
 
-	Low Resolution handlers
-	
+    Low Resolution handlers
+
 ***********************************************************************************/
 
 BEGIN_UPDATE( render_pixel_lores ) {
 	/* now we're ready to render it */
 	int color = 0;
-	
+
 	for ( i = 0; i < planes; i++ ) {
 		color |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << i;
 	}
@@ -564,14 +564,14 @@ UNIMPLEMENTED( render_pixel_lores_lace_sprites )
 
 /***********************************************************************************
 
-	High Resolution handlers
-	
+    High Resolution handlers
+
 ***********************************************************************************/
 
 BEGIN_UPDATE( render_pixel_hires ) {
 	/* now we're ready to render it */
 	int color = 0;
-	
+
 	for ( i = 0; i < planes; i++ ) {
 		color |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << i;
 	}
@@ -583,7 +583,7 @@ BEGIN_UPDATE( render_pixel_hires ) {
 BEGIN_UPDATE_WITH_SPRITES( render_pixel_hires_sprites ) {
 	/* now we're ready to render it */
 	int color = 0;
-	
+
 	for ( i = 0; i < planes; i++ ) {
 		color |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << i;
 	}
@@ -597,8 +597,8 @@ UNIMPLEMENTED( render_pixel_hires_lace_sprites )
 
 /***********************************************************************************
 
-	Dual Playfield handlers
-	
+    Dual Playfield handlers
+
 ***********************************************************************************/
 
 BEGIN_UPDATE( render_pixel_dualplayfield_lores ) {
@@ -613,12 +613,12 @@ BEGIN_UPDATE( render_pixel_dualplayfield_lores ) {
 			color[0] |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << ( i >> 1 );
 		}
 	}
-	
+
 	if ( color[0] || color[1] ) { /* if theres a pixel to draw */
 		if ( custom_regs.BPLCON2 & 0x40 ) { /* check wich playfield has priority */
 			if ( color[1] )
 				dst[x] = Machine->pens[custom_regs.COLOR[color[1]+8]];
-			else			
+			else
 				dst[x] = Machine->pens[custom_regs.COLOR[color[0]]];
 		} else {
 			if ( color[0] )
@@ -640,14 +640,14 @@ UNIMPLEMENTED( render_pixel_dualplayfield_hires_lace_sprites )
 
 /***********************************************************************************
 
-	HAM handlers
-	
+    HAM handlers
+
 ***********************************************************************************/
 
 BEGIN_UPDATE( render_pixel_ham ) {
 	/* now we're ready to render it */
 	int color = 0;
-	
+
 	for ( i = 0; i < planes; i++ ) {
 		color |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << i;
 	}
@@ -727,17 +727,17 @@ static char mode_names[20][48] = {
 #endif
 
 INLINE int get_mode( void ) {
-	
+
 	int ret = 0;
-	
+
 	ret += ( custom_regs.BPLCON0 & BPLCON0_LACE ) ? 5 : 0;
-	
+
 	if ( custom_regs.BPLCON0 & BPLCON0_HOMOD )
 		return ( ret + 4 );
-	
+
 	ret += ( custom_regs.BPLCON0 & BPLCON0_HIRES ) ? 1 : 0;
 	ret += ( custom_regs.BPLCON0 & BPLCON0_DBLPF ) ? 2 : 0;
-	
+
 	return ret;
 }
 
@@ -749,7 +749,7 @@ VIDEO_START(amiga)
 	update_regs.old_DIWSTOP = -1;
 	update_regs.old_DDFSTRT = -1;
 	update_regs.RAM = memory_region(REGION_CPU1);
-	
+
 	update_regs.sprite_in_scanline = auto_malloc( Machine->drv->screen_height * sizeof( int ) );
 	if ( update_regs.sprite_in_scanline == 0 )
 		return 1;
@@ -781,11 +781,11 @@ void amiga_render_scanline(int scanline)
 	amiga_sprite_dma(scanline);
 
 	y = scanline;
-	
+
 	/* normalize some register values */
 	if ( custom_regs.DDFSTOP < custom_regs.DDFSTRT )
 		custom_regs.DDFSTOP = custom_regs.DDFSTRT;
-	
+
 	/* start of a new line, signal we're not done with it and fill up vars */
 	line_done = 0;
 	start_x = 0;
@@ -796,16 +796,16 @@ void amiga_render_scanline(int scanline)
 
 	/* make sure we complete the line */
 	do {
-		
+
 		/* start of a new line... check if the copper is (still) enabled */
 		line_done = copper_update( start_x, y, &end_x );
-		
+
 		if ( line_done )
 			end_x = sw;
-		
+
 		/* precaulculate some update registers */
 		init_update_regs();
-		
+
 		/* get the number of planes */
 		planes = ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) >> 12;
 		if ( planes == 6 && (custom_regs.BPLCON0 & (BPLCON0_DBLPF | BPLCON0_HOMOD)) == 0 )
@@ -815,13 +815,13 @@ void amiga_render_scanline(int scanline)
 
 		/* precalculate if the bitplane dma is enabled */
 		bitplane_dma_disabled = ( custom_regs.DMACON & ( DMACON_BPLEN | DMACON_DMAEN ) ) != ( DMACON_BPLEN | DMACON_DMAEN );
-		
-		
+
+
 		/***************************************************************************
-			First we check for a number of conditions to see if we can render image
-			pixels yet. Otherwise, we fill with the background color.
-		 **************************************************************************/
-		
+            First we check for a number of conditions to see if we can render image
+            pixels yet. Otherwise, we fill with the background color.
+         **************************************************************************/
+
 		if ( bitplane_dma_disabled || planes == 0 || y < update_regs.v_start || y >= update_regs.v_stop ) {
 			for ( x = start_x; x < end_x; x++ )
 				dst[x] = update_regs.back_color;
@@ -830,7 +830,7 @@ void amiga_render_scanline(int scanline)
 				local_render = render_pixel[get_mode()+10];
 			else
 				local_render = render_pixel[get_mode()];
-			
+
 			/* first clear buffer */
 			if ( start_x == 0 ) {
 				for ( x = start_x; x < end_x; x++ )
@@ -843,7 +843,7 @@ void amiga_render_scanline(int scanline)
 			for ( x = start_x; x < end_x; x++ )
 				(*local_render)( tmpbitmap, dst, planes, x, y, min_x );
 		}
-		
+
 		/* now we start from where we left off */
 		start_x = end_x;
 
@@ -851,7 +851,7 @@ void amiga_render_scanline(int scanline)
 
 	if ( y >= update_regs.v_start && y < update_regs.v_stop )
 		update_modulos( planes ); /* update modulos */
-	
+
 	update_regs.sprite_in_scanline[y] = 0;
 
 }

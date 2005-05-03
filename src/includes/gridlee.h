@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Videa Gridlee hardware
+    Videa Gridlee hardware
 
     driver by Aaron Giles
 

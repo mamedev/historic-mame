@@ -42,8 +42,8 @@ static void get_tile_info_A(int tile_index)
 	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	if ((attr == 0x0d) && (!(K007121_ctrlram[0][0])) && (!(K007121_ctrlram[0][2])))
-		bank = 0;	/*	this allows the game to print text
-					in all banks selected by the k007121 */
+		bank = 0;	/*  this allows the game to print text
+                    in all banks selected by the k007121 */
 
 	SET_TILE_INFO(
 			0,
@@ -134,13 +134,13 @@ WRITE8_HANDLER( flkatck_k007121_regs_w )
 
 /***************************************************************************
 
-	Display Refresh
+    Display Refresh
 
 ***************************************************************************/
 
 /***************************************************************************
 
-	Flack Attack sprites. Each sprite has 16 bytes!:
+    Flack Attack sprites. Each sprite has 16 bytes!:
 
 
 ***************************************************************************/
@@ -158,7 +158,7 @@ usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02
 	/* set scroll registers */
 	tilemap_set_scrollx(k007121_tilemap[0],0,K007121_ctrlram[0][0x00] - 40);
 	tilemap_set_scrolly(k007121_tilemap[0],0,K007121_ctrlram[0][0x02]);
-	
+
 	/* compute clipping */
 	final_clip[0] = k007121_clip[0];
 	final_clip[1] = k007121_clip[1];

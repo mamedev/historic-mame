@@ -25,9 +25,9 @@ static void sslam_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		ypos = source[0] & 0x01ff;
 		colr = (source[2] & 0xf000) >> 12;
 		eightbyeight = source[0] & 0x1000;
-		flipx = source[0] & 0x4000;		
+		flipx = source[0] & 0x4000;
 		number = source[3];
-		
+
 		xpos -=16; xpos -=7;
 		ypos = 0xff - ypos;
 		ypos -=16; ypos -=7;
@@ -156,7 +156,7 @@ VIDEO_UPDATE(sslam)
 		md_clip.max_x = cliprect->max_x - (sslam_regs[2]+2 - 0x8c8);
 		md_clip.min_y = cliprect->min_y;
 		md_clip.max_y = cliprect->max_y;
-	
+
 		tilemap_draw(bitmap,&md_clip,sslam_md_tilemap,0,0);
 	}
 	else

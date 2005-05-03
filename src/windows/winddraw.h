@@ -1,6 +1,6 @@
 //============================================================
 //
-//	winddraw.h - Win32 DirectDraw code
+//  winddraw.h - Win32 DirectDraw code
 //
 //============================================================
 
@@ -11,7 +11,7 @@
 
 
 //============================================================
-//	PROTOTYPES
+//  PROTOTYPES
 //============================================================
 
 int win_ddraw_init(int width, int height, int depth, int attributes, const struct win_effect_data *effect);

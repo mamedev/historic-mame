@@ -12,7 +12,7 @@
   8/27/97 -- Rewritten a second time by Aaron Giles, with the datasheets in hand
 
 pending:
-	Z80CTC , Counter mode & Timer with Trigrt start :not support Triger level
+    Z80CTC , Counter mode & Timer with Trigrt start :not support Triger level
 
 ***************************************************************************/
 
@@ -143,7 +143,7 @@ static void z80ctc_interrupt_check( z80ctc *ctc )
 	{
 		/* if IEO disable , same and lower IRQ is masking */
 /* ASG: changed this line because this state could have an interrupt pending as well! */
-/*		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;*/
+/*      if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;*/
 		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = ctc->int_state[ch];
 		else                                   state |= ctc->int_state[ch];
 	}

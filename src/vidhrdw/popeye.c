@@ -356,16 +356,16 @@ static void popeye_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 		int code,color,flipx,flipy,sx,sy;
 
 		/*
-		 * offs+3:
-		 * bit 7 ?
-		 * bit 6 ?
-		 * bit 5 ?
-		 * bit 4 MSB of sprite code
-		 * bit 3 vertical flip
-		 * bit 2 sprite bank
-		 * bit 1 \ color (with bit 2 as well)
-		 * bit 0 /
-		 */
+         * offs+3:
+         * bit 7 ?
+         * bit 6 ?
+         * bit 5 ?
+         * bit 4 MSB of sprite code
+         * bit 3 vertical flip
+         * bit 2 sprite bank
+         * bit 1 \ color (with bit 2 as well)
+         * bit 0 /
+         */
 
 		code = (spriteram[offs + 2] & 0x7f) + ((spriteram[offs + 3] & 0x10) << 3)
 							+ ((spriteram[offs + 3] & 0x04) << 6);

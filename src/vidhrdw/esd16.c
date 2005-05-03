@@ -1,35 +1,35 @@
 /***************************************************************************
 
-						  -= ESD 16 Bit Games =-
+                          -= ESD 16 Bit Games =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q / W			Shows Layer 0 / 1
-		A				Shows Sprites
-
-		Keys can be used together!
+                    driver by   Luca Elia (l.elia@tin.it)
 
 
-	[ 2 Scrolling Layers ]
+Note:   if MAME_DEBUG is defined, pressing Z with:
 
-		Tile Size:				8 x 8 x 8
-		Color Codes:			1 per Layer
-		Layer Size (tiles) :	128 x 64
-		Layer Size (pixels):	1024 x 512
+        Q / W           Shows Layer 0 / 1
+        A               Shows Sprites
 
-	[ 256 Sprites ]
+        Keys can be used together!
 
-		Sprites are made of 16 x 16 x 5 tiles. Size can vary from 1 to
-		8 tiles vertically, while their width is always 1 tile.
 
-	[ Priorities ]
+    [ 2 Scrolling Layers ]
 
-		The game only uses this scheme:
+        Tile Size:              8 x 8 x 8
+        Color Codes:            1 per Layer
+        Layer Size (tiles) :    128 x 64
+        Layer Size (pixels):    1024 x 512
 
-		Back -> Front:	Layer 0, Layer 1, Sprites
+    [ 256 Sprites ]
+
+        Sprites are made of 16 x 16 x 5 tiles. Size can vary from 1 to
+        8 tiles vertically, while their width is always 1 tile.
+
+    [ Priorities ]
+
+        The game only uses this scheme:
+
+        Back -> Front:  Layer 0, Layer 1, Sprites
 
 ***************************************************************************/
 
@@ -58,14 +58,14 @@ VIDEO_UPDATE( esd16 );
 
 /***************************************************************************
 
-									Tilemaps
+                                    Tilemaps
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
+        0.w                             Code
 
-	No color code:	layer 0 (backmost) usues the second 256 colors,
-					layer 1 the first 256.
+    No color code:  layer 0 (backmost) usues the second 256 colors,
+                    layer 1 the first 256.
 
 ***************************************************************************/
 
@@ -123,7 +123,7 @@ WRITE16_HANDLER( esd16_vram_1_w )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -160,24 +160,24 @@ VIDEO_START( esd16 )
 
 /***************************************************************************
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		fedc b--- ---- ----
-				---- -a9- ---- ----		Y Size: (1 << N) Tiles
-				---- ---8 7654 3210		Y (Signed, Bottom-Up)
+        0.w     fedc b--- ---- ----
+                ---- -a9- ---- ----     Y Size: (1 << N) Tiles
+                ---- ---8 7654 3210     Y (Signed, Bottom-Up)
 
-		2.w								Code
+        2.w                             Code
 
-		4.w		fed- ---- ---- ----
-				---c ---- ---- ----		Color?
-				---- ba9- ---- ----		Color
-				---- ---8 7654 3210		X (Signed)
+        4.w     fed- ---- ---- ----
+                ---c ---- ---- ----     Color?
+                ---- ba9- ---- ----     Color
+                ---- ---8 7654 3210     X (Signed)
 
-		6.w		fedc ba9- ---- ----
-				---- ---8 ---- ----		? 1 (Display Sprite?)
-				---- ---- 7654 3210
+        6.w     fedc ba9- ---- ----
+                ---- ---8 ---- ----     ? 1 (Display Sprite?)
+                ---- ---- 7654 3210
 
 - To Do: Flip X&Y ? They seem unused.
 
@@ -246,7 +246,7 @@ static void hedpanic_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 		int	sy		=	spriteram16[ offs + 0 ];
 		int	code	=	spriteram16[ offs + 1 ];
 		int	sx		=	spriteram16[ offs + 2 ];
-//		int	attr	=	spriteram16[ offs + 3 ];
+//      int attr    =   spriteram16[ offs + 3 ];
 
 		int dimy	=	1 << ((sy >> 9) & 3);
 
@@ -288,7 +288,7 @@ static void hedpanic_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
 
 ***************************************************************************/
@@ -360,5 +360,5 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 4)	hedpanic_draw_sprites(bitmap,cliprect);
 
 
-//	usrintf_showmessage("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
+//  usrintf_showmessage("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
 }

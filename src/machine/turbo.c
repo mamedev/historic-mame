@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Sega Z80-3D system
+    Sega Z80-3D system
 
 *************************************************************************/
 
@@ -35,15 +35,15 @@ static int segment_init;
 
 /*******************************************
 
-	Turbo 8255 PPI handling
+    Turbo 8255 PPI handling
 
 *******************************************/
 /*
-	chip index:
-	0 = IC75 - CPU Board, Sheet 6, D7
-	1 = IC32 - CPU Board, Sheet 6, D6
-	2 = IC123 - CPU Board, Sheet 6, D4
-	3 = IC6 - CPU Board, Sheet 5, D7
+    chip index:
+    0 = IC75 - CPU Board, Sheet 6, D7
+    1 = IC32 - CPU Board, Sheet 6, D6
+    2 = IC123 - CPU Board, Sheet 6, D4
+    3 = IC6 - CPU Board, Sheet 5, D7
 */
 
 static WRITE8_HANDLER( turbo_opa_w )
@@ -107,7 +107,7 @@ static ppi8255_interface turbo_8255_intf =
 
 /*******************************************
 
-	Subroc3D 8255 PPI handling
+    Subroc3D 8255 PPI handling
 
 *******************************************/
 
@@ -147,7 +147,7 @@ static ppi8255_interface subroc3d_8255_intf =
 
 /*******************************************
 
-	Buck Rogers 8255 PPI handling
+    Buck Rogers 8255 PPI handling
 
 *******************************************/
 
@@ -202,7 +202,7 @@ static ppi8255_interface buckrog_8255_intf =
 
 /*******************************************
 
-	Machine Init
+    Machine Init
 
 *******************************************/
 
@@ -241,8 +241,8 @@ MACHINE_INIT( buckrog )
 
 /*******************************************
 
-	8279 handling
-	IC84 - CPU Board, Sheet 5, C7
+    8279 handling
+    IC84 - CPU Board, Sheet 5, C7
 
 *******************************************/
 
@@ -317,7 +317,7 @@ void turbo_update_segments(void)
 
 /*******************************************
 
-	Turbo misc handling
+    Turbo misc handling
 
 *******************************************/
 
@@ -368,7 +368,7 @@ void turbo_update_tachometer(void)
 
 /*******************************************
 
-	Turbo ROM decoding
+    Turbo ROM decoding
 
 *******************************************/
 
@@ -377,7 +377,7 @@ void turbo_rom_decode(void)
 /*
  * The table is arranged this way (second half is mirror image of first)
  *
- *		0  1  2	 3	4  5  6	 7	8  9  A	 B	C  D  E	 F
+ *      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
  *
  * 0   00 00 00 00 01 01 01 01 02 02 02 02 03 03 03 03
  * 1   04 04 04 04 05 05 05 05 06 06 06 06 07 07 07 07
@@ -477,13 +477,13 @@ void turbo_rom_decode(void)
 
 /*******************************************
 
-	Subroc-3D misc handling
+    Subroc-3D misc handling
 
 *******************************************/
 
 /*******************************************
 
-	Buck Rogers misc handling
+    Buck Rogers misc handling
 
 *******************************************/
 

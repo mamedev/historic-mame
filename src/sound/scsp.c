@@ -1,24 +1,24 @@
 /*
-	Sega/Yamaha YMF292-F (SCSP = Saturn Custom Sound Processor) emulation
-	By ElSemi
-	MAME/M1 conversion and cleanup by R. Belmont
+    Sega/Yamaha YMF292-F (SCSP = Saturn Custom Sound Processor) emulation
+    By ElSemi
+    MAME/M1 conversion and cleanup by R. Belmont
 
-	This chip has 32 voices.  Each voice can play a sample or be part of
-	an FM construct.  Unlike traditional Yamaha FM chips, the base waveform
-	for the FM still comes from the wavetable RAM.
+    This chip has 32 voices.  Each voice can play a sample or be part of
+    an FM construct.  Unlike traditional Yamaha FM chips, the base waveform
+    for the FM still comes from the wavetable RAM.
 
-	Unsupported:
-		- FM mode (VF3 uses it, Hanagumi might late in the title song...)
-		- on-board programmable DSP and related functionality
+    Unsupported:
+        - FM mode (VF3 uses it, Hanagumi might late in the title song...)
+        - on-board programmable DSP and related functionality
 
-	ChangeLog:
-	* November 25, 2003 (ES) Fixed buggy timers and envelope overflows.
+    ChangeLog:
+    * November 25, 2003 (ES) Fixed buggy timers and envelope overflows.
                             (RB) Improved sample rates other than 44100, multiple
-	             		 chips now works properly.
-	* December 02, 2003 (ES) Added DISDL register support, improves mix.
-	* April 28, 2004    (ES) Corrected envelope rates, added key-rate scaling,
-	                         added ringbuffer support.
-	* January 8, 2005   (RB) Added ability to specify region offset for RAM.
+                         chips now works properly.
+    * December 02, 2003 (ES) Added DISDL register support, improves mix.
+    * April 28, 2004    (ES) Corrected envelope rates, added key-rate scaling,
+                             added ringbuffer support.
+    * January 8, 2005   (RB) Added ability to specify region offset for RAM.
 */
 
 #include <math.h>
@@ -39,8 +39,8 @@
 #include "scsplfo.c"
 
 /*
-	SCSP features 32 programmable slots
-	that can generate FM and PCM (from ROM/RAM) sound
+    SCSP features 32 programmable slots
+    that can generate FM and PCM (from ROM/RAM) sound
 */
 
 //SLOT PARAMETERS
@@ -965,7 +965,7 @@ static void SCSP_DoMasterSamples(struct _SCSP *SCSP, int nsamples)
 		signed int smpl=*bufl1>>2;
 		signed int smpr=*bufr1>>2;
 
-//		if (!chip)
+//      if (!chip)
 		{
 			SCSP_TimersAddTicks(SCSP, 1);
 			CheckPendingIRQ(SCSP);
@@ -994,7 +994,7 @@ static void dma_scsp(struct _SCSP *SCSP)
 			 "DGATE: %d  DDIR: %d\n",SCSP->scsp_dmea,SCSP->scsp_drga,SCSP->scsp_dtlg,scsp_dgate ? 1 : 0,scsp_ddir ? 1 : 0);
 
 	/* Copy the dma values in a temp storage for resuming later *
-	 * (DMA *can't* overwrite his parameters).                  */
+     * (DMA *can't* overwrite his parameters).                  */
 	if(!(scsp_ddir))
 	{
 		tmp_dma[0] = scsp_regs[0x412/2];
@@ -1053,9 +1053,9 @@ static void SCSP_Update(void *param, stream_sample_t **inputs, stream_sample_t *
 static void *scsp_start(int sndindex, int clock, const void *config)
 {
 	const struct SCSPinterface *intf;
-	
+
 	struct _SCSP *SCSP;
-	
+
 	SCSP = auto_malloc(sizeof(*SCSP));
 	memset(SCSP, 0, sizeof(*SCSP));
 

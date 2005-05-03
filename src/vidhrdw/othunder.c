@@ -27,8 +27,8 @@ static int taito_hide_pixels;
 static VIDEO_START( othunder_core )
 {
 	/* Up to $800/8 big sprites, requires 0x100 * sizeof(*spritelist)
-	   Multiply this by 32 to give room for the number of small sprites,
-	   which are what actually get put in the structure. */
+       Multiply this by 32 to give room for the number of small sprites,
+       which are what actually get put in the structure. */
 
 	spritelist = auto_malloc(0x2000 * sizeof(*spritelist));
 	if (!spritelist)
@@ -47,7 +47,7 @@ static VIDEO_START( othunder_core )
 VIDEO_START( othunder )
 {
 	/* There is a problem here. 4 is correct for text layer/sprite
-	   alignment, but the bg layers [or one of them] are wrong */
+       alignment, but the bg layers [or one of them] are wrong */
 
 	taito_hide_pixels = 4;
 	return video_start_othunder_core();
@@ -55,25 +55,25 @@ VIDEO_START( othunder )
 
 
 /************************************************************
-			SPRITE DRAW ROUTINE
+            SPRITE DRAW ROUTINE
 
 It draws a series of small tiles ("chunks") together to
 create a big sprite. The spritemap rom provides the lookup
 table for this. We look up the 16x8 sprite chunks from
 the spritemap rom, creating each 64x64 sprite as follows:
 
-	 0  1  2  3
-	 4  5  6  7
-	 8  9 10 11
-	12 13 14 15
-	16 17 18 19
-	20 21 22 23
-	24 25 26 27
-	28 29 30 31
+     0  1  2  3
+     4  5  6  7
+     8  9 10 11
+    12 13 14 15
+    16 17 18 19
+    20 21 22 23
+    24 25 26 27
+    28 29 30 31
 
 The game makes heavy use of sprite zooming.
 
-		***
+        ***
 
 NB: unused portions of the spritemap rom contain hex FF's.
 It is a useful coding check to warn in the log if these
@@ -81,25 +81,25 @@ are being accessed. [They can be inadvertently while
 spriteram is being tested, take no notice of that.]
 
 
-		Othunder (modified table from Raine)
+        Othunder (modified table from Raine)
 
-		Byte | Bit(s) | Description
-		-----+76543210+-------------------------------------
-		  0  |xxxxxxx.| ZoomY (0 min, 63 max - msb unused as sprites are 64x64)
-		  0  |.......x| Y position (High)
-		  1  |xxxxxxxx| Y position (Low)
-		  2  |x.......| Sprite/BG Priority (0=sprites high)
-		  2  |.x......| Flip X
-		  2  |..?????.| unknown/unused ?
-		  2  |.......x| X position (High)
-		  3  |xxxxxxxx| X position (Low)
-		  4  |xxxxxxxx| Palette bank
-		  5  |?.......| unknown/unused ?
-		  5  |.xxxxxxx| ZoomX (0 min, 63 max - msb unused as sprites are 64x64)
-		  6  |x.......| Flip Y
-		  6  |.??.....| unknown/unused ?
-		  6  |...xxxxx| Sprite Tile high (2 msbs unused - 3/4 of spritemap rom empty)
-		  7  |xxxxxxxx| Sprite Tile low
+        Byte | Bit(s) | Description
+        -----+76543210+-------------------------------------
+          0  |xxxxxxx.| ZoomY (0 min, 63 max - msb unused as sprites are 64x64)
+          0  |.......x| Y position (High)
+          1  |xxxxxxxx| Y position (Low)
+          2  |x.......| Sprite/BG Priority (0=sprites high)
+          2  |.x......| Flip X
+          2  |..?????.| unknown/unused ?
+          2  |.......x| X position (High)
+          3  |xxxxxxxx| X position (Low)
+          4  |xxxxxxxx| Palette bank
+          5  |?.......| unknown/unused ?
+          5  |.xxxxxxx| ZoomX (0 min, 63 max - msb unused as sprites are 64x64)
+          6  |x.......| Flip Y
+          6  |.??.....| unknown/unused ?
+          6  |...xxxxx| Sprite Tile high (2 msbs unused - 3/4 of spritemap rom empty)
+          7  |xxxxxxxx| Sprite Tile low
 
 ********************************************************/
 
@@ -116,7 +116,7 @@ static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct r
 	int bad_chunks;
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
+       while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -180,8 +180,8 @@ static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct r
 			if (sprites_flipscreen)
 			{
 				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
+                   drawgfxzoom does not know to draw from flip-side of sprites when
+                   screen is flipped; so we must correct the coords ourselves. */
 
 				curx = 320 - curx - zx;
 				cury = 256 - cury - zy;
@@ -237,7 +237,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 /**************************************************************
-				SCREEN REFRESH
+                SCREEN REFRESH
 **************************************************************/
 
 VIDEO_UPDATE( othunder )

@@ -1,19 +1,19 @@
 /***************************************************************************
 
-						  -= Power Instinct =-
-							(C) 1993 Atlus
+                          -= Power Instinct =-
+                            (C) 1993 Atlus
 
-				driver by	Luca Elia (l.elia@tin.it)
+                driver by   Luca Elia (l.elia@tin.it)
 
 Set 1
-	CPU:    MC68000
-	Sound:  OKIM6295
+    CPU:    MC68000
+    Sound:  OKIM6295
 Set 2
-	CPU:    MC68000, Z80 (for sound)
-	Sound:  2x OKI6295 (Sound code supports an additional YM2203, but it's not fitted)
+    CPU:    MC68000, Z80 (for sound)
+    Sound:  2x OKI6295 (Sound code supports an additional YM2203, but it's not fitted)
 
-- Note:	To enter test mode press F2 (Test)
-		Use 9 (Service Coin) to change page.
+- Note: To enter test mode press F2 (Test)
+        Use 9 (Service Coin) to change page.
 
 TODO:
 - sprites flip y (not used by the game)
@@ -47,7 +47,7 @@ VIDEO_UPDATE( powerins );
 
 /***************************************************************************
 
-								Memory Maps
+                                Memory Maps
 
 ***************************************************************************/
 
@@ -71,8 +71,8 @@ static WRITE16_HANDLER( powerins_okibank_w )
 static WRITE8_HANDLER( powerina_okibank_w )
 {
 	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-	   controlled. The sample table at the beginning of the addressing space is
-	   divided in four pages as well, banked together with the sample data. */
+       controlled. The sample table at the beginning of the addressing space is
+       divided in four pages as well, banked together with the sample data. */
 
 	#define TABLESIZE 0x100
 	#define BANKSIZE 0x10000
@@ -160,14 +160,14 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem_snd, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) // ? written only once ?
-//	AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) // ?
+//  AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) // ? written only once ?
+//  AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) // ?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_snd, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-/*	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)	Not fitted on this board */
-/*	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)		Not fitted on this board */
+/*  AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)    Not fitted on this board */
+/*  AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)      Not fitted on this board */
 	AM_RANGE(0x00, 0x00) AM_READ(powerina_fake_ym2203_r)
 	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP)
 	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
@@ -176,8 +176,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_snd, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-/*	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)	Not fitted on this board */
-/*	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)	Not fitted on this board */
+/*  AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)  Not fitted on this board */
+/*  AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)    Not fitted on this board */
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
@@ -187,7 +187,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************
 
-								Input Ports
+                                Input Ports
 
 ***************************************************************************/
 
@@ -229,7 +229,7 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
 	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_3C ) )
@@ -238,7 +238,7 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2C to start, 1C to continue */
 	PORT_DIPSETTING(      0x0070, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0050, DEF_STR( 1C_3C ) )
@@ -255,13 +255,13 @@ INPUT_PORTS_START( powerins )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 /*
-	In "Join In" mode, a second player can join even if one player has aready
-	begun to play.  Please refer to chart below:
+    In "Join In" mode, a second player can join even if one player has aready
+    begun to play.  Please refer to chart below:
 
-	Join In Mode	Credit			Join In		Game Over
-	-----------------------------------------------------------------------------------------------
-	Join In ON	1C per Player		Anytime		Winner of VS Plays Computer
-	Join In OFF	1C = VS Mode 2 players	Cannot		After win VS Game Over for both players
+    Join In Mode    Credit          Join In     Game Over
+    -----------------------------------------------------------------------------------------------
+    Join In ON  1C per Player       Anytime     Winner of VS Plays Computer
+    Join In OFF 1C = VS Mode 2 players  Cannot      After win VS Game Over for both players
 
 */
 	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Demo_Sounds ) )
@@ -287,7 +287,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-								Graphics Layouts
+                                Graphics Layouts
 
 ***************************************************************************/
 
@@ -349,7 +349,7 @@ static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-								Machine Drivers
+                                Machine Drivers
 
 ***************************************************************************/
 
@@ -427,15 +427,15 @@ static MACHINE_DRIVER_START( powerina )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-/*	MDRV_SOUND_ADD(YM2203, ym2203_interface)	Sound code talks to one, but */
-/*												it's not fitted on the board */
+/*  MDRV_SOUND_ADD(YM2203, ym2203_interface)    Sound code talks to one, but */
+/*                                              it's not fitted on the board */
 MACHINE_DRIVER_END
 
 
 
 /***************************************************************************
 
-								ROMs Loading
+                                ROMs Loading
 
 ***************************************************************************/
 
@@ -443,7 +443,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-								Power Instinct
+                                Power Instinct
 
 Location     Device       File ID     Checksum
 ----------------------------------------------

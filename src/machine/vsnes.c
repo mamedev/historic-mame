@@ -2,8 +2,8 @@
 
 Nintendo VS UniSystem and DualSystem - (c) 1984 Nintendo of America
 
-	Portions of this code are heavily based on
-	Brad Oliver's MESS implementation of the NES.
+    Portions of this code are heavily based on
+    Brad Oliver's MESS implementation of the NES.
 
 ***************************************************************************/
 
@@ -21,7 +21,7 @@ static UINT8 *remapped_colortable;
 static int sound_fix=0;
 /*************************************
  *
- *	Color Mapping
+ *  Color Mapping
  *
  *************************************/
 
@@ -107,7 +107,7 @@ static int remap_colors( int num, int addr, int data )
 
 /*************************************
  *
- *	Input Ports
+ *  Input Ports
  *
  *************************************/
 WRITE8_HANDLER( vsnes_in0_w )
@@ -212,7 +212,7 @@ READ8_HANDLER( vsnes_in1_1_r )
 
 /*************************************
  *
- *	Init machine
+ *  Init machine
  *
  *************************************/
 
@@ -231,7 +231,7 @@ MACHINE_INIT( vsnes )
 
 /*************************************
  *
- *	Init machine
+ *  Init machine
  *
  *************************************/
 MACHINE_INIT( vsdual )
@@ -253,7 +253,7 @@ MACHINE_INIT( vsdual )
 
 /*************************************
  *
- *	Common init for all games
+ *  Common init for all games
  *
  *************************************/
 DRIVER_INIT( vsnes )
@@ -267,7 +267,7 @@ DRIVER_INIT( vsnes )
 
 /**********************************************************************************
  *
- *	Game and Board-specific initialization
+ *  Game and Board-specific initialization
  *
  **********************************************************************************/
 
@@ -1156,7 +1156,7 @@ DRIVER_INIT( platoon )
 {
 
 	/* when starting a mapper 68 game  the first 16K ROM bank in the cart is loaded into $8000
-	the LAST 16K ROM bank is loaded into $C000. The last 16K of ROM cannot be swapped. */
+    the LAST 16K ROM bank is loaded into $C000. The last 16K of ROM cannot be swapped. */
 
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
 	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x2c000], 0x4000 );

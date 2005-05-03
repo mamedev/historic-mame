@@ -2,12 +2,12 @@
 
   machine/stvcd.c
 
-	-- we should adapt this to use the .cue / .bin or whatever format we
-	decide to keep the cd in once we have one
+    -- we should adapt this to use the .cue / .bin or whatever format we
+    decide to keep the cd in once we have one
 
-	since sports fishing 2 is the only st-v game to require the cd, is an
-	incomplete dump, and will also require the mpeg decoder it seems fairly
-	unlikely this will be done soon
+    since sports fishing 2 is the only st-v game to require the cd, is an
+    incomplete dump, and will also require the mpeg decoder it seems fairly
+    unlikely this will be done soon
 
 ***************************************************************************/
 
@@ -443,9 +443,9 @@ UINT32 iso_get_status(void){
 
 	stat = 0;
 
-//	if(iso_media_present) stat |= CDSTAT_MEDIA_PRESENT;
+//  if(iso_media_present) stat |= CDSTAT_MEDIA_PRESENT;
 
-//	stat |= CDSTAT_CAN_RAW_AUDIO;
+//  stat |= CDSTAT_CAN_RAW_AUDIO;
 
 	return(stat);
 }
@@ -462,11 +462,11 @@ static void iso_build_disc_iso(void){
 	int i, j;
 	UINT32 fad;
 
-//	char fmt[][12] = {
-//		"%02d.iso", "-%02d.iso", "_%02d.iso", " %02d.iso",
-//		"%02d.wav", "-%02d.wav", "_%02d.wav", " %02d.wav",
-//		"%02d.mp3", "-%02d.mp3", "_%02d.mp3", " %02d.mp3",
-//	};
+//  char fmt[][12] = {
+//      "%02d.iso", "-%02d.iso", "_%02d.iso", " %02d.iso",
+//      "%02d.wav", "-%02d.wav", "_%02d.wav", " %02d.wav",
+//      "%02d.mp3", "-%02d.mp3", "_%02d.mp3", " %02d.mp3",
+//  };
 
 	char fmt[3][12] = {
 		"%02d.iso",
@@ -507,40 +507,40 @@ static void iso_build_disc_iso(void){
 
 					if(i == 1){
 /*
-						// first track
-						logerror("1, lunghezza %d, iso buff contiene %s\n",fsize(f),iso_buff);
-						fseek(f, 0, SEEK_SET);
-						int pp=fread(iso_buff, 1, 0x110, f);
-						fseek(f, 0, SEEK_SET);
-						logerror("2\n");
-						logerror("%d\t%s\n",pp,iso_buff);
+                        // first track
+                        logerror("1, lunghezza %d, iso buff contiene %s\n",fsize(f),iso_buff);
+                        fseek(f, 0, SEEK_SET);
+                        int pp=fread(iso_buff, 1, 0x110, f);
+                        fseek(f, 0, SEEK_SET);
+                        logerror("2\n");
+                        logerror("%d\t%s\n",pp,iso_buff);
 
-						if(strncmp(&iso_buff[0x00], "SEGA SEGASATURN ", 16)){
-							logerror("2b\n");
-							// ISO 2048-bytes data track
+                        if(strncmp(&iso_buff[0x00], "SEGA SEGASATURN ", 16)){
+                            logerror("2b\n");
+                            // ISO 2048-bytes data track
 
-							//setup_game_info(&iso_buff[0x00]);
-							//setup_area_symbol(iso_buff[0x40]);
+                            //setup_game_info(&iso_buff[0x00]);
+                            //setup_area_symbol(iso_buff[0x40]);
 
-						}else
-						if(strncmp(&iso_buff[0x10], "SEGA SEGASATURN ", 16)){
+                        }else
+                        if(strncmp(&iso_buff[0x10], "SEGA SEGASATURN ", 16)){
 
-							// ISO 2352-bytes data track
+                            // ISO 2352-bytes data track
 
-							//setup_game_info(&iso_buff[0x10]);
-							//setup_area_symbol(iso_buff[0x50]);
+                            //setup_game_info(&iso_buff[0x10]);
+                            //setup_area_symbol(iso_buff[0x50]);
 
-							iso_track[i-1].type = 1;
+                            iso_track[i-1].type = 1;
 
-						}else{
+                        }else{
 
-							logerror("ERROR: unknown track %i format (file: %s)\n", i, t);
-							exit(1);
-						}
-						logerror("3\n");
-						memset(iso_buff, 0x00, 0x110);
+                            logerror("ERROR: unknown track %i format (file: %s)\n", i, t);
+                            exit(1);
+                        }
+                        logerror("3\n");
+                        memset(iso_buff, 0x00, 0x110);
 
-						iso_track[i-1].type = 0; // 2048-bytes
+                        iso_track[i-1].type = 0; // 2048-bytes
 */
 					}else{
 
@@ -645,24 +645,24 @@ void iso_init(void){
 
 UINT32 FAD_TO_MIN(UINT32 fad){
 /*
-	UINT32 tmp=fad/75;
-	UINT32 tmp2=0;
-	while (tmp>60){
+    UINT32 tmp=fad/75;
+    UINT32 tmp2=0;
+    while (tmp>60){
         tmp -=60;
-		tmp2++;
-	}
-	return(tmp2);
+        tmp2++;
+    }
+    return(tmp2);
 */
 	return (fad/4500);
 }
 
 UINT32 FAD_TO_SEC(UINT32 fad){
 /*
-	UINT32 tmp=fad/75;
-	while (tmp>60){
+    UINT32 tmp=fad/75;
+    while (tmp>60){
         tmp -=60;
-	}
-	return(tmp);
+    }
+    return(tmp);
 */
 	return( (fad/75) %60);
 }
@@ -917,7 +917,7 @@ void CD_com_update(UINT32 count){
 						logerror("BFUL!\n");
 
 						CD_hirq |= HIRQ_BFUL;
-					//	CD_hirq |= HIRQ_PEND; // not sure
+					//  CD_hirq |= HIRQ_PEND; // not sure
 						CD_hirq |= HIRQ_DRDY; // not sure
 
 						CD_status = CDB_STAT_PAUSE;
@@ -990,7 +990,7 @@ void CD_com_update(UINT32 count){
 			CD_cur_track	= iso_find_track(CD_cur_fad);
 			CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
 			CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
-			//CD_cur_fid		= iso_find_file(CD_cur_fad);
+			//CD_cur_fid        = iso_find_file(CD_cur_fad);
 
 			if((CD_cur_fad < CD_play_fad) ||
 			   (CD_cur_fad >= (CD_play_fad + CD_play_range))){

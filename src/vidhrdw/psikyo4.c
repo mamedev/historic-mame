@@ -41,22 +41,22 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 {
 	/*- Sprite Format 0x0000 - 0x2bff -**
 
-	0 hhhh --yy yyyy yyyy | wwww --xx xxxx xxxx  1  Ffpp pppp ---- -nnn | nnnn nnnn nnnn nnnn
+    0 hhhh --yy yyyy yyyy | wwww --xx xxxx xxxx  1  Ffpp pppp ---- -nnn | nnnn nnnn nnnn nnnn
 
-	y = ypos
-	x = xpos
+    y = ypos
+    x = xpos
 
-	h = height
-	w = width
+    h = height
+    w = width
 
-	f = flip (x)
-	F = flip (y) Unused?
+    f = flip (x)
+    F = flip (y) Unused?
 
-	n = tile number
+    n = tile number
 
-	p = palette
+    p = palette
 
-	**- End Sprite Format -*/
+    **- End Sprite Format -*/
 
 	const struct GfxElement *gfx = Machine->gfx[0];
 	data32_t *source = spriteram32;
@@ -171,8 +171,8 @@ VIDEO_UPDATE( psikyo4 )
 		usrintf_showmessage	("Regs %08x %08x %08x",
 			psikyo4_vidregs[0], psikyo4_vidregs[1],
 			psikyo4_vidregs[2]);
-//		usrintf_showmessage ("Brightness %08x%08x",
-//			screen1_brt[0], screen2_brt[0]);
+//      usrintf_showmessage ("Brightness %08x%08x",
+//          screen1_brt[0], screen2_brt[0]);
 	}
 #endif
 #endif

@@ -39,11 +39,11 @@ static void get_bg_tile_info(int tile_index)
 	int gfxsel = colorram[tile_index] & 1;
 	int bank = ( ( colorram[tile_index] >> 2 ) & 0x07 );
 	int code = videoram[tile_index];
-	
+
 	code |= ( bank & 1 ) << 10;
 	code |= ( bank & 2 ) << 8;
 	code += ( bank & 4 ) << 6;
-	
+
 	SET_TILE_INFO(gfxsel,code,0,0)
 }
 

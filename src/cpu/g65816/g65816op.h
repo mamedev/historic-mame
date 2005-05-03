@@ -328,7 +328,7 @@ INLINE void g65816i_set_flag_i(uint value)
 		return;
 	}
 	FLAG_I = value;
-//	g65816i_check_maskable_interrupt();
+//  g65816i_check_maskable_interrupt();
 }
 
 
@@ -2131,7 +2131,7 @@ TABLE_FUNCTION(void, set_line, (int line, int state))
 					CPU_STOPPED &= ~STOP_LEVEL_WAI;
 				return;
 			}
-//			g65816i_interrupt_hardware(VECTOR_IRQ);
+//          g65816i_interrupt_hardware(VECTOR_IRQ);
 			return;
 		case G65816_LINE_NMI:
 			if(state == CLEAR_LINE)
@@ -2245,9 +2245,9 @@ TABLE_FUNCTION(int, execute, (int clocks))
 		do
 		{
 			/* Note that I'm doing a per-instruction interrupt
-			 * check until this core is working well enough
-			 * to start trying fancy stuff.
-			 */
+             * check until this core is working well enough
+             * to start trying fancy stuff.
+             */
 			g65816i_check_maskable_interrupt();
 
 			REGISTER_PPC = REGISTER_PC;

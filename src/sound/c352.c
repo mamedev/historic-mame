@@ -97,16 +97,16 @@ static int get_mseq_bit(struct c352_info *info)
 }
 
 static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long sample_count)
-						  
+
 {
-														  
+
 	int i;
-													  
+
 	signed short sample;
 	float pbase = (float)SAMPLE_RATE_BASE / (float)Machine->sample_rate;
 	INT32 frequency, delta, offset, cnt, flag;
 	UINT32 pos;
-	
+
 	frequency = info->c352_ch[ch].pitch;
 	delta=(long)((float)frequency * pbase);
 
@@ -114,7 +114,7 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 	offset = info->c352_ch[ch].pos;	// 16.16 fixed-point offset into the sample
 	flag = info->c352_ch[ch].flag;
 
-	if ((flag & C352_FLG_ACTIVE) == 0) 
+	if ((flag & C352_FLG_ACTIVE) == 0)
 	{
 		return;
 	}
@@ -122,10 +122,10 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 	for(i = 0 ; i < sample_count ; i++)
 	{
 		offset += delta;
-		cnt = (offset>>16)&0x7fff;	
+		cnt = (offset>>16)&0x7fff;
 		if (cnt)			// if there is a whole sample part, chop it off now that it's been applied
 		{
-			offset &= 0xffff;		
+			offset &= 0xffff;
 		}
 
 		// apply the whole sample part of the fraction to the current pointer and check if we're at the end
@@ -133,11 +133,11 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 		{
 			pos -= cnt;
 
-			if (pos <= info->c352_ch[ch].loop_point) 
+			if (pos <= info->c352_ch[ch].loop_point)
 			{
 				if (flag & C352_FLG_LONG)
 				{
-//					printf("ch %02d: end chain part 1\n", ch);
+//                  printf("ch %02d: end chain part 1\n", ch);
 					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 					return;
@@ -158,11 +158,11 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 		{
 			pos += cnt;
 
-			if (pos >= info->c352_ch[ch].stop_addr) 
+			if (pos >= info->c352_ch[ch].stop_addr)
 			{
 				if (flag & C352_FLG_LONG)
 				{
-//					printf("ch %02d: end chain part 1\n", ch);
+//                  printf("ch %02d: end chain part 1\n", ch);
 					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 					return;
@@ -218,10 +218,10 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 			sample = info->mulaw_table[(unsigned char)sample];
 		}
 
-		info->channel_l[i] += ((sample * info->c352_ch[ch].vol_l)>>8);  
-		info->channel_r[i] += ((sample * info->c352_ch[ch].vol_r)>>8);  
-		info->channel_l2[i] += ((sample * info->c352_ch[ch].vol_l2)>>8);  
-		info->channel_r2[i] += ((sample * info->c352_ch[ch].vol_r2)>>8);  
+		info->channel_l[i] += ((sample * info->c352_ch[ch].vol_l)>>8);
+		info->channel_r[i] += ((sample * info->c352_ch[ch].vol_r)>>8);
+		info->channel_l2[i] += ((sample * info->c352_ch[ch].vol_l2)>>8);
+		info->channel_r2[i] += ((sample * info->c352_ch[ch].vol_r2)>>8);
 	}
 
 	info->c352_ch[ch].pos = offset;
@@ -238,7 +238,7 @@ static void c352_update(void *param, stream_sample_t **inputs, stream_sample_t *
 	stream_sample_t *bufferl2 = buf[2];
 	stream_sample_t *bufferr2 = buf[3];
 
-	for(i = 0 ; i < sample_count ; i++) 
+	for(i = 0 ; i < sample_count ; i++)
 	{
 	       info->channel_l[i] = info->channel_r[i] = info->channel_l2[i] = info->channel_r2[i] = 0;
 	}
@@ -248,7 +248,7 @@ static void c352_update(void *param, stream_sample_t **inputs, stream_sample_t *
 		c352_mix_one_channel(info, j, sample_count);
 	}
 
-	for(i = 0 ; i < sample_count ; i++) 
+	for(i = 0 ; i < sample_count ; i++)
 	{
 		*bufferl++ = (short) (info->channel_l[i] >>3);
 		*bufferr++ = (short) (info->channel_r[i] >>3);
@@ -263,7 +263,7 @@ static unsigned short c352_read_reg16(struct c352_info *info, unsigned long addr
 	unsigned short	val;
 
 	stream_update(info->stream, 0);
-	
+
 	chan = (address >> 4) & 0xfff;
 	if (chan > 31)
 	{
@@ -292,7 +292,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 	chan = (address >> 4) & 0xfff;
 
 	stream_update(info->stream, 0);
-	
+
 	if (chan > 31)
 	{
 		#if VERBOSE
@@ -352,7 +352,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 
 			switch (val & 3)
 			{
-				case 0:	// normal	
+				case 0:	// normal
 				case 2:	// loop
 				case 3:	// reverse loop
 					if (info->c352_ch[chan].current_addr >= info->c352_ch[chan].stop_addr)
@@ -369,11 +369,11 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 					}
 					break;
 			}
-	
-/*			printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
-				info->c352_ch[chan].current_addr,
-				info->c352_ch[chan].loop_point,
-				info->c352_ch[chan].stop_addr);*/
+
+/*          printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
+                info->c352_ch[chan].current_addr,
+                info->c352_ch[chan].loop_point,
+                info->c352_ch[chan].stop_addr);*/
 
 			info->c352_ch[chan].pos = 0;
 		}
@@ -387,15 +387,15 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 
 			info->c352_ch[chan].stop_addr &= 0xffffff;
 
-//			printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
+//          printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 
 		}
 		else if ((val & 0x8000) == 0x8000) // chain mode, phase 2
 		{
 			int bank = (info->c352_ch[chan].start_addr & 0xff)<<16;
 
-			info->c352_ch[chan].loop_point = info->c352_ch[chan].end_addr + bank; 
-			info->c352_ch[chan].stop_addr = info->c352_ch[chan].end_addr + bank; 
+			info->c352_ch[chan].loop_point = info->c352_ch[chan].end_addr + bank;
+			info->c352_ch[chan].stop_addr = info->c352_ch[chan].end_addr + bank;
 			info->c352_ch[chan].flag &= ~(C352_FLG_LONGPHASE|C352_FLG_LONG);
 			info->c352_ch[chan].flag |= C352_FLG_ACTIVE;
 			info->c352_ch[chan].current_addr = info->c352_ch[chan].loop_point;
@@ -403,7 +403,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 
 			switch (val & 3)
 			{
-				case 0:	// normal	
+				case 0:	// normal
 				case 2:	// loop
 				case 3:	// reverse loop
 					if (info->c352_ch[chan].current_addr >= info->c352_ch[chan].stop_addr)
@@ -419,7 +419,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 					break;
 			}
 
-//			printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
+//          printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 		}
 
 		break;
@@ -479,7 +479,7 @@ static void c352_init(struct c352_info *info, int sndindex)
 	{
 	      double y = (double) (i & 0x7f);
 	      double x = (exp (y / y_max * log (1.0 + u)) - 1.0) * x_max / u;
-	
+
 	      if (i & 0x80)
 	      {
 	        x = -x;
@@ -526,7 +526,7 @@ static void *c352_start(int sndindex, int clock, const void *config)
 {
 	const struct C352interface *intf;
 	struct c352_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 

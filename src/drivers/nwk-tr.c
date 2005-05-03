@@ -1,4 +1,4 @@
-/*	Konami NWK-TR */
+/*  Konami NWK-TR */
 
 #include "driver.h"
 
@@ -225,7 +225,7 @@ WRITE32_HANDLER(K001604_char_w)
 	}
 
 	addr = offset + ((set + (bank * 0x40000)) / 4);
-	
+
 	COMBINE_DATA(K001604_char_ram + addr);
 	K001604_dirty_map[addr / 32] = 1;
 	K001604_char_dirty = 1;

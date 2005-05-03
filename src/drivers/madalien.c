@@ -10,29 +10,29 @@ Driver by Norbert Kehrer (February 2004).
 Hardware:
 ---------
 
-Main CPU	6502
-Sound CPU	6502
-Sound chip	AY-3-8910
+Main CPU    6502
+Sound CPU   6502
+Sound chip  AY-3-8910
 
 
 Memory map of main board:
 -------------------------
 
-$0000 - $03ff	Program RAM 
-$6000 - $63ff	Video RAM   
-$6800 - $7fff	Character generator RAM
-$8004		Flip screen in cocktail mode (?)
-$8006		Write: send command to sound board, read: input from sound board
-$8008		Write: set counter for shifter circuitry, read: low byte of shift reg. after shift operation
-$8009		Write: set data to be shifted, read: high byte of shift reg. after shift operation
-$8008		Video register (control of headlight, color, and landscape)
-$800d		Background horiz. scroll register left part
-$800e		Background horiz. scroll register right part
-$800f		Background vertical scroll register
-$9000		Input port 1: player 1 controls
-$9001		DIP switch port
-$9002		Input port 2: player 2 controls
-$c000 - $ffff	Program ROM
+$0000 - $03ff   Program RAM
+$6000 - $63ff   Video RAM
+$6800 - $7fff   Character generator RAM
+$8004       Flip screen in cocktail mode (?)
+$8006       Write: send command to sound board, read: input from sound board
+$8008       Write: set counter for shifter circuitry, read: low byte of shift reg. after shift operation
+$8009       Write: set data to be shifted, read: high byte of shift reg. after shift operation
+$8008       Video register (control of headlight, color, and landscape)
+$800d       Background horiz. scroll register left part
+$800e       Background horiz. scroll register right part
+$800f       Background vertical scroll register
+$9000       Input port 1: player 1 controls
+$9001       DIP switch port
+$9002       Input port 2: player 2 controls
+$c000 - $ffff   Program ROM
 
 Main board interrupts: NMI triggered, when coin is inserted
 
@@ -40,13 +40,13 @@ Main board interrupts: NMI triggered, when coin is inserted
 Memory map of sound board:
 --------------------------
 
-$0000 - $03ff	Sound board program RAM 
-$6500		Sound board register, just to write in someting (?)
-$6800		Sound board register, just to write in and read out (?)
-$8000		Write: AY-3-8910 control port, read: input from master CPU
-$8001		AY-3-8910 data port
-$8006		Output to master CPU
-$f800 - $ffff	Sound board program ROM
+$0000 - $03ff   Sound board program RAM
+$6500       Sound board register, just to write in someting (?)
+$6800       Sound board register, just to write in and read out (?)
+$8000       Write: AY-3-8910 control port, read: input from master CPU
+$8001       AY-3-8910 data port
+$8006       Output to master CPU
+$f800 - $ffff   Sound board program ROM
 
 Sound board interrupts: NMI triggered by VBlank signal
 
@@ -71,7 +71,7 @@ DIP switch port, mapped to memory address $9001:
  1         Game screen (0 = prevent turning, 1 = to turn) (?)
   00       Bonus points (0 = 3000, 1 = 7000, 2 = 5000, 3 = nil)
      00    Game charge (0 = 1 coin/1 play, 1 = 1 coin/2 plays, 2 and 3 = 2 coins 1 play)
-       00  Number of cars (0 = 3 cars, 1 = 4 cars, 2 = 5 cars, 3 = 6cars) 
+       00  Number of cars (0 = 3 cars, 1 = 4 cars, 2 = 5 cars, 3 = 6cars)
 
 Input port 2, mapped to memory address $9002:
 7654 3210
@@ -209,7 +209,7 @@ static void get_bg_tile_info_r(int tile_index)
 
 	if (x < 8)
 		code = bgrom[bg_base + 0x80 + 8*y + x];
-	else 
+	else
 		code = 16;
 
 	color = madalien_swap_colors * 4;
@@ -225,19 +225,19 @@ VIDEO_START( madalien )
 	int x, y, data1, data2, bit;
 	const UINT8 *headlight_rom;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
 		return 1;
 
-	bg_tilemap_l = tilemap_create(get_bg_tile_info_l, tilemap_scan_cols_flip_x, 
+	bg_tilemap_l = tilemap_create(get_bg_tile_info_l, tilemap_scan_cols_flip_x,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
 	if ( !bg_tilemap_l )
 		return 1;
 
-	bg_tilemap_r = tilemap_create(get_bg_tile_info_r, tilemap_scan_cols_flip_x, 
+	bg_tilemap_r = tilemap_create(get_bg_tile_info_r, tilemap_scan_cols_flip_x,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
 	if ( !bg_tilemap_r )
@@ -343,7 +343,7 @@ VIDEO_UPDATE( madalien )
 					xp = x;
 					yp = yh + y;
 					if( xp >= Machine->visible_area.min_x &&
-					    yp >= Machine->visible_area.min_y && 
+					    yp >= Machine->visible_area.min_y &&
 					    xp <= Machine->visible_area.max_x &&
 					    yp <= Machine->visible_area.max_y )
 					{
@@ -416,7 +416,7 @@ WRITE8_HANDLER(madalien_video_register_w)
 		/* Headlight on, if bit 0 is on */
 		madalien_headlight_on = bit0;
 
-		/* Swap color bits 1 and 2 of background */ 
+		/* Swap color bits 1 and 2 of background */
 		if (bit2 != madalien_swap_colors)
 		{
 			madalien_swap_colors = bit2;
@@ -479,7 +479,7 @@ UINT8 reverse_bits( int x )	/* bit reversal by wiring in Mad Alien hardware */
 {
 	int bit, n;
 	n = 0;
-	for (bit=0; bit<8; bit++) 
+	for (bit=0; bit<8; bit++)
 		if (x & (1 << bit))
 			n |= (1 << (7-bit));
 	return n;
@@ -557,7 +557,7 @@ static struct GfxLayout tilelayout =
 	16,16,  /* 16*16 tiles */
 	16+1,	/* 16 tiles + 1 empty tile */
 	3,      /* 3 bits per pixel */
-	{ 4*16*16*16+4, 2*16*16*16+4, 4 }, 
+	{ 4*16*16*16+4, 2*16*16*16+4, 4 },
 	{ 3*16*8+0, 3*16*8+1, 3*16*8+2, 3*16*8+3, 2*16*8+0, 2*16*8+1, 2*16*8+2, 2*16*8+3,
 	  16*8+0, 16*8+1, 16*8+2, 16*8+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -582,8 +582,8 @@ static ADDRESS_MAP_START( madalien_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8008, 0x8008) AM_READ(madalien_shift_reg_lo_r)	/* Low byte of shift reg. after shift operation */
 	AM_RANGE(0x8009, 0x8009) AM_READ(madalien_shift_reg_hi_r)	/* Low byte of shift reg. after shift operation */
 	AM_RANGE(0x9000, 0x9000) AM_READ(input_port_0_r)    		/* Input ports */
-	AM_RANGE(0x9001, 0x9001) AM_READ(input_port_1_r)    
-	AM_RANGE(0x9002, 0x9002) AM_READ(input_port_2_r)    
+	AM_RANGE(0x9001, 0x9001) AM_READ(input_port_1_r)
+	AM_RANGE(0x9002, 0x9002) AM_READ(input_port_2_r)
 	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM */
 ADDRESS_MAP_END
 
@@ -690,7 +690,7 @@ static MACHINE_DRIVER_START( madalien )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1) 
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(madalien_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2*32)
 	MDRV_COLORTABLE_LENGTH(2*32)
@@ -700,7 +700,7 @@ static MACHINE_DRIVER_START( madalien )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 500000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
 MACHINE_DRIVER_END
@@ -740,7 +740,7 @@ ROM_START( madalien )
 ROM_END
 
 
-DRIVER_INIT( madalien )	
+DRIVER_INIT( madalien )
 {
 	madalien_shift_counter = 0;
 	madalien_shift_reg_lo  = 0;

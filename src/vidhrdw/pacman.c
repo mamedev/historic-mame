@@ -1,18 +1,18 @@
 /*************************************************************************
 
-	Namco Pac Man
+    Namco Pac Man
 
 **************************************************************************
 
-	This file is used by the Pac Man, Pengo & Jr Pac Man drivers.
+    This file is used by the Pac Man, Pengo & Jr Pac Man drivers.
 
-	Pengo & Pac Man are almost identical, the only differences being the
-	extra gfx bank in Pengo, and the need to compensate for an hardware
-	sprite positioning "bug" in Pac Man.
+    Pengo & Pac Man are almost identical, the only differences being the
+    extra gfx bank in Pengo, and the need to compensate for an hardware
+    sprite positioning "bug" in Pac Man.
 
-	Jr Pac Man has the same sprite hardware as Pac Man, the extra bank
-	from Pengo and a scrolling playfield at the expense of one color per row
-	for the playfield so it can fit in the same amount of ram.
+    Jr Pac Man has the same sprite hardware as Pac Man, the extra bank
+    from Pengo and a scrolling playfield at the expense of one color per row
+    for the playfield so it can fit in the same amount of ram.
 
 **************************************************************************/
 
@@ -280,7 +280,7 @@ VIDEO_UPDATE( pacman )
 
 /*************************************************************************
 
-	Sega Pengo
+    Sega Pengo
 
 **************************************************************************/
 

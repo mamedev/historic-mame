@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Hard Drivin' video hardware
+    Hard Drivin' video hardware
 
 ****************************************************************************/
 
@@ -13,7 +13,7 @@
 
 /*************************************
  *
- *	Constants and macros
+ *  Constants and macros
  *
  *************************************/
 
@@ -28,7 +28,7 @@
 
 /*************************************
  *
- *	External definitions
+ *  External definitions
  *
  *************************************/
 
@@ -45,7 +45,7 @@ size_t hdgsp_vram_size;
 
 /*************************************
  *
- *	Static globals
+ *  Static globals
  *
  *************************************/
 
@@ -68,7 +68,7 @@ static int last_rendered_scanline;
 
 /*************************************
  *
- *	Start/stop routines
+ *  Start/stop routines
  *
  *************************************/
 
@@ -150,7 +150,7 @@ VIDEO_START( harddriv )
 
 /*************************************
  *
- *	Shift register access
+ *  Shift register access
  *
  *************************************/
 
@@ -212,7 +212,7 @@ void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 
 /*************************************
  *
- *	TMS34010 update callback
+ *  TMS34010 update callback
  *
  *************************************/
 
@@ -232,7 +232,7 @@ void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 
 /*************************************
  *
- *	Palette bank updating
+ *  Palette bank updating
  *
  *************************************/
 
@@ -249,7 +249,7 @@ static void update_palette_bank(int newbank)
 
 /*************************************
  *
- *	Video control registers (lo)
+ *  Video control registers (lo)
  *
  *************************************/
 
@@ -275,7 +275,7 @@ WRITE16_HANDLER( hdgsp_control_lo_w )
 
 /*************************************
  *
- *	Video control registers (hi)
+ *  Video control registers (hi)
  *
  *************************************/
 
@@ -338,7 +338,7 @@ WRITE16_HANDLER( hdgsp_control_hi_w )
 
 /*************************************
  *
- *	Video RAM expanders
+ *  Video RAM expanders
  *
  *************************************/
 
@@ -398,7 +398,7 @@ WRITE16_HANDLER( hdgsp_vram_2bpp_w )
 
 /*************************************
  *
- *	Palette registers (lo)
+ *  Palette registers (lo)
  *
  *************************************/
 
@@ -435,7 +435,7 @@ WRITE16_HANDLER( hdgsp_paletteram_lo_w )
 
 /*************************************
  *
- *	Palette registers (hi)
+ *  Palette registers (hi)
  *
  *************************************/
 
@@ -463,7 +463,7 @@ WRITE16_HANDLER( hdgsp_paletteram_hi_w )
 
 /*************************************
  *
- *	End of frame routine
+ *  End of frame routine
  *
  *************************************/
 
@@ -477,7 +477,7 @@ VIDEO_EOF( harddriv )
 
 /*************************************
  *
- *	Core refresh routine
+ *  Core refresh routine
  *
  *************************************/
 

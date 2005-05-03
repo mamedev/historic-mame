@@ -76,17 +76,17 @@ VIDEO_UPDATE(hanaroku)
 static WRITE8_HANDLER( hanaroku_out_0_w )
 {
 	/*
-		bit		description
+        bit     description
 
-		 0		meter1 (coin1)
-		 1		meter2 (coin2)
-		 2		meter3 (1/2 d-up)
-		 3		meter4
-		 4		call out (meter)
-		 5		lockout (key)
-		 6		hopper2 (play)
-		 7		meter5 (start)
-	*/
+         0      meter1 (coin1)
+         1      meter2 (coin2)
+         2      meter3 (1/2 d-up)
+         3      meter4
+         4      call out (meter)
+         5      lockout (key)
+         6      hopper2 (play)
+         7      meter5 (start)
+    */
 
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
@@ -98,17 +98,17 @@ static WRITE8_HANDLER( hanaroku_out_0_w )
 static WRITE8_HANDLER( hanaroku_out_1_w )
 {
 	/*
-		bit		description
+        bit     description
 
-		 0		hopper1 (data clear)
-		 1		dis dat
-		 2		dis clk
-		 3		pay out
-		 4		ext in 1
-		 5		ext in 2
-		 6		?
-		 7		?
-	*/
+         0      hopper1 (data clear)
+         1      dis dat
+         2      dis clk
+         3      pay out
+         4      ext in 1
+         5      ext in 2
+         6      ?
+         7      ?
+    */
 }
 
 static WRITE8_HANDLER( hanaroku_out_2_w )
@@ -151,7 +151,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( hanaroku )
-	PORT_START_TAG("IN0")	// IN0	(0xe000)
+	PORT_START_TAG("IN0")	// IN0  (0xe000)
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )		// adds n credits depending on "Coinage" Dip Switch
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )		// adds 5 credits
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("1/2 D-Up") PORT_CODE(KEYCODE_H)
@@ -161,7 +161,7 @@ INPUT_PORTS_START( hanaroku )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Play")
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 ) PORT_NAME("Start")
 
-	PORT_START_TAG("IN1")	// IN1	(0xe001)
+	PORT_START_TAG("IN1")	// IN1  (0xe001)
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Card 1")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Card 2")
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Card 3")
@@ -171,7 +171,7 @@ INPUT_PORTS_START( hanaroku )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME(DEF_STR( Yes )) PORT_CODE(KEYCODE_Y)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME(DEF_STR( No  )) PORT_CODE(KEYCODE_N)
 
-	PORT_START_TAG("IN2")	// IN2	(0xe002)
+	PORT_START_TAG("IN2")	// IN2  (0xe002)
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Data Clear") PORT_CODE(KEYCODE_D)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON9 ) PORT_NAME("Medal In") PORT_CODE(KEYCODE_I)
@@ -180,13 +180,13 @@ INPUT_PORTS_START( hanaroku )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Ext In 2")
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("DSW1")	// DSW1	(0xd000 - Port A)
+	PORT_START_TAG("DSW1")	// DSW1 (0xd000 - Port A)
 	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("DSW2")	// DSW2	(0xd000 - Port B)
+	PORT_START_TAG("DSW2")	// DSW2 (0xd000 - Port B)
 	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("DSW3")	// DSW3	(0xe004)
+	PORT_START_TAG("DSW3")	// DSW3 (0xe004)
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )		// Stored at 0xc028
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
@@ -259,7 +259,7 @@ static MACHINE_DRIVER_START( hanaroku )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 1500000)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

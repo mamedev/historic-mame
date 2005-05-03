@@ -123,7 +123,7 @@ static void palette_notifier(int addr)
 	unsigned int g = ((byte0 & 0xf0)>>4) * 0x11;
 	unsigned int r = (byte0 & 0xf) * 0x11;
 
-	//	addr &= 0x1ff;
+	//  addr &= 0x1ff;
 
 	if(addr > 0x200)
 	{
@@ -131,7 +131,7 @@ logerror("Large palette ? %03x (%04x)\n", addr, activecpu_get_pc());
 	}
 	else
 	{
-		//		r = g = b = ((addr & 0x1e) != 0)*255;
+		//      r = g = b = ((addr & 0x1e) != 0)*255;
 		palette_set_color(addr/2, r, g, b);
 	}
 }
@@ -332,7 +332,7 @@ static WRITE8_HANDLER( rombankswitch_w )
 			logerror("New rom size : %x\n", (high+1)*0x2000);
 		}
 
-//		logerror("robs %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
+//      logerror("robs %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 		cur_rombank = data;
 		cpu_setbank(1, memory_region(REGION_CPU1)+0x10000+0x2000*cur_rombank);
 	}
@@ -352,7 +352,7 @@ static WRITE8_HANDLER( rombank2switch_w )
 			logerror("New rom2 size : %x\n", (high+1)*0x4000);
 		}
 
-//		logerror("robs2 %02x (%04x)\n", data, activecpu_get_pc());
+//      logerror("robs2 %02x (%04x)\n", data, activecpu_get_pc());
 
 		cur_rombank2 = data;
 		cpu_setbank(6, memory_region(REGION_CPU3)+0x10000+0x4000*cur_rombank2);
@@ -485,7 +485,7 @@ static WRITE8_HANDLER( mcu_data_w )
 {
 	last_data = data;
 	last_data_adr = activecpu_get_pc();
-//	logerror("mcu write %02x (%04x)\n", data, activecpu_get_pc());
+//  logerror("mcu write %02x (%04x)\n", data, activecpu_get_pc());
 	switch(data)
 	{
 	case 0x43:
@@ -498,12 +498,12 @@ static WRITE8_HANDLER( mcu_data_w )
 
 static WRITE8_HANDLER( mcu_control_w )
 {
-//	logerror("mcu control %02x (%04x)\n", data, activecpu_get_pc());
+//  logerror("mcu control %02x (%04x)\n", data, activecpu_get_pc());
 }
 
 static READ8_HANDLER( mcu_data_r )
 {
-//	logerror("mcu read (%04x) [%02x, %04x]\n", activecpu_get_pc(), last_data, last_data_adr);
+//  logerror("mcu read (%04x) [%02x, %04x]\n", activecpu_get_pc(), last_data, last_data_adr);
 	if(mcu_pos==mcu_reply_len)
 		return 0;
 
@@ -512,7 +512,7 @@ static READ8_HANDLER( mcu_data_r )
 
 static READ8_HANDLER( mcu_control_r )
 {
-//	logerror("mcu control read (%04x)\n", activecpu_get_pc());
+//  logerror("mcu control read (%04x)\n", activecpu_get_pc());
 	return 0x1;
 }
 
@@ -1065,7 +1065,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+             INPUT PORTS, DIPs
 ***********************************************************/
 
 #define TAITO_COINAGE_WORLD_8 \
@@ -1497,7 +1497,7 @@ INPUT_PORTS_START( puzznic )
 	PORT_DIPSETTING(    0x40, "Stage one step back/Timer continuous" )
 	PORT_DIPSETTING(    0xc0, "Stage reset to start/Timer continuous" )
 	PORT_DIPSETTING(    0x80, "Stage reset to start/Timer reset to start" )
-//	PORT_DIPSETTING(    0x00, "No Use" )
+//  PORT_DIPSETTING(    0x00, "No Use" )
 
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -1851,7 +1851,7 @@ INPUT_PORTS_START( plgirls )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-//	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+//  PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

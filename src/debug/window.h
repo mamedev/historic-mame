@@ -80,9 +80,9 @@ struct sWindow
 	UINT8	*attr;	/* Pointer to video data - attributes */
 
 	/* These are the callbacks when certain things happen. All fields have been
-	 * updated BEFORE the call. Return FALSE if the moves, resizes, closes,
-	 * refocus aren't accepted.
-	 */
+     * updated BEFORE the call. Return FALSE if the moves, resizes, closes,
+     * refocus aren't accepted.
+     */
 
 	UINT32 (*Resize)(UINT32 idx, struct sWindow *);
 	UINT32 (*Close)(UINT32 idx, struct sWindow *);

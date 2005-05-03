@@ -21,81 +21,81 @@ Known issues:
 Memory Map (Preliminary):
 
 Working RAM
-  $24		used to mirror bankswitch state
-  $25		coin trigger state
-  $26		#credits (decimal)
-  $27 -  $28	partial credits
-  $2C -  $2D	sprite refresh trigger (used by NMI)
-  $31		live/demo (if live, player controls are read from input ports)
-  $32		indicates 2 player (alternating) game, or 1 player game
-  $33		active player
-  $37		stage number
-  $38		stage state (for stages with more than one part)
-  $40		game status flags; 0x80 indicates time over, 0x40 indicates player dead
- $220		player health
- $222 -  $223	stage timer
- $48a -  $48b	horizontal scroll buffer
- $511 -  $690	sprite RAM buffer
- $693		num pending sound commands
- $694 -  $698	sound command queue
+  $24       used to mirror bankswitch state
+  $25       coin trigger state
+  $26       #credits (decimal)
+  $27 -  $28    partial credits
+  $2C -  $2D    sprite refresh trigger (used by NMI)
+  $31       live/demo (if live, player controls are read from input ports)
+  $32       indicates 2 player (alternating) game, or 1 player game
+  $33       active player
+  $37       stage number
+  $38       stage state (for stages with more than one part)
+  $40       game status flags; 0x80 indicates time over, 0x40 indicates player dead
+ $220       player health
+ $222 -  $223   stage timer
+ $48a -  $48b   horizontal scroll buffer
+ $511 -  $690   sprite RAM buffer
+ $693       num pending sound commands
+ $694 -  $698   sound command queue
 
-$1002		#lives
-$1014 - $1015	stage timer - separated digits
-$1017 - $1019	stage timer: (ticks,seconds,minutes)
-$101a		timer for palette animation
-$1020 - $1048	high score table
-$10e5 - $10ff	68705 data buffer
+$1002       #lives
+$1014 - $1015   stage timer - separated digits
+$1017 - $1019   stage timer: (ticks,seconds,minutes)
+$101a       timer for palette animation
+$1020 - $1048   high score table
+$10e5 - $10ff   68705 data buffer
 
 Video RAM
-$1800 - $1bff	text layer, characters
-$1c00 - $1fff	text layer, character attributes
-$2000 - $217f	MIX RAM (96 sprites)
-$2800 - $2bff	BACK LOW MAP RAM (background tiles)
-$2C00 - $2fff	BACK HIGH MAP RAM (background attributes)
-$3000 - $30ff	COLOR RG RAM
-$3100 - $31ff	COLOR B RAM
+$1800 - $1bff   text layer, characters
+$1c00 - $1fff   text layer, character attributes
+$2000 - $217f   MIX RAM (96 sprites)
+$2800 - $2bff   BACK LOW MAP RAM (background tiles)
+$2C00 - $2fff   BACK HIGH MAP RAM (background attributes)
+$3000 - $30ff   COLOR RG RAM
+$3100 - $31ff   COLOR B RAM
 
 Registers
-$3800w	scroll(0ff)
-$3801w	scroll(300)
-$3802w	sound command
-$3803w	screen flip (0=flip; 1=noflip)
+$3800w  scroll(0ff)
+$3801w  scroll(300)
+$3802w  sound command
+$3803w  screen flip (0=flip; 1=noflip)
 
-$3804w	send data to 68705
-$3804r	receive data from 68705
+$3804w  send data to 68705
+$3804r  receive data from 68705
 
-$3805w	bankswitch
-$3806w	watchdog?
-$3807w	coin counter
+$3805w  bankswitch
+$3806w  watchdog?
+$3807w  coin counter
 
-$3800r	'player1'
-    xx		start buttons
-      xx	fire buttons
-        xxxx	joystick state
+$3800r  'player1'
+    xx      start buttons
+      xx    fire buttons
+        xxxx    joystick state
 
-$3801r	'player2'
-    xx		coin inputs
-      xx	fire buttons
-        xxxx	joystick state
+$3801r  'player2'
+    xx      coin inputs
+      xx    fire buttons
+        xxxx    joystick state
 
-$3802r	'DIP2'
-    x		unused?
-     x		vblank
-      x 	0: 68705 is ready to send information
-       x	1: 68705 is ready to receive information
-        xx	3rd fire buttons for player 2,1
-          xx	difficulty
+$3802r  'DIP2'
+    x       unused?
+     x      vblank
+      x     0: 68705 is ready to send information
+       x    1: 68705 is ready to receive information
+        xx  3rd fire buttons for player 2,1
+          xx    difficulty
 
 $3803r 'DIP1'
-    x		screen flip
-     x		cabinet type
-      x 	bonus (extra life for high score)
-       x	starting lives: 1 or 2
-        xxxx	coins per play
+    x       screen flip
+     x      cabinet type
+      x     bonus (extra life for high score)
+       x    starting lives: 1 or 2
+        xxxx    coins per play
 
 ROM
-$4000 - $7fff	bankswitched ROM
-$8000 - $ffff	ROM
+$4000 - $7fff   bankswitched ROM
+$8000 - $ffff   ROM
 
 ***************************************************************************/
 
@@ -152,11 +152,11 @@ static WRITE8_HANDLER( sound_w )
 }
 
 /********************************************************************************************/
-/*	MCU Simulation
+/*  MCU Simulation
 **
-**	Renegade and Nekketsu Kouha Kunio Kun MCU behaviors are identical,
-**	except for the initial MCU status byte, and command encryption table
-**	(and enemy health??)
+**  Renegade and Nekketsu Kouha Kunio Kun MCU behaviors are identical,
+**  except for the initial MCU status byte, and command encryption table
+**  (and enemy health??)
 */
 
 static int mcu_type;
@@ -349,7 +349,7 @@ static void mcu_process_command(void)
 
 	case 0x41: /* 0x41, 0x00, 0x00, stage# -> ? */
 		{
-//			int stage = mcu_buffer[3];
+//          int stage = mcu_buffer[3];
 			mcu_buffer[0] = 2;
 			mcu_buffer[1] = 0x20;
 			mcu_buffer[2] = 0x78;
@@ -386,7 +386,7 @@ static void mcu_process_command(void)
 			int indx = mcu_buffer[3];
 			int enemy_type=0;
 
-			static int table[] = 
+			static int table[] =
 			{
 				0x01, 0x06, 0x06, 0x05, 0x05, 0x05, 0x05, 0x05,	/* for stage#: 0 */
 				0x02, 0x0a, 0x0a, 0x09, 0x09, 0x09, 0x09,	/* for stage#: 1 */
@@ -439,17 +439,17 @@ static WRITE8_HANDLER( bankswitch_w )
 static INTERRUPT_GEN( renegade_interrupt )
 {
 /*
-	static int coin;
-	int port = readinputport(1) & 0xc0;
-	if (port != 0xc0)
-	{
-		if (coin == 0)
-		{
-			coin = 1;
-			return irq0_line_hold();
-		}
-	}
-	else coin = 0;
+    static int coin;
+    int port = readinputport(1) & 0xc0;
+    if (port != 0xc0)
+    {
+        if (coin == 0)
+        {
+            coin = 1;
+            return irq0_line_hold();
+        }
+    }
+    else coin = 0;
 */
 
 	static int count;
@@ -673,7 +673,7 @@ static struct GfxLayout tileslayout4 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* 8x8 text, 8 colors */
-	{ REGION_GFX1, 0x00000, &charlayout,	 0, 4 },	/* colors	0- 32 */
+	{ REGION_GFX1, 0x00000, &charlayout,	 0, 4 },	/* colors   0- 32 */
 
 	/* 16x16 background tiles, 8 colors */
 	{ REGION_GFX2, 0x00000, &tileslayout1, 192, 8 },	/* colors 192-255 */

@@ -314,13 +314,13 @@ VIDEO_START( psychic5 )
 	memset(ps5_io_ram,0,0x400);
 	memset(ps5_palette_ram,0,0xc00);
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 16, 16, 64, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )

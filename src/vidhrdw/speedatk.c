@@ -61,7 +61,7 @@ PALETTE_INIT( speedatk )
 
 	/* Colortable entry */
 	for(i = 0; i < 0x100; i++)
-		colortable[i] = color_prom[i];	
+		colortable[i] = color_prom[i];
 }
 
 WRITE8_HANDLER( speedatk_videoram_w )

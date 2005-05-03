@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Function prototypes and constants for the ticket dispenser emulator
+    Function prototypes and constants for the ticket dispenser emulator
 
 ***************************************************************************/
 

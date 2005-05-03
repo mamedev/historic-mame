@@ -1,5 +1,5 @@
 /*
-**	Video Driver for Taito Samurai (1985)
+**  Video Driver for Taito Samurai (1985)
 */
 
 #include "driver.h"
@@ -183,7 +183,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		/* 240-source[0] seems nice,but some dangling sprites appear on the left      */
 		/* side in Mission 660.Setting it to 242 fixes it,but will break other games. */
 		/* So I'm using this specific check. -kal 11 jul 2002 */
-//		if(sprite_type == 1) sy=sy+2;
+//      if(sprite_type == 1) sy=sy+2;
 
 		if( flip_screen )
 		{
@@ -221,13 +221,13 @@ VIDEO_UPDATE( tsamurai )
 /* end of column scroll code */
 
 	/*
-		This following isn't particularly efficient.  We'd be better off to
-		dynamically change every 8th palette to the background color, so we
-		could draw the background as an opaque tilemap.
+        This following isn't particularly efficient.  We'd be better off to
+        dynamically change every 8th palette to the background color, so we
+        could draw the background as an opaque tilemap.
 
-		Note that the background color register isn't well understood
-		(screenshots would be helpful)
-	*/
+        Note that the background color register isn't well understood
+        (screenshots would be helpful)
+    */
 	fillbitmap(bitmap,Machine->pens[bgcolor],cliprect);
 	tilemap_draw(bitmap,cliprect,background,0,0);
 	draw_sprites(bitmap,cliprect);

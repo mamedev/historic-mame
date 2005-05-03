@@ -1,45 +1,45 @@
-//	MOLE ATTACK    YACHIYO  1982
-//	known clones: "Holy Moly"
+//  MOLE ATTACK    YACHIYO  1982
+//  known clones: "Holy Moly"
 //
-//	emulated by Jason Nelson, Phil Stroffolino
-//	known issues:
-//		some dips not mapped
-//		protection isn't fully understood, but game seems to be
-//		ok.
+//  emulated by Jason Nelson, Phil Stroffolino
+//  known issues:
+//      some dips not mapped
+//      protection isn't fully understood, but game seems to be
+//      ok.
 //
-//	buttons are laid out as follows:
-//	7	8	9
-//	4	5	6
-//	1	2	3
+//  buttons are laid out as follows:
+//  7   8   9
+//  4   5   6
+//  1   2   3
 //
 // Working RAM notes:
-// 0x2e0					number of credits
-// 0x2F1					coin up trigger
-// 0x2F2					round counter
-// 0x2F3					flag value
-// 0x2FD					hammer aim for attract mode
-// 0x2E1-E2					high score
-// 0x2ED-EE					score
-// 0x301-309				presence and height of mole in each hole, from bottom left
+// 0x2e0                    number of credits
+// 0x2F1                    coin up trigger
+// 0x2F2                    round counter
+// 0x2F3                    flag value
+// 0x2FD                    hammer aim for attract mode
+// 0x2E1-E2                 high score
+// 0x2ED-EE                 score
+// 0x301-309                presence and height of mole in each hole, from bottom left
 // 0x30a
-// 0x32E-336				if a hammer is above a mole. (Not the same as collision)
-// 0x337					dip switch related
-// 0x338					dip switch related
-// 0x340				    hammer control: manual=0; auto=1
-// 0x34C					round point 10s.
-// 0x34D				    which bonus round pattern to use for moles.
-// 0x349					button pressed (0..8 / 0xff)
-// 0x350					number of players
-// 0x351					irq-related
+// 0x32E-336                if a hammer is above a mole. (Not the same as collision)
+// 0x337                    dip switch related
+// 0x338                    dip switch related
+// 0x340                    hammer control: manual=0; auto=1
+// 0x34C                    round point 10s.
+// 0x34D                    which bonus round pattern to use for moles.
+// 0x349                    button pressed (0..8 / 0xff)
+// 0x350                    number of players
+// 0x351                    irq-related
 // 0x361
 // 0x362
 // 0x363
 // 0x364
-// 0x366					mirrors tile bank
-// 0x36B					controls which player is playing. (1 == player 2);
-// 0x3DC					affects mole popup
-// 0x3E5					round point/passing point control?
-// 0x3E7					round point/passing point control?
+// 0x366                    mirrors tile bank
+// 0x36B                    controls which player is playing. (1 == player 2);
+// 0x3DC                    affects mole popup
+// 0x3E5                    round point/passing point control?
+// 0x3E7                    round point/passing point control?
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -57,26 +57,26 @@ extern VIDEO_UPDATE(mole);
 
 static READ8_HANDLER( mole_protection_r )
 {
-	/*	Following are all known examples of Mole Attack
-	**	code reading from the protection circuitry:
-	**
-	**	5b0b:
-	**	ram[0x0361] = (ram[0x885+ram[0x8a5])&ram[0x886]
-	**	ram[0x0363] = ram[0x886]
-	**
-	**	53c9:
-	**	ram[0xe0] = ram[0x800]+ram[0x802]+ram[0x804]
-	**	ram[0xea] = ram[0x828]
-	**
-	**	ram[0xe2] = (ram[0x806]&ram[0x826])|ram[0x820]
-	**	ram[0xe3] = ram[0x826]
-	**
-	**	ram[0x361] = (ram[0x8cd]&ram[0x8ad])|ram[0x8ce]
-	**	ram[0x362] = ram[0x8ae] = 0x32
-	**
-	**	ram[0x363] = ram[0x809]+ram[0x829]+ram[0x828]
-	**	ram[0x364] = ram[0x808]
-	*/
+	/*  Following are all known examples of Mole Attack
+    **  code reading from the protection circuitry:
+    **
+    **  5b0b:
+    **  ram[0x0361] = (ram[0x885+ram[0x8a5])&ram[0x886]
+    **  ram[0x0363] = ram[0x886]
+    **
+    **  53c9:
+    **  ram[0xe0] = ram[0x800]+ram[0x802]+ram[0x804]
+    **  ram[0xea] = ram[0x828]
+    **
+    **  ram[0xe2] = (ram[0x806]&ram[0x826])|ram[0x820]
+    **  ram[0xe3] = ram[0x826]
+    **
+    **  ram[0x361] = (ram[0x8cd]&ram[0x8ad])|ram[0x8ce]
+    **  ram[0x362] = ram[0x8ae] = 0x32
+    **
+    **  ram[0x363] = ram[0x809]+ram[0x829]+ram[0x828]
+    **  ram[0x364] = ram[0x808]
+    */
 
 	switch (offset)
 	{
@@ -94,11 +94,11 @@ static READ8_HANDLER( mole_protection_r )
 	case 0xae: return 0x32; /* coinage */
 	}
 
-	/*	The above are critical protection reads.
-	**	It isn't clear what effect (if any) the
-	**	remaining reads have; for now we simply
-	**	return 0x00
-	*/
+	/*  The above are critical protection reads.
+    **  It isn't clear what effect (if any) the
+    **  remaining reads have; for now we simply
+    **  return 0x00
+    */
 	return 0x00;
 }
 
@@ -218,7 +218,7 @@ static MACHINE_DRIVER_START( mole )
 
 	// sound hardware
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END

@@ -1,17 +1,17 @@
 /************************************************************************
 
-	ST register functions
+    ST register functions
 
 ************************************************************************/
 
 /*
-	remember that the OP ST bit is maintained in lastparity
+    remember that the OP ST bit is maintained in lastparity
 */
 
 /*
-	setstat sets the ST_OP bit according to lastparity
+    setstat sets the ST_OP bit according to lastparity
 
-	It must be called before reading the ST register.
+    It must be called before reading the ST register.
 */
 
 static void setstat(void)
@@ -34,9 +34,9 @@ static void setstat(void)
 }
 
 /*
-	getstat sets emulator's lastparity variable according to 9900's STATUS bits.
-	It must be called on interrupt return, or when, for some reason,
-	the emulated program sets the STATUS register directly.
+    getstat sets emulator's lastparity variable according to 9900's STATUS bits.
+    It must be called on interrupt return, or when, for some reason,
+    the emulated program sets the STATUS register directly.
 */
 static void getstat(void)
 {
@@ -55,20 +55,20 @@ static void getstat(void)
 }
 
 /*
-	A few words about the following functions.
+    A few words about the following functions.
 
-	A big portability issue is the behavior of the ">>" instruction with the sign bit, which has
-	not been normalised.  Every compiler does whatever it thinks smartest.
-	My code assumed that when shifting right signed numbers, the operand is left-filled with a
-	copy of sign bit, and that when shifting unsigned variables, it is left-filled with 0s.
-	This is probably the most logical behaviour, and it is the behavior of CW PRO3 - most time
-	(the exception is that ">>=" instructions always copy the sign bit (!)).  But some compilers
-	are bound to disagree.
+    A big portability issue is the behavior of the ">>" instruction with the sign bit, which has
+    not been normalised.  Every compiler does whatever it thinks smartest.
+    My code assumed that when shifting right signed numbers, the operand is left-filled with a
+    copy of sign bit, and that when shifting unsigned variables, it is left-filled with 0s.
+    This is probably the most logical behaviour, and it is the behavior of CW PRO3 - most time
+    (the exception is that ">>=" instructions always copy the sign bit (!)).  But some compilers
+    are bound to disagree.
 
-	So, I had to create special functions with predefined tables included, so that this code work
-	on every compiler.  BUT this is a real slow-down.
-	So, you might have to include a few lines in assembly to make this work better.
-	Sorry about this, this problem is really unpleasant and absurd, but it is not my fault.
+    So, I had to create special functions with predefined tables included, so that this code work
+    on every compiler.  BUT this is a real slow-down.
+    So, you might have to include a few lines in assembly to make this work better.
+    Sorry about this, this problem is really unpleasant and absurd, but it is not my fault.
 */
 
 
@@ -132,7 +132,7 @@ INLINE INT16 arithmetic_right_shift(INT16 val, int c)
 
 
 /*
-	Set lae
+    Set lae
 */
 INLINE void setst_lae(INT16 val)
 {
@@ -148,7 +148,7 @@ INLINE void setst_lae(INT16 val)
 
 
 /*
-	Set laep (BYTE)
+    Set laep (BYTE)
 */
 INLINE void setst_byte_laep(INT8 val)
 {
@@ -165,7 +165,7 @@ INLINE void setst_byte_laep(INT8 val)
 }
 
 /*
-	For COC, CZC, and TB
+    For COC, CZC, and TB
 */
 INLINE void setst_e(UINT16 val, UINT16 to)
 {
@@ -176,7 +176,7 @@ INLINE void setst_e(UINT16 val, UINT16 to)
 }
 
 /*
-	For CI, C, CB
+    For CI, C, CB
 */
 INLINE void setst_c_lae(UINT16 to, UINT16 val)
 {
@@ -396,7 +396,7 @@ static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
 /* Could do with some equivalent functions for non power PC's */
 
 /*
-	Set laeco for add
+    Set laeco for add
 */
 INLINE INT16 setst_add_laeco(int a, int b)
 {
@@ -432,7 +432,7 @@ INLINE INT16 setst_add_laeco(int a, int b)
 
 
 /*
-	Set laeco for subtract
+    Set laeco for subtract
 */
 INLINE INT16 setst_sub_laeco(int a, int b)
 {
@@ -468,7 +468,7 @@ INLINE INT16 setst_sub_laeco(int a, int b)
 
 
 /*
-	Set laecop for add (BYTE)
+    Set laecop for add (BYTE)
 */
 INLINE INT8 setst_addbyte_laecop(int a, int b)
 {
@@ -506,7 +506,7 @@ INLINE INT8 setst_addbyte_laecop(int a, int b)
 
 
 /*
-	Set laecop for subtract (BYTE)
+    Set laecop for subtract (BYTE)
 */
 INLINE INT8 setst_subbyte_laecop(int a, int b)
 {
@@ -547,7 +547,7 @@ INLINE INT8 setst_subbyte_laecop(int a, int b)
 
 
 /*
-	For NEG
+    For NEG
 */
 INLINE void setst_laeo(INT16 val)
 {
@@ -568,7 +568,7 @@ INLINE void setst_laeo(INT16 val)
 
 
 /*
-	Meat of SRA
+    Meat of SRA
 */
 INLINE UINT16 setst_sra_laec(INT16 a, UINT16 c)
 {
@@ -594,7 +594,7 @@ INLINE UINT16 setst_sra_laec(INT16 a, UINT16 c)
 
 
 /*
-	Meat of SRL.  Same algorithm as SRA, except that we fills in with 0s.
+    Meat of SRL.  Same algorithm as SRA, except that we fills in with 0s.
 */
 INLINE UINT16 setst_srl_laec(UINT16 a,UINT16 c)
 {

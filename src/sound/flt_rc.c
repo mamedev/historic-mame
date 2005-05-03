@@ -18,7 +18,7 @@ static void filter_rc_update(void *param, stream_sample_t **inputs, stream_sampl
 	stream_sample_t *dst = outputs[0];
 	struct filter_rc_info *info = param;
 	int memory = info->memory;
-	
+
 	while (samples--)
 	{
 		*dst++ = memory + ((*src++ - memory) * info->k) / 0x10000;
@@ -31,10 +31,10 @@ static void filter_rc_update(void *param, stream_sample_t **inputs, stream_sampl
 static void *filter_rc_start(int sndindex, int clock, const void *config)
 {
 	struct filter_rc_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	
+
 	info->stream = stream_create(1, 1, Machine->sample_rate, info, filter_rc_update);
 
 	return info;

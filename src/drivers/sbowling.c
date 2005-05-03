@@ -83,7 +83,7 @@ static WRITE8_HANDLER( sbw_videoram_w )
 
 	v1 = videoram[offset];
 	v2 = videoram[offset+0x2000];
-	
+
 	for(i = 0; i < 8; i++)
 	{
 		plot_pixel_sbw(x++, y, color_prom_address | ( ((v1&1)*0x20) | ((v2&1)*0x40) ) );
@@ -141,12 +141,12 @@ static INTERRUPT_GEN( sbw_interrupt )
 static WRITE8_HANDLER (system_w)
 {
 	/*
-		76543210
-		-------x flip screen/controls?
-		------x- trackball x/y  select
-		-----x-- 1 ?
-		----x--- flip screen/controls
-	*/
+        76543210
+        -------x flip screen/controls?
+        ------x- trackball x/y  select
+        -----x-- 1 ?
+        ----x--- flip screen/controls
+    */
 	flip_screen_set(data&1);
 
 	if((sbw_system^data)&1)
@@ -161,15 +161,15 @@ static WRITE8_HANDLER (system_w)
 static WRITE8_HANDLER(graph_control_w)
 {
 	/*
-		76543210
-		-----xxx color PROM address lines A9,A8,A7
-		----?--- nc ?
-		--xx---- background image select (address lines on tilemap rom)
-		xx------ color PROM address lines A4,A3
-	*/
-	
+        76543210
+        -----xxx color PROM address lines A9,A8,A7
+        ----?--- nc ?
+        --xx---- background image select (address lines on tilemap rom)
+        xx------ color PROM address lines A4,A3
+    */
+
 	color_prom_address = ((data&0x07)<<7) | ((data&0xc0)>>3);
-	
+
 	bgmap = ((data>>4)^3) & 0x3;
 	tilemap_mark_all_tiles_dirty(sb_tilemap);
 }
@@ -186,7 +186,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf801, 0xf801) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)		
+	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -194,7 +194,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(sbw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xf801, 0xf801) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_RAM)	
+	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
 
@@ -220,19 +220,19 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( sbowling )
 	PORT_START
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1   )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH,	IPT_TILT )	
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,	IPT_TILT )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
-		
+
 	PORT_START
 	PORT_BIT( 0xff, 0, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30)
 
 	PORT_START
 	PORT_BIT( 0xff, 0, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_REVERSE
-		
+
 	PORT_START	/* coin slots: A 4 LSB, B 4 MSB */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -260,7 +260,7 @@ INPUT_PORTS_START( sbowling )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) ) 
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -361,7 +361,7 @@ static MACHINE_DRIVER_START( sbowling )
 	MDRV_PALETTE_INIT(sbowling)
 	MDRV_VIDEO_START(sbowling)
 	MDRV_VIDEO_UPDATE(sbowling)
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -370,7 +370,7 @@ static MACHINE_DRIVER_START( sbowling )
 MACHINE_DRIVER_END
 
 ROM_START( sbowling )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "kb01.6h",        0x0000, 0x1000, CRC(dd5d411a) SHA1(ca15676d234353bc47f642be13d58f3d6d880126))
 	ROM_LOAD( "kb02.5h",        0x1000, 0x1000, CRC(75d3c45f) SHA1(af6e6237b7b28efaac258e6ddd85518c3406b24a))
 	ROM_LOAD( "kb03.3h",        0x2000, 0x1000, CRC(955fbfb8) SHA1(05d501f924adc5b816670f6f5e58a98a0c1bc962))
@@ -379,10 +379,10 @@ ROM_START( sbowling )
 	ROM_LOAD( "kb05.9k",        0x0000, 0x800,  CRC(4b4d9569) SHA1(d69e69add69ec11724090e34838ec8c61de81f4e))
 	ROM_LOAD( "kb06.7k",        0x0800, 0x800,  CRC(d89ba78b) SHA1(9e01be976e1e14feb8f7bd9f699a977a15a72e0d))
 	ROM_LOAD( "kb07.6k",        0x1000, 0x800,  CRC(9fb5db1a) SHA1(0b28ca5277ebe0d78d1a3f2d414efb5fd7c6e9ee))
-	
+
 	ROM_REGION( 0x01000, REGION_USER1, 0 )
 	ROM_LOAD( "kb04.10k",       0x0000, 0x1000, CRC(1c27adc1) SHA1(a68748fbdbd8fb48f20b3675d793e5c156d1bd02))
-	
+
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	ROM_LOAD( "kb08.7m",        0x0000, 0x0400, CRC(e949e441) SHA1(8e0fe71ed6d4e6f94a703c27a8364da27b443730))
 	ROM_LOAD( "kb09.6m",        0x0400, 0x0400, CRC(e29191a6) SHA1(9a2c78a96ef6d118f4dacbea0b7d454b66a452ae))

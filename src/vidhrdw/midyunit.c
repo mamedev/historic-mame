@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Williams/Midway Y/Z-unit system
+    Williams/Midway Y/Z-unit system
 
 **************************************************************************/
 
@@ -73,7 +73,7 @@ static void scanline0_callback(int param);
 
 /*************************************
  *
- *	Video startup
+ *  Video startup
  *
  *************************************/
 
@@ -172,7 +172,7 @@ VIDEO_START( midzunit )
 
 /*************************************
  *
- *	Banked graphics ROM access
+ *  Banked graphics ROM access
  *
  *************************************/
 
@@ -190,7 +190,7 @@ READ16_HANDLER( midyunit_gfxrom_r )
 
 /*************************************
  *
- *	Video/color RAM read/write
+ *  Video/color RAM read/write
  *
  *************************************/
 
@@ -227,7 +227,7 @@ READ16_HANDLER( midyunit_vram_r )
 
 /*************************************
  *
- *	Shift register read/write
+ *  Shift register read/write
  *
  *************************************/
 
@@ -246,25 +246,25 @@ void midyunit_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 
 /*************************************
  *
- *	Y/Z-unit control register
+ *  Y/Z-unit control register
  *
  *************************************/
 
 WRITE16_HANDLER( midyunit_control_w )
 {
 	/*
-	 * Narc system register
-	 * ------------------
-	 *
-	 *   | Bit              | Use
-	 * --+-FEDCBA9876543210-+------------
-	 *   | xxxxxxxx-------- |   7 segment led on CPU board
-	 *   | --------xx------ |   CMOS page
-	 *   | ----------x----- | - OBJ PAL RAM select
-	 *   | -----------x---- | - autoerase enable
-	 *   | ---------------- | - watchdog
-	 *
-	 */
+     * Narc system register
+     * ------------------
+     *
+     *   | Bit              | Use
+     * --+-FEDCBA9876543210-+------------
+     *   | xxxxxxxx-------- |   7 segment led on CPU board
+     *   | --------xx------ |   CMOS page
+     *   | ----------x----- | - OBJ PAL RAM select
+     *   | -----------x---- | - autoerase enable
+     *   | ---------------- | - watchdog
+     *
+     */
 
 	if (ACCESSING_LSB)
 	{
@@ -302,7 +302,7 @@ WRITE16_HANDLER( midyunit_control_w )
 
 /*************************************
  *
- *	Palette handlers
+ *  Palette handlers
  *
  *************************************/
 
@@ -328,7 +328,7 @@ WRITE16_HANDLER( midyunit_paletteram_w )
 
 /*************************************
  *
- *	DMA drawing routines
+ *  DMA drawing routines
  *
  *************************************/
 
@@ -451,7 +451,7 @@ DMA_DRAW_FUNC(prefix##_p0c1_xf, XFLIP_YES, PIXEL_COPY,  PIXEL_COLOR)	\
 																												\
 static dma_draw_func prefix[32] =																				\
 {																												\
-/*	B0:N / B1:N			B0:Y / B1:N			B0:N / B1:Y			B0:Y / B1:Y */									\
+/*  B0:N / B1:N         B0:Y / B1:N         B0:N / B1:Y         B0:Y / B1:Y */									\
 	dma_draw_none,		prefix##_p0,		prefix##_p1,		prefix##_p0p1,		/* no color */ 				\
 	prefix##_c0,		prefix##_c0,		prefix##_c0p1,		prefix##_c0p1,		/* color 0 pixels */		\
 	prefix##_c1,		prefix##_p0c1,		prefix##_c1,		prefix##_p0c1,		/* color non-0 pixels */	\
@@ -475,7 +475,7 @@ DECLARE_BLITTER_SET(dma_draw)
 
 /*************************************
  *
- *	DMA finished callback
+ *  DMA finished callback
  *
  *************************************/
 
@@ -502,7 +502,7 @@ static void dma_callback(int is_in_34010_context)
 
 /*************************************
  *
- *	DMA reader
+ *  DMA reader
  *
  *************************************/
 
@@ -543,7 +543,7 @@ READ16_HANDLER( midyunit_dma_r )
 
 /*************************************
  *
- *	DMA write handler
+ *  DMA write handler
  *
  *************************************/
 
@@ -695,7 +695,7 @@ WRITE16_HANDLER( midyunit_dma_w )
 
 /*************************************
  *
- *	Partial screen updater
+ *  Partial screen updater
  *
  *************************************/
 
@@ -741,7 +741,7 @@ static void update_partial(int scanline, int render)
 
 /*************************************
  *
- *	34010 display address callback
+ *  34010 display address callback
  *
  *************************************/
 
@@ -753,7 +753,7 @@ void midyunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 
 /*************************************
  *
- *	34010 interrupt callback
+ *  34010 interrupt callback
  *
  *************************************/
 
@@ -766,7 +766,7 @@ void midyunit_display_interrupt(int scanline)
 
 /*************************************
  *
- *	34010 I/O register kludge
+ *  34010 I/O register kludge
  *
  *************************************/
 
@@ -788,7 +788,7 @@ WRITE16_HANDLER( midyunit_io_register_w )
 
 /*************************************
  *
- *	End-of-frame update
+ *  End-of-frame update
  *
  *************************************/
 
@@ -809,7 +809,7 @@ static void scanline0_callback(int param)
 
 /*************************************
  *
- *	Core refresh routine
+ *  Core refresh routine
  *
  *************************************/
 

@@ -1,26 +1,26 @@
 /***************************************************************************
 
-						  -= Fuuki 16 Bit Games (FG-2) =-
+                          -= Fuuki 16 Bit Games (FG-2) =-
 
-					driver by	Luca Elia (l.elia@tin.it)
-					c.f. Fuuki FG-3
+                    driver by   Luca Elia (l.elia@tin.it)
+                    c.f. Fuuki FG-3
 
 
-	[ 4 Scrolling Layers ]
+    [ 4 Scrolling Layers ]
 
-							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 (double-buffered) ]
+                            [ Layer 0 ]     [ Layer 1 ]     [ Layers 2&3 (double-buffered) ]
 
-	Tile Size:				16 x 16 x 4		16 x 16 x 8		8 x 8 x 4
-	Layer Size (tiles):		64 x 32			64 x 32			64 x 32
+    Tile Size:              16 x 16 x 4     16 x 16 x 8     8 x 8 x 4
+    Layer Size (tiles):     64 x 32         64 x 32         64 x 32
 
-	[ 1024? Zooming Sprites ]
+    [ 1024? Zooming Sprites ]
 
-	Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
-	tiles both horizontally and vertically.
-	There is zooming (from full size to half size) and 4 levels of
-	priority (wrt layers)
+    Sprites are made of 16 x 16 x 4 tiles. Size can vary from 1 to 16
+    tiles both horizontally and vertically.
+    There is zooming (from full size to half size) and 4 levels of
+    priority (wrt layers)
 
-	* Note: the game does hardware assisted raster effects *
+    * Note: the game does hardware assisted raster effects *
 
 ***************************************************************************/
 
@@ -36,16 +36,16 @@ data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
 /***************************************************************************
 
 
-									Tilemaps
+                                    Tilemaps
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w								Code
+        0.w                             Code
 
-		2.w		fedc ba98 ---- ----
-				---- ---- 7--- ----		Flip Y
-				---- ---- -6-- ----		Flip X
-				---- ---- --54 3210		Color
+        2.w     fedc ba98 ---- ----
+                ---- ---- 7--- ----     Flip Y
+                ---- ---- -6-- ----     Flip X
+                ---- ---- --54 3210     Color
 
 
 ***************************************************************************/
@@ -77,7 +77,7 @@ LAYER( 3 )
 /***************************************************************************
 
 
-							Video Hardware Init
+                            Video Hardware Init
 
 
 ***************************************************************************/
@@ -88,7 +88,7 @@ PALETTE_INIT( fuuki16 )
 	int pen;
 
 	/* The game does not initialise the palette at startup. It should
-	   be totally black */
+       be totally black */
 	for (pen = 0; pen < Machine->drv->total_colors; pen++)
 		palette_set_color(pen,0,0,0);
 }
@@ -124,26 +124,26 @@ VIDEO_START( fuuki16 )
 /***************************************************************************
 
 
-								Sprites Drawing
+                                Sprites Drawing
 
-	Offset: 	Bits:					Value:
+    Offset:     Bits:                   Value:
 
-		0.w		fedc ---- ---- ----		Number Of Tiles Along X - 1
-				---- b--- ---- ----		Flip X
-				---- -a-- ---- ----		1 = Don't Draw This Sprite
-				---- --98 7654 3210		X (Signed)
+        0.w     fedc ---- ---- ----     Number Of Tiles Along X - 1
+                ---- b--- ---- ----     Flip X
+                ---- -a-- ---- ----     1 = Don't Draw This Sprite
+                ---- --98 7654 3210     X (Signed)
 
-		2.w		fedc ---- ---- ----		Number Of Tiles Along Y - 1
-				---- b--- ---- ----		Flip Y
-				---- -a-- ---- ----
-				---- --98 7654 3210		Y (Signed)
+        2.w     fedc ---- ---- ----     Number Of Tiles Along Y - 1
+                ---- b--- ---- ----     Flip Y
+                ---- -a-- ---- ----
+                ---- --98 7654 3210     Y (Signed)
 
-		4.w		fedc ---- ---- ----		Zoom X ($0 = Full Size, $F = Half Size)
-				---- ba98 ---- ----		Zoom Y ""
-				---- ---- 76-- ----		Priority
-				---- ---- --54 3210		Color
+        4.w     fedc ---- ---- ----     Zoom X ($0 = Full Size, $F = Half Size)
+                ---- ba98 ---- ----     Zoom Y ""
+                ---- ---- 76-- ----     Priority
+                ---- ---- --54 3210     Color
 
-		6.w								Code
+        6.w                             Code
 
 
 ***************************************************************************/
@@ -243,33 +243,33 @@ if (code_pressed(KEYCODE_X))
 /***************************************************************************
 
 
-								Screen Drawing
+                                Screen Drawing
 
-	Video Registers (fuuki16_vregs):
+    Video Registers (fuuki16_vregs):
 
-		00.w		Layer 0 Scroll Y
-		02.w		Layer 0 Scroll X
-		04.w		Layer 1 Scroll Y
-		06.w		Layer 1 Scroll X
-		08.w		Layer 2 Scroll Y
-		0a.w		Layer 2 Scroll X
-		0c.w		Layers Y Offset
-		0e.w		Layers X Offset
+        00.w        Layer 0 Scroll Y
+        02.w        Layer 0 Scroll X
+        04.w        Layer 1 Scroll Y
+        06.w        Layer 1 Scroll X
+        08.w        Layer 2 Scroll Y
+        0a.w        Layer 2 Scroll X
+        0c.w        Layers Y Offset
+        0e.w        Layers X Offset
 
-		10-1a.w		? 0
-		1c.w		Trigger a level 5 irq on this raster line
-		1e.w		? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
+        10-1a.w     ? 0
+        1c.w        Trigger a level 5 irq on this raster line
+        1e.w        ? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
 
-	Priority Register (fuuki16_priority):
+    Priority Register (fuuki16_priority):
 
-		fedc ba98 7654 3---
-		---- ---- ---- -210		Layer Order
+        fedc ba98 7654 3---
+        ---- ---- ---- -210     Layer Order
 
 
-	Unknown Registers (fuuki16_unknown):
+    Unknown Registers (fuuki16_unknown):
 
-		00.w		? $0200/$0201	(Flip Screen Off/On)
-		02.w		? $f300/$0330
+        00.w        ? $0200/$0201   (Flip Screen Off/On)
+        02.w        ? $f300/$0330
 
 ***************************************************************************/
 
@@ -298,9 +298,9 @@ VIDEO_UPDATE( fuuki16 )
 	data16_t scrollx_offs,   scrolly_offs;
 
 	/*
-	It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
-	See fuukifg3 for more justification
-	*/
+    It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
+    See fuukifg3 for more justification
+    */
 
 	int tm_back, tm_middle, tm_front;
 	int pri_table[6][3] = {
@@ -341,9 +341,9 @@ VIDEO_UPDATE( fuuki16 )
 	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly /*+ 0x02*/);
 
 	/* The backmost tilemap decides the background color(s) but sprites can
-	   go below the opaque pixels of that tilemap. We thus need to mark the
-	   transparent pixels of this layer with a different priority value */
-//	fuuki16_draw_layer(bitmap,cliprect, tm_back,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+       go below the opaque pixels of that tilemap. We thus need to mark the
+       transparent pixels of this layer with a different priority value */
+//  fuuki16_draw_layer(bitmap,cliprect, tm_back,  TILEMAP_IGNORE_TRANSPARENCY, 0);
 
 	/* Actually, bg colour is simply the last pen i.e. 0x1fff -pjp */
 	fillbitmap(bitmap,(0x800*4)-1,cliprect);

@@ -41,7 +41,7 @@ void volfied_cchip_init(void);
 
 
 /***********************************************************
-				MEMORY STRUCTURES
+                MEMORY STRUCTURES
 ***********************************************************/
 
 static ADDRESS_MAP_START( volfied_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -91,7 +91,7 @@ ADDRESS_MAP_END
 
 
 /***********************************************************
-				INPUT PORTS
+                INPUT PORTS
 ***********************************************************/
 
 #define VOLFIED_INPUT_BITS                                                          \
@@ -270,7 +270,7 @@ INPUT_PORTS_END
 
 
 /**************************************************************
-				GFX DECODING
+                GFX DECODING
 **************************************************************/
 
 static struct GfxLayout tilelayout =
@@ -292,7 +292,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /**************************************************************
-				YM2203 (SOUND)
+                YM2203 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2203 emulator when the internal timers cause an IRQ */
@@ -313,7 +313,7 @@ static struct YM2203interface ym2203_interface =
 
 
 /***********************************************************
-				MACHINE DRIVERS
+                MACHINE DRIVERS
 ***********************************************************/
 
 static DRIVER_INIT( volfied )
@@ -358,7 +358,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                    DRIVERS
 ***************************************************************************/
 
 ROM_START( volfied )

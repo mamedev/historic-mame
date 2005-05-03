@@ -8,14 +8,14 @@
 
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 1)
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
-  Jump Kids	            (c) 1993 Comad
+  Jump Kids             (c) 1993 Comad
   Fancy World           (c) 1995 Unico
   Choky! Choky!         (c) 1995 SemiCom
-  Hatch Catch			(c) 1995 SemiCom
+  Hatch Catch           (c) 1995 SemiCom
   Cookie & Bibi[2]      (c) 1995 SemiCom
   B.C. Story            (c) 1997 SemiCom
-  Jumping Pop			(c) 2001 ESD
-  Super Trio[1]			(c) 1994 GameAce
+  Jumping Pop           (c) 2001 ESD
+  Super Trio[1]         (c) 1994 GameAce
 
   [1] has the same sprites as the bootlegs, not much else is the same tho
 
@@ -402,7 +402,7 @@ static ADDRESS_MAP_START( jumppop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x300000, 0x303fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
 	AM_RANGE(0x320000, 0x323fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
-//	AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA16_RAM)
+//  AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA16_RAM)
 //  AM_RANGE(0x320000, 0x323fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x380000, 0x38000f) AM_WRITE(MWA16_RAM) AM_BASE(&jumppop_control)
 
@@ -469,7 +469,7 @@ WRITE16_HANDLER( semicom_soundcmd_w )
 	{
 		soundlatch_w(0,data & 0xff);
 		// needed for Super Trio which reads the sound with polling
-//		cpu_spinuntil_time(TIME_IN_USEC(100));
+//      cpu_spinuntil_time(TIME_IN_USEC(100));
 		cpu_boost_interleave(0, TIME_IN_USEC(20));
 
 	}
@@ -495,7 +495,7 @@ static ADDRESS_MAP_START( semicom_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
-//	AM_RANGE(0xf006, 0xf006) ??
+//  AM_RANGE(0xf006, 0xf006) ??
 	AM_RANGE(0xf00e, 0xf00e) AM_WRITE(oki_sound_bank_w)
 ADDRESS_MAP_END
 
@@ -655,7 +655,7 @@ INPUT_PORTS_START( fncywld )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )		// duplicated setting
+//  PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )        // duplicated setting
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
@@ -1047,55 +1047,55 @@ INPUT_PORTS_START( jumppop )
 	PORT_DIPSETTING(      0xc000, "3" )
 	PORT_DIPSETTING(      0x4000, "4" )
 /*
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_START
+    PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 */
 INPUT_PORTS_END
 
@@ -1764,7 +1764,7 @@ ROM_START( htchctch )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(5b27adb6) SHA1(a0821093d8c73765ff15767bdfc0afa95aa1371d) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
@@ -1796,7 +1796,7 @@ ROM_START( cookbib )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(a77d13f4) SHA1(13db72f5b171b0c1226e97ea98d9edd7144d56d9) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
@@ -1829,7 +1829,7 @@ ROM_START( chokchok )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(0bd39834) SHA1(2860c2b7fcb74546afde11a59d4b359612ab6e68) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -1873,7 +1873,7 @@ ROM_START( bcstry )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	/* taken from other set, check... */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
@@ -1927,7 +1927,7 @@ ROM_START( bcstrya )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there */
+       shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
@@ -2145,7 +2145,7 @@ static DRIVER_INIT( fncywld )
 
 static READ16_HANDLER( bcstory_1a0_read )
 {
-//	printf("bcstory_io %06x\n",activecpu_get_pc());
+//  printf("bcstory_io %06x\n",activecpu_get_pc());
 	if (activecpu_get_pc()==0x0560) return 0x1a0;
 	else return readinputport(2);
 }
@@ -2161,19 +2161,19 @@ static DRIVER_INIT ( bcstory )
 static DRIVER_INIT( htchctch )
 {
 
-//	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
+//  data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
 	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
 	int i;
 	/* simulate RAM initialization done by the protection MCU */
 	/* verified on real hardware */
-//	static data16_t htchctch_mcu68k[] =
-//	{
-//		/* moved to protdata.bin file .. */
-//	};
+//  static data16_t htchctch_mcu68k[] =
+//  {
+//      /* moved to protdata.bin file .. */
+//  };
 
 
-//	for (i = 0;i < sizeof(htchctch_mcu68k)/sizeof(htchctch_mcu68k[0]);i++)
-//		tumblep_mainram[0x000/2 + i] = htchctch_mcu68k[i];
+//  for (i = 0;i < sizeof(htchctch_mcu68k)/sizeof(htchctch_mcu68k[0]);i++)
+//      tumblep_mainram[0x000/2 + i] = htchctch_mcu68k[i];
 
 	for (i = 0;i < 0x200/2;i++)
 		tumblep_mainram[0x000/2 + i] = PROTDATA[i];
@@ -2260,7 +2260,7 @@ static DRIVER_INIT( htchctch )
 	/* put the address we to read to in A2 */
 	HCROM[0x1e10c/2] = 0x45f9;
 	HCROM[0x1e10e/2] = 0x0012;
-//	HCROM[0x1e110/2] = 0x2000;
+//  HCROM[0x1e110/2] = 0x2000;
 	HCROM[0x1e110/2] = 0x2000+0x60+0x60+0x60+0x60+0x60;
 
 	/* put the number of rows into D3 */

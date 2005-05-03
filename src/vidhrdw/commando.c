@@ -84,7 +84,7 @@ static void get_bg_tile_info(int tile_index)
 	int code = videoram[tile_index] + ((attr & 0xc0) << 2);
 	int color = attr & 0x0f;
 	int flags = TILE_FLIPYX((attr & 0x30) >> 4);
-	
+
 	SET_TILE_INFO(1, code, color, flags)
 }
 
@@ -94,21 +94,21 @@ static void get_fg_tile_info(int tile_index)
 	int code = commando_videoram2[tile_index] + ((attr & 0xc0) << 2);
 	int color = attr & 0x0f;
 	int flags = TILE_FLIPYX((attr & 0x30) >> 4);
-	
+
 	SET_TILE_INFO(0, code, color, flags)
 }
 
 VIDEO_START( commando )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 16, 16, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-		
+
 	if ( !fg_tilemap )
 		return 1;
 

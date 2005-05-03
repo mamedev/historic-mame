@@ -189,7 +189,7 @@ INLINE void sync( void )
 	m6809.int_state |= M6809_SYNC;	 /* HJB 990227 */
 	CHECK_IRQ_LINES;
 	/* if M6809_SYNC has not been cleared by CHECK_IRQ_LINES,
-	 * stop execution until the interrupt lines change. */
+     * stop execution until the interrupt lines change. */
 	if( m6809.int_state & M6809_SYNC )
 		if (m6809_ICount > 0) m6809_ICount = 0;
 }
@@ -277,7 +277,7 @@ INLINE void sex( void )
 	UINT16 t;
 	t = SIGNED(B);
 	D = t;
-//	CLR_NZV;	Tim Lindner 20020905: verified that V flag is not affected
+//  CLR_NZV;    Tim Lindner 20020905: verified that V flag is not affected
 	CLR_NZ;
 	SET_NZ16(t);
 }

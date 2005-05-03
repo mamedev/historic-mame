@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Exidy 440 video system
+    Exidy 440 video system
 
 ***************************************************************************/
 
@@ -40,7 +40,7 @@ void exidy440_update_firq(void);
 
 /*************************************
  *
- *	Initialize the video system
+ *  Initialize the video system
  *
  *************************************/
 
@@ -93,7 +93,7 @@ VIDEO_START( exidy440 )
 
 /*************************************
  *
- *	Video RAM read/write
+ *  Video RAM read/write
  *
  *************************************/
 
@@ -122,7 +122,7 @@ WRITE8_HANDLER( exidy440_videoram_w )
 
 /*************************************
  *
- *	Palette RAM read/write
+ *  Palette RAM read/write
  *
  *************************************/
 
@@ -155,7 +155,7 @@ WRITE8_HANDLER( exidy440_paletteram_w )
 
 /*************************************
  *
- *	Horizontal/vertical positions
+ *  Horizontal/vertical positions
  *
  *************************************/
 
@@ -166,7 +166,7 @@ READ8_HANDLER( exidy440_horizontal_pos_r )
 	exidy440_update_firq();
 
 	/* according to the schems, this value is only latched on an FIRQ
-	 * caused by collision or beam */
+     * caused by collision or beam */
 	return exidy440_latched_x;
 }
 
@@ -176,9 +176,9 @@ READ8_HANDLER( exidy440_vertical_pos_r )
 	int result;
 
 	/* according to the schems, this value is latched on any FIRQ
-	 * caused by collision or beam, ORed together with CHRCLK,
-	 * which probably goes off once per scanline; for now, we just
-	 * always return the current scanline */
+     * caused by collision or beam, ORed together with CHRCLK,
+     * which probably goes off once per scanline; for now, we just
+     * always return the current scanline */
 	result = cpu_getscanline();
 	return (result < 255) ? result : 255;
 }
@@ -187,7 +187,7 @@ READ8_HANDLER( exidy440_vertical_pos_r )
 
 /*************************************
  *
- *	Sprite RAM handler
+ *  Sprite RAM handler
  *
  *************************************/
 
@@ -201,7 +201,7 @@ WRITE8_HANDLER( exidy440_spriteram_w )
 
 /*************************************
  *
- *	Interrupt and I/O control regs
+ *  Interrupt and I/O control regs
  *
  *************************************/
 
@@ -250,7 +250,7 @@ WRITE8_HANDLER( exidy440_interrupt_clear_w )
 
 /*************************************
  *
- *	Interrupt generators
+ *  Interrupt generators
  *
  *************************************/
 
@@ -274,7 +274,7 @@ INTERRUPT_GEN( exidy440_vblank_interrupt )
 
 /*************************************
  *
- *	IRQ callback handlers
+ *  IRQ callback handlers
  *
  *************************************/
 
@@ -315,15 +315,15 @@ void collide_firq_callback(int param)
 
 /*************************************
  *
- *	Determine the time when the beam
- *	will intersect a given pixel
+ *  Determine the time when the beam
+ *  will intersect a given pixel
  *
  *************************************/
 
 double compute_pixel_time(int x, int y)
 {
 	/* assuming this is called at refresh time, compute how long until we
-	 * hit the given x,y position */
+     * hit the given x,y position */
 	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (double)x * (1.0 / 320.0));
 }
 
@@ -331,7 +331,7 @@ double compute_pixel_time(int x, int y)
 
 /*************************************
  *
- *	Sprite drawing
+ *  Sprite drawing
  *
  *************************************/
 
@@ -432,7 +432,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 /*************************************
  *
- *	Core refresh routine
+ *  Core refresh routine
  *
  *************************************/
 
@@ -475,7 +475,7 @@ static void update_screen(struct mame_bitmap *bitmap, const struct rectangle *cl
 
 /*************************************
  *
- *	Standard screen refresh callback
+ *  Standard screen refresh callback
  *
  *************************************/
 
@@ -510,7 +510,7 @@ VIDEO_UPDATE( exidy440 )
 
 /*************************************
  *
- *	Standard screen refresh callback
+ *  Standard screen refresh callback
  *
  *************************************/
 
@@ -527,11 +527,11 @@ VIDEO_EOF( exidy440 )
 		beamy = ((input_port_5_r(0) & 0xff) * 240) >> 8;
 
 		/* The timing of this FIRQ is very important. The games look for an FIRQ
-			and then wait about 650 cycles, clear the old FIRQ, and wait a
-			very short period of time (~130 cycles) for another one to come in.
-			From this, it appears that they are expecting to get beams over
-			a 12 scanline period, and trying to pick roughly the middle one.
-			This is how it is implemented. */
+            and then wait about 650 cycles, clear the old FIRQ, and wait a
+            very short period of time (~130 cycles) for another one to come in.
+            From this, it appears that they are expecting to get beams over
+            a 12 scanline period, and trying to pick roughly the middle one.
+            This is how it is implemented. */
 		increment = cpu_getscanlineperiod();
 		time = compute_pixel_time(beamx, beamy) - increment * 6;
 		for (i = 0; i <= 12; i++, time += increment)

@@ -93,7 +93,7 @@ static ADDRESS_MAP_START( system_h1_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x03f00000, 0x03f0ffff) AM_RAM //AM_SHARE(1) /*not work ram,something else *AND* not all of it...*/
 	AM_RANGE(0x03f10000, 0x03ffffff) AM_RAM
 	/*code jumps here after is it uploaded,likely to be Work Ram-H as in st-v,
-	  I think nobody cares if I give it the same name...*/
+      I think nobody cares if I give it the same name...*/
 	AM_RANGE(0x06000000, 0x060fffff) AM_RAM AM_BASE(&sysh1_workram_h)
 ADDRESS_MAP_END
 
@@ -157,16 +157,16 @@ static INTERRUPT_GEN( system_h1 )
 {
 	switch(cpu_getiloops())
 	{
-	//	case 2: cpunum_set_input_line(0, 6, HOLD_LINE); break;
+	//  case 2: cpunum_set_input_line(0, 6, HOLD_LINE); break;
 		case 1: cpunum_set_input_line(0, 4, HOLD_LINE); break;
-	//	case 0: cpunum_set_input_line(0, 2, HOLD_LINE); break;
+	//  case 0: cpunum_set_input_line(0, 2, HOLD_LINE); break;
 	}
 }
 
 MACHINE_INIT ( coolridr )
 {
 
-//	cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
+//  cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 
 }

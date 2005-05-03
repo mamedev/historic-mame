@@ -1,109 +1,109 @@
 /***************************************************************************
 
-	Data East 'Rohga' era hardware:
+    Data East 'Rohga' era hardware:
 
-	Rogha Armour Attack			(c) 1991 Data East Corporation
-	Wizard Fire					(c) 1992 Data East Corporation
-	Nitro Ball/Gun Ball			(c) 1992 Data East Corporation
-	Schmeiser Robo				(c) 1993 Hot B
+    Rogha Armour Attack         (c) 1991 Data East Corporation
+    Wizard Fire                 (c) 1992 Data East Corporation
+    Nitro Ball/Gun Ball         (c) 1992 Data East Corporation
+    Schmeiser Robo              (c) 1993 Hot B
 
-	This hardware is capable of alpha-blending on sprites and playfields
+    This hardware is capable of alpha-blending on sprites and playfields
 
-	Todo:  On Wizard Fire when you insert a coin and press start, the start
-	button being held seems to select the knight right away.  Emulation bug.
+    Todo:  On Wizard Fire when you insert a coin and press start, the start
+    button being held seems to select the knight right away.  Emulation bug.
 
-	Todo:  Rohga protection emulation is still incomplete.  Game only works
-	up to level 5 and the priority register does not seem to be written.
+    Todo:  Priority errors & other graphics errors in Nitro Ball.
 
-	Todo:  Priority errors in Nitro Ball
+    Todo:  There is some kind of full-screen flash in Rohga when you die,
+        not emulated.
 
-	Schmeiser Robo runs on a slightly modified Rohga pcb.
+    Schmeiser Robo runs on a slightly modified Rohga pcb.
 
-	Emulation by Bryan McPhail, mish@tendril.co.uk
+    Emulation by Bryan McPhail, mish@tendril.co.uk
 
-	Schmeiser Robo PCB Layout
-	-------------------------
+    Schmeiser Robo PCB Layout
+    -------------------------
 
-	DE-0353-3
-	|---------------------------------------------------|
-	|62256  62256                         104  DSW2 DSW1|
-	|                                                   |
-	|               59     PAL                          |
-	|                      PAL                          |
-	|SR001J  SR006J                            DSW3     |
-	|                      6264                         |
-	|SR002-74  PAL         6264           113           |
-	|SR003-74       74     6264                        J|
-	|                      6264   HB00031E             A|
-	|                             PAL                  M|
-	|                                                  M|
-	|               55            SR011                A|
-	|                             SR012   M6295#2       |
-	|                                                   |
-	|                      45     YM2151  M6295#1    CN2|
-	|       SR007   52            LH5168                |
-	|       SR008          71     SR013   YM3014        |
-	|SR004  SR009   52                    JP3 VOL1 VOL2 |
-	|SR005  SR010                                       |
-	|                     28MHz  32.220MHz      TA8205  |
-	|---------------------------------------------------|
+    DE-0353-3
+    |---------------------------------------------------|
+    |62256  62256                         104  DSW2 DSW1|
+    |                                                   |
+    |               59     PAL                          |
+    |                      PAL                          |
+    |SR001J  SR006J                            DSW3     |
+    |                      6264                         |
+    |SR002-74  PAL         6264           113           |
+    |SR003-74       74     6264                        J|
+    |                      6264   HB00031E             A|
+    |                             PAL                  M|
+    |                                                  M|
+    |               55            SR011                A|
+    |                             SR012   M6295#2       |
+    |                                                   |
+    |                      45     YM2151  M6295#1    CN2|
+    |       SR007   52            LH5168                |
+    |       SR008          71     SR013   YM3014        |
+    |SR004  SR009   52                    JP3 VOL1 VOL2 |
+    |SR005  SR010                                       |
+    |                     28MHz  32.220MHz      TA8205  |
+    |---------------------------------------------------|
 
-	Notes:
-				68000 clock: 14.000MHz
-				VSync: 58kHz
-				HSync: 15.68kHz
-				YM2151 clock: 3.58MHz
-				M6295#1 clock: 1.00MHz, Sample Rate: = / 132
-				M6295#2 clock: 2.00MHz, Sample Rate: = / 132
-				CN2: Connector for stereo sound out
-				Vol1, Vol2: Volume POT for left/right speakers. In Mono mode, only right volume is used.
-				JP3: jumper to set mono/stereo output
-				PCB has several wire mods also
-	            
-				SR001, SR002 : 27C040
-				SR003, SR004 : 4M Mask (40 pin 16 bit)
-				SR004 - SR010: 8M Mask (42 pin 16 bit)
-				SR011, SR012 : 4M Mask (32 pin 8 bit)
-				HB00031E     : MB7116 (512 bytes x 4 bit) PROM near chip 113
+    Notes:
+                68000 clock: 14.000MHz
+                VSync: 58kHz
+                HSync: 15.68kHz
+                YM2151 clock: 3.58MHz
+                M6295#1 clock: 1.00MHz, Sample Rate: = / 132
+                M6295#2 clock: 2.00MHz, Sample Rate: = / 132
+                CN2: Connector for stereo sound out
+                Vol1, Vol2: Volume POT for left/right speakers. In Mono mode, only right volume is used.
+                JP3: jumper to set mono/stereo output
+                PCB has several wire mods also
 
-	Gun Ball PCB Layout
-	---------------------
+                SR001, SR002 : 27C040
+                SR003, SR004 : 4M Mask (40 pin 16 bit)
+                SR004 - SR010: 8M Mask (42 pin 16 bit)
+                SR011, SR012 : 4M Mask (32 pin 8 bit)
+                HB00031E     : MB7116 (512 bytes x 4 bit) PROM near chip 113
 
-	DE-0358-3
-	|---------------------------------------------------|
-	|62256   62256  |---|  PAL           |---|    CN3   |
-	|JC00    JC01   |59 |  PAL           |146| DSW1 DSW2|
-	|JC02    JC03   |---|  PAL           |---|          |
-	|JC04-3  JC05-3        PAL                          |
-	|                                                   |
-	|MAV-00  JC06 |----|                 |-----|        |
-	|MAV-01  JC07 | 56 |                 | 113 |        |
-	|             |----|     6264        |     |       J|
-	|                        6264        |-----|       A|
-	|             |----|     6264                      M|
-	|MAV-02 MAV-03| 74 |     6264                      M|
-	|             |----|     PAL                       A|
-	|             |----|     JN-00          M6295#2     |
-	|MAV-04 MAV-05| 52 | |---|       MAV-11       JP7   |
-	|             |----| | 71|       MAV-10 M6295#1  CN2|
-	|MAV-06 MAV-07       |---|       JC08               |
-	|             |----|       |----|LH5168  YM3012     |
-	|             | 52 | |---| |6280|         VOL1 VOL2 |
-	|             |----| | 71| |----|YM2151             |
-	|MAV-08 MAV-09  28MHz|---|   32.220MHz      TA8205  |
-	|---------------------------------------------------|
+    Gun Ball PCB Layout
+    ---------------------
 
-	Notes:
-				68000 clock   : 14.000MHz [28/2]
-				HuC6280 clock : 8.050MHz [32.200/4]
-				YM2151 clock  : 3.577777778MHz [32.200/9]
-				M6295#1 clock : 1.00625MHz [32.200/32], Sample Rate = 1006250 / 132
-				M6295#2 clock : 2.0125MHz  [32.200/16], Sample Rate = 2012500 / 132
-				CN2           : Connector for stereo sound out
-				VOL1, VOL2    : Volume pot for left/right speakers. In Mono mode, only right volume is used.
-				JP7           : Jumper to set mono/stereo output
-				JN-00         : Fujitsu MB7116 PROM
-				VSync         : 58kHz
+    DE-0358-3
+    |---------------------------------------------------|
+    |62256   62256  |---|  PAL           |---|    CN3   |
+    |JC00    JC01   |59 |  PAL           |146| DSW1 DSW2|
+    |JC02    JC03   |---|  PAL           |---|          |
+    |JC04-3  JC05-3        PAL                          |
+    |                                                   |
+    |MAV-00  JC06 |----|                 |-----|        |
+    |MAV-01  JC07 | 56 |                 | 113 |        |
+    |             |----|     6264        |     |       J|
+    |                        6264        |-----|       A|
+    |             |----|     6264                      M|
+    |MAV-02 MAV-03| 74 |     6264                      M|
+    |             |----|     PAL                       A|
+    |             |----|     JN-00          M6295#2     |
+    |MAV-04 MAV-05| 52 | |---|       MAV-11       JP7   |
+    |             |----| | 71|       MAV-10 M6295#1  CN2|
+    |MAV-06 MAV-07       |---|       JC08               |
+    |             |----|       |----|LH5168  YM3012     |
+    |             | 52 | |---| |6280|         VOL1 VOL2 |
+    |             |----| | 71| |----|YM2151             |
+    |MAV-08 MAV-09  28MHz|---|   32.220MHz      TA8205  |
+    |---------------------------------------------------|
+
+    Notes:
+                68000 clock   : 14.000MHz [28/2]
+                HuC6280 clock : 8.050MHz [32.200/4]
+                YM2151 clock  : 3.577777778MHz [32.200/9]
+                M6295#1 clock : 1.00625MHz [32.200/32], Sample Rate = 1006250 / 132
+                M6295#2 clock : 2.0125MHz  [32.200/16], Sample Rate = 2012500 / 132
+                CN2           : Connector for stereo sound out
+                VOL1, VOL2    : Volume pot for left/right speakers. In Mono mode, only right volume is used.
+                JP7           : Jumper to set mono/stereo output
+                JN-00         : Fujitsu MB7116 PROM
+                VSync         : 58kHz
 
 ***************************************************************************/
 
@@ -120,8 +120,10 @@ VIDEO_START( rohga );
 VIDEO_START( wizdfire );
 VIDEO_START( nitrobal );
 VIDEO_UPDATE( rohga );
+VIDEO_UPDATE( schmeisr );
 VIDEO_UPDATE( wizdfire );
 VIDEO_UPDATE( nitrobal );
+WRITE16_HANDLER( rohga_buffer_spriteram16_w );
 
 static READ16_HANDLER( rohga_dip3_r ) { return readinputport(3); }
 static READ16_HANDLER( nitrobal_control_r ) { return readinputport(3); }
@@ -131,14 +133,18 @@ static READ16_HANDLER( schmeisr_control_r ) { return readinputport(1); }
 
 static ADDRESS_MAP_START( rohga_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x280000, 0x2807ff) AM_READ(deco16_104_rohga_prot_r) /* Protection device */
+	AM_RANGE(0x280000, 0x2807ff) AM_MIRROR(0x800) AM_READ(deco16_104_rohga_prot_r) /* Protection device */
 	AM_RANGE(0x2c0000, 0x2c0001) AM_READ(rohga_dip3_r)
 	AM_RANGE(0x321100, 0x321101) AM_READ(MRA16_NOP) /* Irq ack?  Value not used */
 	AM_RANGE(0x3c0000, 0x3c1fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3c2000, 0x3c2fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3c4000, 0x3c4fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3c6000, 0x3c6fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3d0000, 0x3d07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3ca000, 0x3cafff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3cc000, 0x3ccfff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3ce000, 0x3cefff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3d0000, 0x3d0fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3e0000, 0x3e1fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3f0000, 0x3f3fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
@@ -147,22 +153,24 @@ static ADDRESS_MAP_START( rohga_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
 	AM_RANGE(0x240000, 0x24000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
-	AM_RANGE(0x280000, 0x2807ff) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
-	AM_RANGE(0x280800, 0x280fff) AM_WRITE(deco16_104_rohga_prot_w) /* Mirror */
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x310000, 0x31000b) AM_WRITE(MWA16_NOP) /* Palette control? */
-	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* Priority? */
+	AM_RANGE(0x280000, 0x2807ff) AM_MIRROR(0x800) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
+
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(rohga_buffer_spriteram16_w) /* write 1 for sprite dma */
+	AM_RANGE(0x310000, 0x310009) AM_WRITE(MWA16_NOP) /* Palette control? */
+	AM_RANGE(0x31000a, 0x31000b) AM_WRITE(deco16_palette_dma_w) /* Write 1111 for dma?  (Or any value?) */
+	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* ? */
 	AM_RANGE(0x322000, 0x322001) AM_WRITE(deco16_priority_w)
+
 	AM_RANGE(0x3c0000, 0x3c1fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
 	AM_RANGE(0x3c2000, 0x3c2fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
 	AM_RANGE(0x3c4000, 0x3c4fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
 	AM_RANGE(0x3c6000, 0x3c6fff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
-	AM_RANGE(0x3c8000, 0x3c87ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
-	AM_RANGE(0x3ca000, 0x3ca7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
-	AM_RANGE(0x3cc000, 0x3cc7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
-	AM_RANGE(0x3ce000, 0x3ce7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x3ca000, 0x3cafff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
+	AM_RANGE(0x3cc000, 0x3ccfff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
+	AM_RANGE(0x3ce000, 0x3cefff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
 	AM_RANGE(0x3d0000, 0x3d07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3e0000, 0x3e1fff) AM_WRITE(deco16_nonbuffered_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_WRITE(deco16_buffered_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x3f0000, 0x3f3fff) AM_WRITE(MWA16_RAM) /* Main ram */
 ADDRESS_MAP_END
 
@@ -280,36 +288,37 @@ static ADDRESS_MAP_START( schmeisr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x3c2000, 0x3c2fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3c4000, 0x3c4fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3c6000, 0x3c6fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3ca000, 0x3cafff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3cc000, 0x3ccfff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3ce000, 0x3cefff) AM_MIRROR(0x1000) AM_READ(MRA16_RAM)
 	AM_RANGE(0x3d0000, 0x3d07ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3e0000, 0x3e1fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3e2000, 0x3e3fff) AM_READ(MRA16_RAM) /* Mirror of above? */
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_MIRROR(0x2000) AM_READ(MRA16_RAM)
 	AM_RANGE(0xff0000, 0xff7fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( schmeisr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
 	AM_RANGE(0x240000, 0x24000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
-	AM_RANGE(0x280000, 0x2807ff) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
-	AM_RANGE(0x280800, 0x280fff) AM_WRITE(deco16_104_rohga_prot_w) /* Mirror */
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x310000, 0x31000b) AM_WRITE(MWA16_NOP) /* Palette control? */
-	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* Priority? */
+	AM_RANGE(0x280000, 0x2807ff) AM_MIRROR(0x800) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
+
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(rohga_buffer_spriteram16_w) /* write 1 for sprite dma */
+	AM_RANGE(0x310000, 0x310009) AM_WRITE(MWA16_NOP) /* Palette control? */
+	AM_RANGE(0x31000a, 0x31000b) AM_WRITE(deco16_palette_dma_w) /* Write 1111 for dma?  (Or any value?) */
+	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* ? */
 	AM_RANGE(0x322000, 0x322001) AM_WRITE(deco16_priority_w)
+
 	AM_RANGE(0x3c0000, 0x3c1fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
 	AM_RANGE(0x3c2000, 0x3c2fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
-	AM_RANGE(0x3c3000, 0x3c3fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
 	AM_RANGE(0x3c4000, 0x3c4fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
-	AM_RANGE(0x3c5000, 0x3c5fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
 	AM_RANGE(0x3c6000, 0x3c6fff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
-	AM_RANGE(0x3c7000, 0x3c7fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
-	AM_RANGE(0x3c8000, 0x3c87ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
-	AM_RANGE(0x3ca000, 0x3ca7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
-	AM_RANGE(0x3cc000, 0x3cc7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
-	AM_RANGE(0x3ce000, 0x3ce7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
+	AM_RANGE(0x3c8000, 0x3c8fff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x3ca000, 0x3cafff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
+	AM_RANGE(0x3cc000, 0x3ccfff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
+	AM_RANGE(0x3ce000, 0x3cefff) AM_MIRROR(0x1000) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
 	AM_RANGE(0x3d0000, 0x3d07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3e0000, 0x3e1fff) AM_WRITE(deco16_nonbuffered_palette_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x3e2000, 0x3e3fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_MIRROR(0x2000) AM_WRITE(deco16_buffered_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xff0000, 0xff7fff) AM_WRITE(MWA16_RAM) /* Main ram */
 ADDRESS_MAP_END
 
@@ -584,7 +593,7 @@ INPUT_PORTS_START( nitrobal )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-	PORT_START 
+	PORT_START
 	PORT_BIT( 0x1, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x2, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x4, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
@@ -809,7 +818,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_schmeisr[] =
 	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
 	{ REGION_GFX3, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
-	{ REGION_GFX4, 0, &spritelayout2,     1024, 32 },	/* Sprites 16x16 */
+	{ REGION_GFX4, 0, &spritelayout2,    1024, 64 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -841,8 +850,7 @@ static MACHINE_DRIVER_START( rohga )
 	MDRV_CPU_PROGRAM_MAP(rohga_readmem,rohga_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280,32220000/8)
-	/* audio CPU */
+	MDRV_CPU_ADD(H6280,32220000/4)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -863,8 +871,8 @@ static MACHINE_DRIVER_START( rohga )
 
 	MDRV_SOUND_ADD(YM2151, 32220000/9)
 	MDRV_SOUND_CONFIG(ym2151_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.80)
-	MDRV_SOUND_ROUTE(1, "right", 0.80)
+	MDRV_SOUND_ROUTE(0, "left", 0.78)
+	MDRV_SOUND_ROUTE(1, "right", 0.78)
 
 	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
@@ -884,8 +892,7 @@ static MACHINE_DRIVER_START( wizdfire )
 	MDRV_CPU_PROGRAM_MAP(wizdfire_readmem,wizdfire_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280,32220000/8)
-	/* audio CPU */
+	MDRV_CPU_ADD(H6280,32220000/4)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -927,8 +934,7 @@ static MACHINE_DRIVER_START( nitrobal )
 	MDRV_CPU_PROGRAM_MAP(nitrobal_readmem,nitrobal_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280,32220000/8)
-	/* audio CPU */
+	MDRV_CPU_ADD(H6280,32220000/4)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -970,8 +976,7 @@ static MACHINE_DRIVER_START( schmeisr )
 	MDRV_CPU_PROGRAM_MAP(schmeisr_readmem,schmeisr_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280,32220000/8)
-	/* audio CPU */
+	MDRV_CPU_ADD(H6280,32220000/4)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -985,7 +990,7 @@ static MACHINE_DRIVER_START( schmeisr )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(rohga)
-	MDRV_VIDEO_UPDATE(rohga)
+	MDRV_VIDEO_UPDATE(schmeisr)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1258,7 +1263,7 @@ ROM_START( nitrobal )
 	ROM_LOAD( "mav11.r19",  0x00000,  0x80000,  CRC(ef513908) SHA1(72db6c704071d7a784b3768c256fc51087e9e93c) )
 
 	ROM_REGION( 1024, REGION_PROMS, 0 )
-	ROM_LOAD( "jn-00.17l", 0x00000,  0x400,  CRC(6ac77b84) SHA1(9e1e2cabdb20b819e592a0f07d15658062227fa4) )	/* Priority (unused) */	
+	ROM_LOAD( "jn-00.17l", 0x00000,  0x400,  CRC(6ac77b84) SHA1(9e1e2cabdb20b819e592a0f07d15658062227fa4) )	/* Priority (unused) */
 ROM_END
 
 ROM_START( gunball )
@@ -1314,19 +1319,19 @@ ROM_START( schmeisr )
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sr013.18p",  0x00000,  0x10000,  CRC(4ac00cbb) SHA1(cbc21e13978ae5e8940c8c22932dc424605c0ba4) )
 
-	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* Filled in later */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Encrypted tiles */
-	ROM_LOAD( "sr002-74.9a",  0x000000, 0x080000,  CRC(97e15c7b) SHA1(8697115d4b5ed94a1392034060821d3e354bceb0) ) 
+	ROM_LOAD( "sr002-74.9a",  0x000000, 0x080000,  CRC(97e15c7b) SHA1(8697115d4b5ed94a1392034060821d3e354bceb0) )
 	ROM_LOAD( "sr003-74.11a", 0x080000, 0x080000,  CRC(ea367971) SHA1(365c27bdef4daa01e926fbcf11ce622186133106) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* Encrypted tiles */
-	ROM_LOAD( "sr007.17d",  0x000000, 0x100000,  CRC(886f80c7) SHA1(c06efc1ce7f51d4e503267e63dc9f762d55ad528) ) 
+	ROM_LOAD( "sr007.17d",  0x000000, 0x100000,  CRC(886f80c7) SHA1(c06efc1ce7f51d4e503267e63dc9f762d55ad528) )
 	ROM_LOAD( "sr008.18d",  0x100000, 0x100000,  CRC(a74cbc90) SHA1(1aabfec7cd64e7097aa55f0ddc5a2c9e1e25618a) )
 
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "sr004.19a", 0x000000, 0x100000,  CRC(e25434a1) SHA1(136ebb36e9b6caeac885423e8f365008ddcea778) ) 
+	ROM_LOAD( "sr004.19a", 0x000000, 0x100000,  CRC(e25434a1) SHA1(136ebb36e9b6caeac885423e8f365008ddcea778) )
 	ROM_LOAD( "sr005.20a", 0x100000, 0x100000,  CRC(1630033b) SHA1(e2a5fd7f8839db9d5b41d3cada598a6c07a97368) )
 	ROM_LOAD( "sr009.19d", 0x200000, 0x100000,  CRC(7b9d982f) SHA1(55d89ee68ceaf3ca8059177721b6c9a16103b1b4) )
 	ROM_LOAD( "sr010.20d", 0x300000, 0x100000,  CRC(6e9e5352) SHA1(357659ff5ab9ce94df3313e9a60125769c7fe10a) )
@@ -1365,12 +1370,12 @@ static DRIVER_INIT( nitrobal )
 }
 
 static DRIVER_INIT( schmeisr )
-{	
+{
 	const data8_t *src = memory_region(REGION_GFX2);
 	data8_t *dst = memory_region(REGION_GFX1);
 
-	memcpy(dst,src,0x10000);
-	memcpy(dst+0x10000,src+0x80000,0x10000);
+	memcpy(dst,src,0x20000);
+	memcpy(dst+0x20000,src+0x80000,0x20000);
 
 	deco74_decrypt(REGION_GFX1);
 	deco74_decrypt(REGION_GFX2);
@@ -1378,11 +1383,11 @@ static DRIVER_INIT( schmeisr )
 	deco16_104_rohga_reset();
 }
 
-GAMEX(1991, rohga,    0,       rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Asia/Europe v3.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )
-GAMEX(1991, rohgah,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Hong Kong v3.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1991, rohgau,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (US v1.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1991, rohga,    0,       rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Asia/Europe v3.0)"  )
+GAME( 1991, rohgah,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Hong Kong v3.0)" )
+GAME( 1991, rohgau,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (US v1.0)" )
 GAME( 1992, wizdfire, 0,       wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Wizard Fire (US v1.1)" )
 GAME( 1992, darksel2, wizdfire,wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Dark Seal 2 (Japan v2.1)" )
 GAME( 1992, nitrobal, 0,       nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Nitro Ball (US)" )
 GAME( 1992, gunball,  nitrobal,nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Gun Ball (Japan)" )
-GAMEX(1993, schmeisr, 0,       schmeisr, schmeisr, schmeisr, ROT0,   "Hot B",                 "Schmeiser Robo", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, schmeisr, 0,       schmeisr, schmeisr, schmeisr, ROT0,   "Hot B",                 "Schmeiser Robo (Japan)" )

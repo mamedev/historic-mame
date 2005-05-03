@@ -197,7 +197,7 @@ VIDEO_START(konamigx_5bpp)
 	else
 		game_tile_callback = konamigx_type2_tile_callback;
 
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -205,7 +205,7 @@ VIDEO_START(konamigx_5bpp)
 	if (_gxcommoninit()) return 1;
 
 	/* here are some hand tuned per game scroll offsets to go with the per game visible areas,
-	   i see no better way of doing this for now... */
+       i see no better way of doing this for now... */
 
 	if (!strcmp(Machine->gamedrv->name,"tbyahhoo"))
 	{
@@ -239,7 +239,7 @@ VIDEO_START(konamigx_5bpp)
 
 VIDEO_START(winspike)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_alpha_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_alpha_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -256,7 +256,7 @@ VIDEO_START(winspike)
 
 VIDEO_START(dragoonj)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 1, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -278,7 +278,7 @@ VIDEO_START(dragoonj)
 
 VIDEO_START(le2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 1, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -298,7 +298,7 @@ VIDEO_START(le2)
 
 VIDEO_START(konamigx_6bpp)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -316,7 +316,7 @@ VIDEO_START(konamigx_6bpp)
 
 VIDEO_START(konamigx_type3)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -334,7 +334,7 @@ VIDEO_START(konamigx_type3)
 
 VIDEO_START(konamigx_type4)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_8, 0, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -352,7 +352,7 @@ VIDEO_START(konamigx_type4)
 
 VIDEO_START(konamigx_6bpp_2)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 1, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -376,7 +376,7 @@ VIDEO_START(konamigx_6bpp_2)
 
 VIDEO_START(opengolf)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}
@@ -405,7 +405,7 @@ VIDEO_START(opengolf)
 
 VIDEO_START(racinfrc)
 {
-	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback))
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_6, 0, NULL, konamigx_type2_tile_callback, 0))
 	{
 		return 1;
 	}

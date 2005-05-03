@@ -36,28 +36,28 @@ Revision:
   My investigation so far has dismissed the following possibilities:
 
  1) Hidden IRQ's - RST38 and NMI are the only interrupts operatubg in mode 1
-	and they both work as supposed to.
+    and they both work as supposed to.
 
  2) Collision code missing - I've located collision routines responsible for
-	over 90% of the enemies. They're called by individual sprite handlers
-	everytime after VRAM update - except those with collision problems.
+    over 90% of the enemies. They're called by individual sprite handlers
+    everytime after VRAM update - except those with collision problems.
 
  3) Collision data missing - Sprite information is stored at $D800. Data of
-	 the questionable sprites is further formatted, tagged and copied to the
-	 memory area shared with the MCU.
+     the questionable sprites is further formatted, tagged and copied to the
+     memory area shared with the MCU.
 
  4) MCU not working - The MCU latches specially formatted sprite data at
-	$E820 byte-by-byte, one after another into the accumulator, but does
-	not process nor store them into memory. It then asserts $E8A3 when
-	the reading is done. The code is about a kilobyte long and I checked
-	everywhere including IRQ services but no sign of collision functions.
-	The main CPU expects a result at $E8A2 however. The problrm is quite
-	similar to the randomization at $C07C in Bubble Bobble.
+    $E820 byte-by-byte, one after another into the accumulator, but does
+    not process nor store them into memory. It then asserts $E8A3 when
+    the reading is done. The code is about a kilobyte long and I checked
+    everywhere including IRQ services but no sign of collision functions.
+    The main CPU expects a result at $E8A2 however. The problrm is quite
+    similar to the randomization at $C07C in Bubble Bobble.
 
-	Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
-	added a function in machine\mexico86.c to simulate its I/O behavior but we
-	need real board owners to verify. Mexico86 and Kick'n Run don't use
-	$E8A2-$E8A3 so they're not affected in any way.
+    Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
+    added a function in machine\mexico86.c to simulate its I/O behavior but we
+    need real board owners to verify. Mexico86 and Kick'n Run don't use
+    $E8A2-$E8A3 so they're not affected in any way.
 
 - Modified VIDEO_UPDATE. The orignal is a Mexico86 duplicate which produces
   graphics artifacts especially beyond stage 3.

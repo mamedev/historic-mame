@@ -1,8 +1,8 @@
 /******************************************************************************
 
-	Video Hardware for Nichibutsu Mahjong series.
+    Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
+    Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
 ******************************************************************************/
 
@@ -174,7 +174,7 @@ WRITE8_HANDLER( nbmj8891_taiwanmb_blitter_w )
 
 WRITE8_HANDLER( nbmj8891_taiwanmb_gfxdraw_w )
 {
-//	nbmj8891_gfxdraw();
+//  nbmj8891_gfxdraw();
 }
 
 WRITE8_HANDLER( nbmj8891_taiwanmb_gfxflag_w )
@@ -203,17 +203,17 @@ WRITE8_HANDLER( nbmj8891_taiwanmb_mcu_w )
 	}
 
 /*
-	if (data == 0x02)
-	{
-		if (param_old[(param_cnt - 1) & 0x0f] == 0x18)
-		{
-			nbmj8891_dispflag = 1;
-		}
-		else if (param_old[(param_cnt - 1) & 0x0f] == 0x1a)
-		{
-			nbmj8891_dispflag = 0;
-		}
-	}
+    if (data == 0x02)
+    {
+        if (param_old[(param_cnt - 1) & 0x0f] == 0x18)
+        {
+            nbmj8891_dispflag = 1;
+        }
+        else if (param_old[(param_cnt - 1) & 0x0f] == 0x1a)
+        {
+            nbmj8891_dispflag = 0;
+        }
+    }
 */
 
 	if (data == 0x04)
@@ -263,8 +263,8 @@ WRITE8_HANDLER( nbmj8891_taiwanmb_mcu_w )
 		nbmj8891_gfxdraw();
 	}
 
-//	blitter_direction_x = 0;				// for debug
-//	blitter_direction_y = 0;				// for debug
+//  blitter_direction_x = 0;                // for debug
+//  blitter_direction_y = 0;                // for debug
 	nbmj8891_dispflag = 1;					// for debug
 
 	param_cnt++;

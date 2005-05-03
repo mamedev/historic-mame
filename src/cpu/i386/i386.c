@@ -1,7 +1,7 @@
-/* 
-	Intel 386 emulator
+/*
+    Intel 386 emulator
 
-	Written by Ville Linde
+    Written by Ville Linde
 */
 
 #include "cpuintrf.h"
@@ -130,7 +130,7 @@ static void sib_byte(UINT8 mod, UINT32* out_ea, UINT8* out_segment)
 	*out_ea = ea;
 	*out_segment = segment;
 }
-		
+
 static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 {
 	INT8 disp8;
@@ -152,11 +152,11 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 			case 2: ea = REG32(EDX); segment = DS; break;
 			case 3: ea = REG32(EBX); segment = DS; break;
 			case 4: sib_byte( mod, &ea, &segment ); break;
-			case 5: 
+			case 5:
 				if( mod == 0 ) {
 					ea = FETCH32(); segment = DS;
 				} else {
-					ea = REG32(EBP); segment = SS; 
+					ea = REG32(EBP); segment = SS;
 				}
 				break;
 			case 6: ea = REG32(ESI); segment = DS; break;
@@ -175,7 +175,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 
 		*out_ea = ea;
 		*out_segment = segment;
-	
+
 	} else {
 		switch( rm )
 		{
@@ -189,7 +189,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 				if( mod == 0 ) {
 					ea = FETCH16(); segment = DS;
 				} else {
-					ea = REG16(BP); segment = SS; 
+					ea = REG16(BP); segment = SS;
 				}
 				break;
 			case 7: ea = REG16(BX); segment = DS; break;
@@ -228,26 +228,26 @@ static UINT32 GetEA(UINT8 modrm)
 
 static void i386_trap(int irq)
 {
-	/*	I386 Interrupts/Traps/Faults:
-	 *
-	 *	0x00	Divide by zero
-	 *	0x01	Debug exception
-	 *	0x02	NMI
-	 *	0x03	Int3
-	 *	0x04	Overflow
-	 *	0x05	Array bounds check
-	 *	0x06	Illegal Opcode
-	 *	0x07	FPU not available
-	 *	0x08	Double fault
-	 *	0x09	Coprocessor segment overrun
-	 *	0x0a	Invalid task state
-	 *	0x0b	Segment not present
-	 *	0x0c	Stack exception
-	 *	0x0d	General Protection Fault
-	 *	0x0e	Page fault
-	 *	0x0f	Reserved
-	 *	0x10	Coprocessor error
-	 */
+	/*  I386 Interrupts/Traps/Faults:
+     *
+     *  0x00    Divide by zero
+     *  0x01    Debug exception
+     *  0x02    NMI
+     *  0x03    Int3
+     *  0x04    Overflow
+     *  0x05    Array bounds check
+     *  0x06    Illegal Opcode
+     *  0x07    FPU not available
+     *  0x08    Double fault
+     *  0x09    Coprocessor segment overrun
+     *  0x0a    Invalid task state
+     *  0x0b    Segment not present
+     *  0x0c    Stack exception
+     *  0x0d    General Protection Fault
+     *  0x0e    Page fault
+     *  0x0f    Reserved
+     *  0x10    Coprocessor error
+     */
 	UINT32 v1, v2;
 	UINT32 offset;
 	UINT16 segment;
@@ -350,7 +350,7 @@ void i386_init(void)
 		}
 		parity_table[i] = ~(c & 0x1) & 0x1;
 	}
-	
+
 	for( i=0; i < 256; i++ ) {
 		MODRM_table[i].reg.b = regs8[(i >> 3) & 0x7];
 		MODRM_table[i].reg.w = regs16[(i >> 3) & 0x7];
@@ -533,9 +533,9 @@ int i386_execute(int num_cycles)
 		I.operand_size = I.sreg[CS].d;
 		I.address_size = I.sreg[CS].d;
 		I.segment_prefix = 0;
-		
+
 		CALL_MAME_DEBUG;
-		
+
 		I386OP(decode_opcode)();
 	}
 
@@ -550,7 +550,7 @@ static UINT8 i386_reg_layout[] =
 	I386_EAX,		I386_EBP,		-1,
 	I386_EBX,		I386_ESI,		-1,
 	I386_ECX,		I386_EDI,		-1,
-	I386_EDX,		-1, 
+	I386_EDX,		-1,
 	I386_CS,		I386_CR0,		-1,
 	I386_SS,		I386_CR1,		-1,
 	I386_DS,		I386_CR2,		-1,
@@ -628,7 +628,7 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I386_DR7:			I.dr[7] = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_TR6:			I.tr[6] = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_TR7:			I.tr[7] = info->i; break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback; break;
 	}
@@ -648,7 +648,7 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:		info->i = 8;							break;
 		case CPUINFO_INT_MIN_CYCLES:				info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:				info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -718,7 +718,7 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2003-2004 Ville Linde"); break;
 
-		case CPUINFO_STR_FLAGS:	   				sprintf(info->s = cpuintrf_temp_str(), "%08X", get_flags()); break; 
+		case CPUINFO_STR_FLAGS:	   				sprintf(info->s = cpuintrf_temp_str(), "%08X", get_flags()); break;
 
 		case CPUINFO_STR_REGISTER + I386_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", I.pc); break;
 		case CPUINFO_STR_REGISTER + I386_EIP:			sprintf(info->s = cpuintrf_temp_str(), "EIP: %08X", I.eip); break;

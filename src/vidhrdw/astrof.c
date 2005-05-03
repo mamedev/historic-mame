@@ -35,7 +35,7 @@ PALETTE_INIT( astrof )
   bit 0 -- RED
         -- RED
         -- GREEN
-	  	-- GREEN
+        -- GREEN
         -- BLUE
   bit 5 -- BLUE
 
@@ -97,8 +97,8 @@ VIDEO_START( astrof )
 static void common_videoram_w(int offset, int data, int color)
 {
 	/* DO NOT try to optimize this by comparing if the value actually changed.
-	   The games write the same data with a different color. For example, the
-	   fuel meter in Astro Fighter doesn't work with that 'optimization' */
+       The games write the same data with a different color. For example, the
+       fuel meter in Astro Fighter doesn't work with that 'optimization' */
 
 	int i,x,y,fore,back;
 	int dx = 1;
@@ -149,7 +149,7 @@ WRITE8_HANDLER( astrof_video_control1_w )
 	// Bit 1     = Shown in schematics as what appears to be a screen clear
 	//             bit, but it's always zero in Astro Fighter
 	// Bit 2     = Not hooked up in the schematics, but at one point the game
-	//			   sets it to 1.
+	//             sets it to 1.
 	// Bit 3-7   = Not hooked up
 
 	if (input_port_2_r(0) & 0x02) /* Cocktail mode */
@@ -165,7 +165,7 @@ WRITE8_HANDLER( astrof_video_control1_w )
 // Bit 1     = Hooked up to a connector called OUT1, don't know what it does
 // Bit 2     = Palette select in Astro Fighter, unused in Tomahawk
 // Bit 3     = Turns on RED color gun regardless of what the value is
-// 			   in the color PROM
+//             in the color PROM
 // Bit 4-7   = Not hooked up
 
 WRITE8_HANDLER( astrof_video_control2_w )
@@ -244,6 +244,6 @@ VIDEO_UPDATE( astrof )
 			common_videoram_w(offs, videoram[offs], colorram[offs]);
 		}
 	}
-	
+
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

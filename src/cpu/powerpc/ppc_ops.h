@@ -1,6 +1,6 @@
 static PPC_OPCODE ppc_opcode_common[] =
 {
-	/*code	subcode			handler				*/
+	/*code  subcode         handler             */
 	{ 31,	266,			ppc_addx			},
 	{ 31,	266 | 512,		ppc_addx			},
 	{ 31,	10,				ppc_addcx			},

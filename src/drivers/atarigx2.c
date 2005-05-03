@@ -1,20 +1,20 @@
 /***************************************************************************
 
-	Atari GX2 hardware
+    Atari GX2 hardware
 
-	driver by Aaron Giles
+    driver by Aaron Giles
 
-	Games supported:
-		* Space Lords (1992) [2 sets]
-		* Moto Frenzy (1992)
-		* Road Riot's Revenge Rally (1993)
+    Games supported:
+        * Space Lords (1992) [2 sets]
+        * Moto Frenzy (1992)
+        * Road Riot's Revenge Rally (1993)
 
-	Known bugs:
-		* protection devices unknown
+    Known bugs:
+        * protection devices unknown
 
 ****************************************************************************
 
-	Memory map (TBA)
+    Memory map (TBA)
 
 ***************************************************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -43,7 +43,7 @@ static data32_t *	protection_base;
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -75,7 +75,7 @@ static MACHINE_INIT( atarigx2 )
 
 /*************************************
  *
- *	I/O read dispatch.
+ *  I/O read dispatch.
  *
  *************************************/
 
@@ -123,15 +123,15 @@ static READ32_HANDLER( a2d_data_r )
 static WRITE32_HANDLER( latch_w )
 {
 	/*
-		D13 = 68.DISA
-		D12 = ERASE
-		D11 = /MOGO
-		D8  = VCR
-		D5  = /XRESET
-		D4  = /SNDRES
-		D3  = CC.L
-		D0  = CC.R
-	*/
+        D13 = 68.DISA
+        D12 = ERASE
+        D11 = /MOGO
+        D8  = VCR
+        D5  = /XRESET
+        D4  = /SNDRES
+        D3  = CC.L
+        D0  = CC.R
+    */
 
 	logerror("latch_w(%08X) & %08X\n", data, ~mem_mask);
 
@@ -159,7 +159,7 @@ static WRITE32_HANDLER( mo_command_w )
 
 /*************************************
  *
- *	Protection?
+ *  Protection?
  *
  *************************************/
 
@@ -170,9 +170,9 @@ static WRITE32_HANDLER( atarigx2_protection_w )
 {
 	{
 		int pc = activecpu_get_previouspc();
-//		if (pc == 0x11cbe || pc == 0x11c30)
-//			logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, activecpu_get_reg(M68K_A2));
-//		else
+//      if (pc == 0x11cbe || pc == 0x11c30)
+//          logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, activecpu_get_reg(M68K_A2));
+//      else
 		if (ACCESSING_MSW32)
 			logerror("%06X:Protection W@%04X = %04X\n", pc, offset * 4, data >> 16);
 		else
@@ -1163,7 +1163,7 @@ static READ32_HANDLER( atarigx2_protection_r )
 
 /*************************************
  *
- *	32-bit stub handlers
+ *  32-bit stub handlers
  *
  *************************************/
 
@@ -1176,7 +1176,7 @@ static READ32_HANDLER( inputs_01_r )
 
 /*************************************
  *
- *	Main CPU memory handlers
+ *  Main CPU memory handlers
  *
  *************************************/
 
@@ -1210,7 +1210,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	Port definitions
+ *  Port definitions
  *
  *************************************/
 
@@ -1376,7 +1376,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
+ *  Graphics definitions
  *
  *************************************/
 
@@ -1425,7 +1425,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *  Machine driver
  *
  *************************************/
 
@@ -1461,7 +1461,7 @@ MACHINE_DRIVER_END
 
 /*************************************
  *
- *	ROM definition(s)
+ *  ROM definition(s)
  *
  *************************************/
 
@@ -2030,7 +2030,7 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
+ *  Driver initialization
  *
  *************************************/
 
@@ -2056,26 +2056,26 @@ static DRIVER_INIT( motofren )
 	atarigx2_motion_object_base = 0x200;
 	atarigx2_motion_object_mask = 0x1ff;
 /*
-L/W=!68.A23*!E.A22*!E.A21										= 000x xxxx = 000000-1fffff
-   +68.A23*E.A22*E.A21*68.A20*68.A19*68.A18*68.A17				= 1111 111x = fe0000-ffffff
+L/W=!68.A23*!E.A22*!E.A21                                       = 000x xxxx = 000000-1fffff
+   +68.A23*E.A22*E.A21*68.A20*68.A19*68.A18*68.A17              = 1111 111x = fe0000-ffffff
 
-68.XIO=68.A23*E.A22*E.A21*!68.A20*!68.A18*!68.A17*!68.A16		= 1110 x000 = e00000-e0ffff, e80000-e8ffff
-    +68.A23*E.A22*E.A21*!68.A20*!68.A19							= 1110 0xxx = e00000-e7ffff
+68.XIO=68.A23*E.A22*E.A21*!68.A20*!68.A18*!68.A17*!68.A16       = 1110 x000 = e00000-e0ffff, e80000-e8ffff
+    +68.A23*E.A22*E.A21*!68.A20*!68.A19                         = 1110 0xxx = e00000-e7ffff
 
-68.ROM=!68.A23*68.AS*!E.A22*!E.A21								= 000x xxxx = 000000-1fffff
+68.ROM=!68.A23*68.AS*!E.A22*!E.A21                              = 000x xxxx = 000000-1fffff
 
-68.EXT=68.A23*68.AS*E.A22*!E.A21*!68.A20						= 1100 xxxx = c00000-cfffff
+68.EXT=68.A23*68.AS*E.A22*!E.A21*!68.A20                        = 1100 xxxx = c00000-cfffff
 
-68.WRAM=68.A23*68.AS*E.A22*E.A21*68.A20*68.A19*68.A18*68.A17	= 1111 111x = fe0000-ffffff
+68.WRAM=68.A23*68.AS*E.A22*E.A21*68.A20*68.A19*68.A18*68.A17    = 1111 111x = fe0000-ffffff
 
-XMEM=68.A23*E.A22*!E.A21*68.A20									= 1101 xxxx = d00000-dfffff
+XMEM=68.A23*E.A22*!E.A21*68.A20                                 = 1101 xxxx = d00000-dfffff
 
-68.W1=68.A23*E.A22*!E.A21*68.A20*!68.A18						= 1101 x0xx = d00000-d3ffff, d80000-dbffff
+68.W1=68.A23*E.A22*!E.A21*68.A20*!68.A18                        = 1101 x0xx = d00000-d3ffff, d80000-dbffff
 
-68.W0=68.A23*E.A22*!E.A21*68.A20*!68.A18						= 1101 x0xx = d00000-d3ffff, d80000-dbffff
-    +68.A23*E.A22*!E.A21*68.A20*!68.A19							= 1101 0xxx = d00000-d7ffff
-    +68.A23*E.A22*!E.A21*!68.A20*68.A19							= 1100 1xxx = c80000-cfffff
-    +!68.A23*!E.A22*!E.A21										= 000x xxxx = 000000-1fffff
+68.W0=68.A23*E.A22*!E.A21*68.A20*!68.A18                        = 1101 x0xx = d00000-d3ffff, d80000-dbffff
+    +68.A23*E.A22*!E.A21*68.A20*!68.A19                         = 1101 0xxx = d00000-d7ffff
+    +68.A23*E.A22*!E.A21*!68.A20*68.A19                         = 1100 1xxx = c80000-cfffff
+    +!68.A23*!E.A22*!E.A21                                      = 000x xxxx = 000000-1fffff
 */
 }
 
@@ -2101,7 +2101,7 @@ static DRIVER_INIT( rrreveng )
 
 /*************************************
  *
- *	Game driver(s)
+ *  Game driver(s)
  *
  *************************************/
 

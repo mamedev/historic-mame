@@ -7,7 +7,7 @@
 #ifndef _H8PRIV_H_
 #define _H8PRIV_H_
 
-typedef struct 
+typedef struct
 {
 	// main CPU stuff
 	UINT32 h8err;
@@ -20,7 +20,7 @@ typedef struct
 	UINT8  h8uflag, h8uiflag;
 
 	int (*irq_cb)(int);
-	
+
 	// H8/3002 onboard peripherals stuff
 
 	UINT8 per_regs[256];

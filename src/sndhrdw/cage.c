@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari CAGE Audio Board
+    Atari CAGE Audio Board
 
 ****************************************************************************/
 
@@ -18,7 +18,7 @@
 
 /*************************************
  *
- *	Constants/macros
+ *  Constants/macros
  *
  *************************************/
 
@@ -29,7 +29,7 @@
 
 /*************************************
  *
- *	Statics
+ *  Statics
  *
  *************************************/
 
@@ -62,7 +62,7 @@ static data32_t *speedup_ram;
 
 /*************************************
  *
- *	I/O port definitions
+ *  I/O port definitions
  *
  *************************************/
 
@@ -135,7 +135,7 @@ static const char *register_names[] =
 
 /*************************************
  *
- *	Prototypes
+ *  Prototypes
  *
  *************************************/
 
@@ -148,7 +148,7 @@ static WRITE32_HANDLER( speedup_w );
 
 /*************************************
  *
- *	Initialization
+ *  Initialization
  *
  *************************************/
 
@@ -166,7 +166,7 @@ void cage_init(int boot_region, offs_t speedup)
 	dma_timer = timer_alloc(dma_timer_callback);
 	timer[0] = timer_alloc(timer_callback);
 	timer[1] = timer_alloc(timer_callback);
-	
+
 	if (speedup)
 		speedup_ram = memory_install_write32_handler(cage_cpu, ADDRESS_SPACE_PROGRAM, speedup, speedup, 0, 0, speedup_w);
 }
@@ -189,7 +189,7 @@ void cage_reset_w(int state)
 
 /*************************************
  *
- *	DMA timers
+ *  DMA timers
  *
  *************************************/
 
@@ -205,11 +205,11 @@ static void dma_timer_callback(int param)
 		}
 		return;
 	}
-			
+
 	/* set the final count to 0 and the source address to the final address */
 	tms32031_io_regs[DMA_TRANSFER_COUNT] = 0;
 	tms32031_io_regs[DMA_SOURCE_ADDR] = param;
-	
+
 	/* set the interrupt */
 	cpunum_set_input_line(cage_cpu, TMS32031_DINT, ASSERT_LINE);
 	dma_enabled = 0;
@@ -220,20 +220,20 @@ static void update_dma_state(void)
 {
 	/* determine the new enabled state */
 	int enabled = ((tms32031_io_regs[DMA_GLOBAL_CTL] & 3) == 3) && (tms32031_io_regs[DMA_TRANSFER_COUNT] != 0);
-	
+
 	/* see if we turned on */
 	if (enabled && !dma_enabled)
 	{
 		INT16 sound_data[STACK_SOUND_BUFSIZE];
 		UINT32 addr, inc;
 		int i;
-		
+
 		/* make sure our assumptions are correct */
 		if (tms32031_io_regs[DMA_DEST_ADDR] != 0x808048)
 			logerror("CAGE DMA: unexpected dest address %08X!\n", tms32031_io_regs[DMA_DEST_ADDR]);
 		if ((tms32031_io_regs[DMA_GLOBAL_CTL] & 0xfef) != 0xe03)
 			logerror("CAGE DMA: unexpected transfer params %08X!\n", tms32031_io_regs[DMA_GLOBAL_CTL]);
-		
+
 		/* do the DMA up front */
 		addr = tms32031_io_regs[DMA_SOURCE_ADDR];
 		inc = (tms32031_io_regs[DMA_GLOBAL_CTL] >> 4) & 1;
@@ -254,14 +254,14 @@ static void update_dma_state(void)
 			dma_timer_enabled = 1;
 		}
 	}
-	
+
 	/* see if we turned off */
 	else if (!enabled && dma_enabled)
 	{
 		timer_adjust(dma_timer, TIME_NEVER, 0, TIME_NEVER);
 		dma_timer_enabled = 0;
 	}
-	
+
 	/* set the new state */
 	dma_enabled = enabled;
 }
@@ -270,7 +270,7 @@ static void update_dma_state(void)
 
 /*************************************
  *
- *	Internal timers
+ *  Internal timers
  *
  *************************************/
 
@@ -288,25 +288,25 @@ static void update_timer(int which)
 	/* determine the new enabled state */
 	int base = 0x10 * which;
 	int enabled = ((tms32031_io_regs[base + TIMER0_GLOBAL_CTL] & 0xc0) == 0xc0);
-	
+
 	/* see if we turned on */
 	if (enabled && !timer_enabled[which])
 	{
 		double period = cage_cpu_h1_clock * 2. * (double)tms32031_io_regs[base + TIMER0_PERIOD];
-		
+
 		/* make sure our assumptions are correct */
 		if (tms32031_io_regs[base + TIMER0_GLOBAL_CTL] != 0x2c1)
 			logerror("CAGE TIMER%d: unexpected timer config %08X!\n", which, tms32031_io_regs[base + TIMER0_GLOBAL_CTL]);
 
 		timer_adjust(timer[which], period, which, TIME_NEVER);
 	}
-	
+
 	/* see if we turned off */
 	else if (!enabled && timer_enabled[which])
 	{
 		timer_adjust(timer[which], TIME_NEVER, which, TIME_NEVER);
 	}
-	
+
 	/* set the new state */
 	timer_enabled[which] = enabled;
 }
@@ -315,7 +315,7 @@ static void update_timer(int which)
 
 /*************************************
  *
- *	Serial port I/O
+ *  Serial port I/O
  *
  *************************************/
 
@@ -329,10 +329,10 @@ static void update_serial(void)
 	/* if we're in clock mode, muliply by another factor of 2 */
 	if (tms32031_io_regs[SPORT_GLOBAL_CTL] & 4)
 		serial_clock *= 2.0;
-	
+
 	/* now multiply by the timer period */
 	bit_clock = serial_clock * (double)(tms32031_io_regs[SPORT_TIMER_PERIOD] & 0xffff);
-	
+
 	/* and times the number of bits per sample */
 	serial_time_per_word = bit_clock * 8.0 * (double)(((tms32031_io_regs[SPORT_GLOBAL_CTL] >> 18) & 3) + 1);
 
@@ -345,14 +345,14 @@ static void update_serial(void)
 
 /*************************************
  *
- *	Master read/write
+ *  Master read/write
  *
  *************************************/
 
 static READ32_HANDLER( tms32031_io_r )
 {
 	UINT16 result = tms32031_io_regs[offset];
-	
+
 	switch (offset)
 	{
 		case DMA_GLOBAL_CTL:
@@ -372,7 +372,7 @@ static WRITE32_HANDLER( tms32031_io_w )
 
 	if (LOG_32031_IOPORTS)
 		logerror("CAGE:%06X:%s write = %08X\n", activecpu_get_pc(), register_names[offset & 0x7f], tms32031_io_regs[offset]);
-	
+
 	switch (offset)
 	{
 		case DMA_GLOBAL_CTL:
@@ -381,19 +381,19 @@ static WRITE32_HANDLER( tms32031_io_w )
 		case DMA_TRANSFER_COUNT:
 			update_dma_state();
 			break;
-		
+
 		case TIMER0_GLOBAL_CTL:
 		case TIMER0_COUNTER:
 		case TIMER0_PERIOD:
 			update_timer(0);
 			break;
-		
+
 		case TIMER1_GLOBAL_CTL:
 		case TIMER1_COUNTER:
 		case TIMER1_PERIOD:
 			update_timer(1);
 			break;
-		
+
 		case SPORT_TX_CTL:
 		case SPORT_RX_CTL:
 		case SPORT_TIMER_COUNTER:
@@ -419,19 +419,19 @@ static WRITE32_HANDLER( tms32031_io_w )
 
 /*************************************
  *
- *	External interfaces
+ *  External interfaces
  *
  *************************************/
 
 static void update_control_lines(void)
 {
 	int val;
-	
+
 	/* set the IRQ to the main CPU */
 	if (cage_irqhandler)
 	{
 		int reason = 0;
-		
+
 		if ((cage_control & 3) == 3 && !cpu_to_cage_ready)
 			reason |= CAGE_IRQ_REASON_BUFFER_EMPTY;
 		if ((cage_control & 2) && cage_to_cpu_ready)
@@ -519,12 +519,12 @@ void main_to_cage_w(UINT16 data)
 UINT16 cage_control_r(void)
 {
 	UINT16 result = 0;
-	
+
 	if (cpu_to_cage_ready)
 		result |= 2;
 	if (cage_to_cpu_ready)
 		result |= 1;
-	
+
 	return result;
 }
 
@@ -537,16 +537,16 @@ void cage_control_w(UINT16 data)
 	if (!(cage_control & 3))
 	{
 		cpunum_set_input_line(cage_cpu, INPUT_LINE_RESET, ASSERT_LINE);
-		
+
 		dma_enabled = 0;
 		dma_timer_enabled = 0;
 		timer_adjust(dma_timer, TIME_NEVER, 0, TIME_NEVER);
-		
+
 		timer_enabled[0] = 0;
 		timer_enabled[1] = 0;
 		timer_adjust(timer[0], TIME_NEVER, 0, TIME_NEVER);
 		timer_adjust(timer[1], TIME_NEVER, 0, TIME_NEVER);
-		
+
 		memset(tms32031_io_regs, 0, 0x60 * 4);
 
 		cpu_to_cage_ready = 0;
@@ -554,7 +554,7 @@ void cage_control_w(UINT16 data)
 	}
 	else
 		cpunum_set_input_line(cage_cpu, INPUT_LINE_RESET, CLEAR_LINE);
-	
+
 	/* update the control state */
 	update_control_lines();
 }
@@ -563,7 +563,7 @@ void cage_control_w(UINT16 data)
 
 /*************************************
  *
- *	Speedups
+ *  Speedups
  *
  *************************************/
 
@@ -577,7 +577,7 @@ static WRITE32_HANDLER( speedup_w )
 
 /*************************************
  *
- *	CPU memory map & config
+ *  CPU memory map & config
  *
  *************************************/
 
@@ -614,7 +614,7 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *	CAGE machine driver
+ *  CAGE machine driver
  *
  *************************************/
 
@@ -628,23 +628,23 @@ MACHINE_DRIVER_START( cage )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	
+
 #if (DAC_BUFFER_CHANNELS == 4)
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
-	
+
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
-	
+
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
-	
+
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 #else
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	
+
 	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 #endif
@@ -653,7 +653,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( cage_seattle )
 	MDRV_IMPORT_FROM(cage)
-	
+
 	MDRV_CPU_MODIFY("cage")
 	MDRV_CPU_PROGRAM_MAP(cage_map_seattle,0)
 MACHINE_DRIVER_END
