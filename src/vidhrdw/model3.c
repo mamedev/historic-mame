@@ -229,7 +229,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	int tile_index = 0;
 	UINT16 *tiles = (UINT16*)&m3_tile_ram[layer * 0x400];
 
-	//printf("Layer %d: X: %d, Y: %d\n", layer, x1, y1);
+	//logerror("Layer %d: X: %d, Y: %d\n", layer, x1, y1);
 
 	if(layer > 1) {
 		int modr = (model3_layer_modulate2 >> 8) & 0xff;
@@ -427,7 +427,7 @@ READ64_HANDLER(model3_vid_reg_r)
 		case 0x08/8:	return U64(0xffffffffffffffff);		/* ??? */
 		case 0x20/8:	return (UINT64)model3_layer_enable << 52;
 		case 0x40/8:	return ((UINT64)model3_layer_modulate1 << 32) | (UINT64)model3_layer_modulate2;
-		default:		printf("read reg %02X\n", offset);break;
+		default:		logerror("read reg %02X\n", offset);break;
 	}
 	return 0;
 }
@@ -436,7 +436,7 @@ WRITE64_HANDLER(model3_vid_reg_w)
 {
 	switch(offset)
 	{
-		case 0x00/8:	printf("vid_reg0: %08X%08X\n", (UINT32)(data>>32),(UINT32)(data)); vid_reg0 = data; break;
+		case 0x00/8:	logerror("vid_reg0: %08X%08X\n", (UINT32)(data>>32),(UINT32)(data)); vid_reg0 = data; break;
 		case 0x08/8:	break;		/* ??? */
 		case 0x10/8:	model3_irq_state &= ~(data >> 56); break;		/* VBL IRQ Ack */
 
@@ -447,7 +447,7 @@ WRITE64_HANDLER(model3_vid_reg_w)
 						break;
 		case 0x60/8:	COMBINE_DATA(&layer_scroll[0]); break;
 		case 0x68/8:	COMBINE_DATA(&layer_scroll[1]); break;
-		default:		printf("model3_vid_reg_w: %02X, %08X%08X\n", offset, (UINT32)(data >> 32), (UINT32)(data)); break;
+		default:		logerror("model3_vid_reg_w: %02X, %08X%08X\n", offset, (UINT32)(data >> 32), (UINT32)(data)); break;
 	}
 }
 
@@ -573,7 +573,7 @@ static void real3d_upload_texture(UINT32 header, UINT32 *data)
 				write_texture16(xpos, ypos, width, height, page, (UINT16*)data);
 			} else {
 				/* TODO: 8-bit textures are weird. need to figure out some additional bits */
-				//printf("W: %d, H: %d, X: %d, Y: %d, P: %d, Bit: %d, : %08X, %08X\n", width, height, xpos, ypos, page, bitdepth, header & 0x00681040, header);
+				//logerror("W: %d, H: %d, X: %d, Y: %d, P: %d, Bit: %d, : %08X, %08X\n", width, height, xpos, ypos, page, bitdepth, header & 0x00681040, header);
 				//write_texture8(xpos, ypos, width, height, page, (UINT16*)data);
 			}
 			break;
@@ -582,7 +582,7 @@ static void real3d_upload_texture(UINT32 header, UINT32 *data)
 				write_texture16(xpos, ypos, width, height, page, (UINT16*)data);
 			} else {
 				/* TODO: 8-bit textures are weird. need to figure out some additional bits */
-				//printf("W: %d, H: %d, X: %d, Y: %d, P: %d, Bit: %d, : %08X, %08X\n", width, height, xpos, ypos, page, bitdepth, header & 0x00681040, header);
+				//logerror("W: %d, H: %d, X: %d, Y: %d, P: %d, Bit: %d, : %08X, %08X\n", width, height, xpos, ypos, page, bitdepth, header & 0x00681040, header);
 				//write_texture8(xpos, ypos, width, height, page, (UINT16*)data);
 			}
 			break;
@@ -1256,7 +1256,7 @@ static void draw_model(UINT32 *model)
 		}
 
 		if(header[6] == 0) {
-			//printf("draw_model: header word 6 == 0\n");
+			//logerror("draw_model: header word 6 == 0\n");
 			return;
 		}
 
@@ -1541,12 +1541,12 @@ static void traverse_node(UINT32 address)
 						break;
 
 					default:
-						printf("traverse_node %08X: link 1 = %08X\n", address, link);
+						logerror("traverse_node %08X: link 1 = %08X\n", address, link);
 						break;
 				}
 			}
 		} else {
-			printf("traverse_node %08X: link 1 = %08X\n", address, link);
+			logerror("traverse_node %08X: link 1 = %08X\n", address, link);
 		}
 	}
 
@@ -1561,7 +1561,7 @@ static void traverse_node(UINT32 address)
 			traverse_node(link & 0xffffff);
 		}
 	} else {
-		printf("traverse_node %08X: link 2 = %08X\n", address, link);
+		logerror("traverse_node %08X: link 2 = %08X\n", address, link);
 	}
 }
 
@@ -1586,7 +1586,7 @@ static void traverse_root_node(UINT32 address)
 	}
 	else {
 		if ((link_address >> 24) != 0x01) {
-			printf("traverse_root_node: link address = %08X\n", link_address);
+			logerror("traverse_root_node: link address = %08X\n", link_address);
 		}
 	}
 
@@ -1637,7 +1637,7 @@ static void traverse_root_node(UINT32 address)
 			break;
 
 		default:
-			printf("traverse_root_node: node link = %08X\n", link_node);
+			logerror("traverse_root_node: node link = %08X\n", link_node);
 			break;
 	}
 }

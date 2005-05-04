@@ -67,7 +67,7 @@ static void dietgogo_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 
 static int dietgo_bank_callback(const int bank)
 {
-	return (bank & 0x7) * 0x1000;
+	return ((bank>>4)&0x7) * 0x1000;
 }
 
 VIDEO_START(dietgo)

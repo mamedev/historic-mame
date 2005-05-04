@@ -1842,9 +1842,9 @@ INPUT_PORTS_START( vsslalom )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( starlstr )
-	VS_CONTROLS( IPT_START1, IPT_UNKNOWN, IPT_START2, IPT_UNKNOWN )
+	VS_DUAL_CONTROLS_L /* left side controls */
 
-	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+	PORT_START
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
@@ -1866,6 +1866,8 @@ INPUT_PORTS_START( starlstr )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+
+	VS_DUAL_CONTROLS_R /* Right Side Controls */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tkoboxng )

@@ -27,7 +27,7 @@
 #include "sound/2151intf.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
-#include "sound/msm5205.h"
+#include "sound/custom.h"
 
 ADDRESS_MAP_EXTERN(seibu_sound_readmem);
 ADDRESS_MAP_EXTERN(seibu_sound_writemem);
@@ -59,6 +59,8 @@ MACHINE_INIT( seibu_sound_1 );
 MACHINE_INIT( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
 
+void *seibu_adpcm_start(int clock, const struct CustomSound_interface *config);
+void seibu_adpcm_stop(void *token);
 void seibu_adpcm_decrypt(int region);
 WRITE8_HANDLER( seibu_adpcm_adr_1_w );
 WRITE8_HANDLER( seibu_adpcm_ctl_1_w );
@@ -81,10 +83,10 @@ static struct YM3812interface ym3812_interface =					\
 
 #define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE							\
 																	\
-static struct MSM5205interface msm5205_interface =					\
+static struct CustomSound_interface adpcm_interface =				\
 {																	\
-	NULL,				/* VCK function */							\
-	MSM5205_S48_4B		/* 8 kHz */									\
+	seibu_adpcm_start,												\
+	seibu_adpcm_stop												\
 };
 
 #define SEIBU_SOUND_SYSTEM_YM2151_HARDWARE							\
@@ -166,12 +168,12 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)						\
 
 #define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE							\
-	MDRV_SOUND_ADD(MSM5205, 384000) 								\
-	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ADD(CUSTOM, 8000)	 								\
+	MDRV_SOUND_CONFIG(adpcm_interface)								\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40) 					\
 																	\
-	MDRV_SOUND_ADD(MSM5205, 384000) 								\
-	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ADD(CUSTOM, 8000) 									\
+	MDRV_SOUND_CONFIG(adpcm_interface)								\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
 

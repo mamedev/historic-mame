@@ -74,16 +74,17 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
         data8_t  *ROM_LUTC = (data8_t *)memory_region(REGION_USER2)+0x8000;   // Selected by bit 7...
 
        	for (offs = 0x0; offs <= (objectram_size); offs += 8)
-	{
+		{
 
-        if(!object_ram[offs+4] && !object_ram[offs+5])
-                continue;
-        if(object_ram[offs+7] == 0xfc || object_ram[offs+7] == 0xff)   // ?
-                break;
 
      	  int offs0 = object_ram[offs+6] << 8;              // Lower 6-bits go into upper ROM portion
      	  int bit7  = (object_ram[offs+6] >> 7) & 0x1;      // Selects which ROM to use in calculating lookup
           int lut;
+
+		  if(!object_ram[offs+4] && !object_ram[offs+5])
+                continue;
+        if(object_ram[offs+7] == 0xfc || object_ram[offs+7] == 0xff)   // ?
+                break;
 
           if(!bit7)
               lut = (ROM_LUTC[offs0 | (index_y<<4) | index_x]) & 0x7f;
@@ -95,7 +96,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
         for(index_y=0; index_y<8; index_y++)
         {
 
-        for(int index_x=0; index_x<8; index_x++)
+			int index_x;
+        for(index_x=0; index_x<8; index_x++)
         {
 
           /* Index into the object lookup table */
@@ -170,11 +172,12 @@ WRITE8_HANDLER( lockon_vram_2_w )
 /* 8*8 characters */
 static void get_lockon_tile_info0(int tile_index)
 {
+	int upper, lower, tileno, color;
   	tile_index <<= 1;
-        int upper = (lockon_vram0[tile_index+1]&0x03)<<8;
-        int lower = (lockon_vram0[tile_index]);
-	int tileno = (upper + lower);
-	int color = 0;
+	upper = (lockon_vram0[tile_index+1]&0x03)<<8;
+	lower = (lockon_vram0[tile_index]);
+	tileno = (upper + lower);
+	color = 0;
 
 	SET_TILE_INFO(4,tileno,color,0)
 }
@@ -182,11 +185,12 @@ static void get_lockon_tile_info0(int tile_index)
 /* Scene tiles */
 static void get_lockon_tile_info1(int tile_index)
 {
-  	tile_index <<= 1;
-        int upper = (lockon_vram1[tile_index+1]<<8);
-        int lower = (lockon_vram1[tile_index]);
-	int tileno = (upper + lower);
-	int color = 0;
+  	int upper, lower, tileno, color;
+ 	tile_index <<= 1;
+	upper = (lockon_vram1[tile_index+1]<<8);
+	lower = (lockon_vram1[tile_index]);
+	tileno = (upper + lower);
+	color = 0;
 
 	SET_TILE_INFO(5,tileno,color,0)
 }
@@ -194,11 +198,12 @@ static void get_lockon_tile_info1(int tile_index)
 /* HUD tiles */
 static void get_lockon_tile_info2(int tile_index)
 {
-  	tile_index <<= 1;
-        int upper = (lockon_vram1[tile_index+1]<<8);
-        int lower = (lockon_vram1[tile_index]);
-	int tileno = (upper + lower);
-	int color = 0;
+  	int upper, lower, tileno, color;
+ 	tile_index <<= 1;
+	upper = (lockon_vram1[tile_index+1]<<8);
+	lower = (lockon_vram1[tile_index]);
+	tileno = (upper + lower);
+	color = 0;
 
 	SET_TILE_INFO(6,tileno,color,0)
 }

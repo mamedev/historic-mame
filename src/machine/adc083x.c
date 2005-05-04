@@ -240,6 +240,10 @@ static int adc083x_conversion( int chip )
 	{
 		result = 0;
 	}
+	else if( result > 255 )
+	{
+		result = 255;
+	}
 
 	return result;
 }

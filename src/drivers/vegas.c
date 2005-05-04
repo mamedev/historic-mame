@@ -87,6 +87,7 @@
 #define LOG_TIMEKEEPER		(0)
 #define LOG_SIO				(0)
 #define LOG_DYNAMIC			(0)
+#define PRINTF_SERIAL		(0)
 
 
 
@@ -926,7 +927,7 @@ static WRITE32_HANDLER( nile_w )
 			break;
 
 		case NREG_UARTTHR:		/* serial port output */
-			printf("%c", data & 0xff);
+			if (PRINTF_SERIAL) printf("%c", data & 0xff);
 			logit = 0;
 			break;
 		case NREG_UARTIER:		/* serial interrupt enable */

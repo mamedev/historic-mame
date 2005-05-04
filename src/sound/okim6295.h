@@ -41,4 +41,17 @@ WRITE16_HANDLER( OKIM6295_data_0_msb_w );
 WRITE16_HANDLER( OKIM6295_data_1_msb_w );
 WRITE16_HANDLER( OKIM6295_data_2_msb_w );
 
+/*
+    To help the various custom ADPCM generators out there,
+    the following routines may be used.
+*/
+struct adpcm_state
+{
+	INT32	signal;
+	INT32	step;
+};
+void reset_adpcm(struct adpcm_state *state);
+INT16 clock_adpcm(struct adpcm_state *state, UINT8 nibble);
+
+
 #endif

@@ -276,6 +276,7 @@ static void v60WritePSW(UINT32 newval)
 UINT32 opUNHANDLED(void)
 {
 	osd_die("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 // Opcode jump table

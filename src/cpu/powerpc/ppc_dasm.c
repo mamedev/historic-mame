@@ -354,6 +354,7 @@ static IDESCR itab[] =
     { "ori",    D_OP(24),           M_RT|M_RA|M_UIMM,           F_RA_RT_UIMM,   0           },
     { "oris",   D_OP(25),           M_RT|M_RA|M_UIMM,           F_RA_RT_UIMM,   0           },
     { "rfi",    D_OP(19)|D_XO(50),  0,                          F_NONE,         0           },
+	{ "rfci",	D_OP(19)|D_XO(51),	0,							F_NONE,			0			},
     { "rlwimi", D_OP(20),           M_RT|M_RA|M_SH|M_MB|M_ME|M_RC,  F_RA_RT_SH_MB_ME,   FL_RC   },
     { "rlwinm", D_OP(21),           M_RT|M_RA|M_SH|M_MB|M_ME|M_RC,  F_RA_RT_SH_MB_ME,   FL_RC   },
     { "rlwnm",  D_OP(23),           M_RT|M_RA|M_RB|M_MB|M_ME|M_RC,  F_RLWNMx,   FL_RC       },

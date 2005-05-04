@@ -45,8 +45,7 @@ struct ADPCMVoice
 	UINT32 sample;			/* current sample number */
 	UINT32 count;			/* total samples to play */
 
-	UINT32 signal;			/* current ADPCM signal */
-	UINT32 step;			/* current ADPCM step */
+	struct adpcm_state adpcm;/* current ADPCM state */
 	UINT32 volume;			/* output volume */
 
 	INT16 last_sample;		/* last sample output */
@@ -73,6 +72,9 @@ static int diff_lookup[49*16];
 
 /* volume lookup table */
 static UINT32 volume_table[16];
+
+/* tables computed? */
+static int tables_computed = 0;
 
 /* useful interfaces */
 const struct OKIM6295interface okim6295_interface_region_1 = { REGION_SOUND1 };
@@ -128,6 +130,56 @@ static void compute_tables(void)
 			out /= 1.412537545;	/* = 10 ^ (3/20) = 3dB */
 		volume_table[step] = (UINT32)out;
 	}
+
+	tables_computed = 1;
+}
+
+
+
+/**********************************************************************************************
+
+     reset_adpcm -- reset the ADPCM stream
+
+***********************************************************************************************/
+
+void reset_adpcm(struct adpcm_state *state)
+{
+	/* make sure we have our tables */
+	if (!tables_computed)
+		compute_tables();
+
+	/* reset the signal/step */
+	state->signal = -2;
+	state->step = 0;
+}
+
+
+
+/**********************************************************************************************
+
+     clock_adpcm -- clock the next ADPCM byte
+
+***********************************************************************************************/
+
+INT16 clock_adpcm(struct adpcm_state *state, UINT8 nibble)
+{
+	state->signal += diff_lookup[state->step * 16 + (nibble & 15)];
+
+	/* clamp to the maximum */
+	if (state->signal > 2047)
+		state->signal = 2047;
+	else if (state->signal < -2048)
+		state->signal = -2048;
+
+	/* adjust the step size and clamp */
+	state->step += index_shift[nibble & 7];
+	if (state->step > 48)
+		state->step = 48;
+	else if (state->step < 0)
+		state->step = 0;
+
+	/* return the signal scaled up to 32767 */
+	return state->signal << 4;
 }
 
 
@@ -145,33 +197,16 @@ static void generate_adpcm(struct okim6295 *chip, struct ADPCMVoice *voice, INT1
 	{
 		UINT8 *base = chip->region_base + chip->bank_offset + voice->base_offset;
 		int sample = voice->sample;
-		int signal = voice->signal;
 		int count = voice->count;
-		int step = voice->step;
-		int val;
 
 		/* loop while we still have samples to generate */
 		while (samples)
 		{
 			/* compute the new amplitude and update the current step */
-			val = base[sample / 2] >> (((sample & 1) << 2) ^ 4);
-			signal += diff_lookup[step * 16 + (val & 15)];
-
-			/* clamp to the maximum */
-			if (signal > 2047)
-				signal = 2047;
-			else if (signal < -2048)
-				signal = -2048;
-
-			/* adjust the step size and clamp */
-			step += index_shift[val & 7];
-			if (step > 48)
-				step = 48;
-			else if (step < 0)
-				step = 0;
+			int nibble = base[sample / 2] >> (((sample & 1) << 2) ^ 4);
 
 			/* output to the buffer, scaling by the volume */
-			*buffer++ = signal * voice->volume / 16;
+			*buffer++ = clock_adpcm(&voice->adpcm, nibble) * voice->volume / 256;
 			samples--;
 
 			/* next! */
@@ -184,8 +219,6 @@ static void generate_adpcm(struct okim6295 *chip, struct ADPCMVoice *voice, INT1
 
 		/* update the parameters */
 		voice->sample = sample;
-		voice->signal = signal;
-		voice->step = step;
 	}
 
 	/* fill the rest with silence */
@@ -309,8 +342,8 @@ static void adpcm_state_save_register(struct ADPCMVoice *voice, int i)
 	state_save_register_UINT8  (buf, i, "playing", &voice->playing, 1);
 	state_save_register_UINT32 (buf, i, "sample" , &voice->sample,  1);
 	state_save_register_UINT32 (buf, i, "count"  , &voice->count,   1);
-	state_save_register_UINT32 (buf, i, "signal" , &voice->signal,  1);
-	state_save_register_UINT32 (buf, i, "step"   , &voice->step,    1);
+	state_save_register_UINT32 (buf, i, "signal" , &voice->adpcm.signal,  1);
+	state_save_register_UINT32 (buf, i, "step"   , &voice->adpcm.step,    1);
 	state_save_register_UINT32 (buf, i, "volume" , &voice->volume,  1);
 
 	state_save_register_INT16  (buf, i, "last_sample", &voice->last_sample, 1);
@@ -364,7 +397,7 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	{
 		/* initialize the rest of the structure */
 		info->voice[voice].volume = 255;
-		info->voice[voice].signal = -2;
+		reset_adpcm(&info->voice[voice].adpcm);
 		if (Machine->sample_rate)
 			info->voice[voice].source_step = (UINT32)((double)clock * (double)FRAC_ONE / (double)Machine->sample_rate);
 	}
@@ -507,8 +540,7 @@ static void OKIM6295_data_w(int num, int data)
 						voice->count = 2 * (stop - start + 1);
 
 						/* also reset the ADPCM parameters */
-						voice->signal = -2;
-						voice->step = 0;
+						reset_adpcm(&voice->adpcm);
 						voice->volume = volume_table[data & 0x0f];
 					}
 					else

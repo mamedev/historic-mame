@@ -55,7 +55,7 @@ INLINE data8_t RDSPC(int space, offs_t addr)
 		case 4:
 			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
 		case 8:
-			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
+			return (*address_space[space].accessors->read_qword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
 	}
 	return 0;
 }
@@ -104,6 +104,7 @@ enum {
 	MODE_HEX_UINT8,
 	MODE_HEX_UINT16,
 	MODE_HEX_UINT32,
+	MODE_HEX_UINT64,
 	MODE_HEX_COUNT
 };
 
@@ -116,9 +117,11 @@ enum {
 
 #define UINT16_XOR_LE(o) (((o)&~1)|(((o)&1)^1))
 #define UINT32_XOR_LE(o) (((o)&~3)|(((o)&3)^3))
+#define UINT64_XOR_LE(o) (((o)&~7)|(((o)&7)^7))
 #define HOST_XOR_LE  0
 #define UINT16_XOR_BE(o) (o)
 #define UINT32_XOR_BE(o) (o)
+#define UINT64_XOR_BE(o) (o)
 #define HOST_XOR_BE  0
 
 /****************************************************************************
@@ -1066,6 +1069,13 @@ INLINE unsigned order( unsigned offset, unsigned size )
 		{
 		case CPU_IS_LE: return UINT32_XOR_LE(offset);
 		case CPU_IS_BE: return UINT32_XOR_BE(offset);
+		}
+		break;
+	case 8:
+		switch( ENDIAN )
+		{
+		case CPU_IS_LE: return UINT64_XOR_LE(offset);
+		case CPU_IS_BE: return UINT64_XOR_BE(offset);
 		}
 		break;
 	}
@@ -3102,6 +3112,9 @@ static void edit_mem( int which )
 			break;
 		case MODE_HEX_UINT32:
 			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
+			break;
+		case MODE_HEX_UINT64:
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~8) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
 			break;
 	}
 	win_set_title( win, name_memory(DBGMEM[which].address) );
@@ -5269,7 +5282,7 @@ void mame_debug_init(void)
 			case  8: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
 			case 16: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
 			case 32: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT32; break;
-//          case 64: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT64; break;
+			case 64: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT64; break;
 		}
 	}
 

@@ -1022,10 +1022,6 @@ static void fill_xy(void)
 #define PIXELS_PER_WORD (16 / BITS_PER_PIXEL)
 #define PIXEL_MASK ((1 << BITS_PER_PIXEL) - 1)
 
-#ifdef macintosh
-#pragma optimization_level 1
-#endif
-
 static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 {
 	/* if this is the first time through, perform the operation */
@@ -1514,10 +1510,6 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 			DADDR_Y += DYDX_Y;
 	}
 }
-
-#ifdef macintosh
-#pragma optimization_level reset
-#endif
 
 static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 {

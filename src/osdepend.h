@@ -332,13 +332,15 @@ int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
 /* aborts the program in some unexpected fatal way */
 #ifdef __GNUC__
-void CLIB_DECL osd_die(const char *text,...)
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
-	__attribute__((noreturn))
-#endif
-	__attribute__ ((format (printf, 1, 2)));
+	void CLIB_DECL osd_die(const char *text,...)
+	#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
+		__attribute__((noreturn))
+	#endif
+		__attribute__ ((format (printf, 1, 2)));
+#elif defined(_MSC_VER)
+	__declspec(noreturn) void CLIB_DECL osd_die(const char *text,...);
 #else
-void CLIB_DECL osd_die(const char *text,...);
+	void CLIB_DECL osd_die(const char *text,...);
 #endif
 
 

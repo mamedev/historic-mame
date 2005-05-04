@@ -195,6 +195,18 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 
 #if defined(__POWERPC__) && defined(__MWERKS__)
 
+#ifndef _asm_get_global_ptr
+	#if TARGET_RT_MAC_CFM
+		#define _asm_set_global_b(x,y)	stb		x,y(RTOC);
+		#define _asm_get_global_ptr		stw		x,y(RTOC);
+	#else
+		#define _asm_set_global_b(x,y) 	addis	r2,RPIC,ha16(y); \
+									 	stb		x,lo16(y)(r2);
+		#define _asm_get_global_ptr(x,y) 	addis	x,RPIC,ha16(y); \
+									 		addi	x,x,lo16(y);
+	#endif
+#endif
+
 // setst_add_32_laeco :
 // - computes a+b
 // - sets L, A, E, Carry and Overflow in st
@@ -204,6 +216,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 
 static INT32 asm setst_add_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
+	nofralloc
 #if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
@@ -254,6 +267,7 @@ nocarry:
 
 static INT32 asm setst_sub_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
+	nofralloc
 #if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
@@ -300,8 +314,8 @@ nocarry:
 //
 static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)   // load pointer to I
-  _asm_get_global(r6,I)
+	nofralloc
+  _asm_get_global_ptr(r6,I)
 
   slwi a, a, 16     // shift a
   slwi b, b, 16     // shift b
@@ -323,8 +337,8 @@ static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 //
 static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 {
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+	nofralloc
+  _asm_get_global_ptr(r6,I)
 
   slwi a, a, 16
   slwi b, b, 16
@@ -346,8 +360,8 @@ static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 //
 static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+	nofralloc
+  _asm_get_global_ptr(r6,I)
 
   slwi a, a, 24     // shift a
   slwi b, b, 24     // shift b
@@ -361,7 +375,6 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24   // shift back result
   mtlr r12  // restore LR
   sth r5, 4(r6)     // save new ST
-//  stb r3, lastparity(RTOC)  // copy result to lastparity
   _asm_set_global_b(r3,lastparity)  // copy result to lastparity
   blr       // and return
 }
@@ -371,8 +384,8 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 //
 static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+	nofralloc
+  _asm_get_global_ptr(r6,I)
 
   slwi a, a, 24
   slwi b, b, 24
@@ -386,7 +399,6 @@ static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24
   mtlr r12
   sth r5, 4(r6)
-//  stb r3, lastparity(RTOC)
   _asm_set_global_b(r3,lastparity)  // copy result to lastparity
   blr
 }

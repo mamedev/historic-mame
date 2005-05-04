@@ -957,56 +957,67 @@ UINT32 am2ImmediateQuick(void)
 UINT32 am2Error1(void)
 {
 	osd_die("CPU - AM2 - 1 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 am2Error2(void)
 {
 	osd_die("CPU - AM2 - 2 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 am2Error3(void)
 {
 	osd_die("CPU - AM2 - 3 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 am2Error4(void)
 {
 	osd_die("CPU - AM2 - 4 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 am2Error5(void)
 {
 	osd_die("CPU - AM2 - 5 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error1(void)
 {
 	osd_die("CPU - BAM2 - 1 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error2(void)
 {
 	osd_die("CPU - BAM2 - 2 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error3(void)
 {
 	osd_die("CPU - BAM2 - 3 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error4(void)
 {
 	osd_die("CPU - BAM2 - 4 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error5(void)
 {
 	osd_die("CPU - BAM2 - 5 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 UINT32 bam2Error6(void)
 {
 	osd_die("CPU - BAM2 - 6 (PC=%06x)\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 

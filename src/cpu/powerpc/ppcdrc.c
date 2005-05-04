@@ -1,20 +1,50 @@
-/* IBM/Motorola PowerPC 4xx/6xx Emulator */
+/*
+    PowerPC 4xx/6xx Dynamic Recompiler for x86
+
+    Written by Ville Linde
+*/
 
 #include "driver.h"
 #include "ppc.h"
 #include "mamedbg.h"
+#include "x86drc.h"
+
+
+#define PPC_DRC
+#define LOG_CODE			(0)
+
+#define CACHE_SIZE			(16 * 1024 * 1024)
+#define MAX_INSTRUCTIONS	512
+
 
 #if (HAS_PPC603)
-void ppc603_exception(int exception);
+static void ppcdrc603_init(void);
+static void ppcdrc603_exit(void);
+static void ppcdrc603_reset(void *param);
+static int ppcdrc603_execute(int cycles);
+static void ppcdrc603_set_irq_line(int irqline, int state);
 #endif
 #if (HAS_PPC602)
-void ppc602_exception(int exception);
+static void ppcdrc602_init(void);
+static void ppcdrc602_exit(void);
+static void ppcdrc602_reset(void *param);
+static int ppcdrc602_execute(int cycles);
+static void ppcdrc602_set_irq_line(int irqline, int state);
 #endif
 #if (HAS_PPC403)
-void ppc403_exception(int exception);
 UINT8 ppc403_spu_r(UINT32 a);
 void ppc403_spu_w(UINT32 a, UINT8 d);
+static void ppcdrc403_init(void);
+static void ppcdrc403_exit(void);
+static void ppcdrc403_reset(void *param);
+static int ppcdrc403_execute(int cycles);
+static void ppcdrc403_set_irq_line(int irqline, int state);
 #endif
+
+static void ppcdrc_init(void);
+static void ppcdrc_reset(struct drccore *drc);
+static void ppcdrc_recompile(struct drccore *drc);
+static void ppcdrc_entrygen(struct drccore *drc);
 
 #define RD				((op >> 21) & 0x1F)
 #define RT				((op >> 21) & 0x1f)
@@ -211,6 +241,7 @@ typedef struct {
 	UINT32 dccr;
 	UINT32 pit;
 	UINT32 tsr;
+	UINT32 tcr;
 	UINT32 dbsr;
 	UINT32 sgr;
 	UINT32 pid;
@@ -233,9 +264,15 @@ typedef struct {
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
+	struct drccore *drc;
+	UINT32 drcoptions;
 
+	void *		generate_interrupt_exception;
+	void *		generate_syscall_exception;
+	void *		generate_decrementer_exception;
+	void *		generate_trap_exception;
 
-	// STUFF added for the 6xx series
+	// PowerPC 60x specific registers */
 	UINT32 dec;
 	UINT32 fpscr;
 
@@ -248,7 +285,6 @@ typedef struct {
 	/* PowerPC 602 specific registers */
 	UINT32 lt;
 	UINT32 sp;
-	UINT32 tcr;
 	UINT32 ibr;
 } PPC_REGS;
 
@@ -257,7 +293,7 @@ typedef struct {
 typedef struct {
 	int code;
 	int subcode;
-	void (* handler)(UINT32);
+	UINT32 (* handler)(struct drccore *, UINT32);
 } PPC_OPCODE;
 
 
@@ -581,35 +617,10 @@ INLINE UINT32 ppc_get_spr(int spr)
 
 INLINE void ppc_set_msr(UINT32 value)
 {
-	int i;
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
-	MSR = value;
 
-	if( value & MSR_EE ) {
-		/* check for pending interrupts */
-		for(i=0; i < 32; i++) {
-			if(ppc.exception_pending & (1 << i)) {
-				ppc.exception_pending &= ~(1 << i);
-#if (HAS_PPC603)
-				if(ppc.is603) {
-					ppc603_exception(i);
-				}
-#endif
-#if (HAS_PPC602)
-				if(ppc.is602) {
-					ppc602_exception(i);
-				}
-#endif
-#if (HAS_PPC403)
-				if(!ppc.is602 && !ppc.is603) {
-					ppc403_exception(i);
-				}
-#endif
-				break;
-			}
-		}
-	}
+	MSR = value;
 }
 
 INLINE UINT32 ppc_get_msr(void)
@@ -634,13 +645,22 @@ INLINE UINT32 ppc_get_cr(void)
 	return CR(0) << 28 | CR(1) << 24 | CR(2) << 20 | CR(3) << 16 | CR(4) << 12 | CR(5) << 8 | CR(6) << 4 | CR(7);
 }
 
+static void log_code(struct drccore *drc)
+{
+#if LOG_CODE
+	FILE *temp;
+	temp = fopen("code.bin", "wb");
+	fwrite(drc->cache_base, 1, drc->cache_top - drc->cache_base, temp);
+	fclose(temp);
+#endif
+}
 /***********************************************************************/
 
-static void (* optable19[1024])(UINT32);
-static void (* optable31[1024])(UINT32);
-static void (* optable59[1024])(UINT32);
-static void (* optable63[1024])(UINT32);
-static void (* optable[64])(UINT32);
+static UINT32 (* optable19[1024])(struct drccore *, UINT32);
+static UINT32 (* optable31[1024])(struct drccore *, UINT32);
+static UINT32 (* optable59[1024])(struct drccore *, UINT32);
+static UINT32 (* optable63[1024])(struct drccore *, UINT32);
+static UINT32 (* optable[64])(struct drccore *, UINT32);
 
 INLINE UINT8 READ8(UINT32 a)
 {
@@ -787,18 +807,11 @@ INLINE void WRITE64(UINT32 a, UINT64 d)
 #include "ppc403.c"
 #endif
 
-#if (HAS_PPC602)
-#include "ppc602.c"
-#endif
-
-#if (HAS_PPC603)
-#include "ppc603.c"
-#endif
-
 /********************************************************************/
 
 #include "ppc_ops.c"
-#include "ppc_ops.h"
+#include "drc_ops.c"
+#include "drc_ops.h"
 
 /* Initialization and shutdown */
 
@@ -807,26 +820,26 @@ void ppc_init(void)
 	int i,j;
 
 	for( i=0; i < 64; i++ ) {
-		optable[i] = ppc_invalid;
+		optable[i] = recompile_invalid;
 	}
 	for( i=0; i < 1024; i++ ) {
-		optable19[i] = ppc_invalid;
-		optable31[i] = ppc_invalid;
-		optable59[i] = ppc_invalid;
-		optable63[i] = ppc_invalid;
+		optable19[i] = recompile_invalid;
+		optable31[i] = recompile_invalid;
+		optable59[i] = recompile_invalid;
+		optable63[i] = recompile_invalid;
 	}
 
 	/* Fill the opcode tables */
-	for( i=0; i < (sizeof(ppc_opcode_common) / sizeof(PPC_OPCODE)); i++ ) {
+	for( i=0; i < (sizeof(ppcdrc_opcode_common) / sizeof(PPC_OPCODE)); i++ ) {
 
-		switch(ppc_opcode_common[i].code)
+		switch(ppcdrc_opcode_common[i].code)
 		{
 			case 19:
-				optable19[ppc_opcode_common[i].subcode] = ppc_opcode_common[i].handler;
+				optable19[ppcdrc_opcode_common[i].subcode] = ppcdrc_opcode_common[i].handler;
 				break;
 
 			case 31:
-				optable31[ppc_opcode_common[i].subcode] = ppc_opcode_common[i].handler;
+				optable31[ppcdrc_opcode_common[i].subcode] = ppcdrc_opcode_common[i].handler;
 				break;
 
 			case 59:
@@ -834,7 +847,7 @@ void ppc_init(void)
 				break;
 
 			default:
-				optable[ppc_opcode_common[i].code] = ppc_opcode_common[i].handler;
+				optable[ppcdrc_opcode_common[i].code] = ppcdrc_opcode_common[i].handler;
 		}
 
 	}
@@ -854,114 +867,181 @@ void ppc_init(void)
 	}
 }
 
-
-// !!! probably should move this stuff elsewhere !!!
-static void ppc403_init(void)
+#if (HAS_PPC403)
+static void ppcdrc403_init(void)
 {
 	ppc_init();
+	ppcdrc_init();
 
 	/* PPC403 specific opcodes */
-	optable31[454] = ppc_dccci;
-	optable31[486] = ppc_dcread;
-	optable31[262] = ppc_icbt;
-	optable31[966] = ppc_iccci;
-	optable31[998] = ppc_icread;
-	optable31[323] = ppc_mfdcr;
-	optable31[451] = ppc_mtdcr;
-	optable31[131] = ppc_wrtee;
-	optable31[163] = ppc_wrteei;
-
-	// !!! why is rfci here !!!
-	optable19[51] = ppc_rfci;
+	optable31[454] = recompile_dccci;
+	optable31[486] = recompile_dcread;
+	optable31[262] = recompile_icbt;
+	optable31[966] = recompile_iccci;
+	optable31[998] = recompile_icread;
+	optable31[323] = recompile_mfdcr;
+	optable31[451] = recompile_mtdcr;
+	optable31[131] = recompile_wrtee;
+	optable31[163] = recompile_wrteei;
+	optable19[51] = recompile_rfci;
 
 	ppc.spu.rx_timer = timer_alloc(ppc403_spu_rx_callback);
 	ppc.spu.tx_timer = timer_alloc(ppc403_spu_tx_callback);
 
 	ppc.is603 = 0;
+	ppc.is602 = 0;
 }
 
-static void ppc403_exit(void)
+static void ppcdrc403_exit(void)
 {
-
+#if LOG_CODE
+	//if (symfile) fclose(symfile);
+#endif
+	drc_exit(ppc.drc);
 }
 
-
-static void ppc603_init(void)
+static void ppcdrc403_reset(void *param)
 {
-	int i ;
+	ppc_config *config = param;
+	ppc.pc = ppc.npc = 0xfffffffc;
+	ppc.pvr = config->pvr;
 
-	ppc_init() ;
+	ppc_set_msr(0);
+	change_pc(ppc.pc);
 
-	optable[48] = ppc_lfs;
-	optable[49] = ppc_lfsu;
-	optable[50] = ppc_lfd;
-	optable[51] = ppc_lfdu;
-	optable[52] = ppc_stfs;
-	optable[53] = ppc_stfsu;
-	optable[54] = ppc_stfd;
-	optable[55] = ppc_stfdu;
-	optable31[631] = ppc_lfdux;
-	optable31[599] = ppc_lfdx;
-	optable31[567] = ppc_lfsux;
-	optable31[535] = ppc_lfsx;
-	optable31[595] = ppc_mfsr;
-	optable31[659] = ppc_mfsrin;
-	optable31[371] = ppc_mftb;
-	optable31[210] = ppc_mtsr;
-	optable31[242] = ppc_mtsrin;
-	optable31[758] = ppc_dcba;
-	optable31[759] = ppc_stfdux;
-	optable31[727] = ppc_stfdx;
-	optable31[983] = ppc_stfiwx;
-	optable31[695] = ppc_stfsux;
-	optable31[663] = ppc_stfsx;
-	optable31[370] = ppc_tlbia;
-	optable31[306] = ppc_tlbie;
-	optable31[566] = ppc_tlbsync;
-	optable31[310] = ppc_eciwx;
-	optable31[438] = ppc_ecowx;
+	/* reset the DRC */
+	drc_cache_reset(ppc.drc);
+}
 
-	optable63[264] = ppc_fabsx;
-	optable63[21] = ppc_faddx;
-	optable63[32] = ppc_fcmpo;
-	optable63[0] = ppc_fcmpu;
-	optable63[14] = ppc_fctiwx;
-	optable63[15] = ppc_fctiwzx;
-	optable63[18] = ppc_fdivx;
-	optable63[72] = ppc_fmrx;
-	optable63[136] = ppc_fnabsx;
-	optable63[40] = ppc_fnegx;
-	optable63[12] = ppc_frspx;
-	optable63[26] = ppc_frsqrtex;
-	optable63[22] = ppc_fsqrtx;
-	optable63[20] = ppc_fsubx;
-	optable63[583] = ppc_mffsx;
-	optable63[70] = ppc_mtfsb0x;
-	optable63[38] = ppc_mtfsb1x;
-	optable63[711] = ppc_mtfsfx;
-	optable63[134] = ppc_mtfsfix;
-	optable63[64] = ppc_mcrfs;
+static int ppcdrc403_execute(int cycles)
+{
+	/* count cycles and interrupt cycles */
+	ppc_icount = cycles;
+	drc_execute(ppc.drc);
+	return cycles - ppc_icount;
+}
 
-	optable59[21] = ppc_faddsx;
-	optable59[18] = ppc_fdivsx;
-	optable59[24] = ppc_fresx;
-	optable59[22] = ppc_fsqrtsx;
-	optable59[20] = ppc_fsubsx;
+static void ppcdrc403_set_irq_line(int irqline, int state)
+{
+	if (irqline >= INPUT_LINE_IRQ0 && irqline <= INPUT_LINE_IRQ4)
+	{
+		UINT32 mask = (1 << (4 - irqline));
+		if( state ) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc.exception_pending |= 0x1;
+
+				if (ppc.irq_callback)
+				{
+					ppc.irq_callback(irqline);
+				}
+			}
+		}
+	}
+	else if (irqline == PPC403_SPU_RX)
+	{
+		UINT32 mask = 0x08000000;
+		if (state) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc.exception_pending |= 0x1;
+			}
+		}
+	}
+	else if (irqline == PPC403_SPU_TX)
+	{
+		UINT32 mask = 0x04000000;
+		if (state) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc.exception_pending |= 0x1;
+			}
+		}
+	}
+	else
+	{
+		osd_die("PPC: Unknown IRQ line %d\n", irqline);
+	}
+}
+#endif
+
+#if (HAS_PPC603)
+static void ppcdrc603_init(void)
+{
+	int i;
+	ppc_init();
+	ppcdrc_init();
+
+	optable[48] = recompile_lfs;
+	optable[49] = recompile_lfsu;
+	optable[50] = recompile_lfd;
+	optable[51] = recompile_lfdu;
+	optable[52] = recompile_stfs;
+	optable[53] = recompile_stfsu;
+	optable[54] = recompile_stfd;
+	optable[55] = recompile_stfdu;
+	optable31[631] = recompile_lfdux;
+	optable31[599] = recompile_lfdx;
+	optable31[567] = recompile_lfsux;
+	optable31[535] = recompile_lfsx;
+	optable31[595] = recompile_mfsr;
+	optable31[659] = recompile_mfsrin;
+	optable31[371] = recompile_mftb;
+	optable31[210] = recompile_mtsr;
+	optable31[242] = recompile_mtsrin;
+	optable31[758] = recompile_dcba;
+	optable31[759] = recompile_stfdux;
+	optable31[727] = recompile_stfdx;
+	optable31[983] = recompile_stfiwx;
+	optable31[695] = recompile_stfsux;
+	optable31[663] = recompile_stfsx;
+	optable31[370] = recompile_tlbia;
+	optable31[306] = recompile_tlbie;
+	optable31[566] = recompile_tlbsync;
+	optable31[310] = recompile_eciwx;
+	optable31[438] = recompile_ecowx;
+
+	optable63[264] = recompile_fabsx;
+	optable63[21] = recompile_faddx;
+	optable63[32] = recompile_fcmpo;
+	optable63[0] = recompile_fcmpu;
+	optable63[14] = recompile_fctiwx;
+	optable63[15] = recompile_fctiwzx;
+	optable63[18] = recompile_fdivx;
+	optable63[72] = recompile_fmrx;
+	optable63[136] = recompile_fnabsx;
+	optable63[40] = recompile_fnegx;
+	optable63[12] = recompile_frspx;
+	optable63[26] = recompile_frsqrtex;
+	optable63[22] = recompile_fsqrtx;
+	optable63[20] = recompile_fsubx;
+	optable63[583] = recompile_mffsx;
+	optable63[70] = recompile_mtfsb0x;
+	optable63[38] = recompile_mtfsb1x;
+	optable63[711] = recompile_mtfsfx;
+	optable63[134] = recompile_mtfsfix;
+	optable63[64] = recompile_mcrfs;
+
+	optable59[21] = recompile_faddsx;
+	optable59[18] = recompile_fdivsx;
+	optable59[24] = recompile_fresx;
+	optable59[22] = recompile_fsqrtsx;
+	optable59[20] = recompile_fsubsx;
 
 	for(i = 0; i < 32; i++)
 	{
-		optable63[i * 32 | 29] = ppc_fmaddx;
-		optable63[i * 32 | 28] = ppc_fmsubx;
-		optable63[i * 32 | 25] = ppc_fmulx;
-		optable63[i * 32 | 31] = ppc_fnmaddx;
-		optable63[i * 32 | 30] = ppc_fnmsubx;
-		optable63[i * 32 | 23] = ppc_fselx;
+		optable63[i * 32 | 29] = recompile_fmaddx;
+		optable63[i * 32 | 28] = recompile_fmsubx;
+		optable63[i * 32 | 25] = recompile_fmulx;
+		optable63[i * 32 | 31] = recompile_fnmaddx;
+		optable63[i * 32 | 30] = recompile_fnmsubx;
+		optable63[i * 32 | 23] = recompile_fselx;
 
-		optable59[i * 32 | 29] = ppc_fmaddsx;
-		optable59[i * 32 | 28] = ppc_fmsubsx;
-		optable59[i * 32 | 25] = ppc_fmulsx;
-		optable59[i * 32 | 31] = ppc_fnmaddsx;
-		optable59[i * 32 | 30] = ppc_fnmsubsx;
+		optable59[i * 32 | 29] = recompile_fmaddsx;
+		optable59[i * 32 | 28] = recompile_fmsubsx;
+		optable59[i * 32 | 25] = recompile_fmulsx;
+		optable59[i * 32 | 31] = recompile_fnmaddsx;
+		optable59[i * 32 | 30] = recompile_fnmsubsx;
 	}
 
 	for(i = 0; i < 256; i++)
@@ -980,88 +1060,124 @@ static void ppc603_init(void)
 	ppc.is603 = 1;
 }
 
-static void ppc603_exit(void)
+static void ppcdrc603_exit(void)
 {
-
+#if LOG_CODE
+	//if (symfile) fclose(symfile);
+#endif
+	drc_exit(ppc.drc);
 }
 
-#if (HAS_PPC602)
-static void ppc602_init(void)
+static void ppcdrc603_reset(void *param)
 {
-	int i ;
+	ppc_config *config = param;
+	ppc.pc = ppc.npc = 0xfff00100;
+	ppc.pvr = config->pvr;
 
-	ppc_init() ;
+	ppc_set_msr(0x40);
+	change_pc(ppc.pc);
 
-	optable[48] = ppc_lfs;
-	optable[49] = ppc_lfsu;
-	optable[50] = ppc_lfd;
-	optable[51] = ppc_lfdu;
-	optable[52] = ppc_stfs;
-	optable[53] = ppc_stfsu;
-	optable[54] = ppc_stfd;
-	optable[55] = ppc_stfdu;
-	optable31[631] = ppc_lfdux;
-	optable31[599] = ppc_lfdx;
-	optable31[567] = ppc_lfsux;
-	optable31[535] = ppc_lfsx;
-	optable31[595] = ppc_mfsr;
-	optable31[659] = ppc_mfsrin;
-	optable31[371] = ppc_mftb;
-	optable31[210] = ppc_mtsr;
-	optable31[242] = ppc_mtsrin;
-	optable31[758] = ppc_dcba;
-	optable31[759] = ppc_stfdux;
-	optable31[727] = ppc_stfdx;
-	optable31[983] = ppc_stfiwx;
-	optable31[695] = ppc_stfsux;
-	optable31[663] = ppc_stfsx;
-	optable31[370] = ppc_tlbia;
-	optable31[306] = ppc_tlbie;
-	optable31[566] = ppc_tlbsync;
-	optable31[310] = ppc_eciwx;
-	optable31[438] = ppc_ecowx;
+	/* reset the DRC */
+	drc_cache_reset(ppc.drc);
+}
 
-	optable63[264] = ppc_fabsx;
-	optable63[21] = ppc_faddx;
-	optable63[32] = ppc_fcmpo;
-	optable63[0] = ppc_fcmpu;
-	optable63[14] = ppc_fctiwx;
-	optable63[15] = ppc_fctiwzx;
-	optable63[18] = ppc_fdivx;
-	optable63[72] = ppc_fmrx;
-	optable63[136] = ppc_fnabsx;
-	optable63[40] = ppc_fnegx;
-	optable63[12] = ppc_frspx;
-	optable63[26] = ppc_frsqrtex;
-	optable63[22] = ppc_fsqrtx;
-	optable63[20] = ppc_fsubx;
-	optable63[583] = ppc_mffsx;
-	optable63[70] = ppc_mtfsb0x;
-	optable63[38] = ppc_mtfsb1x;
-	optable63[711] = ppc_mtfsfx;
-	optable63[134] = ppc_mtfsfix;
-	optable63[64] = ppc_mcrfs;
+static int ppcdrc603_execute(int cycles)
+{
+	/* count cycles and interrupt cycles */
+	ppc_icount = cycles;
+	drc_execute(ppc.drc);
+	return cycles - ppc_icount;
+}
 
-	optable59[21] = ppc_faddsx;
-	optable59[18] = ppc_fdivsx;
-	optable59[24] = ppc_fresx;
-	optable59[22] = ppc_fsqrtsx;
-	optable59[20] = ppc_fsubsx;
+static void ppcdrc603_set_irq_line(int irqline, int state)
+{
+	if( state ) {
+		ppc.exception_pending |= 0x1;
+		if (ppc.irq_callback)
+		{
+			ppc.irq_callback(irqline);
+		}
+	}
+}
+#endif
+
+#if (HAS_PPC602)
+static void ppcdrc602_init(void)
+{
+	int i;
+	ppc_init();
+	ppcdrc_init();
+
+	optable[48] = recompile_lfs;
+	optable[49] = recompile_lfsu;
+	optable[50] = recompile_lfd;
+	optable[51] = recompile_lfdu;
+	optable[52] = recompile_stfs;
+	optable[53] = recompile_stfsu;
+	optable[54] = recompile_stfd;
+	optable[55] = recompile_stfdu;
+	optable31[631] = recompile_lfdux;
+	optable31[599] = recompile_lfdx;
+	optable31[567] = recompile_lfsux;
+	optable31[535] = recompile_lfsx;
+	optable31[595] = recompile_mfsr;
+	optable31[659] = recompile_mfsrin;
+	optable31[371] = recompile_mftb;
+	optable31[210] = recompile_mtsr;
+	optable31[242] = recompile_mtsrin;
+	optable31[758] = recompile_dcba;
+	optable31[759] = recompile_stfdux;
+	optable31[727] = recompile_stfdx;
+	optable31[983] = recompile_stfiwx;
+	optable31[695] = recompile_stfsux;
+	optable31[663] = recompile_stfsx;
+	optable31[370] = recompile_tlbia;
+	optable31[306] = recompile_tlbie;
+	optable31[566] = recompile_tlbsync;
+	optable31[310] = recompile_eciwx;
+	optable31[438] = recompile_ecowx;
+
+	optable63[264] = recompile_fabsx;
+	optable63[21] = recompile_faddx;
+	optable63[32] = recompile_fcmpo;
+	optable63[0] = recompile_fcmpu;
+	optable63[14] = recompile_fctiwx;
+	optable63[15] = recompile_fctiwzx;
+	optable63[18] = recompile_fdivx;
+	optable63[72] = recompile_fmrx;
+	optable63[136] = recompile_fnabsx;
+	optable63[40] = recompile_fnegx;
+	optable63[12] = recompile_frspx;
+	optable63[26] = recompile_frsqrtex;
+	optable63[22] = recompile_fsqrtx;
+	optable63[20] = recompile_fsubx;
+	optable63[583] = recompile_mffsx;
+	optable63[70] = recompile_mtfsb0x;
+	optable63[38] = recompile_mtfsb1x;
+	optable63[711] = recompile_mtfsfx;
+	optable63[134] = recompile_mtfsfix;
+	optable63[64] = recompile_mcrfs;
+
+	optable59[21] = recompile_faddsx;
+	optable59[18] = recompile_fdivsx;
+	optable59[24] = recompile_fresx;
+	optable59[22] = recompile_fsqrtsx;
+	optable59[20] = recompile_fsubsx;
 
 	for(i = 0; i < 32; i++)
 	{
-		optable63[i * 32 | 29] = ppc_fmaddx;
-		optable63[i * 32 | 28] = ppc_fmsubx;
-		optable63[i * 32 | 25] = ppc_fmulx;
-		optable63[i * 32 | 31] = ppc_fnmaddx;
-		optable63[i * 32 | 30] = ppc_fnmsubx;
-		optable63[i * 32 | 23] = ppc_fselx;
+		optable63[i * 32 | 29] = recompile_fmaddx;
+		optable63[i * 32 | 28] = recompile_fmsubx;
+		optable63[i * 32 | 25] = recompile_fmulx;
+		optable63[i * 32 | 31] = recompile_fnmaddx;
+		optable63[i * 32 | 30] = recompile_fnmsubx;
+		optable63[i * 32 | 23] = recompile_fselx;
 
-		optable59[i * 32 | 29] = ppc_fmaddsx;
-		optable59[i * 32 | 28] = ppc_fmsubsx;
-		optable59[i * 32 | 25] = ppc_fmulsx;
-		optable59[i * 32 | 31] = ppc_fnmaddsx;
-		optable59[i * 32 | 30] = ppc_fnmsubsx;
+		optable59[i * 32 | 29] = recompile_fmaddsx;
+		optable59[i * 32 | 28] = recompile_fmsubsx;
+		optable59[i * 32 | 25] = recompile_fmulsx;
+		optable59[i * 32 | 31] = recompile_fnmaddsx;
+		optable59[i * 32 | 30] = recompile_fnmsubsx;
 	}
 
 	for(i = 0; i < 256; i++)
@@ -1081,9 +1197,46 @@ static void ppc602_init(void)
 	ppc.is602 = 1;
 }
 
-static void ppc602_exit(void)
+static void ppcdrc602_exit(void)
 {
+#if LOG_CODE
+	//if (symfile) fclose(symfile);
+#endif
+	drc_exit(ppc.drc);
+}
 
+static void ppcdrc602_reset(void *param)
+{
+	ppc_config *config = param;
+	ppc.pc = ppc.npc = 0xfff00100;
+	ppc.pvr = config->pvr;
+
+	ppc_set_msr(0);
+	change_pc(ppc.pc);
+
+	ppc.hid0 = 1;
+
+	/* reset the DRC */
+	drc_cache_reset(ppc.drc);
+}
+
+static int ppcdrc602_execute(int cycles)
+{
+	/* count cycles and interrupt cycles */
+	ppc_icount = cycles;
+	drc_execute(ppc.drc);
+	return cycles - ppc_icount;
+}
+
+static void ppcdrc602_set_irq_line(int irqline, int state)
+{
+	if( state ) {
+		ppc.exception_pending |= 0x1;
+		if (ppc.irq_callback)
+		{
+			ppc.irq_callback(irqline);
+		}
+	}
 }
 #endif
 
@@ -1214,36 +1367,6 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-#if (HAS_PPC403)
-void ppc403_set_info(UINT32 state, union cpuinfo *info)
-{
-	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
-	{
-		ppc403_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
-		return;
-	}
-	switch(state)
-	{
-		default:	ppc_set_info(state, info);		break;
-	}
-}
-#endif
-
-#if (HAS_PPC603)
-void ppc603_set_info(UINT32 state, union cpuinfo *info)
-{
-	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
-	{
-		ppc603_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
-		return;
-	}
-	switch(state)
-	{
-		default:	ppc_set_info(state, info);		break;
-	}
-}
-#endif
-
 void ppc_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch(state)
@@ -1319,10 +1442,10 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
-		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = ppc403_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = ppc403_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = ppc403_execute;			break;
+		case CPUINFO_PTR_INIT:							info->init = ppcdrc403_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = ppcdrc403_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = ppcdrc403_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc403_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = ppc.irq_callback;	break;
@@ -1381,7 +1504,23 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
+
+
+/* PowerPC 403 */
 #if (HAS_PPC403)
+void ppc403_set_info(UINT32 state, union cpuinfo *info)
+{
+	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
+	{
+		ppcdrc403_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
+		return;
+	}
+	switch(state)
+	{
+		default:	ppc_set_info(state, info);		break;
+	}
+}
+
 void ppc403_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch(state)
@@ -1392,10 +1531,10 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc403_set_info;		break;
-		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = ppc403_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = ppc403_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = ppc403_execute;			break;
+		case CPUINFO_PTR_INIT:							info->init = ppcdrc403_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = ppcdrc403_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = ppcdrc403_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc403_execute;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC403"); break;
@@ -1405,7 +1544,21 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 }
 #endif
 
+/* PowerPC 603 */
 #if (HAS_PPC603)
+void ppc603_set_info(UINT32 state, union cpuinfo *info)
+{
+	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
+	{
+		ppcdrc603_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
+		return;
+	}
+	switch(state)
+	{
+		default:	ppc_set_info(state, info);		break;
+	}
+}
+
 void ppc603_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch(state)
@@ -1419,10 +1572,10 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
-		case CPUINFO_PTR_INIT:						info->init = ppc603_init;				break;
-		case CPUINFO_PTR_RESET:						info->reset = ppc603_reset;				break;
-		case CPUINFO_PTR_EXIT:						info->exit = ppc603_exit;				break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = ppc603_execute;			break;
+		case CPUINFO_PTR_INIT:						info->init = ppcdrc603_init;				break;
+		case CPUINFO_PTR_RESET:						info->reset = ppcdrc603_reset;				break;
+		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc603_exit;				break;
+		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc603_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -1434,13 +1587,12 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 /* PowerPC 602 */
-
 #if (HAS_PPC602)
 void ppc602_set_info(UINT32 state, union cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{
-		ppc602_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
+		ppcdrc602_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
 		return;
 	}
 	switch(state)
@@ -1462,10 +1614,10 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc602_set_info;		break;
-		case CPUINFO_PTR_INIT:						info->init = ppc602_init;				break;
-		case CPUINFO_PTR_RESET:						info->reset = ppc602_reset;				break;
-		case CPUINFO_PTR_EXIT:						info->exit = ppc602_exit;				break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = ppc602_execute;			break;
+		case CPUINFO_PTR_INIT:						info->init = ppcdrc602_init;				break;
+		case CPUINFO_PTR_RESET:						info->reset = ppcdrc602_reset;				break;
+		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc602_exit;				break;
+		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc602_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

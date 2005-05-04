@@ -2,6 +2,11 @@
 
 static void ppc403_dma_exec(int ch);
 
+static SPU_RX_HANDLER spu_rx_handler;
+static SPU_TX_HANDLER spu_tx_handler;
+static void ppc403_spu_rx_callback(int cpu);
+static void ppc403_spu_tx_callback(int cpu);
+
 INLINE void ppc_set_dcr(int dcr, UINT32 value)
 {
 	switch(dcr)
@@ -16,9 +21,10 @@ INLINE void ppc_set_dcr(int dcr, UINT32 value)
 		case DCR_BR5:		ppc.br[5] = value; break;
 		case DCR_BR6:		ppc.br[6] = value; break;
 		case DCR_BR7:		ppc.br[7] = value; break;
-		case DCR_EXISR:		EXISR = value; break;
-		case DCR_EXIER:		EXIER = value; if(value != 0)printf("ppc: EXIER: %08X\n", value);break;
-		case DCR_IOCR:		ppc.iocr = value; printf("ppc: IOCR: %08X\n", value);break;
+
+		case DCR_EXISR:		EXISR &= ~value; break;
+		case DCR_EXIER:		EXIER = value; break;
+		case DCR_IOCR:		ppc.iocr = value; break;
 		case DCR_DMASR:		break;		/* TODO */
 		case DCR_DMADA0:	ppc.dma[0].da = value; break;
 		case DCR_DMADA1:	ppc.dma[1].da = value; break;
@@ -82,14 +88,16 @@ INLINE UINT32 ppc_get_dcr(int dcr)
 			osd_die("ppc: get_dcr: Unimplemented DCR %X\n", dcr);
 			break;
 	}
-	return 0;
 }
 
 
 
+#ifndef PPC_DRC
 static void ppc403_reset(void *param)
 {
+	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfffffffc;
+	ppc.pvr = config->pvr;
 
 	ppc_set_msr(0);
 	change_pc(ppc.pc);
@@ -102,6 +110,7 @@ static int ppc403_execute(int cycles)
 
 	while( ppc_icount > 0 )
 	{
+//      UINT32 tblo = (UINT32)(ppc.tb);
 		UINT32 opcode;
 		ppc.pc = ppc.npc;
 		ppc.npc += 4;
@@ -122,6 +131,31 @@ static int ppc403_execute(int cycles)
 
 		/* TODO: Update timebase */
 		ppc.tb++;
+
+#if 0
+		/* Fixed Interval Timer */
+		if (((UINT32)(ppc.tb) & ppc.fit_bit) && (tblo & ppc.fit_bit) == 0) {
+			if (ppc.fit_int_enable) {
+				ppc403_exception(EXCEPTION_FIXED_INTERVAL_TIMER);
+			}
+		}
+		/* Watchdog Timer */
+		if (((UINT32)(ppc.tb) & ppc.wdt_bit) && (tblo & ppc.wdt_bit) == 0) {
+			switch((ppc.tsr >> 28) & 0x3)
+			{
+				case 0: ppc.tsr |= TSR_ENW; break;
+				case 1: ppc.tsr |= TSR_ENW; break;
+				case 2:
+					if (ppc.wdt_int_enable && (ppc.msr & MSR_CE)) {
+						ppc403_exception(EXCEPTION_WATCHDOG_TIMER);
+					}
+					break;
+				case 3:
+					osd_die("PPC: Watchdog Timer caused reset");
+					break;
+			}
+		}
+#endif
 	}
 
 	return cycles - ppc_icount;
@@ -146,10 +180,93 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x0500;
+				EXISR |= ppc.external_int;
 			}
 			else
 			{
-				ppc.exception_pending |= 1 << 5;
+				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
+			}
+			break;
+
+		case EXCEPTION_TRAP:			/* Program exception / Trap */
+			{
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.pc;
+				SRR1 = msr;
+
+				msr &= ~(MSR_WE | MSR_PR | MSR_EE | MSR_PE);	// Clear WE, PR, EE, PR
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0700;
+				else
+					ppc.npc = EVPR | 0x0700;
+			}
+			break;
+
+		case EXCEPTION_SYSTEM_CALL:		/* System call */
+			{
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr;
+
+				msr &= ~(MSR_WE | MSR_PR | MSR_EE | MSR_PE);	// Clear WE, PR, EE, PR
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0c00;
+				else
+					ppc.npc = EVPR | 0x0c00;
+			}
+			break;
+
+		case EXCEPTION_FIXED_INTERVAL_TIMER:		/* Fixed Interval Timer */
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr;
+
+				msr &= ~(MSR_WE | MSR_PR | MSR_EE | MSR_PE);	// Clear WE, PR, EE, PR
+				if( msr & MSR_LE )
+					msr |= MSR_ILE;
+				else
+					msr &= ~MSR_ILE;
+				ppc_set_msr(msr);
+
+				ppc.npc = EVPR | 0x1010;
+			}
+			else
+			{
+				ppc.exception_pending |= 1 << 21;
+			}
+			break;
+
+		case EXCEPTION_WATCHDOG_TIMER:				/* Watchdog Timer */
+			{
+				UINT32 msr = ppc_get_msr();
+
+				SRR2 = ppc.npc;
+				SRR3 = msr;
+
+				msr &= ~(MSR_WE | MSR_PR | MSR_CE | MSR_EE | MSR_DE | MSR_PE | MSR_DR | MSR_IR);
+				if (msr & MSR_LE)
+					msr |= MSR_ILE;
+				else
+					msr &= ~MSR_ILE;
+				ppc_set_msr(msr);
+
+				ppc.npc = EVPR | 0x1020;
 			}
 			break;
 
@@ -161,12 +278,44 @@ void ppc403_exception(int exception)
 
 static void ppc403_set_irq_line(int irqline, int state)
 {
-	UINT32 mask = (1 << (4 - irqline));
-	if( state ) {
-		if( EXIER & mask ) {
-			EXISR |= mask;
-			ppc403_exception(EXCEPTION_IRQ);
+	if (irqline >= INPUT_LINE_IRQ0 && irqline <= INPUT_LINE_IRQ4)
+	{
+		UINT32 mask = (1 << (4 - irqline));
+		if( state ) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc403_exception(EXCEPTION_IRQ);
+
+				if (ppc.irq_callback)
+				{
+					ppc.irq_callback(irqline);
+				}
+			}
 		}
+	}
+	else if (irqline == PPC403_SPU_RX)
+	{
+		UINT32 mask = 0x08000000;
+		if (state) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc403_exception(EXCEPTION_IRQ);
+			}
+		}
+	}
+	else if (irqline == PPC403_SPU_TX)
+	{
+		UINT32 mask = 0x04000000;
+		if (state) {
+			if( EXIER & mask ) {
+				ppc.external_int = mask;
+				ppc403_exception(EXCEPTION_IRQ);
+			}
+		}
+	}
+	else
+	{
+		osd_die("PPC: Unknown IRQ line %d\n", irqline);
 	}
 }
 
@@ -175,11 +324,25 @@ static void ppc403_dma_set_irq_line(int dma, int state)
 	UINT32 mask = (1 << (3 - dma)) << 20;
 	if( state ) {
 		if( EXIER & mask ) {
-			EXISR |= mask;
+			ppc.external_int = mask;
 			ppc403_exception(EXCEPTION_IRQ);
 		}
 	}
 }
+#endif
+
+#ifdef PPC_DRC
+static void ppc403_dma_set_irq_line(int dma, int state)
+{
+	UINT32 mask = (1 << (3 - dma)) << 20;
+	if( state ) {
+		if( EXIER & mask ) {
+			ppc.external_int = mask;
+			ppc.exception_pending |= 0x1;
+		}
+	}
+}
+#endif
 
 
 
@@ -213,7 +376,12 @@ static void ppc_icread(UINT32 op)
 
 static void ppc_rfci(UINT32 op)
 {
-	osd_die("ppc: rfci not implemented\n");
+	UINT32 msr;
+	ppc.npc = ppc.srr2;
+	msr = ppc.srr3;
+	ppc_set_msr( msr );
+
+	change_pc(ppc.npc);
 }
 
 static void ppc_mfdcr(UINT32 op)
@@ -247,12 +415,11 @@ static void ppc_wrteei(UINT32 op)
 /**************************************************************************/
 /* PPC403 Serial Port */
 
-static UINT8 ppc403_spu_r(UINT32 a)
+UINT8 ppc403_spu_r(UINT32 a)
 {
-	printf("spu_r: %02X\n", a & 0xf);
 	switch(a & 0xf)
 	{
-		case 0x0:		return ppc.spu.spls;
+		case 0x0:		return ppc.spu.spls | 0x6;		/* transmit buffer is always empty */
 		case 0x2:		return ppc.spu.sphs;
 		case 0x4:		return (ppc.spu.brd >> 8) & 0xf;
 		case 0x5:		return (ppc.spu.brd & 0xff);
@@ -262,10 +429,9 @@ static UINT8 ppc403_spu_r(UINT32 a)
 		case 0x9:		return ppc.spu.sprb;
 		default:		osd_die("ppc: spu_r: %02X\n", a & 0xf);
 	}
-	return 0;
 }
 
-static void ppc403_spu_w(UINT32 a, UINT8 d)
+void ppc403_spu_w(UINT32 a, UINT8 d)
 {
 	switch(a & 0xf)
 	{
@@ -289,7 +455,11 @@ static void ppc403_spu_w(UINT32 a, UINT8 d)
 		case 0x5:
 			ppc.spu.brd &= 0xff00;
 			ppc.spu.brd |= d;
-			printf("ppc: SPU Baud rate: %d\n", (3686400 / (ppc.spu.brd + 1)) / 16);
+			if (ppc.iocr & 0x2) {
+				printf("ppc: SPU Baud rate: %d\n", (3686400 / (ppc.spu.brd + 1)) / 16);
+			} else {
+				printf("ppc: SPU Baud rate: %d\n", (33333333 / (ppc.spu.brd + 1)) / 16);
+			}
 			break;
 
 		case 0x6:
@@ -298,6 +468,25 @@ static void ppc403_spu_w(UINT32 a, UINT8 d)
 
 		case 0x7:
 			ppc.spu.sprc = d;
+			if (ppc.spu.sprc & 0x80)	/* enable RX */
+			{
+				int baud_rate;
+				if (ppc.iocr & 0x2) {
+					baud_rate = (3686400 / (ppc.spu.brd + 1)) / 16;
+				} else {
+					baud_rate = (33333333 / (ppc.spu.brd + 1)) / 16;
+				}
+
+				/* for now RX receives 8 bits at a time. maybe fix this later? */
+				baud_rate /= 8;
+
+				//timer_adjust(ppc.spu.rx_timer, TIME_IN_HZ(baud_rate), cpu_getactivecpu(), TIME_IN_HZ(baud_rate));
+				timer_enable(ppc.spu.rx_timer, 0);
+			}
+			else						/* disable RX */
+			{
+				timer_enable(ppc.spu.rx_timer, 0);
+			}
 			break;
 
 		case 0x8:
@@ -306,13 +495,66 @@ static void ppc403_spu_w(UINT32 a, UINT8 d)
 
 		case 0x9:
 			ppc.spu.sptb = d;
+			ppc403_spu_tx_callback(cpu_getactivecpu());
 			break;
 
 		default:
 			osd_die("ppc: spu_w: %02X, %02X\n", a & 0xf, d);
 			break;
 	}
-	printf("spu_w: %02X, %02X\n", a & 0xf, d);
+	//printf("spu_w: %02X, %02X\n", a & 0xf, d);
+}
+
+void ppc403_spu_rx(UINT8 data)
+{
+	ppc.spu.sprb = data;
+
+	/* set receive buffer full */
+	ppc.spu.spls = 0x80;
+
+	/* generate interrupt if DMA is disabled and RBR interrupt is enabled */
+	if (((ppc.spu.sprc >> 5) & 0x3) == 0x01) {
+#ifndef PPC_DRC
+		ppc403_set_irq_line(PPC403_SPU_RX, ASSERT_LINE);
+#else
+		ppcdrc403_set_irq_line(PPC403_SPU_RX, ASSERT_LINE);
+#endif
+	}
+}
+
+static void ppc403_spu_rx_callback(int cpu)
+{
+	if (spu_rx_handler != NULL)
+	{
+		ppc403_spu_rx(spu_rx_handler());
+	}
+}
+
+static void ppc403_spu_tx_callback(int cpu)
+{
+	if (spu_tx_handler != NULL)
+	{
+		spu_tx_handler(ppc.spu.sptb);
+
+		/* generate interrupt if DMA is disabled and TBR interrupt is enabled */
+		if (((ppc.spu.sptc >> 5) & 0x3) == 0x01) {
+#ifndef PPC_DRC
+			ppc403_set_irq_line(PPC403_SPU_TX, ASSERT_LINE);
+#else
+			ppcdrc403_set_irq_line(PPC403_SPU_TX, ASSERT_LINE);
+#endif
+		}
+	}
+}
+
+void ppc403_install_spu_rx_handler(SPU_RX_HANDLER rx_handler)
+{
+	spu_rx_handler = rx_handler;
+}
+
+void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler)
+{
+	spu_tx_handler = tx_handler;
 }
 
 /*********************************************************************************/
@@ -383,10 +625,12 @@ static void ppc403_dma_exec(int ch)
 						}
 
 						/* generate SPU interrupts */
+#ifndef PPC_DRC
 						if( EXIER & 0x04000000 ) {
 							EXISR |= 0x04000000;
 							ppc403_exception(EXCEPTION_IRQ);
 						}
+#endif
 					}
 					else {
 						osd_die("ppc: dma_exec: buffered DMA to unknown peripheral ! (channel %d)\n", ch);
@@ -400,7 +644,55 @@ static void ppc403_dma_exec(int ch)
 				break;
 
 			case 2:		/* software initiated mem-to-mem DMA */
-				osd_die("ppc: dma_exec: SW mem-to-mem DMA not implemented\n");
+				//printf("ppc: DMA (%d, SW mem-to-mem): SA = %08X, DA = %08X, CT = %08X\n", ch, ppc.dma[ch].sa, ppc.dma[ch].da, ppc.dma[ch].ct);
+
+				switch(width)
+				{
+					case 1:		/* Byte transfer */
+						for (i=0; i < ppc.dma[ch].ct; i++)
+						{
+							UINT8 b = READ8(ppc.dma[ch].sa);
+							WRITE8(ppc.dma[ch].da, b);
+							ppc.dma[ch].sa += sai;
+							ppc.dma[ch].da += dai;
+						}
+						break;
+					case 2:		/* Word transfer */
+						for (i=0; i < ppc.dma[ch].ct; i++)
+						{
+							UINT16 w = READ16(ppc.dma[ch].sa);
+							WRITE16(ppc.dma[ch].da, w);
+							ppc.dma[ch].sa += sai;
+							ppc.dma[ch].da += dai;
+						}
+						break;
+					case 4:		/* Double word transfer */
+						for (i=0; i < ppc.dma[ch].ct; i++)
+						{
+							UINT32 d = READ32(ppc.dma[ch].sa);
+							WRITE32(ppc.dma[ch].da, d);
+							ppc.dma[ch].sa += sai;
+							ppc.dma[ch].da += dai;
+						}
+						break;
+					case 16:	/* 16-byte transfer */
+						for (i=0; i < ppc.dma[ch].ct; i++)
+						{
+							UINT32 d1 = READ32(ppc.dma[ch].sa+0);
+							UINT32 d2 = READ32(ppc.dma[ch].sa+4);
+							UINT32 d3 = READ32(ppc.dma[ch].sa+8);
+							UINT32 d4 = READ32(ppc.dma[ch].sa+12);
+							WRITE32(ppc.dma[ch].da+0, d1);
+							WRITE32(ppc.dma[ch].da+4, d2);
+							WRITE32(ppc.dma[ch].da+8, d3);
+							WRITE32(ppc.dma[ch].da+12, d4);
+							ppc.dma[ch].sa += 16;
+							ppc.dma[ch].da += 16;
+						}
+						break;
+					default:
+						osd_die("dma: dma_exec: SW mem-to-mem DMA, width = %d\n", width);
+				}
 				break;
 
 			case 3:		/* hardware initiated mem-to-mem DMA */

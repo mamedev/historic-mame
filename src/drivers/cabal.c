@@ -64,12 +64,73 @@ static MACHINE_INIT( cabalbl )
 
 /******************************************************************************************/
 
+static struct cabalbl_adpcm_state
+{
+	struct adpcm_state adpcm;
+	sound_stream *stream;
+	UINT32 current, end;
+	UINT8 nibble;
+	UINT8 playing;
+	UINT8 allocated;
+	UINT8 *base;
+} cabalbl_adpcm[2];
+
+static void cabalbl_adpcm_callback(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples)
+{
+	struct cabalbl_adpcm_state *state = param;
+	stream_sample_t *dest = outputs[0];
+
+	while (state->playing && samples > 0)
+	{
+		int val = (state->base[state->current] >> state->nibble) & 15;
+
+		state->nibble ^= 4;
+		if (state->nibble == 4)
+		{
+			state->current++;
+			if (state->current >= state->end)
+				state->playing = 0;
+		}
+
+		*dest++ = clock_adpcm(&state->adpcm, val);
+		samples--;
+	}
+	while (samples > 0)
+	{
+		*dest++ = 0;
+		samples--;
+	}
+}
+
+void *cabalbl_adpcm_start(int clock, const struct CustomSound_interface *config)
+{
+	int i;
+
+	for (i = 0; i < 2; i++)
+		if (!cabalbl_adpcm[i].allocated)
+		{
+			struct cabalbl_adpcm_state *state = &cabalbl_adpcm[i];
+			state->allocated = 1;
+			state->playing = 0;
+			state->stream = stream_create(0, 1, clock, state, cabalbl_adpcm_callback);
+			state->base = memory_region(REGION_SOUND1);
+			reset_adpcm(&state->adpcm);
+			return state;
+		}
+	return NULL;
+}
+
+void cabalbl_adpcm_stop(void *token)
+{
+	struct cabalbl_adpcm_state *state = token;
+	state->allocated = 0;
+}
 
 static void cabalbl_play_adpcm( int channel, int which ){
 	if( which!=0xff ){
 		unsigned char *RAM = memory_region(REGION_SOUND1);
 		int offset = channel*0x10000;
-		int start, len;
+		int start,len;
 
 		which = which&0x7f;
 		if( which ){
@@ -77,7 +138,14 @@ static void cabalbl_play_adpcm( int channel, int which ){
 			start = RAM[offset+which] + 256*RAM[offset+which+1];
 			len = (RAM[offset+start]*256 + RAM[offset+start+1])*2;
 			start+=2;
-//          ADPCM_play( channel,offset+start,len );
+
+			if (cabalbl_adpcm[channel].stream)
+				stream_update(cabalbl_adpcm[channel].stream, 0);
+			cabalbl_adpcm[channel].current = start + offset;
+			cabalbl_adpcm[channel].end = start + offset + len/2;
+			cabalbl_adpcm[channel].nibble = 4;
+			cabalbl_adpcm[channel].playing = 1;
+			cabalbl_adpcm[channel].base = RAM;
 		}
 	}
 }
@@ -469,6 +537,13 @@ static struct YM2151interface cabalbl_ym2151_interface =
 
 SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
 
+static struct CustomSound_interface cabalbl_adpcm_interface =
+{
+	cabalbl_adpcm_start,
+	cabalbl_adpcm_stop
+};
+
+
 static MACHINE_DRIVER_START( cabal )
 
 	/* basic machine hardware */
@@ -503,8 +578,13 @@ static MACHINE_DRIVER_START( cabal )
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
 
-	MDRV_SOUND_ADD(MSM5205, 0)
-	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ADD(CUSTOM, 8000)
+	MDRV_SOUND_CONFIG(adpcm_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(CUSTOM, 8000)
+	MDRV_SOUND_CONFIG(adpcm_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
@@ -544,8 +624,13 @@ static MACHINE_DRIVER_START( cabalbl )
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
 
-	MDRV_SOUND_ADD(MSM5205, 0)
-	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ADD(CUSTOM, 8000)
+	MDRV_SOUND_CONFIG(cabalbl_adpcm_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(CUSTOM, 8000)
+	MDRV_SOUND_CONFIG(cabalbl_adpcm_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END

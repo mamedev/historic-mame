@@ -299,7 +299,11 @@ static READ16_HANDLER( control_4_r )
 
 static READ16_HANDLER( jongbou_inputs_r )
 {
-	return readinputportbytag("IN0") | readinputportbytag("IN3");
+	UINT8 inp1 = readinputportbytag("IN3");
+	UINT8 inp2 = readinputportbytag("IN4");
+	inp1 = ((inp1 & 0x01) << 3) + ((inp1 & 0x02) << 1) + ((inp1 & 0x04) >> 1) + ((inp1 & 0x08) >> 3);
+	inp2 = ((inp2 & 0x01) << 3) + ((inp2 & 0x02) << 1) + ((inp2 & 0x04) >> 1) + ((inp2 & 0x08) >> 3);
+	return readinputportbytag("IN0") | inp1 | inp2 << 4;
 }
 
 /******************************************************************************/
@@ -1088,7 +1092,10 @@ INPUT_PORTS_START( jongbou )
 	ALPHA68K_MCU
 
 	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_SENSITIVITY(15) PORT_KEYDELTA(20)
+	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_MINMAX(0, 15) PORT_SENSITIVITY(50) PORT_KEYDELTA(20)
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_MINMAX(0, 15) PORT_SENSITIVITY(50) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( paddlema )
@@ -2100,13 +2107,13 @@ static MACHINE_DRIVER_START( jongbou )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
 	MDRV_CPU_PROGRAM_MAP(kyros_readmem,kyros_writemem)
-	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,2)
+	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,17) // must be at least 4 for the controls to be smooth
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(jongbou_sound_map,0)
 	MDRV_CPU_IO_MAP(jongbou_sound_io_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,32)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 160) // guess, controls sound speed
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3267,7 +3274,7 @@ static DRIVER_INIT( tnexspce )
 GAME( 1986, sstingry, 0,        sstingry,      sstingry, sstingry, ROT90, "Alpha Denshi Co.",   "Super Stingray" )
 GAME( 1987, kyros,    0,        kyros,         kyros,    kyros,    ROT90, "World Games Inc",    "Kyros" )
 GAME( 1986, kyrosj,   kyros,    kyros,         kyros,    kyros,    ROT90, "Alpha Denshi Co.",   "Kyros No Yakata (Japan)" )
-GAMEX(1987, jongbou,  0,        jongbou,       jongbou,  jongbou,  ROT90, "SNK",                "Mahjong Block Jongbou (Japan)", GAME_NOT_WORKING )
+GAME( 1987, jongbou,  0,        jongbou,       jongbou,  jongbou,  ROT90, "SNK",                "Mahjong Block Jongbou (Japan)" )
 GAME( 1988, paddlema, 0,        alpha68k_I,    paddlema, paddlema, ROT90, "SNK",                "Paddle Mania" )
 GAME( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90, "[Alpha Denshi Co.] (SNK/Romstar license)", "Time Soldiers (US Rev 3)" )
 GAME( 1987, timesol1, timesold, alpha68k_II,   timesold, timesol1, ROT90, "[Alpha Denshi Co.] (SNK/Romstar license)", "Time Soldiers (US Rev 1)" )

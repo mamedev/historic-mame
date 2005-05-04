@@ -1736,7 +1736,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 						return 0;
 					if (joyindex==2 && lightgun_dual_player_state[3])
 						return 1;
-					if (joyindex==2 && lightgun_dual_player_state[3])
+					if (joyindex==3 && lightgun_dual_player_state[3])
 						return 0;
 				}
 				return lightgun_dual_player_state[joyindex];

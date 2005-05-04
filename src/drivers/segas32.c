@@ -1590,7 +1590,7 @@ ROM_END
 
 ROM_START( brival )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD( "ep15720.8", 0x000000, 0x020000, CRC(0d182d78) SHA1(53e9e5898869ea4a354dc3e9a78d8b8e9a7274c9) )
+	ROM_LOAD( "epr15722.8", 0x000000, 0x020000, CRC(138141c0) SHA1(aca2a46ee1008e91c65a09e79c76d5175e7df5e8) )
 	ROM_RELOAD     (               0x020000, 0x20000 )
 	ROM_RELOAD     (               0x040000, 0x20000 )
 	ROM_RELOAD     (               0x060000, 0x20000 )
@@ -1611,18 +1611,62 @@ ROM_START( brival )
 	ROM_LOAD( "mp15626.34", 0x380000, 0x100000, CRC(83306d1e) SHA1(feb08902b51c0013d9417832cdf198e36cdfc28c) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15629.14", 0x000000, 0x200000, CRC(2c8dd96d) SHA1(4a42a30485c19eb4f4a9d518a3dff3ae11911d01) )
+	ROM_LOAD16_BYTE( "mpr15628.5",  0x000001, 0x200000, CRC(58d4ca40) SHA1(b1633acc803bba7e8283a9663b49abeda662a74d) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15637.32", 0x000000, 0x200000, CRC(b6cf2f05) SHA1(a308d40ce5165e03fccf7fcd615ee111f7840fdc) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15635.30", 0x000002, 0x200000, CRC(70f2eb2b) SHA1(9868c8b0dd8ce810a0e32f51e702eee7e1c9a967) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15633.28", 0x000004, 0x200000, CRC(005dfed5) SHA1(f555620d75d3886a890307be9df9c0879bcda695) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15631.26", 0x000006, 0x200000, CRC(c35e2f21) SHA1(37935aa2eaa1769e57fb58f47f9797ae153d7496) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15636.31", 0x800000, 0x200000, CRC(d81ca97b) SHA1(a8e64e6cbe822f18ce20f50c8ddb8f1d5ed8b783) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15634.29", 0x800002, 0x200000, CRC(b0c6c52a) SHA1(04dd7344ca82e38f9d796a764c9e5a631a89aaac) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15632.27", 0x800004, 0x200000, CRC(8476e52b) SHA1(e89748d34febcaf362580cdae30a5c570e56899a) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15630.25", 0x800006, 0x200000, CRC(bf7dd2f6) SHA1(ab3fbe9e2b9b57424fb2a147f32b0f573c0b11b8) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+	/* populated at runtime */
+ROM_END
+
+ROM_START( brivalj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD( "ep15720.8", 0x000000, 0x020000, CRC(0d182d78) SHA1(53e9e5898869ea4a354dc3e9a78d8b8e9a7274c9) )
+	ROM_RELOAD     (               0x020000, 0x20000 )
+	ROM_RELOAD     (               0x040000, 0x20000 )
+	ROM_RELOAD     (               0x060000, 0x20000 )
+	ROM_RELOAD     (               0x080000, 0x20000 )
+	ROM_RELOAD     (               0x0a0000, 0x20000 )
+	ROM_RELOAD     (               0x0c0000, 0x20000 )
+	ROM_RELOAD     (               0x0e0000, 0x20000 )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 ) /* v60 data (actually, banked code - swapping is necessary) */
+	ROM_LOAD16_BYTE( "ep15723.18", 0x000000, 0x080000, CRC(4ff40d39) SHA1(b33a656f976ec7a1a2268e7b9a81d5b84f3d9ca3) )
+	ROM_LOAD16_BYTE( "ep15724.9",  0x000001, 0x080000, CRC(3ff8a052) SHA1(f484a8e15a022f9ff290e662ab27f96f9f0ad24e) )
+
+	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "ep15725.36", 0x00000, 0x20000, CRC(ea1407d7) SHA1(68b571341f032278e87a38739ba8084b7a6062d3) )
+	ROM_RELOAD(             0x100000, 0x20000             )
+	ROM_LOAD( "mp15627.35", 0x180000, 0x100000, CRC(8a8388c5) SHA1(7ee03feb975cc576a3d8651fd41976ca87d60894) )
+	ROM_LOAD( "mp15625.24", 0x280000, 0x100000, CRC(3ce82932) SHA1(f2107bc2591f46a51c9f0d706933b1ae69db91f9) )
+	ROM_LOAD( "mp15626.34", 0x380000, 0x100000, CRC(83306d1e) SHA1(feb08902b51c0013d9417832cdf198e36cdfc28c) )
+
+	/* the 10 roms below may be bad dumps ... mp14598 / 99 have corrupt tiles when compared to the roms
+       in the parent set, but Sega did change the part numbers so they might be correct, the others
+       are suspicious, the changes are very similar but the part numbers haven't changed.  We really
+       need a 3rd board to verify */
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD16_BYTE( "mp14599f.14", 0x000000, 0x200000, CRC(1de17e83) SHA1(04ee14b863f93b42a5bd1b6da71cff54ef11d4b7) )
 	ROM_LOAD16_BYTE( "mp14598f.5",  0x000001, 0x200000, CRC(cafb0de9) SHA1(94c6bfc7a4081dee373e9466a7b6f80889696087) )
 
 	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
-	ROMX_LOAD( "mp15637.32", 0x000000, 0x200000, CRC(f39844c0) SHA1(c48dc8cccdd9d3756cf99a983c6a89ed43fcda22) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15635.30", 0x000002, 0x200000, CRC(263cf6d1) SHA1(7accd214502fd050edc0901c9929d6069dae4d00) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15633.28", 0x000004, 0x200000, CRC(44e9a88b) SHA1(57a930b9c3b83c889df54de60c90f847c2dcb614) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15631.26", 0x000006, 0x200000, CRC(e93cf9c9) SHA1(17786cd3ccaef613216db724e923861841c52b45) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15636.31", 0x800000, 0x200000, CRC(079ff77f) SHA1(bdd41acef58c39ba58cf85d307229622877dbdf9) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15634.29", 0x800002, 0x200000, CRC(1edc14cd) SHA1(80a281c904560b364fe9f2b8987b7a254220a29f) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15632.27", 0x800004, 0x200000, CRC(796215f2) SHA1(d7b393781dbba59c9b1cd600d27e6d91e36ea771) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "mp15630.25", 0x800006, 0x200000, CRC(8dabb501) SHA1(c5af2187d00e0b9732a82441f9758b303fecbb2c) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15637.32", 0x000000, 0x200000, CRC(f39844c0) SHA1(c48dc8cccdd9d3756cf99a983c6a89ed43fcda22) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15635.30", 0x000002, 0x200000, CRC(263cf6d1) SHA1(7accd214502fd050edc0901c9929d6069dae4d00) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15633.28", 0x000004, 0x200000, CRC(44e9a88b) SHA1(57a930b9c3b83c889df54de60c90f847c2dcb614) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15631.26", 0x000006, 0x200000, CRC(e93cf9c9) SHA1(17786cd3ccaef613216db724e923861841c52b45) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15636.31", 0x800000, 0x200000, CRC(079ff77f) SHA1(bdd41acef58c39ba58cf85d307229622877dbdf9) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15634.29", 0x800002, 0x200000, CRC(1edc14cd) SHA1(80a281c904560b364fe9f2b8987b7a254220a29f) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15632.27", 0x800004, 0x200000, CRC(796215f2) SHA1(d7b393781dbba59c9b1cd600d27e6d91e36ea771) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "brivalj_mp15630.25", 0x800006, 0x200000, CRC(8dabb501) SHA1(c5af2187d00e0b9732a82441f9758b303fecbb2c) , ROM_SKIP(6)|ROM_GROUPWORD )
 
 	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
 	/* populated at runtime */
@@ -2665,6 +2709,7 @@ static struct
 	{ "arabfgt",   spidey_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 0 },
 	{ "arabfgtj",  spidey_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 4         , 0             , 0 },
 	{ "brival",    brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
+	{ "brivalj",   brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
 	{ "darkedge",  brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
 	{ "darkedgj",  brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
 	{ "dbzvrvs",   brival_custom_io_r   , NULL                 , EEPROM_SYS32_0    , 5         , 1             , 0 },
@@ -2841,7 +2886,8 @@ GAMEX(1992, arescue,  0,        segas32,    f1en,    arescue,   ROT0, "Sega"  , 
 GAMEX(1993, alien3,   0,        segas32,    alien3,  alien3,    ROT0, "Sega"  , "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, arabfgt,  0,        segas32,    spidey,  arabfgt,   ROT0, "Sega"  , "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, arabfgtj, arabfgt,  segas32,    spidey,  arabfgt,   ROT0, "Sega"  , "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, brival,   0,        segas32_hi, brival,  brival,    ROT0, "Sega"  , "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brival,   0,        segas32_hi, brival,  brival,    ROT0, "Sega"  , "Burning Rival (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brivalj,  brival,   segas32_hi, brival,  brival,    ROT0, "Sega"  , "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, darkedge, 0,        segas32_hi, brival,  segas32,   ROT0, "Sega"  , "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 GAMEX(1992, darkedgj, darkedge, segas32_hi, brival,  segas32,   ROT0, "Sega"  , "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, dbzvrvs,  0,        segas32_hi, svf,	 segas32,   ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)

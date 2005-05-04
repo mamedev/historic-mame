@@ -333,6 +333,9 @@ do { OP1(0x9d); } while(0);
 #define _bswap_r32(reg) \
 do { OP1(0x0F); OP1(0xC8+(reg)); } while (0)
 
+#define _cmc() \
+do { OP1(0xf5); } while(0);
+
 
 
 /*###################################################################################################
@@ -609,6 +612,12 @@ do { OP1(0x0f); OP1(0xac); MODRM_REG(sreg, dreg); OP1(imm); } while (0)
 #define _bt_m32bd_r32(base, disp, reg) \
 do { OP1(0x0f); OP1(0xa3); MODRM_MBD(reg, base, disp); } while (0)
 
+#define _bt_m32abs_imm(addr, imm) \
+do { OP1(0x0f); OP1(0xba); MODRM_MABS(4, addr); OP1(imm); } while (0)
+
+#define _bt_r32_imm(reg, imm) \
+do { OP1(0x0f); OP1(0xba); MODRM_REG(4, reg); OP1(imm); } while (0)
+
 #define _bsr_r32_r32(dreg, sreg) \
 do { OP1(0x0f); OP1(0xbd); MODRM_REG(dreg, sreg); } while (0)
 
@@ -686,6 +695,8 @@ do { OP1(0x33); MODRM_MABS(dreg, addr); } while (0)
 #define _add_m32abs_r32(addr, sreg) \
 do { OP1(0x01); MODRM_MABS(sreg, addr); } while (0)
 
+#define _or_m32abs_r32(addr, sreg) \
+do { OP1(0x09); MODRM_MABS(sreg, addr); } while (0)
 
 
 #define _arith_r32_imm_common(reg, dreg, imm)		\
@@ -845,7 +856,7 @@ do { OP1(0xd3);	OP1(0xd8 | ((reg) & 7)); } while(0)
 **#################################################################################################*/
 
 #define _or_r8_r8(r1, r2) \
-do { OP1(0x0A); MODRM_REG(r2, r1); } while (0)
+do { OP1(0x08); MODRM_REG(r2, r1); } while (0)
 
 #define _arith_m16abs_imm_common(reg, addr, imm)	\
 do {												\
@@ -922,6 +933,9 @@ do { _arith_m8abs_imm_common(0, addr, imm); } while (0)
 #define _or_m8abs_imm(addr, imm) \
 do { _arith_m8abs_imm_common(1, addr, imm); } while (0)
 
+#define _adc_m8abs_imm(addr, imm) \
+do { _arith_m8abs_imm_common(2, addr, imm); } while (0)
+
 #define _sbb_m8abs_imm(addr, imm) \
 do { _arith_m8abs_imm_common(3, addr, imm); } while (0)
 
@@ -945,6 +959,18 @@ do { OP1(0xf6); MODRM_REG(0, reg); OP1(imm); } while (0)
 
 #define _and_m8bd_r8(base, disp, sreg) \
 do { OP1(0x20); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _shl_r8_imm(dreg, imm) \
+do { \
+	if ((imm) == 1) { OP1(0xd0); MODRM_REG(4, dreg); } \
+	else { OP1(0xc0); MODRM_REG(4, dreg); OP1(imm); } \
+} while (0)
+
+#define _shr_r8_imm(dreg, imm) \
+do { \
+	if ((imm) == 1) { OP1(0xd0); MODRM_REG(5, dreg); } \
+	else { OP1(0xc0); MODRM_REG(5, dreg); OP1(imm); } \
+} while (0)
 
 #define _shl_r8_cl(dreg) \
 do { OP1(0xd2); MODRM_REG(4, dreg); } while (0)

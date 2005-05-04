@@ -280,13 +280,20 @@ typedef void drawscanline_t( const edge *e1, const edge *e2, int sy, const struc
 static void
 renderscanline_flat( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
 {
+	struct mame_bitmap *pBitmap = Machine->scrbitmap;
+
+	if ((sy < 0) || (sy >= pBitmap->height))
+	{
+		logerror ("sy (%d) is bogus, bitmap height: %d", sy, pBitmap->height);
+		return;
+	}
+
 	if( e1->x > e2->x )
 	{
 		SWAP(e1,e2);
 	}
 
 	{
-		struct mame_bitmap *pBitmap = Machine->scrbitmap;
 		UINT16 *pDest = (UINT16 *)pBitmap->line[sy];
 		INT32 *pZBuf = namco_zbuffer + pBitmap->width*sy;
 
@@ -304,6 +311,7 @@ renderscanline_flat( const edge *e1, const edge *e2, int sy, const struct rectan
 				z += crop*dz;
 				x0 = clip->min_x;
 			}
+			if (x0<0) x0 = 0;
 			if( x1>clip->max_x )
 			{
 				x1 = clip->max_x;
@@ -324,13 +332,20 @@ renderscanline_flat( const edge *e1, const edge *e2, int sy, const struct rectan
 static void
 renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
 {
+	struct mame_bitmap *pBitmap = Machine->scrbitmap;
+
+	if ((sy < 0) || (sy >= pBitmap->height))
+	{
+		logerror ("sy (%d) is bogus, bitmap height: %d", sy, pBitmap->height);
+		return;
+	}
+
 	if( e1->x > e2->x )
 	{
 		SWAP(e1,e2);
 	}
 
 	{
-		struct mame_bitmap *pBitmap = Machine->scrbitmap;
 		UINT32 *pDest = (UINT32 *)pBitmap->line[sy];
 		INT32 *pZBuf = namco_zbuffer + pBitmap->width*sy;
 
@@ -359,6 +374,7 @@ renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectang
 				z += crop*dz;
 				x0 = clip->min_x;
 			}
+			if (x0<0) x0 = 0;
 			if( x1>clip->max_x )
 			{
 				x1 = clip->max_x;
@@ -477,6 +493,7 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 				e1.z += dz1dy*crop;
 				ystart = clip->min_y;
 			}
+			if (ystart< 0) ystart = 0;
 			if( yend>clip->max_y ) yend = clip->max_y;
 
 			for( y=ystart; y<yend; y++ )
@@ -524,6 +541,7 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 				e1.z += dz1dy*crop;
 				ystart = clip->min_y;
 			}
+			if (ystart< 0) ystart = 0;
 			if( yend>clip->max_y ) yend = clip->max_y;
 
 			for( y=ystart; y<yend; y++ )

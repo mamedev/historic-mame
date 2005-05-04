@@ -1,6 +1,7 @@
 /*  Konami ZR107 */
 
 #include "driver.h"
+#include "cpu/powerpc/ppc.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/k054539.h"
 
@@ -245,10 +246,16 @@ static struct K054539interface k054539_interface =
 INPUT_PORTS_START( zr107 )
 INPUT_PORTS_END
 
+static ppc_config zr107_ppc_cfg =
+{
+	PPC_MODEL_403GA
+};
+
 static MACHINE_DRIVER_START( zr107 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
+	MDRV_CPU_CONFIG(zr107_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(zr107_map, 0)
 
 	MDRV_CPU_ADD(M68000, 64000000/8)	/* 8MHz */

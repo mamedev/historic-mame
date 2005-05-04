@@ -144,25 +144,25 @@ handle_mcu( void )
 	old_p3 = p3;
 	old_p4 = p4;
 
-	IORAM[0xA000] = p1;
-	IORAM[0xA003] = p2;
-	IORAM[0xA005] = p3;
-	IORAM[0xA0b8] = p4;
+	IORAM[BYTE4_XOR_LE(0xA000)] = p1;
+	IORAM[BYTE4_XOR_LE(0xA003)] = p2;
+	IORAM[BYTE4_XOR_LE(0xA005)] = p3;
+	IORAM[BYTE4_XOR_LE(0xA0b8)] = p4;
 
-	IORAM[0xA014] = 0;	// analog
-	IORAM[0xA016] = 0;	// analog
-	IORAM[0xA018] = 0;	// analog
+	IORAM[BYTE4_XOR_LE(0xA014)] = 0;	// analog
+	IORAM[BYTE4_XOR_LE(0xA016)] = 0;	// analog
+	IORAM[BYTE4_XOR_LE(0xA018)] = 0;	// analog
 
-	IORAM[0xA009] = 0;
+	IORAM[BYTE4_XOR_LE(0xA009)] = 0;
 
 	toggle ^= 1;
 	if (toggle)
 	{	// final lap
-		IORAM[0xA000]|=0x80;
+		IORAM[BYTE4_XOR_LE(0xA000)]|=0x80;
 	}
 	else
 	{	// speed racer
-		IORAM[0xA000]&=0x7f;
+		IORAM[BYTE4_XOR_LE(0xA000)]&=0x7f;
 	}
 #endif
 } /* handle_mcu */

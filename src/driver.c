@@ -1293,6 +1293,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( vigilntu )	/* (c) 1988 (US) */
 	DRIVER( vigilntj )	/* (c) 1988 (Japan) */
 	DRIVER( kikcubic )	/* (c) 1988 (Japan) */
+	DRIVER( kikcubib )	/* bootleg */
 	DRIVER( buccanrs )	/* (c) 1989 Duintronic */
 	DRIVER( buccanra )	/* (c) 1989 Duintronic */
 	/* M72 (and derivatives) */
@@ -3187,7 +3188,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( svf )		/* (c) 1994 */
 	DRIVER( svs )		/* (c) 1994 */
 	DRIVER( jleague )	/* (c) 1994 (Japan) */
-	DRIVER( brival )	/* (c) 1992 (Japan) */
+	DRIVER( brival )	/* (c) 1992 (World) */
+	DRIVER( brivalj )	/* (c) 1992 (Japan) */
 	DRIVER( radm )		/* (c) 1991 (World) */
 	DRIVER( radmu )		/* (c) 1991 (US) */
 	DRIVER( radr )		/* (c) 1991 */
@@ -4126,6 +4128,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mtlchamp )	/* GX234 (c) 1993 (World) */
 	DRIVER( mtlchmpu )	/* GX234 (c) 1993 (US) */
 	DRIVER( mtlchmpj )	/* GX234 (c) 1993 (Japan) */
+	DRIVER( mtlchmpa )	/* GX234 (c) 1993 (Japan) */
 	DRIVER( rungun )	/* GX247 (c) 1993 (World) */
 	DRIVER( runguna )	/* GX247 (c) 1993 (World) */
 	DRIVER( rungunu )	/* GX247 (c) 1993 (US) */
@@ -5435,6 +5438,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rdftj )
 	DRIVER( rdft2 )
 	DRIVER( rdft2a )
+	DRIVER( rdft2a2 )
 	DRIVER( rdft2j )
 	DRIVER( rdft2us )
 	DRIVER( rdft22kc )

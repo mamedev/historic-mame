@@ -474,7 +474,7 @@ static MACHINE_DRIVER_START( roldfrog )
 	MDRV_CPU_PROGRAM_MAP(roldfrog_readmem,roldfrog_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,30000000)			/* 3 MHz - verified */
+	MDRV_CPU_ADD(Z80,3000000)			/* 3 MHz - verified */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(roldf_sound_map,0)
 	MDRV_CPU_IO_MAP(roldf_sound_io_map,0)
@@ -596,8 +596,8 @@ ROM_START( roldfrog )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
 
-	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -621,8 +621,8 @@ ROM_START( roldfrga )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
 
-	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )

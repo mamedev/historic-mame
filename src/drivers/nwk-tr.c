@@ -1,6 +1,7 @@
 /*  Konami NWK-TR */
 
 #include "driver.h"
+#include "cpu/powerpc/ppc.h"
 
 static data8_t led_reg0;
 static data8_t led_reg1;
@@ -281,7 +282,7 @@ static READ32_HANDLER( sysreg_r )
 	}
 	if( offset == 1 ) {
 		if( mem_mask == 0x00ffffff )	/* Dip switches */
-			r |= 0x80 << 24;			/* 0x80 = test mode */
+			r |= 0x00 << 24;			/* 0x80 = test mode */
 		return r;
 	}
 	return 0;
@@ -357,12 +358,16 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( nwktr )
 INPUT_PORTS_END
 
-
+static ppc_config nwktr_ppc_cfg =
+{
+	PPC_MODEL_403GA
+};
 
 static MACHINE_DRIVER_START( nwktr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
+	MDRV_CPU_CONFIG(nwktr_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(nwktr_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)

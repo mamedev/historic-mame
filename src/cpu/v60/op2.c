@@ -262,11 +262,13 @@ int opCMPF(void)
 int op5FUNHANDLED(void)
 {
 	osd_die("Unhandled 5F opcode at %08x\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 int op5CUNHANDLED(void)
 {
 	osd_die("Unhandled 5C opcode at %08x\n", PC);
+	return 0; /* never reached, osd_die won't return */
 }
 
 int (*Op5FTable[32])(void) =

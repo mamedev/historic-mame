@@ -1762,10 +1762,10 @@ ROM_START( htchctch )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(5b27adb6) SHA1(a0821093d8c73765ff15767bdfc0afa95aa1371d) )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(5b27adb6) SHA1(a0821093d8c73765ff15767bdfc0afa95aa1371d) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "p01.c1", 0x00000, 0x20000, CRC(18c06829) SHA1(46b180319ed33abeaba70d2cc61f17639e59bfdb) )
@@ -1794,10 +1794,10 @@ ROM_START( cookbib )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(a77d13f4) SHA1(13db72f5b171b0c1226e97ea98d9edd7144d56d9) )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(a77d13f4) SHA1(13db72f5b171b0c1226e97ea98d9edd7144d56d9) )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "sound.uc1", 0x00000, 0x20000, CRC(545e19b6) SHA1(ef518bbe44b22e7ef77ee6af337ebcad9b2674e0) )
@@ -1827,10 +1827,10 @@ ROM_START( chokchok )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(0bd39834) SHA1(2860c2b7fcb74546afde11a59d4b359612ab6e68) )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(0bd39834) SHA1(2860c2b7fcb74546afde11a59d4b359612ab6e68) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "uc1.bin", 0x00000, 0x40000, CRC(f3f57abd) SHA1(601dc669020ef9156fa221e768be9b88454e3f55) )
@@ -1871,11 +1871,11 @@ ROM_START( bcstry )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
 	/* taken from other set, check... */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
@@ -1925,10 +1925,10 @@ ROM_START( bcstrya )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )

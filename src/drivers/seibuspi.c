@@ -1466,7 +1466,9 @@ static INTERRUPT_GEN( spi_interrupt )
 
 static MACHINE_INIT( spi )
 {
-	UINT8* rom = memory_region(REGION_USER1);
+	data32_t *rombase = (data32_t*)memory_region(REGION_USER1);
+	data32_t flash_data = rombase[0x1ffffc/4];
+
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
@@ -1478,13 +1480,13 @@ static MACHINE_INIT( spi )
 	/* If any of the other values are wrong, the game goes to update mode */
 	intelflash_write(0, 0, 0xff);
 	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 0, rom[0x1ffffc]);	/* country code */
+	intelflash_write(0, 0, flash_data & 0xff);			/* country code */
 	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 1, rom[0x1ffffd]);	/* unknown */
+	intelflash_write(0, 1, (flash_data >> 8) & 0xff);	/* unknown */
 	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 2, rom[0x1ffffe]);	/* unknown */
+	intelflash_write(0, 2, (flash_data >> 16) & 0xff);	/* unknown */
 	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 3, rom[0x1fffff]);	/* game code (same between regions) */
+	intelflash_write(0, 3, (flash_data >> 24) & 0xff);	/* game code (same between regions) */
 }
 
 static MACHINE_DRIVER_START( spi )
@@ -2236,10 +2238,46 @@ ROM_END
 ROM_START(rdft2)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
-	ROM_LOAD32_BYTE("prg0e.bin", 0x000000, 0x80000, CRC(046b3f0e) SHA1(033898f658d6007f891828835734422d4af36321) )
-	ROM_LOAD32_BYTE("prg1e.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
-	ROM_LOAD32_BYTE("prg2e.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
-	ROM_LOAD32_BYTE("prg3e.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
+	ROM_LOAD32_BYTE("prg0.tun", 0x000000, 0x80000, CRC(3cb3fdca) SHA1(4b472dfd65c7bbbcb92a295aa73b0fa70581455b) )
+	ROM_LOAD32_BYTE("prg1.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
+	ROM_LOAD32_BYTE("prg2.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
+	ROM_LOAD32_BYTE("prg3.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
+	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
+	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
+
+	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, BAD_DUMP CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, BAD_DUMP CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, BAD_DUMP CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, BAD_DUMP CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
+
+	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, BAD_DUMP CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, BAD_DUMP CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, BAD_DUMP CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, BAD_DUMP CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, BAD_DUMP CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, BAD_DUMP CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
+ROM_END
+
+ROM_START(rdft2j)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0.sei", 0x000000, 0x80000, CRC(a60c4e7c) SHA1(7789b029d0ac084c7e5e662a7168edaed8f11633) )
+	ROM_LOAD32_BYTE("prg1.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
+	ROM_LOAD32_BYTE("prg2.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
+	ROM_LOAD32_BYTE("prg3.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
 	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
@@ -2272,15 +2310,15 @@ ROM_END
 ROM_START(rdft2a)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
-	ROM_LOAD32_BYTE("rf2_1.bin", 0x000000, 0x80000, CRC(72198410) SHA1(ca4bc858f6bf247a343b0fdae1d1a3cdabc4a3c3) )
-	ROM_LOAD32_BYTE("rf2_2.bin", 0x000001, 0x80000, CRC(ec73a767) SHA1(83f3905afe49401793c0ea0193cb31d3ba1e1739) )
-	ROM_LOAD32_BYTE("rf2_3.bin", 0x000002, 0x80000, CRC(e66243b2) SHA1(54e67af37a4586fd1afc79085ed433d599e1bb87) )
-	ROM_LOAD32_BYTE("rf2_4.bin", 0x000003, 0x80000, CRC(92b7b73e) SHA1(128649b2a6a0616113bd0f9846fb6cf814ae326d) )
+	ROM_LOAD32_BYTE("prg0.met", 0x000000, 0x80000, CRC(046b3f0e) SHA1(033898f658d6007f891828835734422d4af36321) )
+	ROM_LOAD32_BYTE("prg1.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
+	ROM_LOAD32_BYTE("prg2.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
+	ROM_LOAD32_BYTE("prg3.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
-	ROM_LOAD24_BYTE("rf2_5.bin", 0x000001, 0x10000, CRC(377cac2f) SHA1(f7c9323d79b77f6c8c02ba2c6cdca127d6e5cb5c) )
-	ROM_LOAD24_BYTE("rf2_6.bin", 0x000000, 0x10000, CRC(42bd5372) SHA1(c38df85b25070db9640eac541f71c0511bab0c98) )
-	ROM_LOAD24_BYTE("rf2_7.bin", 0x000002, 0x10000, CRC(1efaac7e) SHA1(8252af56dcb7a6306dc3422070176778e3c511c2) )
+	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
+	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
+	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
 	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
@@ -2305,18 +2343,18 @@ ROM_START(rdft2a)
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
-ROM_START(rdft2j)
+ROM_START(rdft2a2)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
-	ROM_LOAD32_BYTE("prg0.bin",  0x000000, 0x80000, CRC(a60c4e7c) SHA1(7789b029d0ac084c7e5e662a7168edaed8f11633) )
-	ROM_LOAD32_BYTE("prg1e.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
-	ROM_LOAD32_BYTE("prg2e.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
-	ROM_LOAD32_BYTE("prg3e.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
+	ROM_LOAD32_BYTE("rf2_1.bin", 0x000000, 0x80000, CRC(72198410) SHA1(ca4bc858f6bf247a343b0fdae1d1a3cdabc4a3c3) )
+	ROM_LOAD32_BYTE("rf2_2.bin", 0x000001, 0x80000, CRC(ec73a767) SHA1(83f3905afe49401793c0ea0193cb31d3ba1e1739) )
+	ROM_LOAD32_BYTE("rf2_3.bin", 0x000002, 0x80000, CRC(e66243b2) SHA1(54e67af37a4586fd1afc79085ed433d599e1bb87) )
+	ROM_LOAD32_BYTE("rf2_4.bin", 0x000003, 0x80000, CRC(92b7b73e) SHA1(128649b2a6a0616113bd0f9846fb6cf814ae326d) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, 0)
-	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
-	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
-	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
+	ROM_LOAD24_BYTE("rf2_5.bin", 0x000001, 0x10000, CRC(377cac2f) SHA1(f7c9323d79b77f6c8c02ba2c6cdca127d6e5cb5c) )
+	ROM_LOAD24_BYTE("rf2_6.bin", 0x000000, 0x10000, CRC(42bd5372) SHA1(c38df85b25070db9640eac541f71c0511bab0c98) )
+	ROM_LOAD24_BYTE("rf2_7.bin", 0x000002, 0x10000, CRC(1efaac7e) SHA1(8252af56dcb7a6306dc3422070176778e3c511c2) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
 	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
@@ -2556,8 +2594,9 @@ GAMEX( 1996, rdft,      0,       spi,      spi_3button, rdft,     ROT270, "Seibu
 GAMEX( 1996, rdftau,    rdft,    spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Australia)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1996, rdftj,     rdft,    spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Japan set 2)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
-GAMEX( 1997, rdft2,     0,       spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Metrotainment license)", "Raiden Fighters 2 (Asia, Metrotainment license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
-GAMEX( 1997, rdft2a,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters 2 (Asia, Dream Island license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2,     0,       spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Tuning license)", "Raiden Fighters 2",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2a2,   rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters 2 (Asia, Dream Island license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2a,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Metrotainment license)", "Raiden Fighters 2 (Asia, Metrotainment license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1997, rdft2j,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 (Japan, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 GAMEX( 1998, rfjet,     0,       spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Tuning license)", "Raiden Fighters Jet",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

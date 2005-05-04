@@ -1,6 +1,8 @@
 /*  GTI Club */
 
 #include "driver.h"
+#include "machine/eeprom.h"
+#include "cpu/powerpc/ppc.h"
 
 static data8_t led_reg0;
 static data8_t led_reg1;
@@ -112,20 +114,65 @@ VIDEO_UPDATE( gticlub )
 
 /******************************************************************/
 
+/* 93C56 EEPROM */
+static struct EEPROM_interface eeprom_interface =
+{
+	8,				/* address bits */
+	16,				/* data bits */
+	"*110",			/*  read command */
+	"*101",			/* write command */
+	"*111",			/* erase command */
+	"*10000xxxxxx",	/* lock command */
+	"*10011xxxxxx",	/* unlock command */
+	1,				/* enable_multi_read */
+	0				/* reset_delay */
+};
+
+static void eeprom_handler(mame_file *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+		if (file)	EEPROM_load(file);
+	}
+}
+
+//UINT32 eeprom_bit = 0;
 static READ32_HANDLER( sysreg_r )
 {
-	return 0;
+	UINT32 r = 0;
+	if (offset == 1) {
+		if (!(mem_mask & 0xff000000) )
+		{
+			UINT32 eeprom_bit = (EEPROM_read_bit() << 1);
+			r |= eeprom_bit << 24;
+		}
+		return r;
+	}
+	return 0xffffffff;
 }
 
 static WRITE32_HANDLER( sysreg_w )
 {
-	if( offset == 0 ) {
-		if( mem_mask == 0x00ffffff )
+	if (offset == 0) {
+		if( !(mem_mask & 0xff000000) )
+		{
 			led_reg0 = (data >> 24) & 0xff;
-		if( mem_mask == 0xff00ffff )
+		}
+		if( !(mem_mask & 0x00ff0000) )
+		{
 			led_reg1 = (data >> 16) & 0xff;
+		}
+		if( !(mem_mask & 0x000000ff) )
+		{
+			EEPROM_write_bit((data & 0x01) ? 1 : 0);
+			EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE);
+			EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
+		}
 	}
-	if( offset == 1 )
+	if (offset == 1)
 		return;
 }
 
@@ -142,7 +189,7 @@ static READ32_HANDLER( video_r )
 static ADDRESS_MAP_START( gticlub_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_SHARE(3)
 	AM_RANGE(0x74000000, 0x740000ff) AM_READWRITE(K001604_reg_r, K001604_reg_w)
-	AM_RANGE(0x74010000, 0x74017fff) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x74010000, 0x7401ffff) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x74020000, 0x7403ffff) AM_READWRITE(K001604_tile_r, K001604_tile_w)
 	AM_RANGE(0x74040000, 0x7407ffff) AM_READWRITE(K001604_char_r, K001604_char_w)
 	AM_RANGE(0x78000000, 0x7800ffff) AM_RAM
@@ -162,19 +209,31 @@ ADDRESS_MAP_END
 
 /********************************************************************/
 
+static NVRAM_HANDLER(gticlub)
+{
+	eeprom_handler(file, read_or_write);
+}
 
 
 INPUT_PORTS_START( gticlub )
 INPUT_PORTS_END
 
+static ppc_config gticlub_ppc_cfg =
+{
+	PPC_MODEL_403GA
+};
+
 static MACHINE_DRIVER_START( gticlub )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
+	MDRV_CPU_CONFIG(gticlub_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(gticlub_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
+
+	MDRV_NVRAM_HANDLER(gticlub)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)

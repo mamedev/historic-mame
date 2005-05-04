@@ -37,6 +37,12 @@
 #define SPR403_PBL2			0x3FE	/* 406GA Protection Bound Lower 2               Read / Write */
 #define SPR403_PBU2			0x3FF	/* 406GA Protection Bound Upper 2               Read / Write */
 
+#define SPR403_SGR			0x3b9	/* 403GCX Storage Guarded Register */
+#define SPR403_DCWR			0x3ba	/* 403GCX Data Cache Write Through */
+#define SPR403_PID			0x3b1	/* 403GCX Process ID */
+#define SPR403_TBHU			0x3cc	/* 403GCX Time Base High User-mode */
+#define SPR403_TBLU			0x3cd	/* 403GCX Time Base Low User-mode */
+
 #define SPR603E_DSISR		18		/* 603E */
 #define SPR603E_DAR			19		/* 603E */
 #define SPR603E_DEC			22		/* 603E */
@@ -116,10 +122,12 @@
 #define DCR_IOCR		0xa0	/* io configuration */
 
 enum {
-	EXCEPTION_IRQ			= 0x5,
-	EXCEPTION_DECREMENTER	= 0x9,
-	EXCEPTION_TRAP			= 0x7,
-	EXCEPTION_SYSTEM_CALL	= 0xc
+	EXCEPTION_IRQ						= 1,
+	EXCEPTION_DECREMENTER				= 2,
+	EXCEPTION_TRAP						= 3,
+	EXCEPTION_SYSTEM_CALL				= 4,
+	EXCEPTION_FIXED_INTERVAL_TIMER		= 21,
+	EXCEPTION_WATCHDOG_TIMER			= 22,
 };
 
 enum {
@@ -188,7 +196,16 @@ typedef struct {
 } ppc_config;
 
 #if (HAS_PPC403)
+typedef UINT8 (* SPU_RX_HANDLER)(void);
+typedef void  (* SPU_TX_HANDLER)(UINT8);
 void ppc403_get_info(UINT32 state, union cpuinfo *info);
+void ppc403_spu_rx(UINT8 data);
+void ppc403_install_spu_rx_handler(SPU_RX_HANDLER rx_handler);
+void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler);
+
+#define PPC403_SPU_RX		5
+#define PPC403_SPU_TX		6
+
 #endif
 
 #if (HAS_PPC602)

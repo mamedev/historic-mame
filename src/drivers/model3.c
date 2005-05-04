@@ -1163,7 +1163,7 @@ static READ64_HANDLER( model3_sys_r )
 			break;
 	}
 
-	logerror("Unknown model3 sys_r: offs %x mask %x\n", offset, (UINT32)mem_mask);
+	logerror("Unknown model3 sys_r: offs %08X mask %08X\n", offset, (UINT32)mem_mask);
 	return 0;
 }
 
@@ -1182,6 +1182,7 @@ static WRITE64_HANDLER( model3_sys_w )
 			if (!(mem_mask & U64(0xff00000000000000)))
 			{
 				model3_crom_bank = data >> 56;
+
 				data >>= 56;
 				data = (~data) & 7;
 				cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (data * 0x800000)); /* banked CROM */
@@ -1295,7 +1296,23 @@ static READ64_HANDLER(model3_security_r)
 	return U64(0xffffffffffffffff);
 }
 
+static WRITE64_HANDLER(daytona2_rombank_w)
+{
+	UINT8 bankh, bankl;
+	if (!(mem_mask & U64(0xff00000000000000)))
+	{
+		data >>= 56;
+		bankh = ((~data) >> 2) & 0x3;
+		bankl = (~data) & 0x3;
 
+		cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x800000));
+
+		//bankl = (~data) & 3;
+		//bankh = (~data >> 2) & 3;
+
+		//cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x400000)); /* banked CROM */
+	}
+}
 
 static ADDRESS_MAP_START( model3_mem, ADDRESS_SPACE_PROGRAM, 64)
 	AM_RANGE(0x00000000, 0x007fffff) AM_RAM	AM_BASE(&work_ram)	/* work RAM */
@@ -1489,6 +1506,37 @@ INPUT_PORTS_START( harley )
 	PORT_START	// back brake
 	PORT_BIT( 0xff, 0x00, IPT_PEDAL3 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
 INPUT_PORTS_END
+
+INPUT_PORTS_START( daytona2 )
+	MODEL3_SYSTEM_CONTROLS_1
+	MODEL3_SYSTEM_CONTROLS_2
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* View Button 1 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* View Button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )	/* View Button 3 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )	/* View Button 4 */
+	PORT_BIT( 0x50, IP_ACTIVE_LOW, IPT_BUTTON5 )	/* Shift 1 */
+	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_BUTTON6 )	/* Shift 2 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON7 )	/* Shift 3 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON8 )	/* Shift 4 */
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )		/* Dip switches */
+
+	PORT_START	// steering
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START	// accelerator
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START	// brake
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+INPUT_PORTS_END
+
 
 
 
@@ -2800,20 +2848,18 @@ ROM_END
     0x02: V-blank start
     0x01: Unused ?
 */
-/*static int model3_vblank = 0;*/
+//static int model3_vblank = 0;
 static INTERRUPT_GEN(model3_interrupt)
 {
-	/*if(model3_vblank == 0) {
-        model3_irq_state = 0x42;
-    } else {
-        model3_irq_state = 0x0d;
-    }
-    model3_vblank++;
-    if (model3_vblank > 2)
-        model3_vblank = 0;*/
-
-	model3_irq_state = 0x42;
+//  if (model3_vblank == 0) {
+		model3_irq_state = 0x42;
+//  } else {
+//      model3_irq_state = 0x0d;
+//  }
 	cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
+
+//  model3_vblank++;
+//  model3_vblank &= 3;
 }
 
 static ppc_config model3_1x =
@@ -2832,13 +2878,15 @@ static MACHINE_DRIVER_START( model3_10 )
 	MDRV_CPU_PROGRAM_MAP(model3_mem, 0)
  	MDRV_CPU_VBLANK_INT(model3_interrupt,1)
 
+ 	MDRV_INTERLEAVE(10)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(model3_10)
 	MDRV_NVRAM_HANDLER(model3)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(496, 384)
 	MDRV_VISIBLE_AREA(0, 495, 0, 383)
 	MDRV_PALETTE_LENGTH(65536)
@@ -2859,7 +2907,7 @@ static MACHINE_DRIVER_START( model3_15 )
 	MDRV_MACHINE_INIT(model3_15)
 	MDRV_NVRAM_HANDLER(model3)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(496, 384)
 	MDRV_VISIBLE_AREA(0, 495, 0, 383)
 	MDRV_PALETTE_LENGTH(65536)
@@ -2880,7 +2928,7 @@ static MACHINE_DRIVER_START( model3_20 )
 	MDRV_MACHINE_INIT(model3_20)
 	MDRV_NVRAM_HANDLER(model3)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(496, 384)
 	MDRV_VISIBLE_AREA(0, 495, 0, 383)
 	MDRV_PALETTE_LENGTH(65536)
@@ -2901,7 +2949,7 @@ static MACHINE_DRIVER_START( model3_21 )
 	MDRV_MACHINE_INIT(model3_21)
 	MDRV_NVRAM_HANDLER(model3)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(496, 384)
 	MDRV_VISIBLE_AREA(0, 495, 0, 383)
 	MDRV_PALETTE_LENGTH(65536)
@@ -3167,18 +3215,18 @@ static DRIVER_INIT( srally2 )
 
 static DRIVER_INIT( swtrilgy )
 {
-	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
+//  UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
 	init_model3_20();
 
-	rom[(0xf0e48^4)/4] = 0x60000000;
-	rom[(0x043dc^4)/4] = 0x48000090;
-	rom[(0x029a0^4)/4] = 0x60000000;
-	rom[(0x02a0c^4)/4] = 0x60000000;
-	rom[(0xa36dc^4)/4] = 0x60000000;
-	rom[(0xa36f4^4)/4] = 0x60000000;
-	rom[(0xa3708^4)/4] = 0x60000000;
-	rom[(0xa371c^4)/4] = 0x60000000;
-	rom[(0xa3730^4)/4] = 0x60000000;
+/*  rom[(0xf0e48^4)/4] = 0x60000000;
+    rom[(0x043dc^4)/4] = 0x48000090;
+    rom[(0x029a0^4)/4] = 0x60000000;
+    rom[(0x02a0c^4)/4] = 0x60000000;
+    rom[(0xa36dc^4)/4] = 0x60000000;
+    rom[(0xa36f4^4)/4] = 0x60000000;
+    rom[(0xa3708^4)/4] = 0x60000000;
+    rom[(0xa371c^4)/4] = 0x60000000;
+    rom[(0xa3730^4)/4] = 0x60000000;*/
 }
 
 static DRIVER_INIT( von2 )
@@ -3208,7 +3256,15 @@ static DRIVER_INIT( dirtdvls )
 
 static DRIVER_INIT( daytona2 )
 {
+	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
 	init_model3_20();
+
+	memory_install_write64_handler( 0, ADDRESS_SPACE_PROGRAM, 0xc3800000, 0xc3800007, 0, 0, daytona2_rombank_w );
+
+	//rom[(0x68468c^4)/4] = 0x60000000;
+	rom[(0x6063c4^4)/4] = 0x60000000;
+	rom[(0x616434^4)/4] = 0x60000000;
+	rom[(0x69f4e4^4)/4] = 0x60000000;
 }
 
 
@@ -3238,6 +3294,6 @@ GAMEX( 1999, vs2v991,        0, model3_20, model3,    vs2v991, ROT0, "Sega", "Vi
 GAMEX( 1999, vs299,    vs2v991, model3_20, model3,      vs299, ROT0, "Sega", "Virtua Striker 2 '99", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* Model 3 Step 2.1 */
-GAMEX( 1998, daytona2,       0, model3_21, model3,   daytona2, ROT0, "Sega", "Daytona USA 2", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, daytona2,       0, model3_21, daytona2, daytona2, ROT0, "Sega", "Daytona USA 2", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, dirtdvls,       0, model3_21, model3,   dirtdvls, ROT0, "Sega", "Dirt Devils", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, swtrilgy,       0, model3_21, model3,   swtrilgy, ROT0, "Sega/LucasArts", "Star Wars Trilogy", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

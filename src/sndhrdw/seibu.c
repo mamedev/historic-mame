@@ -125,7 +125,67 @@ void seibu_sound_decrypt(int cpu_region,int length)
     Handlers for early Seibu/Tad games with dual channel ADPCM
 */
 
-static int start, end, start1, end1;
+static struct seibu_adpcm_state
+{
+	struct adpcm_state adpcm;
+	sound_stream *stream;
+	UINT32 current, end;
+	UINT8 nibble;
+	UINT8 playing;
+	UINT8 allocated;
+	UINT8 *base;
+} seibu_adpcm[2];
+
+static void seibu_adpcm_callback(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples)
+{
+	struct seibu_adpcm_state *state = param;
+	stream_sample_t *dest = outputs[0];
+
+	while (state->playing && samples > 0)
+	{
+		int val = (state->base[state->current] >> state->nibble) & 15;
+
+		state->nibble ^= 4;
+		if (state->nibble == 4)
+		{
+			state->current++;
+			if (state->current >= state->end)
+				state->playing = 0;
+		}
+
+		*dest++ = clock_adpcm(&state->adpcm, val);
+		samples--;
+	}
+	while (samples > 0)
+	{
+		*dest++ = 0;
+		samples--;
+	}
+}
+
+void *seibu_adpcm_start(int clock, const struct CustomSound_interface *config)
+{
+	int i;
+
+	for (i = 0; i < 2; i++)
+		if (!seibu_adpcm[i].allocated)
+		{
+			struct seibu_adpcm_state *state = &seibu_adpcm[i];
+			state->allocated = 1;
+			state->playing = 0;
+			state->stream = stream_create(0, 1, clock, state, seibu_adpcm_callback);
+			state->base = memory_region(REGION_SOUND1);
+			reset_adpcm(&state->adpcm);
+			return state;
+		}
+	return NULL;
+}
+
+void seibu_adpcm_stop(void *token)
+{
+	struct seibu_adpcm_state *state = token;
+	state->allocated = 0;
+}
 
 // "decrypt" is a bit flowery here, as it's probably just line-swapping to
 // simplify PCB layout/routing rather than intentional protection, but it
@@ -144,28 +204,33 @@ void seibu_adpcm_decrypt(int region)
 
 WRITE8_HANDLER( seibu_adpcm_adr_1_w )
 {
+	if (seibu_adpcm[0].stream)
+		stream_update(seibu_adpcm[0].stream, 0);
 	if (offset)
 	{
-		end = data<<8;
+		seibu_adpcm[0].end = data<<8;
 	}
 	else
 	{
-		start = data<<8;
+		seibu_adpcm[0].current = data<<8;
+		seibu_adpcm[0].nibble = 4;
 	}
 }
 
 WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 {
 	// sequence is 00 02 01 each time.
+	if (seibu_adpcm[0].stream)
+		stream_update(seibu_adpcm[0].stream, 0);
 	switch (data)
 	{
 		case 0:
-//              ADPCM_stop(0);
+			seibu_adpcm[0].playing = 0;
 			break;
 		case 2:
 			break;
 		case 1:
-//          ADPCM_play(0, start, end-start);
+			seibu_adpcm[0].playing = 1;
 			break;
 
 	}
@@ -173,30 +238,33 @@ WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 
 WRITE8_HANDLER( seibu_adpcm_adr_2_w )
 {
+	if (seibu_adpcm[1].stream)
+		stream_update(seibu_adpcm[1].stream, 0);
 	if (offset)
 	{
-		end1 = data<<8;
+		seibu_adpcm[1].end = (data<<8) + 0x10000;
 	}
 	else
 	{
-		start1 = data<<8;
+		seibu_adpcm[1].current = (data<<8) + 0x10000;
+		seibu_adpcm[1].nibble = 4;
 	}
 }
 
 WRITE8_HANDLER( seibu_adpcm_ctl_2_w )
 {
 	// sequence is 00 02 01 each time.
+	if (seibu_adpcm[1].stream)
+		stream_update(seibu_adpcm[1].stream, 0);
 	switch (data)
 	{
 		case 0:
-//              ADPCM_stop(1);
+			seibu_adpcm[1].playing = 0;
 			break;
 		case 2:
 			break;
 		case 1:
-			start1 += 0x10000;
-			end1 += 0x10000;
-//          ADPCM_play(1, start1, end1-start1);
+			seibu_adpcm[1].playing = 1;
 			break;
 
 	}

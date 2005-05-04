@@ -986,8 +986,8 @@ ROM_START( raidndx )
 	ROM_LOAD( "dx_back2.2s",   0x200000, 0x200000, CRC(5799af3e) SHA1(85d6532abd769da77bcba70bd2e77915af40f987) )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) */
-	ROM_LOAD32_WORD( "dx_obj1.4h",  0x000000, 0x100000, CRC(9a7ad495) SHA1(51790f6ee1e05def28a3b09863312d658422f5eb) ) // 1meg??
-	ROM_LOAD32_WORD( "dx_obj2.6h",  0x000002, 0x100000, CRC(4f1da0e1) SHA1(8e7f351c416a03ce2c793e45ba98d9d3f16cf5e8) ) // 1meg??
+	ROM_LOAD32_WORD( "obj1",        0x000000, 0x200000, CRC(ff08ef0b) SHA1(a1858430e8171ca8bab785457ef60e151b5e5cf1) ) /* Shared with original Raiden 2 */
+	ROM_LOAD32_WORD( "obj2",        0x000002, 0x200000, CRC(638eb771) SHA1(9774cc070e71668d7d1d20795502dccd21ca557b) ) /* Shared with original Raiden 2 */
 	ROM_LOAD32_WORD( "dx_obj3.4k",  0x400000, 0x200000, CRC(ba381227) SHA1(dfc4d659aca1722a981fa56a31afabe66f444d5d) )
 	ROM_LOAD32_WORD( "dx_obj4.6k",  0x400002, 0x200000, CRC(65e50d19) SHA1(c46147b4132abce7314b46bf419ce4773e024b05) )
 
@@ -1060,8 +1060,8 @@ ROM_START( raidndxj )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) */
 	/* not from this set, assumed to be the same */
-	ROM_LOAD32_WORD( "dx_obj1.4h",  0x000000, 0x100000, CRC(9a7ad495) SHA1(51790f6ee1e05def28a3b09863312d658422f5eb) ) // 1meg??
-	ROM_LOAD32_WORD( "dx_obj2.6h",  0x000002, 0x100000, CRC(4f1da0e1) SHA1(8e7f351c416a03ce2c793e45ba98d9d3f16cf5e8) ) // 1meg??
+	ROM_LOAD32_WORD( "obj1",        0x000000, 0x200000, CRC(ff08ef0b) SHA1(a1858430e8171ca8bab785457ef60e151b5e5cf1) ) /* Shared with original Raiden 2 */
+	ROM_LOAD32_WORD( "obj2",        0x000002, 0x200000, CRC(638eb771) SHA1(9774cc070e71668d7d1d20795502dccd21ca557b) ) /* Shared with original Raiden 2 */
 	ROM_LOAD32_WORD( "dx_obj3.4k",  0x400000, 0x200000, CRC(ba381227) SHA1(dfc4d659aca1722a981fa56a31afabe66f444d5d) )
 	ROM_LOAD32_WORD( "dx_obj4.6k",  0x400002, 0x200000, CRC(65e50d19) SHA1(c46147b4132abce7314b46bf419ce4773e024b05) )
 
@@ -1139,8 +1139,8 @@ ROM_START( raidndxa )
 
 	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) */
 	/* not from this set, assumed to be the same */
-	ROM_LOAD32_WORD( "dx_obj1.4h",  0x000000, 0x100000, CRC(9a7ad495) SHA1(51790f6ee1e05def28a3b09863312d658422f5eb) ) // 1meg?? should be same as raiden 2 acc. to readme
-	ROM_LOAD32_WORD( "dx_obj2.6h",  0x000002, 0x100000, CRC(4f1da0e1) SHA1(8e7f351c416a03ce2c793e45ba98d9d3f16cf5e8) ) // 1meg?? should be same as raiden 2 acc. to readme
+	ROM_LOAD32_WORD( "obj1",        0x000000, 0x200000, CRC(ff08ef0b) SHA1(a1858430e8171ca8bab785457ef60e151b5e5cf1) ) /* Shared with original Raiden 2 */
+	ROM_LOAD32_WORD( "obj2",        0x000002, 0x200000, CRC(638eb771) SHA1(9774cc070e71668d7d1d20795502dccd21ca557b) ) /* Shared with original Raiden 2 */
 	ROM_LOAD32_WORD( "dx_obj3.4k",  0x400000, 0x200000, CRC(ba381227) SHA1(dfc4d659aca1722a981fa56a31afabe66f444d5d) )
 	ROM_LOAD32_WORD( "dx_obj4.6k",  0x400002, 0x200000, CRC(65e50d19) SHA1(c46147b4132abce7314b46bf419ce4773e024b05) )
 
