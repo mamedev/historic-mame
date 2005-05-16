@@ -597,7 +597,7 @@ VIDEO_START( gstrik2 )
 
 /* Draw sprites */
 
-static void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	const int region		=	REGION_GFX1;
 

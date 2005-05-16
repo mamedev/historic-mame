@@ -238,12 +238,31 @@ WRITE8_HANDLER( qix_palettebank_w )
 VIDEO_UPDATE( qix )
 {
 	pen_t *pens = &Machine->pens[qix_palettebank * 256];
-	int y;
+	UINT8 *vram;
+	UINT8 scanline[256];
+	int x,y;
 
 	/* draw the bitmap */
-	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		draw_scanline8(bitmap, 0, y, 256, &videoram[y * 256], pens, -1);
-
+	if (qix_cocktail_flip)
+	{
+		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		{
+			vram = &videoram[(y ^ 0xff) * 256];
+			for (x = 0;x < 256;x++)
+				scanline[x] = vram[x ^ 0xff];
+			draw_scanline8(bitmap, 0, y, 256, scanline, pens, -1);
+		}
+	}
+	else
+	{
+		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		{
+			vram = &videoram[y * 256];
+			for (x = 0;x < 256;x++)
+				scanline[x] = vram[x];
+			draw_scanline8(bitmap, 0, y, 256, scanline, pens, -1);
+		}
+	}
 #if 0
 	// note the confusing bit order!
 	usrintf_showmessage("self test leds: %d%d %d%d%d%d",BIT(leds,7),BIT(leds,5),BIT(leds,6),BIT(leds,4),BIT(leds,2),BIT(leds,3));

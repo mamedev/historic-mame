@@ -27,16 +27,16 @@ Address          Dir Data     Name       Description
 11010010-xxxxxx0   W -------x VCRRQ      palette chip (93419)
 11010010-xxxxxx1   W xxxxxxxx VCRRQ      palette chip (93419)
 11010011--------   W ---xxxxx PRY        priority control [2]
-11010100----0000 R   xxxxxxxx H0-H7      sprite 0..7 collided
-11010100----0001 R   xxxxxxxx H8-H15     sprite 8..15 collided
-11010100----0010 R   xxxxxxxx H16-H23    sprite 16..23 collided
+11010100----0000 R   xxxxxxxx H0-H7      sprite 0..7 collided with a previous one
+11010100----0001 R   xxxxxxxx H8-H15     sprite 8..15 collided with a previous one
+11010100----0010 R   xxxxxxxx H16-H23    sprite 16..23 collided with a previous one
 11010100----0011 R   -------x OB1        sprite/tilemap 1 collision
 11010100----0011 R   ------x- OB2        sprite/tilemap 2 collision
 11010100----0011 R   -----x-- OB3        sprite/tilemap 3 collision
 11010100----0011 R   ----x--- S12        tilemap 1/tilemap 2 collision
 11010100----0011 R   ---x---- S13        tilemap 1/tilemap 3 collision
 11010100----0011 R   --x----- S23        tilemap 2/tilemap 3 collision
-11010100----0011 R   00------ S23        always 0
+11010100----0011 R   00------            always 0
 11010100----01-- R   xxxxxxxx EXRHR      read contents of graphics ROMs (address selected by d509-d50a)
 11010100----1000 R   11xxxxxx IN0        digital inputs
 11010100----1001 R   11xxxxxx IN1        digital inputs

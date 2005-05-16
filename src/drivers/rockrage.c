@@ -4,6 +4,47 @@ Rock'n'Rage(GX620) (c) 1986 Konami
 
 Driver by Manuel Abadia <manu@teleline.es>
 
+GX620 PWB302109A
+|------------------------------------------------------|
+| LA4445  VOL1 JP1  LM324    6809    6309              |
+|         VOL2 JP2  YM2151                             |
+|         YM3012 3.579545MHz                           |
+|                                                      |
+|       CN1                                            |
+|         LM324                007420                  |
+|                    6116 620G3.11C   6264  620N2.15C  |
+|                                             620N1.16C|
+|J                                                     |
+|A                                                     |
+|M                                   24MHz             |
+|M        620D4.6E                                     |
+|A                             |-------|               |
+|            VLM5030           |007342 |               |
+|  DSW3(4) DSW2(8)             |       |         6264  |
+|          DSW1(8) 620D11B.7F  |       |620D6B.15F     |
+|    |-----------|   620G10B.8F|-------|  620D5B.16F   |
+|    |           |                                     |
+|    |  007327   |            620D9.11G                |
+|    |           | 620G11A.7G   620D8.12G  620D6A.15G  |
+|    |-----------|    620D10A.8G  620D7.13G  620D5A.16G|
+|------------------------------------------------------|
+
+Notes:
+      6809 clock 1.500MHz [24/16]
+      6309 clock 3.000MHz [24/8]
+      VLM5030 clock 3.579545MHz
+      YM2151 clock 3.579545MHz
+      VSync 60Hz
+      HSync 15.16kHz
+      JP1/JP2 - 4-pin jumper to set stereo/mono output
+      CN1 - 4 pin right speaker sound output connector
+      6116 - 2k x8 SRAM (DIP24)
+      6264 - 8k x8 SRAM (DIP28)
+      Konami custom ICs -
+                          007342 3905 67 3147B (PGA181)
+                          007420 3916 67 23 52 A (SDIP64)
+                          007327 (custom ceramic wide DIP40)
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -255,11 +296,11 @@ static struct VLM5030interface vlm5030_interface =
 static MACHINE_DRIVER_START( rockrage )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(HD6309, 3000000)		/* 24MHz/8 (?) */
+	MDRV_CPU_ADD(HD6309, 3000000)		/* 24MHz/8 */
 	MDRV_CPU_PROGRAM_MAP(rockrage_readmem,rockrage_writemem)
 	MDRV_CPU_VBLANK_INT(rockrage_interrupt,1)
 
-	MDRV_CPU_ADD(M6809, 2000000)
+	MDRV_CPU_ADD(M6809, 1500000)		/* 24MHz/16 */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(rockrage_readmem_sound,rockrage_writemem_sound)
 
@@ -299,8 +340,8 @@ MACHINE_DRIVER_END
 
 ROM_START( rockrage )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "rr-q01.rom", 0x08000, 0x08000, CRC(0ddb5ef5) SHA1(71b38c9f957858371f0ac95720d3c6d07339e5c5) )	/* fixed ROM */
-	ROM_LOAD( "rr-q02.rom", 0x10000, 0x10000, CRC(b4f6e346) SHA1(43fded4484836ff315dd6e40991f909dad73f1ed) )	/* banked ROM */
+	ROM_LOAD( "620q01.16c", 0x08000, 0x08000, CRC(0ddb5ef5) SHA1(71b38c9f957858371f0ac95720d3c6d07339e5c5) )	/* fixed ROM */
+	ROM_LOAD( "620q02.15c", 0x10000, 0x10000, CRC(b4f6e346) SHA1(43fded4484836ff315dd6e40991f909dad73f1ed) )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, CRC(9fbefe82) SHA1(ab42b7e519a0dd08f2249dad0819edea0976f39a) )
@@ -310,8 +351,8 @@ ROM_START( rockrage )
 	ROM_LOAD( "620k05.16g",	0x020000, 0x20000, BAD_DUMP CRC(ca9d9346) SHA1(fee8d98def802f312c6cd0ec751c67aa18acfacd)  )
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rr-k11.rom",	0x000000, 0x20000, CRC(70449239) SHA1(07653ea3bfe0063c9d2b2102ac52a1b50fc2971e) )	/* sprites */
-	ROM_LOAD( "rr-l10.rom",	0x020000, 0x20000, CRC(06d108e0) SHA1(cae8c5f2fc4e84bc7adbf27f71a18a74968c4296) )
+	ROM_LOAD( "620k11.rom",	0x000000, 0x20000, CRC(70449239) SHA1(07653ea3bfe0063c9d2b2102ac52a1b50fc2971e) )	/* sprites */
+	ROM_LOAD( "620l10.8g",	0x020000, 0x20000, CRC(06d108e0) SHA1(cae8c5f2fc4e84bc7adbf27f71a18a74968c4296) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, CRC(9f0e0608) SHA1(c95bdb370e4a91f27afbd5ff3b39b2e0ad87da73) )	/* layer 0 lookup table */
@@ -320,6 +361,35 @@ ROM_START( rockrage )
 															/* because it's always 0 1 2 ... f */
 	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* VLM3050 data */
 	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, CRC(8be969f3) SHA1(9856b4c13fac77b645aed67a08cb4965b4966492) )
+ROM_END
+
+ROM_START( rockraga )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
+	ROM_LOAD( "620n01.16c", 0x08000, 0x10000, CRC(f89f56ea) SHA1(64ba2575e09af257b242d913eab69130f7341894) )	/* fixed ROM */
+	ROM_LOAD( "620n02.15c", 0x10000, 0x10000, CRC(5bc1f1cf) SHA1(d5bb9971d778449e0c01495f9888c0da7ac617a7) )	/* banked ROM */
+
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for the sound CPU */
+	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, CRC(9fbefe82) SHA1(ab42b7e519a0dd08f2249dad0819edea0976f39a) ) /* Same rom but labeled as ver "G" */
+
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "620d06a.15g", 0x000000, 0x10000, CRC(8cc05d4b) SHA1(0d6fef98bdc4d299229de4e0044241aedee83b85)  )	/* tiles */
+	ROM_LOAD( "620d06b.15f", 0x010000, 0x10000, CRC(3892d41d) SHA1(c49f2e61f24a59be4e59e2f3c60e731b8a05ddd3) )
+	ROM_LOAD( "620d05a.16g", 0x020000, 0x10000, CRC(4d53fde9) SHA1(941fb6c94922727516945330b4b738aa052f7734) )
+	ROM_LOAD( "620d05b.16f", 0x030000, 0x10000, CRC(69f4599f) SHA1(664581874d74ed7bf59bde6730799e15f4e0144d) )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "620g11a.7g",	0x000000, 0x10000, CRC(0ef40c2c) SHA1(2c0b7e611333a072ebcef60c1985211d5936bf66) )	/* sprites */
+	ROM_LOAD( "620d11b.7f",	0x010000, 0x10000, CRC(8f116cbf) SHA1(0400609aadde39c6f02ab954c78bc67a1d23da1d) )
+	ROM_LOAD( "620d10a.8g",	0x020000, 0x10000, CRC(4789ae7b) SHA1(8885ca20bf746fb3ed229486c0e3903ababfacc9) )
+	ROM_LOAD( "620g10b.8f",	0x030000, 0x10000, CRC(1618854a) SHA1(0afb34a9ed97f13c1910acd7767cb8546ea7e6cd) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "620k09.11g", 0x00000, 0x00100, CRC(9f0e0608) SHA1(c95bdb370e4a91f27afbd5ff3b39b2e0ad87da73) )	/* layer 0 lookup table */
+	ROM_LOAD( "620k08.12g", 0x00100, 0x00100, CRC(b499800c) SHA1(46fa4e071ebceed12027de109be1e16dde5e846e) )	/* layer 1 lookup table */
+	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, CRC(b6135ee0) SHA1(248a978987cff86c2bbad10ef332f63a6abd5bee) )	/* sprite lookup table, but its not used */
+															/* because it's always 0 1 2 ... f */
+	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* VLM3050 data */
+	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, CRC(8be969f3) SHA1(9856b4c13fac77b645aed67a08cb4965b4966492) ) /* Same rom but labeled as ver "G" */
 ROM_END
 
 ROM_START( rockragj )
@@ -354,4 +424,5 @@ ROM_END
 ***************************************************************************/
 
 GAME( 1986, rockrage, 0,        rockrage, rockrage, 0, ROT0, "Konami", "Rock 'n Rage (World?)" )
+GAME( 1986, rockraga, rockrage, rockrage, rockrage, 0, ROT0, "Konami", "Rock 'n Rage (Prototype?)" )
 GAME( 1986, rockragj, rockrage, rockrage, rockrage, 0, ROT0, "Konami", "Koi no Hotrock (Japan)" )

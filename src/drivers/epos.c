@@ -41,32 +41,16 @@ MACHINE_INIT( dealer );
 
 WRITE8_HANDLER( dealer_decrypt_rom )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	if (offset & 0x04)
-	{
-		counter = counter + 1;
-		if (counter < 0)
-			counter = 0x0F;
-	}
+		counter = (counter + 1) & 0x03;
 	else
-	{
-		counter = (counter - 1) & 0x0F;
-	}
+		counter = (counter - 1) & 0x03;
 
 //  logerror("PC %08x: ctr=%04x\n",activecpu_get_pc(),counter);
 
-	switch(counter)
-	{
-
-		case 0x00:	cpu_setbank(1, &RAM[0x10000]);		break;
-		case 0x01:	cpu_setbank(1, &RAM[0x20000]);		break;
-		case 0x02:	cpu_setbank(1, &RAM[0x30000]);		break;
-		case 0x03:	cpu_setbank(1, &RAM[0x40000]);		break;
-		default:
-			logerror("Invalid counter = %02X\n",counter);
-			break;
-	}
+	cpu_setbank(1, rom + 0x10000 * counter);
 }
 
 
@@ -536,7 +520,7 @@ ROM_END
 
 
 ROM_START( dealer )
-	ROM_REGION( 0x50000, REGION_CPU1, 0 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "u1.bin",			0x0000, 0x2000, CRC(e06f3563) SHA1(0d58cd1f2e1ca89adb9c64d7dd520bb1f2d50f1a) )
 	ROM_LOAD( "u2.bin",			0x2000, 0x2000, CRC(726bbbd6) SHA1(3538f3d655899c2a0f984c43fb7545ea4be1b231) )
 	ROM_LOAD( "u3.bin",			0x4000, 0x2000, CRC(ab721455) SHA1(a477da0590e0431172baae972e765473e19dcbff) )
@@ -546,168 +530,84 @@ ROM_START( dealer )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, NO_DUMP )	/* missing */
 ROM_END
 
+/*
+
+Revenger EPOS 1984
+
+EPOS TRISTAR 9000
+
+
+
+   8910   Z80A    4116  4116
+                  4116  4116
+                  4116  4116
+    6116          4116  4116
+    6116          4116  4116
+    U4            4116  4116     74S189
+    U3            4116  4116     74S189
+    U2            4116  4116
+    U1        8255
+                             22.1184MHz
+*/
+
+ROM_START( revenger )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD( "r06124.u1",    0x0000, 0x2000, CRC(fad1a2a5) BAD_DUMP SHA1(a31052c91fe67e2e90441abc40b6483f921ecfe3) )
+	ROM_LOAD( "r06124.u2",    0x2000, 0x2000, CRC(a8e0ee7b) BAD_DUMP SHA1(f6f78e8ce40eab07de461b364876c1eb4a78d96e) )
+	ROM_LOAD( "r06124.u3",    0x4000, 0x2000, CRC(cca414a5) BAD_DUMP SHA1(1c9dd3ff63d57e9452e63083cdbd7f5d693bb686) )
+	ROM_LOAD( "r06124.u4",    0x6000, 0x2000, CRC(0b81c303) BAD_DUMP SHA1(9022d18dec11312eb4bb471c22b563f5f897b4f7) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, NO_DUMP )	/* missing */
+ROM_END
+
 MACHINE_INIT( dealer )
 {
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000);
+	cpu_setbank(1, memory_region(REGION_CPU1));
 
 	ppi8255_init(&ppi8255_intf);
 }
 
 DRIVER_INIT( dealer )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int A;
-	int oldbyte,newbyte;
+
+	/* Key 0 */
+	for (A = 0;A < 0x8000;A++)
+		rom[A] = BITSWAP8(rom[A] ^ 0xbd, 2,6,4,0,5,7,1,3 );
 
 	/* Key 1 */
-	for (A = 0;A < 0x7000;A++)
-	{
-		oldbyte = ROM[A];
-
-		newbyte = 0;
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x10;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x04) * 0x20;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x08) / 0x08;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x02;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x20) / 0x04;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x20;
-
-		ROM[A + 0x10000] = newbyte;
-	}
+	for (A = 0;A < 0x8000;A++)
+		rom[A + 0x10000] = BITSWAP8(rom[A], 7,5,4,6,3,2,1,0 );
 
 	/* Key 2 */
-	for (A = 0;A < 0x7000;A++)
-	{
-		oldbyte = ROM[A+0x10000];
-
-		newbyte = 0;
-		newbyte += ((oldbyte & 0x01 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
-
-		ROM[A + 0x20000 ] = newbyte;
-	}
+	for (A = 0;A < 0x8000;A++)
+		rom[A + 0x20000] = BITSWAP8(rom[A] ^ 1, 7,6,5,4,3,0,2,1 );
 
 	/* Key 3 */
-	for (A = 0;A < 0x7000;A++)
-	{
-		oldbyte = ROM[A+0x10000];
+	for (A = 0;A < 0x8000;A++)
+		rom[A + 0x30000] = BITSWAP8(rom[A] ^ 1, 7,5,4,6,3,0,2,1 );
 
-		newbyte = 0;
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
+	/*
+        there is not enough data to determine key 3.
+        the code in question is this:
 
-		ROM[A + 0x30000 ] = newbyte;
-	}
+        [this is the data as decrypted by Key 1]
+        2F58: 55 5C 79
+        2F5B: 55 F7 79
+        2F5E: 55 CD 79
 
-	/* Key 4 */
-	for (A = 0;A < 0x7000;A++)
-	{
+        it must become
 
-/* there is not enough data to determine the last key.
-   the code in question is this:
+        2F58: 32 3e 78  ld (793e),a
+        2F5B: 32 xx 78  ld (79xx),a
+        2F5E: 32 xx 78  ld (79xx),a
 
-     55  =   32         ld (793e),a
-2f59 5c       3e
-2f5a 79      78
-
-2f5b 55   32            ld (79xx),a
-2f5c f7   53 or  D2 or  F3
-2f5d 79   78
-
-2f5e 55    32           ld (79xx),a
-2f5f cd 1B 56 77 9A BB F6
-     79    78
-It writes data to be read later.
-I don't know the lsb of the writes.  I do know:
-if 2f5c = 53 then 2f5f = 9A or BB or F6
-          d2             1B 77 BB
-          f3             1B 56 9A
-
-Someone will have to check the code to see what it's looking for.
-As usual I've had to make some assumptions so I can't guarantee 100% accuracy
-Dave
-*/
-
-		oldbyte = ROM[A+0x10000];
-
-		newbyte = 0;
-#if 1
-//53:9a
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x08;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x04;
-#endif
-
-#if 0
-//53:bb
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x02) * 0x10;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x08;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x00) / 0x80;
-#endif
-
-#if 0
-//f3:9a
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
-#endif
-
-#if 0
-//f3:1b
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x40;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x00) / 0x80;
-#endif
-
-#if 0
-//d2:1b
-		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
-		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x40;
-		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
-		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
-		newbyte += ((oldbyte & 0x10 ) ^ 0x10) / 0x10;
-		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
-		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
-		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x04;
-#endif
-
-		ROM[A + 0x40000 ] = newbyte;
-	}
+        the obvious solution is a combination of key 1 and key 2.
+    */
 }
+
 
 /*************************************
  *
@@ -715,11 +615,12 @@ Dave
  *
  *************************************/
 
-GAME ( 1982, megadon,  0,        epos,  megadon,  0,	  ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
-GAMEX( 1982, catapult, 0,        epos,  igmo,     0,	  ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
-GAME ( 1983, suprglob, 0,        epos,  suprglob, 0,	  ROT270, "Epos Corporation", "Super Glob" )
-GAME ( 1983, theglob,  suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob" )
-GAME ( 1983, theglob2, suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob (earlier)" )
-GAME ( 1983, theglob3, suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob (set 3)" )
-GAMEX( 1984, igmo,     0,        epos,  igmo,     0,	  ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
-GAMEX( 19??, dealer,   0,        dealer, dealer,  dealer, ROT270, "Epos Corporation", "The Dealer", GAME_NOT_WORKING)
+GAME ( 1982, megadon,  0,        epos,   megadon,  0,	     ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
+GAMEX( 1982, catapult, 0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
+GAME ( 1983, suprglob, 0,        epos,   suprglob, 0,	     ROT270, "Epos Corporation", "Super Glob" )
+GAME ( 1983, theglob,  suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob" )
+GAME ( 1983, theglob2, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (earlier)" )
+GAME ( 1983, theglob3, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (set 3)" )
+GAMEX( 1984, igmo,     0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
+GAMEX( 19??, dealer,   0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "The Dealer", GAME_NOT_WORKING)
+GAMEX( 1984, revenger, 0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "Revenger", GAME_NOT_WORKING)

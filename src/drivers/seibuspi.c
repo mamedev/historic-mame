@@ -2600,7 +2600,7 @@ GAMEX( 1997, rdft2a,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu K
 GAMEX( 1997, rdft2j,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 (Japan, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 GAMEX( 1998, rfjet,     0,       spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Tuning license)", "Raiden Fighters Jet",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
-GAMEX( 1998, rfjetu,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (US)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1998, rfjetu,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters Jet (US)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1998, rfjeta,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters Jet (Asia)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1998, rfjetj,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
@@ -2610,7 +2610,7 @@ GAMEX( 1998, rfjetj,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu
 GAMEX( 1997, rdft2us,   rdft2,   sxx2f,    spi_2button, rdft2us,  ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters 2.1 (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND ) // title screen shows '2.1'
 
 /* SXX2G */
-GAMEX( 1999, rfjetus,   rfjet,   sxx2f,    spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND  ) // has 1998-99 copyright + planes unlocked
+GAMEX( 1999, rfjetus,   rfjet,   sxx2f,    spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters Jet (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND  ) // has 1998-99 copyright + planes unlocked
 
 /* SYS386 */
 GAMEX( 2000, rdft22kc,  rdft2,   seibu386, spi_2button, rdft22kc, ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

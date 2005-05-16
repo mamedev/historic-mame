@@ -383,7 +383,7 @@ INLINE void MODIFY_AR_ARP(void)
 
 INLINE void CALCULATE_ADD_CARRY(void)
 {
-	if ( ((INT32)(oldacc.d) < 0) && ((INT32)(R.ACC.d) >= 0) ) {
+	if ( (UINT32)(oldacc.d) > (UINT32)(R.ACC.d) ) {
 		SET1(C_FLAG);
 	}
 	else {
@@ -393,7 +393,7 @@ INLINE void CALCULATE_ADD_CARRY(void)
 
 INLINE void CALCULATE_SUB_CARRY(void)
 {
-	if ( ((INT32)(oldacc.d) >= 0) && ((INT32)(R.ACC.d) < 0) ) {
+	if ( (UINT32)(oldacc.d) < (UINT32)(R.ACC.d) ) {
 		CLR1(C_FLAG);
 	}
 	else {
@@ -536,9 +536,10 @@ static void abst(void)
 {
 		if ( (INT32)(R.ACC.d) < 0 ) {
 			R.ACC.d = -R.ACC.d;
-			if (OVM) {
+			if (R.ACC.d == 0x80000000)
+			{
 				SET0(OV_FLAG);
-				if (R.ACC.d == 0x80000000) R.ACC.d-- ;
+				if (OVM) R.ACC.d-- ;
 			}
 		}
 		CLR1(C_FLAG);
@@ -715,7 +716,7 @@ static void blkd(void)
 		R.ALU.d = M_RDRAM(R.PFC);
 		PUTDATA(R.ALU.d);
 		R.PFC++;
-		tms32025_icount -= (1*CLK);
+		R.tms32025_dec_cycles += (1*CLK);
 }
 static void blkp(void)
 {										/** Fix cycle timing **/
@@ -726,7 +727,7 @@ static void blkp(void)
 		R.ALU.d = M_RDROM(R.PFC);
 		PUTDATA(R.ALU.d);
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void blz(void)
 {
@@ -1094,9 +1095,9 @@ static void mac(void)			/** RAM blocks B0,B1,B2 may be important ! */
 		CALCULATE_ADD_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = ( R.ALU.w.l * M_RDROM(R.PFC) );
+		R.Preg.d = ( (INT16)R.ALU.w.l * (INT16)M_RDROM(R.PFC) );
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void macd(void)			/** RAM blocks B0,B1,B2 may be important ! */
 {								/** Fix cycle timing **/
@@ -1114,9 +1115,9 @@ static void macd(void)			/** RAM blocks B0,B1,B2 may be important ! */
 			M_WRTRAM((memaccess+1),R.ALU.w.l);
 		}
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = ( R.ALU.w.l * M_RDROM(R.PFC) );
+		R.Preg.d = ( (INT16)R.ALU.w.l * (INT16)M_RDROM(R.PFC) );
 		R.PFC++;
-		tms32025_icount -= (2*CLK);
+		R.tms32025_dec_cycles += (2*CLK);
 }
 static void mar(void)		/* LARP and NOP are a subset of this instruction */
 {
@@ -1386,7 +1387,7 @@ static void sqra(void)
 		CALCULATE_ADD_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = (R.ALU.w.l * R.ALU.w.l);
+		R.Preg.d = ((INT16)R.ALU.w.l * (INT16)R.ALU.w.l);
 }
 static void sqrs(void)
 {
@@ -1397,7 +1398,7 @@ static void sqrs(void)
 		CALCULATE_SUB_CARRY();
 		GETDATA(0,0);
 		R.Treg = R.ALU.w.l;
-		R.Preg.d = (R.ALU.w.l * R.ALU.w.l);
+		R.Preg.d = ((INT16)R.ALU.w.l * (INT16)R.ALU.w.l);
 }
 static void sst(void)
 {
@@ -1522,7 +1523,7 @@ static void tblr(void)
 		}
 		R.ALU.w.l = M_RDROM(R.PFC);
 		if ( (CNF0) && ( (UINT16)(R.PFC) >= 0xff00 ) ) {}	/** TMS32025 only */
-		else tms32025_icount -= (1*CLK);
+		else R.tms32025_dec_cycles += (1*CLK);
 		PUTDATA(R.ALU.w.l);
 		R.PFC++;
 }
@@ -1532,9 +1533,9 @@ static void tblw(void)
 		{
 			R.PFC = R.ACC.w.l;
 		}
-		tms32025_icount -= (1*CLK);
+		R.tms32025_dec_cycles += (1*CLK);
 		GETDATA(0,0);
-		if (R.external_mem_access) tms32025_icount -= (1*CLK);
+		if (R.external_mem_access) R.tms32025_dec_cycles += (1*CLK);
 		M_WRTROM(R.PFC, R.ALU.w.l);
 		R.PFC++;
 }
@@ -2170,6 +2171,126 @@ static offs_t tms32025_dasm(char *buffer, offs_t pc)
 }
 
 
+/****************************************************************************
+ *  Opcode fetcher
+ ****************************************************************************/
+static int tms32025_readop(UINT32 offset, int size, UINT64 *value)
+{
+	void *ptr;
+
+	/* skip if not custom */
+	if (!tms32025_pgmmap[offset >> 8])
+		return 0;
+
+	ptr = &((UINT8 *)&tms32025_pgmmap[offset >> 8])[offset & 0xff];
+	switch (size)
+	{
+		case 1:	*value = *((data8_t *) ptr);
+		case 2:	*value = *((data16_t *) ptr);
+		case 4:	*value = *((data32_t *) ptr);
+		case 8:	*value = *((data64_t *) ptr);
+	}
+	return 1;
+}
+
+
+/****************************************************************************
+ *  Memory reader
+ ****************************************************************************/
+static int tms32025_read(int space, UINT32 offset, int size, UINT64 *value)
+{
+	void *ptr = NULL;
+	UINT64 temp = 0;
+
+	switch (space)
+	{
+		case ADDRESS_SPACE_PROGRAM:
+			ptr = tms32025_pgmmap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_DATA:
+			ptr = tms32025_datamap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_IO:
+			return 0;
+	}
+
+	switch (size)
+	{
+		case 1:
+			*value = ((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)];
+			break;
+		case 2:
+			*value = ((data16_t *)ptr)[(offset & 0xff) / 2];
+			break;
+		case 4:
+			tms32025_read(space, offset + 0, 2, &temp);
+			*value = temp << 16;
+			tms32025_read(space, offset + 2, 2, &temp);
+			*value |= temp & 0xffff;
+			break;
+		case 8:
+			tms32025_read(space, offset + 0, 4, &temp);
+			*value = temp << 32;
+			tms32025_read(space, offset + 4, 4, &temp);
+			*value |= temp & 0xffffffff;
+			break;
+	}
+	return 1;
+}
+
+
+/****************************************************************************
+ *  Memory writer
+ ****************************************************************************/
+static int tms32025_write(int space, UINT32 offset, int size, UINT64 value)
+{
+	void *ptr = NULL;
+
+	switch (space)
+	{
+		case ADDRESS_SPACE_PROGRAM:
+			ptr = tms32025_pgmmap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_DATA:
+			ptr = tms32025_datamap[offset >> 8];
+			if (!ptr)
+				return 0;
+			break;
+
+		case ADDRESS_SPACE_IO:
+			return 0;
+	}
+
+	switch (size)
+	{
+		case 1:
+			((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)] = value;
+			break;
+		case 2:
+			((data16_t *)ptr)[(offset & 0xff) / 2] = value;
+			break;
+		case 4:
+			tms32025_write(space, offset + 0, 2, value >> 16);
+			tms32025_write(space, offset + 2, 2, value);
+			break;
+		case 8:
+			tms32025_write(space, offset + 0, 4, value >> 32);
+			tms32025_write(space, offset + 4, 4, value);
+			break;
+	}
+	return 1;
+}
+
+
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -2247,10 +2368,10 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16+1;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16+1;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 17;					break;
@@ -2309,6 +2430,9 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms32025_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32025_dasm;		break;
+		case CPUINFO_PTR_READ:							info->read = tms32025_read;				break;
+		case CPUINFO_PTR_WRITE:							info->write = tms32025_write;			break;
+		case CPUINFO_PTR_READOP:						info->readop = tms32025_readop;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = R.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32025_reg_layout;			break;

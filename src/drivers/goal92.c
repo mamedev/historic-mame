@@ -5,9 +5,6 @@
     driver by Pierpaolo Prazzoli
     and some bits by David Haywood
 
-    TODO:
-    - Add ADPCM emulation
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -26,6 +23,8 @@ extern VIDEO_START( goal92 );
 extern VIDEO_UPDATE( goal92 );
 
 extern data16_t *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
+
+static int msm5205next;
 
 static WRITE16_HANDLER( goal92_sound_command_w )
 {
@@ -85,10 +84,28 @@ ADDRESS_MAP_END
 
 /* Sound CPU */
 
+static WRITE8_HANDLER( adpcm_control_w )
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU2);
+
+	/* the code writes either 2 or 3 in the bottom two bits */
+	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
+
+	MSM5205_reset_w(0,data & 0x08);
+}
+
+static WRITE8_HANDLER( adpcm_data_w )
+{
+	msm5205next = data;
+}
+
 static ADDRESS_MAP_START( sound_cpu, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_ROM
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) // adpcm write ?
-	AM_RANGE(0xe400, 0xe400) AM_WRITE(MWA8_NOP) // adpcm write ?
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(adpcm_control_w)
+	AM_RANGE(0xe400, 0xe400) AM_WRITE(adpcm_data_w)
 	AM_RANGE(0xe800, 0xe800) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
 	AM_RANGE(0xe801, 0xe801) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
 	AM_RANGE(0xec00, 0xec00) AM_READWRITE(YM2203_status_port_1_r, YM2203_control_port_1_w)
@@ -231,7 +248,14 @@ static struct YM2203interface ym2203_interface =
 
 static void goal92_adpcm_int(int data)
 {
-	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+	static int toggle = 0;
+
+	MSM5205_data_w (0,msm5205next);
+	msm5205next>>=4;
+
+	toggle ^= 1;
+	if(toggle)
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct MSM5205interface msm5205_interface =
@@ -330,9 +354,9 @@ static MACHINE_DRIVER_START( goal92 )
 	MDRV_SOUND_ADD(YM2203, 2500000/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
-	MDRV_SOUND_ADD(MSM5205, 400000)
+	MDRV_SOUND_ADD(MSM5205, 384000)
 	MDRV_SOUND_CONFIG(msm5205_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cupsocbl )
@@ -412,8 +436,9 @@ ROM_START( goal92 )
 	ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x80000, CRC(db0a6c7c) SHA1(b609db7806b99bc921806d8b3e5e515b4651c375) )
 	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x80000, CRC(e4c45dee) SHA1(542749bd1ff51220a151fe66acdadac83df8f0ee) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code */
-	ROM_LOAD( "1.bin",        0x00000, 0x10000, CRC(3d317622) SHA1(ae4e8c5247bc215a2769786cb8639bce2f80db22) )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* Z80 code */
+	ROM_LOAD( "1.bin",        0x00000, 0x8000, CRC(3d317622) SHA1(ae4e8c5247bc215a2769786cb8639bce2f80db22) )
+	ROM_CONTINUE(             0x10000, 0x8000 ) /* banked at 8000-bfff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "6.bin",        0x000000, 0x040000, CRC(83cadc8f) SHA1(1d3309750347c5d6d661f5cf452235e5a83a7483) )

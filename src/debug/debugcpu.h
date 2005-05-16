@@ -85,6 +85,9 @@ struct debug_cpu_info
 	struct debug_trace_info trace;				/* trace info */
 	struct breakpoint *first_bp;				/* first breakpoint */
 	struct debug_space_info space[ADDRESS_SPACES];/* per-address space info */
+	int 			(*read)(int space, UINT32 offset, int size, UINT64 *value); /* memory read routine */
+	int				(*write)(int space, UINT32 offset, int size, UINT64 value); /* memory write routine */
+	int				(*readop)(UINT32 offset, int size, UINT64 *value);	/* opcode read routine */
 };
 
 
@@ -136,6 +139,7 @@ void				debug_refresh_display(void);
 int					debug_get_execution_state(void);
 UINT32				debug_get_execution_counter(void);
 void				debug_trace_printf(int cpunum, const char *fmt, ...);
+void				debug_source_script(const char *file);
 
 /* CPU execution hooks */
 void				debug_vblank_hook(void);

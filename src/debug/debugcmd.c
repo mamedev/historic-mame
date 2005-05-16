@@ -1289,6 +1289,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 	{
 		int pcbyte = ADDR2BYTE(offset + i, info, ADDRESS_SPACE_PROGRAM);
 		char output[200], disasm[200];
+		UINT64 dummyreadop;
 		int outdex = 0;
 		int numbytes;
 
@@ -1296,7 +1297,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
 
 		/* get the disassembly up front, but only if mapped */
-		if (memory_get_op_ptr(cpunum, pcbyte) != NULL)
+		if (memory_get_op_ptr(cpunum, pcbyte) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
 		{
 			memory_set_opbase(pcbyte);
 			i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;
@@ -1459,12 +1460,7 @@ static void execute_snap(int ref, int params, const char *param[])
 
 static void execute_source(int ref, int params, const char *param[])
 {
-	if (debug_source_file)
-		fclose(debug_source_file);
-
-	debug_source_file = fopen(param[0], "r");
-	if (!debug_source_file)
-		debug_console_printf("Cannot open command file '%s'\n", param[0]);
+	debug_source_script(param[0]);
 }
 
 

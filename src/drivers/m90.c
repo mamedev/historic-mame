@@ -694,6 +694,11 @@ static INTERRUPT_GEN( m90_interrupt )
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x60/4);
 }
 
+static INTERRUPT_GEN( bomblord_interrupt )
+{
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x50/4);
+}
+
 
 
 static MACHINE_DRIVER_START( m90 )
@@ -789,7 +794,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bbmanw )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/4)	/* 8 MHz ??????? */
+	MDRV_CPU_ADD_TAG("main",V30,32000000/4)	/* 8 MHz ??????? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
@@ -826,6 +831,13 @@ static MACHINE_DRIVER_START( bbmanw )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( bomblord )
+
+	MDRV_IMPORT_FROM( bbmanw )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(bomblord_interrupt,1)
+
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bootleg )
 
@@ -930,8 +942,8 @@ ROM_END
 
 ROM_START( atompunk )
 	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "bbm-cp1d.62",   0x00001, 0x20000, CRC(be57bf74) SHA1(cd3f887f7ec8a5721551477ec2d4a7336f422c6f) )
-	ROM_LOAD16_BYTE( "bbm-cp0d.65",   0x00000, 0x20000, CRC(860c0479) SHA1(7556d62955d0d7a7100fbd9d9cb7356b96a4df78) )
+	ROM_LOAD16_BYTE( "bbm-cp0d.65",   0x00001, 0x20000, CRC(860c0479) SHA1(7556d62955d0d7a7100fbd9d9cb7356b96a4df78) )
+	ROM_LOAD16_BYTE( "bbm-cp1d.62",   0x00000, 0x20000, CRC(be57bf74) SHA1(cd3f887f7ec8a5721551477ec2d4a7336f422c6f) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
@@ -1193,12 +1205,12 @@ static DRIVER_INIT( bomblord )
 GAMEX(1991, hasamu,   0,        m90,      hasamu,   hasamu,   ROT0, "Irem", "Hasamu (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1991, dynablst, 0,        bombrman, dynablst, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Dynablaster / Bomber Mam", GAME_NO_COCKTAIL )
 GAMEX(1991, bombrman, dynablst, bombrman, bombrman, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomber Man (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1991, atompunk, dynablst, bombrman, atompunk, bombrman, ROT0, "Irem America (licensed from Hudson Soft)", "Atomic Punk (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1991, atompunk, dynablst, bombrman, atompunk, bombrman, ROT0, "Irem America (licensed from Hudson Soft)", "Atomic Punk (US)", GAME_NO_COCKTAIL )
 GAMEX(1991, dynablsb, dynablst, bootleg,  bombrman, 0,        ROT0, "bootleg", "Dynablaster (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1992, bbmanw,   0,        bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World / New Dyna Blaster - Global Quest", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1992, bbmanwj,  bbmanw,   bombrman, bbmanwj,  bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1992, newapunk, bbmanw,   bbmanw,   bbmanwj,  bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1992, bomblord, bbmanw,   bombrman, bbmanw,   bomblord, ROT0, "bootleg", "Bomber Lord (bootleg)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX(1992, bomblord, bbmanw,   bomblord, bbmanw,   bomblord, ROT0, "bootleg", "Bomber Lord (bootleg)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX(1992, quizf1,   0,        quizf1,   quizf1,   quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX(1993, riskchal, 0,        m90,      riskchal, riskchal, ROT0, "Irem", "Risky Challenge", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1993, gussun,   riskchal, m90,      riskchal, riskchal, ROT0, "Irem", "Gussun Oyoyo (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

@@ -3602,6 +3602,12 @@ ROM_START( cosmicmo )
 	ROM_LOAD( "cosmicmo.7",   0x4800, 0x0400, CRC(6a13b15b) SHA1(dc03a6c3e938cfd08d16bd1660899f951ba72ea2) )
 ROM_END
 
+ROM_START( cosmicm2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "3907.bin",   0x0000, 0x1000, CRC(bbffede6) SHA1(e7505ee8e3f19557ebbfd0145dc2ae0d1c529eba) )
+	ROM_LOAD( "3906.bin",   0x4000, 0x1000, CRC(b841f894) SHA1(b1f9e1800969baab14da2fd8873b58d4707b7236) )
+ROM_END
+
 ROM_START( superinv )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
 	ROM_LOAD( "00",           0x0000, 0x0400, CRC(7a9b4485) SHA1(dde918ec106971972bf7c7e5085c1262522f7e35) )
@@ -4085,6 +4091,7 @@ ROM_END
 	  GAME( 1979, jspecter, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 1)" )
 	  GAME( 1979, jspectr2, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 2)" )
 	  GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, invaders, ROT270, "Universal", "Cosmic Monsters" )
+      GAME( 1979, cosmicm2, invaders, invaders, cosmicmo, invaders, ROT270, "Universal", "Cosmic Monsters 2" )
 	  GAME( 19??, superinv, invaders, invaders, invaders, invaders, ROT270, "bootleg", "Super Invaders" )
 	  GAME( 19??, invasion, invaders, invaders, invasion, invaders, ROT270, "Sidam", "Invasion" )
 	  GAME( 1978, sstrangr, 0,		  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger" )

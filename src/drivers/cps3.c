@@ -1,42 +1,246 @@
-/* CPS 3 */
-
 /*
 
-CPS3 Games are supplied with a CD and Cartridge.
-CD contains the game data, Cartridge appears to contain a chip for the encryption and a Bios rom
+Capcom CP SYSTEM III Hardware Overview
+Capcom, 1996-1999
 
-the CPU is thought to be SH-2 based
+From late 1996 to 1999 Capcom developed another hardware platform to rival the CPS2 System and called
+it CP SYSTEM III. Only 6 games were produced....
+                                                                                        CD            Security
+Game                                                 Date   S/W Rev        CD Part#     Label         Cart Part#
+----------------------------------------------------------------------------------------------------------------
+JoJo no Kimyouna Bouken / JoJo's Venture             1998   *              CAP-JJK000   CAP-JJK-140   JJK98c00F
+JoJo no Kimyouna Bouken  Miraie no Isan              1999   *              CAP-JJM000   CAP-JJM-110   JJM99900F
+/ JoJo's Bizarre Adventure Heritage for the Future          *
+Street Fighter III New Generation                    1997   970204 JAPAN   CAP-SF3000   CAP-SF3-3     SF397200F
+Street Fighter III 2nd Impact Giant Attack           1997   970930 JAPAN   CAP-3GA000   CAP-3GA-1     3GA97a00F
+Street Fighter III 3rd Strike Fight for the Future   1999   *              CAP-33S000   CAP-33S-1     33S99400F
+Warzard / Red Earth                                  1996   *              CAP-WZD000   CAP-WZD-5     WZD96a00F
 
-the cartridges are backed up by a battery and are highly sensitive.
+* - only two of the games are tested working, so only two S/W Revision dates are known.
 
-this driver does nothing, it is for reference purposes only for now.
+The CP SYSTEM III comprises a main board with several custom ASICs, custom 72-pin SIMMs for program
+and graphics storage (the same SIMMs are also used in some CPS2 titles), SCSI CDROM and CDROM disc,
+and a plug-in security cart containing a boot ROM, an NVRAM and another custom ASIC containing vital
+decryption information held by a [suicide] battery.
 
-Very few games were produced for this system (6 in total)
+Not much is known about the actual CPU used in this system due to the extensive use of encryption,
+and the volatile nature of the security information, although it is thought to use two Hitachi SH-2
+CPUs in a master and slave configuration.
 
-JoJo no Kimyouna Bouken / JoJo's Venture
-JoJo no Kimyouna Bouken  Miraie no Isan / JoJo's Bizarre Adventure  Heritage for the Future
-Street Fighter III  New Generation
-Street Fighter III, 2nd Impact  Giant Attack
-Street Fighter III, 3rd Strike  Fight for the Future
-Warzard / Red Earth
+A possible theory about how the cart works is that the flashROM in the cart probably contains a program
+which is executed by the custom Capcom IC inside the cart to boot the game. The code in the flashROM is
+encrypted, but is likely decrypted using a key probably held in the FM1208S NVRAM. However, if the
+custom IC detects any tampering (generally things such as voltage fluctuation or voltage dropping), it
+immediately erases the NVRAM (and thus the key) which effectively kills the security cart dead.
+It is also possible that the custom Capcom IC may contain some internal code to initiate the boot process
+which is battery-backed as well. This is all speculation, of course.
 
+The main board uses the familiar Capcom SIMM modules to hold the data from the CDROM so that the life of
+the CD drive is maximized. The SIMMs don't contain RAM, but instead TSOP48 surface mounted flashROMs
+that can be updated with different games on bootup using a built-in software updating system.
+The SIMMs that hold the program code are located in positions 1 & 2 and are 64MBit.
+The SIMMs that hold the graphics are located in positions 3, 4, 5, 6 & 7 and are 128MBit.
+The data in the SIMMs is not decrypted, it is merely taken directly from the CDROM and shuffled slightly.
+The SIMMs hold the entire contents of the CDROM.
+
+To swap games requires the security cart for the game, it's CDROM disc and the correctly populated type
+and number of SIMMs on the main board.
+On first power-up after switching the cart and CD, you're presented with a screen asking if you want to
+re-program the SIMMs with the new game. Pressing player 1 button 2 cancels it. Pressing player 1 button 1
+allows it to proceed whereby you wait about 25 minutes then the game boots up almost immediately. On
+subsequent power-ups, the game boots immediately.
+If the CDROM is not present in the drive on a normal bootup, a message tells you to insert the CDROM.
+Then you press button 1 to continue and the game boots immediately.
+Note that not all of the SIMMs are populated on the PCB for each game. Some games have more, some less,
+depending on game requirements, so flash times can vary per game. See the table below for details.
+
+                                                     |----------- Required SIMM Locations & Types -----------|
+Game                                                 1       2       3        4        5         6         7
+--------------------------------------------------------------------------------------------------------------
+JoJo's Venture                                       64MBit  64MBit  128MBit  128MBit  32MBit    -         -
+JoJo's Bizarre Adventure                             64MBit  64MBit  128MBit  128MBit  128MBit   -         -
+Street Fighter III New Generation                    64MBit  -       128MBit  128MBit  32MBit*   -         -
+Street Fighter III 2nd Impact Giant Attack           64MBit  64MBit  128MBit  128MBit  128MBit   -         -
+Street Fighter III 3rd Strike Fight for the Future   64MBit  64MBit  128MBit  128MBit  128MBit   128MBit   -
+Warzard / Red Earth                                  64MBit  -       128MBit  128MBit  32MBit*   -         -
+
+                                                     Notes:
+                                                           - denotes not populated
+                                                           * 32MBit SIMMs have only 2 FlashROMs populated on them.
+                                                             128MBit SIMMs can also be used.
+                                                           No game uses a SIMM at 7
+                                                           See main board diagram below for SIMM locations.
+
+Due to the built-in upgradability of the hardware, and the higher frame-rates the hardware seems to have,
+it appears Capcom had big plans for this system and possibly intended to create many games on it, as they
+did with CPS2. Unfortunately for Capcom, CP SYSTEM III was an absolute flop in the arcades so those plans
+were cancelled. Possible reasons include...
+- The games were essentially just 2D, and already there were many 3D games coming out onto the market that
+  interested operators more than this.
+- The cost of the system was quite expensive when compared to other games on the market.
+- It is rumoured that the system was difficult to program for developers.
+- These PCBs were not popular with operators because the security carts are extremely static-sensitive and most
+  of them failed due to the decryption information being zapped by simple handling of the PCBs or by touching
+  the security cart edge connector underneath the PCB while the security cart was plugged in, or by power
+  fluctuations while flashing the SIMMs. You will know if your cart has been zapped because on bootup, you get
+  a screen full of garbage coloured pixels instead of the game booting up, or just a black or single-coloured
+  screen. You should also not touch the inside of the security cart or open it up because it will immediately
+  be zapped when you touch it!
+
+
+PCB Layouts
+-----------
+
+CAPCOM
+CP SYSTEMIII
+95682A-4 (older rev 95682A-3)
+   |----------------------------------------------------------------------|
+  |= J1             HM514260     |------------|      |  |  |  |  |        |
+   |                             |CAPCOM      |      |  |  |  |  |        |
+  |= J2     TA8201  TC5118160    |DL-2729 PPU |      |  |  |  |  |        |
+   |                             |(QFP304)    |      |  |  |  |  |        |
+|--|          VOL   TC5118160    |            |      |  |  |  |  |        |
+|    LM833N                      |            |      S  S  S  S  S        |
+|    LM833N         TC5118160    |------------|      I  I  I  I  I        |
+|           TDA1306T                      |--------| M  M  M  M  M        |
+|                   TC5118160  60MHz      |CAPCOM  | M  M  M  M  M       |-|
+|                              42.9545MHz |DL-3329 | 7  6  5  4  3       | |
+|           LM385                         |SSU     | |  |  |  |  |       | |
+|J                         KM681002       |--------| |  |  |  |  |       | |
+|A                         KM681002  62256 |-------| |  |  |  |  |       | |
+|M                                         |DL3529 | |  |  |  |  |       | |
+|M          MC44200FU                      |GLL2   | |  |  |  |  |       | |
+|A                              3.6864MHz  |-------|                  CN6| |
+|                                                             |  |       | |
+|                               |--------|   |-|              |  |       | |
+|                               |CAPCOM  |   | |   |-------|  |  |       | |
+|        TD62064                |DL-2929 |   | |   |CAPCOM |  |  |       | |
+|                               |IOU     |   | |   |DL-3429|  |  |       | |
+|        TD62064                |--------|   | |   |GLL1   |  S  S       | |
+|--|                            *HA16103FPJ  | |   |-------|  I  I       |-|
+   |                                         | |CN5           M  M        |
+   |                                         | |   |-------|  M  M        |
+  |-|                        93C46           | |   |CAPCOM |  2  1        |
+  | |      PS2501                            | |   |DL-2829|  |  | |-----||
+  | |CN1                                     | |   |CCU    |  |  | |AMD  ||
+  | |      PS2501                            | |   |-------|  |  | |33C93||
+  |-|                                        |-|              |  | |-----||
+   |   SW1                                         HM514260   |  |        |
+   |----------------------------------------------------------------------|
 Notes:
+      TA8201     - Toshiba TA8201 18W BTL x 2-Channel Audio Power Amplifier
+      PS2501     - NEC PS2501 High Isolation Voltage Single Transistor Type Multi Photocoupler (DIP16)
+      TDA1306T   - Philips TDA1306T Noise Shaping Filter DAC (SOIC24)
+      MC44200FU  - Motorola MC44200FU Triple 8-bit Video DAC (QFP44)
+      LM833N     - ST Microelectronics LM833N Low Noise Audio Dual Op-Amp (DIP8)
+      TD62064    - Toshiba TD62064AP NPN 50V 1.5A Quad Darlington Driver (DIP16)
+      HA16103FPJ - Hitachi HA16103FPJ Watchdog Timer (SOIC20)
+                   *Note this IC is not populated on the rev -4 board
+      93C46      - National Semiconductor NM93C46A 128bytes x8 Serial EEPROM (SOIC8)
+                   Note this IC is covered by a plastic housing on the PCB. The chip is just a normal
+                   (unsecured) EEPROM so why it was covered is not known.
+      LM385      - National Semiconductor LM385 Adjustable Micropower Voltage Reference Diode (SOIC8)
+      33C93      - AMD 33C93A-16 SCSI Controller (PLCC44)
+      KM681002   - Samsung Electronics KM681002 128k x8 SRAM (SOJ32)
+      62256      - 8k x8 SRAM (SOJ28)
+      HM514260   - Hitachi HM514260CJ7 1M x16 DRAM (SOJ42)
+      TC5118160  - Toshiba TC5118160BJ-60 256k x16 DRAM (SOJ42)
+      SW1        - Push-button Test Switch
+      VOL        - Master Volume Potentiometer
+      J1/J2      - Optional RCA Left/Right Audio Out Connectors
+      CN1        - 34-Pin Capcom Kick Button Harness Connector
+      CN5        - Security Cartridge Slot
+      CN6        - 4-Pin Power Connector and 50-pin SCSI Data Cable Connector
+                   CDROM Drive is a CR504-KCM 4X SCSI drive manufactured By Panasonic / Matsushita
+      SIMM 1-2   - 72-Pin SIMM Connector, holds single sided SIMMs containing 4x Fujitsu 29F016A
+                   surface mounted TSOP48 FlashROMs
+      SIMM 3-7   - 72-Pin SIMM Connector, holds double sided SIMMs containing 8x Fujitsu 29F016A
+                   surface mounted TSOP48 FlashROMs
 
-JoJo Venture  -  bios dumped
-JoJo Biz Adv  -  bios not dumped
-SF3 - New Gen -  bios dumped
-SF3 - Sec Imp -  bios not dumped
-SF3 - 3rd Str -  bios not dumped
-Warzard       -  bios dumped
+                   SIMM Layout -
+                          |----------------------------------------------------|
+                          |                                                    |
+                          |   |-------|   |-------|   |-------|   |-------|    |
+                          |   |Flash_A|   |Flash_B|   |Flash_C|   |Flash_D|    |
+                          |   |-------|   |-------|   |-------|   |-------|    |
+                          |-                                                   |
+                           |-------------------------/\------------------------|
+                           Notes:
+                                  For SIMMs 1-2, Flash_A & Flash_C and regular pinout (Fujitsu 29F016A-90PFTN)
+                                  Flash_B & Flash_D are reverse pinout (Fujitsu 29F016A-90PFTR)
+                                  and are mounted upside down also so that pin1 lines up with
+                                  the normal pinout of FlashROMs A & C.
+                                  For SIMMs 3-7, the 8 FlashROMs are populated on both sides using a similar layout.
+
+      Capcom Custom ASICs -
+                           DL-2729 PPU SD10-505   (QFP304)
+                           DL-2829 CCU SD07-1514  (QFP208)
+                           DL-2929 IOU SD08-1513  (I/O controller, QFP208)
+                           DL-3329 SSU SD04-1536  (QFP144)
+                           DL-3429 GLL1 SD06-1537 (QFP144)
+                           DL-3529 GLL2 SD11-1755 (QFP80)
 
 
-Bios Rom in cart = region?
+Connector Pinouts
+-----------------
 
-CD image also contains bmp format files of the title logos
+                       JAMMA Connector                                       Extra Button Connector
+                       ---------------                                       ----------------------
+                    PART SIDE    SOLDER SIDE                                       TOP    BOTTOM
+                ----------------------------                               --------------------------
+                      GND  01    A  GND                                        GND  01    02  GND
+                      GND  02    B  GND                                        +5V  03    04  +5V
+                      +5V  03    C  +5V                                       +12V  05    06  +12V
+                      +5V  04    D  +5V                                             07    08
+                       NC  05    E  NC                           Player 2 Button 4  09    10
+                     +12V  06    F  +12V                                            11    12
+                           07    H                                                  13    14
+           Coin Counter 1  08    J  NC                           Player 1 Button 4  15    16
+             Coin Lockout  09    K  Coin Lockout                 Player 1 Button 5  17    18
+               Speaker (+) 10    L  Speaker (-)                  Player 1 Button 6  19    20
+                       NC  11    M  NC                           Player 2 Button 5  21    22
+                Video Red  12    N  Video Green                  Player 2 Button 6  23    24
+               Video Blue  13    P  Video Composite Sync                            25    26
+             Video Ground  14    R  Service Switch                                  27    28
+                     Test  15    S  NC                                 Volume Down  29    30  Volume UP
+                   Coin A  16    T  Coin B                                     GND  31    32  GND
+           Player 1 Start  17    U  Player 2 Start                             GND  33    34  GND
+              Player 1 Up  18    V  Player 2 Up
+            Player 1 Down  19    W  Player 2 Down
+            Player 1 Left  20    X  Player 2 Left
+           Player 1 Right  21    Y  Player 2 Right
+        Player 1 Button 1  22    Z  Player 2 Button 1
+        Player 1 Button 2  23    a  Player 2 Button 2
+        Player 1 Button 3  24    b  Player 2 Button 3
+                       NC  25    c  NC
+                       NC  26    d  NC
+                      GND  27    e  GND
+                      GND  28    f  GND
 
-2nd impact is interesting as the data isn't encrypted on it
 
-CPS3 can read CD-R images, security is provided by the cartridge.  rom data from cd is checksumed.
+Security Cartridge PCB Layout
+-----------------------------
+
+CAPCOM 95682B-3 TORNADO
+|------------------------------------------------|
+|      BATTERY                                   |
+|                          |-------|             |
+|                          |CAPCOM |   29F400    |
+|                          |DL-3229|   *28F400   |
+|                          |SCU    |     *FM1208S|
+| 74HC00                   |-------|             |
+|               6.25MHz                    74F00 |
+|---|     |-|                             |------|
+    |     | |                             |
+    |-----| |-----------------------------|
+Notes:
+      74F00        - 74F00 Quad 2-Input NAND Gate (SOIC14)
+      74HC00       - Philips 74HC00N Quad 2-Input NAND Gate (DIP14)
+      29F400       - Fujitsu 29F400TA-90PFTN 512k x8 FlashROM (TSOP48)
+      Custom ASIC  - CAPCOM DL-3229 SCU (QFP144)
+      FM1208S      - RAMTRON FM1208S 4k (512bytes x8) Nonvolatile Ferroelectric RAM (SOIC24)
+      28F400       - 28F400 SOP44 FlashROM (not populated)
+      *            - These components located on the other side of the PCB
 
 */
 
@@ -89,7 +293,7 @@ ROM_START( sfiii )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "sf3bios",  0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -108,14 +312,14 @@ ROM_START( sfiii )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "sfiii", 0, MD5(cdc5c5423bd8c053de7cdd927dc60da7) SHA1(cc72c9eb2096f4d51f2cf6df18f29fd79d05067c) )
+	DISK_IMAGE_READONLY( "cap-sf3000", 0, MD5(cdc5c5423bd8c053de7cdd927dc60da7) SHA1(cc72c9eb2096f4d51f2cf6df18f29fd79d05067c) )
 ROM_END
 
 ROM_START( sfiii2 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "sf32ibios.rom",  0x000000, 0x080000, CRC(faea0a3e) SHA1(a03cd63bcf52e4d57f7a598c8bc8e243694624ec) )
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(faea0a3e) SHA1(a03cd63bcf52e4d57f7a598c8bc8e243694624ec) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -136,14 +340,14 @@ ROM_START( sfiii2 )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "sfiii2", 0, MD5(941c7e8d0838db9880ea7bf169ad310d) SHA1(76e9fdef020c4b85a10aa8828a63e67c7dca22bd) )
+	DISK_IMAGE_READONLY( "cap-3ga000", 0, MD5(941c7e8d0838db9880ea7bf169ad310d) SHA1(76e9fdef020c4b85a10aa8828a63e67c7dca22bd) )
 ROM_END
 
 ROM_START( sfiii3 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, BAD_DUMP CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) ) // fixed bits
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -166,14 +370,14 @@ ROM_START( sfiii3 )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "sfiii3", 0, MD5(f159ad85cc94ced3ddb9ef5e92173a9f) SHA1(47c7ae0f2dc47c7d28bdf66d378a3aaba4c99c75) )
+	DISK_IMAGE_READONLY( "cap-33s000", 0, MD5(f159ad85cc94ced3ddb9ef5e92173a9f) SHA1(47c7ae0f2dc47c7d28bdf66d378a3aaba4c99c75) )
 ROM_END
 
 ROM_START( warzard )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "warzard_cart_flashrom.bin",  0x000000, 0x080000, CRC(f8e2f0c6) SHA1(93d6a986f44c211fff014e55681eca4d2a2774d6) )
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(f8e2f0c6) SHA1(93d6a986f44c211fff014e55681eca4d2a2774d6) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -192,14 +396,14 @@ ROM_START( warzard )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "warzard", 0, MD5(028ff12a4ce34118dd0091e87c8cdd08) SHA1(6d4e6b7fff4ff3f04e349479fa5a1cbe63e673b8) )
+	DISK_IMAGE_READONLY( "cap-wzd000", 0, MD5(028ff12a4ce34118dd0091e87c8cdd08) SHA1(6d4e6b7fff4ff3f04e349479fa5a1cbe63e673b8) )
 ROM_END
 
 ROM_START( jojo )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "jojocart.bin",  0x000000, 0x080000, CRC(02778f60) SHA1(a167f9ebe030592a0cdb0c6a3c75835c6a43be4c) )
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(02778f60) SHA1(a167f9ebe030592a0cdb0c6a3c75835c6a43be4c) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -219,7 +423,7 @@ ROM_START( jojo )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "jojo", 0, MD5(05440ecf90e836207a27a99c817a3328) SHA1(d5a11315ac21e573ffe78e63602ec2cb420f361f) )
+	DISK_IMAGE_READONLY( "cap-jjk000", 0, MD5(05440ecf90e836207a27a99c817a3328) SHA1(d5a11315ac21e573ffe78e63602ec2cb420f361f) )
 ROM_END
 
 
@@ -228,7 +432,7 @@ ROM_START( jojoba )
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	// this was from a version which doesn't require the cd to run
-	ROM_LOAD( "jojoba.rom",  0x000000, 0x080000, CRC(4dab19f5) SHA1(ba07190e7662937fc267f07285c51e99a45c061e) )
+	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(4dab19f5) SHA1(ba07190e7662937fc267f07285c51e99a45c061e) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -249,7 +453,7 @@ ROM_START( jojoba )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "jojoba", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
+	DISK_IMAGE_READONLY( "cap-jjm000", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
 ROM_END
 
 ROM_START( jojobaa )
@@ -277,16 +481,16 @@ ROM_START( jojobaa )
 	#endif
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "jojoba", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
+	DISK_IMAGE_READONLY( "cap-jjm000", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
 ROM_END
 
 
 
 
-GAMEX( 1997, sfiii,   0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III - New Generation", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1998, sfiii2,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 2nd Impact - Giant Attack", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, sfiii3,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 3rd Strike - Fight for the Future", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1996, warzard, 0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Warzard", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1998, jojo,    0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Venture", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, jojoba,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, jojobaa, jojoba,   cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure (alt)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1997, sfiii,   0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III: New Generation", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, sfiii2,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 2nd Impact: Giant Attack", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1999, sfiii3,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 3rd Strike: Fight for the Future", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, warzard, 0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Warzard / Red Earth", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, jojo,    0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Venture / JoJo no Kimyouna Bouken", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1999, jojoba,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure: Heritage for the Future / JoJo no Kimyouna Bouken: Miraie no Isan", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1999, jojobaa, jojoba,   cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure: Heritage for the Future / JoJo no Kimyouna Bouken: Miraie no Isan (alt)", GAME_NOT_WORKING | GAME_NO_SOUND )

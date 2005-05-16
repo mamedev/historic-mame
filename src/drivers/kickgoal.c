@@ -17,8 +17,8 @@ Should the screen size really be doubled in kickgoal or should the fg tiles be 8
 because otherwise these don't seem much like the same hardware..
 
 you get 64 credits in hwaction (eeprom bug?)
+service mode doesn't work in hwaction (reads from unmapped memory, probably a mirror of something)
 
-sprite disable needed (hw action leaves sprites on screen after some levels..)
 
 */
 
@@ -303,7 +303,7 @@ static MACHINE_DRIVER_START( hwaction )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(kickgoal)
+	MDRV_NVRAM_HANDLER(kickgoal) // 93C46 really
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

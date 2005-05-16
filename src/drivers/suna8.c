@@ -85,25 +85,19 @@ void suna8_sh_start(void);
 
 DRIVER_INIT( hardhead )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	data8_t *rom = memory_region(REGION_CPU1);
 	int i;
 
 	for (i = 0; i < 0x8000; i++)
 	{
-		data8_t x = RAM[i];
-		if (!   ( (i & 0x800) && ((~i & 0x400) ^ ((i & 0x4000)>>4)) )	)
+		static const UINT8 swaptable[8] =
 		{
-			x	=	x ^ 0x58;
-			x	=	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<4))?1:0)<<3) |
-					(((x & (1<<3))?1:0)<<4) |
-					(((x & (1<<5))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<7))?1:0)<<7);
-		}
-		RAM[i] = x;
+			1,1,0,1,1,1,1,0,
+		};
+		int table = ((i & 0x0c00) >> 10) | ((i & 0x4000) >> 12);
+
+		if (swaptable[table])
+			rom[i] = BITSWAP8(rom[i], 7,6,5,3,4,2,1,0) ^ 0x58;
 	}
 }
 
@@ -122,28 +116,74 @@ static DRIVER_INIT( hardhedb )
 
 /* !! BRICKZN3 !! */
 
-static int is_special(int i)
+static void brickzn_decrypt(void)
 {
-	if (i & 0x400)
+	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	int i;
+
+	memory_set_opcode_base(0,RAM + size);
+
+
+	/* Opcodes and data */
+	for (i = 0; i < 0x50000; i++)
 	{
-		switch ( i & 0xf )
+		static const UINT8 opcode_swaptable[8] =
 		{
-			case 0x1:
-			case 0x5:	return 1;
-			default:	return 0;
+			1,1,1,0,0,1,1,0,
+		};
+		static const UINT8 data_swaptable[16] =
+		{
+			1,1,1,0,0,1,1,1,1,0,1,1,1,1,1,1,
+		};
+		int opcode_swap = opcode_swaptable[((i & 0x00c) >> 2) | ((i & 0x040) >> 4)];
+		int data_swap = (i >= 0x8000) ? 0 : data_swaptable[(i & 0x003) | ((i & 0x008) >> 1) | ((i & 0x400) >> 7)];
+		data8_t x = RAM[i];
+
+		if (data_swap)
+		{
+			x = BITSWAP8(x, 7,6,5,4,3,2,0,1);
+			RAM[i] = BITSWAP8(x, 7,2,3,4,5,6,1,0) ^ 0x10;
+		}
+
+		if (opcode_swap)
+			x ^= 0x80;
+
+		if (opcode_swap || data_swap)
+			x = BITSWAP8(x, 7,2,3,4,5,6,1,0) ^ 0x10;
+
+		RAM[i + size] = x;
+	}
+}
+
+DRIVER_INIT( brickzn )
+{
+	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	int i;
+
+	brickzn_decrypt();
+
+	// restore opcodes which for some reason shouldn't be decrypted... */
+	for (i = 0; i < 0x8000; i++)
+	{
+		if (	((i >= 0x0730) && (i <= 0x076f)) ||
+				((i >= 0x45c5) && (i <= 0x45e4)) ||
+				((i >= 0x7393) && (i <= 0x73ba)) ||
+				((i >= 0x7a79) && (i <= 0x7aa9)) )
+		{
+			RAM[i+size] = RAM[i];
 		}
 	}
-	else
-	{
-		switch ( i & 0xf )
-		{
-			case 0x3:
-			case 0x7:
-			case 0x8:
-			case 0xc:	return 1;
-			default:	return 0;
-		}
-	}
+
+
+	/* !!!!!! PATCHES !!!!!! */
+
+	RAM[0x3349+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
+
+	RAM[0x1431+size] = 0x00;	// HALT -> NOP (NMI source??)
+	RAM[0x24b5+size] = 0x00;	// HALT -> NOP
+	RAM[0x2583+size] = 0x00;	// HALT -> NOP
 }
 
 DRIVER_INIT( brickzn3 )
@@ -152,405 +192,49 @@ DRIVER_INIT( brickzn3 )
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	int i;
 
-	memory_set_opcode_base(0,RAM + size);
+	brickzn_decrypt();
 
-	/* Opcodes */
-
-	for (i = 0; i < 0x50000; i++)
-	{
-		int encry;
-		data8_t x = RAM[i];
-
-		data8_t mask = 0x90;
-
-	if (i >= 0x8000)
-	{
-		switch ( i & 0xf )
-		{
-//825b  ->  see 715a!
-//8280  ->  see 7192!
-//8280: e=2 m=90
-//8281: e=2 m=90
-//8283: e=2 m=90
-//8250: e=0
-//8262: e=0
-//9a42: e=0
-//9a43: e=0
-//8253: e=0
-			case 0x0:
-			case 0x1:
-			case 0x2:
-			case 0x3:
-				if (i & 0x40)	encry = 0;
-				else			encry = 2;
-				break;
-//828c: e=0
-//9a3d: e=0
-//825e: e=0
-//826e: e=0
-//9a3f: e=0
-			case 0xc:
-			case 0xd:
-			case 0xe:
-			case 0xf:
-				encry = 0;
-				break;
-//8264: e=2 m=90
-//9a44: e=2 m=90
-//8255: e=2 m=90
-//8255: e=2 m=90
-//8285: e=2 m=90
-//9a37: e=2 m=90
-//8268: e=2 m=90
-//9a3a: e=2 m=90
-//825b: e=2 m=90
-			case 0x4:
-			case 0x5:
-			case 0x6:
-			case 0x7:
-			case 0x8:
-			case 0xa:
-			case 0xb:
-			default:
-				encry = 2;
-		}
-	}
-	else
-	if (	((i >= 0x0730) && (i <= 0x076f)) ||
-			((i >= 0x4540) && (i <= 0x455f)) ||
-			((i >= 0x79d9) && (i <= 0x7a09)) ||
-			((i >= 0x72f3) && (i <= 0x7320))	)
-	{
-		if ( !is_special(i) )
-		{
-			mask = 0x10;
-			encry = 1;
-		}
-		else
-			encry = 0;
-	}
-	else
-	{
-
-		switch ( i & 0xf )
-		{
-//0000: e=1 m=90
-//0001: e=1 m=90
-//0012: e=1 m=90
-
-//00c0: e=1 m=10
-//0041: e=1 m=10
-//0042: e=1 m=10
-//0342: e=1 m=10
-
-//05a0: e=1 m=90
-//04a1: e=2 m=90
-//04b1: e=2 m=90
-//05a1: e=2 m=90
-//05a2: e=1 m=90
-
-//0560: e=1 m=10
-//0441: e=0
-//0571: e=0
-//0562: e=1 m=10
-			case 0x1:
-				switch( i & 0x440 )
-				{
-					case 0x000:	encry = 1;	mask = 0x90;	break;
-					case 0x040:	encry = 1;	mask = 0x10;	break;
-					case 0x400:	encry = 2;	mask = 0x90;	break;
-					default:
-					case 0x440:	encry = 0;					break;
-				}
-				break;
-
-			case 0x0:
-			case 0x2:
-				switch( i & 0x440 )
-				{
-					case 0x000:	encry = 1;	mask = 0x90;	break;
-					case 0x040:	encry = 1;	mask = 0x10;	break;
-					case 0x400:	encry = 1;	mask = 0x90;	break;
-					default:
-					case 0x440:	encry = 1;	mask = 0x10;	break;
-				}
-				break;
-
-			case 0x3:
-//003: e=2 m=90
-//043: e=0
-//6a3: e=2 m=90
-//643: e=1 m=10
-//5d3: e=1 m=10
-				switch( i & 0x440 )
-				{
-					case 0x000:	encry = 2;	mask = 0x90;	break;
-					case 0x040:	encry = 0;					break;
-					case 0x400:	encry = 1;	mask = 0x90;	break;
-					default:
-					case 0x440:	encry = 1;	mask = 0x10;	break;
-				}
-				break;
-
-			case 0x5:
-//015: e=1 m=90
-//045: e=1 m=90
-//5b5: e=2 m=90
-//5d5: e=2 m=90
-				if (i & 0x400)	encry = 2;
-				else			encry = 1;
-				break;
-
-
-			case 0x7:
-			case 0x8:
-				if (i & 0x400)	{	encry = 1;	mask = 0x90;	}
-				else			{	encry = 2;	}
-				break;
-
-			case 0xc:
-				if (i & 0x400)	{	encry = 1;	mask = 0x10;	}
-				else			{	encry = 0;	}
-				break;
-
-			case 0xd:
-			case 0xe:
-			case 0xf:
-				mask = 0x10;
-				encry = 1;
-				break;
-
-			default:
-				encry = 1;
-		}
-	}
-		switch (encry)
-		{
-			case 1:
-				x	^=	mask;
-				x	=	(((x & (1<<1))?1:0)<<0) |
-						(((x & (1<<0))?1:0)<<1) |
-						(((x & (1<<6))?1:0)<<2) |
-						(((x & (1<<5))?1:0)<<3) |
-						(((x & (1<<4))?1:0)<<4) |
-						(((x & (1<<3))?1:0)<<5) |
-						(((x & (1<<2))?1:0)<<6) |
-						(((x & (1<<7))?1:0)<<7);
-				break;
-
-			case 2:
-				x	^=	mask;
-				x	=	(((x & (1<<0))?1:0)<<0) |	// swap
-						(((x & (1<<1))?1:0)<<1) |
-						(((x & (1<<6))?1:0)<<2) |
-						(((x & (1<<5))?1:0)<<3) |
-						(((x & (1<<4))?1:0)<<4) |
-						(((x & (1<<3))?1:0)<<5) |
-						(((x & (1<<2))?1:0)<<6) |
-						(((x & (1<<7))?1:0)<<7);
-				break;
-		}
-
-		RAM[i + size] = x;
-	}
-
-
-	/* Data */
-
+	// restore opcodes which for some reason shouldn't be decrypted... */
 	for (i = 0; i < 0x8000; i++)
 	{
-		data8_t x = RAM[i];
-
-		if ( !is_special(i) )
+		if (	((i >= 0x0730) && (i <= 0x076f)) ||
+				((i >= 0x4541) && (i <= 0x4560)) ||
+				((i >= 0x72f3) && (i <= 0x731a)) ||
+				((i >= 0x79d9) && (i <= 0x7a09)) )
 		{
-			x	^=	0x10;
-			x	=	(((x & (1<<1))?1:0)<<0) |
-					(((x & (1<<0))?1:0)<<1) |
-					(((x & (1<<6))?1:0)<<2) |
-					(((x & (1<<5))?1:0)<<3) |
-					(((x & (1<<4))?1:0)<<4) |
-					(((x & (1<<3))?1:0)<<5) |
-					(((x & (1<<2))?1:0)<<6) |
-					(((x & (1<<7))?1:0)<<7);
+			RAM[i+size] = RAM[i];
 		}
-
-		RAM[i] = x;
 	}
 
 
-/* !!!!!! PATCHES !!!!!! */
+	/* !!!!!! PATCHES !!!!!! */
 
-RAM[0x3337+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
-//RAM[0x3338+size] = 0x00;  // jp $C800 -> NOP
-//RAM[0x3339+size] = 0x00;  // jp $C800 -> NOP
-//RAM[0x333a+size] = 0x00;  // jp $C800 -> NOP
+	RAM[0x3337+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
 
-RAM[0x1406+size] = 0x00;	// HALT -> NOP (NMI source??)
-RAM[0x2487+size] = 0x00;	// HALT -> NOP
-RAM[0x256c+size] = 0x00;	// HALT -> NOP
+	RAM[0x1406+size] = 0x00;	// HALT -> NOP (NMI source??)
+	RAM[0x2487+size] = 0x00;	// HALT -> NOP
+	RAM[0x256c+size] = 0x00;	// HALT -> NOP
 }
-
 
 
 /***************************************************************************
                                 Hard Head 2
 ***************************************************************************/
 
-INLINE data8_t hardhea2_decrypt(data8_t x, int encry, int mask)
-{
-		switch( encry )
-		{
-		case 1:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<4))?1:0)<<3) |
-					(((x & (1<<3))?1:0)<<4) |
-					(((x & (1<<7))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<5))?1:0)<<7);
-		case 2:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<3))?1:0)<<3) |	// swap
-					(((x & (1<<4))?1:0)<<4) |
-					(((x & (1<<7))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<5))?1:0)<<7);
-		case 3:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<4))?1:0)<<3) |
-					(((x & (1<<3))?1:0)<<4) |
-					(((x & (1<<5))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<7))?1:0)<<7);
-		case 0:
-		default:
-			return x;
-		}
-}
-
 DRIVER_INIT( hardhea2 )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	data8_t x;
-	int i,encry,mask;
+	int i;
 
 	memory_set_opcode_base(0,RAM + size);
 
-	/* Opcodes */
 
-	for (i = 0; i < 0x8000; i++)
+	/* Address lines scrambling */
+	memcpy(RAM + size, RAM, size);
+	for (i = 0x00000; i < 0x50000; i++)
 	{
-// Address lines scrambling
-		switch (i & 0x7000)
-		{
-		case 0x4000:
-		case 0x5000:
-			break;
-		default:
-			if ((i & 0xc0) == 0x40)
-			{
-				int j = (i & ~0xc0) | 0x80;
-				x		=	RAM[j];
-				RAM[j]	=	RAM[i];
-				RAM[i]	=	x;
-			}
-		}
-
-		x		=	RAM[i];
-
-		switch (i & 0x7000)
-		{
-		case 0x0000:
-		case 0x6000:
-			encry	=	1;
-			switch ( i & 0x401 )
-			{
-			case 0x400:	mask = 0x41;	break;
-			default:
-			case 0x401:	mask = 0x45;
-			}
-			break;
-
-		case 0x2000:
-		case 0x4000:
-			switch ( i & 0x401 )
-			{
-			case 0x000:	mask = 0x45;	encry = 1;	break;
-			case 0x001:	mask = 0x04;	encry = 1;	break;
-			case 0x400:	mask = 0x41;	encry = 3;	break;
-			default:
-			case 0x401:	mask = 0x45;	encry = 1;	break;
-			}
-			break;
-
-		case 0x7000:
-			switch ( i & 0x401 )
-			{
-			case 0x001:	mask = 0x45;	encry = 1;	break;
-			default:
-			case 0x000:
-			case 0x400:
-			case 0x401:	mask = 0x41;	encry = 3;	break;
-			}
-			break;
-
-		case 0x1000:
-		case 0x3000:
-		case 0x5000:
-			encry	=	1;
-			switch ( i & 0x401 )
-			{
-			case 0x000:	mask = 0x41;	break;
-			case 0x001:	mask = 0x45;	break;
-			case 0x400:	mask = 0x41;	break;
-			default:
-			case 0x401:	mask = 0x41;
-			}
-			break;
-
-		default:
-			mask = 0x41;
-			encry = 1;
-		}
-
-		RAM[i+size] = hardhea2_decrypt(x,encry,mask);
-	}
-
-
-	/* Data */
-
-	for (i = 0; i < 0x8000; i++)
-	{
-		x		=	RAM[i];
-		mask	=	0x41;
-		switch (i & 0x7000)
-		{
-		case 0x2000:
-		case 0x4000:
-		case 0x7000:
-			encry	=	0;
-			break;
-		default:
-			encry	=	2;
-		}
-
-		RAM[i] = hardhea2_decrypt(x,encry,mask);
-	}
-
-	for (i = 0x00000; i < 0x40000; i++)
-	{
-// Address lines scrambling
-		switch (i & 0x3f000)
-		{
 /*
 0x1000 to scramble:
         dump                screen
@@ -565,25 +249,53 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
         8?, 9n?,an, bn      y,y,?,? (player anims)
         cn, dy, en, fn      y,y,n,n
 */
-		case 0x00000:
-		case 0x01000:
-		case 0x0c000:
-		case 0x0d000:
+		static const UINT8 swaptable[80] =
+		{
+			1,1,1,1,0,0,1,1,    0,0,0,0,0,0,0,0,	// 8000-ffff not used
+			1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,
+		};
+		int addr = i;
 
-		case 0x30000:
-		case 0x31000:
-		case 0x38000:
-		case 0x39000:
-		case 0x3c000:
-		case 0x3d000:
-			if ((i & 0xc0) == 0x40)
-			{
-				int j = (i & ~0xc0) | 0x80;
-				x				=	RAM[j+0x10000];
-				RAM[j+0x10000]	=	RAM[i+0x10000];
-				RAM[i+0x10000]	=	x;
-			}
-		}
+		if (swaptable[(i & 0xff000) >> 12])
+			addr = (addr & 0xf0000) | BITSWAP16(addr, 15,14,13,12,11,10,9,8,6,7,5,4,3,2,1,0);
+
+		RAM[i] = RAM[addr + size];
+	}
+
+	/* Opcodes */
+	for (i = 0; i < 0x8000; i++)
+	{
+		static const UINT8 swaptable[32] =
+		{
+			1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,
+			1,1,0,1,1,1,1,1,1,1,1,1,0,1,0,0,
+		};
+		static const UINT8 xortable[32] =
+		{
+			0x04,0x04,0x00,0x04,0x00,0x04,0x00,0x00,0x04,0x45,0x00,0x04,0x00,0x04,0x00,0x00,
+			0x04,0x45,0x00,0x04,0x00,0x04,0x00,0x00,0x04,0x04,0x00,0x04,0x00,0x04,0x00,0x00,
+		};
+		int table = (i & 1) | ((i & 0x400) >> 9) | ((i & 0x7000) >> 10);
+
+		x = RAM[i];
+
+		x = BITSWAP8(x, 7,6,5,3,4,2,1,0) ^ 0x41 ^ xortable[table];
+		if (swaptable[table])
+			x = BITSWAP8(x, 5,6,7,4,3,2,1,0);
+
+		RAM[i + size] = x;
+	}
+
+	/* Data */
+	for (i = 0; i < 0x8000; i++)
+	{
+		static const UINT8 swaptable[8] = { 1,1,0,1,0,1,1,0 };
+
+		if (swaptable[(i & 0x7000) >> 12])
+			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x41;
 	}
 }
 
@@ -592,133 +304,62 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
                                 Star Fighter
 ***************************************************************************/
 
-/* SAME AS HARDHEA2 */
-INLINE data8_t starfigh_decrypt(data8_t x, int encry, int mask)
-{
-		switch( encry )
-		{
-		case 1:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<4))?1:0)<<3) |
-					(((x & (1<<3))?1:0)<<4) |
-					(((x & (1<<7))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<5))?1:0)<<7);
-		case 2:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<3))?1:0)<<3) |	// swap
-					(((x & (1<<4))?1:0)<<4) |
-					(((x & (1<<7))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<5))?1:0)<<7);
-		case 3:
-			x	^=	mask;
-			return	(((x & (1<<0))?1:0)<<0) |
-					(((x & (1<<1))?1:0)<<1) |
-					(((x & (1<<2))?1:0)<<2) |
-					(((x & (1<<4))?1:0)<<3) |
-					(((x & (1<<3))?1:0)<<4) |
-					(((x & (1<<5))?1:0)<<5) |
-					(((x & (1<<6))?1:0)<<6) |
-					(((x & (1<<7))?1:0)<<7);
-		case 0:
-		default:
-			return x;
-		}
-}
-
 DRIVER_INIT( starfigh )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	data8_t x;
-	int i,encry,mask;
+	int i;
 
 	memory_set_opcode_base(0,RAM + size);
 
-	/* Opcodes */
-
+	/* Address lines scrambling */
+	memcpy(RAM + size, RAM, size);
 	for (i = 0; i < 0x8000; i++)
 	{
-// Address lines scrambling
-		switch (i & 0x7000)
+		static const UINT8 swaptable[8] =
 		{
-		case 0x0000:
-		case 0x1000:
-		case 0x2000:
-		case 0x3000:
-		case 0x4000:
-		case 0x5000:
-			if ((i & 0xc0) == 0x40)
-			{
-				int j = (i & ~0xc0) | 0x80;
-				x		=	RAM[j];
-				RAM[j]	=	RAM[i];
-				RAM[i]	=	x;
-			}
-			break;
-		case 0x6000:
-		default:
-			break;
-		}
+			1,1,1,1,1,1,0,0,
+		};
+		int addr = i;
 
-		x		=	RAM[i];
+		if (swaptable[(i & 0x7000) >> 12])
+			addr = BITSWAP16(addr, 15,14,13,12,11,10,9,8,6,7,5,4,3,2,1,0);
 
-		switch (i & 0x7000)
-		{
-		case 0x2000:
-		case 0x4000:
-			switch ( i & 0x0c00 )
-			{
-			case 0x0400:	mask = 0x40;	encry = 3;	break;
-			case 0x0800:	mask = 0x04;	encry = 1;	break;
-			default:		mask = 0x44;	encry = 1;	break;
-			}
-			break;
-
-		case 0x0000:
-		case 0x1000:
-		case 0x3000:
-		case 0x5000:
-		default:
-			mask = 0x45;
-			encry = 1;
-		}
-
-		RAM[i+size] = starfigh_decrypt(x,encry,mask);
+		RAM[i] = RAM[addr + size];
 	}
 
-
-	/* Data */
-
+	/* Opcodes */
 	for (i = 0; i < 0x8000; i++)
 	{
-		x		=	RAM[i];
-
-		switch (i & 0x7000)
+		static const UINT8 swaptable[32] =
 		{
-		case 0x2000:
-		case 0x4000:
-		case 0x7000:
-			encry = 0;
-			break;
-		case 0x0000:
-		case 0x1000:
-		case 0x3000:
-		case 0x5000:
-		case 0x6000:
-		default:
-			mask = 0x45;
-			encry = 2;
-		}
+			0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+			0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		};
+		static const UINT8 xortable[32] =
+		{
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x41,0x01,0x00,0x00,0x00,0x00,
+			0x01,0x01,0x41,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		};
+		int table = (i & 0x7c00) >> 10;
 
-		RAM[i] = starfigh_decrypt(x,encry,mask);
+		x = RAM[i];
+
+		x = BITSWAP8(x, 5,6,7,3,4,2,1,0) ^ 0x45 ^ xortable[table];
+		if (swaptable[table])
+			x = BITSWAP8(x, 5,6,7,4,3,2,1,0) ^ 0x04;
+
+		RAM[i + size] = x;
+	}
+
+	/* Data */
+	for (i = 0; i < 0x8000; i++)
+	{
+		static const UINT8 swaptable[8] = { 1,1,0,1,0,1,1,0 };
+
+		if (swaptable[(i & 0x7000) >> 12])
+			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x45;
 	}
 }
 
@@ -731,88 +372,47 @@ static DRIVER_INIT( sparkman )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	data8_t x;
 	int i;
 
 	memory_set_opcode_base(0,RAM + size);
 
 	/* Address lines scrambling */
+	memcpy(RAM + size, RAM, size);
 	for (i = 0; i < 0x8000; i++)
 	{
-		if ((i >= 0x4000) && (i <= 0x5fff))
-			RAM[i+size] = RAM[i];
-		else
-			RAM[i+size] = RAM[BITSWAP16(i,15,14,13,12,11,10,9,7,8,6,5,4,3,2,1,0)];
+		static const UINT8 swaptable[8] =
+		{
+			1,1,1,1,0,0,1,1,
+		};
+		int addr = i;
+
+		if (swaptable[(i & 0x7000) >> 12])
+			addr = BITSWAP16(addr, 15,14,13,12,11,10,9,7,8,6,5,4,3,2,1,0);
+
+		RAM[i] = RAM[addr + size];
 	}
-	memcpy(RAM,RAM + size,size);
 
 	/* Opcodes */
 	for (i = 0; i < 0x8000; i++)
 	{
-		int encry;
-		data8_t x = RAM[i];
-
-/*
-        0000 2fff   44  0
-        3000 37ff   40  1
-        3800 3bff   44  0
-        3c00 3fff   40  1
-        4000 63ff   44  0
-        6400 67ff   40  1
-        6800 6bff   04  0
-        6c00 7fff   44  0
-*/
-
-		switch(i & 0x7c00)
+		static const UINT8 swaptable[32] =
 		{
-			case 0x0000:
-			case 0x0400:
-			case 0x0800:
-			case 0x0c00:
-			case 0x1000:
-			case 0x1400:
-			case 0x1800:
-			case 0x1c00:
-			case 0x2000:
-			case 0x2400:
-			case 0x2800:
-			case 0x2c00:
-
-			case 0x3800:
-
-			case 0x4000:
-			case 0x4400:
-			case 0x4800:
-			case 0x4c00:
-			case 0x5000:
-			case 0x5400:
-			case 0x5800:
-			case 0x5c00:
-			case 0x6000:
-
-			case 0x6c00:
-			case 0x7000:
-			case 0x7400:
-			case 0x7800:
-			case 0x7c00:
-				x		^=	0x44;
-				encry	=	0;
-			break;
-
-			case 0x6800:
-				x		^=	0x04;
-				encry	=	0;
-			break;
-
-        	default:
-				x		^=	0x40;
-				encry	=	1;
-		}
-
-		switch (encry)
+			0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,
+			0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+		};
+		static const UINT8 xortable[32] =
 		{
-			case 0:	x	=	BITSWAP8(x,5,6,7,3,4,2,1,0);	break;
-			case 1:	x	=	BITSWAP8(x,7,6,5,3,4,2,1,0);	break;
-		}
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x00,0x00,0x00,0x00,0x00,
+		};
+		int table = (i & 0x7c00) >> 10;
+
+		x = RAM[i];
+
+		x = BITSWAP8(x, 5,6,7,3,4,2,1,0) ^ 0x44 ^ xortable[table];
+		if (swaptable[table])
+			x = BITSWAP8(x, 5,6,7,4,3,2,1,0) ^ 0x04;
 
 		RAM[i + size] = x;
 	}
@@ -820,15 +420,10 @@ static DRIVER_INIT( sparkman )
 	/* Data */
 	for (i = 0; i < 0x8000; i++)
 	{
-		switch (i & 0x7000)
-		{
-			case 0x3000:
-			case 0x6000:
-				break;
+		static const UINT8 swaptable[8] = { 1,1,1,0,1,1,0,1 };
 
-			default:
-				RAM[i] = BITSWAP8(RAM[i] ^ 0x44,5,6,7,4,3,2,1,0);
-		}
+		if (swaptable[(i & 0x7000) >> 12])
+			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x44;
 	}
 }
 
@@ -2617,11 +2212,8 @@ Large epoxy(?) module near the cpu's.
 ROM_START( brickzn )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "brickzon.009", 0x00000, 0x08000, CRC(1ea68dea) SHA1(427152a26b062c5e77089de49c1da69369d4d557) )	// V5.0 1992,3,3
-	ROM_RELOAD(               0x50000, 0x08000             )
 	ROM_LOAD( "brickzon.008", 0x10000, 0x20000, CRC(c61540ba) SHA1(08c0ede591b229427b910ca6bb904a6146110be8) )
-	ROM_RELOAD(               0x60000, 0x20000             )
 	ROM_LOAD( "brickzon.007", 0x30000, 0x20000, CRC(ceed12f1) SHA1(9006726b75a65455afb1194298bade8fa2207b4a) )
-	ROM_RELOAD(               0x80000, 0x20000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
 	ROM_LOAD( "brickzon.010", 0x00000, 0x10000, CRC(4eba8178) SHA1(9a214a1acacdc124529bc9dde73a8e884fc70293) )
@@ -2644,11 +2236,8 @@ ROM_END
 ROM_START( brickzn3 )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "39",           0x00000, 0x08000, CRC(043380bd) SHA1(7eea7cc7d754815df233879b4a9d3d88eac5b28d) )	// V3.0 1992,1,23
-	ROM_RELOAD(               0x50000, 0x08000             )
 	ROM_LOAD( "38",           0x10000, 0x20000, CRC(e16216e8) SHA1(e88ae97e8a632823d5f1fe500954b6f6542407d5) )
-	ROM_RELOAD(               0x60000, 0x20000             )
 	ROM_LOAD( "brickzon.007", 0x30000, 0x20000, CRC(ceed12f1) SHA1(9006726b75a65455afb1194298bade8fa2207b4a) )
-	ROM_RELOAD(               0x80000, 0x20000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
 	ROM_LOAD( "brickzon.010", 0x00000, 0x10000, CRC(4eba8178) SHA1(9a214a1acacdc124529bc9dde73a8e884fc70293) )
@@ -2709,15 +2298,10 @@ Sound is a Yamaha YM3812 and a  AY-3-8910A
 ROM_START( hardhea2 )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "hrd-hd9",  0x00000, 0x08000, CRC(69c4c307) SHA1(0dfde1dcda51b5b1740aff9e96cb877a428a3e04) )	// V 2.0 1991,2,12
-	ROM_RELOAD(           0x50000, 0x08000             )
 	ROM_LOAD( "hrd-hd10", 0x10000, 0x10000, CRC(77ec5b0a) SHA1(2d3e24c208904a7884e585e08e5818fd9f8b5391) )
-	ROM_RELOAD(           0x60000, 0x10000             )
 	ROM_LOAD( "hrd-hd11", 0x20000, 0x10000, CRC(12af8f8e) SHA1(1b33a060b70900042fdae00f7dec325228d566f5) )
-	ROM_RELOAD(           0x70000, 0x10000             )
 	ROM_LOAD( "hrd-hd12", 0x30000, 0x10000, CRC(35d13212) SHA1(2fd03077b89ec9e55d2758b7f9cada970f0bdd91) )
-	ROM_RELOAD(           0x80000, 0x10000             )
 	ROM_LOAD( "hrd-hd13", 0x40000, 0x10000, CRC(3225e7d7) SHA1(2da9d1ce182dab8d9e09772e6899676b84c7458c) )
-	ROM_RELOAD(           0x90000, 0x10000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
 	ROM_LOAD( "hrd-hd14", 0x00000, 0x08000, CRC(79a3be51) SHA1(30bc67cd3a936615c6931f8e15953425dff59611) )
@@ -2750,15 +2334,10 @@ ROM_END
 ROM_START( starfigh )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "starfgtr.l1", 0x00000, 0x08000, CRC(f93802c6) SHA1(4005b06b69dd440dfb6385766386a1168e73288f) )	// V.1
-	ROM_RELOAD(              0x50000, 0x08000             )
 	ROM_LOAD( "starfgtr.j1", 0x10000, 0x10000, CRC(fcfcf08a) SHA1(65fe1666aa5092f820b337bcbcbed7accdec440d) )
-	ROM_RELOAD(              0x60000, 0x10000             )
 	ROM_LOAD( "starfgtr.i1", 0x20000, 0x10000, CRC(6935fcdb) SHA1(f47812f6716ccf52dd7ab8522c29e059f1e38f31) )
-	ROM_RELOAD(              0x70000, 0x10000             )
 	ROM_LOAD( "starfgtr.l3", 0x30000, 0x10000, CRC(50c072a4) SHA1(e48ec5a786ef245e5b2b72390824b6b7c449a74b) )	// 0xxxxxxxxxxxxxxx = 0xFF (ROM Test: OK)
-	ROM_RELOAD(              0x80000, 0x10000             )
 	ROM_LOAD( "starfgtr.j3", 0x40000, 0x10000, CRC(3fe3c714) SHA1(ccc9a33cf29c0e43ae8ab91f08438a89c777c186) )	// clear text here
-	ROM_RELOAD(              0x90000, 0x10000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
 	ROM_LOAD( "starfgtr.m8", 0x0000, 0x8000, CRC(ae3b0691) SHA1(41e004d09522cf7ddce6e4adc68841ad5553264a) )
@@ -2800,15 +2379,10 @@ Suna Electronics IND. CO., LTD 1989    Pinout = JAMMA
 ROM_START( sparkman )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "sparkman.e7", 0x00000, 0x08000, CRC(d89c5780) SHA1(177f0ae21c00575a7eb078e86f3a790fc95211e4) )	/* "SPARK MAN MAIN PROGRAM 1989,8,12 K.H.T (SUNA ELECTRPNICS) V 2.0 SOULE KOREA" */
-	ROM_RELOAD(              0x50000, 0x08000 )
 	ROM_LOAD( "sparkman.g7", 0x10000, 0x10000, CRC(48b4a31e) SHA1(771d1f1a2ce950ce2b661a4081471e98a7a7d53e) )
-	ROM_RELOAD(              0x60000, 0x10000 )
 	ROM_LOAD( "sparkman.g8", 0x20000, 0x10000, CRC(b8a4a557) SHA1(10251b49fb44fb1e7c71fde8fe9544df29d27346) )
-	ROM_RELOAD(              0x70000, 0x10000 )
 	ROM_LOAD( "sparkman.i7", 0x30000, 0x10000, CRC(f5f38e1f) SHA1(25f0abbac1298fad1f8e7202db05e48c3598bc88) )
-	ROM_RELOAD(              0x80000, 0x10000 )
 	ROM_LOAD( "sparkman.i8", 0x40000, 0x10000,  CRC(e54eea25) SHA1(b8ea884ee1a24953b6406f2d1edf103700f542d2) )
-	ROM_RELOAD(              0x90000, 0x10000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
 	ROM_LOAD( "sparkman.h11", 0x00000, 0x08000, CRC(06822f3d) SHA1(d30592cecbcd4dbf67e5a8d9c151d60b3232a54d) )
@@ -2856,5 +2430,5 @@ GAMEX( 1988, srangerb, rranger, rranger,  rranger,	0,        ROT0,  "bootleg", "
 GAMEX( 1988, srangerw, rranger, rranger,  rranger,	0,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
 GAMEX( 1989, sparkman, 0,       sparkman, sparkman, sparkman, ROT0,  "SunA",    "Spark Man (v 2.0)",             GAME_NOT_WORKING )
 GAMEX( 1990, starfigh, 0,       starfigh, hardhea2, starfigh, ROT90, "SunA",    "Star Fighter (v1)",             GAME_NOT_WORKING )
-GAMEX( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )
-GAMEX( 1992, brickzn3, brickzn, brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v3.0)",             GAME_NOT_WORKING )
+GAMEX( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn,  ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )
+GAMEX( 1992, brickzn3, brickzn, brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v4.0)",             GAME_NOT_WORKING )

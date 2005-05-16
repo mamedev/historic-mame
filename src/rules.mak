@@ -1005,7 +1005,7 @@ OBJDIRS += $(OBJ)/cpu/mips
 CPUDEFS += -DHAS_R4600=1
 ifdef X86_MIPS3_DRC
 CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
-$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mdrcold.c mips3.h
 else
 CPUOBJS += $(OBJ)/cpu/mips/mips3.o
 $(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h

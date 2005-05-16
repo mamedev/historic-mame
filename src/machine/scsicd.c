@@ -7,10 +7,13 @@
 #include "driver.h"
 #include "scsidev.h"
 #include "cdrom.h"
+#ifdef MESS
+#include "devices/chd_cd.h"
+#endif
 
 typedef struct
 {
-	data32_t lba, blocks, last_lba;
+	data32_t lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock;
 	int last_command;
  	struct cdrom_file *cdrom;
 	data8_t last_packet[16];
@@ -34,13 +37,17 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 
 	switch (our_this->last_command)
 	{
-			case 0:		// TEST UNIT READY
+		case 0:		// TEST UNIT READY
 			retval = 12;
 			break;
 		case 3: 	// REQUEST SENSE
 			retval = 16;
 			break;
 		case 0x12:	// INQUIRY
+			break;
+		case 0x15:	// MODE SELECT (6)
+			logerror("SCSICD: MODE SELECT (6) length %x control %x\n", pCmdBuf[4], pCmdBuf[5]);
+			retval = 0x18;
 			break;
 		case 0x1a:	// MODE SENSE
 			retval = 8;
@@ -52,7 +59,17 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<8 | pCmdBuf[8];
 
-			retval = our_this->blocks * 2048;
+			retval = our_this->blocks * our_this->bytes_per_sector;
+
+			if (our_this->num_subblocks > 1)
+			{
+				our_this->cur_subblock = our_this->lba % our_this->num_subblocks;
+				our_this->lba /= our_this->num_subblocks;
+			}
+			else
+			{
+				our_this->cur_subblock = 0;
+			}
 
 			/* convert physical frame to CHD */
 			if (cdrom)
@@ -61,13 +78,19 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 				cdrom_stop_audio(cdrom);
 			}
 
-			logerror("SCSICD: READ (10) at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
+			logerror("SCSICD: READ (10) at LBA %x for %d blocks (%d bytes)\n", our_this->lba, our_this->blocks, retval);
 			break;
 		case 0x42:	// READ SUB-CHANNEL
 	//                      logerror("SCSICD: READ SUB-CHANNEL type %d\n", pCmdBuf[3]);
 			retval = 16;
 			break;
 		case 0x43:	// READ TOC
+			// note: this is necessary for Firebeat, but it breaks GV and 573.  need to
+			// investigate further...
+/*          {
+                int trks = cdrom_get_last_track(cdrom);
+                retval = (trks * 8) + 4;
+            }*/
 			break;
 		case 0x45:	// PLAY AUDIO  (10 byte)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
@@ -128,7 +151,17 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<16 | pCmdBuf[8]<<8 | pCmdBuf[9];
 
-			retval = our_this->blocks * 2048;
+			retval = our_this->blocks * our_this->bytes_per_sector;
+
+			if (our_this->num_subblocks > 1)
+			{
+				our_this->cur_subblock = our_this->lba % our_this->num_subblocks;
+				our_this->lba /= our_this->num_subblocks;
+			}
+			else
+			{
+				our_this->cur_subblock = 0;
+			}
 
 			/* convert physical frame to CHD */
 			if (cdrom)
@@ -137,7 +170,10 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 				cdrom_stop_audio(cdrom);
 			}
 
-			logerror("SCSICD: READ (12) at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
+			logerror("SCSICD: READ (12) at LBA %x for %x blocks (%x bytes)\n", our_this->lba, our_this->blocks, retval);
+			break;
+		case 0xbb:	// SET CD SPEED
+			logerror("SCSICD: SET CD SPEED to %d kbytes/sec.\n", pCmdBuf[2]<<8 | pCmdBuf[3]);
 			break;
 		default:
 			logerror("SCSICD: unknown SCSI command %x!\n", our_this->last_command);
@@ -158,6 +194,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 	data8_t *fifo = our_this->last_packet;
 	struct cdrom_file *cdrom = our_this->cdrom;
 	data32_t temp;
+	data8_t tmp_buffer[2048];
 
 	switch (our_this->last_command)
 	{
@@ -170,11 +207,14 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 			break;
 
 		case 0x12:	// INQUIRY
-			pData[8] = 'S';
-			pData[9] = 'o';
-			pData[10] = 'n';
-			pData[11] = 'y';
-			pData[12] = '\0';
+			pData[0] = 0x05;	// device is present, device is CD/DVD (MMC-3)
+			pData[1] = 0x80;	// media is removable
+			pData[2] = 0x05;	// device complies with SPC-3 standard
+			pData[3] = 0x02;	// response data format = SPC-3 standard
+			memset(&pData[8], 0, 8*3);
+			strcpy((char *)&pData[8], "Sony");	// some Konami games freak out if this isn't "Sony", so we'll lie
+			strcpy((char *)&pData[16], "CDU-76S");	// this is the actual drive on my Nagano '98 board
+			strcpy((char *)&pData[32], "1.0");
 			break;
 
 		case 0x25:	// READ CAPACITY
@@ -187,27 +227,40 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 			pData[1] = (temp>>16) & 0xff;
 			pData[2] = (temp>>8) & 0xff;
 			pData[3] = (temp & 0xff);
-			pData[4] = 0;	// block size is always 2048 (0x0800)
+			pData[4] = 0;
 			pData[5] = 0;
-			pData[6] = 0x08;
-			pData[7] = 0;
+			pData[6] = (our_this->bytes_per_sector>>8)&0xff;
+			pData[7] = (our_this->bytes_per_sector & 0xff);
 			break;
 
 		case 0x28:	// READ (10 byte)
 		case 0xa8:	// READ (12 byte)
+			logerror("SCSICD: read %x bytes, \n", bytes);
 			if ((our_this->cdrom) && (our_this->blocks))
 			{
 				while (bytes > 0)
 				{
-					if (!cdrom_read_data(our_this->cdrom, our_this->lba, 1, pData, CD_TRACK_MODE1))
+					if (!cdrom_read_data(our_this->cdrom, our_this->lba, 1, tmp_buffer, CD_TRACK_MODE1))
 					{
 						logerror("SCSICD: CD read error!\n");
 					}
-					our_this->lba++;
+
+					logerror("True LBA: %d, buffer half: %d\n", our_this->lba, our_this->cur_subblock * our_this->bytes_per_sector);
+
+					memcpy(pData, &tmp_buffer[our_this->cur_subblock * our_this->bytes_per_sector], our_this->bytes_per_sector);
+
+					our_this->cur_subblock++;
+					if (our_this->cur_subblock >= our_this->num_subblocks)
+					{
+						our_this->cur_subblock = 0;
+
+						our_this->lba++;
+						our_this->blocks--;
+					}
+
 					our_this->last_lba = our_this->lba;
-					our_this->blocks--;
-					bytes -= CD_FRAME_SIZE;
-					pData += CD_FRAME_SIZE;
+					bytes -= our_this->bytes_per_sector;
+					pData += our_this->bytes_per_sector;
 				}
 			}
 			break;
@@ -283,7 +336,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 						in_len = fifo[7]<<8 | fifo[8];
 
 						trks = cdrom_get_last_track(cdrom);
-						len = (trks * 8) + 2;
+						len = (trks * 8) + 4;
 
 						if (start_trk == 0xaa)	// special hack
 						{
@@ -295,9 +348,9 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 							len = in_len;
 						}
 
-						pData[0] = (in_len>>8) & 0xff;
-						pData[1] = (in_len & 0xff);
-						pData[2] = start_trk;
+						pData[0] = (len>>8) & 0xff;
+						pData[1] = (len & 0xff);
+						pData[2] = start_trk+1;
 						pData[3] = trks;
 
 						dptr = (start_trk * 8) + 4;
@@ -369,11 +422,27 @@ void scsicd_write_data(SCSICd *our_this, int bytes, data8_t *pData)
 {
 	switch (our_this->last_command)
 	{
+		case 0x15:	// MODE SELECT (6)
 		case 0x55:	// MODE SELECT
 			logerror("SCSICD: MODE SELECT page %x\n", pData[0] & 0x3f);
 
 			switch (pData[0] & 0x3f)
 			{
+				case 0x0:	// vendor-specific
+					// check for SGI extension to force 512-byte blocks
+					if ((pData[3] == 8) && (pData[10] == 2))
+					{
+						logerror("SCSICD: Experimental SGI 512-byte block extension enabled\n");
+
+						our_this->bytes_per_sector = 512;
+						our_this->num_subblocks = 4;
+					}
+					else
+					{
+						logerror("SCSICD: Unknown vendor-specific page!\n");
+					}
+					break;
+
 				case 0xe:	// audio page
 					logerror("Ch 0 route: %x vol: %x\n", pData[8], pData[9]);
 					logerror("Ch 1 route: %x vol: %x\n", pData[10], pData[11]);
@@ -409,13 +478,20 @@ int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 
 			instance->lba = 0;
 			instance->blocks = 0;
+			instance->bytes_per_sector = 2048;
+			instance->num_subblocks = 1;
+ 			instance->cur_subblock = 0;
+
+			#ifdef MESS
+			instance->cdrom = mess_cd_get_cdrom_file_by_number(intparm);
+			#else
 			instance->cdrom = cdrom_open(get_disk_handle(intparm));
 
 			if (!instance->cdrom)
 			{
 				logerror("SCSICD: no CD found!\n");
 			}
-
+			#endif
 
 			result = (SCSICd **) file;
 			*result = instance;
@@ -428,6 +504,11 @@ int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 			devptr = (struct cdrom_file **)ptrparm;
 			instance = (SCSICd *)file;
 			*devptr = instance->cdrom;
+			break;
+
+		case SCSIOP_SET_DEVICE:
+			instance = (SCSICd *)file;
+			instance->cdrom = (struct cdrom_file *)ptrparm;
 			break;
 	}
 

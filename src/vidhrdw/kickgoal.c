@@ -108,7 +108,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		int flipx = spriteram16[offs+1] & 0x0020;
 		int color = spriteram16[offs+1] & 0x000f;
 
-		if (spriteram16[offs+0] == 0x0100) break;
+		if (spriteram16[offs+0] & 0x0100) break;
 
 		ypos *= 2;
 
@@ -171,8 +171,10 @@ static void get_hwaction_bg_tile_info(int tile_index)
 {
 	int tileno = kickgoal_bgram[tile_index*2] & 0x1fff;
 	int color = kickgoal_bgram[tile_index*2+1] & 0x000f;
+	int flipx = kickgoal_bgram[tile_index*2+1] & 0x0020;
+	int flipy = kickgoal_bgram[tile_index*2+1] & 0x0040;
 
-	SET_TILE_INFO(1,tileno + 0x0000,color + 0x10,0)
+	SET_TILE_INFO(1,tileno + 0x0000,color + 0x10,(flipx ? TILE_FLIPX : 0) | (flipy ? TILE_FLIPY : 0))
 }
 
 /* BG 2 */
@@ -181,8 +183,9 @@ static void get_hwaction_bg2_tile_info(int tile_index)
 	int tileno = kickgoal_bg2ram[tile_index*2] & 0x1fff;
 	int color = kickgoal_bg2ram[tile_index*2+1] & 0x000f;
 	int flipx = kickgoal_bg2ram[tile_index*2+1] & 0x0020;
+	int flipy = kickgoal_bg2ram[tile_index*2+1] & 0x0040;
 
-	SET_TILE_INFO(1,tileno + 0x2000,color + 0x20,flipx ? TILE_FLIPX : 0);
+	SET_TILE_INFO(1,tileno + 0x2000,color + 0x20,(flipx ? TILE_FLIPX : 0) | (flipy ? TILE_FLIPY : 0))
 }
 
 
@@ -207,11 +210,13 @@ static UINT32 tilemap_scan_hwactionfg( UINT32 col, UINT32 row, UINT32 num_cols, 
 
 VIDEO_START( hwaction )
 {
-	kickgoal_fgtm = tilemap_create(get_hwaction_fg_tile_info,tilemap_scan_hwactionfg,TILEMAP_TRANSPARENT, 8, 8,64,64);
-		tilemap_set_transparent_pen(kickgoal_fgtm,15);
-	kickgoal_bgtm = tilemap_create(get_hwaction_bg_tile_info,tilemap_scan_hwactionbg,TILEMAP_TRANSPARENT, 16, 16,64,64);
-		tilemap_set_transparent_pen(kickgoal_bgtm,15);
-	kickgoal_bg2tm = tilemap_create(get_hwaction_bg2_tile_info,tilemap_scan_hwactionbg2,TILEMAP_OPAQUE, 16, 16,64,64);
+	kickgoal_fgtm  = tilemap_create(get_hwaction_fg_tile_info,tilemap_scan_hwactionfg,TILEMAP_TRANSPARENT,  8, 8,64,64);
+	kickgoal_bgtm  = tilemap_create(get_hwaction_bg_tile_info,tilemap_scan_hwactionbg,TILEMAP_TRANSPARENT, 16,16,64,64);
+	kickgoal_bg2tm = tilemap_create(get_hwaction_bg2_tile_info,tilemap_scan_hwactionbg2,TILEMAP_OPAQUE,    16,16,64,64);
+
+	tilemap_set_transparent_pen(kickgoal_fgtm,15);
+	tilemap_set_transparent_pen(kickgoal_bgtm,15);
+
 	return 0;
 }
 
@@ -229,7 +234,7 @@ static void hwaction_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 		int flipx = spriteram16[offs+1] & 0x0020;
 		int color = spriteram16[offs+1] & 0x000f;
 
-		if (spriteram16[offs+0] == 0x0100) break;
+		if (spriteram16[offs+0] & 0x0100) break;
 
 		ypos = 0x110-ypos;
 

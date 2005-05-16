@@ -1382,7 +1382,7 @@ static struct GfxLayout newsin7_charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	3,	/* 3 bits per pixel */
-	{ 0, 2*256*8*8, 2*2*256*8*8 },	/* the bitplanes are separated */
+	{ 2*2*256*8*8, 0, 2*256*8*8 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -1392,7 +1392,7 @@ static struct GfxLayout newsin7_spritelayout =
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 2*64*16*16, 2*2*64*16*16 },	/* the bitplanes are separated */
+	{ 2*2*64*16*16, 0, 2*64*16*16 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -2546,7 +2546,7 @@ GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,      ROT90, "Amenip
 GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )
 GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars" )
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish" )
-GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
+GAME( 1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7" )
 GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar" )
 GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)" )
 GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )

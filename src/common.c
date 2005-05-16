@@ -78,7 +78,7 @@ data32_t *generic_nvram32;
 static struct chd_file *disk_handle[4];
 
 /* system BIOS */
-static int system_bios;
+int system_bios;
 
 
 /***************************************************************************

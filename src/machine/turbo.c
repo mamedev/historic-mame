@@ -24,7 +24,6 @@ UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 static UINT8 segment_address, segment_increment;
 static UINT8 port_8279;
 
-static UINT8 buckrog_status;
 static UINT8 buckrog_command;
 
 static UINT8 old_segment_data[32];
@@ -151,17 +150,9 @@ static ppi8255_interface subroc3d_8255_intf =
 
 *******************************************/
 
-static READ8_HANDLER( buckrog_cpu2_status_r )
-{
-	return buckrog_status;
-}
-
-
 static WRITE8_HANDLER( buckrog_cpu2_command_w )
 {
-	buckrog_status &= ~0x80;
 	buckrog_command = data;
-	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
@@ -173,6 +164,13 @@ static WRITE8_HANDLER( buckrog_back_palette_w )
 
 static WRITE8_HANDLER( buckrog_fore_palette_w )
 {
+	if ((data & 0x80) == 0x00)
+	{
+		/* this actually just touches bit 6 */
+		ppi8255_set_portC(0, 0x40);
+
+		cpunum_set_input_line(1, 0, HOLD_LINE);
+	}
 	buckrog_fchg = data & 0x07;
 }
 
@@ -192,7 +190,7 @@ static ppi8255_interface buckrog_8255_intf =
 	2,
 	{ NULL,                   NULL },
 	{ NULL,                   NULL },
-	{ buckrog_cpu2_status_r,  NULL },
+	{ NULL,                   NULL },
 	{ buckrog_cpu2_command_w, buckrog_sound_A_w },
 	{ buckrog_back_palette_w, buckrog_sound_B_w },
 	{ buckrog_fore_palette_w, buckrog_extra_w }
@@ -232,7 +230,6 @@ MACHINE_INIT( buckrog )
 	ppi8255_init(&buckrog_8255_intf);
 	segment_address = segment_increment = 0;
 	segment_init = 1;
-	buckrog_status = 0x80;
 	buckrog_command = 0x00;
 	port_8279 = 1;
 }
@@ -489,7 +486,9 @@ void turbo_rom_decode(void)
 
 READ8_HANDLER( buckrog_cpu2_command_r )
 {
-	buckrog_status |= 0x80;
+	/* this actually just touches bit 6 */
+	ppi8255_set_portC(0, 0x00);
+
 	return buckrog_command;
 }
 

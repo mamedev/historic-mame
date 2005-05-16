@@ -949,7 +949,11 @@ void sound_stop(void)
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
 		struct speaker_info *spk = &speaker[spknum];
+#ifdef WIN32
+		printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
+#else
 		logerror("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
+#endif
 	}
 }
 #endif /* MAME_DEBUG */

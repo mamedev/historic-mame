@@ -1,3 +1,11 @@
+/*********************************************************************
+
+    8255ppi.h
+
+    Intel 8255 PPI I/O chip
+
+*********************************************************************/
+
 #ifndef _8255PPI_H_
 #define _8255PPI_H_
 
@@ -30,10 +38,9 @@ void ppi8255_set_portAwrite( int which, write8_handler portAwrite);
 void ppi8255_set_portBwrite( int which, write8_handler portBwrite);
 void ppi8255_set_portCwrite( int which, write8_handler portCwrite);
 
-#ifdef MESS
-/* Peek at the ports */
-data8_t ppi8255_peek( int which, offs_t offset );
-#endif
+void ppi8255_set_portA( int which, int data );
+void ppi8255_set_portB( int which, int data );
+void ppi8255_set_portC( int which, int data );
 
 /* Helpers */
 READ8_HANDLER( ppi8255_0_r );
@@ -53,26 +60,9 @@ WRITE8_HANDLER( ppi8255_5_w );
 WRITE8_HANDLER( ppi8255_6_w );
 WRITE8_HANDLER( ppi8255_7_w );
 
-/**************************************************************************/
-/* Added by Kev Thacker */
-/* mode 2 (used by Sord M5 to communicate with FD-5 disc interface */
+#ifdef MESS
+/* Peek at the ports */
+data8_t ppi8255_peek( int which, offs_t offset );
+#endif
 
-/* interface for mode 2 */
-typedef struct
-{
-	write8_handler	obfa_write[MAX_8255];
-	write8_handler	intra_write[MAX_8255];
-	write8_handler	ibfa_write[MAX_8255];
-} ppi8255_mode2_interface;
-
-/* set interface to use for mode 2 */
-/* call AFTER setting interface with other function */
-void ppi8255_set_mode2_interface( ppi8255_mode2_interface *intfce);
-
-/* set acka input */
-void ppi8255_set_input_acka(int which, int data);
-
-/* set stba input */
-void ppi8255_set_input_stba(int which, int data);
-
-#endif /* MESS */
+#endif /* _8255PPI_H_ */

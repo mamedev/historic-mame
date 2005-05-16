@@ -342,8 +342,8 @@ static void adpcm_state_save_register(struct ADPCMVoice *voice, int i)
 	state_save_register_UINT8  (buf, i, "playing", &voice->playing, 1);
 	state_save_register_UINT32 (buf, i, "sample" , &voice->sample,  1);
 	state_save_register_UINT32 (buf, i, "count"  , &voice->count,   1);
-	state_save_register_UINT32 (buf, i, "signal" , &voice->adpcm.signal,  1);
-	state_save_register_UINT32 (buf, i, "step"   , &voice->adpcm.step,    1);
+	state_save_register_INT32  (buf, i, "signal" , &voice->adpcm.signal,  1);
+	state_save_register_INT32  (buf, i, "step"   , &voice->adpcm.step,    1);
 	state_save_register_UINT32 (buf, i, "volume" , &voice->volume,  1);
 
 	state_save_register_INT16  (buf, i, "last_sample", &voice->last_sample, 1);

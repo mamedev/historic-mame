@@ -32,20 +32,28 @@ int scsihd_exec_command(SCSIHd *our_this, data8_t *pCmdBuf)
 	switch (our_this->last_command)
 	{
 		case 0:		// TEST UNIT READY
+			retdata = 12;
+			break;
 		case 3: 	// REQUEST SENSE
+			retdata = 16;
 			break;
 		case 0x12:	// INQUIRY
+			retdata = 12;
 			break;
 		case 0x15:	// MODE SELECT (used to set CDDA volume)
 			logerror("SCSIHD: MODE SELECT length %x control %x\n", pCmdBuf[4], pCmdBuf[5]);
+			retdata = 0x18;
 			break;
 		case 0x1a:	// MODE SENSE
+			retdata = 8;
 			break;
 		case 0x28: 	// READ (10 byte)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<8 | pCmdBuf[8];
 
 			logerror("SCSIHD: READ at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
+
+			retdata = our_this->blocks * 512;
 			break;
 		default:
 			logerror("SCSIHD: unknown SCSI command %x!\n", our_this->last_command);
@@ -70,11 +78,14 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 			break;
 
 		case 0x12:	// INQUIRY
-			pData[8] = 'S';
-			pData[9] = 'o';
-			pData[10] = 'n';
-			pData[11] = 'y';
-			pData[12] = '\0';
+			pData[0] = 0x00;	// device is direct-access (e.g. hard disk)
+			pData[1] = 0x00;	// media is not removable
+			pData[2] = 0x05;	// device complies with SPC-3 standard
+			pData[3] = 0x02;	// response data format = SPC-3 standard
+			memset(&pData[8], 0, 8*3);
+			strcpy((char *)&pData[8], "MAME/MESS");
+			strcpy((char *)&pData[16], "SCSI HDD");
+			strcpy((char *)&pData[32], "1.0");
 			break;
 
 		case 0x28:	// READ (10 byte)
@@ -95,6 +106,10 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 			}
 			break;
 
+
+		default:
+			logerror("SCSIHD: readback of data from unknown command %d\n", our_this->last_command);
+			break;
 	}
 }
 
@@ -126,13 +141,17 @@ int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 
 			instance->lba = 0;
 			instance->blocks = 0;
+
+			#ifdef MESS
+			instance->disk = (struct hard_disk_file *)NULL;
+			#else
 			instance->disk = hard_disk_open(get_disk_handle(intparm));
 
 			if (!instance->disk)
 			{
 				logerror("SCSIHD: no HD found!\n");
 			}
-
+			#endif
 
 			result = (SCSIHd **) file;
 			*result = instance;
@@ -146,6 +165,12 @@ int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 			instance = (SCSIHd *)file;
 			*devptr = instance->disk;
 			break;
+
+		case SCSIOP_SET_DEVICE:
+			instance = (SCSIHd *)file;
+			instance->disk = (struct hard_disk_file *)ptrparm;
+			break;
+
 	}
 
 	return 0;

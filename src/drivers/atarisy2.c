@@ -442,11 +442,123 @@ static READ8_HANDLER( leta_r )
  *
  *************************************/
 
+/*
+    Information from Derrick R on the mixing for this board:
+
+    Lets start at the YM3012. The fist Op-Amp is a
+    non-inverting gain stage.  The small cap can be
+    ignored, it will filter out of the audio range.
+     Gain = R106/R107 + 1 = 100/18 + 1 = 6.556
+    Also the CH1 output is referenced to 2.5V.  Anything
+    above is positive, below is negative.  Then amplified
+    by 6.556 and clipped to -15V and (15V-1.5V=13.5V).
+    This is usefull to work out the relative signal levels
+    of each effect.
+
+    This then goes to the stage you were asking about.  We
+    use milman to work out the voltage at the center of
+    R74/R124 and the switched in resistors.
+
+    -------------- Vout
+    |    |   |
+    R74  RP  R124
+    |    |   |
+    Vin  0   0
+
+    Vin is the output of the first gain stage
+    RP = is the switched resistors in parallel
+
+    Vout = RT * IT
+
+    IT is the total current
+    IT = Vin/R74 + 0/RP + 0/R124 = Vin/R74
+
+    RT = all resistors in parallel
+    RT = 1/ (1/R74 + 1/R124 + 1/RP)
+    Note if no RP resistors are switched in then
+     RT= 1/ (1/R74 + 1/R124)
+
+    So If we assume Vin=1V, we have this:
+    0  .5
+    1  .333
+    2  .242
+    3  .195
+    4  .153
+    5  .133
+    6  .115
+    7  .103
+
+    Or half of Frank's values and in the proper order.
+    This is important because later everything together
+    will work out the relative volumes for the effects.
+
+    This then goes to the final inverting op-amp which has
+    a gain of -R123/R124.  Or in this case -1.  Again the
+    cap can be ignored.  This gives us the voltage at YAM1
+    (Vyam1)
+
+    Everything is mixed at the bottom left of page 16.
+    Using the summing formula:
+    Vout = -R148 * (Vpaud1/R142 + Vtiaud/R143 +
+    Vyam1/R144)
+    Or shortened for just YAM1:
+    Vout = -R148/R142 * Vyam1 = -2.128 * Vyam1
+
+    OK so from the top, the YM3012 has a 0-5V out.  The
+    first op-amp converts this to +/-2.5V.  Adds a gain of
+    6.556. This gives a maximum of +/-16.389V which is
+    clipped to +13.5V/-15V.
+    Then the gain table is applied.  Then a gain of -1,
+    which will not cause the amp stage to clip.  (I
+    mention it beause the speech amp has a gain of -4.7
+    and might clip).
+
+    Then a final gain of -R148/R144 = -100/47 = -2.128.
+    Which clips to +/-13.5V.  But...
+
+    It actually would be better to use the summing formula
+    mentioned earlier to mix the 3 effects together.
+    Because the final clipping is dependant on the sum of
+    all 3 effects.
+
+    I went into complete detail, because the other effects
+    use similar stages, but with different values.
+
+    Hope it helps.  My personally opinion is clipping is
+    important.  So it would be nice to add it in properly.
+*/
+
 static WRITE8_HANDLER( mixer_w )
 {
-	atarigen_set_ym2151_vol((data & 7) * 100 / 7);
-	atarigen_set_pokey_vol(((data >> 3) & 3) * 100 / 3);
-	atarigen_set_tms5220_vol(((data >> 5) & 7) * 100 / 7);
+	double rbott, rtop, gain;
+
+	/* these gains are cheesed up, but give an approximate effect */
+
+	/* bits 0-2 control the volume of the YM2151, using 22k, 47k, and 100k resistors */
+	rtop = 1.0/(1.0/100 + 1.0/100);
+	rbott = 0;
+	if (!(data & 0x01)) rbott += 1.0/100;
+	if (!(data & 0x02)) rbott += 1.0/47;
+	if (!(data & 0x04)) rbott += 1.0/22;
+	gain = (rbott == 0) ? 1.0 : ((1.0/rbott) / (rtop + (1.0/rbott)));
+	atarigen_set_ym2151_vol(gain * 100);
+
+	/* bits 3-4 control the volume of the POKEYs, using 47k and 100k resistors */
+	rtop = 1.0/(1.0/100 + 1.0/100);
+	rbott = 0;
+	if (!(data & 0x08)) rbott += 1.0/47;
+	if (!(data & 0x10)) rbott += 1.0/22;
+	gain = (rbott == 0) ? 1.0 : ((1.0/rbott) / (rtop + (1.0/rbott)));
+	atarigen_set_pokey_vol(gain * 100);
+
+	/* bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors */
+	rtop = 1.0/(1.0/100 + 1.0/100);
+	rbott = 0;
+	if (!(data & 0x20)) rbott += 1.0/100;
+	if (!(data & 0x40)) rbott += 1.0/47;
+	if (!(data & 0x80)) rbott += 1.0/22;
+	gain = (rbott == 0) ? 1.0 : ((1.0/rbott) / (rtop + (1.0/rbott)));
+	atarigen_set_tms5220_vol(gain * 100);
 }
 
 
@@ -1202,20 +1314,20 @@ static MACHINE_DRIVER_START( atarisy2 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 	MDRV_SOUND_ADD_TAG("ym", YM2151, ATARI_CLOCK_14MHz/4)
-	MDRV_SOUND_ROUTE(0, "left", 0.80)
-	MDRV_SOUND_ROUTE(1, "right", 0.80)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
 
 	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
 	MDRV_SOUND_CONFIG(pokey_interface_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.35)
 
 	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
 	MDRV_SOUND_CONFIG(pokey_interface_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.35)
 
 	MDRV_SOUND_ADD_TAG("tms", TMS5220, ATARI_CLOCK_20MHz/4/4/2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END
 
 

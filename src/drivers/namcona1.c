@@ -32,7 +32,6 @@ To Do:
 
 - Xday 2:
     has some graphics glitches (wrong sprite tiles); probably blitter-related
-    input ports are wonky; can add "coins" while in free-play mode, but can't start game
 
     Rom board  M112
     Rom board custom Key chip i.d. C394
@@ -313,58 +312,6 @@ INPUT_PORTS_START( namcona1_quiz )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START4 )
-
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN4 )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( xday2 )
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Test ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "SERVICE" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE )
-
-	PORT_START
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) /* next */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* prev */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x8f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	// 0x2000 enter was pressed (in game settings screen)
-	// 0x1000 exit was pressed (in game settings screen)
-
-	PORT_START
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2) /* enter */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2) /* exit */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	// 0x2000 next was pressed (in game settings screen)
-	// 0x1000 prev was pressed (in game settings screen)
-
-	PORT_START
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x8f, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(4)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x8f, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1283,4 +1230,4 @@ GAMEX( 1993,numanath, 0,        namcona1,  namcona1_joy,	numanath, ROT0, "Namco"
 GAMEX( 1993,numanatj, numanath, namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX( 1993,quiztou,  0,        namcona1,  namcona1_quiz,	quiztou,  ROT0, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	tinklpit, ROT0, "Namco", "Tinkle Pit (Japan)", GAME_IMPERFECT_SOUND )
-GAMEX( 1995,xday2,    0,        namcona1,  xday2,           xday2,    ROT0, "Namco", "X-Day 2 (Japan)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995,xday2,    0,        namcona1,  namcona1_joy,        xday2,    ROT0, "Namco", "X-Day 2 (Japan)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )

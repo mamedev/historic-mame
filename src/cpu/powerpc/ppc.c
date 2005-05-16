@@ -242,8 +242,12 @@ typedef struct {
 	FPR	fpr[32];
 	UINT32 sr[16];
 
+#if HAS_PPC603
 	int is603;
+#endif
+#if HAS_PPC602
 	int is602;
+#endif
 
 	/* PowerPC 602 specific registers */
 	UINT32 lt;
@@ -268,6 +272,38 @@ static UINT32 ppc_rotate_mask[32][32];
 
 #define ROPCODE(pc)			cpu_readop32(pc)
 #define ROPCODE64(pc)		cpu_readop64(DWORD_XOR_BE(pc))
+
+/*********************************************************************/
+
+INLINE int IS_PPC602(void)
+{
+#if HAS_PPC602
+	return ppc.is602;
+#else
+	return 0;
+#endif
+}
+
+INLINE int IS_PPC603(void)
+{
+#if HAS_PPC603
+	return ppc.is603;
+#else
+	return 0;
+#endif
+}
+
+INLINE int IS_PPC403(void)
+{
+#if HAS_PPC403
+	return !IS_PPC602() && !IS_PPC603();
+#else
+	return 0;
+#endif
+}
+
+/*********************************************************************/
+
 
 INLINE void SET_CR0(INT32 rd)
 {
@@ -357,7 +393,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	}
 
 #if (HAS_PPC603 || HAS_PPC602)
-	if(ppc.is603 || ppc.is602) {
+	if(IS_PPC602() || IS_PPC603()) {
 		switch(spr)
 		{
 			case SPR603E_DEC:
@@ -428,7 +464,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 #endif
 
 #if (HAS_PPC403)
-	if (!ppc.is603 && !ppc.is602) {
+	if (IS_PPC403()) {
 		switch(spr)
 		{
 			case SPR403_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; return;
@@ -495,7 +531,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 	}
 
 #if (HAS_PPC403)
-	if (!ppc.is603 && !ppc.is602)
+	if (IS_PPC403())
 	{
 		switch (spr)
 		{
@@ -534,7 +570,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 #endif
 
 #if (HAS_PPC603 || HAS_PPC602)
-	if (ppc.is603 || ppc.is602)
+	if (IS_PPC603() || IS_PPC602())
 	{
 		switch (spr)
 		{
@@ -602,7 +638,7 @@ INLINE void ppc_set_msr(UINT32 value)
 				}
 #endif
 #if (HAS_PPC403)
-				if(!ppc.is602 && !ppc.is603) {
+				if(IS_PPC403()) {
 					ppc403_exception(i);
 				}
 #endif
@@ -644,21 +680,20 @@ static void (* optable[64])(UINT32);
 
 INLINE UINT8 READ8(UINT32 a)
 {
-	if (ppc.is603 || ppc.is602)
-	{
+	if (IS_PPC603() || IS_PPC602())
 		return program_read_byte_64be(a);
-	}
 
-	if(a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
+#if HAS_PPC403
+	if(a >= 0x40000000 && a <= 0x4000000f)		/* Serial Port */
 		return ppc403_spu_r(a);
-	} else {
+#endif
+
 		return program_read_byte_32be(a);
 	}
-}
 
 INLINE UINT16 READ16(UINT32 a)
 {
-	if (ppc.is603 || ppc.is602) {
+	if (IS_PPC603() || IS_PPC602()) {
 		if( a & 0x1 ) {
 			return ((UINT16)program_read_byte_64be(a+0) << 8) | ((UINT16)program_read_byte_64be(a+1) << 0);
 		}
@@ -674,7 +709,7 @@ INLINE UINT16 READ16(UINT32 a)
 
 INLINE UINT32 READ32(UINT32 a)
 {
-	if (ppc.is603 || ppc.is602) {
+	if (IS_PPC603() || IS_PPC602()) {
 		if( a & 0x3 ) {
 			return ((UINT32)program_read_byte_64be(a+0) << 24) | ((UINT32)program_read_byte_64be(a+1) << 16) |
 				   ((UINT32)program_read_byte_64be(a+2) << 8) | ((UINT32)program_read_byte_64be(a+3) << 0);
@@ -697,29 +732,30 @@ INLINE UINT64 READ64(UINT32 a)
 	}
 	return program_read_qword_64be(a);
 #else
-	return 0
+	return 0;
 #endif
 }
 
 
 INLINE void WRITE8(UINT32 a, UINT8 d)
 {
-	if (ppc.is603 || ppc.is602)
+	if (IS_PPC603() || IS_PPC602())
 	{
 		program_write_byte_64be(a, d&0xff);
 		return;
 	}
 
-	if( a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
+#if HAS_PPC403
+	if( a >= 0x40000000 && a <= 0x4000000f )		/* Serial Port */
 		ppc403_spu_w(a, d);
-	} else {
+#endif
+
 		program_write_byte_32be(a, d);
 	}
-}
 
 INLINE void WRITE16(UINT32 a, UINT16 d)
 {
-	if (ppc.is603 || ppc.is602)
+	if (IS_PPC603() || IS_PPC602())
 	{
 		if( a & 0x1 ) {
 			program_write_byte_64be(a+0, (UINT8)(d >> 8));
@@ -739,7 +775,7 @@ INLINE void WRITE16(UINT32 a, UINT16 d)
 
 INLINE void WRITE32(UINT32 a, UINT32 d)
 {
-	if (ppc.is603 || ppc.is602)
+	if (IS_PPC603() || IS_PPC602())
 	{
 		if( ppc.reserved ) {
 			if( a == ppc.reserved_address ) {
@@ -778,8 +814,6 @@ INLINE void WRITE64(UINT32 a, UINT64 d)
 		return;
 	}
 	program_write_qword_64be(a, d);
-#else
-	return 0;
 #endif
 }
 
@@ -805,6 +839,8 @@ INLINE void WRITE64(UINT32 a, UINT64 d)
 void ppc_init(void)
 {
 	int i,j;
+
+	memset(&ppc, 0, sizeof(ppc));
 
 	for( i=0; i < 64; i++ ) {
 		optable[i] = ppc_invalid;
@@ -856,6 +892,7 @@ void ppc_init(void)
 
 
 // !!! probably should move this stuff elsewhere !!!
+#if HAS_PPC403
 static void ppc403_init(void)
 {
 	ppc_init();
@@ -876,16 +913,16 @@ static void ppc403_init(void)
 
 	ppc.spu.rx_timer = timer_alloc(ppc403_spu_rx_callback);
 	ppc.spu.tx_timer = timer_alloc(ppc403_spu_tx_callback);
-
-	ppc.is603 = 0;
 }
 
 static void ppc403_exit(void)
 {
 
 }
+#endif /* HAS_PPC403 */
 
 
+#if (HAS_PPC603)
 static void ppc603_init(void)
 {
 	int i ;
@@ -984,6 +1021,7 @@ static void ppc603_exit(void)
 {
 
 }
+#endif
 
 #if (HAS_PPC602)
 static void ppc602_init(void)
@@ -1077,7 +1115,6 @@ static void ppc602_init(void)
 			((i & 0x01) ? 0x0000000F : 0);
 	}
 
-	ppc.is603 = 0;
 	ppc.is602 = 1;
 }
 
@@ -1319,10 +1356,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
-		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = ppc403_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = ppc403_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = ppc403_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = ppc.irq_callback;	break;

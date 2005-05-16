@@ -145,6 +145,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( theglob3 )	/* (c) 1983 */
 	DRIVER( igmo )		/* (c) 1984 */
 	DRIVER( dealer )	/* (c) 198? */
+	DRIVER( revenger )	/* (c) 1984 */
 
 	/* "Galaxian hardware" games */
 	DRIVER( galaxian )	/* (c) Namco */
@@ -1082,6 +1083,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( grescue )	/* bootleg? */
 	DRIVER( desterth )	/* bootleg */
 	DRIVER( cosmicmo )	/* Universal */
+	DRIVER( cosmicm2 )	/* Universal */
 	DRIVER( rollingc )	/* Nichibutsu */
 	DRIVER( ozmawars )	/* Shin Nihon Kikaku (SNK) */
 	DRIVER( ozmawar2 )	/* Shin Nihon Kikaku (SNK) */
@@ -3572,6 +3574,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( prosport )	/* (c) 1983 */
 	DRIVER( boomrang )	/* (c) 1983 */
 	DRIVER( kamikcab )	/* (c) 1984 */
+	DRIVER( yellowcb )	/* bootleg */
 	DRIVER( liberate )	/* (c) 1984  Data East Corporation */
 	DRIVER( dualaslt )	/* (c) 1984  Data East USA (US) */
 	DRIVER( liberatb )	/* bootleg */
@@ -3939,6 +3942,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bootcamp )	/* GX611 (c) 1987 */
 	DRIVER( combascb )	/* bootleg */
 	DRIVER( rockrage )	/* GX620 (c) 1986 (World?) */
+	DRIVER( rockraga )	/* GX620 (c) 1986 (Prototype?) */
 	DRIVER( rockragj )	/* GX620 (c) 1986 (Japan) */
 	DRIVER( mx5000 )	/* GX669 (c) 1987 */
 	DRIVER( flkatck )	/* GX669 (c) 1987 (Japan) */
@@ -4036,6 +4040,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( kittenk )	/* GX712 (c) 1988 */
 	DRIVER( nyanpani )	/* GX712 (c) 1988 (Japan) */
 	DRIVER( hcrash )	/* GX790 */
+	DRIVER( hcrashc )	/* GX790 */
 
 	/* GX400 BIOS based games */
 	DRIVER( rf2 )		/* GX561 (c) 1985 */
@@ -4114,7 +4119,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( moobl )		/* bootleg */
 	DRIVER( bucky )		/* GX173 (c) 1992 (World) */
 	DRIVER( buckyua )	/* GX173 (c) 1992 (US) */
-	DRIVER( gaiapols )	/* GX123 (c) 1993 (Japan) */
+	DRIVER( gaiapols )	/* GX123 (c) 1993 (US) */
+	DRIVER( gaiapolj )	/* GX123 (c) 1993 (Japan) */
 	DRIVER( mystwarr )	/* GX128 (c) 1993 (World) */
 	DRIVER( mystwaru )	/* GX128 (c) 1993 (US) */
 	DRIVER( viostorm )	/* GX168 (c) 1993 (Europe) */
@@ -5865,6 +5871,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	DRIVER( ultrax )	/* (c) 1995 Banpresto */
 	DRIVER( jsk )		/* (c) 1997 Visco */
+	DRIVER( gdfs )		/* (c) 1995 Banpresto */
 
 	/* ST-0016 based games (ST-0016 is a z80 / gfx / sound all in one) */
 	/* plain ST-0016 */
@@ -6011,6 +6018,7 @@ Other Sun games
 	DRIVER( bigtwin )	/* (c) 1995 */
 	DRIVER( wbeachvl )	/* (c) 1995 */
 	DRIVER( excelsr )	/* (c) 1995 */
+	DRIVER( hotmind )	/* (c) 1995 */
 	DRIVER( drtomy )	/* (c) 1993 no copyright message (1993 on pcb), some code taken from 'Big Karnak' */
 
 	/* Pacific Novelty games */
@@ -6113,6 +6121,7 @@ Other Sun games
 	/* ESD games */
 	/* http://www.esdgame.co.kr/english/ */
 	DRIVER( multchmp )	/* (c) 1998 (Korea) */
+	DRIVER( mchampdx )	/* (c) 1999 ESD */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */
 
 	/* Dyna Electronics / Dynax / Nakanihon games */
@@ -6403,6 +6412,7 @@ Other Sun games
 	DRIVER( sprcrs2a )	/* (c) 1986 GM Shoji */
 	DRIVER( gcpinbal )	/* (c) 1994 Excellent System */
 	DRIVER( vmetal )	/* (c) 1995 Excellent System? */
+	DRIVER( vmetaln )	/* (c) 1995 Excellent System? */
 	DRIVER( aquarium )	/* (c) 1996 Excellent System */
 	DRIVER( policetr )	/* (c) 1996 P&P Marketing */
 	DRIVER( polict11 )	/* (c) 1996 P&P Marketing */

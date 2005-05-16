@@ -283,6 +283,9 @@ enum
 	CPUINFO_PTR_EXECUTE,								/* R/O: int (*execute)(int cycles) */
 	CPUINFO_PTR_BURN,									/* R/O: void (*burn)(int cycles) */
 	CPUINFO_PTR_DISASSEMBLE,							/* R/O: void (*disassemble)(char *buffer, offs_t pc) */
+	CPUINFO_PTR_READ,									/* R/O: int (*read)(int space, UINT32 offset, int size, UINT64 *value) */
+	CPUINFO_PTR_WRITE,									/* R/O: int (*write)(int space, UINT32 offset, int size, UINT64 value) */
+	CPUINFO_PTR_READOP,									/* R/O: int (*readop)(UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_IRQ_CALLBACK,							/* R/W: int (*irqcallback)(int state) */
 	CPUINFO_PTR_INSTRUCTION_COUNTER,					/* R/O: int *icount */
 	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
@@ -325,7 +328,10 @@ union cpuinfo
 	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
 	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
 	offs_t	(*disassemble)(char *buffer, offs_t pc);	/* CPUINFO_PTR_DISASSEMBLE */
-	int		(*irqcallback)(int state);					/* CPUINFO_PTR_IRQCALLBACK */
+	int		(*irqcallback)(int state);					/* CPUINFO_PTR_IRQ_CALLBACK */
+	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
+	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
+	int		(*readop)(UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READOP */
 	int *	icount;										/* CPUINFO_PTR_INSTRUCTION_COUNTER */
 	construct_map_t internal_map;						/* CPUINFO_PTR_INTERNAL_MEMORY_MAP */
 };

@@ -9,11 +9,12 @@
     Gunforce                        Nanao   08J27261A  011 9106KK701
     Ken-Go                          ?       ? (Same as Gunforce)
     Bomberman                       Nanao   08J27261A1 012 9123KK200
+    Atomic Punk                     ?       08J27291A1 012 9128KK440
     Blade Master                    ?       ? (Same as Bomberman)
     Quiz F-1 1,2 Finish             Nanao   08J27291A4 014 9147KK700
     Gunforce 2                      Nanao   08J27291A4 014 92457KK700
     Lethal Thunder                  ?       ? (Same as Quiz F1 and Gunforce 2)
-    Bomberman World/Atomic Punk             ?
+    Bomberman World / New Atomic Punk             ?
     Undercover Cops                         ? (Same as BMan World)
     Gun Hohki                       Nanao   08J27291A6 016
     Skins Game                      Nanao   08J27291A7 017
@@ -587,7 +588,7 @@ const unsigned char shisen2_decryption_table[256] = {
 	xxxx,0x1e,0x48,0xe2,0x50,xxxx,0xc3,0x23, xxxx,xxxx,0xe9,xxxx,0x40,0x83,0xa3,0x46, /* 20 */
 //       new  new  new  new       new  new             new       new  new  new
 	0x49,0xb4,0xa9,xxxx,0xd3,0x8b,0xe8,0xb8, 0xa0,xxxx,xxxx,xxxx,0x84,xxxx,xxxx,xxxx, /* 30 */
-//  !!!! ???? new       ^^^^ new  new        new                 new
+//  !!!! ???? new       !!!! new  new        new                 new
 	xxxx,xxxx,xxxx,xxxx,0x14,xxxx,0x25,xxxx, xxxx,0x5e,xxxx,0x87,0x56,0xb9,xxxx,0x39, /* 40 */
 //                      new       new             new       new  new  new       new
 	0x89,xxxx,xxxx,xxxx,xxxx,0x1f,0xa4,xxxx, 0xf8,0x5f,xxxx,0xb3,0x5b,xxxx,0x8d,xxxx, /* 50 */
@@ -595,7 +596,7 @@ const unsigned char shisen2_decryption_table[256] = {
 	xxxx,0xc5,0x7c,0x07,xxxx,0x88,0xba,0x47, 0x35,0xfb,xxxx,0x7f,xxxx,xxxx,0xc6,0xeb, /* 60 */
 //       new  !!!! new       new  new  new   new  new       !!!!                new
 	xxxx,0xc7,xxxx,xxxx,0xd2,0xa1,0x72,0x79, 0xfe,0x24,0xab,0x2a,0xbc,0x0d,0x8f,0x7e, /* 70 */
-//                      ^^^^ new  new  new   new  new  new  new       new  new  !!!!
+//                      !!!! new  new  new   new  new  new  new       new  new  !!!!
 	xxxx,0x7d,xxxx,0xe7,0x2d,xxxx,xxxx,0x57, 0x0b,0xa2,xxxx,0x9d,xxxx,xxxx,0x74,0x85, /* 80 */
 //       !!!!      new  new            new   new  new       new            new  new
 	0xaf,0x2f,0x8a,0xe6,0x08,xxxx,0xff,xxxx, xxxx,xxxx,xxxx,xxxx,0x02,xxxx,xxxx,xxxx, /* 90 */

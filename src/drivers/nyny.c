@@ -258,15 +258,15 @@ INPUT_PORTS_START( nyny )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY	/* PIA0 PB3 */
 
 	PORT_START_TAG("SW1")	/* port 2*/
-	PORT_DIPNAME( 0x03, 0x03, "Bombs from UFO (scr 3+) " )
+	PORT_DIPNAME( 0x03, 0x03, "Bombs from UFO (scr 3+)" )
 	PORT_DIPSETTING(	0x03, "9" )
 	PORT_DIPSETTING(	0x02, "12" )
 	PORT_DIPSETTING(	0x01, "3" )
 	PORT_DIPSETTING(	0x00, "6" )
-	PORT_DIPNAME( 0x04, 0x04, "Bombs from UFO (scr 1-2) " )
+	PORT_DIPNAME( 0x04, 0x04, "Bombs from UFO (scr 1-2)" )
 	PORT_DIPSETTING(	0x04, "6" )
 	PORT_DIPSETTING(	0x00, "9" )
-	PORT_DIPNAME( 0x80, 0x80, "Voice Volume " )
+	PORT_DIPNAME( 0x80, 0x80, "Voice Volume" )
 	PORT_DIPSETTING(	0x80, DEF_STR( High ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Low ) )
 

@@ -1,17 +1,71 @@
 /*
 
 Varia Metal
+Excellent System Ltd, 1995
+
+PCB Layout
+----------
+This game runs on Metro hardware.
+
+ES-9309B-B
+|--------------------------------------------|
+| TA7222   8.U9     DSW1(8)  DSW2(8)         |
+|VOL    M6295  1.000MHz                      |
+|                   |------------|           |
+|          7.U12    |   68000    |           |
+|  uPC3403          |------------|           |
+|J 640kHz  ES-8712                           |
+|A M6585           EPM7032    6B.U18  5B.U19 |
+|M       MM1035                              |
+|M        26.666MHz  16MHz    62256   62256  |
+|A                                           |
+|                 |--------|          1.U29  |
+|         62256   |Imagetek|                 |
+|         62256   |14220   |          2.U31  |
+|                 |        |                 |
+|                 |--------|          3.U28  |
+|                                            |
+|                  6264               4.U30  |
+|--------------------------------------------|
+Notes:
+      68000   - clock 16.000MHz
+      ES-8712 - ES-8712 Single Channel ADPCM Samples Player. Clock ?? seems to be 16kHz?
+                This chip is branded 'EXCELLENT', may be (or not??) manufactured by Ensonic (SDIP48)
+      M6295   - clock 1.000MHz. Sample rate = 1000000/132
+      M6585   - Oki M6585 ADPCM Voice Synthesizer IC (DIP18). Clock 640kHz.
+                Sample rate = 16kHz (selection - pin 1 LOW, pin 2 HIGH = 16kHz)
+                This is a version-up to the previous M5205 with some additional
+                capabilies and improvements.
+      MM1035  - Mitsumi Monolithic IC MM1035 System Reset and Watchdog Timer (DIP8)
+      uPC3403 - NEC uPC3403 High Performance Quad Operational Amplifier (DIP14)
+      62256   - 32k x8 SRAM (DIP28)
+      6264    - 8k x8 SRAM (DIP28)
+      TA7222  - Toshiba TA7222 5.8 Watt Audio Power Amplifier (SIP10)
+      EPM7032 - Altera EPM7032LC44-15T High Performance EEPROM-based Programmable Logic Device (PLCC44)
+      Custom  - Imagetek 14220 Graphics Controller (QFP208)
+      VSync   - 58.2328Hz
+      HSync   - 15.32kHz
+      ROMs    -
+                6B & 5B are 27C040 EPROM (DIP32)
+                8 is 4M MaskROM (DIP32)
+                All other ROMs are 16M MaskROM (DIP42)
+
+
+
+
+Varia Metal
 
 Notes:
+
+*****
+i should fully merge video with metro.c, it uses the same imagetek chip (although with 16x16 tiles)
+this should fix most of the remaining gfx glitches
+*****
+
 
 It has Sega and Taito logos in the roms ?!
 
 whats going on with the dipswitches
-
-scrolling behavior is incorrect, see background on second attract demo
-tilemap priorities can change
-
-spriteram clear or list markers? (i clear it after drawing each sprite at the moment)
 
 ES8712 sound may not be quite right. Samples are currently looped, but
 whether they should and how, is unknown.
@@ -19,28 +73,12 @@ whether they should and how, is unknown.
 cleanup
 
 
----
-
-Excellent Systems 'Varia Metal'
-board ID ES-9309B-B
-
-main cpu 68000 @ 16Mhz
-
-sound oki m6295 (rom VM8)
-      ES8712    (rom VM7)
-
-program roms VM5 and VM6
-
-graphics VM1-VM4
-
-roms are 23C160 except for code and OKI 27C4001
-
-
 */
 
 #include "driver.h"
 #include "sound/okim6295.h"
 #include "sound/es8712.h"
+#include "vidhrdw/generic.h"
 
 data16_t *vmetal_texttileram;
 data16_t *vmetal_mid1tileram;
@@ -53,9 +91,10 @@ static struct tilemap *vmetal_texttilemap;
 static struct tilemap *vmetal_mid1tilemap;
 static struct tilemap *vmetal_mid2tilemap;
 
-static data16_t *varia_spriteram16;
-
-
+/* vidhrdw/metro.c */
+extern data16_t *metro_videoregs;
+extern void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+WRITE16_HANDLER( metro_paletteram_w );
 
 READ16_HANDLER ( varia_crom_read )
 {
@@ -65,7 +104,7 @@ READ16_HANDLER ( varia_crom_read )
 	data16_t retdat;
 	offset = offset << 1;
 	offset |= (vmetal_videoregs[0x0ab/2]&0x7f) << 16;
-	retdat = (cgrom[offset] <<8)| (cgrom[offset+1]);
+	retdat = ((cgrom[offset] <<8)| (cgrom[offset+1]))^0xffff; // invert because we inverted the data..
 //  usrintf_showmessage("varia romread offset %06x data %04x",offset, retdat);
 
 	return retdat;
@@ -88,96 +127,6 @@ static void get_vmetal_tlookup(UINT16 data, UINT16 *tileno, UINT16 *color)
 	*color = (lookup>>20) & 0xff;
 }
 
-/* sprite format
-
-sprites are non-tile based
-
-4 words per sprite
-
- -------- --------    -------- --------    -------- --------    -------- --------
-       xx xxxxxxxx           y yyyyyyyy    Ff             oo    oooooooo oooooooo
-
-
-  x = xpos
-  y = ypos
-  f = flipy
-  F = flipx
-  o = offset (64 byte sprite gfxdata boundaries)
-
-
-
-
-*/
-
-static void varia_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
-{
-
-	data16_t *finish = varia_spriteram16;
-	data16_t *source = finish + 0x1000/2;
-
-	UINT16 *destline;
-
-	const struct GfxElement *gfx = Machine->gfx[0];
-
-	data8_t *srcgfx;
-
-	int gfxoffs;
-
-	while( source>finish )
-	{
-		int x,y,xloop,yloop;
-		UINT16 height, width;
-		int tile;
-		int flipy, flipx;
-		int colour;
-		source -= 0x04;
-		x = source[0]&0x3ff;
-		y = source[1]& 0x1ff;
-		flipy = source[2]&0x4000;
-		flipx = source[2]&0x8000;
-		gfxoffs = 0;
-		tile=(source[3]) | ((source[2]&0x3)<<16);
-		srcgfx= gfx->gfxdata+(64*tile);
-		width = (((source[2]&0x3000) >> 12)+1)*16;
-		height =(((source[2]&0x0600) >> 9)+1)*16;
-		colour =((source[2]&0x00f0) >> 4);
-
-		y-=64;
-		x-=64;
-
-
-		for (yloop=0; yloop<height; yloop++)
-		{
-			UINT16 drawypos;
-
-			if (!flipy) {drawypos = y+yloop;} else {drawypos = (y+height-1)-yloop;}
-
-			destline = (UINT16 *)(bitmap->line[drawypos]);
-
-
-			for (xloop=0; xloop<width; xloop++)
-			{
-				UINT16 drawxpos;
-				int pixdata;
-				pixdata = srcgfx[gfxoffs];
-
-				if (!flipx) { drawxpos = x+xloop; } else { drawxpos = (x+width-1)-xloop; }
-
-				if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) && (pixdata!=15))
-					destline[drawxpos] = pixdata + ((0x80+colour)*16);
-
-
-				gfxoffs++;
-			}
-
-
-		}
-
-		/* I see no end of list marker or register ... so I'm clearing the sprite ram after I draw each sprite */
-	//  source[0] = source[1] = source[2] = source[3] = 0;
-	// done in VIDEO_EOF
-	}
-}
 
 WRITE16_HANDLER( vmetal_texttileram_w )
 {
@@ -196,23 +145,6 @@ WRITE16_HANDLER( vmetal_mid2tileram_w )
 	tilemap_mark_tile_dirty(vmetal_mid2tilemap,offset);
 }
 
-WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w )
-{
-	int r,g,b;
-	UINT16 datax;
-	COMBINE_DATA(&paletteram16[offset]);
-	datax = paletteram16[offset];
-
-	r = (datax >>  6) & 0x1f;
-	g = (datax >> 11) & 0x1f;
-	b = (datax >>  1) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
-}
 
 static READ16_HANDLER ( varia_dips_bit8_r ) { return ((readinputport(3) & 0x80) << 0) | ((readinputport(2) & 0x80) >> 1); }
 static READ16_HANDLER ( varia_dips_bit7_r ) { return ((readinputport(3) & 0x40) << 1) | ((readinputport(2) & 0x40) >> 0); }
@@ -291,12 +223,12 @@ static ADDRESS_MAP_START( varia_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x160000, 0x16ffff) AM_READ(varia_crom_read) // cgrom read window ..
 
-	AM_RANGE(0x170000, 0x171fff) AM_RAM
-	AM_RANGE(0x172000, 0x173fff) AM_READWRITE(MRA16_RAM, paletteram16_GGGGGRRRRRBBBBBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x174000, 0x174fff) AM_RAM AM_BASE(&varia_spriteram16)
+	AM_RANGE(0x170000, 0x173fff) AM_READWRITE(MRA16_RAM,metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x174000, 0x174fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x175000, 0x177fff) AM_RAM
 	AM_RANGE(0x178000, 0x1787ff) AM_RAM AM_BASE(&vmetal_tlookup)
-	AM_RANGE(0x178800, 0x17ffff) AM_RAM AM_BASE(&vmetal_videoregs)
+	AM_RANGE(0x178800, 0x1796ff) AM_RAM AM_BASE(&vmetal_videoregs)
+	AM_RANGE(0x179700, 0x179713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
 
 	AM_RANGE(0x200000, 0x200001) AM_READWRITE(input_port_0_word_r, vmetal_control_w)
 	AM_RANGE(0x200002, 0x200003) AM_READ(input_port_1_word_r )
@@ -411,29 +343,29 @@ INPUT_PORTS_END
 static struct GfxLayout char16x16layout =
 {
 	16,16,
-	RGN_FRAC(1,4),
+	RGN_FRAC(1,1),
 	4,
 	{ 0,1,2,3 },
-	{ RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+12, RGN_FRAC(1,4)+8, RGN_FRAC(3,4)+4, RGN_FRAC(3,4)+0, RGN_FRAC(3,4)+12, RGN_FRAC(3,4)+8, 4, 0, 12, 8, RGN_FRAC(2,4)+4, RGN_FRAC(2,4)+0, RGN_FRAC(2,4)+12, RGN_FRAC(2,4)+8 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16, 8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	16*16
+	{ 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64, 8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
+	16*64
 };
 
 static struct GfxLayout char8x8layout =
 {
 	8,8,
-	RGN_FRAC(1,4),
+	RGN_FRAC(1,1),
 	4,
 	{ 0,1,2,3 },
-	{ 4, 0, 12, 8, RGN_FRAC(2,4)+4, RGN_FRAC(2,4)+0, RGN_FRAC(2,4)+12, RGN_FRAC(2,4)+8 },
-	{ RGN_FRAC(1,4)+0*16,0*16, RGN_FRAC(1,4)+1*16, 1*16, RGN_FRAC(1,4)+2*16,  2*16, RGN_FRAC(1,4)+3*16, 3*16 },
-	4*16
+	{ 4, 0, 12, 8, 20, 16, 28, 24 },
+	{ 0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32 },
+	8*32
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &char16x16layout,   0x0, 512  }, /* bg tiles */
-	{ REGION_GFX1, 0, &char8x8layout,   0x0, 512  }, /* bg tiles */
+	{ REGION_GFX1, 0, &char16x16layout,   0x1000, 512  }, /* bg tiles */
+	{ REGION_GFX1, 0, &char8x8layout,   0x1000, 512  }, /* bg tiles */
 	{ -1 } /* end of array */
 };
 
@@ -447,7 +379,7 @@ static void get_vmetal_texttilemap_tile_info(int tile_index)
 	tile = (data & 0xf) | (lookup & 0x7fff0);
 	color = ((lookup>>20) & 0x1f)+0xe0;
 	if (data & 0x8000) tile = 0;
-	SET_TILE_INFO(1, tile, color, TILE_FLIPYX(0x0));
+	SET_TILE_INFO(1, tile, color^0xf, TILE_FLIPYX(0x0));
 }
 
 
@@ -456,14 +388,14 @@ static void get_vmetal_mid1tilemap_tile_info(int tile_index)
 	UINT16 tile, color, data = vmetal_mid1tileram[tile_index];
 	get_vmetal_tlookup(data, &tile, &color);
 	if (data & 0x8000) tile = 0;
-	SET_TILE_INFO(0, tile, color, TILE_FLIPYX(0x0));
+	SET_TILE_INFO(0, tile, color^0xf, TILE_FLIPYX(0x0));
 }
 static void get_vmetal_mid2tilemap_tile_info(int tile_index)
 {
 	UINT16 tile, color, data = vmetal_mid2tileram[tile_index];
 	get_vmetal_tlookup(data, &tile, &color);
 	if (data & 0x8000) tile = 0;
-	SET_TILE_INFO(0, tile, color, TILE_FLIPYX(0x0));
+	SET_TILE_INFO(0, tile, color^0xf, TILE_FLIPYX(0x0));
 }
 
 VIDEO_START(varia)
@@ -471,9 +403,9 @@ VIDEO_START(varia)
 	vmetal_texttilemap = tilemap_create(get_vmetal_texttilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      8, 8, 256,256);
 	vmetal_mid1tilemap = tilemap_create(get_vmetal_mid1tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      16,16, 256,256);
 	vmetal_mid2tilemap = tilemap_create(get_vmetal_mid2tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,      16,16, 256,256);
-	tilemap_set_transparent_pen(vmetal_texttilemap,15);
-	tilemap_set_transparent_pen(vmetal_mid1tilemap,15);
-	tilemap_set_transparent_pen(vmetal_mid2tilemap,15);
+	tilemap_set_transparent_pen(vmetal_texttilemap,0);
+	tilemap_set_transparent_pen(vmetal_mid1tilemap,0);
+	tilemap_set_transparent_pen(vmetal_mid2tilemap,0);
 
 	return 0;
 }
@@ -481,22 +413,21 @@ VIDEO_START(varia)
 VIDEO_UPDATE(varia)
 {
 	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_set_scrollx(vmetal_mid2tilemap,0, vmetal_videoregs[0x06a/2] /*+ vmetal_videoregs[0x066/2]*/);
-	tilemap_set_scrollx(vmetal_mid1tilemap,0, vmetal_videoregs[0x07a/2] /*+ vmetal_videoregs[0x076/2]*/);
+	tilemap_set_scrollx(vmetal_mid2tilemap,0, vmetal_videoregs[0x06a/2]-64 /*+ vmetal_videoregs[0x066/2]*/);
+	tilemap_set_scrollx(vmetal_mid1tilemap,0, vmetal_videoregs[0x07a/2]-64 /*+ vmetal_videoregs[0x076/2]*/);
+	tilemap_set_scrollx(vmetal_texttilemap,0, -64 /*+ vmetal_videoregs[0x076/2]*/);
 
+	tilemap_set_scrolly(vmetal_mid2tilemap,0, -64 );
+	tilemap_set_scrolly(vmetal_mid1tilemap,0, -64 );
+	tilemap_set_scrolly(vmetal_texttilemap,0, -64 );
 
 	tilemap_draw(bitmap,cliprect,vmetal_mid1tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,vmetal_mid2tilemap,0,0);
-	varia_drawsprites (bitmap,cliprect);
+	metro_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,vmetal_texttilemap,0,0);
 }
-
-VIDEO_EOF(varia)
-{
-	memset(varia_spriteram16, 0, 0x1000);
-}
-
 
 static MACHINE_DRIVER_START( varia )
 	MDRV_CPU_ADD(M68000, 16000000)
@@ -508,13 +439,12 @@ static MACHINE_DRIVER_START( varia )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(2048, 2048)
-	MDRV_VISIBLE_AREA(0, 319, 0, 223)
+	MDRV_VISIBLE_AREA(0+64, 319+64, 0+64, 223+64)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x1000)
+	MDRV_PALETTE_LENGTH(0x4000)
 
 	MDRV_VIDEO_START(varia)
 	MDRV_VIDEO_UPDATE(varia)
-	MDRV_VIDEO_EOF(varia)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
@@ -530,24 +460,43 @@ static MACHINE_DRIVER_START( varia )
 MACHINE_DRIVER_END
 
 
-
 ROM_START( vmetal )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "5b.u19", 0x00001, 0x80000, CRC(bab1541d) SHA1(ffa9d38e065694c3abb16054735fc34bf0a6e10b) )
+	ROM_LOAD16_BYTE( "6b.u18", 0x00000, 0x80000, CRC(4eb939d5) SHA1(741ab05043fc3bd886162d878630e45da9359718) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_INVERT )
+	ROMX_LOAD( "1.u29", 0x000004, 0x200000, CRC(b470c168) SHA1(c30462dc134da1e71a94b36ef96ecd65c325b07e) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "2.u31", 0x000000, 0x200000, CRC(b36f8d60) SHA1(1676859d0fee4eb9897ce1601a2c9fd9a6dc4a43) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "3.u28", 0x000006, 0x200000, CRC(00fca765) SHA1(ca9010bd7f59367e483868018db9a9abf871386e) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "4.u30", 0x000002, 0x200000, CRC(5a25a49c) SHA1(c30781202ec882e1ec6adfb560b0a1075b3cce55) , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* OKI6295 Samples */
+	/* Second half is junk */
+	ROM_LOAD( "8.u9", 0x00000, 0x80000, CRC(c14c001c) SHA1(bad96b5cd40d1c34ef8b702262168ecab8192fb6) )
+
+	ROM_REGION( 0x200000, REGION_SOUND2, 0 ) /* Samples */
+	ROM_LOAD( "7.u12", 0x00000, 0x200000, CRC(a88c52f1) SHA1(d74a5a11f84ba6b1042b33a2c156a1071b6fbfe1) )
+ROM_END
+
+ROM_START( vmetaln )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "vm5.bin", 0x00001, 0x80000, CRC(43ef844e) SHA1(c673f34fcc9e406282c9008795b52d01a240099a) )
 	ROM_LOAD16_BYTE( "vm6.bin", 0x00000, 0x80000, CRC(cb292ab1) SHA1(41fdfe67e6cb848542fd5aa0dfde3b1936bb3a28) )
 
-	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-	ROM_LOAD( "vm1.bin", 0x000000, 0x200000, CRC(b470c168) SHA1(c30462dc134da1e71a94b36ef96ecd65c325b07e) )
-	ROM_LOAD( "vm2.bin", 0x200000, 0x200000, CRC(b36f8d60) SHA1(1676859d0fee4eb9897ce1601a2c9fd9a6dc4a43) )
-	ROM_LOAD( "vm3.bin", 0x400000, 0x200000, CRC(00fca765) SHA1(ca9010bd7f59367e483868018db9a9abf871386e) )
-	ROM_LOAD( "vm4.bin", 0x600000, 0x200000, CRC(5a25a49c) SHA1(c30781202ec882e1ec6adfb560b0a1075b3cce55) )
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_INVERT )
+	ROMX_LOAD( "1.u29", 0x000004, 0x200000, CRC(b470c168) SHA1(c30462dc134da1e71a94b36ef96ecd65c325b07e) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "2.u31", 0x000000, 0x200000, CRC(b36f8d60) SHA1(1676859d0fee4eb9897ce1601a2c9fd9a6dc4a43) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "3.u28", 0x000006, 0x200000, CRC(00fca765) SHA1(ca9010bd7f59367e483868018db9a9abf871386e) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "4.u30", 0x000002, 0x200000, CRC(5a25a49c) SHA1(c30781202ec882e1ec6adfb560b0a1075b3cce55) , ROM_GROUPWORD | ROM_SKIP(6))
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* OKI6295 Samples */
 	/* Second half is junk */
-	ROM_LOAD( "vm8.bin", 0x00000, 0x80000, CRC(c14c001c) SHA1(bad96b5cd40d1c34ef8b702262168ecab8192fb6) )
+	ROM_LOAD( "8.u9", 0x00000, 0x80000, CRC(c14c001c) SHA1(bad96b5cd40d1c34ef8b702262168ecab8192fb6) )
 
 	ROM_REGION( 0x200000, REGION_SOUND2, 0 ) /* Samples */
-	ROM_LOAD( "vm7.bin", 0x00000, 0x200000, CRC(a88c52f1) SHA1(d74a5a11f84ba6b1042b33a2c156a1071b6fbfe1) )
+	ROM_LOAD( "7.u12", 0x00000, 0x200000, CRC(a88c52f1) SHA1(d74a5a11f84ba6b1042b33a2c156a1071b6fbfe1) )
 ROM_END
 
-GAMEX( 1995, vmetal, 0, varia, varia, 0, ROT270, "Excellent Systems", "Varia Metal", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, vmetal,  0,      varia, varia, 0, ROT270, "Excellent Systems",                        "Varia Metal",                        GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 1995, vmetaln, vmetal, varia, varia, 0, ROT270, "[Excellent Systems] New Ways Trading Co.", "Varia Metal (New Ways Trading Co.)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

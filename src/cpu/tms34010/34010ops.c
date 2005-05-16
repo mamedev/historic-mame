@@ -1371,7 +1371,8 @@ static void move1_aa (void) { MOVE_AA(1); }
 {																\
 	PUSH(PC);													\
 	PC = R##REG(R##DSTREG);										\
-	change_pc(TOBYTE(PC));									\
+	PC = (PC + 0x0f) & ~0x0f;									\
+	change_pc(TOBYTE(PC));										\
 	COUNT_CYCLES(3);											\
 }
 static void call_a (void) { CALL(A); }
@@ -1388,6 +1389,9 @@ static void calla(void)
 {
 	PUSH(PC+0x20);
 	PC = PARAM_LONG_NO_INC();
+	/* 9 Ball Shootout calls to FFDF7468, expecting it */
+	/* to execute the next instruction from FFDF7470 */
+	PC = (PC + 0x0f) & ~0x0f;
 	change_pc(TOBYTE(PC));
 	COUNT_CYCLES(4);
 }

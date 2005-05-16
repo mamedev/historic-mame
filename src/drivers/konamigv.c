@@ -233,7 +233,7 @@ static void scsi_dma_read( UINT32 n_address, INT32 n_size )
 		else
 		{
 			/* assume normal 2048 byte data for now */
-			am53cf96_read_data( CD_FRAME_SIZE, sector_buffer );
+			am53cf96_read_data( 2048, sector_buffer );
 			n_this = 2048 / 4;
 		}
 		n_size -= n_this;

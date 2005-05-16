@@ -105,8 +105,7 @@ INLINE UINT16 Shade(UINT16 Src,UINT32 Shade)
 	return RGB16(scr,scg,scb);
 }
 
-
-UINT16 Alpha(_Quad *Quad,UINT16 Src,UINT16 Dst)
+static UINT16 Alpha(_Quad *Quad,UINT16 Src,UINT16 Dst)
 {
 	UINT32 scr=(EXTRACTR8(Src)*((Quad->Shade>>16)&0xff))>>8;
 	UINT32 scg=(EXTRACTG8(Src)*((Quad->Shade>>8)&0xff))>>8;
@@ -204,7 +203,7 @@ UINT16 Alpha(_Quad *Quad,UINT16 Src,UINT16 Dst)
 }
 
 #define TILENAME(bpp,t,a) \
-void DrawQuad##bpp##t##a(_Quad *Quad)
+static void DrawQuad##bpp##t##a(_Quad *Quad)
 
 //TRUST ON THE COMPILER OPTIMIZATIONS
 #define TILETEMPL(bpp,t,a) \
@@ -304,7 +303,7 @@ TILETEMPL(4,1,0) TILETEMPL(4,1,1) TILETEMPL(4,1,2)
 DrawQuad##bpp##t##a
 
 
-void DrawQuadFill(_Quad *Quad)
+static void DrawQuadFill(_Quad *Quad)
 {
 	UINT32 x,y;
 	UINT16 *line=Quad->Dest;
@@ -326,7 +325,7 @@ void DrawQuadFill(_Quad *Quad)
 
 typedef void (*_DrawTemplate)(_Quad *);
 
-_DrawTemplate DrawImage[]=
+static _DrawTemplate DrawImage[]=
 {
 	TILENAME(4,0,0),
 	TILENAME(8,0,0),
@@ -343,7 +342,8 @@ _DrawTemplate DrawImage[]=
 	TILENAME(16,0,2),
 	TILENAME(16,0,2),
 };
-_DrawTemplate DrawTile[]=
+
+static _DrawTemplate DrawTile[]=
 {
 	TILENAME(4,1,0),
 	TILENAME(8,1,0),

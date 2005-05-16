@@ -1,38 +1,28 @@
 /***************************************************************************
 
-AmeriDarts      (c) 1989 Ameri Corporation
-Cool Pool       (c) 1992 Catalina
-9 Ball Shootout (c) 1993 E-Scape/Bundra
+    AmeriDarts      (c) 1989 Ameri Corporation
+    Cool Pool       (c) 1992 Catalina
+    9 Ball Shootout (c) 1993 E-Scape/Bundra
 
-preliminary driver by Nicola Salmoria and Aaron Giles
+    preliminary driver by Nicola Salmoria and Aaron Giles
 
 
-The main cpu is a 34010; it is encrypted in 9 Ball Shootout.
+    The main cpu is a 34010; it is encrypted in 9 Ball Shootout.
 
-The second CPU in AmeriDarts is a 32015, whose built-in ROM hasn't been read.
+    The second CPU in AmeriDarts is a 32015, whose built-in ROM hasn't
+    been read.
 
-The second CPU in Cool Pool and 9 Ball Shootout is a 320C26; the code is
-the same in the two games.
+    The second CPU in Cool Pool and 9 Ball Shootout is a 320C26; the code
+    is the same in the two games.
 
-Cool Pool:
-- There are handlers for the two external ints, which aren't hooked up yet.
-  INT2 is probably connected to the "IOP" (32026).
+    Cool Pool:
+    - The checksum test routine is wrong, e.g. when it says to be testing
+      4U/8U it is actually reading 4U/8U/3U/7U, when testing 3U/7U it
+      actually reads 2U/6U/1U/5U. The placement cannot therefore be exactly
+      determined by the check passing.
 
-- rom test starts at 0xffe021a0. It also contains functions to print text on
-  the screen (0xffe04230), so should be good a good start for the gfx emulation.
-
-- The checksum test routine is wrong, e.g. when it says to be testing 4U/8U it
-  is actually reading 4U/8U/3U/7U, when testing 3U/7U it actually reads
-  2U/6U/1U/5U. The placement cannot therefore be exactly determined by the
-  check passing.
-
-9 Ball Shootout:
-- U110 and U111 both have checksum 00000000 so the ROM test cannot tell if they
-  are swapped.
-
-TODO:
-- emulate "thrash protection" (NVRAM write protection)
-- emulate "IOP" (I/O Processor?) see check at 0xffe02c90 (coolpool)
+    TODO:
+    - emulate "thrash protection" (NVRAM write protection)
 
 ***************************************************************************/
 
@@ -44,101 +34,69 @@ TODO:
 #include "sound/dac.h"
 
 
-static data16_t *code_rom;
 
-static data16_t *ram_base;
+/*************************************
+ *
+ *  Local variables
+ *
+ *************************************/
+
+static data16_t *vram_base;
 
 static data16_t dpyadr;
 static int dpyadrscan;
+static int last_dpyint;
 
-VIDEO_START( coolpool )
+static UINT8 cmd_pending;
+static data16_t iop_cmd;
+static data16_t iop_answer;
+static int iop_romaddr;
+
+
+
+
+/*************************************
+ *
+ *  Video updates
+ *
+ *************************************/
+
+static VIDEO_UPDATE( amerdart )
 {
-	return 0;
-}
-
-void coolpool_to_shiftreg(unsigned int address, UINT16* shiftreg)
-{
-//logerror("%08x:coolpool_to_shiftreg(%08x)\n", activecpu_get_pc(), address);
-	memcpy(shiftreg, &ram_base[TOWORD(address)], TOBYTE(0x1000));
-}
-
-void coolpool_from_shiftreg(unsigned int address, UINT16* shiftreg)
-{
-//logerror("%08x:coolpool_from_shiftreg(%08x)\n", activecpu_get_pc(), address);
-	memcpy(&ram_base[TOWORD(address)], shiftreg, TOBYTE(0x1000));
-}
-
-READ16_HANDLER( coolpool_gfxrom_r )
-{
-	data8_t *rom = memory_region(REGION_GFX1);
-
-	return rom[2*offset] | (rom[2*offset+1] << 8);
-}
-
-WRITE16_HANDLER( coolpool_34010_io_register_w )
-{
-	if (offset == REG_DPYADR || offset == REG_DPYTAP)
-		force_partial_update(cpu_getscanline());
-	tms34010_io_register_w(offset, data, mem_mask);
-
-	/* track writes to the DPYADR register which takes effect on the following scanline */
-	if (offset == REG_DPYADR)
-	{
-		dpyadr = ~data & 0xfffc;
-		dpyadrscan = cpu_getscanline() + 1;
-		logerror("dpyadr = %04X on scan %d\n", dpyadr, dpyadrscan);
-	}
-}
-
-
-void coolpool_dpyint_callback(int scanline)
-{
-//  if (scanline < Machine->visible_area.max_y)
-//      force_partial_update(scanline - 1);
-}
-
-
-VIDEO_UPDATE( amerdart )
-{
-	data16_t *base = &ram_base[TOWORD(0x800)];
+	data16_t *base = &vram_base[TOWORD(0x800) + cliprect->min_y * TOWORD(0x800)];
 	int x, y;
 
+	/* if we're blank, just blank the screen */
+	if (tms34010_io_display_blanked(0))
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+		return;
+	}
+
+	/* loop over scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT8 scanline[320];
-		for (x = cliprect->min_x; x <= cliprect->max_x; x += 2)
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
+
+		/* render 4bpp data */
+		for (x = cliprect->min_x; x <= cliprect->max_x; x += 4)
 		{
 			data16_t pixels = base[x / 4];
-
-			scanline[x+0] = (pixels >> 0) & 15;
-			scanline[x+1] = (pixels >> 4) & 15;
-			scanline[x+2] = (pixels >> 8) & 15;
-			scanline[x+3] = (pixels >> 12) & 15;
+			*dest++ = (pixels >> 0) & 15;
+			*dest++ = (pixels >> 4) & 15;
+			*dest++ = (pixels >> 8) & 15;
+			*dest++ = (pixels >> 12) & 15;
 		}
-
-		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, scanline, NULL, -1);
 		base += TOWORD(0x800);
 	}
 }
 
-INTERRUPT_GEN( coolpool_vblank_start )
+
+static VIDEO_UPDATE( coolpool )
 {
-	/* dpyadr is latched from dpystrt at the beginning of VBLANK every frame */
-	cpuintrf_push_context(0);
-
-	/* due to timing issues, we sometimes set the DPYADR just before we get here;
-       in order to avoid trouncing that value, we look for the last scanline */
-	if (dpyadrscan < Machine->visible_area.max_y)
-		dpyadr = ~tms34010_io_register_r(REG_DPYSTRT, 0) & 0xfffc;
-	dpyadrscan = 0;
-
-	cpuintrf_pop_context();
-}
-
-VIDEO_UPDATE( coolpool )
-{
-	data16_t dpytap, dudate, dumask;
-	int x, y, offset;
+	data16_t dpytap, dudate, dumask, vsblnk, veblnk;
+	int startscan = cliprect->min_y, endscan = cliprect->max_y;
+	int x, y, offset, scanoffs = 0;
 
 	/* if we're blank, just blank the screen */
 	if (tms34010_io_display_blanked(0))
@@ -148,66 +106,159 @@ VIDEO_UPDATE( coolpool )
 	}
 
 	/* fetch current scanline advance and column offset values */
+	/* these are used aggressively in 9ballsht opening scene */
 	cpuintrf_push_context(0);
 	dudate = (tms34010_io_register_r(REG_DPYCTL, 0) & 0x03fc) << 4;
 	dumask = dudate - 1;
 	dpytap = tms34010_io_register_r(REG_DPYTAP, 0) & 0x3fff & dumask;
+	vsblnk = tms34010_io_register_r(REG_VSBLNK, 0);
+	veblnk = tms34010_io_register_r(REG_VEBLNK, 0);
 	cpuintrf_pop_context();
+
+	/* adjust drawing area based on blanking (9 ball shootout tweaks it) */
+	if (vsblnk > veblnk && vsblnk - veblnk < Machine->drv->screen_height)
+	{
+		/* compute starting scanline offset (assume centered) */
+		scanoffs = ((Machine->visible_area.max_y - Machine->visible_area.min_y + 1) - (vsblnk - veblnk)) / 2;
+
+		/* adjust start/end scanlines */
+		if (startscan != Machine->visible_area.min_y)
+			startscan += scanoffs;
+		endscan += scanoffs;
+		if (endscan >= Machine->visible_area.max_y)
+			endscan = Machine->visible_area.max_y;
+	}
 
 	/* compute the offset */
 	offset = (dpyadr << 4) + dpytap;
-/*
-{
-    static int temp;
-    if (code_pressed(KEYCODE_J) && temp > 0) temp -= 2;
-    else if (code_pressed(KEYCODE_K)) temp += 2;
-    offset = temp;
-}*/
 
 	/* adjust for when DPYADR was written */
-	if (cliprect->min_y > dpyadrscan)
-		offset += (cliprect->min_y - dpyadrscan) * dudate;
-//printf("DPYADR = %04X DPYTAP = %04X (%d-%d)\n", dpyadr, dpytap, cliprect->min_y, cliprect->max_y);
+	if (cliprect->min_y - scanoffs >= dpyadrscan)
+		offset += (cliprect->min_y - scanoffs - dpyadrscan) * dudate;
 
-	/* render the visible section */
-	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+	/* loop over scanlines */
+	for (y = startscan; y <= endscan; y++)
 	{
-		UINT8 scanline[320];
-		for (x = cliprect->min_x; x <= cliprect->max_x; x += 2)
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
+
+		/* if we're in outer bands, just clear */
+		if (y < Machine->visible_area.min_y + scanoffs || y > Machine->visible_area.max_y - scanoffs)
+			memset(dest, 0, (cliprect->max_x - cliprect->min_x + 1) * 2);
+
+		/* render 8bpp data */
+		else
 		{
-			data16_t pixels = ram_base[(offset & ~dumask & TOWORD(0x1fffff)) | ((offset + x/2) & dumask)];
-
-			scanline[x+0] = (pixels >> 0) & 0xff;
-			scanline[x+1] = (pixels >> 8) & 0xff;
+			for (x = cliprect->min_x; x <= cliprect->max_x; x += 2)
+			{
+				data16_t pixels = vram_base[(offset & ~dumask & TOWORD(0x1fffff)) | ((offset + x/2) & dumask)];
+				*dest++ = (pixels >> 0) & 0xff;
+				*dest++ = (pixels >> 8) & 0xff;
+			}
+			offset += dudate;
 		}
-
-		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, scanline, NULL, -1);
-		offset += dudate;
 	}
 }
 
 
 
-static data16_t input_data;
 
-MACHINE_INIT( coolpool )
+/*************************************
+ *
+ *  Shift register access
+ *
+ *************************************/
+
+static void coolpool_to_shiftreg(unsigned int address, UINT16 *shiftreg)
 {
+	memcpy(shiftreg, &vram_base[TOWORD(address)], TOBYTE(0x1000));
+}
+
+
+static void coolpool_from_shiftreg(unsigned int address, UINT16 *shiftreg)
+{
+	memcpy(&vram_base[TOWORD(address)], shiftreg, TOBYTE(0x1000));
+}
+
+
+
+/*************************************
+ *
+ *  Mid-screen addressing updates
+ *
+ *************************************/
+
+static void coolpool_dpyint_callback(int scanline)
+{
+logerror("dpyint @ %d\n", scanline);
+	/* log when we got the DPYINT so that changes are tagged to this scanline */
+	last_dpyint = scanline + 1;
+	if (scanline < Machine->visible_area.max_y)
+		force_partial_update(scanline);
+}
+
+
+static void coolpool_reset_dpyadr(int param)
+{
+	/* at the start of each screen, re-fetch the DPYADR */
+	cpuintrf_push_context(0);
+	dpyadr = ~tms34010_io_register_r(REG_DPYADR, 0) & 0xfffc;
+	dpyadrscan = last_dpyint = 0;
+	cpuintrf_pop_context();
+
+	/* come again next screen */
+	timer_set(cpu_getscanlinetime(0), 0, coolpool_reset_dpyadr);
+}
+
+
+static WRITE16_HANDLER( coolpool_34010_io_register_w )
+{
+	tms34010_io_register_w(offset, data, mem_mask);
+
+	/* track writes to the DPYADR register which takes effect on the following scanline */
+	if (offset == REG_DPYADR)
+	{
+		dpyadr = ~data & 0xfffc;
+		dpyadrscan = last_dpyint;
+logerror("dpyadr = %04X (assuming at %d, really at %d)\n", dpyadr, dpyadrscan, cpu_getscanline());
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Game initialzation
+ *
+ *************************************/
+
+static MACHINE_INIT( coolpool )
+{
+	timer_set(cpu_getscanlinetime(0), 0, coolpool_reset_dpyadr);
 	tlc34076_reset(6);
 }
+
+
+
+/*************************************
+ *
+ *  AmeriDarts fake IOP handling
+ *
+ *************************************/
 
 WRITE16_HANDLER( amerdart_input_w )
 {
 	logerror("%08X:IOP write = %04X\n", activecpu_get_pc(), data);
-	COMBINE_DATA(&input_data);
+	COMBINE_DATA(&iop_cmd);
 	cpunum_set_input_line(0, 1, ASSERT_LINE);
 }
+
 
 READ16_HANDLER( amerdart_input_r )
 {
 	logerror("%08X:IOP read\n", activecpu_get_pc());
 	cpunum_set_input_line(0, 1, CLEAR_LINE);
 
-	switch (input_data)
+	switch (iop_cmd)
 	{
 		case 0x19:
 			return 0x6c00;
@@ -216,11 +267,18 @@ READ16_HANDLER( amerdart_input_r )
 			return readinputport(0);
 
 		default:
-			return input_data;
+			return iop_cmd;
 	}
 	return 0;
 }
 
+
+
+/*************************************
+ *
+ *  Cool Pool IOP control
+ *
+ *************************************/
 
 static WRITE16_HANDLER( coolpool_misc_w )
 {
@@ -232,46 +290,71 @@ static WRITE16_HANDLER( coolpool_misc_w )
 	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static int cmd_pending,iop_cmd,iop_answer;
 
-static WRITE16_HANDLER( coolpool_iop_w )
+
+/*************************************
+ *
+ *  Cool Pool IOP communications
+ *  (from TMS34010 side)
+ *
+ *************************************/
+
+static void deferred_iop_w(int data)
 {
-	logerror("%08x:IOP write %04x\n",activecpu_get_pc(),data);
 	iop_cmd = data;
 	cmd_pending = 1;
 	cpunum_set_input_line(1, 0, HOLD_LINE);	/* ???  I have no idea who should generate this! */
 										/* the DSP polls the status bit so it isn't strictly */
 										/* necessary to also have an IRQ */
+	cpu_boost_interleave(0, TIME_IN_USEC(50));
 }
+
+
+static WRITE16_HANDLER( coolpool_iop_w )
+{
+	logerror("%08x:IOP write %04x\n",activecpu_get_pc(),data);
+	timer_set(TIME_NOW, data, deferred_iop_w);
+}
+
 
 static READ16_HANDLER( coolpool_iop_r )
 {
-//  logerror("%08x:IOP read %04x\n",activecpu_get_pc(),iop_answer);
+	logerror("%08x:IOP read %04x\n",activecpu_get_pc(),iop_answer);
 	cpunum_set_input_line(0, 1, CLEAR_LINE);
 
 	return iop_answer;
 }
 
+
+
+/*************************************
+ *
+ *  Cool Pool IOP communications
+ *  (from IOP side)
+ *
+ *************************************/
+
 static READ16_HANDLER( dsp_cmd_r )
 {
 	cmd_pending = 0;
-//  logerror("%08x:IOP cmd_r %04x\n",activecpu_get_pc(),iop_cmd);
+	logerror("%08x:IOP cmd_r %04x\n",activecpu_get_pc(),iop_cmd);
 	return iop_cmd;
 }
+
 
 static WRITE16_HANDLER( dsp_answer_w )
 {
 	logerror("%08x:IOP answer %04x\n",activecpu_get_pc(),data);
-//usrintf_showmessage("IOP answer %04x",data);
 	iop_answer = data;
 	cpunum_set_input_line(0, 1, ASSERT_LINE);
 }
 
+
 static READ16_HANDLER( dsp_bio_line_r )
 {
-	if (cmd_pending) return CLEAR_LINE;
-	else return ASSERT_LINE;
+	return cmd_pending ? CLEAR_LINE : ASSERT_LINE;
 }
+
 
 static READ16_HANDLER( dsp_hold_line_r )
 {
@@ -279,147 +362,182 @@ static READ16_HANDLER( dsp_hold_line_r )
 }
 
 
-static int romaddr;
+
+/*************************************
+ *
+ *  IOP ROM and DAC access
+ *
+ *************************************/
 
 static READ16_HANDLER( dsp_rom_r )
 {
 	data8_t *rom = memory_region(REGION_USER2);
-	return rom[romaddr & (memory_region_length(REGION_USER2)-1)];
+	return rom[iop_romaddr & (memory_region_length(REGION_USER2) - 1)];
 }
+
 
 static WRITE16_HANDLER( dsp_romaddr_w )
 {
 	switch (offset)
 	{
 		case 0:
-			romaddr = (romaddr & 0xffff00) | (data >> 8); break;
+			iop_romaddr = (iop_romaddr & 0xffff00) | (data >> 8);
+			break;
+
 		case 1:
-			romaddr = (romaddr & 0x0000ff) | (data << 8); break;
+			iop_romaddr = (iop_romaddr & 0x0000ff) | (data << 8);
+			break;
 	}
 }
 
 
 WRITE16_HANDLER( dsp_dac_w )
 {
-	DAC_signed_data_16_w(0,(data << 4) ^ 0x8000);
+	DAC_signed_data_16_w(0,(INT16)(data << 4) + 0x8000);
 }
 
 
 
 /*************************************
  *
- *  Memory maps
+ *  Cool Pool trackball inputs
  *
  *************************************/
 
-static ADDRESS_MAP_START( amerdart_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x05000000, 0x0500000f) AM_READ(amerdart_input_r)	// IOP
-	AM_RANGE(0x06000000, 0x06007fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xffb00000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
+static READ16_HANDLER( coolpool_input_r )
+{
+	static UINT8 oldx, oldy;
+	static UINT16 lastresult;
 
-static ADDRESS_MAP_START( amerdart_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)
+	int result = (readinputport(1) & 0x00ff) | (lastresult & 0xff00);
+	UINT8 newx = readinputport(2);
+	UINT8 newy = readinputport(3);
+	int dx = (INT8)(newx - oldx);
+	int dy = (INT8)(newy - oldy);
+
+	if (dx < 0)
+	{
+		oldx--;
+		switch (result & 0x300)
+		{
+			case 0x000:	result ^= 0x200;	break;
+			case 0x100:	result ^= 0x100;	break;
+			case 0x200:	result ^= 0x100;	break;
+			case 0x300:	result ^= 0x200;	break;
+		}
+	}
+	if (dx > 0)
+	{
+		oldx++;
+		switch (result & 0x300)
+		{
+			case 0x000:	result ^= 0x100;	break;
+			case 0x100:	result ^= 0x200;	break;
+			case 0x200:	result ^= 0x200;	break;
+			case 0x300:	result ^= 0x100;	break;
+		}
+	}
+
+	if (dy < 0)
+	{
+		oldy--;
+		switch (result & 0xc00)
+		{
+			case 0x000:	result ^= 0x800;	break;
+			case 0x400:	result ^= 0x400;	break;
+			case 0x800:	result ^= 0x400;	break;
+			case 0xc00:	result ^= 0x800;	break;
+		}
+	}
+	if (dy > 0)
+	{
+		oldy++;
+		switch (result & 0xc00)
+		{
+			case 0x000:	result ^= 0x400;	break;
+			case 0x400:	result ^= 0x800;	break;
+			case 0x800:	result ^= 0x800;	break;
+			case 0xc00:	result ^= 0x400;	break;
+		}
+	}
+
+//  logerror("%08X:read port 7 (X=%02X Y=%02X oldX=%02X oldY=%02X res=%04X)\n", activecpu_get_pc(),
+//      newx, newy, oldx, oldy, result);
+	lastresult = result;
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *  Main Memory maps
+ *
+ *************************************/
+
+static ADDRESS_MAP_START( amerdart_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_BASE(&vram_base)
 //  AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(???_w)    DSP reset, coin counters
-	AM_RANGE(0x05000000, 0x0500000f) AM_WRITE(amerdart_input_w)	// IOP
-	AM_RANGE(0x06000000, 0x06007fff) AM_WRITE(MWA16_RAM)	// NVRAM
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xffb00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+	AM_RANGE(0x05000000, 0x0500000f) AM_READWRITE(amerdart_input_r, amerdart_input_w)	// IOP
+	AM_RANGE(0x06000000, 0x06007fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xffb00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
-#if 0
-static ADDRESS_MAP_START( io_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x011f) AM_READ(MRA16_RAM)	/* 90h words internal RAM */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA16_ROM)	/* 800h words. The real DSPs ROM is at */
-									/* address 0 */
-									/* View it at 8000h in the debugger */
+
+static ADDRESS_MAP_START( coolpool_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_RAM AM_BASE(&vram_base)
+	AM_RANGE(0x01000000, 0x010000ff) AM_READWRITE(tlc34076_lsb_r, tlc34076_lsb_w)	// IMSG176P-40
+	AM_RANGE(0x02000000, 0x020000ff) AM_READWRITE(coolpool_iop_r, coolpool_iop_w)
+	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)
+	AM_RANGE(0x03000000, 0x03ffffff) AM_ROM AM_REGION(REGION_GFX1, 0)
+	AM_RANGE(0x06000000, 0x06007fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( io_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x011f) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA16_ROM)
-ADDRESS_MAP_END
-#endif
 
-
-static ADDRESS_MAP_START( coolpool_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x01000000, 0x010000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
-	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
-//  { 0x02000010, 0x0200001f,               // "IOP"
-	AM_RANGE(0x03000000, 0x03ffffff) AM_READ(coolpool_gfxrom_r)
-	AM_RANGE(0x06000000, 0x06007fff) AM_READ(MRA16_RAM)	// NVRAM
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xffe00000, 0xffffffff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( nballsht_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_RAM AM_BASE(&vram_base)
+	AM_RANGE(0x02000000, 0x020000ff) AM_READWRITE(coolpool_iop_r, coolpool_iop_w)
+	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)
+	AM_RANGE(0x04000000, 0x040000ff) AM_READWRITE(tlc34076_lsb_r, tlc34076_lsb_w)	// IMSG176P-40
+	AM_RANGE(0x06000000, 0x0603ffff) AM_RAM	AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
+	AM_RANGE(0xff000000, 0xff7fffff) AM_ROM AM_REGION(REGION_GFX1, 0)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( coolpool_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)	// video + work ram
-	AM_RANGE(0x01000000, 0x010000ff) AM_WRITE(tlc34076_lsb_w)	// IMSG176P-40
-	AM_RANGE(0x02000000, 0x0200000f) AM_WRITE(coolpool_iop_w)	// "IOP"
-	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)	// IOP reset + other stuff
-	AM_RANGE(0x06000000, 0x06007fff) AM_WRITE(MWA16_RAM)	// NVRAM
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(coolpool_34010_io_register_w)
-	AM_RANGE(0xffe00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+
+
+/*************************************
+ *
+ *  DSP Memory maps
+ *
+ *************************************/
+
+static ADDRESS_MAP_START( amerdart_dsp_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x011f) AM_RAM
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( nballsht_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x02000000, 0x0200000f) AM_READ(coolpool_iop_r)	// "IOP"
-//  { 0x02000010, 0x0200001f,               // "IOP"
-	AM_RANGE(0x04000000, 0x040000ff) AM_READ(tlc34076_lsb_r)	// IMSG176P-40
-	AM_RANGE(0x06000000, 0x0601ffff) AM_READ(MRA16_RAM)	// more NVRAM?
-	AM_RANGE(0x06020000, 0x0603ffff) AM_READ(MRA16_RAM)	// NVRAM
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xff000000, 0xff7fffff) AM_READ(coolpool_gfxrom_r)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA16_RAM)
+
+static ADDRESS_MAP_START( dsp_program_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( nballsht_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram_base)	// video + work ram
-	AM_RANGE(0x02000000, 0x0200000f) AM_WRITE(coolpool_iop_w)	// "IOP"
-	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)	// IOP reset + other stuff
-	AM_RANGE(0x04000000, 0x040000ff) AM_WRITE(tlc34076_lsb_w)
-	AM_RANGE(0x06000000, 0x0601ffff) AM_WRITE(MWA16_RAM)	// more NVRAM?
-	AM_RANGE(0x06020000, 0x0603ffff) AM_WRITE(MWA16_RAM)	// NVRAM
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(coolpool_34010_io_register_w)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA16_ROM) /* External ROM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA16_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
-	/* only internal RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
-	/* only internal RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0x02, 0x02) AM_READ(dsp_cmd_r)
+static ADDRESS_MAP_START( dsp_io_map, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0x00, 0x01) AM_WRITE(dsp_romaddr_w)
+	AM_RANGE(0x02, 0x02) AM_READWRITE(dsp_cmd_r, dsp_answer_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(dsp_dac_w)
 	AM_RANGE(0x04, 0x04) AM_READ(dsp_rom_r)
 	AM_RANGE(0x05, 0x05) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x07, 0x07) AM_READ(input_port_1_word_r)
 	AM_RANGE(TMS32025_BIO, TMS32025_BIO) AM_READ(dsp_bio_line_r)
 	AM_RANGE(TMS32025_HOLD, TMS32025_HOLD) AM_READ(dsp_hold_line_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0x00, 0x01) AM_WRITE(dsp_romaddr_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(dsp_answer_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(dsp_dac_w)
 //  AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
 ADDRESS_MAP_END
-
 
 
 
@@ -508,6 +626,7 @@ INPUT_PORTS_START( amerdart )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( 9ballsht )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
@@ -547,6 +666,44 @@ INPUT_PORTS_START( 9ballsht )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( coolpool )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SERVICE2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_SERVICE4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_SERVICE2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_SERVICE3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SERVICE4 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// correct
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	// correct
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	// correct
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)	// correct
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	// correct
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	// correct
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )					// correct
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )					// correct
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )					// correct
+	PORT_SERVICE_NO_TOGGLE(0x0010, IP_ACTIVE_LOW)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )					// correct
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )					// correct
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -577,12 +734,11 @@ MACHINE_DRIVER_START( amerdart )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_PROGRAM_MAP(amerdart_readmem,amerdart_writemem)
+	MDRV_CPU_PROGRAM_MAP(amerdart_map,0)
 
-#if 0
 	MDRV_CPU_ADD(TMS32010, 15000000/8)
-	MDRV_CPU_PROGRAM_MAP(io_readmem,io_writemem)
-#endif
+	MDRV_CPU_FLAGS(CPU_DISABLE)
+	MDRV_CPU_PROGRAM_MAP(amerdart_dsp_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -592,10 +748,8 @@ MACHINE_DRIVER_START( amerdart )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(320, 261)	/* ??? */
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
-
 	MDRV_PALETTE_LENGTH(16)
 
-	MDRV_VIDEO_START(coolpool)
 	MDRV_VIDEO_UPDATE(amerdart)
 
 	/* sound hardware */
@@ -605,32 +759,29 @@ MACHINE_DRIVER_START( amerdart )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( coolpool )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_ADD_TAG("main", TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_PROGRAM_MAP(coolpool_readmem,coolpool_writemem)
-	MDRV_CPU_VBLANK_INT(coolpool_vblank_start,1)
+	MDRV_CPU_PROGRAM_MAP(coolpool_map,0)
 
 	MDRV_CPU_ADD(TMS32026,40000000)
-	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
-	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
-	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
+	MDRV_CPU_PROGRAM_MAP(dsp_program_map,0)
+	MDRV_CPU_IO_MAP(dsp_io_map,0)
 
-	MDRV_MACHINE_INIT(coolpool)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
-	MDRV_INTERLEAVE(20)
+	MDRV_MACHINE_INIT(coolpool)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(320, 261)	/* ??? */
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
-
 	MDRV_PALETTE_LENGTH(256)
 
-	MDRV_VIDEO_START(coolpool)
 	MDRV_VIDEO_UPDATE(coolpool)
 
 	/* sound hardware */
@@ -639,44 +790,14 @@ static MACHINE_DRIVER_START( coolpool )
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( 9ballsht )
+	MDRV_IMPORT_FROM(coolpool)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_PROGRAM_MAP(nballsht_readmem,nballsht_writemem)
-	MDRV_CPU_VBLANK_INT(coolpool_vblank_start,1)
-
-	MDRV_CPU_ADD(TMS32026,40000000)
-	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
-	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
-	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
-
-	MDRV_MACHINE_INIT(coolpool)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
-	MDRV_INTERLEAVE(20)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-	MDRV_SCREEN_SIZE(320, 261)	/* ??? */
-	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
-
-	MDRV_PALETTE_LENGTH(256)
-
-	MDRV_VIDEO_START(coolpool)
-	MDRV_VIDEO_UPDATE(coolpool)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(nballsht_map,0)
 MACHINE_DRIVER_END
-
-
-
 
 
 
@@ -687,9 +808,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( amerdart )
-	ROM_REGION( TOBYTE(0x100000), REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION16_LE( 0x0a0000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x0a0000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "u31",  0x000001, 0x10000, CRC(9628c422) SHA1(46b71acc746760962e34e9d7876f9499ea7d5c7c) )
 	ROM_LOAD16_BYTE( "u32",  0x000000, 0x10000, CRC(2d651ed0) SHA1(e2da2c3d8f25c17e26fd435c75983b2db8691993) )
 	ROM_LOAD16_BYTE( "u38",  0x020001, 0x10000, CRC(1eb8c887) SHA1(220f566043535c54ad1cf2216966c7f42099e50b) )
@@ -724,14 +843,13 @@ ROM_START( amerdart )
 	ROM_LOAD16_WORD( "u23",  0x0f0000, 0x10000, CRC(d7c2b13b) SHA1(3561e08011f649e4d0c47792745b2a014167e816) )
 ROM_END
 
-ROM_START( coolpool )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* dummy region for TMS34010 */
 
-	ROM_REGION16_LE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+ROM_START( coolpool )
+	ROM_REGION16_LE( 0x40000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "u112b",        0x00000, 0x20000, CRC(aa227769) SHA1(488e357a7aad07369cade3110cde14ba8562c66c) )
 	ROM_LOAD16_BYTE( "u113b",        0x00001, 0x20000, CRC(5b5f82f1) SHA1(82afb6a8d94cf09960b962d5208aab451b56feae) )
 
-	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
+	ROM_REGION16_LE( 0x200000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
 	ROM_LOAD16_BYTE( "u04",          0x000000, 0x20000, CRC(66a9940e) SHA1(7fa587280ecfad6b06194868de09cbdd57cf517f) )
 	ROM_CONTINUE(                    0x100000, 0x20000 )
 	ROM_LOAD16_BYTE( "u08",          0x000001, 0x20000, CRC(56789cf4) SHA1(5ad867d5029fdac9dccd01a6979171aa30d9a6eb) )
@@ -764,14 +882,13 @@ ROM_START( coolpool )
 	ROM_LOAD( "u10c",         0x1c0000, 0x40000, CRC(a3dbcae3) SHA1(af997f3f56f406d5eb9fa415e1672b2d129815b8) )
 ROM_END
 
-ROM_START( 9ballsht )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* dummy region for TMS34010 */
 
-	ROM_REGION16_LE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+ROM_START( 9ballsht )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "u112",         0x00000, 0x40000, CRC(b3855e59) SHA1(c3175df24b85897783169bcaccd61630e512f7f6) )
 	ROM_LOAD16_BYTE( "u113",         0x00001, 0x40000, CRC(30cbf462) SHA1(64b2e2d40c2a92c4f4823dc866e5464792954ac3) )
 
-	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
+	ROM_REGION16_LE( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
 	ROM_LOAD16_BYTE( "u110",         0x00000, 0x80000, CRC(890ed5c0) SHA1(eaf06ee5b6c5ed0103b535396b4517012818a416) )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
@@ -789,13 +906,11 @@ ROM_END
   I assume the others are the same.
  */
 ROM_START( 9ballsh2 )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* dummy region for TMS34010 */
-
-	ROM_REGION16_LE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "e-scape.112",  0x00000, 0x40000, CRC(aee8114f) SHA1(a0d0e9e3a879393585b85ac6d04e31a7d4221179) )
 	ROM_LOAD16_BYTE( "e-scape.113",  0x00001, 0x40000, CRC(ccd472a7) SHA1(d074080e987c233b26b3c72248411c575f7a2293) )
 
-	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
+	ROM_REGION16_LE( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
 	ROM_LOAD16_BYTE( "u110",         0x00000, 0x80000, CRC(890ed5c0) SHA1(eaf06ee5b6c5ed0103b535396b4517012818a416) )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
@@ -809,13 +924,11 @@ ROM_START( 9ballsh2 )
 ROM_END
 
 ROM_START( 9ballsh3 )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* dummy region for TMS34010 */
-
-	ROM_REGION16_LE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "8e_1826.112",  0x00000, 0x40000, CRC(486f7a8b) SHA1(635e3b1e7a21a86dd3d0ea994e9b923b06df587e) )
 	ROM_LOAD16_BYTE( "8e_6166.113",  0x00001, 0x40000, CRC(c41db70a) SHA1(162112f9f5bb6345920a45c41da6a249796bd21f) )
 
-	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
+	ROM_REGION16_LE( 0x100000, REGION_GFX1, 0 )	/* gfx data read by main CPU */
 	ROM_LOAD16_BYTE( "u110",         0x00000, 0x80000, CRC(890ed5c0) SHA1(eaf06ee5b6c5ed0103b535396b4517012818a416) )
 	ROM_LOAD16_BYTE( "u111",         0x00001, 0x80000, CRC(1a9f1145) SHA1(ba52a6d1aca26484c320518f69c66ce3ceb4adcf) )
 
@@ -829,45 +942,32 @@ ROM_START( 9ballsh3 )
 ROM_END
 
 
+
 /*************************************
  *
  *  Driver init
  *
  *************************************/
 
-static DRIVER_INIT( amerdart )
+static DRIVER_INIT( coolpool )
 {
-	/* set up code ROMs */
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
+	memory_install_read16_handler(1, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, coolpool_input_r);
 }
 
-DRIVER_INIT( coolpool )
-{
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 
-	/* remove IOP check */
-	/* the check would pass, but the game crashes afterwards!
-       Disabling the check effectively disables the IOP communication, so inputs don't
-       work but the attract mode does. */
-	code_rom[TOWORD(0xffe02c90-0xffe00000)] = 0x0300;
-	code_rom[TOWORD(0xffe02ca0-0xffe00000)] = 0x0300;
-
-	/* patch a loop during IOP test which doesn't get through... */
-	code_rom[TOWORD(0xffe02ff0-0xffe00000)] = 0x0300;
-}
-
-static void decode_9ballsht(void)
+static DRIVER_INIT( 9ballsht )
 {
 	int a;
 	data16_t *rom;
 
 	/* decrypt the main program ROMs */
+	rom = (data16_t *)memory_region(REGION_USER1);
 	for (a = 0;a < memory_region_length(REGION_USER1)/2;a++)
 	{
 		int hi,lo,nhi,nlo;
 
-		hi = code_rom[a] >> 8;
-		lo = code_rom[a] & 0xff;
+		hi = rom[a] >> 8;
+		lo = rom[a] & 0xff;
 
 		nhi = BITSWAP8(hi,5,2,0,7,6,4,3,1) ^ 0x29;
 		if (hi & 0x01) nhi ^= 0x03;
@@ -880,7 +980,7 @@ static void decode_9ballsht(void)
 		if (lo & 0x04) nlo ^= 0x0c;
 		if (lo & 0x08) nlo ^= 0x10;
 
-		code_rom[a] = (nhi << 8) | nlo;
+		rom[a] = (nhi << 8) | nlo;
 	}
 
 	/* decrypt the sub data ROMs */
@@ -894,46 +994,6 @@ static void decode_9ballsht(void)
 	}
 }
 
-DRIVER_INIT( 9ballsht )
-{
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
-	decode_9ballsht();
-
-	/* disable ROM test otherwise the patches would break it... */
-	code_rom[TOWORD(0xffec0240-0xffc00000)] = 0x0300;
-
-	/* patch out a part of the vblank interrupt handler that would cause a crash... */
-	code_rom[TOWORD(0xffe55430-0xffc00000)] = 0xc059;
-}
-
-DRIVER_INIT( 9ballsh2 )
-{
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
-	decode_9ballsht();
-
-	/* disable ROM test otherwise the patches would break it... */
-	code_rom[TOWORD(0xffebd440-0xffc00000)] = 0x0300;
-
-	/* patch out a part of the vblank interrupt handler that would cause a crash... */
-	code_rom[TOWORD(0xffe54030-0xffc00000)] = 0xc059;
-}
-
-DRIVER_INIT( 9ballsh3 )
-{
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-
-	decode_9ballsht();
-
-	/* disable ROM test otherwise the patches would break it... */
-	code_rom[TOWORD(0xffeba840-0xffc00000)] = 0x0300;
-
-	/* patch out a part of the vblank interrupt handler that would cause a crash... */
-	code_rom[TOWORD(0xffe53630-0xffc00000)] = 0xc059;
-}
-
-
 
 
 /*************************************
@@ -942,8 +1002,8 @@ DRIVER_INIT( 9ballsh3 )
  *
  *************************************/
 
-GAMEX( 1989, amerdart, 0,        amerdart, amerdart, amerdart, ROT0, "Ameri",   "AmeriDarts", GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, coolpool, 0,        coolpool, 9ballsht, coolpool, ROT0, "Catalina", "Cool Pool", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsht, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsh2, coolpool, 9ballsht, 9ballsht, 9ballsh2, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsh3, coolpool, 9ballsht, 9ballsht, 9ballsh3, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts", GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1992, coolpool, 0,        coolpool, coolpool, coolpool, ROT0, "Catalina", "Cool Pool" )
+GAME( 1993, 9ballsht, 0,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)" )
+GAME( 1993, 9ballsh2, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)" )
+GAME( 1993, 9ballsh3, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)" )

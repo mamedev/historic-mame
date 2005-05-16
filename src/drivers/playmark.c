@@ -3,6 +3,7 @@
 Big Twins
 World Beach Volley
 Excelsior
+Hot Mind
 
 driver by Nicola Salmoria
 
@@ -14,6 +15,13 @@ advanced - more colourful, and stores setting in an EEPROM.
 
 An interesting thing about this hardware is that the same gfx ROMs are used
 to generate both 8x8 and 16x16 tiles for different tilemaps.
+
+Hot Mind has different tilemaps layout than the other ones, also its pcb was
+marked as HARD TIMES 28-06-94, probably the 2 games can be swapped
+
+
+Games needed:
+- Hard Times
 
 
 TODO:
@@ -43,17 +51,23 @@ extern data16_t *wbeachvl_rowscroll;
 VIDEO_START( bigtwin );
 VIDEO_START( wbeachvl );
 VIDEO_START( excelsr );
+VIDEO_START( hotmind );
 WRITE16_HANDLER( wbeachvl_txvideoram_w );
 WRITE16_HANDLER( wbeachvl_fgvideoram_w );
 WRITE16_HANDLER( wbeachvl_bgvideoram_w );
+WRITE16_HANDLER( hotmind_txvideoram_w );
+WRITE16_HANDLER( hotmind_fgvideoram_w );
+WRITE16_HANDLER( hotmind_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( bigtwin_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_scroll_w );
 WRITE16_HANDLER( wbeachvl_scroll_w );
 WRITE16_HANDLER( excelsr_scroll_w );
+WRITE16_HANDLER( hotmind_scroll_w );
 VIDEO_UPDATE( bigtwin );
 VIDEO_UPDATE( wbeachvl );
 VIDEO_UPDATE( excelsr );
+VIDEO_UPDATE( hotmind );
 
 
 
@@ -118,6 +132,15 @@ static READ16_HANDLER( wbeachvl_port0_r )
 	return (input_port_0_r(0) & 0x7f) | bit;
 }
 
+static READ16_HANDLER( hotmind_port2_r )
+{
+	int bit;
+
+	bit = EEPROM_read_bit() << 7;
+
+	return (input_port_2_r(0) & 0x7f) | bit;
+}
+
 static WRITE16_HANDLER( wbeachvl_coin_eeprom_w )
 {
 	if (ACCESSING_LSB)
@@ -132,6 +155,18 @@ static WRITE16_HANDLER( wbeachvl_coin_eeprom_w )
 		EEPROM_set_cs_line((data & 0x20) ? CLEAR_LINE : ASSERT_LINE);
 		EEPROM_write_bit(data & 0x80);
 		EEPROM_set_clock_line((data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
+	}
+}
+
+static WRITE16_HANDLER( hotmind_coin_eeprom_w )
+{
+	if (ACCESSING_LSB)
+	{
+		coin_counter_w(0,data & 0x20);
+
+		EEPROM_set_cs_line((data & 1) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_write_bit(data & 4);
+		EEPROM_set_clock_line((data & 2) ? ASSERT_LINE : CLEAR_LINE );
 	}
 }
 
@@ -194,7 +229,7 @@ static WRITE8_HANDLER( playmark_oki_w )
 
 static WRITE8_HANDLER( playmark_snd_control_w )
 {
-	/*  This port controls communications to and from the 68K, and the OKI
+    /*  This port controls communications to and from the 68K, and the OKI
         device.
 
         bit legend
@@ -288,6 +323,25 @@ static ADDRESS_MAP_START( excelsr_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x70001e, 0x70001f) AM_WRITE(playmark_snd_command_w)
 	AM_RANGE(0x780000, 0x7807ff) AM_RAM AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hotmind_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, hotmind_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
+	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, hotmind_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
+	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, hotmind_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
+	AM_RANGE(0x110000, 0x11000b) AM_WRITE(hotmind_scroll_w)
+	AM_RANGE(0x11000c, 0x11000d) AM_WRITENOP
+	AM_RANGE(0x200000, 0x200fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x280000, 0x2807ff) AM_RAM AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300012, 0x300013) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x300014, 0x300015) AM_WRITE(hotmind_coin_eeprom_w) AM_READ(hotmind_port2_r)
+	AM_RANGE(0x30001a, 0x30001b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x30001c, 0x30001d) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(playmark_snd_command_w)
+	AM_RANGE(0x304000, 0x304001) AM_WRITENOP		/* watchdog? irq ack? */
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -559,6 +613,109 @@ INPUT_PORTS_START( excelsr )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hotmind )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM data */
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Very Hard 5" )
+	PORT_DIPSETTING(    0x01, "Very Hard 4" )
+	PORT_DIPSETTING(    0x02, "Very Hard 3" )
+	PORT_DIPSETTING(    0x03, "Very Hard 2" )
+	PORT_DIPSETTING(    0x04, "Very Hard 1" )
+	PORT_DIPSETTING(    0x05, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( Easy ) )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Erogatore Gettoni" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Erogatore Ticket" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Clear Memory" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x01, 0x01, "Coin Mode" )
+	PORT_DIPSETTING(    0x01, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* TODO: support coin mode 2, this requires IPT_DIPSWITCH_NAME to be conditional. */
+	PORT_DIPNAME( 0x1e, 0x1e, "Coinage Mode 1" )
+	PORT_DIPSETTING(    0x14, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x16, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x1a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x12, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+#if 0
+	PORT_DIPNAME( 0x06, 0x06, "Coin A Mode 2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x18, 0x18, "Coin B Mode 2" )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+#endif
+
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -569,6 +726,17 @@ static struct GfxLayout charlayout =
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	32*8
+};
+
+static struct GfxLayout hotmind_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
 static struct GfxLayout tilelayout =
@@ -666,18 +834,26 @@ static struct GfxDecodeInfo excelsr_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo hotmind_gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0, &tilelayout,         0x200, 16 },	/* colors 0x200-0x2ff */
+	{ REGION_GFX1, 0, &tilelayout,         0x000, 16 },	/* colors 0x000-0x0ff */
+	{ REGION_GFX1, 0, &hotmind_charlayout, 0x100,  8 },	/* colors 0x100-0x07f */
+	{ -1 } /* end of array */
+};
+
 static MACHINE_DRIVER_START( bigtwin )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
 	MDRV_CPU_PROGRAM_MAP(bigtwin_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
+	MDRV_CPU_ADD(PIC16C57, (12000000/PIC16C5x_CLOCK_DIVIDER))	/* 3MHz */
 	/* Program and Data Maps are internal to the MCU */
 	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -693,7 +869,7 @@ static MACHINE_DRIVER_START( bigtwin )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -702,15 +878,15 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( wbeachvl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
 	MDRV_CPU_PROGRAM_MAP(wbeachvl_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-//  MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))   /* 4MHz ? */
+//  MDRV_CPU_ADD(PIC16C57, (12000000/PIC16C5x_CLOCK_DIVIDER))   /* 3MHz */
 	/* Program and Data Maps are internal to the MCU */
 //  MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(wbeachvl)
@@ -728,7 +904,7 @@ static MACHINE_DRIVER_START( wbeachvl )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -736,15 +912,15 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( excelsr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
 	MDRV_CPU_PROGRAM_MAP(excelsr_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
+	MDRV_CPU_ADD(PIC16C57, (12000000/PIC16C5x_CLOCK_DIVIDER))	/* 3MHz */
 	/* Program and Data Maps are internal to the MCU */
 	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -760,7 +936,41 @@ static MACHINE_DRIVER_START( excelsr )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( hotmind )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(hotmind_main_map, 0)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(PIC16C57, (12000000/PIC16C5x_CLOCK_DIVIDER))	/* 3MHz */
+	/* Program and Data Maps are internal to the MCU */
+	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(wbeachvl)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(hotmind_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(hotmind)
+	MDRV_VIDEO_UPDATE(hotmind)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -886,6 +1096,76 @@ ROM_START( excelsr )
 	ROM_COPY( REGION_USER2, 0x060000, 0x0a0000, 0x020000)
 ROM_END
 
+/*
+
+Hot Mind
+Playmark, 1995
+
+PCB Layout
+----------
+HARD TIMES 28-06-94
+      |---------------------------------------------------------|
+      |        ROM20                                            |
+      |                                   PAL                   |
+      |        M6295                      PAL      ROM23  ROM27 |
+      |        1MHz               PAL              ROM24  ROM28 |
+|-----|               PIC16C57            62256                 |
+|     |                                   62256                 |
+|93C46|J       6116                                ROM25  ROM29 |
+|     |A       6116                     |--------| ROM26  ROM30 |
+|     |M                                |TPC1020 |              |
+|J    |M                                |AFN-084C|              |
+|A    |A                                |        |              |
+|M    |                       26MHz     |--------|              |
+|M    |                                                         |
+|A    |  DSW1                                                   |
+|     |                                                         |
+|     |  DSW2        PAL                                        |
+|     |                                                         |
+|-----|                  68000                            6116  |
+      |                                   6116            6116  |
+      |  62256    62256                   6116      PAL         |
+      |                  24MHz            6116                  |
+      |  ROM21    ROM22                   6116                  |
+      |---------------------------------------------------------|
+Notes:
+      68000 CPU clock - 12.000MHz [24/2]
+      M6295 clock     - 1.000MHz. Sample rate = 1000000/132
+      PIC16C57 clock  - OCS1/CLKIN 12.000MHz (on pin 27, but internally divided by 4 at 3.000MHz)
+                        Note PIC is secured, contents can not be read out.
+      VSync           - 58Hz
+      HSync           - 14.25kHz
+*/
+
+ROM_START( hotmind )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "21.u87",       0x00000, 0x20000, CRC(e9000f7f) SHA1(c19fee7b774d3f30f4d4025a63ec396ec119c855) )
+	ROM_LOAD16_BYTE( "22.u68",       0x00001, 0x20000, CRC(2c518ec5) SHA1(6d9e81ddb5793d64e22dc0254519b947f6ec6954) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	/* ROM will be copied here by the init code from REGION_USER1 */
+
+	/* original PIC was protected, but it seem to be good with the Excelsior one (probably they're the same) */
+	ROM_REGION( 0x3000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pic16c57-hs.i015", 0x0000, 0x2d4c, CRC(022c6941) SHA1(8ead40bfa7aa783b1ce62bd6cfa673cb876e29e7) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "23.u36",       0x00000, 0x20000, CRC(ddcf60b9) SHA1(0c0fbc44131cb7d36c21bf5aead87b498c5684f5) )
+	ROM_LOAD( "27.u42",       0x20000, 0x20000, CRC(413bbcf4) SHA1(d82ae9d26df1a69b760b3025048e47ab757d9175) )
+	ROM_LOAD( "24.u39",       0x40000, 0x20000, CRC(4baa5b4c) SHA1(ee953ed9a4a45715d1ae39b5bb8b9b6505a4e95d) )
+	ROM_LOAD( "28.u49",       0x60000, 0x20000, CRC(8df34d6a) SHA1(ca0d2ca7e0f2a302bc8b1a03c0c18ac72fe105ac) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "26.u34",       0x00000, 0x20000, CRC(ff8d3b75) SHA1(5427b70a61dee4c125877e040be21cb1cadb1af5) )
+	ROM_LOAD( "30.u85",       0x20000, 0x20000, CRC(87a640c7) SHA1(818ff3243cb3ed0189988348e6c2e954f0d3dd4f) )
+	ROM_LOAD( "25.u35",       0x40000, 0x20000, CRC(c4fd4445) SHA1(ab0c5a328a312740595b5c92a1050527140518f3) )
+	ROM_LOAD( "29.u83",       0x60000, 0x20000, CRC(0bebfb53) SHA1(d4342f808141b70af98c370004153a31d120e2a4) )
+
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "20.io13",      0x00000, 0x40000, CRC(0bf3a3e5) SHA1(2ae06f37a6bcd20bc5fbaa90d970aba2ebf3cf5a) )
+ROM_END
+
+
 static UINT8 playmark_asciitohex(UINT8 data)
 {
 	/* Convert ASCII data to HEX */
@@ -964,3 +1244,4 @@ static DRIVER_INIT( bigtwin )
 GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  bigtwin, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL )
 GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND )
 GAME(  199?, excelsr,  0, excelsr,  excelsr,  bigtwin, ROT0, "Playmark", "Excelsior" )
+GAME(  1995, hotmind,  0, hotmind,  hotmind,  bigtwin, ROT0, "Playmark", "Hot Mind" )

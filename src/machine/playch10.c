@@ -9,6 +9,8 @@ int pc10_nmi_enable;	/* nmi enable */
 int pc10_dog_di;		/* watchdog disable */
 int pc10_int_detect;	/* interrupt detect */
 int pc10_gun_controller;
+int pc10_game_mode;		/* Used in Single monitor version to display Game or PPU */
+int pc10_dispmask_old;
 
 /* Locals */
 static int cart_sel;
@@ -27,6 +29,8 @@ MACHINE_INIT( pc10 )
 {
 	/* initialize latches and flip-flops */
 	pc10_nmi_enable = pc10_dog_di = pc10_dispmask = pc10_sdcs = pc10_int_detect = 0;
+
+	pc10_game_mode = pc10_dispmask_old = 0;
 
 	cart_sel = 0;
 	cntrl_mask = 1;

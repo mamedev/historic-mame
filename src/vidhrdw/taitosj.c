@@ -447,38 +447,50 @@ static void check_sprite_sprite_collision(void)
 	UINT8 i,j,sx1,sx2,sy1,sy2;
 
 
-	/* chech each pair of sprites */
-	for (i = 0x00; i < 0x20; i++)
+	if (taitosj_video_enable & 0x80)	// check OBJOFF
 	{
-		if ((i >= 0x10) && (i <= 0x17)) continue;	/* no sprites here */
-
-		if (get_sprite_xy(i, &sx1, &sy1))
+		/* chech each pair of sprites */
+		for (i = 0x00; i < 0x20; i++)
 		{
-			for (j = 0x00; j < 0x20; j++)
+			if ((i >= 0x10) && (i <= 0x17)) continue;	/* no sprites here */
+
+			if (get_sprite_xy(i, &sx1, &sy1))
 			{
-				if (j >= i)	 break;		/* only check a pair once and don't check against itself */
-
-				if ((j >= 0x10) && (j <= 0x17)) continue;	  /* no sprites here */
-
-				if (get_sprite_xy(j, &sx2, &sy2))
+				for (j = i+1; j < 0x20; j++)
 				{
-					/* rule out any pairs that cannot be touching */
-					if ((abs((INT8)sx1 - (INT8)sx2) < 16) &&
-						(abs((INT8)sy1 - (INT8)sy2) < 16))
+					if ((j >= 0x10) && (j <= 0x17)) continue;	  /* no sprites here */
+
+					if (get_sprite_xy(j, &sx2, &sy2))
 					{
-						if (check_sprite_sprite_bitpattern(sx1, sy1, i, sx2, sy2, j))
+						/* rule out any pairs that cannot be touching */
+						if ((abs((INT8)sx1 - (INT8)sx2) < 16) &&
+							(abs((INT8)sy1 - (INT8)sy2) < 16))
 						{
-							/* mark sprites as collided */
-							int reg1,reg2;
+							if (check_sprite_sprite_bitpattern(sx1, sy1, i, sx2, sy2, j))
+							{
+								/* mark sprite as collided */
+								/* note that only the sprite with the higher number is marked */
+								/* as collided. This is how the hardware works and required */
+								/* by Pirate Pete to be able to finish the last round. */
+								int reg;
 
-							reg1 = i >> 3;
-							if (reg1 == 3)  reg1 = 2;
+								/* Here I am mimicking what I do in the sprite drawing code. */
+								/* The last sprite has to be moved at the start of the list. */
+								if (j == 0x1f)
+								{
+									reg = i >> 3;
+									if (reg == 3)  reg = 2;
 
-							reg2 = j >> 3;
-							if (reg2 == 3)  reg2 = 2;
+									taitosj_collision_reg[reg] |= (1 << (i & 0x07));
+								}
+								else
+								{
+									reg = j >> 3;
+									if (reg == 3)  reg = 2;
 
-							taitosj_collision_reg[reg1] |= (1 << (i & 0x07));
-							taitosj_collision_reg[reg2] |= (1 << (j & 0x07));
+									taitosj_collision_reg[reg] |= (1 << (j & 0x07));
+								}
+							}
 						}
 					}
 				}
@@ -604,14 +616,17 @@ static void check_sprite_plane_collision(void)
 	UINT8 i;
 
 
-	/* check each sprite */
-	for (i = 0x00; i < 0x20; i++)
+	if (taitosj_video_enable & 0x80)	// check OBJOFF
 	{
-		if ((i >= 0x10) && (i <= 0x17)) continue;	/* no sprites here */
-
-		if (spriteon[i])
+		/* check each sprite */
+		for (i = 0x00; i < 0x20; i++)
 		{
-			taitosj_collision_reg[3] |= check_sprite_plane_bitpattern(i);
+			if ((i >= 0x10) && (i <= 0x17)) continue;	/* no sprites here */
+
+			if (spriteon[i])
+			{
+				taitosj_collision_reg[3] |= check_sprite_plane_bitpattern(i);
+			}
 		}
 	}
 }
@@ -619,16 +634,32 @@ static void check_sprite_plane_collision(void)
 
 static void drawsprites(struct mame_bitmap *bitmap)
 {
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities (but they are still wrong sometimes.) */
-	if (taitosj_video_enable & 0x80)
+	/* sprite visibility area is missing 4 pixels from the sides, surely to reduce
+       wraparound side effects. This was verified on a real Elevator Action.
+       Note that the clipping is asymmetrical. This matches the real thing.
+       I'm not sure of what should happen when the screen is flipped, though.
+     */
+	static struct rectangle spritevisiblearea =
 	{
-		int offs;
+		0*8+3, 32*8-1-1,
+		2*8, 30*8-1
+	};
+	static struct rectangle spritevisibleareaflip =
+	{
+		0*8+1, 32*8-3-1,
+		2*8, 30*8-1
+	};
+
+	if (taitosj_video_enable & 0x80)	// check OBJOFF
+	{
+		int sprite;
 
 
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4) // spriteram_size == spriteram_2_size
+		/* drawing order is a bit strange. The last sprite has to be moved at the start of the list. */
+		for (sprite = 0x1f;sprite >= 0;sprite--)
 		{
 			UINT8 sx,sy,flipx,flipy;
+			int offs = ((sprite - 1) & 0x1f) * 4;	// move last sprite at the head of the list
 
 
 			if ((offs >= 0x40) && (offs <= 0x5f))  continue;	/* no sprites here */
@@ -654,7 +685,7 @@ static void drawsprites(struct mame_bitmap *bitmap)
 						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((taitosj_spritebank[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						flipscreen[0] ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around. The horizontal games (eg. sfposeid) need this */
 				drawgfx(bitmap,Machine->gfx[(taitosj_spritebank[offs + 3] & 0x40) ? 3 : 1],
@@ -662,7 +693,7 @@ static void drawsprites(struct mame_bitmap *bitmap)
 						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((taitosj_spritebank[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx - 0x100,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						flipscreen[0] ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

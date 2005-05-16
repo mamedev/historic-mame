@@ -1018,6 +1018,7 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 {
 	int minlen = BYTE2ADDR(activecpu_min_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int maxlen = BYTE2ADDR(activecpu_max_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
+	UINT32 addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	offs_t curpc, lastgoodpc = startpc;
 	char dasmbuffer[100];
 
@@ -1045,7 +1046,7 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 			if (memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
 			{
 				memory_set_opbase(pcbyte);
-				instlen = activecpu_dasm(dasmbuffer, testpc) & DASMFLAG_LENGTHMASK;
+				instlen = activecpu_dasm(dasmbuffer, testpc & addrmask) & DASMFLAG_LENGTHMASK;
 			}
 			else
 				instlen = 1;
@@ -1133,11 +1134,13 @@ static void disasm_recompute(struct debug_view *view)
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	struct debug_view_disasm *dasmdata = view->extra_data;
 	int chunksize, minbytes, maxbytes;
+	UINT32 addrmask;
 	int instr;
 	offs_t pc;
 
 	/* switch to the context of the CPU in question */
 	cpuintrf_push_context(view->cpunum);
+	addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 	/* determine how many characters we need for an address and set the divider */
 	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars + 1;
@@ -1161,6 +1164,7 @@ static void disasm_recompute(struct debug_view *view)
 	pc = disasm_back_up(view->cpunum, cpuinfo, pc, 3);
 	for (instr = 0; instr < DASM_LINES; instr++)
 	{
+		UINT64 dummyreadop;
 		char buffer[100];
 		offs_t pcbyte;
 		int numbytes;
@@ -1173,10 +1177,10 @@ static void disasm_recompute(struct debug_view *view)
 		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
 
 		/* get the disassembly, but only if mapped */
-		if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL)
+		if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
 		{
 			memory_set_opbase(pcbyte);
-			pc += numbytes = activecpu_dasm(buffer, pc) & DASMFLAG_LENGTHMASK;
+			pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
 		}
 		else
 		{

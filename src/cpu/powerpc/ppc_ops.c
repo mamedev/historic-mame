@@ -1040,7 +1040,7 @@ static void ppc_sc(UINT32 op)
 	}
 #endif
 #if (HAS_PPC403)
-	if (!ppc.is603 && !ppc.is602) {
+	if (IS_PPC403()) {
 		ppc403_exception(EXCEPTION_SYSTEM_CALL);
 	}
 #endif
@@ -1486,7 +1486,7 @@ static void ppc_tw(UINT32 op)
 		}
 #endif
 #if (HAS_PPC403)
-		if (!ppc.is603 && !ppc.is602) {
+		if (IS_PPC403()) {
 			ppc403_exception(EXCEPTION_TRAP);
 		}
 #endif
@@ -1530,7 +1530,7 @@ static void ppc_twi(UINT32 op)
 		}
 #endif
 #if (HAS_PPC403)
-		if (!ppc.is603 && !ppc.is602) {
+		if (IS_PPC403()) {
 			ppc403_exception(EXCEPTION_TRAP);
 		}
 #endif
@@ -2045,9 +2045,39 @@ static void ppc_faddx(UINT32 op)
 
 static void ppc_fcmpo(UINT32 op)
 {
+	UINT32 b = RB;
+	UINT32 a = RA;
+	UINT32 t = (RT >> 2);
+	UINT32 c;
+
 	CHECK_FPU_AVAILABLE();
 
-    ppc_unimplemented(op);
+	SET_VXSNAN(FPR(a), FPR(b));
+
+	if(is_nan_double(FPR(a)) || is_nan_double(FPR(b)))
+	{
+		c = 1; /* OX */
+		if(is_snan_double(FPR(a)) || is_snan_double(FPR(b))) {
+			ppc.fpscr |= 0x01000000; /* VXSNAN */
+
+			if(!(ppc.fpscr & 0x40000000) || is_qnan_double(FPR(a)) || is_qnan_double(FPR(b)))
+				ppc.fpscr |= 0x00080000; /* VXVC */
+		}
+	}
+	else if(FPR(a).fd < FPR(b).fd){
+		c = 8; /* FX */
+	}
+	else if(FPR(a).fd > FPR(b).fd){
+		c = 4; /* FEX */
+	}
+	else {
+		c = 2; /* VX */
+	}
+
+	CR(t) = c;
+
+	ppc.fpscr &= ~0x0001F000;
+	ppc.fpscr |= (c << 12);
 }
 
 static void ppc_fcmpu(UINT32 op)

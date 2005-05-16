@@ -14,7 +14,8 @@
     Black Panther           GX604
     City Bomber (World)     GX787
     City Bomber (Japan)     GX787
-    Hyper Crash             GX790
+    Hyper Crash (Version D) GX790
+    Hyper Crash (Version C) GX790
     Kitten Kaboodle         GX712
     Nyan Nyan Panic (Japan) GX712
 
@@ -32,10 +33,6 @@ but when they get close to top of the screen they go in front of them.
 --
 To display score, priority of upper part is always lower.
 So this is the correct behavior of real hardware, not an emulation bug.
-- hcrash:
-Coin mechs doesn't work properly.
---
-There's a graphic glitch on the car.
 
 ***************************************************************************/
 
@@ -116,6 +113,7 @@ INTERRUPT_GEN( nemesis_interrupt )
 	if (irq_on)
 		cpunum_set_input_line(0, 1, HOLD_LINE);
 }
+
 
 WRITE16_HANDLER( salamand_soundlatch_word_w )
 {
@@ -255,7 +253,7 @@ READ16_HANDLER( konamigt_input_word_r )
 	return ret;
 }
 
-/*Copied from WEC Le Mans 24 driver,explicity needed for Hyper Crash*/
+/* Copied from WEC Le Mans 24 driver, explicity needed for Hyper Crash */
 static UINT16 hcrash_selected_ip;
 
 static WRITE16_HANDLER( selected_ip_w )
@@ -348,10 +346,10 @@ WRITE8_HANDLER( salamand_speech_start_w )
 
 WRITE8_HANDLER( gx400_speech_start_w )
 {
-        /* the voice data is not in a rom but in sound RAM at $8000 */
-        VLM5030_set_rom ((memory_region(REGION_CPU2))+ 0x8000);
-        VLM5030_ST (1);
-        VLM5030_ST (0);
+	/* the voice data is not in a rom but in sound RAM at $8000 */
+	VLM5030_set_rom ((memory_region(REGION_CPU2))+ 0x8000);
+	VLM5030_ST (1);
+	VLM5030_ST (0);
 }
 
 static READ8_HANDLER( nemesis_portA_r )
@@ -827,6 +825,40 @@ static ADDRESS_MAP_START( city_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(city_sound_bank_w) /* 7232 bankswitch */
+ADDRESS_MAP_END
+
+/******************************************************************************/
+
+static ADDRESS_MAP_START( hcrash_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_ROM
+	AM_RANGE(0x040000, 0x05ffff) AM_ROM
+	AM_RANGE(0x080000, 0x083fff) AM_RAM
+	AM_RANGE(0x090000, 0x091fff) AM_RAM AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0a0000, 0x0a0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable */
+	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(salamand_soundlatch_word_w)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITENOP	/* watchdog probably */
+	AM_RANGE(0x0c000a, 0x0c000b) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0c2000, 0x0c2001) AM_READ(konamigt_input_word_r)	/* Konami GT control */
+	AM_RANGE(0x0c2800, 0x0c2801) AM_WRITENOP
+	AM_RANGE(0x0c2802, 0x0c2803) AM_WRITE(gx400_irq2_enable_word_w) // or at 0x0c2804 ?
+	AM_RANGE(0x0c2804, 0x0c2805) AM_WRITENOP
+	AM_RANGE(0x0c4000, 0x0c4001) AM_WRITE(selected_ip_w) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c4002, 0x0c4003) AM_READ(selected_ip_r)	/* WEC Le Mans 24 control */ AM_WRITENOP /* latches the value read previously */
+	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
+	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
+	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
+	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
+	AM_RANGE(0x180000, 0x180fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x190800, 0x190eff) AM_RAM			/* not used */
+	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x191000, 0x191fff) AM_RAM			/* not used */
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -1844,26 +1876,72 @@ INPUT_PORTS_START( nyanpani )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hcrash )
-	PORT_START /*IN0*/
-	PORT_BIT( 0xfb, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START /*DSW0*/
-	PORT_DIPNAME( 0x0003, 0x0001, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(      0x0003, "Konami GT w/o brake" )
-	PORT_DIPSETTING(      0x0002, "WEC Le Mans 24 Upright" )
-	PORT_DIPSETTING(      0x0001, "Konami GT with brake" )
-	//0x0003 WEC Le Mans 24 Upright again
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Brake (WEC Le Mans 24 cabinet)")
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	// must be 0 otherwise game freezes when using WEC Le Mans 24 cabinet
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Quantity of Initials" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x02, "7" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, "Speed Unit" )
+	PORT_DIPSETTING(    0x08, "km/h" )
+	PORT_DIPSETTING(    0x00, "M.P.H." )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW0 */
+	GX400_COINAGE_DIP
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x03, "Konami GT without brake" )
+	PORT_DIPSETTING(    0x02, "WEC Le Mans 24 Upright" )
+	PORT_DIPSETTING(    0x01, "Konami GT with brake" )
+	// 0x00 WEC Le Mans 24 Upright again
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
@@ -1872,71 +1950,21 @@ INPUT_PORTS_START( hcrash )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START /*DSW1,Coinage*/
-	GX400_COINAGE_DIP
-
-	PORT_START /*DSW2*/
-	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
-
-	PORT_START /*DSW3*/
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START /*DSW4,ACTIVE HIGH*/
-	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
-
-	/*Konami GT specific control*/
+	/* Konami GT specific control */
 	PORT_START	/* IN6 */
 	PORT_BIT( 0xff, 0x40, IPT_DIAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(25) PORT_KEYDELTA(10)
 
 	PORT_START	/* IN7 */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Brake (Konami GT cabinet)")
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 //  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 
-	/*WEC Le Mans 24 specific control*/
-	PORT_START	/* IN8 - Accelerator*/
+	/* WEC Le Mans 24 specific control */
+	PORT_START	/* IN8 - Accelerator */
 	PORT_BIT( 0xff, 0, IPT_PEDAL ) PORT_MINMAX(0,0x80) PORT_SENSITIVITY(30) PORT_KEYDELTA(10)
 
-	PORT_START	/* IN9 - Steering*/
-	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_MINMAX(0x33,0xa3) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
+	PORT_START	/* IN9 - Steering Wheel */
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -2501,85 +2529,12 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
-
-static ADDRESS_MAP_START( hcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x05ffff) AM_READ(MRA16_ROM)	/* ROM */
-	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
-
-
-	AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM)
-
-	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_4_word_r)	/* DSW1 */
-	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_2_word_r)	/* IN2 */
-	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_1_word_r)	/* IN1 */
-	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(input_port_0_word_r)	/* Coins, start buttons, test mode */
-	AM_RANGE(0x0c0008, 0x0c0009) AM_READ(input_port_3_word_r)	/* DSW0 */
-	AM_RANGE(0x0c000a, 0x0c000b) AM_READ(input_port_5_word_r)	/* DSW2 */
-	AM_RANGE(0x0c2000, 0x0c2001) AM_READ(konamigt_input_word_r)/*0x0c2000: Konami GT control*/
-	AM_RANGE(0x0c4002, 0x0c4003) AM_READ(selected_ip_r)/*0x0c4000: WEC Le Mans 24 control*/
-
-
-	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
-
-	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r)
-	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r)
-	AM_RANGE(0x190800, 0x190eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r)
-	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r)
-	AM_RANGE(0x191000, 0x191fff) AM_READ(MRA16_RAM)
-
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)	/* ROM */
-	AM_RANGE(0x040000, 0x05ffff) AM_WRITE(MWA16_ROM)	/* ROM */
-
-	AM_RANGE(0x050000, 0x0503ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x050400, 0x0507ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x050800, 0x050bff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x050c00, 0x050fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll)
-	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)       /* used, but written to with 0's */
-
-
-	AM_RANGE(0x090000, 0x091fff) AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
-
-	AM_RANGE(0x100000, 0x100fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
-	AM_RANGE(0x101000, 0x101fff) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
-	AM_RANGE(0x102000, 0x102fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
-	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
-	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
-
-	AM_RANGE(0x180000, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
-	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x190800, 0x190eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
-	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
-	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
-
-//  AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
-	AM_RANGE(0x05c800, 0x05c801) AM_WRITE(watchdog_reset16_w)	/* probably */
-
-	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable */
-	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(gx400_irq2_enable_word_w)          /* irq enable */
-	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(salamand_soundlatch_word_w)
-	AM_RANGE(0x0c4000, 0x0c4001) AM_WRITE(selected_ip_w)
-	//0x0c4002, 0x0c4003 latches the value read previously.
-	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
 static MACHINE_DRIVER_START( hcrash )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,18432000/2)         /* 9.216 MHz? */
-	MDRV_CPU_PROGRAM_MAP(hcrash_readmem,hcrash_writemem)
-	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
-//  MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
+	MDRV_CPU_ADD(M68000,18432000/3)         /* 6.144MHz */
+	MDRV_CPU_PROGRAM_MAP(hcrash_map,0)
+	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
 	/* audio CPU */        /* 3.579545 MHz */
@@ -2892,22 +2847,147 @@ ROM_START( nyanpani )
 	ROM_LOAD(      "712b01.1k",   0x00000, 0x80000, CRC(f65b5d95) SHA1(12701be68629844720cd16af857ce38ef06af61c) )
 ROM_END
 
+/*
+
+Hyper Crash
+Konami, 1987
+
+PCB Layout
+----------
+
+GX790 PWB(B) 250093A
+|----------------------------------------------------------------------|
+|VOL-L      CN3    CN5     790C01.M10                                  |
+|VOL-R      CN4                                                        |
+|    MB3722        UPC324          6264   790C02.S9  790C03.T9        |-|
+|                                                                     | |
+|J      ADC0804    UPC324                                             | |
+|A                                                                    | |
+|M                     UPC324                                         | |
+|M                                 6264   790C05.S7  790C06.T7        | |
+|A                         007232                                     | |
+|                                                                     |-|
+|                                                                      |
+|                      YM3012                                          |
+|                                3.579545MHz                           |
+|                          YM2151                                      |
+|                                                                      |
+|                                   Z80           68000                |
+|                VLM5030                                              |-|
+|                     790C08.J4                                       | |
+|1                                                                    | |
+|8         AN6914                                                     | |
+|W         AN6914                                                     | |
+|A                                                                    | |
+|Y                DSW3(4)                                             | |
+|                                  790C09.N2   007593                 |-|
+|   CN7           DSW2(8)  DSW1(8)                                     |
+|   CN8      CN9                   6116                                |
+|----------------------------------------------------------------------|
+Notes:
+      68000 CPU clock - 6.144MHz [18.432/3]
+      Z80 clock     - 3.579545MHz
+      YM2151 clock  - 3.579545MHz
+      VLM5030 clock - 3.579545MHz
+      007232 clock  - 3.579545MHz
+      CN3/CN4 - 4 pin plug/jumper for stereo/mono ouput selection
+      CN5 - Right speaker output connection
+      CN7 - 4 pin steering connector
+      CN8 - 4 pin accelerate/brake connection
+      CN9 - 8 pin connection labelled 'ACTION SEAT'
+      VSync - 60Hz
+      HSync - 15.52kHz
+      Konami Custom ICs -
+                          007232 (SDIP64)
+                          007593 (custom ceramic flat pack with 56 legs)
+      ROMs -
+             790C02/05 - Fujitsu 27C512 OTP EPROM (DIP28)
+             790C03/06 - Fujitsu 27C256 EPROM (DIP28)
+             790C01    - Toshiba 571001 (in socket adapter to DIP28 pins on PCB)
+                         Actual socket on PCB is wired for 28 pin 1M MaskROM
+             790C09    - Fujitsu 27C256 EPROM (DIP28)
+             790C08    - Fujitsu 27C256 EPROM (DIP28)
+                         Note! PCB is wired for 27C128, top half of EPROM is blank.
+
+
+GX400PWB(A)200204C
+|----------------------------------------------------------------------|
+|                                                                      |
+|  4416 4416 4416 4416         6264           0005292                  |
+|                                                                     |-|
+|  4416 4416 4416 4416         6264                                   | |
+|                                                                     | |
+|                                                                     | |
+|                                                                     | |
+|                                                                     | |
+|                                                                     | |
+|                                                                     |-|
+|                                6264                                  |
+|   0005294   0005290    0005293              0005291   6116  6116     |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                     |-|
+|                                                                     | |
+|                                                                     | |
+|                                                                     | |
+|                                                                     | |
+|4164 4164 4164 4164                                                  | |
+|4164 4164 4164 4164                                                  | |
+|                                      6116                           |-|
+|4164 4164 4164 4164      0005295                                      |
+|4164 4164 4164 4164                                  18.432MHz        |
+|----------------------------------------------------------------------|
+Notes:
+      4416 - 16K x4 DRAM
+      4164 - 64K x1 DRAM
+      6264 - 8K x8 SRAM
+      6116 - 2K x8 SRAM
+      Konami Custom ICs -
+                         0005290 (SDIP64)
+                         0005291 (ZIP64)
+                         0005292(SDIP64)
+                         0005293 (SDIP64), also stamped 'TC15G014AP-0019'
+                         0005294 (ZIP64)
+                         0005295 (SDIP64)
+*/
+
 ROM_START( hcrash )
 	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
-	ROM_LOAD16_BYTE( "790-d03.t9",   0x000000, 0x08000, CRC(10177dce) SHA1(e46f75e3206eff5299e08e5258e67b68efc4c20c) )
-	ROM_LOAD16_BYTE( "790-d06.t7",   0x000001, 0x08000, CRC(fca5ab3e) SHA1(2ad335cf25a86fe38c190e2e0fe101ea161eb81d) )
-	ROM_LOAD16_BYTE( "790-c02.s9",   0x040000, 0x10000, CRC(8ae6318f) SHA1(b3205df1103a69eef34c5207e567a27a5fee5660) )
-	ROM_LOAD16_BYTE( "790-c05.s7",   0x040001, 0x10000, CRC(c214f77b) SHA1(c5754c3da2a3820d8d06f8ff171be6c2aea92ecc) )
+	ROM_LOAD16_BYTE( "790-d03.t9",   0x00000, 0x08000, CRC(10177dce) SHA1(e46f75e3206eff5299e08e5258e67b68efc4c20c) )
+	ROM_LOAD16_BYTE( "790-d06.t7",   0x00001, 0x08000, CRC(fca5ab3e) SHA1(2ad335cf25a86fe38c190e2e0fe101ea161eb81d) )
+	ROM_LOAD16_BYTE( "790-c02.s9",   0x40000, 0x10000, CRC(8ae6318f) SHA1(b3205df1103a69eef34c5207e567a27a5fee5660) )
+	ROM_LOAD16_BYTE( "790-c05.s7",   0x40001, 0x10000, CRC(c214f77b) SHA1(c5754c3da2a3820d8d06f8ff171be6c2aea92ecc) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for sound */
-	ROM_LOAD( "790-c09.n2",   0x000000, 0x08000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
+	ROM_LOAD( "790-c09.n2",   0x00000, 0x8000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )    /* ? data */
-	ROM_LOAD( "790-c08.j4",   0x000000, 0x08000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )  /* VLM5030 data data */
+	ROM_LOAD( "790-c08.j4",   0x00000, 0x8000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )    /* 007232 data */
-	ROM_LOAD( "790-c01.m10",  0x000000, 0x20000, CRC(07976bc3) SHA1(9341ac6084fbbe17c4e7bbefade9a3f1dec3f132) )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )  /* 007232 data */
+	ROM_LOAD( "790-c01.m10",  0x00000, 0x20000, CRC(07976bc3) SHA1(9341ac6084fbbe17c4e7bbefade9a3f1dec3f132) )
 ROM_END
+
+ROM_START( hcrashc )
+	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
+	ROM_LOAD16_BYTE( "790c03.t9",    0x00000, 0x08000, CRC(d98ec625) SHA1(ddec88b0babd1c538fe5055adec73b537d637d3e) )
+	ROM_LOAD16_BYTE( "790c06.t7",    0x00001, 0x08000, CRC(1d641a86) SHA1(d20ae01565d04db62d5687546c19d87c8e26248c) )
+	ROM_LOAD16_BYTE( "790c02.s9",    0x40000, 0x10000, CRC(8ae6318f) SHA1(b3205df1103a69eef34c5207e567a27a5fee5660) )
+	ROM_LOAD16_BYTE( "790c05.s7",    0x40001, 0x10000, CRC(c214f77b) SHA1(c5754c3da2a3820d8d06f8ff171be6c2aea92ecc) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for sound */
+	ROM_LOAD( "790c09.n2",    0x00000, 0x8000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )  /* VLM5030 data data */
+	ROM_LOAD( "790c02.j4",    0x00000, 0x8000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )  /* 007232 data */
+	ROM_LOAD( "790c01.m10",   0x00000, 0x20000, CRC(07976bc3) SHA1(9341ac6084fbbe17c4e7bbefade9a3f1dec3f132) )
+ROM_END
+
+
 
 GAME( 1985, nemesis,  0,        nemesis,       nemesis,  0, ROT0,   "Konami", "Nemesis" )
 GAME( 1985, nemesuk,  nemesis,  nemesis,       nemesuk,  0, ROT0,   "Konami", "Nemesis (World?)" )
@@ -2923,6 +3003,7 @@ GAMEX(1986, lifefrcj, salamand, salamand,      lifefrcj, 0, ROT0,   "Konami", "L
 GAMEX(1987, blkpnthr, 0,        blkpnthr,      blkpnthr, 0, ROT0,   "Konami", "Black Panther", GAME_NO_COCKTAIL )
 GAMEX(1987, citybomb, 0,        citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (World)", GAME_NO_COCKTAIL )
 GAMEX(1987, citybmrj, citybomb, citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1987, hcrash,   0,        hcrash ,       hcrash,   0, ROT0,   "Konami", "Hyper Crash (version D)", GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX(1987, hcrash,   0,        hcrash,        hcrash,   0, ROT0,   "Konami", "Hyper Crash (version D)", GAME_NO_COCKTAIL )
+GAMEX(1987, hcrashc,  hcrash,   hcrash,        hcrash,   0, ROT0,   "Konami", "Hyper Crash (version C)", GAME_NO_COCKTAIL )
 GAMEX(1988, kittenk,  0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Kitten Kaboodle", GAME_NO_COCKTAIL )
 GAMEX(1988, nyanpani, kittenk,  nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)", GAME_NO_COCKTAIL )

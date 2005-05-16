@@ -739,6 +739,22 @@ static ADDRESS_MAP_START( jsk_mem,ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK2)
 ADDRESS_MAP_END
 
+/***************************************************************************
+  Gundam Final Shooting
+***************************************************************************/
+
+static ADDRESS_MAP_START( gdfs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	SSV_READMEM( 0xc00000 )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( gdfs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x87ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x8c0000, 0x8c00ff) AM_WRITE(MWA16_RAM)
+	SSV_WRITEMEM
+ADDRESS_MAP_END
+
+
 
 /***************************************************************************
 
@@ -3185,7 +3201,19 @@ static MACHINE_DRIVER_START( jsk )
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gdfs )
 
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(gdfs_readmem, gdfs_writemem)
+
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_GFXDECODE(eaglshot_gfxdecodeinfo)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -4482,6 +4510,90 @@ ROM_START( vasara2a )
 	ROM_LOAD16_BYTE( "s1.u37", 0x000000, 0x200000, CRC(11cd7098) SHA1(f75288b5c89df039dfb41d66bd275cda8605e75a) )
 ROM_END
 
+/*
+
+Mobile Suit Gundam Final Shooting
+Banpresto, 1995
+
+Uses main board STA-0001B SYSTEM SSV
+
+Game Board Layout
+-----------------
+
+VISCO (no other PCB numbers)
+|---------------------------------------------------------|
+|                 GAL16V8(2)                              |
+|   VG004-01.U33            VG004-07.U39                  |
+|      VG004-02.U34           VG004-08.U40                |
+|        VG004-03.U35           VG004-10.U45      TC514400|
+|          VG004-04.U36           VG004-09.U43            |
+|            VG004-05.U37           VG004-11.U48  TC514400|
+|D1            VG004-06.U38                               |
+|                                       100MHz    TC514400|
+|                                                         |
+|                                |--------------| TC514400|
+|      TC551001                  |              |         |
+|P           |-------| GAL20V8   |              | TC514400|
+| S2914      | SETA  | GAL20V8   |     SETA     |         |
+|            |ST-0009| GAL20V8   |              | TC514400|
+|            |       |           |   ST-0020    |         |
+|            |-------|           |              | TC514400|
+|      TC551001                  |              |         |
+|           SSVV7.U16            |--------------| TC514400|
+|               VG004-12.U4                               |
+|C1                 VG004-13.U5  TC514260      VG004-14.U3|
+| ADC0809             TC55257    GAL16V8(1) SSV2SET0.U1   |
+|                     TC55257           SSVSET1.U2        |
+|---------------------------------------------------------|
+Notes:
+      D1         - 4 pin connector for power
+      P          - 10 pin connector
+      C1         - 10 pin connector for analog controls
+      ADC0809    - National Semiconductor ADC0809 8-Bit Microprocessor Compatible A/D Converter with 8-Channel Multiplexer (DIP28)
+      S2914      - Seiko S2914 EEPROM (DIP8)
+      TC551001   - Toshiba TC551001BFL-70L 128K x8 SRAM (SOP32)
+      TC55257    - Toshiba TC55257N-70L 32K x8 SRAM (SOP28)
+      TC514260   - Toshiba TC514260BJ-70 256K x16 DRAM (SOJ40)
+      GAL16V8(1) - Lattice GAL16V8B stamped 'VG004-18' (DIP20)
+      GAL16V8(2) - Lattice GAL16V8B stamped 'VG004-19' (DIP20)
+      GAL20V8    - Lattice GAL20V8B all 3 stamped 'VG004-20' and have identical contents (DIP24)
+      U16,U2,U1  - 4M MaskROM (DIP32)
+      All other ROMs are 8M/16M MaskROM (DIP42)
+      Custom Seta ICs -
+                       ST-0009 (QFP176)
+                       ST-0020 (QFP304, heaksinked)
+*/
+
+ROM_START( gdfs )
+	ROM_REGION16_LE( 0x400100, REGION_USER1, 0 )		/* V60 Code */ // only needs to be 400000 but due to v60 bug or debugger bug i have to increase it or dasm fails
+	ROM_LOAD16_WORD( "vg004-14.u3", 0x000000, 0x100000, CRC(d88254df) SHA1(ccdfd42e4ce3941018f83e300da8bf7a5950f65c) )
+	ROM_RELOAD(0x100000,0x100000)
+	ROM_LOAD16_BYTE( "ssv2set0.u1",   0x200000, 0x080000, CRC(c23b9e2c) SHA1(9026e065252981fb403255ddc5782359c0088e8a) )
+	ROM_RELOAD(0x300000,0x80000)
+	ROM_LOAD16_BYTE( "ssv2set1.u2",   0x200001, 0x080000, CRC(d7d52570) SHA1(12e7531519a0a4331e409991265908fb518286ef) )
+	ROM_RELOAD(0x300001,0x80000)
+
+	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* Sprites? */
+	ROM_LOAD( "vg004-01.u33", 0x0000000, 0x200000, CRC(aa9a81c2) SHA1(a7d005f9be199e317aa4c6aed8a2ab322fe82119) )
+	ROM_LOAD( "vg004-02.u34", 0x0200000, 0x200000, CRC(fa40ecb4) SHA1(0513f3b6879dc7d207646d949d6ddb7251f77bcc) )
+	ROM_LOAD( "vg004-03.u35", 0x0400000, 0x200000, CRC(90004023) SHA1(041edb77b34e6677ac5b85ce542d87a9bb1baf31) )
+	ROM_LOAD( "vg004-04.u36", 0x0600000, 0x200000, CRC(fdafd289) SHA1(3ff1969a176d13bfa68a48c9ed582f5789b1047f) )
+	ROM_LOAD( "vg004-05.u37", 0x0800000, 0x200000, CRC(9ae488b0) SHA1(7823cc689c588f3dbcafe9bdc94c094d6e9cd605) )
+	ROM_LOAD( "vg004-06.u38", 0x0a00000, 0x200000, CRC(3402325f) SHA1(7ea169c1f8b01a37bd7dbb4d486d38bdac62be5b) )
+	ROM_LOAD( "vg004-07.u39", 0x0c00000, 0x200000, CRC(5e89fcf9) SHA1(db727ec8117e84c98037c756715e28fd5e39972a) )
+	ROM_LOAD( "vg004-08.u40", 0x0e00000, 0x200000, CRC(6b1746dc) SHA1(35e5ee02975474985a4a611dcc439fc3050b7f94) )
+	ROM_LOAD( "ssvv7.u16",    0x1000000, 0x080000, CRC(f1c3ab6f) SHA1(b7f54f7ae60650fee7570aa4dd4266c629149673) ) // erm.. more sprites? (numbers etc.)
+
+	ROM_REGION( 0x1800000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* near sprites, but not sprites?? */
+	ROM_LOAD( "vg004-09.u43", 0x000000, 0x200000, CRC(b7382cfa) SHA1(df735470181c16f8aac0e3be76e1ed53a32dbb9c) )
+	ROM_LOAD( "vg004-10.u45", 0x200000, 0x200000, CRC(b3c6b1cb) SHA1(c601213e35d8dfd1244921da5c093f82145706d2) )
+	ROM_LOAD( "vg004-11.u48", 0x400000, 0x200000, CRC(1491def1) SHA1(344043302c81b4118cac4f692375b8af7ea68570) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "vg004-12.u4", 0x000000, 0x200000, CRC(eb41a4ef) SHA1(f4d0844a3c00cf90faa59ae982744b7f0bcbe218) )
+	ROM_LOAD( "vg004-13.u5", 0x200000, 0x200000, CRC(a4ed3977) SHA1(5843d56f69789e70ce0201a693ffae322b628459) )
+ROM_END
+
 /***************************************************************************
 
 
@@ -4512,7 +4624,7 @@ GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
-GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                 GAME_NO_COCKTAIL )
+GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
 
@@ -4523,5 +4635,6 @@ GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpres
 
 GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1997,  jsk,      0,        jsk, 			janjans1, jsk, 			ROT0,   "Visco",          "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1997,  jsk,      0,        jsk, 			janjans1, jsk,  ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",             GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1995,  gdfs,     0,        gdfs,  vasara2,   vasara,     ROT0,	"Banpresto",         "Mobile Suit Gundam Final Shooting",                        GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 

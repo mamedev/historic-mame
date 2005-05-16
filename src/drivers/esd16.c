@@ -3,6 +3,7 @@
                           -= ESD 16 Bit Games =-
 
                     driver by   Luca Elia (l.elia@tin.it)
+                    additions by David Haywood
 
 
 Main  CPU   :   M68000
@@ -12,10 +13,11 @@ Sound CPU   :   Z80
 Sound Chips :   M6295 (AD-65)  +  YM3812 (U6612)  +  YM3014 (U6614)
 
 ---------------------------------------------------------------------------
-Year + Game         PCB             Notes
+Year + Game            PCB             Notes
 ---------------------------------------------------------------------------
-98  Multi Champ     ESD 11-09-98
-00  Head Panic      ESD 08-26-1999 (with Fuuki)
+98  Multi Champ        ESD 11-09-98
+99  Multi Champ Deluxe ESD 08-26-1999
+00  Head Panic         ESD 08-26-1999 (with Fuuki)
 ---------------------------------------------------------------------------
 
 Head Panic
@@ -195,6 +197,39 @@ static ADDRESS_MAP_START( hedpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w)
 ADDRESS_MAP_END
 
+/* Multi Champ Deluxe, like Head Panic but different addresses */
+
+static ADDRESS_MAP_START( mchampdx_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x400000, 0x400fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x500006, 0x500007) AM_READ(esd_eeprom_r	)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mchampdx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x303fff) AM_WRITE(esd16_vram_0_w) AM_BASE(&esd16_vram_0	)	// Layers
+	AM_RANGE(0x320000, 0x323fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	//
+	AM_RANGE(0x324000, 0x327fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	// mirror?
+	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+    AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)//AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown3 )   // IRQ Ack
+//  AM_RANGE(0x500008, 0x500009) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown5     )   // Flip Screen + ? // not checked
+//  AM_RANGE(0x50000a, 0x50000b) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown4 )   // ? 2 not checked
+	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU // ok
+	AM_RANGE(0x50000e, 0x50000f) AM_WRITE(esd_eeprom_w)
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x600800, 0x600807) AM_WRITE(esd16_spriteram_w				)	// Sprites (Mirrored)
+	AM_RANGE(0x700000, 0x700003) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_0	)	// Scroll
+	AM_RANGE(0x700004, 0x700007) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_1	)	//
+	AM_RANGE(0x700008, 0x700009) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_x) // not used in mchampdx?
+	AM_RANGE(0x70000a, 0x70000b) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_y) // not used in mchampdx?
+//  AM_RANGE(0x70000c, 0x70000d) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown1) // ??
+	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(MWA16_RAM) AM_BASE(&head_layersize) // ??
+	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w) // not used in mchampdx?
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -494,11 +529,11 @@ static MACHINE_DRIVER_START( multchmp )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM3812, 4000000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
 	MDRV_SOUND_ADD(OKIM6295, 8000)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hedpanic )
@@ -516,6 +551,15 @@ static MACHINE_DRIVER_START( hedpanic )
 	MDRV_GFXDECODE(hedpanic_gfxdecodeinfo)
 	MDRV_VIDEO_UPDATE(hedpanic)
 
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( mchampdx )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hedpanic)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(mchampdx_readmem,mchampdx_writemem)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -594,6 +638,79 @@ ROM_START( multchmp )
 	ROM_LOAD( "multchmp.u10", 0x00000, 0x20000, CRC(6e741fcd) SHA1(742e0952916c00f67dd9f8d01e721a9a538d2fc4) )
 ROM_END
 
+/*
+
+Multi Champ Deluxe
+------------------
+
+PCB Layout
+----------
+
+ESD 08-26-1999
+|-----------------------------------------|
+|  3014  3812 6116   6295   ESD4.SU10   * |
+|VOL      ESD3.SU06  Z80          ROM.JU01|
+|             PAL                       * |
+|                            6116         |
+|       6116            PAL  6116 ROM.JU02|
+|       6116           |-------|        * |
+|J                PAL  | ESD   |        * |
+|A                PAL  |CRTC99 |ESD5.JU07 |
+|M     PAL             |       |        * |
+|M     PAL             |-------|          |
+|A    68000    ESD1.CU03                  |
+|              ESD2.CU02  |-------|       |
+|                         |ACTEL  | 6116  |
+|   93C46                 |A40MX04| 6116  |
+|              MCM6206    |       | 6116  |
+|              MCM6206    |-------| 6116  |
+| 16MHz   PAL  MCM6206                    |
+| 14MHz   PAL  MCM6206  ROM.FU35 ROM.FU34 |
+|-----------------------------------------|
+
+Notes:
+      68000 clock 16.000MHz
+      Z80 clock 4.000MHz
+      M6295 clock 1.000MHz. Sample rate 1000000/132
+      YM3812 clock 4.000MHz
+      HSync   - 15.625kHz
+      VSync   - 60Hz
+      MCM6206 - 32k x8 SRAM (SOJ28)
+      6116    - 2k x8 SRAM (SOP28)
+      A40MX04 - Actel A40MX04-F FPGA (PLCC84)
+      CRTC99  - ESD CRTC99 Graphics Controller (QFP240)
+
+      * : Board has positions for 6x standard 32 pin EPROMs but only position ESD5 is populated
+          with an EPROM. In between the unpopulated positions are 2x smt pads. These are populated
+          with 2x 16M SOP44 smt Mask ROMs.
+
+*/
+
+ROM_START( mchampdx )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "esd2.cu02", 0x000000, 0x040000, CRC(4cca802c) SHA1(5e6e81febbb56b7c4630b530e546e7ab59c6c6c1))
+	ROM_LOAD16_BYTE( "esd1.cu03", 0x000001, 0x040000, CRC(0af1cd0a) SHA1(d2befcb596d83d523317d17b4c1c71f99de0d33e) )
+
+	ROM_REGION( 0x84000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "esd3.su06", 0x00000, 0x0c000, CRC(2c0c8813) SHA1(ad6b881af4a629a948dcb3c99cea73c20ba1faf4) )
+	ROM_CONTINUE(             0x10000, 0x74000             )
+
+	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites, 16x16x5 */
+	ROM_LOAD( "rom.ju01", 0x200000, 0x200000, CRC(1a749fc2) SHA1(feff4b26ee28244b4d092798a176e33e09d5df2c) )
+	ROM_LOAD( "rom.ju02", 0x000000, 0x200000, CRC(7e87e332) SHA1(f90aa00a64a940846d99053c7aa023e3fd5d070b) )
+	/* expand this to take up 0x200000 bytes too so we can decode it */
+	ROM_LOAD16_BYTE( "esd5.ju07", 0x400000, 0x080000, CRC(6cc871cc) SHA1(710b9695c864e4234686993b88d24590d60e1cb9) )
+	ROM_FILL( 0x500000, 0x100000, 0 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layers, 16x16x8 */
+	ROM_LOAD16_BYTE( "rom.fu35", 0x000000, 0x200000, CRC(ba46f3dc) SHA1(4ac7695bdf4237654481f7f74f8650d70a51e691) )
+	ROM_LOAD16_BYTE( "rom.fu34", 0x000001, 0x200000, CRC(2895cf09) SHA1(88756fcd589af1986c3881d4080f086afc11b498) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "esd4.su10", 0x00000, 0x80000, CRC(14c4a30d) SHA1(d8eb2f08d5293f729cbec1897e3b92b675cc2814) )
+ROM_END
+
+
 /***************************************************************************
 
 PCB Layout (Head Panic)
@@ -662,5 +779,9 @@ ROM_END
 
 ***************************************************************************/
 
+/* ESD 11-09-98 */
 GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea)" )
+
+/* ESD 08-26-1999 */
+GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe" )
 GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea?)" )

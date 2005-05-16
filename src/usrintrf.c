@@ -1886,6 +1886,22 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		}
 	}
 
+	if (input_ui_pressed(IPT_UI_CLEAR))
+	{
+		if (menugroup != -1)
+		{
+			if (sel < (total - 1))
+			{
+				if (seq_get_1(entry[sel]) == CODE_NONE)
+					seq_copy(entry[sel], defentry[sel]);
+				else
+					seq_set_1(entry[sel], CODE_NONE);
+
+				schedule_full_refresh();
+			}
+		}
+	}
+
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
@@ -2048,6 +2064,19 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 
 	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
+
+	if (input_ui_pressed(IPT_UI_CLEAR))
+	{
+		if (sel < (total - 1))
+		{
+			if (seq_get_1(seq[sel]) == CODE_NONE)
+				seq_set_1(seq[sel], CODE_DEFAULT);
+			else
+				seq_set_1(seq[sel], CODE_NONE);
+
+			schedule_full_refresh();
+		}
+	}
 
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
