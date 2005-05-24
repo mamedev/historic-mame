@@ -106,6 +106,22 @@
 	PORT_DIPSETTING(    0x00, "2" ) \
 	IREM_COIN_MODE_1_NEW
 
+#define IREM_SYSTEM_DIPSWITCH_CABINET \
+	PORT_START \
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) ) \
+	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" ) \
+	PORT_DIPSETTING(    0x04, "Common" ) \
+	PORT_DIPSETTING(    0x00, "Separate" ) \
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" ) /* Default 1 */ \
+	PORT_DIPSETTING(    0x08, "1" ) \
+	PORT_DIPSETTING(    0x00, "2" ) \
+	IREM_COIN_MODE_1_NEW
+
 #define IREM_SYSTEM_DIPSWITCH \
 	PORT_START \
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ) \

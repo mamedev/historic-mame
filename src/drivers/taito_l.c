@@ -1914,36 +1914,52 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( plgirls2 )
 	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) ) /* Listed as Not Used */
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" ) /* Coin Mode B not supported yet */
+	PORT_DIPSETTING(    0x08, "Mode A" )
+	PORT_DIPSETTING(    0x00, "Mode B" )
 	TAITO_COINAGE_JAPAN_8
+/*
+
+Coin 1 is DSW 1, 5&6 - Coin 2 is DSW 1, 7&8
+
+-----------------------------------
+       |        | 1cn/1pl |off|off|
+Mode A |  Coin  | 1cn/2pl |on |off|
+       |        | 2cn/1pl |off|on |
+       |        | 2cn/3pl |on |on |
+-----------------------------------
+       |        | 1cn/1pl |off|off|
+Mode B |  Coin  | 1cn/4pl |on |off|
+       |        | 3cn/1pl |off|on |
+       |        | 4cn/1pl |on |on |
+-----------------------------------
+*/
 
 	PORT_START_TAG("DSWB")
 	/* Difficulty controls the number of hits requiered to destroy enemies */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Time" ) /* Simply listed as "Time", what exactly does it refer to? */
+	PORT_DIPSETTING(    0x04, "2 Seconds" )
+	PORT_DIPSETTING(    0x00, "3 Seconds" )
 	PORT_DIPNAME( 0x18, 0x18, "Life" )
 	PORT_DIPSETTING(    0x10, "3/2/3" )
 	PORT_DIPSETTING(    0x18, "4/3/4" )
 	PORT_DIPSETTING(    0x08, "5/4/5" )
 	PORT_DIPSETTING(    0x00, "6/5/6" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, "Character Speed" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) /* Listed as Not Used */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) ) /* Listed as Not Used */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2871,7 +2887,7 @@ GAME( 1988, kurikinu, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Ame
 GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
 GAME( 1988, kurikina, kurikint, kurikina, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World, prototype?)" )
 GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World set 1)" )
-GAME( 1989, plottina, plotting, plotting, plotting, 0,		  ROT0,   "Taito Corporation Japan", "Plotting (World set 2)" )
+GAME( 1989, plottina, plotting, plotting, plotting, 0,        ROT0,   "Taito Corporation Japan", "Plotting (World set 2)" )
 GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
 GAME( 1990, horshoes, 0,        horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)" )
 GAME( 1990, palamed,  0,        palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)" )

@@ -133,10 +133,10 @@ static int ppc602_execute(int cycles)
 		//int cc = (ppc_icount >> 2) & 0x1;
 		dec_old = DEC;
 		ppc.pc = ppc.npc;
-		ppc.npc += 4;
-		opcode = ROPCODE64(ppc.pc);
-
 		CALL_MAME_DEBUG;
+
+		ppc.npc = ppc.pc + 4;
+		opcode = ROPCODE64(ppc.pc);
 
 		switch(opcode >> 26)
 		{

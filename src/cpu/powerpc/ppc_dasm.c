@@ -182,6 +182,7 @@ enum
 #define FL_CHECK_RA     (1 << 5)    // assert rA!=0
 #define FL_CHECK_LSWI   (1 << 6)    // specific check for LSWI validity
 #define FL_CHECK_LSWX   (1 << 7)    // specific check for LSWX validity
+#define FL_SO			(1 << 8)	// use DASMFLAG_STEP_OUT
 
 
 /*
@@ -225,7 +226,7 @@ static IDESCR itab[] =
     { "b",      D_OP(18),           M_LI|M_AA|M_LK,             F_LI,           FL_AA|FL_LK },
     { "bc",     D_OP(16),           M_BO|M_BI|M_BD|M_AA|M_LK,   F_BCx,          FL_AA|FL_LK },
     { "bcctr",  D_OP(19)|D_XO(528), M_BO|M_BI|M_LK,             F_BO_BI,        FL_LK       },
-    { "bclr",   D_OP(19)|D_XO(16),  M_BO|M_BI|M_LK,             F_BO_BI,        FL_LK       },
+    { "bclr",   D_OP(19)|D_XO(16),  M_BO|M_BI|M_LK,             F_BO_BI,        FL_LK|FL_SO },
     { "cmp",    D_OP(31)|D_XO(0),   M_CRFD|M_L|M_RA|M_RB,       F_CMP,          0           },
     { "cmpi",   D_OP(11),           M_CRFD|M_L|M_RA|M_SIMM,     F_CMP_SIMM,     0           },
     { "cmpl",   D_OP(31)|D_XO(32),  M_CRFD|M_L|M_RA|M_RB,       F_CMP,          0           },
@@ -845,13 +846,14 @@ static int Simplified(UINT32 op, UINT32 vpc, char *signed16, char *mnem, char *o
 	return 1;
 }
 
-int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
+offs_t ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 {
 	char signed16[12];
 	UINT32 disp;
 	int i,j;
 	char mnem[200];
 	char oprs[200];
+	offs_t flags = DASMFLAG_SUPPORTED;
 
 	mnem[0] = '\0'; // so we can use strcat()
 	oprs[0] = '\0';
@@ -872,7 +874,7 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 			buffer += sprintf(buffer, " ");
 		}
 		buffer += sprintf(buffer, "%s", oprs);
-		return 4;
+		return 4 | flags;
 	}
 
 	/*
@@ -1145,15 +1147,20 @@ int ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op)
 				break;
 			}
 
+			if ((itab[i].flags & FL_LK) && (op & M_LK))
+				flags |= DASMFLAG_STEP_OVER;
+			else if (itab[i].flags & FL_SO)
+				flags |= DASMFLAG_STEP_OUT;
+
 			buffer += sprintf(buffer, "%s", mnem);
 			for( j = strlen(mnem); j < 10; j++ ) {
 				buffer += sprintf(buffer, " ");
 			}
 			buffer += sprintf(buffer, "%s", oprs);
-			return 4;
+			return 4 | flags;
         }
     }
 
 	sprintf(buffer, "?");
-    return 4;
+    return 4 | flags;
 }

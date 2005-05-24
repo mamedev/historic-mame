@@ -633,22 +633,22 @@ INPUT_PORTS_START( majtitl2 )
 	IREM_JOYSTICK_3_4(3)
 	IREM_JOYSTICK_3_4(4)
 	IREM_COINS
-	IREM_SYSTEM_DIPSWITCH_4PLAYERS
+	IREM_SYSTEM_DIPSWITCH_CABINET
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Given Holes/Stroke Play" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
-	PORT_DIPNAME( 0x02, 0x02, "Ginen Holes/Match or Skins" )
+	PORT_DIPNAME( 0x02, 0x02, "Given Holes/Match or Skins" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Control Panel" )	/* 4 Way joysticks with 2 buttons each player */
+	PORT_DIPNAME( 0x08, 0x08, "Joystick Configuration" )    /* Listed as "Joysticks on" */
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )          /* "One Side" */
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )         /* "Both Sides" */
+	PORT_DIPNAME( 0x10, 0x10, "Number of Joysticks" )	/* 4 Way joysticks with 2 buttons each player */
 	PORT_DIPSETTING(    0x10, "2 Joysticks" )
 	PORT_DIPSETTING(    0x00, "4 Joysticks" )
 	PORT_DIPNAME( 0x20, 0x00, "Any Button to Start" )
@@ -995,7 +995,7 @@ INPUT_PORTS_START( dsccr94j )
 	IREM_JOYSTICK_3_4(3)
 	IREM_JOYSTICK_3_4(4)
 	IREM_COINS
-	IREM_SYSTEM_DIPSWITCH_4PLAYERS
+	IREM_SYSTEM_DIPSWITCH /* Dip Switch 2, dip 2 is listed as "Don't Change" and is "OFF" */
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x03, 0x03, "Time" )
@@ -1003,15 +1003,21 @@ INPUT_PORTS_START( dsccr94j )
 	PORT_DIPSETTING(    0x03, "2:00" )
 	PORT_DIPSETTING(    0x02, "2:30" )
 	PORT_DIPSETTING(    0x01, "3:00" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Easy) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x10, 0x10, "Game Mode" )
+	PORT_DIPSETTING(    0x10, "Match Mode" )
+	PORT_DIPSETTING(    0x00, "Power Mode" )
+/*
+   Match Mode: Winner advances to the next game.  Game Over for the loser
+   Power Mode: The Players can play the game until their respective powers run
+               out, reguardless of whether they win or lose the game.
+               Player 2 can join in any time during the game
+               Player power (time) can be adjusted by dip switch #3
+*/
 	PORT_DIPNAME( 0x20, 0x20, "Starting Button" )
 	PORT_DIPSETTING(    0x00, "Button 1" )
 	PORT_DIPSETTING(    0x20, "Start Button" )
@@ -1021,12 +1027,11 @@ INPUT_PORTS_START( dsccr94j )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* Dip switch bank 3 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, "Player Power" )
+	PORT_DIPSETTING(    0x00, "500" )
+	PORT_DIPSETTING(    0x03, "1000" )
+	PORT_DIPSETTING(    0x01, "1500" )
+	PORT_DIPSETTING(    0x02, "2000" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

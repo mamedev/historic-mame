@@ -19,6 +19,10 @@
 #define MAX_COMMAND_LENGTH		512
 #define MAX_COMMAND_PARAMS		16
 
+/* flags for command parsing */
+#define CMDFLAG_NONE						(0x0000)
+#define CMDFLAG_KEEP_QUOTES					(0x0001)
+
 /* values for the error code in an command error */
 #define CMDERR_NONE							(0)
 #define CMDERR_UNKNOWN_COMMAND				(1)
@@ -69,7 +73,7 @@ void				debug_console_exit(void);
 /* command handling */
 CMDERR				debug_console_execute_command(const char *command, int echo);
 CMDERR				debug_console_validate_command(const char *command);
-void				debug_console_register_command(const char *command, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param));
+void				debug_console_register_command(const char *command, UINT32 flags, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param));
 const char *		debug_cmderr_to_string(CMDERR error);
 
 /* console management */

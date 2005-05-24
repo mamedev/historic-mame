@@ -42,6 +42,7 @@ struct debug_command
 	struct debug_command *	next;
 	const char *			command;
 	void					(*handler)(int ref, int params, const char **param);
+	UINT32					flags;
 	int						ref;
 	int						minparams;
 	int						maxparams;
@@ -99,6 +100,13 @@ void debug_console_exit(void)
 	if (console_history)
 		free(console_history);
 	console_history = NULL;
+
+	while (commandlist)
+	{
+		struct debug_command *temp = commandlist;
+		commandlist = commandlist->next;
+		free(temp);
+	}
 }
 
 
@@ -112,7 +120,7 @@ void debug_console_exit(void)
     command
 -------------------------------------------------*/
 
-static void trim_parameter(char **paramptr)
+static void trim_parameter(char **paramptr, int keep_quotes)
 {
 	char *param = *paramptr;
 	int len = strlen(param);
@@ -126,9 +134,12 @@ static void trim_parameter(char **paramptr)
 		/* check for begin/end quotes */
 		if (len >= 2 && param[0] == '"' && param[len - 1] == '"')
 		{
-			param[len - 1] = 0;
-			param++;
-			len -= 2;
+			if (!keep_quotes)
+			{
+				param[len - 1] = 0;
+				param++;
+				len -= 2;
+			}
 		}
 
 		/* check for start/end braces */
@@ -191,14 +202,6 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 	else
 		params = 0;
 
-	/* NULL-terminate and trim space around all the parameters */
-	for (i = 1; i < params; i++)
-		*param[i]++ = 0;
-
-	/* now go back and trim quotes and braces and any spaces they reveal*/
-	for (i = 0; i < params; i++)
-		trim_parameter(&param[i]);
-
 	/* search the command list */
 	len = strlen(command);
 	for (cmd = commandlist; cmd != NULL; cmd = cmd->next)
@@ -218,6 +221,14 @@ static CMDERR internal_execute_command(int validate_only, int params, char **par
 		return MAKE_CMDERR_UNKNOWN_COMMAND(0);
 	if (foundcount > 1)
 		return MAKE_CMDERR_AMBIGUOUS_COMMAND(0);
+
+	/* NULL-terminate and trim space around all the parameters */
+	for (i = 1; i < params; i++)
+		*param[i]++ = 0;
+
+	/* now go back and trim quotes and braces and any spaces they reveal*/
+	for (i = 0; i < params; i++)
+		trim_parameter(&param[i], found->flags & CMDFLAG_KEEP_QUOTES);
 
 	/* see if we have the right number of parameters */
 	if (params < found->minparams)
@@ -352,7 +363,7 @@ CMDERR debug_console_validate_command(const char *command)
     command handler
 -------------------------------------------------*/
 
-void debug_console_register_command(const char *command, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param))
+void debug_console_register_command(const char *command, UINT32 flags, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param))
 {
 	struct debug_command *cmd = malloc(sizeof(*cmd));
 	if (!cmd)
@@ -360,6 +371,7 @@ void debug_console_register_command(const char *command, int ref, int minparams,
 
 	/* fill in the command */
 	cmd->command = command;
+	cmd->flags = flags;
 	cmd->ref = ref;
 	cmd->minparams = minparams;
 	cmd->maxparams = maxparams;

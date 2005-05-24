@@ -46,7 +46,7 @@ BIOS:
     - Port 4 = /GAMERES
     - Port 5 = /GAMESTOP
     - Port 6 = N/C
-    - Port 7 = N/C
+    - Port 7 = N/
     - Port 8 = NMI Enable
     - Port 9 = DOG DI
     - Port A = /PPURES
@@ -394,16 +394,16 @@ static NVRAM_HANDLER( playch10 )
 }
 
 /* Only used in single monitor bios */
-static data8_t *time;
+static data8_t *timedata;
 
 static WRITE8_HANDLER( time_w )
 {
 	if(data == 0xf)
 		data = 0;
 
-	time[offset] = data;
+	timedata[offset] = data;
 
-	usrintf_showmessage("Time: %d%d%d%d",time[3],time[2],time[1],time[0]);
+	usrintf_showmessage("Time: %d%d%d%d",timedata[3],timedata[2],timedata[1],timedata[0]);
 }
 
 /******************************************************************************/
@@ -432,7 +432,7 @@ static ADDRESS_MAP_START( bios_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(pc10_PPURES_w)
 	AM_RANGE(0x0b, 0x0e) AM_WRITE(pc10_CARTSEL_w)
 	AM_RANGE(0x0f, 0x0f) AM_WRITE(up8w_w)
-	AM_RANGE(0x10, 0x13) AM_WRITE(time_w) AM_BASE(&time)
+	AM_RANGE(0x10, 0x13) AM_WRITE(time_w) AM_BASE(&timedata)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cart_map, ADDRESS_SPACE_PROGRAM, 8 )

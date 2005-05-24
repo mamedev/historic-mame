@@ -113,8 +113,8 @@ WRITE16_HANDLER( k3_scrolly_w )
 
 WRITE16_HANDLER( k3_soundbanks_w )
 {
-	OKIM6295_set_bank_base(0, (data & 4) ? 0x40000 : 0 );
-	OKIM6295_set_bank_base(1, (data & 1) ? 0 : 0x40000);
+	OKIM6295_set_bank_base(0, (data & 4) ? 0x40000 : 0);
+	OKIM6295_set_bank_base(1, (data & 2) ? 0x40000 : 0);
 }
 
 
@@ -265,17 +265,15 @@ static MACHINE_DRIVER_START( k3 )
 	MDRV_VIDEO_START(k3)
 	MDRV_VIDEO_UPDATE(k3)
 
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

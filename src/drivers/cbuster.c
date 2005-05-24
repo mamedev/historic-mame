@@ -359,12 +359,11 @@ static struct YM2151interface ym2151_interface =
 static MACHINE_DRIVER_START( twocrude )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000) /* Accurate */
+	MDRV_CPU_ADD(M68000, 12000000) /* Custom chip 59 */
 	MDRV_CPU_PROGRAM_MAP(twocrude_readmem,twocrude_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
 
-	MDRV_CPU_ADD(H6280,32220000/8)
-	/* audio CPU */	/* Accurate */
+	MDRV_CPU_ADD(H6280,32220000/4) /* Custom chip 45, Audio section crystal is 32.220 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -395,7 +394,7 @@ static MACHINE_DRIVER_START( twocrude )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 
-	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END

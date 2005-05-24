@@ -2880,12 +2880,12 @@ static void dump_mem( int which, int set_title )
 			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base) );
 	}
 
-//  switch( DBGMEM[which].mode )
-//  {
-//  case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
-	/*case MODE_HEX_UINT16:*/ dump_mem_hex( which, len_addr, 4 );// break;
-//  case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
-//  }
+	switch( DBGMEM[which].mode )
+	{
+		case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
+		case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
+		case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
+	}
 }
 
 /**************************************************************************

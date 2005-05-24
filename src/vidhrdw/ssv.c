@@ -18,7 +18,7 @@
 
     Offset:     Bits:                   Value:
 
-        0.w     f--- ---- ---- ----     Shadow (Highlight?)
+        0.w     f--- ---- ---- ----     Shadow
                 -edc ---- ---- ----     Each bit enables 2 bitplanes*
                 ---- ba-- ---- ----     X Size (1,2,4,8 tiles)
                 ---- --98 ---- ----     Y Size (1,2,4,8 tiles)
@@ -55,7 +55,7 @@
                 ---- --9- ---- ----     Code? Color?
                 ---- ---8 7654 3210     Color code (64 color steps)
 
-        4.w     f--- ---- ---- ----     Shadow (Highlight?)
+        4.w     f--- ---- ---- ----     Shadow
                 -edc ---- ---- ----     Each bit enables 2 bitplanes*
                 ---- ba-- ---- ----     X Size (1,2,4,8 tiles)
                 ---- --98 7654 3210     X
@@ -96,7 +96,7 @@
 
         6.w     fed- ---- ---- ----     Tilemap width (games only use 1 -> $200, 2 -> $400)
                 ---c ---- ---- ----     ?
-                ---- b--- ---- ----     Shadow (Highlight?)
+                ---- b--- ---- ----     Shadow
                 ---- -a98 ---- ----     Each bit enables 2 bitplanes*
                 ---- ---- 7654 3210     ? some games leave it to 0, others
                                           use e.g 28 for scroll 0, 29 for
@@ -124,6 +124,12 @@
     that fill up the screen and use scroll 0 as the source tilemap are
     always displayed before the sprites in the sprites list.
 
+    Shadows:
+
+    The low bits of the pens from a "shadowing" tile (regardless of color code)
+    substitute the top bits of the color index (0-7fff) in the frame buffer.
+    The number of low bits from the "shadowing tile" is 4 or 2, depending on
+    bit 7 of 1c0077.
 
 Note: press Z to show some info on each sprite (debug builds only)
 
@@ -133,11 +139,60 @@ Note: press Z to show some info on each sprite (debug builds only)
 #include "vidhrdw/generic.h"
 #include "seta.h"
 
+int shadow_pen_mask, shadow_pen_shift;
+
+void ssv_drawgfx(	struct mame_bitmap *bitmap, const struct GfxElement *gfx,
+					unsigned int code,unsigned int color,int flipx,int flipy,int x0,int y0,
+					const struct rectangle *cliprect, int shadow	)
+{
+	UINT8 *source, *addr, pen;
+	UINT16 *dest;
+	int sx, x1, dx;
+	int sy, y1, dy;
+
+	addr	=	(code  % gfx->total_elements) * gfx->char_modulo + gfx->gfxdata;
+	color	=	gfx->color_granularity * (color % gfx->total_colors);
+
+	if ( flipx )	{	x1 = x0-1;				x0 += gfx->width-1;		dx = -1;	}
+	else			{	x1 = x0 + gfx->width;							dx =  1;	}
+
+	if ( flipy )	{	y1 = y0-1;				y0 += gfx->height-1;	dy = -1;	}
+	else			{	y1 = y0 + gfx->height;							dy =  1;	}
+
+#define SSV_DRAWGFX(SETPIXELCOLOR)												\
+	for ( sy = y0; sy != y1; sy += dy )											\
+	{																			\
+		if ( sy >= cliprect->min_y && sy <= cliprect->max_y )					\
+		{																		\
+			source	=	addr;													\
+			dest	=	(UINT16 *)bitmap->line[sy];								\
+																				\
+			for ( sx = x0; sx != x1; sx += dx )									\
+			{																	\
+				pen = *source++;												\
+																				\
+				if ( pen && sx >= cliprect->min_x && sx <= cliprect->max_x )	\
+					SETPIXELCOLOR												\
+			}																	\
+		}																		\
+																				\
+		addr	+=	gfx->line_modulo;											\
+	}
+
+	if (shadow)
+	{
+		SSV_DRAWGFX( { dest[sx] = ((dest[sx] & shadow_pen_mask) | (pen << shadow_pen_shift)) & 0x7fff; } )
+	}
+	else
+	{
+		SSV_DRAWGFX( { dest[sx] = (color + pen) & 0x7fff; } )
+	}
+}
+
+
 VIDEO_START( ssv )
 {
 	Machine->gfx[0]->color_granularity = 64; /* 256 colour sprites with palette selectable on 64 colour boundaries */
-
-	alpha_set_level(0x80);	// until proper shadows are implemented
 
 	return 0;
 }
@@ -532,7 +587,7 @@ static void ssv_draw_row(struct mame_bitmap *bitmap, int sx, int sy, int scroll)
 	{
 		for (sy=sy1,y=y1; sy <= clip.max_y; sy+=0x10,y+=0x10)
 		{
-			int tx, ty, gfx, transparency;
+			int tx, ty, gfx;
 
 			s3	=	&spriteram16[	page * (size * ((0x1000/0x200)/2))	+
 									((x & ((size -1) & ~0xf)) << 2)	+
@@ -557,20 +612,17 @@ static void ssv_draw_row(struct mame_bitmap *bitmap, int sx, int sy, int scroll)
 			if (flipy)	{ ystart = 2-1;  yend = -1; yinc = -1; }
 			else		{ ystart = 0;    yend = 2;  yinc = +1; }
 
-			transparency = shadow ? TRANSPARENCY_ALPHA : TRANSPARENCY_PEN;
-
 			/* Draw a tile (16x16) */
 			for (tx = xstart; tx != xend; tx += xinc)
 			{
 				for (ty = ystart; ty != yend; ty += yinc)
 				{
-					drawgfx( bitmap,	Machine->gfx[gfx],
-										code++,
-										color,
-										flipx, flipy,
-										sx + tx * 16, sy + ty * 8,
-										&clip,
-										transparency ,0 );
+					ssv_drawgfx( bitmap,	Machine->gfx[gfx],
+											code++,
+											color,
+											flipx, flipy,
+											sx + tx * 16, sy + ty * 8,
+											&clip, shadow	);
 				} /* ty */
 			} /* tx */
 
@@ -691,7 +743,7 @@ if (( (ssv_special !=4 ) && ( xnum == 0 && ynum == 0x0c00 )) || (ssv_special == 
 */
 			else
 			{
-				int shadow, gfx, transparency;
+				int shadow, gfx;
 				if (s2 >= end2)	break;
 
 				code	=	s2[0];	// code high bits
@@ -736,19 +788,16 @@ else
 
 				/* Draw the tiles */
 
-				transparency = shadow ? TRANSPARENCY_ALPHA : TRANSPARENCY_PEN;
-
 				for (x = xstart; x != xend; x += xinc)
 				{
 					for (y = ystart; y != yend; y += yinc)
 					{
-						drawgfx( bitmap,	Machine->gfx[gfx],
-											code++,
-											color,
-											flipx, flipy,
-											sx + x * 16, sy + y * 8,
-											&Machine->visible_area,
-											transparency, 0 );
+						ssv_drawgfx( bitmap,	Machine->gfx[gfx],
+												code++,
+												color,
+												flipx, flipy,
+												sx + x * 16, sy + y * 8,
+												&Machine->visible_area, shadow	);
 					}
 				}
 
@@ -787,6 +836,19 @@ void ssv_enable_video(int enable)
 
 VIDEO_UPDATE( ssv )
 {
+	if (ssv_scroll[0x76/2] & 0x0080)
+	{
+		// 4 bit shadows (mslider, stmblade)
+		shadow_pen_mask		=	0x1fff;
+		shadow_pen_shift	=	11;
+	}
+	else
+	{
+		// 2 bit shadows
+		shadow_pen_mask		=	0x3fff;
+		shadow_pen_shift	=	13;
+	}
+
 	/* The background color is the first one in the palette */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
@@ -794,7 +856,7 @@ VIDEO_UPDATE( ssv )
 
 	if (ssv_special !=3)
 	{
-		ssv_draw_layer(bitmap,0);		// "background layer"
+		ssv_draw_layer(bitmap,0);	// "background layer"
 		ssv_draw_sprites(bitmap);	// sprites list
 	} // dynagears is weird, whats really going on?
 	else

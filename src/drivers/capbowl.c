@@ -119,6 +119,28 @@ static INTERRUPT_GEN( capbowl_interrupt )
 
 /*************************************
  *
+ *  Partial updating
+ *
+ *************************************/
+
+static void capbowl_update(int scan)
+{
+	force_partial_update(scan - 1);
+	scan += 32;
+	if (scan > 240) scan = 32;
+	timer_set(cpu_getscanlinetime(scan), scan, capbowl_update);
+}
+
+
+static MACHINE_INIT( capbowl )
+{
+	timer_set(cpu_getscanlinetime(32), 32, capbowl_update);
+}
+
+
+
+/*************************************
+ *
  *  Graphics ROM banking
  *
  *************************************/
@@ -337,6 +359,7 @@ static MACHINE_DRIVER_START( capbowl )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(5000)
 
+	MDRV_MACHINE_INIT(capbowl)
 	MDRV_NVRAM_HANDLER(capbowl)
 
 	/* video hardware */

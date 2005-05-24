@@ -1120,7 +1120,7 @@ static DRIVER_INIT( gaelco3d )
 	dst = memory_region(REGION_USER3) + gaelco3d_mask_offset;
 	for (y = 0; y < gaelco3d_mask_size/4096; y++)
 		for (x = 0; x < 4096; x++)
-			dst[y * 4096 + x] = (src[(x / 1024) * 0x20000 + (y * 1024 + x % 1024) / 8] >> (x % 8)) & 1;
+			dst[y * 4096 + x] = (src[(x / 1024) * (gaelco3d_mask_size/8/4) + (y * 1024 + x % 1024) / 8] >> (x % 8)) & 1;
 }
 
 

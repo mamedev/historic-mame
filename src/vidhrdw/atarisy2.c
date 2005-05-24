@@ -196,7 +196,7 @@ WRITE16_HANDLER( atarisy2_yscroll_w )
 
 	/* if bit 4 is zero, the scroll value is clocked in right away */
 	if (!(newscroll & 0x10))
-		tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll >> 6);
+		tilemap_set_scrolly(atarigen_playfield_tilemap, 0, (newscroll >> 6) - cpu_getscanline());
 	else
 		timer_adjust(yscroll_reset_timer, cpu_getscanlinetime(0), newscroll >> 6, 0);
 

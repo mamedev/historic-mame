@@ -336,6 +336,9 @@ do { OP1(0x0F); OP1(0xC8+(reg)); } while (0)
 #define _cmc() \
 do { OP1(0xf5); } while(0);
 
+#define _int(interrupt) \
+do { if (interrupt == 3) { OP1(0xcc); } else { OP1(0xcd); OP1(interrupt); } } while(0)
+
 
 
 /*###################################################################################################

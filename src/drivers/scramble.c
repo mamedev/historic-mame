@@ -27,8 +27,92 @@ Notes:
 #include "machine/8255ppi.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
+#include "sound/5110intf.h"
+#include "sound/tms5110.h"
 #include "galaxian.h"
 
+
+/***************************************************************************
+    AD2083 TMS5110 implementation (still wrong!)
+***************************************************************************/
+
+static int speech_rom_address = 0;
+static int speech_rom_address_hi = 0;
+static int speech_rom_bit = 0;
+
+static void start_talking (void)
+{
+	tms5110_CTL_w(0,TMS5110_CMD_SPEAK);
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+}
+
+static void reset_talking (void)
+{
+	tms5110_CTL_w(0,TMS5110_CMD_RESET);
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	tms5110_PDC_w(0,0);
+	tms5110_PDC_w(0,1);
+	tms5110_PDC_w(0,0);
+
+	speech_rom_address    = 0;
+	speech_rom_address_hi = 0;
+    speech_rom_bit        = 0;
+}
+
+int ad2083_speech_rom_read_bit(void)
+{
+	unsigned char *ROM = memory_region(REGION_SOUND1);
+	int bit;
+
+	speech_rom_address %= memory_region_length(REGION_SOUND1);
+
+	bit = (ROM[speech_rom_address] >> speech_rom_bit) & 1;
+//  bit = (ROM[speech_rom_address] >> (speech_rom_bit ^ 7)) & 1;
+
+	speech_rom_bit++;
+	if(speech_rom_bit == 8)
+	{
+		speech_rom_address++;
+		speech_rom_bit = 0;
+	}
+
+	return bit;
+}
+
+
+static WRITE8_HANDLER( ad2083_soundlatch_w )
+{
+	soundlatch_w(0,data);
+
+	if(data & 0x80)
+	{
+		reset_talking();
+	}
+	else if(data & 0x30)
+	{
+		start_talking();
+
+		if((data & 0x30) == 0x30)
+			speech_rom_address_hi = 0x1000;
+		else
+			speech_rom_address_hi = 0;
+
+	}
+}
+
+static WRITE8_HANDLER( ad2083_tms5110_ctrl_w )
+{
+	speech_rom_address = speech_rom_address_hi | (data * 0x40);
+}
 
 
 static ADDRESS_MAP_START( scramble_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -94,7 +178,7 @@ static ADDRESS_MAP_START( explorer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
 	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(soundlatch_w)
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(explorer_sh_irqtrigger_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(hotshock_sh_irqtrigger_w)
 ADDRESS_MAP_END
 
 
@@ -358,6 +442,45 @@ static ADDRESS_MAP_START( mimonscr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( ad2083_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
+	AM_RANGE(0x4800, 0x4bff) AM_READWRITE(galaxian_videoram_r, galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x503f) AM_RAM AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_RAM AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_RAM AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x6004, 0x6004) AM_WRITE(hotshock_flip_screen_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(galaxian_coin_counter_2_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_0_w)
+	AM_RANGE(0x6803, 0x6803) AM_WRITE(scramble_background_blue_w)
+	AM_RANGE(0x6805, 0x6805) AM_WRITE(galaxian_coin_counter_1_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(scramble_background_red_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(scramble_background_green_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(ad2083_soundlatch_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(hotshock_sh_irqtrigger_w)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_0_r)
+	AM_RANGE(0x8001, 0x8001) AM_READ(input_port_1_r)
+	AM_RANGE(0x8002, 0x8002) AM_READ(input_port_2_r)
+	AM_RANGE(0x8003, 0x8003) AM_READ(input_port_3_r)
+	AM_RANGE(0xa000, 0xdfff) AM_ROM
+	AM_RANGE(0xe800, 0xebff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ad2083_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_ROM
+	AM_RANGE(0x8000, 0x83ff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ad2083_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x01, 0x01) AM_WRITE(ad2083_tms5110_ctrl_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_1_w)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( triplep_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1354,6 +1477,87 @@ INPUT_PORTS_START( scorpion )
 	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ad2083 )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // if ON it doesn't accept any COIN
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 2C_8C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 2C_8C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
+	PORT_DIPSETTING(    0x04, "150000" )
+	PORT_DIPSETTING(    0x08, "100000" )
+	PORT_DIPSETTING(    0x00, "200000" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 static struct GfxLayout devilfsh_charlayout =
 {
@@ -1446,6 +1650,30 @@ static struct GfxLayout sfx_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
+static struct GfxLayout ad2083_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	RGN_FRAC(1,2),
+	2,	/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout ad2083_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	RGN_FRAC(1,2),
+	2,	/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
+
 static struct GfxDecodeInfo devilfsh_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &devilfsh_charlayout,   0, 8 },
@@ -1474,6 +1702,13 @@ struct GfxDecodeInfo sfx_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+struct GfxDecodeInfo ad2083_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &ad2083_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x0000, &ad2083_spritelayout,  0, 8 },
+	{ -1 } /* end of array */
+};
+
 static struct AY8910interface sfx_ay8910_interface_1 =
 {
 	0,
@@ -1489,7 +1724,13 @@ struct AY8910interface explorer_ay8910_interface_1 =
 
 struct AY8910interface explorer_ay8910_interface_2 =
 {
-	soundlatch_r
+	hotshock_soundlatch_r
+};
+
+struct AY8910interface hotshock_ay8910_interface_2 =
+{
+	hotshock_soundlatch_r,
+	scramble_portB_r
 };
 
 struct AY8910interface scorpion_ay8910_interface_1 =
@@ -1505,6 +1746,11 @@ struct AY8910interface triplep_ay8910_interface =
 	0
 };
 
+static struct TMS5110interface tms5110_interface =
+{
+	0,							/* irq callback function */
+	ad2083_speech_rom_read_bit	/* M0 callback function. Called whenever chip requests a single bit of data */
+};
 
 static MACHINE_DRIVER_START( scramble )
 
@@ -1547,11 +1793,11 @@ static MACHINE_DRIVER_START( explorer )
 	/* sound hardware */
 	MDRV_SOUND_MODIFY("8910.1")
 	MDRV_SOUND_CONFIG(explorer_ay8910_interface_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 
 	MDRV_SOUND_MODIFY("8910.2")
 	MDRV_SOUND_CONFIG(explorer_ay8910_interface_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( theend )
@@ -1673,10 +1919,19 @@ static MACHINE_DRIVER_START( hotshock )
 	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_IO_MAP(hotshock_sound_readport,hotshock_sound_writeport)
 
+	MDRV_MACHINE_INIT(galaxian)
+
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
 	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(pisces)
+
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_CONFIG(hotshock_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cavelon )
@@ -1819,6 +2074,46 @@ static MACHINE_DRIVER_START( scorpion )
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( ad2083 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_PROGRAM_MAP(ad2083_map,0)
+
+	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz */
+	MDRV_CPU_PROGRAM_MAP(ad2083_sound_map,0)
+	MDRV_CPU_IO_MAP(ad2083_sound_io_map,0)
+
+	MDRV_MACHINE_INIT(galaxian)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(ad2083_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
+
+	MDRV_PALETTE_INIT(turtles)
+	MDRV_VIDEO_START(ad2083)
+	MDRV_VIDEO_UPDATE(galaxian)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(explorer_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(explorer_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+
+	MDRV_SOUND_ADD(TMS5110, 640000)
+	MDRV_SOUND_CONFIG(tms5110_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2504,12 +2799,12 @@ ROM_END
 ROM_START( scrpiona )
 	/* this dump is bad (at least one rom) */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "scor_d2.bin",  0x0000, 0x1000, CRC(c5b9daeb) SHA1(faf7a22013dd5f063eb8f506f3722cfd5522539a) )
-	ROM_LOAD( "scor_e2.bin",  0x1000, 0x1000, CRC(82308d05) SHA1(26bc7c8b3ea0020fd1b93f6aaa29d82d04ae64b2) )
-	ROM_LOAD( "scor_g2.bin",  0x2000, 0x1000, CRC(756b09cd) SHA1(9aec34e063fe8c0d1392db09daea2875d06eec46) )
-	ROM_LOAD( "scor_h2.bin",  0x3000, 0x1000, CRC(a0457b93) SHA1(5ed32e117a97660dae001bd97fcb3f31e0debb24) )
-	ROM_LOAD( "scor_k2.bin",  0x5800, 0x0800, CRC(42ec34d8) SHA1(b358d10a96490f325420b992e8e03bb3884e415a) )
-	ROM_LOAD( "scor_l2.bin",  0x6000, 0x0800, CRC(6623da33) SHA1(99110005d00c80d674bde5d21608f50b85ee488c) )
+	ROM_LOAD( "scor_d2.bin",  0x0000, 0x1000, BAD_DUMP CRC(c5b9daeb) SHA1(faf7a22013dd5f063eb8f506f3722cfd5522539a) )
+	ROM_LOAD( "scor_e2.bin",  0x1000, 0x1000, BAD_DUMP CRC(82308d05) SHA1(26bc7c8b3ea0020fd1b93f6aaa29d82d04ae64b2) )
+	ROM_LOAD( "scor_g2.bin",  0x2000, 0x1000, BAD_DUMP CRC(756b09cd) SHA1(9aec34e063fe8c0d1392db09daea2875d06eec46) )
+	ROM_LOAD( "scor_h2.bin",  0x3000, 0x1000, BAD_DUMP CRC(a0457b93) SHA1(5ed32e117a97660dae001bd97fcb3f31e0debb24) )
+	ROM_LOAD( "scor_k2.bin",  0x5800, 0x0800, BAD_DUMP CRC(42ec34d8) SHA1(b358d10a96490f325420b992e8e03bb3884e415a) )
+	ROM_LOAD( "scor_l2.bin",  0x6000, 0x0800, BAD_DUMP CRC(6623da33) SHA1(99110005d00c80d674bde5d21608f50b85ee488c) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "32_a4.7c",     0x0000, 0x1000, CRC(361b8a36) SHA1(550ac5f721aaa9fea5f6d63ba590d6b367525c23) )
@@ -2526,6 +2821,32 @@ ROM_START( scrpiona )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
+ROM_START( ad2083 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "ad0.10o",      0x0000, 0x2000, CRC(4d34325a) SHA1(4a0eb1cd94382c44ab2642d734d3da9025872eba) )
+	ROM_LOAD( "ad1.9o",       0x2000, 0x2000, CRC(0f37134b) SHA1(a935ae013e9fb26b5ef44f7ebd2a043763b146db) )
+	ROM_LOAD( "ad2.8o",       0xa000, 0x2000, CRC(bcfa655f) SHA1(6a552c67f48e9ece6c6d38b4151ff6f3dbfd8dcb) )
+	ROM_LOAD( "ad3.7o",       0xc000, 0x2000, CRC(60655225) SHA1(628796b23ad66f8f7b2c160d923ecbea10fd7553) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound CPU */
+	ROM_LOAD( "ad1s.3d",      0x0000, 0x2000, CRC(80f39b0f) SHA1(35671eaf6fc7643ad691414349f1b2772d020e9a) )
+	ROM_LOAD( "ad2s.4d",      0x2000, 0x1000, CRC(5177fe2b) SHA1(9aee953ae43131c4db9db71ca69a8ce9ad62ff05) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ad4.5k",       0x0000, 0x2000, CRC(388cdd21) SHA1(52f97d8e4f7c7f45a2875f03eadc622b540693e7) )
+	ROM_LOAD( "ad5.3k",       0x2000, 0x2000, CRC(f53f3449) SHA1(0711f2e47504f256d46eea1e225e35f9bde8b9fb) )
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
+	ROM_LOAD( "ad1v.9a",      0x0000, 0x1000, CRC(4cb93fff) SHA1(2cc686a9a58a85f2bb04fb6ced4626e9952635bb) )
+	ROM_LOAD( "ad2v.10a",     0x1000, 0x1000, CRC(4b530ea7) SHA1(8793b3497b598f33b34bf9524e360c6c62e8001d) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom-am27s19dc.1m", 0x0000, 0x0020, CRC(2759aebd) SHA1(644fd2c95ca49cbbc0ee1b88ca2563451ddd4fe0) )
+
+	ROM_REGION( 0x0020, REGION_USER1, 0 ) /* sample related? near TMS5110 and sample roms */
+	ROM_LOAD( "prom-sn74s188.8a",  0x0000, 0x0020, CRC(5e395112) SHA1(427d6a5b5d0837db4bf804f392d77ba5a86ffd72) )
 ROM_END
 
 
@@ -2560,3 +2881,4 @@ GAMEX(1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FL
 GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)" )
 GAMEX(1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND )
 GAMEX(1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX(1983, ad2083,   0,        ad2083,   ad2083,   ad2083,       ROT90, "Midcoin", "A. D. 2083", GAME_IMPERFECT_SOUND )

@@ -113,10 +113,10 @@ static int ppc403_execute(int cycles)
 //      UINT32 tblo = (UINT32)(ppc.tb);
 		UINT32 opcode;
 		ppc.pc = ppc.npc;
-		ppc.npc += 4;
-		opcode = ROPCODE(ppc.pc);
-
 		CALL_MAME_DEBUG;
+
+		ppc.npc = ppc.pc + 4;
+		opcode = ROPCODE(ppc.pc);
 
 		switch(opcode >> 26)
 		{

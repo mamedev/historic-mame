@@ -80,6 +80,7 @@ static void execute_wplist(int ref, int params, const char **param);
 static void execute_save(int ref, int params, const char **param);
 static void execute_dump(int ref, int params, const char **param);
 static void execute_dasm(int ref, int params, const char **param);
+static void execute_find(int ref, int params, const char **param);
 static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
@@ -104,62 +105,69 @@ void debug_command_init(void)
 	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "if", 0, 3, 3, execute_if);
 
 	/* add all the commands */
-	debug_console_register_command("help",      0, 0, 1, execute_help);
-	debug_console_register_command("printf",    0, 1, MAX_COMMAND_PARAMS, execute_printf);
-	debug_console_register_command("tracelog",  0, 1, MAX_COMMAND_PARAMS, execute_tracelog);
-	debug_console_register_command("quit",      0, 0, 0, execute_quit);
-	debug_console_register_command("do",        0, 1, 1, execute_do);
-	debug_console_register_command("step",      0, 0, 1, execute_step);
-	debug_console_register_command("s",         0, 0, 1, execute_step);
-	debug_console_register_command("over",      0, 0, 1, execute_over);
-	debug_console_register_command("o",         0, 0, 1, execute_over);
-	debug_console_register_command("out" ,      0, 0, 0, execute_out);
-	debug_console_register_command("go",        0, 0, 1, execute_go);
-	debug_console_register_command("g",         0, 0, 1, execute_go);
-	debug_console_register_command("gvblank",   0, 0, 0, execute_go_vblank);
-	debug_console_register_command("gv",        0, 0, 0, execute_go_vblank);
-	debug_console_register_command("gint",      0, 0, 1, execute_go_interrupt);
-	debug_console_register_command("gi",        0, 0, 1, execute_go_interrupt);
-	debug_console_register_command("next",      0, 0, 0, execute_next);
-	debug_console_register_command("n",         0, 0, 0, execute_next);
-	debug_console_register_command("focus",     0, 1, 1, execute_focus);
-	debug_console_register_command("ignore",    0, 0, MAX_COMMAND_PARAMS, execute_ignore);
-	debug_console_register_command("observe",   0, 0, MAX_COMMAND_PARAMS, execute_observe);
+	debug_console_register_command("help",      CMDFLAG_NONE, 0, 0, 1, execute_help);
+	debug_console_register_command("printf",    CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_printf);
+	debug_console_register_command("tracelog",  CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_tracelog);
+	debug_console_register_command("quit",      CMDFLAG_NONE, 0, 0, 0, execute_quit);
+	debug_console_register_command("do",        CMDFLAG_NONE, 0, 1, 1, execute_do);
+	debug_console_register_command("step",      CMDFLAG_NONE, 0, 0, 1, execute_step);
+	debug_console_register_command("s",         CMDFLAG_NONE, 0, 0, 1, execute_step);
+	debug_console_register_command("over",      CMDFLAG_NONE, 0, 0, 1, execute_over);
+	debug_console_register_command("o",         CMDFLAG_NONE, 0, 0, 1, execute_over);
+	debug_console_register_command("out" ,      CMDFLAG_NONE, 0, 0, 0, execute_out);
+	debug_console_register_command("go",        CMDFLAG_NONE, 0, 0, 1, execute_go);
+	debug_console_register_command("g",         CMDFLAG_NONE, 0, 0, 1, execute_go);
+	debug_console_register_command("gvblank",   CMDFLAG_NONE, 0, 0, 0, execute_go_vblank);
+	debug_console_register_command("gv",        CMDFLAG_NONE, 0, 0, 0, execute_go_vblank);
+	debug_console_register_command("gint",      CMDFLAG_NONE, 0, 0, 1, execute_go_interrupt);
+	debug_console_register_command("gi",        CMDFLAG_NONE, 0, 0, 1, execute_go_interrupt);
+	debug_console_register_command("next",      CMDFLAG_NONE, 0, 0, 0, execute_next);
+	debug_console_register_command("n",         CMDFLAG_NONE, 0, 0, 0, execute_next);
+	debug_console_register_command("focus",     CMDFLAG_NONE, 0, 1, 1, execute_focus);
+	debug_console_register_command("ignore",    CMDFLAG_NONE, 0, 0, MAX_COMMAND_PARAMS, execute_ignore);
+	debug_console_register_command("observe",   CMDFLAG_NONE, 0, 0, MAX_COMMAND_PARAMS, execute_observe);
 
-	debug_console_register_command("bpset",     0, 1, 3, execute_bpset);
-	debug_console_register_command("bp",        0, 1, 3, execute_bpset);
-	debug_console_register_command("bpclear",   0, 0, 1, execute_bpclear);
-	debug_console_register_command("bpdisable", 0, 0, 1, execute_bpdisenable);
-	debug_console_register_command("bpenable",  1, 0, 1, execute_bpdisenable);
-	debug_console_register_command("bplist",    0, 0, 0, execute_bplist);
+	debug_console_register_command("bpset",     CMDFLAG_NONE, 0, 1, 3, execute_bpset);
+	debug_console_register_command("bp",        CMDFLAG_NONE, 0, 1, 3, execute_bpset);
+	debug_console_register_command("bpclear",   CMDFLAG_NONE, 0, 0, 1, execute_bpclear);
+	debug_console_register_command("bpdisable", CMDFLAG_NONE, 0, 0, 1, execute_bpdisenable);
+	debug_console_register_command("bpenable",  CMDFLAG_NONE, 1, 0, 1, execute_bpdisenable);
+	debug_console_register_command("bplist",    CMDFLAG_NONE, 0, 0, 0, execute_bplist);
 
-	debug_console_register_command("wpset",     ADDRESS_SPACE_PROGRAM, 3, 5, execute_wpset);
-	debug_console_register_command("wp",        ADDRESS_SPACE_PROGRAM, 3, 5, execute_wpset);
-	debug_console_register_command("wpdset",    ADDRESS_SPACE_DATA, 3, 5, execute_wpset);
-	debug_console_register_command("wpd",       ADDRESS_SPACE_DATA, 3, 5, execute_wpset);
-	debug_console_register_command("wpiset",    ADDRESS_SPACE_IO, 3, 5, execute_wpset);
-	debug_console_register_command("wpi",       ADDRESS_SPACE_IO, 3, 5, execute_wpset);
-	debug_console_register_command("wpclear",   0, 0, 1, execute_wpclear);
-	debug_console_register_command("wpdisable", 0, 0, 1, execute_wpdisenable);
-	debug_console_register_command("wpenable",  1, 0, 1, execute_wpdisenable);
-	debug_console_register_command("wplist",    0, 0, 0, execute_wplist);
+	debug_console_register_command("wpset",     CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 3, 5, execute_wpset);
+	debug_console_register_command("wp",        CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 3, 5, execute_wpset);
+	debug_console_register_command("wpdset",    CMDFLAG_NONE, ADDRESS_SPACE_DATA, 3, 5, execute_wpset);
+	debug_console_register_command("wpd",       CMDFLAG_NONE, ADDRESS_SPACE_DATA, 3, 5, execute_wpset);
+	debug_console_register_command("wpiset",    CMDFLAG_NONE, ADDRESS_SPACE_IO, 3, 5, execute_wpset);
+	debug_console_register_command("wpi",       CMDFLAG_NONE, ADDRESS_SPACE_IO, 3, 5, execute_wpset);
+	debug_console_register_command("wpclear",   CMDFLAG_NONE, 0, 0, 1, execute_wpclear);
+	debug_console_register_command("wpdisable", CMDFLAG_NONE, 0, 0, 1, execute_wpdisenable);
+	debug_console_register_command("wpenable",  CMDFLAG_NONE, 1, 0, 1, execute_wpdisenable);
+	debug_console_register_command("wplist",    CMDFLAG_NONE, 0, 0, 0, execute_wplist);
 
-	debug_console_register_command("save",      ADDRESS_SPACE_PROGRAM, 3, 4, execute_save);
-	debug_console_register_command("saved",     ADDRESS_SPACE_DATA, 3, 4, execute_save);
-	debug_console_register_command("savei",     ADDRESS_SPACE_IO, 3, 4, execute_save);
+	debug_console_register_command("save",      CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 3, 4, execute_save);
+	debug_console_register_command("saved",     CMDFLAG_NONE, ADDRESS_SPACE_DATA, 3, 4, execute_save);
+	debug_console_register_command("savei",     CMDFLAG_NONE, ADDRESS_SPACE_IO, 3, 4, execute_save);
 
-	debug_console_register_command("dump",      ADDRESS_SPACE_PROGRAM, 3, 6, execute_dump);
-	debug_console_register_command("dumpd",     ADDRESS_SPACE_DATA, 3, 6, execute_dump);
-	debug_console_register_command("dumpi",     ADDRESS_SPACE_IO, 3, 6, execute_dump);
+	debug_console_register_command("dump",      CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 3, 6, execute_dump);
+	debug_console_register_command("dumpd",     CMDFLAG_NONE, ADDRESS_SPACE_DATA, 3, 6, execute_dump);
+	debug_console_register_command("dumpi",     CMDFLAG_NONE, ADDRESS_SPACE_IO, 3, 6, execute_dump);
 
-	debug_console_register_command("dasm",      0, 3, 5, execute_dasm);
+	debug_console_register_command("f",         CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_PROGRAM, 3, MAX_COMMAND_PARAMS, execute_find);
+	debug_console_register_command("find",      CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_PROGRAM, 3, MAX_COMMAND_PARAMS, execute_find);
+	debug_console_register_command("fd",        CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_DATA, 3, MAX_COMMAND_PARAMS, execute_find);
+	debug_console_register_command("findd",     CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_DATA, 3, MAX_COMMAND_PARAMS, execute_find);
+	debug_console_register_command("fi",        CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_IO, 3, MAX_COMMAND_PARAMS, execute_find);
+	debug_console_register_command("findi",     CMDFLAG_KEEP_QUOTES, ADDRESS_SPACE_IO, 3, MAX_COMMAND_PARAMS, execute_find);
 
-	debug_console_register_command("trace",     0, 1, 3, execute_trace);
-	debug_console_register_command("traceover", 0, 1, 3, execute_traceover);
+	debug_console_register_command("dasm",      CMDFLAG_NONE, 0, 3, 5, execute_dasm);
 
-	debug_console_register_command("snap",      0, 0, 1, execute_snap);
+	debug_console_register_command("trace",     CMDFLAG_NONE, 0, 1, 3, execute_trace);
+	debug_console_register_command("traceover", CMDFLAG_NONE, 0, 1, 3, execute_traceover);
 
-	debug_console_register_command("source",	0, 1, 1, execute_source);
+	debug_console_register_command("snap",      CMDFLAG_NONE, 0, 0, 1, execute_snap);
+
+	debug_console_register_command("source",    CMDFLAG_NONE, 0, 1, 1, execute_source);
 }
 
 
@@ -1236,6 +1244,112 @@ static void execute_dump(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
+    execute_find - execute the find command
+-------------------------------------------------*/
+
+static void execute_find(int ref, int params, const char *param[])
+{
+	UINT64 offset, endoffset, length, cpunum = cpu_getactivecpu();
+	const struct debug_cpu_info *info;
+	UINT64 data_to_find[256];
+	UINT8 data_size[256];
+	int cur_data_size;
+	int data_count = 0;
+	int spacenum = ref;
+	int found = 0;
+	UINT64 i, j;
+
+	/* validate parameters */
+	if (!validate_parameter_number(param[0], &offset))
+		return;
+	if (!validate_parameter_number(param[1], &length))
+		return;
+
+	/* further validation */
+	if (cpunum >= cpu_gettotalcpu())
+	{
+		debug_console_printf("Invalid CPU number!");
+		return;
+	}
+	info = debug_get_cpu_info(cpunum);
+	offset = ADDR2BYTE(offset, info, spacenum);
+	endoffset = ADDR2BYTE(offset + length - 1, info, spacenum);
+	cur_data_size = ADDR2BYTE(1, info, spacenum);
+	if (cur_data_size == 0)
+		cur_data_size = 1;
+
+	/* parse the data parameters */
+	for (i = 2; i < params; i++)
+	{
+		const char *pdata = param[i];
+
+		/* check for a string */
+		if (pdata[0] == '"' && pdata[strlen(pdata) - 1] == '"')
+		{
+			for (j = 1; j < strlen(pdata) - 1; j++)
+			{
+				data_to_find[data_count] = pdata[j];
+				data_size[data_count++] = 1;
+			}
+		}
+
+		/* otherwise, validate as a number */
+		else
+		{
+			/* check for a 'b','w','d',or 'q' prefix */
+			data_size[data_count] = cur_data_size;
+			if (tolower(pdata[0]) == 'b' && pdata[1] == '.') { data_size[data_count] = cur_data_size = 1; pdata += 2; }
+			if (tolower(pdata[0]) == 'w' && pdata[1] == '.') { data_size[data_count] = cur_data_size = 2; pdata += 2; }
+			if (tolower(pdata[0]) == 'd' && pdata[1] == '.') { data_size[data_count] = cur_data_size = 4; pdata += 2; }
+			if (tolower(pdata[0]) == 'q' && pdata[1] == '.') { data_size[data_count] = cur_data_size = 8; pdata += 2; }
+
+			/* look for a wildcard */
+			if (!strcmp(pdata, "?"))
+				data_size[data_count++] |= 0x10;
+
+			/* otherwise, validate as a number */
+			else if (!validate_parameter_number(pdata, &data_to_find[data_count++]))
+				return;
+		}
+	}
+
+	/* now search */
+	cpuintrf_push_context(cpunum);
+	for (i = offset; i <= endoffset; i += data_size[0])
+	{
+		int suboffset = 0;
+		int match = 1;
+
+		/* find the entire string */
+		for (j = 0; j < data_count && match; j++)
+		{
+			switch (data_size[j])
+			{
+				case 1:	match = ((UINT8)debug_read_byte(spacenum, i + suboffset) == (UINT8)data_to_find[j]);	break;
+				case 2:	match = ((UINT16)debug_read_word(spacenum, i + suboffset) == (UINT16)data_to_find[j]);	break;
+				case 4:	match = ((UINT32)debug_read_dword(spacenum, i + suboffset) == (UINT32)data_to_find[j]);	break;
+				case 8:	match = ((UINT64)debug_read_qword(spacenum, i + suboffset) == (UINT64)data_to_find[j]);	break;
+				default:	/* all other cases are wildcards */		break;
+			}
+			suboffset += data_size[j] & 0x0f;
+		}
+
+		/* did we find it? */
+		if (match)
+		{
+			found++;
+			debug_console_printf("Found at %08X\n", (UINT32)BYTE2ADDR(i, info, spacenum));
+		}
+	}
+	cpuintrf_pop_context();
+
+	/* print something if not found */
+	if (found == 0)
+		debug_console_printf("Not found\n");
+}
+
+
+/*-------------------------------------------------
     execute_dasm - execute the dasm command
 -------------------------------------------------*/
 
@@ -1366,6 +1480,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 {
 	const char *action = NULL, *filename = param[0];
 	FILE *f = NULL;
+	const char *mode;
 	UINT64 cpunum;
 
 	cpunum = cpu_getactivecpu();
@@ -1388,7 +1503,16 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 	/* open the file */
 	if (filename)
 	{
-		f = fopen(filename, "w");
+		mode = "w";
+
+		/* opening for append? */
+		if ((filename[0] == '>') && (filename[1] == '>'))
+		{
+			mode = "a";
+			filename += 2;
+		}
+
+		f = fopen(filename, mode);
 		if (!f)
 		{
 			debug_console_printf("Error opening file '%s'", param[0]);

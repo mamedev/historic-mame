@@ -750,22 +750,40 @@ INPUT_PORTS_START( spinlbrk )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0400, 0x0400, "Coin Slot" )		/* Japan ver acts like "Same" is always selected */
+	PORT_DIPNAME( 0x0400, 0x0400, "Coin Slot" )
 	PORT_DIPSETTING(      0x0000, "Same" )
 	PORT_DIPSETTING(      0x0400, "Individual" )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "Player Lever Check?" ) /* Possibly Demo Sound??? but causes lever error??? */
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Lever Type" )
+	PORT_DIPSETTING(      0x1000, "Digital" )
+	PORT_DIPSETTING(      0x0000, "Analog" )		/* This setting causes lever error??? */
 	PORT_SERVICE( 0x2000, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x4000, 0x4000, "Health Pack" )
-	PORT_DIPSETTING(      0x4000, "20 Hitpoints" )			/* World and Japan ver this value is 32 */
-	PORT_DIPSETTING(      0x0000, "32 Hitpoints" )			/* World and Japan ver this value is 40 */
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )			/* This DIP has no effect that I can see */
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )			/*  most likely "Bonus Life" */
+	PORT_DIPSETTING(      0x4000, "32 Hitpoints" )
+	PORT_DIPSETTING(      0x0000, "40 Hitpoints" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Life Restoration" )
+	PORT_DIPSETTING(      0x8000, "10 Points" )
+	PORT_DIPSETTING(      0x0000, "5 Points" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( spinlbrj )
+	PORT_INCLUDE(spinlbrk)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(      0x0400, "Unlimited" )
+	PORT_DIPSETTING(      0x0000, "6 Times" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( spinlbru )
+	PORT_INCLUDE(spinlbrk)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x4000, 0x4000, "Health Pack" )
+	PORT_DIPSETTING(      0x4000, "20 Hitpoints" )
+	PORT_DIPSETTING(      0x0000, "32 Hitpoints" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( turbofrc )
@@ -2095,8 +2113,8 @@ ROM_END
 
 
 GAMEX( 1990, spinlbrk, 0,        spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (World)", GAME_NO_COCKTAIL )
-GAMEX( 1990, spinlbru, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (US)", GAME_NO_COCKTAIL )
-GAMEX( 1990, spinlbrj, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1990, spinlbru, spinlbrk, spinlbrk, spinlbru, 0, ROT0,   "V-System Co.", "Spinal Breakers (US)", GAME_NO_COCKTAIL )
+GAMEX( 1990, spinlbrj, spinlbrk, spinlbrk, spinlbrj, 0, ROT0,   "V-System Co.", "Spinal Breakers (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, pspikes,  0,        pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (World)", GAME_NO_COCKTAIL )
 GAMEX( 1991, pspikesk, pspikes,  pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)", GAME_NO_COCKTAIL )
 GAMEX( 1991, svolly91, pspikes,  pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)", GAME_NO_COCKTAIL )

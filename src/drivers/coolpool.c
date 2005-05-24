@@ -51,6 +51,7 @@ static UINT8 cmd_pending;
 static data16_t iop_cmd;
 static data16_t iop_answer;
 static int iop_romaddr;
+static UINT8 amerdart_iop_echo;
 
 
 
@@ -71,6 +72,16 @@ static VIDEO_UPDATE( amerdart )
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
 		return;
+	}
+
+	/* update the palette */
+	for (x = 0; x < 16; x++)
+	{
+		UINT16 pal = vram_base[x];
+		int r = (pal >> 4) & 0x0f;
+		int g = (pal >> 8) & 0x0f;
+		int b = (pal >> 12) & 0x0f;
+		palette_set_color(x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
 	}
 
 	/* loop over scanlines */
@@ -170,13 +181,13 @@ static VIDEO_UPDATE( coolpool )
 
 static void coolpool_to_shiftreg(unsigned int address, UINT16 *shiftreg)
 {
-	memcpy(shiftreg, &vram_base[TOWORD(address)], TOBYTE(0x1000));
+	memcpy(shiftreg, &vram_base[TOWORD(address) & ~TOWORD(0xfff)], TOBYTE(0x1000));
 }
 
 
 static void coolpool_from_shiftreg(unsigned int address, UINT16 *shiftreg)
 {
-	memcpy(&vram_base[TOWORD(address)], shiftreg, TOBYTE(0x1000));
+	memcpy(&vram_base[TOWORD(address) & ~TOWORD(0xfff)], shiftreg, TOBYTE(0x1000));
 }
 
 
@@ -189,7 +200,6 @@ static void coolpool_from_shiftreg(unsigned int address, UINT16 *shiftreg)
 
 static void coolpool_dpyint_callback(int scanline)
 {
-logerror("dpyint @ %d\n", scanline);
 	/* log when we got the DPYINT so that changes are tagged to this scanline */
 	last_dpyint = scanline + 1;
 	if (scanline < Machine->visible_area.max_y)
@@ -219,7 +229,6 @@ static WRITE16_HANDLER( coolpool_34010_io_register_w )
 	{
 		dpyadr = ~data & 0xfffc;
 		dpyadrscan = last_dpyint;
-logerror("dpyadr = %04X (assuming at %d, really at %d)\n", dpyadr, dpyadrscan, cpu_getscanline());
 	}
 }
 
@@ -245,31 +254,73 @@ static MACHINE_INIT( coolpool )
  *
  *************************************/
 
-WRITE16_HANDLER( amerdart_input_w )
+static WRITE16_HANDLER( amerdart_misc_w )
 {
-	logerror("%08X:IOP write = %04X\n", activecpu_get_pc(), data);
-	COMBINE_DATA(&iop_cmd);
+	logerror("%08x:IOP_reset_w %04x\n",activecpu_get_pc(),data);
+
+	coin_counter_w(0, ~data & 0x0001);
+	coin_counter_w(1, ~data & 0x0002);
+
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bits 10-15 are counted down over time */
+	if (data & 0x0400) amerdart_iop_echo = 1;
+}
+
+
+static void amerdart_iop_response(int param)
+{
+	/* echo values until we get 0x19 */
+	iop_answer = iop_cmd;
+	if (amerdart_iop_echo && iop_cmd != 0x19)
+	{
+		cpunum_set_input_line(0, 1, ASSERT_LINE);
+		return;
+	}
+	amerdart_iop_echo = 0;
+
+	/* rest is based off the command */
+	switch (iop_cmd)
+	{
+		default:
+			printf("Unknown IOP command %04X\n", iop_cmd);
+
+		case 0x000:
+		case 0x019:
+		case 0x600:
+		case 0x60f:
+		case 0x6f0:
+		case 0x6ff:
+			iop_answer = 0x6c00;
+			break;
+
+		case 0x100:
+			iop_answer = (INT8)(readinputportbytag("XAXIS2") + readinputportbytag("YAXIS2")) << 6;
+			break;
+		case 0x101:
+			iop_answer = (INT8)(readinputportbytag("XAXIS2") - readinputportbytag("YAXIS2")) << 6;
+			break;
+		case 0x102:
+			iop_answer = (INT8)(readinputportbytag("XAXIS1") + readinputportbytag("YAXIS1")) << 6;
+			break;
+		case 0x103:
+			iop_answer = (INT8)(readinputportbytag("XAXIS1") - readinputportbytag("YAXIS1")) << 6;
+			break;
+
+		case 0x500:
+			iop_answer = readinputport(0);
+			break;
+	}
+
 	cpunum_set_input_line(0, 1, ASSERT_LINE);
 }
 
 
-READ16_HANDLER( amerdart_input_r )
+static WRITE16_HANDLER( amerdart_iop_w )
 {
-	logerror("%08X:IOP read\n", activecpu_get_pc());
-	cpunum_set_input_line(0, 1, CLEAR_LINE);
-
-	switch (iop_cmd)
-	{
-		case 0x19:
-			return 0x6c00;
-
-		case 0x500:
-			return readinputport(0);
-
-		default:
-			return iop_cmd;
-	}
-	return 0;
+	logerror("%08x:IOP write %04x\n", activecpu_get_pc(), data);
+	COMBINE_DATA(&iop_cmd);
+	timer_set(TIME_IN_USEC(100), 0, amerdart_iop_response);
 }
 
 
@@ -284,8 +335,8 @@ static WRITE16_HANDLER( coolpool_misc_w )
 {
 	logerror("%08x:IOP_reset_w %04x\n",activecpu_get_pc(),data);
 
-	coin_counter_w(0,~data & 0x0001);
-	coin_counter_w(1,~data & 0x0002);
+	coin_counter_w(0, ~data & 0x0001);
+	coin_counter_w(1, ~data & 0x0002);
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
 }
@@ -312,7 +363,7 @@ static void deferred_iop_w(int data)
 
 static WRITE16_HANDLER( coolpool_iop_w )
 {
-	logerror("%08x:IOP write %04x\n",activecpu_get_pc(),data);
+	logerror("%08x:IOP write %04x\n", activecpu_get_pc(), data);
 	timer_set(TIME_NOW, data, deferred_iop_w);
 }
 
@@ -409,9 +460,9 @@ static READ16_HANDLER( coolpool_input_r )
 	static UINT8 oldx, oldy;
 	static UINT16 lastresult;
 
-	int result = (readinputport(1) & 0x00ff) | (lastresult & 0xff00);
-	UINT8 newx = readinputport(2);
-	UINT8 newy = readinputport(3);
+	int result = (readinputportbytag("IN1") & 0x00ff) | (lastresult & 0xff00);
+	UINT8 newx = readinputportbytag("XAXIS");
+	UINT8 newy = readinputportbytag("YAXIS");
 	int dx = (INT8)(newx - oldx);
 	int dy = (INT8)(newy - oldy);
 
@@ -477,10 +528,10 @@ static READ16_HANDLER( coolpool_input_r )
 
 static ADDRESS_MAP_START( amerdart_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_BASE(&vram_base)
-//  AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(???_w)    DSP reset, coin counters
-	AM_RANGE(0x05000000, 0x0500000f) AM_READWRITE(amerdart_input_r, amerdart_input_w)	// IOP
+	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(amerdart_misc_w)
+	AM_RANGE(0x05000000, 0x0500000f) AM_READWRITE(coolpool_iop_r, amerdart_iop_w)
 	AM_RANGE(0x06000000, 0x06007fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
 	AM_RANGE(0xffb00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
@@ -548,158 +599,85 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( amerdart )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_SERVICE( 0x0010, IP_ACTIVE_HIGH )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
-
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 )	PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0010, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SPECIAL ) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* coin door */
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* bill validator */
+	PORT_START_TAG("XAXIS1")
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET PORT_PLAYER(1)
 
-	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Flip_Screen ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0001, DEF_STR( On ))
-	PORT_DIPNAME( 0x0002, 0x0000, "Dipswitch Coinage" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ))
-	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coinage ))
-	PORT_DIPSETTING(      0x001c, "1" )
-	PORT_DIPSETTING(      0x0018, "2" )
-	PORT_DIPSETTING(      0x0014, "3" )
-	PORT_DIPSETTING(      0x000c, "USA ECA" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
-	PORT_DIPNAME( 0x00e0, 0x0060, "Credits" )
-	PORT_DIPSETTING(      0x0020, "3 Start/1 Continue" )
-	PORT_DIPSETTING(      0x00e0, "2 Start/2 Continue" )
-	PORT_DIPSETTING(      0x00a0, "2 Start/1 Continue" )
-	PORT_DIPSETTING(      0x0000, "1 Start/4 Continue" )
-	PORT_DIPSETTING(      0x0040, "1 Start/3 Continue" )
-	PORT_DIPSETTING(      0x0060, "1 Start/1 Continue" )
-	PORT_DIPNAME( 0x0300, 0x0300, "Country" )
-	PORT_DIPSETTING(      0x0300, DEF_STR( USA ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( French ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( German ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Bill Validator" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0000, "Two Counters" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Players ) )
-	PORT_DIPSETTING(      0x1000, "3 Players" )
-	PORT_DIPSETTING(      0x0000, "2 Players" )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(      0x2000, "Rev X" )
-	PORT_DIPSETTING(      0x0000, "Terminator 2" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Video Freeze" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+	PORT_START_TAG("YAXIS1")
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET PORT_PLAYER(1)
+
+	PORT_START_TAG("XAXIS2")
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET PORT_PLAYER(2)
+
+	PORT_START_TAG("YAXIS2")
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( 9ballsht )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SERVICE2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_SERVICE4 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_SERVICE2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_SERVICE3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SERVICE4 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	// correct
+	PORT_BIT( 0x00ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0300, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )					// correct
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )					// correct
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )					// correct
-	PORT_SERVICE_NO_TOGGLE(0x0010, IP_ACTIVE_LOW)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )					// correct
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )					// correct
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)	// correct
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0010, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( coolpool )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SERVICE2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_SERVICE4 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_SERVICE2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_SERVICE3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SERVICE4 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	// correct
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	// correct
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	// correct
+	PORT_BIT( 0x00ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0f00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0xc000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )					// correct
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )					// correct
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )					// correct
-	PORT_SERVICE_NO_TOGGLE(0x0010, IP_ACTIVE_LOW)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )					// correct
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SERVICE1 )					// correct
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0010, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_SPECIAL )
 
-	PORT_START
+	PORT_START_TAG("XAXIS")
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 
-	PORT_START
+	PORT_START_TAG("YAXIS")
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 INPUT_PORTS_END
 
@@ -742,7 +720,7 @@ MACHINE_DRIVER_START( amerdart )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(20)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1002,8 +980,8 @@ static DRIVER_INIT( 9ballsht )
  *
  *************************************/
 
-GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts", GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts", GAME_NO_SOUND )
 GAME( 1992, coolpool, 0,        coolpool, coolpool, coolpool, ROT0, "Catalina", "Cool Pool" )
 GAME( 1993, 9ballsht, 0,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)" )
-GAME( 1993, 9ballsh2, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)" )
-GAME( 1993, 9ballsh3, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)" )
+GAME( 1993, 9ballsh2, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)" )
+GAME( 1993, 9ballsh3, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)" )

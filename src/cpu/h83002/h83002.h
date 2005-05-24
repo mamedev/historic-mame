@@ -55,14 +55,14 @@ enum
 	H8_PORTB,	// 6
 
 	// analog inputs
-	H8_ADC_0_L = 0x10,
-	H8_ADC_0_H,
-	H8_ADC_1_L,
+	H8_ADC_0_H = 0x10,
+	H8_ADC_0_L,
 	H8_ADC_1_H,
-	H8_ADC_2_L,
+	H8_ADC_1_L,
 	H8_ADC_2_H,
-	H8_ADC_3_L,
+	H8_ADC_2_L,
 	H8_ADC_3_H,
+	H8_ADC_3_L,
 
 	// serial ports
 	H8_SERIAL_A = 0x20,

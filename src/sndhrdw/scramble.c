@@ -179,13 +179,13 @@ static void sfx_sh_7474_callback(void)
 
 WRITE8_HANDLER( hotshock_sh_irqtrigger_w )
 {
-	cpunum_set_input_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, ASSERT_LINE);
 }
 
-WRITE8_HANDLER( explorer_sh_irqtrigger_w  )
+READ8_HANDLER( hotshock_soundlatch_r )
 {
-	cpunum_set_input_line(1, 0, PULSE_LINE);
-	cpu_spinuntil_time(TIME_IN_USEC(100));
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
+	return soundlatch_r(0);
 }
 
 static void filter_w(int chip, int channel, int data)
@@ -267,4 +267,3 @@ WRITE8_HANDLER( zigzag_8910_control_trigger_w )
 {
 	AY8910_control_port_0_w(0,latch);
 }
-

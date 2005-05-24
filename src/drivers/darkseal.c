@@ -293,7 +293,7 @@ static MACHINE_DRIVER_START( darkseal )
 	MDRV_CPU_PROGRAM_MAP(darkseal_readmem,darkseal_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
 
-	MDRV_CPU_ADD(H6280, 32220000/8) /* Custom chip 45, Audio section crystal is 32.220 MHz */
+	MDRV_CPU_ADD(H6280, 32220000/4) /* Custom chip 45, Audio section crystal is 32.220 MHz */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
@@ -325,7 +325,7 @@ static MACHINE_DRIVER_START( darkseal )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END

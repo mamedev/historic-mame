@@ -70,7 +70,7 @@ static struct GfxLayout objlayout =
 	8,8,	/* 8*8 sprites */
 	4096,	/* 4096 of them */
 	6,		/* 6 bits per pixel */
-	{ 5*8*0x08000, 4*8*0x08000, 3*8*0x08000, 2*8*0x08000, 1*8*0x08000, 0*8*0x08000 },
+	{ 5*8*0x10000, 4*8*0x10000, 3*8*0x10000, 2*8*0x10000, 1*8*0x10000, 0*8*0x10000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8		/* every sprite takes 8 consecutive bytes */
@@ -614,7 +614,6 @@ static int decode_gfx(UINT16 *pflookup, UINT16 *molookup)
 
 static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 {
-	int bank_offset[8] = { 0, 0x00000, 0x30000, 0x60000, 0x90000, 0xc0000, 0xe0000, 0x100000 };
 	int bank_index, i, gfx_index;
 
 	/* determine the bank index */
@@ -643,7 +642,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		return bank_gfx[bpp - 4][bank_index];
 
 	/* if the bank is out of range, call it 0 */
-	if (bank_offset[bank_index] >= memory_region_length(REGION_GFX2))
+	if (0x80000 * (bank_index - 1) >= memory_region_length(REGION_GFX2))
 		return 0;
 
 	/* don't have one? let's make it ... first find any empty slot */
@@ -656,10 +655,10 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 	/* tweak the structure for the number of bitplanes we have */
 	objlayout.planes = bpp;
 	for (i = 0; i < bpp; i++)
-		objlayout.planeoffset[i] = (bpp - i - 1) * 0x8000 * 8;
+		objlayout.planeoffset[i] = (bpp - i - 1) * 0x10000 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(&memory_region(REGION_GFX2)[bank_offset[bank_index]], &objlayout);
+	Machine->gfx[gfx_index] = decodegfx(&memory_region(REGION_GFX2)[0x80000 * (bank_index - 1)], &objlayout);
 	if (!Machine->gfx[gfx_index])
 		return -1;
 

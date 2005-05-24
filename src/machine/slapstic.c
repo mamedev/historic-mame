@@ -218,7 +218,6 @@ struct slapstic_data
 	struct mask_value add2;
 	struct mask_value addplus1;
 	struct mask_value addplus2;
-	struct mask_value addplus3;
 	struct mask_value add3;
 };
 
@@ -239,7 +238,6 @@ struct slapstic_data
 	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN }
 #define NO_ADDITIVE			\
-	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN },	\
@@ -550,14 +548,13 @@ static struct slapstic_data slapstic111 =
 	/* additive banking */
 	{ 0x3fff,0x00a1 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x00a2 },				/* 2nd mask/value in sequence */
-	{ 0x3c5f,0x284d },				/* +1 mask/value */
-	{ 0x3e5f,0x2c5d },				/* +2 mask/value */
-	{ 0x3e5f,0x285d },				/* +3 mask/value */
+	{ 0x3c4f,0x284d },				/* +1 mask/value */
+	{ 0x3a5f,0x285d },				/* +2 mask/value */
 	{ 0x3ff8,0x2800 }				/* final mask/value in sequence */
 };
 
 
-/* slapstic 137412-112: Pit Fighter (Europe) (confirmed) */
+/* slapstic 137412-112: Pit Fighter (Japan) (confirmed) */
 static struct slapstic_data slapstic112 =
 {
 	/* basic banking */
@@ -577,14 +574,13 @@ static struct slapstic_data slapstic112 =
 	/* additive banking */
 	{ 0x3fff,0x2dce },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x2dcf },				/* 2nd mask/value in sequence */
-	{ 0x3dff,0x15f2 },				/* +1 mask/value */
-	{ 0x3fff,0x15a2 },				/* +2 mask/value */
-	{ 0x3fff,0x15e2 },				/* +3 mask/value */
+	{ 0x3def,0x15e2 },				/* +1 mask/value */
+	{ 0x3fbf,0x15a2 },				/* +2 mask/value */
 	{ 0x3ffc,0x1450 }				/* final mask/value in sequence */
 };
 
 
-/* slapstic 137412-113: Uknown (Europe) (confirmed) */
+/* slapstic 137412-113: Unknown (Europe) (confirmed) */
 static struct slapstic_data slapstic113 =
 {
 	/* basic banking */
@@ -604,10 +600,35 @@ static struct slapstic_data slapstic113 =
 	/* additive banking */
 	{ 0x3fff,0x049b },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x049c },				/* 2nd mask/value in sequence */
-	{ 0x3fdf,0x3ec7 },				/* +1 mask/value */
-	{ 0x3fdf,0x3fd7 },				/* +2 mask/value */
-	{ 0x3fdf,0x3ed7 },				/* +3 mask/value */
+	{ 0x3fcf,0x3ec7 },				/* +1 mask/value */
+	{ 0x3edf,0x3ed7 },				/* +2 mask/value */
 	{ 0x3fff,0x3fb2 }				/* final mask/value in sequence */
+};
+
+
+/* slapstic 137412-114: Unknown (Europe) (unconfirmed) */
+static struct slapstic_data slapstic114 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0040,0x0048,0x0050,0x0058 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0016 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x24de },				/* 2nd mask/value in sequence */
+	{ 0x3871,0x0000 },				/* 3rd mask/value in sequence */
+	{ 0x3fe7,0x0040 },				/* 4th mask/value in sequence */
+	1,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x0ab7 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x0ab8 },				/* 2nd mask/value in sequence */
+	{ 0x3f63,0x0d40 },				/* +1 mask/value */
+	{ 0x3fd9,0x0dc8 },				/* +2 mask/value */
+	{ 0x3fff,0x0ab0 }				/* final mask/value in sequence */
 };
 
 
@@ -631,9 +652,8 @@ static struct slapstic_data slapstic115 =
 	/* additive banking */
 	{ 0x3fff,0x2591 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x2592 },				/* 2nd mask/value in sequence */
-	{ 0x3ff6,0x3402 },				/* +1 mask/value */
-	{ 0x3fb6,0x3410 },				/* +2 mask/value */
-	{ 0x3ff6,0x3412 },				/* +3 mask/value */
+	{ 0x3fe6,0x3402 },				/* +1 mask/value */
+	{ 0x3fb4,0x3410 },				/* +2 mask/value */
 	{ 0x3fff,0x34a2 }				/* final mask/value in sequence */
 };
 
@@ -659,8 +679,7 @@ static struct slapstic_data slapstic116 =
 	{ 0x3fff,0x3f7c },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3f7d },				/* 2nd mask/value in sequence */
 	{ 0x3db2,0x3c12 },				/* +1 mask/value */
-	{ 0x3ff3,0x3e43 },				/* +2 mask/value */
-	{ 0x3ff3,0x3e53 },				/* +3 mask/value */
+	{ 0x3fe3,0x3e43 },				/* +2 mask/value */
 	{ 0x3fff,0x2ba8 }				/* final mask/value in sequence */
 };
 
@@ -685,9 +704,8 @@ static struct slapstic_data slapstic117 =
 	/* additive banking */
 	{ 0x3fff,0x0676 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x0677 },				/* 2nd mask/value in sequence */
-	{ 0x3e73,0x1a43 },				/* +1 mask/value */
+	{ 0x3e62,0x1a42 },				/* +1 mask/value */
 	{ 0x3e35,0x1a11 },				/* +2 mask/value */
-	{ 0x3e77,0x1a53 },				/* +3 mask/value */
 	{ 0x3fff,0x1a42 }				/* final mask/value in sequence */
 };
 
@@ -712,9 +730,8 @@ static struct slapstic_data slapstic118 =
 	/* additive banking */
 	{ 0x3fff,0x1958 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x1959 },				/* 2nd mask/value in sequence */
-	{ 0x3f77,0x3056 },				/* +1 mask/value */
-	{ 0x3f77,0x3042 },				/* +2 mask/value */
-	{ 0x3f77,0x3052 },				/* +3 mask/value */
+	{ 0x3f73,0x3052 },				/* +1 mask/value */
+	{ 0x3f67,0x3042 },				/* +2 mask/value */
 	{ 0x3ff8,0x30e0 }				/* final mask/value in sequence */
 };
 
@@ -742,7 +759,7 @@ static struct slapstic_data *slapstic_table[] =
 	&slapstic111,
 	&slapstic112,
 	&slapstic113,
-	NULL,			/* never seen */
+	&slapstic114,
 	&slapstic115,
 	&slapstic116,
 	&slapstic117,
@@ -1054,22 +1071,16 @@ int slapstic_tweak(offs_t offset)
 			/* ADDITIVE2 state: watch for twiddling and the escape mechanism */
 			case ADDITIVE2:
 
-				/* check for add 1 case */
+				/* check for add 1 case -- can intermix */
 				if (MATCHES_MASK_VALUE(offset, slapstic.addplus1))
 				{
 					add_bank = (add_bank + 1) & 3;
 				}
 
-				/* check for add 2 case */
-				else if (MATCHES_MASK_VALUE(offset, slapstic.addplus2))
+				/* check for add 2 case -- can intermix */
+				if (MATCHES_MASK_VALUE(offset, slapstic.addplus2))
 				{
 					add_bank = (add_bank + 2) & 3;
-				}
-
-				/* check for add 3 case */
-				else if (MATCHES_MASK_VALUE(offset, slapstic.addplus3))
-				{
-					add_bank = (add_bank + 3) & 3;
 				}
 
 				/* check for escape case -- can intermix with the above */

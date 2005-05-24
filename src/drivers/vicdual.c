@@ -1810,6 +1810,40 @@ ROM_START( carnvckt )
 	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, CRC(0dbaa2b0) SHA1(eae7fc362a0ff8f908c42e093c7dbb603659373c) )
 ROM_END
 
+ROM_START( brdrline )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "b1.bin",       0x0000, 0x0400, CRC(df182769) SHA1(2b1b70c6282b32e0a4ed80ab4e6b20f90630e910) )
+	ROM_LOAD( "b2.bin",       0x0400, 0x0400, CRC(e1d1c4ce) SHA1(86320c836577549af6fe6c311f8475a51de52627) )
+	ROM_LOAD( "b3.bin",       0x0800, 0x0400, CRC(4ec4afa2) SHA1(dd5b97f1a37cd655064b773e4a755b87de4c6a3f) )
+	ROM_LOAD( "b4.bin",       0x0c00, 0x0400, CRC(88de95f6) SHA1(fe3388346785ad15dead89913e4ff36120a83599) )
+	ROM_LOAD( "b5.bin",       0x1000, 0x0400, CRC(2e4e13b9) SHA1(bdf31c11733127b8b77fa72933d3b9dc6834d5d8) )
+	ROM_LOAD( "b6.bin",       0x1400, 0x0400, CRC(c181e87a) SHA1(426e1ce15477039e4a19b536500f387518026efc) )
+	ROM_LOAD( "b7.bin",       0x1800, 0x0400, CRC(21180015) SHA1(b23f876db1a9a986f1087ead07a01e836d5ee842) )
+	ROM_LOAD( "b8.bin",       0x1c00, 0x0400, CRC(56a7fee0) SHA1(495efa91773fd3cf36da4e538893db08e64e5bab) )
+	ROM_LOAD( "b9.bin",       0x2000, 0x0400, CRC(bb532e63) SHA1(da511e0be58b13781897e6efb5a59a3558016b12) )
+	ROM_LOAD( "b10.bin",      0x2400, 0x0400, CRC(64793709) SHA1(fabfb783f1d93a3d9454fc345a64498e4b5b9138) )
+	ROM_LOAD( "b11.bin",      0x2800, 0x0400, CRC(2ae2f928) SHA1(afd99c800801d38ee59008344bd9a3901f72ff50) )
+	ROM_LOAD( "b12.bin",      0x2c00, 0x0400, CRC(e14cfaf5) SHA1(d159e93f703aae3c04da08102ff718d5a4ca7a91) )
+	ROM_LOAD( "b13.bin",      0x3000, 0x0400, CRC(605e0d27) SHA1(771de6d31ee7896a2441f1df4565027793d99989) )
+	ROM_LOAD( "b14.bin",      0x3400, 0x0400, CRC(93f5714f) SHA1(50a043be1e1cf8b1aeb846571a12fe70cbb3477e) )
+	ROM_LOAD( "b15.bin",      0x3800, 0x0400, CRC(2f8a9b1c) SHA1(853d5ca017b133c1f13f703cceb20f04199d4752) )
+	ROM_LOAD( "b16.bin",      0x3c00, 0x0400, CRC(cc138bed) SHA1(7d3eebdeaff19783d5ef20a7ececec00773434fc) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "borderc.49",   0x0000, 0x0020, CRC(bc6be94e) SHA1(34e113ec25e19212b74907d35be5cb8714a8249c) )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound ROM */
+	ROM_LOAD( "au.bin",       0x0000, 0x0400, CRC(a23e1d9f) SHA1(ce209571f6341aa6f036a015e666673098bc98ea) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROM */
+	ROM_LOAD( "border.32",   0x0000, 0x0020, CRC(c128d0ba) SHA1(0ce9febbb7e2f5388ed999a479e3d385dba0b342) )
+	ROM_LOAD( "bordera.15",  0x0000, 0x0020, CRC(6449e678) SHA1(421c45c8fba3c2bc2a7ebbea2c837c8fa1a5a2f3) )
+	ROM_LOAD( "borderb.14",  0x0000, 0x0020, CRC(55dcdef1) SHA1(6fbd041edc258b7e1b99bbe9526612cfb1b541f8) )
+	/* following 2 from sound board */
+	ROM_LOAD( "prom93427.1", 0x0000, 0x0100, CRC(64b98dc7) SHA1(f0bb7d0b4b56cc2936ce4cbec165394f3026ed6d) )
+	ROM_LOAD( "prom93427.2", 0x0000, 0x0100, CRC(bda82367) SHA1(1c96453c2ae372892c39b5657cf2b252a90a10a9) )
+ROM_END
+
 ROM_START( brdrlinb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "border1.33",   0x0000, 0x0800, CRC(48387706) SHA1(b4db2f05e722812370b0b24cd15061d6fc578560) ) // karateco
@@ -2081,7 +2115,8 @@ GAMEX(1980, spacetrk, 0,        4ports,   spacetrk, spacetrk,  ROT270, "Sega", "
 GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, sptrekct,  ROT270, "Sega", "Space Trek (cocktail)", GAME_NO_SOUND )
 GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)" )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (cocktail)" )
-GAME( 1981, brdrlinb, 0,        carnival, brdrline, carnival,  ROT270, "bootleg", "Borderline (bootleg)" )
+GAME( 1981, brdrline, 0,        carnival, brdrline, carnival,  ROT270, "Sega", "Borderline" )
+GAME( 1981, brdrlinb, brdrline, carnival, brdrline, carnival,  ROT270, "bootleg", "Borderline (bootleg)" )
 GAMEX(1980, digger,   0,        3ports,   digger,   digger,    ROT270, "Sega", "Digger", GAME_NO_SOUND )
 GAME( 1981, pulsar,   0,        pulsar,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
 GAMEX(1979, heiankyo, 0,        4ports,   heiankyo, heiankyo,  ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )

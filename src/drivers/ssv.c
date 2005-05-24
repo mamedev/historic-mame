@@ -61,9 +61,6 @@ STA-0001 & STA-0001B should be fully interchangable, its reported that STA-0001 
 To Do:
 
 - all games :   CRT controller (resolution+visible area+flip screen?)
-                Proper "shadows" support: the low 4 bits of the pens from a "shadowing"
-                tile (regardless of color code) substitute the top 4 bits of the
-                color index (0-7fff) in the frame buffer.
 
 - hypreac2  :   communication with other units
                 tilemap sprites use the yoffset specified in the sprites-list?
@@ -331,7 +328,7 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*  Sound   */	\
 	AM_RANGE(0x482000, 0x482fff) AM_READWRITE(MRA16_RAM, dsp_w) AM_BASE(&dsp_ram)   \
 	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*  ROM     */	    \
-	/*{ 0x990000, 0x99007f, fake_r  )*/
+//AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
 
 #define SSV_WRITEMEM														                                \
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_mainram)                    /* RAM */     \
@@ -345,7 +342,7 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w )                                 /* IRQ Ack */     \
 	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w)                               /* IRQ Enable */  \
 	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w)                           /* Sound */       \
-	/*AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w    )*/
+//AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
 
 
 static data16_t *ssv_input_sel;
@@ -2962,13 +2959,12 @@ static MACHINE_DRIVER_START( ssv )
 	MDRV_MACHINE_INIT(ssv)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 
 	MDRV_SCREEN_SIZE(0x180, 0x100)
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 	MDRV_GFXDECODE(ssv_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x8000+256)	// provide 256 addition colors as security buffer
-									// when the last color codes are used for 256 color tiles
+	MDRV_PALETTE_LENGTH(0x8000)
 	MDRV_VIDEO_START(ssv)
 	MDRV_VIDEO_UPDATE(ssv)
 
@@ -4604,7 +4600,7 @@ ROM_END
 
 //     year   rom       clone     machine   inputs    init      monitor manufacturer          title                                               flags
 
-GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy"         ,     "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",              "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
@@ -4631,10 +4627,10 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",
 // Games not working properly:
 
 GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+
 //  Games not working at all:
 
 GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1997,  jsk,      0,        jsk, 			janjans1, jsk,  ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",             GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1995,  gdfs,     0,        gdfs,  vasara2,   vasara,     ROT0,	"Banpresto",         "Mobile Suit Gundam Final Shooting",                        GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-
+GAMEX( 1997,  jsk,      0,        jsk,      janjans1, jsk,      ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1995,  gdfs,     0,        gdfs,     vasara2,  vasara,   ROT0,   "Banpresto",          "Mobile Suit Gundam Final Shooting",                GAME_NO_COCKTAIL | GAME_NOT_WORKING )

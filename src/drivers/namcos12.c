@@ -3,13 +3,13 @@
   Namco System 12 - Arcade PSX Hardware
   =====================================
   Driver by smf
+  H8/3002 and Golgo13 support by R. Belmont based on work by The_Author and DynaChicken
 
   Issues:
     not all games work due to either banking, dma or protection issues.
     graphics are glitchy in some games.
 
     - day, date, and year from the RTC appear to be ignored (hour/min/sec are fine). H8 core bug or BIOS doesn't care?
-    - golgo13 needs the gun figured out.  also, what is the "sensor" input listed in the test menu?
     - golgo13 assumes the test switch is a switch, not a button - must hold down F2 to stay in test mode
 
 Game & software revision                 Company/Year              CPU board    Mother board          Daughter board     Keycus
@@ -696,6 +696,10 @@ Notes:
 #include "sound/c352.h"
 #include <time.h>
 
+#define GUNX( a ) ( ( readinputport( a ) * 511 ) / 0x1ff )	// display and game want 512
+#define GUNY( a ) ( ( readinputport( a ) * 479 ) / 0x1ff )	// display needs 480
+#define GUNY2( a ) ( ( readinputport( a ) * 447 ) / 0x1ff )	// game wants 448
+
 #define VERBOSE_LEVEL ( 0 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
@@ -1046,30 +1050,52 @@ static WRITE8_HANDLER( s12_mcu_settings_w )
 	s12_setstate ^= 1;
 }
 
-/* Golgo 13 lightgun inputs: FIXME!  What format do these want the data in? */
+/* Golgo 13 lightgun inputs
+ *
+ * Note: The H8/3002's ADC is 10 bits wide, but
+ * it expects the 10-bit value to be left-justified
+ * within the 16-bit word.  Hence the odd shifting
+ * here.
+ */
 
 static READ8_HANDLER( s12_mcu_gun_h_r )
 {
-	if (offset & 1)
-	{	// upper 2 bits of 10-bit result
+	int rv;
+
+	// if game has no lightgun ports, return 0
+	if (port_tag_to_index("IN3") == -1)
+	{
 		return 0;
 	}
 
-	// lower 8 bits
-	if (port_tag_to_index("IN3")!=-1) return readinputportbytag("IN3");
-	else return 0;
+	rv = GUNX(3) + 156;
+
+	if (offset & 1)
+	{
+		return (rv&0x3)<<6;
+	}
+
+	return (rv&0x3fc)>>2;
 }
 
 static READ8_HANDLER( s12_mcu_gun_v_r )
 {
-	if (offset & 1)
-	{	// upper 2 bits of 10-bit result
+	int rv;
+
+	// if game has no lightgun ports, return 0
+	if (port_tag_to_index("IN4") == -1)
+	{
 		return 0;
 	}
 
-	// lower 8 bits
-	if (port_tag_to_index("IN4")!=-1) return readinputportbytag("IN4");
-	else return 0;
+	rv = 0x1de - (GUNY2(4));	// + 0x1e = way on top
+
+	if (offset & 1)
+	{
+		return (rv&0x3)<<6;
+	}
+
+	return (rv&0x3fc)>>2;
 }
 
 static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
@@ -1078,10 +1104,10 @@ static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(H8_PORTA, H8_PORTA) AM_READWRITE( s12_mcu_pa_r, s12_mcu_pa_w )
 	AM_RANGE(H8_PORTB, H8_PORTB) AM_READWRITE( s12_mcu_portB_r, s12_mcu_portB_w )
 	AM_RANGE(H8_SERIAL_B, H8_SERIAL_B) AM_READ( s12_mcu_rtc_r ) AM_WRITE( s12_mcu_settings_w )
-	AM_RANGE(H8_ADC_0_L, H8_ADC_0_H) AM_NOP
-	AM_RANGE(H8_ADC_1_L, H8_ADC_1_H) AM_READ( s12_mcu_gun_h_r )	// golgo 13 gun X-axis
-	AM_RANGE(H8_ADC_2_L, H8_ADC_2_H) AM_READ( s12_mcu_gun_v_r )	// golgo 13 gun Y-axis
-	AM_RANGE(H8_ADC_3_L, H8_ADC_3_H) AM_NOP
+	AM_RANGE(H8_ADC_0_H, H8_ADC_0_L) AM_NOP
+	AM_RANGE(H8_ADC_1_H, H8_ADC_1_L) AM_READ( s12_mcu_gun_h_r )	// golgo 13 gun X-axis
+	AM_RANGE(H8_ADC_2_H, H8_ADC_2_L) AM_READ( s12_mcu_gun_v_r )	// golgo 13 gun Y-axis
+	AM_RANGE(H8_ADC_3_H, H8_ADC_3_L) AM_NOP
 ADDRESS_MAP_END
 
 static struct C352interface c352_interface =
@@ -1093,7 +1119,7 @@ static VIDEO_UPDATE( golgo13 )
 {
 	video_update_psx( bitmap, cliprect );
 
-// FIXME: need to draw crosshair here
+	draw_crosshair(bitmap, GUNX(3), GUNY(4), cliprect);
 }
 
 static MACHINE_DRIVER_START( coh700 )
@@ -1242,11 +1268,11 @@ INPUT_PORTS_START( golgo13 )
 
 	/* IN 3 */
 	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0x1ff, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0x1ff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
 	/* IN 4 */
 	PORT_START_TAG("IN4")
-	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0x1ff, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0x1ff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 INPUT_PORTS_END
 
 ROM_START( aquarush )
@@ -1578,4 +1604,4 @@ GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",    
 GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAMEX( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */

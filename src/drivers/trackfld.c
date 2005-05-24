@@ -836,7 +836,8 @@ static MACHINE_DRIVER_START( wizzquiz )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(trackfld)
-	MDRV_CPU_REPLACE("main",M6803,2048000)		/* 1.400 MHz ??? */
+	// right cpu?
+	MDRV_CPU_REPLACE("main",M6800,2048000)		/* 1.400 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(wizzquiz_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 

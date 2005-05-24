@@ -117,7 +117,7 @@ MACHINE_INIT( explorer )
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	RAM[0x47ff] = 0; /* If not set, it doesn't reset after the 1st time */
 
-	machine_init_scramble();
+	machine_init_galaxian();
 }
 
 WRITE8_HANDLER( galaxian_coin_lockout_w )
@@ -1506,6 +1506,21 @@ DRIVER_INIT( scorpion )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, MWA8_NOP);
 
 	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3000, 0, 0, scorpion_sound_status_r);
+}
+
+DRIVER_INIT( ad2083 )
+{
+	data8_t c;
+	int i;
+
+	data8_t *ROM = memory_region(REGION_CPU1);
+
+	for (i=0; i<memory_region_length(REGION_CPU1); i++)
+	{
+		c = ROM[i] ^ 0x35;
+		c = BITSWAP8(c, 6,2,5,1,7,3,4,0); /* also swapped inside of the bigger module */
+		ROM[i] = c;
+	}
 }
 
 INTERRUPT_GEN( hunchbks_vh_interrupt )

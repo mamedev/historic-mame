@@ -103,8 +103,100 @@
             4 * CY7C185    = 4 *   8k =   32k (TMS1 RAM)
             8 * CY7C199    = 8 *  32k =  256k (TMS2 RAM)
 
-***************************************************************************/
+****************************************************************************
 
+Hot Memory (German V1.2)
+Tuning/Strata/Incredible Technologies, 1994
+
+This game is a clone of Pairs and runs on Incredible Technologies 32bit hardware.
+
+PCB Layout
+----------
+
+Top (2 separate PCBs plugged into the main board)
+---
+
+P/N 1060 REV 0
+|---------------------------------|    |---------------------------------|
+|6522          SND.U17    SROM0   |    |  GROM15            GROM10       |
+|   6809     6264   ENSONIC       |    |                                 |
+|                                 |    |  GROM16            GROM11       |
+|  LED1                           |    |                                 |
+|        PAL1                     |    | *GROM17           *GROM12       |
+|                                 |    |                                 |
+|                  *SROM2 *SROM1  |    | *GROM18           *GROM13       |
+|    ES5506  16MHz                |    |                                 |
+|               MM5437            |    |                                 |
+|                                 |    |                                 |
+|            PAL2                 |    |  GROM5             GROM0        |
+|                                 |    |                                 |
+|                           VOL   |    |  GROM6             GROM1        |
+|                    TDA1543      |    |                                 |
+|                                 |    | *GROM7            *GROM2        |
+|    555         3403    3403     |    |                                 |
+|                                 |    | *GROM8            *GROM3        |
+|                                 |    |                                 |
+|        JP3                      |    | *GROM9            *GROM4        |
+|---------------------------------|    |---------------------------------|
+Notes:
+      *      - These locations not populated
+      ES5506 - Ensonic ES5506 OTTOR2, clock 16.000MHz
+      6809   - STMicroelectronics EF68B09, clock 2.000MHz
+      ENSONIC- DIP42 chip labelled 'ENSONIC (C)1992 2M 1350901601 9320 1.00' at location ROM0
+               -This is actually a 16MBit DIP42 MaskROM
+      MM5437 - National Semiconductor MM5437 pseudo-random noise generator chip (DIP8)
+      LED1   - Sound Status Yellow LED, blinks when active
+      PAL1   - Labelled 'ITBP-1'
+      PAL2   - Labelled 'ITSS-1'
+      JP3    - 4 pin connector for right speaker output
+
+Main Board
+----------
+
+P/N 1059 REV3
+|------------------------------------------------------------------------|
+|MC3423            84256                   V52C8128K70                   |
+|                                                                        |
+|                                                                        |
+|                  84256                                                 |
+|                                                                        |
+|                                          V52C8128K70                   |
+|A                 84256                            V52C8128K70          |
+|M                                                           V52C8128K70 |
+|M             PAL3      LED2                                            |
+|A                                       PAL4   PAL5   PAL6   PAL7   PAL8|
+|J      |-----|                                                          |
+|       |     |               HOTMEM1.U88                                |
+|       |  6  |           62256                                          |
+|       |  8  |                                         |----------|     |
+|       |  0  |12MHz                          8MHz      |          |     |
+|       |  0  |               HOTMEM0.U83               |   IT42   |     |
+|       |  0  | BATTERY   62256                         | (QFP208) |     |
+|       |     |                                         |          |     |
+|DSW(4) |-----| ADM690                     25MHz        |----------|     |
+|  J1         J2                                                         |
+|------------------------------------------------------------------------|
+Notes:
+      AMMAJ - Note JAMMA connector is backwards!
+      68000 - clock 12.000MHz
+      HSync - 15.68kHz
+      VSync - 60Hz
+      J1/J2 - 15 Pin Connector For Player 3 & 4 Controls
+      PAL3  - GAL22V10
+      PAL4  - Labelled 'ITVS-16A'
+      PAL5  - Labelled 'ITVS-15'
+      PAL6  - Labelled 'ITVS-14'
+      PAL7  - Labelled 'ITVS-13'
+      PAL8  - Labelled 'ITVS-12'
+      LED2  - CPU Status Green LED, blinks when active
+      IT42  - Custom Incredible Technologies Graphics Generator (QFP208)
+      ADM690- Analog Devices ADM690 4.65V Reset, Battery Switchover, Watchdog Timer, Power Fail Input IC (DIP8)
+      MC3423- Motorola MC3423 Overvoltage Sensing Circuit (SOIC8)
+      84256 - Fujitsu MB84256A-10L 32k x8 SRAM (SOP28)
+      62256 - MOSEL MS62256L-10PC 32k x8 SRAM (DIP28)
+      V52C8128K70 - Vitelic V52C8128K70 ?? possibly 128k x8 DRAM (SOJ40)
+
+****************************************************************************/
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
@@ -766,7 +858,7 @@ static ADDRESS_MAP_START( bloodstm_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x580000, 0x59ffff) AM_READWRITE(MRA16_RAM, bloodstm_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(bloodstm_plane_w)
 	AM_RANGE(0x780000, 0x780001) AM_READ(input_port_5_word_r)
-	AM_RANGE(0x800000, 0x87ffff) AM_MIRROR(0x700000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&main_rom)
+	AM_RANGE(0x800000, 0x87ffff) AM_MIRROR(0x780000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&main_rom)
 ADDRESS_MAP_END
 
 
@@ -1851,6 +1943,31 @@ ROM_START( pairsa )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, CRC(1d96c581) SHA1(3b7c84b7db3b098ec28c7058c16f97e9cf0e4733) )
 ROM_END
 
+ROM_START( hotmemry )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "hotmem0.u83", 0x00000, 0x40000, CRC(5b9d87a2) SHA1(5a1ca7b622832fcb641e081d0c2a49c38ca795cd) )
+	ROM_LOAD16_BYTE( "hotmem1.u88", 0x00001, 0x40000, CRC(aeea087c) SHA1(3a8bdc04bc4051691823d0c5a1a3429475692100) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "hotmem_snd.u17", 0x10000, 0x18000, CRC(805941c7) SHA1(4a6832d93ff2b986cb54052658af62584782cb59) )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x880000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "hotmem.grom0",  0x000000, 0x80000, CRC(68f279ef) SHA1(66098e68474e692676662b03835d1b74f581b0f4) )
+	ROM_LOAD32_BYTE( "hotmem.grom5",  0x000001, 0x80000, CRC(295bb43d) SHA1(ccecdbc9dc9ef925fe59a53eeff89135d2ae748d) )
+	ROM_LOAD32_BYTE( "hotmem.grom10", 0x000002, 0x80000, CRC(f8cc939b) SHA1(cbd35346f057f1e615705acb2595ba550f6d8772) )
+	ROM_LOAD32_BYTE( "hotmem.grom15", 0x000003, 0x80000, CRC(a03d9bcd) SHA1(e75be35fd5cfec1e7ab3e0db468bff4d76a9cb27) )
+	ROM_LOAD32_BYTE( "hotmem.grom1",  0x200000, 0x40000, CRC(b446105e) SHA1(25b5067c09490086095fcf10085f0eeffd53b27f) )
+	ROM_LOAD32_BYTE( "hotmem.grom6",  0x200001, 0x40000, CRC(3a7ba9eb) SHA1(dd7548afb8ee92af369732f4159b0ad0d1b58259) )
+	ROM_LOAD32_BYTE( "hotmem.grom11", 0x200002, 0x40000, CRC(9ec4ea41) SHA1(5bc4489b881c9736cb39891b6ab5e75f5c45907c) )
+	ROM_LOAD32_BYTE( "hotmem.grom16", 0x200003, 0x40000, CRC(4507a895) SHA1(3d6cd6cd81b62545f7be5991f67803cf11c96ee6) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "1350901601.rom0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "hotmem.srom0", 0x000000, 0x80000, CRC(c1103224) SHA1(52cf341ff9092ecb8cb94f66a96ee0c726bf1412) )
+ROM_END
 
 ROM_START( wcbowldx )	/* Deluxe version 2.00 (PCB P/N 1082 Rev 2) - I.T. is still selling this set. */
 	ROM_REGION32_BE( CODE_SIZE, REGION_USER1, 0 )
@@ -3534,6 +3651,7 @@ GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incr
 GAME( 1994, bloods11, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v1.10)" )
 GAME( 1994, pairs,    0,        bloodstm, pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (V1.2, 09/30/94)" )
 GAME( 1994, pairsa,   pairs,    bloodstm, pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs (09/07/94)" )
+GAME( 1994, hotmemry, pairs,    bloodstm, pairs,    bloodstm, ROT0, "Tuning/Incredible Technologies", "Hot Memory (V1.2, Germany)" )
 GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */

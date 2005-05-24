@@ -109,6 +109,7 @@ VIDEO_START( drivfrcg );
 VIDEO_START( bongo );
 VIDEO_START( scorpion );
 VIDEO_START( racknrol );
+VIDEO_START( ad2083 );
 
 VIDEO_UPDATE( galaxian );
 
@@ -170,6 +171,7 @@ DRIVER_INIT( sfx );
 DRIVER_INIT( gmgalax );
 DRIVER_INIT( ladybugg );
 DRIVER_INIT( scorpion );
+DRIVER_INIT( ad2083 );
 
 MACHINE_INIT( scramble );
 MACHINE_INIT( sfx );
@@ -258,12 +260,13 @@ WRITE8_HANDLER( frogger_filter_w );
 READ8_HANDLER( scramble_portB_r );
 READ8_HANDLER( frogger_portB_r );
 
+READ8_HANDLER( hotshock_soundlatch_r );
+
 WRITE8_HANDLER( scramble_sh_irqtrigger_w );
 WRITE8_HANDLER( sfx_sh_irqtrigger_w );
 WRITE8_HANDLER( mrkougar_sh_irqtrigger_w );
 WRITE8_HANDLER( froggrmc_sh_irqtrigger_w );
 WRITE8_HANDLER( hotshock_sh_irqtrigger_w );
-WRITE8_HANDLER( explorer_sh_irqtrigger_w  );
 
 WRITE8_HANDLER( zigzag_8910_latch_w );
 WRITE8_HANDLER( zigzag_8910_data_trigger_w );

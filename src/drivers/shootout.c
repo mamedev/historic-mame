@@ -153,7 +153,7 @@ ADDRESS_MAP_END
 /*******************************************************************************/
 
 INPUT_PORTS_START( shootout )
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
@@ -175,7 +175,7 @@ INPUT_PORTS_START( shootout )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -185,7 +185,7 @@ INPUT_PORTS_START( shootout )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
@@ -195,17 +195,17 @@ INPUT_PORTS_START( shootout )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x01, "1" )
 	PORT_DIPSETTING(	0x03, "3" )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Infinite ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x0c, "20K 70K" )
-	PORT_DIPSETTING(	0x08, "30K 80K" )
-	PORT_DIPSETTING(	0x04, "40K 90K" )
-	PORT_DIPSETTING(	0x00, "70K" )
+	PORT_DIPSETTING(	0x0c, "20.000 Every 70.000" )
+	PORT_DIPSETTING(	0x08, "30.000 Every 80.000" )
+	PORT_DIPSETTING(	0x04, "40.000 Every 90.000" )
+	PORT_DIPSETTING(	0x00, "70.000" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x30, DEF_STR( Easy ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Normal ) )
@@ -213,6 +213,22 @@ INPUT_PORTS_START( shootout )
 	PORT_DIPSETTING(	0x00, DEF_STR( Very_Hard ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL ) /* this is set when either coin is inserted */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( shootouj )
+	PORT_INCLUDE(shootout)
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x20, 0x20, "Company Copyright" )
+	PORT_DIPSETTING(	0x20, "Data East Corp" )
+	PORT_DIPSETTING(	0x00, "Data East USA Inc" )
+
+	PORT_MODIFY("DSW2")
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x0c, "20K 50K" )
+	PORT_DIPSETTING(	0x08, "30K 60K" )
+	PORT_DIPSETTING(	0x04, "50K 70K" )
+	PORT_DIPSETTING(	0x00, "70K" )
 INPUT_PORTS_END
 
 
@@ -453,6 +469,6 @@ static DRIVER_INIT( shootout )
 }
 
 
-GAME( 1985, shootout, 0,		shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)")
-GAME( 1985, shootouj, shootout, shootouj, shootout, 0,		  ROT0, "Data East USA", "Shoot Out (Japan)" )
+GAME( 1985, shootout, 0,        shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)")
+GAME( 1985, shootouj, shootout, shootouj, shootouj, 0,        ROT0, "Data East USA", "Shoot Out (Japan)" )
 GAME( 1985, shootoub, shootout, shootouj, shootout, shootout, ROT0, "bootleg", "Shoot Out (Korean Bootleg)" )

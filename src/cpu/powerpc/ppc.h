@@ -217,7 +217,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG
-extern int ppc_dasm_one(char *buffer, offs_t pc, UINT32 op);
+extern offs_t ppc_dasm_one(char *buffer, offs_t pc, UINT32 op);
 #endif
 
 #endif	/* _PPC_H */

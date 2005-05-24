@@ -71,6 +71,7 @@ static void mimonkey_modify_spritecode(data8_t *spriteram,int *code,int *flipx,i
 static void  batman2_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void  jumpbug_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void dkongjrm_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void   ad2083_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 
 static void (*modify_color)(UINT8 *color);	/* function to call to do modify how the color codes map to the PROM */
 static void frogger_modify_color(UINT8 *color);
@@ -869,6 +870,47 @@ VIDEO_START( drivfrcg )
 	return 0;
 }
 
+VIDEO_START( ad2083 )
+{
+	tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(tilemap,0);
+	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll = tilemap_set_scrolly;
+
+	modify_charcode = 0;
+	modify_spritecode = ad2083_modify_spritecode;
+	modify_color = 0;
+	modify_ypos = 0;
+
+	mooncrst_gfxextend = 0;
+
+	draw_bullets = scramble_draw_bullets;
+
+	draw_background = turtles_draw_background;
+	background_enable = 0;
+	background_blue = 0;
+	background_red = 0;
+	background_green = 0;
+
+	draw_stars = noop_draw_stars;
+
+	flip_screen_x = 0;
+	flip_screen_y = 0;
+
+	spriteram2_present = 0;
+
+	spritevisiblearea      = &_spritevisiblearea;
+	spritevisibleareaflipx = &_spritevisibleareaflipx;
+
+	color_mask = 7;
+
+	return 0;
+}
+
 data8_t *racknrol_tiles_bank;
 
 WRITE8_HANDLER( racknrol_tiles_bank_w )
@@ -1254,6 +1296,12 @@ static void dkongjrm_modify_spritecode(data8_t *spriteram,int *code,int *flipx,i
 	*flipx = 0;
 }
 
+static void ad2083_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
+{
+	/* No x flip */
+	*code = (spriteram[offs + 1] & 0x7f) | ((spriteram[offs + 2] & 0x30) << 2);
+	*flipx = 0;
+}
 
 /* color PROM mapping functions */
 

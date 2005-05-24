@@ -40,6 +40,8 @@ static READ16_HANDLER( vaportra_pf4_data_r ) { return vaportra_pf4_data[offset];
 
 static WRITE16_HANDLER( vaportra_sound_w )
 {
+	/* Force synchronisation between CPUs with fake timer */
+	timer_set(TIME_NOW, 0, NULL);
 	soundlatch_w(0,data & 0xff);
 	cpunum_set_input_line(1,0,PULSE_LINE);
 }
@@ -308,9 +310,9 @@ static MACHINE_DRIVER_START( vaportra )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,12000000) /* Custom chip 59 */
 	MDRV_CPU_PROGRAM_MAP(vaportra_readmem,vaportra_writemem)
-	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280, 32220000/8) /* Custom chip 45; Audio section crystal is 32.220 MHz */
+	MDRV_CPU_ADD(H6280, 32220000/4) /* Custom chip 45; Audio section crystal is 32.220 MHz */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 

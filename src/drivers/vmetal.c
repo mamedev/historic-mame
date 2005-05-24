@@ -462,7 +462,7 @@ MACHINE_DRIVER_END
 
 ROM_START( vmetal )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "5b.u19", 0x00001, 0x80000, CRC(bab1541d) SHA1(ffa9d38e065694c3abb16054735fc34bf0a6e10b) )
+	ROM_LOAD16_BYTE( "5b.u19", 0x00001, 0x80000, CRC(4933ac6c) SHA1(1a3303e32fcb08854d4d6e13f36ca99d92aed4cc) )
 	ROM_LOAD16_BYTE( "6b.u18", 0x00000, 0x80000, CRC(4eb939d5) SHA1(741ab05043fc3bd886162d878630e45da9359718) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_INVERT )
@@ -498,5 +498,5 @@ ROM_START( vmetaln )
 	ROM_LOAD( "7.u12", 0x00000, 0x200000, CRC(a88c52f1) SHA1(d74a5a11f84ba6b1042b33a2c156a1071b6fbfe1) )
 ROM_END
 
-GAMEX( 1995, vmetal,  0,      varia, varia, 0, ROT270, "Excellent Systems",                        "Varia Metal",                        GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 1995, vmetal,  0,      varia, varia, 0, ROT270, "Excellent Systems",                        "Varia Metal",                        GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, vmetaln, vmetal, varia, varia, 0, ROT270, "[Excellent Systems] New Ways Trading Co.", "Varia Metal (New Ways Trading Co.)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

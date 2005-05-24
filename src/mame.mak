@@ -446,6 +446,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/taitoair.o $(OBJ)/drivers/taitoair.o \
 	$(OBJ)/drivers/taitojc.o \
 	$(OBJ)/drivers/fgoal.o $(OBJ)/vidhrdw/fgoal.o \
+	$(OBJ)/drivers/darkmist.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
@@ -1280,6 +1281,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/turbosub.o \
 	$(OBJ)/drivers/penocup.o \
 	$(OBJ)/drivers/dreamwld.o \
+	$(OBJ)/drivers/cybertnk.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

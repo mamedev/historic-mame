@@ -356,7 +356,7 @@ static DRIVER_INIT( aquarium )
 }
 
 
-struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0, &tilelayout,       0x300, 32 },
 	{ REGION_GFX1, 0, &char5bpplayout,   0x400, 32 },

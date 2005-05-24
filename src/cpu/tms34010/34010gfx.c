@@ -1216,6 +1216,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 					/* fetch another word if necessary */
 					if (srcmask == 0)
 					{
+		LOGGFX(("  right fetch @ %08x\n", swordaddr));
 						srcword = (*word_read)(swordaddr++ << 1);
 						srcmask = PIXEL_MASK;
 					}
@@ -1396,6 +1397,13 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < right_partials; x++)
 				{
+					/* fetch source pixel if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(--swordaddr << 1);
+						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1408,11 +1416,6 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask >>= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(--swordaddr << 1);
-						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
-					}
 
 					/* update the destination */
 					dstmask >>= BITS_PER_PIXEL;
@@ -1436,6 +1439,13 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < PIXELS_PER_WORD; x++)
 				{
+					/* fetch source pixel if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(--swordaddr << 1);
+						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1448,11 +1458,6 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask >>= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(--swordaddr << 1);
-						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
-					}
 
 					/* update the destination */
 					dstmask >>= BITS_PER_PIXEL;
@@ -1472,6 +1477,13 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 				/* loop over partials */
 				for (x = 0; x < left_partials; x++)
 				{
+					/* fetch the source pixel if necessary */
+					if (srcmask == 0)
+					{
+						srcword = (*word_read)(--swordaddr << 1);
+						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
+					}
+
 					/* process the pixel */
 					pixel = srcword & srcmask;
 					if (dstmask > srcmask)
@@ -1484,11 +1496,6 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 
 					/* update the source */
 					srcmask >>= BITS_PER_PIXEL;
-					if (srcmask == 0)
-					{
-						srcword = (*word_read)(--swordaddr << 1);
-						srcmask = PIXEL_MASK << (16 - BITS_PER_PIXEL);
-					}
 
 					/* update the destination */
 					dstmask >>= BITS_PER_PIXEL;

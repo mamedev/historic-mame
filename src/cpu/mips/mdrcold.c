@@ -438,7 +438,7 @@ static void ddivu(UINT64 *rs, UINT64 *rt)
 
 static int recompile_delay_slot(struct drccore *drc, UINT32 pc)
 {
-	UINT8 *saved_top = drc->cache_top;
+	UINT8 *saved_top;
 	UINT32 result;
 
 #ifdef MAME_DEBUG
@@ -446,6 +446,8 @@ static int recompile_delay_slot(struct drccore *drc, UINT32 pc)
 	_mov_r32_imm(REG_EDI, pc);
 	drc_append_call_debugger(drc);
 #endif
+
+	saved_top = drc->cache_top;
 
 	/* recompile the instruction as-is */
 	in_delay_slot = 1;

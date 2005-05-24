@@ -4,9 +4,6 @@ no idea if this is the real title, I just see a large Peno Cup logo in the 2/3 r
 
 looks like some kind of ping pong / tennis game?
 
-this is a BAD dump
-
-
  ___________________________________________________
 |        __     _________ __________   __________  |
 |__      |_|   |UM62256D| |UM62256D|   |UM62256D|  |
@@ -37,20 +34,16 @@ this is a BAD dump
 
 The PCB is Spanish and manufacured by Gamart.
 
-ROMs 2, 3, 4 & 5 are bad. :(
 
-*/
+--- Need to work out how the program rom is banked
+--- hw is similar to hotblock and twins
 
-/*
-
-maybe its possible to reconstruct most the code from the
-3 dumps and emulate the hardware at least
-
-would help if the NEC dasm was fixed...
 
 */
 
 #include "driver.h"
+static data8_t*peno_vram;
+
 
 VIDEO_START(penocup)
 {
@@ -59,22 +52,159 @@ VIDEO_START(penocup)
 
 VIDEO_UPDATE(penocup)
 {
+	int y,x,count;
+//  int i;
+	static int xxx=320,yyy=204;
+
+	fillbitmap(bitmap, get_black_pen(), 0);
+
+//  for (i=0;i<256;i++)
+//  {
+//      int dat,r,g,b;
+//      dat=(hotblock_pal[i*2+1]<<8)|hotblock_pal[i*2];
+//
+//      b = (dat>>10)&0x1f;
+//      g = (dat>>5)&0x1f;
+//      r = (dat>>0)&0x1f;
+//      palette_set_color(i,r*8,g*8,b*8);
+//  }
+
+	count=0;
+	for (y=0;y<yyy;y++)
+	{
+		for(x=0;x<xxx;x++)
+		{
+			/*if(hotblock_port0&0x40)*/plot_pixel(bitmap, x,y, peno_vram[count]+0x300);
+			count++;
+		}
+	}
+}
+
+static data8_t paloff_l;
+static data8_t paloff_h;
+static data8_t paldat_l;
+static data8_t paldat_h;
+
+
+static WRITE8_HANDLER( paloff_l_w )
+{
+	paloff_l = data;
+}
+
+static WRITE8_HANDLER( paloff_h_w )
+{
+	paloff_h = data;
+}
+
+WRITE8_HANDLER( pcup_prgbank_w )
+{
+	int bank;
+	unsigned char *ROM1 = memory_region(REGION_USER1);
+
+	bank = (data>>4) &0x07;
+	cpu_setbank(2,&ROM1[0x80000*(bank)]);
 
 }
 
 
+static WRITE8_HANDLER( paldat_l_w )
+{
+	paldat_l = data;
+}
+
+static WRITE8_HANDLER( paldat_h_w )
+{
+	int paldat;
+	int paloff;
+	int r,g,b;
+
+	paldat_h = data;
+
+	paldat = (paldat_h <<8)|paldat_l;
+	paloff = (paloff_h <<8)|paloff_l;
+	paloff &=0x7fff;
+
+	b = (paldat>>10)&0x1f;
+	g = (paldat>>5)&0x1f;
+	r = (paldat>>0)&0x1f;
+
+	palette_set_color(paloff,r*8,g*8,b*8);
+}
+
+static READ8_HANDLER( peno_rand )
+{
+	return 0xff;// rand();
+}
+
+static READ8_HANDLER( peno_rand2 )
+{
+	return rand();
+}
+
 static ADDRESS_MAP_START( penocup_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x0ffff) AM_RAM
-	AM_RANGE(0x20000, 0xfffff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)
+	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&peno_vram)
+	AM_RANGE(0x20000, 0x7ffff) AM_READ(MRA8_BANK1) // ?
+	AM_RANGE(0x80000, 0xfffff) AM_READ(MRA8_BANK2) // ?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( penocup_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_NOP)
+
+	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_0_r)
+	AM_RANGE(0x0003, 0x0003) AM_READ(input_port_1_r)
+	AM_RANGE(0x0004, 0x0004) AM_READ(input_port_2_r)
+	AM_RANGE(0x0005, 0x0005) AM_READ(input_port_3_r)
+
+//  AM_RANGE(0x0018, 0x0018) AM_READ(peno_rand2)
+//  AM_RANGE(0x001e, 0x001e) AM_READ(peno_rand2)
+
+	AM_RANGE(0x0008, 0x0008) AM_WRITE(paldat_l_w)
+	AM_RANGE(0x0009, 0x0009) AM_WRITE(paldat_h_w)
+
+	AM_RANGE(0x000a, 0x000a) AM_WRITE(paloff_l_w)
+	AM_RANGE(0x000b, 0x000b) AM_WRITE(paloff_h_w)
+
+//  AM_RANGE(0x0010, 0x0010) AM_WRITE(pcup_prgbank_w)
+	AM_RANGE(0x0010, 0x0010) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0011, 0x0011) AM_WRITE(MWA8_NOP)
+
+	AM_RANGE(0x0020, 0x0020) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0021, 0x0021) AM_WRITE(MWA8_NOP)
+
+
+	AM_RANGE(0x0034, 0x0034) AM_READ(peno_rand) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x0035, 0x0035) AM_READ(peno_rand)
+
 ADDRESS_MAP_END
+
 
 
 INPUT_PORTS_START(penocup)
 	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "0x0003" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -98,6 +228,27 @@ INPUT_PORTS_START(penocup)
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* 8bit */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
 INPUT_PORTS_END
 
 
@@ -120,7 +271,7 @@ static MACHINE_DRIVER_START( penocup )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(1024,1024)
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 200-1)
-	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_LENGTH(0x8000)
 
 	MDRV_VIDEO_START(penocup)
 	MDRV_VIDEO_UPDATE(penocup)
@@ -128,26 +279,36 @@ MACHINE_DRIVER_END
 
 ROM_START( penocup )
 
-	/* dump a */
+	/* hopefully this is a good dump */
+
 	ROM_REGION( 0x200000, REGION_USER1, 0 )
-	ROM_LOAD16_BYTE( "27c040_dump_a.2", 0x000000, 0x080000, BAD_DUMP CRC(791d68c8) SHA1(641c989d50e95ac3ff7c87d148cfab44abbdc774) )
-	ROM_LOAD16_BYTE( "27c040_dump_a.3", 0x000001, 0x080000, BAD_DUMP CRC(00c81241) SHA1(899d4d1566f5f5d2967b6a8ec7dca60833846bbe) )
-	ROM_LOAD16_BYTE( "27c040_dump_a.4", 0x100000, 0x080000, BAD_DUMP CRC(11af50f6) SHA1(1e5b6cc5c5a6c1ec302b2de7ce40c9ebfb349b46) )
-	ROM_LOAD16_BYTE( "27c040_dump_a.5", 0x100001, 0x080000, BAD_DUMP CRC(f6b87231) SHA1(3db461c0858c207e8a3dfd822c99d28e3a26b4ee) )
+	ROM_LOAD16_BYTE( "2.bin", 0x000000, 0x080000,  CRC(6a6c6d75) SHA1(3742b82462176d77732a69e142db9e6f61f25dc5) )
+	ROM_LOAD16_BYTE( "3.bin", 0x000001, 0x080000,  CRC(6062c0b2) SHA1(c5f0ac58c847ce2588c805f40180f2586a6477b7) )
+	ROM_LOAD16_BYTE( "4.bin", 0x100000, 0x080000,  CRC(4388dead) SHA1(1965e4b84452b244e32c8d218aace8d287c67ec2) )
+	ROM_LOAD16_BYTE( "5.bin", 0x100001, 0x080000,  CRC(fdbf9b28) SHA1(2d260555586097c8a396f65111f55ace801c7a5d) )
+
+	/* dumps below are bad dumps */
+
+	/* dump a */
+//  ROM_REGION( 0x200000, REGION_USER1, 0 )
+//  ROM_LOAD16_BYTE( "27c040_dump_a.2", 0x000000, 0x080000, BAD_DUMP CRC(791d68c8) SHA1(641c989d50e95ac3ff7c87d148cfab44abbdc774) )
+//  ROM_LOAD16_BYTE( "27c040_dump_a.3", 0x000001, 0x080000, BAD_DUMP CRC(00c81241) SHA1(899d4d1566f5f5d2967b6a8ec7dca60833846bbe) )
+//  ROM_LOAD16_BYTE( "27c040_dump_a.4", 0x100000, 0x080000, BAD_DUMP CRC(11af50f6) SHA1(1e5b6cc5c5a6c1ec302b2de7ce40c9ebfb349b46) )
+//  ROM_LOAD16_BYTE( "27c040_dump_a.5", 0x100001, 0x080000, BAD_DUMP CRC(f6b87231) SHA1(3db461c0858c207e8a3dfd822c99d28e3a26b4ee) )
 
 	/* dump b */
-	ROM_REGION( 0x200000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "27c040_dump_b.2", 0x000000, 0x080000, BAD_DUMP CRC(df1f2618) SHA1(7c6abb7a6ec55c49b95809f003d217f1ea758729) )
-	ROM_LOAD16_BYTE( "27c040_dump_b.3", 0x000001, 0x080000, BAD_DUMP CRC(0292ca69) SHA1(fe3b0e78d9e946d8f8a86e8246e5a94483f44ce1) )
-	ROM_LOAD16_BYTE( "27c040_dump_b.4", 0x100000, 0x080000, BAD_DUMP CRC(f6bcadc6) SHA1(d8c61c207175d67f4229103696dc2a4447af2ba4) )
-	ROM_LOAD16_BYTE( "27c040_dump_b.5", 0x100001, 0x080000, BAD_DUMP CRC(b872747c) SHA1(24d2aa2603a71cdfd3d45608177bb60ab7cfe8a2) )
+//  ROM_REGION( 0x200000, REGION_USER2, 0 )
+//  ROM_LOAD16_BYTE( "27c040_dump_b.2", 0x000000, 0x080000, BAD_DUMP CRC(df1f2618) SHA1(7c6abb7a6ec55c49b95809f003d217f1ea758729) )
+//  ROM_LOAD16_BYTE( "27c040_dump_b.3", 0x000001, 0x080000, BAD_DUMP CRC(0292ca69) SHA1(fe3b0e78d9e946d8f8a86e8246e5a94483f44ce1) )
+//  ROM_LOAD16_BYTE( "27c040_dump_b.4", 0x100000, 0x080000, BAD_DUMP CRC(f6bcadc6) SHA1(d8c61c207175d67f4229103696dc2a4447af2ba4) )
+//  ROM_LOAD16_BYTE( "27c040_dump_b.5", 0x100001, 0x080000, BAD_DUMP CRC(b872747c) SHA1(24d2aa2603a71cdfd3d45608177bb60ab7cfe8a2) )
 
 	/* dump c */
-	ROM_REGION( 0x200000, REGION_USER3, 0 )
-	ROM_LOAD16_BYTE( "27c040_dump_c.2", 0x000000, 0x080000, BAD_DUMP CRC(be70adc7) SHA1(fe439caa54856c75ef310e456a7e61b15321031d) )
-	ROM_LOAD16_BYTE( "27c040_dump_c.3", 0x000001, 0x080000, BAD_DUMP CRC(8e3b3396) SHA1(f47243041b9283712e34ea58fa2456c35785c5ee) )
-	ROM_LOAD16_BYTE( "27c040_dump_c.4", 0x100000, 0x080000, BAD_DUMP CRC(34ab75e9) SHA1(779f03139b336cdc46f4d00bf3fd9e6de79942e2) )
-	ROM_LOAD16_BYTE( "27c040_dump_c.5", 0x100001, 0x080000, BAD_DUMP CRC(3e7b3533) SHA1(433439c2b8a8e54bb20fc3c1690d3f183c6fa6f6) )
+//  ROM_REGION( 0x200000, REGION_USER3, 0 )
+//  ROM_LOAD16_BYTE( "27c040_dump_c.2", 0x000000, 0x080000, BAD_DUMP CRC(be70adc7) SHA1(fe439caa54856c75ef310e456a7e61b15321031d) )
+//  ROM_LOAD16_BYTE( "27c040_dump_c.3", 0x000001, 0x080000, BAD_DUMP CRC(8e3b3396) SHA1(f47243041b9283712e34ea58fa2456c35785c5ee) )
+//  ROM_LOAD16_BYTE( "27c040_dump_c.4", 0x100000, 0x080000, BAD_DUMP CRC(34ab75e9) SHA1(779f03139b336cdc46f4d00bf3fd9e6de79942e2) )
+//  ROM_LOAD16_BYTE( "27c040_dump_c.5", 0x100001, 0x080000, BAD_DUMP CRC(3e7b3533) SHA1(433439c2b8a8e54bb20fc3c1690d3f183c6fa6f6) )
 
 	/* these were the same in each dump..*/
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* not verified if this is correct yet, seems very empty, maybe protected */
@@ -159,25 +320,27 @@ ROM_END
 
 static DRIVER_INIT (penocup)
 {
+
 	unsigned char *ROM1 = memory_region(REGION_USER1);
-	unsigned char *ROM2 = memory_region(REGION_USER2);
-	unsigned char *ROM3 = memory_region(REGION_USER3);
+/*
+    unsigned char *ROM2 = memory_region(REGION_USER2);
+    unsigned char *ROM3 = memory_region(REGION_USER3);
 
-	UINT32 count;
+    UINT32 count;
 
-	for (count = 0;count <0x200000;count++)
-	{
-		if ((ROM1[count] != ROM2[count]) || (ROM2[count] != ROM3[count]))
-		{
-			printf("Non-Matching addr: 0x%06x DumpA: %02x  DumpB: %02x  DumpC: %02x\n", count, ROM1[count],ROM2[count],ROM3[count]);
-		}
-	}
-
-
+    for (count = 0;count <0x200000;count++)
+    {
+        if ((ROM1[count] != ROM2[count]) || (ROM2[count] != ROM3[count]))
+        {
+            printf("Non-Matching addr: 0x%06x DumpA: %02x  DumpB: %02x  DumpC: %02x\n", count, ROM1[count],ROM2[count],ROM3[count]);
+        }
+    }
+*/
 	cpu_setbank(1,&ROM1[0x120000]);
+	cpu_setbank(2,&ROM1[0x180000]);
 
 
 
 }
 
-GAMEX(199?, penocup, 0,        penocup, penocup, penocup, ROT0,  "Gamart?", "Peno Cup?", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX(199?, penocup, 0,        penocup, penocup, penocup, ROT0,  "Gamart?", "Table Tennis Championships / Peno Cup?", GAME_NOT_WORKING|GAME_NO_SOUND )
