@@ -488,9 +488,9 @@ static VIDEO_UPDATE( lghost )
 	int x3 = readinputportbytag("GUNX3");
 	int y3 = readinputportbytag("GUNY3");
 	video_update_system18(bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->drv->screen_width - 1) / 255, y1 * (Machine->drv->screen_height - 1) / 255, cliprect);
-	draw_crosshair(bitmap, x2 * (Machine->drv->screen_width - 1) / 255, y2 * (Machine->drv->screen_height - 1) / 255, cliprect);
-	draw_crosshair(bitmap, x3 * (Machine->drv->screen_width - 1) / 255, y3 * (Machine->drv->screen_height - 1) / 255, cliprect);
+	draw_crosshair(bitmap, x1 * (Machine->drv->screen_width - 1) / 255, y1 * (Machine->drv->screen_height - 1) / 255, cliprect, 0);
+	draw_crosshair(bitmap, x2 * (Machine->drv->screen_width - 1) / 255, y2 * (Machine->drv->screen_height - 1) / 255, cliprect, 1);
+	draw_crosshair(bitmap, x3 * (Machine->drv->screen_width - 1) / 255, y3 * (Machine->drv->screen_height - 1) / 255, cliprect, 2);
 }
 
 
@@ -1244,7 +1244,7 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_SOUND_ROUTE(0, "left", 0.40)
 	MDRV_SOUND_ROUTE(1, "right", 0.40)
 
-	MDRV_SOUND_ADD_TAG("5c68", RF5C68, 8000000)
+	MDRV_SOUND_ADD_TAG("5c68", RF5C68, 10000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END

@@ -56,6 +56,7 @@ static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param);
 
 static void execute_help(int ref, int params, const char **param);
 static void execute_printf(int ref, int params, const char **param);
+static void execute_logerror(int ref, int params, const char **param);
 static void execute_tracelog(int ref, int params, const char **param);
 static void execute_quit(int ref, int params, const char **param);
 static void execute_do(int ref, int params, const char **param);
@@ -85,6 +86,7 @@ static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
 static void execute_source(int ref, int params, const char **param);
+static void execute_memdump(int ref, int params, const char **param);
 
 
 
@@ -99,14 +101,17 @@ static void execute_source(int ref, int params, const char **param);
 
 void debug_command_init(void)
 {
+	struct symbol_table *global_table = debug_expression_get_global_symtable();
+
 	/* add a few simple global functions */
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "min", 0, 2, 2, execute_min);
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "max", 0, 2, 2, execute_max);
-	debug_symtable_add_function(GLOBAL_SYMBOL_TABLE, "if", 0, 3, 3, execute_if);
+	debug_symtable_add_function(global_table, "min", 0, 2, 2, execute_min);
+	debug_symtable_add_function(global_table, "max", 0, 2, 2, execute_max);
+	debug_symtable_add_function(global_table, "if", 0, 3, 3, execute_if);
 
 	/* add all the commands */
 	debug_console_register_command("help",      CMDFLAG_NONE, 0, 0, 1, execute_help);
 	debug_console_register_command("printf",    CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_printf);
+	debug_console_register_command("logerror",  CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_logerror);
 	debug_console_register_command("tracelog",  CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_tracelog);
 	debug_console_register_command("quit",      CMDFLAG_NONE, 0, 0, 0, execute_quit);
 	debug_console_register_command("do",        CMDFLAG_NONE, 0, 1, 1, execute_do);
@@ -168,6 +173,8 @@ void debug_command_init(void)
 	debug_console_register_command("snap",      CMDFLAG_NONE, 0, 0, 1, execute_snap);
 
 	debug_console_register_command("source",    CMDFLAG_NONE, 0, 1, 1, execute_source);
+
+	debug_console_register_command("memdump",	CMDFLAG_NONE, 0, 0, 1, execute_memdump);
 }
 
 
@@ -402,6 +409,27 @@ static void execute_printf(int ref, int params, const char *param[])
 	/* then do a printf */
 	if (mini_printf(buffer, param[0], params - 1, &values[1]))
 		debug_console_write_line(buffer);
+}
+
+
+/*-------------------------------------------------
+    execute_logerror - execute the logerror command
+-------------------------------------------------*/
+
+static void execute_logerror(int ref, int params, const char *param[])
+{
+	UINT64 values[MAX_COMMAND_PARAMS];
+	char buffer[1024];
+	int i;
+
+	/* validate the other parameters */
+	for (i = 1; i < params; i++)
+		if (!validate_parameter_number(param[i], &values[i]))
+			return;
+
+	/* then do a printf */
+	if (mini_printf(buffer, param[0], params - 1, &values[1]))
+		logerror("%s", buffer);
 }
 
 
@@ -1588,4 +1616,24 @@ static void execute_source(int ref, int params, const char *param[])
 }
 
 
+/*-------------------------------------------------
+    execute_memdump - execute the memdump command
+-------------------------------------------------*/
+
+static void execute_memdump(int ref, int params, const char **param)
+{
+	FILE *file;
+	const char *filename;
+
+	filename = (params == 0) ? "memdump.log" : param[0];
+
+	debug_console_printf("Dumping memory to %s\n", filename);
+
+	file = fopen(filename, "w");
+	if (file)
+	{
+		memory_dump(file);
+		fclose(file);
+	}
+}
 

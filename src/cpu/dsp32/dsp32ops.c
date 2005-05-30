@@ -131,8 +131,7 @@ static void illegal(void)
 
 static void unimplemented(void)
 {
-	fprintf(stderr, "Unimplemented op @ %06X: %08X (dis=%02X, tbl=%03X)\n", dsp32.PC - 4, OP, OP >> 25, OP >> 21);
-	exit(1);
+    osd_die("Unimplemented op @ %06X: %08X (dis=%02X, tbl=%03X)\n", dsp32.PC - 4, OP, OP >> 25, OP >> 21);
 }
 
 
@@ -444,16 +443,14 @@ INLINE UINT32 double_to_dsp(double val)
 
 static double dau_read_pi_special(int i)
 {
-	fprintf(stderr, "Unimplemented dau_read_pi_special(%d)\n", i);
-	exit(1);
+    osd_die("Unimplemented dau_read_pi_special(%d)\n", i);
 	return 0;
 }
 
 
 static void dau_write_pi_special(int i, double val)
 {
-	fprintf(stderr, "Unimplemented dau_write_pi_special(%d)\n", i);
-	exit(1);
+    osd_die("Unimplemented dau_write_pi_special(%d)\n", i);
 }
 
 
@@ -695,8 +692,7 @@ static int condition(int cond)
 		case 46:	/* !ireq2 */
 		case 47:	/* ireq2 */
 		default:
-			fprintf(stderr, "Unimplemented condition: %X\n", cond);
-			exit(1);
+		    osd_die("Unimplemented condition: %X\n", cond);
 	}
 }
 #endif

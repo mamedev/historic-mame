@@ -104,8 +104,7 @@ static void illegal(void)
 
 static void unimplemented(void)
 {
-	fprintf(stderr, "Unimplemented op @ %06X: %08X (tbl=%03X)\n", tms32031.pc - 1, OP, OP >> 21);
-	exit(1);
+	osd_die("Unimplemented op @ %06X: %08X (tbl=%03X)\n", tms32031.pc - 1, OP, OP >> 21);
 }
 
 

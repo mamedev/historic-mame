@@ -44,7 +44,7 @@ static UINT8 color_latch[3];
 
 /* Sidetrack/Targ/Spectar don't have a color PROM; colors are changed by the means of 8x3 */
 /* dip switches on the board. Here are the colors they map to. */
-UINT8 sidetrac_palette[] =
+UINT8 sidetrac_palette[PALETTE_LEN*3] =
 {
 	0x00,0x00,0x00,   /* BACKGND */
 	0x00,0x00,0x00,   /* CSPACE0 */
@@ -57,7 +57,7 @@ UINT8 sidetrac_palette[] =
 };
 
 /* Targ has different colors */
-UINT8 targ_palette[] =
+UINT8 targ_palette[PALETTE_LEN*3] =
 {
 					/* color   use                */
 	0x00,0x00,0xff, /* blue    background         */
@@ -71,7 +71,7 @@ UINT8 targ_palette[] =
 };
 
 /* Spectar has different colors */
-UINT8 spectar_palette[] =
+UINT8 spectar_palette[PALETTE_LEN*3] =
 {
 					/* color   use                */
 	0x00,0x00,0xff, /* blue    background         */
@@ -92,7 +92,7 @@ UINT8 spectar_palette[] =
  *
  *************************************/
 
-UINT16 exidy_1bpp_colortable[] =
+UINT16 exidy_1bpp_colortable[COLORTABLE_LEN] =
 {
 	/* one-bit characters */
 	0, 4,  /* chars 0x00-0x3F */
@@ -107,7 +107,7 @@ UINT16 exidy_1bpp_colortable[] =
 	0, 6,
 };
 
-UINT16 exidy_2bpp_colortable[] =
+UINT16 exidy_2bpp_colortable[COLORTABLE_LEN] =
 {
 	/* two-bit characters */
 	/* (Because this is 2-bit color, the colorspace is only divided

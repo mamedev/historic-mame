@@ -1119,7 +1119,7 @@ static VIDEO_UPDATE( golgo13 )
 {
 	video_update_psx( bitmap, cliprect );
 
-	draw_crosshair(bitmap, GUNX(3), GUNY(4), cliprect);
+	draw_crosshair(bitmap, GUNX(3), GUNY(4), cliprect, 0);
 }
 
 static MACHINE_DRIVER_START( coh700 )

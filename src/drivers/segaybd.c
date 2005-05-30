@@ -354,8 +354,8 @@ static VIDEO_UPDATE( rchase )
 	int x2 = readinputportbytag("ADC2");
 	int y2 = readinputportbytag("ADC3");
 	video_update_yboard(bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->drv->screen_width - 1) / 255, y1 * (Machine->drv->screen_height - 1) / 255, cliprect);
-	draw_crosshair(bitmap, x2 * (Machine->drv->screen_width - 1) / 255, y2 * (Machine->drv->screen_height - 1) / 255, cliprect);
+	draw_crosshair(bitmap, x1 * (Machine->drv->screen_width - 1) / 255, y1 * (Machine->drv->screen_height - 1) / 255, cliprect, 0);
+	draw_crosshair(bitmap, x2 * (Machine->drv->screen_width - 1) / 255, y2 * (Machine->drv->screen_height - 1) / 255, cliprect, 1);
 }
 
 

@@ -210,23 +210,23 @@ extra:	$(TOOLS) $(TEXTS)
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 
 # primary target
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(EXPAT) $(ZLIB)
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(EXPAT) $(ZLIB) $(OSDBGOBJS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT)
+xml2info$(EXE): $(OBJ)/xml2info.o $(EXPAT) $(OSDBGOBJS)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 # secondary libraries
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
@@ -252,9 +252,9 @@ $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 
 # generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
+$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c $(OSDBGOBJS)
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $< $(OSDBGOBJS)
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 

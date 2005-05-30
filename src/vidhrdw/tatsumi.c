@@ -215,9 +215,9 @@ VIDEO_START( apache3 )
 {
 	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	shadow_pen_array = auto_malloc(8192);
-	temp_bitmap = bitmap_alloc_depth(512, 512, 32);
+	temp_bitmap = auto_bitmap_alloc_depth(512, 512, 32);
 
-	if (!tx_layer || !shadow_pen_array || !temp_bitmap)
+	if (!tx_layer)
 		return 1;
 
 	memset(shadow_pen_array, 0, 8192);
@@ -231,7 +231,7 @@ VIDEO_START( roundup5 )
 	shadow_pen_array = auto_malloc(8192);
 	roundup5_vram = auto_malloc(0x48000 * 4);
 
-	if (!tx_layer || !shadow_pen_array || !roundup5_vram)
+	if (!tx_layer)
 		return 1;
 
 	memset(shadow_pen_array, 0, 8192);
@@ -245,7 +245,7 @@ VIDEO_START( cyclwarr )
 	tx_layer = tilemap_create(get_text_tile_info_cyclwarr,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	shadow_pen_array = auto_malloc(8192);
 
-	if (!bg_layer || !tx_layer || !shadow_pen_array)
+	if (!bg_layer || !tx_layer)
 		return 1;
 
 	memset(shadow_pen_array, 0, 8192);

@@ -331,6 +331,7 @@ int png_read_file(mame_file *fp, struct png_info *p)
 		ihead = pidat->next;
 		free (pidat);
 	}
+	free(ihead);
 	p->bpp = (samples[p->color_type] * p->bit_depth) / 8;
 	p->rowbytes = ceil((p->width * p->bit_depth * samples[p->color_type]) / 8.0);
 

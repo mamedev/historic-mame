@@ -97,10 +97,6 @@ VIDEO_START( gcpinbal )
 	return (gcpinbal_core_vh_start());
 }
 
-VIDEO_STOP (void)
-{
-}
-
 
 /******************************************************************
                    TILEMAP READ AND WRITE HANDLERS

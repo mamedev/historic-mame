@@ -255,7 +255,7 @@ VIDEO_UPDATE( pntnpuzl )
 		sx = readinputport(1) * 400 / 128;
 		sy = (0x7f - readinputport(2)) * 240 / 128;
 
-		draw_crosshair(bitmap,sx,sy,cliprect);
+		draw_crosshair(bitmap,sx,sy,cliprect,0);
 	}
 }
 

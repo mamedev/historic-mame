@@ -400,8 +400,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				if((value & 0x80000000) && !(DEC & 0x80000000))
 				{
 					/* trigger interrupt */
-					printf("ERROR: set_spr to DEC triggers IRQ\n");
-					exit(1);
+					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
 				DEC = value;
 				return;

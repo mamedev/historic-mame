@@ -423,6 +423,8 @@ static void galaxian_sh_start(void)
 
 	noisetimer = timer_alloc(noise_timer_cb);
 	lfotimer = timer_alloc(lfo_timer_cb);
+
+	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, galaxian_sh_update);
 }
 
 
@@ -552,8 +554,6 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 	LOG(("lfotimer bits:%d%d%d%d r0:%d, r1:%d, rx: %d, time: %9.2fus\n", lfobit[3], lfobit[2], lfobit[1], lfobit[0], (int)r0, (int)r1, (int)rx, 0.639 * rx));
 	timer_adjust(lfotimer, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)), 0, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)));
 #endif
-
-	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, galaxian_sh_update);
 }
 
 static void galaxian_sh_update(int dummy)

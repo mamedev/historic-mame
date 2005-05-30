@@ -464,7 +464,6 @@ extern data32_t hng64_dls[2][0x81] ;
 
 VIDEO_START( hng64 ) ;
 VIDEO_UPDATE( hng64 ) ;
-VIDEO_STOP( hng64 ) ;
 
 static data32_t activeBuffer ;
 
@@ -1444,7 +1443,6 @@ MACHINE_DRIVER_START( hng64 )
 
 	MDRV_VIDEO_START(hng64)
 	MDRV_VIDEO_UPDATE(hng64)
-	MDRV_VIDEO_STOP(hng64)
 MACHINE_DRIVER_END
 
 ROM_START( hng64 )

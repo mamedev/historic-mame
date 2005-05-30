@@ -373,11 +373,20 @@ static int find_memory(void);
 static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t offset);
 static genf *get_static_handler(int databits, int readorwrite, int spacenum, int which);
 
-#if (MEM_DUMP)
-static void mem_dump(void);
-#else
-#define mem_dump()
-#endif
+static void mem_dump(void)
+{
+	FILE *file;
+
+	if (MEM_DUMP)
+	{
+		file = fopen("memdump.log", "w");
+		if (file)
+		{
+			memory_dump(file);
+			fclose(file);
+		}
+	}
+}
 
 
 
@@ -2874,8 +2883,6 @@ static genf *get_static_handler(int databits, int readorwrite, int spacenum, int
     debugging
 -------------------------------------------------*/
 
-#if MEM_DUMP
-
 static void dump_map(FILE *file, const struct addrspace_data_t *space, const struct table_data_t *table)
 {
 	static const char *strings[] =
@@ -2950,9 +2957,8 @@ static void dump_map(FILE *file, const struct addrspace_data_t *space, const str
 	}
 }
 
-static void mem_dump(void)
+void memory_dump(FILE *file)
 {
-	FILE *file = fopen("memdump.log", "w");
 	int cpunum, spacenum;
 
 	/* skip if we can't open the file */
@@ -2976,7 +2982,5 @@ static void mem_dump(void)
 				              "==========================================\n", cpunum, spacenum);
 				dump_map(file, &cpudata[cpunum].space[spacenum], &cpudata[cpunum].space[spacenum].write);
 			}
-	fclose(file);
 }
 
-#endif

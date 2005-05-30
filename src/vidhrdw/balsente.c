@@ -319,6 +319,6 @@ VIDEO_UPDATE( balsente )
 		int beamx = balsente_shooter_x;
 		int beamy = balsente_shooter_y - 10;
 
-		draw_crosshair(bitmap,beamx,beamy,cliprect);
+		draw_crosshair(bitmap,beamx,beamy,cliprect,0);
 	}
 }

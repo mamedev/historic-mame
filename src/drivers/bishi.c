@@ -257,6 +257,7 @@ MACHINE_DRIVER_END
 
 // ROM definitions
 
+
 ROM_START( bishi )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "575jaa.a05", 0x000000, 0x80000, CRC(7d354567) SHA1(7fc11585693c91c0ef7a8e00df4f2f01b356210f) )
@@ -266,7 +267,7 @@ ROM_START( bishi )
 	ROM_LOAD16_BYTE( "575_ja.a07", 0x000000, 0x080000, CRC(37bbf387) SHA1(dcf7b151b865d251f3122611b6339dd84eb1f990) )
 	ROM_LOAD16_BYTE( "575_ja.a08", 0x000001, 0x080000, CRC(47ecd559) SHA1(7baac23557d40cccc21b93f181606563924244b0) )
 	ROM_LOAD16_BYTE( "575_ja.a09", 0x100000, 0x080000, CRC(c1db6e68) SHA1(e951661e3b39a83db21aed484764e032adcf3c2a) )
-	ROM_LOAD16_BYTE( "575_ja.a10", 0x100001, 0x080000, BAD_DUMP CRC(c8b145d6) SHA1(15cb3e4bebb999f1791fafa7a2ce3875a56991ff) )  // both halves identical (bad?)
+	ROM_LOAD16_BYTE( "575_ja.a10", 0x100001, 0x080000, BAD_DUMP CRC(c8b145d6) SHA1(15cb3e4bebb999f1791fafa7a2ce3875a56991ff) )  // both halves identical (bad)
 
 	// dummy region (game has no sprites, but we want to use the GX mixer)
 	ROM_REGION( 0x80000, REGION_GFX2, 0 )
@@ -278,9 +279,31 @@ ROM_START( bishi )
 	ROM_LOAD( "575jaa.a04", 0x180000, 0x080000, CRC(0120967f) SHA1(14cc2b9269f46859d1de418c8d4c76a6bdb09d16) )
 ROM_END
 
+ROM_START( sbishi )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "675_ja.a05", 0x000000, 0x80000, CRC(28a09c01) SHA1(627f6c9b9e88434ff3198c778ae5c57d9cda82c5) )
+	ROM_LOAD16_WORD_SWAP( "675_ja.a06", 0x080000, 0x80000, CRC(e4998b33) SHA1(3012f7661542b38b1a113c5c10e2729c6a37e709) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROM_LOAD16_BYTE( "675_ja.a07", 0x000000, 0x080000, CRC(6fe7c658) SHA1(a786a417053a5fc62f967bdd564e8d3bdc89f958) )
+	ROM_LOAD16_BYTE( "675_ja.a08", 0x000001, 0x080000, CRC(c230afc9) SHA1(f23c64ed08e77960beb0f8db2605622a3887e5f8) )
+	ROM_LOAD16_BYTE( "675_ja.a09", 0x100000, 0x080000, CRC(63fe85a5) SHA1(e5ef1f3fc634264260d5fc3a669646abf1601b23) )
+	ROM_LOAD16_BYTE( "675_ja.a10", 0x100001, 0x080000, CRC(703ac462) SHA1(6dd05b2a78517a46b9ae8322c6b94bddbe91e848) )
+
+	// dummy region (game has no sprites, but we want to use the GX mixer)
+	ROM_REGION( 0x80000, REGION_GFX2, 0 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "675_ja.a01", 0x000000, 0x080000, CRC(67910b15) SHA1(6566e2344ebe9d61c584a1ab9ecbc8e7dd0a9a5b) )
+	ROM_LOAD( "675_ja.a02", 0x080000, 0x080000, CRC(3313a7ae) SHA1(a49df87446a5b1bbf77fdf13a298ed486d7d7476) )
+	ROM_LOAD( "675_ja.a03", 0x100000, 0x080000, CRC(ec977e6a) SHA1(9beb13e716d1694a64ce787fa3db4ba986a07d51) )
+	ROM_LOAD( "675_ja.a04", 0x180000, 0x080000, CRC(1d1de34e) SHA1(1671216545cc0842cf8c128eaa0c612e6d91875c) )
+ROM_END
+
 static DRIVER_INIT( bishi )
 {
 	state_save_register_UINT16("bishi", 0, "control2", &cur_control, 1);
 }
 
-GAMEX( 1996, bishi,     0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Bishi Bashi Championship Mini Game Senshuken", GAME_IMPERFECT_GRAPHICS)
+GAMEX( 1996, bishi,     0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Bishi Bashi Championship Mini Game Senshuken (Japan JAA)", GAME_IMPERFECT_GRAPHICS)
+GAMEX( 1998, sbishi,    0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Super Bishi Bashi Championship (Japan JAA)", GAME_IMPERFECT_GRAPHICS)

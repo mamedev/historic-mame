@@ -11,6 +11,7 @@
 
 #include "osd_cpu.h"
 #include <stddef.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1018,6 +1019,9 @@ data8_t *	memory_install_write8_matchmask_handler (int cpunum, int spacenum, off
 data16_t *	memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler);
 data32_t *	memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler);
 data64_t *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler);
+
+/* ----- memory debugging ----- */
+void memory_dump(FILE *file);
 
 
 /***************************************************************************

@@ -221,9 +221,9 @@ static VIDEO_UPDATE( konamigq )
 {
 	video_update_psx( bitmap, cliprect );
 
-	draw_crosshair( bitmap, GUNX( 5 ), GUNY( 6 ), cliprect );
-	draw_crosshair( bitmap, GUNX( 7 ), GUNY( 8 ), cliprect );
-	draw_crosshair( bitmap, GUNX( 9 ), GUNY( 10 ), cliprect );
+	draw_crosshair( bitmap, GUNX( 5 ), GUNY( 6 ), cliprect, 0 );
+	draw_crosshair( bitmap, GUNX( 7 ), GUNY( 8 ), cliprect, 1 );
+	draw_crosshair( bitmap, GUNX( 9 ), GUNY( 10 ), cliprect, 2 );
 }
 
 static ADDRESS_MAP_START( konamigq_map, ADDRESS_SPACE_PROGRAM, 32 )

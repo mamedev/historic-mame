@@ -1532,7 +1532,7 @@ VIDEO_UPDATE( namcos22s )
 	{
 		beamx = ((readinputport(1))*640)/256;
 		beamy = ((readinputport(2))*480)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect );
+		draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
 	}
 }
 

@@ -42,7 +42,7 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	printf x
+#define LOG(x)	do { logerror x; } while (0)
 #else
 #define LOG(x)
 #endif
@@ -73,6 +73,14 @@ struct _mame_timer
 	mame_time 		start;
 	mame_time 		expire;
 };
+
+
+
+/*-------------------------------------------------
+    prototypes
+-------------------------------------------------*/
+
+static void timer_logtimers(void);
 
 
 
@@ -137,7 +145,11 @@ INLINE mame_timer *timer_new(void)
 
 	/* remove an empty entry */
 	if (!timer_free_head)
+	{
+		timer_logtimers();
+		osd_die("Out of timers!\n");
 		return NULL;
+	}
 	timer = timer_free_head;
 	timer_free_head = timer->next;
 	if (!timer_free_head)
@@ -689,3 +701,33 @@ mame_time mame_timer_firetime(mame_timer *which)
 {
 	return which->expire;
 }
+
+
+
+/*-------------------------------------------------
+    timer_logtimers - log all the timers
+-------------------------------------------------*/
+
+static void timer_logtimers(void)
+{
+	mame_timer *t;
+
+	logerror("===============\n");
+	logerror("TIMER LOG START\n");
+	logerror("===============\n");
+
+	logerror("Enqueued timers:\n");
+	for (t = timer_head; t; t = t->next)
+		logerror("  Start=%15.6f Exp=%15.6f Per=%15.6f Ena=%d Tmp=%d (%s:%d)\n",
+			mame_time_to_double(t->start), mame_time_to_double(t->expire), mame_time_to_double(t->period), t->enabled, t->temporary, t->file, t->line);
+
+	logerror("Free timers:\n");
+	for (t = timer_free_head; t; t = t->next)
+		logerror("  Start=%15.6f Exp=%15.6f Per=%15.6f Ena=%d Tmp=%d (%s:%d)\n",
+			mame_time_to_double(t->start), mame_time_to_double(t->expire), mame_time_to_double(t->period), t->enabled, t->temporary, t->file, t->line);
+
+	logerror("==============\n");
+	logerror("TIMER LOG STOP\n");
+	logerror("==============\n");
+}
+

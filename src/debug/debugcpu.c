@@ -70,6 +70,7 @@ static int break_on_interrupt_cpunum;
 static int break_on_interrupt_irqline;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
+static struct symbol_table *global_symtable;
 
 static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
@@ -240,18 +241,22 @@ void debug_cpu_init(void)
 	step_overout_cpunum = 0;
 	key_check_counter = 0;
 
+	/* create a global symbol table */
+	global_symtable = debug_symtable_alloc();
+	debug_expression_set_global_symtable(global_symtable);
+
 	/* add "wpaddr", "wpdata", "cycles", "cpunum" to the global symbol table */
-	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "wpaddr", 0, get_wpaddr, NULL);
-	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "wpdata", 0, get_wpdata, NULL);
-	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "cycles", 0, get_cycles, NULL);
-	debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, "cpunum", 0, get_cpunum, NULL);
+	debug_symtable_add_register(global_symtable, "wpaddr", 0, get_wpaddr, NULL);
+	debug_symtable_add_register(global_symtable, "wpdata", 0, get_wpdata, NULL);
+	debug_symtable_add_register(global_symtable, "cycles", 0, get_cycles, NULL);
+	debug_symtable_add_register(global_symtable, "cpunum", 0, get_cpunum, NULL);
 
 	/* add the temporary variables to the global symbol table */
 	for (regnum = 0; regnum < NUM_TEMP_VARIABLES; regnum++)
 	{
 		char symname[10];
 		sprintf(symname, "temp%d", regnum);
-		debug_symtable_add_register(GLOBAL_SYMBOL_TABLE, symname, regnum, get_tempvar, set_tempvar);
+		debug_symtable_add_register(global_symtable, symname, regnum, get_tempvar, set_tempvar);
 	}
 
 	/* reset the CPU info */
@@ -356,6 +361,10 @@ void debug_cpu_exit(void)
 				debug_watchpoint_clear(debug_cpuinfo[cpunum].space[spacenum].first_wp->index);
 		}
 	}
+
+	/* free the global symbol table */
+	if (global_symtable)
+		debug_symtable_free(global_symtable);
 }
 
 

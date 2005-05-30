@@ -179,7 +179,7 @@ struct parsed_expression
 **  LOCAL VARIABLES
 **#################################################################################################*/
 
-static struct symbol_table global_table;
+static struct symbol_table *global_table;
 
 
 
@@ -1540,6 +1540,28 @@ static void free_expression_strings(struct parsed_expression *expr)
 **#################################################################################################*/
 
 /*-------------------------------------------------
+    debug_expression_set_global_symtable - set the
+    global symbol table
+-------------------------------------------------*/
+
+void debug_expression_set_global_symtable(struct symbol_table *table)
+{
+	global_table = table;
+}
+
+
+/*-------------------------------------------------
+    debug_expression_get_global_symtable - return
+    a pointer to the global symtable
+-------------------------------------------------*/
+
+struct symbol_table *debug_expression_get_global_symtable(void)
+{
+	return global_table;
+}
+
+
+/*-------------------------------------------------
     debug_expression_evaluate - evaluate a string
     expression using the passed symbol table
 -------------------------------------------------*/
@@ -1720,12 +1742,8 @@ int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *en
 	char *newstring;
 	int strindex;
 
-	/* NULL means add to the global table */
-	if (table == GLOBAL_SYMBOL_TABLE)
-		table = &global_table;
-
 	/* see if we already have an entry */
-	symbol = NULL;//(struct symbol_entry *)debug_symtable_find(table, entry->name);
+	symbol = (struct symbol_entry *)debug_symtable_find(table, entry->name);
 	if (symbol != NULL)
 	{
 		/* we found it; replace this entry */
@@ -1818,8 +1836,8 @@ const struct symbol_entry *debug_symtable_find(const struct symbol_table *table,
 {
 	int symindex;
 
-	/* NULL means find in the global table */
-	if (table != GLOBAL_SYMBOL_TABLE)
+	/* NULL means find only in the global table */
+	if (table != NULL)
 	{
 		/* dumb linear search for now */
 		for (symindex = 0; symindex < table->count; symindex++)
@@ -1828,12 +1846,14 @@ const struct symbol_entry *debug_symtable_find(const struct symbol_table *table,
 	}
 
 	/* if not found, look in the global table */
-	table = &global_table;
-
-	/* dumb linear search for now */
-	for (symindex = 0; symindex < table->count; symindex++)
-		if (!strcmp(symbol, table->symbol[symindex].name))
-			return &table->symbol[symindex];
+	table = global_table;
+	if (table != NULL)
+	{
+		/* dumb linear search for now */
+		for (symindex = 0; symindex < table->count; symindex++)
+			if (!strcmp(symbol, table->symbol[symindex].name))
+				return &table->symbol[symindex];
+	}
 
 	return NULL;
 }

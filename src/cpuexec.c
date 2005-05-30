@@ -228,16 +228,20 @@ static void watchdog_setup(void);
 static void handle_loadsave(void);
 
 
+
 /*************************************
  *
  *  Watchdog Flags
  *
  *************************************/
+
 #define WATCHDOG_IS_STARTED_DISABLED	-1
 #define WATCHDOG_IS_DISABLED			-2
 #define WATCHDOG_IS_TIMER_BASED			-3
 #define WATCHDOG_IS_INVALID				-4
 #define WATCHDOG_IS_BEING_STARTED		-5
+
+
 
 #if 0
 #pragma mark CORE CPU
@@ -654,17 +658,23 @@ void cpu_loadsave_reset(void)
 
 /*************************************
  *
- *  Watchdog routines
+ *  Watchdog timer callback
  *
  *************************************/
-
-/*---------------- Internal watchdog functions ---------------*/
 
 static void watchdog_callback(int param)
 {
 	logerror("reset caused by the (time) watchdog\n");
 	machine_reset();
 }
+
+
+
+/*************************************
+ *
+ *  Watchdog setup routine
+ *
+ *************************************/
 
 static void watchdog_setup(void)
 {
@@ -675,16 +685,14 @@ static void watchdog_setup(void)
 			/* Start a vblank based watchdog. */
 			watchdog_counter = Machine->drv->watchdog_vblank_count;
 		}
-		else
-		if (Machine->drv->watchdog_time != 0)
+		else if (Machine->drv->watchdog_time != 0)
 		{
 			/* Start a time based watchdog. */
 			watchdog_timer = timer_alloc(watchdog_callback);
 			timer_adjust(watchdog_timer, Machine->drv->watchdog_time, 0, 0);
 			watchdog_counter = WATCHDOG_IS_TIMER_BASED;
 		}
-		else
-		if (watchdog_counter == WATCHDOG_IS_INVALID)
+		else if (watchdog_counter == WATCHDOG_IS_INVALID)
 		{
 			/* The watchdog was not initialized in the MACHINE_DRIVER,
              * so we will start with it disabled.
@@ -707,6 +715,14 @@ static void watchdog_setup(void)
 	}
 }
 
+
+
+/*************************************
+ *
+ *  Watchdog reset
+ *
+ *************************************/
+
 static void watchdog_reset(void)
 {
 	if (watchdog_counter == WATCHDOG_IS_TIMER_BASED)
@@ -726,7 +742,12 @@ static void watchdog_reset(void)
 }
 
 
-/*---------------- External watchdog functions ---------------*/
+
+/*************************************
+ *
+ *  Watchdog enable/disable
+ *
+ *************************************/
 
 void watchdog_enable(int enable)
 {
@@ -747,6 +768,14 @@ void watchdog_enable(int enable)
 	}
 }
 
+
+
+/*************************************
+ *
+ *  Read/write handlers for watchdog
+ *  reset
+ *
+ *************************************/
 
 WRITE8_HANDLER( watchdog_reset_w )
 {
@@ -1781,11 +1810,13 @@ static void cpu_updatecallback(int param)
 
 	/* check the watchdog */
 	if (watchdog_counter > 0)
+	{
 		if (--watchdog_counter == 0)
 		{
 			logerror("reset caused by the (vblank) watchdog\n");
 			machine_reset();
 		}
+	}
 
 	/* track total frames */
 	current_frame++;

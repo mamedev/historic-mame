@@ -1240,9 +1240,9 @@ static VIDEO_UPDATE( carnevil )
 
 	/* now draw the crosshairs */
 	get_crosshair_xy(0, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect);
+	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
 	get_crosshair_xy(1, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect);
+	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 }
 
 

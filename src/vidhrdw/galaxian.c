@@ -1649,8 +1649,7 @@ void galaxian_init_stars(int colors_offset)
 
 	if (total_stars != STAR_COUNT)
 	{
-		logerror("total_stars = %d, STAR_COUNT = %d\n",total_stars,STAR_COUNT);
-		exit(1);
+		osd_die("total_stars = %d, STAR_COUNT = %d\n",total_stars,STAR_COUNT);
 	}
 }
 

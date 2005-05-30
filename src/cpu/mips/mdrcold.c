@@ -228,9 +228,8 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	/* handle the results */
 	if (!(result & RECOMPILE_SUCCESSFUL))
 	{
-		printf("Unimplemented op %08X (%02X,%02X)\n", *opptr, *opptr >> 26, *opptr & 0x3f);
 		mips3_exit();
-		exit(1);
+		osd_die("Unimplemented op %08X (%02X,%02X)\n", *opptr, *opptr >> 26, *opptr & 0x3f);
 	}
 	pcdelta = (INT8)(result >> 24);
 	cycles = (INT8)(result >> 16);

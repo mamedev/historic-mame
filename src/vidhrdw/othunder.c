@@ -310,7 +310,7 @@ VIDEO_UPDATE( othunder )
 		screeny += 2;
 
 		/* player 1 */
-		draw_crosshair(bitmap,screenx,screeny,cliprect);
+		draw_crosshair(bitmap,screenx,screeny,cliprect,0);
 
 		/* calculate p2 screen co-ords by matching routine at $AA48 */
 		rawx = othunder_ram[0x284c/2];
@@ -353,7 +353,7 @@ VIDEO_UPDATE( othunder )
 		screeny += 2;
 
 		/* player 2 */
-		draw_crosshair(bitmap,screenx,screeny,cliprect);
+		draw_crosshair(bitmap,screenx,screeny,cliprect,1);
 	}
 }
 

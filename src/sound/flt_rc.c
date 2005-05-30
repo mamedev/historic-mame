@@ -21,8 +21,8 @@ static void filter_rc_update(void *param, stream_sample_t **inputs, stream_sampl
 
 	while (samples--)
 	{
-		*dst++ = memory + ((*src++ - memory) * info->k) / 0x10000;
-		memory = src[-1];
+		*dst++ = *src + ((memory - *src) * info->k) / 0x10000;
+		memory = *src++;
 	}
 	info->memory = memory;
 }

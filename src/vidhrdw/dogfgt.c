@@ -83,13 +83,12 @@ static void get_tile_info(int tile_index)
 VIDEO_START( dogfgt )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
+	if (!bg_tilemap)
+		return 1;
 
 	bitmapram = auto_malloc(BITMAPRAM_SIZE);
 
-	pixbitmap = bitmap_alloc(256,256);
-
-	if (!bg_tilemap || !bitmapram || !pixbitmap)
-		return 1;
+	pixbitmap = auto_bitmap_alloc(256,256);
 
 	return 0;
 }

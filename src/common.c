@@ -29,7 +29,7 @@
 // routines don't clip at boundaries of the bitmap.
 #define BITMAP_SAFETY			16
 
-#define MAX_MALLOCS				4096
+#define MAX_MALLOCS				8192
 
 
 

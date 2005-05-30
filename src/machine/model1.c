@@ -38,8 +38,7 @@ static UINT32 fifoout_pop(void)
 {
 	UINT32 v;
 	if(fifoout_wpos == fifoout_rpos) {
-		logerror("TGP FIFOOUT underflow (%x)\n", activecpu_get_pc());
-		exit(0);
+		osd_die("TGP FIFOOUT underflow (%x)\n", activecpu_get_pc());
 	}
 	v = fifoout_data[fifoout_rpos++];
 	if(fifoout_rpos == FIFO_SIZE)

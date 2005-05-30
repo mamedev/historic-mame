@@ -357,11 +357,11 @@ DrawCrossshair( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 
 	beamx = readinputport(2+x1port)*bitmap->width/256;
 	beamy = readinputport(2+y1port)*bitmap->height/256;
-	draw_crosshair( bitmap, beamx, beamy, cliprect );
+	draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
 
 	beamx = readinputport(2+x2port)*bitmap->width/256;
 	beamy = readinputport(2+y2port)*bitmap->height/256;
-	draw_crosshair( bitmap, beamx, beamy, cliprect );
+	draw_crosshair( bitmap, beamx, beamy, cliprect, 1 );
 }
 
 /**************************************************************************/

@@ -16,9 +16,6 @@
 **  CONSTANTS
 **#################################################################################################*/
 
-/* global symbol table */
-#define GLOBAL_SYMBOL_TABLE					(NULL)
-
 /* maximum number of parameters in a function call */
 #define MAX_FUNCTION_PARAMS					(16)
 
@@ -120,6 +117,8 @@ typedef UINT32 EXPRERR;
 **#################################################################################################*/
 
 /* expression evaluation */
+void						debug_expression_set_global_symtable(struct symbol_table *table);
+struct symbol_table *		debug_expression_get_global_symtable(void);
 EXPRERR 					debug_expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result);
 EXPRERR 					debug_expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result);
 EXPRERR 					debug_expression_execute(struct parsed_expression *expr, UINT64 *result);

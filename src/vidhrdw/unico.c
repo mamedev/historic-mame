@@ -386,12 +386,12 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 		draw_crosshair(bitmap,
 			readinputport(6)*384/256,
 			readinputport(5)*224/256,
-			cliprect);
+			cliprect,0);
 
 		draw_crosshair(bitmap,
 			readinputport(4)*384/256,
 			readinputport(3)*224/256,
-			cliprect);
+			cliprect,1);
 	}
 }
 
@@ -436,12 +436,12 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 		draw_crosshair(bitmap,
 			readinputport(6)*384/256,
 			readinputport(5)*224/256,
-			cliprect);
+			cliprect,0);
 
 		draw_crosshair(bitmap,
 			readinputport(4)*384/256,
 			readinputport(3)*224/256,
-			cliprect);
+			cliprect,1);
 	}
 }
 

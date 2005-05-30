@@ -26,8 +26,12 @@ endif
 
 # enable guard pages on all memory allocations in the debug build
 ifdef DEBUG
-OSOBJS += $(OBJ)/windows/winalloc.o
-LDFLAGS += -Wl,--allow-multiple-definition
+DEFS += -DMALLOC_DEBUG
+OSDBGOBJS = $(OBJ)/windows/winalloc.o
+OSDBGLDFLAGS = -Wl,--allow-multiple-definition
+else
+OSDBGOBJS =
+OSDBGLDFLAGS =
 endif
 
 # video blitting functions

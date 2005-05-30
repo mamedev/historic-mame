@@ -441,10 +441,7 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	mips3.icache = malloc(config->icache);
 	mips3.dcache = malloc(config->dcache);
 	if (!mips3.icache || !mips3.dcache)
-	{
-		fprintf(stderr, "error: couldn't allocate cache for mips3!\n");
-		exit(1);
-	}
+		osd_die("error: couldn't allocate cache for mips3!\n");
 
 	/* set up the endianness */
 	mips3.bigendian = bigendian;

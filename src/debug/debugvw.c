@@ -1004,7 +1004,13 @@ static void disasm_free(struct debug_view *view)
 
 	/* free any disasm we callocated */
 	if (dasmdata)
+	{
+		if (dasmdata->expression)
+			debug_expression_free(dasmdata->expression);
+		if (dasmdata->expression_string)
+			free(dasmdata->expression_string);
 		free(dasmdata);
+	}
 	view->extra_data = NULL;
 }
 
@@ -1453,7 +1459,13 @@ static void memory_free(struct debug_view *view)
 
 	/* free any memory we callocated */
 	if (memdata)
+	{
+		if (memdata->expression)
+			debug_expression_free(memdata->expression);
+		if (memdata->expression_string)
+			free(memdata->expression_string);
 		free(memdata);
+	}
 	view->extra_data = NULL;
 }
 

@@ -512,7 +512,7 @@ int jaguargpu_execute(int cycles)
 	do
 	{
 		/* debugging */
-		//if (jaguar.PC < 0xf03000 || jaguar.PC > 0xf04000) { fprintf(stderr, "GPU: jaguar.PC = %06X (ppc = %06X)\n", jaguar.PC, jaguar.ppc); exit(1); }
+		//if (jaguar.PC < 0xf03000 || jaguar.PC > 0xf04000) { osd_die("GPU: jaguar.PC = %06X (ppc = %06X)\n", jaguar.PC, jaguar.ppc); }
 		jaguar.ppc = jaguar.PC;
 		CALL_MAME_DEBUG;
 

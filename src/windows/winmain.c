@@ -697,8 +697,7 @@ static void start_profiler(void)
 	if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &currentThread,
 			THREAD_GET_CONTEXT | THREAD_SUSPEND_RESUME | THREAD_QUERY_INFORMATION, FALSE, 0))
 	{
-		fprintf(stderr, "Failed to get thread handle for main thread\n");
-		exit(1);
+		osd_die("Failed to get thread handle for main thread\n");
 	}
 
 	profiler_thread_exit = 0;

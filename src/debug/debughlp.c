@@ -83,6 +83,7 @@ static struct help_item static_help_list[] =
 		"  help [<topic>] -- get help on a particular topic\n"
 		"  do <expression> -- evaluates the given expression\n"
 		"  printf <format>[,<item>[,...]] -- prints one or more <item>s to the console using <format>\n"
+		"  logerror <format>[,<item>[,...]] -- outputs one or more <item>s to the error.log\n"
 		"  tracelog <format>[,<item>[,...]] -- outputs one or more <item>s to the trace file using <format>\n"
 		"  snap [<filename>] -- save a screen snapshot\n"
 		"  quit -- exits MAME and the debugger\n"
@@ -104,6 +105,7 @@ static struct help_item static_help_list[] =
 		"  save <filename>,<address>,<length>[,<cpunum>] -- save binary program memory to the given file\n"
 		"  saved <filename>,<address>,<length>[,<cpunum>] -- save binary data memory to the given file\n"
 		"  savei <filename>,<address>,<length>[,<cpunum>] -- save binary I/O memory to the given file\n"
+		"  memdump [<filename>] -- dump the current memory map to <filename>\n"
 		"\n"
 	},
 	{
@@ -223,6 +225,29 @@ static struct help_item static_help_list[] =
 		"\n"
 		"printf \"A=%d, B=%d\\nC=%d\",a,b,a+b\n"
 		"  Prints A=<aval>, B=<bval> on one line, and C=<a+bval> on a second line.\n"
+		"\n"
+	},
+	{
+		"logerror",
+		"\n"
+		"  logerror <format>[,<item>[,...]]\n"
+		"\n"
+		"The logerror command performs a C-style printf to the error log. Only a very limited set of\n"
+		"formatting options are available:\n"
+		"\n"
+		"  %[0][<n>]d -- logs <item> as a decimal value with optional digit count and zero-fill\n"
+		"  %[0][<n>]x -- logs <item> as a hexadecimal value with optional digit count and zero-fill\n"
+		"\n"
+		"All remaining formatting options are ignored. Use %% together to output a % character. Multiple\n"
+		"lines can be printed by embedding a \\n in the text.\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"logerror \"PC=%04X\",pc\n"
+		"  Logs PC=<pcval> where <pcval> is displayed in hexadecimal with 4 digits with zero-fill.\n"
+		"\n"
+		"logerror \"A=%d, B=%d\\nC=%d\",a,b,a+b\n"
+		"  Logs A=<aval>, B=<bval> on one line, and C=<a+bval> on a second line.\n"
 		"\n"
 	},
 	{
@@ -841,6 +866,23 @@ static struct help_item static_help_list[] =
 		"\n"
 		"The wplist command lists all the current watchpoints, along with their index and any\n"
 		"conditions or actions attached to them.\n"
+		"\n"
+	},
+	{
+		"memdump",
+		"\n"
+		"  memdump [<filename>]\n"
+		"\n"
+		"Dumps the current memory map to <filename>. If <filename> is omitted, then dumps\n"
+		"to memdump.log"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"memdump mylog.log\n"
+		"  Dumps memory to mylog.log.\n"
+		"\n"
+		"memdump\n"
+		"  Dumps memory to memdump.log.\n"
 		"\n"
 	},
 };

@@ -105,7 +105,8 @@ $8000 - $ffff   ROM
 #include "cpu/m6809/m6809.h"
 #include "state.h"
 #include "sound/3812intf.h"
-#include "sound/msm5205.h"
+#include "sound/okim6295.h"
+#include "sound/custom.h"
 
 extern VIDEO_UPDATE( renegade );
 extern VIDEO_START( renegade );
@@ -127,6 +128,53 @@ static int bank;
 
 /********************************************************************************************/
 
+static struct renegade_adpcm_state
+{
+	struct adpcm_state adpcm;
+	sound_stream *stream;
+	UINT32 current, end;
+	UINT8 nibble;
+	UINT8 playing;
+	UINT8 *base;
+} renegade_adpcm;
+
+static void renegade_adpcm_callback(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples)
+{
+	struct renegade_adpcm_state *state = param;
+	stream_sample_t *dest = outputs[0];
+
+	while (state->playing && samples > 0)
+	{
+		int val = (state->base[state->current] >> state->nibble) & 15;
+
+		state->nibble ^= 4;
+		if (state->nibble == 4)
+		{
+			state->current++;
+			if (state->current >= state->end)
+				state->playing = 0;
+		}
+
+		*dest++ = clock_adpcm(&state->adpcm, val);
+		samples--;
+	}
+	while (samples > 0)
+	{
+		*dest++ = 0;
+		samples--;
+	}
+}
+
+void *renegade_adpcm_start(int clock, const struct CustomSound_interface *config)
+{
+	struct renegade_adpcm_state *state = &renegade_adpcm;
+	state->playing = 0;
+	state->stream = stream_create(0, 1, clock, state, renegade_adpcm_callback);
+	state->base = memory_region(REGION_SOUND1);
+	reset_adpcm(&state->adpcm);
+	return state;
+}
+
 static WRITE8_HANDLER( adpcm_play_w )
 {
 	int offs;
@@ -140,7 +188,12 @@ static WRITE8_HANDLER( adpcm_play_w )
 		len = 0x1000;
 
 	if (offs >= 0 && offs+len <= 0x20000)
-		;//ADPCM_play(0, offs, len);
+	{
+		renegade_adpcm.current = offs;
+		renegade_adpcm.end = offs + len/2;
+		renegade_adpcm.nibble = 4;
+		renegade_adpcm.playing = 1;
+	}
 	else
 		logerror("out of range adpcm command: 0x%02x\n", data);
 }
@@ -722,10 +775,9 @@ static struct YM3526interface ym3526_interface =
 	irqhandler
 };
 
-static struct MSM5205interface msm5205_interface =
+static struct CustomSound_interface adpcm_interface =
 {
-	NULL,				/* VCK function */
-	MSM5205_S48_4B		/* 8 kHz */
+	renegade_adpcm_start
 };
 
 
@@ -761,8 +813,8 @@ static MACHINE_DRIVER_START( renegade )
 	MDRV_SOUND_CONFIG(ym3526_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD(MSM5205, 384000)
-	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ADD(CUSTOM, 8000)
+	MDRV_SOUND_CONFIG(adpcm_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 

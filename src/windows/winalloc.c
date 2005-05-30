@@ -14,6 +14,11 @@
 #include "video.h"
 #include "blit.h"
 
+// undefine any redefines we have in the prefix
+#undef malloc
+#undef calloc
+#undef realloc
+
 
 
 //============================================================
@@ -43,6 +48,8 @@ typedef struct
 	void *			base;
 	void *			vbase;
 	int				id;
+	const char *	file;
+	int				line;
 } memory_entry;
 
 
@@ -96,6 +103,8 @@ INLINE void free_entry(memory_entry *entry)
 	entry->size = 0;
 	entry->base = NULL;
 	entry->vbase = NULL;
+	entry->file = NULL;
+	entry->line = 0;
 }
 
 
@@ -104,7 +113,7 @@ INLINE void free_entry(memory_entry *entry)
 //  IMPLEMENTATION
 //============================================================
 
-void* CLIB_DECL malloc(size_t size)
+void* malloc_file_line(size_t size, const char *file, int line)
 {
 	memory_entry *entry = allocate_entry();
 	UINT8 *page_base, *block_base;
@@ -134,17 +143,28 @@ void* CLIB_DECL malloc(size_t size)
 	entry->size = size;
 	entry->base = block_base;
 	entry->vbase = page_base - PAGE_SIZE;
+	entry->file = file;
+	entry->line = line;
 #if LOG_CALLS
-	logerror("malloc #%06d size = %d\n",entry->id,entry->size);
+	if (entry->file)
+		logerror("malloc #%06d size = %d (%s:%d)\n",entry->id,entry->size,entry->file,entry->line);
+	else
+		logerror("malloc #%06d size = %d\n",entry->id,entry->size);
 #endif
 	return block_base;
 }
 
 
-void* CLIB_DECL calloc(size_t size, size_t count)
+void* CLIB_DECL malloc(size_t size)
+{
+	return malloc_file_line(size, NULL, 0);
+}
+
+
+void* calloc_file_line(size_t size, size_t count, const char *file, int line)
 {
 	// first allocate the memory
-	void *memory = malloc(size * count);
+	void *memory = malloc_file_line(size * count, file, line);
 	if (memory == NULL)
 		return NULL;
 
@@ -154,7 +174,13 @@ void* CLIB_DECL calloc(size_t size, size_t count)
 }
 
 
-void * CLIB_DECL realloc(void *memory, size_t size)
+void* CLIB_DECL calloc(size_t size, size_t count)
+{
+	return calloc_file_line(size, count, NULL, 0);
+}
+
+
+void * realloc_file_line(void *memory, size_t size, const char *file, int line)
 {
 	void *newmemory = NULL;
 
@@ -162,7 +188,7 @@ void * CLIB_DECL realloc(void *memory, size_t size)
 	if (size != 0)
 	{
 		// allocate space for the new amount
-		newmemory = malloc(size);
+		newmemory = malloc_file_line(size, file, line);
 		if (newmemory == NULL)
 			return NULL;
 
@@ -182,6 +208,12 @@ void * CLIB_DECL realloc(void *memory, size_t size)
 		free(memory);
 
 	return newmemory;
+}
+
+
+void * CLIB_DECL realloc(void *memory, size_t size)
+{
+	return realloc_file_line(memory, size, NULL, 0);
 }
 
 
@@ -234,7 +266,10 @@ void check_unfreed_mem(void)
 			if (total == 0)
 				printf("--- memory leak warning ---\n");
 			total += memory_list[i].size;
-			printf("allocation #%06d, %d bytes\n",memory_list[i].id,memory_list[i].size);
+			if (memory_list[i].file)
+				printf("allocation #%06d, %d bytes (%s:%d)\n",memory_list[i].id,memory_list[i].size,memory_list[i].file,memory_list[i].line);
+			else
+				printf("allocation #%06d, %d bytes\n",memory_list[i].id,memory_list[i].size);
 		}
 	}
 

@@ -364,10 +364,7 @@ static void r3000_reset(void *param, int bigendian)
 	r3000.icache = malloc(config->icache);
 	r3000.dcache = malloc(config->dcache);
 	if (!r3000.icache || !r3000.dcache)
-	{
-		fprintf(stderr, "error: couldn't allocate cache for r3000!\n");
-		exit(1);
-	}
+		osd_die("error: couldn't allocate cache for r3000!\n");
 
 	/* set up the endianness */
 	r3000.bigendian = bigendian;

@@ -153,5 +153,5 @@ VIDEO_UPDATE( triplhnt )
 
 	triplhnt_draw_sprites(bitmap, cliprect);
 
-	draw_crosshair(bitmap, cross_x, cross_y, cliprect);
+	draw_crosshair(bitmap, cross_x, cross_y, cliprect, 0);
 }

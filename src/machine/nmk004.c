@@ -269,9 +269,7 @@ static void effects_update(int channel)
 							return;
 
 						default:
-logerror("effects channel %d unsupported token %02x\n",channel,token);
-exit(0);
-							break;
+							osd_die("effects channel %d unsupported token %02x\n",channel,token);
 					}
 				}
 			} while (token == 0xef || (token & 0xf0) == 0xf0);

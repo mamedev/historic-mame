@@ -203,8 +203,7 @@ UINT32 cdb_find_track(UINT32 fad){
 	if(fad && CD_toc.leadout.fad > fad)
 		return(CD_toc.last.num);
 
-	logerror("ERROR: no track for the poor fad %x\n", fad);
-	exit(1);
+	osd_die("ERROR: no track for the poor fad %x\n", fad);
 
 	return((INT32)-1);
 }
@@ -245,20 +244,17 @@ UINT32 cdb_find_track(UINT32 fad){
 
 		if(f->mode & CDB_FILTMODE_COD){
 
-			logerror("ERROR: cod check required\n");
-			exit(1);
+			osd_die("ERROR: cod check required\n");
 		}
 
 		if(f->mode & CDB_FILTMODE_SUB){
 
-			logerror("ERROR: sub check required\n");
-			exit(1);
+			osd_die("ERROR: sub check required\n");
 		}
 
 		if(f->mode & CDB_FILTMODE_CHAN){
 
-			logerror("ERROR: chan check required\n");
-			exit(1);
+			osd_die("ERROR: chan check required\n");
 		}
 
 		if(f->mode & CDB_FILTMODE_FID){
@@ -309,8 +305,7 @@ UINT32 cdb_make_room(UINT32 pn){
 
 	// should never happen, BFUL prevents it
 
-	logerror("ERROR: cdb_make_room found no free sector\n");
-	exit(1);
+	osd_die("ERROR: cdb_make_room found no free sector\n");
 }
 
 
@@ -359,8 +354,7 @@ UINT32 iso_read_sector(UINT32 mode, UINT32 fad, UINT8 * dst){
 
 		f = fopen(iso_track[tn-1].path, "rb");
 		if(f == NULL){
-			logerror("ERROR: couldn't open %s\n", iso_track[tn-1].path);
-			exit(1);
+			osd_die("ERROR: couldn't open %s\n", iso_track[tn-1].path);
 		}
 
 		logerror( "reading fad:%x off:%x tn:%i from %s\n",
@@ -368,8 +362,7 @@ UINT32 iso_read_sector(UINT32 mode, UINT32 fad, UINT8 * dst){
 
 		fseek(f, (fad - iso_track[tn-1].fad) * 2048, SEEK_SET); // 2352
 		if(fread(buff, 1, 2352, f) != 2352){
-			logerror("ERROR: couldn't read from iso (fad = %06x)\n", fad);
-			exit(1);
+			osd_die("ERROR: couldn't read from iso (fad = %06x)\n", fad);
 		}
 
 		fclose(f);
@@ -534,8 +527,7 @@ static void iso_build_disc_iso(void){
 
                         }else{
 
-                            logerror("ERROR: unknown track %i format (file: %s)\n", i, t);
-                            exit(1);
+                            osd_die("ERROR: unknown track %i format (file: %s)\n", i, t);
                         }
                         logerror("3\n");
                         memset(iso_buff, 0x00, 0x110);
@@ -694,8 +686,7 @@ void cdb_build_toc(void){
 	for(i = CD_toc.first.num-1; i <= CD_toc.last.num-1; i++){
 
 		if(iso_get_track_info(i+1, &ctrl, &idx, &fad)){
-			logerror("ERROR: error on cdb_build_toc, iso_get_track_info tn=%i\n", i+1);
-			exit(1);
+			osd_die("ERROR: error on cdb_build_toc, iso_get_track_info tn=%i\n", i+1);
 		}
 
 		CD_toc.track[i].ctrl	= (ctrl << 4);

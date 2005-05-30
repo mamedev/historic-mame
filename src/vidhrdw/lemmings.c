@@ -93,35 +93,18 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( lemmings )
 {
-	bitmap0 = bitmap_alloc(2048,256);
+	bitmap0 = auto_bitmap_alloc(2048,256);
 	vram_tilemap = tilemap_create(get_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	vram_buffer = (data8_t*)malloc(2048*64); /* 64 bytes per VRAM character */
-	vram_dirty = (data8_t*)malloc(2048);
-	sprite_triple_buffer_0 = (data16_t*)malloc(0x800);
-	sprite_triple_buffer_1 = (data16_t*)malloc(0x800);
-
-	if (!bitmap0 || !vram_tilemap || !vram_buffer || !vram_dirty || !sprite_triple_buffer_0 || !sprite_triple_buffer_1)
-		return 1;
+	vram_buffer = (data8_t*)auto_malloc(2048*64); /* 64 bytes per VRAM character */
+	vram_dirty = (data8_t*)auto_malloc(2048);
+	sprite_triple_buffer_0 = (data16_t*)auto_malloc(0x800);
+	sprite_triple_buffer_1 = (data16_t*)auto_malloc(0x800);
 
 	tilemap_set_transparent_pen(vram_tilemap,0);
 	fillbitmap(bitmap0,0x100,0);
 
 	return 0;
-}
-
-VIDEO_STOP( lemmings )
-{
-	if (bitmap0)
-		bitmap_free(bitmap0);
-	if (vram_buffer)
-		free(vram_buffer);
-	if (vram_dirty)
-		free(vram_dirty);
-	if (sprite_triple_buffer_0)
-		free(sprite_triple_buffer_0);
-	if (sprite_triple_buffer_1)
-		free(sprite_triple_buffer_1);
 }
 
 VIDEO_EOF( lemmings )

@@ -647,17 +647,17 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 
 void win_destroy_window(void)
 {
+	// possibly kill the debug window
+	if (options.mame_debug)
+		debugwin_destroy_windows();
+
 	// kill directdraw
 	if (win_use_directx)
 	{
 		if (win_use_directx == USE_D3D)
-		{
 			win_d3d_kill();
-		}
 		else
-		{
 			win_ddraw_kill();
-		}
 	}
 
 	// kill the window if it still exists

@@ -1049,7 +1049,7 @@ VIDEO_UPDATE( seawolf2 )
 		if (centre<2)   centre=2;
 		if (centre>317) centre=317;
 
-		draw_crosshair(bitmap,centre,35,&Machine->visible_area);
+		draw_crosshair(bitmap,centre,35,&Machine->visible_area,0);
 
 		/* Player 2 */
 
@@ -1060,7 +1060,7 @@ VIDEO_UPDATE( seawolf2 )
 			if (centre<1)   centre=1;
 			if (centre>316) centre=316;
 
-			draw_crosshair(bitmap,centre,33,&Machine->visible_area);
+			draw_crosshair(bitmap,centre,33,&Machine->visible_area,1);
 		}
 	}
 }

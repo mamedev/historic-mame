@@ -524,12 +524,12 @@ VIDEO_UPDATE( bang )
         /* 1P Gun */
         posx = readinputport(3)*320/256;
         posy = readinputport(5)*240/256;
-        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
+        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect, 0);
 
         /* 2P Gun */
         posx = readinputport(4)*320/256;
         posy = readinputport(6)*240/256;
-        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect);
+        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect, 1);
     }
 }
 

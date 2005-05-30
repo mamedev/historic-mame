@@ -92,6 +92,29 @@ void ppc603_exception(int exception)
 			}
 			break;
 
+		case EXCEPTION_SMI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x1400;
+				else
+					ppc.npc = 0x00000000 | 0x1400;
+			}
+			else {
+				ppc.exception_pending |= 1 << EXCEPTION_SMI;
+			}
+			break;
 
 		default:
 			osd_die("ppc: Unhandled exception %d\n", exception);
@@ -108,6 +131,12 @@ static void ppc603_set_irq_line(int irqline, int state)
 			ppc.irq_callback(irqline);
 		}
 	}
+}
+
+static void ppc603_set_smi_line(int state)
+{
+	if( state )
+		ppc603_exception(EXCEPTION_SMI);
 }
 
 static void ppc603_reset(void *param)

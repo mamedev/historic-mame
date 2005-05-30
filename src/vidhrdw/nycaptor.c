@@ -306,8 +306,8 @@ VIDEO_UPDATE( nycaptor )
   break;
  }
  if(nyc_gametype==1)
- 	draw_crosshair(bitmap,readinputport(5),255-readinputport(6),cliprect);
+ 	draw_crosshair(bitmap,readinputport(5),255-readinputport(6),cliprect,0);
  else
- 	draw_crosshair(bitmap,readinputport(5),readinputport(6),cliprect);
+ 	draw_crosshair(bitmap,readinputport(5),readinputport(6),cliprect,0);
 }
 

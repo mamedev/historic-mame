@@ -2049,7 +2049,7 @@ static void RebuildStringTables(void)
 		(!menuStrings.subStrings && menuStrings.numStrings) ||
 		(!menuStrings.buf && storageNeeded))
 	{
-		logerror(	"cheat: memory allocation error\n"
+		osd_die(	"cheat: memory allocation error\n"
 					"	length =			%.8X\n"
 					"	numStrings =		%.8X\n"
 					"	mainStringLength =	%.8X\n"
@@ -2066,8 +2066,6 @@ static void RebuildStringTables(void)
 					(int)menuStrings.mainStrings,
 					(int)menuStrings.subStrings,
 					(int)menuStrings.buf);
-
-		exit(1);
 	}
 
 	traverse = menuStrings.buf;

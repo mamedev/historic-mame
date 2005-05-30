@@ -264,8 +264,7 @@ static char *copy_and_expand_variables(const char *path, int len)
 	return result;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory in variable expansion!\n");
-	exit(1);
+	osd_die("Out of memory in variable expansion!\n");
 }
 
 
@@ -334,8 +333,7 @@ static void expand_pathlist(struct pathdata *list)
 	return;
 
 out_of_memory:
-	fprintf(stderr, "Out of memory!\n");
-	exit(1);
+	osd_die("Out of memory!\n");
 }
 
 

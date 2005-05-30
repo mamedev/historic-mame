@@ -3527,7 +3527,7 @@ void drawgfx_toggle_crosshair(void)
 	crosshair_enable^=1;
 }
 
-void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip)
+void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip,int player)
 {
 	unsigned short black,white;
 	int i;
@@ -3540,10 +3540,40 @@ void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangl
 
 	for (i = 1;i < 6;i++)
 	{
-		plotclip(bitmap,x+i,y,white,clip);
-		plotclip(bitmap,x-i,y,white,clip);
-		plotclip(bitmap,x,y+i,white,clip);
-		plotclip(bitmap,x,y-i,white,clip);
+		switch (player)
+		{
+			case 0:
+				plotclip(bitmap,x+i,y,white,clip);
+				plotclip(bitmap,x-i,y,white,clip);
+				plotclip(bitmap,x,y+i,white,clip);
+				plotclip(bitmap,x,y-i,white,clip);
+				break;
+
+			case 1:
+				plotclip(bitmap,x+i,y-i,white,clip);
+				plotclip(bitmap,x-i,y-i,white,clip);
+				plotclip(bitmap,x+i,y+i,white,clip);
+				plotclip(bitmap,x-i,y+i,white,clip);
+				break;
+
+			case 2:
+				plotclip(bitmap,x-5,y-i,white,clip);
+				plotclip(bitmap,x+5,y-i,white,clip);
+				plotclip(bitmap,x-5,y+i,white,clip);
+				plotclip(bitmap,x+5,y+i,white,clip);
+				plotclip(bitmap,x-i,y-5,white,clip);
+				plotclip(bitmap,x+i,y-5,white,clip);
+				plotclip(bitmap,x-i,y+5,white,clip);
+				plotclip(bitmap,x+i,y+5,white,clip);
+				break;
+
+			case 3:
+				plotclip(bitmap,x-i,y-5+i,white,clip);
+				plotclip(bitmap,x+i,y-5+i,white,clip);
+				plotclip(bitmap,x-i,y+5-i,white,clip);
+				plotclip(bitmap,x+i,y+5-i,white,clip);
+				break;
+		}
 	}
 }
 

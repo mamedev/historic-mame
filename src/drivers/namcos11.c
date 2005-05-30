@@ -872,8 +872,8 @@ static VIDEO_UPDATE( lightgun )
 {
 	video_update_psx( bitmap, cliprect );
 
-	draw_crosshair( bitmap, lightgunx( 6 ), lightguny( 7 ), cliprect );
-	draw_crosshair( bitmap, lightgunx( 8 ), lightguny( 9 ), cliprect );
+	draw_crosshair( bitmap, lightgunx( 6 ), lightguny( 7 ), cliprect, 0 );
+	draw_crosshair( bitmap, lightgunx( 8 ), lightguny( 9 ), cliprect, 1 );
 }
 
 static MACHINE_DRIVER_START( coh110g )

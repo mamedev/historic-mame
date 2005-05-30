@@ -136,16 +136,14 @@ static void InitDasm16C5x(void)
 				case 'k':
 					bit --;
 					break;
-				default: printf("Invalid instruction encoding '%s %s'\n",
+				default: osd_die("Invalid instruction encoding '%s %s'\n",
 					ops[0],ops[1]);
-					exit(1);
 			}
 		}
 		if (bit != -1 )
 		{
-			printf("not enough bits in encoding '%s %s' %d\n",
+			osd_die("not enough bits in encoding '%s %s' %d\n",
 				ops[0],ops[1],bit);
-			exit(1);
 		}
 		while (isspace(*p)) p++;
 		if (*p) Op[i].extcode = *p;
@@ -222,7 +220,7 @@ unsigned Dasm16C5x(char *str, unsigned pc)
 			case 'k': k <<=1; k |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 			case ' ': break;
 			case '1': case '0':  bit--; break;
-			case '\0': printf("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
+			case '\0': osd_die("premature end of parse string, opcode %x, bit = %d\n",code,bit);
 		}
 		cp++;
 	}
@@ -243,8 +241,7 @@ unsigned Dasm16C5x(char *str, unsigned pc)
 				case 'F': sprintf(num,"%s",regfile[f]); break;
 				case 'K': sprintf(num,"%02Xh",k); break;
 				default:
-					printf("illegal escape character in format '%s'\n",Op[op].fmt);
-					exit(1);
+					osd_die("illegal escape character in format '%s'\n",Op[op].fmt);
 			}
 			q = num; while (*q) *str++ = *q++;
 			*str = '\0';

@@ -4,13 +4,14 @@
     Cool Pool       (c) 1992 Catalina
     9 Ball Shootout (c) 1993 E-Scape/Bundra
 
-    preliminary driver by Nicola Salmoria and Aaron Giles
+    driver by Nicola Salmoria and Aaron Giles
 
 
     The main cpu is a 34010; it is encrypted in 9 Ball Shootout.
 
     The second CPU in AmeriDarts is a 32015, whose built-in ROM hasn't
-    been read.
+    been read. A simulation of the I/O behavior is included, but since the
+    second CPU controls sound, there is no sound.
 
     The second CPU in Cool Pool and 9 Ball Shootout is a 320C26; the code
     is the same in the two games.
@@ -20,9 +21,6 @@
       4U/8U it is actually reading 4U/8U/3U/7U, when testing 3U/7U it
       actually reads 2U/6U/1U/5U. The placement cannot therefore be exactly
       determined by the check passing.
-
-    TODO:
-    - emulate "thrash protection" (NVRAM write protection)
 
 ***************************************************************************/
 
@@ -52,6 +50,25 @@ static data16_t iop_cmd;
 static data16_t iop_answer;
 static int iop_romaddr;
 static UINT8 amerdart_iop_echo;
+
+static const UINT16 nvram_unlock_seq[] =
+{
+	0x3fb, 0x3fb, 0x3f8, 0x3fc, 0x3fa, 0x3fe, 0x3f9, 0x3fd, 0x3fb, 0x3ff
+};
+#define NVRAM_UNLOCK_SEQ_LEN (sizeof(nvram_unlock_seq) / sizeof(nvram_unlock_seq[0]))
+static UINT16 nvram_write_seq[NVRAM_UNLOCK_SEQ_LEN];
+static UINT8 nvram_write_enable;
+static mame_timer *nvram_write_timer;
+
+
+
+/*************************************
+ *
+ *  Prototypes
+ *
+ *************************************/
+
+static void nvram_write_timeout(int param);
 
 
 
@@ -172,7 +189,6 @@ static VIDEO_UPDATE( coolpool )
 
 
 
-
 /*************************************
  *
  *  Shift register access
@@ -240,10 +256,65 @@ static WRITE16_HANDLER( coolpool_34010_io_register_w )
  *
  *************************************/
 
+static MACHINE_INIT( amerdart )
+{
+	nvram_write_enable = 0;
+	nvram_write_timer = timer_alloc(nvram_write_timeout);
+}
+
+
 static MACHINE_INIT( coolpool )
 {
 	timer_set(cpu_getscanlinetime(0), 0, coolpool_reset_dpyadr);
 	tlc34076_reset(6);
+	nvram_write_enable = 0;
+	nvram_write_timer = timer_alloc(nvram_write_timeout);
+}
+
+
+
+/*************************************
+ *
+ *  NVRAM writes with thrash protect
+ *
+ *************************************/
+
+static void nvram_write_timeout(int param)
+{
+	nvram_write_enable = 0;
+}
+
+
+static WRITE16_HANDLER( nvram_thrash_w )
+{
+	/* keep track of the last few writes */
+	memmove(&nvram_write_seq[0], &nvram_write_seq[1], (NVRAM_UNLOCK_SEQ_LEN - 1) * sizeof(nvram_write_seq[0]));
+	nvram_write_seq[NVRAM_UNLOCK_SEQ_LEN - 1] = offset;
+
+	/* if they match the unlock sequence, enable writes and set a timeout */
+	if (!memcmp(nvram_unlock_seq, nvram_write_seq, sizeof(nvram_unlock_seq)))
+	{
+		nvram_write_enable = 1;
+		timer_adjust(nvram_write_timer, TIME_IN_MSEC(1000), 0, 0);
+	}
+}
+
+
+static WRITE16_HANDLER( nvram_data_w )
+{
+	/* only the low 8 bits matter */
+	if (ACCESSING_LSB)
+	{
+		if (nvram_write_enable)
+			generic_nvram16[offset] = data & 0xff;
+	}
+}
+
+
+static WRITE16_HANDLER( nvram_thrash_data_w )
+{
+	nvram_data_w(offset, data, mem_mask);
+	nvram_thrash_w(offset, data, mem_mask);
 }
 
 
@@ -283,7 +354,7 @@ static void amerdart_iop_response(int param)
 	switch (iop_cmd)
 	{
 		default:
-			printf("Unknown IOP command %04X\n", iop_cmd);
+			logerror("Unknown IOP command %04X\n", iop_cmd);
 
 		case 0x000:
 		case 0x019:
@@ -530,7 +601,7 @@ static ADDRESS_MAP_START( amerdart_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_BASE(&vram_base)
 	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(amerdart_misc_w)
 	AM_RANGE(0x05000000, 0x0500000f) AM_READWRITE(coolpool_iop_r, amerdart_iop_w)
-	AM_RANGE(0x06000000, 0x06007fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x06000000, 0x06007fff) AM_READWRITE(MRA16_RAM, nvram_thrash_data_w) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
 	AM_RANGE(0xffb00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
@@ -542,7 +613,7 @@ static ADDRESS_MAP_START( coolpool_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x02000000, 0x020000ff) AM_READWRITE(coolpool_iop_r, coolpool_iop_w)
 	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)
 	AM_RANGE(0x03000000, 0x03ffffff) AM_ROM AM_REGION(REGION_GFX1, 0)
-	AM_RANGE(0x06000000, 0x06007fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x06000000, 0x06007fff) AM_READWRITE(MRA16_RAM, nvram_thrash_data_w) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
@@ -553,7 +624,7 @@ static ADDRESS_MAP_START( nballsht_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x02000000, 0x020000ff) AM_READWRITE(coolpool_iop_r, coolpool_iop_w)
 	AM_RANGE(0x03000000, 0x0300000f) AM_WRITE(coolpool_misc_w)
 	AM_RANGE(0x04000000, 0x040000ff) AM_READWRITE(tlc34076_lsb_r, tlc34076_lsb_w)	// IMSG176P-40
-	AM_RANGE(0x06000000, 0x0603ffff) AM_RAM	AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x06000000, 0x0601ffff) AM_MIRROR(0x00020000) AM_READWRITE(MRA16_RAM, nvram_thrash_data_w) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, coolpool_34010_io_register_w)
 	AM_RANGE(0xff000000, 0xff7fffff) AM_ROM AM_REGION(REGION_GFX1, 0)
 	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
@@ -720,6 +791,7 @@ MACHINE_DRIVER_START( amerdart )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(amerdart)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

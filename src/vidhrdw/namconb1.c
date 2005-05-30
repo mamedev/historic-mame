@@ -216,11 +216,11 @@ VIDEO_UPDATE( namconb1 )
 	{
 		beamx = ((readinputport(4))*288)/256;
 		beamy = ((readinputport(5))*224)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect );
+		draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
 
 		beamx = ((readinputport(6))*288)/256;
 		beamy = ((readinputport(7))*224)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect );
+		draw_crosshair( bitmap, beamx, beamy, cliprect, 1 );
 	}
 }
 

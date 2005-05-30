@@ -335,6 +335,19 @@ int debugwin_init_windows(void)
 
 
 //============================================================
+//  debugwin_destroy_windows
+//============================================================
+
+void debugwin_destroy_windows(void)
+{
+	// loop over windows and free them
+	while (window_list)
+		DestroyWindow(window_list->wnd);
+}
+
+
+
+//============================================================
 //  debugwin_show
 //============================================================
 

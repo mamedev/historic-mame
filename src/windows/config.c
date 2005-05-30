@@ -423,24 +423,21 @@ int cli_frontend_init (int argc, char **argv)
 	rc = cli_rc_create();
 	if (!rc)
 	{
-		fprintf (stderr, "error on rc creation\n");
-		exit(1);
+		osd_die ("error on rc creation\n");
 	}
 
 	/* parse the commandline */
 	got_gamename = 0;
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{
-		fprintf (stderr, "error while parsing cmdline\n");
-		exit(1);
+		osd_die ("error while parsing cmdline\n");
 	}
 
 	/* determine global configfile name */
 	cmd_name = win_strip_extension(win_basename(argv[0]));
 	if (!cmd_name)
 	{
-		fprintf (stderr, "who am I? cannot determine the name I was called with\n");
-		exit(1);
+		osd_die ("who am I? cannot determine the name I was called with\n");
 	}
 
 	sprintf (buffer, "%s.ini", cmd_name);
@@ -493,8 +490,7 @@ int cli_frontend_init (int argc, char **argv)
         options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
 		if (!options.playback)
 		{
-			fprintf(stderr, "failed to open %s for playback\n", playbackname);
-			exit(1);
+			osd_die("failed to open %s for playback\n", playbackname);
 		}
 	}
 
@@ -615,8 +611,7 @@ int cli_frontend_init (int argc, char **argv)
 		options.record = mame_fopen(recordname,0,FILETYPE_INPUTLOG,1);
 		if (!options.record)
 		{
-			fprintf(stderr, "failed to open %s for recording\n", recordname);
-			exit(1);
+			osd_die("failed to open %s for recording\n", recordname);
 		}
 	}
 

@@ -295,7 +295,6 @@ static MACHINE_DRIVER_START( lemmings )
 
 	MDRV_VIDEO_EOF(lemmings)
 	MDRV_VIDEO_START(lemmings)
-	MDRV_VIDEO_STOP(lemmings)
 	MDRV_VIDEO_UPDATE(lemmings)
 
 	/* sound hardware */

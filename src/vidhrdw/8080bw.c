@@ -565,7 +565,7 @@ static void draw_sight(struct mame_bitmap *bitmap,const struct rectangle *clipre
 	}
 
 
-	draw_crosshair(bitmap,x,y,cliprect);
+	draw_crosshair(bitmap,x,y,cliprect,0);
 }
 
 

@@ -387,8 +387,8 @@ VIDEO_UPDATE( model3 )
 		gun1_y = readinputport(6);
 		gun2_x = readinputport(7);
 		gun2_y = readinputport(8);
-		draw_crosshair(bitmap, gun1_x, gun1_y, cliprect);
-		draw_crosshair(bitmap, gun2_x, gun2_y, cliprect);
+		draw_crosshair(bitmap, gun1_x, gun1_y, cliprect, 0);
+		draw_crosshair(bitmap, gun2_x, gun2_y, cliprect, 1);
 	}
 
 	//draw_texture_sheet(bitmap, cliprect);

@@ -101,6 +101,7 @@ void debug_console_exit(void)
 		free(console_history);
 	console_history = NULL;
 
+	/* free the command list */
 	while (commandlist)
 	{
 		struct debug_command *temp = commandlist;
