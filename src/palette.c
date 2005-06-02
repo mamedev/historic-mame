@@ -1061,6 +1061,9 @@ void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b)
 	/* special case the black pen */
 	else if (pen == get_black_pen())
 		*r = *g = *b = 0;
+	/* special case the white pen (crosshairs) */
+	else if (pen == Machine->uifont->colortable[1])
+		*r = *g = *b = 255;
 	else
 	usrintf_showmessage("palette_get_color() out of range");
 }

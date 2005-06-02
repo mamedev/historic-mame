@@ -1,3 +1,95 @@
+/*
+    Information extracted from below, and from Modeler:
+
+    Tile format:
+        Bits               Usage
+        y------- --------  Tile Y flip
+        -x------ --------  Tile X flip
+        --?----- --------  Unknown
+        ---ccccc cccc----  Tile color palette
+        ---nnnnn nnnnnnnn  Tile index
+
+    Text format:
+        Bits               Usage
+        ccccccc- --------  Tile color palette
+        -------n nnnnnnnn  Tile index
+
+    Text RAM:
+        Offset   Bits               Usage
+        F00      m------- --------  Screen mode (1=416w, 0=320w)
+                 ----e--- --------  Bitmap mode enable?
+                 -----b-- --------  Internal tilemap bank select
+        F02      cccccccc --------  Per-layer clipping modes (see Modeler)
+                 -------- ----d---  Disable tilemap layer 3
+                 -------- -----d--  Disable tilemap layer 2
+                 -------- ------d-  Disable tilemap layer 1
+                 -------- -------d  Disable tilemap layer 0
+        F04      tttttttt --------  Rowscroll/select table page number
+                 -------- ----s---  Enable rowselect for tilemap layer 3
+                 -------- -----s--  Enable rowselect for tilemap layer 2
+                 -------- ------c-  Enable rowscroll for tilemap layer 3
+                 -------- -------c  Enable rowscroll for tilemap layer 2
+        F06      cccc---- --------  Layer 3 clip select
+                 ----cccc --------  Layer 2 clip select
+                 -------- cccc----  Layer 1 clip select
+                 -------- ----cccc  Layer 0 clip select
+        F12      ------xx xxxxxxxx  Layer 0 X scroll
+        F16      -------y yyyyyyyy  Layer 0 Y scroll
+        F1A      ------xx xxxxxxxx  Layer 1 X scroll
+        F1E      -------y yyyyyyyy  Layer 1 Y scroll
+        F22      ------xx xxxxxxxx  Layer 2 X scroll
+        F26      -------y yyyyyyyy  Layer 2 Y scroll
+        F2A      ------xx xxxxxxxx  Layer 3 X scroll
+        F2E      -------y yyyyyyyy  Layer 3 Y scroll
+        F30      ------xx xxxxxxxx  Layer 0 X offset (Modeler says X center)
+        F32      -------y yyyyyyyy  Layer 0 Y offset (Modeler says Y center)
+        F34      ------xx xxxxxxxx  Layer 1 X offset
+        F36      -------y yyyyyyyy  Layer 1 Y offset
+        F38      ------xx xxxxxxxx  Layer 2 X offset
+        F3A      -------y yyyyyyyy  Layer 2 Y offset
+        F3C      ------xx xxxxxxxx  Layer 3 X offset
+        F3E      -------y yyyyyyyy  Layer 3 Y offset
+        F40      -wwwwwww --------  Layer 0 upper-right page select
+                 -------- -wwwwwww  Layer 0 upper-left page select
+        F42      -wwwwwww --------  Layer 0 lower-right page select
+                 -------- -wwwwwww  Layer 0 lower-left page select
+        F44      -wwwwwww --------  Layer 1 upper-right page select
+                 -------- -wwwwwww  Layer 1 upper-left page select
+        F46      -wwwwwww --------  Layer 1 lower-right page select
+                 -------- -wwwwwww  Layer 2 upper-left page select
+        F48      -wwwwwww --------  Layer 2 upper-right page select
+                 -------- -wwwwwww  Layer 2 lower-left page select
+        F4A      -wwwwwww --------  Layer 2 lower-right page select
+                 -------- -wwwwwww  Layer 3 upper-left page select
+                 -wwwwwww --------  Layer 3 upper-right page select
+        F4E      -------- -wwwwwww  Layer 3 lower-left page select
+                 -wwwwwww --------  Layer 3 lower-right page select
+        F50      xxxxxxxx xxxxxxxx  Layer 0 X step increment (0x200 = 1.0)
+        F52      yyyyyyyy yyyyyyyy  Layer 0 Y step increment (0x200 = 1.0)
+        F54      xxxxxxxx xxxxxxxx  Layer 1 X step increment (0x200 = 1.0)
+        F56      yyyyyyyy yyyyyyyy  Layer 1 Y step increment (0x200 = 1.0)
+        F58      xxxxxxxx xxxxxxxx  Layer 2 X step increment (0x200 = 1.0)
+        F5A      yyyyyyyy yyyyyyyy  Layer 2 Y step increment (0x200 = 1.0)
+        F5C      -------- tttt----  Text layer page select (page = 64 + t*8)
+                 -------- -----bbb  Text layer tile bank
+        F60      xxxxxxxx xxxxxxxx  Clip rect 0, left
+        F62      yyyyyyyy yyyyyyyy  Clip rect 0, top
+        F64      xxxxxxxx xxxxxxxx  Clip rect 0, right
+        F66      yyyyyyyy yyyyyyyy  Clip rect 0, bottom
+        F68      xxxxxxxx xxxxxxxx  Clip rect 1, left
+        F6A      yyyyyyyy yyyyyyyy  Clip rect 1, top
+        F6C      xxxxxxxx xxxxxxxx  Clip rect 1, right
+        F6E      yyyyyyyy yyyyyyyy  Clip rect 1, bottom
+        F70      xxxxxxxx xxxxxxxx  Clip rect 2, left
+        F72      yyyyyyyy yyyyyyyy  Clip rect 2, top
+        F74      xxxxxxxx xxxxxxxx  Clip rect 2, right
+        F76      yyyyyyyy yyyyyyyy  Clip rect 2, bottom
+        F78      xxxxxxxx xxxxxxxx  Clip rect 3, left
+        F7A      yyyyyyyy yyyyyyyy  Clip rect 3, top
+        F7C      xxxxxxxx xxxxxxxx  Clip rect 3, right
+        F7E      yyyyyyyy yyyyyyyy  Clip rect 3, bottom
+*/
+
 #define NEW_DRAWSPRITE 1
 /* System 32 Video Hardware */
 

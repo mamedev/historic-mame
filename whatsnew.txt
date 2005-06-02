@@ -1,3 +1,25 @@
+0.97
+----
+
+IMPORTANT: As of MAME 0.96, the source code license has changed.
+Please see the new file license.txt for details. The new license
+is based off the BSD license, with additional prohibitions against
+commercial usage. See http://mamedev.com for additional details.
+
+
+MAMETesters Bugs Fixed
+----------------------
+message096u4gre
+
+
+Source Changes
+--------------
+Fixed memory leak in hiscore system. [Nicola Salmoria]
+
+Fixed OKI banking in Pocket Gal Deluxe. [Sonikos]
+
+
+
 0.96u4
 ------
 

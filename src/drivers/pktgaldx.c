@@ -74,7 +74,7 @@ extern data16_t* pcktgaldb_sprites;
 
 static WRITE16_HANDLER(pktgaldx_oki_bank_w)
 {
-	OKIM6295_set_bank_base(1, data&3);
+	OKIM6295_set_bank_base(1, (data & 3) * 0x40000);
 }
 
 /**********************************************************************************/

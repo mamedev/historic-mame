@@ -408,12 +408,13 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
 				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= (UINT64)(value);
+				ppc.tb |= ((UINT64) value) << 0;
 				return;
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
-				osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
+				ppc.tb &= U64(0x00000000ffffffff);
+				ppc.tb |= ((UINT64) value) << 32;
 				return;
 
 			case SPR603E_HID0:
@@ -1275,6 +1276,7 @@ void ppc603_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
+		case CPUINFO_INT_INPUT_STATE + PPC_INPUT_LINE_SMI:	ppc603_set_smi_line(info->i);	break;
 		default:	ppc_set_info(state, info);		break;
 	}
 }
