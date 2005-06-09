@@ -11,7 +11,6 @@
 #include "driver.h"
 #include "debugcon.h"
 #include "debugcpu.h"
-#include "debugexp.h"
 #include "debughlp.h"
 #include "debugvw.h"
 #include <stdarg.h>

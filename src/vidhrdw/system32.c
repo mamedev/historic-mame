@@ -1613,7 +1613,8 @@ VIDEO_UPDATE( system32 ) {
 
 	// end palette dirty
 
-	system32_screen_mode = sys32_videoram[0x01FF00/2] & 0xc000;  // this should be 0x8000 according to modeler but then brival is broken?  this way alien3 and arabfgt try to change when they shouldn't .. wrong register?
+	system32_screen_mode = sys32_videoram[0x01FF00/2] & 0x8000;  // this should be 0x8000 according to modeler but then brival is broken?  this way alien3 and arabfgt try to change when they shouldn't .. wrong register?
+//usrintf_showmessage("control = %04X", sys32_videoram[0x01FF00/2]);
 
 	if (multi32) {
 		monitor_setting=readinputport(0xf);
@@ -1632,8 +1633,6 @@ VIDEO_UPDATE( system32 ) {
 		monitor_display_width=1;
 		monitor_vertical_offset=1;
 	}
-
-	fillbitmap(bitmap, 0, 0);
 
 	if (system32_screen_mode && system32_allow_high_resolution) {
 		set_visible_area(52*monitor_display_start*8, 52*8*monitor_display_width-1, 0, 28*8*monitor_vertical_offset-1);

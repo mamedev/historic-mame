@@ -525,6 +525,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( falcon )	/* bootleg */
 	DRIVER( vautour )	/* bootleg (Jeutel) */
 	DRIVER( griffon )	/* bootleg (Videotron) */
+	DRIVER( falcona )	/* bootleg */
 	DRIVER( pleiads )	/* (c) 1981 Tehkan */
 	DRIVER( pleiadbl )	/* bootleg */
 	DRIVER( pleiadce )	/* (c) 1981 Centuri + Tehkan */
@@ -783,12 +784,12 @@ const struct GameDriver *drivers[] =
 	DRIVER( ncv2j )		/* (c) 1996 (Japan) */
 
 	/* Namco System 21 games */
-	/* 1988, Winning Run */
+	DRIVER( winrun )
 	/* 1989, Winning Run Suzuka Grand Prix */
 	DRIVER( winrun91 )
 	DRIVER( solvalou )	/* (c) 1991 (Japan) */
 	DRIVER( starblad )	/* (c) 1991 */
-/* 199?, Driver's Eyes */
+	DRIVER( driveyes )	/* (c) 1992? */
 /* 1992, ShimDrive */
 	DRIVER( aircombj )	/* (c) 1992 (Japan) */
 	DRIVER( aircombu )	/* (c) 1992 (US) */
@@ -3771,6 +3772,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MBC ?? */
 	DRIVER( boogwing )	/* MBD (c) 1992 */
 	DRIVER( boogwina )	/* MBD (c) 1992 */
+	DRIVER( ragtime )	/* MBD (c) 1992 */
 	DRIVER( dblewing )	/* MBE (c) 1993 Mitchell */
 	DRIVER( fghthist )	/* MBF (c) 1993 Data East Corporation (US) */
 	DRIVER( fghthstw )	/* MBF (c) 1993 Data East Corporation (World) */
@@ -5036,6 +5038,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( timesold )	/* Alpha-68K96II 'BT' (c) 1987 SNK / Romstar */
 	DRIVER( timesol1 )  /* Alpha-68K96II 'BT' (c) 1987 */
 	DRIVER( btlfield )  /* Alpha-68K96II 'BT' (c) 1987 */
+	DRIVER( btlfildb )	/* bootleg */
 	DRIVER( skysoldr )	/* Alpha-68K96II 'SS' (c) 1988 SNK (Romstar with dip switch) */
 	DRIVER( goldmedl )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
 	DRIVER( goldmeda )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
@@ -6177,9 +6180,9 @@ Other Sun games
 	DRIVER( nettoqc )	/* "103" (c) 1995 Nakanihon */
 	DRIVER( ddenlovr )	/* "113" (c) 1996 Dynax */
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
-						/* "510" Hana Kagerou 1996 Nakanihon */
+	DRIVER( hkagerou )	/* "510" Hana Kagerou 1996 Nakanihon */
 	DRIVER( realbrk )	/* "523" Billiard Academy Real Break 1998 */
-						/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
+	DRIVER( mjreach1 )	/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
 
 	DRIVER( pkgnsh )	/* "???" Pachinko Gindama Shoubu */
 	DRIVER( pkgnshdx )	/* "???" Pachinko Gindama Shoubu DX */
@@ -6540,7 +6543,8 @@ Other Sun games
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
 	DRIVER( rabbit )	/* (c) 1997 Electronic Arts */
 	DRIVER( tmmjprd )	/* (c) 1997 Media / Sonnet */
-	DRIVER( malzak )
+	DRIVER( malzak )    /* (c) 1980? Kitronix */
+	DRIVER( malzak2 )	/* (c) 1980? Kitronix */
 	DRIVER( supertnk )	/* (c) 1981 VIDEO GAMES GmbH, W.-GERMANY */
 	DRIVER( crospang )
 	DRIVER( funybubl )	/* Comad Industries */

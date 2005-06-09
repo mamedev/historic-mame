@@ -142,8 +142,8 @@ typedef struct {
 	UINT8 sptc;
 	UINT8 sprb;
 	UINT8 sptb;
-	void *rx_timer;
-	void *tx_timer;
+	mame_timer *rx_timer;
+	mame_timer *tx_timer;
 } SPU_REGS;
 
 typedef union {
@@ -210,6 +210,8 @@ typedef struct {
 	UINT32 iccr;
 	UINT32 dccr;
 	UINT32 pit;
+	UINT32 pit_counter;
+ 	UINT32 pit_int_enable;
 	UINT32 tsr;
 	UINT32 dbsr;
 	UINT32 sgr;
@@ -638,8 +640,16 @@ INLINE void ppc_set_msr(UINT32 value)
 				}
 #endif
 #if (HAS_PPC403)
-				if(IS_PPC403()) {
+				if(!ppc.is602 && !ppc.is603) {
+					if (i == EXCEPTION_IRQ)
+					{
+						if (EXIER & ppc.external_int)
+							ppc403_exception(i);
+					}
+					else
+					{
 					ppc403_exception(i);
+				}
 				}
 #endif
 				break;
@@ -1177,6 +1187,30 @@ static UINT8 ppc_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+static UINT8 ppc603_reg_layout[] =
+{
+	PPC_PC,			PPC_MSR,		-1,
+	PPC_CR,			PPC_LR,			-1,
+	PPC_CTR,		PPC_XER,		-1,
+	PPC_DEC,						-1,
+	PPC_R0,		 	PPC_R16,		-1,
+	PPC_R1, 		PPC_R17,		-1,
+	PPC_R2, 		PPC_R18,		-1,
+	PPC_R3, 		PPC_R19,		-1,
+	PPC_R4, 		PPC_R20,		-1,
+	PPC_R5, 		PPC_R21,		-1,
+	PPC_R6, 		PPC_R22,		-1,
+	PPC_R7, 		PPC_R23,		-1,
+	PPC_R8,			PPC_R24,		-1,
+	PPC_R9,			PPC_R25,		-1,
+	PPC_R10,		PPC_R26,		-1,
+	PPC_R11,		PPC_R27,		-1,
+	PPC_R12,		PPC_R28,		-1,
+	PPC_R13,		PPC_R29,		-1,
+	PPC_R14,		PPC_R30,		-1,
+	PPC_R15,		PPC_R31,		0
+};
+
 static offs_t ppc_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
@@ -1252,9 +1286,9 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 }
 
 #if (HAS_PPC403)
-void ppc403_set_info(UINT32 state, union cpuinfo *info)
+static void ppc403_set_info(UINT32 state, union cpuinfo *info)
 {
-	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
+	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 8)
 	{
 		ppc403_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
 		return;
@@ -1267,7 +1301,7 @@ void ppc403_set_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_PPC603)
-void ppc603_set_info(UINT32 state, union cpuinfo *info)
+static void ppc603_set_info(UINT32 state, union cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{
@@ -1276,6 +1310,7 @@ void ppc603_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
+		case CPUINFO_INT_REGISTER + PPC_DEC:				DEC = info->i;						break;
 		case CPUINFO_INT_INPUT_STATE + PPC_INPUT_LINE_SMI:	ppc603_set_smi_line(info->i);	break;
 		default:	ppc_set_info(state, info);		break;
 	}
@@ -1421,7 +1456,7 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_LINES:					info->i = 7;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 8;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
@@ -1458,9 +1493,11 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = ppc603_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppc603_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
+		case CPUINFO_STR_REGISTER + PPC_DEC:			sprintf(info->s = cpuintrf_temp_str(), "DEC: %08X", DEC); break;
 
 		default:	ppc_get_info(state, info);		break;
 	}
@@ -1470,7 +1507,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 /* PowerPC 602 */
 
 #if (HAS_PPC602)
-void ppc602_set_info(UINT32 state, union cpuinfo *info)
+static void ppc602_set_info(UINT32 state, union cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{

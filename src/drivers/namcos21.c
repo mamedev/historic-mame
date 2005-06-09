@@ -1,59 +1,159 @@
-/***************************************************************************
+/**
 Namco System 21
 
     There are at least three hardware variations, all of which are based on
     Namco System2:
 
-    1. Winning Run was a mass-produced prototype; it uses 3 68k CPUs
+    1. Winning Run was a mass-produced prototype; it uses 3 68k CPUs; all others use 2 68k CPUs.
 
     2. Cyber Sled uses 4xTMS320C25
 
     3. Starblade uses 5xTMS320C20
 
-Notes:
-    ROLT (roll type) specifies the order in which rotation transformations
-    should be applied, i.e. xyz or xzy (matrix multiplication is not associative).
-    The current meaning of ROLT seems to be consistant across System21 games, and even
-    System22.
+The main 68k CPUs populate a chunk of shared RAM with an display list describing a scene to be rendered.
+The main CPUs also specify attributes for a master camera which provides additional global transformations.
+The display list contains references to specific 3d objects and their position/orientation in 3d space.
 
-    The priority between polygons and sprites is currently hard-coded.
+The master DSP parses the display list and applies high level geometry, emitting matrices and object
+references.
 
-    In StarBlade, the sprite list is stored at a different location during startup tests.
+An intermediate device (*) expands object references to the primitive data from point ROMs interleaved with
+local transforms, making this data available as input to the slave DSP.
 
-    Starblade has some missing background graphics (i.e. the spaceport runway at
+The slave DSP applies the view transform to each primitive's vertices, projection, and clipping,
+and outputs quad descriptors.  Each quad has a reference color (shared across vertices),
+and for each vertex the tuple: (screenx,screeny,z-code).  The z-code scalar accounts for depth bias.
+A zbuffer is used while rendering quads.
+
+---------------------------------------------------------------------------
+
+STATUS:
+    Starblade:
+        missing background objects on stage#1 (starships)
+        - missing 'upload' data (dsp to 68k)?; check for unmapped ram use?
+        - find object code for starship (compare to PSX port)
+
+    Solvaou:
+        no polys; why?
+
+    CyberSled:
+        graphics cropped
+        three uploads?
+
+    Air Combat:
+        unemulated ram
+
+    Winning Run
+        ?
+
+    Winning Run 92
+        ?
+
+    Driver's Eyes
+        ?
+
+TODO:   Unify memory maps.
+
+TODO:   Fix emulation to support other games (likely caused by dspram16_r hacks).
+
+TODO:   Determine purpose of additional (unemulated) DSPs.  I believe they are additional slave DSPs that
+        run in parallel, but it is difficult to know for sure without having access to the DSP bios code.
+        The single slave DSP isn't powerful enough to update the polygon layer at 60fps.
+
+TODO:   (*) Extract master DSP's BIOS (via trojan if possible).
+        Certain tasks currently implemented in C (see TransferDspData) are quite likely done explicitly
+        by the master DSP.
+
+TODO:   Determine how "point ram" (tested by main 68k cpu on boot) is actually used.
+
+TODO:   namcoic.c: in StarBlade, the sprite list is stored at a different location during startup tests.
+        Is there a register that controls this?
+
+TODO:   Starblade has some missing background graphics (i.e. the spaceport runway at
     beginning of stage#1, various large startship cruisers drifting in space, etc.
+        Even with (mostly complete) DSP emulation, it is a complete mystery why this isn't working.
     The main CPU doesn't write descriptors for these objects in its display list, nor does it
     write any obvious "high level commands" to control background graphics sequencing.
 
-    Starblade's EPROM may be incorrect.
+TODO:   CyberSled appears to use the "POSIRQ" feature seen in various Namco System 2 games for
+        split screen effects.  This IRQ is triggered at a designated scanline.  Confirm that this
+        works as expected.
 
-    Starblade may require the use of custom MCU code.
+TODO:   Map lamps/vibration outputs as used by StarBlade (and possibly other titles).
+        These likely involve the MCU.
 
-    Starblade's point ROMs frequently contain an apparently garbage value in the most
-    significant byte, but the ROMs have been confirmed to be good.  We currently apply
-    a heuristic at runtime to try and correct for it, and don't see any obvious problems.
-    For the polygon data, it is almost invariably just sign extension bits, that can
-    be computed from the middle byte.
+---------------------------------------------------------------------------
 
-    Starblade (and other games) write a lot of data/code to the DSP processors on
-    startup.  Once it is disassembled and understood, it may be possible to insert a
-    trojan to fetch the DSP kernel ROM code, and faithfully emulate all aspects of
-    the system.
+DSP RAM is shared with the 68000 CPUs and master DSP.
+This memory map reflects DSP RAM as seen by the 68000 CPUs.
 
-    Solvalou does some interesting communication with the DSP processors on startup, and
-    refuses to run if a problem occurs.  The routines testing the return code have been
-    patched out for now.
+    0x200000..0x2000ff  populated with ASCII Text during self-tests:
+        ROM:
+        RAM:
+        PTR:
+        SMU:
+        IDC:
+        CPU:ABORT
+        DSP:
+        CRC:OK  from cpu
+        CRC:    from dsp
+        ID:
+        B-M:    P-M:    S-M:    SET UP
 
-    CyberSled appears to use the "POSIRQ" feature seen in various Namco System 2 games for
-    split screen effects.  This IRQ is triggered at a designated scanline.  It's purpose in
-    CyberSled is unknown.
+    0x200100    status: 2=upload needed, 4=error (abort)
+    0x200102    status
+    0x200104    0x0002
+    0x200106    addr written by main cpu
+    0x20010a    checksum (starblade expects 0xed53)
+    0x20010c    checksum (starblade expects 0xd5df)
+    0x20010e    1 : upload-code-to-dsp request trigger
+    0x200110    status
+    0x200112    status
+    0x200114    master dsp code size
+    0x200116    slave dsp code size
+    0x200120    upload source1 addr hi
+    0x200122    upload source1 addr lo
+    0x200124    upload source2 addr hi
+    0x200126    upload source2 addr lo
 
-    There appears to be support for at least 16 levels of lighting for the flat-shaded
-    polygons.  The palette is organized into multiple banks, that differ only in respect
-    to shading.  If Namco System22 is any indication, it's likely that System21 has
-    a light vector encoded somewhere in the camera attributes.
+    0x200200    enable
+    0x200202    status
+    0x200206    work page select
 
-    Lamps/vibration outputs are not yet mapped
+    0x208000..0x2080ff  camera attributes for page#0
+    0x208200..0x208fff  3d object attribute display list for page#0
+
+    0x20c000..0x20c0ff  camera attributes for page#1
+    0x20c200..0x20cfff  3d object attribute display list for page#1
+
+---------------------------------------------------------------------------
+
+Thanks to Aaron Giles for originally making sense of the Point ROM data.
+
+Point data in ROMS (signed 24 bit words) encodes the 3d primitives.
+
+The first part of the Point ROMs is an address table.  The first entry serves
+a special (unknown) purpose.
+
+Given an object index, this table provides an address into the second part of
+the ROM.
+
+The second part of the ROM is a series of display lists.
+This is a sequence of pointers to actual polygon data. There may be
+more than one, and the list is terminated by $ffffff.
+
+The remainder of the ROM is a series of polygon data. The first word of each
+entry is the length of the entry (in words, not counting the length word).
+
+The rest of the data in each entry is organized as follows:
+
+length (1 word)
+unknown value (1 word) - this increments with each entry
+vertex count (1 word) - the number of vertices encoded
+unknown value (1 word) - almost always 0; depth bias
+vertex list (n x 3 words)
+quad count (1 word) - the number of quads to draw
+quad primitives (n x 5 words) - indices of four verticies plus color code
 
 -----------------------------------------------------------------------
 Board 1 : DSP Board - 1st PCB. (Uppermost)
@@ -157,7 +257,6 @@ DSP    2K       HN62344    AC1-POIL.L     CF90   [   DSP data   ]
 DSP    2E       HN62344    AC1-POIH       4D02   [   DSP data   ]
 DSP    17D     GAL16V8A    3PDSP5         6C00
 
-
 NOTE:  CPU68  - CPU board        2252961002  (2252971002)
        OBJ(B) - Object board     8623961803  (8623963803)
        DSP    - DSP board        8623961703  (8623963703)
@@ -168,9 +267,7 @@ NOTE:  CPU68  - CPU board        2252961002  (2252971002)
        ROMs that have the same locations are different revisions
        of the same ROMs (AC1 or AC2).
 
-
 Jumper settings:
-
 
 Location    Position set    alt. setting
 ----------------------------------------
@@ -180,7 +277,6 @@ CPU68 PCB:
   JP2          /D-ST           /VBL
   JP3
 */
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
@@ -189,132 +285,384 @@ CPU68 PCB:
 #include "namcoic.h"
 #include "sound/2151intf.h"
 #include "sound/c140.h"
+#include "namcos21.h"
+
+#define CPU_DSP_MASTER_REGION	REGION_CPU5
+#define CPU_DSP_SLAVE_REGION	REGION_CPU6
+
+#define DSP_BUF_MAX (4096*8)
+static struct
+{
+	unsigned masterSourceAddr;
+	data16_t slaveInputBuffer[DSP_BUF_MAX];
+	size_t slaveInputSize;
+	unsigned slaveSourceAddr;
+
+	data16_t slaveOutputBuffer[DSP_BUF_MAX];
+	unsigned slaveOutputSize;
+
+	data16_t masterDirectDrawBuffer[256];
+	unsigned masterDirectDrawSize;
+} *mpDspState;
+
+/*static*/ void
+UpdatePolyFrameBufferAndResetDSPs( void )
+{
+	memset( mpDspState, 0, sizeof(*mpDspState) );
+	cpunum_set_input_line(4, INPUT_LINE_RESET, PULSE_LINE); /* DSP: master */
+	cpunum_set_input_line(5, INPUT_LINE_RESET, PULSE_LINE); /* DSP: slave */
+	namcos21_ClearPolyFrameBuffer();
+}
 
 /* globals (shared by videohrdw/namcos21.c) */
-
 data16_t *namcos21_dspram16;
 data16_t *namcos21_spritepos;
 
 /* private data */
-
 static data16_t	*mpDataROM;
 static data16_t	*mpSharedRAM1;
 static data8_t	*mpDualPortRAM;
-
-static data16_t namcos21_dsp_control[1]; /* ??? */
-static data16_t namcos21_dsp_data[1]; /* ??? */
+static data16_t namcos21_dsp_control[1];
 
 /* memory handlers for shared DSP RAM (used to pass 3d parameters) */
 
+static READ16_HANDLER( uploadhack_r )
+{ /* used for memory reads from fake adddress 0xfffffe */
+	return 0;
+}
+
+void namcos21_enabledsps( void )
+{
+	data16_t *pMem;
+
+	pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+	pMem[1] = 0x0100;
+
+	pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+	pMem[1] = 0x0100;
+}
+
 static READ16_HANDLER( dspram16_r )
 {
+	if( namcos21_dspram16[0] == 0x524f ) // "RO"(M)
+	{ /* the check above is done so we don't interfere with the DSPRAM test */
+		namcos21_dspram16[0x100/2] = 2; /* status to fake working DSP */
+		namcos21_dspram16[0x102/2] = 2; /* status to fake working DSP */
+		namcos21_dspram16[0x110/2] = 2; /* status to fake working DSP */
+		namcos21_dspram16[0x112/2] = 0; /* status to fake working DSP */
+
+		if( namcos2_gametype == NAMCOS21_SOLVALOU )
+		{
+			if( code_pressed(KEYCODE_A) ) namcos21_dspram16[0x94] = 0; // solvalou patch
+		}
+
+		/* The DSPs provide the 68k CPUs with a list of memory chunks to copy.
+         * This is done at boot time, and doesn't appear to actually do anything
+         * important.  For now, we pass artifically constructed parameters that
+         * cause no memory copies to take place.
+         */
+		namcos21_dspram16[0x120/2] = 0xfffffe>>16;
+		namcos21_dspram16[0x122/2] = 0xfffffe&0xffff;
+		namcos21_dspram16[0x124/2] = 0xfffffe>>16;
+		namcos21_dspram16[0x126/2] = 0xfffffe&0xffff;
+
+		if( namcos21_dspram16[0x128/2] == 1 )
+		{ /* ??? */
+			namcos21_dspram16[0x102/2] = 1;
+//          namcos21_dspram16[0x128/2] = 0; /* ? */
+		}
+
+		switch( offset )
+		{
+		case 0x010a/2:
+		case 0x010c/2:
+			logerror( "crc read: %d:0x%08x\n", cpu_getactivecpu(), activecpu_get_pc() );
+			break;
+		default:
+			break;
+		}
+
+		/* The 68k CPUs perform some sort of checksum on the DSPs. The expected values are game-specific. */
+		switch( namcos2_gametype )
+		{
+		case NAMCOS21_CYBERSLED:
+			namcos21_dspram16[0x10a/2] = 0x4f4b;
+			namcos21_dspram16[0x10c/2] = 0x759c;
+			break;
+
+		case NAMCOS21_STARBLADE:
+			namcos21_dspram16[0x10a/2] = 0xed53;
+			namcos21_dspram16[0x10c/2] = 0xd5df;
+			break;
+
+		case NAMCOS21_SOLVALOU:
+			namcos21_dspram16[0x10a/2] = 0x05b2;
+			namcos21_dspram16[0x10c/2] = 0x606e;
+			break;
+
+		case NAMCOS21_AIRCOMBAT:
+			break;
+
+		default:
+			/* TODO: add 'checksum' values for other games */
+			break;
+		}
+
+		if( namcos21_dspram16[0x10e/2] == 0x0001 )
+		{
+			int i;
+			unsigned len;
+			data16_t *pUploadDest;
+			static int count;
+			data16_t *pMem;
+
+			/* This signals that a large chunk of code/data has been written by the main CPU.
+             * The 68k CPU waits for this flag to be cleared.
+             */
+			logerror( "%d:0x%x upload %d\n",
+				cpu_getactivecpu(),
+				activecpu_get_pc(),
+				count++ );
+
+			namcos21_dspram16[0x10e/2] = 0; /* ack */
+
+			/* upload to master dsp */
+			len = namcos21_dspram16[0x114/2];
+			if( len )
+			{
+				logerror( "upload master\n" );
+				pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+				for( i=0; i<len; i++ )
+				{
+					pUploadDest[i] = namcos21_dspram16[0x2000/2+i];
+				}
+				pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+				pMem[1] = 0x0100;
+			}
+
+			/* upload to slave dsp(s) */
+			len = namcos21_dspram16[0x116/2];
+			if( len )
+			{
+				logerror( "upload slave\n" );
+				pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+				for( i=0; i<len; i++ )
+				{
+					pUploadDest[i] = namcos21_dspram16[0xa000/2+i];
+				}
+				pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+				pMem[1] = 0x0100;
+			}
+		}
+	}
 	return namcos21_dspram16[offset];
 }
 
 static WRITE16_HANDLER( dspram16_w )
 {
 	COMBINE_DATA( &namcos21_dspram16[offset] );
-}
+	if( offset == 0x103 )
+	{
+		cpu_yield(); /* hack; synchronization for solvalou */
+	}
+} /* dspram16_w */
 
 /************************************************************************************/
 
-#define CPU_DSP_MASTER_ID		4
-#define CPU_DSP_MASTER_REGION	REGION_CPU5
-
-#define CPU_DSP_SLAVE_ID		5
-#define CPU_DSP_SLAVE_REGION	REGION_CPU6
-
-static void
+static int
 InitDSP( void )
 {
-	cpunum_set_input_line(CPU_DSP_SLAVE_ID,INPUT_LINE_HALT,ASSERT_LINE);
+	data16_t *pMem;
+	data16_t pc, loop;
 
+	mpDspState = auto_malloc( sizeof(*mpDspState) );
+	if( !mpDspState )
 	{
-		data16_t *pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
-		data16_t pc = 0;
-		data16_t *pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
-		int addr = 0x2046e;
-		const data16_t *pSrc = addr/2 + (data16_t *)memory_region(REGION_CPU1);
-		size_t len = *pSrc++;
-		memcpy( pUploadDest, pSrc, len*2 );
-
-		pMem[pc] = 0xc804;pc++; /* ldpk 004h */
-		pMem[pc] = 0xca00;pc++; /* zac */
-		pMem[pc] = 0x6000;pc++; /* sacl $00,0 */
-		pMem[pc] = 0xca01;pc++; /* lack 01h */
-		pMem[pc] = 0x6001;pc++; /* sacl $01,0 */
-
-		pMem[pc] = 0xff80;pc++; /* b */
-		pMem[pc] = pc;pc++;
+		return -1;
 	}
 
-	{
-		data16_t *pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
-		data16_t pc = 0;
-		data16_t *pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
-		int addr = 0x220f6;
-		const data16_t *pSrc = addr/2 + (data16_t *)memory_region(REGION_CPU1);
-		size_t len = *pSrc++;
-		memcpy( pUploadDest, pSrc, len*2 );
-		pMem[pc] = 0xff80;pc++; /* b */
-		pMem[pc] = pc;pc++;
-	}
-}
+	memset( mpDspState, 0, sizeof(*mpDspState) );
 
-static READ16_HANDLER( dsp_HOLD_signal_r )
-{
+	pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+	pc = 0;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0; /* 0x0100; */
+	pc = 2; /* IRQ0 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 4; /* IRQ1 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 6; /* IRQ2 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x18; /* timer IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x1a; /* serial receive IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x1b; /* serial send IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x100;
+	pMem[pc] = 0xc804;pc++; /* ldpk 004h */
+	pMem[pc] = 0xca00;pc++; /* zac */
+	pMem[pc] = 0x6000;pc++; /* sacl $00,0 */
+	pMem[pc] = 0xca01;pc++; /* lack 01h */
+	pMem[pc] = 0x6001;pc++; /* sacl $01,0 */
+	loop = pc;
+	pMem[pc++] = 0xfe80; /* call */
+	pMem[pc++] = 0x8002;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = loop;
+
+	pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+	pc = 0;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0; /* 0x0100; */
+	pc = 2; /* IRQ0 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 4; /* IRQ1 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 6; /* IRQ2 */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x18; /* timer IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x1a; /* serial receive IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x1b; /* serial send IRQ */
+	pMem[pc++] = 0xCE26; /* ret */
+	pc = 0x100;
+	pMem[pc] = 0xc804;pc++; /* ldpk 004h */
+	pMem[pc] = 0xca00;pc++; /* zac */
+	pMem[pc] = 0x6000;pc++; /* sacl $00,0 */
+	pMem[pc] = 0xca01;pc++; /* lack 01h */
+	pMem[pc] = 0x6001;pc++; /* sacl $01,0 */
+	loop = pc;
+	pMem[pc++] = 0xfe80; /* call */
+	pMem[pc++] = 0x8010;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = loop;
+
 	return 0;
 }
 
-static WRITE16_HANDLER( dsp_HOLD_ACK_w )
-{
-	logerror( "TMS32025:%04x Writing %01x level to HOLD-Acknowledge signal\n",
-		activecpu_get_previouspc(), data );
-}
-
-static WRITE16_HANDLER( dsp_XF_output_w )
-{
-	logerror( "TMS32025:%04x XF output %01x\n",
-		activecpu_get_previouspc(), data );
-}
-
-/////////////////////////////////////////////////////////////////////////////////////
-//extern int debug_key_pressed;
+/***********************************************************/
 
 static READ16_HANDLER( dsp_port1_r )
-{
-//  debug_key_pressed = 1;
+{ /* PDP status */
 	return 0x8000;
 }
-#if 0
+static READ16_HANDLER( dsp_port2_r )
+{ /* PDP kick */
+	return 0;
+}
+
 static WRITE16_HANDLER( dsp_port2_w )
-{
+{ /* PDP addr set */
+	mpDspState->masterSourceAddr = data;
+	logerror( "port2_w(PDP ADDR): 0x%04x\n", data );
 }
 static READ16_HANDLER( dsp_port3_r )
-{
+{ /* trigger; XF-related? */
+	logerror( "port3_r(PDP trigger)\n" );
 	return 0;
 }
 static WRITE16_HANDLER( dsp_port4_w )
-{
+{ /* PDP mode */
+	logerror( "port4_w(0x%04x)\n", data );
 }
-#endif
 static READ16_HANDLER( dsp_port8_r )
-{
+{ /* slave status? */
 	return 0x0001;
 }
 static READ16_HANDLER( dsp_port9_r )
-{
+{ /* unk status; pre-transmit */
 	return 0x0000;
 }
-#if 0
-static WRITE16_HANDLER( dsp_portA_w )
-{
+static WRITE16_HANDLER(dsp_porta_w)
+{ /* unk enable; 0 or 1 */
+	logerror( "porta_w(0x%04x)\n", data );
 }
-static WRITE16_HANDLER( dsp_portB_w )
+static WRITE16_HANDLER(dsp_portb_w)
 {
+	logerror( "portb_w(0x%04x)\n", data );
+	if( data!=1 )
+	{ /* only 0->1 transition triggers */
+		return;
+	}
+	if( mpDspState->masterDirectDrawSize == 13 )
+	{
+		int i;
+		int sx[4], sy[4], zcode[4];
+		int color  = mpDspState->masterDirectDrawBuffer[0];
+		for( i=0; i<4; i++ )
+		{
+			sx[i] = NAMCOS21_POLY_FRAME_WIDTH/2 + (INT16)mpDspState->masterDirectDrawBuffer[i*3+1];
+			sy[i] = NAMCOS21_POLY_FRAME_HEIGHT/2 + (INT16)mpDspState->masterDirectDrawBuffer[i*3+2];
+			zcode[i] = mpDspState->masterDirectDrawBuffer[i*3+3];
+			logerror( "#%d:{%4d,%4d,0x%04x},color=0x%x\n", i,sx[i],sy[i],zcode[i],color );
+		}
+		if( color&0x8000 )
+		{
+			namcos21_DrawQuad( sx, sy, zcode, color );
+		}
+		else
+		{
+			logerror( "indirection used w/ direct draw?\n" );
+		}
+	}
+	mpDspState->masterDirectDrawSize = 0;
 }
-#endif
-/////////////////////////////////////////////////////////////////////////////////////
+static WRITE16_HANDLER(dsp_portc_w)
+{ /* enqueue data for direct-drawn poly */
+	logerror( "portc_w(0x%04x)\n", data );
+	if( mpDspState->masterDirectDrawSize < DSP_BUF_MAX )
+	{
+		mpDspState->masterDirectDrawBuffer[mpDspState->masterDirectDrawSize++] = data;
+	}
+	else
+	{
+		logerror( "portc overflow\n" );
+	}
+} /* dsp_portc_w */
+
+/***********************************************************/
+
+static data16_t mCusKeyState;
+
+static WRITE16_HANDLER(dspcuskey_w)
+{
+	logerror( "0x%08x:cuskey_w(%d)\n", activecpu_get_pc(), data );
+
+	if( namcos2_gametype == NAMCOS21_SOLVALOU )
+	{
+		if( data == 0x8000 )
+		{
+			mCusKeyState = 0xffff;
+		}
+		else if( data == 0x0000 )
+		{
+			mCusKeyState = 0x0145;
+		}
+	}
+}
+static READ16_HANDLER(dspcuskey_r)
+{
+	data16_t result = 0;
+
+	if( namcos2_gametype == NAMCOS21_SOLVALOU )
+	{
+		switch( offset )
+		{
+		case 0:
+			result = mCusKeyState;
+			break;
+		case 2:
+			mCusKeyState = 0xfeba;
+			break;
+		}
+	}
+	logerror( "0x%08x:cuskey_r()==0x%04x\n", activecpu_get_pc(), result );
+	return result;
+}
 
 static ADDRESS_MAP_START( master_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
@@ -322,24 +670,266 @@ static ADDRESS_MAP_START( master_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_dsp_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x2000, 0x200f) AM_READ(dspcuskey_r) AM_WRITE(dspcuskey_w)
 	AM_RANGE(0x8000, 0xffff) AM_READ(dspram16_r) AM_WRITE(dspram16_w) /* 0x8000 words */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_dsp_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0x01,0x01)  AM_READ(dsp_port1_r)
-//  AM_RANGE(0x02,0x02)  AM_WRITE(dsp_port2_w)
-//  AM_RANGE(0x03,0x03)  AM_READ(dsp_port3_r)
-//  AM_RANGE(0x04,0x04)  AM_WRITE(dsp_port4_w)
-	AM_RANGE(0x08,0x08)  AM_READ(dsp_port8_r)
-	AM_RANGE(0x09,0x09)  AM_READ(dsp_port9_r)
-//  AM_RANGE(0x0a,0x0a)  AM_WRITE(dsp_portA_w)
-//  AM_RANGE(0x0b,0x0b)  AM_WRITE(dsp_portB_w)
-	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
-	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
-	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+	AM_RANGE(0x01,0x01) AM_READ(dsp_port1_r)
+	AM_RANGE(0x02,0x02) AM_READ(dsp_port2_r) AM_WRITE(dsp_port2_w)
+	AM_RANGE(0x03,0x03) AM_READ(dsp_port3_r)
+	AM_RANGE(0x04,0x04) AM_WRITE(dsp_port4_w)
+	AM_RANGE(0x08,0x08) AM_READ(dsp_port8_r)
+	AM_RANGE(0x09,0x09) AM_READ(dsp_port9_r)
+	AM_RANGE(0x0a,0x0a) AM_WRITE(dsp_porta_w)
+	AM_RANGE(0x0b,0x0b) AM_WRITE(dsp_portb_w)
+	AM_RANGE(0x0c,0x0c) AM_WRITE(dsp_portc_w)
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ( MRA16_NOP )
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE( MWA16_NOP )
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE( MWA16_NOP )
 ADDRESS_MAP_END
 
-/////////////////////////////////////////////////////////////////////////////////////
+/************************************************************************************/
+
+static void
+TransmitWordToSlave( data16_t data )
+{
+	if( mpDspState->slaveInputSize < DSP_BUF_MAX )
+	{
+		mpDspState->slaveInputBuffer[mpDspState->slaveInputSize++] = data;
+	}
+	else
+	{
+		logerror( "slave input buffer overflow\n" );
+	}
+}
+
+/**
+ * On real hardware, the behavior below is almost certainly implemented
+ * in DSP bios code, triggered from timer interrupts.
+ */
+static void
+TransferDspData( void )
+{
+	if( mpDspState->masterSourceAddr >= 0x8000 &&
+		mpDspState->masterSourceAddr &&
+		mpDspState->slaveSourceAddr >= mpDspState->slaveInputSize )
+	{
+		const INT32 *pPointData = (INT32 *)memory_region( REGION_USER2 );
+		const data16_t *pSource = &namcos21_dspram16[mpDspState->masterSourceAddr - 0x8000];
+
+		mpDspState->slaveInputSize = 0;
+		mpDspState->slaveSourceAddr = 0;
+
+		for(;;)
+		{
+			int i;
+			data16_t code = *pSource++;
+			if( code == 0xffff )
+			{
+				data16_t addr = *pSource++;
+				mpDspState->masterSourceAddr = addr;
+				return;
+			}
+			else if( code == 1 )
+			{
+				logerror( "PDP NOP?\n" );
+				pSource += code;
+			}
+			else if( code == 0x18 )
+			{
+				TransmitWordToSlave( code );
+				for( i=0; i<code; i++ )
+				{
+					TransmitWordToSlave( pSource[i] );
+				}
+				pSource += code;
+			}
+			else
+			{
+				data16_t len = *pSource++;
+				INT32 masterAddr = pPointData[code];
+				for(;;)
+				{
+					INT32 subAddr = pPointData[masterAddr++];
+					if( subAddr==0xffffff )
+					{
+						break;
+					}
+					else
+					{
+						int primWords = (UINT16)(pPointData[subAddr++]);
+						TransmitWordToSlave( len );
+
+						for( i=0; i<len; i++ )
+						{
+							TransmitWordToSlave( pSource[i] );
+						}
+
+						TransmitWordToSlave( primWords );
+						for( i=0; i<primWords; i++ )
+						{
+							TransmitWordToSlave( (UINT16)pPointData[subAddr+i] );
+						}
+					}
+				} /* for(;;) */
+				pSource += len;
+			} /* if( code ... ) */
+		} /* for(;;) */
+	}
+} /* TransferDspData */
+
+static const INT32 *
+FindPrimitiveDataBySurfaceID( int surfID )
+{
+	const INT32 *pPointData = (INT32 *)memory_region( REGION_USER2 );
+	INT32 last = pPointData[0];
+	int i;
+	for( i=1; i<last; i++ )
+	{
+		INT32 masterAddr = pPointData[i];
+		for(;;)
+		{
+			INT32 subAddr = pPointData[masterAddr++];
+			if( subAddr == 0xffffff )
+			{
+				break;
+			}
+			else
+			{
+				data16_t len = pPointData[subAddr+0];
+				if( len>2 )
+				{
+					int id = pPointData[subAddr+1];
+					data16_t vertexCount = pPointData[subAddr+2];
+					if( id == surfID )
+					{
+						unsigned offs = subAddr + 4 + vertexCount*3;
+						return &pPointData[offs];
+					}
+				}
+			}
+		}
+	}
+	return NULL;
+} /* FindPrimitiveDataBySurfaceID */
+
+static void
+RenderSlaveOutput( data16_t data )
+{
+	if( mpDspState->slaveOutputSize >= 4096 )
+	{
+		logerror( "FATAL ERROR: SLAVE OVERFLOW\n" );
+		return;
+	}
+	mpDspState->slaveOutputBuffer[mpDspState->slaveOutputSize++] = data;
+	if(1)
+	{
+		data16_t *pSource = mpDspState->slaveOutputBuffer;
+		data16_t count = *pSource++;
+		if( count && mpDspState->slaveOutputSize > count )
+		{
+			data16_t surfaceID = *pSource++;
+			data16_t *pVertexList = pSource;
+			int sx[4], sy[4],zcode[4];
+			int j;
+			if( surfaceID&0x8000 )
+			{
+				for( j=0; j<4; j++ )
+				{
+					sx[j] = NAMCOS21_POLY_FRAME_WIDTH/2 + (INT16)pVertexList[3*j+0];
+					sy[j] = NAMCOS21_POLY_FRAME_HEIGHT/2 + (INT16)pVertexList[3*j+1];
+					zcode[j] = pVertexList[3*j+3];
+				}
+				namcos21_DrawQuad( sx, sy, zcode, surfaceID&0x7fff );
+			}
+			else if( surfaceID )
+			{
+				const INT32 *pSurf = FindPrimitiveDataBySurfaceID( surfaceID );
+				if( pSurf )
+				{
+					data16_t surfCount = *pSurf++;
+					while( surfCount-- )
+					{
+						data16_t color;
+						for( j=0; j<4; j++ )
+						{
+							data16_t vi = *pSurf++;
+							sx[j] = NAMCOS21_POLY_FRAME_WIDTH/2  + (INT16)pVertexList[3*vi+0];
+							sy[j] = NAMCOS21_POLY_FRAME_HEIGHT/2 + (INT16)pVertexList[3*vi+1];
+							zcode[j] = pVertexList[3*vi+2];
+						}
+						color = *pSurf++;
+						namcos21_DrawQuad( sx, sy, zcode, color );
+					} /* while( surfCount) */
+				} /* if( pSurf ) */
+			} /* if( surfaceID ) */
+			mpDspState->slaveOutputSize = 0;
+		}
+	}
+} /* RenderSlaveOutput */
+
+static size_t
+GetInputBytesAvailableForSlave( void )
+{
+	return mpDspState->slaveInputSize - mpDspState->slaveSourceAddr;
+} /* GetInputBytesAvailableForSlave */
+
+static READ16_HANDLER(slave_port2_r)
+{
+	data16_t result;
+	TransferDspData();
+	result = GetInputBytesAvailableForSlave();
+	if( result )
+	{
+		logerror( "%x : slave port2_r : 0x%04x\n", activecpu_get_pc(), result );
+	}
+	return result;
+} /* slave_port2_r */
+
+static READ16_HANDLER(slave_port0_r)
+{ /* read data */
+	data16_t result;
+	TransferDspData();
+	if( GetInputBytesAvailableForSlave()>0 )
+	{ /* data is available */
+		result = mpDspState->slaveInputBuffer[mpDspState->slaveSourceAddr++];
+	}
+	else
+	{
+		result =0;
+	}
+	logerror( "%x : slave port0_r : 0x%04x\n", activecpu_get_pc(), result );
+	return result;
+} /* slave_port0_r */
+
+static READ16_HANDLER(slave_port3_r)
+{ /* number of bytes in output buffer (slave blocks if too large) */
+	data16_t result = 0;
+	return result;
+}
+
+static WRITE16_HANDLER(slave_port0_w)
+{
+	logerror( "%x : slave port0_w : 0x%04x\n", activecpu_get_pc(), data );
+	RenderSlaveOutput( data );
+}
+
+static WRITE16_HANDLER(slave_port3_w)
+{ /* ack? */
+	logerror( "%x : slave port3_w : 0x%04x\n", activecpu_get_pc(), data );
+} /* slave_port3_w */
+
+static WRITE16_HANDLER( slave_XF_output_w )
+{
+	/* Trigger update of framebuffer and reset slave/master.
+     * This is probably NOT how real hardware works.
+     */
+	if( data==0 )
+	{
+		UpdatePolyFrameBufferAndResetDSPs();
+	}
+} /* slave_XF_output_w */
 
 static ADDRESS_MAP_START( slave_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
@@ -350,31 +940,59 @@ static ADDRESS_MAP_START( slave_dsp_data, ADDRESS_SPACE_DATA, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( slave_dsp_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
-	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
-	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+	AM_RANGE(0x00,0x00) AM_READ(slave_port0_r) AM_WRITE(slave_port0_w)
+	AM_RANGE(0x02,0x02) AM_READ(slave_port2_r)
+	AM_RANGE(0x03,0x03) AM_READ(slave_port3_r) AM_WRITE(slave_port3_w)
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(MRA16_NOP)
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(MWA16_NOP)
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(slave_XF_output_w)
 ADDRESS_MAP_END
 
 /************************************************************************************/
 
 static WRITE16_HANDLER( namcos21_dsp_control_w )
-{
+{ /* serial output; used to pump bits and possibly to trigger IRQs on master DSP */
+	static int code;
+	static int prev;
+	int cur;
 	COMBINE_DATA( &namcos21_dsp_control[offset] );
-}
-
-static WRITE16_HANDLER( namcos21_dsp_data_w )
-{
-	COMBINE_DATA( &namcos21_dsp_data[offset] );
+	cur = namcos21_dsp_control[offset];
+	if( (prev^cur)&4 )
+	{
+		code<<=1;
+		code |= cur&1;
+		code &= 0x1ff;
+	}
 }
 
 static READ16_HANDLER( namcos21_dsp_control_r )
 {
+/*  logerror( "dsp control_r%x:%x[%x]==%04x\n",
+        cpu_getactivecpu(),
+        activecpu_get_pc(),
+        offset,
+        namcos21_dsp_control[offset] ); */
 	return namcos21_dsp_control[offset];
+}
+
+#define PTRAM_SIZE 0x20000
+static data8_t *ptram;
+static unsigned int ptram_addr;
+
+static WRITE16_HANDLER( namcos21_dsp_data_w )
+{
+	ptram[ptram_addr++] = data;
+	ptram_addr &= (PTRAM_SIZE-1);
 }
 
 static READ16_HANDLER( namcos21_dsp_data_r )
 {
-	return namcos21_dsp_data[offset];
+/*  logerror( "dsp data_r%x:%x[%x]==%04x\n",
+        cpu_getactivecpu(),
+        activecpu_get_pc(),
+        offset,
+        ptram[ptram_addr] ); */
+	return ptram[ptram_addr];
 }
 
 /* dual port ram memory handlers */
@@ -414,13 +1032,6 @@ static WRITE16_HANDLER( shareram1_w )
 	COMBINE_DATA( &mpSharedRAM1[offset] );
 }
 
-#if 0
-static READ16_HANDLER( dsp_status_r )
-{
-	return 1;
-}
-#endif
-
 /* some games have read-only areas where more ROMs are mapped */
 
 static READ16_HANDLER( data_r )
@@ -446,102 +1057,64 @@ static WRITE16_HANDLER( paletteram16_w )
 }
 
 /******************************************************************************/
-WRITE16_HANDLER( NAMCO_C139_SCI_buffer_w ){}
-READ16_HANDLER( NAMCO_C139_SCI_buffer_r ){ return 0; }
+static WRITE16_HANDLER( NAMCO_C139_SCI_buffer_w ){}
+static READ16_HANDLER( NAMCO_C139_SCI_buffer_r ){ return 0; }
 
-WRITE16_HANDLER( NAMCO_C139_SCI_register_w ){}
-READ16_HANDLER( NAMCO_C139_SCI_register_r ){ return 0; }
+static WRITE16_HANDLER( NAMCO_C139_SCI_register_w ){}
+static READ16_HANDLER( NAMCO_C139_SCI_register_r ){ return 0; }
 /******************************************************************************/
 
-WRITE16_HANDLER( unk_48000X_w )
+static WRITE16_HANDLER( unk_48000X_w )
 {
 	/* 0x400 bytes - gamma table? */
+}
+static data16_t namcos21_unk_reg;
+WRITE16_HANDLER( namcos21_unk_reg_w )
+{
+	/* 0x40 or 0x00 */
+	COMBINE_DATA( &namcos21_unk_reg );
+}
+static READ16_HANDLER( namcos21_unk_reg_r )
+{
+	/* 0x40 or 0x00 */
+	return namcos21_unk_reg;
 }
 
 /*************************************************************/
 /* MASTER 68000 CPU Memory declarations                      */
 /*************************************************************/
-static ADDRESS_MAP_START( readmem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM )
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM ) /* private work RAM */
-	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R )
-	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r )
-	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM ) /* shared RAM with DSP graphics processors */
-	AM_RANGE(0x400000, 0x400001) AM_READ(namcos21_dsp_control_r )
-	AM_RANGE(0x440000, 0x440001) AM_READ(namcos21_dsp_data_r )
-	AM_RANGE(0x700000, 0x71ffff) AM_READ(namco_obj16_r )
-	AM_RANGE(0x720000, 0x72000f) AM_READ(namco_spritepos16_r )
-	AM_RANGE(0x740000, 0x75ffff) AM_READ(MRA16_RAM ) /* palette */
-	AM_RANGE(0x760000, 0x760001) AM_READ(MRA16_NOP )
-	AM_RANGE(0x800000, 0x8fffff) AM_READ(data_r )
-	AM_RANGE(0x900000, 0x90ffff) AM_READ(shareram1_r )
-	AM_RANGE(0xa00000, 0xa00fff) AM_READ(namcos2_68k_dualportram_word_r )
-	AM_RANGE(0xb00000, 0xb03fff) AM_READ(NAMCO_C139_SCI_buffer_r )
-	AM_RANGE(0xb80000, 0xb8000f) AM_READ(NAMCO_C139_SCI_register_r )
-	AM_RANGE(0xc00000, 0xcfffff) AM_READ(data2_r ) /* Cyber Sled */
-	AM_RANGE(0xd00000, 0xdfffff) AM_READ(data2_r )
+static ADDRESS_MAP_START( namcos21_68k_master, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) /* private work RAM */
+	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_master_C148_r) AM_WRITE(namcos2_68k_master_C148_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_master_default, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM )
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM ) /* private work RAM */
-	AM_RANGE(0x180000, 0x183fff) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
-	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_master_C148_w )
-	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_RAM) AM_BASE(&namcos21_dspram16 )
-	AM_RANGE(0x280000, 0x280001) AM_WRITE(MWA16_NOP ) /* written once on startup */
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(namcos21_dsp_control_w )
-	AM_RANGE(0x440000, 0x440001) AM_WRITE(namcos21_dsp_data_w )
-	AM_RANGE(0x480000, 0x4807ff) AM_WRITE(unk_48000X_w )
-	AM_RANGE(0x700000, 0x71ffff) AM_WRITE(namco_obj16_w )
-	AM_RANGE(0x720000, 0x72000f) AM_WRITE(namco_spritepos16_w )
-	AM_RANGE(0x740000, 0x75ffff) AM_WRITE(MWA16_RAM) AM_BASE(&paletteram16 )
-	AM_RANGE(0x760000, 0x760001) AM_WRITE(MWA16_NOP ) /* 0x40 or 0x00 */
-	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(shareram1_w) AM_BASE(&mpSharedRAM1 )
-	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(namcos2_68k_dualportram_word_w )
-	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(NAMCO_C139_SCI_buffer_w )
-	AM_RANGE(0xb80000, 0xb8000f) AM_WRITE(NAMCO_C139_SCI_register_w )
+static ADDRESS_MAP_START( namcos21_68k_slave, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) /* private work RAM */
+	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r) AM_WRITE(namcos2_68k_slave_C148_w)
 ADDRESS_MAP_END
 
-/*************************************************************/
-/* SLAVE 68000 CPU Memory declarations                       */
-/*************************************************************/
-
-static ADDRESS_MAP_START( readmem_slave_default, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM )
-	AM_RANGE(0x100000, 0x13ffff) AM_READ(MRA16_RAM )
-	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r )
-	AM_RANGE(0x200000, 0x20ffff) AM_READ(dspram16_r )
-	AM_RANGE(0x400000, 0x400001) AM_READ(namcos21_dsp_control_r )
-	AM_RANGE(0x440000, 0x440001) AM_READ(namcos21_dsp_data_r )
-	AM_RANGE(0x700000, 0x71ffff) AM_READ(namco_obj16_r )
-	AM_RANGE(0x720000, 0x72000f) AM_READ(namco_spritepos16_r )
-	AM_RANGE(0x740000, 0x75ffff) AM_READ(paletteram16_r )
-	AM_RANGE(0x760000, 0x760001) AM_READ(MRA16_NOP )
-	AM_RANGE(0x800000, 0x8fffff) AM_READ(data_r )
-	AM_RANGE(0x900000, 0x90ffff) AM_READ(shareram1_r )
-	AM_RANGE(0xa00000, 0xa00fff) AM_READ(namcos2_68k_dualportram_word_r )
-	AM_RANGE(0xb00000, 0xb03fff) AM_READ(NAMCO_C139_SCI_buffer_r )
-	AM_RANGE(0xb80000, 0xb8000f) AM_READ(NAMCO_C139_SCI_register_r )
-	AM_RANGE(0xc00000, 0xcfffff) AM_READ(data2_r ) /* Cyber Sled */
-	AM_RANGE(0xd00000, 0xdfffff) AM_READ(data2_r )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_slave_default, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_NOP ) /* CyberSled writes here on startup */
-	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(MWA16_RAM )
-	AM_RANGE(0x1c0000, 0x1fffff) AM_WRITE(namcos2_68k_slave_C148_w )
-	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(dspram16_w )
-	AM_RANGE(0x280000, 0x280001) AM_WRITE(MWA16_NOP ) /* written once on startup */
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(namcos21_dsp_control_w )
-	AM_RANGE(0x440000, 0x440001) AM_WRITE(namcos21_dsp_data_w )
-	AM_RANGE(0x700000, 0x71ffff) AM_WRITE(namco_obj16_w )
-	AM_RANGE(0x720000, 0x72000f) AM_WRITE(namco_spritepos16_w )
-	AM_RANGE(0x740000, 0x75ffff) AM_WRITE(paletteram16_w )
-	AM_RANGE(0x760000, 0x760001) AM_WRITE(MWA16_NOP )
-	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(shareram1_w )
-	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(namcos2_68k_dualportram_word_w )
-	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(NAMCO_C139_SCI_buffer_w )
-	AM_RANGE(0xb80000, 0xb8000f) AM_WRITE(NAMCO_C139_SCI_register_w )
+static ADDRESS_MAP_START( namcos21_68k_common, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(dspram16_r) AM_WRITE(dspram16_w) AM_BASE(&namcos21_dspram16)
+	AM_RANGE(0x280000, 0x280001) AM_WRITE(MWA16_NOP) /* written once on startup */
+	AM_RANGE(0x400000, 0x400001) AM_READ(namcos21_dsp_control_r) AM_WRITE(namcos21_dsp_control_w)
+	AM_RANGE(0x440000, 0x440001) AM_READ(namcos21_dsp_data_r) AM_WRITE(namcos21_dsp_data_w)
+//  AM_RANGE(0x440002, 0x44ffff) AM_WRITE(MWA16_NOP) /* (?) aircombj */
+//  AM_RANGE(0x480000, 0x4807ff) AM_WRITE(unk_48000X_w)
+	AM_RANGE(0x700000, 0x71ffff) AM_READ(namco_obj16_r) AM_WRITE(namco_obj16_w)
+	AM_RANGE(0x720000, 0x720007) AM_READ(namco_spritepos16_r) AM_WRITE(namco_spritepos16_w)
+	AM_RANGE(0x740000, 0x75ffff) AM_READ(paletteram16_r ) AM_WRITE(paletteram16_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x760000, 0x760001) AM_READ(namcos21_unk_reg_r) AM_WRITE(namcos21_unk_reg_w)
+	AM_RANGE(0x800000, 0x8fffff) AM_READ(data_r)
+	AM_RANGE(0x900000, 0x90ffff) AM_READ(shareram1_r) AM_WRITE(shareram1_w) AM_BASE(&mpSharedRAM1)
+	AM_RANGE(0xa00000, 0xa00fff) AM_READ(namcos2_68k_dualportram_word_r) AM_WRITE(namcos2_68k_dualportram_word_w)
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(NAMCO_C139_SCI_buffer_r) AM_WRITE(NAMCO_C139_SCI_buffer_w)
+	AM_RANGE(0xb80000, 0xb8000f) AM_READ(NAMCO_C139_SCI_register_r) AM_WRITE(NAMCO_C139_SCI_register_w)
+	AM_RANGE(0xc00000, 0xcfffff) AM_READ(data2_r) /* Cyber Sled */
+	AM_RANGE(0xd00000, 0xdfffff) AM_READ(data2_r)
+	AM_RANGE(0xfffffe, 0xffffff) AM_READ(uploadhack_r)
 ADDRESS_MAP_END
 
 /*************************************************************
@@ -795,11 +1368,11 @@ static struct C140interface C140_interface_typeB =
 
 static MACHINE_DRIVER_START( s21base )
 	MDRV_CPU_ADD(M68000,12288000) /* Master */
-	MDRV_CPU_PROGRAM_MAP(readmem_master_default,writemem_master_default)
+	MDRV_CPU_PROGRAM_MAP(namcos21_68k_master, namcos21_68k_common)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
 
 	MDRV_CPU_ADD(M68000,12288000) /* Slave */
-	MDRV_CPU_PROGRAM_MAP(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_PROGRAM_MAP(namcos21_68k_slave, namcos21_68k_common)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
 
 	MDRV_CPU_ADD(M6809,3072000) /* Sound */
@@ -811,25 +1384,25 @@ static MACHINE_DRIVER_START( s21base )
 	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz? */
+	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz? overclocked */
 	MDRV_CPU_PROGRAM_MAP(master_dsp_program,0)
 	MDRV_CPU_DATA_MAP(master_dsp_data,0)
 	MDRV_CPU_IO_MAP(master_dsp_io,0)
 
-	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz? */
+	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz?; overclocked */
 	MDRV_CPU_PROGRAM_MAP(slave_dsp_program,0)
 	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
 	MDRV_CPU_IO_MAP(slave_dsp_io,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+	MDRV_INTERLEAVE(10/*0*/)
 
 	MDRV_MACHINE_INIT(namcos2)
 	MDRV_NVRAM_HANDLER(namcos2)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-	MDRV_SCREEN_SIZE(496,480)
+	MDRV_SCREEN_SIZE(NAMCOS21_POLY_FRAME_WIDTH,NAMCOS21_POLY_FRAME_HEIGHT)
 	MDRV_VISIBLE_AREA(0,495,0,479)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -870,7 +1443,7 @@ static MACHINE_DRIVER_START( poly_c140_typeB )
 	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( poly_winrun_c140_typeB )
+static MACHINE_DRIVER_START( winrun_c140_typeB )
 	MDRV_CPU_ADD(M68000,12288000) /* Master */
 	MDRV_CPU_PROGRAM_MAP(readmem_master_winrun,writemem_master_winrun)
 	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
@@ -1075,6 +1648,57 @@ ROM_START( cybsled )
 	ROM_LOAD("voi3.12e",0x180000,0x80000,CRC(c902b4a4) SHA1(816357ec1a02a7ebf817ac1182e9c50ce5ca71f6) )
 ROM_END
 
+ROM_START( driveyes )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68k code */
+	ROM_LOAD16_BYTE( "de2_mpub.3j",  0x000000, 0x20000, CRC(80a0e5be) SHA1(6613b95e164c2032ea9043e4161130c6b3262492) )
+	ROM_LOAD16_BYTE( "de2_mplb.1j",  0x000001, 0x20000, CRC(942172d8) SHA1(21d8dfd2165b5ceb0399fdb53d9d0f51f1255803) )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* 68k code */
+	ROM_LOAD16_BYTE( "de1_spub.6c",  0x000000, 0x20000, CRC(0221d4b2) SHA1(65fd38b1cfaa6693d71248561d764a9ea1098c56) )
+	ROM_LOAD16_BYTE( "de1_splb.4c",  0x000001, 0x20000, CRC(288799e2) SHA1(2c4bf0cf9c71458fff4dd77e426a76685d9e1bab) )
+
+	ROM_REGION( 0x30000, REGION_CPU3, 0 ) /* Sound */
+	ROM_LOAD( "de1_snd0r.8j",	0x00c000, 0x004000, CRC(6a321e1e) SHA1(b2e77cac4ed7609593fa5a462c9d78526451e477) )
+	ROM_CONTINUE(			0x010000, 0x01c000 )
+	ROM_RELOAD(				0x010000, 0x020000 )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* I/O MCU */
+	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
+	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
+
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "de1_obj0.5s",  0x000000, 0x80000, CRC(5d42c71e) SHA1(f1aa2bb31bbbcdcac8e94334b1c78238cac1a0e7) )
+	ROM_LOAD( "de1_obj1.5x",  0x080000, 0x80000, CRC(c98011ad) SHA1(bc34c21428e0ef5887051c0eb0fdef5397823a82) )
+	ROM_LOAD( "de1_obj2.3s",  0x100000, 0x80000, CRC(6cf5b608) SHA1(c8537fbe97677c4c8a365b1cf86c4645db7a7d6b) )
+	ROM_LOAD( "de1_obj3.3x",  0x180000, 0x80000, CRC(cdc195bb) SHA1(91443917a6982c286b6f15381d441d061aefb138) )
+	ROM_LOAD( "de1_obj4.4s",  0x180000, 0x80000, CRC(cdc195bb) SHA1(91443917a6982c286b6f15381d441d061aefb138) )
+	ROM_LOAD( "de1_obj5.4x",  0x180000, 0x80000, CRC(cdc195bb) SHA1(91443917a6982c286b6f15381d441d061aefb138) )
+	ROM_LOAD( "de1_obj6.2s",  0x180000, 0x80000, CRC(cdc195bb) SHA1(91443917a6982c286b6f15381d441d061aefb138) )
+	ROM_LOAD( "de1_obj7.2x",  0x180000, 0x80000, CRC(cdc195bb) SHA1(91443917a6982c286b6f15381d441d061aefb138) )
+
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "de1_du.3a",  0x00001, 0x20000, CRC(dcb27da5) SHA1(ecd72397d10313fe8dcb8589bdc5d88d4298b26c) )
+	ROM_LOAD16_BYTE( "de1_dl.1a",  0x00000, 0x20000, CRC(f692a8f3) SHA1(4c29f60400b18d9ef0425de149618da6cf762ca4) )
+
+	ROM_REGION16_BE( 0xc0000, REGION_USER2, 0 ) /* 3d objects */
+	ROM_LOAD16_BYTE( "de1pt0ub.8j",  0x00000, 0x20000, CRC(f5469a29) SHA1(38b6ea1fbe482b69fbb0e2f44f44a0ca2a49f6bc) )
+	ROM_LOAD16_BYTE( "de1pt0lb.8d",  0x00001, 0x20000, CRC(5c18f596) SHA1(215cbda62254e31b4ff6431623384df1639bfdb7) )
+	ROM_LOAD16_BYTE( "de1pt1u.8l",   0x40000, 0x20000, CRC(146ab6b8) SHA1(aefb89585bf311f8d33f18298fea326ef1f19f1e) )
+	ROM_LOAD16_BYTE( "de1pt1l.8e",   0x40001, 0x20000, CRC(96c2463c) SHA1(e43db580e7b454af04c22e894108fbb56da0eeb5) )
+	ROM_LOAD16_BYTE( "de1pt2u.5n",   0x80000, 0x20000, CRC(146ab6b8) SHA1(aefb89585bf311f8d33f18298fea326ef1f19f1e) )
+	ROM_LOAD16_BYTE( "de1pt2l.7n",   0x80001, 0x20000, CRC(96c2463c) SHA1(e43db580e7b454af04c22e894108fbb56da0eeb5) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* sound samples */
+	ROM_LOAD("de1_voi0.12b",0x00000,0x40000,CRC(5b3d43a9) SHA1(cdc04f19dc91dca9fa88ba0c2fca72aa195a3694) )
+	ROM_LOAD("de1_voi1.12c",0x40000,0x40000,CRC(413e6181) SHA1(e827ec11f5755606affd2635718512aeac9354da) )
+	ROM_LOAD("de1_voi2.12d",0x80000,0x40000,CRC(067d0720) SHA1(a853b2d43027a46c5e707fc677afdaae00f450c7) )
+	ROM_LOAD("de1_voi3.12e",0xc0000,0x40000,CRC(8b5aa45f) SHA1(e1214e639200758ad2045bde0368a2d500c1b84a) )
+ROM_END
+
 ROM_START( starblad )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Master */
 	ROM_LOAD16_BYTE( "st1_mpu.bin",  0x000000, 0x80000, CRC(483a311c) SHA1(dd9416b8d4b0f8b361630e312eac71c113064eae) )
@@ -1111,7 +1735,8 @@ ROM_START( starblad )
 	ROM_LOAD32_BYTE( "st1pt0h.bin", 0x000001, 0x80000, CRC(84eb355f) SHA1(89a248b8be2e0afcee29ba4c4c9cca65d5fb246a) )
 	ROM_LOAD32_BYTE( "st1pt0u.bin", 0x000002, 0x80000, CRC(1956cd0a) SHA1(7d21b3a59f742694de472c545a1f30c3d92e3390) )
 	ROM_LOAD32_BYTE( "st1pt0l.bin", 0x000003, 0x80000, CRC(ff577049) SHA1(1e1595174094e88d5788753d05ce296c1f7eca75) )
-	ROM_LOAD32_BYTE( "st1pt1h.bin", 0x200001, 0x80000, CRC(96b1bd7d) SHA1(55da7896dda2aa4c35501a55c8605a065b02aa17) )
+
+	ROM_LOAD32_BYTE( "st1pt1h.bin", 0x200001, 0x80000, CRC(96b1bd7d) SHA1(55da7896dda2aa4c35501a55c8605a065b02aa17) ) // bad?
 	ROM_LOAD32_BYTE( "st1pt1u.bin", 0x200002, 0x80000, CRC(ecf21047) SHA1(ddb13f5a2e7d192f0662fa420b49f89e1e991e66) )
 	ROM_LOAD32_BYTE( "st1pt1l.bin", 0x200003, 0x80000, CRC(01cb0407) SHA1(4b58860bbc353de8b4b8e83d12b919d9386846e8) )
 
@@ -1170,6 +1795,53 @@ ROM_START( solvalou )
 	ROM_LOAD("sv1voi3.bin",0x180000,0x80000,CRC(33085ff3) SHA1(0a30b91618c250a5e7bd896a8ceeb3d16da178a9) )
 ROM_END
 
+ROM_START( winrun )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68k code */
+	ROM_LOAD16_BYTE( "sg1mpu.3k",  0x000000, 0x20000, CRC(80a0e5be) SHA1(6613b95e164c2032ea9043e4161130c6b3262492) )
+	ROM_LOAD16_BYTE( "sg1mpl.1k",  0x000001, 0x20000, CRC(942172d8) SHA1(21d8dfd2165b5ceb0399fdb53d9d0f51f1255803) )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* 68k code */
+	ROM_LOAD16_BYTE( "sg1spu.6b",  0x000000, 0x20000, CRC(0221d4b2) SHA1(65fd38b1cfaa6693d71248561d764a9ea1098c56) )
+	ROM_LOAD16_BYTE( "sg1spl.4b",  0x000001, 0x20000, CRC(288799e2) SHA1(2c4bf0cf9c71458fff4dd77e426a76685d9e1bab) )
+
+	ROM_REGION( 0x30000, REGION_CPU3, 0 ) /* Sound */
+	ROM_LOAD( "sg1snd0.7c",	0x00c000, 0x004000, CRC(6a321e1e) SHA1(b2e77cac4ed7609593fa5a462c9d78526451e477) )
+	ROM_CONTINUE(			0x010000, 0x01c000 )
+	ROM_RELOAD(				0x010000, 0x020000 )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* I/O MCU */
+	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
+	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
+
+	ROM_REGION( 0x80000, REGION_CPU5, 0 ) /* 68k code */
+	ROM_LOAD16_BYTE( "sg1gp0u.1j",  0x00000, 0x20000, CRC(f5469a29) SHA1(38b6ea1fbe482b69fbb0e2f44f44a0ca2a49f6bc) )
+	ROM_LOAD16_BYTE( "sg1gp0l.3j",  0x00001, 0x20000, CRC(5c18f596) SHA1(215cbda62254e31b4ff6431623384df1639bfdb7) )
+	ROM_LOAD16_BYTE( "sg1gp1u.1l",  0x40000, 0x20000, CRC(146ab6b8) SHA1(aefb89585bf311f8d33f18298fea326ef1f19f1e) )
+	ROM_LOAD16_BYTE( "sg1gp1l.3l",  0x40001, 0x20000, CRC(96c2463c) SHA1(e43db580e7b454af04c22e894108fbb56da0eeb5) )
+
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "sg1d0u.3a",  0x00001, 0x20000, CRC(dcb27da5) SHA1(ecd72397d10313fe8dcb8589bdc5d88d4298b26c) )
+	ROM_LOAD16_BYTE( "sg1d0l.1a",  0x00000, 0x20000, CRC(f692a8f3) SHA1(4c29f60400b18d9ef0425de149618da6cf762ca4) )
+	ROM_LOAD16_BYTE( "sg1d1u.3b",  0x40001, 0x20000, CRC(ac2afd1b) SHA1(510eb41931164b086c85ba0a86d6f10b88f5e534) )
+	ROM_LOAD16_BYTE( "sg1d1l.1b",  0x40000, 0x20000, CRC(ebb51af1) SHA1(87b7b64ee662bf652add1e1199e42391d0e2f7e8) )
+
+	ROM_REGION16_BE( 0x80000, REGION_USER2, 0 ) /* 3d objects */
+	ROM_LOAD16_BYTE( "sg1pt0u.8j", 0x00001, 0x20000, CRC(abf512a6) SHA1(e86288039d6c4dedfa95b11cb7e4b87637f90c09) )
+	ROM_LOAD16_BYTE( "sg1pt0l.8d", 0x00000, 0x20000, CRC(ac8d468c) SHA1(d1b457a19a5d3259d0caf933f42b3a02b485867b) )
+	ROM_LOAD16_BYTE( "sg1pt1u.8l", 0x40001, 0x20000, CRC(7e5dab74) SHA1(5bde219d5b4305d38d17b494b2e759f05d05329f) )
+	ROM_LOAD16_BYTE( "sg1pt1l.8e", 0x40000, 0x20000, CRC(38a54ec5) SHA1(5c6017c98cae674868153ff2d64532027cf0ab83) )
+
+	ROM_REGION16_BE( 0x100000, REGION_USER3, 0 ) /* bitmapped graphics */
+	ROM_LOAD16_BYTE( "sg1gd0u.1p",  0x00001, 0x40000, CRC(33f5a19b) SHA1(b1dbd242168007f80e13e11c78b34abc1668883e) )
+	ROM_LOAD16_BYTE( "sg1gd0l.3p",  0x00000, 0x40000, CRC(9a29500e) SHA1(c605f86b138e0a4c3163ffd967482e298a15fbe7) )
+	ROM_LOAD16_BYTE( "sg1gd1u.1s",  0x80001, 0x40000, CRC(17e5a61c) SHA1(272ebd7daa56847f1887809535362331b5465dec) )
+	ROM_LOAD16_BYTE( "sg1gd1l.3s",  0x80000, 0x40000, CRC(64df59a2) SHA1(1e9d0945b94780bb0be16803e767466d2cda07e8) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) /* sound samples */
+	ROM_LOAD("sgvoi-1.11c",0x000000,0x80000,CRC(9fb33af3) SHA1(666630a8e5766ca4c3275961963c3e713dfdda2d) )
+	ROM_LOAD("sgboi-3.11e",0x080000,0x80000,CRC(76e22f92) SHA1(0e1b8d35a5b9c20cc3192d935f0c9da1e69679d2) )
+ROM_END
+
 ROM_START( winrun91 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68k code */
 	ROM_LOAD16_BYTE( "mpu.3k",  0x000000, 0x20000, CRC(80a0e5be) SHA1(6613b95e164c2032ea9043e4161130c6b3262492) )
@@ -1219,25 +1891,15 @@ ROM_END
 
 static void namcos21_init( int game_type )
 {
-	data32_t *pMem = (data32_t *)memory_region(REGION_USER2);
-	int numWords = memory_region_length(REGION_USER2)/4;
-	int i;
-
-	/* sign-extend the 24 bit point data into a more-convenient 32 bit format */
-	for( i=0; i<numWords; i++ )
-	{
-		if( pMem[i] &  0x00800000 )
-		{
-			pMem[i] |= 0xff000000;
-		}
-	}
 	namcos2_gametype = game_type;
+	ptram = auto_malloc(PTRAM_SIZE);
 	mpDataROM = (data16_t *)memory_region( REGION_USER1 );
 	InitDSP();
 } /* namcos21_init */
 
 static DRIVER_INIT( winrun )
 {
+	/* don't use the generic namcos21_init; hardware is different */
 	namcos2_gametype = NAMCOS21_WINRUN91;
 	mpDataROM = (data16_t *)memory_region( REGION_USER1 );
 }
@@ -1245,7 +1907,7 @@ static DRIVER_INIT( winrun )
 static DRIVER_INIT( aircombt )
 {
 #if 0
-	/* replace first four tests of aircombj with special "hidden" tests */
+	/* replace first four tests of aircombj to reveal special "hidden" tests */
 	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
 	pMem[0x2a32/2] = 0x90;
 	pMem[0x2a34/2] = 0x94;
@@ -1269,17 +1931,12 @@ DRIVER_INIT( cybsled )
 
 DRIVER_INIT( solvalou )
 {
-	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
-
-	/* patch out DSP memtest/clear */
-	pMem[0x1FD7C/2] = 0x4E71;
-	pMem[0x1FD7E/2] = 0x4E71;
-
-	/* patch out DSP test/populate */
-	pMem[0x1FDA6/2] = 0x4E71;
-	pMem[0x1FDA8/2] = 0x4E71;
-
 	namcos21_init( NAMCOS21_SOLVALOU );
+}
+
+DRIVER_INIT( driveyes )
+{
+	namcos2_gametype = NAMCOS21_DRIVERS_EYES;
 }
 
 /*************************************************************/
@@ -1523,15 +2180,14 @@ static INPUT_PORTS_START( aircombt )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
-/*    YEAR, NAME,     PARENT,   MACHINE,          INPUT,        INIT,     MONITOR,    COMPANY, FULLNAME,            FLAGS */
-GAMEX( 1992, aircombj, 0,       poly_c140_typeB,  aircombt, 	aircombt, ROT0,	      "Namco", "Air Combat (Japan)",	GAME_NOT_WORKING ) /* mostly working */
-GAMEX( 1992, aircombu, aircombj,poly_c140_typeB,  aircombt, 	aircombt, ROT0,       "Namco", "Air Combat (US)",	GAME_NOT_WORKING ) /* mostly working */
-GAMEX( 1993, cybsled,  0,       poly_c140_typeA,  cybsled,      cybsled,  ROT0,       "Namco", "Cyber Sled",		GAME_NOT_WORKING ) /* mostly working */
-/* 199?, Driver's Eyes */
+/*    YEAR, NAME,     PARENT,   MACHINE,           INPUT,        INIT,     MONITOR, COMPANY, FULLNAME,             FLAGS */
+GAMEX( 1992, aircombj, 0,       poly_c140_typeB,   aircombt,     aircombt, ROT0,    "Namco", "Air Combat (Japan)", GAME_NOT_WORKING ) /* mostly working */
+GAMEX( 1992, aircombu, aircombj,poly_c140_typeB,   aircombt,     aircombt, ROT0,    "Namco", "Air Combat (US)",	  GAME_NOT_WORKING ) /* mostly working */
+GAMEX( 1993, cybsled,  0,       poly_c140_typeA,   cybsled,      cybsled,  ROT0,    "Namco", "Cyber Sled",         GAME_NOT_WORKING ) /* mostly working */
+GAMEX( 1999, driveyes, 0,       poly_c140_typeA,   s21default,   driveyes, ROT0,    "Namco", "Driver's Eyes",      GAME_NOT_WORKING )
 /* 1992, ShimDrive */
-GAMEX( 1991, solvalou, 0,       poly_c140_typeA,  s21default,	    solvalou, ROT0,   "Namco", "Solvalou (Japan)",	GAME_IMPERFECT_GRAPHICS ) /* working and playable */
-GAMEX( 1991, starblad, 0,       poly_c140_typeA,  s21default,  	starblad, ROT0,       "Namco", "Starblade",		GAME_IMPERFECT_GRAPHICS ) /* working and playable */
-/* 1988, Winning Run */
+GAMEX( 1991, solvalou, 0,       poly_c140_typeA,   s21default,   solvalou, ROT0,    "Namco", "Solvalou (Japan)",   GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS ) /* working and playable */
+GAMEX( 1991, starblad, 0,       poly_c140_typeA,   s21default,   starblad, ROT0,    "Namco", "Starblade",		  GAME_IMPERFECT_GRAPHICS ) /* working and playable */
+GAMEX( 1988, winrun,   0,       winrun_c140_typeB, s21default,   winrun,   ROT0,    "Namco", "Winning Run",        GAME_NOT_WORKING )
 /* 1989, Winning Run Suzuka Grand Prix */
-GAMEX( 1991, winrun91, 0,       poly_winrun_c140_typeB, s21default,winrun,ROT0,       "Namco", "Winning Run 91", 	GAME_NOT_WORKING ) /* not working */
+GAMEX( 1991, winrun91, 0,       winrun_c140_typeB, s21default,   winrun,   ROT0,    "Namco", "Winning Run 91", 	  GAME_NOT_WORKING ) /* not working */

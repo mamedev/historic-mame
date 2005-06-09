@@ -436,7 +436,7 @@ static int v60_execute(int cycles)
 	while(v60_ICount >= 0) {
 		PPC = PC;
 		CALL_MAME_DEBUG;
-		v60_ICount--;
+		v60_ICount -= 8;	/* fix me -- this is just an average */
 		PC += OpCodeTable[OpRead8(PC)]();
 		if(v60.irq_line != CLEAR_LINE)
 			v60_try_irq();

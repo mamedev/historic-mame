@@ -608,6 +608,7 @@ static data16_t mSpritePos[4];
 WRITE16_HANDLER( namco_spritepos16_w )
 {
 	COMBINE_DATA( &mSpritePos[offset] );
+	logerror( "namco_spritepos16_w(%d):=%d\n", offset, (INT16)mSpritePos[offset] );
 }
 READ16_HANDLER( namco_spritepos16_r )
 {
@@ -749,15 +750,7 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 
 	if( bitmap->width > 288 )
 	{ /* Medium Resolution: System21 adjust */
-		if( namcos2_gametype == NAMCOS21_CYBERSLED )
-		{
-			xscroll -= 0x04;
-			yscroll += 0x1d;
-		}
-		else
-		{ /* Starblade */
 			yscroll += 0x10;
-		}
 	}
 	else
 	{
@@ -1626,6 +1619,7 @@ namco_road_set_transparent_color(pen_t pen)
 void
 namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
+	const data8_t *clut = (void *)memory_region(REGION_USER3);
 	struct mame_bitmap *pSourceBitmap;
 	unsigned yscroll;
 	int i;
@@ -1687,6 +1681,10 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 							int pen = pSourceGfx[sourcex>>16];
 							if (pen != mRoadTransparentColor)
 							{
+								if( clut )
+								{
+									pen = (pen&~0xff)|clut[pen&0xff];
+								}
 								pDest[screenx] = pen;
 							}
 							screenx++;
@@ -1698,6 +1696,10 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 						while( numpixels-- > 0 )
 						{
 							int pen = pSourceGfx[sourcex>>16];
+							if( clut )
+							{
+								pen = (pen&~0xff)|clut[pen&0xff];
+							}
 							pDest[screenx++] = pen;
 							sourcex += dsourcex;
 						}

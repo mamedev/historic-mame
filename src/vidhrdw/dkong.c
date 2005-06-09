@@ -164,8 +164,7 @@ VIDEO_START( dkong )
 	gfx_bank = 0;
 	palette_bank = 0;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
@@ -335,14 +334,14 @@ VIDEO_UPDATE( radarscp )
 {
 	palette_set_color(256,0xff,0x00,0x00);	/* stars */
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_grid(bitmap);
 	draw_sprites(bitmap, 0x40, 1);
 }
 
 VIDEO_UPDATE( dkong )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_sprites(bitmap, 0x40, 1);
 }
 
@@ -350,7 +349,7 @@ VIDEO_UPDATE( pestplce )
 {
 	int offs;
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -362,14 +361,14 @@ VIDEO_UPDATE( pestplce )
 					(spriteram[offs + 1] & 0x0f) + 16 * palette_bank,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
 					spriteram[offs + 3] - 8,240 - spriteram[offs] + 8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
 VIDEO_UPDATE( spclforc )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* it uses spriteram[offs + 2] & 0x10 for sprite bank */
 	draw_sprites(bitmap, 0x10, 3);

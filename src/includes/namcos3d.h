@@ -48,11 +48,3 @@ void namcos22_BlitTri(
 	INT32 flags,
 	const namcos22_camera * );
 
-void namcos21_BlitTriFlat(
-	struct mame_bitmap *pBitmap,
-	const struct rectangle *cliprect,
-	const struct VerTex v[3],
-	unsigned color,
-	INT32 zsort,
-	/* INT32 flags, */
-	const namcos21_camera * );

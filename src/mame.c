@@ -116,10 +116,10 @@
             - calls shutdown_machine() [mame.c]
 
             shutdown_machine() [mame.c]
+                - calls cpu_exit() [cpuexec.c] to tear down the CPU system
                 - calls memory_shutdown() [memory.c] to tear down the memory system
                 - frees all the memory regions
                 - calls chd_close_all() [chd.c] to tear down the hard disks
-                - calls cpu_exit() [cpuexec.c] to tear down the CPU system
                 - calls code_close() [input.c] to tear down the input system
                 - calls state_save_reset() [state.c] to reset the saved state system
                 - calls coin_counter_reset() [common.c] to reset coin counters
@@ -633,6 +633,9 @@ static void shutdown_machine(void)
 	devices_exit();
 #endif
 
+	/* reset the CPU system -- must be done before memory goes away */
+	cpu_exit();
+
 	/* release any allocated memory */
 	memory_shutdown();
 
@@ -642,9 +645,6 @@ static void shutdown_machine(void)
 
 	/* close all hard drives */
 	chd_close_all();
-
-	/* reset the CPU system */
-	cpu_exit();
 
 	/* close down the input system */
 	code_close();

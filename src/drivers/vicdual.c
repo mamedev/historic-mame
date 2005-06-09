@@ -263,6 +263,40 @@ INPUT_PORTS_START( safari )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( nsub )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x08,  0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x10,  0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x20,  0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x40,  0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( frogs )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY	/* The original joystick was a 3-way */
@@ -1457,7 +1491,8 @@ ROM_START( nsub )
 	ROM_LOAD( "epr274.42",     0x3000, 0x0800, CRC(d69eb098) SHA1(fd3e67d18b5891aa65aab5967d49810c5d88dcee) )
 	ROM_LOAD( "epr275.41",     0x3800, 0x0800, CRC(1c7d90cc) SHA1(8483825d9811c925407328836ae10f98b011c3dd) )
 
-	ROM_REGION( 0x0040, REGION_USER1, 0 )	/* misc PROMs */
+	/* color prom? */
+	ROM_REGION( 0x0020, REGION_USER1, 0 )
 	ROM_LOAD( "pr69.11", 0x0000, 0x0020, CRC(c94dd091) SHA1(f88cfb033ff83adb7375652be1fa32ba489d8418) )
 
 /*
@@ -2091,7 +2126,6 @@ static DRIVER_INIT( alphaho )
 }
 #endif
 
-
 GAME( 1977, depthch,  0,        depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
 GAME( 1977, depthv1,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge (older)" )
 GAME( 1977, subhunt,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Taito", "Sub Hunter" )
@@ -2106,7 +2140,7 @@ GAMEX(1979, headon,   0,        2ports,   headon,   headon,    ROT0,   "Gremlin"
 GAMEX(1979, headonb,  headon,   2ports,   headon,   headon,    ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
 GAMEX(1979, headon2,  0,        3ports,   headon2,  headon2,   ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
 GAMEX(1979, invho2,   0,        invinco4, invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2", GAME_IMPERFECT_SOUND )
-GAMEX(1980, nsub,     0,        safari,   safari,   sspaceat,  ROT270, "Sega", "N-Sub",GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX(1980, nsub,     0,        2ports,   nsub,     safari,    ROT270, "Sega", "N-Sub (upright)", GAME_WRONG_COLORS | GAME_NO_SOUND )
 GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai", GAME_NO_SOUND )
 GAME( 1979, invinco,  0,        invinco3, invinco,  invinco,   ROT270, "Sega", "Invinco" )
 GAMEX(1979, invds,    0,        invinco4, invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan", GAME_IMPERFECT_SOUND )

@@ -1,17 +1,20 @@
 /*###################################################################################################
 **
 **
-**      debugexp.c
-**      Debugger expressions engine.
+**      express.c
+**      Generic expressions engine.
 **      Written by Aaron Giles
+**      Copyright (c) 2005, Aaron Giles
 **
 **
 **#################################################################################################*/
 
-#include "driver.h"
-#include "debugexp.h"
-#include "debugcpu.h"
+#include "osdepend.h"
+#include "express.h"
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 
@@ -27,13 +30,17 @@
 **  CONSTANTS
 **#################################################################################################*/
 
+#ifndef DEFAULT_BASE
+#define DEFAULT_BASE			16			/* hex unless otherwise specified */
+#endif
+
 #define MAX_TOKENS				128
 #define MAX_STACK_DEPTH			128
 #define MAX_STRING_LENGTH		256
 #define MAX_EXPRESSION_STRINGS	64
 #define MAX_SYMBOL_LENGTH		64
 
-#define SYM_TABLE_ALLOC_CHUNK	256
+#define SYM_TABLE_HASH_SIZE		97
 
 /* token.type values */
 enum
@@ -81,9 +88,9 @@ enum
 
 	TIN_MEMORY_SPACE_SHIFT	= 10,
 	TIN_MEMORY_SPACE_MASK	= (3 << TIN_MEMORY_SPACE_SHIFT),
-	TIN_MEMORY_PROGRAM		= (ADDRESS_SPACE_PROGRAM << TIN_MEMORY_SPACE_SHIFT),
-	TIN_MEMORY_DATA			= (ADDRESS_SPACE_DATA    << TIN_MEMORY_SPACE_SHIFT),
-	TIN_MEMORY_IO			= (ADDRESS_SPACE_IO      << TIN_MEMORY_SPACE_SHIFT),
+	TIN_MEMORY_PROGRAM		= (EXPSPACE_PROGRAM << TIN_MEMORY_SPACE_SHIFT),
+	TIN_MEMORY_DATA			= (EXPSPACE_DATA    << TIN_MEMORY_SPACE_SHIFT),
+	TIN_MEMORY_IO			= (EXPSPACE_IO      << TIN_MEMORY_SPACE_SHIFT),
 };
 
 
@@ -156,11 +163,17 @@ struct token
 	union int_ptr	value;			/* value of token */
 };
 
+struct internal_symbol_entry
+{
+	struct internal_symbol_entry *next;	/* pointer to the next entry */
+	const char *	name;			/* name of the symbol */
+	struct symbol_entry	entry;		/* actual entry data */
+};
+
 struct symbol_table
 {
-	UINT32			count;			/* number of symbols in the table */
-	UINT32			alloc;			/* number of symbols currently allocated */
-	struct symbol_entry *symbol; 	/* array of symbols */
+	struct symbol_table *parent;	/* pointer to the parent symbol table */
+	struct internal_symbol_entry *hash[SYM_TABLE_HASH_SIZE]; /* hash table */
 };
 
 struct parsed_expression
@@ -172,14 +185,6 @@ struct parsed_expression
 	int				token_stack_ptr;/* stack poointer */
 	struct token token_stack[MAX_STACK_DEPTH];/* token stack */
 };
-
-
-
-/*###################################################################################################
-**  LOCAL VARIABLES
-**#################################################################################################*/
-
-static struct symbol_table *global_table;
 
 
 
@@ -293,10 +298,13 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 	if (token->type == TOK_SYMBOL)
 	{
 		struct symbol_entry *symbol = token->value.p;
-		if (symbol == NULL || symbol->type != SMT_REGISTER)
+		if (symbol == NULL || (symbol->type != SMT_REGISTER && symbol->type != SMT_VALUE))
 			return MAKE_EXPRERR_NOT_RVAL(token->offset);
 		token->type = TOK_NUMBER;
-		token->value.i = (*symbol->info.reg.getter)(symbol->ref);
+		if (symbol->type == SMT_REGISTER)
+			token->value.i = (*symbol->info.reg.getter)(symbol->ref);
+		else
+			token->value.i = symbol->info.gen.value;
 	}
 
 	/* memory tokens get resolved down to number tokens */
@@ -305,7 +313,7 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 		int space = (token->info & TIN_MEMORY_SPACE_MASK) >> TIN_MEMORY_SPACE_SHIFT;
 		int size = (token->info & TIN_MEMORY_SIZE_MASK) >> TIN_MEMORY_SIZE_SHIFT;
 		token->type = TOK_NUMBER;
-		token->value.i = debug_read_memory(space, token->value.i, 1 << size);
+		token->value.i = external_read_memory(space, token->value.i, 1 << size);
 	}
 
 	/* to be an rval, the token must be a number */
@@ -332,7 +340,7 @@ INLINE UINT64 get_lval_value(struct token *token, const struct symbol_table *tab
 	{
 		int space = (token->info & TIN_MEMORY_SPACE_MASK) >> TIN_MEMORY_SPACE_SHIFT;
 		int size = (token->info & TIN_MEMORY_SIZE_MASK) >> TIN_MEMORY_SIZE_SHIFT;
-		return debug_read_memory(space, token->value.i, 1 << size);
+		return external_read_memory(space, token->value.i, 1 << size);
 	}
 	return 0;
 }
@@ -355,7 +363,7 @@ INLINE void set_lval_value(struct token *token, const struct symbol_table *table
 	{
 		int space = (token->info & TIN_MEMORY_SPACE_MASK) >> TIN_MEMORY_SPACE_SHIFT;
 		int size = (token->info & TIN_MEMORY_SIZE_MASK) >> TIN_MEMORY_SIZE_SHIFT;
-		debug_write_memory(space, token->value.i, 1 << size, value);
+		external_write_memory(space, token->value.i, 1 << size, value);
 	}
 }
 
@@ -626,9 +634,9 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				break;
 
 			case '>':
-				if (string[1] == '<' && string[2] == '=')
+				if (string[1] == '>' && string[2] == '=')
 					SET_TOKEN_INFO(3, TOK_OPERATOR, TVL_ASSIGNRSHIFT, TIN_PRECEDENCE_13 | TIN_RIGHT_TO_LEFT);
-				else if (string[1] == '<')
+				else if (string[1] == '>')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_RSHIFT, TIN_PRECEDENCE_5);
 				else if (string[1] == '=')
 					SET_TOKEN_INFO(2, TOK_OPERATOR, TVL_GREATEROREQUAL, TIN_PRECEDENCE_6);
@@ -723,7 +731,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 			{
 				static const char *valid = "abcdefghijklmnopqrstuvwxyz0123456789_$#.";
 				static const char *numbers = "0123456789abcdef";
-				int bufindex = 0, must_be_number = 0, numbase = 16;
+				int bufindex = 0, must_be_number = 0, numbase = DEFAULT_BASE;
 				char buffer[MAX_SYMBOL_LENGTH];
 				UINT64 value;
 
@@ -763,7 +771,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 					/* if we're not forced to be a number, check for a symbol match first */
 					if (!must_be_number)
 					{
-						const struct symbol_entry *symbol = debug_symtable_find(expr->table, buffer);
+						const struct symbol_entry *symbol = symtable_find(expr->table, buffer);
 						if (symbol != NULL)
 						{
 							token->type = TOK_SYMBOL;
@@ -1540,33 +1548,11 @@ static void free_expression_strings(struct parsed_expression *expr)
 **#################################################################################################*/
 
 /*-------------------------------------------------
-    debug_expression_set_global_symtable - set the
-    global symbol table
--------------------------------------------------*/
-
-void debug_expression_set_global_symtable(struct symbol_table *table)
-{
-	global_table = table;
-}
-
-
-/*-------------------------------------------------
-    debug_expression_get_global_symtable - return
-    a pointer to the global symtable
--------------------------------------------------*/
-
-struct symbol_table *debug_expression_get_global_symtable(void)
-{
-	return global_table;
-}
-
-
-/*-------------------------------------------------
-    debug_expression_evaluate - evaluate a string
+    expression_evaluate - evaluate a string
     expression using the passed symbol table
 -------------------------------------------------*/
 
-EXPRERR debug_expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result)
+EXPRERR expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result)
 {
 	struct parsed_expression temp_expression;
 	EXPRERR exprerr;
@@ -1597,11 +1583,11 @@ cleanup:
 
 
 /*-------------------------------------------------
-    debug_expression_parse - parse an expression and
+    expression_parse - parse an expression and
     return an allocated token array
 -------------------------------------------------*/
 
-EXPRERR debug_expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result)
+EXPRERR expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result)
 {
 	struct parsed_expression temp_expression;
 	EXPRERR exprerr;
@@ -1635,11 +1621,11 @@ cleanup:
 
 
 /*-------------------------------------------------
-    debug_expression_execute - execute a
+    expression_execute - execute a
     previously-parsed expression
 -------------------------------------------------*/
 
-EXPRERR debug_expression_execute(struct parsed_expression *expr, UINT64 *result)
+EXPRERR expression_execute(struct parsed_expression *expr, UINT64 *result)
 {
 	/* execute the expression to get the result */
 	return execute_tokens(expr, result);
@@ -1647,11 +1633,11 @@ EXPRERR debug_expression_execute(struct parsed_expression *expr, UINT64 *result)
 
 
 /*-------------------------------------------------
-    debug_expression_free - free a previously
+    expression_free - free a previously
     allocated parsed expression
 -------------------------------------------------*/
 
-void debug_expression_free(struct parsed_expression *expr)
+void expression_free(struct parsed_expression *expr)
 {
 	if (expr)
 	{
@@ -1662,11 +1648,11 @@ void debug_expression_free(struct parsed_expression *expr)
 
 
 /*-------------------------------------------------
-    debug_expression_original_string - return a
+    expression_original_string - return a
     pointer to the original expression string
 -------------------------------------------------*/
 
-const char *debug_expression_original_string(struct parsed_expression *expr)
+const char *expression_original_string(struct parsed_expression *expr)
 {
 	return expr->original_string;
 }
@@ -1678,11 +1664,11 @@ const char *debug_expression_original_string(struct parsed_expression *expr)
 **#################################################################################################*/
 
 /*-------------------------------------------------
-    debug_exprerr_to_string - return a friendly
+    exprerr_to_string - return a friendly
     string for a given expression error
 -------------------------------------------------*/
 
-const char *debug_exprerr_to_string(EXPRERR error)
+const char *exprerr_to_string(EXPRERR error)
 {
 	switch (EXPRERR_ERROR_CLASS(error))
 	{
@@ -1711,10 +1697,23 @@ const char *debug_exprerr_to_string(EXPRERR error)
 **#################################################################################################*/
 
 /*-------------------------------------------------
-    debug_symtable_alloc - allocate a symbol table
+    hash_string - simple string hash
 -------------------------------------------------*/
 
-struct symbol_table *debug_symtable_alloc(void)
+INLINE UINT32 hash_string(const char *string)
+{
+	UINT32 hash = 0;
+	while (*string)
+		hash = (hash * 31) + *string++;
+	return hash;
+}
+
+
+/*-------------------------------------------------
+    symtable_alloc - allocate a symbol table
+-------------------------------------------------*/
+
+struct symbol_table *symtable_alloc(struct symbol_table *parent)
 {
 	struct symbol_table *table;
 
@@ -1724,135 +1723,133 @@ struct symbol_table *debug_symtable_alloc(void)
 		return NULL;
 
 	/* initialize the data */
-	table->count = 0;
-	table->alloc = 0;
-	table->symbol = NULL;
+	memset(table, 0, sizeof(*table));
+	table->parent = parent;
 	return table;
 }
 
 
 /*-------------------------------------------------
-    debug_symtable_add - add a new symbol to a
+    symtable_add - add a new symbol to a
     symbol table
 -------------------------------------------------*/
 
-int debug_symtable_add(struct symbol_table *table, const struct symbol_entry *entry)
+int symtable_add(struct symbol_table *table, const char *name, const struct symbol_entry *entry)
 {
-	struct symbol_entry *symbol;
+	struct internal_symbol_entry *symbol;
+	struct symbol_entry *oldentry;
 	char *newstring;
+	UINT32 hash_index;
 	int strindex;
 
-	/* see if we already have an entry */
-	symbol = (struct symbol_entry *)debug_symtable_find(table, entry->name);
-	if (symbol != NULL)
+	/* see if we already have an entry and just overwrite it if we do */
+	oldentry = (struct symbol_entry *)symtable_find(table, name);
+	if (oldentry)
 	{
-		/* we found it; replace this entry */
-		if (symbol->name != NULL)
-			free((void *)symbol->name);
-		symbol->name = NULL;
+		*oldentry = *entry;
+		return 1;
 	}
-	else
-	{
-		/* expand the table if necessary */
-		if (table->count >= table->alloc)
-		{
-			/* increment by the chunk count and realloc */
-			int newalloc = table->alloc + SYM_TABLE_ALLOC_CHUNK;
-			struct symbol_entry *newarray = realloc(table->symbol, newalloc * sizeof(table->symbol[0]));
 
-			/* return 0 on failure */
-			if (!newarray)
-				return 0;
-
-			/* update the table */
-			table->alloc = newalloc;
-			table->symbol = newarray;
-		}
-
-		/* allocate the new entry */
-		symbol = &table->symbol[table->count++];
-	}
+	/* otherwise, allocate a new entry */
+	symbol = malloc(sizeof(*symbol));
+	memset(symbol, 0, sizeof(*symbol));
 
 	/* allocate space for a copy of the string */
-	newstring = malloc(strlen(entry->name) + 1);
+	newstring = malloc(strlen(name) + 1);
 	if (!newstring)
+	{
+		free(symbol);
 		return 0;
+	}
 
 	/* copy the string, converting to lowercase */
-	for (strindex = 0; entry->name[strindex] != 0; strindex++)
-		newstring[strindex] = tolower(entry->name[strindex]);
+	for (strindex = 0; name[strindex] != 0; strindex++)
+		newstring[strindex] = tolower(name[strindex]);
 	newstring[strindex] = 0;
 
-	/* add the entry */
-	*symbol = *entry;
+	/* fill in the details */
 	symbol->name = newstring;
+	symbol->entry = *entry;
+
+	/* add the entry to the hash table */
+	hash_index = hash_string(newstring) % SYM_TABLE_HASH_SIZE;
+	symbol->next = table->hash[hash_index];
+	table->hash[hash_index] = symbol;
 	return 1;
 }
 
 
 /*-------------------------------------------------
-    debug_symtable_add_register - add a new
+    symtable_add_register - add a new
     register symbol to a symbol table
 -------------------------------------------------*/
 
-int	debug_symtable_add_register(struct symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64))
+int	symtable_add_register(struct symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64))
 {
 	struct symbol_entry symbol;
 
-	symbol.name = name;
 	symbol.ref = ref;
 	symbol.type = SMT_REGISTER;
 	symbol.info.reg.getter = getter;
 	symbol.info.reg.setter = setter;
-	return debug_symtable_add(table, &symbol);
+	return symtable_add(table, name, &symbol);
 }
 
 
 /*-------------------------------------------------
-    debug_symtable_add_function - add a new
+    symtable_add_function - add a new
     function symbol to a symbol table
 -------------------------------------------------*/
 
-int debug_symtable_add_function(struct symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *))
+int symtable_add_function(struct symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *))
 {
 	struct symbol_entry symbol;
 
-	symbol.name = name;
 	symbol.ref = ref;
 	symbol.type = SMT_FUNCTION;
 	symbol.info.func.minparams = minparams;
 	symbol.info.func.maxparams = maxparams;
 	symbol.info.func.execute = execute;
-	return debug_symtable_add(table, &symbol);
+	return symtable_add(table, name, &symbol);
 }
 
 
 /*-------------------------------------------------
-    debug_symtable_find - find a symbol in a symbol
+    symtable_add_value - add a new
+    value symbol to a symbol table
+-------------------------------------------------*/
+
+int symtable_add_value(struct symbol_table *table, const char *name, UINT64 value)
+{
+	struct symbol_entry symbol;
+
+	symbol.ref = 0;
+	symbol.type = SMT_VALUE;
+	symbol.info.gen.value = value;
+	return symtable_add(table, name, &symbol);
+}
+
+
+/*-------------------------------------------------
+    symtable_find - find a symbol in a symbol
     table
 -------------------------------------------------*/
 
-const struct symbol_entry *debug_symtable_find(const struct symbol_table *table, const char *symbol)
+const struct symbol_entry *symtable_find(const struct symbol_table *table, const char *name)
 {
-	int symindex;
+	UINT32 hash_index = hash_string(name) % SYM_TABLE_HASH_SIZE;
+	const struct internal_symbol_entry *symbol;
 
-	/* NULL means find only in the global table */
-	if (table != NULL)
+	/* loop until we run out of tables */
+	while (table)
 	{
-		/* dumb linear search for now */
-		for (symindex = 0; symindex < table->count; symindex++)
-			if (!strcmp(symbol, table->symbol[symindex].name))
-				return &table->symbol[symindex];
-	}
+		/* search linearly within this hash entry */
+		for (symbol = table->hash[hash_index]; symbol; symbol = symbol->next)
+			if (!strcmp(symbol->name, name))
+				return &symbol->entry;
 
-	/* if not found, look in the global table */
-	table = global_table;
-	if (table != NULL)
-	{
-		/* dumb linear search for now */
-		for (symindex = 0; symindex < table->count; symindex++)
-			if (!strcmp(symbol, table->symbol[symindex].name))
-				return &table->symbol[symindex];
+		/* look in the parent */
+		table = table->parent;
 	}
 
 	return NULL;
@@ -1860,21 +1857,26 @@ const struct symbol_entry *debug_symtable_find(const struct symbol_table *table,
 
 
 /*-------------------------------------------------
-    debug_symtable_free - free a symbol table
+    symtable_free - free a symbol table
 -------------------------------------------------*/
 
-void debug_symtable_free(struct symbol_table *table)
+void symtable_free(struct symbol_table *table)
 {
-	int symindex;
+	struct internal_symbol_entry *entry, *next;
+	int hash_index;
 
-	/* free all the names */
-	for (symindex = 0; symindex < table->count; symindex++)
-		if (table->symbol[symindex].name)
-			free((void *)table->symbol[symindex].name);
+	/* free all the entries in the hash table */
+	for (hash_index = 0; hash_index < SYM_TABLE_HASH_SIZE; hash_index++)
+		for (entry = table->hash[hash_index]; entry; entry = next)
+		{
+			/* free the allocated name */
+			if (entry->name)
+				free((void *)entry->name);
 
-	/* free the list */
-	if (table->symbol)
-		free(table->symbol);
+			/* remove from this list and put on the free list */
+			next = entry->next;
+			free(entry);
+		}
 
 	/* free the structure */
 	free(table);

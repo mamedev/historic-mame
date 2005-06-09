@@ -21,7 +21,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/sound/wavwrite.o
 
 ifdef NEW_DEBUGGER
-COREOBJS += $(OBJ)/debug/debugcmd.o $(OBJ)/debug/debugcpu.o $(OBJ)/debug/debugexp.o \
+COREOBJS += $(OBJ)/debug/debugcmd.o $(OBJ)/debug/debugcpu.o $(OBJ)/debug/express.o \
 			$(OBJ)/debug/debugvw.o $(OBJ)/debug/debughlp.o $(OBJ)/debug/debugcon.o
 else
 COREOBJS += $(OBJ)/debug/mamedbg.o $(OBJ)/debug/window.o

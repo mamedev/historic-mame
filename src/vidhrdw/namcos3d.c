@@ -54,7 +54,7 @@ Mixer:
         [O]: Constant for each object (or polygon).
 */
 
-INT32 *namco_zbuffer; /* TBR: Namco System 21 and System22 use sorting, not a real ZBuffer */
+INT32 *namco_zbuffer;
 
 static data16_t *mpTextureTileMap16;
 static data8_t *mpTextureTileMapAttr;
@@ -149,99 +149,12 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 
 				mpTextureTileData = pTextureROM;
 				PatchTexture(); /* HACK! */
-
-				if( 0 )
-				{
-					int tpage;
-					for( tpage=0; tpage<0x10; tpage++ )
-					{
-						int ty;
-						char fname[32];
-						FILE *fOut;
-						sprintf( fname, "tpage-%x.bmp", tpage );
-						fOut = fopen( fname, "wb" );
-						if( fOut )
-						{
-							FILE *fIn = fopen( "template.bmp", "rb" );
-							if( fIn )
-							{
-								int i;
-								for( i=0; i<14+40; i++ )
-								{
-									int dat = fgetc( fIn );
-									fputc( dat, fOut );
-								}
-								fclose( fIn );
-
-								for( i=0; i<256; i++ )
-								{
-									fputc( 0x00, fOut );
-									fputc( i, fOut );
-									fputc( (i*3)&0xff, fOut );
-									fputc( (i*7)&0xff, fOut );
-								}
-
-								for( ty=0xfff; ty>=0; ty--)
-								{
-									int tx;
-									for( tx=0; tx<0x1000; tx++ )
-									{
-										int color = texel(tx,ty+tpage*0x1000);
-										fputc( color, fOut );
-									}
-								}
-							}
-							fclose( fOut );
-						}
-					}
-				}
 			} /* pUnpackedTileAttr */
 		}
 		return 0;
 	}
 	return -1;
 }
-
-void
-namcos3d_Rotate( double M[4][4], const struct RotParam *pParam )
-{
-	switch( pParam->rolt )
-	{
-	case 0:
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		break;
-	case 1:
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		break;
-	case 2:
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		break;
-	case 3:
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		break;
-	case 4:
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		break;
-	case 5:
-		matrix3d_RotZ( M, pParam->thz_sin, pParam->thz_cos );
-		matrix3d_RotY( M, pParam->thy_sin, pParam->thy_cos );
-		matrix3d_RotX( M, pParam->thx_sin, pParam->thx_cos );
-		break;
-	default:
-		logerror( "unknown rolt:%08x\n",pParam->rolt );
-		break;
-	}
-} /* namcos3d_Rotate */
 
 void
 namcos3d_Start( struct mame_bitmap *pBitmap )
@@ -275,79 +188,24 @@ static unsigned texel( unsigned x, unsigned y )
 	return mpTextureTileData[(tile<<8)|mXYAttrToPixel[mpTextureTileMapAttr[offs]][x&0xf][y&0xf]];
 } /* texel */
 
-typedef void drawscanline_t( const edge *e1, const edge *e2, int sy, const struct rectangle *clip );
+typedef void drawscanline_t(
+	struct mame_bitmap *bitmap,
+	const struct rectangle *clip,
+	const edge *e1,
+	const edge *e2,
+	int sy );
 
 static void
-renderscanline_flat( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
+renderscanline_uvi( struct mame_bitmap *bitmap, const struct rectangle *clip, const edge *e1, const edge *e2, int sy )
 {
-	struct mame_bitmap *pBitmap = Machine->scrbitmap;
-
-	if ((sy < 0) || (sy >= pBitmap->height))
-	{
-		logerror ("sy (%d) is bogus, bitmap height: %d", sy, pBitmap->height);
-		return;
-	}
-
 	if( e1->x > e2->x )
 	{
 		SWAP(e1,e2);
 	}
 
 	{
-		UINT16 *pDest = (UINT16 *)pBitmap->line[sy];
-		INT32 *pZBuf = namco_zbuffer + pBitmap->width*sy;
-
-		int x0 = (int)e1->x;
-		int x1 = (int)e2->x;
-		int w = x1-x0;
-		if( w )
-		{
-			double z = e1->z; /* 1/z */
-			double dz = (e2->z - e1->z)/w;
-			int x, crop;
-			crop = clip->min_x - x0;
-			if( crop>0 )
-			{
-				z += crop*dz;
-				x0 = clip->min_x;
-			}
-			if (x0<0) x0 = 0;
-			if( x1>clip->max_x )
-			{
-				x1 = clip->max_x;
-			}
-
-			for( x=x0; x<x1; x++ )
-			{
-				if( mZSort<pZBuf[x] )
-				{
-					pDest[x] = mColor;
-					pZBuf[x] = mZSort;
-				}
-			}
-		}
-	}
-}
-
-static void
-renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectangle *clip )
-{
-	struct mame_bitmap *pBitmap = Machine->scrbitmap;
-
-	if ((sy < 0) || (sy >= pBitmap->height))
-	{
-		logerror ("sy (%d) is bogus, bitmap height: %d", sy, pBitmap->height);
-		return;
-	}
-
-	if( e1->x > e2->x )
-	{
-		SWAP(e1,e2);
-	}
-
-	{
-		UINT32 *pDest = (UINT32 *)pBitmap->line[sy];
-		INT32 *pZBuf = namco_zbuffer + pBitmap->width*sy;
+		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
+		INT32 *pZBuf = namco_zbuffer + bitmap->width*sy;
 
 		int x0 = (int)e1->x;
 		int x1 = (int)e2->x;
@@ -374,7 +232,6 @@ renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectang
 				z += crop*dz;
 				x0 = clip->min_x;
 			}
-			if (x0<0) x0 = 0;
 			if( x1>clip->max_x )
 			{
 				x1 = clip->max_x;
@@ -409,7 +266,13 @@ renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectang
  * rendertri uses floating point arithmetic
  */
 static void
-rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct rectangle *clip, drawscanline_t pdraw )
+rendertri(
+		struct mame_bitmap *bitmap,
+		const struct rectangle *clip,
+		const vertex *v0,
+		const vertex *v1,
+		const vertex *v2,
+		drawscanline_t pdraw )
 {
 	int dy,ystart,yend,crop;
 
@@ -493,12 +356,11 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 				e1.z += dz1dy*crop;
 				ystart = clip->min_y;
 			}
-			if (ystart< 0) ystart = 0;
 			if( yend>clip->max_y ) yend = clip->max_y;
 
 			for( y=ystart; y<yend; y++ )
 			{
-				pdraw( &e1,&e2,y, clip );
+				pdraw( bitmap, clip, &e1,&e2,y );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -541,12 +403,11 @@ rendertri( const vertex *v0, const vertex *v1, const vertex *v2, const struct re
 				e1.z += dz1dy*crop;
 				ystart = clip->min_y;
 			}
-			if (ystart< 0) ystart = 0;
 			if( yend>clip->max_y ) yend = clip->max_y;
 
 			for( y=ystart; y<yend; y++ )
 			{
-				pdraw( &e1,&e2,y, clip );
+				pdraw( bitmap, clip, &e1,&e2,y );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -590,7 +451,7 @@ BlitTriHelper(
 	ProjectPoint( v1,&b,camera );
 	ProjectPoint( v2,&c,camera );
 	mColor = color;
-	rendertri( &a, &b, &c, &camera->clip, renderscanline_uvi );
+	rendertri( pBitmap, &camera->clip, &a, &b, &c, renderscanline_uvi );
 }
 
 static double
@@ -709,113 +570,4 @@ namcos22_BlitTri(
 		/* wholly clipped */
 		break;
 	}
-} /* BlitTri */
-
-static void
-Namcos21ProjectPoint( const struct VerTex *v, vertex *pv, const namcos21_camera *camera )
-{
-	pv->x = camera->cx + v->x*camera->zoomx/v->z;
-	pv->y = camera->cy - v->y*camera->zoomy/v->z;
-}
-
-static void
-BlitFlatTriHelper(
-		struct mame_bitmap *pBitmap,
-		const struct rectangle *cliprect,
-		const struct VerTex *v0,
-		const struct VerTex *v1,
-		const struct VerTex *v2,
-		const namcos21_camera *camera )
-{
-	vertex a,b,c;
-	Namcos21ProjectPoint( v0, &a, camera );
-	Namcos21ProjectPoint( v1, &b, camera );
-	Namcos21ProjectPoint( v2, &c, camera );
-	rendertri( &a, &b, &c, cliprect, renderscanline_flat );
-}
-
-/**
- * BlitTriFlat is used by Namco System21 to draw flat-shaded triangles.
- *
- * TBA: merge further with the triangle-rendering code used by Namco System22
- */
-void
-namcos21_BlitTriFlat( struct mame_bitmap *pBitmap, const struct rectangle *cliprect, const struct VerTex v[3], unsigned color, INT32 zsort, const namcos21_camera *camera )
-{
-	struct VerTex vc[3];
-	int i,j;
-	int iBad = 0, iGood = 0;
-	int bad_count = 0;
-
-	/* don't bother rendering a degenerate triangle */
-	if( VertexEqual(&v[0],&v[1]) ) return;
-	if( VertexEqual(&v[0],&v[2]) ) return;
-	if( VertexEqual(&v[1],&v[2]) ) return;
-
-	if( (v[2].x*((v[0].z*v[1].y)-(v[0].y*v[1].z)))+
-		(v[2].y*((v[0].x*v[1].z)-(v[0].z*v[1].x)))+
-		(v[2].z*((v[0].y*v[1].x)-(v[0].x*v[1].y))) >= 0 )
-	{
-		return; /* backface cull */
-	}
-
-
-	mZSort = zsort;
-	mColor = color;
-
-	for( i=0; i<3; i++ )
-	{
-		if( v[i].z<MIN_Z )
-		{
-			bad_count++;
-			iBad = i;
-		}
-		else
-		{
-			iGood = i;
-		}
-	}
-
-	switch( bad_count )
-	{
-	case 0:
-		BlitFlatTriHelper( pBitmap, cliprect, &v[0],&v[1],&v[2], camera );
-		break;
-
-	case 1:
-		vc[0] = v[0];vc[1] = v[1];vc[2] = v[2];
-
-		i = (iBad+1)%3;
-		vc[iBad].x = interp( v[i].z,v[i].x, v[iBad].z,v[iBad].x  );
-		vc[iBad].y = interp( v[i].z,v[i].y, v[iBad].z,v[iBad].y  );
-		vc[iBad].z = MIN_Z;
-		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
-
-		j = (iBad+2)%3;
-		vc[i].x = interp(v[j].z,v[j].x, v[iBad].z,v[iBad].x  );
-		vc[i].y = interp(v[j].z,v[j].y, v[iBad].z,v[iBad].y  );
-		vc[i].z = MIN_Z;
-		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
-		break;
-
-	case 2:
-		vc[0] = v[0];vc[1] = v[1];vc[2] = v[2];
-
-		i = (iGood+1)%3;
-		vc[i].x = interp(v[iGood].z,v[iGood].x, v[i].z,v[i].x  );
-		vc[i].y = interp(v[iGood].z,v[iGood].y, v[i].z,v[i].y  );
-		vc[i].z = MIN_Z;
-
-		i = (iGood+2)%3;
-		vc[i].x = interp(v[iGood].z,v[iGood].x, v[i].z,v[i].x  );
-		vc[i].y = interp(v[iGood].z,v[iGood].y, v[i].z,v[i].y  );
-		vc[i].z = MIN_Z;
-
-		BlitFlatTriHelper( pBitmap, cliprect, &vc[0],&vc[1],&vc[2], camera );
-		break;
-
-	case 3:
-		/* wholly clipped */
-		break;
-	}
-} /* BlitTri */
+} /* namcos22_BlitTri */

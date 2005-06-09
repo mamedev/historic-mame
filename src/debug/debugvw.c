@@ -13,7 +13,7 @@
 #include "debugcmd.h"
 #include "debugcpu.h"
 #include "debugcon.h"
-#include "debugexp.h"
+#include "express.h"
 #include <ctype.h>
 
 
@@ -1006,7 +1006,7 @@ static void disasm_free(struct debug_view *view)
 	if (dasmdata)
 	{
 		if (dasmdata->expression)
-			debug_expression_free(dasmdata->expression);
+			expression_free(dasmdata->expression);
 		if (dasmdata->expression_string)
 			free(dasmdata->expression_string);
 		free(dasmdata);
@@ -1235,13 +1235,13 @@ static void disasm_update(struct debug_view *view)
 		struct parsed_expression *expr;
 
 		/* parse the new expression */
-		exprerr = debug_expression_parse(dasmdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
+		exprerr = expression_parse(dasmdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
 
 		/* if it worked, update the expression */
 		if (exprerr == EXPRERR_NONE)
 		{
 			if (dasmdata->expression)
-				debug_expression_free(dasmdata->expression);
+				expression_free(dasmdata->expression);
 			dasmdata->expression = expr;
 		}
 	}
@@ -1252,7 +1252,7 @@ static void disasm_update(struct debug_view *view)
 		UINT64 result;
 
 		/* recompute the value of the expression */
-		exprerr = debug_expression_execute(dasmdata->expression, &result);
+		exprerr = expression_execute(dasmdata->expression, &result);
 		if (exprerr == EXPRERR_NONE && result != dasmdata->last_result)
 		{
 			offs_t resultbyte = ADDR2BYTE(result, cpuinfo, ADDRESS_SPACE_PROGRAM);
@@ -1461,7 +1461,7 @@ static void memory_free(struct debug_view *view)
 	if (memdata)
 	{
 		if (memdata->expression)
-			debug_expression_free(memdata->expression);
+			expression_free(memdata->expression);
 		if (memdata->expression_string)
 			free(memdata->expression_string);
 		free(memdata);
@@ -1751,13 +1751,13 @@ static void memory_update(struct debug_view *view)
 		struct parsed_expression *expr;
 
 		/* parse the new expression */
-		exprerr = debug_expression_parse(memdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
+		exprerr = expression_parse(memdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
 
 		/* if it worked, update the expression */
 		if (exprerr == EXPRERR_NONE)
 		{
 			if (memdata->expression)
-				debug_expression_free(memdata->expression);
+				expression_free(memdata->expression);
 			memdata->expression = expr;
 			memdata->expression_dirty = 1;
 		}
@@ -1769,7 +1769,7 @@ static void memory_update(struct debug_view *view)
 		UINT64 result;
 
 		/* recompute the value of the expression */
-		exprerr = debug_expression_execute(memdata->expression, &result);
+		exprerr = expression_execute(memdata->expression, &result);
 
 		/* no longer dirty */
 		memdata->expression_dirty = 0;

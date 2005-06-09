@@ -55,7 +55,7 @@ The following cord is written, on PCB:  K1100388A   J1100169A   M6100708A
 There are the parts that were written as B68 on this PCB.
 The original title of the game called B68 is unknown.
 This PCB is the same as the one that is used with EARTH-JOKER.
-<I think B68 is the Taito ROM id# for Asuka & Asuka - B.Troha>
+<B68 is the verified Taito ROM id# for Asuka & Asuka - B.Troha>
 
 
 Use of TC0100SCN
@@ -1312,25 +1312,25 @@ ROM_END
 
 ROM_START( asuka )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
-	ROM_LOAD16_BYTE( "asuka_13.rom",  0x00000, 0x20000, CRC(855efb3e) SHA1(644e02e207adeaec7839c824688d88ab8d046418) )
-	ROM_LOAD16_BYTE( "asuka_12.rom",  0x00001, 0x20000, CRC(271eeee9) SHA1(c08e347be4aae929c0ab95ff7618edaa1a7d6da9) )
+	ROM_LOAD16_BYTE( "b68-13.bin",  0x00000, 0x20000, CRC(855efb3e) SHA1(644e02e207adeaec7839c824688d88ab8d046418) )
+	ROM_LOAD16_BYTE( "b68-12.bin",  0x00001, 0x20000, CRC(271eeee9) SHA1(c08e347be4aae929c0ab95ff7618edaa1a7d6da9) )
 	/* 0x040000 - 0x7ffff is intentionally empty */
-	ROM_LOAD16_WORD( "asuka_03.rom",  0x80000, 0x80000, CRC(d3a59b10) SHA1(35a2ff18b64e73ac5e17484354c0cc58bc2cd7fc) )	/* Fix ROM */
+	ROM_LOAD16_WORD( "b68-03.bin",  0x80000, 0x80000, CRC(d3a59b10) SHA1(35a2ff18b64e73ac5e17484354c0cc58bc2cd7fc) )	/* Fix ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "asuka_01.rom",  0x00000, 0x80000, CRC(89f32c94) SHA1(74fbb699e05e2336509cb5ac06ed94335ff870d5) )	/* SCR tiles (8 x 8) */
+	ROM_LOAD( "b68-01.bin",  0x00000, 0x80000, CRC(89f32c94) SHA1(74fbb699e05e2336509cb5ac06ed94335ff870d5) )	/* SCR tiles (8 x 8) */
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD       ( "asuka_02.rom", 0x00000, 0x80000, CRC(f5018cd3) SHA1(860ce140ae369556d03d5d78987b87c0d6070df5) )	/* Sprites (16 x 16) */
-	ROM_LOAD16_BYTE( "asuka_07.rom", 0x80000, 0x10000, CRC(c113acc8) SHA1(613c61a78df73dcb0b9c9018ae829e865baac772) )
-	ROM_LOAD16_BYTE( "asuka_06.rom", 0x80001, 0x10000, CRC(f517e64d) SHA1(8be491bfe0f7eed58521de9d31da677acf635c23) )
+	ROM_LOAD       ( "b68-02.bin", 0x00000, 0x80000, CRC(f5018cd3) SHA1(860ce140ae369556d03d5d78987b87c0d6070df5) )	/* Sprites (16 x 16) */
+	ROM_LOAD16_BYTE( "b68-07.bin", 0x80000, 0x10000, CRC(c113acc8) SHA1(613c61a78df73dcb0b9c9018ae829e865baac772) )
+	ROM_LOAD16_BYTE( "b68-06.bin", 0x80001, 0x10000, CRC(f517e64d) SHA1(8be491bfe0f7eed58521de9d31da677acf635c23) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
-	ROM_LOAD( "asuka_11.rom", 0x00000, 0x04000, CRC(c378b508) SHA1(1b145fe736b924f298e02532cf9f26cc18b42ca7) )
+	ROM_LOAD( "b68-11.bin", 0x00000, 0x04000, CRC(c378b508) SHA1(1b145fe736b924f298e02532cf9f26cc18b42ca7) )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* ADPCM samples */
-	ROM_LOAD( "asuka_10.rom", 0x00000, 0x10000, CRC(387aaf40) SHA1(47c583564ef1d49ece15f97221b2e073e8fb0544) )
+	ROM_LOAD( "b68-10.bin", 0x00000, 0x10000, CRC(387aaf40) SHA1(47c583564ef1d49ece15f97221b2e073e8fb0544) )
 ROM_END
 
 ROM_START( mofflott )

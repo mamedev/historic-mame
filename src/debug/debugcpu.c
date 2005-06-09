@@ -12,7 +12,7 @@
 #include "debugcpu.h"
 #include "debugcmd.h"
 #include "debugcon.h"
-#include "debugexp.h"
+#include "express.h"
 #include "debugvw.h"
 #include <ctype.h>
 
@@ -49,6 +49,7 @@ int debug_key_pressed;
 /* fixme: end */
 
 FILE *debug_source_file;
+struct symbol_table *global_symtable;
 
 static UINT64 wpdata;
 static UINT64 wpaddr;
@@ -70,7 +71,6 @@ static int break_on_interrupt_cpunum;
 static int break_on_interrupt_irqline;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
-static struct symbol_table *global_symtable;
 
 static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
@@ -242,21 +242,20 @@ void debug_cpu_init(void)
 	key_check_counter = 0;
 
 	/* create a global symbol table */
-	global_symtable = debug_symtable_alloc();
-	debug_expression_set_global_symtable(global_symtable);
+	global_symtable = symtable_alloc(NULL);
 
 	/* add "wpaddr", "wpdata", "cycles", "cpunum" to the global symbol table */
-	debug_symtable_add_register(global_symtable, "wpaddr", 0, get_wpaddr, NULL);
-	debug_symtable_add_register(global_symtable, "wpdata", 0, get_wpdata, NULL);
-	debug_symtable_add_register(global_symtable, "cycles", 0, get_cycles, NULL);
-	debug_symtable_add_register(global_symtable, "cpunum", 0, get_cpunum, NULL);
+	symtable_add_register(global_symtable, "wpaddr", 0, get_wpaddr, NULL);
+	symtable_add_register(global_symtable, "wpdata", 0, get_wpdata, NULL);
+	symtable_add_register(global_symtable, "cycles", 0, get_cycles, NULL);
+	symtable_add_register(global_symtable, "cpunum", 0, get_cpunum, NULL);
 
 	/* add the temporary variables to the global symbol table */
 	for (regnum = 0; regnum < NUM_TEMP_VARIABLES; regnum++)
 	{
 		char symname[10];
 		sprintf(symname, "temp%d", regnum);
-		debug_symtable_add_register(global_symtable, symname, regnum, get_tempvar, set_tempvar);
+		symtable_add_register(global_symtable, symname, regnum, get_tempvar, set_tempvar);
 	}
 
 	/* reset the CPU info */
@@ -284,7 +283,7 @@ void debug_cpu_init(void)
 		debug_cpuinfo[cpunum].readop = (int (*)(UINT32, int, UINT64 *))cpunum_get_info_fct(cpunum, CPUINFO_PTR_READOP);
 
 		/* allocate a symbol table */
-		debug_cpuinfo[cpunum].symtable = debug_symtable_alloc();
+		debug_cpuinfo[cpunum].symtable = symtable_alloc(global_symtable);
 
 		/* add all registers into it */
 		for (regnum = 0; regnum < MAX_REGS; regnum++)
@@ -308,7 +307,7 @@ void debug_cpu_init(void)
 			symname[charnum] = 0;
 
 			/* add the symbol to the table */
-			debug_symtable_add_register(debug_cpuinfo[cpunum].symtable, symname, regnum, get_cpu_reg, set_cpu_reg);
+			symtable_add_register(debug_cpuinfo[cpunum].symtable, symname, regnum, get_cpu_reg, set_cpu_reg);
 		}
 
 		/* loop over address spaces and get info */
@@ -347,7 +346,7 @@ void debug_cpu_exit(void)
 
 		/* free the symbol table */
 		if (debug_cpuinfo[cpunum].symtable)
-			debug_symtable_free(debug_cpuinfo[cpunum].symtable);
+			symtable_free(debug_cpuinfo[cpunum].symtable);
 
 		/* free all breakpoints */
 		while (debug_cpuinfo[cpunum].first_bp)
@@ -364,7 +363,7 @@ void debug_cpu_exit(void)
 
 	/* free the global symbol table */
 	if (global_symtable)
-		debug_symtable_free(global_symtable);
+		symtable_free(global_symtable);
 }
 
 
@@ -987,7 +986,7 @@ void debug_check_breakpoints(int cpunum, offs_t pc)
 		if (bp->enabled && bp->address == pc)
 
 			/* if we do, evaluate the condition */
-			if (bp->condition == NULL || (debug_expression_execute(bp->condition, &result) == EXPRERR_NONE && result))
+			if (bp->condition == NULL || (expression_execute(bp->condition, &result) == EXPRERR_NONE && result))
 			{
 				/* halt in the debugger by default */
 				execution_state = EXECUTION_STATE_STOPPED;
@@ -1089,7 +1088,7 @@ int debug_breakpoint_clear(int bpnum)
 
 				/* free the memory */
 				if (bp->condition)
-					debug_expression_free(bp->condition);
+					expression_free(bp->condition);
 				if (bp->action)
 					free(bp->action);
 				free(bp);
@@ -1149,7 +1148,7 @@ void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address,
 		if (wp->enabled && (wp->type & type) && address + size > wp->address && address < wp->address + wp->length)
 
 			/* if we do, evaluate the condition */
-			if (wp->condition == NULL || (debug_expression_execute(wp->condition, &result) == EXPRERR_NONE && result))
+			if (wp->condition == NULL || (expression_execute(wp->condition, &result) == EXPRERR_NONE && result))
 			{
 				static const char *sizes[] =
 				{
@@ -1274,7 +1273,7 @@ int debug_watchpoint_clear(int wpnum)
 
 					/* free the memory */
 					if (wp->condition)
-						debug_expression_free(wp->condition);
+						expression_free(wp->condition);
 					if (wp->action)
 						free(wp->action);
 					free(wp);
@@ -1681,11 +1680,11 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 
 
 /*-------------------------------------------------
-    debug_read_memory - read 1,2,4 or 8 bytes at
+    external_read_memory - read 1,2,4 or 8 bytes at
     the given offset in the given address space
 -------------------------------------------------*/
 
-UINT64 debug_read_memory(int space, UINT32 offset, int size)
+UINT64 external_read_memory(int space, UINT32 offset, int size)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	if (info->space[space].databytes == 0)
@@ -1705,11 +1704,11 @@ UINT64 debug_read_memory(int space, UINT32 offset, int size)
 
 
 /*-------------------------------------------------
-    debug_write_memory - write 1,2,4 or 8 bytes to
+    external_write_memory - write 1,2,4 or 8 bytes to
     the given offset in the given address space
 -------------------------------------------------*/
 
-void debug_write_memory(int space, UINT32 offset, int size, UINT64 value)
+void external_write_memory(int space, UINT32 offset, int size, UINT64 value)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	if (info->space[space].databytes == 0)

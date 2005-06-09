@@ -123,6 +123,7 @@ CPUS+=PPC602@
 CPUS+=PPC603@
 CPUS+=SE3208@
 CPUS+=MC68HC11@
+CPUS+=ADSP21062@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -412,7 +413,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/darius.o $(OBJ)/drivers/darius.o \
 	$(OBJ)/vidhrdw/rastan.o $(OBJ)/drivers/rastan.o \
 	$(OBJ)/machine/rainbow.o $(OBJ)/drivers/rainbow.o \
-	$(OBJ)/drivers/opwolf.o \
+	$(OBJ)/drivers/opwolf.o $(OBJ)/machine/opwolf.o \
 	$(OBJ)/vidhrdw/othunder.o $(OBJ)/drivers/othunder.o \
 	$(OBJ)/vidhrdw/topspeed.o $(OBJ)/drivers/topspeed.o \
 	$(OBJ)/machine/arkanoid.o $(OBJ)/vidhrdw/arkanoid.o $(OBJ)/drivers/arkanoid.o \
@@ -693,7 +694,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/machine/intelfsh.o $(OBJ)/drivers/konamigv.o \
 	$(OBJ)/machine/scsicd.o $(OBJ)/machine/scsihd.o \
 	$(OBJ)/drivers/gticlub.o \
-	$(OBJ)/machine/timekpr.o $(OBJ)/drivers/hornet.o \
+	$(OBJ)/machine/timekpr.o $(OBJ)/drivers/hornet.o $(OBJ)/machine/konppc.o \
 	$(OBJ)/drivers/nwk-tr.o \
 	$(OBJ)/drivers/zr107.o \
 

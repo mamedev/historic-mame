@@ -806,7 +806,7 @@ static struct MultiPCM_interface scross_multipcm_interface =
 static MACHINE_DRIVER_START( base )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V60, 20000000/10) // Reality is 20mhz but V60/V70 timings are unknown
+	MDRV_CPU_ADD(V60, 20000000)
 	MDRV_CPU_PROGRAM_MAP(multi32_readmem,multi32_writemem)
 	MDRV_CPU_VBLANK_INT(system32_interrupt,2)
 

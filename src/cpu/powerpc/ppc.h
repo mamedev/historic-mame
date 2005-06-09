@@ -127,8 +127,10 @@ enum {
 	EXCEPTION_TRAP						= 3,
 	EXCEPTION_SYSTEM_CALL				= 4,
 	EXCEPTION_SMI						= 5,
+	EXCEPTION_PROGRAMMABLE_INTERVAL_TIMER   = 20,
 	EXCEPTION_FIXED_INTERVAL_TIMER		= 21,
 	EXCEPTION_WATCHDOG_TIMER			= 22,
+	EXCEPTION_CRITICAL_INTERRUPT			= 23,
 };
 
 enum {
@@ -143,6 +145,7 @@ enum {
 	PPC_LR,
 	PPC_CTR,
 	PPC_XER,
+	PPC_DEC,
 	PPC_R0,
 	PPC_R1,
 	PPC_R2,
@@ -204,13 +207,20 @@ typedef struct {
 #if (HAS_PPC403)
 typedef UINT8 (* SPU_RX_HANDLER)(void);
 typedef void  (* SPU_TX_HANDLER)(UINT8);
+typedef void (* PPC_DMA_HANDLER)(int);
+
 void ppc403_get_info(UINT32 state, union cpuinfo *info);
 void ppc403_spu_rx(UINT8 data);
 void ppc403_install_spu_rx_handler(SPU_RX_HANDLER rx_handler);
 void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler);
+void ppc403_install_spu_rx_dma_handler(PPC_DMA_HANDLER rx_dma_handler, UINT8 *buffer);
+void ppc403_install_spu_tx_dma_handler(PPC_DMA_HANDLER tx_dma_handler, UINT8 *buffer);
+void ppc403_install_dma_read_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8 *buffer);
+void ppc403_install_dma_write_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8 *buffer);
 
 #define PPC403_SPU_RX		5
 #define PPC403_SPU_TX		6
+#define PPC403_CRITICAL_IRQ		7
 
 #endif
 

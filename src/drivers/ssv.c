@@ -2839,10 +2839,8 @@ static struct ES5506interface es5506_interface =
 };
 
 /* Average clock cycles per instruction (12?) */
-#define AVERAGE_CPI		(12)
-
-#define CLOCK_16MHz			(16000000 / AVERAGE_CPI)	// Known speed for system boards STA-0001 & STA-0001B
-#define CLOCK_12MHz			(12000000 / AVERAGE_CPI)
+#define CLOCK_16MHz			(16000000)	// Known speed for system boards STA-0001 & STA-0001B
+#define CLOCK_12MHz			(12000000)
 
 /***************************************************************************
 

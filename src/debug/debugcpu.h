@@ -11,7 +11,7 @@
 #ifndef __DEBUGCPU_H__
 #define __DEBUGCPU_H__
 
-#include "debugexp.h"
+#include "express.h"
 
 
 /*###################################################################################################
@@ -117,10 +117,11 @@ struct watchpoint
 
 
 /*###################################################################################################
-**  LOCAL VARIABLES
+**  GLOBAL VARIABLES
 **#################################################################################################*/
 
 extern FILE *debug_source_file;
+extern struct symbol_table *global_symtable;
 
 
 
@@ -183,7 +184,7 @@ void				debug_write_word(int spacenum, offs_t address, data16_t data);
 void				debug_write_dword(int spacenum, offs_t address, data32_t data);
 void				debug_write_qword(int spacenum, offs_t address, data64_t data);
 UINT64				debug_read_opcode(UINT32 offset, int size);
-UINT64				debug_read_memory(int space, UINT32 offset, int size);
-void				debug_write_memory(int space, UINT32 offset, int size, UINT64 value);
+UINT64				external_read_memory(int space, UINT32 offset, int size);
+void				external_write_memory(int space, UINT32 offset, int size, UINT64 value);
 
 #endif

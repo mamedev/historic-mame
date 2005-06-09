@@ -392,11 +392,11 @@ static int decode_AM(unsigned ipc, unsigned pc, int m, int opsize, char *out)
 
 			case 29: // PC Double Displacement (16 bit)
 				out_AM_PCDoubleDisplacement(ipc, read16(pc+1), read16(pc+3), opsize, out);
-				return 3;
+				return 5;
 
 			case 30: // PC Double Displacement (32 bit)
 				out_AM_PCDoubleDisplacement(ipc, read32(pc+1), read32(pc+5), opsize, out);
-				return 3;
+				return 9;
 
 			default:
 				strcat(out, "!ERRAM5");

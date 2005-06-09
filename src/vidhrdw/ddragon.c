@@ -218,6 +218,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				dy = -dy;
 			}
 
+			which &= ~size;
+
 			switch ( size ) {
 				case 0: /* normal */
 				DRAW_SPRITE( 0, sx, sy );

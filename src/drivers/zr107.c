@@ -1,11 +1,19 @@
-/*  Konami ZR107 */
+/*  Konami ZR107 System
+
+    Driver by Ville Linde
+*/
 
 #include "driver.h"
 #include "cpu/powerpc/ppc.h"
+#include "cpu/sharc/sharc.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/k054539.h"
+#include "machine/konppc.h"
 
+extern READ32_HANDLER(K001005_r);
+extern WRITE32_HANDLER(K001005_w);
 
+static data8_t led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 static WRITE32_HANDLER( paletteram32_w )
 {
@@ -57,20 +65,62 @@ VIDEO_UPDATE( zr107 )
 	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
 
 	K056832_tilemap_draw_dj(bitmap, cliprect, 0, 0, 1);
+
+	draw_7segment_led(bitmap, 3, 3, led_reg0);
+	draw_7segment_led(bitmap, 9, 3, led_reg1);
 }
 
 /******************************************************************/
 
 static READ32_HANDLER( sysreg_r )
 {
-	//printf("sysreg_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
-	return 0x80;
+	UINT32 r = 0;
+	if (offset == 0)
+	{
+		if (!(mem_mask & 0xff000000))
+		{
+			r |= readinputport(0) << 24;
+		}
+		if (!(mem_mask & 0x00ff0000))
+		{
+			r |= readinputport(1) << 16;
+		}
+		if (!(mem_mask & 0x0000ff00))
+		{
+			r |= readinputport(2) << 8;
+		}
+		if (!(mem_mask & 0x000000ff))
+		{
+			r |= readinputport(3) << 0;
+		}
+	}
+	else if (offset == 1)
+	{
+		if (!(mem_mask & 0xff000000))
+		{
+			return 0;
+		}
+	}
+	printf("sysreg_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+	return r;
 }
 
 static WRITE32_HANDLER( sysreg_w )
 {
-	if( offset == 1 )
+	if( offset == 0 ) {
+		if( mem_mask == 0x00ffffff )
+			led_reg0 = (data >> 24) & 0xff;
+		if( mem_mask == 0xff00ffff )
+			led_reg1 = (data >> 16) & 0xff;
 		return;
+	}
+	else if( offset == 1 ) {
+		if (!(mem_mask & 0xff000000))
+		{
+			printf("sysreg_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+		}
+		return;
+	}
 	printf("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
 }
 
@@ -163,14 +213,6 @@ static WRITE32_HANDLER( lanc_w )
 
 }
 
-static data32_t video_reg = 0;
-
-static READ32_HANDLER( video_r )
-{
-	video_reg ^= 0x80;
-	return video_reg;
-}
-
 /******************************************************************/
 
 static ADDRESS_MAP_START( zr107_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -178,8 +220,8 @@ static ADDRESS_MAP_START( zr107_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x74000000, 0x74001fff) AM_READWRITE(K056832_ram_long_r, K056832_ram_long_w)
 	AM_RANGE(0x74020000, 0x7402003f) AM_READWRITE(K056832_long_r, K056832_long_w)
 	AM_RANGE(0x74080000, 0x74081fff) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x78000000, 0x7800ffff) AM_RAM				/* 21N 21K 23N 23K */
-	AM_RANGE(0x780c0000, 0x780c0007) AM_READ(video_r)
+	AM_RANGE(0x78000000, 0x7800ffff) AM_READWRITE(cgboard_dsp_shared_r_ppc, cgboard_dsp_shared_w_ppc)		/* 21N 21K 23N 23K */
+	AM_RANGE(0x780c0000, 0x780c0007) AM_READWRITE(cgboard_dsp_comm_r_ppc, cgboard_dsp_comm_w_ppc)
 	AM_RANGE(0x7e000000, 0x7e003fff) AM_READWRITE(sysreg_r, sysreg_w)
 	AM_RANGE(0x7e008000, 0x7e009fff) AM_READWRITE(lanc_r, lanc_w)	/* LANC registers */
 	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_RAM							/* LANC Buffer RAM (27E) */
@@ -239,11 +281,72 @@ static struct K054539interface k054539_interface =
 	REGION_SOUND1
 };
 
-/********************************************************************/
+/*****************************************************************************/
 
+UINT32 dataram[0x100000];
+
+static READ32_HANDLER( dsp_dataram_r )
+{
+	return dataram[offset] & 0xffff;
+}
+
+static WRITE32_HANDLER( dsp_dataram_w )
+{
+	dataram[offset] = data;
+}
+
+static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x1000000, 0x101ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x1400000, 0x14fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
+	AM_RANGE(0x1800000, 0x18fffff) AM_READWRITE(K001005_r, K001005_w)
+	AM_RANGE(0x1c00000, 0x1c000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
+ADDRESS_MAP_END
+
+/*****************************************************************************/
 
 
 INPUT_PORTS_START( zr107 )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Test Button") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_8)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x08, 0x00, "DIP3" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "DIP2" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "DIP1" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, "DIP0" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x01, DEF_STR( On ) )
+
 INPUT_PORTS_END
 
 static ppc_config zr107_ppc_cfg =
@@ -251,19 +354,47 @@ static ppc_config zr107_ppc_cfg =
 	PPC_MODEL_403GA
 };
 
+static sharc_config sharc_cfg =
+{
+	BOOT_MODE_EPROM
+};
+
+/* PowerPC interrupts
+
+    IRQ0:  Vblank
+    IRQ2:  LANC
+    DMA0
+
+*/
+static INTERRUPT_GEN( zr107_vblank )
+{
+	cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
+//  cpunum_set_input_line(0, INPUT_LINE_IRQ2, ASSERT_LINE);
+}
+static MACHINE_INIT( zr107 )
+{
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+}
+
 static MACHINE_DRIVER_START( zr107 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
 	MDRV_CPU_CONFIG(zr107_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(zr107_map, 0)
+	MDRV_CPU_VBLANK_INT(zr107_vblank, 1)
 
 	MDRV_CPU_ADD(M68000, 64000000/8)	/* 8MHz */
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_memmap, 0)
+
+	MDRV_CPU_ADD(ADSP21062, 36000000)
+	MDRV_CPU_CONFIG(sharc_cfg)
+	MDRV_CPU_PROGRAM_MAP(sharc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT(zr107)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -287,7 +418,20 @@ static MACHINE_DRIVER_START( zr107 )
 	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
-/*************************************************************************/
+/*****************************************************************************/
+
+static DRIVER_INIT(zr107)
+{
+	init_konami_cgboard(0);
+}
+
+static DRIVER_INIT(midnrun)
+{
+	init_zr107();
+}
+
+
+/*****************************************************************************/
 
 ROM_START(midnrun)
 	ROM_REGION(0x200000, REGION_USER1, 0)	/* PowerPC program roms */
@@ -341,7 +485,7 @@ ROM_START(windheat)
         ROM_LOAD( "677a08.5r",    0x400000, 0x200000, CRC(bde38850) SHA1(aaf1bdfc25ecdffc1f6076c9c1b2edbe263171d2) )
 ROM_END
 
-/*************************************************************************/
+/*****************************************************************************/
 
-GAMEX( 1995, midnrun,	0,		zr107,	zr107,	0,		ROT0,	"Konami",	"Midnight Run", GAME_NOT_WORKING )
+GAMEX( 1995, midnrun,	0,		zr107,	zr107,	midnrun,	ROT0,	"Konami",	"Midnight Run", GAME_NOT_WORKING )
 GAMEX( 1996, windheat,	0,		zr107,	zr107,	0,		ROT0,	"Konami",	"Winding Heat", GAME_NOT_WORKING )

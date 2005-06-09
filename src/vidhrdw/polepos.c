@@ -531,7 +531,9 @@ VIDEO_UPDATE( polepos )
 	draw_road(bitmap);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
-
+/* following code should be enabled only in a debug build */
+/* original arcade doesn't work in this way */
+#ifdef MAME_DEBUG
 	{
 		int in = readinputport( 0 );
 		static int lastin;
@@ -541,4 +543,5 @@ VIDEO_UPDATE( polepos )
 
 		lastin = in;
 	}
+#endif
 }

@@ -818,7 +818,7 @@ ROM_START( wingwara )
 ROM_END
 
 static MACHINE_DRIVER_START( model1 )
-	MDRV_CPU_ADD(V60, 16000000/12) // Reality is 16Mhz
+	MDRV_CPU_ADD(V60, 16000000)
 	MDRV_CPU_PROGRAM_MAP(model1_mem, 0)
 	MDRV_CPU_IO_MAP(model1_io, 0)
 	MDRV_CPU_VBLANK_INT(model1_interrupt, 2)

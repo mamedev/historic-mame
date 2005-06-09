@@ -12,7 +12,7 @@
 #include "debugcmd.h"
 #include "debugcon.h"
 #include "debugcpu.h"
-#include "debugexp.h"
+#include "express.h"
 #include "debughlp.h"
 #include "debugvw.h"
 #include "artwork.h"
@@ -101,12 +101,10 @@ static void execute_memdump(int ref, int params, const char **param);
 
 void debug_command_init(void)
 {
-	struct symbol_table *global_table = debug_expression_get_global_symtable();
-
 	/* add a few simple global functions */
-	debug_symtable_add_function(global_table, "min", 0, 2, 2, execute_min);
-	debug_symtable_add_function(global_table, "max", 0, 2, 2, execute_max);
-	debug_symtable_add_function(global_table, "if", 0, 3, 3, execute_if);
+	symtable_add_function(global_symtable, "min", 0, 2, 2, execute_min);
+	symtable_add_function(global_symtable, "max", 0, 2, 2, execute_max);
+	symtable_add_function(global_symtable, "if", 0, 3, 3, execute_if);
 
 	/* add all the commands */
 	debug_console_register_command("help",      CMDFLAG_NONE, 0, 0, 1, execute_help);
@@ -235,12 +233,12 @@ static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param)
 
 static int validate_parameter_number(const char *param, UINT64 *result)
 {
-	EXPRERR err = debug_expression_evaluate(param, debug_get_cpu_info(cpu_getactivecpu())->symtable, result);
+	EXPRERR err = expression_evaluate(param, debug_get_cpu_info(cpu_getactivecpu())->symtable, result);
 	if (err == EXPRERR_NONE)
 		return 1;
 	debug_console_printf("Error in expression: %s\n", param);
 	debug_console_printf("                     %*s^", EXPRERR_ERROR_OFFSET(err), "");
-	debug_console_printf("%s\n", debug_exprerr_to_string(err));
+	debug_console_printf("%s\n", exprerr_to_string(err));
 	return 0;
 }
 
@@ -252,12 +250,12 @@ static int validate_parameter_number(const char *param, UINT64 *result)
 
 static int validate_parameter_expression(const char *param, struct parsed_expression **result)
 {
-	EXPRERR err = debug_expression_parse(param, debug_get_cpu_info(cpu_getactivecpu())->symtable, result);
+	EXPRERR err = expression_parse(param, debug_get_cpu_info(cpu_getactivecpu())->symtable, result);
 	if (err == EXPRERR_NONE)
 		return 1;
 	debug_console_printf("Error in expression: %s\n", param);
 	debug_console_printf("                     %*s^", EXPRERR_ERROR_OFFSET(err), "");
-	debug_console_printf("%s\n", debug_exprerr_to_string(err));
+	debug_console_printf("%s\n", exprerr_to_string(err));
 	return 0;
 }
 
@@ -884,7 +882,7 @@ static void execute_bplist(int ref, int params, const char *param[])
 				int buflen;
 				buflen = sprintf(buffer, "%c%4X @ %08X", bp->enabled ? ' ' : 'D', bp->index, bp->address);
 				if (bp->condition)
-					buflen += sprintf(&buffer[buflen], " if %s", debug_expression_original_string(bp->condition));
+					buflen += sprintf(&buffer[buflen], " if %s", expression_original_string(bp->condition));
 				if (bp->action)
 					buflen += sprintf(&buffer[buflen], " do %s", bp->action);
 				debug_console_write_line(buffer);
@@ -1076,7 +1074,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 						int buflen;
 						buflen = sprintf(buffer, "%c%4X @ %08X-%08X %s", wp->enabled ? ' ' : 'D', wp->index, wp->address, wp->address + wp->length - 1, types[wp->type & 3]);
 						if (wp->condition)
-							buflen += sprintf(&buffer[buflen], " if %s", debug_expression_original_string(wp->condition));
+							buflen += sprintf(&buffer[buflen], " if %s", expression_original_string(wp->condition));
 						if (wp->action)
 							buflen += sprintf(&buffer[buflen], " do %s", wp->action);
 						debug_console_write_line(buffer);

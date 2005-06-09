@@ -8,8 +8,9 @@ but I suspect it will be similar to all the protection semicom
 used for everything else (0x200 bytes of code/data placed in RAM
 at startup by the MCU)
 
-I guess it supplies the IRQ code which copies palette and reads inputs?
-currently the a wait loop is patched out...
+protection data is read via a port, scrambled a bit, and put in
+main ram, the interrupt is pointed to the data in ram.
+
 
 */
 
@@ -19,14 +20,17 @@ currently the a wait loop is patched out...
 data32_t*dreamwld_bg_videoram;
 data32_t*dreamwld_bg2_videoram;
 data32_t*dreamwld_spriteram;
+data32_t*dreamwld_mainram;
+
 static struct tilemap *dreamwld_bg_tilemap;
 static struct tilemap *dreamwld_bg2_tilemap;
 
+/* this is the sprite format as it is stored in mainram for dreamwld */
 static void dreamwld_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	data32_t *source = dreamwld_spriteram;
-	data32_t *finish = source + 0x10000/4-3;
+	data32_t *finish = source + 0x1200/4-3;
 	data16_t *redirect = (data16_t *)memory_region(REGION_GFX3);
 
 //  source++;
@@ -34,16 +38,49 @@ static void dreamwld_drawsprites( struct mame_bitmap *bitmap, const struct recta
 	while( source<finish )
 	{
 		int xpos, ypos, tileno;//, flipx, flipy, chain, enable, number, count;
+		int xsize,ysize;
+		int xct,yct;
+		int xflip;
+		int xinc;
 
-		ypos = (source[0]&0x000001ff) >>0;
-		xpos = (source[1]&0x01ff0000) >> 16;
+	//  xsize = 8;
+	//  ysize = 8;
+
+		ypos =  (source[0]&0x000001ff) >>0;
+		ysize = (source[0]&0x00000e00) >>9;
+
+		xsize = (source[1]&0x0e000000) >> 25;
+		xpos =  (source[1]&0x01ff0000) >> 16;
+		xpos -=16;
+
+		xflip = (source[1]&0x00004000) >> 14;
+
+		xinc = 16;
+		if (xflip)
+		{
+			xinc = -16;
+			xpos+=16;//*xsize;
+		}
+
+		ysize++;xsize++;
+
 		tileno = (source[2]&0xffff0000) >> 16; // eeeh sprite list is a bit strange?
 	//  tileno+=0xf00;
 
-		tileno=redirect[tileno];
+//      tileno=;
 
-		drawgfx(bitmap,gfx,tileno,0,0,0,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
+		for (yct=0;yct<ysize;yct++)
+		{
+			for (xct=0;xct<xsize;xct++)
+			{
+				drawgfx(bitmap,gfx,redirect[tileno],0,xflip,0,xpos+xct*xinc,ypos+yct*16,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,redirect[tileno],0,xflip,0,(xpos+xct*xinc)-0x200,ypos+yct*16,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,redirect[tileno],0,xflip,0,(xpos+xct*xinc)-0x200,(ypos+yct*16)-0x200,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,redirect[tileno],0,xflip,0,xpos+xct*xinc,(ypos+yct*16)-0x200,cliprect,TRANSPARENCY_PEN,0);
 
+				tileno++;
+			}
+		}
 
 		source+=2;
 	}
@@ -104,28 +141,71 @@ VIDEO_UPDATE(dreamwld)
 }
 
 
-READ32_HANDLER( dreamwld_random_read)
+static READ32_HANDLER( dreamwld_random_read)
 {
 	return mame_rand();
 }
 
+static READ32_HANDLER( inputs_r_1 )
+{
+	int x;
+
+	x= readinputport(0);
+
+//  return x|(x<<8)|(x<<16)|(x<<24);
+
+	logerror("Protection Read Offset %08x, Mem_mask %08x\n",offset*4, mem_mask);
+
+	return mame_rand()^ (mame_rand()<<16);
+}
+
+
+static READ32_HANDLER( inputs_r_2 )
+{
+	int x;
+
+	x= readinputport(1);
+
+	return x|(x<<16);
+
+}
+
+static READ32_HANDLER( inputs_r_3 )
+{
+	int x;
+
+	x= readinputport(2);
+
+	return x|(x<<16);
+
+}
+
 static ADDRESS_MAP_START( dreamwld_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x400000, 0x40100f) AM_RAM
-	AM_RANGE(0x600000, 0x601fff) AM_RAM
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM  AM_WRITE(MWA32_NOP)
+
+	AM_RANGE(0x400000, 0x40100f) AM_RAM  // real sprites?
+	AM_RANGE(0x600000, 0x601fff) AM_RAM  // real palette?
 	AM_RANGE(0x800000, 0x801fff) AM_READWRITE(MRA32_RAM, dreamwld_bg_videoram_w ) AM_BASE( &dreamwld_bg_videoram )
 	AM_RANGE(0x802000, 0x803fff) AM_READWRITE(MRA32_RAM, dreamwld_bg2_videoram_w ) AM_BASE( &dreamwld_bg2_videoram )
 	AM_RANGE(0x804000, 0x805fff) AM_RAM
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(dreamwld_random_read)
-	AM_RANGE(0xfe0000, 0xfeffff) AM_RAM AM_BASE( &dreamwld_spriteram ) // real sprite ram or work ram?
-	AM_RANGE(0xff0000, 0xffffff) AM_RAM
+//  AM_RANGE(0xc00000, 0xc0ffff) AM_READ(dreamwld_random_read)
+
+	AM_RANGE(0xc00030, 0xc00033) AM_READ(inputs_r_1) // it reads protection data (irq code) from here and puts it at ffd000
+	AM_RANGE(0xc00000, 0xc00003) AM_READ(inputs_r_2)
+	AM_RANGE(0xc00004, 0xc00007) AM_READ(inputs_r_3)
+
+	AM_RANGE(0xfe0000, 0xfeffff) AM_RAM AM_BASE( &dreamwld_spriteram ) // real sprite ram or work ram?  -- looks to be work ram...
+//  AM_RANGE(0xff0000, 0xffffff) AM_READ(mainram_r) AM_WRITE(mainram_w)  AM_BASE( &dreamwld_mainram )
+	AM_RANGE(0xff0000, 0xffcfff) AM_RAM // work ram
+	/* ffd000 - ffdfff is ram too, the protection data gets copied here and the interrupt (irq6) is pointed at it */
+	AM_RANGE(0xffe000, 0xffffff) AM_RAM // real sprite ram or work ram?
 ADDRESS_MAP_END
 
 
 
 INPUT_PORTS_START(dreamwld)
 	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -149,6 +229,106 @@ INPUT_PORTS_START(dreamwld)
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 16bit */
+	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* 16bit */
+	PORT_DIPNAME( 0x0001, 0x0001, "2" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /*
@@ -184,12 +364,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static INTERRUPT_GEN( dreamwld_interrupt )
+{
+//  dreamwld_mainram
+	dreamwld_spriteram[0x3606/4]=0; // the irq should do this ...
+}
 
 static MACHINE_DRIVER_START( dreamwld )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)
 	MDRV_CPU_PROGRAM_MAP(dreamwld_map, 0)
-	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+	MDRV_CPU_VBLANK_INT(dreamwld_interrupt,1)
+//  MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -197,7 +383,9 @@ static MACHINE_DRIVER_START( dreamwld )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(1024,1024)
-	MDRV_VISIBLE_AREA(0, 512-1, 0, 512-1)
+//  MDRV_VISIBLE_AREA(0, 512-1, 0, 512-1)
+	MDRV_VISIBLE_AREA(0, 304-1, 0, 224-1)
+
 	MDRV_PALETTE_LENGTH(256)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
@@ -208,10 +396,7 @@ MACHINE_DRIVER_END
 
 DRIVER_INIT( dreamwld )
 {
-	/* patch out irq (or mcu?) wait? */
-	data16_t *THEROM = (data16_t*)memory_region(REGION_CPU1);
-	THEROM[0x017d8a/2] = 0x4e71;
-
+	/* nothing for now ..*/
 }
 
 ROM_START( dreamwld )

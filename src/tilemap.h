@@ -116,10 +116,12 @@ void tilemap_mark_gfxdata_dirty( struct tilemap *tilemap, UINT8 *dirty_array ); 
 void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows ); /* default: 1 */
 void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped );
 void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
+int tilemap_get_scrolldx( struct tilemap *tilemap );
 
 void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ); /* default: 1 */
 void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+int tilemap_get_scrolldy( struct tilemap *tilemap );
 
 void tilemap_set_palette_offset( struct tilemap *tilemap, int offset );
 void tilemap_set_user_data( struct tilemap *tilemap, void *user_data );

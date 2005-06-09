@@ -51,6 +51,23 @@ WRITE8_HANDLER( senjyo_volume_w )
 	sample_set_volume(0,single_volume / 15.0);
 }
 
+
+static void senjyo_sh_update(int param)
+{
+	double period;
+
+	if (Machine->sample_rate == 0) return;
+
+
+	/* ctc2 timer single tone generator frequency */
+	period = z80ctc_getperiod (0, 2);
+	if( period != 0 ) single_rate = (int)(1.0 / period );
+	else single_rate = 0;
+
+	sample_set_freq(0,single_rate);
+}
+
+
 void senjyo_sh_start(void)
 {
     int i;
@@ -70,20 +87,6 @@ void senjyo_sh_start(void)
 	/* CTC2 single tone generator */
 	sample_set_volume(0,0);
 	sample_start_raw(0,_single,SINGLE_LENGTH,single_rate,1);
-}
 
-
-void senjyo_sh_update(void)
-{
-	double period;
-
-	if (Machine->sample_rate == 0) return;
-
-
-	/* ctc2 timer single tone generator frequency */
-	period = z80ctc_getperiod (0, 2);
-	if( period != 0 ) single_rate = (int)(1.0 / period );
-	else single_rate = 0;
-
-	sample_set_freq(0,single_rate);
+	timer_pulse(TIME_IN_HZ(Machine->refresh_rate), 0, senjyo_sh_update);
 }

@@ -1091,6 +1091,18 @@ tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped )
 	recalculate_scroll( tilemap );
 }
 
+int
+tilemap_get_scrolldx( struct tilemap *tilemap )
+{
+	return (tilemap->attributes & TILEMAP_FLIPX) ? tilemap->dx_if_flipped : tilemap->dx;
+}
+
+int
+tilemap_get_scrolldy( struct tilemap *tilemap )
+{
+	return (tilemap->attributes & TILEMAP_FLIPY) ? tilemap->dy_if_flipped : tilemap->dy;
+}
+
 void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value )
 {
 	tilemap->logical_rowscroll[which] = value;

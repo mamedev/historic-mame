@@ -486,7 +486,7 @@ static MACHINE_DRIVER_START( tokib )
 	MDRV_CPU_PROGRAM_MAP(tokib_readmem,tokib_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL (could be level1, same vector) */
 
-	MDRV_CPU_ADD(Z80, 3579545)	/* correct, accurate */
+	MDRV_CPU_ADD(Z80, 4000000)	/* verified with PCB */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tokib_sound_readmem,tokib_sound_writemem)
 

@@ -4,7 +4,7 @@
 
   Video functions
 
-  SAA 5050 -- Character display  (TODO: fix up background colours)
+  SAA 5050 -- Character display
   S2636 (x2) -- Sprites, Sprite->Sprite collisions
   Playfield graphics generator
       (TODO: probably best to switch this to tilemaps one day, figure out banking)
@@ -50,7 +50,7 @@ static struct mame_bitmap* collision_bitmap;
 
 int temp_x,temp_y;
 
-struct
+struct playfield
 {
 	int x;
 	int y;
@@ -83,20 +83,25 @@ VIDEO_UPDATE( malzak )
 	fillbitmap(bitmap,0,0);
 
 	// SAA 5050 - Teletext character generator
-	for (sy = 0; sy < 24; sy++)
+	for (sy = 24; sy >= 0; sy--)
 	{
 		/* Set start of line state */
 		saa5050_state.saa5050_flags = 0;
 		saa5050_state.saa5050_prvchr = 32;
 		saa5050_state.saa5050_forecol = SAA5050_WHITE;
 		saa5050_state.saa5050_prvcol = SAA5050_WHITE;
+		saa5050_state.saa5050_backcol = SAA5050_BLACK;
 
 		for (sx = 0; sx < 42; sx++)
 		{
+			int blank = 0;
 			code = saa5050_vidram[sy * 64 + sx];
 			if (code < 32)
 			{
 				switch (code) {
+				case 0x00:
+					blank = 1;  // code 0x00 should not display anything
+					break;      // unless HOLDGR is set
 				case 0x01: case 0x02: case 0x03: case 0x04:
 				case 0x05: case 0x06: case 0x07:
 					saa5050_state.saa5050_prvcol = saa5050_state.saa5050_forecol = code;
@@ -140,7 +145,7 @@ VIDEO_UPDATE( malzak )
 					saa5050_state.saa5050_backcol = SAA5050_BLACK;
 					break;
 				case 0x1d:
-//                  saa5050_state.saa5050_backcol = saa5050_state.saa5050_prvcol;
+                  saa5050_state.saa5050_backcol = saa5050_state.saa5050_prvcol;
 					break;
 				case 0x1e:
 					saa5050_state.saa5050_flags |= SAA5050_HOLDGR;
@@ -154,6 +159,12 @@ VIDEO_UPDATE( malzak )
 				else
 					code = 32;
 			}
+
+			if (code & 0x80)
+				colour = (saa5050_state.saa5050_forecol << 3) | saa5050_state.saa5050_backcol;
+			else
+				colour = saa5050_state.saa5050_forecol | (saa5050_state.saa5050_backcol << 3);
+
 			if (saa5050_state.saa5050_flags & SAA5050_CONCEAL)
 				code = 32;
 			else if ((saa5050_state.saa5050_flags & SAA5050_FLASH) && (frame_count > 38))
@@ -168,26 +179,26 @@ VIDEO_UPDATE( malzak )
 						code += 64;
 				}
 			}
-			if (code & 0x80)
-				colour = (saa5050_state.saa5050_forecol << 3) | saa5050_state.saa5050_backcol;
-			else
-				colour = saa5050_state.saa5050_forecol | (saa5050_state.saa5050_backcol << 3);
-			if (saa5050_state.saa5050_flags & SAA5050_DBLHI)
+
+			if((blank == 0) || (saa5050_state.saa5050_flags & SAA5050_HOLDGR))
 			{
-				drawgfx (bitmap, Machine->gfx[4], code, colour, 0, 0,
-					sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-				drawgfx (bitmap, Machine->gfx[5], code, colour, 0, 0,
-					sx * 6, (sy + 1) * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			}
-			else
-			{
-				drawgfx (bitmap, Machine->gfx[3], code, colour, 0, 0,
-					sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+				if (saa5050_state.saa5050_flags & SAA5050_DBLHI)
+				{
+					drawgfx (bitmap, Machine->gfx[4], code, colour, 0, 0,
+						sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+					drawgfx (bitmap, Machine->gfx[5], code, colour, 0, 0,
+						sx * 6, (sy + 1) * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+				}
+				else
+				{
+					drawgfx (bitmap, Machine->gfx[3], code, colour, 0, 0,
+						sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+				}
 			}
 		}
 		if (saa5050_state.saa5050_flags & SAA5050_DBLHI)
 		{
-			sy++;
+			sy--;
 			saa5050_state.saa5050_flags &= ~SAA5050_DBLHI;
 		}
 	}
@@ -228,5 +239,5 @@ WRITE8_HANDLER( playfield_w )
 //  field[tile].x = temp_x / 16;
 //  field[tile].y = temp_y;
 	field[tile].code = (data & 0x1f);
-
+	logerror("GFX: 0x16%02x write 0x%02x\n",offset,data);
 }

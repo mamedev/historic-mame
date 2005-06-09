@@ -1469,6 +1469,16 @@ else
 CPUDEFS += -DHAS_MC68HC11=0
 endif
 
+CPU=$(strip $(findstring ADSP21062@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sharc
+CPUDEFS += -DHAS_ADSP21062=1
+CPUOBJS += $(OBJ)/cpu/sharc/sharc.o
+DBGOBJS += $(OBJ)/cpu/sharc/sharcdsm.o
+$(OBJ)/cpu/sharc/sharc.o: sharc.c sharc.h sharcops.c sharcops.h sharcdsm.c sharcdsm.h compute.c
+else
+CPUDEFS += -DHAS_ADSP21062=0
+endif
 
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)

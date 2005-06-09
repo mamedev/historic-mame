@@ -157,6 +157,7 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info);
 void ppc603_get_info(UINT32 state, union cpuinfo *info);
 void SE3208_get_info(UINT32 state, union cpuinfo *info);
 void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
+void adsp21062_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
@@ -673,6 +674,9 @@ const struct
 #if (HAS_MC68HC11)
 	{ CPU_MC68HC11, mc68hc11_get_info },
 #endif
+#if (HAS_ADSP21062)
+	{ CPU_ADSP21062, adsp21062_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
@@ -983,6 +987,7 @@ int cpuintrf_init_cpu(int cpunum, int cputype)
 void cpuintrf_exit_cpu(int cpunum)
 {
 	/* if the CPU core defines an exit function, call it now */
+	(*cpu[cpunum].intf.set_context)(cpu[cpunum].context);
 	if (cpu[cpunum].intf.exit)
 		(*cpu[cpunum].intf.exit)();
 

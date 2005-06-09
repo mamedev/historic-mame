@@ -27,15 +27,18 @@
 ********************************************************************************
 
  Change Log:
- 04 Mar 2002     | Fixed Dip Switches and Inputs    (Steph)
+ 03 Jun 2005 - Pierpaolo Prazzoli
+             | Fixed VBlank
+             | Fixed some bad sprites
+ 04 Mar 2002 | Fixed Dip Switches and Inputs    (Steph)
              | Fixed screen flipping by using similar routine to the one
              | in src/vidhrdw/wwfwfest.c        (Steph)
- 18 Jun 2001     | Changed Interrupt Function .. its not fully understood whats
+ 18 Jun 2001 | Changed Interrupt Function .. its not fully understood whats
              | is meant to be going on ..
- 15 Jun 2001     | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
+ 15 Jun 2001 | Cleaned up Sprite Drawing a bit, correcting some clipping probs,
              | mapped DSW's
- 15 Jun 2001     | First Submission of Driver,
- 14 Jun 2001     | Started Driver, using Raine Source as a reference for getting it
+ 15 Jun 2001 | First Submission of Driver,
+ 14 Jun 2001 | Started Driver, using Raine Source as a reference for getting it
              | up and running
 
 ********************************************************************************
@@ -44,17 +47,6 @@
 
  - Scrolling *might* be slightly off, i'm not sure
  - Maybe Palette Marking could be Improved
- - There seems to be a bad tile during one of Macho Man's Moves (where does
-   it come from?)
- - How should the interrupts work .. the current way is a bit of a guess based
-   on how the game runs, if standard IPT_VBLANK and 2 different interrupts per
-   frame are used the game either runs well and hangs on a game 'Time Out' end
-   of match scenario, or the other way round the game is very sluggish and
-   non-responsive to controls.  It seems both interrupts must happen during the
-   vblank period or something.
-   Steph's update : I don't have this problem, but I have this message in the log file :
-    "Warning: you are using IPT_VBLANK with vblank_duration = 0.
-    You need to increase vblank_duration for IPT_VBLANK to work."
 
 *******************************************************************************/
 
@@ -76,8 +68,6 @@ READ16_HANDLER( input_port_2_word_r_cust );
 WRITE16_HANDLER( wwfsstar_fg0_videoram_w );
 WRITE16_HANDLER( wwfsstar_bg0_videoram_w );
 WRITE16_HANDLER ( wwfsstar_soundwrite );
-
-int vbl;
 
 
 static WRITE16_HANDLER( wwfsstar_flipscreen_w )
@@ -105,7 +95,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_4_word_r)	/* DSW1 */
 	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_0_word_r)	/* CTRLS0 */
 	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_1_word_r)	/* CTRLS1 */
-	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_2_word_r_cust)	/* MISC */
+	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_2_word_r)	/* MISC */
 	AM_RANGE(0x1c0000, 0x1c3fff) AM_READ(MRA16_RAM)	/* Work Ram */
 ADDRESS_MAP_END
 
@@ -167,10 +157,6 @@ WRITE16_HANDLER ( wwfsstar_soundwrite )
 	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
-READ16_HANDLER( input_port_2_word_r_cust )
-{
-	return vbl | (readinputport(2) & 0xfe);
-}
 
 /*******************************************************************************
  Input Ports
@@ -202,7 +188,7 @@ INPUT_PORTS_START( wwfsstar )
 	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Button B (1P VS 2P - Buy-in)")
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )  /* IPT_VBLANK is ignored for custom indicator */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -295,9 +281,9 @@ static struct GfxLayout tiles16x16_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles8x8_layout,    0, 16 },	/* colors   0-255 */
-	{ REGION_GFX2, 0, &tiles16x16_layout,   128, 16 },	/* colors   128-383 */
-	{ REGION_GFX3, 0, &tiles16x16_layout,   256, 8 },	/* colors   256-383 */
+	{ REGION_GFX1, 0, &tiles8x8_layout,     0, 16 },	/* colors   0-255 */
+	{ REGION_GFX2, 0, &tiles16x16_layout, 128, 16 },	/* colors   128-383 */
+	{ REGION_GFX3, 0, &tiles16x16_layout, 256,  8 },	/* colors   256-383 */
 	{ -1 }
 };
 
@@ -310,18 +296,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 *******************************************************************************/
 
 static INTERRUPT_GEN( wwfsstar_interrupt ) {
-	if( cpu_getiloops() == 0 ){
-		vbl = 1;
-	}
 
-	else if( cpu_getiloops() == 240 ){
-		vbl = 0;
-		cpunum_set_input_line(0, 5, HOLD_LINE);
-	}
-
-	else if( cpu_getiloops() == 250 ){
-		 cpunum_set_input_line(0, 6, HOLD_LINE);
-	}
+	cpunum_set_input_line(0, 5 + cpu_getiloops(), HOLD_LINE);
 }
 
 /*******************************************************************************
@@ -351,14 +327,14 @@ static MACHINE_DRIVER_START( wwfsstar )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,262)
+	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -395,11 +395,11 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hunchbkd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_0_r)		/* IN0 */
-	AM_RANGE(0x1480, 0x1480) AM_READ(input_port_1_r)		/* IN1 */
-	AM_RANGE(0x1500, 0x1500) AM_READ(input_port_2_r)		/* IN2/DSW2 */
+	AM_RANGE(0x1400, 0x1400) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x1480, 0x1480) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x1500, 0x1500) AM_READ(input_port_2_r)	/* IN2/DSW2 */
 //  AM_RANGE(0x1507, 0x1507) AM_READ(herbiedk_iack_r)   /* Clear Int */
-	AM_RANGE(0x1580, 0x1580) AM_READ(input_port_3_r)		/* DSW1 */
+	AM_RANGE(0x1580, 0x1580) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x1600, 0x1bff) AM_READ(MRA8_RAM)			/* video RAM */
 	AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
@@ -636,15 +636,13 @@ static ADDRESS_MAP_START( pestplce_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7c00, 0x7c00) AM_WRITE(dkongjr_sh_tuneselect_w)
 	AM_RANGE(0x7c80, 0x7c80) AM_WRITE(dkongjr_gfxbank_w)
 	AM_RANGE(0x7c81, 0x7c81) AM_WRITE(dkongjr_sh_test6_w)
-	AM_RANGE(0x7d00, 0x7d00) AM_WRITE(MWA8_RAM) /* walk */
-	AM_RANGE(0x7d01, 0x7d01) AM_WRITE(MWA8_RAM) /* jump */
-	AM_RANGE(0x7d02, 0x7d02) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x7d03, 0x7d03) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7d00, 0x7d02) AM_WRITENOP //(dkong_sh1_w)    /* walk/jump/boom sample trigger */
+	AM_RANGE(0x7d03, 0x7d03) AM_WRITENOP //(dkong_sh_sound3_w)
 	AM_RANGE(0x7d04, 0x7d04) AM_WRITE(dkong_sh_sound4_w)
 	AM_RANGE(0x7d05, 0x7d05) AM_WRITE(dkong_sh_sound5_w)
-	AM_RANGE(0x7d06, 0x7d06) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x7d80, 0x7d80) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x7d82, 0x7d82) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x7d06, 0x7d06) AM_WRITENOP
+	AM_RANGE(0x7d80, 0x7d80) AM_WRITENOP //(dkong_sh_w)
+	AM_RANGE(0x7d82, 0x7d82) AM_WRITE(dkong_flipscreen_w)
 	AM_RANGE(0x7d84, 0x7d84) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0x7d85, 0x7d85) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7d86, 0x7d87) AM_WRITE(dkong_palettebank_w)
@@ -1406,7 +1404,8 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( strtheat )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(60) PORT_KEYDELTA(10) PORT_REVERSE
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -1415,7 +1414,8 @@ INPUT_PORTS_START( strtheat )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(60) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_COCKTAIL
@@ -1453,10 +1453,16 @@ INPUT_PORTS_START( strtheat )
 	PORT_DIPSETTING(    0x38, "80000" )
 	PORT_DIPNAME( 0x40, 0x00,"Control type" )
 	PORT_DIPSETTING(    0x00, "Steering Wheel" )
-	PORT_DIPSETTING(    0x40, DEF_STR ( Joystick ) ) // TODO: Add support with conditional dis-switch
+	PORT_DIPSETTING(    0x40, DEF_STR ( Joystick ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(40) PORT_KEYDELTA(10) PORT_REVERSE
+
+	PORT_START      /* IN5 */
+	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(40) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -1486,11 +1492,11 @@ static struct GfxLayout spritelayout =
 static struct GfxLayout pestplce_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
+	256,	/* 256 sprites */
 	2,	/* 2 bits per pixel */
-	{ 256*16*16, 0 },	/* the two bitplanes are separated */
-	{ 128*16*16+0, 128*16*16+1, 128*16*16+2, 128*16*16+3, 128*16*16+4, 128*16*16+5, 128*16*16+6, 128*16*16+7,  /* the two halves of the sprite are separated */
-		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0, 256*16*16 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,		/* the two halves of the sprite are separated */
+			256*16*8+0, 256*16*8+1, 256*16*8+2, 256*16*8+3, 256*16*8+4, 256*16*8+5, 256*16*8+6, 256*16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	16*8	/* every sprite takes 16 consecutive bytes */
@@ -1505,8 +1511,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo pestplce_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &charlayout,				0, 64 },
-	{ REGION_GFX2, 0x0000, &pestplce_spritelayout,  0, 64 },
+	{ REGION_GFX1, 0x0000, &charlayout,			   0, 64 },
+	{ REGION_GFX2, 0x0000, &pestplce_spritelayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -1742,6 +1748,13 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( dkong3b )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(dkongjr)
+	MDRV_PALETTE_INIT(dkong3)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( pestplce )
 
 	/* basic machine hardware */
@@ -1765,7 +1778,7 @@ static MACHINE_DRIVER_START( pestplce )
 	MDRV_PALETTE_LENGTH(256)
 	MDRV_COLORTABLE_LENGTH(64*4)
 
-	MDRV_PALETTE_INIT(dkong)
+	MDRV_PALETTE_INIT(dkong)	// wrong!
 	MDRV_VIDEO_START(dkong)
 	MDRV_VIDEO_UPDATE(pestplce)
 
@@ -1774,7 +1787,7 @@ static MACHINE_DRIVER_START( pestplce )
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
 
-	/* samples*/
+	/* samples */
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( epos )
@@ -2266,23 +2279,20 @@ ROM_START( pestplce )
 	ROM_LOAD( "pest.4",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	// this has FIXED BITS (xxxxxxxxxx1xxxxx)
-	ROM_LOAD( "pest.o",       0x0000, 0x1000, BAD_DUMP CRC(22874444) SHA1(23d4744c99d48ae9f5e1ef8a214ff279a1fa0a3e) )
+	ROM_LOAD( "pest.o",       0x0000, 0x1000, CRC(03939ece) SHA1(a776558eba2f8a2bc16933555d41a4532b627bff) )
 	ROM_LOAD( "pest.k",       0x1000, 0x1000, CRC(2acacedf) SHA1(f91863f46aeb8986226b0b0854bac00217d6e7cf) )
-	ROM_RELOAD(				  0x0000, 0x1000 ) // for now we overwrite the bad rom
 
-	// all have FIRST AND SECOND HALF IDENTICAL
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pest.a",       0x0000, 0x1000, CRC(22d89c23) SHA1(c5dbf97c8d7ef7acff8395ae083ce29c0c203160) )
-	ROM_LOAD( "pest.b",       0x1000, 0x1000, CRC(543b15ae) SHA1(486152fa86aa5b01f1364ff95462f71ce2a93f92) )
-	ROM_LOAD( "pest.c",       0x2000, 0x1000, CRC(ebf68c21) SHA1(9a734f13e2b89c72a71bce77dd0d5ed54f2c6ae5) )
-	ROM_LOAD( "pest.d",       0x3000, 0x1000, CRC(3c6781ac) SHA1(61c53d9d27e0c78a3a152ea45b7e686850e8a5e1) )
+	ROM_LOAD( "pest.a",        0x1000, 0x1000, CRC(1958346e) SHA1(c4053dafc904b5e202e4a1acc48dd3e22db05c74) )
+	ROM_LOAD( "pest.b",        0x0000, 0x1000, CRC(e760073e) SHA1(917e74a4efa62b7404a03f094f3f4047dda8feda) )
+	ROM_LOAD( "pest.c",        0x3000, 0x1000, CRC(bf08f2a3) SHA1(c755f7463ac46054c65248d91b8e8da9cd379bf5) )
+	ROM_LOAD( "pest.d",        0x2000, 0x1000, CRC(3a993c17) SHA1(af7048576aa3185b051518663693802ec9014a74) )
 
-	// are these the same as dkongjr ?
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "pest-2e.bpr",  0x0000, 0x0100, NO_DUMP/*BAD_DUMP CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb)*/ )	/* palette low 4 bits (inverted) */
-	ROM_LOAD( "pest-2f.bpr",  0x0100, 0x0100, NO_DUMP/*BAD_DUMP CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f)*/ )	/* palette high 4 bits (inverted) */
-	ROM_LOAD( "pest-2n.bpr",  0x0200, 0x0100, NO_DUMP/*BAD_DUMP CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70)*/ )	/* character color codes on a per-column basis */
+	/* not standard dkong layout */
+	ROM_REGION( 0x0300, REGION_PROMS, ROMREGION_INVERT )
+	ROM_LOAD( "n82s129a.bin",  0x0000, 0x0100, CRC(0330f35f) SHA1(5bd50cdd738b258dd3cfcd0e1dd8d37c927edc4b) )
+	ROM_LOAD( "n82s129b.bin",  0x0100, 0x0100, CRC(ba88311b) SHA1(b4388ebd3984bdb966d850cfb7d34c3ebce230b7) )
+	ROM_LOAD( "sn74s288n.bin", 0x0200, 0x0020, CRC(a5a6f2ca) SHA1(5507fb6f5c8845c4421c2996e9f76c818d987623) )
 ROM_END
 
 ROM_START( dkong3 )
@@ -2372,9 +2382,9 @@ ROM_START( dkong3b )
 	ROM_LOAD( "7f.bin",       0x3000, 0x1000, CRC(55c58662) SHA1(7f3d5a1b386cc37d466e42392ffefc928666a8dc) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "dk3b-c.1d",    0x0000, 0x0200, BAD_DUMP CRC(df54befc) SHA1(7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1) ) /* palette red & green component */
-	ROM_LOAD( "dk3b-c.1c",    0x0100, 0x0200, BAD_DUMP CRC(66a77f40) SHA1(c408d65990f0edd78c4590c447426f383fcd2d88) ) /* palette blue component */
-	ROM_LOAD( "dk3b-v.2n",    0x0200, 0x0100, BAD_DUMP CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) )	/* character color codes on a per-column basis */
+	ROM_LOAD( "dk3b-c.1d",    0x0000, 0x0200, CRC(df54befc) SHA1(7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1) ) /* palette red & green component */
+	ROM_LOAD( "dk3b-c.1c",    0x0100, 0x0200, CRC(66a77f40) SHA1(c408d65990f0edd78c4590c447426f383fcd2d88) ) /* palette blue component */
+	ROM_LOAD( "dk3b-v.2n",    0x0200, 0x0100, CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) ) /* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( hunchbkd )
@@ -2628,7 +2638,7 @@ ROM_START( drakton )
 	ROM_LOAD( "2764.u3",      0x2000, 0x2000, CRC(69583a35) SHA1(061271be4e9ddfd8dff4217f1434215ad35ba505) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-	/* which is better? */
+	/* one is used for dkong conversions, the other one for dkongjr conversions */
 	ROM_LOAD( "2716.3h",      0x0000, 0x0800, CRC(3489a35b) SHA1(9ebcf4b20b212d54e6b1a6d9abbda3109298631b) )
 	ROM_LOAD( "2716.3h1",     0x0000, 0x0800, CRC(2a6ec016) SHA1(c95e185a39c8029f00798ce0a00759a4deb45677) )
 
@@ -2676,6 +2686,65 @@ ROM_START( strtheat )
 	ROM_LOAD( "82s129.2n",     0x0200, 0x0100, CRC(a515d59b) SHA1(930616c4bcd819c2a4432a6619a8c6da74f3e8c5) ) /* character color codes on a per-column basis */
 ROM_END
 
+/*
+------------------------------------------------
+Shooting Gallery by SEATON GROVE/ZACCARIA (1984)
+------------------------------------------------
+
+Location      Device      File ID      Checksum
+-----------------------------------------------
+SSB 5B         2716       SG-01-0        81B9
+CPU 3H         2732       SG-01-3H       3F58
+CPU 5B         2764       SG-01-5B       C2A9
+GFX 3N         2732       SG-01-3N       C8AC
+GFX 3P         2732       SG-01-3P       715A
+GFX 7C         2716       SG-01-7C       D73C
+GFX 7D         2716       SG-01-7D       1545
+GFX 7E         2716       SG-01-7E       48A3
+GFX 7F         2716       SG-01-7F       97C5
+SND IC6        2532       SG-01-SND      6AE1
+SND IC8        2716       SG-01-SPK      852B
+CPU 2E         6306       SG-01-2E       127E
+CPU 2F         6306       SG-01-2F       1167
+GFX 2N         6306       SG-01-2N       1000
+GIB          82S147       SG-01          1554
+GIB          82S153       SG-02          D966 *
+
+
+Note:  CPU  -  CPU PCB
+       GFX  -  GFX/Video PCB
+       SSB  -  (Century) Speech/Sound PCB   500-38 Iss3 (1981)
+       SND  -  Sound PCB
+       GIB  -  Gun Interface PCB  (C) Seatongrove (1984)
+
+         *  -  JEDEC fusemap checksum, not the file checksum
+            -  Some ROM images have duplicate halves, this is not an error
+
+
+
+Hardware information:
+
+CPU PCB:          MBL8035N  (MCU, RAM 64byte, ROM N/A)
+                  upD8257C  (DMA Controller)
+                  ROM  SG-01-3H
+                  ROM  SG-01-5B
+                  PROM SG-01-2E
+                  PROM SG-01-2F
+
+Gun Interface:    2650A (8-bit CPU)
+                  PROM SG-1
+                  PLD  SG-2
+
+Sound PCB:     2x AY8910
+                  ROM SG-01-SND
+                  ROM SG-01-SPK
+
+Speech PCB:    2x 2650A  (8-bit CPU)
+                  MC6810 (128x8 SRAM)
+                  TMS5100ANL (Speech)
+                  ROM SG-01-0
+*/
+
 ROM_START( shootgal )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "sg-01-5b",    0x0000, 0x1000, CRC(1066ea33) SHA1(822d45cf4b5ef8f7a527e07063989caf623fab15) )
@@ -2705,7 +2774,7 @@ ROM_START( shootgal )
 	ROM_LOAD( "sg-01-7e",    0x1000, 0x0800, CRC(65d11685) SHA1(4e4b0b60ca4c16e26d842e142002887456d98ea4) )
 	ROM_LOAD( "sg-01-7f",    0x1800, 0x0800, CRC(44fe71a2) SHA1(ff4442a5601ac2ed63c57e22977299b5b5499c93) )
 
-	ROM_REGION( 0x0600, REGION_PROMS, 0 ) //ok?
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "sg-01-2e",    0x0000, 0x0200, CRC(34fb23ea) SHA1(6bd6de791c9e0a5f9c833c287663e9755e01c573) )
 	ROM_LOAD( "sg-01-2f",    0x0100, 0x0200, CRC(c29b880a) SHA1(950017a0298f91e41db9865ed8ce388f4095f6cf) )
 	ROM_LOAD( "sg-01-2n",    0x0200, 0x0200, CRC(e08ed788) SHA1(6982f6bcc70dbf4c75ff538a5df70da11bc89bb4) )
@@ -2745,7 +2814,6 @@ static DRIVER_INIT( radarscp )
 }
 
 
-
 GAMEX(1980, radarscp, 0,        radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US set 1)" )
@@ -2762,7 +2830,7 @@ GAME( 1982, dkngjnrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo o
 
 GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
 GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
-GAMEX(1984, dkong3b,  dkong3,	dkongjr,  dkong3b,  0,        ROT90, "bootleg", "Donkey Kong 3 (bootleg on Donkey Kong Jr. hardware)", GAME_WRONG_COLORS )
+GAME( 1984, dkong3b,  dkong3,	dkong3b,  dkong3b,  0,        ROT90, "bootleg", "Donkey Kong 3 (bootleg on Donkey Kong Jr. hardware)" )
 
 GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)")
 

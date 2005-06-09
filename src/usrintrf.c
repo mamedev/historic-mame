@@ -3019,6 +3019,16 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 			else scroll++;
 		}
 
+		if (input_ui_pressed_repeat(IPT_UI_HOME, 4))
+		{
+			scroll = 0;
+		}
+
+		if (input_ui_pressed_repeat(IPT_UI_END, 4))
+		{
+			scroll = count_lines_in_buffer(buf); /* display_scroll_message will fix it */
+		}
+
 		if (input_ui_pressed_repeat(IPT_UI_PAN_UP, 4))
 		{
 			scroll -= maxrows - 2;

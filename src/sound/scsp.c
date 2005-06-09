@@ -518,7 +518,7 @@ static void SCSP_Init(struct _SCSP *SCSP, const struct SCSPinterface *intf)
 
 	// no "pend"
 	SCSP[0].udata.data[0x20/2] = 0;
-	SCSP[1].udata.data[0x20/2] = 0;
+	//SCSP[1].udata.data[0x20/2] = 0;
 	SCSP->TimCnt[0] = 0xffff;
 	SCSP->TimCnt[1] = 0xffff;
 	SCSP->TimCnt[2] = 0xffff;

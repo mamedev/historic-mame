@@ -149,6 +149,34 @@ static void strtheat_decrypt_rom_B(void)
 	}
 }
 
+static READ8_HANDLER( strtheat_inputport_0_r )
+{
+	if(readinputport(3) & 0x40)
+	{
+		/* Joystick inputs */
+		return readinputport(0);
+	}
+	else
+	{
+		/* Steering Wheel inputs */
+		return (readinputport(0) & ~3) | (readinputport(4) & 3);
+	}
+}
+
+static READ8_HANDLER( strtheat_inputport_1_r )
+{
+	if(readinputport(3) & 0x40)
+	{
+		/* Joystick inputs */
+		return readinputport(1);
+	}
+	else
+	{
+		/* Steering Wheel inputs */
+		return (readinputport(1) & ~3) | (readinputport(5) & 3);
+	}
+}
+
 DRIVER_INIT( strtheat )
 {
 	/* While the PAL supports up to 16 decryption methods, only four
@@ -158,5 +186,8 @@ DRIVER_INIT( strtheat )
 	strtheat_decrypt_rom_9();
 	strtheat_decrypt_rom_A();
 	strtheat_decrypt_rom_B();
-}
 
+	/* custom handlers supporting Joystick or Steering Wheel */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7c00, 0x7c00, 0, 0, strtheat_inputport_0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7c80, 0x7c80, 0, 0, strtheat_inputport_1_r);
+}

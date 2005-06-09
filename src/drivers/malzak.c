@@ -2,6 +2,14 @@
 
   Malzak
 
+  Produced by Kitronix, cabinet artwork suggests it was
+  released in 1980.
+
+  Was sold around New Zealand in the early '80s.
+  Sold about 500 sets, fairly decent for the time.
+
+  There are more games on this hardware, as far as I am aware.
+
   Driver by Reip, Barry Rodewald
   SAA 5050 display code "borrowed" from the Philips 2000T/2000M driver in MESS
 
@@ -18,8 +26,13 @@
   TODO - I/O ports (0x00 for sprite->background collisions)
          sound (2x SN76477)
          playfield graphics may be banked, tiles above 0x1f are incorrect
-         sprite->sprite collision aren't quite perfect
+         sprite->sprite collisions aren't quite perfect
            (you can often fly through flying missiles)
+
+  Notes:
+  - Test mode in Malzak II should be enabled by setting a POT to position
+  '4' and pressing button 1 three times.  Then the POT is set to position
+  '1' to go back to the game.
 
 */
 
@@ -31,6 +44,8 @@
 
 #define SAA5050_VBLANK 2500
 
+int malzak_bank1;
+int malzak_bank2;
 
 extern int temp_x,temp_y;
 
@@ -91,9 +106,44 @@ static WRITE8_HANDLER( ram_mirror_w )
 	program_write_byte(0x1000+offset,data);
 }
 
+static READ8_HANDLER( bank_r )
+{
+	unsigned char* bank = memory_region(REGION_USER2);
 
+	return bank[offset + (malzak_bank1 * 0x0400)];
+}
+
+static READ8_HANDLER( s2636_portA_r )
+{
+	// POT switch position, read from port A of the first S2636
+	// Not sure of the correct values to return, but these should
+	// do based on the game code.
+	switch(readinputport(1))
+	{
+		case 0:  // Normal play
+			return 0xf0;
+		case 1:
+			return 0x90;
+		case 2:
+			return 0x70;
+		case 3:  // Change settings
+			return 0x00;
+		default:
+			return 0xf0;
+	}
+}
+
+/*
+static READ8_HANDLER( bank2_r )
+{  // probably very wrong :)
+    unsigned char* bank = memory_region(REGION_USER1);
+
+    return bank[offset + (malzak_bank1 * 0x0400)];
+}
+*/
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ(bank_r)
 	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1100, 0x11ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1200, 0x12ff) AM_READ(MRA8_RAM)
@@ -108,7 +158,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3000, 0x3fff) AM_READ(ram_mirror_r)
 	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x5000, 0x5fff) AM_READ(ram_mirror_r)
-
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(ram_mirror_r)
 ADDRESS_MAP_END
 
 
@@ -118,7 +169,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1100, 0x11ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x1200, 0x12ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x1300, 0x13ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1400, 0x14ff) AM_WRITE(malzak_s2636_1_w) // S2636 offset $CB bit 40 tested as collision ?
+	AM_RANGE(0x1400, 0x14ff) AM_WRITE(malzak_s2636_1_w)
 	AM_RANGE(0x1500, 0x15ff) AM_WRITE(malzak_s2636_2_w)
 	AM_RANGE(0x1600, 0x16ff) AM_WRITE(playfield_w)
 	AM_RANGE(0x1600, 0x16ff) AM_WRITE(MWA8_RAM)
@@ -127,8 +178,52 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x3000, 0x3fff) AM_WRITE(ram_mirror_w)
 	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x5000, 0x5dff) AM_WRITE(ram_mirror_w)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(ram_mirror_w)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(ram_mirror_w)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( malzak2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ(bank_r)
+	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1100, 0x11ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1300, 0x13ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x14cb, 0x14cb) AM_READ(fake_VRLE_r)
+	AM_RANGE(0x14cc, 0x14cc) AM_READ(s2636_portA_r)
+	AM_RANGE(0x1400, 0x14ff) AM_READ(malzak_s2636_1_r)
+	AM_RANGE(0x1500, 0x15ff) AM_READ(malzak_s2636_2_r)
+	AM_RANGE(0x1600, 0x16ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_READ(MRA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1800, 0x1fff) AM_READ(saa5050_r)  // SAA 5050 video RAM
+	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(ram_mirror_r)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(ram_mirror_r)
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(ram_mirror_r)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( malzak2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1100, 0x11ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1200, 0x12ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1300, 0x13ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1400, 0x14ff) AM_WRITE(malzak_s2636_1_w)
+	AM_RANGE(0x1500, 0x15ff) AM_WRITE(malzak_s2636_2_w)
+	AM_RANGE(0x1600, 0x16ff) AM_WRITE(playfield_w)
+	AM_RANGE(0x1600, 0x16ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x1700, 0x17ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1800, 0x1fff) AM_WRITE(saa5050_w)  // SAA 5050 video RAM
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(ram_mirror_w)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(ram_mirror_w)
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(ram_mirror_w)
 ADDRESS_MAP_END
 
 static READ8_HANDLER( s2650_data_r )
@@ -139,21 +234,29 @@ static READ8_HANDLER( s2650_data_r )
 
 static WRITE8_HANDLER( port40_w )
 {
-//  usrintf_showmessage("S2650 [0x%04x]: port 0x40 write: 0x%02x",cpunum_get_pc_byte(0),data);
-//  if(data & 0x01)
-//      irqenable = 1;
-//  else
-//      irqenable = 0;
+//  Bit 0 is constantly set high during gameplay
+//  Bit 4 is set high, then low, upon death
+//  Bit 1 is set high on boot, and on the title screens.
+//  Bits 1-3 are all set high upon death, until the game continues
+//  Bit 6 is used only in Malzak II, and is set high after checking
+//        the selected version
+//  logerror("S2650 [0x%04x]: port 0x40 write: 0x%02x\n",cpunum_get_pc_byte(0),data);
+	if(data & 0x40)
+		malzak_bank1 = 1;
+	else
+		malzak_bank1 = 0;
 }
 
 static WRITE8_HANDLER( port60_w )
 {
 	temp_x = data;
+//  logerror("I/O: port 0x60 write 0x%02x\n",data);
 }
 
 static WRITE8_HANDLER( portc0_w )
 {
 	temp_y = data;
+//  logerror("I/O: port 0xc0 write 0x%02x\n",data);
 }
 
 static READ8_HANDLER( collision_r )
@@ -163,6 +266,7 @@ static READ8_HANDLER( collision_r )
 
 	if(++counter > 15)
 		counter = 0;
+//  logerror("I/O port 0x00 read\n");
 	return 0xd0 + counter;
 }
 
@@ -170,19 +274,19 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(collision_r) // returns where a collision can occur.
     AM_RANGE(0x80, 0x80) AM_READ(input_port_0_r)  //controls
 	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(s2650_data_r)  // read upon death
-    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
+    AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x40, 0x40) AM_WRITE(port40_w)  // possibly sound codes for dual SN76477s
 	AM_RANGE(0x60, 0x60) AM_WRITE(port60_w)  // possibly playfield scroll X offset
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(MWA8_NOP)  // echoes I/O port read from port 0x80
-	AM_RANGE(0xc0, 0xc0) AM_WRITE(portc0_w)  // possibly playfield scroll Y offset
+	AM_RANGE(0xc0, 0xc0) AM_WRITE(portc0_w)  // possibly playfield row selection for writing and/or collisions
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( malzak )
 
-	/* Malzak has a stick (not sure if it's 4-way or 8-way),
+	/* Malzak has an 8-way stick
        and only one button (firing and bomb dropping on the same button) */
 
 	PORT_START /* I/O port 0x80 */
@@ -196,42 +300,40 @@ INPUT_PORTS_START( malzak )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    )
 
     PORT_START
-//  PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
-//  PORT_DIPSETTING(    0x00, "3" )
-//  PORT_DIPSETTING(    0x01, "4" )
-//    PORT_DIPNAME( 0x02, 0x00, "Lightning Speed" )
-//  PORT_DIPSETTING(    0x00, "Slow" )
-//  PORT_DIPSETTING(    0x02, "Fast" )
-//  PORT_DIPNAME( 0x1C, 0x04, DEF_STR( Coinage ) )
-//  PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-//  PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
-//  PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-//  PORT_DIPSETTING(    0x0C, DEF_STR( 1C_3C ) )
-//  PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(    0x14, DEF_STR( 1C_5C ) )
-//  PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-//  PORT_DIPSETTING(    0x1C, DEF_STR( 1C_7C ) )
-//  PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
-//  PORT_DIPSETTING(    0x00, "1000" )
-//  PORT_DIPSETTING(    0x20, "1500" )
-  //  PORT_DIPNAME( 0x40, 0x00, "Extended Play" )
-//  PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-//  PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-
-	PORT_START
-//  PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-//  PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-//  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
-//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+    // No POT switch on Malzak as far as I know
 
 	PORT_START	/* SENSE */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 INPUT_PORTS_END
+
+INPUT_PORTS_START( malzak2 )
+
+	/* Same as Malzak, but with additional POT switch, and
+       possibly a reset button too. */
+
+	PORT_START /* I/O port 0x80 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT  )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    )
+
+    PORT_START  // Fake DIP switch to handle the POT switch.
+	PORT_DIPNAME( 0x03, 0x00, "POT switch position" )
+	PORT_DIPSETTING( 0x00, "1" )  // Normal play
+	PORT_DIPSETTING( 0x01, "2" )
+	PORT_DIPSETTING( 0x02, "3" )
+	PORT_DIPSETTING( 0x03, "4" )  // Change settings
+
+	PORT_START	/* SENSE */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -331,7 +433,7 @@ static struct GfxDecodeInfo malzak_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static int val = -1;
+//static int val = -1;
 
 
 static PALETTE_INIT( malzak )
@@ -343,8 +445,8 @@ static PALETTE_INIT( malzak )
 
 MACHINE_INIT(malzak)
 {
-	val++;
-	printf("val = %X\n",val);
+//  val++;
+//  printf("val = %X\n",val);
 }
 
 static struct SN76477interface sn76477_intf =
@@ -371,7 +473,7 @@ static struct SN76477interface sn76477_intf =
 static MACHINE_DRIVER_START( malzak )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3800000/4)
+	MDRV_CPU_ADD_TAG("main", S2650, 3800000/4)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 
@@ -387,7 +489,7 @@ static MACHINE_DRIVER_START( malzak )
 	MDRV_PALETTE_INIT(malzak)
 	MDRV_COLORTABLE_LENGTH(128)
 
-	MDRV_MACHINE_INIT(malzak)
+//  MDRV_MACHINE_INIT(malzak)
 
 	MDRV_VIDEO_START(malzak)
 	MDRV_VIDEO_UPDATE(malzak)
@@ -404,23 +506,60 @@ static MACHINE_DRIVER_START( malzak )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( malzak2 )
+	MDRV_IMPORT_FROM( malzak )
+
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_PROGRAM_MAP( malzak2_readmem, malzak2_writemem )
+
+	MDRV_NVRAM_HANDLER( generic_0fill )
+MACHINE_DRIVER_END
+
 ROM_START( malzak )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "malzak.5",     0x0000, 0x0800, CRC(75355c98) SHA1(7036ed5d9ee38585b1a6bc204d410d5fb5ddd81f) )
 	ROM_CONTINUE( 0x2000, 0x0800 )
 	ROM_LOAD( "malzak.4",     0x0800, 0x0400, CRC(744c81e3) SHA1(c08d6df3cf2808a5f99d8247fc19a59be88121a9) )
 	ROM_CONTINUE( 0x4000, 0x0c00 )
-	ROM_LOAD( "malzak.2",     0x0c00, 0x0800, CRC(2a12ad67) SHA1(f89a50b62311a170004c061abd8dedc3ebd84748) )
+	// Terrain data
 	ROM_LOAD( "malzak.3",     0x4400, 0x0800, CRC(b947229e) SHA1(37b88b5aa91a483fcfe60a9bdd67a66f6378c487) )
 
-	ROM_REGION(0x0800, REGION_USER1, 0)
+	// Screen data
+	ROM_REGION(0x0800, REGION_USER2, 0)
+	ROM_LOAD( "malzak.2",     0x0000, 0x0800, CRC(2a12ad67) SHA1(f89a50b62311a170004c061abd8dedc3ebd84748) )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "malzak.1",     0x0000, 0x0800, CRC(74d5ff7b) SHA1(cae326370dc83b86542f9d070e2dc91b1b833356) )
 
-	ROM_REGION(0x01000, REGION_GFX2,0) // internal character set?
+	ROM_REGION(0x01000, REGION_GFX2,0) // SAA5050 internal character ROM
 	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BAD_DUMP CRC(78c17e3e) SHA1(4e1c59dc484505de1dc0b1ba7e5f70a54b0d4ccc) )
 
 ROM_END
 
-GAMEX( 19??, malzak,   0,       malzak, malzak, 0,        ROT0, "Kitronix", "Malzak", GAME_NOT_WORKING | GAME_NO_SOUND )
+ROM_START( malzak2 )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+	ROM_LOAD( "malz1a.bin",   0x000000, 0x000800, CRC(5c3cb14c) SHA1(2d3b5703cb9a47e34aa593f0e8d42d4e67c167d9) )
+	ROM_CONTINUE( 0x2000, 0x0800 )
+
+	ROM_LOAD( "malz2b.bin",     0x0800, 0x0400, CRC(2af8aace) SHA1(7aaf03d4848c2cce72b2b3729661e7826834ad44) )
+	ROM_CONTINUE( 0x4000, 0x0400 )
+	ROM_CONTINUE( 0x2800, 0x0400 )
+	ROM_CONTINUE( 0x6000, 0x0400 )
+	// Terrain data
+	ROM_LOAD( "malz3c.bin",     0x4400, 0x0800, CRC(54d6a02e) SHA1(80c550d74da770689fe451cb0ee8e550a63b1b96) )
+
+	// Screen data
+	ROM_REGION(0x0800, REGION_USER2, 0)
+	ROM_LOAD( "malz4d.bin",     0x0000, 0x0800, CRC(5c6ca415) SHA1(e7571519ac7911507d2c1cf975a7663f41321cb9) )
+
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "malzak.1",     0x0000, 0x0800, CRC(74d5ff7b) SHA1(cae326370dc83b86542f9d070e2dc91b1b833356) )
+
+	ROM_REGION(0x01000, REGION_GFX2,0) // SAA5050 internal character ROM
+	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BAD_DUMP CRC(78c17e3e) SHA1(4e1c59dc484505de1dc0b1ba7e5f70a54b0d4ccc) )
+
+ROM_END
+
+
+GAMEX( 19??, malzak,   0,       malzak,  malzak,  0,        ROT0, "Kitronix", "Malzak", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 19??, malzak2, malzak,   malzak2, malzak2, 0,        ROT0, "Kitronix", "Malzak II", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

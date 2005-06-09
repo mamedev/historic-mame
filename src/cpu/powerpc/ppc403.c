@@ -2,10 +2,35 @@
 
 static void ppc403_dma_exec(int ch);
 
+#define DMA_CE		0x80000000
+#define DMA_CIE		0x40000000
+#define DMA_TD		0x20000000
+#define DMA_PL		0x10000000
+#define DMA_DAI		0x02000000
+#define DMA_SAI		0x01000000
+#define DMA_CP		0x00800000
+#define DMA_ETD		0x00000200
+#define DMA_TCE		0x00000100
+#define DMA_CH		0x00000080
+#define DMA_BME		0x00000040
+#define DMA_ECE		0x00000020
+#define DMA_TCD		0x00000010
+#define DMA_PCE		0x00000008
+
 static SPU_RX_HANDLER spu_rx_handler;
 static SPU_TX_HANDLER spu_tx_handler;
 static void ppc403_spu_rx_callback(int cpu);
 static void ppc403_spu_tx_callback(int cpu);
+
+static PPC_DMA_HANDLER spu_rx_dma_handler;
+static PPC_DMA_HANDLER spu_tx_dma_handler;
+static UINT8 *spu_rx_dma_ptr;
+static UINT8 *spu_tx_dma_ptr;
+
+static PPC_DMA_HANDLER dma_read_handler[4];
+static PPC_DMA_HANDLER dma_write_handler[4];
+static UINT8 *dma_read_ptr[4];
+static UINT8 *dma_write_ptr[4];
 
 INLINE void ppc_set_dcr(int dcr, UINT32 value)
 {
@@ -22,7 +47,7 @@ INLINE void ppc_set_dcr(int dcr, UINT32 value)
 		case DCR_BR6:		ppc.br[6] = value; break;
 		case DCR_BR7:		ppc.br[7] = value; break;
 
-		case DCR_EXISR:		EXISR &= ~value; break;
+		case DCR_EXISR:		ppc.exisr &= ~value; break;
 		case DCR_EXIER:		EXIER = value; break;
 		case DCR_IOCR:		ppc.iocr = value; break;
 		case DCR_DMASR:		break;		/* TODO */
@@ -112,10 +137,11 @@ static int ppc403_execute(int cycles)
 	{
 //      UINT32 tblo = (UINT32)(ppc.tb);
 		UINT32 opcode;
-		ppc.pc = ppc.npc;
+
 		CALL_MAME_DEBUG;
 
-		ppc.npc = ppc.pc + 4;
+		ppc.pc = ppc.npc;
+		ppc.npc += 4;
 		opcode = ROPCODE(ppc.pc);
 
 		switch(opcode >> 26)
@@ -131,6 +157,22 @@ static int ppc403_execute(int cycles)
 
 		/* TODO: Update timebase */
 		ppc.tb++;
+
+		/* Programmable Interval Timer (PIT) */
+		if (ppc.pit_counter > 0)
+		{
+			ppc.pit_counter--;
+			if (ppc.pit_counter == 0)
+			{
+				if (ppc.pit_int_enable) {
+					ppc403_exception(EXCEPTION_PROGRAMMABLE_INTERVAL_TIMER);
+				}
+				if (ppc.tcr & 0x00400000)	// Automatic reload
+				{
+					ppc.pit_counter = ppc.pit;
+				}
+			}
+		}
 
 #if 0
 		/* Fixed Interval Timer */
@@ -166,6 +208,7 @@ void ppc403_exception(int exception)
 	switch( exception )
 	{
 		case EXCEPTION_IRQ:		/* External Interrupt */
+		{
 			if( ppc_get_msr() & MSR_EE ) {
 				UINT32 msr = ppc_get_msr();
 
@@ -187,6 +230,7 @@ void ppc403_exception(int exception)
 				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
 			}
 			break;
+		}
 
 		case EXCEPTION_TRAP:			/* Program exception / Trap */
 			{
@@ -206,8 +250,8 @@ void ppc403_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0700;
 				else
 					ppc.npc = EVPR | 0x0700;
-			}
 			break;
+		}
 
 		case EXCEPTION_SYSTEM_CALL:		/* System call */
 			{
@@ -227,10 +271,37 @@ void ppc403_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0c00;
 				else
 					ppc.npc = EVPR | 0x0c00;
+			break;
+		}
+
+		case EXCEPTION_PROGRAMMABLE_INTERVAL_TIMER:
+		{
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr;
+
+				msr &= ~(MSR_WE | MSR_PR | MSR_EE | MSR_PE);	// Clear WE, PR, EE, PR
+				if( msr & MSR_LE )
+					msr |= MSR_ILE;
+				else
+					msr &= ~MSR_ILE;
+				ppc_set_msr(msr);
+
+				ppc.npc = EVPR | 0x1000;
+
+				ppc.tsr |= 0x08000000;		// PIT interrupt
+			}
+			else
+			{
+				ppc.exception_pending |= 1 << 20;
 			}
 			break;
+		}
 
 		case EXCEPTION_FIXED_INTERVAL_TIMER:		/* Fixed Interval Timer */
+		{
 			if( ppc_get_msr() & MSR_EE ) {
 				UINT32 msr = ppc_get_msr();
 
@@ -251,6 +322,7 @@ void ppc403_exception(int exception)
 				ppc.exception_pending |= 1 << 21;
 			}
 			break;
+		}
 
 		case EXCEPTION_WATCHDOG_TIMER:				/* Watchdog Timer */
 			{
@@ -267,8 +339,27 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x1020;
-			}
 			break;
+			}
+
+		case EXCEPTION_CRITICAL_INTERRUPT:
+		{
+			UINT32 msr = ppc_get_msr();
+
+			SRR2 = ppc.npc;
+			SRR3 = msr;
+
+			msr &= ~(MSR_WE | MSR_PR | MSR_CE | MSR_EE | MSR_DE | MSR_PE | MSR_DR | MSR_IR);
+			if (msr & MSR_LE)
+				msr |= MSR_ILE;
+			else
+				msr &= ~MSR_ILE;
+			ppc_set_msr(msr);
+
+			EXISR |= 0x80000000;
+			ppc.npc = EVPR | 0x100;
+			break;
+		}
 
 		default:
 			osd_die("ppc: Unhandled exception %d\n", exception);
@@ -281,7 +372,7 @@ static void ppc403_set_irq_line(int irqline, int state)
 	if (irqline >= INPUT_LINE_IRQ0 && irqline <= INPUT_LINE_IRQ4)
 	{
 		UINT32 mask = (1 << (4 - irqline));
-		if( state ) {
+		if( state == ASSERT_LINE) {
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
 				ppc403_exception(EXCEPTION_IRQ);
@@ -291,6 +382,11 @@ static void ppc403_set_irq_line(int irqline, int state)
 					ppc.irq_callback(irqline);
 				}
 			}
+		}
+		// clear line is used to clear the interrupt when the interrupts are level-sensitive
+		else if (state == CLEAR_LINE)
+		{
+			ppc.exisr &= ~mask;
 		}
 	}
 	else if (irqline == PPC403_SPU_RX)
@@ -310,6 +406,14 @@ static void ppc403_set_irq_line(int irqline, int state)
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
 				ppc403_exception(EXCEPTION_IRQ);
+			}
+		}
+	}
+	else if (irqline == PPC403_CRITICAL_IRQ)
+	{
+		if (state) {
+			if (EXIER & 0x80000000) {
+				ppc403_exception(EXCEPTION_CRITICAL_INTERRUPT);
 			}
 		}
 	}
@@ -477,15 +581,39 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 					baud_rate = (33333333 / (ppc.spu.brd + 1)) / 16;
 				}
 
-				/* for now RX receives 8 bits at a time. maybe fix this later? */
-				baud_rate /= 8;
+				/* check if serial port is hooked to a DMA channel */
+				/* if so, do a DMA operation */
+				if( ((((ppc.spu.sprc >> 5) & 0x3) == 2) && (ppc.dma[2].cr & DMA_CE)) ||
+					((((ppc.spu.sprc >> 5) & 0x3) == 3) && (ppc.dma[3].cr & DMA_CE)) )
+				{
+					int i;
+					int ch = (ppc.spu.sprc >> 5) & 0x3;
+				//  printf("ppc: DMA from serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
 
-				//timer_adjust(ppc.spu.rx_timer, TIME_IN_HZ(baud_rate), cpu_getactivecpu(), TIME_IN_HZ(baud_rate));
-				timer_enable(ppc.spu.rx_timer, 0);
+					if (spu_rx_dma_handler)
+					{
+						int length = ppc.dma[ch].ct;
+
+						spu_rx_dma_handler(length);
+
+						for (i=0; i < length; i++)
+						{
+							//program_write_byte_32be(ppc.dma[ch].da++, spu_rx_dma_ptr[i]);
+						}
+					}
+
+					/* set receive buffer full */
+					ppc.spu.spls = 0x80;
+
+#ifndef PPC_DRC
+					ppc403_set_irq_line(PPC403_SPU_RX, ASSERT_LINE);
+#else
+					ppcdrc403_set_irq_line(PPC403_SPU_RX, ASSERT_LINE);
+#endif
+				}
 			}
 			else						/* disable RX */
 			{
-				timer_enable(ppc.spu.rx_timer, 0);
 			}
 			break;
 
@@ -502,7 +630,7 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 			osd_die("ppc: spu_w: %02X, %02X\n", a & 0xf, d);
 			break;
 	}
-	//printf("spu_w: %02X, %02X\n", a & 0xf, d);
+	printf("spu_w: %02X, %02X at %08X\n", a & 0xf, d, ppc.pc);
 }
 
 void ppc403_spu_rx(UINT8 data)
@@ -557,26 +685,41 @@ void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler)
 	spu_tx_handler = tx_handler;
 }
 
+
+void ppc403_spu_rx_dma(UINT8 *data, int length)
+{
+
+}
+
+void ppc403_install_spu_rx_dma_handler(PPC_DMA_HANDLER rx_dma_handler, UINT8 *buffer)
+{
+	spu_rx_dma_handler = rx_dma_handler;
+	spu_rx_dma_ptr = buffer;
+}
+
+void ppc403_install_spu_tx_dma_handler(PPC_DMA_HANDLER tx_dma_handler, UINT8 *buffer)
+{
+	spu_tx_dma_handler = tx_dma_handler;
+	spu_tx_dma_ptr = buffer;
+}
+
 /*********************************************************************************/
 
 /* PPC 403 DMA */
 
-#define DMA_CE		0x80000000
-#define DMA_CIE		0x40000000
-#define DMA_TD		0x20000000
-#define DMA_PL		0x10000000
-#define DMA_DAI		0x02000000
-#define DMA_SAI		0x01000000
-#define DMA_CP		0x00800000
-#define DMA_ETD		0x00000200
-#define DMA_TCE		0x00000100
-#define DMA_CH		0x00000080
-#define DMA_BME		0x00000040
-#define DMA_ECE		0x00000020
-#define DMA_TCD		0x00000010
-#define DMA_PCE		0x00000008
-
 static const int dma_transfer_width[4] = { 1, 2, 4, 16 };
+
+void ppc403_install_dma_read_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8 *buffer)
+{
+	dma_read_handler[ch] = dma_handler;
+	dma_read_ptr[ch] = buffer;
+}
+
+void ppc403_install_dma_write_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8 *buffer)
+{
+	dma_write_handler[ch] = dma_handler;
+	dma_write_ptr[ch] = buffer;
+}
 
 static void ppc403_dma_exec(int ch)
 {
@@ -606,13 +749,10 @@ static void ppc403_dma_exec(int ch)
 			case 0:		/* buffered DMA */
 				if( ppc.dma[ch].cr & DMA_TD )	/* peripheral to mem */
 				{
-					printf("ppc: dma_exec: buffered DMA (peripheral to mem) not implemented (DA: %08X, CT: %08X)\n", ppc.dma[ch].da, ppc.dma[ch].ct);
-
-					for( i=0; i < ppc.dma[ch].ct; i++ ) {
-						program_write_byte_32be(ppc.dma[ch].da++, 0xdb);
+					// nothing to do for now */
 					}
-				}
-				else {							/* mem to peripheral */
+				else							/* mem to peripheral */
+				{
 
 					/* check if the serial port is hooked to channel 2 or 3 */
 					if( (ch == 2 && ((ppc.spu.sptc >> 5) & 0x3) == 2) ||
@@ -620,16 +760,20 @@ static void ppc403_dma_exec(int ch)
 					{
 						printf("ppc: dma_exec: DMA to serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
 
-						for( i=0; i < ppc.dma[ch].ct; i++ ) {
-							printf("DMA to SPU: %02X\n", program_read_byte_32be(ppc.dma[ch].da++));
+						if (spu_tx_dma_handler)
+						{
+							int length = ppc.dma[ch].ct;
+
+							for( i=0; i < length; i++ ) {
+								spu_tx_dma_ptr[i] = program_read_byte_32be(ppc.dma[ch].da++);
+							}
+							spu_tx_dma_handler(length);
 						}
 
-						/* generate SPU interrupts */
 #ifndef PPC_DRC
-						if( EXIER & 0x04000000 ) {
-							EXISR |= 0x04000000;
-							ppc403_exception(EXCEPTION_IRQ);
-						}
+						ppc403_set_irq_line(PPC403_SPU_TX, ASSERT_LINE);
+#else
+						ppcdrc403_set_irq_line(PPC403_SPU_TX, ASSERT_LINE);
 #endif
 					}
 					else {

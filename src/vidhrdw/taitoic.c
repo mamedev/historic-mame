@@ -234,22 +234,10 @@ Colscroll [standard layout]
 =========
 
 The e000-ff area is not divided into two halves, it appears to refer only
-to bg0 - the bottommost layer unless bg0/1 are flipped. This would work
-for Gunfront, which flips bg layers and has bg0 as clouds on top: the
-video shows only the clouds affected.
+to bg1 - the top most layer unless bg0/1 are flipped.
 
-128 words are available in 0xe0?? area. I think every word scrolls 8
-pixels - evidenced in Gunfront. [128 words could scroll 128x8 pixels,
-adequate for the double width tilemaps which are available on the
-TC0100SCN.]
-
-[The reasoning behind colscroll only affecting bg0 may be that it is
-only addressable per column of 8 pixels. This is not very fine, and will
-tend to look jagged because you can't individually control each pixel
-column. Not a problem if:
-(i) you only use steps of 1 up or down between neighbouring columns
-(ii) you use rowscroll simultaneously to drown out the jaggedness
-(iii) it's the background layer and isn't the most visible thing.]
+128 words are available in 0xe0?? area. Every word scrolls 8
+pixels.
 
 Growl
 -----
@@ -2874,6 +2862,43 @@ void TC0100SCN_tilemap_update(void)
 	}
 }
 
+static void TC0100SCN_tilemap_draw_fg(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int chip, struct tilemap* tilemap ,int flags, UINT32 priority)
+{
+	const struct mame_bitmap *src_bitmap = tilemap_get_pixmap(tilemap);
+	int width_mask, height_mask, x, y, p;
+	int column_offset, src_x=0, src_y=0;
+	int scrollx_delta = - tilemap_get_scrolldx( tilemap );
+	int scrolly_delta = - tilemap_get_scrolldy( tilemap );
+
+	width_mask=src_bitmap->width - 1;
+	height_mask=src_bitmap->height - 1;
+
+	src_y=(TC0100SCN_fgscrolly[chip] + scrolly_delta)&height_mask;
+
+	// Row offsets are 'screen space' 0-255 regardless of Y scroll
+	for (y=0; y<256; y++) {
+		src_x=(TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][(y-8)&0x1ff] + scrollx_delta)&width_mask;
+
+		// Col offsets are 'tilemap' space 0-511, and apply to blocks of 8 pixels at once
+		for (x=0; x<320; x++) {
+			column_offset=TC0100SCN_colscroll_ram[chip][(((TC0100SCN_fgscrollx[chip] + x)&0x3ff) / 8)];
+			p=(((UINT16*)src_bitmap->line[(src_y - column_offset)&height_mask])[src_x]);
+
+			if ((p&0xf)!=0)
+			{
+				plot_pixel(bitmap, x, y, Machine->pens[p]);
+				if (priority_bitmap)
+				{
+					UINT8 *pri = priority_bitmap->line[y];
+					pri[x]|=priority;
+				}
+			}
+			src_x=(src_x+1)&width_mask;
+		}
+		src_y=(src_y+1)&height_mask;
+	}
+}
+
 int TC0100SCN_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int layer,int flags,UINT32 priority)
 {
 	int disable = TC0100SCN_ctrl[chip][6] & 0xf7;
@@ -2893,7 +2918,7 @@ if (disable != 0 && disable != 3 && disable != 7)
 			break;
 		case 1:
 			if (disable & 0x02) return 1;
-			tilemap_draw(bitmap,&clip,TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]],flags,priority);
+			TC0100SCN_tilemap_draw_fg(bitmap,&clip,chip,TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]],flags,priority);
 			break;
 		case 2:
 			if (disable & 0x04) return 1;

@@ -465,7 +465,11 @@ static READ16_HANDLER( alpha_II_trigger_r )
 
 				if ((coin_id&0xff) == 0x22)
 				{
-					coinvalue = (~readinputportbytag("IN4")>>0) & 7;
+					if(!strcmp(Machine->gamedrv->name, "btlfildb"))
+						coinvalue = (readinputportbytag("IN4")>>0) & 7;
+					else
+						coinvalue = (~readinputportbytag("IN4")>>0) & 7;
+
 					deposits1++;
 					if (deposits1 == coinage1[coinvalue][0])
 					{
@@ -484,7 +488,11 @@ static READ16_HANDLER( alpha_II_trigger_r )
 
 				if ((coin_id>>8) == 0x22)
 				{
-					coinvalue = (~readinputportbytag("IN4")>>0) & 7;
+					if(!strcmp(Machine->gamedrv->name, "btlfildb"))
+						coinvalue = (readinputportbytag("IN4")>>0) & 7;
+					else
+						coinvalue = (~readinputportbytag("IN4")>>0) & 7;
+
 					deposits2++;
 					if (deposits2 == coinage2[coinvalue][0])
 					{
@@ -1272,6 +1280,66 @@ INPUT_PORTS_START( btlfield )
 
 	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( btlfildb )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+
+	ALPHA68K_MCU
+
+	PORT_START_TAG("IN3")  /* Service + dip */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
+
+	/* 2 physical sets of _6_ dip switches */
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+//  PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// See notes
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Invulnerability (Cheat)")
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1C/1C B 1C/1C" )
+	PORT_DIPSETTING(    0x01, "A 1C/2C B 2C/1C" )
+	PORT_DIPSETTING(    0x02, "A 1C/3C B 3C/1C" )
+	PORT_DIPSETTING(    0x03, "A 1C/4C B 4C/1C" )
+	PORT_DIPSETTING(    0x04, "A 1C/5C B 5C/1C" )
+	PORT_DIPSETTING(    0x05, "A 1C/6C B 6C/1C" )
+	PORT_DIPSETTING(    0x06, "A 2C/3C B 7C/1C" )
+	PORT_DIPSETTING(    0x07, "A 3C/2C B 8C/1C" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN5")  /* player 1 12-way rotary control - converted in controls_r() */
+	/* not used */
+
+	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
+	/* not used */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skysoldr )
@@ -2176,7 +2244,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( alpha68k_II )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000) /* Correct */
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000) /* Correct */
 	MDRV_CPU_PROGRAM_MAP(alpha68k_II_readmem,alpha68k_II_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
 
@@ -2213,6 +2281,12 @@ static MACHINE_DRIVER_START( alpha68k_II )
 
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( btlfildb )
+	MDRV_IMPORT_FROM(alpha68k_II)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,2)
 MACHINE_DRIVER_END
 
 //AT
@@ -2641,6 +2715,50 @@ ROM_START( btlfield )
 	ROM_LOAD( "bf.13",           0x180000, 0x20000, CRC(56a3a26a) SHA1(d8485f629df98155c706ab0f725dd5fe475f1272) )
 	ROM_LOAD( "bf.17",           0x1a0000, 0x20000, CRC(6b37d048) SHA1(bc7b7abd971313e50ac5f69d7dbec9de8a354537) )
 	ROM_LOAD( "bf.21",           0x1c0000, 0x20000, CRC(bc3b3944) SHA1(6c99d2b093e5cb04dc3422c2f0f81a20f5a504b5) )
+ROM_END
+
+ROM_START( btlfildb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "3.bin",      0x00000, 0x10000, CRC(141f10ca) SHA1(4f6a59975964c92693476576533aba80c089b5ef) )
+	ROM_LOAD16_BYTE( "1.bin",      0x00001, 0x10000, CRC(caa09adf) SHA1(5df0775119b3e957bbe620142a5454e337bdf4b8) )
+	ROM_LOAD16_BYTE( "bf.1",       0x20000, 0x10000, CRC(158f4cb3) SHA1(48335a1e68afda24e1cca8cce5f869f30c6bda9c) )
+	ROM_LOAD16_BYTE( "bf.2",       0x20001, 0x10000, CRC(af01a718) SHA1(588fda345b5ebd75d03d78c431227f220932ee46) )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )   /* Sound CPU */
+	ROM_LOAD( "bf.7",            0x00000,  0x08000, CRC(f8b293b5) SHA1(d326763628d7cbe864abc15d6db7fa7fe4381f31) )
+	ROM_CONTINUE(                0x18000,  0x08000 )
+	ROM_LOAD( "bf.8",            0x30000,  0x10000, CRC(8a43497b) SHA1(c64519b2aced8b072efdd1a6286f082094a50e61) )
+	ROM_LOAD( "bf.9",            0x50000,  0x10000, CRC(1408416f) SHA1(d7a32de156791f923635d7fdddc8db97f66bfb2a) )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )  /* chars */
+	ROM_LOAD( "bfv1_05.bin",     0x00000,  0x08000, CRC(be269dbf) SHA1(3240badbf65e076cc1f7caaec1081df9a4371d47) )
+	ROM_LOAD( "bfv1_06.bin",     0x08000,  0x08000, CRC(022b9de9) SHA1(5a736a4cfe05e7681c78ab816dfe04074fe0293d) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )  /* sprites */
+	ROM_LOAD( "12.bin",          0x000000, 0x10000, CRC(8cab60f2) SHA1(92410d430cab112e87888a9cf50c304957f43be0) )
+	ROM_LOAD( "11.bin",          0x010000, 0x10000, CRC(e296581e) SHA1(5d889e9365ecff7c518e39130c55a7b836ff2861) )
+	ROM_LOAD( "8.bin",           0x020000, 0x10000, CRC(54462294) SHA1(b772729bbc54b26b09ccbf953c3b054ed4e22273) )
+	ROM_LOAD( "7.bin",           0x030000, 0x10000, CRC(03b18a1d) SHA1(d4d288ccbe193accc3fd5c04b7152197305a69b7) )
+	ROM_LOAD( "5.bin",           0x040000, 0x10000, CRC(d6f3d746) SHA1(3f4401d1ab024f8d1a6ab9dd4116d24cad76c3b1) )
+	ROM_LOAD( "6.bin",           0x050000, 0x10000, CRC(07714f39) SHA1(8a9b62947b29955598218f924b9f76c027177295) )
+	ROM_LOAD( "16.bin",          0x080000, 0x10000, CRC(6166553a) SHA1(c2279589646ebd8ea77c477e5f2641048ab6f0d4) )
+	ROM_LOAD( "15.bin",          0x090000, 0x10000, CRC(805439d7) SHA1(385d05341aa71cee96a92eaeec13f4b45d420726) )
+	ROM_LOAD( "13.bin",          0x0a0000, 0x10000, CRC(5622cb93) SHA1(e8683998714430836313b72d6be894129b65c772) )
+	ROM_LOAD( "14.bin",          0x0b0000, 0x10000, CRC(67860390) SHA1(1eb25a7e84a10f1385222ab992412db68b4e8266) )
+	ROM_LOAD( "9.bin",           0x0c0000, 0x10000, CRC(02f73dc5) SHA1(369851080f4716ea9a7b9fa40aa40b4a55bfe0ba) )
+	ROM_LOAD( "10.bin",          0x0d0000, 0x10000, CRC(e5de7eb8) SHA1(534000a03548f6f7cf466511caf203c487aeaa79) )
+	ROM_LOAD( "21.bin",          0x100000, 0x10000, CRC(81b75cdc) SHA1(8f529f293899c34d5be31bb675dda6706c2d29a9) )
+	ROM_LOAD( "22.bin",          0x110000, 0x10000, CRC(5231e4df) SHA1(b3a75eed0496a7437af5f970b23e495ecfe17422) )
+	ROM_LOAD( "20.bin",          0x120000, 0x10000, CRC(5a944f3e) SHA1(dad0322800348465393fdce9c379636b3829b76c) )
+	ROM_LOAD( "19.bin",          0x130000, 0x10000, CRC(db1dcd5e) SHA1(cc1d442b7a20ad923f88365f834ce608a56d6f6e) )
+	ROM_LOAD( "17.bin",          0x140000, 0x10000, CRC(69210ee6) SHA1(b627d8694821a66ca9825f05ce7f4997b4bfe60c) )
+	ROM_LOAD( "18.bin",          0x150000, 0x10000, CRC(40bf0b3d) SHA1(db084a0879845b265ca3f9359e19d907dc2ac00c) )
+	ROM_LOAD( "28.bin",          0x180000, 0x10000, CRC(3399e86e) SHA1(6e9a6a623ce2a2a76edfd328192ba85cd820dbc3) )
+	ROM_LOAD( "27.bin",          0x190000, 0x10000, CRC(86529c8a) SHA1(500d1651b0a86db4c0dd8c357a6363ef2a07b5ba) )
+	ROM_LOAD( "25.bin",          0x1a0000, 0x10000, CRC(6764d81b) SHA1(331e455fb228f2b6e97124d620688ec66da50603) )
+	ROM_LOAD( "26.bin",          0x1b0000, 0x10000, CRC(335b7b50) SHA1(8649a710e07835c7ed88efbf8c963a0b5c81d170) )
+	ROM_LOAD( "24.bin",          0x1c0000, 0x10000, CRC(2e78684a) SHA1(b4a64fef05c11f06640b461b264ec11a86f4119d) )
+	ROM_LOAD( "23.bin",          0x1d0000, 0x10000, CRC(500e0dbc) SHA1(88caea968340b3932469f8149bc7a08a7ca7d285) )
 ROM_END
 
 ROM_START( skysoldr )
@@ -3181,6 +3299,13 @@ static DRIVER_INIT( btlfield )
 	coin_id=0x22|(0x22<<8);
 }
 
+static DRIVER_INIT( btlfildb )
+{
+	invert_controls=1;
+	microcontroller_id=0;
+	coin_id=0x22|(0x22<<8); //not checked
+}
+
 static DRIVER_INIT( skysoldr )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x40008, 0x40009, 0, 0, skysoldr_cycle_r);
@@ -3279,6 +3404,7 @@ GAME( 1988, paddlema, 0,        alpha68k_I,    paddlema, paddlema, ROT90, "SNK",
 GAME( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90, "[Alpha Denshi Co.] (SNK/Romstar license)", "Time Soldiers (US Rev 3)" )
 GAME( 1987, timesol1, timesold, alpha68k_II,   timesold, timesol1, ROT90, "[Alpha Denshi Co.] (SNK/Romstar license)", "Time Soldiers (US Rev 1)" )
 GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90, "[Alpha Denshi Co.] (SNK license)", "Battle Field (Japan)" )
+GAME( 1987, btlfildb, timesold, btlfildb,      btlfildb, btlfildb, ROT90, "bootleg",            "Battle Field (bootleg)" )
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90, "[Alpha Denshi Co.] (SNK of America/Romstar license)", "Sky Soldiers (US)" )
 GAME( 1988, goldmedl, 0,        alpha68k_II_gm,goldmedl, goldmedl, ROT0,  "SNK",                "Gold Medalist" )
 GAME( 1988, goldmeda, goldmedl, alpha68k_II_gm,goldmedl, goldmeda, ROT0,  "SNK",                "Gold Medalist (alt)" )

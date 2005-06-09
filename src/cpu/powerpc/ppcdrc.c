@@ -925,7 +925,7 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 	if (irqline >= INPUT_LINE_IRQ0 && irqline <= INPUT_LINE_IRQ4)
 	{
 		UINT32 mask = (1 << (4 - irqline));
-		if( state ) {
+		if( state == ASSERT_LINE) {
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
 				ppc.exception_pending |= 0x1;
@@ -935,6 +935,11 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 					ppc.irq_callback(irqline);
 				}
 			}
+		}
+		// clear line is used to clear the interrupt when the interrupts are level-sensitive
+		else if (state == CLEAR_LINE)
+		{
+			ppc.exisr &= ~mask;
 		}
 	}
 	else if (irqline == PPC403_SPU_RX)

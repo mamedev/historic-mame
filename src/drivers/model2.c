@@ -54,6 +54,7 @@
 #include "vidhrdw/segaic24.h"
 #include "cpu/i960/i960.h"
 #include "cpu/m68000/m68k.h"
+#include "cpu/sharc/sharc.h"
 #include "sound/scsp.h"
 #include "sound/multipcm.h"
 #include "sound/2612intf.h"
@@ -62,7 +63,10 @@ UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *
 static data32_t model2_intreq;
 static data32_t model2_intena;
 static data32_t model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
-static data32_t copro_prog[24*1024], geo_prog[24*1024];
+static data32_t /*copro_prog[24*1024],*/ geo_prog[24*1024];
+
+static data32_t *copro_shared;
+
 static data32_t model2_timervals[4], model2_timerorig[4];
 static int      model2_timerrun[4];
 static void    *model2_timers[4];
@@ -179,6 +183,13 @@ static MACHINE_INIT(model2)
 
 	// copy the 68k vector table into RAM
 	memcpy(memory_region(REGION_CPU2), memory_region(REGION_CPU2)+0x80000, 16);
+}
+
+static MACHINE_INIT(model2b)
+{
+	machine_init_model2();
+
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 static VIDEO_START(model2)
@@ -323,6 +334,8 @@ static WRITE32_HANDLER( copro_ctl1_w )
 		else
 		{
 			logerror("Boot copro, %d dwords\n", model2_coprocnt);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
+			//cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
 		}
 	}
 
@@ -352,7 +365,13 @@ static WRITE32_HANDLER(copro_prg_w)
 {
 	if (model2_coproctl & 0x80000000)
 	{
-		copro_prog[model2_coprocnt] = data;
+		//printf("copro %08X: %08X\n", model2_coprocnt, data);
+		//copro_prog[model2_coprocnt] = data;
+		//model2_coprocnt++;
+
+		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 0, (data >> 0) & 0xff);
+		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 1, (data >> 8) & 0xff);
+
 		model2_coprocnt++;
 	}
 }
@@ -1101,6 +1120,32 @@ static struct MultiPCM_interface m1_multipcm_interface_2 =
 	REGION_SOUND2
 };
 
+
+
+
+
+READ32_HANDLER( copro_sharc_shared_r )
+{
+//  printf("dsp_shared_r: %08X\n", offset);
+
+	return (copro_shared[(offset >> 1) + 0] << 16) | (copro_shared[(offset >> 1) + 1]);
+}
+
+WRITE32_HANDLER( copro_sharc_shared_w )
+{
+	printf("copro_sharc_shared_w: %08X, %08X\n", offset, data);
+
+	copro_shared[offset] = data;
+}
+
+static ADDRESS_MAP_START( copro_sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x1000000, 0x101ffff) AM_READWRITE(copro_sharc_shared_r, copro_sharc_shared_w)
+ADDRESS_MAP_END
+
+
+
+
+
 /* original Model 2 */
 static MACHINE_DRIVER_START( model2o )
 	MDRV_CPU_ADD(I960, 25000000)
@@ -1172,6 +1217,12 @@ static MACHINE_DRIVER_START( model2a )
 	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
+
+static sharc_config sharc_cfg =
+{
+	BOOT_MODE_HOST
+};
+
 /* 2B-CRX */
 static MACHINE_DRIVER_START( model2b )
 	MDRV_CPU_ADD(I960, 25000000)
@@ -1181,10 +1232,14 @@ static MACHINE_DRIVER_START( model2b )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(model2_snd, 0)
 
+	MDRV_CPU_ADD(ADSP21062, 40000000)
+	MDRV_CPU_CONFIG(sharc_cfg)
+	MDRV_CPU_PROGRAM_MAP(copro_sharc_map, 0)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(model2)
+	MDRV_MACHINE_INIT(model2b)
 	MDRV_NVRAM_HANDLER( model2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
