@@ -373,6 +373,31 @@ static ADDRESS_MAP_START( writemem3, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE( 0xa00000, 0xa00001) AM_WRITE(MWA16_NOP) 	/* IRQ 2 acknowledge? */
 ADDRESS_MAP_END
 
+/* Final Tetris */
+
+static ADDRESS_MAP_START( finalttr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r)
+
+	AM_RANGE(0x600000, 0x6001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( finalttr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&hyperpac_ram)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(semicom_soundcmd_w)
+//  AM_RANGE(0x400000, 0x400001) ???
+	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP)	/* IRQ 4 acknowledge? */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP)	/* IRQ 3 acknowledge? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* IRQ 2 acknowledge? */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
@@ -843,6 +868,87 @@ INPUT_PORTS_START( moremore )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( finalttr )
+	PORT_START	/* 500001 */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+/*  PORT_DIPSETTING(      0x0018, DEF_STR( 1C_1C ) ) Duplicate setting? */
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Must be low or game stops! */
+													/* probably VBlank */
+	PORT_START	/* 500003 */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, "Time" )
+	PORT_DIPSETTING(      0x0000, "60 Seconds" )
+	PORT_DIPSETTING(      0x000c, "90 Seconds" )
+	PORT_DIPSETTING(      0x0008, "120 Seconds" )
+	PORT_DIPSETTING(      0x0004, "150 Seconds" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500005 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 /* SnowBros */
 
 static struct GfxLayout tilelayout =
@@ -954,6 +1060,15 @@ MACHINE_INIT (semiprot)
 	hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 }
 
+MACHINE_INIT (finalttr)
+{
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
+
+	for (i = 0;i < 0x200/2;i++)
+	hyperpac_ram[0x2000/2 + i] = PROTDATA[i];
+}
+
 static MACHINE_DRIVER_START( snowbros )
 
 	/* basic machine hardware */
@@ -1026,6 +1141,36 @@ static MACHINE_DRIVER_START( semiprot )
 	MDRV_IMPORT_FROM(semicom)
 	MDRV_MACHINE_INIT ( semiprot )
 MACHINE_DRIVER_END
+
+/*
+
+Final Tetris (unknown manufacturer)
+
+the pcb is korean and probably original even if it's very cheap.
+
+osc 12mhz
+osc 3.579545mhz
+68000
+z8004b
+CA5101 (sound chip)
+OKI M6295 (sound chip)
+Intel P8752 (mcu)
+
+2x dips banks
+
+*/
+
+static MACHINE_DRIVER_START( finalttr )
+	MDRV_IMPORT_FROM(semicom)
+
+	MDRV_CPU_REPLACE("main", M68000, 12000000)
+	MDRV_CPU_PROGRAM_MAP(finalttr_readmem,finalttr_writemem)
+
+	MDRV_CPU_REPLACE("sound", Z80, 3578545)
+
+	MDRV_MACHINE_INIT ( finalttr )
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( _4in1 )
 	/* basic machine hardware */
@@ -1351,6 +1496,35 @@ ROM_START( snowbro3 )
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "us5",     0x00000, 0x20000, CRC(7c6368ef) SHA1(53393c570c605f7582b61c630980041e2ed32e2d) )
 	ROM_CONTINUE(0x80000,0x60000)
+ROM_END
+
+ROM_START( finalttr )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "10.7o",    0x00000, 0x20000, CRC(eecc83e5) SHA1(48088a2fae8852a73a325a9659c24b241515eac3) )
+	ROM_LOAD16_BYTE( "9.5o",     0x00001, 0x20000, CRC(58d3640e) SHA1(361bc64174a6c7b15a13e0d1f048c7ea270182ca) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "12.5r",    0x00000, 0x10000, CRC(4bc21361) SHA1(dab9bea665c0f2fd7cee8ab7f3762e427911bcca) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+       shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(d5bbb006) SHA1(2f9ce6c4f4f5a304a807134da9c85c68a7b49200) )
+	/* after 0xc7 the data read seems meaningless garbage, it doesn't appear to
+       stop at 0x102200, might be worth going back and checking if its simply random
+       values due to ram not being cleared, or actual data */
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "11.7p",    0x00000, 0x20000, CRC(2e331022) SHA1(1e74c66d16eb9c8ae04acecbb4040dea037492cc) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "5.1d",     0x00000, 0x40000, CRC(64a450f3) SHA1(d0560f68fe1527fda7852269ec39237ace66ab32) )
+	ROM_LOAD( "6.1f",     0x40000, 0x40000, CRC(7281a3cc) SHA1(3f2ed7893bd7c5ff25ecb6eabce78ab66fe532a7) )
+	ROM_LOAD( "7.1g",     0x80000, 0x40000, CRC(ec80f442) SHA1(870e44d28490a324f74af554604b9daa8422b86f) )
+	ROM_LOAD( "9.1h",     0xc0000, 0x40000, CRC(2ebd316d) SHA1(2f1249ebd2a0bb0cc15259f7187201576a365fa6) )
 ROM_END
 
 READ16_HANDLER ( moremorp_0a_read )
@@ -1799,7 +1973,7 @@ GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Br
 GAME( 1990, snowbroc, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 4)" )
 GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)" )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )
-/* SemiCom Games */
+
 GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
 GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
@@ -1809,3 +1983,4 @@ GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / E
 GAME( 1999, moremorp, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
 GAME( 1999, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" ) // original is 1999, bootleg 2002?
 GAMEX(2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "bootleg", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
+GAME( 199?, finalttr, 0,        finalttr, finalttr, 0,        ROT0, "unknown", "Final Tetris" )

@@ -813,7 +813,8 @@ static void ppc_mcrf(UINT32 op)
 
 static void ppc_mcrxr(UINT32 op)
 {
-	osd_die("ppc: mcrxr unimplemented\n");
+	CR(RT >> 2) = XER & 0x0F;
+	XER = 0;
 }
 
 static void ppc_mfcr(UINT32 op)

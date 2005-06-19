@@ -61,9 +61,13 @@
 #define FLG3O		0x40000		/* FLAG3 (1) Output / (0) Input */
 #define CAFRZ		0x80000		/* Cache freeze */
 
+
+#define REG(x)		(sharc.r[x].r)
+#define FREG(x)		(sharc.r[x].f)
+
 /*****************************************************************************/
 
-int systemreg_latency_reg = 0;
+int systemreg_latency_reg = -1;
 UINT32 systemreg_latency_data = 0;
 
 static void add_systemreg_write(int sysreg, UINT32 data)
@@ -81,7 +85,7 @@ INLINE void swap_sysreg(UINT32 *a, UINT32 *b)
 
 static void systemreg_latency_op(void)
 {
-	if (systemreg_latency_reg != 0)
+	if (systemreg_latency_reg != -1)
 	{
 		UINT32 data = systemreg_latency_data;
 
@@ -196,10 +200,30 @@ static void systemreg_latency_op(void)
 				}
 
 				if (data & 0x80) {
-					osd_die("SHARC: systemreg_latency_op: enable R15-R8 alternate");
+					if (((oldreg & data) & 0x80) == 0)
+					{
+						swap_sysreg(&sharc.r[8].r, &sharc.reg_alt[8].r);
+						swap_sysreg(&sharc.r[9].r, &sharc.reg_alt[9].r);
+						swap_sysreg(&sharc.r[10].r, &sharc.reg_alt[10].r);
+						swap_sysreg(&sharc.r[11].r, &sharc.reg_alt[11].r);
+						swap_sysreg(&sharc.r[12].r, &sharc.reg_alt[12].r);
+						swap_sysreg(&sharc.r[13].r, &sharc.reg_alt[13].r);
+						swap_sysreg(&sharc.r[14].r, &sharc.reg_alt[14].r);
+						swap_sysreg(&sharc.r[15].r, &sharc.reg_alt[15].r);
+					}
 				}
 				if (data & 0x400) {
-					osd_die("SHARC: systemreg_latency_op: enable R7-R0 alternate");
+					if (((oldreg & data) & 0x400) == 0)
+					{
+						swap_sysreg(&sharc.r[0].r, &sharc.reg_alt[0].r);
+						swap_sysreg(&sharc.r[1].r, &sharc.reg_alt[1].r);
+						swap_sysreg(&sharc.r[2].r, &sharc.reg_alt[2].r);
+						swap_sysreg(&sharc.r[3].r, &sharc.reg_alt[3].r);
+						swap_sysreg(&sharc.r[4].r, &sharc.reg_alt[4].r);
+						swap_sysreg(&sharc.r[5].r, &sharc.reg_alt[5].r);
+						swap_sysreg(&sharc.r[6].r, &sharc.reg_alt[6].r);
+						swap_sysreg(&sharc.r[7].r, &sharc.reg_alt[7].r);
+					}
 				}
 				break;
 			}
@@ -209,7 +233,7 @@ static void systemreg_latency_op(void)
 			default:	osd_die("SHARC: systemreg_latency_op: unknown register %02X at %08X\n", systemreg_latency_reg, sharc.pc);
 		}
 
-		systemreg_latency_reg = 0;
+		systemreg_latency_reg = -1;
 	}
 }
 
@@ -220,7 +244,7 @@ INLINE UINT32 GET_UREG(int ureg)
 	{
 		case 0x0:		/* R0 - R15 */
 		{
-			return sharc.r[reg];
+			return sharc.r[reg].r;
 		}
 
 		case 0x1:
@@ -344,7 +368,7 @@ INLINE void SET_UREG(int ureg, UINT32 data)
 	switch((ureg >> 4) & 0xf)
 	{
 		case 0x0:		/* R0 - R15 */
-			sharc.r[reg] = data;
+			sharc.r[reg].r = data;
 			break;
 
 		case 0x1:
@@ -442,13 +466,13 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 		case 0x00:		/* LSHIFT Rx */
 		{
 			if(shift < 0) {
-				sharc.r[rn] = (shift > -32 ) ? (sharc.r[rx] >> -shift) : 0;
-				SET_FLAG_SV_RSHIFT(sharc.r[rx], -shift);
+				REG(rn) = (shift > -32 ) ? (REG(rx) >> -shift) : 0;
+				SET_FLAG_SV_RSHIFT(REG(rx), -shift);
 			} else {
-				sharc.r[rn] = (shift < 32) ? (sharc.r[rx] << shift) : 0;
-				SET_FLAG_SV_LSHIFT(sharc.r[rx], shift);
+				REG(rn) = (shift < 32) ? (REG(rx) << shift) : 0;
+				SET_FLAG_SV_LSHIFT(REG(rx), shift);
 			}
-			SET_FLAG_SZ(sharc.r[rn]);
+			SET_FLAG_SZ(REG(rn));
 			break;
 		}
 
@@ -457,16 +481,16 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			if (shift < 0)
 			{
 				int s = (-shift) & 0x1f;
-				sharc.r[rn] = (((UINT32)sharc.r[rx] >> s) & ((UINT32)(0xffffffff) >> s)) |
-							  (((UINT32)sharc.r[rx] << (32-s)) & ((UINT32)(0xffffffff) << (32-s)));
+				REG(rn) = (((UINT32)REG(rx) >> s) & ((UINT32)(0xffffffff) >> s)) |
+							  (((UINT32)REG(rx) << (32-s)) & ((UINT32)(0xffffffff) << (32-s)));
 			}
 			else
 			{
 				int s = shift & 0x1f;
-				sharc.r[rn] = (((UINT32)sharc.r[rx] << s) & ((UINT32)(0xffffffff) << s)) |
-							  (((UINT32)sharc.r[rx] >> (32-s)) & ((UINT32)(0xffffffff) >> (32-s)));
+				REG(rn) = (((UINT32)REG(rx) << s) & ((UINT32)(0xffffffff) << s)) |
+							  (((UINT32)REG(rx) >> (32-s)) & ((UINT32)(0xffffffff) >> (32-s)));
 			}
-			SET_FLAG_SZ(sharc.r[rn]);
+			SET_FLAG_SZ(REG(rn));
 			break;
 		}
 
@@ -474,37 +498,52 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 		{
 			UINT32 r = 0;
 			if(shift < 0) {
-				r = (shift > -32 ) ? (sharc.r[rx] >> -shift) : 0;
-				SET_FLAG_SV_RSHIFT(sharc.r[rx], -shift);
+				r = (shift > -32 ) ? (REG(rx) >> -shift) : 0;
+				SET_FLAG_SV_RSHIFT(REG(rx), -shift);
 			} else {
-				r = (shift < 32) ? (sharc.r[rx] << shift) : 0;
-				SET_FLAG_SV_LSHIFT(sharc.r[rx], shift);
+				r = (shift < 32) ? (REG(rx) << shift) : 0;
+				SET_FLAG_SV_LSHIFT(REG(rx), shift);
 			}
 			SET_FLAG_SZ(r);
 
-			sharc.r[rn] = sharc.r[rn] | r;
+			REG(rn) = REG(rn) | r;
 			break;
 		}
 
 		case 0x10:		/* FEXT Rx BY <bit6>:<len6> */
 		{
-			UINT32 ext = sharc.r[rx] & MAKE_EXTRACT_MASK(bit, len);
-			sharc.r[rn] = ext >> bit;
+			UINT32 ext = REG(rx) & MAKE_EXTRACT_MASK(bit, len);
+			REG(rn) = ext >> bit;
 
-			SET_FLAG_SZ(sharc.r[rn]);
+			SET_FLAG_SZ(REG(rn));
 			/* TODO: set SV flag */
+			break;
+		}
+
+		case 0x12:		/* FEXT Rx BY <bit6>:<len6> (Sign Extended) */
+		{
+			UINT32 ext = (REG(rx) & MAKE_EXTRACT_MASK(bit, len)) >> bit;
+			if (ext & (1 << (len-1))) {
+				ext |= (UINT32)0xffffffff << (len-1);
+			}
+			REG(rn) = ext;
+
+			SET_FLAG_SZ(REG(rn));
+			if (bit+len > 32) {
+				sharc.astat |= SV;
+			}
 			break;
 		}
 
 		case 0x13:		/* FDEP Rx BY Ry <bit6>:<len6> (Sign Extended) */
 		{
-			UINT32 ext = sharc.r[rx] & MAKE_EXTRACT_MASK(0, len);
+			UINT32 ext = REG(rx) & MAKE_EXTRACT_MASK(0, len);
 			if (ext & (1 << (len-1))) {
 				ext |= (UINT32)0xffffffff << (len-1);
 			}
-			sharc.r[rn] = ext << bit;
+			REG(rn) = ext << bit;
 
-			SET_FLAG_SZ(sharc.r[rn]);
+			SET_FLAG_SZ(REG(rn));
 			if (bit+len > 32) {
 				sharc.astat |= SV;
 			}
@@ -513,11 +552,11 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 
 		case 0x19:		/* Rn = Rn OR FDEP Rx BY <bit6>:<len6> */
 		{
-			UINT32 ext = sharc.r[rx] & MAKE_EXTRACT_MASK(0, len);
+			UINT32 ext = REG(rx) & MAKE_EXTRACT_MASK(0, len);
 
-			sharc.r[rn] |= ext << bit;
+			REG(rn) |= ext << bit;
 
-			SET_FLAG_SZ(sharc.r[rn]);
+			SET_FLAG_SZ(REG(rn));
 			if (bit+len > 32) {
 				sharc.astat |= SV;
 			}
@@ -528,10 +567,10 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 		{
 			if (data >= 0 && data < 32)
 			{
-				UINT32 xreg = sharc.r[rx];
-				sharc.r[rn] = xreg | (1 << data);
+				UINT32 xreg = REG(rx);
+				REG(rn) = xreg | (1 << data);
 
-				SET_FLAG_SZ(sharc.r[rn]);
+				SET_FLAG_SZ(REG(rn));
 			}
 			else
 			{
@@ -544,10 +583,10 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 		{
 			if (data >= 0 && data < 32)
 			{
-				UINT32 xreg = sharc.r[rx];
-				sharc.r[rn] = xreg ^ (1 << data);
+				UINT32 xreg = REG(rx);
+				REG(rn) = xreg ^ (1 << data);
 
-				SET_FLAG_SZ(sharc.r[rn]);
+				SET_FLAG_SZ(REG(rn));
 			}
 			else
 			{
@@ -560,7 +599,7 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 		{
 			if (data < 31)
 			{
-				UINT32 r = sharc.r[rx] & (1 << data);
+				UINT32 r = REG(rx) & (1 << data);
 
 				SET_FLAG_SZ(r);
 			}
@@ -589,11 +628,45 @@ static void COMPUTE(UINT32 opcode)
 	//int rm = rs;
 
 	if(opcode & 0x400000) {		/* Multi-function opcode */
+		int fm = (opcode >> 12) & 0xf;
+		int fa = (opcode >> 8) & 0xf;
+		int fxm = (opcode >> 6) & 0x3;			// registers 0 - 3
+		int fym = ((opcode >> 4) & 0x3) + 4;	// registers 4 - 7
+		int fxa = ((opcode >> 2) & 0x3) + 8;	// registers 8 - 11
+		int fya = (opcode & 0x3) + 12;			// registers 12 - 15
+
+		if (fm == fxa || fm == fya)
+		{
+			osd_die("SHARC: multi-op parallelity issue: dest reg %d = src reg (at %08X)", fm, sharc.pc);
+		}
+
 		int multiop = (opcode >> 16) & 0x3f;
 		switch(multiop)
 		{
 			case 0x00:		compute_multi_mr_to_reg(op & 0xf, rn); break;
 			case 0x01:		compute_multi_reg_to_mr(op & 0xf, rn); break;
+
+			case 0x18:		/* Fm = Fxm * Fym,   Fa = Fxa + Fya */
+			{
+				compute_fmul(fm, fxm, fym);
+				compute_fadd(fa, fxa, fya);
+				break;
+			}
+
+			case 0x19:		/* Fm = Fxm * Fym,   Fa = Fxa - Fya */
+			{
+				compute_fmul(fm, fxm, fym);
+				compute_fsub(fa, fxa, fya);
+				break;
+			}
+
+			case 0x1a:		/* Fm = Fxm * Fym,   Fa = FLOAT Fxa BY Fya */
+			{
+				compute_fmul(fm, fxm, fym);
+				compute_float_scaled(fa, fxa, fya);
+				break;
+			}
+
 			default:
 				osd_die("SHARC: compute: multi-function opcode %02X not implemented ! (%08X, %08X)", multiop, sharc.pc, opcode);
 				break;
@@ -613,12 +686,33 @@ static void COMPUTE(UINT32 opcode)
 					case 0x06:		compute_sub_ci(rn, rx, ry); break;
 					case 0x0a:		compute_comp(rx, ry); break;
 					case 0x21:		compute_pass(rn, rx); break;
+					case 0x22:		compute_neg(rn, rx); break;
 					case 0x29:		compute_inc(rn, rx); break;
 					case 0x2a:		compute_dec(rn, rx); break;
 					case 0x40:		compute_and(rn, rx, ry); break;
 					case 0x41:		compute_or(rn, rx, ry); break;
 					case 0x42:		compute_xor(rn, rx, ry); break;
 					case 0x62:		compute_max(rn, rx, ry); break;
+					case 0x81:		compute_fadd(rn, rx, ry); break;
+					case 0x82:		compute_fsub(rn, rx, ry); break;
+					case 0x91:		compute_fabs_plus(rn, rx, ry); break;
+					case 0xa2:		compute_fneg(rn, rx); break;
+					case 0xbd:		compute_scalb(rn, rx, ry); break;
+					case 0xc1:		compute_logb(rn, rx); break;
+					case 0xc4:		compute_recips(rn, rx); break;
+					case 0xca:		compute_float(rn, rx); break;
+					case 0xda:		compute_float_scaled(rn, rx, ry); break;
+
+					case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+					case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7e: case 0x7f:
+					{
+						/* Fixed-point Dual Add/Subtract */
+						int rs = (opcode >> 12) & 0xf;
+						int ra = (opcode >> 8) & 0xf;
+						compute_dual_add_sub(ra, rs, rx, ry);
+						break;
+					}
+
 					default:		osd_die("SHARC: compute: unimplemented ALU operation %02X (%08X, %08X)", op, sharc.pc, opcode);
 				}
 				break;
@@ -633,9 +727,11 @@ static void COMPUTE(UINT32 opcode)
 					case 0x14:		sharc.mrf = 0; break;
 					case 0x16:		sharc.mrb = 0; break;
 
+					case 0x30:		compute_fmul(rn, rx, ry); break;
 					case 0x40:		compute_mul_uuir(rn, rx, ry); break;
+
 					default:
-						osd_die("SHARC: compute: multiplier operations not implemented ! (%08X, %08X)", sharc.pc, opcode);
+						osd_die("SHARC: compute: multiplier operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
 						break;
 				}
 				break;
@@ -645,17 +741,65 @@ static void COMPUTE(UINT32 opcode)
 			/* Shifter operations */
 			case 2:
 			{
-				switch(op>>2)
+				sharc.astat &= ~(SZ|SV|SS);
+
+				op >>= 2;
+				switch(op)
 				{
+					case 0x02:		/* ROT Rx BY Ry */
+					{
+						int shift = REG(ry);
+						if (shift < 0)
+						{
+							int s = (-shift) & 0x1f;
+							REG(rn) = (((UINT32)REG(rx) >> s) & ((UINT32)(0xffffffff) >> s)) |
+									  (((UINT32)REG(rx) << (32-s)) & ((UINT32)(0xffffffff) << (32-s)));
+						}
+						else
+				{
+							int s = shift & 0x1f;
+							REG(rn) = (((UINT32)REG(rx) << s) & ((UINT32)(0xffffffff) << s)) |
+									  (((UINT32)REG(rx) >> (32-s)) & ((UINT32)(0xffffffff) >> (32-s)));
+						}
+						SET_FLAG_SZ(REG(rn));
+						break;
+					}
+
+					case 0x08:		/* Rn = Rn OR LSHIFT Rx BY Ry*/
+					{
+						INT8 shift = REG(ry);
+						if(shift < 0) {
+							REG(rn) = REG(rn) | (shift > -32 ) ? (REG(rx) >> -shift) : 0;
+							SET_FLAG_SV_RSHIFT(REG(rx), -shift);
+						} else {
+							REG(rn) = REG(rn) | (shift < 32) ? (REG(rx) << shift) : 0;
+							SET_FLAG_SV_LSHIFT(REG(rx), shift);
+						}
+						SET_FLAG_SZ(REG(rn));
+						break;
+					}
+
+					case 0x10:		/* FEXT Rx BY Ry */
+					{
+						int bit = REG(ry) & 0x3f;
+						int len = (REG(ry) >> 6) & 0x3f;
+						UINT32 ext = REG(rx) & MAKE_EXTRACT_MASK(bit, len);
+						REG(rn) = ext >> bit;
+
+						SET_FLAG_SZ(REG(rn));
+						/* TODO: set SV flag */
+						break;
+					}
+
 					case 0x30:		/* BSET Rx BY Ry */
 					{
-						UINT32 shift = sharc.r[ry];
+						UINT32 shift = REG(ry);
 						if (shift >= 0 && shift < 32)
 						{
-							UINT32 xreg = sharc.r[rx];
-							sharc.r[rn] = xreg | (1 << shift);
+							UINT32 xreg = REG(rx);
+							REG(rn) = xreg | (1 << shift);
 
-							SET_FLAG_SZ(sharc.r[rn]);
+							SET_FLAG_SZ(REG(rn));
 						}
 						else
 						{
@@ -713,7 +857,7 @@ INLINE void PUSH_LOOP(UINT32 pc, UINT32 count)
 	sharc.curlcntr = count;
 }
 
-INLINE UINT32 POP_LOOP(void)
+INLINE void POP_LOOP(void)
 {
 	sharc.lstkp--;
 	if(sharc.lstkp < 0) {
@@ -856,11 +1000,11 @@ static void sharcop_sysreg_bitop(void)
 		case 2:		/* TOGGLE */
 			src ^= data;
 			break;
-		case 3:		/* TEST */
+		case 4:		/* TEST */
 			if((src & data) == data)
 				sharc.astat |= BTF;
 			break;
-		case 4:		/* XOR */
+		case 5:		/* XOR */
 			if(src == data)
 				sharc.astat |= BTF;
 			break;
@@ -955,10 +1099,10 @@ static void sharcop_compute_dm_to_dreg_immmod(void)
 	}
 
 	if(u) {		/* post-modify with update */
-		sharc.r[dreg] = dm_read32(DM_REG_I(i));
+		REG(dreg) = dm_read32(DM_REG_I(i));
 		DM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		sharc.r[dreg] = dm_read32(DM_REG_I(i)+mod);
+		REG(dreg) = dm_read32(DM_REG_I(i)+mod);
 	}
 }
 
@@ -977,10 +1121,10 @@ static void sharcop_compute_dreg_to_dm_immmod(void)
 	}
 
 	if(u) {		/* post-modify with update */
-		dm_write32(DM_REG_I(i), sharc.r[dreg]);
+		dm_write32(DM_REG_I(i), REG(dreg));
 		DM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		dm_write32(DM_REG_I(i)+mod, sharc.r[dreg]);
+		dm_write32(DM_REG_I(i)+mod, REG(dreg));
 	}
 }
 
@@ -999,10 +1143,10 @@ static void sharcop_compute_pm_to_dreg_immmod(void)
 	}
 
 	if(u) {		/* post-modify with update */
-		sharc.r[dreg] = pm_read32(PM_REG_I(i));
+		REG(dreg) = pm_read32(PM_REG_I(i));
 		PM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		sharc.r[dreg] = pm_read32(PM_REG_I(i)+mod);
+		REG(dreg) = pm_read32(PM_REG_I(i)+mod);
 	}
 }
 
@@ -1021,10 +1165,10 @@ static void sharcop_compute_dreg_to_pm_immmod(void)
 	}
 
 	if(u) {		/* post-modify with update */
-		pm_write32(PM_REG_I(i), sharc.r[dreg]);
+		pm_write32(PM_REG_I(i), REG(dreg));
 		PM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		pm_write32(PM_REG_I(i)+mod, sharc.r[dreg]);
+		pm_write32(PM_REG_I(i)+mod, REG(dreg));
 	}
 }
 
@@ -1309,18 +1453,18 @@ static void sharcop_imm_shift_dreg_dmpm(void)
 
 		if(g) {		/* PM */
 			if(d) {		/* dreg -> PM */
-				pm_write32(PM_REG_I(i), sharc.r[dreg]);
+				pm_write32(PM_REG_I(i), REG(dreg));
 				PM_REG_I(i)+=PM_REG_M(m);
 			} else {	/* PM <- dreg */
-				sharc.r[dreg] = pm_read32(PM_REG_I(i));
+				REG(dreg) = pm_read32(PM_REG_I(i));
 				PM_REG_I(i)+=PM_REG_M(m);
 			}
 		} else {	/* DM */
 			if(d) {		/* dreg -> DM */
-				dm_write32(DM_REG_I(i), sharc.r[dreg]);
+				dm_write32(DM_REG_I(i), REG(dreg));
 				DM_REG_I(i)+=DM_REG_M(m);
 			} else {	/* DM <- dreg */
-				sharc.r[dreg] = dm_read32(DM_REG_I(i));
+				REG(dreg) = dm_read32(DM_REG_I(i));
 				DM_REG_I(i)+=DM_REG_M(m);
 			}
 		}
@@ -1422,7 +1566,7 @@ static void sharcop_jump_direct_rel(void)
 static void sharcop_jump_indirect(void)
 {
 	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
+//  int ci = (sharc.opcode >> 24) & 0x1;
 	int j = (sharc.opcode >> 26) & 0x1;
 	int e = (sharc.opcode >> 25) & 0x1;
 	int pmi = (sharc.opcode >> 30) & 0x7;
@@ -1431,8 +1575,8 @@ static void sharcop_jump_indirect(void)
 	int compute = sharc.opcode & 0x7fffff;
 
 	// TODO: implement Clear Interrupt
-	if(ci)
-		osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
+//  if(ci)
+//      osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {
@@ -1511,15 +1655,15 @@ static void sharcop_call_indirect(void)
 static void sharcop_jump_indirect_rel(void)
 {
 	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
+//  int ci = (sharc.opcode >> 24) & 0x1;
 	int j = (sharc.opcode >> 26) & 0x1;
 	int e = (sharc.opcode >> 25) & 0x1;
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	int compute = sharc.opcode & 0x7fffff;
 
 	// TODO: implement Clear Interrupt
-	if(ci)
-		osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
+//  if(ci)
+//      osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {

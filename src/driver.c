@@ -257,6 +257,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( mrkougar )	/* (c) 1984 ATW */
 	DRIVER( mrkougr2 )
 	DRIVER( mrkougb )	/* bootleg */
+	DRIVER( mrkougb2 )	/* bootleg */
 	DRIVER( hotshock )	/* (c) 1982 E.G. Felaco */
 	DRIVER( conquer )	/* (c) 1982 ???? */
 	DRIVER( hunchbks )	/* (c) 1983 Century */
@@ -840,6 +841,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( cheekyms )	/* (c) [1980?] */
 	DRIVER( ladybug )	/* (c) 1981 */
 	DRIVER( ladybugb )	/* bootleg */
+	DRIVER( ladybgb2 )	/* bootleg */
 	DRIVER( snapjack )	/* (c) */
 	DRIVER( sraider )	/* (c) 1982 Universal */
 	DRIVER( cavenger )	/* (c) 1981 */
@@ -1932,6 +1934,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( moremorp )	/* (c) 1999 SemiCom + Exit */
 	DRIVER( 4in1boot )	/* (c) 2002 but bootleg of 1999 release? */
 	DRIVER( snowbro3 )	/* (c) 2002 but hack / bootleg of snowbros? */
+	DRIVER( finalttr )	/* (c) unknown? */
 
 	/* More Toaplan Games */
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
@@ -2140,6 +2143,7 @@ V-V                           TP-027
 	DRIVER( sidearmr )	/* 12/1986 (c) 1986 + Romstar license (US) */
 	DRIVER( sidearjp )	/* 12/1986 (c) 1986 (Japan) */
 	DRIVER( turtship )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
+	DRIVER( turtshik )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dyger )		/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dygera )	/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( twinfalc )	/* (c) 1989 Philko (Poara Enterprises license) (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
@@ -3216,8 +3220,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( ga2 )		/* (c) 1992 (World)*/
 	DRIVER( ga2u )		/* (c) 1992 (US)*/
 	DRIVER( ga2j )		/* (c) 1992 (Japan)*/
-	DRIVER( spidey )	/* (c) 1991 (World)*/
-	DRIVER( spideyu )	/* (c) 1991 (US) */
+	DRIVER( spidman )	/* (c) 1991 (World)*/
+	DRIVER( spidmanu )	/* (c) 1991 (US) */
 	DRIVER( arabfgt )	/* (c) 1991 */
 	DRIVER( arabfgtj )	/* (c) 1991 */
 	DRIVER( arescue )	/* (c) 1992 */
@@ -3358,6 +3362,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( scuda )
 	DRIVER( lostwsga )
 	DRIVER( vs215 )
+	DRIVER( lemans24 )
 	DRIVER( vs29815 )
 
 	/* Step 2.0 */

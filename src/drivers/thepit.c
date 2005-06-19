@@ -84,7 +84,9 @@ static WRITE8_HANDLER( flip_screen_y_w )
 static ADDRESS_MAP_START( thepit_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8800, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8c00, 0x8fff) AM_READ(colorram_r)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r)
 	AM_RANGE(0x9800, 0x98ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa000, 0xa000) AM_READ(thepit_input_port_0_r)
@@ -118,6 +120,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( intrepid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x4fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8c00, 0x8fff) AM_READ(colorram_r)
 	AM_RANGE(0x9000, 0x98ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa000, 0xa000) AM_READ(thepit_input_port_0_r)
 	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
@@ -128,6 +131,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( intrepid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x4fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(colorram_w)
 	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x9400, 0x97ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x9800, 0x983f) AM_WRITE(thepit_attributes_w) AM_BASE(&thepit_attributesram)
@@ -531,7 +535,6 @@ static struct AY8910interface ay8910_interface =
 	soundlatch_r
 };
 
-
 static MACHINE_DRIVER_START( thepit )
 
 	/* basic machine hardware */
@@ -581,7 +584,6 @@ static MACHINE_DRIVER_START( intrepid )
 
 	/* video hardware */
 	MDRV_GFXDECODE(intrepid_gfxdecodeinfo)
-	MDRV_PALETTE_INIT(thepit)
 MACHINE_DRIVER_END
 
 
@@ -837,7 +839,7 @@ GAME( 1982, dockman,  0,        intrepid, dockman,  0, ROT90, "Taito Corporation
 GAME( 1982, portman,  dockman,  intrepid, dockman,  0, ROT90, "Nova Games Ltd.", "Port Man" )
 GAME( 1982, funnymou, 0,        suprmous, suprmous, 0, ROT90, "Chuo Co. Ltd", "Funny Mouse" )
 GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0, ROT90, "Taito Corporation", "Super Mouse" )
-GAME( 1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse" )
+GAMEX(1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse", GAME_WRONG_COLORS )
 GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
 GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )
 GAMEX(1984, zaryavos, 0,        intrepid, intrepid, 0, ROT90, "Nova Games of Canada", "Zarya Vostoka", GAME_NOT_WORKING )

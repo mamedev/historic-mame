@@ -760,11 +760,6 @@ static INPUT_PORTS_START( system18_generic )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-#if 0
-static INPUT_PORTS_START( generic )
-	PORT_INCLUDE( system18_generic )
-INPUT_PORTS_END
-#endif
 
 
 /*************************************

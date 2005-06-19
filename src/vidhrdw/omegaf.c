@@ -543,7 +543,7 @@ WRITE8_HANDLER( omegaf_sprite_overdraw_w )
 	if (sprite_overdraw_enabled != (data & 1))
 	{
 		sprite_overdraw_enabled = data & 1;
-		fillbitmap(bitmap_sp, 15, &Machine -> visible_area);
+		fillbitmap(bitmap_sp, 15, &Machine->visible_area);
 	}
 }
 
@@ -582,15 +582,53 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			flipy = spriteram[offs + 2] & 0x20;
 			color = spriteram[offs + 4] & 0x0f;
 
-			drawgfx(bitmap,Machine->gfx[(big) ? 4 : 3],
-					tile,
-					color,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,
-					TRANSPARENCY_PEN, 15);
+			if(sprite_overdraw_enabled && (color & 8))
+			{
+				/* "static" sprites */
+				drawgfx(bitmap_sp,Machine->gfx[(big) ? 4 : 3],
+						tile,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->visible_area,
+						TRANSPARENCY_PEN, 15);
+			}
+			else
+			{
+				drawgfx(bitmap,Machine->gfx[(big) ? 4 : 3],
+						tile,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->visible_area,
+						TRANSPARENCY_PEN, 15);
+
+				/* all the "normal" sprites clear the "static" ones */
+				if(sprite_overdraw_enabled)
+				{
+					int x,y,offset = 0;
+					const struct GfxElement *gfx = Machine->gfx[(big) ? 4 : 3];
+					data8_t *srcgfx = gfx->gfxdata + tile * gfx->char_modulo;
+
+					for(y = 0; y < gfx->height; y++)
+					{
+						for(x = 0; x < gfx->width; x++)
+						{
+							if(srcgfx[offset] != 15)
+							{
+								plot_pixel(bitmap_sp, sx + x, sy + y, 15);
+							}
+
+							offset++;
+						}
+					}
+				}
+			}
 		}
 	}
+
+	if(sprite_overdraw_enabled)
+		copybitmap(bitmap, bitmap_sp, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_PEN, 15);
 }
 
 VIDEO_UPDATE( omegaf )
@@ -600,13 +638,17 @@ VIDEO_UPDATE( omegaf )
 	if (bg0_enabled)	tilemap_draw(bitmap,cliprect, bg0_tilemap, 0, 0);
 	if (bg1_enabled)	tilemap_draw(bitmap,cliprect, bg1_tilemap, 0, 0);
 	if (bg2_enabled)	tilemap_draw(bitmap,cliprect, bg2_tilemap, 0, 0);
-	if ( sprite_overdraw_enabled )				/* overdraw sprite mode */
-	{
-		draw_sprites(bitmap_sp,cliprect);
-		copybitmap(bitmap, bitmap_sp, 0, 0, 0, 0,
-		           cliprect, TRANSPARENCY_PEN, 15);
-	}
-	else										/* normal sprite mode */
-		draw_sprites(bitmap,cliprect);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
+}
+
+VIDEO_UPDATE( robokid )
+{
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+
+	if (bg0_enabled)	tilemap_draw(bitmap,cliprect, bg0_tilemap, 0, 0);
+	if (bg1_enabled)	tilemap_draw(bitmap,cliprect, bg1_tilemap, 0, 0);
+	draw_sprites(bitmap,cliprect);
+	if (bg2_enabled)	tilemap_draw(bitmap,cliprect, bg2_tilemap, 0, 0);
 	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
 }

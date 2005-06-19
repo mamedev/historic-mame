@@ -536,7 +536,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
 	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o $(OBJ)/drivers/multi32.o \
-	$(OBJ)/vidhrdw/system32.o \
+	$(OBJ)/vidhrdw/segas32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \
 	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \

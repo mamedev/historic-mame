@@ -38,6 +38,15 @@ TODO:
 
 ***************************************************************************/
 
+/*
+ * Space Raider todo list:
+ *
+ * decode cpu#2 writes to port 0x30 and 0x38 - resistors for sound
+ * decode cpu#2 writes to port 0x28-0x2f - ???
+ * examine other bits from cpu#2 write to 0xe800
+ * one unknown dip
+ */
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
@@ -55,13 +64,23 @@ extern PALETTE_INIT( ladybug );
 extern VIDEO_START( ladybug );
 extern VIDEO_UPDATE( ladybug );
 
+extern PALETTE_INIT( sraider );
 extern VIDEO_START( sraider );
 extern VIDEO_UPDATE( sraider );
-extern WRITE8_HANDLER( sraider_grid_w );
-extern WRITE8_HANDLER( sraider_grid_control_w );
+extern VIDEO_EOF( sraider );
+extern WRITE8_HANDLER( sraider_grid_color_w );
+extern WRITE8_HANDLER( sraider_grid_data_w );
 
-extern UINT8 sraider_grid_status;
-extern UINT8 sraider_0x30, sraider_0x38;
+extern READ8_HANDLER( sraider_8005_r );
+extern WRITE8_HANDLER( sraider_sound_low_w );
+extern WRITE8_HANDLER( sraider_sound_high_w );
+extern READ8_HANDLER( sraider_sound_low_r );
+extern READ8_HANDLER( sraider_sound_high_r );
+extern WRITE8_HANDLER( sraider_io_w );
+extern WRITE8_HANDLER( sraider_misc_w );
+
+//extern UINT8 sraider_grid_status;
+//extern UINT8 sraider_0x30, sraider_0x38;
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
@@ -487,15 +506,14 @@ INPUT_PORTS_START( sraider )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names" )
+	PORT_DIPSETTING(    0x00, "3 Letters" )
+	PORT_DIPSETTING(    0x04, "10 Letters" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
@@ -578,8 +596,8 @@ static struct GfxLayout gridlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 0 },  // These are doubled up for now
+	1,	/* 1 bit per pixel */
+	{ 0 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8},
 	8*8	/* every char takes 8 consecutive bytes */
@@ -589,8 +607,8 @@ static struct GfxLayout gridlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 0 },  // These are doubled up for now
+	1,	/* 2 bits per pixel */
+	{ 0 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -609,11 +627,10 @@ static struct GfxDecodeInfo sraider_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &charlayout,      0,  8 },
 	{ REGION_GFX2, 0, &spritelayout,  4*8, 16 },
 	{ REGION_GFX2, 0, &spritelayout2, 4*8, 16 },
-	{ REGION_USER1, 0, &gridlayout, 0, 8 },
-	{ REGION_USER1, 0, &gridlayout2, 0, 8 },
+	{ REGION_USER1, 0, &gridlayout, 32+64, 1 },
+	{ REGION_USER1, 0, &gridlayout2, 32+64, 1 },
 	{ -1 } /* end of array */
 };
-
 
 
 static MACHINE_DRIVER_START( ladybug )
@@ -648,176 +665,44 @@ static MACHINE_DRIVER_START( ladybug )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
-static READ8_HANDLER(_8005_r)
-{
-	/* This must return X011111X or cpu #1 will hang */
-	return 0x3e;
-}
-
-static READ8_HANDLER( sraider_unknown_r )
-{
-	return sraider_grid_status;
-}
-
-static WRITE8_HANDLER( sraider_soundlatch_w )
-{
-	soundlatch_w(0, data);
-	cpunum_set_input_line(1,0,ASSERT_LINE);
-}
-
-static WRITE8_HANDLER( sound_irq_ack )
-{
-	cpunum_set_input_line(1,0,CLEAR_LINE);
-}
-
-UINT8 sraider_wierd_value[8];
-
-static WRITE8_HANDLER( sound_w )
-{
-	//printf("%02X: %02X\n",offset,data);
-
-
-	switch(offset)
-	{
-		case 0x00:
-			/* I don't think there is a sound chip here */
-			break;
-		case 0x08:
-			SN76496_0_w(0,data);
-			break;
-		case 0x10:
-			SN76496_1_w(0,data);
-			break;
-		case 0x18:
-			SN76496_2_w(0,data);
-			break;
-		case 0x20:
-			SN76496_3_w(0,data);
-			break;
-		case 0x28:
-		case 0x29:
-		case 0x2a:
-		case 0x2b:
-		case 0x2c:
-		case 0x2d:
-		case 0x2e:
-		case 0x2f:
-			sraider_wierd_value[offset&7] = data;
-			if(offset==0x2f)
-			{
-				int i;
-				for(i=0;i<8;i++)
-				{
-					//printf("%02X:",sraider_wierd_value[i]);
-				}
-				//printf("\n");
-			}
-			break;
-		case 0x30:
-			//printf("%02X: %02X\n",offset,data);
-			sraider_0x30 = data;
-			break;
-		case 0x38:
-			//printf("%02X:    %02X\n",offset,data);
-			sraider_0x38 = data;
-			break;
-		default:
-			printf("%02X\n",offset);
-			break;
-	}
-
-#if 0
-	if(offset & 8)
-		SN76496_1_w(0,data);
-	else
-		SN76496_0_w(0,data);
-#endif
-
-}
 
 static ADDRESS_MAP_START( sraider_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
 	AM_RANGE(0x6000, 0x6fff) AM_RAM
 	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x8005, 0x8005) AM_READ(_8005_r)
-	AM_RANGE(0x8006, 0x8006) AM_WRITE(sraider_grid_w)//MWA8_NOP)
-	AM_RANGE(0x8007, 0x8007) AM_WRITE(sraider_soundlatch_w)
+	AM_RANGE(0x8005, 0x8005) AM_READ(sraider_8005_r)  // protection check?
+	AM_RANGE(0x8006, 0x8006) AM_WRITE(sraider_sound_low_w)
+	AM_RANGE(0x8007, 0x8007) AM_WRITE(sraider_sound_high_w)
 	AM_RANGE(0x9000, 0x9000) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0x9001, 0x9001) AM_READ(input_port_1_r)	/* IN1 */
 	AM_RANGE(0x9002, 0x9002) AM_READ(input_port_2_r)	/* DSW0 */
 	AM_RANGE(0x9003, 0x9003) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(ladybug_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(ladybug_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(ladybug_flipscreen_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)  //unknown
+		// 0x10 when in attract, 0x20 when coined/playing
 ADDRESS_MAP_END
 
-//it drives the grid and sound (?)
 static ADDRESS_MAP_START( sraider_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
 	AM_RANGE(0x6000, 0x63ff) AM_RAM
-	AM_RANGE(0x8000, 0x8000) AM_READ(sraider_unknown_r)
-	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)//MRA8_NOP) //ed, f7 -> read 0x80 ?
-	AM_RANGE(0xc000, 0xc000) AM_READ(MRA8_NOP)
-	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(sraider_grid_control_w)
-	AM_RANGE(0xe800, 0xe800) AM_WRITE(sound_irq_ack)
+	AM_RANGE(0x8000, 0x8000) AM_READ(sraider_sound_low_r)
+	AM_RANGE(0xa000, 0xa000) AM_READ(sraider_sound_high_r)
+	AM_RANGE(0xc000, 0xc000) AM_READ(MRA8_NOP) //some kind of sync
+	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(sraider_grid_data_w)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(sraider_io_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sraider_cpu2_io, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x3f) AM_WRITE(sound_w)
+  	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0x18, 0x18) AM_WRITE(SN76496_3_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(SN76496_4_w)
+	AM_RANGE(0x28, 0x3f) AM_WRITE(sraider_misc_w)  // lots unknown
 ADDRESS_MAP_END
 
-PALETTE_INIT( sraider )
-{
-	int i;
-
-	for (i = 0;i < 32;i++)
-	{
-		int bit1,bit2,r,g,b;
-
-
-		bit1 = (~color_prom[i] >> 3) & 0x01;
-		bit2 = (~color_prom[i] >> 0) & 0x01;
-		r = 0x47 * bit1 + 0x97 * bit2;
-		bit1 = (~color_prom[i] >> 5) & 0x01;
-		bit2 = (~color_prom[i] >> 4) & 0x01;
-		g = 0x47 * bit1 + 0x97 * bit2;
-		bit1 = (~color_prom[i] >> 7) & 0x01;
-		bit2 = (~color_prom[i] >> 6) & 0x01;
-		b = 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
-	}
-
-	/* characters */
-	for (i = 0;i < 8;i++)
-	{
-		colortable[4 * i] = 0;
-		colortable[4 * i + 1] = i + 0x08;
-		colortable[4 * i + 2] = i + 0x10;
-		colortable[4 * i + 3] = i + 0x18;
-	}
-
-	/* sprites */
-	for (i = 0;i < 4 * 8;i++)
-	{
-		int bit0,bit1,bit2,bit3;
-
-
-		/* low 4 bits are for sprite n */
-		bit0 = (color_prom[i + 32] >> 3) & 0x01;
-		bit1 = (color_prom[i + 32] >> 2) & 0x01;
-		bit2 = (color_prom[i + 32] >> 1) & 0x01;
-		bit3 = (color_prom[i + 32] >> 0) & 0x01;
-		colortable[i + 4 * 8] = 1 * bit0 + 2 * bit1 + 4 * bit2 + 8 * bit3;
-
-		/* high 4 bits are for sprite n + 8 */
-		bit0 = (color_prom[i + 32] >> 7) & 0x01;
-		bit1 = (color_prom[i + 32] >> 6) & 0x01;
-		bit2 = (color_prom[i + 32] >> 5) & 0x01;
-		bit3 = (color_prom[i + 32] >> 4) & 0x01;
-		colortable[i + 4 * 16] = 1 * bit0 + 2 * bit1 + 4 * bit2 + 8 * bit3;
-	}
-}
 
 static MACHINE_DRIVER_START( sraider )
 
@@ -829,6 +714,7 @@ static MACHINE_DRIVER_START( sraider )
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(sraider_cpu2_map,0)
 	MDRV_CPU_IO_MAP(sraider_cpu2_io,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -838,15 +724,19 @@ static MACHINE_DRIVER_START( sraider )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
 	MDRV_GFXDECODE(sraider_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32)
-	MDRV_COLORTABLE_LENGTH(4*24)
+	MDRV_PALETTE_LENGTH(65)
+	MDRV_COLORTABLE_LENGTH(32+64+2)
 
 	MDRV_PALETTE_INIT(sraider)
 	MDRV_VIDEO_START(sraider)
 	MDRV_VIDEO_UPDATE(sraider)
+	MDRV_VIDEO_EOF(sraider)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_ADD(SN76496, 4000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -899,6 +789,29 @@ ROM_START( ladybugb )
 	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, CRC(ffc424d7) SHA1(2a4b9533e61e265bdd38c126add8c26d5bc048d5) )
 	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, CRC(ad6af809) SHA1(276275d56c725b9d90eeb44c317ceb06bac27ae7) )
 	ROM_LOAD( "lb6a.cpu",     0x5000, 0x1000, CRC(88c8002a) SHA1(ffff1b8d4c1521710c988eee12081d28ed491ccf) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, CRC(77b1da1e) SHA1(58cb82417396a3d96acfc864f091b1a5988f228d) )
+	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, CRC(aa82e00b) SHA1(83a5b745e58844b6dd7d05dfe9dbb5959aaf5c40) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "lb8.cpu",      0x0000, 0x1000, CRC(8b99910b) SHA1(0bc812cf872f04eacedb50feed53f1aa8a1f24b9) )
+	ROM_LOAD( "lb7.cpu",      0x1000, 0x1000, CRC(86a5b448) SHA1(f8585a6fcf921e3e21f112dd2de474cb53cef290) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, CRC(df091e52) SHA1(4d7fea6d9ab31e5f280b1dc198a325f00c3826ef) ) /* palette */
+	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, CRC(40640d8f) SHA1(85d13a9b78c47174cff7c869f52b30263bae575e) ) /* sprite color lookup table */
+	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* ?? */
+ROM_END
+
+ROM_START( ladybgb2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "lb1b.cpu",     0x0000, 0x1000, CRC(35d61e65) SHA1(43b797f1882e0acbf6685deea82de77e78d2c917) )
+	ROM_LOAD( "lb2b.cpu",     0x1000, 0x1000, CRC(a13e0fe4) SHA1(9e2876d8390d2b072d064b197057089a25c13a4a) )
+	ROM_LOAD( "lb3b.cpu",     0x2000, 0x1000, CRC(ee8ac716) SHA1(ead222d2cd022ea3a4559e3cff08cabf2486eb68) )
+	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, CRC(ffc424d7) SHA1(2a4b9533e61e265bdd38c126add8c26d5bc048d5) )
+	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, CRC(ad6af809) SHA1(276275d56c725b9d90eeb44c317ceb06bac27ae7) )
+	ROM_LOAD( "lb6b.cpu",     0x5000, 0x1000, CRC(dc906e89) SHA1(ffa5c3fc9d438e85cbe4fb33343dec664406fda7) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, CRC(77b1da1e) SHA1(58cb82417396a3d96acfc864f091b1a5988f228d) )
@@ -1037,7 +950,7 @@ ROM_START( sraider )
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "srpr10-1.a2",  0x0000, 0x0020, CRC(121fdb99) SHA1(3bc092da40beb129a4df3db2f55d22bbbcf7bad8) )
 	ROM_LOAD( "srpr10-2.l3",  0x0020, 0x0020, CRC(88b67e70) SHA1(e21ee2939e96dffee101bd92c62ed975b6b64001) )
-	ROM_LOAD( "srpr10-3.c1",  0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) )
+	ROM_LOAD( "srpr10-3.c1",  0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* ?? */
 
 	/* fixed portion of the grid */
 	ROM_REGION( 0x1000, REGION_USER1, 0 )
@@ -1069,7 +982,8 @@ DRIVER_INIT( sraider )
 GAME( 1981, cavenger, 0,       ladybug, cavenger, 0,       ROT0,   "Universal", "Cosmic Avenger" )
 GAME( 1981, ladybug,  0,       ladybug, ladybug,  0,       ROT270, "Universal", "Lady Bug" )
 GAME( 1981, ladybugb, ladybug, ladybug, ladybug,  0,       ROT270, "bootleg",   "Lady Bug (bootleg)" )
+GAME( 1981, ladybgb2, ladybug, ladybug, ladybug,  0,       ROT270, "bootleg",   "Lady Bug (bootleg Set 2)" )
 GAME( 1982, dorodon,  0,       ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 1)" )
 GAME( 1982, dorodon2, dorodon, ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 2)" )
 GAME( 1982, snapjack, 0,       ladybug, snapjack, 0,       ROT0,   "Universal", "Snap Jack" )
-GAMEX(1982, sraider,  0,       sraider, sraider,  sraider, ROT270, "Universal", "Space Raider", GAME_IMPERFECT_GRAPHICS )
+GAME( 1982, sraider,  0,       sraider, sraider,  sraider, ROT270, "Universal", "Space Raider" )

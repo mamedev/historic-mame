@@ -163,6 +163,8 @@ Stadium Cross EPR15093  EPR15094  EPR15018  EPR15019  EPR15192  EPR15020  EPR150
 
 int multi32;
 
+data16_t *scrambled_paletteram16[2];
+
 static unsigned char irq_status;
 static data16_t *system32_shared_ram;
 extern data16_t *system32_mixerregs[2];  // mixer registers
@@ -181,9 +183,6 @@ extern data16_t *scrambled_paletteram16[2];
 static data16_t *paletteram16_b;
 
 extern int system32_mixerShift;
-extern int system32_screen_mode;
-extern int system32_screen_old_mode;
-extern int system32_allow_high_resolution;
 
 extern int sys32_brightness[2][3];
 
@@ -673,11 +672,6 @@ static MACHINE_INIT( system32 )
 {
 	cpu_setbank(1, memory_region(REGION_CPU1));
 	irq_init();
-
-	/* force it to select lo-resolution on reset */
-	system32_allow_high_resolution = 0;
-	system32_screen_mode = 0;
-	system32_screen_old_mode = 1;
 }
 
 static INTERRUPT_GEN( system32_interrupt )

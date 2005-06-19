@@ -183,7 +183,7 @@ static struct GfxLayout lordgun_16x16x6_layout =
 	16,16,
 	RGN_FRAC(1,3),
 	6,
-	{ RGN_FRAC(0,3)+0, RGN_FRAC(0,3)+8, RGN_FRAC(1,3)+0, RGN_FRAC(1,3)+8, RGN_FRAC(2,3)+0, RGN_FRAC(2,3)+8, },
+	{ RGN_FRAC(0,3)+0, RGN_FRAC(0,3)+8, RGN_FRAC(1,3)+0, RGN_FRAC(1,3)+8, RGN_FRAC(2,3)+0, RGN_FRAC(2,3)+8 },
 	{ 0,1,2,3,4,5,6,7, 256,257,258,259,260,261,262,263 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,8*16,9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
 	16*32
@@ -194,7 +194,7 @@ static struct GfxLayout lordgun_8x8x6_layout =
 	8,8,
 	RGN_FRAC(1,3),
 	6,
-	{ RGN_FRAC(0,3)+0, RGN_FRAC(0,3)+8, RGN_FRAC(1,3)+0, RGN_FRAC(1,3)+8, RGN_FRAC(2,3)+0, RGN_FRAC(2,3)+8,},
+	{ RGN_FRAC(0,3)+0, RGN_FRAC(0,3)+8, RGN_FRAC(1,3)+0, RGN_FRAC(1,3)+8, RGN_FRAC(2,3)+0, RGN_FRAC(2,3)+8 },
 	{ 0,1,2,3,4,5,6,7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	8*16

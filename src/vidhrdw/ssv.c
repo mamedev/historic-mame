@@ -710,6 +710,11 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 					depth = local_depth;
 			}
 
+			if (ssv_special == 3)	/* kludge to fix bad shadow sprites in Dyna Gears */
+			{
+				xnum = global_xnum;
+				ynum = global_ynum;
+			}
 
 
 

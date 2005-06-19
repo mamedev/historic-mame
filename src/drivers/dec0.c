@@ -1195,7 +1195,7 @@ static MACHINE_DRIVER_START( midres )
 
 	MDRV_SOUND_ADD(OKIM6295, 7757)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.40)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -7011,7 +7011,7 @@ GAMEB( 1997, puzzldpr, puzzledp, neogeo, neogeo, neogeo,  neogeo,   ROT0, "Taito
 GAMEB( 1998, breakrev, breakers, neogeo, neo320, neogeo,  neogeo,   ROT0, "Visco", "Breakers Revenge")
 GAMEB( 1998, flipshot, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Battle Flip Shot" )
 GAMEB( 1999, ctomaday, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
-GAMEB( 1999, ganryu,   neogeo,   neogeo, neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */
+GAMEB( 1999, ganryu,   neogeo,   neogeo, neogeo, neogeo,  ganryu,   ROT0, "Visco", "Ganryu / Musashi Ganryuki" )	/* Encrypted GFX */
 GAMEB( 2000, bangbead, neogeo,   neogeo, raster, neogeo,  bangbead, ROT0, "Visco", "Bang Bead" )
 //GAMEB( 2000, bangbedp, bangbead, neogeo, raster, neogeo,  neogeo,   ROT0, "Visco", "Bang Bead (prototype)" )
 
@@ -7023,7 +7023,7 @@ GAMEB( 2002, ms4plus,  mslug4,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "bootl
 GAMEB( 2002, rotd,     neogeo,	 neogeo, neogeo, neogeo,  rotd,	    ROT0, "Evoga / Playmore", "Rage of the Dragons" )
 
 /* Atlus */
-GAMEB( 2002, matrim,   neogeo,   neogeo, raster, neogeo,  matrim,   ROT0, "Noise Factory / Atlus", "Matrimelee" )
+GAMEB( 2002, matrim,   neogeo,   neogeo, raster, neogeo,  matrim,   ROT0, "Noise Factory / Atlus", "Matrimelee / Shin Gouketsuji Ichizoku Toukon" )
 
 /* Breezasoft */
 GAMEBX( 2001, jockeygp, neogeo,   neogeo, neogeo, neogeo,  jockeygp,   ROT0, "Sun Amusement / BrezzaSoft", "Jockey Grand Prix",GAME_NOT_WORKING )

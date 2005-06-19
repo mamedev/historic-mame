@@ -12,7 +12,7 @@
 
 /* constant definitions */
 #define BOTTOM_VISIBLE_SCANLINE	239		/* The bottommost visible scanline */
-#define NMI_SCANLINE     		244		/* 244 times Bayou Billy perfectly */
+#define NMI_SCANLINE     		243		/* Triggered at the beginning of this scanline */
 #define VISIBLE_SCREEN_WIDTH	(32*8)	/* Visible screen width */
 #define VISIBLE_SCREEN_HEIGHT	(30*8)	/* Visible screen height */
 #define VIDEORAM_SIZE			0x4000	/* videoram size */
@@ -701,19 +701,17 @@ static void update_scanline( int num )
 		/* Render this scanline if appropriate */
 		if ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) )
 			render_scanline( num );
-
-		return;
 	}
 
-	if ( scanline == BOTTOM_VISIBLE_SCANLINE+1 )
+	/* Note: this routine is called at the _end_ of each scanline */
+	if ( scanline == BOTTOM_VISIBLE_SCANLINE )
 	{
 		/* We just entered VBLANK */
 		ppu_regs[PPU_STATUS] |= PPU_STATUS_VBLANK;
-		return;
 	}
 
 	/* If NMI's are set to be triggered, go for it */
-	if ( ( scanline == NMI_SCANLINE ) && ( ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI ) )
+	if ( ( scanline == NMI_SCANLINE-1 ) && ( ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI ) )
 	{
 		if ( intf->nmi_handler[num] )
 			(*intf->nmi_handler[num])( num, ppu_regs );

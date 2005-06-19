@@ -51,7 +51,8 @@ static struct via6522_interface leprechn_via_0_interface =
 {
 	/*inputs : A/B         */ 0, leprechn_videoram_r,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ leprechn_videoram_w, leprechn_graphics_command_w, 0, 0,
+	/*outputs: A/B         */ leprechn_videoram_w, leprechn_graphics_command_w,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ 0
 };
 
@@ -59,7 +60,8 @@ static struct via6522_interface leprechn_via_1_interface =
 {
 	/*inputs : A/B         */ leprechn_input_port_r, 0,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ 0, leprechn_input_port_select_w, 0, leprechn_coin_counter_w,
+	/*outputs: A/B         */ 0, leprechn_input_port_select_w,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, leprechn_coin_counter_w,
 	/*irq                  */ 0
 };
 
@@ -67,7 +69,8 @@ static struct via6522_interface leprechn_via_2_interface =
 {
 	/*inputs : A/B         */ 0, 0,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ leprechn_sh_w, 0, 0, 0,
+	/*outputs: A/B         */ leprechn_sh_w, 0,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ 0
 };
 

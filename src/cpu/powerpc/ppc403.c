@@ -223,6 +223,7 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x0500;
+				change_pc(ppc.npc);
 				EXISR |= ppc.external_int;
 			}
 			else
@@ -250,6 +251,7 @@ void ppc403_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0700;
 				else
 					ppc.npc = EVPR | 0x0700;
+				change_pc(ppc.npc);
 			break;
 		}
 
@@ -271,6 +273,7 @@ void ppc403_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0c00;
 				else
 					ppc.npc = EVPR | 0x0c00;
+				change_pc(ppc.npc);
 			break;
 		}
 
@@ -290,6 +293,7 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x1000;
+				change_pc(ppc.npc);
 
 				ppc.tsr |= 0x08000000;		// PIT interrupt
 			}
@@ -316,6 +320,7 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x1010;
+				change_pc(ppc.npc);
 			}
 			else
 			{
@@ -339,6 +344,7 @@ void ppc403_exception(int exception)
 				ppc_set_msr(msr);
 
 				ppc.npc = EVPR | 0x1020;
+				change_pc(ppc.npc);
 			break;
 			}
 
@@ -358,6 +364,7 @@ void ppc403_exception(int exception)
 
 			EXISR |= 0x80000000;
 			ppc.npc = EVPR | 0x100;
+			change_pc(ppc.npc);
 			break;
 		}
 

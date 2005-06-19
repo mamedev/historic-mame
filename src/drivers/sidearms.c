@@ -979,34 +979,67 @@ ROM_END
 
 ROM_START( turtship )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + banked ROMs images */
-	ROM_LOAD( "turtship.003",    0x00000, 0x08000, CRC(e7a7fc2e) SHA1(1a9147e82a5e56e8e5b68bbce144f96261e88669) )
-	ROM_LOAD( "turtship.002",    0x10000, 0x08000, CRC(e576f482) SHA1(3be3792cb437bff0345681a3a2fdefefa3439357) )
-	ROM_LOAD( "turtship.001",    0x18000, 0x08000, CRC(a9b64240) SHA1(38c59877de6055230c3250ef74abc97e4ed88cb6) )
+	ROM_LOAD( "t-3.5g",    0x00000, 0x08000, CRC(0863fc1c) SHA1(b583e06e05e466c2344a4a420a47227c9ab8705c) )
+	ROM_LOAD( "t-2.3g",    0x10000, 0x08000, CRC(2327b35a) SHA1(bf7b5e11c3f75aff7d09c0fc4ad61fb4bcb38100) )
+	ROM_LOAD( "t-1.3e",    0x18000, 0x08000, CRC(845a9ab0) SHA1(f1455aeca92d129c7ed145d76e5093f41ce62ccb) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
-	ROM_LOAD( "turtship.004",    0x0000, 0x8000, CRC(1cbe48e8) SHA1(6ac5981d36a44595bb8dc847c54c7be7b374f82c) )
+	ROM_LOAD( "t-4.8a",    0x00000, 0x08000, CRC(1cbe48e8) SHA1(6ac5981d36a44595bb8dc847c54c7be7b374f82c) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "turtship.005",    0x00000, 0x04000, CRC(651fef75) SHA1(9c821a2ee30c222987f0d4192133776490d6a4e0) )	/* characters */
+	ROM_LOAD( "t-5.8k",    0x00000, 0x04000, CRC(35c3dbc5) SHA1(6700c72e5e0f7bd1429d342cb5d3daccd6b1b70f) )	/* characters */
+	ROM_CONTINUE(          0x00000, 0x04000 )	/* is the first half used? */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "turtship.008",    0x00000, 0x10000, CRC(e0658469) SHA1(931c41cd6af759b30f6018248c3bab4d544acb98) )	/* tiles */
-	ROM_LOAD( "turtship.010",    0x10000, 0x10000, CRC(76bb73bb) SHA1(4c4acd205421674878948a0d2bed6032bde3f97f) )
-	ROM_RELOAD( 0x30000, 0x10000)
-	ROM_LOAD( "turtship.011",    0x20000, 0x10000, CRC(53da6cb1) SHA1(52720746298adb01828f959f81b385d268c94343) )
-	ROM_LOAD( "turtship.006",    0x40000, 0x10000, CRC(a7cce654) SHA1(f6c99622dcacc1d76021ca29b0bbceefbb75c499) )
-	ROM_LOAD( "turtship.007",    0x50000, 0x10000, CRC(3ccf11b9) SHA1(777cc853bfcf2db4027b35d516fa5bef8b010e63) )
-	ROM_RELOAD( 0x70000, 0x10000)
-	ROM_LOAD( "turtship.009",    0x60000, 0x10000, CRC(44762916) SHA1(3427066fc02d1b9b71a59ac41d3332d5cd8d1423) )
+	ROM_LOAD( "t-8.1d",    0x00000, 0x10000, CRC(30a857f0) SHA1(a2d261e8104d0459067bdbdd71662fe8d6917da1) )	/* tiles */
+	ROM_LOAD( "t-10.3c",   0x10000, 0x10000, CRC(76bb73bb) SHA1(4c4acd205421674878948a0d2bed6032bde3f97f) )
+	ROM_RELOAD( 0x30000,   0x10000)
+	ROM_LOAD( "t-11.3d",   0x20000, 0x10000, CRC(53da6cb1) SHA1(52720746298adb01828f959f81b385d268c94343) )
+	ROM_LOAD( "t-6.1a",    0x40000, 0x10000, CRC(45ce41ad) SHA1(6e2f559adc4aee80326b3ae5ae6c6688a3491962) )
+	ROM_LOAD( "t-7.1c",    0x50000, 0x10000, CRC(3ccf11b9) SHA1(777cc853bfcf2db4027b35d516fa5bef8b010e63) )
+	ROM_RELOAD( 0x70000,   0x10000)
+	ROM_LOAD( "t-9.3a",    0x60000, 0x10000, CRC(44762916) SHA1(3427066fc02d1b9b71a59ac41d3332d5cd8d1423) )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "turtship.013",    0x00000, 0x10000, CRC(599f5246) SHA1(b7e5bbff3b6117613744970c8680b7bc171516bd) )	/* sprites */
-	ROM_LOAD( "turtship.015",    0x10000, 0x10000, CRC(69fd202f) SHA1(67d7d6d08f5daa0460ce51516f1d27dfd6aef297) )
-	ROM_LOAD( "turtship.012",    0x20000, 0x10000, CRC(fb54cd33) SHA1(49f7b728a4de8b93f5fd929f59a65509e4556161) )
-	ROM_LOAD( "turtship.014",    0x30000, 0x10000, CRC(b3ea74a3) SHA1(aa347a6cd75408a3ba4ce26d3e1015a1be1faa64) )
+	ROM_LOAD( "t-13.1i",   0x00000, 0x10000, CRC(599f5246) SHA1(b7e5bbff3b6117613744970c8680b7bc171516bd) )	/* sprites */
+	ROM_LOAD( "t-15.3i",   0x10000, 0x10000, CRC(f30cfa90) SHA1(0e4ecea069df6a6bb6ec03eff51c0f37e7531aa8) )
+	ROM_LOAD( "t-12.1g",   0x20000, 0x10000, CRC(fb54cd33) SHA1(49f7b728a4de8b93f5fd929f59a65509e4556161) )
+	ROM_LOAD( "t-14.3g",   0x30000, 0x10000, CRC(d636873c) SHA1(6edf01d0bd6d085eda491c600b1f4b4cbede5a74) )
 
 	ROM_REGION( 0x08000, REGION_GFX4, 0 )	/* background tilemaps */
-	ROM_LOAD( "turtship.016",    0x0000, 0x8000, CRC(affd51dd) SHA1(3338aa1fdd6b9926acc215f7f3656d70803f1832) )
+	ROM_LOAD( "t-16.9f",   0x00000, 0x08000, CRC(1a5a45d7) SHA1(51ceeae938fbda207c3f8ce65593d271dc8c4a41) )
+ROM_END
+
+ROM_START( turtshik )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + banked ROMs images */
+	ROM_LOAD( "turtship.003",  0x00000, 0x08000, CRC(e7a7fc2e) SHA1(1a9147e82a5e56e8e5b68bbce144f96261e88669) )
+	ROM_LOAD( "turtship.002",  0x10000, 0x08000, CRC(e576f482) SHA1(3be3792cb437bff0345681a3a2fdefefa3439357) )
+	ROM_LOAD( "turtship.001",  0x18000, 0x08000, CRC(a9b64240) SHA1(38c59877de6055230c3250ef74abc97e4ed88cb6) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "t-4.8a",        0x00000, 0x08000, CRC(1cbe48e8) SHA1(6ac5981d36a44595bb8dc847c54c7be7b374f82c) )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "turtship.005",  0x00000, 0x04000, CRC(651fef75) SHA1(9c821a2ee30c222987f0d4192133776490d6a4e0) )	/* characters */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "turtship.008",  0x00000, 0x10000, CRC(e0658469) SHA1(931c41cd6af759b30f6018248c3bab4d544acb98) )	/* tiles */
+	ROM_LOAD( "t-10.3c",       0x10000, 0x10000, CRC(76bb73bb) SHA1(4c4acd205421674878948a0d2bed6032bde3f97f) )
+	ROM_RELOAD( 0x30000,       0x10000)
+	ROM_LOAD( "t-11.3d",       0x20000, 0x10000, CRC(53da6cb1) SHA1(52720746298adb01828f959f81b385d268c94343) )
+	ROM_LOAD( "turtship.006",  0x40000, 0x10000, CRC(a7cce654) SHA1(f6c99622dcacc1d76021ca29b0bbceefbb75c499) )
+	ROM_LOAD( "t-7.1c",        0x50000, 0x10000, CRC(3ccf11b9) SHA1(777cc853bfcf2db4027b35d516fa5bef8b010e63) )
+	ROM_RELOAD( 0x70000,       0x10000)
+	ROM_LOAD( "t-9.3a",        0x60000, 0x10000, CRC(44762916) SHA1(3427066fc02d1b9b71a59ac41d3332d5cd8d1423) )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "t-13.1i",       0x00000, 0x10000, CRC(599f5246) SHA1(b7e5bbff3b6117613744970c8680b7bc171516bd) )	/* sprites */
+	ROM_LOAD( "turtship.015",  0x10000, 0x10000, CRC(69fd202f) SHA1(67d7d6d08f5daa0460ce51516f1d27dfd6aef297) )
+	ROM_LOAD( "t-12.1g",       0x20000, 0x10000, CRC(fb54cd33) SHA1(49f7b728a4de8b93f5fd929f59a65509e4556161) )
+	ROM_LOAD( "turtship.014",  0x30000, 0x10000, CRC(b3ea74a3) SHA1(aa347a6cd75408a3ba4ce26d3e1015a1be1faa64) )
+
+	ROM_REGION( 0x08000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "turtship.016",  0x00000, 0x08000, CRC(affd51dd) SHA1(3338aa1fdd6b9926acc215f7f3656d70803f1832) )
 ROM_END
 
 ROM_START( dyger )
@@ -1147,10 +1180,11 @@ static DRIVER_INIT( whizz    ) { sidearms_gameid = 3; }
 GAMEX(1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship" )
+GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko (Pacific Games license)", "Turtle Ship (Japan)" )
+GAME( 1988, turtshik, turtship, turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship (Korea)" )
 GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)" )
 GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)" )
-GAME( 1989, twinfalc, 0,        whizz, 	  whizz,    whizz,	  ROT0,   "Philko (Poara Enterprises license)", "Twin Falcons" )
-GAME( 1989, whizz,    twinfalc, whizz, 	  whizz,    whizz,	  ROT0,   "Philko", "Whizz" )
+GAME( 1989, twinfalc, 0,        whizz, 	  whizz,    whizz,    ROT0,   "Philko (Poara Enterprises license)", "Twin Falcons" )
+GAME( 1989, whizz,    twinfalc, whizz, 	  whizz,    whizz,    ROT0,   "Philko", "Whizz" )
 
 

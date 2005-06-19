@@ -3,7 +3,7 @@
     Incredible Technologies/Strata system
     (32-bit blitter variant)
 
-    driver by Aaron Giles
+    Driver by Aaron Giles
     Golden Tee variants & World Class Bowling Deluxe additions by Brian A. Troha
 
     Games supported:
@@ -12,7 +12,7 @@
         * Hard Yardage (2 sets)
         * Pairs (2 sets)
         * Driver's Edge (1 set)
-        * World Class Bowling (4 sets)
+        * World Class Bowling (6 sets)
         * Street Fighter: The Movie (4 sets)
         * Shuffleshot (2 sets)
         * Golden Tee 3D Golf (11 sets)
@@ -51,9 +51,9 @@
             - GT3D through GT Classic
 
     There are at least 3 different revisions of the sound board for the 3-tier Golden Tee boards
-        P/N 1066 Rev 2: Ensoniq sample MX J9426, sound CPU code is V1.0 to V1.2
-        P/N 1078 Rev 1: Ensoniq sample 2MX16U, sound CPU code is V2.0 to V2.2, this is the same
-                sample rom IT used on the 3-tier World Class Bowling for SROM 0.
+        P/N 1066 Rev 2: Ensoniq sample 2M 1350901601, sound CPU code is V1.0 to V1.2
+        P/N 1078 Rev 1: Ensoniq sample 2MX16U 1350901801, sound CPU code is V2.0 to V2.2, this
+            is the same sample rom IT used on the 3-tier World Class Bowling for SROM 0.
         P/N 1078 Rev 1: This revision dropped the Ensoniq samples and converted to the samples
             currently used on the single PCB format.  Roms are identified by the use of "NR"
             on the label and the sound code is labeled "GTG3_NR(U23)"
@@ -481,7 +481,7 @@ static READ32_HANDLER( drivedge_gas_r )
 
 /*************************************
  *
- *  Protection?
+ *  Protection is hangled through a PIC 16C54 MCU
  *
  *************************************/
 
@@ -636,7 +636,8 @@ static struct via6522_interface via_interface =
 {
 	/*inputs : A/B         */ 0, 0,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ 0, pia_portb_out, 0, 0,
+	/*outputs: A/B         */ 0, pia_portb_out,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ via_irq
 };
 
@@ -645,7 +646,8 @@ static struct via6522_interface drivedge_via_interface =
 {
 	/*inputs : A/B         */ 0, 0,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ 0, drivedge_portb_out, 0, drivedge_turbo_light,
+	/*outputs: A/B         */ 0, drivedge_portb_out,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, 0, drivedge_turbo_light,
 	/*irq                  */ via_irq
 };
 
@@ -1703,7 +1705,7 @@ ROM_START( bloodstm )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1741,7 +1743,7 @@ ROM_START( bloods22 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1779,7 +1781,7 @@ ROM_START( bloods21 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1817,7 +1819,7 @@ ROM_START( bloods11 )
 	ROM_FILL(                        0x800000, 0x080000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "enssnd2m.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "bssrom0.bin",  0x000000, 0x80000, CRC(ee4570c8) SHA1(73dd292224bf182770b3cc2d90eb52b7d7b24378) )
@@ -1850,7 +1852,7 @@ ROM_START( hardyard )
 	ROM_LOAD32_BYTE( "itfb11.bin", 0x800003, 0x020000, CRC(cd4f0df0) SHA1(632eb0cf27d7bf3df09d03f373a3195dd5a702b8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "fbsrom00.bin", 0x000000, 0x080000, CRC(b0a76ad2) SHA1(d1125cf96f6b9613840b8d22afa59748fb32ab90) )
@@ -1882,7 +1884,7 @@ ROM_START( hardyd10 )
 	ROM_LOAD32_BYTE( "itfb11.bin", 0x800003, 0x020000, CRC(cd4f0df0) SHA1(632eb0cf27d7bf3df09d03f373a3195dd5a702b8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "fbsrom00.bin", 0x000000, 0x080000, CRC(b0a76ad2) SHA1(d1125cf96f6b9613840b8d22afa59748fb32ab90) )
@@ -1910,7 +1912,7 @@ ROM_START( pairs )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x40000, CRC(b2975259) SHA1(aa82f8e855f2ebf1d7178a46f2b515d7c9a26299) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x80000, CRC(19a857f9) SHA1(2515b4c127191d52d3b5a72477384847d8cabad3) )
@@ -1937,7 +1939,7 @@ ROM_START( pairsa )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x40000, CRC(b2975259) SHA1(aa82f8e855f2ebf1d7178a46f2b515d7c9a26299) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, CRC(1d96c581) SHA1(3b7c84b7db3b098ec28c7058c16f97e9cf0e4733) )
@@ -1963,13 +1965,13 @@ ROM_START( hotmemry )
 	ROM_LOAD32_BYTE( "hotmem.grom16", 0x200003, 0x40000, CRC(4507a895) SHA1(3d6cd6cd81b62545f7be5991f67803cf11c96ee6) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "1350901601.rom0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "hotmem.srom0", 0x000000, 0x80000, CRC(c1103224) SHA1(52cf341ff9092ecb8cb94f66a96ee0c726bf1412) )
 ROM_END
 
-ROM_START( wcbowldx )	/* Deluxe version 2.00 (PCB P/N 1082 Rev 2) - I.T. is still selling this set. */
+ROM_START( wcbowldx )	/* Deluxe version 2.00 (PCB P/N 1082 Rev 2) */
 	ROM_REGION32_BE( CODE_SIZE, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "wcbdprm0.200", 0x00000, 0x20000, CRC(280df7f0) SHA1(dacffe8fc21263093b0f4a4fbf444abd49afbff1) )
 	ROM_LOAD32_BYTE( "wcbdprm1.200", 0x00001, 0x20000, CRC(526eded0) SHA1(106d5503ed4db2411e1f3446d613eac525a8a9cc) )
@@ -2159,7 +2161,7 @@ ROM_START( wcbwl12 )	/* Version 1.2 (unique Hardware, 3-tier type board) */
 	ROM_FILL(                      0x400000, 0x480000, 0xff )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "wcb_rom.0",   0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
+	ROM_LOAD16_BYTE( "ensoniq.2mx", 0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "wcb_srm.0",  0x000000, 0x080000, CRC(115bcd1f) SHA1(c321bf3145c11de1351c8f9cd554ab3d6600e854) )
@@ -2201,7 +2203,7 @@ ROM_START( drivedge )
 	ROM_LOAD32_BYTE( "de-grm19.bin", 0x800003, 0x20000, CRC(4ced78e1) SHA1(7995c8684ca28cbdf620d10297850463fa473fe8) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "de-srom0.bin", 0x000000, 0x80000, CRC(649c685f) SHA1(95d8f257cac621c8bd4abaa88ea5f7b3b8adea4c) )
@@ -2468,7 +2470,7 @@ ROM_START( gt3ds192 ) /* Version 1.92 for the 3 tier type PCB with short ROM boa
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2505,7 +2507,7 @@ ROM_START( gt3dl192 ) /* Version 1.92 for the 3 tier type PCB with long ROM boar
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0_l", 0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
+	ROM_LOAD16_BYTE( "ensoniq.2mx", 0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2542,7 +2544,7 @@ ROM_START( gt3dl191 ) /* Version 1.91 for the 3 tier type PCB with long ROM boar
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0_l", 0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
+	ROM_LOAD16_BYTE( "ensoniq.2mx", 0x000000, 0x200000, CRC(0814ab80) SHA1(e92525f7cf58cf480510c278fea705f67225e58f) ) /* Ensoniq 2MX16U 1350901801 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2579,7 +2581,7 @@ ROM_START( gt3dv18 ) /* Version 1.8 for the 3 tier type PCB with short ROM board
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2616,7 +2618,7 @@ ROM_START( gt3dv17 ) /* Version 1.7 for the 3 tier type PCB with short ROM board
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2653,7 +2655,7 @@ ROM_START( gt3dv16 ) /* Version 1.6 for the 3 tier type PCB with short ROM board
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2690,7 +2692,7 @@ ROM_START( gt3dv15 ) /* Version 1.5 for the 3 tier type PCB with short ROM board
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -2727,7 +2729,7 @@ ROM_START( gt3dv14 ) /* Version 1.4 for the 3 tier type PCB with short ROM board
 	ROM_LOAD32_BYTE( "gtg3_grm.2_3", 0x400003, 0x80000, CRC(77869bcf) SHA1(dde3b64578b79a94c7e346561a691229bbcfadac) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "gtg3_srm.0", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq MX J9426 1350901601 */
+	ROM_LOAD16_BYTE( "ensoniq.2m", 0x000000, 0x200000, CRC(9fdc4825) SHA1(71e5255c66d9010be7e6f27916b605441fc53839) ) /* Ensoniq 2m 1350901601 */
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "gtg3_srm.1", 0x000000, 0x80000, CRC(ac669434) SHA1(6941884c553515f5bc06af772897835a44aa8e4c) )
@@ -3528,7 +3530,7 @@ static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
 static DRIVER_INIT( wcbowlt )
 {
 	/* Tournament Version */
-	init_shuffle_bowl_common(0x1116);
+	init_shuffle_bowl_common(0x111a);
 
 	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
 	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
@@ -3656,12 +3658,12 @@ GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incr
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl161, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.61)" ) /* PIC 16C54 labeled as ITBWL-3 */
-GAMEX(1997, wcbwl140, wcbowldx, sftm,     wcbowldx, wcbowlt,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITBWL-3 */
+GAME( 1997, wcbwl140, wcbowldx, sftm,     wcbowldx, wcbowlt,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)" ) /* PIC 16C54 labeled as ??? */
 GAME( 1995, wcbwl12,  wcbowl,   wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)" ) /* PIC 16C54 labeled as ITBWL-1 */
-GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )	/* PIC 16C54 labeled as ITSF-1 */
-GAME( 1995, sftm111,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.11)" )	/* PIC 16C54 labeled as ITSF-1 */
-GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )	/* PIC 16C54 labeled as ITSF-1 */
-GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )	/* PIC 16C54 labeled as ITSF-1 */
+GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" ) /* PIC 16C54 labeled as ITSF-1 */
+GAME( 1995, sftm111,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.11)" ) /* PIC 16C54 labeled as ITSF-1 */
+GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" ) /* PIC 16C54 labeled as ITSF-1 */
+GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" ) /* PIC 16C54 labeled as ITSF-1 */
 GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.39)" ) /* PIC 16C54 labeled as ITSHF-1 */
 GAME( 1997, sshot137, shufshot, sftm,     shufbowl, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.37)" ) /* PIC 16C54 labeled as ITSHF-1 */
 GAME( 1999, wcbowldx, 0,        sftm,     wcbowldx, shufshot, ROT0, "Incredible Technologies",        "World Class Bowling Deluxe (v2.00)" ) /* PIC 16C54 labeled as ITBWL-4 */
@@ -3683,11 +3685,8 @@ GAME( 1999, wcbowldx, 0,        sftm,     wcbowldx, shufshot, ROT0, "Incredible 
         ROM   P/N 1069 Rev 2 or P/N 1088 Rev 0 (1 Trackball Connector)
         Sound P/N 1078 Rev 1 or P/N 1066 Rev 2
     n = Non-tournament (AAMA 676266+) PCB P/N 1082 Rev 2 - Applies only for GT3D
-    t = Tournament PCB P/N 1082 Rev 2, with necessary chips on board
-        Philips SCN68681 (DUART):
-            http://www.semiconductors.philips.com/acrobat/datasheets/SCN68681_2.pdf
-        ST Timekeeper (M48T02-120PC1):
-            http://us.st.com/stonline/books/pdf/docs/2410.pdf
+    t = Tournament PCB P/N 1082 Rev 2, with necessary chips on board:
+        Philips SCN68681 (DUART) & ST Timekeeper (M48T02-120PC1)
 
     NOTE: Due to various different upgrade packages from IT, the 3 tier boards can end up with any combination
         of rom boards and sound boards.  For historical reasons, GTG3 3 tier S versions will use the oldest

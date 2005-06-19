@@ -388,7 +388,8 @@ static struct via6522_interface via_interface =
 {
 	/*inputs : A/B         */ via_pa_r, via_pb_r,
 	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2   */ via_pa_w, via_pb_w, 0, 0,
+	/*outputs: A/B         */ via_pa_w, via_pb_w,
+    /*outputs: CA/B1,CA/B2 */ 0, 0, 0, 0,
 	/*irq                  */ 0
 };
 

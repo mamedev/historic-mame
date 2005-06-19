@@ -2417,7 +2417,7 @@ static DRIVER_INIT( sfru2049 )
  *************************************/
 
 // Voodoo 2 games
-GAME ( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.5)" )
+GAME ( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.6)" )
 GAMEX( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
 GAMEX( 1999, gauntdl,  0,        vegas,    gauntdl , gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games", "War: The Final Assault", GAME_NOT_WORKING )

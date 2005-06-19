@@ -93,6 +93,8 @@ Notes:
             AB003002.3-2   2M MaskROM (DIP32)   |
             AB003003.3-3   2M MaskROM (DIP32)   /
 
+  Driver by Pierpaolo Prazzoli
+
 */
 
 #include "driver.h"
@@ -132,6 +134,14 @@ static WRITE8_HANDLER( champbwl_misc_w )
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + 0x4000 * ((data & 0x30)>>4));
 }
 
+static WRITE8_HANDLER( champbwl_objctrl_w )
+{
+	if(offset != 0)
+		data ^= 0xff;
+
+	tnzs_objctrl[offset] = data;
+}
+
 static ADDRESS_MAP_START( champbwl_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_REGION(REGION_CPU1, 0x10000)
 	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
@@ -140,7 +150,7 @@ static ADDRESS_MAP_START( champbwl_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(seta_sound_r, seta_sound_w)
 	AM_RANGE(0xe000, 0xe1ff) AM_RAM AM_BASE(&tnzs_vdcram)
 	AM_RANGE(0xe200, 0xe2ff) AM_RAM AM_BASE(&tnzs_scrollram) /* scrolling info */
-	AM_RANGE(0xe300, 0xe303) AM_MIRROR(0xfc) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
+	AM_RANGE(0xe300, 0xe303) AM_MIRROR(0xfc) AM_WRITE(champbwl_objctrl_w) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
 
 	AM_RANGE(0xe800, 0xe800) AM_WRITENOP
 
@@ -289,7 +299,7 @@ static MACHINE_DRIVER_START( champbwl )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 52*8-1, 1*8, 31*8-1)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 
@@ -327,4 +337,4 @@ ROM_START( champbwl )
 	ROM_LOAD( "ab002002.2-2", 0xc0000, 0x40000, CRC(42ebe997) SHA1(1808b9e5e996a395c1d48ac001067f736f96feec) )
 ROM_END
 
-GAMEX( 1989, champbwl, 0, champbwl, champbwl, 0, ROT270, "Seta / Romstar Inc.", "Championship Bowling", GAME_IMPERFECT_GRAPHICS )
+GAME( 1989, champbwl, 0, champbwl, champbwl, 0, ROT270, "Seta / Romstar Inc.", "Championship Bowling" )

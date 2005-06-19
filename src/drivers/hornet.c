@@ -417,7 +417,6 @@ static READ32_HANDLER( sysreg_r )
 		}
 		if (!(mem_mask & 0x000000ff))
 		{
-			//r |= 0x80;
 			r |= 0xff;
 		}
 	}
@@ -873,7 +872,6 @@ static UINT8 jamma_rdata[1024];
 static void jamma_r(int length)
 {
 	int i;
-
 	for (i=0; i < length; i++)
 	{
 		jamma_rdata[i] = rand();
@@ -923,7 +921,7 @@ static DRIVER_INIT(gradius4)
 
 static DRIVER_INIT(sscope)
 {
-	int i,j;
+	int i;
 	UINT16 checksum;
 
 	/* RTC data */
@@ -951,16 +949,6 @@ static DRIVER_INIT(sscope)
 	checksum = ~checksum - 1;
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
-
-	for (i=0x10; i < 0x2000; i+=0x10)
-	{
-		for (j=0; j < 14; j++)
-		{
-			backup_ram[i+j] = 0;
-		}
-		backup_ram[i+0xe] = 0xff;
-		backup_ram[i+0xf] = 0xff;
-	}
 
 	voodoo_version = 0;
 	init_hornet();
@@ -991,12 +979,12 @@ static DRIVER_INIT(sscope2)
 	checksum = 0;
 	for (i=0; i < 14; i+=2)
 	{
-		checksum += (backup_ram[i+1] << 8) | (backup_ram[i]);
+		checksum += (backup_ram[i] << 8) | (backup_ram[i+1]);
 		checksum &= 0xffff;
 	}
 	checksum = -1 - checksum;
-	backup_ram[0x0e] = (checksum >> 0) & 0xff;	// checksum
-	backup_ram[0x0f] = (checksum >> 8) & 0xff;	// checksum
+	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
+	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
 	/* Silent Scope data */
 	backup_ram[0x1f40] = 0x47;	// 'G'
@@ -1018,12 +1006,12 @@ static DRIVER_INIT(sscope2)
 	checksum = 0;
 	for (i=0x1f40; i < 0x1f4e; i+=2)
 	{
-		checksum += (backup_ram[i+1] << 8) | (backup_ram[i]);
+		checksum += (backup_ram[i] << 8) | (backup_ram[i+1]);
 		checksum &= 0xffff;
 	}
 	checksum = -1 - checksum;
-	backup_ram[0x1f4e] = (checksum >> 0) & 0xff;	// checksum
-	backup_ram[0x1f4f] = (checksum >> 8) & 0xff;	// checksum
+	backup_ram[0x1f4e] = (checksum >> 8) & 0xff;	// checksum
+	backup_ram[0x1f4f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 1;
 	init_hornet();
@@ -1038,34 +1026,30 @@ ROM_START(sscope)
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("ss1-1.7s", 0x000000, 0x80000, CRC(2805ea1d) SHA1(2556a51ee98cb8f59bf081e916c69a24532196f1))
 
-	ROM_REGION(0x800000, REGION_USER5, 0)		/* CG Board textures */
-    	ROM_LOAD32_WORD( "ss1-3.u32",    0x000000, 0x400000, CRC(335793e1) SHA1(d582b53c3853abd59bc728f619a30c27cfc9497c) )
-    	ROM_LOAD32_WORD( "ss1-3.u24",    0x000002, 0x400000, CRC(d6e7877e) SHA1(b4d0e17ada7dd126ec564a20e7140775b4b3fdb7) )
+	ROM_REGION(0x800000, REGION_USER5, 0)		/* CG Board texture roms */
+    	ROM_LOAD32_WORD_SWAP( "ss1-3.u32",    0x000000, 0x400000, CRC(335793e1) SHA1(d582b53c3853abd59bc728f619a30c27cfc9497c) )
+    	ROM_LOAD32_WORD_SWAP( "ss1-3.u24",    0x000002, 0x400000, CRC(d6e7877e) SHA1(b4d0e17ada7dd126ec564a20e7140775b4b3fdb7) )
 
-	ROM_REGION(0x1000000, REGION_USER4, 0)		/* other roms (samples? textures?) */
+	ROM_REGION(0x400000, REGION_USER4, 0)		/* PCM sample roms */
         ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
         ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
-
-		// Note: these two are bad dumps, they are just the latter halves of u24 and u32
-        ROM_LOAD( "ss830a13.bin", 0xc00000, 0x200000, CRC(707f4b83) SHA1(a0ebe1de32a807e99e77144f2fc6de455ee9e42a) )
-        ROM_LOAD( "ss830a14.bin", 0xe00000, 0x200000, CRC(ba338856) SHA1(0cab0bb5a8164256cbe98a4b08dcdaf877c1cfdc) )
 ROM_END
 
 ROM_START(sscope2)
 	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
 	ROM_LOAD16_WORD_SWAP("931d01.bin", 0x000000, 0x200000, CRC(4065fde6) SHA1(84f2dedc3e8f61651b22c0a21433a64993e1b9e2))
 
-	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data ROM */
-	ROM_LOAD32_WORD("931a04.bin", 0x000000, 0x200000, CRC(4f5917e6) SHA1(a63a107f1d6d9756e4ab0965d72ea446f0692814))
+	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data roms */
+		ROM_LOAD32_WORD_SWAP("931a04.bin", 0x000000, 0x200000, CRC(4f5917e6) SHA1(a63a107f1d6d9756e4ab0965d72ea446f0692814))
 
-	ROM_REGION(0x800000, REGION_USER3, 0)		/* Comm board ROMs */
+	ROM_REGION32_BE(0x800000, REGION_USER3, 0)	/* Comm board roms */
 	ROM_LOAD("931a19.bin", 0x000000, 0x400000, CRC(8e8bb6af) SHA1(1bb399f7897fbcbe6852fda3215052b2810437d8))
 	ROM_LOAD("931a20.bin", 0x400000, 0x400000, CRC(a14a7887) SHA1(daf0cbaf83e59680a0d3c4d66fcc48d02c9723d1))
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("931a08.bin", 0x000000, 0x80000, CRC(1597d604) SHA1(a1eab4d25907930b59ea558b484c3b6ddcb9303c))
 
-	ROM_REGION(0xc00000, REGION_USER4, 0)		/* other roms (samples? textures?) */
+	ROM_REGION(0xc00000, REGION_USER4, 0)		/* PCM sample roms */
         ROM_LOAD( "931a09.bin",   0x000000, 0x400000, CRC(694c354c) SHA1(42f54254a5959e1b341f2801f1ad032c4ed6f329) )
         ROM_LOAD( "931a10.bin",   0x400000, 0x400000, CRC(78ceb519) SHA1(e61c0d21b6dc37a9293e72814474f5aee59115ad) )
         ROM_LOAD( "931a11.bin",   0x800000, 0x400000, CRC(9c8362b2) SHA1(a8158c4db386e2bbd61dc9a600720f07a1eba294) )
@@ -1075,22 +1059,22 @@ ROM_START(gradius4)
 	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
         ROM_LOAD16_WORD_SWAP( "837c01.27p",   0x000000, 0x200000, CRC(ce003123) SHA1(15e33997be2c1b3f71998627c540db378680a7a1) )
 
-	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data ROM */
-        ROM_LOAD32_WORD( "837a04.16t",   0x000000, 0x200000, CRC(18453b59) SHA1(3c75a54d8c09c0796223b42d30fb3867a911a074) )
-        ROM_LOAD32_WORD( "837a05.14t",   0x000002, 0x200000, CRC(77178633) SHA1(ececdd501d0692390325c8dad6dbb068808a8b26) )
+	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data roms */
+        ROM_LOAD32_WORD_SWAP( "837a04.16t",   0x000000, 0x200000, CRC(18453b59) SHA1(3c75a54d8c09c0796223b42d30fb3867a911a074) )
+        ROM_LOAD32_WORD_SWAP( "837a05.14t",   0x000002, 0x200000, CRC(77178633) SHA1(ececdd501d0692390325c8dad6dbb068808a8b26) )
 
-	ROM_REGION(0x1000000, REGION_USER5, 0)		/* CG Board texture ROMs */
-        ROM_LOAD( "837a14.32u",   0x000000, 0x400000, CRC(ff1b5d18) SHA1(7a38362170133dcc6ea01eb62981845917b85c36) )
-        ROM_LOAD( "837a13.24u",   0x000002, 0x400000, CRC(d86e10ff) SHA1(6de1179d7081d9a93ab6df47692d3efc190c38ba) )
-        ROM_LOAD( "837a16.32v",   0x800000, 0x400000, CRC(bb7a7558) SHA1(8c8cc062793c2dcfa72657b6ea0813d7223a0b87) )
-        ROM_LOAD( "837a15.24v",   0x800002, 0x400000, CRC(e0620737) SHA1(c14078cdb44f75c7c956b3627045d8494941d6b4) )
+	ROM_REGION32_BE(0x1000000, REGION_USER5, 0)	/* CG Board texture roms */
+        ROM_LOAD32_WORD_SWAP( "837a14.32u",   0x000000, 0x400000, CRC(ff1b5d18) SHA1(7a38362170133dcc6ea01eb62981845917b85c36) )
+        ROM_LOAD32_WORD_SWAP( "837a13.24u",   0x000002, 0x400000, CRC(d86e10ff) SHA1(6de1179d7081d9a93ab6df47692d3efc190c38ba) )
+        ROM_LOAD32_WORD_SWAP( "837a16.32v",   0x800000, 0x400000, CRC(bb7a7558) SHA1(8c8cc062793c2dcfa72657b6ea0813d7223a0b87) )
+        ROM_LOAD32_WORD_SWAP( "837a15.24v",   0x800002, 0x400000, CRC(e0620737) SHA1(c14078cdb44f75c7c956b3627045d8494941d6b4) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
         ROM_LOAD16_WORD_SWAP( "837a08.7s",    0x000000, 0x080000, CRC(c3a7ff56) SHA1(9d8d033277d560b58da151338d14b4758a9235ea) )
 
-	ROM_REGION(0x800000, REGION_USER4, 0)		/* sound ROMs */
-        ROM_LOAD( "837a09.16p",   0x0000000, 0x400000, CRC(fb8f3dc2) SHA1(69e314ac06308c5a24309abc3d7b05af6c0302a8) )
-        ROM_LOAD( "837a10.14p",   0x0400000, 0x400000, CRC(1419cad2) SHA1(a6369a5c29813fa51e8246d0c091736f32994f3d) )
+	ROM_REGION(0x800000, REGION_USER4, 0)		/* PCM sample roms */
+        ROM_LOAD( "837a09.16p",   0x000000, 0x400000, CRC(fb8f3dc2) SHA1(69e314ac06308c5a24309abc3d7b05af6c0302a8) )
+        ROM_LOAD( "837a10.14p",   0x400000, 0x400000, CRC(1419cad2) SHA1(a6369a5c29813fa51e8246d0c091736f32994f3d) )
 ROM_END
 
 /*************************************************************************/

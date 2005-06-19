@@ -153,7 +153,8 @@ static struct via6522_interface via_0_interface =
 {
 	/*inputs : A/B         */ NULL, NULL,
 	/*inputs : CA/B1,CA/B2 */ /*vblank*/NULL, NULL, NULL, NULL,
-	/*outputs: A/B,CA/B2   */ video_portA_w, video_portB_w, video_CA2_w, NULL,
+	/*outputs: A/B         */ video_portA_w, video_portB_w,
+	/*outputs: CA/B1,CA/B2 */ NULL, NULL, video_CA2_w, NULL,
 	/*irq                  */ via_irq
 };
 
@@ -194,7 +195,8 @@ static struct via6522_interface via_1_interface =
 {
 	/*inputs : A/B         */ io_port_r, NULL,
 	/*inputs : CA/B1,CA/B2 */ NULL, NULL, NULL, NULL,
-	/*outputs: A/B,CA/B2   */ NULL, io_select_w, NULL, coin_w,
+	/*outputs: A/B         */ NULL, io_select_w,
+	/*outputs: CA/B1,CA/B2 */ NULL, NULL, NULL, coin_w,
 	/*irq                  */ NULL
 };
 
@@ -243,7 +245,8 @@ static struct via6522_interface via_2_interface =
 {
 	/*inputs : A/B         */ NULL, sound_ack_r,
 	/*inputs : CA/B1,CA/B2 */ NULL, NULL, NULL, NULL,
-	/*outputs: A/B,CA/B2   */ sound_cmd_w, NULL, sound_trigger_w, sound_reset_w,
+	/*outputs: A/B         */ sound_cmd_w, NULL,
+	/*outputs: CA/B1,CA/B2 */ NULL, NULL, sound_trigger_w, sound_reset_w,
 	/*irq                  */ NULL
 };
 

@@ -44,16 +44,11 @@ struct via6522_interface
 	read8_handler in_cb2_func;
 	write8_handler out_a_func;
 	write8_handler out_b_func;
+	write8_handler out_ca1_func;
+	write8_handler out_cb1_func;
 	write8_handler out_ca2_func;
 	write8_handler out_cb2_func;
 	void (*irq_func)(int state);
-
-    /* kludges for the Vectrex */
-	void (*out_shift_func)(int val);
-	void (*t2_callback)(double tme);
-    /* kludges for the Mac Plus (and 128k, 512k, 512ke) keyboard interface */
-	void (*out_shift_func2)(int val);	/* called when some data is shifted out in EXT sync mode */
-	void (*si_ready_func)(void);		/* called when the shift-in is enabled (EXT sync mode) */
 };
 
 #ifdef __cplusplus
@@ -70,8 +65,6 @@ void via_set_input_ca2(int which, int data);
 void via_set_input_b(int which, int data);
 void via_set_input_cb1(int which, int data);
 void via_set_input_cb2(int which, int data);
-
-void via_set_input_si(int which, int data);
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 

@@ -776,7 +776,7 @@ static struct GfxLayout tilelayout =
 	16,16,
 	RGN_FRAC(1,2),
 	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0,  },
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 		0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -1788,9 +1788,9 @@ GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Cor
 GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0, "Data East Corporation", "Caveman Ninja (US)" )
 GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Tatakae Genshizin Joe & Mac (Japan)" )
 GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0, "bootleg", "Stoneage" )
-GAME( 1991, robocop2, 0,       robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (World)" )
-GAME( 1991, robocp2u, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (US)" )
-GAME( 1991, robocp2j, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (Japan)" )
+GAME( 1991, robocop2, 0,       robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (Euro/Asia v0.10)" )
+GAME( 1991, robocp2u, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (US v0.05)" )
+GAME( 1991, robocp2j, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (Japan v0.11)" )
 GAME( 1992, mutantf,  0,       mutantf,  mutantf, mutantf,  ROT0, "Data East Corporation", "Mutant Fighter (World Rev 4, EM-5)" )
 GAME( 1992, mutantfa, mutantf, mutantf,  mutantf, mutantf,  ROT0, "Data East Corporation", "Mutant Fighter (World Rev 3, EM-4)" )
 GAME( 1992, deathbrd, mutantf, mutantf,  mutantf, mutantf,  ROT0, "Data East Corporation", "Death Brade (Japan Rev 2, JM-3)" )

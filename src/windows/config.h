@@ -16,4 +16,7 @@ void cli_frontend_exit (void);
 // Creates an RC object
 struct rc_struct *cli_rc_create(void);
 
+// Flushes the log file
+void win_flush_logfile(void);
+
 #endif // _WIN_CONFIG__

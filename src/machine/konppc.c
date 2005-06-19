@@ -25,7 +25,7 @@ void init_konami_cgboard(int board_id)
 READ32_HANDLER( cgboard_dsp_comm_r_ppc )
 {
 //  printf("dsp_cmd_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
-	return (dsp_comm_sharc[offset] ^ 0x80) | dsp_comm_sharc[offset+1] << 8;
+	return dsp_comm_sharc[offset] | dsp_comm_sharc[offset+1] << 8;
 }
 
 WRITE32_HANDLER( cgboard_dsp_comm_w_ppc )
@@ -53,7 +53,8 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_ppc )
 			}
 			if (data & 0x04000000)
 			{
-				//osd_die("Trying SHARC interrupt 1 !!!");
+				cpunum_set_input_line(2, INPUT_LINE_IRQ1, ASSERT_LINE);
+				cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
 			}
 
 			dsp_shared_ram_bank = (data >> 24) & 0x1;
@@ -89,7 +90,7 @@ WRITE32_HANDLER( cgboard_dsp_shared_w_ppc )
 
 READ32_HANDLER( cgboard_dsp_comm_r_sharc )
 {
-	return (dsp_comm_ppc[offset] ^ 0x80);
+	return dsp_comm_ppc[offset];
 }
 
 WRITE32_HANDLER( cgboard_dsp_comm_w_sharc )

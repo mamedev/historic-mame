@@ -84,8 +84,7 @@ To Do:
 - ultrax    :   bad gfx offsets and wrong visible area
 - twineag2  :   bad gfx offsets on some scenes
 
-- dynagear  :   Requires 2 kludges for the video emulation and has some bad shadow sprites
-                on the left side of the screen
+- dynagear  :   Requires 3 kludges for the video emulation, visible area may be incorrect
 
     code @ $e75cdc
 
@@ -4605,7 +4604,7 @@ GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta", 
 GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts",                                    GAME_NO_COCKTAIL )
 GAMEX( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
-GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )
 GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )

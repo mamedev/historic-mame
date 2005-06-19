@@ -46,13 +46,17 @@
  *  RDMEM   read memory
  ***************************************************************/
 #undef RDMEM
+#undef RDMEM_ID
 #define RDMEM(addr) program_read_byte_8(M4510_MEM(addr))
+#define RDMEM_ID(addr) RDMEM(addr)
 
 /***************************************************************
  *  WRMEM   write memory
  ***************************************************************/
 #undef WRMEM
+#undef WRMEM_ID
 #define WRMEM(addr,data) program_write_byte_8(M4510_MEM(addr),data)
+#define WRMEM_ID(addr,data) WRMEM(addr,data)
 
 /* c65 docu says transfer of axyz to the mapper register
    so no readback!? */

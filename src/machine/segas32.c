@@ -177,16 +177,16 @@ WRITE16_HANDLER(brival_protboard_w)
 {
 	static const int protAddress[6][2] =
 	{
-		{ 0x9517, 0x00/2 },
-		{ 0x9597, 0x10/2 },
-		{ 0x9597, 0x20/2 },
-		{ 0x9597, 0x30/2 },
-		{ 0x9597, 0x40/2 },
-		{ 0x9617, 0x50/2 },
+		{ 0x109517, 0x00/2 },
+		{ 0x109597, 0x10/2 },
+		{ 0x109597, 0x20/2 },
+		{ 0x109597, 0x30/2 },
+		{ 0x109597, 0x40/2 },
+		{ 0x109617, 0x50/2 },
 	};
 	char ret[32];
 	int curProtType;
-	unsigned char *ROM = memory_region(REGION_USER1);
+	unsigned char *ROM = memory_region(REGION_CPU1);
 
 	switch (offset)
 	{

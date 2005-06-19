@@ -72,6 +72,7 @@
         F5A      yyyyyyyy yyyyyyyy  Layer 2 Y step increment (0x200 = 1.0)
         F5C      -------- tttt----  Text layer page select (page = 64 + t*8)
                  -------- -----bbb  Text layer tile bank
+        F5E      yyyyyyyy yyyyyyyy  Layer 2 Y step increment?????
         F60      xxxxxxxx xxxxxxxx  Clip rect 0, left
         F62      yyyyyyyy yyyyyyyy  Clip rect 0, top
         F64      xxxxxxxx xxxxxxxx  Clip rect 0, right
@@ -833,9 +834,42 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 
 	sys32sprite_rom_offset				= (spritedata_source[6]&0xffff) >> 0;
 
-	sprite_palette_mask=(1<<(system32_mixerShift+4))-1;
+/*
+mixerShift = 3-6, change to 0-3
+
+sprite_palette_mask :   007f  00ff  01ff  03ff
+priority_lookup     :   7800  7000  6000  4000
+indirect_base       :   07ff  0fff  1fff  3fff
+priority_lookup     :   7800  7000  6000  4000
+
+if (indirect)
+{
+   if (inline_indirect)
+   {
+      table = &source[8];
+   }
+   else
+   {
+      table = source[7] & indirect_base;
+   }
+   if (table[0] == 0xffff)
+      priority_lookup = 1;
+   else
+      priority_lookup = (table[0] & priority_lookup);
+}
+else
+{
+   if ((source[7] & sprite_palette_mask) == sprite_palette_mask)
+      is_shadow = 1;
+   priority_lookup = source[7] & priority_lookup;
+}
+
+*/
+
+
+	sprite_palette_mask=(1<<(system32_mixerShift+7))-1;
 	sprite_priority_levels=system32_mixerregs[sys32sprite_monitor_select][0x4d/2]&2?15:3;
-	mixerinput = (spritedata_source[7] >> (system32_mixerShift + 8)) & 0xf;
+	mixerinput = (spritedata_source[7] >> (system32_mixerShift + 11)) & 0xf;
 	sys32sprite_palette = (spritedata_source[7] >> 4) & sprite_palette_mask;
 	sys32sprite_palette += (system32_mixerregs[sys32sprite_monitor_select][mixerinput] & 0x30)<<2;
 
@@ -858,17 +892,17 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 		}
 		else /* indirect mode where the display list contains an offset to the table */
 		{
-			sys32sprite_table = sys32_spriteram16 + ((spritedata_source[7] & ((1<<(8+system32_mixerShift))-1))*8);
+			sys32sprite_table = sys32_spriteram16 + ((spritedata_source[7] & ((1<<(11+system32_mixerShift))-1))*8);
 		}
 		if (sys32sprite_table[0]==0xffff) sys32sprite_priority_lookup=1;
-		else sys32sprite_priority_lookup = (sys32sprite_table[0]>>(8+system32_mixerShift))&0xf;
+		else sys32sprite_priority_lookup = (sys32sprite_table[0]>>(11+system32_mixerShift))&0xf;
 	}
 	else {
 		/* If all of the palette bits are set, the sprite is a shadow.  This is a secondary
            method to define sprite shadows alongside the sys32sprite_is_shadow bit.
            Direct palette shadow sprites use the upper 16 values in the sprite priority lookup table. */
 		if (sprite_palette_mask==((spritedata_source[7]>>4)&sprite_palette_mask)) sys32sprite_is_shadow=1;
-		sys32sprite_priority_lookup = (spritedata_source[7]>>(system32_mixerShift+8))&0xf;
+		sys32sprite_priority_lookup = (spritedata_source[7]>>(system32_mixerShift+11))&0xf;
 	}
 
 	sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][sys32sprite_priority_lookup&sprite_priority_levels]&0xf;

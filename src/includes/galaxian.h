@@ -87,6 +87,7 @@ VIDEO_START( pisces );
 VIDEO_START( gteikob2 );
 VIDEO_START( batman2 );
 VIDEO_START( jumpbug );
+VIDEO_START( azurian );
 VIDEO_START( dkongjrm );
 VIDEO_START( scramble );
 VIDEO_START( theend );

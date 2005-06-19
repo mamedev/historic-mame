@@ -2875,12 +2875,14 @@ static void TC0100SCN_tilemap_draw_fg(struct mame_bitmap *bitmap,const struct re
 
 	src_y=(TC0100SCN_fgscrolly[chip] + scrolly_delta)&height_mask;
 
+	//We use cliprect->max_y and cliprect->max_x to support games which use more than 1 screen
+
 	// Row offsets are 'screen space' 0-255 regardless of Y scroll
-	for (y=0; y<256; y++) {
+	for (y=0; y<cliprect->max_y; y++) {
 		src_x=(TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][(y-8)&0x1ff] + scrollx_delta)&width_mask;
 
 		// Col offsets are 'tilemap' space 0-511, and apply to blocks of 8 pixels at once
-		for (x=0; x<320; x++) {
+		for (x=0; x<cliprect->max_x; x++) {
 			column_offset=TC0100SCN_colscroll_ram[chip][(((TC0100SCN_fgscrollx[chip] + x)&0x3ff) / 8)];
 			p=(((UINT16*)src_bitmap->line[(src_y - column_offset)&height_mask])[src_x]);
 

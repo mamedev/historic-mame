@@ -221,7 +221,16 @@ VIDEO_UPDATE( ctribe )
 	tilemap_set_scrollx( fg_tilemap, 0, ddragon3_fg_scrollx );
 	tilemap_set_scrolly( fg_tilemap, 0, ddragon3_fg_scrolly );
 
-	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	ddragon3_draw_sprites(bitmap, cliprect);
+	if(ddragon3_vreg & 8)
+	{
+		tilemap_draw(bitmap, cliprect, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		ddragon3_draw_sprites(bitmap, cliprect);
+		tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	}
+	else
+	{
+		tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+		ddragon3_draw_sprites(bitmap, cliprect);
+	}
 }

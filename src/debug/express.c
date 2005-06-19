@@ -727,6 +727,35 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 				break;
 			}
 
+			case '\'':
+			{
+				UINT64 value = 0;
+
+				/* accumulate the value of the character token */
+				string++;
+				while (string[0] != 0)
+				{
+					/* allow '' to mean a nested single quote */
+					if (string[0] == '\'')
+					{
+						if (string[1] != '\'')
+							break;
+						string++;
+					}
+					value = (value << 8) | (UINT8)*string++;
+				}
+
+				/* if we didn't find the ending quote, report an error */
+				if (string[0] != '\'')
+					return MAKE_EXPRERR_UNBALANCED_QUOTES(token->offset);
+				string++;
+
+				/* make it a number token */
+				token->type = TOK_NUMBER;
+				token->value.i = value;
+				break;
+			}
+
 			default:
 			{
 				static const char *valid = "abcdefghijklmnopqrstuvwxyz0123456789_$#.";

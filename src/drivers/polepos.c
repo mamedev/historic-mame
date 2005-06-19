@@ -404,7 +404,7 @@ static struct namcoio_interface intf0 =
 };
 static struct namcoio_interface intf1 =
 {
-	{ in1_l, in1_h, dipA_l, dipA_h, },	/* port read handlers */
+	{ in1_l, in1_h, dipA_l, dipA_h },	/* port read handlers */
 	{ NULL, NULL }						/* port write handlers */
 };
 

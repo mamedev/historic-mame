@@ -24,7 +24,8 @@ static struct via6522_interface b_via_0_interface =
 {
 	/*inputs : A/B         */ 0, b_via_0_pb_r,
 	/*inputs : CA/B1,CA/B2 */ 0, via_1_ca2_r, b_via_0_ca2_r, via_1_ca1_r,
-	/*outputs: A/B,CA/B2   */ b_via_0_pa_w, b_via_0_pb_w, b_via_0_ca2_w, via_1_ca1_w,
+	/*outputs: A/B         */ b_via_0_pa_w, b_via_0_pb_w,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, b_via_0_ca2_w, via_1_ca1_w,
 	/*irq                  */ b_via_0_irq
 };
 
@@ -32,7 +33,8 @@ static struct via6522_interface b_via_1_interface =
 {
 	/*inputs : A/B         */ b_via_1_pa_r, b_via_1_pb_r,
 	/*inputs : CA/B1,CA/B2 */ via_0_cb2_r, 0, via_0_cb1_r, 0,
-	/*outputs: A/B,CA/B2   */ b_via_1_pa_w, b_via_1_pb_w, via_0_cb1_w, 0,
+	/*outputs: A/B         */ b_via_1_pa_w, b_via_1_pb_w,
+	/*outputs: CA/B1,CA/B2 */ 0, 0, via_0_cb1_w, 0,
 	/*irq                  */ b_via_1_irq
 };
 

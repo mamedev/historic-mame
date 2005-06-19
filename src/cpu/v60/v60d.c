@@ -671,6 +671,12 @@ static int dopC7(unsigned ipc, unsigned pc, char *out)
 		return decode_ ## ftype(opnm, opsize1, opsize2, ipc, pc, out); \
 	}
 
+#define DEFINE_EASY_OPCODE_EX(name, opnm, ftype, opsize1, opsize2, flags) \
+	static int dop ## name(unsigned ipc, unsigned pc, char *out) \
+	{ \
+		return decode_ ## ftype(opnm, opsize1, opsize2, ipc, pc, out) | (flags); \
+	}
+
 #define DEFINE_TRIPLE_OPCODE(name, string, ftype) \
 	DEFINE_EASY_OPCODE(name##B,string ".b", ftype, 0, 0) \
 	DEFINE_EASY_OPCODE(name##H,string ".h", ftype, 1, 1) \
@@ -726,8 +732,8 @@ DEFINE_EASY_OPCODE(BR8, "br", F4a, 0, 0)
 DEFINE_EASY_OPCODE(BR16, "br", F4b, 0, 0)
 DEFINE_EASY_OPCODE(BRK, "brk", F5, 0, 0)
 DEFINE_EASY_OPCODE(BRKV, "brkv", F5, 0, 0)
-DEFINE_EASY_OPCODE(BSR, "bsr", F4b, 0, 0)
-DEFINE_EASY_OPCODE(CALL, "call", F1F2, 0, 2)
+DEFINE_EASY_OPCODE_EX(BSR, "bsr", F4b, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(CALL, "call", F1F2, 0, 2, DASMFLAG_STEP_OVER)
 DEFINE_EASY_OPCODE(CAXI, "caxi", F1, 2, 2)
 DEFINE_EASY_OPCODE(CHKAR, "chkar", F1F2, 0, 0) // ?
 DEFINE_EASY_OPCODE(CHKAW, "chkaw", F1F2, 0, 0) // ?
@@ -750,21 +756,21 @@ DEFINE_EASY_OPCODE(CVTWS, "cvt.ws", F2, 2, 0)
 DEFINE_EASY_OPCODE(CVTWL, "cvt.wl", F2, 2, 1)
 DEFINE_EASY_OPCODE(CVTSW, "cvt.sw", F2, 0, 2)
 DEFINE_EASY_OPCODE(CVTLW, "cvt.lw", F2, 1, 2)
-DEFINE_EASY_OPCODE(DBGT, "dbgt", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBGE, "dbge", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBLT, "dbgt", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBLE, "dbge", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBH, "dbh", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBNL, "dbnl", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBL, "dbl", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBNH, "dbnh", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBE, "dbe", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBNE, "dbne", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBV, "dbe", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBNV, "dbne", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBN, "dbn", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBP, "dbp", F6, 0, 0)
-DEFINE_EASY_OPCODE(DBR, "dbr", F6, 0, 0)
+DEFINE_EASY_OPCODE_EX(DBGT, "dbgt", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBGE, "dbge", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBLT, "dbgt", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBLE, "dbge", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBH, "dbh", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBNL, "dbnl", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBL, "dbl", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBNH, "dbnh", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBE, "dbe", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBNE, "dbne", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBV, "dbe", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBNV, "dbne", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBN, "dbn", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBP, "dbp", F6, 0, 0, DASMFLAG_STEP_OVER)
+DEFINE_EASY_OPCODE_EX(DBR, "dbr", F6, 0, 0, DASMFLAG_STEP_OVER)
 DEFINE_TRIPLE_OPCODE(DEC, "dec", F3)
 DEFINE_EASY_OPCODE(DISPOSE, "dispose", F5, 0, 0)
 DEFINE_TRIPLE_OPCODE(DIV, "div", F1F2)
@@ -785,7 +791,7 @@ DEFINE_TRIPLE_OPCODE(INC, "inc", F3)
 DEFINE_EASY_OPCODE(INSBFL, "insbfl", F7c, 2, 0x82)
 DEFINE_EASY_OPCODE(INSBFR, "insbfr", F7c, 2, 0x82)
 DEFINE_EASY_OPCODE(JMP, "jmp", F3, 0, 0)
-DEFINE_EASY_OPCODE(JSR, "jsr", F3, 0, 0)
+DEFINE_EASY_OPCODE_EX(JSR, "jsr", F3, 0, 0, DASMFLAG_STEP_OVER)
 DEFINE_EASY_OPCODE(LDPR, "ldpr", F1F2, 2, 2)
 DEFINE_EASY_OPCODE(LDTASK, "ldtask", F1F2, 2, 2)
 DEFINE_TRIPLE_OPCODE(MOV, "mov", F1F2)
@@ -835,16 +841,16 @@ DEFINE_EASY_OPCODE(PUSH, "push", F3, 2, 0)
 DEFINE_EASY_OPCODE(PUSHM, "pushm", F3, 2, 0)
 DEFINE_TRIPLE_OPCODE(REM, "rem", F1F2)
 DEFINE_TRIPLE_OPCODE(REMU, "remu", F1F2)
-DEFINE_EASY_OPCODE(RET, "ret", F3, 2, 0)
-DEFINE_EASY_OPCODE(RETIU, "retiu", F3, 1, 0)
-DEFINE_EASY_OPCODE(RETIS, "retis", F3, 1, 0)
+DEFINE_EASY_OPCODE_EX(RET, "ret", F3, 2, 0, DASMFLAG_STEP_OUT)
+DEFINE_EASY_OPCODE_EX(RETIU, "retiu", F3, 1, 0, DASMFLAG_STEP_OUT)
+DEFINE_EASY_OPCODE_EX(RETIS, "retis", F3, 1, 0, DASMFLAG_STEP_OUT)
 DEFINE_EASY_OPCODE(ROTB, "rot.b", F1F2, 0, 0)
 DEFINE_EASY_OPCODE(ROTH, "rot.h", F1F2, 0, 1)
 DEFINE_EASY_OPCODE(ROTW, "rot.w", F1F2, 0, 2)
 DEFINE_EASY_OPCODE(ROTCB, "rotc.b", F1F2, 0, 0)
 DEFINE_EASY_OPCODE(ROTCH, "rotc.h", F1F2, 0, 1)
 DEFINE_EASY_OPCODE(ROTCW, "rotc.w", F1F2, 0, 2)
-DEFINE_EASY_OPCODE(RSR, "rsr", F5, 0, 0)
+DEFINE_EASY_OPCODE_EX(RSR, "rsr", F5, 0, 0, DASMFLAG_STEP_OUT)
 DEFINE_EASY_OPCODE(RVBIT, "rvbit", F1F2, 0, 0)
 DEFINE_EASY_OPCODE(RVBYT, "rvbyt", F1F2, 2, 2)
 DEFINE_EASY_OPCODE(SCH0BSU, "sch0bsu", F7b, 0x80, 2)
@@ -878,7 +884,7 @@ DEFINE_EASY_OPCODE(TASI, "tasi", F3, 0, 0)
 DEFINE_EASY_OPCODE(TB, "tb", F6, 0, 0)
 DEFINE_TRIPLE_OPCODE(TEST, "test", F3)
 DEFINE_EASY_OPCODE(TEST1, "test1", F1F2, 2, 2)
-DEFINE_EASY_OPCODE(TRAP, "trap", F3, 0, 0)
+DEFINE_EASY_OPCODE_EX(TRAP, "trap", F3, 0, 0, DASMFLAG_STEP_OVER)
 DEFINE_EASY_OPCODE(TRAPFL, "trapfl", F5, 0, 0)
 DEFINE_EASY_OPCODE(UPDATE, "update", F1F2, 0, 3) // ?
 DEFINE_EASY_OPCODE(UPDPSWH, "updpsw.h", F1F2, 2, 2)
@@ -1222,12 +1228,12 @@ void v60_dasm_init(void)
 offs_t v60_dasm(char *buffer, offs_t pc)
 {
 	readop = program_read_byte_16le;
-	return dasm_optable[readop(pc)](pc, pc+1, buffer);
+	return dasm_optable[readop(pc)](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
 }
 
 offs_t v70_dasm(char *buffer, offs_t pc)
 {
 	readop = program_read_byte_32le;
-	return dasm_optable[readop(pc)](pc, pc+1, buffer);
+	return dasm_optable[readop(pc)](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
 }
 #endif

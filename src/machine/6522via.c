@@ -11,7 +11,7 @@
 
     T2 pulse counting mode
     Pulse mode handshake output
-    Shift register
+    More shift register
 
 **********************************************************************/
 
@@ -68,6 +68,7 @@ struct via6522
 	mame_timer *t2;
 	double time2;
 	char t2_active;
+	UINT8 shift_counter;
 
 	double cycles_to_sec;
 	double sec_to_cycles;
@@ -171,7 +172,6 @@ void via_config(int which, const struct via6522_interface *intf)
 	via_set_clock (which, Machine->drv->cpu[0].cpu_clock);
 }
 
-
 /******************* external interrupt check *******************/
 
 static void via_set_int (int which, int data)
@@ -215,6 +215,73 @@ logerror("6522VIA chip %d: IFR = %02X.  PC: %08X\n", which, v->ifr, activecpu_ge
 	}
 }
 
+/************************ shift register ************************/
+
+static void via_shift (int which)
+{
+	struct via6522 *v = via + which;
+
+	if (SO_O2_CONTROL(v->acr))
+	{
+		v->out_cb2 = (v->sr >> 7) & 1;
+		v->sr =  (v->sr << 1) | v->out_cb2;
+
+		if (v->intf->out_cb2_func)
+			v->intf->out_cb2_func(0, v->out_cb2);
+
+		v->in_cb1=1;
+		if (v->intf->out_cb1_func)
+		{
+			/* this should be one cycle wide */
+			v->intf->out_cb1_func(0, 0);
+			v->intf->out_cb1_func(0, 1);
+		}
+
+		v->shift_counter = (v->shift_counter + 1) % 8;
+
+		if (v->shift_counter)
+			timer_set(V_CYCLES_TO_TIME(2), which, via_shift);
+		else
+		{
+			if (!(v->ifr & INT_SR))
+				via_set_int(which, INT_SR);
+		}
+	}
+	if (SO_EXT_CONTROL(v->acr))
+	{
+		v->out_cb2 = (v->sr >> 7) & 1;
+		v->sr =  (v->sr << 1) | v->out_cb2;
+
+		if (v->intf->out_cb2_func)
+			v->intf->out_cb2_func(0, v->out_cb2);
+
+		v->shift_counter = (v->shift_counter + 1) % 8;
+
+		if (v->shift_counter == 0)
+		{
+			if (!(v->ifr & INT_SR))
+				via_set_int(which, INT_SR);
+		}
+	}
+	if (SI_EXT_CONTROL(v->acr))
+	{
+		if (v->intf->in_cb2_func)
+			v->in_cb2 = v->intf->in_cb2_func(0);
+
+		v->sr =  (v->sr << 1) | (v->in_cb2 & 1);
+
+		v->shift_counter = (v->shift_counter + 1) % 8;
+
+		if (v->shift_counter == 0)
+		{
+			if (!(v->ifr & INT_SR))
+			{
+				via_set_int(which, INT_SR);
+			}
+		}
+	}
+}
+
 /******************* Timer timeouts *************************/
 static void via_t1_timeout (int which)
 {
@@ -251,11 +318,6 @@ static void via_t1_timeout (int which)
 static void via_t2_timeout (int which)
 {
 	struct via6522 *v = via + which;
-
-	if (v->intf->t2_callback)
-		v->intf->t2_callback(timer_timeelapsed(v->t2));
-	else
-		logerror("6522VIA chip %d: T2 timout occured but there is no callback.  PC: %08X\n", which, activecpu_get_pc());
 
 	v->t2_active = 0;
 	v->time2=timer_get_time();
@@ -468,6 +530,12 @@ int via_read(int which, int offset)
 
     case VIA_SR:
 		val = v->sr;
+		via_clear_int(which, INT_SR);
+		if (SO_O2_CONTROL(v->acr))
+		{
+			v->shift_counter=0;
+			timer_set(V_CYCLES_TO_TIME(2), which,via_shift);
+		}
 		break;
 
     case VIA_PCR:
@@ -681,11 +749,6 @@ void via_write(int which, int offset, int data)
 
 		if (!T2_COUNT_PB6(v->acr))
 		{
-			if (v->intf->t2_callback)
-				v->intf->t2_callback(timer_timeelapsed(v->t2));
-			else
-				logerror("6522VIA chip %d: T2 timout occured but there is no callback.  PC: %08X\n", which, activecpu_get_pc());
-
 			timer_adjust (v->t2, V_CYCLES_TO_TIME(TIMER2_VALUE(v) + IFR_DELAY), which, 0);
 			v->t2_active = 1;
 		}
@@ -697,24 +760,11 @@ void via_write(int which, int offset, int data)
 
     case VIA_SR:
 		v->sr = data;
+		v->shift_counter=0;
+		via_clear_int(which, INT_SR);
 		if (SO_O2_CONTROL(v->acr))
 		{
-			if (v->intf->out_shift_func)
-				v->intf->out_shift_func(data);
-			else
-				logerror("6522VIA chip %d: Shift register is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), data);
-		}
-
-		/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
-		if (SO_EXT_CONTROL(v->acr))
-		{
-			if (v->intf->out_shift_func2)
-			{
-				v->intf->out_shift_func2(data);
-				via_set_int(which, INT_SR);
-			}
-			else
-				logerror("6522VIA chip %d: Shift register (Mac Plus) is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), data);
+			timer_set(V_CYCLES_TO_TIME(2), which,via_shift);
 		}
 		break;
 
@@ -766,14 +816,6 @@ logerror("6522VIA chip %d: PCR = %02X.  PC: %08X\n", which, data, activecpu_get_
 		{
 			timer_adjust (v->t1, V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, 0);
 			v->t1_active = 1;
-		}
-		/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
-		if (SI_EXT_CONTROL(data))
-		{
-			if (v->intf->si_ready_func)
-				v->intf->si_ready_func();
-			else
-				logerror("6522VIA chip %d: SI READY is being called to but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 		}
 		break;
 
@@ -903,8 +945,6 @@ void via_set_input_ca2(int which, int data)
 
 }
 
-
-
 /******************* interface setting VIA port B input *******************/
 
 void via_set_input_b(int which, int data)
@@ -938,6 +978,8 @@ void via_set_input_cb1(int which, int data)
 				else
 					logerror("6522VIA chip %d: Port B is being read but has no handler.  PC: %08X\n", which, activecpu_get_pc());
 			}
+			if (SO_EXT_CONTROL(v->acr) || SI_EXT_CONTROL(v->acr))
+				via_shift (which);
 
 			via_set_int (which, INT_CB1);
 
@@ -987,18 +1029,6 @@ void via_set_input_cb2(int which, int data)
 			v->in_cb2 = data;
 		}
     }
-}
-
-/******************* interface to shift data into VIA ***********************/
-
-/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
-
-void via_set_input_si(int which, int data)
-{
-	struct via6522 *v = via + which;
-
-	via_set_int(which, INT_SR);
-	v->sr = data;
 }
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/

@@ -755,6 +755,16 @@ VIDEO_START( jumpbug )
 	return ret;
 }
 
+VIDEO_START( azurian )
+{
+	int ret = video_start_galaxian_plain();
+
+	draw_stars = galaxian_draw_stars;
+	draw_bullets = scramble_draw_bullets; /* Shots are yellow like in Scramble */
+
+	return ret;
+}
+
 VIDEO_START( mimonkey )
 {
 	int ret = video_start_scramble();

@@ -3527,7 +3527,7 @@ static struct GfxLayout rockclim_charlayout =
 	8,8,
 	256,
 	4,//?
-	{ 4, 0,4096*8+4,4096*8, },
+	{ 4, 0,4096*8+4,4096*8 },
 	{ 3, 2, 1, 0,11 ,10, 9, 8 },
 	{ 0*8*2, 1*8*2, 2*8*2, 3*8*2, 4*8*2, 5*8*2, 6*8*2, 7*8*2 },
 	8*8*2
@@ -3820,6 +3820,15 @@ static MACHINE_DRIVER_START( jumpbug )
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, 1789750)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( azurian )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian)
+
+	/* video hardware */
+	MDRV_VIDEO_START(azurian)
 MACHINE_DRIVER_END
 
 
@@ -5958,7 +5967,7 @@ GAME( 1981, scramblb, scramble, scramblb, scramblb, 0,        ROT90,  "bootleg",
 GAME( 1981, jumpbug,  0,        jumpbug,  jumpbug,  0,        ROT90,  "Rock-ola", "Jump Bug" )
 GAME( 1981, jumpbugb, jumpbug,  jumpbug,  jumpbug,  0,        ROT90,  "bootleg", "Jump Bug (bootleg)" )
 GAME( 1983, levers,   0,        jumpbug,  levers,   0,        ROT90,  "Rock-ola", "Levers" )
-GAME( 1982, azurian,  0,        galaxian, azurian,  azurian,  ROT90,  "Rait Electronics Ltd", "Azurian Attack" )
+GAME( 1982, azurian,  0,        azurian,  azurian,  azurian,  ROT90,  "Rait Electronics Ltd", "Azurian Attack" )
 GAME( 19??, orbitron, 0,        galaxian, orbitron, pisces,   ROT270, "Signatron USA", "Orbitron" )
 GAME( 1982, checkman, 0,        checkman, checkman, checkman, ROT90,  "Zilec-Zenitone", "Check Man" )
 GAME( 1982, checkmaj, checkman, checkmaj, checkmaj, checkmaj, ROT90,  "Jaleco", "Check Man (Japan)" )

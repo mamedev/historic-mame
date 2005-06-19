@@ -29,6 +29,8 @@ Known issues :
 NOTE :
 ========
  - To skip dip setting display, press 1P + 2P start in Atomic Robokid.
+ - To enter the level code in Atomic Robokid, in the title screen insert 1 coin
+   and then press 1P or 2P start while keeping pressed 1P or 2P button1
 
 ***************************************************************************/
 
@@ -89,6 +91,7 @@ extern WRITE8_HANDLER( omegaf_flipscreen_w );
 extern VIDEO_START( omegaf );
 extern VIDEO_START( robokid );
 extern VIDEO_UPDATE( omegaf );
+extern VIDEO_UPDATE( robokid );
 
 static int omegaf_bank_latch = 2;
 
@@ -673,6 +676,7 @@ static MACHINE_DRIVER_START( robokid )
 
 	MDRV_GFXDECODE(robokid_gfxdecodeinfo)
 	MDRV_VIDEO_START(robokid)
+	MDRV_VIDEO_UPDATE(robokid)
 MACHINE_DRIVER_END
 
 

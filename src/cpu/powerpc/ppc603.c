@@ -20,6 +20,7 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
 					ppc.npc = 0x00000000 | 0x0500;
+				change_pc(ppc.npc);
 			}
 			else {
 				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
@@ -44,6 +45,7 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
 					ppc.npc = 0x00000000 | 0x0900;
+				change_pc(ppc.npc);
 			}
 			else {
 				ppc.exception_pending |= 1 << EXCEPTION_DECREMENTER;
@@ -68,6 +70,7 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0700;
 				else
 					ppc.npc = 0x00000000 | 0x0700;
+				change_pc(ppc.npc);
 			}
 			break;
 
@@ -89,6 +92,7 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0c00;
 				else
 					ppc.npc = 0x00000000 | 0x0c00;
+				change_pc(ppc.npc);
 			}
 			break;
 
@@ -110,6 +114,7 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x1400;
 				else
 					ppc.npc = 0x00000000 | 0x1400;
+				change_pc(ppc.npc);
 			}
 			else {
 				ppc.exception_pending |= 1 << EXCEPTION_SMI;
