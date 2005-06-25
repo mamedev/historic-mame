@@ -425,15 +425,15 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 				switch( GTE_FUNCT( op ) )
 				{
 				case 0x01:
-					if( INS_CO( op ) == 0x0180001 )
+					if( INS_COFUN( op ) == 0x0180001 )
 					{
 						sprintf( buffer, "rtps" );
 					}
 					break;
 				case 0x06:
-					if( INS_CO( op ) == 0x0400006 ||
-						INS_CO( op ) == 0x1400006 ||
-						INS_CO( op ) == 0x0155cc6 )
+					if( INS_COFUN( op ) == 0x0400006 ||
+						INS_COFUN( op ) == 0x1400006 ||
+						INS_COFUN( op ) == 0x0155cc6 )
 					{
 						sprintf( buffer, "nclip" );
 					}
@@ -445,13 +445,13 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x10:
-					if( INS_CO( op ) == 0x0780010 )
+					if( INS_COFUN( op ) == 0x0780010 )
 					{
 						sprintf( buffer, "dpcs" );
 					}
 					break;
 				case 0x11:
-					if( INS_CO( op ) == 0x0980011 )
+					if( INS_COFUN( op ) == 0x0980011 )
 					{
 						sprintf( buffer, "intpl" );
 					}
@@ -465,43 +465,43 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x13:
-					if( INS_CO( op ) == 0x0e80413 )
+					if( INS_COFUN( op ) == 0x0e80413 )
 					{
 						sprintf( buffer, "ncds" );
 					}
 					break;
 				case 0x14:
-					if( INS_CO( op ) == 0x1280414 )
+					if( INS_COFUN( op ) == 0x1280414 )
 					{
 						sprintf( buffer, "cdp" );
 					}
 					break;
 				case 0x16:
-					if( INS_CO( op ) == 0x0f80416 )
+					if( INS_COFUN( op ) == 0x0f80416 )
 					{
 						sprintf( buffer, "ncdt" );
 					}
 					break;
 				case 0x1b:
-					if( INS_CO( op ) == 0x108041b )
+					if( INS_COFUN( op ) == 0x108041b )
 					{
 						sprintf( buffer, "nccs" );
 					}
 					break;
 				case 0x1c:
-					if( INS_CO( op ) == 0x138041c )
+					if( INS_COFUN( op ) == 0x138041c )
 					{
 						sprintf( buffer, "cc" );
 					}
 					break;
 				case 0x1e:
-					if( INS_CO( op ) == 0x0c8041e )
+					if( INS_COFUN( op ) == 0x0c8041e )
 					{
 						sprintf( buffer, "ncs" );
 					}
 					break;
 				case 0x20:
-					if( INS_CO( op ) == 0x0d80420 )
+					if( INS_COFUN( op ) == 0x0d80420 )
 					{
 						sprintf( buffer, "nct" );
 					}
@@ -513,31 +513,31 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x29:
-					if( INS_CO( op ) == 0x0680029 )
+					if( INS_COFUN( op ) == 0x0680029 )
 					{
 						sprintf( buffer, "dcpl" );
 					}
 					break;
 				case 0x2a:
-					if( INS_CO( op ) == 0x0f8002a )
+					if( INS_COFUN( op ) == 0x0f8002a )
 					{
 						sprintf( buffer, "dpct" );
 					}
 					break;
 				case 0x2d:
-					if( INS_CO( op ) == 0x158002d )
+					if( INS_COFUN( op ) == 0x158002d )
 					{
 						sprintf( buffer, "avsz3" );
 					}
 					break;
 				case 0x2e:
-					if( INS_CO( op ) == 0x168002e )
+					if( INS_COFUN( op ) == 0x168002e )
 					{
 						sprintf( buffer, "avsz4" );
 					}
 					break;
 				case 0x30:
-					if( INS_CO( op ) == 0x0280030 )
+					if( INS_COFUN( op ) == 0x0280030 )
 					{
 						sprintf( buffer, "rtpt" );
 					}
@@ -556,8 +556,8 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x3f:
-					if( INS_CO( op ) == 0x108043f ||
-						INS_CO( op ) == 0x118043f )
+					if( INS_COFUN( op ) == 0x108043f ||
+						INS_COFUN( op ) == 0x118043f )
 					{
 						sprintf( buffer, "ncct" );
 					}

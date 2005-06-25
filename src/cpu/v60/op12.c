@@ -457,6 +457,8 @@ UINT32 opCHKAE(void)
 
 UINT32 opCHLVL(void)
 {
+	UINT32 oldPSW;
+
 	F12DecodeOperands(ReadAM,0,ReadAM,0);
 
 	if (f12Op1>3)
@@ -464,16 +466,16 @@ UINT32 opCHLVL(void)
 		osd_die("Illegal data field on opCHLVL, PC=%x\n", PC);
 	}
 
-	UPDATEPSW();
+	oldPSW = v60_update_psw_for_exception(0, f12Op1);
 
 	SP -= 4;
 	MemWrite32(SP,f12Op2);
 
 	SP -= 4;
-	MemWrite32(SP,0x1800 + f12Op1*0x100);
+	MemWrite32(SP,EXCEPTION_CODE_AND_SIZE(0x1800 + f12Op1*0x100, 8));
 
 	SP -= 4;
-	MemWrite32(SP,PSW);
+	MemWrite32(SP,oldPSW);
 
 	SP -= 4;
 	MemWrite32(SP,PC + amLength1 + amLength2 + 2);
@@ -757,10 +759,9 @@ UINT32 opLDTASK(void)
 	int i;
 	F12DecodeOperands(ReadAMAddress,2,ReadAM,2);
 
-	TCB = f12Op2;
+	v60WritePSW(v60ReadPSW() & 0xefffffff);
 
-	UPDATEPSW();
-	v60WritePSW(PSW & 0xefffffff);
+	TR = f12Op2;
 
 	TKCW = MemRead32(f12Op2);
 	f12Op2 += 4;
@@ -2194,6 +2195,9 @@ UINT32 opUPDPSWW(void)
 {
 	F12DecodeOperands(ReadAM,2,ReadAM,2);
 
+	/* can only modify condition code and control fields */
+	f12Op2 &= 0xFFFFFF;
+	f12Op1 &= 0xFFFFFF;
 	v60WritePSW((v60ReadPSW() & (~f12Op2)) | (f12Op1 & f12Op2));
 
 	F12END();
@@ -2203,6 +2207,7 @@ UINT32 opUPDPSWH(void)
 {
 	F12DecodeOperands(ReadAM,2,ReadAM,2);
 
+	/* can only modify condition code fields */
 	f12Op2 &= 0xFFFF;
 	f12Op1 &= 0xFFFF;
 	v60WritePSW((v60ReadPSW() & (~f12Op2)) | (f12Op1 & f12Op2));

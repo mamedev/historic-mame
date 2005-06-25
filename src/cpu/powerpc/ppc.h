@@ -200,8 +200,94 @@ typedef enum {
 	PPC_MODEL_755				= 0x00083203	/* "Goldfinger", version 2.3 */
 } PPC_MODEL;
 
+typedef enum {
+	BUS_FREQUENCY_16MHZ = 0,
+	BUS_FREQUENCY_20MHZ,
+	BUS_FREQUENCY_25MHZ,
+	BUS_FREQUENCY_33MHZ,
+	BUS_FREQUENCY_40MHZ,
+	BUS_FREQUENCY_50MHZ,
+	BUS_FREQUENCY_60MHZ,
+	BUS_FREQUENCY_66MHZ,
+	BUS_FREQUENCY_75MHZ,
+} PPC_BUS_FREQUENCY;
+
+// PLL Configuration based on the table in MPC603EUM page 7-31
+static const int mpc603e_pll_config[12][9] =
+{
+	// 16,  20,  25,  33,  40,  50,  60,  66,  75
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{ 0x2, 0x2, 0x2, 0x1, 0x1, 0x1,  -1, 0x0,  -1 },
+	{  -1,  -1,  -1,  -1,  -1, 0xc,  -1, 0xc,  -1 },
+	{ 0x5, 0x5, 0x5, 0x4, 0x4, 0x4,  -1,  -1,  -1 },
+	{  -1,	-1,  -1, 0x6, 0x6,  -1,  -1,  -1,  -1 },
+	{  -1,  -1, 0x8, 0x8,  -1,  -1,  -1,  -1,  -1 },
+	{  -1, 0xe, 0xe,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{ 0xa, 0xa, 0xa,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+};
+
+// PLL Configuration based on the table in MPC603E7VEC page 29
+static const int mpc603ev_pll_config[12][9] =
+{
+	// 16,  20,  25,  33,  40,  50,  60,  66,  75
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	// 2:1
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1, 0x4, 0x4 },
+	// 2.5:1
+	{  -1,  -1,  -1,  -1,  -1, 0x6, 0x6, 0x6, 0x6 },
+	// 3:1
+	{  -1,  -1,  -1,  -1, 0x8, 0x8, 0x8, 0x8, 0x8 },
+	// 3.5:1
+	{  -1,  -1,  -1,  -1, 0xe, 0xe, 0xe, 0xe,  -1 },
+	// 4:1
+	{  -1,  -1,  -1, 0xa, 0xa, 0xa, 0xa,  -1,  -1 },
+	// 4.5:1
+	{  -1,  -1,  -1, 0x7, 0x7, 0x7,  -1,  -1,  -1 },
+	// 5:1
+	{  -1,  -1, 0xb, 0xb, 0xb,  -1,  -1,  -1,  -1 },
+	// 5.5:1
+	{  -1,  -1, 0x9, 0x9, 0x9,  -1,  -1,  -1,  -1 },
+	// 6:1
+	{  -1,  -1, 0xd, 0xd, 0xd,  -1,  -1,  -1,  -1 }
+};
+
+// PLL Configuration based on the table in MPC603E7TEC page 23
+static const int mpc603r_pll_config[12][9] =
+{
+	// 16,  20,  25,  33,  40,  50,  60,  66,  75
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	{  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1 },
+	// 2:1
+	{  -1,  -1,  -1,  -1, 0x5, 0x5, 0x5, 0x5, 0x5 },
+	// 2.5:1
+	{  -1,  -1,  -1,  -1,  -1,  -1, 0x6, 0x6, 0x6 },
+	// 3:1
+	{  -1,  -1,  -1,  -1,  -1, 0x8, 0x8, 0x8, 0x8 },
+	// 3.5:1
+	{  -1,  -1,  -1,  -1,  -1, 0xe, 0xe, 0xe, 0xe },
+	// 4:1
+	{  -1,  -1,  -1,  -1, 0xa, 0xa, 0xa, 0xa, 0xa },
+	// 4.5:1
+	{  -1,  -1,  -1, 0x7, 0x7, 0x7, 0x7, 0x7,  -1 },
+	// 5:1
+	{  -1,  -1,  -1, 0xb, 0xb, 0xb, 0xb,  -1,  -1 },
+	// 5.5:1
+	{  -1,  -1,  -1, 0x9, 0x9, 0x9,  -1,  -1,  -1 },
+	// 6:1
+	{  -1,  -1, 0xd, 0xd, 0xd, 0xd,  -1,  -1,  -1 },
+};
+
 typedef struct {
 	PPC_MODEL pvr;
+	int bus_frequency_multiplier;
+	PPC_BUS_FREQUENCY bus_frequency;
 } ppc_config;
 
 #if (HAS_PPC403)

@@ -101,9 +101,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX3, 0, &tiles8x8_layout, 0, 16 },
 	{ REGION_GFX4, 0, &tiles8x8_layout, 0, 16 },
 	{ REGION_GFX5, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX6, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX7, 0, &tiles8x8_layout, 0, 16 },
-
 	{ -1 }
 };
 
@@ -158,38 +155,50 @@ ROM_START( darkmist )
 	/* I guess these aren't all gfx, but they seem to be encrypted ... */
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )
-	ROM_LOAD16_BYTE( "dm_01.rom", 0x00000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
-	ROM_LOAD16_BYTE( "dm_02.rom", 0x00001, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
+	ROM_LOAD( "dm_01.rom", 0x00000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
+	ROM_LOAD( "dm_02.rom", 0x10000, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
 
-	ROM_REGION( 0x10000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "dm_03.rom", 0x00000, 0x08000, CRC(60b40c2a) SHA1(c046273b15dab95ea4851c26ce941e580fa1b6ec)  )
-	ROM_LOAD16_BYTE( "dm_04.rom", 0x00001, 0x08000, CRC(d47b8cd9) SHA1(86eb7a5d8ea63c0c91f455b1b8322cc7b9c4a968)  )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "dm_05.rom", 0x00000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
+	ROM_LOAD( "dm_06.rom", 0x10000, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
 
 	ROM_REGION( 0x20000, REGION_GFX3, 0 )
-	ROM_LOAD16_BYTE( "dm_05.rom", 0x00000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
-	ROM_LOAD16_BYTE( "dm_06.rom", 0x00001, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
+	ROM_LOAD( "dm_09.rom", 0x00000, 0x10000, CRC(52154b50) SHA1(5ee1a4bcf0752a057b9993b0069d744c35cf55f4)  )
+	ROM_LOAD( "dm_10.rom", 0x10000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
 
-	ROM_REGION( 0x08000, REGION_GFX4, 0 )
-	ROM_LOAD16_BYTE( "dm_07.rom", 0x00000, 0x04000, CRC(889b1277) SHA1(78405110b9cf1ab988c0cbfdb668498dadb41229)  )
-	ROM_LOAD16_BYTE( "dm_08.rom", 0x00001, 0x04000, CRC(f76f6f46) SHA1(ce1c67dc8976106b24fee8d3a0b9e5deb016a327)  )
+	ROM_REGION( 0x10000, REGION_GFX4, 0 )
+	ROM_LOAD( "dm_11.rom", 0x00000, 0x08000, CRC(3118e2f9) SHA1(dfd946ea1310851f97d31ce58d8280f2d92b0f59)  )
+	ROM_LOAD( "dm_12.rom", 0x08000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
 
-	ROM_REGION( 0x20000, REGION_GFX5, 0 )
-	ROM_LOAD16_BYTE( "dm_09.rom", 0x00000, 0x10000, CRC(52154b50) SHA1(5ee1a4bcf0752a057b9993b0069d744c35cf55f4)  )
-	ROM_LOAD16_BYTE( "dm_10.rom", 0x00001, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
+	ROM_REGION( 0x4000, REGION_GFX5, 0 )
+	ROM_LOAD( "dm_13.rom", 0x00000, 0x02000, CRC(38bb38d9) SHA1(d751990166dd3d503c5de7667679b96210061cd1)  )
+	ROM_LOAD( "dm_14.rom", 0x02000, 0x02000, CRC(ac5a31f3) SHA1(79083390671062be2eab93cc875a0f86d709a963)  )
 
-	ROM_REGION( 0x10000, REGION_GFX6, 0 )
-	ROM_LOAD16_BYTE( "dm_11.rom", 0x00000, 0x08000, CRC(3118e2f9) SHA1(dfd946ea1310851f97d31ce58d8280f2d92b0f59)  )
-	ROM_LOAD16_BYTE( "dm_12.rom", 0x00001, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
+	/* decrypted */
 
-	ROM_REGION( 0x4000, REGION_GFX7, 0 )
-	ROM_LOAD16_BYTE( "dm_13.rom", 0x00000, 0x02000, CRC(38bb38d9) SHA1(d751990166dd3d503c5de7667679b96210061cd1)  )
-	ROM_LOAD16_BYTE( "dm_14.rom", 0x00001, 0x02000, CRC(ac5a31f3) SHA1(79083390671062be2eab93cc875a0f86d709a963)  )
+	ROM_REGION( 0x10000, REGION_USER1, 0 ) //tile/attrib maps (width 512x64 )
+	ROM_LOAD( "dm_03.rom", 0x00000, 0x08000, CRC(60b40c2a) SHA1(c046273b15dab95ea4851c26ce941e580fa1b6ec)  )
+	ROM_LOAD( "dm_04.rom", 0x08000, 0x08000, CRC(d47b8cd9) SHA1(86eb7a5d8ea63c0c91f455b1b8322cc7b9c4a968)  )
+
+	ROM_REGION( 0x08000, REGION_USER2, 0 ) //data ? gfx ? maps ? 64x256
+	ROM_LOAD( "dm_07.rom", 0x00000, 0x04000, CRC(889b1277) SHA1(78405110b9cf1ab988c0cbfdb668498dadb41229)  )
+	ROM_LOAD( "dm_08.rom", 0x04000, 0x04000, CRC(f76f6f46) SHA1(ce1c67dc8976106b24fee8d3a0b9e5deb016a327)  )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "63s281n.l1",  0x0000, 0x0100, NO_DUMP  )
+	ROM_LOAD( "63s281n.m7",  0x0100, 0x0100, NO_DUMP  )
+	ROM_LOAD( "63s281n.d7",  0x0200, 0x0100, NO_DUMP  )
+	ROM_LOAD( "63s281n.j15", 0x0300, 0x0100, NO_DUMP  )
+	ROM_LOAD( "63s281n.f11", 0x0400, 0x0100, NO_DUMP  )
+	ROM_LOAD( "82s129.d11",  0x0500, 0x0100, NO_DUMP  )
 ROM_END
 
 static DRIVER_INIT(darkmist)
 {
 	int i;
 	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *buffer=auto_malloc(0x10000);
+
 
 	/* is this complete? */
 
@@ -218,9 +227,34 @@ static DRIVER_INIT(darkmist)
 	}
 
 	memory_set_opcode_base(0,memory_region(REGION_CPU1)+0x20000);
-
-
 	cpu_setbank(1,&ROM[0x010000]);
+
+	//adr line swaps
+	ROM = memory_region(REGION_USER1);
+	memcpy( buffer, ROM, memory_region_length(REGION_USER1) );
+	for(i=0;i<memory_region_length(REGION_USER1);i++)
+	{
+		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,6,5,4,3,2,14,13,12,11,8,7,1,0,10,9)];
+	}
+
+	ROM = memory_region(REGION_USER2);
+	memcpy( buffer, ROM, memory_region_length(REGION_USER2) );
+	for(i=0;i<memory_region_length(REGION_USER2);i++)
+	{
+		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14 ,5,4,3,2,11,10,9,8,13,12,1,0,7,6)];
+	}
+
+#if 0
+	{
+		FILE *f=fopen("user2.bin","wb");
+		fwrite(memory_region(REGION_USER2),1,memory_region_length(REGION_USER2),f);
+		fclose(f);
+		f=fopen("user1.bin","wb");
+		fwrite(memory_region(REGION_USER1),1,memory_region_length(REGION_USER1),f);
+		fclose(f);
+	}
+#endif
+
 
 }
 

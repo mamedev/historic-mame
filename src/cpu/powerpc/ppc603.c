@@ -20,10 +20,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
 					ppc.npc = 0x00000000 | 0x0500;
+
+				ppc.interrupt_pending &= ~0x1;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
 			}
 			break;
 
@@ -45,10 +44,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
 					ppc.npc = 0x00000000 | 0x0900;
+
+				ppc.interrupt_pending &= ~0x2;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_DECREMENTER;
 			}
 			break;
 
@@ -114,10 +112,9 @@ void ppc603_exception(int exception)
 					ppc.npc = 0xfff00000 | 0x1400;
 				else
 					ppc.npc = 0x00000000 | 0x1400;
+
+				ppc.interrupt_pending &= ~0x4;
 				change_pc(ppc.npc);
-			}
-			else {
-				ppc.exception_pending |= 1 << EXCEPTION_SMI;
 			}
 			break;
 
@@ -130,7 +127,7 @@ void ppc603_exception(int exception)
 static void ppc603_set_irq_line(int irqline, int state)
 {
 	if( state ) {
-		ppc603_exception(EXCEPTION_IRQ);
+		ppc.interrupt_pending |= 0x1;
 		if (ppc.irq_callback)
 		{
 			ppc.irq_callback(irqline);
@@ -140,22 +137,66 @@ static void ppc603_set_irq_line(int irqline, int state)
 
 static void ppc603_set_smi_line(int state)
 {
-	if( state )
-		ppc603_exception(EXCEPTION_SMI);
+	if( state ) {
+		ppc.interrupt_pending |= 0x4;
+	}
+}
+
+INLINE void ppc603_check_interrupts(void)
+{
+	if (MSR & MSR_EE)
+	{
+		if (ppc.interrupt_pending != 0)
+		{
+			if (ppc.interrupt_pending & 0x1)
+			{
+				ppc603_exception(EXCEPTION_IRQ);
+			}
+			else if (ppc.interrupt_pending & 0x2)
+			{
+				ppc603_exception(EXCEPTION_DECREMENTER);
+			}
+			else if (ppc.interrupt_pending & 0x4)
+			{
+				ppc603_exception(EXCEPTION_SMI);
+			}
+		}
+	}
 }
 
 static void ppc603_reset(void *param)
 {
+	int pll_config = 0;
+	float multiplier;
 	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
 	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+
+	switch(config->pvr)
+	{
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		default: break;
+	}
+
+	if (pll_config == -1)
+	{
+		osd_die("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
+	}
+
+	ppc.hid1 = pll_config << 28;
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);
 
 	ppc.hid0 = 1;
 
-	ppc.exception_pending = 0;
+	ppc.interrupt_pending = 0;
 }
 
 
@@ -189,9 +230,11 @@ static int ppc603_execute(int cycles)
 		ppc.tb += 1;
 
 		DEC -= 1;
-		if(DEC > dec_old) {
-			ppc603_exception(EXCEPTION_DECREMENTER);
+		if(DEC == 0) {
+			ppc.interrupt_pending |= 0x2;
 		}
+
+		ppc603_check_interrupts();
 	}
 
 	return cycles - ppc_icount;

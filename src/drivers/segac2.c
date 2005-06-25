@@ -3771,6 +3771,17 @@ ROM_START( tantr ) /* Tant-R (Puzzle & Action)  (c)1992 Sega */
 	ROM_LOAD( "epr15617.4", 0x000000, 0x040000, CRC(338324a1) SHA1(79e2782d0d4764dd723886f846c852a6f6c1fb64) )
 ROM_END
 
+ROM_START( tantrkor ) /* Tant-R (Puzzle & Action) (Korea) (c)1993 Sega */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "32", 0x000000, 0x080000, CRC(7efe26b3) SHA1(958420b9b400eafe392745af90bff729463427c7) )
+	ROM_LOAD16_BYTE( "31", 0x000001, 0x080000, CRC(af5a860f) SHA1(cb0011f420721d035e9f0e43bb72cf286982fd32) )
+	ROM_LOAD16_BYTE( "34", 0x100000, 0x080000, BAD_DUMP CRC(a4d01173) SHA1(d5bff55a675a71f1cb623d1e3f94650e12419b3a) )
+	ROM_LOAD16_BYTE( "33", 0x100001, 0x080000, CRC(82d78413) SHA1(9ff9c2b1632e280444965110bab90c0fc98cd6da) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr15617.4", 0x000000, 0x040000, CRC(338324a1) SHA1(79e2782d0d4764dd723886f846c852a6f6c1fb64) )
+ROM_END
+
 
 ROM_START( tantrbl ) /* Tant-R (Puzzle & Action) (Bootleg)  (c)1992 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
@@ -4736,6 +4747,44 @@ static DRIVER_INIT( tantr )
 	init_saves();
 }
 
+static DRIVER_INIT( tantrkor )
+{
+
+	static const UINT32 tantrkor_table[256/8] =
+	{
+		0x80931102, 0xc4d75546, 0xd5825502, 0x91c61146,
+		0x081b998a, 0x4c5fddce, 0x5d0add8a, 0x194e99ce,
+		0xc4d77764, 0xc4d77764, 0x91c63364, 0x91c63364,
+		0xc4d77764, 0xc4d77764, 0x91c63364, 0x91c63364,
+		0x91930002, 0xd5d74446, 0xc4824402, 0x80c60046,
+		0x191b888a, 0x5d5fccce, 0x4c0acc8a, 0x084e88ce,
+		0xd5d76664, 0xd5d76664, 0x80c62264, 0x80c62264,
+		0xd5d76664, 0xd5d76664, 0x80c62264, 0x80c62264
+	};
+
+#if 0
+	{
+		int base = 0x5ce;
+		data8_t *rom	=	memory_region(REGION_CPU1);
+		int a,b;
+
+		for (a=0;a<256;a+=8) {
+			printf("\n0x");
+			for(b=0;b<8;b++) {
+				int x;
+				x = rom[(base+a+b)^1]&0xf;
+				printf("%1x",x);
+			}
+		}
+	}
+#endif
+
+	prot_table = tantrkor_table;
+	bloxeed_sound = 0;
+	init_saves();
+}
+
+
 static DRIVER_INIT( ichidant )
 {
 	static const UINT32 ichidant_table[256/8] =
@@ -4967,6 +5016,7 @@ GAME ( 1990, tfrceacb, tfrceac,  segac2,   tfrceac,  tfrceacb, ROT0, "bootleg", 
 GAMEX( 1991, twinsqua, 0,        segac2,   borench,  borench,  ROT0, "Sega",                   "Twin Squash",GAME_NOT_WORKING )
 GAME ( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!" )
 GAME ( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
+GAME ( 1993, tantrkor, tantr,    segac2,   ichidant, tantrkor, ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Korea)" )
 GAME ( 1992, tantrbl,  tantr,    segac2,   ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
 GAME ( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
 

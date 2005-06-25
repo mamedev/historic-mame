@@ -13,8 +13,6 @@
     Main Issues:
     - Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
       use by the current ES5505 core (which rightly should be 16 bit).
-    - Zoomed layers are not always positioned quite correctly in flipscreen mode
-      (Grid Seeker)
 
     Other Issues:
     - Dsp isn't hooked up.
@@ -22,10 +20,9 @@
     - Sound doesn't work in RidingF/RingRage?
     - It does work in ringrage but you have to enter test mode first
     - Sound balance is not emulated (see arabianm test mode)
-    - When playing space invaders dx in original mode, t.t. with overlay, there
-      should be an alpha blending effect to make tre stripes affect the graphics
-      below them. Instead, the stripes are drawn as blocks in the background
-      (note: this effect is correct in the Taito B version of the game)
+    - When playing space invaders dx in original mode, t.t. with overlay, the
+    alpha blending effect is wrong (see Taito B version of game)
+    - Bubble Symphony has an alpha transition effect that doesn't appear in Mame
 
     Feel free to report any other issues to me.
 
@@ -182,7 +179,7 @@ static WRITE32_HANDLER( f3_sound_bankswitch_w )
 
 static ADDRESS_MAP_START( f3_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
-  	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA32_RAM)
+  	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x20000) AM_READ(MRA32_RAM)
 	AM_RANGE(0x440000, 0x447fff) AM_READ(MRA32_RAM) /* Palette ram */
 	AM_RANGE(0x4a0000, 0x4a0017) AM_READ(f3_control_r)
 	AM_RANGE(0x600000, 0x60ffff) AM_READ(MRA32_RAM) /* Object data */
@@ -197,7 +194,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( f3_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x300000, 0x30007f) AM_WRITE(f3_sound_bankswitch_w)
-	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA32_RAM) AM_BASE(&f3_ram)
+	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x20000) AM_WRITE(MWA32_RAM) AM_BASE(&f3_ram)
 	AM_RANGE(0x440000, 0x447fff) AM_WRITE(f3_palette_24bit_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x4a0000, 0x4a001f) AM_WRITE(f3_control_w)
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
@@ -494,8 +491,7 @@ static MACHINE_DRIVER_START( f3 )
 	MDRV_CPU_VBLANK_INT(f3_interrupt,2)
 
 	MDRV_CPU_ADD(M68000, 16000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0) /* audio CPU */
 
 	MDRV_FRAMES_PER_SECOND(58.97)
 	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
@@ -506,7 +502,7 @@ static MACHINE_DRIVER_START( f3 )
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(40*8+48*2, 32*8)
-	MDRV_VISIBLE_AREA(46, 40*8-1+46, 24, 24+232-1)
+	MDRV_VISIBLE_AREA(46, 40*8-1 + 46, 24, 24+232-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192)
 
@@ -531,17 +527,17 @@ MACHINE_DRIVER_END
 */
 static MACHINE_DRIVER_START( f3_224a )
 	MDRV_IMPORT_FROM(f3)
-	MDRV_VISIBLE_AREA(46, 40*8-1+46, 31, 31+224-1)
+	MDRV_VISIBLE_AREA(46, 40*8-1 + 46, 31, 31+224-1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( f3_224b )
 	MDRV_IMPORT_FROM(f3)
-	MDRV_VISIBLE_AREA(46, 40*8-1+46, 32, 32+224-1)
+	MDRV_VISIBLE_AREA(46, 40*8-1 + 46, 32, 32+224-1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( f3_224c )
 	MDRV_IMPORT_FROM(f3)
-	MDRV_VISIBLE_AREA(46, 40*8-1+46, 24, 24+224-1)
+	MDRV_VISIBLE_AREA(46, 40*8-1 + 46, 24, 24+224-1)
 MACHINE_DRIVER_END
 
 /******************************************************************************/
@@ -3202,6 +3198,11 @@ static void tile_decode(int uses_5bpp_tiles)
 		offset++;
 	}
 	state_save_register_UINT32("f3", 0, "coinword", coin_word, 2);
+
+	/* Some games have been verified to be slower in Mame than the real boards
+        because of 68020 timing inaccuracies.  This compensates for that by overlocking
+        the emulated cpu */
+	cpunum_set_clockscale(0, 1.4f);
 }
 
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\

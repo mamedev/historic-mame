@@ -123,7 +123,7 @@ lev 7 : 0x7c : 0000 07e0 - input device clear?
 #include "sound/3812intf.h"
 
 static struct tilemap *tx_tilemap;
-data16_t *tx_vram;
+static data16_t *tx_vram;
 data16_t *slave_data;
 data16_t *com_ram;
 //static UINT16 mux_data;

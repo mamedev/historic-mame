@@ -1144,7 +1144,7 @@ MACHINE_DRIVER_END
 
 /*
 
-Final Tetris (unknown manufacturer)
+Final Tetris
 
 the pcb is korean and probably original even if it's very cheap.
 
@@ -1200,7 +1200,7 @@ static MACHINE_DRIVER_START( snowbro3 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 8500)
+	MDRV_SOUND_ADD(OKIM6295, 7575)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -1497,6 +1497,16 @@ ROM_START( snowbro3 )
 	ROM_LOAD( "us5",     0x00000, 0x20000, CRC(7c6368ef) SHA1(53393c570c605f7582b61c630980041e2ed32e2d) )
 	ROM_CONTINUE(0x80000,0x60000)
 ROM_END
+
+/*
+
+Information from Korean arcade gaming magazine
+
+name : Final Tetris
+author : Jeil computer system
+year : 1993.08.24
+
+*/
 
 ROM_START( finalttr )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
@@ -1983,4 +1993,4 @@ GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / E
 GAME( 1999, moremorp, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
 GAME( 1999, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" ) // original is 1999, bootleg 2002?
 GAMEX(2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "bootleg", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
-GAME( 199?, finalttr, 0,        finalttr, finalttr, 0,        ROT0, "unknown", "Final Tetris" )
+GAME( 1993, finalttr, 0,        finalttr, finalttr, 0,        ROT0, "Jeil Computer System", "Final Tetris" )

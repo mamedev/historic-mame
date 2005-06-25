@@ -81,7 +81,6 @@ typedef struct
 struct v60info {
 	struct cpu_info info;
 	UINT32 reg[68];
-	UINT32 tcb;
 	Flags flags;
 	int irq_line;
 	int nmi_line;
@@ -171,7 +170,6 @@ static int v60_ICount;
 #define ADTMR0	v60.reg[63]
 #define ADTMR1	v60.reg[64]
 //29-31 reserved
-#define TCB		v60.tcb
 
 // Register names
 const char *v60_reg_names[69] = {
@@ -191,27 +189,10 @@ const char *v60_reg_names[69] = {
 	"ATBR0", "ATLR0", "ATBR1", "ATLR1",
 	"ATBR2", "ATLR2", "ATBR3", "ATLR3",
 	"TRMODE", "ADTR0", "ADTR1","ADTMR0",
-	"ADTMR1","Reserved","Reserved","Reserved",
-	"TCB"
+	"ADTMR1","Reserved","Reserved","Reserved"
 };
 
 // Defines...
-#define UPDATEPSW()	\
-{ \
-  PSW &= 0xfffffff0; \
-  PSW |= (_Z?1:0) | (_S?2:0) | (_OV?4:0) | (_CY?8:0); \
-}
-
-#define UPDATECPUFLAGS() \
-{ \
-	_Z =  (UINT8)(PSW & 1); \
-	_S =  (UINT8)(PSW & 2); \
-	_OV = (UINT8)(PSW & 4); \
-	_CY = (UINT8)(PSW & 8); \
-}
-
-#define UPDATEFPUFLAGS()	{ }
-
 #define NORMALIZEFLAGS() \
 { \
 	_S	= _S  ? 1 : 0; \
@@ -222,43 +203,84 @@ const char *v60_reg_names[69] = {
 
 static void v60_try_irq(void);
 
-#define STACK_REG(IS,EL)	((IS)==0?37+(EL):36)
 
-static UINT32 v60ReadPSW(void)
+INLINE void v60SaveStack(void)
 {
-	v60.reg[STACK_REG((v60.reg[33]>>28)&1, (v60.reg[33]>>24)&3)] = SP;
-	UPDATEPSW();
+	if (PSW & 0x10000000)
+		ISP = SP;
+	else
+		v60.reg[37 + ((PSW >> 24) & 3)] = SP;
+}
+
+INLINE void v60ReloadStack(void)
+{
+	if (PSW & 0x10000000)
+		SP = ISP;
+	else
+		SP = v60.reg[37 + ((PSW >> 24) & 3)];
+}
+
+INLINE UINT32 v60ReadPSW(void)
+{
+	PSW &= 0xfffffff0;
+	PSW |= (_Z?1:0) | (_S?2:0) | (_OV?4:0) | (_CY?8:0);
 	return PSW;
 }
 
-static void v60ReloadStack(void)
+INLINE void v60WritePSW(UINT32 newval)
 {
-	SP = v60.reg[STACK_REG((v60.reg[33]>>28)&1, (v60.reg[33]>>24)&3)];
-}
+	/* determine if we need to save/restore the stacks */
+	int updateStack = 0;
 
-static void v60WritePSW(UINT32 newval)
-{
-	UINT32 oldval = v60ReadPSW();
-	int oldIS, newIS, oldEL, newEL;
+	/* if the interrupt state is changing, we definitely need to update */
+	if ((newval ^ PSW) & 0x10000000)
+		updateStack = 1;
 
+	/* if we are not in interrupt mode and the level is changing, we also must update */
+	else if (!(PSW & 0x10000000) && ((newval ^ PSW) & 0x03000000))
+		updateStack = 1;
+
+	/* save the previous stack value */
+	if (updateStack)
+		v60SaveStack();
+
+	/* set the new value and update the flags */
 	PSW = newval;
-	UPDATECPUFLAGS();
+	_Z =  (UINT8)(PSW & 1);
+	_S =  (UINT8)(PSW & 2);
+	_OV = (UINT8)(PSW & 4);
+	_CY = (UINT8)(PSW & 8);
 
-	// Now check if we must swap SP
-	oldIS = (oldval >> 28) & 1;
-	newIS = (newval >> 28) & 1;
-
-	oldEL = (oldval >> 24) & 3;
-	newEL = (newval >> 24) & 3;
-
-	if (oldIS != newIS)
-	{
-		v60.reg[STACK_REG(oldIS,oldEL)] = SP;
-		SP = v60.reg[STACK_REG(newIS,newEL)];
-	}
+	/* fetch the new stack value */
+	if (updateStack)
+		v60ReloadStack();
 }
+
+
+INLINE UINT32 v60_update_psw_for_exception(int is_interrupt, int target_level)
+{
+	UINT32 oldPSW = v60ReadPSW();
+	UINT32 newPSW = oldPSW;
+
+	// Change to interrupt context
+	newPSW &= ~(3 << 24);  // PSW.EL = 0
+	newPSW |= target_level << 24; // set target level
+	newPSW &= ~(1 << 18);  // PSW.IE = 0
+	newPSW &= ~(1 << 16);  // PSW.TE = 0
+	newPSW &= ~(1 << 27);  // PSW.TP = 0
+	newPSW &= ~(1 << 17);  // PSW.AE = 0
+	newPSW &= ~(1 << 29);  // PSW.EM = 0
+	if (is_interrupt)
+		newPSW |=  (1 << 28);// PSW.IS = 1
+	newPSW |=  (1 << 31);  // PSW.ASA = 1
+	v60WritePSW(newPSW);
+
+	return oldPSW;
+}
+
 
 #define GETINTVECT(nint)	MemRead32(SBR + (nint)*4)
+#define EXCEPTION_CODE_AND_SIZE(code, size)	(((code) << 16) | (size))
 
 
 // Addressing mode decoding functions
@@ -304,7 +326,6 @@ static void base_init(const char *type)
 	v60.nmi_line = CLEAR_LINE;
 
 	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 68);
-	state_save_register_UINT32(type, cpu, "tcb",      &v60.tcb, 1);
 	state_save_register_int   (type, cpu, "irq_line", &v60.irq_line);
 	state_save_register_int   (type, cpu, "nmi_line", &v60.nmi_line);
 	state_save_register_UINT32(type, cpu, "ppc",      &PPC, 1);
@@ -340,7 +361,6 @@ void v60_reset(void *param)
 	SYCW	= 0x00000070;
 	TKCW	= 0x0000e000;
 	PSW2	= 0x0000f002;
-	TCB     = 0x00000000;
 	ChangePC(PC);
 
 	_CY	= 0;
@@ -356,30 +376,13 @@ void v60_exit(void)
 
 static void v60_do_irq(int vector)
 {
-	UINT32 tempPSW;
-	UPDATEPSW();
-	tempPSW=PSW;
-
-	/* this is quite a horrible hack, if we do this then srmp7 breaks,
-       if we don't then ultrax/twineag2 are broken, a real fix is needed */
-	if (!strcmp(Machine->gamedrv->name,"ultrax") ||	// from Mame32Plus
-	    !strcmp(Machine->gamedrv->name,"twineag2"))
-		v60WritePSW(PSW|((1<<28)));
+	UINT32 oldPSW = v60_update_psw_for_exception(1, 0);
 
 	// Push PC and PSW onto the stack
 	SP-=4;
-	MemWrite32(SP, tempPSW);
+	MemWrite32(SP, oldPSW);
 	SP-=4;
 	MemWrite32(SP, PC);
-
-	// Change to interrupt context
-	PSW &= ~(3 << 24);  // PSW.EL = 0
-	PSW &= ~(1 << 18);  // PSW.IE = 0
-	PSW &= ~(1 << 16);  // PSW.TE = 0
-	PSW &= ~(1 << 27);  // PSW.TP = 0
-	PSW &= ~(1 << 17);  // PSW.AE = 0
-	PSW &= ~(1 << 29);  // PSW.EM = 0
-	PSW |=  (1 << 31);  // PSW.ASA = 1
 
 	// Jump to vector for user interrupt
 	PC = GETINTVECT(vector);
@@ -483,7 +486,7 @@ static UINT8 v60_reg_layout[] = {
 	V60_SBR, V60_ISP, -1,
 	V60_L0SP, V60_L1SP, -1,
 	V60_L2SP, V60_L3SP, -1,
-	V60_TCB, V60_PSW, 0
+	V60_PSW, 0
 };
 
 static UINT8 v60_win_layout[] = {
@@ -562,7 +565,7 @@ static void v60_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V60_FP:				FP = info->i;							break;
 		case CPUINFO_INT_REGISTER + V60_SP:				SP = info->i;							break;
 		case CPUINFO_INT_REGISTER + V60_PC:				PC = info->i;							break;
-		case CPUINFO_INT_REGISTER + V60_PSW:			PSW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V60_PSW:			v60WritePSW(info->i);					break;
 		case CPUINFO_INT_REGISTER + V60_ISP:			ISP = info->i;							break;
 		case CPUINFO_INT_REGISTER + V60_L0SP:			L0SP = info->i;							break;
 		case CPUINFO_INT_REGISTER + V60_L1SP:			L1SP = info->i;							break;
@@ -587,7 +590,6 @@ static void v60_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V60_ADTR1:			ADTR1 = info->i;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR0:			ADTMR0 = info->i;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR1:			ADTMR1 = info->i;						break;
-		case CPUINFO_INT_REGISTER + V60_TCB:			TCB = info->i;							break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					v60.irq_cb = info->irqcallback;			break;
@@ -665,7 +667,7 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V60_SP:				info->i = SP;							break;
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + V60_PC:				info->i = PC;							break;
-		case CPUINFO_INT_REGISTER + V60_PSW:			info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + V60_PSW:			info->i = v60ReadPSW();					break;
 		case CPUINFO_INT_REGISTER + V60_ISP:			info->i = ISP;							break;
 		case CPUINFO_INT_REGISTER + V60_L0SP:			info->i = L0SP;							break;
 		case CPUINFO_INT_REGISTER + V60_L1SP:			info->i = L1SP;							break;
@@ -690,7 +692,6 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V60_ADTR1:			info->i = ADTR1;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR0:			info->i = ADTMR0;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR1:			info->i = ADTMR1;						break;
-		case CPUINFO_INT_REGISTER + V60_TCB:			info->i = TCB;							break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = v60_set_info;			break;
@@ -749,7 +750,7 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + V60_FP:				sprintf(info->s = cpuintrf_temp_str(), "FP:%08X", FP); break;
 		case CPUINFO_STR_REGISTER + V60_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%08X", SP); break;
 		case CPUINFO_STR_REGISTER + V60_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%08X", PC); break;
-		case CPUINFO_STR_REGISTER + V60_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%08X", PSW); break;
+		case CPUINFO_STR_REGISTER + V60_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%08X", v60ReadPSW()); break;
 		case CPUINFO_STR_REGISTER + V60_ISP:			sprintf(info->s = cpuintrf_temp_str(), "ISP:%08X", ISP); break;
 		case CPUINFO_STR_REGISTER + V60_L0SP:			sprintf(info->s = cpuintrf_temp_str(), "L0SP:%08X", L0SP); break;
 		case CPUINFO_STR_REGISTER + V60_L1SP:			sprintf(info->s = cpuintrf_temp_str(), "L1SP:%08X", L1SP); break;
@@ -774,7 +775,6 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + V60_ADTR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTR1:%08X", ADTR1); break;
 		case CPUINFO_STR_REGISTER + V60_ADTMR0:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR0:%08X", ADTMR0); break;
 		case CPUINFO_STR_REGISTER + V60_ADTMR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR1:%08X", ADTMR1); break;
-		case CPUINFO_STR_REGISTER + V60_TCB:			sprintf(info->s = cpuintrf_temp_str(), "TCB:%08X", TCB); break;
 	}
 }
 

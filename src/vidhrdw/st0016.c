@@ -168,7 +168,7 @@ READ8_HANDLER(st0016_dma_r)
 {
 	/* bits 0 and 1 = 0 -> DMA transfer complete */
 	if(ISMACS)
-		return rand();
+		return 0;
 	else
 		return 0;
 }
@@ -296,7 +296,7 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
   	if(ISMACS)
   		y+=0x20;
 
-		if( st0016_spriteram[i+3]&0x80 ) /* end of list */
+		if( st0016_spriteram[i+3]&0x80) /* end of list */
 			break;
 
 		offset=st0016_spriteram[i+2]+256*(st0016_spriteram[i+3]);
@@ -362,6 +362,17 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 
 									if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) )
 									{
+										/*Quick and dirty kludge to get past the booting tests in yuka*/
+										#if 0
+										if(st0016_spriteram[offset+5]&0x20)
+										{
+											#ifdef MAME_DEBUG
+											usrintf_showmessage("sprite bit activated");
+											#endif
+											break;
+										}
+										#endif
+
 										if(st0016_spriteram[offset+5]&0x40)
 											destline[drawxpos] |= pixdata<<4;
 										else
@@ -380,7 +391,6 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 			}
 		}
 	}
-
 }
 
 WRITE8_HANDLER(st0016_rom_bank_w);
@@ -454,7 +464,7 @@ VIDEO_START( st0016 )
 		break;
 
 		case 10:
-			set_visible_area(0,383,0,319);
+			set_visible_area(0,383,0,255);
 		break;
 
 		default:

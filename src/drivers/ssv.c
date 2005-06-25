@@ -32,7 +32,7 @@ STA-0001B   VISCO-001B  94  Drift Out '94                           Visco
 STA-0001B   GOLF ROM    94  Eagle Shot Golf                         Sammy
 STA-0001B   ?           94  Twin Eagle II - The Rescue Mission      Seta
 STA-0001B   P1-102A     95  Mahjong Hyper Reaction                  Sammy
-?           ?           95  Ultra X Weapons / Ultra Keibitai    Banpresto + Tsuburaya Prod.
+?           ?           95  Ultra X Weapons / Ultra Keibitai        Banpresto + Tsuburaya Prod.
 STA-0001B   VISCO-JJ1   96  Lovely Pop Mahjong Jan Jan Shimasyo     Visco
 STA-0001B   VISCO-001B  96  Storm Blade                             Visco
 STA-0001B   P1-105A     96? Meosis Magic                            Sammy
@@ -93,8 +93,7 @@ To Do:
             0x482040 - 0x482043 - write latch ?
 
      R:
-            0x482022 - 0x482023 - result = direction ,
-                                                        probably : 00 = down, 40 = left, 80 = up, c0 = right
+            0x482022 - 0x482023 - result = direction, probably : 00 = down, 40 = left, 80 = up, c0 = right
             0x482042 - 0x482043 - protection status bits ?
 
 ***************************************************************************/
@@ -309,7 +308,7 @@ static WRITE16_HANDLER( dsp_w )
 
 ***************************************************************************/
 
-//static READ16_HANDLER( fake_r )   {   return ssv_scroll[offset];  }
+static READ16_HANDLER( fake_r )   {   return ssv_scroll[offset];  }
 
 #define SSV_READMEM( _ROM  )										\
 	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_RAM				)	/*  RAM     */	\
@@ -327,7 +326,7 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*  Sound   */	\
 	AM_RANGE(0x482000, 0x482fff) AM_READWRITE(MRA16_RAM, dsp_w) AM_BASE(&dsp_ram)   \
 	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*  ROM     */	    \
-//AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
+AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
 
 #define SSV_WRITEMEM														                                \
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_mainram)                    /* RAM */     \
@@ -341,7 +340,7 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w )                                 /* IRQ Ack */     \
 	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w)                               /* IRQ Enable */  \
 	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w)                           /* Sound */       \
-//AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
+AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
 
 
 static data16_t *ssv_input_sel;
@@ -751,6 +750,87 @@ static ADDRESS_MAP_START( gdfs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
+/***************************************************************************
+  Eagle Shot Golf
+***************************************************************************/
+
+static data8_t trackball_select, gfxrom_select;
+
+static READ16_HANDLER( eaglshot_gfxrom_r )
+{
+	UINT8 *rom	=	memory_region(REGION_GFX1);
+	size_t size	=	memory_region_length(REGION_GFX1);
+
+	offset = offset * 2 + gfxrom_select * 0x200000;
+
+	if (offset > size)
+		return 0xffff;
+
+	return rom[offset] + (rom[offset+1]<<8);
+}
+
+static WRITE16_HANDLER( eaglshot_gfxrom_w )
+{
+	if (ACCESSING_LSB)
+		gfxrom_select = data;
+}
+
+static READ16_HANDLER( eaglshot_trackball_r )
+{
+	switch(trackball_select)
+	{
+		case 0x60:	return (readinputport(5) >> 8) & 0xff;
+		case 0x40:	return (readinputport(5) >> 0) & 0xff;
+
+		case 0x70:	return (readinputport(6) >> 8) & 0xff;
+		case 0x50:	return (readinputport(6) >> 0) & 0xff;
+	}
+	return 0;
+}
+
+static WRITE16_HANDLER( eaglshot_trackball_w )
+{
+	if (ACCESSING_LSB)
+		trackball_select = data;
+}
+
+
+
+static READ16_HANDLER( eaglshot_gfxram_r )
+{
+	return eaglshot_gfxram[offset + (ssv_scroll[0x76/2] & 0xf) * 0x40000/2];
+}
+
+static WRITE16_HANDLER( eaglshot_gfxram_w )
+{
+	offset += (ssv_scroll[0x76/2] & 0xf) * 0x40000/2;
+	COMBINE_DATA(&eaglshot_gfxram[offset]);
+
+	eaglshot_dirty = 1;
+	eaglshot_dirty_tile[offset / (16*8/2)] = 1;
+}
+
+
+static ADDRESS_MAP_START( eaglshot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x180000, 0x1bffff) AM_READ(eaglshot_gfxram_r		)
+	AM_RANGE(0x210000, 0x210001) AM_READ(/*watchdog_reset16_r*/MRA16_NOP		)	// Watchdog
+	AM_RANGE(0xa00000, 0xbfffff) AM_READ(eaglshot_gfxrom_r		)
+	AM_RANGE(0xc00000, 0xc007ff) AM_READ(MRA16_RAM				)	// NVRAM
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(eaglshot_trackball_r	)
+	SSV_READMEM( 0xf00000 )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( eaglshot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x180000, 0x1bffff) AM_WRITE(eaglshot_gfxram_w		)
+//  AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP             )   // ? 0,4 at the start
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w		)	// Inverted lockout lines
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(eaglshot_gfxrom_w		)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(eaglshot_trackball_w	)
+	AM_RANGE(0xc00000, 0xc007ff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
+	SSV_WRITEMEM
+ADDRESS_MAP_END
+
+
 
 /***************************************************************************
 
@@ -925,13 +1005,11 @@ INPUT_PORTS_END
 
 /***************************************************************************
                                 Eagle Shot Golf
-
-                Place holder for corrected dip switch settings
 ***************************************************************************/
 
 INPUT_PORTS_START( eaglshot )
 	PORT_START	// IN0 - $210002
-	PORT_DIPNAME( 0x000f, 0x0009, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_1C ) )
@@ -954,10 +1032,10 @@ INPUT_PORTS_START( eaglshot )
 	PORT_DIPSETTING(      0x0001, "Multiple Coin Feature E" )
 // 1c-1c, 2c-3c
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Discount to Continue" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) ) // 2 Coins to start, 1 to continue
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Controls ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Credits To Start" )
+	PORT_DIPSETTING(      0x0010, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Controls ) )	// trackball dosn't work yet
 	PORT_DIPSETTING(      0x0020, DEF_STR( Trackball ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Joystick ) )
 	PORT_DIPNAME( 0x0040, 0x0040, "Trackball Type" )
@@ -968,11 +1046,11 @@ INPUT_PORTS_START( eaglshot )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START	// IN1 - $210004
-	PORT_DIPNAME( 0x0003, 0x0003, "Number of Holes" )
-	PORT_DIPSETTING(      0x0002, "2 Holes" )
-	PORT_DIPSETTING(      0x0003, "3 Holes" )
-	PORT_DIPSETTING(      0x0001, "4 Holes" )
-	PORT_DIPSETTING(      0x0000, "5 Holes" )
+	PORT_DIPNAME( 0x0003, 0x0003, "Number Of Holes" )
+	PORT_DIPSETTING(      0x0002, "2" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0001, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) ) // No listed value for ON & ON
 	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
@@ -990,7 +1068,7 @@ INPUT_PORTS_START( eaglshot )
 
 	PORT_START	// IN2 - $210008
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
@@ -1000,7 +1078,7 @@ INPUT_PORTS_START( eaglshot )
 
 	PORT_START	// IN3 - $21000a
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
@@ -1009,11 +1087,19 @@ INPUT_PORTS_START( eaglshot )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
 
 	PORT_START	// IN4 - $21000c
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(10)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(10)
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW,  IPT_COIN1 ) PORT_IMPULSE(10)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW,  IPT_COIN2 ) PORT_IMPULSE(10)
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_TILT     )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
 	PORT_BIT(  0x00f0, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+
+	PORT_START	// IN5 - trackball x ($d00000)
+    PORT_BIT( 0x0fff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_RESET PORT_PLAYER(1)
+
+	PORT_START	// IN6 - trackball y ($d00000)
+    PORT_BIT( 0x0fff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_RESET PORT_PLAYER(1)
+
 INPUT_PORTS_END
 
 
@@ -2808,7 +2894,7 @@ static struct GfxLayout layout_16x8x6_2 =
 	16,8,
 	RGN_FRAC(1,1),
 	6,
-	{	STEP8(0,1)		},
+	{	2,3,4,5,6,7		},
 	{	STEP16(0,8)		},
 	{	STEP8(0,16*8)	},
 	16*8*8
@@ -2862,7 +2948,8 @@ void init_ssv(void)
 								( (i & 1) ? (8 << 16) : 0 ) ;
 	ssv_enable_video(1);
 	ssv_special = 0;
-	interrupt_ultrax=0;
+	interrupt_ultrax = 0;
+	eaglshot_dirty = 0;
 }
 
 void hypreac2_init(void)
@@ -2880,8 +2967,11 @@ DRIVER_INIT( drifto94 )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
 DRIVER_INIT( eaglshot )		{	init_ssv();
-								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
-								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef; }
+								eaglshot_gfxram = (data16_t*)auto_malloc(16 * 0x40000);
+								eaglshot_dirty_tile = (char*)auto_malloc(16 * 0x40000 / (16*8));
+								hypreac2_init();
+								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
+								ssv_tilemap_offsx = 0;	ssv_tilemap_offsy = -0xef; }
 DRIVER_INIT( hypreact )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf7;	}
@@ -2918,14 +3008,13 @@ DRIVER_INIT( stmblade )		{	init_ssv();
 DRIVER_INIT( survarts )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-DRIVER_INIT( dynagear )		{	init_ssv(); ssv_special = 3;
+DRIVER_INIT( dynagear )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xec;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xec;	}
 DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( sxyreac2 )		{	hypreac2_init();
-								ssv_special=4;
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
@@ -2934,7 +3023,7 @@ DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
 DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = 0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
-DRIVER_INIT( vasara )		{	init_ssv(); ssv_special = 2;
+DRIVER_INIT( vasara )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
 
@@ -3134,10 +3223,14 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( eaglshot )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(survarts)
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(eaglshot_readmem, eaglshot_writemem)
+
+	MDRV_NVRAM_HANDLER(ssv)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 8, 0xe8-1)
 	MDRV_GFXDECODE(eaglshot_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -3400,7 +3493,6 @@ ROM_END
 /***************************************************************************
 
                         Eagle Shot Golf
-Eagle Shot Golf
 Sammy, 1994
 
 Lower PCB
@@ -3437,14 +3529,21 @@ Chips of note:  mc14584b - Motorola HEX Schmitt Trigger
 
 This chip is used for the trackball trigger / reading / converting values
 
+----
+
+eaglshot and eaglshta differ by only 3 bytes:
+
+eaglshot  400: d4 05 f0 00 d4 05 f0 00 d4 05 f0 00 d4 05 f0 00
+eaglshta  400: 00 00 00 00 d4 05 f0 00 d4 05 f0 00 d4 05 f0 00
+
 ***************************************************************************/
 
 ROM_START( eaglshot )
 	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
-	ROM_LOAD16_BYTE( "si003-10.u20",  0x000001, 0x080000, CRC(c8872e48) SHA1(c8e1e712d5fa380f8fc1447502f21d2ae592811a) )
 	ROM_LOAD16_BYTE( "si003-09.u18",  0x000000, 0x080000, CRC(219c71ce) SHA1(4f8996b4c5b267a90073d67857358147732f8c0d) )
+	ROM_LOAD16_BYTE( "si003-10.u20",  0x000001, 0x080000, CRC(c8872e48) SHA1(c8e1e712d5fa380f8fc1447502f21d2ae592811a) )
 
-	ROM_REGION( 0x0c00000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x0c00000, REGION_GFX1, /*ROMREGION_DISPOSE*/0 )	/* Sprites - Read by the CPU */
 	ROM_LOAD( "si003-01.u13", 0x0000000, 0x200000, CRC(d7df0d52) SHA1(d7b79a186f4272334c2297666c52f32c05787c29) )
 	ROM_LOAD( "si003-02.u12", 0x0200000, 0x200000, CRC(92b4d50d) SHA1(9dc2f2961b088824d8370ac83dff796345fe4158) )
 	ROM_LOAD( "si003-03.u11", 0x0400000, 0x200000, CRC(6ede4012) SHA1(6663990c6ee8e500cb8c51ad2102761ee0b3351d) )
@@ -3468,10 +3567,10 @@ ROM_END
 
 ROM_START( eaglshta )
 	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
-	ROM_LOAD16_BYTE( "si003-10.prh",  0x000001, 0x080000, CRC(2060c304) SHA1(2ecd178ea6459b8aaac1fa499e7c91809cd22649) )
 	ROM_LOAD16_BYTE( "si003-09.prl",  0x000000, 0x080000, CRC(36989004) SHA1(115a8dd4d7c4b4e042d51f886a93613b1405603b) )
+	ROM_LOAD16_BYTE( "si003-10.prh",  0x000001, 0x080000, CRC(2060c304) SHA1(2ecd178ea6459b8aaac1fa499e7c91809cd22649) )
 
-	ROM_REGION( 0x0c00000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x0c00000, REGION_GFX1, /*ROMREGION_DISPOSE*/0 )	/* Sprites - Read by the CPU */
 	ROM_LOAD( "si003-01.u13", 0x0000000, 0x200000, CRC(d7df0d52) SHA1(d7b79a186f4272334c2297666c52f32c05787c29) )
 	ROM_LOAD( "si003-02.u12", 0x0200000, 0x200000, CRC(92b4d50d) SHA1(9dc2f2961b088824d8370ac83dff796345fe4158) )
 	ROM_LOAD( "si003-03.u11", 0x0400000, 0x200000, CRC(6ede4012) SHA1(6663990c6ee8e500cb8c51ad2102761ee0b3351d) )
@@ -4198,11 +4297,9 @@ SAM-5127
 */
 
 ROM_START( dynagear )
-	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
 	ROM_LOAD16_BYTE( "si002-prl.u4", 0x000000, 0x080000, CRC(71ba29c6) SHA1(ef43ab665daa4fc9ee01996d03f2f0b4c74c8435) )
 	ROM_LOAD16_BYTE( "si002-prh.u3", 0x000001, 0x080000, CRC(d0947a12) SHA1(95b54ed9dc51c952ad123103b8633a821cde05e9) )
-	ROM_LOAD16_BYTE( "si002-prl.u4", 0x100000, 0x080000, CRC(71ba29c6) SHA1(ef43ab665daa4fc9ee01996d03f2f0b4c74c8435) )
-	ROM_LOAD16_BYTE( "si002-prh.u3", 0x100001, 0x080000, CRC(d0947a12) SHA1(95b54ed9dc51c952ad123103b8633a821cde05e9) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "si002-01.u27", 0x0000000, 0x200000, CRC(0060a521) SHA1(10cdb967e6cb4fc7c23c1ac40b24e35262060f5c) )
@@ -4554,7 +4651,7 @@ Notes:
       All other ROMs are 8M/16M MaskROM (DIP42)
       Custom Seta ICs -
                        ST-0009 (QFP176)
-                       ST-0020 (QFP304, heaksinked)
+                       ST-0020 (QFP304, heatsinked)
 */
 
 ROM_START( gdfs )
@@ -4605,13 +4702,13 @@ GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",
 GAMEX( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
 GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
-GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )
+GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )
 GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                                 GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAMEX( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
@@ -4623,11 +4720,11 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",
 
 // Games not working properly:
 
-GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 
 //  Games not working at all:
 
-GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1997,  jsk,      0,        jsk,      janjans1, jsk,      ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1995,  gdfs,     0,        gdfs,     vasara2,  vasara,   ROT0,   "Banpresto",          "Mobile Suit Gundam Final Shooting",                GAME_NO_COCKTAIL | GAME_NOT_WORKING )

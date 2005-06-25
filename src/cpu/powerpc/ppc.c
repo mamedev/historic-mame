@@ -229,9 +229,10 @@ typedef struct {
 	int reserved;
 	UINT32 reserved_address;
 
-	int exception_pending;
+	int interrupt_pending;
 	int external_int;
 
+	int bus_freq_multiplier;
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
@@ -404,19 +405,19 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 					/* trigger interrupt */
 					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
-				DEC = value;
+				DEC = value * (ppc.bus_freq_multiplier * 2);
 				return;
 
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
 				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= ((UINT64) value) << 0;
+				ppc.tb |= ((UINT64) value*4) << 0;
 				return;
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
 				ppc.tb &= U64(0x00000000ffffffff);
-				ppc.tb |= ((UINT64) value) << 32;
+				ppc.tb |= ((UINT64) value*4) << 32;
 				return;
 
 			case SPR603E_HID0:
@@ -584,11 +585,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR603E_TBL_W:		return (ppc.tb & 0xffffffff);
-			case SPR603E_TBU_W:		return ((ppc.tb >> 32) & 0xffffffff);
+			case SPR603E_TBL_W:		return ((ppc.tb / 4) & 0xffffffff);
+			case SPR603E_TBU_W:		return (((ppc.tb / 4) >> 32) & 0xffffffff);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
-			case SPR603E_DEC:		return DEC;
+			case SPR603E_DEC:		return DEC / (ppc.bus_freq_multiplier * 2);
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
@@ -619,43 +620,9 @@ INLINE UINT32 ppc_get_spr(int spr)
 
 INLINE void ppc_set_msr(UINT32 value)
 {
-	int i;
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
 	MSR = value;
-
-	if( value & MSR_EE ) {
-		/* check for pending interrupts */
-		for(i=0; i < 32; i++) {
-			if(ppc.exception_pending & (1 << i)) {
-				ppc.exception_pending &= ~(1 << i);
-#if (HAS_PPC603)
-				if(ppc.is603) {
-					ppc603_exception(i);
-				}
-#endif
-#if (HAS_PPC602)
-				if(ppc.is602) {
-					ppc602_exception(i);
-				}
-#endif
-#if (HAS_PPC403)
-				if(!ppc.is602 && !ppc.is603) {
-					if (i == EXCEPTION_IRQ)
-					{
-						if (EXIER & ppc.external_int)
-							ppc403_exception(i);
-					}
-					else
-					{
-					ppc403_exception(i);
-				}
-				}
-#endif
-				break;
-			}
-		}
-	}
 }
 
 INLINE UINT32 ppc_get_msr(void)
@@ -757,11 +724,14 @@ INLINE void WRITE8(UINT32 a, UINT8 d)
 
 #if HAS_PPC403
 	if( a >= 0x40000000 && a <= 0x4000000f )		/* Serial Port */
+	{
 		ppc403_spu_w(a, d);
+		return;
+	}
 #endif
 
-		program_write_byte_32be(a, d);
-	}
+	program_write_byte_32be(a, d);
+}
 
 INLINE void WRITE16(UINT32 a, UINT16 d)
 {

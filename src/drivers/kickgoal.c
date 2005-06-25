@@ -2,7 +2,7 @@
 
 
 Kick Goal (c)1995 TCH
-Hollywood Action (c)1995 TCH
+Action Hollywood (c)1995 TCH
 
  prelim driver by David Haywood
 
@@ -16,8 +16,7 @@ Sound - Not possible without PIC dump?
 Should the screen size really be doubled in kickgoal or should the fg tiles be 8bpp instead
 because otherwise these don't seem much like the same hardware..
 
-you get 64 credits in hwaction (eeprom bug?)
-service mode doesn't work in hwaction (reads from unmapped memory, probably a mirror of something)
+Both games have problems with the Eeprom (settings are not saved)
 
 
 */
@@ -36,9 +35,82 @@ lev 7 : 0x7c : 0000 0000 - x
 */
 
 #include "driver.h"
+#include "cpu/pic16c5x/pic16c5x.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "sound/okim6295.h"
+
+/**************************************************************************
+   This table converts commands sent from the main CPU, into sample numbers
+   played back by the sound processor.
+   All commentry and most sound effects are correct, however the music
+   tracks may be playing at the wrong times.
+   Accordingly, the commands for playing the below samples is just a guess:
+   1A, 1B, 1C, 1D, 1E, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 6A, 6B, 6C
+   Note: that samples 60, 61 and 62 combine to form a music track.
+   Ditto for samples 65, 66, 67 and 68.
+*/
+
+static const data8_t kickgoal_cmd_snd[128] =
+{
+/*00*/	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+/*08*/	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x70, 0x71,
+/*10*/	0x72, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14,
+/*18*/	0x15, 0x16, 0x17, 0x18, 0x19, 0x73, 0x74, 0x75,
+/*20*/	0x76, 0x1a, 0x1b, 0x1c, 0x1d, 0x00, 0x1f, 0x6c,
+/*28*/  0x1e, 0x65, 0x00, 0x00, 0x60, 0x20, 0x69, 0x65,
+/*30*/	0x00, 0x00, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+/*38*/	0x29, 0x2a, 0x2b, 0x00, 0x6b, 0x00, 0x00, 0x00
+};
+
+/* Sound numbers in the sample ROM
+01 Melody A     Bank 0
+02 Melody B     Bank 0
+03 Melody C     Bank 1
+04 Melody D     Bank 1
+05 Melody E     Bank 2
+06 Melody F     Bank 2
+
+20 Kick
+21 Kick (loud)
+22 Bounce
+23 Bounce (loud)
+24 Hit post
+25 Close door
+26 Gunshot
+27 "You've scored!"
+28 "Goal"
+29 "Goal" (loud)
+2a Kick (loud)
+2b Throw ball
+2c Coin
+2d Crowd
+2e Crowd (loud)
+2f 27 - 29
+30 Goal (in room?)
+31 2B - 2D
+32 2D - 2E
+33 Crowd (short)
+34 Crowd (shortest)
+
+****************************************************************
+Hollywood Action
+
+01-19 Samples
+21-26 Melodies Bank 0
+41-48 Melodies Bank 1
+61-63 Melodies Bank 2
+
+*/
+
+
+#define oki_time_base 0x08
+
+static int kickgoal_sound;
+static int kickgoal_melody;
+static int kickgoal_melody_loop;
+static int kickgoal_snd_bank;
+static int snd_new, snd_sam[4];
 
 
 data16_t *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
@@ -50,36 +122,351 @@ WRITE16_HANDLER( kickgoal_bg2ram_w );
 VIDEO_START( kickgoal );
 VIDEO_UPDATE( kickgoal );
 
-VIDEO_START( hwaction );
-VIDEO_UPDATE( hwaction );
+VIDEO_START( actionhw );
+VIDEO_UPDATE( actionhw );
 
 
-
-static struct EEPROM_interface eeprom_interface =
+static void kickgoal_play(int melody, int data)
 {
-	6,				/* address bits */
-	16,				/* data bits */
-	"*110",			/*  read command */
-	"*101",			/* write command */
-	0,				/* erase command */
-	"*10000xxxx",	/* lock command */
-	"*10011xxxx"	/* unlock command */
-};
+	int status = OKIM6295_status_0_r(0);
 
-static NVRAM_HANDLER( kickgoal )
+	logerror("Playing sample %01x:%02x from command %02x\n",kickgoal_snd_bank,kickgoal_sound,data);
+	if (kickgoal_sound == 0) usrintf_showmessage("Unknown sound command %02x",kickgoal_sound);
+
+	if (melody) {
+		if (kickgoal_melody != kickgoal_sound) {
+			kickgoal_melody      = kickgoal_sound;
+			kickgoal_melody_loop = kickgoal_sound;
+			if (status & 0x08)
+				OKIM6295_data_0_w(0,0x40);
+			OKIM6295_data_0_w(0,(0x80 | kickgoal_melody));
+			OKIM6295_data_0_w(0,0x81);
+		}
+	}
+	else {
+		if ((status & 0x01) == 0) {
+		OKIM6295_data_0_w(0,(0x80 | kickgoal_sound));
+			OKIM6295_data_0_w(0,0x11);
+		}
+		else if ((status & 0x02) == 0) {
+		OKIM6295_data_0_w(0,(0x80 | kickgoal_sound));
+			OKIM6295_data_0_w(0,0x21);
+		}
+		else if ((status & 0x04) == 0) {
+		OKIM6295_data_0_w(0,(0x80 | kickgoal_sound));
+			OKIM6295_data_0_w(0,0x41);
+		}
+	}
+}
+
+WRITE16_HANDLER( kickgoal_snd_w )
 {
-	if (read_or_write) EEPROM_save(file);
-	else
+	if (ACCESSING_LSB)
 	{
-		EEPROM_init(&eeprom_interface);
-		if (file) EEPROM_load(file);
+		logerror("PC:%06x Writing %04x to Sound CPU\n",activecpu_get_previouspc(),data);
+		if (data >= 0x40) {
+			if (data == 0xfe) {
+				OKIM6295_data_0_w(0,0x40);	/* Stop playing the melody */
+				kickgoal_melody      = 0x00;
+				kickgoal_melody_loop = 0x00;
+			}
+			else {
+				logerror("Unknown command (%02x) sent to the Sound controller\n",data);
+			}
+		}
+		else if (data == 0) {
+			OKIM6295_data_0_w(0,0x38);		/* Stop playing effects */
+		}
+		else {
+			kickgoal_sound = kickgoal_cmd_snd[data];
+
+			if (kickgoal_sound >= 0x70) {
+				if (kickgoal_snd_bank != 1)
+					OKIM6295_set_bank_base(0, (1 * 0x40000));
+				kickgoal_snd_bank = 1;
+				kickgoal_play(0, data);
+			}
+			else if (kickgoal_sound >= 0x69) {
+				if (kickgoal_snd_bank != 2)
+					OKIM6295_set_bank_base(0, (2 * 0x40000));
+				kickgoal_snd_bank = 2;
+				kickgoal_play(4, data);
+			}
+			else if (kickgoal_sound >= 0x65) {
+				if (kickgoal_snd_bank != 1)
+					OKIM6295_set_bank_base(0, (1 * 0x40000));
+				kickgoal_snd_bank = 1;
+				kickgoal_play(4, data);
+			}
+			else if (kickgoal_sound >= 0x60) {
+				kickgoal_snd_bank = 0;
+					OKIM6295_set_bank_base(0, (0 * 0x40000));
+				kickgoal_snd_bank = 0;
+				kickgoal_play(4, data);
+			}
+			else {
+				kickgoal_play(0, data);
+			}
+		}
+	}
+}
+
+WRITE16_HANDLER( actionhw_snd_w )
+{
+	logerror("PC:%06x Writing %04x to Sound CPU - mask %04x\n",activecpu_get_previouspc(),data,mem_mask);
+
+	if (!ACCESSING_LSB) data >>= 8;
+
+	switch (data)
+	{
+		case 0xfc:	OKIM6295_set_bank_base(0, (0 * 0x40000)); break;
+		case 0xfd:	OKIM6295_set_bank_base(0, (2 * 0x40000)); break;
+		case 0xfe:	OKIM6295_set_bank_base(0, (1 * 0x40000)); break;
+		case 0xff:	OKIM6295_set_bank_base(0, (3 * 0x40000)); break;
+		case 0x78:	OKIM6295_data_0_w(0,data);
+					snd_sam[0]=00; snd_sam[1]=00; snd_sam[2]=00; snd_sam[3]=00;
+					break;
+		default:	if (snd_new) /* Play new sample */
+					{
+						if ((data & 0x80) && (snd_sam[3] != snd_new))
+						{
+							logerror("About to play sample %02x at vol %02x\n",snd_new,data);
+							if ((OKIM6295_status_0_r(0) & 0x08) != 0x08)
+							{
+							logerror("Playing sample %02x at vol %02x\n",snd_new,data);
+								OKIM6295_data_0_w(0,snd_new);
+								OKIM6295_data_0_w(0,data);
+							}
+							snd_new = 00;
+						}
+						if ((data & 0x40) && (snd_sam[2] != snd_new))
+						{
+							logerror("About to play sample %02x at vol %02x\n",snd_new,data);
+							if ((OKIM6295_status_0_r(0) & 0x04) != 0x04)
+							{
+							logerror("Playing sample %02x at vol %02x\n",snd_new,data);
+								OKIM6295_data_0_w(0,snd_new);
+								OKIM6295_data_0_w(0,data);
+							}
+							snd_new = 00;
+						}
+						if ((data & 0x20) && (snd_sam[1] != snd_new))
+						{
+							logerror("About to play sample %02x at vol %02x\n",snd_new,data);
+							if ((OKIM6295_status_0_r(0) & 0x02) != 0x02)
+							{
+							logerror("Playing sample %02x at vol %02x\n",snd_new,data);
+								OKIM6295_data_0_w(0,snd_new);
+								OKIM6295_data_0_w(0,data);
+							}
+							snd_new = 00;
+						}
+						if ((data & 0x10) && (snd_sam[0] != snd_new))
+						{
+							logerror("About to play sample %02x at vol %02x\n",snd_new,data);
+							if ((OKIM6295_status_0_r(0) & 0x01) != 0x01)
+							{
+							logerror("Playing sample %02x at vol %02x\n",snd_new,data);
+								OKIM6295_data_0_w(0,snd_new);
+								OKIM6295_data_0_w(0,data);
+							}
+							snd_new = 00;
+						}
+						break;
+					}
+					else if (data > 0x80) /* New sample command */
+					{
+						logerror("Next sample %02x\n",data);
+						snd_new = data;
+						break;
+					}
+					else /* Turn a channel off */
+					{
+						logerror("Turning channel %02x off\n",data);
+						OKIM6295_data_0_w(0,data);
+						if (data & 0x40) snd_sam[3] = 00;
+						if (data & 0x20) snd_sam[2] = 00;
+						if (data & 0x10) snd_sam[1] = 00;
+						if (data & 0x08) snd_sam[0] = 00;
+						snd_new = 00;
+						break;
+					}
 	}
 }
 
 
+
+
+static int m6295_comm;
+static int m6295_bank;
+static UINT16 m6295_key_delay;
+static INTERRUPT_GEN( kickgoal_interrupt )
+{
+	if ((OKIM6295_status_0_r(0) & 0x08) == 0)
+	{
+		switch(kickgoal_melody_loop)
+		{
+			case 0x060:	kickgoal_melody_loop = 0x061; break;
+			case 0x061:	kickgoal_melody_loop = 0x062; break;
+			case 0x062:	kickgoal_melody_loop = 0x060; break;
+
+			case 0x065:	kickgoal_melody_loop = 0x165; break;
+			case 0x165:	kickgoal_melody_loop = 0x265; break;
+			case 0x265:	kickgoal_melody_loop = 0x365; break;
+			case 0x365:	kickgoal_melody_loop = 0x066; break;
+			case 0x066:	kickgoal_melody_loop = 0x067; break;
+			case 0x067:	kickgoal_melody_loop = 0x068; break;
+			case 0x068:	kickgoal_melody_loop = 0x065; break;
+
+			case 0x063:	kickgoal_melody_loop = 0x063; break;
+			case 0x064:	kickgoal_melody_loop = 0x064; break;
+			case 0x069:	kickgoal_melody_loop = 0x069; break;
+			case 0x06a:	kickgoal_melody_loop = 0x06a; break;
+			case 0x06b:	kickgoal_melody_loop = 0x06b; break;
+			case 0x06c:	kickgoal_melody_loop = 0x06c; break;
+
+			default:	kickgoal_melody_loop = 0x00; break;
+		}
+
+		if (kickgoal_melody_loop)
+		{
+//          logerror("Changing to sample %02x\n",kickgoal_melody_loop);
+			OKIM6295_data_0_w(0,((0x80 | kickgoal_melody_loop) & 0xff));
+			OKIM6295_data_0_w(0,0x81);
+		}
+	}
+	if ( code_pressed_memory(KEYCODE_PGUP) )
+	{
+		if (m6295_key_delay >= (0x60 * oki_time_base))
+		{
+			m6295_bank += 0x01;
+			m6295_bank &= 0x03;
+			if (m6295_bank == 0x03) m6295_bank = 0x00;
+			usrintf_showmessage("Changing Bank to %02x",m6295_bank);
+			OKIM6295_set_bank_base(0, ((m6295_bank) * 0x40000));
+
+			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
+			else m6295_key_delay = (0x30 * oki_time_base);
+		}
+		else
+			m6295_key_delay += (0x01 * oki_time_base);
+	}
+	else if ( code_pressed_memory(KEYCODE_PGDN) )
+	{
+		if (m6295_key_delay >= (0x60 * oki_time_base))
+		{
+			m6295_bank -= 0x01;
+			m6295_bank &= 0x03;
+			if (m6295_bank == 0x03) m6295_bank = 0x02;
+			usrintf_showmessage("Changing Bank to %02x",m6295_bank);
+			OKIM6295_set_bank_base(0, ((m6295_bank) * 0x40000));
+
+			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
+			else m6295_key_delay = (0x30 * oki_time_base);
+		}
+		else
+			m6295_key_delay += (0x01 * oki_time_base);
+	}
+	else if ( code_pressed_memory(KEYCODE_INSERT) )
+	{
+		if (m6295_key_delay >= (0x60 * oki_time_base))
+		{
+			m6295_comm += 1;
+			m6295_comm &= 0x7f;
+			if (m6295_comm == 0x00) { OKIM6295_set_bank_base(0, (0 * 0x40000)); m6295_bank = 0; }
+			if (m6295_comm == 0x60) { OKIM6295_set_bank_base(0, (0 * 0x40000)); m6295_bank = 0; }
+			if (m6295_comm == 0x65) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
+			if (m6295_comm == 0x69) { OKIM6295_set_bank_base(0, (2 * 0x40000)); m6295_bank = 2; }
+			if (m6295_comm == 0x70) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
+			usrintf_showmessage("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
+
+			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
+			else m6295_key_delay = (0x5d * oki_time_base);
+		}
+		else
+			m6295_key_delay += (0x01 * oki_time_base);
+	}
+	else if ( code_pressed_memory(KEYCODE_DEL) )
+	{
+		if (m6295_key_delay >= (0x60 * oki_time_base))
+		{
+			m6295_comm -= 1;
+			m6295_comm &= 0x7f;
+			if (m6295_comm == 0x2b) { OKIM6295_set_bank_base(0, (0 * 0x40000)); m6295_bank = 0; }
+			if (m6295_comm == 0x64) { OKIM6295_set_bank_base(0, (0 * 0x40000)); m6295_bank = 0; }
+			if (m6295_comm == 0x68) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
+			if (m6295_comm == 0x6c) { OKIM6295_set_bank_base(0, (2 * 0x40000)); m6295_bank = 2; }
+			if (m6295_comm == 0x76) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
+			usrintf_showmessage("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
+
+			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
+			else m6295_key_delay = (0x5d * oki_time_base);
+		}
+		else
+			m6295_key_delay += (0x01 * oki_time_base);
+	}
+	else if ( code_pressed_memory(KEYCODE_Z) )
+	{
+		if (m6295_key_delay >= (0x80 * oki_time_base))
+		{
+			OKIM6295_data_0_w(0,0x78);
+			OKIM6295_data_0_w(0,(0x80 | m6295_comm));
+			OKIM6295_data_0_w(0,0x11);
+
+			usrintf_showmessage("Playing sound %02x on Bank %02x",m6295_comm,m6295_bank);
+
+			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
+			else m6295_key_delay = (0x60 * oki_time_base);
+		}
+		else
+			m6295_key_delay += (0x01 * oki_time_base);
+//      logerror("Sending %02x to the sound CPU\n",m6295_comm);
+	}
+	else m6295_key_delay = 0xffff;
+}
+
+
+static data8_t *kickgoal_default_eeprom;
+static int kickgoal_default_eeprom_length;
+
+static unsigned char kickgoal_default_eeprom_type1[128] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+
+static NVRAM_HANDLER( kickgoal )
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface_93C46);
+
+		if (file) EEPROM_load(file);
+		else
+		{
+			if (kickgoal_default_eeprom)	/* Sane Defaults */
+				EEPROM_set_data(kickgoal_default_eeprom,kickgoal_default_eeprom_length);
+		}
+	}
+}
+
+
+
 static READ16_HANDLER( kickgoal_eeprom_r )
 {
-	return EEPROM_read_bit();
+	if (ACCESSING_LSB)
+	{
+		return EEPROM_read_bit();
+	}
+	return 0;
 }
 
 
@@ -103,35 +490,40 @@ static WRITE16_HANDLER( kickgoal_eeprom_w )
 }
 
 
-/* Memory Maps ****************************************************************
+/* Memory Maps *****************************************************************/
 
-it doesn't seem able to read from fg/bg/spr/pal ram
-
-*/
-
-static ADDRESS_MAP_START( kickgoal_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( kickgoal_program_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+/// AM_RANGE(0x30001e, 0x30001f) AM_WRITE(kickgoal_snd_w)
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x900006, 0x900007) AM_READ(kickgoal_eeprom_r)
-	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00000, 0xc007ff) AM_READ(MRA16_RAM) // hwaction needs this
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( kickgoal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x800004, 0x800005) AM_WRITE(soundlatch_word_w)
+/// AM_RANGE(0x800004, 0x800005) AM_WRITE(soundlatch_word_w)
+	AM_RANGE(0x800004, 0x800005) AM_WRITE(actionhw_snd_w)
 	AM_RANGE(0x900000, 0x900005) AM_WRITE(kickgoal_eeprom_w)
-	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(kickgoal_fgram_w) AM_BASE(&kickgoal_fgram) /* FG Layer */
-	AM_RANGE(0xa04000, 0xa07fff) AM_WRITE(kickgoal_bgram_w) AM_BASE(&kickgoal_bgram) /* Higher BG Layer */
-	AM_RANGE(0xa08000, 0xa0bfff) AM_WRITE(kickgoal_bg2ram_w) AM_BASE(&kickgoal_bg2ram) /* Lower BG Layer */
-	AM_RANGE(0xa0c000, 0xa0ffff) AM_WRITE(MWA16_RAM) // more tilemap?
+	AM_RANGE(0x900006, 0x900007) AM_READ(kickgoal_eeprom_r)
+	AM_RANGE(0xa00000, 0xa03fff) AM_READWRITE(MRA16_RAM, kickgoal_fgram_w) AM_BASE(&kickgoal_fgram) /* FG Layer */
+	AM_RANGE(0xa04000, 0xa07fff) AM_READWRITE(MRA16_RAM, kickgoal_bgram_w) AM_BASE(&kickgoal_bgram) /* Higher BG Layer */
+	AM_RANGE(0xa08000, 0xa0bfff) AM_READWRITE(MRA16_RAM, kickgoal_bg2ram_w) AM_BASE(&kickgoal_bg2ram) /* Lower BG Layer */
+	AM_RANGE(0xa0c000, 0xa0ffff) AM_READWRITE(MRA16_RAM, MWA16_RAM) // more tilemap?
 	AM_RANGE(0xa10000, 0xa1000f) AM_WRITE(MWA16_RAM) AM_BASE(&kickgoal_scrram) /* Scroll Registers */
 	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Sprites */
-	AM_RANGE(0xc00000, 0xc007ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16) /* Palette */
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xc00000, 0xc007ff) AM_READWRITE(MRA16_RAM, paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16) /* Palette */ // actionhw reads this
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
+
+/***************************** PIC16C57 Memory Map **************************/
+
+	/* $000 - 7FF  PIC16C57 Internal Program ROM. Note: code is 12bits wide */
+	/* $000 - 07F  PIC16C57 Internal Data RAM */
+
+static ADDRESS_MAP_START( kickgoal_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	/* Unknown without the PIC dump */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( actionhw_io_map, ADDRESS_SPACE_IO, 8 )
+	/* Unknown without the PIC dump */
+ADDRESS_MAP_END
+
 
 /* INPUT ports ***************************************************************/
 
@@ -225,7 +617,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout hwaction_fg88_alt_charlayout =
+static struct GfxLayout actionhw_fg88_alt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -237,7 +629,7 @@ static struct GfxLayout hwaction_fg88_alt_charlayout =
 };
 
 
-static struct GfxLayout hwaction_bg1616_charlayout =
+static struct GfxLayout actionhw_bg1616_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -251,10 +643,10 @@ static struct GfxLayout hwaction_bg1616_charlayout =
 
 
 
-static struct GfxDecodeInfo hwaction_gfxdecodeinfo[] =
+static struct GfxDecodeInfo actionhw_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &hwaction_fg88_alt_charlayout,   0x000, 0x40 },
-	{ REGION_GFX1, 0, &hwaction_bg1616_charlayout,  0x000, 0x40 },
+	{ REGION_GFX1, 0, &actionhw_fg88_alt_charlayout,   0x000, 0x40 },
+	{ REGION_GFX1, 0, &actionhw_bg1616_charlayout,  0x000, 0x40 },
 	{ -1 } /* end of array */
 };
 
@@ -266,10 +658,14 @@ static MACHINE_DRIVER_START( kickgoal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
-	MDRV_CPU_PROGRAM_MAP(kickgoal_readmem,kickgoal_writemem)
+	MDRV_CPU_PROGRAM_MAP(kickgoal_program_map, 0)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(kickgoal_interrupt, 240)
 
-	/* pic16c57? */
+	MDRV_CPU_ADD(PIC16C57, ((12000000/4)/PIC16C5x_CLOCK_DIVIDER))	/* 3MHz ? */
+	MDRV_CPU_FLAGS(CPU_DISABLE)	/* Disables since the internal rom isn't dumped */
+	/* Program and Data Maps are internal to the MCU */
+	MDRV_CPU_IO_MAP(kickgoal_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -288,17 +684,22 @@ static MACHINE_DRIVER_START( kickgoal )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-//  MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, 12000000/8/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( hwaction )
+static MACHINE_DRIVER_START( actionhw )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
-	MDRV_CPU_PROGRAM_MAP(kickgoal_readmem,kickgoal_writemem)
+	MDRV_CPU_PROGRAM_MAP(kickgoal_program_map, 0)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	/* pic16c57? */
+	MDRV_CPU_ADD(PIC16C57, ((12000000/4)/PIC16C5x_CLOCK_DIVIDER))	/* 3MHz ? */
+	MDRV_CPU_FLAGS(CPU_DISABLE) /* Disables since the internal rom isn't dumped */
+	/* Program and Data Maps are internal to the MCU */
+	MDRV_CPU_IO_MAP(actionhw_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -308,16 +709,18 @@ static MACHINE_DRIVER_START( hwaction )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(10*8+2, 54*8-1+2, 2*8, 30*8-1)
-	MDRV_GFXDECODE(hwaction_gfxdecodeinfo)
+	MDRV_VISIBLE_AREA(10*8+2, 54*8-1+2, 0*8, 30*8-1)
+	MDRV_GFXDECODE(actionhw_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(hwaction)
-	MDRV_VIDEO_UPDATE(hwaction)
+	MDRV_VIDEO_START(actionhw)
+	MDRV_VIDEO_UPDATE(actionhw)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-//  MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, 12000000/8/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -329,7 +732,8 @@ ROM_START( kickgoal )
 	ROM_LOAD16_BYTE( "ic6",   0x000000, 0x40000, CRC(498ca792) SHA1(c638c3a1755870010c5961b58bcb02458ff4e238) )
 	ROM_LOAD16_BYTE( "ic5",   0x000001, 0x40000, CRC(d528740a) SHA1(d56a71004aabc839b0833a6bf383e5ef9d4948fa) )
 
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound? (missing) */
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound? (missing) */
+	/* Remove the CPU_DISABLED flag in MACHINE_DRIVER when the rom is dumped */
 	ROM_LOAD( "pic16c57",     0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -338,16 +742,24 @@ ROM_START( kickgoal )
 	ROM_LOAD( "ic35",   0x100000, 0x80000, CRC(ea010563) SHA1(5e474db372550e9d33f933ab00881a9b29a712d1) )
 	ROM_LOAD( "ic36",   0x180000, 0x80000, CRC(b6a86860) SHA1(73ab43830d5e62154bc8953615cdb397c7a742aa) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "ic13",   0x00000, 0x080000, BAD_DUMP CRC(c6cb56e9) SHA1(835773b3f0647d3c553180bcf10e57ad44d68353) ) // BAD ADDRESS LINES (mask=010000)
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is the area that gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "ic13",        0x00000, 0x40000, BAD_DUMP CRC(c6cb56e9) SHA1(835773b3f0647d3c553180bcf10e57ad44d68353) ) // BAD ADDRESS LINES (mask=010000)
+	ROM_CONTINUE(            0x60000, 0x20000 )
+	ROM_CONTINUE(            0xa0000, 0x20000 )
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x40000, 0x20000)
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
+	ROM_COPY( REGION_SOUND1, 0x00000, 0xc0000, 0x20000)
 ROM_END
 
-ROM_START( holywact )
+ROM_START( actionhw )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "2.ic6",  0x000000, 0x80000, CRC(2b71d58c) SHA1(3e58531fa56d41a3c7944e3beab4850907564a89) )
 	ROM_LOAD16_BYTE( "1.ic5",  0x000001, 0x80000, CRC(136b9711) SHA1(553f9fdd99bb9ce2e1492d0755633075e59ba587) )
 
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound? (missing) */
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound? (missing) */
+	/* Remove the CPU_DISABLED flag in MACHINE_DRIVER when the rom is dumped */
 	ROM_LOAD( "pic16c57",     0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -360,20 +772,32 @@ ROM_START( holywact )
 	ROM_LOAD( "10.ic32", 0x300000, 0x80000, CRC(5ee5db3e) SHA1(c79f84548ce5311acac478c5180330bf56485863) )
 	ROM_LOAD( "11.ic36", 0x380000, 0x80000, CRC(8d376b1e) SHA1(37f16b3237d9813a8d153ab5640252e7643f3b99) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "3.ic13",   0x00000, 0x080000, CRC(b8f6705d) SHA1(55116e14aba6dac7334e26f704b3e6b0b9f856c2) )
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is the area that gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )    /* OKIM6295 samples */
+	ROM_LOAD( "3.ic13",      0x00000, 0x40000, CRC(b8f6705d) SHA1(55116e14aba6dac7334e26f704b3e6b0b9f856c2) )
+	ROM_CONTINUE(            0x60000, 0x20000 )
+	ROM_CONTINUE(            0xa0000, 0x20000 )
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x40000, 0x20000)
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
+	ROM_COPY( REGION_SOUND1, 0x00000, 0xc0000, 0x20000) /* Last bank used in Test Mode */
 ROM_END
 
 /* GAME drivers **************************************************************/
 
 DRIVER_INIT( kickgoal )
 {
+#if 0 /* we should find a real fix instead  */
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	/* fix "bug" that prevents game from writing to EEPROM */
 	rom[0x12b0/2] = 0x0001;
+#endif
+
+	kickgoal_default_eeprom = kickgoal_default_eeprom_type1;
+	kickgoal_default_eeprom_length = sizeof(kickgoal_default_eeprom_type1);
 }
 
 
 GAMEX( 1995, kickgoal,0, kickgoal, kickgoal, kickgoal, ROT0, "TCH", "Kick Goal", GAME_NO_SOUND )
-GAMEX( 1995, holywact,0, hwaction, kickgoal, 0, ROT0, "TCH", "Hollywood Action", GAME_NO_SOUND )
+GAMEX( 1995, actionhw,0, actionhw, kickgoal, kickgoal, ROT0, "TCH", "Action Hollywood", GAME_IMPERFECT_SOUND )

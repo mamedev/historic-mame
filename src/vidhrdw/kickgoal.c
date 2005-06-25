@@ -158,7 +158,7 @@ VIDEO_UPDATE( kickgoal )
 /* Holywood Action */
 
 /* FG */
-static void get_hwaction_fg_tile_info(int tile_index)
+static void get_actionhw_fg_tile_info(int tile_index)
 {
 	int tileno = kickgoal_fgram[tile_index*2] & 0x0fff;
 	int color = kickgoal_fgram[tile_index*2+1] & 0x000f;
@@ -167,7 +167,7 @@ static void get_hwaction_fg_tile_info(int tile_index)
 }
 
 /* BG */
-static void get_hwaction_bg_tile_info(int tile_index)
+static void get_actionhw_bg_tile_info(int tile_index)
 {
 	int tileno = kickgoal_bgram[tile_index*2] & 0x1fff;
 	int color = kickgoal_bgram[tile_index*2+1] & 0x000f;
@@ -178,7 +178,7 @@ static void get_hwaction_bg_tile_info(int tile_index)
 }
 
 /* BG 2 */
-static void get_hwaction_bg2_tile_info(int tile_index)
+static void get_actionhw_bg2_tile_info(int tile_index)
 {
 	int tileno = kickgoal_bg2ram[tile_index*2] & 0x1fff;
 	int color = kickgoal_bg2ram[tile_index*2+1] & 0x000f;
@@ -189,30 +189,30 @@ static void get_hwaction_bg2_tile_info(int tile_index)
 }
 
 
-static UINT32 tilemap_scan_hwactionbg2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 tilemap_scan_actionhwbg2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	/* logical (col,row) -> memory offset */
 	return col*16 + (row & 0xf) + ((row & 0x70) >> 4) * 0x400;
 }
 
-static UINT32 tilemap_scan_hwactionbg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 tilemap_scan_actionhwbg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	/* logical (col,row) -> memory offset */
 	return col*16 + (row & 0xf) + ((row & 0x70) >> 4) * 0x400;
 }
 
-static UINT32 tilemap_scan_hwactionfg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 tilemap_scan_actionhwfg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	/* logical (col,row) -> memory offset */
 	return col*32 + (row & 0x1f) + ((row & 0x20) >> 5) * 0x800;
 }
 
 
-VIDEO_START( hwaction )
+VIDEO_START( actionhw )
 {
-	kickgoal_fgtm  = tilemap_create(get_hwaction_fg_tile_info,tilemap_scan_hwactionfg,TILEMAP_TRANSPARENT,  8, 8,64,64);
-	kickgoal_bgtm  = tilemap_create(get_hwaction_bg_tile_info,tilemap_scan_hwactionbg,TILEMAP_TRANSPARENT, 16,16,64,64);
-	kickgoal_bg2tm = tilemap_create(get_hwaction_bg2_tile_info,tilemap_scan_hwactionbg2,TILEMAP_OPAQUE,    16,16,64,64);
+	kickgoal_fgtm  = tilemap_create(get_actionhw_fg_tile_info,tilemap_scan_actionhwfg,TILEMAP_TRANSPARENT,  8, 8,64,64);
+	kickgoal_bgtm  = tilemap_create(get_actionhw_bg_tile_info,tilemap_scan_actionhwbg,TILEMAP_TRANSPARENT, 16,16,64,64);
+	kickgoal_bg2tm = tilemap_create(get_actionhw_bg2_tile_info,tilemap_scan_actionhwbg2,TILEMAP_OPAQUE,    16,16,64,64);
 
 	tilemap_set_transparent_pen(kickgoal_fgtm,15);
 	tilemap_set_transparent_pen(kickgoal_bgtm,15);
@@ -221,7 +221,7 @@ VIDEO_START( hwaction )
 }
 
 
-static void hwaction_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void actionhw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	int offs;
@@ -248,7 +248,7 @@ static void hwaction_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 }
 
 
-VIDEO_UPDATE( hwaction )
+VIDEO_UPDATE( actionhw )
 {
 	/* set scroll */
 	tilemap_set_scrollx( kickgoal_fgtm, 0, kickgoal_scrram[0]  );
@@ -262,7 +262,7 @@ VIDEO_UPDATE( hwaction )
 	tilemap_draw(bitmap,cliprect,kickgoal_bg2tm,0,0);
 	tilemap_draw(bitmap,cliprect,kickgoal_bgtm,0,0);
 
-	hwaction_draw_sprites(bitmap,cliprect);
+	actionhw_draw_sprites(bitmap,cliprect);
 
 	tilemap_draw(bitmap,cliprect,kickgoal_fgtm,0,0);
 }

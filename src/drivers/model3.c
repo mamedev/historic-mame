@@ -418,6 +418,15 @@ static UINT32 pci_device_get_reg(int device, int reg)
 {
 	switch(device)
 	{
+		case 11:		/* ??? */
+			switch(reg)
+			{
+				case 0x14:	return 0;		/* ??? */
+				default:
+					osd_die("pci_device_get_reg: Device 11, unknown reg %02X", reg);
+					break;
+			}
+
 		case 13:		/* Real3D Controller chip */
 			switch(reg)
 			{
@@ -618,29 +627,44 @@ static WRITE64_HANDLER( mpc106_addr_w )
 	if (!(mem_mask & U64(0xffffffff00000000)))
 	{
 		UINT32 d = BYTE_REVERSE32((UINT32)(data >> 32));
-		mpc105_addr = data >> 32;
 
-		pci_bus = (d >> 16) & 0xff;
-		pci_device = (d >> 11) & 0x1f;
-		pci_function = (d >> 8) & 0x7;
-		pci_reg = (d >> 2) & 0x3f;
+		if (((d >> 8) & 0xffffff) == 0x800000)
+		{
+			mpc106_addr = d & 0xff;
+		}
+		else
+		{
+			mpc106_addr = data >> 32;
+
+			pci_bus = (d >> 16) & 0xff;
+			pci_device = (d >> 11) & 0x1f;
+			pci_function = (d >> 8) & 0x7;
+			pci_reg = (d >> 2) & 0x3f;
+		}
 	}
 }
 
 static READ64_HANDLER( mpc106_data_r )
 {
 	if(pci_device == 0) {
-		return ((UINT64)(BYTE_REVERSE32(mpc106_regs[(pci_reg/2)+1])) << 32) |
-			   ((UINT64)(BYTE_REVERSE32(mpc106_regs[(pci_reg/2)+0])));
+		return ((UINT64)(BYTE_REVERSE32(mpc106_regs[(mpc106_addr/2)+1])) << 32) |
+			   ((UINT64)(BYTE_REVERSE32(mpc106_regs[(mpc106_addr/2)+0])));
 	}
-	return BYTE_REVERSE32(pci_device_get_reg(pci_device, pci_reg));
+	if (!(mem_mask & U64(0xffffffff00000000)))
+	{
+		return (UINT64)(BYTE_REVERSE32(pci_device_get_reg(pci_device, pci_reg))) << 32;
+	}
+	else
+	{
+		return (UINT64)(BYTE_REVERSE32(pci_device_get_reg(pci_device, pci_reg)));
+	}
 }
 
 static WRITE64_HANDLER( mpc106_data_w )
 {
 	if(pci_device == 0) {
-		mpc106_regs[(pci_reg/2)+1] = BYTE_REVERSE32((UINT32)(data >> 32));
-		mpc106_regs[(pci_reg/2)+0] = BYTE_REVERSE32((UINT32)(data));
+		mpc106_regs[(mpc106_addr/2)+1] = BYTE_REVERSE32((UINT32)(data >> 32));
+		mpc106_regs[(mpc106_addr/2)+0] = BYTE_REVERSE32((UINT32)(data));
 		return;
 	}
 	if (!(mem_mask & 0xffffffff))
@@ -902,6 +926,7 @@ static NVRAM_HANDLER( model3 )
 {
 	if( stricmp(Machine->gamedrv->name, "lostwsga") == 0 ||
 		stricmp(Machine->gamedrv->name, "dirtdvls") == 0 ||
+		stricmp(Machine->gamedrv->name, "lemans24") == 0 ||
 		stricmp(Machine->gamedrv->name, "von2") == 0 ||
 		stricmp(Machine->gamedrv->name, "von254g") == 0)
 	{
@@ -1275,6 +1300,18 @@ static UINT16 vs299_prot_data[] =
 	0x4149, 0x4620, 0x5f43, 0x4553, 0x4147
 };
 
+static UINT16 swt_prot_data[] =
+{
+	0xffff,
+	0x3d3d, 0x3d3d, 0x203d, 0x5453, 0x5241, 0x5720, 0x5241, 0x2053,
+	0x3d3d, 0x3d3d, 0x0a3d, 0x6f43, 0x7970, 0x6952, 0x6867, 0x2074,
+	0x4553, 0x4147, 0x4520, 0x746e, 0x7265, 0x7270, 0x7369, 0x7365,
+	0x202c, 0x744c, 0x2e64, 0x410a, 0x756d, 0x6573, 0x656d, 0x746e,
+	0x5220, 0x4426, 0x4420, 0x7065, 0x2e74, 0x2320, 0x3231, 0x4b0a,
+	0x7461, 0x7573, 0x6179, 0x7573, 0x4120, 0x646e, 0x206f, 0x2026,
+	0x614b, 0x6f79, 0x6f6b, 0x5920, 0x6d61, 0x6d61, 0x746f, 0x0a6f,
+};
+
 static READ64_HANDLER(model3_security_r)
 {
 	switch(offset)
@@ -1286,6 +1323,15 @@ static READ64_HANDLER(model3_security_r)
 				stricmp(Machine->gamedrv->name, "vs2v991") == 0)
 			{
 				return (UINT64)vs299_prot_data[prot_data_ptr++] << 48;
+			}
+			else if (stricmp(Machine->gamedrv->name, "swtrilgy") == 0)
+			{
+				UINT64 data = (UINT64)swt_prot_data[prot_data_ptr++] << 16;
+				if (prot_data_ptr > 0x38)
+				{
+					prot_data_ptr = 0;
+				}
+				return data;
 			}
 			else
 			{
@@ -1537,7 +1583,28 @@ INPUT_PORTS_START( daytona2 )
 	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
 INPUT_PORTS_END
 
+INPUT_PORTS_START( swtrilgy )
+	MODEL3_SYSTEM_CONTROLS_1
+	MODEL3_SYSTEM_CONTROLS_2
 
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0xde, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )		/* Dip switches */
+
+	PORT_START		/* Analog Stick Y */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
+
+	PORT_START		/* Analog Stick X */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
+
+INPUT_PORTS_END
 
 
 #define ROM_LOAD64_WORD(name,offset,length,hash)      ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(6))
@@ -2912,35 +2979,46 @@ ROM_END
     0x02: V-blank start
     0x01: Unused ?
 */
-//static int model3_vblank = 0;
+static int model3_vblank = 0;
 static INTERRUPT_GEN(model3_interrupt)
 {
-//  if (model3_vblank == 0) {
+	if (model3_vblank == 0) {
 		model3_irq_state = 0x42;
-//  } else {
-//      model3_irq_state = 0x0d;
-//  }
+	} else {
+		model3_irq_state = 0x0d;
+	}
 	cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
 
-//  model3_vblank++;
-//  model3_vblank &= 3;
+	model3_vblank++;
+	model3_vblank &= 1;
 }
 
-static ppc_config model3_1x =
+static ppc_config model3_10 =
 {
-	PPC_MODEL_603E		/* 603e, Stretch, 1.3 */
+	PPC_MODEL_603E,		/* 603e, Stretch, 1.3 */
+	0x10,				/* Multiplier 1, Bus = 66MHz, Core = 66MHz */
+	BUS_FREQUENCY_66MHZ
+};
+
+static ppc_config model3_15 =
+{
+	PPC_MODEL_603E,		/* 603e, Stretch, 1.3 */
+	0x15,				/* Multiplier 1.5, Bus = 66MHz, Core = 100MHz */
+	BUS_FREQUENCY_66MHZ
 };
 
 static ppc_config model3_2x =
 {
-	PPC_MODEL_603EV		/* 603e-PID7t, Goldeneye, 2.1 */
+	PPC_MODEL_603R,		/* 603e-PID7t, Goldeneye, 2.1 */
+	0x25,				/* Multiplier 2.5, Bus = 66MHz, Core = 166MHz */
+	BUS_FREQUENCY_66MHZ
 };
 
 static MACHINE_DRIVER_START( model3_10 )
 	MDRV_CPU_ADD(PPC603, 66000000)
-	MDRV_CPU_CONFIG(model3_1x)
+	MDRV_CPU_CONFIG(model3_10)
 	MDRV_CPU_PROGRAM_MAP(model3_mem, 0)
- 	MDRV_CPU_VBLANK_INT(model3_interrupt,1)
+ 	MDRV_CPU_VBLANK_INT(model3_interrupt,2)
 
  	MDRV_INTERLEAVE(10)
 
@@ -2961,9 +3039,9 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( model3_15 )
 	MDRV_CPU_ADD(PPC603, 100000000)
-	MDRV_CPU_CONFIG(model3_1x)
+	MDRV_CPU_CONFIG(model3_15)
 	MDRV_CPU_PROGRAM_MAP(model3_mem, 0)
- 	MDRV_CPU_VBLANK_INT(model3_interrupt,1)
+ 	MDRV_CPU_VBLANK_INT(model3_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2984,7 +3062,7 @@ static MACHINE_DRIVER_START( model3_20 )
 	MDRV_CPU_ADD(PPC603, 166000000)
 	MDRV_CPU_CONFIG(model3_2x)
 	MDRV_CPU_PROGRAM_MAP(model3_mem, 0)
- 	MDRV_CPU_VBLANK_INT(model3_interrupt,1)
+ 	MDRV_CPU_VBLANK_INT(model3_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3005,7 +3083,7 @@ static MACHINE_DRIVER_START( model3_21 )
 	MDRV_CPU_ADD(PPC603, 166000000)
 	MDRV_CPU_CONFIG(model3_2x)
 	MDRV_CPU_PROGRAM_MAP(model3_mem, 0)
- 	MDRV_CPU_VBLANK_INT(model3_interrupt,1)
+ 	MDRV_CPU_VBLANK_INT(model3_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3124,7 +3202,17 @@ static DRIVER_INIT( scud )
 
 static DRIVER_INIT( lemans24 )
 {
+	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
 	init_model3_15();
+
+	memory_install_read64_handler( 0, ADDRESS_SPACE_PROGRAM, 0xc1000000, 0xc10000ff, 0, 0, scsi_r );
+	memory_install_write64_handler( 0, ADDRESS_SPACE_PROGRAM, 0xc1000000, 0xc10000ff, 0, 0, scsi_w );
+
+	rom[(0x73fe38^4)/4] = 0x38840004;		/* This seems to be an actual bug in the original code */
+
+	rom[(0x73eb5c^4)/4] = 0x60000000;
+	rom[(0x73edd0^4)/4] = 0x60000000;
+	rom[(0x73edc4^4)/4] = 0x60000000;
 }
 
 static DRIVER_INIT( vf3 )
@@ -3265,11 +3353,11 @@ static DRIVER_INIT( harley )
 	memory_install_read64_handler( 0, ADDRESS_SPACE_PROGRAM, 0xc0000000, 0xc00fffff, 0, 0, network_r );
 	memory_install_write64_handler( 0, ADDRESS_SPACE_PROGRAM, 0xc0000000, 0xc00fffff, 0, 0, network_w );
 
+	rom[(0x50e8d4^4)/4] = 0x60000000;
+	rom[(0x50e8f4^4)/4] = 0x60000000;
 	rom[(0x50fb84^4)/4] = 0x60000000;
 	rom[(0x4f736c^4)/4] = 0x60000000;
 	rom[(0x4f738c^4)/4] = 0x60000000;
-	rom[(0x50e8d4^4)/4] = 0x60000000;
-	rom[(0x50e8f4^4)/4] = 0x60000000;
 }
 
 static DRIVER_INIT( srally2 )
@@ -3284,18 +3372,13 @@ static DRIVER_INIT( srally2 )
 
 static DRIVER_INIT( swtrilgy )
 {
-//  UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
+	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
 	init_model3_20();
 
-/*  rom[(0xf0e48^4)/4] = 0x60000000;
+	rom[(0xf0e48^4)/4] = 0x60000000;
     rom[(0x043dc^4)/4] = 0x48000090;
     rom[(0x029a0^4)/4] = 0x60000000;
     rom[(0x02a0c^4)/4] = 0x60000000;
-    rom[(0xa36dc^4)/4] = 0x60000000;
-    rom[(0xa36f4^4)/4] = 0x60000000;
-    rom[(0xa3708^4)/4] = 0x60000000;
-    rom[(0xa371c^4)/4] = 0x60000000;
-    rom[(0xa3730^4)/4] = 0x60000000;*/
 }
 
 static DRIVER_INIT( von2 )
@@ -3350,13 +3433,13 @@ GAMEX( 1996, scud,           0, model3_15, scud,         scud, ROT0, "Sega", "Sc
 GAMEX( 1996, scuda,       scud, model3_15, scud,         scud, ROT0, "Sega", "Scud Race (Export)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, lostwsga,       0, model3_15, lostwsga, lostwsga, ROT0, "Sega", "The Lost World", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, vs215,        vs2, model3_15, model3,      vs215, ROT0, "Sega", "Virtua Striker 2 (Step 1.5)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, lemans24,       0, model3_15, scud,     lemans24, ROT0, "Sega", "LeMans 24", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1997, lemans24,       0, model3_15, scud,     lemans24, ROT0, "Sega", "LeMans 24", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, vs29815,    vs298, model3_15, model3,    vs29815, ROT0, "Sega", "Virtua Striker 2 '98 (Step 1.5)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* Model 3 Step 2.0 */
 GAMEX( 1997, vs2,            0, model3_20, model3,        vs2, ROT0, "Sega", "Virtua Striker 2 (Step 2.0)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, harley,         0, model3_20, harley,     harley, ROT0, "Sega", "Harley-Davidson and L.A. Riders", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, srally2,        0, model3_20, model3,    srally2, ROT0, "Sega", "Sega Rally 2", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, srally2,        0, model3_20, scud,      srally2, ROT0, "Sega", "Sega Rally 2", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, von2,           0, model3_20, model3,       von2, ROT0, "Sega", "Virtual On 2: Oratorio Tangram", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, von254g,     von2, model3_20, model3,  model3_20, ROT0, "Sega", "Virtual On 2: Oratorio Tangram (ver 5.4g)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, vs298,          0, model3_20, model3,      vs298, ROT0, "Sega", "Virtua Striker 2 '98 (Step 2.0)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
@@ -3366,4 +3449,4 @@ GAMEX( 1999, vs299,    vs2v991, model3_20, model3,      vs299, ROT0, "Sega", "Vi
 /* Model 3 Step 2.1 */
 GAMEX( 1998, daytona2,       0, model3_21, daytona2, daytona2, ROT0, "Sega", "Daytona USA 2", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, dirtdvls,       0, model3_21, model3,   dirtdvls, ROT0, "Sega", "Dirt Devils", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, swtrilgy,       0, model3_21, model3,   swtrilgy, ROT0, "Sega/LucasArts", "Star Wars Trilogy", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, swtrilgy,       0, model3_21, swtrilgy, swtrilgy, ROT0, "Sega/LucasArts", "Star Wars Trilogy", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

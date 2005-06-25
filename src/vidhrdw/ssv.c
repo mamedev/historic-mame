@@ -92,7 +92,7 @@
 
         2.w                             Scroll Y
 
-        4.w                             ? 0000, 05ff, 057f
+        4.w                             Priority ? (0000, 0401, 0440, 057f, 05ff)
 
         6.w     fed- ---- ---- ----     Tilemap width (games only use 1 -> $200, 2 -> $400)
                 ---c ---- ---- ----     ?
@@ -129,7 +129,7 @@
     The low bits of the pens from a "shadowing" tile (regardless of color code)
     substitute the top bits of the color index (0-7fff) in the frame buffer.
     The number of low bits from the "shadowing tile" is 4 or 2, depending on
-    bit 7 of 1c0077.
+    bit 7 of 1c0076.
 
 Note: press Z to show some info on each sprite (debug builds only)
 
@@ -200,12 +200,15 @@ VIDEO_START( ssv )
 /* Scroll values + CRT controller registers */
 data16_t *ssv_scroll;
 
-int ssv_special;	// kludge for hypreac2
+int ssv_special;	// game specific kludges
 
 int ssv_tile_code[16];
 
 int ssv_sprites_offsx, ssv_sprites_offsy;
 int ssv_tilemap_offsx, ssv_tilemap_offsy;
+
+data16_t *eaglshot_gfxram;
+char eaglshot_dirty, *eaglshot_dirty_tile;
 
 /***************************************************************************
 
@@ -245,6 +248,14 @@ int ssv_tilemap_offsx, ssv_tilemap_offsy;
     drifto94:   0000 0025 00cd 01c6 - 0001 0013 0101 0106
                 0300 0711 0500 0000 - 0015 5940 0000 0000
                 03ea      5558  (flip)
+
+    dynagear:   002b 002c 00d4 01c6 - 0001 0012 0102 0106
+                02fd 0000 0500 0000 - 0015 5940 0000 0000
+                ????      ????  (flip)
+
+    eaglshot:   0021 002a 00ca 01c6 - 0001 0016 00f6 0106
+                0301 0000 0500 d000 - 0015 5940 0000 0000
+                ????      ????  (flip)
 
     hypreact:   0021 0022 00cb 01c6 - 0001 000e 00fe 0106
                 0301 0000 0500 c000 - 0015 5140 0000 0000
@@ -286,13 +297,30 @@ int ssv_tilemap_offsx, ssv_tilemap_offsy;
                 03f1 0711 5550 c080 - 0015 5940 0000 0000 <- 711 becomes 0 during gameplay
                 0301      0500  (flip)
 
+    survarts:   002b 002c 00d4 01c6 - 0001 0012 0102 0106
+                0301 0000 0500 0000 - 0015 5140 0000 0000
+                03e9      5558  (flip)
+
     sxyreact:   0021 0022 00cb 01c6 - 0001 000e 00fe 0106
                 0301 0000 0500 c000 - 0015 5140 0000 0000
                 03ef      5558  (flip)
 
-    survarts:   002b 002c 00d4 01c6 - 0001 0012 0102 0106
-                0301 0000 0500 0000 - 0015 5140 0000 0000
-                03e9      5558  (flip)
+    sxyreac2:   0021 0023 00cb 01c6 - 0001 000e 00fe 0106
+                0301 0000 0500 c000 - 0015 5140 0000 0000
+                ????      ????  (flip)
+
+    twineag2:   002b 002c 00d4 01c6 - 0001 0012 0102 0106
+                ffec 0000 e500 4000 - 0315 7940 0000 0000
+                ????      ????  (flip)
+
+    ultrax:     002b 002c 00d4 01c6 - 0001 0012 0102 0106
+                ffec 0000 e500 4000 - 0315 7940 0000 0000
+                02fe      b558  (flip)
+
+    vasara &    0021 0024 00cc 01c6 - 0001 000e 00fe 0106
+    vasara2:    03f1 0000 6500 c000 - 0015 5140 0000 0000
+                0301      3558  (flip)
+
 
 ***************************************************************************/
 
@@ -482,10 +510,20 @@ writings on finish      100130: 6109 4840 004e 0058 "good work"
 sprite begin of lev1    100010: 6b60 4280 0016 00a0
                         121400: 51a0 0042 6800 0c00 (64x64)
 
+[eaglshot]
+title logo              100040: 001b 2920 0048 00e0
+                        114900: 2130 0060 7018 0fd0 (16x64)
+
+play                    100020: 0003 290c 0000 0000
+                        114860: 0003 0000 03f0 0ce0 (tilemap)
+
+sammy logo              100020: 0003 1000 0000 0000
+                        108000: 0001 0000 4380 0ce0 (tilemap)
+
 From the above some noteworthy cases are:
 
             101f60: 0006 0825 00b0 000c
-            104128: 1a3a 0000 63d4 0400     consider y size & depth
+            104128: 1a3a 0000 63d4 0400     consider y size
 
             101030: 717f 40c0 0010 0000
             120600: 0000 0000 0000 ffff     ignore y size & depth
@@ -497,10 +535,10 @@ From the above some noteworthy cases are:
             11c498: 00e0 00b2 6c00 0800     consider x size & y size
 
             100100: 701f 051b 0041 0020
-            1028d8: 05aa 0030 f000 0470     consider depth
+            1028d8: 05aa 0030 f000 0470     consider shadow (16x16 shadow)
 
             100010: 6b60 4280 0016 00a0
-            121400: 51a0 0042 6800 0c00
+            121400: 51a0 0042 6800 0c00     (64x64)
 
             100140: 6003 04ca 0000 0000     tilemap
             102650: 0003 0000 0000 0c00
@@ -554,8 +592,12 @@ static void ssv_draw_row(struct mame_bitmap *bitmap, int sx, int sy, int scroll)
 
 	x		=	ssv_scroll[ scroll * 4 + 0 ];	// x scroll
 	y		=	ssv_scroll[ scroll * 4 + 1 ];	// y scroll
-//              ssv_scroll[ scroll * 4 + 2 ];   // ? 0, 05ff, 057f
+	//          ssv_scroll[ scroll * 4 + 2 ];   // Priority ?
 	mode	=	ssv_scroll[ scroll * 4 + 3 ];	// shadow, depth etc.
+
+	// Priority ?
+	if ( (ssv_scroll[ scroll * 4 + 2 ] < ssv_scroll[ 0 * 4 + 2 ]) )
+		return;
 
 	/* How is the background layer disabled ? */
 	if ((mode & 0x0700) == 0)	return;
@@ -694,51 +736,35 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 			local_xnum		=	sx & 0x0c00;
 			local_ynum		=	sy & 0x0c00;
 
-			depth = global_depth ? global_depth : local_depth;
-			xnum = local_xnum;
-			ynum = local_ynum;
-
-
-			if (global_depth && global_depth != local_depth)
+			if (ssv_scroll[0x76/2] & 0x4000)
 			{
-				if (global_xnum || global_ynum)
-				{
-					xnum = global_xnum;
-					ynum = global_ynum;
-				}
-				else
-					depth = local_depth;
+				xnum	=	local_xnum;
+				ynum	=	local_ynum;
+				depth	=	local_depth;
+			}
+			else
+			{
+				xnum	=	global_xnum;
+				ynum	=	global_ynum;
+				depth	=	global_depth;
 			}
 
-			if (ssv_special == 3)	/* kludge to fix bad shadow sprites in Dyna Gears */
+			if ( s2[0] <= 7 && s2[1] == 0 && xnum == 0 && ynum == 0x0c00)
 			{
-				xnum = global_xnum;
-				ynum = global_ynum;
-			}
-
-
-
-
-
-if (( (ssv_special !=4 ) && ( xnum == 0 && ynum == 0x0c00 )) || (ssv_special == 4 && ( global_xnum == 0 && global_ynum == 0x0c00 )))
-			{
+				// Tilemap Sprite
 				int scroll;
 
-				scroll	=		s2[ 0 ];	// scroll index
-//                              s2[ 1 ];    // always 0
-//                              s2[ 2 ];    // ignore x offset?
-//                              s2[ 3 ];    // ignore y offset?
+				scroll	=	s2[ 0 ];	// scroll index
 
+				if		(ssv_scroll[0x7a/2] == 0x4940)	sy += 0x60;	// srmp4
+				else if (ssv_scroll[0x7a/2] == 0x5940)	sy -= 0x20;	// drifto94, dynagear, eaglshot, keithlcy, mslider, stmblade
 
-
-
-				// Kludge for srmp4
-				if (ssv_scroll[0x7a/2] == 0x4940)	sy+=0x60;
-
-				if (ssv_special !=3) // dynagears draws rows over sprites?! (but needs rows for hi-score table..)
 					ssv_draw_row(bitmap, sx, sy, scroll);
 			}
-/*  "normal" sprite
+			else
+			{
+				// "Normal" Sprite
+/*
     hot spots:
     "warning" in hypreac2 has mode & 0x0100 and is not 16x16
     keithlcy high scores has mode & 0x0100 and y & 0x0c00 can be 0x0c00
@@ -746,8 +772,7 @@ if (( (ssv_special !=4 ) && ( xnum == 0 && ynum == 0x0c00 )) || (ssv_special == 
     ultrax (begin of lev1): 100010: 6b60 4280 0016 00a0
                             121400: 51a0 0042 6800 0c00 needs to be a normal sprite
 */
-			else
-			{
+
 				int shadow, gfx;
 				if (s2 >= end2)	break;
 
@@ -782,14 +807,24 @@ if (( (ssv_special !=4 ) && ( xnum == 0 && ynum == 0x0c00 )) || (ssv_special == 
 				sx	=	(sx & 0x1ff) - (sx & 0x200);
 				sy	=	(sy & 0x1ff) - (sy & 0x200);
 
-				/* Tweak it (game specific) */
-				if (ssv_special == 2) sy = 232 - sy; // vasara, wheres the register for this?
+				if (ssv_scroll[0x74/2] == 0x6500)	// vasara
+					sy = 0xe8 - sy;
 
-				sx	=	ssv_sprites_offsx + sx;
 if (ssv_scroll[0x74/2] & 0x8000)	// srmp7, twineag2, ultrax
-				sy	=	ssv_sprites_offsy + sy;	// ?
-else
+				{
+					sx	=	ssv_sprites_offsx + sx;
+					sy	=	ssv_sprites_offsy + sy;
+				}
+				else if (ssv_scroll[0x76/2] & 0x1000)	// eaglshot
+				{
+					sx	=	ssv_sprites_offsx + sx - (xnum-1) * 8;
+					sy	=	ssv_sprites_offsy - sy - (ynum * 8) / 2;	// sy is the sprite center
+				}
+				else
+				{
+					sx	=	ssv_sprites_offsx + sx;
 				sy	=	ssv_sprites_offsy - sy - (ynum-1) * 8;
+				}
 
 				/* Draw the tiles */
 
@@ -841,6 +876,8 @@ void ssv_enable_video(int enable)
 
 VIDEO_UPDATE( ssv )
 {
+	int tile;
+
 	if (ssv_scroll[0x76/2] & 0x0080)
 	{
 		// 4 bit shadows (mslider, stmblade)
@@ -859,16 +896,24 @@ VIDEO_UPDATE( ssv )
 
 	if (!enable_video)	return;
 
-	if (ssv_special !=3)
+	// Decode tiles from ram (eaglshot)
+	if (eaglshot_dirty)
 	{
-		ssv_draw_layer(bitmap,0);	// "background layer"
-		ssv_draw_sprites(bitmap);	// sprites list
-	} // dynagears is weird, whats really going on?
-	else
-	{
-		ssv_draw_layer(bitmap,0);
-		ssv_draw_layer(bitmap,1);
-		ssv_draw_sprites(bitmap);
-		ssv_draw_layer(bitmap,3);
+		eaglshot_dirty = 0;
+
+		for (tile = 0; tile < (16 * 0x40000 / (16*8)); tile++)
+		{
+			if (eaglshot_dirty_tile[tile])
+			{
+				eaglshot_dirty_tile[tile] = 0;
+
+				decodechar(Machine->gfx[0], tile, (UINT8 *)eaglshot_gfxram, Machine->drv->gfxdecodeinfo[0].gfxlayout);
+				decodechar(Machine->gfx[1], tile, (UINT8 *)eaglshot_gfxram, Machine->drv->gfxdecodeinfo[1].gfxlayout);
+			}
+		}
 	}
+
+		ssv_draw_layer(bitmap,0);	// "background layer"
+
+		ssv_draw_sprites(bitmap);	// sprites list
 }

@@ -3,8 +3,8 @@
 // it really seems like this should be elsewhere - like maybe the floating point checks can hang out someplace else
 #include <math.h>
 
-#define USE_SSE2			1
-#define COMPILE_FPU			1
+#define USE_SSE2			0
+#define COMPILE_FPU			0
 
 #define PPCDRC_STRICT_VERIFY		0x0001			/* verify all instructions */
 
@@ -103,6 +103,30 @@ static void ppcdrc_recompile(struct drccore *drc)
 	log_code(drc);
 }
 
+static void update_counters(struct drccore *drc)
+{
+	struct linkdata link1;
+	/* update timebase counter */
+	/* maybe this should only be updated on branches ? */
+
+	_mov_r64_m64abs(REG_EDX, REG_EAX, &ppc.tb);				// mov  edx:eax, [ppc.tb]
+	_add_r32_imm(REG_EAX, 1);								// add  eax,1
+	_adc_r32_imm(REG_EDX, 0);								// adc  edx,0
+	_mov_m64abs_r64(&ppc.tb, REG_EDX, REG_EAX);				// mov  [ppc.tb],edx:eax
+
+	/* decrementer */
+	if (ppc.is603 || ppc.is602)
+	{
+		_mov_r32_m32abs(REG_EAX, &ppc.dec);
+		_sub_r32_imm(REG_EAX, 1);
+		_mov_m32abs_r32(&ppc.dec, REG_EAX);
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc_short_link(COND_NZ, &link1);
+		_or_m32abs_imm(&ppc.exception_pending, 0x2);
+		_resolve_link(&link1);
+	}
+
+}
 
 static void ppcdrc_entrygen(struct drccore *drc)
 {
@@ -111,7 +135,6 @@ static void ppcdrc_entrygen(struct drccore *drc)
 
 static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 {
-	struct linkdata link1;
 	int pcdelta, cycles;
 	UINT32 *opptr;
 	UINT32 result;
@@ -143,26 +166,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	pcdelta = (INT8)(result >> 24);
 	cycles = (INT8)(result >> 16);
 
-	/* update timebase counter */
-	/* maybe this should only be updated on branches ? */
-	{
-		_mov_r64_m64abs(REG_EDX, REG_EAX, &ppc.tb);				// mov  edx:eax, [ppc.tb]
-		_add_r32_imm(REG_EAX, 1);								// add  eax,1
-		_adc_r32_imm(REG_EDX, 0);								// adc  edx,0
-		_mov_m64abs_r64(&ppc.tb, REG_EDX, REG_EAX);				// mov  [ppc.tb],edx:eax
-
-		/* decrementer */
-		if (ppc.is603 || ppc.is602)
-		{
-			_mov_r32_m32abs(REG_EAX, &ppc.dec);
-			_sub_r32_imm(REG_EAX, 1);
-			_mov_m32abs_r32(&ppc.dec, REG_EAX);
-			_cmp_r32_imm(REG_EAX, 0);
-			_jcc_short_link(COND_NZ, &link1);
-			_or_m32abs_imm(&ppc.exception_pending, 0x2);
-			_resolve_link(&link1);
-		}
-	}
+	update_counters(drc);
 
 	/* epilogue */
 	drc_append_standard_epilogue(drc, cycles, pcdelta, 1);
@@ -304,10 +308,10 @@ static void append_branch_or_dispatch(struct drccore *drc, UINT32 newpc, int cyc
 	void *code = drc_get_code_at_pc(drc, newpc);
 	_mov_r32_imm(REG_EDI, newpc);
 
+	update_counters(drc);
 	append_check_interrupts(drc, 0);
 
 	drc_append_standard_epilogue(drc, cycles, 0, 1);
-
 
 
 	if (code)
@@ -2279,8 +2283,62 @@ static UINT32 recompile_sync(struct drccore *drc, UINT32 op)
 
 static UINT32 recompile_tw(struct drccore *drc, UINT32 op)
 {
-	printf("PPCDRC: recompile tw\n");
-	return RECOMPILE_UNIMPLEMENTED;
+	struct linkdata link1, link2, link3, link4, link5, link6;
+	int do_link1 = 0;
+	int do_link2 = 0;
+	int do_link3 = 0;
+	int do_link4 = 0;
+	int do_link5 = 0;
+
+	_mov_r32_m32abs(REG_EAX, &REG(RA));
+	_mov_r32_m32abs(REG_EDX, &REG(RB));
+	_cmp_r32_r32(REG_EAX, REG_EDX);
+
+	if (RT & 0x10) {
+		_jcc_near_link(COND_L, &link1);		// less than = signed <
+		do_link1 = 1;
+	}
+	if (RT & 0x08) {
+		_jcc_near_link(COND_G, &link2);		// greater = signed >
+		do_link2 = 1;
+	}
+	if (RT & 0x04) {
+		_jcc_near_link(COND_E, &link3);		// equal
+		do_link3 = 1;
+	}
+	if (RT & 0x02) {
+		_jcc_near_link(COND_B, &link4);		// below = unsigned <
+		do_link4 = 1;
+	}
+	if (RT & 0x01) {
+		_jcc_near_link(COND_A, &link5);		// above = unsigned >
+		do_link5 = 1;
+	}
+	_jmp_near_link(&link6);
+
+	if (do_link1) {
+		_resolve_link(&link1);
+	}
+	if (do_link2) {
+		_resolve_link(&link2);
+	}
+	if (do_link3) {
+		_resolve_link(&link3);
+	}
+	if (do_link4) {
+		_resolve_link(&link4);
+	}
+	if (do_link5) {
+		_resolve_link(&link5);
+	}
+	// generate exception
+	_mov_m32abs_imm(&SRR0, temp_ppc_pc + 4);
+	_jmp(ppc.generate_trap_exception);
+
+	// no exception
+	_resolve_link(&link6);
+
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
 static UINT32 recompile_twi(struct drccore *drc, UINT32 op)
@@ -2405,6 +2463,7 @@ static UINT32 recompile_rfci(struct drccore *drc, UINT32 op)
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
+#if HAS_PPC403
 static UINT32 recompile_mfdcr(struct drccore *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -2448,6 +2507,7 @@ static UINT32 recompile_wrteei(struct drccore *drc, UINT32 op)
 
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
+#endif
 
 
 

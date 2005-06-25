@@ -118,6 +118,28 @@ INLINE UINT32 ppc_get_dcr(int dcr)
 
 
 #ifndef PPC_DRC
+INLINE void ppc403_check_interrupts(void)
+{
+	if (MSR & MSR_EE)
+	{
+		if (ppc.interrupt_pending != 0)
+		{
+			if (ppc.interrupt_pending & 0x1)
+			{
+				ppc403_exception(EXCEPTION_IRQ);
+			}
+			else if (ppc.interrupt_pending & 0x2)
+			{
+				ppc403_exception(EXCEPTION_PROGRAMMABLE_INTERVAL_TIMER);
+			}
+			else if (ppc.interrupt_pending & 0x4)
+			{
+				ppc403_exception(EXCEPTION_FIXED_INTERVAL_TIMER);
+			}
+		}
+	}
+}
+
 static void ppc403_reset(void *param)
 {
 	ppc_config *config = param;
@@ -139,7 +161,6 @@ static int ppc403_execute(int cycles)
 		UINT32 opcode;
 
 		CALL_MAME_DEBUG;
-
 		ppc.pc = ppc.npc;
 		ppc.npc += 4;
 		opcode = ROPCODE(ppc.pc);
@@ -165,7 +186,7 @@ static int ppc403_execute(int cycles)
 			if (ppc.pit_counter == 0)
 			{
 				if (ppc.pit_int_enable) {
-					ppc403_exception(EXCEPTION_PROGRAMMABLE_INTERVAL_TIMER);
+					ppc.interrupt_pending |= 0x2;
 				}
 				if (ppc.tcr & 0x00400000)	// Automatic reload
 				{
@@ -178,7 +199,7 @@ static int ppc403_execute(int cycles)
 		/* Fixed Interval Timer */
 		if (((UINT32)(ppc.tb) & ppc.fit_bit) && (tblo & ppc.fit_bit) == 0) {
 			if (ppc.fit_int_enable) {
-				ppc403_exception(EXCEPTION_FIXED_INTERVAL_TIMER);
+				ppc.interrupt_pending |= 0x4;
 			}
 		}
 		/* Watchdog Timer */
@@ -198,6 +219,8 @@ static int ppc403_execute(int cycles)
 			}
 		}
 #endif
+
+		ppc403_check_interrupts();
 	}
 
 	return cycles - ppc_icount;
@@ -225,10 +248,8 @@ void ppc403_exception(int exception)
 				ppc.npc = EVPR | 0x0500;
 				change_pc(ppc.npc);
 				EXISR |= ppc.external_int;
-			}
-			else
-			{
-				ppc.exception_pending |= 1 << EXCEPTION_IRQ;
+
+				ppc.interrupt_pending &= ~0x1;
 			}
 			break;
 		}
@@ -297,10 +318,6 @@ void ppc403_exception(int exception)
 
 				ppc.tsr |= 0x08000000;		// PIT interrupt
 			}
-			else
-			{
-				ppc.exception_pending |= 1 << 20;
-			}
 			break;
 		}
 
@@ -322,31 +339,27 @@ void ppc403_exception(int exception)
 				ppc.npc = EVPR | 0x1010;
 				change_pc(ppc.npc);
 			}
-			else
-			{
-				ppc.exception_pending |= 1 << 21;
-			}
 			break;
 		}
 
 		case EXCEPTION_WATCHDOG_TIMER:				/* Watchdog Timer */
-			{
-				UINT32 msr = ppc_get_msr();
+		{
+			UINT32 msr = ppc_get_msr();
 
-				SRR2 = ppc.npc;
-				SRR3 = msr;
+			SRR2 = ppc.npc;
+			SRR3 = msr;
 
-				msr &= ~(MSR_WE | MSR_PR | MSR_CE | MSR_EE | MSR_DE | MSR_PE | MSR_DR | MSR_IR);
-				if (msr & MSR_LE)
-					msr |= MSR_ILE;
-				else
-					msr &= ~MSR_ILE;
-				ppc_set_msr(msr);
+			msr &= ~(MSR_WE | MSR_PR | MSR_CE | MSR_EE | MSR_DE | MSR_PE | MSR_DR | MSR_IR);
+			if (msr & MSR_LE)
+				msr |= MSR_ILE;
+			else
+				msr &= ~MSR_ILE;
+			ppc_set_msr(msr);
 
-				ppc.npc = EVPR | 0x1020;
-				change_pc(ppc.npc);
+			ppc.npc = EVPR | 0x1020;
+			change_pc(ppc.npc);
 			break;
-			}
+		}
 
 		case EXCEPTION_CRITICAL_INTERRUPT:
 		{
@@ -382,7 +395,7 @@ static void ppc403_set_irq_line(int irqline, int state)
 		if( state == ASSERT_LINE) {
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
-				ppc403_exception(EXCEPTION_IRQ);
+				ppc.interrupt_pending |= 0x1;
 
 				if (ppc.irq_callback)
 				{
@@ -402,7 +415,7 @@ static void ppc403_set_irq_line(int irqline, int state)
 		if (state) {
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
-				ppc403_exception(EXCEPTION_IRQ);
+				ppc.interrupt_pending |= 0x1;
 			}
 		}
 	}
@@ -412,7 +425,7 @@ static void ppc403_set_irq_line(int irqline, int state)
 		if (state) {
 			if( EXIER & mask ) {
 				ppc.external_int = mask;
-				ppc403_exception(EXCEPTION_IRQ);
+				ppc.interrupt_pending |= 0x1;
 			}
 		}
 	}
@@ -436,7 +449,7 @@ static void ppc403_dma_set_irq_line(int dma, int state)
 	if( state ) {
 		if( EXIER & mask ) {
 			ppc.external_int = mask;
-			ppc403_exception(EXCEPTION_IRQ);
+			ppc.interrupt_pending |= 0x1;
 		}
 	}
 }

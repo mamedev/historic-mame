@@ -222,6 +222,8 @@ UINT32 opRET(void) /* TRUSTED */
 
 UINT32 opTRAP(void)
 {
+	UINT32 oldPSW;
+
 	modAdd=PC + 1;
 	modDim=0;
 
@@ -281,14 +283,14 @@ UINT32 opTRAP(void)
 		else break;
 	}
 
-	UPDATEPSW();
+	oldPSW = v60_update_psw_for_exception(0, 0);
 
 	// Issue the software trap with interrupts
 	SP -= 4;
-	MemWrite32(SP, 0x3000 + 0x100 * (amOut&0xF));
+	MemWrite32(SP, EXCEPTION_CODE_AND_SIZE(0x3000 + 0x100 * (amOut&0xF), 4));
 
 	SP -= 4;
-	MemWrite32(SP, PSW);
+	MemWrite32(SP, oldPSW);
 
 	SP -= 4;
 	MemWrite32(SP, PC + amLength1 + 1);
@@ -301,7 +303,7 @@ UINT32 opTRAP(void)
 
 UINT32 opRETIU(void) /* TRUSTED */
 {
-	UINT32 tempPSW;
+	UINT32 newPSW;
 	modAdd=PC + 1;
 	modDim=1;
 
@@ -313,24 +315,20 @@ UINT32 opRETIU(void) /* TRUSTED */
 	SP += 4;
 	ChangePC(PC);
 
-	tempPSW=MemRead32(SP);
+	newPSW = MemRead32(SP);
 	SP += 4;
 
 	// Destroy stack frame
 	SP += amOut;
 
-	v60WritePSW(tempPSW);
-
-	// Update all the flags from PSW
-	UPDATECPUFLAGS();
-	UPDATEFPUFLAGS();
+	v60WritePSW(newPSW);
 
 	return 0;
 }
 
 UINT32 opRETIS(void)
 {
-	UINT32 appw;
+	UINT32 newPSW;
 
 	modAdd=PC + 1;
 	modDim=1;
@@ -343,16 +341,13 @@ UINT32 opRETIS(void)
 	SP += 4;
 	ChangePC(PC);
 
-	appw = MemRead32(SP);
+	newPSW = MemRead32(SP);
 	SP += 4;
-
-	v60WritePSW(appw);
 
 	// Destroy stack frame
 	SP += amOut;
 
-	// Update only CPU flags from PSW @@@
-//  UPDATECPUFLAGS();
+	v60WritePSW(newPSW);
 
 	return 0;
 }
@@ -367,10 +362,10 @@ UINT32 opSTTASK(void)
 
 	amLength1 = ReadAM();
 
-	adr = TCB;
+	adr = TR;
 
-	UPDATEPSW();
-	v60WritePSW(PSW | 0x10000000);
+	v60WritePSW(v60ReadPSW() | 0x10000000);
+	v60SaveStack();
 
 	MemWrite32(adr, TKCW);
 	adr += 4;
@@ -405,11 +400,9 @@ UINT32 opSTTASK(void)
 
 UINT32 opGETPSW(void)
 {
-	UPDATEPSW();
-
 	modAdd=PC + 1;
 	modDim=2;
-	modWriteValW=PSW;
+	modWriteValW=v60ReadPSW();
 
 	// Write PSW to the operand
 	amLength1=WriteAM();
@@ -476,9 +469,8 @@ UINT32 opPOPM(void)
 
 	if (amOut & (1<<31))
 	{
-		PSW = (PSW & 0xFFFF0000) | MemRead16(SP);
+		v60WritePSW((v60ReadPSW() & 0xffff0000) | MemRead16(SP));
 		SP += 4;
-		UPDATECPUFLAGS();
 	}
 
 	return amLength1 + 1;
@@ -496,9 +488,8 @@ UINT32 opPUSHM(void)
 
 	if (amOut & (1<<31))
 	{
-		UPDATEPSW();
 		SP -= 4;
-		MemWrite32(SP,PSW);
+		MemWrite32(SP,v60ReadPSW());
 	}
 
 	for (i=0;i<31;i++)

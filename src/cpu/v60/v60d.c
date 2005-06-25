@@ -414,7 +414,7 @@ static int decode_AM(unsigned ipc, unsigned pc, int m, int opsize, char *out)
 static int decode_F1(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	unsigned char code = readop(pc);
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	if(code & 0x20) {
 		int ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out)) + 2;
 		strcat(out, ", ");
@@ -431,7 +431,7 @@ static int decode_F2(const char *opnm, int opsize1, int opsize2, unsigned ipc, u
 {
 	int ret;
 	unsigned char code = readop(pc);
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 	ret += decode_AM(ipc, pc+1+ret, code & 0x20, opsize2, out + strlen(out));
@@ -448,19 +448,19 @@ static int decode_F1F2(const char *opnm, int opsize1, int opsize2, unsigned ipc,
 
 static int decode_F3(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	return decode_AM(ipc, pc, readop(pc-1) & 1, opsize1, out + strlen(out)) + 1;
 }
 
 static int decode_F4a(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "%s %X", opnm, ipc+read8(pc));
+	sprintf(out, "%-8s%X", opnm, ipc+read8(pc));
 	return 2;
 }
 
 static int decode_F4b(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "%s %X", opnm, ipc+read16(pc));
+	sprintf(out, "%-8s%X", opnm, ipc+read16(pc));
 	return 3;
 }
 
@@ -472,7 +472,7 @@ static int decode_F5(const char *opnm, int opsize1, int opsize2, unsigned ipc, u
 
 static int decode_F6(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "%s %s, %X[PC]", opnm, v60_reg_names[readop(pc) & 0x1f], ipc+read16(pc+1));
+	sprintf(out, "%-8s%s, %X[PC]", opnm, v60_reg_names[readop(pc) & 0x1f], ipc+read16(pc+1));
 	return 4;
 }
 
@@ -482,7 +482,7 @@ static int decode_F7a(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	unsigned char code = readop(pc);
 	unsigned char code2;
 
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 
@@ -511,7 +511,7 @@ static int decode_F7b(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	unsigned char code = readop(pc);
 	unsigned char code2;
 
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 
@@ -533,7 +533,7 @@ static int decode_F7c(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	unsigned char code = readop(pc);
 	unsigned char code2;
 
-	sprintf(out, "%s ", opnm);
+	sprintf(out, "%-8s", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 

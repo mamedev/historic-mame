@@ -6,12 +6,12 @@
 UINT32 opBRK(void)
 {
 /*
-    UPDATEPSW();
+    UINT32 oldPSW = v60_update_psw_for_exception(0, 0);
 
     SP -=4;
-    MemWrite32(SP, 0x0d00);
+    MemWrite32(SP, EXCEPTION_CODE_AND_SIZE(0x0d00, 4));
     SP -=4;
-    MemWrite32(SP, PSW);
+    MemWrite32(SP, oldPSW);
     SP -=4;
     MemWrite32(SP, PC + 1);
     PC = GETINTVECT(13);
@@ -24,14 +24,14 @@ UINT32 opBRK(void)
 
 UINT32 opBRKV(void)
 {
-	UPDATEPSW();
+	UINT32 oldPSW = v60_update_psw_for_exception(0, 0);
 
 	SP -=4;
 	MemWrite32(SP, PC);
 	SP -=4;
-	MemWrite32(SP, 0x0d00);
+	MemWrite32(SP, EXCEPTION_CODE_AND_SIZE(0x1501, 4));
 	SP -=4;
-	MemWrite32(SP, PSW);
+	MemWrite32(SP, oldPSW);
 	SP -=4;
 	MemWrite32(SP, PC + 1);
 	PC = GETINTVECT(21);
@@ -79,9 +79,7 @@ UINT32 opRSR(void)
 
 UINT32 opTRAPFL(void)
 {
-	UPDATEPSW();
-
-	if ((TKCW & 0x1F0) & ((PSW & 0x1F00) >> 4))
+	if ((TKCW & 0x1F0) & ((v60ReadPSW() & 0x1F00) >> 4))
 	{
 		// @@@ FPU exception
 		osd_die("Hit TRAPFL! PC=%x\n", PC);

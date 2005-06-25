@@ -261,6 +261,7 @@ typedef struct {
 	int exception_pending;
 	int external_int;
 
+	int bus_freq_multiplier;
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
@@ -402,13 +403,13 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 					/* trigger interrupt */
 					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
-				DEC = value;
+				DEC = value * ppc.bus_freq_multiplier * 2;
 				return;
 
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
 				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= (UINT64)(value);
+				ppc.tb |= (UINT64)(value*4);
 				return;
 
 			case SPR603E_TBU_R:
@@ -581,11 +582,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR603E_TBL_W:		return (ppc.tb & 0xffffffff);
-			case SPR603E_TBU_W:		return ((ppc.tb >> 32) & 0xffffffff);
+			case SPR603E_TBL_W:		return ((ppc.tb / 4) & 0xffffffff);
+			case SPR603E_TBU_W:		return (((ppc.tb / 4) >> 32) & 0xffffffff);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
-			case SPR603E_DEC:		return DEC;
+			case SPR603E_DEC:		return DEC / (ppc.bus_freq_multiplier * 2);
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
@@ -668,11 +669,15 @@ INLINE UINT8 READ8(UINT32 a)
 		return program_read_byte_64be(a);
 	}
 
+#if HAS_PPC403
 	if(a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
 		return ppc403_spu_r(a);
 	} else {
 		return program_read_byte_32be(a);
 	}
+#else
+	return 0;
+#endif
 }
 
 INLINE UINT16 READ16(UINT32 a)
@@ -729,11 +734,13 @@ INLINE void WRITE8(UINT32 a, UINT8 d)
 		return;
 	}
 
+#if HAS_PPC403
 	if( a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
 		ppc403_spu_w(a, d);
 	} else {
 		program_write_byte_32be(a, d);
 	}
+#endif
 }
 
 INLINE void WRITE16(UINT32 a, UINT16 d)
@@ -1074,9 +1081,30 @@ static void ppcdrc603_exit(void)
 
 static void ppcdrc603_reset(void *param)
 {
+	int pll_config = 0;
+	float multiplier;
 	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
 	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+
+	switch(config->pvr)
+	{
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		default: break;
+	}
+
+	if (pll_config == -1)
+	{
+		osd_die("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
+	}
+
+	ppc.hid1 = pll_config << 28;
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);
@@ -1211,9 +1239,14 @@ static void ppcdrc602_exit(void)
 
 static void ppcdrc602_reset(void *param)
 {
+	float multiplier;
 	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
 	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	ppc.bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0);
 	change_pc(ppc.pc);
@@ -1446,10 +1479,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
-		case CPUINFO_PTR_INIT:							info->init = ppcdrc403_init;			break;
-		case CPUINFO_PTR_RESET:							info->reset = ppcdrc403_reset;			break;
-		case CPUINFO_PTR_EXIT:							info->exit = ppcdrc403_exit;			break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc403_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = ppc.irq_callback;	break;

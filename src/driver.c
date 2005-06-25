@@ -727,7 +727,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( cosmogng )	/* (c) 1991 (US) */
 	DRIVER( cosmognj )	/* (c) 1991 (Japan) */
 	DRIVER( finalap3 )	/* 92.9  Final Lap 3 */
-	DRIVER( finalp3a )	/* 92.9  Final Lap 3 */
+	DRIVER( finalp3j )	/* 92.9  Final Lap 3 */
 	DRIVER( luckywld )	/* (c) 1992 */
 	DRIVER( lckywldj )	/* (c) 1992 */
 	DRIVER( suzuka8h )
@@ -1651,6 +1651,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( champwru )	/* C01 (c) 1989 Taito America Corporation (US) */
 	DRIVER( champwrj )	/* C01 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( puzznic )	/* C20 (c) 1989 Taito Corporation (Japan) */
+	DRIVER( puzznica )	/* C20 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( horshoes )	/* C47 (c) 1990 Taito America Corporation (US) */
 	DRIVER( palamed )	/* C63 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( cachat )	/* ??? (c) 1993 Taito Corporation (Japan) */
@@ -3420,6 +3421,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( twinsqua )	/* (c) 1991 Sega */
 	DRIVER( ribbit )	/* (c) 1991 Sega */
 	DRIVER( tantr )		/* (c) 1992 Sega */
+	DRIVER( tantrkor )	/* (c) 1992 Sega */
 	DRIVER( tantrbl )	/* bootleg */
 	DRIVER( tantrbl2 )	/* bootleg */
 	DRIVER( puyo )		/* (c) 1992 Sega / Compile */
@@ -5462,8 +5464,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ejanhs )
 
 	DRIVER( rdft )
+	DRIVER( rdftu )
 	DRIVER( rdftau )
 	DRIVER( rdftj )
+	DRIVER( rdftdi )
 	DRIVER( rdft2 )
 	DRIVER( rdft2a )
 	DRIVER( rdft2a2 )
@@ -6178,6 +6182,7 @@ Other Sun games
 	DRIVER( mmpanic )	/* "70" 1992 Nakanihon/Taito */
 	DRIVER( quizchq )	/* "73" (c) 1993 Nakanihon */
 	DRIVER( quizchql )	/* "73" (c) 1993 Laxan */
+	DRIVER( animaljr )	/* "75" 1993 Nakanihon/Taito */
 	DRIVER( quiz365 )	/* "78" (c) 1994 Nakanihon */
 	DRIVER( quiz365t )	/* "78" (c) 1994 Nakanihon (Taiwan) */
 	DRIVER( rongrong )	/* "80" (c) 1994 Nakanihon */
@@ -6262,7 +6267,7 @@ Other Sun games
 	DRIVER( mstworld )	/* (c) 199? */
 
 	DRIVER( kickgoal )	/* (c) 1995 */
-	DRIVER( holywact )	/* (c) 1995 */
+	DRIVER( actionhw )	/* (c) 1995 */
 
 	/* U.S. Games games */
 	DRIVER( usg32 )

@@ -813,8 +813,8 @@ static void ppc_mcrf(UINT32 op)
 
 static void ppc_mcrxr(UINT32 op)
 {
-	CR(RT >> 2) = XER & 0x0F;
-	XER = 0;
+	CR(RT >> 2) = (XER >> 28) & 0x0F;
+	XER &= ~0xf0000000;
 }
 
 static void ppc_mfcr(UINT32 op)
@@ -1889,8 +1889,8 @@ static void ppc_mftb(UINT32 op)
 
 	switch(x)
 	{
-		case 268:	REG(RT) = (UINT32)(ppc.tb); break;
-		case 269:	REG(RT) = (UINT32)(ppc.tb >> 32); break;
+		case 268:	REG(RT) = (UINT32)(ppc.tb / 4); break;
+		case 269:	REG(RT) = (UINT32)((ppc.tb / 4) >> 32); break;
 		default:	osd_die("ppc: Invalid timebase register %d at %08X", x, ppc.pc); break;
 	}
 }

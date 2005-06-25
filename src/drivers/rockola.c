@@ -1304,8 +1304,8 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, CRC(7dc9d450) SHA1(9b2d1dfb3270a562d14bd54bfb3405a9095becc0) ) /* background colors */
 
 	ROM_REGION( 0x1000, REGION_SOUND1, 0 )	/* sound ROMs */
-	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, NO_DUMP CRC(d2a64006) SHA1(3f20b59ce1954f65535cd5603ca9271586428e35) )  /* missing, using the SNK one */
-	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, NO_DUMP CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* missing, using the SNK one */
+	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, CRC(d2a64006) SHA1(3f20b59ce1954f65535cd5603ca9271586428e35) )  /* confirmed, 6/21/05 */
+	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* confirmed, 6/21/05 */
 
 	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
 	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )   /* HD38882 internal ROM */

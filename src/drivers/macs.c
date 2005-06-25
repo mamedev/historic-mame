@@ -6,6 +6,18 @@ processor seems to be ST0016 (z80 based) from SETA
 
 around 0x3700 of the bios (when interleaved) contains the ram test text
 
+TODO:
+(general)
+-Hook-Up bios.
+-Is the NMI triggering really needed?The NMI vectors points to a retn in all the games...
+(yuka)
+-Crashes because of the first time that executes ldir at 8c0,it call sprite data with
+ASCII character texts.
+(yujan)
+-Girls disappears when you win.
+-Some trasparency issues.
+-Some gfx are offset.
+
 
 ----- Game Notes -----
 
@@ -125,7 +137,7 @@ READ8_HANDLER(st0016_dma_r);
 static READ8_HANDLER(macs_dips)
 {
 	//printf("[%x] %x\n",offset,activecpu_get_previouspc());
-	return 0xff;//xff;
+	return 0x00;//xff;
 }
 
 static WRITE8_HANDLER(rambank_w)
@@ -151,21 +163,58 @@ static READ8_HANDLER(macs_rand_r)
 	return rand();
 }
 
+static UINT8 mux_data;
+
+static READ8_HANDLER( macs_input_r )
+{
+ 	//logerror("I/O read at PC = %06x offset = %02x\n",activecpu_get_pc(),offset+0xc0);
+
+	switch(offset)
+	{
+		case 0:
+		{
+			/*It's bit-wise*/
+			switch(mux_data)
+			{
+				case 0x00: return readinputportbytag("IN0");
+				case 0x01: return readinputportbytag("IN1");
+				case 0x02: return readinputportbytag("IN2");
+				case 0x04: return readinputportbytag("IN3");
+				case 0x08: return readinputportbytag("IN4");
+				default:
+				logerror("Unmapped mahjong panel mux data %02x\n",mux_data);
+				return 0xff;
+			}
+		}
+		case 1: return readinputportbytag("SYS0");
+		case 2: return readinputportbytag("DSW0");
+		case 3: return readinputportbytag("DSW1");
+		case 4: return readinputportbytag("DSW2");
+		case 5: return readinputportbytag("DSW3");
+		case 6: return readinputportbytag("DSW4");
+		case 7: return readinputportbytag("SYS1");
+		default: 	usrintf_showmessage("Unmapped I/O read at PC = %06x offset = %02x",activecpu_get_pc(),offset+0xc0);
+	}
+
+	return 0xff;
+}
+
+static WRITE8_HANDLER( macs_output_w )
+{
+	//logerror("I/O write at PC = %06x offset = %02x data = %02x\n",activecpu_get_pc(),offset+0xc0,data);
+
+	switch(offset)
+	{
+		case 2: mux_data = data; break;
+		//logerror("Unmapped I/O write at PC = %06x offset = %02x data = %02x\n",activecpu_get_pc(),offset+0xc0,data);
+		//default: usrintf_showmessage("Unmapped I/O write at PC = %06x offset = %02x data = %02x",activecpu_get_pc(),offset+0xc0,data);
+	}
+}
+
 static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xbf) AM_READ(st0016_vregs_r) AM_WRITE(st0016_vregs_w) /* video/crt regs ? */
-	AM_RANGE(0xc0, 0xc0) AM_READ(macs_dips) AM_WRITE(rambank2_w) //AM_WRITENOP
-	AM_RANGE(0xc1, 0xc1)	AM_READ(macs_dips) AM_WRITENOP
-	AM_RANGE(0xc2, 0xc2) AM_READ(input_port_0_r) AM_WRITENOP //switch a ds1
-	AM_RANGE(0xc3, 0xc3)	AM_READ(input_port_0_r) AM_WRITENOP //switch a ds 2
-	AM_RANGE(0xc4, 0xc4) AM_READ(input_port_0_r) AM_WRITENOP//a ds 3
-	AM_RANGE(0xc5, 0xc5) AM_READ(input_port_0_r) AM_WRITENOP//a ds 4
-	AM_RANGE(0xc6, 0xc6) AM_READ(input_port_1_r) AM_WRITENOP
-	AM_RANGE(0xc7, 0xc7) AM_READ(macs_dips) AM_WRITENOP //dipswitches here !
-
-
-	//AM_RANGE(0xc0, 0xc7) AM_READ(random_r) AM_WRITENOP
-
+	AM_RANGE(0xc0, 0xc7) AM_READWRITE(macs_input_r,macs_output_w)
 	AM_RANGE(0xe0, 0xe0) AM_WRITENOP /* renju = $40, neratte = 0 */
 	AM_RANGE(0xe1, 0xe1) AM_WRITE(st0016_rom_bank_w)
 	AM_RANGE(0xe2, 0xe2) AM_WRITE(st0016_sprite_bank_w)
@@ -192,8 +241,9 @@ static INTERRUPT_GEN(st0016_int)
 }
 
 INPUT_PORTS_START( macs )
-	PORT_START_TAG("IN0")
-	PORT_DIPNAME( 0x01, 0x01, "BIT 1" )
+	/*0*/
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x01, 0x01, "DSW0 - BIT 1" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "BIT 2" )
@@ -218,53 +268,170 @@ INPUT_PORTS_START( macs )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_START1 ) /* buttons ? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused ? */
-
+	/*1*/
 	PORT_START_TAG("DSW1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x01, 0x01, "DSW1 - BIT 1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "BIT 2" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Test mode" )
+	PORT_DIPNAME( 0x04, 0x04, "BIT 4" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(      0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(      0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(      0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x08, "BIT 8" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "BIT 10" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "BIT 20" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "BIT 40" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "BIT 80" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
+	/*2*/
 	PORT_START_TAG("DSW2")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x00, DEF_STR( Very_Hard ) )
-	PORT_DIPSETTING(      0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(      0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(      0x03, DEF_STR( Normal ) )
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x01, "DSW 2 - BIT 1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "BIT 2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "BIT 4" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "BIT 8" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "BIT 10" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "BIT 20" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "BIT 40" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "BIT 80" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	/*3*/
+	PORT_START_TAG("DSW3")
+	PORT_DIPNAME( 0x01, 0x01, "DSW3 - BIT 1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "BIT 2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Game" )
+	PORT_DIPSETTING(    0x08, "Bet Type" )
+	PORT_DIPSETTING(    0x00, "Normal Type" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Level_Select ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Memory Reset" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Analyzer" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	/*4 - unused*/
+	PORT_START_TAG("DSW4")
+	PORT_DIPNAME( 0x01, 0x01, "DSW4 - BIT 1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "BIT 2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "BIT 4" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "BIT 8" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "BIT 10" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "BIT 20" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "BIT 40" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "BIT 80" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	/*(COMMON) MAHJONG PANEL*/
+	PORT_START_TAG("IN0")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN4")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
+	PORT_BIT(0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*
+    Note: These could likely to be switches that are on the game board and not Dip Switches
+    */
+	PORT_START_TAG("SYS0")
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Note In") PORT_CODE(KEYCODE_4_PAD)
+
+	PORT_START_TAG("SYS1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Clear Coin Counter") PORT_CODE(KEYCODE_1_PAD)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Memory Reset") PORT_CODE(KEYCODE_2_PAD)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Analyzer") PORT_CODE(KEYCODE_3_PAD)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -274,7 +441,7 @@ static struct ST0016interface st0016_interface =
 	&st0016_charram
 };
 
-static MACHINE_DRIVER_START(macs )
+static MACHINE_DRIVER_START( macs )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",Z80,8000000) /* 8 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(st0016_mem,0)
@@ -414,9 +581,9 @@ static DRIVER_INIT(macs)
 
 
 
-GAMEX( 1995, macsbios, 0,        macs, macs, macs, ROT0, "I'Max", "Multi Amenity Cassette System BIOS", NOT_A_DRIVER | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1995, kisekaem, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Mahjong",  GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1995, kisekaeh, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Hanafuda",  GAME_NOT_WORKING |GAME_NO_SOUND)
-GAMEX( 1996, cultname, macsbios, macs, macs, macs, ROT0, "I'Max", "Seimei-Kantei-Meimei-Ki Cult Name",  GAME_NOT_WORKING |GAME_NO_SOUND)
-GAMEX( 1999, yuka,     macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Ka",  GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, yujan,    macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING |GAME_NO_SOUND ) // shows *something* with hack
+GAMEX( 1995, macsbios, 0,        macs, macs, macs, ROT0, "I'Max", "Multi Amenity Cassette System BIOS", NOT_A_DRIVER | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, kisekaem, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Mahjong",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAMEX( 1995, kisekaeh, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Hanafuda",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
+GAMEX( 1996, cultname, macsbios, macs, macs, macs, ROT0, "I'Max", "Seimei-Kantei-Meimei-Ki Cult Name",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
+GAMEX( 1999, yuka,     macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Ka",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAMEX( 1999, yujan,    macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) // shows *something* with hack

@@ -381,7 +381,7 @@ VIDEO_UPDATE( irobot )
 	int x, y, offs;
 
 	/* copy the polygon bitmap */
-	for (y = Machine->visible_area.min_y; y < Machine->visible_area.max_y; y++)
+	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 		draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, &bitmap_base[y * BITMAP_WIDTH], Machine->pens, -1);
 
 	/* redraw the non-zero characters in the alpha layer */

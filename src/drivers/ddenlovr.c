@@ -12,9 +12,10 @@ Sound: (AY-3-8910) + YM2413 + MSM6295
 Other: Real Time Clock (Oki MSM6242B or 72421B)
 
 ---------------------------------------------------------------------------------------------------------------------------
-Year + Game                 Board           CPU     Sound                       Custom              Notes
+Year + Game                 Board           CPU     Sound                       Custom                              Notes
 ---------------------------------------------------------------------------------------------------------------------------
-92 Monkey Mole Panic                        2xZ80   AY8910 +          M6295     Dynax NL-001        8251
+92 Monkey Mole Panic                        2xZ80   AY8910 +          M6295     Dynax NL-001                        8251
+93 Animalandia Jr.                          2xZ80   AY8910 +          M6295     NL-004 (x2), NL-003 (x2), NL-001    TMP82C51 (USART)
 93 Quiz Channel Question    N7311208L1-2    Z80              YM2413 + M6295     NAKANIHON NL-002
 94 Quiz 365                                 68000   AY8910 + YM2413 + M6295
 94 Rong Rong                                Z80              YM2413 + M6295     NAKANIHON NL-002
@@ -164,6 +165,11 @@ VIDEO_START(mmpanic)
 	return 0;
 }
 
+
+static void dynax_flipscreen_w( data8_t data )
+{
+	logerror("flipscreen = %02x\n",data);
+}
 
 static void dynax_blit_flip_w( data8_t data )
 {
@@ -654,6 +660,10 @@ profiler_mark(PROFILER_VIDEO);
 			else			dynax_dest_layer = (dynax_dest_layer & 0xff00) | (data<<0);
 			break;
 
+		case 0x01:
+			dynax_flipscreen_w(data);
+			break;
+
 		case 0x02:
 			dynax_blit_y = data | hi_bits;
 			break;
@@ -811,9 +821,9 @@ profiler_mark(PROFILER_VIDEO);
 			dynax_dest_layer = data;
 			break;
 
-//      case 0x04:
-//          Flip screen
-//          break;
+		case 0x04:
+			dynax_flipscreen_w(data);
+			break;
 
 		case 0x08:
 			dynax_blit_y = data | hi_bits;
@@ -2687,21 +2697,21 @@ INPUT_PORTS_START( mmpanic )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested?
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	/* Test */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	/* Test */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested?
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("8") PORT_CODE(KEYCODE_8_PAD)
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("9") PORT_CODE(KEYCODE_9_PAD)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("8") PORT_CODE(KEYCODE_8_PAD)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("9") PORT_CODE(KEYCODE_9_PAD)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	// busy?
 
 	PORT_START	// IN1 6b (68 = 0 & 1)
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("1") PORT_CODE(KEYCODE_1_PAD)
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("2") PORT_CODE(KEYCODE_2_PAD)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("3") PORT_CODE(KEYCODE_3_PAD)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("4") PORT_CODE(KEYCODE_4_PAD)
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("5") PORT_CODE(KEYCODE_5_PAD)
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("6") PORT_CODE(KEYCODE_6_PAD)
-	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("7") PORT_CODE(KEYCODE_7_PAD)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("1") PORT_CODE(KEYCODE_1_PAD)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("2") PORT_CODE(KEYCODE_2_PAD)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("3") PORT_CODE(KEYCODE_3_PAD)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("4") PORT_CODE(KEYCODE_4_PAD)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("5") PORT_CODE(KEYCODE_5_PAD)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("6") PORT_CODE(KEYCODE_6_PAD)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("7") PORT_CODE(KEYCODE_7_PAD)
 
 	PORT_START	// IN2 - DSW
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
@@ -2732,7 +2742,7 @@ INPUT_PORTS_START( mmpanic )
 	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0*" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1*" )	// reg 1 of blitter
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Unknown 2-2&3*" )
@@ -2774,6 +2784,103 @@ INPUT_PORTS_START( mmpanic )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown 3-7*" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( animaljr )
+	PORT_START	// IN0 6a (68 = 1:used? 2:normal 3:goes to 69)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	/* Test */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	// busy?
+
+	PORT_START	// IN1 6b (68 = 0 & 1)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested ?
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("1") PORT_CODE(KEYCODE_1_PAD)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("2") PORT_CODE(KEYCODE_2_PAD)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("3") PORT_CODE(KEYCODE_3_PAD)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("4") PORT_CODE(KEYCODE_4_PAD)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("5") PORT_CODE(KEYCODE_5_PAD)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("6") PORT_CODE(KEYCODE_6_PAD)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - DSW
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 1-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 1-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x80, "Difficulty?" )
+	PORT_DIPSETTING(    0xe0, "0" )
+	PORT_DIPSETTING(    0xc0, "1" )
+	PORT_DIPSETTING(    0xa0, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x60, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+	PORT_DIPSETTING(    0x20, "6" )
+	PORT_DIPSETTING(    0x00, "7" )
+
+	PORT_START	// IN3 - DSW
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2*" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, "Unknown 2-3&4" )	// used ?
+//  PORT_DIPSETTING(    0x10, "0" )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x18, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Pirate Fight" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Taito Copyright" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	// IN4 - DSW
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 3-0*" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Tickets" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 3-2*" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 3-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 3-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 3-7" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -3810,6 +3917,45 @@ ROM_END
 
 /***************************************************************************
 
+Z80 x2
+OSC 24MHz, 14.31818MHz, 16MHz
+Oki M6295 + YM2413 + AY-3-8910
+Oki 6242 + 3.6v battery + 32.768kHz (rtc)
+Toshiba TMP82C51 (USART)
+Custom ICs NL-004 (x2), NL-003 (x2), NL-001
+RAM 8kx8 near 7502S
+RAM 8kx8 near 7503S
+RAM 2kx8 near NL-001
+RAM 32kx8 (x8) near NL-003 & NL-003
+DIPs 10-position (x2)
+PAL near 7504
+PAL near 7501S
+
+probably 7501S is damaged, I can not get a consistent read. 10 reads supplied for comparison.
+
+***************************************************************************/
+
+ROM_START( animaljr )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "7502s.2e",     0x00000, 0x40000, CRC(4b14a4be) SHA1(79f7207f7311c627ece1a0d8571b4bddcdefb336) )
+	ROM_RELOAD(               0x10000, 0x40000 )
+
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "7503s.8e",     0x00000, 0x20000, CRC(d1fac899) SHA1(dde2824d73b13c18b83e4c4b63fe7835bce87ea4) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_LOAD( "7504.17b",     0x000000, 0x100000, CRC(b62de6a3) SHA1(62abf09b52844d3b3325e8931cb572c15581964f) )
+	ROM_LOAD( "7505.17d",     0x100000, 0x080000, CRC(729b073f) SHA1(8e41fafc47adbe76452e92ab1459536a5a46784d) )
+	ROM_LOAD( "7506s.17f",    0x180000, 0x080000, CRC(1be1ae17) SHA1(57bf9bcd9df49cdbb1311ec9e850cb1a141e5069) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "7501s_0.1h",   0x00000, 0x40000, BAD_DUMP CRC(59debb66) SHA1(9021722d3f8956946f102eddc7c676e1ef41574e) )
+ROM_END
+
+
+/***************************************************************************
+
 Quiz Channel Question (JPN ver.)
 (c)1993 Nakanihon
 
@@ -4184,6 +4330,7 @@ ROM_END
 GAMEX(1992, mmpanic,  0,       mmpanic,  mmpanic,  0,        ROT0, "Nakanihon + East Technology (Taito license)", "Monkey Mole Panic (USA)",                    GAME_NO_COCKTAIL )
 GAMEX(1993, quizchq,  0,       quizchq,  quizchq,  0,        ROT0, "Nakanihon",                                   "Quiz Channel Question (Ver 1.00) (Japan)",   GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX(1993, quizchql, quizchq, quizchq,  quizchq,  0,        ROT0, "Nakanihon (Laxan license)",                   "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX(1993, animaljr, 0,       mmpanic,  animaljr, 0,        ROT0, "Nakanihon + East Technology (Taito license)", "Animalandia Jr.",                            GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon",                                   "Quiz 365 (Japan)",                           GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, quiz365t, quiz365, quiz365,  quiz365,  0,        ROT0, "Nakanihon + Taito",                           "Quiz 365 (Hong Kong & Taiwan)",              GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Europe)",                         GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
