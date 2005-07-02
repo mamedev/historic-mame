@@ -1889,8 +1889,8 @@ static void ppc_mftb(UINT32 op)
 
 	switch(x)
 	{
-		case 268:	REG(RT) = (UINT32)(ppc.tb / 4); break;
-		case 269:	REG(RT) = (UINT32)((ppc.tb / 4) >> 32); break;
+		case 268:	REG(RT) = (UINT32)(ppc_read_timebase()); break;
+		case 269:	REG(RT) = (UINT32)(ppc_read_timebase() >> 32); break;
 		default:	osd_die("ppc: Invalid timebase register %d at %08X", x, ppc.pc); break;
 	}
 }

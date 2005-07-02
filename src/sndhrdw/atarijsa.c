@@ -386,7 +386,7 @@ static WRITE8_HANDLER( jsa2_io_w )
 			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			if (has_oki6295) OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -499,8 +499,9 @@ static WRITE8_HANDLER( jsa3_io_w )
             */
 
 			/* update the OKI bank */
+
 			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
-			OKIM6295_set_bank_base(0, oki6295_bank_base);
+			if (has_oki6295) OKIM6295_set_bank_base(0, oki6295_bank_base);
 
 			/* update the bank */
 			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
@@ -511,7 +512,7 @@ static WRITE8_HANDLER( jsa3_io_w )
 			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			if (has_oki6295) OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
 			break;
 
 		case 0x206:		/* /MIX */
@@ -525,7 +526,7 @@ static WRITE8_HANDLER( jsa3_io_w )
 
 			/* update the OKI bank */
 			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
-			OKIM6295_set_bank_base(0, oki6295_bank_base);
+			if (has_oki6295) OKIM6295_set_bank_base(0, oki6295_bank_base);
 
 			/* update the volumes */
 			ym2151_volume = ((data >> 1) & 7) * 100 / 7;

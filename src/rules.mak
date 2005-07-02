@@ -1405,10 +1405,10 @@ OBJDIRS += $(OBJ)/cpu/powerpc
 CPUDEFS += -DHAS_PPC403=1
 ifdef X86_PPC_DRC
 CPUOBJS += $(OBJ)/cpu/powerpc/ppcdrc.o
-$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc403.c
+$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc_mem.c ppc403.c
 else
 CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
-$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.c ppc_mem.c ppc403.c
 endif
 DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
 else
@@ -1421,10 +1421,10 @@ OBJDIRS += $(OBJ)/cpu/powerpc
 CPUDEFS += -DHAS_PPC602=1
 ifdef X86_PPC_DRC
 CPUOBJS += $(OBJ)/cpu/powerpc/ppcdrc.o
-$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc602.c
+$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc_mem.c ppc602.c
 else
 CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
-$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc602.c
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.c ppc_mem.c ppc602.c
 endif
 DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
 else
@@ -1437,10 +1437,10 @@ OBJDIRS += $(OBJ)/cpu/powerpc
 CPUDEFS += -DHAS_PPC603=1
 ifdef X86_PPC_DRC
 CPUOBJS += $(OBJ)/cpu/powerpc/ppcdrc.o
-$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc603.c
+$(OBJ)/cpu/powerpc/ppcdrc.o: ppcdrc.c ppc.h drc_ops.c drc_ops.h ppc_ops.c ppc_mem.c ppc603.c
 else
 CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
-$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc603.c
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.c ppc_mem.c ppc603.c
 endif
 DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
 else

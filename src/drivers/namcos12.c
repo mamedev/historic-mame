@@ -44,7 +44,7 @@ Super World Stadium '99 (SS91/VER.A3)    (C) Namco,        1999    COH 700      
 *Super World Stadium 2001                (C) Namco,        2001
 *Techno Drive                            (C) Namco,        1998
 *TeknoWerk                               (C) Namco,        1999
-*Tenkomori Shooting                      (C) Namco,        1998
+Tenkomori Shooting (TKM2/VER.A1)         (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC036
 Tekken 3 (TET1/VER.E1)                   (C) Namco,        1996    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC006
 Tekken 3 (TET2/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
 Tekken 3 (TET3/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
@@ -208,6 +208,7 @@ Notes:
                      Tekken 3                  TET1 Ver.A   TET1/VER.E1      MOTHER(B)
                      Tekken 3                  TET2 Ver.A   TET2/VER.A       MOTHER
                      Tekken 3                  TET3 Ver.A   TET3/VER.A       MOTHER
+                     Tenkomori Shooting        TKM2 Ver.A   TKM2/VER.A1      MOTHER(B)
 
       SOUND.11S    : Fujitsu 29F400TA-90 512K x8 EEPROM (holds H8/3002 program, SOP44)
                      This ROM is not labelled with any other markings except the manufacturer and chip type. The ROM labels
@@ -261,14 +262,19 @@ This PCB is used on:
 Game          Revision     PCB                                            KEYCUS   ROMs Populated
 ------------------------------------------------------------------------------------------------------------------
 Ehrgeiz       EG2/VER.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021    EG1 WAVE0
-                                                                                   EG1 ROM0U, EG1ROM0L.12
+                                                                                   EG1 ROM0U, EG1 ROM0L
                                                                                    EG1 FL1U, EG1 FL1L, EG1 FL2U
                                                                                    EG1 FL2L, EG1 FL3U, EG1 FL3L
 
 Ehrgeiz       EG3/VER.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021    EG1 WAVE0
-                                                                                   EG1 ROM0U, EG1ROM0L.12
+                                                                                   EG1 ROM0U, EG1 ROM0L
                                                                                    EG1 FL1U, EG1 FL1L, EG1 FL2U
                                                                                    EG1 FL2L, EG1 FL3U, EG1 FL3L
+
+Tenkomori     TKM2/VER.A1  SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC036    TKM1 WAVE0, TKM1 WAVE1
+Shooting                                                                           TKM1 ROM0U, TKM1 ROM0L
+                                                                                   TKM1 FL1U, TKM1 FL1L, TKM1 FL2U
+                                                                                   TKM1 FL2L, TKM1 FL3U, TKM1 FL3L
 
 ********
 *Type 2*
@@ -743,27 +749,6 @@ static READ16_HANDLER( sharedram_sub_r )
 	return shared16[BYTE_XOR_LE(offset)];
 }
 
-static INTERRUPT_GEN( namcos12_vblank )
-{
-	psx_vblank();
-
-	/* kludge: protection hacks */
-	if( strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 )
-	{
-		if( g_p_n_psxram[ 0x2ac494 / 4 ] == 0x080ab125 )
-		{
-			g_p_n_psxram[ 0x2ac494 / 4 ] = 0;
-		}
-	}
-	else if( strcmp( Machine->gamedrv->name, "pacapp" ) == 0 )
-	{
-		if( g_p_n_psxram[ 0x16d50 / 4 ] == 0x08005b54 )
-		{
-			g_p_n_psxram[ 0x16d50 / 4 ] = 0;
-		}
-	}
-}
-
 static data32_t m_n_bankoffset, m_n_bankoffseth;
 
 // called after a state load to properly set things up again
@@ -854,9 +839,6 @@ static WRITE32_HANDLER( s12_dma_bias_w )
 static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
 	AM_RANGE(0x1f000000, 0x1f000003) AM_READWRITE(MRA32_NOP, bankoffset_w)			/* banking */
-	AM_RANGE(0x1f008000, 0x1f008003) AM_WRITENOP    /* ?? */
-	AM_RANGE(0x1f010000, 0x1f010003) AM_WRITENOP    /* ?? */
-	AM_RANGE(0x1f018000, 0x1f018003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f080000, 0x1f083fff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos12_sharedram) /* shared ram?? */
 	AM_RANGE(0x1f140000, 0x1f140fff) AM_READWRITE( at28c16_32le_16lsb_0_r, at28c16_32le_16lsb_0_w ) /* eeprom */
 	AM_RANGE(0x1f1bff08, 0x1f1bff0f) AM_WRITENOP    /* ?? */
@@ -887,7 +869,6 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
 ADDRESS_MAP_END
 
-
 static DRIVER_INIT( namcos12 )
 {
 	psx_driver_init();
@@ -899,26 +880,40 @@ static DRIVER_INIT( namcos12 )
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffseth", &m_n_bankoffseth, 1 );
 	state_save_register_func_postload( s12_resetbank );
+}
 
-	/* kludge: some kind of protection? */
-	if( strcmp( Machine->gamedrv->name, "tekkentt" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "mrdrillr" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "pacapp" ) == 0 )
-	{
-		data8_t *RAM = memory_region( REGION_USER1 );
+static unsigned char kcram[ 12 ];
 
-		*( (data32_t *)&RAM[ 0x20280 ] ) = 0;
-		*( (data32_t *)&RAM[ 0x20284 ] ) = 0;
-		*( (data32_t *)&RAM[ 0x20288 ] ) = 0;
-	}
+static WRITE32_HANDLER( kcoff_w )
+{
+	cpu_setbank( 2, memory_region( REGION_USER1 ) + 0x20280 );
+}
+
+static WRITE32_HANDLER( kcon_w )
+{
+	cpu_setbank( 2, kcram );
 }
 
 MACHINE_INIT( namcos12 )
 {
 	psx_machine_init();
 	bankoffset_w(0,0,0);
+
+	if( strcmp( Machine->gamedrv->name, "tekkentt" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "mrdrillr" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "pacapp" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tenkomor" ) == 0 )
+	{
+		/* this is based on guesswork, it might not even be keycus. */
+		memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1fc20280, 0x1fc2028b, 0, 0, MRA32_BANK2 );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f008000, 0x1f008003, 0, 0, kcon_w );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f018000, 0x1f018003, 0, 0, kcoff_w );
+
+		memset( kcram, 0, sizeof( kcram ) );
+		cpu_setbank( 2, kcram );
+	}
 }
 
 
@@ -1126,7 +1121,7 @@ static MACHINE_DRIVER_START( coh700 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( namcos12_map, 0 )
-	MDRV_CPU_VBLANK_INT( namcos12_vblank, 1 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD(H83002, 14745600 )	/* verified 14.7456 MHz */
 	MDRV_CPU_PROGRAM_MAP( s12h8rwmap, 0 )
@@ -1307,7 +1302,7 @@ ROM_START( ehrgeiz )
 	ROM_LOAD16_BYTE( "eg1fl3u.6",    0x1800001, 0x200000, CRC(cea397de) SHA1(3791dbadb5699c805c27930e59c61af4d62f77f7) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD16_WORD_SWAP( "eg3vera.11s", 0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
+	ROM_LOAD16_WORD_SWAP( "eg1vera.11s", 0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "eg1wave0.2",          0x0000000, 0x800000, CRC(961fe69f) SHA1(0189a061959a8d94b9d2db627911264faf9f28fd) )
@@ -1329,7 +1324,7 @@ ROM_START( ehrgeiza )
 	ROM_LOAD16_BYTE( "eg1fl3u.6",    0x1800001, 0x200000, CRC(cea397de) SHA1(3791dbadb5699c805c27930e59c61af4d62f77f7) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD16_WORD_SWAP( "eg3vera.11s", 0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
+	ROM_LOAD16_WORD_SWAP( "eg1vera.11s", 0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "eg1wave0.2",          0x0000000, 0x800000, CRC(961fe69f) SHA1(0189a061959a8d94b9d2db627911264faf9f28fd) )
@@ -1535,7 +1530,7 @@ ROM_START( tekken3 )
 	ROM_LOAD16_BYTE( "tet1fl3u.13",  0x1800001, 0x200000, CRC(1917d993) SHA1(cabc44514a3e62a18a7f8f883603241447d6948b) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD16_WORD_SWAP( "tet1vere.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
+	ROM_LOAD16_WORD_SWAP( "tet1vera.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "tet1wave0.5",         0x0000000, 0x400000, CRC(77ba7975) SHA1(fe9434dcf0fb232c85efaaae1b4b13d36099620a) )
@@ -1558,7 +1553,7 @@ ROM_START( tekken3a )
 	ROM_LOAD16_BYTE( "tet1fl3u.13",  0x1800001, 0x200000, CRC(1917d993) SHA1(cabc44514a3e62a18a7f8f883603241447d6948b) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD16_WORD_SWAP( "tet1vere.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
+	ROM_LOAD16_WORD_SWAP( "tet1vera.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "tet1wave0.5",         0x0000000, 0x400000, CRC(77ba7975) SHA1(fe9434dcf0fb232c85efaaae1b4b13d36099620a) )
@@ -1590,6 +1585,29 @@ ROM_START( tekkentt )
 	ROM_LOAD( "teg3wave1.12",        0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
 ROM_END
 
+ROM_START( tenkomor )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "tkm2vera.2e",  0x0000000, 0x200000, CRC(a9b81653) SHA1(9199505019234140b0d89e199f0db307d5bcca02) )
+	ROM_LOAD16_BYTE( "tkm2vera.2j",  0x0000001, 0x200000, CRC(28cff9ee) SHA1(d1996d45cca3a9bbd6a7f39721b2ec9f3d052422) )
+
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "tkm1rom0l.12", 0x0000000, 0x800000, CRC(dddebb39) SHA1(44169b0c6be4d387e7b6087ce723476ee96b09b4) )
+	ROM_LOAD16_BYTE( "tkm1rom0u.11", 0x0000001, 0x800000, CRC(dbcc3838) SHA1(c4e11800c5e8122044914152227b8a29e9446c9d) )
+	ROM_LOAD16_BYTE( "tkm1fl1l.9",   0x1000000, 0x200000, CRC(071ef722) SHA1(7c0317b3bca2763dbbac5454901cd48a0b195edd) )
+	ROM_LOAD16_BYTE( "tkm1fl1u.10",  0x1000001, 0x200000, CRC(580f8391) SHA1(2205c80721631ea8016efbe6d79f5ea7d1924278) )
+	ROM_LOAD16_BYTE( "tkm1fl2l.7",   0x1400000, 0x200000, CRC(bd54efe3) SHA1(ff3573066ad2498a33ceabf378a3c69af11ee7db) )
+	ROM_LOAD16_BYTE( "tkm1fl2u.8",   0x1400001, 0x200000, CRC(6e4e6320) SHA1(8d220b0028cfc2f02eb34df41a5dbb23be3e7908) )
+	ROM_LOAD16_BYTE( "tkm1fl3l.5",   0x1800000, 0x200000, CRC(a31ffb10) SHA1(4f8e41e263611a7f9a63bd53ebee4e68ad0095e6) )
+	ROM_LOAD16_BYTE( "tkm1fl3u.6",   0x1800001, 0x200000, CRC(bc566162) SHA1(db40d28c57dbf1351adfa2dd740edbe0b897307f) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "tkm1vera.11s", 0x0000000, 0x080000, CRC(0b414dae) SHA1(a8f77ae7ee0dc516cd9aaf944431a9a0c9dc7def) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tkm1wave0.2",  0x0000000, 0x800000, CRC(6085387d) SHA1(a2a55f6ebe9de2d5415a1c4f3ec7975af95b45b4) )
+	ROM_LOAD( "tkm1wave1.1",  0x0800000, 0x800000, CRC(7567796b) SHA1(99e4b867477da2ccddfa9bebc4be84adc5cba53c) )
+ROM_END
+
 GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, tekken3a,  tekken3,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, lbgrande,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -1598,6 +1616,7 @@ GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",    
 GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, ehrgeiza,  ehrgeiz,  coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, tenkomor,  0,        coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
 GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */

@@ -594,58 +594,12 @@ ADDRESS_MAP_END
                                 Bonk's Adventure
 ***************************************************************************/
 
-static int bonkadv_oki_0_bank[16] = {
-	0x00000,0x00000,0x00000,0x00000, // 1 chunk of 0x40000
-	0x40000,0x50000,0x60000,0x70000, // then chunks of 0x10000
-	0x80000,0x90000,0xa0000,0xb0000,
-	0xc0000,0xd0000,0xe0000,0xf0000
-};
-
-static int bonkadv_bank0;
-
 static WRITE16_HANDLER( bonkadv_oki_0_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		bonkadv_bank0 = bonkadv_oki_0_bank[data & 0xf];
-		OKIM6295_set_bank_base(0, bonkadv_bank0);
+		OKIM6295_set_bank_base(0, 0x40000 * (data & 0xF));
 		logerror("CPU #0 PC %06X : OKI0  bank %08X\n",activecpu_get_pc(),data);
-	}
-}
-
-/*
-    Sample layout is similar to what Luca describes for gtmr:
-    Except for chunk 0, the first $40 samples of each chunk are empty,
-    and despite that, samples in the range $0-3f are played.
-    So I adopted what he did for gtmr, and as he says: "By using
-    this scheme the sound improves, but I wouldn't bet it's correct.."
-*/
-WRITE16_HANDLER( bonkadv_oki_0_data_w )
-{
-	static int pend = 0;
-
-	if (ACCESSING_LSB)
-	{
-		if (pend)	pend = 0;
-		else
-		{
-			if (data & 0x80)
-			{
-				int samp = data &0x7f;
-
-				pend = 1;
-				if (samp < 0x40)
-				{
-					OKIM6295_set_bank_base(0, 0);
-//                  logerror("Setting OKI0 bank to zero\n");
-				}
-				else
-					OKIM6295_set_bank_base(0, bonkadv_bank0 );
-			}
-		}
-
-		OKIM6295_data_0_w(0,data);
-//      logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -680,7 +634,7 @@ static ADDRESS_MAP_START( bonkadv, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x60001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
 	AM_RANGE(0x680000, 0x68001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_1_regs_w) AM_BASE(&kaneko16_layers_1_regs)	// Layers 1 Regs
 	AM_RANGE(0x700000, 0x70001f) AM_READWRITE(MRA16_RAM, kaneko16_sprites_regs_w) AM_BASE(&kaneko16_sprites_regs)	// Sprites Regs
-	AM_RANGE(0x800000, 0x800001) AM_READWRITE(OKIM6295_status_0_lsb_r, bonkadv_oki_0_data_w)
+	AM_RANGE(0x800000, 0x800001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	AM_RANGE(0x880000, 0x880001) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
 	AM_RANGE(0x900000, 0x900015) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)
 	AM_RANGE(0xa00000, 0xa00001) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// Watchdog
@@ -709,13 +663,11 @@ READ16_HANDLER( gtmr_wheel_r )
 		return	readinputport(5);				// 270° Wheel
 }
 
-static int bank0;
 WRITE16_HANDLER( gtmr_oki_0_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		OKIM6295_set_bank_base(0, 0x10000 * (data & 0xF) );
-		bank0 = (data & 0xF);
+		OKIM6295_set_bank_base(0, 0x40000 * (data & 0xF) );
 //      logerror("CPU #0 PC %06X : OKI0 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
@@ -729,44 +681,12 @@ WRITE16_HANDLER( gtmr_oki_1_bank_w )
 	}
 }
 
-/*
-    If you look at the samples ROM for the OKI chip #0, you'll see
-    it's divided into 16 chunks, each chunk starting with the header
-    holding the samples addresses. But, except for chunk 0, the first
-    $100 bytes ($20 samples) of each chunk are empty, and despite that,
-    samples in the range $0-1f are played. So, whenever a samples in
-    this range is requested, we use the address and sample from chunk 0,
-    otherwise we use those from the selected bank. By using this scheme
-    the sound improves, but I wouldn't bet it's correct..
-*/
-
 WRITE16_HANDLER( gtmr_oki_0_data_w )
 {
-	static int pend = 0;
-
 	if (ACCESSING_LSB)
 	{
-		if (pend)	pend = 0;
-		else
-		{
-			if (data & 0x80)
-			{
-				int samp = data &0x7f;
-
-				pend = 1;
-				if (samp < 0x20)
-				{
-					OKIM6295_set_bank_base(0, 0);
-//                  logerror("Setting OKI0 bank to zero\n");
-				}
-				else
-					OKIM6295_set_bank_base(0, 0x10000 * bank0 );
-			}
-		}
-
 		OKIM6295_data_0_w(0,data);
 //      logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
-
 	}
 }
 
@@ -2610,6 +2530,34 @@ void kaneko16_unscramble_tiles(int region)
 	}
 }
 
+void kaneko16_expand_sample_banks(int region)
+{
+	/* The sample data for the first OKI has an address translator/
+       banking register in it that munges the addresses as follows:
+
+         Offsets 00000-2FFFF always come from ROM 00000-2FFFF
+         Offsets 30000-3FFFF come from ROM (10000*bank) + 00000-0FFFF
+
+       Because we can't do this dynamically, we pre-generate all 16
+       possible combinations of these and swap between them.
+    */
+	int bank;
+
+	if (memory_region_length(region) < 0x40000 * 16)
+		osd_die("gtmr SOUND1 region too small");
+
+	/* bank 0 maps to itself, so we just leave it alone */
+	for (bank = 15; bank > 0; bank--)
+	{
+		UINT8 *src0 = memory_region(region);
+		UINT8 *srcn = src0 + 0x10000 * (bank < 3 ? 3 : bank);
+		UINT8 *dst = src0 + 0x40000 * bank;
+
+		memcpy(dst + 0x30000, srcn + 0x00000, 0x10000);
+		memcpy(dst + 0x00000, src0 + 0x00000, 0x30000);
+	}
+}
+
 DRIVER_INIT( kaneko16 )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
@@ -2619,6 +2567,13 @@ DRIVER_INIT( kaneko16 )
 DRIVER_INIT( berlwall )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
+}
+
+DRIVER_INIT( samplebank )
+{
+	kaneko16_unscramble_tiles(REGION_GFX2);
+	kaneko16_unscramble_tiles(REGION_GFX3);
+	kaneko16_expand_sample_banks(REGION_SOUND1);
 }
 
 
@@ -3132,7 +3087,7 @@ ROM_START( gtmr )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
@@ -3169,7 +3124,7 @@ ROM_START( gtmre )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
@@ -3206,7 +3161,7 @@ ROM_START( gtmrusa )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
@@ -3296,7 +3251,7 @@ ROM_START( gtmr2 )
 	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, CRC(e023d51b) SHA1(3c9f591f3ca2ee8e1100b83ae8eb593e11e6eac7) )
 	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, CRC(03c48bdb) SHA1(f5ba45d026530d46f760cf06d02a1ffcca89aa3c) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, CRC(5250fa45) SHA1(b1ad4660906997faea0aa89866de01a0e9f2b61d) )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
@@ -3330,7 +3285,7 @@ ROM_START( gtmr2a )
 	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, CRC(e023d51b) SHA1(3c9f591f3ca2ee8e1100b83ae8eb593e11e6eac7) )
 	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, CRC(03c48bdb) SHA1(f5ba45d026530d46f760cf06d02a1ffcca89aa3c) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, CRC(5250fa45) SHA1(b1ad4660906997faea0aa89866de01a0e9f2b61d) )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
@@ -3364,7 +3319,7 @@ ROM_START( gtmr2u )
 	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, CRC(e023d51b) SHA1(3c9f591f3ca2ee8e1100b83ae8eb593e11e6eac7) )
 	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, CRC(03c48bdb) SHA1(f5ba45d026530d46f760cf06d02a1ffcca89aa3c) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, CRC(5250fa45) SHA1(b1ad4660906997faea0aa89866de01a0e9f2b61d) )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
@@ -3892,7 +3847,7 @@ ROM_START( bonkadv )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "pc500105.55",		 0x000000, 0x100000, CRC(bebb3edc) SHA1(e0fed4307316deaeb811ec29f5022adeaf577a95) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "pc604109.101",		 0x000000, 0x100000, CRC(76025530) SHA1(e0c8192d783057798eea084aa3e87938f6e01cb7) )
 
 	ROM_REGION( 0x300000, REGION_SOUND2, 0 )	/* Samples */
@@ -3914,25 +3869,25 @@ ROM_END
 
 /* Working games */
 
-GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 1)" )
-GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 2)" )
-GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (World)" )
-GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)" )
-GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16, ROT0,  "Atlus",  "Blaze On (Japan)" )
-GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "Sand Scorpion" )
-GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
-GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
-GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )
-GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)" )
-GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)" )
-GAME( 1995, gtmr2u,   gtmr2,    gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally 2 USA (95/05/18)" )
+GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (set 1)" )
+GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (set 2)" )
+GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World)" )
+GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)" )
+GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16,   ROT0,  "Atlus",  "Blaze On (Japan)" )
+GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion" )
+GAME( 1994, gtmr,     0,        gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
+GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
+GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )
+GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)" )
+GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)" )
+GAME( 1995, gtmr2u,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally 2 USA (95/05/18)" )
 
 /* Non-working games (mainly due to protection) */
 
-GAMEX(1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16, ROT90, "Kaneko", "Explosive Breaker",       GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16, ROT90, "Kaneko", "Bakuretsu Breaker",       GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Shogun Warriors",         GAME_NOT_WORKING )
-GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
-GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
-GAMEX(1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16, ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
-GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "B.C. Kid / Bonk's Adventure / Kyukyoku!! PC Genjin", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX(1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Explosive Breaker",       GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Bakuretsu Breaker",       GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr,   ROT0,  "Kaneko", "Shogun Warriors",         GAME_NOT_WORKING )
+GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr,   ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
+GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,          ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
+GAMEX(1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16,   ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
+GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  samplebank, ROT0,  "Kaneko", "B.C. Kid / Bonk's Adventure / Kyukyoku!! PC Genjin", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

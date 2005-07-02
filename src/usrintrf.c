@@ -1104,6 +1104,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 	changed = 1;
 
+	/* mark all the tilemaps dirty on entry so they are re-drawn consistently in the viewer */
+	tilemap_mark_all_tiles_dirty(NULL);
+
 	do
 	{
 		static const struct rectangle fullrect = { 0, 10000, 0, 10000 };
@@ -1492,6 +1495,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 			!input_ui_pressed(IPT_UI_CANCEL));
 
 	schedule_full_refresh();
+
+	/* mark all the tilemaps dirty on exit so they are updated correctly on the next frame */
+	tilemap_mark_all_tiles_dirty(NULL);
 }
 
 

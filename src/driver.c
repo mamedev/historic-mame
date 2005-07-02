@@ -1651,7 +1651,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( champwru )	/* C01 (c) 1989 Taito America Corporation (US) */
 	DRIVER( champwrj )	/* C01 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( puzznic )	/* C20 (c) 1989 Taito Corporation (Japan) */
-	DRIVER( puzznica )	/* C20 (c) 1989 Taito Corporation (Japan) */
+	DRIVER( puzznicj )	/* C20 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( horshoes )	/* C47 (c) 1990 Taito America Corporation (US) */
 	DRIVER( palamed )	/* C63 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( cachat )	/* ??? (c) 1993 Taito Corporation (Japan) */
@@ -2612,6 +2612,7 @@ V-V                           TP-027
 	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
 	DRIVER( ehrgeiza )	/* Ehrgeiz (EG2/VER.A) */
 	DRIVER( mdhorse )	/* Derby Quiz My Dream Horse (MDH1/VER.A2) */
+	DRIVER( tenkomor )	/* Tenkomori Shooting (TKM2/VER.A1) */
 	DRIVER( fgtlayer )	/* Fighting Layer (FTL0/VER.A) */
 	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VER.A2) */
 	DRIVER( sws99 )		/* Super World Stadium '99 (SS91/VER.A3) */
@@ -4140,7 +4141,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( moobl )		/* bootleg */
 	DRIVER( bucky )		/* GX173 (c) 1992 (World) */
 	DRIVER( buckyua )	/* GX173 (c) 1992 (US) */
-	DRIVER( gaiapols )	/* GX123 (c) 1993 (US) */
+	DRIVER( gaiapols )	/* GX123 (c) 1993 (Europe) */
+	DRIVER( gaiapolu )	/* GX123 (c) 1993 (US) */
 	DRIVER( gaiapolj )	/* GX123 (c) 1993 (Japan) */
 	DRIVER( mystwarr )	/* GX128 (c) 1993 (World) */
 	DRIVER( mystwaru )	/* GX128 (c) 1993 (US) */
@@ -4788,6 +4790,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( prehislu )	/* A8003 'GT' (c) 1989 */
 	DRIVER( gensitou )	/* A8003 'GT' (c) 1989 */
 	DRIVER( mechatt )	/* A8002 'MA' (c) 1989 */
+	DRIVER( mechattu )	/* A8002 'MA' (c) 1989 */
 	DRIVER( bbusters )	/* A9003 'BB' (c) 1989 */
 
 	/* Electrocoin on early SNK hardware - gambling game remove once it works */
@@ -5435,6 +5438,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( raidndxa )
 	DRIVER( raidndxb )
 	DRIVER( raidndxj )
+	DRIVER( raidndxm )       /* (c) 1994 Seibu Kaihatsu + Metrotainment license */
 	DRIVER( zeroteam )
 	DRIVER( zeroteaa )
 	DRIVER( zeroteab )
@@ -6593,6 +6597,7 @@ Other Sun games
 	DRIVER( gunpey )	/* (c) 2000 Banpresto */
 	DRIVER( spaceg )	/* (c) 19?? */
 	DRIVER( wldarrow )	/* (c) 19?? */
+	DRIVER( unkmeyco )	/* (c) 19?? */
 	DRIVER( laserbas )
 	DRIVER( laserbsa )
 	DRIVER( futflash )

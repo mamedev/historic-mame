@@ -2910,16 +2910,18 @@ void K05324x_set_z_rejection(int zcode)
 /*                                                                         */
 /***************************************************************************/
 
-static int K053245_memory_region=2;
-static struct GfxElement *K053245_gfx;
-static void (*K053245_callback)(int *code,int *color,int *priority);
-static int K053244_rombank;
-static int K053245_ramsize;
-static data16_t *K053245_ram, *K053245_buffer;
-static data8_t K053244_regs[0x10];
-static int K053245_dx, K053245_dy;
+#define MAX_K053245_CHIPS 2
 
-int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+static int K053245_memory_region[MAX_K053245_CHIPS];
+static struct GfxElement *K053245_gfx[MAX_K053245_CHIPS];
+static void (*K053245_callback[MAX_K053245_CHIPS])(int *code,int *color,int *priority);
+static int K053244_rombank[MAX_K053245_CHIPS];
+static int K053245_ramsize[MAX_K053245_CHIPS];
+static data16_t *K053245_ram[MAX_K053245_CHIPS], *K053245_buffer[MAX_K053245_CHIPS];
+static data8_t K053244_regs[MAX_K053245_CHIPS][0x10];
+static int K053245_dx[MAX_K053245_CHIPS], K053245_dy[MAX_K053245_CHIPS];
+
+int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority))
 {
 	int gfx_index,i;
@@ -2935,6 +2937,15 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 				16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
 		128*8
 	};
+
+	if (chip>=MAX_K053245_CHIPS)
+	{
+		printf("K053245_vh_start chip >= MAX_K053245_CHIPS\n");
+		return 1;
+	}
+
+	K053245_memory_region[chip]=2;
+
 
 
 	/* find first empty slot to decode gfx */
@@ -2979,86 +2990,98 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
 	K05324x_z_rejection = -1;
-	K053245_memory_region = gfx_memory_region;
-	K053245_gfx = Machine->gfx[gfx_index];
-	K053245_callback = callback;
-	K053244_rombank = 0;
-	K053245_ramsize = 0x800;
-	K053245_ram = auto_malloc(K053245_ramsize);
-	K053245_dx = K053245_dy = 0;
-	if (!K053245_ram) return 1;
+	K053245_memory_region[chip] = gfx_memory_region;
+	K053245_gfx[chip] = Machine->gfx[gfx_index];
+	K053245_callback[chip] = callback;
+	K053244_rombank[chip] = 0;
+	K053245_ramsize[chip] = 0x800;
+	K053245_ram[chip] = auto_malloc(K053245_ramsize[chip]);
+	K053245_dx[chip] = K053245_dy[chip] = 0;
+	if (!K053245_ram[chip]) return 1;
 
-	K053245_buffer = auto_malloc(K053245_ramsize);
-	if (!K053245_buffer)
+	K053245_buffer[chip] = auto_malloc(K053245_ramsize[chip]);
+	if (!K053245_buffer[chip])
 		return 1;
 
-	memset(K053245_ram,0,K053245_ramsize);
-	memset(K053245_buffer,0,K053245_ramsize);
+	memset(K053245_ram[chip],0,K053245_ramsize[chip]);
+	memset(K053245_buffer[chip],0,K053245_ramsize[chip]);
 
 	return 0;
 }
 
-void K053245_set_SpriteOffset(int offsx, int offsy)
+void K053245_set_SpriteOffset(int chip,int offsx, int offsy)
 {
-	K053245_dx = offsx;
-	K053245_dy = offsy;
+	K053245_dx[chip] = offsx;
+	K053245_dy[chip] = offsy;
 }
 
 READ16_HANDLER( K053245_word_r )
 {
-	return K053245_ram[offset];
+	return K053245_ram[0][offset];
 }
 
 WRITE16_HANDLER( K053245_word_w )
 {
-	COMBINE_DATA(K053245_ram+offset);
+	COMBINE_DATA(K053245_ram[0]+offset);
 }
 
 READ8_HANDLER( K053245_r )
 {
 	if(offset & 1)
-		return K053245_ram[offset>>1] & 0xff;
+		return K053245_ram[0][offset>>1] & 0xff;
 	else
-		return (K053245_ram[offset>>1]>>8) & 0xff;
+		return (K053245_ram[0][offset>>1]>>8) & 0xff;
+}
+
+
+void K053245_chip_w(int chip,int offset,int data)
+{
+	if(offset & 1)
+		K053245_ram[chip][offset>>1] = (K053245_ram[chip][offset>>1] & 0xff00) | data;
+	else
+		K053245_ram[chip][offset>>1] = (K053245_ram[chip][offset>>1] & 0x00ff) | (data<<8);
 }
 
 WRITE8_HANDLER( K053245_w )
 {
-	if(offset & 1)
-		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0xff00) | data;
-	else
-		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0x00ff) | (data<<8);
+	K053245_chip_w(0,offset,data);
 }
 
-void K053245_clear_buffer(void)
+/* 2nd chip */
+WRITE8_HANDLER( K053245_1_w )
+{
+	K053245_chip_w(1,offset,data);
+}
+
+void K053245_clear_buffer(int chip)
 {
 	int i, e;
-	for (e=K053245_ramsize/2, i=0; i<e; i+=8) K053245_buffer[i] = 0;
+	for (e=K053245_ramsize[chip]/2, i=0; i<e; i+=8) K053245_buffer[chip][i] = 0;
 }
 
-INLINE void K053245_update_buffer( void )
+INLINE void K053245_update_buffer( int chip )
 {
-	memcpy(K053245_buffer, K053245_ram, K053245_ramsize);
+	memcpy(K053245_buffer[chip], K053245_ram[chip], K053245_ramsize[chip]);
 }
 
-READ8_HANDLER( K053244_r )
+UINT8 K053244_chip_r (int chip, int offset)
 {
-	if ((K053244_regs[5] & 0x10) && offset >= 0x0c && offset < 0x10)
+	if ((K053244_regs[chip][5] & 0x10) && offset >= 0x0c && offset < 0x10)
 	{
 		int addr;
 
-		addr = (K053244_rombank << 19) | ((K053244_regs[11] & 0x7) << 18)
-			| (K053244_regs[8] << 10) | (K053244_regs[9] << 2)
+		addr = (K053244_rombank[chip] << 19) | ((K053244_regs[chip][11] & 0x7) << 18)
+			| (K053244_regs[chip][8] << 10) | (K053244_regs[chip][9] << 2)
 			| ((offset & 3) ^ 1);
-		addr &= memory_region_length(K053245_memory_region)-1;
+		addr &= memory_region_length(K053245_memory_region[chip])-1;
 
 //  usrintf_showmessage("%04x: offset %02x addr %06x",activecpu_get_pc(),offset&3,addr);
 
-		return memory_region(K053245_memory_region)[addr];
+		return memory_region(K053245_memory_region[chip])[addr];
 	}
 	else if (offset == 0x06)
 	{
-		K053245_update_buffer();
+		K053245_update_buffer(chip);
 		return 0;
 	}
 	else
@@ -3068,9 +3091,14 @@ READ8_HANDLER( K053244_r )
 	}
 }
 
-WRITE8_HANDLER( K053244_w )
+READ8_HANDLER( K053244_r )
 {
-	K053244_regs[offset] = data;
+	return K053244_chip_r(0,offset);
+}
+
+void K053244_chip_w(int chip, int offset, int data)
+{
+	K053244_regs[chip][offset] = data;
 
 	switch(offset) {
 	case 0x05: {
@@ -3082,10 +3110,22 @@ WRITE8_HANDLER( K053244_w )
 		break;
 	}
 	case 0x06:
-		K053245_update_buffer();
+		K053245_update_buffer(chip);
 		break;
 	}
 }
+
+WRITE8_HANDLER( K053244_w )
+{
+	K053244_chip_w(0,offset,data);
+}
+
+/* 2nd chip */
+WRITE8_HANDLER( K053244_1_w )
+{
+	K053244_chip_w(1,offset,data);
+}
+
 
 READ16_HANDLER( K053244_lsb_r )
 {
@@ -3111,9 +3151,9 @@ WRITE16_HANDLER( K053244_word_w )
 		K053244_w(offset*2+1, data & 0xff);
 }
 
-void K053244_bankselect(int bank)
+void K053244_bankselect(int chip, int bank)
 {
-	K053244_rombank = bank;
+	K053244_rombank[chip] = bank;
 }
 
 /*
@@ -3144,25 +3184,25 @@ void K053244_bankselect(int bank)
  * The rest of the sprite remains normal.
  */
 
-void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect) //*
+void K053245_sprites_draw(int chip, struct mame_bitmap *bitmap,const struct rectangle *cliprect) //*
 {
 #define NUM_SPRITES 128
 	int offs,pri_code,i;
 	int sortedlist[NUM_SPRITES];
 	int flipscreenX, flipscreenY, spriteoffsX, spriteoffsY;
 
-	flipscreenX = K053244_regs[5] & 0x01;
-	flipscreenY = K053244_regs[5] & 0x02;
-	spriteoffsX = (K053244_regs[0] << 8) | K053244_regs[1];
-	spriteoffsY = (K053244_regs[2] << 8) | K053244_regs[3];
+	flipscreenX = K053244_regs[chip][5] & 0x01;
+	flipscreenY = K053244_regs[chip][5] & 0x02;
+	spriteoffsX = (K053244_regs[chip][0] << 8) | K053244_regs[chip][1];
+	spriteoffsY = (K053244_regs[chip][2] << 8) | K053244_regs[chip][3];
 
 	for (offs = 0;offs < NUM_SPRITES;offs++)
 		sortedlist[offs] = -1;
 
 	/* prebuild a sorted table */
-	for (i=K053245_ramsize/2, offs=0; offs<i; offs+=8)
+	for (i=K053245_ramsize[chip]/2, offs=0; offs<i; offs+=8)
 	{
-		pri_code = K053245_buffer[offs];
+		pri_code = K053245_buffer[chip][offs];
 		if (pri_code & 0x8000)
 		{
 			pri_code &= 0x007f;
@@ -3207,15 +3247,15 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		/* field to do bank switching. However this applies only to TMNT2, with its */
 		/* protection mcu creating the sprite table, so we don't know where to fetch */
 		/* the bits from. */
-		code = K053245_buffer[offs+1];
+		code = K053245_buffer[chip][offs+1];
 		code = ((code & 0xffe1) + ((code & 0x0010) >> 2) + ((code & 0x0008) << 1)
 				 + ((code & 0x0004) >> 1) + ((code & 0x0002) << 2));
-		color = K053245_buffer[offs+6] & 0x00ff;
+		color = K053245_buffer[chip][offs+6] & 0x00ff;
 		pri = 0;
 
-		(*K053245_callback)(&code,&color,&pri);
+		(*K053245_callback[chip])(&code,&color,&pri);
 
-		size = (K053245_buffer[offs] & 0x0f00) >> 8;
+		size = (K053245_buffer[chip][offs] & 0x0f00) >> 8;
 
 		w = 1 << (size & 0x03);
 		h = 1 << ((size >> 2) & 0x03);
@@ -3225,13 +3265,13 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
           <0x40 enlarge (0x20 = double size)
           >0x40 reduce (0x80 = half size)
         */
-		zoomy = K053245_buffer[offs+4];
+		zoomy = K053245_buffer[chip][offs+4];
 		if (zoomy > 0x2000) continue;
 		if (zoomy) zoomy = (0x400000+zoomy/2) / zoomy;
 		else zoomy = 2 * 0x400000;
-		if ((K053245_buffer[offs] & 0x4000) == 0)
+		if ((K053245_buffer[chip][offs] & 0x4000) == 0)
 		{
-			zoomx = K053245_buffer[offs+5];
+			zoomx = K053245_buffer[chip][offs+5];
 			if (zoomx > 0x2000) continue;
 			if (zoomx) zoomx = (0x400000+zoomx/2) / zoomx;
 			else zoomx = 2 * 0x400000;
@@ -3239,18 +3279,18 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		}
 		else zoomx = zoomy;
 
-		ox = K053245_buffer[offs+3] + spriteoffsX;
-		oy = K053245_buffer[offs+2];
+		ox = K053245_buffer[chip][offs+3] + spriteoffsX;
+		oy = K053245_buffer[chip][offs+2];
 
-		ox += K053245_dx;
-		oy += K053245_dy;
+		ox += K053245_dx[chip];
+		oy += K053245_dy[chip];
 
-		flipx = K053245_buffer[offs] & 0x1000;
-		flipy = K053245_buffer[offs] & 0x2000;
-		mirrorx = K053245_buffer[offs+6] & 0x0100;
+		flipx = K053245_buffer[chip][offs] & 0x1000;
+		flipy = K053245_buffer[chip][offs] & 0x2000;
+		mirrorx = K053245_buffer[chip][offs+6] & 0x0100;
 		if (mirrorx) flipx = 0; // documented and confirmed
-		mirrory = K053245_buffer[offs+6] & 0x0200;
-		shadow = K053245_buffer[offs+6] & 0x0080;
+		mirrory = K053245_buffer[chip][offs+6] & 0x0200;
+		shadow = K053245_buffer[chip][offs+6] & 0x0080;
 
 		if (flipscreenX)
 		{
@@ -3334,7 +3374,7 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 				if (zoomx == 0x10000 && zoomy == 0x10000)
 				{
-					pdrawgfx(bitmap,K053245_gfx,
+					pdrawgfx(bitmap,K053245_gfx[chip],
 							c,
 							color,
 							fx,fy,
@@ -3343,13 +3383,14 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 				}
 				else
 				{
-					pdrawgfxzoom(bitmap,K053245_gfx,
+					pdrawgfxzoom(bitmap,K053245_gfx[chip],
 							c,
 							color,
 							fx,fy,
 							sx,sy,
 							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
 							(zw << 16) / 16,(zh << 16) / 16,pri);
+
 				}
 			}
 		}
@@ -8675,4 +8716,4 @@ READ32_HANDLER( K055555_long_r )
 	return (K055555_word_r(offset+1, 0xffff) | K055555_word_r(offset, 0xffff)<<16);
 }
 
-READ16_HANDLER( K053244_reg_word_r ) { return(K053244_regs[offset*2]<<8|K053244_regs[offset*2+1]); }
+READ16_HANDLER( K053244_reg_word_r ) { return(K053244_regs[0][offset*2]<<8|K053244_regs[0][offset*2+1]); }

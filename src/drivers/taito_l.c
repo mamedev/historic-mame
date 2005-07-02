@@ -2737,19 +2737,6 @@ ROM_END
 
 ROM_START( puzznic )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "u11.rom",  0x00000, 0x20000, CRC(a4150b6c) SHA1(27719b8993735532cd59f4ed5693ff3143ee2336) )
-	ROM_RELOAD(           0x10000, 0x20000 )
-
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "mc68705p", 0x0000, 0x0800, NO_DUMP )
-
-	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "u10.rom",  0x00000, 0x20000, CRC(4264056c) SHA1(d2d8a170ae0f361093a5384935238605a59e5938) )
-	ROM_LOAD( "u09.rom",  0x20000, 0x20000, CRC(3c115f8b) SHA1(8d518be01b7c4d6d993d5d9b62aab719a5c8baca) )
-ROM_END
-
-ROM_START( puzznica )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "c20-09.ic11", 0x00000, 0x20000, CRC(156d6de1) SHA1(c247936b62ef354851c9bace76a7a0aa14194d5f) )
 	ROM_RELOAD(              0x10000, 0x20000 )
 
@@ -2759,6 +2746,19 @@ ROM_START( puzznica )
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c20-07.ic10", 0x00000, 0x10000, CRC(be12749a) SHA1(c67d1a434486843a6776d89e905362b7db595d8d) )
 	ROM_LOAD( "c20-06.ic9",  0x10000, 0x10000, CRC(ac85a9c5) SHA1(2d72dae86a191ccdac9648980aca832fb9886544) )
+ROM_END
+
+ROM_START( puzznicj )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "u11.rom",  0x00000, 0x20000, CRC(a4150b6c) SHA1(27719b8993735532cd59f4ed5693ff3143ee2336) )
+	ROM_RELOAD(           0x10000, 0x20000 )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 2k for the microcontroller */
+	ROM_LOAD( "mc68705p", 0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "u10.rom",  0x00000, 0x20000, CRC(4264056c) SHA1(d2d8a170ae0f361093a5384935238605a59e5938) )
+	ROM_LOAD( "u09.rom",  0x20000, 0x20000, CRC(3c115f8b) SHA1(8d518be01b7c4d6d993d5d9b62aab719a5c8baca) )
 ROM_END
 
 ROM_START( horshoes )
@@ -2901,8 +2901,8 @@ GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Cor
 GAME( 1988, kurikina, kurikint, kurikina, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World, prototype?)" )
 GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World set 1)" )
 GAME( 1989, plottina, plotting, plotting, plotting, 0,        ROT0,   "Taito Corporation Japan", "Plotting (World set 2)" )
-GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
-GAME( 1989, puzznica, 0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation Japan", "Puzznic (Japan set 2)" )
+GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation Japan", "Puzznic (World)" )
+GAME( 1989, puzznicj, puzznic,  puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
 GAME( 1990, horshoes, 0,        horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)" )
 GAME( 1990, palamed,  0,        palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)" )
 GAME( 1993, cachat,   0,        cachat,   cachat,   0,        ROT0,   "Taito Corporation", "Cachat (Japan)" )

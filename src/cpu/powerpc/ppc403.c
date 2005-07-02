@@ -153,6 +153,7 @@ static void ppc403_reset(void *param)
 static int ppc403_execute(int cycles)
 {
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
 	change_pc(ppc.npc);
 
 	while( ppc_icount > 0 )
@@ -175,9 +176,6 @@ static int ppc403_execute(int cycles)
 		}
 
 		ppc_icount--;
-
-		/* TODO: Update timebase */
-		ppc.tb++;
 
 		/* Programmable Interval Timer (PIT) */
 		if (ppc.pit_counter > 0)
@@ -222,6 +220,9 @@ static int ppc403_execute(int cycles)
 
 		ppc403_check_interrupts();
 	}
+
+	// update timebase
+	ppc.tb += (ppc_tb_base_icount - ppc_icount);
 
 	return cycles - ppc_icount;
 }
@@ -876,5 +877,52 @@ static void ppc403_dma_exec(int ch)
 			ppc403_dma_set_irq_line( ch, PULSE_LINE );
 
 	}
+}
+
+/*********************************************************************************/
+
+static UINT8 ppc403_read8(UINT32 a)
+{
+	if(a >= 0x40000000 && a <= 0x4000000f)		/* Serial Port */
+		return ppc403_spu_r(a);
+	return program_read_byte_32be(a);
+}
+
+#define ppc403_read16	program_read_word_32be
+#define ppc403_read32	program_read_dword_32be
+
+static void ppc403_write8(UINT32 a, UINT8 d)
+{
+	if( a >= 0x40000000 && a <= 0x4000000f )		/* Serial Port */
+	{
+		ppc403_spu_w(a, d);
+		return;
+	}
+	program_write_byte_32be(a, d);
+}
+
+#define ppc403_write16	program_write_word_32be
+#define ppc403_write32	program_write_dword_32be
+
+static UINT16 ppc403_read16_unaligned(UINT32 a)
+{
+	osd_die("ppc: Unaligned read16 %08X at %08X\n", a, ppc.pc);
+	return 0;
+}
+
+static UINT32 ppc403_read32_unaligned(UINT32 a)
+{
+	osd_die("ppc: Unaligned read32 %08X at %08X\n", a, ppc.pc);
+	return 0;
+}
+
+static void ppc403_write16_unaligned(UINT32 a, UINT16 d)
+{
+	osd_die("ppc: Unaligned write16 %08X, %04X at %08X\n", a, d, ppc.pc);
+}
+
+static void ppc403_write32_unaligned(UINT32 a, UINT32 d)
+{
+	osd_die("ppc: Unaligned write32 %08X, %08X at %08X\n", a, d, ppc.pc);
 }
 

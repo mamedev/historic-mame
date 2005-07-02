@@ -210,7 +210,7 @@ void dma_finished( int n_channel )
 				if( n_address == 0xffffff )
 				{
 					m_p_n_dmabase[ n_channel ] = n_address;
-					dma_start_timer( n_channel, 26000 );
+					dma_start_timer( n_channel, 19000 );
 					return;
 				}
 				if( n_total > 65535 )
@@ -934,6 +934,10 @@ void psx_sio_install_handler( int n_port, psx_sio_handler p_f_sio_handler )
 
 /* MDEC */
 
+static int mdec_decoded = 0;
+static int mdec_offset = 0;
+static UINT16 mdec_output[ 24 * 16 ];
+
 #define	DCTSIZE ( 8 )
 #define	DCTSIZE2 ( DCTSIZE * DCTSIZE )
 
@@ -1064,9 +1068,12 @@ static UINT32 mdec_unpack( UINT32 n_address )
 		}
 		n_packed = psxreadword( n_address );
 		n_address += 2;
+		if( n_packed == 0xfe00 )
+		{
+			break;
+		}
 
 		n_qscale = mdec_unpack_run( n_packed );
-
 		p_n_unpacked[ 0 ] = mdec_unpack_val( n_packed ) * p_n_q[ 0 ];
 
 		n_z = 0;
@@ -1127,18 +1134,20 @@ INLINE UINT16 mdec_clamp_b5( INT32 n_b )
 	return m_p_n_mdec_b5[ n_b + 128 + 256 ];
 }
 
-INLINE void mdec_makergb15( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
+INLINE void mdec_makergb15( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT16 n_stp )
 {
-	g_p_n_psxram[ n_address / 4 ] = n_stp |
+	mdec_output[ WORD_XOR_LE( n_address + 0 ) / 2 ] = n_stp |
 		mdec_clamp_r5( p_n_y[ 0 ] + n_r ) |
 		mdec_clamp_g5( p_n_y[ 0 ] + n_g ) |
-		mdec_clamp_b5( p_n_y[ 0 ] + n_b ) |
-		( mdec_clamp_r5( p_n_y[ 1 ] + n_r ) |
+		mdec_clamp_b5( p_n_y[ 0 ] + n_b );
+
+	mdec_output[ WORD_XOR_LE( n_address + 2 ) / 2 ] = n_stp |
+		mdec_clamp_r5( p_n_y[ 1 ] + n_r ) |
 		mdec_clamp_g5( p_n_y[ 1 ] + n_g ) |
-		mdec_clamp_b5( p_n_y[ 1 ] + n_b ) ) << 16;
+		mdec_clamp_b5( p_n_y[ 1 ] + n_b );
 }
 
-static void mdec_yuv2_to_rgb15( UINT32 n_address )
+static void mdec_yuv2_to_rgb15( void )
 {
 	INT32 n_r;
 	INT32 n_g;
@@ -1151,15 +1160,16 @@ static void mdec_yuv2_to_rgb15( UINT32 n_address )
 	UINT32 n_x;
 	UINT32 n_y;
 	UINT32 n_z;
-	UINT32 n_stp;
+	UINT16 n_stp;
+	int n_address = 0;
 
 	if( ( m_n_mdec0_command & ( 1L << 25 ) ) != 0 )
 	{
-		n_stp = 0x80008000;
+		n_stp = 0x8000;
 	}
 	else
 	{
-		n_stp = 0x00000000;
+		n_stp = 0x0000;
 	}
 
 	p_n_cb = &m_p_n_mdec_unpacked[ 0 ];
@@ -1202,6 +1212,7 @@ static void mdec_yuv2_to_rgb15( UINT32 n_address )
 		}
 		p_n_y += DCTSIZE2;
 	}
+	mdec_decoded = ( 16 * 16 ) / 2;
 }
 
 INLINE UINT16 mdec_clamp8( INT32 n_r )
@@ -1211,12 +1222,12 @@ INLINE UINT16 mdec_clamp8( INT32 n_r )
 
 INLINE void mdec_makergb24( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
 {
-	psxwriteword( n_address + 0, ( mdec_clamp8( p_n_y[ 0 ] + n_g ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_r ) );
-	psxwriteword( n_address + 2, ( mdec_clamp8( p_n_y[ 1 ] + n_r ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_b ) );
-	psxwriteword( n_address + 4, ( mdec_clamp8( p_n_y[ 1 ] + n_b ) << 8 ) | mdec_clamp8( p_n_y[ 1 ] + n_g ) );
+	mdec_output[ WORD_XOR_LE( n_address + 0 ) / 2 ] = ( mdec_clamp8( p_n_y[ 0 ] + n_g ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_r );
+	mdec_output[ WORD_XOR_LE( n_address + 2 ) / 2 ] = ( mdec_clamp8( p_n_y[ 1 ] + n_r ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_b );
+	mdec_output[ WORD_XOR_LE( n_address + 4 ) / 2 ] = ( mdec_clamp8( p_n_y[ 1 ] + n_b ) << 8 ) | mdec_clamp8( p_n_y[ 1 ] + n_g );
 }
 
-static void mdec_yuv2_to_rgb24( UINT32 n_address )
+static void mdec_yuv2_to_rgb24( void )
 {
 	INT32 n_r;
 	INT32 n_g;
@@ -1230,6 +1241,7 @@ static void mdec_yuv2_to_rgb24( UINT32 n_address )
 	UINT32 n_y;
 	UINT32 n_z;
 	UINT32 n_stp;
+	int n_address = 0;
 
 	if( ( m_n_mdec0_command & ( 1L << 25 ) ) != 0 )
 	{
@@ -1280,18 +1292,20 @@ static void mdec_yuv2_to_rgb24( UINT32 n_address )
 		}
 		p_n_y += DCTSIZE2;
 	}
+	mdec_decoded = ( 24 * 16 ) / 2;
 }
 
 static void mdec0_write( UINT32 n_address, INT32 n_size )
 {
 	int n_index;
 
+	verboselog( 2, "mdec0_write( %08x, %08x )\n", n_address, n_size );
 	switch( m_n_mdec0_command >> 28 )
 	{
 	case 0x3:
 		verboselog( 1, "mdec decode %08x %08x %08x\n", m_n_mdec0_command, n_address, n_size );
 		m_n_mdec0_address = n_address;
-		m_n_mdec0_size = n_size;
+		m_n_mdec0_size = n_size * 4;
 		m_n_mdec1_status |= ( 1L << 29 );
 		break;
 	case 0x4:
@@ -1339,28 +1353,59 @@ static void mdec0_write( UINT32 n_address, INT32 n_size )
 
 static void mdec1_read( UINT32 n_address, INT32 n_size )
 {
-	if( ( m_n_mdec0_command & ( 1L << 29 ) ) != 0 )
+	UINT32 n_this;
+	UINT32 n_nextaddress;
+
+	verboselog( 2, "mdec1_read( %08x, %08x )\n", n_address, n_size );
+	if( ( m_n_mdec0_command & ( 1L << 29 ) ) != 0 && m_n_mdec0_size != 0 )
 	{
-		if( ( m_n_mdec0_command & ( 1L << 27 ) ) != 0 )
+		while( n_size > 0 )
 		{
-			while( n_size > 0 )
+			if( mdec_decoded == 0 )
 			{
-				m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
-				mdec_yuv2_to_rgb15( n_address );
-				n_address += ( 16 * 16 ) * 2;
-				n_size -= ( 16 * 16 ) / 2;
+				if( (int)m_n_mdec0_size <= 0 )
+				{
+					printf( "ran out of data %08x\n", n_size );
+					m_n_mdec0_size = 0;
+					break;
+				}
+
+				n_nextaddress = mdec_unpack( m_n_mdec0_address );
+				m_n_mdec0_size -= n_nextaddress - m_n_mdec0_address;
+				m_n_mdec0_address = n_nextaddress;
+
+				if( ( m_n_mdec0_command & ( 1L << 27 ) ) != 0 )
+				{
+					mdec_yuv2_to_rgb15();
+				}
+				else
+				{
+					mdec_yuv2_to_rgb24();
+				}
+				mdec_offset = 0;
 			}
+
+			n_this = mdec_decoded;
+			if( n_this > n_size )
+			{
+				n_this = n_size;
+			}
+			mdec_decoded -= n_this;
+
+			memcpy( (UINT8 *)g_p_n_psxram + n_address, (UINT8 *)mdec_output + mdec_offset, n_this * 4 );
+			mdec_offset += n_this * 4;
+			n_address += n_this * 4;
+			n_size -= n_this;
 		}
-		else
+
+		if( m_n_mdec0_size < 0 )
 		{
-			while( n_size > 0 )
-			{
-				m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
-				mdec_yuv2_to_rgb24( n_address );
-				n_address += ( 24 * 16 ) * 2;
-				n_size -= ( 24 * 16 ) / 2;
-			}
+			printf( "ran out of data %d\n", m_n_mdec0_size );
 		}
+	}
+	else
+	{
+		printf( "mdec1_read no conversion :%08x:%08x:\n", m_n_mdec0_command, m_n_mdec0_size );
 	}
 	m_n_mdec1_status &= ~( 1L << 29 );
 }
@@ -1385,8 +1430,10 @@ READ32_HANDLER( psx_mdec_r )
 	switch( offset )
 	{
 	case 0:
+		verboselog( 2, "mdec 0 status %08x\n", 0 );
 		return 0;
 	case 1:
+		verboselog( 2, "mdec 1 status %08x\n", m_n_mdec1_status );
 		return m_n_mdec1_status;
 	}
 	return 0;

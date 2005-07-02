@@ -812,7 +812,7 @@ static struct YM2151interface ym2151_interface =
 static struct MSM5205interface msm5205_interface =
 {
 	topspeed_msm5205_vck,	/* VCK function */
-	MSM5205_S96_4B			/* 4 kHz? */
+	MSM5205_S48_4B			/* 8 kHz */
 };
 
 

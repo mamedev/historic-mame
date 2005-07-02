@@ -836,8 +836,8 @@ UINT32 opADDDC(void)
 
 	F7CLOADOP2BYTE(appb);
 
-	src = (appb >> 4) * 10 + (appb & 0xF);
-	dst = (UINT8)(f7cOp1 >> 4) * 10 + (UINT8)(f7cOp1 & 0xF);
+	src = (UINT8)(f7cOp1 >> 4) * 10 + (UINT8)(f7cOp1 & 0xF);
+	dst = (appb >> 4) * 10 + (appb & 0xF);
 
 	appb = src + dst + (_CY?1:0);
 
@@ -875,11 +875,11 @@ UINT32 opSUBDC(void)
 
 	F7CLOADOP2BYTE(appb);
 
-	src = ((appb & 0xF0) >> 4) * 10 + (appb & 0xF);
-	dst = (UINT32)(f7cOp1 >> 4) * 10 + (UINT32)(f7cOp1 & 0xF);
+	src = (UINT32)(f7cOp1 >> 4) * 10 + (UINT32)(f7cOp1 & 0xF);
+	dst = ((appb & 0xF0) >> 4) * 10 + (appb & 0xF);
 
 	// Note that this APPB must be SIGNED!
-	appb = (INT32)src - (INT32)dst - (_CY?1:0);
+	appb = (INT32)dst - (INT32)src - (_CY?1:0);
 
 	if (appb < 0)
 	{
@@ -903,10 +903,41 @@ UINT32 opSUBDC(void)
 
 UINT32 opSUBRDC(void)
 {
+	INT8 appb;
+	UINT32 src, dst;
+
 	F7cDecodeOperands(ReadAM, 0, ReadAMAddress, 0);
 
-	logerror("SUBRDC %x (pat: %x)\n", f7cOp1, f7cLen);
+	if (f7cLen != 0)
+	{
+		logerror("SUBRDC %x (pat: %x)\n", f7cOp1, f7cLen);
+	}
 
+	F7CLOADOP2BYTE(appb);
+
+	src = (UINT32)(f7cOp1 >> 4) * 10 + (UINT32)(f7cOp1 & 0xF);
+	dst = ((appb & 0xF0) >> 4) * 10 + (appb & 0xF);
+
+	// Note that this APPB must be SIGNED!
+	appb = (INT32)src - (INT32)dst - (_CY?1:0);
+
+	if (appb < 0)
+	{
+		appb += 100;
+		_CY = 1;
+	}
+	else
+		_CY = 0;
+
+	// compute z flag:
+	// cleared if result non-zero or carry generated
+	// unchanged otherwise
+	if (appb != 0 || _CY)
+		_Z = 0;
+
+	appb = ((appb/10)<<4) | (appb % 10);
+
+	F7CSTOREOP2BYTE();
 	F7CEND();
 }
 
@@ -985,7 +1016,7 @@ UINT32 (*Op59Table[32])(void) =
 {
 	opADDDC,
 	opSUBDC,
-	op59UNHANDLED,
+	opSUBRDC,
 	op59UNHANDLED,
 	op59UNHANDLED,
 	op59UNHANDLED,

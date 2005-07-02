@@ -106,7 +106,7 @@ VIDEO_START( sauro )
 	fg_tilemap = tilemap_create(get_tile_info_fg, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if (!bg_tilemap)
+	if (!fg_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);

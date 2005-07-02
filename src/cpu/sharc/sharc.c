@@ -376,6 +376,9 @@ static void sharc_reset(void *param)
 			sharc_dma_exec(6);
 			break;
 
+		case BOOT_MODE_HOST:
+			break;
+
 		default:
 			osd_die("SHARC: Unimplemented boot mode %d\n", config->boot_mode);
 	}

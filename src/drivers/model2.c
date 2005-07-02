@@ -63,9 +63,6 @@ UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *
 static data32_t model2_intreq;
 static data32_t model2_intena;
 static data32_t model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
-static data32_t /*copro_prog[24*1024],*/ geo_prog[24*1024];
-
-static data32_t *copro_shared;
 
 static data32_t model2_timervals[4], model2_timerorig[4];
 static int      model2_timerrun[4];
@@ -190,6 +187,7 @@ static MACHINE_INIT(model2b)
 	machine_init_model2();
 
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 static VIDEO_START(model2)
@@ -306,7 +304,6 @@ static WRITE32_HANDLER(geo_prg_w)
 {
 	if (model2_geoctl & 0x80000000)
 	{
-		geo_prog[model2_geocnt] = data;
 		model2_geocnt++;
 	}
 }
@@ -334,8 +331,6 @@ static WRITE32_HANDLER( copro_ctl1_w )
 		else
 		{
 			logerror("Boot copro, %d dwords\n", model2_coprocnt);
-			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
-			//cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
 		}
 	}
 
@@ -365,16 +360,77 @@ static WRITE32_HANDLER(copro_prg_w)
 {
 	if (model2_coproctl & 0x80000000)
 	{
-		//printf("copro %08X: %08X\n", model2_coprocnt, data);
-		//copro_prog[model2_coprocnt] = data;
-		//model2_coprocnt++;
+		model2_coprocnt++;
+	}
+}
 
+
+
+static WRITE32_HANDLER( copro_sharc_ctl1_w )
+{
+	// did hi bit change?
+	if ((data ^ model2_coproctl) == 0x80000000)
+	{
+		if (data & 0x80000000)
+		{
+			logerror("Start copro upload\n");
+			model2_coprocnt = 0;
+		}
+		else
+		{
+			logerror("Boot copro, %d dwords\n", model2_coprocnt);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
+			//cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
+		}
+	}
+
+	model2_coproctl = data;
+}
+
+static WRITE32_HANDLER( geo_sharc_ctl1_w )
+{
+	// did hi bit change?
+	if ((data ^ model2_geoctl) == 0x80000000)
+	{
+		if (data & 0x80000000)
+		{
+			logerror("Start geo upload\n");
+			model2_geocnt = 0;
+		}
+		else
+		{
+			logerror("Boot geo, %d dwords\n", model2_geocnt);
+			cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+		}
+	}
+
+	model2_geoctl = data;
+}
+
+static WRITE32_HANDLER(copro_sharc_prg_w)
+{
+	if (model2_coproctl & 0x80000000)
+	{
 		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 0, (data >> 0) & 0xff);
 		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 1, (data >> 8) & 0xff);
 
 		model2_coprocnt++;
 	}
 }
+
+static WRITE32_HANDLER(geo_sharc_prg_w)
+{
+	if (model2_geoctl & 0x80000000)
+	{
+		cpunum_write_byte(3, 0x80000+(model2_geocnt*2) + 0, (data >> 0) & 0xff);
+		cpunum_write_byte(3, 0x80000+(model2_geocnt*2) + 1, (data >> 8) & 0xff);
+
+		model2_geocnt++;
+	}
+}
+
+
+
 
 static READ32_HANDLER(hotd_unk_r)
 {
@@ -716,15 +772,12 @@ static ADDRESS_MAP_START( model2_base_mem, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0x00800010, 0x00800013) AM_WRITENOP
 	AM_RANGE(0x008000b0, 0x008000b3) AM_WRITENOP
-	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
 	AM_RANGE(0x00804004, 0x0080400f) AM_WRITENOP	// quiet psikyo games
-	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
 
 	AM_RANGE(0x00900000, 0x0097ffff) AM_RAM AM_BASE(&model2_bufferram)
 
-	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
+
 	AM_RANGE(0x00980004, 0x00980007) AM_READ(fifoctl_r)
-	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
 	AM_RANGE(0x0098000c, 0x0098000f) AM_READ(videoctl_r)
 
 	AM_RANGE(0x00e80000, 0x00e80007) AM_READWRITE(model2_irq_r, model2_irq_w)
@@ -764,6 +817,11 @@ static ADDRESS_MAP_START( model2o_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0021ffff) AM_RAM
 	AM_RANGE(0x00220000, 0x0023ffff) AM_ROM AM_REGION(REGION_CPU1, 0x20000)
 
+	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+
+	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
+	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
 	AM_RANGE(0x009c0000, 0x009cffff) AM_READWRITE( model2_serial_r, model2o_serial_w )
 
 	AM_RANGE(0x01c00000, 0x01c00007) AM_READ(analog_r)
@@ -780,6 +838,11 @@ static ADDRESS_MAP_START( model2a_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_WRITENOP
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
+	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+
+	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
+	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
 	AM_RANGE(0x009c0000, 0x009cffff) AM_READWRITE( model2_serial_r, model2_serial_w )
 
 	AM_RANGE(0x01c00000, 0x01c00003) AM_READWRITE(ctrl0_r, ctrl0_w)
@@ -792,11 +855,37 @@ static ADDRESS_MAP_START( model2a_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01c80000, 0x01c80003) AM_READWRITE( model2_serial_r, model2_serial_w )
 ADDRESS_MAP_END
 
-/* 2B-CRX and 2C-CRX overrides (will need to separate when DSP emulation is added) */
-static ADDRESS_MAP_START( model2_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
+/* 2B-CRX overrides */
+static ADDRESS_MAP_START( model2b_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_WRITENOP
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
+	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_sharc_prg_w)
+	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_sharc_prg_w)
+
+	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_sharc_ctl1_w )
+	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_sharc_ctl1_w )
+	AM_RANGE(0x009c0000, 0x009cffff) AM_READWRITE( model2_serial_r, model2_serial_w )
+
+	AM_RANGE(0x01c00000, 0x01c00003) AM_READWRITE(ctrl0_r, ctrl0_w)
+	AM_RANGE(0x01c00004, 0x01c00007) AM_READ(ctrl1_r)
+	AM_RANGE(0x01c00010, 0x01c00013) AM_READ(ctrl10_r)
+	AM_RANGE(0x01c00014, 0x01c00017) AM_READ(ctrl14_r)
+	AM_RANGE(0x01c00018, 0x01c0001b) AM_READ( hotd_unk_r )
+	AM_RANGE(0x01c0001c, 0x01c0001f) AM_READ( sonic_unk_r )
+	AM_RANGE(0x01c80000, 0x01c80003) AM_READWRITE( model2_serial_r, model2_serial_w )
+ADDRESS_MAP_END
+
+/* 2C-CRX overrides */
+static ADDRESS_MAP_START( model2c_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_WRITENOP
+	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
+
+	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+
+	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
+	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
 	AM_RANGE(0x009c0000, 0x009cffff) AM_READWRITE( model2_serial_r, model2_serial_w )
 
 	AM_RANGE(0x01c00000, 0x01c00003) AM_READWRITE(ctrl0_r, ctrl0_w)
@@ -1123,23 +1212,12 @@ static struct MultiPCM_interface m1_multipcm_interface_2 =
 
 
 
-
-READ32_HANDLER( copro_sharc_shared_r )
-{
-//  printf("dsp_shared_r: %08X\n", offset);
-
-	return (copro_shared[(offset >> 1) + 0] << 16) | (copro_shared[(offset >> 1) + 1]);
-}
-
-WRITE32_HANDLER( copro_sharc_shared_w )
-{
-	printf("copro_sharc_shared_w: %08X, %08X\n", offset, data);
-
-	copro_shared[offset] = data;
-}
-
 static ADDRESS_MAP_START( copro_sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x1000000, 0x101ffff) AM_READWRITE(copro_sharc_shared_r, copro_sharc_shared_w)
+	AM_RANGE(0x1000000, 0x101ffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( geo_sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x1000000, 0x101ffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -1226,7 +1304,7 @@ static sharc_config sharc_cfg =
 /* 2B-CRX */
 static MACHINE_DRIVER_START( model2b )
 	MDRV_CPU_ADD(I960, 25000000)
-	MDRV_CPU_PROGRAM_MAP(model2_base_mem, model2_crx_mem)
+	MDRV_CPU_PROGRAM_MAP(model2_base_mem, model2b_crx_mem)
  	MDRV_CPU_VBLANK_INT(model2_interrupt,2)
 
 	MDRV_CPU_ADD(M68000, 12000000)
@@ -1235,6 +1313,10 @@ static MACHINE_DRIVER_START( model2b )
 	MDRV_CPU_ADD(ADSP21062, 40000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
 	MDRV_CPU_PROGRAM_MAP(copro_sharc_map, 0)
+
+	MDRV_CPU_ADD(ADSP21062, 40000000)
+	MDRV_CPU_CONFIG(sharc_cfg)
+	MDRV_CPU_PROGRAM_MAP(geo_sharc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1261,7 +1343,7 @@ MACHINE_DRIVER_END
 /* 2C-CRX */
 static MACHINE_DRIVER_START( model2c )
 	MDRV_CPU_ADD(I960, 25000000)
-	MDRV_CPU_PROGRAM_MAP(model2_base_mem, model2_crx_mem)
+	MDRV_CPU_PROGRAM_MAP(model2_base_mem, model2c_crx_mem)
  	MDRV_CPU_VBLANK_INT(model2c_interrupt,3)
 
 	MDRV_CPU_ADD(M68000, 12000000)

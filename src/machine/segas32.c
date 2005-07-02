@@ -173,7 +173,7 @@ READ16_HANDLER(brival_protection_r)
 	return segas32_workram[0xba00/2 + offset];
 }
 
-WRITE16_HANDLER(brival_protboard_w)
+WRITE16_HANDLER(brival_protection_w)
 {
 	static const int protAddress[6][2] =
 	{
@@ -211,7 +211,7 @@ WRITE16_HANDLER(brival_protboard_w)
 		default:
 			if (offset >= 0xa00/2 && offset < 0xc00/2)
 				return;
-			logerror("brival_protboard_w: UNKNOWN WRITE: offset %x value %x\n", offset, data);
+			logerror("brival_protection_w: UNKNOWN WRITE: offset %x value %x\n", offset, data);
 			return;
 			break;
 	}
@@ -225,13 +225,66 @@ WRITE16_HANDLER(brival_protboard_w)
 
 /******************************************************************************
  ******************************************************************************
+  Dark Edge
+ ******************************************************************************
+ ******************************************************************************/
+
+static void darkedge_protection_update(int param)
+{
+	cpuintrf_push_context(0);
+	program_write_word(0x20f072, 0);
+	cpuintrf_pop_context();
+}
+
+WRITE16_HANDLER( darkedge_protection_w )
+{
+	logerror("%06x:darkedge_prot_w(%06X) = %04X & %04X\n",
+		activecpu_get_pc(), 0xa00000 + 2*offset, data, mem_mask ^ 0xffff);
+	if (offset == 0 && data == 0)
+		timer_set(TIME_IN_USEC(50), 0, darkedge_protection_update);
+}
+
+
+READ16_HANDLER( darkedge_protection_r )
+{
+	logerror("%06x:darkedge_prot_r(%06X) & %04X\n",
+		activecpu_get_pc(), 0xa00000 + 2*offset, mem_mask ^ 0xffff);
+	return 0xffff;
+}
+
+
+
+/******************************************************************************
+ ******************************************************************************
+  DBZ VRVS
+ ******************************************************************************
+ ******************************************************************************/
+
+WRITE16_HANDLER( dbzvrvs_protection_w )
+{
+	logerror("%06x:dbzvrvs_prot_w(%06X) = %04X & %04X\n",
+		activecpu_get_pc(), 0xa00000 + 2*offset, data, mem_mask ^ 0xffff);
+}
+
+
+READ16_HANDLER( dbzvrvs_protection_r )
+{
+	logerror("%06x:dbzvrvs_prot_r(%06X) & %04X\n",
+		activecpu_get_pc(), 0xa00000 + 2*offset, mem_mask ^ 0xffff);
+	return 0xffff;
+}
+
+
+
+/******************************************************************************
+ ******************************************************************************
   Arabian Fight
  ******************************************************************************
  ******************************************************************************/
 
 
 // protection ram is 8-bits wide and only occupies every other address
-READ16_HANDLER(arabfgt_protboard_r)
+READ16_HANDLER(arabfgt_protection_r)
 {
 	int PC = activecpu_get_pc();
 	int cmpVal;
@@ -251,7 +304,7 @@ READ16_HANDLER(arabfgt_protboard_r)
 	return 0;
 }
 
-WRITE16_HANDLER(arabfgt_protboard_w)
+WRITE16_HANDLER(arabfgt_protection_w)
 {
 }
 

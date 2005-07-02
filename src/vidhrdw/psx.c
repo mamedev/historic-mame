@@ -162,6 +162,17 @@ static union
 	} Dot;
 } m_packet;
 
+struct PSXGPU
+{
+	int n_tx;
+	int n_ty;
+	int n_abr;
+	int n_tp;
+	int n_ix;
+	int n_iy;
+	int n_ti;
+} psxgpu;
+
 static UINT16 *m_p_vram;
 static UINT32 m_n_vram_size;
 static UINT32 m_n_gpu_buffer_offset;
@@ -190,7 +201,6 @@ static UINT32 m_n_lightgun_x;
 static UINT32 m_n_lightgun_y;
 static UINT32 m_n_screenwidth;
 static UINT32 m_n_screenheight;
-static UINT32 m_n_drawmode;
 
 #define MAX_LEVEL ( 32 )
 #define MID_LEVEL ( ( MAX_LEVEL / 2 ) << 8 )
@@ -632,7 +642,6 @@ static int psx_gpu_init( void )
 #endif
 
 	m_n_gpustatus = 0x14802000;
-	m_n_drawmode = 0;
 	m_n_gpuinfo = 0;
 	m_n_gpu_buffer_offset = 0;
 	m_n_lightgun_x = 0;
@@ -767,7 +776,13 @@ static int psx_gpu_init( void )
 	state_save_register_UINT32( "psx", 0, "m_n_gpuinfo", &m_n_gpuinfo, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_lightgun_x", &m_n_lightgun_x, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_lightgun_y", &m_n_lightgun_y, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_drawmode", &m_n_drawmode, 1 );
+	state_save_register_int( "psx", 0, "n_tx", &psxgpu.n_tx );
+	state_save_register_int( "psx", 0, "n_ty", &psxgpu.n_ty );
+	state_save_register_int( "psx", 0, "n_abr", &psxgpu.n_abr );
+	state_save_register_int( "psx", 0, "n_tp", &psxgpu.n_tp );
+	state_save_register_int( "psx", 0, "n_ix", &psxgpu.n_ix );
+	state_save_register_int( "psx", 0, "n_iy", &psxgpu.n_iy );
+	state_save_register_int( "psx", 0, "n_ti", &psxgpu.n_ti );
 
 	state_save_register_func_postload( updatevisiblearea );
 
@@ -945,9 +960,76 @@ f  e| d| c  b| a  9| 8  7| 6  5| 4| 3  2  1  0
 
 /*
 type 2
-f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
-          |ty|     |   tp|  abr|ty|         tx
+f  e| d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
+    |iy|ix|ty|     |   tp|  abr|ty|         tx
 */
+
+INLINE void decode_tpage( struct PSXGPU *p_psxgpu, UINT32 tpage )
+{
+	if( m_n_gputype == 2 )
+	{
+		m_n_gpustatus = ( m_n_gpustatus & 0xfffff800 ) | ( tpage & 0x7ff );
+
+		p_psxgpu->n_tx = ( tpage & 0x0f ) << 6;
+		p_psxgpu->n_ty = ( ( tpage & 0x10 ) << 4 ) | ( ( tpage & 0x800 ) >> 2 );
+		p_psxgpu->n_abr = ( tpage & 0x60 ) >> 5;
+		p_psxgpu->n_tp = ( tpage & 0x180 ) >> 7;
+		p_psxgpu->n_ix = ( tpage & 0x1000 ) >> 12;
+		p_psxgpu->n_iy = ( tpage & 0x2000 ) >> 13;
+		p_psxgpu->n_ti = 0;
+		if( ( tpage & ~0x39ff ) != 0 )
+		{
+			verboselog( 1, "not handled: draw mode %08x\n", tpage & ~0x39ff );
+		}
+		if( p_psxgpu->n_tp == 3 )
+		{
+			verboselog( 0, "not handled: tp == 3\n" );
+		}
+	}
+	else
+	{
+		m_n_gpustatus = ( m_n_gpustatus & 0xffffe000 ) | ( tpage & 0x1fff );
+
+		p_psxgpu->n_tx = ( tpage & 0x0f ) << 6;
+		p_psxgpu->n_ty = ( ( tpage & 0x60 ) << 3 );
+		p_psxgpu->n_abr = ( tpage & 0x180 ) >> 7;
+		p_psxgpu->n_tp = ( tpage & 0x600 ) >> 9;
+		p_psxgpu->n_ti = ( tpage & 0x2000 ) >> 13;
+		p_psxgpu->n_ix = 0;
+		p_psxgpu->n_iy = 0;
+		if( ( tpage & ~0x27ef ) != 0 )
+		{
+			verboselog( 1, "not handled: draw mode %08x\n", tpage & ~0x27ef );
+		}
+		if( p_psxgpu->n_tp == 3 )
+		{
+			verboselog( 0, "not handled: tp == 3\n" );
+		}
+		else if( p_psxgpu->n_tp == 2 && p_psxgpu->n_ti != 0 )
+		{
+			verboselog( 0, "not handled: interleaved 15 bit texture\n" );
+		}
+	}
+}
+
+#define SPRITESETUP \
+	if( psxgpu.n_iy != 0 ) \
+	{ \
+		n_dv = -1; \
+	} \
+	else \
+	{ \
+		n_dv = 1; \
+	} \
+	if( psxgpu.n_ix != 0 ) \
+	{ \
+		n_u |= 1; \
+		n_du = -1; \
+	} \
+	else \
+	{ \
+		n_du = 1; \
+	}
 
 #define TRANSPARENCYSETUP \
 	p_n_f = m_p_n_f1; \
@@ -961,7 +1043,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	switch( n_cmd & 0x02 ) \
 	{ \
 	case 0x02: \
-		switch( n_abr & 0x03 ) \
+		switch( psxgpu.n_abr ) \
 		{ \
 		case 0x00: \
 			p_n_f = m_p_n_f05; \
@@ -1007,80 +1089,24 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 		break; \
 	}
 
-#define SOLIDSETUP( DRAWMODE ) \
-	if( m_n_gputype == 2 ) \
-	{ \
-		n_abr = ( DRAWMODE & 0x60 ) >> 5; \
-	} \
-	else \
-	{ \
-		n_abr = ( DRAWMODE & 0x180 ) >> 7; \
-	} \
+#define SOLIDSETUP \
 	TRANSPARENCYSETUP
 
-#define TEXTURESETUP( DRAWMODE ) \
+#define TEXTURESETUP \
 	p_clut = m_p_p_vram[ n_cluty ] + n_clutx; \
-	if( m_n_gputype == 2 ) \
-	{ \
-		if( m_n_drawmode != DRAWMODE ) \
-		{ \
-			m_n_drawmode = DRAWMODE; \
-			m_n_gpustatus = ( m_n_gpustatus & 0xfffff800 ) | ( m_n_drawmode & 0x7ff ); \
-		} \
-		n_tx = ( DRAWMODE & 0x0f ) << 6; \
-		n_ty = ( ( DRAWMODE & 0x10 ) << 4 ) | \
-			( ( DRAWMODE & 0x800 ) >> 2 ); \
-		n_abr = ( DRAWMODE & 0x60 ) >> 5; \
-		n_tp = ( DRAWMODE & 0x180 ) >> 7; \
-		n_ti = 0; \
-		if( ( DRAWMODE & ~0x9ff ) != 0 ) \
-		{ \
-			verboselog( 1, "not handled: draw mode %08x\n", DRAWMODE & ~0x9ff ); \
-		} \
-		if( n_tp == 3 ) \
-		{ \
-			verboselog( 1, "not handled: tp == 3\n" ); \
-		} \
-	} \
-	else \
-	{ \
-		if( m_n_drawmode != DRAWMODE ) \
-		{ \
-			m_n_drawmode = DRAWMODE; \
-			m_n_gpustatus = ( m_n_gpustatus & 0xffffe000 ) | ( m_n_drawmode & 0x1fff ); \
-		} \
-		n_tx = ( DRAWMODE & 0x0f ) << 6; \
-		n_ty = ( ( DRAWMODE & 0x60 ) << 3 ); \
-		n_abr = ( DRAWMODE & 0x180 ) >> 7; \
-		n_tp = ( DRAWMODE & 0x600 ) >> 9; \
-		n_ti = ( DRAWMODE & 0x2000 ) >> 13; \
-		if( ( DRAWMODE & ~0x27ef ) != 0 ) \
-		{ \
-			verboselog( 1, "not handled: draw mode %08x\n", DRAWMODE & ~0x27ef ); \
-		} \
-		if( n_tp == 3 ) \
-		{ \
-			verboselog( 1, "not handled: tp == 3\n" ); \
-		} \
-		else if( n_tp == 2 && n_ti != 0 ) \
-		{ \
-			verboselog( 1, "not handled: interleaved 15 bit texture\n" ); \
-		} \
-	} \
- \
-	switch( n_tp ) \
+	switch( psxgpu.n_tp ) \
 	{ \
 	case 0: \
-		n_tx += m_n_twx >> 2; \
-		n_ty += m_n_twy; \
+		psxgpu.n_tx += m_n_twx >> 2; \
+		psxgpu.n_ty += m_n_twy; \
 		break; \
 	case 1: \
-		n_tx += m_n_twx >> 1; \
-		n_ty += m_n_twy; \
+		psxgpu.n_tx += m_n_twx >> 1; \
+		psxgpu.n_ty += m_n_twy; \
 		break; \
 	case 2: \
-		n_tx += m_n_twx >> 0; \
-		n_ty += m_n_twy; \
+		psxgpu.n_tx += m_n_twx >> 0; \
+		psxgpu.n_ty += m_n_twy; \
 		break; \
 	} \
 	TRANSPARENCYSETUP
@@ -1141,22 +1167,22 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	n_v.d += n_dv;
 
 #define FLATTEXTUREDRECTANGLEUPDATE \
-	n_u++;
+	n_u += n_du;
 
 #define TEXTURE4BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + TXV ] + n_tx + ( TXU >> 2 ) ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + ( TXU >> 2 ) ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
 
 #define TEXTURE8BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + TXV ] + n_tx + ( TXU >> 1 ) ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + ( TXU >> 1 ) ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
 
 #define TEXTURE15BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = *( m_p_p_vram[ n_ty + TXV ] + n_tx + TXU );
+		n_bgr = *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + TXU );
 
 #define TEXTUREWINDOW4BIT( TXV, TXU ) TEXTURE4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 #define TEXTUREWINDOW8BIT( TXV, TXU ) TEXTURE8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
@@ -1167,21 +1193,21 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	{ \
 		int n_xi = ( ( TXU >> 2 ) & ~0x3c ) + ( ( TXV << 2 ) & 0x3c ); \
 		int n_yi = ( TXV & ~0xf ) + ( ( TXU >> 4 ) & 0xf ); \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
 
 #define TEXTUREINTERLEAVED8BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
 		int n_xi = ( ( TXU >> 1 ) & ~0x78 ) + ( ( TXU << 2 ) & 0x40 ) + ( ( TXV << 3 ) & 0x38 ); \
 		int n_yi = ( TXV & ~0x7 ) + ( ( TXU >> 5 ) & 0x7 ); \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
 
 #define TEXTUREINTERLEAVED15BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
 		int n_xi = TXU; \
 		int n_yi = TXV; \
-		n_bgr = *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi );
+		n_bgr = *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi );
 
 #define TEXTUREWINDOWINTERLEAVED4BIT( TXV, TXU ) TEXTUREINTERLEAVED4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 #define TEXTUREWINDOWINTERLEAVED8BIT( TXV, TXU ) TEXTUREINTERLEAVED8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
@@ -1230,7 +1256,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 	} \
 	p_vram = m_p_p_vram[ n_y ] + n_x; \
  \
-	if( n_ti != 0 ) \
+	if( psxgpu.n_ti != 0 ) \
 	{ \
 		/* interleaved texture */ \
 		if( m_n_twh != 255 || \
@@ -1243,7 +1269,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 			{ \
 			case 0x00: \
 				/* shading */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1264,7 +1290,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 				break; \
 			case 0x02: \
 				/* semi transparency */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1292,7 +1318,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 			{ \
 			case 0x00: \
 				/* shading */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1313,7 +1339,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 				break; \
 			case 0x02: \
 				/* semi transparency */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1348,7 +1374,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 			{ \
 			case 0x00: \
 				/* shading */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1369,7 +1395,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 				break; \
 			case 0x02: \
 				/* semi transparency */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1397,7 +1423,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 			{ \
 			case 0x00: \
 				/* shading */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					TEXTURE4BIT( TXV, TXU ) \
@@ -1417,7 +1443,7 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 				break; \
 			case 0x02: \
 				/* semi transparency */ \
-				switch( n_tp ) \
+				switch( psxgpu.n_tp ) \
 				{ \
 				case 0: \
 					/* 4 bit clut */ \
@@ -1444,8 +1470,6 @@ static void FlatPolygon( int n_points )
 {
 	INT16 n_y;
 	INT16 n_x;
-
-	UINT32 n_abr;
 
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
@@ -1489,7 +1513,7 @@ static void FlatPolygon( int n_points )
 
 	n_cmd = BGR_C( m_packet.FlatPolygon.n_bgr );
 
-	SOLIDSETUP( m_n_drawmode )
+	SOLIDSETUP
 
 	n_r.w.h = BGR_R( m_packet.FlatPolygon.n_bgr ); n_r.w.l = 0;
 	n_g.w.h = BGR_G( m_packet.FlatPolygon.n_bgr ); n_g.w.l = 0;
@@ -1604,12 +1628,6 @@ static void FlatTexturedPolygon( int n_points )
 	UINT32 n_clutx;
 	UINT32 n_cluty;
 
-	UINT32 n_tp;
-	UINT32 n_tx;
-	UINT32 n_ty;
-	UINT32 n_abr;
-	UINT32 n_ti;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -1666,7 +1684,8 @@ static void FlatTexturedPolygon( int n_points )
 	n_clutx = ( m_packet.FlatTexturedPolygon.vertex[ 0 ].n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.FlatTexturedPolygon.vertex[ 0 ].n_texture.w.h >> 6 ) & 0x3ff;
 
-	TEXTURESETUP( m_packet.FlatTexturedPolygon.vertex[ 1 ].n_texture.w.h )
+	decode_tpage( &psxgpu, m_packet.FlatTexturedPolygon.vertex[ 1 ].n_texture.w.h );
+	TEXTURESETUP
 
 	switch( n_cmd & 0x01 )
 	{
@@ -1814,8 +1833,6 @@ static void GouraudPolygon( int n_points )
 	INT16 n_y;
 	INT16 n_x;
 
-	UINT32 n_abr;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -1873,7 +1890,7 @@ static void GouraudPolygon( int n_points )
 
 	n_cmd = BGR_C( m_packet.GouraudPolygon.vertex[ 0 ].n_bgr );
 
-	SOLIDSETUP( m_n_drawmode )
+	SOLIDSETUP
 
 	if( n_points == 4 )
 	{
@@ -2025,12 +2042,6 @@ static void GouraudTexturedPolygon( int n_points )
 	UINT32 n_clutx;
 	UINT32 n_cluty;
 
-	UINT32 n_tp;
-	UINT32 n_tx;
-	UINT32 n_ty;
-	UINT32 n_abr;
-	UINT32 n_ti;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -2102,7 +2113,8 @@ static void GouraudTexturedPolygon( int n_points )
 	n_clutx = ( m_packet.GouraudTexturedPolygon.vertex[ 0 ].n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.GouraudTexturedPolygon.vertex[ 0 ].n_texture.w.h >> 6 ) & 0x3ff;
 
-	TEXTURESETUP( m_packet.GouraudTexturedPolygon.vertex[ 1 ].n_texture.w.h )
+	decode_tpage( &psxgpu, m_packet.GouraudTexturedPolygon.vertex[ 1 ].n_texture.w.h );
+	TEXTURESETUP
 
 	if( n_points == 4 )
 	{
@@ -2581,7 +2593,6 @@ static void FlatRectangle( void )
 	INT16 n_x;
 
 	UINT8 n_cmd;
-	UINT32 n_abr;
 
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
@@ -2613,7 +2624,7 @@ static void FlatRectangle( void )
 
 	n_cmd = BGR_C( m_packet.FlatRectangle.n_bgr );
 
-	SOLIDSETUP( m_n_drawmode )
+	SOLIDSETUP
 
 	n_r.w.h = BGR_R( m_packet.FlatRectangle.n_bgr ); n_r.w.l = 0;
 	n_g.w.h = BGR_G( m_packet.FlatRectangle.n_bgr ); n_g.w.l = 0;
@@ -2647,7 +2658,6 @@ static void FlatRectangle8x8( void )
 	INT16 n_x;
 
 	UINT8 n_cmd;
-	UINT32 n_abr;
 
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
@@ -2679,7 +2689,7 @@ static void FlatRectangle8x8( void )
 
 	n_cmd = BGR_C( m_packet.FlatRectangle8x8.n_bgr );
 
-	SOLIDSETUP( m_n_drawmode )
+	SOLIDSETUP
 
 	n_r.w.h = BGR_R( m_packet.FlatRectangle8x8.n_bgr ); n_r.w.l = 0;
 	n_g.w.h = BGR_G( m_packet.FlatRectangle8x8.n_bgr ); n_g.w.l = 0;
@@ -2713,7 +2723,6 @@ static void FlatRectangle16x16( void )
 	INT16 n_x;
 
 	UINT8 n_cmd;
-	UINT32 n_abr;
 
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
@@ -2745,7 +2754,7 @@ static void FlatRectangle16x16( void )
 
 	n_cmd = BGR_C( m_packet.FlatRectangle16x16.n_bgr );
 
-	SOLIDSETUP( m_n_drawmode )
+	SOLIDSETUP
 
 	n_r.w.h = BGR_R( m_packet.FlatRectangle16x16.n_bgr ); n_r.w.l = 0;
 	n_g.w.h = BGR_G( m_packet.FlatRectangle16x16.n_bgr ); n_g.w.l = 0;
@@ -2783,12 +2792,6 @@ static void FlatTexturedRectangle( void )
 	UINT32 n_clutx;
 	UINT32 n_cluty;
 
-	UINT32 n_tp;
-	UINT32 n_tx;
-	UINT32 n_ty;
-	UINT32 n_abr;
-	UINT32 n_ti;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -2802,6 +2805,8 @@ static void FlatTexturedRectangle( void )
 	PAIR n_b;
 	UINT8 n_u;
 	UINT8 n_v;
+	int n_du;
+	int n_dv;
 
 	INT16 n_distance;
 	UINT32 n_h;
@@ -2826,7 +2831,8 @@ static void FlatTexturedRectangle( void )
 	n_clutx = ( m_packet.FlatTexturedRectangle.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.FlatTexturedRectangle.n_texture.w.h >> 6 ) & 0x3ff;
 
-	TEXTURESETUP( m_n_drawmode )
+	TEXTURESETUP
+	SPRITESETUP
 
 	switch( n_cmd & 0x01 )
 	{
@@ -2856,13 +2862,13 @@ static void FlatTexturedRectangle( void )
 		{
 			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
 			{
-				n_u += ( m_n_drawarea_x1 - n_x );
+				n_u += ( m_n_drawarea_x1 - n_x ) * n_du;
 				n_distance -= ( m_n_drawarea_x1 - n_x );
 				n_x = m_n_drawarea_x1;
 			}
 			TEXTUREFILL( FLATTEXTUREDRECTANGLEUPDATE, n_u, n_v );
 		}
-		n_v++;
+		n_v += n_dv;
 		n_y++;
 		n_h--;
 	}
@@ -2878,12 +2884,6 @@ static void Sprite8x8( void )
 	UINT32 n_clutx;
 	UINT32 n_cluty;
 
-	UINT32 n_tp;
-	UINT32 n_tx;
-	UINT32 n_ty;
-	UINT32 n_abr;
-	UINT32 n_ti;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -2897,6 +2897,8 @@ static void Sprite8x8( void )
 	PAIR n_b;
 	UINT8 n_u;
 	UINT8 n_v;
+	int n_du;
+	int n_dv;
 
 	INT16 n_distance;
 	UINT32 n_h;
@@ -2921,7 +2923,8 @@ static void Sprite8x8( void )
 	n_clutx = ( m_packet.Sprite8x8.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.Sprite8x8.n_texture.w.h >> 6 ) & 0x3ff;
 
-	TEXTURESETUP( m_n_drawmode )
+	TEXTURESETUP
+	SPRITESETUP
 
 	switch( n_cmd & 0x01 )
 	{
@@ -2951,13 +2954,13 @@ static void Sprite8x8( void )
 		{
 			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
 			{
-				n_u += ( m_n_drawarea_x1 - n_x );
+				n_u += ( m_n_drawarea_x1 - n_x ) * n_du;
 				n_distance -= ( m_n_drawarea_x1 - n_x );
 				n_x = m_n_drawarea_x1;
 			}
 			TEXTUREFILL( FLATTEXTUREDRECTANGLEUPDATE, n_u, n_v );
 		}
-		n_v++;
+		n_v += n_dv;
 		n_y++;
 		n_h--;
 	}
@@ -2973,12 +2976,6 @@ static void Sprite16x16( void )
 	UINT32 n_clutx;
 	UINT32 n_cluty;
 
-	UINT32 n_tp;
-	UINT32 n_tx;
-	UINT32 n_ty;
-	UINT32 n_abr;
-	UINT32 n_ti;
-
 	UINT16 *p_n_f;
 	UINT16 *p_n_redb;
 	UINT16 *p_n_greenb;
@@ -2992,6 +2989,8 @@ static void Sprite16x16( void )
 	PAIR n_b;
 	UINT8 n_u;
 	UINT8 n_v;
+	int n_du;
+	int n_dv;
 
 	INT16 n_distance;
 	UINT32 n_h;
@@ -3016,7 +3015,8 @@ static void Sprite16x16( void )
 	n_clutx = ( m_packet.Sprite16x16.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.Sprite16x16.n_texture.w.h >> 6 ) & 0x3ff;
 
-	TEXTURESETUP( m_n_drawmode )
+	TEXTURESETUP
+	SPRITESETUP
 
 	switch( n_cmd & 0x01 )
 	{
@@ -3046,13 +3046,13 @@ static void Sprite16x16( void )
 		{
 			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
 			{
-				n_u += ( m_n_drawarea_x1 - n_x );
+				n_u += ( m_n_drawarea_x1 - n_x ) * n_du;
 				n_distance -= ( m_n_drawarea_x1 - n_x );
 				n_x = m_n_drawarea_x1;
 			}
 			TEXTUREFILL( FLATTEXTUREDRECTANGLEUPDATE, n_u, n_v );
 		}
-		n_v++;
+		n_v += n_dv;
 		n_y++;
 		n_h--;
 	}
@@ -3341,6 +3341,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			break;
 		case 0x58:
 		case 0x5c:
+		case 0x5e:
 			if( m_n_gpu_buffer_offset < 5 &&
 				( m_n_gpu_buffer_offset != 4 || ( m_packet.n_entry[ 4 ] & 0xf000f000 ) != 0x50005000 ) )
 			{
@@ -3544,15 +3545,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 		case 0xe1:
 			verboselog( 1, "%02x: draw mode %06x\n", m_packet.n_entry[ 0 ] >> 24,
 				m_packet.n_entry[ 0 ] & 0xffffff );
-			m_n_drawmode = m_packet.n_entry[ 0 ] & 0xffffff;
-			if( m_n_gputype == 2 )
-			{
-				m_n_gpustatus = ( m_n_gpustatus & 0xfffff800 ) | ( m_n_drawmode & 0x7ff );
-			}
-			else
-			{
-				m_n_gpustatus = ( m_n_gpustatus & 0xffffe000 ) | ( m_n_drawmode & 0x1fff );
-			}
+			decode_tpage( &psxgpu, m_packet.n_entry[ 0 ] & 0xffffff );
 			break;
 		case 0xe2:
 			m_n_twy = ( ( ( m_packet.n_entry[ 0 ] >> 15 ) & 0x1f ) << 3 );
@@ -3602,6 +3595,8 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 				m_n_drawoffset_x, m_n_drawoffset_y );
 			break;
 		case 0xe6:
+			m_n_gpustatus &= ~( 3L << 0xb );
+			m_n_gpustatus |= ( data & 0x03 ) << 0xb;
 			if( ( m_packet.n_entry[ 0 ] & 3 ) != 0 )
 			{
 				verboselog( 1, "not handled: mask setting %d\n", m_packet.n_entry[ 0 ] & 3 );
@@ -3640,7 +3635,6 @@ WRITE32_HANDLER( psx_gpu_w )
 			verboselog( 1, "reset gpu\n" );
 			m_n_gpu_buffer_offset = 0;
 			m_n_gpustatus = 0x14802000;
-			m_n_drawmode = 0;
 			m_n_drawarea_x1 = 0;
 			m_n_drawarea_y1 = 0;
 			m_n_drawarea_x2 = 1023;
@@ -3676,6 +3670,11 @@ WRITE32_HANDLER( psx_gpu_w )
 			verboselog( 1, "dma setup %d\n", data & 3 );
 			m_n_gpustatus &= ~( 3L << 0x1d );
 			m_n_gpustatus |= ( data & 0x03 ) << 0x1d;
+			m_n_gpustatus &= ~( 1L << 0x19 );
+			if( ( data & 3 ) == 1 || ( data & 3 ) == 2 )
+			{
+				m_n_gpustatus |= ( 1L << 0x19 );
+			}
 			break;
 		case 0x05:
 			m_n_displaystartx = data & 1023;
@@ -3704,7 +3703,10 @@ WRITE32_HANDLER( psx_gpu_w )
 			m_n_gpustatus &= ~( 127L << 0x10 );
 			m_n_gpustatus |= ( data & 0x3f ) << 0x11; /* width 0 + height + videmode + isrgb24 + isinter */
 			m_n_gpustatus |= ( ( data & 0x40 ) >> 0x06 ) << 0x10; /* width 1 */
-			m_b_reverseflag = ( data >> 7 ) & 1;
+			if( m_n_gputype == 1 )
+			{
+				m_b_reverseflag = ( data >> 7 ) & 1;
+			}
 			updatevisiblearea();
 			break;
 		case 0x09:

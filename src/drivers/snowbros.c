@@ -1105,7 +1105,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( wintbob )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(snowbros)
-	MDRV_CPU_REPLACE("main", M68000, 10000000) /* faster cpu on bootleg? otherwise the gfx break up */
+	MDRV_CPU_REPLACE("main", M68000, 12000000) /* faster cpu on bootleg? otherwise the gfx and scroll break up */
 
 	/* video hardware */
 	MDRV_GFXDECODE(gfxdecodeinfo_wb)

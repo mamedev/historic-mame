@@ -128,25 +128,25 @@ static UINT32		ppc_field_xlat[256];
 #define XER_OV			0x40000000
 #define XER_CA			0x20000000
 
-#define MSR_POW			0x00040000
+#define MSR_POW			0x00040000	/* Power Management Enable */
 #define MSR_WE			0x00040000
 #define MSR_CE			0x00020000
-#define MSR_ILE			0x00010000
-#define MSR_EE			0x00008000
-#define MSR_PR			0x00004000
-#define MSR_FP			0x00002000
-#define MSR_ME			0x00001000
+#define MSR_ILE			0x00010000	/* Interrupt Little Endian Mode */
+#define MSR_EE			0x00008000	/* External Interrupt Enable */
+#define MSR_PR			0x00004000	/* Problem State */
+#define MSR_FP			0x00002000	/* Floating Point Available */
+#define MSR_ME			0x00001000	/* Machine Check Enable */
 #define MSR_FE0			0x00000800
-#define MSR_SE			0x00000400
-#define MSR_BE			0x00000200
+#define MSR_SE			0x00000400	/* Single Step Trace Enable */
+#define MSR_BE			0x00000200	/* Branch Trace Enable */
 #define MSR_DE			0x00000200
 #define MSR_FE1			0x00000100
-#define MSR_IP			0x00000040
-#define MSR_IR			0x00000020
-#define MSR_DR			0x00000010
+#define MSR_IP			0x00000040	/* Interrupt Prefix */
+#define MSR_IR			0x00000020	/* Instruction Relocate */
+#define MSR_DR			0x00000010	/* Data Relocate */
 #define MSR_PE			0x00000008
 #define MSR_PX			0x00000004
-#define MSR_RI			0x00000002
+#define MSR_RI			0x00000002	/* Recoverable Interrupt Enable */
 #define MSR_LE			0x00000001
 
 #define TSR_ENW			0x80000000
@@ -186,6 +186,11 @@ typedef union {
 	float f;
 } FPR32;
 
+typedef struct {
+	UINT32 u;
+	UINT32 l;
+} BATENT;
+
 
 typedef struct {
 	UINT32 r[32];
@@ -211,22 +216,8 @@ typedef struct {
 	UINT32 dar;
 	UINT32 ear;
 
-	UINT32 ibat0l;
-	UINT32 ibat0u;
-	UINT32 ibat1l;
-	UINT32 ibat1u;
-	UINT32 ibat2l;
-	UINT32 ibat2u;
-	UINT32 ibat3l;
-	UINT32 ibat3u;
-	UINT32 dbat0l;
-	UINT32 dbat0u;
-	UINT32 dbat1l;
-	UINT32 dbat1u;
-	UINT32 dbat2l;
-	UINT32 dbat2u;
-	UINT32 dbat3l;
-	UINT32 dbat3u;
+	BATENT ibat[4];
+	BATENT dbat[4];
 
 	UINT32 evpr;
 	UINT32 exier;
@@ -261,7 +252,6 @@ typedef struct {
 	int exception_pending;
 	int external_int;
 
-	int bus_freq_multiplier;
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
@@ -287,6 +277,23 @@ typedef struct {
 	UINT32 lt;
 	UINT32 sp;
 	UINT32 ibr;
+
+	/* PowerPC function pointers for memory accesses/exceptions */
+	void (*exception)(int exception);
+	data8_t (*read8)(offs_t address);
+	data16_t (*read16)(offs_t address);
+	data32_t (*read32)(offs_t address);
+	data64_t (*read64)(offs_t address);
+	void (*write8)(offs_t address, data8_t data);
+	void (*write16)(offs_t address, data16_t data);
+	void (*write32)(offs_t address, data32_t data);
+	void (*write64)(offs_t address, data64_t data);
+	data16_t (*read16_unaligned)(offs_t address);
+	data32_t (*read32_unaligned)(offs_t address);
+	data64_t (*read64_unaligned)(offs_t address);
+	void (*write16_unaligned)(offs_t address, data16_t data);
+	void (*write32_unaligned)(offs_t address, data32_t data);
+	void (*write64_unaligned)(offs_t address, data64_t data);
 } PPC_REGS;
 
 
@@ -300,6 +307,10 @@ typedef struct {
 
 
 static int ppc_icount;
+static int ppc_tb_base_icount;
+static int ppc_dec_base_icount;
+static int ppc_dec_trigger_cycle;
+static int bus_freq_multiplier = 1;
 static PPC_REGS ppc;
 static UINT32 ppc_rotate_mask[32][32];
 
@@ -375,6 +386,63 @@ INLINE UINT32 check_condition_code(UINT32 bo, UINT32 bi)
 	return ctr_ok && condition_ok;
 }
 
+INLINE UINT64 ppc_read_timebase(void)
+{
+	int cycles = ppc_tb_base_icount - ppc_icount;
+
+	if (ppc.is603 || ppc.is602)
+	{
+		// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+		return ppc.tb + (cycles / 4);
+	}
+	else
+	{
+		// timebase is incremented once every core cycle on PPC403
+		return ppc.tb + cycles;
+	}
+}
+
+INLINE void ppc_write_timebase_l(UINT32 tbl)
+{
+	ppc_tb_base_icount = ppc_icount;
+
+	ppc.tb &= ~0xffffffff;
+	ppc.tb |= tbl;
+}
+
+INLINE void ppc_write_timebase_h(UINT32 tbh)
+{
+	ppc_tb_base_icount = ppc_icount;
+
+	ppc.tb &= 0xffffffff;
+	ppc.tb |= (UINT64)(tbh) << 32;
+}
+
+INLINE UINT32 read_decrementer(void)
+{
+	int cycles = ppc_dec_base_icount - ppc_icount;
+
+	// decrementer is decremented once every four bus clock cycles, so adjust the cycles accordingly
+	return DEC - (cycles / (bus_freq_multiplier * 2));
+}
+
+INLINE void write_decrementer(UINT32 value)
+{
+	ppc_dec_base_icount = ppc_icount;
+
+	DEC = value;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+}
+
 /*********************************************************************/
 
 INLINE void ppc_set_spr(int spr, UINT32 value)
@@ -403,18 +471,17 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 					/* trigger interrupt */
 					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
 				}
-				DEC = value * ppc.bus_freq_multiplier * 2;
+				write_decrementer(value);
 				return;
 
 			case SPR603E_TBL_W:
 			case SPR603E_TBL_R: // special 603e case
-				ppc.tb &= U64(0xffffffff00000000);
-				ppc.tb |= (UINT64)(value*4);
+				ppc_write_timebase_l(value);
 				return;
 
 			case SPR603E_TBU_R:
 			case SPR603E_TBU_W: // special 603e case
-				osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
+				ppc_write_timebase_h(value);
 				return;
 
 			case SPR603E_HID0:
@@ -425,22 +492,22 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				ppc.hid1 = value;
 				return;
 
-			case SPR603E_IBAT0L:		ppc.ibat0l = value; return;
-			case SPR603E_IBAT0U:		ppc.ibat0u = value; return;
-			case SPR603E_IBAT1L:		ppc.ibat1l = value; return;
-			case SPR603E_IBAT1U:		ppc.ibat1u = value; return;
-			case SPR603E_IBAT2L:		ppc.ibat2l = value; return;
-			case SPR603E_IBAT2U:		ppc.ibat2u = value; return;
-			case SPR603E_IBAT3L:		ppc.ibat3l = value; return;
-			case SPR603E_IBAT3U:		ppc.ibat3u = value; return;
-			case SPR603E_DBAT0L:		ppc.dbat0l = value; return;
-			case SPR603E_DBAT0U:		ppc.dbat0u = value; return;
-			case SPR603E_DBAT1L:		ppc.dbat1l = value; return;
-			case SPR603E_DBAT1U:		ppc.dbat1u = value; return;
-			case SPR603E_DBAT2L:		ppc.dbat2l = value; return;
-			case SPR603E_DBAT2U:		ppc.dbat2u = value; return;
-			case SPR603E_DBAT3L:		ppc.dbat3l = value; return;
-			case SPR603E_DBAT3U:		ppc.dbat3u = value; return;
+			case SPR603E_IBAT0L:		ppc.ibat[0].l = value; return;
+			case SPR603E_IBAT0U:		ppc.ibat[0].u = value; return;
+			case SPR603E_IBAT1L:		ppc.ibat[1].l = value; return;
+			case SPR603E_IBAT1U:		ppc.ibat[1].u = value; return;
+			case SPR603E_IBAT2L:		ppc.ibat[2].l = value; return;
+			case SPR603E_IBAT2U:		ppc.ibat[2].u = value; return;
+			case SPR603E_IBAT3L:		ppc.ibat[3].l = value; return;
+			case SPR603E_IBAT3U:		ppc.ibat[3].u = value; return;
+			case SPR603E_DBAT0L:		ppc.dbat[0].l = value; return;
+			case SPR603E_DBAT0U:		ppc.dbat[0].u = value; return;
+			case SPR603E_DBAT1L:		ppc.dbat[1].l = value; return;
+			case SPR603E_DBAT1U:		ppc.dbat[1].u = value; return;
+			case SPR603E_DBAT2L:		ppc.dbat[2].l = value; return;
+			case SPR603E_DBAT2U:		ppc.dbat[2].u = value; return;
+			case SPR603E_DBAT3L:		ppc.dbat[3].l = value; return;
+			case SPR603E_DBAT3U:		ppc.dbat[3].u = value; return;
 
 			case SPR603E_SDR1:
 				ppc.sdr1 = value;
@@ -467,8 +534,8 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	if (!ppc.is603 && !ppc.is602) {
 		switch(spr)
 		{
-			case SPR403_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; return;
-			case SPR403_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; return;
+			case SPR403_TBHI:		ppc_write_timebase_h(value); return;
+			case SPR403_TBLO:		ppc_write_timebase_l(value); return;
 
 			case SPR403_TSR:
 				ppc.tsr &= ~value; // 1 clears, 0 does nothing
@@ -536,9 +603,9 @@ INLINE UINT32 ppc_get_spr(int spr)
 		switch (spr)
 		{
 			case SPR403_TBLU:
-			case SPR403_TBLO:		return (ppc.tb & 0xffffffff);
+			case SPR403_TBLO:		return (UINT32)(ppc_read_timebase());
 			case SPR403_TBHU:
-			case SPR403_TBHI:		return ((ppc.tb >> 32) & 0xffffff);
+			case SPR403_TBHI:		return (UINT32)(ppc_read_timebase() >> 32);
 
 			case SPR403_EVPR:		return EVPR;
 			case SPR403_ESR:		return ppc.esr;
@@ -582,31 +649,31 @@ INLINE UINT32 ppc_get_spr(int spr)
 				osd_die("ppc: get_spr: TBU_R \n");
 				break;
 
-			case SPR603E_TBL_W:		return ((ppc.tb / 4) & 0xffffffff);
-			case SPR603E_TBU_W:		return (((ppc.tb / 4) >> 32) & 0xffffffff);
+			case SPR603E_TBL_W:		return (UINT32)(ppc_read_timebase());
+			case SPR603E_TBU_W:		return (UINT32)(ppc_read_timebase() >> 32);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
-			case SPR603E_DEC:		return DEC / (ppc.bus_freq_multiplier * 2);
+			case SPR603E_DEC:		return read_decrementer();
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
 			case SPR603E_EAR:		return ppc.ear;
-			case SPR603E_IBAT0L:	return ppc.ibat0l;
-			case SPR603E_IBAT0U:	return ppc.ibat0u;
-			case SPR603E_IBAT1L:	return ppc.ibat1l;
-			case SPR603E_IBAT1U:	return ppc.ibat1u;
-			case SPR603E_IBAT2L:	return ppc.ibat2l;
-			case SPR603E_IBAT2U:	return ppc.ibat2u;
-			case SPR603E_IBAT3L:	return ppc.ibat3l;
-			case SPR603E_IBAT3U:	return ppc.ibat3u;
-			case SPR603E_DBAT0L:	return ppc.dbat0l;
-			case SPR603E_DBAT0U:	return ppc.dbat0u;
-			case SPR603E_DBAT1L:	return ppc.dbat1l;
-			case SPR603E_DBAT1U:	return ppc.dbat1u;
-			case SPR603E_DBAT2L:	return ppc.dbat2l;
-			case SPR603E_DBAT2U:	return ppc.dbat2u;
-			case SPR603E_DBAT3L:	return ppc.dbat3l;
-			case SPR603E_DBAT3U:	return ppc.dbat3u;
+			case SPR603E_IBAT0L:	return ppc.ibat[0].l;
+			case SPR603E_IBAT0U:	return ppc.ibat[0].u;
+			case SPR603E_IBAT1L:	return ppc.ibat[1].l;
+			case SPR603E_IBAT1U:	return ppc.ibat[1].u;
+			case SPR603E_IBAT2L:	return ppc.ibat[2].l;
+			case SPR603E_IBAT2U:	return ppc.ibat[2].u;
+			case SPR603E_IBAT3L:	return ppc.ibat[3].l;
+			case SPR603E_IBAT3U:	return ppc.ibat[3].u;
+			case SPR603E_DBAT0L:	return ppc.dbat[0].l;
+			case SPR603E_DBAT0U:	return ppc.dbat[0].u;
+			case SPR603E_DBAT1L:	return ppc.dbat[1].l;
+			case SPR603E_DBAT1U:	return ppc.dbat[1].u;
+			case SPR603E_DBAT2L:	return ppc.dbat[2].l;
+			case SPR603E_DBAT2U:	return ppc.dbat[2].u;
+			case SPR603E_DBAT3L:	return ppc.dbat[3].l;
+			case SPR603E_DBAT3U:	return ppc.dbat[3].u;
 		}
 	}
 #endif
@@ -662,152 +729,7 @@ static UINT32 (* optable59[1024])(struct drccore *, UINT32);
 static UINT32 (* optable63[1024])(struct drccore *, UINT32);
 static UINT32 (* optable[64])(struct drccore *, UINT32);
 
-INLINE UINT8 READ8(UINT32 a)
-{
-	if (ppc.is603 || ppc.is602)
-	{
-		return program_read_byte_64be(a);
-	}
-
-#if HAS_PPC403
-	if(a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
-		return ppc403_spu_r(a);
-	} else {
-		return program_read_byte_32be(a);
-	}
-#else
-	return 0;
-#endif
-}
-
-INLINE UINT16 READ16(UINT32 a)
-{
-	if (ppc.is603 || ppc.is602) {
-		if( a & 0x1 ) {
-			return ((UINT16)program_read_byte_64be(a+0) << 8) | ((UINT16)program_read_byte_64be(a+1) << 0);
-		}
-		return program_read_word_64be(a);
-	}
-
-	if( a & 0x1 ) {
-		osd_die("ppc: Unaligned read16 %08X at %08X\n", a, ppc.pc);
-	}
-
-	return program_read_word_32be(a);
-}
-
-INLINE UINT32 READ32(UINT32 a)
-{
-	if (ppc.is603 || ppc.is602) {
-		if( a & 0x3 ) {
-			return ((UINT32)program_read_byte_64be(a+0) << 24) | ((UINT32)program_read_byte_64be(a+1) << 16) |
-				   ((UINT32)program_read_byte_64be(a+2) << 8) | ((UINT32)program_read_byte_64be(a+3) << 0);
-		}
-		return program_read_dword_64be(a);
-	}
-
-	if( a & 0x3 ) {
-		osd_die("ppc: Unaligned read32 %08X at %08X\n", a, ppc.pc);
-	}
-
-	return program_read_dword_32be(a);
-}
-
-INLINE UINT64 READ64(UINT32 a)
-{
-#if (HAS_PPC603 || HAS_PPC602)
-	if( a & 0x7 ) {
-		return ((UINT64)READ32(a+0) << 32) | (UINT64)(READ32(a+4));
-	}
-	return program_read_qword_64be(a);
-#else
-	return 0
-#endif
-}
-
-
-INLINE void WRITE8(UINT32 a, UINT8 d)
-{
-	if (ppc.is603 || ppc.is602)
-	{
-		program_write_byte_64be(a, d&0xff);
-		return;
-	}
-
-#if HAS_PPC403
-	if( a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
-		ppc403_spu_w(a, d);
-	} else {
-		program_write_byte_32be(a, d);
-	}
-#endif
-}
-
-INLINE void WRITE16(UINT32 a, UINT16 d)
-{
-	if (ppc.is603 || ppc.is602)
-	{
-		if( a & 0x1 ) {
-			program_write_byte_64be(a+0, (UINT8)(d >> 8));
-			program_write_byte_64be(a+1, (UINT8)(d));
-			return;
-		}
-		program_write_word_64be(a, d);
-		return;
-	}
-
-	if( a & 0x1 ) {
-		osd_die("ppc: Unaligned write16 %08X, %04X at %08X\n", a, d, ppc.pc);
-	} else {
-		program_write_word_32be(a, d);
-	}
-}
-
-INLINE void WRITE32(UINT32 a, UINT32 d)
-{
-	if (ppc.is603 || ppc.is602)
-	{
-		if( ppc.reserved ) {
-			if( a == ppc.reserved_address ) {
-				ppc.reserved = 0;
-			}
-		}
-		if( a & 0x3 ) {
-			program_write_byte_64be(a+0, (UINT8)(d >> 24));
-			program_write_byte_64be(a+1, (UINT8)(d >> 16));
-			program_write_byte_64be(a+2, (UINT8)(d >> 8));
-			program_write_byte_64be(a+3, (UINT8)(d >> 0));
-			return;
-		}
-		program_write_dword_64be(a, d);
-		return;
-	}
-
-	if( a & 0x3 ) {
-		osd_die("ppc: Unaligned write32 %08X, %08X at %08X\n", a, d, ppc.pc);
-	} else {
-		if( ppc.reserved ) {
-			if( a == ppc.reserved_address ) {
-				ppc.reserved = 0;
-			}
-		}
-		program_write_dword_32be(a, d);
-	}
-}
-
-INLINE void WRITE64(UINT32 a, UINT64 d)
-{
-#if (HAS_PPC603 || HAS_PPC602)
-	if( a & 0x7 ) {
-		WRITE32(a+0, (UINT32)(d >> 32));
-		WRITE32(a+4, (UINT32)(d));
-		return;
-	}
-	program_write_qword_64be(a, d);
-#else
-	return 0;
-#endif
-}
+#include "ppc_mem.c"
 
 #if (HAS_PPC403)
 #include "ppc403.c"
@@ -896,6 +818,17 @@ static void ppcdrc403_init(void)
 
 	ppc.is603 = 0;
 	ppc.is602 = 0;
+
+	ppc.read8 = ppc403_read8;
+	ppc.read16 = ppc403_read16;
+	ppc.read32 = ppc403_read32;
+	ppc.write8 = ppc403_write8;
+	ppc.write16 = ppc403_write16;
+	ppc.write32 = ppc403_write32;
+	ppc.read16_unaligned = ppc403_read16_unaligned;
+	ppc.read32_unaligned = ppc403_read32_unaligned;
+	ppc.write16_unaligned = ppc403_write16_unaligned;
+	ppc.write32_unaligned = ppc403_write32_unaligned;
 }
 
 static void ppcdrc403_exit(void)
@@ -923,7 +856,13 @@ static int ppcdrc403_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+
 	drc_execute(ppc.drc);
+
+	// update timebase
+	ppc.tb += (ppc_tb_base_icount - ppc_icount);
+
 	return cycles - ppc_icount;
 }
 
@@ -1069,6 +1008,21 @@ static void ppcdrc603_init(void)
 	}
 
 	ppc.is603 = 1;
+
+	ppc.read8 = program_read_byte_64be;
+	ppc.read16 = program_read_word_64be;
+	ppc.read32 = program_read_dword_64be;
+	ppc.read64 = program_read_qword_64be;
+	ppc.write8 = program_write_byte_64be;
+	ppc.write16 = program_write_word_64be;
+	ppc.write32 = program_write_dword_64be;
+	ppc.write64 = program_write_qword_64be;
+	ppc.read16_unaligned = ppc_read16_unaligned;
+	ppc.read32_unaligned = ppc_read32_unaligned;
+	ppc.read64_unaligned = ppc_read64_unaligned;
+	ppc.write16_unaligned = ppc_write16_unaligned;
+	ppc.write32_unaligned = ppc_write32_unaligned;
+	ppc.write64_unaligned = ppc_write64_unaligned;
 }
 
 static void ppcdrc603_exit(void)
@@ -1089,13 +1043,13 @@ static void ppcdrc603_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	switch(config->pvr)
 	{
-		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
 		default: break;
 	}
 
@@ -1117,7 +1071,28 @@ static int ppcdrc603_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+
 	drc_execute(ppc.drc);
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
+
 	return cycles - ppc_icount;
 }
 
@@ -1227,6 +1202,21 @@ static void ppcdrc602_init(void)
 
 	ppc.is603 = 0;
 	ppc.is602 = 1;
+
+	ppc.read8 = program_read_byte_64be;
+	ppc.read16 = program_read_word_64be;
+	ppc.read32 = program_read_dword_64be;
+	ppc.read64 = program_read_qword_64be;
+	ppc.write8 = program_write_byte_64be;
+	ppc.write16 = program_write_word_64be;
+	ppc.write32 = program_write_dword_64be;
+	ppc.write64 = program_write_qword_64be;
+	ppc.read16_unaligned = ppc_read16_unaligned;
+	ppc.read32_unaligned = ppc_read32_unaligned;
+	ppc.read64_unaligned = ppc_read64_unaligned;
+	ppc.write16_unaligned = ppc_write16_unaligned;
+	ppc.write32_unaligned = ppc_write32_unaligned;
+	ppc.write64_unaligned = ppc_write64_unaligned;
 }
 
 static void ppcdrc602_exit(void)
@@ -1246,7 +1236,7 @@ static void ppcdrc602_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0);
 	change_pc(ppc.pc);
@@ -1261,7 +1251,28 @@ static int ppcdrc602_execute(int cycles)
 {
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+
 	drc_execute(ppc.drc);
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
+
 	return cycles - ppc_icount;
 }
 

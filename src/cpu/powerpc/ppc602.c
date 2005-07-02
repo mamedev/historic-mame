@@ -137,7 +137,7 @@ static void ppc602_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);
@@ -149,14 +149,25 @@ static void ppc602_reset(void *param)
 
 static int ppc602_execute(int cycles)
 {
-	UINT32 opcode, dec_old;
+	UINT32 opcode;
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+
 	change_pc(ppc.npc);
 
 	while( ppc_icount > 0 )
 	{
-		//int cc = (ppc_icount >> 2) & 0x1;
-		dec_old = DEC;
 		ppc.pc = ppc.npc;
 		CALL_MAME_DEBUG;
 
@@ -174,15 +185,20 @@ static int ppc602_execute(int cycles)
 
 		ppc_icount--;
 
-		ppc.tb += 1;
-
-		DEC -= 1;
-		if(DEC == 0) {
+		if(ppc_icount == ppc_dec_trigger_cycle) {
 			ppc.interrupt_pending |= 0x2;
 		}
 
 		ppc602_check_interrupts();
 	}
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
+
 
 	return cycles - ppc_icount;
 }

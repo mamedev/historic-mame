@@ -118,6 +118,54 @@ void ppc603_exception(int exception)
 			}
 			break;
 
+		case EXCEPTION_DSI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0300;
+				else
+					ppc.npc = 0x00000000 | 0x0300;
+
+				ppc.interrupt_pending &= ~0x4;
+				change_pc(ppc.npc);
+			}
+			break;
+
+		case EXCEPTION_ISI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x0400;
+				else
+					ppc.npc = 0x00000000 | 0x0400;
+
+				ppc.interrupt_pending &= ~0x4;
+				change_pc(ppc.npc);
+			}
+			break;
+
 		default:
 			osd_die("ppc: Unhandled exception %d\n", exception);
 			break;
@@ -174,13 +222,13 @@ static void ppc603_reset(void *param)
 
 	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
 				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	ppc.bus_freq_multiplier = (int)(multiplier * 2);
+	bus_freq_multiplier = (int)(multiplier * 2);
 
 	switch(config->pvr)
 	{
-		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[ppc.bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
 		default: break;
 	}
 
@@ -202,14 +250,25 @@ static void ppc603_reset(void *param)
 
 static int ppc603_execute(int cycles)
 {
-	UINT32 opcode, dec_old;
+	UINT32 opcode;
 	ppc_icount = cycles;
+	ppc_tb_base_icount = cycles;
+	ppc_dec_base_icount = cycles;
+
+	// check if decrementer exception occurs during execution
+	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
+	{
+		ppc_dec_trigger_cycle = ppc_icount - DEC;
+	}
+	else
+	{
+		ppc_dec_trigger_cycle = 0x7fffffff;
+	}
+
 	change_pc(ppc.npc);
 
 	while( ppc_icount > 0 )
 	{
-		//int cc = (ppc_icount >> 2) & 0x1;
-		dec_old = DEC;
 		ppc.pc = ppc.npc;
 		CALL_MAME_DEBUG;
 
@@ -227,15 +286,19 @@ static int ppc603_execute(int cycles)
 
 		ppc_icount--;
 
-		ppc.tb += 1;
-
-		DEC -= 1;
-		if(DEC == 0) {
+		if(ppc_icount == ppc_dec_trigger_cycle) {
 			ppc.interrupt_pending |= 0x2;
 		}
 
 		ppc603_check_interrupts();
 	}
+
+	// update timebase
+	// timebase is incremented once every four core clock cycles, so adjust the cycles accordingly
+	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
+
+	// update decrementer
+	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
 
 	return cycles - ppc_icount;
 }

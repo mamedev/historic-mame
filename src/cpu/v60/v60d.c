@@ -551,6 +551,7 @@ static int decode_F7c(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 
 static int (*dasm_optable[256])(unsigned ipc, unsigned pc, char *out);
 static int (*dasm_optable_58[64])(unsigned ipc, unsigned pc, char *out);
+static int (*dasm_optable_59[64])(unsigned ipc, unsigned pc, char *out);
 static int (*dasm_optable_5A[64])(unsigned ipc, unsigned pc, char *out);
 static int (*dasm_optable_5B[64])(unsigned ipc, unsigned pc, char *out);
 static int (*dasm_optable_5C[64])(unsigned ipc, unsigned pc, char *out);
@@ -625,6 +626,11 @@ static int dop58(unsigned ipc, unsigned pc, char *out)
 	return dasm_optable_58[readop(pc) & 0x1f](ipc, pc, out);
 }
 
+static int dop59(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_59[readop(pc) & 0x1f](ipc, pc, out);
+}
+
 static int dop5A(unsigned ipc, unsigned pc, char *out)
 {
 	return dasm_optable_5A[readop(pc) & 0x1f](ipc, pc, out);
@@ -694,6 +700,7 @@ static int dopC7(unsigned ipc, unsigned pc, char *out)
 DEFINE_FPU_OPCODE(ABSF, "absf", F2)
 DEFINE_TRIPLE_OPCODE(ADD, "add", F1F2)
 DEFINE_TRIPLE_OPCODE(ADDC, "addc", F1F2)
+DEFINE_EASY_OPCODE(ADDDC, "adddc", F7c, 0, 0)
 DEFINE_FPU_OPCODE(ADDF, "addf", F2)
 DEFINE_TRIPLE_OPCODE(AND, "and", F1F2)
 DEFINE_EASY_OPCODE(ANDBSU, "andbsu", F7b, 0x80, 0x80)
@@ -756,6 +763,8 @@ DEFINE_EASY_OPCODE(CVTWS, "cvt.ws", F2, 2, 0)
 DEFINE_EASY_OPCODE(CVTWL, "cvt.wl", F2, 2, 1)
 DEFINE_EASY_OPCODE(CVTSW, "cvt.sw", F2, 0, 2)
 DEFINE_EASY_OPCODE(CVTLW, "cvt.lw", F2, 1, 2)
+DEFINE_EASY_OPCODE(CVTDPZ, "cvtd.pz", F7c, 0, 1)
+DEFINE_EASY_OPCODE(CVTDZP, "cvtd.zp", F7c, 1, 0)
 DEFINE_EASY_OPCODE_EX(DBGT, "dbgt", F6, 0, 0, DASMFLAG_STEP_OVER)
 DEFINE_EASY_OPCODE_EX(DBGE, "dbge", F6, 0, 0, DASMFLAG_STEP_OVER)
 DEFINE_EASY_OPCODE_EX(DBLT, "dbgt", F6, 0, 0, DASMFLAG_STEP_OVER)
@@ -879,6 +888,8 @@ DEFINE_EASY_OPCODE(STPR, "stpr", F1F2, 2, 2)
 DEFINE_EASY_OPCODE(STTASK, "sttask", F3, 2, 0)
 DEFINE_TRIPLE_OPCODE(SUB, "sub", F1F2)
 DEFINE_TRIPLE_OPCODE(SUBC, "subc", F1F2)
+DEFINE_EASY_OPCODE(SUBDC, "subdc", F7c, 0, 0)
+DEFINE_EASY_OPCODE(SUBRDC, "subrdc", F7c, 0, 0)
 DEFINE_FPU_OPCODE(SUBF, "subf", F2)
 DEFINE_EASY_OPCODE(TASI, "tasi", F3, 0, 0)
 DEFINE_EASY_OPCODE(TB, "tb", F6, 0, 0)
@@ -906,6 +917,7 @@ void v60_dasm_init(void)
 	for (i=0; i<64; i++)
 	{
 		dasm_optable_58[i] = dop58UNHANDLED;
+		dasm_optable_59[i] = dop58UNHANDLED;
 		dasm_optable_5A[i] = dop5AUNHANDLED;
 		dasm_optable_5B[i] = dop5BUNHANDLED;
 		dasm_optable_5C[i] = dop5CUNHANDLED;
@@ -959,6 +971,12 @@ void v60_dasm_init(void)
 	dasm_optable_5E[0x1A] = dopMULFL;
 	dasm_optable_5C[0x1B] = dopDIVFS;
 	dasm_optable_5E[0x1B] = dopDIVFL;
+
+	dasm_optable_59[0x00] = dopADDDC;
+	dasm_optable_59[0x01] = dopSUBDC;
+	dasm_optable_59[0x02] = dopSUBRDC;
+	dasm_optable_59[0x10] = dopCVTDPZ;
+	dasm_optable_59[0x18] = dopCVTDZP;
 
 	dasm_optable_5F[0x00] = dopCVTWS;
 	dasm_optable_5F[0x01] = dopCVTSW;
@@ -1074,6 +1092,7 @@ void v60_dasm_init(void)
 	dasm_optable[0x54] = dopREMW;
 	dasm_optable[0x55] = dopREMUW;
 	dasm_optable[0x58] = dop58;
+	dasm_optable[0x59] = dop59;
 	dasm_optable[0x5A] = dop5A;
 	dasm_optable[0x5B] = dop5B;
 	dasm_optable[0x5C] = dop5C;

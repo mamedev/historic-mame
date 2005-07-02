@@ -118,12 +118,18 @@ extern WRITE16_HANDLER( system32_sprite_control_w );
 extern WRITE16_HANDLER( system32_mixer_w );
 
 /* machine/segas32.c */
-extern READ16_HANDLER( arabfgt_protboard_r );
+extern READ16_HANDLER( arabfgt_protection_r );
 extern READ16_HANDLER( arf_wakeup_protection_r );
-extern WRITE16_HANDLER( arabfgt_protboard_w );
+extern WRITE16_HANDLER( arabfgt_protection_w );
 
 extern READ16_HANDLER( brival_protection_r );
-extern WRITE16_HANDLER( brival_protboard_w );
+extern WRITE16_HANDLER( brival_protection_w );
+
+extern READ16_HANDLER( darkedge_protection_r );
+extern WRITE16_HANDLER( darkedge_protection_w );
+
+extern READ16_HANDLER( dbzvrvs_protection_r );
+extern WRITE16_HANDLER( dbzvrvs_protection_w );
 
 extern void decrypt_ga2_protrom(void);
 extern READ16_HANDLER( ga2_dpram_r );
@@ -136,6 +142,7 @@ extern data16_t sys32_tilebank_external;
 extern data16_t sys32_displayenable;
 extern int system32_mixerShift;
 extern data16_t *sys32_spriteram16;
+
 
 
 /*************************************
@@ -173,7 +180,7 @@ static void update_irq_state(void)
 	/* loop over interrupt vectors, finding the highest priority one with */
 	/* an unmasked interrupt pending */
 	for (vector = 0; vector < 5; vector++)
-		if (effirq & (1 << v60_irq_control[vector]))
+		if (effirq & (1 << vector))
 		{
 			cpunum_set_input_line_and_vector(0, 0, ASSERT_LINE, vector);
 			break;
@@ -187,7 +194,12 @@ static void update_irq_state(void)
 
 static void signal_v60_irq(int which)
 {
-	v60_irq_control[7] |= 1 << which;
+	int i;
+
+	/* see if this interrupt input is mapped to any vectors; if so, mark them */
+	for (i = 0; i < 5; i++)
+		if (v60_irq_control[i] == which)
+			v60_irq_control[7] |= 1 << i;
 	update_irq_state();
 }
 
@@ -196,7 +208,7 @@ static void int_control_w(int offset, UINT8 data)
 {
 	int duration;
 
-	logerror("%06X:int_control_w(%X) = %02X\n", activecpu_get_pc(), offset, data);
+//  logerror("%06X:int_control_w(%X) = %02X\n", activecpu_get_pc(), offset, data);
 	switch (offset)
 	{
 		case 0:
@@ -379,8 +391,8 @@ static WRITE16_HANDLER( io_chip_w )
 			EEPROM_write_bit(data & 0x80);
 			EEPROM_set_cs_line((data & 0x20) ? CLEAR_LINE : ASSERT_LINE);
 			EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
-            coin_lockout_w(1, data & 0x08);
-            coin_lockout_w(0, data & 0x04);
+/*            coin_lockout_w(1, data & 0x08);
+            coin_lockout_w(0, data & 0x04);*/
 			coin_counter_w(1, data & 0x02);
 			coin_counter_w(0, data & 0x01);
 			break;
@@ -397,6 +409,7 @@ static WRITE16_HANDLER( io_chip_w )
 		/* CNT register */
 		case 0x1c/2:
 			sys32_displayenable = (data & 0x02);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
 			break;
 	}
 }
@@ -413,6 +426,8 @@ static READ16_HANDLER( io_expansion_r )
 {
 	if (custom_io_r)
 		return (*custom_io_r)(offset, mem_mask);
+	else
+		logerror("%06X:io_expansion_r(%X)\n", activecpu_get_pc(), offset);
 	return 0xffff;
 }
 
@@ -425,6 +440,8 @@ static WRITE16_HANDLER( io_expansion_w )
 
 	if (custom_io_w)
 		(*custom_io_w)(offset, data, mem_mask);
+	else
+		logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
 }
 
 
@@ -556,13 +573,28 @@ static WRITE16_HANDLER( shared_ram_w )
 static void update_sound_irq_state(void)
 {
 	UINT8 effirq = sound_irq_input & ~sound_irq_control[3] & 0x07;
-	cpunum_set_input_line(1, 0, effirq ? ASSERT_LINE : CLEAR_LINE);
+	int vector;
+
+	/* loop over interrupt vectors, finding the highest priority one with */
+	/* an unmasked interrupt pending */
+	for (vector = 0; vector < 3; vector++)
+		if (effirq & (1 << vector))
+		{
+			cpunum_set_input_line_and_vector(1, 0, ASSERT_LINE, 2 * vector);
+			break;
+		}
+
+	/* if we didn't find any, clear the interrupt line */
+	if (vector == 3)
+		cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
 
 static void signal_sound_irq(int which)
 {
 	int i;
+
+	/* see if this interrupt input is mapped to any vectors; if so, mark them */
 	for (i = 0; i < 3; i++)
 		if (sound_irq_control[i] == which)
 			sound_irq_input |= 1 << i;
@@ -582,7 +614,6 @@ static void clear_sound_irq(int which)
 
 static WRITE8_HANDLER( sound_int_control_lo_w )
 {
-//printf("int_control_lo(%d) = %d\n", offset, data);
 	/* odd offsets are interrupt acks */
 	if (offset & 1)
 	{
@@ -598,7 +629,6 @@ static WRITE8_HANDLER( sound_int_control_lo_w )
 
 static WRITE8_HANDLER( sound_int_control_hi_w )
 {
-//printf("int_control_hi(%d) = %d\n", offset, data);
 	sound_irq_control[offset] = data;
 	update_sound_irq_state();
 }
@@ -676,6 +706,11 @@ static NVRAM_HANDLER( segas32 )
 }
 
 
+static WRITE16_HANDLER( random_number_w )
+{
+	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+}
+
 static READ16_HANDLER( random_number_r )
 {
 	return rand();
@@ -703,7 +738,7 @@ static ADDRESS_MAP_START( segas32_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc0001f) AM_MIRROR(0x0fff80) AM_READWRITE(io_chip_r, io_chip_w)
 	AM_RANGE(0xc00040, 0xc0007f) AM_MIRROR(0x0fff80) AM_READWRITE(io_expansion_r, io_expansion_w)
 	AM_RANGE(0xd00000, 0xd0000f) AM_MIRROR(0x07fff0) AM_READWRITE(interrupt_control_r, interrupt_control_w)
-	AM_RANGE(0xd80000, 0xdfffff) AM_READ(random_number_r)
+	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(random_number_r, random_number_w)
 	AM_RANGE(0xf00000, 0xffffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 ADDRESS_MAP_END
 
@@ -856,6 +891,8 @@ INPUT_PORTS_START( alien3 )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("SERVICE12")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1077,10 +1114,6 @@ INPUT_PORTS_START( jpark )
 
 	PORT_MODIFY("P2")
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_MODIFY("SERVICE12")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("ANALOG1")
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
@@ -1375,7 +1408,7 @@ static MACHINE_DRIVER_START( segas32 )
 	MDRV_NVRAM_HANDLER(segas32)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT )
 	MDRV_SCREEN_SIZE(52*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 52*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -2050,7 +2083,7 @@ ROM_START( radm )
 	ROM_LOAD_x8( "epr13527.bin", 0x100000, 0x020000, CRC(a2e3fbbe) SHA1(2787bbef696ab3f2b7855ac991867837d3de54cd) )
 	ROM_LOAD_x2( "epr13523.bin", 0x200000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
 	ROM_LOAD_x2( "epr13699.bin", 0x300000, 0x080000, CRC(33fd2913) SHA1(60b664559b4989446b1c7d875432e53a36fe27df) )
-//  ROM_LOAD_x2( "epr13523.bin", 0x400000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
+	ROM_LOAD_x2( "epr13523.bin", 0x400000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "mpr13519.bin", 0x000000, 0x080000, CRC(bedc9534) SHA1(7b3f7a47b6c0ca6707dc3c1167f3564d43adb32f) )
@@ -2086,7 +2119,7 @@ ROM_START( radmu )
 	ROM_LOAD_x8( "epr13527.bin", 0x100000, 0x020000, CRC(a2e3fbbe) SHA1(2787bbef696ab3f2b7855ac991867837d3de54cd) )
 	ROM_LOAD_x2( "epr13523.bin", 0x200000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
 	ROM_LOAD_x2( "epr13699.bin", 0x300000, 0x080000, CRC(33fd2913) SHA1(60b664559b4989446b1c7d875432e53a36fe27df) )
-//  ROM_LOAD_x2( "epr13523.bin", 0x400000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
+	ROM_LOAD_x2( "epr13523.bin", 0x400000, 0x080000, CRC(d5563697) SHA1(eb3fd3dbfea383ac1bb5d2e1552723994cb4693d) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "mpr13519.bin", 0x000000, 0x080000, CRC(bedc9534) SHA1(7b3f7a47b6c0ca6707dc3c1167f3564d43adb32f) )
@@ -2125,7 +2158,7 @@ ROM_START( radr )
 	ROM_LOAD_x8( "epr14108.35", 0x100000, 0x020000, CRC(38a99b4d) SHA1(b6455e6b29bfef41c5e0ebe3a8064889b7e5f5fd) )
 	ROM_LOAD_x2( "epr14109.31", 0x200000, 0x080000, CRC(b42e5833) SHA1(da94ce7c1d7a581a1aa6b79b323c67a919918808) )
 	ROM_LOAD_x2( "epr14110.26", 0x300000, 0x080000, CRC(b495e7dc) SHA1(b4143fcee10e0649378fdb1e3f5a0a2c585414ec) )
-//  ROM_LOAD_x2( "epr14237.22", 0x400000, 0x080000, CRC(0a4b4b29) SHA1(98447a587f903ba03e17d6a145b7c8bfddf25c4d) )
+	ROM_LOAD_x2( "epr14237.22", 0x400000, 0x080000, CRC(0a4b4b29) SHA1(98447a587f903ba03e17d6a145b7c8bfddf25c4d) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "epr14102.38", 0x000000, 0x040000, CRC(5626e80f) SHA1(9844817295a8cd8a9b09da6681b0c1fbfe82618e) )
@@ -2161,7 +2194,7 @@ ROM_START( radru )
 	ROM_LOAD_x8( "epr14108.35", 0x100000, 0x020000, CRC(38a99b4d) SHA1(b6455e6b29bfef41c5e0ebe3a8064889b7e5f5fd) )
 	ROM_LOAD_x2( "epr14109.31", 0x200000, 0x080000, CRC(b42e5833) SHA1(da94ce7c1d7a581a1aa6b79b323c67a919918808) )
 	ROM_LOAD_x2( "epr14110.26", 0x300000, 0x080000, CRC(b495e7dc) SHA1(b4143fcee10e0649378fdb1e3f5a0a2c585414ec) )
-//  ROM_LOAD_x2( "epr14237.22", 0x400000, 0x080000, CRC(0a4b4b29) SHA1(98447a587f903ba03e17d6a145b7c8bfddf25c4d) )
+	ROM_LOAD_x2( "epr14237.22", 0x400000, 0x080000, CRC(0a4b4b29) SHA1(98447a587f903ba03e17d6a145b7c8bfddf25c4d) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "epr14102.38", 0x000000, 0x040000, CRC(5626e80f) SHA1(9844817295a8cd8a9b09da6681b0c1fbfe82618e) )
@@ -2196,8 +2229,8 @@ ROM_START( slipstrm )
 	ROM_LOAD16_BYTE( "slipstrm.u7", 0x100001, 0x080000, CRC(0e605c81) SHA1(47c64195cab9a07b234d5a375d26168e53ffaa17) )
 
 	ROM_REGION( 0x500000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD_x8( "slipstrm.u35", 0x100000, 0x020000, BAD_DUMP CRC(0fee2278) SHA1(7533a03c3fc46d65dfdd07bddf1e6e0bbc368752) )
-	ROM_LOAD_x2( "slipstrm.u31", 0x200000, 0x080000, BAD_DUMP CRC(ae7be5f2) SHA1(ba089355e64864435bcc3b0c208e4bce1ea66295) )
+	ROM_LOAD_x8( "slipstrm.u35", 0x100000, 0x020000, CRC(0fee2278) SHA1(7533a03c3fc46d65dfdd07bddf1e6e0bbc368752) )
+	ROM_LOAD_x2( "slipstrm.u31", 0x200000, 0x080000, CRC(ae7be5f2) SHA1(ba089355e64864435bcc3b0c208e4bce1ea66295) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "slipstrm.u38", 0x000000, 0x080000, CRC(3cbb2d0b) SHA1(b94006347b72cd60a889b0e279f62f677cedfd2e) )
@@ -2467,12 +2500,12 @@ ROM_END
  *
  *************************************/
 
-static void common_init(read16_handler custom_r, write16_handler custom_w)
+static void common_init(read16_handler custom_r, write16_handler custom_w, const UINT8 *default_eeprom)
 {
 	/* reset the custom handlers and other pointers */
 	custom_io_r = custom_r;
 	custom_io_w = custom_w;
-	system32_default_eeprom = NULL;
+	system32_default_eeprom = default_eeprom;
 }
 
 
@@ -2498,8 +2531,7 @@ static DRIVER_INIT( alien3 )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w);
-	system32_default_eeprom = alien3_default_eeprom;
+	common_init(analog_custom_io_r, analog_custom_io_w, alien3_default_eeprom);
 }
 
 
@@ -2511,36 +2543,50 @@ static READ16_HANDLER( arescue_unknown_r )
 
 static DRIVER_INIT( arescue )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w);
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x8fffff, 0, 0, arescue_unknown_r); // protection? communication?
 }
 
 
 static DRIVER_INIT( arabfgt )
 {
-	common_init(extra_custom_io_r, NULL);
+	common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa000ff, 0, 0, arabfgt_protboard_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa000ff, 0, 0, arabfgt_protection_r);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0011f, 0, 0, arf_wakeup_protection_r);
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, arabfgt_protboard_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, arabfgt_protection_w);
 }
 
 
 static DRIVER_INIT( brival )
 {
-	common_init(extra_custom_io_r, NULL);
+	common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
 	segas32_protram = auto_malloc (0x1000);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20ba00, 0x20ba07, 0, 0, brival_protection_r);
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, brival_protboard_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, brival_protection_w);
+}
+
+
+static DRIVER_INIT( darkedge )
+{
+	common_init(extra_custom_io_r, NULL, NULL);
+
+	/* install protection handlers */
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, darkedge_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, darkedge_protection_w);
 }
 
 
 static DRIVER_INIT( dbzvrvs )
 {
-	common_init(NULL, NULL);
+	common_init(NULL, NULL, NULL);
+
+	/* install protection handlers */
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, dbzvrvs_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, dbzvrvs_protection_w);
 }
 
 
@@ -2552,7 +2598,7 @@ static READ16_HANDLER( f1en_unknown_read )
 
 static DRIVER_INIT( f1en )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w);
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x810000, 0x810003, 0, 0, f1en_unknown_read);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x818000, 0x818003, 0, 0, f1en_unknown_read);
 }
@@ -2560,7 +2606,7 @@ static DRIVER_INIT( f1en )
 
 static DRIVER_INIT( f1lap )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w);
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x810000, 0x810003, 0, 0, f1en_unknown_read);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x818000, 0x818003, 0, 0, f1en_unknown_read);
 }
@@ -2568,7 +2614,7 @@ static DRIVER_INIT( f1lap )
 
 static DRIVER_INIT( ga2 )
 {
-	common_init(extra_custom_io_r, NULL);
+	common_init(extra_custom_io_r, NULL, NULL);
 
 	decrypt_ga2_protrom();
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, ga2_dpram_w);
@@ -2578,7 +2624,7 @@ static DRIVER_INIT( ga2 )
 
 static DRIVER_INIT( holo )
 {
-	common_init(NULL, NULL);
+	common_init(NULL, NULL, NULL);
 }
 
 
@@ -2587,7 +2633,7 @@ static DRIVER_INIT( jpark )
 	/* Temp. Patch until we emulate the 'Drive Board', thanks to Malice */
 	data16_t *pROM = (data16_t *)memory_region(REGION_CPU1);
 
-	common_init(analog_custom_io_r, analog_custom_io_w);
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 
 	pROM[0xC15A8/2] = 0xCD70;
 	pROM[0xC15AA/2] = 0xD8CD;
@@ -2609,8 +2655,7 @@ static DRIVER_INIT( radm )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w);
-	system32_default_eeprom = radm_default_eeprom;
+	common_init(analog_custom_io_r, analog_custom_io_w, radm_default_eeprom);
 }
 
 
@@ -2629,20 +2674,19 @@ static DRIVER_INIT( radr )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w);
-	system32_default_eeprom = radr_default_eeprom;
+	common_init(analog_custom_io_r, analog_custom_io_w, radr_default_eeprom);
 }
 
 
 static DRIVER_INIT( slipstrm )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w);
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 }
 
 
 static DRIVER_INIT( sonic )
 {
-	common_init(sonic_custom_io_r, sonic_custom_io_w);
+	common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
 
 	/* install protection handlers */
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20E5C4, 0x20E5C5, 0, 0, sonic_level_load_protection);
@@ -2651,19 +2695,19 @@ static DRIVER_INIT( sonic )
 
 static DRIVER_INIT( sonicp )
 {
-	common_init(sonic_custom_io_r, sonic_custom_io_w);
+	common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
 }
 
 
 static DRIVER_INIT( spidman )
 {
-	common_init(extra_custom_io_r, NULL);
+	common_init(extra_custom_io_r, NULL, NULL);
 }
 
 
 static DRIVER_INIT( svf )
 {
-	common_init(NULL, NULL);
+	common_init(NULL, NULL, NULL);
 }
 
 
@@ -2674,39 +2718,39 @@ static DRIVER_INIT( svf )
  *
  *************************************/
 
-GAMEX(1992, arescue,  0,        segas32,     arescue,  arescue,  ROT0, "Sega"  , "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, alien3,   0,        segas32,     alien3,   alien3,   ROT0, "Sega"  , "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, arabfgt,  0,        segas32,     arabfgt,  arabfgt,  ROT0, "Sega"  , "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, arabfgtj, arabfgt,  segas32,     arabfgt,  arabfgt,  ROT0, "Sega"  , "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, brival,   0,        segas32,     brival,   brival,   ROT0, "Sega"  , "Burning Rival (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, brivalj,  brival,   segas32,     brival,   brival,   ROT0, "Sega"  , "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, darkedge, 0,        segas32,     darkedge, brival,   ROT0, "Sega"  , "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1992, darkedgj, darkedge, segas32,     darkedge, brival,   ROT0, "Sega"  , "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, arescue,  0,        segas32,     arescue,  arescue,  ROT0, "Sega",   "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, alien3,   0,        segas32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, arabfgt,  0,        segas32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, arabfgtj, arabfgt,  segas32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brival,   0,        segas32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brivalj,  brival,   segas32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, darkedge, 0,        segas32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, darkedgj, darkedge, segas32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 GAMEX(1994, dbzvrvs,  0,        segas32,     dbzvrvs,  dbzvrvs,  ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-GAMEX(1991, f1en,     0,        segas32,     f1en,     f1en,     ROT0, "Sega"  , "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, f1lap,    0,        segas32,     f1lap,    f1lap,    ROT0, "Sega"  , "F1 Super Lap", GAME_NOT_WORKING )
-GAMEX(1992, ga2,      0,        segas32_v20, ga2,      ga2,      ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, ga2u,     ga2,      segas32_v20, ga2u,     ga2,      ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, ga2j,     ga2,      segas32_v20, ga2,      ga2,      ROT0, "Sega"  , "Golden Axe: The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, holo,     0,        segas32,     holo,     holo,     ORIENTATION_FLIP_Y, "Sega"  , "Holosseum (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, jpark,    0,        segas32,     jpark,    jpark,    ROT0, "Sega"  , "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radm,     0,        segas32,     radm,     radm,     ROT0, "Sega"  , "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radmu,    radm,     segas32,     radm,     radm,     ROT0, "Sega"  , "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radr,     0,        segas32,     radr,     radr,     ROT0, "Sega"  , "Rad Rally (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radru,    radr,     segas32,     radr,     radr,     ROT0, "Sega"  , "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1995, slipstrm, 0,        segas32,     slipstrm, slipstrm, ROT0, "Capcom", "Slipstream", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX(1992, sonic,    0,        segas32,     sonic,    sonic,    ROT0, "Sega"  , "SegaSonic The Hedgehog (Japan, rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1992, sonicp,   sonic,    segas32,     sonic,    sonicp,   ROT0, "Sega"  , "SegaSonic The Hedgehog (Japan, prototype)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, spidman,  0,        segas32,     spidman,  spidman,  ROT0, "Sega"  , "Spider-Man: The Videogame (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, spidmanu, spidman,  segas32,     spidmanu, spidman,  ROT0, "Sega"  , "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, svf,      0,        segas32,     svf,      svf,      ROT0, "Sega"  , "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, svs,	  svf,		segas32,     svf,	   svf,      ROT0, "Sega"  , "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, jleague,  svf,      segas32,     svf,      svf,      ROT0, "Sega"  , "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1991, f1en,     0,        segas32,     f1en,     f1en,     ROT0, "Sega",   "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, f1lap,    0,        segas32,     f1lap,    f1lap,    ROT0, "Sega",   "F1 Super Lap", GAME_NOT_WORKING )
+GAMEX(1992, ga2,      0,        segas32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2u,     ga2,      segas32_v20, ga2u,     ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2j,     ga2,      segas32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, holo,     0,        segas32,     holo,     holo,     ORIENTATION_FLIP_Y, "Sega",   "Holosseum (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jpark,    0,        segas32,     jpark,    jpark,    ROT0, "Sega",   "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radm,     0,        segas32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radmu,    radm,     segas32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radr,     0,        segas32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radru,    radr,     segas32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1995, slipstrm, 0,        segas32,     slipstrm, slipstrm, ROT0, "Capcom", "Slipstream", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1992, sonic,    0,        segas32,     sonic,    sonic,    ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, sonicp,   sonic,    segas32,     sonic,    sonicp,   ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, prototype)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spidman,  0,        segas32,     spidman,  spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spidmanu, spidman,  segas32,     spidmanu, spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, svf,      0,        segas32,     svf,      svf,      ROT0, "Sega",   "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, svs,	  svf,		segas32,     svf,	   svf,      ROT0, "Sega",   "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jleague,  svf,      segas32,     svf,      svf,      ROT0, "Sega",   "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 
 /*
 int control regs used in: alien3, f1en, jpark, slipstrm, sonic, svs
 
 radr - missing music
 
-need to implement: sound reset
+sonic: opaque hack not working
 */

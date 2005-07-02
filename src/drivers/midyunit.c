@@ -1980,7 +1980,7 @@ GAME( 1991, term2,    0,       term2,    term2,   term2,    ORIENTATION_FLIP_X, 
 GAME( 1991, term2la2, term2,   term2,    term2,   term2la2, ORIENTATION_FLIP_X, "Midway",   "Terminator 2 - Judgment Day (rev LA2 12/09/91)" )
 GAME( 1991, term2la1, term2,   term2,    term2,   term2la1, ORIENTATION_FLIP_X, "Midway",   "Terminator 2 - Judgment Day (rev LA1 11/01/91)" )
 GAME( 1992, mkprot9,  mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (prototype, rev 9.0 07/28/92)" )
-GAME( 1992, mkla1,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
+GAME( 1992, mkla1,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/09/92)" )
 GAME( 1992, mkla2,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
 GAME( 1992, mkla3,    mk,      mk,       mkla4,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )
 GAME( 1992, mkla4,    mk,      mk,       mkla4,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 4.0 09/28/92)" )

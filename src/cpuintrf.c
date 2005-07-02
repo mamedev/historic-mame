@@ -987,9 +987,13 @@ int cpuintrf_init_cpu(int cpunum, int cputype)
 void cpuintrf_exit_cpu(int cpunum)
 {
 	/* if the CPU core defines an exit function, call it now */
-	(*cpu[cpunum].intf.set_context)(cpu[cpunum].context);
 	if (cpu[cpunum].intf.exit)
+	{
+		/* switch contexts to the CPU during the exit */
+		cpuintrf_push_context(cpunum);
 		(*cpu[cpunum].intf.exit)();
+		cpuintrf_pop_context();
+	}
 
 	/* free the context buffer for that CPU */
 	if (cpu[cpunum].context)

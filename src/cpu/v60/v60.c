@@ -279,7 +279,7 @@ INLINE UINT32 v60_update_psw_for_exception(int is_interrupt, int target_level)
 }
 
 
-#define GETINTVECT(nint)	MemRead32(SBR + (nint)*4)
+#define GETINTVECT(nint)	MemRead32((SBR & ~0xfff) + (nint)*4)
 #define EXCEPTION_CODE_AND_SIZE(code, size)	(((code) << 16) | (size))
 
 

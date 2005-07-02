@@ -37,7 +37,7 @@ static void ppcdrc_init(void)
 	drconfig.address_bits     = 32;
 	drconfig.lsbs_to_ignore   = 2;
 	drconfig.uses_fp          = 1;
-	drconfig.uses_sse         = 1;
+	drconfig.uses_sse         = USE_SSE2;
 	drconfig.pc_in_memory     = 0;
 	drconfig.icount_in_memory = 0;
 	drconfig.pcptr            = (UINT32 *)&ppc.pc;
@@ -106,26 +106,15 @@ static void ppcdrc_recompile(struct drccore *drc)
 static void update_counters(struct drccore *drc)
 {
 	struct linkdata link1;
-	/* update timebase counter */
-	/* maybe this should only be updated on branches ? */
-
-	_mov_r64_m64abs(REG_EDX, REG_EAX, &ppc.tb);				// mov  edx:eax, [ppc.tb]
-	_add_r32_imm(REG_EAX, 1);								// add  eax,1
-	_adc_r32_imm(REG_EDX, 0);								// adc  edx,0
-	_mov_m64abs_r64(&ppc.tb, REG_EDX, REG_EAX);				// mov  [ppc.tb],edx:eax
 
 	/* decrementer */
 	if (ppc.is603 || ppc.is602)
 	{
-		_mov_r32_m32abs(REG_EAX, &ppc.dec);
-		_sub_r32_imm(REG_EAX, 1);
-		_mov_m32abs_r32(&ppc.dec, REG_EAX);
-		_cmp_r32_imm(REG_EAX, 0);
+		_cmp_r32_m32abs(REG_EBP, &ppc_dec_trigger_cycle);
 		_jcc_short_link(COND_NZ, &link1);
 		_or_m32abs_imm(&ppc.exception_pending, 0x2);
 		_resolve_link(&link1);
 	}
-
 }
 
 static void ppcdrc_entrygen(struct drccore *drc)
@@ -224,11 +213,10 @@ static void append_generate_exception(struct drccore *drc, UINT8 exception)
 	_jcc_short_link(COND_Z, &link1);	// if Z == 0, bit == 1
 	_or_r32_imm(REG_EAX, MSR_LE);		// set LE
 	_resolve_link(&link1);
-	_mov_r32_r32(REG_EDX, REG_EAX);
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_r32(REG_EAX);
 	_call((genf *)ppc_set_msr);
-	_add_r32_imm(REG_ESP, 4);
+	_pop_r32(REG_EDX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
 	if (ppc.is603)
@@ -3035,8 +3023,13 @@ static UINT32 recompile_faddx(struct drccore *drc, UINT32 op)
 
 static UINT32 recompile_fcmpo(struct drccore *drc, UINT32 op)
 {
-	printf("PPCDRC: fcmpo unimplemented\n");
-	return RECOMPILE_UNIMPLEMENTED;
+	_mov_m32abs_r32(&ppc_icount, REG_EBP);
+	_push_imm(op);
+	_call((genf *)ppc_fcmpo);
+	_add_r32_imm(REG_ESP, 4);
+	_mov_r32_m32abs(REG_EBP, &ppc_icount);
+
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
 static UINT32 recompile_fcmpu(struct drccore *drc, UINT32 op)

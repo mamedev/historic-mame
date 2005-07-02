@@ -532,8 +532,8 @@ VIDEO_UPDATE( semicom )
 
 	flipscreen=tumblep_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	if (flipscreen) offs=1; else offs=8;
-	if (flipscreen) offs2=-3; else offs2=8;
+	if (flipscreen) offs=1; else offs=-1;	/* fixed */
+	if (flipscreen) offs2=-3; else offs2=-5;	/* fixed */
 
 	tilemap_set_scrollx( pf1_tilemap,0, tumblep_control_0[1]+offs2 );
 	tilemap_set_scrolly( pf1_tilemap,0, tumblep_control_0[2] );
@@ -566,6 +566,30 @@ VIDEO_UPDATE( semicom_altoffsets )
 	tilemap_set_scrolly( pf1_alt_tilemap,0, tumblep_control_0[2] );
 	tilemap_set_scrollx( pf2_tilemap,0, tumblep_control_0[3]+offsx );
 	tilemap_set_scrolly( pf2_tilemap,0, tumblep_control_0[4]+offsy );
+
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	if (tumblep_control_0[6]&0x80)
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+	jumpkids_drawsprites(bitmap,cliprect);
+}
+
+VIDEO_UPDATE( bcstory )
+{
+	int offs,offs2;
+
+	flipscreen=tumblep_control_0[0]&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) offs=1; else offs=8;	/* not sure of this */
+	if (flipscreen) offs2=-3; else offs2=8;	/* not sure of this */
+
+	tilemap_set_scrollx( pf1_tilemap,0, tumblep_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_tilemap,0, tumblep_control_0[2] );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, tumblep_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, tumblep_control_0[2] );
+	tilemap_set_scrollx( pf2_tilemap,0, tumblep_control_0[3]+offs );
+	tilemap_set_scrolly( pf2_tilemap,0, tumblep_control_0[4] );
 
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 	if (tumblep_control_0[6]&0x80)

@@ -66,12 +66,12 @@ All other ROMs surface mounted (not included):
 Label   Printed*    Position
 191 A03 Mask16M-8bit - Near 054986A & 054539 - Sound - Also labeled as 056046
 
-191A04  Mask8M-16bit \ Near 053244A (x2) & 05245A - Tiles
+191A04  Mask8M-16bit \ Near 053244A (x2) & 05245A - Sprites
 191A05  Mask8M-16bit /
 191 A06 Mask8M-16bit - Also labeled as 056049
 
 191A07  Mask8M-16bitx4 \
-191A08  Mask8M-16bitx4  | Near 054157 (x2) & 054156 - Sprites
+191A08  Mask8M-16bitx4  | Near 054157 (x2) & 054156 - Tiles
 191A09  Mask8M-16bitx4  |
 191A10  Mask8M-16bitx4 /
 
@@ -149,7 +149,7 @@ Address          Dir Data     Name      Description
 TODO:
 
 - Sprite decode
-- Sprite banking (? - the reload indicator)
+- Sprite banking (? - the reload indicator) (looks more like flipping?)
 - Sprite priorities
 - Guns need reworking in Japan set -  you move backwards right now, it's unnatural a bit :)
 
@@ -335,6 +335,15 @@ static READ8_HANDLER( le_4800_r )
 	return 0;
 }
 
+/* Lethal Enforcers has 1x 053244 (Sprite Control) chip and
+ 2x 053245 (Sprite Rendering)
+
+ this allows for 6bpp sprites by combining 2x 4bpp layers (2bpp unused)
+
+ in MAME we emulate 2 of each, writing the same data to each 053244
+
+ */
+
 static WRITE8_HANDLER( le_4800_w )
 {
 	if (cur_control2 & 0x10)	// RAM enable
@@ -363,6 +372,7 @@ static WRITE8_HANDLER( le_4800_w )
 				case 0x45:
 				case 0x46:
 					K053244_w(offset-0x40, data);
+					K053244_1_w(offset-0x40, data);
 					break;
 
 				case 0x80:
@@ -406,7 +416,11 @@ static WRITE8_HANDLER( le_4800_w )
 			}
 		}
 		else if (offset < 0x1800)
+		{
 			K053245_w((offset - 0x0800) & 0x07ff, data);
+			K053245_1_w((offset - 0x0800) & 0x07ff, data);
+
+		}
 		else if (offset < 0x2000)
 			K056832_ram_code_lo_w(offset - 0x1800, data);
 		else if (offset < 0x2800)
@@ -554,6 +568,39 @@ static MACHINE_INIT( lethalen )
 	cpu_setbank(1, &prgrom[0x10000]);
 	cpu_setbank(2, &prgrom[0x48000]);
 }
+static struct GfxLayout lethal_6bpp =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	6,
+	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0, 8, 0, 24, 16 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+	8*32+0, 8*32+1, 8*32+2, 8*32+3, 8*32+4, 8*32+5, 8*32+6, 8*32+7 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	128*8
+};
+
+#if 0
+static struct GfxLayout lethal_6bpp =
+{
+	16,16,
+	RGN_FRAC(1,2),				/* filled in later */
+	6,
+	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0,24, 16, 8, 0 },	/* filled in later */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+	8*32+0, 8*32+1, 8*32+2, 8*32+3, 8*32+4, 8*32+5, 8*32+6, 8*32+7 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	128*8
+};
+#endif
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0, &lethal_6bpp,   0x300, 256  }, /* sprites tiles */
+	{ -1 } /* end of array */
+};
 
 static MACHINE_DRIVER_START( lethalen )
 	/* basic machine hardware */
@@ -571,6 +618,9 @@ static MACHINE_DRIVER_START( lethalen )
 	MDRV_MACHINE_INIT(lethalen)
 
 	MDRV_NVRAM_HANDLER(lethalen)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
@@ -615,10 +665,16 @@ ROM_START( lethalen )	// US version UAE
 	ROM_LOAD32_WORD( "191a09", 0x200000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_ERASE00 )
-	/* sprites */
+	/* sprites - fake 6bpp decode is done from here */
 	ROM_LOAD( "191a04", 0x000000, 0x100000, CRC(5c3eeb2b) SHA1(33ea8b3968b78806334b5a0aab3a2c24e45c604e) )
 	ROM_LOAD( "191a05", 0x100000, 0x100000, CRC(f2e3b58b) SHA1(0bbc2fe87a4fd00b5073a884bcfebcf9c2c402ad) )
 	ROM_LOAD( "191a06", 0x200000, 0x100000, CRC(ee11fc08) SHA1(ec6dd684e8261b181d65b8bf1b9e97da5c4468f7) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00 )
+	ROM_COPY(REGION_GFX2,0,0, 0x200000)
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_ERASE00 )
+	ROM_COPY(REGION_GFX2,0x200000,0, 0x200000)
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	/* K054539 samples */
@@ -642,11 +698,17 @@ ROM_START( lethalej )	// Japan version JAD
 	ROM_LOAD32_WORD( "191a07", 0x200002, 0x100000, CRC(1dad184c) SHA1(b2c4a8e48084005056aef2c8eaccb3d2eca71b73) )
 	ROM_LOAD32_WORD( "191a09", 0x200000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	/* sprites */
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_ERASE00 )
+	/* sprites - fake 6bpp decode is done from here */
 	ROM_LOAD( "191a04", 0x000000, 0x100000, CRC(5c3eeb2b) SHA1(33ea8b3968b78806334b5a0aab3a2c24e45c604e) )
 	ROM_LOAD( "191a05", 0x100000, 0x100000, CRC(f2e3b58b) SHA1(0bbc2fe87a4fd00b5073a884bcfebcf9c2c402ad) )
 	ROM_LOAD( "191a06", 0x200000, 0x100000, CRC(ee11fc08) SHA1(ec6dd684e8261b181d65b8bf1b9e97da5c4468f7) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00 )
+	ROM_COPY(REGION_GFX2,0,0, 0x200000)
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_ERASE00 )
+	ROM_COPY(REGION_GFX2,0x200000,0, 0x200000)
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	/* K054539 samples */
@@ -656,6 +718,8 @@ ROM_END
 static DRIVER_INIT( lethalen )
 {
 	konami_rom_deinterleave_2_half(REGION_GFX2);
+	konami_rom_deinterleave_2(REGION_GFX3);
+	konami_rom_deinterleave_2(REGION_GFX4);
 
 	state_save_register_int("LE", 0, "control2", &cur_control2);
 }

@@ -183,6 +183,7 @@ VIDEO_UPDATE( fncywld );
 VIDEO_UPDATE( jumppop );
 VIDEO_UPDATE( semicom );
 VIDEO_UPDATE( semicom_altoffsets );
+VIDEO_UPDATE( bcstory );
 VIDEO_START( suprtrio );
 VIDEO_UPDATE( suprtrio );
 
@@ -1547,6 +1548,11 @@ MACHINE_DRIVER_START( cookbib )
 	MDRV_VIDEO_UPDATE( semicom_altoffsets )
 MACHINE_DRIVER_END
 
+MACHINE_DRIVER_START( bcstory )
+	MDRV_IMPORT_FROM(htchctch)
+	MDRV_VIDEO_UPDATE( bcstory )
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( jumppop )
 	/* basic machine hardware */
@@ -2481,7 +2487,7 @@ GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fa
 GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" ) // not 100% sure about gfx offsets
 GAME (1995, cookbib,  0,       cookbib,   cookbib,  htchctch, ROT0, "SemiCom", "Cookie & Bibi" ) // not 100% sure about gfx offsets
 GAMEX(1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "Choky! Choky!", GAME_IMPERFECT_GRAPHICS ) // corruption during attract mode (tmap disable?)
-GAMEX(1997, bcstry,   0,       htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
-GAMEX(1997, bcstrya,  bcstry,  htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
+GAMEX(1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
+GAMEX(1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )
 GAME (1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio" )

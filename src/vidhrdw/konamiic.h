@@ -111,22 +111,24 @@ READ8_HANDLER( K052109_051960_r );
 WRITE8_HANDLER( K052109_051960_w );
 
 
-int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 READ16_HANDLER( K053245_word_r );
 WRITE16_HANDLER( K053245_word_w );
 READ8_HANDLER( K053245_r );
 WRITE8_HANDLER( K053245_w );
+WRITE8_HANDLER( K053245_1_w );
 READ8_HANDLER( K053244_r );
 WRITE8_HANDLER( K053244_w );
+WRITE8_HANDLER( K053244_1_w );
 READ16_HANDLER( K053244_lsb_r );
 WRITE16_HANDLER( K053244_lsb_w );
 READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
-void K053244_bankselect(int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
-void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
-void K053245_clear_buffer(void);
-void K053245_set_SpriteOffset(int offsx, int offsy);
+void K053244_bankselect(int chip, int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
+void K053245_sprites_draw(int chip, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+void K053245_clear_buffer(int chip);
+void K053245_set_SpriteOffset(int chip,int offsx, int offsy);
 
 #define K055673_LAYOUT_GX  0
 #define K055673_LAYOUT_RNG 1
