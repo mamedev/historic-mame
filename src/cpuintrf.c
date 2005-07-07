@@ -79,6 +79,7 @@ void m68008_get_info(UINT32 state, union cpuinfo *info);
 void m68010_get_info(UINT32 state, union cpuinfo *info);
 void m68ec020_get_info(UINT32 state, union cpuinfo *info);
 void m68020_get_info(UINT32 state, union cpuinfo *info);
+void m68040_get_info(UINT32 state, union cpuinfo *info);
 void t11_get_info(UINT32 state, union cpuinfo *info);
 void s2650_get_info(UINT32 state, union cpuinfo *info);
 void tms34010_get_info(UINT32 state, union cpuinfo *info);
@@ -394,7 +395,7 @@ const struct
 #if (HAS_I8751)
 	{ CPU_I8751, i8751_get_info },
 #endif
-#if (HAS_I8751)
+#if (HAS_I8752)
 	{ CPU_I8752, i8752_get_info },
 #endif
 #if (HAS_M6800)
@@ -453,6 +454,9 @@ const struct
 #endif
 #if (HAS_M68020)
 	{ CPU_M68020, m68020_get_info },
+#endif
+#if (HAS_M68040)
+	{ CPU_M68040, m68040_get_info },
 #endif
 #if (HAS_T11)
 	{ CPU_T11, t11_get_info },

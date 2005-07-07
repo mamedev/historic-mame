@@ -117,25 +117,23 @@ WRITE8_HANDLER( looping_flip_screen_y_w )
 WRITE8_HANDLER( looping_colorram_w )
 {
 	int i,offs;
-	if( colorram[offset]!=data )
+
+	colorram[offset] = data;
+	if( offset&1 )
 	{
-		colorram[offset] = data;
-		if( offset&1 )
+		/* odd bytes are column color attribute */
+		offs = (offset/2);
+		/* mark the whole column dirty */
+		for( i=0; i<0x20; i++ )
 		{
-			/* odd bytes are column color attribute */
-			offs = (offset/2);
-			/* mark the whole column dirty */
-			for( i=0; i<0x20; i++ )
-			{
-				tilemap_mark_tile_dirty( tilemap, offs );
-				offs += 0x20;
-			}
+			tilemap_mark_tile_dirty( tilemap, offs );
+			offs += 0x20;
 		}
-		else
-		{
-			/* even bytes are column scroll */
-			tilemap_set_scrolly( tilemap,offset/2,data );
-		}
+	}
+	else
+	{
+		/* even bytes are column scroll */
+		tilemap_set_scrolly( tilemap,offset/2,data );
 	}
 }
 
@@ -152,11 +150,8 @@ VIDEO_START( looping )
 
 WRITE8_HANDLER( looping_videoram_w )
 {
-	if( videoram[offset]!=data )
-	{
-		videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap, offset );
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty( tilemap, offset );
 }
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
@@ -258,6 +253,8 @@ WRITE8_HANDLER( looping_sound_sw )
 
 static ADDRESS_MAP_START( looping_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9800, 0x983f) AM_READ(MRA8_RAM)
 /*  AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM) videoram is write only? */
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_0_r)	/* inp */

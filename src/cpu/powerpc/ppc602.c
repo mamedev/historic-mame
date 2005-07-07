@@ -171,9 +171,12 @@ static int ppc602_execute(int cycles)
 		ppc.pc = ppc.npc;
 		CALL_MAME_DEBUG;
 
-		ppc.npc = ppc.pc + 4;
+		if (MSR & MSR_IR)
+			opcode = ppc_readop_translated(ppc.pc);
+		else
 		opcode = ROPCODE64(ppc.pc);
 
+		ppc.npc = ppc.pc + 4;
 		switch(opcode >> 26)
 		{
 			case 19:	optable19[(opcode >> 1) & 0x3ff](opcode); break;

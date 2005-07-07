@@ -1,27 +1,159 @@
 /***************************************************************************
 
-    Sega System 32 hardware
+    Sega System 32/Multi 32 hardware
 
 ****************************************************************************
 
-    there are still MANY issues with the system 32 driver, mostly video related
+    Still to do:
+        * fix protection
+        * fix jpark correctly
 
-    -- priorities are wrong (needs full priority buffer rendering)
+****************************************************************************
 
-    -- protection is also a serious problem in several games
+Title Fight (Export Revision)
+Sega, 1992
 
-    -- readd code for jpark cabinet (it was never right anyway)
+This game runs on Sega System Multi32 hardware.
 
-    -- readd random number generator...
+PCB Layout
+----------
+837-8676  171-6253C (C) SEGA 1992
+834-9324-02 (STICKER)
+|-------------------------------------------------------------------------------------------|
+|             CNF                                     CNH                          8464     |
+|8464   HM53461ZP-12 (x16)      |-----------|    HM53461ZP-12 (x16)                8464     |
+|8464                           | SEGA      |                                      8464     |
+|8464                           | 315-5386A |                                      8464     |
+|8464                           |           |                                               |
+|                               |           |                                               |
+|                               |           |                                               |
+|   |---------|  |---------|    |-----------|                    |---------|  |---------|   |
+|   |SEGA     |  |SEGA     |                                     |SEGA     |  |SEGA     |   |
+|   |315-5388 |  |315-5387 |  HM53461ZP-12 (x8)                  |315-5388 |  |315-5242 |   |
+|   |         |  |         |                                     |         |  |         |   |
+|   |         |  |         |                                     |         |  |         |   |
+|   |---------|  |---------|                                     |---------|  |---------|   |
+|             CND                                     CNE                                   |
+| |---------| MB3771 MB3771                      315-5596              |-------| M5M5278P-25|
+| |SEGA     |                                                          |SEGA   |            |
+| |315-5242 |      8464                                                |315-   | M5M5278P-25|
+| |         |BAT_3.3V                                                  |5591   |            |
+| |         |BAT_5.5V                     |---------|                  |-------| M5M5278P-25|
+| |---------|         Z80    50MHz        |SEGA     |     |-----------|                 DSW1|
+|                            32MHz        |315-5385 |     |NEC        |          M5M5278P-25|
+| |------|                                |         |     |D70632R-20 |                 SW4 |
+| |SEGA  |                   |-------|    |         |     |9314X9 V70 |    40MHz        SW3 |
+| |315-  |                   |SEGA   |    |---------|     |(C)NEC 1986|                     |
+| |5560  | YM3438            |315-   |                    |           |                     |
+| |------| LC78820           |5296   |                    |-----------|              93C45  |
+|TDA1518                     |-------|                                   |-------|          |
+|                                       SW1    SW2                       |SEGA   |       CNM|
+|  VOL                                                                   |315-   |          |
+|                                                                        |5296   |          |
+| UPC844 UPC4064                                                         |-------|          |
+|                                                                                           |
+|CNC                                                      LED                               |
+--|            JAMMA             |----|     CNJ      |----|            JAMMA             |--|
+  |------------------------------|    |--------------|    |------------------------------|
+Notes:
+      V70 CPU running at 20.00MHz [40/2]
+      Z80 CPU running at 8.000MHz [32/4]
+      YM3438 running at 8.000MHz [32/4]
+      315-5560 running at 8.000MHz [32/4]
+      CND/E/F/H: Multi-pin connectors for connection of ROM Board
+      CNC      : 4 pin connector for 2nd Speaker for Stereo Output
+      CNJ      : 32 pin connector (purpose unknown)
+      CNM      : 30 pin connector (purpose unknown)
+      SW1      : push-button TEST switch
+      SW2      : push button SERVICE switch
+      SW3/4    : push button switches (purpose unknown)
+      DSW1     : 4-position DIP Switch
+
+      SEGA Custom ICs:
+                      315-5596  Lattice GAL16V8A (DIP20)
+                      315-5386A (QFP184)
+                      315-5388  (x2, QFP160)
+                      315-5387  (QFP160)
+                      315-5242  (x2, custom ceramic DIP32 containing a small QFP IC and some capacitors/resistors etc)
+                      315-5296  (x2, QFP100)
+                      315-5560  (QFP80)
+                      315-5385  (QFP128)
+                      315-5591  (QFP100)
+
+
+ROM Board
+---------
+837-8890
+|-------------------------------------------------------------------------------------------|
+|             CN3                                     CN4                                   |
+|                                                                                           |
+|             IC3                          IC14            IC15              IC10           |
+| IC1   IC2                   JP1-5                                                         |
+|                                                                                           |
+|             IC11            JP6-10       IC22            IC23              IC18           |
+|                                                                                           |
+|                                                                                           |
+|                                          IC36            IC37                             |
+|             315-5598                                                       IC38           |
+|                  CN5                                                                      |
+| IC30  IC31                               IC39            IC40                             |
+|                                                                CN6         IC41           |
+|JP11-16      CN1                                     CN2                                   |
+|-------------------------------------------------------------------------------------------|
+
+Notes:
+CN1/2/3/4 : Multi-pin connectors (below PCB) for connection of ROM Board to Main Board
+CN5       : Custom Sega connector for connection of protection daughterboard (not used)
+CN6       : Custom Sega connector (purpose unknown)
+315-5598  : Lattice GAL16V8A (DIP20)
+
+Jumpers: (to configure ROM sizes used on Title Fight. Other games may vary depending on ROM types used.)
+JP1: 1-2
+JP2: 1-2
+JP3: 2-3
+JP4: 2-3
+JP5: 2-3
+JP6: 1-2
+JP7: 2-3
+JP8: 2-3
+JP9: 1-2
+JP10: 1-2
+JP11: OPEN
+JP12: OPEN
+JP13: OPEN
+JP14: OPEN
+JP15: 1-2
+JP16: 2-3
+
+ROM Locations (All known System Multi32 games shown for reference)
+-------------
+PCB Label     CPU P0    CPU P1    CPU D0    CPU D1    SOUND     SCR0      SCR1      OBJ0      OBJ1      OBJ2      OBJ3      OBJ4      OBJ5      OBJ6      OBJ7      PCM D0    PCM D1    PCM EP/S
+IC#           IC37      IC40      IC36      IC39      IC31      IC3       IC11      IC14      IC22      IC15      IC23      IC10      IC18      IC38      IC41      IC1       IC2       IC30
+
+IC Type       27C2048   27C2048   -         -         27C1000   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -         -
+Title Fight   EPR15388  EPR15389  -         -         EPR15384  MPR15381  MPR15382  MPR15379  MPR15380  MPR15375  MPR15376  MPR15371  MPR15372  MPR15373  MPR15374  MPR15385  -         -
+
+IC Type       27C1024   27C1024   27C4200   27C4200   27C040    8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -
+OutRunners    EPR15618  EPR15619  EPR15538  EPR15539  EPR15550  MPR15548  MPR15549  MPR15540  MPR15541  MPR15542  MPR15543  MPR15544  MPR15545  MPR15546  MPR15547  MPR15551  MPR15552  -
+
+IC Type       27C2048   27C2048   -         -         27C1000   534200    534200    8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -
+Hard Dunk     EPR16512  EPR16509  -         -         EPR16505  MPR16503  MPR16504  MPR16495  MPR16496  MPR16497  MPR16498  MPR16499  MPR16500  MPR16501  MPR16502  MPR16506  MPR16507  -
+Hard Dunk (J) EPR16508  EPR16509  -         -         EPR16505  MPR16503  MPR16504  MPR16495  MPR16496  MPR16497  MPR16498  MPR16499  MPR16500  MPR16501  MPR16502  MPR16506  MPR16507  -
+
+IC Type       27C2048   27C2048   27C4200   27C4200   27C1000   27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    -
+Stadium Cross EPR15093  EPR15094  EPR15018  EPR15019  EPR15192  EPR15020  EPR15021  EPR15022  EPR15023  EPR15024  EPR15025  EPR15026  EPR15027  EPR15028  EPR15029  EPR15031  EPR15032  -
+
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "segas32.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/random.h"
 #include "sound/2612intf.h"
 #include "sound/rf5c68.h"
+#include "sound/multipcm.h"
 
 
 
@@ -31,11 +163,12 @@
  *
  *************************************/
 
-#define MASTER_CLOCK	32215900
-#define RFC_CLOCK		50000000
+#define MASTER_CLOCK		32215900
+#define RFC_CLOCK			50000000
+#define MULTI32_CLOCK		40000000
 
-#define TIMER_0_CLOCK	((MASTER_CLOCK/2)/4096)	/* a guess */
-#define TIMER_1_CLOCK	((RFC_CLOCK/16)/256)	/* should be correct */
+#define TIMER_0_CLOCK		((MASTER_CLOCK/2)/2048)	/* confirmed */
+#define TIMER_1_CLOCK		((RFC_CLOCK/16)/256)	/* confirmed */
 
 #define MAIN_IRQ_VBSTART	0
 #define MAIN_IRQ_VBSTOP		1
@@ -50,46 +183,42 @@
 
 /*************************************
  *
+ *  Global variables
+ *
+ *************************************/
+
+data8_t *ga2_dpram;
+data16_t *system32_workram;
+data16_t *system32_protram;
+
+
+
+/*************************************
+ *
  *  Statics
  *
  *************************************/
 
-extern data16_t *sys32_videoram;
-data16_t* segas32_workram;
-
-data16_t* segas32_protram;
-
-
-/* used by multi32.c? */
-int analogRead[8];
-int analogSwitch=0;
-
-int system32_temp_kludge;
-
-static read16_handler custom_io_r;
-static write16_handler custom_io_w;
-
 static const UINT8 *system32_default_eeprom;
+static data8_t *z80_shared_ram;
 
-/* hmm */
-
-static UINT8 misc_io_data[0x10];
-
+/* V60 interrupt controller */
 static UINT8 v60_irq_control[0x10];
 static mame_timer *v60_irq_timer[2];
 
+/* sound interrupt controller */
 static UINT8 sound_irq_control[4];
 static UINT8 sound_irq_input;
 static UINT8 sound_dummy_value;
 static UINT16 sound_bank;
 
-/* custom I/O data */
-static UINT8 analog_value;
+/* I/O chips and custom I/O */
+static UINT8 misc_io_data[2][0x10];
+static read16_handler custom_io_r[2];
+static write16_handler custom_io_w[2];
+static UINT8 analog_bank;
+static UINT8 analog_value[4];
 static UINT8 sonic_last[6];
-
-data8_t *ga2_dpram;
-
-static data8_t *z80_shared_ram;
 
 
 
@@ -103,47 +232,6 @@ static void signal_v60_irq(int which);
 static void signal_sound_irq(int which);
 
 
-/* vidhrdw/system32.c */
-extern VIDEO_START(system32);
-extern VIDEO_UPDATE(system32);
-extern void system32_set_vblank(int state);
-extern WRITE16_HANDLER( sys32_videoram_w );
-extern READ16_HANDLER ( sys32_videoram_r );
-extern WRITE16_HANDLER ( sys32_spriteram_w );
-extern WRITE16_HANDLER( system32_paletteram16_xBBBBBGGGGGRRRRR_w );
-extern READ16_HANDLER( system32_paletteram16_xBGRBBBBGGGGRRRR_r );
-extern WRITE16_HANDLER( system32_paletteram16_xBGRBBBBGGGGRRRR_w );
-extern READ16_HANDLER( system32_sprite_control_r );
-extern WRITE16_HANDLER( system32_sprite_control_w );
-extern WRITE16_HANDLER( system32_mixer_w );
-
-/* machine/segas32.c */
-extern READ16_HANDLER( arabfgt_protection_r );
-extern READ16_HANDLER( arf_wakeup_protection_r );
-extern WRITE16_HANDLER( arabfgt_protection_w );
-
-extern READ16_HANDLER( brival_protection_r );
-extern WRITE16_HANDLER( brival_protection_w );
-
-extern READ16_HANDLER( darkedge_protection_r );
-extern WRITE16_HANDLER( darkedge_protection_w );
-
-extern READ16_HANDLER( dbzvrvs_protection_r );
-extern WRITE16_HANDLER( dbzvrvs_protection_w );
-
-extern void decrypt_ga2_protrom(void);
-extern READ16_HANDLER( ga2_dpram_r );
-extern WRITE16_HANDLER( ga2_dpram_w );
-
-extern WRITE16_HANDLER(sonic_level_load_protection);
-
-/* vidhrdw/segas32.c */
-extern data16_t sys32_tilebank_external;
-extern data16_t sys32_displayenable;
-extern int system32_mixerShift;
-extern data16_t *sys32_spriteram16;
-
-
 
 /*************************************
  *
@@ -151,7 +239,7 @@ extern data16_t *sys32_spriteram16;
  *
  *************************************/
 
-static MACHINE_INIT( segas32 )
+static MACHINE_INIT( system32 )
 {
 	/* initialize the interrupt controller */
 	memset(v60_irq_control, 0xff, sizeof(v60_irq_control));
@@ -259,7 +347,7 @@ static void int_control_w(int offset, UINT8 data)
 }
 
 
-static READ16_HANDLER( interrupt_control_r )
+static READ16_HANDLER( interrupt_control_16_r )
 {
 	switch (offset)
 	{
@@ -277,12 +365,39 @@ static READ16_HANDLER( interrupt_control_r )
 }
 
 
-static WRITE16_HANDLER( interrupt_control_w )
+static WRITE16_HANDLER( interrupt_control_16_w )
 {
 	if (ACCESSING_LSB)
 		int_control_w(offset*2+0, data);
 	if (ACCESSING_MSB)
 		int_control_w(offset*2+1, data >> 8);
+}
+
+
+static READ32_HANDLER( interrupt_control_32_r )
+{
+	switch (offset)
+	{
+		case 8/4:
+			/* fix me - should return timer count down value */
+			break;
+	}
+
+	/* return all F's for everything except timer values */
+	return 0xffffffff;
+}
+
+
+static WRITE32_HANDLER( interrupt_control_32_w )
+{
+	if (!(mem_mask & 0x000000ff))
+		int_control_w(offset*4+0, data);
+	if (!(mem_mask & 0x0000ff00))
+		int_control_w(offset*4+1, data >> 8);
+	if (!(mem_mask & 0x00ff0000))
+		int_control_w(offset*4+2, data >> 16);
+	if (!(mem_mask & 0xff000000))
+		int_control_w(offset*4+3, data >> 24);
 }
 
 
@@ -308,7 +423,7 @@ static INTERRUPT_GEN( start_of_vblank_int )
  *
  *************************************/
 
-static READ16_HANDLER( io_chip_r )
+static data16_t common_io_chip_r(int which, offs_t offset, data16_t mem_mask)
 {
 	offset &= 0x1f/2;
 
@@ -323,20 +438,20 @@ static READ16_HANDLER( io_chip_r )
 		case 0x0c/2:
 		case 0x0e/2:
 			/* if the port is configured as an output, return the last thing written */
-			if (misc_io_data[0x1e/2] & (1 << offset))
-				return misc_io_data[offset];
+			if (misc_io_data[which][0x1e/2] & (1 << offset))
+				return misc_io_data[which][offset];
 
 			/* otherwise, return an input port */
-			return readinputport(offset);
+			return readinputport(which*8 + offset);
 
 		/* I/O port with EEPROM data bit */
 		case 0x0a/2:
 			/* if the port is configured as an output, return the last thing written */
-			if (misc_io_data[0x1e/2] & (1 << offset))
-				return misc_io_data[offset];
+			if (misc_io_data[which][0x1e/2] & (1 << offset))
+				return misc_io_data[which][offset];
 
 			/* otherwise, return an input port */
-			return readinputport(offset) | (EEPROM_read_bit() << 7);
+			return readinputport(which*8 + offset) | (EEPROM_read_bit() << 7);
 
 		/* 'SEGA' protection */
 		case 0x10/2:
@@ -351,18 +466,18 @@ static READ16_HANDLER( io_chip_r )
 		/* CNT register & mirror */
 		case 0x18/2:
 		case 0x1c/2:
-			return misc_io_data[0x1c/2];
+			return misc_io_data[which][0x1c/2];
 
 		/* port direction register & mirror */
 		case 0x1a/2:
 		case 0x1e/2:
-			return misc_io_data[0x1e/2];
+			return misc_io_data[which][0x1e/2];
 	}
 	return 0xffff;
 }
 
 
-static WRITE16_HANDLER( io_chip_w )
+static void common_io_chip_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
 {
 	UINT8 old;
 
@@ -372,8 +487,8 @@ static WRITE16_HANDLER( io_chip_w )
 
 	/* generic implementation */
 	offset &= 0x1f/2;
-	old = misc_io_data[offset];
-	misc_io_data[offset] = data;
+	old = misc_io_data[which][offset];
+	misc_io_data[which][offset] = data;
 
 	switch (offset)
 	{
@@ -388,30 +503,75 @@ static WRITE16_HANDLER( io_chip_w )
 
 		/* miscellaneous output */
 		case 0x06/2:
-			EEPROM_write_bit(data & 0x80);
-			EEPROM_set_cs_line((data & 0x20) ? CLEAR_LINE : ASSERT_LINE);
-			EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
-/*            coin_lockout_w(1, data & 0x08);
-            coin_lockout_w(0, data & 0x04);*/
-			coin_counter_w(1, data & 0x02);
-			coin_counter_w(0, data & 0x01);
+			if (which == 0)
+			{
+				EEPROM_write_bit(data & 0x80);
+				EEPROM_set_cs_line((data & 0x20) ? CLEAR_LINE : ASSERT_LINE);
+				EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+			}
+/*            coin_lockout_w(1 + 2*which, data & 0x08);
+            coin_lockout_w(0 + 2*which, data & 0x04);*/
+			coin_counter_w(1 + 2*which, data & 0x02);
+			coin_counter_w(0 + 2*which, data & 0x01);
 			break;
 
 		/* tile banking */
 		case 0x0e/2:
-			if (data != sys32_tilebank_external)
-			{
-				sys32_tilebank_external = data;
-				tilemap_mark_all_tiles_dirty(NULL);
-			}
+			if (which == 0)
+				system32_tilebank_external = data;
 			break;
 
 		/* CNT register */
 		case 0x1c/2:
-			sys32_displayenable = (data & 0x02);
-			cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
+			system32_displayenable[which] = (data & 0x02);
+			if (which == 0)
+				cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
 			break;
 	}
+}
+
+
+static READ16_HANDLER( io_chip_r )
+{
+	return common_io_chip_r(0, offset, mem_mask);
+}
+
+
+static WRITE16_HANDLER( io_chip_w )
+{
+	common_io_chip_w(0, offset, data, mem_mask);
+}
+
+
+static READ32_HANDLER( io_chip_0_r )
+{
+	return common_io_chip_r(0, offset*2+0, mem_mask) |
+	      (common_io_chip_r(0, offset*2+1, mem_mask >> 16) << 16);
+}
+
+
+static WRITE32_HANDLER( io_chip_0_w )
+{
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		common_io_chip_w(0, offset*2+0, data, mem_mask);
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		common_io_chip_w(0, offset*2+1, data >> 16, mem_mask >> 16);
+}
+
+
+static READ32_HANDLER( io_chip_1_r )
+{
+	return common_io_chip_r(1, offset*2+0, mem_mask) |
+	      (common_io_chip_r(1, offset*2+1, mem_mask >> 16) << 16);
+}
+
+
+static WRITE32_HANDLER( io_chip_1_w )
+{
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+		common_io_chip_w(1, offset*2+0, data, mem_mask);
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+		common_io_chip_w(1, offset*2+1, data >> 16, mem_mask >> 16);
 }
 
 
@@ -424,8 +584,8 @@ static WRITE16_HANDLER( io_chip_w )
 
 static READ16_HANDLER( io_expansion_r )
 {
-	if (custom_io_r)
-		return (*custom_io_r)(offset, mem_mask);
+	if (custom_io_r[0])
+		return (*custom_io_r[0])(offset, mem_mask);
 	else
 		logerror("%06X:io_expansion_r(%X)\n", activecpu_get_pc(), offset);
 	return 0xffff;
@@ -438,10 +598,72 @@ static WRITE16_HANDLER( io_expansion_w )
 	if (!ACCESSING_LSB)
 		return;
 
-	if (custom_io_w)
-		(*custom_io_w)(offset, data, mem_mask);
+	if (custom_io_w[0])
+		(*custom_io_w[0])(offset, data, mem_mask);
 	else
 		logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
+}
+
+
+static READ32_HANDLER( io_expansion_0_r )
+{
+	if (custom_io_r[0])
+		return (*custom_io_r[0])(offset*2+0, mem_mask) |
+			  ((*custom_io_r[0])(offset*2+1, mem_mask >> 16) << 16);
+	else
+		logerror("%06X:io_expansion_r(%X)\n", activecpu_get_pc(), offset);
+	return 0xffffffff;
+}
+
+
+static WRITE32_HANDLER( io_expansion_0_w )
+{
+	/* only LSB matters */
+	if ((mem_mask & 0x000000ff) != 0x000000ff)
+	{
+		if (custom_io_w[0])
+			(*custom_io_w[0])(offset*2+0, data, mem_mask);
+		else
+			logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
+	}
+	if ((mem_mask & 0x00ff0000) != 0x00ff0000)
+	{
+		if (custom_io_w[0])
+			(*custom_io_w[0])(offset*2+1, data >> 16, mem_mask >> 16);
+		else
+			logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
+	}
+}
+
+
+static READ32_HANDLER( io_expansion_1_r )
+{
+	if (custom_io_r[1])
+		return (*custom_io_r[1])(offset*2+0, mem_mask) |
+			  ((*custom_io_r[1])(offset*2+1, mem_mask >> 16) << 16);
+	else
+		logerror("%06X:io_expansion_r(%X)\n", activecpu_get_pc(), offset);
+	return 0xffffffff;
+}
+
+
+static WRITE32_HANDLER( io_expansion_1_w )
+{
+	/* only LSB matters */
+	if ((mem_mask & 0x000000ff) != 0x000000ff)
+	{
+		if (custom_io_w[1])
+			(*custom_io_w[1])(offset*2+0, data, mem_mask);
+		else
+			logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
+	}
+	if ((mem_mask & 0x00ff0000) != 0x00ff0000)
+	{
+		if (custom_io_w[1])
+			(*custom_io_w[1])(offset*2+1, data >> 16, mem_mask >> 16);
+		else
+			logerror("%06X:io_expansion_w(%X) = %02X\n", activecpu_get_pc(), offset, data & 0xff);
+	}
 }
 
 
@@ -461,8 +683,8 @@ static READ16_HANDLER( analog_custom_io_r )
 		case 0x12/2:
 		case 0x14/2:
 		case 0x16/2:
-			result = analog_value | 0x7f;
-			analog_value <<= 1;
+			result = analog_value[offset & 3] | 0x7f;
+			analog_value[offset & 3] <<= 1;
 			return result;
 	}
 	logerror("%06X:unknown analog_custom_io_r(%X) & %04X\n", activecpu_get_pc(), offset*2, mem_mask ^ 0xffff);
@@ -479,7 +701,7 @@ static WRITE16_HANDLER( analog_custom_io_w )
 		case 0x12/2:
 		case 0x14/2:
 		case 0x16/2:
-			analog_value = readinputportbytag_safe(names[offset & 3], 0);
+			analog_value[offset & 3] = readinputportbytag_safe(names[offset & 3], 0);
 			return;
 	}
 	logerror("%06X:unknown analog_custom_io_w(%X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask ^ 0xffff);
@@ -500,6 +722,26 @@ static READ16_HANDLER( extra_custom_io_r )
 
 	logerror("%06X:unknown extra_custom_io_r(%X) & %04X\n", activecpu_get_pc(), offset*2, mem_mask ^ 0xffff);
 	return 0xffff;
+}
+
+
+static WRITE16_HANDLER( orunners_custom_io_w )
+{
+	static const char *names[] = { "ANALOG1", "ANALOG2", "ANALOG3", "ANALOG4", "ANALOG5", "ANALOG6", "ANALOG7", "ANALOG8" };
+	switch (offset)
+	{
+		case 0x10/2:
+		case 0x12/2:
+		case 0x14/2:
+		case 0x16/2:
+			analog_value[offset & 3] = readinputportbytag_safe(names[analog_bank * 4 + (offset & 3)], 0);
+			return;
+
+		case 0x20/2:
+			analog_bank = data & 1;
+			return;
+	}
+	logerror("%06X:unknown orunners_custom_io_w(%X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask ^ 0xffff);
 }
 
 
@@ -544,22 +786,70 @@ static WRITE16_HANDLER( sonic_custom_io_w )
 
 /*************************************
  *
+ *  Random number generator
+ *
+ *************************************/
+
+static WRITE16_HANDLER( random_number_16_w )
+{
+	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+}
+
+static READ16_HANDLER( random_number_16_r )
+{
+	return rand();
+}
+
+static WRITE32_HANDLER( random_number_32_w )
+{
+	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+}
+
+static READ32_HANDLER( random_number_32_r )
+{
+	return rand() | (rand() << 16);
+}
+
+
+
+/*************************************
+ *
  *  Sound communications
  *
  *************************************/
 
-static READ16_HANDLER( shared_ram_r )
+static READ16_HANDLER( shared_ram_16_r )
 {
 	return z80_shared_ram[offset*2+0] | (z80_shared_ram[offset*2+1] << 8);
 }
 
 
-static WRITE16_HANDLER( shared_ram_w )
+static WRITE16_HANDLER( shared_ram_16_w )
 {
 	if (ACCESSING_LSB)
 		z80_shared_ram[offset*2+0] = data;
 	if (ACCESSING_MSB)
 		z80_shared_ram[offset*2+1] = data >> 8;
+}
+
+
+static READ32_HANDLER( shared_ram_32_r )
+{
+	return z80_shared_ram[offset*4+0] | (z80_shared_ram[offset*4+1] << 8) |
+	      (z80_shared_ram[offset*4+2] << 16) | (z80_shared_ram[offset*4+3] << 24);
+}
+
+
+static WRITE32_HANDLER( shared_ram_32_w )
+{
+	if (!(mem_mask & 0x000000ff))
+		z80_shared_ram[offset*4+0] = data;
+	if (!(mem_mask & 0x0000ff00))
+		z80_shared_ram[offset*4+1] = data >> 8;
+	if (!(mem_mask & 0x00ff0000))
+		z80_shared_ram[offset*4+2] = data >> 16;
+	if (!(mem_mask & 0xff000000))
+		z80_shared_ram[offset*4+3] = data >> 24;
 }
 
 
@@ -664,6 +954,18 @@ static WRITE8_HANDLER( sound_bank_hi_w )
 }
 
 
+static WRITE8_HANDLER( multipcm_bank_w )
+{
+	multipcm_set_bank(0, 0x80000 * ((data >> 3) & 7), 0x80000 * (data & 7));
+}
+
+
+static WRITE8_HANDLER( scross_bank_w )
+{
+	multipcm_set_bank(0, 0x80000 * (data & 7), 0x80000 * (data & 7));
+}
+
+
 
 /*************************************
  *
@@ -684,13 +986,13 @@ static WRITE8_HANDLER( sound_dummy_w )
 
 
 
-/******************************************************************************
- ******************************************************************************
-  NVRAM / Eeprom  (reads / writes are handled in io_r and io_w)
- ******************************************************************************
- ******************************************************************************/
+/*************************************
+ *
+ *  NVRAM handler
+ *
+ *************************************/
 
-static NVRAM_HANDLER( segas32 )
+static NVRAM_HANDLER( system32 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -706,17 +1008,6 @@ static NVRAM_HANDLER( segas32 )
 }
 
 
-static WRITE16_HANDLER( random_number_w )
-{
-	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
-}
-
-static READ16_HANDLER( random_number_r )
-{
-	return rand();
-}
-
-
 
 /*************************************
  *
@@ -724,21 +1015,42 @@ static READ16_HANDLER( random_number_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( segas32_map, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( system32_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x000000, 0x1fffff) AM_ROM
-	AM_RANGE(0x200000, 0x20ffff) AM_MIRROR(0x0f0000) AM_RAM	AM_BASE(&segas32_workram)
-	AM_RANGE(0x300000, 0x31ffff) AM_MIRROR(0x0e0000) AM_READWRITE(MRA16_RAM, sys32_videoram_w) AM_BASE(&sys32_videoram)
-	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x0e0000) AM_READWRITE(MRA16_RAM, sys32_spriteram_w) AM_BASE(&sys32_spriteram16)
+	AM_RANGE(0x200000, 0x20ffff) AM_MIRROR(0x0f0000) AM_RAM	AM_BASE(&system32_workram)
+	AM_RANGE(0x300000, 0x31ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_videoram_r, system32_videoram_w) AM_BASE(&system32_videoram)
+	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_spriteram_r, system32_spriteram_w) AM_BASE(&system32_spriteram)
 	AM_RANGE(0x500000, 0x50000f) AM_MIRROR(0x0ffff0) AM_READWRITE(system32_sprite_control_r, system32_sprite_control_w)
-	AM_RANGE(0x600000, 0x607fff) AM_MIRROR(0x0e0000) AM_READWRITE(MRA16_RAM, system32_paletteram16_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x608000, 0x60ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_paletteram16_xBGRBBBBGGGGRRRR_r, system32_paletteram16_xBGRBBBBGGGGRRRR_w)
+	AM_RANGE(0x600000, 0x60ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_paletteram_r, system32_paletteram_w) AM_BASE(&system32_paletteram[0])
 	AM_RANGE(0x610000, 0x61007f) AM_MIRROR(0x0eff80) AM_WRITE(system32_mixer_w)
-	AM_RANGE(0x700000, 0x701fff) AM_MIRROR(0x0fe000) AM_READWRITE(shared_ram_r, shared_ram_w)
+	AM_RANGE(0x700000, 0x701fff) AM_MIRROR(0x0fe000) AM_READWRITE(shared_ram_16_r, shared_ram_16_w)
 	AM_RANGE(0xc00000, 0xc0001f) AM_MIRROR(0x0fff80) AM_READWRITE(io_chip_r, io_chip_w)
 	AM_RANGE(0xc00040, 0xc0007f) AM_MIRROR(0x0fff80) AM_READWRITE(io_expansion_r, io_expansion_w)
-	AM_RANGE(0xd00000, 0xd0000f) AM_MIRROR(0x07fff0) AM_READWRITE(interrupt_control_r, interrupt_control_w)
-	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(random_number_r, random_number_w)
+	AM_RANGE(0xd00000, 0xd0000f) AM_MIRROR(0x07fff0) AM_READWRITE(interrupt_control_16_r, interrupt_control_16_w)
+	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(random_number_16_r, random_number_16_w)
+	AM_RANGE(0xf00000, 0xffffff) AM_ROM AM_REGION(REGION_CPU1, 0)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( multi32_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(24) )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
+	AM_RANGE(0x200000, 0x21ffff) AM_MIRROR(0x0e0000) AM_RAM
+	AM_RANGE(0x300000, 0x31ffff) AM_MIRROR(0x0e0000) AM_READWRITE(multi32_videoram_r, multi32_videoram_w) AM_BASE((data32_t **)&system32_videoram)
+	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x0e0000) AM_READWRITE(multi32_spriteram_r, multi32_spriteram_w) AM_BASE((data32_t **)&system32_spriteram)
+	AM_RANGE(0x500000, 0x50000f) AM_MIRROR(0x0ffff0) AM_READWRITE(multi32_sprite_control_r, multi32_sprite_control_w)
+	AM_RANGE(0x600000, 0x60ffff) AM_MIRROR(0x060000) AM_READWRITE(multi32_paletteram_0_r, multi32_paletteram_0_w) AM_BASE((data32_t **)&system32_paletteram[0])
+	AM_RANGE(0x610000, 0x61007f) AM_MIRROR(0x06ff80) AM_WRITE(multi32_mixer_0_w)
+	AM_RANGE(0x680000, 0x68ffff) AM_MIRROR(0x060000) AM_READWRITE(multi32_paletteram_1_r, multi32_paletteram_1_w) AM_BASE((data32_t **)&system32_paletteram[1])
+	AM_RANGE(0x690000, 0x69007f) AM_MIRROR(0x06ff80) AM_WRITE(multi32_mixer_1_w)
+	AM_RANGE(0x700000, 0x701fff) AM_MIRROR(0x0fe000) AM_READWRITE(shared_ram_32_r, shared_ram_32_w)
+	AM_RANGE(0xc00000, 0xc0001f) AM_MIRROR(0x07ff80) AM_READWRITE(io_chip_0_r, io_chip_0_w)
+	AM_RANGE(0xc00040, 0xc0007f) AM_MIRROR(0x07ff80) AM_READWRITE(io_expansion_0_r, io_expansion_0_w)
+	AM_RANGE(0xc80000, 0xc8001f) AM_MIRROR(0x07ff80) AM_READWRITE(io_chip_1_r, io_chip_1_w)
+	AM_RANGE(0xc80040, 0xc8007f) AM_MIRROR(0x07ff80) AM_READWRITE(io_expansion_1_r, io_expansion_1_w)
+	AM_RANGE(0xd00000, 0xd0000f) AM_MIRROR(0x07fff0) AM_READWRITE(interrupt_control_32_r, interrupt_control_32_w)
+	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(random_number_32_r, random_number_32_w)
 	AM_RANGE(0xf00000, 0xffffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 ADDRESS_MAP_END
 
@@ -750,7 +1062,7 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( system32_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x9fff) AM_ROM AM_REGION(REGION_CPU2, 0x100000)
 	AM_RANGE(0xa000, 0xbfff) AM_ROMBANK(1)
 	AM_RANGE(0xc000, 0xc00f) AM_MIRROR(0x0ff0) AM_WRITE(RF5C68_reg_w)
@@ -758,7 +1070,7 @@ static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xffff) AM_RAM AM_BASE(&z80_shared_ram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( system32_sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_MIRROR(0x0c) AM_READWRITE(YM3438_status_port_0_A_r, YM3438_control_port_0_A_w)
 	AM_RANGE(0x81, 0x81) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_0_A_w)
@@ -770,6 +1082,27 @@ static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x93, 0x93) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_1_B_w)
 	AM_RANGE(0xa0, 0xaf) AM_WRITE(sound_bank_lo_w)
 	AM_RANGE(0xb0, 0xbf) AM_WRITE(sound_bank_hi_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(sound_int_control_lo_w)
+	AM_RANGE(0xd0, 0xd3) AM_MIRROR(0x04) AM_WRITE(sound_int_control_hi_w)
+	AM_RANGE(0xf1, 0xf1) AM_READWRITE(sound_dummy_r, sound_dummy_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( multi32_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_ROM AM_REGION(REGION_CPU2, 0x100000)
+	AM_RANGE(0xa000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MultiPCM_reg_0_r, MultiPCM_reg_0_w)
+	AM_RANGE(0xe000, 0xffff) AM_RAM AM_BASE(&z80_shared_ram)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( multi32_sound_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(8) )
+	AM_RANGE(0x80, 0x80) AM_MIRROR(0x0c) AM_READWRITE(YM3438_status_port_0_A_r, YM3438_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_MIRROR(0x0c) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_0_B_w)
+	AM_RANGE(0xa0, 0xaf) AM_WRITE(sound_bank_lo_w)
+	AM_RANGE(0xb0, 0xbf) AM_WRITE(multipcm_bank_w)
 	AM_RANGE(0xc0, 0xcf) AM_WRITE(sound_int_control_lo_w)
 	AM_RANGE(0xd0, 0xd3) AM_MIRROR(0x04) AM_WRITE(sound_int_control_hi_w)
 	AM_RANGE(0xf1, 0xf1) AM_READWRITE(sound_dummy_r, sound_dummy_w)
@@ -844,6 +1177,71 @@ static INPUT_PORTS_START( system32_generic )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("PORTH")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( multi32_generic )
+	PORT_START_TAG("P1_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("P2_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTC_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTD_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("SERVICE12_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE( 0x02, IP_ACTIVE_LOW )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("SERVICE34_A")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE3 )	/* sometimes mirrors SERVICE1 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4 )	/* tends to also work as a test switch */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+
+	PORT_START_TAG("PORTG_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTH_A")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("P1_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("P2_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTC_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTD_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("SERVICE12_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("SERVICE34_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTG_B")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("PORTH_B")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1095,6 +1493,86 @@ INPUT_PORTS_START( ga2u )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( harddunk )
+	PORT_INCLUDE( multi32_generic )
+
+	PORT_MODIFY("P1_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+
+	PORT_MODIFY("P2_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+
+	PORT_MODIFY("SERVICE12_A")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P1_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
+
+	PORT_MODIFY("P2_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(5)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(5)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(5)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(5)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(5)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(5)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(5)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(5)
+
+	PORT_MODIFY("SERVICE12_B")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START5 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("EXTRA1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(3)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+
+	PORT_START_TAG("EXTRA2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(6)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(6)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(6)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(6)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(6)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(6)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(6)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(6)
+
+	PORT_START_TAG("EXTRA3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START6 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( holo )
 	PORT_INCLUDE( system32_generic )
 
@@ -1126,6 +1604,51 @@ INPUT_PORTS_START( jpark )
 
 	PORT_START_TAG("ANALOG4")
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(5) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( orunners )
+	PORT_INCLUDE( multi32_generic )
+
+	PORT_MODIFY("P1_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_SPACE)	/* shift up */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_LSHIFT)	/* shift down */
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P2_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_Z)		/* DJ/music */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_X)		/* << */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_C)		/* >> */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P1_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_CODE(KEYCODE_Q)		/* shift up */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) PORT_CODE(KEYCODE_W)		/* shift down */
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P2_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)								/* DJ/music */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)								/* << */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)								/* >> */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("ANALOG1")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START_TAG("ANALOG2")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START_TAG("ANALOG3")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START_TAG("ANALOG4")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOG7")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOG8")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -1208,6 +1731,35 @@ INPUT_PORTS_START( radr )
 
 	PORT_START_TAG("ANALOG3")
 	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10)
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( scross )
+	PORT_INCLUDE( multi32_generic )
+
+	PORT_MODIFY("P1_A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_SPACE)	/*  */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_LSHIFT)	/*  */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) PORT_CODE(KEYCODE_LALT)		/* brake */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P1_B")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_CODE(KEYCODE_Q)		/*  */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) PORT_CODE(KEYCODE_W)		/*  */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) PORT_CODE(KEYCODE_S)		/* brake */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("ANALOG1")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START_TAG("ANALOG2")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START_TAG("ANALOG3")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_START_TAG("ANALOG4")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0,255) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -1343,6 +1895,48 @@ INPUT_PORTS_START( svf )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( titlef )
+	PORT_INCLUDE( multi32_generic )
+
+	PORT_MODIFY("P1_A")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT ) PORT_PLAYER(1)
+
+	PORT_MODIFY("P2_A")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT ) PORT_PLAYER(1)
+
+	PORT_MODIFY("SERVICE12_A")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_MODIFY("P1_B")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT ) PORT_PLAYER(2)
+
+	PORT_MODIFY("P2_B")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT ) PORT_PLAYER(2)
+
+	PORT_MODIFY("SERVICE12_B")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -1382,6 +1976,11 @@ static const struct YM3438interface ym3438_interface =
 	ym3438_irq_handler
 };
 
+static const struct MultiPCM_interface multi32_pcm_interface =
+{
+	REGION_SOUND1
+};
+
 
 
 /*************************************
@@ -1390,25 +1989,25 @@ static const struct YM3438interface ym3438_interface =
  *
  *************************************/
 
-static MACHINE_DRIVER_START( segas32 )
+static MACHINE_DRIVER_START( system32 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V60, MASTER_CLOCK/2)
-	MDRV_CPU_PROGRAM_MAP(segas32_map,0)
+	MDRV_CPU_PROGRAM_MAP(system32_map,0)
 	MDRV_CPU_VBLANK_INT(start_of_vblank_int,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, MASTER_CLOCK/4)
-	MDRV_CPU_PROGRAM_MAP(sound_map,0)
-	MDRV_CPU_IO_MAP(sound_portmap,0)
+	MDRV_CPU_PROGRAM_MAP(system32_sound_map,0)
+	MDRV_CPU_IO_MAP(system32_sound_portmap,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(segas32)
-	MDRV_NVRAM_HANDLER(segas32)
+	MDRV_MACHINE_INIT(system32)
+	MDRV_NVRAM_HANDLER(system32)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(52*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 52*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1435,12 +2034,55 @@ static MACHINE_DRIVER_START( segas32 )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( segas32_v20 )
-	MDRV_IMPORT_FROM(segas32)
+static MACHINE_DRIVER_START( system32_v20 )
+	MDRV_IMPORT_FROM(system32)
 
 	/* add a V25 for protection */
 	MDRV_CPU_ADD(V20, 10000000)
 	MDRV_CPU_PROGRAM_MAP(ga2_v25_map,0)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( multi32 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V70, MULTI32_CLOCK/2)
+	MDRV_CPU_PROGRAM_MAP(multi32_map,0)
+	MDRV_CPU_VBLANK_INT(start_of_vblank_int,1)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, MASTER_CLOCK/4)
+	MDRV_CPU_PROGRAM_MAP(multi32_sound_map,0)
+	MDRV_CPU_IO_MAP(multi32_sound_portmap,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
+
+	MDRV_MACHINE_INIT(system32)
+	MDRV_NVRAM_HANDLER(system32)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_ASPECT_RATIO(8,3)
+	MDRV_SCREEN_SIZE(52*2*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 52*2*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(multi32)
+	MDRV_VIDEO_UPDATE(multi32)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3438, MASTER_CLOCK/4)
+	MDRV_SOUND_CONFIG(ym3438_interface)
+	MDRV_SOUND_ROUTE(1, "left", 0.40)
+	MDRV_SOUND_ROUTE(0, "right", 0.40)
+
+	MDRV_SOUND_ADD(MULTIPCM, MASTER_CLOCK/4)
+	MDRV_SOUND_CONFIG(multi32_pcm_interface)
+	MDRV_SOUND_ROUTE(1, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1495,6 +2137,16 @@ MACHINE_DRIVER_END
 
 #define ROM_LOAD16_BYTE_x4(name, base, length, crc) \
 	ROM_LOAD16_BYTE( name, base + 0 * length, length, crc ) \
+	ROM_RELOAD(     base + 2 * length, length ) \
+	ROM_RELOAD(     base + 4 * length, length ) \
+	ROM_RELOAD(     base + 6 * length, length )
+
+#define ROM_LOAD32_WORD_x2(name, base, length, crc) \
+	ROM_LOAD32_WORD( name, base + 0 * length, length, crc ) \
+	ROM_RELOAD(     base + 2 * length, length )
+
+#define ROM_LOAD32_WORD_x4(name, base, length, crc) \
+	ROM_LOAD32_WORD( name, base + 0 * length, length, crc ) \
 	ROM_RELOAD(     base + 2 * length, length ) \
 	ROM_RELOAD(     base + 4 * length, length ) \
 	ROM_RELOAD(     base + 6 * length, length )
@@ -1999,6 +2651,72 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
+    Hard Dunk (Multi-32)
+    not protected
+*/
+ROM_START( harddunk )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x2( "ep16512.37", 0x000000, 0x40000, CRC(1a7de085) SHA1(2e0dac1f7715089b7f6b1035c859ffe2d674932f) )
+	/* the following is the same as 16509.40 but with a different name, unusual for Sega */
+	ROM_LOAD32_WORD_x2( "ep16513.40", 0x000002, 0x40000, CRC(603dee75) SHA1(32ae964a4b57d470b4900cca6e06329f1a75a6e6) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "16505", 0x100000, 0x20000, CRC(eeb90a07) SHA1(d1c2132897994b2e85fd5a97222b9fcd61bc421e) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "16503", 0x000000, 0x080000, CRC(ac1b6f1a) SHA1(56482931adf7fe551acf796b74cd8af3773d4fef) )
+	ROM_LOAD16_BYTE( "16504", 0x000001, 0x080000, CRC(7c61fcd8) SHA1(ca4354f90fada752bf11ee22a7798a8aa22b1c61) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "16495", 0x000000, 0x200000, CRC(6e5f26be) SHA1(146761072bbed08f4a9df8a474b34fab61afaa4f) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16497", 0x000002, 0x200000, CRC(42ab5859) SHA1(f50c51eb81186aec5f747ecab4c5c928f8701afc) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16499", 0x000004, 0x200000, CRC(a290ea36) SHA1(2503b44174f23a9d323caab86553977d1d6d9c94) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16501", 0x000006, 0x200000, CRC(f1566620) SHA1(bcf31d11ee669d5afc7dc22c42fa59f4e48c1f50) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16496", 0x800000, 0x200000, CRC(d9d27247) SHA1(d211623478516ed1b89ab16a7fc7969954c5e353) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16498", 0x800002, 0x200000, CRC(c022a991) SHA1(a660a20692f4d9ba7be73577328f69f109be5e47) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16500", 0x800004, 0x200000, CRC(452c0be3) SHA1(af87ce4618bae2d791c1baed34ba7f853af664ff) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16502", 0x800006, 0x200000, CRC(ffc3147e) SHA1(12d882dec3098674d27058a8009e8778555f477a) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "mp16506.1", 0x000000, 0x200000, CRC(e779f5ed) SHA1(462d1bbe8bb12a0c5a6d6c613c720b26ec21cb25) )
+	ROM_LOAD( "mp16507.2", 0x200000, 0x200000, CRC(31e068d3) SHA1(9ac88b15af441fb3b31ce759c565b60a09039571) )
+ROM_END
+
+/**************************************************************************************************************************
+    Hard Dunk (Japan) (Multi-32)
+    not protected
+*/
+ROM_START( harddunj )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x2( "16508.37", 0x000000, 0x40000, CRC(b3713be5) SHA1(8123638a838e41fcc0d32e14382421b521eff94f) )
+	ROM_LOAD32_WORD_x2( "16509.40", 0x000002, 0x40000, CRC(603dee75) SHA1(32ae964a4b57d470b4900cca6e06329f1a75a6e6) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "16505", 0x100000, 0x20000, CRC(eeb90a07) SHA1(d1c2132897994b2e85fd5a97222b9fcd61bc421e) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "16503", 0x000000, 0x080000, CRC(ac1b6f1a) SHA1(56482931adf7fe551acf796b74cd8af3773d4fef) )
+	ROM_LOAD16_BYTE( "16504", 0x000001, 0x080000, CRC(7c61fcd8) SHA1(ca4354f90fada752bf11ee22a7798a8aa22b1c61) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "16495", 0x000000, 0x200000, CRC(6e5f26be) SHA1(146761072bbed08f4a9df8a474b34fab61afaa4f) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16497", 0x000002, 0x200000, CRC(42ab5859) SHA1(f50c51eb81186aec5f747ecab4c5c928f8701afc) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16499", 0x000004, 0x200000, CRC(a290ea36) SHA1(2503b44174f23a9d323caab86553977d1d6d9c94) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16501", 0x000006, 0x200000, CRC(f1566620) SHA1(bcf31d11ee669d5afc7dc22c42fa59f4e48c1f50) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16496", 0x800000, 0x200000, CRC(d9d27247) SHA1(d211623478516ed1b89ab16a7fc7969954c5e353) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16498", 0x800002, 0x200000, CRC(c022a991) SHA1(a660a20692f4d9ba7be73577328f69f109be5e47) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16500", 0x800004, 0x200000, CRC(452c0be3) SHA1(af87ce4618bae2d791c1baed34ba7f853af664ff) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "16502", 0x800006, 0x200000, CRC(ffc3147e) SHA1(12d882dec3098674d27058a8009e8778555f477a) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "mp16506.1", 0x000000, 0x200000, CRC(e779f5ed) SHA1(462d1bbe8bb12a0c5a6d6c613c720b26ec21cb25) )
+	ROM_LOAD( "mp16507.2", 0x200000, 0x200000, CRC(31e068d3) SHA1(9ac88b15af441fb3b31ce759c565b60a09039571) )
+ROM_END
+
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
     Holosseum
     not protected
 */
@@ -2064,6 +2782,42 @@ ROM_START( jpark )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* unused */
 	ROM_LOAD( "epr13908.xx", 0x00000, 0x8000, CRC(6228c1d2) SHA1(bd37fe775534fb94c9af80546948ce5f9c47bbf5) ) /* cabinet movement */
+ROM_END
+
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+    Outrunners (Multi-32)
+    not protected
+*/
+ROM_START( orunners )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x4( "epr15618.bin", 0x000000, 0x020000, CRC(25647f76) SHA1(9f882921ebb2f078350295c322b263f75812c053) )
+	ROM_LOAD32_WORD_x4( "epr15619.bin", 0x000002, 0x020000, CRC(2a558f95) SHA1(616ec0a7b251da61a49b933c58895b1a4d39417a) )
+	ROM_LOAD32_WORD( "mpr15538.bin",    0x100000, 0x080000, CRC(93958820) SHA1(e19b6f18a5707dbb64ae009d63c05eac5bac4a81) )
+	ROM_LOAD32_WORD( "mpr15539.bin",    0x100002, 0x080000, CRC(219760fa) SHA1(bd62a83de9c9542f6da454a87dc4947492f65c52) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr15550.bin", 0x100000, 0x80000, CRC(0205d2ed) SHA1(3475479e1a45fe96eefbe53842758898db7accbf) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15548.bin", 0x000000, 0x200000, CRC(b6470a66) SHA1(e1544590c02d41f62f82a4d771b893fb0f2734c7) )
+	ROM_LOAD16_BYTE( "mpr15549.bin", 0x000001, 0x200000, CRC(81d12520) SHA1(1555893941e832f00ad3d0b3ad0c34a0d3a1c58a) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15540.bin", 0x000000, 0x200000, CRC(a10d72b4) SHA1(6d9d5e20be6721b53ce49df4d5a1bbd91f5b3aed) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15542.bin", 0x000002, 0x200000, CRC(40952374) SHA1(c669ef52508bc2f49cf812dc86ac98fb535471fa) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15544.bin", 0x000004, 0x200000, CRC(39e3df45) SHA1(38a7b21617b45613b05509dda388f8f7770b186c) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15546.bin", 0x000006, 0x200000, CRC(e3fcc12c) SHA1(1cf7e05c7873f68789a27a91cddf471df40d7907) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15541.bin", 0x800000, 0x200000, CRC(a2003c2d) SHA1(200a2c7d78d3f5f28909267fdcdbddd58c5f5fa2) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15543.bin", 0x800002, 0x200000, CRC(933e8e7b) SHA1(0d53286f524f47851a483569dc37e9f6d34cc5f4) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15545.bin", 0x800004, 0x200000, CRC(53dd0235) SHA1(4aee5ae1820ff933b6bd8a54bdbf989c0bc95c1a) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15547.bin", 0x800006, 0x200000, CRC(edcb2a43) SHA1(f0bcfcc749ca0267f85bf9838164869912944d00) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "mpr15551.bin", 0x000000, 0x200000, CRC(4894bc73) SHA1(351f5c03fb430fd87df915dfe3a377b5ada622c4) )
+	ROM_LOAD( "mpr15552.bin", 0x200000, 0x200000, CRC(1c4b5e73) SHA1(50a8e9a200575a3522a51bf094aa0e87b90bb0a3) )
 ROM_END
 
 
@@ -2397,6 +3151,45 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
+    Stadium Cross (Multi-32)
+    not protected
+*/
+ROM_START( scross )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x2( "epr15093.bin", 0x000000, 0x040000, CRC(2adc7a4b) SHA1(dca71f00d94898c0758394704d819e13482bf120) )
+	ROM_LOAD32_WORD_x2( "epr15094.bin", 0x000002, 0x040000, CRC(bbb0ae73) SHA1(0d8837706405f301adf8fa85c8d4813d7600af98) )
+	ROM_LOAD32_WORD( "epr15018.bin",    0x100000, 0x080000, CRC(3a98385e) SHA1(8088d337655030c28e290da4bbf44cb647dab66c) )
+	ROM_LOAD32_WORD( "epr15019.bin",    0x100002, 0x080000, CRC(8bf4ac83) SHA1(e594d9d9b42d0765ed8a20a40b7dd92b75124d34) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "epr15192.bin", 0x100000, 0x20000, CRC(7524290b) SHA1(ee58be2c0c4293ee19622b96ca493f4ce4da0038) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	/* 1ST AND 2ND HALF IDENTICAL (all roms) */
+	ROM_LOAD16_BYTE( "epr15020.bin", 0x000000, 0x200000, CRC(65afea2f) SHA1(ad573727398bfac8e94f321be84b60e5690bfba6) )
+	ROM_LOAD16_BYTE( "epr15021.bin", 0x000001, 0x200000, CRC(27bc6969) SHA1(d6bb446becb2d36b73bca5055357a43b837afc0a) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	/* 1ST AND 2ND HALF IDENTICAL (all roms) */
+	ROMX_LOAD( "epr15022.bin", 0x000000, 0x200000, CRC(09ca9608) SHA1(cbd0138c1c7811d42b051fed6a7e3526cc4e457f) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15024.bin", 0x000002, 0x200000, CRC(0dc920eb) SHA1(d24d637aa0dcd3bae779ef7e12663df81667dbf7) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15026.bin", 0x000004, 0x200000, CRC(67637c37) SHA1(7c250e7e9dd5c07da4fa35bacdfcecd5e8fa4ec7) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15028.bin", 0x000006, 0x200000, CRC(9929abdc) SHA1(34b6624ddd3a0aedec0a2b433643a37f745ec66d) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15023.bin", 0x800000, 0x200000, CRC(0e42a2bb) SHA1(503214caf5fa9a2324b61e04f378fd1a790322df) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15025.bin", 0x800002, 0x200000, CRC(0c677fc6) SHA1(fc2207008417072e7ee91f722797d827e150ce2d) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15027.bin", 0x800004, 0x200000, CRC(d6d077f9) SHA1(928cefae9ae58239fbffb1dcee282c6ac1e661fe) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "epr15029.bin", 0x800006, 0x200000, CRC(707af749) SHA1(fae5325c983df3cf198878220ad88d47339ac512) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	/* 1ST AND 2ND HALF IDENTICAL (all roms, are these OK?) */
+	ROM_LOAD("epr15031.bin", 0x000000, 0x200000, CRC(663a7fd2) SHA1(b4393a687225b075db21960d19a6ddd7a9d7d086) )
+	ROM_LOAD("epr15032.bin", 0x200000, 0x200000, CRC(cb709f3d) SHA1(3962c8b5907d1f8f611f58ddac693cc47364a79c) )
+ROM_END
+
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
     Super Visual Football
     protected via FD1149 317-0222
 */
@@ -2493,6 +3286,69 @@ ROM_START( jleague )
 ROM_END
 
 
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+    Title Fight (Multi-32)
+    not protected
+*/
+ROM_START( titlef )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x2( "epr15388.37", 0x000000, 0x40000, CRC(db1eefbd) SHA1(7059a1d5c9364d836c1d922071a108cbde661e0a) )
+	ROM_LOAD32_WORD_x2( "epr15389.40", 0x000002, 0x40000, CRC(da9f60a3) SHA1(87a7bea04e51e3c241871e83ff7322c6a07bd106) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "epr15384.31", 0x100000, 0x20000, CRC(0f7d208d) SHA1(5425120480f813210fae28951e8bfd5acb08ca53) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15381.3", 0x000000, 0x200000, CRC(162cc4d6) SHA1(2369d3d76ab5ef8f033aa45530ab957f0e5ff028) )
+	ROM_LOAD16_BYTE( "mpr15382.11", 0x000001, 0x200000, CRC(fd03a130) SHA1(040c36383ef5d8298af714958cd5b0a4c7556ae7) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15379.14", 0x000000, 0x200000, CRC(e5c74b11) SHA1(67e4460efe5dcd88ffc12024b255efc843e6a8b5) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15375.15", 0x000002, 0x200000, CRC(046a9b50) SHA1(2b4c53f2a0264835cb7197daa9b3461c212541e8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15371.10", 0x000004, 0x200000, CRC(999046c6) SHA1(37ce4e8aaf537b5366eacabaf36e4477b5624121) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15373.38", 0x000006, 0x200000, CRC(9b3294d9) SHA1(19542f14ce09753385a44098dfd1aaf331e7af0e) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15380.22", 0x800000, 0x200000, CRC(6ea0e58d) SHA1(1c4b761522157b0b9d086181ba6f6994879d8fdf) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15376.23", 0x800002, 0x200000, CRC(de3e05c5) SHA1(cac0d04ecd37e5836d246c0809bcfc11430df591) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15372.18", 0x800004, 0x200000, CRC(c187c36a) SHA1(bb55c2a768a43ef19a7847a4aa113523fee26c20) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15374.41", 0x800006, 0x200000, CRC(e026aab0) SHA1(75dfaef6d50c3d1d7f27aa5e44fcbc0ff2173c6f) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "mpr15385.1", 0x000000, 0x200000, CRC(5a9b0aa0) SHA1(d208aa165f9eea05e3b8c3f406ff44374e4f6887) )
+ROM_END
+
+/**************************************************************************************************************************
+    Title Fight (US)
+    not protected
+*/
+ROM_START( titlefu )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD_x4( "epr15386.37", 0x000000, 0x40000, CRC(e36e2516) SHA1(b6a73d6136ff8a13831b6db0fbc8a585f2acf254) )
+	ROM_LOAD32_WORD_x4( "epr15387.40", 0x000002, 0x40000, CRC(e63406d3) SHA1(cd105862b2267d1d3af588cda70e6e4c1cca1da2) )
+
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "epr15384.31", 0x100000, 0x20000, CRC(0f7d208d) SHA1(5425120480f813210fae28951e8bfd5acb08ca53) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15381.3", 0x000000, 0x200000, CRC(162cc4d6) SHA1(2369d3d76ab5ef8f033aa45530ab957f0e5ff028) )
+	ROM_LOAD16_BYTE( "mpr15382.11", 0x000001, 0x200000, CRC(fd03a130) SHA1(040c36383ef5d8298af714958cd5b0a4c7556ae7) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15379.14", 0x000000, 0x200000, CRC(e5c74b11) SHA1(67e4460efe5dcd88ffc12024b255efc843e6a8b5) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15375.15", 0x000002, 0x200000, CRC(046a9b50) SHA1(2b4c53f2a0264835cb7197daa9b3461c212541e8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15371.10", 0x000004, 0x200000, CRC(999046c6) SHA1(37ce4e8aaf537b5366eacabaf36e4477b5624121) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15373.38", 0x000006, 0x200000, CRC(9b3294d9) SHA1(19542f14ce09753385a44098dfd1aaf331e7af0e) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15380.22", 0x800000, 0x200000, CRC(6ea0e58d) SHA1(1c4b761522157b0b9d086181ba6f6994879d8fdf) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15376.23", 0x800002, 0x200000, CRC(de3e05c5) SHA1(cac0d04ecd37e5836d246c0809bcfc11430df591) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15372.18", 0x800004, 0x200000, CRC(c187c36a) SHA1(bb55c2a768a43ef19a7847a4aa113523fee26c20) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15374.41", 0x800006, 0x200000, CRC(e026aab0) SHA1(75dfaef6d50c3d1d7f27aa5e44fcbc0ff2173c6f) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "mpr15385.1", 0x000000, 0x200000, CRC(5a9b0aa0) SHA1(d208aa165f9eea05e3b8c3f406ff44374e4f6887) )
+ROM_END
+
+
 
 /*************************************
  *
@@ -2503,8 +3359,8 @@ ROM_END
 static void common_init(read16_handler custom_r, write16_handler custom_w, const UINT8 *default_eeprom)
 {
 	/* reset the custom handlers and other pointers */
-	custom_io_r = custom_r;
-	custom_io_w = custom_w;
+	custom_io_r[0] = custom_r;
+	custom_io_w[0] = custom_w;
 	system32_default_eeprom = default_eeprom;
 }
 
@@ -2564,7 +3420,7 @@ static DRIVER_INIT( brival )
 	common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
-	segas32_protram = auto_malloc (0x1000);
+	system32_protram = auto_malloc (0x1000);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20ba00, 0x20ba07, 0, 0, brival_protection_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, brival_protection_w);
 }
@@ -2622,6 +3478,12 @@ static DRIVER_INIT( ga2 )
 }
 
 
+static DRIVER_INIT( harddunk )
+{
+	common_init(extra_custom_io_r, NULL, NULL);
+}
+
+
 static DRIVER_INIT( holo )
 {
 	common_init(NULL, NULL, NULL);
@@ -2637,6 +3499,12 @@ static DRIVER_INIT( jpark )
 
 	pROM[0xC15A8/2] = 0xCD70;
 	pROM[0xC15AA/2] = 0xD8CD;
+}
+
+
+static DRIVER_INIT( orunners )
+{
+	common_init(analog_custom_io_r, orunners_custom_io_w, NULL);
 }
 
 
@@ -2678,6 +3546,13 @@ static DRIVER_INIT( radr )
 }
 
 
+static DRIVER_INIT( scross )
+{
+	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xb0, 0xbf, 0, 0, scross_bank_w);
+}
+
+
 static DRIVER_INIT( slipstrm )
 {
 	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
@@ -2711,6 +3586,12 @@ static DRIVER_INIT( svf )
 }
 
 
+static DRIVER_INIT( titlef )
+{
+	common_init(NULL, NULL, NULL);
+}
+
+
 
 /*************************************
  *
@@ -2718,39 +3599,38 @@ static DRIVER_INIT( svf )
  *
  *************************************/
 
-GAMEX(1992, arescue,  0,        segas32,     arescue,  arescue,  ROT0, "Sega",   "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, alien3,   0,        segas32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, arabfgt,  0,        segas32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, arabfgtj, arabfgt,  segas32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, brival,   0,        segas32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, brivalj,  brival,   segas32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, darkedge, 0,        segas32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1992, darkedgj, darkedge, segas32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1994, dbzvrvs,  0,        segas32,     dbzvrvs,  dbzvrvs,  ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-GAMEX(1991, f1en,     0,        segas32,     f1en,     f1en,     ROT0, "Sega",   "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, f1lap,    0,        segas32,     f1lap,    f1lap,    ROT0, "Sega",   "F1 Super Lap", GAME_NOT_WORKING )
-GAMEX(1992, ga2,      0,        segas32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, ga2u,     ga2,      segas32_v20, ga2u,     ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, ga2j,     ga2,      segas32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1992, holo,     0,        segas32,     holo,     holo,     ORIENTATION_FLIP_Y, "Sega",   "Holosseum (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, jpark,    0,        segas32,     jpark,    jpark,    ROT0, "Sega",   "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radm,     0,        segas32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radmu,    radm,     segas32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radr,     0,        segas32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, radru,    radr,     segas32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1995, slipstrm, 0,        segas32,     slipstrm, slipstrm, ROT0, "Capcom", "Slipstream", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX(1992, sonic,    0,        segas32,     sonic,    sonic,    ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1992, sonicp,   sonic,    segas32,     sonic,    sonicp,   ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, prototype)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, spidman,  0,        segas32,     spidman,  spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, spidmanu, spidman,  segas32,     spidmanu, spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, svf,      0,        segas32,     svf,      svf,      ROT0, "Sega",   "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, svs,	  svf,		segas32,     svf,	   svf,      ROT0, "Sega",   "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, jleague,  svf,      segas32,     svf,      svf,      ROT0, "Sega",   "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, arescue,  0,        system32,     arescue,  arescue,  ROT0, "Sega",   "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, alien3,   0,        system32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, arabfgt,  0,        system32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, arabfgtj, arabfgt,  system32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brival,   0,        system32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, brivalj,  brival,   system32,     brival,   brival,   ROT0, "Sega",   "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, darkedge, 0,        system32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, darkedgj, darkedge, system32,     darkedge, darkedge, ROT0, "Sega",   "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1994, dbzvrvs,  0,        system32,     dbzvrvs,  dbzvrvs,  ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
+GAMEX(1991, f1en,     0,        system32,     f1en,     f1en,     ROT0, "Sega",   "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, f1lap,    0,        system32,     f1lap,    f1lap,    ROT0, "Sega",   "F1 Super Lap", GAME_NOT_WORKING )
+GAMEX(1992, ga2,      0,        system32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2u,     ga2,      system32_v20, ga2u,     ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2j,     ga2,      system32_v20, ga2,      ga2,      ROT0, "Sega",   "Golden Axe: The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, holo,     0,        system32,     holo,     holo,     ORIENTATION_FLIP_Y, "Sega",   "Holosseum (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jpark,    0,        system32,     jpark,    jpark,    ROT0, "Sega",   "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radm,     0,        system32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radmu,    radm,     system32,     radm,     radm,     ROT0, "Sega",   "Rad Mobile (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radr,     0,        system32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radru,    radr,     system32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1995, slipstrm, 0,        system32,     slipstrm, slipstrm, ROT0, "Capcom", "Slipstream", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, sonic,    0,        system32,     sonic,    sonic,    ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, sonicp,   sonic,    system32,     sonic,    sonicp,   ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, prototype)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spidman,  0,        system32,     spidman,  spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spidmanu, spidman,  system32,     spidmanu, spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, svf,      0,        system32,     svf,      svf,      ROT0, "Sega",   "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, svs,	  svf,		system32,     svf,	    svf,      ROT0, "Sega",   "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jleague,  svf,      system32,     svf,      svf,      ROT0, "Sega",   "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 
-/*
-int control regs used in: alien3, f1en, jpark, slipstrm, sonic, svs
-
-radr - missing music
-
-sonic: opaque hack not working
-*/
+GAMEX(1994, harddunk, 0,        multi32,      harddunk, harddunk, ROT0, "Sega",   "Hard Dunk (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, harddunj, harddunk, multi32,      harddunk, harddunk, ROT0, "Sega",   "Hard Dunk (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, orunners, 0,        multi32,      orunners, orunners, ROT0, "Sega",   "OutRunners (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, scross,   0,        multi32,      scross,   scross,   ROT0, "Sega",   "Stadium Cross (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, titlef,   0,        multi32,      titlef,   titlef,   ROT0, "Sega",   "Title Fight (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, titlefu,  titlef,   multi32,      titlef,   titlef,   ROT0, "Sega",   "Title Fight (US)", GAME_IMPERFECT_GRAPHICS )

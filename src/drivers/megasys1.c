@@ -116,11 +116,6 @@ RAM         RW      0f0000-0f3fff       0e0000-0effff?      <
 
 ***************************************************************************/
 
-// This will fix tempo and samples in at least avsprit, 64street, astyanax
-// but will break at least one game: hachoo
-
-#define SOUND_HACK 1
-
 #include "driver.h"
 #include "megasys1.h"
 #include "vidhrdw/generic.h"
@@ -132,7 +127,7 @@ RAM         RW      0f0000-0f3fff       0e0000-0effff?      <
 /* Variables only used here: */
 
 static data16_t ip_select, ip_select_values[5];
-
+static UINT8 megasys1_ignore_oki_status = 0;	/* used in MACHINE_INIT */
 
 /* Variables defined in vidhrdw: */
 
@@ -155,6 +150,13 @@ WRITE16_HANDLER( megasys1_vregs_D_w );
 
 MACHINE_INIT( megasys1 )
 {
+	megasys1_ignore_oki_status = 1;	/* ignore oki status due 'protection' */
+	ip_select = 0;	/* reset protection */
+}
+
+MACHINE_INIT( megasys1_hachoo )
+{
+	megasys1_ignore_oki_status = 0;	/* strangely hachoo need real oki status */
 	ip_select = 0;	/* reset protection */
 }
 
@@ -474,22 +476,19 @@ static void megasys1_sound_irq(int irq)
 
 static READ16_HANDLER( oki_status_0_r )
 {
-#if SOUND_HACK
-	return 0;
-#else
-	return OKIM6295_status_0_lsb_r(offset,mem_mask);
-#endif
+	if (megasys1_ignore_oki_status == 1)
+		return 0;
+	else
+		return OKIM6295_status_0_lsb_r(offset,mem_mask);
 }
 
 static READ16_HANDLER( oki_status_1_r )
 {
-#if SOUND_HACK
-	return 0;
-#else
-	return OKIM6295_status_1_lsb_r(offset,mem_mask);
-#endif
+	if (megasys1_ignore_oki_status == 1)
+		return 0;
+	else
+		return OKIM6295_status_1_lsb_r(offset,mem_mask);
 }
-
 
 /***************************************************************************
                             [ Sound CPU - System A ]
@@ -702,6 +701,11 @@ static MACHINE_DRIVER_START( system_A_iganinju )
 	MDRV_IMPORT_FROM(system_A)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(interrupt_A_iganinju,INTERRUPT_NUM_A)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( system_A_hachoo )
+	MDRV_IMPORT_FROM(system_A)
+	MDRV_MACHINE_INIT(megasys1_hachoo)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( system_B )
@@ -3605,7 +3609,7 @@ GAME( 1988, tshingna, tshingen, system_A,          tshingen, phantasm, ROT0,   "
 GAME( 1988, iganinju, 0,        system_A_iganinju, iganinju, iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)" )
 GAME( 1989, astyanax, 0,        system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax" )
 GAME( 1989, lordofk,  astyanax, system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)" )
-GAMEX(1989, hachoo,   0,        system_A,          hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME( 1989, hachoo,   0,        system_A_hachoo,   hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!" )
 GAME( 1989, jitsupro, 0,        system_A,          jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
 GAME( 1989, plusalph, 0,        system_A,          plusalph, plusalph, ROT270, "Jaleco", "Plus Alpha" )
 GAME( 1989, stdragon, 0,        system_A,          stdragon, stdragon, ROT0,   "Jaleco", "Saint Dragon" )

@@ -53,6 +53,7 @@ CPUS+=M68000@
 CPUS+=M68010@
 CPUS+=M68EC020@
 CPUS+=M68020@
+CPUS+=M68040@
 CPUS+=T11@
 CPUS+=S2650@
 CPUS+=TMS34010@
@@ -535,7 +536,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
-	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o $(OBJ)/drivers/multi32.o \
+	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o \
 	$(OBJ)/vidhrdw/segas32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \

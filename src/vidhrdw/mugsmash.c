@@ -42,7 +42,6 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		int flipx = (attr & 0x0080)>>7;
 		int colour = (attr & 0x000f);
 
-
 		xpos += ((attr & 0x0020) >> 5) * 0x100;
 		ypos += ((attr & 0x0010) >> 4) * 0x100;
 
@@ -130,13 +129,13 @@ WRITE16_HANDLER (mugsmash_reg_w)
 	switch (offset)
 	{
 	case 0:
-		tilemap_set_scrollx(mugsmash_tilemap2,0, mugsmash_regs1[2]+4); // verify
+		tilemap_set_scrollx(mugsmash_tilemap2,0, mugsmash_regs1[2]+7);
 		break;
 	case 1:
 		tilemap_set_scrolly(mugsmash_tilemap2,0, mugsmash_regs1[3]+4);
 		break;
 	case 2:
-		tilemap_set_scrollx(mugsmash_tilemap1,0, mugsmash_regs1[0]+4); // verify
+		tilemap_set_scrollx(mugsmash_tilemap1,0, mugsmash_regs1[0]+3);
 		break;
 	case 3:
 		tilemap_set_scrolly(mugsmash_tilemap1,0, mugsmash_regs1[1]+4);

@@ -15,7 +15,7 @@ Year + Game         Game     PCB         Epoxy CPU    Notes
 ---------------------------------------------------------------------------
 88  Hard Head       KRB-14   60138-0083  S562008      Encryption + Protection
 88  Rough Ranger    K030087  ?           S562008
-89  Spark Man       ?        ?           ?            Not Working (Protection)
+89  Spark Man       KRB-16   60136-081   T568009      Not Working (Protection)
 90  Star Fighter    ?        ?           ?            Not Working
 91  Hard Head 2     ?        ?           T568009      Encryption + Protection
 92  Brick Zone      ?        ?           Yes          Not Working
@@ -2372,7 +2372,13 @@ ROM_END
 
                                 Spark Man
 
-Suna Electronics IND. CO., LTD 1989    Pinout = JAMMA
+Suna Electronics IND. CO., LTD 1989 KRB-16 60136-0081  Pinout = JAMMA
+
+Game uses a Custom Sealed processor labeled "SUNA T568009" and a z80 processor for sound
+
+Sound is a Yamaha YM3812 and a  AY-3-8910A
+
+24mhz crystal
 
 ***************************************************************************/
 

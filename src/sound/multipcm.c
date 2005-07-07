@@ -89,9 +89,7 @@ typedef struct MultiPCM_t
 	sound_stream * stream;
 
 	unsigned char registers[28][8];	// 8 registers per voice?
-	int type;			// chip type: 0=model1, 1=multi32
-	int bankL, bankR;
-	long banksize;
+	UINT32 bankL, bankR;
 
 	VoiceT Voices[28];
 	int curreg, curvoice;
@@ -248,9 +246,6 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 		mpcm->pantbl[i]=(long)( (255/sqrt(15)) * sqrt(i));
 	}
 
-	mpcm->type = intf->type;
-	mpcm->banksize = intf->banksize;
-
 	mpcm->curreg = mpcm->curvoice = 0;
 
 	mpcm->romptr = (signed char *)memory_region(intf->region);
@@ -310,8 +305,8 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 
 		sprintf(mname, "MultiPCM %d", sndindex);
 
-		state_save_register_int(mname, sndindex, "bankL", &mpcm->bankL);
-		state_save_register_int(mname, sndindex, "bankR", &mpcm->bankR);
+		state_save_register_UINT32(mname, sndindex, "bankL", &mpcm->bankL, 1);
+		state_save_register_UINT32(mname, sndindex, "bankR", &mpcm->bankR, 1);
 
 		for (v = 0; v < 28; v++)
 		{
@@ -421,26 +416,19 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 						// perform banking
 						if (st >= 0x100000)
 						{
-							if (cptr->type == 1)	// multiPCM
-							{
 /*                              logerror("MPCM: key on chip %d voice %d\n", chip, vnum);
-                                logerror("regs %02x %02x %02x %02x %02x %02x %02x %02x\n", cptr->registers[vnum][0],
-                                    cptr->registers[vnum][1],cptr->registers[vnum][2],cptr->registers[vnum][3],
-                                    cptr->registers[vnum][4],cptr->registers[vnum][5],
-                                    cptr->registers[vnum][6],cptr->registers[vnum][7]);*/
+                           logerror("regs %02x %02x %02x %02x %02x %02x %02x %02x\n", cptr->registers[vnum][0],
+                               cptr->registers[vnum][1],cptr->registers[vnum][2],cptr->registers[vnum][3],
+                               cptr->registers[vnum][4],cptr->registers[vnum][5],
+                               cptr->registers[vnum][6],cptr->registers[vnum][7]);*/
 
-								if (vptr->pan < 8)
-								{
-									st = (st & 0xfffff) + cptr->banksize * cptr->bankL;
-								}
-								else
-								{
-									st = (st & 0xfffff) + cptr->banksize * cptr->bankR;
-								}
-							}
-							else	// model 1
+							if (vptr->pan < 8)
 							{
-								st = (st & 0xfffff) + cptr->banksize * cptr->bankL;
+								st = (st & 0xfffff) + cptr->bankL;
+							}
+							else
+							{
+								st = (st & 0xfffff) + cptr->bankR;
 							}
 						}
 
@@ -535,44 +523,12 @@ WRITE8_HANDLER( MultiPCM_reg_1_w )
 	MultiPCM_reg_w(1, offset, data);
 }
 
-WRITE8_HANDLER( MultiPCM_bank_0_w )
+void multipcm_set_bank(int which, UINT32 leftoffs, UINT32 rightoffs)
 {
-	struct MultiPCM_t *mpcm = sndti_token(SOUND_MULTIPCM, 0);
-
-	if (mpcm->type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
-	{
-		mpcm->bankL = mpcm->bankR = (data&0x7);
-	}
-	else if (mpcm->type == MULTIPCM_MODE_MULTI32)	// multi32
-	{
-		mpcm->bankL = (data>>3)&0x7;
-		mpcm->bankR = data & 0x7;
-	}
-	else
-	{
-		mpcm->bankL = data&0x1f;
-	}
+	struct MultiPCM_t *mpcm = sndti_token(SOUND_MULTIPCM, which);
+	mpcm->bankL = leftoffs;
+	mpcm->bankR = rightoffs;
 }
-
-WRITE8_HANDLER( MultiPCM_bank_1_w )
-{
-	struct MultiPCM_t *mpcm = sndti_token(SOUND_MULTIPCM, 1);
-
-	if (mpcm->type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
-	{
-		mpcm->bankL = mpcm->bankR = (data&0x7);
-	}
-	else if (mpcm->type == MULTIPCM_MODE_MULTI32)	// multi32
-	{
-		mpcm->bankL = (data>>3)&0x7;
-		mpcm->bankR = data & 0x7;
-	}
-	else
-	{
-		mpcm->bankL = data&0x1f;
-	}
-}
-
 
 
 

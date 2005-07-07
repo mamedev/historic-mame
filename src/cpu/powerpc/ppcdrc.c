@@ -279,7 +279,6 @@ typedef struct {
 	UINT32 ibr;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
-	void (*exception)(int exception);
 	data8_t (*read8)(offs_t address);
 	data16_t (*read16)(offs_t address);
 	data32_t (*read32)(offs_t address);
@@ -682,12 +681,47 @@ INLINE UINT32 ppc_get_spr(int spr)
 	return 0;
 }
 
+static data8_t ppc_read8_translated(offs_t address);
+static data16_t ppc_read16_translated(offs_t address);
+static data32_t ppc_read32_translated(offs_t address);
+static data64_t ppc_read64_translated(offs_t address);
+static void ppc_write8_translated(offs_t address, data8_t data);
+static void ppc_write16_translated(offs_t address, data16_t data);
+static void ppc_write32_translated(offs_t address, data32_t data);
+static void ppc_write64_translated(offs_t address, data64_t data);
+
 INLINE void ppc_set_msr(UINT32 value)
 {
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
 
 	MSR = value;
+
+	if (ppc.is603 || ppc.is602)
+	{
+		if (!(MSR & MSR_DR))
+		{
+			ppc.read8 = program_read_byte_64be;
+			ppc.read16 = program_read_word_64be;
+			ppc.read32 = program_read_dword_64be;
+			ppc.read64 = program_read_qword_64be;
+			ppc.write8 = program_write_byte_64be;
+			ppc.write16 = program_write_word_64be;
+			ppc.write32 = program_write_dword_64be;
+			ppc.write64 = program_write_qword_64be;
+		}
+		else
+		{
+			ppc.read8 = ppc_read8_translated;
+			ppc.read16 = ppc_read16_translated;
+			ppc.read32 = ppc_read32_translated;
+			ppc.read64 = ppc_read64_translated;
+			ppc.write8 = ppc_write8_translated;
+			ppc.write16 = ppc_write16_translated;
+			ppc.write32 = ppc_write32_translated;
+			ppc.write64 = ppc_write64_translated;
+		}
+	}
 }
 
 INLINE UINT32 ppc_get_msr(void)
@@ -1341,26 +1375,6 @@ static UINT8 ppc_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-static offs_t ppc_dasm(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return ppc_dasm_one(buffer, pc, ROPCODE(pc));
-#else
-	sprintf(buffer, "$%08X", ROPCODE(pc));
-	return 4;
-#endif
-}
-
-static offs_t ppc_dasm64(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return ppc_dasm_one(buffer, pc, ROPCODE64(pc));
-#else
-	sprintf(buffer, "$%08X", (UINT32)ROPCODE64(pc));
-	return 4;
-#endif
-}
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -1621,6 +1635,9 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc603_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc603_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
+		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
+		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
@@ -1663,6 +1680,9 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc602_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc602_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
+		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
+		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC602"); break;

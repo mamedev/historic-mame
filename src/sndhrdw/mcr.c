@@ -342,16 +342,11 @@ void csdeluxe_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-ADDRESS_MAP_START( csdeluxe_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x007fff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x018000, 0x018007) AM_READ(pia_0_msb_r)
-	AM_RANGE(0x01c000, 0x01cfff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( csdeluxe_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x007fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x018000, 0x018007) AM_WRITE(pia_0_msb_w)
-	AM_RANGE(0x01c000, 0x01cfff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_START( csdeluxe_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(17) )
+	AM_RANGE(0x000000, 0x007fff) AM_ROM
+	AM_RANGE(0x018000, 0x018007) AM_READWRITE(pia_0_msb_r, pia_0_msb_w)
+	AM_RANGE(0x01c000, 0x01cfff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -368,7 +363,7 @@ struct pia6821_interface csdeluxe_pia_intf =
 MACHINE_DRIVER_START(chip_squeak_deluxe)
 	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(csdeluxe_readmem,csdeluxe_writemem)
+	MDRV_CPU_PROGRAM_MAP(csdeluxe_map,0)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("csd", DAC, 0)
@@ -429,16 +424,11 @@ void soundsgood_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-ADDRESS_MAP_START( soundsgood_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x060000, 0x060007) AM_READ(pia_1_msb_r)
-	AM_RANGE(0x070000, 0x070fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( soundsgood_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x060000, 0x060007) AM_WRITE(pia_1_msb_w)
-	AM_RANGE(0x070000, 0x070fff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_START( soundsgood_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(19) )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x060000, 0x060007) AM_READWRITE(pia_1_msb_r, pia_1_msb_w)
+	AM_RANGE(0x070000, 0x070fff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -458,7 +448,7 @@ struct pia6821_interface soundsgood_pia_intf =
 MACHINE_DRIVER_START(sounds_good)
 	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(soundsgood_readmem,soundsgood_writemem)
+	MDRV_CPU_PROGRAM_MAP(soundsgood_map,0)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("sg", DAC, 0)

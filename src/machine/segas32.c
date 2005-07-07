@@ -1,9 +1,8 @@
 /* Sega System 32 Protection related functions */
 
 #include "driver.h"
+#include "segas32.h"
 
-extern data16_t* segas32_workram;
-extern data16_t* segas32_protram;
 
 /******************************************************************************
  ******************************************************************************
@@ -69,8 +68,6 @@ void decrypt_ga2_protrom(void)
 	nec_v25_cpu_decrypt();
 }
 
-extern data8_t *ga2_dpram;
-
 
 WRITE16_HANDLER( ga2_dpram_w )
 {
@@ -127,23 +124,23 @@ WRITE16_HANDLER(sonic_level_load_protection)
 {
 	unsigned short level;
 //Perform write
-	segas32_workram[CLEARED_LEVELS / 2] = (data & ~mem_mask) | (segas32_workram[CLEARED_LEVELS / 2] & mem_mask);
+	system32_workram[CLEARED_LEVELS / 2] = (data & ~mem_mask) | (system32_workram[CLEARED_LEVELS / 2] & mem_mask);
 
 //Refresh current level
-		if (segas32_workram[CLEARED_LEVELS / 2] == 0)
+		if (system32_workram[CLEARED_LEVELS / 2] == 0)
 		{
 			level = 0x0007;
 		}
 		else
 		{
-			level =  *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (segas32_workram[CLEARED_LEVELS / 2] * 2) - 1);
-			level |= *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (segas32_workram[CLEARED_LEVELS / 2] * 2) - 2) << 8;
+			level =  *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (system32_workram[CLEARED_LEVELS / 2] * 2) - 1);
+			level |= *((memory_region(REGION_CPU1) + LEVEL_ORDER_ARRAY) + (system32_workram[CLEARED_LEVELS / 2] * 2) - 2) << 8;
 		}
-		segas32_workram[CURRENT_LEVEL / 2] = level;
+		system32_workram[CURRENT_LEVEL / 2] = level;
 
 //Reset level status
-		segas32_workram[CURRENT_LEVEL_STATUS / 2] = 0x0000;
-		segas32_workram[(CURRENT_LEVEL_STATUS + 2) / 2] = 0x0000;
+		system32_workram[CURRENT_LEVEL_STATUS / 2] = 0x0000;
+		system32_workram[(CURRENT_LEVEL_STATUS + 2) / 2] = 0x0000;
 }
 
 
@@ -170,7 +167,7 @@ READ16_HANDLER(brival_protection_r)
 		}
 	}
 
-	return segas32_workram[0xba00/2 + offset];
+	return system32_workram[0xba00/2 + offset];
 }
 
 WRITE16_HANDLER(brival_protection_w)
@@ -219,7 +216,7 @@ WRITE16_HANDLER(brival_protection_w)
 	memcpy(ret, &ROM[protAddress[curProtType][0]], 16);
 	ret[16] = '\0';
 
-	memcpy(&segas32_protram[protAddress[curProtType][1]], ret, 16);
+	memcpy(&system32_protram[protAddress[curProtType][1]], ret, 16);
 }
 
 

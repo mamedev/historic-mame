@@ -179,6 +179,12 @@ void m68k_set_encrypted_opcode_range(int cpunum, offs_t start, offs_t end);
 
 #endif // A68K2
 
+#if HAS_M68040
+#define M68K_EMULATE_040			OPT_ON
+#else
+#define M68K_EMULATE_040			OPT_OFF
+#endif
+
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */
 /* ======================================================================== */

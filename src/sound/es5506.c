@@ -1555,13 +1555,13 @@ WRITE16_HANDLER( ES5506_data_1_word_w )
 
 void ES5506_voice_bank_0_w(int voice, int bank)
 {
-	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 0);
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5506, 0);
 	chip->voice[voice].exbank=bank;
 }
 
 void ES5506_voice_bank_1_w(int voice, int bank)
 {
-	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 1);
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5506, 1);
 	chip->voice[voice].exbank=bank;
 }
 

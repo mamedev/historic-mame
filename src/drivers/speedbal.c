@@ -20,7 +20,7 @@ in:
 30  IN2  JOY 2 STATUS & TILT
 
 out:
-40  ????
+40  coin counters
 50  ????  maybe VSYNC ????
 
  ======================================================================
@@ -33,13 +33,16 @@ f000-dfff RAM
 out:
 00  YM3812 control
 01  YM3812 data
-20  ??
+40  ??
+80  ??
+82  ??
+c1  ??
 
  ======================================================================
 
-  Colors :   2 bits for foreground characters =  4 colors * 16 palettes
-         4 bits for background tiles      = 16 colors * 16 palettes
-         4 bits for sprites        = 16 colors * 16 palettes
+  Colors : 2 bits for foreground characters =  4 colors * 16 palettes
+           4 bits for background tiles      = 16 colors * 16 palettes
+           4 bits for sprites               = 16 colors * 16 palettes
 
 ***************************************************************************/
 
@@ -48,88 +51,56 @@ out:
 #include "sound/3812intf.h"
 
 
-unsigned char *speedbal_foreground_videoram;
-unsigned char *speedbal_background_videoram;
-unsigned char *speedbal_sprites_dataram;
-
-size_t speedbal_foreground_videoram_size;
-size_t speedbal_background_videoram_size;
-size_t speedbal_sprites_dataram_size;
+extern data8_t *speedbal_background_videoram;
+extern data8_t *speedbal_foreground_videoram;
 
 VIDEO_START( speedbal );
 VIDEO_UPDATE( speedbal );
-READ8_HANDLER( speedbal_foreground_videoram_r );
 WRITE8_HANDLER( speedbal_foreground_videoram_w );
-READ8_HANDLER( speedbal_background_videoram_r );
 WRITE8_HANDLER( speedbal_background_videoram_w );
 
-
-unsigned char *speedbal_sharedram;
-
-READ8_HANDLER( speedbal_sharedram_r )
+static WRITE8_HANDLER( speedbal_coincounter_w )
 {
-//  if (offset==0x0) speedbal_sharedram[offset]+=1;
-  return speedbal_sharedram[offset];
+	coin_counter_w(0, data & 0x80);
+	coin_counter_w(1, data & 0x40);
+	flip_screen_set(data & 8); // also changes data & 0x10 at the same time too (flipx and flipy?)
+	/* unknown: (data & 0x10) and (data & 4) */
 }
 
-
-WRITE8_HANDLER( speedbal_sharedram_w )
-{
-    speedbal_sharedram[offset] = data;
-}
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdbff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xdc00, 0xdfff) AM_READ(speedbal_sharedram_r)  // shared with SOUND
-	AM_RANGE(0xe000, 0xe1ff) AM_READ(speedbal_background_videoram_r)
-	AM_RANGE(0xe800, 0xefff) AM_READ(speedbal_foreground_videoram_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( main_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdbff) AM_ROM
+	AM_RANGE(0xdc00, 0xdfff) AM_RAM AM_SHARE(1) // shared with SOUND
+	AM_RANGE(0xe000, 0xe1ff) AM_RAM AM_WRITE(speedbal_background_videoram_w) AM_BASE(&speedbal_background_videoram)
+	AM_RANGE(0xe800, 0xefff) AM_RAM AM_WRITE(speedbal_foreground_videoram_w) AM_BASE(&speedbal_foreground_videoram)
+	AM_RANGE(0xf000, 0xf5ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf600, 0xfeff) AM_RAM
+	AM_RANGE(0xff00, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdbff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(speedbal_sharedram_w) AM_BASE(&speedbal_sharedram)  // shared with SOUND
-	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(speedbal_background_videoram_w) AM_BASE(&speedbal_background_videoram) AM_SIZE(&speedbal_background_videoram_size)
-	AM_RANGE(0xe800, 0xefff) AM_WRITE(speedbal_foreground_videoram_w) AM_BASE(&speedbal_foreground_videoram) AM_SIZE(&speedbal_foreground_videoram_size)
-	AM_RANGE(0xf000, 0xf5ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
-	AM_RANGE(0xf600, 0xfeff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xff00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&speedbal_sprites_dataram) AM_SIZE(&speedbal_sprites_dataram_size)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xd000, 0xdbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xdc00, 0xdfff) AM_READ(speedbal_sharedram_r) // shared with MAIN CPU
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xd000, 0xdbff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(speedbal_sharedram_w) // shared with MAIN CPU
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+static ADDRESS_MAP_START( main_cpu_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_1_r)
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_2_r)
 	AM_RANGE(0x30, 0x30) AM_READ(input_port_3_r)
+	AM_RANGE(0x40, 0x40) AM_WRITE(speedbal_coincounter_w)
+	AM_RANGE(0x50, 0x50) AM_WRITENOP
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
+static ADDRESS_MAP_START( sound_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xd000, 0xdbff) AM_RAM
+	AM_RANGE(0xdc00, 0xdfff) AM_RAM AM_SHARE(1) // shared with MAIN CPU
+	AM_RANGE(0xf000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+static ADDRESS_MAP_START( sound_cpu_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITENOP
+	AM_RANGE(0x80, 0x80) AM_WRITENOP
+	AM_RANGE(0x82, 0x82) AM_WRITENOP
+	AM_RANGE(0xc1, 0xc1) AM_WRITENOP
 ADDRESS_MAP_END
-
 
 
 INPUT_PORTS_START( speedbal )
@@ -254,13 +225,13 @@ static MACHINE_DRIVER_START( speedbal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,0)
+	MDRV_CPU_PROGRAM_MAP(main_cpu_map,0)
+	MDRV_CPU_IO_MAP(main_cpu_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 2660000)	/* 2.66 MHz ???  Maybe yes */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_cpu_map,0)
+	MDRV_CPU_IO_MAP(sound_cpu_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -308,21 +279,10 @@ ROM_START( speedbal )
 	ROM_LOAD( "sb8.bin",  0x10000, 0x08000, CRC(d2bfbdb6) SHA1(b552b055450f438729c83337f561d05b6518ae75) )
 	ROM_LOAD( "sb4.bin",  0x18000, 0x08000, CRC(1d23a130) SHA1(aabf7c46f9299ffb8b8ca92839622d000a470a0b) )
 
-	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "sb6.bin",  0x00000, 0x08000, CRC(0e2506eb) SHA1(56f779266b977819063c475b84ca246fc6d8d6a7) )    /* sprites */
-	ROM_LOAD( "sb7.bin",  0x08000, 0x08000, CRC(9f1b33d1) SHA1(1f8be8f8e6a2ee99a7dafeead142ccc629fa792d) )
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_INVERT | ROMREGION_DISPOSE )
+	ROM_LOAD( "sb7.bin",  0x00000, 0x08000, CRC(9f1b33d1) SHA1(1f8be8f8e6a2ee99a7dafeead142ccc629fa792d) )   /* sprites */
+	ROM_LOAD( "sb6.bin",  0x08000, 0x08000, CRC(0e2506eb) SHA1(56f779266b977819063c475b84ca246fc6d8d6a7) )
 ROM_END
 
 
-static DRIVER_INIT( speedbal )
-{
-	int i;
-
-	/* invert the graphics bits on the sprites */
-	for (i = 0; i < memory_region_length(REGION_GFX3); i++)
-		memory_region(REGION_GFX3)[i] ^= 0xff;
-}
-
-
-
-GAME( 1987, speedbal, 0, speedbal, speedbal, speedbal, ROT270, "Tecfri", "Speed Ball" )
+GAME( 1987, speedbal, 0, speedbal, speedbal, 0, ROT270, "Tecfri", "Speed Ball" )

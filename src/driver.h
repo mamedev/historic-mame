@@ -599,6 +599,15 @@ extern const struct GameDriver *drivers[];
 
 ***************************************************************************/
 
+/* ensure that TRUE/FALSE are defined */
+#ifndef TRUE
+#define TRUE    1
+#endif
+
+#ifndef FALSE
+#define FALSE   0
+#endif
+
 /* Use to prevent warnings from GCC about overly-long integer constants. */
 #ifdef __GNUC__
 #define U64(val) val##ULL

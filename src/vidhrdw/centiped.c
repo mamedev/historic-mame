@@ -406,7 +406,7 @@ VIDEO_UPDATE( centiped )
 		int x = spriteram[offs + 0x20];
 		int y = 240 - spriteram[offs + 0x10];
 
-		drawgfx(bitmap, Machine->gfx[1], code, color, centiped_flipscreen ^ flipx, flipy, x, y,
+		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				&spriteclip, TRANSPARENCY_PENS, penmask[color & 0x3f]);
 	}
 }

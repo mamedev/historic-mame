@@ -1388,7 +1388,7 @@ static void goldnaxe_i8751_sim(void)
 	}
 
 	/* read inputs */
-	workram[0x2cd0/2] = (readinputport(1) << 8) | readinputport(2);
+	workram[0x2cd0/2] = (readinputport(1) << 8) | readinputport(3);
 	workram[0x2c96/2] = readinputport(0) << 8;
 }
 
@@ -1411,7 +1411,7 @@ static void tturf_i8751_sim(void)
 	/* read inputs */
 	workram[0x01e6/2] = readinputport(0) << 8;
 	workram[0x01e8/2] = readinputport(1) << 8;
-	workram[0x01ea/2] = readinputport(2) << 8;
+	workram[0x01ea/2] = readinputport(3) << 8;
 }
 
 

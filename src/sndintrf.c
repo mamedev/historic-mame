@@ -399,7 +399,7 @@ const struct
 	{ SOUND_VRENDER0, vrender0_get_info },
 #endif
 #if (HAS_VOTRAX)
-	{ SOUND_VORTRAX, votrax_get_info },
+	{ SOUND_VOTRAX, votrax_get_info },
 #endif
 #if (HAS_ES8712)
 	{ SOUND_ES8712, es8712_get_info },

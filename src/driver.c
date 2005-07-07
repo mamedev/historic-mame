@@ -4123,6 +4123,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( xmen2p )	/* GX065 (c) 1992 (World) */
 	DRIVER( xmen2pj )	/* GX065 (c) 1992 (Japan) */
 	DRIVER( xmen6p )	/* GX065 (c) 1992 */
+	DRIVER( xmen6pu )	/* GX065 (c) 1992 */
 	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
 	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
 	DRIVER( asterix )	/* GX068 (c) 1992 (World) */
@@ -6080,6 +6081,7 @@ Other Sun games
 	DRIVER( lastfero )	/* (c) */
 	DRIVER( lastforg )	/* (c) */
 	DRIVER( toride2g )	/* (c) 1994 */
+	DRIVER( gunmast )	/* (c) 1994 */
 	DRIVER( daitorid )	/* (c) */
 	DRIVER( dokyusei )	/* (c) 1995 Make Software / Elf / Media Trading */
 	DRIVER( dokyusp )	/* (c) 1995 Make Software / Elf / Media Trading */
@@ -6576,7 +6578,8 @@ Other Sun games
 	DRIVER( yujan )		/* (C) 1999 Yubis */
 	DRIVER( onetwo )	/* (c) 1997 Barko */
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
-	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
+	DRIVER( pchmp95 )	/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
+	DRIVER( pchmp95v )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */
 	DRIVER( tictac )	/* (c) 198? Merit */

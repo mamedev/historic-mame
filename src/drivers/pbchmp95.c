@@ -132,8 +132,27 @@ static MACHINE_DRIVER_START( pbchmp95 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+/* this set has (c)1992 Sega / Vic Tokai in the roms? */
+ROM_START( pchmp95 )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "rom.u5", 0x00000, 0x08000, CRC(348fccb8) SHA1(947defd86c4a597fbfb9327eec4903aa779b3788)  )
+	ROM_CONTINUE ( 0x10000, 0x18000)
 
-ROM_START( pbchmp95 )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_LOAD( "rom.u3", 0x00000, 0x20000,  CRC(7007ced4) SHA1(6a0aac3ff9a4d5360c8ba1142f010add1b430ada)  )
+
+	ROM_REGION( 0x40000, REGION_GFX2, 0 )
+	ROM_LOAD( "rom.a1", 0x00000, 0x40000,  CRC(512300a5) SHA1(1e9ba58d1ddbfb8276c68f6d5c3591e6b77abf21)  )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "rom.s6", 0x00000, 0x08000, CRC(82460b82) SHA1(d85a9d77edaa67dfab8ff6ac4cb6273f0904b3c0)  )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( " rom.v10", 0x00000, 0x40000, CRC(62e42371) SHA1(5042abc2176d0c35fd6b698eca4145f93b0a3944) )
+ROM_END
+
+/* no sega logo? a bootleg? */
+ROM_START( pchmp95v )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "3.bin", 0x00000, 0x08000, CRC(e881aa05) SHA1(10d259396cac4b9a1b72c262c11ffa5efbdac433)  )
 	ROM_CONTINUE ( 0x10000, 0x18000)
@@ -152,4 +171,5 @@ ROM_START( pbchmp95 )
 ROM_END
 
 
-GAMEX( 1995, pbchmp95, 0, pbchmp95, pbchmp95, 0, ROT0, "Veltmeijer Automaten", "Pinball Champ '95", GAME_NOT_WORKING )
+GAMEX( 1992, pchmp95,  0 ,      pbchmp95, pbchmp95, 0, ROT0, "Sega / Vic Tokai / Excellent Systems", "Pinball Champ '95(?) (Excellent Systems)", GAME_NOT_WORKING ) // title not known
+GAMEX( 1995, pchmp95v, pchmp95, pbchmp95, pbchmp95, 0, ROT0, "Veltmeijer Automaten", "Pinball Champ '95 (Veltmeijer Automaten, bootleg?)", GAME_NOT_WORKING )

@@ -139,6 +139,23 @@ void m68ec020_get_info(UINT32 state, union cpuinfo *info);
 void m68020_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
+/****************************************************************************
+ * M68040 section
+ ****************************************************************************/
+#if HAS_M68040
+#define MC68040_IRQ_1					MC68000_IRQ_1
+#define MC68040_IRQ_2					MC68000_IRQ_2
+#define MC68040_IRQ_3					MC68000_IRQ_3
+#define MC68040_IRQ_4					MC68000_IRQ_4
+#define MC68040_IRQ_5					MC68000_IRQ_5
+#define MC68040_IRQ_6					MC68000_IRQ_6
+#define MC68040_IRQ_7					MC68000_IRQ_7
+#define MC68040_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
+#define MC68040_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
+
+void m68040_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
 // C Core header
 #include "m68kmame.h"
 

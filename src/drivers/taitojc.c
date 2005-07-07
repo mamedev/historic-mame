@@ -355,17 +355,20 @@ WRITE16_HANDLER(f3_volume_w);
 WRITE16_HANDLER(f3_es5505_bank_w);
 void f3_68681_reset(void);
 
-data32_t *jc_unknown_ram;
-data32_t *jc_unknown_ram2;
-data32_t *jc_unknown_ram3;
-data32_t *jc_unknown_ram4;
-static int taitojc_ramgfx;
-data32_t *jc_weirdram;
+static int taitojc_gfx_index;
 
-static struct GfxLayout jc_ram_layout =
+static data8_t *taitojc_dirty_map;
+static data32_t *taitojc_char_ram;
+static data32_t *taitojc_tile_ram;
+static int taitojc_char_dirty = 1;
+static struct tilemap *taitojc_tilemap;
+
+#define TAITOJC_NUM_TILES		0x180
+
+static struct GfxLayout taitojc_char_layout =
 {
 	16,16,
-	0x2000,
+	TAITOJC_NUM_TILES,
 	4,
 	{ 0,1,2,3 },
 	{ 24,28,16,20,8,12,0,4, 56,60,48,52,40,44,32,36 },
@@ -373,150 +376,144 @@ static struct GfxLayout jc_ram_layout =
 	16*64
 };
 
+static void taitojc_tile_info(int tile_index)
+{
+	UINT32 val = taitojc_tile_ram[tile_index];
+	int color = 0;
+	int tile = (val >> 2) & 0x7f;
+	SET_TILE_INFO(taitojc_gfx_index, tile, color, 0);
+}
 
 VIDEO_START( taitojc )
 {
-	/* if in doubt steal code from other drivers ;-) */
-	int gfx_index=0;
-
-	/* allocate RAM for characters */
-//  jc_unknown_ram = auto_malloc(0x00100000);
-
  	/* find first empty slot to decode gfx */
-	for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
-		if (Machine->gfx[gfx_index] == 0)
+	for (taitojc_gfx_index = 0; taitojc_gfx_index < MAX_GFX_ELEMENTS; taitojc_gfx_index++)
+		if (Machine->gfx[taitojc_gfx_index] == 0)
 			break;
 
-	if (gfx_index == MAX_GFX_ELEMENTS)
+	if (taitojc_gfx_index == MAX_GFX_ELEMENTS)
 		return 1;
 
+	taitojc_tilemap = tilemap_create(taitojc_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64, 64);
+	taitojc_dirty_map = auto_malloc(TAITOJC_NUM_TILES);
+
+	taitojc_char_ram = auto_malloc(0x4000);
+	taitojc_tile_ram = auto_malloc(0x4000);
+
+	memset(taitojc_char_ram, 0, 0x4000);
+	memset(taitojc_tile_ram, 0, 0x4000);
+
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[gfx_index] = decodegfx((UINT8 *)jc_unknown_ram,&jc_ram_layout); // can't use RGN_FRAC ?
-		if (!Machine->gfx[gfx_index])
-			return 1;
+	Machine->gfx[taitojc_gfx_index] = decodegfx((UINT8 *)&taitojc_char_ram, &taitojc_char_layout);
+	if (!Machine->gfx[taitojc_gfx_index])
+		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = 1;	// is this correct ?
-	taitojc_ramgfx = gfx_index;
-
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[taitojc_gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[taitojc_gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[taitojc_gfx_index]->colortable = Machine->pens;
+		Machine->gfx[taitojc_gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
 	return 0;
-
 }
+
+static void taitojc_tile_update(void)
+{
+	int i;
+	if (taitojc_char_dirty) {
+		for (i=0; i < TAITOJC_NUM_TILES; i++) {
+			if (taitojc_dirty_map[i]) {
+				taitojc_dirty_map[i] = 0;
+				decodechar(Machine->gfx[taitojc_gfx_index], i, (UINT8 *)taitojc_char_ram, &taitojc_char_layout);
+			}
+		}
+		tilemap_mark_all_tiles_dirty(taitojc_tilemap);
+		taitojc_char_dirty = 0;
+	}
+}
+
+static READ32_HANDLER(taitojc_tile_r)
+{
+	return taitojc_tile_ram[offset];
+}
+
+static READ32_HANDLER(taitojc_char_r)
+{
+	return taitojc_char_ram[offset];
+}
+
+static WRITE32_HANDLER(taitojc_tile_w)
+{
+	COMBINE_DATA(taitojc_tile_ram + offset);
+	tilemap_mark_tile_dirty(taitojc_tilemap, offset);
+}
+
+static WRITE32_HANDLER(taitojc_char_w)
+{
+	COMBINE_DATA(taitojc_char_ram + offset);
+	taitojc_dirty_map[offset/32] = 1;
+	taitojc_char_dirty = 1;
+}
+
+
 VIDEO_UPDATE( taitojc )
 {
-	if ( code_pressed_memory(KEYCODE_M) )
-	{
-		{
-			FILE *fp;
-
-			fp=fopen("jc_unknown_ram", "w+b");
-			if (fp)
-			{
-				fwrite(jc_unknown_ram, 0x0100000, 1, fp);
-				fclose(fp);
-			}
-		}
-		{
-			FILE *fp;
-
-			fp=fopen("jc_unknown_ram2", "w+b");
-			if (fp)
-			{
-				fwrite(jc_unknown_ram2, 0x010000, 1, fp);
-				fclose(fp);
-			}
-		}
-		{
-			FILE *fp;
-
-			fp=fopen("jc_unknown_ram3", "w+b");
-			if (fp)
-			{
-				fwrite(jc_unknown_ram3, 0x0100000, 1, fp);
-				fclose(fp);
-			}
-		}
-		{
-			FILE *fp;
-
-			fp=fopen("jc_unknown_ram4", "w+b");
-			if (fp)
-			{
-				fwrite(jc_unknown_ram4, 0x02000, 1, fp);
-				fclose(fp);
-			}
-		}
-
-	}
-
-	/* just decode all the character ram, not optimized, not fast, but for now who gives a damn? */
-	{
-		int numchar;
-		for (numchar = 0; numchar < 0x2000;numchar++)
-				decodechar(Machine->gfx[taitojc_ramgfx],numchar,
-					(UINT8 *)jc_unknown_ram,&jc_ram_layout);
-	}
-
-	{
-		int x,y;
-		const struct GfxElement *gfx = Machine->gfx[0];
-		int gfx_shift = 2;
-
-		for (y = 0; y < 64 ; y++) {
-			for (x = 0; x < 64 ; x++) {
-
-				UINT32 data;
-				int tileno;
-
-				data = jc_unknown_ram[((0xf8000)/4) + x + (y*64)];
-
-				tileno = (data>>gfx_shift) &0x7f;
-				tileno += 0x1f80;
-
-				drawgfx(bitmap,gfx,tileno,0,0,0,x*16,y*16,cliprect,TRANSPARENCY_PEN,0);
-
-			}
-
-		}
-
-
-	}
-
-
-
+	taitojc_tile_update();
+	tilemap_draw(bitmap, cliprect, taitojc_tilemap, 0,0);
 }
 
-READ32_HANDLER ( jc_unknown_r )
+data32_t jc_unk4_data = 0;
+READ32_HANDLER ( jc_unknown4_r )
 {
-	return 0xffffffff;
-//  return mame_rand() ^ (mame_rand()<<16);
+	return jc_unk4_data | 0x02000000;		/* 0x2000000 enables memory test. Test switch ? */
 }
 
-READ32_HANDLER ( jc_unk2_r )
+WRITE32_HANDLER ( jc_unknown4_w )
+{
+	if(data & 0x10000000)
+		jc_unk4_data = 0x01000000;
+	else
+		jc_unk4_data = 0;
+}
+
+READ32_HANDLER(jc_unknown3_r)
 {
 	return 0xffffffff;
 }
 
-static ADDRESS_MAP_START( taitojc_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x04000000, 0x040fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x05900000, 0x0590ffff) AM_READ(MRA32_RAM) AM_BASE(&jc_weirdram)
-//  AM_RANGE(0x05900004, 0x05900007) AM_READ(jc_unknown_r) // ?
-	AM_RANGE(0x06400000, 0x0640ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x06600000, 0x06600003) AM_READ(jc_unk2_r)
-	AM_RANGE(0x08000000, 0x080fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x10000000, 0x10001fff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
+static int jc_unk2_regs[4] = { 0xff, 0, 0x1, 0 };
+static data32_t jc_unk2_reg = 0;
+READ32_HANDLER(jc_unknown2_r)
+{
+	jc_unk2_reg++;
+	return jc_unk2_regs[jc_unk2_reg & 0x3];
+}
 
-static ADDRESS_MAP_START( taitojc_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x04000000, 0x040fffff) AM_WRITE(MWA32_RAM) AM_BASE(&jc_unknown_ram)// jc_unknown_ram contains characters
-	AM_RANGE(0x05900000, 0x0590ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x06400000, 0x0640ffff) AM_WRITE(MWA32_RAM) AM_BASE(&jc_unknown_ram2)
-	AM_RANGE(0x06600000, 0x06600003) AM_WRITE(MWA32_NOP) // ?
-	AM_RANGE(0x08000000, 0x080fffff) AM_WRITE(MWA32_RAM) AM_BASE(&jc_unknown_ram3)
-	AM_RANGE(0x10000000, 0x10001fff) AM_WRITE(MWA32_RAM) AM_BASE(&jc_unknown_ram4)
+READ32_HANDLER(jc_unknown1_r)
+{
+	return 0;
+}
+
+static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32)
+	AM_RANGE(0x00000000, 0x001fffff) AM_ROM
+	AM_RANGE(0x04000000, 0x040f7fff) AM_RAM
+	AM_RANGE(0x040f8000, 0x040fbfff) AM_READWRITE(taitojc_tile_r, taitojc_tile_w)
+	AM_RANGE(0x040fc000, 0x040fefff) AM_READWRITE(taitojc_char_r, taitojc_char_w)
+	AM_RANGE(0x040ff000, 0x040fffff) AM_RAM
+	AM_RANGE(0x05800000, 0x05801fff) AM_READ(jc_unknown1_r)
+	AM_RANGE(0x05900000, 0x05900003) AM_READ(jc_unknown2_r)
+	AM_RANGE(0x05900004, 0x05900007) AM_READ(jc_unknown3_r)
+	AM_RANGE(0x06400000, 0x0640ffff) AM_RAM
+	AM_RANGE(0x06600000, 0x06600003) AM_NOP
+	AM_RANGE(0x06600004, 0x06600007) AM_READ(jc_unknown4_r)
+	AM_RANGE(0x0660004c, 0x0660004f) AM_WRITE(jc_unknown4_w)
+	AM_RANGE(0x08000000, 0x080fffff) AM_RAM
+	AM_RANGE(0x10000000, 0x10001fff) AM_RAM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -542,6 +539,12 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc7ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hc11_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x8000, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0)
+ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( taitojc )
 INPUT_PORTS_END
@@ -575,7 +578,7 @@ static MACHINE_INIT( jc )
 
 	// Code assumes RAM at 05800000 is initalized to all FF, but then tests it
 	// like normal RAM later.  Weird.
-	memset(jc_weirdram, 0xff, 0xffff);
+	//memset(jc_weirdram, 0xff, 0xffff);
 }
 
 static struct ES5505interface es5505_interface =
@@ -585,8 +588,8 @@ static struct ES5505interface es5505_interface =
 };
 
 static MACHINE_DRIVER_START( taitojc )
-	MDRV_CPU_ADD(M68020, 25000000) // 68040 !!!
-	MDRV_CPU_PROGRAM_MAP(taitojc_readmem,taitojc_writemem)
+	MDRV_CPU_ADD(M68040, 25000000)
+	MDRV_CPU_PROGRAM_MAP(taitojc_map, 0)
 //  MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_MACHINE_INIT(jc)
@@ -595,14 +598,17 @@ static MACHINE_DRIVER_START( taitojc )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_CPU_ADD(MC68HC11, 4000000)
+	MDRV_CPU_PROGRAM_MAP(hc11_map, 0)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*16, 64*16)
-	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 32*16-1)
+	MDRV_SCREEN_SIZE(64*16, 48*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 24*16-1)
 	MDRV_PALETTE_LENGTH(0x200)
 
 	MDRV_VIDEO_START(taitojc)

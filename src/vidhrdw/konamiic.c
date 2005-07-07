@@ -3422,7 +3422,7 @@ if (code_pressed(KEYCODE_D))
 static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
-static data16_t *K053247_ram=0;
+data16_t *K053247_ram=0;
 static struct GfxElement *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053246_OBJCHA_line;

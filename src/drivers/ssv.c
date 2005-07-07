@@ -27,53 +27,116 @@ Main Board  ROM Board   Year + Game                                 By
 STA-0001    STS-0001    93  Super Real Mahjong PIV                  Seta
 STA-0001    STS-0001    93  Dramatic Adventure Quiz Keith & Lucy    Visco
 STA-0001    SAM-5127    93  Survival Arts                           Sammy
-STA-0001    SAM-5127    93  DynaGears                               Sammy
+STA-0001    SAM-5127    93  Dyna Gears                              Sammy
 STA-0001B   VISCO-001B  94  Drift Out '94                           Visco
 STA-0001B   GOLF ROM    94  Eagle Shot Golf                         Sammy
 STA-0001B   ?           94  Twin Eagle II - The Rescue Mission      Seta
+STA-0001B   VISCO       95  Mobil Suit Gundam Final Shooting (1)    Banpresto
 STA-0001B   P1-102A     95  Mahjong Hyper Reaction                  Sammy
 ?           ?           95  Ultra X Weapons / Ultra Keibitai        Banpresto + Tsuburaya Prod.
 STA-0001B   VISCO-JJ1   96  Lovely Pop Mahjong Jan Jan Shimasyo     Visco
 STA-0001B   VISCO-001B  96  Storm Blade                             Visco
 STA-0001B   P1-105A     96? Meosis Magic                            Sammy
-STA-0001B   ?           97  Joryuu Syougi Kyoushitsu (1)            Visco
+STA-0001B   ?           97  Joryuu Syougi Kyoushitsu (2)            Visco
 STA-0001B   VISCO-JJ1   97  Koi Koi Shimasyo 2                      Visco
 STA-0001B   P1-112A     97  Mahjong Hyper Reaction 2                Sammy
 STA-0001B   ?           97  Monster Slider                          Visco / Datt
 STA-0001    ?           97  Super Real Mahjong P7                   Seta
 STA-0001B   ?           98  Gourmet Battle Quiz Ryorioh CooKing     Visco
 STA-0001B   P1-112C     98  Pachinko Sexy Reaction                  Sammy
+STA-0001B   B1-001A     99  Pachinko Sexy Reaction 2                Sammy
 STA-0001B   P1-112C     99  Change Air Blade                        Visco
 STA-0001B   SSV_SUB     00  Vasara                                  Visco
 STA-0001B   SSV_SUB     01  Vasara 2                                Visco
 -----------------------------------------------------------------------------------
 
-(1) Uses NEC V810 CPU as sub cpu
+(1) Uses ST-0009 & ST-0020 & Light Gun
+(2) Uses NEC V810 CPU as sub cpu
 
+SSV Hardware Overview
+Sammy/Seta/Visco, 1993-2001
 
-Games not yet dumped:
-                        ?   Kidou Senshi Gundam Final Shooting      Visco / Banpresto
+SSV was a joint venture between "S"ammy, "S"eta and "V"isco to produce a high quality 32-bit
+RISC-based hardware platform.
 
+The SSV main board contains all of the CPUs, RAM, custom ICs and sound chips. The lower PCB plugs
+into 4x 64-pin connectors and contains the game software and any additional game-specific connectors
+for controllers etc. The SSV games can be swapped by simply exchanging the lower (game) PCB onto any
+SSV main board. There is an older main board STA-0001 which is not compatible with _some_ of the
+newer games. The actual PCB will plug in, but the games will not boot up, instead displaying some
+kind of debug screen full of numbers. This is known to occur on Vasara and Vasara 2 but may occur
+with other games also. AFAIK, the actual PCBs look identical!
 
-STA-0001 & STA-0001B should be fully interchangable, its reported that STA-0001 runs at
-12mhz whereas STA-0001B runs at 16.
+PCB Layouts
+-----------
+
+Main Board (common to all SSV-based games)
+
+STA-0001B SYSTEM SSV
+|---------------------------------------------------------|
+| 2066   VOL                                              |
+|TA8210                    |--------|      74ALS245 x6    |
+|      TL072 |--------|    |        |                     |
+|H           |ENSONIC |    | ST0007 |                 JP1 |
+|      TL072 |ES5506  |    |        |   |--------|JP2     |
+|            |OTTOR2  |    |--------|   |        |74ALS74 |
+|S           |--------|                 |  V60   |        |
+|      D6376                74ALS08     |        |74F32   |
+|   74LS07                              |--------|        |
+|          TC4050                                 JP3     |
+|J TD62064                                                |
+|A              74ALS245                                  |
+|M      LM358      74ALS245                               |
+|M        |------|     74ALS245                           |
+|A        |ST0004|                 681000  681000         |
+|         |      |                                        |
+||------| |------| 43256  43256 43256       43256  43256  |
+||ST0005|                         |--------|      JP4     |
+||      |      48MHz              |        |       MB3771 |
+||------|42.9545MHz   74AC245     | ST0006 | 74ALS273     |
+|                         74F245  |        |       74F04  |
+| DSW1(8)   DSW2(8)               |--------|              |
+|---------------------------------------------------------|
+(Note All IC's Shown)
+
+Notes:
+      H       - 3 pin connector for additional sound output
+      S       - 5 pin connector for additional sound output
+      D6376   - NEC D6376 2-channel 16-bit D/A converter (SOIC16)
+      V60     - NEC D70615GD-16 V60 CPU, clock 16.000MHz [48/3] (QFP120)
+      ES5506  - Ensonic ES5506 sound IC, clock 16.000MHz [48/3] (PLCC68)
+      LM358   - National Semiconductor LM358 Low Power Dual Operational Amplifier (DIP8)
+      2066    - New Japan Radio NJM2066 Dual Operational Amplifier (DIP16)
+      TL072   - Texas Instruments TL072 Low Noise JFET-Input Operational Amplifier (DIP8)
+      TA8210  - Toshiba TA8210 20W 2-channel Audio Power Amplifier
+      43256   - Sharp LH52B256-70LL 32K x8 SRAM (DIP28)
+                Note all sockets with 43256 can accept DIP32 128K x8 SRAM instead depending on
+                game requirements
+      681000  - Samsung KM681000ALP-7L 128K x8 SRAM (DIP32)
+      JP1     - 3 pin jumper, hardwired on PCB to 2-3
+      JP2     - 3 pin jumper, hardwired on PCB to 2-3
+      JP3     - 3 pin jumper, hardwired on PCB to 1-3
+      JP4     - 3 pin jumper, hardwired on PCB to 1-3
+
+      SETA custom IC's -
+                         ST-0004 Video DAC (QFP64)
+                         ST-0005 Parallel I/O (QFP100)
+                         ST-0006 Video controller (QFP208, covered with large heaksink)
+                         ST-0007 System controller (QFP160)
 
 To Do:
 
 - all games :   CRT controller (resolution+visible area+flip screen?)
 
+- dynagear  :   visible area may be incorrect
+
 - hypreac2  :   communication with other units
                 tilemap sprites use the yoffset specified in the sprites-list?
                 (see the 8 pixel gap between the backgrounds and the black rows)
 
-- mslider   :   V60 issues?  the correct tiles don't always vanish, depending on
-                the layout of the 3 tiles you put together sometimes only 2 vanish
-                and a blank are off the bottom of the game board flashes instead
-                of the correct 3rd tile *fixed* (Needed RAM mirror)
-
 - srmp4     :   Backgrounds are offset by $60 pixels, so they're kludged to work
 
-- srmp7     :   Needs interrupts by the sound chip (unsupported yet). Kludged to work.
+- srmp7     :   Needs interrupts by the sound chip (not properly hooked up yet). Kludged to work.
 
 - stmblade  :   There is a rogue "tilemap" sprite that pops up at level 2 and stays
                 there till the end of the game (a piece of sky to the left of the screen).
@@ -83,8 +146,6 @@ To Do:
 
 - ultrax    :   bad gfx offsets and wrong visible area
 - twineag2  :   bad gfx offsets on some scenes
-
-- dynagear  :   Requires 3 kludges for the video emulation, visible area may be incorrect
 
     code @ $e75cdc
 
@@ -100,6 +161,7 @@ To Do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/eeprom.h"
 #include "machine/random.h"
 #include "sound/es5506.h"
 #include "seta.h"
@@ -189,6 +251,20 @@ INTERRUPT_GEN( ssv_interrupt )
 	}
 }
 
+INTERRUPT_GEN( gdfs_interrupt )
+{
+	if (cpu_getiloops())
+	{
+		requested_int |= 1 << 6;	// reads lightgun (4 times for 4 axis)
+		update_irq_state();
+	}
+	else
+	{
+		requested_int |= 1 << 3;	// vblank
+		update_irq_state();
+	}
+}
+
 /***************************************************************************
 
 
@@ -269,6 +345,21 @@ NVRAM_HANDLER( ssv )
 			mame_fread(file, ssv_nvram, ssv_nvram_size);
 }
 
+NVRAM_HANDLER( gdfs )
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface_93C46);
+
+		if (file) EEPROM_load(file);
+		else
+		{
+			/* Set the EEPROM to Factory Defaults */
+		}
+	}
+}
 
 /***************************************************************************
 
@@ -326,7 +417,7 @@ static READ16_HANDLER( fake_r )   {   return ssv_scroll[offset];  }
 	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*  Sound   */	\
 	AM_RANGE(0x482000, 0x482fff) AM_READWRITE(MRA16_RAM, dsp_w) AM_BASE(&dsp_ram)   \
 	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*  ROM     */	    \
-AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
+//AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
 
 #define SSV_WRITEMEM														                                \
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_mainram)                    /* RAM */     \
@@ -340,7 +431,7 @@ AM_RANGE(0x990000, 0x99007f) AM_READ(fake_r)
 	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w )                                 /* IRQ Ack */     \
 	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w)                               /* IRQ Enable */  \
 	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w)                           /* Sound */       \
-AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
+//AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
 
 
 static data16_t *ssv_input_sel;
@@ -368,6 +459,153 @@ static ADDRESS_MAP_START( drifto94_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x483000, 0x485fff) AM_WRITE(MWA16_NOP				)	// ?
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP				)	// ??
 	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
+	SSV_WRITEMEM
+ADDRESS_MAP_END
+
+
+/***************************************************************************
+                     Mobil Suit Gundam Final Shooting
+***************************************************************************/
+
+static int gdfs_gfxram_bank, gdfs_lightgun_select;
+static data16_t *gdfs_blitram;
+
+READ16_HANDLER( gdfs_eeprom_r )
+{
+	return (((gdfs_lightgun_select & 1) ? 0 : 0xff) ^ readinputport(5 + gdfs_lightgun_select)) | (EEPROM_read_bit() << 8);
+}
+
+WRITE16_HANDLER( gdfs_eeprom_w )
+{
+	static data16_t data_old;
+
+	if (data & ~0x7b00)
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
+
+	if ( ACCESSING_MSB )
+	{
+//      data & 0x8000 ? (near palette writes)
+//      data & 0x0001 ?
+
+		// latch the bit
+		EEPROM_write_bit(data & 0x4000);
+
+		// reset line asserted: reset.
+		EEPROM_set_cs_line((data & 0x1000) ? CLEAR_LINE : ASSERT_LINE );
+
+		// clock line asserted: write latch or select next bit to read
+		EEPROM_set_clock_line((data & 0x2000) ? ASSERT_LINE : CLEAR_LINE );
+
+		if (!(data_old & 0x0800) && (data & 0x0800))	// rising clock
+			gdfs_lightgun_select = (data & 0x0300) >> 8;
+	}
+
+	COMBINE_DATA(&data_old);
+}
+
+
+static READ16_HANDLER( gdfs_gfxram_r )
+{
+	return eaglshot_gfxram[offset + gdfs_gfxram_bank * 0x100000/2];
+}
+
+static WRITE16_HANDLER( gdfs_gfxram_w )
+{
+	offset += gdfs_gfxram_bank * 0x100000/2;
+	COMBINE_DATA(&eaglshot_gfxram[offset]);
+
+	eaglshot_dirty = 1;
+	eaglshot_dirty_tile[offset / (16*8/2)] = 1;
+}
+
+static READ16_HANDLER( gdfs_blitram_r )
+{
+	switch (offset)
+	{
+		case 0x00/2:
+			// blitter status? (bit C, bit A)
+			return 0;
+	}
+
+	logerror("CPU #0 PC: %06X - Blit reg read: %02X\n",activecpu_get_pc(),offset*2);
+	return 0;
+}
+
+static WRITE16_HANDLER( gdfs_blitram_w )
+{
+	COMBINE_DATA(&gdfs_blitram[offset]);
+
+	switch (offset)
+	{
+		case 0x8a/2:
+		{
+			if (data & ~0x43)
+				logerror("CPU #0 PC: %06X - Unknown gdfs_gfxram_bank bit written %04X\n",activecpu_get_pc(),data);
+
+			if (ACCESSING_LSB)
+				gdfs_gfxram_bank = data & 3;
+		}
+		break;
+
+		case 0xc0/2:
+		case 0xc2/2:
+		case 0xc4/2:
+		case 0xc6/2:
+		case 0xc8/2:
+		break;
+
+		case 0xca/2:
+		{
+			UINT32 src	=	(gdfs_blitram[0xc0/2] + (gdfs_blitram[0xc2/2] << 16)) << 1;
+			UINT32 dst	=	(gdfs_blitram[0xc4/2] + (gdfs_blitram[0xc6/2] << 16)) << 4;
+			UINT32 len	=	(gdfs_blitram[0xc8/2]) << 4;
+
+			UINT8 *rom	=	memory_region(REGION_GFX2);
+			size_t size	=	memory_region_length(REGION_GFX2);
+
+			if ( (src+len <= size) && (dst+len <= 4 * 0x100000) )
+			{
+				eaglshot_dirty = 1;
+
+				memcpy( &eaglshot_gfxram[dst/2], &rom[src], len );
+
+				if (len % (16*8))	len = len / (16*8) + 1;
+				else				len = len / (16*8);
+
+				memset( &eaglshot_dirty_tile[dst / (16*8)], 1, len );
+			}
+			else
+			{
+				logerror("CPU #0 PC: %06X - Blit out of range: src %x, dst %x, len %x\n",activecpu_get_pc(),src,dst,len);
+			}
+		}
+		break;
+
+		default:
+			logerror("CPU #0 PC: %06X - Blit reg written: %02X <- %04X\n",activecpu_get_pc(),offset*2,data);
+	}
+}
+
+static ADDRESS_MAP_START( gdfs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x540000, 0x540001) AM_READ(gdfs_eeprom_r)
+	AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x440000, 0x44003f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x87ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x8c0000, 0x8c00ff) AM_READ(gdfs_blitram_r)
+	AM_RANGE(0x900000, 0x9fffff) AM_READ(gdfs_gfxram_r)
+	SSV_READMEM( 0xc00000 )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( gdfs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(gdfs_tmapram_w) AM_BASE(&gdfs_tmapram)
+	AM_RANGE(0x420000, 0x43ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x440000, 0x44003f) AM_WRITE(MWA16_RAM) AM_BASE(&gdfs_tmapscroll)
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(gdfs_eeprom_w)
+	AM_RANGE(0x600000, 0x600fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x800000, 0x87ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)
+	AM_RANGE(0x8c0000, 0x8c00ff) AM_WRITE(gdfs_blitram_w) AM_BASE(&gdfs_blitram)
+	AM_RANGE(0x900000, 0x9fffff) AM_WRITE(gdfs_gfxram_w)
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
@@ -573,9 +811,10 @@ static WRITE16_HANDLER( srmp7_sound_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		int bank = 0x400000 * (data & 1);
-		ES5506_voice_bank_0_w(2, bank);
-		ES5506_voice_bank_0_w(3, bank);
+		int bank = 0x400000/2 * (data & 1);	// UINT16 address
+		int voice;
+		for (voice = 0; voice < 32; voice++)
+			ES5506_voice_bank_0_w(voice, bank);
 	}
 //  usrintf_showmessage("%04X",data);
 }
@@ -733,22 +972,6 @@ static ADDRESS_MAP_START( jsk_mem,ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x40000000, 0x4000000f) AM_NOP // I/O
 	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK2)
 ADDRESS_MAP_END
-
-/***************************************************************************
-  Gundam Final Shooting
-***************************************************************************/
-
-static ADDRESS_MAP_START( gdfs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	SSV_READMEM( 0xc00000 )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( gdfs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x800000, 0x87ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x8c0000, 0x8c00ff) AM_WRITE(MWA16_RAM)
-	SSV_WRITEMEM
-ADDRESS_MAP_END
-
 
 /***************************************************************************
   Eagle Shot Golf
@@ -1104,6 +1327,103 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+                     Mobil Suit Gundam Final Shooting
+***************************************************************************/
+
+INPUT_PORTS_START( gdfs )
+	PORT_START	// IN0 - $210002
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Controls ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Joystick ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Light_Gun ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Light Gun Calibration" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, "Stage Select" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Coinage ) )
+//  PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) /* 2 Coins to Start, 1 Coin to Continue??? */
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Save Scores" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )	// Clear NVRAM on boot
+	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 1-7" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN1 - $210004
+	PORT_DIPNAME( 0x0001, 0x0001, "Invert X Axis" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Unknown 2-1" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 2-2" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Language ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( English ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Japanese ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 2-5*" )	// F76E34
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 2-6*" )	// F77487
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 2-7*" )	// F77255
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN2 - $210008
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1  )					// press at boot for service mode
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	// used in test mode
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(1)
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(1)
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(1)
+
+	PORT_START	// IN3 - $21000a
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START2  )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(2)
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(2)
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(2)
+
+	PORT_START	// IN4 - $21000c
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    ) PORT_IMPULSE(10)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    ) PORT_IMPULSE(10)
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN5 - $540000(0)
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START	// IN6 - $540000(1)
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(10) PORT_PLAYER(1)
+
+	PORT_START	// IN7 - $540000(2)
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_START	// IN8 - $540000(3)
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(10) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+
+/***************************************************************************
                                 Hyper Reaction
 ***************************************************************************/
 
@@ -1190,7 +1510,7 @@ INPUT_PORTS_START( hypreact )
 	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_I )
 	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_M )
 	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START1                              )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START1  )
 	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	// IN6 - $c00000(1)
@@ -1306,7 +1626,7 @@ INPUT_PORTS_START( hypreac2 )
 	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_I )
 	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_M )
 	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START1                              )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START1  )
 	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	// IN6 - $500000(1)
@@ -1469,10 +1789,10 @@ INPUT_PORTS_START( keithlcy )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )	)	// 15 sec
-	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )	)	// 12
-	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )	)	// 10
-	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest )	)	// 8
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )      // 15 sec
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )	)    // 12
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )      // 10
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )   // 8
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0008, "2" )
 	PORT_DIPSETTING(      0x000c, "3" )
@@ -2902,8 +3222,28 @@ static struct GfxLayout layout_16x8x6_2 =
 
 static struct GfxDecodeInfo eaglshot_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_16x8x8_2, 0, 0x8000/64 }, // [0] Sprites (256 colors)
-	{ REGION_GFX1, 0, &layout_16x8x6_2, 0, 0x8000/64 }, // [1] Sprites (64 colors)
+	{ REGION_GFX1, 0, &layout_16x8x8_2, 0, 0x8000/64 }, // [0] Sprites (256 colors, decoded from ram)
+	{ REGION_GFX1, 0, &layout_16x8x6_2, 0, 0x8000/64 }, // [1] Sprites (64 colors, decoded from ram)
+	{ -1 }
+};
+
+static struct GfxLayout layout_16x16x8 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8,
+	{	STEP8(0,1)		},
+	{	STEP16(0,8)		},
+	{	STEP16(0,16*8)	},
+	16*16*8
+};
+
+static struct GfxDecodeInfo gdfs_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &layout_16x8x8,   0, 0x8000/64  }, // [0] Sprites (256 colors)
+	{ REGION_GFX1, 0, &layout_16x8x6,   0, 0x8000/64  }, // [1] Sprites (64 colors)
+	{ REGION_GFX2, 0, &layout_16x8x8_2, 0, 0x8000/64  }, // [2] Zooming Sprites (256 colors, decoded from ram)
+	{ REGION_GFX3, 0, &layout_16x16x8,  0, 0x8000/256 }, // [3] Tilemap
 	{ -1 }
 };
 
@@ -2922,10 +3262,6 @@ static struct ES5506interface es5506_interface =
 	REGION_SOUND3,
 	REGION_SOUND4
 };
-
-/* Average clock cycles per instruction (12?) */
-#define CLOCK_16MHz			(16000000)	// Known speed for system boards STA-0001 & STA-0001B
-#define CLOCK_12MHz			(12000000)
 
 /***************************************************************************
 
@@ -2952,7 +3288,7 @@ void init_ssv(void)
 	eaglshot_dirty = 0;
 }
 
-void hypreac2_init(void)
+void init_ssv_hypreac2(void)
 {
 	int i;
 
@@ -2966,22 +3302,21 @@ void hypreac2_init(void)
 DRIVER_INIT( drifto94 )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-DRIVER_INIT( eaglshot )		{	init_ssv();
-								eaglshot_gfxram = (data16_t*)auto_malloc(16 * 0x40000);
-								eaglshot_dirty_tile = (char*)auto_malloc(16 * 0x40000 / (16*8));
-								hypreac2_init();
+DRIVER_INIT( eaglshot )		{	init_ssv_hypreac2();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = 0;	ssv_tilemap_offsy = -0xef; }
+DRIVER_INIT( gdfs )			{	init_ssv();
+								ssv_sprites_offsx = -8;	ssv_sprites_offsy = 1;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
 DRIVER_INIT( hypreact )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf7;	}
-DRIVER_INIT( hypreac2 )		{	hypreac2_init();	// different
+DRIVER_INIT( hypreac2 )		{	init_ssv_hypreac2();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
 DRIVER_INIT( janjans1 )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-
 DRIVER_INIT( keithlcy )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf1;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
@@ -3011,10 +3346,10 @@ DRIVER_INIT( survarts )		{	init_ssv();
 DRIVER_INIT( dynagear )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xec;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xec;	}
-DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
+DRIVER_INIT( sxyreact )		{	init_ssv_hypreac2();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-DRIVER_INIT( sxyreac2 )		{	hypreac2_init();
+DRIVER_INIT( sxyreac2 )		{	init_ssv_hypreac2();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
@@ -3026,8 +3361,7 @@ DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 DRIVER_INIT( vasara )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
-
-DRIVER_INIT( jsk )		{	cpu_setbank(2, memory_region(REGION_USER2));
+DRIVER_INIT( jsk )			{	cpu_setbank(2, memory_region(REGION_USER2));
 								init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
@@ -3036,7 +3370,7 @@ DRIVER_INIT( jsk )		{	cpu_setbank(2, memory_region(REGION_USER2));
 static MACHINE_DRIVER_START( ssv )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", V60, CLOCK_16MHz) /* Based on STA-0001 & STA-0001B System boards */
+	MDRV_CPU_ADD_TAG("main", V60, 16000000) /* Based on STA-0001 & STA-0001B System boards */
 	MDRV_CPU_VBLANK_INT(ssv_interrupt,2)	/* Vblank */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3075,6 +3409,25 @@ static MACHINE_DRIVER_START( drifto94 )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gdfs )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(gdfs_readmem, gdfs_writemem)
+	MDRV_CPU_VBLANK_INT(gdfs_interrupt,1+4)
+
+	MDRV_NVRAM_HANDLER(gdfs)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+
+	MDRV_GFXDECODE(gdfs_gfxdecodeinfo)
+	MDRV_VIDEO_START(gdfs)
+	MDRV_VIDEO_UPDATE(gdfs)
 MACHINE_DRIVER_END
 
 
@@ -3231,7 +3584,10 @@ static MACHINE_DRIVER_START( eaglshot )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x140-1, 8, 0xe8-1)
+
 	MDRV_GFXDECODE(eaglshot_gfxdecodeinfo)
+	MDRV_VIDEO_START(eaglshot)
+	MDRV_VIDEO_UPDATE(eaglshot)
 MACHINE_DRIVER_END
 
 
@@ -3282,24 +3638,10 @@ static MACHINE_DRIVER_START( jsk )
 	MDRV_CPU_ADD(V810,25000000)
 	MDRV_CPU_PROGRAM_MAP(jsk_mem, 0)
 
-
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( gdfs )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(ssv)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(gdfs_readmem, gdfs_writemem)
-
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
-	MDRV_GFXDECODE(eaglshot_gfxdecodeinfo)
-
-	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
-MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -3362,33 +3704,6 @@ ROM_START( cairblad )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "ac1410m0.u41", 0x000000, 0x400000, CRC(ecf1f255) SHA1(984b1529b8f0c7d94ea713c85d71df00f54eba79) ) // AC1807M01.U41   32M Mask
-ROM_END
-
-ROM_START( sxyreac2 )
-	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
-	ROM_LOAD16_WORD( "ac1714e00.u32",  0x000000, 0x200000, CRC(78075d70) SHA1(05c84bb32c6f97fceb5436d192c14cac79d9ab07) )
-
-	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "ac1701t00.u6",  0x0000000, 0x400000, CRC(e14611c2) SHA1(0eaf28b27b879b6ce99bea03b286717a2d6f60f4) )
-	ROM_LOAD( "ac1702t00.u9",  0x0400000, 0x400000, CRC(2c8b07f8) SHA1(e4128075c207d03206085f58b5aa8ebd28d3c2a9) )
-
-	ROM_LOAD( "ac1703t00.u7",  0x0800000, 0x400000, CRC(d6c7e861) SHA1(b4c17829222f5b9430e96183f77fa49ec040061e) )
-	ROM_LOAD( "ac1704t00.u10", 0x0c00000, 0x400000, CRC(5fa7ccf0) SHA1(9972e3e689024505739eeaefcc12670918e2cbd8) )
-
-	ROM_LOAD( "ac1705t00.u8",  0x1000000, 0x400000, CRC(2dff0652) SHA1(3c68ec3b233f248208ea80e4799a9504318b4e7c) )
-	ROM_LOAD( "ac1706t00.u11", 0x1400000, 0x400000, CRC(e7a168e0) SHA1(b4e19cc3a1fd0f18db7476ebe7cbb397c60e01b3) )
-
-	ROM_FILL(                 0x1800000, 0x800000, 0         )
-
-	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD16_WORD_SWAP( "ac1707t00.u41", 0x000000, 0x400000, CRC(28999bc4) SHA1(4cddaa4a155cc03d456e6edb20dd207f7ff3d9c4) )
-
-	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY ) /* Samples */
-	ROM_LOAD16_WORD_SWAP( "ac1708t00.u42", 0x200000, 0x200000, CRC(7001eec0) SHA1(cc568ef90ec7201a73e9dc217d72cfbc3860e6b8) )
-	ROM_CONTINUE( 0x000000, 0x200000 )
-
-	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_COPY( REGION_SOUND2, 0x000000,    0x200000, 0x200000 )
 ROM_END
 
 
@@ -3492,8 +3807,45 @@ ROM_END
 
 /***************************************************************************
 
-                        Eagle Shot Golf
+Eagle Shot Golf
 Sammy, 1994
+
+GOLF ROM
+|----------------------------------------|
+| 514400                    GAL SI3-11   |
+|                           GAL SI3-12   |
+| 514400                                 |
+|          SI003-06.u31    SI003-09.u18  |
+| 514400                                 |
+|                                        |
+| 514400   SI003-05.u30    SI003-09.u18  |
+|                                        |
+| 514400                                 |
+|          SI003-04.u10                  |
+| 514400                                 |
+|                                        |
+| 514400   SI003-03.u11                  |
+|                                        |
+| 514400                                 |
+|          SI003-02.u12                  |
+|                                        |
+|                                        |
+|          SI003-01.u13    SI003-07.U23  |
+|                                        |
+|                                        |
+|                          SI003-08.U24  |
+|                                        |
+|                                        |
+|                                        |
+|                             mc14584b   |
+|                                        |
+|                                 P1     |
+|-------------------------------||||||---|
+
+ mc14584b - Motorola HEX Schmitt Trigger
+   514400 - Hatachi HM514400BS7 1M x 4 DRAM (4 Megs of RAM)
+      GAL - GAL16V8B
+       P1 - 6 Pin trackball connector (same pinout as Golden Tee 9x series)
 
 Lower PCB
 PCB Number: GOLF ROM PCB
@@ -4115,11 +4467,13 @@ ROM_START( srmp7 )
 	ROM_LOAD( "sx015-12.d2", 0x3800000, 0x400000, CRC(80336523) SHA1(ec66e21fe1401fdb438e03657542a7b6b0cbc5ce) )
 	ROM_LOAD( "sx015-11.d3", 0x3c00000, 0x400000, CRC(134c8e28) SHA1(669118b58f27d5e2e08052debe904f95d9ab32a3) )
 
-	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION16_BE( 0x800000, REGION_SOUND1, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_BYTE( "sx015-06.s0", 0x000000, 0x200000, CRC(0d5a206c) SHA1(2fdaf2a56b6608f20a788eb79a8426102ff33e14) )
+	ROM_RELOAD(                     0x400000, 0x200000             )
 
-	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION16_BE( 0x800000, REGION_SOUND2, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_BYTE( "sx015-05.s1", 0x000000, 0x200000, CRC(bb8cebe2) SHA1(3691e5fb4e963f69c1fe01cb5d968433029c4833) )
+	ROM_RELOAD(                     0x400000, 0x200000             )
 
 	ROM_REGION16_BE( 0x800000, REGION_SOUND3, ROMREGION_ERASE | ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_BYTE( "sx015-04.s2", 0x000000, 0x200000, CRC(f6e933df) SHA1(7cb69515a0ffc62fbac2be3a5fb322538560bd38) )
@@ -4134,6 +4488,45 @@ ROM_END
 /***************************************************************************
 
          Survival Arts
+
+Sammy USA, 1994
+
+This game runs on SSV hardware.
+
+Game PCB Layout
+---------------
+
+SAM-5127
+|----------------------------------------|
+| SI001-13.U6               4P     3P    |
+|                                        |
+| SI001-12.U7                            |
+|                                        |
+| SI001-11.U8                            |
+|                                        |
+| SI001-10.U9                            |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                           SI001-08.U21 |
+|                                        |
+|                           SI001-05.U22 |
+|                                        |
+|                           SI001-02.U23 |
+|                                        |
+|                                        |
+|USA-PR-H.U3                             |
+|                                        |
+|USA-PR-L.U4  SI001-09.U15  SI001-07.U25 |
+|                                        |
+|             SI001-06.U16  SI001-04.U26 |
+|PAL                                     |
+|(SI001-14)   SI001-03.U17  SI001-01.U27 |
+|                                        |
+|----------------------------------------|
 
  Manufacturer: Sammy USA
  System Type: System SSV
@@ -4189,8 +4582,8 @@ ROM_END
  si003-14.u5 (16V8B)
 
  MISC:
- Pin Header for P3 (used)
- Pin Header for P4 (unused)
+ P3 10 Pin Header for Buttons 4-6 (Kick) for each player
+ P4 10 Pin Header (unused)
 
 ***************************************************************************/
 
@@ -4200,27 +4593,27 @@ ROM_START( survarts )
 	ROM_LOAD16_BYTE( "prh-r5.u3", 0x000001, 0x080000, CRC(d446f010) SHA1(fb6c349edb2e6d1fcf8ed360dbe82be6d74f91d2) )
 
 	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "si001-01.a0", 0x0000000, 0x200000, CRC(8b38fbab) SHA1(c4a67b24b33d4eef7b0f885bd69cae6c67bd3981) )
-	ROM_LOAD( "si001-04.a1", 0x0200000, 0x200000, CRC(34248b54) SHA1(077198f8de1622b71c580e34d5ad1b6bf3229fe9) )
-	ROM_LOAD( "si001-07.a2", 0x0400000, 0x200000, CRC(497d6151) SHA1(a9860c75943c0fd2991660ce2a9505edc6c2fa46) )
+	ROM_LOAD( "si001-01.u27", 0x0000000, 0x200000, CRC(8b38fbab) SHA1(c4a67b24b33d4eef7b0f885bd69cae6c67bd3981) ) /* A0 */
+	ROM_LOAD( "si001-04.u26", 0x0200000, 0x200000, CRC(34248b54) SHA1(077198f8de1622b71c580e34d5ad1b6bf3229fe9) ) /* A1 */
+	ROM_LOAD( "si001-07.u25", 0x0400000, 0x200000, CRC(497d6151) SHA1(a9860c75943c0fd2991660ce2a9505edc6c2fa46) ) /* A2 */
 
-	ROM_LOAD( "si001-02.b0", 0x0600000, 0x200000, CRC(cb4a2dbd) SHA1(26cdd1b54a3fa1dc3c3a8945d1a3562e9c62ace6) )
-	ROM_LOAD( "si001-05.b1", 0x0800000, 0x200000, CRC(8f092381) SHA1(6c49f1f5b3c31bd7c6a93ba0450d9f64fd512633) )
-	ROM_LOAD( "si001-08.b2", 0x0a00000, 0x200000, CRC(182b88c4) SHA1(a5b6a3e1fd67f036b1255385e81b6a3eb69f9f3f) )
+	ROM_LOAD( "si001-02.u23", 0x0600000, 0x200000, CRC(cb4a2dbd) SHA1(26cdd1b54a3fa1dc3c3a8945d1a3562e9c62ace6) ) /* B0 */
+	ROM_LOAD( "si001-05.u22", 0x0800000, 0x200000, CRC(8f092381) SHA1(6c49f1f5b3c31bd7c6a93ba0450d9f64fd512633) ) /* B1 */
+	ROM_LOAD( "si001-08.u21", 0x0a00000, 0x200000, CRC(182b88c4) SHA1(a5b6a3e1fd67f036b1255385e81b6a3eb69f9f3f) ) /* B2 */
 
-	ROM_LOAD( "si001-03.c0", 0x0c00000, 0x200000, CRC(92fdf652) SHA1(cf7aeb3a1e8ffe34cf24cb919a0ab3cc90202fa9) )
-	ROM_LOAD( "si001-06.c1", 0x0e00000, 0x200000, CRC(9a62f532) SHA1(7e7ba1224e52b33a9bd14058230efc871178c4f8) )
-	ROM_LOAD( "si001-09.c2", 0x1000000, 0x200000, CRC(0955e393) SHA1(0be9134190706eaee49177034b0536b05c4bc7ac) )
+	ROM_LOAD( "si001-03.u17", 0x0c00000, 0x200000, CRC(92fdf652) SHA1(cf7aeb3a1e8ffe34cf24cb919a0ab3cc90202fa9) ) /* C0 */
+	ROM_LOAD( "si001-06.u16", 0x0e00000, 0x200000, CRC(9a62f532) SHA1(7e7ba1224e52b33a9bd14058230efc871178c4f8) ) /* C1 */
+	ROM_LOAD( "si001-09.u15", 0x1000000, 0x200000, CRC(0955e393) SHA1(0be9134190706eaee49177034b0536b05c4bc7ac) ) /* C2 */
 
 	ROM_FILL(                0x1200000, 0x600000, 0          )
 
 //  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD16_WORD_SWAP( "si001-10.s0", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) )
-	ROM_LOAD16_WORD_SWAP( "si001-11.s1", 0x100000, 0x100000, CRC(a81e6ea6) SHA1(499f070500895ed7b6785b42fb6bbf973fc6dc04) )
-	ROM_LOAD16_WORD_SWAP( "si001-12.s2", 0x200000, 0x100000, CRC(e9b2b45b) SHA1(17fd27cdb8a0b9932cb1e71e0547c0d9d6fc7d06) )
-	ROM_LOAD16_WORD_SWAP( "si001-13.s3", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) )
+	ROM_LOAD16_WORD_SWAP( "si001-10.u9", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) ) /* S0 */
+	ROM_LOAD16_WORD_SWAP( "si001-11.u8", 0x100000, 0x100000, CRC(a81e6ea6) SHA1(499f070500895ed7b6785b42fb6bbf973fc6dc04) ) /* S1 */
+	ROM_LOAD16_WORD_SWAP( "si001-12.u7", 0x200000, 0x100000, CRC(e9b2b45b) SHA1(17fd27cdb8a0b9932cb1e71e0547c0d9d6fc7d06) ) /* S2 */
+	ROM_LOAD16_WORD_SWAP( "si001-13.u6", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) ) /* S3 */
 ROM_END
 
 ROM_START( survartu )
@@ -4229,32 +4622,32 @@ ROM_START( survartu )
 	ROM_LOAD16_BYTE( "usa-pr-h.u3", 0x000001, 0x080000, CRC(6bee2635) SHA1(a2d0517bf599331ef47beb8a902589039e4502e0) )
 
 	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "si001-01.a0", 0x0000000, 0x200000, CRC(8b38fbab) SHA1(c4a67b24b33d4eef7b0f885bd69cae6c67bd3981) )
-	ROM_LOAD( "si001-04.a1", 0x0200000, 0x200000, CRC(34248b54) SHA1(077198f8de1622b71c580e34d5ad1b6bf3229fe9) )
-	ROM_LOAD( "si001-07.a2", 0x0400000, 0x200000, CRC(497d6151) SHA1(a9860c75943c0fd2991660ce2a9505edc6c2fa46) )
+	ROM_LOAD( "si001-01.u27", 0x0000000, 0x200000, CRC(8b38fbab) SHA1(c4a67b24b33d4eef7b0f885bd69cae6c67bd3981) ) /* A0 */
+	ROM_LOAD( "si001-04.u26", 0x0200000, 0x200000, CRC(34248b54) SHA1(077198f8de1622b71c580e34d5ad1b6bf3229fe9) ) /* A1 */
+	ROM_LOAD( "si001-07.u25", 0x0400000, 0x200000, CRC(497d6151) SHA1(a9860c75943c0fd2991660ce2a9505edc6c2fa46) ) /* A2 */
 
-	ROM_LOAD( "si001-02.b0", 0x0600000, 0x200000, CRC(cb4a2dbd) SHA1(26cdd1b54a3fa1dc3c3a8945d1a3562e9c62ace6) )
-	ROM_LOAD( "si001-05.b1", 0x0800000, 0x200000, CRC(8f092381) SHA1(6c49f1f5b3c31bd7c6a93ba0450d9f64fd512633) )
-	ROM_LOAD( "si001-08.b2", 0x0a00000, 0x200000, CRC(182b88c4) SHA1(a5b6a3e1fd67f036b1255385e81b6a3eb69f9f3f) )
+	ROM_LOAD( "si001-02.u23", 0x0600000, 0x200000, CRC(cb4a2dbd) SHA1(26cdd1b54a3fa1dc3c3a8945d1a3562e9c62ace6) ) /* B0 */
+	ROM_LOAD( "si001-05.u22", 0x0800000, 0x200000, CRC(8f092381) SHA1(6c49f1f5b3c31bd7c6a93ba0450d9f64fd512633) ) /* B1 */
+	ROM_LOAD( "si001-08.u21", 0x0a00000, 0x200000, CRC(182b88c4) SHA1(a5b6a3e1fd67f036b1255385e81b6a3eb69f9f3f) ) /* B2 */
 
-	ROM_LOAD( "si001-03.c0", 0x0c00000, 0x200000, CRC(92fdf652) SHA1(cf7aeb3a1e8ffe34cf24cb919a0ab3cc90202fa9) )
-	ROM_LOAD( "si001-06.c1", 0x0e00000, 0x200000, CRC(9a62f532) SHA1(7e7ba1224e52b33a9bd14058230efc871178c4f8) )
-	ROM_LOAD( "si001-09.c2", 0x1000000, 0x200000, CRC(0955e393) SHA1(0be9134190706eaee49177034b0536b05c4bc7ac) )
+	ROM_LOAD( "si001-03.u17", 0x0c00000, 0x200000, CRC(92fdf652) SHA1(cf7aeb3a1e8ffe34cf24cb919a0ab3cc90202fa9) ) /* C0 */
+	ROM_LOAD( "si001-06.u16", 0x0e00000, 0x200000, CRC(9a62f532) SHA1(7e7ba1224e52b33a9bd14058230efc871178c4f8) ) /* C1 */
+	ROM_LOAD( "si001-09.u15", 0x1000000, 0x200000, CRC(0955e393) SHA1(0be9134190706eaee49177034b0536b05c4bc7ac) ) /* C2 */
 
 	ROM_FILL(                0x1200000, 0x600000, 0          )
 
 //  The chip seems to use REGION1 too, but produces no sound from there.
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD16_WORD_SWAP( "si001-10.s0", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) )
-	ROM_LOAD16_WORD_SWAP( "si001-11.s1", 0x100000, 0x100000, CRC(a81e6ea6) SHA1(499f070500895ed7b6785b42fb6bbf973fc6dc04) )
-	ROM_LOAD16_WORD_SWAP( "si001-12.s2", 0x200000, 0x100000, CRC(e9b2b45b) SHA1(17fd27cdb8a0b9932cb1e71e0547c0d9d6fc7d06) )
-	ROM_LOAD16_WORD_SWAP( "si001-13.s3", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) )
+	ROM_LOAD16_WORD_SWAP( "si001-10.u9", 0x000000, 0x100000, CRC(5642b333) SHA1(84936af8b3882e116b279e422075f35aabdd232f) ) /* S0 */
+	ROM_LOAD16_WORD_SWAP( "si001-11.u8", 0x100000, 0x100000, CRC(a81e6ea6) SHA1(499f070500895ed7b6785b42fb6bbf973fc6dc04) ) /* S1 */
+	ROM_LOAD16_WORD_SWAP( "si001-12.u7", 0x200000, 0x100000, CRC(e9b2b45b) SHA1(17fd27cdb8a0b9932cb1e71e0547c0d9d6fc7d06) ) /* S2 */
+	ROM_LOAD16_WORD_SWAP( "si001-13.u6", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) ) /* S3 */
 ROM_END
 
-/*
+/***************************************************************************
 
-Dynagears
+                        Dynagears
 Sammy, 1993
 
 This game runs on SSV hardware.
@@ -4294,7 +4687,7 @@ SAM-5127
 |                                        |
 |----------------------------------------|
 
-*/
+***************************************************************************/
 
 ROM_START( dynagear )
 	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
@@ -4367,6 +4760,87 @@ ROM_START( sxyreact )
 	ROM_CONTINUE( 0x000000, 0x200000 )	// this will go in region 3
 
 	// a few sparse samples are played from here
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_COPY( REGION_SOUND2, 0x000000,    0x200000, 0x200000 )
+ROM_END
+
+/***************************************************************************
+
+                        Pachinko Sexy Reaction 2 (Japan)
+
+Pachinko Sexy Reaction 2
+Sammy, 1999
+
+SAMMY B1-001A
+|---------------------------------------------------------|
+|                                                         |
+|                                                         |
+|                                                         |
+|                                                         |
+|               U12   AC1702T00.U9                        |
+|                         AC1701T00.U6                    |
+|                                                         |
+|                                                         |
+|                                                         |
+|CN8                  AC1704T00.U10       AC1706T00.U11   |
+|               U13      AC1703T00.U7   U14   AC1705T00.U8|
+|                                                         |
+|                                                         |
+|                                                         |
+|                                                         |
+|         AC1708T00.U42                                   |
+|CN3             AC1707T00.U41                            |
+|                                                  BATT   |
+|                      AC1714E00.U32            U55       |
+|        CN5                   U47  U46  U2 U1  U35       |
+|     D7001C                                8464  GAL16V8 |
+|                                                         |
+|---------------------------------------------------------|
+Notes:
+      6264     - Fujitsu MB8464A-10LL-SK 8K x8 SRAM (DIP28)
+      D7001C   - NEC D7001C UART (DIP16)
+      BATT     - 3.6V NICD Battery
+      CN5      - 3 pin connector
+      CN3      - 10 pin connector
+      CN8      - 9 pin connector
+      U12,U13, \
+      U14      / Locations for SOP44 surface mounted ROMs, unpopulated
+      U47,U46, \
+      U2,U1    / Locations for DIP32 ROMs, unpopulated
+      U35      - Location for NEC D71051GU, unpopulated
+      U55      - Location for MSM62X42B Real Time Clock, unpopulated
+      GAL16V8  - Lattice GAL16V8D stamped 'AC1709G00' (DIP20)
+      U41,U42, \
+      U7,U8,   \
+      U10,U11  / OKI M27C3252CZ 32MBit SOP44 surface mounted maskROMs
+
+      U32      - ST Microelectronics M27C160 16MBit EPROM (DIP42)
+
+***************************************************************************/
+
+ROM_START( sxyreac2 )
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_WORD( "ac1714e00.u32",  0x000000, 0x200000, CRC(78075d70) SHA1(05c84bb32c6f97fceb5436d192c14cac79d9ab07) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ac1701t00.u6",  0x0000000, 0x400000, CRC(e14611c2) SHA1(0eaf28b27b879b6ce99bea03b286717a2d6f60f4) )
+	ROM_LOAD( "ac1702t00.u9",  0x0400000, 0x400000, CRC(2c8b07f8) SHA1(e4128075c207d03206085f58b5aa8ebd28d3c2a9) )
+
+	ROM_LOAD( "ac1703t00.u7",  0x0800000, 0x400000, CRC(d6c7e861) SHA1(b4c17829222f5b9430e96183f77fa49ec040061e) )
+	ROM_LOAD( "ac1704t00.u10", 0x0c00000, 0x400000, CRC(5fa7ccf0) SHA1(9972e3e689024505739eeaefcc12670918e2cbd8) )
+
+	ROM_LOAD( "ac1705t00.u8",  0x1000000, 0x400000, CRC(2dff0652) SHA1(3c68ec3b233f248208ea80e4799a9504318b4e7c) )
+	ROM_LOAD( "ac1706t00.u11", 0x1400000, 0x400000, CRC(e7a168e0) SHA1(b4e19cc3a1fd0f18db7476ebe7cbb397c60e01b3) )
+
+	ROM_FILL(                 0x1800000, 0x800000, 0         )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "ac1707t00.u41", 0x000000, 0x400000, CRC(28999bc4) SHA1(4cddaa4a155cc03d456e6edb20dd207f7ff3d9c4) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY ) /* Samples */
+	ROM_LOAD16_WORD_SWAP( "ac1708t00.u42", 0x200000, 0x200000, CRC(7001eec0) SHA1(cc568ef90ec7201a73e9dc217d72cfbc3860e6b8) )
+	ROM_CONTINUE( 0x000000, 0x200000 )
+
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_COPY( REGION_SOUND2, 0x000000,    0x200000, 0x200000 )
 ROM_END
@@ -4497,6 +4971,7 @@ ROM_END
 /***************************************************************************
 
                             Vasara / Vasara 2
+
 Visco Games, 2000 / 2001
 (info from the vasara 2 board but vasara should be the same)
 
@@ -4511,6 +4986,48 @@ TSOP48 type 1 SMT ROMs though many of the positions are unpopulated.
 It's likely this same ROM board could be used for other Visco games.
 
 ROM PCB (PCB Number: SSV_SUB)
+
+SSV-SUB
+|-------------------------------------------|
+|                                           |
+|            logic chips (x14)              |
+|                                           |
+|                                           |
+|                                           |
+|  U4   U8   U3   U7   U2   U6   U1   U5    |
+|                                           |
+|                                           |
+|                                           |
+|                                           |
+|   U12    U11   logic (x3)   U10     U9    |
+|                                           |
+|                                           |
+|                                           |
+|                                           |
+|                                           |
+|                                           |
+|             U38             U34           |
+| U37  U36         U30  U31        PAL PAL  |
+|             U39             U35           |
+|                                           |
+|                                           |
+|-------------------------------------------|
+Notes:
+LOC      Vasara                  Vasara 2           Device
+----------------------------------------------------------------------
+U4       VASARA-1-D0             VASARA-2-D0        64M SOP44 MaskROM
+U3       VASARA-1-C0             VASARA-2-C0        64M SOP44 MaskROM
+U2       VASARA-1-B0             VASARA-2-B0        64M SOP44 MaskROM
+U1       VASARA-1-A0             VASARA-2-A0        64M SOP44 MaskROM
+U37      VASARA-1 SND1           VASARA-1 SND1      Macronix MX29F1610 SOP44 MaskROM
+U36      VASARA-1 SND0           VASARA-1 SND0      Macronix MX29F1610 SOP44 MaskROM
+U30      PRG-L U30               PRG-L U30          TMS 27C040 EPROM
+U31      PRG-H U31               PRG-H U31          TMS 27C040 EPROM
+U34      VASARA-1 DAT            VASARA-1 DAT       Macronix MX29F1610 MaskROM
+
+Locations U5, U6, U7 &U8 wired for Macronix MX29F1610 SOP44 but not populated.
+Locations U9, U10, U11, U12, U35, U38 & U39 wired for Macronix MX29F1610 TSOP48 but not populated.
+
 
 File Name     Labeled as        Loc. Printed*      ROM Type
 -----------------------------------------------------------------------
@@ -4600,7 +5117,7 @@ ROM_START( vasara2a )
 	ROM_LOAD16_BYTE( "s1.u37", 0x000000, 0x200000, CRC(11cd7098) SHA1(f75288b5c89df039dfb41d66bd275cda8605e75a) )
 ROM_END
 
-/*
+/***************************************************************************
 
 Mobile Suit Gundam Final Shooting
 Banpresto, 1995
@@ -4652,36 +5169,48 @@ Notes:
       Custom Seta ICs -
                        ST-0009 (QFP176)
                        ST-0020 (QFP304, heatsinked)
-*/
+
+****************************************************************************/
 
 ROM_START( gdfs )
-	ROM_REGION16_LE( 0x400100, REGION_USER1, 0 )		/* V60 Code */ // only needs to be 400000 but due to v60 bug or debugger bug i have to increase it or dasm fails
-	ROM_LOAD16_WORD( "vg004-14.u3", 0x000000, 0x100000, CRC(d88254df) SHA1(ccdfd42e4ce3941018f83e300da8bf7a5950f65c) )
+	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_WORD( "vg004-14.u3",   0x000000, 0x100000, CRC(d88254df) SHA1(ccdfd42e4ce3941018f83e300da8bf7a5950f65c) )
 	ROM_RELOAD(0x100000,0x100000)
 	ROM_LOAD16_BYTE( "ssv2set0.u1",   0x200000, 0x080000, CRC(c23b9e2c) SHA1(9026e065252981fb403255ddc5782359c0088e8a) )
 	ROM_RELOAD(0x300000,0x80000)
 	ROM_LOAD16_BYTE( "ssv2set1.u2",   0x200001, 0x080000, CRC(d7d52570) SHA1(12e7531519a0a4331e409991265908fb518286ef) )
 	ROM_RELOAD(0x300001,0x80000)
 
-	ROM_REGION( 0x1800000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* Sprites? */
-	ROM_LOAD( "vg004-01.u33", 0x0000000, 0x200000, CRC(aa9a81c2) SHA1(a7d005f9be199e317aa4c6aed8a2ab322fe82119) )
-	ROM_LOAD( "vg004-02.u34", 0x0200000, 0x200000, CRC(fa40ecb4) SHA1(0513f3b6879dc7d207646d949d6ddb7251f77bcc) )
-	ROM_LOAD( "vg004-03.u35", 0x0400000, 0x200000, CRC(90004023) SHA1(041edb77b34e6677ac5b85ce542d87a9bb1baf31) )
-	ROM_LOAD( "vg004-04.u36", 0x0600000, 0x200000, CRC(fdafd289) SHA1(3ff1969a176d13bfa68a48c9ed582f5789b1047f) )
-	ROM_LOAD( "vg004-05.u37", 0x0800000, 0x200000, CRC(9ae488b0) SHA1(7823cc689c588f3dbcafe9bdc94c094d6e9cd605) )
-	ROM_LOAD( "vg004-06.u38", 0x0a00000, 0x200000, CRC(3402325f) SHA1(7ea169c1f8b01a37bd7dbb4d486d38bdac62be5b) )
-	ROM_LOAD( "vg004-07.u39", 0x0c00000, 0x200000, CRC(5e89fcf9) SHA1(db727ec8117e84c98037c756715e28fd5e39972a) )
-	ROM_LOAD( "vg004-08.u40", 0x0e00000, 0x200000, CRC(6b1746dc) SHA1(35e5ee02975474985a4a611dcc439fc3050b7f94) )
-	ROM_LOAD( "ssvv7.u16",    0x1000000, 0x080000, CRC(f1c3ab6f) SHA1(b7f54f7ae60650fee7570aa4dd4266c629149673) ) // erm.. more sprites? (numbers etc.)
-
-	ROM_REGION( 0x1800000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* near sprites, but not sprites?? */
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vg004-09.u43", 0x000000, 0x200000, CRC(b7382cfa) SHA1(df735470181c16f8aac0e3be76e1ed53a32dbb9c) )
 	ROM_LOAD( "vg004-10.u45", 0x200000, 0x200000, CRC(b3c6b1cb) SHA1(c601213e35d8dfd1244921da5c093f82145706d2) )
 	ROM_LOAD( "vg004-11.u48", 0x400000, 0x200000, CRC(1491def1) SHA1(344043302c81b4118cac4f692375b8af7ea68570) )
 
+	ROM_REGION( 0x1000000, REGION_GFX2, /*ROMREGION_DISPOSE*/0 )	// Zooming Sprites, read by a blitter
+	ROM_LOAD( "vg004-01.u33", 0x0000000, 0x200000, CRC(aa9a81c2) SHA1(a7d005f9be199e317aa4c6aed8a2ab322fe82119) )
+	ROM_LOAD( "vg004-02.u34", 0x0200000, 0x200000, CRC(fa40ecb4) SHA1(0513f3b6879dc7d207646d949d6ddb7251f77bcc) )
+	ROM_LOAD( "vg004-03.u35", 0x0400000, 0x200000, CRC(90004023) SHA1(041edb77b34e6677ac5b85ce542d87a9bb1baf31) )
+	ROM_LOAD( "vg004-04.u36", 0x0600000, 0x200000, CRC(fdafd289) SHA1(3ff1969a176d13bfa68a48c9ed582f5789b1047f) )
+	ROM_LOAD( "vg004-06.u38", 0x0a00000, 0x200000, CRC(3402325f) SHA1(7ea169c1f8b01a37bd7dbb4d486d38bdac62be5b) )
+	ROM_LOAD( "vg004-05.u37", 0x0800000, 0x200000, CRC(9ae488b0) SHA1(7823cc689c588f3dbcafe9bdc94c094d6e9cd605) )
+	ROM_LOAD( "vg004-07.u39", 0x0c00000, 0x200000, CRC(5e89fcf9) SHA1(db727ec8117e84c98037c756715e28fd5e39972a) )
+	ROM_LOAD( "vg004-08.u40", 0x0e00000, 0x200000, CRC(6b1746dc) SHA1(35e5ee02975474985a4a611dcc439fc3050b7f94) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	// Tilemap
+	ROM_LOAD( "ssvv7.u16",    0x0000000, 0x080000, CRC(f1c3ab6f) SHA1(b7f54f7ae60650fee7570aa4dd4266c629149673) )
+
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD( "vg004-12.u4", 0x000000, 0x200000, CRC(eb41a4ef) SHA1(f4d0844a3c00cf90faa59ae982744b7f0bcbe218) )
-	ROM_LOAD( "vg004-13.u5", 0x200000, 0x200000, CRC(a4ed3977) SHA1(5843d56f69789e70ce0201a693ffae322b628459) )
+	ROM_LOAD16_BYTE( "vg004-12.u4", 0x000000, 0x200000, CRC(eb41a4ef) SHA1(f4d0844a3c00cf90faa59ae982744b7f0bcbe218) )
+	ROM_LOAD16_BYTE( "vg004-13.u5", 0x000001, 0x200000, CRC(a4ed3977) SHA1(5843d56f69789e70ce0201a693ffae322b628459) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_COPY( REGION_SOUND1, 0x000000, 0x000000, 0x400000 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY ) /* Samples */
+	ROM_COPY( REGION_SOUND1, 0x000000, 0x000000, 0x400000 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND4, ROMREGION_SOUNDONLY ) /* Samples */
+	ROM_COPY( REGION_SOUND1, 0x000000, 0x000000, 0x400000 )
 ROM_END
 
 /***************************************************************************
@@ -4698,18 +5227,22 @@ GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
-GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts",                                    GAME_NO_COCKTAIL )
+GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts (World)",                            GAME_NO_COCKTAIL )
 GAMEX( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
+GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",              "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",              "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995,  gdfs,     0,        gdfs,     gdfs,     gdfs,     ROT0,   "Banpresto",          "Mobil Suit Gundam Final Shooting (Japan)",         GAME_NO_COCKTAIL )
+GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270, "Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )
 GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                                 GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAMEX( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
+GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
@@ -4718,13 +5251,10 @@ GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",
 GAMEX( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
 
-// Games not working properly:
 
-GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994,  eaglshta, eaglshot, eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                            GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+//  Games not working properly:
+
 
 //  Games not working at all:
 
 GAMEX( 1997,  jsk,      0,        jsk,      janjans1, jsk,      ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1995,  gdfs,     0,        gdfs,     vasara2,  vasara,   ROT0,   "Banpresto",          "Mobile Suit Gundam Final Shooting",                GAME_NO_COCKTAIL | GAME_NOT_WORKING )

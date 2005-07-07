@@ -768,6 +768,13 @@ static WRITE64_HANDLER(scsi_w)
 	}
 }
 
+static UINT32 scsi_fetch(UINT32 dsp)
+{
+	UINT32 result;
+	result = program_read_dword_64be(dsp);
+	return BYTE_REVERSE32(result);
+}
+
 static void scsi_irq_callback(void)
 {
 	model3_irq_state |= model3_irq_enable & ~0x60;	/* FIXME: enable only SCSI interrupt */
@@ -965,7 +972,7 @@ static void model3_init(int step)
 		} else {
 			mpc105_init();
 		}
-		lsi53c810_init((UINT8*)work_ram, scsi_irq_callback, real3d_dma_callback);
+		lsi53c810_init(scsi_fetch, scsi_irq_callback, real3d_dma_callback);
 		real3d_device_id = 0x16c311db;	/* PCI Vendor ID (11db = SEGA), Device ID (16c3 = 315-5827) */
 	}
 	else {
