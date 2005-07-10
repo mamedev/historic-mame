@@ -6,9 +6,9 @@ mame [name of the game to run] [options]
 
 For example:
 
-   mame mspacman -nosound
+   mame robby -nosound
 
-...will run Ms Pac Man without sound
+...will run Robby Roto without sound
 
 
 Configuration options
