@@ -773,7 +773,7 @@ static int cur_sound_region;
 
 static void reset_sound_region(void)
 {
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
+	memory_set_bankptr(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -928,7 +928,7 @@ static MACHINE_DRIVER_START( mystwarr )
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 480)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(480))
 
 	MDRV_INTERLEAVE(32);
 	MDRV_FRAMES_PER_SECOND(60)
@@ -951,13 +951,13 @@ static MACHINE_DRIVER_START( mystwarr )
 
 	MDRV_SOUND_ADD(K054539, 48000)
 	MDRV_SOUND_CONFIG(k054539_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)	/* stereo channels are inverted */
+	MDRV_SOUND_ROUTE(1, "left", 1.0)
 
 	MDRV_SOUND_ADD(K054539, 48000)
 	MDRV_SOUND_CONFIG(k054539_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)	/* stereo channels are inverted */
+	MDRV_SOUND_ROUTE(1, "left", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( viostorm )

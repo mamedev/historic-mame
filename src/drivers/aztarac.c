@@ -175,7 +175,7 @@ static MACHINE_DRIVER_START( aztarac )
 	MDRV_CPU_ADD(Z80, 2000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_PERIODIC_INT(aztarac_snd_timed_irq,100)
+	MDRV_CPU_PERIODIC_INT(aztarac_snd_timed_irq,TIME_IN_HZ(100))
 
 	MDRV_FRAMES_PER_SECOND(40)
 	MDRV_MACHINE_INIT(aztarac)

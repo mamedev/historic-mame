@@ -107,7 +107,7 @@ static WRITE8_HANDLER(mux_select_w)
 
 WRITE8_HANDLER(st0016_rom_bank_w)
 {
-	cpu_setbank( 1, memory_region(REGION_CPU1) + (data* 0x4000) + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) + (data* 0x4000) + 0x10000 );
 	st0016_rom_bank=data;
 }
 
@@ -914,7 +914,7 @@ static DRIVER_INIT(speglsht)
 static DRIVER_INIT(mayjinsn)
 {
 	st0016_game=4;
-	cpu_setbank(2, memory_region(REGION_USER1));
+	memory_set_bankptr(2, memory_region(REGION_USER1));
 }
 
 

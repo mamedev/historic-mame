@@ -1,15 +1,15 @@
-/*###################################################################################################
-**
-**
-**      drccore.h
-**      x86 Dynamic recompiler support routines.
-**      Written by Aaron Giles
-**
-**
-**#################################################################################################*/
+/***************************************************************************
 
-#ifndef __DRCCORE_H__
-#define __DRCCORE_H__
+    x86drc.h
+
+    x86 Dynamic recompiler support routines.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __X86DRC_H__
+#define __X86DRC_H__
 
 
 /*###################################################################################################
@@ -1121,6 +1121,9 @@ do { OP1(0xe9); OP4(0x00); (link)->target = drc->cache_top; (link)->size = 4; } 
 #define _jmp(target) \
 do { OP1(0xe9); OP4((UINT32)(target) - ((UINT32)drc->cache_top + 4)); } while (0)
 
+#define _jmp_r32(reg) \
+do { OP1(0xff); MODRM_REG(4, reg); } while (0)
+
 
 
 #define _call(target) \
@@ -1627,4 +1630,4 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end);
 UINT32 drc_x86_get_features(void);
 
 
-#endif
+#endif	/* __X86DRC_H__ */

@@ -128,7 +128,7 @@ static WRITE8_HANDLER(mux_select_w)
 */
 static WRITE8_HANDLER(st0016_rom_bank_w)
 {
-	cpu_setbank( 1, memory_region(REGION_CPU1) + (data* 0x4000) + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) + (data* 0x4000) + 0x10000 );
 	st0016_rom_bank=data;
 }
 
@@ -143,14 +143,14 @@ static READ8_HANDLER(macs_dips)
 static WRITE8_HANDLER(rambank_w)
 {
 	//printf("RAMBANK [%x] %x\n",data,activecpu_get_previouspc());
-	cpu_setbank( 2, &extraram[(data&1)*0x1000] );
+	memory_set_bankptr( 2, &extraram[(data&1)*0x1000] );
 	//rambank=data;
 }
 
 static WRITE8_HANDLER(rambank2_w)
 {
 	//printf("RAMBANK2 [%x] %x\n",data,activecpu_get_previouspc());
-	//cpu_setbank( 2, &extraram[((data>>5)&1)*0x1000] );
+	//memory_set_bankptr( 2, &extraram[((data>>5)&1)*0x1000] );
 	//rambank=data;
 }
 

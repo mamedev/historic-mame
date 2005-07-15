@@ -80,7 +80,7 @@ static WRITE8_HANDLER( z80_bankswitch_w )
 
 	offset = 0x10000 + ( ( ( data & 7 ) - 2 ) * 0x4000 );
 
-	cpu_setbank( 2, &RAM[ offset ] );
+	memory_set_bankptr( 2, &RAM[ offset ] );
 }
 
 #if 0

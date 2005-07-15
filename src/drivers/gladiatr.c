@@ -210,7 +210,7 @@ WRITE8_HANDLER( gladiatr_bankswitch_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 
-	cpu_setbank(1, rom + 0x6000 * (data & 0x01));
+	memory_set_bankptr(1, rom + 0x6000 * (data & 0x01));
 }
 
 
@@ -271,7 +271,7 @@ static MACHINE_INIT( gladiator )
 	/* 6809 bank memory set */
 	{
 		data8_t *rom = memory_region(REGION_CPU3) + 0x10000;
-		cpu_setbank(2,rom);
+		memory_set_bankptr(2,rom);
 	}
 }
 
@@ -300,7 +300,7 @@ static WRITE8_HANDLER( glad_adpcm_w )
 	data8_t *rom = memory_region(REGION_CPU3) + 0x10000;
 
 	/* bit6 = bank offset */
-	cpu_setbank(2,rom + ((data & 0x40) ? 0xc000 : 0));
+	memory_set_bankptr(2,rom + ((data & 0x40) ? 0xc000 : 0));
 
 	MSM5205_data_w(0,data);         /* bit0..3  */
 	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */

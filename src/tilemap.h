@@ -1,7 +1,15 @@
-/* tilemap.h */
+/***************************************************************************
 
-#ifndef TILEMAP_H
-#define TILEMAP_H
+    tilemap.h
+
+    Generic tilemap management system.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __TILEMAP_H__
+#define __TILEMAP_H__
 
 struct tilemap; /* appease compiler */
 
@@ -175,4 +183,4 @@ UINT32 tilemap_count( void );
 void tilemap_nb_size( UINT32 number, UINT32 *width, UINT32 *height );
 void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly );
 
-#endif
+#endif	/* __TILEMAP_H__ */

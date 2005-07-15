@@ -102,7 +102,7 @@ WRITE8_HANDLER( hvymetal_videomode_w )
 //  rom[0x4a57] = 0x4a;
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 
 	system1_videomode_w(0, data);
 }
@@ -113,7 +113,7 @@ WRITE8_HANDLER( brain_videomode_w )
 	unsigned char *rom = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 
 	system1_videomode_w(0, data);
 }
@@ -124,7 +124,7 @@ WRITE8_HANDLER( chplft_videomode_w )
 	unsigned char *rom = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 
 	system1_videomode_w(0, data);
 }

@@ -4,6 +4,7 @@
 unsigned char *lkage_scroll, *lkage_vreg;
 static unsigned char bg_tile_bank, fg_tile_bank;
 
+
 /*
     lkage_scroll[0x00]: text layer horizontal scroll
     lkage_scroll[0x01]: text layer vertical scroll
@@ -12,22 +13,27 @@ static unsigned char bg_tile_bank, fg_tile_bank;
     lkage_scroll[0x04]: background layer horizontal scroll
     lkage_scroll[0x05]: background layer vertical scroll
 
-    lkage_vreg[0]:
+    lkage_vreg[0]: 0x00,0x04
         0x04: fg tile bank select
+        0x08: ?
 
-    lkage_vreg[1]:
+    lkage_vreg[1]: 0x7d
         0xf0: background, foreground palette select
         0x08: bg tile bank select
         0x07: text layer palette select (is it?)
 
-    lkage_vreg[2]:
+    lkage_vreg[2]: 0xf3
         0x03: flip screen x/y
         0xf0: normally 1111, but 1001 and 0001 inbetween stages (while the
         backgrounds are are being redrawn). These bits are probably used to enable
         individual layers, but we have no way of knowing the mapping.
 */
 
-struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static int bg_scrollx = -5;
+static int fg_scrollx = -1;
+static int tx_scrollx = -1;
+
+static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 WRITE8_HANDLER( lkage_videoram_w )
 {
@@ -54,29 +60,17 @@ WRITE8_HANDLER( lkage_videoram_w )
 
 static void get_bg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(
-			0,
-			videoram[tile_index + 0x800] + 256 * (bg_tile_bank?5:1),
-			0,
-			0)
+	SET_TILE_INFO( 0, videoram[tile_index + 0x800] + 256 * (bg_tile_bank?5:1), 0, 0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(
-			0,
-			videoram[tile_index + 0x400] + 256 * (fg_tile_bank?1:0),
-			1,
-			0)
+	SET_TILE_INFO( 0, videoram[tile_index + 0x400] + 256 * (fg_tile_bank?1:0), 1, 0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
-	SET_TILE_INFO(
-			0,
-			videoram[tile_index],
-			2,
-			0)
+	SET_TILE_INFO( 0, videoram[tile_index], 2, 0)
 }
 
 VIDEO_START( lkage )
@@ -87,15 +81,17 @@ VIDEO_START( lkage )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
+	if( !bg_tilemap || !fg_tilemap || !tx_tilemap )
+	{
 		return 1;
+	}
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
 
-	tilemap_set_scrolldx(tx_tilemap,-9,15);
-	tilemap_set_scrolldx(fg_tilemap,-15,13);
-	tilemap_set_scrolldx(bg_tilemap,-13,19);
+	tilemap_set_scrolldx(bg_tilemap,bg_scrollx,bg_scrollx+24);
+	tilemap_set_scrolldx(fg_tilemap,fg_scrollx,fg_scrollx+24);
+	tilemap_set_scrolldx(tx_tilemap,tx_scrollx,tx_scrollx+24);
 
 	return 0;
 }
@@ -126,23 +122,24 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			int flipy = attributes&0x02;
 			int height = (attributes&0x08) ? 2 : 1;
 			int sx = source[0];
-			int sy = 256 -16*height -source[1];
+			int sy = 256-16*height-source[1];
 			int sprite_number = source[3] + ((attributes & 0x04) << 6);
-
 			if (flip_screen_x)
 			{
-				sx = 240 - sx - 6;
+				sx = 228 - sx;
 				flipx = !flipx;
 			}
 			else
-				sx -= 23;
-			sx = ((sx + 8) & 0xff) - 8;
-			if (flip_screen_y)
 			{
-				sy = 256 - 16*height - sy;
+				sx -= 12;
+			}
+
+			if( flip_screen_y )
+			{
+				sy = 254 - 16*height - sy;
 				flipy = !flipy;
 			}
-			sy -= 1;
+			sx &= 0xff;
 
 			if (height == 2 && !flipy) sprite_number ^= 1;
 
@@ -201,6 +198,7 @@ VIDEO_UPDATE( lkage )
 		lkage_set_palette_row( 0xa, 0x11, 16 ); /* text colors */
 	}
 
+
 	tilemap_set_scrollx(tx_tilemap,0,lkage_scroll[0]);
 	tilemap_set_scrolly(tx_tilemap,0,lkage_scroll[1]);
 	tilemap_set_scrollx(fg_tilemap,0,lkage_scroll[2]);
@@ -211,9 +209,9 @@ VIDEO_UPDATE( lkage )
 	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{
 		tilemap_draw( bitmap,cliprect,bg_tilemap,0 ,0);
-		draw_sprites( bitmap,cliprect, 1 );
+		draw_sprites( bitmap,cliprect, 1 ); /* low priority */
 		tilemap_draw( bitmap,cliprect,fg_tilemap,0 ,0);
-		draw_sprites( bitmap,cliprect, 0 );
+		draw_sprites( bitmap,cliprect, 0 ); /* high priority */
 		tilemap_draw( bitmap,cliprect,tx_tilemap,0 ,0);
 	}
 	else

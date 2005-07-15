@@ -48,7 +48,7 @@ static WRITE8_HANDLER( chqflag_bankswitch_w )
 
 	/* bits 0-4 = ROM bank # (0x00-0x11) */
 	bankaddress = 0x10000 + (data & 0x1f)*0x4000;
-	cpu_setbank(4,&RAM[bankaddress]);
+	memory_set_bankptr(4,&RAM[bankaddress]);
 
 	/* bit 5 = memory bank select */
 	if (data & 0x20){

@@ -45,7 +45,7 @@ WRITE8_HANDLER( primella_ctrl_w )
 
 	/* bits 0-2 select ROM bank */
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	/* bit 3 disables tx layer */
 	tx_pri = data & 0x08;

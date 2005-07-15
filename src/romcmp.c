@@ -12,9 +12,13 @@
 #	include <dirent.h>
 #	include <errno.h>
 #else
-#	include "dirent.h"
+#	include <windows.h>
 #endif
 #include <sys/stat.h>
+#ifdef _MSC_VER
+#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
+#define S_ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
+#endif
 #endif
 
 
@@ -499,28 +503,53 @@ static int load_files(int i, int *found, const char *path)
 
 	if (S_ISDIR(st.st_mode))
 	{
-		DIR *dir;
-		struct dirent *d;
+#ifdef _WIN32
+		HANDLE dir;
+		WIN32_FIND_DATAA ent;
+		int more;
+		char *dirfilter;
+		int dirlen = strlen(path);
 
-		/* load all files in directory */
+		memset(&ent, 0, sizeof(WIN32_FIND_DATA));
+		dirfilter = malloc(dirlen+5);
+		if (dirfilter == NULL)
+			return 1;
+		memcpy(dirfilter, path, dirlen);
+		memcpy(dirfilter+dirlen, "/*.*", 5);
+
+        dir = FindFirstFileA(dirfilter, &ent);
+        free(dirfilter);
+
+        if (dir != INVALID_HANDLE_VALUE)
+        {
+            do
+            {
+                char *d_name = ent.cFileName;
+#else
+        DIR *dir;
+        struct dirent *d;
+
+        /* load all files in directory */
 		dir = opendir(path);
 		if (dir)
 		{
 			while((d = readdir(dir)) != NULL)
 			{
+				char *d_name = d->d_name;
+#endif
 				char buf[255+1];
 				struct stat st_file;
 
-				sprintf(buf, "%s%c%s", path, PATH_DELIM, d->d_name);
+				sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
 				if(stat(buf, &st_file) == 0 && S_ISREG(st_file.st_mode))
 				{
 					unsigned size = st_file.st_size;
 					while (size && (size & 1) == 0) size >>= 1;
 					if (size & ~1)
-						printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d->d_name,i ? d->d_name : "");
+						printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
 					else
 					{
-						strcpy(files[i][found[i]].name,d->d_name);
+						strcpy(files[i][found[i]].name,d_name);
 						files[i][found[i]].size = st_file.st_size;
 						readfile(path,&files[i][found[i]]);
 						files[i][found[i]].listed = 0;
@@ -532,8 +561,15 @@ static int load_files(int i, int *found, const char *path)
 						found[i]++;
 					}
 				}
+#ifdef _WIN32
+				more = FindNextFileA(dir, &ent);
+			}
+			while (more);
+			FindClose(dir);
+#else
 			}
 			closedir(dir);
+#endif
 		}
 	}
 	else

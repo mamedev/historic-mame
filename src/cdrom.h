@@ -1,11 +1,15 @@
 /***************************************************************************
 
+    cdrom.h
+
     Generic MAME cd-rom implementation
 
 ***************************************************************************/
 
-#ifndef _MAME_CDROM_H_
-#define _MAME_CDROM_H_
+#pragma once
+
+#ifndef __CDROM_H__
+#define __CDROM_H__
 
 #include "driver.h"
 #include "chd.h"
@@ -99,5 +103,5 @@ data32_t cdrom_get_track_start(struct cdrom_file *file, int track, int msf);
 int cdrom_get_track_type(struct cdrom_file *file, int track);
 struct cdrom_toc *cdrom_get_toc(struct cdrom_file *file);
 
-#endif	// _MAME_CDROM_H_
+#endif	// __CDROM_H__
 

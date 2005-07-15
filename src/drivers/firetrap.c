@@ -93,7 +93,7 @@ static WRITE8_HANDLER( firetrap_bankselect_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static READ8_HANDLER( firetrap_8751_bootleg_r )
@@ -215,7 +215,7 @@ static WRITE8_HANDLER( firetrap_sound_bankselect_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
-	cpu_setbank(2,&RAM[bankaddress]);
+	memory_set_bankptr(2,&RAM[bankaddress]);
 }
 
 static int msm5205next;

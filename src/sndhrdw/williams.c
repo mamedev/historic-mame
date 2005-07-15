@@ -488,7 +488,7 @@ static void adpcm_ym2151_irq(int state)
 
 static WRITE8_HANDLER( cvsd_bank_select_w )
 {
-	cpu_setbank(6, get_cvsd_bank_base(data));
+	memory_set_bankptr(6, get_cvsd_bank_base(data));
 }
 
 
@@ -499,7 +499,7 @@ static WRITE8_HANDLER( cvsd_bank_select_w )
 
 static WRITE8_HANDLER( adpcm_bank_select_w )
 {
-	cpu_setbank(6, get_adpcm_bank_base(data));
+	memory_set_bankptr(6, get_adpcm_bank_base(data));
 }
 
 
@@ -530,13 +530,13 @@ static WRITE8_HANDLER( adpcm_6295_bank_select_w )
 
 static WRITE8_HANDLER( narc_master_bank_select_w )
 {
-	cpu_setbank(6, get_narc_master_bank_base(data));
+	memory_set_bankptr(6, get_narc_master_bank_base(data));
 }
 
 
 static WRITE8_HANDLER( narc_slave_bank_select_w )
 {
-	cpu_setbank(5, get_narc_slave_bank_base(data));
+	memory_set_bankptr(5, get_narc_slave_bank_base(data));
 }
 
 

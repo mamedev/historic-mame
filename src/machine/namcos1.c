@@ -559,7 +559,7 @@ WRITE8_HANDLER( namcos1_sound_bankswitch_w )
 	data8_t *rom = memory_region(REGION_CPU3) + 0xc000;
 
 	int bank = (data & 0x70) >> 4;
-	cpu_setbank(17,rom + 0x4000 * bank);
+	memory_set_bankptr(17,rom + 0x4000 * bank);
 }
 
 
@@ -668,7 +668,7 @@ static void set_bank(int banknum, bankhandler *handler)
 	int cpunum = (banknum >> 3) & 1;
 
 	/* for BANK handlers , memory direct and OP-code base */
-	cpu_setbank(banknum + 1, handler->bank_pointer);
+	memory_set_bankptr(banknum + 1, handler->bank_pointer);
 
 	/* read handlers */
 	if (!handler->bank_handler_r)
@@ -902,7 +902,7 @@ WRITE8_HANDLER( namcos1_mcu_bankswitch_w )
 	/* bit 0-1 : address line A15-A16 */
 	addr += (data & 3) * 0x8000;
 
-	cpu_setbank(20, memory_region(REGION_CPU4) + addr);
+	memory_set_bankptr(20, memory_region(REGION_CPU4) + addr);
 }
 
 
@@ -976,8 +976,8 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "triram", namcos1_triram, 0x800);
 
 	/* Point mcu & sound shared RAM to destination */
-	cpu_setbank( 18, namcos1_triram );
-	cpu_setbank( 19, namcos1_triram );
+	memory_set_bankptr( 18, namcos1_triram );
+	memory_set_bankptr( 19, namcos1_triram );
 
 	/* build bank elements */
 	namcos1_build_banks(specific->key_r,specific->key_w);

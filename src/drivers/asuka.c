@@ -148,7 +148,7 @@ INTERRUPT_GEN( cadash_interrupt )
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
 
 

@@ -210,7 +210,7 @@ static WRITE8_HANDLER( bankswitch1_w )
 	/* with bankswitch1_ext_w() in wndrmomo */
 	if (memory_region(REGION_USER1)) return;
 
-	cpu_setbank(1,base + ((data & 0x03) * 0x2000));
+	memory_set_bankptr(1,base + ((data & 0x03) * 0x2000));
 }
 
 static WRITE8_HANDLER( bankswitch1_ext_w )
@@ -219,14 +219,14 @@ static WRITE8_HANDLER( bankswitch1_ext_w )
 
 	if (base == 0) return;
 
-	cpu_setbank(1,base + ((data & 0x1f) * 0x2000));
+	memory_set_bankptr(1,base + ((data & 0x1f) * 0x2000));
 }
 
 static WRITE8_HANDLER( bankswitch2_w )
 {
 	unsigned char *base = memory_region(REGION_CPU2) + 0x10000;
 
-	cpu_setbank(2,base + ((data & 0x03) * 0x2000));
+	memory_set_bankptr(2,base + ((data & 0x03) * 0x2000));
 }
 
 /* Stubs to pass the correct Dip Switch setup to the MCU */
@@ -348,7 +348,7 @@ static MACHINE_INIT( namco86 )
 {
 	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
-	cpu_setbank(1,base);
+	memory_set_bankptr(1,base);
 }
 
 

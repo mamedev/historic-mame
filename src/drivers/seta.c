@@ -2761,7 +2761,7 @@ static WRITE8_HANDLER( sub_bankswitch_w )
 	data8_t *rom = memory_region(REGION_CPU2);
 	int bank = data >> 4;
 
-	cpu_setbank(1, &rom[bank * 0x4000 + 0xc000]);
+	memory_set_bankptr(1, &rom[bank * 0x4000 + 0xc000]);
 }
 
 static WRITE8_HANDLER( sub_bankswitch_lockout_w )

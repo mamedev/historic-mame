@@ -4152,7 +4152,7 @@ DRIVER_INIT ( stv )
 	time(&ltime);
 	today = localtime(&ltime);
 
-	cpu_setbank(1,&ROM[0x000000]);
+	memory_set_bankptr(1,&ROM[0x000000]);
 
 	smpc_ram = auto_malloc (0x80);
 	stv_scu = auto_malloc (0x100);
@@ -4222,7 +4222,7 @@ static void print_game_info(void)
 
 MACHINE_INIT( stv )
 {
-	cpu_setbank(1,memory_region(REGION_USER1));
+	memory_set_bankptr(1,memory_region(REGION_USER1));
 
 	// don't let the slave cpu and the 68k go anywhere
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);

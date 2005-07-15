@@ -65,6 +65,12 @@ static void ppcdrc_reset(struct drccore *drc)
 
 	ppc.generate_trap_exception = drc->cache_top;
 	append_generate_exception(drc, EXCEPTION_TRAP);
+
+	ppc.generate_dsi_exception = drc->cache_top;
+	append_generate_exception(drc, EXCEPTION_DSI);
+
+	ppc.generate_isi_exception = drc->cache_top;
+	append_generate_exception(drc, EXCEPTION_ISI);
 }
 
 static void ppcdrc_recompile(struct drccore *drc)
@@ -193,9 +199,9 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 }
 
 
-static UINT32 exception_vector[32] =
+static const UINT32 exception_vector[32] =
 {
-	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00
+	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00, 0x1400, 0x0300, 0x0400
 };
 
 static void append_generate_exception(struct drccore *drc, UINT8 exception)
@@ -1108,6 +1114,7 @@ static UINT32 recompile_lbz(struct drccore *drc, UINT32 op)
 	}
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1123,6 +1130,7 @@ static UINT32 recompile_lbzu(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EDX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1138,6 +1146,7 @@ static UINT32 recompile_lbzux(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EDX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 
@@ -1155,6 +1164,7 @@ static UINT32 recompile_lbzx(struct drccore *drc, UINT32 op)
 	_push_r32(REG_EAX);
 	_call((genf *)READ8);
 	_add_r32_imm(REG_ESP, 4);
+	_movzx_r32_r8(REG_EAX, REG_AL);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
 	_mov_r32_m32abs(REG_EBP, &ppc_icount);
 

@@ -73,7 +73,7 @@ WRITE8_HANDLER( hexion_bankswitch_w )
 	unsigned char *rom = memory_region(REGION_CPU1) + 0x10000;
 
 	/* bits 0-3 select ROM bank */
-	cpu_setbank(1,rom + 0x2000 * (data & 0x0f));
+	memory_set_bankptr(1,rom + 0x2000 * (data & 0x0f));
 
 	/* does bit 6 trigger the 052591? */
 	if (data & 0x40)

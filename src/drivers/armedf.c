@@ -178,7 +178,7 @@ extern data16_t *armedf_bg_videoram;
 extern data16_t *armedf_fg_videoram;
 extern data16_t *terraf_text_videoram;
 extern data16_t *legion_cmd;
-extern struct tilemap *tx_tilemap;
+extern struct tilemap *armedf_tx_tilemap;
 
 static WRITE16_HANDLER( io_w )
 {
@@ -202,7 +202,7 @@ static WRITE16_HANDLER( terraf_io_w )
 		{
 			terraf_text_videoram[i]=0x20;
 		}
-		tilemap_mark_all_tiles_dirty( tx_tilemap );
+		tilemap_mark_all_tiles_dirty( armedf_tx_tilemap );
 		//logerror("vreg WIPE TX\n");
 	}
 	//logerror("VReg = %04x\n", armedf_vreg);

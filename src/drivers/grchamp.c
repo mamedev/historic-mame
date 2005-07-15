@@ -386,7 +386,7 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_CPU_ADD(Z80, 3000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,75)		/* irq's are triggered every 75 Hz */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(75))		/* irq's are triggered every 75 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

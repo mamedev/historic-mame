@@ -120,7 +120,7 @@ static WRITE8_HANDLER(speedspn_banked_rom_change)
 			break;
 	}
 
-	cpu_setbank(1,&rom[addr + 0x8000]);
+	memory_set_bankptr(1,&rom[addr + 0x8000]);
 }
 
 static WRITE8_HANDLER(mstworld_banked_rom_change)
@@ -128,7 +128,7 @@ static WRITE8_HANDLER(mstworld_banked_rom_change)
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int addr = 0x10000 + ((data >> 2) & 0x1f) * 0x4000;
 
-	cpu_setbank(1,&rom[addr]);
+	memory_set_bankptr(1,&rom[addr]);
 }
 
 /*** SOUND RELATED ***********************************************************/

@@ -12,9 +12,14 @@ special thanks to Nekomata, NTD & code-name'Siberia'
 
 TODO:
 - wrong background in fstarfrc title
+- there could be some priorities problems in riot
+  (more noticeable in level 2)
 
-To enter into service mode in Final Star Force press and hold start
-buttons 1 and 2 during P.O.S.T.
+Notes:
+- To enter into service mode in Final Star Force press and hold start
+  buttons 1 and 2 during P.O.S.T.
+- The games seem to be romswaps. At least you can swap Riot roms on the pcb
+  with Final Star Force and it'll work without problems.
 
 ******************************************************************************/
 

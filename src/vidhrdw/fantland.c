@@ -1,13 +1,13 @@
 /***************************************************************************
 
-                      -= Fantasy Land / Galaxy Gunners =-
+                      -= Electronic Devices / International Games =-
 
                     driver by   Luca Elia (l.elia@tin.it)
 
     This game has sprites only:
 
-    tiles are 16 x 16 x 6. There are $400 sprites, each one is allotted
-    8 bytes of memory (but only 5 are used) :
+    tiles are 16 x 16 x 6. There are 0x400 sprites, each one is allotted
+    8 bytes of memory in spriteram (but only 5 are used) :
 
     Offset:     Bits:           Value:
 
@@ -26,8 +26,24 @@
 
         4                       Y (low bits)
 
-    Then follows a table with 1 byte per sprite: the index of a x,y
-    and code offset that sprite will use, from a table with 256 entries:
+    Then 2 tables follow, 0x400 bytes each:
+
+    - the first table contains 1 byte per sprite: an index in the second table
+    - the second table is either an x,y offset or an index in spriteram_2:
+
+        0                       X offset (low bits)
+
+        1                       Y offset (low bits)
+
+        2       7--- ----       If 1, the following bits are an index in spriteram_2 for the real X&Y & Code offsets
+                -654 321-
+                ---- ---0       X offset (high bit)
+
+        3       7654 321-
+                ---- ---0       Y offset (high bit)
+
+
+    Spriteram_2 contains 0x4000 X&Y & Code offsets:
 
         0                       Y offset (low bits)
 
@@ -44,11 +60,12 @@
 
 static void fantland_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	data8_t	*ram	=	spriteram,		// spriteram start
-			*end	=	ram + 0x2000,	// spriteram end
-			*ram2	=	ram + 0x2000;	// table of indexes into the table of offsets
+	data8_t	*indx_ram	=	spriteram + 0x2000,	// this ram contains indexes into offs_ram
+			*offs_ram	=	spriteram + 0x2400,	// this ram contains x,y offsets or indexes into spriteram_2
+			*ram		=	spriteram,			// current sprite pointer in spriteram
+			*ram2		=	indx_ram;			// current sprite pointer in indx_ram
 
-	for ( ; ram < end; ram += 8,ram2 ++)
+	for ( ; ram < indx_ram; ram += 8,ram2++)
 	{
 		int attr,code,color, x,y,xoffs,yoffs,flipx,flipy, idx;
 
@@ -65,16 +82,38 @@ static void fantland_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 		y		+=	(attr & 0x40) << 2;
 		x		+=	(attr & 0x80) << 1;
 
-		/* Index in the table of offsets */
+		// Index in the table of offsets
+
 		idx		=	ram2[0] * 4;
 
-		/* Fetch the offsets */
-		yoffs	=	spriteram_2[idx + 0] + (spriteram_2[idx + 1] << 8);
-		xoffs	=	spriteram_2[idx + 2] + (spriteram_2[idx + 3] << 8);
+		// Fetch the offsets
+
+		if (offs_ram[idx + 2] & 0x80)
+		{
+			// x,y & code offset is in spriteram_2, this is its index
+
+			idx		=	(((offs_ram[idx + 2] << 8) + offs_ram[idx + 3]) & 0x3fff) * 4;
+
+			yoffs	=	spriteram_2[idx + 0] + (spriteram_2[idx + 1] << 8);
+			xoffs	=	spriteram_2[idx + 2] + (spriteram_2[idx + 3] << 8);
+
+			code	+=	yoffs >> 9;
+		}
+		else
+		{
+			// this is an x,y offset
+
+			yoffs	=	((offs_ram[idx + 3] & 0x01) << 8) + offs_ram[idx + 1];
+			xoffs	=	((offs_ram[idx + 2] & 0x01) << 8) + offs_ram[idx + 0];
+		}
+
+		yoffs		=	(yoffs & 0xff) - (yoffs & 0x100);
+		xoffs		=	(xoffs & 0x1ff);
+
+		if (xoffs >= 0x180)		xoffs -= 0x200;
 
 		y		+=	yoffs;
 		x		+=	xoffs;
-		code	+=	yoffs >> 9;
 
 		y		=	(y & 0xff) - (y & 0x100);
 		x		=	(x & 0x1ff);
@@ -87,7 +126,32 @@ static void fantland_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 VIDEO_UPDATE( fantland )
 {
+	int portx, porty;
+
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 	fantland_draw_sprites(bitmap,cliprect);
-}
 
+	// Draw the crosshairs for lightgun games
+
+	if (	(portx = port_tag_to_index("Controls")) > 0	&&
+			((readinputport(portx) & 3) != 3)			)
+		return;
+
+	if (	(portx = port_tag_to_index("P1 Lightgun X")) > 0	&&
+			(porty = port_tag_to_index("P1 Lightgun Y")) > 0	)
+	{
+		draw_crosshair(bitmap,
+			readinputport(portx) * 2 - 0x0e,
+			readinputport(porty) * 2 - 0xf8,
+			cliprect,0);
+	}
+
+	if (	(portx = port_tag_to_index("P2 Lightgun X")) > 0	&&
+			(porty = port_tag_to_index("P2 Lightgun Y")) > 0	)
+	{
+		draw_crosshair(bitmap,
+			readinputport(portx) * 2 - 0x0e,
+			readinputport(porty) * 2 - 0xf8,
+			cliprect,1);
+	}
+}

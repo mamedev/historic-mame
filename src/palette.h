@@ -67,12 +67,10 @@
 
 ******************************************************************************/
 
-#ifndef PALETTE_H
-#define PALETTE_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __PALETTE_H__
+#define __PALETTE_H__
 
 
 /*-------------------------------------------------
@@ -252,8 +250,4 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 void palette_init_black_and_white(UINT16 *colortable, const UINT8 *color_prom);
 void palette_init_RRRR_GGGG_BBBB(UINT16 *colortable, const UINT8 *color_prom);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __PALETTE_H__ */

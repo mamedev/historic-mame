@@ -129,11 +129,11 @@ MACHINE_INIT( pipedrm )
 
 	/* initialize main Z80 bank */
 	ram = memory_region(REGION_CPU1);
-	cpu_setbank(1, &ram[0x10000]);
+	memory_set_bankptr(1, &ram[0x10000]);
 
 	/* initialize sound bank */
 	ram = memory_region(REGION_CPU2);
-	cpu_setbank(2, &ram[0x10000]);
+	memory_set_bankptr(2, &ram[0x10000]);
 }
 
 
@@ -152,7 +152,7 @@ static WRITE8_HANDLER( pipedrm_bankswitch_w )
 
 	/* set the memory bank on the Z80 using the low 3 bits */
 	UINT8 *ram = memory_region(REGION_CPU1);
-	cpu_setbank(1, &ram[0x10000 + (data & 0x7) * 0x2000]);
+	memory_set_bankptr(1, &ram[0x10000 + (data & 0x7) * 0x2000]);
 
 	/* map to the fromance gfx register */
 	fromance_gfxreg_w(offset, ((data >> 6) & 0x01) | 	/* flipscreen */
@@ -163,7 +163,7 @@ static WRITE8_HANDLER( pipedrm_bankswitch_w )
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	UINT8 *ram = memory_region(REGION_CPU2);
-	cpu_setbank(2, &ram[0x10000 + (data & 0x01) * 0x8000]);
+	memory_set_bankptr(2, &ram[0x10000 + (data & 0x01) * 0x8000]);
 }
 
 

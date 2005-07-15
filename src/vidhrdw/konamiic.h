@@ -127,6 +127,7 @@ READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
 void K053244_bankselect(int chip, int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
 void K053245_sprites_draw(int chip, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+void K053245_sprites_draw_lethal(int chip, struct mame_bitmap *bitmap,const struct rectangle *cliprect); /* for lethal enforcers */
 void K053245_clear_buffer(int chip);
 void K053245_set_SpriteOffset(int chip,int offsx, int offsy);
 

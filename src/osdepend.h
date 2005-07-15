@@ -1,24 +1,18 @@
-#ifndef OSDEPEND_H
-#define OSDEPEND_H
+/***************************************************************************
 
-#include "osd_cpu.h"
+    osdepend.h
+
+    OS-dependent code interface.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __OSDEPEND_H__
+#define __OSDEPEND_H__
+
+#include "mamecore.h"
 #include "inptport.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* The Win32 port requires this constant for variable arg routines. */
-#ifndef CLIB_DECL
-#define CLIB_DECL
-#endif
-
-#ifdef __LP64__
-#define FPTR unsigned long   /* 64bit: sizeof(void *) is sizeof(long)  */
-#else
-#define FPTR unsigned int
-#endif
-
 
 int osd_init(void);
 void osd_exit(void);
@@ -357,8 +351,4 @@ void CLIB_DECL logerror(const char *text,...)
 void CLIB_DECL logerror(const char *text,...);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __OSDEPEND_H__ */

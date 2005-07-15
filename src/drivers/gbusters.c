@@ -395,7 +395,7 @@ static void gbusters_banking( int lines )
 
 	/* bits 0-3 ROM bank */
 	offs += (lines & 0x0f)*0x2000;
-	cpu_setbank( 1, &RAM[offs] );
+	memory_set_bankptr( 1, &RAM[offs] );
 
 	if (lines & 0xf0){
 		//logerror("%04x: (lines) write %02x\n",activecpu_get_pc(), lines);

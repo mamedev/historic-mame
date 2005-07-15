@@ -496,7 +496,7 @@ ShuffleDataROMs( void )
 		pMem32[i] = (pMem8[0]<<16)|(pMem8[1]<<24)|(pMem8[2]<<0)|(pMem8[3]<<8);
 		pMem8+=4;
 	}
-	cpu_setbank( 1, pMem32 );
+	memory_set_bankptr( 1, pMem32 );
 }
 
 static DRIVER_INIT( machbrkr )

@@ -279,7 +279,7 @@ static MACHINE_INIT( strtheat )
 
 	/* The initial state of the counter is 0x08 */
 	counter = 0x08;
-	cpu_setbank (1, &ROM[0x10000]);
+	memory_set_bankptr (1, &ROM[0x10000]);
 }
 
 static MACHINE_INIT( drakton )
@@ -288,7 +288,7 @@ static MACHINE_INIT( drakton )
 
 	/* The initial state of the counter is 0x09 */
 	counter = 0x09;
-	cpu_setbank (1, &ROM[0x14000]);
+	memory_set_bankptr (1, &ROM[0x14000]);
 }
 
 static READ8_HANDLER( epos_decrypt_rom )
@@ -308,10 +308,10 @@ static READ8_HANDLER( epos_decrypt_rom )
 
 	switch(counter)
 	{
-		case 0x08:	cpu_setbank (1, &ROM[0x10000]);		break;
-		case 0x09:	cpu_setbank (1, &ROM[0x14000]);		break;
-		case 0x0A:	cpu_setbank (1, &ROM[0x18000]);		break;
-		case 0x0B:	cpu_setbank (1, &ROM[0x1C000]);		break;
+		case 0x08:	memory_set_bankptr (1, &ROM[0x10000]);		break;
+		case 0x09:	memory_set_bankptr (1, &ROM[0x14000]);		break;
+		case 0x0A:	memory_set_bankptr (1, &ROM[0x18000]);		break;
+		case 0x0B:	memory_set_bankptr (1, &ROM[0x1C000]);		break;
 		default:
 			logerror("Invalid counter = %02X\n",counter);
 			break;

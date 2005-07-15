@@ -16,35 +16,45 @@
 
 static int sprite_colorbase;
 static int layer_colorbase[4];
-//static int layerpri[4];
-struct mame_bitmap * sprite_planes0123;
-struct mame_bitmap * sprite_planes45xx;
-
+//static int layerpri[4] ={ 1,2,4,0 };
 
 static void lethalen_sprite_callback(int *code, int *color, int *priority_mask)
 {
-/*
-    int pri = (*color & 0x00e0) >> 2;
-    if (pri <= layerpri[2])                             *priority_mask = 0;
-    else if (pri > layerpri[2] && pri <= layerpri[1])   *priority_mask = 0xf0;
-    else if (pri > layerpri[1] && pri <= layerpri[0])   *priority_mask = 0xf0|0xcc;
-    else                                                *priority_mask = 0xf0|0xcc|0xaa;
-    *color = sprite_colorbase; // |
-*/
-	*priority_mask = 0x00;
+	int pri = (*color & 0xfff0);
 	*color = *color & 0x000f;
+	*color+=0x400/64; // colourbase?
+
+	/* this isn't ideal.. shouldn't need to hardcode it? not 100% sure about it anyway*/
+	if (pri==0x10) *priority_mask = 0xf0; // guys on first level
+	else if (pri==0x90) *priority_mask = 0xf0; // car doors
+	else if (pri==0x20) *priority_mask = 0xf0|0xcc; // people behind glass on 1st level
+	else if (pri==0xa0) *priority_mask = 0xf0|0xcc; // glass on 1st/2nd level
+	else if (pri==0x40) *priority_mask = 0; // blood splats?
+	else if (pri==0x00) *priority_mask = 0; // gunshots etc
+	else if (pri==0x30) *priority_mask = 0xf0|0xcc|0xaa; // mask sprites (always in a bad colour, used to do special effects i think
+	else
+	{
+		usrintf_showmessage("unknown pri %04x\n",pri);
+		*priority_mask = 0;
+	}
 
 	*code = (*code & 0x3fff); // | spritebanks[(*code >> 12) & 3];
 }
 
 static void lethalen_tile_callback(int layer, int *code, int *color)
 {
-	tile_info.flags = TILE_FLIPYX((*color) & 3);
+	/* where are the flip bits? lethal enforcers needs them on reload and p2 start screen */
+	/* they don't seem to be anywhere in the ram we're looking at... */
+//  tile_info.flags = TILE_FLIPYX(1);;
+
+
 	*color = layer_colorbase[layer] + ((*color & 0x3c)<<2);
 }
 
 VIDEO_START(lethalen)
 {
+	int i;
+
 	K053251_vh_start();
 
 	K056832_vh_start(REGION_GFX1, K056832_BPP_8LE, 1, NULL, lethalen_tile_callback, 0);
@@ -52,11 +62,12 @@ VIDEO_START(lethalen)
 	if (K053245_vh_start(0, REGION_GFX3,NORMAL_PLANE_ORDER, lethalen_sprite_callback))
 		return 1;
 
-	if (K053245_vh_start(1, REGION_GFX4,NORMAL_PLANE_ORDER, lethalen_sprite_callback))
-		return 1;
+	/* the default drawmode table is no good for 6bpp, create a new one */
+	gfx_drawmode_table[0] = DRAWMODE_NONE;
+	for (i = 1;i < 64;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 
-	sprite_planes0123 = auto_bitmap_alloc_depth(64*8, 32*8, 16);
-	sprite_planes45xx = auto_bitmap_alloc_depth(64*8, 32*8, 16);
+	gfx_drawmode_table[63] = DRAWMODE_SHADOW;
 
 	// this game uses external linescroll RAM
 	K056832_SetExtLinescroll();
@@ -64,21 +75,19 @@ VIDEO_START(lethalen)
 	// the US and Japanese cabinets apparently use different mirror setups
 	if (!strcmp(Machine->gamedrv->name, "lethalen"))
 	{
- 		K056832_set_LayerOffset(0, -64, 0);
-		K056832_set_LayerOffset(1, -64, 0);
-		K056832_set_LayerOffset(2, -64, 0);
-		K056832_set_LayerOffset(3, -64, 0);
-		K053245_set_SpriteOffset(0, 96, -8);
-		K053245_set_SpriteOffset(1, 96, -8);
+ 		K056832_set_LayerOffset(0, 188, 0);
+		K056832_set_LayerOffset(1, 190, 0);
+		K056832_set_LayerOffset(2, 192, 0);
+		K056832_set_LayerOffset(3, 194, 0);
+		K053245_set_SpriteOffset(0, 95, 0);
 	}
 	else
-	{
+	{ /* fixme */
  		K056832_set_LayerOffset(0, 64, 0);
 		K056832_set_LayerOffset(1, 64, 0);
 		K056832_set_LayerOffset(2, 64, 0);
 		K056832_set_LayerOffset(3, 64, 0);
 		K053245_set_SpriteOffset(0, -96, 8);
-		K053245_set_SpriteOffset(1, -96, 8);
 	}
 
 	layer_colorbase[0] = 0x00;
@@ -113,91 +122,35 @@ WRITE8_HANDLER(le_palette_control)
 	}
 }
 
+extern data16_t *K056832_videoram;
+
 VIDEO_UPDATE(lethalen)
 {
-	int x,y;
-
-
 	fillbitmap(bitmap, 7168, cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
-	fillbitmap(sprite_planes0123, 0, cliprect);
-	fillbitmap(sprite_planes45xx, 0, cliprect);
-
 
 	K056832_tilemap_draw(bitmap, cliprect, 3, 0, 1);
 	K056832_tilemap_draw(bitmap, cliprect, 2, 0, 2);
 	K056832_tilemap_draw(bitmap, cliprect, 1, 0, 4);
 
-	/* Lethal Enforcers has 2 sprite chips, each rendering a 4bpp layer
-      (although 2bpp is unused in one)
-
-      we render each layer to its own bitmap then mix them
-
-      (i'm guessing this is how the HW would work.. as each sprite renderer is only capable of 4bpp)
-
-      this does not seem to work well with priorities ....
-
-    */
-
-	/*
-     the priority buffer probably needs handling manually this way...fun fun fun
-    */
-	K053245_sprites_draw(0, sprite_planes0123, cliprect);
-	fillbitmap(priority_bitmap, 0, cliprect);/* hmm how do we stop it using priority bitmap when we don't want it? for the first chip? */
-	K053245_sprites_draw(1, sprite_planes45xx, cliprect);
-
-	#if 0
-	{
-		FILE *fp;
-		fp=fopen("planes0123", "w+b");
-		if (fp)
-		{
-			fwrite(sprite_planes0123->base, 256*512, 1, fp);
-			fclose(fp);
-		}
-	}
-	{
-		FILE *fp;
-		fp=fopen("planes45xx", "w+b");
-		if (fp)
-		{
-			fwrite(sprite_planes45xx->base, 256*512, 1, fp);
-			fclose(fp);
-		}
-	}
-	#endif
-
-	/* now we mix the layers to make a 6bpp layer .. this isn't perfect.. i think shadow sprites cause problems
-      we probably need to handle them manually because of the weird configuration
-      */
-
-	for(y=0;y<32*8;y++)
-	{
-		UINT16* line_dest = (UINT16 *)(bitmap->line[y]);
-		UINT16* line_0123 = (UINT16 *)(sprite_planes0123->line[y]);
-		UINT16* line_45xx = (UINT16 *)(sprite_planes45xx->line[y]);
-
-		for (x=0;x<64*8;x++)
-		{
-			int dat;
-			/* reorder sprite rom loading / reverse decode instead? */
-			dat  = (line_0123[x] & 0x0003)<<2;
-			dat |= (line_0123[x] & 0x000c)>>2;
-			dat |= (line_45xx[x] & 0x0003)<<4;
-
-			dat |= (line_0123[x] & 0x00f0)<<2; // color
-			dat |= (line_45xx[x] & 0x00f0)<<2; // color ( just incaes one layer was transparent so no pixel was drawn )
-
-			if (dat) line_dest[x]=dat+0x400; /* use sprite_colorbase ? */
-
-		}
-
-	}
-
+	K053245_sprites_draw_lethal(0, bitmap, cliprect);
 
 	// force "A" layer over top of everything
 	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
 
 	draw_crosshair(bitmap, GUNX(2)+216, 240-GUNY(3), cliprect, 0);
 	draw_crosshair(bitmap, GUNX(4)+216, 240-GUNY(5), cliprect, 1);
+
+#if 0
+	{
+		FILE *fp;
+
+		fp=fopen("K056832_videoram", "w+b");
+		if (fp)
+		{
+			fwrite(K056832_videoram, 0x10000, 2, fp);
+			fclose(fp);
+		}
+	}
+#endif
 }

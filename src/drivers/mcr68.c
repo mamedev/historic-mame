@@ -156,7 +156,7 @@ static WRITE16_HANDLER( spyhunt2_control_w )
 /*  turbocs_reset_w(~control_word & 0x0080);*/
 	turbocs_data_w(offset, (control_word >> 8) & 0x001f);
 
-/*  soundsgood_reset_w(~control_word & 0x2000);*/
+	soundsgood_reset_w(~control_word & 0x2000);
 	soundsgood_data_w(offset, (control_word >> 8) & 0x001f);
 }
 
@@ -302,28 +302,19 @@ static READ16_HANDLER( trisport_port_1_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( mcr68_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x060000, 0x063fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x070000, 0x070fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x071000, 0x071fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0a0000, 0x0a000f) AM_READ(mcr68_6840_upper_r)
+static ADDRESS_MAP_START( mcr68_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(21) | AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x060000, 0x063fff) AM_RAM
+	AM_RANGE(0x070000, 0x070fff) AM_READWRITE(MRA16_RAM, mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x071000, 0x071fff) AM_RAM
+	AM_RANGE(0x080000, 0x080fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x090000, 0x09007f) AM_WRITE(mcr68_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0a0000, 0x0a000f) AM_READWRITE(mcr68_6840_upper_r, mcr68_6840_upper_w)
+	AM_RANGE(0x0b0000, 0x0bffff) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x0d0000, 0x0dffff) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x0e0000, 0x0effff) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0f0000, 0x0fffff) AM_READ(input_port_2_word_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( mcr68_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x060000, 0x063fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x070000, 0x070fff) AM_WRITE(mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
-	AM_RANGE(0x071000, 0x071fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x080000, 0x080fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x090000, 0x09007f) AM_WRITE(mcr68_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x0a0000, 0x0a000f) AM_WRITE(mcr68_6840_upper_w)
-	AM_RANGE(0x0b0000, 0x0bffff) AM_WRITE(watchdog_reset16_w)
 ADDRESS_MAP_END
 
 
@@ -334,31 +325,18 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( zwackery_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x037fff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x080fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x084000, 0x084fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x100000, 0x10000f) AM_READ(zwackery_6840_r)
-	AM_RANGE(0x104000, 0x104007) AM_READ(pia_2_msb_r)
-	AM_RANGE(0x108000, 0x108007) AM_READ(pia_3_lsb_r)
-	AM_RANGE(0x10c000, 0x10c007) AM_READ(pia_4_lsb_r)
-	AM_RANGE(0x800000, 0x800fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x802000, 0x803fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00000, 0xc00fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( zwackery_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x037fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x080fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x084000, 0x084fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x100000, 0x10000f) AM_WRITE(mcr68_6840_upper_w)
-	AM_RANGE(0x104000, 0x104007) AM_WRITE(pia_2_msb_w)
-	AM_RANGE(0x108000, 0x108007) AM_WRITE(pia_3_lsb_w)
-	AM_RANGE(0x10c000, 0x10c007) AM_WRITE(pia_4_lsb_w)
-	AM_RANGE(0x800000, 0x800fff) AM_WRITE(zwackery_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
-	AM_RANGE(0x802000, 0x803fff) AM_WRITE(zwackery_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xc00000, 0xc00fff) AM_WRITE(zwackery_spriteram_w) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+static ADDRESS_MAP_START( zwackery_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x037fff) AM_ROM
+	AM_RANGE(0x080000, 0x080fff) AM_RAM
+	AM_RANGE(0x084000, 0x084fff) AM_RAM
+	AM_RANGE(0x100000, 0x10000f) AM_READWRITE(zwackery_6840_r, mcr68_6840_upper_w)
+	AM_RANGE(0x104000, 0x104007) AM_READWRITE(pia_2_msb_r, pia_2_msb_w)
+	AM_RANGE(0x108000, 0x108007) AM_READWRITE(pia_3_lsb_r, pia_3_lsb_w)
+	AM_RANGE(0x10c000, 0x10c007) AM_READWRITE(pia_4_lsb_r, pia_4_lsb_w)
+	AM_RANGE(0x800000, 0x800fff) AM_READWRITE(MRA16_RAM, zwackery_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x802000, 0x803fff) AM_READWRITE(MRA16_RAM, zwackery_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xc00000, 0xc00fff) AM_READWRITE(MRA16_RAM, zwackery_spriteram_w) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
 
@@ -369,29 +347,20 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( pigskin_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( pigskin_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(21) | AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x080000, 0x08ffff) AM_READ(pigskin_port_1_r)
 	AM_RANGE(0x0a0000, 0x0affff) AM_READ(pigskin_port_2_r)
-	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x120000, 0x120001) AM_READ(pigskin_protection_r)
-	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x180000, 0x18000f) AM_READ(mcr68_6840_upper_r)
-	AM_RANGE(0x1e0000, 0x1effff) AM_READ(input_port_0_word_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( pigskin_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x0c0000, 0x0c007f) AM_WRITE(mcr68_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x0e0000, 0x0effff) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x100000, 0x100fff) AM_WRITE(mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
-	AM_RANGE(0x120000, 0x120001) AM_WRITE(pigskin_protection_w)
-	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x180000, 0x18000f) AM_WRITE(mcr68_6840_upper_w)
+	AM_RANGE(0x100000, 0x100fff) AM_READWRITE(MRA16_RAM, mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x120000, 0x120001) AM_READWRITE(pigskin_protection_r, pigskin_protection_w)
+	AM_RANGE(0x140000, 0x143fff) AM_RAM
+	AM_RANGE(0x160000, 0x1607ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x180000, 0x18000f) AM_READWRITE(mcr68_6840_upper_r, mcr68_6840_upper_w)
 	AM_RANGE(0x1a0000, 0x1affff) AM_WRITE(archrivl_control_w)
+	AM_RANGE(0x1e0000, 0x1effff) AM_READ(input_port_0_word_r)
 ADDRESS_MAP_END
 
 
@@ -402,27 +371,19 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( trisport_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( trisport_map, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(21) | AMEF_UNMAP(1) )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x080000, 0x08ffff) AM_READ(trisport_port_1_r)
 	AM_RANGE(0x0a0000, 0x0affff) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x160000, 0x160fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x180000, 0x18000f) AM_READ(mcr68_6840_upper_r)
-	AM_RANGE(0x1e0000, 0x1effff) AM_READ(input_port_0_word_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( trisport_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x100000, 0x103fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x120000, 0x12007f) AM_WRITE(mcr68_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x160000, 0x160fff) AM_WRITE(mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
-	AM_RANGE(0x180000, 0x18000f) AM_WRITE(mcr68_6840_upper_w)
+	AM_RANGE(0x140000, 0x1407ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x160000, 0x160fff) AM_READWRITE(MRA16_RAM, mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)
+	AM_RANGE(0x180000, 0x18000f) AM_READWRITE(mcr68_6840_upper_r, mcr68_6840_upper_w)
 	AM_RANGE(0x1a0000, 0x1affff) AM_WRITE(archrivl_control_w)
 	AM_RANGE(0x1c0000, 0x1cffff) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x1e0000, 0x1effff) AM_READ(input_port_0_word_r)
 ADDRESS_MAP_END
 
 
@@ -924,11 +885,12 @@ static MACHINE_DRIVER_START( zwackery )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 7652400)
-	MDRV_CPU_PROGRAM_MAP(zwackery_readmem,zwackery_writemem)
+	MDRV_CPU_PROGRAM_MAP(zwackery_map,0)
 	MDRV_CPU_VBLANK_INT(mcr68_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+//  MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_MACHINE_INIT(zwackery)
 
 	/* video hardware */
@@ -951,11 +913,12 @@ static MACHINE_DRIVER_START( mcr68 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 7723800)
-	MDRV_CPU_PROGRAM_MAP(mcr68_readmem,mcr68_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcr68_map,0)
 	MDRV_CPU_VBLANK_INT(mcr68_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_MACHINE_INIT(mcr68)
 
 	/* video hardware */
@@ -1003,7 +966,7 @@ static MACHINE_DRIVER_START( pigskin )
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(pigskin_readmem,pigskin_writemem)
+	MDRV_CPU_PROGRAM_MAP(pigskin_map,0)
 MACHINE_DRIVER_END
 
 
@@ -1014,7 +977,7 @@ static MACHINE_DRIVER_START( trisport )
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(trisport_readmem,trisport_writemem)
+	MDRV_CPU_PROGRAM_MAP(trisport_map,0)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 MACHINE_DRIVER_END
@@ -1279,7 +1242,7 @@ ROM_END
 
 static DRIVER_INIT( zwackery )
 {
-	MCR_CONFIGURE_SOUND(MCR_CHIP_SQUEAK_DELUXE);
+	mcr_sound_init(MCR_CHIP_SQUEAK_DELUXE);
 
 	/* Zwackery doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1288,7 +1251,7 @@ static DRIVER_INIT( zwackery )
 
 static DRIVER_INIT( xenophob )
 {
-	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
+	mcr_sound_init(MCR_SOUNDS_GOOD);
 
 	mcr68_sprite_clip = 0;
 	mcr68_sprite_xoffset = 0;
@@ -1303,7 +1266,7 @@ static DRIVER_INIT( xenophob )
 
 static DRIVER_INIT( spyhunt2 )
 {
-	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK | MCR_SOUNDS_GOOD);
+	mcr_sound_init(MCR_TURBO_CHIP_SQUEAK | MCR_SOUNDS_GOOD);
 
 	mcr68_sprite_clip = 0;
 	mcr68_sprite_xoffset = -6;
@@ -1320,7 +1283,7 @@ static DRIVER_INIT( spyhunt2 )
 
 static DRIVER_INIT( blasted )
 {
-	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
+	mcr_sound_init(MCR_SOUNDS_GOOD);
 
 	mcr68_sprite_clip = 0;
 	mcr68_sprite_xoffset = 0;
@@ -1341,7 +1304,7 @@ static DRIVER_INIT( blasted )
 
 static DRIVER_INIT( archrivl )
 {
-	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
+	mcr_sound_init(MCR_WILLIAMS_SOUND);
 
 	mcr68_sprite_clip = 16;
 	mcr68_sprite_xoffset = 0;
@@ -1371,7 +1334,7 @@ static DRIVER_INIT( archrivl )
 
 static DRIVER_INIT( pigskin )
 {
-	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
+	mcr_sound_init(MCR_WILLIAMS_SOUND);
 
 	/* Pigskin doesn't care too much about this value; currently taken from Tri-Sports */
 	mcr68_timing_factor = 115.0 / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1388,7 +1351,7 @@ static DRIVER_INIT( pigskin )
 
 static DRIVER_INIT( trisport )
 {
-	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
+	mcr_sound_init(MCR_WILLIAMS_SOUND);
 
 	/* Tri-Sports checks the timing of VBLANK relative to the 493 interrupt */
 	/* VBLANK is required to come within 87-119 E clocks (i.e., 870-1190 CPU clocks) */

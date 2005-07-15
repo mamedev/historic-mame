@@ -34,16 +34,16 @@ VIDEO_UPDATE(funybubl);
 static WRITE8_HANDLER ( funybubl_vidram_bank_w )
 {
 	if ((data&1) == 0)
-		cpu_setbank(1,&funybubl_banked_videoram[0x000000]);
+		memory_set_bankptr(1,&funybubl_banked_videoram[0x000000]);
 	else
-		cpu_setbank(1,&funybubl_banked_videoram[0x001000]);
+		memory_set_bankptr(1,&funybubl_banked_videoram[0x001000]);
 }
 
 static WRITE8_HANDLER ( funybubl_cpurombank_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
-		cpu_setbank(2,&rom[0x10000+0x4000*(data&0x3f)]);
+		memory_set_bankptr(2,&rom[0x10000+0x4000*(data&0x3f)]);
 }
 
 
@@ -212,7 +212,7 @@ DRIVER_INIT( funybubl )
 {
 	funybubl_banked_videoram = auto_malloc (0x2000);
 
-	cpu_setbank(1,&funybubl_banked_videoram[0x000000]);
+	memory_set_bankptr(1,&funybubl_banked_videoram[0x000000]);
 }
 
 

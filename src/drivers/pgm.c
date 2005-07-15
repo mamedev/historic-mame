@@ -996,7 +996,7 @@ static void expand_colourdata(void)
 static void pgm_basic_init(void)
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
+	memory_set_bankptr(1,&ROM[0x100000]);
 
 	expand_32x32x5bpp();
 	expand_colourdata();

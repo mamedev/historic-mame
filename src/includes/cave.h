@@ -32,6 +32,7 @@ PALETTE_INIT( dfeveron );
 PALETTE_INIT( mazinger );
 PALETTE_INIT( sailormn );
 PALETTE_INIT( pwrinst2 );
+PALETTE_INIT( korokoro );
 
 VIDEO_START( cave_1_layer );
 VIDEO_START( cave_2_layers );

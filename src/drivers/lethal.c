@@ -146,12 +146,21 @@ Address          Dir Data     Name      Description
 1xxxxxxxxxxxxxxx R   xxxxxxxx PROM      program ROM
 
 
-TODO:
+note:
 
-- Sprite decode
-- Sprite banking (? - the reload indicator) (looks more like flipping?)
-- Sprite priorities
-- Guns need reworking in Japan set -  you move backwards right now, it's unnatural a bit :)
+lethal enforcers has 2 sprite rendering chips working in parallel mixing
+data together to give 6bpp.. we cheat by using a custom function in
+konamiic.c and a fixed 6bpp decode.
+
+japanese version scroll / mirror / guns not set up correctly
+
+guns might be slightly off center
+
+'external' rowscroll not hooked up correctly (1st attract level, highscores)
+
+can't find the flip bits used for the tiles.. (p2 start screen, reload indicator)
+
+maybe some priority issues / sprite placement issues..
 
 ***************************************************************************/
 
@@ -174,6 +183,14 @@ WRITE8_HANDLER(le_palette_control);
 
 static int init_eeprom_count;
 static int cur_control2;
+
+/* Default Eeprom for the parent.. otherwise it will always complain first boot */
+/* its easy to init but this saves me a bit of time.. */
+unsigned char lethalen_default_eeprom[48] = {
+	0x02, 0x1E, 0x00, 0x00, 0x39, 0x31, 0x39, 0x31, 0x55, 0x45, 0x77, 0x00, 0x00, 0x00, 0x00, 0x01,
+	0x02, 0x01, 0x00, 0x03, 0x05, 0x01, 0x01, 0x02, 0x28, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -200,7 +217,11 @@ static NVRAM_HANDLER( lethalen )
 			EEPROM_load(file);
 		}
 		else
+		{
 			init_eeprom_count = 10;
+			EEPROM_set_data(lethalen_default_eeprom,48);
+
+		}
 	}
 }
 
@@ -255,7 +276,7 @@ static WRITE8_HANDLER( le_bankswitch_w )
 {
 	data8_t *prgrom = (data8_t *)memory_region(REGION_CPU1)+0x10000;
 
-	cpu_setbank(1, &prgrom[data * 0x2000]);
+	memory_set_bankptr(1, &prgrom[data * 0x2000]);
 }
 
 static READ8_HANDLER( le_4800_r )
@@ -335,15 +356,6 @@ static READ8_HANDLER( le_4800_r )
 	return 0;
 }
 
-/* Lethal Enforcers has 1x 053244 (Sprite Control) chip and
- 2x 053245 (Sprite Rendering)
-
- this allows for 6bpp sprites by combining 2x 4bpp layers (2bpp unused)
-
- in MAME we emulate 2 of each, writing the same data to each 053244
-
- */
-
 static WRITE8_HANDLER( le_4800_w )
 {
 	if (cur_control2 & 0x10)	// RAM enable
@@ -372,7 +384,6 @@ static WRITE8_HANDLER( le_4800_w )
 				case 0x45:
 				case 0x46:
 					K053244_w(offset-0x40, data);
-					K053244_1_w(offset-0x40, data);
 					break;
 
 				case 0x80:
@@ -418,7 +429,6 @@ static WRITE8_HANDLER( le_4800_w )
 		else if (offset < 0x1800)
 		{
 			K053245_w((offset - 0x0800) & 0x07ff, data);
-			K053245_1_w((offset - 0x0800) & 0x07ff, data);
 
 		}
 		else if (offset < 0x2000)
@@ -565,8 +575,8 @@ static MACHINE_INIT( lethalen )
 {
 	data8_t *prgrom = (data8_t *)memory_region(REGION_CPU1);
 
-	cpu_setbank(1, &prgrom[0x10000]);
-	cpu_setbank(2, &prgrom[0x48000]);
+	memory_set_bankptr(1, &prgrom[0x10000]);
+	memory_set_bankptr(2, &prgrom[0x48000]);
 }
 static struct GfxLayout lethal_6bpp =
 {
@@ -581,24 +591,10 @@ static struct GfxLayout lethal_6bpp =
 	128*8
 };
 
-#if 0
-static struct GfxLayout lethal_6bpp =
-{
-	16,16,
-	RGN_FRAC(1,2),				/* filled in later */
-	6,
-	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0,24, 16, 8, 0 },	/* filled in later */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-	8*32+0, 8*32+1, 8*32+2, 8*32+3, 8*32+4, 8*32+5, 8*32+6, 8*32+7 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	128*8
-};
-#endif
-
+/* we use this decode instead of the one done by the sprite video start due to it being 6bpp */
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &lethal_6bpp,   0x300, 256  }, /* sprites tiles */
+	{ REGION_GFX2, 0, &lethal_6bpp,   0x000/*0x400*/, 256  }, /* sprites tiles */
 	{ -1 } /* end of array */
 };
 
@@ -724,5 +720,5 @@ static DRIVER_INIT( lethalen )
 	state_save_register_int("LE", 0, "control2", &cur_control2);
 }
 
-GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)
+GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_IMPERFECT_GRAPHICS)
 GAMEX( 1992, lethalej, lethalen, lethalej, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)

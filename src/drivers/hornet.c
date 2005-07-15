@@ -460,11 +460,11 @@ static data8_t sndto68k[16], sndtoppc[2];	/* read/write split mapping */
 
 static READ32_HANDLER( ppc_sound_r )
 {
+	UINT32 r = 0;
 
 	/* Hack to get past the sound IC test */
 	return 0x005f0000;
 
-	UINT32 r = 0;
 	if (!(mem_mask & 0xff000000))
 	{
 		r |= sndtoppc[0] << 24;
@@ -537,7 +537,7 @@ static WRITE32_HANDLER( comm_rombank_w )
 	int bank = data >> 24;
 	if( bank != comm_rombank ) {
 		comm_rombank = bank & 0x7f;
-		cpu_setbank(1, memory_region(REGION_USER3) + (comm_rombank * 0x10000));
+		memory_set_bankptr(1, memory_region(REGION_USER3) + (comm_rombank * 0x10000));
 	}
 }
 
@@ -647,7 +647,7 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-UINT32 dataram[0x100000];
+static UINT32 dataram[0x100000];
 
 static READ32_HANDLER( dsp_dataram_r )
 {
@@ -831,7 +831,7 @@ static INTERRUPT_GEN( hornet_vblank )
 
 static MACHINE_INIT( hornet )
 {
-	cpu_setbank(1, memory_region(REGION_USER3));
+	memory_set_bankptr(1, memory_region(REGION_USER3));
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
 

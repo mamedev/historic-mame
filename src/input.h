@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef INPUT_H
-#define INPUT_H
+#pragma once
+
+#ifndef __INPUT_H__
+#define __INPUT_H__
 
 
 
@@ -562,4 +564,4 @@ void seq_to_string(const input_seq_t *seq, char *string, int maxlen);
 
 INLINE input_code_t seq_get_1(const input_seq_t *seq) { return seq->code[0]; }
 
-#endif
+#endif	/* __INPUT_H__ */

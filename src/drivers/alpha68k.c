@@ -801,7 +801,7 @@ static WRITE8_HANDLER( sound_bank_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data) * 0x4000;
-	cpu_setbank(7,&RAM[bankaddress]);
+	memory_set_bankptr(7,&RAM[bankaddress]);
 }
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2084,7 +2084,7 @@ static MACHINE_DRIVER_START( sstingry )
 	MDRV_CPU_IO_MAP(0,kyros_sound_writeport)
 //AT
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 2)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(4000))
 //ZT
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2134,7 +2134,7 @@ static MACHINE_DRIVER_START( kyros )
 	MDRV_CPU_IO_MAP(0,kyros_sound_writeport)
 //AT
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 2)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(4000))
 //ZT
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2252,7 +2252,7 @@ static MACHINE_DRIVER_START( alpha68k_II )
 	/* audio CPU */ /* Correct?? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500) //AT
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(7500)) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2301,7 +2301,7 @@ static MACHINE_DRIVER_START( alpha68k_II_gm )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem, sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport, sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(7500))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2344,7 +2344,7 @@ static MACHINE_DRIVER_START( alpha68k_V )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(8500)) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2386,7 +2386,7 @@ static MACHINE_DRIVER_START( alpha68k_V_sb )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(8500)) //AT
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3309,7 +3309,7 @@ static DRIVER_INIT( btlfildb )
 static DRIVER_INIT( skysoldr )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x40008, 0x40009, 0, 0, skysoldr_cycle_r);
-	cpu_setbank(8, (memory_region(REGION_USER1))+0x40000);
+	memory_set_bankptr(8, (memory_region(REGION_USER1))+0x40000);
 	invert_controls=0;
 	microcontroller_id=0;
 	coin_id=0x22|(0x22<<8);
@@ -3324,7 +3324,7 @@ static DRIVER_INIT( goldmedl )
 
 static DRIVER_INIT( goldmeda )
 {
-	cpu_setbank(8, memory_region(REGION_CPU1) + 0x20000);
+	memory_set_bankptr(8, memory_region(REGION_CPU1) + 0x20000);
 	invert_controls=0;
 	microcontroller_id=0x8803; //Guess - routine to handle coinage is the same as in 'goldmedl'
 	coin_id=0x23|(0x24<<8);
@@ -3349,7 +3349,7 @@ static DRIVER_INIT( skyadvnu )
 static DRIVER_INIT( gangwars )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x40206, 0x40207, 0, 0, gangwars_cycle_r);
-	cpu_setbank(8, memory_region(REGION_USER1));
+	memory_set_bankptr(8, memory_region(REGION_USER1));
 	invert_controls=0;
 	microcontroller_id=0x8512;
 	coin_id=0x23|(0x24<<8);
@@ -3358,7 +3358,7 @@ static DRIVER_INIT( gangwars )
 static DRIVER_INIT( gangwarb )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x40206, 0x40207, 0, 0, gangwarb_cycle_r);
-	cpu_setbank(8, memory_region(REGION_USER1));
+	memory_set_bankptr(8, memory_region(REGION_USER1));
 	invert_controls=0;
 	microcontroller_id=0x8512;
 	coin_id=0x23|(0x24<<8);

@@ -45,7 +45,7 @@ static void mcr2_get_bg_tile_info(int tile_index)
 }
 
 
-static void twotigra_get_bg_tile_info(int tile_index)
+static void twotiger_get_bg_tile_info(int tile_index)
 {
 	int data = videoram[tile_index] | (videoram[tile_index + 0x400] << 8);
 	int code = data & 0x1ff;
@@ -107,10 +107,10 @@ VIDEO_START( mcr2 )
 }
 
 
-VIDEO_START( twotigra )
+VIDEO_START( twotiger )
 {
 	/* initialize the background tilemap */
-	bg_tilemap = tilemap_create(twotigra_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+	bg_tilemap = tilemap_create(twotiger_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 	if (!bg_tilemap)
 		return 1;
 
@@ -167,7 +167,7 @@ WRITE8_HANDLER( mcr2_videoram_w )
 }
 
 
-WRITE8_HANDLER( twotigra_videoram_w )
+WRITE8_HANDLER( twotiger_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset & 0x3ff);

@@ -1680,8 +1680,8 @@ static DRIVER_INIT (raiden2)
 	/* wrong , there must be some banking this just stops it crashing */
 	unsigned char *RAM = memory_region(REGION_USER1);
 
-	cpu_setbank(1,&RAM[0x000000]);
-	cpu_setbank(2,&RAM[0x040000]);
+	memory_set_bankptr(1,&RAM[0x000000]);
+	memory_set_bankptr(2,&RAM[0x040000]);
 
 	decrypt_sprites();
 }
@@ -1691,8 +1691,8 @@ static DRIVER_INIT (r2nocpu)
 	/* wrong , there must be some banking this just stops it crashing */
 	unsigned char *RAM = memory_region(REGION_USER1);
 
-	cpu_setbank(1,&RAM[0x000000]);
-	cpu_setbank(2,&RAM[0x040000]);
+	memory_set_bankptr(1,&RAM[0x000000]);
+	memory_set_bankptr(2,&RAM[0x040000]);
 
 	decrypt_sprites();
 

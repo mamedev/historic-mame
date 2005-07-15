@@ -52,7 +52,7 @@ static void set_m90_bank(void)
 	if (!rom)
 		usrintf_showmessage("bankswitch with no banked ROM!");
 	else
-		cpu_setbank(1,rom + bankaddress);
+		memory_set_bankptr(1,rom + bankaddress);
 }
 
 /***************************************************************************/

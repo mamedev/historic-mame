@@ -468,9 +468,9 @@ static void dcs_reset(void)
 	/* initialize banking */
 	dcs.databank = 0;
 	dcs.srambank = 0;
-	cpu_setbank(20, dcs.sounddata);
+	memory_set_bankptr(20, dcs.sounddata);
 	if (dcs_sram_bank0)
-		cpu_setbank(21, dcs_sram_bank0);
+		memory_set_bankptr(21, dcs_sram_bank0);
 
 	/* initialize the ADSP Tx callback */
 	cpunum_set_info_fct(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (genf *)sound_tx_callback);
@@ -631,7 +631,7 @@ static READ16_HANDLER( dcs_sdrc_asic_ver_r )
 static WRITE16_HANDLER( dcs_data_bank_select_w )
 {
 	dcs.databank = data;
-	cpu_setbank(20, &dcs.sounddata[(dcs.databank % dcs.databank_count) * bank20_size/2]);
+	memory_set_bankptr(20, &dcs.sounddata[(dcs.databank % dcs.databank_count) * bank20_size/2]);
 
 	/* bit 11 = sound board led */
 #if 0
@@ -654,11 +654,11 @@ static READ16_HANDLER( dcs_data_bank_select_r )
 static WRITE16_HANDLER( dcs2_sram_bank_w )
 {
 	COMBINE_DATA(&dcs.srambank);
-	cpu_setbank(21, (dcs.srambank & 0x1000) ? dcs_sram_bank1 : dcs_sram_bank0);
+	memory_set_bankptr(21, (dcs.srambank & 0x1000) ? dcs_sram_bank1 : dcs_sram_bank0);
 
 	/* it appears that the Vegas games also access the boot ROM via this location */
 	if (((dcs.srambank >> 7) & 7) == dcs.databank)
-		cpu_setbank(20, &dcs.soundboot[dcs.databank * bootbank_stride/2]);
+		memory_set_bankptr(20, &dcs.soundboot[dcs.databank * bootbank_stride/2]);
 }
 
 

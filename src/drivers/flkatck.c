@@ -51,7 +51,7 @@ static WRITE8_HANDLER( flkatck_bankswitch_w )
 	/* bits 0-1: bank # */
 	bankaddress += 0x10000 + (data & 0x03)*0x2000;
 	if ((data & 0x03) != 0x03)	/* for safety */
-		cpu_setbank(1,&RAM[bankaddress]);
+		memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static READ8_HANDLER( flkatck_ls138_r )

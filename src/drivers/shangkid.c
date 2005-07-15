@@ -88,7 +88,7 @@ static DRIVER_INIT( shangkid )
 
 static WRITE8_HANDLER( shangkid_maincpu_bank_w )
 {
-	cpu_setbank( 1,&memory_region(REGION_CPU1)[(data&1)?0x10000:0x8000] );
+	memory_set_bankptr( 1,&memory_region(REGION_CPU1)[(data&1)?0x10000:0x8000] );
 }
 
 static WRITE8_HANDLER( shangkid_bbx_enable_w )
@@ -134,7 +134,7 @@ WRITE8_HANDLER( shangkid_bbx_AY8910_write_w )
 		}
 		else
 		{
-			cpu_setbank( 2,&memory_region( REGION_CPU3 )[data?0x0000:0x10000] );
+			memory_set_bankptr( 2,&memory_region( REGION_CPU3 )[data?0x0000:0x10000] );
 		}
 		break;
 

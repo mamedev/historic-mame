@@ -289,6 +289,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x5fe6, 0x5fe7) AM_READ(vendetta_sound_r)
 	AM_RANGE(0x5fe8, 0x5fe9) AM_READ(K053246_r)
 	AM_RANGE(0x5fea, 0x5fea) AM_READ(watchdog_reset_r)
+	/* what is the desired effect of overlapping these memory regions anyway? */
 	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK3)
 	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_BANK2)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(K052109_r)
@@ -305,6 +306,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x5fe2, 0x5fe2) AM_WRITE(vendetta_eeprom_w)
 	AM_RANGE(0x5fe4, 0x5fe4) AM_WRITE(z80_irq_w)
 	AM_RANGE(0x5fe6, 0x5fe7) AM_WRITE(K053260_0_w)
+	/* what is the desired effect of overlapping these memory regions anyway? */
 	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_BANK3)
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_BANK2)
 	AM_RANGE(0x4000, 0x7fff) AM_WRITE(K052109_w)
@@ -322,8 +324,9 @@ static ADDRESS_MAP_START( esckids_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3fd4, 0x3fd4) AM_READ(vendetta_sound_interrupt_r)		// Sound
 	AM_RANGE(0x3fd6, 0x3fd7) AM_READ(vendetta_sound_r)				// Sound
 	AM_RANGE(0x3fd8, 0x3fd9) AM_READ(K053246_r)			// 053246 (Sprite)
+	/* what is the desired effect of overlapping these memory regions anyway? */
 	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_BANK3)			// 052109 (Tilemap) 0x0000-0x0fff
-	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
 	AM_RANGE(0x2000, 0x5fff) AM_READ(K052109_r)			// 052109 (Tilemap)
 	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)			// 053248 '975r01' 1M ROM (Banked)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
@@ -339,8 +342,9 @@ static ADDRESS_MAP_START( esckids_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3fd4, 0x3fd4) AM_WRITE(z80_irq_w)			// Sound
 	AM_RANGE(0x3fd6, 0x3fd7) AM_WRITE(K053260_0_w)		// Sound
 	AM_RANGE(0x3fda, 0x3fda) AM_WRITE(MWA8_NOP)			// Not Emulated (Watchdog ???)
+	/* what is the desired effect of overlapping these memory regions anyway? */
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_BANK3)			// 052109 (Tilemap) 0x0000-0x0fff
-	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_BANK2)			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
 	AM_RANGE(0x2000, 0x5fff) AM_WRITE(K052109_w)			// 052109 (Tilemap)
 	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)			// 053248 '975r01' 1M ROM (Banked)
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
@@ -779,7 +783,7 @@ static void vendetta_banking( int lines )
 		logerror("PC = %04x : Unknown bank selected %02x\n", activecpu_get_pc(), lines );
 	}
 	else
-		cpu_setbank( 1, &RAM[ 0x10000 + ( lines * 0x2000 ) ] );
+		memory_set_bankptr( 1, &RAM[ 0x10000 + ( lines * 0x2000 ) ] );
 }
 
 static MACHINE_INIT( vendetta )
@@ -790,7 +794,7 @@ static MACHINE_INIT( vendetta )
 	irq_enabled = 0;
 
 	/* init banks */
-	cpu_setbank( 1, &memory_region(REGION_CPU1)[0x10000] );
+	memory_set_bankptr( 1, &memory_region(REGION_CPU1)[0x10000] );
 	vendetta_video_banking( 0 );
 }
 

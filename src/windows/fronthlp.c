@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 #include <unzip.h>
 #include <zlib.h>
 #include <tchar.h>
@@ -383,27 +382,39 @@ void romident(const char* name, int enter_dirs);
 
 void identify_dir(const char* dirname)
 {
-	DIR *dir;
-	struct dirent *ent;
+	HANDLE dir;
+	WIN32_FIND_DATAA ent;
+	int more;
+	char *dirfilter;
+	int dirlen = strlen(dirname);
 
-	dir = opendir(dirname);
-	if (!dir) {
+	memset(&ent, 0, sizeof(WIN32_FIND_DATA));
+	dirfilter = malloc(dirlen+5);
+	if (dirfilter == NULL)
 		return;
-	}
+	memcpy(dirfilter, dirname, dirlen);
+	memcpy(dirfilter+dirlen, "/*.*", 5);
 
-	ent = readdir(dir);
-	while (ent) {
-		/* Skip special files */
-		if (ent->d_name[0]!='.') {
-			char* buf = (char*)malloc(strlen(dirname)+1+strlen(ent->d_name)+1);
-			sprintf(buf,"%s/%s",dirname,ent->d_name);
+    dir = FindFirstFileA(dirfilter, &ent);
+    free(dirfilter);
+
+    if (INVALID_HANDLE_VALUE == dir) {
+        return;
+    }
+
+    do {
+        /* Skip special files */
+		if (ent.cFileName[0] != '.') {
+			char* buf = (char*)malloc(strlen(dirname)+1+strlen(ent.cFileName)+1);
+			sprintf(buf,"%s/%s",dirname,ent.cFileName);
 			romident(buf,0);
 			free(buf);
 		}
 
-		ent = readdir(dir);
+		more = FindNextFileA(dir, &ent);
 	}
-	closedir(dir);
+	while (more);
+	FindClose(dir);
 }
 
 void romident(const char* name,int enter_dirs)

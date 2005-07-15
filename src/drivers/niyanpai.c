@@ -80,7 +80,7 @@ static void niyanpai_soundbank_w(int data)
 {
 	unsigned char *SNDROM = memory_region(REGION_CPU2);
 
-	cpu_setbank(1, &SNDROM[0x08000 + (0x8000 * (data & 0x03))]);
+	memory_set_bankptr(1, &SNDROM[0x08000 + (0x8000 * (data & 0x03))]);
 }
 
 static int niyanpai_sound_r(int offset)

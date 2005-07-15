@@ -116,14 +116,14 @@ static int bankaddress2;
 static void set_m64_bank(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static void set_m64_bank2(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&RAM[bankaddress]);
-	cpu_setbank(2,&RAM[bankaddress2]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bankptr(2,&RAM[bankaddress2]);
 }
 
 
@@ -147,7 +147,7 @@ READ8_HANDLER( ldrun2_bankswitch_r )
 
 		/* swap to bank #1 on second read */
 		if (ldrun2_bankswap == 0)
-			cpu_setbank(1,&RAM[0x12000]);
+			memory_set_bankptr(1,&RAM[0x12000]);
 	}
 	return 0;
 }

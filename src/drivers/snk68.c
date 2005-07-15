@@ -1119,7 +1119,7 @@ ROM_END
 
 static DRIVER_INIT( searchar )
 {
-	cpu_setbank(1, memory_region(REGION_USER1));
+	memory_set_bankptr(1, memory_region(REGION_USER1));
 }
 
 /******************************************************************************/

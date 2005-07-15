@@ -307,7 +307,7 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-UINT32 dataram[0x100000];
+static UINT32 dataram[0x100000];
 
 static READ32_HANDLER( dsp_dataram_r )
 {

@@ -491,12 +491,12 @@ static MACHINE_DRIVER_START( stfight )
 	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
 	MDRV_CPU_VBLANK_INT(stfight_vb_interrupt,1)
-	MDRV_CPU_PERIODIC_INT(stfight_interrupt_1,30)
+	MDRV_CPU_PERIODIC_INT(stfight_interrupt_1,TIME_IN_HZ(30))
 
 	MDRV_CPU_ADD(Z80, 3000000)
 	/* audio CPU */	/* 3 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(120))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

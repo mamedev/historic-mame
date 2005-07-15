@@ -51,9 +51,6 @@ struct via6522_interface
 	void (*irq_func)(int state);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 void via_set_clock(int which,int clck);
 void via_config(int which, const struct via6522_interface *intf);
 void via_reset(void);
@@ -193,9 +190,6 @@ READ8_HANDLER( via_4_cb2_r );
 READ8_HANDLER( via_5_cb2_r );
 READ8_HANDLER( via_6_cb2_r );
 READ8_HANDLER( via_7_cb2_r );
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 

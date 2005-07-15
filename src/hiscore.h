@@ -1,5 +1,15 @@
-#ifndef HISCORE_H
-#define HISCORE_H
+/***************************************************************************
+
+    hiscore.h
+
+    Manages the hiscore system.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __HISCORE_H__
+#define __HISCORE_H__
 
 void hs_open( const char *name );
 void hs_init( void );
@@ -9,4 +19,4 @@ void hs_close( void );
 void computer_writemem_byte(int cpu, int addr, int value);
 int computer_readmem_byte(int cpu, int addr);
 
-#endif
+#endif	/* __HISCORE_H__ */

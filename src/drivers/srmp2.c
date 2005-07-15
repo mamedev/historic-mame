@@ -373,7 +373,7 @@ static WRITE8_HANDLER( srmp3_rombank_w )
 	if (data & 0x1f) addr = ((0x10000 + (0x2000 * (data & 0x0f))) - 0x8000);
 	else addr = 0x10000;
 
-	cpu_setbank(1, &ROM[addr]);
+	memory_set_bankptr(1, &ROM[addr]);
 }
 
 /**************************************************************************

@@ -34,7 +34,7 @@ static WRITE8_HANDLER( onetwo_cpubank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1) + 0x10000;
 
-	cpu_setbank(1,&RAM[data * 0x4000]);
+	memory_set_bankptr(1,&RAM[data * 0x4000]);
 }
 
 static WRITE8_HANDLER( onetwo_coin_counters_w )

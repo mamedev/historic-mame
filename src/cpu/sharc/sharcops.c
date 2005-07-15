@@ -618,6 +618,7 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 
 static void COMPUTE(UINT32 opcode)
 {
+	int multiop;
 	int op = (opcode >> 12) & 0xff;
 	int cu = (opcode >> 20) & 0x3;
 	int rn = (opcode >> 8) & 0xf;
@@ -640,7 +641,7 @@ static void COMPUTE(UINT32 opcode)
 			osd_die("SHARC: multi-op parallelity issue: dest reg %d = src reg (at %08X)", fm, sharc.pc);
 		}
 
-		int multiop = (opcode >> 16) & 0x3f;
+		multiop = (opcode >> 16) & 0x3f;
 		switch(multiop)
 		{
 			case 0x00:		compute_multi_mr_to_reg(op & 0xf, rn); break;
@@ -1396,7 +1397,7 @@ static void sharcop_immdata_to_dmpm(void)
 	int m = (sharc.opcode >> 38) & 0x7;
 	UINT32 data = (UINT32)sharc.opcode;
 
-	if(sharc.opcode & 0x2000000000) {
+	if(sharc.opcode & U64(0x2000000000)) {
 		/* program memory (PM) */
 		pm_write32(PM_REG_I(i), data);
 		PM_REG_I(i)+=PM_REG_M(m);

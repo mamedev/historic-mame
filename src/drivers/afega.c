@@ -686,7 +686,7 @@ static MACHINE_DRIVER_START( stagger1 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)	/* fixed */
 	MDRV_GFXDECODE(stagger1_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(768)
 
@@ -734,6 +734,7 @@ static MACHINE_DRIVER_START( bubl2000 )
 	MDRV_IMPORT_FROM(grdnstrm)
 
 	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)	/* added to do not break other games */
 	MDRV_VIDEO_UPDATE(bubl2000)
 MACHINE_DRIVER_END
 

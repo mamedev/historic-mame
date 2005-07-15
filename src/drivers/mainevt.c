@@ -64,7 +64,7 @@ WRITE8_HANDLER( mainevt_bankswitch_w )
 
 	/* bit 0-1 ROM bank select */
 	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	/* TODO: bit 5 = select work RAM or palette? */
 //  palette_selected = data & 0x20;

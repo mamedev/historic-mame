@@ -255,13 +255,13 @@ static WRITE8_HANDLER( hanamai_keyboard_w )
 static WRITE8_HANDLER( dynax_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x08000+0x8000*(data & 0x0f)]);
+	memory_set_bankptr(1,&ROM[0x08000+0x8000*(data & 0x0f)]);
 }
 
 static WRITE8_HANDLER( jantouki_sound_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU2);
-	cpu_setbank(2,&ROM[0x08000+0x8000*data]);
+	memory_set_bankptr(2,&ROM[0x08000+0x8000*data]);
 }
 
 
@@ -271,7 +271,7 @@ static WRITE8_HANDLER( hnoridur_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1) + 0x10000 + 0x8000*data;
 //logerror("%04x: rom bank = %02x\n",activecpu_get_pc(),data);
-	cpu_setbank(1,ROM);
+	memory_set_bankptr(1,ROM);
 	hnoridur_bank = data;
 }
 
@@ -854,7 +854,7 @@ static READ8_HANDLER( yarunara_input_r )
 static WRITE8_HANDLER( yarunara_rombank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000 + 0x8000 * data;
-	cpu_setbank(1, rom);
+	memory_set_bankptr(1, rom);
 
 	hnoridur_bank = data;
 	if (data == 0x1c)
@@ -934,7 +934,7 @@ READ8_HANDLER( jantouki_blitter_busy_r )
 static WRITE8_HANDLER( jantouki_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x8000 + 0x8000*(data&0x0f)]);
+	memory_set_bankptr(1,&ROM[0x8000 + 0x8000*(data&0x0f)]);
 	set_led_status(0,data & 0x10);	// maybe
 }
 
@@ -2720,7 +2720,7 @@ static MACHINE_DRIVER_START( yarunara )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(yarunara_readmem,yarunara_writemem)
 	MDRV_CPU_IO_MAP(yarunara_readport,yarunara_writeport)
-	MDRV_CPU_PERIODIC_INT(yarunara_clock_interrupt,60)	// RTC
+	MDRV_CPU_PERIODIC_INT(yarunara_clock_interrupt,TIME_IN_HZ(60))	// RTC
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 

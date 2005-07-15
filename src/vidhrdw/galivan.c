@@ -260,7 +260,7 @@ WRITE8_HANDLER( galivan_gfxbank_w )
 		int bank = (data & 0x80) >> 7;
 		unsigned char *RAM = memory_region(REGION_CPU1);
 
-		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
+		memory_set_bankptr(1,&RAM[0x10000 + 0x2000 * bank]);
 	}
 
 /*  logerror("Address: %04X - port 40 = %02x\n",activecpu_get_pc(),data); */
@@ -306,7 +306,7 @@ logerror("%04x: write %02x to port 80\n",activecpu_get_pc(),data);
 		int bank = (data & 0xc0) >> 6;
 		unsigned char *RAM = memory_region(REGION_CPU1);
 
-		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
+		memory_set_bankptr(1,&RAM[0x10000 + 0x2000 * bank]);
 	}
 
 #if 0

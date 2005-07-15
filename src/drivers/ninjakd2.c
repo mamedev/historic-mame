@@ -281,7 +281,7 @@ WRITE8_HANDLER( ninjakd2_bankselect_w )
 		ninjakd2_bank_latch = data;
 
 		bankaddress = 0x10000 + ((data & 0x7) * 0x4000);
-		cpu_setbank(1,&RAM[bankaddress]);	 /* Select 8 banks of 16k */
+		memory_set_bankptr(1,&RAM[bankaddress]);	 /* Select 8 banks of 16k */
 	}
 }
 

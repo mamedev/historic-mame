@@ -196,7 +196,7 @@ static WRITE8_HANDLER( argus_bankselect_w )
 	{
 		argus_bank_latch = data;
 		bankaddress = 0x10000 + ((data & 7) * 0x4000);
-		cpu_setbank(1, &RAM[bankaddress]);	 /* Select 8 banks of 16k */
+		memory_set_bankptr(1, &RAM[bankaddress]);	 /* Select 8 banks of 16k */
 	}
 }
 

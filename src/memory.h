@@ -6,94 +6,15 @@
 
 ***************************************************************************/
 
-#ifndef _MEMORY_H
-#define _MEMORY_H
+#pragma once
 
-#include "osd_cpu.h"
+#ifndef __MEMORY_H__
+#define __MEMORY_H__
+
+#include "mamecore.h"
 #include <stddef.h>
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
- * Versions of GNU C earlier that 2.7 appear to have problems with the
- * __attribute__ definition of UNUSEDARG, so we act as if it was not a
- * GNU compiler.
- */
-
-#ifdef __GNUC__
-#if (__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
-#define UNUSEDARG
-#else
-#define UNUSEDARG __attribute__((__unused__))
-#endif
-#else
-#define UNUSEDARG
-#endif
-
-
-/*
- * Use __builtin_expect on GNU C 3.0 and above
- */
-#ifdef __GNUC__
-#if (__GNUC__ < 3)
-#define UNEXPECTED(exp)	(exp)
-#else
-#define UNEXPECTED(exp)	 __builtin_expect((exp), 0)
-#endif
-#else
-#define UNEXPECTED(exp)	(exp)
-#endif
-
-
-/***************************************************************************
-
-    Floating-point <-> unsigned converters
-
-***************************************************************************/
-
-
-INLINE float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-INLINE UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
-INLINE float u2d(UINT64 v)
-{
-	union {
-		double dd;
-		UINT64 vv;
-	} u;
-	u.vv = v;
-	return u.dd;
-}
-
-INLINE UINT64 d2u(double d)
-{
-	union {
-		double dd;
-		UINT64 vv;
-	} u;
-	u.dd = d;
-	return u.vv;
-}
 
 
 /***************************************************************************
@@ -1146,13 +1067,5 @@ do {																					\
 /* ----- forces the next branch to generate a call to the opbase handler ----- */
 #define catch_nextBranch()			(opcode_entry = 0xff)
 
-/* ----- bank switching macro ----- */
-#define cpu_setbank(bank, base) memory_set_bankptr(bank, base)
 
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif	/* !_MEMORY_H */
-
+#endif	/* __MEMORY_H__ */

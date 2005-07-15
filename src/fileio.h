@@ -6,16 +6,14 @@
 
 ***************************************************************************/
 
-#ifndef FILEIO_H
-#define FILEIO_H
+#pragma once
+
+#ifndef __FILEIO_H__
+#define __FILEIO_H__
 
 #include <stdarg.h>
 #include "osdepend.h"
 #include "hash.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /* file types */
@@ -92,8 +90,4 @@ int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
 int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...);
 #endif /* __GNUC__ */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __FILEIO_H__ */

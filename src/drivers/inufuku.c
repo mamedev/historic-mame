@@ -122,7 +122,7 @@ static WRITE8_HANDLER( inufuku_soundrombank_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU2) + 0x10000;
 
-	cpu_setbank(1, ROM + (data & 0x03) * 0x8000);
+	memory_set_bankptr(1, ROM + (data & 0x03) * 0x8000);
 }
 
 

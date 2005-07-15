@@ -175,8 +175,8 @@ static MACHINE_INIT(model2)
 {
 	machine_init_model2o();
 
-	cpu_setbank(4, memory_region(REGION_SOUND1) + 0x200000);
-	cpu_setbank(5, memory_region(REGION_SOUND1) + 0x600000);
+	memory_set_bankptr(4, memory_region(REGION_SOUND1) + 0x200000);
+	memory_set_bankptr(5, memory_region(REGION_SOUND1) + 0x600000);
 
 	// copy the 68k vector table into RAM
 	memcpy(memory_region(REGION_CPU2), memory_region(REGION_CPU2)+0x80000, 16);
@@ -1152,13 +1152,13 @@ static WRITE16_HANDLER( model2snd_ctrl )
 	{
 		if (data & 0x20)
 		{
-	  		cpu_setbank(4, memory_region(REGION_SOUND1) + 0x200000);
-			cpu_setbank(5, memory_region(REGION_SOUND1) + 0x600000);
+	  		memory_set_bankptr(4, memory_region(REGION_SOUND1) + 0x200000);
+			memory_set_bankptr(5, memory_region(REGION_SOUND1) + 0x600000);
 		}
 		else
 		{
-			cpu_setbank(4, memory_region(REGION_SOUND1) + 0x800000);
-			cpu_setbank(5, memory_region(REGION_SOUND1) + 0xa00000);
+			memory_set_bankptr(4, memory_region(REGION_SOUND1) + 0x800000);
+			memory_set_bankptr(5, memory_region(REGION_SOUND1) + 0xa00000);
 		}
 	}
 }

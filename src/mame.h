@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MACHINE_H
-#define MACHINE_H
+#pragma once
+
+#ifndef __MAME_H__
+#define __MAME_H__
 
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +17,6 @@
 #include <ctype.h>
 
 #include "fileio.h"
-#include "osdepend.h"
 #include "drawgfx.h"
 #include "palette.h"
 
@@ -396,21 +397,8 @@ int mame_find_cpu_index(const char *tag);
 /* runs validity checks */
 int mame_validitychecks(void);
 
-/* Compare strings case insensitive */
-INLINE int my_stricmp(const char *dst, const char *src)
-{
-	while (*src && *dst)
-	{
-		if (tolower(*src) != tolower(*dst))
-			return *dst - *src;
-		src++;
-		dst++;
-	}
-	return *dst - *src;
-}
-
 #ifdef MESS
 #include "mess.h"
 #endif /* MESS */
 
-#endif
+#endif	/* __MAME_H__ */

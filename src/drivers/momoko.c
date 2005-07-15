@@ -40,7 +40,7 @@ WRITE8_HANDLER( momoko_bg_read_bank_w )
 {
 	data8_t *BG_MAP = memory_region(REGION_USER1);
 	int bank_address = (data & 0x1f) * 0x1000;
-	cpu_setbank(1, &BG_MAP[bank_address]);
+	memory_set_bankptr(1, &BG_MAP[bank_address]);
 }
 
 /****************************************************************************/

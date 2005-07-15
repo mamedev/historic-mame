@@ -313,9 +313,9 @@ WRITE8_HANDLER( zoo_bankswitch_w )
 	UINT8 *rom = memory_region(REGION_CPU2);
 
 	if (data & 0x04)
-		cpu_setbank(1, &rom[0x10000]);
+		memory_set_bankptr(1, &rom[0x10000]);
 	else
-		cpu_setbank(1, &rom[0xa000]);
+		memory_set_bankptr(1, &rom[0xa000]);
 
 	/* not necessary, but technically correct */
 	qix_palettebank_w(offset,data);

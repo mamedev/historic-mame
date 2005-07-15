@@ -562,9 +562,9 @@ static MACHINE_INIT( jc )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
-	cpu_setbank(1,&RAM[0x80000]);
-	cpu_setbank(2,&RAM[0x90000]);
-	cpu_setbank(3,&RAM[0xa0000]);
+	memory_set_bankptr(1,&RAM[0x80000]);
+	memory_set_bankptr(2,&RAM[0x90000]);
+	memory_set_bankptr(3,&RAM[0xa0000]);
 
 	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
 	RAM[1]=RAM[0x80001];

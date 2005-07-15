@@ -112,8 +112,8 @@ static WRITE8_HANDLER( ccastles_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	if (data) { cpu_setbank(1,&RAM[0x10000]); }
-	else { cpu_setbank(1,&RAM[0xa000]); }
+	if (data) { memory_set_bankptr(1,&RAM[0x10000]); }
+	else { memory_set_bankptr(1,&RAM[0xa000]); }
 }
 
 

@@ -319,7 +319,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER( bankswitch_w )
 {
-	cpu_setbank(5, memory_region(REGION_CPU2) + ((data - 1) & 3) * 0x4000 + 0x10000);
+	memory_set_bankptr(5, memory_region(REGION_CPU2) + ((data - 1) & 3) * 0x4000 + 0x10000);
 }
 
 static READ8_HANDLER( jumping_latch_r )

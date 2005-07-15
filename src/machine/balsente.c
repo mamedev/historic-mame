@@ -181,8 +181,8 @@ MACHINE_INIT( balsente )
 	memset(noise_position, 0, sizeof(noise_position));
 
 	/* point the banks to bank 0 */
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
-	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000]);
+	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000]);
+	memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000]);
 
 	/* start a timer to generate interrupts */
 	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
@@ -298,8 +298,8 @@ WRITE8_HANDLER( balsente_rombank_select_w )
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
 	/* the bank number comes from bits 4-6 */
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
-	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
+	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
+	memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
 }
 
 
@@ -314,15 +314,15 @@ WRITE8_HANDLER( balsente_rombank2_select_w )
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
 	{
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * 6]);
+		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
+		memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * 6]);
 	}
 
 	/* set both banks */
 	else
 	{
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * bank]);
+		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
+		memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * bank]);
 	}
 }
 

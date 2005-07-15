@@ -313,7 +313,7 @@ static MACHINE_DRIVER_START( exctsccr )
 	MDRV_CPU_ADD(Z80, 4123456)	/* ??? with 4 MHz, nested NMIs might happen */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000) /* 4 kHz, updates the dac */
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(4000)) /* 4 kHz, updates the dac */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -667,7 +667,7 @@ static MACHINE_DRIVER_START( zaccaria )
 	MDRV_CPU_ADD(M6802,3580000/4)
 	/* audio CPU */	/* 895 kHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem1,sound_writemem1)
-	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,3580000/4096)
+	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,TIME_IN_HZ(3580000/4096))
 
 	MDRV_CPU_ADD(M6802,3580000/4)
 	/* audio CPU */	/* 895 kHz */

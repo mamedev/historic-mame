@@ -172,7 +172,7 @@ static WRITE8_HANDLER( questions_bank_w )
 			break;
 		}
 
-		cpu_setbank(1,&questions[bankaddr]);
+		memory_set_bankptr(1,&questions[bankaddr]);
 	}
 }
 

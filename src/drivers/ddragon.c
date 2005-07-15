@@ -130,7 +130,7 @@ static WRITE8_HANDLER( ddragon_bankswitch_w )
 	else if (dd_sub_cpu_busy == 0x00)
 		cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
-	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
+	memory_set_bankptr( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
 }
 
 static WRITE8_HANDLER( toffy_bankswitch_w )
@@ -145,7 +145,7 @@ static WRITE8_HANDLER( toffy_bankswitch_w )
 	/* bit 3 unknown */
 
 	/* I don't know ... */
-	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0x20) >> 5 ) ) ] );
+	memory_set_bankptr( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0x20) >> 5 ) ) ] );
 }
 
 /*****************************************************************************/
@@ -167,7 +167,7 @@ static WRITE8_HANDLER( darktowr_bankswitch_w )
 		cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	darktowr_bank=(data & 0xe0) >> 5;
-//  cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
+//  memory_set_bankptr( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
 //  logerror("Bank %05x %02x %02x\n",activecpu_get_pc(),darktowr_bank,data);
 }
 

@@ -289,7 +289,7 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 	/* bits 6, 4 and 3 used for something input related? */
 
 	address = 0x10000 + (data & 0x07) * 0x8000;
-	cpu_setbank(1,&rom[address]);
+	memory_set_bankptr(1,&rom[address]);
 }
 
 
@@ -306,7 +306,7 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 
 	address = 0x10000 + data * 0x8000;
 
-	cpu_setbank(1,&rom[address]);
+	memory_set_bankptr(1,&rom[address]);
 }
 
 
@@ -324,7 +324,7 @@ static WRITE8_HANDLER ( dynax_bank_w )
 
 	address = 0x10000 + data * 0x8000;
 
-	cpu_setbank(1,&rom[address]);
+	memory_set_bankptr(1,&rom[address]);
 }
 
 

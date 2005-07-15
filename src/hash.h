@@ -6,12 +6,10 @@
 
 *********************************************************************/
 
-#ifndef HASH_H
-#define HASH_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __HASH_H__
+#define __HASH_H__
 
 #define HASH_INFO_NO_DUMP	0
 #define HASH_INFO_BAD_DUMP	1
@@ -74,8 +72,5 @@ void hash_compute(char* dst, const unsigned char* data, unsigned long length, un
 // Verifies that a hash string is valid
 int hash_verify_string(const char *hash);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+#endif	/* __HASH_H__ */

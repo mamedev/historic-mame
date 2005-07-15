@@ -293,7 +293,7 @@ static WRITE8_HANDLER( prmrsocr_s_bankswitch_w )
 {
 	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
 
-	cpu_setbank(1,rom + (data & 7) * 0x4000);
+	memory_set_bankptr(1,rom + (data & 7) * 0x4000);
 }
 
 

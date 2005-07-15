@@ -371,7 +371,7 @@ WRITE8_HANDLER( seibu_bank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1+sound_cpu);
 
-	cpu_setbank(1,rom + 0x10000 + 0x8000 * (data & 1));
+	memory_set_bankptr(1,rom + 0x10000 + 0x8000 * (data & 1));
 }
 
 WRITE8_HANDLER( seibu_coin_w )

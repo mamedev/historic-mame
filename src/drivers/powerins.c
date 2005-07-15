@@ -417,7 +417,7 @@ static MACHINE_DRIVER_START( powerina )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
 	MDRV_CPU_IO_MAP(readport_snd,writeport_snd)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 120)	// YM2203 rate is at 150??
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(120))	// YM2203 rate is at 150??
 
 	MDRV_SOUND_REPLACE("oki1", OKIM6295, 16000000/4/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)

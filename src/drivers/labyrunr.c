@@ -46,7 +46,7 @@ if (data & 0xe0) usrintf_showmessage("bankswitch %02x",data);
 
 	/* bits 0-2 = bank number */
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	/* bits 3 and 4 are coin counters */
 	coin_counter_w(0,data & 0x08);

@@ -153,7 +153,7 @@ INLINE double get_verint_scanline_time(void)
 	double result;
 
 	if (scanline < 0)
-		result += tms34061.regs[TMS34061_VERTOTAL];
+		scanline += tms34061.regs[TMS34061_VERTOTAL];
 
 	/* we fire at the HBLANK signal */
 	result = cpu_getscanlinetime(scanline) + cpu_getscanlineperiod() * 0.9;

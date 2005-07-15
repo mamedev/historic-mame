@@ -208,7 +208,7 @@ WRITE8_HANDLER( supertnk_bankswitch_w )
 			break;
 	}
 	bankaddress = 0x4000 + supertnk_rom_bank * 0x1000;
-	cpu_setbank(1,&ROM[bankaddress]);
+	memory_set_bankptr(1,&ROM[bankaddress]);
 }
 
 

@@ -50,7 +50,7 @@ WRITE8_HANDLER( dealer_decrypt_rom )
 
 //  logerror("PC %08x: ctr=%04x\n",activecpu_get_pc(),counter);
 
-	cpu_setbank(1, rom + 0x10000 * counter);
+	memory_set_bankptr(1, rom + 0x10000 * counter);
 }
 
 
@@ -563,7 +563,7 @@ ROM_END
 
 MACHINE_INIT( dealer )
 {
-	cpu_setbank(1, memory_region(REGION_CPU1));
+	memory_set_bankptr(1, memory_region(REGION_CPU1));
 
 	ppi8255_init(&ppi8255_intf);
 }

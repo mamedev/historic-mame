@@ -1,14 +1,6 @@
 #ifndef _UPD7810_H_
 #define _UPD7810_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef RUNTIME_LOADER
-	extern void upd7810_runtime_loader_init(void);
-#endif
-
 /*
   all types have internal ram at 0xff00-0xffff
   7810
@@ -157,10 +149,6 @@ typedef struct {
 #ifdef MAME_DEBUG
 extern unsigned Dasm7810( char *dst, unsigned pc );
 extern unsigned Dasm7807( char *dst, unsigned pc );
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif

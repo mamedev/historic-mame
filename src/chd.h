@@ -4,8 +4,10 @@
 
 ***************************************************************************/
 
-#ifndef CHD_H
-#define CHD_H
+#pragma once
+
+#ifndef __CHD_H__
+#define __CHD_H__
 
 #include "driver.h"
 
@@ -207,4 +209,4 @@ struct chd_exfile *chd_start_compress_ex(struct chd_file *chd);
 int chd_compress_ex(struct chd_exfile *chdex, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
 int chd_end_compress_ex(struct chd_exfile *chdex, void (*progress)(const char *, ...));
 
-#endif /* CHD_H */
+#endif /* __CHD_H__ */

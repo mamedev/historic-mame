@@ -1210,7 +1210,7 @@ static MACHINE_DRIVER_START( hotchase )
 	MDRV_CPU_ADD(M6809, 3579545 / 2)
 	/* audio CPU */	/* 3.579/2 MHz - PCB is drawn in one set's readme */
 	MDRV_CPU_PROGRAM_MAP(hotchase_sound_readmem,hotchase_sound_writemem)
-	MDRV_CPU_PERIODIC_INT( hotchase_sound_timer, 496 )
+	MDRV_CPU_PERIODIC_INT( hotchase_sound_timer, TIME_IN_HZ(496) )
 
 	/* Amuse: every 2 ms */
 	MDRV_FRAMES_PER_SECOND(60)

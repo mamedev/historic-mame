@@ -1,10 +1,6 @@
 #ifndef STREAMS_H
 #define STREAMS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef INT32 stream_sample_t;
 typedef struct _sound_stream sound_stream;
 
@@ -26,9 +22,5 @@ int stream_get_inputs(sound_stream *stream);
 int stream_get_outputs(sound_stream *stream);
 void stream_set_input_gain(sound_stream *stream, int input, float gain);
 void stream_set_output_gain(sound_stream *stream, int output, float gain);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -103,7 +103,7 @@ static WRITE8_HANDLER( rastan_bankswitch_w )
 	if (data == 0) offs = 0x0000;
 	else offs = (data-1) * 0x4000 + 0x10000;
 
-	cpu_setbank( 1, memory_region(REGION_CPU2) + offs );
+	memory_set_bankptr( 1, memory_region(REGION_CPU2) + offs );
 }
 
 

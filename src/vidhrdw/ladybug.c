@@ -449,6 +449,7 @@ VIDEO_UPDATE( sraider )
 	// since it's not used
 
 	int offs;
+	int i;
 
 	for (offs = 0; offs < 32; offs++)
 	{
@@ -471,7 +472,6 @@ VIDEO_UPDATE( sraider )
 		redclash_draw_stars(bitmap,32,1,0x00,0xd8);
 
 	// draw the horizontal gridlines
-	int i;
 	tilemap_draw(bitmap, &Machine->visible_area, grid_tilemap, 0, flip_screen);
 	for(i=0;i<256;i++)
 	{

@@ -1,11 +1,15 @@
 /*********************************************************************
 
-  cheat.h
+    cheat.h
+
+    Cheat system.
 
 *********************************************************************/
 
-#ifndef CHEAT_H
-#define CHEAT_H
+#pragma once
+
+#ifndef __CHEAT_H__
+#define __CHEAT_H__
 
 extern int he_did_cheat;
 
@@ -17,4 +21,4 @@ void DoCheat(struct mame_bitmap *bitmap);
 
 void DisplayWatches(struct mame_bitmap * bitmap);
 
-#endif
+#endif	/* __CHEAT_H__ */

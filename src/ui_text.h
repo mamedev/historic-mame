@@ -1,14 +1,16 @@
-/*********************************************************************
+/***************************************************************************
 
-  ui_text.h
+    ui_text.h
 
-  Functions used to retrieve text used by MAME, to aid in
-  translation.
+    Functions used to retrieve text used by MAME, to aid in
+    translation.
 
-*********************************************************************/
+***************************************************************************/
 
-#ifndef UI_TEXT_H
-#define UI_TEXT_H
+#pragma once
+
+#ifndef __UI_TEXT_H__
+#define __UI_TEXT_H__
 
 #include "driver.h"
 
@@ -211,5 +213,5 @@ int uistring_init (mame_file *language_file);
 
 const char * ui_getstring (int string_num);
 
-#endif /* UI_TEXT_H */
+#endif /* __UI_TEXT_H__ */
 

@@ -364,7 +364,7 @@ static WRITE8_HANDLER( kabukiz_sound_bank_w )
 	if(data != 0xff)
 	{
 		data8_t *ROM = memory_region(REGION_CPU3);
-		cpu_setbank(3, &ROM[0x10000 + 0x4000 * (data & 0x07)]);
+		memory_set_bankptr(3, &ROM[0x10000 + 0x4000 * (data & 0x07)]);
 	}
 }
 
@@ -2040,7 +2040,7 @@ Notes:
 
 ROM_START( kabukiz )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "b50_05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
+	ROM_LOAD( "b50-05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
@@ -2048,7 +2048,7 @@ ROM_START( kabukiz )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
 	ROM_REGION( 0x30000, REGION_CPU3, 0 )	/* 64k + bankswitch areas for the third CPU */
-	ROM_LOAD( "b50_07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
+	ROM_LOAD( "b50-07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -2060,15 +2060,15 @@ ROM_END
 
 ROM_START( kabukizj )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "b50_05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
+	ROM_LOAD( "b50-05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "b50_06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
+	ROM_LOAD( "b50-06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
 	ROM_REGION( 0x30000, REGION_CPU3, 0 )	/* 64k + bankswitch areas for the third CPU */
-	ROM_LOAD( "b50_07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
+	ROM_LOAD( "b50-07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )

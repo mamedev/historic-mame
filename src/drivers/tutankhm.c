@@ -197,7 +197,7 @@ static WRITE8_HANDLER( tutankhm_bankselect_w )
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static WRITE8_HANDLER( tutankhm_coin_counter_w )

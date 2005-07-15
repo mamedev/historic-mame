@@ -358,13 +358,13 @@ WRITE8_HANDLER( zigzag_sillyprotection_w )
 	if (data)
 	{
 		/* swap ROM 2 and 3! */
-		cpu_setbank(1,&RAM[0x3000]);
-		cpu_setbank(2,&RAM[0x2000]);
+		memory_set_bankptr(1,&RAM[0x3000]);
+		memory_set_bankptr(2,&RAM[0x2000]);
 	}
 	else
 	{
-		cpu_setbank(1,&RAM[0x2000]);
-		cpu_setbank(2,&RAM[0x3000]);
+		memory_set_bankptr(1,&RAM[0x2000]);
+		memory_set_bankptr(2,&RAM[0x3000]);
 	}
 }
 
@@ -479,7 +479,7 @@ WRITE8_HANDLER( _4in1_bank_w )
 	_4in1_bank = data & 0x03;
 
 	bankaddress = (_4in1_bank * 0x4000) + 0x10000;
-	cpu_setbank(1, &RAM[bankaddress]);
+	memory_set_bankptr(1, &RAM[bankaddress]);
 
 	galaxian_gfxbank_w(0, _4in1_bank);
 }
@@ -506,7 +506,7 @@ static void gmgalax_select_game(int game)
 	gmgalax_selected_game = game;
 
 	bankaddress = (gmgalax_selected_game * 0x4000) + 0x10000;
-	cpu_setbank(1, &RAM[bankaddress]);
+	memory_set_bankptr(1, &RAM[bankaddress]);
 
 	galaxian_gfxbank_w(0, gmgalax_selected_game);
 }
@@ -540,12 +540,12 @@ static void cavelon_banksw(void)
 	if (cavelon_bank)
 	{
 		cavelon_bank = 0;
-		cpu_setbank(1, &ROM[0x0000]);
+		memory_set_bankptr(1, &ROM[0x0000]);
 	}
 	else
 	{
 		cavelon_bank = 1;
-		cpu_setbank(1, &ROM[0x10000]);
+		memory_set_bankptr(1, &ROM[0x10000]);
 	}
 }
 

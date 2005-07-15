@@ -326,8 +326,8 @@ static int nmi_enable = 0;
 
 static void reset_sound_region(void)
 {
-	cpu_setbank( STATIC_BANK1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
-//  cpu_setbank( 1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
+	memory_set_bankptr( STATIC_BANK1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
+//  memory_set_bankptr( 1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
 
 }
 

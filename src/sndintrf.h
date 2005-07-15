@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef SNDINTRF_H
-#define SNDINTRF_H
+#pragma once
+
+#ifndef __SNDINTRF_H__
+#define __SNDINTRF_H__
 
 #include "sound/streams.h"
 
@@ -380,4 +382,4 @@ WRITE8_HANDLER( soundlatch4_clear_w );
 void soundlatch_setclearedvalue(int value);
 
 
-#endif
+#endif	/* __SNDINTRF_H__ */

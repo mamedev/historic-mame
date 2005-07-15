@@ -1,5 +1,15 @@
-#ifndef PROFILER_H
-#define PROFILER_H
+/***************************************************************************
+
+    profiler.h
+
+    Functions to manage profiling of MAME execution.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __PROFILER_H__
+#define __PROFILER_H__
 
 /* profiling */
 enum {
@@ -65,4 +75,4 @@ void profiler_start(void);
 void profiler_stop(void);
 void profiler_show(struct mame_bitmap *bitmap);
 
-#endif	/* PROFILER_H */
+#endif	/* __PROFILER_H__ */

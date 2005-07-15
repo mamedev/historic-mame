@@ -44,7 +44,7 @@ static WRITE8_HANDLER( cbasebal_bankswitch_w )
 	/* bits 0-4 select ROM bank */
 //logerror("%04x: bankswitch %02x\n",activecpu_get_pc(),data);
 	bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	/* bit 5 used but unknown */
 

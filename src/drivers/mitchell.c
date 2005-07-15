@@ -82,7 +82,7 @@ static WRITE8_HANDLER( pang_bankswitch_w )
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 

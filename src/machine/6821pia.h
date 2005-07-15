@@ -47,10 +47,6 @@ struct pia6821_interface
 	void (*irq_b_func)(int state);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void pia_init(int count);
 void pia_unconfig(void);
 void pia_config(int which, int addressing, const struct pia6821_interface *intf);
@@ -234,9 +230,5 @@ READ8_HANDLER( pia_4_cb2_r );
 READ8_HANDLER( pia_5_cb2_r );
 READ8_HANDLER( pia_6_cb2_r );
 READ8_HANDLER( pia_7_cb2_r );
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -201,7 +201,7 @@ static void init_machine_common(void)
 	/* allocate a timer for feeding the autobuffer */
 	adsp_autobuffer_timer = timer_alloc(adsp_autobuffer_irq);
 
-	cpu_setbank(1, &src[0x0000]);
+	memory_set_bankptr(1, &src[0x0000]);
 
 	/* keep the TMS32031 halted until the code is ready to go */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
@@ -567,7 +567,7 @@ static WRITE16_HANDLER( adsp_control_w )
 static WRITE16_HANDLER( adsp_rombank_w )
 {
 	logerror("adsp_rombank_w(%d) = %04X\n", offset, data);
-	cpu_setbank(1, &memory_region(REGION_USER1)[((offset & 1) * 0x80 + (data & 0x7f)) * 0x4000]);
+	memory_set_bankptr(1, &memory_region(REGION_USER1)[((offset & 1) * 0x80 + (data & 0x7f)) * 0x4000]);
 }
 
 

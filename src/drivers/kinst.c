@@ -49,7 +49,7 @@ static MACHINE_INIT( kinst )
 	/* both games map one logical 4k page at address 0 to physical address 0x8090000 */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MRA32_BANK1);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MWA32_BANK1);
-	cpu_setbank(1, &rambase2[0x90000/4]);
+	memory_set_bankptr(1, &rambase2[0x90000/4]);
 
 	/* keep the DCS held in reset at startup */
 	dcs_reset_w(1);

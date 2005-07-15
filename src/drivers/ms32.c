@@ -1551,8 +1551,8 @@ static READ8_HANDLER( latch_r )
 
 static WRITE8_HANDLER( ms32_snd_bank_w )
 {
-		cpu_setbank(4, memory_region(REGION_CPU2) + 0x14000+0x4000*(data&0xf));
-		cpu_setbank(5, memory_region(REGION_CPU2) + 0x14000+0x4000*(data>>4));
+		memory_set_bankptr(4, memory_region(REGION_CPU2) + 0x14000+0x4000*(data&0xf));
+		memory_set_bankptr(5, memory_region(REGION_CPU2) + 0x14000+0x4000*(data>>4));
 }
 
 static WRITE8_HANDLER( to_main_w )
@@ -1592,9 +1592,9 @@ static struct YMF271interface ymf271_interface =
 
 static MACHINE_INIT( ms32 )
 {
-	cpu_setbank(1, memory_region(REGION_CPU1));
-	cpu_setbank(4, memory_region(REGION_CPU2) + 0x14000);
-	cpu_setbank(5, memory_region(REGION_CPU2) + 0x18000);
+	memory_set_bankptr(1, memory_region(REGION_CPU1));
+	memory_set_bankptr(4, memory_region(REGION_CPU2) + 0x14000);
+	memory_set_bankptr(5, memory_region(REGION_CPU2) + 0x18000);
 	irq_init();
 }
 

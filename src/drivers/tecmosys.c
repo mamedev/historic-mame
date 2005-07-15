@@ -356,7 +356,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static WRITE8_HANDLER( deroon_bankswitch_w )
 {
-	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-2) & 0x0f) * 0x4000 + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU2) + ((data-2) & 0x0f) * 0x4000 + 0x10000 );
 }
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )

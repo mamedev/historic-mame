@@ -477,12 +477,12 @@ static void dasm_direct_jump(UINT32 pc, UINT64 opcode)
 	UINT32 addr = opcode & 0xffffff;
 
 	get_if_condition(cond);
-	if( opcode & 0x8000000000 )
+	if( opcode & U64(0x8000000000) )
 		print("CALL");
 	else
 		print("JUMP");
 
-	if( opcode & 0x10000000000 ) {		/* PC-relative branch */
+	if( opcode & U64(0x10000000000) ) {		/* PC-relative branch */
 		print(" (0x%08X)", pc + SIGN_EXTEND24(addr));
 	} else {							/* Indirect branch */
 		print(" (0x%08X)", addr);
@@ -514,7 +514,7 @@ static void dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
 	else
 		print("JUMP");
 
-	if( opcode & 0x10000000000 ) {	/* PC-relative branch */
+	if( opcode & U64(0x10000000000) ) {	/* PC-relative branch */
 		print(" (0x%08X)", pc + SIGN_EXTEND6(reladdr));
 	} else {						/* Indirect branch */
 		print(" (%s, %s)", GET_DAG2_M(pmm), GET_DAG2_I(pmi));
@@ -550,7 +550,7 @@ static void dasm_indirect_jump_compute_dregdm(UINT32 pc, UINT64 opcode)
 	get_if_condition(cond);
 	print("JUMP");
 
-	if( opcode & 0x200000000000 ) {	/* PC-relative branch */
+	if( opcode & U64(0x200000000000) ) {	/* PC-relative branch */
 		print(" (0x%08X)", pc + SIGN_EXTEND6(reladdr));
 	} else {						/* Indirect branch */
 		print(" (%s, %s)", GET_DAG2_M(pmm), GET_DAG2_I(pmi));
@@ -577,7 +577,7 @@ static void dasm_rts_compute(UINT32 pc, UINT64 opcode)
 
 	get_if_condition(cond);
 
-	if( opcode & 0x10000000000 )
+	if( opcode & U64(0x10000000000) )
 		print("RTI");
 	else
 		print("RTS");
@@ -602,7 +602,7 @@ static void dasm_do_until_counter(UINT32 pc, UINT64 opcode)
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 addr = opcode & 0xffffff;
 
-	if( opcode & 0x10000000000 ) {		/* Loop counter from universal register */
+	if( opcode & U64(0x10000000000) ) {		/* Loop counter from universal register */
 		print("LCNTR = %s, ", GET_UREG(ureg));
 		print("DO (0x%08X)", pc + SIGN_EXTEND24(addr));
 	} else {							/* Loop counter from immediate */
@@ -701,7 +701,7 @@ static void dasm_ireg_modify(UINT32 pc, UINT64 opcode)
 	int i = (opcode >> 32) & 0x7;
 	UINT32 data = opcode & 0xffffffff;
 
-	if( opcode & 0x8000000000 ) {	/* with bit-reverse */
+	if( opcode & U64(0x8000000000) ) {	/* with bit-reverse */
 		if( g )
 			print("BITREV (%s, %08X)", GET_DAG2_I(i), data);
 		else
@@ -762,7 +762,7 @@ static void dasm_misc(UINT32 pc, UINT64 opcode)
 
 static void dasm_idlenop(UINT32 pc, UINT64 opcode)
 {
-	if( opcode & 0x8000000000 )
+	if( opcode & U64(0x8000000000) )
 		print("IDLE");
 	else
 		print("NOP");
@@ -771,7 +771,7 @@ static void dasm_idlenop(UINT32 pc, UINT64 opcode)
 static void dasm_cjump_rframe(UINT32 pc, UINT64 opcode)
 {
 	/* TODO */
-	if( opcode & 0x10000000000 ) {	/* RFRAME */
+	if( opcode & U64(0x10000000000) ) {	/* RFRAME */
 		print("TODO: RFRAME");
 	} else {
 		print("TODO: CJUMP");

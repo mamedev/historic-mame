@@ -309,7 +309,7 @@ static MACHINE_DRIVER_START( spiders )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2800000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_PERIODIC_INT(spiders_timed_irq , 25)   /* Timed Int  */
+	MDRV_CPU_PERIODIC_INT(spiders_timed_irq , TIME_IN_HZ(25))   /* Timed Int  */
 
 	MDRV_CPU_ADD(M6802,3000000/4)
 	/* audio CPU */

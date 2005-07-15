@@ -199,7 +199,7 @@ static MACHINE_DRIVER_START( sgladiat )
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(sgladiat_readmem_sound,sgladiat_writemem_sound)
 	MDRV_CPU_IO_MAP(sgladiat_readport,0)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 244)	// Marvin's frequency, sounds ok
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(244))	// Marvin's frequency, sounds ok
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -65,7 +65,7 @@ static MACHINE_INIT( thunderj )
 
 	rom_base[0] = (data16_t *)memory_region(REGION_CPU1);
 	rom_base[1] = (data16_t *)memory_region(REGION_CPU2);
-	cpu_setbank(1, shared_ram);
+	memory_set_bankptr(1, shared_ram);
 }
 
 

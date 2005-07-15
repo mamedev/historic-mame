@@ -45,7 +45,7 @@ WRITE8_HANDLER( contra_bankswitch_w )
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
 	if (bankaddress < 0x28000)	/* for safety */
-		cpu_setbank(1,&RAM[bankaddress]);
+		memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 WRITE8_HANDLER( contra_sh_irqtrigger_w )

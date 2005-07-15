@@ -6,8 +6,10 @@
 
 *********************************************************************/
 
-#ifndef ARTWORK_H
-#define ARTWORK_H
+#pragma once
+
+#ifndef __ARTWORK_H__
+#define __ARTWORK_H__
 
 
 /***************************************************************************
@@ -103,5 +105,5 @@ mame_file *artwork_load_artwork_file(const struct GameDriver **driver);
 const struct rectangle *artwork_get_game_rect(void);
 int artwork_overlay_active(void);
 
-#endif /* ARTWORK_H */
+#endif /* __ARTWORK_H__ */
 

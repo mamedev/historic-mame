@@ -217,14 +217,14 @@ WRITE8_HANDLER( profpac_banksw_w )
 			/* 640K eprom board bank handling */
 			int bankoffset = (data-0x80) * 0x4000;
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
-			cpu_setbank(1, memory_region(REGION_USER1) + bankoffset);
+			memory_set_bankptr(1, memory_region(REGION_USER1) + bankoffset);
 		}
 		else
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, profpac_blank_r);
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
-		cpu_setbank(2, memory_region(REGION_CPU1) + 0x8000);
+		memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x8000);
 	}
 	else
 	{
@@ -233,28 +233,28 @@ WRITE8_HANDLER( profpac_banksw_w )
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, astrocde_videoram_r);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
-			cpu_setbank(2, memory_region(REGION_CPU1) + 0x8000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x8000);
 		}
 		else if (data == 0x20)
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
-			cpu_setbank(1, memory_region(REGION_CPU1) + 0x14000);
-			cpu_setbank(2, memory_region(REGION_CPU1) + 0x18000);
+			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x14000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x18000);
 		}
 		else if (data == 0x40)
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
-			cpu_setbank(1, memory_region(REGION_CPU1) + 0x1c000);
-			cpu_setbank(2, memory_region(REGION_CPU1) + 0x20000);
+			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x1c000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x20000);
 		}
 		else if (data == 0x60)
 		{
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
-			cpu_setbank(1, memory_region(REGION_CPU1) + 0x24000);
-			cpu_setbank(2, memory_region(REGION_CPU1) + 0x28000);
+			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x24000);
+			memory_set_bankptr(2, memory_region(REGION_CPU1) + 0x28000);
 		}
 		else
 		{

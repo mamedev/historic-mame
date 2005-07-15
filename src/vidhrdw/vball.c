@@ -23,7 +23,7 @@ int vb_bgprombank=0xff;
 int vb_spprombank=0xff;
 
 static struct tilemap *bg_tilemap;
-static int scrollx[31];
+static int scrollx[32];
 
 /***************************************************************************
 

@@ -64,10 +64,6 @@
 #define FREQ_17_APPROX  FREQ_17_EXACT
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*****************************************************************************
  * pot0_r to pot7_r:
  *  Handlers for reading the pot values. Some Atari games use
@@ -111,9 +107,5 @@ void pokey1_kbcode_w (int kbcode, int make);
 void pokey2_kbcode_w (int kbcode, int make);
 void pokey3_kbcode_w (int kbcode, int make);
 void pokey4_kbcode_w (int kbcode, int make);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif	/* POKEYSOUND_H */

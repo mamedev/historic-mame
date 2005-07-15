@@ -61,7 +61,7 @@ WRITE8_HANDLER( lsasquad_bankswitch_w )
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
 	/* bits 0-2 select ROM bank */
-	cpu_setbank(1,&ROM[0x10000 + 0x2000 * (data & 7)]);
+	memory_set_bankptr(1,&ROM[0x10000 + 0x2000 * (data & 7)]);
 
 	/* bit 3 is zeroed on startup, maybe reset sound CPU */
 

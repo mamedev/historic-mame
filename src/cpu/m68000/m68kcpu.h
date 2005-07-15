@@ -558,9 +558,16 @@
 			m68ki_aerr_fc = FC; \
 			longjmp(m68ki_aerr_trap, 1); \
 		}
+
+	#define m68ki_check_address_error_010_less(ADDR, WRITE_MODE, FC) \
+		if (CPU_TYPE_IS_010_LESS(CPU_TYPE)) \
+		{ \
+			m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
+		}
 #else
 	#define m68ki_set_address_error_trap()
 	#define m68ki_check_address_error(ADDR, WRITE_MODE, FC)
+	#define m68ki_check_address_error_010_less(ADDR, WRITE_MODE, FC)
 #endif /* M68K_ADDRESS_ERROR */
 
 /* Logging */
@@ -1085,13 +1092,13 @@ INLINE uint m68ki_read_8_fc(uint address, uint fc)
 INLINE uint m68ki_read_16_fc(uint address, uint fc)
 {
 	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error_010_less(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
 	return m68k_read_memory_16(ADDRESS_68K(address));
 }
 INLINE uint m68ki_read_32_fc(uint address, uint fc)
 {
 	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error_010_less(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
 	return m68k_read_memory_32(ADDRESS_68K(address));
 }
 
@@ -1103,13 +1110,13 @@ INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
 {
 	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error_010_less(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_16(ADDRESS_68K(address), value);
 }
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 {
 	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error_010_less(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_32(ADDRESS_68K(address), value);
 }
 
@@ -1117,7 +1124,7 @@ INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 INLINE void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 {
 	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error_010_less(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_32_pd(ADDRESS_68K(address), value);
 }
 #endif

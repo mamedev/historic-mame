@@ -823,7 +823,7 @@ static MACHINE_DRIVER_START( elim2 )
 	MDRV_CPU_ADD(Z80, 3867120)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
-	MDRV_CPU_PERIODIC_INT(sega_interrupt,40)
+	MDRV_CPU_PERIODIC_INT(sega_interrupt,TIME_IN_HZ(40))
 
 	MDRV_FRAMES_PER_SECOND(40)
 

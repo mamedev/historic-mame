@@ -511,7 +511,7 @@ static void aliens_banking( int lines )
 	if (lines & 0x10) offs -= 0x8000;
 
 	offs += (lines & 0x0f)*0x2000;
-	cpu_setbank( 1, &RAM[offs] );
+	memory_set_bankptr( 1, &RAM[offs] );
 }
 
 static MACHINE_INIT( aliens )
@@ -521,7 +521,7 @@ static MACHINE_INIT( aliens )
 	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)aliens_banking);
 
 	/* init the default bank */
-	cpu_setbank( 1, &RAM[0x10000] );
+	memory_set_bankptr( 1, &RAM[0x10000] );
 }
 
 

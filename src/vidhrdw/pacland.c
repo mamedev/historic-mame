@@ -230,7 +230,7 @@ WRITE8_HANDLER( pacland_bankswitch_w )
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + ((data & 0x07) << 13);
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 //  pbc = data & 0x20;
 

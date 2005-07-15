@@ -206,6 +206,15 @@ PALETTE_INIT( pwrinst2 )
 			colortable[color] = (color - 0x8000) % Machine->drv->total_colors;
 }
 
+PALETTE_INIT( korokoro )
+{
+	int color, pen;
+
+	for( color = 0; color < 0x40; color++ )
+		for( pen = 0; pen < 16; pen++ )
+			colortable[color * 256 + pen] = 0x3c00 + color * 16 + pen;
+}
+
 /***************************************************************************
 
                                   Tiles Format
@@ -488,8 +497,6 @@ VIDEO_START( sailormn_3_layers )
 
 	return 0;
 }
-
-
 
 /***************************************************************************
 

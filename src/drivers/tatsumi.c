@@ -964,11 +964,11 @@ static DRIVER_INIT( cyclwarr )
 
 	dst = memory_region(REGION_CPU1);
 	memcpy(dst,dst+0x100000,8);
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x100000);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x100000);
 
 	dst = memory_region(REGION_CPU2);
 	memcpy(dst,dst+0x100000,8);
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x100000);
+	memory_set_bankptr(2, memory_region(REGION_CPU2) + 0x100000);
 
 	// Copy sprite & palette data out of GFX rom area
 	tatsumi_rom_sprite_lookup1=auto_malloc(0x4000);

@@ -332,9 +332,9 @@ static void update_memory_mapping(struct memory_mapper_chip *chip)
 		if (banknum && read)
 		{
 			if (rgn->base)
-				cpu_setbank(banknum, *rgn->base);
+				memory_set_bankptr(banknum, *rgn->base);
 			else if (rgn->romoffset != ~0)
-				cpu_setbank(banknum, memory_region(REGION_CPU1 + chip->cpunum) + region_start);
+				memory_set_bankptr(banknum, memory_region(REGION_CPU1 + chip->cpunum) + region_start);
 		}
 
 		if (LOG_MEMORY_MAP) printf("  %06X-%06X (%06X) = %s\n", region_start, region_end, region_mirror, rgn->name);

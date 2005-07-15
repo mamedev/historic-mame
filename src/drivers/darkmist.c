@@ -227,7 +227,7 @@ static DRIVER_INIT(darkmist)
 	}
 
 	memory_set_opcode_base(0,memory_region(REGION_CPU1)+0x20000);
-	cpu_setbank(1,&ROM[0x010000]);
+	memory_set_bankptr(1,&ROM[0x010000]);
 
 	//adr line swaps
 	ROM = memory_region(REGION_USER1);

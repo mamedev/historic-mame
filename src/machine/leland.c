@@ -394,7 +394,7 @@ MACHINE_INIT( leland )
 	slave_length = memory_region_length(REGION_CPU2);
 	slave_base = memory_region(REGION_CPU2);
 	if (slave_length > 0x10000)
-		cpu_setbank(3, &slave_base[0x10000]);
+		memory_set_bankptr(3, &slave_base[0x10000]);
 
 	/* if we have an I86 CPU, reset it */
 	if (Machine->drv->cpu[2].cpu_type == CPU_I186)
@@ -436,7 +436,7 @@ MACHINE_INIT( ataxx )
 	slave_length = memory_region_length(REGION_CPU2);
 	slave_base = memory_region(REGION_CPU2);
 	if (slave_length > 0x10000)
-		cpu_setbank(3, &slave_base[0x10000]);
+		memory_set_bankptr(3, &slave_base[0x10000]);
 
 	/* reset the I186 */
 	leland_i186_sound_init();
@@ -524,10 +524,10 @@ void mayhem_bankswitch(void)
 	battery_ram_enable = ((sound_port_bank & 0x24) == 0);
 
 	address = (!(sound_port_bank & 0x04)) ? &master_base[0x10000] : &master_base[0x1c000];
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &address[0x8000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -539,10 +539,10 @@ void dangerz_bankswitch(void)
 	battery_ram_enable = ((top_board_bank & 0x80) != 0);
 
 	address = (!(alternate_bank & 1)) ? &master_base[0x02000] : &master_base[0x12000];
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &address[0x8000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -557,10 +557,10 @@ void basebal2_bankswitch(void)
 		address = (!(sound_port_bank & 0x04)) ? &master_base[0x10000] : &master_base[0x1c000];
 	else
 		address = (!(top_board_bank & 0x40)) ? &master_base[0x28000] : &master_base[0x30000];
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &address[0x8000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -573,10 +573,10 @@ void redline_bankswitch(void)
 	battery_ram_enable = ((alternate_bank & 3) == 1);
 
 	address = &master_base[bank_list[alternate_bank & 3]];
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &master_base[0xa000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -594,10 +594,10 @@ void viper_bankswitch(void)
 		logerror("%04X:Master bank %02X out of range!\n", activecpu_get_previouspc(), alternate_bank & 3);
 		address = &master_base[bank_list[0]];
 	}
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &master_base[0xa000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -615,10 +615,10 @@ void offroad_bankswitch(void)
 		logerror("%04X:Master bank %02X out of range!\n", activecpu_get_previouspc(), alternate_bank & 7);
 		address = &master_base[bank_list[0]];
 	}
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	address = battery_ram_enable ? battery_ram : &master_base[0xa000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 }
 
 
@@ -640,7 +640,7 @@ void ataxx_bankswitch(void)
 		logerror("%04X:Master bank %02X out of range!\n", activecpu_get_previouspc(), master_bank & 15);
 		address = &master_base[bank_list[0]];
 	}
-	cpu_setbank(1, address);
+	memory_set_bankptr(1, address);
 
 	if (battery_ram_enable)
 		address = battery_ram;
@@ -648,7 +648,7 @@ void ataxx_bankswitch(void)
 		address = &ataxx_qram[(master_bank & 0xc0) << 8];
 	else
 		address = &master_base[0xa000];
-	cpu_setbank(2, address);
+	memory_set_bankptr(2, address);
 
 	wcol_enable = ((master_bank & 0x30) == 0x30);
 }
@@ -1397,7 +1397,7 @@ WRITE8_HANDLER( leland_slave_small_banksw_w )
 		logerror("%04X:Slave bank %02X out of range!", activecpu_get_previouspc(), data & 1);
 		bankaddress = 0x10000;
 	}
-	cpu_setbank(3, &slave_base[bankaddress]);
+	memory_set_bankptr(3, &slave_base[bankaddress]);
 
 	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", activecpu_get_previouspc(), data & 1, bankaddress);
 }
@@ -1412,7 +1412,7 @@ WRITE8_HANDLER( leland_slave_large_banksw_w )
 		logerror("%04X:Slave bank %02X out of range!", activecpu_get_previouspc(), data & 15);
 		bankaddress = 0x10000;
 	}
-	cpu_setbank(3, &slave_base[bankaddress]);
+	memory_set_bankptr(3, &slave_base[bankaddress]);
 
 	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", activecpu_get_previouspc(), data & 15, bankaddress);
 }
@@ -1436,7 +1436,7 @@ WRITE8_HANDLER( ataxx_slave_banksw_w )
 		logerror("%04X:Slave bank %02X out of range!", activecpu_get_previouspc(), data & 0x3f);
 		bankaddress = 0x2000;
 	}
-	cpu_setbank(3, &slave_base[bankaddress]);
+	memory_set_bankptr(3, &slave_base[bankaddress]);
 
 	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", activecpu_get_previouspc(), data, bankaddress);
 }

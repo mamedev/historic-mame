@@ -138,7 +138,7 @@ static WRITE8_HANDLER( fromance_rombank_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU2);
 
-	cpu_setbank(1, &ROM[0x010000 + (0x4000 * data)]);
+	memory_set_bankptr(1, &ROM[0x010000 + (0x4000 * data)]);
 }
 
 

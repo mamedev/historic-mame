@@ -31,11 +31,13 @@
 #endif
 
 #ifdef _MSC_VER
-//#undef INLINE
-//#define INLINE static inline
 #define strcasecmp stricmp
 #endif
 
+/* The Win32 port requires this constant for variable arg routines. */
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
 
 typedef unsigned char						UINT8;
 typedef signed char 						INT8;
@@ -75,23 +77,5 @@ __extension__ typedef signed long long		INT64;
 #define MUL_64_32_32(A,B)	  ((A)*(INT64)(B))
 #define MUL_U64_U32_U32(A,B)  ((A)*(UINT64)(UINT32)(B))
 
-
-/******************************************************************************
- * Union of UINT8, UINT16 and UINT32 in native endianess of the target
- * This is used to access bytes and words in a machine independent manner.
- * The upper bytes h2 and h3 normally contain zero (16 bit CPU cores)
- * thus PAIR.d can be used to pass arguments to the memory system
- * which expects 'int' really.
- ******************************************************************************/
-typedef union {
-#ifdef LSB_FIRST
-	struct { UINT8 l,h,h2,h3; } b;
-	struct { UINT16 l,h; } w;
-#else
-	struct { UINT8 h3,h2,h,l; } b;
-	struct { UINT16 h,l; } w;
-#endif
-	UINT32 d;
-}	PAIR;
 
 #endif	/* defined OSD_CPU_H */

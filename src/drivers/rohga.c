@@ -767,19 +767,6 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxLayout tilelayout_8bpp =
-{
-	16,16,
-	RGN_FRAC(1,4),
-	8,
-	{ RGN_FRAC(3,4)+8, RGN_FRAC(3,4), RGN_FRAC(1,4)+8, RGN_FRAC(1,4), RGN_FRAC(2,4)+8, RGN_FRAC(2,4), 8, 0 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
@@ -795,16 +782,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_wizdfire[] =
 	{ REGION_GFX2, 0, &tilelayout,        0, 32 },	/* Gfx chip 1 as 16x16 */
 	{ REGION_GFX3, 0, &tilelayout,      512, 32 },  /* Gfx chip 2 as 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,   1024, 32 }, /* Sprites 16x16 */
-	{ REGION_GFX5, 0, &spritelayout,   1536, 32 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo_nitrobal[] =
-{
-	{ REGION_GFX1, 0, &charlayout,        0, 32 },	/* Gfx chip 1 as 8x8 */
-	{ REGION_GFX2, 0, &tilelayout,        0, 32 },	/* Gfx chip 1 as 16x16 */
-	{ REGION_GFX3, 0, &tilelayout_8bpp, 512,  2 },  /* Gfx chip 2 as 16x16 */
-	{ REGION_GFX4, 0, &spritelayout,   1024, 32 },  /* Sprites 16x16 */
 	{ REGION_GFX5, 0, &spritelayout,   1536, 32 },
 	{ -1 } /* end of array */
 };
@@ -940,7 +917,7 @@ static MACHINE_DRIVER_START( nitrobal )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_nitrobal)
+	MDRV_GFXDECODE(gfxdecodeinfo_wizdfire)
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(nitrobal)

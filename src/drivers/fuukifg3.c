@@ -254,7 +254,7 @@ static WRITE8_HANDLER ( fuuki32_sound_bw_w )
 {
 	data8_t *rom = memory_region(REGION_CPU2);
 
-	cpu_setbank(1, rom + 0x10000 + (data * 0x8000));
+	memory_set_bankptr(1, rom + 0x10000 + (data * 0x8000));
 }
 
 static READ8_HANDLER( snd_z80_r )

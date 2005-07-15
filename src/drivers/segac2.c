@@ -376,9 +376,9 @@ static MACHINE_INIT( megatech )
 //  unsigned char* ram = memory_region(REGION_CPU3);
 
 	/* mirroring of ram etc. */
-	cpu_setbank(1, &genesis_z80_ram[0]);
-	cpu_setbank(2, &genesis_z80_ram[0]);
-	cpu_setbank(3, &genesis_68k_ram[0]);
+	memory_set_bankptr(1, &genesis_z80_ram[0]);
+	memory_set_bankptr(2, &genesis_z80_ram[0]);
+	memory_set_bankptr(3, &genesis_68k_ram[0]);
 
 	machine_init_genesis();
 }
@@ -388,9 +388,9 @@ static MACHINE_INIT( megaplay )
 //  unsigned char* ram = memory_region(REGION_CPU3);
 
 	/* mirroring of ram etc. */
-	cpu_setbank(1, &genesis_z80_ram[0]);
-	cpu_setbank(2, &ic36_ram[0]);
-	cpu_setbank(3, &genesis_68k_ram[0]);
+	memory_set_bankptr(1, &genesis_z80_ram[0]);
+	memory_set_bankptr(2, &ic36_ram[0]);
+	memory_set_bankptr(3, &genesis_68k_ram[0]);
 
 	machine_init_genesis();
 }
@@ -1048,7 +1048,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 		else
 		{
 			z80running = 1;
-			cpu_setbank(1, &genesis_z80_ram[0]);
+			memory_set_bankptr(1, &genesis_z80_ram[0]);
 
 			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 			/* logerror("z80 started, BusReq ends\n"); */
@@ -4976,8 +4976,8 @@ DRIVER_INIT( puckpkmn )
 	for (i = 0; i < len; i++)
 		rom[i] = BITSWAP8(rom[i],1,4,2,0,7,5,3,6);
 
-	cpu_setbank(1, memory_region(REGION_CPU1) );	// VDP reads the roms from here
-	cpu_setbank(2, main_ram );						// VDP reads the ram from here
+	memory_set_bankptr(1, memory_region(REGION_CPU1) );	// VDP reads the roms from here
+	memory_set_bankptr(2, main_ram );						// VDP reads the ram from here
 
 	init_segac2();
 }

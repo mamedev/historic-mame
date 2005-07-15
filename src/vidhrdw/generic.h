@@ -1,9 +1,5 @@
 #include "driver.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern data8_t *videoram;
 extern data16_t *videoram16;
 extern data32_t *videoram32;
@@ -72,6 +68,3 @@ void set_vh_global_attribute(int *addr, int data);
 int get_vh_global_attribute_changed(void);
 
 
-#ifdef __cplusplus
-}
-#endif

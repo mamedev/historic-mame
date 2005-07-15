@@ -6,16 +6,15 @@
 
 ***************************************************************************/
 
-#ifndef CPUINTRF_H
-#define CPUINTRF_H
+#pragma once
+
+#ifndef __CPUINTRF_H__
+#define __CPUINTRF_H__
 
 #include "osd_cpu.h"
 #include "memory.h"
 #include "timer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*************************************
@@ -683,10 +682,4 @@ INLINE int cpu_gettotalcpu(void)
 }
 
 
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif	/* CPUINTRF_H */
-
+#endif	/* __CPUINTRF_H__ */

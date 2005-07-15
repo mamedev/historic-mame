@@ -529,7 +529,7 @@ static DRIVER_INIT( couple )
 	/*The banked rom isn't a *real* banking,it's just a strange rom hook-up,the 2nd
       and the 3rd halves are 100% identical(!),unless it's an error of TWO different
       dumpers it's just the way it is,a.k.a. it's an "hardware" banking.*/
-	cpu_setbank(1,ROM + 0x10000 + (0x2000 * 2));
+	memory_set_bankptr(1,ROM + 0x10000 + (0x2000 * 2));
 }
 
 /*Year is bogus,Service Mode says 1986 and title screen says 1988?*/

@@ -347,8 +347,8 @@ MACHINE_INIT( mschamp )
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 	int bankaddr = ((readinputportbytag("GAME") & 1) * 0x8000);
 
-	cpu_setbank(1,&rom[bankaddr]);
-	cpu_setbank(2,&rom[bankaddr+0x4000]);
+	memory_set_bankptr(1,&rom[bankaddr]);
+	memory_set_bankptr(2,&rom[bankaddr+0x4000]);
 }
 
 
@@ -1378,7 +1378,6 @@ INPUT_PORTS_START( mschamp )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( maketrax )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
@@ -1423,6 +1422,13 @@ INPUT_PORTS_START( maketrax )
 
 	PORT_START_TAG("DSW 2")
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( crush4 )
+	PORT_INCLUDE( maketrax )
+
+	PORT_START_TAG("GAME")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // always select 2nd part of code
 INPUT_PORTS_END
 
 INPUT_PORTS_START( korosuke )
@@ -2742,6 +2748,31 @@ static struct GfxLayout spritelayout =
 };
 
 
+static struct GfxLayout crush4_tilelayout =
+{
+	8,8, /* 8*8 characters */
+    RGN_FRAC(1,4),
+    2,  /* 2 bits per pixel */
+    { RGN_FRAC(1,2), RGN_FRAC(0,2)+4 },
+    { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    16*8    /* every char takes 16 bytes */
+};
+
+static struct GfxLayout crush4_spritelayout =
+{
+	16,16, /* 16*16 sprites */
+	RGN_FRAC(1,4),
+	2, 	/* 2 bits per pixel */
+	{ RGN_FRAC(1,2), RGN_FRAC(0,2)+4 },
+	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
+			24*8+0, 24*8+1, 24*8+2, 24*8+3, 0, 1, 2, 3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
+	64*8 	/* every sprite takes 64 bytes */
+};
+
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 128 },
@@ -2757,6 +2788,12 @@ static struct GfxDecodeInfo s2650games_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo crush4_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &crush4_tilelayout,   0, 128 },
+	{ REGION_GFX1, 0x1000, &crush4_spritelayout, 0, 128 },
+	{ -1 } /* end of array */
+};
 
 /*************************************
  *
@@ -3026,6 +3063,13 @@ static MACHINE_DRIVER_START( mschamp )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( crush4 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mschamp)
+
+	MDRV_GFXDECODE(crush4_gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 /*************************************
  *
@@ -3702,6 +3746,30 @@ ROM_START( crush3 )
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
 	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, CRC(63efb927) SHA1(5c144a613fc4960a1dfd7ead89e7fee258a63171) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( crush4 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code+64k for decrypted code */
+	ROM_LOAD( "crtwt.2", 0x10000, 0x10000, CRC(adbd21f7) SHA1(984b005cd7a73f697715ecb7a4d806024cb7596d) )	/* banked */
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "crtwt.1", 0x0000, 0x0800, CRC(4250a9ea) SHA1(496a368afcf09c09205f7d0882320d2022e6fc98) )
+	ROM_CONTINUE(        0x1000, 0x0800 )
+	ROM_CONTINUE(        0x0800, 0x0800 )
+	ROM_CONTINUE(        0x1800, 0x0800 )
+	ROM_CONTINUE(        0x2000, 0x0800 )
+	ROM_CONTINUE(        0x3000, 0x0800 )
+	ROM_CONTINUE(        0x2800, 0x0800 )
+	ROM_CONTINUE(        0x3800, 0x0800 )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "82s129.bin",   0x0020, 0x0100, CRC(2bc5d339) SHA1(446e234df94d9ef34c3191877bb33dd775acfdf5) )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
@@ -4795,6 +4863,7 @@ GAME( 1981, piranhah, puckman,  pacman,   mspacman, 0,        ROT90,  "hack", "P
 GAME( 1981, crush,    0,        pacman,   maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
 GAME( 1981, crush2,   crush,    pacman,   maketrax, 0,        ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
 GAME( 1981, crush3,   crush,    pacman,   maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
+GAME( 19??, crush4,   crush,    crush4,   crush4,   0,        ROT90,  "Kural TWT", "Crush Roller (Kural TWT)" )
 GAME( 1981, maketrax, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 1)" )
 GAME( 1981, maketrxb, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 2)" )
 GAME( 1981, korosuke, crush,    pacman,   korosuke, korosuke, ROT90,  "Kural Electric", "Korosuke Roller" )

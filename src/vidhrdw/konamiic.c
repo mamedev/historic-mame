@@ -3411,6 +3411,234 @@ if (code_pressed(KEYCODE_D))
 #undef NUM_SPRITES
 }
 
+/* Lethal Enforcers has 2 of these chips hooked up in parallel to give 6bpp gfx.. lets cheat a
+  bit and make emulating it a little less messy by using a custom function instead */
+void K053245_sprites_draw_lethal(int chip, struct mame_bitmap *bitmap,const struct rectangle *cliprect) //*
+{
+#define NUM_SPRITES 128
+	int offs,pri_code,i;
+	int sortedlist[NUM_SPRITES];
+	int flipscreenX, flipscreenY, spriteoffsX, spriteoffsY;
+
+	flipscreenX = K053244_regs[chip][5] & 0x01;
+	flipscreenY = K053244_regs[chip][5] & 0x02;
+	spriteoffsX = (K053244_regs[chip][0] << 8) | K053244_regs[chip][1];
+	spriteoffsY = (K053244_regs[chip][2] << 8) | K053244_regs[chip][3];
+
+	for (offs = 0;offs < NUM_SPRITES;offs++)
+		sortedlist[offs] = -1;
+
+	/* prebuild a sorted table */
+	for (i=K053245_ramsize[chip]/2, offs=0; offs<i; offs+=8)
+	{
+		pri_code = K053245_buffer[chip][offs];
+		if (pri_code & 0x8000)
+		{
+			pri_code &= 0x007f;
+
+			if (offs && pri_code == K05324x_z_rejection) continue;
+
+			if (sortedlist[pri_code] == -1) sortedlist[pri_code] = offs;
+		}
+	}
+
+	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
+	{
+		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
+
+		offs = sortedlist[pri_code];
+		if (offs == -1) continue;
+
+		/* the following changes the sprite draw order from
+             0  1  4  5 16 17 20 21
+             2  3  6  7 18 19 22 23
+             8  9 12 13 24 25 28 29
+            10 11 14 15 26 27 30 31
+            32 33 36 37 48 49 52 53
+            34 35 38 39 50 51 54 55
+            40 41 44 45 56 57 60 61
+            42 43 46 47 58 59 62 63
+
+            to
+
+             0  1  2  3  4  5  6  7
+             8  9 10 11 12 13 14 15
+            16 17 18 19 20 21 22 23
+            24 25 26 27 28 29 30 31
+            32 33 34 35 36 37 38 39
+            40 41 42 43 44 45 46 47
+            48 49 50 51 52 53 54 55
+            56 57 58 59 60 61 62 63
+        */
+
+		/* NOTE: from the schematics, it looks like the top 2 bits should be ignored */
+		/* (there are not output pins for them), and probably taken from the "color" */
+		/* field to do bank switching. However this applies only to TMNT2, with its */
+		/* protection mcu creating the sprite table, so we don't know where to fetch */
+		/* the bits from. */
+		code = K053245_buffer[chip][offs+1];
+		code = ((code & 0xffe1) + ((code & 0x0010) >> 2) + ((code & 0x0008) << 1)
+				 + ((code & 0x0004) >> 1) + ((code & 0x0002) << 2));
+		color = K053245_buffer[chip][offs+6] & 0x00ff;
+		pri = 0;
+
+		(*K053245_callback[chip])(&code,&color,&pri);
+
+		size = (K053245_buffer[chip][offs] & 0x0f00) >> 8;
+
+		w = 1 << (size & 0x03);
+		h = 1 << ((size >> 2) & 0x03);
+
+		/* zoom control:
+           0x40 = normal scale
+          <0x40 enlarge (0x20 = double size)
+          >0x40 reduce (0x80 = half size)
+        */
+		zoomy = K053245_buffer[chip][offs+4];
+		if (zoomy > 0x2000) continue;
+		if (zoomy) zoomy = (0x400000+zoomy/2) / zoomy;
+		else zoomy = 2 * 0x400000;
+		if ((K053245_buffer[chip][offs] & 0x4000) == 0)
+		{
+			zoomx = K053245_buffer[chip][offs+5];
+			if (zoomx > 0x2000) continue;
+			if (zoomx) zoomx = (0x400000+zoomx/2) / zoomx;
+			else zoomx = 2 * 0x400000;
+//          else zoomx = zoomy; /* workaround for TMNT2 */
+		}
+		else zoomx = zoomy;
+
+		ox = K053245_buffer[chip][offs+3] + spriteoffsX;
+		oy = K053245_buffer[chip][offs+2];
+
+		ox += K053245_dx[chip];
+		oy += K053245_dy[chip];
+
+		flipx = K053245_buffer[chip][offs] & 0x1000;
+		flipy = K053245_buffer[chip][offs] & 0x2000;
+		mirrorx = K053245_buffer[chip][offs+6] & 0x0100;
+		if (mirrorx) flipx = 0; // documented and confirmed
+		mirrory = K053245_buffer[chip][offs+6] & 0x0200;
+		shadow = K053245_buffer[chip][offs+6] & 0x0080;
+
+		if (flipscreenX)
+		{
+			ox = 512 - ox;
+			if (!mirrorx) flipx = !flipx;
+		}
+		if (flipscreenY)
+		{
+			oy = -oy;
+			if (!mirrory) flipy = !flipy;
+		}
+
+		ox = (ox + 0x5d) & 0x3ff;
+		if (ox >= 768) ox -= 1024;
+		oy = (-(oy + spriteoffsY + 0x07)) & 0x3ff;
+		if (oy >= 640) oy -= 1024;
+
+		/* the coordinates given are for the *center* of the sprite */
+		ox -= (zoomx * w) >> 13;
+		oy -= (zoomy * h) >> 13;
+
+		for (y = 0;y < h;y++)
+		{
+			int sx,sy,zw,zh;
+
+			sy = oy + ((zoomy * y + (1<<11)) >> 12);
+			zh = (oy + ((zoomy * (y+1) + (1<<11)) >> 12)) - sy;
+
+			for (x = 0;x < w;x++)
+			{
+				int c,fx,fy;
+
+				sx = ox + ((zoomx * x + (1<<11)) >> 12);
+				zw = (ox + ((zoomx * (x+1) + (1<<11)) >> 12)) - sx;
+				c = code;
+				if (mirrorx)
+				{
+					if ((flipx == 0) ^ (2*x < w))
+					{
+						/* mirror left/right */
+						c += (w-x-1);
+						fx = 1;
+					}
+					else
+					{
+						c += x;
+						fx = 0;
+					}
+				}
+				else
+				{
+					if (flipx) c += w-1-x;
+					else c += x;
+					fx = flipx;
+				}
+				if (mirrory)
+				{
+					if ((flipy == 0) ^ (2*y >= h))
+					{
+						/* mirror top/bottom */
+						c += 8*(h-y-1);
+						fy = 1;
+					}
+					else
+					{
+						c += 8*y;
+						fy = 0;
+					}
+				}
+				else
+				{
+					if (flipy) c += 8*(h-1-y);
+					else c += 8*y;
+					fy = flipy;
+				}
+
+				/* the sprite can start at any point in the 8x8 grid, but it must stay */
+				/* in a 64 entries window, wrapping around at the edges. The animation */
+				/* at the end of the saloon level in Sunset Riders breaks otherwise. */
+				c = (c & 0x3f) | (code & ~0x3f);
+
+				if (zoomx == 0x10000 && zoomy == 0x10000)
+				{
+					pdrawgfx(bitmap,Machine->gfx[0], /* hardcoded to 0 (decoded 6bpp gfx) for le */
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
+				}
+				else
+				{
+					pdrawgfxzoom(bitmap,Machine->gfx[0],  /* hardcoded to 0 (decoded 6bpp gfx) for le */
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+							(zw << 16) / 16,(zh << 16) / 16,pri);
+
+				}
+			}
+		}
+	}
+#if 0
+if (code_pressed(KEYCODE_D))
+{
+	FILE *fp;
+	fp=fopen("SPRITE.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(K053245_buffer, 0x800, 1, fp);
+		usrintf_showmessage("saved");
+		fclose(fp);
+	}
+}
+#endif
+#undef NUM_SPRITES
+}
 
 
 /***************************************************************************/
@@ -4166,26 +4394,6 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		}
 
 		color &= 0xffff; // strip attribute flags
-
-
-// ************************************************************************************
-//  for Escape Kids (GX975)
-// ************************************************************************************
-//    Escape Kids use 053246 #5 register's UNKNOWN Bit #5, #3 and #2.
-//    Bit #5, #3, #2 always set "1".
-//    Maybe, Bit #5 or #3 or #2 or combination means "FIX SPRITE WIDTH TO HALF" ?????
-//    Below 7 lines supports this 053246's(???) function.
-//    Don't rely on it, Please.  But, Escape Kids works correctly!
-// ************************************************************************************
-		if ( K053246_regs[5] & 0x08 ) // Check only "Bit #3 is '1'?"
-		{
-			zoomx = zoomx >> 1;	// Fix sprite width to HALF size
-			ox = (ox >> 1) + 1;	// Fix sprite draw position
-
-			if (flipscreenx)
-				ox = ox + screen_width;
-		}
-
 
 		if (flipscreenx)
 		{
@@ -5628,7 +5836,7 @@ static data16_t K056832_regs[0x20];	// 157/832 regs group 1
 static data16_t K056832_regsb[4];	// 157/832 regs group 2, board dependent
 
 static data8_t *K056832_rombase;	// pointer to tile gfx data
-static data16_t *K056832_videoram;
+data16_t *K056832_videoram;
 static int K056832_NumGfxBanks;		// depends on size of graphics ROMs
 static int K056832_CurGfxBank;		// cached info for K056832_regs[0x1a]
 static int K056832_gfxnum;			// graphics element index for unpacked tiles
@@ -6577,12 +6785,12 @@ WRITE16_HANDLER( K056832_word_w )
 
 				if (offset >= 0x20/2 && offset <= 0x26/2)
 				{
-					K056832_dy[layer] = (INT16)data;
+					K056832_dy[layer] = (INT16)new_data;
 				} else
 
 				if (offset >= 0x28/2 && offset <= 0x2e/2)
 				{
-					K056832_dx[layer] = (INT16)data;
+					K056832_dx[layer] = (INT16)new_data;
 				}
 			break;
 		}

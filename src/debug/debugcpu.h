@@ -184,7 +184,5 @@ void				debug_write_word(int spacenum, offs_t address, data16_t data);
 void				debug_write_dword(int spacenum, offs_t address, data32_t data);
 void				debug_write_qword(int spacenum, offs_t address, data64_t data);
 UINT64				debug_read_opcode(UINT32 offset, int size);
-UINT64				external_read_memory(int space, UINT32 offset, int size);
-void				external_write_memory(int space, UINT32 offset, int size, UINT64 value);
 
 #endif

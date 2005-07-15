@@ -32,19 +32,19 @@ static WRITE8_HANDLER( pcktgal_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	if (data & 1) { cpu_setbank(1,&RAM[0x4000]); }
-	else { cpu_setbank(1,&RAM[0x10000]); }
+	if (data & 1) { memory_set_bankptr(1,&RAM[0x4000]); }
+	else { memory_set_bankptr(1,&RAM[0x10000]); }
 
-	if (data & 2) { cpu_setbank(2,&RAM[0x6000]); }
-	else { cpu_setbank(2,&RAM[0x12000]); }
+	if (data & 2) { memory_set_bankptr(2,&RAM[0x6000]); }
+	else { memory_set_bankptr(2,&RAM[0x12000]); }
 }
 
 static WRITE8_HANDLER( pcktgal_sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
-	if (data & 4) { cpu_setbank(3,&RAM[0x14000]); }
-	else { cpu_setbank(3,&RAM[0x10000]); }
+	if (data & 4) { memory_set_bankptr(3,&RAM[0x14000]); }
+	else { memory_set_bankptr(3,&RAM[0x10000]); }
 }
 
 static WRITE8_HANDLER( pcktgal_sound_w )

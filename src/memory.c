@@ -702,7 +702,7 @@ void *memory_get_op_ptr(int cpunum, offs_t offset)
 		saved_opcode_memory_max = opcode_memory_max;
 		saved_opcode_entry = opcode_entry;
 
-		new_offset = cpudata[cpunum].opbase(offset);
+		new_offset = (*cpudata[cpunum].opbase)(offset);
 
 		if (new_offset == ~0)
 			ptr = &opcode_base[offset];

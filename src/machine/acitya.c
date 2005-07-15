@@ -172,10 +172,10 @@ READ8_HANDLER( acitya_decrypt_rom )
 
 	switch(counter)
 	{
-		case 0x08:	cpu_setbank (1, &RAM[0x10000]);		break;
-		case 0x09:	cpu_setbank (1, &RAM[0x14000]);		break;
-		case 0x0A:	cpu_setbank (1, &RAM[0x18000]);		break;
-		case 0x0B:	cpu_setbank (1, &RAM[0x1C000]);		break;
+		case 0x08:	memory_set_bankptr (1, &RAM[0x10000]);		break;
+		case 0x09:	memory_set_bankptr (1, &RAM[0x14000]);		break;
+		case 0x0A:	memory_set_bankptr (1, &RAM[0x18000]);		break;
+		case 0x0B:	memory_set_bankptr (1, &RAM[0x1C000]);		break;
 		default:
 			logerror("Invalid counter = %02X\n",counter);
 			break;
@@ -199,5 +199,5 @@ MACHINE_INIT( acitya )
 
 	/* The initial state of the counter is 0x0B */
 	counter = 0x0B;
-	cpu_setbank (1, &RAM[0x1c000]);
+	memory_set_bankptr (1, &RAM[0x1c000]);
 }

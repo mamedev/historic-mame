@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
+
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
 
 #include "mame.h"
 #include "input.h"
@@ -26,4 +28,4 @@ void config_save_default(const struct InputPortDefinition *input_ports_backup, c
 int config_load_controller(const char *name, struct InputPortDefinition *input_ports);
 
 
-#endif /* CONFIG_H */
+#endif	/* __CONFIG_H__ */

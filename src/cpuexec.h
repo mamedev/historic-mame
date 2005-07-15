@@ -6,16 +6,14 @@
 
 ***************************************************************************/
 
-#ifndef CPUEXEC_H
-#define CPUEXEC_H
+#pragma once
+
+#ifndef __CPUEXEC_H__
+#define __CPUEXEC_H__
 
 #include "osd_cpu.h"
 #include "memory.h"
 #include "timer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 
@@ -34,7 +32,7 @@ struct MachineCPU
 	void 		(*vblank_interrupt)(void);	/* for interrupts tied to VBLANK */
 	int 		vblank_interrupts_per_frame;/* usually 1 */
 	void 		(*timed_interrupt)(void);	/* for interrupts not tied to VBLANK */
-	int 		timed_interrupts_per_second;
+	double 		timed_interrupt_period;		/* period for periodic interrupts */
 	void *		reset_param;				/* parameter for cpu_reset */
 	const char *tag;
 };
@@ -234,9 +232,6 @@ int cpu_gethorzbeampos(void);
 /* Returns the current VBLANK state */
 int cpu_getvblank(void);
 
-/* Returns the number of the video frame we are currently playing */
-int cpu_getcurrentframe(void);
-
 
 
 /*************************************
@@ -323,8 +318,4 @@ typedef struct
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
 
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif	/* CPUEXEC_H */
+#endif	/* __CPUEXEC_H__ */

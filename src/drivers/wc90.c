@@ -95,7 +95,7 @@ static WRITE8_HANDLER( wc90_bankswitch_w )
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
-	cpu_setbank( 1,&RAM[bankaddress] );
+	memory_set_bankptr( 1,&RAM[bankaddress] );
 }
 
 static WRITE8_HANDLER( wc90_bankswitch1_w )
@@ -105,7 +105,7 @@ static WRITE8_HANDLER( wc90_bankswitch1_w )
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
-	cpu_setbank( 2,&RAM[bankaddress] );
+	memory_set_bankptr( 2,&RAM[bankaddress] );
 }
 
 static WRITE8_HANDLER( wc90_sound_command_w )

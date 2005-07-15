@@ -178,7 +178,7 @@ static READ16_HANDLER( button2_r )
 
 static WRITE8_HANDLER( sound2_bank_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU3)+0x8000*(data+1));
+	memory_set_bankptr(1,memory_region(REGION_CPU3)+0x8000*(data+1));
 }
 
 
@@ -833,7 +833,7 @@ static MACHINE_DRIVER_START( sf )
 	/* audio CPU */	/* ? xtal is 3.579545MHz */
 	MDRV_CPU_PROGRAM_MAP(sound2_readmem,sound2_writemem)
 	MDRV_CPU_IO_MAP(sound2_readport,sound2_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(8000))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

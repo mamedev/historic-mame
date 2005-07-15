@@ -12,7 +12,8 @@ static data16_t armedf_fg_scrollx,armedf_fg_scrolly;
 
 data16_t terraf_scroll_msb;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static struct tilemap *bg_tilemap, *fg_tilemap;
+struct tilemap *armedf_tx_tilemap;
 
 static int scroll_type,sprite_offy, mcu_mode, old_mcu_mode;
 
@@ -110,18 +111,18 @@ VIDEO_START( armedf )
 	//bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
-	tx_tilemap = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
+	armedf_tx_tilemap = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
+	if (!bg_tilemap || !fg_tilemap || !armedf_tx_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0xf);
-	tilemap_set_transparent_pen(tx_tilemap,0xf);
+	tilemap_set_transparent_pen(armedf_tx_tilemap,0xf);
 	tilemap_set_transparent_pen(bg_tilemap,0xf);
 
 	if( scroll_type!=1 )
 	{
-		tilemap_set_scrollx(tx_tilemap,0,-128);
+		tilemap_set_scrollx(armedf_tx_tilemap,0,-128);
 	}
 
 	return 0;
@@ -141,11 +142,11 @@ WRITE16_HANDLER( armedf_text_videoram_w )
 	{
 		if( scroll_type == 1 )
 		{
-			tilemap_mark_tile_dirty(tx_tilemap,offset & 0x7ff);
+			tilemap_mark_tile_dirty(armedf_tx_tilemap,offset & 0x7ff);
 		}
 		else
 		{
-			tilemap_mark_tile_dirty(tx_tilemap,offset & 0xbff);
+			tilemap_mark_tile_dirty(armedf_tx_tilemap,offset & 0xbff);
 		}
 	}
 
@@ -281,18 +282,18 @@ VIDEO_UPDATE( armedf )
 
 	tilemap_set_enable( bg_tilemap, armedf_vreg&0x800 );
 	tilemap_set_enable( fg_tilemap, armedf_vreg&0x400 );
-	tilemap_set_enable( tx_tilemap, armedf_vreg&0x100 );
+	tilemap_set_enable( armedf_tx_tilemap, armedf_vreg&0x100 );
 
 	if ((scroll_type == 0)||(scroll_type == 5 )) {
 		if (old_mcu_mode!=mcu_mode) {
 			if ((mcu_mode&0x000f)==0x0004) {		// transparent tx
-				tilemap_set_transparent_pen(tx_tilemap, 0x0f);
-				tilemap_mark_all_tiles_dirty( tx_tilemap );
+				tilemap_set_transparent_pen(armedf_tx_tilemap, 0x0f);
+				tilemap_mark_all_tiles_dirty( armedf_tx_tilemap );
 				//logerror("? Transparent TX 0x0f\n");
 			}
 			if ((mcu_mode&0x000f)==0x000f) {		// opaque tx
-				tilemap_set_transparent_pen(tx_tilemap, 0x10);
-				tilemap_mark_all_tiles_dirty( tx_tilemap );
+				tilemap_set_transparent_pen(armedf_tx_tilemap, 0x10);
+				tilemap_mark_all_tiles_dirty( armedf_tx_tilemap );
 				//logerror("? Opaque TX\n");
 			}
 
@@ -350,13 +351,13 @@ VIDEO_UPDATE( armedf )
         fillbitmap( bitmap, get_black_pen()&0x0f, cliprect );
     }*/
 
-	if ((mcu_mode&0x0030)==0x0030) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0030) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
-	if ((mcu_mode&0x0030)==0x0020) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0020) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);
 	tilemap_draw( bitmap, cliprect, fg_tilemap, 0, 0);
-	if ((mcu_mode&0x0030)==0x0010) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0010) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
-	if ((mcu_mode&0x0030)==0x0000) tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if ((mcu_mode&0x0030)==0x0000) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
 
 }

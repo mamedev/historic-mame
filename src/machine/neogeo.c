@@ -140,10 +140,10 @@ DRIVER_INIT( neogeo )
 	neogeo_ram16 = auto_malloc (0x10000);
 	if (!neogeo_ram16)
 		return;
-	cpu_setbank(1, neogeo_ram16);
+	memory_set_bankptr(1, neogeo_ram16);
 
 	/* Set the biosbank */
-	cpu_setbank(3, memory_region(REGION_USER1));
+	memory_set_bankptr(3, memory_region(REGION_USER1));
 
 	/* Set the 2nd ROM bank */
 	if (memory_region_length(REGION_CPU1) > 0x100000)

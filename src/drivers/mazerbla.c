@@ -613,13 +613,13 @@ static WRITE8_HANDLER(cfb_rom_bank_sel_w)	/* mazer blazer */
 {
 	gfx_rom_bank = data;
 
-	cpu_setbank( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
 }
 static WRITE8_HANDLER(cfb_rom_bank_sel_w_gg)	/* great guns */
 {
 	gfx_rom_bank = data>>1;
 
-	cpu_setbank( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
 }
 
 
@@ -1501,7 +1501,7 @@ static MACHINE_DRIVER_START( mazerbla )
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, NMI, IM1 INT */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
-//MDRV_CPU_PERIODIC_INT(irq0_line_hold, 400 ) /* frequency in Hz */
+//MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(400) ) /* frequency in Hz */
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no  NMI, IM1 INT */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
@@ -1544,7 +1544,7 @@ static MACHINE_DRIVER_START( greatgun )
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	/* IRQ frequency is: 14318000.0 Hz/16/16/16/16 = 218.475341796875 Hz */
 	/*   that is a period of 1000000000.0 / 218.475341796875 = 4577175.5831 ns */
-	MDRV_CPU_PERIODIC_INT(sound_interrupt, 4577176 ) /* period in nanoseconds */
+	MDRV_CPU_PERIODIC_INT(sound_interrupt, TIME_IN_NSEC(4577176) ) /* period in nanoseconds */
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz, no  NMI, IM1 INT */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)

@@ -166,7 +166,7 @@ WRITE8_HANDLER( srdarwin_control_w )
 	switch (offset) {
     	case 0: /* Top 3 bits - bank switch, bottom 4 - scroll MSB */
 			bankaddress = 0x10000 + (data >> 5) * 0x4000;
-			cpu_setbank(1,&RAM[bankaddress]);
+			memory_set_bankptr(1,&RAM[bankaddress]);
 			scroll2[0]=data&0xf;
 			return;
 
@@ -187,7 +187,7 @@ WRITE8_HANDLER( lastmiss_control_w )
         Bit 0x40 - Y scroll MSB
         Bit 0x80 - Hold subcpu reset line high if clear, else low
     */
-	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
+	memory_set_bankptr(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 
 	scroll2[0]=(data>>5)&1;
 	scroll2[2]=(data>>6)&1;
@@ -205,7 +205,7 @@ WRITE8_HANDLER( shackled_control_w )
 
 	/* Bottom 4 bits - bank switch, Bits 4 & 5 - Scroll MSBs */
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	scroll2[0]=(data>>5)&1;
 	scroll2[2]=(data>>6)&1;

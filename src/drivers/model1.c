@@ -56,7 +56,7 @@ static WRITE16_HANDLER( bank_w )
 	if(ACCESSING_LSB) {
 		switch(data & 0xf) {
 		case 0x1: // 100000-1fffff data roms banking
-			cpu_setbank(1, memory_region(REGION_CPU1) + 0x1000000 + 0x100000*((data >> 4) & 0xf));
+			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x1000000 + 0x100000*((data >> 4) & 0xf));
 			logerror("BANK %x\n", 0x1000000 + 0x100000*((data >> 4) & 0xf));
 			break;
 		case 0x2: // 200000-2fffff data roms banking (unused, all known games have only one bank)
@@ -118,7 +118,7 @@ static INTERRUPT_GEN(model1_interrupt)
 
 static MACHINE_INIT(model1)
 {
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x1000000);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x1000000);
 	irq_init();
 	model1_tgp_reset(!strcmp(Machine->gamedrv->name, "swa") || !strcmp(Machine->gamedrv->name, "wingwar") || !strcmp(Machine->gamedrv->name, "wingwara"));
 	if (!strcmp(Machine->gamedrv->name, "swa"))

@@ -240,7 +240,7 @@ static const UINT8 kuniokun_xor_table[0x2a] =
 static void setbank(void)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	cpu_setbank(1, &RAM[bank ? 0x10000 : 0x4000]);
+	memory_set_bankptr(1, &RAM[bank ? 0x10000 : 0x4000]);
 }
 
 static void setup_statesave(void)

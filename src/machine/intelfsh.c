@@ -91,11 +91,6 @@ void intelflash_init(int chip, int type, void *data)
 		data = auto_malloc( c->size );
 		memset( data, 0xff, c->size );
 	}
-	else
-	{
-		if (osd_is_bad_read_ptr(data, c->size))
-			osd_die("Invalid pointer passed to intelflash_init()");
-	}
 
 	c->flash_mode = FM_NORMAL;
 	c->flash_master_lock = 0;

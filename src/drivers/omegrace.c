@@ -515,13 +515,13 @@ static MACHINE_DRIVER_START( omegrace )
 	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(250))
 
 	MDRV_CPU_ADD(Z80, 1500000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,250)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(250))
 
 	MDRV_FRAMES_PER_SECOND(40)
 

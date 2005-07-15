@@ -1,5 +1,15 @@
-#ifndef _STATE_H
-#define _STATE_H
+/***************************************************************************
+
+    state.h
+
+    Save state management functions.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __STATE_H__
+#define __STATE_H__
 
 #include "osd_cpu.h"
 #include "fileio.h"
@@ -53,4 +63,4 @@ void state_save_dump_registry(void);
 /* Verification function; can be called from front ends */
 int state_save_check_file(mame_file *file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...));
 
-#endif
+#endif	/* __STATE_H__ */

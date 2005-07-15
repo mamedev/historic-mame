@@ -44,11 +44,11 @@ static WRITE8_HANDLER( gng_bankswitch_w )
 
 	if (data == 4)
 	{
-		cpu_setbank(1,rom + 0x4000);
+		memory_set_bankptr(1,rom + 0x4000);
 	}
 	else
 	{
-		cpu_setbank(1,rom + 0x10000 + (data & 3) * 0x2000);
+		memory_set_bankptr(1,rom + 0x10000 + (data & 3) * 0x2000);
 	}
 }
 

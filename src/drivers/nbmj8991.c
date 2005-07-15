@@ -63,7 +63,7 @@ static WRITE8_HANDLER( nbmj8991_soundbank_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (!(data & 0x80)) soundlatch_clear_w(0, 0);
-	cpu_setbank(1, &RAM[0x08000 + (0x8000 * (data & 0x03))]);
+	memory_set_bankptr(1, &RAM[0x08000 + (0x8000 * (data & 0x03))]);
 }
 
 static WRITE8_HANDLER( nbmj8991_sound_w )

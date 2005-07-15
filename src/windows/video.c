@@ -515,20 +515,23 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	ddraw_device_found = FALSE;
 	monitor = NULL;
 	memset(&ddraw_device_guid, 0, sizeof(ddraw_device_guid));
-	result = DirectDrawEnumerateEx(devices_enum_callback, NULL, DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_DETACHEDSECONDARYDEVICES);
-	if (result != DD_OK)
-	{
-		fprintf(stderr, "Error enumerating DirectDraw: %08x\n", (UINT32)result);
-		return 1;
-	}
-	if (screen_name != NULL)
-	{
-		if (!ddraw_device_found)
+ 	if (win_use_ddraw)
+ 	{
+		result = DirectDrawEnumerateEx(devices_enum_callback, NULL, DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_DETACHEDSECONDARYDEVICES);
+		if (result != DD_OK)
 		{
-			fprintf(stderr, "Screen %s not found\n",screen_name);
+			fprintf(stderr, "Error enumerating DirectDraw: %08x\n", (UINT32)result);
 			return 1;
 		}
-		screen_guid_ptr = &ddraw_device_guid;
+		if (screen_name != NULL)
+		{
+			if (!ddraw_device_found)
+			{
+				fprintf(stderr, "Screen %s not found\n",screen_name);
+				return 1;
+			}
+			screen_guid_ptr = &ddraw_device_guid;
+		}
 	}
 
 

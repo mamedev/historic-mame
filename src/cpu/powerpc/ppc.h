@@ -149,6 +149,8 @@ enum {
 	PPC_CTR,
 	PPC_XER,
 	PPC_DEC,
+	PPC_SRR0,
+	PPC_SRR1,
 	PPC_R0,
 	PPC_R1,
 	PPC_R2,

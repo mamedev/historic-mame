@@ -53,16 +53,17 @@ void
 namcos21_ClearPolyFrameBuffer( void )
 {
 	int i;
-	UINT16 *temp;
+	INT16 *temp1;
+	UINT16 *temp2;
 
 	/* swap work and visible framebuffers */
-	temp = mpPolyFrameBufferZ;
+	temp1 = mpPolyFrameBufferZ;
 	mpPolyFrameBufferZ = mpPolyFrameBufferZ2;
-	mpPolyFrameBufferZ2 = temp;
+	mpPolyFrameBufferZ2 = temp1;
 
-	temp = mpPolyFrameBufferPens;
+	temp2 = mpPolyFrameBufferPens;
 	mpPolyFrameBufferPens = mpPolyFrameBufferPens2;
-	mpPolyFrameBufferPens2 = temp;
+	mpPolyFrameBufferPens2 = temp2;
 
 	/* wipe work zbuffer */
 	for( i=0; i<NAMCOS21_POLY_FRAME_WIDTH*NAMCOS21_POLY_FRAME_HEIGHT; i++ )

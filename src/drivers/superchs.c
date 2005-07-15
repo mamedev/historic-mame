@@ -409,7 +409,7 @@ static MACHINE_INIT( superchs )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
-	cpu_setbank(1,&RAM[0x80000]);
+	memory_set_bankptr(1,&RAM[0x80000]);
 
 	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
 	RAM[1]=RAM[0x80001];

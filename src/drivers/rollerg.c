@@ -342,7 +342,7 @@ static void rollerg_banking( int lines )
 
 	offs = 0x10000 + ((lines & 0x07) * 0x4000);
 	if (offs >= 0x28000) offs -= 0x20000;
-	cpu_setbank(1,&RAM[offs]);
+	memory_set_bankptr(1,&RAM[offs]);
 }
 
 static MACHINE_INIT( rollerg )

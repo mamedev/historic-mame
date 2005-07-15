@@ -130,7 +130,7 @@ INTERRUPT_GEN( vball_interrupt );
 static WRITE8_HANDLER( vb_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( data & 1 ) ) ] );
+	memory_set_bankptr( 1,&RAM[ 0x10000 + ( 0x4000 * ( data & 1 ) ) ] );
 
 	if (vball_gfxset != ((data  & 0x20) ^ 0x20)) {
 		vball_gfxset = (data  & 0x20) ^ 0x20;

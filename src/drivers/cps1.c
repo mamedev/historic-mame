@@ -80,7 +80,7 @@ static WRITE8_HANDLER( cps1_snd_bankswitch_w )
 	int bankaddr;
 
 	bankaddr = (data * 0x4000) & (length-1);
-	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
+	memory_set_bankptr(1,&RAM[0x10000 + bankaddr]);
 
 	if (data & 0xfe) logerror("%04x: write %02x to f004\n",activecpu_get_pc(),data);
 }
@@ -216,7 +216,7 @@ static WRITE8_HANDLER( qsound_banksw_w )
 		logerror("WARNING: Q sound bank overflow (%02x)\n", data);
 		bankaddress=0x10000;
 	}
-	cpu_setbank(1, &RAM[bankaddress]);
+	memory_set_bankptr(1, &RAM[bankaddress]);
 }
 
 
@@ -3730,7 +3730,7 @@ static MACHINE_DRIVER_START( qsound )
 
 	MDRV_CPU_REPLACE("sound", Z80, 6000000)
 	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(250))	/* ?? */
 
 	MDRV_NVRAM_HANDLER(qsound)
 

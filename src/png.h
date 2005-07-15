@@ -1,6 +1,15 @@
+/***************************************************************************
 
-#ifndef MAME_PNG_H
-#define MAME_PNG_H
+    png.h
+
+    PNG file management.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __PNG_H__
+#define __PNG_H__
 
 
 #define PNG_Signature       "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
@@ -84,5 +93,5 @@ int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_stop(mame_file *fp);
 int mng_capture_status(void);
-#endif
 
+#endif	/* __PNG_H__ */

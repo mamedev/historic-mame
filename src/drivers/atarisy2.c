@@ -311,7 +311,7 @@ static WRITE16_HANDLER( bankselect_w )
 
 	base = &memory_region(REGION_CPU1)[bankoffset[(newword >> 10) & 0x3f]];
 
-	cpu_setbank(1 + offset, base);
+	memory_set_bankptr(1 + offset, base);
 	activecpu_set_reg(T11_BANK2 + offset, base - opcode_arg_base);
 }
 
@@ -1293,7 +1293,7 @@ static MACHINE_DRIVER_START( atarisy2 )
 
 	MDRV_CPU_ADD_TAG("sound", M6502, ATARI_CLOCK_14MHz/8)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
-	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10)))
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,TIME_IN_HZ((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

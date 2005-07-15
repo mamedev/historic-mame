@@ -284,7 +284,7 @@ static WRITE32_HANDLER( ps4_vidregs_w )
 		if (!(mem_mask & 0x000000ff) || !(mem_mask & 0x0000ff00))	// Bank
 		{
 			unsigned char *ROM = memory_region(REGION_GFX1);
-			cpu_setbank(2,&ROM[0x2000 * (psikyo4_vidregs[offset]&0xfff)]); /* Bank comes from vidregs */
+			memory_set_bankptr(2,&ROM[0x2000 * (psikyo4_vidregs[offset]&0xfff)]); /* Bank comes from vidregs */
 		}
 	}
 #endif
@@ -904,7 +904,7 @@ PC  :000029F8: BT      $000029EC
 static DRIVER_INIT( hotgmck )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&RAM[0x100000]);
+	memory_set_bankptr(1,&RAM[0x100000]);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800000, 0x5800007, 0, 0, hotgmck_io32_r ); // Different Inputs
 }
 

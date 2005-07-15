@@ -85,13 +85,13 @@ WRITE8_HANDLER( starwars_out_w )
 		case 4:		/* bank switch */
 			if (data & 0x80)
 			{
-				cpu_setbank(1, &RAM[0x10000]);
-				if (starwars_is_esb) cpu_setbank(2, &RAM[0x1c000]);
+				memory_set_bankptr(1, &RAM[0x10000]);
+				if (starwars_is_esb) memory_set_bankptr(2, &RAM[0x1c000]);
 			}
 			else
 			{
-				cpu_setbank(1, &RAM[0x06000]);
-				if (starwars_is_esb) cpu_setbank(2, &RAM[0x0a000]);
+				memory_set_bankptr(1, &RAM[0x06000]);
+				if (starwars_is_esb) memory_set_bankptr(2, &RAM[0x0a000]);
 			}
 			break;
 

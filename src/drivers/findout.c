@@ -118,27 +118,27 @@ static READ8_HANDLER( catchall )
 
 static WRITE8_HANDLER( banksel_main_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x8000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x8000);
 }
 static WRITE8_HANDLER( banksel_1_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x10000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x10000);
 }
 static WRITE8_HANDLER( banksel_2_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x18000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x18000);
 }
 static WRITE8_HANDLER( banksel_3_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x20000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x20000);
 }
 static WRITE8_HANDLER( banksel_4_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x28000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x28000);
 }
 static WRITE8_HANDLER( banksel_5_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x30000);
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x30000);
 }
 
 

@@ -43,12 +43,12 @@ extern INT8 mcr12_sprite_xoffs_flip;
 
 VIDEO_START( mcr1 );
 VIDEO_START( mcr2 );
-VIDEO_START( twotigra );
+VIDEO_START( twotiger );
 VIDEO_START( journey );
 
 WRITE8_HANDLER( mcr1_videoram_w );
 WRITE8_HANDLER( mcr2_videoram_w );
-WRITE8_HANDLER( twotigra_videoram_w );
+WRITE8_HANDLER( twotiger_videoram_w );
 
 VIDEO_UPDATE( mcr1 );
 VIDEO_UPDATE( mcr2 );

@@ -343,7 +343,7 @@ WRITE8_HANDLER( psychic5_bankselect_w )
 	{
 		psychic5_bank_latch = data;
 		bankaddress = 0x10000 + ((data & 3) * 0x4000);
-		cpu_setbank(1,&RAM[bankaddress]);	 /* Select 4 banks of 16k */
+		memory_set_bankptr(1,&RAM[bankaddress]);	 /* Select 4 banks of 16k */
 	}
 }
 

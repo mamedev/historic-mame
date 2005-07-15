@@ -135,7 +135,7 @@ static WRITE8_HANDLER( aerofgt_sh_bankswitch_w )
 {
 	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
 
-	cpu_setbank(1,rom + (data & 0x03) * 0x8000);
+	memory_set_bankptr(1,rom + (data & 0x03) * 0x8000);
 }
 
 static MACHINE_INIT( aerofgt )

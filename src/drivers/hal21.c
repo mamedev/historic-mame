@@ -816,7 +816,7 @@ static MACHINE_DRIVER_START( hal21 )
 	MDRV_CPU_PROGRAM_MAP(hal21_readmem_sound,hal21_writemem_sound)
 	MDRV_CPU_IO_MAP(hal21_readport_sound,hal21_writeport_sound)
 	MDRV_CPU_VBLANK_INT(hal21_sound_interrupt,1)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,220) // music tempo, hand tuned
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(220)) // music tempo, hand tuned
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

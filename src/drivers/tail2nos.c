@@ -29,11 +29,11 @@ VIDEO_UPDATE( tail2nos );
 static MACHINE_INIT( tail2nos )
 {
 	/* point to the extra ROMs */
-	cpu_setbank(1,memory_region(REGION_USER1));
-	cpu_setbank(2,memory_region(REGION_USER2));
+	memory_set_bankptr(1,memory_region(REGION_USER1));
+	memory_set_bankptr(2,memory_region(REGION_USER2));
 
 	/* initialize sound bank */
-	cpu_setbank(3,memory_region(REGION_CPU2) + 0x10000);
+	memory_set_bankptr(3,memory_region(REGION_CPU2) + 0x10000);
 }
 
 
@@ -65,7 +65,7 @@ static WRITE16_HANDLER( tail2nos_K051316_ctrl_0_w )
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank(3,memory_region(REGION_CPU2) + 0x10000 + (data & 0x01) * 0x8000);
+	memory_set_bankptr(3,memory_region(REGION_CPU2) + 0x10000 + (data & 0x01) * 0x8000);
 }
 
 

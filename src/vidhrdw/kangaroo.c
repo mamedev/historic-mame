@@ -102,9 +102,9 @@ WRITE8_HANDLER( kangaroo_bank_select_w )
 	/* this is a VERY crude way to handle the banked ROMs - but it's */
 	/* correct enough to pass the self test */
 	if (data & 0x05)
-		cpu_setbank(1,&RAM[0x0000]);
+		memory_set_bankptr(1,&RAM[0x0000]);
 	else
-		cpu_setbank(1,&RAM[0x2000]);
+		memory_set_bankptr(1,&RAM[0x2000]);
 
 	*kangaroo_bank_select = data;
 }

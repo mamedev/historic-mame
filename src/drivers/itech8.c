@@ -614,7 +614,7 @@ static MACHINE_INIT( itech8 )
 {
 	/* make sure bank 0 is selected */
 	if (Machine->drv->cpu[0].cpu_type == CPU_M6809)
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x4000]);
+		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x4000]);
 
 	/* reset the PIA (if used) */
 	pia_unconfig();
@@ -676,7 +676,7 @@ static WRITE8_HANDLER( blitter_w )
 {
 	/* bit 0x20 on address 7 controls CPU banking */
 	if (offset / 2 == 7)
-		cpu_setbank(1, &memory_region(REGION_CPU1)[0x4000 + 0xc000 * ((data >> 5) & 1)]);
+		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x4000 + 0xc000 * ((data >> 5) & 1)]);
 
 	/* the rest is handled by the video hardware */
 	itech8_blitter_w(offset, data);
@@ -686,7 +686,7 @@ static WRITE8_HANDLER( blitter_w )
 static WRITE8_HANDLER( rimrockn_bank_w )
 {
 	/* banking is controlled here instead of by the blitter output */
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x4000 + 0xc000 * (data & 3)]);
+	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x4000 + 0xc000 * (data & 3)]);
 }
 
 

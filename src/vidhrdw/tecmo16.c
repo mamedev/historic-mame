@@ -65,6 +65,7 @@ static void tx_get_tile_info(int tile_index)
 
 VIDEO_START( fstarfrc )
 {
+	/* set up tile layers */
 	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 
@@ -97,6 +98,7 @@ VIDEO_START( fstarfrc )
 
 VIDEO_START( ginkun )
 {
+	/* set up tile layers */
 	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 
@@ -460,6 +462,15 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 								sx-512,sy,
 								cliprect,TRANSPARENCY_PEN,0,
 								priority_mask);
+
+						/* wrap around x */
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx+512,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
 					}
 				}
 			}
@@ -495,6 +506,15 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 								color,
 								flipx,flipy,
 								sx-512,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
+
+						/* wrap around x */
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx+512,sy,
 								cliprect,TRANSPARENCY_PEN,0,
 								priority_mask);
 					}

@@ -62,7 +62,7 @@ static WRITE8_HANDLER( shootout_bankswitch_w )
 	RAM = memory_region(REGION_CPU1);
 	bankaddress = 0x10000 + ( 0x4000 * (data & 0x0f) );
 
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static WRITE8_HANDLER( sound_cpu_command_w )

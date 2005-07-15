@@ -157,10 +157,10 @@
  *************************************/
 
 #define SHOW_CLIPS				0
-#define QWERTY_LAYER_ENABLE		0
-#define PRINTF_MIXER_DATA		0
+#define QWERTY_LAYER_ENABLE		1
+#define PRINTF_MIXER_DATA		1
 #define SHOW_ALPHA				0
-#define LOG_SPRITES				0
+#define LOG_SPRITES				1
 
 
 
@@ -2458,6 +2458,46 @@ VIDEO_UPDATE( system32 )
 		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 		{
 			UINT16 *src = get_layer_scanline(MIXER_LAYER_SPRITES, y);
+			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
+				fprintf(f, "%04X ", *src++);
+			fprintf(f, "\n");
+		}
+		fclose(f);
+
+		f = fopen("nbg0.txt", "w");
+		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+		{
+			UINT16 *src = get_layer_scanline(MIXER_LAYER_NBG0, y);
+			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
+				fprintf(f, "%04X ", *src++);
+			fprintf(f, "\n");
+		}
+		fclose(f);
+
+		f = fopen("nbg1.txt", "w");
+		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+		{
+			UINT16 *src = get_layer_scanline(MIXER_LAYER_NBG1, y);
+			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
+				fprintf(f, "%04X ", *src++);
+			fprintf(f, "\n");
+		}
+		fclose(f);
+
+		f = fopen("nbg2.txt", "w");
+		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+		{
+			UINT16 *src = get_layer_scanline(MIXER_LAYER_NBG2, y);
+			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
+				fprintf(f, "%04X ", *src++);
+			fprintf(f, "\n");
+		}
+		fclose(f);
+
+		f = fopen("nbg3.txt", "w");
+		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+		{
+			UINT16 *src = get_layer_scanline(MIXER_LAYER_NBG3, y);
 			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
 				fprintf(f, "%04X ", *src++);
 			fprintf(f, "\n");

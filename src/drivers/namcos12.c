@@ -756,11 +756,11 @@ static void s12_resetbank(void)
 {
 	if (!strcmp( Machine->gamedrv->name, "golgo13" ))
 	{
-		cpu_setbank( 1, memory_region( REGION_USER2 ) + ((m_n_bankoffseth << 23) | (m_n_bankoffset << 21)) );
+		memory_set_bankptr( 1, memory_region( REGION_USER2 ) + ((m_n_bankoffseth << 23) | (m_n_bankoffset << 21)) );
 	}
 	else
 	{
-		cpu_setbank( 1, memory_region( REGION_USER2 ) + ( m_n_bankoffset * 0x200000 ) );
+		memory_set_bankptr( 1, memory_region( REGION_USER2 ) + ( m_n_bankoffset * 0x200000 ) );
 	}
 }
 
@@ -886,12 +886,12 @@ static unsigned char kcram[ 12 ];
 
 static WRITE32_HANDLER( kcoff_w )
 {
-	cpu_setbank( 2, memory_region( REGION_USER1 ) + 0x20280 );
+	memory_set_bankptr( 2, memory_region( REGION_USER1 ) + 0x20280 );
 }
 
 static WRITE32_HANDLER( kcon_w )
 {
-	cpu_setbank( 2, kcram );
+	memory_set_bankptr( 2, kcram );
 }
 
 MACHINE_INIT( namcos12 )
@@ -912,7 +912,7 @@ MACHINE_INIT( namcos12 )
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f018000, 0x1f018003, 0, 0, kcoff_w );
 
 		memset( kcram, 0, sizeof( kcram ) );
-		cpu_setbank( 2, kcram );
+		memory_set_bankptr( 2, kcram );
 	}
 }
 

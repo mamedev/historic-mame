@@ -90,7 +90,7 @@ static WRITE8_HANDLER( skykid_bankswitch_w )
 	int bit = !BIT(offset,11);
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 
-	cpu_setbank(1,rom + 0x2000 * bit);
+	memory_set_bankptr(1,rom + 0x2000 * bit);
 }
 
 static WRITE8_HANDLER( skykid_irq_1_ctrl_w )

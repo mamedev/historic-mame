@@ -40,7 +40,7 @@ WRITE8_HANDLER( taitosj_bankswitch_w )
 
 	coin_lockout_global_w(~data & 1);
 
-	cpu_setbank(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
+	memory_set_bankptr(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
 }
 
 

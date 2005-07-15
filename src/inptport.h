@@ -6,8 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef INPTPORT_H
-#define INPTPORT_H
+#pragma once
+
+#ifndef __INPTPORT_H__
+#define __INPTPORT_H__
 
 #include "memory.h"
 #include "input.h"
@@ -16,10 +18,6 @@
 #include "unicode.h"
 #endif
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*************************************
@@ -786,9 +784,4 @@ READ32_HANDLER( input_port_28_dword_r );
 READ32_HANDLER( input_port_29_dword_r );
 
 
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif
+#endif	/* __INPTPORT_H__ */

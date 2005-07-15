@@ -6,16 +6,14 @@
 
 ***************************************************************************/
 
-#ifndef CPUINT_H
-#define CPUINT_H
+#pragma once
+
+#ifndef __CPUINT_H__
+#define __CPUINT_H__
 
 #include "osd_cpu.h"
 #include "memory.h"
 #include "timer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*************************************
@@ -125,8 +123,4 @@ READ8_HANDLER( interrupt_enable_r );
 
 
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif	/* CPUEXEC_H */
+#endif	/* __CPUINT_H__ */

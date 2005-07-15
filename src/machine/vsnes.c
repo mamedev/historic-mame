@@ -1284,7 +1284,7 @@ DRIVER_INIT( vstennis )
 	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_BANK1 );
 	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_BANK1 );
 
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x6000]);
+	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x6000]);
 }
 
 /**********************************************************************/

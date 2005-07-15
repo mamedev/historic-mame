@@ -216,7 +216,7 @@ MACHINE_DRIVER_END
 DRIVER_INIT( aleck64 )
 {
 	data8_t *ROM = memory_region(REGION_USER1);
-	cpu_setbank(1,&ROM[0x000000]);
+	memory_set_bankptr(1,&ROM[0x000000]);
 }
 
 ROM_START( 11beat )

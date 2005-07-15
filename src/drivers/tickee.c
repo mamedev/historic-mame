@@ -37,7 +37,7 @@ static data16_t *code_rom;
 static MACHINE_INIT( tickee )
 {
 	/* mirror the ROM into bank 1 */
-	cpu_setbank(1, code_rom);
+	memory_set_bankptr(1, code_rom);
 
 	ticket_dispenser_init(100, 0, 1);
 

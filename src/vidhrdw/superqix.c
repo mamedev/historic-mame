@@ -141,7 +141,7 @@ WRITE8_HANDLER( pbillian_0410_w )
 	coin_counter_w(1,data & 0x04);
 
 	bankaddress = 0x10000 + ((data & 0x08) >> 3) * 0x4000;
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 
 	interrupt_enable_w(0,data & 0x10);
 	flip_screen_set(data & 0x20);
@@ -167,7 +167,7 @@ WRITE8_HANDLER( superqix_0410_w )
 
 	/* bits 4-5 control ROM bank */
 	bankaddress = 0x10000 + ((data & 0x30) >> 4) * 0x4000;
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 }
 
 

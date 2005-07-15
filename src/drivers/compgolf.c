@@ -43,7 +43,7 @@ static WRITE8_HANDLER( compgolf_ctrl_w )
 	if( bank != new_bank )
 	{
 		bank = new_bank;
-		cpu_setbank(1, memory_region(REGION_USER1) + 0x4000 * bank);
+		memory_set_bankptr(1, memory_region(REGION_USER1) + 0x4000 * bank);
 	}
 
 	compgolf_scrollx_hi = (data & 1) << 8;

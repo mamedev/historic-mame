@@ -1,13 +1,15 @@
-/*********************************************************************
+/***************************************************************************
 
-  usrintrf.h
+    usrintrf.h
 
-  Functions used to handle MAME's crude user interface.
+    Functions used to handle MAME's crude user interface.
 
-*********************************************************************/
+***************************************************************************/
 
-#ifndef USRINTRF_H
-#define USRINTRF_H
+#pragma once
+
+#ifndef __USRINTRF_H__
+#define __USRINTRF_H__
 
 struct MEMCARDinterface
 {
@@ -91,4 +93,4 @@ void CLIB_DECL usrintf_showmessage(const char *text,...);
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...);
 #endif
 
-#endif
+#endif	/* __USRINTRF_H__ */

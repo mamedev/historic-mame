@@ -265,7 +265,7 @@ static MACHINE_DRIVER_START( yiear )
 	MDRV_CPU_ADD(M6809,18432000/16)	/* ???? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* vblank */
-	MDRV_CPU_PERIODIC_INT(yiear_nmi_interrupt,500)	/* music tempo (correct frequency unknown) */
+	MDRV_CPU_PERIODIC_INT(yiear_nmi_interrupt,TIME_IN_HZ(500))	/* music tempo (correct frequency unknown) */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

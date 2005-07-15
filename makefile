@@ -112,34 +112,28 @@ ifdef NEW_DEBUGGER
 DEFS += -DNEW_DEBUGGER
 endif
 
-CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fno-strict-aliasing \
-	-Werror -Wall -Wno-sign-compare -Wunused -Wno-unused-functions \
-	-Wpointer-arith -Wbad-function-cast -Wcast-align \
-	-Wstrict-prototypes -Wundef \
-	-Wformat-security -Wwrite-strings \
-	-Wdisabled-optimization \
-#	-Wredundant-decls
-#	-Wfloat-equal
-#	-Wunreachable-code -Wpadded
-#	-W had to remove because of the "missing initializer" warning
-#	-Wlarger-than-262144  \
-#	-Wcast-qual \
-#	-Wconversion \
-#	-Wmissing-prototypes \
-#	-Wmissing-declarations
+	-Werror -Wall \
+	-Wno-sign-compare \
+	-Wno-unused-functions \
+	-Wpointer-arith \
+	-Wbad-function-cast \
+	-Wcast-align \
+	-Wstrict-prototypes \
+	-Wundef \
+	-Wformat-security \
+	-Wwrite-strings \
+	-Wdeclaration-after-statement
 endif
 
 # extra options needed *only* for the osd files
 CFLAGSOSDEPEND = $(CFLAGS)
-
-# the windows osd code at least cannot be compiled with -pedantic
-CFLAGSPEDANTIC = $(CFLAGS) -pedantic
 
 ifdef SYMBOLS
 LDFLAGS =
@@ -212,7 +206,7 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 # primary target
 $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(EXPAT) $(ZLIB) $(OSDBGOBJS)
 # always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c src/version.c -o $(OBJ)/version.o
+	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
@@ -246,15 +240,15 @@ $(OBJ)/%.o: src/%.c
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 	@echo Compiling $(subst .o,.c,$@)...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $*.c -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $*.c -o $@
 
 # additional rule, because m68kcpu.c includes the generated m68kops.h :-/
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 
 # generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c $(OSDBGOBJS)
+$(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $< $(OSDBGOBJS)
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
@@ -273,6 +267,8 @@ clean:
 	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
+	@echo Deleting $(TOOLS)...
+	$(RM) $(TOOLS)
 
 check: $(EMULATOR) xml2info$(EXE)
 	./$(EMULATOR) -listxml > $(NAME).xml

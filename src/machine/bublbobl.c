@@ -23,7 +23,7 @@ WRITE8_HANDLER( bublbobl_bankswitch_w )
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* bits 0-2 select ROM bank */
-	cpu_setbank(1,&ROM[0x10000 + 0x4000 * ((data ^ 4) & 7)]);
+	memory_set_bankptr(1,&ROM[0x10000 + 0x4000 * ((data ^ 4) & 7)]);
 
 	/* bit 3 n.c. */
 
@@ -45,7 +45,7 @@ WRITE8_HANDLER( tokio_bankswitch_w )
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* bits 0-2 select ROM bank */
-	cpu_setbank(1,&ROM[0x10000 + 0x4000 * (data & 7)]);
+	memory_set_bankptr(1,&ROM[0x10000 + 0x4000 * (data & 7)]);
 
 	/* bits 3-7 unknown */
 }

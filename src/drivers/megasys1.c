@@ -14,12 +14,12 @@ Year + Game                         System      Protection
     Makai Densetsu  (Japan)         Z
     P-47  (World) /                 A
     P-47  (Japan)                   A
-    Kick Off (Japan)                A       *
-    Takeda Shingen (Japan)          A       *         Encryption (key 1)
+    Kick Off (Japan)                A
+    Takeda Shingen (Japan)          A                 Encryption (key 1)
     Iga Ninjyutsuden (Japan)        A       *   Yes + Encryption (key 1)
-89  Astyanax          (World) /     A       *   Yes + Encryption (key 2)
-    The Lord of King  (Japan)       A       *   Yes + Encryption (key 2)
-    Hachoo!                         A       *   Yes + Encryption (key 2)
+89  Astyanax          (World) /     A           Yes + Encryption (key 2)
+    The Lord of King  (Japan)       A           Yes + Encryption (key 2)
+    Hachoo!                         A           Yes + Encryption (key 2)
     Jitsuryoku!! Pro Yakyuu (Japan) A           Yes + Encryption (key 2)
     Plus Alpha                      A           Yes + Encryption (key 2)
     Saint Dragon                    A           Yes + Encryption (key 1)
@@ -31,7 +31,7 @@ Year + Game                         System      Protection
     64th Street  (World) /          C       *   Inputs
     64th Street  (Japan)            C       *   Inputs
 92  Soldam (Japan)                  A                 Encryption (key 2)
-    Big Striker                     C       *   Inputs
+    Big Striker                     C           Inputs
 93  Chimera Beast                   C       *   Inputs
     Cybattler                       C           Inputs
     Peek-a-Boo!                     D           Inputs

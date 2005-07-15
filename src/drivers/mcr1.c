@@ -87,24 +87,11 @@ static const UINT8 *nvram_init;
 
 /*************************************
  *
- *  Kick input ports
- *
- *************************************/
-
-static READ8_HANDLER( kick_dial_r )
-{
-	return (readinputport(1) & 0x0f) | ((readinputport(6) << 4) & 0xf0);
-}
-
-
-
-/*************************************
- *
  *  Solar Fox input ports
  *
  *************************************/
 
-static READ8_HANDLER( solarfox_input_0_r )
+static READ8_HANDLER( solarfox_ip0_r )
 {
 	/* This is a kludge; according to the wiring diagram, the player 2 */
 	/* controls are hooked up as documented below. If you go into test */
@@ -112,19 +99,32 @@ static READ8_HANDLER( solarfox_input_0_r )
 	/* game in cocktail mode, they don't work at all. So we fake-mux   */
 	/* the controls through player 1's ports */
 	if (mcr_cocktail_flip)
-		return readinputport(0) | 0x08;
+		return readinputportbytag("SSIO.IP0") | 0x08;
 	else
-		return ((readinputport(0) & ~0x14) | 0x08) | ((readinputport(0) & 0x08) >> 1) | ((readinputport(2) & 0x01) << 4);
+		return ((readinputportbytag("SSIO.IP0") & ~0x14) | 0x08) | ((readinputportbytag("SSIO.IP0") & 0x08) >> 1) | ((readinputportbytag("SSIO.IP2") & 0x01) << 4);
 }
 
 
-static READ8_HANDLER( solarfox_input_1_r )
+static READ8_HANDLER( solarfox_ip1_r )
 {
 	/*  same deal as above */
 	if (mcr_cocktail_flip)
-		return readinputport(1) | 0xf0;
+		return readinputportbytag("SSIO.IP1") | 0xf0;
 	else
-		return (readinputport(1) >> 4) | 0xf0;
+		return (readinputportbytag("SSIO.IP1") >> 4) | 0xf0;
+}
+
+
+
+/*************************************
+ *
+ *  Kick input ports
+ *
+ *************************************/
+
+static READ8_HANDLER( kick_ip1_r )
+{
+	return (readinputportbytag("DIAL2") << 4) & 0xf0;
 }
 
 
@@ -155,43 +155,24 @@ static NVRAM_HANDLER( mcr1 )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)
+/* address map verified from schematics */
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x6fff) AM_ROM
+	AM_RANGE(0x7000, 0x77ff) AM_MIRROR(0x0800) AM_RAM
+	AM_RANGE(0xf000, 0xf1ff) AM_MIRROR(0x0200) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xf400, 0xf41f) AM_MIRROR(0x03e0) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split1_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf81f) AM_MIRROR(0x03e0) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xfc00, 0xffff) AM_READWRITE(MRA8_RAM, mcr1_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x7000, 0x77ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xf400, 0xf41f) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split1_w) AM_BASE(&paletteram)
-	AM_RANGE(0xf800, 0xf81f) AM_WRITE(paletteram_xxxxRRRRBBBBGGGG_split2_w) AM_BASE(&paletteram_2)
-	AM_RANGE(0xfc00, 0xffff) AM_WRITE(mcr1_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
-	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
-	AM_RANGE(0x04, 0x04) AM_READ(input_port_4_r)
-	AM_RANGE(0x07, 0x07) AM_READ(ssio_status_r)
-	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
-	AM_RANGE(0xf0, 0xf3) AM_READ(z80ctc_0_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x1c, 0x1f) AM_WRITE(ssio_data_w)
+/* upper I/O map determined by PAL; only SSIO ports are verified from schematics */
+static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) | AMEF_UNMAP(1) )
+	SSIO_INPUT_PORTS
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0xe8, 0xe8) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xf0, 0xf3) AM_WRITE(z80ctc_0_w)
+	AM_RANGE(0xf0, 0xf3) AM_READWRITE(z80ctc_0_r, z80ctc_0_w)
 ADDRESS_MAP_END
 
 
@@ -202,18 +183,19 @@ ADDRESS_MAP_END
  *
  *************************************/
 
+/* verified from wiring diagram, plus DIP switches from manual */
 INPUT_PORTS_START( solarfox )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("SSIO.IP0")	/* J4 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("SSIO.IP1")	/* J4 10-13,15-18 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -223,11 +205,11 @@ INPUT_PORTS_START( solarfox )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("SSIO.IP2")	/* J5 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 -- dipswitches */
+	PORT_START_TAG("SSIO.IP3")	/* DIPSW @ B3 */
 	PORT_DIPNAME( 0x03, 0x03, "Bonus" )
 	PORT_DIPSETTING(    0x02, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x03, "After 10 racks" )
@@ -244,67 +226,69 @@ INPUT_PORTS_START( solarfox )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
 
-	PORT_START	/* IN4 */
+	PORT_START_TAG("SSIO.IP4")	/* J6 1-8 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* AIN0 */
+	PORT_START_TAG("SSIO.DIP")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
+/* verified from wiring diagram, plus DIP switches from manual */
 INPUT_PORTS_START( kick )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("SSIO.IP0")	/* J4 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
-	PORT_START	/* IN1 -- this is the Kick spinner input.  */
+	PORT_START_TAG("SSIO.IP1")	/* J4 10-13,15-18 */
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(3) PORT_KEYDELTA(50) PORT_REVERSE
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("SSIO.IP2")	/* J5 1-8 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 -- dipswitches */
+	PORT_START_TAG("SSIO.IP3")	/* DIPSW @ B3 */
 	PORT_DIPNAME( 0x01, 0x00, "Music" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN4 */
+	PORT_START_TAG("SSIO.IP4")	/* J6 1-8 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* AIN0 */
+	PORT_START_TAG("SSIO.DIP")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* (fake) player 2 dial */
+	PORT_START_TAG("DIAL2")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
+/* verified from wiring diagram, plus DIP switches from manual */
 INPUT_PORTS_START( kicka )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("SSIO.IP0")	/* J4 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
-	PORT_START	/* IN1 -- this is the Kick spinner input.  */
+	PORT_START_TAG("SSIO.IP1")	/* J4 10-13,15-18 */
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(3) PORT_KEYDELTA(50) PORT_REVERSE
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("SSIO.IP2")	/* J5 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 -- dipswitches */
+	PORT_START_TAG("SSIO.IP3")	/* DIPSW @ B3 */
 	PORT_DIPNAME( 0x01, 0x00, "Music" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -314,13 +298,13 @@ INPUT_PORTS_START( kicka )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ))
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN4 */
+	PORT_START_TAG("SSIO.IP4")	/* J6 1-8 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* AIN0 */
+	PORT_START_TAG("SSIO.DIP")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* (fake) player 2 dial */
+	PORT_START_TAG("DIAL2")
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(3) PORT_KEYDELTA(50) PORT_REVERSE PORT_COCKTAIL
 INPUT_PORTS_END
 
@@ -352,12 +336,13 @@ static MACHINE_DRIVER_START( mcr1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_OSC_MCR_I/8)
 	MDRV_CPU_CONFIG(mcr_daisy_chain)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+	MDRV_WATCHDOG_VBLANK_INIT(16)
 	MDRV_MACHINE_INIT(mcr)
 	MDRV_NVRAM_HANDLER(mcr1)
 
@@ -485,10 +470,9 @@ static DRIVER_INIT( solarfox )
 	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7 };
 	nvram_init = hiscore_init;
 
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, solarfox_input_0_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, solarfox_input_1_r);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, mcr_control_port_w);
+	mcr_sound_init(MCR_SSIO);
+	ssio_set_custom_input(0, 0x1c, solarfox_ip0_r);
+	ssio_set_custom_input(1, 0xff, solarfox_ip1_r);
 
 	mcr12_sprite_xoffs = 16;
 	mcr12_sprite_xoffs_flip = 0;
@@ -499,9 +483,8 @@ static DRIVER_INIT( kick )
 {
 	nvram_init = NULL;
 
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, kick_dial_r);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, mcr_control_port_w);
+	mcr_sound_init(MCR_SSIO);
+	ssio_set_custom_input(1, 0xf0, kick_ip1_r);
 
 	mcr12_sprite_xoffs = 0;
 	mcr12_sprite_xoffs_flip = 16;
@@ -515,6 +498,6 @@ static DRIVER_INIT( kick )
  *
  *************************************/
 
-GAME( 1981, solarfox, 0,    mcr1, solarfox, solarfox, ROT90 ^ ORIENTATION_FLIP_Y, "Bally Midway", "Solar Fox" )
+GAME( 1981, solarfox, 0,    mcr1, solarfox, solarfox, ROT90 ^ ORIENTATION_FLIP_Y, "Bally Midway", "Solar Fox (upright)" )
 GAME( 1981, kick,     0,    mcr1, kick,     kick,     ORIENTATION_SWAP_XY,        "Midway", "Kick (upright)" )
 GAME( 1981, kicka,    kick, mcr1, kicka,    kick,     ROT90,                      "Midway", "Kick (cocktail)" )

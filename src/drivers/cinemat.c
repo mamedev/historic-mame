@@ -269,7 +269,7 @@ static READ8_HANDLER( qb3_frame_r )
 static WRITE8_HANDLER( qb3_ram_bank_w )
 {
 	qb3_ram_bank = cpunum_get_reg(0, CCPU_P) & 3;
-	cpu_setbank(1, &rambase[0x100 * qb3_ram_bank]);
+	memory_set_bankptr(1, &rambase[0x100 * qb3_ram_bank]);
 }
 
 

@@ -994,7 +994,7 @@ static READ8_HANDLER( z80_port_r )
 		{
 			UINT8 *mem08 = memory_region(REGION_CPU2);
 			bank[3] = 0x0800 * ((offset >> 8) & 0x7f) + 0x10000;
-			cpu_setbank(8,&mem08[bank[3]]);
+			memory_set_bankptr(8,&mem08[bank[3]]);
 			return 0;
 			break;
 		}
@@ -1003,7 +1003,7 @@ static READ8_HANDLER( z80_port_r )
 		{
 			UINT8 *mem08 = memory_region(REGION_CPU2);
 			bank[2] = 0x1000 * ((offset >> 8) & 0x3f) + 0x10000;
-			cpu_setbank(7,&mem08[bank[2]]);
+			memory_set_bankptr(7,&mem08[bank[2]]);
 			return 0;
 			break;
 		}
@@ -1012,7 +1012,7 @@ static READ8_HANDLER( z80_port_r )
 		{
 			UINT8 *mem08 = memory_region(REGION_CPU2);
 			bank[1] = 0x2000 * ((offset >> 8) & 0x1f) + 0x10000;
-			cpu_setbank(6,&mem08[bank[1]]);
+			memory_set_bankptr(6,&mem08[bank[1]]);
 			return 0;
 			break;
 		}
@@ -1021,7 +1021,7 @@ static READ8_HANDLER( z80_port_r )
 		{
 			UINT8 *mem08 = memory_region(REGION_CPU2);
 			bank[0] = 0x4000 * ((offset >> 8) & 0x0f) + 0x10000;
-			cpu_setbank(5,&mem08[bank[0]]);
+			memory_set_bankptr(5,&mem08[bank[0]]);
 			return 0;
 			break;
 		}
@@ -6740,17 +6740,17 @@ void neogeo_set_cpu1_second_bank(UINT32 bankaddress)
 	data8_t *RAM = memory_region(REGION_CPU1);
 
 	cpu1_second_bankaddress = bankaddress;
-	cpu_setbank(4,&RAM[bankaddress]);
+	memory_set_bankptr(4,&RAM[bankaddress]);
 }
 
 void neogeo_init_cpu2_setbank(void)
 {
 	UINT8 *mem08 = memory_region(REGION_CPU2);
 
-	cpu_setbank(5,&mem08[bank[0]]);
-	cpu_setbank(6,&mem08[bank[1]]);
-	cpu_setbank(7,&mem08[bank[2]]);
-	cpu_setbank(8,&mem08[bank[3]]);
+	memory_set_bankptr(5,&mem08[bank[0]]);
+	memory_set_bankptr(6,&mem08[bank[1]]);
+	memory_set_bankptr(7,&mem08[bank[2]]);
+	memory_set_bankptr(8,&mem08[bank[3]]);
 }
 
 static void neogeo_init_cpu_banks(void)

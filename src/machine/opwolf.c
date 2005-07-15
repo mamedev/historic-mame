@@ -636,7 +636,7 @@ static void cchip_timer(int dummy)
 	{
 		// Simulate time for command to execute (exact timing unknown, this is close)
 		current_cmd=0xf5;
-		timer_pulse(TIME_IN_CYCLES(80000,0), 0, timer_callback);
+		timer_set(TIME_IN_CYCLES(80000,0), 0, timer_callback);
 	}
 	cchip_last_7a=cchip_ram[0x7a];
 

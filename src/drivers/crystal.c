@@ -233,9 +233,9 @@ static WRITE32_HANDLER(Banksw_w)
 {
 	Bank=(data>>1)&7;
 	if(Bank<=2)
-		cpu_setbank(1,memory_region(REGION_USER1)+Bank*0x1000000);
+		memory_set_bankptr(1,memory_region(REGION_USER1)+Bank*0x1000000);
 	else
-		cpu_setbank(1,memory_region(REGION_USER2));
+		memory_set_bankptr(1,memory_region(REGION_USER2));
 }
 
 static void Timer0cb(int param)
@@ -566,7 +566,7 @@ static MACHINE_INIT(crystal)
 	IntHigh=0;
 	cpu_set_irq_callback(0,icallback);
 	Bank=0;
-	cpu_setbank(1,memory_region(REGION_USER1)+0);
+	memory_set_bankptr(1,memory_region(REGION_USER1)+0);
 	FlashCmd=0xff;
 	OldPort4=0;
 

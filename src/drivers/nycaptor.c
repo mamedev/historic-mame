@@ -316,7 +316,7 @@ static READ8_HANDLER ( nycaptor_generic_control_r )
 static WRITE8_HANDLER( nycaptor_generic_control_w )
 {
 	generic_control_reg = data;
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + ((data&0x08)>>3)*0x4000 );
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 + ((data&0x08)>>3)*0x4000 );
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -461,7 +461,7 @@ static WRITE8_HANDLER( cyclshtg_generic_control_w )
 {
 	int bank=(data>>2)&3;
 	generic_control_reg = data;
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + bank*0x4000 );
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 + bank*0x4000 );
 }
 
 

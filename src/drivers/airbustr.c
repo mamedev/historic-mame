@@ -286,7 +286,7 @@ static void airbustr_bankswitch(int cpunum, int data)
 	else
 		ROM = &ROM[0x10000 + 0x4000 * ((data & 0x07) - 3)];
 
-	cpu_setbank(cpunum + 1, ROM);
+	memory_set_bankptr(cpunum + 1, ROM);
 }
 
 static WRITE8_HANDLER( master_bankswitch_w )

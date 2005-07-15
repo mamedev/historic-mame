@@ -114,7 +114,7 @@ static WRITE8_HANDLER( wc90b_bankswitch_w )
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 static WRITE8_HANDLER( wc90b_bankswitch1_w )
@@ -124,7 +124,7 @@ static WRITE8_HANDLER( wc90b_bankswitch1_w )
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
-	cpu_setbank(2,&RAM[bankaddress]);
+	memory_set_bankptr(2,&RAM[bankaddress]);
 }
 
 static WRITE8_HANDLER( wc90b_sound_command_w )
@@ -140,7 +140,7 @@ static WRITE8_HANDLER( adpcm_control_w )
 
 	/* the code writes either 2 or 3 in the bottom two bits */
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
-	cpu_setbank(3,&RAM[bankaddress]);
+	memory_set_bankptr(3,&RAM[bankaddress]);
 
 	MSM5205_reset_w(0,data & 0x08);
 }

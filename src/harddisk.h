@@ -1,11 +1,15 @@
 /***************************************************************************
 
+    harddisk.h
+
     Generic MAME hard disk implementation, with differencing files
 
 ***************************************************************************/
 
-#ifndef HARDDISK_H
-#define HARDDISK_H
+#pragma once
+
+#ifndef __HARDDISK_H__
+#define __HARDDISK_H__
 
 #include "driver.h"
 #include "chd.h"
@@ -38,4 +42,4 @@ struct hard_disk_info *hard_disk_get_info(struct hard_disk_file *file);
 UINT32 hard_disk_read(struct hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer);
 UINT32 hard_disk_write(struct hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer);
 
-#endif /* HARDDISK_H */
+#endif	/* __HARDDISK_H__ */

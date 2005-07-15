@@ -47,7 +47,7 @@ WRITE8_HANDLER( xxmissio_bank_sel_w )
 {
 	UINT8 *BANK = memory_region(REGION_USER1);
 	UINT32 bank_address = (data & 0x07) * 0x4000;
-	cpu_setbank(1, &BANK[bank_address]);
+	memory_set_bankptr(1, &BANK[bank_address]);
 }
 
 READ8_HANDLER( xxmissio_status_r )

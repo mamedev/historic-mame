@@ -95,7 +95,7 @@ WRITE8_HANDLER( stfight_bank_w )
 {
 	unsigned char   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
 
-	cpu_setbank( 1, &ROM2[data<<14] );
+	memory_set_bankptr( 1, &ROM2[data<<14] );
 }
 
 INTERRUPT_GEN( stfight_vb_interrupt )

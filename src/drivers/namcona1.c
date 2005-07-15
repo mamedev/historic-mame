@@ -988,8 +988,8 @@ init_namcona1( int gametype )
 	mpBank0 = &pMem[0x80000/2];
 	mpBank1 = mpBank0 +  0x200000/2;
 
-	cpu_setbank( 1, mpBank0 ); /* code */
-	cpu_setbank( 2, mpBank1 ); /* data */
+	memory_set_bankptr( 1, mpBank0 ); /* code */
+	memory_set_bankptr( 2, mpBank1 ); /* data */
 
 	mCoinCount[0] = mCoinCount[1] = mCoinCount[2] = mCoinCount[3] = 0;
 	mCoinState = 0;

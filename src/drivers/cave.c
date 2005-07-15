@@ -31,6 +31,7 @@ Year + Game         License     PCB         Tilemaps        Sprites         Othe
 98  Uo Poko         Jaleco      CV02        ?
 99  Guwange         Atlus       ATC05       ?
 99  Gaia Crusaders  Noise Factory ?         ?
+99  Koro Koro Quest Takumi      TUG-01B     9838WX004       9838EX004
 -----------------------------------------------------------------------------------
 
 To Do:
@@ -60,6 +61,7 @@ To Do:
 ***************************************************************************/
 
 static int time_vblank_irq = 2000;
+static UINT8 irq_level;
 static UINT8 vblank_irq;
 static UINT8 sound_irq;
 static UINT8 unknown_irq;
@@ -69,9 +71,9 @@ static UINT8 agallet_vblank_irq;
 static void update_irq_state(void)
 {
 	if (vblank_irq || sound_irq || unknown_irq)
-		cpunum_set_input_line(0, 1, ASSERT_LINE);
+		cpunum_set_input_line(0, irq_level, ASSERT_LINE);
 	else
-		cpunum_set_input_line(0, 1, CLEAR_LINE);
+		cpunum_set_input_line(0, irq_level, CLEAR_LINE);
 }
 
 static void cave_vblank_start(int param)
@@ -409,6 +411,38 @@ NVRAM_HANDLER( cave )
 		}
 	}
 }
+
+struct EEPROM_interface eeprom_interface_93C46_8bit =
+{
+	7,				// address bits 7
+	8,				// data bits    8
+	"*110",			// read         1 10 aaaaaa
+	"*101",			// write        1 01 aaaaaa dddddddddddddddd
+	"*111",			// erase        1 11 aaaaaa
+	"*10000xxxx",	// lock         1 00 00xxxx
+	"*10011xxxx",	// unlock       1 00 11xxxx
+	1,
+//  "*10001xxxx"    // write all    1 00 01xxxx dddddddddddddddd
+//  "*10010xxxx"    // erase all    1 00 10xxxx
+};
+
+NVRAM_HANDLER( korokoro )
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface_93C46_8bit);
+
+		if (file) EEPROM_load(file);
+		else
+		{
+			if (cave_default_eeprom)	/* Set the EEPROM to Factory Defaults */
+				EEPROM_set_data(cave_default_eeprom,cave_default_eeprom_length);
+		}
+	}
+}
+
 
 
 /***************************************************************************
@@ -774,6 +808,106 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
+                               Koro Koro Quest
+***************************************************************************/
+
+static data16_t leds[2];
+
+static void show_leds(void)
+{
+#ifdef MAME_DEBUG
+//  usrintf_showmessage("led %04X eep %02X",leds[0],(leds[1] >> 8) & ~0x70);
+#endif
+}
+
+WRITE16_HANDLER( korokoro_leds_w )
+{
+	COMBINE_DATA( &leds[0] );
+
+	set_led_status(0, data & 0x8000);
+	set_led_status(1, data & 0x4000);
+	set_led_status(2, data & 0x1000);	// square button
+	set_led_status(3, data & 0x0800);	// round  button
+//  coin_lockout_w(1,~data & 0x0200);   // coin lockouts?
+//  coin_lockout_w(0,~data & 0x0100);
+
+//  coin_counter_w(2, data & 0x0080);
+//  coin_counter_w(1, data & 0x0020);
+	coin_counter_w(0, data & 0x0010);
+
+	set_led_status(5, data & 0x0008);
+	set_led_status(6, data & 0x0004);
+	set_led_status(7, data & 0x0002);
+	set_led_status(8, data & 0x0001);
+
+	show_leds();
+}
+
+static int hopper;
+
+WRITE16_HANDLER( korokoro_eeprom_msb_w )
+{
+	if (data & ~0x7000)
+	{
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
+		COMBINE_DATA( &leds[1] );
+		show_leds();
+	}
+
+	if ( ACCESSING_MSB )  // even address
+	{
+		hopper = data & 0x0100;	// ???
+
+		// latch the bit
+		EEPROM_write_bit(data & 0x4000);
+
+		// reset line asserted: reset.
+		EEPROM_set_cs_line((data & 0x1000) ? CLEAR_LINE : ASSERT_LINE );
+
+		// clock line asserted: write latch or select next bit to read
+		EEPROM_set_clock_line((data & 0x2000) ? ASSERT_LINE : CLEAR_LINE );
+	}
+}
+
+READ16_HANDLER( korokoro_input0_r )
+{
+	return readinputport(0) | (hopper ? 0 : 0x8000);
+}
+
+READ16_HANDLER( korokoro_input1_r )
+{
+	return readinputport(1) | ((EEPROM_read_bit() & 0x01) << 12);
+}
+
+static ADDRESS_MAP_START( korokoro_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ( MRA16_ROM				)	// ROM
+//  AM_RANGE(0x100000, 0x107fff) AM_READ( MRA16_RAM             )   // Layer 0
+//  AM_RANGE(0x140000, 0x140005) AM_READ( MRA16_RAM             )   // Layer 0 Control
+//  AM_RANGE(0x180000, 0x187fff) AM_READ( MRA16_RAM             )   // Sprites
+	AM_RANGE(0x1c0000, 0x1c0007) AM_READ( cave_irq_cause_r		)	// IRQ Cause
+//  AM_RANGE(0x200000, 0x207fff) AM_READ( MRA16_RAM             )   // Palette
+//  AM_RANGE(0x240000, 0x240003) AM_READ( cave_sound_r          )   // YMZ280
+	AM_RANGE(0x280000, 0x280001) AM_READ( korokoro_input0_r		)	// Inputs + ???
+	AM_RANGE(0x280002, 0x280003) AM_READ( korokoro_input1_r		)	// Inputs + EEPROM
+	AM_RANGE(0x300000, 0x30ffff) AM_READ( MRA16_RAM				)	// RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( korokoro_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE( MWA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x107fff) AM_WRITE( cave_vram_0_w			) AM_BASE( &cave_vram_0		)	// Layer 0
+	AM_RANGE(0x140000, 0x140005) AM_WRITE( MWA16_RAM				) AM_BASE( &cave_vctrl_0	)	// Layer 0 Control
+	AM_RANGE(0x180000, 0x187fff) AM_WRITE( MWA16_RAM				) AM_BASE( &spriteram16		) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x1c0000, 0x1c007f) AM_WRITE( MWA16_RAM				) AM_BASE( &cave_videoregs	)	// Video Regs
+	AM_RANGE(0x200000, 0x207fff) AM_WRITE( paletteram16_xGGGGGRRRRRBBBBB_word_w	) AM_BASE(&paletteram16)	// Palette
+	AM_RANGE(0x240000, 0x240003) AM_WRITE( cave_sound_w				)	// YMZ280
+	AM_RANGE(0x280008, 0x280009) AM_WRITE( korokoro_leds_w			)
+	AM_RANGE(0x28000a, 0x28000b) AM_WRITE( korokoro_eeprom_msb_w	)	// EEPROM
+	AM_RANGE(0x28000c, 0x28000d) AM_WRITE( MWA16_NOP				)	// 0 (watchdog?)
+	AM_RANGE(0x300000, 0x30ffff) AM_WRITE( MWA16_RAM				)	// RAM
+ADDRESS_MAP_END
+
+
+/***************************************************************************
                                 Mazinger Z
 ***************************************************************************/
 
@@ -1062,7 +1196,7 @@ WRITE8_HANDLER( hotdogst_rombank_w )
 	int bank = data & 0x0f;
 	if ( data & ~0x0f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
-	cpu_setbank(2, &RAM[ 0x4000 * bank ]);
+	memory_set_bankptr(2, &RAM[ 0x4000 * bank ]);
 }
 
 WRITE8_HANDLER( hotdogst_okibank_w )
@@ -1116,7 +1250,7 @@ WRITE8_HANDLER( mazinger_rombank_w )
 	int bank = data & 0x07;
 	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
-	cpu_setbank(2, &RAM[ 0x4000 * bank ]);
+	memory_set_bankptr(2, &RAM[ 0x4000 * bank ]);
 }
 
 static ADDRESS_MAP_START( mazinger_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1160,7 +1294,7 @@ WRITE8_HANDLER( metmqstr_rombank_w )
 	int bank = data & 0xf;
 	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank >= 2)	bank += 2;
-	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
+	memory_set_bankptr(1, &ROM[ 0x4000 * bank ]);
 }
 
 WRITE8_HANDLER( metmqstr_okibank0_w )
@@ -1262,7 +1396,7 @@ WRITE8_HANDLER( pwrinst2_rombank_w )
 	int bank = data & 0x07;
 	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 2)	bank+=1;
-	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
+	memory_set_bankptr(1, &ROM[ 0x4000 * bank ]);
 }
 
 static ADDRESS_MAP_START( pwrinst2_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1320,7 +1454,7 @@ WRITE8_HANDLER( sailormn_rombank_w )
 	int bank = data & 0x1f;
 	if ( data & ~0x1f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
-	cpu_setbank(1, &RAM[ 0x4000 * bank ]);
+	memory_set_bankptr(1, &RAM[ 0x4000 * bank ]);
 }
 
 WRITE8_HANDLER( sailormn_okibank0_w )
@@ -1660,7 +1794,7 @@ INPUT_PORTS_START( guwange )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/* DEF_STR( Normal ) layout but with 4 buttons */
+/* Normal layout but with 4 buttons */
 INPUT_PORTS_START( metmqstr )
 	PORT_START	// IN0 - Player 1
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
@@ -1696,6 +1830,47 @@ INPUT_PORTS_START( metmqstr )
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
 	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
 	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( korokoro )
+	PORT_START	// IN0
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1   ) PORT_IMPULSE(10)	// bit 0x0010 of leds (coin)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2   ) PORT_IMPULSE(10)	// bit 0x0020 of leds (does coin sound)
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_COIN3   ) PORT_IMPULSE(10)	// bit 0x0080 of leds
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 )	// round  button (choose)
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 )	// square button (select in service mode / medal out in game)
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_SERVICE2)	// service medal out?
+	PORT_SERVICE( 0x2000, IP_ACTIVE_LOW )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1)	// service coin
+	PORT_BIT(  0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL)	// motor / hopper status ???
+
+	PORT_START	// IN1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -1782,7 +1957,7 @@ static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
        for consistency with games having $8000 real colors.
-       A vh_init_palette function is thus needed for sprites */
+       A PALETTE_INIT function is thus needed for sprites */
 
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
@@ -1797,7 +1972,7 @@ static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
 static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
 {
 	/* Layers 0&1 are 4 bit deep and use the first 16 of every 256
-       colors for any given color code (a vh_init_palette function
+       colors for any given color code (a PALETTE_INIT function
        is provided for these layers, filling the 8000-83ff entries
        in the color table). Layer 2 uses the whole 256 for any given
        color code and the 4000-7fff range in the color table.   */
@@ -1818,7 +1993,7 @@ static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
        for consistency with games having $8000 real colors.
-       A vh_init_palette function is thus needed for sprites */
+       A PALETTE_INIT function is thus needed for sprites */
 
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
@@ -1849,12 +2024,23 @@ static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
        for consistency with games having $8000 real colors.
-       A vh_init_palette function is needed for sprites */
+       A PALETTE_INIT function is needed for sprites */
 
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,	0x4000, 0x40 }, // [1] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x4,	0x4000, 0x40 }, // [2] Layer 2
+	{ -1 }
+};
+
+/***************************************************************************
+                                Koro Koro Quest
+***************************************************************************/
+
+static struct GfxDecodeInfo korokoro_gfxdecodeinfo[] =
+{
+//    REGION_GFX1                                       // Sprites
+	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
 	{ -1 }
 };
 
@@ -1870,7 +2056,7 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
         first 16 colors of each palette, Indeed, the gfx data in ROM
         is empty in the top 4 bits. Additionally even if there are
         $40 color codes, only $400 colors are addressable.
-        A vh_init_palette is thus needed for sprites and layer 0.   */
+        A PALETTE_INIT function is thus needed for sprites and layer 0.   */
 
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4000, 0x40 }, // [0] Layer 0
@@ -2251,6 +2437,45 @@ static MACHINE_DRIVER_START( hotdogst )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
+                               Koro Koro Quest
+***************************************************************************/
+
+static MACHINE_DRIVER_START( korokoro )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_PROGRAM_MAP(korokoro_readmem,korokoro_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(korokoro)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1-2, 0, 240-1-1)
+	MDRV_GFXDECODE(korokoro_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x4000)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(korokoro)
+	MDRV_VIDEO_START(cave_1_layer)
+	MDRV_VIDEO_UPDATE(cave)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3231,6 +3456,39 @@ ROM_END
 
 /***************************************************************************
 
+Koro Koro Quest
+
+Hardware is kind of Banpresto-ish
+
+ PCB Number - TUG-01B MP001-00175
+ 68000-16 + 16MHZ OSC
+ YMZ280B + YAC516-M + Xtal 16.9344MHz
+ 93C46 EEPROM
+ Custom - 9838EX004 (QFP240), 9838WX004 (QFP144) + OSC 28MHz
+ RAM - 62256 (x8), M5M44260 (x2)
+ 3volt battery
+ GAL16V8H (x5)
+
+***************************************************************************/
+
+ROM_START( korokoro )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "mp-001_ver07.u0130", 0x000000, 0x080000, CRC(86c7241f) SHA1(c9f0ab63c4fe36df1300445e9bb0d5c6a1bb733f) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x180000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_LOAD( "mp-001_ver01.u1066", 0x000000, 0x100000, CRC(c5c6af7e) SHA1(13ac26fd703672a01d629be4e5efe9fb8720a4fb) )
+	ROM_LOAD( "mp-001_ver01.u1051", 0x100000, 0x080000, CRC(fe5e28e8) SHA1(44da1a7d813b149f9bae351bbcbd0bc2d4c70e10) )	// 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "mp-001_ver01.u1060", 0x000000, 0x100000, CRC(ec9cf9d8) SHA1(32fa7120e30c14e484de3b3a9c93efe3654d43c8) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "mp-001_ver01.u1186", 0x000000, 0x100000, CRC(d16e7c5d) SHA1(1f825ace3ed2e23c8d3212320c4645d3d52214c7) )
+ROM_END
+
+
+/***************************************************************************
+
                                 Mazinger Z
 
 Banpresto 1994
@@ -3657,8 +3915,23 @@ void sailormn_unpack_tiles( const int region )
 	}
 }
 
+DRIVER_INIT( cave )
+{
+	cave_default_eeprom = 0;
+	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
+
+	cave_spritetype = 0;	// Normal sprites
+	cave_kludge = 0;
+	time_vblank_irq = 100;
+
+	irq_level = 1;
+}
+
 DRIVER_INIT( agallet )
 {
+	init_cave();
+
 	sailormn_unpack_tiles( REGION_GFX4 );
 
 	cave_default_eeprom = cave_default_eeprom_type7;
@@ -3666,9 +3939,6 @@ DRIVER_INIT( agallet )
 	cave_region_byte = 0x1f;
 
 	unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
-	cave_kludge = 0;
-	time_vblank_irq = 100;
 
 //  Speed Hack
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xb80000, 0xb80001, 0, 0, agallet_irq_cause_r);
@@ -3676,49 +3946,50 @@ DRIVER_INIT( agallet )
 
 DRIVER_INIT( dfeveron )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
 	cave_region_byte = -1;
 
 	unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
 	cave_kludge = 2;
-	time_vblank_irq = 100;
 }
 
 DRIVER_INIT( feversos )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type1feversos;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1feversos);
 	cave_region_byte = -1;
 
 	unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
 	cave_kludge = 2;
-	time_vblank_irq = 100;
 }
 
 DRIVER_INIT( ddonpach )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
 	cave_region_byte = -1;
 
 	ddonpach_unpack_sprites();
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
-	cave_kludge = 0;
 	time_vblank_irq = 90;
 }
 
 DRIVER_INIT( esprade )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
 	cave_region_byte = -1;
 
 	esprade_unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
-	cave_kludge = 0;
 	time_vblank_irq = 2000;	/**/
 
 #if 0		//ROM PATCH
@@ -3731,35 +4002,37 @@ DRIVER_INIT( esprade )
 
 DRIVER_INIT( gaia )
 {
+	init_cave();
+
 	/* No EEPROM */
 
 	unpack_sprites();
-	cave_spritetype = 2;	// DEF_STR( Normal ) sprites with different position handling
-	cave_kludge = 0;
+	cave_spritetype = 2;	// Normal sprites with different position handling
 	time_vblank_irq = 2000;	/**/
 }
 
 DRIVER_INIT( guwange )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
 	cave_region_byte = -1;
 
 	esprade_unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
-	cave_kludge = 0;
 	time_vblank_irq = 2000;	/**/
 }
 
 DRIVER_INIT( hotdogst )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type4;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
 	cave_region_byte = -1;
 
 	unpack_sprites();
-	cave_spritetype = 2;	// DEF_STR( Normal ) sprites with different position handling
-	cave_kludge = 0;
+	cave_spritetype = 2;	// Normal sprites with different position handling
 	time_vblank_irq = 2000;	/**/
 }
 
@@ -3768,6 +4041,8 @@ DRIVER_INIT( mazinger )
 	unsigned char *buffer;
 	data8_t *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
+
+	init_cave();
 
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
@@ -3784,23 +4059,21 @@ DRIVER_INIT( mazinger )
 	cave_region_byte = 0x05;
 
 	unpack_sprites();
-	cave_spritetype = 2;	// DEF_STR( Normal ) sprites with different position handling
+	cave_spritetype = 2;	// Normal sprites with different position handling
 	cave_kludge = 3;
 	time_vblank_irq = 2100;
 
 	/* setup extra ROM */
-	cpu_setbank(1,memory_region(REGION_USER1));
+	memory_set_bankptr(1,memory_region(REGION_USER1));
 }
 
 
 DRIVER_INIT( metmqstr )
 {
-	cave_default_eeprom = 0;
-	cave_default_eeprom_length = 0;
-	cave_region_byte = -1;
+	init_cave();
 
 	unpack_sprites();
-	cave_spritetype = 2;	// DEF_STR( Normal ) sprites with different position handling
+	cave_spritetype = 2;	// Normal sprites with different position handling
 	cave_kludge = 3;
 	time_vblank_irq = 17376;
 }
@@ -3813,9 +4086,7 @@ DRIVER_INIT( pwrinst2 )
 	int len = memory_region_length(REGION_GFX1);
 	int i, j;
 
-	cave_default_eeprom = 0;
-	cave_default_eeprom_length = 0;
-	cave_region_byte = -1;
+	init_cave();
 
 	if ((buffer = malloc(len)))
 	{
@@ -3849,6 +4120,8 @@ DRIVER_INIT( sailormn )
 	data8_t *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 
+	init_cave();
+
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
 	{
@@ -3866,23 +4139,33 @@ DRIVER_INIT( sailormn )
 	cave_region_byte = 0x11;
 
 	unpack_sprites();
-	cave_spritetype = 2;	// DEF_STR( Normal ) sprites with different position handling
+	cave_spritetype = 2;	// Normal sprites with different position handling
 	cave_kludge = 1;
 	time_vblank_irq = 2000;
 }
 
 DRIVER_INIT( uopoko )
 {
+	init_cave();
+
 	cave_default_eeprom = cave_default_eeprom_type3;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
 	cave_region_byte = -1;
 
 	unpack_sprites();
-	cave_spritetype = 0;	// DEF_STR( Normal ) sprites
 	cave_kludge = 2;
 	time_vblank_irq = 2000;	/**/
 }
 
+DRIVER_INIT( korokoro )
+{
+	init_cave();
+
+	irq_level = 2;
+
+	unpack_sprites();
+	time_vblank_irq = 2000;	/**/
+}
 
 /***************************************************************************
 
@@ -3893,23 +4176,24 @@ DRIVER_INIT( uopoko )
 ***************************************************************************/
 
 GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
-GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 ) // region in eeprom
-GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"              )
-GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
-GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
-GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
-GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"               )
-GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" ) // region in eeprom
-GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" ) // region in eeprom
-GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"        ) // board was taiwan, region in eeprom
-GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"               )
-GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)" )
-GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )
-GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"     )
-GAME( 1998, feversos, dfeveron, dfeveron, cave,     feversos, ROT270, "Cave (Nihon System license)",          "Fever SOS (International)"  )
+GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               ) // region in eeprom
+GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"                            )
+GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                         )
+GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                         )
+GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"                             )
+GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"           )
+GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)"   ) // region in eeprom
+GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)"    ) // region in eeprom
+GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"                               ) // board was taiwan, region in eeprom
+GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"                             )
+GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)"               )
+GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"                       )
+GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"                   )
+GAME( 1998, feversos, dfeveron, dfeveron, cave,     feversos, ROT270, "Cave (Nihon System license)",          "Fever SOS (International)"                )
 GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (International Ver 1998 4/22)" )
-GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)" )
-GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )
-GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"            )
-GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"            )
-GAMEX(1999, gaia,     0,        gaia,     gaia,     gaia,     ROT0,   "Noise Factory",                        "Gaia Crusaders", GAME_IMPERFECT_SOUND ) // cuts out occasionally
+GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)"         )
+GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)"         )
+GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"                          )
+GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"                          )
+GAMEX(1999, gaia,     0,        gaia,     gaia,     gaia,     ROT0,   "Noise Factory",                        "Gaia Crusaders",                          GAME_IMPERFECT_SOUND ) // cuts out occasionally
+GAME( 1999, korokoro, 0,        korokoro, korokoro, korokoro, ROT0,   "Takumi",                               "Koro Koro Quest (Japan)"                  )

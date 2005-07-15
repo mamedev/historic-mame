@@ -312,7 +312,7 @@ static MACHINE_DRIVER_START( polyplay )
 	MDRV_CPU_ADD(Z80, 9830400/4)
 	MDRV_CPU_PROGRAM_MAP(polyplay_readmem,polyplay_writemem)
 	MDRV_CPU_IO_MAP(readport_polyplay,writeport_polyplay)
-	MDRV_CPU_PERIODIC_INT(periodic_interrupt,75)
+	MDRV_CPU_PERIODIC_INT(periodic_interrupt,TIME_IN_HZ(75))
 	MDRV_CPU_VBLANK_INT(coin_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(50)

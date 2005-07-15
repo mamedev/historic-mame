@@ -86,6 +86,23 @@ static void spyhunt_get_alpha_tile_info(int tile_index)
 
 /*************************************
  *
+ *  Spy Hunter-specific palette init
+ *
+ *************************************/
+
+PALETTE_INIT( spyhunt )
+{
+	/* alpha colors are hard-coded */
+	palette_set_color(4*16+0,0x00,0x00,0x00);
+	palette_set_color(4*16+1,0x00,0xff,0x00);
+	palette_set_color(4*16+2,0x00,0x00,0xff);
+	palette_set_color(4*16+3,0xff,0xff,0xff);
+}
+
+
+
+/*************************************
+ *
  *  Video startup
  *
  *************************************/
@@ -278,21 +295,4 @@ VIDEO_UPDATE( spyhunt )
 
 	/* render any characters on top */
 	tilemap_draw(bitmap, cliprect, alpha_tilemap, 0, 0);
-}
-
-
-
-/*************************************
- *
- *  Spy Hunter-specific color PROM decoder
- *
- *************************************/
-
-PALETTE_INIT( spyhunt )
-{
-	/* add some colors for the alpha RAM */
-	palette_set_color(4*16+0,0x00,0x00,0x00);
-	palette_set_color(4*16+1,0x00,0xff,0x00);
-	palette_set_color(4*16+2,0x00,0x00,0xff);
-	palette_set_color(4*16+3,0xff,0xff,0xff);
 }

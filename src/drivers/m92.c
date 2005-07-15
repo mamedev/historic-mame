@@ -241,7 +241,7 @@ extern int m92_sprite_buffer_busy,m92_game_kludge;
 static void set_m92_bank(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 /*****************************************************************************/
@@ -2372,7 +2372,7 @@ static void m92_startup(int hasbanks)
 
 		/* Mirror used by In The Hunt for protection */
 		memcpy(RAM+0xc0000,RAM+0x00000,0x10000);
-		cpu_setbank(2,&RAM[0xc0000]);
+		memory_set_bankptr(2,&RAM[0xc0000]);
 	}
 
 	RAM = memory_region(REGION_CPU2);

@@ -121,7 +121,7 @@ static READ8_HANDLER( gigas_spinner_r )
 
 static WRITE8_HANDLER( pbillrd_bankswitch_w )
 {
-	cpu_setbank(1,memory_region(REGION_CPU1) + 0x10000 + 0x4000 * (data & 1));
+	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x10000 + 0x4000 * (data & 1));
 }
 
 
@@ -877,7 +877,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( pbillrd )
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
 	MDRV_CPU_PROGRAM_MAP(pbillrd_readmem,pbillrd_writemem)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3) //??
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(60*3)) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -914,7 +914,7 @@ static MACHINE_DRIVER_START( freekckb )
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
 	MDRV_CPU_PROGRAM_MAP(freekckb_readmem,freekckb_writemem)
 	MDRV_CPU_IO_MAP(freekckb_readport,freekckb_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3) //??
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(60*3)) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -952,7 +952,7 @@ static MACHINE_DRIVER_START( gigas )
 	MDRV_CPU_ADD_TAG("main",Z80, 18432000/6)	//confirmed
 	MDRV_CPU_PROGRAM_MAP(gigas_readmem,gigas_writemem)
 	MDRV_CPU_IO_MAP(gigas_readport,gigas_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3)
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(60*3))
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

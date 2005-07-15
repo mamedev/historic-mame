@@ -18,6 +18,8 @@
 #define XML_TOP "game"
 #endif
 
+extern struct GameDriver driver_0;
+
 /* Print a free format string */
 static const char *normalize_string(const char* s)
 {
@@ -285,7 +287,6 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 {
 	const struct RomModule *region, *rom, *chunk;
 	const struct RomModule *pregion, *prom, *fprom=NULL;
-//  extern struct GameDriver driver_0;
 
 	if (!game->rom)
 		return;
@@ -747,7 +748,6 @@ static void print_game_device(FILE* out, const struct GameDriver* game)
 /* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const struct GameDriver* game)
 {
-	extern struct GameDriver driver_0;
 	const char *start;
 
 	fprintf(out, "\t<" XML_TOP);
@@ -845,7 +845,6 @@ static void print_resources_data(FILE* out, const struct GameDriver* games[])
 	int i, j;
 	int total_bios=0;
 	struct GameDriver *resources[MAX_BIOS];
-	extern struct GameDriver driver_0;
 
 	/* Build a driver list containing all the NOT_A_DRIVER entries */
 	/* This won't catch clones of games with bioses, but the parent should be in games[] anyway */

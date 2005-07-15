@@ -1,17 +1,15 @@
 /*********************************************************************
 
-  drawgfx.h
+    drawgfx.h
 
-  Generic graphic functions.
+    Generic graphic functions.
 
 *********************************************************************/
 
-#ifndef DRAWGFX_H
-#define DRAWGFX_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __DRAWGFX_H__
+#define __DRAWGFX_H__
 
 #include "palette.h"
 
@@ -282,8 +280,4 @@ INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)
 }
 
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __DRAWGFX_H__ */

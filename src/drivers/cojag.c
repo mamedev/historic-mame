@@ -110,13 +110,13 @@ static MACHINE_INIT( cojag )
 		memcpy(jaguar_shared_ram, rom_base, 0x10);
 
 	/* set up main CPU RAM/ROM banks */
-	cpu_setbank(3, jaguar_gpu_ram);
+	memory_set_bankptr(3, jaguar_gpu_ram);
 
 	/* set up DSP RAM/ROM banks */
-	cpu_setbank(10, jaguar_shared_ram);
-	cpu_setbank(11, jaguar_gpu_clut);
-	cpu_setbank(12, jaguar_gpu_ram);
-	cpu_setbank(13, jaguar_dsp_ram);
+	memory_set_bankptr(10, jaguar_shared_ram);
+	memory_set_bankptr(11, jaguar_gpu_clut);
+	memory_set_bankptr(12, jaguar_gpu_ram);
+	memory_set_bankptr(13, jaguar_dsp_ram);
 
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();

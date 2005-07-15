@@ -190,9 +190,9 @@ static WRITE8_HANDLER( rom_banksel_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
-    if (data & 0x01) cpu_setbank(1, &RAM[0x10000]);
-    if (data & 0x02) cpu_setbank(1, &RAM[0x14000]);
-    if (data & 0x04) cpu_setbank(1, &RAM[0x18000]);
+    if (data & 0x01) memory_set_bankptr(1, &RAM[0x10000]);
+    if (data & 0x02) memory_set_bankptr(1, &RAM[0x14000]);
+    if (data & 0x04) memory_set_bankptr(1, &RAM[0x18000]);
 }
 
 

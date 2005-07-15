@@ -8,9 +8,10 @@
  Games Supported:
 
     Vamp 1/2                (c) 1999 Danbi & F2 System
-    Mission Craft           (c) 2000 Sun
+    Mission Craft           (c) 2000 Sun                (version 2.4)
     Coolmini                (c) 199? Semicom
-    Super Lup Lup Puzzle    (c) 1999 Omega System
+    Super Lup Lup Puzzle    (c) 1999 Omega System       (version 4.0)
+    Lup Lup Puzzle          (c) 1999 Omega System       (version 3.0 and 2.9)
 
  Games Needed:
 
@@ -26,18 +27,6 @@
 static data16_t *tiles, *wram;
 static int flip_bit, flipscreen = 0;
 static int palshift;
-
-static WRITE16_HANDLER( vamphalf_palette_w )
-{
-	int r,g,b;
-	COMBINE_DATA(&paletteram16[offset]);
-
-	r = ((paletteram16[offset] & 0x7c00) >> 10);
-	g = ((paletteram16[offset] & 0x03e0) >> 5);
-	b = ((paletteram16[offset] & 0x001f) >> 0);
-
-	palette_set_color(offset,r<<3,g<<3,b<<3);
-}
 
 static READ16_HANDLER( oki_r )
 {
@@ -105,7 +94,7 @@ static WRITE16_HANDLER( flipscreen_w )
 static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_RAM AM_BASE(&wram)
 	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles)
-	AM_RANGE(0x80000000, 0x8000ffff) AM_READ(MRA16_RAM) AM_WRITE(vamphalf_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x80000000, 0x8000ffff) AM_RAM AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xfff00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1,0)
 ADDRESS_MAP_END
 
@@ -279,17 +268,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static INTERRUPT_GEN( common_interrupts )
-{
-	if(cpu_getiloops())
-	{
-		cpunum_set_input_line(0, 4, PULSE_LINE);
-	}
-	else
-	{
-		cpunum_set_input_line(0, 7, PULSE_LINE);
-	}
-}
 
 data8_t suplup_default_nvram[128] = {
 	0xE8, 0xFE, 0xFF, 0xFF, 0x10, 0x80, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x96, 0x2D, 0xB4, 0x80, 0x00,
@@ -344,7 +322,7 @@ ADDRESS_MAP_END
 static MACHINE_DRIVER_START( common )
 	MDRV_CPU_ADD_TAG("main", E116T, 50000000)	/* 50 MHz */
 	MDRV_CPU_PROGRAM_MAP(common_map,0)
-	MDRV_CPU_VBLANK_INT(common_interrupts, 2)
+	MDRV_CPU_VBLANK_INT(irq4_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -609,8 +587,8 @@ Notes:
 
 ROM_START( luplup ) /* version 3.0 / 990128 */
 	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "luplup-rom1.bin", 0x00000, 0x80000, CRC(9ea67f87) SHA1(73d16c056a8d64743181069a01559a43fee529a3) )
-	ROM_LOAD( "luplup-rom2.bin", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94) )
+	ROM_LOAD( "luplup-rom1.v30", 0x00000, 0x80000, CRC(9ea67f87) SHA1(73d16c056a8d64743181069a01559a43fee529a3) )
+	ROM_LOAD( "luplup-rom2.v30", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
 	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )

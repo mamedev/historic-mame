@@ -156,8 +156,8 @@ void cage_init(int boot_region, offs_t speedup)
 {
 	cage_irqhandler = NULL;
 
-	cpu_setbank(10, memory_region(boot_region));
-	cpu_setbank(11, memory_region(boot_region + 1));
+	memory_set_bankptr(10, memory_region(boot_region));
+	memory_set_bankptr(11, memory_region(boot_region + 1));
 
 	cage_cpu = mame_find_cpu_index("cage");
 	cage_cpu_clock_period = 1.0 / (double)Machine->drv->cpu[cage_cpu].cpu_clock;

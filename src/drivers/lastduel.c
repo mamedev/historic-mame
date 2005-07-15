@@ -125,7 +125,7 @@ static WRITE8_HANDLER( mg_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
-	cpu_setbank(3,&RAM[bankaddress]);
+	memory_set_bankptr(3,&RAM[bankaddress]);
 }
 
 static ADDRESS_MAP_START( mg_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )

@@ -358,11 +358,11 @@ WRITE8_HANDLER( combasc_bankselect_w )
 
 	if (data & 0x10)
 	{
-		cpu_setbank(1,page + 0x4000 * ((data & 0x0e) >> 1));
+		memory_set_bankptr(1,page + 0x4000 * ((data & 0x0e) >> 1));
 	}
 	else
 	{
-		cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+		memory_set_bankptr(1,page + 0x20000 + 0x4000 * (data & 1));
 	}
 }
 
@@ -387,16 +387,16 @@ WRITE8_HANDLER( combascb_bankselect_w )
 
 		if (data & 0x10)
 		{
-			cpu_setbank(1,page + 0x4000 * ((data & 0x0e) >> 1));
+			memory_set_bankptr(1,page + 0x4000 * ((data & 0x0e) >> 1));
 		}
 		else
 		{
-			cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+			memory_set_bankptr(1,page + 0x20000 + 0x4000 * (data & 1));
 		}
 
 		if (data == 0x1f)
 		{
-			cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
+			memory_set_bankptr(1,page + 0x20000 + 0x4000 * (data & 1));
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x4403, 0, 0, combascb_io_r);/* IO RAM & Video Registers */
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4400, 0x4400, 0, 0, combascb_priority_w);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x4800, 0, 0, combascb_sh_irqtrigger_w);

@@ -443,7 +443,7 @@ static DRIVER_INIT( fixeight )
 static DRIVER_INIT( fixeighb )
 {
 	data16_t *bgdata = (data16_t *)memory_region(REGION_CPU1);
-	cpu_setbank(1, &bgdata[0x40000]); /* $80000 - $fffff */
+	memory_set_bankptr(1, &bgdata[0x40000]); /* $80000 - $fffff */
 }
 
 
@@ -534,7 +534,7 @@ static DRIVER_INIT( battleg )
 	data8_t *Z80 = (data8_t *)memory_region(REGION_CPU2);
 
 	/* Set Z80 bank switch */
-	cpu_setbank(1, &Z80[0x10000]);		/* Default bank is 2 */
+	memory_set_bankptr(1, &Z80[0x10000]);		/* Default bank is 2 */
 
 	toaplan2_sub_cpu = CPU_2_Z80;
 }
@@ -1103,7 +1103,7 @@ static WRITE8_HANDLER( battleg_bankswitch_w )
 	{
 		current_bank = bank;
 		bankaddress = 0x10000 + 0x4000 * current_bank;
-		cpu_setbank(1, &RAM[bankaddress]);
+		memory_set_bankptr(1, &RAM[bankaddress]);
 	}
 }
 
@@ -1164,7 +1164,7 @@ static WRITE8_HANDLER( batrider_bankswitch_w )
 			bankaddress = 0x10000 + 0x4000 * (current_bank - 2);
 		else
 			bankaddress = 0x4000 * current_bank;
-		cpu_setbank(1, &RAM[bankaddress]);
+		memory_set_bankptr(1, &RAM[bankaddress]);
 	}
 }
 
@@ -4741,7 +4741,7 @@ static MACHINE_DRIVER_START( bbakraid )
 	MDRV_CPU_ADD(Z80,32000000/4)
 	MDRV_CPU_PROGRAM_MAP(bbakraid_sound_readmem,bbakraid_sound_writemem)
 	MDRV_CPU_IO_MAP(bbakraid_sound_readport,bbakraid_sound_writeport)
-	MDRV_CPU_PERIODIC_INT(bbakraid_snd_interrupt, 388)
+	MDRV_CPU_PERIODIC_INT(bbakraid_snd_interrupt, TIME_IN_HZ(388))
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(262)

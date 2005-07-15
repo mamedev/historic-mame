@@ -521,7 +521,7 @@ static void crimfght_banking( int lines )
 	K052109_set_RMRD_line((lines & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 
 	offs = 0x10000 + ( ( lines & 0x0f ) * 0x2000 );
-	cpu_setbank( 2, &RAM[offs] );
+	memory_set_bankptr( 2, &RAM[offs] );
 }
 
 static MACHINE_INIT( crimfght )
@@ -531,7 +531,7 @@ static MACHINE_INIT( crimfght )
 	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)crimfght_banking);
 
 	/* init the default bank */
-	cpu_setbank( 2, &RAM[0x10000] );
+	memory_set_bankptr( 2, &RAM[0x10000] );
 }
 
 static DRIVER_INIT( crimfght )

@@ -1,18 +1,17 @@
 /***************************************************************************
 
-  timer.c
+    timer.h
 
-  Functions needed to generate timing and synchronization between several
-  CPUs.
+    Functions needed to generate timing and synchronization between several
+    CPUs.
 
 ***************************************************************************/
+
+#pragma once
 
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*-------------------------------------------------
@@ -302,8 +301,4 @@ INLINE int compare_mame_times(mame_time _time1, mame_time _time2)
 }
 
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __TIMER_H__ */

@@ -136,7 +136,7 @@ WRITE8_HANDLER( beezer_bankswitch_w )
 		UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK1);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_BANK1);
-		cpu_setbank(1, rom + (data & 0x07) * 0x2000 + ((data & 0x08) ? 0x1000: 0));
+		memory_set_bankptr(1, rom + (data & 0x07) * 0x2000 + ((data & 0x08) ? 0x1000: 0));
 	}
 }
 

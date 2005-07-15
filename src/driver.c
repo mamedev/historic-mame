@@ -75,6 +75,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( crush )  /* (c) 1981 Kural Samno Electric Ltd */
 	DRIVER( crush2 ) /* (c) 1981 Kural Esco Electric Ltd - bootleg? */
 	DRIVER( crush3 ) /* Kural Electric Ltd - bootleg? */
+	DRIVER( crush4 ) /* Kural TWT */
 	DRIVER( maketrax ) /* (c) 1981 Williams, high score table says KRL (fur Kural) */
 	DRIVER( maketrxb ) /* (c) 1981 [Kural] (Williams license) */
 	DRIVER( korosuke ) /* (c) 1981 Kural Electric */
@@ -1185,7 +1186,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( domino )	/* (c) 1982 */
 	DRIVER( wacko )		/* (c) 1982 */
 	DRIVER( twotiger )	/* (c) 1984 */
-	DRIVER( twotigra )	/* (c) 1984 */
+	DRIVER( twotigrc )	/* (c) 1984 */
 	/* MCR2 + MCR3 sprites */
 	DRIVER( journey )	/* (c) 1983 */
 	/* MCR3 */
@@ -2037,6 +2038,7 @@ V-V                           TP-027
 	DRIVER( uopoko )	/* (c) 1998 Cave + Jaleco license */
 	DRIVER( guwange )	/* (c) 1999 Atlus/Cave */
 	DRIVER( gaia )		/* (c) 1999 Noise Factory */
+	DRIVER( korokoro )	/* (c) 1999 Takumi */
 
 	/* Kyugo games */
 	/* Kyugo only made four games: Repulse, Flash Gal, SRD Mission and Air Wolf. */
@@ -3787,6 +3789,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fghthsta )	/* MBF (c) 1993 Data East Corporation (US) */
 	DRIVER( hvysmsh )	/* MBG */
 	DRIVER( nslasher )	/* MBH */
+        DRIVER( nslashej )	/* MBH (c) 1993 Data East Corporation (Japan)*/
 	/* MBI ?? */
 	/* MBJ ?? */
 	/* MBK ?? */
@@ -5779,6 +5782,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mgcrystj )	/* (c) 1991 Kaneko + distributed by Atlus (Japan) */
 	DRIVER( blazeon )	/* (c) 1992 Atlus */
 	DRIVER( sandscrp )	/* (c) 1992 Face */
+	DRIVER( sandscra )	/* (c) 1992 Face */
 	DRIVER( explbrkr )
 	DRIVER( bakubrkr )
 	DRIVER( shogwarr )
@@ -6528,6 +6532,7 @@ Other Sun games
 	DRIVER( rundeep )	/* (c) 1988 Cream (bootleg?) */
 	DRIVER( wallc )		/* (c) 1984 Midcoin */
 	DRIVER( wallca )	/* (c) 1984 Midcoin */
+	DRIVER( wink )		/* (c) 1985 Midcoin */
 	DRIVER( skyarmy )	/* (c) 1982 Shoei */
 	DRIVER( lethalj )	/* (c) 1996 The Game Room */
 	DRIVER( eggventr )	/* (c) 1997 The Game Room */

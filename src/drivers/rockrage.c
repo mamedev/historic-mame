@@ -76,7 +76,7 @@ static WRITE8_HANDLER( rockrage_bankswitch_w )
 
 	/* bits 4-6 = bank number */
 	bankaddress = 0x10000 + ((data & 0x70) >> 4) * 0x2000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 
 	/* bits 0 & 1 = coin counters */
 	coin_counter_w(0,data & 0x01);

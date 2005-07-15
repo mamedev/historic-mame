@@ -113,7 +113,7 @@ WRITE8_HANDLER( gunsmoke_c804_w )
 
 	/* bits 2 and 3 select the ROM bank */
 	bankaddress = 0x10000 + (data & 0x0c) * 0x1000;
-	cpu_setbank(1, &RAM[bankaddress]);
+	memory_set_bankptr(1, &RAM[bankaddress]);
 
 	/* bit 5 resets the sound CPU? - we ignore it */
 

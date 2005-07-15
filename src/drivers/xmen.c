@@ -162,7 +162,7 @@ static data8_t sound_curbank;
 
 static void sound_reset_bank(void)
 {
-	cpu_setbank(4, memory_region(REGION_CPU2) + 0x10000 + (sound_curbank & 0x07) * 0x4000);
+	memory_set_bankptr(4, memory_region(REGION_CPU2) + 0x10000 + (sound_curbank & 0x07) * 0x4000);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -869,9 +869,9 @@ static DRIVER_INIT( xmen )
 	state_save_register_func_postload(sound_reset_bank);
 }
 
-GAME ( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (US 4 Players ver. UBB)" )
-GAME ( 1992, xmen2p,  xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (Asia 2 Players ver. AAA)" )
-GAME ( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (Japan 2 Players ver. JAA)" )
+GAME ( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players ver. UBB)" )
+GAME ( 1992, xmen2p,  xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver. AAA)" )
+GAME ( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver. JAA)" )
 
-GAMEX( 1992, xmen6p,  xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (Euro 6 Players ver. ECB)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1992, xmen6pu, xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (US 6 Players ver. UCB)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, xmen6p,  xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver. ECB)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, xmen6pu, xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver. UCB)", GAME_IMPERFECT_GRAPHICS )

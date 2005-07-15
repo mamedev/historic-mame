@@ -184,16 +184,16 @@ static WRITE8_HANDLER( xainCPUA_bankswitch_w )
 
 	xain_pri=data&0x7;
 
-	if (data & 0x08) {cpu_setbank(1,&RAM[0x10000]);}
-	else {cpu_setbank(1,&RAM[0x4000]);}
+	if (data & 0x08) {memory_set_bankptr(1,&RAM[0x10000]);}
+	else {memory_set_bankptr(1,&RAM[0x4000]);}
 }
 
 static WRITE8_HANDLER( xainCPUB_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
-	if (data & 0x01) {cpu_setbank(2,&RAM[0x10000]);}
-	else {cpu_setbank(2,&RAM[0x4000]);}
+	if (data & 0x01) {memory_set_bankptr(2,&RAM[0x10000]);}
+	else {memory_set_bankptr(2,&RAM[0x4000]);}
 }
 
 static WRITE8_HANDLER( xain_sound_command_w )

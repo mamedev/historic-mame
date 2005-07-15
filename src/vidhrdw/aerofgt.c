@@ -457,7 +457,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 						sx,sy,
 						cliprect,TRANSPARENCY_PEN,15,
 						zoomx << 11,zoomy << 11,
-						pri ? 0 : 0x2);
+						(pri || chip == 1) ? 0 : 0x2);
 				map_start++;
 			}
 
@@ -636,7 +636,7 @@ VIDEO_UPDATE( karatblz )
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,1);
 
 	/* we use the priority buffer so sprites are drawn front to back */
 	turbofrc_drawsprites(bitmap,cliprect,1);

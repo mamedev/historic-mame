@@ -1400,8 +1400,8 @@ MACHINE_INIT(hyperneo)
 {
 	FILE *fp;
 	data8_t *RAM = (data8_t*)hng64_soundram;
-	cpu_setbank(1,&RAM[0x1e0000]);
-	cpu_setbank(2,&RAM[0x001000]); // where..
+	memory_set_bankptr(1,&RAM[0x1e0000]);
+	memory_set_bankptr(2,&RAM[0x001000]); // where..
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 

@@ -207,7 +207,8 @@ Pulirula
 
 In level 3, the mask sprites used for the door are misaligned by one pixel to
 the left.
-
+(BM100705 - Not a bug - various alignment problems seem to be confirmed from a real pcb).
+Shadows appear to have some kind of flicker effect on real pcb - not emulated/understood.
 
 Metal Black
 -----------
@@ -790,7 +791,7 @@ static INTERRUPT_GEN( taitof2_interrupt )
 
 static void reset_sound_region(void)
 {
-	cpu_setbank( 2, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+	memory_set_bankptr( 2, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -4732,7 +4733,7 @@ static struct YM2203interface ym2203_interface =
 MACHINE_INIT( qcrayon )
 {
 	/* point to the extra ROM */
-	cpu_setbank(1,memory_region(REGION_USER1));
+	memory_set_bankptr(1,memory_region(REGION_USER1));
 }
 
 

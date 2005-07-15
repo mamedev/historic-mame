@@ -317,7 +317,7 @@ static MACHINE_DRIVER_START( wiping )
 	MDRV_CPU_ADD(Z80,18432000/6)
 	/* audio CPU */	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)	/* periodic interrupt, don't know about the frequency */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(120))	/* periodic interrupt, don't know about the frequency */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

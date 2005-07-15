@@ -912,7 +912,7 @@ static MACHINE_INIT( tx1 )
 static MACHINE_DRIVER_START( tx1 )
         MDRV_CPU_ADD(I86,5000000 )
         MDRV_CPU_PROGRAM_MAP(tx1_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, 46 )        /* To do: measure HD46505 CUDISP output rate */
+        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )        /* To do: measure HD46505 CUDISP output rate */
 //      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
         MDRV_CPU_ADD(I86,5000000 )
@@ -922,7 +922,7 @@ static MACHINE_DRIVER_START( tx1 )
         /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tx1_sound_prg,0)
 	MDRV_CPU_IO_MAP(tx1_sound_io,0)
-        MDRV_CPU_PERIODIC_INT(irq0_line_hold, 915.52734375/2 )         /* Guess */
+        MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(915.52734375/2) )         /* Guess */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -951,7 +951,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( buggyboy )
         MDRV_CPU_ADD(I86,5000000 )
         MDRV_CPU_PROGRAM_MAP(buggyboy_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, 46 )    /* To do: measure HD46505 CUDISP output rate */
+        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
 //      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
         MDRV_CPU_ADD(I86,5000000 )
@@ -960,7 +960,7 @@ static MACHINE_DRIVER_START( buggyboy )
 	MDRV_CPU_ADD(Z80,3750000 )
         /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyboy_sound_prg,0)
-        MDRV_CPU_PERIODIC_INT(z80_irq, 915.52734375/2 )  /* To do: verify against real PCB */
+        MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB */
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)
 
         MDRV_FRAMES_PER_SECOND(60)
@@ -998,7 +998,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( buggyb1 )
         MDRV_CPU_ADD(I86,5000000 )
         MDRV_CPU_PROGRAM_MAP(buggyb1_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, 46 )    /* To do: measure HD46505 CUDISP output rate */
+        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
 //      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
         MDRV_CPU_ADD(I86,5000000 )
@@ -1007,7 +1007,7 @@ static MACHINE_DRIVER_START( buggyb1 )
 	MDRV_CPU_ADD(Z80,3750000 )
         /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyb1_sound_prg,0)
-        MDRV_CPU_PERIODIC_INT(z80_irq, 915.52734375/2 )  /* To do: verify against real PCB*/
+        MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB*/
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)
 
          /* Confirm this stuff */

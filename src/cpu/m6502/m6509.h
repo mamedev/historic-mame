@@ -26,10 +26,6 @@
 #include "osd_cpu.h"
 #include "m6502.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum {
 	M6509_PC=1, M6509_S, M6509_P, M6509_A, M6509_X, M6509_Y,
 	M6509_EA, M6509_ZP, M6509_NMI_STATE, M6509_IRQ_STATE, M6509_SO_STATE,
@@ -46,10 +42,6 @@ void m6509_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned int Dasm6509( char *dst, unsigned pc );
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* _M6509_H */

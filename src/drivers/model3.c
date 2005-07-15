@@ -958,7 +958,7 @@ static NVRAM_HANDLER( model3 )
 static void model3_init(int step)
 {
 	model3_step = step;
-	cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 ); /* banked CROM */
+	memory_set_bankptr( 1, memory_region( REGION_USER1 ) + 0x800000 ); /* banked CROM */
 
 	model3_machine_init(step);	// step 1.5
 	model3_tap_reset();
@@ -1217,7 +1217,7 @@ static WRITE64_HANDLER( model3_sys_w )
 
 				data >>= 56;
 				data = (~data) & 7;
-				cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (data * 0x800000)); /* banked CROM */
+				memory_set_bankptr( 1, memory_region( REGION_USER1 ) + 0x800000 + (data * 0x800000)); /* banked CROM */
 			}
 			if (!(mem_mask & 0xff000000))
 			{
@@ -1358,12 +1358,12 @@ static WRITE64_HANDLER(daytona2_rombank_w)
 		bankh = ((~data) >> 2) & 0x3;
 		bankl = (~data) & 0x3;
 
-		cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x800000));
+		memory_set_bankptr( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x800000));
 
 		//bankl = (~data) & 3;
 		//bankh = (~data >> 2) & 3;
 
-		//cpu_setbank( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x400000)); /* banked CROM */
+		//memory_set_bankptr( 1, memory_region( REGION_USER1 ) + 0x800000 + (bankh * 0x1000000) + (bankl * 0x400000)); /* banked CROM */
 	}
 }
 

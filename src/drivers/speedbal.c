@@ -44,6 +44,10 @@ c1  ??
            4 bits for background tiles      = 16 colors * 16 palettes
            4 bits for sprites               = 16 colors * 16 palettes
 
+ Note:
+ - To enter test mode, keep pressed COIN1 and COIN2 during boot,
+   until the RAM / ROM tests are finished
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -78,6 +82,7 @@ static ADDRESS_MAP_START( main_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( main_cpu_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
 	AM_RANGE(0x10, 0x10) AM_READ(input_port_1_r)
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_2_r)
@@ -94,6 +99,7 @@ static ADDRESS_MAP_START( sound_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_cpu_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITENOP

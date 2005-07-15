@@ -334,11 +334,11 @@ static WRITE8_HANDLER( fromanc2_subcpu_rombank_w )
 	int rambank = (data & 0x0c) >> 2;
 
 	// Change ROM BANK
-	cpu_setbank(1, &RAM[rombank * 0x4000]);
+	memory_set_bankptr(1, &RAM[rombank * 0x4000]);
 
 	// Change RAM BANK
-	if (rambank != 0) cpu_setbank(2, &RAM[0x10000 + (rambank * 0x4000)]);
-	else cpu_setbank(2, &RAM[0x8000]);
+	if (rambank != 0) memory_set_bankptr(2, &RAM[0x10000 + (rambank * 0x4000)]);
+	else memory_set_bankptr(2, &RAM[0x8000]);
 }
 
 

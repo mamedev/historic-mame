@@ -151,13 +151,13 @@ static WRITE32_HANDLER( namcofl_sysreg_w )
 	{
 		if (data == 0)	// RAM at 00000000, ROM at 10000000
 		{
-			cpu_setbank( 1, namcofl_workram );
-			cpu_setbank( 2, memory_region(REGION_CPU1) );
+			memory_set_bankptr( 1, namcofl_workram );
+			memory_set_bankptr( 2, memory_region(REGION_CPU1) );
 		}
 		else		// ROM at 00000000, RAM at 10000000
 		{
-			cpu_setbank( 1, memory_region(REGION_CPU1) );
-			cpu_setbank( 2, namcofl_workram );
+			memory_set_bankptr( 1, memory_region(REGION_CPU1) );
+			memory_set_bankptr( 2, namcofl_workram );
 		}
 	}
 }
@@ -401,8 +401,8 @@ static void namcofl_common_init(void)
 {
 	namcofl_workram = auto_malloc(0x100000);
 
-	cpu_setbank( 1, memory_region(REGION_CPU1) );
-	cpu_setbank( 2, namcofl_workram );
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) );
+	memory_set_bankptr( 2, namcofl_workram );
 }
 
 static DRIVER_INIT(speedrcr)

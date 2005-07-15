@@ -29,9 +29,6 @@
 
 ***************************************************************************/
 
-/* Variables for stat menu */
-extern char build_version[];
-
 /* MARTINEZ.F 990207 Memory Card */
 
 struct MEMCARDinterface memcard_intf;

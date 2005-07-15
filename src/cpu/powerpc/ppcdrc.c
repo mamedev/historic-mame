@@ -262,6 +262,8 @@ typedef struct {
 	void *		generate_syscall_exception;
 	void *		generate_decrementer_exception;
 	void *		generate_trap_exception;
+	void *		generate_dsi_exception;
+	void *		generate_isi_exception;
 
 	// PowerPC 60x specific registers */
 	UINT32 dec;
@@ -1348,6 +1350,7 @@ static UINT8 ppc_reg_layout[] =
 	PPC_PC,			PPC_MSR,		-1,
 	PPC_CR,			PPC_LR,			-1,
 	PPC_CTR,		PPC_XER,		-1,
+	PPC_SRR0,		PPC_SRR1,		-1,
 	PPC_R0,		 	PPC_R16,		-1,
 	PPC_R1, 		PPC_R17,		-1,
 	PPC_R2, 		PPC_R18,		-1,
@@ -1390,6 +1393,8 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_LR:				LR = info->i;							break;
 		case CPUINFO_INT_REGISTER + PPC_CTR:			CTR = info->i;							break;
 		case CPUINFO_INT_REGISTER + PPC_XER:			XER = info->i;						 	break;
+		case CPUINFO_INT_REGISTER + PPC_SRR0:			SRR0 = info->i;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR1:			SRR1 = info->i;							break;
 
 		case CPUINFO_INT_REGISTER + PPC_R0:				ppc.r[0] = info->i;						break;
 		case CPUINFO_INT_REGISTER + PPC_R1:				ppc.r[1] = info->i;						break;
@@ -1465,6 +1470,8 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_LR:				info->i = LR;							break;
 		case CPUINFO_INT_REGISTER + PPC_CTR:			info->i = CTR;							break;
 		case CPUINFO_INT_REGISTER + PPC_XER:			info->i = XER;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR0:			info->i = SRR0;							break;
+		case CPUINFO_INT_REGISTER + PPC_SRR1:			info->i = SRR1;							break;
 
 		case CPUINFO_INT_REGISTER + PPC_R0:				info->i = ppc.r[0];						break;
 		case CPUINFO_INT_REGISTER + PPC_R1:				info->i = ppc.r[1];						break;
@@ -1526,6 +1533,8 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + PPC_LR:				sprintf(info->s = cpuintrf_temp_str(), "LR: %08X", LR); break;
 		case CPUINFO_STR_REGISTER + PPC_CTR:			sprintf(info->s = cpuintrf_temp_str(), "CTR: %08X", CTR); break;
 		case CPUINFO_STR_REGISTER + PPC_XER:			sprintf(info->s = cpuintrf_temp_str(), "XER: %08X", XER); break;
+		case CPUINFO_STR_REGISTER + PPC_SRR0:			sprintf(info->s = cpuintrf_temp_str(), "SRR0: %08X", SRR0); break;
+		case CPUINFO_STR_REGISTER + PPC_SRR1:			sprintf(info->s = cpuintrf_temp_str(), "SRR1: %08X", SRR1); break;
 
 		case CPUINFO_STR_REGISTER + PPC_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", ppc.r[0]); break;
 		case CPUINFO_STR_REGISTER + PPC_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", ppc.r[1]); break;

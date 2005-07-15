@@ -155,10 +155,10 @@ static WRITE8_HANDLER( wardner_ramrom_bank_sw )
 				case 6:  bankaddress = 0x30000; break; /* not used */
 				default: bankaddress = 0x00000; break; /* not used */
 			}
-			cpu_setbank(1,&RAM[bankaddress]);
+			memory_set_bankptr(1,&RAM[bankaddress]);
 		}
 		else {
-			cpu_setbank(1,&RAM[0x0000]);
+			memory_set_bankptr(1,&RAM[0x0000]);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, wardner_sprite_r);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xadff, 0, 0, paletteram_r);
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xae00, 0xafff, 0, 0, MRA8_RAM);

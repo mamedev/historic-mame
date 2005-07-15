@@ -315,7 +315,7 @@ static int cur_sound_region;
 
 static void reset_sound_region(void)
 {
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
+	memory_set_bankptr(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -388,7 +388,7 @@ MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_ADD(Z80, 8000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_PERIODIC_INT(audio_interrupt, 480)
+	MDRV_CPU_PERIODIC_INT(audio_interrupt, TIME_IN_HZ(480))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

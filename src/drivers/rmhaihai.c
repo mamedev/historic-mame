@@ -168,8 +168,8 @@ static WRITE8_HANDLER( themj_rombank_w )
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 	int bank = data & 0x03;
 logerror("banksw %d\n",bank);
-	cpu_setbank(1, rom + bank*0x4000);
-	cpu_setbank(2, rom + bank*0x4000 + 0x2000);
+	memory_set_bankptr(1, rom + bank*0x4000);
+	memory_set_bankptr(2, rom + bank*0x4000 + 0x2000);
 }
 
 static MACHINE_INIT( themj )

@@ -504,12 +504,12 @@ static void taito_f2_tc360_spritemixdraw( struct mame_bitmap *dest_bmp,const str
 						// Blend mode 2 - Sprite under tilemap, use sprite data with tilemap palette
 						else if ((f2_spriteblendmode&0xc0)==0x80 && sprite_priority==(tilemap_priority-1))
 						{
-							dest[x]=(dest[x]&0xffef); // Could be ^0x10 rather than &~0x10
+							dest[x]=(dest[x]&0xffef);
 						}
-						// Blend mode 2 - Sprite over tilemap, don't know if this is right
+						// Blend mode 2 - Sprite over tilemap, alternate sprite palette, confirmed in Pulirula level 2
 						else if ((f2_spriteblendmode&0xc0)==0x80 && sprite_priority==(tilemap_priority+1))
 						{
-							dest[x]=(dest[x]&0xffe0) | 0x10 | (pal[c]&0xf); // Pulirula level 2, Liquid Kids attract mode
+							dest[x]=(pal[c]&0xffef); // Pulirula level 2, Liquid Kids attract mode
 						}
 						// No blending
 						else

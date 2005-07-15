@@ -321,7 +321,7 @@ WRITE8_HANDLER( scontra_bankswitch_w )
 
 	/* bits 0-3 ROM bank */
 	offs = 0x10000 + (data & 0x0f)*0x2000;
-	cpu_setbank( 1, &RAM[offs] );
+	memory_set_bankptr( 1, &RAM[offs] );
 
 	/* bit 4 select work RAM or palette RAM at 5800-5fff */
 	palette_selected = ~data & 0x10;
@@ -989,7 +989,7 @@ static void thunderx_banking( int lines )
 
 	offs = 0x10000 + (((lines & 0x0f) ^ 0x08) * 0x2000);
 	if (offs >= 0x28000) offs -= 0x20000;
-	cpu_setbank( 1, &RAM[offs] );
+	memory_set_bankptr( 1, &RAM[offs] );
 }
 
 static MACHINE_INIT( scontra )
@@ -1004,7 +1004,7 @@ static MACHINE_INIT( thunderx )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)thunderx_banking);
-	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
+	memory_set_bankptr( 1, &RAM[0x10000] ); /* init the default bank */
 
 	paletteram = &RAM[0x28000];
 	pmcram = &RAM[0x28800];

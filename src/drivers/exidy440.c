@@ -295,7 +295,7 @@ static INTERRUPT_GEN( main_interrupt )
 MACHINE_INIT( exidy440 )
 {
 	exidy440_bank = 0;
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
+	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000]);
 
 	last_coins = input_port_3_r(0) & 3;
 	coin_state = 3;

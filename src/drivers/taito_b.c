@@ -209,7 +209,7 @@ static WRITE8_HANDLER( bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
 
-	cpu_setbank (1, &RAM [0x10000 + (banknum * 0x4000)]);
+	memory_set_bankptr (1, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
 

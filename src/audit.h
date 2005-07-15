@@ -1,6 +1,15 @@
+/***************************************************************************
 
-#ifndef AUDIT_H
-#define AUDIT_H
+    audit.h
+
+    ROM set auditing functions.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __AUDIT_H__
+#define __AUDIT_H__
 
 /* return values from VerifyRomSet and VerifySampleSet */
 #define CORRECT   		0
@@ -57,4 +66,4 @@ int RomInSet (const struct GameDriver *gamedrv, const char* hash);
 int RomsetMissing (int game);
 
 
-#endif
+#endif	/* __AUDIT_H__ */

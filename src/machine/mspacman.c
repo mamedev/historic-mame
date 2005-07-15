@@ -182,7 +182,7 @@ MACHINE_INIT( mspacman )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mspacman_decode();
-	cpu_setbank (1, &RAM[0x00000]);
+	memory_set_bankptr (1, &RAM[0x00000]);
 }
 
 
@@ -190,7 +190,7 @@ WRITE8_HANDLER( mspacman_activate_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	if(data==1) cpu_setbank (1, &RAM[0x10000]);
+	if(data==1) memory_set_bankptr (1, &RAM[0x10000]);
 }
 
 

@@ -502,7 +502,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER(jumppop_z80_bank_w)
 {
-	cpu_setbank(1, memory_region(REGION_CPU2) + 0x10000 + (0x4000 * data));
+	memory_set_bankptr(1, memory_region(REGION_CPU2) + 0x10000 + (0x4000 * data));
 }
 
 static ADDRESS_MAP_START( jumppop_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1564,7 +1564,7 @@ static MACHINE_DRIVER_START( jumppop )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(jumppop_sound_map, 0)
 	MDRV_CPU_IO_MAP(jumppop_sound_io_map, 0)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 1953)	/* measured */
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, TIME_IN_HZ(1953))	/* measured */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)

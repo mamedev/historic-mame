@@ -85,7 +85,7 @@ static WRITE8_HANDLER( bank_select_w )
         xxxxxxx  - unused ?
 
     */
-	cpu_setbank( 1, memory_region(REGION_CPU1) + ((data&1) * 0x4000) + 0x10000 );
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) + ((data&1) * 0x4000) + 0x10000 );
 }
 
 static WRITE8_HANDLER( latch_w )

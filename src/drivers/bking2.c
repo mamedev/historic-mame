@@ -534,7 +534,7 @@ static MACHINE_DRIVER_START( bking2 )
 			/* - NMI triggered by the main CPU */
 			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
 			/*   that is a period of 27306666.6666 ns */
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,27306667)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_NSEC(27306667))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -1312,7 +1312,7 @@ static MACHINE_DRIVER_START( konamigx )
 	MDRV_CPU_ADD_TAG("sound", M68000, 9200000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gxsndmap, 0)
-	MDRV_CPU_PERIODIC_INT(irq2_line_hold, 480)
+	MDRV_CPU_PERIODIC_INT(irq2_line_hold, TIME_IN_HZ(480))
 
 	MDRV_INTERLEAVE(32);
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2186,7 +2186,7 @@ ROM_START( gokuparo )
 	ROM_LOAD( "321b18.7g", 0x200000, 2*1024*1024, CRC(2c561ad0) SHA1(6265054072ba1c2837dd96e0259b20bc50457160) )
 ROM_END
 
-/* Fantastic Journey (US version) */
+/* Fantastic Journey (version) */
 ROM_START( fantjour )
 	/* main program */
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
@@ -2795,7 +2795,7 @@ ROM_START( soccersa )
 	ROM_LOAD( "427a16.9r", 0x000000, 2*1024*1024,  CRC(39547265) SHA1(c0efd68c0c1ea59141045150842f36d43e1f01d8) )
 ROM_END
 
-/* Vs. Net Soccer (US ver UAB) */
+/* Vs. Net Soccer (ver UAB) */
 ROM_START(vsnetscr)
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
@@ -2835,7 +2835,7 @@ ROM_START(vsnetscr)
 	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
 ROM_END
 
-/* Vs. Net Soccer (Japan ver JAB) */
+/* Vs. Net Soccer (ver JAB) */
 ROM_START(vsnetscj)
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
@@ -2945,7 +2945,7 @@ ROM_START( le2u )
 	ROM_LOAD( "312a18.7g", 0x200000, 1*1024*1024, CRC(5717abd7) SHA1(d304d733e7fca0363ea6b3872c2d3bbe4edf1179) )
 ROM_END
 
-/* Lethal Enforcers II (Japan version) */
+/* Lethal Enforcers II (version) */
 ROM_START( le2j )
 	/* main program */
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
@@ -3027,7 +3027,7 @@ ROM_START( racinfrc )
 	ROM_LOAD( "250a18.12y", 0x200000, 2*1024*1024, CRC(8014a2eb) SHA1(d82f0a7d559340ae05a78ecc8bb69bb35b9c0658) )
 ROM_END
 
-/* Konami's Open Golf Championship - Europe version EAE */
+/* Konami's Open Golf Championship - version EAE */
 ROM_START( opengolf )
 	/* main program */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )
@@ -3079,7 +3079,7 @@ ROM_START( opengolf )
 	ROM_LOAD( "218a18.12y", 0x200000, 1*1024*1024, CRC(98ec4cfb) SHA1(638753f9d9269719a37133b9c39c242507fdd8ac) )
 ROM_END
 
-/* Konami's Open Golf Championship - Europe version EAD */
+/* Konami's Open Golf Championship - version EAD */
 ROM_START( opengol2 )
 	/* main program */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )
@@ -3440,44 +3440,44 @@ GAMEX(1994, konamigx, 0, konamigx, konamigx, konamigx, ROT0, "Konami", "System G
 /* Type 1: standard with an add-on 53936 on the ROM board, analog inputs, */
 /* and optional LAN capability (only on Racin' Force - chips aren't present on the golf games) */
 /* needs the ROZ layer to be playable */
-GAMEX( 1994, racinfrc, konamigx, racinfrc,  racinfrc, konamigx, ROT0, "Konami", "Racin' Force (US ver UAB)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
-GAMEX( 1994, opengolf, konamigx, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (Europe ver EAE)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
-GAMEX( 1994, opengol2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (Europe ver EAD)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
-GAMEX( 1994, ggreats2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Golfing Greats 2 (Japan ver JAC)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 1994, racinfrc, konamigx, racinfrc,  racinfrc, konamigx, ROT0, "Konami", "Racin' Force (ver UAB)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+GAMEX( 1994, opengolf, konamigx, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (ver EAE)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+GAMEX( 1994, opengol2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (ver EAD)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+GAMEX( 1994, ggreats2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Golfing Greats 2 (ver JAC)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 
 /* Type 2: totally stock, sometimes with funny protection chips on the ROM board */
 /* these games work and are playable with minor graphics glitches */
-GAMEX( 1994, le2,      konamigx, le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (Europe ver EAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, le2u,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (US ver UAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, le2j,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
-GAMEX( 1994, gokuparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Gokujyou Parodius (Japan ver JAD)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, puzldama, konamigx, konamigx, puzldama, konamigx, ROT0, "Konami", "Taisen Puzzle-dama (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, tbyahhoo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Twin Bee Yahhoo! (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, tkmmpzdm, konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Tokimeki Memorial Taisen Puzzle-dama (Japan ver JAB)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, dragoona, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (Asia ver AAB)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, dragoonj, dragoona, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, sexyparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Sexy Parodius (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, daiskiss, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Daisu-Kiss (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Taisen Tokkae-dama (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, le2,      konamigx, le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, le2u,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver UAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, le2j,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver JAA)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
+GAMEX( 1994, gokuparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Gokujyou Parodius (ver JAD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, puzldama, konamigx, konamigx, puzldama, konamigx, ROT0, "Konami", "Taisen Puzzle-dama (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, tbyahhoo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Twin Bee Yahhoo! (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, tkmmpzdm, konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Tokimeki Memorial Taisen Puzzle-dama (ver JAB)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, dragoona, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (ver AAB)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, dragoonj, dragoona, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, sexyparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Sexy Parodius (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, daiskiss, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Daisu-Kiss (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Taisen Tokkae-dama (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 /* protection controls player ship direction in attract mode - doesn't impact playability */
-GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (ver JAA)", GAME_IMPERFECT_GRAPHICS|GAME_UNEMULATED_PROTECTION )
 /* bad sprite colours, part of tilemap gets blanked out when a game starts (might be more protection) */
-GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (Europe ver EAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, winspikj, winspike, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (Japan ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver EAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, winspikj, winspike, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 
 /* this game is unplayable due to protection */
 GAMEX( 1994, fantjour, gokuparo, konamigx, gokuparo, konamigx, ROT0, "Konami", "Fantastic Journey", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 
 
 /* Type 3: dual monitor output and 53936 on the ROM board, external palette RAM */
-GAMEX( 1994, soccerss, konamigx, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (Japan ver JAA)", GAME_NOT_WORKING )
-GAMEX( 1994, soccersa, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (Asia ver AAA)", GAME_NOT_WORKING )
+GAMEX( 1994, soccerss, konamigx, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver JAA)", GAME_NOT_WORKING )
+GAMEX( 1994, soccersa, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver AAA)", GAME_NOT_WORKING )
 
 
 /* Type 4: dual monitor output and 53936 on the ROM board, external palette RAM, DMA protection */
-GAMEX( 1996, vsnetscr, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (US ver UAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, vsnetscj, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (Japan ver JAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, rungun2,  konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Run and Gun 2 (US ver UAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, slamdnk2, rungun2,  gxtype4, type3, konamigx, ROT0, "Konami", "Slam Dunk 2 (Japan ver JAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, rushhero, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Rushing Heroes (US ver UAB)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )
+GAMEX( 1996, vsnetscr, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver UAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, vsnetscj, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver JAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, rungun2,  konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Run and Gun 2 (ver UAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, slamdnk2, rungun2,  gxtype4, type3, konamigx, ROT0, "Konami", "Slam Dunk 2 (ver JAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, rushhero, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Rushing Heroes (ver UAB)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )

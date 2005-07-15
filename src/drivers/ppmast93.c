@@ -153,7 +153,7 @@ WRITE8_HANDLER( ppmast93_port4_w )
 	coin_counter_w(1, data & 0x10);
 
 	bank = data & 0x07;
-	cpu_setbank(1,&rom[0x10000+(bank*0x4000)]);
+	memory_set_bankptr(1,&rom[0x10000+(bank*0x4000)]);
 }
 
 
@@ -347,7 +347,7 @@ static MACHINE_DRIVER_START( ppmast93 )
 	MDRV_CPU_ADD(Z80,5000000)		 /* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(ppmast93_cpu2_map,0)
 	MDRV_CPU_IO_MAP(ppmast93_cpu2_io,0)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,78)
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(78))
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

@@ -321,7 +321,7 @@ MACHINE_INIT( ssv )
 {
 	requested_int = 0;
 	cpu_set_irq_callback(0, ssv_irq_callback);
-	cpu_setbank(1, memory_region(REGION_USER1));
+	memory_set_bankptr(1, memory_region(REGION_USER1));
 }
 
 
@@ -3361,7 +3361,7 @@ DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 DRIVER_INIT( vasara )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
-DRIVER_INIT( jsk )			{	cpu_setbank(2, memory_region(REGION_USER2));
+DRIVER_INIT( jsk )			{	memory_set_bankptr(2, memory_region(REGION_USER2));
 								init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
@@ -3835,7 +3835,7 @@ GOLF ROM
 |                                        |
 |                          SI003-08.U24  |
 |                                        |
-|                                        |
+|                             uPD4701    |
 |                                        |
 |                             mc14584b   |
 |                                        |
@@ -3843,6 +3843,7 @@ GOLF ROM
 |-------------------------------||||||---|
 
  mc14584b - Motorola HEX Schmitt Trigger
+  uPD4701 - Mouse/Trackball interface by NEC
    514400 - Hatachi HM514400BS7 1M x 4 DRAM (4 Megs of RAM)
       GAL - GAL16V8B
        P1 - 6 Pin trackball connector (same pinout as Golden Tee 9x series)

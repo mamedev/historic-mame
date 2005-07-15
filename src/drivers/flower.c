@@ -246,7 +246,7 @@ static MACHINE_DRIVER_START( flower )
 
 	MDRV_CPU_ADD(Z80,8000000)
 	MDRV_CPU_PROGRAM_MAP(flower_sound_cpu,0)
-	MDRV_CPU_PERIODIC_INT(sn_irq,90)	/* periodic interrupt, don't know about the frequency */
+	MDRV_CPU_PERIODIC_INT(sn_irq,TIME_IN_HZ(90))	/* periodic interrupt, don't know about the frequency */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

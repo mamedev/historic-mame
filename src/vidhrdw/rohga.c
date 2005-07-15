@@ -539,13 +539,9 @@ VIDEO_UPDATE( nitrobal )
 	fillbitmap(bitmap,Machine->pens[512],&Machine->visible_area);
 	fillbitmap(priority_bitmap,0,NULL);
 	deco16_clear_sprite_priority_bitmap();
-	deco16_tilemap_3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 
-	/* We don't draw pf4 because it's always the same data as pf4 - the 4bpp outputs
-    are combined into a single 8bpp bitmap.  We can precompute the 8bpp tiles to avoid
-    combining them at runtime (see also Robocop 2) */
-
-	// (todo: actually pf3/4 differ on the high score screen)
+	/* pf3 and pf4 are combined into a single 8bpp bitmap */
+	deco16_tilemap_34_combine_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	deco16_tilemap_2_draw(bitmap,cliprect,0,16);
 	nitrobal_drawsprites(bitmap,cliprect,buffered_spriteram16,3);

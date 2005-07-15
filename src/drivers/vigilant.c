@@ -38,7 +38,7 @@ WRITE8_HANDLER( vigilant_bank_select_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 /***************************************************************************

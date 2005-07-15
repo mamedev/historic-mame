@@ -374,7 +374,7 @@ static WRITE8_HANDLER( omegaf_bankselect_w )
 			bankaddress = omegaf_bank_latch * 0x4000;
 		else
 			bankaddress = 0x10000 + ( (omegaf_bank_latch - 2) * 0x4000);
-		cpu_setbank( 1, &RAM[bankaddress] );	 /* Select 16 banks of 16k */
+		memory_set_bankptr( 1, &RAM[bankaddress] );	 /* Select 16 banks of 16k */
 	}
 }
 

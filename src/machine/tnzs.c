@@ -694,10 +694,10 @@ MACHINE_INIT( tnzs )
 		unsigned char *RAM;
 
 		RAM = memory_region(REGION_CPU1);
-		cpu_setbank(1,&RAM[0x18000]);
+		memory_set_bankptr(1,&RAM[0x18000]);
 
 		RAM = memory_region(REGION_CPU2);
-		cpu_setbank(2,&RAM[0x10000]);
+		memory_set_bankptr(2,&RAM[0x10000]);
 	}
 }
 
@@ -727,7 +727,7 @@ WRITE8_HANDLER( tnzs_bankswitch_w )
 		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 	/* bits 0-2 select RAM/ROM bank */
-	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
+	memory_set_bankptr (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 }
 
 WRITE8_HANDLER( tnzs_bankswitch1_w )
@@ -779,5 +779,5 @@ WRITE8_HANDLER( tnzs_bankswitch1_w )
 	}
 
 	/* bits 0-1 select ROM bank */
-	cpu_setbank (2, &RAM[0x10000 + 0x2000 * (data & 3)]);
+	memory_set_bankptr (2, &RAM[0x10000 + 0x2000 * (data & 3)]);
 }

@@ -227,7 +227,7 @@ WRITE8_HANDLER( appoooh_out_w )
 	{
 		unsigned char *RAM = memory_region(REGION_CPU1);
 
-		cpu_setbank(1,&RAM[data&0x40 ? 0x10000 : 0x0a000]);
+		memory_set_bankptr(1,&RAM[data&0x40 ? 0x10000 : 0x0a000]);
 	}
 
 	/* bit 7 unknown (used) */

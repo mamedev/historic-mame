@@ -1262,7 +1262,7 @@ static WRITE8_HANDLER( upd7759_control_w )
 				bankoffs += (data & 0x07) * 0x04000;
 				break;
 		}
-		cpu_setbank(1, memory_region(REGION_CPU2) + 0x10000 + (bankoffs % size));
+		memory_set_bankptr(1, memory_region(REGION_CPU2) + 0x10000 + (bankoffs % size));
 	}
 }
 

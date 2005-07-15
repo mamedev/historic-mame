@@ -6,7 +6,9 @@
     Dragon Gun
     Fighter's History
     Locked 'N Loaded
+    Night Slashers
     Tattoo Assassins
+
 
     Emulation by Bryan McPhail, mish@tendril.co.uk.  Thank you to Tim,
     Avedis and Stiletto for many things including work on Fighter's
@@ -1821,7 +1823,7 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_CPU_ADD(M6809, 2000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_tattass,sound_writemem_tattass)
-	MDRV_CPU_PERIODIC_INT(tattass_snd_interrupt,489) /* Fixed FIRQ of 489Hz as measured on real (pinball) machine */
+	MDRV_CPU_PERIODIC_INT(tattass_snd_interrupt,TIME_IN_HZ(489)) /* Fixed FIRQ of 489Hz as measured on real (pinball) machine */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
@@ -2585,6 +2587,39 @@ ROM_START( nslasher )
 	ROM_LOAD( "mbh-11.16l", 0x000000,  0x80000,  CRC(0ec40b6b) SHA1(9fef44149608ae2a00f6a75a6f77f2efcab6e78e) )
 ROM_END
 
+ROM_START( nslashej )
+	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* Encrypted ARM 32 bit code */
+	ROM_LOAD32_WORD( "lx-00.bin", 0x000000, 0x80000, CRC(6ed5fb88) SHA1(84350da7939a479968a523c84e254e3ee54b8da2) )
+	ROM_LOAD32_WORD( "lx-01.bin", 0x000002, 0x80000, CRC(a6df2152) SHA1(6fe7e0b2e71c5f807951dcc81a6a3cff55247961) )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mbh-00.8c",  0x000000,  0x200000,  CRC(a877f8a3) SHA1(79253525f360a73161894f31e211e4d6b38d307a) ) /* Encrypted tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mbh-01.9c",  0x000000,  0x200000,  CRC(1853dafc) SHA1(b1183c0db301cbed9f079c782202dbfc553b198e) ) /* Encrypted tiles */
+
+	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "mbh-02.14c",  0x000001,  0x200000,  CRC(b2f158a1) SHA1(4f8c0b324813db198fe1dad7fff4185b828b94de) )
+	ROM_LOAD16_BYTE( "mbh-04.16c",  0x000000,  0x200000,  CRC(eecfe06d) SHA1(2df817fe5e2ea31207b217bb03dc58979c05d0d2) )
+	ROM_LOAD16_BYTE( "mbh-03.15c",  0x400001,  0x80000,  CRC(787787e3) SHA1(531444e3f28aa9a7539a5a76ca94a9d6b97274c5) )
+	ROM_LOAD16_BYTE( "mbh-05.17c",  0x400000,  0x80000,  CRC(1d2b7c17) SHA1(ae0b8e0448a1a8180fb424fb0bc8a4302f8ff602) )
+	ROM_LOAD16_BYTE( "mbh-06.18c",  0xa00000,  0x100000,  CRC(038c2127) SHA1(5bdb215305f1a419fde27a83b623a38b9328e560) )
+	ROM_LOAD16_BYTE( "mbh-07.19c",  0xb00000,  0x40000,  CRC(bbd22323) SHA1(6ab665b2e6d04cdadc48c52e15098e978b61fe10) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "mbh-08.16e",  0x000001,  0x80000,  CRC(cdd7f8cb) SHA1(910bbe8783c0ba722e9d6399b332d658fa059fdb) )
+	ROM_LOAD16_BYTE( "mbh-09.18e",  0x000000,  0x80000,  CRC(33fa2121) SHA1(eb0e99d29b1ad9995df28e5b7cfc89d53efb53c3) )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "mbh-10.14l", 0x000000,  0x80000,  CRC(c4d6b116) SHA1(c5685bce6a6c6a74ca600ebf766ba1007f0dc666) )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 )
+	ROM_LOAD( "mbh-11.16l", 0x000000,  0x80000,  CRC(0ec40b6b) SHA1(9fef44149608ae2a00f6a75a6f77f2efcab6e78e) )
+ROM_END
+
 /**********************************************************************************/
 
 static READ32_HANDLER( captaven_skip )
@@ -2740,4 +2775,5 @@ GAMEX(1993, fghthsta, fghthist, fghthsta, fghthist, fghthist, ROT0, "Data East C
 GAMEX(1994, lockload, 0,        lockload, lockload, lockload, ROT0, "Data East Corporation", "Locked 'n Loaded (US)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEX(1994, tattass,  0,        tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (US Prototype)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1994, tattassa, tattass,  tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (Asia Prototype)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, nslasher, 0,        tattass,  tattass,  nslasher, ROT0, "Data East Corporation", "Night Slashers", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
+GAMEX(1993, nslasher, 0,        tattass,  tattass,  nslasher, ROT0, "Data East Corporation", "Night Slashers", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
+GAMEX(1993, nslashej, nslasher,        tattass,  tattass,  nslasher, ROT0, "Data East Corporation", "Night Slashers (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)

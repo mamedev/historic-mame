@@ -137,7 +137,7 @@ static void dmaop_transfer_control(void)
 
 	/* relative or absolute addressing? */
 	if (lsi810.dcmd & 0x08000000)
-		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF00000000 : 0));
+		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
 	else
 		dest = dsps;
 

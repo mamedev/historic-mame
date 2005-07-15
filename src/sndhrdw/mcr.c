@@ -16,7 +16,22 @@
 #include "sound/5220intf.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
-#include "mcr.h"
+#include "includes/mcr.h"
+#include "sndhrdw/mcr.h"
+
+
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+#define SSIO_CLOCK			16000000
+#define CSDELUXE_CLOCK		15000000
+#define SOUNDSGOOD_CLOCK	16000000
+#define TURBOCS_CLOCK		8000000
+#define SQUAWKTALK_CLOCK	3580000
 
 
 
@@ -42,11 +57,19 @@ static UINT16 dacval;
 static UINT8 ssio_sound_cpu;
 static UINT8 ssio_data[4];
 static UINT8 ssio_status;
+static UINT8 ssio_14024_count;
+static UINT8 ssio_mute;
 static UINT8 ssio_duty_cycle[2][3];
+static UINT8 ssio_ayvolume_lookup[16];
+static UINT8 ssio_custom_input_mask[5];
+static UINT8 ssio_custom_output_mask[2];
+static read8_handler ssio_custom_input[5];
+static write8_handler ssio_custom_output[2];
 
 /* Chip Squeak Deluxe-specific globals */
 static UINT8 csdeluxe_sound_cpu;
 static UINT8 csdeluxe_dac_index;
+static UINT8 csdeluxe_status;
 extern struct pia6821_interface csdeluxe_pia_intf;
 
 /* Turbo Chip Squeak-specific globals */
@@ -72,21 +95,32 @@ extern struct pia6821_interface squawkntalk_pia1_intf;
 
 /*************************************
  *
+ *  Prototypes
+ *
+ *************************************/
+
+static void ssio_compute_ay8910_modulation(void);
+
+
+
+/*************************************
+ *
  *  Generic MCR sound initialization
  *
  *************************************/
 
-void mcr_sound_init(void)
+void mcr_sound_init(UINT8 config)
 {
 	int sound_cpu = 1;
 	int dac_index = 0;
+
+	mcr_sound_config = config;
 
 	/* SSIO */
 	if (mcr_sound_config & MCR_SSIO)
 	{
 		ssio_sound_cpu = sound_cpu++;
-		ssio_reset_w(1);
-		ssio_reset_w(0);
+		ssio_compute_ay8910_modulation();
 	}
 
 	/* Turbo Chip Squeak */
@@ -95,8 +129,6 @@ void mcr_sound_init(void)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &turbocs_pia_intf);
 		turbocs_dac_index = dac_index++;
 		turbocs_sound_cpu = sound_cpu++;
-		turbocs_reset_w(1);
-		turbocs_reset_w(0);
 	}
 
 	/* Chip Squeak Deluxe */
@@ -105,8 +137,6 @@ void mcr_sound_init(void)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &csdeluxe_pia_intf);
 		csdeluxe_dac_index = dac_index++;
 		csdeluxe_sound_cpu = sound_cpu++;
-		csdeluxe_reset_w(1);
-		csdeluxe_reset_w(0);
 	}
 
 	/* Sounds Good */
@@ -116,8 +146,6 @@ void mcr_sound_init(void)
 		pia_config(1, PIA_ALTERNATE_ORDERING, &soundsgood_pia_intf);
 		soundsgood_dac_index = dac_index++;
 		soundsgood_sound_cpu = sound_cpu++;
-		soundsgood_reset_w(1);
-		soundsgood_reset_w(0);
 	}
 
 	/* Squawk n Talk */
@@ -126,8 +154,6 @@ void mcr_sound_init(void)
 		pia_config(0, PIA_STANDARD_ORDERING, &squawkntalk_pia0_intf);
 		pia_config(1, PIA_STANDARD_ORDERING, &squawkntalk_pia1_intf);
 		squawkntalk_sound_cpu = sound_cpu++;
-		squawkntalk_reset_w(1);
-		squawkntalk_reset_w(0);
 	}
 
 	/* Advanced Audio */
@@ -135,6 +161,50 @@ void mcr_sound_init(void)
 	{
 		williams_cvsd_init(sound_cpu++, 0);
 		dac_index++;
+	}
+}
+
+
+void mcr_sound_reset(void)
+{
+	/* SSIO */
+	if (mcr_sound_config & MCR_SSIO)
+	{
+		ssio_reset_w(1);
+		ssio_reset_w(0);
+	}
+
+	/* Turbo Chip Squeak */
+	if (mcr_sound_config & MCR_TURBO_CHIP_SQUEAK)
+	{
+		turbocs_reset_w(1);
+		turbocs_reset_w(0);
+	}
+
+	/* Chip Squeak Deluxe */
+	if (mcr_sound_config & MCR_CHIP_SQUEAK_DELUXE)
+	{
+		csdeluxe_reset_w(1);
+		csdeluxe_reset_w(0);
+	}
+
+	/* Sounds Good */
+	if (mcr_sound_config & MCR_SOUNDS_GOOD)
+	{
+		soundsgood_reset_w(1);
+		soundsgood_reset_w(0);
+	}
+
+	/* Squawk n Talk */
+	if (mcr_sound_config & MCR_SQUAWK_N_TALK)
+	{
+		squawkntalk_reset_w(1);
+		squawkntalk_reset_w(0);
+	}
+
+	/* Advanced Audio */
+	if (mcr_sound_config & MCR_WILLIAMS_SOUND)
+	{
 		williams_cvsd_reset_w(1);
 		williams_cvsd_reset_w(0);
 	}
@@ -149,11 +219,90 @@ void mcr_sound_init(void)
  *
  *  MCR SSIO communications
  *
- *  Z80, 2 AY-3812
+ *  Z80, 2 AY-8910
  *
  *************************************/
 
+/*
+    AY-8910 modulation:
+
+        Starts with a 16MHz oscillator
+            /2 via 7474 flip-flip @ F11
+
+        This signal clocks the binary counter @ E11 which
+        cascades into the decade counter @ D11. This combo
+        effectively counts from 0-159 and then wraps. The
+        value from these counters is input to an 82S123 PROM,
+        which appears to be standard on all games.
+
+        One bit at a time from this PROM is clocked at a time
+        and the resulting inverted signal becomes a clock for
+        the down counters at F3, F4, F5, F8, F9, and F10. The
+        value in these down counters are reloaded after the 160
+        counts from the binary/decade counter combination.
+
+        When these down counters reach 0, the TC signal goes
+        high and stops modulating the voice; it also stops the
+        counter from counting down anymore. This creates an
+        effective duty cycle for the voice.
+
+        Given that the down counters are reset 50000 times per
+        second (SSIO_CLOCK/2/160), which is above the typical
+        frequency of sound output. So we simply apply a volume
+        adjustment to each voice according to the duty cycle.
+*/
+static void ssio_compute_ay8910_modulation(void)
+{
+	UINT8 *prom = memory_region(REGION_PROMS);
+	int volval;
+
+	/* loop over all possible values of the duty cycle */
+	for (volval = 0; volval < 16; volval++)
+	{
+		int remaining_clocks = volval;
+		int clock;
+
+		/* loop over all the clocks until we run out; look up in the PROM */
+		/* to find out when the next clock should fire */
+		for (clock = 0; clock < 160 && remaining_clocks; clock++)
+			if (!(prom[clock / 8] & (0x80 >> (clock % 8))))
+				remaining_clocks--;
+
+		/* treat the duty cycle as a volume */
+		ssio_ayvolume_lookup[volval] = (160 - clock) * 100 / 160;
+	}
+}
+
 /********* internal interfaces ***********/
+static INTERRUPT_GEN( ssio_14024_clock )
+{
+	/*
+        /SINT is generated as follows:
+
+        Starts with a 16MHz oscillator
+            /2 via 7474 flip-flip @ F11
+            /16 via 74161 binary counter @ E11
+            /10 via 74190 decade counter @ D11
+
+        Bit 3 of the decade counter clocks a 14024 7-bit async counter @ C12.
+        This routine is called to clock this 7-bit counter.
+        Bit 6 of the output is inverted and connected to /SINT.
+    */
+	ssio_14024_count = (ssio_14024_count + 1) & 0x7f;
+
+	/* if the low 5 bits clocked to 0, bit 6 has changed state */
+	if ((ssio_14024_count & 0x3f) == 0)
+		cpunum_set_input_line(ssio_sound_cpu, 0, (ssio_14024_count & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static READ8_HANDLER( ssio_irq_clear )
+{
+	/* a read here asynchronously resets the 14024 count, clearing /SINT */
+	ssio_14024_count = 0;
+	cpunum_set_input_line(ssio_sound_cpu, 0, CLEAR_LINE);
+	return 0xff;
+}
+
 static WRITE8_HANDLER( ssio_status_w )
 {
 	ssio_status = data;
@@ -171,10 +320,12 @@ static void ssio_delayed_data_w(int param)
 
 static void ssio_update_volumes(void)
 {
-	int chip, chan;
-	for (chip = 0; chip < 2; chip++)
-		for (chan = 0; chan < 3; chan++)
-			AY8910_set_volume(chip, chan, (ssio_duty_cycle[chip][chan] ^ 15) * 100 / 15);
+	AY8910_set_volume(0, 0, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[0][0]]);
+	AY8910_set_volume(0, 1, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[0][1]]);
+	AY8910_set_volume(0, 2, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[0][2]]);
+	AY8910_set_volume(1, 0, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][0]]);
+	AY8910_set_volume(1, 1, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][1]]);
+	AY8910_set_volume(1, 2, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][2]]);
 }
 
 static WRITE8_HANDLER( ssio_porta0_w )
@@ -200,7 +351,7 @@ static WRITE8_HANDLER( ssio_porta1_w )
 static WRITE8_HANDLER( ssio_portb1_w )
 {
 	ssio_duty_cycle[1][2] = data & 15;
-	sound_global_enable(!(data & 0x80));
+	ssio_mute = data & 0x80;
 	ssio_update_volumes();
 }
 
@@ -228,10 +379,42 @@ void ssio_reset_w(int state)
 		for (i = 0; i < 4; i++)
 			ssio_data[i] = 0;
 		ssio_status = 0;
+		ssio_14024_count = 0;
 	}
 	/* going low resets and reactivates the CPU */
 	else
 		cpunum_set_input_line(ssio_sound_cpu, INPUT_LINE_RESET, CLEAR_LINE);
+}
+
+READ8_HANDLER( ssio_input_port_r )
+{
+	static const char *port[] = { "SSIO.IP0", "SSIO.IP1", "SSIO.IP2", "SSIO.IP3", "SSIO.IP4" };
+	UINT8 result = readinputportbytag_safe(port[offset], 0xff);
+	if (ssio_custom_input[offset])
+		result = (result & ~ssio_custom_input_mask[offset]) |
+		         ((*ssio_custom_input[offset])(offset) & ssio_custom_input_mask[offset]);
+	return result;
+}
+
+WRITE8_HANDLER( ssio_output_port_w )
+{
+	int which = offset >> 2;
+	if (which == 0)
+		mcr_control_port_w(offset, data);
+	if (ssio_custom_output[which])
+		(*ssio_custom_output[which])(offset, data & ssio_custom_output_mask[which]);
+}
+
+void ssio_set_custom_input(int which, int mask, read8_handler handler)
+{
+	ssio_custom_input[which] = handler;
+	ssio_custom_input_mask[which] = mask;
+}
+
+void ssio_set_custom_output(int which, int mask, write8_handler handler)
+{
+	ssio_custom_output[which/4] = handler;
+	ssio_custom_output_mask[which/4] = mask;
 }
 
 
@@ -254,42 +437,38 @@ struct AY8910interface ssio_ay8910_interface_2 =
 
 
 /********* memory interfaces ***********/
-ADDRESS_MAP_START( ssio_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x9003) AM_READ(ssio_data_r)
-	AM_RANGE(0xa001, 0xa001) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0xb001, 0xb001) AM_READ(AY8910_read_port_1_r)
-	AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)
-	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_5_r)
-ADDRESS_MAP_END
 
-ADDRESS_MAP_START( ssio_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0xa002, 0xa002) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(AY8910_control_port_1_w)
-	AM_RANGE(0xb002, 0xb002) AM_WRITE(AY8910_write_port_1_w)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(ssio_status_w)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)
+/* address map verified from schematics */
+ADDRESS_MAP_START( ssio_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x8000, 0x83ff) AM_MIRROR(0x0c00) AM_RAM
+	AM_RANGE(0x9000, 0x9003) AM_MIRROR(0x0ffc) AM_READ(ssio_data_r)
+	AM_RANGE(0xa000, 0xa000) AM_MIRROR(0x0ffc) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_MIRROR(0x0ffc) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0xa002, 0xa002) AM_MIRROR(0x0ffc) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_MIRROR(0x0ffc) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xb001, 0xb001) AM_MIRROR(0x0ffc) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0xb002, 0xb002) AM_MIRROR(0x0ffc) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0xc000, 0xcfff) AM_READWRITE(MRA8_NOP, ssio_status_w)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITENOP	/* low bit controls yellow LED */
+	AM_RANGE(0xe000, 0xefff) AM_READ(ssio_irq_clear)
+	AM_RANGE(0xf000, 0xffff) AM_READ(port_tag_to_handler8("SSIO.DIP"))	/* 6 DIP switches */
 ADDRESS_MAP_END
 
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(mcr_ssio)
-	MDRV_CPU_ADD_TAG("ssio", Z80, 2000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(ssio_readmem,ssio_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
+	MDRV_CPU_ADD_TAG("ssio", Z80, SSIO_CLOCK/2/4)
+	MDRV_CPU_PROGRAM_MAP(ssio_map,0)
+	MDRV_CPU_PERIODIC_INT(ssio_14024_clock,TIME_IN_HZ(SSIO_CLOCK/2/16/10))
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD_TAG("ssio.1", AY8910, 2000000)
+	MDRV_SOUND_ADD_TAG("ssio.1", AY8910, SSIO_CLOCK/2/4)
 	MDRV_SOUND_CONFIG(ssio_ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
 
-	MDRV_SOUND_ADD_TAG("ssio.2", AY8910, 2000000)
+	MDRV_SOUND_ADD_TAG("ssio.2", AY8910, SSIO_CLOCK/2/4)
 	MDRV_SOUND_CONFIG(ssio_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
 MACHINE_DRIVER_END
@@ -315,6 +494,11 @@ static WRITE8_HANDLER( csdeluxe_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
+
+	/* some games tend to set the DDR only temporarily to allow these bits */
+	/* to go through, assuming that they will be effectively latched */
+	if (pia_get_ddr_b(0) & 0x30)
+		csdeluxe_status = (data >> 4) & 3;
 }
 
 static void csdeluxe_irq(int state)
@@ -326,6 +510,30 @@ static void csdeluxe_delayed_data_w(int param)
 {
 	pia_0_portb_w(0, param & 0x0f);
 	pia_0_ca1_w(0, ~param & 0x10);
+
+	/* oftentimes games will write one nibble at a time; the sync on this is very */
+	/* important, so we boost the interleave briefly while this happens */
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
+}
+
+static READ16_HANDLER( csdeluxe_pia_r )
+{
+	/* Spy Hunter accesses the MSB; Turbo Tag access via the LSB */
+	/* My guess is that Turbo Tag works through a fluke, whereby the 68000 */
+	/* using the MOVEP instruction outputs the same value on the high and */
+	/* low bytes. */
+	if (ACCESSING_MSB)
+		return pia_0_r(offset) << 8;
+	else
+		return pia_0_r(offset);
+}
+
+static WRITE16_HANDLER( csdeluxe_pia_w )
+{
+	if (ACCESSING_MSB)
+		pia_0_w(offset, data >> 8);
+	else
+		pia_0_w(offset, data);
 }
 
 
@@ -335,6 +543,11 @@ WRITE8_HANDLER( csdeluxe_data_w )
 	timer_set(TIME_NOW, data, csdeluxe_delayed_data_w);
 }
 
+READ8_HANDLER( csdeluxe_status_r )
+{
+	return csdeluxe_status;
+}
+
 void csdeluxe_reset_w(int state)
 {
 	cpunum_set_input_line(csdeluxe_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
@@ -342,10 +555,12 @@ void csdeluxe_reset_w(int state)
 
 
 /********* memory interfaces ***********/
+
+/* address map determined by PAL; not verified */
 ADDRESS_MAP_START( csdeluxe_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(17) )
 	AM_RANGE(0x000000, 0x007fff) AM_ROM
-	AM_RANGE(0x018000, 0x018007) AM_READWRITE(pia_0_msb_r, pia_0_msb_w)
+	AM_RANGE(0x018000, 0x018007) AM_READWRITE(csdeluxe_pia_r, csdeluxe_pia_w)
 	AM_RANGE(0x01c000, 0x01cfff) AM_RAM
 ADDRESS_MAP_END
 
@@ -361,13 +576,21 @@ struct pia6821_interface csdeluxe_pia_intf =
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(chip_squeak_deluxe)
-	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
-	/* audio CPU */
+	MDRV_CPU_ADD_TAG("csd", M68000, CSDELUXE_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(csdeluxe_map,0)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("csd", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START(chip_squeak_deluxe_stereo)
+	MDRV_CPU_ADD_TAG("csd", M68000, CSDELUXE_CLOCK/2)
+	MDRV_CPU_PROGRAM_MAP(csdeluxe_map,0)
+
+	MDRV_SOUND_ADD_TAG("csd", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -391,7 +614,11 @@ static WRITE8_HANDLER( soundsgood_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
-	soundsgood_status = (data >> 4) & 3;
+
+	/* some games tend to set the DDR only temporarily to allow these bits */
+	/* to go through, assuming that they will be effectively latched */
+	if (pia_get_ddr_b(1) & 0x30)
+		soundsgood_status = (data >> 4) & 3;
 }
 
 static void soundsgood_irq(int state)
@@ -403,6 +630,10 @@ static void soundsgood_delayed_data_w(int param)
 {
 	pia_1_portb_w(0, (param >> 1) & 0x0f);
 	pia_1_ca1_w(0, ~param & 0x01);
+
+	/* oftentimes games will write one nibble at a time; the sync on this is very */
+	/* important, so we boost the interleave briefly while this happens */
+	cpu_boost_interleave(0, TIME_IN_USEC(250));
 }
 
 
@@ -419,11 +650,14 @@ READ8_HANDLER( soundsgood_status_r )
 
 void soundsgood_reset_w(int state)
 {
+if (state) printf("SG Reset\n");
 	cpunum_set_input_line(soundsgood_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
 /********* memory interfaces ***********/
+
+/* address map determined by PAL; not verified */
 ADDRESS_MAP_START( soundsgood_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(19) )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
@@ -446,8 +680,7 @@ struct pia6821_interface soundsgood_pia_intf =
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(sounds_good)
-	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
-	/* audio CPU */
+	MDRV_CPU_ADD_TAG("sg", M68000, SOUNDSGOOD_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(soundsgood_map,0)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -461,7 +694,7 @@ MACHINE_DRIVER_END
  *
  *  MCR Turbo Chip Squeak communications
  *
- *  MC6809, 1 PIA, 8-bit DAC
+ *  MC6809, 1 PIA, 10-bit DAC
  *
  *************************************/
 
@@ -488,6 +721,10 @@ static void turbocs_delayed_data_w(int param)
 {
 	pia_0_portb_w(0, (param >> 1) & 0x0f);
 	pia_0_ca1_w(0, ~param & 0x01);
+
+	/* oftentimes games will write one nibble at a time; the sync on this is very */
+	/* important, so we boost the interleave briefly while this happens */
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
 }
 
 
@@ -509,18 +746,13 @@ void turbocs_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-ADDRESS_MAP_START( turbocs_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x4003) AM_READ(pia_0_r)	/* Max RPM accesses the PIA here */
-	AM_RANGE(0x6000, 0x6003) AM_READ(pia_0_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
 
-ADDRESS_MAP_START( turbocs_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4003) AM_WRITE(pia_0_w)	/* Max RPM accesses the PIA here */
-	AM_RANGE(0x6000, 0x6003) AM_WRITE(pia_0_w)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+/* address map verified from schematics */
+ADDRESS_MAP_START( turbocs_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x3800) AM_RAM
+	AM_RANGE(0x4000, 0x4003) AM_MIRROR(0x3ffc) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -535,9 +767,8 @@ struct pia6821_interface turbocs_pia_intf =
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(turbo_chip_squeak)
-	MDRV_CPU_ADD_TAG("tcs", M6809, 9000000/4)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(turbocs_readmem,turbocs_writemem)
+	MDRV_CPU_ADD_TAG("tcs", M6809, TURBOCS_CLOCK/4)
+	MDRV_CPU_PROGRAM_MAP(turbocs_map,0)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("tcs", DAC, 0)
@@ -570,7 +801,12 @@ MACHINE_DRIVER_END
 /********* internal interfaces ***********/
 static WRITE8_HANDLER( squawkntalk_porta1_w )
 {
-	logerror("Write to AY-8912\n");
+	logerror("Write to AY-8912 = %02X\n", data);
+}
+
+static WRITE8_HANDLER( squawkntalk_dac_w )
+{
+	logerror("Write to DAC = %02X\n", data);
 }
 
 static WRITE8_HANDLER( squawkntalk_porta2_w )
@@ -632,18 +868,28 @@ void squawkntalk_reset_w(int state)
 
 
 /********* memory interfaces ***********/
-ADDRESS_MAP_START( squawkntalk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0080, 0x0083) AM_READ(pia_0_r)
-	AM_RANGE(0x0090, 0x0093) AM_READ(pia_1_r)
-	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
+
+/* address map verified from schematics */
+/* note that jumpers control the ROM sizes; if these are changed, use the alternate */
+/* address map below */
+ADDRESS_MAP_START( squawkntalk_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x007f) AM_RAM		/* internal RAM */
+	AM_RANGE(0x0080, 0x0083) AM_MIRROR(0x4f6c) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0x0090, 0x0093) AM_MIRROR(0x4f6c) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0x1000, 0x1fff) AM_MIRROR(0x4000) AM_WRITE(squawkntalk_dac_w)
+	AM_RANGE(0x8000, 0xbfff) AM_MIRROR(0x4000) AM_ROM
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( squawkntalk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0080, 0x0083) AM_WRITE(pia_0_w)
-	AM_RANGE(0x0090, 0x0093) AM_WRITE(pia_1_w)
-	AM_RANGE(0xd000, 0xffff) AM_WRITE(MWA8_ROM)
+/* alternate address map if the ROM jumpers are changed to support a smaller */
+/* ROM size of 2k */
+ADDRESS_MAP_START( squawkntalk_alt_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x007f) AM_RAM		/* internal RAM */
+	AM_RANGE(0x0080, 0x0083) AM_MIRROR(0x676c) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0x0090, 0x0093) AM_MIRROR(0x676c) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0x0800, 0x0fff) AM_MIRROR(0x6000) AM_WRITE(squawkntalk_dac_w)
+	AM_RANGE(0x8000, 0x9fff) AM_MIRROR(0x6000) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -665,12 +911,14 @@ struct pia6821_interface squawkntalk_pia1_intf =
 
 /********* machine driver ***********/
 MACHINE_DRIVER_START(squawk_n_talk)
-	MDRV_CPU_ADD_TAG("snt", M6802, 3580000/4)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(squawkntalk_readmem,squawkntalk_writemem)
+	MDRV_CPU_ADD_TAG("snt", M6802, SQUAWKTALK_CLOCK/4)
+	MDRV_CPU_PROGRAM_MAP(squawkntalk_map,0)
 
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
+	/* only used on Discs of Tron, which is stereo */
 	MDRV_SOUND_ADD_TAG("snt", TMS5220, 640000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+
+	/* the board also supports an AY-8912 and/or an 8-bit DAC, neither of */
+	/* which are populated on the Discs of Tron board */
 MACHINE_DRIVER_END

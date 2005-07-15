@@ -237,7 +237,7 @@ DRIVER_INIT(mquake)
 	amiga_machine_config(&mquake_intf);
 
 	/* set up memory */
-	cpu_setbank(1, memory_region(REGION_USER1));
+	memory_set_bankptr(1, memory_region(REGION_USER1));
 
 }
 

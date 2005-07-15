@@ -628,7 +628,7 @@ static void blit_vert_line(void)
 
 
 
-static inline void log_blit(int data)
+INLINE void log_blit(int data)
 {
 	logerror("%06x: blit src %06x x %03x y %03x flags %02x layer %02x pen %02x penmode %02x w %03x h %03x linelen %03x clip: ctrl %x xy %03x %03x wh %03x %03x\n",
 			activecpu_get_pc(),
@@ -1730,11 +1730,11 @@ WRITE8_HANDLER( rongrong_select_w )
 
 //logerror("%04x: rongrong_select_w %02x\n",activecpu_get_pc(),data);
 	/* bits 0-4 = **both** ROM bank **AND** input select */
-	cpu_setbank(1, &rom[0x10000 + 0x8000 * (data & 0x1f)]);
+	memory_set_bankptr(1, &rom[0x10000 + 0x8000 * (data & 0x1f)]);
 	rongrong_select = data;
 
 	/* bits 5-7 = RAM bank */
-	cpu_setbank(2, &rom[0x110000 + 0x1000 * ((data & 0xe0) >> 5)]);
+	memory_set_bankptr(2, &rom[0x110000 + 0x1000 * ((data & 0xe0) >> 5)]);
 }
 
 
@@ -1856,7 +1856,7 @@ static WRITE8_HANDLER( mmpanic_select_w )
 static WRITE8_HANDLER( mmpanic_rombank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
-	cpu_setbank(1, &rom[0x10000 + 0x8000 * (data & 0x7)]);
+	memory_set_bankptr(1, &rom[0x10000 + 0x8000 * (data & 0x7)]);
 	/* Bit 4? */
 }
 
@@ -2016,9 +2016,9 @@ WRITE8_HANDLER( hanakanz_rombank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 
-	cpu_setbank(1, &rom[0x10000 + 0x8000 * (data & 0x0f)]);
+	memory_set_bankptr(1, &rom[0x10000 + 0x8000 * (data & 0x0f)]);
 
-	cpu_setbank(2, &rom[0x90000 + 0x1000 * ((data & 0xf0) >> 4)]);
+	memory_set_bankptr(2, &rom[0x90000 + 0x1000 * ((data & 0xf0) >> 4)]);
 }
 
 static ADDRESS_MAP_START( hanakanz_readmem, ADDRESS_SPACE_PROGRAM, 8 )

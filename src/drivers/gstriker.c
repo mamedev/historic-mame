@@ -227,7 +227,7 @@ static WRITE8_HANDLER( gs_sh_bankswitch_w )
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x8000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	memory_set_bankptr(1,&RAM[bankaddress]);
 }
 
 /*** GFX DECODE **************************************************************/

@@ -722,8 +722,8 @@ static unsigned char curbank;
 
 static void reset_bank(void)
 {
-	cpu_setbank(1, memory_region(REGION_USER1) + curbank * 0x40000);
-	cpu_setbank(2, memory_region(REGION_USER1) + curbank * 0x40000);
+	memory_set_bankptr(1, memory_region(REGION_USER1) + curbank * 0x40000);
+	memory_set_bankptr(2, memory_region(REGION_USER1) + curbank * 0x40000);
 }
 
 static READ16_HANDLER( curbank_r )

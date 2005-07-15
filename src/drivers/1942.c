@@ -85,7 +85,7 @@ static WRITE8_HANDLER( c1942_bankswitch_w )
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
-	cpu_setbank(1, &ROM[bankaddress]);
+	memory_set_bankptr(1, &ROM[bankaddress]);
 }
 
 

@@ -1849,40 +1849,6 @@ static void cpu_timedintcallback(int param)
 
 /*************************************
  *
- *  Converts an integral timing rate
- *  into a period
- *
- *************************************/
-
-/*--------------------------------------------------------------
-
-    Rates can be specified as follows:
-
-        rate <= 0       -> 0
-        rate < 50000    -> 'rate' cycles per frame
-        rate >= 50000   -> 'rate' nanoseconds
-
---------------------------------------------------------------*/
-
-static mame_time cpu_computerate(int value)
-{
-	/* values equal to zero are zero */
-	if (value <= 0)
-		return time_zero;
-
-	/* values above between 0 and 50000 are in Hz */
-	if (value < 50000)
-		return double_to_mame_time(1.0 / value);
-
-	/* values greater than 50000 are in nanoseconds */
-	else
-		return double_to_mame_time(TIME_IN_NSEC(value));
-}
-
-
-
-/*************************************
- *
  *  Callback to force a timeslice
  *
  *************************************/
@@ -2030,10 +1996,9 @@ static void cpu_inittimers(void)
 		cpu[cpunum].vblankint_timer = mame_timer_alloc(NULL);
 
 		/* see if we need to allocate a CPU timer */
-		ipf = Machine->drv->cpu[cpunum].timed_interrupts_per_second;
-		if (ipf)
+		if (Machine->drv->cpu[cpunum].timed_interrupt_period)
 		{
-			cpu[cpunum].timedint_period = cpu_computerate(ipf);
+			cpu[cpunum].timedint_period = double_to_mame_time(Machine->drv->cpu[cpunum].timed_interrupt_period);
 			cpu[cpunum].timedint_timer = mame_timer_alloc(cpu_timedintcallback);
 			mame_timer_adjust(cpu[cpunum].timedint_timer, cpu[cpunum].timedint_period, cpunum, cpu[cpunum].timedint_period);
 		}

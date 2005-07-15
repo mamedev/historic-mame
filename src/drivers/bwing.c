@@ -408,7 +408,7 @@ static MACHINE_DRIVER_START( bwing )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(bwp3_readmem, bwp3_writemem)
 	MDRV_CPU_IO_MAP(bwp3_readport, bwp3_writeport)
-	MDRV_CPU_PERIODIC_INT(bwp3_interrupt, 1000)
+	MDRV_CPU_PERIODIC_INT(bwp3_interrupt, TIME_IN_HZ(1000))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(600)	// must be long enough for polling

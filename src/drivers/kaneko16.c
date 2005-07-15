@@ -975,7 +975,7 @@ static WRITE8_HANDLER( blazeon_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 7;
-	cpu_setbank(15, &RAM[bank * 0x10000 + 0x1000]);
+	memory_set_bankptr(15, &RAM[bank * 0x10000 + 0x1000]);
 }
 #endif
 
@@ -1006,7 +1006,7 @@ WRITE8_HANDLER( sandscrp_bankswitch_w )
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
 
-	cpu_setbank(1, RAM);
+	memory_set_bankptr(1, RAM);
 }
 
 static READ8_HANDLER( sandscrp_latchstatus_r )
@@ -2429,13 +2429,13 @@ static MACHINE_DRIVER_START( sandscrp )
 
 	MDRV_SOUND_ADD(OKIM6295, 12000000/6/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 
 	MDRV_SOUND_ADD(YM2203, 4000000)
 	MDRV_SOUND_CONFIG(ym2203_intf_sandscrp)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -3467,6 +3467,26 @@ ROM_START( sandscrp )
 ROM_END
 
 
+ROM_START( sandscra )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "11.ic4", 0x000000, 0x040000, CRC(80020cab) SHA1(4f1f4d8ea07ad745f2d6d3f800686f07fe4bf20f) )
+	ROM_LOAD16_BYTE( "12.ic5", 0x000001, 0x040000, CRC(8df1d42f) SHA1(2a9db5c4b99a8a3f62bffa9ddd96a95e2042602b) )
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "sandsc08.bin", 0x00000, 0x0c000, CRC(6f3e9db1) SHA1(06a04fa17f44319986913bff70433510c89e38f1) )
+	ROM_CONTINUE(             0x10000, 0x14000             )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ss502.ic16", 0x000000, 0x100000, CRC(d8012ebb) SHA1(975bbb3b57a09e41d2257d4fa3a64097144de554) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layers */
+	ROM_LOAD16_WORD_SWAP( "ss501.ic30", 0x000000, 0x100000, CRC(0cf9f99d) SHA1(47f7f120d2bc075bedaff0a44306a8f46a1d848c) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "sandsc07.bin", 0x000000, 0x040000, CRC(9870ab12) SHA1(5ea3412cbc57bfaa32a1e2552b2eb46f4ceb5fa8) )
+ROM_END
+
+
 /***************************************************************************
 
                                 Shogun Warriors
@@ -3874,7 +3894,8 @@ GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall,   ROT0,  "Kaneko",
 GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World)" )
 GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)" )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16,   ROT0,  "Atlus",  "Blaze On (Japan)" )
-GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion" )
+GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 1)" )
+GAME( 1992, sandscra, sandscrp, sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 2)" )
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
 GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
 GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )

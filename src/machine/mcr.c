@@ -222,7 +222,7 @@ MACHINE_INIT( mcr )
 	mcr_cocktail_flip = 0;
 
 	/* initialize the sound */
-	mcr_sound_init();
+	mcr_sound_reset();
 }
 
 
@@ -258,8 +258,7 @@ static void mcr68_common_init(void)
 	mcr_cocktail_flip = 0;
 
 	/* initialize the sound */
-	pia_unconfig();
-	mcr_sound_init();
+	mcr_sound_reset();
 }
 
 

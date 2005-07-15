@@ -102,7 +102,7 @@ WRITE8_HANDLER( pcup_prgbank_w )
 	unsigned char *ROM1 = memory_region(REGION_USER1);
 
 	bank = (data>>4) &0x07;
-	cpu_setbank(2,&ROM1[0x80000*(bank)]);
+	memory_set_bankptr(2,&ROM1[0x80000*(bank)]);
 
 }
 
@@ -336,8 +336,8 @@ static DRIVER_INIT (penocup)
         }
     }
 */
-	cpu_setbank(1,&ROM1[0x120000]);
-	cpu_setbank(2,&ROM1[0x180000]);
+	memory_set_bankptr(1,&ROM1[0x120000]);
+	memory_set_bankptr(2,&ROM1[0x180000]);
 
 
 

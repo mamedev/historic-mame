@@ -83,7 +83,7 @@ WRITE8_HANDLER( yunsung8_bankswitch_w )
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
 
-	cpu_setbank(1, RAM);
+	memory_set_bankptr(1, RAM);
 }
 
 /*
@@ -152,7 +152,7 @@ WRITE8_HANDLER( yunsung8_sound_bankswitch_w )
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
 
-	cpu_setbank(2, RAM);
+	memory_set_bankptr(2, RAM);
 
 	MSM5205_reset_w(0,data & 0x20);
 }

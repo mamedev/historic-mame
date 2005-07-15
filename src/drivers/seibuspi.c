@@ -787,7 +787,7 @@ static WRITE8_HANDLER( z80_bank_w )
 	if ((data & 7) != z80_lastbank)
 	{
 		z80_lastbank = (data & 7);
-		cpu_setbank(4, memory_region(REGION_CPU2) + (0x8000 * z80_lastbank));
+		memory_set_bankptr(4, memory_region(REGION_CPU2) + (0x8000 * z80_lastbank));
 	}
 }
 
@@ -1474,7 +1474,7 @@ static MACHINE_INIT( spi )
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, z80_enable_w);
 
-	cpu_setbank(4, memory_region(REGION_CPU2));
+	memory_set_bankptr(4, memory_region(REGION_CPU2));
 
 	/* If the first value doesn't match, the game shows a checksum error */
 	/* If any of the other values are wrong, the game goes to update mode */

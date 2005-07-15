@@ -1,13 +1,19 @@
-#ifndef __UNZIP_H
-#define __UNZIP_H
+/***************************************************************************
+
+    unzip.h
+
+    Functions to manipulate data within ZIP files.
+
+***************************************************************************/
+
+#pragma once
+
+#ifndef __UNZIP_H__
+#define __UNZIP_H__
 
 #include "osd_cpu.h"
 #include "osdepend.h"
 #include <stdio.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /***************************************************************************
  * Support for retrieving files from zipfiles
@@ -133,8 +139,4 @@ void unzip_cache_clear(void);
 /* public globals */
 extern int	gUnzipQuiet;	/* flag controls error messages */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif	/* __UNZIP_H__ */

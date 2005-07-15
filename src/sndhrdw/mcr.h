@@ -12,11 +12,16 @@
 
 /************ Generic MCR routines ***************/
 
-void mcr_sound_init(void);
+void mcr_sound_init(UINT8 config);
+void mcr_sound_reset(void);
 
 WRITE8_HANDLER( ssio_data_w );
 READ8_HANDLER( ssio_status_r );
+READ8_HANDLER( ssio_input_port_r );
+WRITE8_HANDLER( ssio_output_port_w );
 void ssio_reset_w(int state);
+void ssio_set_custom_input(int which, int mask, read8_handler handler);
+void ssio_set_custom_output(int which, int mask, write8_handler handler);
 
 WRITE8_HANDLER( csdeluxe_data_w );
 READ8_HANDLER( csdeluxe_status_r );
@@ -37,8 +42,6 @@ void squawkntalk_reset_w(int state);
 
 /************ Sound Configuration ***************/
 
-extern UINT8 mcr_sound_config;
-
 #define MCR_SSIO				0x01
 #define MCR_CHIP_SQUEAK_DELUXE	0x02
 #define MCR_SOUNDS_GOOD			0x04
@@ -46,8 +49,15 @@ extern UINT8 mcr_sound_config;
 #define MCR_SQUAWK_N_TALK		0x10
 #define MCR_WILLIAMS_SOUND		0x20
 
-#define MCR_CONFIGURE_SOUND(x) \
-	mcr_sound_config = x
+
+
+/************ SSIO input ports ***************/
+
+#define SSIO_INPUT_PORTS \
+	AM_RANGE(0x00, 0x04) AM_MIRROR(0x18) AM_READ(ssio_input_port_r) \
+	AM_RANGE(0x07, 0x07) AM_MIRROR(0x18) AM_READ(ssio_status_r) \
+	AM_RANGE(0x00, 0x07) AM_MIRROR(0x03) AM_WRITE(ssio_output_port_w) \
+	AM_RANGE(0x1c, 0x1f) AM_WRITE(ssio_data_w)
 
 
 
@@ -55,6 +65,7 @@ extern UINT8 mcr_sound_config;
 
 MACHINE_DRIVER_EXTERN( mcr_ssio );
 MACHINE_DRIVER_EXTERN( chip_squeak_deluxe );
+MACHINE_DRIVER_EXTERN( chip_squeak_deluxe_stereo );
 MACHINE_DRIVER_EXTERN( sounds_good );
 MACHINE_DRIVER_EXTERN( turbo_chip_squeak );
 MACHINE_DRIVER_EXTERN( turbo_chip_squeak_plus_sounds_good );

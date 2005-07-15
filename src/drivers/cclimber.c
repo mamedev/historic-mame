@@ -1457,7 +1457,7 @@ static MACHINE_DRIVER_START( swimmer )
 	/* audio CPU */	/* 2 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000000/16384) /* IRQs are triggered by the main CPU */
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(4000000/16384)) /* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

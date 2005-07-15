@@ -54,7 +54,7 @@ static WRITE8_HANDLER( blktiger_bankswitch_w )
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-	cpu_setbank(1,&rom[bankaddress]);
+	memory_set_bankptr(1,&rom[bankaddress]);
 }
 
 static WRITE8_HANDLER( blktiger_coinlockout_w )
