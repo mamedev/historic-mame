@@ -132,7 +132,7 @@ static int output[2];
 
 static void ctc_interrupt (int state)
 {
-	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0,state));
+	cpunum_set_input_line(1, 0, state);
 }
 
 static WRITE8_HANDLER( ctc_timer_1_w )

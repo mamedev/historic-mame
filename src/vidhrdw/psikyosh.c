@@ -1033,7 +1033,7 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
 						dt[0].y = ypos;
 					}
 					dt[1].text = 0;	/* terminate array */
-					displaytext(Machine->scrbitmap,dt);
+					displaytext(bitmap,dt);
 				}
 #endif
 #endif
@@ -1052,7 +1052,7 @@ VIDEO_START( psikyosh )
 		return 1;
 
 	/* Need 16-bit z-buffer */
-	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->scrbitmap->width, Machine->scrbitmap->height, 16)) == 0)
+	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16)) == 0)
 		return 1;
 
 	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */

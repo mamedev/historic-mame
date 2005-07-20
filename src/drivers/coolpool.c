@@ -366,16 +366,16 @@ static void amerdart_iop_response(int param)
 			break;
 
 		case 0x100:
-			iop_answer = (INT8)(readinputportbytag("XAXIS2") + readinputportbytag("YAXIS2")) << 6;
+			iop_answer = (INT8)(-readinputportbytag("YAXIS2") - readinputportbytag("XAXIS2")) << 6;
 			break;
 		case 0x101:
-			iop_answer = (INT8)(readinputportbytag("XAXIS2") - readinputportbytag("YAXIS2")) << 6;
+			iop_answer = (INT8)(-readinputportbytag("YAXIS2") + readinputportbytag("XAXIS2")) << 6;
 			break;
 		case 0x102:
-			iop_answer = (INT8)(readinputportbytag("XAXIS1") + readinputportbytag("YAXIS1")) << 6;
+			iop_answer = (INT8)(-readinputportbytag("YAXIS1") - readinputportbytag("XAXIS1")) << 6;
 			break;
 		case 0x103:
-			iop_answer = (INT8)(readinputportbytag("XAXIS1") - readinputportbytag("YAXIS1")) << 6;
+			iop_answer = (INT8)(-readinputportbytag("YAXIS1") + readinputportbytag("XAXIS1")) << 6;
 			break;
 
 		case 0x500:
@@ -893,6 +893,42 @@ ROM_START( amerdart )
 	ROM_LOAD16_WORD( "u23",  0x0f0000, 0x10000, CRC(d7c2b13b) SHA1(3561e08011f649e4d0c47792745b2a014167e816) )
 ROM_END
 
+ROM_START( amerdar2 )
+	ROM_REGION16_LE( 0x0a0000, REGION_USER1, 0 )	/* 34010 code */
+	ROM_LOAD16_BYTE( "u31",     0x000001, 0x10000, CRC(9628c422) SHA1(46b71acc746760962e34e9d7876f9499ea7d5c7c) )
+	ROM_LOAD16_BYTE( "u32",     0x000000, 0x10000, CRC(2d651ed0) SHA1(e2da2c3d8f25c17e26fd435c75983b2db8691993) )
+	ROM_LOAD16_BYTE( "u38",     0x020001, 0x10000, CRC(1eb8c887) SHA1(220f566043535c54ad1cf2216966c7f42099e50b) )
+	ROM_LOAD16_BYTE( "u39",     0x020000, 0x10000, CRC(2ab1ea68) SHA1(4e29a274c5c62b6ca92119eb320200beb784ca55) )
+	ROM_LOAD16_BYTE( "u45",     0x040001, 0x10000, CRC(74394375) SHA1(ceb7ae4e3253351da362cd0ada87702164005d17) )
+	ROM_LOAD16_BYTE( "u46",     0x040000, 0x10000, CRC(1188047e) SHA1(249f25582ab72eeee37798418460de312053660e) )
+	ROM_LOAD16_BYTE( "u52",     0x060001, 0x10000, CRC(5ac2f06d) SHA1(b3a5d0cd94bdffdbf5bd17dbb30c07bfad3fa5d0) )
+	ROM_LOAD16_BYTE( "u53",     0x060000, 0x10000, CRC(4bd25cf0) SHA1(d1092cc3b6172d6567acd21f79b22043380102b7) )
+	ROM_LOAD16_BYTE( "u57.bin", 0x080001, 0x10000, CRC(8a70f849) SHA1(dfd4cf90de2ab8cbeff458f0fd20110c1ed009e9) )
+	ROM_LOAD16_BYTE( "u58.bin", 0x080000, 0x10000, CRC(8bb81975) SHA1(b7666572ab543991c7deaa0ebefb8b4526a7e386) )
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 32015 code (missing) */
+	ROM_LOAD16_BYTE( "dspl",         0x00000, 0x08000, NO_DUMP )
+	ROM_LOAD16_BYTE( "dsph",         0x00001, 0x08000, NO_DUMP )
+
+	ROM_REGION( 0x100000, REGION_USER2, 0 )				/* 32015 data? (incl. samples?) */
+	ROM_LOAD16_WORD( "u1.bin",   0x000000, 0x10000, CRC(e2bb7f54) SHA1(39eeb61a852b93331f445cc1c993727e52959660) )
+	ROM_LOAD16_WORD( "u2",      0x010000, 0x10000, CRC(a587fffd) SHA1(f33f511d1bf1d6eb3c42535593a9718571174c4b) )
+	ROM_LOAD16_WORD( "u3",      0x020000, 0x10000, CRC(984d343a) SHA1(ee214830de4cb22d2d8e9d3ca335eff05af4abb6) )
+	ROM_LOAD16_WORD( "u4",      0x030000, 0x10000, CRC(c4765ff6) SHA1(7dca61d32300047ca1c089057e617553d60a0995) )
+	ROM_LOAD16_WORD( "u5",      0x040000, 0x10000, CRC(3b63b890) SHA1(a1223cb8884d5365af7d3f607657efff877f8845) )
+	ROM_LOAD16_WORD( "u6",      0x050000, 0x10000, CRC(5cdb9aa9) SHA1(fae5d2c7f649bcba8068c8bc8266ee411258535e) )
+	ROM_LOAD16_WORD( "u7",      0x060000, 0x10000, CRC(147083a2) SHA1(c04c38145ab159bd519e6325477a3f7d0eebbda1) )
+	ROM_LOAD16_WORD( "u8",      0x070000, 0x10000, CRC(975b368c) SHA1(1d637ce8c5d60833bb25aab2610e1a856720235e) )
+	ROM_LOAD16_WORD( "u16",     0x080000, 0x10000, CRC(7437e8bf) SHA1(754be4822cd586590f09e706d7eb48e5ba8c8817) )
+	ROM_LOAD16_WORD( "u17",     0x090000, 0x10000, CRC(e32bdd0f) SHA1(0662abbe84f0bad2631566b506ef016fcd79b9ee) )
+	ROM_LOAD16_WORD( "u18",     0x0a0000, 0x10000, CRC(de3b4d7c) SHA1(68e7ffe2d84aef7c24d1787c4f9b6950c0107741) )
+	ROM_LOAD16_WORD( "u19",     0x0b0000, 0x10000, CRC(7109247c) SHA1(201809ec6599b30c26823bde6851b6eaa2589710) )
+	ROM_LOAD16_WORD( "u20",     0x0c0000, 0x10000, CRC(038b7d2d) SHA1(80bab18ca36d2bc101da7f3f6e1c82d8a802c14c) )
+	ROM_LOAD16_WORD( "u21",     0x0d0000, 0x10000, CRC(9b0b8978) SHA1(b31d0451ecd7085c191d20b2b41d0e8fe551996c) )
+	ROM_LOAD16_WORD( "u22",     0x0e0000, 0x10000, CRC(4b92588a) SHA1(eea262c1a122015364a0046ff2bc7816f5f6821d) )
+	ROM_LOAD16_WORD( "u23.bin", 0x0f0000, 0x10000, CRC(7c1e6f2e) SHA1(21ae530e4bd7c0c9f1a84f01f136c71952c8adc4) )
+ROM_END
+
 
 ROM_START( coolpool )
 	ROM_REGION16_LE( 0x40000, REGION_USER1, 0 )	/* 34010 code */
@@ -1052,7 +1088,8 @@ static DRIVER_INIT( 9ballsht )
  *
  *************************************/
 
-GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts", GAME_NO_SOUND )
+GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 1)", GAME_NO_SOUND )
+GAMEX(1989, amerdar2, amerdart, amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 2)", GAME_NO_SOUND )
 GAME( 1992, coolpool, 0,        coolpool, coolpool, coolpool, ROT0, "Catalina", "Cool Pool" )
 GAME( 1993, 9ballsht, 0,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)" )
 GAME( 1993, 9ballsh2, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)" )

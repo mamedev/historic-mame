@@ -16,7 +16,7 @@ data16_t *splash_spriteram;
 data16_t *splash_pixelram;
 data16_t *roldfrog_bitmap_mode;
 int splash_bitmap_type;
-static struct tilemap *screen[2];
+static struct tilemap *tilemap[2];
 
 /***************************************************************************
 
@@ -28,7 +28,7 @@ static struct tilemap *screen[2];
     Tile format
     -----------
 
-    Screen 0: (64*32, 8x8 tiles)
+    Tilemap 0: (64*32, 8x8 tiles)
 
     Word | Bit(s)            | Description
     -----+-FEDCBA98-76543210-+--------------------------
@@ -36,7 +36,7 @@ static struct tilemap *screen[2];
       0  | ----xxxx -------- | sprite code (high 4 bits)
       0  | xxxx---- -------- | color
 
-    Screen 1: (32*32, 16x16 tiles)
+    Tilemap 1: (32*32, 16x16 tiles)
 
     Word | Bit(s)            | Description
     -----+-FEDCBA98-76543210-+--------------------------
@@ -47,7 +47,7 @@ static struct tilemap *screen[2];
       0  | xxxx---- -------- | color
 */
 
-static void get_tile_info_splash_screen0(int tile_index)
+static void get_tile_info_splash_tilemap0(int tile_index)
 {
 	int data = splash_videoram[tile_index];
 	int attr = data >> 8;
@@ -60,7 +60,7 @@ static void get_tile_info_splash_screen0(int tile_index)
 			0)
 }
 
-static void get_tile_info_splash_screen1(int tile_index)
+static void get_tile_info_splash_tilemap1(int tile_index)
 {
 	int data = splash_videoram[(0x1000/2) + tile_index];
 	int attr = data >> 8;
@@ -90,7 +90,7 @@ WRITE16_HANDLER( splash_vram_w )
 	COMBINE_DATA(&splash_videoram[offset]);
 
 	if (oldword != splash_videoram[offset])
-		tilemap_mark_tile_dirty(screen[offset >> 11],((offset << 1) & 0x0fff) >> 1);
+		tilemap_mark_tile_dirty(tilemap[offset >> 11],((offset << 1) & 0x0fff) >> 1);
 }
 
 static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
@@ -181,16 +181,16 @@ static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle
 
 VIDEO_START( splash )
 {
-	screen[0] = tilemap_create(get_tile_info_splash_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	screen[1] = tilemap_create(get_tile_info_splash_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	tilemap[0] = tilemap_create(get_tile_info_splash_tilemap0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	tilemap[1] = tilemap_create(get_tile_info_splash_tilemap1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	if (!screen[0] || !screen[1])
+	if (!tilemap[0] || !tilemap[1])
 		return 1;
 
-	tilemap_set_transparent_pen(screen[0],0);
-	tilemap_set_transparent_pen(screen[1],0);
+	tilemap_set_transparent_pen(tilemap[0],0);
+	tilemap_set_transparent_pen(tilemap[1],0);
 
-	tilemap_set_scrollx(screen[0], 0, 4);
+	tilemap_set_scrollx(tilemap[0], 0, 4);
 
 	return 0;
 }
@@ -273,26 +273,26 @@ static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 VIDEO_UPDATE( splash )
 {
 	/* set scroll registers */
-	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
-	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
+	tilemap_set_scrolly(tilemap[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(tilemap[1], 0, splash_vregs[1]);
 
 	splash_draw_bitmap(bitmap,cliprect);
 
-	tilemap_draw(bitmap,cliprect,screen[1],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
 	splash_draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,screen[0],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
 }
 
 VIDEO_UPDATE( funystrp )
 {
 	/* set scroll registers */
-	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
-	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
+	tilemap_set_scrolly(tilemap[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(tilemap[1], 0, splash_vregs[1]);
 
 	splash_draw_bitmap(bitmap,cliprect);
 
-	tilemap_draw(bitmap,cliprect,screen[1],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
 	/*Sprite chip is similar but not the same*/
 	funystrp_draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,screen[0],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
 }

@@ -588,25 +588,6 @@ static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *
 
 /*****************************************************************************/
 
-VIDEO_UPDATE( m92 )
-{
-	/* Screen refresh is handled by raster interrupt routine, here
-        we just check the keyboard */
-	if (code_pressed_memory(KEYCODE_F1)) {
-		m92_raster_enable ^= 1;
-		if (m92_raster_enable)
-			usrintf_showmessage("Raster IRQ enabled");
-		else
-			usrintf_showmessage("Raster IRQ disabled");
-	}
-
-	/* Flipscreen appears hardwired to the dipswitch - strange */
-	if (readinputport(5)&1)
-		flip_screen_set(0);
-	else
-		flip_screen_set(1);
-}
-
 static void m92_update_scroll_positions(void)
 {
 	int i,pf1_off,pf2_off,pf3_off;
@@ -714,22 +695,24 @@ static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle 
 	m92_drawsprites(bitmap,cliprect);
 }
 
-void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
+VIDEO_UPDATE( m92 )
 {
-	struct rectangle clip;
+	m92_update_scroll_positions();
+	m92_screenrefresh(bitmap,cliprect);
 
-	clip.min_x = 0;//Machine->visible_area.min_x;
-	clip.max_x = 511;//Machine->visible_area.max_x;
-	clip.min_y = start_line+128;
-	clip.max_y = end_line+128;
-	if (clip.min_y < Machine->visible_area.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (clip.max_y > Machine->visible_area.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	if (clip.max_y > clip.min_y)
-	{
-		m92_update_scroll_positions();
-		m92_screenrefresh(bitmap,&clip);
+	/* check the keyboard */
+	if (code_pressed_memory(KEYCODE_F1)) {
+		m92_raster_enable ^= 1;
+		if (m92_raster_enable)
+			usrintf_showmessage("Raster IRQ enabled");
+		else
+			usrintf_showmessage("Raster IRQ disabled");
 	}
+
+	/* Flipscreen appears hardwired to the dipswitch - strange */
+	if (readinputport(5)&1)
+		flip_screen_set(0);
+	else
+		flip_screen_set(1);
 }
+

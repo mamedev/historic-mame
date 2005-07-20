@@ -267,9 +267,9 @@ namcos2_GetPosIrqScanline( void )
 	{
 		scanline = 0;
 	}
-	else if( scanline > Machine->scrbitmap->height )
+	else if( scanline > Machine->drv->screen_height )
 	{
-		scanline = Machine->scrbitmap->height;
+		scanline = Machine->drv->screen_height;
 	}
 	return scanline;
 } /* namcos2_GetPosIrqScanline */

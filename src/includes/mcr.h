@@ -13,11 +13,15 @@
 extern INT16 spyhunt_scrollx, spyhunt_scrolly;
 extern double mcr68_timing_factor;
 
-extern Z80_DaisyChain mcr_daisy_chain[];
+extern struct z80_irq_daisy_chain mcr_daisy_chain[];
 extern UINT8 mcr_cocktail_flip;
 
 extern struct GfxLayout mcr_bg_layout;
 extern struct GfxLayout mcr_sprite_layout;
+
+extern UINT32 mcr_cpu_board;
+extern UINT32 mcr_sprite_board;
+extern UINT32 mcr_ssio_board;
 
 MACHINE_INIT( mcr );
 MACHINE_INIT( mcr68 );
@@ -41,17 +45,14 @@ READ16_HANDLER( mcr68_6840_lower_r );
 extern INT8 mcr12_sprite_xoffs;
 extern INT8 mcr12_sprite_xoffs_flip;
 
-VIDEO_START( mcr1 );
-VIDEO_START( mcr2 );
+VIDEO_START( mcr );
 VIDEO_START( twotiger );
-VIDEO_START( journey );
 
 WRITE8_HANDLER( mcr1_videoram_w );
 WRITE8_HANDLER( mcr2_videoram_w );
 WRITE8_HANDLER( twotiger_videoram_w );
 
-VIDEO_UPDATE( mcr1 );
-VIDEO_UPDATE( mcr2 );
+VIDEO_UPDATE( mcr );
 VIDEO_UPDATE( journey );
 
 

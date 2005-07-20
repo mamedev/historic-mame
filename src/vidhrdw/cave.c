@@ -102,7 +102,6 @@ static struct {
 	int line_offset;
 	unsigned char *baseaddr_zbuf;
 	int line_offset_zbuf;
-	int origin_x, origin_y;
 } blit;
 
 #define MAX_PRIORITY 4
@@ -733,15 +732,8 @@ static void get_sprite_info_donpachi(void)
 
 static int sprite_init_cave(void)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
-
-	screen_width = Machine->scrbitmap->width;
-	screen_height = Machine->scrbitmap->height;
-
-	blit.origin_x = 0;
-	blit.origin_y = 0;
-	blit.baseaddr = bitmap->line[0];
-	blit.line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
+	screen_width = Machine->drv->screen_width;
+	screen_height = Machine->drv->screen_height;
 
 	if (cave_spritetype == 0 || cave_spritetype == 2)	// most of the games
 	{
@@ -1432,6 +1424,9 @@ VIDEO_UPDATE( cave )
 {
 	int pri, pri2;
 	int layers_ctrl = -1;
+
+	blit.baseaddr = bitmap->line[0];
+	blit.line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
 
 	/* Choose the tilemap to display (8x8 tiles or 16x16 tiles) */
 	if (tilemap_0)

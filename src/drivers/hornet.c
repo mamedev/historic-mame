@@ -386,7 +386,7 @@ VIDEO_UPDATE( hornet )
 {
 	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
 
-	video_update_voodoo(bitmap, cliprect);
+	video_update_voodoo(screen, bitmap, cliprect);
 
 	K037122_tile_update();
 	K037122_tile_draw(bitmap, cliprect);

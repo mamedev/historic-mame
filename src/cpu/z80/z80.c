@@ -92,6 +92,7 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "z80.h"
+#include "z80daisy.h"
 
 #define VERBOSE 0
 
@@ -139,19 +140,16 @@ static UINT8 z80_win_layout[] = {
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
 /* register is calculated as follows: refresh=(Z80.r&127)|(Z80.r2&128)      */
 /****************************************************************************/
-typedef struct {
-/* 00 */	PAIR	prvpc,pc,sp,af,bc,de,hl,ix,iy;
-/* 24 */	PAIR	af2,bc2,de2,hl2;
-/* 34 */	UINT8	r,r2,iff1,iff2,halt,im,i;
-/* 3B */	UINT8	irq_max;			/* number of daisy chain devices        */
-/* 3C */	INT8	request_irq;		/* daisy chain next request device      */
-/* 3D */	INT8	service_irq;		/* daisy chain next reti handling device */
-/* 3E */	UINT8	nmi_state;			/* nmi line state */
-/* 3F */	UINT8	irq_state;			/* irq line state */
-/* 40 */	UINT8	int_state[Z80_MAXDAISY];
-/* 44 */	Z80_DaisyChain irq[Z80_MAXDAISY];
-/* 84 */	int		(*irq_callback)(int irqline);
-/* 88 */	int		extra_cycles;		/* extra cycles for interrupts */
+typedef struct
+{
+	PAIR	prvpc,pc,sp,af,bc,de,hl,ix,iy;
+	PAIR	af2,bc2,de2,hl2;
+	UINT8	r,r2,iff1,iff2,halt,im,i;
+	UINT8	nmi_state;			/* nmi line state */
+	UINT8	irq_state;			/* irq line state */
+	struct z80_irq_daisy_chain *daisy;
+	int		(*irq_callback)(int irqline);
+	int		extra_cycles;		/* extra cycles for interrupts */
 }	Z80_Regs;
 
 #define CF	0x01
@@ -831,8 +829,7 @@ INLINE UINT32 ARG16(void)
 	if( IFF1 == 0 && IFF2 == 1 )								\
 	{															\
 		IFF1 = 1;												\
-		if( Z80.irq_state != CLEAR_LINE ||						\
-			Z80.request_irq >= 0 )								\
+		if( Z80.irq_state != CLEAR_LINE)						\
 		{														\
 			LOG(("Z80 #%d RETN takes IRQ\n",					\
 				cpu_getactivecpu()));							\
@@ -846,17 +843,12 @@ INLINE UINT32 ARG16(void)
  * RETI
  ***************************************************************/
 #define RETI	{												\
-	int device = Z80.service_irq;								\
 	POP( pc );													\
 	change_pc(PCD);												\
 /* according to http://www.msxnet.org/tech/z80-documented.pdf */\
 /*  IFF1 = IFF2;    */											\
-	if( device >= 0 )											\
-	{															\
-		LOG(("Z80 #%d RETI device %d: $%02x\n",					\
-			cpu_getactivecpu(), device, Z80.irq[device].irq_param)); \
-		Z80.irq[device].interrupt_reti(Z80.irq[device].irq_param); \
-	}															\
+	if (Z80.daisy)												\
+		z80daisy_call_reti_device(Z80.daisy);					\
 }
 
 /***************************************************************
@@ -1755,8 +1747,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 			PC++;												\
 			R++;												\
 		}														\
-		if( Z80.irq_state != CLEAR_LINE ||						\
-			Z80.request_irq >= 0 )								\
+		if( Z80.irq_state != CLEAR_LINE)						\
 		{														\
 			after_EI = 1;	/* avoid cycle skip hacks */		\
 			EXEC(op,ROP());										\
@@ -3679,25 +3670,18 @@ static void take_interrupt(void)
 		/* Check if processor was halted */
 		LEAVE_HALT;
 
-		if( Z80.irq_max )			/* daisy chain mode */
-		{
-			if( Z80.request_irq >= 0 )
-			{
-				/* Clear both interrupt flip flops */
-				IFF1 = IFF2 = 0;
-				irq_vector = Z80.irq[Z80.request_irq].interrupt_entry(Z80.irq[Z80.request_irq].irq_param);
-				LOG(("Z80 #%d daisy chain irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-				Z80.request_irq = -1;
-			} else return;
-		}
+		/* Clear both interrupt flip flops */
+		IFF1 = IFF2 = 0;
+
+		/* Daisy chain mode? If so, call the requesting device */
+		if (Z80.daisy)
+			irq_vector = z80daisy_call_ack_device(Z80.daisy);
+
+		/* else call back the cpu interface to retrieve the vector */
 		else
-		{
-			/* Clear both interrupt flip flops */
-			IFF1 = IFF2 = 0;
-			/* call back the cpu interface to retrieve the vector */
 			irq_vector = (*Z80.irq_callback)(0);
-			LOG(("Z80 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-		}
+
+		LOG(("Z80 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
 
 		/* Interrupt mode 2. Call [Z80.i:databyte] */
 		if( IM == 2 )
@@ -3868,13 +3852,8 @@ static void z80_init(void)
 	state_save_register_UINT8("z80", cpu, "HALT", &Z80.halt, 1);
 	state_save_register_UINT8("z80", cpu, "IM", &Z80.im, 1);
 	state_save_register_UINT8("z80", cpu, "I", &Z80.i, 1);
-	state_save_register_UINT8("z80", cpu, "irq_max", &Z80.irq_max, 1);
-	state_save_register_INT8("z80", cpu, "request_irq", &Z80.request_irq, 1);
-	state_save_register_INT8("z80", cpu, "service_irq", &Z80.service_irq, 1);
-	state_save_register_UINT8("z80", cpu, "int_state", Z80.int_state, 4);
 	state_save_register_UINT8("z80", cpu, "nmi_state", &Z80.nmi_state, 1);
 	state_save_register_UINT8("z80", cpu, "irq_state", &Z80.irq_state, 1);
-	/* daisy chain needs to be saved by z80ctc.c somehow */
 }
 
 /****************************************************************************
@@ -3882,28 +3861,15 @@ static void z80_init(void)
  ****************************************************************************/
 static void z80_reset(void *param)
 {
-	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	memset(&Z80, 0, sizeof(Z80));
 	IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	F = ZF;			/* Zero flag is set */
-	Z80.request_irq = -1;
-	Z80.service_irq = -1;
 	Z80.nmi_state = CLEAR_LINE;
 	Z80.irq_state = CLEAR_LINE;
+	Z80.daisy = param;
 
-	if( daisy_chain )
-	{
-		while( daisy_chain->irq_param != -1 && Z80.irq_max < Z80_MAXDAISY )
-		{
-			/* set callbackhandler after reti */
-			Z80.irq[Z80.irq_max] = *daisy_chain;
-			/* device reset */
-			if( Z80.irq[Z80.irq_max].reset )
-				Z80.irq[Z80.irq_max].reset(Z80.irq[Z80.irq_max].irq_param);
-			Z80.irq_max++;
-			daisy_chain++;
-		}
-	}
+	if (Z80.daisy)
+		z80daisy_reset(Z80.daisy);
 
 	change_pc(PCD);
 }
@@ -3998,48 +3964,15 @@ static void set_irq_line(int irqline, int state)
 	else
 	{
 		LOG(("Z80 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
+
+		/* update the IRQ state */
 		Z80.irq_state = state;
-		if( state == CLEAR_LINE ) return;
+		if (Z80.daisy)
+			Z80.irq_state = z80daisy_update_irq_state(Z80.daisy);
 
-		if( Z80.irq_max )
-		{
-			int daisychain, device, int_state;
-			daisychain = (*Z80.irq_callback)(irqline);
-			device = daisychain >> 8;
-			int_state = daisychain & 0xff;
-			LOG(("Z80 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
-
-			if( Z80.int_state[device] != int_state )
-			{
-				LOG((" change\n"));
-				/* set new interrupt status */
-				Z80.int_state[device] = int_state;
-				/* check interrupt status */
-				Z80.request_irq = Z80.service_irq = -1;
-
-				/* search higher IRQ or IEO */
-				for( device = 0 ; device < Z80.irq_max ; device ++ )
-				{
-					/* IEO = disable ? */
-					if( Z80.int_state[device] & Z80_INT_IEO )
-					{
-						Z80.request_irq = -1;		/* if IEO is disable , masking lower IRQ */
-						Z80.service_irq = device;	/* set highest interrupt service device */
-					}
-					/* IRQ = request ? */
-					if( Z80.int_state[device] & Z80_INT_REQ )
-						Z80.request_irq = device;
-				}
-				LOG(("Z80 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z80.service_irq, Z80.request_irq));
-				if( Z80.request_irq < 0 ) return;
-			}
-			else
-			{
-				LOG((" no change\n"));
-				return;
-			}
-		}
-		take_interrupt();
+		/* if there's something pending, take it */
+		if (Z80.irq_state != CLEAR_LINE)
+			take_interrupt();
 	}
 }
 
@@ -4133,18 +4066,6 @@ static void z80_set_info(UINT32 state, union cpuinfo *info)
 			break;
 		case CPUINFO_INT_REGISTER + Z80_HALT:
 			Z80.halt = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC0:
-			Z80.int_state[0] = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC1:
-			Z80.int_state[1] = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC2:
-			Z80.int_state[2] = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC3:
-			Z80.int_state[3] = info->i;
 			break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
@@ -4310,18 +4231,6 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z80_HALT:
 			info->i = Z80.halt;
 			break;
-		case CPUINFO_INT_REGISTER + Z80_DC0:
-			info->i = Z80.int_state[0];
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC1:
-			info->i = Z80.int_state[1];
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC2:
-			info->i = Z80.int_state[2];
-			break;
-		case CPUINFO_INT_REGISTER + Z80_DC3:
-			info->i = Z80.int_state[3];
-			break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:
@@ -4464,18 +4373,6 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 			break;
 		case CPUINFO_STR_REGISTER + Z80_HALT:
 			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", Z80.halt);
-			break;
-		case CPUINFO_STR_REGISTER + Z80_DC0:
-			sprintf(info->s = cpuintrf_temp_str(), "DC0:%X", Z80.irq_max >= 1 && Z80.int_state[0]);
-			break;
-		case CPUINFO_STR_REGISTER + Z80_DC1:
-			sprintf(info->s = cpuintrf_temp_str(), "DC1:%X", Z80.irq_max >= 2 && Z80.int_state[1]);
-			break;
-		case CPUINFO_STR_REGISTER + Z80_DC2:
-			sprintf(info->s = cpuintrf_temp_str(), "DC2:%X", Z80.irq_max >= 3 && Z80.int_state[2]);
-			break;
-		case CPUINFO_STR_REGISTER + Z80_DC3:
-			sprintf(info->s = cpuintrf_temp_str(), "DC3:%X", Z80.irq_max >= 4 && Z80.int_state[3]);
 			break;
 	}
 }

@@ -24,6 +24,7 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "sound/3812intf.h"
 #include "sound/dac.h"
+#include "cpu/z80/z80daisy.h"
 
 
 #define SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -488,12 +489,12 @@ static WRITE8_HANDLER( tmpz84c011_1_dir_pe_w )	{ pio_dir[9] = data; }
 
 static void ctc0_interrupt(int state)
 {
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line(0, 0, state);
 }
 
 static void ctc1_interrupt(int state)
 {
-	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line(1, 0, state);
 }
 
 /* CTC of main cpu, ch0 trigger is vblank */
@@ -4138,16 +4139,16 @@ INPUT_PORTS_START( mjegolf )
 INPUT_PORTS_END
 
 
-static Z80_DaisyChain daisy_chain_main[] =
+static struct z80_irq_daisy_chain daisy_chain_main[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 },	/* device 0 = CTC_0 */
-	{ 0, 0, 0, -1 }										/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 },	/* device 0 = CTC_0 */
+	{ 0, 0, 0, 0, -1 }										/* end mark */
 };
 
-static Z80_DaisyChain daisy_chain_sound[] =
+static struct z80_irq_daisy_chain daisy_chain_sound[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 1 },	/* device 0 = CTC_1 */
-	{ 0, 0, 0, -1 }										/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 1 },	/* device 0 = CTC_1 */
+	{ 0, 0, 0, 0, -1 }										/* end mark */
 };
 
 

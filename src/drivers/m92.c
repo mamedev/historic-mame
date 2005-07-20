@@ -229,7 +229,6 @@ WRITE8_HANDLER( m92_pf3_control_w );
 WRITE8_HANDLER( m92_master_control_w );
 VIDEO_START( m92 );
 VIDEO_UPDATE( m92 );
-void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line);
 
 extern int m92_raster_irq_position,m92_raster_enable;
 extern unsigned char *m92_vram_data,*m92_spritecontrol;
@@ -1161,36 +1160,24 @@ static struct IremGA20_interface iremGA20_interface =
 
 static INTERRUPT_GEN( m92_interrupt )
 {
-	if (osd_skip_this_frame()==0)
-		m92_vh_raster_partial_refresh(Machine->scrbitmap,0,249);
-
+	force_partial_update(249+128);
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_0); /* VBL */
 }
 
 static INTERRUPT_GEN( m92_raster_interrupt )
 {
-	static int last_line=0;
 	int line = M92_SCANLINES - cpu_getiloops();
 
 	/* Raster interrupt */
 	if (m92_raster_enable && line==m92_raster_irq_position) {
-		if (osd_skip_this_frame()==0)
-			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line+1);
-		last_line=line+1;
+		force_partial_update(line+128);
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_2);
 	}
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
 	else if (line==249) { /* 248 is last visible line */
-		if (osd_skip_this_frame()==0)
-			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,249);
-		last_line=249;
+		force_partial_update(249+128);
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_0);
-	}
-
-	/* End of vblank */
-	else if (line==M92_SCANLINES-1) {
-		last_line=0;
 	}
 }
 
@@ -2553,7 +2540,7 @@ GAME( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem Ame
 GAME( 1993, kaiteids, inthunt,  raster,    inthunt,  kaiteids,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)" )
 GAMEX(1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem America", "Ninja Baseball Batman (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, ssoldier, 0,  psoldier,  psoldier, ssoldier, ROT0,   "Irem America", "Superior Soldiers (US)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, ssoldier, 0,        psoldier,  psoldier, ssoldier, ROT0,   "Irem America", "Superior Soldiers (US)", GAME_IMPERFECT_SOUND )
 GAMEX(1993, psoldier, ssoldier, psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1994, dsccr94j, dsoccr94, psoldier,  dsccr94j, dsccr94j, ROT0,   "Irem",         "Dream Soccer '94 (Japan)" )
 GAME( 1994, gunforc2, 0,        raster,    gunforc2, gunforc2, ROT0,   "Irem",         "Gunforce 2 (US)" )

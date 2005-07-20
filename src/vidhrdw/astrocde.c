@@ -47,7 +47,6 @@ static int BackgroundData,VerticalBlank;
 
 static int sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
 
-static void (*astrocde_update_line)(struct mame_bitmap *bitmap,int line);
 static void wow_update_line(struct mame_bitmap *bitmap,int line);
 static void profpac_update_line(struct mame_bitmap *bitmap,int line);
 
@@ -184,8 +183,7 @@ static void interrupt_common(void)
 {
 	int i,next;
 
-	if (!osd_skip_this_frame())
-		astrocde_update_line(Machine->scrbitmap,CurrentScan);
+	force_partial_update(CurrentScan);
 
 	next = (CurrentScan + 1) % MAX_INT_PER_FRAME;
 	for (i = 0;i < 8;i++)
@@ -888,7 +886,6 @@ READ8_HANDLER( wow_io_r )
 VIDEO_START( astrocde )
 {
 	astrocde_videoram_r = wow_videoram_r;
-	astrocde_update_line = wow_update_line;
 
 	rng = auto_malloc(RNG_PERIOD * sizeof(rng[0]));
 	star = auto_malloc(SCREEN_WIDTH * MAX_LINES * sizeof(star[0]));
@@ -986,7 +983,6 @@ VIDEO_START( profpac )
 	profpac_videoram = auto_malloc(0x4000* 4 * sizeof(UINT16));
 
 	astrocde_videoram_r = profpac_videoram_r;
-	astrocde_update_line = profpac_update_line;
 
 	CurrentScan = 0;
 
@@ -1017,7 +1013,7 @@ VIDEO_UPDATE( astrocde )
 {
 	int i;
 
-	for (i = 0;i < MAX_LINES;i++)
+	for (i = cliprect->min_y;i <= cliprect->max_y;i++)
 		wow_update_line(bitmap,i);
 }
 
@@ -1025,7 +1021,7 @@ VIDEO_UPDATE( profpac )
 {
 	int i;
 
-	for (i = 0;i < MAX_LINES;i++)
+	for (i = cliprect->min_y;i <= cliprect->max_y;i++)
 		profpac_update_line(bitmap,i);
 }
 
@@ -1035,7 +1031,7 @@ VIDEO_UPDATE( seawolf2 )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	video_update_astrocde(bitmap,0);
+	video_update_astrocde(screen,bitmap,cliprect);
 
 
 	/* Draw a sight */

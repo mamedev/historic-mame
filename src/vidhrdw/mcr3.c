@@ -222,6 +222,17 @@ void mcr3_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		if (spriteram[offs] == 0)
 			continue;
 
+/*
+    monoboard:
+        flags.d0 -> ICG0~ -> PCG0~/PCG2~/PCG4~/PCG6~ -> bit 4 of linebuffer
+        flags.d1 -> ICG1~ -> PCG1~/PCG3~/PCG5~/PCG7~ -> bit 5 of linebuffer
+        flags.d2 -> IPPR  -> PPR0 /PPR1 /PPR2 /PPR3  -> bit 6 of linebuffer
+        flags.d3 -> IRA15 ----------------------------> address line 15 of FG ROMs
+        flags.d4 -> HFLIP
+        flags.d5 -> VFLIP
+
+*/
+
 		/* extract the bits of information */
 		flags = spriteram[offs + 1];
 		code = spriteram[offs + 2] + 256 * ((flags >> 3) & 0x01);

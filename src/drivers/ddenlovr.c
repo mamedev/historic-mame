@@ -23,6 +23,7 @@ Year + Game                 Board           CPU     Sound                       
 95 Nettoh Quiz Champion                     68000   AY8910 + YM2413 + M6295
 96 Hana Kanzashi                            Z80              YM2413 + M6295     70C160F011?
 97 Hana Kagerou                             Z80              YM2413 + M6295     70C160F011
+98 Mahjong Chuukanejyo                      Z80     AY8910 + YM2413 + M6295     70C160F009
 98 Mahjong Reach Ippatsu                    Z80              YM2413 + M6295     70C160F011
 ---------------------------------------------------------------------------------------------------------------------------
 
@@ -1034,8 +1035,8 @@ static READ8_HANDLER( rongrong_gfxrom_r )
 
 	if (address >= size)
 	{
-		address %= size;
 		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", activecpu_get_pc(), address);
+		address %= size;
 	}
 
 	dynax_blit_address++;
@@ -1108,7 +1109,7 @@ VIDEO_EOF(ddenlovr)
 	int enab2 = dynax_layer_enable2;
 
 #if 0
-	static int base = 0x68e5ff;
+	static int base = 0x0;
 
 	int next;
 	memset(pixmap[0],0,512*512);
@@ -1120,7 +1121,8 @@ VIDEO_EOF(ddenlovr)
 	dynax_blit_pen_mode = 0;
 	dynax_blit_y = 5;
 	dynax_clip_ctrl = 0x0f;
-	next = blit_draw(base,0,0);
+//  next = blit_draw(base,0);
+	next = hanakanz_blit_draw(base,0);
 if (code_pressed(KEYCODE_Z))
 	usrintf_showmessage("%06x",base);
 	if (code_pressed(KEYCODE_S)) base = next;
@@ -2084,8 +2086,8 @@ static READ8_HANDLER( hanakanz_gfxrom_r )
 
 	if (address >= size)
 	{
-		address %= size;
 		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", activecpu_get_pc(), address);
+		address %= size;
 	}
 
 	if (offset == 0)
@@ -2131,8 +2133,8 @@ static WRITE8_HANDLER( hanakanz_palette_w )
 	}
 	else
 	{
-		// rrrggggg 0rrbbbbb
-		// 21043210 04343210
+		// 0bbggggg bbbrrrrr
+		// 04343210 21043210
 
 		int g = dynax_blit_reg & 0x1f;
 		int r = data & 0x1f;
@@ -2247,6 +2249,144 @@ static ADDRESS_MAP_START( mjreach1_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0xa1, 0xa1) AM_WRITE( YM2413_data_port_0_w		)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE( OKIM6295_data_0_w		)
 	AM_RANGE(0xe0, 0xef) AM_WRITE( rtc_w					)	// 6242RTC
+ADDRESS_MAP_END
+
+
+/***************************************************************************
+     Mahjong Chuukanejyo
+***************************************************************************/
+
+static READ8_HANDLER( mjchuuka_keyb_r )
+{
+	data8_t val = 0xff;
+
+	if      (!(keyb & 0x01))	val = readinputport(offset * 5 + 1);
+	else if (!(keyb & 0x02))	val = readinputport(offset * 5 + 2);
+	else if (!(keyb & 0x04))	val = readinputport(offset * 5 + 3);
+	else if (!(keyb & 0x08))	val = readinputport(offset * 5 + 4);
+	else if (!(keyb & 0x10))	val = readinputport(offset * 5 + 5);
+
+	val |= readinputport(16 + offset);
+	if (offset)	val |= 0x80;	// blitter busy
+	return val;
+}
+
+static WRITE8_HANDLER( mjchuuka_blitter_w )
+{
+	hanakanz_blitter_reg_w(0,offset >> 8);
+	hanakanz_blitter_data_w(0,data);
+}
+
+static data8_t mjchuuka_romdata[2];
+
+static void mjchuuka_get_romdata(void)
+{
+	data8_t *rom	=	memory_region( REGION_GFX1 );
+	size_t size		=	memory_region_length( REGION_GFX1 );
+	int address		=	(dynax_blit_address & 0xffffff) * 2;
+
+	if (address >= size)
+	{
+		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", activecpu_get_pc(), address);
+		address %= size;
+	}
+
+	mjchuuka_romdata[0] = rom[address + 0];
+	mjchuuka_romdata[1] = rom[address + 1];
+}
+
+static READ8_HANDLER( mjchuuka_gfxrom_0_r )
+{
+	mjchuuka_get_romdata();
+	dynax_blit_address++;
+	return mjchuuka_romdata[0];
+}
+static READ8_HANDLER( mjchuuka_gfxrom_1_r )
+{
+	return mjchuuka_romdata[1];
+}
+
+static WRITE8_HANDLER( mjchuuka_palette_w )
+{
+	static int palette_index;
+	data16_t rgb = (offset & 0xff00) | data;
+
+	if (rgb & 0x8000)
+	{
+		palette_index = rgb & 0x1ff;
+	}
+	else
+	{
+		// 0bbggggg bbbrrrrr
+		// 04343210 21043210
+
+		int r = (rgb >> 0) & 0x1f;
+		int g = (rgb >> 8) & 0x1f;
+		int b = ((rgb >> 5) & 0x07) | ((rgb & 0x6000) >> 10);
+		r =  (r << 3) | (r >> 2);
+		g =  (g << 3) | (g >> 2);
+		b =  (b << 3) | (b >> 2);
+
+		palette_set_color((palette_index++)&0x1ff,r,g,b);
+	}
+}
+
+static WRITE8_HANDLER( mjchuuka_coincounter_w )
+{
+	// bit 0 = in counter
+	// bit 1 = out counter
+	// bit 3 = lockout
+	// bit 8?
+
+	coin_counter_w(0, data   & 0x01);
+	coin_lockout_w(0,(~data) & 0x08);
+
+	if (data & 0x74)
+		logerror("%04x: warning, coin counter = %02x\n", activecpu_get_pc(), data);
+
+#ifdef MAME_DEBUG
+//    usrintf_showmessage("40 = %02x",data);
+#endif
+}
+
+static WRITE8_HANDLER( mjchuuka_oki_bank_w )
+{
+	// data & 0x08 ?
+	OKIM6295_set_bank_base(0, (data & 0x01) ? 0x40000 : 0);
+
+#ifdef MAME_DEBUG
+//    usrintf_showmessage("1e = %02x",data);
+#endif
+}
+
+static ADDRESS_MAP_START( mjchuuka_readport, ADDRESS_SPACE_IO, 8 )	// 16 bit I/O
+	AM_RANGE(0x13, 0x13) AM_MIRROR(0xff00) AM_READ( hanakanz_rand_r			)
+	AM_RANGE(0x23, 0x23) AM_MIRROR(0xff00) AM_READ( mjchuuka_gfxrom_0_r		)
+	AM_RANGE(0x42, 0x42) AM_MIRROR(0xff00) AM_READ( input_port_0_r			)
+	AM_RANGE(0x43, 0x44) AM_MIRROR(0xff00) AM_READ( mjchuuka_keyb_r			)
+	AM_RANGE(0x45, 0x45) AM_MIRROR(0xff00) AM_READ( mjchuuka_gfxrom_1_r		)
+	AM_RANGE(0x60, 0x60) AM_MIRROR(0xff00) AM_READ( input_port_11_r			)	// DSW 1
+	AM_RANGE(0x61, 0x61) AM_MIRROR(0xff00) AM_READ( input_port_12_r			)	// DSW 2
+	AM_RANGE(0x62, 0x62) AM_MIRROR(0xff00) AM_READ( input_port_13_r			)	// DSW 3
+	AM_RANGE(0x63, 0x63) AM_MIRROR(0xff00) AM_READ( input_port_14_r			)	// DSW 4
+	AM_RANGE(0x64, 0x64) AM_MIRROR(0xff00) AM_READ( input_port_15_r			)	// DSW 1-4 high bits
+	AM_RANGE(0x80, 0x80) AM_MIRROR(0xff00) AM_READ( OKIM6295_status_0_r		)
+	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_READ( rtc_r					)	// 6242RTC
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mjchuuka_writeport, ADDRESS_SPACE_IO, 8 )	// 16 bit I/O
+	AM_RANGE(0x1c, 0x1c) AM_MIRROR(0xff00) AM_WRITE( hanakanz_rombank_w			)
+	AM_SPACE(0x20, 0xff)                   AM_WRITE( mjchuuka_blitter_w			)
+	AM_SPACE(0x21, 0xff)                   AM_WRITE( mjchuuka_palette_w			)
+	AM_RANGE(0x40, 0x40) AM_MIRROR(0xff00) AM_WRITE( mjchuuka_coincounter_w		)
+	AM_RANGE(0x41, 0x41) AM_MIRROR(0xff00) AM_WRITE( hanakanz_keyb_w			)
+	AM_RANGE(0x80, 0x80) AM_MIRROR(0xff00) AM_WRITE( OKIM6295_data_0_w			)
+	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_WRITE( rtc_w						)	// 6242RTC
+	AM_RANGE(0xa0, 0xa0) AM_MIRROR(0xff00) AM_WRITE( YM2413_register_port_0_w	)
+	AM_RANGE(0xa1, 0xa1) AM_MIRROR(0xff00) AM_WRITE( YM2413_data_port_0_w		)
+	AM_RANGE(0xe0, 0xe0) AM_MIRROR(0xff00) AM_WRITE( AY8910_control_port_0_w	)
+	AM_RANGE(0xe1, 0xe1) AM_MIRROR(0xff00) AM_WRITE( AY8910_write_port_0_w		)
+	AM_RANGE(0x1e, 0x1e) AM_MIRROR(0xff00) AM_WRITE( mjchuuka_oki_bank_w		)
 ADDRESS_MAP_END
 
 
@@ -2894,7 +3034,7 @@ INPUT_PORTS_START( hanakanz )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE  ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	// Test
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1	)	// analyzer
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2	)	// data clear
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4	)	// note
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2	)	// note
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1	)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN	)
 
@@ -3120,7 +3260,7 @@ INPUT_PORTS_START( hkagerou )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE  ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	// Test
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1	)	// analyzer
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2	)	// data clear
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4	)	// note
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2	)	// note
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1	)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN	)
 
@@ -3227,7 +3367,7 @@ INPUT_PORTS_START( hkagerou )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPNAME( 0x80, 0x80, "Note" )
+	PORT_DIPNAME( 0x80, 0x80, "Credits Per Note" )
 	PORT_DIPSETTING(    0x00, "25" )
 	PORT_DIPSETTING(    0x80, "50" )
 
@@ -3347,7 +3487,7 @@ INPUT_PORTS_START( mjreach1 )
 	PORT_SERVICE(0x04, IP_ACTIVE_LOW)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1	)	// analyzer
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2	)	// data clear
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4	)	// note
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2	)	// note
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1	)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN	)
 
@@ -3514,7 +3654,7 @@ INPUT_PORTS_START( mjreach1 )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "In Game Sound" )
+	PORT_DIPNAME( 0x02, 0x00, "In Game Music" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Girls (Demo)" )
@@ -3537,7 +3677,7 @@ INPUT_PORTS_START( mjreach1 )
 	PORT_DIPSETTING(    0x00, "Flip/Flop" )
 
 	PORT_START	// IN15 - DSWs top bits
-	PORT_DIPNAME( 0x01, 0x01, "Note Rate" )
+	PORT_DIPNAME( 0x01, 0x01, "Credits Per Note" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "10" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -3573,6 +3713,240 @@ INPUT_PORTS_START( mjreach1 )
 
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( mjchuuka )
+
+	PORT_START	// IN0 - Coins + Service Keys
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE3	)	// medal out
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+	PORT_SERVICE(0x04, IP_ACTIVE_LOW)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1	)	// analyzer
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2	)	// data clear
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2	)	// note
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1	)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+
+	// keyb 2
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A		)	PORT_PLAYER(2)	// A
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E		)	PORT_PLAYER(2)	// E
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I		)	PORT_PLAYER(2)	// I
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M		)	PORT_PLAYER(2)	// M
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN		)	PORT_PLAYER(2)	// Kan
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2			)	// Start 2
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B		)	PORT_PLAYER(2)	// B
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F		)	PORT_PLAYER(2)	// F
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J		)	PORT_PLAYER(2)	// J
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N		)	PORT_PLAYER(2)	// N
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH	)	PORT_PLAYER(2)	// Reach
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET		)	PORT_PLAYER(2)	// BET
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C		)	PORT_PLAYER(2)	// C
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G		)	PORT_PLAYER(2)	// G
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K		)	PORT_PLAYER(2)	// K
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI		)	PORT_PLAYER(2)	// Chi
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON		)	PORT_PLAYER(2)	// Ron
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D		)	PORT_PLAYER(2)	// D
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H		)	PORT_PLAYER(2)	// H
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L		)	PORT_PLAYER(2)	// L
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON		)	PORT_PLAYER(2)	// Pon
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE	)	PORT_PLAYER(2)	// "l"
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE		)	PORT_PLAYER(2)	// "t"
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP	)	PORT_PLAYER(2)	// "w"
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP	)	PORT_PLAYER(2)	// Flip Flop
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG			)	PORT_PLAYER(2)	// "b"
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL		)	PORT_PLAYER(2)	// "s"
+
+	// keyb 1
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A		)	// A
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E		)	// E
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I		)	// I
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M		)	// M
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN		)	// Kan
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1			)	// Start 1
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B		)	// B
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F		)	// F
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J		)	// J
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N		)	// N
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH	)	// Reach
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET		)	// BET
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C		)	// C
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G		)	// G
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K		)	// K
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI		)	// Chi
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON		)	// Ron
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D		)	// D
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H		)	// H
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L		)	// L
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON		)	// Pon
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN			)	// nothing
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE	)	// "l"
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE		)	// "t"
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP	)	// "w"
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP	)	// Flip Flop
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG			)	// "b"
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL		)	// "s"
+
+	PORT_START	// IN11 - DSW1
+	PORT_DIPNAME( 0x0f, 0x07, "Pay Out Rate (%)" )
+	PORT_DIPSETTING(    0x00, "50" )
+	PORT_DIPSETTING(    0x01, "53" )
+	PORT_DIPSETTING(    0x02, "56" )
+	PORT_DIPSETTING(    0x03, "59" )
+	PORT_DIPSETTING(    0x04, "62" )
+	PORT_DIPSETTING(    0x05, "65" )
+	PORT_DIPSETTING(    0x06, "68" )
+	PORT_DIPSETTING(    0x07, "71" )
+	PORT_DIPSETTING(    0x08, "75" )
+	PORT_DIPSETTING(    0x09, "78" )
+	PORT_DIPSETTING(    0x0a, "81" )
+	PORT_DIPSETTING(    0x0b, "84" )
+	PORT_DIPSETTING(    0x0c, "87" )
+	PORT_DIPSETTING(    0x0d, "90" )
+	PORT_DIPSETTING(    0x0e, "93" )
+	PORT_DIPSETTING(    0x0f, "96" )
+	PORT_DIPNAME( 0x30, 0x30, "Odds Rate" )
+	PORT_DIPSETTING(    0x20, "1 2 3 4 6 8 10 15" )
+	PORT_DIPSETTING(    0x30, "1 2 4 8 12 16 24 32" )
+	PORT_DIPSETTING(    0x00, "1 2 3 5 8 15 30 50" )
+	PORT_DIPSETTING(    0x10, "1 2 3 5 10 25 50 100" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Max Bet" )
+	PORT_DIPSETTING(    0xc0, "1" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0x40, "10" )
+	PORT_DIPSETTING(    0x00, "20" )
+
+	PORT_START	// IN12 - DSW2
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Min Credits To Start" )
+	PORT_DIPSETTING(    0x0c, "1" )
+//  PORT_DIPSETTING(    0x08, "2" ) // ? these don't let you start a game
+//  PORT_DIPSETTING(    0x04, "3" )
+//  PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x00, "255" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN13 - DSW3
+	PORT_DIPNAME( 0x07, 0x07, "YAKUMAN Bonus" )
+	PORT_DIPSETTING(    0x07, "Cut" )
+	PORT_DIPSETTING(    0x06, "1 T" )
+	PORT_DIPSETTING(    0x05, "300" )
+	PORT_DIPSETTING(    0x04, "500" )
+	PORT_DIPSETTING(    0x03, "700" )
+	PORT_DIPSETTING(    0x02, "1000" )
+	PORT_DIPSETTING(    0x01, "1000?" )
+	PORT_DIPSETTING(    0x00, "1000?" )
+	PORT_DIPNAME( 0x18, 0x18, "YAKUMAN Times" )
+//  PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x18, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x08, "3?" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, "149" )
+	PORT_DIPSETTING(    0x00, "212" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN14 - DSW4
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "In Game Music" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Girls" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, "Dressed" )
+	PORT_DIPSETTING(    0x04, "Underwear" )
+	PORT_DIPSETTING(    0x00, "Nude" )
+	PORT_DIPNAME( 0x10, 0x00, "Girls Speech" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN15 - DSWs top bits
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Credits Per Note" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x00, "10" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Computer Strength?" )
+	PORT_DIPSETTING(    0x0c, "Weak" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Normal ))
+	PORT_DIPSETTING(    0x04, "Strong" )
+	PORT_DIPSETTING(    0x00, "Very Strong" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 4-8" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 4-9" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN16 - Fake DSW
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN17 - Fake DSW
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
 
 /***************************************************************************
                             Don Den Lover Vol.1
@@ -3857,6 +4231,44 @@ static MACHINE_DRIVER_START( mjreach1 )
 	MDRV_IMPORT_FROM( hanakanz )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(mjreach1_readport,mjreach1_writeport)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
+     Mahjong Chuukanejyo
+***************************************************************************/
+
+/*  the CPU is in Interrupt Mode 2
+    vector can be 0xf8, 0xfa
+    0xf8 is vblank
+    0xfa is from the 6242RTC
+ */
+static INTERRUPT_GEN( mjchuuka_irq )
+{
+	static int count;
+
+	/* I haven't found a irq ack register, so I need this kludge to
+       make sure I don't lose any interrupt generated by the blitter,
+       otherwise quizchq would lock up. */
+	if (cpunum_get_info_int(0,CPUINFO_INT_INPUT_STATE + 0))
+		return;
+
+	if ((++count % 60) == 0)
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfa);
+	else
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xf8);
+}
+
+
+static MACHINE_DRIVER_START( mjchuuka )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( hanakanz )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(mjchuuka_readport,mjchuuka_writeport)
+	MDRV_CPU_VBLANK_INT(mjchuuka_irq,1)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4327,6 +4739,64 @@ ROM_START( mjreach1 )
 	ROM_LOAD( "52601.1c",     0x00000, 0x80000, CRC(52666107) SHA1(1e1c17b1da7ded5fc52422c7e569ef02af1ee11d) )	// 2 banks
 ROM_END
 
+/***************************************************************************
+
+Mahjong Chuukanejyo
+Dynax, 1995
+
+PCB Layout
+----------
+D11107218L1
+|-----------------------------------------------|
+|10WAY           18WAY          D12101 5.5V_BATT|
+|          358     358        6606              |
+|      VOL    6868A                             |
+|                         16MHz                 |
+|           95101                   62256       |
+|                        TMPZ84C015F-6          |
+|                                D12102         |
+|2                                        3631  |
+|8                                              |
+|W                                  PAL         |
+|A            28.322MHz                         |
+|Y                                              |
+|                          PAL                  |
+|             70C160F009                        |
+|                           D12103      D12104  |
+|              TC524256Z-12                     |
+|              TC524256Z-12 D12105      D12106  |
+|DIP1     DIP2 TC524256Z-12                     |
+|DIP3     DIP4 TC524256Z-12 D12107      D12108  |
+|-----------------------------------------------|
+Notes:
+      Main CPU is Toshiba TMPZ84C015F-6 (QFP100)
+      95101 - Unknown 40 pin DIP, maybe equivalent to AY-3-8910?
+      6868A - Unknown 18 pin DIP, maybe some other sound related chip or a PIC?
+      3631  - Unknown 18 pin DIP, maybe RTC or a PIC?
+      6606  - Unknown QFP44, probably OKI M6295?
+      70C160F009 - QFP208 Dynax Custom
+
+
+***************************************************************************/
+
+ROM_START( mjchuuka )
+	ROM_REGION( 0x90000+16*0x1000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "d12102.5b", 0x00000, 0x80000, CRC(585a0a8e) SHA1(94b3eede36117fe0a34b61454484c72cd7f0ce6a) )
+	ROM_RELOAD(            0x10000, 0x80000 )
+
+	ROM_REGION( 0x300000, REGION_GFX1, ROMREGION_ERASEFF )	/* blitter data */
+	ROM_LOAD16_BYTE( "d12103.11c", 0x000000, 0x080000, CRC(83bfc841) SHA1(36547e737244f95004c598adeb46cebce9ab3231) )
+	ROM_LOAD16_BYTE( "d12104.11a", 0x000001, 0x080000, CRC(1bf6220a) SHA1(ea18fdf6e1298a3b4c91fbf6219b1edcfecaeca3) )
+	ROM_LOAD16_BYTE( "d12105.12c", 0x100000, 0x080000, CRC(3424c8ac) SHA1(ee48622b478d39c6bdb5a18cab204e14f7d54f7a) )
+	ROM_LOAD16_BYTE( "d12106.12a", 0x100001, 0x080000, CRC(9052bd09) SHA1(3e8e32dea6c0cea895b7f16883e500e487689e72) )
+	ROM_LOAD16_BYTE( "d12107.13c", 0x280000, 0x020000, CRC(184afa94) SHA1(57566123a6dde661770740ad7a6c364c7ef5de86) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "d12108.13a", 0x280001, 0x020000, CRC(f8e8558a) SHA1(69e64c83945c6462b704b6d9d0250c9d98f66859) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "d12101.1b", 0x00000, 0x80000, CRC(9759c65e) SHA1(cf098c07616b6d2a2ba10ff6ae0006442b675326) )
+ROM_END
+
+
 GAMEX(1992, mmpanic,  0,       mmpanic,  mmpanic,  0,        ROT0, "Nakanihon + East Technology (Taito license)", "Monkey Mole Panic (USA)",                    GAME_NO_COCKTAIL )
 GAMEX(1993, quizchq,  0,       quizchq,  quizchq,  0,        ROT0, "Nakanihon",                                   "Quiz Channel Question (Ver 1.00) (Japan)",   GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX(1993, quizchql, quizchq, quizchq,  quizchq,  0,        ROT0, "Nakanihon (Laxan license)",                   "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
@@ -4339,4 +4809,5 @@ GAMEX(1995, nettoqc,  0,       nettoqc,  nettoqc,  0,        ROT0, "Nakanihon", 
 GAMEX(1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",                                       "Don Den Lover Vol. 1 (Hong Kong)",           GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAMEX(1996, hanakanz, 0,       hanakanz, hanakanz, 0,        ROT0, "Dynax",                                       "Hana Kanzashi (Japan)",                      GAME_NO_COCKTAIL )
 GAMEX(1997, hkagerou, 0,       hkagerou, hkagerou, 0,        ROT0, "Nakanihon + Dynax",                           "Hana Kagerou [BET] (Japan)",                 GAME_NO_COCKTAIL )
+GAMEX(1998, mjchuuka, 0,       mjchuuka, mjchuuka, 0,        ROT0, "Dynax",                                       "Mahjong Chuukanejyo (China)",                GAME_NO_COCKTAIL )
 GAMEX(1998, mjreach1, 0,       mjreach1, mjreach1, 0,        ROT0, "Nihon System",                                "Mahjong Reach Ippatsu (Japan)",              GAME_NO_COCKTAIL )

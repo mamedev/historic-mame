@@ -233,7 +233,7 @@ VIDEO_UPDATE( nwktr )
 {
 	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
 
-	video_update_voodoo(bitmap, cliprect);
+	video_update_voodoo(screen, bitmap, cliprect);
 
 	K001604_tile_update();
 	K001604_tile_draw(bitmap, cliprect);

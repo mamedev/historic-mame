@@ -728,7 +728,7 @@ VIDEO_UPDATE( mbmj8688_LCD )
 
 	clip.min_y += 64;
 	clip.max_y -= 64;
-	video_update_mbmj8688(bitmap,&clip);
+	video_update_mbmj8688(screen,bitmap,&clip);
 	clip.min_y -= 64;
 	clip.max_y += 64;
 

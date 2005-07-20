@@ -32,7 +32,7 @@
 #define VIDEO_START(name)		int video_start_##name(void)
 #define VIDEO_STOP(name)		void video_stop_##name(void)
 #define VIDEO_EOF(name)			void video_eof_##name(void)
-#define VIDEO_UPDATE(name)		void video_update_##name(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+#define VIDEO_UPDATE(name)		void video_update_##name(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 
 /* NULL versions */
 #define init_NULL				NULL
@@ -351,7 +351,7 @@ struct InternalMachineDriver
 	int (*video_start)(void);
 	void (*video_stop)(void);
 	void (*video_eof)(void);
-	void (*video_update)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+	void (*video_update)(int screen, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
 	struct MachineSound sound[MAX_SOUND];
 	struct MachineSpeaker speaker[MAX_SPEAKER];

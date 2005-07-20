@@ -1217,7 +1217,7 @@ void force_partial_update(int scanline)
 	if (clip.min_y <= clip.max_y)
 	{
 		profiler_mark(PROFILER_VIDEO);
-		(*Machine->drv->video_update)(Machine->scrbitmap, &clip);
+		(*Machine->drv->video_update)(0, Machine->scrbitmap, &clip);
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
 	}

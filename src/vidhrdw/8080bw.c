@@ -20,7 +20,7 @@ static UINT8 cloud_pos;
 static data8_t bowler_bonus_display;
 
 static write8_handler videoram_w_p;
-static void (*video_update_p)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+static void (*video_update_p)(int screen,struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
 static WRITE8_HANDLER( bw_videoram_w );
 static WRITE8_HANDLER( schaser_videoram_w );
@@ -485,7 +485,7 @@ static WRITE8_HANDLER( phantom2_videoram_w )
 ***************************************************************************/
 VIDEO_UPDATE( 8080bw )
 {
-	video_update_p(bitmap, cliprect);
+	video_update_p(screen, bitmap, cliprect);
 }
 
 
@@ -572,7 +572,7 @@ static void draw_sight(struct mame_bitmap *bitmap,const struct rectangle *clipre
 static VIDEO_UPDATE( seawolf )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(bitmap, cliprect);
+	video_update_8080bw_common(screen, bitmap, cliprect);
 
     draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x1f) * 8) + 4, 63);
 }
@@ -580,7 +580,7 @@ static VIDEO_UPDATE( seawolf )
 static VIDEO_UPDATE( blueshrk )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(bitmap, cliprect);
+	video_update_8080bw_common(screen, bitmap, cliprect);
 
     draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x7f) * 2) - 12, 63);
 }
@@ -588,7 +588,7 @@ static VIDEO_UPDATE( blueshrk )
 static VIDEO_UPDATE( desertgu )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(bitmap, cliprect);
+	video_update_8080bw_common(screen, bitmap, cliprect);
 
 	draw_sight(bitmap,cliprect,
 			   ((input_port_0_r(0) & 0x7f) * 2) - 30,
@@ -615,7 +615,7 @@ static VIDEO_UPDATE( bowler )
 
 
 	/* update the bitmap */
-	video_update_8080bw_common(bitmap, cliprect);
+	video_update_8080bw_common(screen, bitmap, cliprect);
 
 
 	/* draw the current bonus value - on the original game this

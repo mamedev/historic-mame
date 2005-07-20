@@ -51,4 +51,4 @@ WRITE16_HANDLER( deco16_priority_w );
 
 READ16_HANDLER( deco16_71_r );
 
-void deco16_print_debug_info(void);
+void deco16_print_debug_info(struct mame_bitmap *bitmap);

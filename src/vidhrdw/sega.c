@@ -175,5 +175,5 @@ VIDEO_START( sega )
 VIDEO_UPDATE( sega )
 {
 	sega_generate_vector_list();
-	video_update_vector(bitmap,0);
+	video_update_vector(screen,bitmap,0);
 }

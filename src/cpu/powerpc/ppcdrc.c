@@ -258,6 +258,7 @@ typedef struct {
 	struct drccore *drc;
 	UINT32 drcoptions;
 
+	void *		invoke_exception_handler;
 	void *		generate_interrupt_exception;
 	void *		generate_syscall_exception;
 	void *		generate_decrementer_exception;
@@ -266,7 +267,7 @@ typedef struct {
 	void *		generate_isi_exception;
 
 	// PowerPC 60x specific registers */
-	UINT32 dec;
+	UINT32 dec, dec_frac;
 	UINT32 fpscr;
 
 	FPR	fpr[32];
@@ -295,6 +296,9 @@ typedef struct {
 	void (*write16_unaligned)(offs_t address, data16_t data);
 	void (*write32_unaligned)(offs_t address, data32_t data);
 	void (*write64_unaligned)(offs_t address, data64_t data);
+
+	/* saved ESP when entering entry point */
+	UINT32 host_esp;
 } PPC_REGS;
 
 
@@ -429,7 +433,7 @@ INLINE UINT32 read_decrementer(void)
 
 INLINE void write_decrementer(UINT32 value)
 {
-	ppc_dec_base_icount = ppc_icount;
+	ppc_dec_base_icount = ppc_icount + (ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2);
 
 	DEC = value;
 
@@ -442,6 +446,33 @@ INLINE void write_decrementer(UINT32 value)
 	{
 		ppc_dec_trigger_cycle = 0x7fffffff;
 	}
+}
+
+/*********************************************************************/
+
+INLINE void ppc_exception(int exception_type)
+{
+	void *exception_code = NULL;
+	void (*invoke_exception_handler)(void *handler);
+
+	switch(exception_type)
+	{
+		case EXCEPTION_DECREMENTER:
+			exception_code = ppc.generate_decrementer_exception;
+			break;
+		case EXCEPTION_DSI:
+			exception_code = ppc.generate_dsi_exception;
+			break;
+		case EXCEPTION_ISI:
+			exception_code = ppc.generate_isi_exception;
+			break;
+		default:
+			osd_die("Unknown exception %d\n", exception_type);
+			break;
+	}
+
+	memcpy(&invoke_exception_handler, &ppc.invoke_exception_handler, sizeof(invoke_exception_handler));
+	invoke_exception_handler(exception_code);
 }
 
 /*********************************************************************/
@@ -470,7 +501,8 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				if((value & 0x80000000) && !(DEC & 0x80000000))
 				{
 					/* trigger interrupt */
-					osd_die("ERROR: set_spr to DEC triggers IRQ\n");
+					if( MSR & MSR_EE )
+						ppc_exception(EXCEPTION_DECREMENTER);
 				}
 				write_decrementer(value);
 				return;
@@ -1108,7 +1140,7 @@ static int ppcdrc603_execute(int cycles)
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
-	ppc_dec_base_icount = cycles;
+	ppc_dec_base_icount = cycles + ppc.dec_frac;
 
 	// check if decrementer exception occurs during execution
 	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
@@ -1127,6 +1159,7 @@ static int ppcdrc603_execute(int cycles)
 	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
 
 	// update decrementer
+	ppc.dec_frac = ((ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2));
 	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
 
 	return cycles - ppc_icount;
@@ -1378,6 +1411,31 @@ static UINT8 ppc_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+static UINT8 ppc603_reg_layout[] =
+{
+	PPC_PC,			PPC_MSR,		-1,
+	PPC_CR,			PPC_LR,			-1,
+	PPC_CTR,		PPC_XER,		-1,
+	PPC_SRR0,		PPC_SRR1,		-1,
+	PPC_DEC,						-1,
+	PPC_R0,		 	PPC_R16,		-1,
+	PPC_R1, 		PPC_R17,		-1,
+	PPC_R2, 		PPC_R18,		-1,
+	PPC_R3, 		PPC_R19,		-1,
+	PPC_R4, 		PPC_R20,		-1,
+	PPC_R5, 		PPC_R21,		-1,
+	PPC_R6, 		PPC_R22,		-1,
+	PPC_R7, 		PPC_R23,		-1,
+	PPC_R8,			PPC_R24,		-1,
+	PPC_R9,			PPC_R25,		-1,
+	PPC_R10,		PPC_R26,		-1,
+	PPC_R11,		PPC_R27,		-1,
+	PPC_R12,		PPC_R28,		-1,
+	PPC_R13,		PPC_R29,		-1,
+	PPC_R14,		PPC_R30,		-1,
+	PPC_R15,		PPC_R31,		0
+};
+
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -1622,6 +1680,7 @@ void ppc603_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
+		case CPUINFO_INT_REGISTER + PPC_DEC:				write_decrementer(info->i);		break;
 		default:	ppc_set_info(state, info);		break;
 	}
 }
@@ -1633,6 +1692,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_LINES:					info->i = 5;				break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;			break;
+		case CPUINFO_INT_REGISTER + PPC_DEC:			info->i = read_decrementer(); break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
@@ -1647,9 +1707,11 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
+		case CPUINFO_STR_REGISTER + PPC_DEC:			sprintf(info->s = cpuintrf_temp_str(), "DEC: %08X", read_decrementer()); break;
 
 		default:	ppc_get_info(state, info);		break;
 	}

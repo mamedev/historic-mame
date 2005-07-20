@@ -790,9 +790,9 @@ VIDEO_START( atari )
 VIDEO_UPDATE( atari )
 {
 #ifdef MESS
-	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
+	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
 #else
-	video_update_generic_bitmapped(bitmap, cliprect);
+	video_update_generic_bitmapped(screen, bitmap, cliprect);
 #endif
 
 	if( tv_artifacts != (readinputport(0) & 0x40) )

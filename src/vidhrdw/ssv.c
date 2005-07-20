@@ -906,7 +906,7 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 					dt[0].text = buf;	dt[0].color = ((s1[0] & 0x0200) ? UI_COLOR_INVERSE : UI_COLOR_NORMAL);
 					dt[0].x = sx;		dt[0].y = sy;
 					dt[1].text = 0;	/* terminate array */
-					displaytext(Machine->scrbitmap,dt);		}
+					displaytext(bitmap,dt);		}
 				#endif
 
 			}		/* sprite type */
@@ -946,7 +946,7 @@ VIDEO_UPDATE( eaglshot )
 		}
 	}
 
-	video_update_ssv(bitmap, cliprect);
+	video_update_ssv(screen, bitmap, cliprect);
 }
 
 /*
@@ -1106,7 +1106,7 @@ static void gdfs_draw_zooming_sprites(struct mame_bitmap *bitmap, int priority)
 				dt[0].text = buf;	dt[0].color = UI_COLOR_INVERSE;
 				dt[0].x = sx / 0x10000;		dt[0].y = sy / 0x10000;
 				dt[1].text = 0;	/* terminate array */
-				displaytext(Machine->scrbitmap,dt);		}
+				displaytext(bitmap,dt);		}
 			#endif
 		}	/* single-sprites */
 
@@ -1117,7 +1117,7 @@ VIDEO_UPDATE( gdfs )
 {
 	int tile, pri;
 
-	video_update_ssv(bitmap, cliprect);
+	video_update_ssv(screen, bitmap, cliprect);
 
 	// Decode zooming sprites tiles from ram
 	if (eaglshot_dirty)

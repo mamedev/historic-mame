@@ -753,7 +753,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 	sprintf(buf, "%02X %02X",((src[ 0 ] & 0xf800) >> 11)^0x1f,((src[ 1 ] & 0xfc00) >> 10) );
     dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
     dt[0].x = x;    dt[0].y = y;    dt[1].text = 0; /* terminate array */
-	displaytext(Machine->scrbitmap,dt);		}
+	displaytext(bitmap,dt);		}
 #endif
 			src += inc;
 		}

@@ -367,9 +367,8 @@ static UINT8 *tile_opaque_pf;
 
 /******************************************************************************/
 
-static void print_debug_info(void)
+static void print_debug_info(struct mame_bitmap *bitmap)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int j,l[16];
 	char buf[64];
 
@@ -640,7 +639,7 @@ VIDEO_START( f3 )
 	pivot_dirty = (UINT8 *)auto_malloc(2048);
 	pf_line_inf = auto_malloc(5 * sizeof(struct f3_playfield_line_inf));
 	sa_line_inf = auto_malloc(1 * sizeof(struct f3_spritealpha_line_inf));
-	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
@@ -3357,5 +3356,5 @@ VIDEO_UPDATE( f3 )
 	/* Draw final framebuffer */
 	f3_scanline_draw(bitmap,cliprect);
 
-//  print_debug_info();
+//  print_debug_info(bitmap);
 }

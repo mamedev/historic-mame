@@ -15,7 +15,7 @@ data16_t *glass_vregs;
 data16_t *glass_videoram;
 
 static struct tilemap *pant[2];
-static struct mame_bitmap *screen;
+static struct mame_bitmap *screen_bitmap;
 
 static int glass_blitter_serial_buffer[5];
 static int current_command = 0;
@@ -102,11 +102,11 @@ WRITE16_HANDLER( glass_blitter_w )
 					for (i = 0; i < 320; i++){
 						int color = *gfx;
 						gfx++;
-						plot_pixel(screen, i, j, Machine->pens[color & 0xff]);
+						plot_pixel(screen_bitmap, i, j, Machine->pens[color & 0xff]);
 					}
 				}
 			} else {
-				fillbitmap(screen, Machine->pens[0], 0);
+				fillbitmap(screen_bitmap, Machine->pens[0], 0);
 			}
 		}
 	}
@@ -138,9 +138,9 @@ VIDEO_START( glass )
 {
 	pant[0] = tilemap_create(get_tile_info_glass_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	pant[1] = tilemap_create(get_tile_info_glass_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	screen = auto_bitmap_alloc (320, 200);
+	screen_bitmap = auto_bitmap_alloc (320, 200);
 
-	if (!pant[0] || !pant[1] || !screen)
+	if (!pant[0] || !pant[1] || !screen_bitmap)
 		return 1;
 
 	tilemap_set_transparent_pen(pant[0],0);
@@ -213,7 +213,7 @@ VIDEO_UPDATE( glass )
 
 	/* draw layers + sprites */
 	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
-	copybitmap(bitmap,screen,0,0,0x18,0x24,cliprect,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,screen_bitmap,0,0,0x18,0x24,cliprect,TRANSPARENCY_NONE,0);
 	tilemap_draw(bitmap,cliprect,pant[1],0,0);
 	tilemap_draw(bitmap,cliprect,pant[0],0,0);
 	glass_draw_sprites(bitmap,cliprect);

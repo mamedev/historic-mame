@@ -515,7 +515,7 @@ VIDEO_UPDATE( gaelco2 )
 VIDEO_UPDATE( bang )
 {
     /* standard rendering on this hardware */
-    video_update_gaelco2(bitmap, cliprect);
+    video_update_gaelco2(screen, bitmap, cliprect);
 
     /* draw crosshairs */
     {

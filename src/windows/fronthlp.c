@@ -383,7 +383,7 @@ void romident(const char* name, int enter_dirs);
 void identify_dir(const char* dirname)
 {
 	HANDLE dir;
-	WIN32_FIND_DATAA ent;
+	WIN32_FIND_DATA ent;
 	int more;
 	char *dirfilter;
 	int dirlen = strlen(dirname);
@@ -395,7 +395,7 @@ void identify_dir(const char* dirname)
 	memcpy(dirfilter, dirname, dirlen);
 	memcpy(dirfilter+dirlen, "/*.*", 5);
 
-    dir = FindFirstFileA(dirfilter, &ent);
+    dir = FindFirstFile(dirfilter, &ent);
     free(dirfilter);
 
     if (INVALID_HANDLE_VALUE == dir) {

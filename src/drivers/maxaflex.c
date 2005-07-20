@@ -226,7 +226,7 @@ VIDEO_UPDATE(maxaflex)
 {
 	static char text[100];
 
-	video_update_atari(bitmap,cliprect);
+	video_update_atari(screen,bitmap,cliprect);
 
 	if ( digitA != -1 )
 	{

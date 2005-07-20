@@ -1236,7 +1236,7 @@ static VIDEO_UPDATE( carnevil )
 	int beamx, beamy;
 
 	/* first do common video update */
-	video_update_voodoo(bitmap, cliprect);
+	video_update_voodoo(screen, bitmap, cliprect);
 
 	/* now draw the crosshairs */
 	get_crosshair_xy(0, &beamx, &beamy);

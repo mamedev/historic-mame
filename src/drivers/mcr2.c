@@ -565,8 +565,8 @@ static MACHINE_DRIVER_START( mcr2 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
 
-	MDRV_VIDEO_START(mcr2)
-	MDRV_VIDEO_UPDATE(mcr2)
+	MDRV_VIDEO_START(mcr)
+	MDRV_VIDEO_UPDATE(mcr)
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(mcr_ssio)
@@ -582,13 +582,9 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( journey )
-
-	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr2)
-	MDRV_CPU_REPLACE("main", Z80, 7500000)
 
 	/* video hardware */
-	MDRV_VIDEO_START(journey)
 	MDRV_VIDEO_UPDATE(journey)
 MACHINE_DRIVER_END
 
@@ -953,6 +949,9 @@ ROM_END
 
 static DRIVER_INIT( mcr2 )
 {
+	mcr_cpu_board = 90010;
+	mcr_sprite_board = 91399;
+
 	mcr_sound_init(MCR_SSIO);
 	mcr12_sprite_xoffs = 0;
 	mcr12_sprite_xoffs_flip = 0;

@@ -531,7 +531,7 @@ int deco16_1_video_init(void) /* 1 times playfield generator chip */
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
 
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
@@ -583,7 +583,7 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
 
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
@@ -629,7 +629,7 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 int deco_allocate_sprite_bitmap(void)
 {
 	/* Allow sprite bitmap to be used by Deco32 games as well */
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
 
 	return (sprite_priority_bitmap!=0);
 }
@@ -827,9 +827,8 @@ void deco16_pf34_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscro
 
 /*****************************************************************************************/
 
-void deco16_print_debug_info(void)
+void deco16_print_debug_info(struct mame_bitmap *bitmap)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	char buf[64];
 	int j;
 

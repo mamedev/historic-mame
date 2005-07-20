@@ -1187,9 +1187,6 @@ static VIDEO_START( halleys )
 	// abort if DRIVER_INIT failed
 	if (!init_success) return(1);
 
-	// abort on unsupported bit depths
-	if (Machine->scrbitmap->depth != 15 && Machine->scrbitmap->depth != 16) return(1);
-
 	// create short cuts to scroll registers
 	scrolly0 = io_ram + HALLEYS_Y0;
 	scrollx0 = io_ram + HALLEYS_X0;
@@ -1945,8 +1942,6 @@ static MACHINE_INIT( halleys )
 
 	memset(io_ram, 0xff, io_ramsize);
 	memset(render_layer[0], 0, SCREEN_BYTESIZE * MAX_LAYERS);
-
-	fillbitmap(Machine->scrbitmap, bgcolor, &Machine->visible_area);
 }
 
 

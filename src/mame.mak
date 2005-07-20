@@ -346,7 +346,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/machine/astrocde.o $(OBJ)/vidhrdw/astrocde.o \
 	$(OBJ)/sndhrdw/wow.o $(OBJ)/sndhrdw/gorf.o $(OBJ)/drivers/astrocde.o \
 	$(OBJ)/machine/mcr.o $(OBJ)/sndhrdw/mcr.o \
-	$(OBJ)/vidhrdw/mcr12.o $(OBJ)/vidhrdw/mcr3.o \
+	$(OBJ)/vidhrdw/mcr.o $(OBJ)/vidhrdw/mcr3.o \
 	$(OBJ)/drivers/mcr1.o $(OBJ)/drivers/mcr2.o $(OBJ)/drivers/mcr3.o \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
@@ -591,7 +591,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/boogwing.o $(OBJ)/drivers/boogwing.o \
 	$(OBJ)/drivers/dblewing.o \
 	$(OBJ)/drivers/dietgo.o $(OBJ)/vidhrdw/dietgo.o \
-	$(OBJ)/drivers/deco156.o \
+	$(OBJ)/drivers/deco156.o $(OBJ)/machine/deco156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
 	$(OBJ)/vidhrdw/sshangha.o $(OBJ)/drivers/sshangha.o \
 
@@ -1206,6 +1206,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/pntnpuzl.o \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
 	$(OBJ)/vidhrdw/afega.o $(OBJ)/drivers/afega.o \
+	$(OBJ)/drivers/pkscram.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \

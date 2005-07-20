@@ -1112,7 +1112,7 @@ static struct C352interface c352_interface =
 
 static VIDEO_UPDATE( golgo13 )
 {
-	video_update_psx( bitmap, cliprect );
+	video_update_psx( screen, bitmap, cliprect );
 
 	draw_crosshair(bitmap, GUNX(3), GUNY(4), cliprect, 0);
 }

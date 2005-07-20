@@ -59,6 +59,7 @@ static UINT8 ssio_data[4];
 static UINT8 ssio_status;
 static UINT8 ssio_14024_count;
 static UINT8 ssio_mute;
+static UINT8 ssio_overall[2];
 static UINT8 ssio_duty_cycle[2][3];
 static UINT8 ssio_ayvolume_lookup[16];
 static UINT8 ssio_custom_input_mask[5];
@@ -326,6 +327,7 @@ static void ssio_update_volumes(void)
 	AY8910_set_volume(1, 0, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][0]]);
 	AY8910_set_volume(1, 1, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][1]]);
 	AY8910_set_volume(1, 2, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][2]]);
+//printf("overall: %d/%d\n", ssio_overall[0], ssio_overall[1]);
 }
 
 static WRITE8_HANDLER( ssio_porta0_w )
@@ -338,6 +340,7 @@ static WRITE8_HANDLER( ssio_porta0_w )
 static WRITE8_HANDLER( ssio_portb0_w )
 {
 	ssio_duty_cycle[0][2] = data & 15;
+	ssio_overall[0] = (data >> 4) & 7;
 	ssio_update_volumes();
 }
 
@@ -351,6 +354,7 @@ static WRITE8_HANDLER( ssio_porta1_w )
 static WRITE8_HANDLER( ssio_portb1_w )
 {
 	ssio_duty_cycle[1][2] = data & 15;
+	ssio_overall[1] = (data >> 4) & 7;
 	ssio_mute = data & 0x80;
 	ssio_update_volumes();
 }
@@ -650,7 +654,7 @@ READ8_HANDLER( soundsgood_status_r )
 
 void soundsgood_reset_w(int state)
 {
-if (state) printf("SG Reset\n");
+//if (state) printf("SG Reset\n");
 	cpunum_set_input_line(soundsgood_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 

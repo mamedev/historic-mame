@@ -811,7 +811,7 @@ VIDEO_UPDATE( tmnt2 )
 			palette_set_shadow_mode(0);
 	}
 
-	video_update_lgtnfght(bitmap,cliprect);
+	video_update_lgtnfght(screen,bitmap,cliprect);
 }
 
 

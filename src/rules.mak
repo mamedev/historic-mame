@@ -4,7 +4,7 @@ CPU=$(strip $(findstring Z80@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z80
 CPUDEFS += -DHAS_Z80=1
-CPUOBJS += $(OBJ)/cpu/z80/z80.o
+CPUOBJS += $(OBJ)/cpu/z80/z80.o $(OBJ)/cpu/z80/z80daisy.o
 DBGOBJS += $(OBJ)/cpu/z80/z80dasm.o
 $(OBJ)/cpu/z80/z80.o: z80.c z80.h
 else
@@ -15,7 +15,7 @@ CPU=$(strip $(findstring Z180@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z180
 CPUDEFS += -DHAS_Z180=1
-CPUOBJS += $(OBJ)/cpu/z180/z180.o
+CPUOBJS += $(OBJ)/cpu/z180/z180.o $(OBJ)/cpu/z80/z80daisy.o
 DBGOBJS += $(OBJ)/cpu/z180/z180dasm.o
 $(OBJ)/cpu/z180/z180.o: z180.c z180.h z180daa.h z180op.c z180ops.h z180tbl.h z180cb.c z180dd.c z180ed.c z180fd.c z180xy.c
 else

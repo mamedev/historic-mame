@@ -352,13 +352,6 @@ static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle 
 
 /*****************************************************************************/
 
-VIDEO_UPDATE( m107 )
-{
-	/* Nothing - screen refresh is handled by raster interrupt routine */
-}
-
-/*****************************************************************************/
-
 static void m107_update_scroll_positions(void)
 {
 	int i;
@@ -436,26 +429,6 @@ void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clipr
         any used yet */
 }
 
-void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
-{
-	struct rectangle clip;
-
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = start_line+128;
-	clip.max_y = end_line+128;
-	if (clip.min_y < Machine->visible_area.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (clip.max_y > Machine->visible_area.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	if (clip.max_y > clip.min_y)
-	{
-		m107_update_scroll_positions();
-		m107_screenrefresh(bitmap,&clip);
-	}
-}
-
 /*****************************************************************************/
 
 WRITE8_HANDLER( m107_spritebuffer_w )
@@ -465,3 +438,12 @@ WRITE8_HANDLER( m107_spritebuffer_w )
 		memcpy(m107_spriteram,spriteram,0x1000);
 	}
 }
+
+/*****************************************************************************/
+
+VIDEO_UPDATE( m107 )
+{
+	m107_update_scroll_positions();
+	m107_screenrefresh(bitmap,cliprect);
+}
+

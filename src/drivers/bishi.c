@@ -305,5 +305,5 @@ static DRIVER_INIT( bishi )
 	state_save_register_UINT16("bishi", 0, "control2", &cur_control, 1);
 }
 
-GAMEX( 1996, bishi,     0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Bishi Bashi Championship Mini Game Senshuken (Japan JAA)", GAME_IMPERFECT_GRAPHICS)
-GAMEX( 1998, sbishi,    0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Super Bishi Bashi Championship (Japan JAA)", GAME_IMPERFECT_GRAPHICS)
+GAMEX( 1996, bishi,     0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Bishi Bashi Championship Mini Game Senshuken (ver JAA)", GAME_IMPERFECT_GRAPHICS)
+GAMEX( 1998, sbishi,    0,       bishi,     bishi,     bishi,      ROT0, "Konami", "Super Bishi Bashi Championship (ver JAA)", GAME_IMPERFECT_GRAPHICS)

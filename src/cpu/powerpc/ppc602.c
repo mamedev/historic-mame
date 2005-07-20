@@ -149,6 +149,7 @@ static void ppc602_reset(void *param)
 
 static int ppc602_execute(int cycles)
 {
+	int exception_type;
 	UINT32 opcode;
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
@@ -165,6 +166,18 @@ static int ppc602_execute(int cycles)
 	}
 
 	change_pc(ppc.npc);
+
+#ifdef __GNUC__
+	// MinGW's optimizer kills setjmp()/longjmp()
+	(void)__builtin_return_address(1);
+#endif
+
+	exception_type = setjmp(ppc.exception_jmpbuf);
+	if (exception_type)
+	{
+		ppc.npc = ppc.pc;
+		ppc602_exception(exception_type);
+	}
 
 	while( ppc_icount > 0 )
 	{

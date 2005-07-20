@@ -914,9 +914,8 @@ VIDEO_EOF( dragngun )
 }
 
 #if 0
-static void print_debug_info()
+static void print_debug_info(struct mame_bitmap *bitmap)
 {
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int j;
 	char buf[64];
 
@@ -1302,5 +1301,5 @@ if (!code_pressed(KEYCODE_W))	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
 if (!code_pressed(KEYCODE_E))	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
 if (!code_pressed(KEYCODE_R))	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
-//  print_debug_info();
+//  print_debug_info(bitmap);
 }

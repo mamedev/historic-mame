@@ -73,6 +73,7 @@ I/O read/write
 #include "machine/z80fmly.h"
 #include "sound/sn76496.h"
 #include "sound/samples.h"
+#include "cpu/z80/z80daisy.h"
 
 
 
@@ -540,11 +541,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static Z80_DaisyChain daisy_chain[] =
+static struct z80_irq_daisy_chain daisy_chain[] =
 {
-	{ z80pio_reset , z80pio_interrupt, z80pio_reti , 0 }, /* device 0 = PIO_0 , low  priority */
-	{ z80ctc_reset , z80ctc_interrupt, z80ctc_reti , 0 }, /* device 1 = CTC_0 , high priority */
-	{ 0,0,0,-1} 	   /* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti , 0 }, /* device 0 = CTC_0 , high priority */
+	{ z80pio_reset, z80pio_irq_state, z80pio_irq_ack, z80pio_irq_reti , 0 }, /* device 1 = PIO_0 , low  priority */
+	{ 0,0,0,0,-1} 	   /* end mark */
 };
 
 

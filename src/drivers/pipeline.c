@@ -52,6 +52,7 @@ Notes:
 #include "machine/z80fmly.h"
 #include "sound/2203intf.h"
 #include "machine/8255ppi.h"
+#include "cpu/z80/z80daisy.h"
 
 static struct tilemap *tilemap1;
 static struct tilemap *tilemap2;
@@ -295,7 +296,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void ctc0_interrupt(int state)
 {
-	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line(1, 0, state);
 }
 
 static z80ctc_interface ctc_intf =
@@ -309,10 +310,10 @@ static z80ctc_interface ctc_intf =
 	{ 0 },					// ZC/TO2 callback
 };
 
-static Z80_DaisyChain daisy_chain_sound[] =
+static struct z80_irq_daisy_chain daisy_chain_sound[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 },	/* device 0 = CTC_1 */
-	{ 0, 0, 0, -1 }		/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 },	/* device 0 = CTC_1 */
+	{ 0, 0, 0, 0, -1 }		/* end mark */
 };
 
 static ppi8255_interface ppi8255_intf =

@@ -250,10 +250,11 @@ static void ppc603_reset(void *param)
 
 static int ppc603_execute(int cycles)
 {
+	int exception_type;
 	UINT32 opcode;
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
-	ppc_dec_base_icount = cycles;
+	ppc_dec_base_icount = cycles + ppc.dec_frac;
 
 	// check if decrementer exception occurs during execution
 	if ((UINT32)(DEC - ppc_icount) > (UINT32)(DEC))
@@ -266,6 +267,18 @@ static int ppc603_execute(int cycles)
 	}
 
 	change_pc(ppc.npc);
+
+#ifdef __GNUC__
+	// MinGW's optimizer kills setjmp()/longjmp()
+	(void)__builtin_return_address(1);
+#endif
+
+	exception_type = setjmp(ppc.exception_jmpbuf);
+	if (exception_type)
+	{
+		ppc.npc = ppc.pc;
+		ppc603_exception(exception_type);
+	}
 
 	while( ppc_icount > 0 )
 	{
@@ -301,6 +314,7 @@ static int ppc603_execute(int cycles)
 	ppc.tb += ((ppc_tb_base_icount - ppc_icount) / 4);
 
 	// update decrementer
+	ppc.dec_frac = ((ppc_dec_base_icount - ppc_icount) % (bus_freq_multiplier * 2));
 	DEC -= ((ppc_dec_base_icount - ppc_icount) / (bus_freq_multiplier * 2));
 
 	return cycles - ppc_icount;

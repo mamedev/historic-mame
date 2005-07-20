@@ -1567,11 +1567,11 @@ static UINT8 update_tilemaps(const struct rectangle *cliprect)
 static void sprite_erase_buffer(void)
 {
 	/* erase the visible sprite buffer and clear the checksums */
-	fillbitmap(layer_data[MIXER_LAYER_SPRITES].bitmap, 0, NULL);
+	fillbitmap(layer_data[MIXER_LAYER_SPRITES].bitmap, 0xffff, NULL);
 
 	/* for multi32, erase the other buffer as well */
 	if (is_multi32)
-		fillbitmap(layer_data[MIXER_LAYER_MULTISPR].bitmap, 0, NULL);
+		fillbitmap(layer_data[MIXER_LAYER_MULTISPR].bitmap, 0xffff, NULL);
 }
 
 
@@ -1639,28 +1639,70 @@ static void sprite_swap_buffers(void)
 	/* only draw if onscreen, not 0 or 15 */								\
 	if (x >= clipin->min_x && x <= clipin->max_x && 						\
 		(!do_clipout || x < clipout->min_x || x > clipout->max_x) &&		\
-		pix != 0 && pix != trans) 											\
+		pix != trans) 														\
 	{																		\
-		if (!shadow)														\
-			dest[x] = indtable[pix];										\
+		if (!indirect)														\
+		{																	\
+			if (pix != 0)													\
+			{																\
+				if (!shadow)												\
+					dest[x] = color | pix;									\
+				else														\
+					dest[x] &= 0x7fff;										\
+			}																\
+		}																	\
 		else																\
-			dest[x] |= 0x8000;												\
+		{																	\
+			int indpix = indtable[pix];										\
+			if ((indpix & transmask) != transmask)							\
+			{																\
+				if (!shadow)												\
+					dest[x] = indpix;										\
+				else														\
+					dest[x] &= 0x7fff;										\
+			}																\
+		}																	\
 	}
 
 #define sprite_draw_pixel_256(trans)										\
 	/* only draw if onscreen, not 0 or 15 */								\
 	if (x >= clipin->min_x && x <= clipin->max_x && 						\
 		(!do_clipout || x < clipout->min_x || x > clipout->max_x) &&		\
-		pix != 0 && pix != trans) 											\
+		pix != trans) 														\
 	{																		\
-		if (!shadow)														\
-			dest[x] = indtable[pix >> 4] | (pix & 0x0f);					\
+		if (!indirect)														\
+		{																	\
+			if (pix != 0)													\
+			{																\
+				if (!shadow)												\
+					dest[x] = color | pix;									\
+				else														\
+					dest[x] &= 0x7fff;										\
+			}																\
+		}																	\
 		else																\
-			dest[x] |= 0x8000;												\
+		{																	\
+			int indpix = (indtable[pix >> 4]) | (pix & 0x0f);				\
+			if ((indpix & transmask) != transmask)							\
+			{																\
+				if (!shadow)												\
+					dest[x] = indpix;										\
+				else														\
+					dest[x] &= 0x7fff;										\
+			}																\
+		}																	\
 	}
 
 static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rectangle *clipin, const struct rectangle *clipout)
 {
+	static const int transparency_masks[4][4] =
+	{
+		{ 0x7fff, 0x3fff, 0x1fff, 0x0fff },
+		{ 0x3fff, 0x1fff, 0x0fff, 0x07ff },
+		{ 0x3fff, 0x1fff, 0x0fff, 0x07ff },
+		{ 0x1fff, 0x0fff, 0x07ff, 0x03ff }
+	};
+
 	struct mame_bitmap *bitmap = layer_data[(!is_multi32 || !(data[3] & 0x0800)) ? MIXER_LAYER_SPRITES_2 : MIXER_LAYER_MULTISPR_2].bitmap;
 	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x400000;
 	const UINT32 *spritebase = (const UINT32 *)memory_region(REGION_GFX2);
@@ -1687,9 +1729,10 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rect
 	int ypos     = (INT16)(data[4] << 4) >> 4;
 	int xpos     = (INT16)(data[5] << 4) >> 4;
 	UINT32 addr  = data[6] | ((data[2] & 0xf000) << 4);
+	int color    = 0x8000 | (data[7] & (bpp8 ? 0x7f00 : 0x7ff0));
 	int hzoom, vzoom;
 	int xdelta = 1, ydelta = 1;
-	int x, y, xtarget, ytarget, yacc = 0, pix;
+	int x, y, xtarget, ytarget, yacc = 0, pix, transmask;
 	const UINT32 *spritedata;
 	UINT32 addrmask, curaddr;
 	UINT16 indtable[16];
@@ -1698,25 +1741,17 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rect
 	if (srcw == 0 || srch == 0 || dstw == 0 || dsth == 0)
 		goto bail;
 
-	/* create the local palette for the indirect case */
-	if (shadow)
-	{
-		for (x = 0; x < 16; x++)
-			indtable[x] = 0x7ffe;
-	}
+	/* determine the transparency mask for pixels */
+	transmask = transparency_masks[sprite_control_latched[0x08/2] & 3][sprite_control_latched[0x0a/2] & 3];
+	if (bpp8)
+		transmask &= 0xfff0;
 
-	else if (indirect)
+	/* create the local palette for the indirect case */
+	if (indirect)
 	{
 		UINT16 *src = indlocal ? &data[8] : &system32_spriteram[8 * (data[7] & 0x1fff)];
 		for (x = 0; x < 16; x++)
-			indtable[x] = src[x] & (bpp8 ? 0x7ff0 : 0x7fff);
-	}
-
-	/* create the local palette for the direct case */
-	else
-	{
-		for (x = 0; x < 16; x++)
-			indtable[x] = bpp8 ? ((data[7] & 0x7f00) | (x << 4)) : ((data[7] & 0x7ff0) | x);
+			indtable[x] = src[x] & (bpp8 ? 0xfff0 : 0xffff);
 	}
 
 	/* clamp to within the memory region size */
@@ -2217,11 +2252,11 @@ static void mix_all_layers(int which, int xoffs, struct mame_bitmap *bitmap, con
 				else
 				{
 					firstpix = sprpix;
-					shadow = firstpix & sprshadowmask;
-					if ((firstpix & 0x7fff) != 0)
+					shadow = ~firstpix & sprshadowmask;
+					if ((firstpix & 0x7fff) != 0x7fff)
 					{
 						firstpix &= sprpixmask;
-						if ((firstpix & 0xfffe) != sprshadow)
+						if ((firstpix & 0x7ffe) != sprshadow)
 							break;
 						shadow = 1;
 					}
@@ -2260,11 +2295,11 @@ static void mix_all_layers(int which, int xoffs, struct mame_bitmap *bitmap, con
 					else
 					{
 						secondpix = sprpix;
-						shadow = secondpix & sprshadowmask;
-						if ((secondpix & 0x7fff) != 0)
+						shadow = ~secondpix & sprshadowmask;
+						if ((secondpix & 0x7fff) != 0x7fff)
 						{
 							secondpix &= sprpixmask;
-							if ((secondpix & 0xfffe) != sprshadow)
+							if ((secondpix & 0x7ffe) != sprshadow)
 								break;
 							shadow = 1;
 						}

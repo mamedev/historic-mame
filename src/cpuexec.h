@@ -292,30 +292,4 @@ void cpu_yielduntil_time(double duration);
 int cpu_getiloops(void);
 
 
-
-/*************************************
- *
- *  Z80 daisy chain
- *
- *************************************/
-
-/* fix me - where should this stuff go? */
-
-/* daisy-chain link */
-typedef struct
-{
-	void (*reset)(int); 			/* reset callback     */
-	int  (*interrupt_entry)(int);	/* entry callback     */
-	void (*interrupt_reti)(int);	/* reti callback      */
-	int irq_param;					/* callback paramater */
-} Z80_DaisyChain;
-
-#define Z80_MAXDAISY	4		/* maximum of daisy chan device */
-
-#define Z80_INT_REQ 	0x01	/* interrupt request mask       */
-#define Z80_INT_IEO 	0x02	/* interrupt disable mask(IEO)  */
-
-#define Z80_VECTOR(device,state) (((device)<<8)|(state))
-
-
 #endif	/* __CPUEXEC_H__ */

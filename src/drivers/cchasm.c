@@ -18,6 +18,7 @@
 #include "cchasm.h"
 #include "sound/custom.h"
 #include "sound/ay8910.h"
+#include "cpu/z80/z80daisy.h"
 
 
 /*************************************
@@ -155,10 +156,10 @@ static struct CustomSound_interface custom_interface =
  *
  *************************************/
 
-static Z80_DaisyChain daisy_chain[] =
+static struct z80_irq_daisy_chain daisy_chain[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0,0,0,-1 } 		/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,0,-1 } 		/* end mark */
 };
 
 

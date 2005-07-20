@@ -6,23 +6,23 @@ CPU: Z80 (x2), MC68705
 Sound: YM2203 (x2)
 
 Phil Stroffolino
-pjstroff@hotmail.com
+ptroffo@yahoo.com
 
 TODO:
+
+- The high score display uses a video attribute flag whose pupose isn't known.
+
+- purpose of the 0x200 byte prom, "a54-10.2" is unknown.  It contains values in range 0x0..0xf.
+
+- SOUND: lots of unknown writes to the YM2203 I/O ports
+
 - Note that all the bootlegs are derived from a different version of the
   original which hasn't been found yet.
-- SOUND: lots of unknown writes to the YM2203 I/O ports
-- lkage is verfied to be an original set, but it seems to work regardless of what
-  the mcu does. Moreover, the mcu returns a checksum which is different from the
-  one I think the game expects (89, while the game seems to expect 5d). But the
-  game works anyway, it never gives the usual Taito "BAD HW" message.
-- sprite and tilemap placement is most certainly wrong
 
-Take the following observations with a grain of salt (might not be true):
-- attract mode is bogus (observe the behavior of the player)
-- the second stage isn't supposed to have (red) Samurai, only Ninja.
-- The final stage is almost impossible in MAME! On the arcade, I could make my
-  way to the top fairly easily, but in MAME I have to use invulnerability.
+- lkage is verfied to be an original set, but it seems to work regardless of what
+  the mcu does. Moreover, the mcu returns a checksum which is different from what
+  is expected - the MCU computes 0x89, but the main CPU expects 0x5d.
+  The game works anyway, it never gives the usual Taito "BAD HW" message.
 
 ***************************************************************************/
 
@@ -81,43 +81,27 @@ static WRITE8_HANDLER( lkage_sh_nmi_enable_w )
 	}
 }
 
-
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe800, 0xefff) AM_READ(paletteram_r)
-	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf062, 0xf062) AM_READ(lkage_mcu_r)
+static ADDRESS_MAP_START( lkage, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) /* work ram */
+	AM_RANGE(0xe800, 0xefff) AM_READ(paletteram_r) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_vreg) /* video registers */
+	AM_RANGE(0xf060, 0xf060) AM_WRITE(lkage_sound_command_w)
+	AM_RANGE(0xf061, 0xf061) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf062, 0xf062) AM_READ(lkage_mcu_r) AM_WRITE(lkage_mcu_w)
+	AM_RANGE(0xf063, 0xf063) AM_WRITE(MWA8_NOP) /* pulsed; nmi on sound cpu? */
 	AM_RANGE(0xf080, 0xf080) AM_READ(input_port_0_r) /* DSW1 */
 	AM_RANGE(0xf081, 0xf081) AM_READ(input_port_1_r) /* DSW2 (coinage) */
 	AM_RANGE(0xf082, 0xf082) AM_READ(input_port_2_r) /* DSW3 */
-	AM_RANGE(0xf083, 0xf083) AM_READ(input_port_3_r)	/* start buttons, insert coin, tilt */
-	AM_RANGE(0xf084, 0xf084) AM_READ(input_port_4_r)	/* P1 controls */
-	AM_RANGE(0xf086, 0xf086) AM_READ(input_port_5_r)	/* P2 controls */
+	AM_RANGE(0xf083, 0xf083) AM_READ(input_port_3_r) /* start, insert coin, tilt */
+	AM_RANGE(0xf084, 0xf084) AM_READ(input_port_4_r) /* P1 controls */
+	AM_RANGE(0xf086, 0xf086) AM_READ(input_port_5_r) /* P2 controls */
 	AM_RANGE(0xf087, 0xf087) AM_READ(lkage_mcu_status_r)
-//  AM_RANGE(0xf0a3, 0xf0a3) AM_READ(MRA8_NOP) /* unknown */
-	AM_RANGE(0xf0c0, 0xf0c5) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf100, 0xf15f) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&paletteram)
-//  paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
-	AM_RANGE(0xf000, 0xf003) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_vreg) /* video registers */
-	AM_RANGE(0xf060, 0xf060) AM_WRITE(lkage_sound_command_w)
-	AM_RANGE(0xf061, 0xf061) AM_WRITE(MWA8_NOP) /* unknown */
-	AM_RANGE(0xf062, 0xf062) AM_WRITE(lkage_mcu_w)
-//  AM_RANGE(0xf063, 0xf063) AM_WRITE(MWA8_NOP) /* unknown */
-//  AM_RANGE(0xf0a2, 0xf0a2) AM_WRITE(MWA8_NOP) /* unknown */
-//  AM_RANGE(0xf0a3, 0xf0a3) AM_WRITE(MWA8_NOP) /* unknown */
-	AM_RANGE(0xf0c0, 0xf0c5) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_scroll) /* scrolling */
-//  AM_RANGE(0xf0e1, 0xf0e1) AM_WRITE(MWA8_NOP) /* unknown */
-	AM_RANGE(0xf100, 0xf15f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* spriteram */
-	AM_RANGE(0xf400, 0xffff) AM_WRITE(lkage_videoram_w) AM_BASE(&videoram) /* videoram */
+	AM_RANGE(0xf0a0, 0xf0a3) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) /* unknown */
+	AM_RANGE(0xf0c0, 0xf0c5) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) AM_BASE(&lkage_scroll)
+	AM_RANGE(0xf0e1, 0xf0e1) AM_WRITE(MWA8_NOP) /* pulsed */
+	AM_RANGE(0xf100, 0xf15f) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM) AM_WRITE(lkage_videoram_w) AM_BASE(&videoram) /* videoram */
 ADDRESS_MAP_END
 
 static READ8_HANDLER( port_fetch_r )
@@ -128,7 +112,6 @@ static READ8_HANDLER( port_fetch_r )
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x4000, 0x7fff) AM_READ(port_fetch_r)
 ADDRESS_MAP_END
-
 
 static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
@@ -150,8 +133,6 @@ static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
-
-
 
 /***************************************************************************/
 
@@ -185,10 +166,10 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( lkage )
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "10000" ) /* unconfirmed */
-	PORT_DIPSETTING(    0x02, "15000" ) /* unconfirmed */
-	PORT_DIPSETTING(    0x01, "20000" ) /* unconfirmed */
-	PORT_DIPSETTING(    0x00, "24000" ) /* unconfirmed */
+	PORT_DIPSETTING(    0x03, "30000 100000" ) /* unverified */
+	PORT_DIPSETTING(    0x02, "30000 70000" ) /* unverified */
+	PORT_DIPSETTING(    0x01, "20000 70000" ) /* unverified */
+	PORT_DIPSETTING(    0x00, "20000 50000" ) /* unverified */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -244,23 +225,23 @@ INPUT_PORTS_START( lkage )
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
 
 	PORT_START_TAG("DSW3")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Easiest ) )  /* unconfirmed */
-	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )    /* unconfirmed */
-	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )  /* unconfirmed */
-	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )    /* unconfirmed */
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Initial Season" )
+	PORT_DIPSETTING(    0x02, "Spring" )
+	PORT_DIPSETTING(    0x00, "Winter" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
 	PORT_DIPSETTING(    0x10, "Coins/Credits" )
 	PORT_DIPSETTING(    0x00, "Insert Coin" )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, "1985" )
-	PORT_DIPSETTING(    0x20, "MCMLXXXIV" )
+	PORT_DIPSETTING(    0x20, "MCMLXXXIV" ) /* 1984(!) */
 	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -299,8 +280,6 @@ INPUT_PORTS_START( lkage )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-
 static struct GfxLayout tile_layout =
 {
 	8,8,
@@ -325,15 +304,12 @@ static struct GfxLayout sprite_layout =
 	32*8
 };
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &tile_layout,  128, 3 },
-	{ REGION_GFX1, 0x0000, &sprite_layout,  0, 8 },
+	{ REGION_GFX1, 0x0000, &tile_layout,  /*128*/0, 64 },
+	{ REGION_GFX1, 0x0000, &sprite_layout,  0, 16 },
 	{ -1 }
 };
-
-
 
 static void irqhandler(int irq)
 {
@@ -349,18 +325,14 @@ static struct YM2203interface ym2203_interface =
 	irqhandler
 };
 
-
-
 static MACHINE_DRIVER_START( lkage )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(lkage,0)
 	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
-	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_CPU_ADD(M68705,4000000/2)	/* ??? */
@@ -374,11 +346,7 @@ static MACHINE_DRIVER_START( lkage )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(2*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(176)
-		/*
-            there are actually 1024 colors in paletteram, however, we use a 100% correct
-            reduced "virtual palette" to achieve some optimizations in the video driver.
-        */
+	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(lkage)
 	MDRV_VIDEO_UPDATE(lkage)
@@ -402,15 +370,13 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( lkageb )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(lkage,0)
 	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
-	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -421,11 +387,7 @@ static MACHINE_DRIVER_START( lkageb )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(2*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(176)
-		/*
-            there are actually 1024 colors in paletteram, however, we use a 100% correct
-            reduced "virtual palette" to achieve some optimizations in the video driver.
-        */
+	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(lkage)
 	MDRV_VIDEO_UPDATE(lkage)
@@ -446,7 +408,6 @@ static MACHINE_DRIVER_START( lkageb )
 	MDRV_SOUND_ROUTE(2, "mono", 0.15)
 	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
-
 
 
 ROM_START( lkage )
@@ -541,46 +502,60 @@ ROM_END
 
 static unsigned char mcu_val;
 
-/*Note:This probably uses another MCU dump,which is undumped.*/
+/*Note: This probably uses another MCU dump,which is undumped.*/
 
 static READ8_HANDLER( fake_mcu_r )
 {
+	int result = 0;
+
 	switch(mcu_val)
 	{
 		/*These are for the attract mode*/
-		case 0x01: return (mcu_val-1);
-		case 0x90: return (mcu_val+0x43);
-		/*Gameplay Protection,checked in this order at a start of a play*/
-		case 0xa6: return (mcu_val+0x27);
-		case 0x34: return (mcu_val+0x7f);
-		case 0x48: return (mcu_val+0xb7);
+		case 0x01:
+			result = mcu_val-1;
+			break;
 
-		default:   return (mcu_val);
+		case 0x90:
+			result = mcu_val+0x43;
+			break;
+
+		/*Gameplay Protection,checked in this order at a start of a play*/
+		case 0xa6:
+			result = mcu_val+0x27;
+			break;
+
+		case 0x34:
+			result = mcu_val+0x7f;
+			break;
+
+		case 0x48:
+			result = mcu_val+0xb7;
+			break;
+
+		default:
+			result = mcu_val;
+			break;
 	}
+	return result;
 }
 
 static WRITE8_HANDLER( fake_mcu_w )
 {
-	//if(data != 1 && data != 0xa6 && data != 0x34 && data != 0x48)
-	//  usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
-
 	mcu_val = data;
 }
 
 static READ8_HANDLER( fake_status_r )
 {
-	static int res = 3;// cpu data/mcu ready status
-
+	static int res = 3; /* cpu data/mcu ready status */
 	return res;
 }
 
 DRIVER_INIT( lkageb )
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf062, 0xf062, 0, 0, fake_mcu_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf087, 0xf087, 0, 0, fake_status_r);
+	memory_install_read8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xf062, 0xf062, 0, 0, fake_mcu_r);
+	memory_install_read8_handler( 0, ADDRESS_SPACE_PROGRAM, 0xf087, 0xf087, 0, 0, fake_status_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf062, 0xf062, 0, 0, fake_mcu_w );
 }
-
 
 GAME( 1984, lkage,   0,     lkage,  lkage, 0,       ROT0, "Taito Corporation", "The Legend of Kage" )
 GAME( 1984, lkageb,  lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 1)" )

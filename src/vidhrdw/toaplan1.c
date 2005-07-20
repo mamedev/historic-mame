@@ -1199,7 +1199,7 @@ VIDEO_UPDATE( toaplan1 )
 
 VIDEO_UPDATE( zerowing )
 {
-	video_update_toaplan1(bitmap,cliprect);
+	video_update_toaplan1(screen,bitmap,cliprect);
 }
 
 VIDEO_UPDATE( demonwld )

@@ -11,6 +11,190 @@
     Known bugs:
         * none at this time
 
+
+    MCR-1 =
+        CPU Board (main CPU, background, palette, mixing)
+            * 2MHz Z80
+            * up to 7x2k program EPROMs
+            * 2x4k background EPROMs
+            * 32 entry palette RAM
+            * background colors 0-15
+            * sprite colors 16-31
+            * sprite pen 8 shows foreground through
+        Video Generator Board (sprites)
+            * up to 4x8k sprite EPROMs
+            * 4bpp output
+            * line buffers are ORed together
+        Sound I/O board (audio and I/O ports)
+            * 2MHz Z80
+            * 2x2MHz AY-8910 with duty cycle control
+            * 3 external input ports (IP0=J4,1-8; IP1=J4,10-14,15-18; IP2=J5,1-8)
+            * 2 internal DIP switches (IP3; IP4)
+            * 1 external output port (IP4=J5,10-17)
+
+    MCR-2 =
+
+
+
+CPU Boards:
+    90009 (Kick, SolarFox)
+        * 2MHz Z80
+        * up to 7x2k program EPROMs
+        * 2x4k background EPROMs
+        * 32 entry palette RAM
+        * background colors 0-15
+        * sprite colors 16-31
+        * sprite pen 8 shows foreground through
+
+    90010 (SHollow, Tron, Kroozr, Domino)
+        * 2MHz Z80
+        * up to 6x8k program EPROMs
+        * 2x8k background EPROMs
+        * 64 entry palette RAM
+        * background colors 0-63, upper two bits come from tile RAM
+        * sprite colors 0-63, upper two bits come from tile RAM
+        * sprite pen 8 shows foreground through
+
+    91442 (SpyHunt)
+        * 5MHz Z80
+        * up to 6x8k program EPROMs
+        * 4x8k background EPROMs (odd format)
+        * 1x4k alpha EPROM
+        * 64 entry palette RAM
+        * background colors 0-15 on top half of screen, 32-47 on bottom
+        * sprite colors 16-31 on top half of screen, 48-63 on bottom
+        * alpha colors hard coded to green, blue, or white
+
+    91475 (Journey)
+        * unknown
+
+    91490 (Tapper, DOTron, DemoDerb)
+        * 5MHz Z80
+        * up to 3x16k + 1x8k program EPROMs
+        * 2x16k background EPROMs
+        * 64 entry palette RAM
+        * background colors 0-63, upper two bits come from tile RAM
+        * sprite colors 0-63, upper two bits come from either tile RAM or video gen (select via jumpers)
+
+    91721 (Crater)
+        * unknown, but expected to be identical to 91442 except:
+        * sprite colors 0-63, upper two bits come from video gen
+
+
+Video Boards:
+    91399 (Kick, SolarFox, SHollow, Tron, Kroozr, Domino)
+        * 4x8k sprite EPROMs
+        * data is ORed into linebuffers
+        * output is 4 bits: VID0-3
+        * support for hflip, vflip (code bits 6,7)
+
+    91442 (SpyHunt)
+        * 8x32k sprite EPROMs
+        * data is written to linebuffers if not all F's
+        * support for hflip, vflip (flags bits 4,5)
+        * output is 4 bits: VID0-3
+
+    91464 (Journey, Tapper, DOTron, DemoDerb)
+        * 8x32k sprite EPROMs
+        * data is written to linebuffers if not all F's
+        * support for hflip, vflip (flags bits 4,5)
+        * support for 4 bits of extra data per pixel (flags bits 0-3)
+        * output is 8 bits: VID0-3, COL0-3
+
+
+Sound Boards:
+    90908 (Kick, SolarFox)
+        * 2MHz Z80
+        * 2x2MHz AY8910
+        * each AY8910 channel has a duty cycle controlled @ 50kHz by a down counter
+        * each AY8910 has a 3-to-8 demux that controls the left/right panning
+        * input port 0 (J4 1-8)
+        * input port 1 (J4 10-13,14-18)
+        * input port 2 (J5 1-8)
+        * DIP switch (10 position, port 3)
+        * DIP switch (8 position, port 4)
+        * output port (J5 10-17)
+
+    90913 (SHollow, Tron, Domino, Journey)
+        * 2MHz Z80
+        * 2x2MHz AY8910
+        * each AY8910 channel has a duty cycle controlled @ 50kHz by a down counter
+        * removed the panning controls
+        * input port 0 (J4 1-8)
+        * input port 1 (J4 10-13,14-18)
+        * input port 2 (J5 1-8)
+        * DIP switch (10 position, port 3), top bit goes to J6 10
+        * input port 4 (J6 1-7,9)
+        * output port (J5 10-17)
+
+    91483 (Kroozr)
+        * basically identical to 90913
+        * input port 4 has a set of jumpers between it and the J6 outputs
+
+    91657 (NFL, DOTron, SpyHunt)
+        * appears to be identical in every way to 90908
+
+
+
+
+               CPU   Video  Sound
+              -----  -----  -----
+    Kick      90009  91399  90908
+    SolarFox  90009  91399  90908
+
+    SHollow   90010  91399  90913
+    Tron      90010  91399  90913  91418
+    Kroozr    90010  91399  91483  91458  91482
+    Domino    90010  91399  90913
+    Wacko
+    TwoTiger
+    Journey   91475  91464  90913
+    NFL                     91657
+
+    Tapper    91490  91464  90913
+    Timber
+    DOTron    91490  91464  91657
+    DemoDerb  91490  91464  90913
+
+    SpyHunt   91442  91433  91657/90913  91671
+    Crater    91721  91464  91657
+    TurboTag
+
+    DemoDerM
+    Sarge
+    MaxRPM
+    Rampage
+    PowerDrv
+    StarGrds
+
+
+
+
+90009 = CPU Board (Kick, SolarFox)
+90010 = Super CPU (Kroozr, Tron, SHollow)
+90908 = Sound I/O (Kick, SolarFox)
+90913 = Super Sound I/O (SHollow, Tron)
+91399 = Video Gen (Kick, SolarFox, SHollow, Tron, Kroozr)
+91418 = Optical Encoder (Tron)
+91433 = Video Gen III (SpyHunt)
+91434 = Optical Sensor PC (Kroozr)
+91442 = CPU Board MCR III (SpyHunt)
+91458 = Analog Joystick PC (Kroozr)
+91464 = Super Video Gen MCR III (Tapper)
+91482 = Optical Sensor PC (Kroozr)
+91483 = Super Sound I/O (Kroozr)
+91490 = 5MHz CPU (Tapper)
+91649 = Absolute Position PC (SpyHunt)
+91657 = Super Sound I/O with Panning (DOTron)
+91658 = Lamp Sequencer (DOTron)
+91659 = Flashing Fluorescent Assembly (DOTron)
+91660 = Squawk & Talk (DOTron)
+91671 = Chip Squeak Deluxe (SpyHunt)
+91673 = Lamp Driver (SpyHunt)
+91794 = Optical Encoder Deluxe (DemoDerb)
+91799 = Turbo Chip Squeak (DemoDerb)
+
+
 ****************************************************************************
 
     Memory map
@@ -353,8 +537,8 @@ static MACHINE_DRIVER_START( mcr1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 
-	MDRV_VIDEO_START(mcr1)
-	MDRV_VIDEO_UPDATE(mcr1)
+	MDRV_VIDEO_START(mcr)
+	MDRV_VIDEO_UPDATE(mcr)
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(mcr_ssio)
@@ -470,6 +654,9 @@ static DRIVER_INIT( solarfox )
 	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7 };
 	nvram_init = hiscore_init;
 
+	mcr_cpu_board = 90009;
+	mcr_sprite_board = 91399;
+
 	mcr_sound_init(MCR_SSIO);
 	ssio_set_custom_input(0, 0x1c, solarfox_ip0_r);
 	ssio_set_custom_input(1, 0xff, solarfox_ip1_r);
@@ -482,6 +669,9 @@ static DRIVER_INIT( solarfox )
 static DRIVER_INIT( kick )
 {
 	nvram_init = NULL;
+
+	mcr_cpu_board = 90009;
+	mcr_sprite_board = 91399;
 
 	mcr_sound_init(MCR_SSIO);
 	ssio_set_custom_input(1, 0xf0, kick_ip1_r);

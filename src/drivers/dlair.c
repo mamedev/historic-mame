@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/z80fmly.h"
+#include "cpu/z80/z80daisy.h"
 
 
 
@@ -117,7 +118,7 @@ if ((led1 & 64) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
 /* z80 ctc */
 static void ctc_interrupt (int state)
 {
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0,state));
+	cpunum_set_input_line(0, 0, state);
 }
 
 static z80ctc_interface ctc_intf =
@@ -210,10 +211,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static Z80_DaisyChain daisy_chain[] =
+static struct z80_irq_daisy_chain daisy_chain[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0,0,0,-1} 		/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,0,-1} 		/* end mark */
 };
 
 

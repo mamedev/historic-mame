@@ -607,8 +607,6 @@ Known problems with this driver.
   - Progear slows down more that it should when compared to real hardware. See
     the explenation above for the most likley cause of this problem.
 
-  - The spinner in Puzz Loop 2 is not emulated.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -5024,6 +5022,33 @@ ROM_START( sfau )
 	ROM_LOAD16_WORD_SWAP( "sfz.12m",   0x200000, 0x200000, CRC(8bdbc4b4) SHA1(0e21c9a75a17a7e7dfd8bb51098c2b9dc4c933ec) )
 ROM_END
 
+ROM_START( sfza )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "sfza.03a", 0x000000, 0x80000, CRC(ca91bed9) SHA1(af238a4a1b87fa09ae7da7e0c41964c95dae6513) )
+	ROM_LOAD16_WORD_SWAP( "sfz.04a",  0x080000, 0x80000, CRC(5f99e9a5) SHA1(e9f286315d17096adc08e6b4e6ff7c5351f5bef3) )
+	ROM_LOAD16_WORD_SWAP( "sfz.05a",  0x100000, 0x80000, CRC(0810544d) SHA1(5f39bda3e7b16508eb58e5a2e0cc58c09cf428ce) )
+	ROM_LOAD16_WORD_SWAP( "sfz.06",   0x180000, 0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//  ROM_LOAD16_WORD_SWAP( "sfzax.03a", 0x000000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
+	ROM_FILL(              0x000000, 0x800000, 0 )
+	ROMX_LOAD( "sfz.14m",   0x800000, 0x200000, CRC(90fefdb3) SHA1(5eb28c8de57acfeaefebdd01509c7d9ba5244705) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.16m",   0x800002, 0x200000, CRC(5354c948) SHA1(07588f1ba6addc04fef3274c971174aaf3e632ab) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.18m",   0x800004, 0x200000, CRC(41a1e790) SHA1(ce25dad542308691dbe9606b26279bbd59ea4b81) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.20m",   0x800006, 0x200000, CRC(a549df98) SHA1(f054e95df650a891ef56da8bfb31cb2c945a9aed) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfz.01",   0x00000, 0x08000, CRC(ffffec7d) SHA1(75b4aef001b72a0f571b51b2b97803facc1832dd) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "sfz.02",   0x28000, 0x20000, CRC(45f46a08) SHA1(e32dbd27b52ab708278045b5a829376e55a4ca81) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "sfz.11m",   0x000000, 0x200000, CRC(c4b093cd) SHA1(256526bb693a0b72443f047e060304c9b739acd1) )
+	ROM_LOAD16_WORD_SWAP( "sfz.12m",   0x200000, 0x200000, CRC(8bdbc4b4) SHA1(0e21c9a75a17a7e7dfd8bb51098c2b9dc4c933ec) )
+ROM_END
+
 ROM_START( sfzj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "sfzj.03c", 0x000000, 0x80000, CRC(f5444120) SHA1(22158894971754ad83b8eeb8bdfb9874794b98c0) )
@@ -7168,8 +7193,8 @@ ROM_START( xmvsfu )
 	ROM_LOAD16_WORD_SWAP( "xvs.09",   0x300000, 0x80000, CRC(9641f36b) SHA1(dcba3482d1ba37ccfb30d402793ee063c6621aed) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//  ROM_LOAD16_WORD_SWAP( "xvsux.03k", 0x000000, 0x80000, NO_DUMP )
-//  ROM_LOAD16_WORD_SWAP( "xvsux.04k", 0x080000, 0x80000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "xvsux.03k", 0x000000, 0x80000, CRC(1db62484) SHA1(74e8631c75e1d3252141762e8e7e848bb0631a97) )
+	ROM_LOAD16_WORD_SWAP( "xvsux.04k", 0x080000, 0x80000, CRC(63ba4c8e) SHA1(1e1b38dd3fabb8ccddb460b660e6093154074d97) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "xvs.13m",   0x0000000, 0x400000, CRC(f6684efd) SHA1(c0a2f3a9e82ab8b084a500aec71ac633e947328c) , ROM_GROUPWORD | ROM_SKIP(6) )
@@ -7537,6 +7562,7 @@ GAME( 1995, sfar1,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAMEX(1995, sfar2,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950627)", GAME_NOT_WORKING )
 GAME( 1995, sfar3,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950605)" )
 GAME( 1995, sfau,     sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (US 950627)" )
+GAMEX(1995, sfza,     sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Asia 950627)", GAME_NOT_WORKING )
 GAME( 1995, sfzj,     sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Japan 950727)" )
 GAME( 1995, sfzjr1,   sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Japan 950627)" )
 GAME( 1995, sfzjr2,   sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Japan 950605)" )
@@ -7575,7 +7601,7 @@ GAME( 1996, spf2t,    0,       cps2, 19xx,    cps2, ROT0,   "Capcom", "Super Puz
 GAME( 1996, spf2xj,   spf2t,   cps2, 19xx,    cps2, ROT0,   "Capcom", "Super Puzzle Fighter II X (Japan 960531)" )
 GAMEX(1996, spf2ta,   spf2t,   cps2, 19xx,    cps2, ROT0,   "Capcom", "Super Puzzle Fighter II Turbo (Asia 960529)", GAME_NOT_WORKING )
 GAME( 1996, xmvsf,    0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (Euro 960910)" )
-GAMEX(1996, xmvsfu,   xmvsf,   cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (US 961023)", GAME_NOT_WORKING )
+GAME( 1996, xmvsfu,   xmvsf,   cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (US 961023)" )
 GAME( 1996, xmvsfur1, xmvsf,   cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (US 961004)" )
 GAMEX(1996, xmvsfj,   xmvsf,   cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (Japan 961004)", GAME_NOT_WORKING )
 GAMEX(1996, xmvsfjr1, xmvsf,   cps2, ssf2,    cps2, ROT0,   "Capcom", "X-Men Vs. Street Fighter (Japan 960910)", GAME_NOT_WORKING )

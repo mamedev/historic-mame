@@ -598,7 +598,7 @@ if (code_pressed(KEYCODE_Z))
 	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
 	dt[0].x = s->x;		dt[0].y = s->y;
 	dt[1].text = 0;	/* terminate array */
-	displaytext(Machine->scrbitmap,dt);		}
+	displaytext(bitmap,dt);		}
 #endif
 #endif
 	}

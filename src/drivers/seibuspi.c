@@ -608,52 +608,131 @@ extern int bg_size;
 data32_t *spimainram;
 
 /********************************************************************/
-static int z80_fifo_pos = 0;
-
-static UINT8 z80_semaphore = 0;
-static UINT8 z80_com = 0;
-static UINT8 i386_semaphore = 1;
-
+static int z80_prg_fifo_pos = 0;
 static int z80_lastbank;
 
-READ32_HANDLER( sound_com_r )
+#define FIFO_SIZE 512
+static int fifoin_rpos, fifoin_wpos;
+static UINT8 fifoin_data[FIFO_SIZE];
+static int fifoin_read_request = 0;
+
+static int fifoout_rpos, fifoout_wpos;
+static UINT8 fifoout_data[FIFO_SIZE];
+static int fifoout_read_request = 0;
+
+static UINT8 z80_fifoout_pop(void)
 {
-	i386_semaphore = 0x1;
-	z80_semaphore = 0x1;
-	return z80_com;
+	UINT8 r;
+	if (fifoout_wpos == fifoout_rpos)
+	{
+		osd_die("Sound FIFOOUT underflow at %08X\n", activecpu_get_pc());
+	}
+	r = fifoout_data[fifoout_rpos++];
+	if(fifoout_rpos == FIFO_SIZE)
+	{
+		fifoout_rpos = 0;
+	}
+
+	if (fifoout_wpos == fifoout_rpos)
+	{
+		fifoout_read_request = 0;
+	}
+
+	return r;
 }
 
-WRITE32_HANDLER( sound_com_w )
+static void z80_fifoout_push(UINT8 data)
+{
+	fifoout_data[fifoout_wpos++] = data;
+	if (fifoout_wpos == FIFO_SIZE)
+	{
+		fifoout_wpos = 0;
+	}
+	if(fifoout_wpos == fifoout_rpos)
+	{
+		osd_die("Sound FIFOOUT overflow at %08X\n", activecpu_get_pc());
+	}
+
+	fifoout_read_request = 1;
+}
+
+static UINT8 z80_fifoin_pop(void)
+{
+	UINT8 r;
+	if (fifoin_wpos == fifoin_rpos)
+	{
+		osd_die("Sound FIFOIN underflow at %08X\n", activecpu_get_pc());
+	}
+	r = fifoin_data[fifoin_rpos++];
+	if(fifoin_rpos == FIFO_SIZE)
+	{
+		fifoin_rpos = 0;
+	}
+
+	if (fifoin_wpos == fifoin_rpos)
+	{
+		fifoin_read_request = 0;
+	}
+
+	return r;
+}
+
+static void z80_fifoin_push(UINT8 data)
+{
+	fifoin_data[fifoin_wpos++] = data;
+	if(fifoin_wpos == FIFO_SIZE)
+	{
+		fifoin_wpos = 0;
+	}
+	if(fifoin_wpos == fifoin_rpos)
+	{
+		osd_die("Sound FIFOIN overflow at %08X\n", activecpu_get_pc());
+	}
+
+	fifoin_read_request = 1;
+}
+
+
+
+static READ32_HANDLER( sound_fifo_r )
+{
+	UINT8 r = z80_fifoout_pop();
+
+	return r;
+}
+
+static WRITE32_HANDLER( sound_fifo_w )
 {
 	if( (mem_mask & 0xff) == 0 ) {
-		z80_com = data & 0xff;
-		i386_semaphore = 0;
-		z80_semaphore = 0x3;	/* data available */
+		z80_fifoin_push(data & 0xff);
 	}
 }
 
-
-READ32_HANDLER( sound_semaphore_r )
+static READ32_HANDLER( sound_fifo_status_r )
 {
-	/* prevent z80 timeout and game hangs?.. */
-	cpu_spinuntil_time(TIME_IN_USEC(30));
-
-	return i386_semaphore;
+	UINT32 r = 0;
+	if (fifoout_read_request)
+	{
+		r |= 2;
+	}
+	return r | 1;
 }
 
-READ32_HANDLER( spi_unknown_r )
+
+
+static READ32_HANDLER( spi_unknown_r )
 {
 	return 0xffffffff;
 }
 
-WRITE32_HANDLER( ds2404_reset_w )
+static WRITE32_HANDLER( ds2404_reset_w )
 {
 	if( ACCESSING_LSB32 ) {
 		DS2404_1W_reset_w(offset, data);
 	}
 }
 
-READ32_HANDLER( ds2404_data_r )
+static READ32_HANDLER( ds2404_data_r )
 {
 	if( ACCESSING_LSB32 ) {
 		return DS2404_data_r(offset);
@@ -661,27 +740,27 @@ READ32_HANDLER( ds2404_data_r )
 	return 0;
 }
 
-WRITE32_HANDLER( ds2404_data_w )
+static WRITE32_HANDLER( ds2404_data_w )
 {
 	if( ACCESSING_LSB32 ) {
 		DS2404_data_w(offset, data);
 	}
 }
 
-WRITE32_HANDLER( ds2404_clk_w )
+static WRITE32_HANDLER( ds2404_clk_w )
 {
 	if( ACCESSING_LSB32 ) {
 		DS2404_clk_w(offset, data);
 	}
 }
 
-READ32_HANDLER( eeprom_r )
+static READ32_HANDLER( eeprom_r )
 {
 	/* TODO */
 	return 0;
 }
 
-WRITE32_HANDLER( eeprom_w )
+static WRITE32_HANDLER( eeprom_w )
 {
 	// tile banks
 	if( !(mem_mask & 0x00ff0000) ) {
@@ -691,16 +770,16 @@ WRITE32_HANDLER( eeprom_w )
 	/* TODO */
 }
 
-WRITE32_HANDLER( z80_fifo_w )
+static WRITE32_HANDLER( z80_prg_fifo_w )
 {
 	UINT8* ram = memory_region(REGION_CPU2);
 	if( ACCESSING_LSB32 ) {
-		if (z80_fifo_pos<0x40000) ram[z80_fifo_pos] = data & 0xff;
-		z80_fifo_pos++;
+		if (z80_prg_fifo_pos<0x40000) ram[z80_prg_fifo_pos] = data & 0xff;
+		z80_prg_fifo_pos++;
 	}
 }
 
-WRITE32_HANDLER( z80_enable_w )
+static WRITE32_HANDLER( z80_enable_w )
 {
 	// tile banks
 	if( !(mem_mask & 0x00ff0000) ) {
@@ -710,7 +789,7 @@ WRITE32_HANDLER( z80_enable_w )
 logerror("z80 data = %08x mask = %08x\n",data,mem_mask);
 	if( !(mem_mask & 0x000000ff) ) {
 		if( data & 0x1 ) {
-			z80_fifo_pos = 0;
+			z80_prg_fifo_pos = 0;
 			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE );
 		} else {
 			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
@@ -718,7 +797,7 @@ logerror("z80 data = %08x mask = %08x\n",data,mem_mask);
 	}
 }
 
-READ32_HANDLER( spi_controls1_r )
+static READ32_HANDLER( spi_controls1_r )
 {
 	if( ACCESSING_LSB32 ) {
 		return (readinputport(1) << 8) | readinputport(0) | 0xffff0000;
@@ -728,7 +807,7 @@ READ32_HANDLER( spi_controls1_r )
 
 static int control_bit40 = 0;
 
-READ32_HANDLER( spi_controls2_r )
+static READ32_HANDLER( spi_controls2_r )
 {
 	if( ACCESSING_LSB32 ) {
 		control_bit40 ^= 0x40;
@@ -737,24 +816,24 @@ READ32_HANDLER( spi_controls2_r )
 	return 0xffffffff;
 }
 
-READ32_HANDLER( spi_6295_0_r )
+static READ32_HANDLER( spi_6295_0_r )
 {
 	return OKIM6295_status_0_r(0);
 }
 
-READ32_HANDLER( spi_6295_1_r )
+static READ32_HANDLER( spi_6295_1_r )
 {
 	return OKIM6295_status_1_r(0);
 }
 
-WRITE32_HANDLER( spi_6295_0_w )
+static WRITE32_HANDLER( spi_6295_0_w )
 {
 	if( ACCESSING_LSB32 ) {
 		OKIM6295_data_0_w(0, data & 0xff);
 	}
 }
 
-WRITE32_HANDLER( spi_6295_1_w )
+static WRITE32_HANDLER( spi_6295_1_w )
 {
 	if( ACCESSING_LSB32 ) {
 		OKIM6295_data_1_w(0, data & 0xff);
@@ -763,23 +842,26 @@ WRITE32_HANDLER( spi_6295_1_w )
 
 /********************************************************************/
 
-READ8_HANDLER( z80_semaphore_r )
+static READ8_HANDLER( z80_soundfifo_r )
 {
-	return z80_semaphore;
+	UINT8 r = z80_fifoin_pop();
+
+	return r;
 }
 
-READ8_HANDLER( z80_com_r )
+static WRITE8_HANDLER( z80_soundfifo_w )
 {
-	z80_semaphore = 0x1;
-	i386_semaphore = 0x1;
-	return z80_com;
+	z80_fifoout_push(data);
 }
 
-WRITE8_HANDLER( z80_com_w )
+static READ8_HANDLER( z80_soundfifo_status_r )
 {
-	z80_com = data;
-	z80_semaphore = 0;
-	i386_semaphore = 0x3;	/* data available */
+	UINT8 r = 0;
+	if (fifoin_read_request)
+	{
+		r |= 2;
+	}
+	return r | 1;
 }
 
 static WRITE8_HANDLER( z80_bank_w )
@@ -791,15 +873,39 @@ static WRITE8_HANDLER( z80_bank_w )
 	}
 }
 
-static READ8_HANDLER( z80_unk_r )
+static READ8_HANDLER( z80_jp1_r )
 {
 	return readinputport(3);
 }
 
 static READ32_HANDLER( soundrom_r )
 {
-	UINT8 *sound = memory_region(REGION_SOUND1);
-	return sound[offset];
+	UINT8 *sound = (UINT8*)memory_region(REGION_USER2);
+	UINT16 *sound16 = (UINT16*)memory_region(REGION_USER2);
+
+	if (mem_mask == 0xffffff00)
+	{
+//      printf("8bit sound read %08x\n",offset);
+		return sound[offset];
+	}
+	else if (mem_mask == 0x00000000)
+	{
+		if (offset < 0x100000)
+		{
+			return sound16[offset];
+		}
+		else if (offset < 0x200000)
+		{
+			return sound16[0x80000 + (offset & 0x7ffff)];
+		}
+		else
+		{
+			return sound[offset];
+		}
+	}
+
+
+	osd_die("soundrom_r: %08X, %08X\n", offset, mem_mask);
 }
 
 /********************************************************************/
@@ -814,8 +920,8 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
 	AM_RANGE(0x00000608, 0x0000060b) AM_READ(spi_unknown_r)		/* Unknown */
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
-	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)
-	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_semaphore_r)
+	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_fifo_r)
+	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_fifo_status_r)
 	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
 	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
@@ -834,7 +940,7 @@ static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000494, 0x00000497) AM_WRITE(video_dma_address_w)
 	AM_RANGE(0x0000050c, 0x0000050f) AM_WRITE(sprite_dma_start_w)
 	AM_RANGE(0x00000600, 0x00000603) AM_WRITE(MWA32_NOP)		/* Unknown */
-	AM_RANGE(0x00000680, 0x00000683) AM_WRITE(sound_com_w)
+	AM_RANGE(0x00000680, 0x00000683) AM_WRITE(sound_fifo_w)
 	AM_RANGE(0x00000684, 0x00000687) AM_WRITE(MWA32_NOP)		/* Unknown */
 	AM_RANGE(0x000006d0, 0x000006d3) AM_WRITE(ds2404_reset_w)
 	AM_RANGE(0x000006d4, 0x000006d7) AM_WRITE(ds2404_data_w)
@@ -844,9 +950,9 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( spisound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4008, 0x4008) AM_READ(z80_com_r)			/* Checksum checking */
-	AM_RANGE(0x4009, 0x4009) AM_READ(z80_semaphore_r)	/* Z80 read semaphore */
-	AM_RANGE(0x400a, 0x400a) AM_READ(z80_unk_r)
+	AM_RANGE(0x4008, 0x4008) AM_READ(z80_soundfifo_r)
+	AM_RANGE(0x4009, 0x4009) AM_READ(z80_soundfifo_status_r)
+	AM_RANGE(0x400a, 0x400a) AM_READ(z80_jp1_r)
 	AM_RANGE(0x4013, 0x4013) AM_READNOP
 	AM_RANGE(0x6000, 0x600f) AM_READ(YMF271_0_r)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK4)		/* Banked ram */
@@ -856,7 +962,7 @@ static ADDRESS_MAP_START( spisound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x4002, 0x4002) AM_WRITE(MWA8_NOP)		/* ack RST 10 */
 	AM_RANGE(0x4003, 0x4003) AM_WRITE(MWA8_NOP)		/* Unknown */
-	AM_RANGE(0x4008, 0x4008) AM_WRITE(z80_com_w)		/* Checksum checking */
+	AM_RANGE(0x4008, 0x4008) AM_WRITE(z80_soundfifo_w)
 	AM_RANGE(0x400b, 0x400b) AM_WRITE(MWA8_NOP)		/* Unknown */
 	AM_RANGE(0x401b, 0x401b) AM_WRITE(z80_bank_w)		/* control register: bits 0-2 = bank @ 8000, bit 3 = watchdog? */
 	AM_RANGE(0x6000, 0x600f) AM_WRITE(YMF271_0_w)
@@ -881,11 +987,11 @@ static WRITE8_HANDLER( flashrom_write )
 	logerror("Flash Write: %08X, %02X\n", offset, data);
 	if( offset < 0x100000 )
 	{
-		intelflash_write(0, offset, data);
+		intelflash_write(0, offset + 1, data);
 	}
 	else if( offset < 0x200000 )
 	{
-		intelflash_write(1, offset - 0x100000, data);
+		intelflash_write(1, offset - 0x100000 + 1, data);
 	}
 }
 
@@ -975,6 +1081,7 @@ INPUT_PORTS_START( spi_2button )
 
 	PORT_START_TAG("JP1")		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x03, "Update"  )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1009,6 +1116,7 @@ INPUT_PORTS_START( spi_3button )
 
 	PORT_START_TAG("JP1")
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x03, "Update"  )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1070,6 +1178,7 @@ INPUT_PORTS_START( spi_ejanhs )
 
 	PORT_START_TAG("JP1")
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x03, "Update"  )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1466,12 +1575,15 @@ static INTERRUPT_GEN( spi_interrupt )
 
 static MACHINE_INIT( spi )
 {
-	data32_t *rombase = (data32_t*)memory_region(REGION_USER1);
-	data32_t flash_data = rombase[0x1ffffc/4];
+	int i;
+	UINT8 *sound = memory_region(REGION_SOUND1);
+
+	UINT8 *rombase = memory_region(REGION_USER1);
+	UINT8 flash_data = rombase[0x1ffffc];
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_prg_fifo_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, z80_enable_w);
 
 	memory_set_bankptr(4, memory_region(REGION_CPU2));
@@ -1480,13 +1592,18 @@ static MACHINE_INIT( spi )
 	/* If any of the other values are wrong, the game goes to update mode */
 	intelflash_write(0, 0, 0xff);
 	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 0, flash_data & 0xff);			/* country code */
-	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 1, (flash_data >> 8) & 0xff);	/* unknown */
-	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 2, (flash_data >> 16) & 0xff);	/* unknown */
-	intelflash_write(0, 0, 0x10);
-	intelflash_write(0, 3, (flash_data >> 24) & 0xff);	/* game code (same between regions) */
+	intelflash_write(0, 0, flash_data);			/* country code */
+
+	for (i=0; i < 0x100000; i++)
+	{
+		intelflash_write(0, 0, 0xff);
+		sound[i] = intelflash_read(0, i);
+	}
+	for (i=0; i < 0x100000; i++)
+	{
+		intelflash_write(1, 0, 0xff);
+		sound[0x100000+i] = intelflash_read(1, i);
+	}
 }
 
 static MACHINE_DRIVER_START( spi )
@@ -1508,7 +1625,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_NVRAM_HANDLER(spi)
 
  	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(spi_gfxdecodeinfo)
@@ -1798,7 +1915,7 @@ static MACHINE_DRIVER_START( seibu386 )
 	MDRV_MACHINE_INIT(seibu386)
 
  	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(spi_gfxdecodeinfo)
@@ -1848,9 +1965,12 @@ ROM_START(senkyu)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
-	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x080000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_CONTINUE(0x100000,0x080000)
+	ROM_LOAD("fb_7.216",      0x200000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
 ROM_END
 
 ROM_START(senkyua)
@@ -1876,9 +1996,12 @@ ROM_START(senkyua)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
-	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x080000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_CONTINUE(0x100000,0x080000)
+	ROM_LOAD("fb_7.216",      0x200000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
 ROM_END
 
 ROM_START(batlball)
@@ -1904,9 +2027,12 @@ ROM_START(batlball)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
-	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x080000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_CONTINUE(0x100000,0x080000)
+	ROM_LOAD("fb_7.216",      0x200000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
 ROM_END
 
 ROM_START(batlbala)
@@ -1932,9 +2058,12 @@ ROM_START(batlbala)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
-	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x080000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_CONTINUE(0x100000,0x080000)
+	ROM_LOAD("fb_7.216",      0x200000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
 ROM_END
 
 ROM_START(ejanhs)
@@ -1962,9 +2091,12 @@ ROM_START(ejanhs)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("ej3_pcm1.215",  0x000000, 0x100000, CRC(a92a3a82) SHA1(b86c27c5a2831ddd2a1c2b071018a99afec14018) )
-	ROM_LOAD("ejan3_7.216",   0x100000, 0x080000, CRC(c6fc6bcf) SHA1(d4d8c06d295f8eacfa10c21dbab5858f936121f3) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("ej3_pcm1.215",  0x000000, 0x080000, CRC(a92a3a82) SHA1(b86c27c5a2831ddd2a1c2b071018a99afec14018) )
+	ROM_CONTINUE(0x100000,0x080000)
+	ROM_LOAD("ejan3_7.216",   0x200000, 0x080000, CRC(c6fc6bcf) SHA1(d4d8c06d295f8eacfa10c21dbab5858f936121f3) )
 ROM_END
 
 
@@ -1993,8 +2125,11 @@ ROM_START(viprp1)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("v_pcm.215",  0x000000, 0x080000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_CONTINUE(0x100000,0x80000) /* stops reading around 00ee8a6, rom is empty at this point, countdown continues anyway */
 ROM_END
 
 ROM_START(viprp1s)
@@ -2022,8 +2157,11 @@ ROM_START(viprp1s)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("v_pcm.215",  0x000000, 0x080000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_CONTINUE(0x100000,0x80000)
 ROM_END
 
 ROM_START(viprp1o)
@@ -2051,8 +2189,11 @@ ROM_START(viprp1o)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("v_pcm.215",  0x000000, 0x080000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_CONTINUE(0x100000,0x80000)
 ROM_END
 
 ROM_START(viprp1ot)
@@ -2080,9 +2221,13 @@ ROM_START(viprp1ot)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
-	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("v_pcm.215",  0x000000, 0x080000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_CONTINUE(0x100000,0x80000)
 ROM_END
+
 
 ROM_START(rdft)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
@@ -2110,7 +2255,9 @@ ROM_START(rdft)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
@@ -2141,7 +2288,9 @@ ROM_START(rdftu)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
@@ -2173,7 +2322,9 @@ ROM_START(rdftj)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
@@ -2204,7 +2355,9 @@ ROM_START(rdftau)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
@@ -2235,7 +2388,9 @@ ROM_START(rdftdi)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
@@ -2296,7 +2451,7 @@ ROM_START(rdft2us)
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(cc543c4f) SHA1(6e5c93fd3d21c594571b071d4a830211e1f162b2) )
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("sound1.bin", 0x100000, 0x80000, CRC(20384b0e) SHA1(9c5d725418543df740f9145974ed6ffbbabee1d0) )
 
 ROM_END
@@ -2335,7 +2490,9 @@ ROM_START(rdft2)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
@@ -2371,7 +2528,9 @@ ROM_START(rdft2j)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
@@ -2407,7 +2566,9 @@ ROM_START(rdft2a)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
@@ -2443,7 +2604,9 @@ ROM_START(rdft2a2)
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
@@ -2473,7 +2636,9 @@ ROM_START(rfjet) /* SPI Cart, Europe */
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
@@ -2504,7 +2669,9 @@ ROM_START(rfjetj) /* SPI Cart, Japan */
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
@@ -2536,7 +2703,9 @@ ROM_START(rfjetu) /* SPI Cart, US */
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
@@ -2567,7 +2736,9 @@ ROM_START(rfjeta) /* SPI Cart, Asia */
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x200000, REGION_SOUND1, 0)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
@@ -2599,7 +2770,7 @@ ROM_START(rfjetus)	/* Single board version SXX2G */
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("rfj-05.u091", 0x000000, 0x40000, CRC(a55e8799) SHA1(5d4ca9ae920ab54e23ee3b1b33db72711e744516) ) /* ZPRG */
 
-	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("rfj-04.107", 0x200000, 0x80000, CRC(c050da03) SHA1(1002dac51a3a4932c4f0074c1f3d97a597d98755) ) /* SOUND1 */
 ROM_END

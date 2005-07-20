@@ -317,8 +317,7 @@ void cpu_setOPbasez180(int pc)
 	if( _IFF1 == 0 && _IFF2 == 1 )								\
 	{															\
 		_IFF1 = 1;												\
-		if( Z180.irq_state[0] != CLEAR_LINE ||					\
-			Z180.request_irq >= 0 ) 							\
+		if( Z180.irq_state[0] != CLEAR_LINE )					\
 		{														\
 			LOG(("Z180 #%d RETN takes INT0\n",                  \
 				cpu_getactivecpu()));							\
@@ -344,17 +343,12 @@ void cpu_setOPbasez180(int pc)
  * RETI
  ***************************************************************/
 #define RETI	{												\
-	int device = Z180.service_irq;								\
 	POP(PC);													\
 	z180_change_pc(_PCD);										\
 /* according to http://www.msxnet.org/tech/Z80/z80undoc.txt */	\
 /*  _IFF1 = _IFF2;  */											\
-	if( device >= 0 )											\
-	{															\
-		LOG(("Z180 #%d RETI device %d: $%02x\n",                \
-			cpu_getactivecpu(), device, Z180.irq[device].irq_param)); \
-		Z180.irq[device].interrupt_reti(Z180.irq[device].irq_param); \
-	}															\
+	if (Z180.daisy)												\
+		z80daisy_call_reti_device(Z180.daisy);					\
 }
 
 /***************************************************************
@@ -1173,8 +1167,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 			_PC++;												\
 			_R++;												\
 		}														\
-		if( Z180.irq_state[0] != CLEAR_LINE ||					\
-			Z180.request_irq >= 0 ) 							\
+		if( Z180.irq_state[0] != CLEAR_LINE )					\
 		{														\
 			after_EI = 1;	/* avoid cycle skip hacks */		\
 			EXEC(op,ROP()); 									\

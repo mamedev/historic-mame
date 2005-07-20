@@ -958,7 +958,7 @@ static int vdp_getvscroll(int plane, int column)
 *******************************************************************************
 
     These are used by the Screen Refresh functions to do the actual rendering
-    of a screenline to Machine->scrbitmap.
+    of a screenline to the bitmap.
 
     Draw Planes in Order
         Scroll B Low

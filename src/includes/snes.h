@@ -346,7 +346,6 @@ extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );
 extern void snes_hdma_init(void);
 extern void snes_hdma(void);
-extern void snes_refresh_scanline( UINT16 curline );
 
 /* (PPU) Video related */
 extern UINT8  *snes_vram;			/* Video RAM (Should be 16-bit, but it's easier this way) */

@@ -1176,7 +1176,15 @@ INPUT_PORTS_END
 INPUT_PORTS_START( kirarast )	// player 1 inputs done? others?
 	MS32_UNKNOWN_INPUTS
 
-	MS32_SYSTEM_INPUTS
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
+//PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) /* already mapped in mahjong inputs */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+//PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) /* ms32.c mahjongs don't have P2 inputs */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -1304,6 +1312,14 @@ INPUT_PORTS_START( kirarast )	// player 1 inputs done? others?
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( akiss )	// player 1 inputs done? others?
+	PORT_INCLUDE( kirarast )
+
+	PORT_MODIFY("IN1")
+//PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) /* coin 2 is unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( f1superb )	// Mostly wrong !
@@ -2348,13 +2364,13 @@ static DRIVER_INIT (f1superb)
 
 GAMEX( 1994, hayaosi1, 0,        ms32, hayaosi1, ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1994, bbbxing,  0,        ms32, bbbxing,  ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1994, 47pie2,   0,        ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1994, 47pie2o,  47pie2,   ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, 47pie2,   0,        ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, 47pie2o,  47pie2,   ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War / Wangan Sensou", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
 GAMEX( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1995, akiss,    0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, akiss,    0,        ms32, akiss,    kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (92047-01 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (91022-10 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

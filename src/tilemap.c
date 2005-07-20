@@ -750,8 +750,8 @@ static void tilemap_reset(void)
 
 int tilemap_init( void )
 {
-	screen_width	= Machine->scrbitmap->width;
-	screen_height	= Machine->scrbitmap->height;
+	screen_width	= Machine->drv->screen_width;
+	screen_height	= Machine->drv->screen_height;
 	first_tilemap	= NULL;
 
 	state_save_register_func_postload(tilemap_reset);

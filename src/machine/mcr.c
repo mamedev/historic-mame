@@ -12,6 +12,7 @@
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
 #include "mcr.h"
 
 
@@ -27,6 +28,10 @@
 double mcr68_timing_factor;
 
 UINT8 mcr_cocktail_flip;
+
+UINT32 mcr_cpu_board;
+UINT32 mcr_sprite_board;
+UINT32 mcr_ssio_board;
 
 
 
@@ -182,14 +187,14 @@ static struct pia6821_interface zwackery_pia_4_intf =
 
 static void ctc_interrupt(int state)
 {
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line(0, 0, state);
 }
 
 
-Z80_DaisyChain mcr_daisy_chain[] =
+struct z80_irq_daisy_chain mcr_daisy_chain[] =
 {
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0, 0, 0, -1 }		/* end mark */
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
+	{ 0, 0, 0, 0, -1 }		/* end mark */
 };
 
 

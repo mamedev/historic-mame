@@ -100,7 +100,7 @@ struct DEBUGOPTS
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0, 0, 0};
 /*                                    red   green  blue    purple  yellow cyan    grey    white */
 static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
-static UINT8 snes_dbg_vidhrdw(UINT16 curline);
+static UINT8 snes_dbg_vidhrdw(struct mame_bitmap *bitmap, UINT16 curline);
 #endif /* SNES_DBG_VIDHRDW */
 
 /* Forward declarations */
@@ -153,10 +153,6 @@ static struct SNES_MODE_CONFIG snes_modedefs[8] =
 /*6*/	{ {snes_update_line_4_hi, NULL, NULL, NULL}, 1 },					/* Supports offset per tile and hires */
 /*7*/	{ {snes_update_line_mode7, NULL, NULL, NULL}, 1 }					/* Supports direct colour */
 };
-
-VIDEO_UPDATE( snes )
-{
-}
 
 /*****************************************
  * snes_draw_blend()
@@ -1827,10 +1823,9 @@ static void snes_update_offsets(void)
  *
  * Redraw the current line.
  *********************************************/
-void snes_refresh_scanline( UINT16 curline )
+void snes_refresh_scanline( struct mame_bitmap *bitmap, UINT16 curline )
 {
 	UINT16 ii;
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
 
 	profiler_mark(PROFILER_VIDEO);
 
@@ -1895,7 +1890,7 @@ void snes_refresh_scanline( UINT16 curline )
 		}
 
 #ifdef SNES_DBG_VIDHRDW
-		if( snes_dbg_vidhrdw( curline ) )
+		if( snes_dbg_vidhrdw( bitmap, curline ) )
 		{
 			profiler_mark(PROFILER_END);
 			return;
@@ -1912,6 +1907,14 @@ void snes_refresh_scanline( UINT16 curline )
 	}
 
 	profiler_mark(PROFILER_END);
+}
+
+VIDEO_UPDATE( snes )
+{
+	int y;
+
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		snes_refresh_scanline(bitmap, y);
 }
 
 
@@ -1999,7 +2002,7 @@ static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr
 	ui_text( bitmap, str, 0, 227 );
 }
 
-static UINT8 snes_dbg_vidhrdw( UINT16 curline )
+static UINT8 snes_dbg_vidhrdw( struct mame_bitmap *bitmap, UINT16 curline )
 {
 	UINT16 ii;
 
@@ -2038,7 +2041,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 		}
 		/* Display some debug info on the screen */
 		sprintf( t, "%s%s", debug_options.windows_disabled?" ":"W", debug_options.transparency_disabled?" ":"T" );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%s1 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[0]?" ":"*",
 				(snes_ram[TM] & 0x1)?"M":" ",
@@ -2054,7 +2057,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				snes_ram[BG1SC] & 0x3,
 				(snes_ram[BG1SC] & 0xfc) << 9,
 				snes_ppu.layer[0].data );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%s2 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[1]?" ":"*",
 				(snes_ram[TM] & 0x2)?"M":" ",
@@ -2070,7 +2073,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				snes_ram[BG2SC] & 0x3,
 				(snes_ram[BG2SC] & 0xfc) << 9,
 				snes_ppu.layer[1].data );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%s3 %s%s%s%s%s%c%s%s%d%s%s%d %4X %4X",
 				debug_options.bg_disabled[2]?" ":"*",
 				(snes_ram[TM] & 0x4)?"M":" ",
@@ -2087,7 +2090,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				snes_ram[BG3SC] & 0x3,
 				(snes_ram[BG3SC] & 0xfc) << 9,
 				snes_ppu.layer[2].data );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%s4 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[3]?" ":"*",
 				(snes_ram[TM] & 0x8)?"M":" ",
@@ -2103,7 +2106,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				snes_ram[BG4SC] & 0x3,
 				(snes_ram[BG4SC] & 0xfc) << 9,
 				snes_ppu.layer[3].data );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%sO %s%s%s%s%s%c%s%s%d%d       %4X",
 				debug_options.bg_disabled[4]?" ":"*",
 				(snes_ram[TM] & 0x10)?"M":" ",
@@ -2116,28 +2119,28 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				(snes_ram[WOBJSEL] & 0x8)?((snes_ram[WOBJSEL] & 0x4)?"o":"i"):" ",
 				snes_ppu.oam.size[0], snes_ppu.oam.size[1],
 				snes_ppu.layer[4].data );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%sB   %s  %c%s%s",
 				debug_options.bg_disabled[5]?" ":"*",
 				(snes_ram[CGADSUB] & 0x20)?"B":" ",
 				WINLOGIC[(snes_ram[WOBJLOG] & 0xc)>>2],
 				(snes_ram[WOBJSEL] & 0x20)?((snes_ram[WOBJSEL] & 0x10)?"o":"i"):" ",
 				(snes_ram[WOBJSEL] & 0x80)?((snes_ram[WOBJSEL] & 0x40)?"o":"i"):" " );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "1) %3d %3d   2) %3d %3d", (snes_ppu.bgd_offset.horizontal[0] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[0] & 0x3ff) >> 3, (snes_ppu.bgd_offset.horizontal[1] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[1] & 0x3ff) >> 3 );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "3) %3d %3d   4) %3d %3d", (snes_ppu.bgd_offset.horizontal[2] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[2] & 0x3ff) >> 3, (snes_ppu.bgd_offset.horizontal[3] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[3] & 0x3ff) >> 3 );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "Flags: %s%s%s %s %2d", (snes_ram[CGWSEL] & 0x2)?"S":"F", (snes_ram[CGADSUB] & 0x80)?"-":"+", (snes_ram[CGADSUB] & 0x40)?" 50%":"100%",(snes_ram[CGWSEL] & 0x1)?"D":"P", (snes_ram[MOSAIC] & 0xf0) >> 4 );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "SetINI: %s %s %s %s %s %s", (snes_ram[SETINI] & 0x1)?" I":"NI", (snes_ram[SETINI] & 0x2)?"P":"R", (snes_ram[SETINI] & 0x4)?"240":"225",(snes_ram[SETINI] & 0x8)?"512":"256",(snes_ram[SETINI] & 0x40)?"E":"N",(snes_ram[SETINI] & 0x80)?"ES":"NS" );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "Mode7: A %5d B %5d", snes_ppu.mode7.matrix_a, snes_ppu.mode7.matrix_b );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, " %s%s%s   C %5d D %5d", (snes_ram[M7SEL] & 0xc0)?((snes_ram[M7SEL] & 0x40)?"0":"C"):"R", (snes_ram[M7SEL] & 0x1)?"H":" ", (snes_ram[M7SEL] & 0x2)?"V":" ", snes_ppu.mode7.matrix_c, snes_ppu.mode7.matrix_d );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "       X %5d Y %5d", snes_ppu.mode7.origin_x, snes_ppu.mode7.origin_y );
-		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		ui_text( bitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 	}
 	/* Just for testing, draw as many tiles as possible */
 	{
@@ -2164,7 +2167,7 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				{
 					scanlines[MAINSCREEN].buffer[ii] = 0;
 				}
-				snes_dbg_draw_all_tiles( Machine->scrbitmap, addr, dt, pal * 16 );
+				snes_dbg_draw_all_tiles( bitmap, addr, dt, pal * 16 );
 			}
 			return 1;
 		}
@@ -2188,22 +2191,22 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 			/* Draw back colour */
 			for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
 				scanlines[MAINSCREEN].buffer[ii] = Machine->pens[0];
-			snes_dbg_draw_maps( Machine->scrbitmap, tmaddr, dm, curline, tmbg );
-			draw_scanline16( Machine->scrbitmap, 0, curline, SNES_SCR_WIDTH, scanlines[MAINSCREEN].buffer, Machine->pens, 200 );
+			snes_dbg_draw_maps( bitmap, tmaddr, dm, curline, tmbg );
+			draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanlines[MAINSCREEN].buffer, Machine->pens, 200 );
 			return 1;
 				}
 		}
 
 			/* Draw some useful information about the back/fixed colours and current bg mode etc. */
-	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 26, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0xc0) >> 6]] );
-	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 24, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0x30) >> 4]] );
-	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 22, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
-	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 12, curline, Machine->pens[32767] );
-	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 2, curline, Machine->pens[32767] );
+	plot_pixel( bitmap, SNES_DBG_HORZ_POS - 26, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0xc0) >> 6]] );
+	plot_pixel( bitmap, SNES_DBG_HORZ_POS - 24, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0x30) >> 4]] );
+	plot_pixel( bitmap, SNES_DBG_HORZ_POS - 22, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
+	plot_pixel( bitmap, SNES_DBG_HORZ_POS - 12, curline, Machine->pens[32767] );
+	plot_pixel( bitmap, SNES_DBG_HORZ_POS - 2, curline, Machine->pens[32767] );
 			for( ii = 0; ii < 5; ii++ )
 			{
-		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 19 + ii, curline, Machine->remapped_colortable[0] );
-		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 9 + ii, curline, Machine->remapped_colortable[FIXED_COLOUR] );
+		plot_pixel( bitmap, SNES_DBG_HORZ_POS - 19 + ii, curline, Machine->remapped_colortable[0] );
+		plot_pixel( bitmap, SNES_DBG_HORZ_POS - 9 + ii, curline, Machine->remapped_colortable[FIXED_COLOUR] );
 			}
 			/* Draw window positions */
 			scanlines[MAINSCREEN].buffer[snes_ram[WH0]] = Machine->pens[dbg_mode_colours[0]];

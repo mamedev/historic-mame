@@ -720,5 +720,5 @@ static DRIVER_INIT( lethalen )
 	state_save_register_int("LE", 0, "control2", &cur_control2);
 }
 
-GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_IMPERFECT_GRAPHICS)
-GAMEX( 1992, lethalej, lethalen, lethalej, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)
+GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (ver UAE)", GAME_IMPERFECT_GRAPHICS)
+GAMEX( 1992, lethalej, lethalen, lethalej, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (ver JAD)", GAME_NOT_WORKING)

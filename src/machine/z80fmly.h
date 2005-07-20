@@ -46,8 +46,9 @@ WRITE8_HANDLER( z80ctc_1_trg2_w );
 WRITE8_HANDLER( z80ctc_1_trg3_w );
 
 /* Z80 DaisyChain controll */
-int z80ctc_interrupt( int which );
-void z80ctc_reti( int which );
+int z80ctc_irq_state(int which);
+int z80ctc_irq_ack(int which);
+void z80ctc_irq_reti(int which);
 /*--------------------------------------------------------------------*/
 #define MAX_PIO 1
 
@@ -76,8 +77,9 @@ void z80pio_p_w( int which , int ch , int data );
 int z80pio_p_r( int which , int ch );
 
 /* Z80 DaisyChain controll */
-int z80pio_interrupt( int which );
-void z80pio_reti( int which );
+int z80pio_irq_state(int which);
+int z80pio_irq_ack(int which);
+void z80pio_irq_reti(int which);
 
 /* mame interface */
 void z80pio_0_reset (void);

@@ -20,6 +20,16 @@ pending:
 #include "driver.h"
 #include "z80fmly.h"
 #include "cpu/z80/z80.h"
+#include "cpu/z80/z80daisy.h"
+
+#define VERBOSE		0
+
+#if VERBOSE
+#define VPRINTF(x) logerror x
+#else
+#define VPRINTF(x)
+#endif
+
 
 typedef struct
 {
@@ -124,7 +134,7 @@ double z80ctc_getperiod (int which, int ch)
 	/* if counter mode */
 	if( (mode & MODE) == MODE_COUNTER)
 	{
-		logerror("CTC %d is CounterMode : Can't calcrate period\n", ch );
+		logerror("CTC %d is CounterMode : Can't calculate period\n", ch );
 		return 0;
 	}
 
@@ -133,22 +143,14 @@ double z80ctc_getperiod (int which, int ch)
 	return clock * (double)ctc->tconst[ch];
 }
 
-/* interrupt request callback with daisy-chain circuit */
-static void z80ctc_interrupt_check( z80ctc *ctc )
-{
-	int state = 0;
-	int ch;
 
-	for( ch = 3 ; ch >= 0 ; ch-- )
-	{
-		/* if IEO disable , same and lower IRQ is masking */
-/* ASG: changed this line because this state could have an interrupt pending as well! */
-/*      if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;*/
-		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = ctc->int_state[ch];
-		else                                   state |= ctc->int_state[ch];
-	}
-	/* change interrupt status */
-	if (ctc->intr) (*ctc->intr)(state);
+static void z80ctc_interrupt_check(int which)
+{
+	z80ctc *ctc = ctcs + which;
+
+	/* if we have a callback, update it with the current state */
+	if (ctc->intr)
+		(*ctc->intr)((z80ctc_irq_state(which) & Z80_DAISY_INT) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -165,7 +167,8 @@ void z80ctc_reset (int which)
 		timer_adjust(ctc->timer[i], TIME_NEVER, 0, 0);
 		ctc->int_state[i] = 0;
 	}
-	z80ctc_interrupt_check( ctc );
+	z80ctc_interrupt_check(which);
+	VPRINTF(("CTC Reset\n"));
 }
 
 void z80ctc_0_reset (void) { z80ctc_reset (0); }
@@ -237,19 +240,13 @@ void z80ctc_w (int which, int offset, int data)
 	{
 		/* set the new mode */
 		ctc->mode[ch] = data;
-		logerror("CTC ch.%d mode = %02x\n", ch, data);
+		VPRINTF(("CTC ch.%d mode = %02x\n", ch, data));
 
 		/* if we're being reset, clear out any pending timers for this channel */
 		if ((data & RESET) == RESET_ACTIVE)
 		{
 			timer_adjust(ctc->timer[ch], TIME_NEVER, 0, 0);
-
-			if( ctc->int_state[ch] != 0 )
-			{
-				/* clear interrupt service , request */
-				ctc->int_state[ch] = 0;
-				z80ctc_interrupt_check( ctc );
-			}
+			/* note that we don't clear the interrupt state here! */
 		}
 
 		/* all done here */
@@ -279,8 +276,7 @@ int z80ctc_r (int which, int ch)
 	{
 		double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
 
-logerror("CTC clock %f\n",1.0/clock);
-
+		VPRINTF(("CTC clock %f\n",1.0/clock));
 
 		if (ctc->timer[ch])
 			return ((int)(timer_timeleft (ctc->timer[ch]) / clock) + 1) & 0xff;
@@ -293,51 +289,79 @@ READ8_HANDLER( z80ctc_0_r ) { return z80ctc_r (0, offset); }
 READ8_HANDLER( z80ctc_1_r ) { return z80ctc_r (1, offset); }
 
 
-int z80ctc_interrupt( int which )
+/* interrupt request callback with daisy-chain circuit */
+int z80ctc_irq_state(int which)
+{
+	z80ctc *ctc = ctcs + which;
+	int state = 0;
+	int ch;
+
+	VPRINTF(("CTC IRQ state = %d%d%d%d\n", ctc->int_state[0], ctc->int_state[1], ctc->int_state[2], ctc->int_state[3]));
+
+	/* loop over all channels */
+	for (ch = 0; ch < 4; ch++)
+	{
+		/* if we're servicing a request, don't indicate more interrupts */
+		if (ctc->int_state[ch] & Z80_DAISY_IEO)
+		{
+			state |= Z80_DAISY_IEO;
+			break;
+		}
+		state |= ctc->int_state[ch];
+	}
+
+	return state;
+}
+
+
+int z80ctc_irq_ack(int which)
 {
 	z80ctc *ctc = ctcs + which;
 	int ch;
 
-	for( ch = 0 ; ch < 4 ; ch++ )
-	{
-		if( ctc->int_state[ch] )
+	/* loop over all channels */
+	for (ch = 0; ch < 4; ch++)
+
+		/* find the first channel with an interrupt requested */
+		if (ctc->int_state[ch] & Z80_DAISY_INT)
 		{
-			if( ctc->int_state[ch] == Z80_INT_REQ)
-				ctc->int_state[ch] = Z80_INT_IEO;
-			break;
+			VPRINTF(("CTC IRQAck ch%d\n", ch));
+
+			/* clear interrupt, switch to the IEO state, and update the IRQs */
+			ctc->int_state[ch] = Z80_DAISY_IEO;
+			z80ctc_interrupt_check(which);
+			return ctc->vector + ch * 2;
 		}
-	}
-	if( ch > 3 )
-	{
-		logerror("CTC entry INT : non IRQ\n");
-		ch = 0;
-	}
-	z80ctc_interrupt_check( ctc );
-	return ctc->vector + ch * 2;
+
+	logerror("z80ctc_irq_ack: failed to find an interrupt to ack!\n");
+	return ctc->vector;
 }
 
-/* when operate RETI , soud be call this function for request pending interrupt */
-void z80ctc_reti( int which )
+
+void z80ctc_irq_reti(int which)
 {
 	z80ctc *ctc = ctcs + which;
 	int ch;
 
-	for( ch = 0 ; ch < 4 ; ch++ )
-	{
-		if( ctc->int_state[ch] & Z80_INT_IEO )
+	/* loop over all channels */
+	for (ch = 0; ch < 4; ch++)
+
+		/* find the first channel with an IEO pending */
+		if (ctc->int_state[ch] & Z80_DAISY_IEO)
 		{
-			/* highest served interrupt found */
-			/* clear interrupt status */
-			ctc->int_state[ch] &= ~Z80_INT_IEO;
-			/* search next interrupt */
-			break;
+			VPRINTF(("CTC IRQReti ch%d\n", ch));
+
+			/* clear the IEO state and update the IRQs */
+			ctc->int_state[ch] &= ~Z80_DAISY_IEO;
+			z80ctc_interrupt_check(which);
+			return;
 		}
-	}
-	/* set next interrupt stattus */
-	z80ctc_interrupt_check( ctc );
+
+	logerror("z80ctc_irq_reti: failed to find an interrupt to clear IEO on!\n");
 }
 
-static void z80ctc_timercallback (int param)
+
+static void z80ctc_timercallback(int param)
 {
 	int which = param >> 2;
 	int ch = param & 3;
@@ -346,12 +370,11 @@ static void z80ctc_timercallback (int param)
 	/* down counter has reached zero - see if we should interrupt */
 	if ((ctc->mode[ch] & INTERRUPT) == INTERRUPT_ON)
 	{
-		if( !(ctc->int_state[ch] & Z80_INT_REQ) )
-		{
-			ctc->int_state[ch] |= Z80_INT_REQ;
-			z80ctc_interrupt_check( ctc );
-		}
+		ctc->int_state[ch] |= Z80_DAISY_INT;
+		VPRINTF(("CTC timer ch%d\n", ch));
+		z80ctc_interrupt_check(which);
 	}
+
 	/* generate the clock pulse */
 	if (ctc->zc[ch])
 	{
@@ -386,7 +409,7 @@ void z80ctc_trg_w (int which, int trg, int offset, int data)
 			{
 				double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
 
-logerror("CTC clock %f\n",1.0/clock);
+				VPRINTF(("CTC clock %f\n",1.0/clock));
 
 				if (!(ctc->notimer & (1<<ch)))
 					timer_adjust(ctc->timer[ch], clock * (double)ctc->tconst[ch], (which << 2) + ch, clock * (double)ctc->tconst[ch]);
@@ -404,7 +427,7 @@ logerror("CTC clock %f\n",1.0/clock);
 
 				/* if we hit zero, do the same thing as for a timer interrupt */
 				if (!ctc->down[ch])
-					z80ctc_timercallback ((which << 2) + ch);
+					z80ctc_timercallback((which << 2) + ch);
 			}
 		}
 	}
@@ -486,16 +509,13 @@ void z80pio_init (z80pio_interface *intf)
 	}
 }
 
-static void z80pio_interrupt_check( z80pio *pio )
+static void z80pio_interrupt_check(int which)
 {
-	int state;
+	z80pio *pio = pios + which;
 
-	if( pio->int_state[1] & Z80_INT_IEO ) state  = Z80_INT_IEO;
-	else                                  state  = pio->int_state[1];
-	if( pio->int_state[0] & Z80_INT_IEO ) state  = Z80_INT_IEO;
-	else                                  state |= pio->int_state[0];
-	/* change daisy chain status */
-	if (pio->intr) (*pio->intr)(state);
+	/* if we have a callback, update it with the current state */
+	if (pio->intr)
+		(*pio->intr)((z80pio_irq_state(which) & Z80_DAISY_INT) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void z80pio_check_irq( z80pio *pio , int ch )
@@ -524,11 +544,11 @@ static void z80pio_check_irq( z80pio *pio , int ch )
 		else if( pio->rdy[ch] == 0 ) irq = 1;
 	}
 	old_state = pio->int_state[ch];
-	if( irq ) pio->int_state[ch] |=  Z80_INT_REQ;
-	else      pio->int_state[ch] &= ~Z80_INT_REQ;
+	if( irq ) pio->int_state[ch] |=  Z80_DAISY_INT;
+	else      pio->int_state[ch] &= ~Z80_DAISY_INT;
 
 	if( old_state != pio->int_state[ch] )
-		z80pio_interrupt_check( pio );
+		z80pio_interrupt_check(pio - pios);
 }
 
 void z80pio_reset (int which)
@@ -546,7 +566,7 @@ void z80pio_reset (int which)
 		pio->int_state[i] = 0;
 		pio->strobe[i] = 0;
 	}
-	z80pio_interrupt_check( pio );
+	z80pio_interrupt_check(which);
 }
 
 /* pio data register write */
@@ -652,47 +672,70 @@ int z80pio_d_r( int which , int ch )
 	return 0;
 }
 
-int z80pio_interrupt( int which )
+
+int z80pio_irq_state(int which)
 {
 	z80pio *pio = pios + which;
-	int ch = 0;
+	int state = 0;
+	int ch;
 
-	/* port A */
-	if( pio->int_state[0] == Z80_INT_REQ )
+	/* loop over all channels */
+	for (ch = 0; ch < 2; ch++)
 	{
-		pio->int_state[0] |= Z80_INT_IEO;
-	} if( pio->int_state[0] == 0 )
-	{
-		/* port B */
-		ch = 1;
-		if( pio->int_state[1] == Z80_INT_REQ )
+		/* if we're servicing a request, don't indicate more interrupts */
+		if (pio->int_state[ch] & Z80_DAISY_IEO)
 		{
-			pio->int_state[1] |= Z80_INT_IEO;
+			state |= Z80_DAISY_IEO;
+			break;
 		}
-		else
-		{
-			logerror("PIO entry INT : non IRQ\n");
-			ch = 0;
-		}
+		state |= pio->int_state[ch];
 	}
-	z80pio_interrupt_check( pio );
-	return pio->vector[ch];
+	return state;
 }
 
-void z80pio_reti( int which )
+
+int z80pio_irq_ack(int which)
 {
 	z80pio *pio = pios + which;
+	int ch;
 
-	if( pio->int_state[0] & Z80_INT_IEO )
-	{
-		pio->int_state[0] &= ~Z80_INT_IEO;
-	} else if( pio->int_state[1] & Z80_INT_IEO )
-	{
-		pio->int_state[1] &= ~Z80_INT_IEO;
-	}
-	/* set next interrupt stattus */
-	z80pio_interrupt_check( pio );
+	/* loop over all channels */
+	for (ch = 0; ch < 2; ch++)
+
+		/* find the first channel with an interrupt requested */
+		if (pio->int_state[ch] & Z80_DAISY_INT)
+		{
+			/* clear interrupt, switch to the IEO state, and update the IRQs */
+			pio->int_state[ch] = Z80_DAISY_IEO;
+			z80pio_interrupt_check(which);
+			return pio->vector[ch];
+		}
+
+	logerror("z80pio_irq_ack: failed to find an interrupt to ack!");
+	return pio->vector[0];
 }
+
+
+void z80pio_irq_reti(int which)
+{
+	z80pio *pio = pios + which;
+	int ch;
+
+	/* loop over all channels */
+	for (ch = 0; ch < 2; ch++)
+
+		/* find the first channel with an IEO pending */
+		if (pio->int_state[ch] & Z80_DAISY_IEO)
+		{
+			/* clear the IEO state and update the IRQs */
+			pio->int_state[ch] &= ~Z80_DAISY_IEO;
+			z80pio_interrupt_check(which);
+			return;
+		}
+
+	logerror("z80pio_irq_reti: failed to find an interrupt to clear IEO on!");
+}
+
 
 /* z80pio port write */
 void z80pio_p_w( int which , int ch , int data )
@@ -791,7 +834,7 @@ static void z80pio_update_strobe(int which, int ch, int state)
 					if (pio->enable[ch] & PIO_INT_ENABLE)
 					{
 						/* trigger an int request */
-						pio->int_state[ch] |= Z80_INT_REQ;
+						pio->int_state[ch] |= Z80_DAISY_INT;
 					}
 				}
 			}
@@ -800,7 +843,7 @@ static void z80pio_update_strobe(int which, int ch, int state)
 			pio->strobe[ch] = state;
 
 			/* check interrupt */
-			z80pio_interrupt_check( pio );
+			z80pio_interrupt_check(which);
 		}
 		break;
 

@@ -2376,6 +2376,7 @@ V-V                           TP-027
 	DRIVER( sfar2 )		/* 27/06/1995 (c) 1995 (Euro) */
 	DRIVER( sfar3 )		/* 05/06/1995 (c) 1995 (Euro) */
 	DRIVER( sfau )		/* 27/06/1995 (c) 1995 (US) */
+	DRIVER( sfza )		/* 27/06/1995 (c) 1995 (Asia) */
 	DRIVER( sfzj )		/* 27/07/1995 (c) 1995 (Japan) */
 	DRIVER( sfzjr1 )	/* 27/06/1995 (c) 1995 (Japan) */
 	DRIVER( sfzjr2 )	/* 05/06/1995 (c) 1995 (Japan) */
@@ -3033,6 +3034,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( eswatj )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( exctleag )  /* (protected) */
 	DRIVER( fpoint )	/* (c) 1989 (Japan, FD1094, decrypted) */
+	DRIVER( fpoint1 )	/* (c) 1989 (Japan, FD1094, decrypted) */
 	DRIVER( goldnaxe )	/* (c) 1989 */
 	DRIVER( goldnaxu )	/* (c) 1989 (protected. Japan) */
 	DRIVER( goldnaxj )
@@ -3140,6 +3142,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( thndrbld )	/* (protected) */
 	DRIVER( thndrbdj )  /*  */
 	DRIVER( loffire )	/* (protected) */
+	DRIVER( loffireu )
 	DRIVER( loffirej )
 	DRIVER( rachero )
 	DRIVER( abcop )
@@ -6202,6 +6205,7 @@ Other Sun games
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
 	DRIVER( hkagerou )	/* "510" Hana Kagerou 1996 Nakanihon */
 	DRIVER( realbrk )	/* "523" Billiard Academy Real Break 1998 */
+	DRIVER( mjchuuka )	/* "???" (c) 1998 Dynax */
 	DRIVER( mjreach1 )	/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
 
 	DRIVER( pkgnsh )	/* "???" Pachinko Gindama Shoubu */
@@ -6505,6 +6509,7 @@ Other Sun games
 	DRIVER( tugboat )	/* (c) 1982 ETM */
 	DRIVER( gotcha )	/* (c) 1997 Dongsung + "presented by Para" */
 	DRIVER( amerdart )	/* (c) 1989 Ameri Corporation */
+	DRIVER( amerdar2 )	/* (c) 1989 Ameri Corporation */
 	DRIVER( coolpool )	/* (c) 1992 Catalina Games */
 	DRIVER( 9ballsht )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
 	DRIVER( 9ballsh2 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
@@ -6614,5 +6619,6 @@ Other Sun games
 	DRIVER( penocup )
 	DRIVER( dreamwld )	/* (c) 2000 SemiCom */
 	DRIVER( cybertnk )	/* (c) 1990 Coreland */
+	DRIVER( pkscram )	/* (c) 1993 Cosmo Electronics Corporation */
 
 #endif	/* DRIVER_RECURSIVE */

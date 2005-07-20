@@ -444,25 +444,18 @@ static void take_interrupt(int irq)
 
 		if( irq == Z180_INT0 )
 		{
-			if( Z180.irq_max )	/* daisy chain mode */
-			{
-				if( Z180.request_irq >= 0 )
-				{
-					/* Clear both interrupt flip flops */
-					_IFF1 = _IFF2 = 0;
-					irq_vector = Z180.irq[Z180.request_irq].interrupt_entry(Z180.irq[Z180.request_irq].irq_param);
-					LOG(("Z180 #%d daisy chain irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-					Z180.request_irq = -1;
-				} else return;
-			}
+			/* Clear both interrupt flip flops */
+			_IFF1 = _IFF2 = 0;
+
+			/* Daisy chain mode? If so, call the requesting device */
+			if (Z180.daisy)
+				irq_vector = z80daisy_call_ack_device(Z180.daisy);
+
+			/* else call back the cpu interface to retrieve the vector */
 			else
-			{
-				/* Clear both interrupt flip flops */
-				_IFF1 = _IFF2 = 0;
-				/* call back the cpu interface to retrieve the vector */
 				irq_vector = (*Z180.irq_callback)(0);
-				LOG(("Z180 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-			}
+
+			LOG(("Z180 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
 
 			/* Interrupt mode 2. Call [Z180.I:databyte] */
 			if( _IM == 2 )

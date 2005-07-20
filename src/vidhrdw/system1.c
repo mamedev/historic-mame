@@ -169,8 +169,8 @@ INLINE void draw_pixel(struct mame_bitmap *bitmap,
 	int sprite_onscreen;
 
 
-	if (x < 0 || x >= Machine->scrbitmap->width ||
-		y < 0 || y >= Machine->scrbitmap->height)
+	if (x < 0 || x >= Machine->drv->screen_width ||
+		y < 0 || y >= Machine->drv->screen_height)
 		return;
 
 	if (sprite_onscreen_map[256*y+x] != 255)

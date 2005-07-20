@@ -1025,7 +1025,7 @@ static void system16b_generic_init(int _rom_board)
 static MACHINE_INIT( system16b )
 {
 	static const UINT8 default_banklist[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	static const UINT8 alternate_banklist[] = { 255,255,255,255, 255,255,255,3, 255,255,255,2, 255,1,0,255 };
+	static const UINT8 alternate_banklist[] = { 0,255,255,255, 255,255,255,3, 255,255,255,2, 255,1,0,255 };
 	int i;
 
 	segaic16_memory_mapper_reset();
@@ -1623,6 +1623,8 @@ static WRITE16_HANDLER( sjryuko_custom_io_w )
 	standard_io_w(offset, data, mem_mask);
 }
 
+
+
 /*************************************
  *
  *  Passing Shot custom I/O
@@ -1645,6 +1647,7 @@ static READ16_HANDLER( passshtj_custom_io_r )
 	}
 	return standard_io_r(offset, mem_mask);
 }
+
 
 
 /*************************************
@@ -4234,6 +4237,58 @@ ROM_END
  **************************************************************************************************************************
     Flash Point, Sega System 16B
     CPU: FD1094 (317-0127A)
+    ROM Board: 171-5358
+
+    171-5358        834-6764
+    ROW A       171-5358
+    PRG 1   12598B
+    PRG 2
+    PRG 3
+    PRG 4   12599B
+    PRG 5
+    PRG 6
+    SPRG    7   12592
+    SND 8
+    SND 9
+    SND 10
+    SND 11
+    ROW B
+    OBJ 1   12596
+    OBJ 2
+    OBJ 3
+    OBJ 4
+    OBJ 5   12597
+    OBJ 6
+    OBJ 7
+    OBJ 8
+    SCR 9   12593
+    SCR 10  12594
+    SCR 11  12595
+*/
+ROM_START( fpoint )
+	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12599b.a4", 0x000000, 0x10000, CRC(26e3f354) SHA1(5be263a7d66f09508651c661f90cd4f55ac9631c) )
+	ROM_LOAD16_BYTE( "epr12598b.a1", 0x000001, 0x10000, CRC(c0f2c97d) SHA1(0f59e0a848ce8bd2de33a831e09fa5b712553d5d) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0127a.key", 0x0000, 0x2000, CRC(5adb0042) SHA1(07c565cd741df3de2923921b1009dac4021acd41) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "opr12593.a14", 0x00000, 0x10000, CRC(cc0582d8) SHA1(92c7d125a6dcb9c5e6e7bd92a5bf3008385ed487) )
+	ROM_LOAD( "opr12594.a15", 0x10000, 0x10000, CRC(8bfc4815) SHA1(08d28b65e5024c592a9a289b270774ef5c553cbf) )
+	ROM_LOAD( "opr12595.a16", 0x20000, 0x10000, CRC(5b18d60b) SHA1(8e9c81635dcefa52d1cf53c2937ae560191b5202) )
+
+	ROM_REGION16_BE( 0x20000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "opr12596.b1", 0x00001, 0x10000, CRC(4a4041f3) SHA1(4c52b30223d8aa80ccdbb196098cb17e64ad6583) )
+	ROM_LOAD16_BYTE( "opr12597.b5", 0x00000, 0x10000, CRC(6961e676) SHA1(7639d2da086b57a9a8d6100fdacf40d97d7c4772) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12592.a10", 0x0000, 0x8000, CRC(9a8c11bb) SHA1(399f8e9bdd7aaa4d25817fa9cd4bbf413e5baebe) )
+ROM_END
+
+/**************************************************************************************************************************
+    Flash Point, Sega System 16B
+    CPU: FD1094 (317-0127A)
     ROM Board: 171-5704
 
     Pos.   Silk        Type        Part         Pos.   Silk        Type        Part
@@ -4254,7 +4309,7 @@ ROM_END
     A15    SCR02       OPR-12594   27C512       B15    SCR12       Unused
     A16    SCR03       OPR-12595   27C512       B16    SCR13       Unused
 */
-ROM_START( fpoint )
+ROM_START( fpoint1 )
 	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12591b.a7", 0x000000, 0x10000, CRC(248b3e1b) SHA1(b473c2a057a61896596ac4761e875d72c4f91529) )
 	ROM_LOAD16_BYTE( "epr12590b.a5", 0x000001, 0x10000, CRC(75256e3d) SHA1(87a7d9952f29e49958c135906ac2fd19bdc29b67) )
@@ -5883,7 +5938,8 @@ GAME( 1989, eswat,    0,        system16b,      eswat,    generic_5797,  ROT0,  
 GAME( 1989, eswatu,   eswat,    system16b,      eswat,    generic_5797,  ROT0,   "Sega",           "E-Swat - Cyber Police (set 2, US, FD1094 317-0129)" )
 GAME( 1989, eswatj,   eswat,    system16b,      eswat,    generic_5797,  ROT0,   "Sega",           "E-Swat - Cyber Police (set 1, Japan, FD1094 317-0128)" )
 GAMEX(19??, exctleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Excite League (FD1094 317-0079?)", GAME_NOT_WORKING )
-GAME( 1989, fpoint,   0,        system16b,      fpoint,   generic_5704,  ROT0,   "Sega",           "Flash Point (Japan, FD1094 317-0127A)" )
+GAME( 1989, fpoint,   0,        system16b,      fpoint,   generic_5358,  ROT0,   "Sega",           "Flash Point (set 2, Japan, FD1094 317-0127A)" )
+GAME( 1989, fpoint1,  fpoint,   system16b,      fpoint,   generic_5704,  ROT0,   "Sega",           "Flash Point (set 1, Japan, FD1094 317-0127A)" )
 GAME( 1989, goldnaxe, 0,        system16b_8751, goldnaxe, goldnaxe_5797, ROT0,   "Sega",           "Golden Axe (set 6, US, 8751 317-123A)" )
 GAMEX(1989, goldnaxu, goldnaxe, system16b,      goldnaxe, generic_5797,  ROT0,   "Sega",           "Golden Axe (set 5, US, FD1094 317-0122)", GAME_NOT_WORKING )
 GAME( 1989, goldnaxj, goldnaxe, system16b,      goldnaxe, generic_5704,  ROT0,   "Sega",           "Golden Axe (set 4, Japan, FD1094 317-0121)" )

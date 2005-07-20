@@ -50,6 +50,7 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "z180.h"
+#include "../z80/z80daisy.h"
 
 #define VERBOSE 0
 
@@ -97,23 +98,19 @@ static UINT8 z180_win_layout[] = {
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
 /****************************************************************************/
 typedef struct {
-/* 00 */	PAIR	PREPC,PC,SP,AF,BC,DE,HL,IX,IY;
-/* 24 */	PAIR	AF2,BC2,DE2,HL2;
-/* 34 */	UINT8	R,R2,IFF1,IFF2,HALT,IM,I;
-/* 3B */	UINT8	tmdr_latch; 		/* flag latched TMDR0H, TMDR1H values */
-/* 3C */	UINT32	iol;				/* I/O line status bits */
-/* 40 */	UINT8	io[64]; 			/* 64 internal 8 bit registers */
-/* 80 */	offs_t	mmu[16];			/* MMU address translation */
-/* c0 */	UINT8	tmdr[2];			/* latched TMDR0H and TMDR1H values */
-/* c2 */	UINT8	irq_max;			/* number of daisy chain devices        */
-/* c3 */	INT8	request_irq;		/* daisy chain next request device      */
-/* c4 */	INT8	service_irq;		/* daisy chain next reti handling device */
-/* c5 */	UINT8	nmi_state;			/* nmi line state */
-/* c6 */	UINT8	irq_state[10];		/* irq line states (INT0,INT1,INT2) */
-/* d0 */	UINT8	int_state[Z80_MAXDAISY];
-/* d4 */	Z80_DaisyChain irq[Z80_MAXDAISY];
-/* e4 */	int 	(*irq_callback)(int irqline);
-/* e8 */	int 	extra_cycles;		/* extra cycles for interrupts */
+	PAIR	PREPC,PC,SP,AF,BC,DE,HL,IX,IY;
+	PAIR	AF2,BC2,DE2,HL2;
+	UINT8	R,R2,IFF1,IFF2,HALT,IM,I;
+	UINT8	tmdr_latch; 		/* flag latched TMDR0H, TMDR1H values */
+	UINT32	iol;				/* I/O line status bits */
+	UINT8	io[64]; 			/* 64 internal 8 bit registers */
+	offs_t	mmu[16];			/* MMU address translation */
+	UINT8	tmdr[2];			/* latched TMDR0H and TMDR1H values */
+	UINT8	nmi_state;			/* nmi line state */
+	UINT8	irq_state[3];		/* irq line states (INT0,INT1,INT2) */
+	struct z80_irq_daisy_chain *daisy;
+	int 	(*irq_callback)(int irqline);
+	int 	extra_cycles;		/* extra cycles for interrupts */
 }	Z180_Regs;
 
 #define CF	0x01
@@ -1843,15 +1840,10 @@ static void z180_init(void)
 	state_save_register_UINT8("z180", cpu, "HALT", &Z180.HALT, 1);
 	state_save_register_UINT8("z180", cpu, "IM", &Z180.IM, 1);
 	state_save_register_UINT8("z180", cpu, "I", &Z180.I, 1);
-	state_save_register_UINT8("z180", cpu, "irq_max", &Z180.irq_max, 1);
-	state_save_register_INT8("z180", cpu, "request_irq", &Z180.request_irq, 1);
-	state_save_register_INT8("z180", cpu, "service_irq", &Z180.service_irq, 1);
-	state_save_register_UINT8("z180", cpu, "int_state", Z180.int_state, 4);
 	state_save_register_UINT8("z180", cpu, "nmi_state", &Z180.nmi_state, 1);
 	state_save_register_UINT8("z180", cpu, "int0_state", &Z180.irq_state[0], 1);
 	state_save_register_UINT8("z180", cpu, "int1_state", &Z180.irq_state[1], 1);
 	state_save_register_UINT8("z180", cpu, "int2_state", &Z180.irq_state[2], 1);
-	/* daisy chain needs to be saved by z80ctc.c somehow */
 }
 
 /****************************************************************************
@@ -1859,7 +1851,6 @@ static void z180_init(void)
  ****************************************************************************/
 static void z180_reset(void *param)
 {
-	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	int i, p;
 #if BIG_FLAGS_ARRAY
 	if( !SZHVC_add || !SZHVC_sub )
@@ -1960,12 +1951,11 @@ static void z180_reset(void *param)
 	memset(&Z180, 0, sizeof(Z180));
 	_IX = _IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	_F = ZF;			/* Zero flag is set */
-	Z180.request_irq = -1;
-	Z180.service_irq = -1;
 	Z180.nmi_state = CLEAR_LINE;
 	Z180.irq_state[0] = CLEAR_LINE;
 	Z180.irq_state[1] = CLEAR_LINE;
 	Z180.irq_state[2] = CLEAR_LINE;
+	Z180.daisy = param;
 
 	/* reset io registers */
 	IO_CNTLA0  = Z180_CNTLA0_RESET;
@@ -2033,19 +2023,8 @@ static void z180_reset(void *param)
 	IO_OMCR    = Z180_OMCR_RESET;
 	IO_IOCR    = Z180_IOCR_RESET;
 
-	if( daisy_chain )
-	{
-		while( daisy_chain->irq_param != -1 && Z180.irq_max < Z80_MAXDAISY )
-		{
-			/* set callbackhandler after reti */
-			Z180.irq[Z180.irq_max] = *daisy_chain;
-			/* device reset */
-			if( Z180.irq[Z180.irq_max].reset )
-				Z180.irq[Z180.irq_max].reset(Z180.irq[Z180.irq_max].irq_param);
-			Z180.irq_max++;
-			daisy_chain++;
-		}
-	}
+	if (Z180.daisy)
+		z80daisy_reset(Z180.daisy);
 	z180_mmu();
 	z180_change_pc(_PCD);
 }
@@ -2189,48 +2168,19 @@ static void set_irq_line(int irqline, int state)
 	else
 	{
 		LOG(("Z180 #%d set_irq_line %d = %d\n",cpu_getactivecpu() , irqline,state));
+
+		/* update the IRQ state */
 		Z180.irq_state[irqline] = state;
-		if( state == CLEAR_LINE ) return;
+		if (Z180.daisy)
+			Z180.irq_state[0] = z80daisy_update_irq_state(Z180.daisy);
 
-		if( irqline == 0 && Z180.irq_max )
-		{
-			int daisychain, device, int_state;
-			daisychain = (*Z180.irq_callback)(irqline);
-			device = daisychain >> 8;
-			int_state = daisychain & 0xff;
-			LOG(("Z180 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
-
-			if( Z180.int_state[device] != int_state )
-			{
-				LOG((" change\n"));
-				/* set new interrupt status */
-				Z180.int_state[device] = int_state;
-				/* check interrupt status */
-				Z180.request_irq = Z180.service_irq = -1;
-
-				/* search higher IRQ or IEO */
-				for( device = 0 ; device < Z180.irq_max ; device ++ )
-				{
-					/* IEO = disable ? */
-					if( Z180.int_state[device] & Z80_INT_IEO )
-					{
-						Z180.request_irq = -1;		 /* if IEO is disable , masking lower IRQ */
-						Z180.service_irq = device;	 /* set highest interrupt service device */
-					}
-					/* IRQ = request ? */
-					if( Z180.int_state[device] & Z80_INT_REQ )
-						Z180.request_irq = device;
-				}
-				LOG(("Z180 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z180.service_irq, Z180.request_irq));
-				if( Z180.request_irq < 0 ) return;
-			}
-			else
-			{
-				LOG((" no change\n"));
-				return;
-			}
-		}
-		take_interrupt(irqline);
+		/* if there's something pending, take it */
+		if (Z180.irq_state[0] != CLEAR_LINE)
+			take_interrupt(Z180_INT0);
+		if (Z180.irq_state[1] != CLEAR_LINE)
+			take_interrupt(Z180_INT1);
+		if (Z180.irq_state[2] != CLEAR_LINE)
+			take_interrupt(Z180_INT2);
 	}
 }
 
@@ -2284,10 +2234,6 @@ static void z180_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z180_IFF1:			Z180.IFF1 = info->i;					break;
 		case CPUINFO_INT_REGISTER + Z180_IFF2:			Z180.IFF2 = info->i;					break;
 		case CPUINFO_INT_REGISTER + Z180_HALT:			Z180.HALT = info->i;					break;
-		case CPUINFO_INT_REGISTER + Z180_DC0:			Z180.int_state[0] = info->i;			break;
-		case CPUINFO_INT_REGISTER + Z180_DC1:			Z180.int_state[1] = info->i;			break;
-		case CPUINFO_INT_REGISTER + Z180_DC2:			Z180.int_state[2] = info->i;			break;
-		case CPUINFO_INT_REGISTER + Z180_DC3:			Z180.int_state[3] = info->i;			break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLA0:		Z180.io[0x00] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLA1:		Z180.io[0x01] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLB0:		Z180.io[0x02] = info->i;				break;
@@ -2422,10 +2368,6 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z180_IFF1:			info->i = Z180.IFF1;					break;
 		case CPUINFO_INT_REGISTER + Z180_IFF2:			info->i = Z180.IFF2;					break;
 		case CPUINFO_INT_REGISTER + Z180_HALT:			info->i = Z180.HALT;					break;
-		case CPUINFO_INT_REGISTER + Z180_DC0:			info->i = Z180.int_state[0];			break;
-		case CPUINFO_INT_REGISTER + Z180_DC1:			info->i = Z180.int_state[1];			break;
-		case CPUINFO_INT_REGISTER + Z180_DC2:			info->i = Z180.int_state[2];			break;
-		case CPUINFO_INT_REGISTER + Z180_DC3:			info->i = Z180.int_state[3];			break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLA0:		info->i = Z180.io[0x00];				break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLA1:		info->i = Z180.io[0x01];				break;
 		case CPUINFO_INT_REGISTER + Z180_CNTLB0:		info->i = Z180.io[0x02];				break;
@@ -2551,10 +2493,6 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + Z180_IFF1:			sprintf(info->s = cpuintrf_temp_str(), "IFF1:%X", Z180.IFF1); break;
 		case CPUINFO_STR_REGISTER + Z180_IFF2:			sprintf(info->s = cpuintrf_temp_str(), "IFF2:%X", Z180.IFF2); break;
 		case CPUINFO_STR_REGISTER + Z180_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", Z180.HALT); break;
-		case CPUINFO_STR_REGISTER + Z180_DC0: 			sprintf(info->s = cpuintrf_temp_str(), "DC0:%X", Z180.irq_max >= 1 && Z180.int_state[0]); break;
-		case CPUINFO_STR_REGISTER + Z180_DC1: 			sprintf(info->s = cpuintrf_temp_str(), "DC1:%X", Z180.irq_max >= 2 && Z180.int_state[1]); break;
-		case CPUINFO_STR_REGISTER + Z180_DC2: 			sprintf(info->s = cpuintrf_temp_str(), "DC2:%X", Z180.irq_max >= 3 && Z180.int_state[2]); break;
-		case CPUINFO_STR_REGISTER + Z180_DC3: 			sprintf(info->s = cpuintrf_temp_str(), "DC3:%X", Z180.irq_max >= 4 && Z180.int_state[3]); break;
 		case CPUINFO_STR_REGISTER + Z180_CCR: 			sprintf(info->s = cpuintrf_temp_str(), "CCR :%02X", Z180.io[Z180_CCR-Z180_CNTLA0]); break;
 		case CPUINFO_STR_REGISTER + Z180_ITC: 			sprintf(info->s = cpuintrf_temp_str(), "ITC :%02X", Z180.io[Z180_ITC-Z180_CNTLA0]); break;
 		case CPUINFO_STR_REGISTER + Z180_CBR: 			sprintf(info->s = cpuintrf_temp_str(), "CBR :%02X", Z180.io[Z180_CBR-Z180_CNTLA0]); break;

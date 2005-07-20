@@ -505,7 +505,7 @@ static int load_files(int i, int *found, const char *path)
 	{
 #ifdef _WIN32
 		HANDLE dir;
-		WIN32_FIND_DATAA ent;
+		WIN32_FIND_DATA ent;
 		int more;
 		char *dirfilter;
 		int dirlen = strlen(path);
@@ -517,7 +517,7 @@ static int load_files(int i, int *found, const char *path)
 		memcpy(dirfilter, path, dirlen);
 		memcpy(dirfilter+dirlen, "/*.*", 5);
 
-        dir = FindFirstFileA(dirfilter, &ent);
+        dir = FindFirstFile(dirfilter, &ent);
         free(dirfilter);
 
         if (dir != INVALID_HANDLE_VALUE)

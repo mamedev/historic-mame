@@ -387,70 +387,25 @@ static void screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 VIDEO_UPDATE( battlera )
 {
-	/* Nothing */
-}
-
-#if 0
-static void partial_refresh(struct mame_bitmap *bitmap,int current_line)
-{
-	struct rectangle clip;
-
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = next_update_first_line;
-	clip.max_y = current_line;
-	if (clip.min_y < Machine->visible_area.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (clip.max_y > Machine->visible_area.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	if (clip.max_y >= clip.min_y)
-	{
-		screenrefresh(bitmap,&clip);
-	}
-
-	next_update_first_line = current_line + 1;
-}
-#endif
-
-void battlera_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
-{
-	struct rectangle clip;
-
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = start_line;
-	clip.max_y = end_line;
-	if (clip.min_y < Machine->visible_area.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (clip.max_y > Machine->visible_area.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	if (clip.max_y > clip.min_y)
-	{
-		screenrefresh(bitmap,&clip);
-	}
+	screenrefresh(bitmap,cliprect);
 }
 
 /******************************************************************************/
 
 INTERRUPT_GEN( battlera_interrupt )
 {
-	static int last_line=0;
-
 	current_scanline=255-cpu_getiloops(); /* 8 lines clipped at top */
 
 	/* If raster interrupt occurs, refresh screen _up_ to this point */
 	if (rcr_enable && (current_scanline+56)==HuC6270_registers[6]) {
-		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,current_scanline);
-		last_line=current_scanline;
+		force_partial_update(current_scanline);
 		cpunum_set_input_line(0, 0, HOLD_LINE); /* RCR interrupt */
 	}
 
 	/* Start of vblank */
 	else if (current_scanline==240) {
 		bldwolf_vblank=1;
-		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,240);
+		force_partial_update(240);
 		if (irq_enable)
 			cpunum_set_input_line(0, 0, HOLD_LINE); /* VBL */
 	}
@@ -458,6 +413,5 @@ INTERRUPT_GEN( battlera_interrupt )
 	/* End of vblank */
 	if (current_scanline==254) {
 		bldwolf_vblank=0;
-		last_line=0;
 	}
 }

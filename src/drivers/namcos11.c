@@ -870,7 +870,7 @@ static int lightguny( int port )
 
 static VIDEO_UPDATE( lightgun )
 {
-	video_update_psx( bitmap, cliprect );
+	video_update_psx( screen, bitmap, cliprect );
 
 	draw_crosshair( bitmap, lightgunx( 6 ), lightguny( 7 ), cliprect, 0 );
 	draw_crosshair( bitmap, lightgunx( 8 ), lightguny( 9 ), cliprect, 1 );

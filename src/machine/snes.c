@@ -1171,7 +1171,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
 
-		snes_refresh_scanline( snes_ppu.beam.current_vert );
+		force_partial_update( snes_ppu.beam.current_vert );
 	}
 	else
 	{

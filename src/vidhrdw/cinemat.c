@@ -236,7 +236,7 @@ VIDEO_UPDATE( spacewar )
 {
 	int sw_option = readinputportbytag("INPUTS");
 
-	video_update_vector(bitmap, cliprect);
+	video_update_vector(screen, bitmap, cliprect);
 
 	/* set the state of the artwork */
 	artwork_show("pressed3", (~sw_option >> 0) & 1);

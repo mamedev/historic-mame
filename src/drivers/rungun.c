@@ -656,8 +656,8 @@ MACHINE_INIT( rng )
 	rng_sound_status = 0;
 }
 
-GAMEX( 1993, rungun,   0,      rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, runguna,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (World ver. EAA 1993 10.4)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, rungunu,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UAB 1993 10.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, rungunua, rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (US ver. UBA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1993, slmdunkj, rungun, rng, rng, rng, ROT0, "Konami", "Slam Dunk (Japan ver. JAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungun,   0,      rng, rng, rng, ROT0, "Konami", "Run and Gun (ver EAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, runguna,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (ver EAA 1993 10.4)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungunu,  rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (ver UAB 1993 10.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, rungunua, rungun, rng, rng, rng, ROT0, "Konami", "Run and Gun (ver UBA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1993, slmdunkj, rungun, rng, rng, rng, ROT0, "Konami", "Slam Dunk (ver JAA 1993 10.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
