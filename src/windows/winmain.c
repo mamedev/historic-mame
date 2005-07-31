@@ -59,10 +59,9 @@ int _CRT_glob = 0;
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
 
+#if ENABLE_PROFILER
 static struct map_entry symbol_map[MAX_SYMBOLS];
 static int map_entries;
-
-#if ENABLE_PROFILER
 static HANDLE profiler_thread;
 static DWORD profiler_thread_id;
 static volatile UINT8 profiler_thread_exit;
@@ -83,10 +82,10 @@ static const char helpfile[] = "mess.chm";
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
 static int get_code_base_size(UINT32 *base, UINT32 *size);
-static void parse_map_file(void);
-static void free_symbol_map(void);
 
 #if ENABLE_PROFILER
+static void parse_map_file(void);
+static void free_symbol_map(void);
 static void output_symbol_list(FILE *f);
 static void increment_bucket(UINT32 addr);
 static void start_profiler(void);
@@ -181,7 +180,9 @@ int main(int argc, char **argv)
 		strcpy(ext, ".map");
 	else
 		strcat(mapfile_name, ".map");
+#if ENABLE_PROFILER
 	parse_map_file();
+#endif
 
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
@@ -229,8 +230,8 @@ int main(int argc, char **argv)
 
 #if ENABLE_PROFILER
 	output_symbol_list(stderr);
-#endif
 	free_symbol_map();
+#endif
 	free_pathlists();
 
 #ifdef MAME_DEBUG
@@ -529,8 +530,6 @@ static int compare_hits(const void *item1, const void *item2)
 {
 	return ((const struct map_entry *)item2)->hits - ((const struct map_entry *)item1)->hits;
 }
-#endif
-
 
 
 //============================================================
@@ -615,8 +614,6 @@ static void free_symbol_map(void)
 }
 
 
-
-#if ENABLE_PROFILER
 //============================================================
 //  output_symbol_list
 //============================================================

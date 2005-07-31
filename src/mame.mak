@@ -592,6 +592,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/drivers/dblewing.o \
 	$(OBJ)/drivers/dietgo.o $(OBJ)/vidhrdw/dietgo.o \
 	$(OBJ)/drivers/deco156.o $(OBJ)/machine/deco156.o \
+	$(OBJ)/drivers/simpl156.o $(OBJ)/vidhrdw/simpl156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
 	$(OBJ)/vidhrdw/sshangha.o $(OBJ)/drivers/sshangha.o \
 

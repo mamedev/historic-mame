@@ -581,14 +581,6 @@ static MACHINE_DRIVER_START( twotiger )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( journey )
-	MDRV_IMPORT_FROM(mcr2)
-
-	/* video hardware */
-	MDRV_VIDEO_UPDATE(journey)
-MACHINE_DRIVER_END
-
-
 
 /*************************************
  *
@@ -982,6 +974,14 @@ static DRIVER_INIT( twotiger )
 }
 
 
+static DRIVER_INIT( journey )
+{
+	init_mcr2();
+	mcr_cpu_board = 91475;
+	mcr_sprite_board = 91464;
+}
+
+
 
 /*************************************
  *
@@ -1000,4 +1000,4 @@ GAME( 1982, domino,   0,        mcr2,     domino,   mcr2,     ROT0,  "Bally Midw
 GAME( 1982, wacko,    0,        mcr2,     wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
 GAME( 1984, twotiger, 0,        twotiger, twotiger, twotiger, ROT0,  "Bally Midway", "Two Tigers (dedicated)" )
 GAME( 1984, twotigrc, twotiger, mcr2,     twotigrc, mcr2,     ROT0,  "Bally Midway", "Two Tigers (Tron conversion)" )
-GAMEX(1983, journey,  0,        journey,  journey,  mcr2,     ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )
+GAMEX(1983, journey,  0,        mcr2,     journey,  journey,  ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )

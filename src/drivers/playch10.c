@@ -317,8 +317,10 @@ extern DRIVER_INIT( pcaboard );	/* a-board games */
 extern DRIVER_INIT( pcbboard );	/* b-board games */
 extern DRIVER_INIT( pccboard );	/* c-board games */
 extern DRIVER_INIT( pcdboard );	/* d-board games */
+extern DRIVER_INIT( pcdboard_2 );	/* d-board games with extra ram */
 extern DRIVER_INIT( pceboard );	/* e-board games */
 extern DRIVER_INIT( pcfboard );	/* f-board games */
+extern DRIVER_INIT( pcfboard_2 );	/* f-board games with extra ram */
 extern DRIVER_INIT( pcgboard );	/* g-board games */
 extern DRIVER_INIT( pcgboard_type2 ); /* g-board games with 4 screen mirror */
 extern DRIVER_INIT( pchboard );	/* h-board games */
@@ -1682,7 +1684,7 @@ GAMEB( 1988, pc_cntra, playch10, playch10, playch10, playch10, pcbboard, ROT0, "
 GAMEB( 1986, pc_goons, playch10, playch10, playch10, playch10, pccboard, ROT0, "Konami",									"The Goonies (PlayChoice-10)" )
 
 /* D-Board Games */
-GAMEB( 1986, pc_mtoid, playch10, playch10, playch10, playch10, pcdboard, ROT0, "Nintendo",									"Metroid (PlayChoice-10)" )
+GAMEB( 1986, pc_mtoid, playch10, playch10, playch10, playch10, pcdboard_2, ROT0, "Nintendo",									"Metroid (PlayChoice-10)" )
 GAMEB( 1987, pc_radrc, playch10, playch10, playch10, playch10, pcdboard, ROT0, "Square",									"Rad Racer (PlayChoice-10)" )
 
 /* E-Board Games */
@@ -1695,7 +1697,7 @@ GAMEB( 1988, pc_ddrgn, playch10, playch10, playch10, playch10, pcfboard, ROT0, "
 GAMEB( 1989, pc_ngaid, playch10, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)",		"Ninja Gaiden (PlayChoice-10)" )
 GAMEB( 1989, pc_tmnt,  playch10, playch10, playch10, playch10, pcfboard, ROT0, "Konami (Nintendo of America license)",		"Teenage Mutant Ninja Turtles (PlayChoice-10)" )
 GAMEB( 1989, pc_ftqst, playch10, playch10, playch10, playch10, pcfboard, ROT0, "Sunsoft (Nintendo of America license)",	"Uncle Fester's Quest: The Addams Family (PlayChoice-10)" )
-GAMEBX(1989, pc_bstar, playch10, playch10, playch10, playch10, pcfboard, ROT0, "SNK (Nintendo of America license)",		"Baseball Stars: Be a Champ! (PlayChoice-10)", GAME_IMPERFECT_GRAPHICS)
+GAMEBX(1989, pc_bstar, playch10, playch10, playch10, playch10, pcfboard_2, ROT0, "SNK (Nintendo of America license)",		"Baseball Stars: Be a Champ! (PlayChoice-10)", GAME_IMPERFECT_GRAPHICS)
 GAMEB( 1989, pc_tbowl, playch10, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)",		"Tecmo Bowl (PlayChoice-10)" )
 GAMEB( 1990, pc_drmro, playch10, playch10, playch10, playch10, pcfboard, ROT0, "Nintendo",									"Dr. Mario (PlayChoice-10)" )
 GAMEB( 1990, pc_ynoid, playch10, playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "Yo! Noid (PlayChoice-10)" )

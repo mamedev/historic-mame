@@ -146,7 +146,7 @@ Sound Boards:
     Tron      90010  91399  90913  91418
     Kroozr    90010  91399  91483  91458  91482
     Domino    90010  91399  90913
-    Wacko
+    Wacko     90010  91399  90913
     TwoTiger
     Journey   91475  91464  90913
     NFL                     91657

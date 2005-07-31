@@ -12,10 +12,6 @@
           contradicts the theory that bit 9 is a sign bit. For now, the code
           assumes that the X center has 10 bits of resolution.
 
-        - In radr, on the title screen, they draw the main title with an
-          indirect palette entry of $0000 and expect it to be displayed. Problem
-          is, in the framebuffer $0000 is treated as transparent.
-
         - In svf (the field) and radr (on the field), they use tilemap-specific
           flip in conjunction with rowscroll AND rowselect. According to Charles,
           in this case, the rowselect lookups should be done in reverse order,
@@ -1751,7 +1747,7 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rect
 	{
 		UINT16 *src = indlocal ? &data[8] : &system32_spriteram[8 * (data[7] & 0x1fff)];
 		for (x = 0; x < 16; x++)
-			indtable[x] = src[x] & (bpp8 ? 0xfff0 : 0xffff);
+			indtable[x] = (src[x] & (bpp8 ? 0xfff0 : 0xffff)) | ((sprite_control_latched[0x0a/2] & 1) ? 0x8000 : 0x0000);
 	}
 
 	/* clamp to within the memory region size */

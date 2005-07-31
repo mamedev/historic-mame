@@ -83,8 +83,6 @@ data32_t *	policetr_rambase;
 
 
 /* local variables */
-static data32_t *rom_base;
-
 static data32_t control_data;
 
 static data32_t bsmt_reg;
@@ -277,42 +275,41 @@ static NVRAM_HANDLER( policetr )
  *
  *************************************/
 
-static ADDRESS_MAP_START( policetr_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0001ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00400000, 0x00400003) AM_READ(policetr_video_r)
-	AM_RANGE(0x00600000, 0x00600003) AM_READ(bsmt2000_data_r)
-	AM_RANGE(0x00a00000, 0x00a00003) AM_READ(port0_r)
-	AM_RANGE(0x00a20000, 0x00a20003) AM_READ(port1_r)
-	AM_RANGE(0x00a40000, 0x00a40003) AM_READ(port2_r)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( policetr_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0001ffff) AM_WRITE(MWA32_RAM) AM_BASE(&policetr_rambase)
+static ADDRESS_MAP_START( policetr_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_RAM AM_BASE(&policetr_rambase)
 	AM_RANGE(0x00200000, 0x0020000f) AM_WRITE(policetr_video_w)
-	AM_RANGE(0x00500000, 0x00500003) AM_WRITE(MWA32_NOP)		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00400000, 0x00400003) AM_READ(policetr_video_r)
+	AM_RANGE(0x00500000, 0x00500003) AM_WRITENOP		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00600000, 0x00600003) AM_READ(bsmt2000_data_r)
 	AM_RANGE(0x00700000, 0x00700003) AM_WRITE(bsmt2000_reg_w)
 	AM_RANGE(0x00800000, 0x00800003) AM_WRITE(bsmt2000_data_w)
 	AM_RANGE(0x00900000, 0x00900003) AM_WRITE(policetr_palette_offset_w)
 	AM_RANGE(0x00920000, 0x00920003) AM_WRITE(policetr_palette_data_w)
 	AM_RANGE(0x00a00000, 0x00a00003) AM_WRITE(control_w)
-	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITE(MWA32_NOP)		// watchdog???
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+	AM_RANGE(0x00a00000, 0x00a00003) AM_READ(port0_r)
+	AM_RANGE(0x00a20000, 0x00a20003) AM_READ(port1_r)
+	AM_RANGE(0x00a40000, 0x00a40003) AM_READ(port2_r)
+	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITENOP		// watchdog???
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sshooter_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0001ffff) AM_WRITE(MWA32_RAM) AM_BASE(&policetr_rambase)
+static ADDRESS_MAP_START( sshooter_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0001ffff) AM_RAM AM_BASE(&policetr_rambase)
 	AM_RANGE(0x00200000, 0x00200003) AM_WRITE(bsmt2000_data_w)
 	AM_RANGE(0x00300000, 0x00300003) AM_WRITE(policetr_palette_offset_w)
 	AM_RANGE(0x00320000, 0x00320003) AM_WRITE(policetr_palette_data_w)
-	AM_RANGE(0x00500000, 0x00500003) AM_WRITE(MWA32_NOP)		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00400000, 0x00400003) AM_READ(policetr_video_r)
+	AM_RANGE(0x00500000, 0x00500003) AM_WRITENOP		// copies ROM here at startup, plus checksum
+	AM_RANGE(0x00600000, 0x00600003) AM_READ(bsmt2000_data_r)
 	AM_RANGE(0x00700000, 0x00700003) AM_WRITE(bsmt2000_reg_w)
 	AM_RANGE(0x00800000, 0x0080000f) AM_WRITE(policetr_video_w)
 	AM_RANGE(0x00a00000, 0x00a00003) AM_WRITE(control_w)
-	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITE(MWA32_NOP)		// watchdog???
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+	AM_RANGE(0x00a00000, 0x00a00003) AM_READ(port0_r)
+	AM_RANGE(0x00a20000, 0x00a20003) AM_READ(port1_r)
+	AM_RANGE(0x00a40000, 0x00a40003) AM_READ(port2_r)
+	AM_RANGE(0x00e00000, 0x00e00003) AM_WRITENOP		// watchdog???
+	AM_RANGE(0x1fc00000, 0x1fcfffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
@@ -436,7 +433,7 @@ MACHINE_DRIVER_START( policetr )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", R3000BE, MASTER_CLOCK/2)
 	MDRV_CPU_CONFIG(config)
-	MDRV_CPU_PROGRAM_MAP(policetr_readmem,policetr_writemem)
+	MDRV_CPU_PROGRAM_MAP(policetr_map,0)
 	MDRV_CPU_VBLANK_INT(irq4_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -468,7 +465,7 @@ MACHINE_DRIVER_START( sshooter )
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(policetr_readmem,sshooter_writemem)
+	MDRV_CPU_PROGRAM_MAP(sshooter_map,0)
 MACHINE_DRIVER_END
 
 
@@ -480,15 +477,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( policetr )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
-
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
 	ROM_LOAD16_BYTE( "pt-u125.bin", 0x200000, 0x100000, CRC(e9ccf3a0) SHA1(b3fd8c094f76ace4cf403c3d0f6bd6c5d8db7d6a) )
 	ROM_LOAD16_BYTE( "pt-u124.bin", 0x200001, 0x100000, CRC(f4acf921) SHA1(5b244e9a51304318fa0c03eb7365b3c12627d19b) )
 
-	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "pt-u113.bin", 0x00000, 0x20000, CRC(7b34d366) SHA1(b86cfe155e0685992aebbcc7db705fdbadc42bf9) )
 	ROM_LOAD32_BYTE( "pt-u112.bin", 0x00001, 0x20000, CRC(57d059c8) SHA1(ed0c624fc0afbeb6616bba8a67ce5b18d7c119fc) )
 	ROM_LOAD32_BYTE( "pt-u111.bin", 0x00002, 0x20000, CRC(fb5ce933) SHA1(4a07ac3e2d86262061092f112cab89f8660dce3d) )
@@ -503,8 +498,6 @@ ROM_END
 
 
 ROM_START( polict11 )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
-
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
@@ -526,15 +519,13 @@ ROM_END
 
 
 ROM_START( plctr13b )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
-
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
 	ROM_LOAD16_BYTE( "pt-u125.bin", 0x200000, 0x100000, CRC(e9ccf3a0) SHA1(b3fd8c094f76ace4cf403c3d0f6bd6c5d8db7d6a) )
 	ROM_LOAD16_BYTE( "pt-u124.bin", 0x200001, 0x100000, CRC(f4acf921) SHA1(5b244e9a51304318fa0c03eb7365b3c12627d19b) )
 
-	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 /*
 Note: If you set the dipswitch to service mode and reset the game within Mame.
       All 4 program ROMs fail the checksum code... IE: they show in red
@@ -554,9 +545,8 @@ Note: If you set the dipswitch to service mode and reset the game within Mame.
 	ROM_RELOAD(              0x4f8000, 0x100000 )
 ROM_END
 
-ROM_START( sshooter )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
 
+ROM_START( sshooter )
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
 	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
@@ -567,7 +557,7 @@ ROM_START( sshooter )
 	ROM_LOAD16_BYTE( "ss-u127.bin", 0x600000, 0x100000, CRC(76a7a591) SHA1(9fd7cce21b01f388966a3e8388ba95820ac10bfd) ) // 4:1
 	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, CRC(ab1b9d60) SHA1(ff51a71443f7774d3abf96c2eb8ef6a54d73dd8e) ) // 4:2
 
-	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "ss-u113.v17", 0x00000, 0x40000, CRC(a8c96af5) SHA1(a62458156603b74e0d84ce6928f7bb868bf5a219) ) // 1:1
 	ROM_LOAD32_BYTE( "ss-u112.v17", 0x00001, 0x40000, CRC(c732d5fa) SHA1(2bcc26c8bbf55394173ca65b4b0df01bc6b719bb) ) // 1:2
 	ROM_LOAD32_BYTE( "ss-u111.v17", 0x00002, 0x40000, CRC(4240fa2f) SHA1(54223207c1e228d6b836918601c0f65c2692e5bc) ) // 1:3
@@ -580,8 +570,9 @@ ROM_START( sshooter )
 	ROM_RELOAD(              0x4f8000, 0x100000 )
 ROM_END
 
+
 ROM_START( sshoot12 )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
@@ -593,7 +584,7 @@ ROM_START( sshoot12 )
 	ROM_LOAD16_BYTE( "ss-u127.bin", 0x600000, 0x100000, CRC(76a7a591) SHA1(9fd7cce21b01f388966a3e8388ba95820ac10bfd) ) // 4:1
 	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, CRC(ab1b9d60) SHA1(ff51a71443f7774d3abf96c2eb8ef6a54d73dd8e) ) // 4:2
 
-	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "ss-u113.v12", 0x00000, 0x40000, CRC(73dbaf4b) SHA1(a85fad95d63333f4fe5647f31258b3a22c5c2c0d) ) // 1:1
 	ROM_LOAD32_BYTE( "ss-u112.v12", 0x00001, 0x40000, CRC(06fbc2de) SHA1(8bdfcbc33b5fc010464dcd7691f9ecd6ba2168ba) ) // 1:2
 	ROM_LOAD32_BYTE( "ss-u111.v12", 0x00002, 0x40000, CRC(0b291731) SHA1(bd04f0b1b52198344df625fcddfc6c6ccb0bd923) ) // 1:3
@@ -618,8 +609,12 @@ static DRIVER_INIT( policetr )
 {
 	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000fc8, 0x00000fcb, 0, 0, speedup_w);
 	speedup_pc = 0x1fc028ac;
+}
 
-	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
+static DRIVER_INIT( plctr13b )
+{
+	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000fc8, 0x00000fcb, 0, 0, speedup_w);
+	speedup_pc = 0x1fc028bc;
 }
 
 
@@ -627,8 +622,12 @@ static DRIVER_INIT( sshooter )
 {
 	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00018fd8, 0x00018fdb, 0, 0, speedup_w);
 	speedup_pc = 0x1fc03470;
+}
 
-	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
+static DRIVER_INIT( sshoot12 )
+{
+	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00018fd8, 0x00018fdb, 0, 0, speedup_w);
+	speedup_pc = 0x1fc033e0;
 }
 
 
@@ -641,6 +640,6 @@ static DRIVER_INIT( sshooter )
 
 GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3)" )
 GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)" )
-GAME( 1996, plctr13b, policetr, sshooter, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)" )
+GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)" )
 GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)" )
-GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)" )
+GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)" )

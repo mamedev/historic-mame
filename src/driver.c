@@ -2973,12 +2973,12 @@ DokiDoki Penguin Land *not confirmed
 
 	/* Enduro Racer / Space Harrier / Hang On */
 	DRIVER( enduror )	/* (c) 1985 (protected) */
+	DRIVER( enduror1 )	/* (c) 1985 (protected) */
 	DRIVER( endurob2 )	/* (c) 1985 (Beta bootleg) */
 	DRIVER( endurobl )	/* (c) 1985 (Herb bootleg) */
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( sharrier )	/* (c) 1985 */
 	DRIVER( shangupb )	/* (c) 1992 (but bootleg, hangon hw?) */
-
 
 	/* Pre-16 */
 	DRIVER( aliensy1 )	/* (c) 1987 (protected. Japan) */
@@ -3814,6 +3814,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MBX ?? */
 	/* MBY ?? */
 	DRIVER( backfire )	/* MBZ (c) 1995 */
+	DRIVER( backfira )	/* MBZ (c) 1995 */
 	/* MCA ?? */
 	DRIVER( prtytime )	/* (c) 1995 Mitchell */
 	DRIVER( gangonta )	/* MCB (c) 1995 Mitchell */
@@ -5572,6 +5573,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( avspirit )	/* (c) 1991 */
 	DRIVER( phantasm )	/* (c) 1991 (Japan) */
 	DRIVER( edf )		/* (c) 1991 */
+	DRIVER( edfu )		/* (c) 1991 */
 	DRIVER( 64street )	/* (c) 1991 */
 	DRIVER( 64streej )	/* (c) 1991 (Japan) */
 	DRIVER( soldamj )	/* (c) 1992 (Japan) */

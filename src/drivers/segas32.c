@@ -792,7 +792,7 @@ static WRITE16_HANDLER( sonic_custom_io_w )
 
 static WRITE16_HANDLER( random_number_16_w )
 {
-	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+//  printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
 }
 
 static READ16_HANDLER( random_number_16_r )
@@ -802,7 +802,7 @@ static READ16_HANDLER( random_number_16_r )
 
 static WRITE32_HANDLER( random_number_32_w )
 {
-	printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+//  printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
 }
 
 static READ32_HANDLER( random_number_32_r )
@@ -1847,10 +1847,6 @@ INPUT_PORTS_START( spidman )
 	PORT_MODIFY("P2")
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_MODIFY("SERVICE12")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-
 	PORT_START_TAG("EXTRA1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
@@ -1872,9 +1868,7 @@ INPUT_PORTS_START( spidman )
 	PORT_START_TAG("EXTRA3")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1882,11 +1876,12 @@ INPUT_PORTS_START( spidmanu )
 	PORT_INCLUDE( spidman )
 
 	PORT_MODIFY("SERVICE12")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_MODIFY("EXTRA3")
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
 

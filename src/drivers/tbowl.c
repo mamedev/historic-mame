@@ -8,7 +8,6 @@ attractive graphics
 
 --- Current Issues
 
-Sound Incomplete (what plays the sample roms, like tecmo16.c? )
 Might be some priority glitches
 
 ***/
@@ -17,6 +16,7 @@ Might be some priority glitches
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 /* in vidhrdw/tbowl.c */
 extern data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
@@ -33,6 +33,11 @@ WRITE8_HANDLER (tbowl_bgyscroll_lo);  WRITE8_HANDLER (tbowl_bgyscroll_hi);
 
 VIDEO_START( tbowl );
 VIDEO_UPDATE( tbowl );
+
+static WRITE8_HANDLER( tbowl_coin_counter_w )
+{
+	coin_counter_w(0, data & 1);
+}
 
 /*** Banking
 
@@ -93,6 +98,7 @@ static WRITE8_HANDLER( tbowl_sound_command_w )
 
 ***/
 
+
 /* Board B */
 
 static ADDRESS_MAP_START( readmem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
@@ -126,10 +132,11 @@ static ADDRESS_MAP_START( writemem_6206B, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(tbowlb_bankswitch_w)
 //  AM_RANGE(0xfc01, 0xfc01) AM_WRITE(unknown_write) /* written during start-up, not again */
 //  AM_RANGE(0xfc02, 0xfc02) AM_WRITE(unknown_write) /* written during start-up, not again */
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(tbowl_coin_counter_w)
 	AM_RANGE(0xfc0d, 0xfc0d) AM_WRITE(tbowl_sound_command_w) /* not sure, used quite a bit */
 //  AM_RANGE(0xfc05, 0xfc05) AM_WRITE(unknown_write) /* no idea */
-//  AM_RANGE(0xfc08, 0xfc08) AM_WRITE(unknown_write) /* hardly uesd .. */
-//  AM_RANGE(0xfc0a, 0xfc0a) AM_WRITE(unknown_write) /* hardly uesd .. */
+//  AM_RANGE(0xfc08, 0xfc08) AM_WRITE(unknown_write) /* hardly used .. */
+//  AM_RANGE(0xfc0a, 0xfc0a) AM_WRITE(unknown_write) /* hardly used .. */
 	AM_RANGE(0xfc10, 0xfc10) AM_WRITE(tbowl_bg2xscroll_lo)
 	AM_RANGE(0xfc11, 0xfc11) AM_WRITE(tbowl_bg2xscroll_hi)
 	AM_RANGE(0xfc12, 0xfc12) AM_WRITE(tbowl_bg2yscroll_lo)
@@ -171,11 +178,49 @@ ADDRESS_MAP_END
 
 /* Board A */
 
+static int adpcm_pos[2],adpcm_end[2];
+
+static WRITE8_HANDLER( tbowl_adpcm_start_w )
+{
+	adpcm_pos[offset & 1] = data << 8;
+	MSM5205_reset_w(offset & 1,0);
+}
+
+static WRITE8_HANDLER( tbowl_adpcm_end_w )
+{
+	adpcm_end[offset & 1] = (data + 1) << 8;
+}
+
+static WRITE8_HANDLER( tbowl_adpcm_vol_w )
+{
+	MSM5205_set_volume(offset & 1, (data & 0x7f) * 100 / 0x7f);
+}
+
+static void tbowl_adpcm_int(int num)
+{
+	static int adpcm_data[2] = { -1, -1 };
+
+	if (adpcm_pos[num] >= adpcm_end[num] ||
+				adpcm_pos[num] >= memory_region_length(REGION_SOUND1)/2)
+		MSM5205_reset_w(num,1);
+	else if (adpcm_data[num] != -1)
+	{
+		MSM5205_data_w(num,adpcm_data[num] & 0x0f);
+		adpcm_data[num] = -1;
+	}
+	else
+	{
+		unsigned char *ROM = memory_region(REGION_SOUND1) + 0x10000 * num;
+
+		adpcm_data[num] = ROM[adpcm_pos[num]++];
+		MSM5205_data_w(num,adpcm_data[num] >> 4);
+	}
+}
+
 static ADDRESS_MAP_START( readmem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe010, 0xe010) AM_READ(soundlatch_r)
-
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
@@ -185,15 +230,11 @@ static ADDRESS_MAP_START( writemem_6206A, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd001, 0xd001) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0xd800, 0xd800) AM_WRITE(YM3812_control_port_1_w)
 	AM_RANGE(0xd801, 0xd801) AM_WRITE(YM3812_write_port_1_w)
-//  AM_RANGE(0xe000, 0xe000) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe001, 0xe001) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe002, 0xe002) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe003, 0xe003) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe004, 0xe004) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe005, 0xe005) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe006, 0xe006) AM_WRITE(unknown_write)
-//  AM_RANGE(0xe007, 0xe007) AM_WRITE(unknown_write)
-/* rest of sound is probably similar to tecmo.c */
+	AM_RANGE(0xe000, 0xe001) AM_WRITE(tbowl_adpcm_end_w)
+	AM_RANGE(0xe002, 0xe003) AM_WRITE(tbowl_adpcm_start_w)
+	AM_RANGE(0xe004, 0xe005) AM_WRITE(tbowl_adpcm_vol_w)
+	AM_RANGE(0xe006, 0xe006) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xe007, 0xe007) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
 ADDRESS_MAP_END
 
 /*** Input Ports
@@ -514,8 +555,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*** Sound Bits
 
-There should also be something for playing the samples (roms 2+3)
-
 */
 
 static void irqhandler(int linestate)
@@ -528,13 +567,19 @@ static struct YM3526interface ym3812_interface =
 	irqhandler
 };
 
+static struct MSM5205interface msm5205_interface =
+{
+	tbowl_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz               */
+};
+
 /*** Machine Driver
 
 there are 3 boards, each with a cpu, boards b and c contain
 NEC D70008AC-8's which is just a Z80, board a (the sound board)
 has an actual Z80 chip
 
-Sound Hardware should be 2 YM3812's, this isn't done yet
+Sound Hardware should be 2 YM3812's + 2 MSM5205's
 
 The game is displayed on 2 monitors
 
@@ -583,6 +628,13 @@ static MACHINE_DRIVER_START( tbowl )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
 	/* something for the samples? */
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -695,8 +747,8 @@ ROM_START( tbowl )
 	ROM_LOAD16_BYTE( "6206c.23",	0x00000, 0x10000, CRC(97fba168) SHA1(107de19614d57453a37462e1a4d499d14633d50b) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "6206a.2",	0x00000, 0x10000, CRC(1e9e5936) SHA1(60370d1de28b1c5ffeff7843702aaddb19ff1f58) )
-	ROM_LOAD( "6206a.3",	0x10000, 0x10000, CRC(3aa24744) SHA1(06de3f9a2431777218cc67f59230fddbfa01cf2d) )
+	ROM_LOAD( "6206a.3",	0x00000, 0x10000, CRC(3aa24744) SHA1(06de3f9a2431777218cc67f59230fddbfa01cf2d) )
+	ROM_LOAD( "6206a.2",	0x10000, 0x10000, CRC(1e9e5936) SHA1(60370d1de28b1c5ffeff7843702aaddb19ff1f58) )
 ROM_END
 
 ROM_START( tbowlj )
@@ -736,9 +788,9 @@ ROM_START( tbowlj )
 	ROM_LOAD16_BYTE( "6206c.23",	0x00000, 0x10000, CRC(97fba168) SHA1(107de19614d57453a37462e1a4d499d14633d50b) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "6206a.2",	0x00000, 0x10000, CRC(1e9e5936) SHA1(60370d1de28b1c5ffeff7843702aaddb19ff1f58) )
-	ROM_LOAD( "6206a.3",	0x10000, 0x10000, CRC(3aa24744) SHA1(06de3f9a2431777218cc67f59230fddbfa01cf2d) )
+	ROM_LOAD( "6206a.3",	0x00000, 0x10000, CRC(3aa24744) SHA1(06de3f9a2431777218cc67f59230fddbfa01cf2d) )
+	ROM_LOAD( "6206a.2",	0x10000, 0x10000, CRC(1e9e5936) SHA1(60370d1de28b1c5ffeff7843702aaddb19ff1f58) )
 ROM_END
 
-GAMEX( 1987, tbowl,    0,        tbowl,    tbowl,    0, ROT0,  "Tecmo", "Tecmo Bowl (World?)", GAME_IMPERFECT_SOUND )
-GAMEX( 1987, tbowlj,   tbowl,    tbowl,    tbowlj,   0, ROT0,  "Tecmo", "Tecmo Bowl (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1987, tbowl,    0,        tbowl,    tbowl,    0, ROT0,  "Tecmo", "Tecmo Bowl (World?)" )
+GAME( 1987, tbowlj,   tbowl,    tbowl,    tbowlj,   0, ROT0,  "Tecmo", "Tecmo Bowl (Japan)" )

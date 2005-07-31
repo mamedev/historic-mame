@@ -600,6 +600,9 @@ static MACHINE_DRIVER_START( esckids )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(esckids_readmem,esckids_writemem)
 
+//MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )    /* black areas on the edges */
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+
 	MDRV_VIDEO_START(esckids)
 
 MACHINE_DRIVER_END

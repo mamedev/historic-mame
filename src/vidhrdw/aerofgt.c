@@ -479,17 +479,12 @@ static void pspikesb_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 
 		if (aerofgt_spriteram3[i + 3 - 4] & 0x8000) break;
 
-		xpos = aerofgt_spriteram3[i + 2] & 0x01ff;
-		ypos = aerofgt_spriteram3[i + 3 - 4] & 0x1ff;
+		xpos = (aerofgt_spriteram3[i + 2] & 0x1ff) - 34;
+		ypos = 256 - (aerofgt_spriteram3[i + 3 - 4] & 0x1ff) - 33;
 		code = aerofgt_spriteram3[i + 0] & 0x1fff;
-
-		color = flipy = 0;
-
+		flipy = 0;
 		flipx = aerofgt_spriteram3[i + 1] & 0x0800;
-
 		color = aerofgt_spriteram3[i + 1] & 0x000f;
-
-		ypos = 256 - ypos;
 
 		drawgfx(bitmap,Machine->gfx[sprite_gfx],
 				code,
@@ -497,6 +492,15 @@ static void pspikesb_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 				flipx,flipy,
 				xpos,ypos,
 				cliprect,TRANSPARENCY_PEN,15);
+
+		/* wrap around y */
+		drawgfx(bitmap,Machine->gfx[sprite_gfx],
+				code,
+				color,
+				flipx,flipy,
+				xpos,ypos + 512,
+				cliprect,TRANSPARENCY_PEN,15);
+
 	}
 }
 
@@ -619,10 +623,7 @@ VIDEO_UPDATE( pspikesb )
 		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0xff,aerofgt_rasterram[i]+22);
 	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
-	fillbitmap(priority_bitmap,0,cliprect);
-
 	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
-
 	pspikesb_drawsprites(bitmap,cliprect);
 }
 

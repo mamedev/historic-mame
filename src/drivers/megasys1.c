@@ -1668,6 +1668,39 @@ ROM_START( edf )
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, CRC(1d877538) SHA1(a5be0dc65dcfc36fbba10d1fddbe155e24b6122f) )
 ROM_END
 
+ROM_START( edfu )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 )		/* Main CPU Code: 00000-3ffff & 80000-bffff */
+	ROM_LOAD16_BYTE( "edf5.b5",  0x000000, 0x020000, CRC(105094d1) SHA1(e962164836756bc20c2b5dc0032042a0219e82d8) )
+	ROM_CONTINUE (               0x080000, 0x020000 )
+	ROM_LOAD16_BYTE( "edf6.b3",  0x000001, 0x020000, CRC(94da2f0c) SHA1(ae6aef03d61d244a857a9dc824be230c35f4c978) )
+	ROM_CONTINUE (               0x080001, 0x020000 )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "edf_01.rom",  0x000000, 0x020000, CRC(2290ea19) SHA1(64c9394bd4d5569d68833d2e57abaf2f1af5be97) )
+	ROM_LOAD16_BYTE( "edf_02.rom",  0x000001, 0x020000, CRC(ce93643e) SHA1(686bf0ec104af8c97624a782e0d60afe170fd945) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "edf_m04.rom",  0x000000, 0x080000, CRC(6744f406) SHA1(3b8f13ca968456186d9ad61f34611b7eab62ea86) )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "edf_m05.rom",  0x000000, 0x080000, CRC(6f47e456) SHA1(823baa9dc4cb2425c64e9332c6ed4678e49d0c7b) )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "edf_09.rom",   0x000000, 0x020000, CRC(96e38983) SHA1(a4fb94f15d9a9f7df1645be66fe3e179d0ebf765) )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "edf_m03.rom",  0x000000, 0x080000, CRC(ef469449) SHA1(bc591e56c5478383eb4bd29f16133c6ba407c22f) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "edf_m02.rom",  0x000000, 0x040000, CRC(fc4281d2) SHA1(67ea324ff359a5d9e7538c08865b5eeebd16704b) )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "edf_m01.rom",  0x000000, 0x040000, CRC(9149286b) SHA1(f6c66c5cd50b72c4d401a263c65a8d4ef8cf9221) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom.14m",    0x0000, 0x0200, CRC(1d877538) SHA1(a5be0dc65dcfc36fbba10d1fddbe155e24b6122f) )
+ROM_END
+
 INPUT_PORTS_START( edf )
 	COINS
 //  fire    unfold_weapons
@@ -3619,6 +3652,7 @@ GAME( 1990, rodlndjb, rodland,  system_A,          rodland,  0,        ROT0,   "
 GAME( 1991, avspirit, 0,        system_B,          avspirit, avspirit, ROT0,   "Jaleco", "Avenging Spirit" )
 GAME( 1990, phantasm, avspirit, system_A,          avspirit, phantasm, ROT0,   "Jaleco", "Phantasm (Japan)" )
 GAME( 1991, edf,      0,        system_B,          edf,      edf,      ROT0,   "Jaleco", "E.D.F. : Earth Defense Force" )
+GAME( 1991, edfu,     edf,      system_B,          edf,      edf,      ROT0,   "Jaleco", "E.D.F. : Earth Defense Force (North America)" )
 GAME( 1991, 64street, 0,        system_C,          64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (World)" )
 GAME( 1991, 64streej, 64street, system_C,          64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (Japan)" )
 GAME( 1992, soldamj,  0,        system_A,          soldamj,  soldam,   ROT0,   "Jaleco", "Soldam (Japan)" )

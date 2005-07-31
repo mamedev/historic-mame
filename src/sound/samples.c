@@ -122,6 +122,10 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 			return 0;
 	}
 
+	/* if there was a 0 length data block, we're done */
+	if (length == 0)
+		return 0;
+
 	/* fill in the sample data */
 	sample->length = length;
 	sample->frequency = rate;

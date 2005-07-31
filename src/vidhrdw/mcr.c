@@ -64,6 +64,33 @@ static void mcr_90010_get_tile_info(int tile_index)
 }
 
 
+/*
+    The 91490 board uses 2 adjacent bytes per tile:
+
+    Byte 0:
+        pppppppp = picture index (low 8 bits)
+
+    Byte 1:
+        ss------ = sprite palette bank (can be disabled via jumpers)
+        --cc---- = tile palette bank
+        ----y--- = Y flip
+        -----x-- = X flip
+        ------pp = picture index (high 2 bits)
+
+ */
+static void mcr_91490_get_tile_info(int tile_index)
+{
+	int data = videoram[tile_index * 2] | (videoram[tile_index * 2 + 1] << 8);
+	int code = data & 0x3ff;
+	int color = (data >> 12) & 3;
+	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 10) & 3));
+
+	/* sprite color base might come from the top 2 bits */
+	tile_info.priority = (data >> 14) & 3;
+}
+
+
+
 static void twotiger_get_tile_info(int tile_index)
 {
 	int data = videoram[tile_index] | (videoram[tile_index + 0x400] << 8);
@@ -94,6 +121,14 @@ VIDEO_START( mcr )
 
 		case 90010:
 			bg_tilemap = tilemap_create(mcr_90010_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+			break;
+
+		case 91475:
+			bg_tilemap = tilemap_create(mcr_90010_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
+			break;
+
+		case 91490:
+			bg_tilemap = tilemap_create(mcr_91490_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 			break;
 	}
 	if (!bg_tilemap)
@@ -174,10 +209,21 @@ WRITE8_HANDLER( twotiger_videoram_w )
 }
 
 
+WRITE8_HANDLER( mcr3_videoram_w )
+{
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+}
+
+
 
 /*************************************
  *
- *  Common sprite update
+ *  91399 Video Gen sprite renderer
+ *
+ *  Paired with:
+ *      90009 CPU -> fixed palette @ 1
+ *      90010 CPU -> palette specified by tiles
  *
  *************************************/
 
@@ -242,6 +288,85 @@ static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectan
 
 /*************************************
  *
+ *  91464 Super Video Gen sprite renderer
+ *
+ *  Paired with:
+ *      91442 CPU -> fixed palette @ 1 (upper half) or 3 (lower half)
+ *      91475 CPU -> palette specified by ???
+ *      91490 CPU -> palette specified by sprite board or by tiles (select via jumpers)
+ *      91721 CPU -> palette specified by sprite board
+ *
+ *************************************/
+
+static void render_sprites_91464(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int primask, int sprmask, int colormask)
+{
+	const struct GfxElement *gfx = Machine->gfx[1];
+	int offs;
+
+	/* render the sprites into the bitmap, working from topmost to bottommost */
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
+	{
+		int code, color, x, y, sx, sy, hflip, vflip;
+
+		/* extract the bits of information */
+		code = (spriteram[offs + 2] + 256 * ((spriteram[offs + 1] >> 3) & 0x01)) % gfx->total_elements;
+		color = (((~spriteram[offs + 1] & 3) << 4) & sprmask) | colormask;
+		hflip = (spriteram[offs + 1] & 0x10) ? 31 : 0;
+		vflip = (spriteram[offs + 1] & 0x20) ? 31 : 0;
+		sx = (spriteram[offs + 3] - 3) * 2;
+		sy = (241 - spriteram[offs]) * 2;
+
+		/* apply cocktail mode */
+		if (mcr_cocktail_flip)
+		{
+			hflip ^= 31;
+			vflip ^= 31;
+			sx = 480 - sx;
+			sy = 452 - sy;
+		}
+
+		/* clamp within 512 */
+		sx &= 0x1ff;
+		sy &= 0x1ff;
+
+		/* loop over lines in the sprite */
+		for (y = 0; y < 32; y++, sy = (sy + 1) & 0x1ff)
+			if (sy >= cliprect->min_y && sy <= cliprect->max_y)
+			{
+				UINT8 *src = gfx->gfxdata + gfx->char_modulo * code + gfx->line_modulo * (y ^ vflip);
+				UINT16 *dst = (UINT16 *)bitmap->line[sy];
+				UINT8 *pri = priority_bitmap->line[sy];
+
+				/* loop over columns */
+				for (x = 0; x < 32; x++)
+				{
+					int tx = (sx + x) & 0x1ff;
+					int pix = pri[tx];
+					if (pix != 0xff)
+					{
+						/* compute the final value */
+						pix = (pix & primask) | color | src[x ^ hflip];
+
+						/* if non-zero, draw */
+						if (pix & 0x0f)
+						{
+							/* mark this pixel so we don't draw there again */
+							pri[tx] = 0xff;
+
+							/* only draw if the low 3 bits are set */
+							if (pix & 0x07)
+								dst[tx] = pix;
+						}
+					}
+				}
+			}
+	}
+}
+
+
+
+/*************************************
+ *
  *  Main refresh routines
  *
  *************************************/
@@ -264,22 +389,16 @@ VIDEO_UPDATE( mcr )
 		case 91399:
 			render_sprites_91399(bitmap, cliprect);
 			break;
+
+		case 91464:
+			if (mcr_cpu_board == 91442)
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
+			else if (mcr_cpu_board == 91475)
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
+			else if (mcr_cpu_board == 91490)
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
+			else if (mcr_cpu_board == 91721)
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
+			break;
 	}
-}
-
-
-VIDEO_UPDATE( journey )
-{
-	/* update the flip state */
-	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
-
-	/* draw the background */
-	fillbitmap(priority_bitmap, 0, cliprect);
-	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0x00);
-	tilemap_draw(bitmap, cliprect, bg_tilemap, 1, 0x10);
-	tilemap_draw(bitmap, cliprect, bg_tilemap, 2, 0x20);
-	tilemap_draw(bitmap, cliprect, bg_tilemap, 3, 0x30);
-
-	/* draw the sprites */
-	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);
 }

@@ -120,6 +120,8 @@ static data32_t *deco32_ram;
 static int raster_enable,raster_offset;
 static void *raster_irq_timer;
 
+extern void decrypt156(void);
+
 /**********************************************************************************/
 
 static void interrupt_gen(int scanline)
@@ -2559,6 +2561,11 @@ ROM_START( nslasher )
 	ROM_LOAD32_WORD( "mainprg.1f", 0x000000, 0x80000, CRC(507acbae) SHA1(329a2bb244f2f3adb8d75cab5aa2dcb129d70712) )
 	ROM_LOAD32_WORD( "mainprg.2f", 0x000002, 0x80000, CRC(931fc7ee) SHA1(54eb12abfa3f332ce9b43a45ec424aaee88641a6) )
 
+	/* Japanese program roms for comparison - see decrypt analysis */
+//  ROM_REGION(0x100000, REGION_CPU3, 0 ) /* Encrypted ARM 32 bit code */
+//  ROM_LOAD32_WORD( "lx-00.bin", 0x000000, 0x80000, CRC(6ed5fb88) SHA1(84350da7939a479968a523c84e254e3ee54b8da2) )
+//  ROM_LOAD32_WORD( "lx-01.bin", 0x000002, 0x80000, CRC(a6df2152) SHA1(6fe7e0b2e71c5f807951dcc81a6a3cff55247961) )
+
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
 
@@ -2755,6 +2762,8 @@ static DRIVER_INIT( nslasher )
 
 	deco56_decrypt(REGION_GFX1); /* 141 */
 	deco74_decrypt(REGION_GFX2);
+
+	decrypt156();
 
 	/* The board for Night Slashers is very close to the Fighter's History and
     Tattoo Assassins boards, but has an encrypted ARM cpu. */

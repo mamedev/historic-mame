@@ -767,6 +767,10 @@ static WRITE32_HANDLER( eeprom_w )
 		rf2_set_layer_banks(data >> 16);
 	}
 
+	// oki banking
+	if (sndti_to_sndnum(SOUND_OKIM6295, 1) >= 0)
+		OKIM6295_set_bank_base(1, (data & 0x4000000) ? 0x40000 : 0);
+
 	/* TODO */
 }
 
@@ -920,7 +924,6 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
 	AM_RANGE(0x00000608, 0x0000060b) AM_READ(spi_unknown_r)		/* Unknown */
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
-	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_fifo_r)
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_fifo_status_r)
 	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
 	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
@@ -1032,7 +1035,6 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01200004, 0x01200007) AM_READ(spi_6295_1_r)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)		/* ROM location in real-mode */
 ADDRESS_MAP_END
-
 
 static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000003ff) AM_WRITE(MWA32_RAM)
@@ -1583,6 +1585,7 @@ static MACHINE_INIT( spi )
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000680, 0x00000683, 0, 0, sound_fifo_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_prg_fifo_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, z80_enable_w);
 
@@ -1928,11 +1931,11 @@ static MACHINE_DRIVER_START( seibu386 )
 
 	MDRV_SOUND_ADD(OKIM6295, 1431815/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_SOUND_ADD(OKIM6295, 1431815/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*******************************************************************/
@@ -2451,7 +2454,7 @@ ROM_START(rdft2us)
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(cc543c4f) SHA1(6e5c93fd3d21c594571b071d4a830211e1f162b2) )
 
-	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_REGION(0x280000, REGION_SOUND1, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("sound1.bin", 0x100000, 0x80000, CRC(20384b0e) SHA1(9c5d725418543df740f9145974ed6ffbbabee1d0) )
 
 ROM_END
@@ -2770,7 +2773,7 @@ ROM_START(rfjetus)	/* Single board version SXX2G */
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("rfj-05.u091", 0x000000, 0x40000, CRC(a55e8799) SHA1(5d4ca9ae920ab54e23ee3b1b33db72711e744516) ) /* ZPRG */
 
-	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_REGION(0x280000, REGION_SOUND1, ROMREGION_ERASE00)	/* sound roms */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("rfj-04.107", 0x200000, 0x80000, CRC(c050da03) SHA1(1002dac51a3a4932c4f0074c1f3d97a597d98755) ) /* SOUND1 */
 ROM_END
@@ -2807,9 +2810,9 @@ ROM_START(rdft22kc)
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0)	/* sound data for MSM6295 */
 	ROM_LOAD("pcm0.1022", 0x000000, 0x80000, CRC(fd599b35) SHA1(00c0307d1b503bd5ce02d7960ce5e1ad600a7290) )
+
 	ROM_REGION( 0x80000, REGION_SOUND2, 0)	/* sound data for MSM6295 */
 	ROM_LOAD("pcm1.1023", 0x000000, 0x80000, CRC(8b716356) SHA1(42ee1896c02518cd1e9cb0dc130321834665a79e) )
-
 ROM_END
 
 /*******************************************************************/
@@ -2854,4 +2857,4 @@ GAMEX( 1997, rdft2us,   rdft2,   sxx2f,    spi_2button, rdft2us,  ROT270, "Seibu
 GAMEX( 1999, rfjetus,   rfjet,   sxx2f,    spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters Jet (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND  ) // has 1998-99 copyright + planes unlocked
 
 /* SYS386 */
-GAMEX( 2000, rdft22kc,  rdft2,   seibu386, spi_2button, rdft22kc, ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 2000, rdft22kc,  rdft2,   seibu386, spi_2button, rdft22kc, ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS )

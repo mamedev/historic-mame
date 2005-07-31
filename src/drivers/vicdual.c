@@ -1237,6 +1237,7 @@ static MACHINE_DRIVER_START( depthch )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(2ports)
+	MDRV_CPU_REPLACE("main", 8080, 15468480/8)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, 0)

@@ -236,8 +236,8 @@ static int compute_tables(struct ES5506Chip *chip)
 ***********************************************************************************************/
 
 #define interpolate(sample1, sample2, accum)										\
-		(sample1 * (INT32)(0x800 - (voice->accum & 0x7ff)) + 						\
-		 sample2 * (INT32)(voice->accum & 0x7ff)) >> 11;
+		(sample1 * (INT32)(0x800 - (accum & 0x7ff)) + 						\
+		 sample2 * (INT32)(accum & 0x7ff)) >> 11;
 
 #if BACKEND_INTERPOLATE
 #define backend_interpolate(sample1, sample2, position)								\

@@ -179,13 +179,6 @@ WRITE8_HANDLER( mcr3_paletteram_w )
  *
  *************************************/
 
-WRITE8_HANDLER( mcr3_videoram_w )
-{
-	videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
-}
-
-
 WRITE8_HANDLER( spyhunt_videoram_w )
 {
 	videoram[offset] = data;
@@ -302,7 +295,7 @@ VIDEO_UPDATE( spyhunt )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
-	mcr3_update_sprites(bitmap, cliprect, spyhunt_sprite_color_mask, 0x80, -12, 0);
+	mcr3_update_sprites(bitmap, cliprect, spyhunt_sprite_color_mask, 0, -12, 0);
 
 	/* render any characters on top */
 	tilemap_draw(bitmap, cliprect, alpha_tilemap, 0, 0);

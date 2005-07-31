@@ -482,9 +482,18 @@ static INTERRUPT_GEN(skns_interrupt)
 	cpunum_set_input_line(0,interrupt,HOLD_LINE);
 }
 
-INPUT_PORTS_START( skns )
+/**********************************************************************************
 
-	PORT_START  /* IN0 */
+    Input port definitions
+
+    NOTE: The driver reads data from eight input ports, even if they are unused.
+          So I left them mapped. See for reference the READ32_HANDLERs :
+          "nova_input_port_0_r", "nova_input_port_3_r", "nova_input_port_dip_r"
+**********************************************************************************/
+
+static INPUT_PORTS_START( skns )		/* 3 buttons, 2 players */
+
+	PORT_START_TAG("IN0")  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -492,9 +501,9 @@ INPUT_PORTS_START( skns )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* IN1 */
+	PORT_START_TAG("IN1")  /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -502,9 +511,9 @@ INPUT_PORTS_START( skns )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* IN2 */
+	PORT_START_TAG("IN2")  /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -514,26 +523,19 @@ INPUT_PORTS_START( skns )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START  /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START_TAG("IN3")  /* IN3 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle A */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(1)
+	PORT_START_TAG("Paddle A")  /* Paddle A */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle B */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(2)
+	PORT_START_TAG("Paddle B")  /* Paddle B */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle C */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(3)
+	PORT_START_TAG("Paddle C")  /* Paddle C */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* DSW */
+	PORT_START_TAG("DSW")  /* DSW */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR(Flip_Screen) ) // This port affects 0x040191c8 function
 	PORT_DIPSETTING(    0x02, DEF_STR(Off) )
@@ -557,63 +559,58 @@ INPUT_PORTS_START( skns )
 	PORT_DIPSETTING(    0x00, "Freezes the game")
 	PORT_DIPSETTING(    0x80, "Right value")
 
-	PORT_START  /* Paddle D */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(4)
+	PORT_START_TAG("Paddle D")  /* Paddle D */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jjparads )
+static INPUT_PORTS_START( skns_1p )		/* 2 buttons, 1 player */
 
-	PORT_START  /* IN0 */
+	PORT_START_TAG("IN0")  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	/* jjparads and jjparad2 are 1 player only games
+       ryouran and teljan have an unemulated feature
+       that allows to play them in two player mode
+       via a cable-network connection (untestable)
+       Service mode test shows only P1 inputs */
+	PORT_START_TAG("IN1")  /* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* IN2 */
+	/* same as above, coin 2 and start 2 are untestable
+       in ryouran and teljan. So I left disabled for now */
+	PORT_START_TAG("IN2")  /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+//PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+//PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START  /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START_TAG("IN3")  /* IN3 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle A */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(1)
+	PORT_START_TAG("Paddle A")  /* Paddle A */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle B */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(2)
+	PORT_START_TAG("Paddle B")  /* Paddle B */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* Paddle C */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(3)
+	PORT_START_TAG("Paddle C")  /* Paddle C */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* DSW */
+	PORT_START_TAG("DSW")  /* DSW */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR(Flip_Screen) ) // This port affects 0x040191c8 function
 	PORT_DIPSETTING(    0x02, DEF_STR(Off) )
@@ -637,8 +634,60 @@ INPUT_PORTS_START( jjparads )
 	PORT_DIPSETTING(    0x00, "Freezes the game")
 	PORT_DIPSETTING(    0x80, "Right value")
 
-	PORT_START  /* Paddle D */
-	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(4)
+	PORT_START_TAG("Paddle D")  /* Paddle D */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( cyvern )		/* 2 buttons, 2 players */
+	PORT_INCLUDE( skns )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( galpanis )	/* 1 button, 2 players */
+	PORT_INCLUDE( skns )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( puzzloop )	/* 2 buttons, 2 players, paddle */
+	PORT_INCLUDE( skns )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("Paddle A")  /* Paddle A */
+	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(1)
+
+	PORT_MODIFY("Paddle B")  /* Paddle B */
+	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(2)
+
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( vblokbrk )	/* 3 buttons, 2 players, paddle */
+	PORT_INCLUDE( skns )
+
+	PORT_MODIFY("Paddle A")  /* Paddle A */
+	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(1)
+
+	PORT_MODIFY("Paddle B")  /* Paddle B */
+	PORT_BIT( 0xFF, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_REVERSE PORT_PLAYER(2)
 
 INPUT_PORTS_END
 
@@ -1674,22 +1723,22 @@ ROM_END
 
 GAMEX( 1996, skns,     0,    skns, skns, 0,        ROT0,  "Kaneko", "Super Kaneko Nova System BIOS", NOT_A_DRIVER )
 
-GAMEX( 1996, galpani4, skns,    skns, skns,     galpani4, ROT0,  "Kaneko", "Gals Panic 4 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, galpanis, skns,    skns, skns,     galpanis, ROT0,  "Kaneko", "Gals Panic S - Extra Edition (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, cyvern,   skns,    skns, skns,     cyvern,   ROT90, "Kaneko", "Cyvern (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, galpans2, skns,    skns, skns,     galpans2, ROT0,  "Kaneko", "Gals Panic S2 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, panicstr, skns,    skns, skns,     panicstr, ROT0,  "Kaneko", "Panic Street (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, galpani4, skns,    skns, cyvern,   galpani4, ROT0,  "Kaneko", "Gals Panic 4 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, galpanis, skns,    skns, galpanis, galpanis, ROT0,  "Kaneko", "Gals Panic S - Extra Edition (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, cyvern,   skns,    skns, cyvern,   cyvern,   ROT90, "Kaneko", "Cyvern (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, galpans2, skns,    skns, galpanis, galpans2, ROT0,  "Kaneko", "Gals Panic S2 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, panicstr, skns,    skns, galpanis, panicstr, ROT0,  "Kaneko", "Panic Street (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1999, senknow , skns,    skns, skns,     senknow,  ROT0,  "Kaneko / Kouyousha", "Sen-Know (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 2000, gutsn,    skns,    skns, skns,     gutsn,    ROT0,  "Kaneko / Kouyousha", "Guts'n (Japan)", GAME_IMPERFECT_GRAPHICS ) // quite fragile, started working of it's own accord in 0.69 :)
-GAMEX( 1998, puzzloop, skns,    skns, skns,     puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, puzloopj, puzzloop,skns, skns,     puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, puzloopu, puzzloop,skns, skns,     puzloopu, ROT0,  "Mitchell", "Puzz Loop (USA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, jjparads, skns,    skns, jjparads, jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, jjparad2, skns,    skns, jjparads, jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, ryouran , skns,    skns, jjparads, ryouran,  ROT0,  "Electro Design", "VS Mahjong Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, teljan  , skns,    skns, jjparads, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, puzzloop, skns,    skns, puzzloop, puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, puzloopj, puzzloop,skns, puzzloop, puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, puzloopu, puzzloop,skns, puzzloop, puzloopu, ROT0,  "Mitchell", "Puzz Loop (USA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, jjparads, skns,    skns, skns_1p,  jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, jjparad2, skns,    skns, skns_1p,  jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, ryouran , skns,    skns, skns_1p,  ryouran,  ROT0,  "Electro Design", "VS Mahjong Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, teljan  , skns,    skns, skns_1p,  teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sengekis, skns,    skns, skns,     sengekis, ROT90, "Kaneko / Warashi", "Sengeki Striker (Asia)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sengekij, sengekis,skns, skns,     sengekij, ROT90, "Kaneko / Warashi", "Sengeki Striker (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, vblokbrk, skns,    skns, skns,     sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, sarukani, vblokbrk,skns, skns,     sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, vblokbrk, skns,    skns, vblokbrk, sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, sarukani, vblokbrk,skns, vblokbrk, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )
 

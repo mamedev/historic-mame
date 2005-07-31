@@ -130,6 +130,7 @@ struct debug_view_memory
 	UINT8			reverse_view;				/* reverse-endian view? */
 	UINT8			ascii_view;					/* display ASCII characters? */
 	UINT8			live_tracking;				/* track the value of the live expression? */
+	UINT8			byte_offset;				/* byte offset within each row */
 	UINT64			last_result;				/* last result from the expression */
 	struct parsed_expression *expression;		/* expression to compute */
 	char *			expression_string;			/* copy of the expression string */
@@ -1388,18 +1389,15 @@ static void	disasm_setprop(struct debug_view *view, UINT32 property, const void 
 	switch (property)
 	{
 		case DVP_EXPRESSION:
-			if (!dasmdata->expression_string || strcmp(dasmdata->expression_string, (const char *)value))
-			{
-				debug_view_begin_update(view);
-				if (dasmdata->expression_string)
-					free(dasmdata->expression_string);
-				dasmdata->expression_string = malloc(strlen((const char *)value) + 1);
-				if (dasmdata->expression_string)
-					strcpy(dasmdata->expression_string, (const char *)value);
-				dasmdata->expression_dirty = 1;
-				view->update_pending = 1;
-				debug_view_end_update(view);
-			}
+			debug_view_begin_update(view);
+			if (dasmdata->expression_string)
+				free(dasmdata->expression_string);
+			dasmdata->expression_string = malloc(strlen((const char *)value) + 1);
+			if (dasmdata->expression_string)
+				strcpy(dasmdata->expression_string, (const char *)value);
+			dasmdata->expression_dirty = 1;
+			view->update_pending = 1;
+			debug_view_end_update(view);
 			break;
 
 		case DVP_TRACK_LIVE:
@@ -1498,7 +1496,7 @@ static int memory_get_cursor_pos(struct debug_view *view, offs_t *address, UINT8
 	curx -= memdata->divider1;
 
 	/* compute the base address */
-	*address = 0x10 * cury;
+	*address = 0x10 * cury + memdata->byte_offset;
 
 	/* the rest depends on the current format */
 
@@ -1580,6 +1578,9 @@ static void memory_set_cursor_pos(struct debug_view *view, offs_t address, UINT8
 	struct debug_view_memory *memdata = view->extra_data;
 	int curx, cury;
 
+	/* offset the address by the byte offset */
+	address -= memdata->byte_offset;
+
 	/* compute the y coordinate */
 	cury = address / 0x10;
 
@@ -1647,7 +1648,6 @@ static void memory_handle_char(struct debug_view *view, char chval)
 	char *hexchar = strchr(hexvals, tolower(chval));
 	offs_t address;
 	UINT8 shift;
-//  int modval;
 
 	/* get the position */
 	if (!memory_get_cursor_pos(view, &address, &shift))
@@ -1780,35 +1780,27 @@ static void memory_update(struct debug_view *view)
 		/* recompute the value of the expression */
 		exprerr = expression_execute(memdata->expression, &result);
 
-		/* no longer dirty */
-		memdata->expression_dirty = 0;
-
 		/* reset the row number */
-		if (result != memdata->last_result || view->cpunum != memdata->cpunum)
+		if (result != memdata->last_result || memdata->expression_dirty || view->cpunum != memdata->cpunum)
 		{
 			memdata->last_result = result;
 			view->top_row = ADDR2BYTE(memdata->last_result, cpuinfo, memdata->spacenum) / 0x10;
+			memdata->byte_offset = ADDR2BYTE(memdata->last_result, cpuinfo, memdata->spacenum) % 0x10;
 			view->cursor_row = view->top_row;
 		}
+
+		/* no longer dirty */
+		memdata->expression_dirty = 0;
 	}
 
 	/* update our CPU number */
 	memdata->cpunum = view->cpunum;
 
-	/* if the cursor is visible, normalize it */
-	if (view->cursor_visible)
-	{
-		offs_t addr;
-		UINT8 shift;
-		memory_get_cursor_pos(view, &addr, &shift);
-		memory_set_cursor_pos(view, addr, shift);
-	}
-
 	/* loop over visible rows */
 	for (row = 0; row < view->visible_rows; row++)
 	{
 		UINT32 effrow = view->top_row + row;
-		offs_t addrbyte = effrow * 0x10;
+		offs_t addrbyte = effrow * 0x10 + memdata->byte_offset;
 		UINT8 attrib = DCA_NORMAL;
 		UINT32 col = 0;
 
@@ -1965,18 +1957,15 @@ static void	memory_setprop(struct debug_view *view, UINT32 property, const void 
 	switch (property)
 	{
 		case DVP_EXPRESSION:
-			if (!memdata->expression_string || strcmp(memdata->expression_string, (const char *)value))
-			{
-				debug_view_begin_update(view);
-				if (memdata->expression_string)
-					free(memdata->expression_string);
-				memdata->expression_string = malloc(strlen((const char *)value) + 1);
-				if (memdata->expression_string)
-					strcpy(memdata->expression_string, (const char *)value);
-				memdata->expression_dirty = 1;
-				view->update_pending = 1;
-				debug_view_end_update(view);
-			}
+			debug_view_begin_update(view);
+			if (memdata->expression_string)
+				free(memdata->expression_string);
+			memdata->expression_string = malloc(strlen((const char *)value) + 1);
+			if (memdata->expression_string)
+				strcpy(memdata->expression_string, (const char *)value);
+			memdata->expression_dirty = 1;
+			view->update_pending = 1;
+			debug_view_end_update(view);
 			break;
 
 		case DVP_TRACK_LIVE:

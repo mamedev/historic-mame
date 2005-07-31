@@ -50,6 +50,21 @@ static const char *s_mnemonic[] = {
 	"sll", "sra", "srl", "sub", "xor "
 };
 
+#define _OVER DASMFLAG_STEP_OVER
+#define _OUT  DASMFLAG_STEP_OUT
+
+static const UINT32 s_flags[] = {
+	0    ,0    ,0    ,0    ,_OVER,0    ,0    ,0    ,
+	_OVER,0    ,_OVER,0    ,0    ,0    ,0    ,0    ,
+	_OVER,0    ,0    ,0    ,_OVER,0    ,0    ,0    ,
+	0    ,_OVER,0    ,_OVER,0    ,0    ,0    ,0    ,
+	_OVER,0    ,_OVER,0    ,0    ,0    ,_OVER,_OVER,
+	0    ,0    ,0    ,0    ,0    ,0    ,_OUT ,_OUT ,
+	_OUT ,0    ,0    ,0    ,0    ,0    ,0    ,0    ,
+	0    ,0    ,0    ,_OVER,0    ,0    ,0    ,0    ,
+	0    ,0    ,0    ,0    ,0
+};
+
 typedef struct {
 	UINT8	access;
 	UINT8	mnemonic;
@@ -592,7 +607,7 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 		dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
     }
 
-    return pc - PC;
+    return (pc - PC) | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
 }
 
 #endif

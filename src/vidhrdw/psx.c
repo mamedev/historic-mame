@@ -1093,20 +1093,22 @@ INLINE void decode_tpage( struct PSXGPU *p_psxgpu, UINT32 tpage )
 	TRANSPARENCYSETUP
 
 #define TEXTURESETUP \
+	n_tx = psxgpu.n_tx; \
+	n_ty = psxgpu.n_ty; \
 	p_clut = m_p_p_vram[ n_cluty ] + n_clutx; \
 	switch( psxgpu.n_tp ) \
 	{ \
 	case 0: \
-		psxgpu.n_tx += m_n_twx >> 2; \
-		psxgpu.n_ty += m_n_twy; \
+		n_tx += m_n_twx >> 2; \
+		n_ty += m_n_twy; \
 		break; \
 	case 1: \
-		psxgpu.n_tx += m_n_twx >> 1; \
-		psxgpu.n_ty += m_n_twy; \
+		n_tx += m_n_twx >> 1; \
+		n_ty += m_n_twy; \
 		break; \
 	case 2: \
-		psxgpu.n_tx += m_n_twx >> 0; \
-		psxgpu.n_ty += m_n_twy; \
+		n_tx += m_n_twx >> 0; \
+		n_ty += m_n_twy; \
 		break; \
 	} \
 	TRANSPARENCYSETUP
@@ -1172,17 +1174,17 @@ INLINE void decode_tpage( struct PSXGPU *p_psxgpu, UINT32 tpage )
 #define TEXTURE4BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + ( TXU >> 2 ) ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + TXV ] + n_tx + ( TXU >> 2 ) ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
 
 #define TEXTURE8BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + ( TXU >> 1 ) ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + TXV ] + n_tx + ( TXU >> 1 ) ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
 
 #define TEXTURE15BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
-		n_bgr = *( m_p_p_vram[ psxgpu.n_ty + TXV ] + psxgpu.n_tx + TXU );
+		n_bgr = *( m_p_p_vram[ n_ty + TXV ] + n_tx + TXU );
 
 #define TEXTUREWINDOW4BIT( TXV, TXU ) TEXTURE4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 #define TEXTUREWINDOW8BIT( TXV, TXU ) TEXTURE8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
@@ -1193,21 +1195,21 @@ INLINE void decode_tpage( struct PSXGPU *p_psxgpu, UINT32 tpage )
 	{ \
 		int n_xi = ( ( TXU >> 2 ) & ~0x3c ) + ( ( TXV << 2 ) & 0x3c ); \
 		int n_yi = ( TXV & ~0xf ) + ( ( TXU >> 4 ) & 0xf ); \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi ) >> ( ( TXU & 0x03 ) << 2 ) ) & 0x0f ];
 
 #define TEXTUREINTERLEAVED8BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
 		int n_xi = ( ( TXU >> 1 ) & ~0x78 ) + ( ( TXU << 2 ) & 0x40 ) + ( ( TXV << 3 ) & 0x38 ); \
 		int n_yi = ( TXV & ~0x7 ) + ( ( TXU >> 5 ) & 0x7 ); \
-		n_bgr = p_clut[ ( *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
+		n_bgr = p_clut[ ( *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi ) >> ( ( TXU & 0x01 ) << 3 ) ) & 0xff ];
 
 #define TEXTUREINTERLEAVED15BIT( TXV, TXU ) \
 	while( n_distance > 0 ) \
 	{ \
 		int n_xi = TXU; \
 		int n_yi = TXV; \
-		n_bgr = *( m_p_p_vram[ psxgpu.n_ty + n_yi ] + psxgpu.n_tx + n_xi );
+		n_bgr = *( m_p_p_vram[ n_ty + n_yi ] + n_tx + n_xi );
 
 #define TEXTUREWINDOWINTERLEAVED4BIT( TXV, TXU ) TEXTUREINTERLEAVED4BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
 #define TEXTUREWINDOWINTERLEAVED8BIT( TXV, TXU ) TEXTUREINTERLEAVED8BIT( ( TXV & m_n_twh ), ( TXU & m_n_tww ) )
@@ -1622,6 +1624,8 @@ static void FlatTexturedPolygon( int n_points )
 {
 	INT16 n_y;
 	INT16 n_x;
+	int n_tx;
+	int n_ty;
 
 	UINT8 n_cmd;
 
@@ -2036,6 +2040,8 @@ static void GouraudTexturedPolygon( int n_points )
 {
 	INT16 n_y;
 	INT16 n_x;
+	int n_tx;
+	int n_ty;
 
 	UINT8 n_cmd;
 
@@ -2786,6 +2792,8 @@ static void FlatTexturedRectangle( void )
 {
 	INT16 n_y;
 	INT16 n_x;
+	int n_tx;
+	int n_ty;
 
 	UINT8 n_cmd;
 
@@ -2878,6 +2886,8 @@ static void Sprite8x8( void )
 {
 	INT16 n_y;
 	INT16 n_x;
+	int n_tx;
+	int n_ty;
 
 	UINT8 n_cmd;
 
@@ -2970,6 +2980,8 @@ static void Sprite16x16( void )
 {
 	INT16 n_y;
 	INT16 n_x;
+	int n_tx;
+	int n_ty;
 
 	UINT8 n_cmd;
 

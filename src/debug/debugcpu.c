@@ -69,6 +69,7 @@ static int break_on_vblank;
 static int break_on_interrupt;
 static int break_on_interrupt_cpunum;
 static int break_on_interrupt_irqline;
+static int memory_modified;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
 
@@ -82,6 +83,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
 static void perform_trace(struct debug_cpu_info *info);
 static void prepare_for_step_overout(void);
+static void process_source_file(void);
 static UINT64 get_wpaddr(UINT32 ref);
 static UINT64 get_wpdata(UINT32 ref);
 static UINT64 get_cycles(UINT32 ref);
@@ -555,7 +557,7 @@ void debug_halt_on_next_instruction(void)
 void debug_refresh_display(void)
 {
 	reset_partial_updates();
-	draw_screen();	/* so we can change stuff in RAM and see the effect on screen */
+	draw_screen();
 	update_video_and_audio();
 }
 
@@ -785,30 +787,16 @@ void MAME_Debug(void)
 		osd_sound_enable(0);
 		while (execution_state == EXECUTION_STATE_STOPPED)
 		{
+			/* clear the memory modified flag and wait */
+			memory_modified = 0;
 			osd_wait_for_debugger();
 
-			/* check for commands in the source file */
-			while (debug_source_file && (execution_state == EXECUTION_STATE_STOPPED))
-			{
-				char buf[512];
-				int i;
+			/* if something modified memory, update the screen */
+			if (memory_modified)
+				debug_refresh_display();
 
-				if (feof(debug_source_file))
-				{
-					fclose(debug_source_file);
-					debug_source_file = NULL;
-				}
-				else
-				{
-					memset(buf, 0, sizeof(buf));
-					fgets(buf, sizeof(buf), debug_source_file);
-					i = strlen(buf);
-					while((i > 0) && (isspace(buf[i-1])))
-						buf[--i] = '\0';
-					if (buf[0])
-						debug_console_execute_command(buf, 1);
-				}
-			}
+			/* check for commands in the source file */
+			process_source_file();
 		}
 		osd_sound_enable(1);
 
@@ -929,6 +917,41 @@ static void prepare_for_step_overout(void)
 			steps_until_stop = 100;
 		else
 			steps_until_stop = 1;
+	}
+}
+
+
+/*-------------------------------------------------
+    process_source_file - executes commands from
+    a source file
+-------------------------------------------------*/
+
+static void process_source_file(void)
+{
+	/* loop until the file is exhausted or until we are executing again */
+	while (debug_source_file && (execution_state == EXECUTION_STATE_STOPPED))
+	{
+		char buf[512];
+		int i;
+
+		/* stop at the end of file */
+		if (feof(debug_source_file))
+		{
+			fclose(debug_source_file);
+			debug_source_file = NULL;
+			return;
+		}
+
+		/* fetch the next line and strip any whitespace */
+		memset(buf, 0, sizeof(buf));
+		fgets(buf, sizeof(buf), debug_source_file);
+		i = strlen(buf);
+		while((i > 0) && (isspace(buf[i-1])))
+			buf[--i] = '\0';
+
+		/* execute the command */
+		if (buf[0])
+			debug_console_execute_command(buf, 1);
 	}
 }
 
@@ -1363,7 +1386,7 @@ data16_t debug_read_word(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_word)
+	if (address_space[spacenum].accessors->read_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
 		result = (*address_space[spacenum].accessors->read_word)(address);
@@ -1402,7 +1425,7 @@ data32_t debug_read_dword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_dword)
+	if (address_space[spacenum].accessors->read_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
 		result = (*address_space[spacenum].accessors->read_dword)(address);
@@ -1441,7 +1464,7 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_qword)
+	if (address_space[spacenum].accessors->read_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
 		result = (*address_space[spacenum].accessors->read_qword)(address);
@@ -1468,6 +1491,7 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 void debug_write_byte(int spacenum, offs_t address, data8_t data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	memory_modified = 1;
 	memory_set_debugger_access(1);
 	if (info->write && (*info->write)(spacenum, address, 1, data))
 		;
@@ -1485,6 +1509,7 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
 void debug_write_word(int spacenum, offs_t address, data16_t data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	memory_modified = 1;
 	if (info->write)
 	{
 		int handled;
@@ -1494,7 +1519,7 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_word)
+	if (address_space[spacenum].accessors->write_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_word)(address, data);
@@ -1521,6 +1546,7 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 void debug_write_dword(int spacenum, offs_t address, data32_t data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	memory_modified = 1;
 	if (info->write)
 	{
 		int handled;
@@ -1530,7 +1556,7 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_dword)
+	if (address_space[spacenum].accessors->write_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_dword)(address, data);
@@ -1557,6 +1583,7 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 void debug_write_qword(int spacenum, offs_t address, data64_t data)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	memory_modified = 1;
 	if (info->write)
 	{
 		int handled;
@@ -1566,7 +1593,7 @@ void debug_write_qword(int spacenum, offs_t address, data64_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_qword)
+	if (address_space[spacenum].accessors->write_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_qword)(address, data);

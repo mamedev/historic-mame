@@ -972,7 +972,7 @@ static MACHINE_DRIVER_START( enduror )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( endurobl )
+static MACHINE_DRIVER_START( enduror1 )
 	MDRV_IMPORT_FROM(sharrier_base)
 	MDRV_IMPORT_FROM(sound_board_2203)
 MACHINE_DRIVER_END
@@ -1182,7 +1182,7 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
     Enduro Racer with YM2151 sound board
-    CPU: FD1089A (317-????)
+    CPU: FD1089A (317-0013A)
 */
 ROM_START( enduror )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1190,8 +1190,8 @@ ROM_START( enduror )
 	ROM_LOAD16_BYTE( "7636a.rom",0x00001, 0x8000, CRC(84131639) SHA1(04981464577d2604eec36c14c5de9c91604ae501) )
 	ROM_LOAD16_BYTE( "7641.rom", 0x10000, 0x8000, CRC(2503ae7c) SHA1(27009d5b47dc207145048edfcc1ac8ffda5f0b78) )
 	ROM_LOAD16_BYTE( "7637.rom", 0x10001, 0x8000, CRC(82a27a8c) SHA1(4b182d8c23454aed7d786c9824932957319b6eff) )
-	ROM_LOAD16_BYTE( "7642.rom", 0x20000, 0x8000, CRC(1c453bea) SHA1(c6e606cdcb1690de05ef5283b48a8a61b2e0ad51) )	// enduro.a06 / .a09
-	ROM_LOAD16_BYTE( "7638.rom", 0x20001, 0x8000, CRC(70544779) SHA1(e6403edd7fc0ad5d447c25be5d7f10889aa109ff) )	// looks like encrypted versions of
+	ROM_LOAD16_BYTE( "7642.rom", 0x20000, 0x8000, CRC(1c453bea) SHA1(c6e606cdcb1690de05ef5283b48a8a61b2e0ad51) )
+	ROM_LOAD16_BYTE( "7638.rom", 0x20001, 0x8000, CRC(70544779) SHA1(e6403edd7fc0ad5d447c25be5d7f10889aa109ff) )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* second 68000 CPU */
 	ROM_LOAD16_BYTE("7634.rom", 0x0000, 0x8000, CRC(3e07fd32) SHA1(7acb9e9712ecfe928c421c84dece783e75077746) )
@@ -1245,6 +1245,77 @@ ROM_START( enduror )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
 	ROM_LOAD( "7681.rom", 0x00000, 0x8000, CRC(bc0c4d12) SHA1(3de71bde4c23e3c31984f20fc4bc7e221354c56f) )
 	ROM_LOAD( "7680.rom", 0x10000, 0x8000, CRC(627b3c8c) SHA1(806fe7dce619ad19c09178061be4607d2beba14d) )
+
+	ROM_REGION( 0x2000, REGION_PROMS, 0 ) /* zoom table */
+	ROM_LOAD( "6844.rom", 0x0000, 0x2000, CRC(e3ec7bd6) SHA1(feec0fe664e16fac0fde61cf64b401b9b0575323) )
+ROM_END
+
+/**************************************************************************************************************************
+    Enduro Racer with YM2203 sound board
+    CPU: FD1089A (317-0013A)
+*/
+ROM_START( enduror1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "eprxxxx.ic97", 0x00000, 0x8000, CRC(a1bdadab) SHA1(f52d747a6947ad2dbc12765133adfb41eb5a5f2f) )
+	ROM_LOAD16_BYTE( "epr7629.ic84", 0x00001, 0x8000, CRC(f50f4169) SHA1(b4eebb5131bb472db03f0e340743437753a9efe3) )
+	ROM_LOAD16_BYTE( "7641.rom",     0x10000, 0x8000, CRC(2503ae7c) SHA1(27009d5b47dc207145048edfcc1ac8ffda5f0b78) )
+	ROM_LOAD16_BYTE( "7637.rom",     0x10001, 0x8000, CRC(82a27a8c) SHA1(4b182d8c23454aed7d786c9824932957319b6eff) )
+	ROM_LOAD16_BYTE( "7642.rom",     0x20000, 0x8000, CRC(1c453bea) SHA1(c6e606cdcb1690de05ef5283b48a8a61b2e0ad51) )
+	ROM_LOAD16_BYTE( "7638.rom",     0x20001, 0x8000, CRC(70544779) SHA1(e6403edd7fc0ad5d447c25be5d7f10889aa109ff) )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* second 68000 CPU */
+	ROM_LOAD16_BYTE("7634.rom", 0x0000, 0x8000, CRC(3e07fd32) SHA1(7acb9e9712ecfe928c421c84dece783e75077746) )
+	ROM_LOAD16_BYTE("7635.rom", 0x0001, 0x8000, CRC(22f762ab) SHA1(70fa87da76c714db7213c42128a0b6a27644a1d4) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "7644.rom", 0x00000, 0x08000, CRC(e7a4ff90) SHA1(06d18470019041e32be9a969870cd995de626cd6) )
+	ROM_LOAD( "7645.rom", 0x08000, 0x08000, CRC(4caa0095) SHA1(a24c741cdca0542e462f17ff94f132c62710e198) )
+	ROM_LOAD( "7646.rom", 0x10000, 0x08000, CRC(7e432683) SHA1(c8249b23fce77eb456166161c2d9aa34309efe31) )
+
+	ROM_REGION32_LE( 0x100000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD32_BYTE( "7678.rom", 0x00000, 0x8000, CRC(9fb5e656) SHA1(264b0ad017eb0fc7e0b542e6dd160ba964c100fd) )
+	ROM_LOAD32_BYTE( "7670.rom", 0x00001, 0x8000, CRC(dbbe2f6e) SHA1(310797a61f91d6866e728e0da3b30828e06d1b52) )
+	ROM_LOAD32_BYTE( "7662.rom", 0x00002, 0x8000, CRC(cb0c13c5) SHA1(856d1234fd8f8146e20fe6c65c0a535b7b7512cd) )
+	ROM_LOAD32_BYTE( "7654.rom", 0x00003, 0x8000, CRC(2db6520d) SHA1(d16739e84316b4bd26963b729208169bbf01f499) )
+	ROM_LOAD32_BYTE( "7677.rom", 0x20000, 0x8000, CRC(7764765b) SHA1(62543130816c084d292f229a15b3ce1305c99bb3) )
+	ROM_LOAD32_BYTE( "7669.rom", 0x20001, 0x8000, CRC(f9525faa) SHA1(fbe2f67a9baee069dbca26a669d0a263bcca0d09) )
+	ROM_LOAD32_BYTE( "7661.rom", 0x20002, 0x8000, CRC(fe93a79b) SHA1(591025a371a451c9cddc8c7480c9841a18bb9a7f) )
+	ROM_LOAD32_BYTE( "7653.rom", 0x20003, 0x8000, CRC(46a52114) SHA1(d646ab03c1985953401619457d03072833edc6c7) )
+	ROM_LOAD32_BYTE( "7676.rom", 0x40000, 0x8000, CRC(2e42e0d4) SHA1(508f6f89e681b59272884ba129a5c6ffa1b6ba05) )
+	ROM_LOAD32_BYTE( "7668.rom", 0x40001, 0x8000, CRC(e115ce33) SHA1(1af591bc1567b89d0de399e4a02d896fba938bab) )
+	ROM_LOAD32_BYTE( "7660.rom", 0x40002, 0x8000, CRC(86dfbb68) SHA1(a05ac16fbe3aaf34dd46229d4b71fc1f72a3a556) )
+	ROM_LOAD32_BYTE( "7652.rom", 0x40003, 0x8000, CRC(2880cfdb) SHA1(94b78d78d82c324ca108970d8689f1d6b2ca8a24) )
+	ROM_LOAD32_BYTE( "7675.rom", 0x60000, 0x8000, CRC(05cd2d61) SHA1(51688a5a9bc4da3f88ce162ff30affe8c6d3d0c8) )
+	ROM_LOAD32_BYTE( "7667.rom", 0x60001, 0x8000, CRC(923bde9d) SHA1(7722a7fdbf45f862f1011d1afae8dedd5885bf52) )
+	ROM_LOAD32_BYTE( "7659.rom", 0x60002, 0x8000, CRC(629dc8ce) SHA1(4af2a53678890b02922dee54f7cd3c5550001572) )
+	ROM_LOAD32_BYTE( "7651.rom", 0x60003, 0x8000, CRC(d7902bad) SHA1(f4872d1a42dcf7d5dbdbc1233606a706b39478d7) )
+	ROM_LOAD32_BYTE( "7674.rom", 0x80000, 0x8000, CRC(1a129acf) SHA1(ebaa60ccedc95c58af3ce99105b924b303827f6e) )
+	ROM_LOAD32_BYTE( "7666.rom", 0x80001, 0x8000, CRC(23697257) SHA1(19453b14e8e6789e4c48a80d1b83dbaf37fbdceb) )
+	ROM_LOAD32_BYTE( "7658.rom", 0x80002, 0x8000, CRC(1677f24f) SHA1(4786996cc8a04344e82ec9be7c4e7c8a005914a3) )
+	ROM_LOAD32_BYTE( "7650.rom", 0x80003, 0x8000, CRC(642635ec) SHA1(e42bbae178e9a139325633e8c85a606c91e39e36) )
+	ROM_LOAD32_BYTE( "7673.rom", 0xa0000, 0x8000, CRC(82602394) SHA1(d714f397f33a52429f394fc4c403d39be7911ccf) )
+	ROM_LOAD32_BYTE( "7665.rom", 0xa0001, 0x8000, CRC(12d77607) SHA1(5b5d25646336a8ceae449d5b7a6b70372d81dd8b) )
+	ROM_LOAD32_BYTE( "7657.rom", 0xa0002, 0x8000, CRC(8158839c) SHA1(f22081caf11d6b57488c969b5935cd4686e11197) )
+	ROM_LOAD32_BYTE( "7649.rom", 0xa0003, 0x8000, CRC(4edba14c) SHA1(db0aab94de50f8f9501b7afd2fff70fb0a6b2b36) )
+	ROM_LOAD32_BYTE( "7672.rom", 0xc0000, 0x8000, CRC(d11452f7) SHA1(f68183053005a26c0014050592bad6d63325895e) )
+	ROM_LOAD32_BYTE( "7664.rom", 0xc0001, 0x8000, CRC(0df2cfad) SHA1(d62d12922be921967da37fbc624aaed72c4a2a98) )
+	ROM_LOAD32_BYTE( "7656.rom", 0xc0002, 0x8000, CRC(6c741272) SHA1(ccaedda1436ddc339377e610d51e13726bb6c7eb) )
+	ROM_LOAD32_BYTE( "7648.rom", 0xc0003, 0x8000, CRC(983ea830) SHA1(9629476a300ba711893775ca94dce81a00afd246) )
+	ROM_LOAD32_BYTE( "7671.rom", 0xe0000, 0x8000, CRC(b0c7fdc6) SHA1(c9e0993fed36526e0e46ab2da9413af24b96cae8) )
+	ROM_LOAD32_BYTE( "7663.rom", 0xe0001, 0x8000, CRC(2b0b8f08) SHA1(14aa1e6866f1c23c9ff271e8f216f6ecc21601ab) )
+	ROM_LOAD32_BYTE( "7655.rom", 0xe0002, 0x8000, CRC(3433fe7b) SHA1(636449a0707d6629bf6ea503cfb52ad24af1c017) )
+	ROM_LOAD32_BYTE( "7647.rom", 0xe0003, 0x8000, CRC(2e7fbec0) SHA1(a59ec5fc3341833671fb948cd21b47f3a49db538) )
+
+	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* road gfx */
+	ROM_LOAD( "7633.rom", 0x0000, 0x8000, CRC(6f146210) SHA1(2f58f0c3563b434ed02700b9ca1545a696a5716e) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU -- taken from endurobl below */
+	ROM_LOAD( "13.16d", 0x00000, 0x004000, BAD_DUMP CRC(81c82fc9) SHA1(99eae7edc62d719993c46a703f9daaf332e236e9) )
+	ROM_LOAD( "12.16e", 0x04000, 0x004000, BAD_DUMP CRC(755bfdad) SHA1(2942f3da5a45a3ac7bba6a73142663fd975f4379) )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* Sega PCM sound data -- taken from endurobl below */
+	ROM_LOAD( "7681.rom", 0x00000, 0x8000, BAD_DUMP CRC(bc0c4d12) SHA1(3de71bde4c23e3c31984f20fc4bc7e221354c56f) )
+	ROM_LOAD( "7680.rom", 0x08000, 0x8000, BAD_DUMP CRC(627b3c8c) SHA1(806fe7dce619ad19c09178061be4607d2beba14d) )
 
 	ROM_REGION( 0x2000, REGION_PROMS, 0 ) /* zoom table */
 	ROM_LOAD( "6844.rom", 0x0000, 0x2000, CRC(e3ec7bd6) SHA1(feec0fe664e16fac0fde61cf64b401b9b0575323) )
@@ -1461,6 +1532,7 @@ static DRIVER_INIT( endurob2 )
 GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On" )
 GAME( 1992, shangupb, shangon,  shangupb, shangupb, hangon,   ROT0, "bootleg", "Super Hang-On (Hang-On upgrade, bootleg)" )
 GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier" )
-GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (FD1089B 317-unknown)" )
-GAME( 1986, endurobl, enduror,  endurobl, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
+GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2151, FD1089B 317-0013A)" )
+GAME( 1986, enduror1, enduror,  enduror1, enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2203, FD1089B 317-0013A)" )
+GAME( 1986, endurobl, enduror,  enduror1, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
 GAMEX(1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)", GAME_NOT_WORKING )
