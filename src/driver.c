@@ -340,6 +340,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( swimmerb )	/* (c) 1982 Tehkan */
 	DRIVER( guzzler )	/* (c) 1983 Tehkan */
 	DRIVER( cannonb )	/* (c) 1985 Soft */
+	DRIVER( cannonb2 )	/* (c) 1985 TV Game Gruenberg */
 	DRIVER( ckongb )	/* bootleg */
 
 	/* Nichibutsu games */
@@ -3831,6 +3832,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( magdrop )	/* (c) 1995 Data East */
 	DRIVER( magdropp )	/* (c) 1995 Data East */
 	DRIVER( osman )		/* (c) 1996 Mitchell */
+	DRIVER( candance )	/* (c) 1996 Mitchell */
 
 	/* Data East MLC Games */
 	DRIVER( avengrgs )	/* MCG (c) 1995 Data East Corporation (Japan) */
@@ -5335,7 +5337,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( embargo )
 	DRIVER( tripool )	/* (c) 1981 Noma (Casino Tech license) */
 	DRIVER( tripoola )	/* (c) 1981 Noma (Costal Games license) */
-	DRIVER( joinem )	/* (c) 1983 Global */
+	DRIVER( joinem )	/* (c) 1986 Global */
+	DRIVER( striv )		/* (c) 1985 Hara Industries */
 	DRIVER( jack )		/* (c) 1982 Cinematronics */
 	DRIVER( jack2 )		/* (c) 1982 Cinematronics */
 	DRIVER( jack3 )		/* (c) 1982 Cinematronics */
@@ -5388,6 +5391,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( zaryavos )	/* (c) 1983 Nova Games of Canada (prototype) */
 	DRIVER( timelimt )	/* (c) 1983 Chuo Co. Ltd */
 	DRIVER( progress )	/* (c) 1984 Chuo Co. Ltd */
+	DRIVER( rtriv )		/* (c) 198? Romar */
 
 	/* Valadon Automation games */
 	DRIVER( bagman )	/* (c) 1982 */

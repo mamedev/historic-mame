@@ -11,6 +11,7 @@ struct sample_channel
 	UINT32		frac;
 	UINT32		step;
 	UINT8		loop;
+	UINT8		paused;
 };
 
 struct samples_info
@@ -304,6 +305,25 @@ void sample_set_volume(int channel,float volume)
 	stream_set_output_gain(chan->stream, 0, volume);
 }
 
+void sample_set_pause(int channel,int pause)
+{
+	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
+	struct sample_channel *chan = &info->channel[channel];
+
+	if (Machine->sample_rate == 0)
+		return;
+	if (channel >= info->numchannels)
+	{
+		logerror("error: sample_set_pause() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
+		return;
+	}
+
+	/* force an update before we start */
+	stream_update(chan->stream, 0);
+
+	chan->paused = pause;
+}
+
 void sample_stop(int channel)
 {
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
@@ -362,7 +382,7 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 	struct sample_channel *chan = param;
 	stream_sample_t *buffer = _buffer[0];
 
-	if (chan->source)
+	if (chan->source && !chan->paused)
 	{
 		/* load some info locally */
 		UINT32 pos = chan->pos;
@@ -432,6 +452,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
 		info->channel[i].source = NULL;
 		info->channel[i].step = 0;
 		info->channel[i].loop = 0;
+		info->channel[i].paused = 0;
 	}
 
 	/* initialize any custom handlers */

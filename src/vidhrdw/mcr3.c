@@ -179,6 +179,13 @@ WRITE8_HANDLER( mcr3_paletteram_w )
  *
  *************************************/
 
+WRITE8_HANDLER( mcr3_videoram_w )
+{
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+}
+
+
 WRITE8_HANDLER( spyhunt_videoram_w )
 {
 	videoram[offset] = data;

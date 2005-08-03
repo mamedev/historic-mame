@@ -2475,7 +2475,7 @@ ROM_END
 
 
 
-GAME( 1987, shadowld, 0,        ns1,     shadowld, shadowld, ROT180, "Namco", "Shadow Land" )
+GAME( 1987, shadowld, 0,        ns1,     shadowld, shadowld, ROT180, "Namco", "Shadowland" )
 GAME( 1987, youkaidk, shadowld, ns1,     shadowld, shadowld, ROT180, "Namco", "Yokai Douchuuki (Japan new version)" )
 GAME( 1987, yokaidko, shadowld, ns1,     shadowld, shadowld, ROT180, "Namco", "Yokai Douchuuki (Japan old version)" )
 GAME( 1987, dspirit,  0,        ns1,     dspirit,  dspirit,  ROT90,  "Namco", "Dragon Spirit (new version)" )

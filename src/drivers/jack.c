@@ -71,6 +71,7 @@ static WRITE8_HANDLER( jack_sh_command_w )
 	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
+
 /* these handlers are guessed, because otherwise you can't enter test mode */
 
 static int joinem_snd_bit = 0;
@@ -89,6 +90,48 @@ static READ8_HANDLER( joinem_input1_r )
 		ret |= 0x20;
 
 	return ret;
+}
+
+/*
+    Super Triv questions read handler
+*/
+
+static int question_address = 0;
+static int question_rom = 0;
+static int remap_address[16];
+
+static READ8_HANDLER( striv_question_r )
+{
+	// Set-up the remap table for every 16 bytes
+	if((offset & 0xc00) == 0x800)
+	{
+		remap_address[offset & 0x0f] = (offset & 0xf0) >> 4;
+	}
+	// Select which rom to read and the high 5 bits of address
+	else if((offset & 0xc00) == 0xc00)
+	{
+		question_rom = offset & 7;
+		question_address = (offset & 0xf8) << 7;
+	}
+	// Read the actual byte from question roms
+	else
+	{
+		data8_t *ROM = memory_region(REGION_USER1);
+		int real_address;
+
+		real_address = question_address | (offset & 0x3f0) | remap_address[offset & 0x0f];
+
+		// Check if it wants to read from the upper 8 roms or not
+		if(offset & 0x400)
+			real_address |= 0x8000 * (question_rom + 8);
+		else
+			real_address |= 0x8000 * question_rom;
+
+		return ROM[real_address];
+
+	}
+
+	return 0; // the value read from the configuration reads is discarded
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -133,6 +176,7 @@ static ADDRESS_MAP_START( joinem_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb800, 0xbbff) AM_RAM AM_WRITE(jack_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0xbc00, 0xbfff) AM_RAM AM_WRITE(jack_colorram_w) AM_BASE(&colorram)
 ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
@@ -636,6 +680,65 @@ INPUT_PORTS_START( joinem )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( striv )
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x02, 0x00, "Monitor" )
+	PORT_DIPSETTING(    0x02, "Horizontal" )
+	PORT_DIPSETTING(    0x00, "Vertical" )
+	PORT_DIPNAME( 0x05, 0x05, "Gaming Option Number" )
+	PORT_DIPSETTING(    0x01, "2" ) PORT_DIPCONDITION(0,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x05, "3" ) PORT_DIPCONDITION(0,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x00, "4" ) PORT_DIPCONDITION(0,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x04, "5" ) PORT_DIPCONDITION(0,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x01, "4" ) PORT_DIPCONDITION(0,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0x05, "5" ) PORT_DIPCONDITION(0,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0x00, "6" ) PORT_DIPCONDITION(0,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0x04, "7" ) PORT_DIPCONDITION(0,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x20, 0x20, "Gaming Option" )
+	PORT_DIPSETTING(    0x20, "Number of Wrong Answer" )
+	PORT_DIPSETTING(    0x00, "Number of Questions" )
+	PORT_DIPNAME( 0x40, 0x40, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START_TAG("DSW2")
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED ) //?
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0xfd, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("IN5")
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED ) //?
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -670,7 +773,6 @@ static struct GfxDecodeInfo joinem_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &joinem_charlayout, 0, 32 },
 	{ -1 }
 };
-
 
 static struct AY8910interface ay8910_interface =
 {
@@ -950,7 +1052,7 @@ ROM_START( sucasino )
 ROM_END
 
 ROM_START( tripool )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tri73a.bin",   0x0000, 0x1000, CRC(96893aa7) SHA1(ea1dc5824d89c1bb131850625a65d018a9127179) )
 	ROM_LOAD( "tri62a.bin",   0x2000, 0x1000, CRC(3299dc65) SHA1(8f93247e2f49be6b601006be62f4ad539ec899fe) )
 	ROM_LOAD( "tri52b.bin",   0x3000, 0x1000, CRC(27ef765e) SHA1(2a18a9b74fd4d9f3a724270cd3a98adbfdf22a5e) )
@@ -968,7 +1070,7 @@ ROM_START( tripool )
 ROM_END
 
 ROM_START( tripoola )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tri73a.bin",   0x0000, 0x1000, CRC(96893aa7) SHA1(ea1dc5824d89c1bb131850625a65d018a9127179) )
 	ROM_LOAD( "tri62a.bin",   0x2000, 0x1000, CRC(3299dc65) SHA1(8f93247e2f49be6b601006be62f4ad539ec899fe) )
 	ROM_LOAD( "tri52b.bin",   0x3000, 0x1000, CRC(27ef765e) SHA1(2a18a9b74fd4d9f3a724270cd3a98adbfdf22a5e) )
@@ -1002,6 +1104,119 @@ ROM_START( joinem )
 	ROM_REGION( 0x100, REGION_PROMS, 0 ) /* colours */
 	ROM_LOAD_NIB_LOW(  "l82s129.11n", 0x0000, 0x100, CRC(7b724211) SHA1(7396c773e8d48dea856d9482d6c48de966616c83) )
 	ROM_LOAD_NIB_HIGH( "h82s129.12n", 0x0000, 0x100, CRC(2e81c5ff) SHA1(e103c8813af704d5de11fe705de5105ff3a691c3) )
+ROM_END
+
+/*
+
+Super Triv
+?, 1985
+
+PCB Layout
+----------
+
+Top Board
+
+P-1244-1A MADE IN JAPAN
+HARA INDUSTRIES JAPAN CO., LTD.
+|-------------------------------------------|
+|                                           |
+|                                      2114 |
+|       VOL                            2114 |
+|                                DIP40      |
+|                                           |
+|  DSW1    6116                             |
+|4 DSW2    6116    6116                     |
+|4         DIP24   BC3.7E                   |
+|W         PR4.6F  BC2.6E             SND.5A|
+|A         PR3.5F  BC1.5E                   |
+|Y         PR2.4F                           |
+|          DIP24         Z80                |
+|                                 Z80       |
+|--|---CN-J----|----------------------------|
+   |-----------|
+
+Notes:
+      DIP24/40 - Empty sockets used to connect ROM daughterboard to main board
+      Z80      - Z80 CPU running at 3.000MHz (both)
+      6116     - 2K x8 SRAM
+      2114     - 1K x4 SRAM
+      CN-J     - 50 pin flat cable PCB joiner
+
+Bottom Board
+
+P-1244-2A MADE IN JAPAN
+|-------------------------------------------|
+|                  82S16              18MHz |
+|                  82S16                    |
+|                  82S16                    |
+|                  82S16                    |
+|                  82S16                    |
+|   2114  2114                              |
+|   2114  2114                              |
+|   2114  2114                       CHR3.5A|
+|   2114  2114                              |
+|   2114                             CHR2.4A|
+|   2114                                    |
+|   2114                             CHR1.2A|
+|   2114                             CHR0.1A|
+|--|---CN-J----|----------------------------|
+   |-----------|
+Notes:
+      82S16 - 256bytes x 1bit Bipolar DRAM
+      2114  - 1K x4 SRAM
+      CN-J  - 50 pin flat cable PCB joiner
+
+
+ROM Daughterboard
+
+|-----------------------------|
+|ROM.U7  TBFT1.U14  AY3-8910  |
+|ROM.U6  TBFT0.U13  TBFD0.U21 |
+|        TBFL2.U12            |
+|        TBFL1.U11            |
+|        TBFL0.U10            |
+|        TBFD3.U9             |
+|PR1.F2  TBFD2.U8   TBFD1.U15 |
+|-----------------------------|
+
+
+*/
+
+ROM_START( striv )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pr1.f2",       0x0000, 0x1000, CRC(dcf5da6e) SHA1(e88c8226ae4d4a0af717f0760e551e0ce4c79c5e) )
+	ROM_LOAD( "pr2.4f",       0x1000, 0x1000, CRC(921610ba) SHA1(7dea7a57543dd79325da34cebd7b9dd8a767bb2a) )
+	ROM_LOAD( "pr3.5f",       0x2000, 0x1000, CRC(c36f0e21) SHA1(d036a56798bbb42bee269450524172ec071dcf03) )
+	ROM_LOAD( "pr4.6f",       0x3000, 0x1000, CRC(0dc98a97) SHA1(36c1c61d3330e2c00d9aa94ae80bcb1b9c5aea21) )
+	/* 0xc000 - 0xcfff questions rom space */
+	ROM_LOAD( "bc3.7e",       0xd000, 0x1000, CRC(83f03885) SHA1(d83f03752ccf85fd9f10c2d801ecd5f4ef729cde) )
+	ROM_LOAD( "bc2.6e",       0xe000, 0x1000, CRC(75f18361) SHA1(4966418f3b6204e888bd56f36db88518dcd08640) )
+	ROM_LOAD( "bc1.5e",       0xf000, 0x1000, CRC(0d150385) SHA1(090139797a1b6935fcf4c239e11bdd7ae55fac76) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "snd.5a",       0x0000, 0x1000, CRC(b7ddf84f) SHA1(fa4cc0b2e5a88c82c62492c03e97ac6aa8a905b1) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "chr3.5a",      0x0000, 0x1000, CRC(8f982a9c) SHA1(dd6f454dfd3e03d008080890881cfafd79758a40) )
+	ROM_LOAD( "chr2.4a",      0x1000, 0x1000, CRC(8f982a9c) SHA1(dd6f454dfd3e03d008080890881cfafd79758a40) )
+	ROM_LOAD( "chr1.2a",      0x2000, 0x1000, CRC(7ad4358e) SHA1(dd3a03c78fa8bf435e9905b901dc5a9987cd52e4) )
+	ROM_LOAD( "chr0.1a",      0x3000, 0x1000, CRC(8f60229b) SHA1(96a888ae02797a205e1c6202395d3b42a820ad4d) )
+
+	ROM_REGION( 0x80000, REGION_USER1, ROMREGION_ERASEFF ) /* Question roms */
+	ROM_LOAD( "rom.u6",       0x00000, 0x8000, CRC(a32d7a28) SHA1(fbad0b5c9f1dbeb4f245a2198248c18ceae556fa) )
+	ROM_LOAD( "rom.u7",       0x08000, 0x8000, CRC(bc44ae18) SHA1(815cc3c87b89fc702a9ca88d5117ab46464b53c0) )
+	ROM_LOAD( "tbfd2.u8",     0x10000, 0x8000, CRC(9572984a) SHA1(0edd668754b84cc8c3dce9c8db17ea6e4a397765) )
+	ROM_LOAD( "tbfd3.u9",     0x18000, 0x8000, CRC(d904a2f1) SHA1(a7adc07319f04f4bd383145ec07f1924eb5cbd4d) )
+	ROM_LOAD( "tbfl0.u10",    0x20000, 0x8000, CRC(680264a2) SHA1(a3637aa36a31c0cda1d530c8307996516a05f9ef) )
+	ROM_LOAD( "tbfl1.u11",    0x28000, 0x8000, CRC(33e99d00) SHA1(0b6c6b564507e0ee189fe8ba1d85c77c2c4c77e7) )
+	ROM_LOAD( "tbfl2.u12",    0x30000, 0x8000, CRC(2e7a941f) SHA1(8f5331df91f865c559381114e21aa118c8fe34eb) )
+	ROM_LOAD( "tbft0.u13",    0x38000, 0x8000, CRC(7d2e5e89) SHA1(4e56fe325b93d577602e8bcab3130f426cee3de4) )
+	ROM_LOAD( "tbft1.u14",    0x40000, 0x8000, CRC(d36246cf) SHA1(553ce72c35822694461adc2e572522a9eeff5667) )
+	ROM_LOAD( "tbfd1.u15",    0x48000, 0x8000, CRC(745db398) SHA1(52b6999699ebae8ed9ada45d47a8f8ee68e36bf1) )
+	// 0x50000 - 0x7ffff empty
+
+	ROM_REGION( 0x2000, REGION_USER2, ROMREGION_DISPOSE ) // ? probably leftover / unused, it's a program rom from Hyper Olympic
+	ROM_LOAD( "tbfd0.u21",    0x0000, 0x2000, CRC(15b83099) SHA1(79827590d74f20c9a95723e06b05af2b15c34f5f) )
 ROM_END
 
 
@@ -1066,7 +1281,42 @@ static DRIVER_INIT( zzyzzyxx )
 	timer_rate = 16;
 }
 
+static DRIVER_INIT( striv )
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	data8_t data;
+	int A;
 
+	/* decrypt program rom */
+	/* thanks to David Widel to have helped with the decryption */
+	for( A = 0; A < 0x4000; A++ )
+	{
+		data = ROM[A];
+
+		if(A & 0x1000)
+		{
+			if(A & 4)
+				ROM[A] = BITSWAP8(data,7,2,5,1,3,6,4,0) ^ 1;
+			else
+				ROM[A] = BITSWAP8(data,0,2,5,1,3,6,4,7) ^ 0x81;
+		}
+		else
+		{
+			if(A & 4)
+				ROM[A] = BITSWAP8(data,7,2,5,1,3,6,4,0) ^ 1;
+			else
+				ROM[A] = BITSWAP8(data,0,2,5,1,3,6,4,7);
+		}
+	}
+
+	// Set-up the weirdest questions read ever done
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, striv_question_r);
+
+	// Nop out unused sprites writes
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xb0ff, 0, 0, MWA8_NOP);
+
+	timer_rate = 128;
+}
 
 GAME( 1982, jack,     0,        jack,    jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 1)" )
 GAME( 1982, jack2,    jack,     jack,    jack2,    jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 2)" )
@@ -1080,3 +1330,4 @@ GAME( 1984, sucasino, 0,        jack,    sucasino, jack,     ROT90, "Data Amusem
 GAME( 1981, tripool,  0,        tripool, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
 GAME( 1981, tripoola, tripool,  tripool, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )
 GAME( 1986, joinem,   0,        joinem,  joinem,   zzyzzyxx, ROT90, "Global Corporation", "Joinem" )
+GAMEX(1985, striv,    0,        jack,    striv,    striv,    ROT270,"Hara Industries", "Super Triv", GAME_IMPERFECT_SOUND )

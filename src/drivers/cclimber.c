@@ -166,6 +166,19 @@ static MACHINE_INIT( cclimber )
 }
 
 
+static WRITE8_HANDLER( cannonb_spritewrite )
+{
+
+	unsigned char *ram = memory_region(REGION_CPU1);
+	/*Need to force it to use the sprite rom instead of tile rom for sprites*/
+	ram[0x9880+offset]=data;
+	if ((offset & 0x03)==1)
+		{
+		ram[0x9880+offset]=data  | 0x20;
+		};
+
+}
+
 
 /* Note that River Patrol reads/writes to a000-a4f0. This is a bug in the code.
    The instruction at 0x0593 should say LD DE,$8000 */
@@ -244,7 +257,7 @@ static ADDRESS_MAP_START( cannonb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	/* 9800-9bff and 9c00-9fff share the same RAM, interleaved */
 	/* (9800-981f for scroll, 9c20-9c3f for color RAM, and so on) */
 	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
-	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(cannonb_spritewrite) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x98dc, 0x98df) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
 	AM_RANGE(0x9800, 0x9bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
 	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
@@ -1074,6 +1087,9 @@ ROM_START( silvland )
 ROM_END
 
 
+/*This dump is a mess.  11n and 11k seem to be bad dumps, the second half should probably be sprite data
+  Comparing to set 2 11l and 11h are unnecessary, and are actually from Le Bagnard(set1), as is 5m.
+  5n ID'd as unknown, but it also is from bagnard with some patches.*/
 ROM_START( cannonb )
 	ROM_REGION( 0x11000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "canballs.5d", 0x10000, 0x1000, CRC(43ad0d16) SHA1(682f1ee15e41bb5a161287536bb97704c0d3be9c) ) /* only this one ROM is encrypted */
@@ -1101,6 +1117,32 @@ ROM_START( cannonb )
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "canballs.5s",  0x0000, 0x1000, CRC(5f0bcdfb) SHA1(7f79bf6de117348f606696ed7ea1937bbf926612) )
 	ROM_LOAD( "canballs.5p",  0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
+ROM_END
+
+ROM_START( cannonb2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "cb1.bin",   0x0000, 0x1000, CRC(7a3cba7c) SHA1(08b8b356fdbe642e80d42b5ab4164a1bd6ad93ba) )
+	ROM_LOAD( "cb2.bin",   0x1000, 0x1000, CRC(58ef3118) SHA1(51ae36c21147e99d4060034520f6eebf3210937c) )
+	ROM_LOAD( "cb3.bin",   0x2000, 0x1000, CRC(e18a836b) SHA1(19b90a55db82914c5db18486e05d9f59aba1b442) )
+	ROM_LOAD( "cb4.bin",   0x3000, 0x1000, CRC(696ebdb0) SHA1(0bff115e4710199641722ca12af4e16dc5b0ec13) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "cb10.bin",   0x0000, 0x1000, CRC(602a6c2d) SHA1(788f83bcb0667d8a42c209f3d51708d496be58df) )
+	ROM_LOAD( "cb9.bin",   0x1000, 0x1000, CRC(2d036026) SHA1(b6eada3e67edd7db59d9ca823b798cd20f0afca9) )
+
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "cb7.bin",   0x0000, 0x0800, CRC(80eb517d) SHA1(fef4111f656c58b28e7eac5aa5b5cc7e07ccb2fd) )
+	ROM_LOAD( "cb8.bin",   0x0800, 0x0800, CRC(f67c80f1) SHA1(d1fbcce1b6242f810e106ff50812636e3168ebc1) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "v6.bin",      0x0000, 0x0020, CRC(751c3325) SHA1(edce2bc883996c1d72dc6c1c9f62799b162d415a) )
+	ROM_LOAD( "u6.bin",      0x0020, 0x0020, CRC(c0539747) SHA1(1bc70057b59b8cb11299fb6b0d84a46da6c0a025) )
+	ROM_LOAD( "t6.bin",      0x0040, 0x0020, CRC(b4e827a5) SHA1(31a5a5ad54417a474d22bb16c473415d99a2b6f1) )
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "cb6.bin",    0x0000, 0x1000, CRC(5f0bcdfb) SHA1(7f79bf6de117348f606696ed7ea1937bbf926612) )
+	ROM_LOAD( "cb5.bin",    0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
 ROM_END
 
 static DRIVER_INIT( cannonb )
@@ -1693,6 +1735,7 @@ GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg",
 GAME( 1982?,rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)" )
 GAME( 1982?,silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land" )
 GAMEX(1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, cannonb2,  cannonb, cannonb,  cannonb,  0,        ROT90, "TV Game Gruenberg", "Cannonball set 2" )
 GAME( 198?, ckongb  , ckong,    cclimber, ckongb,    ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)" )
 
 GAME( 1982, swimmer,  0,        swimmer,  swimmer,  0,        ROT0,   "Tehkan", "Swimmer (set 1)" )

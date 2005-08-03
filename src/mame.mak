@@ -347,7 +347,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/sndhrdw/wow.o $(OBJ)/sndhrdw/gorf.o $(OBJ)/drivers/astrocde.o \
 	$(OBJ)/machine/mcr.o $(OBJ)/sndhrdw/mcr.o \
 	$(OBJ)/vidhrdw/mcr.o $(OBJ)/vidhrdw/mcr3.o \
-	$(OBJ)/drivers/mcr1.o $(OBJ)/drivers/mcr2.o $(OBJ)/drivers/mcr3.o \
+	$(OBJ)/drivers/mcr.o $(OBJ)/drivers/mcr3.o \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
@@ -1202,7 +1202,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/crospang.o $(OBJ)/vidhrdw/crospang.o \
 	$(OBJ)/drivers/1945kiii.o \
 	$(OBJ)/drivers/bmcbowl.o \
-	$(OBJ)/drivers/dcheese.o \
+	$(OBJ)/drivers/dcheese.o $(OBJ)/vidhrdw/dcheese.o \
 	$(OBJ)/drivers/micro3d.o $(OBJ)/vidhrdw/micro3d.o \
 	$(OBJ)/drivers/pntnpuzl.o \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \

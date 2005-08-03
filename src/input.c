@@ -35,6 +35,7 @@ struct input_code_info
 {
 	UINT8						analogtype;				/* analog type */
 	INT32						memory;					/* memory */
+	INT32						prev_analog;			/* previous analog value */
 	const struct OSCodeInfo *	osinfo;					/* pointer to the OS code info */
 	char						token[MAX_TOKEN_LEN];	/* token string */
 };
@@ -1039,6 +1040,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 	int enable = 1;
 	int invert = 0;
 	int count = 0;
+	int changed = 0;
 
 	/* iterate over all of the codes */
 	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
@@ -1050,7 +1052,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 			/* OR: if the preceding enable was non-zero after processing at least one code, stop there */
 			/* otherwise, reset the state and continue */
 			case CODE_OR:
-				if (enable != 0 && count > 0 && result != 0)
+				if (enable != 0 && count > 0 && (result != 0 || changed))
 				{
 					*analogtype = type;
 					return result;
@@ -1078,6 +1080,11 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 							result = value;
 							type = ANALOG_TYPE(code);
 							count++;
+							if (type == ANALOG_TYPE_ABSOLUTE && result != code_map[code].prev_analog)
+							{
+								changed = 1;
+								code_map[code].prev_analog = result;
+							}
 						}
 					}
 
@@ -1093,7 +1100,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 				break;
 		}
 	}
-	if (enable != 0 && count > 0 && result != 0)
+	if (enable != 0 && count > 0 && (result != 0 || changed))
 	{
 		*analogtype = type;
 		return result;

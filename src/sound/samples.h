@@ -26,6 +26,7 @@ void sample_start(int channel,int samplenum,int loop);
 void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,int loop);
 void sample_set_freq(int channel,int freq);
 void sample_set_volume(int channel,float volume);
+void sample_set_pause(int channel,int pause);
 void sample_stop(int channel);
 int sample_playing(int channel);
 int sample_loaded(int samplenum);

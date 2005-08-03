@@ -1232,17 +1232,11 @@ void force_partial_update(int scanline)
     draw_screen - render the final screen bitmap
     and update any artwork
 -------------------------------------------------*/
-int gbPriorityBitmapIsDirty;
 
 void draw_screen(void)
 {
 	/* finish updating the screen */
 	force_partial_update(Machine->visible_area.max_y);
-	if( gbPriorityBitmapIsDirty )
-	{
-		fillbitmap( priority_bitmap, 0x00, NULL );
-		gbPriorityBitmapIsDirty = 0;
-	}
 }
 
 

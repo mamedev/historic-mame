@@ -3411,7 +3411,7 @@ static MACHINE_DRIVER_START( puckpkmn )
 
 	/* video hardware */
 	MDRV_VIDEO_START(puckpkmn)
-	MDRV_VISIBLE_AREA(8, 319, 0, 223)
+	MDRV_VISIBLE_AREA(0, 319, 0, 223)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(OKIM6295, 8000)

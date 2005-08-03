@@ -156,7 +156,7 @@ WRITE8_HANDLER( thepit_attributes_w )
 
 WRITE8_HANDLER( intrepid_graphics_bank_select_w )
 {
-	set_vh_global_attribute(&graphics_bank, data << 1);
+	set_vh_global_attribute(&graphics_bank, (data & 1) << 1);
 }
 
 

@@ -2,13 +2,10 @@
 
 /*
 
-the least protected of the DE102 games?
+the most protected of the DE102 games?
 
 -- you can't select your plane
-
-Video Problems (currently hooked up to tumblep video, probably wrongly
--- gfx are wrong (double width sprites missing?)
--- tilemape are wrong
+-- locks up at boss
 
 */
 
@@ -17,27 +14,69 @@ Video Problems (currently hooked up to tumblep video, probably wrongly
 #include "decocrpt.h"
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "machine/random.h"
 
 extern void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcode_select_xor);
+
+/*
+
+offs +0
+-------- --------
+ fFbSssy yyyyyyyy
+
+s = size (multipart)
+S = size (x?) (does any other game use this?)
+f = flipy
+b = flash
+F = flipx
+y = ypos
+
+offs +1
+-------- --------
+tttttttt tttttttt
+
+t = sprite tile
+
+offs +2
+-------- --------
+ppcccccx xxxxxxxx
+
+c = colour palette
+p = priority
+x = xpos
+
+*/
+
 
 
 static void dblewing_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs += 4)
+	for (offs = 0x400-4;offs >= 0;offs -= 4)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+		int x,y,sprite,colour,multi,mult2,fx,fy,inc,flash,mult,xsize,pri;
 
 		sprite = spriteram16[offs+1];
-		if (!sprite) continue;
 
 		y = spriteram16[offs];
 		flash=y&0x1000;
+		xsize = y&0x0800;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 
 		x = spriteram16[offs+2];
 		colour = (x >>9) & 0x1f;
+
+		pri = (x&0xc000); // 2 bits or 1?
+
+		switch (pri&0xc000) {
+		case 0x0000: pri=0; break;
+		case 0x4000: pri=0xf0; break;
+		case 0x8000: pri=0xf0|0xcc; break;
+		case 0xc000: pri=0xf0|0xcc; break; /*  or 0xf0|0xcc|0xaa ? */
+		}
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -71,14 +110,25 @@ static void dblewing_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		}
 		else mult=-16;
 
+		mult2 = multi+1;
+
 		while (multi >= 0)
 		{
-			drawgfx(bitmap,Machine->gfx[2],
+			pdrawgfx(bitmap,Machine->gfx[2],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					cliprect,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0,pri);
+
+			if (xsize)
+			pdrawgfx(bitmap,Machine->gfx[2],
+					(sprite - multi * inc)-mult2,
+					colour,
+					fx,fy,
+					x-16,y + mult * multi,
+					cliprect,TRANSPARENCY_PEN,0,pri);
+
 
 			multi--;
 		}
@@ -103,17 +153,154 @@ VIDEO_START(dblewing)
 
 VIDEO_UPDATE(dblewing)
 {
+
 	flip_screen_set( deco16_pf12_control[0]&0x80 );
 	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
 
 	fillbitmap(bitmap,Machine->pens[0x0],cliprect); /* not Confirmed */
 	fillbitmap(priority_bitmap,0,NULL);
 
-	deco16_tilemap_2_draw(bitmap,cliprect,0,0);
+	deco16_tilemap_2_draw(bitmap,cliprect,0,2);
+	deco16_tilemap_1_draw(bitmap,cliprect,0,4);
 	dblewing_drawsprites(bitmap,cliprect);
-	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 }
 
+
+/*
+
+cheats.. to make testing a bit easier
+
+; [ Double Wings ]
+:dblewing:00000000:FF3C1F:00000009:FFFFFFFF:Infinite Credits
+:dblewing:00000000:FF381C:000000F8:FFFFFFFF:1P Rapid Fire
+:dblewing:00000000:FF3821:00000002:FFFFFFFF:1P Invincibility
+:dblewing:00000000:FF389D:00000008:FFFFFFFF:1P Infinite Lives
+:dblewing:00000000:FF389F:00000006:FFFFFFFF:1P Infinite Bombs
+:dblewing:00000000:FF38A5:0000001C:0000001C:1P Always Maximum Shot Power
+:dblewing:62000000:FF38A5:00000000:00000000:1P Select Weapon
+:dblewing:00010000:FF38A5:00000000:00000060:Vulcan
+:dblewing:00010000:FF38A5:00000020:00000060:Laser
+:dblewing:00010000:FF38A5:00000040:00000060:Break Vulcan
+:dblewing:00000000:FF38A7:0000000C:0000000C:1P Always Max Sub Wepon Power
+:dblewing:62000000:FF38A7:00000000:00000000:1P Select Sub Weapon
+:dblewing:00010000:FF38A7:00000000:000000F0:None
+:dblewing:00010000:FF38A7:00000060:000000F0:Missile
+:dblewing:00010000:FF38A7:00000070:000000F0:Homing
+:dblewing:00000000:FF38B5:00000001:FFFFFFFF:1P Always Have Restart Item
+:dblewing:62000000:FF38A1:00000000:FFFFFFFF:1P Select Character
+:dblewing:00010000:FF38A1:00000000:FFFFFFFF:Nick (Red)
+:dblewing:00010000:FF38A1:00000001:FFFFFFFF:Sophie (Blue)
+:dblewing:00010000:FF38A1:00000002:FFFFFFFF:Elan (Yellow)
+:dblewing:00000000:FF38DC:000000F8:FFFFFFFF:2P Rapid Fire
+:dblewing:00000000:FF38E1:00000002:FFFFFFFF:2P Invincibility
+:dblewing:00000000:FF395D:00000008:FFFFFFFF:2P Infinite Lives
+:dblewing:00000000:FF395F:00000006:FFFFFFFF:2P Infinite Bombs
+:dblewing:00000000:FF3965:0000001C:0000001C:2P Always Maximum Shot Power
+:dblewing:62000000:FF3965:00000000:00000000:2P Select Weapon
+:dblewing:00010000:FF3965:00000000:00000060:Vulcan
+:dblewing:00010000:FF3965:00000020:00000060:Laser
+:dblewing:00010000:FF3965:00000040:00000060:Break Vulcan
+:dblewing:00000000:FF3967:0000000C:0000000C:2P Always Max Sub Wepon Power
+:dblewing:62000000:FF3967:00000000:00000000:2P Select Sub Weapon
+:dblewing:00010000:FF3967:00000000:000000F0:None
+:dblewing:00010000:FF3967:00000060:000000F0:Missile
+:dblewing:00010000:FF3967:00000070:000000F0:Homing
+:dblewing:00000000:FF3975:00000001:FFFFFFFF:2P Always Have Restart Item
+:dblewing:62000000:FF3961:00000000:FFFFFFFF:2P Select Character
+:dblewing:00010000:FF3961:00000000:FFFFFFFF:Nick (Red)
+:dblewing:00010000:FF3961:00000001:FFFFFFFF:Sophie (Blue)
+:dblewing:00010000:FF3961:00000002:FFFFFFFF:Elan (Yellow)
+
+*/
+
+/* protection.. involves more addresses than this .. */
+/* this is going to be typical deco '104' protection...
+ writes one place, reads back data shifted in another
+ the addresses below are the ones seen accessed by the
+ game so far...
+
+ we need to log the PC of each read/write and check to
+ see if the code makes any of them move obvious
+*/
+static UINT16 dblwings_008_data;
+static UINT16 dblwings_104_data;
+static UINT16 dblwings_406_data;
+static UINT16 dblwings_608_data;
+static UINT16 dblwings_70c_data;
+static UINT16 dblwings_78a_data;
+static UINT16 dblwings_088_data;
+static UINT16 dblwings_58c_data;
+static UINT16 dblwings_408_data;
+static UINT16 dblwings_40e_data;
+static UINT16 dblwings_080_data;
+static UINT16 dblwings_788_data;
+static UINT16 dblwings_38e_data;
+static UINT16 dblwings_580_data;
+static UINT16 dblwings_60a_data;
+static UINT16 dblwings_200_data;
+static UINT16 dblwings_28c_data;
+
+
+READ16_HANDLER ( dlbewing_prot_r )
+{
+	if ((offset*2)==0x068) return 0;//dblwings_78a_data;
+	if ((offset*2)==0x094) return dblwings_104_data; // p1 inputs select screen  OK
+	if ((offset*2)==0x0f8) return 0;// dblwings_080_data;
+	if ((offset*2)==0x104) return 0;
+	if ((offset*2)==0x10e) return 0;
+	if ((offset*2)==0x16a) return 0;
+	if ((offset*2)==0x1a8) return 0;
+	if ((offset*2)==0x1d4) return 0;
+	if ((offset*2)==0x1ea) return 0;
+	if ((offset*2)==0x206) return 0;//dblwings_70c_data;
+	if ((offset*2)==0x24c) return 0;//dblwings_78a_data;
+	if ((offset*2)==0x246) return 0; // end of leve
+	if ((offset*2)==0x25c) return 0;
+	if ((offset*2)==0x284) return 0; //3rd player 2nd boss
+	if ((offset*2)==0x330) return 0; // sound?
+	if ((offset*2)==0x3ec) return 0; // sound?
+	if ((offset*2)==0x432) return 0; // boss on water level?
+	if ((offset*2)==0x476) return dblwings_008_data; // dips?
+	if ((offset*2)==0x4b0) return dblwings_608_data;
+	if ((offset*2)==0x52e) return 0; // end of leve
+	if ((offset*2)==0x532) return 0; // end of leve
+	if ((offset*2)==0x54a) return 0; //3rd player 2nd boss
+	if ((offset*2)==0x566) return 0; // bosses?
+	if ((offset*2)==0x596) return 0;
+	if ((offset*2)==0x5d8) return dblwings_406_data; // p2 inputs select screen  OK
+	if ((offset*2)==0x692) return 0; // boss on water level?
+	if ((offset*2)==0x6d6) return 0;
+	if ((offset*2)==0x748) return 0;//dblwings_408_data; // dblwings_408_data // 3rd player 1st level?
+	if ((offset*2)==0x786) return 0;
+
+	printf("dblewing prot r %08x, %04x, %04x\n",activecpu_get_pc(), offset*2, mem_mask);
+
+	return 0;//mame_rand();
+}
+
+WRITE16_HANDLER( dblewing_prot_w )
+{
+	if ((offset*2)==0x008) { dblwings_008_data = data; return; }
+	if ((offset*2)==0x088) { dblwings_088_data = data; return; }
+	if ((offset*2)==0x080) { dblwings_080_data = data; return; } // p3 3rd boss?
+	if ((offset*2)==0x104) { dblwings_104_data = data; return; } // p1 inputs select screen  OK
+	if ((offset*2)==0x200) { dblwings_200_data = data; return; }
+	if ((offset*2)==0x28c) { dblwings_28c_data = data; return; }
+	if ((offset*2)==0x380) { soundlatch_w(0,data&0xff);	/*cpunum_set_input_line(1,0,HOLD_LINE);*/ return; } // sound write
+	if ((offset*2)==0x38e) { dblwings_38e_data = data; return; }
+	if ((offset*2)==0x406) { dblwings_406_data = data; return; } // p2 inputs select screen  OK
+	if ((offset*2)==0x408) { dblwings_408_data = data; return; } // 3rd player 1st level?
+	if ((offset*2)==0x40e) { dblwings_40e_data = data; return; } // 3rd player 2nd level?
+	if ((offset*2)==0x580) { dblwings_580_data = data; return; }
+	if ((offset*2)==0x58c) { dblwings_58c_data = data; return; } // 3rd player 1st level?
+	if ((offset*2)==0x608) { dblwings_608_data = data; return; }
+	if ((offset*2)==0x60a) { dblwings_60a_data = data; return; }
+	if ((offset*2)==0x70c) { dblwings_70c_data = data; return; }
+	if ((offset*2)==0x78a) { dblwings_78a_data = data; return; }
+	if ((offset*2)==0x788) { dblwings_788_data = data; return; }
+
+	printf("dblewing prot w %08x, %04x, %04x %04x\n",activecpu_get_pc(), offset*2, mem_mask,data);
+}
 
 static ADDRESS_MAP_START( dblewing_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
@@ -123,14 +310,17 @@ static ADDRESS_MAP_START( dblewing_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
 	AM_RANGE(0x106000, 0x106fff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
 
-	/* protection related? */
+	/* protection */
 //  AM_RANGE(0x280104, 0x280105) AM_WRITE(MWA16_NOP) // ??
 	AM_RANGE(0x2800ac, 0x2800ad) AM_READ(input_port_2_word_r) // dips
 	AM_RANGE(0x280298, 0x280299) AM_READ(input_port_1_word_r) // vbl
-	AM_RANGE(0x280476, 0x280477) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x280506, 0x280507) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x2802B4, 0x2802B5) AM_READ(input_port_0_word_r) // inverted?
 //  AM_RANGE(0x280330, 0x280331) AM_READ(MRA16_NOP) // sound?
-	AM_RANGE(0x280380, 0x280381) AM_WRITE(MWA16_NOP) // sound
+//  AM_RANGE(0x280380, 0x280381) AM_WRITE(MWA16_NOP) // sound
+
+	AM_RANGE(0x280000, 0x2807ff) AM_READWRITE(dlbewing_prot_r,dblewing_prot_w)
+
 
 	AM_RANGE(0x284000, 0x284001) AM_RAM
 	AM_RANGE(0x288000, 0x288001) AM_RAM
@@ -139,6 +329,29 @@ static ADDRESS_MAP_START( dblewing_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x320000, 0x3207ff) AM_READWRITE(MRA16_RAM,paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xff0000, 0xff3fff) AM_MIRROR(0xc000) AM_RAM
 ADDRESS_MAP_END
+
+
+static WRITE8_HANDLER( YM2151_w )
+{
+	switch (offset) {
+	case 0:
+		YM2151_register_port_0_w(0,data);
+		break;
+	case 1:
+		YM2151_data_port_0_w(0,data);
+		break;
+	}
+}
+
+
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+//  AM_RANGE(0xa000, 0xa001) AM_READWRITE(YM2151_status_port_0_r,YM2151_w)
+//  AM_RANGE(0xb000, 0xb000) AM_READ(OKIM6295_status_0_r)
+//  AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
 
 
 static struct GfxLayout tile_8x8_layout =
@@ -259,9 +472,69 @@ INPUT_PORTS_START( dblewing )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
+	PORT_START	/* 16bit */
+	PORT_DIPNAME( 0x0001, 0x0001, "2" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 
 INPUT_PORTS_END
+
+static void sound_irq(int irq)
+{
+//  cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//  printf("sound irq\n");
+}
+
+static struct YM2151interface ym2151_interface =
+{
+	sound_irq
+};
 
 
 static MACHINE_DRIVER_START( dblewing )
@@ -269,6 +542,10 @@ static MACHINE_DRIVER_START( dblewing )
 	MDRV_CPU_ADD(M68000, 14000000)	/* DE102 */
 	MDRV_CPU_PROGRAM_MAP(dblewing_map,0)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -284,6 +561,15 @@ static MACHINE_DRIVER_START( dblewing )
 	MDRV_VIDEO_UPDATE(dblewing)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -294,11 +580,11 @@ Double Wings (JPN Ver.)
 DEC-22V0 (S-NK-3220)
 
 Software is by Mitchell, but the PCB is pure Data East.
-It's the standard DEC-22V0 PCB that runs many Data East games from around the mid 90's.
 
 Data East ROM code = KP
 
-CPU     :68000 ?
+
+CPU     :DE102 - Encrypted 68000
 Sound   :TMPZ84C00AP-6,YM2151,OKI M6295, YM3014B
 OSC     :28.0000MHz,32.2200MHz
 RAM     :LH6168 x 1, CXK5814 x 6, CXK5864 x 4
@@ -306,9 +592,9 @@ DIP     :2 x 8 position
 Other   :DATA EAST Chips (numbers scratched)
          --------------------------------------
          DATA EAST #?  9235EV 205941  VC5259-0001 JAPAN (confirmed #52) - 128 pin PQFP
-         DATA EAST #?  DATA EAST 250 JAPAN - 128 Pin PQFP
+         DATA EAST #?  DATA EAST 250 JAPAN (#102, the CPU) - 128 Pin PQFP
          DATA EAST #?  24220F008 (confirmed #141) - 160 pin PQFP
-         DATA EAST #?  L7A0717   9143  (confirmed #104 and definitely the CPU) - 100 pin PQFP
+         DATA EAST #?  L7A0717   9143  (confirmed #104, IO/Protection) - 100 pin PQFP
 
          PALs: PAL16L8 (x 2, VG-00, VG-01) between program ROMs and CPU
                PAL16L8 (x 1, VG-02) next to #52
@@ -334,7 +620,7 @@ ROM_START( dblewing )
 	ROM_LOAD16_BYTE( "kp_00-.3d",    0x000001, 0x040000, CRC(547dc83e) SHA1(f6f96bd4338d366f06df718093f035afabc073d1) )
 	ROM_LOAD16_BYTE( "kp_01-.5d",    0x000000, 0x040000, CRC(7a210c33) SHA1(ced89140af6d6a1bc0ffb7728afca428ed007165) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, ROMREGION_DISPOSE ) // sound cpu?
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) // sound cpu?
 	ROM_LOAD( "kp_02-.10h",    0x00000, 0x10000, CRC(def035fa) SHA1(fd50314e5c94c25df109ee52c0ce701b0ff2140c) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -355,4 +641,4 @@ static DRIVER_INIT( dblewing )
 }
 
 
-GAMEX(1993, dblewing, 0,        dblewing, dblewing,  dblewing,  ROT90,"Mitchell", "Double Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1993, dblewing, 0,        dblewing, dblewing,  dblewing,  ROT90,"Mitchell", "Double Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND|GAME_NOT_WORKING)

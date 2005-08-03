@@ -25,7 +25,6 @@
 #endif /* MESS */
 
 extern char build_version[];
-extern int gbPriorityBitmapIsDirty;
 
 
 

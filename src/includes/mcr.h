@@ -42,20 +42,22 @@ READ16_HANDLER( mcr68_6840_upper_r );
 READ16_HANDLER( mcr68_6840_lower_r );
 
 
-/*----------- defined in vidhrdw/mcr12.c -----------*/
+/*----------- defined in vidhrdw/mcr.c -----------*/
 
 extern INT8 mcr12_sprite_xoffs;
 extern INT8 mcr12_sprite_xoffs_flip;
 
 VIDEO_START( mcr );
-VIDEO_START( twotiger );
 
-WRITE8_HANDLER( mcr1_videoram_w );
-WRITE8_HANDLER( mcr2_videoram_w );
+WRITE8_HANDLER( mcr_91490_paletteram_w );
+
+WRITE8_HANDLER( mcr_90009_videoram_w );
+WRITE8_HANDLER( mcr_90010_videoram_w );
+READ8_HANDLER( twotiger_videoram_r );
 WRITE8_HANDLER( twotiger_videoram_w );
+WRITE8_HANDLER( mcr_91490_videoram_w );
 
 VIDEO_UPDATE( mcr );
-VIDEO_UPDATE( journey );
 
 
 /*----------- defined in vidhrdw/mcr3.c -----------*/

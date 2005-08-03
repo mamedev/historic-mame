@@ -411,7 +411,7 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 	int regindex = offset / chip->voices;
 
 #if LOG_COMMANDS
-	logerror("BSMT#%d write: V%d R%d = %04X\n", chip - bsmt2000, offset % chip->voices, regindex, data);
+	logerror("BSMT write: V%d R%d = %04X\n", offset % chip->voices, regindex, data);
 #endif
 
 	/* update the register */

@@ -453,6 +453,68 @@ IN0_REAL
 IN2_FAKE
 INPUT_PORTS_END
 
+INPUT_PORTS_START( rtriv )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x04, 0x04, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, "Monitor" )
+	PORT_DIPSETTING(    0x10, "Vertical" )
+	PORT_DIPSETTING(    0x00, "Horizontal" )
+	PORT_DIPNAME( 0x20, 0x20, "Gaming Option" )
+	PORT_DIPSETTING(    0x20, "Number of Wrong Answer" )
+	PORT_DIPSETTING(    0x00, "Number of Good Answer for Bonus Question" )
+	PORT_DIPNAME( 0xc0, 0x40, "Gaming Option Number" )
+	PORT_DIPSETTING(    0x00, "2" ) PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x40, "3" ) PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x80, "4" ) PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0xc0, "5" ) PORT_DIPCONDITION(2,0x20,PORTCOND_EQUALS,0x20)
+	PORT_DIPSETTING(    0x00, "4" ) PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0x40, "5" ) PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0x80, "6" ) PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x20)
+	PORT_DIPSETTING(    0xc0, "7" ) PORT_DIPCONDITION(2,0x20,PORTCOND_NOTEQUALS,0x20)
+
+	/* Since the real inputs are multiplexed, we used this fake port
+       to read the 2nd player controls when the screen is flipped */
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
@@ -830,16 +892,87 @@ ROM_START( machomou )
 	ROM_LOAD( "mmouse1.clr",  0x0020, 0x0020, NO_DUMP )
 ROM_END
 
+ROM_START( rtriv )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "rtriv-e.p1",   0x0000, 0x1000, CRC(f3c74f58) SHA1(015715689e25864a38f21075e30491590741c100) )
+	ROM_LOAD( "rtriv-e.p2",   0x1000, 0x1000, CRC(d6ba213f) SHA1(cca42b87692620661d120b8b02d2be83268b0e38) )
+	ROM_LOAD( "rtriv-e.p3",   0x2000, 0x1000, CRC(b8cf20cd) SHA1(23ffcc27cd19b4e9c1d30bcd318f11a9d6278a08) )
+	ROM_LOAD( "rtriv-i.fc1",  0x3000, 0x1000, CRC(be5dca69) SHA1(9844f4a3d500df41a980f90d7450285740709b93) )
+	/* 0x4000 - 0x4fff question rom space */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "ngames7.22",   0x0000, 0x0800, CRC(871e5a03) SHA1(d2105a8ae1829d493e85bcbbcd152a28f68eb035) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
+	ROM_LOAD( "ngames8.8",    0x1000, 0x1000, BAD_DUMP CRC(f7644e1d) SHA1(d58d0d5739906b602f4c08a2fb9a16c32fcc245b) )
+	ROM_LOAD( "ngames9.9",    0x0000, 0x1000, CRC(db553afc) SHA1(e7561ca0b2a4543c41bf41c96d17784b299ab367) )
+	ROM_RELOAD(				  0x1000, 0x1000 ) // reload it until the other rom is re-dumped
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* Question roms */
+	ROM_LOAD( "rtriv-1f.d0",  0x00000, 0x8000, CRC(84787af0) SHA1(5c1c74128af2b2d62ae9ba730da500e818b3dbd8) )
+	ROM_LOAD( "rtriv-1f.d1",  0x08000, 0x8000, CRC(ff718059) SHA1(c2620b9116e42c56bf8c9260453f34ce19052601) )
+	ROM_LOAD( "rtriv-1f.l0",  0x10000, 0x8000, CRC(ea43fdea) SHA1(fba341f11649891df4bed20dafda3b4a84756679) )
+	ROM_LOAD( "rtriv-1f.l1",  0x18000, 0x8000, CRC(6e15f4e2) SHA1(355c208f32d87361d4c89287db3e2fb403fc2bfd) )
+	ROM_LOAD( "rtriv-1f.l2",  0x20000, 0x8000, CRC(ecb9fc3c) SHA1(ed9b7768956a30af50058425a67ae44822563c6b) )
+	ROM_LOAD( "rtriv-1f.t0",  0x28000, 0x8000, CRC(ca82b8a6) SHA1(a61026b242561996668adef2876c92e0fc06ac26) )
+	ROM_LOAD( "rtriv-1f.t1",  0x30000, 0x8000, CRC(56c24a9c) SHA1(df773fedeff14fc5bbd29f9d06a9f6c62259bcb3) )
+	ROM_LOAD( "rtriv-1f.t2",  0x38000, 0x8000, CRC(e62917cf) SHA1(e9e11e3f47f3278f13773b9b556dd122ba735c0b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "rtriv.ic3",    0x0000, 0x0020, CRC(927ff40a) SHA1(3d699d981851989e9190505b0dede5202d688f2b) )
+ROM_END
+
+/*
+    Romar Triv questions read handler
+*/
+
+static int question_address = 0;
+static int question_rom = 0;
+static int remap_address[16];
+
+static READ8_HANDLER( rtriv_question_r )
+{
+	// Set-up the remap table for every 16 bytes
+	if((offset & 0xc00) == 0x800)
+	{
+		remap_address[offset & 0x0f] = ((offset & 0xf0) >> 4) ^ 0x0f;
+	}
+	// Select which rom to read and the high 5 bits of address
+	else if((offset & 0xc00) == 0x400)
+	{
+		question_rom = (offset & 0x70) >> 4;
+		question_address = ((offset & 0x80) << 3) | ((offset & 0x0f) << 11);
+	}
+	// Read the actual byte from question roms
+	else if((offset & 0xc00) == 0xc00)
+	{
+		data8_t *ROM = memory_region(REGION_USER1);
+		int real_address;
+
+		real_address = (0x8000 * question_rom) | question_address | (offset & 0x3f0) | remap_address[offset & 0x0f];
+
+		return ROM[real_address];
+	}
+
+	return 0; // the value read from the configuration reads is discarded
+}
+
+DRIVER_INIT( rtriv )
+{
+	// Set-up the weirdest questions read ever done
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4fff, 0, 0, rtriv_question_r);
+}
 
 
-GAME( 1981, roundup,  0,        thepit,   roundup,  0, ROT90, "Amenip/Centuri", "Round-Up" )
-GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito Corporation", "Fitter" )
-GAME( 1982, thepit,   0,        thepit,   thepit,   0, ROT90, "Centuri", "The Pit" )
-GAME( 1982, dockman,  0,        intrepid, dockman,  0, ROT90, "Taito Corporation", "Dock Man" )
-GAME( 1982, portman,  dockman,  intrepid, dockman,  0, ROT90, "Nova Games Ltd.", "Port Man" )
-GAME( 1982, funnymou, 0,        suprmous, suprmous, 0, ROT90, "Chuo Co. Ltd", "Funny Mouse" )
-GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0, ROT90, "Taito Corporation", "Super Mouse" )
-GAMEX(1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse", GAME_WRONG_COLORS )
-GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
-GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )
-GAMEX(1984, zaryavos, 0,        intrepid, intrepid, 0, ROT90, "Nova Games of Canada", "Zarya Vostoka", GAME_NOT_WORKING )
+GAME( 1981, roundup,  0,        thepit,   roundup,  0,     ROT90, "Amenip/Centuri", "Round-Up" )
+GAME( 1981, fitter,   roundup,  thepit,   fitter,   0,     ROT90, "Taito Corporation", "Fitter" )
+GAME( 1982, thepit,   0,        thepit,   thepit,   0,     ROT90, "Centuri", "The Pit" )
+GAME( 1982, dockman,  0,        intrepid, dockman,  0,     ROT90, "Taito Corporation", "Dock Man" )
+GAME( 1982, portman,  dockman,  intrepid, dockman,  0,     ROT90, "Nova Games Ltd.", "Port Man" )
+GAME( 1982, funnymou, 0,        suprmous, suprmous, 0,     ROT90, "Chuo Co. Ltd", "Funny Mouse" )
+GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0,     ROT90, "Taito Corporation", "Super Mouse" )
+GAMEX(1982, machomou, 0,        suprmous, suprmous, 0,     ROT90, "Techstar", "Macho Mouse", GAME_WRONG_COLORS )
+GAME( 1983, intrepid, 0,        intrepid, intrepid, 0,     ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
+GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0,     ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )
+GAMEX(1984, zaryavos, 0,        intrepid, intrepid, 0,     ROT90, "Nova Games of Canada", "Zarya Vostoka", GAME_NOT_WORKING )
+GAMEX(198?, rtriv,    0,        intrepid, rtriv,    rtriv, ROT90, "Romar", "Romar Triv", GAME_WRONG_COLORS )

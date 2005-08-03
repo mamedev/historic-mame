@@ -27,7 +27,6 @@ static struct tilemap *bg_tilemap;
 
     Byte 0:
         pppppppp = picture index
-
  */
 static void mcr_90009_get_tile_info(int tile_index)
 {
@@ -50,7 +49,6 @@ static void mcr_90009_get_tile_info(int tile_index)
         -----y-- = Y flip
         ------x- = X flip
         -------p = picture index (high 1 bit)
-
  */
 static void mcr_90010_get_tile_info(int tile_index)
 {
@@ -76,7 +74,6 @@ static void mcr_90010_get_tile_info(int tile_index)
         ----y--- = Y flip
         -----x-- = X flip
         ------pp = picture index (high 2 bits)
-
  */
 static void mcr_91490_get_tile_info(int tile_index)
 {
@@ -86,19 +83,6 @@ static void mcr_91490_get_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 10) & 3));
 
 	/* sprite color base might come from the top 2 bits */
-	tile_info.priority = (data >> 14) & 3;
-}
-
-
-
-static void twotiger_get_tile_info(int tile_index)
-{
-	int data = videoram[tile_index] | (videoram[tile_index + 0x400] << 8);
-	int code = data & 0x1ff;
-	int color = (data >> 11) & 3;
-	SET_TILE_INFO(0, code, color, TILE_FLIPYX((data >> 9) & 3));
-
-	/* sprite color base comes from the top 2 bits */
 	tile_info.priority = (data >> 14) & 3;
 }
 
@@ -137,31 +121,82 @@ VIDEO_START( mcr )
 }
 
 
-VIDEO_START( twotiger )
+
+/*************************************
+ *
+ *  Palette RAM writes
+ *
+ *************************************/
+
+static void mcr_set_color(int index, int data)
 {
-	/* initialize the background tilemap */
-	bg_tilemap = tilemap_create(twotiger_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
-	if (!bg_tilemap)
-		return 1;
-	return 0;
+	/* 3 bits each, RGB */
+	int r = (data >> 6) & 7;
+	int g = (data >> 0) & 7;
+	int b = (data >> 3) & 7;
+
+	/* up to 8 bits */
+	r = (r << 5) | (r << 2) | (r >> 1);
+	g = (g << 5) | (g << 2) | (g >> 1);
+	b = (b << 5) | (b << 2) | (b >> 1);
+
+	/* set the color */
+	palette_set_color(index, r, g, b);
+}
+
+
+static void journey_set_color(int index, int data)
+{
+	/* 3 bits each, RGB */
+	int r = (data >> 6) & 7;
+	int g = (data >> 0) & 7;
+	int b = (data >> 3) & 7;
+
+	/* up to 8 bits */
+	r = (r << 5) | (r << 1);
+	g = (g << 5) | (g << 1);
+	b = (b << 5) | (b << 1);
+
+	/* set the BG color */
+	palette_set_color(index, r, g, b);
+
+	/* if this is an odd entry in the upper palette bank, the hardware */
+	/* hard-codes a low 1 bit -- this is used for better grayscales */
+	if ((index & 0x31) == 0x31)
+	{
+		r |= 0x11;
+		g |= 0x11;
+		b |= 0x11;
+	}
+
+	/* set the FG color */
+	palette_set_color(index + 64, r, g, b);
+}
+
+
+WRITE8_HANDLER( mcr_91490_paletteram_w )
+{
+	paletteram[offset] = data;
+	offset &= 0x7f;
+	mcr_set_color((offset / 2) & 0x3f, data | ((offset & 1) << 8));
 }
 
 
 
 /*************************************
  *
- *  Videoram writes
+ *  Video RAM writes
  *
  *************************************/
 
-WRITE8_HANDLER( mcr1_videoram_w )
+WRITE8_HANDLER( mcr_90009_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
 
-WRITE8_HANDLER( mcr2_videoram_w )
+WRITE8_HANDLER( mcr_90010_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
@@ -169,47 +204,36 @@ WRITE8_HANDLER( mcr2_videoram_w )
 	/* palette RAM is mapped into the upper 0x80 bytes here */
 	if ((offset & 0x780) == 0x780)
 	{
-		/* bit 2 of the red component is taken from bit 0 of the address */
-		int idx = (offset >> 1) & 0x3f;
-		int r = ((offset & 1) << 2) + (data >> 6);
-		int g = (data >> 0) & 7;
-		int b = (data >> 3) & 7;
-
-		/* up to 8 bits */
-		r = (r << 5) | (r << 2) | (r >> 1);
-		g = (g << 5) | (g << 2) | (g >> 1);
-		b = (b << 5) | (b << 2) | (b >> 1);
-
-		palette_set_color(idx, r, g, b);
+		if (mcr_cpu_board != 91475)
+			mcr_set_color((offset / 2) & 0x3f, data | ((offset & 1) << 8));
+		else
+			journey_set_color((offset / 2) & 0x3f, data | ((offset & 1) << 8));
 	}
 }
 
+
+READ8_HANDLER( twotiger_videoram_r )
+{
+	/* Two Tigers swizzles the address bits on videoram */
+	int effoffs = ((offset << 1) & 0x7fe) | ((offset >> 10) & 1);
+	return videoram[effoffs];
+}
 
 WRITE8_HANDLER( twotiger_videoram_w )
 {
-	videoram[offset] = data;
-	tilemap_mark_tile_dirty(bg_tilemap, offset & 0x3ff);
+	/* Two Tigers swizzles the address bits on videoram */
+	int effoffs = ((offset << 1) & 0x7fe) | ((offset >> 10) & 1);
 
-	/* palette RAM is mapped into the upper 0x40 bytes of each bank */
-	if ((offset & 0x3c0) == 0x3c0)
-	{
-		/* bit 2 of the red component is taken from bit 0 of the address */
-		int idx = ((offset & 0x400) >> 5) | ((offset >> 1) & 0x1f);
-		int r = ((offset & 1) << 2) + (data >> 6);
-		int g = (data >> 0) & 7;
-		int b = (data >> 3) & 7;
+	videoram[effoffs] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, effoffs / 2);
 
-		/* up to 8 bits */
-		r = (r << 5) | (r << 2) | (r >> 1);
-		g = (g << 5) | (g << 2) | (g >> 1);
-		b = (b << 5) | (b << 2) | (b >> 1);
-
-		palette_set_color(idx, r, g, b);
-	}
+	/* palette RAM is mapped into the upper 0x80 bytes here */
+	if ((effoffs & 0x780) == 0x780)
+		mcr_set_color(((offset & 0x400) >> 5) | ((offset >> 1) & 0x1f), data | ((offset & 1) << 8));
 }
 
 
-WRITE8_HANDLER( mcr3_videoram_w )
+WRITE8_HANDLER( mcr_91490_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
@@ -292,7 +316,7 @@ static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectan
  *
  *  Paired with:
  *      91442 CPU -> fixed palette @ 1 (upper half) or 3 (lower half)
- *      91475 CPU -> palette specified by ???
+ *      91475 CPU -> palette specified by sprite board; sprites have extra implicit colors
  *      91490 CPU -> palette specified by sprite board or by tiles (select via jumpers)
  *      91721 CPU -> palette specified by sprite board
  *
@@ -394,7 +418,7 @@ VIDEO_UPDATE( mcr )
 			if (mcr_cpu_board == 91442)
 				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			else if (mcr_cpu_board == 91475)
-				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x40);
 			else if (mcr_cpu_board == 91490)
 				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			else if (mcr_cpu_board == 91721)
