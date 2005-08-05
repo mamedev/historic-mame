@@ -9,6 +9,7 @@
 static int sci_spriteframe;
 extern data16_t *taitoz_sharedram;
 
+static int road_palbank;
 
 
 /**********************************************************/
@@ -836,6 +837,25 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
                         SCREEN REFRESH
 **************************************************************/
 
+WRITE16_HANDLER( contcirc_out_w )
+{
+	if (ACCESSING_LSB)
+	{
+		/* bit 0 = reset sub CPU */
+		cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+
+		/* bits 1-3 n.c. */
+
+		/* 3d glasses control */
+		/* bit 4 = SCPSW */
+		/* bit 5 = SCP */
+
+		/* bits 6 and 7 select the road palette bank */
+		road_palbank = (data & 0xc0) >> 6;
+	}
+}
+
+
 VIDEO_UPDATE( contcirc )
 {
 	UINT8 layer[3];
@@ -848,12 +868,11 @@ VIDEO_UPDATE( contcirc )
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],0,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0150ROD_draw(bitmap,cliprect,-3,0xc0,1,0,2);	// -6
+	TC0150ROD_draw(bitmap,cliprect,-3,road_palbank << 6,1,0,1,2);	// -6
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	contcirc_draw_sprites_16x8(bitmap,cliprect,5);	// 7
@@ -879,7 +898,7 @@ VIDEO_UPDATE( chasehq )
 
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,2);
+	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,1,2);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	chasehq_draw_sprites_16x16(bitmap,cliprect,7);
@@ -903,7 +922,7 @@ VIDEO_UPDATE( bshark )
 
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,1,2);
+	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,1,1,2);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	bshark_draw_sprites_16x8(bitmap,cliprect,8);
@@ -927,7 +946,7 @@ VIDEO_UPDATE( sci )
 
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,2);
+	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,1,2);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	sci_draw_sprites_16x8(bitmap,cliprect,6);
@@ -951,7 +970,7 @@ VIDEO_UPDATE( aquajack )
 
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0150ROD_draw(bitmap,cliprect,-1,0,2,1,2);
+	TC0150ROD_draw(bitmap,cliprect,-1,0,2,1,1,2);
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	aquajack_draw_sprites_16x8(bitmap,cliprect,3);
@@ -1110,7 +1129,7 @@ VIDEO_UPDATE( dblaxle )
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,0);
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,1);
 
-	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,2);
+	TC0150ROD_draw(bitmap,cliprect,-1,0xc0,0,0,1,2);
 	bshark_draw_sprites_16x8(bitmap,cliprect,7);
 
 	/* This layer used for the big numeric displays */

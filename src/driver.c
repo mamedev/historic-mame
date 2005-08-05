@@ -1697,7 +1697,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( spacedxo )	/* D89 (c) 1994 Taito Corporation (Japan) */
 
 	/* Taito Z-System games */
-	DRIVER( contcirc )	/* B33 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( contcirc )	/* B33 (c) 1987 Taito Corporation Japan (World) */
 	DRIVER( contcrcu )	/* B33 (c) 1987 Taito America Corporation (US) */
 	DRIVER( contcrua )	/* B33 (c) 1987 Taito America Corporation (US) */
 	DRIVER( chasehq )	/* B52 (c) 1988 Taito Corporation Japan (World) */

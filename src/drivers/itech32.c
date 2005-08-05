@@ -1610,7 +1610,15 @@ static MACHINE_DRIVER_START( gt3dt )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gt3d)
 
-	MDRV_NVRAM_HANDLER( gt3dt )
+	MDRV_NVRAM_HANDLER( gt3dt ) /* Make Tournament sets load/store the Timekeeper info */
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( wcbowlt )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sftm)
+
+	MDRV_NVRAM_HANDLER( gt3dt ) /* Make WCB Tournament load/store the Timekeeper info */
 MACHINE_DRIVER_END
 
 
@@ -3658,7 +3666,7 @@ GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incr
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl161, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.61)" ) /* PIC 16C54 labeled as ITBWL-3 */
-GAME( 1997, wcbwl140, wcbowldx, sftm,     wcbowldx, wcbowlt,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)" ) /* PIC 16C54 labeled as ITBWL-4? */
+GAME( 1997, wcbwl140, wcbowldx, wcbowlt,  wcbowldx, wcbowlt,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)" ) /* PIC 16C54 labeled as ITBWL-4? */
 GAME( 1995, wcbwl12,  wcbowl,   wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)" ) /* PIC 16C54 labeled as ITBWL-1 */
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" ) /* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftm111,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.11)" ) /* PIC 16C54 labeled as ITSF-1 */

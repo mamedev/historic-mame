@@ -4151,17 +4151,11 @@ int TC0150ROD_vh_start(void)
     1800-1fff  Road B, bank 1
 
     1ffe-1fff  Control word
+               ........ xxxxxxxx    Screen line where priority changes
+               ......xx ........    Road A RAM page
+               ....xx.. ........    Road B RAM page
+               0000.... ........    Not used?
 
-               Contcirc: 08 0d   [bifurcating]
-               ChaseHQ:  00 05   [08 0d when road rejoins]
-               SCI:      09 0c   [when road bifurcates]
-               Nightstr: 08 0d   [both bifurcating and not...]
-               Aquajack: 04      [always?]
-               Dblaxle:  08 0d
-
-               1000 1101
-               1001 1100
-               0000 0101
 
 
     Road ram line layout (thanks to Raine for original table)
@@ -4170,27 +4164,26 @@ int TC0150ROD_vh_start(void)
     -----+-----------------+----------------------------------------
     Word | Bit(s)          |  Info
     -----+-----------------+----------------------------------------
-      0  |x....... ........|  Draw background outside road edge on LHS
+      0  |x....... ........|  Draw background behind left road edge
       0  |.x...... ........|  Left road edge from road A has priority over road B ?? (+)
       0  |..x..... ........|  Left road edge from road A has priority over road B ?? (*)
-      0  |...x.... ........|  Left edge/background palette entry offset  (set = +2)
+      0  |...xx... ........|  Left edge/background palette entry offset
       0  |......xx xxxxxxxx|  Left edge   [pixels from road center] (@)
          |                 |
-      1  |x....... ........|  Draw background outside road edge on RHS
+      1  |x....... ........|  Draw background behind right road edge
       1  |.x...... ........|  Right road edge from road A has priority over road B ??
       1  |..x..... ........|  Right road edge from road A has priority over road B ?? (*)
-      1  |...x.... ........|  Right edge/background palette entry offset  (set = +2)
+      1  |...xx... ........|  Right edge/background palette entry offset
       1  |......xx xxxxxxxx|  Right edge   [pixels from road center] (@)
          |                 |
-      2  |x....... ........|  Set for either road a/b used lines in all games (Aquajack varies)
+      2  |x....... ........|  Draw background behind road body
       2  |.x...... ........|  Road line body from Road A has higher priority than Road B ??
       2  |..x..... ........|  Road line body from Road A has higher priority than Road B ??
-      2  |...x.... ........|  Palette entry offset   (set = +2)
-      2  |....?... ........|  ? unknown, maybe line enable (always set?)
+      2  |...xx... ........|  Body/background palette entry offset
       2  |.....xxx xxxxxxxx|  X Offset   [offset is inverted] (^)
          |                 |
       3  |xxxx.... ........|  Color Bank  (selects group of 4 palette entries used for line)
-      3  |......xx xxxxxxxx|  Road Gfx Tile number
+      3  |....xxxx xxxxxxxx|  Road Gfx Tile number (top 2 bits not used by any game)
     -----+-----------------+-----------------------------------------
 
     @ size of bitmask suggested by Nightstr stage C when boss appears
@@ -4310,7 +4303,7 @@ lookup table from rom for the TaitoZ sprites.
 
 ******************************************************************************/
 
-void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority)
+void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs,int palette_offs,int type,int road_trans,UINT32 low_priority,UINT32 high_priority)
 {
 #ifdef MAME_DEBUG
 	static int dislayer[6];	/* Road Layer toggles to help get road correct */
@@ -4345,8 +4338,10 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 
 	int twin_road = 0;
 
-	int road_A_address = y_offs * 4;	/* Index into roadram for road A */
-	int road_B_address = y_offs * 4 + ((type == 2) ? 0 : 0x800);	/* Aquajack has road B in road A area */
+	int road_A_address = y_offs * 4 + ((road_ctrl & 0x0300) << 2);	/* Index into roadram for road A */
+	int road_B_address = y_offs * 4 + ((road_ctrl & 0x0c00) << 0);	/* Index into roadram for road B */
+
+	int priority_switch_line = (road_ctrl & 0x00ff) - y_offs;
 
 #ifdef MAME_DEBUG
 	if (code_pressed_memory (KEYCODE_X))
@@ -4393,12 +4388,6 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 		usrintf_showmessage(buf3);
 	}
 #endif
-
-	/* Check which bank Road A should be drawn from */
-	if ((road_ctrl &0x100))	road_A_address += 0x400;
-
-	/* Check which bank Road B should be drawn from */
-	if ((road_ctrl &0x400))	road_B_address += 0x400;
 
 	do
 	{
@@ -4869,7 +4858,10 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 				}
 			}
 
-			taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,priority,cliprect);
+			if (y > priority_switch_line)
+				taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,high_priority,cliprect);
+			else
+				taitoic_drawscanline(bitmap,0,y,scanline,1,ROT0,low_priority,cliprect);
 		}
 
 		y++;

@@ -313,7 +313,7 @@ INTERRUPT_GEN( mcr_interrupt )
 
 	/* CTC line 3 is connected to 493, which is signalled once every */
 	/* frame at 30Hz */
-	if (cpu_getiloops() == 0)
+	if (cpu_getcurrentframe() % 2 == 1)
 	{
 		z80ctc_0_trg3_w(0, 1);
 		z80ctc_0_trg3_w(0, 0);

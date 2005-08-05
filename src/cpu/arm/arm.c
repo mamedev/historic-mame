@@ -258,7 +258,6 @@ typedef struct
 static ARM_REGS arm;
 
 static int arm_icount;
-static int check_irq_state;
 
 /* Prototypes */
 static void HandleALU( data32_t insn);
@@ -267,7 +266,6 @@ static void HandleBranch( data32_t insn);
 static void HandleMemSingle( data32_t insn);
 static void HandleMemBlock( data32_t insn);
 static data32_t decodeShift( data32_t insn, data32_t *pCarry);
-static void arm_check_irq_state(int internal);
 
 /***************************************************************************/
 
@@ -343,13 +341,11 @@ static int arm_execute( int cycles )
 	{
 
 #ifdef MAME_DEBUG
-
 		if (mame_debug)
 			MAME_Debug();
 #endif
 
 		/* load instruction */
-		check_irq_state=0;
 		pc = R15;
 		insn = READ32( pc & ADDRESS_MASK );
 
@@ -440,10 +436,6 @@ static int arm_execute( int cycles )
 		}
 
 		arm_icount -= 3;
-
-		//if (check_irq_state)
-		//  arm_check_irq_state(1);
-
 	} while( arm_icount > 0 );
 
 	return cycles - arm_icount;
@@ -466,11 +458,9 @@ static void arm_set_context(void *src)
 	}
 }
 
-static void arm_check_irq_state(int internal)
+static void arm_check_irq_state(void)
 {
-	data32_t pc = R15;
-	if (!internal)
-		pc+=4; /* save old pc (already incremented in pipeline) */;
+	data32_t pc = R15+4; /* save old pc (already incremented in pipeline) */;
 
 	/* Exception priorities (from ARM6, not specifically ARM2/3):
 
@@ -516,7 +506,7 @@ static void set_irq_line(int irqline, int state)
 		break;
 	}
 
-	arm_check_irq_state(0);
+	arm_check_irq_state();
 }
 
 static offs_t arm_dasm(char *buffer, offs_t pc)
@@ -630,19 +620,14 @@ static void HandleMemSingle( data32_t insn )
 		/* Load */
 		if (insn & INSN_SDT_B)
 		{
-//static int i=0;
-//i++;
-//          if (rnv==0x120020)
-//              SetRegister(rd,0xffff);
-//          else
-//          SetRegister(rd,(data32_t) READ8(rnv));
-			SetRegister(rd,(rd&0xffffff00)|((data32_t) READ8(rnv)));
-		//00024AE8
+			SetRegister(rd,(data32_t) READ8(rnv));
 		}
 		else
 		{
 			if (rd == eR15)
 			{
+				if (ARM_DEBUG_CORE)
+					logerror("%08x:  LDR to R15\n",R15);
 				R15 = (READ32(rnv) & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & MODE_MASK);
 				R15 -= 4;
 			}
@@ -751,8 +736,7 @@ static void HandleALU( data32_t insn )
 {
 	data32_t op2, sc=0, rd, rn, opcode;
 	data32_t by, rdn;
-//  data32_t oldMode=R15&3;
-//  data32_t oldIRQ=R15&0x0c000000;
+	data32_t oldMode=R15&3;
 
 	opcode = (insn & INSN_OPCODE) >> INSN_OPCODE_SHIFT;
 
@@ -788,15 +772,12 @@ static void HandleALU( data32_t insn )
 	{
 		if ((rn = (insn & INSN_RN) >> INSN_RN_SHIFT) == eR15)
 		{
-			//if (ARM_DEBUG_CORE)
-			//  logerror("%08x:  Pipelined R15 (Shift %d) (mode %d)\n",R15,(insn&INSN_I?8:insn&0x10u?12:12),R15&3);
+			if (ARM_DEBUG_CORE)
+				logerror("%08x:  Pipelined R15 (Shift %d)\n",R15,(insn&INSN_I?8:insn&0x10u?12:12));
 
 			/* Docs strongly suggest the mode bits should be included here, but it breaks Captain
             America, as it starts doing unaligned reads */
-//          if (((insn & INSN_RD) >> INSN_RD_SHIFT)== eR15)
-//              rn=(R15+8);
-//          else
-				rn=(R15+8)&ADDRESS_MASK;
+			rn=(R15+8)&ADDRESS_MASK;
 		}
 		else
 		{
@@ -871,49 +852,25 @@ static void HandleALU( data32_t insn )
 		if (rdn == eR15 && !(insn & INSN_S))
 		{
 			/* Merge the old NZCV flags into the new PC value */
-			R15 = (rd & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15&MODE_MASK);
+			R15 = (rd & ADDRESS_MASK) | (R15 & PSR_MASK) | oldMode;
+
+			/* Retain old mode regardless */
+			if (ARM_DEBUG_CORE)
+				logerror("%08x:  Suspected R15 mode change\n",R15);
 		}
 		else
 		{
-			if (rdn==eR15)
-			{
-//              if (oldMode!=(rd&0x3))
-//                  logerror("hmm, state %08x\n", R15);
+			if (rdn==eR15) {
+				if (ARM_DEBUG_CORE)
+					logerror("%08x: Setting R15 with S flag\n",R15);
+				SetRegister(rdn,rd|oldMode); /* Todo: Should mask rd?? Mode not affected by S bit? */
 
-	//          if ((oldMode&3)!=(rd&3))
-//          logerror("%08x:  Suspected sflag R15 mode change %d\n",R15,oldMode);
-				/* S Flag is set - update PSR & mode if in non-user mode only */
-				if ((R15&MODE_MASK)!=0)
-				{
-					SetRegister(rdn,rd);
-
-					/* IRQ masks may have changed in this instruction */
-					check_irq_state=1;
-					//arm_check_irq_state();
-				}
-				else
-				{
-					//should really be IRQ mask/mode mask only??
-
-					SetRegister(rdn,(rd&ADDRESS_MASK) | (R15&PSR_MASK) | (R15&MODE_MASK));
-				}
-//              SetRegister(rdn,rd);
-//???
-				/*
-0003F6C: STR     R14, [R13], #$4
-0003F70: LDR     R12, [R0], #$20
-0003F74: BNE     $3f8c
-0003F8C: LDR     R11, [R0], #$2c
-0003F90: SUB     R10, R11, #$10
-0003F94: STR     R10, [R0], #$2c
-*/
-//              SetRegister(rdn,rd|oldMode); /* Todo: Should mask rd?? Mode not affected by S bit? */
-
+				/* IRQ masks may have changed in this instruction */
+//              arm_check_irq_state();
 			}
 			else
-			{
+				/* S Flag is set - update PSR & mode */
 				SetRegister(rdn,rd);
-			}
 		}
 	/* TST & TEQ can affect R15 (the condition code register) with the S bit set */
 	} else if (rdn==eR15) {
@@ -971,9 +928,6 @@ static int loadInc ( data32_t pat, data32_t rbv, data32_t s)
 		if( (pat>>i)&1 )
 		{
 			if (i==15) {
-				if (s && (R15&3)==0)
-					logerror("user set\n");
-
 				if (s) /* Pull full contents from stack */
 					SetRegister( 15, READ32(rbv+=4) );
 				else /* Pull only address, preserve mode & status flags */
@@ -987,7 +941,7 @@ static int loadInc ( data32_t pat, data32_t rbv, data32_t s)
 	return result;
 }
 
-static int loadDec( data32_t pat, data32_t rbv, data32_t s, data32_t* deferredR15, int* defer)
+static int loadDec( data32_t pat, data32_t rbv, data32_t s)
 {
 	int i,result;
 
@@ -997,18 +951,16 @@ static int loadDec( data32_t pat, data32_t rbv, data32_t s, data32_t* deferredR1
 		if( (pat>>i)&1 )
 		{
 			if (i==15) {
-				*defer=1;
 				if (s) /* Pull full contents from stack */
-					*deferredR15=READ32(rbv-=4);
+					SetRegister( 15, READ32(rbv-=4) );
 				else /* Pull only address, preserve mode & status flags */
-					*deferredR15=(R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv-=4))&ADDRESS_MASK);
+					SetRegister( 15, (R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv-=4))&ADDRESS_MASK) );
 			}
 			else
 				SetRegister( i, READ32(rbv -=4) );
 			result++;
 		}
 	}
-
 	return result;
 }
 
@@ -1064,8 +1016,6 @@ static void HandleMemBlock( data32_t insn)
 		/* Loading */
 		if (insn & INSN_BDT_U)
 		{
-			int oldMode=R15&3;
-
 			/* Incrementing */
 			if (!(insn & INSN_BDT_P)) rbp = rbp + (- 4);
 
@@ -1077,10 +1027,6 @@ static void HandleMemBlock( data32_t insn)
 
 			if (insn & INSN_BDT_W)
 			{
-				int newMode=R15&3;
-
-				if (newMode!=oldMode && rb>12)
-					logerror("artgh %08x\n", R15);
 				if (ARM_DEBUG_CORE && rb==15)
 					logerror("%08x:  Illegal LDRM writeback to r15\n",R15);
 
@@ -1089,32 +1035,22 @@ static void HandleMemBlock( data32_t insn)
 		}
 		else
 		{
-			data32_t deferredR15=0;
-			int defer=0;
-
 			/* Decrementing */
 			if (!(insn & INSN_BDT_P))
 			{
 				rbp = rbp - (- 4);
 			}
 
-			result = loadDec( insn&0xffff, rbp, insn&INSN_BDT_S, &deferredR15, &defer );
+			result = loadDec( insn&0xffff, rbp, insn&INSN_BDT_S );
+			if (insn & 0x8000) {
+				R15-=4;
+			}
 
 			if (insn & INSN_BDT_W)
 			{
 				if (rb==0xf)
 					logerror("%08x:  Illegal LDRM writeback to r15\n",R15);
 				SetRegister(rb,GetRegister(rb)-result*4);
-			}
-
-			// If R15 is pulled from memory we defer setting it until after writeback
-			// is performed, else we may writeback to the wrong context (ie, the new
-			// context if the mode has changed as a result of the R15 read)
-			if (defer)
-				SetRegister(15, deferredR15);
-
-			if (insn & 0x8000) {
-				R15-=4;
 			}
 		}
 	} /* Loading */

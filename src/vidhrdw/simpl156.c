@@ -1,6 +1,7 @@
 /* Simple 156 based board
 
- code mostly from deco32.c, but modified
+ most of this can be merged with vidhrdw/deco16ic.c if we
+ adapt all the read/write handlers to write to 16 bit ram
 
 */
 
@@ -64,10 +65,10 @@ static void simpl156_setup_scroll(struct tilemap *pf_tilemap, data16_t height, d
 	int rows,offs;
 
 	/* Colscroll - not fully supported yet! */
-	if (control1&0x20 && coldata) {
-		sy+=coldata[0];
-		//usrintf_showmessage("%08x",coldata[0]);
-	}
+//  if (control1&0x20 && coldata) {
+//      sy+=coldata[0];
+//      usrintf_showmessage("%08x",coldata[0]);
+//  }
 
 	/* Rowscroll enable */
 	if (control1&0x40 && rowdata) {
@@ -207,6 +208,7 @@ static void simpl156_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 }
 
 
+/* colscroll implementation is incomplete */
 VIDEO_UPDATE( simpl156 )
 {
 	/* Dirty tilemaps if any globals change */
@@ -253,19 +255,85 @@ VIDEO_UPDATE( simpl156 )
 	/* Draw screen */
 	fillbitmap(bitmap,Machine->pens[256],cliprect); /* not verified */
 
-	/* can pf2 be displayed in 8x8 mode? */
-	tilemap_draw(bitmap,cliprect,pf2a_tilemap,0,2);
+
+	/*todo: finish colscroll */
+
+	if (!(simpl156_pf12_control[6]&0x2000)) /* no colscroll */
+	{
+		/* PF2 can be in 8x8 mode or 16x16 mode */
+		if (simpl156_pf12_control[6]&0x8000)
+		{
+			tilemap_draw(bitmap,cliprect,pf2_tilemap,0,2);
+		}
+		else
+		{
+			tilemap_draw(bitmap,cliprect,pf2a_tilemap,0,2);
+		}
+	}
+	else  /* hmm chainrec sets this .. does it NEED colscroll somewhere? */
+	{
+		/* PF2 can be in 8x8 mode or 16x16 mode */
+		if (simpl156_pf12_control[6]&0x8000)
+		{
+			tilemap_draw(bitmap,cliprect,pf2_tilemap,0,2);
+		}
+		else
+		{
+			tilemap_draw(bitmap,cliprect,pf2a_tilemap,0,2);
+		}
+	}
 
 
-	/* PF1 can be in 8x8 mode or 16x16 mode */
-	if (simpl156_pf12_control[6]&0x80)
-		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,4);
-	else
-		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,4);
+	if (!(simpl156_pf12_control[6]&0x0020)) /* no colscroll */
+	{
+		/* PF1 can be in 8x8 mode or 16x16 mode */
+		if (simpl156_pf12_control[6]&0x0080)
+		{
+			tilemap_draw(bitmap,cliprect,pf1_tilemap,0,4);
+		}
+		else
+		{
+			tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,4);
+		}
+	}
+	else /* colscroll - osman uses this */
+	{
+		int col;
+		struct rectangle clip;
+
+		clip.min_x = Machine->visible_area.min_x;
+		clip.max_x = Machine->visible_area.max_x;
+		clip.min_y = Machine->visible_area.min_y;
+		clip.max_y = Machine->visible_area.max_y;
+
+		for (col = 0; col < 320;col++)
+		{
+			int select;
+
+			select = simpl156_pf12_control[1]+col;
+			select &=0x1ff;
+			select >>= 7;
+
+//          printf("Col %d scroll %d, select %d\n",col, simpl156_pf12_control[1], select);
+
+			tilemap_set_scrolly( pf1_tilemap,0, simpl156_pf12_control[2]+ (simpl156_pf1_rowscroll[0x200+select]&0x1ff) );
+			tilemap_set_scrolly( pf1a_tilemap,0, simpl156_pf12_control[2]+ (simpl156_pf1_rowscroll[0x200+select]&0x1ff) );
+
+			clip.min_x = clip.max_x = col;
+
+			/* PF1 can be in 8x8 mode or 16x16 mode */
+			if (simpl156_pf12_control[6]&0x0080)
+			{
+				tilemap_draw(bitmap,&clip,pf1_tilemap,0,4);
+			}
+			else
+			{
+				tilemap_draw(bitmap,&clip,pf1a_tilemap,0,4);
+			}
+		}
+	}
 
 	simpl156_drawsprites(bitmap,cliprect);
-
-
 }
 
 

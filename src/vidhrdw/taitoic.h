@@ -173,7 +173,7 @@ extern int TC0480SCP_pri_reg;
 READ16_HANDLER( TC0150ROD_word_r );
 WRITE16_HANDLER( TC0150ROD_word_w );
 int TC0150ROD_vh_start(void);
-void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority);
+void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs,int palette_offs,int type,int road_trans,UINT32 low_priority,UINT32 high_priority);
 
 
 /***************************************************************************/
