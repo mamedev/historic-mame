@@ -13,7 +13,6 @@ INT8 mcr12_sprite_xoffs;
 INT8 mcr12_sprite_xoffs_flip;
 
 static struct tilemap *bg_tilemap;
-static struct mame_bitmap *fake_bitmap;
 
 
 /*************************************
@@ -96,8 +95,6 @@ static void mcr_91490_get_tile_info(int tile_index)
 
 VIDEO_START( mcr )
 {
-fake_bitmap = auto_bitmap_alloc(512, 512);
-
 	/* the tilemap callback is based on the CPU board */
 	switch (mcr_cpu_board)
 	{
@@ -399,42 +396,32 @@ static void render_sprites_91464(struct mame_bitmap *bitmap, const struct rectan
 
 VIDEO_UPDATE( mcr )
 {
-	struct rectangle fake_clip = *cliprect;
-	fake_clip.min_y = fake_clip.min_y * 2;
-	fake_clip.max_y = fake_clip.max_y * 2 + 1;
-
 	/* update the flip state */
 	tilemap_set_flip(bg_tilemap, mcr_cocktail_flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 
 	/* draw the background */
-	fillbitmap(priority_bitmap, 0, &fake_clip);
-	tilemap_draw(fake_bitmap, &fake_clip, bg_tilemap, 0, 0x00);
-	tilemap_draw(fake_bitmap, &fake_clip, bg_tilemap, 1, 0x10);
-	tilemap_draw(fake_bitmap, &fake_clip, bg_tilemap, 2, 0x20);
-	tilemap_draw(fake_bitmap, &fake_clip, bg_tilemap, 3, 0x30);
+	fillbitmap(priority_bitmap, 0, cliprect);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0x00);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 1, 0x10);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 2, 0x20);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 3, 0x30);
 
 	/* update the sprites and render them */
 	switch (mcr_sprite_board)
 	{
 		case 91399:
-			render_sprites_91399(fake_bitmap, &fake_clip);
+			render_sprites_91399(bitmap, cliprect);
 			break;
 
 		case 91464:
 			if (mcr_cpu_board == 91442)
-				render_sprites_91464(fake_bitmap, &fake_clip, 0x00, 0x30, 0x00);
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			else if (mcr_cpu_board == 91475)
-				render_sprites_91464(fake_bitmap, &fake_clip, 0x00, 0x30, 0x40);
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x40);
 			else if (mcr_cpu_board == 91490)
-				render_sprites_91464(fake_bitmap, &fake_clip, 0x00, 0x30, 0x00);
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			else if (mcr_cpu_board == 91721)
-				render_sprites_91464(fake_bitmap, &fake_clip, 0x00, 0x30, 0x00);
+				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			break;
-	}
-
-	{
-		int y;
-		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-			memcpy(bitmap->line[y], fake_bitmap->line[y*2 + (cpu_getcurrentframe() % 2)], cliprect->max_x * 2);
 	}
 }

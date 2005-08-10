@@ -16,6 +16,7 @@
 #include "driver.h"
 #include "sound/streams.h"
 #include "sound/wavwrite.h"
+#include "config.h"
 
 #define VERBOSE			(0)
 #define MAKE_WAVS		(0)
@@ -25,6 +26,9 @@
 #else
 #define VPRINTF(x)
 #endif
+
+#define MAX_MIXER_CHANNELS		100
+
 
 
 /*************************************
@@ -923,6 +927,7 @@ static int route_sound(void)
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -975,6 +980,70 @@ void sound_stop(void)
 	totalsnd = 0;
 	memset(&speaker, 0, sizeof(speaker));
 	memset(&sound, 0, sizeof(sound));
+}
+
+
+
+/*************************************
+ *
+ *  Mixer load/save
+ *
+ *************************************/
+
+void sndintrf_load(int config_type, struct xml_data_node *parentnode)
+{
+	struct xml_data_node *channelnode;
+	int mixernum;
+
+	/* we only care about game files */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* might not have any data */
+	if (!parentnode)
+		return;
+
+	/* iterate over channel nodes */
+	for (channelnode = xml_get_sibling(parentnode->child, "channel"); channelnode; channelnode = xml_get_sibling(channelnode->next, "channel"))
+	{
+		mixernum = xml_get_attribute_int(channelnode, "index", -1);
+		if (mixernum >= 0 && mixernum < MAX_MIXER_CHANNELS)
+		{
+			float defvol = xml_get_attribute_float(channelnode, "defvol", -1000.0);
+			float newvol = xml_get_attribute_float(channelnode, "newvol", -1000.0);
+			if (defvol == sound_get_default_gain(mixernum) && newvol != -1000.0)
+				sound_set_user_gain(mixernum, newvol);
+		}
+	}
+}
+
+
+void sndintrf_save(int config_type, struct xml_data_node *parentnode)
+{
+	int mixernum;
+
+	/* we only care about game files */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* iterate over mixer channels */
+	if (parentnode)
+		for (mixernum = 0; mixernum < MAX_MIXER_CHANNELS; mixernum++)
+		{
+			float defvol = sound_get_default_gain(mixernum);
+			float newvol = sound_get_user_gain(mixernum);
+
+			if (defvol != newvol)
+			{
+				struct xml_data_node *channelnode = xml_add_child(parentnode, "channel", NULL);
+				if (channelnode)
+				{
+					xml_set_attribute_int(channelnode, "index", mixernum);
+					xml_set_attribute_float(channelnode, "defvol", defvol);
+					xml_set_attribute_float(channelnode, "newvol", newvol);
+				}
+			}
+		}
 }
 
 

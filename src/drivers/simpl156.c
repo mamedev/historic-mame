@@ -40,7 +40,7 @@
 
   Joe & Mac Returns
 
-  When you find the 'Extra Level' the colours are wrong during scrolling
+  Check the special effect when you find the 'Hidden Level'
 
 
 
@@ -53,6 +53,34 @@ Mitchell games:
  - OKI M6295(1) clock: 1.000MHz (28 / 28), sample rate = 1000000 / 132
  - OKI M6295(2) clock: 2.000MHz (28 / 14), sample rate = 2000000 / 132
 
+
+-- additional notes from Charles --
+
+Each game has a 512K block of memory that is decoded in the same way.
+One of the PALs controls where this block starts at, for example
+0x380000 for Magical Drop and 0x180000 for Osman:
+
+000000-00FFFF : Main RAM (16K)
+010000-01FFFF : Sprite RAM (8K)
+020000-02FFFF : Palette RAM (4K)
+030000-03FFFF : simpl156_system_r / simpl156_eeprom_w
+040000-04FFFF : PF1,2 control registers
+050000-05FFFF : PF1,2 name tables
+060000-06FFFF : PF1,2 row scroll
+070000-07FFFF : Control register
+
+The ordering of items within the block does not change and the size of
+each region is always 64K. If any RAM or other I/O has to be mirrored,
+it likely fills out the entire 64K range.
+
+The control register (marked as MWA_NOP in the driver) pulls one of the
+DE156 pins high for a brief moment and low again. Perhaps it triggers an
+interrupt or reset? It doesn't seem to be connected to anything else, at
+least on my board.
+
+The sprite chip has 16K RAM but the highest address line is tied to
+ground, so only 8K is available. This is correctly implemented in the
+driver, I'm mentioning it to confirm it isn't banked or anything like that.
 
 
 
@@ -68,17 +96,11 @@ extern void decrypt156(void);
 #include "vidhrdw/generic.h"
 #include "machine/random.h"
 #include "sound/okim6295.h"
+#include "deco16ic.h"
 
-data32_t *simpl156_pf1_data,*simpl156_pf2_data;
-data32_t *simpl156_pf12_control;
-data32_t *simpl156_pf1_rowscroll,*simpl156_pf2_rowscroll;
 static data32_t *simpl156_systemram;
 data8_t *simpl156_default_eeprom;
 
-extern WRITE32_HANDLER( simpl156_pf1_data_w );
-extern WRITE32_HANDLER( simpl156_pf2_data_w );
-extern READ32_HANDLER( simpl156_pf1_data_r );
-extern READ32_HANDLER( simpl156_pf2_data_r );
 extern VIDEO_START( simpl156 );
 extern VIDEO_UPDATE( simpl156 );
 
@@ -126,7 +148,7 @@ READ32_HANDLER( simpl156_inputs_read )
 
 READ32_HANDLER( simpl156_palette_r )
 {
-	return paletteram32[offset]^0xffff0000;
+	return paletteram16[offset]^0xffff0000;
 }
 
 WRITE32_HANDLER( simpl156_palette_w )
@@ -136,11 +158,12 @@ WRITE32_HANDLER( simpl156_palette_w )
 	int color;
 
 	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
 
-	COMBINE_DATA(&paletteram32[offset]);
+	COMBINE_DATA(&paletteram16[offset]);
 	color = offset;
 
-	dat = paletteram32[offset]&0xffff;
+	dat = paletteram16[offset]&0xffff;
 
 	g = (dat >>  5) & 0x1f;
 	r = (dat >>  0) & 0x1f;
@@ -152,8 +175,6 @@ WRITE32_HANDLER( simpl156_palette_w )
 
 	palette_set_color(color,r,g,b);
 }
-
-
 
 
 static READ32_HANDLER(  simpl156_system_r )
@@ -211,6 +232,7 @@ READ32_HANDLER( simpl156_spriteram_r )
 WRITE32_HANDLER( simpl156_spriteram_w )
 {
 	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
 
 	COMBINE_DATA(&spriteram32[offset]);
 }
@@ -226,48 +248,78 @@ READ32_HANDLER( simpl156_mainram_r )
 WRITE32_HANDLER( simpl156_mainram_w )
 {
 	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
 
 	COMBINE_DATA(&simpl156_mainram[offset]);
 }
 
 READ32_HANDLER( simpl156_pf1_rowscroll_r )
 {
-	return simpl156_pf1_rowscroll[offset]^0xffff0000;
+	return deco16_pf1_rowscroll[offset]^0xffff0000;
 }
 
 WRITE32_HANDLER( simpl156_pf1_rowscroll_w )
 {
 	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
 
-	COMBINE_DATA(&simpl156_pf1_rowscroll[offset]);
+	COMBINE_DATA(&deco16_pf1_rowscroll[offset]);
 }
 
 READ32_HANDLER( simpl156_pf2_rowscroll_r )
 {
-	return simpl156_pf2_rowscroll[offset]^0xffff0000;
+	return deco16_pf2_rowscroll[offset]^0xffff0000;
 }
 
 WRITE32_HANDLER( simpl156_pf2_rowscroll_w )
 {
 	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
 
-	COMBINE_DATA(&simpl156_pf2_rowscroll[offset]);
+	COMBINE_DATA(&deco16_pf2_rowscroll[offset]);
 }
 
 READ32_HANDLER ( simpl156_pf12_control_r )
 {
-	return simpl156_pf12_control[offset]^0xffff0000;
+	return deco16_pf12_control[offset]^0xffff0000;
 }
 
 WRITE32_HANDLER( simpl156_pf12_control_w )
 {
 	data &=0x0000ffff;
-	COMBINE_DATA(&simpl156_pf12_control[offset]);
+	mem_mask &=0x0000ffff;
+
+	COMBINE_DATA(&deco16_pf12_control[offset]);
 }
 
 
-/* the different memory maps MAY just be mirroring, but the boards do have GALs near the CPU */
+READ32_HANDLER( simpl156_pf1_data_r )
+{
+	return deco16_pf1_data[offset]^0xffff0000;
+}
 
+WRITE32_HANDLER( simpl156_pf1_data_w )
+{
+	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
+
+	deco16_pf1_data_w(offset,data,mem_mask);
+}
+
+READ32_HANDLER( simpl156_pf2_data_r )
+{
+	return deco16_pf2_data[offset]^0xffff0000;
+}
+
+
+WRITE32_HANDLER( simpl156_pf2_data_w )
+{
+	data &=0x0000ffff;
+	mem_mask &=0x0000ffff;
+	deco16_pf2_data_w(offset,data,mem_mask);
+}
+
+/* Memory Map controled by PALs */
 
 /* Chain Reaction */
 static ADDRESS_MAP_START( chainrec_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -277,14 +329,14 @@ static ADDRESS_MAP_START( chainrec_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x3c0000, 0x3c0003) AM_READWRITE(oki2_r,oki2_w)
 	AM_RANGE(0x400000, 0x407fff) AM_READWRITE(simpl156_mainram_r, simpl156_mainram_w) AM_BASE(&simpl156_mainram) // main ram?
 	AM_RANGE(0x410000, 0x411fff) AM_READWRITE(simpl156_spriteram_r, simpl156_spriteram_w) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x420000, 0x420fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x420000, 0x420fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w)
 	AM_RANGE(0x430000, 0x430003) AM_READWRITE(simpl156_system_r,simpl156_eeprom_w)
-	AM_RANGE(0x440000, 0x44001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w) AM_BASE(&simpl156_pf12_control)
-	AM_RANGE(0x450000, 0x451fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w) AM_BASE(&simpl156_pf1_data)
+	AM_RANGE(0x440000, 0x44001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w)
+	AM_RANGE(0x450000, 0x451fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
 	AM_RANGE(0x452000, 0x453fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
-	AM_RANGE(0x454000, 0x455fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w) AM_BASE(&simpl156_pf2_data)
-	AM_RANGE(0x460000, 0x461fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w) AM_BASE(&simpl156_pf1_rowscroll)
-	AM_RANGE(0x464000, 0x465fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w) AM_BASE(&simpl156_pf2_rowscroll)
+	AM_RANGE(0x454000, 0x455fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w)
+	AM_RANGE(0x460000, 0x461fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w)
+	AM_RANGE(0x464000, 0x465fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w)
 	AM_RANGE(0x470000, 0x470003) AM_RAM AM_WRITE(MWA32_NOP) // ??
 	AM_RANGE(0x480000, 0x480003) AM_READWRITE(oki_r,oki_w)
 ADDRESS_MAP_END
@@ -298,14 +350,14 @@ static ADDRESS_MAP_START( magdrop_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x340000, 0x340003) AM_READWRITE(oki2_r,oki2_w)
 	AM_RANGE(0x380000, 0x387fff) AM_READWRITE(simpl156_mainram_r, simpl156_mainram_w) AM_BASE(&simpl156_mainram) // main ram?
 	AM_RANGE(0x390000, 0x391fff) AM_READWRITE(simpl156_spriteram_r, simpl156_spriteram_w) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3a0000, 0x3a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x3a0000, 0x3a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w)
 	AM_RANGE(0x3b0000, 0x3b0003) AM_READWRITE(simpl156_system_r,simpl156_eeprom_w)
-	AM_RANGE(0x3c0000, 0x3c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w) AM_BASE(&simpl156_pf12_control)
-	AM_RANGE(0x3d0000, 0x3d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w) AM_BASE(&simpl156_pf1_data)
+	AM_RANGE(0x3c0000, 0x3c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w)
+	AM_RANGE(0x3d0000, 0x3d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
 	AM_RANGE(0x3d2000, 0x3d3fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
-	AM_RANGE(0x3d4000, 0x3d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w) AM_BASE(&simpl156_pf2_data)
-	AM_RANGE(0x3e0000, 0x3e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w) AM_BASE(&simpl156_pf1_rowscroll)
-	AM_RANGE(0x3e4000, 0x3e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w) AM_BASE(&simpl156_pf2_rowscroll)
+	AM_RANGE(0x3d4000, 0x3d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w)
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w)
+	AM_RANGE(0x3e4000, 0x3e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w)
 	AM_RANGE(0x3f0000, 0x3f0003) AM_RAM AM_WRITE(MWA32_NOP) //?
 	AM_RANGE(0x400000, 0x400003) AM_READWRITE(oki_r,oki_w)
 ADDRESS_MAP_END
@@ -318,14 +370,14 @@ static ADDRESS_MAP_START( magdropp_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x4c0000, 0x4c0003) AM_READWRITE(oki2_r,oki2_w)
 	AM_RANGE(0x680000, 0x687fff) AM_READWRITE(simpl156_mainram_r, simpl156_mainram_w) AM_BASE(&simpl156_mainram) // main ram?
 	AM_RANGE(0x690000, 0x691fff) AM_READWRITE(simpl156_spriteram_r, simpl156_spriteram_w) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x6a0000, 0x6a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x6a0000, 0x6a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w)
 	AM_RANGE(0x6b0000, 0x6b0003) AM_READWRITE(simpl156_system_r,simpl156_eeprom_w)
-	AM_RANGE(0x6c0000, 0x6c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w) AM_BASE(&simpl156_pf12_control)
-	AM_RANGE(0x6d0000, 0x6d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w) AM_BASE(&simpl156_pf1_data)
+	AM_RANGE(0x6c0000, 0x6c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w)
+	AM_RANGE(0x6d0000, 0x6d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
 	AM_RANGE(0x6d2000, 0x6d3fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
-	AM_RANGE(0x6d4000, 0x6d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w) AM_BASE(&simpl156_pf2_data)
-	AM_RANGE(0x6e0000, 0x6e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w) AM_BASE(&simpl156_pf1_rowscroll)
-	AM_RANGE(0x6e4000, 0x6e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w) AM_BASE(&simpl156_pf2_rowscroll)
+	AM_RANGE(0x6d4000, 0x6d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w)
+	AM_RANGE(0x6e0000, 0x6e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w)
+	AM_RANGE(0x6e4000, 0x6e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w)
 	AM_RANGE(0x6f0000, 0x6f0003) AM_RAM AM_WRITE(MWA32_NOP) // ?
 	AM_RANGE(0x780000, 0x780003) AM_READWRITE(oki_r,oki_w)
 ADDRESS_MAP_END
@@ -337,14 +389,14 @@ static ADDRESS_MAP_START( mitchell156_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x140000, 0x140003) AM_READWRITE(oki2_r,oki2_w)
 	AM_RANGE(0x180000, 0x187fff) AM_READWRITE(simpl156_mainram_r, simpl156_mainram_w) AM_BASE(&simpl156_mainram) // main ram
 	AM_RANGE(0x190000, 0x191fff) AM_READWRITE(simpl156_spriteram_r, simpl156_spriteram_w) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x1a0000, 0x1a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x1a0000, 0x1a0fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w)
 	AM_RANGE(0x1b0000, 0x1b0003) AM_READWRITE(simpl156_system_r,simpl156_eeprom_w)
-	AM_RANGE(0x1c0000, 0x1c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w) AM_BASE(&simpl156_pf12_control)
-	AM_RANGE(0x1d0000, 0x1d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w) AM_BASE(&simpl156_pf1_data)
+	AM_RANGE(0x1c0000, 0x1c001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w)
+	AM_RANGE(0x1d0000, 0x1d1fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
 	AM_RANGE(0x1d2000, 0x1d3fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
-	AM_RANGE(0x1d4000, 0x1d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w) AM_BASE(&simpl156_pf2_data)
-	AM_RANGE(0x1e0000, 0x1e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w) AM_BASE(&simpl156_pf1_rowscroll)
-	AM_RANGE(0x1e4000, 0x1e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w) AM_BASE(&simpl156_pf2_rowscroll)
+	AM_RANGE(0x1d4000, 0x1d5fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w)
+	AM_RANGE(0x1e0000, 0x1e1fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w)
+	AM_RANGE(0x1e4000, 0x1e5fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w)
 	AM_RANGE(0x1f0000, 0x1f0003) AM_RAM AM_WRITE(MWA32_NOP) // ?
 	AM_RANGE(0x200000, 0x200003) AM_READ(simpl156_inputs_read)
 	AM_RANGE(0x201000, 0x201fff) AM_RAM AM_BASE(&simpl156_systemram) // work ram (32-bit)
@@ -355,14 +407,14 @@ static ADDRESS_MAP_START( joemacr_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100000, 0x107fff) AM_READWRITE(simpl156_mainram_r, simpl156_mainram_w) AM_BASE(&simpl156_mainram) // main ram
 	AM_RANGE(0x110000, 0x111fff) AM_READWRITE(simpl156_spriteram_r, simpl156_spriteram_w) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x120000, 0x120fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x120000, 0x120fff) AM_READWRITE(simpl156_palette_r,simpl156_palette_w)
 	AM_RANGE(0x130000, 0x130003) AM_READWRITE(simpl156_system_r,simpl156_eeprom_w)
-	AM_RANGE(0x140000, 0x14001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w) AM_BASE(&simpl156_pf12_control)
-	AM_RANGE(0x150000, 0x151fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w) AM_BASE(&simpl156_pf1_data)
+	AM_RANGE(0x140000, 0x14001f) AM_READWRITE(simpl156_pf12_control_r, simpl156_pf12_control_w)
+	AM_RANGE(0x150000, 0x151fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
 	AM_RANGE(0x152000, 0x153fff) AM_READWRITE(simpl156_pf1_data_r, simpl156_pf1_data_w)
-	AM_RANGE(0x154000, 0x155fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w) AM_BASE(&simpl156_pf2_data)
-	AM_RANGE(0x160000, 0x161fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w) AM_BASE(&simpl156_pf1_rowscroll)
-	AM_RANGE(0x164000, 0x165fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w) AM_BASE(&simpl156_pf2_rowscroll)
+	AM_RANGE(0x154000, 0x155fff) AM_READWRITE(simpl156_pf2_data_r, simpl156_pf2_data_w)
+	AM_RANGE(0x160000, 0x161fff) AM_READWRITE(simpl156_pf1_rowscroll_r, simpl156_pf1_rowscroll_w)
+	AM_RANGE(0x164000, 0x165fff) AM_READWRITE(simpl156_pf2_rowscroll_r, simpl156_pf2_rowscroll_w)
 	AM_RANGE(0x170000, 0x170003) AM_RAM AM_WRITE(MWA32_NOP) // ?
 	AM_RANGE(0x180000, 0x180003) AM_READWRITE(oki_r,oki_w)
 	AM_RANGE(0x1c0000, 0x1c0003) AM_READWRITE(oki2_r,oki2_w)
@@ -407,11 +459,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tile_8x8_layout,     0,     16 },	/* Tiles (8x8) */
-	{ REGION_GFX1, 0, &tile_16x16_layout,   0,     16 },	/* Tiles (16x16) */
-	{ REGION_GFX1, 0, &tile_8x8_layout,     0x100, 16 },	/* Tiles (8x8) */
-	{ REGION_GFX1, 0, &tile_16x16_layout,   0x100, 16 },	/* Tiles (16x16) */
-
+	{ REGION_GFX1, 0, &tile_8x8_layout,     0,     32 },	/* Tiles (8x8) */
+	{ REGION_GFX1, 0, &tile_16x16_layout,   0,     32 },	/* Tiles (16x16) */
 	{ REGION_GFX2, 0, &spritelayout, 0x200, 32},	/* Sprites (16x16) */
 
 	{ -1 } /* end of array */
@@ -968,22 +1017,23 @@ unsigned char chainrec_eeprom[128] = {
 
   1 in eeprom is 0 in test mode
 
-   for now we configure Osman to 2 buttons and Cannon Dancer to 3 as the Japanese flyer shows a
-   3 button configuration and the guide located at
-   http://mywebpages.comcast.net/raddspencer/cannondancerindex.html
-   also describes 3 buttons being used in the Japanese release.
+  Both games are currently configured to 3 buttons, its possible the game was never
+  released with a 2 button configuration.
+
+   NOTE: an actual read of the eeprom appears to be byteswapped vs. this data / the file
+         MAME outputs
 
 */
 
 unsigned char osman_eeprom[128] = {
-	0xFF, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xBE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0x00, 0x88, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xBE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 unsigned char candance_eeprom[128] = {
 	0xFF, 0xBF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,

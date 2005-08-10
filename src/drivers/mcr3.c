@@ -1083,6 +1083,7 @@ static MACHINE_DRIVER_START( mcrmono )
 
 	/* video hardware */
 	MDRV_VIDEO_START(mcrmono)
+	MDRV_VIDEO_UPDATE(mcr3)
 MACHINE_DRIVER_END
 
 

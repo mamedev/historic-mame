@@ -58,6 +58,7 @@ extern MACHINE_INIT( cbnj );
 extern MACHINE_INIT( cburnrub );
 extern MACHINE_INIT( cbtime );
 extern MACHINE_INIT( cgraplop );
+extern MACHINE_INIT( cgraplp2 );
 extern MACHINE_INIT( clapapa );
 extern MACHINE_INIT( cfghtice );
 extern MACHINE_INIT( cprobowl );

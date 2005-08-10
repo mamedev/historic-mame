@@ -16,6 +16,51 @@ static int oinprion, cbparam;
 static int sprite_colorbase, sub1_colorbase, last_psac_colorbase, gametype;
 static int roz_enable, roz_rombank;
 static struct tilemap *ult_936_tilemap;
+static char *orig_roms;
+
+// do some trickery since we know the graphics decode doesn't touch the source data again
+// and we want the original data
+static void mystwarr_save_orig_tiles(void)
+{
+	unsigned char *s = memory_region(REGION_GFX1);
+	unsigned char *pFinish = s+memory_region_length(REGION_GFX1)-3;
+
+	orig_roms = malloc(memory_region_length(REGION_GFX1));
+	memcpy(orig_roms, s, memory_region_length(REGION_GFX1));
+
+	// now convert the data into a drawable format so we can decode it
+	while (s < pFinish)
+	{
+		/* convert the whole mess to 5bpp planar in System GX's format
+               (p3 p1 p2 p0 p5)
+               (the original ROMs are stored as chunky for the first 4 bits
+               and the 5th bit is planar, which is undecodable as-is) */
+		int d0 = ((s[0]&0x80)   )|((s[0]&0x08)<<3)|((s[1]&0x80)>>2)|((s[1]&0x08)<<1)|
+		         ((s[2]&0x80)>>4)|((s[2]&0x08)>>1)|((s[3]&0x80)>>6)|((s[3]&0x08)>>3);
+		int d1 = ((s[0]&0x40)<<1)|((s[0]&0x04)<<4)|((s[1]&0x40)>>1)|((s[1]&0x04)<<2)|
+		         ((s[2]&0x40)>>3)|((s[2]&0x04)   )|((s[3]&0x40)>>5)|((s[3]&0x04)>>2);
+		int d2 = ((s[0]&0x20)<<2)|((s[0]&0x02)<<5)|((s[1]&0x20)   )|((s[1]&0x02)<<3)|
+		         ((s[2]&0x20)>>2)|((s[2]&0x02)<<1)|((s[3]&0x20)>>4)|((s[3]&0x02)>>1);
+		int d3 = ((s[0]&0x10)<<3)|((s[0]&0x01)<<6)|((s[1]&0x10)<<1)|((s[1]&0x01)<<4)|
+		         ((s[2]&0x10)>>1)|((s[2]&0x01)<<2)|((s[3]&0x10)>>3)|((s[3]&0x01)   );
+
+		s[0] = d3;
+		s[1] = d1;
+		s[2] = d2;
+		s[3] = d0;
+
+		s += 5;
+	}
+}
+
+static void mystwarr_rest_orig_tiles(void)
+{
+	unsigned char *s = memory_region(REGION_GFX1);
+
+	// restore the original data so the ROM test can pass
+	memcpy(s, orig_roms, memory_region_length(REGION_GFX1));
+	free(orig_roms);
+}
 
 
 // Mystic Warriors requires tile based blending.
@@ -119,10 +164,14 @@ VIDEO_START(gaiapols)
 
 	gametype = 0;
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 1, -61, -22, gaiapols_sprite_callback)) // stage2 brick walls
 	{
@@ -165,10 +214,14 @@ VIDEO_START(dadandrn)
 
 	gametype = 1;
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 0, -42, -22, gaiapols_sprite_callback))
 	{
@@ -200,10 +253,14 @@ VIDEO_START(mystwarr)
 
 	gametype = 0;
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, mystwarr_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 0, -48, -24, mystwarr_sprite_callback))
 	{
@@ -232,10 +289,14 @@ VIDEO_START(metamrph)
 	K054338_vh_start();
 	K053250_vh_start(1, &rgn_250);
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 1, -51, -22, metamrph_sprite_callback))
 	{
@@ -262,10 +323,14 @@ VIDEO_START(viostorm)
 	K055555_vh_start();
 	K054338_vh_start();
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game4bpp_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 1, -62, -23, metamrph_sprite_callback))
 	{
@@ -289,10 +354,14 @@ VIDEO_START(martchmp)
 	K055555_vh_start();
 	K054338_vh_start();
 
+	mystwarr_save_orig_tiles();
+
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, game5bpp_tile_callback, 0))
 	{
 		return 1;
 	}
+
+	mystwarr_rest_orig_tiles();
 
 	if (K055673_vh_start(REGION_GFX2, 0, -58, -23, martchmp_sprite_callback))
 	{

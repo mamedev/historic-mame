@@ -12,6 +12,7 @@
 #define __COMMON_H__
 
 #include "hash.h"
+#include "xmlfile.h"
 
 
 
@@ -391,6 +392,8 @@ int new_memory_region(int num, size_t length, UINT32 flags);
 void free_memory_region(int num);
 
 /* common coin counter helpers */
+void counters_load(int config_type, struct xml_data_node *parentnode);
+void counters_save(int config_type, struct xml_data_node *parentnode);
 void coin_counter_reset(void);
 void coin_counter_w(int num,int on);
 void coin_lockout_w(int num,int on);

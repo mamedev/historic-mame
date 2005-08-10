@@ -564,6 +564,70 @@ WRITE8_HANDLER( monsterb_back_port_w )
 	}
 }
 
+/* for set 2 */
+/* other ports are also used */
+static data8_t monster2_bbdata;
+static data8_t monster2_b9data;
+
+WRITE8_HANDLER( monster2_bb_back_port_w )
+{
+	unsigned int temp_scene, temp_charset;
+
+	/* maybe */
+	monster2_bbdata=data;
+
+	temp_scene   = (monster2_b9data & 0x03)|monster2_bbdata<<2;
+	temp_charset = monster2_b9data & 0x03;
+
+	temp_scene = 0x400*temp_scene;
+
+	sv.back_scene = temp_scene;
+	sv.refresh=1;
+
+	sv.back_charset = temp_charset;
+	sv.refresh=1;
+
+//  printf("bb_data %02x\n",data);
+}
+
+WRITE8_HANDLER( monster2_b9_back_port_w )
+{
+	unsigned int temp_scene, temp_charset;
+
+	monster2_b9data = data;
+
+
+	temp_scene   = (monster2_b9data & 0x03)|monster2_bbdata<<2;
+	temp_charset = monster2_b9data & 0x03;
+
+	temp_scene = 0x400*temp_scene;
+
+//  printf("data %02x\n",data);
+
+	if (sv.back_scene != temp_scene)
+	{
+		sv.back_scene = temp_scene;
+		sv.refresh=1;
+	}
+	if (sv.back_charset != temp_charset)
+	{
+		sv.back_charset = temp_charset;
+		sv.refresh=1;
+	}
+
+	/* This bit turns the background off and on. */
+	if ((data & 0x80) && (sv.background_enable==0))
+	{
+		sv.background_enable=1;
+		sv.refresh=1;
+	}
+	else if (((data & 0x80)==0) && (sv.background_enable==1))
+	{
+		sv.background_enable=0;
+		sv.refresh=1;
+	}
+}
+
 /***************************************************************************
 Special refresh for Monster Bash, this code refreshes the static background.
 ***************************************************************************/

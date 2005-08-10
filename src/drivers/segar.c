@@ -1421,7 +1421,7 @@ ROM_START( monsterb )
 ROM_END
 
 ROM_START( monster2 )
-	ROM_REGION( 0x14000, REGION_CPU1, 0 )     /* 64k for code + space for background */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "epr-1548",     0x0000, 0x2000, CRC(239f77c1) SHA1(2945e4b135c1c46bf3e0d947b3d9be052f12e8d8) )
 	ROM_LOAD( "epr-1549",     0x2000, 0x2000, CRC(40aeb223) SHA1(8e0cc1b53ded819673719ffe1fd69feb1ca6fa29) )
 	ROM_LOAD( "epr-1550",     0x4000, 0x2000, CRC(b42bb2b3) SHA1(88bd5b027c46cde9f89e90f50ae2c381681ae483) )
@@ -1457,6 +1457,7 @@ ROM_START( monster2 )
 	ROM_LOAD( "pr-1541",     0x0000, 0x100, CRC(411aa2a5) SHA1(bc6a7119679aaa22f171a9038f49265e8cd4a166) ) /* ??? */
 	ROM_LOAD( "pr-5021",     0x0000, 0x20, CRC(ad1f2839) SHA1(765fdb90cbd1ab1551851a9a0c8ed0cb15928a25) ) /* ??? */
 ROM_END
+
 
 
 ROM_START( spaceod )
@@ -1635,17 +1636,47 @@ static DRIVER_INIT( monsterb )
 
 static DRIVER_INIT( monster2 )
 {
-
-	/* This game uses an encrypted CPU */
-//  monster2_decode();
+	/* This game uses the 315-5006 encrypted CPU */
 	spatter_decode();
 
-	/* This game uses the 315-0082 security chip */
-	sega_security(82);
+	sega_security(0);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0c, 0x0f, 0, 0, monsterb_audio_8255_w);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbc, 0xbc, 0, 0, monsterb_back_port_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xb9, 0xb9, 0, 0, monster2_b9_back_port_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbb, 0xbb, 0, 0, monster2_bb_back_port_w);
+/*
+cpu #0 (PC=000064CD): unmapped I/O byte write to 000000BC = 03
+cpu #0 (PC=000064DB): unmapped I/O byte write to 000000B8 = 00
+cpu #0 (PC=000064E5): unmapped I/O byte write to 000000BA = 00
+cpu #0 (PC=000064E9): unmapped I/O byte write to 000000BB = 01
+*/
+	/* the background tilemap rom has a different layout, rearrange it to match the set 1 format */
+	{
+		data8_t *rom = memory_region(REGION_USER1);
+		int length = memory_region_length(REGION_USER1);
+		data8_t *buf1 = malloc(length);
+		int x;
+
+
+		for (x=0;x<length;x++)
+		{
+			UINT16 addr;
+
+			addr = BITSWAP16(x,
+			                    15,14,13,12,6,
+			                    5,11,10,
+			                    9, 8,7, 4,
+			                    3, 2, 1, 0 );
+
+			buf1[addr] = rom[x];
+		}
+
+		memcpy(rom,buf1,length);
+		free (buf1);
+	}
+
 }
+
 
 
 static DRIVER_INIT( spaceod )
@@ -1693,7 +1724,7 @@ GAME( 1981, astrob2a, astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "As
 GAMEX(1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "Astro Blaster (version 1)", GAME_NOT_WORKING )
 GAMEX(1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "005", GAME_NO_SOUND )
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash" )
-GAMEX(1982, monster2, monsterb,monsterb, monsterb, monster2, ROT270, "Sega", "Monster Bash (2 board version)", GAME_NOT_WORKING )
+GAMEX(1982, monster2, monsterb,monsterb, monsterb, monster2, ROT270, "Sega", "Monster Bash (2 board version)",GAME_IMPERFECT_GRAPHICS )
 GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey" )
 GAMEX(1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (version C)", GAME_NO_SOUND )
 GAMEX(1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (version A)", GAME_NO_SOUND )

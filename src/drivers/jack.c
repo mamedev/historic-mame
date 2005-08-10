@@ -128,7 +128,6 @@ static READ8_HANDLER( striv_question_r )
 			real_address |= 0x8000 * question_rom;
 
 		return ROM[real_address];
-
 	}
 
 	return 0; // the value read from the configuration reads is discarded
@@ -1197,10 +1196,10 @@ ROM_START( striv )
 	ROM_LOAD( "snd.5a",       0x0000, 0x1000, CRC(b7ddf84f) SHA1(fa4cc0b2e5a88c82c62492c03e97ac6aa8a905b1) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "chr3.5a",      0x0000, 0x1000, CRC(8f982a9c) SHA1(dd6f454dfd3e03d008080890881cfafd79758a40) )
+	ROM_LOAD( "chr0.1a",      0x0000, 0x1000, CRC(8f60229b) SHA1(96a888ae02797a205e1c6202395d3b42a820ad4d) )
 	ROM_LOAD( "chr2.4a",      0x1000, 0x1000, CRC(8f982a9c) SHA1(dd6f454dfd3e03d008080890881cfafd79758a40) )
-	ROM_LOAD( "chr1.2a",      0x2000, 0x1000, CRC(7ad4358e) SHA1(dd3a03c78fa8bf435e9905b901dc5a9987cd52e4) )
-	ROM_LOAD( "chr0.1a",      0x3000, 0x1000, CRC(8f60229b) SHA1(96a888ae02797a205e1c6202395d3b42a820ad4d) )
+	ROM_LOAD( "chr3.5a",      0x2000, 0x1000, CRC(8f982a9c) SHA1(dd6f454dfd3e03d008080890881cfafd79758a40) )
+	ROM_LOAD( "chr1.2a",      0x3000, 0x1000, CRC(7ad4358e) SHA1(dd3a03c78fa8bf435e9905b901dc5a9987cd52e4) )
 
 	ROM_REGION( 0x80000, REGION_USER1, ROMREGION_ERASEFF ) /* Question roms */
 	ROM_LOAD( "rom.u6",       0x00000, 0x8000, CRC(a32d7a28) SHA1(fbad0b5c9f1dbeb4f245a2198248c18ceae556fa) )
@@ -1330,4 +1329,4 @@ GAME( 1984, sucasino, 0,        jack,    sucasino, jack,     ROT90, "Data Amusem
 GAME( 1981, tripool,  0,        tripool, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
 GAME( 1981, tripoola, tripool,  tripool, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )
 GAME( 1986, joinem,   0,        joinem,  joinem,   zzyzzyxx, ROT90, "Global Corporation", "Joinem" )
-GAMEX(1985, striv,    0,        jack,    striv,    striv,    ROT270,"Hara Industries", "Super Triv", GAME_IMPERFECT_SOUND )
+GAMEX(1985, striv,    0,        jack,    striv,    striv,    ROT270,"Hara Industries", "Super Triv", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )

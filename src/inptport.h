@@ -18,6 +18,8 @@
 #include "unicode.h"
 #endif
 
+struct xml_data_node;
+
 
 
 /*************************************
@@ -654,8 +656,8 @@ extern const char *inptport_default_strings[];
  *
  *************************************/
 
-int load_input_port_settings(void);
-void save_input_port_settings(void);
+void inptport_load(int config_type, struct xml_data_node *parentnode);
+void inptport_save(int config_type, struct xml_data_node *parentnode);
 
 struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 type, const char *tag, UINT32 mask);
 struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *params));

@@ -13,6 +13,8 @@
 
 #include "sound/streams.h"
 
+struct xml_data_node;
+
 
 
 /*************************************
@@ -316,6 +318,9 @@ void sound_reset(void);
 void sound_frame_update(void);
 void sound_register_token(void *token);
 int sound_scalebufferpos(int value);
+
+void sndintrf_load(int config_type, struct xml_data_node *parentnode);
+void sndintrf_save(int config_type, struct xml_data_node *parentnode);
 
 
 

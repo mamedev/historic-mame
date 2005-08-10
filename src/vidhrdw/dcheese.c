@@ -211,7 +211,7 @@ static void do_blit(void)
 	}
 
 	/* signal an IRQ when done (timing is just a guess) */
-	timer_set(cpu_getscanlineperiod(), 2, dcheese_signal_irq);
+	timer_set(cpu_getscanlineperiod() / 2, 2, dcheese_signal_irq);
 
 	/* these extra parameters are written but they are always zero, so I don't know what they do */
 	if (blitter_xparam[8] != 0 || blitter_xparam[9] != 0 || blitter_xparam[10] != 0 || blitter_xparam[11] != 0 ||

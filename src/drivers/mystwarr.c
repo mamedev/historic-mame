@@ -404,7 +404,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x498000, 0x49801f) AM_READ(MRA16_RAM)
 	AM_RANGE(0x600000, 0x601fff) AM_READ(K056832_ram_word_r)
 	AM_RANGE(0x602000, 0x603fff) AM_READ(K056832_ram_word_r)	// tilemap RAM mirror read(essential)
-	AM_RANGE(0x680000, 0x683fff) AM_READ(K056832_rom_word_r)
+	AM_RANGE(0x680000, 0x683fff) AM_READ(K056832_mw_rom_word_r)
 	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)
 #if MW_DEBUG
 	AM_RANGE(0x480000, 0x4800ff) AM_READ(K055555_word_r)
@@ -455,7 +455,7 @@ static ADDRESS_MAP_START( mmreadmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x27c000, 0x27c001) AM_READ(MRA16_NOP)	// watchdog lives here
 	AM_RANGE(0x300000, 0x301fff) AM_READ(K056832_ram_word_r)
 	AM_RANGE(0x302000, 0x303fff) AM_READ(K056832_ram_word_r)	// tilemap RAM mirror read(essential)
-	AM_RANGE(0x310000, 0x311fff) AM_READ(K056832_rom_word_r)
+	AM_RANGE(0x310000, 0x311fff) AM_READ(K056832_mw_rom_word_r)
 	AM_RANGE(0x320000, 0x321fff) AM_READ(K053250_0_rom_r)
 	AM_RANGE(0x330000, 0x331fff) AM_READ(MRA16_RAM)
 #if MW_DEBUG
@@ -512,7 +512,7 @@ static ADDRESS_MAP_START( vsreadmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x301fff) AM_READ(K056832_ram_word_r)
 	AM_RANGE(0x302000, 0x303fff) AM_READ(K056832_ram_word_r) // tilemap RAM mirror read(essential)
 	AM_RANGE(0x304000, 0x3041ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x310000, 0x311fff) AM_READ(K056832_rom_word_r)
+	AM_RANGE(0x310000, 0x311fff) AM_READ(K056832_mw_rom_word_r)
 	AM_RANGE(0x330000, 0x331fff) AM_READ(MRA16_RAM)
 #if MW_DEBUG
 	AM_RANGE(0x240000, 0x240007) AM_READ(K053246_reg_word_r)
@@ -617,7 +617,7 @@ static ADDRESS_MAP_START( mcreadmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x601fff) AM_READ(MRA16_RAM)			// palette RAM
 	AM_RANGE(0x680000, 0x681fff) AM_READ(K056832_ram_word_r)	// tilemap RAM
 	AM_RANGE(0x682000, 0x683fff) AM_READ(K056832_ram_word_r)	// tilemap RAM mirror read(essential)
-	AM_RANGE(0x700000, 0x703fff) AM_READ(K056832_rom_word_r)	// tile ROM readback
+	AM_RANGE(0x700000, 0x703fff) AM_READ(K056832_mw_rom_word_r)	// tile ROM readback
 #if MW_DEBUG
 	AM_RANGE(0x400000, 0x4000ff) AM_READ(K055555_word_r)
 	AM_RANGE(0x402010, 0x40201f) AM_READ(K053247_reg_word_r)
@@ -658,7 +658,7 @@ static ADDRESS_MAP_START( dddreadmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x410000, 0x411fff) AM_READ(K056832_ram_word_r)	// tilemap RAM
 	AM_RANGE(0x412000, 0x413fff) AM_READ(K056832_ram_word_r) // tilemap RAM mirror read(essential)
 	AM_RANGE(0x420000, 0x421fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x440000, 0x443fff) AM_READ(K056832_rom_word_r)
+	AM_RANGE(0x440000, 0x443fff) AM_READ(K056832_mw_rom_word_r)
 	AM_RANGE(0x450000, 0x45000f) AM_READ(K055673_rom_word_r)
 	AM_RANGE(0x470000, 0x470fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x48a014, 0x48a015) AM_READ(sound_status_msb_r)
@@ -717,7 +717,7 @@ static ADDRESS_MAP_START( gaiareadmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x410000, 0x411fff) AM_READ(K056832_ram_word_r)	// tilemap RAM
 	AM_RANGE(0x412000, 0x413fff) AM_READ(K056832_ram_word_r) // tilemap RAM mirror read(essential)
 	AM_RANGE(0x420000, 0x421fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x440000, 0x441fff) AM_READ(K056832_rom_word_r)
+	AM_RANGE(0x440000, 0x441fff) AM_READ(K056832_mw_rom_word_r)
 	AM_RANGE(0x450000, 0x45000f) AM_READ(K055673_rom_word_r)
 	AM_RANGE(0x470000, 0x470fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x48a014, 0x48a015) AM_READ(sound_status_msb_r)
@@ -1842,7 +1842,7 @@ ROM_START( gaiapols )
 	ROM_LOAD64_WORD( "123e20.36y", 0x000006, 2*1024*1024, CRC(490a6f64) SHA1(81b1acc74ce834399005a748eae50b3d633fa469) )
 
 	/* K053536 roz tiles */
-	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX3, 0 )
 	ROM_LOAD( "123e04.32n", 0x000000, 0x080000, CRC(0d4d5b8b) SHA1(d3fb0c77ad46ee9b9c704be6f174258aa051aa71) )
 	ROM_LOAD( "123e05.29n", 0x080000, 0x080000, CRC(7d123f3e) SHA1(f9752e96515dc965aae04e01dfa813fcc4cbccd6) )
 	ROM_LOAD( "123e06.26n", 0x100000, 0x080000, CRC(fa50121e) SHA1(4596a9b0a6cc67f259182098d3976234b6ed8cb6) )
@@ -1887,7 +1887,7 @@ ROM_START( gaiapolu )
 	ROM_LOAD64_WORD( "123e20.36y", 0x000006, 2*1024*1024, CRC(490a6f64) SHA1(81b1acc74ce834399005a748eae50b3d633fa469) )
 
 	/* K053536 roz tiles */
-	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX3, 0 )
 	ROM_LOAD( "123e04.32n", 0x000000, 0x080000, CRC(0d4d5b8b) SHA1(d3fb0c77ad46ee9b9c704be6f174258aa051aa71) )
 	ROM_LOAD( "123e05.29n", 0x080000, 0x080000, CRC(7d123f3e) SHA1(f9752e96515dc965aae04e01dfa813fcc4cbccd6) )
 	ROM_LOAD( "123e06.26n", 0x100000, 0x080000, CRC(fa50121e) SHA1(4596a9b0a6cc67f259182098d3976234b6ed8cb6) )
@@ -1932,7 +1932,7 @@ ROM_START( gaiapolj )
 	ROM_LOAD64_WORD( "123e20.36y", 0x000006, 2*1024*1024, CRC(490a6f64) SHA1(81b1acc74ce834399005a748eae50b3d633fa469) )
 
 	/* K053536 roz tiles */
-	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX3, 0 )
 	ROM_LOAD( "123e04.32n", 0x000000, 0x080000, CRC(0d4d5b8b) SHA1(d3fb0c77ad46ee9b9c704be6f174258aa051aa71) )
 	ROM_LOAD( "123e05.29n", 0x080000, 0x080000, CRC(7d123f3e) SHA1(f9752e96515dc965aae04e01dfa813fcc4cbccd6) )
 	ROM_LOAD( "123e06.26n", 0x100000, 0x080000, CRC(fa50121e) SHA1(4596a9b0a6cc67f259182098d3976234b6ed8cb6) )
@@ -1978,7 +1978,7 @@ ROM_START( mmaulers )
 	ROM_LOAD16_BYTE( "170a22.32y", 0x800001, 1024*1024, CRC(21628106) SHA1(1e025ff53caa5cbbf7695f8a77736d59f8a8af1b) )
 
 	/* K053536 roz plane */
-	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX3, 0 )
 	ROM_LOAD( "170a04.33n", 0x000000, 0x80000, CRC(64b9a73b) SHA1(8b984bfd8bdf6d93ad223fca46a4f958a0edb2be) )
 	ROM_LOAD( "170a05.30n", 0x080000, 0x80000, CRC(f2c101d0) SHA1(d80045c9a02db08ea6c851bdc12826862e11c381) )
 	ROM_LOAD( "170a06.27n", 0x100000, 0x80000, CRC(b032e59b) SHA1(482300c683db20c2b2fc6e007b8f7e35373e3c00) )
@@ -2023,7 +2023,7 @@ ROM_START( dadandrn )
 	ROM_LOAD16_BYTE( "170a22.32y", 0x800001, 1024*1024, CRC(21628106) SHA1(1e025ff53caa5cbbf7695f8a77736d59f8a8af1b) )
 
 	/* K053536 roz plane */
-	ROM_REGION( 0x180000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000, REGION_GFX3, 0 )
 	ROM_LOAD( "170a04.33n", 0x000000, 0x80000, CRC(64b9a73b) SHA1(8b984bfd8bdf6d93ad223fca46a4f958a0edb2be) )
 	ROM_LOAD( "170a05.30n", 0x080000, 0x80000, CRC(f2c101d0) SHA1(d80045c9a02db08ea6c851bdc12826862e11c381) )
 	ROM_LOAD( "170a06.27n", 0x100000, 0x80000, CRC(b032e59b) SHA1(482300c683db20c2b2fc6e007b8f7e35373e3c00) )
@@ -2041,32 +2041,6 @@ ROM_END
 
 static void init_common(void)
 {
-	unsigned char *s = memory_region(REGION_GFX1);
-	unsigned char *pFinish = s+memory_region_length(REGION_GFX1)-3;
-
-	while( s<pFinish )
-	{
-		/* convert the whole mess to 5bpp planar in System GX's format
-           (p3 p1 p2 p0 p5)
-           (the original ROMs are stored as chunky for the first 4 bits
-           and the 5th bit is planar, which is undecodable as-is) */
-		int d0 = ((s[0]&0x80)   )|((s[0]&0x08)<<3)|((s[1]&0x80)>>2)|((s[1]&0x08)<<1)|
-		         ((s[2]&0x80)>>4)|((s[2]&0x08)>>1)|((s[3]&0x80)>>6)|((s[3]&0x08)>>3);
-		int d1 = ((s[0]&0x40)<<1)|((s[0]&0x04)<<4)|((s[1]&0x40)>>1)|((s[1]&0x04)<<2)|
-		         ((s[2]&0x40)>>3)|((s[2]&0x04)   )|((s[3]&0x40)>>5)|((s[3]&0x04)>>2);
-		int d2 = ((s[0]&0x20)<<2)|((s[0]&0x02)<<5)|((s[1]&0x20)   )|((s[1]&0x02)<<3)|
-		         ((s[2]&0x20)>>2)|((s[2]&0x02)<<1)|((s[3]&0x20)>>4)|((s[3]&0x02)>>1);
-		int d3 = ((s[0]&0x10)<<3)|((s[0]&0x01)<<6)|((s[1]&0x10)<<1)|((s[1]&0x01)<<4)|
-		         ((s[2]&0x10)>>1)|((s[2]&0x01)<<2)|((s[3]&0x10)>>3)|((s[3]&0x01)   );
-
-		s[0] = d3;
-		s[1] = d1;
-		s[2] = d2;
-		s[3] = d0;
-
-		s += 5;
-	}
-
 	/* set default bankswitch */
 	cur_sound_region = 2;
 	reset_sound_region();

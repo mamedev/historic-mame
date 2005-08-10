@@ -991,6 +991,30 @@ ROM_START( vautour )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
 ROM_END
 
+ROM_START( vautour2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "vautour1.bin", 0x0000, 0x0800, CRC(a600f6a4) SHA1(f1aea5ec71da0d0664fb90b87602fe4c4eed2dbe) )
+	ROM_LOAD( "vautour2.bin", 0x0800, 0x0800, CRC(3699b11a) SHA1(7122685cbfcd75898eaa68f8c5bf87c11df59a3b) )
+	ROM_LOAD( "vautour3.bin", 0x1000, 0x0800, CRC(750b059b) SHA1(6fbaa2ef4c7eef6f731a73b2d33a02fff21b318a) )
+	ROM_LOAD( "vautour4.bin", 0x1800, 0x0800, CRC(01a4bfde) SHA1(a740b8f43a226eb585ea538d41228a98392872d6) )
+	ROM_LOAD( "vautour5.bin", 0x2000, 0x0800, CRC(1ff3a982) SHA1(66fb39e7abdf7a9c6e2eb01d41cfe9429781d6aa) )
+	ROM_LOAD( "vautour6.bin", 0x2800, 0x0800, CRC(8c83bff7) SHA1(3dfb090d7e3a9ae8da882b06e166c48555eaf77c) )
+	ROM_LOAD( "vautour7.bin", 0x3000, 0x0800, CRC(805ec2e8) SHA1(7e56fc9990eb99512078e2b1e2874fb33b0aa05c) )
+	ROM_LOAD( "vautour8.bin", 0x3800, 0x0800, CRC(1edebb45) SHA1(2fdf061ee600e27a6ed512ea61a8d78307a7fb8a) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic23",         0x0000, 0x0800, CRC(3c7e623f) SHA1(e7ff5fc371664af44785c079e92eeb2d8530187b) )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, CRC(59916d3b) SHA1(71aec70a8e096ed1f0c2297b3ae7dca1b8ecc38d) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vautor12.2h",  0x0000, 0x0800, CRC(8eff75c9) SHA1(d38a0e0c02ba680984dd8748a3c45ac55f81f127) )
+	ROM_LOAD( "vautor11.2j",  0x0800, 0x0800, CRC(369e7476) SHA1(599d2fc3b298060d746e95c20a089ad37f685d5b) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
+ROM_END
+
 ROM_START( griffon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "griffon0.a5",  0x0000, 0x0800, CRC(c0f73929) SHA1(3cecf8341a5674165d2cae9b22ea5db26a9597de) )
@@ -1184,7 +1208,8 @@ GAME ( 1981, phoenixc, phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg?",
 GAME ( 1981, condor,   phoenix, condor,   condor,   condor,   ROT90, "Sidam", "Condor" )
 // the following 2 were common bootlegs in england & france respectively
 GAME ( 1980, falcon,   phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg", "Falcon (bootleg set 1)" )
-GAME ( 1980, vautour,  phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg", "Vautour (Jeutel France)" )
+GAME ( 1980, vautour,  phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg", "Vautour (set 1 - Jeutel France)" )
+GAME ( 1980, vautour2, phoenix, condor,   condor,   condor,   ROT90, "bootleg", "Vautour (set 2)" )
 GAME ( 1980, griffon,  phoenix, condor,   condor,   condor,   ROT90, "Videotron", "Griffon" )
 GAME ( 1980, falcona,  phoenix, condor,   falcona,  0,        ROT90, "bootleg", "Falcon (bootleg set 2)" )
 GAMEX( 1981, pleiads,  0,       pleiads,  pleiads,  0,        ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_IMPERFECT_COLORS )

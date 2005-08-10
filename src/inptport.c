@@ -91,6 +91,7 @@
 #include <math.h>
 #include "driver.h"
 #include "config.h"
+#include "xmlfile.h"
 
 #ifdef MESS
 #include "inputx.h"
@@ -221,6 +222,9 @@ static struct DigitalJoystickInfo joystick_info[MAX_PLAYERS][DIGITAL_JOYSTICKS_P
 
 /* memory for UI keys */
 static UINT8 ui_memory[__ipt_max];
+
+/* XML attributes for the different types */
+static const char *seqtypestrings[] = { "standard", "decrement", "increment" };
 
 
 
@@ -511,7 +515,6 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	MAHJONG_FLIP_FLOP,  "P2 Mahjong Flip Flop",	SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	MAHJONG_BIG,        "P2 Mahjong Big",       SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	MAHJONG_SMALL,      "P2 Mahjong Small",     SEQ_DEF_0 )
-
 
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	JOYSTICK_UP,		"P3 Up",				SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_3_UP) )
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	JOYSTICK_DOWN,      "P3 Down",    			SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_3_DOWN) )
@@ -902,10 +905,11 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 };
 
 
-static struct InputPortDefinition inputport_list[sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0])];
-static struct InputPortDefinition inputport_list_backup[sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0])];
-static const int inputport_count = sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0]);
+static struct InputPortDefinition inputport_list[ARRAY_LENGTH(inputport_list_defaults)];
+static struct InputPortDefinition inputport_list_backup[ARRAY_LENGTH(inputport_list_defaults)];
+static const int inputport_count = ARRAY_LENGTH(inputport_list_defaults);
 static struct InputPortDefinition *inputport_list_lookup[__ipt_max][MAX_PLAYERS];
+
 
 
 /*************************************
@@ -923,54 +927,18 @@ static void interpolate_analog_port(int port);
 
 /*************************************
  *
- *  Settings save/load frontend
+ *  Input port pre-loading
  *
  *************************************/
 
-int load_input_port_settings(void)
+static void inputport_preload(void)
 {
-	int loaded, ipnum;
-
 	/* start with the raw defaults and ask the OSD to customize them in the backup array */
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
 	osd_customize_inputport_list(inputport_list_backup);
 
-	/* load the controller-specific info -- note that even though we are still modifying */
-	/* the inputport_list_backup, token_to_port_type relies on inputport_list being valid */
+	/* propogate these changes forward to the final input list */
 	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
-	if (options.controller != NULL)
-	{
-		loaded = config_load_controller(options.controller, inputport_list_backup);
-		if (!loaded)
-			osd_die("Could not load controller file %s.cfg\n", options.controller);
-	}
-
-	/* propogate that forward to the live list and apply the config on top of that */
-	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
-	config_load_default(inputport_list_backup, inputport_list);
-
-	/* now load the game-specific info */
-	loaded = config_load(Machine->input_ports_default, Machine->input_ports);
-
-	/* initialize the various port states */
-	inputport_init();
-
-	/* fill lookup table */
-	memset(inputport_list_lookup, 0, sizeof(inputport_list_lookup));
-	for (ipnum = 0; inputport_list[ipnum].type != IPT_END; ipnum++)
-		inputport_list_lookup[inputport_list[ipnum].type][inputport_list[ipnum].player] = &inputport_list[ipnum];
-
-	/* if we didn't find a saved config, return 0 so the main core knows that it */
-	/* is the first time the game is run and it should diplay the disclaimer. */
-	return loaded;
-}
-
-
-void save_input_port_settings(void)
-{
-	/* save the default config and the game-specific config */
-	config_save_default(inputport_list_backup, inputport_list);
-	config_save(Machine->input_ports_default, Machine->input_ports);
 }
 
 
@@ -981,11 +949,12 @@ void save_input_port_settings(void)
  *
  *************************************/
 
-static void inputport_init(void)
+static void inputport_postload(void)
 {
-	int portnum = -1, bitnum = 0;
 	struct InputPort *port;
+	int portnum, bitnum;
 	UINT32 mask;
+	int ipnum;
 
 	/* reset the pointers */
 	memset(&input_port_tag, 0, sizeof(input_port_tag));
@@ -994,6 +963,8 @@ static void inputport_init(void)
 	memset(&joystick_info, 0, sizeof(joystick_info));
 
 	/* loop over the ports and identify all the analog inputs */
+	portnum = -1;
+	bitnum = 0;
 	for (port = Machine->input_ports; port->type != IPT_END; port++)
 	{
 		/* if this is IPT_PORT, increment the port number */
@@ -1134,6 +1105,417 @@ static void inputport_init(void)
 
 	/* run an initial update */
 	inputport_vblank_start();
+
+	/* fill lookup table */
+	memset(inputport_list_lookup, 0, sizeof(inputport_list_lookup));
+	for (ipnum = 0; inputport_list[ipnum].type != IPT_END; ipnum++)
+		inputport_list_lookup[inputport_list[ipnum].type][inputport_list[ipnum].player] = &inputport_list[ipnum];
+}
+
+
+
+/*************************************
+ *
+ *  Identifies which port types are
+ *  saved/loaded
+ *
+ *************************************/
+
+static int save_this_port_type(int type)
+{
+	switch (type)
+	{
+		case IPT_UNUSED:
+		case IPT_END:
+		case IPT_PORT:
+		case IPT_DIPSWITCH_SETTING:
+		case IPT_CONFIG_SETTING:
+		case IPT_CATEGORY_SETTING:
+		case IPT_VBLANK:
+		case IPT_UNKNOWN:
+			return 0;
+	}
+	return 1;
+}
+
+
+
+/*************************************
+ *
+ *  Input port configuration read
+ *
+ *************************************/
+
+INLINE input_code_t get_default_code(int config_type, int type)
+{
+	switch (type)
+	{
+		case IPT_DIPSWITCH_NAME:
+		case IPT_CATEGORY_NAME:
+			return CODE_NONE;
+
+		default:
+			if (config_type != CONFIG_TYPE_GAME)
+				return CODE_NONE;
+			else
+				return CODE_DEFAULT;
+	}
+	return CODE_NONE;
+}
+
+
+INLINE int string_to_seq_index(const char *string)
+{
+	int seqindex;
+
+	for (seqindex = 0; seqindex < ARRAY_LENGTH(seqtypestrings); seqindex++)
+		if (!stricmp(string, seqtypestrings[seqindex]))
+			return seqindex;
+
+	return -1;
+}
+
+
+static void apply_remaps(input_code_t *remaptable)
+{
+	int remapnum, portnum, seqnum;
+
+	/* apply any remapping first */
+	for (remapnum = 0; remapnum < __code_max; remapnum++)
+		if (remaptable[remapnum] != remapnum)
+			for (portnum = 0; inputport_list[portnum].type != IPT_END; portnum++)
+			{
+				/* remap anything in the default sequence */
+				for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+					if (inputport_list[portnum].defaultseq.code[seqnum] == remapnum)
+						inputport_list[portnum].defaultseq.code[seqnum] = remaptable[remapnum];
+
+				/* remap anything in the analog sequences */
+				if (port_type_is_analog(inputport_list[portnum].type))
+				{
+					for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+						if (inputport_list[portnum].defaultdecseq.code[seqnum] == remapnum)
+							inputport_list[portnum].defaultdecseq.code[seqnum] = remaptable[remapnum];
+					for (seqnum = 0; seqnum < SEQ_MAX; seqnum++)
+						if (inputport_list[portnum].defaultincseq.code[seqnum] == remapnum)
+							inputport_list[portnum].defaultincseq.code[seqnum] = remaptable[remapnum];
+				}
+			}
+}
+
+
+
+static int apply_config_to_default(struct xml_data_node *portnode, int type, int player, input_seq_t *defseq, input_seq_t *newseq)
+{
+	int portnum;
+
+	/* find a matching port in the list */
+	for (portnum = 0; portnum < ARRAY_LENGTH(inputport_list_backup); portnum++)
+	{
+		struct InputPortDefinition *updateport = &inputport_list_backup[portnum];
+		if (updateport->type == type &&
+			updateport->player == player &&
+			seq_cmp(&updateport->defaultseq, &defseq[0]) == 0 &&
+			(!port_type_is_analog(type) ||
+			 (seq_cmp(&updateport->defaultdecseq, &defseq[1]) == 0 &&
+			  seq_cmp(&updateport->defaultincseq, &defseq[2]) == 0)))
+		{
+			/* point to the real port */
+			updateport = &inputport_list[portnum];
+
+			/* copy the sequence(s) */
+			seq_copy(&updateport->defaultseq, &newseq[0]);
+			if (port_type_is_analog(type))
+			{
+				seq_copy(&updateport->defaultdecseq, &newseq[1]);
+				seq_copy(&updateport->defaultincseq, &newseq[2]);
+			}
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+static int apply_config_to_current(struct xml_data_node *portnode, int type, int player, input_seq_t *defseq, input_seq_t *newseq)
+{
+	struct InputPort *updateport;
+	int mask, defvalue, index;
+
+	/* read the mask and defvalue attributes */
+	index = xml_get_attribute_int(portnode, "index", 0);
+	mask = xml_get_attribute_int(portnode, "mask", 0);
+	defvalue = xml_get_attribute_int(portnode, "defvalue", 0);
+
+	/* find the indexed port */
+	for (updateport = Machine->input_ports_default; updateport->type != IPT_END; updateport++)
+		if (index-- == 0)
+			break;
+
+	/* verify that it matches */
+	if (updateport->type == type &&
+		updateport->player == player &&
+		updateport->mask == mask &&
+		(updateport->default_value & mask) == (defvalue & mask) &&
+		seq_cmp(&updateport->seq, &defseq[0]) == 0 &&
+		(!port_type_is_analog(type) ||
+		 (seq_cmp(&updateport->analog.decseq, &defseq[1]) == 0 &&
+		  seq_cmp(&updateport->analog.incseq, &defseq[2]) == 0)))
+	{
+		/* point to the real port */
+		updateport = Machine->input_ports + (updateport - Machine->input_ports_default);
+
+		/* fill in the data from the attributes */
+		updateport->default_value = xml_get_attribute_int(portnode, "value", 0);
+		updateport->analog.delta = xml_get_attribute_int(portnode, "keydelta", 0);
+		updateport->analog.centerdelta = xml_get_attribute_int(portnode, "centerdelta", 0);
+		updateport->analog.sensitivity = xml_get_attribute_int(portnode, "sensitivity", 100);
+		updateport->analog.reverse = (strcmp(xml_get_attribute_string(portnode, "reverse", "no"), "yes") == 0);
+
+		/* copy the sequence(s) */
+		seq_copy(&updateport->seq, &newseq[0]);
+		if (port_type_is_analog(type))
+		{
+			seq_copy(&updateport->analog.decseq, &newseq[1]);
+			seq_copy(&updateport->analog.incseq, &newseq[2]);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+
+void inptport_load(int config_type, struct xml_data_node *parentnode)
+{
+	struct xml_data_node *portnode;
+	int seqnum;
+
+	/* in the initialization phase, we reset all our defaults */
+	if (config_type == CONFIG_TYPE_INIT)
+		inputport_preload();
+
+	/* in the completion phase, we finish the initialization with the final ports */
+	else if (config_type == CONFIG_TYPE_FINAL)
+		inputport_postload();
+
+	/* early exit if no data to parse */
+	if (!parentnode)
+		return;
+
+	/* iterate over all the remap nodes for controller configs only */
+	if (config_type == CONFIG_TYPE_CONTROLLER)
+	{
+		struct xml_data_node *remapnode;
+		input_code_t remap[__code_max];
+		int remapnum;
+
+		/* reset the remap table to default */
+		for (remapnum = 0; remapnum < __code_max; remapnum++)
+			remap[remapnum] = remapnum;
+
+		/* build up the remap table */
+		for (remapnode = xml_get_sibling(parentnode->child, "remap"); remapnode; remapnode = xml_get_sibling(remapnode->next, "remap"))
+		{
+			input_code_t origcode = token_to_code(xml_get_attribute_string(remapnode, "origcode", ""));
+			input_code_t newcode = token_to_code(xml_get_attribute_string(remapnode, "newcode", ""));
+			if (origcode != CODE_NONE && origcode < __code_max && newcode != CODE_NONE)
+				remap[origcode] = newcode;
+		}
+
+		/* apply it */
+		apply_remaps(remap);
+	}
+
+	/* iterate over all the port nodes */
+	for (portnode = xml_get_sibling(parentnode->child, "port"); portnode; portnode = xml_get_sibling(portnode->next, "port"))
+	{
+		input_seq_t defseq[3], newseq[3], tempseq;
+		struct xml_data_node *seqnode;
+		int type, player;
+
+		/* get the basic port info from the attributes */
+		type = token_to_port_type(xml_get_attribute_string(portnode, "type", ""), &player);
+
+		/* initialize sequences to defaults */
+		for (seqnum = 0; seqnum < 3; seqnum++)
+		{
+			seq_set_1(&defseq[seqnum], get_default_code(config_type, type));
+			seq_set_1(&newseq[seqnum], get_default_code(config_type, type));
+		}
+
+		/* loop over default sequences */
+		for (seqnode = xml_get_sibling(portnode->child, "defseq"); seqnode; seqnode = xml_get_sibling(seqnode->next, "defseq"))
+		{
+			/* with a valid type, parse out the default sequence and copy into the new sequence */
+			seqnum = string_to_seq_index(xml_get_attribute_string(seqnode, "type", ""));
+			if (seqnum != -1)
+			{
+				if (seqnode->value && string_to_seq(seqnode->value, &tempseq) != 0)
+					seq_copy(&defseq[seqnum], &tempseq);
+				seq_copy(&newseq[seqnum], &defseq[seqnum]);
+			}
+		}
+
+		/* loop over new sequences */
+		for (seqnode = xml_get_sibling(portnode->child, "newseq"); seqnode; seqnode = xml_get_sibling(seqnode->next, "newseq"))
+		{
+			/* with a valid type, parse out the new sequence */
+			seqnum = string_to_seq_index(xml_get_attribute_string(seqnode, "type", ""));
+			if (seqnum != -1)
+				if (seqnode->value && string_to_seq(seqnode->value, &tempseq) != 0)
+					seq_copy(&newseq[seqnum], &tempseq);
+		}
+
+		/* if we're loading default ports, apply to the inputport_list */
+		if (config_type != CONFIG_TYPE_GAME)
+			apply_config_to_default(portnode, type, player, defseq, newseq);
+		else
+			apply_config_to_current(portnode, type, player, defseq, newseq);
+	}
+
+	/* after applying the controller config, push that back into the backup, since that is */
+	/* what we will diff against */
+	if (config_type == CONFIG_TYPE_CONTROLLER)
+		memcpy(inputport_list_backup, inputport_list, sizeof(inputport_list_backup));
+}
+
+
+
+/*************************************
+ *
+ *  Input port configuration write
+ *
+ *************************************/
+
+static void add_sequence(struct xml_data_node *parentnode, int config_type, int is_default, int type, int porttype, const input_seq_t *seq)
+{
+	struct xml_data_node *seqnode;
+	char seqbuffer[256];
+
+	/* skip if empty */
+	if (is_default && seq_get_1(seq) == get_default_code(config_type, porttype))
+		return;
+
+	/* get the string for the sequence */
+	if (seq_get_1(seq) == CODE_NONE)
+		strcpy(seqbuffer, "NONE");
+	else
+		seq_to_string(seq, seqbuffer, sizeof(seqbuffer));
+
+	/* add the new node */
+	seqnode = xml_add_child(parentnode, is_default ? "defseq" : "newseq", seqbuffer);
+	if (seqnode)
+		xml_set_attribute(seqnode, "type", seqtypestrings[type]);
+}
+
+
+static void save_default_inputs(struct xml_data_node *parentnode)
+{
+	int portnum;
+
+	/* iterate over ports */
+	for (portnum = 0; portnum < ARRAY_LENGTH(inputport_list_backup); portnum++)
+		if (save_this_port_type(inputport_list_backup[portnum].type))
+		{
+			struct xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
+			if (portnode)
+			{
+				struct InputPortDefinition *defport = &inputport_list_backup[portnum];
+				struct InputPortDefinition *curport = &inputport_list[portnum];
+
+				/* write the port information and attributes */
+				xml_set_attribute(portnode, "type", port_type_to_token(defport->type, defport->player));
+
+				/* write digital sequences */
+				if (!port_type_is_analog(defport->type))
+				{
+					add_sequence(portnode, CONFIG_TYPE_DEFAULT, 1, 0, defport->type, &defport->defaultseq);
+					if (seq_cmp(&defport->defaultseq, &curport->defaultseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_DEFAULT, 0, 0, defport->type, &curport->defaultseq);
+				}
+
+				/* write analog sequences */
+				else
+				{
+					add_sequence(portnode, CONFIG_TYPE_DEFAULT, 1, 0, defport->type, &defport->defaultseq);
+					add_sequence(portnode, CONFIG_TYPE_DEFAULT, 1, 1, defport->type, &defport->defaultincseq);
+					add_sequence(portnode, CONFIG_TYPE_DEFAULT, 1, 2, defport->type, &defport->defaultdecseq);
+					if (seq_cmp(&defport->defaultseq, &curport->defaultseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_DEFAULT, 0, 0, defport->type, &curport->defaultseq);
+					if (seq_cmp(&defport->defaultdecseq, &curport->defaultseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_DEFAULT, 0, 1, defport->type, &curport->defaultseq);
+					if (seq_cmp(&defport->defaultincseq, &curport->defaultseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_DEFAULT, 0, 2, defport->type, &curport->defaultseq);
+				}
+			}
+		}
+}
+
+
+static void save_game_inputs(struct xml_data_node *parentnode)
+{
+	int portnum;
+
+	/* iterate over ports */
+	for (portnum = 0; Machine->input_ports_default[portnum].type != IPT_END; portnum++)
+		if (save_this_port_type(Machine->input_ports_default[portnum].type))
+		{
+			struct xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
+			if (portnode)
+			{
+				struct InputPort *defport = &Machine->input_ports_default[portnum];
+				struct InputPort *curport = &Machine->input_ports[portnum];
+
+				/* write the port information and attributes */
+				xml_set_attribute(portnode, "type", port_type_to_token(defport->type, defport->player));
+				xml_set_attribute_int(portnode, "mask", defport->mask);
+				xml_set_attribute_int(portnode, "defvalue", defport->default_value & defport->mask);
+				xml_set_attribute_int(portnode, "value", curport->default_value & defport->mask);
+				xml_set_attribute_int(portnode, "index", portnum);
+
+				/* write digital sequences */
+				if (!port_type_is_analog(defport->type))
+				{
+					add_sequence(portnode, CONFIG_TYPE_GAME, 1, 0, defport->type, &defport->seq);
+					if (seq_cmp(&defport->seq, &curport->seq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_GAME, 0, 0, defport->type, &curport->seq);
+				}
+
+				/* write analog sequences */
+				else
+				{
+					/* write analog-specific attributes first */
+					xml_set_attribute_int(portnode, "keydelta", curport->analog.delta);
+					xml_set_attribute_int(portnode, "centerdelta", curport->analog.centerdelta);
+					xml_set_attribute_int(portnode, "sensitivity", curport->analog.sensitivity);
+					xml_set_attribute(portnode, "reverse", curport->analog.reverse ? "yes" : "no");
+
+					/* then the sequences */
+					add_sequence(portnode, CONFIG_TYPE_GAME, 1, 0, defport->type, &defport->seq);
+					add_sequence(portnode, CONFIG_TYPE_GAME, 1, 1, defport->type, &defport->analog.decseq);
+					add_sequence(portnode, CONFIG_TYPE_GAME, 1, 2, defport->type, &defport->analog.incseq);
+					if (seq_cmp(&defport->seq, &curport->seq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_GAME, 0, 0, defport->type, &curport->seq);
+					if (seq_cmp(&defport->analog.decseq, &curport->analog.decseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_GAME, 0, 1, defport->type, &curport->analog.decseq);
+					if (seq_cmp(&defport->analog.incseq, &curport->analog.incseq) != 0)
+						add_sequence(portnode, CONFIG_TYPE_GAME, 0, 2, defport->type, &curport->analog.incseq);
+				}
+			}
+		}
+}
+
+
+void inptport_save(int config_type, struct xml_data_node *parentnode)
+{
+	if (parentnode)
+	{
+		/* default ports save differently */
+		if (config_type == CONFIG_TYPE_DEFAULT)
+			save_default_inputs(parentnode);
+		else
+			save_game_inputs(parentnode);
+	}
 }
 
 

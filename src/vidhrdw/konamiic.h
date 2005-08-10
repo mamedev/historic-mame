@@ -282,6 +282,7 @@ READ16_HANDLER( K056832_5bpp_rom_word_r );
 READ32_HANDLER( K056832_5bpp_rom_long_r );
 READ32_HANDLER( K056832_6bpp_rom_long_r );
 READ16_HANDLER( K056832_rom_word_r );
+READ16_HANDLER( K056832_mw_rom_word_r );
 READ16_HANDLER( K056832_old_rom_word_r );
 WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );

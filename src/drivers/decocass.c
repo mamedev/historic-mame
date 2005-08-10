@@ -621,6 +621,14 @@ static MACHINE_DRIVER_START( cgraplop )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( cgraplp2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cgraplp2)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( clapapa )
 
 	/* basic machine hardware */
@@ -1172,7 +1180,7 @@ GAMEB ( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270
 GAMEB ( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "Data East Corporation", "Bump N Jump (Cassette)" )
 GAMEB ( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "Data East Corporation", "Burger Time (Cassette)" )
 GAMEB ( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
-GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
+GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplp2, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
 GAMEB ( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
 GAMEB ( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
 GAMEB ( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "Data East Corporation", "Fighting Ice Hockey (Cassette)" )

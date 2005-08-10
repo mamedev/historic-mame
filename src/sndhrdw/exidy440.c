@@ -18,10 +18,6 @@
 
 
 
-/* sample rates for each chip */
-#define	SAMPLE_RATE_FAST		(12979200/256)	/* FCLK */
-#define	SAMPLE_RATE_SLOW		(12979200/512)	/* SCLK */
-
 /* internal caching */
 #define	MAX_CACHE_ENTRIES		1024				/* maximum separate samples we expect to ever see */
 #define	SAMPLE_BUFFER_LENGTH	1024				/* size of temporary decode buffer on the stack */
@@ -99,12 +95,10 @@ static sound_channel_data sound_channel[4];
 /* debugging */
 static FILE *debuglog;
 
+/* channel frequency is configurable */
+static int channel_frequency[4];
+
 /* constant channel parameters */
-static const int channel_frequency[4] =
-{
-	SAMPLE_RATE_FAST, SAMPLE_RATE_FAST,		/* channels 0 and 1 are run by FCLK */
-	SAMPLE_RATE_SLOW, SAMPLE_RATE_SLOW		/* channels 2 and 3 are run by SCLK */
-};
 static const int channel_bits[4] =
 {
 	4, 4,									/* channels 0 and 1 are MC3418s, 4-bit CVSD */
@@ -171,8 +165,13 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 	m6844_interrupt = 0x00;
 	m6844_chain = 0x00;
 
+	channel_frequency[0] = clock;   /* channels 0 and 1 are run by FCLK */
+	channel_frequency[1] = clock;
+	channel_frequency[2] = clock/2; /* channels 2 and 3 are run by SCLK */
+	channel_frequency[3] = clock/2;
+
 	/* get stream channels */
-	stream = stream_create(0, 2, SAMPLE_RATE_FAST, NULL, channel_update);
+	stream = stream_create(0, 2, clock, NULL, channel_update);
 
 	/* allocate the sample cache */
 	length = memory_region_length(REGION_SOUND1) * 16 + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
@@ -183,8 +182,8 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 	reset_sound_cache();
 
 	/* allocate the mixer buffer */
-	mixer_buffer_left = auto_malloc(2 * SAMPLE_RATE_FAST * sizeof(INT32));
-	mixer_buffer_right = mixer_buffer_left + SAMPLE_RATE_FAST;
+	mixer_buffer_left = auto_malloc(2 * clock * sizeof(INT32));
+	mixer_buffer_right = mixer_buffer_left + clock;
 
 	if (SOUND_LOG)
 		debuglog = fopen("sound.log", "w");

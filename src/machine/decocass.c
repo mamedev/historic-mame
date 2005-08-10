@@ -1742,6 +1742,15 @@ MACHINE_INIT( cgraplop )
 	type3_swap = TYPE3_SWAP_56;
 }
 
+MACHINE_INIT( cgraplp2 )
+{
+	decocass_init_common();
+	LOG(0,("dongle type #3 (PAL)\n"));
+	decocass_dongle_r = decocass_type3_r;
+	decocass_dongle_w = decocass_type3_w;
+	type3_swap = TYPE3_SWAP_67;
+}
+
 MACHINE_INIT( clapapa )
 {
 	decocass_init_common();

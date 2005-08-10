@@ -6484,9 +6484,81 @@ READ16_HANDLER( K056832_rom_word_r )
 	return ret;
 }
 
+// data is arranged like this:
+// 0000 1111 22 0000 1111 22
+READ16_HANDLER( K056832_mw_rom_word_r )
+{
+	int bank = 10240*K056832_CurGfxBank;
+	int addr;
+
+	if (!K056832_rombase)
+	{
+		K056832_rombase = memory_region(K056832_memory_region);
+	}
+
+	if (K056832_regsb[2] & 0x8)
+	{
+		// we want only the 2s
+		int bit;
+		int res, temp;
+
+		bit = offset % 4;
+		addr = (offset / 4) * 5;
+
+		temp = K056832_rombase[addr+4+bank];
+
+		switch (bit)
+		{
+			case 0:
+				res = (temp & 0x80) << 5;
+				res |= ((temp & 0x40) >> 2);
+				break;
+
+			case 1:
+				res = (temp & 0x20) << 7;
+				res |= (temp & 0x10);
+				break;
+
+			case 2:
+				res = (temp & 0x08) << 9;
+				res |= ((temp & 0x04) << 2);
+				break;
+
+			case 3:
+				res = (temp & 0x02) << 11;
+				res |= ((temp & 0x01) << 4);
+				break;
+		}
+
+		return res;
+	}
+	else
+	{
+		// we want only the 0s and 1s.
+
+		addr = (offset>>1) * 5;
+
+		if (offset & 1)
+		{
+			addr += 2;
+		}
+
+		addr += bank;
+
+		return K056832_rombase[addr+1] | (K056832_rombase[addr] << 8);
+	}
+
+	return 0;
+}
+
 READ16_HANDLER( K056832_old_rom_word_r )
 {
-	int addr = 0x2000*K056832_CurGfxBank + 2*offset;
+	int addr = 0x2000*K056832_CurGfxBank + (2*offset);
+
+	if (!K056832_rombase)
+	{
+		K056832_rombase = memory_region(K056832_memory_region);
+	}
 
 	return K056832_rombase[addr+1] | (K056832_rombase[addr] << 8);
 }

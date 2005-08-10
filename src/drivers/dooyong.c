@@ -42,6 +42,9 @@ Pop Bingo
 - appears to combine 2 4bpp layers to make 1 8bpp layer, for now we just
   treat it as 1 8bpp layer and ignore the 2nd set of registers.
 - some unknown reads / writes
+Flying Tiger
+- sprite/fg priority is not understood
+- layer2 palette bank
 
 ***************************************************************************/
 
@@ -60,6 +63,7 @@ extern data16_t *popbingo_scroll, *popbingo_scroll2;
 WRITE8_HANDLER( lastday_ctrl_w );
 WRITE8_HANDLER( pollux_ctrl_w );
 WRITE8_HANDLER( primella_ctrl_w );
+WRITE8_HANDLER( flytiger_ctrl_w );
 WRITE16_HANDLER( rshark_ctrl_w );
 VIDEO_UPDATE( lastday );
 VIDEO_UPDATE( gulfstrm );
@@ -202,10 +206,10 @@ static ADDRESS_MAP_START( flytiger_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(lastday_bankswitch_w)
-	AM_RANGE(0xe010, 0xe010) AM_WRITE(pollux_ctrl_w)	/* coin counter, flip screen */
+	AM_RANGE(0xe010, 0xe010) AM_WRITE(flytiger_ctrl_w)	/* coin counter, flip screen */
 	AM_RANGE(0xe020, 0xe020) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xe030, 0xe034) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
-	AM_RANGE(0xe040, 0xe044) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
+	AM_RANGE(0xe030, 0xe036) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
+	AM_RANGE(0xe040, 0xe046) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
 	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_txvideoram)
 ADDRESS_MAP_END
@@ -803,6 +807,15 @@ static struct GfxDecodeInfo lastday_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo flytiger_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &lastday_charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
+	{ REGION_GFX3, 0, &tilelayout,         768, 16 },
+	{ REGION_GFX4, 0, &tilelayout,         512, 32 },
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo bluehawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bluehawk_charlayout,  0, 16 },
@@ -836,8 +849,8 @@ static struct GfxDecodeInfo rshark_gfxdecodeinfo[] =
 static struct GfxDecodeInfo popbingo_gfxdecodeinfo[] =
 {
 	/* no chars */
-	{ REGION_GFX1, 0, &rshark_spritelayout,  0, 16 },
-	{ REGION_GFX2, 0, &popbingo_tilelayout,       256, 1 },
+	{ REGION_GFX1, 0, &rshark_spritelayout,   0, 16 },
+	{ REGION_GFX2, 0, &popbingo_tilelayout, 256,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -1032,7 +1045,7 @@ static MACHINE_DRIVER_START( flytiger )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
-	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
+	MDRV_GFXDECODE(flytiger_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_EOF(dooyong)
@@ -1515,7 +1528,7 @@ ROM_START( flytiger )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "2.4h",         0x08000, 0x08000, CRC(2fb72912) SHA1(34453e2b49cf3a6bc9e87a8400428d95f626b97a) )
-	ROM_CONTINUE( 0x0000,0x8000)
+	ROM_CONTINUE(             0x00000, 0x8000 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD16_BYTE( "13.4h", 0x00000, 0x20000, CRC(8a158b95) SHA1(ed09d9c40b76a27e06601381e463a00b16555f1e) )
@@ -1523,10 +1536,10 @@ ROM_START( flytiger )
 	ROM_LOAD16_BYTE( "14.4k", 0x40000, 0x20000, CRC(df66b6f3) SHA1(3a29ae69a09306c5a2a2786acbf227832b408152) )
 	ROM_LOAD16_BYTE( "16.2k", 0x40001, 0x20000, CRC(f24a5099) SHA1(408559057989a40ca298baa85d5fe7cbde72d2b8) )
 
-	ROM_REGION( 0x80000, REGION_GFX4,0 )	/* tiles + tilemaps */
+	ROM_REGION( 0x80000, REGION_GFX3,0 )	/* tiles + tilemaps */
 	ROM_LOAD16_WORD_SWAP( "dy-ft-m1.11n",   0x00000, 0x80000, CRC(f06589c2) SHA1(fb4aa12257e2e0162f2219ebea5177e8bb15e3f0) )
 
-	ROM_REGION( 0x80000, REGION_GFX3,0 )	/* tiles + tilemaps */
+	ROM_REGION( 0x80000, REGION_GFX4,0 )	/* tiles + tilemaps */
 	ROM_LOAD16_WORD_SWAP("dy-ft-m2.11g",   0x00000, 0x80000, CRC(7545f9c9) SHA1(dcab4d64a8fada5afd4a352f5a30c868676d2b57) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKI6295 samples */
@@ -1871,7 +1884,7 @@ GAMEX(1991, gulfstrm, 0,        gulfstrm, gulfstrm, 0, ROT270, "Dooyong", "Gulf 
 GAMEX(1991, gulfstr2, gulfstrm, gulfstrm, gulfstrm, 0, ROT270, "Dooyong (Media Shoji license)", "Gulf Storm (Media Shoji)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX(1991, pollux,   0,        pollux,   pollux,   0, ROT270, "Dooyong", "Pollux (set 1)", GAME_IMPERFECT_SOUND )
 GAMEX(1991, polluxa,  pollux,   pollux,   pollux,   0, ROT270, "Dooyong", "Pollux (set 2)", GAME_IMPERFECT_SOUND )
-GAMEX(1992, flytiger, 0,        flytiger, flytiger, 0, ROT270, "Dooyong", "Flying Tiger", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, flytiger, 0,        flytiger, flytiger, 0, ROT270, "Dooyong", "Flying Tiger", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS )
 GAMEX(1993, bluehawk, 0,        bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC license)", "Blue Hawk (NTC)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )

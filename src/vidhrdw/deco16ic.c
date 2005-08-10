@@ -135,7 +135,7 @@ Rowscroll style:
     8   2 / 1
     9-15 Untested on hardware, no known games set this anyway.  Assumed invalid (no rowscroll)
 
-    Column and rowscroll can both be applied at once.  (Not implemented yet)
+    Column and rowscroll can both be applied at once.
 
 ***************************************************************************/
 

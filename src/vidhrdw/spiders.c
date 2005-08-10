@@ -16,7 +16,6 @@ static int bitflip[256];
 static int *screenbuffer;
 
 #define SCREENBUFFER_SIZE	0x2000
-#define SCREENBUFFER_MASK	0x1fff
 
 /***************************************************************************
 
@@ -27,7 +26,9 @@ VIDEO_START( spiders )
 {
 	int loop;
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+	// Use a temp bitmap so user change (dip switches, etc.) does not effect the bitmap
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
 
 	for(loop=0;loop<256;loop++)
 	{
@@ -40,13 +41,10 @@ VIDEO_START( spiders )
 		bitflip[loop]|=(loop&0x40)?0x02:0x00;
 		bitflip[loop]|=(loop&0x80)?0x01:0x00;
 	}
-
 	if ((screenbuffer = auto_malloc(SCREENBUFFER_SIZE*sizeof(int))) == 0) return 1;
 	memset(screenbuffer,1,SCREENBUFFER_SIZE*sizeof(int));
-
 	return 0;
 }
-
 
 /***************************************************************************
 
@@ -64,26 +62,23 @@ VIDEO_UPDATE( spiders )
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
 	crtc6845_mem_size=crtc6845_horiz_disp*crtc6845_vert_disp*8;
+
+	video_addr=crtc6845_start_addr & 0x7f;
 
 	if(spiders_video_flip)
 	{
-		video_addr=crtc6845_start_addr+(crtc6845_mem_size-1);
-		if((video_addr&0xff)==0x80) video_addr-=0x80;	/* Fudge factor!!! */
+		video_addr+=crtc6845_mem_size-1;
 		increment=-1;
 	}
 	else
 	{
-		video_addr=crtc6845_start_addr;
 		increment=1;
 	}
 
-	video_addr&=0xfbff;	/* Fudge factor: sometimes this bit gets set and */
-				/* I've no idea how it maps to the hardware but  */
-				/* everything works OK if we do this             */
-
-	if(crtc6845_page_flip) video_addr+=0x2000;
+	// Access bank1
+	if(crtc6845_page_flip)
+		video_addr+=0x2000;
 
 	for(loop=0;loop<crtc6845_mem_size;loop++)
 	{
@@ -101,12 +96,11 @@ VIDEO_UPDATE( spiders )
 			data1=RAM[0x4000+video_addr];
 			data2=RAM[0x8000+video_addr];
 		}
-
 		combo=data0|(data1<<8)|(data2<<16);
 
-		if(screenbuffer[video_addr&SCREENBUFFER_MASK]!=combo)
+        // Check if we need to update the bitmap or the bitmap already has the right colour
+		if(screenbuffer[loop]!=combo)
 		{
-
 			y=loop/0x20;
 
 			for(i=0;i<8;i++)
@@ -120,12 +114,10 @@ VIDEO_UPDATE( spiders )
 				data1 >>= 1;
 				data2 >>= 1;
 			}
-			screenbuffer[video_addr&SCREENBUFFER_MASK]=combo;
+			screenbuffer[loop]=combo;
 		}
 		video_addr+=increment;
-		video_addr&=0x3fff;
 	}
-
 	/* Now copy the temp bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

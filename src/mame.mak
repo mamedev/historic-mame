@@ -710,6 +710,7 @@ $(OBJ)/exidy.a: \
 	$(OBJ)/vidhrdw/starfire.o $(OBJ)/drivers/starfire.o \
 	$(OBJ)/vidhrdw/victory.o $(OBJ)/drivers/victory.o \
 	$(OBJ)/sndhrdw/exidy440.o $(OBJ)/vidhrdw/exidy440.o $(OBJ)/drivers/exidy440.o \
+	$(OBJ)/drivers/vertigo.o $(OBJ)/machine/vertigo.o $(OBJ)/vidhrdw/vertigo.o \
 	$(OBJ)/drivers/maxaflex.o $(OBJ)/machine/atari.o $(OBJ)/vidhrdw/atari.o $(OBJ)/vidhrdw/antic.o $(OBJ)/vidhrdw/gtia.o \
 
 $(OBJ)/atari.a: \

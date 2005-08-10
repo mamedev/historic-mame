@@ -10,6 +10,7 @@
 #include "png.h"
 #include "harddisk.h"
 #include "artwork.h"
+#include "config.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -223,6 +224,70 @@ void free_memory_region(int num)
     Coin counter code
 
 ***************************************************************************/
+
+void counters_load(int config_type, struct xml_data_node *parentnode)
+{
+	struct xml_data_node *coinnode, *ticketnode;
+
+	/* on init, reset the counters */
+	if (config_type == CONFIG_TYPE_INIT)
+	{
+		memset(coin_count, 0, sizeof(coin_count));
+		dispensed_tickets = 0;
+	}
+
+	/* only care about game-specific data */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* might not have any data */
+	if (!parentnode)
+		return;
+
+	/* iterate over coins nodes */
+	for (coinnode = xml_get_sibling(parentnode->child, "coins"); coinnode; coinnode = xml_get_sibling(coinnode->next, "coins"))
+	{
+		int index = xml_get_attribute_int(coinnode, "index", -1);
+		if (index >= 0 && index < COIN_COUNTERS)
+			coin_count[index] = xml_get_attribute_int(coinnode, "number", 0);
+	}
+
+	/* get the single tickets node */
+	ticketnode = xml_get_sibling(parentnode->child, "tickets");
+	if (ticketnode)
+		dispensed_tickets = xml_get_attribute_int(ticketnode, "number", 0);
+}
+
+
+void counters_save(int config_type, struct xml_data_node *parentnode)
+{
+	int i;
+
+	/* only care about game-specific data */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* iterate over coin counters */
+	for (i = 0; i < COIN_COUNTERS; i++)
+		if (coin_count[i] != 0)
+		{
+			struct xml_data_node *coinnode = xml_add_child(parentnode, "coins", NULL);
+			if (coinnode)
+			{
+				xml_set_attribute_int(coinnode, "index", i);
+				xml_set_attribute_int(coinnode, "number", coin_count[i]);
+			}
+		}
+
+	/* output tickets */
+	if (dispensed_tickets != 0)
+	{
+		struct xml_data_node *tickets = xml_add_child(parentnode, "tickets", NULL);
+		if (tickets)
+			xml_set_attribute_int(tickets, "number", dispensed_tickets);
+	}
+}
+
 
 void coin_counter_reset(void)
 {

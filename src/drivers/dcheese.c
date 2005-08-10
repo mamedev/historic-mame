@@ -6,9 +6,10 @@
 
     Games supported:
         * Double Cheese
+        * Lotto Fun 2
 
     Other games on this hardware:
-        * Lotto Fun (not dumped)
+        * Flintstones Memory Match?
 
     Known bugs:
         * Test/tilt buttons seem to be swapped compared to test mode
@@ -23,6 +24,10 @@
 #include "vidhrdw/generic.h"
 #include "sound/bsmt2000.h"
 #include "dcheese.h"
+
+
+#define MAIN_OSC	14318180
+#define SOUND_OSC	24000000
 
 
 
@@ -279,6 +284,49 @@ INPUT_PORTS_START( dcheese )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( lottof2 )
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SPECIAL )		/* EEPROM data */
+	PORT_BIT( 0x1f00, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 )		/* button */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 )		/* ticket */
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 220000 */
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* 240000 */
+	PORT_BIT( 0x001f, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* low 5 bits read as a unit */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* ticket status */
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* sound->main buffer status (0=empty) */
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* main->sound buffer status (1=empty) */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_UP )
+	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 2a0002 */
+	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* 2a000e */
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -303,11 +351,11 @@ static struct BSMT2000interface bsmt2000_interface =
 static MACHINE_DRIVER_START( dcheese )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_ADD(M68000, MAIN_OSC)
 	MDRV_CPU_PROGRAM_MAP(main_cpu_map,0)
 	MDRV_CPU_VBLANK_INT(dcheese_vblank,1)
 
-	MDRV_CPU_ADD(M6809, 1250000)
+	MDRV_CPU_ADD(M6809, SOUND_OSC/16)
 	MDRV_CPU_PROGRAM_MAP(sound_cpu_map,0)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,TIME_IN_HZ(500))	/* guess */
 
@@ -330,10 +378,10 @@ static MACHINE_DRIVER_START( dcheese )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(BSMT2000, 12000000*2)	/* guess */
+	MDRV_SOUND_ADD(BSMT2000, SOUND_OSC)
 	MDRV_SOUND_CONFIG(bsmt2000_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	MDRV_SOUND_ROUTE(0, "left", 1.8)
+	MDRV_SOUND_ROUTE(1, "right", 1.8)
 MACHINE_DRIVER_END
 
 
@@ -380,6 +428,32 @@ ROM_START( dcheese )
 ROM_END
 
 
+ROM_START( lottof2 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68k */
+	ROM_LOAD16_BYTE( "u104.r20", 0x00000, 0x20000, CRC(0dfa710e) SHA1(b28676caf2074822e87bd213d76a892bcce07c1a) )
+	ROM_LOAD16_BYTE( "u103.r20", 0x00001, 0x20000, CRC(1bcd7c77) SHA1(891f066cbcf558e7a725154758cf5a7a58a4400a) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* M6809 */
+	ROM_LOAD( "u102.r10", 0x8000, 0x8000, CRC(fcb34c81) SHA1(f80cef85d0f4218c88c01b238f10eff2c6241d33) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )
+	ROM_LOAD( "u123.r10", 0x00000, 0x40000, CRC(dbcdb5aa) SHA1(7473c5e0fc1a40a39e148277b4094fe1338d988c) )
+	ROM_LOAD( "u127.r10", 0x40000, 0x40000, CRC(029ffed9) SHA1(63ba56277745ebea7c2c2b3738790cd2f4ddbe00) )
+	ROM_LOAD( "u125.r10", 0x80000, 0x40000, CRC(c70cf1c6) SHA1(eb5f0c5f7485d92ce569ad915b9f5c3c48338172) )
+	ROM_LOAD( "u129.r10", 0xc0000, 0x40000, CRC(e9c9e4b0) SHA1(02a3bc279e2489fd53f9a08df5f1023f75fff4d1) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "arom0.r10", 0x000000, 0x40000, CRC(05e7581b) SHA1(e12be200abfbef269fc085d6c5efea106487e05f) )
+	ROM_LOAD( "arom1.r10", 0x1e0000, 0x20000, CRC(6c4ebbfd) SHA1(2b396d96ce8903e5e8d455ce019422b744f3c4d5) )
+	ROM_LOAD( "arom2.r10", 0x2e0000, 0x20000, CRC(fbe9fbbb) SHA1(457fc3c0d33cf430e5969f4fa11317f1f930351b) )
+	ROM_LOAD( "arom3.r10", 0x3e0000, 0x20000, CRC(ffb6e463) SHA1(1349455d2ce8eb141bc0fa5219f5e7c52ee969dc) )
+
+	ROM_REGION16_LE( 0x20000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "u144.r10", 0x00000, 0x10000, CRC(3b9d5d9e) SHA1(b3fbfeb41c62c689a825dfe9487917a927a71f58) )
+	ROM_LOAD16_BYTE( "u145.r10", 0x00001, 0x10000, CRC(e5a022a4) SHA1(567a37d24b36ca01a2ac3c40a0392cf97b1eb948) )
+ROM_END
+
+
 
 /*************************************
  *
@@ -402,3 +476,4 @@ static DRIVER_INIT( dcheese )
  *************************************/
 
 GAME( 1993, dcheese, 0, dcheese, dcheese, dcheese, ROT90, "HAR", "Double Cheese" )
+GAME( 1993, lottof2, 0, dcheese, lottof2, dcheese, ROT0,  "HAR", "Lotto Fun 2" )

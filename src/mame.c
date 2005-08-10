@@ -19,6 +19,7 @@
             - calls mame_validitychecks() [mame.c] to perform validity checks on all compiled drivers
             - calls expand_machine_driver() [mame.c] to construct the machine driver
             - calls cpuintrf_init() [cpuintrf.c] to determine which CPUs are available
+            - calls config_init() [config.c] to initialize configuration callbacks
             - calls init_game_options() [mame.c] to compute parameters based on global options struct
             - initializes the savegame system
             - calls osd_init() [osdepend.h] to do platform-specific initialization
@@ -35,7 +36,6 @@
                 - calls timer_init() [timer.c] to reset the timer system
                 - calls cpu_init_refresh_timer() [cpuexec.c] to start the refresh timer
                 - calls cpu_init() [cpuexec.c] to initialize the CPUs
-                - calls load_input_port_settings() [input.c] to load the configuration file
                 - calls memory_init() [memory.c] to process the game's memory maps
                 - calls the driver's DRIVER_INIT callback
 
@@ -64,6 +64,7 @@
                 - calls run_machine_core() [mame.c]
 
                 run_machine_core() [mame.c]
+                    - calls config_load_settings() [config.c] to load the configuration file
                     - shows the copyright screen
                     - shows the game warnings
                     - shows the game info screen
@@ -101,7 +102,7 @@
 
                     - calls the driver's NVRAM_HANDLER to save NVRAM
                     - calls StopCheat() [cheat.c] to tear down the cheat system
-                    - calls save_input_port_settings() [inptport.c] to save the game's configuration
+                    - calls config_save_settings() [config.c] to save the game's configuration
 
                 - calls sound_stop() [sndintrf.c] to stop the audio system
                 - calls the driver's VIDEO_STOP callback
@@ -144,6 +145,7 @@
 #include "vidhrdw/vector.h"
 #include "palette.h"
 #include "harddisk.h"
+#include "config.h"
 
 
 /***************************************************************************
@@ -196,7 +198,6 @@ static int vfcount;
 static struct performance_info performance;
 
 /* misc other statics */
-static int settingsloaded;
 static int leds_status;
 
 /* artwork callbacks */
@@ -319,6 +320,9 @@ int run_game(int game)
 	if (cpuintrf_init())
 		return 1;
 
+	/* initialize the configuration callbacks */
+	config_init();
+
 	/* initialize the game options */
 	if (init_game_options())
 		return 1;
@@ -440,9 +444,6 @@ static int init_machine(void)
 	}
 #endif
 
-	/* load input ports settings (keys, dip switches, and so on) */
-	settingsloaded = load_input_port_settings();
-
 	/* multi-session safety - set spriteram size to zero before memory map is set up */
 	spriteram_size = spriteram_2_size = 0;
 
@@ -558,8 +559,13 @@ static int run_machine(void)
 
 void run_machine_core(void)
 {
+	int settingsloaded;
+
 	/* disable artwork for the start */
 	artwork_enable(0);
+
+	/* load the configuration settings now */
+	settingsloaded = config_load_settings();
 
 	/* if we didn't find a settings file, show the disclaimer */
 	if (settingsloaded || options.skip_disclaimer || showcopyright(artwork_get_ui_bitmap()) == 0)
@@ -611,7 +617,7 @@ void run_machine_core(void)
 					StopCheat();
 
 				/* save input ports settings */
-				save_input_port_settings();
+				config_save_settings();
 			}
 		}
 	}

@@ -4465,6 +4465,22 @@ ROM_START( piscesb )
 	ROM_LOAD( "colour.bin",   0x0000, 0x0020, CRC(57a45057) SHA1(d4ec6a54f72640e5b485aa59e206c090e67ff640) )	// same as checkman.clr
 ROM_END
 
+ROM_START( omni )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "omni1.7f",     0x0000, 0x1000, CRC(a9b7acc6) SHA1(0c6319957b760fea3cfa6c29b37c25f5a89a6d77) )
+	ROM_LOAD( "omni2.7j",     0x1000, 0x1000, CRC(6ade29b7) SHA1(64f1ce82c761db11d26c385299a7063f5971c99a) )
+	ROM_LOAD( "omni3.7f",     0x2000, 0x1000, CRC(9e37bb24) SHA1(d90b2ff0297d87687561e1e9b29510b6c051760b) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "omni5b.l1",    0x0000, 0x0800, CRC(9503a23a) SHA1(23848de56841dd1de9ef74d5a9c981c784098175) )
+	ROM_LOAD( "omni6c.j22",   0x0800, 0x0800, CRC(0adfc3fe) SHA1(a4da488632d9906066db45ae62747caf5ffbf2d8) )
+	ROM_LOAD( "omni4a.j1",    0x1000, 0x0800, CRC(3e61f849) SHA1(efa0059bc843af0c3bb94f4bc0a8286ca5069179) )
+	ROM_LOAD( "omni7d.l2",    0x1800, 0x0800, CRC(7130e9eb) SHA1(e6bb7a9b4f2fc001296e1060d0671b7a88599c8b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "colour.bin",   0x0000, 0x0020, CRC(57a45057) SHA1(d4ec6a54f72640e5b485aa59e206c090e67ff640) )
+ROM_END
+
 ROM_START( uniwars )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, CRC(d975af10) SHA1(a2e2a36a75db8fd09441308b08b6ae073c68b8cf) )
@@ -5948,6 +5964,7 @@ GAME( 19??, tst_galx, galaxian, galaxian, galaxian, 0,        ROT90,  "Test ROM"
 GAME( 1981, gmgalax,  0,        gmgalax,  gmgalax,  gmgalax,  ROT90,  "bootleg", "Ghostmuncher Galaxian (bootleg)" )
 GAME( 19??, pisces,   0,        pisces,   pisces,   pisces,	  ROT90,  "Subelectro", "Pisces" )
 GAME( 19??, piscesb,  pisces,   pisces,   piscesb,  pisces,   ROT90,  "bootleg", "Pisces (bootleg)" )
+GAME( 19??, omni,     pisces,   pisces,   piscesb,  pisces,   ROT90,  "bootleg", "Omni" )
 GAME( 1980, uniwars,  0,        pisces,   superg,   pisces,   ROT90,  "Irem", "UniWar S" )
 GAME( 1980, gteikoku, uniwars,  pisces,   superg,   pisces,   ROT90,  "Irem", "Gingateikoku No Gyakushu" )
 GAME( 1980, gteikokb, uniwars,  pisces,   gteikokb, pisces,   ROT270, "bootleg", "Gingateikoku No Gyakushu (bootleg set 1)" )

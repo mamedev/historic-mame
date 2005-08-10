@@ -13,6 +13,32 @@
 
 #include "mame.h"
 #include "input.h"
+#include "xmlfile.h"
+
+
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+#define CONFIG_TYPE_INIT			0		/* opportunity to initialize things first */
+#define CONFIG_TYPE_CONTROLLER		1		/* loading from controller file */
+#define CONFIG_TYPE_DEFAULT			2		/* loading from default.cfg */
+#define CONFIG_TYPE_GAME			3		/* loading from game.cfg */
+#define CONFIG_TYPE_FINAL			4		/* opportunity to finish initialization */
+
+
+
+/*************************************
+ *
+ *  Type definitions
+ *
+ *************************************/
+
+typedef void (*config_callback)(int config_type, struct xml_data_node *parentnode);
+
 
 
 /*************************************
@@ -21,11 +47,9 @@
  *
  *************************************/
 
-int config_load(const struct InputPort *input_ports_default, struct InputPort *input_ports);
-void config_save(const struct InputPort *input_ports_default, const struct InputPort *input_ports);
-int config_load_default(const struct InputPortDefinition *input_ports_backup, struct InputPortDefinition *input_ports);
-void config_save_default(const struct InputPortDefinition *input_ports_backup, const struct InputPortDefinition *input_ports);
-int config_load_controller(const char *name, struct InputPortDefinition *input_ports);
-
+void config_init(void);
+void config_register(const char *nodename, config_callback load, config_callback save);
+int config_load_settings(void);
+void config_save_settings(void);
 
 #endif	/* __CONFIG_H__ */

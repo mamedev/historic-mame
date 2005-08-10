@@ -165,6 +165,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( gmgalax )	/* bootleg */
 	DRIVER( pisces )	/* Subelectro */
 	DRIVER( piscesb )	/* bootleg */
+	DRIVER( omni )		/* bootleg */
 	DRIVER( uniwars )	/* (c) Irem */
 	DRIVER( gteikoku )	/* (c) Irem */
 	DRIVER( gteikokb )	/* bootleg */
@@ -527,6 +528,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( condor )	/* bootleg */
 	DRIVER( falcon )	/* bootleg */
 	DRIVER( vautour )	/* bootleg (Jeutel) */
+	DRIVER( vautour2 )	/* bootleg */
 	DRIVER( griffon )	/* bootleg (Videotron) */
 	DRIVER( falcona )	/* bootleg */
 	DRIVER( pleiads )	/* (c) 1981 Tehkan */
@@ -4282,6 +4284,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( starfir2 )	/* (c) 1979 Exidy */
 	DRIVER( victory )	/* (c) 1982 */
 	DRIVER( victorba )	/* (c) 1982 */
+	DRIVER( topgunnr )	/* (c) 1986 */
 
 	/* Exidy 440 games */
 	DRIVER( crossbow )	/* (c) 1983 */
@@ -6581,6 +6584,7 @@ Other Sun games
 	DRIVER( crospang )
 	DRIVER( funybubl )	/* Comad Industries */
 	DRIVER( dcheese )	/* (c) 1993 HAR */
+	DRIVER( lottof2 )	/* (c) 1993 HAR */
 	DRIVER( f15se )		/* Microprose */
 	DRIVER( botss )		/* Microprose */
 	DRIVER( stankatk )	/* Microprose */
@@ -6597,11 +6601,12 @@ Other Sun games
 	DRIVER( pchmp95 )	/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
 	DRIVER( pchmp95v )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
+	DRIVER( pitboss )	/* (c) 1983 Merit */
+	DRIVER( trvwhiz )	/* (c) 1985 Merit */
+	DRIVER( trvwhza )	/* (c) 1985 Merit */
+	DRIVER( trvwhzii )	/* (c) 1985 Merit */
+	DRIVER( tictac )	/* (c) 1985 Merit */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */
-	DRIVER( tictac )	/* (c) 198? Merit */
-	DRIVER( pitboss )	/* (c) 198? Merit */
-	DRIVER( trvwhiz )	/* (c) 198? Merit */
-	DRIVER( trvwhzii )	/* (c) 198? Merit */
 	DRIVER( suprgolf )	/* (c) 19?? Nasco */
 	DRIVER( hotblock )	/* (c) 1993 Nics? / Nix? */
 	DRIVER( pntnpuzl )	/* Century? */

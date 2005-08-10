@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  machine.c
+  machine/spiders.c
 
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
@@ -24,13 +24,28 @@ void spiders_irq2a(int state) { cpunum_set_input_line(0,M6809_IRQ_LINE,state ? A
 void spiders_irq2b(int state) { cpunum_set_input_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
 
 /* Sound CPU */
-void spiders_irq3a(int state) { logerror("PIA3 irqA %d\n",state); }
-void spiders_irq3b(int state) { logerror("PIA3 irqB %d\n",state); }
+void spiders_irq3a(int state) { cpunum_set_input_line(1,M6802_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
 
-static WRITE8_HANDLER( soundcmd_w )
+static WRITE8_HANDLER( spiders_soundcmd_w )
 {
-	soundlatch_w(0,data);
-	cpunum_set_input_line(1,M6802_IRQ_LINE,(~data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+	pia_set_input_a(3, data & 0xf8);
+	pia_set_input_ca1(3,data  & 0x80 ? 1 : 0);
+}
+
+static WRITE8_HANDLER( spiders_sounda_w )
+{
+
+}
+
+static WRITE8_HANDLER( spiders_soundb_w )
+{
+
+}
+
+
+static WRITE8_HANDLER( spiders_soundctrl_w )
+{
+
 }
 
 /* Function prototypes */
@@ -42,7 +57,7 @@ READ8_HANDLER( spiders_vrom_r );
 
 /* Declare PIA structure */
 
-/* PIA 0, main CPU */
+/* PIA 1, main CPU */
 static struct pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
@@ -50,7 +65,7 @@ static struct pia6821_interface pia_0_intf =
 	/*irqs   : A/B             */ spiders_irq0a, spiders_irq0b
 };
 
-/* PIA 1, main CPU */
+/* PIA 2, main CPU */
 static struct pia6821_interface pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ spiders_vrom_r, 0, input_port_5_r, 0, 0, 0,
@@ -58,20 +73,20 @@ static struct pia6821_interface pia_1_intf =
 	/*irqs   : A/B             */ spiders_irq1a, spiders_irq1b
 };
 
-/* PIA 2, main CPU */
+/* PIA 3, main CPU */
 static struct pia6821_interface pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, soundcmd_w, 0, 0,
+	/*outputs: A/B,CA/B2       */ spiders_soundctrl_w, spiders_soundcmd_w, 0, 0,
 	/*irqs   : A/B             */ spiders_irq2a, spiders_irq2b
 };
 
-/* PIA 3, sound CPU */
+/* PIA, sound CPU */
 static struct pia6821_interface pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
-	/*irqs   : A/B             */ spiders_irq3a, spiders_irq3b
+	/*outputs: A/B,CA/B2       */ spiders_sounda_w, spiders_soundb_w, 0, 0,
+	/*irqs   : A/B             */ spiders_irq3a, 0
 };
 
 
@@ -101,13 +116,13 @@ MACHINE_INIT( spiders )
 
 INTERRUPT_GEN( spiders_timed_irq )
 {
-	/* Update CA1 on PIA1 - copy of PA0 (COIN1?) */
-	pia_0_ca1_w(0 , input_port_0_r(0)&0x01);
+	/* Update CA1 on PIA1 - copy of PA1 (COIN1) */
+	pia_0_ca1_w(0 , input_port_0_r(0)&0x02);
 
-	/* Update CA2 on PIA1 - copy of PA0 (PS2) */
-	pia_0_ca2_w(0 , input_port_0_r(0)&0x02);
+	/* Update CA2 on PIA1 - copy of PA0 (SERVICE1) */
+	pia_0_ca2_w(0 , input_port_0_r(0)&0x01);
 
-	/* Update CA1 on PIA1 - copy of PA0 (COIN1?) */
+	/* Update CB1 on PIA1 - (Crosshatch) */
 	pia_0_cb1_w(0 , input_port_6_r(0));
 
 	/* Update CB2 on PIA1 - NOT CONNECTED */
@@ -160,7 +175,6 @@ READ8_HANDLER( spiders_vrom_r )
 	if(vrom_ctrl_mode)
 	{
 		retval=RAM[vrom_address];
-//          logerror("VIDEO : Read data %02x from Port address %04x\n",retval,vrom_address);
 		vrom_address++;
 	}
 	else
@@ -187,7 +201,6 @@ READ8_HANDLER( spiders_vrom_r )
 				break;
 		}
 		retval=0;
-//          logerror("VIDEO : Port address set to %04x\n",vrom_address);
 	}
 	return retval;
 }

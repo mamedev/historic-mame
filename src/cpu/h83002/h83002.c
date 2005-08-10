@@ -93,18 +93,18 @@ static UINT8 h8_mov8(UINT8 src);
 static UINT16 h8_mov16(UINT16 src);
 static UINT32 h8_mov32(UINT32 src);
 
-static INT8 h8_add8(INT8 src, INT8 dst);
-static INT16 h8_add16(INT16 src, INT16 dst);
-static INT32 h8_add32(INT32 src, INT32 dst);
+static UINT8 h8_add8(UINT8 src, UINT8 dst);
+static UINT16 h8_add16(UINT16 src, UINT16 dst);
+static UINT32 h8_add32(UINT32 src, UINT32 dst);
 
-static INT8 h8_sub8(INT8 src, INT8 dst);
-static INT16 h8_sub16(INT16 src, INT16 dst);
+static UINT8 h8_sub8(UINT8 src, UINT8 dst);
+static UINT16 h8_sub16(UINT16 src, UINT16 dst);
 
-static INT8 h8_addx8(INT8 src, INT8 dst);
+static UINT8 h8_addx8(UINT8 src, UINT8 dst);
 
-static void h8_cmp8(INT8 src, INT8 dst);
-static void h8_cmp16(INT16 src, INT16 dst);
-static void h8_cmp32(INT32 src, INT32 dst);
+static void h8_cmp8(UINT8 src, UINT8 dst);
+static void h8_cmp16(UINT16 src, UINT16 dst);
+static void h8_cmp32(UINT32 src, UINT32 dst);
 static UINT8 h8_subx8(UINT8 src, UINT8 dst);
 
 static UINT8 h8_or8(UINT8 src, UINT8 dst);
@@ -112,6 +112,7 @@ static UINT16 h8_or16(UINT16 src, UINT16 dst);
 
 static UINT8 h8_xor8(UINT8 src, UINT8 dst);
 static UINT16 h8_xor16(UINT16 src, UINT16 dst);
+static UINT32 h8_xor32(UINT32 src, UINT32 dst);
 
 static UINT8 h8_and8(UINT8 src, UINT8 dst);
 static UINT16 h8_and16(UINT16 src, UINT16 dst);
@@ -136,7 +137,7 @@ static UINT16 h8_rotxr16(UINT16 src);
 static UINT8 h8_shll8(UINT8 src);
 static UINT8 h8_shlr8(UINT8 src);
 static UINT16 h8_shlr16(UINT16 src);
-static UINT32 h8_shlr32(UINT16 src);
+static UINT32 h8_shlr32(UINT32 src);
 
 static INT8 h8_shal8(INT8 src);
 static INT16 h8_shal16(INT16 src);
@@ -161,6 +162,7 @@ static UINT8 h8_bclr8(UINT8 src, UINT8 dst);
 static void h8_btst8(UINT8 src, UINT8 dst);
 static void h8_bld8(UINT8 src, UINT8 dst); // loads to carry
 static void h8_bor8(UINT8 src, UINT8 dst); // result in carry
+static void h8_bxor8(UINT8 src, UINT8 dst);
 
 static INT32 h8_mulxs16(INT16 src, INT16 dst);
 
@@ -231,6 +233,8 @@ static void h8_set_ccr(UINT8 data)
 	h8.h8cflag = 0;
 	h8.h8hflag = 0;
 	h8.h8iflag = 0;
+	h8.h8uflag = 0;
+	h8.h8uiflag = 0;
 
 	if(h8.ccr & NFLAG) h8.h8nflag = 1;
 	if(h8.ccr & ZFLAG) h8.h8zflag = 1;
@@ -320,6 +324,7 @@ static void h8_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	memset(&h8, 0, sizeof(h8));
+	h8.h8iflag = 1;
 
 	h8.irq_cb = h8_default_irq_callback;
 
@@ -376,30 +381,69 @@ static void h8_GenException(UINT8 vectornr)
 	H8_STACK_TIMING(2);
 }
 
+static int h8_get_priority(UINT8 bit)
+{
+	int res = 0;
+	switch(bit)
+	{
+	case 12: // IRQ0
+		if (h8.per_regs[0xF8]&0x80) res = 1; break;
+	case 13: // IRQ1
+		if (h8.per_regs[0xF8]&0x40) res = 1; break;
+	case 14: // IRQ2
+	case 15: // IRQ3
+		if (h8.per_regs[0xF8]&0x20) res = 1; break;
+	case 16: // IRQ4
+	case 17: // IRQ5
+		if (h8.per_regs[0xF8]&0x10) res = 1; break;
+	}
+	return res;
+}
+
 static void h8_check_irqs(void)
 {
+	int lv = -1;
+	if (h8.h8iflag == 0)
+	{
+		lv = 0;
+	}
+	else
+	{
+		if ((h8.per_regs[0xF2]&0x08)/*SYSCR*/ == 0)
+		{
+			if (h8.h8uiflag == 0)
+				lv = 1;
+		}
+	}
+
 	// any interrupts wanted and can accept ?
-	if(((h8.h8_IRQrequestH != 0) || (h8.h8_IRQrequestL != 0)) && (h8.h8iflag == 0))
+	if(((h8.h8_IRQrequestH != 0) || (h8.h8_IRQrequestL != 0)) && (lv >= 0))
 	{
 		UINT8 bit, source;
 		// which one ?
-		for(bit = 0, source = 0; source == 0 && bit < 32; bit++)
+		for(bit = 0, source = 0xff; source == 0xff && bit < 32; bit++)
 		{
 			if( h8.h8_IRQrequestL & (1<<bit) )
 			{
-				// mask off
-				h8.h8_IRQrequestL &= ~(1<<bit);
-				source = bit;
+				if (h8_get_priority(bit) >= lv)
+				{
+					// mask off
+					h8.h8_IRQrequestL &= ~(1<<bit);
+					source = bit;
+				}
 			}
 		}
 		// which one ?
-		for(bit = 0; source == 0 && bit < 32; bit++)
+		for(bit = 0; source == 0xff && bit < 32; bit++)
 		{
 			if( h8.h8_IRQrequestH & (1<<bit) )
 			{
-				// mask off
-				h8.h8_IRQrequestH &= ~(1<<bit);
-				source = bit + 32;
+				if (h8_get_priority(bit + 32) >= lv)
+				{
+					// mask off
+					h8.h8_IRQrequestH &= ~(1<<bit);
+					source = bit + 32;
+				}
 			}
 		}
 
@@ -410,7 +454,8 @@ static void h8_check_irqs(void)
 			(*h8.irq_cb)(source - 12 + H8_IRQ0);
 		}
 
-		h8_GenException(source);
+		if (source != 0xff)
+			h8_GenException(source);
 	}
 }
 
@@ -443,7 +488,7 @@ static int h8_execute(int cycles)
 		case 0x2:
 			// mov.b @xx:8, Rd (abs)
 			dstreg = (opcode>>8) & 0xf;
-			udata8 = h8_mem_read8(0xffffff00+(opcode & 0xff));
+			udata8 = h8_mem_read8(0xffff00+(opcode & 0xff));
 			h8_mov8(udata8); // flags calculation, dont care about others
 			h8_setreg8(dstreg, udata8);
 			H8_IFETCH_TIMING(1);
@@ -453,14 +498,15 @@ static int h8_execute(int cycles)
 			srcreg = (opcode>>8) & 0xf;
 			udata8 = h8_getreg8(srcreg);
 			h8_mov8(udata8); // flags calculation, dont care about others
-			h8_mem_write8(0xffffff00+(opcode & 0xff), udata8);
+			h8_mem_write8(0xffff00+(opcode & 0xff), udata8);
 			H8_IFETCH_TIMING(1);
-			H8_BYTE_TIMING(1, 0xffffff00+(opcode & 0xff));
+			H8_BYTE_TIMING(1, 0xffff00+(opcode & 0xff));
 			break;
 		case 0x4:
 			// bcc @xx:8
 			sdata8 = (opcode & 0xff);
 			if( h8_branch((opcode >> 8) & 0xf) == 1)h8.pc += sdata8;
+			change_pc(h8.pc);
 			break;
 		case 0x5:
 			h8_group5(opcode);
@@ -559,10 +605,31 @@ static void h8_group0(UINT16 opcode)
 		case 0xf:     // and.l Rn, Rn
 			ext16 = h8_mem_read16(h8.pc);
 			h8.pc += 2;
-			udata32 = h8_getreg32((ext16>>4) & 0x7);
-			udata32 &= h8_getreg32(ext16 & 0x7);
-			h8_setreg32((ext16>>4) & 0x7, udata32);
-			H8_IFETCH_TIMING(2)
+			if (ext16 & 0x88)
+			{
+				h8.h8err = 1;
+			}
+			else
+			{
+				switch((ext16>>8)&0xff)
+				{
+				case 0x65:
+					dstreg = ext16 & 0x7;
+					udata32 = h8_xor32(h8_getreg32((ext16>>4) & 0x7), h8_getreg32(dstreg));
+					h8_setreg32(dstreg, udata32);
+					H8_IFETCH_TIMING(2);
+					break;
+				case 0x66:
+					dstreg = ext16 & 0x7;
+					udata32 = h8_and32(h8_getreg32((ext16>>4) & 0x7), h8_getreg32(dstreg));
+					h8_setreg32(dstreg, udata32);
+					H8_IFETCH_TIMING(2);
+					break;
+				default:
+					h8.h8err = 1;
+					break;
+				}
+			}
 			break;
 
 		case 0:
@@ -794,10 +861,17 @@ static void h8_group0(UINT16 opcode)
 		switch((opcode>>4)& 0xf)
 		{
 		case 0:
-			dstreg = opcode & 7;
-			udata32 = h8_add32(1, h8_getreg32(dstreg));
-			h8_setreg32(dstreg, udata32);
-			H8_IFETCH_TIMING(1)
+			if(opcode & 8)
+			{
+				h8.h8err = 1;
+			}
+			else
+			{
+				dstreg = opcode & 7;
+				udata32 = h8_getreg32(dstreg) + 1;
+				h8_setreg32(dstreg, udata32);
+				H8_IFETCH_TIMING(1)
+			}
 			break;
 		case 5:
 			dstreg = opcode & 0xf;
@@ -812,26 +886,54 @@ static void h8_group0(UINT16 opcode)
 			H8_IFETCH_TIMING(1);
 			break;
 		case 8:
-			dstreg = opcode & 7;
-			udata32 = h8_add32(2, h8_getreg32(dstreg));
-			h8_setreg32(dstreg, udata32);
+			if(opcode & 8)
+			{
+				h8.h8err = 1;
+			}
+			else
+			{
+				dstreg = opcode & 7;
+				udata32 = h8_getreg32(dstreg) + 2;
+				h8_setreg32(dstreg, udata32);
+				H8_IFETCH_TIMING(1)
+			}
 			break;
 		case 9:
-			dstreg = opcode & 7;
-			udata32 = h8_add32(4, h8_getreg32(dstreg));
-			h8_setreg32(dstreg, udata32);
+			if(opcode & 8)
+			{
+				h8.h8err = 1;
+			}
+			else
+			{
+				dstreg = opcode & 7;
+				udata32 = h8_getreg32(dstreg) + 4;
+				h8_setreg32(dstreg, udata32);
+				H8_IFETCH_TIMING(1)
+			}
 			break;
 		case 0xd:
 			dstreg = opcode & 0xf;
 			udata16 = h8_inc16(h8_getreg16(dstreg));
-			udata16 = h8_inc16(udata16); // slow and easy
+			if(h8.h8vflag)
+			{
+				udata16 = h8_inc16(udata16); // slow and easy
+				h8.h8vflag = 1;
+			}
+			else
+				udata16 = h8_inc16(udata16); // slow and easy
 			h8_setreg16(dstreg, udata16);
 			H8_IFETCH_TIMING(1);
 			break;
 		case 0xf:
 			dstreg = opcode & 0x7;
 			udata32 = h8_inc32(h8_getreg32(dstreg));
-			udata32 = h8_inc32(udata32); // slow and easy
+			if(h8.h8vflag)
+			{
+				udata32 = h8_inc32(udata32); // slow and easy
+				h8.h8vflag = 1;
+			}
+			else
+				udata32 = h8_inc32(udata32); // slow and easy
 			h8_setreg32(dstreg, udata32);
 			H8_IFETCH_TIMING(1);
 			break;
@@ -947,9 +1049,9 @@ static void h8_group1(UINT16 opcode)
 			break;
 			// shlr.l rx
 		case 0x3:
-			udata32 = h8_getreg32(opcode & 0xf);
+			udata32 = h8_getreg32(opcode & 0x7);
 			udata32 = h8_shlr32(udata32);
-			h8_setreg32(opcode & 0xf, udata32);
+			h8_setreg32(opcode & 0x7, udata32);
 			H8_IFETCH_TIMING(1);
 			break;
 		case 0x8:
@@ -1144,10 +1246,11 @@ static void h8_group1(UINT16 opcode)
 		switch((opcode>>4)& 0xf)
 		{
 		case 0:	// subs.l #1, rN (decrement without touching flags)
-			dstreg = opcode & 0xf;
+			dstreg = opcode & 0x7;
 			udata32 = h8_getreg32(dstreg);
 			udata32--;
 			h8_setreg32(dstreg, udata32);
+			H8_IFETCH_TIMING(1);
 			break;
 		case 5:	// dec.w #1, rN
 			dstreg = opcode & 0xf;
@@ -1164,7 +1267,13 @@ static void h8_group1(UINT16 opcode)
 		case 0xd:	// dec.w #2, rN
 			dstreg = opcode & 0xf;
 			udata16 = h8_dec16(h8_getreg16(dstreg));
-			udata16 = h8_dec16(udata16);
+			if (h8.h8vflag)
+			{
+				udata16 = h8_dec16(udata16);
+				h8.h8vflag = 1;
+			}
+			else
+				udata16 = h8_dec16(udata16);
 			h8_setreg16(dstreg, udata16);
 			H8_IFETCH_TIMING(1);
 			break;
@@ -1317,8 +1426,8 @@ static void h8_group5(UINT16 opcode)
 		else
 		{
 			sdata16 = h8_mem_read16(h8.pc);
-			if( h8_branch((opcode >> 4) & 0xf) == 1)h8.pc += sdata16;
 			h8.pc += 2;
+			if( h8_branch((opcode >> 4) & 0xf) == 1)h8.pc += sdata16;
 			change_pc(h8.pc);
 			H8_IOP_TIMING(2)
 		}
@@ -1389,56 +1498,41 @@ static void h8_group6(UINT16 opcode)
 
 			dstreg = opcode & 0xf;
 			udata8 = h8_getreg8(dstreg);
-			bitnr = h8_getreg8((opcode>>4)& 0xf);
+			bitnr = h8_getreg8((opcode>>4)& 0xf)&7;
 
-			if(((opcode>>4)&0x8) == 0)
+			switch((opcode>>8)&0xf)
 			{
-				switch((opcode>>8)&7)
-				{
-				case 0:	udata8 = h8_bset8(bitnr, udata8); h8_setreg8(dstreg, udata8); H8_IFETCH_TIMING(1); break;
-				case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_setreg8(dstreg, udata8); H8_IFETCH_TIMING(1); break;
-				case 3:	h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(1); break;
-				default:
-					logerror("H8/3002: Unk. group 6 def 0-3-0 %x\n", opcode);
-					h8.h8err = 1;
-					break;
-				}
-			}
-			else
-			{
-				switch((opcode>>8)&7)
-				{
-				case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_setreg8(dstreg, udata8);H8_IFETCH_TIMING(1);break;
-				case 3:	h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(1); break;
-				default:
-					logerror("H8/3002: Unk. group 6 def 0-3-1 %x\n", opcode);
-					h8.h8err = 1;
-					break;
-				}
+			case 0:	udata8 = h8_bset8(bitnr, udata8); h8_setreg8(dstreg, udata8); H8_IFETCH_TIMING(1); break;
+			case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_setreg8(dstreg, udata8); H8_IFETCH_TIMING(1); break;
+			case 3:	h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(1); break;
+			default:
+				logerror("H8/3002: Unk. group 6 def 0-3-0 %x\n", opcode);
+				h8.h8err = 1;
+				break;
 			}
 		}
 		break;
 	case 0x4:
 		// or.w rs, rd
-		dstreg = (opcode>>4) & 0xf;
+		dstreg = opcode & 0xf;
 		udata16 = h8_getreg16(dstreg);
-		udata16 = h8_or16(h8_getreg16(opcode & 0xf), udata16);
+		udata16 = h8_or16(h8_getreg16((opcode>>4) & 0xf), udata16);
 		h8_setreg16(dstreg, udata16);
 		H8_IFETCH_TIMING(1);
 		break;
 	case 0x5:
 		// xor.w rs, rd
-		dstreg = (opcode>>4) & 0xf;
+		dstreg = opcode & 0xf;
 		udata16 = h8_getreg16(dstreg);
-		udata16 = h8_xor16(h8_getreg16(opcode & 0xf), udata16);
+		udata16 = h8_xor16(h8_getreg16((opcode>>4) & 0xf), udata16);
 		h8_setreg16(dstreg, udata16);
 		H8_IFETCH_TIMING(1);
 		break;
 	case 0x6:
 		// and.w rs, rd
-		dstreg = (opcode>>4) & 0xf;
+		dstreg = opcode & 0xf;
 		udata16 = h8_getreg16(dstreg);
-		udata16 = h8_and16(h8_getreg16(opcode & 0xf), udata16);
+		udata16 = h8_and16(h8_getreg16((opcode>>4) & 0xf), udata16);
 		h8_setreg16(dstreg, udata16);
 		H8_IFETCH_TIMING(1)
 		break;
@@ -1732,7 +1826,6 @@ static void h8_group7(UINT16 opcode)
 			{
 				switch((opcode>>8)&7)
 				{
-				case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_setreg8(dstreg, udata8);H8_IFETCH_TIMING(1);break;
 				default:
 					logerror("H8/3002: Unk. group 7 0-7-1 def %x\n", opcode);
 					h8.h8err = 1;
@@ -1769,9 +1862,9 @@ static void h8_group7(UINT16 opcode)
 		else if (((udata16>>8) & 0xff) == 0x6b) // mov.w @(24-bit direct, rN), rM
 		{
 			udata32 += h8_getreg32((opcode >> 4) & 7);
-			udata8 = h8_mem_read8(udata32);
-			h8_mov8(udata8); // update flags !
-			h8_setreg8(udata16 & 0xf, udata8);
+			udata16 = h8_mem_read16(udata32);
+			h8_mov16(udata16); // update flags !
+			h8_setreg16(udata16 & 0xf, udata16);
 
 			H8_BYTE_TIMING(1, udata32);
 			H8_IFETCH_TIMING(4);
@@ -1870,38 +1963,45 @@ static void h8_group7(UINT16 opcode)
 		// bxx.b #xx:3, @rd
 	case 0xc:
 	case 0xd:
-		sdata16 = h8_mem_read16(h8.pc);
-		h8.pc += 2;
-		if(((sdata16>>4)&0x8) == 0)
 		{
-			switch ((sdata16>>8)&7)
+			UINT8 bitnr;
+			sdata16 = h8_mem_read16(h8.pc);
+			h8.pc += 2;
+			address24 = h8_getreg32((opcode>>4) & 0x7);
+			udata8 = h8_mem_read8(address24);
+			bitnr = (sdata16>>4)&7;
+
+			if(((sdata16>>4)&0x8) == 0)
 			{
-				// bset.b #imm, @Rn
-				case 0: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 = h8_bset8((sdata16>>4)&7, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
-				// bnot.b #imm, @Rn
-				case 1: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 = h8_bnot8((sdata16>>4)&7, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
-				// bclr.b #imm, @Rn
-				case 2: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 = h8_bclr8((sdata16>>4)&7, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
-				// btst.b #imm, @Rn
-				case 3: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 >>= (sdata16>>4)&7; udata8 &= 0x1; h8.h8zflag = (udata8 == 0); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
-				// bxor.b #imm, @Rn
-				case 5:	address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 >>= (sdata16>>4)&7; udata8 &= 0x1; h8.h8cflag ^= udata8; H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
-				// bld.b #imm, @Rn
-				case 7: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); h8_bld8((sdata16>>4)&7, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
-				default:
-				h8.h8err=1;
-				logerror("H8/3002: Unk. group 7 cd-1 %x (%x)\n", opcode, (sdata16>>4)&7);
-				break;
+				switch ((sdata16>>8)&0xff)
+				{
+					// bset.b #imm, @Rn
+					case 0x70: udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
+					// bnot.b #imm, @Rn
+					case 0x71: udata8 = h8_bnot8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
+					// bclr.b #imm, @Rn
+					case 0x72: udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
+					// btst.b #imm, @Rn
+					case 0x73: h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
+					// bxor.b #imm, @Rn
+					case 0x75: h8_bxor8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
+					// bld.b #imm, @Rn
+					case 0x77: h8_bld8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
+					default:
+					h8.h8err=1;
+					logerror("H8/3002: Unk. group 7 cd-1 %x (%x)\n", opcode, (sdata16>>4)&7);
+					break;
+				}
 			}
-		}
-		else
-		{
-			switch ((sdata16>>8)&7)
+			else
 			{
-				default:
-				h8.h8err=1;
-				logerror("H8/3002: Unk. group 7 cd-2 %x %x\n", opcode, sdata16);
-				break;
+				switch ((sdata16>>8)&7)
+				{
+					default:
+					h8.h8err=1;
+					logerror("H8/3002: Unk. group 7 cd-2 %x %x\n", opcode, sdata16);
+					break;
+				}
 			}
 		}
 		break;
@@ -1909,38 +2009,83 @@ static void h8_group7(UINT16 opcode)
 	case 0xe:
 	case 0xf:
 		{
-			UINT8 bitnr;
+			UINT8 bitnr=0;
 			ext16 = h8_mem_read16(h8.pc);
-			address24 = 0xffff00 + (opcode & 0xff);
 			h8.pc += 2;
+			address24 = 0xffff00 + (opcode & 0xff);
 			udata8 = h8_mem_read8(address24);
-			bitnr = (ext16>>4)&7;
 
-			if(((ext16>>4)&0x8) == 0)
+			switch((ext16>>8)&0xff)
 			{
-				switch((ext16>>8)&7)
+			case 0x60:
+				bitnr = h8_getreg8((ext16>>4)&0xf)&7;
+				udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				break;
+			case 0x70:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80) h8.h8err = 1;
+				udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				break;
+			case 0x62:
+				bitnr = h8_getreg8((ext16>>4)&0xf)&7;
+				udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				break;
+			case 0x72:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80) h8.h8err = 1;
+				udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				break;
+			case 0x63:
+				bitnr = h8_getreg8((ext16>>4)&0xf)&7;
+				h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24);
+				break;
+			case 0x73:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80) h8.h8err = 1;
+				h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24);
+				break;
+			case 0x74:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80)
 				{
-				case 0:	udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
-				case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8);H8_IFETCH_TIMING(2);H8_BYTE_TIMING(2, address24);break;
-				case 3:	h8_btst8(bitnr, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
-				case 4:	h8_bor8(bitnr, udata8);  H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
-				case 7:	h8_bld8(bitnr, udata8);  H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
-				default:
-				logerror("H8/3002: Unk. group 7 e %x\n", opcode);
+					// bior
 					h8.h8err = 1;
-					break;
 				}
-			}
-			else
-			{
-				switch((ext16>>8)&7)
+				else
 				{
-				case 2:	udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8);H8_IFETCH_TIMING(2);H8_BYTE_TIMING(2, address24);break;
-				default:
-				logerror("H8/3002: Unk. group 7 e2 %x\n", opcode);
-				h8.h8err = 1;break;
+					h8_bor8(bitnr, udata8);  H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24);
 				}
+				break;
+			case 0x67:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80)
+				{
+					// bist
+					h8.h8err = 1;
+				}
+				else
+				{
+					h8_bst8(bitnr, udata8);  H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				}
+				break;
+			case 0x77:
+				bitnr = (ext16>>4)&7;
+				if(ext16&0x80)
+				{
+					// bild
+					h8.h8err = 1;
+				}
+				else
+				{
+					h8_bld8(bitnr, udata8);  H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
+				}
+				break;
+			default:
+				h8.h8err = 1;
+				break;
 			}
+			if(h8.h8err)
+				logerror("H8/3002: Unk. group 7 e %x\n", opcode);
 		}
 		break;
 	default:
@@ -2007,19 +2152,18 @@ static UINT32 h8_mov32(UINT32 src)
 	return src;
 }
 
-static INT8 h8_sub8(INT8 src, INT8 dst)
+static UINT8 h8_sub8(UINT8 src, UINT8 dst)
 {
-	INT32 res;
-	UINT32 hres;
+	UINT16 res;
 
-	res = dst - src;
+	res = (UINT16)dst - src;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res>>7) & 1;
-	h8.h8vflag = (((src^dst) & (res^dst)));
+	h8.h8vflag = (((src^dst) & (res^dst))>>7) & 1;
 	h8.h8cflag = (res >> 8) & 1;
 
 	// zflag
-	if(res==0)
+	if((res&0xff)==0)
 	{
 		h8.h8zflag = 1;
 	}
@@ -2028,26 +2172,24 @@ static INT8 h8_sub8(INT8 src, INT8 dst)
 		h8.h8zflag = 0;
 	}
 
-	hres = ((dst & 0xf) - (src & 0xf));
-	h8.h8hflag = (res & 0x10) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10) ? 1 : 0;
 
 	return res;
 }
 
-static INT16 h8_sub16(INT16 src, INT16 dst)
+static UINT16 h8_sub16(UINT16 src, UINT16 dst)
 {
-	INT32 res;
-	UINT32 hres;
+	UINT32 res;
 
-	res = dst - src;
+	res = (UINT32)dst - src;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res>>15) & 1;
-	h8.h8vflag = (((src^dst) & (res^dst))>>8);
+	h8.h8vflag = (((src^dst) & (res^dst))>>15) & 1;
 	h8.h8cflag = (res >> 16) & 1;
 	//  h8.h8hflag = (res>>28) & 1;
 
 	// zflag
-	if(res==0)
+	if((res&0xffff)==0)
 	{
 		h8.h8zflag = 1;
 	}
@@ -2056,112 +2198,103 @@ static INT16 h8_sub16(INT16 src, INT16 dst)
 		h8.h8zflag = 0;
 	}
 
-	hres = ((dst & 0xfff) - (src & 0xfff));
-	h8.h8hflag = (res & 0x1000) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x1000) ? 1 : 0;
 
 	return res;
 }
 
-#define SetAF(x,y,z)  	(((x) ^ ((y) ^ (z))) & 0x10) ? 1 : 0
-
-static INT8 h8_add8(INT8 src, INT8 dst)
+static UINT8 h8_add8(UINT8 src, UINT8 dst)
 {
-	INT16 res;
+	UINT16 res;
 
-	res = src + dst;
+	res = (UINT16)src + dst;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res & 0x80) ? 1 : 0;
 	h8.h8vflag = ((src^res) & (dst^res) & 0x80) ? 1 : 0;
 	h8.h8cflag = (res & 0x100) ? 1 : 0;
-	h8.h8zflag = (res) ? 0 : 1;
-	h8.h8hflag = SetAF(res, src, dst);
+	h8.h8zflag = (res & 0xff) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10) ? 1 : 0;
 
-	return (INT8)res;
+	return (UINT8)res;
 }
 
-static INT16 h8_add16(INT16 src, INT16 dst)
+static UINT16 h8_add16(UINT16 src, UINT16 dst)
 {
-	INT32 res;
+	UINT32 res;
 
-	res = src + dst;
+	res = (UINT32)src + dst;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res & 0x8000) ? 1 : 0;
 	h8.h8vflag = ((src^res) & (dst^res) & 0x8000) ? 1 : 0;
 	h8.h8cflag = (res & 0x10000) ? 1 : 0;
-	h8.h8zflag = (res) ? 0 : 1;
-	h8.h8hflag = SetAF(res, src, dst);
+	h8.h8zflag = (res & 0xffff) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x1000) ? 1 : 0;
 
 	return res;
 }
 
-static INT32 h8_add32(INT32 src, INT32 dst)
+static UINT32 h8_add32(UINT32 src, UINT32 dst)
 {
-	INT64 res;
+	UINT64 res;
 
-	res = src + dst;
+	res = (UINT64)src + dst;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res & 0x80000000) ? 1 : 0;
 	h8.h8vflag = (((src^res) & (dst^res)) & 0x80000000) ? 1 : 0;
 	h8.h8cflag = ((res) & (((UINT64)1) << 32)) ? 1 : 0;
-	h8.h8zflag = (res) ? 0 : 1;
-	h8.h8hflag = SetAF(res, src, dst);
+	h8.h8zflag = (res & 0xffffffff) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10000000) ? 1 : 0;
 
 	return res;
 }
 
 
-static INT8 h8_addx8(INT8 src, INT8 dst)
+static UINT8 h8_addx8(UINT8 src, UINT8 dst)
 {
-	INT16 res;
+	UINT16 res;
 
-	res = src + dst + h8.h8cflag;
+	res = (UINT16)src + dst + h8.h8cflag;
 	// H,N,Z,V,C modified
 	h8.h8nflag = (res & 0x80) ? 1 : 0;
 	h8.h8vflag = ((src^res) & (dst^res) & 0x80) ? 1 : 0;
 	h8.h8cflag = (res >> 8) & 1;
-	h8.h8hflag = (res>>4) & 1;
-	h8.h8zflag = (res) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10) ? 1 : 0;
+	h8.h8zflag = (res & 0xff) ? 0 : h8.h8zflag;
 
-	return (INT8)res;
+	return (UINT8)res;
 }
 
-static void h8_cmp8(INT8 src, INT8 dst)
+static void h8_cmp8(UINT8 src, UINT8 dst)
 {
-	unsigned res = (unsigned)((dst&0xff)-(src&0xff));
+	UINT16 res = (UINT16)dst - src;
 
 	h8.h8cflag = (res & 0x100) ? 1 : 0;
 	h8.h8vflag = (((dst) ^ (src)) & ((dst) ^ (res)) & 0x80) ? 1 : 0;
-	h8.h8zflag = (res == 0) ? 1 : 0;
+	h8.h8zflag = ((res & 0xff) == 0) ? 1 : 0;
 	h8.h8nflag = (res & 0x80) ? 1 : 0;
-
-	res = ((dst & 0xf) - (src & 0xf));
-	h8.h8hflag = (res & 0x10) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10) ? 1 : 0;
 }
 
-static void h8_cmp16(INT16 src, INT16 dst)
+static void h8_cmp16(UINT16 src, UINT16 dst)
 {
-	unsigned res = (unsigned)((dst&0xffff)-(src&0xffff));
+	UINT32 res = (UINT32)dst - src;
 
 	h8.h8cflag = (res & 0x10000) ? 1 : 0;
 	h8.h8vflag = (((dst) ^ (src)) & ((dst) ^ (res)) & 0x8000) ? 1 : 0;
-	h8.h8zflag = (res == 0) ? 1 : 0;
+	h8.h8zflag = ((res & 0xffff) == 0) ? 1 : 0;
 	h8.h8nflag = (res & 0x8000) ? 1 : 0;
-
-	res = ((dst & 0xfff) - (src & 0xfff));
-	h8.h8hflag = (res & 0x1000) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x1000) ? 1 : 0;
 }
 
-static void h8_cmp32(INT32 src, INT32 dst)
+static void h8_cmp32(UINT32 src, UINT32 dst)
 {
-	UINT64 res = (UINT64)(((UINT64)dst&0xffffffff)-((UINT64)src&0xffffffff));
+	UINT64 res = (UINT64)dst - src;
 
 	h8.h8cflag = (res & (UINT64)U64(0x100000000)) ? 1 : 0;
 	h8.h8vflag = (((dst) ^ (src)) & ((dst) ^ (res)) & 0x80000000) ? 1 : 0;
-	h8.h8zflag = (res == 0) ? 1 : 0;
+	h8.h8zflag = ((res & 0xffffffff) == 0) ? 1 : 0;
 	h8.h8nflag = (res & 0x80000000) ? 1 : 0;
-
-	res = (((UINT64)dst & 0xfffffff) - ((UINT64)src & 0xfffffff));
-	h8.h8hflag = (res & 0x10000000) ? 0 : 1;
+	h8.h8hflag = ((src^dst^res) & 0x10000000) ? 1 : 0;
 }
 
 
@@ -2240,6 +2373,27 @@ static UINT16 h8_xor16(UINT16 src, UINT16 dst)
 	res = src ^ dst;
 
 	h8.h8nflag = (res>>15) & 1;
+	h8.h8vflag = 0;
+
+	// zflag
+	if(res==0)
+	{
+		h8.h8zflag = 1;
+	}
+	else
+	{
+		h8.h8zflag = 0;
+	}
+
+	return res;
+}
+
+static UINT32 h8_xor32(UINT32 src, UINT32 dst)
+{
+	UINT32 res;
+	res = src ^ dst;
+
+	h8.h8nflag = (res>>31) & 1;
 	h8.h8vflag = 0;
 
 	// zflag
@@ -2400,6 +2554,13 @@ static void h8_bor8(UINT8 src, UINT8 dst)
 	h8.h8cflag |= res ? 1 : 0;
 }
 
+static void h8_bxor8(UINT8 src, UINT8 dst)
+{
+	dst >>= src;
+	dst &= 0x1;
+	h8.h8cflag ^= dst;
+}
+
 static UINT8 h8_bclr8(UINT8 src, UINT8 dst)
 {
 	// pass
@@ -2410,7 +2571,7 @@ static UINT8 h8_bclr8(UINT8 src, UINT8 dst)
 
 static INT8 h8_neg8(INT8 src)
 {
-	INT16 res;
+	INT8 res;
 
 	if((UINT8)src == 0x80)
 	{
@@ -2436,16 +2597,15 @@ static INT8 h8_neg8(INT8 src)
 		h8.h8zflag = 0;
 	}
 
-	// $$ half carry calculation NOT CORRECT? $$
-	h8.h8hflag = (res>>4)&1;
-	h8.h8cflag = (res>>8)&1;
+	h8.h8hflag = ((src|res)&0x08) ? 1 : 0;
+	h8.h8cflag = ((src|res)&0x80) ? 1 : 0;
 
 	return res;
 }
 
 static INT16 h8_neg16(INT16 src)
 {
-	INT32 res;
+	INT16 res;
 
 	if((UINT16)src == 0x8000)
 	{
@@ -2471,9 +2631,8 @@ static INT16 h8_neg16(INT16 src)
 		h8.h8zflag = 0;
 	}
 
-	// $$ half carry calculation NOT CORRECT? $$
-	h8.h8hflag = (res>>12)&1;
-	h8.h8cflag = (res>>16)&1;
+	h8.h8hflag = ((src|res)&0x0800) ? 1 : 0;
+	h8.h8cflag = ((src|res)&0x8000) ? 1 : 0;
 
 	return res;
 }
@@ -2746,7 +2905,7 @@ static UINT16 h8_shlr16(UINT16 src)
 	return res;
 }
 
-static UINT32 h8_shlr32(UINT16 src)
+static UINT32 h8_shlr32(UINT32 src)
 {
 	UINT32 res;
 	h8.h8cflag = src&1;
@@ -2773,10 +2932,9 @@ static INT8 h8_shar8(INT8 src)
 {
 	INT8 res;
 	h8.h8cflag = src&1;
-	res = src>>1;
+	res = (src>>1)|(src&0x80);
 	// N and Z modified
 	h8.h8nflag = (res>>7)&1;
-	// $$ OVERFLOW NOT DONE CORRECT $$
 	h8.h8vflag = 0;
 
 	// zflag
@@ -2796,10 +2954,9 @@ static INT16 h8_shar16(INT16 src)
 {
 	INT16 res;
 	h8.h8cflag = src&1;
-	res = src>>1;
+	res = (src>>1)|(src&0x8000);
 	// N and Z modified
 	h8.h8nflag = (res>>15)&1;
-	// $$ OVERFLOW NOT DONE CORRECT $$
 	h8.h8vflag = 0;
 
 	// zflag
@@ -2820,10 +2977,9 @@ static INT32 h8_shar32(INT32 src)
 	INT32 res;
 
 	h8.h8cflag = src&1;
-	res = src>>1;
+	res = (src>>1)|(src&0x80000000);
 	// N and Z modified
 	h8.h8nflag = (res>>31) & 1;
-	// $$ OVERFLOW NOT DONE CORRECT $$
 	h8.h8vflag = 0;
 
 	// zflag
@@ -2847,7 +3003,7 @@ static INT8 h8_shal8(INT8 src)
 	res = src<<1;
 	// N and Z modified
 	h8.h8nflag = (res>>7)&1;
-	h8.h8vflag = 0;
+	h8.h8vflag = (((src>>7)&(~src>>6)) | ((~src>>7)&(~src>>6)))&1;
 
 	// zflag
 	if(res==0)
@@ -2870,10 +3026,7 @@ static INT16 h8_shal16(INT16 src)
 	res = src<<1;
 	// N and Z modified
 	h8.h8nflag = (res>>15)&1;
-	h8.h8vflag = 0;
-
-	// $$ OVERFLOW NOT DONE CORRECT $$
-	h8.h8vflag = 0;
+	h8.h8vflag = (((src>>15)&(~src>>14)) | ((~src>>15)&(~src>>14)))&1;
 
 	// zflag
 	if(res==0)
@@ -3066,7 +3219,7 @@ static INT32 h8_mulxs16(INT16 src, INT16 dst)
 {
 	INT32 res;
 
-	res = src * dst;
+	res = (INT32)src * dst;
 
 	// N and Z modified
 	h8.h8nflag = (res>>31)&1;
@@ -3087,7 +3240,7 @@ static UINT32 h8_divxu16(UINT32 dst, UINT16 src)
 	UINT16 remainder, quotient;
 	UINT32 res = 0;
 	// N and Z modified
-	h8.h8nflag = (src>>31)&1;
+	h8.h8nflag = (src>>15)&1;
 	// zflag
 	if(src==0)
 	{

@@ -441,6 +441,9 @@ OVERLAY_START( lazercmd_overlay )
 	OVERLAY_RECT( 16*HORZ_CHR, 22*VERT_CHR, 32*HORZ_CHR, 23*VERT_CHR, JADE )
 OVERLAY_END
 
+OVERLAY_START( medlanes_overlay )
+	OVERLAY_RECT(  0*HORZ_CHR,  0*VERT_CHR, 32*HORZ_CHR, 24*VERT_CHR, JADE )
+OVERLAY_END
 
 
 static ADDRESS_MAP_START( lazercmd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -574,7 +577,7 @@ INPUT_PORTS_START( medlanes )
 	PORT_DIPNAME( 0x40, 0x00, "Marker Size" )
 	PORT_DIPSETTING(	0x00, "Small" )
 	PORT_DIPSETTING(	0x40, "Large" )
-	PORT_DIPNAME( 0x80, 0x00, "Color Overlay" )
+	PORT_DIPNAME( 0x80, 0x80, "Color Overlay" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
@@ -723,6 +726,7 @@ static MACHINE_DRIVER_START( medlanes )
 	MDRV_PALETTE_LENGTH(3)
 	MDRV_COLORTABLE_LENGTH(2*2)
 
+	MDRV_PALETTE_INIT(lazercmd)
 	MDRV_VIDEO_START(lazercmd)
 	MDRV_VIDEO_UPDATE(lazercmd)
 
@@ -861,6 +865,8 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 DRIVER_INIT( medlanes )
 {
 int i, y;
+
+	artwork_set_overlay(medlanes_overlay);
 
 /******************************************************************
  * The ROMs are 1K x 4 bit, so we have to mix

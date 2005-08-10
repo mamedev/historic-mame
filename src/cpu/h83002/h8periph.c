@@ -433,7 +433,7 @@ UINT8 h8_register_read8(UINT32 address)
 			val = io_read_byte_8(H8_PORTB);
 			break;
 		default:
-			val = h8.per_regs[address - H8_REG_START];
+			val = h8.per_regs[reg];
 			break;
 		}
 	}
@@ -485,7 +485,7 @@ void h8_register_write8(UINT32 address, UINT8 val)
 			break;
 	}
 
-	h8.per_regs[address - H8_REG_START] = val;
+	h8.per_regs[reg] = val;
 }
 
 void h8_itu_init(void)

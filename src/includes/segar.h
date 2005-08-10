@@ -61,6 +61,8 @@ VIDEO_START( segar );
 VIDEO_UPDATE( segar );
 
 WRITE8_HANDLER( monsterb_back_port_w );
+WRITE8_HANDLER( monster2_b9_back_port_w );
+WRITE8_HANDLER( monster2_bb_back_port_w );
 
 VIDEO_START( monsterb );
 VIDEO_UPDATE( monsterb );

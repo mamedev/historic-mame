@@ -59,7 +59,8 @@
  *          The master contrast fader at 0x90020000 also can be fed such a strong power used for white-out.
  *
  * Sound:
- *      - Communications between the MCU and 68020 not yet worked out.
+ *      - Communications between the MCU and 68020 are now partially implemented, but mysteries
+ *        remain, especially w.r.t. the analog input ports.
  *
  * Link
  *      - SCI (link) feature is not yet hooked up
@@ -197,9 +198,6 @@
 // enables HLE of M37710 subcpu (37710 still runs)
 #define FAKE_SUBCPU (1)
 
-// enables actual sharing of RAM between the CPU and MCU
-#define SHARE_MCU_RAM (0)
-
 extern int debug_key_pressed;
 
 enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
@@ -241,6 +239,14 @@ ReadAnalogDrivingPorts( data16_t *gas, data16_t *brake, data16_t *steer )
 	*gas   = readinputport(2)*0xf00/0xff + 0x8000;
 	*brake = readinputport(3)*0xf00/0xff + 0x8000;
 	*steer = (readinputport(4)-0x80)*0xf00/0x7f + 0x8000;
+}
+
+static void
+ReadAnalogDrivingPortsMCU( data16_t *gas, data16_t *brake, data16_t *steer )
+{
+	*gas   = readinputport(2)<<2;
+	*brake = readinputport(3)<<2;
+	*steer = ((readinputport(4)-0x80)*0xf00/0x7f + 0x8000)>>6;
 }
 
 static data16_t
@@ -1698,33 +1704,6 @@ static READ32_HANDLER( namcos22_dipswitch_r )
 
 static READ32_HANDLER( namcos22_mcuram_r )
 {
-#if FAKE_SUBCPU
-//  logerror( "0x%08x:0x%04x\n", activecpu_get_pc(), offset*4 );
-
-	if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
-	{ /* HACKS: work with TIME CRISIS version A */
-		int pc = activecpu_get_pc();
-		if( pc == 0x12c20 || pc==0x91fe )
-		{ /* SUB CPU TEST */
-			return 1<<(7+16);
-		}
-		else if( pc == 0x12c6e )
-		{ /* SUB CPU TEST */
-			return 0;
-		}
-		else if( pc==0x12bf2 || pc==0x910e || pc==0x92a8 )
-		{ /* ori.w   #$8000, $a0bd00.l */
-		}
-		else if( pc==0x140ca || pc==0x19b5c )
-		{
-  			return readinputport(4)<<8;
-		}
-		else if( pc==0x19B70 || pc==0x019B14 || pc==0x19bea )
-		{
-			return namcos22_credits;
-		}
-	}
-#endif
 	return namcos22_shareram[offset];
 }
 
@@ -1853,29 +1832,6 @@ ADDRESS_MAP_END
 static int mFrameCount;
 
 static void
-SimulateAlpineRacerMCU( void )
-{
-	data16_t data = readinputport(1);
-	data16_t swing = readinputport(2)*4; /* max 3ff */
-	data16_t edge = readinputport(3)*4;  /* max 3ff */
-
-	/* motor status hack */
-	if( mFrameCount&1 )
-	{
-		data |= 0x80;
-		namcos22_shareram[0x7d04/4] = 0x0000<<16;
-	}
-	else
-	{
-		namcos22_shareram[0x7d04/4] = 0x0100<<16;
-	}
-	namcos22_shareram[0x300/4] = 0x7551<<16; /* protection? */
-	namcos22_shareram[0x7d00/4] = data<<8;
-	namcos22_shareram[0x7d0a/4] = swing;
-	namcos22_shareram[0x7d0c/4] = edge<<16;
-}
-
-static void
 SimulateAirCombat22MCU( void )
 {
 	if( nthbyte(namcos22_system_controller,0x16)!=0 )
@@ -1890,6 +1846,7 @@ SimulateAirCombat22MCU( void )
 	}
 }
 
+#if 0
 static void
 SimulateCyberCyclesMCU( void )
 {
@@ -1904,32 +1861,7 @@ SimulateCyberCyclesMCU( void )
 		namcos22_shareram[0x7d0c/4] = (gas<<16)|brake;
 	}
 }
-
-static void
-SimulatePropCycleMCU( void )
-{
-	int dx,dy;
-	UINT16 data;
-	static data16_t pedal;
-
-	namcos22_shareram[0x7d00/4] = readinputport(1)<<8;
-
-	data = 0;
-	if( readinputport( 2 ) & 0x20 ) data |= 0x0100;
-	namcos22_shareram[0x7d04/4] = data<<16; /* start1 */
-
-	dx = 0; dy = 0;
-	if( readinputport( 2 ) & 0x04 ) dx++;
-	if( readinputport( 2 ) & 0x08 ) dx--;
-	if( readinputport( 2 ) & 0x01 ) dy--;
-	if( readinputport( 2 ) & 0x02 ) dy++;
-
-	if( readinputport( 2 ) & 0x10 ) pedal+=0x10;
-
-	namcos22_shareram[0x7d08/4] = (UINT16)(dx*0x7fff);
-	namcos22_shareram[0x7d0c/4] = (dy*0x7fff)<<16;
-	namcos22_shareram[0x7d1c/4] = pedal<<16;
-}
+#endif
 
 static void
 SimulateTimeCrisisMCU( void )
@@ -1948,20 +1880,8 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 #if FAKE_SUBCPU
 	switch( namcos22_gametype )
 	{
-	case NAMCOS22_ALPINE_RACER:
-		SimulateAlpineRacerMCU();
-		break;
-
 	case NAMCOS22_AIR_COMBAT22:
 		SimulateAirCombat22MCU();
-		break;
-
-	case NAMCOS22_PROP_CYCLE:
-		SimulatePropCycleMCU();
-		break;
-
-	case NAMCOS22_CYBER_CYCLES:
-		SimulateCyberCyclesMCU();
 		break;
 
 	case NAMCOS22_TIME_CRISIS:
@@ -1992,31 +1912,40 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 	}
 }
 
-// $$TODO - communications doesn't work (endian problems?) and also there seems
-//          to be a way for the 68020 to shut off the MCU's vblank.
-//          Otherwise the MCU crashes when the 68020 overwrites it's work variables
-//          during the shared RAM test.  (Prop Cycle has no such POST test and
-//          will actually run with SHARE_MCU_RAM on right now).
-#if SHARE_MCU_RAM
-INLINE data16_t swap16(data16_t in)
-{
-	return ((in&0xff)<<8) | ((in&0xff00)>>8);
-}
-
 static READ16_HANDLER( s22mcu_shared_r )
 {
 	data16_t *share16 = (data16_t *)namcos22_shareram;
 
-	return share16[offset];
+	return share16[BYTE_XOR_BE(offset)];
 }
 
 static WRITE16_HANDLER( s22mcu_shared_w )
 {
 	data16_t *share16 = (data16_t *)namcos22_shareram;
 
-	COMBINE_DATA(&share16[offset]);
+	/*
+       I have no idea what's going on here.  The M37710 has a 10-bit wide
+       ADC, and the MCU BIOS explicitly does an AND #$03ff on the value
+       that it stores to shared RAM.  But Prop Cycle's 68000 code insists on
+       full 16-bit signed values being there.
+     */
+
+	if (namcos22_gametype == NAMCOS22_PROP_CYCLE)
+	{
+		if ((offset == 0x7d0a/2) || (offset == 0x7d0c/2))
+		{
+			if (data == 0x200) data = 0x8001;
+			else if (data == 0x1ff) data = 0x7fff;
+		}
+	}
+
+	if (namcos22_gametype == NAMCOS22_CYBER_CYCLES)
+	{
+		if (offset == 0x7d0a/2) data <<= 2;
+	}
+
+	COMBINE_DATA(&share16[BYTE_XOR_BE(offset)]);
 }
-#endif
 
 static MACHINE_INIT(namcoss22)
 {
@@ -2027,6 +1956,7 @@ static MACHINE_INIT(namcoss22)
 
 /*
   MCU memory map
+  --------------
   000000-00027f: internal MCU registers and RAM
   002000-002fff: C352 PCM chip
   004000-00bfff: shared RAM with host CPU
@@ -2035,31 +1965,240 @@ static MACHINE_INIT(namcoss22)
   301000-301001: watchdog?
   308000-308003: unknown (I/O?)
 
-  pin hookups:
+  pin hookups
+  -----------
   5 (IRQ0): C383 custom (probably vsync)
   7 (IRQ2): 74F244 at 8c, pin 3
+
+  port assignments
+  ----------------
+  port 4: "bankswitches" the controls read at port 5, probably other functions too
+  port 5: on read, digital controls (buttons, coins, start, service switch)
+          on write, various outputs (lamps, the fan in prop cycle, etc)
+  ADC   : analog inputs
 
 */
 
 static ADDRESS_MAP_START( mcu_program, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x002000, 0x002fff) AM_READWRITE( c352_0_r, c352_0_w )
-#if SHARE_MCU_RAM
 	AM_RANGE(0x004000, 0x00bfff) AM_READWRITE( s22mcu_shared_r, s22mcu_shared_w )
-#else
-	AM_RANGE(0x004000, 0x00bfff) AM_RAM
-#endif
 	AM_RANGE(0x00c000, 0x00ffff) AM_ROM AM_REGION(REGION_USER4, 0xc000)
 	AM_RANGE(0x200000, 0x27ffff) AM_ROM AM_REGION(REGION_USER4, 0)
 	AM_RANGE(0x301000, 0x301001) AM_NOP	// watchdog? LEDs?
 	AM_RANGE(0x308000, 0x308003) AM_NOP	// volume control IC?
 ADDRESS_MAP_END
 
+
+static int p4;
+
+static READ8_HANDLER( mcu_port5_r )
+{
+	// hack for motor status
+	if (namcos22_gametype == NAMCOS22_ALPINE_RACER)
+	{
+		if (p4 & 8)
+		{
+			if (mFrameCount & 1)
+			{
+				return readinputportbytag_safe("MCUP5A", 0xff) | 0x80;
+			}
+			else
+			{
+				return readinputportbytag_safe("MCUP5A", 0xff) & 0x7f;
+			}
+		}
+		else
+		{
+			if (mFrameCount & 1)
+			{
+				return 0xfe;
+			}
+			else
+			{
+				return 0xff;
+			}
+		}
+	}
+	else
+	{
+		if (p4 & 8)
+		{
+			return readinputportbytag_safe("MCUP5A", 0xff);
+		}
+		else
+		{
+			return readinputportbytag_safe("MCUP5B", 0xff);
+		}
+	}
+}
+
+static WRITE8_HANDLER( mcu_port4_w )
+{
+	p4 = data;
+}
+
+static READ8_HANDLER( mcu_port4_r )
+{
+	return p4;
+}
+
+static WRITE8_HANDLER( mcu_port5_w )
+{
+	// prop cycle outputs:
+	// bit 1 = fan
+	// bit 2 = button light
+}
+
+static READ8_HANDLER( mcu_port6_r )
+{
+	return 0;
+}
+
+static READ8_HANDLER( mcu_port7_r )
+{
+	return 0;
+}
+
+// H+L = horizontal, 1 H+L = vertical
+static READ8_HANDLER( propcycle_mcu_adc_r )
+{
+	static int dx, dy;
+	static UINT16 ddx, ddy;
+
+	switch (offset)
+	{
+		case 0:
+			dx = dy = 0;
+			if( readinputport( 2 ) & 0x04 ) dx++;
+			if( readinputport( 2 ) & 0x08 ) dx--;
+			if( readinputport( 2 ) & 0x01 ) dy--;
+			if( readinputport( 2 ) & 0x02 ) dy++;
+
+			ddx = (UINT16)(dx*0x7fff);
+			ddy = (UINT16)(dy*0x7fff);
+			ddx >>= 6;
+			ddy >>= 6;
+
+			// also update the pedal here
+			//
+			// this is a wee bit hackish: the way it actually works is like so:
+			// the pedal has a simple 1-bit "light interrupted" sensor.  the faster you pedal,
+			// the faster it pulses.  this is connected to the clock input for timer A3,
+			// and timer A3 is configured by the MCU program to cause an interrupt each time
+			// it's clocked.  by counting the number of interrupts in a frame, we can determine
+			// how fast the user is pedaling.
+			if( readinputport( 2 ) & 0x10 )
+			{
+				int i;
+				for (i = 0; i < 16; i++)
+				{
+					cpunum_set_input_line(3, M37710_LINE_TIMERA3TICK, PULSE_LINE);
+				}
+			}
+
+			return (ddx & 0xff);
+			break;
+		case 1:
+			return (ddx>>8);
+			break;
+		case 2:
+			return (ddy & 0xff);
+			break;
+		case 3:
+			return (ddy>>8);
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+// 0 H+L = swing, 1 H+L = edge
+static READ8_HANDLER( alpineracer_mcu_adc_r )
+{
+	data16_t swing = readinputport(2)*4; /* max 3ff */
+	data16_t edge = readinputport(3)*4;  /* max 3ff */
+
+	switch (offset)
+	{
+		case 0:
+			return swing & 0xff;
+			break;
+
+		case 1:
+			return (swing>>8);
+			break;
+
+		case 2:
+			return edge & 0xff;
+			break;
+
+		case 3:
+			return (edge>>8);
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+}
+
+static READ8_HANDLER( cybrcycc_mcu_adc_r )
+{
+	data16_t gas,brake,st2;
+	static int steer = 0xc0;
+	ReadAnalogDrivingPorts( &gas, &brake, &st2 );
+
+	gas = readinputport(2)<<2;
+	brake = readinputport(3)<<2;
+
+	switch (offset)
+	{
+		case 0:
+			return steer & 0xff;
+			break;
+
+		case 1:
+			return (steer>>8);
+			break;
+
+		case 2:
+			return gas & 0xff;
+			break;
+
+		case 3:
+			return (gas>>8);
+			break;
+
+		case 4:
+			return brake & 0xff;
+			break;
+
+		case 5:
+			return (brake>>8);
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+}
+
+static ADDRESS_MAP_START( mcu_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(M37710_PORT4, M37710_PORT4) AM_READ( mcu_port4_r ) AM_WRITE( mcu_port4_w )
+	AM_RANGE(M37710_PORT5, M37710_PORT5) AM_READ( mcu_port5_r ) AM_WRITE( mcu_port5_w )
+	AM_RANGE(M37710_PORT6, M37710_PORT6) AM_READ( mcu_port6_r ) AM_WRITENOP
+	AM_RANGE(M37710_PORT7, M37710_PORT7) AM_READ( mcu_port7_r )
+ADDRESS_MAP_END
+
 static INTERRUPT_GEN( mcu_interrupt )
 {
 	if (cpu_getiloops() == 0)
  		cpunum_set_input_line(3, M37710_LINE_IRQ0, HOLD_LINE);
-	else
+	else if (cpu_getiloops() == 1)
 		cpunum_set_input_line(3, M37710_LINE_IRQ2, HOLD_LINE);
+	else
+		cpunum_set_input_line(3, M37710_LINE_ADC, HOLD_LINE);
 }
 
 static struct C352interface c352_interface =
@@ -2085,7 +2224,8 @@ static MACHINE_DRIVER_START( namcos22s )
 
 	MDRV_CPU_ADD(M37710, SS22_MASTER_CLOCK/3)
 	MDRV_CPU_PROGRAM_MAP(mcu_program, 0)
-	MDRV_CPU_VBLANK_INT(mcu_interrupt, 2);
+	MDRV_CPU_IO_MAP( mcu_io, 0 )
+	MDRV_CPU_VBLANK_INT(mcu_interrupt, 3);
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -3485,21 +3625,47 @@ INPUT_PORTS_START( alpiner )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_START_TAG( "MCUP5A" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* DECISION */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* L SELECTION */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) /* R SELECTION */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* DECISION */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* L SELECTION */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* R SELECTION */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START /* SWING */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(1) PORT_KEYDELTA(1)
 
 	PORT_START /* EDGE */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(1) PORT_KEYDELTA(1)
+
+	PORT_START_TAG( "MCUP5B" )
+	PORT_DIPNAME( 0x01, 0x01, "DIP5-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIP5-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIP5-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIP5-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIP5-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIP5-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIP5-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIP5-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END /* Alpine Racer */
 
 
@@ -3577,17 +3743,27 @@ INPUT_PORTS_START( cybrcycc )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* VIEW */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START_TAG( "MCUP5A" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* VIEW */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	DRIVING_ANALOG_PORTS
+
+	PORT_START_TAG( "MCUP5B" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END /* Cyber Cycles */
 
 INPUT_PORTS_START( propcycl )
@@ -3634,6 +3810,26 @@ INPUT_PORTS_START( propcycl )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START_TAG( "MCUP5A" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG( "MCUP5B" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END /* Prop Cycle */
 
 INPUT_PORTS_START( cybrcomm )
@@ -4070,6 +4266,8 @@ DRIVER_INIT( alpiner )
 {
 	namcos22_gametype = NAMCOS22_ALPINE_RACER;
 	InitDSP(1);
+
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
 }
 
 DRIVER_INIT( airco22 )
@@ -4110,6 +4308,8 @@ DRIVER_INIT( propcycl )
 
 	namcos22_gametype = NAMCOS22_PROP_CYCLE;
 	InitDSP(1);
+
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, propcycle_mcu_adc_r);
 }
 
 DRIVER_INIT( ridgeraj )
@@ -4163,6 +4363,8 @@ DRIVER_INIT( cybrcyc )
 
 	namcos22_gametype = NAMCOS22_CYBER_CYCLES;
 	InitDSP(1);
+
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, cybrcycc_mcu_adc_r);
 }
 
 DRIVER_INIT( timecris )
