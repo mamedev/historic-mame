@@ -26,8 +26,6 @@ TODO:
   is there something connected there?
 Last Day:
 - sprite/fg priority is not understood (tanks, boats should pass below bridges)
-- when you insert a coin, the demo sprites continue to move in the background.
-  Maybe the whole background and sprites are supposed to be disabled.
 Gulf Storm:
 - sprite/fg priority is not understood
 - there seem to be some invisible enemies around the first bridge
@@ -113,8 +111,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastday_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc004) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
-	AM_RANGE(0xc008, 0xc00c) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
+	AM_RANGE(0xc000, 0xc006) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
+	AM_RANGE(0xc008, 0xc00e) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
 	AM_RANGE(0xc010, 0xc010) AM_WRITE(lastday_ctrl_w)	/* coin counter, flip screen */
 	AM_RANGE(0xc011, 0xc011) AM_WRITE(lastday_bankswitch_w)
 	AM_RANGE(0xc012, 0xc012) AM_WRITE(soundlatch_w)
@@ -144,8 +142,8 @@ static ADDRESS_MAP_START( pollux_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(lastday_bankswitch_w)
 	AM_RANGE(0xf008, 0xf008) AM_WRITE(pollux_ctrl_w)	/* coin counter, flip screen */
 	AM_RANGE(0xf010, 0xf010) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xf018, 0xf01c) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
-	AM_RANGE(0xf020, 0xf024) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
+	AM_RANGE(0xf018, 0xf01e) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
+	AM_RANGE(0xf020, 0xf026) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
@@ -308,15 +306,12 @@ static ADDRESS_MAP_START( popbingo_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x040000, 0x04cfff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x04d000, 0x04dfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x04e000, 0x04ffff) AM_WRITE(MWA16_RAM)
-
 	AM_RANGE(0x0c0012, 0x0c0013) AM_WRITE(soundlatch_word_w)
-	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(MWA16_NOP) // ctrl_w ?
-	AM_RANGE(0x0c001a, 0x0c001b) AM_WRITE(MWA16_NOP) // ?
-
+	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(rshark_ctrl_w)
+	AM_RANGE(0x0c0018, 0x0c001b) AM_WRITE(MWA16_NOP) // ?
 	AM_RANGE(0x0c4000, 0x0c401b) AM_RAM AM_BASE(&popbingo_scroll)
 	AM_RANGE(0x0cc000, 0x0cc01b) AM_RAM AM_BASE(&popbingo_scroll2) // not used atm
 	AM_RANGE(0x0c8000, 0x0c8fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-
 	AM_RANGE(0x0dc000, 0x0dc01f) AM_RAM // registers of some kind?
 ADDRESS_MAP_END
 

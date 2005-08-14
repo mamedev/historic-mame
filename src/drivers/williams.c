@@ -750,6 +750,69 @@ INPUT_PORTS_START( colony7 )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( jin )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+
+	PORT_START_TAG("IN1")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN2")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) ) // coins don't work if you change this..
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 ) // where is coin 2?
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( stargate )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Fire")
@@ -1299,6 +1362,14 @@ static MACHINE_DRIVER_START( defender )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( jin ) // needs a different screen size or the credit text is clipped
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(defender)
+	MDRV_SCREEN_SIZE(316, 256)
+	MDRV_VISIBLE_AREA(0, 315, 7, 245)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( williams )
 
 	/* basic machine hardware */
@@ -1665,6 +1736,22 @@ ROM_START( colony7a )
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "cs10.bin",  0x0000, 0x0200, CRC(25de5d85) SHA1(826f78c2fe847f594d261c280dd10b9e776bf4fd) )
 	ROM_LOAD( "decoder.3", 0x0200, 0x0200, CRC(c3f45f70) SHA1(d19036cbc46b130548873597b44b8b70758f25c4) )
+ROM_END
+
+
+ROM_START( jin )
+	ROM_REGION( 0x19000, REGION_CPU1, 0 )
+	ROM_LOAD( "jin11.6c", 0x0d000, 0x1000, CRC(c4b9e93f) SHA1(5c3451fd8e108aed60c0ef1032873460aa81454e) )
+	ROM_LOAD( "jin12.7c", 0x0e000, 0x1000, CRC(a8bc9fdd) SHA1(fffec12dbb0ef85f65bbfd93569c535d41773da4) )
+	ROM_LOAD( "jin13.6d", 0x0f000, 0x1000, CRC(79779b85) SHA1(3c0aa595f8ee370790db89ea2ecc4868dde06a27) )
+	ROM_LOAD( "jin14.4c", 0x10000, 0x1000, CRC(6a4df97e) SHA1(c1b8f180e1f935a88fb7203b77b97a614b091c9e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "jin15.3f",   0xf800, 0x0800, CRC(fefd5b48) SHA1(ceb0d18483f0691978c604db94417e6941ad7ff2) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "jin.1a",   0x0000, 0x0200, CRC(8dd98da5) SHA1(da979604f7a2aa8b5a6d4a5debd2e80f77569e35) )
+	ROM_LOAD( "jin.1l",   0x0200, 0x0200, CRC(c3f45f70) SHA1(d19036cbc46b130548873597b44b8b70758f25c4) )
 ROM_END
 
 
@@ -2532,6 +2619,7 @@ GAME( 1980, maydaya,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>
 GAME( 1980, maydayb,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 3)" )
 GAME( 1981, colony7,  0,        defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 1)" )
 GAME( 1981, colony7a, colony7,  defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 2)" )
+GAME( 1982, jin,      0,        jin,      jin,      defender, ROT90,  "Falcon", "Jin" )
 
 /* Standard Williams hardware */
 GAME( 1981, stargate, 0,        williams, stargate, stargate, ROT0,   "Williams", "Stargate" )

@@ -35,6 +35,7 @@ typedef UINT32 FPTR;
 
 
 
+
 /***************************************************************************
  * Union of UINT8, UINT16 and UINT32 in native endianess of the target
  * This is used to access bytes and words in a machine independent manner.

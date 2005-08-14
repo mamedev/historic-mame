@@ -30,7 +30,7 @@
             init_machine() [mame.c]
                 - calls uistring_init() [ui_text.c] to initialize the localized strings
                 - calls code_init() [input.c] to initialize the input system
-                - calls input_port_alloc() [inptport.c] to construct the game's input ports
+                - calls inputport_init() [inptport.c] to set up the input ports
                 - calls chd_set_interface() [chd.c] to initialize the hard disk system
                 - calls rom_load() [common.c] to load the game's ROMs
                 - calls timer_init() [timer.c] to reset the timer system
@@ -397,24 +397,11 @@ static int init_machine(void)
 		goto cant_init_input;
 	}
 
-	/* if we have inputs, process them now */
-	if (gamedrv->construct_ipt)
+	/* initialize the input ports for the game */
+	if (inputport_init(gamedrv->construct_ipt) != 0)
 	{
-		/* allocate input ports */
-		Machine->input_ports = input_port_allocate(gamedrv->construct_ipt);
-		if (!Machine->input_ports)
-		{
-			logerror("could not allocate Machine->input_ports\n");
-			goto cant_allocate_input_ports;
-		}
-
-		/* allocate default input ports */
-		Machine->input_ports_default = input_port_allocate(gamedrv->construct_ipt);
-		if (!Machine->input_ports_default)
-		{
-			logerror("could not allocate Machine->input_ports_default\n");
-			goto cant_allocate_input_ports_default;
-		}
+		logerror("inputport_init failed\n");
+		goto cant_allocate_input_ports;
 	}
 
 	/* init the hard drive interface now, before attempting to load */
@@ -474,10 +461,9 @@ static int init_machine(void)
 
 cant_init_memory:
 cant_load_roms:
-	Machine->input_ports_default = 0;
-cant_allocate_input_ports_default:
-	Machine->input_ports = 0;
 cant_allocate_input_ports:
+	Machine->input_ports_default = 0;
+	Machine->input_ports = 0;
 	code_close();
 cant_init_input:
 cant_load_language_file:

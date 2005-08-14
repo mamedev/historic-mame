@@ -69,6 +69,130 @@ static int      model2_timerrun[4];
 static void    *model2_timers[4];
 static int model2_ctrlmode;
 
+
+
+#define COPRO_FIFOIN_SIZE	16
+static int copro_fifoin_rpos, copro_fifoin_wpos;
+static UINT32 copro_fifoin_data[COPRO_FIFOIN_SIZE];
+static int copro_fifoin_num = 0;
+static UINT32 copro_fifoin_pop(void)
+{
+	UINT32 r;
+	if (copro_fifoin_wpos == copro_fifoin_rpos)
+	{
+		//osd_die("Copro FIFOIN underflow (at %08X)\n", activecpu_get_pc());
+		return 0;
+	}
+	r = copro_fifoin_data[copro_fifoin_rpos++];
+
+	if (copro_fifoin_rpos == COPRO_FIFOIN_SIZE)
+	{
+		copro_fifoin_rpos = 0;
+	}
+
+	copro_fifoin_num--;
+	if (copro_fifoin_num == 0)
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
+	}
+
+	return r;
+}
+
+static void copro_fifoin_push(UINT32 data)
+{
+	copro_fifoin_data[copro_fifoin_wpos++] = data;
+	if (copro_fifoin_wpos == COPRO_FIFOIN_SIZE)
+	{
+		copro_fifoin_wpos = 0;
+	}
+	if (copro_fifoin_wpos == copro_fifoin_rpos)
+	{
+		//osd_die("Copro FIFOIN overflow (at %08X)\n", activecpu_get_pc());
+		return;
+	}
+
+	copro_fifoin_num++;
+	// clear FIFO empty flag on SHARC
+	cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
+}
+
+
+#define COPRO_FIFOOUT_SIZE	16
+static int copro_fifoout_rpos, copro_fifoout_wpos;
+static UINT32 copro_fifoout_data[COPRO_FIFOOUT_SIZE];
+static int copro_fifoout_num = 0;
+static int copro_fifoout_empty = 1;
+static UINT32 copro_fifoout_pop(void)
+{
+	UINT32 r;
+	if (copro_fifoout_wpos == copro_fifoout_rpos)
+	{
+		//osd_die("Copro FIFOOUT underflow (at %08X)\n", activecpu_get_pc());
+		return 0;
+	}
+	r = copro_fifoout_data[copro_fifoout_rpos++];
+
+	if (copro_fifoout_rpos == COPRO_FIFOOUT_SIZE)
+	{
+		copro_fifoout_rpos = 0;
+	}
+	copro_fifoout_num--;
+	if (copro_fifoout_num == 0)
+	{
+		copro_fifoout_empty = 1;
+	}
+	else
+	{
+		copro_fifoout_empty = 0;
+	}
+
+	// set SHARC flag 1: 0 if space available, 1 if FIFO full
+	if (copro_fifoout_num == COPRO_FIFOOUT_SIZE)
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
+	}
+
+	return r;
+}
+
+static void copro_fifoout_push(UINT32 data)
+{
+	copro_fifoout_data[copro_fifoout_wpos++] = data;
+	if (copro_fifoout_wpos == COPRO_FIFOOUT_SIZE)
+	{
+		copro_fifoout_wpos = 0;
+	}
+	if (copro_fifoout_wpos == copro_fifoout_rpos)
+	{
+		//osd_die("Copro FIFOOUT overflow (at %08X)\n", activecpu_get_pc());
+		return;
+	}
+	copro_fifoout_num++;
+	// clear FIFO empty flag on i960
+	copro_fifoout_empty = 0;
+
+	// set SHARC flag 1: 0 if space available, 1 if FIFO full
+	if (copro_fifoout_num == COPRO_FIFOOUT_SIZE)
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
+	}
+}
+
+
+
 static NVRAM_HANDLER( model2 )
 {
 	nvram_handler_93C46(file, read_or_write);
@@ -188,6 +312,14 @@ static MACHINE_INIT(model2b)
 
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
+
+	// set FIFOIN empty flag on SHARC
+	cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
+	// clear FIFOOUT buffer full flag on SHARC
+	cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
+
+	// set FIFO empty flag on i960
+	copro_fifoout_empty = 1;
 }
 
 static VIDEO_START(model2)
@@ -287,7 +419,7 @@ static READ32_HANDLER(analog_r)
 static READ32_HANDLER(fifoctl_r)
 {
 	// #### 1 if fifo empty, zerogun needs | 0x04 set
-	return 1 | 0x04;
+	return copro_fifoout_empty | 0x04;
 }
 
 static READ32_HANDLER(videoctl_r)
@@ -304,6 +436,7 @@ static WRITE32_HANDLER(geo_prg_w)
 {
 	if (model2_geoctl & 0x80000000)
 	{
+		logerror("geo_prg_w: %08X:   %08X\n", model2_geocnt, data);
 		model2_geocnt++;
 	}
 }
@@ -360,6 +493,7 @@ static WRITE32_HANDLER(copro_prg_w)
 {
 	if (model2_coproctl & 0x80000000)
 	{
+		logerror("copro_prg_w: %08X:   %08X\n", model2_coprocnt, data);
 		model2_coprocnt++;
 	}
 }
@@ -407,26 +541,70 @@ static WRITE32_HANDLER( geo_sharc_ctl1_w )
 	model2_geoctl = data;
 }
 
-static WRITE32_HANDLER(copro_sharc_prg_w)
+static READ32_HANDLER(copro_sharc_fifo_r)
 {
-	if (model2_coproctl & 0x80000000)
+	if ((strcmp(Machine->gamedrv->name, "manxtt" ) == 0) || (strcmp(Machine->gamedrv->name, "srallyc" ) == 0))
 	{
-		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 0, (data >> 0) & 0xff);
-		cpunum_write_byte(2, 0x80000+(model2_coprocnt*2) + 1, (data >> 8) & 0xff);
-
-		model2_coprocnt++;
+		return 8;
+	}
+	else
+	{
+		logerror("copro_fifo_r: %08X, %08X\n", offset, mem_mask);
+		return copro_fifoout_pop();
 	}
 }
 
+static UINT16 copro_program_word[3];
+static WRITE32_HANDLER(copro_sharc_fifo_w)
+{
+	if (model2_coproctl & 0x80000000)
+	{
+		copro_program_word[model2_coprocnt % 3] = data & 0xffff;
+		if ((model2_coprocnt % 3) == 2)
+		{
+			UINT64 value = ((UINT64)copro_program_word[2] << 32) |
+						   ((UINT64)copro_program_word[1] << 16) |
+						   ((UINT64)copro_program_word[0]);
+			cpuintrf_push_context(2);
+			sharc_write_program_ram(0x20000 + (model2_coprocnt/3), value);
+			cpuintrf_pop_context();
+		}
+
+		model2_coprocnt++;
+	}
+	else
+	{
+		logerror("copro_fifo_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+		if (data != 0)
+		{
+			copro_fifoin_push(data);
+		}
+	}
+}
+
+static UINT16 geo_program_word[3];
 static WRITE32_HANDLER(geo_sharc_prg_w)
 {
 	if (model2_geoctl & 0x80000000)
 	{
-		cpunum_write_byte(3, 0x80000+(model2_geocnt*2) + 0, (data >> 0) & 0xff);
-		cpunum_write_byte(3, 0x80000+(model2_geocnt*2) + 1, (data >> 8) & 0xff);
+		geo_program_word[model2_geocnt % 3] = data & 0xffff;
+		if ((model2_geocnt % 3) == 2)
+		{
+			UINT64 value = ((UINT64)geo_program_word[2] << 32) |
+						   ((UINT64)geo_program_word[1] << 16) |
+						   ((UINT64)geo_program_word[0]);
+			cpuintrf_push_context(3);
+			sharc_write_program_ram(0x20000 + (model2_geocnt/3), value);
+			cpuintrf_pop_context();
+		}
 
 		model2_geocnt++;
 	}
+}
+
+static WRITE32_HANDLER(copro_function_port_w)
+{
+	logerror("copro_function_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 }
 
 
@@ -861,7 +1039,8 @@ static ADDRESS_MAP_START( model2b_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
 	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_sharc_prg_w)
-	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_sharc_prg_w)
+	AM_RANGE(0x00880000, 0x00883fff) AM_WRITE(copro_function_port_w)
+	AM_RANGE(0x00884000, 0x00887fff) AM_READWRITE(copro_sharc_fifo_r, copro_sharc_fifo_w)
 
 	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_sharc_ctl1_w )
 	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_sharc_ctl1_w )
@@ -1208,12 +1387,22 @@ static struct MultiPCM_interface m1_multipcm_interface_2 =
 
 
 
-static ADDRESS_MAP_START( copro_sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x1000000, 0x101ffff) AM_RAM
+static READ32_HANDLER(copro_sharc_input_fifo_r)
+{
+	return copro_fifoin_pop();
+}
+
+static WRITE32_HANDLER(copro_sharc_output_fifo_w)
+{
+	copro_fifoout_push(data);
+}
+
+static ADDRESS_MAP_START( copro_sharc_map, ADDRESS_SPACE_DATA, 32 )
+	AM_RANGE(0x0400000, 0x0bfffff) AM_READ(copro_sharc_input_fifo_r)
+	AM_RANGE(0x0c00000, 0x13fffff) AM_WRITE(copro_sharc_output_fifo_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( geo_sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x1000000, 0x101ffff) AM_RAM
+static ADDRESS_MAP_START( geo_sharc_map, ADDRESS_SPACE_DATA, 32 )
 ADDRESS_MAP_END
 
 
@@ -1308,11 +1497,11 @@ static MACHINE_DRIVER_START( model2b )
 
 	MDRV_CPU_ADD(ADSP21062, 40000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_PROGRAM_MAP(copro_sharc_map, 0)
+	MDRV_CPU_DATA_MAP(copro_sharc_map, 0)
 
 	MDRV_CPU_ADD(ADSP21062, 40000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_PROGRAM_MAP(geo_sharc_map, 0)
+	MDRV_CPU_DATA_MAP(geo_sharc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

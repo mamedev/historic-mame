@@ -1981,9 +1981,15 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 
 static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x20000;
-	const UINT16 *spritebase = (const UINT16 *)memory_region(REGION_GFX2);
-	UINT16 *data;
+	UINT8 numbanks;
+	const UINT16 *spritebase;
+  	UINT16 *data;
+
+	if (!memory_region(REGION_GFX2))
+		return;
+
+	spritebase = (const UINT16 *)memory_region(REGION_GFX2);
+	numbanks = memory_region_length(REGION_GFX2) / 0x20000;
 
 	/* first scan forward to find the end of the list */
 	for (data = info->spriteram; data < info->spriteram + info->ramsize/2; data += 8)

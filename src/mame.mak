@@ -5,7 +5,7 @@ CPUS+=8080@
 CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
-#CPUS+=M65SC02@
+CPUS+=M65SC02@
 #CPUS+=M65CE02@
 #CPUS+=M6509@
 CPUS+=M6510@
@@ -601,6 +601,7 @@ $(OBJ)/tehkan.a: \
 	$(OBJ)/vidhrdw/bombjack.o $(OBJ)/drivers/bombjack.o \
 	$(OBJ)/vidhrdw/lvcards.o $(OBJ)/drivers/lvcards.o \
 	$(OBJ)/vidhrdw/pbaction.o $(OBJ)/drivers/pbaction.o \
+	$(OBJ)/vidhrdw/lvpoker.o $(OBJ)/drivers/lvpoker.o \
 	$(OBJ)/vidhrdw/tehkanwc.o $(OBJ)/drivers/tehkanwc.o \
 	$(OBJ)/vidhrdw/solomon.o $(OBJ)/drivers/solomon.o \
 	$(OBJ)/vidhrdw/tecmo.o $(OBJ)/drivers/tecmo.o \
@@ -1056,6 +1057,7 @@ $(OBJ)/comad.a: \
 
 $(OBJ)/playmark.a: \
 	$(OBJ)/vidhrdw/sslam.o $(OBJ)/drivers/sslam.o \
+	$(OBJ)/vidhrdw/sderby.o $(OBJ)/drivers/sderby.o \
 	$(OBJ)/vidhrdw/playmark.o $(OBJ)/drivers/playmark.o \
 	$(OBJ)/drivers/drtomy.o \
 
@@ -1109,6 +1111,8 @@ $(OBJ)/sigma.a: \
 	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o \
 
 $(OBJ)/igs.a: \
+	$(OBJ)/vidhrdw/goldstar.o $(OBJ)/drivers/goldstar.o \
+	$(OBJ)/vidhrdw/csk.o $(OBJ)/drivers/csk.o \
 	$(OBJ)/vidhrdw/iqblock.o $(OBJ)/drivers/iqblock.o \
 	$(OBJ)/drivers/chindrag.o \
 	$(OBJ)/drivers/grtwall.o \
@@ -1288,6 +1292,16 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/penocup.o \
 	$(OBJ)/drivers/dreamwld.o \
 	$(OBJ)/drivers/cybertnk.o \
+	$(OBJ)/drivers/funworld.o \
+	$(OBJ)/drivers/vroulet.o \
+	$(OBJ)/drivers/rcasino.o \
+	$(OBJ)/drivers/ampoker.o \
+	$(OBJ)/drivers/cherrym.o \
+	$(OBJ)/drivers/cherrym2.o \
+	$(OBJ)/drivers/lucky8.o \
+	$(OBJ)/drivers/starspnr.o \
+	$(OBJ)/drivers/vp906iii.o \
+	$(OBJ)/drivers/attckufo.o $(OBJ)/sndhrdw/attckufo.o $(OBJ)/vidhrdw/attckufo.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

@@ -8,8 +8,6 @@ static struct tilemap *fore_layer;
 
 UINT32 *scroll_ram;
 
-int old_vidhw;
-int bg_size;
 static UINT32 layer_bank;
 static UINT32 layer_enable;
 static UINT32 video_dma_length;
@@ -25,6 +23,10 @@ static int mid_layer_offset;
 static int fore_layer_offset;
 static int text_layer_offset;
 
+static UINT32 bg_fore_layer_position;
+
+static UINT8 alpha_table[6144];
+
 READ32_HANDLER( spi_layer_bank_r )
 {
 	return layer_bank;
@@ -33,6 +35,17 @@ READ32_HANDLER( spi_layer_bank_r )
 WRITE32_HANDLER( spi_layer_bank_w )
 {
 	COMBINE_DATA( &layer_bank );
+
+	if (layer_bank & 0x80000000) {
+		fore_layer_offset = 0x1000 / 4;
+		mid_layer_offset = 0x2000 / 4;
+		text_layer_offset = 0x3000 / 4;
+	}
+	else {
+		fore_layer_offset = 0x800 / 4;
+		mid_layer_offset = 0x1000 / 4;
+		text_layer_offset = 0x1800 / 4;
+	}
 }
 
 void rf2_set_layer_banks(int banks)
@@ -74,7 +87,7 @@ WRITE32_HANDLER( tilemap_dma_start_w )
 	int i;
 	int index = (video_dma_address / 4) - 0x200;
 
-	if (!old_vidhw)
+	if (layer_bank & 0x80000000)
 	{
 		/* back layer */
 		for (i=0; i < 0x800/4; i++) {
@@ -218,6 +231,117 @@ WRITE32_HANDLER( video_dma_address_w )
 	COMBINE_DATA( &video_dma_address );
 }
 
+static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const struct GfxElement *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
+{
+	UINT8 *dp;
+	int i, j;
+	int x1, x2;
+	int y1, y2;
+	int px, py;
+	int xd = 1, yd = 1;
+
+	int width = gfx->width;
+	int height = gfx->height;
+
+	x1 = sx;
+	x2 = sx + width - 1;
+	y1 = sy;
+	y2 = sy + height - 1;
+
+	if (x1 > cliprect->max_x || x2 < cliprect->min_x)
+	{
+		return;
+	}
+	if (y1 > cliprect->max_y || y2 < cliprect->min_y)
+	{
+		return;
+	}
+
+	px = 0;
+	py = 0;
+
+	if (flipx)
+	{
+		xd = -xd;
+		px = width - 1;
+	}
+	if (flipy)
+	{
+		yd = -yd;
+		py = height - 1;
+	}
+
+	// clip x
+	if (x1 < cliprect->min_x)
+	{
+		if (flipx)
+		{
+			px = width - (cliprect->min_x - x1) - 1;
+		}
+		else
+		{
+			px = (cliprect->min_x - x1);
+		}
+		x1 = cliprect->min_x;
+	}
+	if (x2 > cliprect->max_x)
+	{
+		x2 = cliprect->max_x;
+	}
+
+	// clip y
+	if (y1 < cliprect->min_y)
+	{
+		if (flipy)
+		{
+			py = height - (cliprect->min_y - y1) - 1;
+		}
+		else
+		{
+			py = (cliprect->min_y - y1);
+		}
+		y1 = cliprect->min_y;
+	}
+	if (y2 > cliprect->max_y)
+	{
+		y2 = cliprect->max_y;
+	}
+
+	if (gfx->total_elements <= 0x10000)
+	{
+		code &= 0xffff;
+	}
+
+	dp = gfx->gfxdata + code * gfx->char_modulo;
+
+	// draw
+	for (j=y1; j <= y2; j++)
+	{
+		UINT16 *p = bitmap->line[j];
+		int dp_i = (py * width) + px;
+		py += yd;
+
+		for (i=x1; i <= x2; i++)
+		{
+			UINT8 pen = dp[dp_i];
+			if (pen != 0x3f)
+			{
+				int global_pen = pen + color*64;
+				UINT8 alpha = alpha_table[global_pen];
+				if (alpha)
+				{
+					p[i] = alpha_blend16(p[i], gfx->colortable[global_pen]);
+				}
+				else
+				{
+					p[i] = gfx->colortable[global_pen];
+				}
+			}
+			dp_i += xd;
+		}
+	}
+}
+
 static int sprite_xtable[2][8] =
 {
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
@@ -237,7 +361,6 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int flip_x = 0, flip_y = 0;
 	int a;
 	int priority;
-	int transparency;
 	int x,y, x1, y1;
 	const struct GfxElement *gfx = Machine->gfx[2];
 
@@ -264,15 +387,6 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			ypos |= 0xfe00;
 		color = (sprite_ram[a + 0] & 0x3f);
 
-		if (color == 0x1c || color == 0x1e) {
-			transparency = TRANSPARENCY_ALPHA;
-			alpha_set_level(0x7f);
-		}
-		else {
-			transparency = TRANSPARENCY_PEN;
-		}
-
-
 		width = ((sprite_ram[a + 0] >> 8) & 0x7) + 1;
 		height = ((sprite_ram[a + 0] >> 12) & 0x7) + 1;
 		flip_x = (sprite_ram[a + 0] >> 11) & 0x1;
@@ -291,25 +405,11 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 		for( x=x1; x < width; x++ ) {
 			for( y=y1; y < height; y++ ) {
-				drawgfx(
-					bitmap,
-					gfx,
-					tile_num,
-					color, flip_x, flip_y, xpos + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y],
-					cliprect,
-					transparency, 63
-					);
+				draw_blend_gfx(bitmap, cliprect, gfx, tile_num, color, flip_x, flip_y, xpos + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y]);
 
 				/* xpos seems to wrap-around to 0 at 512 */
 				if( (xpos + (16 * x) + 16) >= 512 ) {
-					drawgfx(
-					bitmap,
-					gfx,
-					tile_num,
-					color, flip_x, flip_y, xpos - 512 + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y],
-					cliprect,
-					transparency, 63
-					);
+					draw_blend_gfx(bitmap, cliprect, gfx, tile_num, color, flip_x, flip_y, xpos - 512 + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y]);
 				}
 
 				tile_num++;
@@ -365,12 +465,7 @@ static void get_fore_tile_info( int tile_index )
 	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	switch(bg_size)
-	{
-		case 0: tile |= 0x2000; break;
-		case 1:	tile |= 0x4000; break;
-		case 2: tile |= 0x8000; break;
-	}
+	tile |= bg_fore_layer_position;
 
 	if( rf2_layer_bank[2] )
 		tile |= 0x4000;
@@ -383,6 +478,8 @@ static void get_fore_tile_info( int tile_index )
 VIDEO_START( spi )
 {
 	int i;
+	int region_length;
+
 	text_layer	= tilemap_create( get_text_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8,64,32 );
 	back_layer	= tilemap_create( get_back_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 16,16,32,32 );
 	mid_layer	= tilemap_create( get_mid_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT, 16,16,32,32 );
@@ -403,16 +500,42 @@ VIDEO_START( spi )
 		palette_set_color(i, 0, 0, 0);
 	}
 
-	if (old_vidhw) {
-		fore_layer_offset = 0x800 / 4;
-		mid_layer_offset = 0x1000 / 4;
-		text_layer_offset = 0x1800 / 4;
+	memset(alpha_table, 0, 6144 * sizeof(UINT8));
+
+	// sprites
+	//for (i = 1792; i < 1808; i++) { alpha_table[i] = 1; } // breaks rdft
+	for (i = 1840; i < 1856; i++) { alpha_table[i] = 1; }
+	for (i = 1920; i < 1952; i++) { alpha_table[i] = 1; }
+	//for (i = 1984; i < 2048; i++) { alpha_table[i] = 1; } // breaks batlball
+	//for (i = 3840; i < 3904; i++) { alpha_table[i] = 1; } // breaks rdft
+	for (i = 4032; i < 4096; i++) { alpha_table[i] = 1; }
+
+	// mid layer
+	for (i = 4960; i < 4992; i++) { alpha_table[i] = 1; }	// breaks ejanhs
+	for (i = 5040; i < 5056; i++) { alpha_table[i] = 1; }	// breaks ejanhs
+	for (i = 5104; i < 5120; i++) { alpha_table[i] = 1; }
+	// fore layer
+	for (i = 5552; i < 5568; i++) { alpha_table[i] = 1; }	// breaks ejanhs
+	for (i = 5616; i < 5632; i++) { alpha_table[i] = 1; }	// breaks ejanhs
+	// text layer
+	for (i = 6000; i < 6016; i++) { alpha_table[i] = 1; }
+	for (i = 6128; i < 6144; i++) { alpha_table[i] = 1; }
+
+	region_length = memory_region_length(REGION_GFX2);
+
+	if (region_length <= 0x300000)
+	{
+		bg_fore_layer_position = 0x2000;
 	}
-	else {
-		fore_layer_offset = 0x1000 / 4;
-		mid_layer_offset = 0x2000 / 4;
-		text_layer_offset = 0x3000 / 4;
+	else if (region_length <= 0x600000)
+	{
+		bg_fore_layer_position = 0x4000;
 	}
+	else
+	{
+		bg_fore_layer_position = 0x8000;
+	}
+
 	return 0;
 }
 
@@ -437,33 +560,104 @@ static void set_scroll(struct tilemap *layer, int scroll)
 }
 
 
+static void combine_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct tilemap *tile, int x, int y, int opaque, INT16 *rowscroll)
+{
+	int i,j;
+	UINT16 *s;
+	UINT16 *d;
+	UINT8 *t;
+	UINT32 xscroll_mask, yscroll_mask;
+	struct mame_bitmap *pen_bitmap;
+	struct mame_bitmap *trans_bitmap;
+
+	pen_bitmap = tilemap_get_pixmap(tile);
+	trans_bitmap = tilemap_get_transparency_bitmap(tile);
+	xscroll_mask = pen_bitmap->width - 1;
+	yscroll_mask = pen_bitmap->height - 1;
+
+	alpha_set_level(0x7f);
+
+	for (j=cliprect->min_y; j <= cliprect->max_y; j++)
+	{
+		int rx = x;
+		if (rowscroll)
+		{
+			rx += rowscroll[(j+y) & yscroll_mask];
+		}
+
+		d = bitmap->line[j];
+		s = pen_bitmap->line[(j+y) & yscroll_mask];
+		t = trans_bitmap->line[(j+y) & yscroll_mask];
+		for (i=cliprect->min_x+rx; i <= cliprect->max_x+rx; i++)
+		{
+			if (opaque || (t[i & xscroll_mask] & (TILE_FLAG_FG_OPAQUE | TILE_FLAG_BG_OPAQUE)))
+			{
+				UINT16 pen = s[i & xscroll_mask];
+				UINT8 alpha = alpha_table[pen];
+				if (alpha)
+				{
+					*d = alpha_blend16(*d, Machine->remapped_colortable[pen]);
+				}
+				else
+				{
+					*d = Machine->remapped_colortable[pen];
+				}
+			}
+			++d;
+		}
+	}
+}
+
+
+
 VIDEO_UPDATE( spi )
 {
-	if( !old_vidhw ) {
-		set_rowscroll(back_layer, 0, (INT16*)&tilemap_ram[0x200]);
-		set_rowscroll(mid_layer, 1, (INT16*)&tilemap_ram[0x600]);
-		set_rowscroll(fore_layer, 2, (INT16*)&tilemap_ram[0xa00]);
+	INT16 *back_rowscroll, *mid_rowscroll, *fore_rowscroll;
+	if( layer_bank & 0x80000000 ) {
+		back_rowscroll	= (INT16*)&tilemap_ram[0x200];
+		mid_rowscroll	= (INT16*)&tilemap_ram[0x600];
+		fore_rowscroll	= (INT16*)&tilemap_ram[0xa00];
 	} else {
-		set_scroll(back_layer, 0);
-		set_scroll(mid_layer, 1);
-		set_scroll(fore_layer, 2);
+		back_rowscroll	= NULL;
+		mid_rowscroll	= NULL;
+		fore_rowscroll	= NULL;
 	}
 
 	if( layer_enable & 0x1 )
 		fillbitmap(bitmap, 0, cliprect);
 
-	tilemap_draw(bitmap, cliprect, back_layer, 0,0);
+	if (!(layer_enable & 0x1))
+	{
+		combine_tilemap(bitmap, cliprect, back_layer, scroll_ram[0] & 0xffff, (scroll_ram[0] >> 16) & 0xffff, 1, back_rowscroll);
+	}
 
 	draw_sprites(bitmap, cliprect, 0);
 
-	tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
+	// if fore layer is enabled, draw priority 1 sprites behind mid layer
+	if (!(layer_enable & 0x4))
+	{
+		draw_sprites(bitmap, cliprect, 1);
+	}
 
-	draw_sprites(bitmap, cliprect, 1);
+	if (!(layer_enable & 0x2))
+	{
+		combine_tilemap(bitmap, cliprect, mid_layer, scroll_ram[1] & 0xffff, (scroll_ram[1] >> 16) & 0xffff, 0, mid_rowscroll);
+	}
+
+	// if fore layer is disabled, draw priority 1 sprites above mid layer
+	if ((layer_enable & 0x4))
+	{
+		draw_sprites(bitmap, cliprect, 1);
+	}
+
 	draw_sprites(bitmap, cliprect, 2);
 
-	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
+	if (!(layer_enable & 0x4))
+	{
+		combine_tilemap(bitmap, cliprect, fore_layer, scroll_ram[2] & 0xffff, (scroll_ram[2] >> 16) & 0xffff, 0, fore_rowscroll);
+	}
 
 	draw_sprites(bitmap, cliprect, 3);
 
-	tilemap_draw(bitmap, cliprect, text_layer, 0,0);
+	combine_tilemap(bitmap, cliprect, text_layer, 0, 0, 0, NULL);
 }

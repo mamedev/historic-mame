@@ -45,6 +45,7 @@ typedef struct
 	int noise_state;
 	int noise_seed;
 	UINT32 noise_counter;
+	int noise_hold;
 	int waveform_select;
 } sound_channel;
 
@@ -185,7 +186,9 @@ static void namco_update_mono(void *param, stream_sample_t **inputs, stream_samp
 			/* only update if we have non-zero volume and frequency */
 			if (v && f)
 			{
-				UINT32 delta = f << (chip->f_fracbits - 15 + 4);
+				int hold_time = 1 << (chip->f_fracbits - 16);
+				int hold = voice->noise_hold;
+				UINT32 delta = f << 4;
 				UINT32 c = voice->noise_counter;
 				INT16 noise_data = OUTPUT_LEVEL(0x07 * (v >> 1));
 				int i;
@@ -200,6 +203,14 @@ static void namco_update_mono(void *param, stream_sample_t **inputs, stream_samp
 					else
 						*mix++ -= noise_data;
 
+					if (hold)
+					{
+						hold--;
+						continue;
+					}
+
+					hold = 	hold_time;
+
 					c += delta;
 					cnt = (c >> 12);
 					c &= (1 << 12) - 1;
@@ -211,8 +222,9 @@ static void namco_update_mono(void *param, stream_sample_t **inputs, stream_samp
 					}
 				}
 
-				/* update the counter for this voice */
+				/* update the counter and hold time for this voice */
 				voice->noise_counter = c;
+				voice->noise_hold = hold;
 			}
 		}
 		else
@@ -259,7 +271,9 @@ static void namco_update_stereo(void *param, stream_sample_t **inputs, stream_sa
 			/* only update if we have non-zero volume and frequency */
 			if ((lv || rv) && f)
 			{
-				UINT32 delta = f << (chip->f_fracbits - 15 + 4);
+				int hold_time = 1 << (chip->f_fracbits - 16);
+				int hold = voice->noise_hold;
+				UINT32 delta = f << 4;
 				UINT32 c = voice->noise_counter;
 				INT16 l_noise_data = OUTPUT_LEVEL(0x07 * (lv >> 1));
 				INT16 r_noise_data = OUTPUT_LEVEL(0x07 * (rv >> 1));
@@ -281,6 +295,14 @@ static void namco_update_stereo(void *param, stream_sample_t **inputs, stream_sa
 						*rmix++ -= r_noise_data;
 					}
 
+					if (hold)
+					{
+						hold--;
+						continue;
+					}
+
+					hold = 	hold_time;
+
 					c += delta;
 					cnt = (c >> 12);
 					c &= (1 << 12) - 1;
@@ -292,8 +314,9 @@ static void namco_update_stereo(void *param, stream_sample_t **inputs, stream_sa
 					}
 				}
 
-				/* update the counter for this voice */
+				/* update the counter and hold time for this voice */
 				voice->noise_counter = c;
+				voice->noise_hold = hold;
 			}
 		}
 		else
@@ -381,6 +404,7 @@ static void *namco_start(int sndindex, int clock, const void *config)
 		voice->noise_state = 0;
 		voice->noise_seed = 1;
 		voice->noise_counter = 0;
+		voice->noise_hold = 0;
 	}
 
 	return chip;

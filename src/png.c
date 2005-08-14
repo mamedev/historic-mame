@@ -25,7 +25,6 @@
 #include "driver.h"
 #include "png.h"
 
-
 /* convert_uint is here so we don't have to deal with byte-ordering issues */
 static UINT32 convert_from_network_order (UINT8 *v)
 {
@@ -894,12 +893,16 @@ int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap)
 
 ********************************************************************************/
 
-static int mng_status;
 
 int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 {
 	UINT8 mhdr[28];
-/*  UINT8 term; */
+	char text[1024];
+
+	sprintf (text, APPNAME " %s", build_version);
+	png_add_text("Software", text);
+	sprintf (text, "%s %s", Machine->gamedrv->manufacturer, Machine->gamedrv->description);
+	png_add_text("System", text);
 
 	if (mame_fwrite(fp, MNG_Signature, 8) != 8)
 	{
@@ -917,27 +920,15 @@ int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 	if (write_chunk(fp, MNG_CN_MHDR, mhdr, 28)==0)
 		return 0;
 
-/*  term = 0x03;    loop sequence    */
-/*  if (write_chunk(fp, MNG_CN_TERM, &term, 1)==0) */
-/*      return 0; */
-
-	mng_status = 1;
 	return 1;
 }
 
 int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap)
 {
-	if (mng_status)
-	{
-		if(png_create_datastream(fp, bitmap) == 0)
-			return 0;
-		return 1;
-	}
-	else
-	{
-		logerror("MNG recording not running\n");
+	if(png_create_datastream(fp, bitmap) == 0)
 		return 0;
-	}
+
+	return 1;
 }
 
 int mng_capture_stop(mame_file *fp)
@@ -945,12 +936,6 @@ int mng_capture_stop(mame_file *fp)
 	if (write_chunk(fp, MNG_CN_MEND, NULL, 0)==0)
 		return 0;
 
-	mng_status = 0;
 	return 1;
-}
-
-int mng_capture_status(void)
-{
-	return mng_status;
 }
 

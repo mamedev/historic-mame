@@ -378,27 +378,27 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static UINT32 dataram[0x100000];
+static UINT32 *sharc_dataram;
 
 static READ32_HANDLER( dsp_dataram_r )
 {
-	return dataram[offset] & 0xffff;
+	return sharc_dataram[offset] & 0xffff;
 }
 
 static WRITE32_HANDLER( dsp_dataram_w )
 {
-	dataram[offset] = data;
+	sharc_dataram[offset] = data;
 }
 
-static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x1000000, 0x101ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
-	AM_RANGE(0x1400000, 0x14fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
-	AM_RANGE(0x5000000, 0x50fffff) AM_RAM
-	AM_RANGE(0x9000000, 0x93fffff) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
-	AM_RANGE(0x9400000, 0x95fffff) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
-	AM_RANGE(0x9800000, 0x9ffffff) AM_WRITE(voodoo_textureram_w)
-	AM_RANGE(0xd000000, 0xd0000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
-	AM_RANGE(0xd400000, 0xd4000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
+static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
+	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
+	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
+	AM_RANGE(0x2400000, 0x24fffff) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
+	AM_RANGE(0x2500000, 0x25fffff) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
+	AM_RANGE(0x2600000, 0x27fffff) AM_WRITE(voodoo_textureram_w)
+	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
+	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -502,7 +502,7 @@ static MACHINE_DRIVER_START( nwktr )
 
 	MDRV_CPU_ADD(ADSP21062, 36000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_PROGRAM_MAP(sharc_map, 0)
+	MDRV_CPU_DATA_MAP(sharc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -523,11 +523,31 @@ MACHINE_DRIVER_END
 
 /*****************************************************************************/
 
+static UINT8 jamma_rdata[1024];
+static void jamma_r(int length)
+{
+	int i;
+	for (i=0; i < length; i++)
+	{
+		jamma_rdata[i] = rand();
+	}
+}
+
+static UINT8 jamma_wdata[1024];
+static void jamma_w(int length)
+{
+
+}
+
 static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( nwktr )
 {
 	init_konami_cgboard(0);
+	sharc_dataram = auto_malloc(0x100000);
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
+
+	ppc403_install_spu_tx_dma_handler(jamma_w, jamma_wdata);
+	ppc403_install_spu_rx_dma_handler(jamma_r, jamma_rdata);
 }
 
 static DRIVER_INIT(thrilld)

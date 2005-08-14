@@ -2742,12 +2742,13 @@ INLINE void muld_im( void )
 INLINE void divd_im( void )
 {
 	UINT8   t;
-	INT16   v;
+	INT16   v, oldD;
 
 	IMMBYTE( t );
 
 	if( t != 0 )
 	{
+		oldD = D;
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
@@ -2758,8 +2759,19 @@ INLINE void divd_im( void )
 		if( B & 0x01 )
 			SEC;
 
-		if ( (v > 127) || (v < -128) )
+		if( (INT16)D < 0 )
+			SEN;
+
+		if ( (v > 127) || (v < -128) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 255) || (v < -256) ) /* hard overflow - division is aborted */
+			{
+				SET_NZ16( oldD );
+				D = abs( oldD );
+			}
+		}
 	}
 	else
 	{
@@ -2771,15 +2783,18 @@ INLINE void divd_im( void )
 /* $118e DIVQ immediate */
 INLINE void divq_im( void )
 {
-	PAIR	t,q;
+	PAIR	t,q, oldQ;
 	INT32	v;
 
 	IMMWORD( t );
+
 	q.w.h = D;
 	q.w.l = W;
 
 	if( t.w.l != 0 )
 	{
+		oldQ = q;
+
 		v = (INT32) q.d / (INT16) t.w.l;
 		D = (INT32) q.d % (INT16) t.w.l;
 		W = v;
@@ -2790,8 +2805,22 @@ INLINE void divq_im( void )
 		if( W & 0x0001 )
 			SEC;
 
-		if ( (v > 65534) || (v < -65535) )
+		if ( (v > 32768) || (v < -35767) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 65536 ) || (v < -65535 ) ) /* hard overflow - division is aborted */
+			{
+				if( oldQ.d < 0 )
+					SEN;
+				else if( oldQ.d == 0 )
+					SEZ;
+
+				t.w.l = abs( t.w.l );
+				D = oldQ.w.h;
+				W = oldQ.w.l;
+			}
+		}
 	}
 	else
 		DZError();
@@ -3047,12 +3076,13 @@ INLINE void muld_di( void )
 INLINE void divd_di( void )
 {
 	UINT8	t;
-	INT16   v;
+	INT16   v, oldD;
 
 	DIRBYTE(t);
 
 	if( t != 0 )
 	{
+		oldD = D;
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
@@ -3063,8 +3093,19 @@ INLINE void divd_di( void )
 		if( B & 0x01 )
 			SEC;
 
-		if ( (v > 127) || (v < -128) )
+		if( (INT16)D < 0 )
+			SEN;
+
+		if ( (v > 127) || (v < -128) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 255) || (v < -256) ) /* hard overflow - division is aborted */
+			{
+				SET_NZ16( oldD );
+				D = abs( oldD );
+			}
+		}
 	}
 	else
 	{
@@ -3076,16 +3117,18 @@ INLINE void divd_di( void )
 /* $119e DIVQ direct -**0- */
 INLINE void divq_di( void )
 {
-	PAIR	t, q;
+	PAIR	t,q, oldQ;
 	INT32	v;
+
+	DIRWORD(t);
 
 	q.w.h = D;
 	q.w.l = W;
 
-	DIRWORD(t);
-
 	if( t.w.l != 0 )
 	{
+		oldQ = q;
+
 		v = (INT32) q.d / (INT16) t.w.l;
 		D = (INT32) q.d % (INT16) t.w.l;
 		W = v;
@@ -3096,13 +3139,26 @@ INLINE void divq_di( void )
 		if( W & 0x0001 )
 			SEC;
 
-		if ( (v > 65534) || (v < -65535) )
+		if ( (v > 32767) || (v < -32768) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 65535 ) || (v < -65536 ) ) /* hard overflow - division is aborted */
+			{
+				if( oldQ.d < 0 )
+					SEN;
+				else if( oldQ.d == 0 )
+					SEZ;
+
+				t.w.l = abs( t.w.l );
+				D = oldQ.w.h;
+				W = oldQ.w.l;
+			}
+		}
 	}
 	else
 		DZError();
 }
-
 /* $10dc LDQ direct -**0- */
 INLINE void ldq_di( void )
 {
@@ -3420,13 +3476,14 @@ INLINE void muld_ix( void )
 INLINE void divd_ix( void )
 {
 	UINT8	t;
-	INT16   v;
+	INT16   v, oldD;
 
 	fetch_effective_address();
 	t=RM(EAD);
 
 	if( t != 0 )
 	{
+		oldD = D;
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
@@ -3437,8 +3494,19 @@ INLINE void divd_ix( void )
 		if( B & 0x01 )
 			SEC;
 
-		if ( (v > 127) || (v < -128) )
+		if( (INT16)D < 0 )
+			SEN;
+
+		if ( (v > 127) || (v < -128) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 255) || (v < -256) ) /* hard overflow - division is aborted */
+			{
+				SET_NZ16( oldD );
+				D = abs( oldD );
+			}
+		}
 	}
 	else
 	{
@@ -3450,20 +3518,21 @@ INLINE void divd_ix( void )
 /* $11ae DIVQ indexed -**0- */
 INLINE void divq_ix( void )
 {
-	UINT16	t;
+	PAIR	t,q, oldQ;
 	INT32	v;
-	PAIR	q;
+
+	fetch_effective_address();
+	t.w.l=RM16(EAD);
 
 	q.w.h = D;
 	q.w.l = W;
 
-	fetch_effective_address();
-	t=RM16(EAD);
-
-	if( t != 0 )
+	if( t.w.l != 0 )
 	{
-		v = (INT32) q.d / (INT16) t;
-		D = (INT32) q.d % (INT16) t;
+		oldQ = q;
+
+		v = (INT32) q.d / (INT16) t.w.l;
+		D = (INT32) q.d % (INT16) t.w.l;
 		W = v;
 
 		CLR_NZVC;
@@ -3472,8 +3541,22 @@ INLINE void divq_ix( void )
 		if( W & 0x0001 )
 			SEC;
 
-		if ( (v > 65534) || (v < -65535) )
+		if ( (v > 32767) || (v < -32768) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 65535 ) || (v < -65536 ) ) /* hard overflow - division is aborted */
+			{
+				if( oldQ.d < 0 )
+					SEN;
+				else if( oldQ.d == 0 )
+					SEZ;
+
+				t.w.l = abs( t.w.l );
+				D = oldQ.w.h;
+				W = oldQ.w.l;
+			}
+		}
 	}
 	else
 		DZError();
@@ -3783,12 +3866,13 @@ INLINE void muld_ex( void )
 INLINE void divd_ex( void )
 {
 	UINT8	t;
-	INT16   v;
+	INT16   v, oldD;
 
 	EXTBYTE(t);
 
 	if( t != 0 )
 	{
+		oldD = D;
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
@@ -3799,8 +3883,19 @@ INLINE void divd_ex( void )
 		if( B & 0x01 )
 			SEC;
 
-		if ( (v > 127) || (v < -128) )
+		if( (INT16)D < 0 )
+			SEN;
+
+		if ( (v > 127) || (v < -128) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 255) || (v < -256) ) /* hard overflow - division is aborted */
+			{
+				SET_NZ16( oldD );
+				D = abs( oldD );
+			}
+		}
 	}
 	else
 	{
@@ -3812,16 +3907,18 @@ INLINE void divd_ex( void )
 /* $11be DIVQ extended -**0- */
 INLINE void divq_ex( void )
 {
-	PAIR	t, q;
+	PAIR	t,q, oldQ;
 	INT32	v;
+
+	EXTWORD(t);
 
 	q.w.h = D;
 	q.w.l = W;
 
-	EXTWORD(t);
-
 	if( t.w.l != 0 )
 	{
+		oldQ = q;
+
 		v = (INT32) q.d / (INT16) t.w.l;
 		D = (INT32) q.d % (INT16) t.w.l;
 		W = v;
@@ -3832,8 +3929,22 @@ INLINE void divq_ex( void )
 		if( W & 0x0001 )
 			SEC;
 
-		if ( (v > 65534) || (v < -65535) )
+		if ( (v > 32767) || (v < -32768) ) /* soft overflow */
+		{
 			SEV;
+
+			if( (v > 65535 ) || (v < -65536 ) ) /* hard overflow - division is aborted */
+			{
+				if( oldQ.d < 0 )
+					SEN;
+				else if( oldQ.d == 0 )
+					SEZ;
+
+				t.w.l = abs( t.w.l );
+				D = oldQ.w.h;
+				W = oldQ.w.l;
+			}
+		}
 	}
 	else
 		DZError();

@@ -78,6 +78,7 @@ struct YMZ280BChip
 	void (*irq_callback)(int);		/* IRQ callback */
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
 	void *update_timer;				/* timer for ymz280b_force_update */
+	UINT32 rom_readback_addr;		/* where the CPU can read the ROM */
 
 	INT16 *ibuffer[2];				/* internal buffer */
 	UINT32 ibuffer_pos_in;
@@ -769,6 +770,7 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 		state_save_register_UINT8("YMZ280B", sndindex, "irq_mask", &chip->irq_mask,1);
 		state_save_register_UINT8("YMZ280B", sndindex, "irq_enable", &chip->irq_enable,1);
 		state_save_register_UINT8("YMZ280B", sndindex, "keyon_enable", &chip->keyon_enable,1);
+		state_save_register_UINT32("YMZ280B", sndindex, "rom_readback", &chip->rom_readback_addr,1);
 		state_save_register_double("YMZ280B", sndindex, "samples_left_over", &chip->samples_left_over,1);
 		for (j = 0; j < 8; j++)
 		{
@@ -955,6 +957,21 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 	{
 		switch (chip->current_register)
 		{
+			case 0x84:		/* ROM readback / RAM write (high) */
+				chip->rom_readback_addr &= 0xffff;
+				chip->rom_readback_addr |= (data<<16);
+				break;
+
+			case 0x85:		/* ROM readback / RAM write (med) */
+				chip->rom_readback_addr &= 0xff00ff;
+				chip->rom_readback_addr |= (data<<8);
+				break;
+
+			case 0x86:		/* ROM readback / RAM write (low) */
+				chip->rom_readback_addr &= 0xffff00;
+				chip->rom_readback_addr |= data;
+				break;
+
 			case 0xfe:		/* IRQ mask */
 				chip->irq_mask = data;
 				update_irq_state(chip);
@@ -1003,6 +1020,12 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 static int compute_status(struct YMZ280BChip *chip)
 {
 	UINT8 result;
+
+	/* ROM/RAM readback? */
+	if (chip->current_register == 0x86)
+	{
+		return chip->region_base[chip->rom_readback_addr];
+	}
 
 	/* force an update */
 	ymz280b_force_update(chip);

@@ -365,7 +365,21 @@ READ16_HANDLER( namcos2_68k_key_r )
 		case 4: return 0x143;
 		}
 		break;
+
+
+	case NAMCOS2_BUBBLE_TROUBLE:
+		switch(offset)
+		{
+		case 0: return 2; // not verified
+		case 1: return 2; // not verified
+		case 2: return 0; // not verified
+		case 4: return 0x141;
+		}
+		break;
 	}
+
+
+
 	return mame_rand()&0xffff;
 }
 

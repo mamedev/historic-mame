@@ -3442,6 +3442,36 @@ INPUT_PORTS_START( trvchlng )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( luctoday )
+   PORT_START_TAG("IN0") //These inputs are clearly wrong, they need a full test
+   PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+   PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )PORT_2WAY PORT_NAME("Add Credit to Bet")
+   PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )PORT_2WAY PORT_NAME("Remove Credit from Bet")
+   PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+   PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1 )//Input connected, but causes a very weird bug with the credit counter, is it the service mode switch?
+
+   PORT_START_TAG("IN1")
+   PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+   PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+   PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+   PORT_START_TAG("DSW0")
+   PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+   PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,
@@ -5948,6 +5978,34 @@ ROM_START( trvchlng )
 	ROM_LOAD( "senko1.bin",   0x0000, 0x0020, CRC(1434c7ff) SHA1(0ee5f5351dd84fbf8d3d8eaafbdbe86dd29960f8) )
 ROM_END
 
+ROM_START( luctoday )
+   ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+   ROM_LOAD( "ltprog1.bin", 0x0000, 0x0800, CRC(59c389b9) SHA1(1e158ced3b56db2c51e422fb4c0b8893565f1956))
+   ROM_LOAD( "ltprog2.bin", 0x2000, 0x0800, CRC(ac3893b1) SHA1(f6b9cd8111b367ff7030cba52fe965959d92568f))
+
+   ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+   ROM_LOAD( "ltchar2.bin", 0x0000, 0x0800, CRC(8cd73bdc) SHA1(6174f7347d2c96f9c5074bc0da5a370c9b07461b))
+   ROM_LOAD( "ltchar1.bin", 0x0800, 0x0800, CRC(b5ba9946) SHA1(7222cbe8c41ca74b214f4dd5439bf69d90f4644e))
+
+   ROM_REGION( 0x0020, REGION_PROMS, 0 )//This may not be the correct prom
+   ROM_LOAD( "luctoday.bpr", 0x0000, 0x0020, BAD_DUMP CRC(d5546262) SHA1(9b8e043af9d937616954fdfb80f6094cf85e5a5b))
+ROM_END
+
+/* is it bad, or protected? it just resets.. code is very close to luctoday, maybe its just a bad copy of it with
+   modified title? */
+ROM_START( chewing )
+   ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+   ROM_LOAD( "1.bin", 0x0000, 0x1000, CRC(404385a9) SHA1(4da4da3c50105d310307ce49ec0a887ed833bf8e) )
+   ROM_LOAD( "7l.bin", 0x2000, 0x0800, CRC(78ebed36) SHA1(e80185737c8ac448901cf0e60ca50d967c323b34) )
+
+   ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+   ROM_LOAD( "2.bin", 0x0000, 0x0800, CRC(88c605f3) SHA1(938a9fadfa0994a1d2fc9b3266ec4ccdb5ec6d3a) )
+   ROM_LOAD( "3.bin", 0x0800, 0x0800, CRC(77ac016a) SHA1(fa5b1e79603ca8d2ee7b3d0a78f12d9ffeec3fd4) )
+
+   ROM_REGION( 0x0020, REGION_PROMS, 0 )
+   ROM_LOAD( "74s288.ch", 0x0000, 0x0020, CRC(24652bc4) SHA1(d89575f3749c75dc963317fe451ffeffd9856e4d) )
+ROM_END
+
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
 GAME( 1979, galmidw,  galaxian, galaxian, galaxian, 0,        ROT90,  "[Namco] (Midway license)", "Galaxian (Midway)" )
@@ -6034,3 +6092,5 @@ GAME( 1982, tazzmang, tazmania,	tazzmang, tazzmang, 0,        ROT90,  "bootleg",
 GAME( 1986, racknrol, 0,        racknrol, racknrol, 0,	      ROT0,   "Status (Shinkai License)", "Rack + Roll" )
 GAME( 1986, hexpool,  racknrol, racknrol, racknrol, 0,	      ROT90,  "Shinkai", "Hex Pool" )
 GAMEX(1985, trvchlng, 0,        racknrol, trvchlng, 0,	      ROT90,  "Joyland (Senko License)", "Trivia Challenge", GAME_NOT_WORKING )
+GAMEX(1980, luctoday, 0,        galaxian, luctoday, 0,        ROT270, "Sigma", "Lucky Today",GAME_WRONG_COLORS )
+GAMEX(19??, chewing,  0,        galaxian, luctoday, 0,        ROT90,  "unknown", "Chewing Gum",GAME_NOT_WORKING )

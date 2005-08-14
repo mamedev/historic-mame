@@ -5,6 +5,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
+#include "state.h"
 
 /*
 
@@ -34,7 +35,8 @@ x = xpos
 
 */
 
-/* based on dietgo.c */
+/* spriteram is really 16-bit.. this can be changed to use 16-bit ram like the tilemaps
+ its the same sprite chip Data East used on many, many 16-bit era titles */
 static void simpl156_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
@@ -118,7 +120,7 @@ VIDEO_UPDATE( simpl156 )
 
 	fillbitmap(bitmap,Machine->pens[256],cliprect);
 
-	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,2);
+	deco16_tilemap_2_draw(bitmap,cliprect,0,2);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,4);
 
 	simpl156_drawsprites(bitmap,cliprect);
@@ -139,6 +141,14 @@ VIDEO_START( simpl156 )
 	deco16_pf2_rowscroll = auto_malloc(0x800);
 	deco16_pf12_control = auto_malloc(0x10);
 	paletteram16 =  auto_malloc(0x1000);
+
+	/* and register the allocated ram so that save states still work */
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Data", deco16_pf1_data, 0x2000/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Data", deco16_pf2_data, 0x2000/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Rowscroll", deco16_pf1_rowscroll, 0x800/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Rowscroll", deco16_pf2_rowscroll, 0x800/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1+2 Control Registers", deco16_pf12_control, 0x10/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Paletteram", paletteram16, 0x1000/2);
 
 	if (deco16_1_video_init())
 		return 1;

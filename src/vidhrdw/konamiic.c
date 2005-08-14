@@ -6551,6 +6551,18 @@ READ16_HANDLER( K056832_mw_rom_word_r )
 	return 0;
 }
 
+READ16_HANDLER( K056832_bishi_rom_word_r )
+{
+	int addr = 0x4000*K056832_CurGfxBank+offset;
+
+	if (!K056832_rombase)
+	{
+		K056832_rombase = memory_region(K056832_memory_region);
+	}
+
+	return K056832_rombase[addr+2] | (K056832_rombase[addr] << 8);
+}
+
 READ16_HANDLER( K056832_old_rom_word_r )
 {
 	int addr = 0x2000*K056832_CurGfxBank + (2*offset);

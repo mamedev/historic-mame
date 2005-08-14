@@ -102,6 +102,7 @@ WRITE8_HANDLER( decocass_w )
 	else if (offset == 0xe417 ) 				   { decocass_nmi_reset_w(offset - 0xe417,data); return; }
 	else if (offset >= 0xe420 && offset <= 0xe42f) { decocass_adc_w(offset - 0xe420,data); return; }
 	else if (offset >= 0xe500 && offset <= 0xe5ff) { decocass_e5xx_w(offset - 0xe500,data); return; }
+	else if (offset >= 0xe900 && offset <= 0xe900) { decocass_e900_w(offset - 0xe900,data); return; }
 	else if (offset >= 0xf000 && offset <= 0xffff) { return; }
 
 	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
@@ -114,7 +115,9 @@ WRITE8_HANDLER( decocass_w )
 
 static ADDRESS_MAP_START( decocass_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2000, 0xbfff) AM_READ(MRA8_RAM)				/* RMS3 RAM */
+	AM_RANGE(0x2000, 0x5fff) AM_READ(MRA8_RAM)				/* RMS3 RAM */
+	AM_RANGE(0x6000, 0xafff) AM_READ(decocass_de0091_r)		/* RMS3 RAM or DE-0091xx board */
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM)				/* RMS3 RAM */
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)				/* DSP3 videoram + colorram */
 	AM_RANGE(0xc800, 0xcbff) AM_READ(decocass_mirrorvideoram_r)
 	AM_RANGE(0xcc00, 0xcfff) AM_READ(decocass_mirrorcolorram_r)
@@ -164,6 +167,7 @@ static ADDRESS_MAP_START( decocass_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe420, 0xe42f) AM_WRITE(decocass_adc_w)
 
 	AM_RANGE(0xe500, 0xe5ff) AM_WRITE(decocass_e5xx_w)
+	AM_RANGE(0xe900, 0xe900) AM_WRITE(decocass_e900_w)	/* DE-0091xx board enable */
 
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
@@ -701,6 +705,15 @@ static MACHINE_DRIVER_START( cflyball )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( czeroize )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(czeroize)
+	MDRV_VISIBLE_AREA(1*8, 32*8-1, 1*8, 31*8-1)
+MACHINE_DRIVER_END
+
+
 #define ROM_LOAD_BIOS(bios,name,offset,length,hash) \
 		ROMX_LOAD(name, offset, length, hash, ROM_BIOS(bios+1)) /* Note '+1' */
 
@@ -768,7 +781,7 @@ ROM_START( ctisland )
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "ctisland.cas", 0x0000, 0x8000, CRC(3f63b8f8) SHA1(2fd0679ef9750a228ebb098672ab6091fda75804) )
 
-	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb */
 	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
 	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
 	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
@@ -782,9 +795,9 @@ ROM_START( ctislnd2 )
 	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, CRC(e09ae5de) SHA1(7dec067d0739a6dad2607132641b66880a5b7751) )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "ctislnd3.cas", 0x0000, 0x8000, CRC(2854b4c0) SHA1(d3b4e0031dbb2340fbbe396a1ff9b8fbfd63663e) )
+	ROM_LOAD( "ctislnd2.cas", 0x0000, 0x8000, CRC(2854b4c0) SHA1(d3b4e0031dbb2340fbbe396a1ff9b8fbfd63663e) )
 
-	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb */
 	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
 	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
 	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
@@ -798,9 +811,9 @@ ROM_START( ctislnd3 )
 	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, CRC(e09ae5de) SHA1(7dec067d0739a6dad2607132641b66880a5b7751) )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "ctislnd2.cas", 0x0000, 0x8000, CRC(45464e1e) SHA1(03275694d963c7ab0e0f5525e248e69da5f9b591) )
+	ROM_LOAD( "ctislnd3.cas", 0x0000, 0x8000, CRC(45464e1e) SHA1(03275694d963c7ab0e0f5525e248e69da5f9b591) )
 
-	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb */
 	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
 	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
 	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
@@ -1109,6 +1122,17 @@ ROM_START( cbdash )
 	ROM_LOAD( "cbdash.cas",   0x0000, 0x8000, CRC(cba4c1af) SHA1(5d163d8e31c58b20679c6be06b1aa02df621822b) )
 ROM_END
 
+/* The Following have no Dongles at all */
+
+ROM_START( cflyball )
+	DECOCASS_COMMON_ROMS
+
+	/* no dongle data */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) SHA1(57698bac7e0d552167efa99d08116bf19a3b29c9) )
+ROM_END
+
 /* The Following have unknown Dongles
     (dongle data not read)       */
 
@@ -1121,19 +1145,11 @@ ROM_START( chwy )
 	ROM_LOAD( "chwy.cas",   0x0000, 0x8000, CRC(68a48064) SHA1(7e389737972fd0c54f398d296159c561f5ec3a93) )
 ROM_END
 
-ROM_START( cflyball )
-	DECOCASS_COMMON_ROMS
-
-	/* no dongle data */
-
-	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) SHA1(57698bac7e0d552167efa99d08116bf19a3b29c9) )
-ROM_END
-
 ROM_START( czeroize )
 	DECOCASS_COMMON_ROMS
 
-	/* no dumped dongle data */
+	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
+	/* missing dongle data */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "czeroize.cas",   0x0000, 0x10000, CRC(3ef0a406) SHA1(645b34cd477e0bb5539c8fe937a7a2dbd8369003) )
@@ -1158,12 +1174,12 @@ static DRIVER_INIT( decocass )
 	decocass_video_state_save_init();
 }
 
-GAMEBX( 1981, decocass, 0,       decocass, decocass, decocass, decocass, ROT270, "Data East Corporation", "Cassette System", NOT_A_DRIVER )
+GAMEBX( 1981, decocass, 0,        decocass, decocass, decocass, decocass, ROT270, "Data East Corporation", "Cassette System", NOT_A_DRIVER )
 GAMEB ( 1981, ctsttape, decocass, decocass, ctsttape, decocass, decocass, ROT270, "Data East Corporation", "Test Tape (Cassette)" )
 GAMEB ( 1981, clocknch, decocass, decocass, clocknch, decocass, decocass, ROT270, "Data East Corporation", "Lock'n'Chase (Cassette)" )
-GAMEBX( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 1)", GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 2)", GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
+GAMEB ( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 1)" )
+GAMEB ( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 2)" )
+GAMEBX( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 3)", GAME_NOT_WORKING ) /* Different Bitswap? */
 GAMEB ( 1981, csuperas, decocass, decocass, csuperas, decocass, decocass, ROT270, "Data East Corporation", "Super Astro Fighter (Cassette)" )
 GAMEB ( 1981, castfant, decocass, decocass, castfant, decocass, decocass, ROT270, "Data East Corporation", "Astro Fantasia (Cassette)" )
 GAMEB ( 1981, cluckypo, decocass, decocass, cluckypo, decocass, decocass, ROT270, "Data East Corporation", "Lucky Poker (Cassette)" )
@@ -1180,7 +1196,7 @@ GAMEB ( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270
 GAMEB ( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "Data East Corporation", "Bump N Jump (Cassette)" )
 GAMEB ( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "Data East Corporation", "Burger Time (Cassette)" )
 GAMEB ( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
-GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplp2, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
+GAMEB ( 1983, cgraplp2, cgraplop, decocass, cgraplp2, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)" )
 GAMEB ( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
 GAMEB ( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
 GAMEB ( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "Data East Corporation", "Fighting Ice Hockey (Cassette)" )
@@ -1188,6 +1204,7 @@ GAMEB ( 1983, cprobowl, decocass, decocass, cprobowl, decocass, decocass, ROT270
 GAMEB ( 1983, cnightst, decocass, decocass, cnightst, decocass, decocass, ROT270, "Data East Corporation", "Night Star (Cassette, set 1)" )
 GAMEB ( 1983, cnights2, cnightst, decocass, cnightst, decocass, decocass, ROT270, "Data East Corporation", "Night Star (Cassette, set 2)" )
 GAMEB ( 1983, cprosocc, decocass, decocass, cprosocc, decocass, decocass, ROT270, "Data East Corporation", "Pro Soccer (Cassette)" )
+GAMEB ( 1983, czeroize, decocass, decocass, czeroize, decocass, decocass, ROT270, "Data East Corporation", "Zeroize (Cassette)" )
 GAMEB ( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270, "Data East Corporation", "Peter Pepper's Ice Cream Factory (Cassette, set 1)" )
 GAMEB ( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "Data East Corporation", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
 GAMEB ( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "Data East Corporation", "Scrum Try (Cassette, set 1)" )
@@ -1196,5 +1213,4 @@ GAMEB ( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270
 GAMEB ( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "Data East Corporation", "Boulder Dash (Cassette)" )
 
 /* The following may be missing dongle data if they're not Type 1 */
-GAMEBX( 1985, chwy,     decocass, decocass, decocass,   decocass, decocass, ROT270, "Data East Corporation", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
-GAMEBX( 1985, czeroize, decocass, decocass, decocass,   decocass, decocass, ROT270, "Data East Corporation", "Zeroize? (Cassette)", GAME_NOT_WORKING )
+GAMEBX( 1985, chwy,     decocass, decocass, decocass, decocass, decocass, ROT270, "Data East Corporation", "Highway Chase? (Cassette)", GAME_NOT_WORKING )

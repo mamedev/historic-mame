@@ -157,16 +157,28 @@ VIDEO_START( dcon )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,fx,fy,x,y,color,sprite;
-	int dx,dy,ax,ay;
+	int dx,dy,ax,ay,inc,pri_mask = 0;
 
-	for (offs = 0x400-4;offs >= 0;offs -= 4)
+	for (offs = 0;offs < 0x400;offs += 4)
 	{
 		if ((spriteram16[offs+0]&0x8000)!=0x8000) continue;
 		sprite = spriteram16[offs+1];
-		if ((sprite>>14)!=pri) continue;
+
+		switch((sprite>>14) & 3)
+		{
+		case 0: pri_mask = 0xf0; // above foreground layer
+			break;
+		case 1: pri_mask = 0xfc; // above midground layer
+			break;
+		case 2: pri_mask = 0xfe; // above background layer
+			break;
+		case 3: pri_mask = 0; // above text layer
+			break;
+		}
+
 		sprite &= 0x3fff;
 
 		y = spriteram16[offs+3];
@@ -179,28 +191,100 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 		color = spriteram16[offs+0]&0x3f;
 		fx = spriteram16[offs+0]&0x4000;
-		fy = 0; /* To do - probably 0x2000 */
+		fy = spriteram16[offs+0]&0x2000;
 		dy=((spriteram16[offs+0]&0x0380)>>7)+1;
 		dx=((spriteram16[offs+0]&0x1c00)>>10)+1;
 
+		inc = 0;
+
 		for (ax=0; ax<dx; ax++)
 			for (ay=0; ay<dy; ay++) {
-				if (!fx)
-					drawgfx(bitmap,Machine->gfx[4],
-						sprite++,
+				if (!fx && !fy)
+				{
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
 						color,fx,fy,x+ax*16,y+ay*16,
-						cliprect,TRANSPARENCY_PEN,15);
-				else
-					drawgfx(bitmap,Machine->gfx[4],
-						sprite++,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+ax*16,y+ay*16 + 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+ax*16,y+ay*16 - 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+				}
+				else if (fx && !fy)
+				{
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
 						color,fx,fy,x+(dx-1-ax)*16,y+ay*16,
-						cliprect,TRANSPARENCY_PEN,15);
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+(dx-1-ax)*16,y+ay*16 + 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+(dx-1-ax)*16,y+ay*16 - 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+				}
+				else if (!fx && fy)
+				{
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+ax*16,y+(dy-1-ay)*16,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+ax*16,y+(dy-1-ay)*16 + 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+ax*16,y+(dy-1-ay)*16 - 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+				}
+				else
+				{
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+(dx-1-ax)*16,y+(dy-1-ay)*16,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+(dx-1-ax)*16,y+(dy-1-ay)*16 + 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+
+					// wrap around y
+					pdrawgfx(bitmap,Machine->gfx[4],
+						sprite + inc,
+						color,fx,fy,x+(dx-1-ax)*16,y+(dy-1-ay)*16 - 512,
+						cliprect,TRANSPARENCY_PEN,15,pri_mask);
+				}
+
+				inc++;
 			}
 	}
 }
 
 VIDEO_UPDATE( dcon )
 {
+	fillbitmap(priority_bitmap,0,cliprect);
+
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0] );
 	tilemap_set_scrolly( background_layer,0, dcon_scroll_ram[1] );
@@ -214,23 +298,25 @@ VIDEO_UPDATE( dcon )
 	else
 		fillbitmap(bitmap,Machine->pens[15],cliprect); /* Should always be black, not pen 15 */
 
-	draw_sprites(bitmap,cliprect,2);
-	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
-	draw_sprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
-	draw_sprites(bitmap,cliprect,0);
-	draw_sprites(bitmap,cliprect,3);
-	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,2);
+	tilemap_draw(bitmap,cliprect,text_layer,0,4);
+
+	draw_sprites(bitmap,cliprect);
 }
 
 VIDEO_UPDATE( sdgndmps )
 {
 	static int last_gfx_bank=0;
 
+	fillbitmap(priority_bitmap,0,cliprect);
+
 	/* Gfx banking */
 	if (last_gfx_bank!=dcon_gfx_bank_select)
+	{
 		tilemap_mark_all_tiles_dirty(midground_layer);
-	last_gfx_bank=dcon_gfx_bank_select;
+		last_gfx_bank=dcon_gfx_bank_select;
+	}
 
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0]+128 );
@@ -247,11 +333,9 @@ VIDEO_UPDATE( sdgndmps )
 	else
 		fillbitmap(bitmap,Machine->pens[15],cliprect); /* Should always be black, not pen 15 */
 
-	draw_sprites(bitmap,cliprect,2);
-	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
-	draw_sprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
-	draw_sprites(bitmap,cliprect,0);
-	draw_sprites(bitmap,cliprect,3);
-	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,2);
+	tilemap_draw(bitmap,cliprect,text_layer,0,4);
+
+	draw_sprites(bitmap,cliprect);
 }

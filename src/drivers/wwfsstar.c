@@ -3,6 +3,17 @@
 ********************************************************************************
  driver by David Haywood
 
+ TODO :
+
+ Verify IRQ frequency and sources -- this seems very wrong at the moment causing
+ laggy gameplay.  Vblank flag should also be checked.
+
+ Incorrect behavior of the above either causes a hang on count-out, or laggy
+ gameplay.
+
+ Dump original MASK roms for GFX - the current roms are from a bootleg board
+
+
  Special Thanks to:
 
  Richard Bush & the Rest of the Raine Team - Raine's WWF Superstars driver on
@@ -28,7 +39,7 @@
 
  Change Log:
  03 Jun 2005 - Pierpaolo Prazzoli
-             | Fixed VBlank
+             | Fixed VBlank (i disagree ;-)
              | Fixed some bad sprites
  04 Mar 2002 | Fixed Dip Switches and Inputs    (Steph)
              | Fixed screen flipping by using similar routine to the one
@@ -362,11 +373,72 @@ MACHINE_DRIVER_END
 
 /*******************************************************************************
  Rom Loaders / Game Drivers
-********************************************************************************
- just the 1 sets supported
 *******************************************************************************/
-
 ROM_START( wwfsstar )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
+	ROM_LOAD16_BYTE( "24ac-0_j-1.34", 0x00000, 0x20000, CRC(ec8fd2c9) SHA1(04ab93e2a1becdc480750c3b55839328b2af4639) )
+	ROM_LOAD16_BYTE( "24ad-0_j-1.35", 0x00001, 0x20000, CRC(54e614e4) SHA1(ee924dea977606fcb1222d1aa89211994126a182)  )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU (Z80)  */
+	ROM_LOAD( "b.12",    0x00000, 0x08000, CRC(1e44f8aa) SHA1(e03857d6954e9b9b6073b211e2d6570032af8807) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "24a9.46",	   0x00000, 0x20000, CRC(703ff08f) SHA1(08c4d33208eb4c76c751a1a0fe16a817bdc30820) )
+	ROM_LOAD( "wwfs03.bin",    0x20000, 0x10000, CRC(8a35a20e) SHA1(3bc1a43f956b6840a4bee9e8fb2a6e3d4ac18f75) )
+	ROM_LOAD( "wwfs05.bin",    0x30000, 0x10000, CRC(6df08962) SHA1(e3dec81644fe5867024a2fcf34a67924622f3a5b) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* FG0 Tiles (8x8) */
+	/* this rom may not be correct for this set.. the rom in the set had half the data missing and only a 99%
+       match with wwfsstau for the first part */
+	ROM_LOAD( "24a4-0.58",    0x00000, 0x20000, BAD_DUMP CRC(cb12ba40) SHA1(2d39f778d9daf0d3606b63975bd6cfc45847a265) )
+
+	/* these are bootleg roms ...  the original has mask roms */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPR Tiles (16x16) */
+	ROM_LOAD( "wwfs39.bin",    0x000000, 0x010000, CRC(d807b09a) SHA1(e5a221ac57e16cb3fb47d986e62f265ebbc5b0e6) )
+	ROM_LOAD( "wwfs38.bin",    0x010000, 0x010000, CRC(d8ea94d3) SHA1(3a9e200dbcd456364317858e4b5fa6a149cb3c61) )
+	ROM_LOAD( "wwfs37.bin",    0x020000, 0x010000, CRC(5e8d7407) SHA1(829cc0c2013138097aa49c9072b87452bf8c8936) )
+	ROM_LOAD( "wwfs36.bin",    0x030000, 0x010000, CRC(9005e942) SHA1(d0276419c21b866e17be85382f4e6f3baa4ce40b) )
+	ROM_LOAD( "wwfs43.bin",    0x040000, 0x010000, CRC(aafc4a38) SHA1(ac48f13fc4d51e425748190f68b32c099acf532d) )
+	ROM_LOAD( "wwfs42.bin",    0x050000, 0x010000, CRC(e48b88fb) SHA1(0fbf9109b86fc6376b8705d28c4c3aeb7fb9cdd8) )
+	ROM_LOAD( "wwfs41.bin",    0x060000, 0x010000, CRC(ed7f69d5) SHA1(ae11aad3af43a0e240d17f4db26d68eaae7f1cf0) )
+	ROM_LOAD( "wwfs40.bin",    0x070000, 0x010000, CRC(4d75fd89) SHA1(76a1f4a169648e00fcb150157393e3a45613f232) )
+	ROM_LOAD( "wwfs19.bin",    0x080000, 0x010000, CRC(7426d444) SHA1(1c1af9492bb711701100bfcecab35f0c38260756) )
+	ROM_LOAD( "wwfs18.bin",    0x090000, 0x010000, CRC(af11ad2a) SHA1(4214b16ada1679c6e18c5f2b6e5d6ddb4b731361) )
+	ROM_LOAD( "wwfs17.bin",    0x0a0000, 0x010000, CRC(ef12069f) SHA1(5748646c0b0d6e00b6eea26fda3a3699e1553473) )
+	ROM_LOAD( "wwfs16.bin",    0x0b0000, 0x010000, CRC(08343e7f) SHA1(2085350e2506cf2d9c7aa74211cca912b36b203d) )
+	ROM_LOAD( "wwfs15.bin",    0x0c0000, 0x010000, CRC(aac5a928) SHA1(1298a5d29b388768ed6508522830e02f95fb54fc) )
+	ROM_LOAD( "wwfs14.bin",    0x0d0000, 0x010000, CRC(67eb7bea) SHA1(1de39072f96a80a41c383e495bb686adb353586c) )
+	ROM_LOAD( "wwfs13.bin",    0x0e0000, 0x010000, CRC(970b6e76) SHA1(c0da2237f759980d2d879c55c6855633c99fc418) )
+	ROM_LOAD( "wwfs12.bin",    0x0f0000, 0x010000, CRC(242caff5) SHA1(9e2a836d9c5415c9313e6609a2eebcb661fa0301) )
+	ROM_LOAD( "wwfs27.bin",    0x100000, 0x010000, CRC(f3eb8ab9) SHA1(4032f96d9c738706e353af7f00de921c2c1b72be) )
+	ROM_LOAD( "wwfs26.bin",    0x110000, 0x010000, CRC(2ca91eaf) SHA1(191512aaf9542cbbd441886455cbfb5e7a0ab5d4) )
+	ROM_LOAD( "wwfs25.bin",    0x120000, 0x010000, CRC(bbf69c6a) SHA1(c9502c9f1fa257f506a4aed22c015524a9fca074) )
+	ROM_LOAD( "wwfs24.bin",    0x130000, 0x010000, CRC(76b08bcd) SHA1(c60bc47cf172203e570e693244a1c6308fa36f0b) )
+	ROM_LOAD( "wwfs23.bin",    0x140000, 0x010000, CRC(681f5b5e) SHA1(17ac4dbfa84f5161f8d1c740ee91ccecf9f83f5f) )
+	ROM_LOAD( "wwfs22.bin",    0x150000, 0x010000, CRC(81fe1bf7) SHA1(37102a6d276907bfeaccc81f1d6693e1c1f26cce) )
+	ROM_LOAD( "wwfs21.bin",    0x160000, 0x010000, CRC(c52eee5e) SHA1(6bf7c63b3c18487dd7d964fe05cef348c6069775) )
+	ROM_LOAD( "wwfs20.bin",    0x170000, 0x010000, CRC(b2a8050e) SHA1(6db9463321973a3141b6ceda35d11f851d0b9e1f) )
+	ROM_LOAD( "wwfs35.bin",    0x180000, 0x010000, CRC(9d648d82) SHA1(81be2ca9f8384b29cf6ce9d59dedf8be1f37fd5d) )
+	ROM_LOAD( "wwfs34.bin",    0x190000, 0x010000, CRC(742a79db) SHA1(5c2a5b578817ea1ed8b6993a8bc554840d7302a9) )
+	ROM_LOAD( "wwfs33.bin",    0x1a0000, 0x010000, CRC(f6923db6) SHA1(5d0aba7f8e3fbde890ef67e91dbdd2bd3e67a23c) )
+	ROM_LOAD( "wwfs32.bin",    0x1b0000, 0x010000, CRC(9becd621) SHA1(200c485d4d5acaf55f47d716a0df3218b64f813a) )
+	ROM_LOAD( "wwfs31.bin",    0x1c0000, 0x010000, CRC(f94c74d5) SHA1(8f740860562876bd21a47ba8be758ecd6913207c) )
+	ROM_LOAD( "wwfs30.bin",    0x1d0000, 0x010000, CRC(94094518) SHA1(e010b211ea9c08a3c1f36a0e04f2c4320acaa2b7) )
+	ROM_LOAD( "wwfs29.bin",    0x1e0000, 0x010000, CRC(7b5b9d83) SHA1(e7381e48a3a63f28fc9a997bfda3e612f4fcccf9) )
+	ROM_LOAD( "wwfs28.bin",    0x1f0000, 0x010000, CRC(70fda626) SHA1(049ef67f57953266ef2c750f58c0ee9baf963b39) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG0 Tiles (16x16) */
+	ROM_LOAD( "wwfs51.bin",    0x00000, 0x10000, CRC(51157385) SHA1(fa9f74ace9432d8686402e410cbc03a8c3b86f4d) )
+	ROM_LOAD( "wwfs50.bin",    0x10000, 0x10000, CRC(7fc79df5) SHA1(c57e8bb55a1d176b9232395207c5a28c622de9a4) )
+	ROM_LOAD( "wwfs49.bin",    0x20000, 0x10000, CRC(a14076b0) SHA1(6817f56d2c6e2d596ebc7827d816ad331b425eeb) )
+	ROM_LOAD( "wwfs48.bin",    0x30000, 0x10000, CRC(251372fd) SHA1(e6036807c902fb34071da8287dedcef6cadae06a) )
+	ROM_LOAD( "wwfs47.bin",    0x40000, 0x10000, CRC(6fd7b6ea) SHA1(7e77e7647153bcaf09e1002b03f851fe474925a2) )
+	ROM_LOAD( "wwfs46.bin",    0x50000, 0x10000, CRC(985e5180) SHA1(9fd8b1ae844a2be465748e3a95ea24aa032e490d) )
+	ROM_LOAD( "wwfs45.bin",    0x60000, 0x10000, CRC(b2fad792) SHA1(083977c041c42c50e4f1f7140d97a7b792f768e9) )
+	ROM_LOAD( "wwfs44.bin",    0x70000, 0x10000, CRC(4f965fa9) SHA1(4312838e216d2a90fe413d027f46d77c74a0aa07) )
+ROM_END
+
+ROM_START( wwfsstau )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
 	ROM_LOAD16_BYTE( "24ac-04.34", 0x00000, 0x20000, CRC(ee9b850e) SHA1(6b634ad98b6104b9e860d05e73f3a139c2a19a78) )
 	ROM_LOAD16_BYTE( "24ad-04.35", 0x00001, 0x20000, CRC(057c2eef) SHA1(6eb5f60fa51b3e7f17fc6a81182a01ea406febea) )
@@ -382,6 +454,71 @@ ROM_START( wwfsstar )
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* FG0 Tiles (8x8) */
 	ROM_LOAD( "24a4-0.58",    0x00000, 0x20000, CRC(cb12ba40) SHA1(2d39f778d9daf0d3606b63975bd6cfc45847a265) )
 
+	/* these are bootleg roms ...  the original has mask roms */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPR Tiles (16x16) */
+	ROM_LOAD( "wwfs39.bin",    0x000000, 0x010000, CRC(d807b09a) SHA1(e5a221ac57e16cb3fb47d986e62f265ebbc5b0e6) )
+	ROM_LOAD( "wwfs38.bin",    0x010000, 0x010000, CRC(d8ea94d3) SHA1(3a9e200dbcd456364317858e4b5fa6a149cb3c61) )
+	ROM_LOAD( "wwfs37.bin",    0x020000, 0x010000, CRC(5e8d7407) SHA1(829cc0c2013138097aa49c9072b87452bf8c8936) )
+	ROM_LOAD( "wwfs36.bin",    0x030000, 0x010000, CRC(9005e942) SHA1(d0276419c21b866e17be85382f4e6f3baa4ce40b) )
+	ROM_LOAD( "wwfs43.bin",    0x040000, 0x010000, CRC(aafc4a38) SHA1(ac48f13fc4d51e425748190f68b32c099acf532d) )
+	ROM_LOAD( "wwfs42.bin",    0x050000, 0x010000, CRC(e48b88fb) SHA1(0fbf9109b86fc6376b8705d28c4c3aeb7fb9cdd8) )
+	ROM_LOAD( "wwfs41.bin",    0x060000, 0x010000, CRC(ed7f69d5) SHA1(ae11aad3af43a0e240d17f4db26d68eaae7f1cf0) )
+	ROM_LOAD( "wwfs40.bin",    0x070000, 0x010000, CRC(4d75fd89) SHA1(76a1f4a169648e00fcb150157393e3a45613f232) )
+	ROM_LOAD( "wwfs19.bin",    0x080000, 0x010000, CRC(7426d444) SHA1(1c1af9492bb711701100bfcecab35f0c38260756) )
+	ROM_LOAD( "wwfs18.bin",    0x090000, 0x010000, CRC(af11ad2a) SHA1(4214b16ada1679c6e18c5f2b6e5d6ddb4b731361) )
+	ROM_LOAD( "wwfs17.bin",    0x0a0000, 0x010000, CRC(ef12069f) SHA1(5748646c0b0d6e00b6eea26fda3a3699e1553473) )
+	ROM_LOAD( "wwfs16.bin",    0x0b0000, 0x010000, CRC(08343e7f) SHA1(2085350e2506cf2d9c7aa74211cca912b36b203d) )
+	ROM_LOAD( "wwfs15.bin",    0x0c0000, 0x010000, CRC(aac5a928) SHA1(1298a5d29b388768ed6508522830e02f95fb54fc) )
+	ROM_LOAD( "wwfs14.bin",    0x0d0000, 0x010000, CRC(67eb7bea) SHA1(1de39072f96a80a41c383e495bb686adb353586c) )
+	ROM_LOAD( "wwfs13.bin",    0x0e0000, 0x010000, CRC(970b6e76) SHA1(c0da2237f759980d2d879c55c6855633c99fc418) )
+	ROM_LOAD( "wwfs12.bin",    0x0f0000, 0x010000, CRC(242caff5) SHA1(9e2a836d9c5415c9313e6609a2eebcb661fa0301) )
+	ROM_LOAD( "wwfs27.bin",    0x100000, 0x010000, CRC(f3eb8ab9) SHA1(4032f96d9c738706e353af7f00de921c2c1b72be) )
+	ROM_LOAD( "wwfs26.bin",    0x110000, 0x010000, CRC(2ca91eaf) SHA1(191512aaf9542cbbd441886455cbfb5e7a0ab5d4) )
+	ROM_LOAD( "wwfs25.bin",    0x120000, 0x010000, CRC(bbf69c6a) SHA1(c9502c9f1fa257f506a4aed22c015524a9fca074) )
+	ROM_LOAD( "wwfs24.bin",    0x130000, 0x010000, CRC(76b08bcd) SHA1(c60bc47cf172203e570e693244a1c6308fa36f0b) )
+	ROM_LOAD( "wwfs23.bin",    0x140000, 0x010000, CRC(681f5b5e) SHA1(17ac4dbfa84f5161f8d1c740ee91ccecf9f83f5f) )
+	ROM_LOAD( "wwfs22.bin",    0x150000, 0x010000, CRC(81fe1bf7) SHA1(37102a6d276907bfeaccc81f1d6693e1c1f26cce) )
+	ROM_LOAD( "wwfs21.bin",    0x160000, 0x010000, CRC(c52eee5e) SHA1(6bf7c63b3c18487dd7d964fe05cef348c6069775) )
+	ROM_LOAD( "wwfs20.bin",    0x170000, 0x010000, CRC(b2a8050e) SHA1(6db9463321973a3141b6ceda35d11f851d0b9e1f) )
+	ROM_LOAD( "wwfs35.bin",    0x180000, 0x010000, CRC(9d648d82) SHA1(81be2ca9f8384b29cf6ce9d59dedf8be1f37fd5d) )
+	ROM_LOAD( "wwfs34.bin",    0x190000, 0x010000, CRC(742a79db) SHA1(5c2a5b578817ea1ed8b6993a8bc554840d7302a9) )
+	ROM_LOAD( "wwfs33.bin",    0x1a0000, 0x010000, CRC(f6923db6) SHA1(5d0aba7f8e3fbde890ef67e91dbdd2bd3e67a23c) )
+	ROM_LOAD( "wwfs32.bin",    0x1b0000, 0x010000, CRC(9becd621) SHA1(200c485d4d5acaf55f47d716a0df3218b64f813a) )
+	ROM_LOAD( "wwfs31.bin",    0x1c0000, 0x010000, CRC(f94c74d5) SHA1(8f740860562876bd21a47ba8be758ecd6913207c) )
+	ROM_LOAD( "wwfs30.bin",    0x1d0000, 0x010000, CRC(94094518) SHA1(e010b211ea9c08a3c1f36a0e04f2c4320acaa2b7) )
+	ROM_LOAD( "wwfs29.bin",    0x1e0000, 0x010000, CRC(7b5b9d83) SHA1(e7381e48a3a63f28fc9a997bfda3e612f4fcccf9) )
+	ROM_LOAD( "wwfs28.bin",    0x1f0000, 0x010000, CRC(70fda626) SHA1(049ef67f57953266ef2c750f58c0ee9baf963b39) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG0 Tiles (16x16) */
+	ROM_LOAD( "wwfs51.bin",    0x00000, 0x10000, CRC(51157385) SHA1(fa9f74ace9432d8686402e410cbc03a8c3b86f4d) )
+	ROM_LOAD( "wwfs50.bin",    0x10000, 0x10000, CRC(7fc79df5) SHA1(c57e8bb55a1d176b9232395207c5a28c622de9a4) )
+	ROM_LOAD( "wwfs49.bin",    0x20000, 0x10000, CRC(a14076b0) SHA1(6817f56d2c6e2d596ebc7827d816ad331b425eeb) )
+	ROM_LOAD( "wwfs48.bin",    0x30000, 0x10000, CRC(251372fd) SHA1(e6036807c902fb34071da8287dedcef6cadae06a) )
+	ROM_LOAD( "wwfs47.bin",    0x40000, 0x10000, CRC(6fd7b6ea) SHA1(7e77e7647153bcaf09e1002b03f851fe474925a2) )
+	ROM_LOAD( "wwfs46.bin",    0x50000, 0x10000, CRC(985e5180) SHA1(9fd8b1ae844a2be465748e3a95ea24aa032e490d) )
+	ROM_LOAD( "wwfs45.bin",    0x60000, 0x10000, CRC(b2fad792) SHA1(083977c041c42c50e4f1f7140d97a7b792f768e9) )
+	ROM_LOAD( "wwfs44.bin",    0x70000, 0x10000, CRC(4f965fa9) SHA1(4312838e216d2a90fe413d027f46d77c74a0aa07) )
+ROM_END
+
+ROM_START( wwfsstaj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
+	ROM_LOAD16_BYTE( "24ac-0_j-1_japan.34", 0x00000, 0x20000, CRC(f872e968) SHA1(e52298817348601ed88c369018d3110e467cf602) )
+	ROM_LOAD16_BYTE( "24ad-0_j-1_japan.35", 0x00001, 0x20000, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU (Z80)  */
+	ROM_LOAD( "b.12",    0x00000, 0x08000, CRC(1e44f8aa) SHA1(e03857d6954e9b9b6073b211e2d6570032af8807) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "24a9.46",	   0x00000, 0x20000, CRC(703ff08f) SHA1(08c4d33208eb4c76c751a1a0fe16a817bdc30820) )
+	ROM_LOAD( "wwfs03.bin",    0x20000, 0x10000, CRC(8a35a20e) SHA1(3bc1a43f956b6840a4bee9e8fb2a6e3d4ac18f75) )
+	ROM_LOAD( "wwfs05.bin",    0x30000, 0x10000, CRC(6df08962) SHA1(e3dec81644fe5867024a2fcf34a67924622f3a5b) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* FG0 Tiles (8x8) */
+	/* this rom may not be correct for this set.. the rom in the set had half the data missing and only a 99%
+       match with wwfsstau for the first part */
+	ROM_LOAD( "24a4-0.58",    0x00000, 0x20000, BAD_DUMP CRC(cb12ba40) SHA1(2d39f778d9daf0d3606b63975bd6cfc45847a265) )
+
+	/* these are bootleg roms ...  the original has mask roms */
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPR Tiles (16x16) */
 	ROM_LOAD( "wwfs39.bin",    0x000000, 0x010000, CRC(d807b09a) SHA1(e5a221ac57e16cb3fb47d986e62f265ebbc5b0e6) )
 	ROM_LOAD( "wwfs38.bin",    0x010000, 0x010000, CRC(d8ea94d3) SHA1(3a9e200dbcd456364317858e4b5fa6a149cb3c61) )
@@ -428,4 +565,7 @@ ROM_START( wwfsstar )
 ROM_END
 
 
-GAME( 1989, wwfsstar, 0, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (US)" )
+
+GAME( 1989, wwfsstar, 0,        wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (Europe)" )
+GAME( 1989, wwfsstau, wwfsstar, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (US)" )
+GAMEX(1989, wwfsstaj, wwfsstar, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (Japan)",GAME_NOT_WORKING ) // missing a program rom

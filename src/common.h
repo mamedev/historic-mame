@@ -438,6 +438,9 @@ struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap);
 void save_screen_snapshot(struct mame_bitmap *bitmap);
 
+/* Movie recording */
+void record_movie(struct mame_bitmap *bitmap);
+
 /* disk handling */
 struct chd_file *get_disk_handle(int diskindex);
 

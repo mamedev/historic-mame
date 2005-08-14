@@ -130,6 +130,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* write-only cases */
 		case FILETYPE_SCREENSHOT:
+		case FILETYPE_MOVIE:
 			if (!openforwrite)
 			{
 				logerror("mame_fopen: type %02x read not supported\n", filetype);
@@ -225,6 +226,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* screenshot files */
 		case FILETYPE_SCREENSHOT:
+		case FILETYPE_MOVIE:
 #ifndef MESS
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENWRITE);
 #else
@@ -822,6 +824,10 @@ static const char *get_extension_for_filetype(int filetype)
 		case FILETYPE_ARTWORK:		/* artwork files */
 		case FILETYPE_SCREENSHOT:	/* screenshot files */
 			extension = "png";
+			break;
+
+		case FILETYPE_MOVIE:	    /* recorded movie files */
+			extension = "mng";
 			break;
 
 		case FILETYPE_NVRAM:		/* NVRAM files */

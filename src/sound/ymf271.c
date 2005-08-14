@@ -28,12 +28,19 @@
 #define SIN_LEN			(1<<SIN_BITS)
 #define SIN_MASK		(SIN_LEN-1)
 
+#define LFO_LENGTH		256
+#define LFO_SHIFT		8
+#define PLFO_MAX		(+1.0)
+#define PLFO_MIN		(-1.0)
+#define ALFO_MAX		(+65536)
+#define ALFO_MIN		(0)
+
 #define log2(n) (log((float) n)/log((float) 2))
 
 typedef struct
 {
 	INT8  extout;
-	INT16 lfoFreq;
+	UINT8 lfoFreq;
 	INT8  lfowave;
 	INT8  pms, ams;
 	INT8  detune;
@@ -57,8 +64,8 @@ typedef struct
 	UINT32 endaddr;
 	INT8   fs, srcnote, srcb;
 
-	UINT64 step;
-	UINT64 stepptr;
+	INT64 step;
+	INT64 stepptr;
 
 	INT8 active;
 	INT8 bits;
@@ -71,7 +78,12 @@ typedef struct
 	INT32 env_decay2_step;
 	INT32 env_release_step;
 
-	INT64 feedback_modulation;
+	INT64 feedback_modulation0;
+	INT64 feedback_modulation1;
+
+	int lfo_phase, lfo_step;
+	int lfo_amplitude;
+	double lfo_phasemod;
 } YMF271Slot;
 
 typedef struct
@@ -111,6 +123,8 @@ static const int fm_tab[] = { 0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, 
 static const int pcm_tab[] = { 0, 4, 8, -1, 12, 16, 20, -1, 24, 28, 32, -1, 36, 40, 44, -1 };
 
 static INT16 *wavetable[7];
+static double plfo_table[4][8][LFO_LENGTH];
+static int alfo_table[4][LFO_LENGTH];
 
 #define ENV_ATTACK		0
 #define ENV_DECAY1		1
@@ -143,6 +157,42 @@ static const double DCTime[] =
 	182.81,		146.17,		121.86,		104.44,		91.41,		73.08,		60.93,		52.22,
 	45.69,		36.55,		33.85,		26.09,		22.83,		18.28,		15.22,		13.03,
 	11.41,		9.12,		7.60,		6.51,		5.69,		5.69,		5.69,		5.69
+};
+
+static const double LFO_frequency_table[256] =
+{
+	0.00066,	0.00068,	0.00070,	0.00073,	0.00075,	0.00078,	0.00081,	0.00084,
+	0.00088,	0.00091,	0.00096,	0.00100,	0.00105,	0.00111,	0.00117,	0.00124,
+	0.00131,	0.00136,	0.00140,	0.00145,	0.00150,	0.00156,	0.00162,	0.00168,
+	0.00175,	0.00183,	0.00191,	0.00200,	0.00210,	0.00221,	0.00234,	0.00247,
+	0.00263,	0.00271,	0.00280,	0.00290,	0.00300,	0.00312,	0.00324,	0.00336,
+	0.00350,	0.00366,	0.00382,	0.00401,	0.00421,	0.00443,	0.00467,	0.00495,
+	0.00526,	0.00543,	0.00561,	0.00580,	0.00601,	0.00623,	0.00647,	0.00673,
+	0.00701,	0.00731,	0.00765,	0.00801,	0.00841,	0.00885,	0.00935,	0.00990,
+	0.01051,	0.01085,	0.01122,	0.01160,	0.01202,	0.01246,	0.01294,	0.01346,
+	0.01402,	0.01463,	0.01529,	0.01602,	0.01682,	0.01771,	0.01869,	0.01979,
+	0.02103,	0.02171,	0.02243,	0.02320,	0.02403,	0.02492,	0.02588,	0.02692,
+	0.02804,	0.02926,	0.03059,	0.03204,	0.03365,	0.03542,	0.03738,	0.03958,
+	0.04206,	0.04341,	0.04486,	0.04641,	0.04807,	0.04985,	0.05176,	0.05383,
+	0.05608,	0.05851,	0.06117,	0.06409,	0.06729,	0.07083,	0.07477,	0.07917,
+	0.08411,	0.08683,	0.08972,	0.09282,	0.09613,	0.09969,	0.10353,	0.10767,
+	0.11215,	0.11703,	0.12235,	0.12817,	0.13458,	0.14167,	0.14954,	0.15833,
+	0.16823,	0.17365,	0.17944,	0.18563,	0.19226,	0.19938,	0.20705,	0.21533,
+	0.22430,	0.23406,	0.24470,	0.25635,	0.26917,	0.28333,	0.29907,	0.31666,
+	0.33646,	0.34731,	0.35889,	0.37126,	0.38452,	0.39876,	0.41410,	0.43066,
+	0.44861,	0.46811,	0.48939,	0.51270,	0.53833,	0.56666,	0.59814,	0.63333,
+	0.67291,	0.69462,	0.71777,	0.74252,	0.76904,	0.79753,	0.82820,	0.86133,
+	0.89722,	0.93623,	0.97878,	1.02539,	1.07666,	1.13333,	1.19629,	1.26666,
+	1.34583,	1.38924,	1.43555,	1.48505,	1.53809,	1.59509,	1.65640,	1.72266,
+	1.79443,	1.87245,	1.95756,	2.05078,	2.15332,	2.26665,	2.39258,	2.53332,
+	2.69165,	2.77848,	2.87109,	2.97010,	3.07617,	3.19010,	3.31280,	3.44531,
+	3.58887,	3.74490,	3.92000,	4.10156,	4.30664,	4.53331,	4.78516,	5.06664,
+	5.38330,	5.55696,	5.74219,	5.94019,	6.15234,	6.38021,	6.62560,	6.89062,
+	7.17773,	7.48981,	7.83026,	8.20312,	8.61328,	9.06661,	9.57031,	10.13327,
+	10.76660,	11.11391,	11.48438,	11.88039,	12.30469,	12.76042,	13.25120,	13.78125,
+	13.35547,	14.97962,	15.66051,	16.40625,	17.22656,	18.13322,	19.14062,	20.26654,
+	21.53320,	22.96875,	24.60938,	26.50240,	28.71094,	31.32102,	34.45312,	38.28125,
+	43.06641,	49.21875,	57.42188,	68.90625,	86.13281,	114.84375,	172.26562,	344.53125
 };
 
 static const int RKS_Table[32][8] =
@@ -256,6 +306,42 @@ INLINE int GET_EXTERNAL_KEYCODE(int block, int fns)
 	return ((block & 7) * 4) + n43;
 }
 
+static const double multiple_table[16] = { 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+
+static const double pow_table[16] = { 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 0.5, 1, 2, 4, 8, 16, 32, 64 };
+
+static const int fs_frequency[4] = { (CLOCK/384), (CLOCK/384)/2, (CLOCK/384)/4, (CLOCK/384)/8 };
+
+INLINE void calculate_step(YMF271Slot *slot)
+{
+	double st;
+
+	if (slot->waveform == 7)	// external waveform (PCM)
+	{
+		st = (double)(2 * (slot->fns | 2048)) * pow_table[slot->block] * (double)(fs_frequency[slot->fs]);
+		st = st * multiple_table[slot->multiple];
+
+		// LFO phase modulation
+		st *= slot->lfo_phasemod;
+
+		st /= (double)(524288/65536);		// pre-multiply with 65536
+
+		slot->step = (UINT64)st / (UINT64)Machine->sample_rate;
+	}
+	else						// internal waveform (FM)
+	{
+		st = (double)(2 * slot->fns) * pow_table[slot->block] * (double)(CLOCK/384);
+		st = st * multiple_table[slot->multiple] * (double)(SIN_LEN);
+
+		// LFO phase modulation
+		st *= slot->lfo_phasemod;
+
+		st /= (double)(536870912/65536);	// pre-multiply with 65536
+
+		slot->step = (UINT64)st / (UINT64)Machine->sample_rate;
+	}
+}
+
 void update_envelope(YMF271Slot *slot)
 {
 	switch (slot->env_state)
@@ -358,11 +444,42 @@ static void init_envelope(YMF271Slot *slot)
 	slot->env_state = ENV_ATTACK;
 }
 
+static void init_lfo(YMF271Slot *slot)
+{
+	slot->lfo_phase = 0;
+	slot->lfo_amplitude = 0;
+	slot->lfo_phasemod = 0;
+
+	slot->lfo_step = (int)((((double)LFO_LENGTH * LFO_frequency_table[slot->lfoFreq]) / 44100.0) * 256.0);
+}
+
+INLINE void update_lfo(YMF271Slot *slot)
+{
+	slot->lfo_phase += slot->lfo_step;
+
+	slot->lfo_amplitude = alfo_table[slot->lfowave][(slot->lfo_phase >> LFO_SHIFT) & (LFO_LENGTH-1)];
+	slot->lfo_phasemod = plfo_table[slot->lfowave][slot->pms][(slot->lfo_phase >> LFO_SHIFT) & (LFO_LENGTH-1)];
+
+	calculate_step(slot);
+}
+
 INLINE int calculate_slot_volume(YMF271Chip *chip, YMF271Slot *slot)
 {
 	int volume;
-	volume = ((UINT64)chip->volume[255 - (slot->volume >> ENV_VOLUME_SHIFT)] *
-			  (UINT64)total_level[slot->tl]) >> 16;
+	UINT64 env_volume;
+	UINT64 lfo_volume = 65536;
+
+	switch (slot->ams)
+	{
+		case 0: lfo_volume = 65536; break;	// 0dB
+		case 1: lfo_volume = 65536 - (((UINT64)slot->lfo_amplitude * 33124) >> 16); break;	// 5.90625dB
+		case 2: lfo_volume = 65536 - (((UINT64)slot->lfo_amplitude * 16742) >> 16); break;	// 11.8125dB
+		case 3: lfo_volume = 65536 - (((UINT64)slot->lfo_amplitude * 4277) >> 16); break;	// 23.625dB
+	}
+
+	env_volume = (UINT64)(chip->volume[255 - (slot->volume >> ENV_VOLUME_SHIFT)] * lfo_volume) >> 16;
+
+	volume = (UINT64)(env_volume * total_level[slot->tl]) >> 16;
 
 	return volume;
 }
@@ -403,6 +520,7 @@ static void update_pcm(YMF271Chip *chip, int slotnum, INT32 *mixp, int length)
 		}
 
 		update_envelope(slot);
+		update_lfo(slot);
 
 		final_volume = calculate_slot_volume(chip, slot);
 
@@ -437,19 +555,26 @@ INLINE INT32 calculate_2op_fm_0(YMF271Chip *chip, int slotnum1, int slotnum2)
 	int env1, env2;
 	INT64 slot1_output, slot2_output;
 	INT64 phase_mod;
+	INT64 feedback;
 
 	update_envelope(slot1);
+	update_lfo(slot1);
 	env1 = calculate_slot_volume(chip, slot1);
 	update_envelope(slot2);
+	update_lfo(slot2);
 	env2 = calculate_slot_volume(chip, slot2);
 
-	slot1_output = wavetable[slot1->waveform][((slot1->stepptr + slot1->feedback_modulation) >> 16) & SIN_MASK];
-	phase_mod = (slot1_output << (SIN_BITS/2)) * modulation_level[slot2->feedback];
+	feedback = (slot1->feedback_modulation0 + slot1->feedback_modulation1) / 2;
+	slot1->feedback_modulation0 = slot1->feedback_modulation1;
+
+	slot1_output = wavetable[slot1->waveform][((slot1->stepptr + feedback) >> 16) & SIN_MASK];
+	slot1_output = (slot1_output * env1) >> 16;
+
+	phase_mod = ((slot1_output << (SIN_BITS-2)) * modulation_level[slot2->feedback]);
 	slot2_output = wavetable[slot2->waveform][((slot2->stepptr + phase_mod) >> 16) & SIN_MASK];
-
-	slot1->feedback_modulation = ((slot1_output << (SIN_BITS/2)) * feedback_level[slot1->feedback]) / 16;
-
 	slot2_output = (slot2_output * env2) >> 16;
+
+	slot1->feedback_modulation1 = (((slot1_output << (SIN_BITS-2)) * feedback_level[slot1->feedback]) / 16);
 
 	slot1->stepptr += slot1->step;
 	slot2->stepptr += slot2->step;
@@ -467,19 +592,26 @@ INLINE INT32 calculate_2op_fm_1(YMF271Chip *chip, int slotnum1, int slotnum2)
 	int env1, env2;
 	INT64 slot1_output, slot2_output;
 	INT64 phase_mod;
+	INT64 feedback;
 
 	update_envelope(slot1);
+	update_lfo(slot1);
 	env1 = calculate_slot_volume(chip, slot1);
 	update_envelope(slot2);
+	update_lfo(slot2);
 	env2 = calculate_slot_volume(chip, slot2);
 
-	slot1_output = wavetable[slot1->waveform][((slot1->stepptr + slot1->feedback_modulation) >> 16) & SIN_MASK];
-	phase_mod = (slot1_output << (SIN_BITS/2)) * modulation_level[slot2->feedback];
+	feedback = (slot1->feedback_modulation0 + slot1->feedback_modulation1) / 2;
+	slot1->feedback_modulation0 = slot1->feedback_modulation1;
+
+	slot1_output = wavetable[slot1->waveform][((slot1->stepptr + feedback) >> 16) & SIN_MASK];
+	slot1_output = (slot1_output * env1) >> 16;
+
+	phase_mod = ((slot1_output << (SIN_BITS-2)) * modulation_level[slot2->feedback]);
 	slot2_output = wavetable[slot2->waveform][((slot2->stepptr + phase_mod) >> 16) & SIN_MASK];
-
-	slot1->feedback_modulation = ((slot2_output << (SIN_BITS/2)) * feedback_level[slot1->feedback]) / 16;
-
 	slot2_output = (slot2_output * env2) >> 16;
+
+	slot1->feedback_modulation1 = (((slot2_output << (SIN_BITS-2)) * feedback_level[slot1->feedback]) / 16);
 
 	slot1->stepptr += slot1->step;
 	slot2->stepptr += slot2->step;
@@ -496,9 +628,10 @@ INLINE INT32 calculate_1op_fm_0(YMF271Chip *chip, int slotnum, int phase_modulat
 	INT64 phase_mod = phase_modulation;
 
 	update_envelope(slot);
+	update_lfo(slot);
 	env = calculate_slot_volume(chip, slot);
 
-	phase_mod = (phase_mod << (SIN_BITS/2)) * modulation_level[slot->feedback];
+	phase_mod = ((phase_mod << (SIN_BITS-2)) * modulation_level[slot->feedback]);
 
 	slot_output = wavetable[slot->waveform][((slot->stepptr + phase_mod) >> 16) & SIN_MASK];
 	slot->stepptr += slot->step;
@@ -516,15 +649,20 @@ INLINE INT32 calculate_1op_fm_1(YMF271Chip *chip, int slotnum)
 	YMF271Slot *slot = &chip->slots[slotnum];
 	int env;
 	INT64 slot_output;
+	INT64 feedback;
 
 	update_envelope(slot);
+	update_lfo(slot);
 	env = calculate_slot_volume(chip, slot);
 
-	slot_output = wavetable[slot->waveform][((slot->stepptr + slot->feedback_modulation) >> 16) & SIN_MASK];
-	slot->feedback_modulation = ((slot_output << (SIN_BITS/2)) * feedback_level[slot->feedback]) / 16;
-	slot->stepptr += slot->step;
+	feedback = slot->feedback_modulation0 + slot->feedback_modulation1;
+	slot->feedback_modulation0 = slot->feedback_modulation1;
 
+	slot_output = wavetable[slot->waveform][((slot->stepptr + feedback) >> 16) & SIN_MASK];
 	slot_output = (slot_output * env) >> 16;
+
+	slot->feedback_modulation1 = (((slot_output << (SIN_BITS-2)) * feedback_level[slot->feedback]) / 16);
+	slot->stepptr += slot->step;
 
 	return slot_output;
 }
@@ -587,7 +725,7 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 							// +--[S1]--|
 							// ---[S3]--+--[S2]--+--[S4]-->
 							case 2:
-								phase_mod1 = calculate_1op_fm_1(chip, slot1) + calculate_1op_fm_0(chip, slot3, 0);
+								phase_mod1 = (calculate_1op_fm_1(chip, slot1) + calculate_1op_fm_0(chip, slot3, 0)) / 2;
 								phase_mod2 = calculate_1op_fm_0(chip, slot2, phase_mod1);
 								output4 = calculate_1op_fm_0(chip, slot4, phase_mod2);
 								break;
@@ -597,14 +735,14 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 							// ---[S3]--+--[S2]--+--[S4]-->
 							case 3:
 								phase_mod1 = calculate_1op_fm_0(chip, slot3, 0);
-								phase_mod2 = calculate_1op_fm_0(chip, slot2, phase_mod1) + calculate_1op_fm_1(chip, slot1);
+								phase_mod2 = (calculate_1op_fm_0(chip, slot2, phase_mod1) + calculate_1op_fm_1(chip, slot1)) / 2;
 								output4 = calculate_1op_fm_0(chip, slot4, phase_mod2);
 								break;
 
 							// <--------|  --[S2]--|
 							// ---[S1]--|-+--[S3]--+--[S4]-->
 							case 4:
-								phase_mod1 = calculate_2op_fm_0(chip, slot1, slot3) + calculate_1op_fm_0(chip, slot2, 0) ;
+								phase_mod1 = (calculate_2op_fm_0(chip, slot1, slot3) + calculate_1op_fm_0(chip, slot2, 0)) / 2;
 								output4 = calculate_1op_fm_0(chip, slot4, phase_mod1);
 								break;
 
@@ -612,7 +750,7 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 							// <-----------------|  |
 							// ---[S1]--+--[S3]--|--+--[S4]-->
 							case 5:
-								phase_mod1 = calculate_2op_fm_1(chip, slot1, slot3) + calculate_1op_fm_0(chip, slot2, 0);
+								phase_mod1 = (calculate_2op_fm_1(chip, slot1, slot3) + calculate_1op_fm_0(chip, slot2, 0)) / 2;
 								output4 = calculate_1op_fm_0(chip, slot4, phase_mod1);
 								break;
 
@@ -653,7 +791,7 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 							// --[S3]--|        |
 							// --[S2]--+--[S4]--+-->
 							case 9:
-								phase_mod1 = calculate_1op_fm_0(chip, slot2, 0) + calculate_1op_fm_0(chip, slot3, 0);
+								phase_mod1 = (calculate_1op_fm_0(chip, slot2, 0) + calculate_1op_fm_0(chip, slot3, 0)) / 2;
 								output4 = calculate_1op_fm_0(chip, slot4, phase_mod1);
 								output1 = calculate_1op_fm_1(chip, slot1);
 								break;
@@ -740,12 +878,12 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 
 			case 1:		// 2x 2 operator FM
 			{
-				mixp = &mix[0];
 				for (op = 0; op < 2; op++)
 				{
-					int slot1 = j + (op + 0) * 12;
-					int slot2 = j + (op + 2) * 12;
+					int slot1 = j + ((op + 0) * 12);
+					int slot2 = j + ((op + 2) * 12);
 
+					mixp = &mix[0];
 					if (chip->slots[slot1].active)
 					{
 						for (i = 0; i < length; i++)
@@ -824,7 +962,7 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 							// <--------|  |
 							// +--[S1]--+--+--[S2]-->
 							case 2:
-								phase_mod = calculate_1op_fm_1(chip, slot1) + calculate_1op_fm_0(chip, slot3, 0);
+								phase_mod = (calculate_1op_fm_1(chip, slot1) + calculate_1op_fm_0(chip, slot3, 0)) / 2;
 								output2 = calculate_1op_fm_0(chip, slot2, phase_mod);
 								break;
 
@@ -908,34 +1046,6 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 	}
 }
 
-static const double multiple_table[16] = { 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-
-static const double pow_table[16] = { 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 0.5, 1, 2, 4, 8, 16, 32, 64 };
-
-static const int fs_frequency[4] = { (CLOCK/384), (CLOCK/384)/2, (CLOCK/384)/4, (CLOCK/384)/8 };
-
-INLINE void calculate_step(YMF271Slot *slot)
-{
-	double st;
-
-	if (slot->waveform == 7)	// external waveform (PCM)
-	{
-		st = (double)(2 * (slot->fns | 2048)) * pow_table[slot->block] * (double)(fs_frequency[slot->fs]);
-		st = st * multiple_table[slot->multiple];
-		st /= (double)(524288/65536);		// pre-multiply with 65536
-
-		slot->step = (UINT64)st / (UINT64)Machine->sample_rate;
-	}
-	else						// internal waveform (FM)
-	{
-		st = (double)(2 * slot->fns) * pow_table[slot->block] * (double)(CLOCK/384);
-		st = st * multiple_table[slot->multiple] * (double)(SIN_LEN);
-		st /= (double)(536870912/65536);	// pre-multiply with 65536
-
-		slot->step = (UINT64)st / (UINT64)Machine->sample_rate;
-	}
-}
-
 static void write_register(YMF271Chip *chip, int slotnum, int reg, int data)
 {
 	YMF271Slot *slot = &chip->slots[slotnum];
@@ -956,7 +1066,9 @@ static void write_register(YMF271Chip *chip, int slotnum, int reg, int data)
 
 				calculate_step(slot);
 				init_envelope(slot);
-				slot->feedback_modulation = 0;
+				init_lfo(slot);
+				slot->feedback_modulation0 = 0;
+				slot->feedback_modulation1 = 0;
 			}
 			else
 			{
@@ -979,7 +1091,7 @@ static void write_register(YMF271Chip *chip, int slotnum, int reg, int data)
 		{
 			slot->lfowave = data & 3;
 			slot->pms = (data >> 3) & 0x7;
-			slot->ams = (data >> 6) & 0x7;
+			slot->ams = (data >> 6) & 0x3;
 			break;
 		}
 
@@ -1443,7 +1555,7 @@ static int ymf271_r(int chipnum, int offset)
 
 static void init_tables(void)
 {
-	int i;
+	int i,j;
 
 	for (i=0; i < 7; i++)
 	{
@@ -1475,6 +1587,52 @@ static void init_tables(void)
 
 		// Waveform 6:     1      (0 <= wt <= 2PI)
 		wavetable[6][i] = (INT16)(1 * MAXOUT);
+	}
+
+	for (i=0; i < LFO_LENGTH; i++)
+	{
+		int tri_wave;
+		double ftri_wave, fsaw_wave;
+		double plfo[4];
+
+		// LFO phase modulation
+		plfo[0] = 0;
+
+		fsaw_wave = ((i % (LFO_LENGTH/2)) * PLFO_MAX) / (double)((LFO_LENGTH/2)-1);
+		plfo[1] = (i < (LFO_LENGTH/2)) ? fsaw_wave : fsaw_wave - PLFO_MAX;
+
+		plfo[2] = (i < (LFO_LENGTH/2)) ? PLFO_MAX : PLFO_MIN;
+
+		ftri_wave = ((i % (LFO_LENGTH/4)) * PLFO_MAX) / (double)(LFO_LENGTH/4);
+		switch (i / (LFO_LENGTH/4))
+		{
+			case 0: plfo[3] = ftri_wave; break;
+			case 1: plfo[3] = PLFO_MAX - ftri_wave; break;
+			case 2: plfo[3] = 0 - ftri_wave; break;
+			case 3: plfo[3] = 0 - (PLFO_MAX - ftri_wave); break;
+		}
+
+		for (j=0; j < 4; j++)
+		{
+			plfo_table[j][0][i] = pow(2.0, 0.0);
+			plfo_table[j][1][i] = pow(2.0, (3.378 * plfo[j]) / 1200.0);
+			plfo_table[j][2][i] = pow(2.0, (5.0646 * plfo[j]) / 1200.0);
+			plfo_table[j][3][i] = pow(2.0, (6.7495 * plfo[j]) / 1200.0);
+			plfo_table[j][4][i] = pow(2.0, (10.1143 * plfo[j]) / 1200.0);
+			plfo_table[j][5][i] = pow(2.0, (20.1699 * plfo[j]) / 1200.0);
+			plfo_table[j][6][i] = pow(2.0, (40.1076 * plfo[j]) / 1200.0);
+			plfo_table[j][7][i] = pow(2.0, (79.307 * plfo[j]) / 1200.0);
+		}
+
+		// LFO amplitude modulation
+		alfo_table[0][i] = 0;
+
+		alfo_table[1][i] = ALFO_MAX - ((i * ALFO_MAX) / LFO_LENGTH);
+
+		alfo_table[2][i] = (i < (LFO_LENGTH/2)) ? ALFO_MAX : ALFO_MIN;
+
+		tri_wave = ((i % (LFO_LENGTH/2)) * ALFO_MAX) / (LFO_LENGTH/2);
+		alfo_table[3][i] = (i < (LFO_LENGTH/2)) ? ALFO_MAX-tri_wave : tri_wave;
 	}
 }
 

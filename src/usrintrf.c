@@ -225,6 +225,223 @@ static const struct GfxLayout uifontlayout =
 
 
 
+/* this stuff will go away with the new rendering system */
+
+#define MAX_RENDER_ELEMENTS	1000
+
+struct render_element
+{
+	float x, y;
+	float x2, y2;
+	UINT16 type;
+	int color;
+};
+
+static struct render_element elemlist[MAX_RENDER_ELEMENTS];
+static int elemindex;
+
+static void ui_raw2rot_rect(struct rectangle *rect);
+static void ui_rot2raw_rect(struct rectangle *rect);
+
+static void get_ui_bounds(float *width, float *height)
+{
+	*width = uirotwidth;
+	*height = uirotheight;
+}
+
+static float get_ui_lineheight(void)
+{
+	return uirotcharheight;
+}
+
+static float get_char_width(UINT16 ch)
+{
+	return uirotcharwidth;
+}
+
+static float get_string_width(const char *s)
+{
+	return strlen(s) * uirotcharwidth;
+}
+
+static void reset_ui_render(void)
+{
+	elemindex = 0;
+}
+
+static void add_ui_char(float x, float y, UINT16 ch, int color)
+{
+	elemlist[elemindex].x = x;
+	elemlist[elemindex].y = y;
+	elemlist[elemindex].type = ch;
+	elemlist[elemindex].color = color;
+	elemindex++;
+}
+
+static void add_ui_box(float x1, float y1, float x2, float y2)
+{
+	elemlist[elemindex].x = x1;
+	elemlist[elemindex].y = y1;
+	elemlist[elemindex].x2 = x2;
+	elemlist[elemindex].y2 = y2;
+	elemlist[elemindex].type = 0xffff;
+	elemindex++;
+}
+
+static void render_ui(struct mame_bitmap *dest)
+{
+	int i;
+
+	for (i = 0; i < elemindex; i++)
+	{
+		struct render_element *elem = &elemlist[i];
+		struct rectangle bounds;
+
+		switch (elem->type)
+		{
+			case 0xffff:	/* box */
+				break;
+
+			default:
+				/* construct a rectangle in rotated coordinates, then transform it */
+				bounds.min_x = elem->x + uirotbounds.min_x;
+				bounds.min_y = elem->y + uirotbounds.min_y;
+				bounds.max_x = bounds.min_x + uirotcharwidth - 1;
+				bounds.max_y = bounds.min_y + uirotcharheight - 1;
+				ui_rot2raw_rect(&bounds);
+
+				/* now render */
+				drawgfx(dest, Machine->uirotfont, elem->type, elem->color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
+				break;
+		}
+	}
+}
+
+enum
+{
+	JUSTIFY_LEFT = 0,
+	JUSTIFY_CENTER,
+	JUSTIFY_RIGHT
+};
+
+enum
+{
+	WRAP_NEVER,
+	WRAP_TRUNCATE,
+	WRAP_WORD
+};
+
+static int draw_text(const char *s, float x, float y, float wrapwidth, int justify, int wrap, rgb_t color, float *totalwidth, float *totalheight)
+{
+	const char *linestart;
+	float cury = y;
+	float maxwidth = 0;
+
+	/* if we don't want wrapping, guarantee a huge wrapwidth */
+	if (wrap == WRAP_NEVER)
+		wrapwidth = 1e28;
+
+	/* loop over lines */
+	while (*s)
+	{
+		const char *lastspace = NULL;
+		float lastspace_width = 0;
+		float curwidth = 0;
+		float curx;
+
+		/* remember the starting position of the line */
+		linestart = s;
+
+		/* loop while we have characters and are less than the wrapwidth */
+		while (*s && curwidth < wrapwidth)
+		{
+			/* if we hit a space, remember the location and the width there */
+			if (*s == ' ')
+			{
+				lastspace = s;
+				lastspace_width = curwidth;
+			}
+
+			/* if we hit a newline, stop immediately */
+			else if (*s == '\n')
+				break;
+
+			/* add the width of this character and advance */
+			curwidth += get_char_width(*s);
+			s++;
+		}
+
+		/* if we accumulated too much for the current width, we need to back off */
+		if (curwidth > wrapwidth)
+		{
+			/* if we're word wrapping, back up to the last space if we can */
+			if (wrap == WRAP_WORD)
+			{
+				/* if we hit a space, back up to there with the appropriate width */
+				if (lastspace)
+				{
+					s = lastspace;
+					curwidth = lastspace_width;
+				}
+
+				/* if we didn't hit a space, back up one character */
+				else if (s > linestart)
+				{
+					s--;
+					curwidth -= get_char_width(*s);
+				}
+			}
+
+			/* if we're truncating, make sure we have enough space for the ... */
+			else if (wrap == WRAP_TRUNCATE)
+			{
+				/* add in the width of the ... */
+				curwidth += 3 * get_char_width('.');
+
+				/* while we are above the wrap width, back up one character */
+				while (curwidth > wrapwidth && s > linestart)
+				{
+					s--;
+					curwidth -= get_char_width(*s);
+				}
+			}
+		}
+
+		/* align according to the justfication */
+		if (justify == JUSTIFY_LEFT)
+			curx = x;
+		else if (justify == JUSTIFY_CENTER)
+			curx = x + (wrapwidth - curwidth) / 2;
+		else if (justify == JUSTIFY_RIGHT)
+			curx = wrapwidth - curwidth;
+
+		/* track the maximum width of any given line */
+		if (curwidth > maxwidth)
+			maxwidth = curwidth;
+
+		/* loop from the line start and add the characters */
+		while (linestart < s)
+		{
+			add_ui_char(curx, cury, *linestart, color);
+			linestart++;
+		}
+
+		/* advance by a row */
+		cury += get_ui_lineheight();
+
+		/* skip past any spaces at the beginning of the next line */
+		while (*s && isspace(*s)) s++;
+	}
+
+	/* report the width and height of the resulting space */
+	if (totalwidth)
+		*totalwidth = maxwidth;
+	if (totalheight)
+		*totalheight = cury - y;
+
+	return 0;
+}
+
 
 #if 0
 #pragma mark UTILITIES
@@ -1488,6 +1705,10 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 		if (input_ui_pressed(IPT_UI_SNAPSHOT))
 			save_screen_snapshot(bitmap);
+
+		if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
+			record_movie(bitmap);
+
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
 
@@ -4125,9 +4346,14 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	extern int mess_pause_for_ui;
 #endif
 
+reset_ui_render();
+
 	/* if the user pressed F12, save the screen to a file */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
 		save_screen_snapshot(bitmap);
+
+	/* if the user pressed LSHIFT+F12, record a movie to a file */
+	record_movie(bitmap);
 
 	/* This call is for the cheat, it must be called once a frame */
 	if (options.cheat) DoCheat(bitmap);
@@ -4135,7 +4361,11 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	/* if the user pressed ESC, stop the emulation */
 	/* but don't quit if the setup menu is on screen */
 	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
+	{
+		/* stop recording if still running */
+		record_movie(NULL);
 		return 1;
+	}
 
 	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CONFIGURE))
 	{
@@ -4201,6 +4431,9 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 			if (input_ui_pressed(IPT_UI_SNAPSHOT))
 				save_screen_snapshot(bitmap);
+
+			if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
+				record_movie(bitmap);
 
 
 			if (input_ui_pressed(IPT_UI_SAVE_STATE))
@@ -4324,16 +4557,14 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	/* add the FPS counter */
 	ui_display_fps(bitmap);
 
+render_ui(bitmap);
+
 	return 0;
 }
 
 
 void init_user_interface(void)
 {
-	extern int snapno;	/* in common.c */
-
-	snapno = 0; /* reset snapshot counter */
-
 	/* clear the input memory */
 	while (code_read_async() != CODE_NONE) {};
 

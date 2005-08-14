@@ -9,6 +9,7 @@ data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 data16_t *popbingo_scroll, *popbingo_scroll2;
 static int tx_pri;
 static int flytiger_pri;
+static int sprites_disabled;
 
 
 WRITE8_HANDLER( lastday_ctrl_w )
@@ -19,7 +20,8 @@ WRITE8_HANDLER( lastday_ctrl_w )
 
 	/* bit 3 is used but unknown */
 
-	/* bit 4 is used but unknown */
+	/* bit 4 disables sprites */
+	sprites_disabled = data & 0x10;
 
 	/* bit 6 is flip screen */
 	flip_screen_set(data & 0x40);
@@ -37,6 +39,8 @@ WRITE8_HANDLER( pollux_ctrl_w )
 	/* bit 1 is used but unknown */
 
 	/* bit 2 is continuously toggled (unknown) */
+
+	/* bit 4 is used but unknown */
 }
 
 WRITE8_HANDLER( primella_ctrl_w )
@@ -530,24 +534,44 @@ static void rshark_draw_sprites(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( lastday )
 {
-	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
-	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
-	draw_sprites(bitmap,0);
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	if(!(lastday_bgscroll[6] & 0x10))
+		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
+
+	if(!(lastday_fgscroll[6] & 0x10))
+		draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+
+	if(!sprites_disabled)
+		draw_sprites(bitmap,0);
+
 	draw_tx(bitmap,-1);
 }
 
 VIDEO_UPDATE( gulfstrm )
 {
-	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
-	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	if(!(lastday_bgscroll[6] & 0x10))
+		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
+
+	if(!(lastday_fgscroll[6] & 0x10))
+		draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+
 	draw_sprites(bitmap,1);
 	draw_tx(bitmap,-1);
 }
 
 VIDEO_UPDATE( pollux )
 {
-	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
-	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	if(!(lastday_bgscroll[6] & 0x10))
+		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
+
+	if(!(lastday_fgscroll[6] & 0x10))
+		draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+
 	draw_sprites(bitmap,2);
 	draw_tx(bitmap,0);
 }
@@ -572,6 +596,7 @@ VIDEO_UPDATE( flytiger )
 		if(!(lastday_fgscroll[6] & 0x10))
 			flytiger_draw_layer2(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX4)+0x78000,TRANSPARENCY_PEN);
 	}
+
 	draw_sprites(bitmap,4);
 	draw_tx(bitmap,0);
 }
@@ -605,7 +630,7 @@ VIDEO_UPDATE( rshark )
 
 VIDEO_UPDATE( popbingo )
 {
-	popbingo_draw_layer(bitmap,1,popbingo_scroll,memory_region(REGION_GFX2),TRANSPARENCY_PEN);
+	popbingo_draw_layer(bitmap,1,popbingo_scroll,memory_region(REGION_GFX2),TRANSPARENCY_NONE);
 	rshark_draw_sprites(bitmap);
 }
 

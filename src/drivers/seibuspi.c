@@ -603,8 +603,6 @@ WRITE32_HANDLER( video_dma_address_w );
 WRITE32_HANDLER( sprite_dma_start_w );
 
 extern UINT32 *scroll_ram;
-extern int old_vidhw;
-extern int bg_size;
 data32_t *spimainram;
 
 /********************************************************************/
@@ -1785,8 +1783,6 @@ static DRIVER_INIT( rdft )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, rdft_speedup_r );
 
 	init_spi();
-	old_vidhw = 0;
-	bg_size = 1;
 }
 
 static DRIVER_INIT( senkyu )
@@ -1794,8 +1790,6 @@ static DRIVER_INIT( senkyu )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018cb4, 0x0018cb7, 0, 0, senkyu_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 0;
 }
 
 static DRIVER_INIT( senkyua )
@@ -1803,8 +1797,6 @@ static DRIVER_INIT( senkyua )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018c9c, 0x0018c9f, 0, 0, senkyua_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 0;
 }
 
 static DRIVER_INIT( batlball )
@@ -1812,8 +1804,6 @@ static DRIVER_INIT( batlball )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018db4, 0x0018db7, 0, 0, batlball_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 0;
 }
 
 static DRIVER_INIT( ejanhs )
@@ -1822,8 +1812,6 @@ static DRIVER_INIT( ejanhs )
 //  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 1;
 }
 
 static DRIVER_INIT( viprp1 )
@@ -1831,8 +1819,6 @@ static DRIVER_INIT( viprp1 )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viprp1_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 1;
 }
 
 static DRIVER_INIT( viprp1o )
@@ -1840,8 +1826,6 @@ static DRIVER_INIT( viprp1o )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viprp1o_speedup_r );
 
 	init_spi();
-	old_vidhw = 1;
-	bg_size = 1;
 }
 
 
@@ -1862,15 +1846,11 @@ static DRIVER_INIT( rf2 )
 static DRIVER_INIT( rdft2 )
 {
 	init_rf2();
-	old_vidhw = 0;
-	bg_size = 2;
 }
 
 static DRIVER_INIT( rdft2us )
 {
 	init_rf2();
-	old_vidhw = 0;
-	bg_size = 2;
 }
 
 
@@ -1885,9 +1865,6 @@ static DRIVER_INIT( rfjet )
 	seibuspi_rise11_sprite_decrypt(memory_region(REGION_GFX3), 0x800000);
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x560, 0x563, 0, 0, sprite_dma_start_w);
-
-	old_vidhw = 0;
-	bg_size = 2;
 }
 
 /* SYS386 */
@@ -1895,8 +1872,6 @@ static DRIVER_INIT( rfjet )
 static DRIVER_INIT( rdft22kc )
 {
 	init_rf2();
-	old_vidhw = 0;
-	bg_size = 2;
 }
 
 static MACHINE_INIT( seibu386 )
@@ -1957,7 +1932,7 @@ ROM_START(senkyu)
 	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
 	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_REGION( 0x300000, REGION_GFX2, 0)	/* background layer roms */
 	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 
@@ -1988,7 +1963,7 @@ ROM_START(senkyua)
 	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
 	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_REGION( 0x300000, REGION_GFX2, 0)	/* background layer roms */
 	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 
@@ -2019,7 +1994,7 @@ ROM_START(batlball)
 	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
 	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_REGION( 0x300000, REGION_GFX2, 0)	/* background layer roms */
 	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 
@@ -2050,7 +2025,7 @@ ROM_START(batlbala)
 	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
 	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
 
-	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_REGION( 0x300000, REGION_GFX2, 0)	/* background layer roms */
 	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
 	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
 

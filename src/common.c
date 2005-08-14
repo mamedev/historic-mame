@@ -60,8 +60,6 @@ unsigned int coin_count[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 static unsigned int lastcoin[COIN_COUNTERS];
 
-int snapno;
-
 /* malloc tracking */
 static struct malloc_info malloc_list[MAX_MALLOCS];
 static int malloc_list_index = 0;
@@ -649,16 +647,16 @@ void end_resource_tracking(void)
 
 /***************************************************************************
 
-    Screen snapshot code
+    Screen snapshot and movie recording code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-    save_screen_snapshot_as - save a snapshot to
-    the given filename
+    save_frame_with - save a frame with a
+    given handler for screenshots and movies
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
+static void save_frame_with(mame_file *fp, struct mame_bitmap *bitmap, int (*write_handler)(mame_file *, struct mame_bitmap *))
 {
 	struct rectangle bounds;
 	struct mame_bitmap *osdcopy;
@@ -686,7 +684,9 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 
 	/* now do the actual work */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		png_write_bitmap(fp,bitmap);
+	{
+		write_handler(fp, bitmap);
+	}
 	else
 	{
 		struct mame_bitmap *copy;
@@ -749,7 +749,7 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 				logerror("Unknown color depth\n");
 				break;
 			}
-			png_write_bitmap(fp,copy);
+			write_handler(fp, copy);
 			bitmap_free(copy);
 		}
 	}
@@ -761,36 +761,105 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 }
 
 
+ /*-------------------------------------------------
+    save_screen_snapshot_as - save a snapshot to
+    the given file handle
+-------------------------------------------------*/
+
+void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
+{
+	save_frame_with(fp, bitmap, png_write_bitmap);
+}
+
 
 /*-------------------------------------------------
-    save_screen_snapshot - save a screen snapshot
+    open the next non-existing file of type
+    filetype according to our numbering scheme
+-------------------------------------------------*/
+
+static mame_file *mame_fopen_next(int filetype)
+{
+	char name[FILENAME_MAX];
+	int seq;
+
+	/* avoid overwriting existing files */
+	/* first of all try with "gamename.xxx" */
+	sprintf(name,"%.8s", Machine->gamedrv->name);
+	if (mame_faccess(name, filetype))
+	{
+		seq = 0;
+		do
+		{
+			/* otherwise use "nameNNNN.xxx" */
+			sprintf(name,"%.4s%04d",Machine->gamedrv->name, seq++);
+		} while (mame_faccess(name, filetype));
+	}
+
+    return (mame_fopen(Machine->gamedrv->name, name, filetype, 1));
+}
+
+
+ /*-------------------------------------------------
+    save_screen_snapshot - save a snapshot.
 -------------------------------------------------*/
 
 void save_screen_snapshot(struct mame_bitmap *bitmap)
 {
-	char name[20];
 	mame_file *fp;
 
-	/* avoid overwriting existing files */
-	/* first of all try with "gamename.png" */
-	sprintf(name,"%.8s", Machine->gamedrv->name);
-	if (mame_faccess(name,FILETYPE_SCREENSHOT))
-	{
-		do
-		{
-			/* otherwise use "nameNNNN.png" */
-			sprintf(name,"%.4s%04d",Machine->gamedrv->name,snapno++);
-		} while (mame_faccess(name, FILETYPE_SCREENSHOT));
-	}
-
-	if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
+	if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
 	{
 		save_screen_snapshot_as(fp, bitmap);
 		mame_fclose(fp);
 	}
 }
 
+ /*-------------------------------------------------
+    record_movie - start, stop and update the
+    recording of a MNG movie
+-------------------------------------------------*/
 
+void record_movie(struct mame_bitmap *bitmap)
+{
+	static mame_file *fp = NULL;
+
+	if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
+	{
+		if (fp == NULL)
+		{
+			fp = mame_fopen_next(FILETYPE_MOVIE);
+			if (fp)
+			{
+				usrintf_showmessage("REC START");
+				save_frame_with(fp, bitmap, mng_capture_start);
+			}
+		}
+		else
+		{
+			mng_capture_stop(fp);
+			mame_fclose(fp);
+			fp = NULL;
+			usrintf_showmessage("REC STOP");
+		}
+	}
+	else
+	{
+		if (fp != NULL)
+		{
+			if (bitmap != NULL)
+			{
+				save_frame_with(fp, bitmap, mng_capture_frame);
+			}
+			else
+			{
+				/* Stop recording if no bitmap (exit) */
+				mng_capture_stop(fp);
+				mame_fclose(fp);
+				fp = NULL;
+			}
+		}
+	}
+}
 
 /***************************************************************************
 

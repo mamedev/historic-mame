@@ -28,12 +28,12 @@ static UINT8 crc16_msb;
 static UINT8 tape_crc16_lsb[256];
 static UINT8 tape_crc16_msb[256];
 
-static data8_t (*decocass_dongle_r)(offs_t offset);
-static void (*decocass_dongle_w)(offs_t offset, data8_t data);
+static UINT8 (*decocass_dongle_r)(offs_t offset);
+static void (*decocass_dongle_w)(offs_t offset, UINT8 data);
 
-static data8_t decocass_reset;
-static data8_t i8041_p1;
-static data8_t i8041_p2;
+static UINT8 decocass_reset;
+static UINT8 i8041_p1;
+static UINT8 i8041_p2;
 
 /* dongle type #1: jumpers C and D assignments */
 #define MAKE_MAP(m0,m1,m2,m3,m4,m5,m6,m7)		\
@@ -49,6 +49,8 @@ static data8_t i8041_p2;
 #define MAP7(m) ((m>>28)&15)
 static UINT32 type1_inmap;
 static UINT32 type1_outmap;
+
+static int de0091_enable;	/* DE-0091xx daughter board enable */
 
 /* dongle type #2: status of the latches */
 static int type2_d2_latch;	/* latched 8041-STATUS D2 value */
@@ -68,6 +70,7 @@ enum {
 	TYPE3_SWAP_25,
 	TYPE3_SWAP_34_0,
 	TYPE3_SWAP_34_7,
+	TYPE3_SWAP_23_56,
 	TYPE3_SWAP_56,
 	TYPE3_SWAP_67
 };
@@ -80,10 +83,10 @@ static int type4_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
 static int type5_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
 
 /* four inputs from the quadrature decoder (H1, V1, H2, V2) */
-static data8_t decocass_quadrature_decoder[4];
+static UINT8 decocass_quadrature_decoder[4];
 
 /* sound latches, ACK status bits and NMI timer */
-static data8_t decocass_sound_ack;
+static UINT8 decocass_sound_ack;
 static void *decocass_sound_timer;
 
 WRITE8_HANDLER( decocass_coin_counter_w )
@@ -102,14 +105,14 @@ WRITE8_HANDLER( decocass_sound_command_w )
 
 READ8_HANDLER( decocass_sound_data_r )
 {
-	data8_t data = soundlatch2_r(0);
+	UINT8 data = soundlatch2_r(0);
 	LOG(2,("CPU #%d sound data    <- $%02x\n", cpu_getactivecpu(), data));
 	return data;
 }
 
 READ8_HANDLER( decocass_sound_ack_r )
 {
-	data8_t data = decocass_sound_ack;	/* D6+D7 */
+	UINT8 data = decocass_sound_ack;	/* D6+D7 */
 	LOG(2,("CPU #%d sound ack     <- $%02x\n", cpu_getactivecpu(), data));
 	return data;
 }
@@ -123,7 +126,7 @@ WRITE8_HANDLER( decocass_sound_data_w )
 
 READ8_HANDLER( decocass_sound_command_r )
 {
-	data8_t data = soundlatch_r(0);
+	UINT8 data = soundlatch_r(0);
 	LOG(2,("CPU #%d sound command <- $%02x\n", cpu_getactivecpu(), data));
 	cpunum_set_input_line(1, M6502_IRQ_LINE, CLEAR_LINE);
 	decocass_sound_ack &= ~0x80;
@@ -143,7 +146,7 @@ WRITE8_HANDLER( decocass_sound_nmi_enable_w )
 
 READ8_HANDLER( decocass_sound_nmi_enable_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	LOG(2,("CPU #%d sound NMI enb <- $%02x\n", cpu_getactivecpu(), data));
 	timer_adjust(decocass_sound_timer, TIME_IN_HZ(256 * 57 / 8 / 2), 0, TIME_IN_HZ(256 * 57 / 8 / 2));
 	return data;
@@ -151,7 +154,7 @@ READ8_HANDLER( decocass_sound_nmi_enable_r )
 
 READ8_HANDLER( decocass_sound_data_ack_reset_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	LOG(2,("CPU #%d sound ack rst <- $%02x\n", cpu_getactivecpu(), data));
 	decocass_sound_ack &= ~0x40;
 	return data;
@@ -193,7 +196,7 @@ WRITE8_HANDLER( decocass_adc_w )
  */
 READ8_HANDLER( decocass_input_r )
 {
-	data8_t data = 0xff;
+	UINT8 data = 0xff;
 	switch (offset & 7)
 	{
 	case 0: case 1: case 2:
@@ -422,7 +425,7 @@ static void tape_update(void)
 		else
 		if (tape_byte < TAPE_BLOCK)
 		{
-			data8_t *ptr = memory_region(REGION_USER2) + tape_block * 256 + tape_byte - TAPE_HEADER;
+			UINT8 *ptr = memory_region(REGION_USER2) + tape_block * 256 + tape_byte - TAPE_HEADER;
 			rdata = (*ptr >> tape_bit) & 1;
 			if (tape_byte != last_byte)
 				LOG(4,("tape %5.4fs: DATA(%02x) $%02x\n", tape_time, tape_byte - TAPE_HEADER, *ptr));
@@ -506,7 +509,7 @@ static void tape_update(void)
 }
 
 #ifdef MAME_DEBUG
-static void decocass_fno(offs_t offset, data8_t data)
+static void decocass_fno(offs_t offset, UINT8 data)
 {
 		/* 8041ENA/ and is this a FNO write (function number)? */
 		if (0 == (i8041_p2 & 0x01))
@@ -551,8 +554,8 @@ static void decocass_fno(offs_t offset, data8_t data)
 
 READ8_HANDLER( decocass_type1_r )
 {
-	static data8_t latch1;
-	data8_t data;
+	static UINT8 latch1;
+	UINT8 data;
 
 	if (1 == (offset & 1))
 	{
@@ -578,7 +581,7 @@ READ8_HANDLER( decocass_type1_r )
 	else
 	{
 		offs_t promaddr;
-		data8_t save;
+		UINT8 save;
 		UINT8 *prom = memory_region(REGION_USER1);
 
 		if (firsttime)
@@ -636,7 +639,7 @@ READ8_HANDLER( decocass_type1_r )
 
 READ8_HANDLER( decocass_type1_map1_r )
 {
-	static data8_t map[] = {
+	static UINT8 map[] = {
 		0x01,0x34,0x03,0x36,0xa4,0x15,0xa6,0x17,
 		0x09,0x3c,0x0b,0x3e,0xac,0x1d,0xae,0x1f,
 		0x90,0x14,0x92,0x16,0x85,0x00,0x87,0x02,
@@ -670,7 +673,7 @@ READ8_HANDLER( decocass_type1_map1_r )
 		0x75,0xe5,0x77,0xe7,0x60,0xd1,0x62,0xd3,
 		0x7d,0xed,0x7f,0xef,0x68,0xd9,0x6a,0xdb
 	};
-	data8_t save, data;
+	UINT8 save, data;
 
 	if (1 == (offset & 1))
 	{
@@ -709,7 +712,7 @@ READ8_HANDLER( decocass_type1_map1_r )
 
 READ8_HANDLER( decocass_type1_map2_r )
 {
-	static data8_t map[] = {
+	static UINT8 map[] = {
 /* 00 */0x06,0x1f,0x8f,0x0c,0x02,0x1b,0x8b,0x08,
 		0x1e,0x1d,0x8e,0x16,0x1a,0x19,0x8a,0x12,
 		0x95,0x17,0x94,0x05,0x91,0x13,0x90,0x01,
@@ -743,8 +746,8 @@ READ8_HANDLER( decocass_type1_map2_r )
 		0xe5,0xfe,0x6f,0xfd,0xe1,0xfa,0x6b,0xf9,
 		0xe4,0xfc,0x6d,0xf6,0xe0,0xf8,0x69,0xf2
 	};
-	static data8_t latch2;
-	data8_t save, addr, data;
+	static UINT8 latch2;
+	UINT8 save, addr, data;
 
 	/* read from tape:
      *  7d 43 5d 4f 04 ae e3 59 57 cb d6 55 4d 15
@@ -795,7 +798,7 @@ READ8_HANDLER( decocass_type1_map2_r )
 
 READ8_HANDLER( decocass_type1_map3_r )
 {
-	static data8_t map[] = {
+	static UINT8 map[] = {
 /* 00 */0x03,0x36,0x01,0x34,0xa6,0x17,0xa4,0x15,
 		0x0b,0x3e,0x09,0x3c,0xae,0x1f,0xac,0x1d,
 		0x92,0x16,0x90,0x14,0x87,0x02,0x85,0x00,
@@ -829,8 +832,8 @@ READ8_HANDLER( decocass_type1_map3_r )
 		0x77,0xe7,0x75,0xe5,0x62,0xd3,0x60,0xd1,
 		0x7f,0xef,0x7d,0xed,0x6a,0xdb,0x68,0xd9
 	};
-	static data8_t latch3;
-	data8_t save, addr, data;
+	static UINT8 latch3;
+	UINT8 save, addr, data;
 
 	/* read from tape:
      *  f6 5f e5 c5 17 23 62 40 67 51 c5 ee 85 23
@@ -891,13 +894,13 @@ READ8_HANDLER( decocass_type1_map3_r )
  ***************************************************************************/
 READ8_HANDLER( decocass_type2_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	if (1 == type2_xx_latch)
 	{
 		if (1 == (offset & 1))
 		{
-			data8_t *prom = memory_region(REGION_USER1);
+			UINT8 *prom = memory_region(REGION_USER1);
 			data = prom[256 * type2_d2_latch + type2_promaddr];
 			LOG(3,("%9.7f 6502-PC: %04x decocass_type2_r(%02x): $%02x <- prom[%03x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, 256 * type2_d2_latch + type2_promaddr));
 		}
@@ -971,13 +974,13 @@ WRITE8_HANDLER( decocass_type2_w )
  ***************************************************************************/
 READ8_HANDLER( decocass_type3_r )
 {
-	data8_t data, save;
+	UINT8 data, save;
 
 	if (1 == (offset & 1))
 	{
 		if (1 == type3_pal_19)
 		{
-			data8_t *prom = memory_region(REGION_USER1);
+			UINT8 *prom = memory_region(REGION_USER1);
 			data = prom[type3_ctrs];
 			LOG(3,("%9.7f 6502-PC: %04x decocass_type3_r(%02x): $%02x <- prom[$%03x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, type3_ctrs));
 			if (++type3_ctrs == 4096)
@@ -1009,8 +1012,9 @@ READ8_HANDLER( decocass_type3_r )
 			if (0 == (offset & E5XX_MASK))
 			{
 				save = cpunum_get_reg(2, I8X41_DATA);
-				if (type3_swap == TYPE3_SWAP_01)
+				switch (type3_swap)
 				{
+				case TYPE3_SWAP_01:
 					data =
 						(BIT1(save) << 0) |
 						(type3_d0_latch << 1) |
@@ -1020,11 +1024,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_12)
-				{
+					break;
+				case TYPE3_SWAP_12:
 					data =
 						(type3_d0_latch << 0) |
 						(BIT2(save) << 1) |
@@ -1034,11 +1035,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_13)
-				{
+					break;
+				case TYPE3_SWAP_13:
 					data =
 						(type3_d0_latch << 0) |
 						(BIT3(save) << 1) |
@@ -1048,11 +1046,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_24)
-				{
+					break;
+				case TYPE3_SWAP_24:
 					data =
 						(type3_d0_latch << 0) |
 						(BIT1(save) << 1) |
@@ -1062,11 +1057,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_25)
-				{
+					break;
+				case TYPE3_SWAP_25:
 					data =
 						(type3_d0_latch << 0) |
 						(BIT1(save) << 1) |
@@ -1076,11 +1068,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT2(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_34_0)
-				{
+					break;
+				case TYPE3_SWAP_34_0:
 					data =
 						(type3_d0_latch << 0) |
 						(BIT1(save) << 1) |
@@ -1090,11 +1079,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_34_7)
-				{
+					break;
+				case TYPE3_SWAP_34_7:
 					data =
 						(BIT7(save) << 0) |
 						(BIT1(save) << 1) |
@@ -1104,11 +1090,19 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(type3_d0_latch << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_56)
-				{
+					break;
+				case TYPE3_SWAP_23_56:
+					data =
+						(type3_d0_latch << 0) |
+						(BIT1(save) << 1) |
+						(BIT3(save) << 2) |
+						(BIT2(save) << 3) |
+						(BIT4(save) << 4) |
+						(BIT6(save) << 5) |
+						(BIT5(save) << 6) |
+						(BIT7(save) << 7);
+					break;
+				case TYPE3_SWAP_56:
 					data =
 						type3_d0_latch |
 						(BIT1(save) << 1) |
@@ -1118,11 +1112,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT6(save) << 5) |
 						(BIT5(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				if (type3_swap == TYPE3_SWAP_67)
-				{
+					break;
+				case TYPE3_SWAP_67:
 					data =
 						type3_d0_latch |
 						(BIT1(save) << 1) |
@@ -1132,10 +1123,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT7(save) << 6) |
 						(BIT6(save) << 7);
-					type3_d0_latch = save & 1;
-				}
-				else
-				{
+					break;
+				default:
 					data =
 						type3_d0_latch |
 						(BIT1(save) << 1) |
@@ -1145,8 +1134,8 @@ READ8_HANDLER( decocass_type3_r )
 						(BIT5(save) << 5) |
 						(BIT6(save) << 6) |
 						(BIT7(save) << 7);
-					type3_d0_latch = save & 1;
 				}
+				type3_d0_latch = save & 1;
 				LOG(3,("%9.7f 6502-PC: %04x decocass_type3_r(%02x): $%02x '%c' <- 8041-DATA\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.'));
 			}
 			else
@@ -1211,7 +1200,7 @@ WRITE8_HANDLER( decocass_type3_w )
 
 READ8_HANDLER( decocass_type4_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	if (1 == (offset & 1))
 	{
@@ -1294,7 +1283,7 @@ WRITE8_HANDLER( decocass_type4_w )
 
 READ8_HANDLER( decocass_type5_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	if (1 == (offset & 1))
 	{
@@ -1370,7 +1359,7 @@ WRITE8_HANDLER( decocass_type5_w )
 
 READ8_HANDLER( decocass_nodong_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	if (1 == (offset & 1))
 	{
@@ -1410,7 +1399,7 @@ READ8_HANDLER( decocass_nodong_r )
 
 READ8_HANDLER( decocass_e5xx_r )
 {
-	data8_t data;
+	UINT8 data;
 
 	/* E5x2-E5x3 and mirrors */
 	if (2 == (offset & E5XX_MASK))
@@ -1472,6 +1461,44 @@ WRITE8_HANDLER( decocass_e5xx_w )
 
 /***************************************************************************
  *
+ *  DE-0091xx daughter board handler
+ *
+ *  The DE-0091xx daughter board seems to be a read-only ROM board with
+ *  two times five 4K ROMs. The only game using it (so far) is
+ *  Treasure Island, which has 4 ROMs.
+ *  The board's ROMs are mapped into view for reads between addresses
+ *  0x6000 and 0xafff by setting bit0 of address 0xe900.
+ *
+ ***************************************************************************/
+
+WRITE8_HANDLER( decocass_e900_w )
+{
+	de0091_enable = data & 1;
+	/* Perhaps the second row of ROMs is enabled by another bit.
+     * There is no way to verify this yet, so for now just look
+     * at bit 0 to enable the daughter board at reads between
+     * 0x6000 and 0xafff.
+     */
+}
+
+READ8_HANDLER( decocass_de0091_r )
+{
+	UINT8 data = 0xff;
+	if (de0091_enable)
+	{
+		UINT8 *mem = memory_region(REGION_USER3);
+		data = mem[offset];
+	}
+	else
+	{
+		UINT8 *mem = memory_region(REGION_CPU1);
+		data = mem[0x6000 + offset];
+	}
+	return data;
+}
+
+/***************************************************************************
+ *
  *  state save setup
  *
  ***************************************************************************/
@@ -1509,6 +1536,7 @@ void decocass_machine_state_save_init(void)
 	state_save_register_UINT8	("decocass", 0, "decocass_reset", &decocass_reset, 1);
 	state_save_register_UINT8	("decocass", 0, "i8041_p1", &i8041_p1, 1);
 	state_save_register_UINT8	("decocass", 0, "i8041_p2", &i8041_p2, 1);
+	state_save_register_int		("decocass", 0, "de0091_enable", &de0091_enable);
 	state_save_register_UINT32	("decocass", 0, "type1_inmap", &type1_inmap, 1);
 	state_save_register_UINT32	("decocass", 0, "type1_outmap", &type1_outmap, 1);
 	state_save_register_int 	("decocass", 0, "type2_d2_latch", &type2_d2_latch);
@@ -1828,6 +1856,25 @@ MACHINE_INIT( cflyball )
 	decocass_dongle_r = decocass_nodong_r;
 }
 
+MACHINE_INIT( czeroize )
+{
+	UINT8 *mem = memory_region(REGION_USER1);
+	decocass_init_common();
+	LOG(0,("dongle type #3 (PAL)\n"));
+	decocass_dongle_r = decocass_type3_r;
+	decocass_dongle_w = decocass_type3_w;
+	type3_swap = TYPE3_SWAP_23_56;
+
+	/*
+     * FIXME: remove if the original ROM is available.
+     * The Zeroize 6502 code at 0x3707 issues LODCTRS with 0x8a,
+     * and expects to read 0x18 from 0x08a0 ff. within 7 bytes.
+     * This hack seems to be sufficient to get around
+     * the missing dongle ROM contents and play the game.
+     */
+	mem[0x08a0] = 0x18;
+}
+
 /***************************************************************************
  *
  *  8041 port handlers
@@ -1935,7 +1982,7 @@ WRITE8_HANDLER( i8041_p1_w )
 
 READ8_HANDLER( i8041_p1_r )
 {
-	data8_t data = i8041_p1;
+	UINT8 data = i8041_p1;
 	static int i8041_p1_old;
 
 	if (data != i8041_p1_old)
@@ -1982,7 +2029,7 @@ WRITE8_HANDLER( i8041_p2_w )
 
 READ8_HANDLER( i8041_p2_r )
 {
-	data8_t data;
+	UINT8 data;
 	static int i8041_p2_old;
 
 	tape_update();

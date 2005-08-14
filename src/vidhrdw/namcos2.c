@@ -339,6 +339,12 @@ DrawCrossshair( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		x2port = 2;
 		y2port = 3;
 		break;
+	case NAMCOS2_BUBBLE_TROUBLE:
+		x1port = 0;
+		y1port = 1;
+		x2port = 2;
+		y2port = 3;
+		break;
 	case NAMCOS2_LUCKY_AND_WILD:
 		x1port = 4;
 		y1port = 2;

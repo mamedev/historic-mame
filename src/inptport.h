@@ -220,6 +220,7 @@ enum
 	IPT_UI_THROTTLE,
 	IPT_UI_SHOW_FPS,
 	IPT_UI_SNAPSHOT,
+	IPT_UI_RECORD_MOVIE,
 	IPT_UI_TOGGLE_CHEAT,
 	IPT_UI_UP,
 	IPT_UI_DOWN,
@@ -656,11 +657,13 @@ extern const char *inptport_default_strings[];
  *
  *************************************/
 
+int inputport_init(void (*construct_ipt)(struct IptInitParams *));
+
 void inptport_load(int config_type, struct xml_data_node *parentnode);
 void inptport_save(int config_type, struct xml_data_node *parentnode);
 
 struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 type, const char *tag, UINT32 mask);
-struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *params));
+struct InputPort *input_port_allocate(void (*construct_ipt)(struct IptInitParams *));
 
 struct InputPortDefinition *get_input_port_list(void);
 struct InputPortDefinition *get_input_port_list_backup(void);

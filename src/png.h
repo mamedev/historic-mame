@@ -92,6 +92,5 @@ int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_stop(mame_file *fp);
-int mng_capture_status(void);
 
 #endif	/* __PNG_H__ */

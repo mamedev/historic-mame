@@ -146,7 +146,7 @@ WRITE8_HANDLER( zaxxon_sound_w )
 				sample_stop(sa[21].channel);
 				break;
 		}
-		break;
+
 	case 1:
 	case 2:
 		for (line = 0;line < 8;line++)

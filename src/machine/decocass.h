@@ -1,4 +1,4 @@
-/* set to 1 to display tape time offset */
+/* Set this to 1 to display current tape position */
 #define TAPE_UI_DISPLAY 0
 
 #ifdef MAME_DEBUG
@@ -12,6 +12,7 @@ extern WRITE8_HANDLER( decocass_coin_counter_w );
 extern WRITE8_HANDLER( decocass_sound_command_w );
 extern READ8_HANDLER( decocass_sound_data_r );
 extern READ8_HANDLER( decocass_sound_ack_r );
+extern READ8_HANDLER( decocass_sound_xxx_r );
 extern WRITE8_HANDLER( decocass_sound_data_w );
 extern READ8_HANDLER( decocass_sound_command_r );
 extern WRITE8_HANDLER( decocass_sound_nmi_enable_w );
@@ -39,6 +40,8 @@ extern WRITE8_HANDLER( type3_w );
 
 extern READ8_HANDLER( decocass_e5xx_r );
 extern WRITE8_HANDLER( decocass_e5xx_w );
+extern READ8_HANDLER( decocass_de0091_r );
+extern WRITE8_HANDLER( decocass_e900_w );
 
 extern MACHINE_INIT( decocass );
 extern MACHINE_INIT( ctsttape );
@@ -68,6 +71,7 @@ extern MACHINE_INIT( cppicf );
 extern MACHINE_INIT( cscrtry );
 extern MACHINE_INIT( cflyball );
 extern MACHINE_INIT( cbdash );
+extern MACHINE_INIT( czeroize );
 
 extern WRITE8_HANDLER( i8041_p1_w );
 extern READ8_HANDLER( i8041_p1_r );

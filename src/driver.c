@@ -231,6 +231,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( racknrol )	/* Status (Senko Kit) */
 	DRIVER( hexpool )	/* Status (Senko Kit) */
 	DRIVER( trvchlng )	/* Senko */
+	DRIVER( luctoday )	/* 1980 Sigma */
+	DRIVER( chewing )	/* ?? unknown */
 
 	/* Has some similarities with Moon Cresta but Board is very different */
 	DRIVER( rockclim )	/* (c)1981 Taito */
@@ -730,6 +732,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( sgunnr2j )	/* (c) 1991 (Japan) */
 	DRIVER( cosmogng )	/* (c) 1991 (US) */
 	DRIVER( cosmognj )	/* (c) 1991 (Japan) */
+	DRIVER( bubbletr )	/* (c) 1992 */
 	DRIVER( finalap3 )	/* 92.9  Final Lap 3 */
 	DRIVER( finalp3j )	/* 92.9  Final Lap 3 */
 	DRIVER( luckywld )	/* (c) 1992 */
@@ -2078,6 +2081,7 @@ V-V                           TP-027
 	DRIVER( maydayb )
 	DRIVER( colony7 )	/* (c) 1981 Taito */
 	DRIVER( colony7a )	/* (c) 1981 Taito */
+	DRIVER( jin )		/* Falcon bootleg/hack */
 	DRIVER( stargate )	/* (c) 1981 */
 	DRIVER( robotron )	/* (c) 1982 */
 	DRIVER( robotryo )	/* (c) 1982 */
@@ -3856,9 +3860,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( pbactio2 )	/* (c) 1985 Tehkan */
 	DRIVER( pbactio3 )	/* (c) 1985 Tehkan */
 	/* 6009 Tank Busters */
-	/* 6011 Pontoon (c) 1985 Tehkan is a gambling game - removed */
-	/* ???? Lovely Poker (c)1985 Tehkan is also a gambling game */
-	DRIVER( lvcards )	/* (c) 1985 Tehkan - not a gambling game? just gambling style? */
+	DRIVER( ponttehk )	/* 6011 - (c) 1985 Tehkan */
+	DRIVER( lvpoker )	/* ???? - (c) 1985 Tehkan */
+	DRIVER( lvcards )	/* (c) 1985 Tehkan */
 	DRIVER( tehkanwc )	/* (c) 1985 Tehkan */
 	DRIVER( gridiron )	/* (c) 1985 Tehkan */
 	DRIVER( teedoff )	/* 6102 - (c) 1986 Tecmo */
@@ -5111,7 +5115,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( saiyugou )	/* TA-0023 (c) 1988 (Japan) */
 	DRIVER( saiyugb1 )	/* bootleg */
 	DRIVER( saiyugb2 )	/* bootleg */
-	DRIVER( wwfsstar )	/* TA-0024 (c) 1989 (US) */
+	DRIVER( wwfsstar )	/* TA-0024 (c) 1989 (Europe) */
+	DRIVER( wwfsstau )	/* TA-0024 (c) 1989 (US) */
+	DRIVER( wwfsstaj )	/* TA-0024 (c) 1989 (Japan) */
 	DRIVER( vball )		/* TA-0025 (c) 1988 */
 	DRIVER( vball2pj )	/* TA-0025 (c) 1988 (Japan) */
 	DRIVER( ddragon2 )	/* TA-0026 (c) 1988 (World) */
@@ -6068,6 +6074,8 @@ Other Sun games
 	DRIVER( excelsr )	/* (c) 1995 */
 	DRIVER( hotmind )	/* (c) 1995 */
 	DRIVER( drtomy )	/* (c) 1993 no copyright message (1993 on pcb), some code taken from 'Big Karnak' */
+	DRIVER( sderby )	/* (c) 1996 */
+	DRIVER( pmroulet )
 
 	/* Pacific Novelty games */
 	DRIVER( sharkatt )	/* (c) [1980] */
@@ -6234,6 +6242,10 @@ Other Sun games
 	DRIVER( spinner )	/* bootleg */
 
 	/* IGS games ( www.igs.com.tw ) */
+	DRIVER( goldstar )	/* (c) 198? IGS */
+	DRIVER( goldstbl )	/* (c) 198? IGS */
+	DRIVER( csk227it )	/* (c) 198? IGS */
+	DRIVER( csk234it )	/* (c) 198? IGS */
 	DRIVER( iqblock )	/* (c) 1993 */
 	DRIVER( grndtour )	/* (c) 1993 */
 	DRIVER( cabaret )
@@ -6631,5 +6643,24 @@ Other Sun games
 	DRIVER( dreamwld )	/* (c) 2000 SemiCom */
 	DRIVER( cybertnk )	/* (c) 1990 Coreland */
 	DRIVER( pkscram )	/* (c) 1993 Cosmo Electronics Corporation */
+	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
+	DRIVER( jollypkr )	/* (c) 1993 Soft Design */
+	DRIVER( bonuscrd )	/* (c) 1986 Fun World */
+	DRIVER( poker4 )	/* (c) 1986 Fun World */
+	DRIVER( poker8 )	/* (c) 1986 Fun World */
+	DRIVER( igpoker )	/* (c) 1990 Inter Games */
+	DRIVER( magiccrd )	/* (c) 1996 Impera */
+	DRIVER( vroulet )	/* (c) 1989 World Game */
+	DRIVER( rcasino )	/* (c) 1984 Dyna Electronics */
+	DRIVER( cmv801 )	/* (c) 198? Corsica */
+	DRIVER( cm2v841 )	/* (c) 198? Dyna Electronics */
+	DRIVER( cm2841a )	/* (c) 198? Dyna Electronics */
+	DRIVER( ampoker2 )	/* (c) 198? Novomatic */
+	DRIVER( ampokr2a )	/* (c) 198? Novomatic */
+	DRIVER( ampokr2b )	/* (c) 198? Novomatic */
+	DRIVER( lucky8 )	/* (c) 1989 Falcon */
+	DRIVER( starspnr )	/* (c) 1982? ACE */
+	DRIVER( vp906iii )	/* (c) 1985 Casino Electronics Inc. */
+	DRIVER( attckufo )	/* (c) 1980 Ryoto Electric Co. */
 
 #endif	/* DRIVER_RECURSIVE */
